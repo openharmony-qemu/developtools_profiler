@@ -199,6 +199,33 @@ HWTEST_F(HisyseventPluginTest, TestStartFail, TestSize.Level1)
     // start
     EXPECT_NE(plugin.Start(configData.data(), 0), 0);
     EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
+    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
+    usleep(US_PER_S * DEFAULT_WAIT); // 10s
+    plugin.Stop();
 }
 
+/**
+ * @tc.name: hisysevent plugin
+ * @tc.desc: customer popen test
+ * @tc.type: FUNC
+ */
+HWTEST_F(HisyseventPluginTest, TestCustomPopenClose, TestSize.Level1)
+{
+    HisyseventConfig config;
+    HisyseventPlugin plugin;
+    // set config
+    config.set_msg("H");
+    int size = config.ByteSizeLong();
+    std::vector<uint8_t> configData(size);
+    config.SerializeToArray(configData.data(), configData.size());
+    plugin.Start(configData.data(), configData.size());
+    EXPECT_EQ(plugin.GetCmdline(), "hisysevent -rd");
+    EXPECT_EQ(plugin.CustomPopen(&plugin.fullCmd_[0], nullptr), nullptr);
+    EXPECT_NE(plugin.CustomPopen(&plugin.fullCmd_[0], "w"), nullptr);
+    FILE* fp = plugin.CustomPopen(&plugin.fullCmd_[0], "r");
+    EXPECT_NE(fp, nullptr);
+    ASSERT_GT(plugin.CustomPclose(fp), 0);
+    usleep(US_PER_S * DEFAULT_WAIT); // 10s
+    plugin.Stop();
+}
 }

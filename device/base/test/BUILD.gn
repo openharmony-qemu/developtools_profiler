@@ -31,6 +31,7 @@ ohos_unittest("hiprofiler_base_ut") {
   configs = [ ":module_private_config" ]
   include_dirs = [ "//third_party/googletest/googletest/include/gtest" ]
   sources = [
+    "unittest/common_test.cpp",
     "unittest/epoll_event_poller_test.cpp",
     "unittest/schedule_task_manager_test.cpp",
     "unittest/semaphore_test.cpp",
