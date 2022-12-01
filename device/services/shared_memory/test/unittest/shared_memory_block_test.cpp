@@ -330,6 +330,25 @@ HWTEST_F(SharedMemoryBlockTest, PutWithPayloadTimeout, TestSize.Level1)
         *((uint32_t*)data) = i;
         *((uint32_t*)header) = i + 1;
         shareMemoryBlock.PutWithPayloadTimeout(header, ARRAYSIZE, data, ARRAYSIZE);
+    }
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
+}
+
+/**
+ * @tc.name: share memory PutWithPayloadSync
+ * @tc.desc: Shared memory type test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, PutWithPayloadSync, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", 8192);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    shareMemoryBlock.SetReusePolicy(ShareMemoryBlock::ReusePolicy::DROP_OLD);
+    int8_t data[ARRAYSIZE];
+    int8_t header[ARRAYSIZE];
+    for (int i = 0; i < 2; i++) {
+        *((uint32_t*)data) = i;
+        *((uint32_t*)header) = i + 1;
         shareMemoryBlock.PutWithPayloadSync(header, ARRAYSIZE, data, ARRAYSIZE);
     }
     ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());

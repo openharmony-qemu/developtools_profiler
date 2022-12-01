@@ -34,7 +34,7 @@ const std::string DEFAULT_TEST_PATH("/system/lib64/");
 const std::string DEFAULT_TEST_PATH("/system/lib/");
 #endif
 const int US_PER_S = 1000000;
-const int DEFAULT_WAIT = 30;
+const int DEFAULT_WAIT = 10;
 
 std::atomic<uint64_t> g_testId(1);
 
@@ -219,7 +219,7 @@ HWTEST_F(HisyseventPluginTest, TestCustomPopenClose, TestSize.Level1)
     std::vector<uint8_t> configData(size);
     config.SerializeToArray(configData.data(), configData.size());
     plugin.Start(configData.data(), configData.size());
-    EXPECT_EQ(plugin.GetCmdline(), "hisysevent -rd");
+    EXPECT_EQ(plugin.GetCmdline(), "hisysevent -rd ");
     EXPECT_EQ(plugin.CustomPopen(&plugin.fullCmd_[0], nullptr), nullptr);
     EXPECT_NE(plugin.CustomPopen(&plugin.fullCmd_[0], "w"), nullptr);
     FILE* fp = plugin.CustomPopen(&plugin.fullCmd_[0], "r");
