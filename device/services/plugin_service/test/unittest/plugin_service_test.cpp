@@ -788,9 +788,9 @@ HWTEST_F(UnitTestPluginService, PluginServiceImpl_RegisterPlugin, TestSize.Level
     SocketContext ctx;
 
     request.set_request_id(5);
-    request.set_path("sample.so");
+    request.set_path("sample2.so");
     request.set_sha256("");
-    request.set_name("abc.so");
+    request.set_name("sample2.so");
     request.set_buffer_size_hint(0);
     EXPECT_TRUE(pluginServiceImp_->RegisterPlugin(ctx, request, response));
     request.set_sha256("abcdsfdsfad");
