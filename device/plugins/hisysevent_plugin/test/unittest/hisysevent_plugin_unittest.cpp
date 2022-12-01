@@ -220,11 +220,18 @@ HWTEST_F(HisyseventPluginTest, TestCustomPopenClose, TestSize.Level1)
     config.SerializeToArray(configData.data(), configData.size());
     plugin.Start(configData.data(), configData.size());
     EXPECT_EQ(plugin.GetCmdline(), "hisysevent -rd ");
-    EXPECT_EQ(plugin.CustomPopen(&plugin.fullCmd_[0], nullptr), nullptr);
-    EXPECT_NE(plugin.CustomPopen(&plugin.fullCmd_[0], "w"), nullptr);
-    FILE* fp = plugin.CustomPopen(&plugin.fullCmd_[0], "r");
-    EXPECT_NE(fp, nullptr);
-    ASSERT_GT(plugin.CustomPclose(fp), 0);
+    std::vector<char*> fullCmdTest;
+    fullCmdTest.push_back(const_cast<char *>("hisysevent"));
+    fullCmdTest.push_back(const_cast<char *>("-rd"));
+    fullCmdTest.push_back(nullptr);
+    EXPECT_EQ(plugin.CustomPopen(&fullCmdTest[0], nullptr), nullptr);
+    FILE* fpr = plugin.CustomPopen(&fullCmdTest[0], "r");
+    EXPECT_NE(fpr, nullptr);
+    ASSERT_GT(plugin.CustomPclose(fpr), 0);
+
+    FILE* fpw = plugin.CustomPopen(&fullCmdTest[0], "w");
+    EXPECT_NE(fpw, nullptr);
+    ASSERT_GT(plugin.CustomPclose(fpw), 0);
     usleep(US_PER_S * DEFAULT_WAIT); // 10s
     plugin.Stop();
 }
