@@ -34,7 +34,7 @@ const std::string DEFAULT_TEST_PATH("/system/lib64/");
 const std::string DEFAULT_TEST_PATH("/system/lib/");
 #endif
 const int US_PER_S = 1000000;
-const int DEFAULT_WAIT = 30;
+const int DEFAULT_WAIT = 10;
 
 std::atomic<uint64_t> g_testId(1);
 
@@ -199,6 +199,40 @@ HWTEST_F(HisyseventPluginTest, TestStartFail, TestSize.Level1)
     // start
     EXPECT_NE(plugin.Start(configData.data(), 0), 0);
     EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
+    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
+    usleep(US_PER_S * DEFAULT_WAIT); // 10s
+    plugin.Stop();
 }
 
+/**
+ * @tc.name: hisysevent plugin
+ * @tc.desc: customer popen test
+ * @tc.type: FUNC
+ */
+HWTEST_F(HisyseventPluginTest, TestCustomPopenClose, TestSize.Level1)
+{
+    HisyseventConfig config;
+    HisyseventPlugin plugin;
+    // set config
+    config.set_msg("H");
+    int size = config.ByteSizeLong();
+    std::vector<uint8_t> configData(size);
+    config.SerializeToArray(configData.data(), configData.size());
+    plugin.Start(configData.data(), configData.size());
+    EXPECT_EQ(plugin.GetCmdline(), "hisysevent -rd ");
+    std::vector<char*> fullCmdTest;
+    fullCmdTest.push_back(const_cast<char *>("hisysevent"));
+    fullCmdTest.push_back(const_cast<char *>("-rd"));
+    fullCmdTest.push_back(nullptr);
+    EXPECT_EQ(plugin.CustomPopen(&fullCmdTest[0], nullptr), nullptr);
+    FILE* fpr = plugin.CustomPopen(&fullCmdTest[0], "r");
+    EXPECT_NE(fpr, nullptr);
+    ASSERT_GT(plugin.CustomPclose(fpr), 0);
+
+    FILE* fpw = plugin.CustomPopen(&fullCmdTest[0], "w");
+    EXPECT_NE(fpw, nullptr);
+    ASSERT_GT(plugin.CustomPclose(fpw), 0);
+    usleep(US_PER_S * DEFAULT_WAIT); // 10s
+    plugin.Stop();
+}
 }

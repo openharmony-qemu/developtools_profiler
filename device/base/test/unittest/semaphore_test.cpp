@@ -37,8 +37,10 @@ protected:
  */
 HWTEST_F(SemaphoreTest, CtorDtor, TestSize.Level1)
 {
-    auto semaphore = GetSemaphoreFactory().Create(0);
+    auto semaphore = GetSemaphoreFactory().Create(1);
     EXPECT_NE(semaphore, nullptr);
+    EXPECT_TRUE(semaphore->TryWait());
+    EXPECT_FALSE(semaphore->TimedWait(1, 0));
 }
 
 /**
@@ -51,6 +53,7 @@ HWTEST_F(SemaphoreTest, Wait, TestSize.Level1)
     auto semaphore = GetSemaphoreFactory().Create(1);
     ASSERT_NE(semaphore, nullptr);
     EXPECT_TRUE(semaphore->Wait());
+    EXPECT_FALSE(semaphore->TryWait());
 }
 
 /**
