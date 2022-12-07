@@ -14,37 +14,42 @@
 import("//build/ohos.gni")
 import("base/config.gni")
 group("hiprofiler_targets") {
-  deps = [
-    "cmds:hiprofiler_cmd",
-    "plugins/api:hiprofiler_plugins",
-    "plugins/cpu_plugin:cpudataplugin",
-    "plugins/cpu_plugin:cpudataplugintest",
-    "plugins/diskio_plugin:diskiodataplugin",
-    "plugins/diskio_plugin:diskiodataplugintest",
-    "plugins/ftrace_plugin:ftrace_targets",
-    "plugins/hidump_plugin:hidumpplugin",
-    "plugins/hilog_plugin:hilogplugin",
-    "plugins/hiperf_plugin:hiperfplugin",
-    "plugins/hisysevent_plugin:hisyseventplugin",
-    "plugins/memory_plugin:memdataplugin",
-    "plugins/memory_plugin:memorytest",
-    "plugins/native_hook:malloctest_cpp",
-    "plugins/native_hook:nativetest_c",
-    "plugins/native_hook:nativetest_cpp",
-    "plugins/native_hook:nativetest_so",
-    "plugins/network_plugin:networkplugin",
-    "plugins/process_plugin:processplugin",
-    "plugins/sample_plugin:sampleplugin",
-    "plugins/stream_plugin:streamplugin",
-    "services/profiler_service:hiprofilerd",
-    "services/shared_memory:shared_memory",
-  ]
-  if (is_ohos && use_musl && !is_asan) {
-    deps += [
-      "plugins/native_daemon:native_daemon",
-      "plugins/native_hook:native_hook",
-      "plugins/native_hook:perf_test_data",
+  if (!is_emulator) {
+    deps = [
+      "cmds:hiprofiler_cmd",
+      "plugins/api:hiprofiler_plugins",
+      "plugins/cpu_plugin:cpudataplugin",
+      "plugins/cpu_plugin:cpudataplugintest",
+      "plugins/diskio_plugin:diskiodataplugin",
+      "plugins/diskio_plugin:diskiodataplugintest",
+      "plugins/ftrace_plugin:ftrace_targets",
+      "plugins/hidump_plugin:hidumpplugin",
+      "plugins/hilog_plugin:hilogplugin",
+      "plugins/hiperf_plugin:hiperfplugin",
+      "plugins/hisysevent_plugin:hisyseventplugin",
+      "plugins/memory_plugin:memdataplugin",
+      "plugins/memory_plugin:memorytest",
+      "plugins/native_hook:malloctest_cpp",
+      "plugins/native_hook:nativetest_c",
+      "plugins/native_hook:nativetest_cpp",
+      "plugins/native_hook:nativetest_so",
+      "plugins/network_plugin:networkplugin",
+      "plugins/process_plugin:processplugin",
+      "plugins/sample_plugin:sampleplugin",
+      "plugins/stream_plugin:streamplugin",
+      "services/profiler_service:hiprofilerd",
+      "services/shared_memory:shared_memory",
     ]
+    if (target_cpu == "arm64") {
+      deps += [ "plugins/hiebpf_plugin:ebpf_targets" ]
+    }
+    if (is_ohos && use_musl && !is_asan) {
+      deps += [
+        "plugins/native_daemon:native_daemon",
+        "plugins/native_hook:native_hook",
+        "plugins/native_hook:perf_test_data",
+      ]
+    }
   }
 }
 
