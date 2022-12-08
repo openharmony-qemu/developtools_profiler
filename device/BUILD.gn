@@ -40,9 +40,6 @@ group("hiprofiler_targets") {
       "services/profiler_service:hiprofilerd",
       "services/shared_memory:shared_memory",
     ]
-    if (target_cpu == "arm64") {
-      deps += [ "plugins/hiebpf_plugin:ebpf_targets" ]
-    }
     if (is_ohos && use_musl && !is_asan) {
       deps += [
         "plugins/native_daemon:native_daemon",
