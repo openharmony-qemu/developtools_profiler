@@ -37,6 +37,10 @@ config("hiprofiler_test_config") {
 }
 
 config("hiprofiler_base_config") {
+  defines = []
+  if (use_musl && !is_asan) {
+    defines += [ "HOOK_ENABLE" ]
+  }
   include_dirs = [
     "include",
     "//third_party/bounds_checking_function/include",
