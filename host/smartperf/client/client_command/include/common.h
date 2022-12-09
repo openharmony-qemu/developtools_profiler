@@ -34,6 +34,7 @@ enum class MessageType {
     GET_CAPTURE,
     CATCH_TRACE_START,
     CATCH_TRACE_FINISH,
+    SetDuBaiDb
 };
 
 const std::unordered_map<MessageType, std::string> messageMap = {
@@ -52,6 +53,7 @@ const std::unordered_map<MessageType, std::string> messageMap = {
     { MessageType::GET_CAPTURE, std::string("get_capture") },
     { MessageType::CATCH_TRACE_START, std::string("catch_trace_start") },
     { MessageType::CATCH_TRACE_FINISH, std::string("catch_trace_end") },
+    { MessageType::SetDuBaiDb, std::string("set_dubai_db") },
 };
 
 enum class CommandType {

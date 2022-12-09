@@ -77,13 +77,15 @@ export struct Report {
 
                 //截取时间戳
                 let timeStamp = databasePath.substring(databasePath.lastIndexOf("/") + 1, databasePath.length)
+
                 database.queryData(timeStamp + ".db").then(data => {
                   if(item.testDuration<5){
                     prompt.showToast({ message: "测试时长过短", duration: 1000 })
                   }else{
                     router.push({ uri: 'pages/ReportDetail', params: {
                       gpData: data,
-                      reportItem: item
+                      reportItem: item,
+                      timeStamp:timeStamp
                     } })
                   }
 

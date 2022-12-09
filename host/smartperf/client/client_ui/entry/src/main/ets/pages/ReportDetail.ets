@@ -17,7 +17,7 @@ import { secToTime } from '../common/utils/TimeUtils';
 import { TIndexInfo } from '../common/entity/DatabaseEntity';
 import router from '@system.router';
 import { Summary } from '../common/ui/detail/Summary';
-import { Power } from '../common/ui/detail/Power';
+import { PowerDubai } from '../common/ui/detail/PowerDubai';
 import { Performance } from '../common/ui/detail/Performance';
 import { Load } from '../common/ui/detail/Load';
 import { Temperature } from '../common/ui/detail/Temperature';
@@ -25,6 +25,9 @@ import { StartTestTitleComponent } from '../common/ui/StartTestTitleComponent';
 import { ReportItem } from '../common/entity/LocalConfigEntity';
 import CheckEmptyUtils from'../common/utils/CheckEmptyUtils'
 
+import { TPowerSensorInfo } from '../common/entity/DatabaseEntity';
+import database from '../common/database/DatabaseUtils';
+import SPLogger from '../common/utils/SPLogger'
 
 @Entry
 @Component
@@ -32,16 +35,25 @@ struct ReportDetail {
   private controller: TabsController = new TabsController()
   private gpData: Array<TIndexInfo> = new Array()
   private reportItem: ReportItem = null
-
+  private tPowerSensorList: Array<TPowerSensorInfo> = new Array<TPowerSensorInfo>()
   aboutToAppear() {
+
     let data : any = router.getParams()["gpData"]
     let report : any = router.getParams()["reportItem"]
+    let timeStamp:any=router.getParams()["timeStamp"]
     if (data != null) {
       this.gpData = data
     }
     if (report != null) {
       this.reportItem = report
     }
+    globalThis.testDuration=this.reportItem.testDuration
+
+    database.query_powersensor_info(timeStamp).then(data => {
+      for (var i = 0; i <data.length ; i++) {
+      this.tPowerSensorList.push(data[i])
+      }
+    })
   }
 
   build() {
@@ -105,7 +117,7 @@ struct ReportDetail {
             if (!CheckEmptyUtils.checkStrIsEmpty(this.gpData[0].currentNow)) {
               TabContent() {
                 Column() {
-                  Power({ gpData: this.gpData })
+                  PowerDubai({tPowerSensorList:this.tPowerSensorList})
                 }.width('100%').height('100%')
               }.tabBar('功耗')
             }

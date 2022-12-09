@@ -14,8 +14,8 @@
  */
 
 import dataRdb from '@ohos.data.rdb'
-import { GPData,TIndexInfo,TGeneralInfo } from '../entity/DatabaseEntity';
-import { sql_t_index_info, dbVersion, dbName } from '../constant/ConstantSQL'
+import { GPData,TIndexInfo,TGeneralInfo,TPowerSensorInfo } from '../entity/DatabaseEntity';
+import { sql_t_index_info, dbVersion, dbName,task_powersensor_info,task_powerapp_info } from '../constant/ConstantSQL'
 import SPLogger from '../utils/SPLogger'
 
 const TAG = "DatabaseUtils"
@@ -27,14 +27,21 @@ export default {
         const STORE_CONFIG_Index = {
             name: pathSuffix + ".db"
         }
-        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG_Index, dbVersion)
-            .then(rdbStore => {
-                rdbStore.executeSql(sql_t_index_info, null).catch(err => {
-//                    SPLogger.DEBUG(TAG,"--> createTable t_index_info err:" + err)
-                })
-//                SPLogger.DEBUG(TAG,"--> createTable start execute sql_t_index_info:" + sql_t_index_info)
-                return rdbStore
-            })
+           dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG_Index, dbVersion)
+               .then(rdbStore => {
+                   rdbStore.executeSql(sql_t_index_info, null).catch(err => {
+
+                   })
+                   rdbStore.executeSql(task_powersensor_info, null).catch(err => {
+
+                   })
+                   rdbStore.executeSql(task_powerapp_info, null).catch(err => {
+
+                   })
+
+                   return rdbStore
+               })
+
     },
 
     //插入表( T_GENERAL_INFO)
@@ -92,7 +99,9 @@ export default {
         var strMap = new Map;
         for (let k of Object.keys(tIndexInfo)) {
             strMap.set(k, tIndexInfo[k]);
+
         }
+
         const valueInsert = {
             "timestamp": strMap.get("timestamp"),
             "taskId": strMap.get("taskId"),
@@ -185,7 +194,7 @@ export default {
                 })
 
         } catch (err) {
-//            SPLogger.ERROR(TAG,"resultSet queryGeneralData:err" + err)
+            SPLogger.ERROR(TAG,"resultSet queryGeneralData:err" + err)
         }
     },
 
@@ -276,7 +285,7 @@ export default {
                     return results
                 })
         } catch (err) {
-//            SPLogger.ERROR(TAG,"resultSet queryIndexInfo Data:err" + err)
+            SPLogger.ERROR(TAG,"resultSet queryIndexInfo Data:err" + err)
         }
     },
     /**
@@ -284,6 +293,7 @@ export default {
      * @param gpDatas
      */
     gpArray2Index(gpDatas: Array<GPData>): TIndexInfo{
+
         var tIndexInfo: TIndexInfo = new TIndexInfo()
         tIndexInfo.setTaskId("18")
         tIndexInfo.setTimeStamp(new Date().getTime().toString())
@@ -291,6 +301,7 @@ export default {
             for (var index = 0; index < gpDatas.length; index++) {
                 let curGPData: GPData = gpDatas[index]
                 let map = curGPData.values
+
                 switch (curGPData.moduleType) {
                     case "CPU":
                         tIndexInfo.setCPUData(
@@ -335,14 +346,15 @@ export default {
                         map.get("soc-thermal"),
                         map.get("system_h"),
                         map.get("gpu-thermal"),
-                        map.get("ambient"),
-                        map.get("Battery")
+                        map.get("ambient")
+
                         )
                         break;
                     case "Power":
                         tIndexInfo.setPowerData(
                         map.get("current_now"),
-                        map.get("voltage_now")
+                        map.get("voltage_now"),
+                        map.get("temp")
                         )
                         break;
                     case "RAM":
@@ -361,6 +373,413 @@ export default {
                 }
             }
         }
+
         return tIndexInfo
-    }
+    },
+
+    //插入表(task_powersensor_info)
+     insertPowerSensor(tableName: string, pathSuffix: number, tPowerSenspor: TPowerSensorInfo) {
+        SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerSenspor" + JSON.stringify(tPowerSenspor))
+        var strMap = new Map;
+        for (let k of Object.keys(tPowerSenspor)) {
+            strMap.set(k, tPowerSenspor[k]);
+        }
+        const valueInsert = {
+            "timestamp": strMap.get("timestamp"),
+            "taskId": strMap.get("taskId"),
+            "sensor": strMap.get("sensor"),
+            "power": strMap.get("power"),
+            "current": strMap.get("current"),
+            "percent": strMap.get("percent"),
+        }
+        const STORE_CONFIG = {
+            name: pathSuffix + ".db"
+        }
+        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion, (err, rdbStore) => {
+            SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerSenspor" + JSON.stringify(pathSuffix))
+            rdbStore.insert(tableName, valueInsert)
+        })
+    },
+    //查询表（detailed_applications_display）
+    async query_applications_display(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_display " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----display" + JSON.stringify(strSQL))
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "display"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "", sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----display" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（task_powersensor_info）
+    async query_powersensor_info(pathSuffix: number): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: pathSuffix+".db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                         let strSQL: string = "select * " +
+                        "from task_powersensor_info order by power desc  "
+
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor =resultSet.getString(resultSet.getColumnIndex("sensor"))
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_cpu）
+    async query_applications_cpu(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_cpu " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "cpu"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----cpu" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_gpu）
+    async query_applications_gpu(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_gpu " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "gpu"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----gpu" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_wifi_data）
+    async query_applications_wifi_data(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_wifi_data " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "wifi_data"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----wifi_data" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_system_idle）
+    async query_applications_system_idle(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_system_idle " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "system_idle"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----system_idle" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_audio）
+    async query_applications_audio(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_audio " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "audio"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----audio" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_dss）
+    async query_applications_dss(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_dss " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "dss"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----dss" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    },
+    //查询表（detailed_applications_ddr）
+    async query_applications_ddr(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_ddr " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "ddr"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----ddr" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+
+        }
+    }, //查询表（detailed_applications_sensor）
+    async query_applications_sensor(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_sensor " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "sensor"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----sensor" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+        }
+    },
+    //查询表（detailed_applications_rom）
+    async query_applications_rom(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerSensorInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
+                    "from detailed_applications_rom " +
+                    "where formatted_start_time >= " +
+                    JSON.stringify(start_time) +
+                    " and formatted_end_time <= " +
+                    JSON.stringify(end_time) +
+                    " and name = "+
+                    JSON.stringify(pkg_name)
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let sensor = "rom"
+                        let power = resultSet.getString(resultSet.getColumnIndex("power"))
+                        let current = resultSet.getString(resultSet.getColumnIndex("current"))
+                        let tPowerSensorInfo = new TPowerSensorInfo( "",  sensor, power, current,"")
+                        results.push(tPowerSensorInfo)
+                    }
+                    SPLogger.INFO("TAG","resultSet query_applications_display-----rom" + JSON.stringify(results))
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+        }
+    },
 }

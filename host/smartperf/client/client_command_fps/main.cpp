@@ -217,8 +217,10 @@ static FpsInfo GetSurfaceFrame(std::string name, FpsConfig &fpsConfig)
     if (fp == nullptr) {
         return fpsInfo;
     }
+    static long long lastLineTime;
     if (!(fpsInfo.timeStampQ).empty()) {
         fpsConfig.lastReadyTime = (fpsInfo.timeStampQ).back();
+        lastLineTime = (fpsInfo.timeStampQ).back();
     }
     ProcessResult(fp, fpsConfig, fpsInfo);
     pclose(fp);
@@ -236,6 +238,12 @@ static FpsInfo GetSurfaceFrame(std::string name, FpsConfig &fpsConfig)
         fpsInfo.fps = fpsInfo.preFps;
         return fpsInfo;
     }
+    
+    if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
+        fpsInfo.fps = 0;
+        return fpsInfo;   
+    }
+
     if (fpsConfig.fpsGb > 0) {
         fpsInfo.fps = fpsConfig.fpsGb;
         fpsInfo.preFps = fpsConfig.fpsGb;

@@ -17,11 +17,11 @@ import { TaskStatus }  from '../common/profiler/base/ProfilerConstant';
 import { ProfilerTask } from "../common/profiler/ProfilerTask"
 import { initFloatWindow,destoryAllFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils'
 import WorkerHandler from '../common/profiler/WorkerHandler';
-import worker from '@ohos.worker'; 
+import worker from '@ohos.worker';
 let MainWorker = globalThis.MainWorker
 
 MainWorker.onmessage = function (result) {
-    WorkerHandler.socketHandler(result)
+  WorkerHandler.socketHandler(result)
 }
 @Entry
 @Component
@@ -110,11 +110,22 @@ struct FloatBall {
   }
 
   longEvent() {
+    MainWorker.postMessage({"setDuBaiDb": true})
     ProfilerTask.getInstance().taskStop()
     this.destroyAllWindow()
     this.clearAllInterVal()
+    var now = new Date();
+    var exitTime = now.getTime() + 1000;
+    while (true) {
+      now = new Date();
+      if (now.getTime() > exitTime)
+      break;
+    }
+    ProfilerTask.getInstance().taskGetDubai()
   }
-
+  async dubai_data_to_disk(){
+    MainWorker.postMessage({"setDuBaiDb": true})
+  }
   destroyAllWindow(){
     globalThis.DestroyFloatingWindow()
     globalThis.DestroyTitleWindow()
@@ -159,7 +170,9 @@ struct FloatBall {
           .height('100%')
           .onClick(() => {
             console.log("collectIntervalCollect  single click ....");
+            this.dubai_data_to_disk()
             this.initAllCollect()
+
             console.log("collectIntervalCollect  single click finished....");
           })
           .gesture(
@@ -167,6 +180,7 @@ struct FloatBall {
           TapGesture({ count: 2 })
             .onAction(() => {
               this.doubleEvent()
+
             }),
           PanGesture({})
             .onActionStart(() => {
@@ -238,7 +252,9 @@ struct FloatBall {
           GestureGroup(GestureMode.Exclusive,
           LongPressGesture({ fingers: 1, repeat: false, duration: 1000 })
             .onAction(() => {
+              this.dubai_data_to_disk()
               this.longEvent()
+
             }),
           PanGesture({})
             .onActionStart(() => {
