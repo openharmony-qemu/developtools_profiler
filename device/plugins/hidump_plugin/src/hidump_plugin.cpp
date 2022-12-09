@@ -30,10 +30,9 @@ const int REDIRECT_STDOUT = 1;
 const int REDIRECT_STDERR = 2;
 const int SLEEP_TIME = 50;
 const int BUF_MAX_LEN = 64;
-const int CACHE_MAX_SIZE = 50;
 const int MS_PER_S = 1000;
 const int US_PER_S = 1000000;
-const char *FPS_FORMAT = "GP_daemon_fps 3600";
+const char *FPS_FORMAT = "GP_daemon_fps 31104000";
 
 static pid_t volatile g_child;
 const int READ = 0;
@@ -127,7 +126,7 @@ void HidumpPlugin::Loop(void)
         if (!ParseHidumpInfo(dataProto, buf)) {
             continue;
         }
-        if (dataProto.ByteSizeLong() >= CACHE_MAX_SIZE) {
+        if (dataProto.ByteSizeLong() > 0) {
             buffer_.resize(dataProto.ByteSizeLong());
             dataProto.SerializeToArray(buffer_.data(), buffer_.size());
             resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
