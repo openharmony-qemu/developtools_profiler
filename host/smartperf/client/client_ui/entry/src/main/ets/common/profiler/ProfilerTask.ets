@@ -17,9 +17,10 @@ import deviceInfo from '@ohos.deviceInfo'
 import CommonEvent from '@ohos.commonEvent'
 import database from '../database/DatabaseUtils'
 import { CPU } from './item/CPU';
+import { dateFormat } from '../utils/TimeUtils';
 import { csvGeneralInfo, csvTIndexInfo } from '../utils/CSVUtils'
 import { createFilePath } from '../utils/IOUtils'
-import { GPData, TIndexInfo, TGeneralInfo } from '../entity/DatabaseEntity'
+import { GPData, TIndexInfo, TGeneralInfo, TPowerSensorInfo } from '../entity/DatabaseEntity'
 import { ProfilerFactory } from './base/ProfilerFactory'
 import SPLogger from '../../common/utils/SPLogger'
 
@@ -61,7 +62,7 @@ export class ProfilerTask {
   }
 
   taskInit() {
-    SPLogger.DEBUG(ProfilerTask.name,'ProfilerUtils taskInit call');
+    SPLogger.INFO(ProfilerTask.name,'ProfilerUtils taskInit call');
     var now = new Date()
     //数据库时间戳标记
     globalThis.dbTime = now.getTime()
@@ -84,7 +85,7 @@ export class ProfilerTask {
 
     //初始化数据库  2022-02-23 dbName改为时间戳
     database.createTable(globalThis.dbTime)
-    SPLogger.DEBUG(ProfilerTask.name,'ProfilerUtils taskInit called');
+    SPLogger.INFO(ProfilerTask.name,'ProfilerUtils taskInit called');
   }
 
   taskStart() {
@@ -150,7 +151,56 @@ export class ProfilerTask {
 
     SPLogger.DEBUG(ProfilerTask.name,'ProfilerTask taskStop called');
   }
+  taskGetDubai(){
+    let  tPowers:Array<TPowerSensorInfo> =new Array()
+    SPLogger.INFO("TAG","resultSet query_applications_display-----startTime" + JSON.stringify(dateFormat(globalThis.startTime) ))
+    SPLogger.INFO("TAG","resultSet query_applications_display-----endTime" + JSON.stringify(dateFormat(globalThis.endTime)))
+    SPLogger.INFO("TAG","resultSet query_applications_display-----dbTime" + JSON.stringify(globalThis.dbTime))
+   database.query_applications_display(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+     if(data.length!=0)
+      tPowers.push(data[0])
+      database.query_applications_cpu(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+        if(data.length!=0)
+        tPowers.push(data[0])
+        database.query_applications_gpu(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+          if(data.length!=0)
+          tPowers.push(data[0])
+          database.query_applications_audio(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+            if(data.length!=0)
+            tPowers.push(data[0])
+            database.query_applications_ddr(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+              if(data.length!=0)
+              tPowers.push(data[0])
+              database.query_applications_dss(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+                if(data.length!=0)
+                tPowers.push(data[0])
+                database.query_applications_system_idle(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+                  if(data.length!=0)
+                  tPowers.push(data[0])
+                  database.query_applications_wifi_data(dateFormat(globalThis.startTime) , dateFormat(globalThis.endTime),globalThis.packageName).then(data => {
+                    if(data.length!=0)
+                    tPowers.push(data[0])
+                    for (var i = 0; i < tPowers.length; i++) {
+                      database.insertPowerSensor("task_powersensor_info",globalThis.dbTime,tPowers[i])
+                    }
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    })
 
+
+
+
+
+
+
+
+
+  }
   taskDestroy() {
     //数据库时间戳标记
     globalThis.dbTime = -1

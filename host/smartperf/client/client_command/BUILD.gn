@@ -35,6 +35,7 @@ ohos_executable("SP_daemon") {
     "CPU.cpp",
     "Capture.cpp",
     "DDR.cpp",
+    "Dubai.cpp",
     "FPS.cpp",
     "GPU.cpp",
     "Power.cpp",

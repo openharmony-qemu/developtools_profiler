@@ -23,6 +23,7 @@
 #include "include/ByTrace.h"
 #include "include/sp_utils.h"
 #include "include/sp_profiler_factory.h"
+#include "include/Dubai.h"
 namespace OHOS {
 namespace SmartPerf {
 SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
@@ -58,14 +59,19 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             break;
         case MessageType::CATCH_TRACE_FINISH: {
             ByTrace::GetInstance().ThreadEndTrace();
-            long long curTimeStamp = SPUtils::GetCurTime();
-            std::string curTime = std::to_string(curTimeStamp);
+            std::string curTime = std::to_string(SPUtils::GetCurTime());
             ByTrace::GetInstance().ThreadFinishTrace(curTime);
             break; 
         } 
         case MessageType::GET_CAPTURE:
             FPS::GetInstance().SetCaptureOn();
-            break;    
+            break; 
+        case MessageType::SetDuBaiDb: {
+            Dubai::GetInstance().DumpDubaiBegin();
+            Dubai::GetInstance().DumpDubaiFinish();
+            Dubai::GetInstance().MoveDubaiDb();
+            break;   
+        }              
         default:
             break;
     }
@@ -113,7 +119,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             break;
         case CommandType::CT_SNAPSHOT:
             FPS::GetInstance().SetCaptureOn();
-            break;        
+            break; 
+        case CommandType::CT_HW:
+            break;            
         default:
             break;
     }

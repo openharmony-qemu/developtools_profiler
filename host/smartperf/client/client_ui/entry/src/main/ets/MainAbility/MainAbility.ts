@@ -29,7 +29,7 @@ MainWorker.onmessage = function (result) {
     WorkerHandler.socketHandler(result)
 }
 
-var abilityWindowStage
+let abilityWindowStage;
 export default class MainAbility extends Ability {
 
     onCreate(want, launchParam) {

@@ -321,7 +321,7 @@ export class TIndexInfo {
     this.ddrFrequency = ddrFreq
   }
 
-  setTempData(shellFrame: String, shellFront: String, shellBack: String, soc_thermal: String, system_h: String, gpu: String, ambient: String, battery: String) {
+  setTempData(shellFrame: String, shellFront: String, shellBack: String, soc_thermal: String, system_h: String, gpu: String, ambient: String) {
     this.shellFrameTemp = shellFrame
     this.shellFrontTemp = shellFront
     this.shellBackTemp = shellBack
@@ -329,12 +329,14 @@ export class TIndexInfo {
     this.systemHTemp = system_h
     this.gpuTemp = gpu
     this.ambientTemp = ambient
-    this.batteryTemp = battery
+
   }
 
-  setPowerData(currentNow: String, voltageNow: String) {
+  setPowerData(currentNow: String, voltageNow: String,batteryTemp:String) {
     this.currentNow = currentNow
     this.voltageNow = voltageNow
+    this.batteryTemp = batteryTemp
+
   }
 
   setFpsData(fps: String, fpsJitter: String) {
@@ -368,15 +370,44 @@ export class TPowerAppInfo {
   public power: String;
   public current: String;
   public percent: String;
+  constructor(id ?: String, taskId ?: String, application ?: String, power ?: String, current ?: String, percent ?: String) {
+    this.id = id
+    this.taskId = taskId
+    this.application = application
+    this.power = power
+    this.current = current
+    this.percent = percent
+  }
 }
 
 //dubai 器件功耗
 export class TPowerSensorInfo {
   //主键 自增
-  public id: String;
-  public taskId: String;
-  public sensor: String;
-  public power: String;
-  public current: String;
-  public percent: String;
+  public id: string;
+  public taskId: string;
+  public sensor: string;
+  public power: string;
+  public current: string;
+  public percent: string;
+  public color: Resource;
+  constructor( taskId ?: string, sensor ?:string, power ?: string, current ?: string, percent ?: string,color?: Resource) {
+    this.taskId = taskId
+    this.sensor = sensor
+    this.power = power
+    this.current = current
+    this.percent = percent
+    this.color = color
+  }
+  setPerenct(percent: string) {
+    this.percent = percent
+  }
+  setColor(color: Resource) {
+    this.color = color
+  }
+  setPower(power: string) {
+    this.power = power
+  }
+  setCurrent(current: string) {
+    this.current = current
+  }
 }

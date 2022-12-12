@@ -131,8 +131,10 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     long long mod = 1e9;
     long long lastReadyTime = -1;
     int fpsGb = 0;
+    static long long lastLineTime;
     if (!(fpsInfo.timeStampQ).empty()) {
         lastReadyTime = (fpsInfo.timeStampQ).back();
+        lastLineTime = (fpsInfo.timeStampQ).back();
     }
     bool jump = false;
     bool refresh = false;
@@ -207,7 +209,10 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         fpsInfo.fps = fpsInfo.preFps;
         return fpsInfo;
     }
-
+    if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
+        fpsInfo.fps = 0;
+        return fpsInfo;   
+    }
     if (fpsGb > 0) {
         fpsInfo.fps = fpsGb;
         fpsInfo.preFps = fpsGb;

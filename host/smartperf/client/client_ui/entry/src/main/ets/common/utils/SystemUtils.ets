@@ -53,5 +53,25 @@ export function getPidOfAbility(processName: string): Promise<String> {
     return pid
   })
 }
+export function bubbleSort(arr: Array<number>): Array<number> {
+  let final: Array<number> = new Array(...arr);
 
+  for (let i = 0; i < final.length; i++) {
+    let no_swap: boolean = true;
+    for (let j = 0; j < final.length - i - 1; j++) {
+      // 如果前一个更大，则和后面的交换
+      if (final[j] > final[j + 1]) {
+        let temp = final[j + 1];
+        final[j + 1] = final[j];
+        final[j] = temp;
+        no_swap = false;
+      }
+    }
+    // 如果未冒泡，则已经排序完毕
+    if (no_swap) {
+      break;
+    }
+  }
+  return final;
+}
 

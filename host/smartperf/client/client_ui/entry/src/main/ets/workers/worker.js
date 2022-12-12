@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import worker from '@ohos.worker'; 
+import worker from '@ohos.worker'; // 导入worker模块
 import net_socket from '@ohos.net.socket';
 
 const workTag = "SmartPerf::Work:: "
@@ -72,6 +72,14 @@ parentPort.onmessage = function (e) {
                 })
                 console.log(workTag + "Worker socket test connection send");
             }
+        }
+
+        if (socketCollectItems.setDuBaiDb) {
+            udp.send({
+                address: UdpSendAddress,
+                data: "set_dubai_db"
+            })
+            console.log(workTag + "Worker socket ‘set_dubai_db’ send");
         }
 
         if (flagPackageNum < 2) {

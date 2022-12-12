@@ -95,3 +95,23 @@ export const sql_t_index_info = "CREATE TABLE IF NOT EXISTS " + "t_index_info" +
 "networkUpSpeed TEXT," +
 "networkDownSpeed TEXT" +
 ")"
+
+export const task_powersensor_info =
+    "CREATE TABLE IF NOT EXISTS " + "task_powersensor_info" + "(" +
+    "id TEXT PRIMARY KEY," +
+    "taskId TEXT NOT NULL," +
+    "sensor TEXT," +
+    "power TEXT," +
+    "current TEXT," +
+    "percent TEXT" +
+    ")"
+
+export const task_powerapp_info =
+    "CREATE TABLE IF NOT EXISTS " + "task_powerapp_info" + "(" +
+    "id TEXT PRIMARY KEY," +
+    "taskId TEXT NOT NULL," +
+    "sensor TEXT," +
+    "power TEXT," +
+    "current TEXT," +
+    "percent TEXT" +
+    ")"
