@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import Ability from '@ohos.application.Ability'
+import Ability from '@ohos.app.ability.UIAbility'
 import { initDb } from '../common/database/LocalRepository'
 import { FloatWindowFun } from '../common/ui/floatwindow/FloatWindowFun'
 import { NetWork } from '../common/profiler/item/NetWork';
