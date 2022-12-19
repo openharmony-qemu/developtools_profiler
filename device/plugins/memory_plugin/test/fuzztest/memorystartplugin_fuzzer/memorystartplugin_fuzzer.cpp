@@ -25,6 +25,7 @@ bool FuzzMemoryStartPlugin(const uint8_t* data, size_t size)
 {
     std::unique_ptr<MemoryDataPlugin> plugin = std::make_unique<MemoryDataPlugin>();
     plugin->Start(data, size);
+    plugin->Stop();
     return true;
 }
 } // namespace OHOS

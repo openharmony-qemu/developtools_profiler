@@ -25,6 +25,7 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-DFUZZ_TEST",
   ]
   sources = [ "memorystartplugin_fuzzer.cpp" ]
   deps = [

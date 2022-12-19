@@ -25,6 +25,7 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-DFUZZ_TEST",
   ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/hiperf_plugin/src/hiperf_module.cpp",
