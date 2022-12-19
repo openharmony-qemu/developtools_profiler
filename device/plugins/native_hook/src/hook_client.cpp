@@ -392,6 +392,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     }
 
     StackRawData rawdata = {{{0}}};
+    StackRawData freeData = {{{0}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
     int stackSize = 0;
@@ -404,6 +405,10 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         stackSize = stackendptr - stackptr;
         FpUnwind(g_ClientConfig.maxStackDepth_, rawdata.ip, stackSize);
         stackSize = 0;
+        if (g_ClientConfig.freeStackData_) {
+            (void)memcpy_s(freeData.ip, sizeof(freeData.ip) / sizeof(uint64_t),
+                           rawdata.ip, sizeof(rawdata.ip) / sizeof(uint64_t));
+        }
 #endif
     } else {
         uint64_t* regs = reinterpret_cast<uint64_t*>(&(rawdata.regs));
@@ -430,6 +435,10 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
         GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
         stackSize = stackendptr - stackptr;
+        if (g_ClientConfig.freeStackData_) {
+            (void)memcpy_s(freeData.regs, sizeof(freeData.regs) / sizeof(char),
+                           rawdata.regs, sizeof(rawdata.regs) / sizeof(char));
+        }
     }
     rawdata.type = MALLOC_MSG;
     rawdata.pid = static_cast<uint32_t>(g_hookPid);
@@ -446,6 +455,15 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     }
 
     if (g_hookClient != nullptr) {
+        freeData.type = FREE_MSG;
+        freeData.pid = rawdata.pid;
+        freeData.tid = rawdata.tid;
+        freeData.mallocSize = 0;
+        freeData.addr = ptr;
+        freeData.ts = rawdata.ts;
+        (void)memcpy_s(freeData.tname, sizeof(freeData.tname) / sizeof(char),
+                       rawdata.tname, sizeof(rawdata.tname) / sizeof(char));
+        g_hookClient->SendStackWithPayload(&freeData, sizeof(freeData), stackptr, stackSize);
         g_hookClient->SendStackWithPayload(&rawdata, sizeof(rawdata), stackptr, stackSize);
     }
     g_mallocTimes++;
