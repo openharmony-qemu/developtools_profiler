@@ -463,7 +463,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         freeData.ts = rawdata.ts;
         (void)memcpy_s(freeData.tname, sizeof(freeData.tname) / sizeof(char),
                        rawdata.tname, sizeof(rawdata.tname) / sizeof(char));
-        g_hookClient->SendStackWithPayload(&freeData, sizeof(freeData), 0, 0); // 0: Don't unwind the freeData.
+        g_hookClient->SendStackWithPayload(&freeData, sizeof(freeData), nullptr, 0); // 0: Don't unwind the freeData.
         g_hookClient->SendStackWithPayload(&rawdata, sizeof(rawdata), stackptr, stackSize);
     }
     g_mallocTimes++;
