@@ -45,9 +45,15 @@ ohos_shared_library("shared_memory") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
+      external_deps = [
+        "c_utils:utils",
+        "shared_library:libhilog",
+      ]
     } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+      external_deps = [
+        "c_utils:utils",
+        "hiviewdfx_hilog_native:libhilog",
+      ]
     }
   }
 }
@@ -70,9 +76,15 @@ ohos_static_library("shared_memory_static") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     if (build_l2) {
-      external_deps = [ "shared_library::libhilog" ]
+      external_deps = [
+        "c_utils:utils",
+        "shared_library::libhilog",
+      ]
     } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+      external_deps = [
+        "c_utils:utils",
+        "hiviewdfx_hilog_native:libhilog",
+      ]
     }
   }
 
@@ -95,9 +107,15 @@ ohos_static_library("shared_memory_lite") {
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
     if (build_l2) {
-      external_deps = [ "shared_library::libhilog" ]
+      external_deps = [
+        "c_utils:utils",
+        "shared_library::libhilog",
+      ]
     } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+      external_deps = [
+        "c_utils:utils",
+        "hiviewdfx_hilog_native:libhilog",
+      ]
     }
   }
 
