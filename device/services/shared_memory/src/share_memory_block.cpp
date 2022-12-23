@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include "ashmem.h"
 #include "logging.h"
 #include "securec.h"
 
@@ -85,16 +86,16 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
     CHECK_TRUE(size > sizeof(BlockHeader), false, "size %u too less!", size);
     CHECK_TRUE(size % PAGE_SIZE == 0, false, "size %u not times of %d!", size, PAGE_SIZE);
 
-    int fd = syscall(SYS_memfd_create, name.c_str(), 0);
-    CHECK_TRUE(fd >= 0, false, "CreateBlock FAIL SYS_memfd_create");
+    int fd = OHOS::AshmemCreate(name.c_str(), size);
+    CHECK_TRUE(fd >= 0, false, "OHOS::AshmemCreate fail.");
 
-    int check = ftruncate(fd, size);
+    int check = OHOS::AshmemSetProt(fd, PROT_READ | PROT_WRITE);
     if (check < 0) {
         close(fd);
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
+        HILOG_ERROR(LOG_CORE, "OHOS::AshmemSetProt ERR : %s", buf);
         return false;
     }
 
