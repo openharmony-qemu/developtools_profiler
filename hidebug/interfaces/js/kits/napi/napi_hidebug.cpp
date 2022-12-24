@@ -46,7 +46,6 @@ const std::string PROC_PATH = "/proc/";
 const std::string ROOT_DIR = "/root";
 const std::string SLASH_STR = "/";
 const std::string DEFAULT_FILENAME = "undefined";
-const std::string JSON_FILE = ".json";
 const std::string CPUPROFILE_FILE = ".cpuprofile";
 const std::string HEAPSNAPSHOT_FILE = ".heapsnapshot";
 enum ErrorCode {
