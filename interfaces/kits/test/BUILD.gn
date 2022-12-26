@@ -26,7 +26,6 @@ ohos_unittest("plugin_module_api_ut") {
   module_out_path = module_output_path
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin",
-    "${OHOS_PROFILER_DIR}/device/plugins/sample_plugin:sampleplugin",
     "${OHOS_PROFILER_DIR}/device/plugins/stream_plugin:streamplugin",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/sample_data:sample_data_cpp",
@@ -45,7 +44,11 @@ ohos_unittest("plugin_module_api_ut") {
     "//third_party/googletest/googletest/include/gtest",
     "//third_party/bounds_checking_function/include",
   ]
-  sources = [ "unittest/plugin_module_api_test.cpp" ]
+  sources = [
+    "${OHOS_PROFILER_DIR}/device/plugins/sample_plugin/src/sample_module.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/sample_plugin/src/sample_plugin.cpp",
+    "unittest/plugin_module_api_test.cpp",
+  ]
   cflags = [
     "-pthread",
     "-Wno-inconsistent-missing-override",
