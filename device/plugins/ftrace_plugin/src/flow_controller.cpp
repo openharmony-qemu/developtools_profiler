@@ -45,6 +45,54 @@ namespace {
     constexpr uint32_t MAX_BLOCK_SIZE_PAGES = 4096;    // 16 MB
     constexpr uint32_t MIN_BLOCK_SIZE_PAGES = 256;     // 1  MB
     const std::set<std::string> g_availableClocks = { "boot", "global", "local", "mono" };
+
+    int GetProcessorNumFromString(char *str)
+    {
+        int processorNum = 0;
+        int lastNum = -1;
+        char *s = str;
+        while (*s != '\0') {
+            if (isdigit(*s)) {
+                int currentNum = strtol(s, &s, 10);
+                if (lastNum == -1) {
+                    processorNum++;
+                } else {
+                    processorNum += currentNum - lastNum;
+                }
+                lastNum = currentNum;
+            } else {
+                if (*s == ',') {
+                    lastNum = -1;
+                }
+                s++;
+            }
+        }
+        return processorNum;
+    }
+
+    int GetProcessorNum()
+    {
+        FILE *fp = fopen("/sys/devices/system/cpu/online", "r");
+        if (fp == nullptr) {
+            HILOG_ERROR(LOG_CORE, "/sys/devices/system/cpu/online not exist, use sysconf()");
+            return sysconf(_SC_NPROCESSORS_CONF);
+        }
+
+        int processorNum = 0;
+        char *line = nullptr;
+        size_t len = 0;
+        if (getline(&line, &len, fp) != -1) {
+            processorNum = GetProcessorNumFromString(line);
+            free(line);
+        }
+        fclose(fp);
+
+        if (processorNum <= 0) {
+            HILOG_ERROR(LOG_CORE, "parse processor num fail, use sysconf()");
+           return sysconf(_SC_NPROCESSORS_CONF);
+        }
+        return processorNum;
+    }
 } // namespace
 
 FTRACE_NS_BEGIN
@@ -85,7 +133,7 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
     CHECK_NOTNULL(transmiter, -1, "create ResultTransporter FAILED!");
 
     // get CPU core numbers
-    int nprocs = static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
+    int nprocs = GetProcessorNum();
     CHECK_TRUE(nprocs > 0, -1, "get processor number failed!");
     platformCpuNum_ = nprocs;
 
