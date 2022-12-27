@@ -25,6 +25,7 @@ ohos_fuzztest("NetworkStartPluginFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-DFUZZ_TEST",
   ]
   sources = [ "networkstartplugin_fuzzer.cpp" ]
   deps = [
