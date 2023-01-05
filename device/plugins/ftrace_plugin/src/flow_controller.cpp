@@ -89,7 +89,7 @@ namespace {
 
         if (processorNum <= 0) {
             HILOG_ERROR(LOG_CORE, "parse processor num fail, use sysconf()");
-           return sysconf(_SC_NPROCESSORS_CONF);
+            return sysconf(_SC_NPROCESSORS_CONF);
         }
         return processorNum;
     }
