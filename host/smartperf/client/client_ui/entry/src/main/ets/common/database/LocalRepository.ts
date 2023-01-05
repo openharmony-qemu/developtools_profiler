@@ -76,7 +76,7 @@ export async function getReportListDb(): Promise<Array<ReportItem>> {
             result.push(
                 new ReportItem(
                 curGeneralInfo.taskId.toString(),
-                    AppFileRealDir + "/" + curGeneralInfo.sessionId.toString(),
+                    AppFileRealDir + curGeneralInfo.sessionId.toString(),
                     curGeneralInfo.packageName,
                     "",
                     curGeneralInfo.taskName,

@@ -14,6 +14,7 @@
  */
 import { TIndexInfo } from '../common/entity/DatabaseEntity'
 import { showFloatWindow, hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils'
+import { getCpuCoreInfo} from '../common/utils/SystemUtils';
 import FloatWindowConstant from '../common/ui/floatwindow/FloatWindowConstant'
 import CommonEvent from '@ohos.commonEvent'
 
@@ -48,8 +49,10 @@ struct TitleWindowPage {
   @State tIndexInfo: TIndexInfo = new TIndexInfo()
   offsetX: number = -1
   offsetY: number = -1
-
+  cpuCoreArr: Array<Number>
   aboutToAppear() {
+
+    this.cpuCoreArr = getCpuCoreInfo().map(Number).sort()
 
     let that = this
     var subscriber
@@ -163,33 +166,33 @@ struct TitleWindowPage {
           })
         }
 
-        if (this.tIndexInfo.cpu0Frequency != undefined) {
+        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"] != undefined) {
           ItemContent({
             icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo.cpu0Frequency.toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
-            tittle: "CPU0频率",
+            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
+            tittle: "CPU-A频率",
             onClickCallBack: () => {
               this.floatWindowEvent("sp_cpu0Frequency", FloatWindowConstant.CPU0_FREQUENCY)
             }
           })
         }
 
-        if (this.tIndexInfo.cpu1Frequency != undefined) {
+        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[1] +"Frequency"] != undefined) {
           ItemContent({
             icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo.cpu1Frequency.toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu1Load + "%",
-            tittle: "CPU1频率",
+            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[1] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu1Load + "%",
+            tittle: "CPU-B频率",
             onClickCallBack: () => {
               this.floatWindowEvent("sp_cpu1Frequency", FloatWindowConstant.CPU1_FREQUENCY)
             }
           })
         }
-        if (this.tIndexInfo.cpu2Frequency != undefined) {
+        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[2] +"Frequency"] != undefined) {
 
           ItemContent({
             icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo.cpu2Frequency.toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu2Load + "%",
-            tittle: "CPU2频率",
+            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[2] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu2Load + "%",
+            tittle: "CPU-C频率",
             onClickCallBack: () => {
               this.floatWindowEvent("sp_cpu2Frequency", FloatWindowConstant.CPU2_FREQUENCY)
             }

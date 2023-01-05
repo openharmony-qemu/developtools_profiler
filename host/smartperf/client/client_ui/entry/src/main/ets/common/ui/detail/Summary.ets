@@ -30,9 +30,10 @@ export struct Summary {
 
   aboutToAppear() {
 
-    var cpuCoreArr = getCpuCoreInfo()
-
-
+    var cpuCoreArr = getCpuCoreInfo().map(Number).sort()
+    console.error(TAG + "cpuCoreArr:" + JSON.stringify(cpuCoreArr))
+    console.error(TAG + "TIndexInfo:" + new TIndexInfo)
+    console.error(TAG + "JSON TIndexInfo:" + JSON.stringify(new TIndexInfo))
     var cpu0FreqSum: number = 0
     var cpu1FreqSum: number = 0
     var cpu2FreqSum: number = 0
@@ -43,12 +44,16 @@ export struct Summary {
     var cpu7FreqSum: number = 0
     var cpuFreqMap = new Map
 
+
+    var cpuA: number = 0
+    var cpuB: number = 0
+    var cpuC: number = 0
+
     var cpuMin: number = 0
     var cpuMid: number = 0
     var cpuMax: number = 0
 
     var normalCurrentNow: number = 0
-
 
     var socThermalTemp: number = 0
     var gpuLoadSum: number = 0
@@ -111,14 +116,20 @@ export struct Summary {
     cpuFreqMap.set("cpu6FreqSum", cpu6FreqSum)
     cpuFreqMap.set("cpu7FreqSum", cpu7FreqSum)
 
-    cpuMin = cpuFreqMap.get("cpu" + 0 + "FreqSum") / 1e3
-    cpuMid = cpuFreqMap.get("cpu" + 1 + "FreqSum") / 1e3
-    cpuMax = cpuFreqMap.get("cpu" + 2 + "FreqSum") / 1e3
+    cpuA = cpuFreqMap.get("cpu" + 0 + "FreqSum") / 1e3
+    cpuB = cpuFreqMap.get("cpu" + 1 + "FreqSum") / 1e3
+    cpuC = cpuFreqMap.get("cpu" + 2 + "FreqSum") / 1e3
 
-    if (cpu4FreqSum > 0 && cpu7FreqSum > 0) {
-      cpuMid = cpuFreqMap.get("cpu" + 4 + "FreqSum") / 1e3
-      cpuMax = cpuFreqMap.get("cpu" + 7 + "FreqSum") / 1e3
+    if (cpuCoreArr.length > 2) {
+      cpuA = cpuFreqMap.get("cpu" + cpuCoreArr[0] + "FreqSum") / 1e3
+      cpuB = cpuFreqMap.get("cpu" + cpuCoreArr[1] + "FreqSum") / 1e3
+      cpuC = cpuFreqMap.get("cpu" + cpuCoreArr[2] + "FreqSum") / 1e3
     }
+    var cpuList = new Array(cpuA, cpuB, cpuC).sort()
+
+    cpuMin = cpuList[0]
+    cpuMid = cpuList[1]
+    cpuMax = cpuList[2]
 
     let calculationTest = new CalculationUtils(fpsList, CalculationUtils.calculateFPSNew(fpsList))
 
@@ -127,6 +138,7 @@ export struct Summary {
         new SummaryItem($r("app.media.icon_normalized_current"), "归一化电流", (normalCurrentNow / this.gpData.length).toFixed(0) + "mA", ""),
       )
     }
+
     if (socThermalTemp > 0) {
       this.summaryItems.push(
         new SummaryItem($r("app.media.icon_max_temperature"), "soc温度", (socThermalTemp / this.gpData.length / 1000 ).toFixed(0) + "℃", "#fff8f8"),
@@ -150,9 +162,9 @@ export struct Summary {
         (gpuFreqSum / this.gpData.length / 1e6).toFixed(0) + "MHZ" + "  " +
         (gpuLoadSum / this.gpData.length).toFixed(0) + "%", "#fcf9f2"),
       new SummaryItem($r("app.media.icon_frame_score"), "DDR频率", (ddrFreqSum / this.gpData.length / 1e6).toFixed(0) + "MHZ", "#fcf9f2"),
-      new SummaryItem($r("app.media.icon_average_frame_b"), "CPU0频率", (cpuMin / this.gpData.length).toFixed(0) + "MHZ", "#fcf9f2"),
-      new SummaryItem($r("app.media.icon_average_frame_b"), "CPU1频率", (cpuMid / this.gpData.length).toFixed(0) + "MHZ", "#fcf9f2"),
-      new SummaryItem($r("app.media.icon_average_frame_b"), "CPU2频率", (cpuMax / this.gpData.length).toFixed(0) + "MHZ", "#fcf9f2"),
+      new SummaryItem($r("app.media.icon_average_frame_b"), "CPU MIN", (cpuMin / this.gpData.length).toFixed(0) + "MHZ", "#fcf9f2"),
+      new SummaryItem($r("app.media.icon_average_frame_b"), "CPU MID", (cpuMid / this.gpData.length).toFixed(0) + "MHZ", "#fcf9f2"),
+      new SummaryItem($r("app.media.icon_average_frame_b"), "CPU MAX", (cpuMax / this.gpData.length).toFixed(0) + "MHZ", "#fcf9f2"),
       new SummaryItem($r("app.media.icon_jank_each_hour"), "RAM", (pssSum / (this.gpData.length - ramNullSum)).toFixed(0) + "KB", "#f0faff")
     )
   }

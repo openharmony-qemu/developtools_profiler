@@ -14,6 +14,6 @@
  */
 
 //实际存储路径 对应 沙箱路径 globalThis.abilityContext.getApplicationContext().filesDir 即/data/storage/base/files
-export const AppFileRealDir = "/data/app/el2/100/base/com.ohos.gameperceptio/files/"
+export const AppFileRealDir = "/data/app/el2/100/base/com.ohos.smartperf/files/"
 //export const AppFileRealDir= "/data/system_ce/0/dubai"
 
