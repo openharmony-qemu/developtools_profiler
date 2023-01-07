@@ -68,7 +68,7 @@ parentPort.onmessage = function (e) {
             for (let i = 0;i < 10; i++) {
                 udp.send({
                     address: UdpSendAddress,
-                    data: "set_pkgName::com.ohos.gameperceptio"
+                    data: "set_pkgName::com.ohos.smartperf"
                 })
                 console.log(workTag + "Worker socket test connection send");
             }

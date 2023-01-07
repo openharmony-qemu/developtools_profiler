@@ -59,6 +59,5 @@ export class RAM extends BaseProfiler implements SocketProfiler{
       let curRAM = ramQueue.pop()
       this.ramMap.set("pss", extractNumber(curRAM))
     }
-    MainWorker.terminate()
   }
 }
