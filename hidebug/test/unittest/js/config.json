@@ -1,7 +1,7 @@
 {
   "app": {
-    "bundleName": "com.ohos.hidebug",
-    "vendor": "ohos",
+    "bundleName": "com.example.myapplication",
+    "vendor": "example",
     "version": {
       "code": 1,
       "name": "1.0"
@@ -13,11 +13,12 @@
   },
   "deviceConfig": {},
   "module": {
-    "package": "com.ohos.hidebug",
+    "package": "com.example.myapplication",
     "name": ".MyApplication",
     "deviceType": [
       "default",
-      "tablet"
+      "tablet",
+      "phone"
     ],
     "distro": {
       "deliveryWithInstall": true,
@@ -37,10 +38,10 @@
             ]
           }
         ],
-        "name": "com.ohos.hidebug.MainAbility",
+        "name": "com.example.myapplication.MainAbility",
         "icon": "$media:icon",
         "description": "$string:mainability_description",
-        "label": "hidebug test",
+        "label": "MyApplication",
         "type": "page",
         "launchType": "standard"
       }
