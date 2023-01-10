@@ -211,7 +211,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     }
     if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
         fpsInfo.fps = 0;
-        return fpsInfo;   
+        return fpsInfo;
     }
     if (fpsGb > 0) {
         fpsInfo.fps = fpsGb;
