@@ -66,6 +66,7 @@ ohos_executable("native_daemon") {
   include_dirs = [
     "./include",
     "./src/",
+    "../../base/include/",
     "../api/include",
     "../api/src",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
@@ -76,9 +77,9 @@ ohos_executable("native_daemon") {
     "//third_party/googletest/googletest/include",
   ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_static",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto_static",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto_static",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "//base/startup/init/interfaces/innerkits:libbegetutil",
     "//third_party/bounds_checking_function:libsec_static",

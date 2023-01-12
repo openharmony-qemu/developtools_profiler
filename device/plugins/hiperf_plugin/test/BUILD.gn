@@ -26,7 +26,7 @@ ohos_unittest("hiperfplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/hiperf_plugin_unittest.cpp" ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/hiperf_plugin:hiperfplugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/hiperf_plugin:hiperfplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
     "//third_party/googletest:gtest_main",
   ]

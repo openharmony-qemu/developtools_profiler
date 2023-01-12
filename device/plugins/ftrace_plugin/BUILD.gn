@@ -15,7 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 import("ftrace.gni")
 
-ohos_shared_library("ftrace_plugin") {
+ohos_source_set("ftrace_plugin_source") {
   sources = [
     "src/file_utils.cpp",
     "src/flow_controller.cpp",
@@ -60,6 +60,10 @@ ohos_shared_library("ftrace_plugin") {
     }
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
+}
+
+ohos_shared_library("ftrace_plugin") {
+  deps = [ ":ftrace_plugin_source" ]
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

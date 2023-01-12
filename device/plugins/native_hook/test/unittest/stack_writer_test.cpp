@@ -88,7 +88,6 @@ bool CheckBuffer(uint8_t* buffer, size_t size)
 {
     ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr);
     uint8_t* cmpaddr = (uint8_t*)g_smbAddr + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_;
-    uint32_t cmpsize = *(uint32_t*)cmpaddr;
     cmpaddr = cmpaddr + sizeof(uint32_t);
 
     header_->info.readOffset_ = header_->info.writeOffset_;

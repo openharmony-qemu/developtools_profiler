@@ -25,8 +25,6 @@ config("module_private_config") {
 ohos_unittest("plugin_module_api_ut") {
   module_out_path = module_output_path
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin",
-    "${OHOS_PROFILER_DIR}/device/plugins/stream_plugin:streamplugin",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/sample_data:sample_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/stream_data:stream_data_cpp",
@@ -45,8 +43,11 @@ ohos_unittest("plugin_module_api_ut") {
     "//third_party/bounds_checking_function/include",
   ]
   sources = [
-    "${OHOS_PROFILER_DIR}/device/plugins/sample_plugin/src/sample_module.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin/src/buffer_splitter.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin/src/memory_data_plugin.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin/src/smaps_stats.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/sample_plugin/src/sample_plugin.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/stream_plugin/src/stream_plugin.cpp",
     "unittest/plugin_module_api_test.cpp",
   ]
   cflags = [

@@ -26,7 +26,7 @@ ohos_unittest("hidumpplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/hidump_plugin_unittest.cpp" ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/hidump_plugin:hidumpplugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/hidump_plugin:hidumpplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",

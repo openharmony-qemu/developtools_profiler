@@ -40,6 +40,16 @@ foreach(proto, network_data_sources) {
 network_data_codegen_all += network_data_codegen
 network_data_codegen_all += network_data_codegen_standard
 
+network_plugin_config_sources = [ "./network_plugin_config.proto" ]
+network_plugin_config_codegen_standard = []
+foreach(proto, network_plugin_config_sources) {
+  name = get_path_info(proto, "name")
+  network_plugin_config_codegen_standard += [
+    "$proto_out_dir/${name}_standard.pb.h",
+    "$proto_out_dir/${name}_standard.pb.cc",
+  ]
+}
+
 config("network_include_config") {
   include_dirs = [ "$proto_out_dir" ]
 }
@@ -82,4 +92,17 @@ ohos_source_set("network_data_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":network_include_config" ]
   sources = network_data_codegen_standard
+}
+
+ohos_source_set("network_plugin_config_cpp_standard") {
+  deps = [ ":network_data_cpp_gen" ]
+  public_deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":network_include_config" ]
+  sources = network_plugin_config_codegen_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }

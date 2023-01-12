@@ -14,8 +14,7 @@
 import("//build/ohos.gni")
 import("../../base/config.gni")
 
-ohos_shared_library("processplugin") {
-  output_name = "processplugin"
+ohos_source_set("processplugin_source") {
   sources = [
     "../memory_plugin/src/buffer_splitter.cpp",
     "src/process_data_plugin.cpp",
@@ -42,6 +41,11 @@ ohos_shared_library("processplugin") {
       external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
     }
   }
+}
+
+ohos_shared_library("processplugin") {
+  output_name = "processplugin"
+  deps = [ ":processplugin_source" ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

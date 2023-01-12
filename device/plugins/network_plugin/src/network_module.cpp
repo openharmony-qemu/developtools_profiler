@@ -58,7 +58,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onRegisterWriterStruct = NetworkRegisterWriterStruct,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "network-plugin",
     .version = "1.01",

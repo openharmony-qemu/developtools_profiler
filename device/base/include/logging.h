@@ -16,6 +16,8 @@
 #ifndef OHOS_PROFILER_LOGGING_H
 #define OHOS_PROFILER_LOGGING_H
 
+#define EXPORT_API __attribute__((visibility("default")))
+
 #undef NDEBUG
 
 #ifndef LOG_TAG

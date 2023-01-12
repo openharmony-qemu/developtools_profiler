@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include "logging.h"
 
 class ShareMemoryBlock {
 public:
@@ -34,15 +35,15 @@ public:
     bool PutWithPayloadTimeout(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize);
     bool PutWithPayloadSync(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize);
 #ifndef NO_PROTOBUF
-    bool PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
+    EXPORT_API bool PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
 #endif
     using DataHandler = std::function<bool(const int8_t*, uint32_t)>;
-    bool TakeData(const DataHandler& func);
+    EXPORT_API bool TakeData(const DataHandler& func);
 
     std::string GetName();
     uint32_t GetSize();
-    int GetfileDescriptor();
-    void ClearShareMemoryBlock();
+    EXPORT_API int GetfileDescriptor();
+    EXPORT_API void ClearShareMemoryBlock();
 
     bool Valid() const;
 

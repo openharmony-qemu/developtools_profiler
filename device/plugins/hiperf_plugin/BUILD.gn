@@ -24,7 +24,7 @@ config("hiperfplugin_config") {
   ]
 }
 
-ohos_shared_library("hiperfplugin") {
+ohos_source_set("hiperfplugin_source") {
   output_name = "hiperfplugin"
   sources = [ "src/hiperf_module.cpp" ]
   public_configs = [
@@ -44,6 +44,10 @@ ohos_shared_library("hiperfplugin") {
       external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
     }
   }
+}
+
+ohos_shared_library("hiperfplugin") {
+  deps = [ ":hiperfplugin_source" ]
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

@@ -37,9 +37,9 @@ ohos_unittest("ipc_ut") {
     "//third_party/googletest/googletest/include/gtest",
   ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "../:ipc",
     "//third_party/googletest:gtest",
   ]

@@ -35,9 +35,9 @@ ohos_unittest("shared_memory_ut") {
   configs = [ ":module_private_config" ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/services/ipc:ipc",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto",
-    "../:shared_memory",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+    "../:shared_memory_source",
     "//third_party/googletest:gtest",
   ]
   cflags = [

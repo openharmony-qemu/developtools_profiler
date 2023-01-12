@@ -19,8 +19,8 @@ ohos_source_set("hiprofiler_plugin_service") {
   public_deps = [
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
   ]
   include_dirs = [
     "include",

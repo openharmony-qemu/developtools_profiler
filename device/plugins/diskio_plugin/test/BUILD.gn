@@ -26,7 +26,7 @@ ohos_unittest("diskiodataplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/diskio_data_plugin_unittest.cpp" ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/diskio_plugin:diskiodataplugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/diskio_plugin:diskiodataplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/diskio_data:diskio_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",

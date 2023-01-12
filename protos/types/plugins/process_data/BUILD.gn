@@ -40,6 +40,16 @@ foreach(proto, process_data_sources) {
 process_data_codegen_all += process_data_codegen
 process_data_codegen_all += process_data_codegen_standard
 
+process_plugin_config_sources = [ "./process_plugin_config.proto" ]
+process_plugin_config_codegen_standard = []
+foreach(proto, process_plugin_config_sources) {
+  name = get_path_info(proto, "name")
+  process_plugin_config_codegen_standard += [
+    "$proto_out_dir/${name}_standard.pb.h",
+    "$proto_out_dir/${name}_standard.pb.cc",
+  ]
+}
+
 config("process_include_config") {
   include_dirs = [ "$proto_out_dir" ]
 }
@@ -82,4 +92,17 @@ ohos_source_set("process_data_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":process_include_config" ]
   sources = process_data_codegen_standard
+}
+
+ohos_source_set("process_plugin_config_cpp_standard") {
+  deps = [ ":process_data_cpp_gen" ]
+  public_deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":process_include_config" ]
+  sources = process_plugin_config_codegen_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }

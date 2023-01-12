@@ -14,8 +14,7 @@
 import("//build/ohos.gni")
 import("../../base/config.gni")
 
-ohos_shared_library("streamplugin") {
-  output_name = "streamplugin"
+ohos_source_set("streamplugin_source") {
   sources = [
     "src/stream_module.cpp",
     "src/stream_plugin.cpp",
@@ -40,6 +39,11 @@ ohos_shared_library("streamplugin") {
     }
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
+}
+
+ohos_shared_library("streamplugin") {
+  output_name = "streamplugin"
+  deps = [ ":streamplugin_source" ]
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

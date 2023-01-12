@@ -296,7 +296,6 @@ HWTEST_F(SharedMemoryBlockTest, TakeData, TestSize.Level1)
     ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
-
 /**
  * @tc.name: share memory PutRawTimeout
  * @tc.desc: Shared memory type test.

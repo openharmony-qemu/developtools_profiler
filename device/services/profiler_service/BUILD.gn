@@ -42,8 +42,8 @@ ohos_source_set("profiler_service") {
     "src/trace_file_writer.cpp",
   ]
   public_deps = [
-    "${OHOS_PROFILER_DIR}/protos/services:profiler_services_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
   ]
   public_configs = [

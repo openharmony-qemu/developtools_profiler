@@ -29,7 +29,7 @@ ohos_unittest("memdataplugin_ut") {
     "unittest/memory_data_plugin_unittest.cpp",
   ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",
@@ -57,7 +57,7 @@ ohos_unittest("smaps_stats_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/smaps_stats_unittest.cpp" ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",

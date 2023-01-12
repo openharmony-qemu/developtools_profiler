@@ -19,7 +19,6 @@
 
 #include "hook_socket_client.h"
 #include "hook_service.h"
-#include "plugin_service.ipc.h"
 #include "service_entry.h"
 #include "socket_context.h"
 #include "logging.h"
@@ -27,7 +26,6 @@
 using namespace testing::ext;
 
 namespace {
-constexpr int SLEEP_TIME = 30000;
 constexpr int MOBILE_BIT = 32;
 constexpr int32_t FILTER_SIZE = 100;
 constexpr int32_t SMB_SIZE = 409600;

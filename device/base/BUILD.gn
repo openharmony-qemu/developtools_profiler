@@ -16,7 +16,13 @@ import("config.gni")
 
 # compile options for gcov
 config("hiprofiler_test_config") {
-  cflags = [ "-std=c++17" ]
+  cflags = [
+    "-std=c++17",
+    "-fvisibility=hidden",
+  ]
+
+  cflags_cc = [ "-fvisibility-inlines-hidden" ]
+
   ldflags = []
 
   if (enable_coverage) {
