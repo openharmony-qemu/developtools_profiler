@@ -57,7 +57,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onRegisterWriterStruct = MemRegisterWriterStruct,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "memory-plugin",
     .version = "1.01",

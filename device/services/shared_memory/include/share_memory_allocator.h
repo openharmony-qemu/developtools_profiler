@@ -24,16 +24,17 @@ using ShareMemoryBlockPtr = STD_PTR(shared, ShareMemoryBlock);
 
 class ShareMemoryAllocator {
 public:
-    static ShareMemoryAllocator& GetInstance();
+    EXPORT_API static ShareMemoryAllocator& GetInstance();
 
-    ShareMemoryBlockPtr CreateMemoryBlockLocal(std::string name, uint32_t size);
-    ShareMemoryBlockPtr CreateMemoryBlockRemote(std::string name, uint32_t size, int fd);
+    EXPORT_API ShareMemoryBlockPtr CreateMemoryBlockLocal(std::string name, uint32_t size);
 
-    bool ReleaseMemoryBlockLocal(std::string name);
-    bool ReleaseMemoryBlockRemote(std::string name);
+    EXPORT_API ShareMemoryBlockPtr CreateMemoryBlockRemote(std::string name, uint32_t size, int fd);
 
-    ShareMemoryBlockPtr FindMemoryBlockByName(std::string name);
+    EXPORT_API bool ReleaseMemoryBlockLocal(std::string name);
 
+    EXPORT_API bool ReleaseMemoryBlockRemote(std::string name);
+
+    EXPORT_API ShareMemoryBlockPtr FindMemoryBlockByName(std::string name);
 private:
     ShareMemoryAllocator();
     ~ShareMemoryAllocator();

@@ -54,7 +54,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onRegisterWriterStruct = (RegisterWriterStructCallback)StreamRegisterWriterStruct,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "stream-plugin",
     .version = "1.01",

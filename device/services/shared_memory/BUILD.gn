@@ -24,7 +24,7 @@ config("shared_memory_config") {
   ]
 }
 
-ohos_shared_library("shared_memory") {
+ohos_source_set("shared_memory_source") {
   sources = [
     "src/share_memory_allocator.cpp",
     "src/share_memory_block.cpp",
@@ -38,9 +38,6 @@ ohos_shared_library("shared_memory") {
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "//third_party/bounds_checking_function:libsec_static",
   ]
-  install_enable = true
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  part_name = "${OHOS_PROFILER_PART_NAME}"
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
@@ -58,38 +55,11 @@ ohos_shared_library("shared_memory") {
   }
 }
 
-ohos_static_library("shared_memory_static") {
-  sources = [
-    "src/share_memory_allocator.cpp",
-    "src/share_memory_block.cpp",
-  ]
-  public_configs = [
-    ":shared_memory_config",
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
-  ]
-
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
-  ]
-
-  if (current_toolchain != host_toolchain) {
-    defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [
-        "c_utils:utils",
-        "shared_library::libhilog",
-      ]
-    } else {
-      external_deps = [
-        "c_utils:utils",
-        "hiviewdfx_hilog_native:libhilog",
-      ]
-    }
-  }
-
-  subsystem_name = "developtools"
-  part_name = "profiler"
+ohos_shared_library("shared_memory") {
+  deps = [ ":shared_memory_source" ]
+  install_enable = true
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ohos_static_library("shared_memory_lite") {

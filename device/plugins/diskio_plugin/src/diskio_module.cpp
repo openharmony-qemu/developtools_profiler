@@ -51,7 +51,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStop = DiskioPluginSessionStop,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "diskio-plugin",
     .version = "1.01",

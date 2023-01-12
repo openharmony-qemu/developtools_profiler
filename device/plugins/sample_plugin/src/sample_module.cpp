@@ -58,7 +58,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onRegisterWriterStruct = SampleRegisterWriterStruct,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "sample-plugin",
     .version = "1.01",

@@ -41,14 +41,12 @@ ohos_unittest("nativehook_ut") {
   ]
 
   public_deps = [
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",

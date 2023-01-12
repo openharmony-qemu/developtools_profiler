@@ -43,7 +43,7 @@ ohos_unittest("ftrace_plugin_ut") {
     "unittest/trace_ops_test.cpp",
   ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/ftrace_plugin:ftrace_plugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/ftrace_plugin:ftrace_plugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",

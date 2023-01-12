@@ -26,7 +26,7 @@ ohos_unittest("networkplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/network_plugin_test.cpp" ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/network_plugin:networkplugin",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_plugin:networkplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_data:network_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",

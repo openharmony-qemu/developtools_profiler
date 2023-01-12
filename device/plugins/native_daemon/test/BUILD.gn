@@ -55,10 +55,9 @@ sources_base = [
 ]
 
 common_deps = [
-  "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook",
-  "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_static",
-  "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto_static",
-  "${OHOS_PROFILER_DIR}/protos/services:service_types_proto_static",
+  "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+  "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+  "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
   "//base/startup/init/interfaces/innerkits:libbegetutil",
   "//third_party/bounds_checking_function:libsec_static",
@@ -94,6 +93,7 @@ config("native_daemon_test_config") {
 
   include_dirs = [
     "../include",
+    "../../../base/include",
     "../src/",
     "../../api/include",
     "../../api/src",

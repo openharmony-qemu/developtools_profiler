@@ -14,16 +14,6 @@
 import("//build/ohos.gni")
 import("../protos.gni")
 
-proto_types_defines = [
-  "./common_types.proto",
-  "./plugin_service_types.proto",
-  "./profiler_service_types.proto",
-]
-
-plugin_services_defines = [ "./plugin_service.proto" ]
-
-profiler_services_defines = [ "./profiler_service.proto" ]
-
 #######################################################
 proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
@@ -31,20 +21,30 @@ proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
 ipc_cpp_plugin = "$subsys_x64_out/protoc_gen_ipc"
 
+config("public_configs") {
+  include_dirs = [ "$proto_out_dir" ]
+}
+
 #######################################################
-proto_types_codegen = []
-foreach(proto, proto_types_defines) {
+all_type_proto = [
+  "./common_types.proto",
+  "./profiler_service_types.proto",
+  "./plugin_service_types.proto",
+]
+
+all_type_codegen = []
+foreach(proto, all_type_proto) {
   name = get_path_info(proto, "name")
-  proto_types_codegen += [
+  all_type_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
   ]
 }
 
-action("service_types_proto_gen") {
+action("all_type_gen") {
   script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
-  sources = proto_types_defines
-  outputs = proto_types_codegen
+  sources = all_type_proto
+  outputs = all_type_codegen
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
@@ -61,37 +61,50 @@ action("service_types_proto_gen") {
   ]
 }
 
-config("service_types_proto_config") {
-  include_dirs = [ "$proto_out_dir" ]
+########################################################
+profiler_service_type_proto = [
+  "./common_types.proto",
+  "./profiler_service_types.proto",
+]
+
+profiler_service_type_codegen = []
+foreach(proto, profiler_service_type_proto) {
+  name = get_path_info(proto, "name")
+  profiler_service_type_codegen += [
+    "$proto_out_dir/$name.pb.h",
+    "$proto_out_dir/$name.pb.cc",
+  ]
 }
 
-ohos_source_set("service_types_proto") {
-  deps = [ ":service_types_proto_gen" ]
+ohos_source_set("profiler_service_type_source") {
+  deps = [ ":all_type_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
-  public_configs = [ ":service_types_proto_config" ]
-  sources = proto_types_codegen
+  public_configs = [ ":public_configs" ]
+  sources = profiler_service_type_codegen
 }
 
-ohos_source_set("service_types_proto_static") {
-  deps = [ ":service_types_proto_gen" ]
+ohos_source_set("profiler_service_all_type_source") {
+  deps = [ ":all_type_gen" ]
   public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
-  public_configs = [ ":service_types_proto_config" ]
-  sources = proto_types_codegen
+  public_configs = [ ":public_configs" ]
+  sources = all_type_codegen
 }
 
-#######################################################
-profiler_services_codegen = []
-foreach(proto, profiler_services_defines) {
+########################################################
+profiler_service_interface_proto = [ "./profiler_service.proto" ]
+
+profiler_service_interface_codegen = []
+foreach(proto, profiler_service_interface_proto) {
   name = get_path_info(proto, "name")
-  profiler_services_codegen += [
+  profiler_service_interface_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
     "$proto_out_dir/$name.grpc.pb.h",
@@ -99,10 +112,10 @@ foreach(proto, profiler_services_defines) {
   ]
 }
 
-action("profiler_services_proto_gen") {
+action("profiler_service_interface_gen") {
   script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
-  sources = profiler_services_defines
-  outputs = profiler_services_codegen
+  sources = profiler_service_interface_proto
+  outputs = profiler_service_interface_codegen
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
@@ -117,20 +130,16 @@ action("profiler_services_proto_gen") {
   ]
   args += rebase_path(sources, root_build_dir)
   deps = [
-    ":service_types_proto_gen",
+    ":all_type_gen",
     "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc_cpp_plugin(//build/toolchain/linux:clang_x64)",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(//build/toolchain/linux:clang_x64)",
   ]
 }
 
-config("profiler_services_proto_config") {
-  include_dirs = [ "$proto_out_dir" ]
-}
-
-ohos_source_set("profiler_services_proto") {
+ohos_source_set("profiler_service_proto") {
   deps = [
-    ":profiler_services_proto_gen",
-    ":service_types_proto",
+    ":all_type_gen",
+    ":profiler_service_interface_gen",
   ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc",
@@ -139,15 +148,32 @@ ohos_source_set("profiler_services_proto") {
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
-  public_configs = [ ":profiler_services_proto_config" ]
-  sources = profiler_services_codegen
+  public_configs = [ ":public_configs" ]
+  sources = profiler_service_interface_codegen
 }
 
-#######################################################
-plugin_services_codegen = []
-foreach(proto, plugin_services_defines) {
+########################################################
+plugin_service_type_proto = [
+  "./common_types.proto",
+  "./plugin_service_types.proto",
+]
+
+plugin_service_type_codegen = []
+foreach(proto, plugin_service_type_proto) {
   name = get_path_info(proto, "name")
-  plugin_services_codegen += [
+  plugin_service_type_codegen += [
+    "$proto_out_dir/$name.pb.h",
+    "$proto_out_dir/$name.pb.cc",
+  ]
+}
+
+########################################################
+plugin_service_interface_proto = [ "./plugin_service.proto" ]
+
+plugin_service_interface_codegen = []
+foreach(proto, plugin_service_interface_proto) {
+  name = get_path_info(proto, "name")
+  plugin_service_interface_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
     "$proto_out_dir/$name.ipc.h",
@@ -155,10 +181,10 @@ foreach(proto, plugin_services_defines) {
   ]
 }
 
-action("plugin_services_proto_gen") {
+action("plugin_service_interface_proto_gen") {
   script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
-  sources = plugin_services_defines
-  outputs = plugin_services_codegen
+  sources = plugin_service_interface_proto
+  outputs = plugin_service_interface_codegen
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
@@ -173,20 +199,16 @@ action("plugin_services_proto_gen") {
   ]
   args += rebase_path(sources, root_build_dir)
   deps = [
-    ":service_types_proto_gen",
+    ":all_type_gen",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
     "${OHOS_PROFILER_DIR}/device/services/ipc:protoc_gen_ipc(${host_toolchain})",
   ]
 }
 
-config("plugin_services_proto_config") {
-  include_dirs = [ "$proto_out_dir" ]
-}
-
-ohos_source_set("plugin_services_proto") {
+ohos_source_set("plugin_service_proto") {
   deps = [
-    ":plugin_services_proto_gen",
-    ":service_types_proto",
+    ":all_type_gen",
+    ":plugin_service_interface_proto_gen",
   ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
@@ -197,33 +219,15 @@ ohos_source_set("plugin_services_proto") {
     "$proto_out_dir",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
   ]
-  public_configs = [ ":plugin_services_proto_config" ]
-  sources = plugin_services_codegen
-}
-
-ohos_source_set("plugin_services_proto_static") {
-  deps = [
-    ":plugin_services_proto_gen",
-    ":service_types_proto_static",
-  ]
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
-    "${OHOS_PROFILER_DIR}/device/services/ipc:ipc",
-  ]
-  include_dirs = [
-    "$proto_out_dir",
-    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
-  ]
-  public_configs = [ ":plugin_services_proto_config" ]
-  sources = plugin_services_codegen
+  public_configs = [ ":public_configs" ]
+  sources = plugin_service_interface_codegen
 }
 
 #######################################################
 ohos_source_set("proto_services_cpp") {
   public_deps = [
-    ":plugin_services_proto",
-    ":profiler_services_proto",
-    ":service_types_proto",
+    ":plugin_service_proto",
+    ":profiler_service_all_type_source",
+    ":profiler_service_proto",
   ]
 }

@@ -19,29 +19,30 @@
 #include <stdlib.h>
 #include "musl_malloc_dispatch.h"
 
+#define EXPORT_API __attribute__((visibility("default")))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-bool ohos_malloc_hook_initialize(const MallocDispatchType*, bool*, const char*);
-bool ohos_malloc_hook_get_hook_flag(void);
-bool ohos_malloc_hook_set_hook_flag(bool);
-void ohos_malloc_hook_finalize(void);
-bool ohos_malloc_hook_on_start(void);
-bool ohos_malloc_hook_on_end(void);
-void* ohos_malloc_hook_malloc(size_t);
-void* ohos_malloc_hook_realloc(void*, size_t);
-void* ohos_malloc_hook_calloc(size_t, size_t);
-void* ohos_malloc_hook_valloc(size_t);
-void ohos_malloc_hook_free(void*);
-void* ohos_malloc_hook_memalign(size_t, size_t);
-size_t ohos_malloc_hook_malloc_usable_size(void*);
-void* ohos_malloc_hook_mmap(void*, size_t, int, int, int, off_t);
-int ohos_malloc_hook_munmap(void*, size_t);
-void ohos_malloc_hook_memtag(void* addr, size_t size, char* tag, size_t tagLen);
-bool ohos_set_filter_size(size_t size, void* ret);
-bool ohos_pid_changed(void);
-void* ohos_release_on_end(void*);
+EXPORT_API bool ohos_malloc_hook_initialize(const MallocDispatchType*, bool*, const char*);
+EXPORT_API bool ohos_malloc_hook_get_hook_flag(void);
+EXPORT_API bool ohos_malloc_hook_set_hook_flag(bool);
+EXPORT_API void ohos_malloc_hook_finalize(void);
+EXPORT_API bool ohos_malloc_hook_on_start(void);
+EXPORT_API bool ohos_malloc_hook_on_end(void);
+EXPORT_API void* ohos_malloc_hook_malloc(size_t);
+EXPORT_API void* ohos_malloc_hook_realloc(void*, size_t);
+EXPORT_API void* ohos_malloc_hook_calloc(size_t, size_t);
+EXPORT_API void* ohos_malloc_hook_valloc(size_t);
+EXPORT_API void ohos_malloc_hook_free(void*);
+EXPORT_API void* ohos_malloc_hook_memalign(size_t, size_t);
+EXPORT_API size_t ohos_malloc_hook_malloc_usable_size(void*);
+EXPORT_API void* ohos_malloc_hook_mmap(void*, size_t, int, int, int, off_t);
+EXPORT_API int ohos_malloc_hook_munmap(void*, size_t);
+EXPORT_API void ohos_malloc_hook_memtag(void* addr, size_t size, char* tag, size_t tagLen);
+EXPORT_API bool ohos_set_filter_size(size_t size, void* ret);
+
 #ifdef __cplusplus
 }
 #endif

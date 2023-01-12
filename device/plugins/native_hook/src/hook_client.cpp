@@ -118,6 +118,8 @@ pid_t inline __attribute__((always_inline)) GetCurThreadId()
     return reinterpret_cast<long>((pthread_getspecific(g_hookTid)));
 }
 
+bool IsPidChanged(void);
+
 bool ohos_malloc_hook_on_start(void)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
@@ -204,7 +206,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (fn) {
         ret = fn(size);
     }
-    if (g_ClientConfig.mallocDisable_ || ohos_pid_changed()) {
+    if (g_ClientConfig.mallocDisable_ || IsPidChanged()) {
         return ret;
     }
     if (!ohos_set_filter_size(size, ret)) {
@@ -301,7 +303,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (fn) {
         pRet = fn(number, size);
     }
-    if (g_ClientConfig.mallocDisable_ || ohos_pid_changed()) {
+    if (g_ClientConfig.mallocDisable_ || IsPidChanged()) {
         return pRet;
     }
     if (!ohos_set_filter_size(number * size, pRet)) {
@@ -384,7 +386,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (fn) {
         pRet = fn(ptr, size);
     }
-    if (g_ClientConfig.mallocDisable_ || ohos_pid_changed()) {
+    if (g_ClientConfig.mallocDisable_ || IsPidChanged()) {
         return pRet;
     }
     if (!ohos_set_filter_size(size, pRet)) {
@@ -463,7 +465,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         freeData.ts = rawdata.ts;
         (void)memcpy_s(freeData.tname, sizeof(freeData.tname) / sizeof(char),
                        rawdata.tname, sizeof(rawdata.tname) / sizeof(char));
-        g_hookClient->SendStackWithPayload(&freeData, sizeof(freeData), nullptr, 0); // 0: Don't unwind the freeData.
+        g_hookClient->SendStackWithPayload(&freeData, sizeof(freeData), nullptr, 0); // 0: Don't unwind the freeData
         g_hookClient->SendStackWithPayload(&rawdata, sizeof(rawdata), stackptr, stackSize);
     }
     g_mallocTimes++;
@@ -485,7 +487,7 @@ void hook_free(void (*free_func)(void*), void* p)
     if (free_func) {
         free_func(p);
     }
-    if (g_ClientConfig.mallocDisable_ || ohos_pid_changed()) {
+    if (g_ClientConfig.mallocDisable_ || IsPidChanged()) {
         return;
     }
     {
@@ -566,7 +568,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     if (fn) {
         ret = fn(addr, length, prot, flags, fd, offset);
     }
-    if (g_ClientConfig.mmapDisable_ || ohos_pid_changed()) {
+    if (g_ClientConfig.mmapDisable_ || IsPidChanged()) {
         return ret;
     }
     StackRawData rawdata = {{{0}}};
@@ -636,7 +638,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     if (fn) {
         ret = fn(addr, length);
     }
-    if (g_ClientConfig.mmapDisable_ || ohos_pid_changed()) {
+    if (g_ClientConfig.mmapDisable_ || IsPidChanged()) {
         return ret;
     }
     int stackSize = 0;
@@ -709,7 +711,7 @@ int hook_prctl(int(*fn)(int, ...),
     if (fn) {
         ret = fn(option, arg2, arg3, arg4, arg5);
     }
-    if (ohos_pid_changed()) {
+    if (IsPidChanged()) {
         return ret;
     }
     if (option == PR_SET_VMA && arg2 == PR_SET_VMA_ANON_NAME) {
@@ -840,7 +842,7 @@ int ohos_malloc_hook_munmap(void* addr, size_t length)
 void ohos_malloc_hook_memtag(void* addr, size_t size, char* tag, size_t tagLen)
 {
     __set_hook_flag(false);
-    if (ohos_pid_changed()) {
+    if (IsPidChanged()) {
         return;
     }
     StackRawData rawdata = {{{0}}};
@@ -879,7 +881,7 @@ bool ohos_set_filter_size(size_t size, void* ret)
     return true;
 }
 
-bool ohos_pid_changed(void)
+bool IsPidChanged(void)
 {
     if (g_isPidChanged) {
         return true;

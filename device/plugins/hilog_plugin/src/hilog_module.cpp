@@ -55,7 +55,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onRegisterWriterStruct = (RegisterWriterStructCallback)HilogPluginRegisterWriterStruct,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "hilog-plugin",
     .version = "1.01",

@@ -48,8 +48,8 @@ ohos_source_set("plugins_sources") {
   ]
   public_deps = [
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_services_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:service_types_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "../../base:hiprofiler_base",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/openssl:libcrypto_shared",

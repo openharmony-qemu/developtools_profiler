@@ -142,7 +142,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onRegisterWriterStruct = HiperfRegisterWriterStruct,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "hiperf-plugin",
     .version = "1.01",

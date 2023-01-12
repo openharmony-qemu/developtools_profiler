@@ -51,7 +51,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStop = CpuPluginSessionStop,
 };
 
-PluginModuleStruct g_pluginModule = {
+EXPORT_API PluginModuleStruct g_pluginModule = {
     .callbacks = &g_callbacks,
     .name = "cpu-plugin",
     .version = "1.01",
