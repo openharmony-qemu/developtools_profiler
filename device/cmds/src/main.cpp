@@ -40,7 +40,6 @@ using google::protobuf::TextFormat;
 namespace {
 constexpr int ADDR_BUFFER_SIZE = 128;
 constexpr int MS_PER_S = 1000;
-constexpr uint16_t SERVICE_PORT = 50051;
 constexpr int KEEP_SESSION_TIMEOUT_MS = 5 * 1000;
 constexpr int KEEP_SESSION_SLEEP_SECOND = 3;
 constexpr int DEFAULT_SESSION_TIME_S = 10;
@@ -84,7 +83,7 @@ std::string GetLoopbackAddress()
 
 uint16_t GetServicePort()
 {
-    return SERVICE_PORT;
+    return COMMON::GetServicePort();
 }
 
 std::string ReadFileToString(const std::string& fileName)

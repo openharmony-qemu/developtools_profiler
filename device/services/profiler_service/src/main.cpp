@@ -22,7 +22,7 @@
 #include "profiler_service.h"
 
 namespace {
-const std::string DEFAULT_SERVICE_LISTEN_URI = "0.0.0.0:50051";
+const std::string DEFAULT_SERVICE_LISTEN_URI = "0.0.0.0:";
 }
 
 int main(int argc, char* argv[])
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     auto service = std::make_shared<ProfilerService>(std::make_shared<PluginService>());
     CHECK_NOTNULL(service, -1, "ProfilerService create failed!");
 
-    std::string listenUri = DEFAULT_SERVICE_LISTEN_URI;
+    std::string listenUri = DEFAULT_SERVICE_LISTEN_URI + std::to_string(COMMON::GetServicePort());
     if (argc > 1) {
         listenUri = argv[1];
     }
