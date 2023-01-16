@@ -17,9 +17,12 @@
 #include <cinttypes>
 #include <csignal>
 #include <fcntl.h>
+#include <fstream>
+#include <iostream>
 #ifdef HOOK_ENABLE
 #include <malloc.h>
 #endif
+#include <sstream>
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -131,4 +134,24 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix)
 #endif // HOOK_ENABLE
 }
 
+int GetServicePort()
+{
+    const std::string portRangePath = "/proc/sys/net/ipv4/ip_local_port_range";
+    std::ifstream file(portRangePath.c_str());
+    if (!file.is_open()) {
+        HILOG_ERROR(LOG_CORE, "Open file failed! filePath:%s", portRangePath.c_str());
+        return -1;
+    }
+    std::string rangeStr;
+    copy(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), std::back_inserter(rangeStr));
+
+    int minPort;
+    int maxPort;
+    std::istringstream istr(rangeStr);
+    istr >> minPort >> maxPort;
+    const int offset = 3168; // To be compatible with previously used port 50051;
+    int port = (minPort + maxPort) / 2 + offset;
+    HILOG_DEBUG(LOG_CORE, "Service port is: %d", port);
+    return port;
+}
 } // COMMON
