@@ -237,7 +237,6 @@ std::string FPS::GetLayer(std::string pkgSurface)
         char buf[1024] = {'\0'};
 
         const int paramFifteen = 15;
-        const int paramFourteen = 14;
         const int paramThree = 3;
         const int windowNameIndex = 0;
         const int windowIdIndex = 3;
@@ -256,11 +255,6 @@ std::string FPS::GetLayer(std::string pkgSurface)
             }
             if (params.size() == paramFifteen) {
                 DumpEntity dumpEntity { params[0], params[1], params[2], params[3], params[7]};
-                dumpEntityList.push_back(dumpEntity);
-            }
-            if (params.size() == paramFourteen) {
-                DumpEntity dumpEntity { params[0], params[1], params[2].substr(0, 4),
-                    params[2].substr(5, params[2].size() - 1),  params[6]};
                 dumpEntityList.push_back(dumpEntity);
             }
             if (params.size() == paramThree) {
