@@ -104,7 +104,7 @@ static void ApplyForMalloc(int mallocSize)
 {
     printf("\nstart malloc apply (size = %d)\n", mallocSize);
     clock_t timerStart = 0;
-    clock_ttimerStop = 0;
+    clock_t timerStop = 0;
     double duration = 0;
     timerStart = clock();
     char* p = DepthMalloc(STATIC_DEPTH, mallocSize);
