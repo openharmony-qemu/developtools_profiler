@@ -468,7 +468,8 @@ int main(int argc, char* argv[])
 
         if (option == 'c' && strcmp(optarg, "-") == 0) {
             std::string content;
-            std::istreambuf_iterator<char> begin(std::cin), end;
+            std::istreambuf_iterator<char> begin(std::cin);
+            std::istreambuf_iterator<char> end = {};
             content.assign(begin, end);
             config = ParsePluginConfig::GetInstance().GetPluginsConfig(content);
             if (config == "") {
