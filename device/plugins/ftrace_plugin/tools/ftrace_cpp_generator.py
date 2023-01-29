@@ -159,19 +159,19 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         if type_info.tid == ProtoType.STRING:
             parse_func = 'ParseStrField'
         elif type_info.tid == ProtoType.INTEGER:
-            assert type_info.size in [4, 8]
-            c_type = None
-            if type_info.size == 4:
-                c_type = 'int32_t' if type_info.signed else 'uint32_t'
-            elif type_info.size == 8:
-                c_type = 'int64_t' if type_info.signed else 'uint64_t'
-            parse_func = 'ParseIntField<{}>'.format(c_type)
+            if type_info.size in [4, 8]:
+                c_type = None
+                if type_info.size == 4:
+                    c_type = 'int32_t' if type_info.signed else 'uint32_t'
+                elif type_info.size == 8:
+                    c_type = 'int64_t' if type_info.signed else 'uint64_t'
+                parse_func = 'ParseIntField<{}>'.format(c_type)
         else:
             logger.warning('WARNING: unkown proto type:{} {}'.format(
                 event.name, field_name))
-        assert parse_func
-        f.write('    msg->set_{}(FtraceFieldParser::'.format(field_name))
-        f.write('{}(format.fields, i++, data, size));\n'.format(parse_func))
+        if parse_func != None:
+            f.write('    msg->set_{}(FtraceFieldParser::'.format(field_name))
+            f.write('{}(format.fields, i++, data, size));\n'.format(parse_func))
 
 
 class EventFormatterCodeGenerator(FtraceEventCodeGenerator):

@@ -118,7 +118,7 @@ pid_t inline __attribute__((always_inline)) GetCurThreadId()
     return reinterpret_cast<long>((pthread_getspecific(g_hookTid)));
 }
 
-bool IsPidChanged(void);
+static bool IsPidChanged(void);
 
 bool ohos_malloc_hook_on_start(void)
 {
