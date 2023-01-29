@@ -103,7 +103,8 @@ static void DepthFree(int depth, void* p)
 static void ApplyForMalloc(int mallocSize)
 {
     printf("\nstart malloc apply (size = %d)\n", mallocSize);
-    clock_t timerStart, timerStop;
+    clock_t timerStart = 0;
+    clock_ttimerStop = 0;
     double duration = 0;
     timerStart = clock();
     char* p = DepthMalloc(STATIC_DEPTH, mallocSize);
@@ -129,7 +130,8 @@ static void ApplyForCalloc(int mallocSize)
 {
     int callocSize = mallocSize / sizeof(char);
     printf("\nstart calloc apply (size = %d)\n", callocSize);
-    clock_t timerStart, timerStop;
+    clock_t timerStart = 0;
+    clock_t timerStop = 0;
     double duration = 0;
     timerStart = clock();
     char* p = DepthCalloc(STATIC_DEPTH, callocSize);
@@ -160,7 +162,8 @@ static void ApplyForRealloc(int mallocSize)
         printf("Invalid mallocSize.\n");
         return;
     }
-    clock_t timerStart, timerStop;
+    clock_t timerStart = 0;
+    clock_t timerStop = 0;
     double duration = 0;
     char* p = (char*)malloc(mallocSize);
     if (!p) {

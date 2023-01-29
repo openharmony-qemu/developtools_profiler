@@ -220,7 +220,8 @@ bool SocketContext::SendFileDescriptor(int fd)
 {
     struct msghdr msg = {0};
     struct cmsghdr* cmsg = nullptr;
-    char buf[CMSG_SPACE(1 * sizeof(int))], data;
+    char buf[CMSG_SPACE(1 * sizeof(int))] = {0};
+    char data;
     if (memset_s(buf, sizeof(buf), 0, sizeof(buf)) != EOK) {
         HILOG_ERROR(LOG_CORE, "memset_s error!");
     }
@@ -245,7 +246,8 @@ int SocketContext::ReceiveFileDiscriptor()
 {
     struct msghdr msg = {0};
     struct cmsghdr* cmsg = nullptr;
-    char buf[CMSG_SPACE(1 * sizeof(int))], data;
+    char buf[CMSG_SPACE(1 * sizeof(int))] = {0};
+    char data;
     struct iovec io = {.iov_base = &data, .iov_len = 1};
     msg.msg_iov = &io;
     msg.msg_iovlen = 1;
