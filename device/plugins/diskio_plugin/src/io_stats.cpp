@@ -222,7 +222,9 @@ bool IoStats::GetIoStats(std::string& line)
     }
 #if __DEBUG__
     char name[128];
-    uint64_t rMergesOrIo, rwIos, rTicksOrw;
+    uint64_t rMergesOrIo = 0;
+    uint64_t rwIos = 0;
+    uint64_t rTicksOrw = 0;
     auto ioInfo = std::make_shared<DiskStats>();
     int ret = sscanf_s(line.c_str(), "%u %u %s %lu %lu %lu %lu %lu %lu %lu %u %u %u %u %lu %lu %lu %u %lu %u",
                        &ioInfo->major_, &ioInfo->minor_, name, sizeof(name),
