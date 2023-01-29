@@ -86,6 +86,7 @@ ohos_source_set("native_hook_source") {
 ohos_shared_library("native_hook") {
   output_name = "native_hook"
   deps = [ ":native_hook_source" ]
+  version_script = "libnative_hook.map"  
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

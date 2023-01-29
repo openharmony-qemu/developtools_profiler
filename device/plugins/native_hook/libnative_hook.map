@@ -1,0 +1,24 @@
+{
+  global:
+  extern "C++" {
+    "ohos_malloc_hook_initialize";
+    "ohos_malloc_hook_get_hook_flag";
+    "ohos_malloc_hook_set_hook_flag";
+    "ohos_malloc_hook_finalize";
+    "ohos_malloc_hook_on_start";
+    "ohos_malloc_hook_on_end";
+    "ohos_malloc_hook_malloc";
+    "ohos_malloc_hook_realloc";
+    "ohos_malloc_hook_calloc";
+    "ohos_malloc_hook_valloc";
+    "ohos_malloc_hook_free";
+    "ohos_malloc_hook_memalign";
+    "ohos_malloc_hook_malloc_usable_size";
+    "ohos_malloc_hook_mmap";
+    "ohos_malloc_hook_munmap";
+    "ohos_malloc_hook_memtag";
+    "ohos_set_filter_size";
+  };
+  local:
+    *;
+};
