@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import subprocess
 import sys
 import argparse
 import logging
@@ -246,7 +247,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             f.write('    auto msg = event.{}_format();\n'.format(
                 str.lower(event.name)))
             f.write("    char buffer[BUFFER_SIZE];\n")
-            event.print_fmt = "\"" + event.name + ": " + event.print_fmt[2:]
+            event.print_fmt = "\"{}: {}".format(event.name, event.print_fmt[2:])
             event.print_fmt = str.replace(event.print_fmt, "=%zu", "=%llu")
             event.print_fmt = str.replace(event.print_fmt, "pfn=%llu", "pfn=%\" PRId64 \"")
             if (category == "binder") :
@@ -417,7 +418,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                 event.print_fmt = str.replace(event.print_fmt, "REC->nr_activate0, REC->nr_activate1", "msg.nr_activate()")
             elif (event.name == "mm_vmscan_writepage") :
                 event.print_fmt = str.replace(event.print_fmt, "page=%p", "page=%s")
-                event.print_fmt = event.print_fmt[:56] + " \"0000000000000000\"" + event.print_fmt[3728:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:56], event.print_fmt[3728:])
             elif (event.name == "mm_vmscan_lru_isolate") :
                 event.print_fmt = str.replace(event.print_fmt, "REC->highest_zoneidx", "msg.classzone_idx()")
             elif (event.name == "balance_dirty_pages") | (event.name == "bdi_dirty_ratelimit") :
@@ -431,39 +432,39 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             elif (event.name == "ext4_find_delalloc_range") :
                 event.print_fmt = str.replace(event.print_fmt, "REC->found_blk", "msg.found_blk()")
             elif (event.name == "mm_filemap_add_to_page_cache") | (event.name == "mm_filemap_delete_from_page_cache"):
-                event.print_fmt = "\"" + event.name + ": dev %\" PRId64 \":%\" PRId64 \" ino %\" PRId64 \" page=%s pfn=%\" PRId64 \" ofs=%\" PRId64 \"\", (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), \"0000000000000000\", msg.pfn(), msg.index() << 12"
+                event.print_fmt = "\"{}: dev %\" PRId64 \":%\" PRId64 \" ino %\" PRId64 \" page=%s pfn=%\" PRId64 \" ofs=%\" PRId64 \"\", (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), \"0000000000000000\", msg.pfn(), msg.index() << 12".format(event.name)
             elif (event.name == "ipi_raise") :
                 event.print_fmt = str.replace(event.print_fmt, "target_mask=%s", "target_mask=%\" PRId64 \"")
                 event.print_fmt = str.replace(event.print_fmt, "__get_bitmask(target_cpus)", "msg.target_cpus()")
             elif (event.name == "mm_page_alloc") :
-                event.print_fmt = event.print_fmt[:78] + " \"0000000000000000\"" + event.print_fmt[3783:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:78], event.print_fmt[3783:])
             elif (event.name == "mm_page_alloc_extfrag") :
-                event.print_fmt = event.print_fmt[:181] + " \"0000000000000000\"" + event.print_fmt[3853:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:181], event.print_fmt[3853:])
             elif (event.name == "mm_page_alloc_zone_locked") :
-                event.print_fmt = event.print_fmt[:94] + " \"0000000000000000\"" + event.print_fmt[3799:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:94], event.print_fmt[3799:])
             elif (event.name == "mm_page_free") :
-                event.print_fmt = event.print_fmt[:49] + " \"0000000000000000\"" + event.print_fmt[3721:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:49], event.print_fmt[3721:])
             elif (event.name == "mm_page_free_batched") :
-                event.print_fmt = event.print_fmt[:56] + " \"0000000000000000\"" + event.print_fmt[3728:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:56], event.print_fmt[3728:])
             elif (event.name == "mm_page_pcpu_drain") :
-                event.print_fmt = event.print_fmt[:70] + " \"0000000000000000\"" + event.print_fmt[3742:]
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:70], event.print_fmt[3742:]}
             elif (event.name == "xprt_transmit"):
                 event.print_fmt = "\"xprt_transmit: xid=0x%08x status=%d\", msg.xid(), msg.status()"
 
             for field_info in event.remain_fields:
                 field_name = fix_field_name(field_info.name)
-                event.print_fmt = str.replace(event.print_fmt, "__get_str("+field_name+")",
-                                                "msg."+field_name+"().c_str()")
-                event.print_fmt = str.replace(event.print_fmt, "__get_dynamic_array("+field_name+")",
-                                                    "msg."+field_name+"()")
-                if field_info.field.startswith('char '+field_name+'[') \
-                    | field_info.field.startswith('const char '+field_name+'[') \
+                event.print_fmt = str.replace(event.print_fmt, "__get_str({})".format(field_name),
+                                                "msg.{}().c_str()".format(field_name))
+                event.print_fmt = str.replace(event.print_fmt, "__get_dynamic_array({})".format(field_name),
+                                                    "msg.{}()".format(field_name))
+                if field_info.field.startswith('char {}['.format(field_name)) \
+                    | field_info.field.startswith('const char {}['.format(field_name)) \
                     | field_info.field.startswith('char *') | field_info.field.startswith('const char *'):
-                    event.print_fmt = str.replace(event.print_fmt, "REC->"+field_name,
-                                                    "msg."+field_name+"().c_str()")
+                    event.print_fmt = str.replace(event.print_fmt, "REC->{}".format(field_name),
+                                                    "msg.{}().c_str()".format(field_name))
                 else:
-                    event.print_fmt = str.replace(event.print_fmt, "REC->"+field_name,
-                                                    "msg."+field_name+"()")
+                    event.print_fmt = str.replace(event.print_fmt, "REC->{}".format(field_name),
+                                                    "msg.{}()".format(field_name))
             if (event.name == "sched_switch"):
                 f.write("    if (msg.prev_state() > 0x0400) {\n")
                 f.write('        sprintf(buffer, "sched_switch: prev_comm=%s prev_pid=%d prev_prio=%d prev_state=? ==> next_comm=%s next_pid=%d next_prio=%d", msg.prev_comm().c_str(), msg.prev_pid(), msg.prev_prio(), msg.next_comm().c_str(), msg.next_pid(), msg.next_prio());\n')
@@ -515,8 +516,8 @@ def main():
             exit(4)
         fmtter_gen = EventFormatterCodeGenerator(events_dir, allow_list)
         fmtter_gen.generate(formatter_out)
-    os.system("./../../../format-code.sh ./trace_converter/event_formatters")
-    os.system("chmod 775 ./trace_converter/event_formatters/*.cpp")
+    subprocess.run("./../../../format-code.sh ./trace_converter/event_formatters")
+    subprocess.run("chmod 775 ./trace_converter/event_formatters/*.cpp")
 
 
 if __name__ == '__main__':
