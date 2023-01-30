@@ -170,7 +170,7 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         else:
             logger.warning('WARNING: unkown proto type:{} {}'.format(
                 event.name, field_name))
-        if parse_func != None:
+        if parse_func is not None:
             f.write('    msg->set_{}(FtraceFieldParser::'.format(field_name))
             f.write('{}(format.fields, i++, data, size));\n'.format(parse_func))
 
