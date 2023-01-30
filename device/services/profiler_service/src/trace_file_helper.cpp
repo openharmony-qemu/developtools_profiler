@@ -29,6 +29,7 @@ TraceFileHelper::TraceFileHelper()
 #if !is_mingw
     : shaCtx_(std::make_shared<SHA256_CTX>())
 #endif
+#endif
 {
 #ifdef is_mingw
 #if !is_mingw
