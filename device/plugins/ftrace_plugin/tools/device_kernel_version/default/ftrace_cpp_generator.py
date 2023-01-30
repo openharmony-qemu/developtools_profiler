@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import subprocess
 import sys
 import argparse
 import logging
@@ -551,9 +552,9 @@ def main():
         parser_gen.generate(os.path.join(parser_out))
         sh_path = "../../../format-code.sh "
         if (os.getcwd().find("device_kernel_version") != -1):
-            sh_path = "../../" + sh_path
-        os.system(sh_path + parser_out)
-        os.system("chmod 775 " + parser_out + "*.cpp")
+            sh_path = "../../{}".format(sh_path)
+        subprocess.run("{}{}".format(sh_path, parser_out))
+        subprocess.run("chmod 775 {}*.cpp".format(parser_out))
 
     if formatter_out:
         if not os.path.isdir(formatter_out):
@@ -563,9 +564,9 @@ def main():
         fmtter_gen.generate(formatter_out)
         sh_path = "../../../format-code.sh "
         if (os.getcwd().find("device_kernel_version") != -1):
-            sh_path = "../../" + sh_path
-        os.system(sh_path + formatter_out)
-        os.system("chmod 775 " + formatter_out + "*.cpp")
+            sh_path = "../../{}".format(sh_path)
+        subprocess.run("{}{}".format(sh_path, formatter_out))
+        subprocess.run("chmod 775 {}*.cpp".format(,formatter_out))
 
 
 if __name__ == '__main__':

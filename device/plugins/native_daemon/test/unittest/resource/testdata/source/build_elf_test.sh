@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
 gcc ./elf_test_source_code.cpp -std=c++17 -lstdc++ -o ../elf_test -Wl,--gc-sections
 strip ../elf_test -o ../elf_test_stripped
 objcopy  -R .note.gnu.build-id -R .note.gnu.property -R .note.ABI-tag ../elf_test_stripped ../elf_test_stripped_nobuildid

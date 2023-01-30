@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import subprocess
 import sys
 import argparse
 import logging
@@ -33,28 +34,28 @@ def main():
     version = args.version
 
     version_path = "device_kernel_version/" + version
-    events_file = version_path + "/events"
+    version_path = "device_kernel_version/{}".format(version)
     if not Path(events_file).is_dir():
         logger.error('device kernel events directory does not exist({})'.format(events_file))
         exit(1)
 
     # generate proto file
-    proto_path = os.getcwd() + "/../../../../protos/types/plugins/ftrace_data/" + version + "/"
-    proto_cmd = "python ftrace_proto_generator.py -a allowlist.txt -e " + events_file + " -o " + proto_path
-    if (os.system(proto_cmd) != 0):
+    proto_path = "{}/../../../../protos/types/plugins/ftrace_data/{}/".format(os.getcwd(), version)
+    proto_cmd = "python ftrace_proto_generator.py -a allowlist.txt -e {} -o {}".format(events_file, proto_path)
+    if (subprocess.run(proto_cmd) != 0):
         logger.error('Execution python failed! cmd: {}'.format(proto_cmd))
         exit(2)
 
     # generate parsers cpp
-    cpp_cmd = "python " + version_path + "/ftrace_cpp_generator.py -a allowlist.txt -e " + events_file
-    parsers_cmd = cpp_cmd + " -p " + version_path + "/event_parsers/"
-    if (os.system(parsers_cmd) != 0):
+    cpp_cmd = "python {}/ftrace_cpp_generator.py -a allowlist.txt -e {}".format(version_path, events_file)
+    parsers_cmd = "{} -p {}/event_parsers/".format(cpp_cmd, version_path)
+    if (subprocess.run(parsers_cmd) != 0):
         logger.error('Execution python failed! cmd: {}'.format(parsers_cmd))
         exit(3)
 
     # generate formatters cpp
-    parsers_cmd = cpp_cmd + " -f " + version_path + "/event_formatters/"
-    if (os.system(parsers_cmd) != 0):
+    parsers_cmd = "{} -f {}/event_formatters/".format(cpp_cmd, version_path)
+    if (subprocess.run(parsers_cmd) != 0):
         logger.error('Execution python failed! cmd: {}'.format(parsers_cmd))
         exit(4)
 
