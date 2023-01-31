@@ -92,6 +92,17 @@ def ensure_dir_exists(file_path):
     if not os.path.exists(file_dir):
         os.mkdir(file_dir)
 
+class Common:
+    this_file = os.path.basename(__file__)
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
+    )
+    logger = logging.getLogger(this_file)
+    cpp_copyright_header = CPP_COPYRIGHT_HEADER
+    parse_register_macro = PARSE_REGISTER_MACRO
+    auto_generated_gni = AUTO_GENERATED_GNI
+    parse_function_args = PARSE_FUNCTION_ARGS
+    gn_copyright_header = GN_COPYRIGHT_HEADER
 
 class EventParserCodeGenerator(FtraceEventCodeGenerator):
     def __init__(self, events_dir, allow_list):
@@ -408,7 +419,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             elif (event.name == "mm_page_free_batched") :
                 event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:56], event.print_fmt[3728:])
             elif (event.name == "mm_page_pcpu_drain") :
-                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:70], event.print_fmt[3742:]}
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:70], event.print_fmt[3742:])
             elif (event.name == "xprt_transmit"):
                 event.print_fmt = "\"xprt_transmit: xid=0x%08x status=%d\", msg.xid(), msg.status()"
             elif (event.name == "rss_stat") :
@@ -478,10 +489,10 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             field_name = fix_field_name(field_info.name)
             event.print_fmt = str.replace(event.print_fmt, "__get_str({})".format(field_name),
                                                 "msg.{}().c_str()".format(field_name))
-                event.print_fmt = str.replace(event.print_fmt, "__get_dynamic_array({})".format(field_name),
-                                                    "msg.{}()".format(field_name))
-                if field_info.field.startswith('char {}['.format(field_name)) \
-                    | field_info.field.startswith('const char {}['.format(field_name)) \
+            event.print_fmt = str.replace(event.print_fmt, "__get_dynamic_array({})".format(field_name),
+                                                "msg.{}()".format(field_name))
+            if field_info.field.startswith('char {}['.format(field_name)) \
+                | field_info.field.startswith('const char {}['.format(field_name)) \
                 | field_info.field.startswith('char *') | field_info.field.startswith('const char *'):
                 event.print_fmt = str.replace(event.print_fmt, "REC->{}".format(field_name), "msg.{}().c_str()".format(field_name))
             else:
@@ -555,8 +566,8 @@ def main():
         sh_path = "../../../format-code.sh "
         if (os.getcwd().find("device_kernel_version") != -1):
             sh_path = "../../{}".format(sh_path)
-        subprocess.run("{}{}".format(sh_path, parser_out))
-        subprocess.run("chmod 775 {}*.cpp".format(parser_out))
+        subprocess.run("{}{}".format(sh_path, parser_out), shell=True)
+        subprocess.run("chmod 775 {}*.cpp".format(parser_out), shell=True)
 
     if formatter_out:
         if not os.path.isdir(formatter_out):
@@ -567,8 +578,8 @@ def main():
         sh_path = "../../../format-code.sh "
         if (os.getcwd().find("device_kernel_version") != -1):
             sh_path = "../../{}".format(sh_path)
-        subprocess.run("{}{}".format(sh_path, formatter_out))
-        subprocess.run("chmod 775 {}*.cpp".format(,formatter_out))
+        subprocess.run("{}{}".format(sh_path, formatter_out), shell=True)
+        subprocess.run("chmod 775 {}*.cpp".format(,formatter_out), shell=True)
 
 
 if __name__ == '__main__':

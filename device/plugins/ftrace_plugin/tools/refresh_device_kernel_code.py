@@ -42,20 +42,20 @@ def main():
     # generate proto file
     proto_path = "{}/../../../../protos/types/plugins/ftrace_data/{}/".format(os.getcwd(), version)
     proto_cmd = "python ftrace_proto_generator.py -a allowlist.txt -e {} -o {}".format(events_file, proto_path)
-    if (subprocess.run(proto_cmd) != 0):
+    if (subprocess.run(proto_cmd, shell=True) != 0):
         logger.error('Execution python failed! cmd: {}'.format(proto_cmd))
         exit(2)
 
     # generate parsers cpp
     cpp_cmd = "python {}/ftrace_cpp_generator.py -a allowlist.txt -e {}".format(version_path, events_file)
     parsers_cmd = "{} -p {}/event_parsers/".format(cpp_cmd, version_path)
-    if (subprocess.run(parsers_cmd) != 0):
+    if (subprocess.run(parsers_cmd, shell=True) != 0):
         logger.error('Execution python failed! cmd: {}'.format(parsers_cmd))
         exit(3)
 
     # generate formatters cpp
     parsers_cmd = "{} -f {}/event_formatters/".format(cpp_cmd, version_path)
-    if (subprocess.run(parsers_cmd) != 0):
+    if (subprocess.run(parsers_cmd, shell=True) != 0):
         logger.error('Execution python failed! cmd: {}'.format(parsers_cmd))
         exit(4)
 

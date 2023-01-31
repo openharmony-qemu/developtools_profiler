@@ -17,6 +17,8 @@ import subprocess
 import sys
 import argparse
 import logging
+sys.path.append(os.getcwd())
+sys.path.append("../../")
 from ftrace_format_parser import FtraceEventCodeGenerator
 from ftrace_format_parser import ProtoType
 
@@ -447,14 +449,14 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             elif (event.name == "mm_page_free_batched") :
                 event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:56], event.print_fmt[3728:])
             elif (event.name == "mm_page_pcpu_drain") :
-                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:70], event.print_fmt[3742:]}
+                event.print_fmt = "{} \"0000000000000000\"{}".format(event.print_fmt[:70], event.print_fmt[3742:])
             elif (event.name == "xprt_transmit"):
                 event.print_fmt = "\"xprt_transmit: xid=0x%08x status=%d\", msg.xid(), msg.status()"
 
             for field_info in event.remain_fields:
                 field_name = fix_field_name(field_info.name)
                 event.print_fmt = str.replace(event.print_fmt, "__get_str({})".format(field_name),
-                                                "msg.{}().c_str()".format(field_name))
+                                                    "msg.{}().c_str()".format(field_name))
                 event.print_fmt = str.replace(event.print_fmt, "__get_dynamic_array({})".format(field_name),
                                                     "msg.{}()".format(field_name))
                 if field_info.field.startswith('char {}['.format(field_name)) \
@@ -516,8 +518,8 @@ def main():
             exit(4)
         fmtter_gen = EventFormatterCodeGenerator(events_dir, allow_list)
         fmtter_gen.generate(formatter_out)
-    subprocess.run("./../../../format-code.sh ./trace_converter/event_formatters")
-    subprocess.run("chmod 775 ./trace_converter/event_formatters/*.cpp")
+    subprocess.run("./../../../format-code.sh ./trace_converter/event_formatters", shell=True)
+    subprocess.run("chmod 775 ./trace_converter/event_formatters/*.cpp", shell=True)
 
 
 if __name__ == '__main__':
