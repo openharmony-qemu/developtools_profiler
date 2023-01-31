@@ -579,7 +579,7 @@ def main():
         if (os.getcwd().find("device_kernel_version") != -1):
             sh_path = "../../{}".format(sh_path)
         subprocess.run("{}{}".format(sh_path, formatter_out), shell=True)
-        subprocess.run("chmod 775 {}*.cpp".format(,formatter_out), shell=True)
+        subprocess.run("chmod 775 {}*.cpp".format(formatter_out), shell=True)
 
 
 if __name__ == '__main__':
