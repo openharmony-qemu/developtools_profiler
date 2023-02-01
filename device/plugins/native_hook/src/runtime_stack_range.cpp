@@ -88,7 +88,8 @@ static long long CvtStrToInt(const char* str, int base)
 
 static int IsEmptyString(const std::string& str)
 {
-    size_t idx = 0, size = str.size();
+    size_t idx = 0;
+    size_t size = str.size();
     while (idx < size) {
         if (!isspace(static_cast<unsigned char>(str[idx])) && str[idx] != 0) {
             return 0;
@@ -108,7 +109,9 @@ static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
     if (buf.size() == 0) {
         buf.resize(INIT_LINE_SIZE);
     }
-    int first_flag = 1, offset = 0, length = 0;
+    int first_flag = 1;
+    int offset = 0;
+    int length = 0;
     do {
         if (offset + length >= static_cast<int>(buf.size())) {
             buf.resize(buf.size() + INC_LINE_SIZE);
@@ -193,7 +196,8 @@ void GetRuntimeStackEnd(const char* stackptr, const char** end, pid_t pid, pid_t
         *end = g_mainStack.end;
     }
     if (!IfContained(start, *end, stackptr)) {
-        char *sigStackStart, *sigStackEnd;
+        char *sigStackStart = nullptr;
+        char *sigStackEnd = nullptr;
         GetRuntimeSigalAltStackRange(&sigStackStart, &sigStackEnd);
         if (IfContained(sigStackStart, sigStackEnd, stackptr)) {
             *end = sigStackEnd;

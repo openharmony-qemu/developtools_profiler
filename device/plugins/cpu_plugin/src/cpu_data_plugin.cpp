@@ -230,7 +230,11 @@ int64_t CpuDataPlugin::GetUserHz()
 
 int64_t CpuDataPlugin::GetCpuUsageTime(std::vector<std::string>& cpuUsageVec)
 {
-    int64_t utime, stime, cutime, cstime, usageTime;
+    int64_t utime = 0;
+    int64_t stime = 0;
+    int64_t cutime = 0;
+    int64_t cstime = 0;
+    int64_t usageTime = 0;
     utime = atoi(cpuUsageVec[PROCESS_UTIME].c_str());
     stime = atoi(cpuUsageVec[PROCESS_STIME].c_str());
     cutime = atoi(cpuUsageVec[PROCESS_CUTIME].c_str());
@@ -360,7 +364,14 @@ bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuT
         return false;
     }
 
-    int64_t user, nice, system, idle, iowait, irq, softirq, steal;
+    int64_t user = 0;
+    int64_t nice = 0;
+    int64_t system = 0;
+    int64_t idle = 0;
+    int64_t iowait = 0;
+    int64_t irq = 0;
+    int64_t softirq = 0;
+    int64_t steal = 0;
     user = atoi(cpuUsageVec[SYSTEM_USER].c_str());
     nice = atoi(cpuUsageVec[SYSTEM_NICE].c_str());
     system = atoi(cpuUsageVec[SYSTEM_SYSTEM].c_str());

@@ -39,13 +39,13 @@ bool IsProcessRunning()
     char buffer[PATH_MAX + 1] = {0};
     readlink("/proc/self/exe", buffer, PATH_MAX);
     std::string processName = buffer;
-    int pos = (int)(processName.find_last_of('/'));
+    int pos = static_cast<int>(processName.find_last_of('/'));
     if (pos != 0) {
         processName = processName.substr(pos + 1, processName.size());
     }
 
     std::string fileName = DEFAULT_PATH + processName + ".pid";
-    int fd = open(fileName.c_str(), O_WRONLY | O_CREAT, (mode_t)0640);
+    int fd = open(fileName.c_str(), O_WRONLY | O_CREAT, static_cast<mode_t>(0640));
     if (fd < 0) {
         const int bufSize = 256;
         char buf[bufSize] = { 0 };

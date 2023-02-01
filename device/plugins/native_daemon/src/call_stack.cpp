@@ -71,8 +71,12 @@ void CallStack::dumpUDI(unw_dyn_info_t &di)
 bool CallStack::fillUDI(unw_dyn_info_t &di, SymbolsFile &symbolsFile, const MemMapItem &mmap,
                         const VirtualThread &thread)
 {
-    uint64_t fdeTableElfOffset, fdeTableSize, ehFrameHdrElfOffset;
-    uint64_t SectionVaddr, SectionSize, SectionFileOffset;
+    uint64_t fdeTableElfOffset = 0;
+    uint64_t fdeTableSize = 0;
+    uint64_t ehFrameHdrElfOffset = 0;
+    uint64_t SectionVaddr = 0;
+    uint64_t SectionSize = 0;
+    uint64_t SectionFileOffset = 0;
     di.start_ip = mmap.begin_;
     di.end_ip = mmap.end_;
 #ifndef target_cpu_arm
@@ -366,7 +370,8 @@ void CallStack::UnwindStep(unw_cursor_t &c, std::vector<CallFrame> &callStack, s
     while (callStack.size() < maxStackLevel) {
         int ret = unw_step(&c);
         if (ret > 0) {
-            unw_word_t ip, sp;
+            unw_word_t ip = 0;
+            unw_word_t sp = 0;
             unw_get_reg(&c, UNW_REG_IP, &ip);
             unw_get_reg(&c, UNW_REG_SP, &sp);
 
@@ -473,7 +478,8 @@ bool CallStack::UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regs
         stackEnd_ = stackPoint_ + stackSize_;
     }
 
-    uint64_t ip, sp;
+    uint64_t ip = 0;
+    uint64_t sp = 0;
     if (!GetIpSP(ip, sp, regs_, regsNum_)) {
         HLOGW("unable get sp or sp , unable unwind");
         return false;
