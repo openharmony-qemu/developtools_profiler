@@ -58,7 +58,8 @@ uint64_t IoStats::GetSystime()
         getline(input, line);
         line += '\n';
 
-        uint64_t nsec, ncent;
+        uint64_t nsec = 0;
+        uint64_t ncent = 0;
         if (ParseLineFields(line) > 0) {
             nsec = fields_[0];
             ncent = fields_[1];

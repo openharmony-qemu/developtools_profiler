@@ -69,7 +69,7 @@ void FinalizeIPC() {}
 
 int ConvertPid(char* buf)
 {
-    int count = 0;
+    unsigned long count = 0;
     char pidBuf[11] = {0}; /* 11: 32 bits to the maximum length of a string */
     char *str = buf;
     while (*str != '\0') {
@@ -182,7 +182,7 @@ bool ohos_malloc_hook_on_end(void)
 }
 
 #if defined(__aarch64__)
-static void inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t *ip, int stackSize)
+static void inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t *ip, unsigned long stackSize)
 {
     void **startfp = (void **)__builtin_frame_address(0);
     void **fp = startfp;
