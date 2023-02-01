@@ -265,7 +265,8 @@ int main(int argc, char *argv[])
             printf("set num:%d not valid arg\n", num);
         }
         for (int i = 0; i < num; i++) {
-            struct timeval start, end;
+            struct timeval start;
+            struct timeval end;
             gettimeofday(&start, nullptr);
             std::string layerName = GetLayer();
             FpsConfig fpsConfig;
