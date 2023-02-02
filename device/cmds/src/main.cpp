@@ -62,6 +62,10 @@ std::string GetLoopbackAddress()
 
     getifaddrs(&ifAddrStruct);
     while (ifAddrStruct != nullptr) {
+        if (ifAddrStruct->ifa_addr == nullptr) {
+            ifAddrStruct = ifAddrStruct->ifa_next;
+            continue;
+        }
         if (ifAddrStruct->ifa_addr->sa_family == AF_INET) {
             // is a valid IP4 Address
             tmpAddrPtr = &((reinterpret_cast<struct sockaddr_in*>(ifAddrStruct->ifa_addr))->sin_addr);
