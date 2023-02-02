@@ -30,6 +30,7 @@ ohos_unittest("memdataplugin_ut") {
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin_source",
+    "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memorytest",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",
