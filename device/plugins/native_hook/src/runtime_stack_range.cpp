@@ -109,7 +109,7 @@ static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
     if (buf.size() == 0) {
         buf.resize(INIT_LINE_SIZE);
     }
-    int first_flag = 1;
+    
     int offset = 0;
     int length = 0;
     do {
