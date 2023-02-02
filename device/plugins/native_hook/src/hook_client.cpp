@@ -73,7 +73,7 @@ int ConvertPid(char* buf)
     char pidBuf[11] = {0}; /* 11: 32 bits to the maximum length of a string */
     char *str = buf;
     while (*str != '\0') {
-        if ((*str >= '0') && (*str <= '9') && (count < sizeof(pidBuf) - 1)) {
+        if ((*str >= '0') && (*str <= '9') && (static_cast<unsigned long>(count) < sizeof(pidBuf) - 1)) {
             pidBuf[count] = *str;
             count++;
             str++;
@@ -192,7 +192,7 @@ static void inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_
         if (nextFp <= fp) {
             break;
         }
-        if (((nextFp - startfp) * sizeof(void *)) > stackSize) {
+        if (((nextFp - startfp) * sizeof(void *)) > static_cast<unsigned long>(stackSize)) {
             break;
         }
         fp = nextFp;
@@ -881,7 +881,7 @@ bool ohos_set_filter_size(size_t size, void* ret)
     return true;
 }
 
-bool IsPidChanged(void)
+static bool IsPidChanged(void)
 {
     if (g_isPidChanged) {
         return true;

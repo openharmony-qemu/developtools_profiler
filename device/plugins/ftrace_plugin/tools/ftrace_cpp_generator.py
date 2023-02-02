@@ -434,7 +434,8 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             elif (event.name == "ext4_find_delalloc_range") :
                 event.print_fmt = str.replace(event.print_fmt, "REC->found_blk", "msg.found_blk()")
             elif (event.name == "mm_filemap_add_to_page_cache") | (event.name == "mm_filemap_delete_from_page_cache"):
-                event.print_fmt = "\"{}: dev %\" PRId64 \":%\" PRId64 \" ino %\" PRId64 \" page=%s pfn=%\" PRId64 \" ofs=%\" PRId64 \"\", (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), \"0000000000000000\", msg.pfn(), msg.index() << 12".format(event.name)
+                event.print_fmt = "\"{}: dev %\" PRId64 \":%\" PRId64 \" ino %\" PRId64 \" page=%s pfn=%\" PRId64 \" ofs=%\" PRId64 \"\", \
+                (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), \"0000000000000000\", msg.pfn(), msg.index() << 12".format(event.name)
             elif (event.name == "ipi_raise") :
                 event.print_fmt = str.replace(event.print_fmt, "target_mask=%s", "target_mask=%\" PRId64 \"")
                 event.print_fmt = str.replace(event.print_fmt, "__get_bitmask(target_cpus)", "msg.target_cpus()")
