@@ -78,7 +78,6 @@ export struct Power {
         new SummaryItem($r("app.media.icon_normalized_current"), "归一耗电", (normalCurrentNow*parseInt(this.testDuration)/3600/ (this.gpData.length-1)).toFixed(5) + "mAH", "#fff8f8"),
       )
 
-
     this.lineData = this.initCurveData();
 
     if (this.gpData.length < 10) {

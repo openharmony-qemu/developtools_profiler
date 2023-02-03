@@ -22,12 +22,12 @@ namespace SmartPerf {
 void Dubai::DumpDubaiBegin() const
 {
     std::string result;
-    SPUtils::LoadCmd("hidumper -s 9081 -a '-b'", result);
+    SPUtils::LoadCmd("hidumper -s 1213 -a '-b'", result);
 }
 void Dubai::DumpDubaiFinish() const
 {
     std::string result;
-    SPUtils::LoadCmd("hidumper -s 9081 -a '-f'", result);
+    SPUtils::LoadCmd("hidumper -s 1213 -a '-f'", result);
 }
 
 void Dubai::MoveDubaiDb() const
@@ -36,7 +36,7 @@ void Dubai::MoveDubaiDb() const
     const std::string dubaiName = "dubai.db";
     const std::string dubaiPath = "/data/system_ce/0/dubai/" + dubaiName;
     const std::string devicePath = "/data/app/el2/100/database/com.ohos.smartperf/entry/rdb";
-    SPUtils::LoadCmd("rm -rf " + devicePath + "/" + dubaiName, result);
+    SPUtils::LoadCmd("rm -rf " + devicePath + "/dubai.*", result);
     SPUtils::LoadCmd("cp " + dubaiPath + " " + devicePath, result);
     SPUtils::LoadCmd("chmod 777 " + devicePath + "/" + dubaiName, result);
 }

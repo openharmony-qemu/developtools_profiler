@@ -24,7 +24,6 @@ import ILineDataSet from './chart/interfaces/datasets/ILineDataSet'
 import { TIndexInfo } from '../../entity/DatabaseEntity';
 
 
-@Entry
 @Component
 export struct Temperature {
   @State private gpData: Array<TIndexInfo> = new Array()

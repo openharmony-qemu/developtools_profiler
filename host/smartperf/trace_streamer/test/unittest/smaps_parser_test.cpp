@@ -280,7 +280,6 @@ HWTEST_F(SmapsParserTest, ParseEmptySmapsData, TestSize.Level1)
     tracePacket.clear_processesinfo();
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SMAPS, STAT_EVENT_RECEIVED);
-    // EXPECT_TRUE(0 == eventCount);
     EXPECT_EQ(0, eventCount);
 }
 } // namespace TraceStreamer

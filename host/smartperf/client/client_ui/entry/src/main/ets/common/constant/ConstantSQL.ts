@@ -110,8 +110,7 @@ export const task_powerapp_info =
     "CREATE TABLE IF NOT EXISTS " + "task_powerapp_info" + "(" +
     "id TEXT PRIMARY KEY," +
     "taskId TEXT NOT NULL," +
-    "sensor TEXT," +
-    "power TEXT," +
-    "current TEXT," +
+    "process TEXT," +
+    "energy TEXT," +
     "percent TEXT" +
     ")"

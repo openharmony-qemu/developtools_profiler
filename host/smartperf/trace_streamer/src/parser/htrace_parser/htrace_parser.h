@@ -39,7 +39,7 @@
 #include "htrace_symbols_detail_parser.h"
 #include "log.h"
 #include "parser_base.h"
-#if WITH_PERF
+#if defined WITH_PERF
 #include "perf_data_parser.h"
 #endif
 #include "string_help.h"
@@ -50,7 +50,7 @@
 namespace SysTuning {
 namespace TraceStreamer {
 using namespace SysTuning::base;
-#if WITH_PERF
+#if defined WITH_PERF
 using namespace OHOS::Developtools::HiPerf;
 #endif
 class HtraceParser : public ParserBase {

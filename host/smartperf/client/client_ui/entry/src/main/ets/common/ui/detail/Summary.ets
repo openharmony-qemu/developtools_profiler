@@ -135,7 +135,7 @@ export struct Summary {
 
     if (normalCurrentNow > 0) {
       this.summaryItems.push(
-        new SummaryItem($r("app.media.icon_normalized_current"), "归一化电流", (normalCurrentNow / this.gpData.length).toFixed(0) + "mA", ""),
+        new SummaryItem($r("app.media.icon_normalized_current"), "归一化电流", (normalCurrentNow / this.gpData.length / 1.1125).toFixed(0) + "mA", ""),
       )
     }
 

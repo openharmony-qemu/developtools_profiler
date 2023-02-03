@@ -14,6 +14,7 @@
  */
 import { fileOpen, travelFile, createGPData, isAccess} from '../base/BaseProfilerUtils';
 import { BaseProfiler } from '../base/BaseProfiler'
+import StringUtils  from '../../utils/StringUtils'
 import { CollectorType } from '../base/ProfilerConstant'
 import SPLogger from '../../../common/utils/SPLogger'
 enum POWER_CONFIG {
@@ -57,11 +58,63 @@ export class Power extends BaseProfiler {
 
   readData() {
     if (this.supportItemKey.length > 0) {
-      for (let powerKey of this.supportItemKey) {
-        let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + "/" + powerKey)
-        this.powerMap.set(powerKey, powerValue)
+      for (let powerKey of Array.from(new Set(this.supportItemKey))) {
+        if (powerKey == "current_now") {
+          let powerValue = this.readCurrentNow()
+          this.powerMap.set(powerKey, powerValue)
+        } else if(powerKey == "voltage_now") {
+          let powerValue = this.readVoltageNow()
+          this.powerMap.set(powerKey, powerValue)
+        } else  {
+          let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + "/" + powerKey)
+          this.powerMap.set(powerKey, powerValue)
+        }
       }
     }
     return createGPData("Power", this.powerMap)
+  }
+
+  readFourTimesData() {
+    if (this.supportItemKey.length > 0) {
+      for (let powerKey of Array.from(new Set(this.supportItemKey))) {
+        if (powerKey == "current_now") {
+          let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + "/" + powerKey)
+          globalThis.powerCurArr.push(powerValue)
+          console.error("last CurrentNow-->push" + powerValue)
+        }
+
+        if (powerKey == "voltage_now") {
+          let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + "/" + powerKey)
+          globalThis.powerVoltArr.push(powerValue)
+          console.error("last VoltageNow-->push" + powerValue)
+        }
+      }
+    }
+  }
+
+  //TODO 电流是否取绝对值累加
+  readCurrentNow():string {
+    let powerQueue : Array<String> = globalThis.powerCurArr
+    let lastValue = 0
+    while (powerQueue.length >= 4) {
+      lastValue += StringUtils.s2L(powerQueue.pop().toString())
+      console.error("last CurrentNow-->pop" + lastValue)
+    }
+    let avgCurrentNum = (lastValue / 4).toString()
+    console.error("last CurrentNowAVG-->" + avgCurrentNum)
+    return avgCurrentNum
+  }
+
+  //TODO 电流是否取绝对值累加
+  readVoltageNow():string {
+    let powerQueue : Array<String> = globalThis.powerVoltArr
+    let lastValue = 0
+    while (powerQueue.length >= 4) {
+      lastValue += StringUtils.s2L(powerQueue.pop().toString())
+      console.error("last VoltageNow-->pop" + lastValue)
+    }
+    let avgCurrentNum = (lastValue / 4).toString()
+    console.error("last VoltageNowAVG-->" + avgCurrentNum)
+    return avgCurrentNum
   }
 }

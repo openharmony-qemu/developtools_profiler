@@ -157,44 +157,44 @@ export default class ScaleMode {
                 this.isZoom=false
             }
         }
-        // if (event.type === TouchType.Move) {
-
-        //     if(event.touches.length==1&&!this.isZoom){
-        //         /**
-        //          * 平移
-        //          */
-        //         let spaceX=event.touches[0].x-this.firstTouch.x
-        //         let spaceY=event.touches[0].y-this.firstTouch.y
-        //         this.move(spaceX-this.startMoveX,spaceY-this.startMoveY,event)
-        //         this.startMoveX=spaceX
-        //         this.startMoveY=spaceY
-        //     }else{
-        //         /**
-        //          * 缩放
-        //          */
-        //         this.isZoom=true
-        //         //第一次双指按下的距离
-        //         let startSpaceX=Math.abs(this.firstTouch.x-this.secondTouch.x)
-        //         let startSpaceY=Math.abs(this.firstTouch.y-this.secondTouch.y)
-        //         //当前双指的距离
-        //         let spaceX=Math.abs(event.touches[0].x-event.touches[1].x)
-        //         let spaceY=Math.abs(event.touches[0].y-event.touches[1].y)
-        //         //当前双指距离 相对 第一次双指 之间的距离
-        //         let moveSpaceX=spaceX-startSpaceX
-        //         let moveSpaceY=spaceY-startSpaceY
-
-        //         //缩放倍数
-        //         let scalcX=Math.abs((this.width+moveSpaceX)/this.width)
-        //         let scalcY=Math.abs((this.height+moveSpaceY)/this.height)
-
-
-        //         //双指位移后的中心点
-        //         this.centerX=Math.abs(event.touches[0].x+event.touches[1].x)/2;
-        //         this.centerY=Math.abs(event.touches[0].y+event.touches[1].y)/2;
-
-        //         this.touchScale(scalcX,scalcY,event)
-        //     }
-        // }
+//        if (event.type === TouchType.Move) {
+//
+//            if(event.touches.length==1&&!this.isZoom){
+//                /**
+//                 * 平移
+//                 */
+//                let spaceX=event.touches[0].x-this.firstTouch.x
+//                let spaceY=event.touches[0].y-this.firstTouch.y
+//                this.move(spaceX-this.startMoveX,spaceY-this.startMoveY,event)
+//                this.startMoveX=spaceX
+//                this.startMoveY=spaceY
+//            }else{
+//                /**
+//                 * 缩放
+//                 */
+//                this.isZoom=true
+//                //第一次双指按下的距离
+//                let startSpaceX=Math.abs(this.firstTouch.x-this.secondTouch.x)
+//                let startSpaceY=Math.abs(this.firstTouch.y-this.secondTouch.y)
+//                //当前双指的距离
+//                let spaceX=Math.abs(event.touches[0].x-event.touches[1].x)
+//                let spaceY=Math.abs(event.touches[0].y-event.touches[1].y)
+//                //当前双指距离 相对 第一次双指 之间的距离
+//                let moveSpaceX=spaceX-startSpaceX
+//                let moveSpaceY=spaceY-startSpaceY
+//
+//                //缩放倍数
+//                let scalcX=Math.abs((this.width+moveSpaceX)/this.width)
+//                let scalcY=Math.abs((this.height+moveSpaceY)/this.height)
+//
+//
+//                //双指位移后的中心点
+//                this.centerX=Math.abs(event.touches[0].x+event.touches[1].x)/2;
+//                this.centerY=Math.abs(event.touches[0].y+event.touches[1].y)/2;
+//
+//                this.touchScale(scalcX,scalcY,event)
+//            }
+//        }
     }
     /**
      * 需要覆写的 单击事件

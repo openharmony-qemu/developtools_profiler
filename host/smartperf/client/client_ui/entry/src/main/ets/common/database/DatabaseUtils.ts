@@ -14,7 +14,7 @@
  */
 
 import dataRdb from '@ohos.data.rdb'
-import { GPData,TIndexInfo,TGeneralInfo,TPowerSensorInfo } from '../entity/DatabaseEntity';
+import { GPData,TIndexInfo,TGeneralInfo,TPowerSensorInfo,TPowerAppInfo } from '../entity/DatabaseEntity';
 import { sql_t_index_info, dbVersion, dbName,task_powersensor_info,task_powerapp_info } from '../constant/ConstantSQL'
 import SPLogger from '../utils/SPLogger'
 
@@ -400,6 +400,29 @@ export default {
             rdbStore.insert(tableName, valueInsert)
         })
     },
+
+    //插入表(task_powerapp_info)
+    insertPowerAppInfo(tableName: string, pathSuffix: number, tPowerApp: TPowerAppInfo) {
+        SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerApp" + JSON.stringify(tPowerApp))
+        var strMap = new Map;
+        for (let k of Object.keys(tPowerApp)) {
+            strMap.set(k, tPowerApp[k]);
+        }
+        const valueInsert = {
+            "taskId": "",
+            "process": strMap.get("application"),
+            "energy": strMap.get("power"),
+            "percent": strMap.get("percent"),
+        }
+        const STORE_CONFIG = {
+            name: pathSuffix + ".db"
+        }
+        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion, (err, rdbStore) => {
+            SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerApp" + JSON.stringify(pathSuffix))
+            rdbStore.insert(tableName, valueInsert)
+        })
+    },
+
     //查询表（detailed_applications_display）
     async query_applications_display(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
         const STORE_CONFIG = {
@@ -780,6 +803,121 @@ export default {
                 })
         } catch (err) {
             SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+        }
+    },
+    //查询dubai 所有进程功耗 并插入表 t_power_appinfo
+    async query_applications_power_info(start_time: string, end_time: string): Promise<Array<TPowerAppInfo>> {
+        const STORE_CONFIG = {
+            name: "dubai.db"
+        }
+        let results = Array<TPowerAppInfo>()
+        var strSQL:String = ""
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let sqlWhere = " where formatted_start_time >= '{startTime}'  and formatted_end_time <= '{endTime}' "
+                    let sqlWhereReplace = sqlWhere.replace("{startTime}",start_time).replace("{endTime}",end_time)
+                    SPLogger.ERROR("TAG","resultSet query_applications_display-----sqlWhereReplace:" + sqlWhereReplace)
+                    strSQL =
+                        "select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy "+
+                        "from detailed_applications_cpu "+
+                        sqlWhereReplace+
+                        "union all "+
+
+                        "select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy "+
+                        "from detailed_applications_display "+
+                        sqlWhereReplace+
+                        "union all "+
+
+                        "select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy "+
+                        "from detailed_applications_gpu "+
+                        sqlWhereReplace+
+                        "union all "+
+
+                        "select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy "+
+                        "from detailed_applications_system_idle "+
+                        sqlWhereReplace+
+                        "union all "+
+
+                        "select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy "+
+                        "from detailed_applications_wifi_data "+
+                        sqlWhereReplace+
+                        "union all "+
+
+                        "select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy "+
+                        "from detailed_applications_sensor "+
+                        sqlWhereReplace+
+                        "union all "+
+
+                        "select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy "+
+                        "from detailed_applications_audio "+
+                        sqlWhereReplace
+
+                    return rdbStore.querySql(strSQL.toString())
+                })
+                .then(resultSet => {
+                    SPLogger.ERROR("TAG","resultSet query_applications_display-----result L:" + resultSet.rowCount)
+                    let tMap:Map<String,String> = new Map
+                    let totalSumEnergy:number = 0.0
+                    while (resultSet.goToNextRow()) {
+                        let sum_energy = resultSet.getString(resultSet.getColumnIndex("energy"))
+                        totalSumEnergy = totalSumEnergy + Number(sum_energy)
+                        let name = resultSet.getString(resultSet.getColumnIndex("name"))
+                        let existElement = tMap.get(name)
+                        if(existElement!=undefined){
+                            //存在则修改
+                            let newP:Number = Number(existElement) + Number(sum_energy)
+                            tMap.set(name,newP.toString())
+                        }else{
+                            tMap.set(name,sum_energy)
+                        }
+                    }
+
+                    //遍历去重相加后的arr
+                    for(let [name,power] of tMap){
+                        let percent = Number(power)*100 / totalSumEnergy
+                        let tPowerAppInfo = new TPowerAppInfo("", "", name, power, "0", percent.toFixed(5))
+                        SPLogger.ERROR("TAG","resultSet query_applications_display-----result0:" + JSON.stringify(tPowerAppInfo))
+                        results.push(tPowerAppInfo)
+                    }
+                    return results.sort((a, b) => parseFloat(b.power.toString()) -  parseFloat(a.power.toString())).slice(0,20)
+                })
+                .then(results =>{
+                    SPLogger.ERROR("TAG","resultSet query_applications_display-----result after:" + results.length)
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display err22222:"+err)
+        }
+    },
+
+    //查询 t_powerapp_info
+    async query_powerapp_info(pathSuffix: number): Promise<Array<TPowerAppInfo>> {
+        const STORE_CONFIG = {
+            name: pathSuffix+".db"
+        }
+        let results = Array<TPowerAppInfo>()
+        try {
+            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+                .then(async(rdbStore) => {
+                    let strSQL: string = "select * " +
+                    "from task_powerapp_info order by energy desc  "
+
+                    return rdbStore.querySql(strSQL)
+                })
+                .then(resultSet => {
+                    while (resultSet.goToNextRow()) {
+                        let process =resultSet.getString(resultSet.getColumnIndex("process"))
+                        let energy = resultSet.getString(resultSet.getColumnIndex("energy"))
+                        let percent = resultSet.getString(resultSet.getColumnIndex("percent"))
+
+                        let tPowerAppInfo = new TPowerAppInfo("", "", process, energy, "0", percent)
+                        results.push(tPowerAppInfo)
+                    }
+                    return results
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet query_applications_display query_powerapp_info:"+err)
         }
     },
 }

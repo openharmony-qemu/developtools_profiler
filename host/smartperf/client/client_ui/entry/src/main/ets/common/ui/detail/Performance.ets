@@ -31,7 +31,6 @@ const TAG: string = "Performance"
 /**
  * 性能页面
  */
-@Entry
 @Component
 export struct Performance {
   @State private gpData: Array<TIndexInfo> = new Array()

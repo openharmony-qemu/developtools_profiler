@@ -25,7 +25,7 @@ import { StartTestTitleComponent } from '../common/ui/StartTestTitleComponent';
 import { ReportItem } from '../common/entity/LocalConfigEntity';
 import CheckEmptyUtils from'../common/utils/CheckEmptyUtils'
 
-import { TPowerSensorInfo } from '../common/entity/DatabaseEntity';
+import { TPowerSensorInfo, TPowerAppInfo } from '../common/entity/DatabaseEntity';
 import database from '../common/database/DatabaseUtils';
 import SPLogger from '../common/utils/SPLogger'
 
@@ -36,6 +36,7 @@ struct ReportDetail {
   private gpData: Array<TIndexInfo> = new Array()
   private reportItem: ReportItem = null
   private tPowerSensorList: Array<TPowerSensorInfo> = new Array<TPowerSensorInfo>()
+  private tPowerAppList: Array<TPowerAppInfo> = new Array<TPowerAppInfo>()
   aboutToAppear() {
 
     let data : any = router.getParams()["gpData"]
@@ -50,10 +51,27 @@ struct ReportDetail {
     globalThis.testDuration=this.reportItem.testDuration
 
     database.query_powersensor_info(timeStamp).then(data => {
-      for (var i = 0; i <data.length ; i++) {
-      this.tPowerSensorList.push(data[i])
-      }
+      data.forEach(t=>{
+        this.tPowerSensorList.push(t)
+      })
     })
+    //归一化电流
+    database.queryData(timeStamp + ".db").then(data => {
+      let normalCurrentNow = data.reduce((pre,cur)=>{
+        return pre + Number(cur.currentNow).valueOf()
+      },0)
+      return Math.abs(normalCurrentNow /data.length/ 1.1125)
+    }).then((normalCurrentNow)=>{
+      database.query_powerapp_info(timeStamp).then(data => {
+        data.forEach(t=>{
+          let current = (Number(t.percent)) * normalCurrentNow  /100
+          t.setCurrent(current.toFixed(5))
+          t.setPercent(Number(t.percent).toFixed(2) + "%")
+          this.tPowerAppList.push(t)
+        })
+      })
+    })
+
   }
 
   build() {
@@ -117,7 +135,7 @@ struct ReportDetail {
             if (!CheckEmptyUtils.checkStrIsEmpty(this.gpData[0].currentNow)) {
               TabContent() {
                 Column() {
-                  PowerDubai({tPowerSensorList:this.tPowerSensorList})
+                  PowerDubai({tPowerSensorList:this.tPowerSensorList, TPowerAppInfoList:this.tPowerAppList})
                 }.width('100%').height('100%')
               }.tabBar('功耗')
             }

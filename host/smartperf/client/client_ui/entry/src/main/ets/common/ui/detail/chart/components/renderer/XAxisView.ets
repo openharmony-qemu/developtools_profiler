@@ -22,7 +22,6 @@ import Transformer from '../..//utils/Transformer'
 import ViewPortHandler from '../../utils/ViewPortHandler'
 import XAixsMode from '../../data/XAixsMode';
 
-@Entry
 @Component
 @Preview
 export default struct XAxisView {

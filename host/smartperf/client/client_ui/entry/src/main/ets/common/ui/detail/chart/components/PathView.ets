@@ -25,7 +25,6 @@ import LineChartRenderer from '../renderer/LineChartRenderer';
 import LineData from '../data/LineData';
 import Utils from '../utils/Utils'
 
-@Entry
 @Component
 @Preview
 export default struct PathView {

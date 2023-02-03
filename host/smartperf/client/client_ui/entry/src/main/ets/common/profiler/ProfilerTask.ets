@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +16,15 @@ import deviceInfo from '@ohos.deviceInfo'
 import CommonEvent from '@ohos.commonEvent'
 import database from '../database/DatabaseUtils'
 import { CPU } from './item/CPU';
+import { Power } from './item/Power';
 import { dateFormat } from '../utils/TimeUtils';
+import { TPowerAppInfo } from '../entity/DatabaseEntity';
 import { csvGeneralInfo, csvTIndexInfo } from '../utils/CSVUtils'
 import { createFilePath } from '../utils/IOUtils'
+import CheckEmptyUtils  from '../utils/CheckEmptyUtils'
 import { GPData, TIndexInfo, TGeneralInfo, TPowerSensorInfo } from '../entity/DatabaseEntity'
 import { ProfilerFactory } from './base/ProfilerFactory'
+import { CollectorType } from './base/ProfilerConstant'
 import SPLogger from '../../common/utils/SPLogger'
 
 export class ProfilerTask {
@@ -83,6 +86,15 @@ export class ProfilerTask {
     // fpsJitter队列
     globalThis.fpsJitterArr = new Array<String>()
 
+    // fps队列
+    globalThis.fpsArr = new Array<String>()
+    // power 电流队列
+    globalThis.powerCurArr = new Array<String>()
+
+    // power 电压队列
+    globalThis.powerVoltArr = new Array<String>()
+
+
     //初始化数据库  2022-02-23 dbName改为时间戳
     database.createTable(globalThis.dbTime)
     SPLogger.INFO(ProfilerTask.name,'ProfilerUtils taskInit called');
@@ -95,7 +107,7 @@ export class ProfilerTask {
       (moduleName)=>{
         let typeCollect = ProfilerFactory.getProfilerByConfig(moduleName.toString())
         if (typeCollect != null) {
-          let gpData:GPData =typeCollect.readData()
+          let gpData:GPData = typeCollect.readData()
           if(typeCollect instanceof CPU){
             gpDataArr.push(typeCollect.readCPULoad())
           }
@@ -116,6 +128,14 @@ export class ProfilerTask {
     SPLogger.DEBUG(ProfilerTask.name,"profiler globalThis.collectIntervalNum " + globalThis.collectIntervalNum)
 
     SPLogger.DEBUG(ProfilerTask.name,'ProfilerTask taskStart called');
+  }
+
+  taskSingleItemStart(collectorType : CollectorType) {
+    SPLogger.ERROR("ProfilerTaskTest",'ProfilerTask taskStart call collectorType' + collectorType.toString());
+    let typeCollect = ProfilerFactory.getProfilerByConfig(collectorType.toString())
+    if(typeCollect instanceof Power) {
+        typeCollect.readFourTimesData()
+    }
   }
 
   taskStop() {
@@ -183,6 +203,12 @@ export class ProfilerTask {
                     for (var i = 0; i < tPowers.length; i++) {
                       database.insertPowerSensor("task_powersensor_info",globalThis.dbTime,tPowers[i])
                     }
+                  }).then(()=>{
+                     return database.query_applications_power_info(dateFormat(globalThis.startTime), dateFormat(globalThis.endTime))
+                  }).then((tArr:Array<TPowerAppInfo>)=>{
+                    tArr.forEach(t=>{
+                      database.insertPowerAppInfo("task_powerapp_info",globalThis.dbTime,t)
+                    })
                   })
                 })
               })
@@ -191,15 +217,6 @@ export class ProfilerTask {
         })
       })
     })
-
-
-
-
-
-
-
-
-
   }
   taskDestroy() {
     //数据库时间戳标记
@@ -218,10 +235,19 @@ export class ProfilerTask {
     //采集定时器 配置
     globalThis.collectInterval = -1
     globalThis.collectIntervalCollect = -1
+    globalThis.collectPowerCollect = -1
     globalThis.collectIntervalNum = -1
+
+    globalThis.powerValue = 0
 
     //socket采集队列 fps ram
     globalThis.fpsArr = new Array<String>()
+
+    // power 电流队列
+    globalThis.powerCurArr = new Array<String>()
+
+    // power 电压队列
+    globalThis.powerVoltArr = new Array<String>()
     globalThis.fpsJitterArr = new Array<String>()
     globalThis.ramArr = new Array<String>()
   }
