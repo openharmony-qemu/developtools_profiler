@@ -52,6 +52,7 @@ sources_base = [
   "../src/utilities.cpp",
   "../src/virtual_runtime.cpp",
   "../src/virtual_thread.cpp",
+  "../../../base/src/common.cpp",
 ]
 
 common_deps = [

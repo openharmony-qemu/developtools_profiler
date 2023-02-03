@@ -26,7 +26,10 @@ config("hiperfplugin_config") {
 
 ohos_source_set("hiperfplugin_source") {
   output_name = "hiperfplugin"
-  sources = [ "src/hiperf_module.cpp" ]
+  sources = [
+    "../../base/src/common.cpp",
+    "src/hiperf_module.cpp",
+  ]
   public_configs = [
     ":hiperfplugin_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",

@@ -14,8 +14,10 @@
  */
 
 #include "common.h"
+#include <array>
 #include <cinttypes>
 #include <csignal>
+#include <dirent.h>
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
@@ -24,14 +26,22 @@
 #endif
 #include <sstream>
 #include <sys/file.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "logging.h"
+
 
 namespace COMMON {
 constexpr int EXECVP_ERRNO = 2;
 const int SHELL_UID = 2000;
 const std::string DEFAULT_PATH = "/data/local/tmp/";
+constexpr int PIPE_LEN = 2;
+constexpr int READ = 0;
+constexpr int WRITE = 1;
+const int FILE_PATH_SIZE = 512;
+const int BUFFER_SIZE = 1024;
+const int INVALID_PID = -1;
 
 bool IsProcessRunning()
 {
@@ -70,19 +80,56 @@ bool IsProcessRunning()
 
 bool IsProcessExist(std::string& processName, int& pid)
 {
-    std::string findpid = "pidof " + processName;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
-
-    constexpr int lineSize = 1000;
-    char line[lineSize];
-    do {
-        if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
-            return false;
-        } else if (strlen(line) > 0 && isdigit(static_cast<unsigned char>(line[0]))) {
-            pid = atoi(line);
-            return true;
+    DIR* dir = opendir("/proc");
+    if (dir == nullptr) {
+        HILOG_ERROR(LOG_CORE, "open /proc dir failed");
+        return false;
+    }
+    struct dirent* ptr;
+    int pidValue = INVALID_PID;
+    while ((ptr = readdir(dir)) != nullptr) {
+        if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
+            continue;
         }
-    } while (true);
+        if ((!isdigit(*ptr->d_name)) || ptr->d_type != DT_DIR) {
+            continue;
+        }
+        char filePath[FILE_PATH_SIZE] = {0};
+        int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
+        if (len < 0) {
+            HILOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
+            continue;
+        }
+        FILE* fp = fopen(filePath, "r");
+        if (fp == nullptr) {
+            HILOG_WARN(LOG_CORE, "open file failed!");
+            break;
+        }
+        char buf[BUFFER_SIZE] = {0};
+        if (fgets(buf, sizeof(buf) - 1, fp) == nullptr) {
+            fclose(fp);
+            continue;
+        }
+        std::string str(buf);
+        size_t found = str.rfind("/");
+        std::string fullProcess;
+        if (found != std::string::npos) {
+            fullProcess = str.substr(found + 1);
+        } else {
+            fullProcess = str;
+        }
+        if (fullProcess == processName) {
+            pidValue = atoi(ptr->d_name);
+            fclose(fp);
+            break;
+        }
+        fclose(fp);
+    }
+    closedir(dir);
+    if (pidValue != INVALID_PID) {
+        pid = pidValue;
+    }
+    return pidValue != INVALID_PID;
 }
 
 int StartProcess(const std::string& processBin, std::vector<char*>& argv)
@@ -106,7 +153,6 @@ int KillProcess(int pid)
     if (pid == -1) {
         return -1;
     }
-
     int stat;
     kill(pid, SIGKILL);
     if (waitpid(pid, &stat, 0) == -1) {
@@ -114,7 +160,6 @@ int KillProcess(int pid)
             stat = -1;
         }
     }
-
     return stat;
 }
 
@@ -126,12 +171,84 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix)
     mallinfoLog += "arena = " + std::to_string(mallinfo.arena) + ", ordblks = " + std::to_string(mallinfo.ordblks);
     mallinfoLog += ", smblks = " + std::to_string(mallinfo.smblks) + ", hblks = " + std::to_string(mallinfo.hblks);
     mallinfoLog += ", hblkhd = " + std::to_string(mallinfo.hblkhd) + ", usmblks = " + std::to_string(mallinfo.usmblks);
-    mallinfoLog += ", fsmblks = " + std::to_string(mallinfo.fsmblks) +
-                   ", uordblks = " + std::to_string(mallinfo.uordblks);
-    mallinfoLog += ", fordblks = " + std::to_string(mallinfo.fordblks) +
-                   ", keepcost = " + std::to_string(mallinfo.keepcost);
+    mallinfoLog +=
+        ", fsmblks = " + std::to_string(mallinfo.fsmblks) + ", uordblks = " + std::to_string(mallinfo.uordblks);
+    mallinfoLog +=
+        ", fordblks = " + std::to_string(mallinfo.fordblks) + ", keepcost = " + std::to_string(mallinfo.keepcost);
     HILOG_INFO(LOG_CORE, "%s", mallinfoLog.c_str());
-#endif // HOOK_ENABLE
+#endif  // HOOK_ENABLE
+}
+
+FILE* CustomPopen(int& childPid, const std::string& filePath, std::vector<std::string>& argv, const char* type)
+{
+    if (type == nullptr) {
+        HILOG_ERROR(LOG_CORE, "Common:%s param invalid", __func__);
+        return nullptr;
+    }
+    int fd[PIPE_LEN];
+    pipe(fd);
+    pid_t pid = fork();
+    if (pid == -1) {
+        HILOG_ERROR(LOG_CORE, "Common:%s fork failed!", __func__);
+        return nullptr;
+    }
+    // child process
+    if (pid == 0) {
+        if (!strncmp(type, "r", strlen(type))) {
+            close(fd[READ]);
+            dup2(fd[WRITE], STDOUT_FILENO);  // Redirect stdout to pipe
+            dup2(fd[WRITE], STDERR_FILENO);  // 2: Redirect stderr to pipe
+        } else {
+            close(fd[WRITE]);
+            dup2(fd[READ], 0);  // Redirect stdin to pipe
+        }
+        setpgid(pid, pid);
+        std::vector<char*> vectArgv;
+        for (auto& item : argv) {
+            vectArgv.push_back(const_cast<char*>(item.c_str()));
+        }
+        // execv : the last argv must be nullptr.
+        vectArgv.push_back(nullptr);
+        execv(filePath.c_str(), &vectArgv[0]);
+        exit(0);
+    } else {
+        if (!strncmp(type, "r", strlen(type))) {
+            // Close the WRITE end of the pipe since parent's fd is read-only
+            close(fd[WRITE]);
+        } else {
+            // Close the READ end of the pipe since parent's fd is write-only
+            close(fd[READ]);
+        }
+    }
+    childPid = pid;
+    if (!strncmp(type, "r", strlen(type))) {
+        return fdopen(fd[READ], "r");
+    }
+    return fdopen(fd[WRITE], "w");
+}
+
+int CustomPclose(FILE* fp, int childPid)
+{
+    HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    CHECK_NOTNULL(fp, -1, "NOTE %s: fp is null", __func__);
+    int stat = 0;
+    if (fclose(fp) != 0) {
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        HILOG_ERROR(LOG_CORE, "Common: %s fclose failed! errno(%d:%s)", __func__, errno, buf);
+    }
+    if (waitpid(childPid, &stat, 0) == -1) {
+        if (errno != EINTR) {
+            const int bufSize = 256;
+            char buf[bufSize] = {0};
+            strerror_r(errno, buf, bufSize);
+            HILOG_ERROR(LOG_CORE, "Common: %s waitpid failed! errno(%d:%s)", __func__, errno, buf);
+            return stat;
+        }
+    }
+    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    return stat;
 }
 
 int GetServicePort()
@@ -153,5 +270,30 @@ int GetServicePort()
     int port = (minPort + maxPort) / 2 + offset;
     HILOG_DEBUG(LOG_CORE, "Service port is: %d", port);
     return port;
+}
+
+void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret)
+{
+    if (str.empty()) {
+        HILOG_ERROR(LOG_CORE, "The string splited is empty!");
+        return;
+    }
+    std::string::size_type beginPos = str.find_first_not_of(sep);
+    std::string::size_type findPos = 0;
+    while (beginPos != std::string::npos) {
+        findPos = str.find(sep, beginPos);
+        std::string tmp;
+        if (findPos != std::string::npos) {
+            tmp = str.substr(beginPos, findPos - beginPos);
+            beginPos = findPos + sep.length();
+        } else {
+            tmp = str.substr(beginPos);
+            beginPos = findPos;
+        }
+        if (!tmp.empty()) {
+            ret.push_back(tmp);
+            tmp.clear();
+        }
+    }
 }
 } // COMMON

@@ -24,7 +24,10 @@ bool IsProcessExist(std::string& processName, int& pid); // Check if the process
 int StartProcess(const std::string& processBin, std::vector<char*>& argv);
 int KillProcess(int pid);
 void PrintMallinfoLog(const std::string& mallInfoPrefix);
+FILE* CustomPopen(int& childPid, const std::string& filePath, std::vector<std::string>& argv, const char* type);
+int CustomPclose(FILE* fp, int childPid);
 int GetServicePort();
+void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret);
 } // COMMON
 
 #endif // COMMON_H
