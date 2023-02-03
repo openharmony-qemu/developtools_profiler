@@ -27,6 +27,7 @@ ohos_unittest("cpudataplugin_ut") {
   sources = [ "unittest/cpu_data_plugin_unittest.cpp" ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/cpu_plugin:cpudataplugin_source",
+    "${OHOS_PROFILER_DIR}/device/plugins/cpu_plugin:cpudataplugintest",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",
