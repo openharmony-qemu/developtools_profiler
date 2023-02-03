@@ -29,9 +29,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "application_info.h"
+#include "bundle_mgr_proxy.h"
+#include "file_ex.h"
+#include "iservice_registry.h"
 #include "logging.h"
+#include "system_ability_definition.h"
 
-
+using namespace OHOS;
+using namespace OHOS::AppExecFwk;
 namespace COMMON {
 constexpr int EXECVP_ERRNO = 2;
 const int SHELL_UID = 2000;
@@ -295,5 +301,43 @@ void SplitString(const std::string& str, const std::string &sep, std::vector<std
             tmp.clear();
         }
     }
+}
+
+bool CheckApplicationPermission(int pid, const std::string& processName)
+{
+    std::string bundleName;
+    if (pid > 0) {
+        std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
+        if (!LoadStringFromFile(filePath, bundleName)) {
+            HILOG_ERROR(LOG_CORE, "Get process name by pid failed!");
+            return false;
+        }
+    } else {
+        bundleName = processName;
+    }
+    if (bundleName.empty()) {
+        HILOG_ERROR(LOG_CORE, "Pid or process name is illegal!");
+        return false;
+    }
+
+    sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (sam == nullptr) {
+        HILOG_ERROR(LOG_CORE, "GetSystemAbilityManager failed!");
+        return false;
+    }
+    sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (remoteObject == nullptr) {
+        HILOG_ERROR(LOG_CORE, "Get BundleMgr SA failed!");
+        return false;
+    }
+    sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
+    ApplicationInfo appInfo;
+    bool ret = proxy->GetApplicationInfo(bundleName, GET_APPLICATION_INFO_WITH_DISABLE,
+                                         Constants::ANY_USERID, appInfo);
+    if (!ret) {
+        HILOG_ERROR(LOG_CORE, "Get application info failed!");
+        return false;
+    }
+    return appInfo.debug;
 }
 } // COMMON

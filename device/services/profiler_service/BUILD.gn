@@ -45,6 +45,7 @@ ohos_source_set("profiler_service") {
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
   ]
   public_configs = [
     ":profiler_service_config",
@@ -66,9 +67,25 @@ ohos_prebuilt_etc("hiprofilerd.cfg") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }
 
+ohos_prebuilt_etc("hiprofiler.para") {
+  source = "../../etc/hiprofiler.para"
+  relative_install_dir = "param"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}
+
+ohos_prebuilt_etc("hiprofiler.para.dac") {
+  source = "../../etc/hiprofiler.para.dac"
+  relative_install_dir = "param"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}
+
 ohos_executable("hiprofilerd") {
   sources = [ "src/main.cpp" ]
   deps = [
+    ":hiprofiler.para",
+    ":hiprofiler.para.dac",
     ":hiprofilerd.cfg",
     ":profiler_service",
     "../../base:hiprofiler_base",

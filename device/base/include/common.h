@@ -28,6 +28,7 @@ FILE* CustomPopen(int& childPid, const std::string& filePath, std::vector<std::s
 int CustomPclose(FILE* fp, int childPid);
 int GetServicePort();
 void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret);
+bool CheckApplicationPermission(int pid, const std::string& processName);
 } // COMMON
 
 #endif // COMMON_H

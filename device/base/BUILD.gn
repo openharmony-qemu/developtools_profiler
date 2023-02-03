@@ -71,13 +71,22 @@ ohos_source_set("hiprofiler_base") {
     ":hiprofiler_test_config",
     ":hiprofiler_base_config",
   ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+  ]
+
   public_deps = [ "//third_party/bounds_checking_function:libsec_static" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
+      external_deps += [ "shared_library:libhilog" ]
     } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+      external_deps += [ "hiviewdfx_hilog_native:libhilog" ]
     }
   }
 }

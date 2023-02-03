@@ -27,11 +27,11 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
   sources = [
-    "${OHOS_PROFILER_DIR}/device/base/src/common.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/hiperf_plugin/src/hiperf_module.cpp",
     "hiperfstartplugin_fuzzer.cpp",
   ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
   ]
 

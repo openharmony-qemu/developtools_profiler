@@ -44,9 +44,6 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
 ohos_executable("native_daemon") {
   output_name = "native_daemon"
   sources = [
-    "../../base/src/common.cpp",
-    "../../base/src/epoll_event_poller.cpp",
-    "../../base/src/event_notifier.cpp",
     "../api/src/buffer_writer.cpp",
     "../api/src/command_poller.cpp",
     "src/call_stack.cpp",
@@ -89,6 +86,7 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+    "../../base:hiprofiler_base",
     "//base/startup/init/interfaces/innerkits:libbegetutil",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/libunwind:unwind_source_${target_cpu}",

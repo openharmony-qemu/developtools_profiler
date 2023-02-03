@@ -35,7 +35,7 @@ uint32_t CommandPoller::GetRequestId()
 
 bool CommandPoller::OnConnect()
 {
-    return Connect(DEFAULT_UNIX_SOCKET_PATH);
+    return Connect(DEFAULT_UNIX_SOCKET_FULL_PATH);
 }
 
 bool CommandPoller::OnCreateSessionCmd(const CreateSessionCmd& cmd, SocketContext& context) const

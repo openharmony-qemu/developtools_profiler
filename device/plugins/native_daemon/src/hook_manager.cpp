@@ -15,11 +15,12 @@
 
 #include "hook_manager.h"
 
-#include <sys/stat.h>
-
 #include <limits>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "command_poller.h"
+#include "common.h"
 #include "epoll_event_poller.h"
 #include "event_notifier.h"
 #include "hook_common.h"
@@ -173,6 +174,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
         return false;
     }
+
+    if (getuid() != 0 && !COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+        HILOG_ERROR(LOG_CORE, "Application debug permisson denied!");
+        return false;
+    }
+
     pid_ = hookConfig_.pid();
 
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();

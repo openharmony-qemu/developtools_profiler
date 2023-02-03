@@ -15,7 +15,10 @@
 #define LOG_TAG "ProfilerService"
 #include "profiler_service.h"
 #include <algorithm>
+#include <unistd.h>
+#include "common.h"
 #include "logging.h"
+#include "native_hook_config.pb.h"
 #include "plugin_service.h"
 #include "plugin_session.h"
 #include "plugin_session_manager.h"
@@ -256,10 +259,27 @@ Status ProfilerService::CreateSession(ServerContext* context,
     // copy plugin configs from request
     std::vector<ProfilerPluginConfig> pluginConfigs;
     pluginConfigs.reserve(nConfigs);
+
     for (int i = 0; i < nConfigs; i++) {
+        if (request->plugin_configs(i).name() == "nativehook" && getuid() != 0) {
+            NativeHookConfig hookConfig;
+            std::string cfgData = request->plugin_configs(i).config_data();
+            if (hookConfig.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
+                HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
+                continue;
+            }
+            if (!COMMON::CheckApplicationPermission(hookConfig.pid(), hookConfig.process_name())) {
+                HILOG_ERROR(LOG_CORE, "Application debug permisson denied!");
+                continue;
+            }
+        }
         pluginConfigs.push_back(request->plugin_configs(i));
     }
 
+    if (pluginConfigs.empty()) {
+        HILOG_ERROR(LOG_CORE, "No plugins are loaded!");
+        return Status(StatusCode::PERMISSION_DENIED, "");
+    }
     std::vector<std::string> pluginNames;
     std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
                    [](ProfilerPluginConfig& config) { return config.name(); });
@@ -284,8 +304,8 @@ Status ProfilerService::CreateSession(ServerContext* context,
         resultDemuxer->SetTraceWriter(traceWriter);
         for (int i = 0; i < nConfigs; i++) {
             ProfilerPluginData pluginData;
-            pluginData.set_name(request->plugin_configs(i).name() + "_config");
-            pluginData.set_data(request->plugin_configs(i).config_data());
+            pluginData.set_name(pluginConfigs[i].name() + "_config");
+            pluginData.set_data(pluginConfigs[i].config_data());
             std::vector<char> msgData(pluginData.ByteSizeLong());
             if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
                 HILOG_WARN(LOG_CORE, "PluginConfig SerializeToArray failed!");
