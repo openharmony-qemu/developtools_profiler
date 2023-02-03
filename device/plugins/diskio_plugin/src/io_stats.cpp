@@ -317,7 +317,7 @@ double IoStats::KeepTowDigits(const uint64_t& data, uint64_t div)
 uint32_t IoStats::PutIoStatsData(StatsData* pluginStats)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    while (ioDatas_.empty()) {
+    if (ioDatas_.empty()) {
         return 0;
     }
 
