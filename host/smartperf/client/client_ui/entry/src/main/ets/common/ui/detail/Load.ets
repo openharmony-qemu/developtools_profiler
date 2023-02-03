@@ -29,7 +29,6 @@ import CheckEmptyUtils from'../../utils/CheckEmptyUtils'
 /**
  * 负载页面
  */
-@Entry
 @Component
 export struct Load {
   @State private gpData: Array<TIndexInfo> = new Array()

@@ -26,11 +26,15 @@ export default class BundleManager {
     static async getIconByBundleName(mBundleNameArr: Array<String>): Promise<Map<string, string>> {
         let mBundleNames = Array.from(new Set(mBundleNameArr))
         let mMap = new Map
-        bundle.getAllApplicationInfo(8, 100).then(async data => {
+        let want = {
+            action: "action.system.home",
+            entities: ["entity.system.home"]
+        };
+        bundle.queryAbilityByWant(want, 1).then(async data => {
             await
             SPLogger.INFO(TAG,'getIconByBundleName data length [' + data.length + ']');
             for (let j = 0; j < data.length; j++) {
-                let bundleName = data[j].name
+                let bundleName = data[j].bundleName
                 for (let i = 0; i < mBundleNames.length; i++) {
                     if (mBundleNames[i] == bundleName) {
                         let bundleContext = globalThis.abilityContext.createBundleContext(mBundleNames[i])
@@ -53,20 +57,23 @@ export default class BundleManager {
     //获取app列表
     static async getAppList(): Promise<Array<AppInfoItem>> {
         let appInfoList = new Array<AppInfoItem>()
-        bundle.getAllApplicationInfo(8, 100).then(async data => {
+        let want = {
+            action: "action.system.home",
+            entities: ["entity.system.home"]
+        };
+        bundle.queryAbilityByWant(want, 1).then(async data => {
             await
             SPLogger.INFO(TAG,'xxx getAllApplicationInfo data length [' + data.length + ']')
             for (let i = 0; i < data.length; i++) {
-                let bundleName = data[i].name
-                let bundleContext = globalThis.abilityContext.createBundleContext(data[i
-                ].name)
+                let bundleName = data[i].bundleName
+                let bundleContext = globalThis.abilityContext.createBundleContext(data[i].bundleName)
                 try {
                     let appName = await bundleContext.resourceManager.getString(data[i].labelId)
                     let icon = await bundleContext.resourceManager.getMediaBase64(data[i].iconId)
                     bundle.getBundleInfo(bundleName, 1).then(bundleData => {
                         BundleManager.getAbility(bundleName).then(abilityName => {
                             console.info("index[" + i + "].getAbility for begin data: ", abilityName);
-                            appInfoList.push(new AppInfoItem(data[i].name, appName, bundleData.versionName, icon, abilityName))
+                            appInfoList.push(new AppInfoItem(bundleName, appName, bundleData.versionName, icon, abilityName))
                         });
                     })
                 } catch (err) {

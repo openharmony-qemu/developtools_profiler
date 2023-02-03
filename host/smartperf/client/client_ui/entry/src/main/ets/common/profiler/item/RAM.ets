@@ -16,7 +16,6 @@ import { createGPData, extractNumber } from '../base/BaseProfilerUtils';
 import { BaseProfiler } from '../base/BaseProfiler'
 import { CollectorType } from '../base/ProfilerConstant'
 import { SocketProfiler} from '../base/SocketProfiler'
-import worker from '@ohos.worker'; 
 import WorkerHandler from '../WorkerHandler';
 let MainWorker = globalThis.MainWorker
 

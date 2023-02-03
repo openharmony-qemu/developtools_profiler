@@ -370,13 +370,27 @@ export class TPowerAppInfo {
   public power: String;
   public current: String;
   public percent: String;
-  constructor(id ?: String, taskId ?: String, application ?: String, power ?: String, current ?: String, percent ?: String) {
+  public color: Resource;
+  constructor(id ?: String, taskId ?: String, application ?: String, power ?: String, current ?: String, percent ?: String,color?: Resource) {
     this.id = id
     this.taskId = taskId
     this.application = application
     this.power = power
     this.current = current
     this.percent = percent
+    this.color = color
+  }
+  setColor(color?: Resource){
+    this.color = color
+  }
+  setPower(power?: String){
+    this.power = power
+  }
+  setPercent(percent?: String){
+    this.percent = percent
+  }
+  setCurrent(current?: String){
+    this.current = current
   }
 }
 

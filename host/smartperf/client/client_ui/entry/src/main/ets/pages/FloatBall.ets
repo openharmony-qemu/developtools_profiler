@@ -19,6 +19,7 @@ import { initFloatWindow,destoryAllFloatWindow } from '../common/ui/floatwindow/
 import WorkerHandler from '../common/profiler/WorkerHandler';
 import worker from '@ohos.worker';
 let MainWorker = globalThis.MainWorker
+import { CollectorType } from '../common/profiler/base/ProfilerConstant'
 
 MainWorker.onmessage = function (result) {
   WorkerHandler.socketHandler(result)
@@ -81,6 +82,14 @@ struct FloatBall {
         }
         console.log("collectIntervalCollect running status::"+ this.playerState);
       }, 1000)
+
+      globalThis.collectPowerCollect = setInterval(() => {
+        console.log("collectIntervalCollect running....");
+        if (this.playerState == TaskStatus.task_running) {
+          ProfilerTask.getInstance().taskSingleItemStart(CollectorType.TYPE_POWER)
+        }
+        console.log("collectIntervalCollect running status::"+ this.playerState);
+      }, 250)
     }
     globalThis.task_status = TaskStatus.task_running
     this.playerState = TaskStatus.task_running
@@ -110,7 +119,6 @@ struct FloatBall {
   }
 
   longEvent() {
-    MainWorker.postMessage({"setDuBaiDb": true})
     ProfilerTask.getInstance().taskStop()
     this.destroyAllWindow()
     this.clearAllInterVal()
@@ -137,6 +145,7 @@ struct FloatBall {
       MainWorker.postMessage({"catch_trace_end":true})
     }
     clearInterval(globalThis.collectIntervalCollect)
+    clearInterval(globalThis.collectPowerCollect)
   }
 
   MoveWindow(offsetX: number, offsetY: number) {
