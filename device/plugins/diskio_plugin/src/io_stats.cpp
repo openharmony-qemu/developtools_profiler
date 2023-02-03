@@ -271,7 +271,7 @@ bool IoStats::PutPluginStatsData(StatsData* pluginStats)
 uint32_t IoStats::PutCpuStatsData(StatsData* pluginStats)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    while (cpuDatas_.empty()) {
+    if (cpuDatas_.empty()) {
         return 0;
     }
 
