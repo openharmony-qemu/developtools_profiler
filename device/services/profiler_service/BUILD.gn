@@ -59,9 +59,17 @@ ohos_source_set("profiler_service") {
   }
 }
 
+ohos_prebuilt_etc("hiprofilerd.cfg") {
+  source = "../../etc/hiprofilerd.cfg"
+  relative_install_dir = "init"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}
+
 ohos_executable("hiprofilerd") {
   sources = [ "src/main.cpp" ]
   deps = [
+    ":hiprofilerd.cfg",
     ":profiler_service",
     "../../base:hiprofiler_base",
     "../plugin_service:hiprofiler_plugin_service",

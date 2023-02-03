@@ -34,6 +34,13 @@ config("hook_config") {
   defines += [ "target_cpu_${target_cpu}" ]
 }
 
+ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
+  source = "../../etc/hiprofiler_daemon.cfg"
+  relative_install_dir = "init"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}
+
 ohos_executable("native_daemon") {
   output_name = "native_daemon"
   sources = [
@@ -77,6 +84,7 @@ ohos_executable("native_daemon") {
     "//third_party/googletest/googletest/include",
   ]
   deps = [
+    ":hiprofiler_daemon.cfg",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",

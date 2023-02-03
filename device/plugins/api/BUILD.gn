@@ -67,8 +67,18 @@ ohos_source_set("plugins_sources") {
   }
 }
 
+ohos_prebuilt_etc("hiprofiler_plugins.cfg") {
+  source = "../../etc/hiprofiler_plugins.cfg"
+  relative_install_dir = "init"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}
+
 ohos_executable("hiprofiler_plugins") {
-  deps = [ ":plugins_sources" ]
+  deps = [
+    ":hiprofiler_plugins.cfg",
+    ":plugins_sources",
+  ]
   sources = [ "src/main.cpp" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
