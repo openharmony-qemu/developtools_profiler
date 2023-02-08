@@ -251,28 +251,78 @@ static FpsInfo GetSurfaceFrame(std::string name, FpsConfig &fpsConfig)
     }
 }
 
+static void ReplaceString(std::string &res)
+{
+    std::string flagOne = "\r";
+    std::string flagTwo = "\n";
+    std::string::size_type ret = res.find(flagOne);
+    while (ret != res.npos) {
+        res.replace(ret, 1, "");
+        ret = res.find(flagOne);
+    }
+    ret = res.find(flagTwo);
+    while (ret != res.npos) {
+        res.replace(ret, 1, "");
+        ret = res.find(flagTwo);
+    }
+}
+
+static bool LoadCmd(const std::string &cmd, std::string &result)
+{
+    std::string cmdExc = cmd;
+    FILE *fd = popen(cmdExc.c_str(), "r");
+    if (fd == nullptr) {
+        return false;
+    }
+    char buf[1024] = {'\0'};
+    int ret = fread(buf, sizeof(buf), 1, fd);
+    if (ret >= 0) {
+        result = buf;
+    }
+    if (pclose(fd) == -1) {
+        std::cout << "" << std::endl;
+    }
+    ReplaceString(result);
+    return ret >= 0 ? true : false;
+}
+
 int main(int argc, char *argv[])
 {
-    FpsInfo gfpsInfo;
-    FpsInfo gfpsUniteInfo;
     int num = 1;
     if (!strcmp(argv[1], "")) {
         printf("the args of num must be not-null!\n");
     } else {
         num = atoi(argv[1]);
-        printf("set num:%d success\n", num);
         if (num < 0) {
             printf("set num:%d not valid arg\n", num);
         }
+        printf("set num:%d success\n", num);
+        FpsInfo gfpsInfo;
+        FpsInfo gfpsUniteInfo;
+        std::string layerName;
+        std::string tempLayerName;
+        struct timeval start;
+        struct timeval end;
+        unsigned long runTime;
+        std::string uniteLayer = "DisplayNode";
+        unsigned long oneSec = 1000000;
+        std::string cmdResult;
         for (int i = 0; i < num; i++) {
-            struct timeval start;
-            struct timeval end;
             gettimeofday(&start, nullptr);
-            std::string layerName = GetLayer();
+            tempLayerName = GetLayer();
+            if (i == 0) {
+                layerName = tempLayerName;
+                LoadCmd("hidumper -s 10 -a \"fpsClear DisplayNode\"", cmdResult);
+                LoadCmd("hidumper -s 10 -a \"fpsClear" + layerName + "\"", cmdResult);
+            } else {
+                if (layerName.compare(tempLayerName) != 0) {
+                    layerName = tempLayerName;
+                    LoadCmd("hidumper -s 10 -a \"fpsClear" + layerName + "\"", cmdResult);
+                }
+            }
             FpsConfig fpsConfig;
-            gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
             FpsConfig fpsUniteConfig;
-            std::string uniteLayer = "DisplayNode";
+            gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
             gfpsUniteInfo = GetSurfaceFrame(uniteLayer, fpsUniteConfig);
             if (gfpsUniteInfo.fps > gfpsInfo.fps)
             {
@@ -280,10 +330,9 @@ int main(int argc, char *argv[])
             } else {
                 printf("fps:%d|%lld\n", gfpsInfo.fps, gfpsInfo.currentFpsTime);
             }
-            gettimeofday(&end, nullptr);
-            unsigned long runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
             fflush(stdout);
-            unsigned long oneSec = 1000000;
+            gettimeofday(&end, nullptr);
+            runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
             usleep(oneSec - runTime);
         }
     }
