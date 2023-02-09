@@ -92,6 +92,7 @@ def ensure_dir_exists(file_path):
     if not os.path.exists(file_dir):
         os.mkdir(file_dir)
 
+
 class Common:
     this_file = os.path.basename(__file__)
     logging.basicConfig(
@@ -103,6 +104,7 @@ class Common:
     auto_generated_gni = AUTO_GENERATED_GNI
     parse_function_args = PARSE_FUNCTION_ARGS
     gn_copyright_header = GN_COPYRIGHT_HEADER
+
 
 class EventParserCodeGenerator(FtraceEventCodeGenerator):
     def __init__(self, events_dir, allow_list):
