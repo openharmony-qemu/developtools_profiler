@@ -244,18 +244,6 @@ Status ProfilerService::CreateSession(ServerContext* context,
     ProfilerSessionConfig sessionConfig = request->session_config();
     const int nBuffers = sessionConfig.buffers_size();
     CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
-
-    // copy buffer configs
-    std::vector<BufferConfig> bufferConfigs;
-    if (nBuffers == 1) {
-        // if only one buffer config provided, all plugin use the same buffer config
-        bufferConfigs.resize(nConfigs, sessionConfig.buffers(0));
-    } else if (nBuffers > 0) {
-        // if more than one buffer config provided, the number of buffer configs must equals number of plugin configs
-        bufferConfigs.assign(sessionConfig.buffers().begin(), sessionConfig.buffers().end());
-    }
-    HILOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
-
     // copy plugin configs from request
     std::vector<ProfilerPluginConfig> pluginConfigs;
     pluginConfigs.reserve(nConfigs);
@@ -280,6 +268,16 @@ Status ProfilerService::CreateSession(ServerContext* context,
         HILOG_ERROR(LOG_CORE, "No plugins are loaded!");
         return Status(StatusCode::PERMISSION_DENIED, "");
     }
+    // copy buffer configs
+    std::vector<BufferConfig> bufferConfigs;
+    if (nBuffers == 1) {
+        // if only one buffer config provided, all plugin use the same buffer config
+        bufferConfigs.resize(pluginConfigs.size(), sessionConfig.buffers(0));
+    } else if (nBuffers > 0) {
+        // if more than one buffer config provided, the number of buffer configs must equals number of plugin configs
+        bufferConfigs.assign(sessionConfig.buffers().begin(), sessionConfig.buffers().end());
+    }
+    HILOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
     std::vector<std::string> pluginNames;
     std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
                    [](ProfilerPluginConfig& config) { return config.name(); });
@@ -302,7 +300,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
             sessionConfig.single_file_max_size_mb());
         CHECK_POINTER_NOTNULL(traceWriter, "alloc TraceFileWriter failed!");
         resultDemuxer->SetTraceWriter(traceWriter);
-        for (int i = 0; i < nConfigs; i++) {
+        for (int i = 0; i < pluginConfigs.size(); i++) {
             ProfilerPluginData pluginData;
             pluginData.set_name(pluginConfigs[i].name() + "_config");
             pluginData.set_data(pluginConfigs[i].config_data());
