@@ -31,6 +31,7 @@
 #include "common.h"
 #include "command_line.h"
 #include "google/protobuf/text_format.h"
+#include "parameters.h"
 #include "parse_plugin_config.h"
 #include "profiler_service.grpc.pb.h"
 #include "trace_plugin_config.pb.h"
@@ -393,31 +394,43 @@ int CheckGrpcMsgSend()
 bool StartDependentProcess()
 {
     constexpr int waitProcMills = 300;
+    if (getuid() == 0) {
+        if (!COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid)) {
+            // need start hiprofilerd
+            std::vector<char*> argvVec;
+            argvVec.push_back(const_cast<char*>(HIPROFILERD_NAME.c_str()));
+            g_hiprofilerdPid = COMMON::StartProcess(HIPROFILERD_NAME, argvVec);
+            // Wait for the hiprofilerd to start
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
+        }
 
-    if (!COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid)) {
-        // need start hiprofilerd
-        std::vector<char*> argvVec;
-        argvVec.push_back(const_cast<char*>(HIPROFILERD_NAME.c_str()));
-        g_hiprofilerdPid = COMMON::StartProcess(HIPROFILERD_NAME, argvVec);
-        // Wait for the hiprofilerd to start
+        if (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid)) {
+            // need start hiprofiler_plugins
+            std::vector<char*> argvVec;
+            argvVec.push_back(const_cast<char*>(HIPROFILER_PLUGINS_NAME.c_str()));
+            g_hiprofilerPluginsPid = COMMON::StartProcess(HIPROFILER_PLUGINS_NAME, argvVec);
+            // Wait for the hiprofiler_plugins add preset plugin
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
+        }
+
+        if (!COMMON::IsProcessExist(NATIVE_DAEMON_NAME, g_nativeDaemonPid)) {
+            // need start native_daemon
+            std::vector<char*> argvVec;
+            argvVec.push_back(const_cast<char*>(NATIVE_DAEMON_NAME.c_str()));
+            g_nativeDaemonPid = COMMON::StartProcess(NATIVE_DAEMON_NAME, argvVec);
+            // Wait for the native_daemon to start
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
+        }
+    } else {
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
+
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
         std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-    }
-
-    if (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid)) {
-        // need start hiprofiler_plugins
-        std::vector<char*> argvVec;
-        argvVec.push_back(const_cast<char*>(HIPROFILER_PLUGINS_NAME.c_str()));
-        g_hiprofilerPluginsPid = COMMON::StartProcess(HIPROFILER_PLUGINS_NAME, argvVec);
-        // Wait for the hiprofiler_plugins add preset plugin
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
         std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-    }
-
-    if (!COMMON::IsProcessExist(NATIVE_DAEMON_NAME, g_nativeDaemonPid)) {
-        // need start native_daemon
-        std::vector<char*> argvVec;
-        argvVec.push_back(const_cast<char*>(NATIVE_DAEMON_NAME.c_str()));
-        g_nativeDaemonPid = COMMON::StartProcess(NATIVE_DAEMON_NAME, argvVec);
-        // Wait for the native_daemon to start
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "1");
         std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     }
 
@@ -433,20 +446,26 @@ bool StartDependentProcess()
 
 void KillDependentProcess()
 {
-    // if pid is equal to -1, need to get pid first.
-    if (g_nativeDaemonPid == -1) {
-        COMMON::IsProcessExist(NATIVE_DAEMON_NAME, g_nativeDaemonPid);
-    }
-    if (g_hiprofilerPluginsPid == -1) {
-        COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid);
-    }
-    if (g_hiprofilerdPid == -1) {
-        COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid);
-    }
+    if (getuid() == 0) {
+        // if pid is equal to -1, need to get pid first.
+        if (g_nativeDaemonPid == -1) {
+            COMMON::IsProcessExist(NATIVE_DAEMON_NAME, g_nativeDaemonPid);
+        }
+        if (g_hiprofilerPluginsPid == -1) {
+            COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid);
+        }
+        if (g_hiprofilerdPid == -1) {
+            COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid);
+        }
 
-    COMMON::KillProcess(g_nativeDaemonPid);
-    COMMON::KillProcess(g_hiprofilerPluginsPid);
-    COMMON::KillProcess(g_hiprofilerdPid);
+        COMMON::KillProcess(g_nativeDaemonPid);
+        COMMON::KillProcess(g_hiprofilerPluginsPid);
+        COMMON::KillProcess(g_hiprofilerdPid);
+    } else {
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
+    }
 }
 } // namespace
 

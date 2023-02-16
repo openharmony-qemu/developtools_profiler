@@ -72,9 +72,9 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(FPS_FORMAT, "r"), CustomPclose);
     if (fp_.get() == nullptr) {
         const int bufSize = 256;
-        char buf[bufSize] = { 0 };
+        char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "HidumpPlugin: popen(%s) Failed, errno(%d:%s)", FPS_FORMAT, errno, buf);
+        HILOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", FPS_FORMAT, errno, buf);
         return -1;
     }
     CHECK_NOTNULL(resultWriter_, -1, "HidumpPlugin: Writer is no set!");

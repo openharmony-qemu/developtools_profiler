@@ -15,7 +15,10 @@
 #define LOG_TAG "ProfilerService"
 #include "profiler_service.h"
 #include <algorithm>
+#include <unistd.h>
+#include "common.h"
 #include "logging.h"
+#include "native_hook_config.pb.h"
 #include "plugin_service.h"
 #include "plugin_session.h"
 #include "plugin_session_manager.h"
@@ -241,25 +244,40 @@ Status ProfilerService::CreateSession(ServerContext* context,
     ProfilerSessionConfig sessionConfig = request->session_config();
     const int nBuffers = sessionConfig.buffers_size();
     CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
+    // copy plugin configs from request
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.reserve(nConfigs);
 
+    for (int i = 0; i < nConfigs; i++) {
+        if (request->plugin_configs(i).name() == "nativehook" && getuid() != 0) {
+            NativeHookConfig hookConfig;
+            std::string cfgData = request->plugin_configs(i).config_data();
+            if (hookConfig.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
+                HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
+                continue;
+            }
+            if (!COMMON::CheckApplicationPermission(hookConfig.pid(), hookConfig.process_name())) {
+                HILOG_ERROR(LOG_CORE, "Application debug permisson denied!");
+                continue;
+            }
+        }
+        pluginConfigs.push_back(request->plugin_configs(i));
+    }
+
+    if (pluginConfigs.empty()) {
+        HILOG_ERROR(LOG_CORE, "No plugins are loaded!");
+        return Status(StatusCode::PERMISSION_DENIED, "");
+    }
     // copy buffer configs
     std::vector<BufferConfig> bufferConfigs;
     if (nBuffers == 1) {
         // if only one buffer config provided, all plugin use the same buffer config
-        bufferConfigs.resize(nConfigs, sessionConfig.buffers(0));
+        bufferConfigs.resize(pluginConfigs.size(), sessionConfig.buffers(0));
     } else if (nBuffers > 0) {
         // if more than one buffer config provided, the number of buffer configs must equals number of plugin configs
         bufferConfigs.assign(sessionConfig.buffers().begin(), sessionConfig.buffers().end());
     }
     HILOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
-
-    // copy plugin configs from request
-    std::vector<ProfilerPluginConfig> pluginConfigs;
-    pluginConfigs.reserve(nConfigs);
-    for (int i = 0; i < nConfigs; i++) {
-        pluginConfigs.push_back(request->plugin_configs(i));
-    }
-
     std::vector<std::string> pluginNames;
     std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
                    [](ProfilerPluginConfig& config) { return config.name(); });
@@ -282,10 +300,10 @@ Status ProfilerService::CreateSession(ServerContext* context,
             sessionConfig.single_file_max_size_mb());
         CHECK_POINTER_NOTNULL(traceWriter, "alloc TraceFileWriter failed!");
         resultDemuxer->SetTraceWriter(traceWriter);
-        for (int i = 0; i < nConfigs; i++) {
+        for (int i = 0; i < pluginConfigs.size(); i++) {
             ProfilerPluginData pluginData;
-            pluginData.set_name(request->plugin_configs(i).name() + "_config");
-            pluginData.set_data(request->plugin_configs(i).config_data());
+            pluginData.set_name(pluginConfigs[i].name() + "_config");
+            pluginData.set_data(pluginConfigs[i].config_data());
             std::vector<char> msgData(pluginData.ByteSizeLong());
             if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
                 HILOG_WARN(LOG_CORE, "PluginConfig SerializeToArray failed!");

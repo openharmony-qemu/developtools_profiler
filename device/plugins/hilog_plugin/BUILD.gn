@@ -31,6 +31,7 @@ ohos_source_set("hilogplugin_source") {
   deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hilog_data:hilog_data_cpp",
+    "../../base:hiprofiler_base",
     "//third_party/bounds_checking_function:libsec_static",
   ]
   if (current_toolchain != host_toolchain) {

@@ -31,6 +31,7 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
     "hiperfstartplugin_fuzzer.cpp",
   ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
   ]
 

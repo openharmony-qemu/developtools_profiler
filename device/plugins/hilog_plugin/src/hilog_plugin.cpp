@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "common.h"
 
 namespace {
 std::atomic<uint64_t> g_id(1);
@@ -42,7 +43,7 @@ static pid_t volatile g_child;
 const int READ = 0;
 const int WRITE = 1;
 const int PIPE_LEN = 2;
-const std::string BIN_COMMAND("/bin/sh");
+const std::string BIN_COMMAND("/system/bin/hilog");
 } // namespace
 
 HilogPlugin::HilogPlugin() : fp_(nullptr, nullptr) {}
@@ -73,16 +74,18 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
         HILOG_ERROR(LOG_CORE, "HilogPlugin: ParseFromArray failed");
         return -1;
     }
-
     if (protoConfig_.need_clear()) {
         fullCmd_ = ClearHilog();
-        std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(fullCmd_.c_str(), "r"), pclose);
-        if (!fp) {
+        int childPid = -1;
+        std::vector<std::string> cmdArg;
+        COMMON::SplitString(fullCmd_, " ", cmdArg);
+        FILE* fp = COMMON::CustomPopen(childPid, BIN_COMMAND, cmdArg, "r");
+        if (fp == nullptr) {
             HILOG_ERROR(LOG_CORE, "%s:clear hilog error", __func__);
             return false;
         }
+        COMMON::CustomPclose(fp, childPid);
     }
-
     if (!InitHilogCmd()) {
         HILOG_ERROR(LOG_CORE, "HilogPlugin: Init HilogCmd failed");
         return -1;
@@ -499,9 +502,16 @@ FILE* HilogPlugin::CustomPopen(const char* command, const char* type)
             close(fd[WRITE]);
             dup2(fd[READ], 0); // Redirect stdin to pipe
         }
-
         setpgid(pid, pid);
-        execl(BIN_COMMAND.c_str(), BIN_COMMAND.c_str(), "-c", command, NULL);
+        std::vector<std::string> cmdArg;
+        COMMON::SplitString(std::string(command), " ", cmdArg);
+        std::vector<char*> vectArgv;
+        for (auto& item : cmdArg) {
+            vectArgv.push_back(const_cast<char*>(item.c_str()));
+        }
+        // execv : the last argv must be nullptr.
+        vectArgv.push_back(nullptr);
+        execv(BIN_COMMAND.c_str(), &vectArgv[0]);
         exit(0);
     } else {
         if (!strncmp(type, "r", strlen(type))) {

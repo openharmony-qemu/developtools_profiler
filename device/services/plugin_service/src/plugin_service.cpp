@@ -37,7 +37,12 @@ const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 PluginService::PluginService()
 {
     pluginIdCounter_ = 0;
-    StartService(DEFAULT_UNIX_SOCKET_PATH);
+    if (getuid() == 0) {
+        StartService(DEFAULT_UNIX_SOCKET_FULL_PATH);
+    } else {
+        StartService(DEFAULT_UNIX_SOCKET_PATH);
+    }
+
     pluginCommandBuilder_ = std::make_shared<PluginCommandBuilder>();
 
     eventPoller_ = std::make_unique<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);

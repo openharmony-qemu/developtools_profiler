@@ -15,11 +15,12 @@
 
 #include "hook_manager.h"
 
-#include <sys/stat.h>
-
 #include <limits>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "command_poller.h"
+#include "common.h"
 #include "epoll_event_poller.h"
 #include "event_notifier.h"
 #include "hook_common.h"
@@ -31,6 +32,7 @@
 #include "utilities.h"
 #include "virtual_runtime.h"
 #include "hook_common.h"
+#include "common.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -44,6 +46,8 @@ const std::string PARAM_NAME = "libc.hook_mode";
 const int MOVE_BIT_8 = 8;
 const int MOVE_BIT_16 = 16;
 const int MOVE_BIT_32 = 32;
+const int SIGNAL_START_HOOK = 36;
+const int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.01";
 }  // namespace
 
@@ -71,29 +75,23 @@ bool HookManager::CheckProcess()
 
 void HookManager::CheckProcessName()
 {
-    std::string findpid = "pidof " + hookConfig_.process_name();
-    HILOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
-
-    char line[LINE_SIZE];
-    do {
-        if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
-            HILOG_INFO(LOG_CORE, "Process %s not exist, set param", hookConfig_.process_name().c_str());
-            std::string cmd = STARTUP + hookConfig_.process_name();
-            int ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
-            if (ret < 0) {
-                HILOG_WARN(LOG_CORE, "set param failed, please manually set param and start process(%s)",
-                           hookConfig_.process_name().c_str());
-            } else {
-                HILOG_INFO(LOG_CORE, "set param success, please start process(%s)", hookConfig_.process_name().c_str());
-            }
-            break;
-        } else if (strlen(line) > 0 && isdigit((unsigned char)(line[0]))) {
-            pid_ = (int)atoi(line);
-            HILOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pid_);
-            break;
+    int pidValue = -1;
+    std::string processName = hookConfig_.process_name();
+    bool isExist = COMMON::IsProcessExist(processName, pidValue);
+    if (!isExist) {
+        HILOG_INFO(LOG_CORE, "Process %s not exist, set param", hookConfig_.process_name().c_str());
+        std::string cmd = STARTUP + hookConfig_.process_name();
+        int ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
+        if (ret < 0) {
+            HILOG_WARN(LOG_CORE, "set param failed, please manually set param and start process(%s)",
+                       hookConfig_.process_name().c_str());
+        } else {
+            HILOG_INFO(LOG_CORE, "set param success, please start process(%s)", hookConfig_.process_name().c_str());
         }
-    } while (1);
+    } else {
+        pid_ = pidValue;
+        HILOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pid_);
+    }
 }
 
 HookManager::HookManager() : buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]), pid_(0) { }
@@ -176,6 +174,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
         return false;
     }
+
+    if (getuid() != 0 && !COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+        HILOG_ERROR(LOG_CORE, "Application debug permisson denied!");
+        return false;
+    }
+
     pid_ = hookConfig_.pid();
 
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();
@@ -325,9 +329,13 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
     stackPreprocess_->StartTakeResults();
 
     if (pid_ > 0) {
-        std::string startCmd = "kill -36 " + std::to_string(pid_);
-        HILOG_INFO(LOG_CORE, "start command : %s", startCmd.c_str());
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(startCmd.c_str(), "r"), pclose);
+        HILOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", pid_);
+        if (kill(pid_, SIGNAL_START_HOOK) == -1) {
+            const int bufSize = 256;
+            char buf[bufSize] = {0};
+            strerror_r(errno, buf, bufSize);
+            HILOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
+        }
     } else {
         HILOG_INFO(LOG_CORE, "StartPluginSession: pid_(%d) is less or equal zero.", pid_);
     }
@@ -342,9 +350,13 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         pid_ = hookService_->GetPid();
     }
     if (pid_ > 0) {
-        std::string stopCmd = "kill -37 " + std::to_string(pid_);
-        HILOG_INFO(LOG_CORE, "stop command : %s", stopCmd.c_str());
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
+        HILOG_INFO(LOG_CORE, "stop command : send 37 signal to process  %d", pid_);
+        if (kill(pid_, SIGNAL_STOP_HOOK) == -1) {
+            const int bufSize = 256;
+            char buf[bufSize] = {0};
+            strerror_r(errno, buf, bufSize);
+            HILOG_ERROR(LOG_CORE, "send 37 signal to process %d , error = %s", pid_, buf);
+        }
     } else {
         HILOG_INFO(LOG_CORE, "StopPluginSession: pid_(%d) is less or equal zero.", pid_);
     }

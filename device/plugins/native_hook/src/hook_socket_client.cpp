@@ -35,7 +35,7 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config) : pid_(pid), c
     eventFd_ = 0;
     unixSocketClient_ = nullptr;
     serviceName_ = "HookService";
-    Connect(DEFAULT_UNIX_SOCKET_HOOK_PATH);
+    Connect(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
 }
 
 HookSocketClient::~HookSocketClient()

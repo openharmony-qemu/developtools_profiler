@@ -134,24 +134,16 @@ void GetHookedProceInfo(HookData& hookData)
     if (hookData.pid > 0) {
         printf("Please send signal 36 to target process %d\n", hookData.pid);
     } else if (!hookData.processName.empty()) {
-        std::string findpid = "pidof " + hookData.processName;
-        std::unique_ptr<char[]> buffer {new (std::nothrow) char[BUF_MAX_LEN]};
-        HILOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
-        char line[LINE_SIZE];
-        do {
-            if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
-                printf("Please start process %s\n", hookData.processName.c_str());
-                break;
-            } else if (strlen(line) > 0 && isdigit((unsigned char)(line[0]))) {
-                printf("If you want to hook current process, please send signal 36 to target process %d\n",
-                    (int)atoi(line));
-                printf("If you want to hook new process, please\n");
-                printf("1.param set libc.hook_mode startup:%s\n", hookData.processName.c_str());
-                printf("2.restart process %s\n", hookData.processName.c_str());
-                break;
-            }
-        } while (1);
+        int pidValue = -1;
+        bool isExist = COMMON::IsProcessExist(hookData.processName, pidValue);
+        if (!isExist) {
+            printf("Please start process %s\n", hookData.processName.c_str());
+        } else {
+            printf("If you want to hook current process, please send signal 36 to target process %d\n", pidValue);
+            printf("If you want to hook new process, please\n");
+            printf("1.param set libc.hook_mode startup:%s\n", hookData.processName.c_str());
+            printf("2.restart process %s\n", hookData.processName.c_str());
+        }
     }
 
     if (hookData.maxStackDepth > 0) {

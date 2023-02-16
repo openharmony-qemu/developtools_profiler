@@ -16,6 +16,7 @@
 #include "hook_service.h"
 
 #include <cinttypes>
+#include <unistd.h>
 
 #include "logging.h"
 #include "parameter.h"
@@ -33,7 +34,11 @@ HookService::HookService(int smbFd,
     : smbFd_(smbFd), eventFd_(eventFd), hookConfig_(config), pid_(pid), processName_(processName)
 {
     serviceName_ = "HookService";
-    StartService(DEFAULT_UNIX_SOCKET_HOOK_PATH);
+    if (getuid() == 0) {
+        StartService(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
+    } else {
+        StartService(DEFAULT_UNIX_SOCKET_HOOK_PATH);
+    }
 }
 
 HookService::~HookService()

@@ -29,12 +29,15 @@ ohos_source_set("ipc") {
     "../../base/include",
     "//third_party/bounds_checking_function/include",
   ]
+
+  external_deps = [ "init:libbegetutil" ]
+
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
+      external_deps += [ "shared_library:libhilog" ]
     } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+      external_deps += [ "hiviewdfx_hilog_native:libhilog" ]
     }
   }
   deps = [

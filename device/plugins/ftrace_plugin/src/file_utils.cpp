@@ -49,7 +49,6 @@ std::string FileUtils::ReadFile(int fd)
 std::string FileUtils::ReadFile(const std::string& path)
 {
     char realPath[PATH_MAX + 1] = {0};
-
     if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
         HILOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
         return "";
@@ -62,7 +61,6 @@ std::string FileUtils::ReadFile(const std::string& path)
         HILOG_WARN(LOG_CORE, "open file %s FAILED: %s!", path.c_str(), buf);
         return "";
     }
-
     std::string content = ReadFile(fd);
     CHECK_TRUE(close(fd) != -1, content, "close %s failed, %d", path.c_str(), errno);
     return content;

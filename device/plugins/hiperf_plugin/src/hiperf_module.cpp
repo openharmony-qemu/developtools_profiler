@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "common.h"
 #include "hiperf_plugin_config.pb.h"
 #include "logging.h"
 #include "securec.h"
@@ -35,6 +36,8 @@ const std::string HIPERF_RECORD_PREPARE = " --control prepare";
 const std::string HIPERF_RECORD_START = " --control start";
 const std::string HIPERF_RECORD_STOP = " --control stop";
 const std::string HIPERF_RECORD_OK = "sampling success";
+const int WAIT_HIPERF_TIME = 10;
+const std::string HIPERF_BIN_PATH = "/system/bin/hiperf";
 
 std::mutex g_taskMutex;
 bool g_isRoot = false;
@@ -80,17 +83,28 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
 bool RunCommand(const std::string& cmd)
 {
     HILOG_INFO(LOG_CORE, "run command: %s", cmd.c_str());
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    CHECK_TRUE(pipe, false, "HiperfPlugin::RunCommand: create popen FAILED!");
-
+    int childPid = -1;
+    bool res = false;
+    std::vector<std::string> cmdArg;
+    COMMON::SplitString(cmd, " ", cmdArg);
+    FILE* fp = COMMON::CustomPopen(childPid, HIPERF_BIN_PATH, cmdArg, "r");
+    if (fp == nullptr) {
+        HILOG_ERROR(LOG_CORE, "HiperfPlugin::RunCommand CustomPopen FAILED!r");
+        return false;
+    }
     constexpr uint32_t readBufferSize = 4096;
     std::array<char, readBufferSize> buffer;
     std::string result;
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    usleep(WAIT_HIPERF_TIME);
+    while (fgets(buffer.data(), buffer.size(), fp) != nullptr) {
         result += buffer.data();
+        res = result.find(HIPERF_RECORD_OK) != std::string::npos;
+        if (res) {
+            break;
+        }
     }
+    COMMON::CustomPclose(fp, childPid);
     HILOG_INFO(LOG_CORE, "run command result: %s", result.c_str());
-    bool res = result.find(HIPERF_RECORD_OK) != std::string::npos;
     CHECK_TRUE(res, false, "HiperfPlugin::RunCommand: execute command FAILED!");
     return true;
 }

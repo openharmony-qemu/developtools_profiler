@@ -50,7 +50,7 @@ ohos_executable("hiprofiler_cmd") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_data:network_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_plugin_config_cpp_standard",
   ]
-
+  external_deps = [ "init:libbegetutil" ]
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
