@@ -303,11 +303,11 @@ int main(int argc, char *argv[])
         std::string tempLayerName;
         struct timeval start;
         struct timeval end;
-        unsigned long runTime;
         std::string uniteLayer = "DisplayNode";
         unsigned long oneSec = 1000000;
         std::string cmdResult;
         for (int i = 0; i < num; i++) {
+            unsigned long runTime;
             gettimeofday(&start, nullptr);
             tempLayerName = GetLayer();
             if (i == 0) {

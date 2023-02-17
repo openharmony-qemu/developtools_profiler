@@ -67,9 +67,9 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             FPS::GetInstance().SetCaptureOn();
             break; 
         case MessageType::SET_DUBAI_DB: {
-            Dubai::GetInstance().DumpDubaiBegin();
-            Dubai::GetInstance().DumpDubaiFinish();
-            Dubai::GetInstance().MoveDubaiDb();
+            Dubai::DumpDubaiBegin();
+            Dubai::DumpDubaiFinish();
+            Dubai::MoveDubaiDb();
             break;   
         }              
         default:
