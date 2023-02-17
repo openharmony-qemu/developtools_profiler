@@ -145,10 +145,18 @@ bool IsProcessExist(std::string& processName, int& pid)
     return pidValue != INVALID_PID;
 }
 
+static void CloseStdio()
+{
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+}
+
 int StartProcess(const std::string& processBin, std::vector<char*>& argv)
 {
     int pid = fork();
     if (pid == 0) {
+        CloseStdio();
         argv.push_back(nullptr); // last item in argv must be NULL
         int retval = execvp(processBin.c_str(), argv.data());
         if (retval == -1 && errno == EXECVP_ERRNO) {
