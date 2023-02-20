@@ -24,11 +24,11 @@ public:
         return instance;
     }
     // dubai db转移smartperf 沙箱
-    void MoveDubaiDb() const;
+    static void MoveDubaiDb();
     // dubai -b
-    void DumpDubaiBegin() const;
+    static void DumpDubaiBegin();
     // dubai -f
-    void DumpDubaiFinish() const;
+    static void DumpDubaiFinish();
 private:
     Dubai() {};
     Dubai(const Dubai &);

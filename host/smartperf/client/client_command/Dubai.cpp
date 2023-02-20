@@ -19,18 +19,18 @@
 namespace OHOS {
 namespace SmartPerf {
 
-void Dubai::DumpDubaiBegin() const
+void Dubai::DumpDubaiBegin()
 {
     std::string result;
     SPUtils::LoadCmd("hidumper -s 1213 -a '-b'", result);
 }
-void Dubai::DumpDubaiFinish() const
+void Dubai::DumpDubaiFinish()
 {
     std::string result;
     SPUtils::LoadCmd("hidumper -s 1213 -a '-f'", result);
 }
 
-void Dubai::MoveDubaiDb() const
+void Dubai::MoveDubaiDb()
 {
     std::string result;
     const std::string dubaiName = "dubai.db";
