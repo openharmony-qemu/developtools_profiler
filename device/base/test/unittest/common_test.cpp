@@ -18,14 +18,48 @@
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
 #include "common.h"
+#include "logging.h"
 
 namespace {
 using namespace testing::ext;
+using namespace COMMON;
 
 class CommonTest : public testing::Test {
 protected:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
+
+    void WriteFile(const std::string& filePath, const std::string& fileContent)
+    {
+        FILE* file = fopen(filePath.c_str(), "w");
+        if (file == nullptr) {
+            std::string errorMsg = GetErrorMsg();
+            HILOG_ERROR(LOG_CORE, "WriteFile: fopen() fail, %s, %s", filePath.c_str(), errorMsg.c_str());
+            return;
+        }
+
+        size_t len = fwrite(const_cast<char*>(fileContent.c_str()), 1, fileContent.length(), file);
+        if (len < 0) {
+            std::string errorMsg = GetErrorMsg();
+            HILOG_ERROR(LOG_CORE, "WriteFile: fwrite() fail, %s", errorMsg.c_str());
+            (void)fclose(file);
+            return;
+        }
+
+        if (fflush(file) == EOF) {
+            std::string errorMsg = GetErrorMsg();
+            HILOG_ERROR(LOG_CORE, "WriteFile: fflush() error = %s", errorMsg.c_str());
+            (void)fclose(file);
+            return;
+        }
+
+        fsync(fileno(file));
+        if (fclose(file) != 0) {
+            std::string errorMsg = GetErrorMsg();
+            HILOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", errorMsg.c_str());
+            return;
+        }
+    }
 };
 
 /**
@@ -61,5 +95,78 @@ HWTEST_F(CommonTest, StartAndKillProcess, TestSize.Level1)
     EXPECT_NE(procPid, 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     EXPECT_NE(COMMON::KillProcess(procPid), -1);
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: VerifyPath.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, VerifyPath, TestSize.Level1)
+{
+    std::string filePath = "/data/local/tmp/config.txt";
+    std::vector<std::string> validPaths = {};
+    EXPECT_TRUE(VerifyPath(filePath, validPaths));
+
+    validPaths = { "/tmp/" };
+    EXPECT_FALSE(VerifyPath(filePath, validPaths));
+
+    validPaths = { "/tmp/", "/data/" };
+    EXPECT_TRUE(VerifyPath(filePath, validPaths));
+
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    EXPECT_TRUE(VerifyPath(filePath, validPaths));
+
+    filePath = "/data/local/tmpconfig.txt";
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    EXPECT_FALSE(VerifyPath(filePath, validPaths));
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: ReadFile.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, ReadFile, TestSize.Level1)
+{
+    std::string fileName = "/data/local/tmp/config.txt";
+    std::string fileContent = "Hello world";
+    WriteFile(fileName, fileContent);
+
+    // invalid path
+    std::vector<std::string> validPaths = { "/tmp/" };
+    std::string readContent;
+    bool ret = ReadFile(fileName, validPaths, readContent);
+    EXPECT_FALSE(ret);
+    EXPECT_TRUE(readContent.empty());
+
+    // invalid file path
+    fileName = "config.txt";
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    readContent.clear();
+    ret = ReadFile(fileName, validPaths, readContent);
+    EXPECT_FALSE(ret);
+    EXPECT_TRUE(readContent.empty());
+
+    // invalid file name
+    fileName = "configtmp.txt";
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    readContent.clear();
+    ret = ReadFile(fileName, validPaths, readContent);
+    EXPECT_FALSE(ret);
+    EXPECT_TRUE(readContent.empty());
+
+    // valid path
+    fileName = "/data/local/tmp/config.txt";
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    readContent.clear();
+    ret = ReadFile(fileName, validPaths, readContent);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(readContent == fileContent);
+
+    // delete file
+    fileName = "/data/local/tmp/config.txt";
+    std::string cmd = "rm " + fileName;
+    system(cmd.c_str());
 }
 } // namespace
