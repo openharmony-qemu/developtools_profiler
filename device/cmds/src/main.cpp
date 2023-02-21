@@ -433,17 +433,8 @@ void KillDependentProcess()
     }
 }
 
-bool ParseConfig(std::string& config, const std::string& configFile)
+bool ParseConfig(const std::string& configFile, std::string& config)
 {
-    if (!config.empty()) {
-        return true; // use config in command
-    }
-
-    if (configFile.empty()) {
-        printf("Please check the configuration!\n"); // no config in command or config file
-        return false;
-    }
-
     std::string configFileWithPath = configFile;
     if (configFile.find('/') == std::string::npos) {
         std::string path("/data/local/tmp/");
@@ -491,6 +482,10 @@ int main(int argc, char* argv[])
             std::istreambuf_iterator<char> end = {};
             content.assign(begin, end);
             config = ParsePluginConfig::GetInstance().GetPluginsConfig(content);
+            if (config.empty()) {
+                printf("Please check the configuration!\n");
+                return -1;
+            }
         }
     }
 
@@ -510,6 +505,12 @@ int main(int argc, char* argv[])
     if (argc < 1 || cmdLine.AnalyzeParam(argvVector) < 0 || data.isHelp) {
         cmdLine.PrintHelp();
         exit(0);
+    }
+
+    if (config.empty() && !data.configFile.empty()) {
+        if (!ParseConfig(data.configFile, config)) {
+            return -1;
+        }
     }
 
     if (data.isStartProcess) {
@@ -536,10 +537,6 @@ int main(int argc, char* argv[])
             KillDependentProcess();
         }
         return 0;
-    }
-
-    if (!ParseConfig(config, data.configFile)) {
-        return -1;
     }
 
     if (config.empty()) { // normal case
