@@ -29,6 +29,9 @@ int CustomPclose(FILE* fp, int childPid);
 int GetServicePort();
 void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret);
 bool CheckApplicationPermission(int pid, const std::string& processName);
+bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths);
+bool ReadFile(const std::string& filePath, const std::vector<std::string>& validPaths, std::string& fileContent);
+std::string GetErrorMsg();
 } // COMMON
 
 #endif // COMMON_H

@@ -132,7 +132,7 @@ public:
         return result;
     }
 
-    void CreateConfigFile(const std::string configFile, const std::string sha256)
+    void CreateConfigFile(const std::string configFile)
     {
         // 构建config文件
         std::string configStr =
@@ -145,16 +145,23 @@ public:
             "  sample_duration: 10000\n"
             "}\n"
             "plugin_configs {\n"
-            "  name: \"/data/local/tmp/libftrace_plugin.z.so\"\n"
-            "  plugin_sha256: \"";
-        configStr = configStr + sha256 + "\"\n";
-        configStr +=
+            "  plugin_name: \"ftrace-plugin\"\n"
             "  sample_interval: 2000\n"
-            "  config_data: \"\\n\\022sched/sched_waking\\n\\020task/task_rename\\n"
-            "\\022sched/sched_switch\\n\\030sched/sched_process_exit\\n"
-            "\\024power/suspend_resume\\n\\030sched/sched_process_free\\n"
-            "\\021task/task_newtask\\n\\022sched/sched_wakeup\\n"
-            "\\026sched/sched_wakeup_new \\200P(\\350\\a0\\200 8\\001B\\004monoP\\310\\001\"\n"
+            "  config_data: {\n"
+            "    ftrace_events: \"sched/sched_switch\"\n"
+            "    ftrace_events: \"sched/sched_wakeup\"\n"
+            "    ftrace_events: \"sched/sched_wakeup_new\"\n"
+            "    ftrace_events: \"sched/sched_waking\"\n"
+            "    ftrace_events: \"sched/sched_process_exit\"\n"
+            "    ftrace_events: \"sched/sched_process_free\"\n"
+            "    buffer_size_kb: 51200\n"
+            "    flush_interval_ms: 1000\n"
+            "    flush_threshold_kb: 4096\n"
+            "    parse_ksyms: true\n"
+            "    clock: \"mono\"\n"
+            "    trace_period_ms: 200\n"
+            "    debug_on: false\n"
+            "  }\n"
             "}\n";
 
         // 根据构建的config写文件
@@ -310,22 +317,18 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
     KillProcess(DEFAULT_HIPROFILERD_NAME);
     KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
 
-    std::string cmd = "cp " + DEFAULT_SO_PATH + "libftrace_plugin.z.so " + DEFAULT_PATH;
-    system(cmd.c_str());
-
     // 测试不存在的config文件
     std::string configTestFile = DEFAULT_PATH + "1234.txt";
     std::string outFile = DEFAULT_PATH + "trace.htrace";
     std::string content = "";
-    cmd = DEFAULT_HIPROFILER_CMD_PATH + " -c " + configTestFile + " -o " + outFile + " -t 3";
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -c " + configTestFile + " -o " + outFile + " -t 3";
     EXPECT_TRUE(RunCommand(cmd, content));
-    std::string destStr = "can't open " + configTestFile;
-    EXPECT_EQ(strncmp(content.c_str(), destStr.c_str(), strlen(destStr.c_str())), 0);
+    std::string destStr = "Read " + configTestFile + " fail";
+    EXPECT_TRUE(content.find(destStr) != std::string::npos);
 
     // 创建有效的config文件
     const std::string configFile = DEFAULT_PATH + "ftrace.config";
-    std::string sha256 = ComputeFileSha256(FTRACE_PLUGIN_PATH);
-    CreateConfigFile(configFile, sha256);
+    CreateConfigFile(configFile);
 
     // 测试有效的config文件，不开启hiprofilerd和hiprofiler_plugin进程
     content = "";
@@ -345,7 +348,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
     EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
 
     // 删除资源文件和生成的trace文件
-    cmd = "rm " + FTRACE_PLUGIN_PATH + " " + configFile + " " + outFile;
+    cmd = "rm " + configFile + " " + outFile;
     system(cmd.c_str());
     StopProcessStub(g_hiprofilerPluginsPid);
     StopProcessStub(g_hiprofilerdPid);

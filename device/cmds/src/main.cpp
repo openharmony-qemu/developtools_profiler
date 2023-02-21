@@ -50,7 +50,6 @@ std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 std::string NATIVE_DAEMON_NAME("native_daemon");
 
 uint32_t g_sampleDuration = 0;
-bool g_isConfigFile = false;
 int g_hiprofilerdPid = -1;
 int g_hiprofilerPluginsPid = -1;
 int g_nativeDaemonPid = -1;
@@ -91,31 +90,6 @@ uint16_t GetServicePort()
     return COMMON::GetServicePort();
 }
 
-std::string ReadFileToString(const std::string& fileName)
-{
-    std::ifstream inputString(fileName, std::ios::in);
-    if (!inputString) {
-        printf("can't open %s\n", fileName.c_str());
-        return "";
-    }
-    std::string content(std::istreambuf_iterator<char>(inputString), {});
-    return content;
-}
-
-std::string ReadConfigContent(const std::string& configFile)
-{
-    std::string content;
-    if (configFile == "-") { // Read configuration information from standard input
-        std::string line;
-        while (std::getline(std::cin, line)) {
-            content += line + "\n";
-        }
-    } else {
-        content = ReadFileToString(configFile);
-    }
-    return content;
-}
-
 std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& config,
                                                         const std::string& keepSecond,
                                                         const std::string& outputFile)
@@ -125,12 +99,7 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
         return nullptr;
     }
 
-    std::string content;
-    if (g_isConfigFile) {
-        content = ReadConfigContent(config);
-    } else {
-        content = std::string(config.c_str());
-    }
+    std::string content = config;
     if (content.empty()) {
         printf("config file empty!");
         return nullptr;
@@ -163,13 +132,11 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
         sessionConfig->result_file().c_str());
 
     g_sampleDuration = sessionConfig->sample_duration();
-    if (!g_isConfigFile) {
-        for (int i = 0; i < request->plugin_configs().size(); i++) {
-            auto pluginConfig = request->mutable_plugin_configs(i);
-            if (!ParsePluginConfig::GetInstance().SetSerializePluginsConfig(pluginConfig->name(), *pluginConfig)) {
-                printf("set %s plugin config failed\n", pluginConfig->name().c_str());
-                return nullptr;
-            }
+    for (int i = 0; i < request->plugin_configs().size(); i++) {
+        auto pluginConfig = request->mutable_plugin_configs(i);
+        if (!ParsePluginConfig::GetInstance().SetSerializePluginsConfig(pluginConfig->name(), *pluginConfig)) {
+            printf("set %s plugin config failed\n", pluginConfig->name().c_str());
+            return nullptr;
         }
     }
 
@@ -344,6 +311,7 @@ bool DoCapture(const std::string& configFile, const std::string& keepSecond, con
 struct DataContext {
     bool isGetGrpcAddr = false;
     std::string traceKeepSecond;
+    std::string configFile;
     std::string outputFile;
     bool isHelp = false;
     bool isShowPluginList = false;
@@ -351,19 +319,16 @@ struct DataContext {
     bool isKillProcess = false;
 };
 
-void ParseCmdline(CommandLine* pCmdLine, std::string& config, DataContext& data)
+void ParseCmdline(CommandLine& cmdLine, DataContext& data)
 {
-    pCmdLine->AddParamSwitch("--getport", "-q", data.isGetGrpcAddr, "get grpc address");
-    pCmdLine->AddParamText("--time", "-t", data.traceKeepSecond, "trace time");
-    pCmdLine->AddParamText("--out", "-o", data.outputFile, "output file name");
-    pCmdLine->AddParamSwitch("--help", "-h", data.isHelp, "make some help");
-    pCmdLine->AddParamSwitch("--list", "-l", data.isShowPluginList, "plugin list");
-    pCmdLine->AddParamSwitch("--start", "-s", data.isStartProcess, "start dependent process");
-    pCmdLine->AddParamSwitch("--kill", "-k", data.isKillProcess, "kill dependent process");
-    if (config.empty()) {
-        g_isConfigFile = true;
-        pCmdLine->AddParamText("--config", "-c", config, "start trace by config file");
-    }
+    cmdLine.AddParamSwitch("--getport", "-q", data.isGetGrpcAddr, "get grpc address");
+    cmdLine.AddParamText("--time", "-t", data.traceKeepSecond, "trace time");
+    cmdLine.AddParamText("--out", "-o", data.outputFile, "output file name");
+    cmdLine.AddParamSwitch("--help", "-h", data.isHelp, "make some help");
+    cmdLine.AddParamSwitch("--list", "-l", data.isShowPluginList, "plugin list");
+    cmdLine.AddParamSwitch("--start", "-s", data.isStartProcess, "start dependent process");
+    cmdLine.AddParamSwitch("--kill", "-k", data.isKillProcess, "kill dependent process");
+    cmdLine.AddParamText("--config", "-c", data.configFile, "start trace by config file");
 }
 
 int CheckGrpcMsgSend()
@@ -467,6 +432,37 @@ void KillDependentProcess()
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
     }
 }
+
+bool ParseConfig(std::string& config, const std::string& configFile)
+{
+    if (!config.empty()) {
+        return true; // use config in command
+    }
+
+    if (configFile.empty()) {
+        printf("Please check the configuration!\n"); // no config in command or config file
+        return false;
+    }
+
+    std::string configFileWithPath = configFile;
+    if (configFile.find('/') == std::string::npos) {
+        std::string path("/data/local/tmp/");
+        configFileWithPath = path + configFile; // add default path
+    }
+
+    printf("Read config from %s\n", configFileWithPath.c_str());
+    std::vector<std::string> validPaths = { "/data/local/tmp/" };
+    if (!COMMON::ReadFile(configFileWithPath, validPaths, config)) {
+        printf("Read %s fail, please place it under \'/data/local/tmp/\'.\n", configFile.c_str());
+        return false;
+    }
+    config = ParsePluginConfig::GetInstance().GetPluginsConfig(config);
+    if (config.empty()) {
+        printf("Error config file: %s\n", configFileWithPath.c_str()); // no config in command or config file
+        return false;
+    }
+    return true;
+}
 } // namespace
 
 int main(int argc, char* argv[])
@@ -495,16 +491,12 @@ int main(int argc, char* argv[])
             std::istreambuf_iterator<char> end = {};
             content.assign(begin, end);
             config = ParsePluginConfig::GetInstance().GetPluginsConfig(content);
-            if (config == "") {
-                printf("Please check the configuration!\n");
-                return -1;
-            }
         }
     }
 
     DataContext data;
-    CommandLine* pCmdLine = &CommandLine::GetInstance();
-    ParseCmdline(pCmdLine, config, data);
+    CommandLine& cmdLine = CommandLine::GetInstance();
+    ParseCmdline(cmdLine, data);
 
     std::vector<std::string> argvVector;
     for (int i = 0; i < argc; i++) {
@@ -515,8 +507,8 @@ int main(int argc, char* argv[])
             argvVector.push_back(argv[i]);
         }
     }
-    if (argc < 1 || pCmdLine->AnalyzeParam(argvVector) < 0 || data.isHelp) {
-        pCmdLine->PrintHelp();
+    if (argc < 1 || cmdLine.AnalyzeParam(argvVector) < 0 || data.isHelp) {
+        cmdLine.PrintHelp();
         exit(0);
     }
 
@@ -544,6 +536,10 @@ int main(int argc, char* argv[])
             KillDependentProcess();
         }
         return 0;
+    }
+
+    if (!ParseConfig(config, data.configFile)) {
+        return -1;
     }
 
     if (config.empty()) { // normal case

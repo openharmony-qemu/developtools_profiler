@@ -355,4 +355,54 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     }
     return appInfo.debug;
 }
-} // COMMON
+
+bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
+{
+    if (validPaths.size() == 0) {
+        return true;
+    }
+
+    for (const std::string& path : validPaths) {
+        if (filePath.rfind(path, 0) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ReadFile(const std::string &filePath, const std::vector<std::string>& validPaths, std::string& fileContent)
+{
+    char* realFilePath = realpath(filePath.c_str(), nullptr);
+    if (realFilePath == nullptr) {
+        HILOG_ERROR(LOG_CORE, "Fail to realPath: %s", filePath.c_str());
+        return false;
+    }
+
+    std::string realFilePathStr(realFilePath);
+    free(realFilePath);
+    if (!VerifyPath(realFilePathStr, validPaths)) {
+        HILOG_ERROR(LOG_CORE, "Fail to VerifyPath: %s", realFilePathStr.c_str());
+        return false;
+    }
+
+    std::ifstream fileStream(realFilePathStr, std::ios::in);
+    if (!fileStream.is_open()) {
+        HILOG_ERROR(LOG_CORE, "Fail to open file %s", realFilePathStr.c_str());
+        return false;
+    }
+
+    std::istreambuf_iterator<char> firstIt = { fileStream };
+    std::string content(firstIt, {});
+    fileContent = content;
+    return true;
+}
+
+std::string GetErrorMsg()
+{
+    const int bufSize = 256;
+    char buffer[bufSize] = { 0 };
+    strerror_r(errno, buffer, bufSize);
+    std::string errorMsg(buffer);
+    return errorMsg;
+}
+} // namespace COMMON
