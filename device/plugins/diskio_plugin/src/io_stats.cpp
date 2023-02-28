@@ -222,31 +222,31 @@ bool IoStats::GetIoStats(std::string& line)
         return true;
     }
 #if __DEBUG__
-    char name[128];
+    char debugName[128];
     uint64_t rMergesOrIo = 0;
     uint64_t rwIos = 0;
     uint64_t rTicksOrw = 0;
-    auto ioInfo = std::make_shared<DiskStats>();
-    int ret = sscanf_s(line.c_str(), "%u %u %s %lu %lu %lu %lu %lu %lu %lu %u %u %u %u %lu %lu %lu %u %lu %u",
-                       &ioInfo->major_, &ioInfo->minor_, name, sizeof(name),
-                       &ioInfo->rSucc_, &rMergesOrIo, &rwIos, &rTicksOrw,
-                       &ioInfo->wSucc_, &ioInfo->wMerged_,
-                       &ioInfo->wSectors_, &ioInfo->timeOfWrite_,
-                       &ioInfo->ios_, &ioInfo->timeOfIo_, &ioInfo->weighted_,
-                       &ioInfo->dSucc_, &ioInfo->dMerged_,
-                       &ioInfo->dSectors_, &ioInfo->timeOfd_,
-                       &ioInfo->flushSucc_, &ioInfo->timeOfFlush_);
+    auto debugIoInfo = std::make_shared<DiskStats>();
+    int ret = sscanf_s(line.c_str(), "%u %u %s %lu %lu %lu %" PRIu64 " %lu %lu %lu %u %u %u %u %lu %lu %lu %u %lu %u",
+                       &debugIoInfo->major_, &debugIoInfo->minor_, debugName, sizeof(debugName),
+                       &debugIoInfo->rSucc_, &rMergesOrIo, &rwIos, &rTicksOrw,
+                       &debugIoInfo->wSucc_, &debugIoInfo->wMerged_,
+                       &debugIoInfo->wSectors_, &debugIoInfo->timeOfWrite_,
+                       &debugIoInfo->ios_, &debugIoInfo->timeOfIo_, &debugIoInfo->weighted_,
+                       &debugIoInfo->dSucc_, &debugIoInfo->dMerged_,
+                       &debugIoInfo->dSectors_, &debugIoInfo->timeOfd_,
+                       &debugIoInfo->flushSucc_, &debugIoInfo->timeOfFlush_);
     if (ret == NUM_SEVEN) {
-        ioInfo->rSectors_ = rMergesOrIo;
-        ioInfo->wSucc_ = rwIos;
-        ioInfo->wSectors_ = rTicksOrw;
+        debugIoInfo->rSectors_ = rMergesOrIo;
+        debugIoInfo->wSucc_ = rwIos;
+        debugIoInfo->wSectors_ = rTicksOrw;
     } else {
-        ioInfo->rMerged_  = rMergesOrIo;
-        ioInfo->rSectors_ = rwIos;
-        ioInfo->timeOfRead_ = rTicksOrw;
+        debugIoInfo->rMerged_  = rMergesOrIo;
+        debugIoInfo->rSectors_ = rwIos;
+        debugIoInfo->timeOfRead_ = rTicksOrw;
     }
-    ioInfo->deviceName_ = std::string(name);
-    ioDatas_.push_back(ioInfo);
+    debugIoInfo->deviceName_ = std::string(name);
+    ioDatas_.push_back(debugIoInfo);
 #endif
 
     return false;
