@@ -178,6 +178,7 @@ constexpr VmeminfoAreaMapping g_vmaMemHeap[] = {
 // [anon:
 constexpr VmeminfoAreaMapping g_vmaMemAnon[] = {
     {OpsType::OPS_START, "[anon:libc_malloc]", {VmemifoType::VMHEAP_NATIVE, VmemifoType::VMHEAP_NULL}},
+    {OpsType::OPS_START, "[anon:native_heap:", {VmemifoType::VMHEAP_NATIVE, VmemifoType::VMHEAP_NULL}},
     {OpsType::OPS_START, "[anon:scudo:", {VmemifoType::VMHEAP_NATIVE, VmemifoType::VMHEAP_NULL}},
     {OpsType::OPS_START, "[anon:GWP-ASan", {VmemifoType::VMHEAP_NATIVE, VmemifoType::VMHEAP_NULL}},
     {OpsType::OPS_START, "[anon:stack_and_tls:", {VmemifoType::VMHEAP_STACK, VmemifoType::VMHEAP_NULL}},
