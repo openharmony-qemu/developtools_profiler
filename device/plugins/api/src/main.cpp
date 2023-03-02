@@ -90,17 +90,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    PluginWatcher watcher(pluginManager);
-    if (!watcher.ScanPlugins(pluginDir)) {
-        HILOG_DEBUG(LOG_CORE, "%s:scan pluginDir %s failed!", __func__, DEFAULT_PLUGIN_PATH);
-        return 0;
-    }
-
-    if (!watcher.WatchPlugins(pluginDir)) {
-        HILOG_DEBUG(LOG_CORE, "%s:monitor pluginDir %s failed!", __func__, DEFAULT_PLUGIN_PATH);
-        return 0;
-    }
-
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
     }
