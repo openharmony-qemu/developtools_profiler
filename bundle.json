@@ -53,7 +53,8 @@
         "//developtools/profiler/hidebug/interfaces/js/kits:profiler_jsapi_module",
         "//developtools/profiler/host/smartperf/client/client_command/:SP_daemon",
         "//developtools/profiler/host/smartperf/client/:SmartPerf",
-        "//developtools/profiler/host/smartperf/client/client_command_fps/:GP_daemon_fps"
+        "//developtools/profiler/host/smartperf/client/client_command_fps/:GP_daemon_fps",
+	"//developtools/profiler/transitto:transitto_tool"
       ],
       "inner_kits": [
         {
