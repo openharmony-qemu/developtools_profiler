@@ -63,11 +63,8 @@ private:
     {
         CHECK_TRUE(close(pipe_[RD]) != -1, -1, "close pipe_[RD] failed, %d", errno);
         CHECK_TRUE(close(pipe_[WR]) != -1, -1, "close pipe_[WR] failed, %d", errno);
-
-        if (handler_ != nullptr) {
-            signal(sig_, handler_);
-            HILOG_INFO(LOG_CORE, "restore signal handler for sig %d done!", sig_);
-        }
+        signal(sig_, nullptr);
+        HILOG_INFO(LOG_CORE, "restore signal handler for sig %d done!", sig_);
         return 0;
     }
 
