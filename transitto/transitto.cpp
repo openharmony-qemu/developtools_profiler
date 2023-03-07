@@ -28,8 +28,10 @@
 #include <sys/mman.h>
 #include <pwd.h>
 #include <string>
+#ifdef SUPPORT_SELINUX_TRANSITTO
 #include <policycoreutils.h>
 #include <selinux/selinux.h>
+#endif
 
 #include "bundle_mgr_interface.h"
 #include "bundle_mgr_proxy.h"
@@ -190,11 +192,12 @@ bool SetSelinux()
 {
     OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "start change selinux context.");
     string seContext = "u:r:transitto_hap:s0";
-
+#ifdef SUPPORT_SELINUX_TRANSITTO
     if (setcon(seContext.c_str()) != 0) {
         OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE, "fail to set selinux context, errno is %{public}d.", errno);
         return false;
     }
+#endif
     OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "change selinux context successfully.");
     return true;
 }

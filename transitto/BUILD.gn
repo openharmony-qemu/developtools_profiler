@@ -19,17 +19,9 @@ ohos_executable("transitto") {
 
   include_dirs = [
     "//third_party/json/include",
-    "//third_party/selinux/libselinux/include",
   ]
   defines = []
   cflags_cc = [ "-std=c++20" ]
-
-  ldflags = [
-    "-Wl,--whole-archive",
-    "-lpthread",
-    "-ldl",
-    "-Wl,--no-whole-archive",
-  ]
 
   external_deps = [
     "ability_base:want",
@@ -41,11 +33,21 @@ ohos_executable("transitto") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "selinux:libload_policy",
-    "selinux:librestorecon",
   ]
 
-  deps = [ "//third_party/selinux:libselinux" ]
+  deps = []
+
+  if (build_selinux) {
+    include_dirs += [
+      "//third_party/selinux/libselinux/include",
+    ]
+    deps += [ "//third_party/selinux:libselinux" ]
+    defines += [ "SUPPORT_SELINUX_TRANSITTO" ]
+    external_deps += [
+      "selinux:libload_policy",
+      "selinux:librestorecon",
+    ]
+  }
 
   install_images = [ "system" ]
 
@@ -60,13 +62,6 @@ ohos_executable("transitto_test") {
   include_dirs = []
   defines = []
   cflags_cc = [ "-std=c++20" ]
-
-  ldflags = [
-    "-Wl,--whole-archive",
-    "-lpthread",
-    "-ldl",
-    "-Wl,--no-whole-archive",
-  ]
 
   external_deps = [ "c_utils:utils" ]
 
