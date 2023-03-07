@@ -17,9 +17,7 @@ import("//developtools/profiler/device/base/config.gni")
 ohos_executable("transitto") {
   sources = [ "transitto.cpp" ]
 
-  include_dirs = [
-    "//third_party/json/include",
-  ]
+  include_dirs = [ "//third_party/json/include" ]
   defines = []
   cflags_cc = [ "-std=c++20" ]
 
@@ -38,9 +36,7 @@ ohos_executable("transitto") {
   deps = []
 
   if (build_selinux) {
-    include_dirs += [
-      "//third_party/selinux/libselinux/include",
-    ]
+    include_dirs += [ "//third_party/selinux/libselinux/include" ]
     deps += [ "//third_party/selinux:libselinux" ]
     defines += [ "SUPPORT_SELINUX_TRANSITTO" ]
     external_deps += [
