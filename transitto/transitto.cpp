@@ -43,81 +43,8 @@
 using namespace std;
 
 constexpr OHOS::HiviewDFX::HiLogLabel TRANS_LOG_LABLE = { LOG_CORE, 0xD002D0C, "TRANSITTO" };
-constexpr int BUFFER_SIZE = 1024;
 
-struct AppInfo {
-    int uid;
-    bool debug;
-    char codePath[BUFFER_SIZE];
-};
-
-bool GetProcessPid(const std::string& processName, int& pid)
-{
-    DIR* dir = opendir("/proc");
-    if (dir == nullptr) {
-        return false;
-    }
-    struct dirent* ptr;
-    int invalidPid = -1;
-    int pidValue = invalidPid;
-    while ((ptr = readdir(dir)) != nullptr) {
-        if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
-            continue;
-        }
-        if ((!isdigit(*ptr->d_name)) || ptr->d_type != DT_DIR) {
-            continue;
-        }
-        char filePath[BUFFER_SIZE] = {0};
-        int len = snprintf_s(filePath, BUFFER_SIZE, BUFFER_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
-        if (len < 0) {
-            continue;
-        }
-        FILE* fp = fopen(filePath, "r");
-        if (fp == nullptr) {
-            continue;
-        }
-
-        char buf[BUFFER_SIZE] = {0};
-        if (fgets(buf, sizeof(buf) - 1, fp) == nullptr) {
-            fclose(fp);
-            continue;
-        }
-        fclose(fp);
-        std::string str(buf);
-        size_t found = str.rfind("/");
-        std::string fullProcess;
-        if (found != std::string::npos) {
-            fullProcess = str.substr(found + 1);
-        } else {
-            fullProcess = str;
-        }
-        if (fullProcess == processName) {
-            pidValue = atoi(ptr->d_name);
-            break;
-        }
-    }
-    closedir(dir);
-    if (pidValue != invalidPid) {
-        pid = pidValue;
-    }
-    return pidValue != invalidPid;
-}
-
-std::string ReadFileToString(const std::string& fileName)
-{
-    std::ifstream inputString(fileName, std::ios::in);
-    if (!inputString || !inputString.is_open()) {
-        return "";
-    }
-
-    std::istreambuf_iterator<char> firstIt = {inputString};
-    std::istreambuf_iterator<char> lastIt = {};
-
-    std::string content(firstIt, lastIt);
-    return content;
-}
-
-bool GetApplicationInfo(const string& bundleName, OHOS::AppExecFwk::ApplicationInfo& appInfo)
+bool GetApplicationInfo(const string& bundleName, int& uid)
 {
     OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -142,11 +69,12 @@ bool GetApplicationInfo(const string& bundleName, OHOS::AppExecFwk::ApplicationI
 
     OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "start to get ApplicationInfo");
     // 0: GET_BASIC_APPLICATION_INFO
-    if (!bundleMgrProxy->GetApplicationInfo(bundleName, 0, OHOS::AppExecFwk::Constants::ANY_USERID, appInfo)) {
-        OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE, "fail to get application info.");
+    uid = bundleMgrProxy->GetUidByDebugBundleName(bundleName, OHOS::AppExecFwk::Constants::ANY_USERID);
+    if (uid < 0) {
+        OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE, "fail to get application info, uid is %{public}d.", uid);
         return false;
     }
-    OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "get ApplicationInfo success uid is %{private}d.", appInfo.uid);
+    OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "get ApplicationInfo success uid is %{private}d.", uid);
     return true;
 }
 
@@ -165,16 +93,10 @@ bool ChangeUidGid(int uid, int gid)
     return true;
 }
 
-void InitEnv(const string& codePath, int uid)
+void InitEnv(int uid)
 {
-    OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "start set env, app baseDir is %{public}s.", codePath.c_str());
-    if (chdir(codePath.c_str()) == -1) {
-        OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE,
-            "fail to chdir, path is %{public}s, errno %{public}d.", codePath.c_str(), errno);
-        return;
-    }
+    OHOS::HiviewDFX::HiLog::Info(TRANS_LOG_LABLE, "start set env.");
 
-    setenv("HOME", codePath.c_str(), 1);
     unsetenv("IFS");
 
     passwd* pw = getpwuid(uid);
@@ -240,43 +162,35 @@ int main(int argc, char* argv[])
     }
 
     string bundleName = argv[1];
-    AppInfo* app = static_cast<AppInfo*>(mmap(nullptr, sizeof(AppInfo),
+    int* bundleUidPtr = static_cast<int*>(mmap(nullptr, sizeof(int),
         PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
-    if (app == MAP_FAILED || app == nullptr) {
+    if (bundleUidPtr == MAP_FAILED || bundleUidPtr == nullptr) {
         OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE, "mmap fail.");
         return -1;
     }
-    memset_s(app, sizeof(AppInfo), 0, sizeof(AppInfo));
+    *bundleUidPtr = -1;
 
     int pid = fork(); // for security_bounded_transition single thread
     if (pid == 0) {
-        OHOS::AppExecFwk::ApplicationInfo appInfo {};
-        if (GetApplicationInfo(bundleName, appInfo)) {
-            app->uid = appInfo.uid;
-            app->debug = appInfo.debug;
-            int ret = strcpy_s(app->codePath, BUFFER_SIZE, appInfo.codePath.c_str());
-            if (ret != EOK) {
-                OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE, "copy appinfo path fail, ret is %{public}d.", ret);
-            }
-        }
+        int uid = -1;
+        GetApplicationInfo(bundleName, uid);
+        *bundleUidPtr = uid;
         _exit(0);
     } else {
         wait(nullptr);
     }
 
-    int uid = app->uid;
-    bool debug = app->debug;
-    string codePath = app->codePath;
-    munmap(app, sizeof(AppInfo));
+    int uid = *bundleUidPtr;
+    munmap(bundleUidPtr, sizeof(int));
 
     string commod = (argc > 2) ? argv[2] : ""; // 2 com
     // normal_hap uid = 200000 * usrid + bundleid % 200000, userid is 100 or 0(shared)
-    if (uid <= 20000000 || !debug || !ChangeUidGid(uid, uid) || !SetSelinux()) {
+    if (uid <= 20000000 || !ChangeUidGid(uid, uid) || !SetSelinux()) {
         OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE, "uid is %{public}d.", uid);
         return -1;
     }
 
-    InitEnv(codePath, uid);
+    InitEnv(uid);
     if (argc > 2 && execvp(argv[2], argv + 2) < 0) { // 2: offset
         OHOS::HiviewDFX::HiLog::Error(TRANS_LOG_LABLE,
             "fail to execvp, com is %{public}s, errno %{public}d.", argv[2], errno); // 2: offset
