@@ -341,14 +341,12 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
         return false;
     }
     sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
-    ApplicationInfo appInfo;
-    bool ret = proxy->GetApplicationInfo(bundleName, GET_APPLICATION_INFO_WITH_DISABLE,
-                                         Constants::ANY_USERID, appInfo);
-    if (!ret) {
-        HILOG_ERROR(LOG_CORE, "Get application info failed!");
+    int uid = proxy->GetUidByDebugBundleName(bundleName, Constants::ANY_USERID);
+    if (uid < 0) {
+        HILOG_ERROR(LOG_CORE, "Get %s uid = %d", bundleName.c_str(), uid);
         return false;
     }
-    return appInfo.debug;
+    return true;
 }
 
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
