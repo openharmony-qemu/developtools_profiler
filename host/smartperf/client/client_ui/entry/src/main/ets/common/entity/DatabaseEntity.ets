@@ -354,7 +354,7 @@ export class TIndexInfo {
   }
 
   setDefaultValue() {
-    let properties: any[] = Object.keys(this)
+    let properties = Object.keys(this)
     properties.forEach(property => {
       this[property] = "-1"
     })

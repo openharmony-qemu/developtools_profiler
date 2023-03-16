@@ -155,7 +155,7 @@ export default class CalculationUtils {
     calculateCaton(fpsJitterList: Array<string>): number{
         let num = 0
         for (let i = 0; i < fpsJitterList.length; i++) {
-            let jitter = fpsJitterList[i].split(",");
+      let jitter = fpsJitterList[i].split(';;');
             for (let j = 0; j < jitter.length; j++) {
                 var n = Number(jitter[j]);
                 if (!isNaN(n) && (n / 1e6 > 100)) {
