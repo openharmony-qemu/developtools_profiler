@@ -185,10 +185,10 @@ export struct Summary {
           .backgroundColor(item.backColor)
           .border({ radius: '5vp', color: '#ffffff' }).shadow({radius : 5})
           .margin({top: '20vp'})
-          .padding("10vp")
+          .padding("5vp")
         }, item => item.content)
       }.margin({ bottom: "30%", left: "15%", right: "15%" }).width('90%')
       .columnsTemplate('1fr 1fr')
-    }.height('90%').width('100%')
+    }
   }
 }
