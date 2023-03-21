@@ -41,16 +41,18 @@ ohos_executable("SP_daemon") {
     "Power.cpp",
     "RAM.cpp",
     "Temperature.cpp",
+    "editor_command.cpp",
+    "parse_click_complete_trace.cpp",
+    "parse_click_response_trace.cpp",
+    "parse_trace.cpp",
     "smartperf_command.cpp",
     "smartperf_main.cpp",
     "sp_profiler_factory.cpp",
     "sp_server_socket.cpp",
     "sp_utils.cpp",
+    "startup_delay.cpp",
   ]
-  include_dirs = [
-    "//developtools/profiler/host/smartperf/client/client_command/include",
-    "//commonlibrary/c_utils/base/include",
-  ]
+  include_dirs = [ "include" ]
   configs = [ ":config" ]
 
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
