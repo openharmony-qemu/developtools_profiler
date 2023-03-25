@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +16,14 @@
 #include <fstream>
 #include <string>
 #include <vector>
-
 namespace OHOS {
     namespace SmartPerf {
         class ParseClickResponseTrace {
             public:
                 float ParseResponseTrace(std::string fileNamePath, std::string packageName);
                 float GetTime(std::string startTime, std::string endTime);
-                std::string GetPid(std::string line, std::string packgeName, std::string pidBefore);
-                std::string GetStartTime(std::string line, std::string &startTimeBefore);
+                std::string GetPid(std::string line, const std::string pn, const std::string pb);
+                std::string GetStartTime(std::string line, const std::string startTimeBefore);
                 float GetLineTime();
             private:
                 std::string flagTime = "0";

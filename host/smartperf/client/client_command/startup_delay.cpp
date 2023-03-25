@@ -59,17 +59,5 @@ std::vector<std::string> StartUpDelay::GetPidByPkg(std::string curPkgName)
     SPUtils::StrSplit(resultPids, " ", pidV);
     return pidV;
 }
-void StartUpDelay::KillCurApp(std::string curPkgName)
-{
-    std::vector<std::string> pidV;
-    do {
-        pidV = GetPidByPkg(curPkgName);
-        std::string result;
-        for (std::string pid : pidV) {
-            SPUtils::LoadCmd("Kill -9 " + pid, result);
-        }
-    }
-    while (pidV.size() > 0);
-}
 }
 }

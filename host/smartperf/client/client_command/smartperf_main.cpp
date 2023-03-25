@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < argc; i++) {
             v.push_back(argv[i]);
         }
-        OHOS::SmartPerf::EditorCommand cmd(argc, argv);
+        OHOS::SmartPerf::EditorCommand(argc, v);
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);

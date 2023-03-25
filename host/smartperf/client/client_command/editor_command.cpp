@@ -23,24 +23,24 @@
 
 namespace OHOS {
 namespace SmartPerf {
-EditorCommand::EditorCommand(int argc, char *argv[])
+EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
 {
-    int type = 2;
     if (argc >= threeParamMore) {
+        int type = 2;
         float time = 0.0;
-        if (strcmp(argv[type], "coldStart") == 0) {
-            time = SmartPerf::EditorCommand::ColdStart(argv);
-        } else if (strcmp(argv[type], "hotStart") == 0) {
-            time = SmartPerf::EditorCommand::HotStart(argv);
-        } else if (strcmp(argv[type], "responseTime") == 0) {
-            time = SmartPerf::EditorCommand::ResponseTime(argv);
-        } else if (strcmp(argv[type], "completeTime") == 0) {
-            time = SmartPerf::EditorCommand::CompleteTime(argv);
+        if (v[type] == "coldStart") {
+            time = SmartPerf::EditorCommand::ColdStart(v);
+        } else if (v[type] == "hotStart") {
+            time = SmartPerf::EditorCommand::HotStart(v);
+        } else if (v[type] == "responseTime") {
+            time = SmartPerf::EditorCommand::ResponseTime(v);
+        } else if (v[type] == "completeTime") {
+            time = SmartPerf::EditorCommand::CompleteTime(v);
         }
         std::cout << "time:" << time << std::endl;
     }
 }
-float EditorCommand::ResponseTime(char *argv[])
+float EditorCommand::ResponseTime(std::vector<std::string> v)
 {
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
@@ -49,10 +49,10 @@ float EditorCommand::ResponseTime(char *argv[])
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
     thGetTrace.join();
-    float time = pcrt.ParseResponseTrace(traceName, argv[3]);
+    float time = pcrt.ParseResponseTrace(traceName, v[3]);
     return time;
 }
-float EditorCommand::CompleteTime(char *argv[])
+float EditorCommand::CompleteTime(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseClickCompleteTrace pcct;
@@ -61,10 +61,10 @@ float EditorCommand::CompleteTime(char *argv[])
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
     thGetTrace.join();
-    float time = pcct.ParseCompleteTrace(traceName, argv[3]);
+    float time = pcct.ParseCompleteTrace(traceName);
     return time;
 }
-float EditorCommand::ColdStart(char *argv[])
+float EditorCommand::ColdStart(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
@@ -73,10 +73,10 @@ float EditorCommand::ColdStart(char *argv[])
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
     thGetTrace.join();
-    float time = parseTrace.ParseTraceCold(traceName, argv[3]);
+    float time = parseTrace.ParseTraceCold(traceName, v[3]);
     return time;
 }
-float EditorCommand::HotStart(char *argv[])
+float EditorCommand::HotStart(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
@@ -85,7 +85,7 @@ float EditorCommand::HotStart(char *argv[])
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
     thGetTrace.join();
-    float time = parseTrace.ParseTraceHot(traceName, argv[3]);
+    float time = parseTrace.ParseTraceHot(traceName, v[3]);
     return time;
 }
 }
