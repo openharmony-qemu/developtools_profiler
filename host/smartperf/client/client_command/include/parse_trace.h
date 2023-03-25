@@ -16,7 +16,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-
 namespace OHOS {
 namespace SmartPerf {
 class ParseTrace {
@@ -25,14 +24,18 @@ public:
     float ParseTraceHot(std::string fileNamePath, std::string packageName);
     float ParseCodeTrace(std::string fileNamePath);
     float ParseHotTrace(std::string fileNamePath);
-    float GetTime(std::string startTime, std::string endTime);
-    std::string GetPid(std::string line, std::string strPackgeName, std::string appPidBefore);
-    std::string GetStartTime(std::string line, std::string startTimeBefore);
+    static float GetTime(std::string start, std::string end);
+    std::string GetPid(std::string line, const std::string strPackgeName, const std::string appPidBefore);
+    std::string GetStartTime(std::string line, const std::string startTimeBefore);
 private:
     std::ifstream infile;
     std::string flagTime = "0";
     int flagTouch = 0;
     int appPidnum = 0;
+    std::string startTime = "0";
+    std::string endTime = "0";
+    std::string endTimeFlag = "0";
+    std::string appPid = "0";
 };
 }
 }

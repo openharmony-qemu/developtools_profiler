@@ -12,21 +12,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef EDITOR_COMMAND_H
 #define EDITOR_COMMAND_H
-
 namespace OHOS {
 namespace SmartPerf {
 class EditorCommand {
 public:
     const int threeParamMore = 3;
-    EditorCommand(int argc, char *argv[]);
+    EditorCommand(int argc, std::vector<std::string> v);
     ~EditorCommand() {};
-    float ColdStart(char *argv[]);
-    float HotStart(char *argv[]);
-    float CompleteTime(char *argv[]);
-    float ResponseTime(char *argv[]);
+    static float ColdStart(std::vector<std::string> v);
+    static float HotStart(std::vector<std::string> v);
+    static float CompleteTime(std::vector<std::string> v);
+    static float ResponseTime(std::vector<std::string> v);
 };
 }
 }

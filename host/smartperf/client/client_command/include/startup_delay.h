@@ -19,13 +19,12 @@ class StartUpDelay {
 public:
     StartUpDelay();
     ~StartUpDelay();
-    void GetTrace(std::string sessionID, std::string traceName);
+    void GetTrace(const std::string sessionID, const std::string traceName);
     std::thread ThreadGetTrace(std::string sessionID, std::string traceName);
     void GetLayout();
     std::thread ThreadGetLayout();
     void ChangeToBackground();
-    void KillCurApp(std::string curPkgName);
-    std::vector<std::string> GetPidByPkg(std::string curPkgName);
+    std::vector<std::string> GetPidByPkg(const std::string curPkgName);
 };
 }
 }
