@@ -31,16 +31,16 @@ EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
         if (v[type] == "coldStart") {
             time = SmartPerf::EditorCommand::ColdStart(v);
         } else if (v[type] == "hotStart") {
-            time = SmartPerf::EditorCommand::HotStart(v);
+            time = SmartPerf::EditorCommand::HotStart();
         } else if (v[type] == "responseTime") {
-            time = SmartPerf::EditorCommand::ResponseTime(v);
+            time = SmartPerf::EditorCommand::ResponseTime();
         } else if (v[type] == "completeTime") {
-            time = SmartPerf::EditorCommand::CompleteTime(v);
+            time = SmartPerf::EditorCommand::CompleteTime();
         }
         std::cout << "time:" << time << std::endl;
     }
 }
-float EditorCommand::ResponseTime(std::vector<std::string> v)
+float EditorCommand::ResponseTime()
 {
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
@@ -49,10 +49,10 @@ float EditorCommand::ResponseTime(std::vector<std::string> v)
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
     thGetTrace.join();
-    float time = pcrt.ParseResponseTrace(traceName, v[3]);
+    float time = pcrt.ParseResponseTrace(traceName);
     return time;
 }
-float EditorCommand::CompleteTime(std::vector<std::string> v)
+float EditorCommand::CompleteTime()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseClickCompleteTrace pcct;
@@ -69,14 +69,25 @@ float EditorCommand::ColdStart(std::vector<std::string> v)
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
     std::string cmdResult;
+    int type = 4;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+    sleep(1);
+    int position = cmdResult.find(":");
+    std::string pathJson = cmdResult.substr(position + 1);
+    sd.InitXY2(v[type], pathJson);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+    std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+    std::cout << "cmd:" << cmd << std::endl;
+    sleep(1);
+    SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
-    float time = parseTrace.ParseTraceCold(traceName, v[3]);
+    float time = parseTrace.ParseTraceCold(traceName);
     return time;
 }
-float EditorCommand::HotStart(std::vector<std::string> v)
+float EditorCommand::HotStart()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
@@ -85,7 +96,7 @@ float EditorCommand::HotStart(std::vector<std::string> v)
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
     thGetTrace.join();
-    float time = parseTrace.ParseTraceHot(traceName, v[3]);
+    float time = parseTrace.ParseTraceHot(traceName);
     return time;
 }
 }

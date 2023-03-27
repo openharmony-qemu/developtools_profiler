@@ -75,11 +75,9 @@ namespace OHOS {
         float ParseClickCompleteTrace::GetTime(std::string endTime)
         {
             size_t point = endTime.find(".");
-            if (point != -1) {
-                float subNum = 2;
-                endTime = endTime.substr(point - subNum);
-                startTime = startTime.substr(point - subNum);
-            }
+            float subNum = 2;
+            endTime = endTime.substr(point - subNum);
+            startTime = startTime.substr(point - subNum);
             if (std::stof(endTime) == 0 || std::stof(startTime) == 0) {
             } else {
                 float displayTime = 0.032;
@@ -87,11 +85,11 @@ namespace OHOS {
             }
             return completeTime;
         }
-        std::string  ParseClickCompleteTrace::GetPid(std::string line, const std::string pn, const std::string pb)
+        std::string  ParseClickCompleteTrace::GetPid(std::string line, const std::string &pn, const std::string &pb)
         {
-            size_t packageNameNumSize = 5;
             if (appPidnum == 0) {
                 std::string::size_type positionPackgeName;
+                size_t packageNameNumSize = 5;
                 if (pn.length() < packageNameNumSize) {
                     std::string::size_type positionAppspawn;
                     positionPackgeName = line.find("task_newtask: pid=");
@@ -119,7 +117,7 @@ namespace OHOS {
             }
             return appPid;
         }
-        std::string  ParseClickCompleteTrace::GetStartTime(std::string line, const std::string startTimeBefore)
+        std::string  ParseClickCompleteTrace::GetStartTime(std::string line, const std::string &startTimeBefore)
         {
             std::string::size_type touchEventDisPos = line.find("H:touchEventDispatch");
             std::string::size_type mTouchEventDisPos = line.find("H:TouchEventDispatch");

@@ -24,12 +24,11 @@
 #include "include/sp_utils.h"
 namespace OHOS {
     namespace SmartPerf {
-        float ParseTrace::ParseTraceCold(std::string fileNamePath, std::string packageName)
+        float ParseTrace::ParseTraceCold(const std::string &fileNamePath)
         {
             int conversion = 1000;
             float code = -1;
             infile.open(fileNamePath);
-            packageName = "com";
             if (infile.fail()) {
                 std::cout << "File " << "open fail" << std::endl;
                 return 0;
@@ -39,12 +38,11 @@ namespace OHOS {
             infile.close();
             return code * conversion;
         }
-        float ParseTrace::ParseTraceHot(std::string fileNamePath, std::string packageName)
+        float ParseTrace::ParseTraceHot(const std::string &fileNamePath)
         {
             int conversion = 1000;
             float code = -1;
             infile.open(fileNamePath);
-            packageName = "com";
             if (infile.fail()) {
                 std::cout << "File " << "open fail" << std::endl;
                 return 0;
@@ -54,7 +52,7 @@ namespace OHOS {
             infile.close();
             return code * conversion;
         }
-        float ParseTrace::ParseCodeTrace(std::string fileNamePath)
+        float ParseTrace::ParseCodeTrace(const std::string &fileNamePath)
         {
             std::string line;
             std::string::size_type tracingMarkWrite;
@@ -91,7 +89,7 @@ namespace OHOS {
             codeTime = SmartPerf::ParseTrace::GetTime(startTime, endTime);
             return codeTime;
         }
-        float ParseTrace::ParseHotTrace(std::string fileNamePath)
+        float ParseTrace::ParseHotTrace(const std::string &fileNamePath)
         {
             std::string line;
             std::string::size_type doComposition;
@@ -101,8 +99,8 @@ namespace OHOS {
                 startTime=SmartPerf::ParseTrace::GetStartTime(line, startTime);
                 doComposition = line.find("H:RSMainThread::DoComposition");
                 if (doComposition != std::string::npos) {
-                    int position1 = line.find("....");
-                    int position2 = line.find(":");
+                    size_t position1 = line.find("....");
+                    size_t position2 = line.find(":");
                     int subNum = 5;
                     endTime = line.substr(position1 + subNum, position2 - position1 - subNum);
                     int endNum = std::stof(endTime);
@@ -130,11 +128,9 @@ namespace OHOS {
         {
             size_t point = end.find(".");
             float codeTime = -1;
-            if (point != -1) {
-                size_t subNum = 2;
-                end = end.substr(point - subNum);
-                start = start.substr(point - subNum);
-            }
+            size_t subNum = 2;
+            end = end.substr(point - subNum);
+            start = start.substr(point - subNum);
             if (std::stof(end) == 0 || std::stof(start) == 0) {
             } else {
                 float displayTime = 0.040;
@@ -142,7 +138,7 @@ namespace OHOS {
             }
             return codeTime;
         }
-        std::string  ParseTrace::GetPid(std::string line, const std::string strPackgeName, const std::string appPidBefore)
+        std::string  ParseTrace::GetPid(std::string line, const std::string &strPackgeName, const std::string &appPidBefore)
         {
             std::string::size_type positionPackgeName;
             std::string::size_type positionAppspawn;
@@ -176,7 +172,7 @@ namespace OHOS {
             }
             return appPid;
         }
-        std::string  ParseTrace::GetStartTime(std::string line, const std::string startTimeBefore)
+        std::string  ParseTrace::GetStartTime(std::string line, const std::string &startTimeBefore)
         {
             std::string::size_type touchEventDisPos = line.find("H:touchEventDispatch");
             std::string::size_type mTouchEventDisPos = line.find("H:TouchEventDispatch");

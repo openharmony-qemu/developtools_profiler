@@ -22,8 +22,8 @@ namespace OHOS {
             public:
                 float ParseCompleteTrace(std::string fileNamePath);
                 float GetTime(std::string endTime);
-                std::string GetPid(std::string line, const std::string pn, const std::string pb);
-                std::string GetStartTime(std::string line, const std::string startTimeBefore);
+                std::string GetPid(std::string line, const std::string &pn, const std::string &pb);
+                std::string GetStartTime(std::string line, const std::string &startTimeBefore);
                 float GetLineTime();
             private:
                 std::ifstream infile;

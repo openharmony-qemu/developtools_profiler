@@ -24,11 +24,10 @@
 #include "include/sp_utils.h"
 namespace OHOS {
     namespace SmartPerf {
-        float ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath, std::string packageName)
+        float ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
         {
             int conversion = 1000;
             infile.open(fileNamePath);
-            packageName = "";
             if (infile.fail()) {
                 std::cout << "File " << "open fail" << std::endl;
                 return 0;
@@ -66,11 +65,9 @@ namespace OHOS {
         float  ParseClickResponseTrace::GetTime(std::string startTime, std::string endTime)
         {
                 size_t point = endTime.find(".");
-                if (point != -1) {
-                    float subNum = 2;
-                    endTime = endTime.substr(point - subNum);
-                    startTime = startTime.substr(point - subNum);
-                }
+                float subNum = 2;
+                endTime = endTime.substr(point - subNum);
+                startTime = startTime.substr(point - subNum);
                 if (std::stof(endTime) == 0 || std::stof(startTime) == 0) {
                 } else {
                     float displayTime = 0.032;
@@ -78,11 +75,11 @@ namespace OHOS {
                 }
                 return completeTime;
         }
-        std::string  ParseClickResponseTrace::GetPid(std::string line, const std::string pn, const std::string pb)
+        std::string  ParseClickResponseTrace::GetPid(std::string line, const std::string &pn, const std::string &pb)
         {
-            size_t packageNameNumSize = 5;
             std::string appPid;
             if (appPidnum == 0) {
+                size_t packageNameNumSize = 5;
                 std::string::size_type positionPackgeName;
             if (pn.length() < packageNameNumSize) {
                 std::string::size_type positionAppspawn;
@@ -111,7 +108,7 @@ namespace OHOS {
             }
             return appPid;
         }
-        std::string  ParseClickResponseTrace::GetStartTime(std::string line, const std::string startTimeBefore)
+        std::string  ParseClickResponseTrace::GetStartTime(std::string line, const std::string &startTimeBefore)
         {
             std::string::size_type mTouchEventDisPos;
             std::string::size_type touchEventDisPos;
