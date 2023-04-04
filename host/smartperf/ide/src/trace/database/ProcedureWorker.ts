@@ -133,7 +133,6 @@ self.onmessage = function (e: any) {
     let res: any
     if (e.data.params.list) {
         dataList[e.data.type] = e.data.params.list;
-        // dataFilter[e.data.type] = new Set();
         if (e.data.params.offscreen) {
             canvasList[e.data.type] = e.data.params.offscreen;
             contextList[e.data.type] = e.data.params.offscreen!.getContext('2d');
@@ -407,7 +406,6 @@ self.onmessage = function (e: any) {
             } else {
                 HeapStruct.hoverHeapStruct = e.data.params.hoverHeapStruct;
             }
-            // HeapStruct.selectHeapStruct = e.data.params.selectHeapStruct;
             for (let re of dataFilter[type]) {
                 HeapStruct.draw(context, re)
             }
@@ -531,8 +529,6 @@ self.onmessage = function (e: any) {
                 canvas.height = e.data.params.maxHeight;
                 context.scale(e.data.params.dpr, e.data.params.dpr);
             }
-            // canvasList[type]!.width = frame.width;
-            // canvasList[type]!.height = frame.height;
             context.clearRect(0, 0, canvas.width, canvas.height);
             let arr = dataFilter[type];
             if (arr.length > 0 && !range.refresh && !useCache && lazyRefresh) {

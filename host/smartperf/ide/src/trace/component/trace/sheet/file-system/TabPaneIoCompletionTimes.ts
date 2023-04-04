@@ -169,40 +169,6 @@ export class TabPaneIoCompletionTimes extends BaseElement {
     }
 
     filterTypeData(pathData:any){
-        // let filter = this.shadowRoot?.querySelector<TabPaneFilter>("#filter")
-        // let firstSelect = filter!.firstSelect;
-        // let tier = -1;
-        // let path = -1;
-        // let pid = -1;
-        // if(parseInt(firstSelect) <= this.defaultNativeTypes.length - 1){
-        //     let typeEntry = Object.entries(DISKIO_TYPE_MAP).find((entry)=>{
-        //         return entry[1] == this.defaultNativeTypes[parseInt(firstSelect)]
-        //     })
-        //     type = typeEntry?parseInt(typeEntry[0]):0
-        // }else if(pathData!=undefined){
-        //     type = parseInt(pathData.type);
-        //     tid = pathData.tid||-1;
-        //     pid = pathData.pid||-1;
-        // }else if(pathData==undefined){
-        //     return
-        // }
-        // let isTidFilter = false;
-        // let isPidFilter = false;
-        // let isTypeFilter = false;
-        // this.source = this.queryDataSource.filter((item)=>{
-        //     if(tid == -1){
-        //         isTidFilter = true
-        //     }else {
-        //         isTidFilter = item.tid == tid
-        //     }
-        //     if(pid == -1){
-        //         isPidFilter = true
-        //     }else{
-        //         isPidFilter = item.pid == pid
-        //     }
-        //     isTypeFilter = type == 0 || item.type == type;
-        //     return isTidFilter&&isPidFilter&&isTypeFilter
-        // })
     }
 
     sortTable(key: string,type:number){

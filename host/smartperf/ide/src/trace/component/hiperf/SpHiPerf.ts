@@ -75,7 +75,6 @@ export class SpHiPerf {
             await this.initFolder();
             await this.initCpuMerge();
             await this.initCpu();
-            // await this.initReport();
             await this.initProcess();
         }
         info("HiPerf Data initialized")
@@ -386,7 +385,6 @@ export class SpHiPerf {
                         row.must = false;
                         if (row.isHover) {
                             SpHiPerf.hoverEventuctStruct = hover;
-                            // this.trace.visibleRows.filter(it => it.rowType === TraceRow.ROW_TYPE_HIPERF_CPU && it.name !== row.name).forEach(it => it.draw(true));
                         }
                     })
                     row.isTransferCanvas = true;
@@ -449,7 +447,6 @@ export class SpHiPerf {
                     row.must = false;
                     if (row.isHover) {
                         SpHiPerf.hoverProcessStruct = hover;
-                        // this.trace.visibleRows.filter(it => it.rowType === TraceRow.ROW_TYPE_HIPERF_PROCESS && it.name !== row.name).forEach(it => it.draw(true));
                     }
                 })
                 row.isTransferCanvas = true;

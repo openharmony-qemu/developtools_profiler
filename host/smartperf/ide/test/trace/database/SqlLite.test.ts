@@ -14,7 +14,6 @@
  */
 // @ts-ignore
 import {threadPool, DbThread,DbPool } from "../../../dist/trace/database/SqlLite.js";
-// import {DbPool} from "../../../src/trace/database/SqlLite";
 
 describe('SqlLite Test', () => {
     it('SqlLiteTest01', function () {
