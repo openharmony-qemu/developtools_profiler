@@ -24,6 +24,7 @@ namespace OHOS {
 bool FuzzHiperfStartPlugin(const uint8_t* data, size_t size)
 {
     HiperfPluginSessionStart(data, size);
+    HiperfPluginSessionStop();
     return true;
 }
 } // namespace OHOS

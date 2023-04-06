@@ -201,14 +201,22 @@ static inline std::string StringFormat(const char* fmt, ...)
         }                                                                                                           \
     } while (0)
 
-#define CHECK_TRUE(expr, retval, fmt, ...)                                                                        \
-    do {                                                                                                          \
-        if (!(expr)) {                                                                                            \
-            HILOG_WARN(LOG_CORE, "CHECK_TRUE(%s) in %s:%d FAILED, " fmt, #expr, __func__, \
-                       __LINE__, ##__VA_ARGS__);                                                                  \
-            return retval;                                                                                        \
-        }                                                                                                         \
+#ifndef FUZZ_TEST
+#define CHECK_TRUE(expr, retval, fmt, ...)                                                                          \
+    do {                                                                                                            \
+        if (!(expr)) {                                                                                              \
+            HILOG_WARN(LOG_CORE, "CHECK_TRUE(%s) in %s:%d FAILED, " fmt, #expr, __func__, __LINE__, ##__VA_ARGS__); \
+            return retval;                                                                                          \
+        }                                                                                                           \
     } while (0)
+#else
+#define CHECK_TRUE(expr, retval, fmt, ...) \
+    do {                                   \
+        if (!(expr)) {                     \
+            return retval;                 \
+        }                                  \
+    } while (0)
+#endif  // FUZZ_TEST
 
 #define RETURN_IF(expr, retval, fmt, ...)             \
     do {                                              \

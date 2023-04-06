@@ -53,6 +53,8 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
         g_logLevel = " --hilog --verbose";
     } else if (logLevel == HiperfPluginConfig_LogLevel_DEBUG) {
         g_logLevel = " --hilog --debug";
+    } else {
+        g_logLevel = " --nodebug";
     }
 
     // command of prepare
