@@ -122,47 +122,4 @@ describe('ProcedureWorkerHiPerfEvent Test', ()=> {
     it('ProcedureWorkerHiPerfEventTest06', function () {
         expect(HiPerfEventStruct.groupBy10MS([{ps:1},{coX:"1"}],10,"")).toEqual([{"dur": 10000000, "height": NaN, "max": 0, "startNS": NaN, "sum": NaN,}])
     });
-
-    // it('ProcedureWorkerHiPerfEventTest07', function () {
-    //     let hiperfEventRender = new HiperfEventRender()
-    //     let  req = {
-    //         lazyRefresh:true,
-    //         type:"test",
-    //         startNS:1,
-    //         endNS:1,
-    //         totalNS:1,
-    //         frame: {
-    //             x: 20,
-    //             y: 20,
-    //             width: 100,
-    //             height: 100
-    //         },
-    //         useCache:false,
-    //         range:{
-    //             refresh:"",
-    //         },
-    //         canvas:'',
-    //         context:{
-    //             font:"11px sans-serif",
-    //             fillStyle:"#ec407a",
-    //             globalAlpha:0.6,
-    //         },
-    //         lineColor:'',
-    //         isHover:'',
-    //         hoverX:1,
-    //         params:'',
-    //         wakeupBean:undefined,
-    //         flagMoveInfo:'',
-    //         flagSelectedInfo:'',
-    //         slicesTime:3,
-    //         id:1,
-    //         x: 20,
-    //         y: 20,
-    //         width: 100,
-    //         height: 100,
-    //         scale:100_000_001
-    //     }
-    //     window.postMessage = jest.fn(()=>true)
-    //     expect(hiperfEventRender.render(req,[],[])).toBeUndefined()
-    // });
 })

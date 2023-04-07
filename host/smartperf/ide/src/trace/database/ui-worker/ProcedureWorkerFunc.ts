@@ -49,8 +49,6 @@ export class FuncRender extends Render{
                 req.canvas.height = req.params.maxHeight;
                 req.context.scale(req.params.dpr, req.params.dpr);
             }
-            // req.canvasList[type]!.width = frame.width;
-            // req.canvasList[type]!.height = frame.height;
             req.context.clearRect(0, 0, req.frame.width, req.frame.height);
             let arr = filter;
             if (arr.length > 0 && !req.range.refresh && !req.useCache && req.lazyRefresh) {

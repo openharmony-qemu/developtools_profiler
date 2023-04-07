@@ -36,7 +36,6 @@ export class objectToMemorySize{
                 return 8
             case 'object':
                 if (Array.isArray(object)) {
-                    // Array processing [1,2] [{x:1},{y:2}]
                     return object.map(this.objectToSize).reduce((res, cur) => res + cur, 0)
                 } else {
                     return this.sizeOfObj(object)

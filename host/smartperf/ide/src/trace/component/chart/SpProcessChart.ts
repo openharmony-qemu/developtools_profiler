@@ -187,7 +187,6 @@ export class SpProcessChart {
                     funcRow.rowType = TraceRow.ROW_TYPE_FUNC
                     funcRow.rowParentId = `${it.pid}`
                     funcRow.rowHidden = !processRow.expansion
-                    // funcRow.checkType = threadRow.checkType;
                     funcRow.style.width = `100%`;
                     funcRow.setAttribute("height", `${maxHeight}`);
                     funcRow.name = `${asyncFunctions[0].funName}`;
@@ -487,7 +486,6 @@ export class SpProcessChart {
                         if (threadRow.args.isOffScreen == true) {
                             if (threadRow.isHover) {
                                 ThreadStruct.hoverThreadStruct = hover;
-                                // this.visibleRows.filter(it => it.rowType === TraceRow.ROW_TYPE_CPU && it.name !== traceRow.name).forEach(it => it.draw());
                             }
                             return;
                         }

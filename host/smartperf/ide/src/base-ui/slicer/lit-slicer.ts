@@ -41,7 +41,6 @@ export class LitSlicer extends HTMLElement {
     }
 
     set direction(val: any) {
-        // this.setAttribute('direction',val);
         if (val.startsWith('h')) {
             this.shadowRoot!.querySelector('div')!.style.flexDirection = 'row'
         } else if (val.startsWith('v')) {

@@ -85,10 +85,6 @@ describe('RangeRuler Test', () => {
     });
 
     it('RangeRulerTest03', function () {
-        // window.requestAnimationFrame = window.requestAnimationFrame ||
-        //     jest.fn().mockImplementation(() => ({
-        //
-        //     }));
         expect(rangeRuler.keyPress({
             key: 'w'
         })).toBeUndefined();

@@ -70,7 +70,6 @@ export class HeapRender {
             } else {
                 HeapStruct.hoverHeapStruct = req.params.hoverHeapStruct;
             }
-            // HeapStruct.selectHeapStruct = e.data.params.selectHeapStruct;
             for (let re of filter) {
                 HeapStruct.draw(req.context, re)
             }

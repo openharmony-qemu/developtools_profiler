@@ -209,7 +209,6 @@ describe('SpHiSysEventChart Test', () => {
     });
 
     it('spHiSysEventChartTest7', function () {
-        // expect(htmlDivElement.onMouseClick({button:2})).toBeUndefined();
         expect(htmlDivElement.onclick).toBe(null);
     });
 })

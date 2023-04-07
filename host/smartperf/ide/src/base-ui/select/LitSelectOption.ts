@@ -22,8 +22,6 @@ export class LitSelectOption extends BaseElement {
     }
 
     initHtml() {
-        // super();
-        // const shadowRoot = this.attachShadow({mode: 'open'});
         return `
         <style>
         :host{ 
