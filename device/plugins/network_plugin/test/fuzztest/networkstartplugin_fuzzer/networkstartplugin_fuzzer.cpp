@@ -23,8 +23,10 @@
 namespace OHOS {
 bool FuzzNetworkStartPlugin(const uint8_t* data, size_t size)
 {
+    google::protobuf::SetLogHandler(nullptr);
     std::unique_ptr<NetworkPlugin> plugin = std::make_unique<NetworkPlugin>();
     plugin->Start(data, size);
+    plugin->Stop();
     return true;
 }
 } // namespace OHOS
