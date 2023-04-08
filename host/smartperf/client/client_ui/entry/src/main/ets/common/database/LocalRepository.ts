@@ -26,12 +26,9 @@ const TAG = "LocalRepository"
 
 
 export function initDb(): void {
-
-    const STORE_CONFIG = {
+  dataRdb.getRdbStore(globalThis.abilityContext, {
         name: dbName
-    }
-
-    dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion)
+  }, dbVersion)
         .then(rdbStore => {
             rdbStore.executeSql(sql_t_general_info, null).catch(err => {
                 SPLogger.DEBUG(TAG, "--> createTable t_genneral_info err:" + err)
