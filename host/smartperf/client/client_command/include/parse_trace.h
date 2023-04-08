@@ -20,22 +20,26 @@ namespace OHOS {
 namespace SmartPerf {
 class ParseTrace {
 public:
-    float ParseTraceCold(const std::string &fileNamePath);
+    float ParseTraceCold(const std::string &fileNamePath, const std::string &appPid);
     float ParseTraceHot(const std::string &fileNamePath);
-    float ParseCodeTrace(const std::string &fileNamePath);
+    float ParseNoahTrace(const std::string &fileNamePath, const std::string &appPid);
+    float ParseTraceNoah(const std::string &fileNamePath, const std::string &appPid);
+    float ParseCodeTrace(const std::string &fileNamePath, const std::string &appPid);
     float ParseHotTrace(const std::string &fileNamePath);
     static float GetTime(std::string start, std::string end);
-    std::string GetPid(std::string line, const std::string &strPackgeName, const std::string &appPidBefore);
+    static float GetTimeNoah(std::string start, std::string end, std::string wt);
     std::string GetStartTime(std::string line, const std::string &startTimeBefore);
+    std::string GetWindowTime(std::string line, std::string wt);
+    std::string GetFrameId(std::string line, std::string appPid, std::string fid);
 private:
     std::ifstream infile;
     std::string flagTime = "0";
     int flagTouch = 0;
-    int appPidnum = 0;
     std::string startTime = "0";
     std::string endTime = "0";
     std::string endTimeFlag = "0";
-    std::string appPid = "0";
+    std::string windowTime = "0";
+    std::string frameId = "0";
 };
 }
 }
