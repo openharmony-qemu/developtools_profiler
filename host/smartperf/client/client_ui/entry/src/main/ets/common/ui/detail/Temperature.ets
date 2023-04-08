@@ -691,36 +691,11 @@ export struct Temperature {
     Stack({ alignContent: Alignment.TopStart }) {
       Scroll() {
         Column({ space: 20 }) {
-            LineChart({lineChartModel: this.lineChartModel2})
-            Text("ShellFrontTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
-
-            LineChart({lineChartModel: this.lineChartModel4})
-            Text("socThermalTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-
-            LineChart({lineChartModel: this.lineChartModel1})
-            Text("BatteryTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
-
-            LineChart({lineChartModel: this.lineChartModel3})
-            Text("ShellFrameTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
 
             LineChart({lineChartModel: this.lineChartModel5})
             Text("ShellBackTemp(℃)") {
             }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
 
-            LineChart({lineChartModel: this.lineChartModel})
-            Text("SystemHTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-            Stack() {
-              Column() {
-                LineChart({lineChartModel: this.lineChartModel6})
-                Text("gpuTemp(℃)") {
-                }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
-              }
-            }
         }.width('100%').alignItems(HorizontalAlign.Center)
       }.width('100%')
     }.width('100%').height('100%')

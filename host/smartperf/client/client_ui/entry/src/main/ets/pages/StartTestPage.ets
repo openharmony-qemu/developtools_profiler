@@ -34,7 +34,7 @@ struct StartTestPage {
   @State selectApp: string = "请选择一个应用"
   @State selectAppIcon: string = ""
   @State private collectConfigs: Array<CollectItem> = new Array()
-  @State private switchList: any =new Array(
+  @State private switchList:Array<SwitchItem> = new Array(
     new SwitchItem("trace", '是否抓取trace', $r("app.media.icon_average_frame_b"), false, true),
     new SwitchItem("screen_capture", '是否开启截图', $r("app.media.icon_screencap"), false, true)
   )
@@ -175,14 +175,15 @@ struct StartTestPage {
                 prompt.showToast({ message: "please choose app!", duration: 1000 })
                 return
               }
-				if(router.getParams()["selectPackageName"]!=null && router !=null){
+				if(router.getParams()["selectPackageName"]!=null && router!=null){
               //启动app
               commonStartAbility(new String(router.getParams()["selectPackageName"]).toString(), new String(router.getParams()["selectAbilityName"]).toString())
 
               //启动悬浮窗
               globalThis.CreateFloatingWindow()
               router.back({ uri: "pages/MainPage" })
-				}
+			  }
+
             })
 
           Divider().height('15%').width("80%").visibility(Visibility.Hidden)
@@ -193,11 +194,11 @@ struct StartTestPage {
   }
 
   onPageShow() {
-    let routerParams:any = router.getParams()
-    let appName:any
-    let appVersion:any
-    let selectPackageName:any
-    let appIconId:any
+    let routerParams = router.getParams()
+    let appName
+    let appVersion
+    let selectPackageName
+    let appIconId
     if (routerParams != undefined && routerParams !=null) {
       appName = routerParams["appName"]
       appVersion = routerParams["appVersion"]
@@ -293,7 +294,7 @@ struct StartTestPage {
 
 @Component
 struct SwitchComponent {
-  @Link private switchList: any
+  @Link private switchList:Array<SwitchItem>
 
   build() {
     Column() {

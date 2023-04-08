@@ -22,7 +22,7 @@ public:
     EditorCommand(int argc, std::vector<std::string> v);
     ~EditorCommand() {};
     static float ColdStart(std::vector<std::string> v);
-    static float HotStart();
+    static float HotStart(std::vector<std::string> v);
     static float CompleteTime();
     static float ResponseTime();
 };

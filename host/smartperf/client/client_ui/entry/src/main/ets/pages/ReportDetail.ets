@@ -39,9 +39,9 @@ struct ReportDetail {
   private tPowerAppList: Array<TPowerAppInfo> = new Array<TPowerAppInfo>()
   aboutToAppear() {
 
-    let data : any = router.getParams()["gpData"]
-    let report : any = router.getParams()["reportItem"]
-    let timeStamp:any=router.getParams()["timeStamp"]
+    let data:any  = router.getParams()["gpData"]
+    let report:any = router.getParams()["reportItem"]
+    let timeStamp:any = router.getParams()["timeStamp"]
     if (data != null) {
       this.gpData = data
     }
