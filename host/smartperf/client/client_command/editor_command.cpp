@@ -86,7 +86,12 @@ float EditorCommand::ColdStart(std::vector<std::string> v)
     sleep(1);
     size_t position = cmdResult.find(":");
     std::string pathJson = cmdResult.substr(position + 1);
-    sd.InitXY2(v[type], pathJson, v[typePKG]);
+    std::string deviceType = sd.GetDeviceType();
+    if (deviceType == " rk3568") {
+        sd.InitXY(v[type], pathJson);
+    } else {
+        sd.InitXY2(v[type], pathJson, v[typePKG]);
+    }
     if (sd.pointXY == "0 0") {
         return noNameType;
     } else {
@@ -95,9 +100,9 @@ float EditorCommand::ColdStart(std::vector<std::string> v)
         std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
         sleep(1);
         SPUtils::LoadCmd(cmd, cmdResult);
+        sleep(1);
         std::string pid = sd.GetPidByPkg(v[typePKG]);
         thGetTrace.join();
-        std::string deviceType = sd.GetDeviceType();
         float time = 0.0;
         if (deviceType == " rk3568") {
             time = parseTrace.ParseTraceCold(traceName, pid);
@@ -111,39 +116,44 @@ float EditorCommand::HotStart(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
+    float time = 0.0;
     std::string cmdResult;
-    int type = 4;
-    int typePKG = 3;
-    float noNameType = 5.0;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
-    sleep(1);
-    size_t position = cmdResult.find(":");
-    std::string pathJson = cmdResult.substr(position + 1);
-    sd.InitXY2(v[type], pathJson, v[typePKG]);
-    if (sd.pointXY == "0 0") {
-        return noNameType;
-    } else {
-        std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
-        sleep(1);
-        SPUtils::LoadCmd(cmd, cmdResult);
-        sleep(1);
-        SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
-        sleep(1);
+    std::string deviceType = sd.GetDeviceType();
+    if (deviceType == " rk3568") {
+        SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
         std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
         std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
-        SPUtils::LoadCmd(cmd, cmdResult);
-        std::string pid = sd.GetPidByPkg(v[typePKG]);
         thGetTrace.join();
-        std::string deviceType = sd.GetDeviceType();
-        float time = 0.0;
-        if (deviceType == " rk3568") {
-            time = parseTrace.ParseTraceCold(traceName, pid);
-        } else {
-            time = parseTrace.ParseTraceNoah(traceName, pid);
-        }
+        float time = parseTrace.ParseTraceHot(traceName);
         return time;
+    } else {
+        int type = 4;
+        int typePKG = 3;
+        float noNameType = 5.0;
+        SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
+        SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+        SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+        sleep(1);
+        size_t position = cmdResult.find(":");
+        std::string pathJson = cmdResult.substr(position + 1);
+        sd.InitXY2(v[type], pathJson, v[typePKG]);
+        if (sd.pointXY == "0 0") {
+            return noNameType;
+        } else {
+            std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+            sleep(1);
+            SPUtils::LoadCmd(cmd, cmdResult);
+            sleep(1);
+            SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+            sleep(1);
+            std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
+            std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
+            SPUtils::LoadCmd(cmd, cmdResult);
+            std::string pid = sd.GetPidByPkg(v[typePKG]);
+            thGetTrace.join();
+            time = parseTrace.ParseTraceNoah(traceName, pid);
+            return time;
+        }
     }
 }
 }

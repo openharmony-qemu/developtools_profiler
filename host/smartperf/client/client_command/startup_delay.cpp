@@ -105,5 +105,44 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
         }
     }
 }
+void StartUpDelay::InitXY(const std::string &curAppName, const std::string &fileName)
+{
+    std::ifstream file(fileName, std::ios::in);
+    std::string strLine = "";
+    std::regex pattern("\\d+");
+    while (getline(file, strLine)) {
+        size_t appIndex = strLine.find(curAppName);
+        if (appIndex > 0) {
+            size_t bounds = strLine.rfind("bounds", appIndex);
+            if (bounds > 0) {
+                std::string boundStr = strLine.substr(bounds, 30);
+                std::smatch result;
+                std::string::const_iterator iterStart = boundStr.begin();
+                std::string::const_iterator iterEnd = boundStr.end();
+                std::vector<std::string> pointVector;
+                while (std::regex_search(iterStart, iterEnd, result, pattern)) {
+                    std::string startX = result[0];
+                    iterStart = result[0].second;
+                    pointVector.push_back(startX);
+                }
+                size_t num = 3;
+                size_t pointNum = pointVector.size();
+                if (pointNum > num) {
+                    int x = (std::atoi(pointVector[2].c_str()) + std::atoi(pointVector[0].c_str())) / 2;
+                    int y = (std::atoi(pointVector[3].c_str()) + std::atoi(pointVector[1].c_str())) / 2;
+                    pointXY = std::to_string(x) + " " + std::to_string(y);
+                } else {
+                    size_t leftStart = boundStr.find_first_of("[");
+                    size_t leftEnd = boundStr.find_first_of("]");
+                    pointXY = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
+                    pointXY = pointXY.replace(pointXY.find(","), 1, " ");
+                }
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+}
 }
 }
