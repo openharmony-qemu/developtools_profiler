@@ -175,14 +175,17 @@ struct StartTestPage {
                 prompt.showToast({ message: "please choose app!", duration: 1000 })
                 return
               }
-				if(router.getParams()["selectPackageName"]!=null && router!=null){
-              //启动app
-              commonStartAbility(new String(router.getParams()["selectPackageName"]).toString(), new String(router.getParams()["selectAbilityName"]).toString())
-
-              //启动悬浮窗
-              globalThis.CreateFloatingWindow()
-              router.back({ uri: "pages/MainPage" })
+				if(router!=null){
+				if(router.getParams()!=null){
+					if(router.getParams()["selectPackageName"]!=null){
+					  //启动app
+					  commonStartAbility(new String(router.getParams()["selectPackageName"]).toString(), new String(router.getParams()["selectAbilityName"]).toString())
+					  //启动悬浮窗
+					  globalThis.CreateFloatingWindow()
+					  router.back({ uri: "pages/MainPage" })
+					 }
 			  }
+			}
 
             })
 
