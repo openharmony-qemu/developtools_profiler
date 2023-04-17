@@ -276,6 +276,8 @@ int FlowController::StartCapture(void)
     keepRunning_ = true;
     pollThread_ = std::thread(&FlowController::CaptureWork, this);
 
+    // set trace_clock
+    traceOps_->SetTraceClock(traceClock_);
     // enable ftrace event switches
     if (traceCategories_.size() > 0) {
         traceOps_->EnableCategories(traceCategories_, hitraceTime_);
@@ -550,6 +552,7 @@ int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
 
     // setup trace clock
     if (g_availableClocks.count(traceConfig.clock()) > 0) {
+        traceClock_ = traceConfig.clock();
         FtraceFsOps::GetInstance().SetTraceClock(traceConfig.clock());
     }
 

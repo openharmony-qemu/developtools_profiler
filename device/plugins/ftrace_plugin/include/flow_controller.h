@@ -104,6 +104,7 @@ private:
     bool ftraceSupported_ = false;
     bool flushCacheData_ = false;
     unsigned int hitraceTime_ = 0;
+    std::string traceClock_;
 };
 FTRACE_NS_END
 #endif // FLOW_CONTROLLER_H

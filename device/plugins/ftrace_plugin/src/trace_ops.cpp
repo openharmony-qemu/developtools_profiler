@@ -104,6 +104,11 @@ bool TraceOps::PrepareDisableCategoriesCmd()
     return false;
 }
 
+void TraceOps::SetTraceClock(const std::string& traceClock)
+{
+    traceClock_ = traceClock;
+}
+
 bool TraceOps::EnableCategories(const std::vector<std::string>& categories, int traceTime)
 {
     CHECK_TRUE(categories.size() > 0, false, "categories empty!");
@@ -116,6 +121,10 @@ bool TraceOps::EnableCategories(const std::vector<std::string>& categories, int 
     }
 
     args_ = {arg0_};
+    if (!traceClock_.empty()) {
+        args_.push_back("--trace_clock");
+        args_.push_back(traceClock_);
+    }
     CHECK_TRUE(PrepareEnableCategoriesCmd(traceTime), false, "prepare enable categories failed!");
 
     int retval = ExecuteCommand();
