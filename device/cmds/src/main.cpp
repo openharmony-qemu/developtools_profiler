@@ -104,7 +104,8 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
         printf("config file empty!");
         return nullptr;
     }
-    if (!TextFormat::ParseFromString(content, request.get())) {
+
+    if (!ParsePluginConfig::GetInstance().GetParser().ParseFromString(content, request.get())) {
         printf("config [%s] parse FAILED!\n", content.c_str());
         return nullptr;
     }
