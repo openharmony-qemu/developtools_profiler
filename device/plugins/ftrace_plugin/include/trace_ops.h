@@ -38,6 +38,7 @@ public:
     bool HasCategory(const std::string& name);
     bool EnableCategories(const std::vector<std::string>& categories, int traceTime = 0);
     bool DisableCategories();
+    void SetTraceClock(const std::string& traceClock);
 
     std::string GetCommand() const;
     TraceType GetTraceType() const;
@@ -58,6 +59,7 @@ protected:
     std::vector<std::string> supportedCategories_;
     std::vector<std::string> args_;
     std::string output_;
+    std::string traceClock_;
 };
 FTRACE_NS_END
 
