@@ -30,8 +30,8 @@ EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
     if (argc >= threeParamMore) {
         int type = 2;
         float time = 0.0;
-        int typeName = 4;
-        float noNameType = 5.0;
+
+        float noNameType = -1.0;
         if (v[type] == "coldStart") {
             time = SmartPerf::EditorCommand::ColdStart(v);
         } else if (v[type] == "hotStart") {
@@ -42,7 +42,7 @@ EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
             time = SmartPerf::EditorCommand::CompleteTime();
         }
         if (time == noNameType) {
-            std::cout << v[typeName] << " Duplicate Application Name" << std::endl;
+            std::cout << "Startup error, unknown application or application not responding"<< std::endl;
         } else {
             std::cout << "time:" << time << std::endl;
         }
@@ -79,7 +79,7 @@ float EditorCommand::ColdStart(std::vector<std::string> v)
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
-    float noNameType = 5.0;
+    float noNameType = -1.0;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
@@ -101,8 +101,12 @@ float EditorCommand::ColdStart(std::vector<std::string> v)
         sleep(1);
         SPUtils::LoadCmd(cmd, cmdResult);
         sleep(1);
+        std::string topPkg = SPUtils::GetTopPkgName();
         std::string pid = sd.GetPidByPkg(v[typePKG]);
         thGetTrace.join();
+        if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
+            return noNameType;
+        }
         float time = 0.0;
         if (deviceType == " rk3568") {
             time = parseTrace.ParseTraceCold(traceName, pid);
@@ -129,7 +133,7 @@ float EditorCommand::HotStart(std::vector<std::string> v)
     } else {
         int type = 4;
         int typePKG = 3;
-        float noNameType = 5.0;
+        float noNameType = -1.0;
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
         SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
@@ -143,14 +147,22 @@ float EditorCommand::HotStart(std::vector<std::string> v)
             std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
             sleep(1);
             SPUtils::LoadCmd(cmd, cmdResult);
-            sleep(1);
-            SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
-            sleep(1);
+            sd.ChangeToBackground();
+            std::string topPkgBefore = SPUtils::GetTopPkgName();
+            if (topPkgBefore.find(v[typePKG]) != std::string::npos) {
+                return noNameType;
+            }
             std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
             std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
+            sleep(1);
             SPUtils::LoadCmd(cmd, cmdResult);
+            sleep(1);
+            std::string topPkg = SPUtils::GetTopPkgName();
             std::string pid = sd.GetPidByPkg(v[typePKG]);
             thGetTrace.join();
+            if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
+                return noNameType;
+            }
             time = parseTrace.ParseTraceNoah(traceName, pid);
             return time;
         }
