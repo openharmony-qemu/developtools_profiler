@@ -21,10 +21,12 @@ public:
     const int threeParamMore = 3;
     EditorCommand(int argc, std::vector<std::string> v);
     ~EditorCommand() {};
-    static float ColdStart(std::vector<std::string> v);
-    static float HotStart(std::vector<std::string> v);
+    float ColdStart(std::vector<std::string> v);
+    float HotStart(std::vector<std::string> v);
     static float CompleteTime();
     static float ResponseTime();
+private:
+    bool isOhTest = false;
 };
 }
 }
