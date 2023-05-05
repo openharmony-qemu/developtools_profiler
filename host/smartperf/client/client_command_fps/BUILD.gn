@@ -23,6 +23,7 @@ config("config") {
     "-Werror",
     "-g3",
     "-Wunused-variable",
+    "-Wno-unused-but-set-variable",
   ]
 }
 

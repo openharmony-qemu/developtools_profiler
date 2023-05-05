@@ -22,12 +22,11 @@ class ParseTrace {
 public:
     float ParseTraceCold(const std::string &fileNamePath, const std::string &appPid);
     float ParseTraceHot(const std::string &fileNamePath);
-    float ParseNoahTrace(const std::string &fileNamePath, const std::string &appPid);
-    float ParseTraceNoah(const std::string &fileNamePath, const std::string &appPid);
+    float ParseNohTrace(const std::string &fileNamePath, const std::string &appPid);
+    float ParseTraceNoh(const std::string &fileNamePath, const std::string &appPid);
     float ParseCodeTrace(const std::string &fileNamePath, const std::string &appPid);
     float ParseHotTrace(const std::string &fileNamePath);
     static float GetTime(std::string start, std::string end);
-    static float GetTimeNoah(std::string start, std::string end, std::string wt);
     std::string GetStartTime(std::string line, const std::string &startTimeBefore);
     std::string GetWindowTime(std::string line, std::string wt);
     std::string GetFrameId(std::string line, std::string appPid, std::string fid);

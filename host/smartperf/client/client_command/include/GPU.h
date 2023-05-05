@@ -36,12 +36,12 @@ private:
     GPU &operator = (const GPU &);
 
     const std::vector<std::string> gpuCurFreqPaths = {
-        "/sys/class/devfreq/fde60000.gpu/cur_freq", // rk3568
-        "/sys/class/devfreq/gpufreq/cur_freq",      // wgr
+        "/sys/class/devfreq/fde60000.gpu/cur_freq",
+        "/sys/class/devfreq/gpufreq/cur_freq",
     };
     const std::vector<std::string> gpuCurLoadPaths = {
-        "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation", // wgr
-        "/sys/class/devfreq/fde60000.gpu/load",                   // rk3568
+        "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation",
+        "/sys/class/devfreq/fde60000.gpu/load",
     };
 };
 }
