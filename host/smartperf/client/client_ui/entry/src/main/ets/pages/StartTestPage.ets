@@ -175,7 +175,7 @@ struct StartTestPage {
                 prompt.showToast({ message: "please choose app!", duration: 1000 })
                 return
               }
-				if(router!=null){
+			if(router!=null){
 				if(router.getParams()!=null){
 					if(router.getParams()["selectPackageName"]!=null){
 					  //启动app
@@ -186,7 +186,6 @@ struct StartTestPage {
 					 }
 			  }
 			}
-
             })
 
           Divider().height('15%').width("80%").visibility(Visibility.Hidden)

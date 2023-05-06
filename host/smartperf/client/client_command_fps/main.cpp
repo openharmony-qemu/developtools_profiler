@@ -288,6 +288,10 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2) {
+        printf("exec failed, require one param | example: GP_daemon_fps 10");
+        return 0;
+    }
     int num = 1;
     if (!strcmp(argv[1], "")) {
         printf("the args of num must be not-null!\n");
@@ -333,7 +337,9 @@ int main(int argc, char *argv[])
             fflush(stdout);
             gettimeofday(&end, nullptr);
             runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
-            usleep(oneSec - runTime);
+            if (runTime < oneSec) {
+                usleep(oneSec - runTime);
+            }
         }
     }
     printf("GP_daemon_fps exec finished!\n");

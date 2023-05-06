@@ -48,11 +48,9 @@ float GPU::GetGpuLoad()
     }
     SPUtils::StrSplit(bufferLine, "@", sps);
     if (sps.size() > 0) {
-        // rk3568
         float loadRk = std::stof(sps[0]);
         return loadRk;
     } else {
-        // wgr
         float loadWgr = std::stof(bufferLine);
         return loadWgr;
     }
