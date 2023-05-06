@@ -197,6 +197,6 @@ export function moveFloatWindow(floatName:string,offsetX: number, offsetY: numbe
 
 }
 export function setFloatWindow(offsetX: number, offsetY: number) {
-    this.floatingWindowOffsetX = (floatingWindowOffsetX + offsetX * 2) < 0 ? 0 : ((floatingWindowOffsetX + offsetX * 2) > (windowWidth - 200) ? (windowWidth - 200) : (floatingWindowOffsetX + offsetX * 2))
-    this.floatingWindowOffsetY = (floatingWindowOffsetY + offsetY * 2) < 0 ? 0 : ((floatingWindowOffsetY + offsetY * 2) > (windowHeight - 200) ? (windowHeight - 200) : (floatingWindowOffsetY + offsetY * 2))
+    floatingWindowOffsetX = (floatingWindowOffsetX + offsetX * 2) < 0 ? 0 : ((floatingWindowOffsetX + offsetX * 2) > (windowWidth - 200) ? (windowWidth - 200) : (floatingWindowOffsetX + offsetX * 2))
+    floatingWindowOffsetY = (floatingWindowOffsetY + offsetY * 2) < 0 ? 0 : ((floatingWindowOffsetY + offsetY * 2) > (windowHeight - 200) ? (windowHeight - 200) : (floatingWindowOffsetY + offsetY * 2))
 }

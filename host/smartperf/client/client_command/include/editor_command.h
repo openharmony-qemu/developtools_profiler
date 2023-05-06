@@ -25,6 +25,8 @@ public:
     float HotStart(std::vector<std::string> v);
     static float CompleteTime();
     static float ResponseTime();
+    static std::string SlideFPS(std::vector<std::string> v);
+    static std::string SlideFps(std::vector<std::string> v);
 private:
     bool isOhTest = false;
 };

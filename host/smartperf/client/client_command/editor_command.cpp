@@ -22,6 +22,7 @@
 #include "include/sp_utils.h"
 #include "include/parse_click_complete_trace.h"
 #include "include/parse_click_response_trace.h"
+#include "include/sp_parse_fps.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -43,6 +44,12 @@ EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
             time = SmartPerf::EditorCommand::ResponseTime();
         } else if (v[type] == "completeTime") {
             time = SmartPerf::EditorCommand::CompleteTime();
+        } else if (v[type] == "fps") {
+            std::cout << SmartPerf::EditorCommand::SlideFps(v)<< std::endl;
+            return;
+        } else if (v[type] == "FPS") {
+            std::cout << SmartPerf::EditorCommand::SlideFPS(v)<< std::endl;
+            return;
         }
         if (time == noNameType) {
             std::cout << "Startup error, unknown application or application not responding"<< std::endl;
@@ -50,6 +57,51 @@ EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
             std::cout << "time:" << time << std::endl;
         }
     }
+}
+std::string EditorCommand::SlideFps(std::vector<std::string> v)
+{
+    OHOS::SmartPerf::StartUpDelay sd;
+    ParseFPS parseFPS;
+    std::string cmdResult;
+    int typePKG = 3;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
+    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+    thGetTrace.join();
+    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    return fps;
+}
+std::string EditorCommand::SlideFPS(std::vector<std::string> v)
+{
+    OHOS::SmartPerf::StartUpDelay sd;
+    ParseFPS parseFPS;
+    std::string cmdResult;
+    int type = 4;
+    int typePKG = 3;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+    sleep(1);
+    size_t position = cmdResult.find(":");
+    std::string pathJson = cmdResult.substr(position + 1);
+    std::string deviceType = sd.GetDeviceType();
+    sd.InitXY2(v[type], pathJson, v[typePKG]);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
+    std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+    sleep(1);
+    SPUtils::LoadCmd(cmd, cmdResult);
+    sleep(1);
+    std::string topPkg = SPUtils::GetTopPkgName();
+    std::string pid = sd.GetPidByPkg(v[typePKG]);
+    if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
+        return "";
+    }
+    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+    cmd = "uinput -T -m 650 1500 650 500 30";
+    SPUtils::LoadCmd(cmd, cmdResult);
+    thGetTrace.join();
+    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    return fps;
 }
 float EditorCommand::ResponseTime()
 {
