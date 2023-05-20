@@ -74,7 +74,7 @@ namespace OHOS {
             std::string::size_type positionTransactionFlag = line.find("transactionFlag:[" + appPid);
             if (positionTransactionFlag != std::string::npos) {
                 size_t positionFrame1 = line.rfind("[" + appPid + ",");
-                size_t positionFrame2 = line.rfind("] isUni:1");
+                size_t positionFrame2 = line.rfind("]");
                 size_t subNum = 2;
                 frameId = line.substr(positionFrame1 + subNum + appPid.length(), positionFrame2 - positionFrame1 - subNum - appPid.length());
             } else {
