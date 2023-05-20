@@ -37,7 +37,7 @@ export function initFloatWindow() {
 export function createFloatWindow(floatName:string) {
 
     //5.5SP2  2106 改成 8
-    wm.create(globalThis.abilityContext, floatName, 2106).then((floatWin) => {
+    wm.create(globalThis.abilityContext, floatName, wm.WindowType.TYPE_FLOAT).then((floatWin) => {
         floatWin.moveTo(lineChartWindowOffsetX, lineChartWindowOffsetY).then(() => {
           floatWin.resetSize(360*globalThis.coefficient,270*globalThis.coefficient).then(() => {
             floatWin.getProperties().then((property) => {
