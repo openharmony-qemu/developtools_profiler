@@ -181,5 +181,82 @@ std::string SPUtils::GetTopPkgName()
     return topPkg;
 }
 
+static std::string GetSplitOne(std::string cmd)
+{
+    std::string result;
+    SPUtils::LoadCmd(cmd, result);
+    std::vector<std::string> splitStrings;
+    SPUtils::StrSplit(result, "=", splitStrings);
+    return splitStrings[1];
+}
+
+std::map<std::string, std::string> SPUtils::GetDeviceInfo()
+{
+    std::map<std::string, std::string> resultMap;
+    std::string sn = GetSplitOne("param get |grep ohos.boot.sn");
+    std::string deviceTypeName = GetSplitOne("param get |grep ohos.boot.hardware");
+    std::string brand = GetSplitOne("param get |grep const.product.brand");
+    std::string version = GetSplitOne("param get |grep const.product.software.version");
+    resultMap["sn"] = sn;
+    resultMap["deviceTypeName"] = deviceTypeName;
+    resultMap["brand"] = brand;
+    resultMap["board"] = "hw";
+    resultMap["version"] = version;
+    return resultMap;
+}
+std::map<std::string, std::string> SPUtils::GetCpuInfo()
+{
+    std::vector<std::string> policyFiles;
+    std::map<std::string, std::string> resultMap;
+    std::string basePath = "/sys/devices/system/cpu/cpufreq/";
+    std::cout << "policyFiles size:" << policyFiles.size() << std::endl;
+    DIR *dir = opendir(basePath.c_str());
+    if (dir == nullptr) {
+        return resultMap;
+    }
+    while (true) {
+        struct dirent *ptr = readdir(dir);
+        if (ptr == nullptr) {
+            break;
+        }
+        if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
+            continue;
+        }
+        policyFiles.push_back(IncludePathDelimiter(basePath) + std::string(ptr->d_name));
+    }
+    for (size_t i = 0; i < policyFiles.size(); i++) {
+        std::string cpus;
+        LoadFile(policyFiles[i] + "/affected_cpus", cpus);
+        std::string max;
+        LoadFile(policyFiles[i] + "/cpuinfo_max_freq", max);
+        std::string min;
+        LoadFile(policyFiles[i] + "/cpuinfo_min_freq", min);
+        std::string nameBase = "cpu-c" + std::to_string(i + 1) + "-";
+        resultMap[nameBase + "cluster"] = cpus;
+        resultMap[nameBase + "max"] = max;
+        resultMap[nameBase + "min"] = min;
+    }
+    return resultMap;
+}
+std::map<std::string, std::string> SPUtils::GetGpuInfo()
+{
+    const std::vector<std::string> gpuCurFreqPaths = {
+        "/sys/class/devfreq/fde60000.gpu/",
+        "/sys/class/devfreq/gpufreq/",
+    };
+    std::map<std::string, std::string> resultMap;
+    for (auto path : gpuCurFreqPaths) {
+        if (FileAccess(path)) {
+            std::string max;
+            SPUtils::LoadFile(path + "/max_freq", max);
+            std::string min;
+            SPUtils::LoadFile(path + "/min_freq", min);
+            resultMap["gpu_max_freq"] = max;
+            resultMap["gpu_min_freq"] = min;
+        }
+    }
+    return resultMap;
+}
+
 }
 }

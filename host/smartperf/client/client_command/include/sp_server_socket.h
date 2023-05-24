@@ -18,15 +18,23 @@
 #include <netinet/in.h>
 namespace OHOS {
 namespace SmartPerf {
+enum class ProtoType {
+    TCP,
+    UDP
+};
 class SpServerSocket {
 public:
     SpServerSocket();
     ~SpServerSocket();
     // 创建一个套接字
-    int Init();
-    // IO操作
+    int Init(ProtoType type);
+    // UDP
     int Sendto(std::string &sendBuf);
     int Recvfrom();
+    // TCP
+    int Accept();
+    int Send(std::string sendBuf);
+    int Recv();
     // 关闭
     void Close() const;
     std::string RecvBuf() const;
@@ -35,9 +43,13 @@ private:
     int sock = -1;
     struct sockaddr_in local;
     struct sockaddr_in client;
-    const int sockPort = 8283;
+    int sockPort;
+    int connFd = -1;
+    const int listenCount = 5;
     const static int buffSizeRecv = 256;
     char rbuf[buffSizeRecv] = "";
+    const int udpPort = 8283;
+    const int tcpPort = 8284;
 };
 }
 }

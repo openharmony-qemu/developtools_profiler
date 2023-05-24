@@ -25,35 +25,49 @@
 #include "sp_data.h"
 namespace OHOS {
 namespace SmartPerf {
-namespace SpCsvUtil {
-void WriteCsv(const std::string &path, const std::vector<SPData> &vmap)
-{
-    std::ofstream outFile;
-    char realPath[PATH_MAX] = {0x00};
-    if (realpath(path.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
-    }
-    outFile.open(path.c_str(), std::ios::out);
-    int i = 0;
-    std::string title = "";
-    for (SPData spdata : vmap) {
-        std::string lineContent = "";
-        for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
-            if (i == 0) {
-                title += iter->first + ",";
+class SpCsvUtil {
+public:
+    static void WriteCsv(std::string path, std::vector<SPData> vmap)
+    {
+        std::ofstream outFile;
+        char realPath[PATH_MAX] = {0x00};
+        if (realpath(path.c_str(), realPath) == nullptr) {
+            std::cout << "" << std::endl;
+        }
+        outFile.open(path.c_str(), std::ios::out);
+        int i = 0;
+        std::string title = "";
+        for (SPData spdata : vmap) {
+            std::string lineContent = "";
+            for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
+                if (i == 0) {
+                    title += iter->first + ",";
+                }
+                lineContent += iter->second + ",";
             }
-            lineContent += iter->second + ",";
+            if (i == 0) {
+                title.pop_back();
+                outFile << title << std::endl;
+            }
+            lineContent.pop_back();
+            outFile << lineContent << std::endl;
+            ++i;
         }
-        if (i == 0) {
-            title.pop_back();
-            outFile << title << std::endl;
-        }
-        lineContent.pop_back();
-        outFile << lineContent << std::endl;
-        ++i;
+        outFile.close();
     }
-    outFile.close();
-}
+    static void WriteCsvH(std::string path, std::map<std::string, std::string> vmap)
+    {
+        std::ofstream outFile;
+        char realPath[PATH_MAX] = {0x00};
+        if (realpath(path.c_str(), realPath) == nullptr) {
+            std::cout << "" << std::endl;
+        }
+        outFile.open(path.c_str(), std::ios::out);
+        for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
+            outFile << iter->first + "," + iter->second << std::endl;
+        }
+        outFile.close();
+    }
 };
 }
 }

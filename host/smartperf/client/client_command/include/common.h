@@ -72,7 +72,9 @@ enum class CommandType {
     CT_R,
     CT_TTRACE,
     CT_SNAPSHOT,
-    CT_HW
+    CT_HW,
+    CT_SESSIONID,
+    CT_INTERVAL
 };
 enum class CommandHelp {
     HELP,
@@ -88,7 +90,21 @@ const std::unordered_map<std::string, CommandType> commandMap = {
     { std::string("-p"), CommandType::CT_P },          { std::string("-r"), CommandType::CT_R },
     { std::string("-trace"), CommandType::CT_TTRACE }, { std::string("-snapshot"), CommandType::CT_SNAPSHOT },
     { std::string("-hw"), CommandType::CT_HW },        { std::string("-d"), CommandType::CT_D },
+    { std::string("-INTERVAL"), CommandType::CT_INTERVAL },  { std::string("-SESSIONID"), CommandType::CT_SESSIONID },
 };
+
+const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
+    { CommandType::CT_N, std::string("-N") },          { CommandType::CT_PKG, std::string("-PKG") },
+    { CommandType::CT_PID, std::string("-PID") },      { CommandType::CT_OUT, std::string("-OUT") },
+    { CommandType::CT_C, std::string("-c") },          { CommandType::CT_G, std::string("-g") },
+    { CommandType::CT_F, std::string("-f") },          { CommandType::CT_F1, std::string("-f1") },
+    { CommandType::CT_F1, std::string("-f2") },        { CommandType::CT_T, std::string("-t") },
+    { CommandType::CT_P, std::string("-p") },          { CommandType::CT_R, std::string("-r") },
+    { CommandType::CT_TTRACE, std::string("-trace") }, { CommandType::CT_SNAPSHOT, std::string("-snapshot") },
+    { CommandType::CT_HW, std::string("-hw") },        { CommandType::CT_D, std::string("-d") },
+    { CommandType::CT_INTERVAL, std::string("-INTERVAL") },  { CommandType::CT_SESSIONID, std::string("-SESSIONID") },
+};
+
 
 const std::unordered_map<CommandHelp, std::string> commandHelpMap = {
     { CommandHelp::HELP, std::string("--help") },

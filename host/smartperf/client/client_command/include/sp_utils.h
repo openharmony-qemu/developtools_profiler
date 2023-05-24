@@ -16,6 +16,7 @@
 #define SP_UTILS_H
 #include <iostream>
 #include <vector>
+#include <map>
 namespace OHOS {
 namespace SmartPerf {
 namespace SPUtils {
@@ -98,6 +99,9 @@ long long GetCurTime();
  *
  */
 std::string GetTopPkgName();
+std::map<std::string, std::string> GetDeviceInfo();
+std::map<std::string, std::string> GetCpuInfo();
+std::map<std::string, std::string> GetGpuInfo();
 };
 }
 }
