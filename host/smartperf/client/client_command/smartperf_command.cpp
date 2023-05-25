@@ -29,9 +29,12 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
     if (argc == oneParam) {
         daemon(0, 0);
         InitSomething();
-        SpThreadSocket spThreadSocket;
-        std::thread tSocket(&SpThreadSocket::Process, spThreadSocket);
+        SpThreadSocket udpThreadSocket;
+        SpThreadSocket tcpThreadSocket;
+        std::thread tSocket(&SpThreadSocket::Process, tcpThreadSocket, ProtoType::TCP);
+        std::thread tSocket1(&SpThreadSocket::Process, udpThreadSocket, ProtoType::UDP);
         tSocket.join();
+        tSocket1.join();
     }
     if (argc == twoParam) {
         auto iterator = commandHelpMap.begin();

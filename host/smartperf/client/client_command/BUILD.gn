@@ -51,6 +51,7 @@ ohos_executable("SP_daemon") {
     "sp_parse_fps.cpp",
     "sp_profiler_factory.cpp",
     "sp_server_socket.cpp",
+    "sp_task.cpp",
     "sp_utils.cpp",
     "startup_delay.cpp",
   ]
