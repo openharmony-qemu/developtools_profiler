@@ -27,6 +27,8 @@
 using namespace testing::ext;
 
 namespace {
+constexpr uint32_t BUFFER_SIZE = 4096;
+
 class PluginClientTest final : public IPluginServiceClient {
 public:
     bool OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response) override
@@ -46,18 +48,21 @@ public:
         usleep(100000); // sleep for 100000 us.
         pluginClient_ = std::make_unique<PluginClientTest>();
         pluginServiceImp_ = std::make_unique<PluginServiceImpl>(*pluginService_);
+        commandBuilder_ = std::make_unique<PluginCommandBuilder>();
     }
 
     void TearDown()
     {
         pluginClient_ = nullptr;
         pluginService_ = nullptr;
+        commandBuilder_ = nullptr;
     }
 
 public:
     std::unique_ptr<PluginService> pluginService_ = nullptr;
     std::unique_ptr<PluginClientTest> pluginClient_ = nullptr;
     std::unique_ptr<PluginServiceImpl> pluginServiceImp_ = nullptr;
+    std::unique_ptr<PluginCommandBuilder> commandBuilder_ = nullptr;
     uint32_t pluginId_;
 };
 
@@ -809,5 +814,23 @@ HWTEST_F(UnitTestPluginService, PluginServiceImpl_UnregisterPlugin, TestSize.Lev
     SocketContext ctx;
     request.set_plugin_id(1);
     EXPECT_FALSE(pluginServiceImp_->UnregisterPlugin(ctx, request, response));
+}
+/**
+ * @tc.name: BuildCreateSessionCmd
+ * @tc.desc: build create session command
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginCommandBuilderTest, pluginCommandBuilder, TestSize.Level1)
+{
+    ProfilerPluginConfig ppc;
+    ppc.set_name("abc.so");
+    ppc.set_plugin_sha256("ASDFAADSF");
+    ppc.set_sample_interval(20);
+    const uint32_t pluginId = 1;
+    EXPECT_TRUE(commandBuilder_->BuildCreateSessionCmd(ppc, BUFFER_SIZE) != nullptr);
+    EXPECT_TRUE(commandBuilder_->BuildStartSessionCmd(ppc, pluginId) != nullptr);
+    EXPECT_TRUE(commandBuilder_->BuildRefreshSessionCmd(pluginId) != nullptr);
+    EXPECT_TRUE(commandBuilder_->BuildStopSessionCmd(pluginId) != nullptr);
+    EXPECT_TRUE(commandBuilder_->BuildDestroySessionCmd(pluginId) != nullptr);
 }
 } // namespace
