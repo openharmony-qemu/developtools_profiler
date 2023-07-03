@@ -39,7 +39,6 @@ constexpr int SLEEP_TIME = 5;
 constexpr int WAIT_FLUSH = 2;
 
 const std::string DEFAULT_NATIVE_DAEMON_PATH("/system/bin/native_daemon");
-std::string DEFAULT_PATH("/data/local/tmp/");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
 constexpr int BUFFER_SIZE = 100 * 1024;
 constexpr int DEFAULT_DEPTH = 32;
@@ -50,9 +49,10 @@ constexpr int FREE_VEC_SIZE = 4;
 constexpr int MALLOC_GET_DATE_SIZE = 3;
 constexpr int FREE_GET_DATA_SIZE = 2;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
-std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
-std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
-std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
+const std::string DEFAULT_PATH("/data/local/tmp/");
+const std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
+const std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
+const std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
 const int LIBA_MALLOC_SIZE = 888;
 const int LIBB_MALLOC_SIZE = 666;
 typedef char* (*DepthMallocSo)(int depth, int mallocSize);
@@ -113,7 +113,8 @@ public:
         }
     }
 
-    std::vector<std::string>& StringSplit(const std::string& str, char delim = ';') {
+    std::vector<std::string>& StringSplit(const std::string& str, char delim = ';')
+    {
         std::stringstream ss(str);
         std::string item;
         static std::vector<std::string> elems;
@@ -214,7 +215,7 @@ public:
         DepthFree(depth, p);
     }
 
-    void dlopenAndCloseSo(std::string filePath, int size, int depth)
+    void DlopenAndCloseSo(std::string filePath, int size, int depth)
     {
         char *ptr = nullptr;
         void *handle = nullptr;
@@ -228,7 +229,6 @@ public:
         }
         mallocFunc = (DepthMallocSo)dlsym(handle, "DepthMallocSo");
         freeFunc = (DepthFreeSo)dlsym(handle, "DepthFreeSo");
-
         if (mallocFunc == nullptr || freeFunc == nullptr) {
             fprintf(stderr, "function not exist!\n");
             exit(0);
@@ -237,7 +237,7 @@ public:
         *ptr = 'a';
         freeFunc(depth, ptr);
         if (handle != nullptr) {
-            usleep(100 * 1000);
+            usleep(100000); // sleep 100000 us
             dlclose(handle);
         }
     }
@@ -248,7 +248,7 @@ public:
         if (processNum == 0) {
             while (1) {
                 ApplyForMalloc(unwindDepth_);
-                usleep(500);
+                usleep(500); // sleep 500 us
             }
         } else {
             hookPid_ = processNum;
@@ -264,16 +264,16 @@ public:
             system(cmdCopyLib.c_str());
             cmdCopyLib = "cp " + DEFAULT_LIBA_PATH + " " + DEFAULT_LIBB_PATH;
             system(cmdCopyLib.c_str());
-            while(1) {
-                dlopenAndCloseSo(VEC_SO_PATH[0], LIBA_MALLOC_SIZE, unwindDepth_);
-                dlopenAndCloseSo(VEC_SO_PATH[1], LIBB_MALLOC_SIZE, unwindDepth_);
+            while (true) {
+                DlopenAndCloseSo(VEC_SO_PATH[0], LIBA_MALLOC_SIZE, unwindDepth_);
+                DlopenAndCloseSo(VEC_SO_PATH[1], LIBB_MALLOC_SIZE, unwindDepth_);
             }
         } else {
             hookPid_ = processNum;
         }
     }
 
-    char *DepthCalloc(int depth, int callocSize)
+    char* DepthCalloc(int depth, int callocSize)
     {
         StaticSpace staticeData;
         if (depth == 0) {
@@ -306,7 +306,7 @@ public:
             free(ret);
             while (1) {
                 ApplyForCalloc(depth);
-                usleep(5000);
+                usleep(5000); // sleep 5000 us
             }
         } else {
             hookPid_ = processNum;
@@ -352,7 +352,7 @@ public:
         if (processNum == 0) {
             while (1) {
                 ApplyForRealloc(depth);
-                usleep(500);
+                usleep(500); // sleep 500 us
             }
         } else {
             hookPid_ = processNum;
@@ -605,7 +605,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2 ;++i) {
+    for (size_t i = 0; i < 2; ++i) {
         unwindDepth_ = 6;
         outFileType_ = "dlopen_";
         modeIndex_ = i;
@@ -622,7 +622,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         {
             std::vector<std::string>& resultVec = StringSplit(buf);
             if (resultVec[mallocPos] == "malloc") {
-                if(resultVec[mallocSizePos] == std::to_string(LIBA_MALLOC_SIZE)) {
+                if (resultVec[mallocSizePos] == std::to_string(LIBA_MALLOC_SIZE)) {
                     std::cout << buf << std::endl;
                     for (size_t i = 0; i < libUnwindDepth; i++) {
                         getline(infile, buf);
@@ -676,18 +676,18 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         std::string expectCallStackId;
         std::string statisticsCallStackId;
         while (getline(infile, buf)) {
-            if(buf.find("stack_map")!=std::string::npos) {
+            if (buf.find("stack_map") != std::string::npos) {
                 if (!expectCallStackId.empty()) {
                     continue;
                 }
                 getline(infile, buf); // read stack_map id
-                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 expectCallStackId = resultVec[1];
                 std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
-            } else if (buf.find("statistics_event")!=std::string::npos) {
+            } else if (buf.find("statistics_event") != std::string::npos) {
                 getline(infile, buf); // read statistics_event pid
                 getline(infile, buf); // read statistics_event callstack_id
-                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 statisticsCallStackId = resultVec[1];
                 std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
                 if (expectCallStackId == statisticsCallStackId) {
@@ -696,7 +696,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
             }
         }
         getline(infile, buf); // read statistics_event apply_count
-        std::vector<std::string>& resultVec = StringSplit(buf,':');
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
@@ -710,7 +710,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level1)
 {
-    for(size_t i = 0; i < 2 ;++i) {
+    for (size_t i = 0; i < 2; ++i) {
         unwindDepth_ = 10;
         outFileType_ = "offline_symbolization_";
         modeIndex_ = i;
@@ -726,19 +726,20 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
         std::string strTable;
         std::string ipString;
         while (getline(infile, buf)) {
-            if (buf.find("stack_map")!=std::string::npos) {
+            if (buf.find("stack_map") != std::string::npos) {
                 getline(infile, buf); // read stack map id
                 getline(infile, buf); // read stack map ip
                 std::vector<std::string>& resultVec = StringSplit(buf,':');
                 ipString = resultVec[0];
-                ipString.erase(std::remove(ipString.begin(), ipString.end(), ' '), ipString.end()); // delete whitespace characters
+                // delete whitespace characters
+                ipString.erase(std::remove(ipString.begin(), ipString.end(), ' '), ipString.end());
                 EXPECT_TRUE(ipString == "ip");
             } else if (buf.find("sym_table") != std::string::npos) {
-                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 symTable = resultVec[1];
                 EXPECT_TRUE(symTable.size() > 0);
             } else if (buf.find("str_table") != std::string::npos) {
-                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 strTable = resultVec[1];
                 EXPECT_TRUE(strTable.size() > 0);
                 if (ipString == "ip" && symTable.size()) {
@@ -801,7 +802,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2 ;++i) {
+    for (size_t i = 0; i < 2; ++i) {
         unwindDepth_ = 6;
         outFileType_ = "stringcompress_";
         modeIndex_ = i;

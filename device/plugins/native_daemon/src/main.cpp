@@ -223,8 +223,8 @@ int main(int argc, char* argv[])
             args.push_back(argv[i]);
         }
         HookData hookData = {0, 0, 0, 0, MAX_UNWIND_DEPTH, 0, "", "", "",
-                            false, false, false, false, false,
-                            false, false, false, false};
+                             false, false, false, false, false,
+                             false, false, false, false};
         if (VerifyCommand(args, hookData)) {
             GetHookedProceInfo(hookData);
         } else {

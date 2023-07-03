@@ -93,9 +93,11 @@ void HookManager::CheckProcessName()
 
 HookManager::HookManager() : buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]), pid_(0) { }
 
-HookManager::HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock, std::shared_ptr<EventNotifier>& eventNotifier,
-                        StackDataRepeaterPtr& stackData)
-                        :shareMemoryBlock_(shareMemoryBlock), eventNotifier_(eventNotifier),stackData_(stackData)
+HookManager::HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock,
+                         std::shared_ptr<EventNotifier>& eventNotifier,
+                         StackDataRepeaterPtr& stackData) : shareMemoryBlock_(shareMemoryBlock),
+                                                            eventNotifier_(eventNotifier),
+                                                            stackData_(stackData)
 {
 }
 

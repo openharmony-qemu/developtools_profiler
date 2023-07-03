@@ -39,9 +39,12 @@ constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
 
 using namespace OHOS::Developtools::NativeDaemon;
 
-StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
-    clockid_t pluginDataClockId, bool isHookStandalone) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
-    hookConfig_(hookConfig), fpHookData_(nullptr, nullptr), pluginDataClockId_(pluginDataClockId), isHookStandaloneSerialize_(isHookStandalone)
+StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater,
+    const NativeHookConfig& hookConfig,
+    clockid_t pluginDataClockId,
+    bool isHookStandalone) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
+                             hookConfig_(hookConfig), fpHookData_(nullptr, nullptr),
+                             pluginDataClockId_(pluginDataClockId), isHookStandaloneSerialize_(isHookStandalone)
 {
     runtime_instance = std::make_shared<VirtualRuntime>(hookConfig_);
 
@@ -80,7 +83,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
                     ForStandard::NativeHookConfig StandardNativeHookConfig;
                     StandardNativeHookConfig.ParseFromArray(buffer_.get(), length);
                     google::protobuf::TextFormat::PrintToString(StandardNativeHookConfig, &str);
-                    size_t n = fwrite(str.data(), 1, str.size() , fp);
+                    size_t n = fwrite(str.data(), 1, str.size(), fp);
                     HILOG_DEBUG(LOG_CORE, "Flush hookConfig_ fwrite n = %zu strbuf.size() = %zu", n, str.size());
                 }
             } else {

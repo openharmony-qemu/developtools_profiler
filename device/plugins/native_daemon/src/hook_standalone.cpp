@@ -13,23 +13,26 @@
  * limitations under the License.
  */
 #include "hook_standalone.h"
+
+#include <csignal>
 #include <functional>
 #include <linux/types.h>
 #include <sys/mman.h>
+
 #include "common.h"
-#include <signal.h>
-#include "utilities.h"
+#include "epoll_event_poller.h"
+#include "event_notifier.h"
 #include "hook_common.h"
+#include "hook_manager.h"
 #include "hook_service.h"
 #include "logging.h"
-#include "share_memory_allocator.h"
-#include "event_notifier.h"
-#include "epoll_event_poller.h"
-#include "virtual_runtime.h"
-#include "stack_preprocess.h"
-#include "hook_manager.h"
-#include "stack_data_repeater.h"
 #include "native_hook_config.pb.h"
+#include "share_memory_allocator.h"
+#include "stack_data_repeater.h"
+#include "stack_preprocess.h"
+#include "virtual_runtime.h"
+#include "hook_manager.h"
+#include "utilities.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
 namespace OHOS {
@@ -53,11 +56,12 @@ bool g_fpUnwind = false;
 uint32_t g_statisticsinterval;
 std::unique_ptr<FILE, decltype(&fclose)> g_fpHookFile(nullptr, nullptr);
 
-static void SignalHandl(int signo) {
-    HILOG_ERROR(LOG_CORE, "recv signal %d",signo);
+static void SignalHandl(int signo)
+{
+    HILOG_ERROR(LOG_CORE, "recv signal %d", signo);
     g_stackpreprocess->StopTakeResults();
     if (g_statisticsinterval > 0) {
-         g_stackpreprocess->FlushRecordStatistics();
+        g_stackpreprocess->FlushRecordStatistics();
     }
     exit(-1);
 }
@@ -155,7 +159,8 @@ bool StartHook(HookData& hookData)
     HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize = %d", isHookStandaloneSerialize);
     HILOG_INFO(LOG_CORE, "rawString = %d", hookData.rawString);
     clockid_t pluginDataClockId = COMMON::GetClockId("realtime");
-    g_stackpreprocess = std::make_shared<StackPreprocess>(g_stackDataRepeater, nativeConfig, pluginDataClockId, isHookStandaloneSerialize);
+    g_stackpreprocess = std::make_shared<StackPreprocess>(g_stackDataRepeater, nativeConfig,
+                                                          pluginDataClockId, isHookStandaloneSerialize);
     CHECK_TRUE(g_stackpreprocess != nullptr, false, "Create StackPreprocess FAIL");
     g_hookManager->SetHookConfig(nativeConfig);
     g_stackpreprocess->StartTakeResults();
