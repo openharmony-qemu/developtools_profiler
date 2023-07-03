@@ -1,0 +1,1590 @@
+diff --git a/native_daemon_ut.patch b/native_daemon_ut.patch
+new file mode 100755
+index 0000000000000000000000000000000000000000..2ce7646762762060c5ad5d05e64fc92b7285e7b9
+--- /dev/null
++++ b/native_daemon_ut.patch
+@@ -0,0 +1,1584 @@
++diff --git a/device/ohos_test.xml b/device/ohos_test.xml
++index e9d11393..4e3c1d29 100644
++--- a/device/ohos_test.xml
+++++ b/device/ohos_test.xml
++@@ -114,6 +114,11 @@
++             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/dwarf/hiperf_643_644_sample_record_213_6754913387560.dump -> /data/test/resource/testdata/dwarf/" src="res"/>
++         </preparer>
++     </target>
+++    <target name="nativehook_ut">
+++        <preparer>
+++            <option name="push" value="developtools/profiler/libnativetest_so.z.so -> /data/local/tmp/" src="out"/>
+++        </preparer>
+++    </target>
++     <target name="processplugin_ut">
++         <preparer>
++             <option name="push" value="plugins/process_plugin/test/resources/proc/stat -> /data/local/tmp/resources/proc/" src="res"/>
++diff --git a/device/plugins/native_daemon/BUILD.gn b/device/plugins/native_daemon/BUILD.gn
++index ce12946d..555e70f2 100644
++--- a/device/plugins/native_daemon/BUILD.gn
+++++ b/device/plugins/native_daemon/BUILD.gn
++@@ -82,6 +82,7 @@ ohos_executable("native_daemon") {
++     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
++     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
++     "../../base:hiprofiler_base",
+++    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
++     "//third_party/bounds_checking_function:libsec_static",
++     "//third_party/libunwind:unwind_source_${target_cpu}",
++     "//third_party/zlib:libz",
++diff --git a/device/plugins/native_daemon/include/hook_manager.h b/device/plugins/native_daemon/include/hook_manager.h
++index d91c5a40..57b57bea 100644
++--- a/device/plugins/native_daemon/include/hook_manager.h
+++++ b/device/plugins/native_daemon/include/hook_manager.h
++@@ -50,6 +50,8 @@ namespace OHOS::Developtools::NativeDaemon {
++ class HookManager : public ManagerInterface {
++ public:
++     HookManager();
+++    HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock, std::shared_ptr<EventNotifier>& eventNotifier,
+++                StackDataRepeaterPtr& stackData);
++     bool RegisterAgentPlugin(const std::string& pluginPath);
++     bool UnregisterAgentPlugin(const std::string& pluginPath);
++ 
++@@ -69,9 +71,10 @@ public:
++     bool ResetWriter(uint32_t pluginId) override;
++     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
++     void ResetStartupParam();
+++    void ReadShareMemory();
+++    void SetHookConfig(const NativeHookConfig& hookConfig);
++ 
++ private:
++-    void ReadShareMemory();
++     void RegisterWriter(const BufferWriterPtr& writer);
++     bool CheckProcess();
++     void CheckProcessName();
++diff --git a/device/plugins/native_daemon/include/hook_standalone.h b/device/plugins/native_daemon/include/hook_standalone.h
++index 01c431e4..34da3d10 100644
++--- a/device/plugins/native_daemon/include/hook_standalone.h
+++++ b/device/plugins/native_daemon/include/hook_standalone.h
++@@ -24,6 +24,7 @@ using HookData = struct {
++     uint64_t duration;
++     uint32_t filterSize;
++     uint32_t maxStackDepth;
+++    uint32_t statisticsInterval;
++     std::string fileName;
++     std::string processName;
++     std::string performance_filename;
++@@ -32,6 +33,10 @@ using HookData = struct {
++     bool freemsgstack;
++     bool munmapmsgstack;
++     bool fpUnwind;
+++    bool offlineSymbolization;
+++    bool callframeCompress;
+++    bool stringCompressed;
+++    bool rawString;
++ };
++ 
++ namespace OHOS {
++diff --git a/device/plugins/native_daemon/include/stack_preprocess.h b/device/plugins/native_daemon/include/stack_preprocess.h
++index 7c549a4c..1113db69 100644
++--- a/device/plugins/native_daemon/include/stack_preprocess.h
+++++ b/device/plugins/native_daemon/include/stack_preprocess.h
++@@ -29,6 +29,7 @@
++ #include "hook_common.h"
++ #include "native_hook_config.pb.h"
++ #include "native_hook_result.pb.h"
+++#include "safe_map.h"
++ 
++ class StackPreprocess {
++ public:
++@@ -43,7 +44,7 @@ public:
++     };
++ 
++     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
++-        clockid_t pluginDataClockId);
+++        clockid_t pluginDataClockId, bool isHookStandalone = false);
++     explicit StackPreprocess(bool fpUnwind);
++     ~StackPreprocess();
++     void SetWriter(const std::shared_ptr<BufferWriter>& writer);
++@@ -109,7 +110,7 @@ private:
++     bool isStopTakeData_ = false;
++     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
++     DISALLOW_COPY_AND_MOVE(StackPreprocess);
++-    std::unordered_map<uint32_t, std::string> memTagMap_ = {};
+++    OHOS::SafeMap<uint32_t, std::string> memTagMap_ = {};
++     std::unordered_map<uint32_t, std::string> threadNameMap_ = {};
++     NativeHookConfig hookConfig_;
++     std::unique_ptr<FILE, decltype(&fclose)> fpHookData_;
++@@ -121,7 +122,7 @@ private:
++     std::vector<uint64_t> callStack_;
++     // Key is callStack_, value is call stack id
++     std::map<std::vector<uint64_t>, uint32_t> callStackMap_;
++-    std::chrono::seconds statisticsInterval_;
+++    std::chrono::seconds statisticsInterval_ {0};
++     std::chrono::steady_clock::time_point lastStatisticsTime_;
++     // Key is call stack id, value is recordstatistic data
++     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_ {STATISTICS_MAP_SZIE};
++@@ -134,6 +135,7 @@ private:
++     clockid_t pluginDataClockId_ = CLOCK_REALTIME;
++     // used for clac wait time in StackDataRepeater::TakeRawData() or statistics HookData
++     clockid_t hookDataClockId_ = CLOCK_REALTIME;
+++    bool isHookStandaloneSerialize_ = false;
++ };
++ 
++ #endif // STACK_PREPROCESS_H
++\ No newline at end of file
++diff --git a/device/plugins/native_daemon/src/hook_manager.cpp b/device/plugins/native_daemon/src/hook_manager.cpp
++index 4f8d5db8..373b6850 100644
++--- a/device/plugins/native_daemon/src/hook_manager.cpp
+++++ b/device/plugins/native_daemon/src/hook_manager.cpp
++@@ -93,6 +93,12 @@ void HookManager::CheckProcessName()
++ 
++ HookManager::HookManager() : buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]), pid_(0) { }
++ 
+++HookManager::HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock, std::shared_ptr<EventNotifier>& eventNotifier,
+++                        StackDataRepeaterPtr& stackData)
+++                        :shareMemoryBlock_(shareMemoryBlock), eventNotifier_(eventNotifier),stackData_(stackData)
+++{
+++}
+++
++ void HookManager::SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
++ {
++     commandPoller_ = p;
++@@ -445,4 +451,9 @@ void HookManager::RegisterWriter(const BufferWriterPtr& writer)
++     g_buffWriter = writer;
++     return;
++ }
+++
+++void HookManager::SetHookConfig(const NativeHookConfig& hookConfig)
+++{
+++    hookConfig_ = hookConfig;
++ }
+++}
++\ No newline at end of file
++diff --git a/device/plugins/native_daemon/src/hook_standalone.cpp b/device/plugins/native_daemon/src/hook_standalone.cpp
++index c002b7cc..8bd78e4d 100644
++--- a/device/plugins/native_daemon/src/hook_standalone.cpp
+++++ b/device/plugins/native_daemon/src/hook_standalone.cpp
++@@ -17,6 +17,7 @@
++ #include <linux/types.h>
++ #include <sys/mman.h>
++ #include "common.h"
+++#include <signal.h>
++ #include "utilities.h"
++ #include "hook_common.h"
++ #include "hook_service.h"
++@@ -26,6 +27,9 @@
++ #include "epoll_event_poller.h"
++ #include "virtual_runtime.h"
++ #include "stack_preprocess.h"
+++#include "hook_manager.h"
+++#include "stack_data_repeater.h"
+++#include "native_hook_config.pb.h"
++ 
++ using namespace OHOS::Developtools::NativeDaemon;
++ namespace OHOS {
++@@ -36,172 +40,26 @@ const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
++ const int MOVE_BIT_16 = 16;
++ const int MOVE_BIT_32 = 32;
++ std::string g_smbName = "hooknativesmb";
++-std::shared_ptr<VirtualRuntime> g_runtimeInstance;
++ std::unique_ptr<EpollEventPoller> g_eventPoller_;
++ std::shared_ptr<ShareMemoryBlock> g_shareMemoryBlock;
++ std::shared_ptr<EventNotifier> g_eventNotifier;
++ std::shared_ptr<HookService> g_hookService;
+++std::shared_ptr<HookManager> g_hookManager;
+++std::shared_ptr<StackDataRepeater> g_stackDataRepeater;
+++std::shared_ptr<StackPreprocess> g_stackpreprocess;
++ uint32_t g_maxStackDepth;
++ bool g_unwindErrorFlag = false;
++ bool g_fpUnwind = false;
+++uint32_t g_statisticsinterval;
++ std::unique_ptr<FILE, decltype(&fclose)> g_fpHookFile(nullptr, nullptr);
++ 
++-void WriteFrames(BaseStackRawData *data, const std::vector<CallFrame>& callFrames)
++-{
++-    if (data->type == MALLOC_MSG) {
++-        fprintf(g_fpHookFile.get(), "malloc;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
++-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
++-    } else if (data->type == FREE_MSG) {
++-        fprintf(g_fpHookFile.get(), "free;%" PRId64 ";%ld;0x%" PRIx64 "\n",
++-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr);
++-    } else if (data->type == MMAP_MSG) {
++-        fprintf(g_fpHookFile.get(), "mmap;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
++-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
++-    } else if (data->type == MUNMAP_MSG) {
++-        fprintf(g_fpHookFile.get(), "munmap;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
++-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
++-    }  else if (data->type == PR_SET_VMA_MSG) {
++-        fprintf(g_fpHookFile.get(), "prctl;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
++-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
++-    } else {
++-        return;
++-    }
++-
++-    size_t idx = 0;
++-    if (!g_fpUnwind) {
++-        idx = FILTER_STACK_DEPTH;
++-    }
++-
++-    for (; idx < callFrames.size(); ++idx) {
++-        auto item = callFrames[idx];
++-        (void)fprintf(g_fpHookFile.get(), "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
++-                      item.ip_, item.sp_, std::string(item.symbolName_).c_str(),
++-                      std::string(item.filePath_).c_str(), item.offset_, item.symbolOffset_);
++-    }
++-    fflush(g_fpHookFile.get());
++-}
++-
++-void ReadShareMemory(uint64_t duration, const std::string& performance_filename)
++-{
++-    CHECK_NOTNULL(g_shareMemoryBlock, NO_RETVAL, "smb is null!");
++-    uint64_t value = g_eventNotifier->Take();
++-
++-    static bool firstFlag = true;
++-    static bool endFlag = false;
++-    static uint64_t times = 0;
++-
++-    struct timespec firstTime;
++-    struct timespec beginTime;
++-    struct timespec endTime;
++-    std::vector<u64> u64regs;
++-    std::vector<CallFrame> callFrames;
++-    uint64_t total_time = 0;
++-#if defined(__arm__)
++-    u64regs.resize(PERF_REG_ARM_MAX);
++-#else
++-    u64regs.resize(PERF_REG_ARM64_MAX);
++-#endif
++-    callFrames.reserve(g_maxStackDepth);
++-    auto rawData = std::make_unique<StandaloneRawStack>();
++-    uint16_t  rawRealSize = 0;
++-    while (true) {
++-        bool ret = g_shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
++-            if (size < sizeof(BaseStackRawData)) {
++-                HILOG_ERROR(LOG_CORE, "stack data invalid!");
++-                return false;
++-            }
++-            rawData->stackConext = reinterpret_cast<BaseStackRawData *>(const_cast<int8_t *>(data));
++-            rawData->data = const_cast<int8_t *>(data) + sizeof(BaseStackRawData);
++-
++-            if (rawData->stackConext->type == MMAP_FILE_TYPE) {
++-                BaseStackRawData* mmapRawData = rawData->stackConext;
++-                std::string filePath(reinterpret_cast<char *>(rawData->data));
++-                COMMON::AdaptSandboxPath(filePath, rawData->stackConext->pid);
++-                HILOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
++-                    "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
++-                    mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
++-                    mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
++-                g_runtimeInstance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr), mmapRawData->mallocSize,
++-                    mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
++-                return true;
++-            } else if (rawData->stackConext->type == MUNMAP_MSG) {
++-                g_runtimeInstance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
++-            }
++-            callFrames.clear();
++-            if (g_fpUnwind) {
++-                rawData->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
++-                uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
++-                for (int idx = 0; idx < rawData->fpDepth; ++idx) {
++-                    if (fpIp[idx] == 0) {
++-                        break;
++-                    }
++-                    callFrames.push_back(fpIp[idx]);
++-                }
++-            } else {
++-                rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
++-                rawData->stackSize = size - rawRealSize;
++-                if (rawData->stackSize > 0) {
++-                    rawData->stackData = reinterpret_cast<uint8_t *>(const_cast<int8_t *>(data)) + rawRealSize;
++-                }
++-#if defined(__arm__)
++-                uint32_t *regAddrArm = reinterpret_cast<uint32_t *>(rawData->data);
++-                u64regs.assign(regAddrArm, regAddrArm + PERF_REG_ARM_MAX);
++-#else
++-                if (memcpy_s(u64regs.data(), sizeof(uint64_t) * PERF_REG_ARM64_MAX, rawData->data,
++-                    sizeof(uint64_t) * PERF_REG_ARM64_MAX) != EOK) {
++-                    HILOG_ERROR(LOG_CORE, "memcpy_s regs failed");
++-                }
++-#endif
++-            }
++-
++-            if (!endFlag && duration != 0) {
++-                clock_gettime(CLOCK_REALTIME, &beginTime);
++-                if (firstFlag) {
++-                    firstFlag = false;
++-                    firstTime = beginTime;
++-                }
++-            }
++-
++-            bool ret = g_runtimeInstance->UnwindStack(u64regs, rawData->stackData, rawData->stackSize,
++-                rawData->stackConext->pid, rawData->stackConext->tid, callFrames,
++-                (g_maxStackDepth > 0) ? g_maxStackDepth + FILTER_STACK_DEPTH : MAX_CALL_FRAME_UNWIND_SIZE);
++-            if (!ret) {
++-                HILOG_ERROR(LOG_CORE, "unwind fatal error");
++-                return false;
++-            }
++-            if (!endFlag && duration != 0) {
++-                clock_gettime(CLOCK_REALTIME, &endTime);
++-                total_time += (endTime.tv_sec - beginTime.tv_sec) * 1000000000LLU +
++-                    (endTime.tv_nsec - beginTime.tv_nsec);
++-                ++times;
++-                if (endTime.tv_sec - firstTime.tv_sec >= static_cast<long>(duration)) {
++-                    endFlag = true;
++-                    FILE *fp = fopen(performance_filename.c_str(), "a");
++-                    if (fp) {
++-                        time_t now = time(nullptr);
++-                        struct tm nowTime;
++-                        localtime_r(&now, &nowTime);
++-                        // 1900: count of years
++-                        fprintf(fp, "Current time: %04d-%02d-%02d %02d:%02d:%02d\n", nowTime.tm_year + 1900,
++-                                nowTime.tm_mon + 1, nowTime.tm_mday, nowTime.tm_hour, nowTime.tm_min, nowTime.tm_sec);
++-                        fprintf(fp, "Total durations: %" PRIu64 " nanoseconds\n", total_time);
++-                        fprintf(fp, "Total times: %" PRIu64 "\n", times);
++-                        fprintf(fp, "Average unwinding stack time: %.2f  nanoseconds\n\n",
++-                                (double)(total_time) / times);
++-                        fclose(fp);
++-                        printf("Performance data has already been generated.\n");
++-                    }
++-                }
++-            }
++-
++-            WriteFrames(rawData->stackConext, callFrames);
++-
++-            return true;
++-        });
++-        if (!ret) {
++-            break;
++-        }
+++static void SignalHandl(int signo) {
+++    HILOG_ERROR(LOG_CORE, "recv signal %d",signo);
+++    g_stackpreprocess->StopTakeResults();
+++    if (g_statisticsinterval > 0) {
+++         g_stackpreprocess->FlushRecordStatistics();
++     }
+++    exit(-1);
++ }
++ 
++ void GetClientConfig(const HookData& hookData, ClientConfig& clientConfig)
++@@ -219,25 +77,18 @@ void GetClientConfig(const HookData& hookData, ClientConfig& clientConfig)
++ 
++ bool StartHook(HookData& hookData)
++ {
++-    g_runtimeInstance = std::make_shared<VirtualRuntime>();
++-    FILE *fp = fopen(hookData.fileName.c_str(), "wb+");
++-    if (fp != nullptr) {
++-        g_fpHookFile.reset();
++-        g_fpHookFile = std::unique_ptr<FILE, decltype(&fclose)>(fp, fclose);
++-    }
++-    if (g_fpHookFile == nullptr) {
++-        printf("create file failed!\n");
++-        return false;
++-    }
++     // create smb and eventNotifier
++     g_shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(g_smbName, hookData.smbSize);
++     g_eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
+++    g_stackDataRepeater = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
+++    CHECK_TRUE(g_stackDataRepeater != nullptr, false, "Create StackDataRepeater FAIL");
+++    g_hookManager = std::make_shared<HookManager>(g_shareMemoryBlock, g_eventNotifier, g_stackDataRepeater);
++     // start event poller task
++     g_eventPoller_ = std::make_unique<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
++     g_eventPoller_->Init();
++     g_eventPoller_->Start();
++     g_eventPoller_->AddFileDescriptor(g_eventNotifier->GetFd(),
++-                                      std::bind(ReadShareMemory, hookData.duration, hookData.performance_filename));
+++                                      std::bind(&HookManager::ReadShareMemory, g_hookManager.get()));
++ 
++     HILOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", g_shareMemoryBlock->GetfileDescriptor(),
++                g_eventNotifier->GetFd());
++@@ -262,6 +113,53 @@ bool StartHook(HookData& hookData)
++ 
++     g_maxStackDepth = hookData.maxStackDepth;
++     g_fpUnwind = hookData.fpUnwind;
+++    g_statisticsinterval = hookData.statisticsInterval;
+++
+++    NativeHookConfig nativeConfig;
+++    nativeConfig.set_fp_unwind(hookData.fpUnwind);
+++    nativeConfig.set_max_stack_depth(hookData.maxStackDepth);
+++    nativeConfig.set_filter_size(hookData.filterSize);
+++    nativeConfig.set_save_file(true);
+++    nativeConfig.set_file_name(hookData.fileName);
+++    nativeConfig.set_statistics_interval(hookData.statisticsInterval);
+++    nativeConfig.set_offline_symbolization(hookData.offlineSymbolization);
+++    nativeConfig.set_callframe_compress(hookData.callframeCompress);
+++    nativeConfig.set_string_compressed(hookData.stringCompressed);
+++#if defined(__arm__)
+++    nativeConfig.set_fp_unwind(false); // if OS is 32-bit,set fp_unwind false.
+++#endif
+++    bool isHookStandaloneSerialize = false;
+++    // statistical reporting must be callframe compressed and accurate.
+++    if (nativeConfig.statistics_interval() > 0) {
+++        nativeConfig.set_callframe_compress(true);
+++        nativeConfig.set_record_accurately(true);
+++    }
+++    // offlinem symbolization, callframe must be compressed
+++    if (nativeConfig.offline_symbolization()) {
+++        nativeConfig.set_callframe_compress(true);
+++    }
+++
+++    // callframe compressed, string must be compressed.
+++    if (nativeConfig.callframe_compress()) {
+++        nativeConfig.set_string_compressed(true);
+++    }
+++
+++    if (nativeConfig.string_compressed() || hookData.rawString) {
+++        isHookStandaloneSerialize = true;
+++    }
+++    HILOG_INFO(LOG_CORE, "fp_unwind = %d", nativeConfig.fp_unwind());
+++    HILOG_INFO(LOG_CORE, "offline_symbolization = %d", nativeConfig.offline_symbolization());
+++    HILOG_INFO(LOG_CORE, "callframe_compress; = %d", nativeConfig.callframe_compress());
+++    HILOG_INFO(LOG_CORE, "string_compressed; = %d", nativeConfig.string_compressed());
+++    HILOG_INFO(LOG_CORE, "statistics_interval = %u", nativeConfig.statistics_interval());
+++    HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize = %d", isHookStandaloneSerialize);
+++    HILOG_INFO(LOG_CORE, "rawString = %d", hookData.rawString);
+++    clockid_t pluginDataClockId = COMMON::GetClockId("realtime");
+++    g_stackpreprocess = std::make_shared<StackPreprocess>(g_stackDataRepeater, nativeConfig, pluginDataClockId, isHookStandaloneSerialize);
+++    CHECK_TRUE(g_stackpreprocess != nullptr, false, "Create StackPreprocess FAIL");
+++    g_hookManager->SetHookConfig(nativeConfig);
+++    g_stackpreprocess->StartTakeResults();
+++    signal(SIGINT, SignalHandl);
++     return true;
++ }
++ } // namespace Hook
++diff --git a/device/plugins/native_daemon/src/main.cpp b/device/plugins/native_daemon/src/main.cpp
++index 199ccc2e..04daba1e 100644
++--- a/device/plugins/native_daemon/src/main.cpp
+++++ b/device/plugins/native_daemon/src/main.cpp
++@@ -100,6 +100,51 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
++                 return false;
++             }
++             printf("set unwind mode:%s\n", unwind.c_str());
+++        } else if (args[idx] == "-S") {
+++            hookData.statisticsInterval = std::stoi(args[idx + 1], nullptr);
+++            if (std::to_string(hookData.statisticsInterval) != args[idx + 1]) {
+++                return false;
+++            }
+++        } else if (args[idx] == "-O") {
+++            std::string offline = args[idx + 1];
+++            if (offline == "false") {
+++                hookData.offlineSymbolization = false;
+++            } else if (offline == "true") {
+++                hookData.offlineSymbolization = true;
+++            } else {
+++                return false;
+++            }
+++            printf("set offlineSymbolization mode:%s\n", offline.c_str());
+++        } else if (args[idx] == "-C") {
+++            std::string callframeCompress = args[idx + 1];
+++            if (callframeCompress == "false") {
+++                hookData.callframeCompress = false;
+++            } else if (callframeCompress == "true") {
+++                hookData.callframeCompress = true;
+++            } else {
+++                return false;
+++            }
+++            printf("set callframeCompress mode:%s\n", callframeCompress.c_str());
+++        } else if (args[idx] == "-c") {
+++            std::string stringCompressed = args[idx + 1];
+++            if (stringCompressed == "false") {
+++                hookData.stringCompressed = false;
+++            } else if (stringCompressed == "true") {
+++                hookData.stringCompressed = true;
+++            } else {
+++                return false;
+++            }
+++            printf("set stringCompressed mode:%s\n", stringCompressed.c_str());
+++        } else if (args[idx] == "-r") {
+++            std::string rawString = args[idx + 1];
+++            if (rawString == "false") {
+++                hookData.rawString = false;
+++            } else if (rawString == "true") {
+++                hookData.rawString = true;
+++            } else {
+++                return false;
+++            }
+++            printf("set rawString mode:%s\n", rawString.c_str());
++         } else {
++             printf("args[%zu] = %s\n", idx, args[idx].c_str());
++             return false;
++@@ -177,13 +222,26 @@ int main(int argc, char* argv[])
++         for (int i = 1; i < argc; i++) {
++             args.push_back(argv[i]);
++         }
++-        HookData hookData = {0, 0, 0, 0, MAX_UNWIND_DEPTH, "", "", "", false, false, false, false};
+++        HookData hookData = {0, 0, 0, 0, MAX_UNWIND_DEPTH, 0, "", "", "",
+++                            false, false, false, false, false,
+++                            false, false, false, false};
++         if (VerifyCommand(args, hookData)) {
++             GetHookedProceInfo(hookData);
++         } else {
++-            printf(
++-                "Usage: native_daemon [-o file] [-s smb_size] <-p pid> <-n process_name> "
++-                "<-f filter_size> <-d max_stack_depth> <-u fp|dwarf>\n");
+++            std::string help = R"(Usage: native_daemon
+++            [-o file]
+++            [-s smb_size]
+++            <-n process_name>
+++            <-f filter_size>
+++            <-d max_stack_depth>
+++            <-u fp|dwarf>
+++            <-S statistics_interval>
+++            <-O offline_symbolization true|false>
+++            <-C callframe_compress true|false>
+++            <-c string_compressed true|false>
+++            <-r raw_string true|false>
+++            )";
+++            printf("%s\n", help.c_str());
++             return 0;
++         }
++     } else {
++diff --git a/device/plugins/native_daemon/src/stack_preprocess.cpp b/device/plugins/native_daemon/src/stack_preprocess.cpp
++index a8ab985f..73d1d456 100644
++--- a/device/plugins/native_daemon/src/stack_preprocess.cpp
+++++ b/device/plugins/native_daemon/src/stack_preprocess.cpp
++@@ -22,7 +22,9 @@
++ #include "plugin_service_types.pb.h"
++ #include "elf_parser.h"
++ #include "utilities.h"
++-
+++#include "native_hook_result_standard.pb.h"
+++#include "native_hook_config_standard.pb.h"
+++#include "google/protobuf/text_format.h"
++ static std::atomic<uint64_t> timeCost = 0;
++ static std::atomic<uint64_t> unwindTimes = 0;
++ 
++@@ -38,8 +40,8 @@ constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
++ using namespace OHOS::Developtools::NativeDaemon;
++ 
++ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
++-    clockid_t pluginDataClockId) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
++-    hookConfig_(hookConfig), fpHookData_(nullptr, nullptr), pluginDataClockId_(pluginDataClockId)
+++    clockid_t pluginDataClockId, bool isHookStandalone) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
+++    hookConfig_(hookConfig), fpHookData_(nullptr, nullptr), pluginDataClockId_(pluginDataClockId), isHookStandaloneSerialize_(isHookStandalone)
++ {
++     runtime_instance = std::make_shared<VirtualRuntime>(hookConfig_);
++ 
++@@ -71,6 +73,16 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
++             if (fp) {
++                 fpHookData_.reset();
++                 fpHookData_ = std::unique_ptr<FILE, decltype(&fclose)>(fp, fclose);
+++                if (isHookStandaloneSerialize_) {
+++                    std::string str;
+++                    size_t length = hookConfig_.ByteSizeLong();
+++                    hookConfig_.SerializeToArray(buffer_.get(), length);
+++                    ForStandard::NativeHookConfig StandardNativeHookConfig;
+++                    StandardNativeHookConfig.ParseFromArray(buffer_.get(), length);
+++                    google::protobuf::TextFormat::PrintToString(StandardNativeHookConfig, &str);
+++                    size_t n = fwrite(str.data(), 1, str.size() , fp);
+++                    HILOG_DEBUG(LOG_CORE, "Flush hookConfig_ fwrite n = %zu strbuf.size() = %zu", n, str.size());
+++                }
++             } else {
++                 fpHookData_.reset();
++             }
++@@ -78,6 +90,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
++             HILOG_WARN(LOG_CORE, "If you need to save the file, please set the file_name");
++         }
++     }
+++    HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize_ = %d\n", isHookStandaloneSerialize_);
++ #if defined(__arm__)
++     u64regs_.resize(PERF_REG_ARM_MAX);
++ #else
++@@ -181,6 +194,7 @@ void StackPreprocess::TakeResults()
++                 ReportThreadNameMap(rawData->stackConext->tid, threadName, stackData);
++                 continue;
++             }
+++
++             if (!rawData->reportFlag) {
++                 ignoreCnts_++;
++                 if (ignoreCnts_ % LOG_PRINT_TIMES == 0) {
++@@ -229,7 +243,9 @@ void StackPreprocess::TakeResults()
++                 HILOG_ERROR(LOG_CORE, "unwind fatal error");
++                 continue;
++             }
++-            if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
+++            if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
+++                SetHookData(rawData, callFrames_, stackData);
+++            } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
++                 WriteFrames(rawData, callFrames_);
++             } else if (!hookConfig_.save_file()) {
++                 SetHookData(rawData, callFrames_, stackData);
++@@ -252,6 +268,9 @@ void StackPreprocess::TakeResults()
++             }
++ #endif
++         }
+++        if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
+++            continue;
+++        }
++         FlushData(stackData);
++ 
++         // interval reporting statistics
++@@ -597,8 +616,8 @@ void StackPreprocess::WriteFrames(RawStackPtr rawStack, const std::vector<CallFr
++     fprintf(fpHookData_.get(), "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
++         rawStack->stackConext->pid, rawStack->stackConext->tid, (int64_t)rawStack->stackConext->ts.tv_sec,
++         rawStack->stackConext->ts.tv_nsec, (uint64_t)rawStack->stackConext->addr, rawStack->stackConext->mallocSize);
++-
++-    for (size_t idx = 0; idx < callFrames.size(); ++idx) {
+++    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+++    for (; idx < callFrames.size(); ++idx) {
++         (void)fprintf(fpHookData_.get(), "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
++             callFrames[idx].ip_, callFrames[idx].sp_, std::string(callFrames[idx].symbolName_).c_str(),
++             std::string(callFrames[idx].filePath_).c_str(), callFrames[idx].offset_, callFrames[idx].symbolOffset_);
++@@ -716,9 +735,19 @@ void StackPreprocess::FlushData(BatchNativeHookData& stackData)
++ {
++     if (stackData.events().size() > 0) {
++         size_t length = stackData.ByteSizeLong();
+++        stackData.SerializeToArray(buffer_.get(), length);
++         if (length < MAX_BUFFER_SIZE) {
++-            stackData.SerializeToArray(buffer_.get(), length);
++-            Flush(buffer_.get(), length);
+++            if (isHookStandaloneSerialize_) {
+++                std::string str;
+++                ForStandard::BatchNativeHookData StandardStackData;
+++                StandardStackData.ParseFromArray(buffer_.get(), length);
+++                google::protobuf::TextFormat::PrintToString(StandardStackData, &str);
+++                size_t n = fwrite(str.data(), 1, str.size(), fpHookData_.get());
+++                fflush(fpHookData_.get());
+++                HILOG_DEBUG(LOG_CORE, "Flush Data fwrite n = %zu str.size() = %zu", n, str.size());
+++            } else {
+++                Flush(buffer_.get(), length);
+++            }
++         } else {
++             HILOG_ERROR(LOG_CORE, "the data is larger than MAX_BUFFER_SIZE, flush failed");
++         }
++@@ -826,18 +855,14 @@ bool StackPreprocess::FlushRecordStatistics()
++ 
++ void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
++ {
++-    auto it = memTagMap_.find(tagId);
++-    if (it == memTagMap_.end()) {
+++    std::string temp;
+++    bool res = memTagMap_.Find(tagId, temp);
+++    if (!res) {
++         memTagMap_[tagId] = tagName;
++     }
++ }
++ 
++ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
++ {
++-    auto it = memTagMap_.find(tagId);
++-    if (it != memTagMap_.end()) {
++-        tagName = it->second;
++-        return true;
++-    }
++-    return false;
+++    return memTagMap_.Find(tagId, tagName);
++ }
++diff --git a/device/plugins/native_daemon/test/BUILD.gn b/device/plugins/native_daemon/test/BUILD.gn
++index 15ac6991..6eb8ddbe 100644
++--- a/device/plugins/native_daemon/test/BUILD.gn
+++++ b/device/plugins/native_daemon/test/BUILD.gn
++@@ -58,6 +58,7 @@ common_deps = [
++   "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
++   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
++   "../../../base:hiprofiler_base",
+++  "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
++   "//base/startup/init/interfaces/innerkits:libbegetutil",
++   "//third_party/bounds_checking_function:libsec_static",
++   "//third_party/googletest:gmock_main",
++diff --git a/device/plugins/native_hook/test/BUILD.gn b/device/plugins/native_hook/test/BUILD.gn
++index 10006829..7d48e782 100644
++--- a/device/plugins/native_hook/test/BUILD.gn
+++++ b/device/plugins/native_hook/test/BUILD.gn
++@@ -48,6 +48,7 @@ ohos_unittest("nativehook_ut") {
++     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon",
++     "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook_source",
++     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+++    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
++     "//third_party/bounds_checking_function:libsec_static",
++     "//third_party/googletest:gtest_main",
++   ]
++diff --git a/device/plugins/native_hook/test/unittest/check_hook_data_test.cpp b/device/plugins/native_hook/test/unittest/check_hook_data_test.cpp
++index 982bfe88..93250812 100644
++--- a/device/plugins/native_hook/test/unittest/check_hook_data_test.cpp
+++++ b/device/plugins/native_hook/test/unittest/check_hook_data_test.cpp
++@@ -22,6 +22,8 @@
++ 
++ #include "buffer_splitter.h"
++ #include "logging.h"
+++#include <fstream>
+++#include <iostream>
++ 
++ #pragma clang optimize off
++ 
++@@ -48,6 +50,13 @@ constexpr int FREE_VEC_SIZE = 4;
++ constexpr int MALLOC_GET_DATE_SIZE = 3;
++ constexpr int FREE_GET_DATA_SIZE = 2;
++ std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
+++std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
+++std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
+++std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
+++const int LIBA_MALLOC_SIZE = 888;
+++const int LIBB_MALLOC_SIZE = 666;
+++typedef char* (*DepthMallocSo)(int depth, int mallocSize);
+++typedef void (*DepthFreeSo)(int depth, char *p);
++ 
++ using StaticSpace = struct {
++     int data[DATA_SIZE];
++@@ -58,31 +67,63 @@ public:
++     static void SetUpTestCase() {}
++     static void TearDownTestCase() {}
++ 
++-    void StartDaemonProcessArgs(int pid, std::string outFile)
+++    void StartDaemonProcessArgs()
++     {
+++        outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
++         int processNum = fork();
++         if (processNum == 0) {
++-            // start running native_daemon -o -s -p
++-            execl(DEFAULT_NATIVE_DAEMON_PATH.c_str(), DEFAULT_NATIVE_DAEMON_PATH.c_str(), "-o", outFile.c_str(),
++-                "-s", std::to_string(SHARE_MEMORY_SIZE).c_str(), "-p", std::to_string(pid).c_str(), nullptr);
+++            command_.push_back(const_cast<char*>(DEFAULT_NATIVE_DAEMON_PATH.c_str()));
+++            command_.push_back(const_cast<char*>("-o"));
+++            command_.push_back(const_cast<char*>(outFile_.c_str()));
+++            command_.push_back(const_cast<char*>("-s"));
+++            command_.push_back(const_cast<char*>(std::to_string(SHARE_MEMORY_SIZE).c_str()));
+++            command_.push_back(const_cast<char*>("-p"));
+++            command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
+++            command_.push_back(const_cast<char*>("-u"));
+++            command_.push_back(const_cast<char*>(mode_[modeIndex_].c_str()));
+++            if (unwindDepth_ > 0) {
+++                command_.push_back(const_cast<char*>("-d"));
+++                command_.push_back(const_cast<char*>(std::to_string(unwindDepth_).c_str()));
+++            }
+++            if (statisticsInterval_ > 0) {
+++                command_.push_back(const_cast<char*>("-S"));
+++                command_.push_back(const_cast<char*>(std::to_string(statisticsInterval_).c_str()));
+++            }
+++            if (offlineSymbolization_) {
+++                command_.push_back(const_cast<char*>("-O"));
+++                command_.push_back(const_cast<char*>("true"));
+++            }
+++            if (callframeCompress_) {
+++                command_.push_back(const_cast<char*>("-C"));
+++                command_.push_back(const_cast<char*>("true"));
+++            }
+++            if (stringCompress_) {
+++                command_.push_back(const_cast<char*>("-c"));
+++                command_.push_back(const_cast<char*>("true"));
+++            }
+++            if (rawString_) {
+++                command_.push_back(const_cast<char*>("-r"));
+++                command_.push_back(const_cast<char*>("true"));
+++            }
+++            command_.push_back(nullptr);
+++            execv(DEFAULT_NATIVE_DAEMON_PATH.c_str(), command_.data());
++             _exit(1);
++         } else {
++             daemonPid_ = processNum;
++         }
++     }
++ 
++-    void StartDaemonProcessArgsDepth(int pid, int setHookDepth, std::string outFile)
++-    {
++-        int processNum = fork();
++-        if (processNum == 0) {
++-            // start running native_daemon -o -s -p -d
++-            execl(DEFAULT_NATIVE_DAEMON_PATH.c_str(), DEFAULT_NATIVE_DAEMON_PATH.c_str(), "-o", outFile.c_str(),
++-                "-s", std::to_string(SHARE_MEMORY_SIZE).c_str(), "-p", std::to_string(pid).c_str(),
++-                "-d", std::to_string(setHookDepth).c_str(), nullptr);
++-            _exit(1);
++-        } else {
++-            daemonSetDepthPid_ = processNum;
+++    std::vector<std::string>& StringSplit(const std::string& str, char delim = ';') {
+++        std::stringstream ss(str);
+++        std::string item;
+++        static std::vector<std::string> elems;
+++        elems.clear();
+++        while (std::getline(ss, item, delim)) {
+++            if (!item.empty()) {
+++                elems.push_back(item);
+++            }
++         }
+++        return elems;
++     }
++ 
++     void StopProcess(int processNum)
++@@ -173,16 +214,62 @@ public:
++         DepthFree(depth, p);
++     }
++ 
++-    void StartMallocProcess(int depth, int& pid)
+++    void dlopenAndCloseSo(std::string filePath, int size, int depth)
+++    {
+++        char *ptr = nullptr;
+++        void *handle = nullptr;
+++        DepthMallocSo mallocFunc = nullptr;
+++        DepthFreeSo freeFunc = nullptr;
+++
+++        handle = dlopen(filePath.data(), RTLD_LAZY);
+++        if (handle == nullptr) {
+++            fprintf(stderr, "library not exist!\n");
+++            exit(0);
+++        }
+++        mallocFunc = (DepthMallocSo)dlsym(handle, "DepthMallocSo");
+++        freeFunc = (DepthFreeSo)dlsym(handle, "DepthFreeSo");
+++
+++        if (mallocFunc == nullptr || freeFunc == nullptr) {
+++            fprintf(stderr, "function not exist!\n");
+++            exit(0);
+++        }
+++        ptr = mallocFunc(depth, size);
+++        *ptr = 'a';
+++        freeFunc(depth, ptr);
+++        if (handle != nullptr) {
+++            usleep(100 * 1000);
+++            dlclose(handle);
+++        }
+++    }
+++
+++    void StartMallocProcess()
++     {
++         int processNum = fork();
++         if (processNum == 0) {
++             while (1) {
++-                ApplyForMalloc(depth);
++-                sleep(1);
+++                ApplyForMalloc(unwindDepth_);
+++                usleep(500);
+++            }
+++        } else {
+++            hookPid_ = processNum;
+++        }
+++    }
+++
+++    void StartDlopenProcess()
+++    {
+++        int processNum = fork();
+++        if (processNum == 0) {
+++            const std::vector<std::string> VEC_SO_PATH { DEFAULT_LIBA_PATH, DEFAULT_LIBB_PATH};
+++            std::string cmdCopyLib{"cp " + DEFAULT_LIBNATIVETEST_PATH + " " + DEFAULT_LIBA_PATH};
+++            system(cmdCopyLib.c_str());
+++            cmdCopyLib = "cp " + DEFAULT_LIBA_PATH + " " + DEFAULT_LIBB_PATH;
+++            system(cmdCopyLib.c_str());
+++            while(1) {
+++                dlopenAndCloseSo(VEC_SO_PATH[0], LIBA_MALLOC_SIZE, unwindDepth_);
+++                dlopenAndCloseSo(VEC_SO_PATH[1], LIBB_MALLOC_SIZE, unwindDepth_);
++             }
++         } else {
++-            pid = processNum;
+++            hookPid_ = processNum;
++         }
++     }
++ 
++@@ -210,7 +297,7 @@ public:
++         DepthFree(depth, p);
++     }
++ 
++-    void StartCallocProcess(int depth, int& pid)
+++    void StartCallocProcess(int depth)
++     {
++         int processNum = fork();
++         if (processNum == 0) {
++@@ -219,10 +306,10 @@ public:
++             free(ret);
++             while (1) {
++                 ApplyForCalloc(depth);
++-                sleep(1);
+++                usleep(5000);
++             }
++         } else {
++-            pid = processNum;
+++            hookPid_ = processNum;
++         }
++     }
++ 
++@@ -259,16 +346,16 @@ public:
++         DepthFree(depth, np);
++     }
++ 
++-    void StartReallocProcess(int depth, int& pid)
+++    void StartReallocProcess(int depth)
++     {
++         int processNum = fork();
++         if (processNum == 0) {
++             while (1) {
++                 ApplyForRealloc(depth);
++-                sleep(1);
+++                usleep(500);
++             }
++         } else {
++-            pid = processNum;
+++            hookPid_ = processNum;
++         }
++     }
++ 
++@@ -283,9 +370,35 @@ public:
++         return true;
++     }
++ 
++-private:
+++    void StartAndStopHook()
+++    {
+++        sleep(1);
+++        StartDaemonProcessArgs();
+++        sleep(1);
+++        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+++        system(cmd.c_str());
+++
+++        sleep(SLEEP_TIME); // 等待生成文本
+++        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+++        system(cmdEnd.c_str());
+++        sleep(WAIT_FLUSH);
+++        StopProcess(hookPid_);
+++        StopProcess(daemonPid_);
+++    }
+++
++     int daemonPid_ = -1;
++-    int daemonSetDepthPid_ = -1;
+++    int hookPid_ = -1;
+++    int modeIndex_ = 0;
+++    int unwindDepth_ = 0;
+++    int statisticsInterval_ = 0;
+++    bool offlineSymbolization_ = false;
+++    bool callframeCompress_ = false;
+++    bool stringCompress_ = false;
+++    bool rawString_ = false;
+++    std::string outFile_ = "";
+++    std::string outFileType_ = "";
+++    std::string mode_[2] = {"dwarf", "fp"};
+++    std::vector<char*> command_;
++ };
++ 
++ /**
++@@ -295,67 +408,57 @@ private:
++  */
++ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level1)
++ {
++-    int setDepth = 100; // 递归深度大于hook默认深度30，测试文本
++-    int mallocPid = -1;
++-    std::string outFile = DEFAULT_PATH + "hooktest_malloc.txt";
++-    StartMallocProcess(setDepth, mallocPid);
++-    sleep(1);
++-    StartDaemonProcessArgs(mallocPid, outFile);
++-
++-    sleep(1);
++-    std::string cmd = "kill -36 " + std::to_string(mallocPid);
++-    system(cmd.c_str());
++-
++-    sleep(SLEEP_TIME); // 等待生成文本
++-    std::string cmdEnd = "kill -37 " + std::to_string(mallocPid);
++-    system(cmdEnd.c_str());
++-    sleep(WAIT_FLUSH);
++-    StopProcess(mallocPid);
++-    StopProcess(daemonPid_);
++-
++-    int32_t ret = ReadFile(outFile);
++-    ASSERT_NE(ret, -1);
++-
++-    BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
++-    std::vector<std::string> hookVec;
++-    std::string addr = "";
++-    int depth = 0;
++-    int addrPos = 3;
++-    bool isFirstHook = true;
++-    do {
++-        char delimiter = ';';
++-        Getdata(totalbuffer, hookVec, delimiter);
++-
++-        if (hookVec[0] == "malloc" && !isFirstHook) {
++-            for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 30;
+++        outFileType_ = "malloc_";
+++        modeIndex_ = i; // 0 is dwarf, 1 is fp mode
+++        StartMallocProcess();
+++        StartAndStopHook();
+++
+++        int32_t ret = ReadFile(outFile_);
+++        ASSERT_NE(ret, -1);
+++
+++        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
+++        std::vector<std::string> hookVec;
+++        std::string addr = "";
+++        int depth = 0;
+++        int addrPos = 3;
+++        bool isFirstHook = true;
+++        do {
+++            char delimiter = ';';
+++            Getdata(totalbuffer, hookVec, delimiter);
+++
+++            if (hookVec[0] == "malloc" && !isFirstHook) {
+++                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+++                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                }
+++                delimiter = '\n';
++                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            }
++-            delimiter = '\n';
++-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
++-            ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
++-
++-            addr = hookVec[addrPos];
++-            depth = 0;
++-        } else if (hookVec[0] == "free" && !isFirstHook) {
++-            for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+++                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+++                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
+++
+++                addr = hookVec[addrPos];
+++                depth = 0;
+++            } else if (hookVec[0] == "free" && !isFirstHook) {
+++                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+++                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                }
+++                delimiter = '\n';
++                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+++                EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
+++                EXPECT_EQ(depth, DEFAULT_DEPTH);
+++
+++                isFirstHook = false;
+++                addr = "";
+++                depth = 0;
+++            } else {
+++                depth++;
++             }
++-            delimiter = '\n';
++-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
++-            EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
++-            EXPECT_EQ(depth, DEFAULT_DEPTH);
++-
++-            isFirstHook = false;
++-            addr = "";
++-            depth = 0;
++-        } else {
++-            depth++;
++-        }
++ 
++-        hookVec.clear();
++-    } while (totalbuffer.NextLine());
+++            hookVec.clear();
+++        } while (totalbuffer.NextLine());
+++    }
++ }
++ 
++ /**
++@@ -365,68 +468,58 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
++  */
++ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Level3)
++ {
++-    int setDepth = 1; // 递归深度小于hook深度100，测试文本
++-    int setHookDepth = 100;
++-    int callocPid = -1;
++-    std::string outFile = DEFAULT_PATH + "hooktest_calloc.txt";
++-    StartCallocProcess(setDepth, callocPid);
++-    sleep(1);
++-    StartDaemonProcessArgsDepth(callocPid, setHookDepth, outFile);
++-
++-    sleep(1);
++-    std::string cmd = "kill -36 " + std::to_string(callocPid);
++-    system(cmd.c_str());
++-
++-    sleep(SLEEP_TIME); // 等待生成文本
++-    std::string cmdEnd = "kill -37 " + std::to_string(callocPid);
++-    system(cmdEnd.c_str());
++-    sleep(WAIT_FLUSH);
++-    StopProcess(callocPid);
++-    StopProcess(daemonSetDepthPid_);
++-
++-    int32_t ret = ReadFile(outFile);
++-    ASSERT_NE(ret, -1);
++-
++-    BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
++-    std::vector<std::string> hookVec;
++-    std::string addr = "";
++-    int depth = 0;
++-    int addrPos = 3;
++-    bool isFirstHook = true;
++-    do {
++-        char delimiter = ';';
++-        Getdata(totalbuffer, hookVec, delimiter);
++-
++-        if (hookVec[0] == "malloc" && !isFirstHook) {
++-            for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+++    for(size_t i = 0; i < 2 ;++i) {
+++        int setDepth = 1;
+++        unwindDepth_ = 100;
+++        outFileType_ = "calloc_";
+++        modeIndex_ = i;
+++        StartCallocProcess(setDepth);
+++        StartAndStopHook();
+++
+++        int32_t ret = ReadFile(outFile_);
+++        ASSERT_NE(ret, -1);
+++
+++        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
+++        std::vector<std::string> hookVec;
+++        std::string addr = "";
+++        int depth = 0;
+++        int addrPos = 3;
+++        bool isFirstHook = true;
+++        do {
+++            char delimiter = ';';
+++            Getdata(totalbuffer, hookVec, delimiter);
+++
+++            if (hookVec[0] == "malloc" && !isFirstHook) {
+++                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+++                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                }
+++                delimiter = '\n';
++                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            }
++-            delimiter = '\n';
++-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
++-            ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_CALLOC_SIZE);
++-
++-            addr = hookVec[addrPos];
++-            depth = 0;
++-        } else if (hookVec[0] == "free" && !isFirstHook) {
++-            for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+++                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+++                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_CALLOC_SIZE);
+++
+++                addr = hookVec[addrPos];
+++                depth = 0;
+++            } else if (hookVec[0] == "free" && !isFirstHook) {
+++                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+++                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                }
+++                delimiter = '\n';
++                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+++                EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
+++                EXPECT_GE(depth, CALLOC_DEPTH);
+++
+++                isFirstHook = false;
+++                addr = "";
+++                depth = 0;
+++            } else {
+++                depth++;
++             }
++-            delimiter = '\n';
++-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
++-            EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
++-            EXPECT_GE(depth, CALLOC_DEPTH);
++-
++-            isFirstHook = false;
++-            addr = "";
++-            depth = 0;
++-        } else {
++-            depth++;
++-        }
++ 
++-        hookVec.clear();
++-    } while (totalbuffer.NextLine());
+++            hookVec.clear();
+++        } while (totalbuffer.NextLine());
+++    }
++ }
++ 
++ /**
++@@ -436,83 +529,343 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
++  */
++ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Level3)
++ {
++-    int setDepth = 100; // realloc测试文本
++-    int reallocPid = -1;
++-    std::string outFile = DEFAULT_PATH + "hooktest_realloc.txt";
++-    StartReallocProcess(setDepth, reallocPid);
++-    sleep(1);
++-    StartDaemonProcessArgs(reallocPid, outFile);
++-
++-    sleep(1);
++-    std::string cmd = "kill -36 " + std::to_string(reallocPid);
++-    system(cmd.c_str());
++-
++-    sleep(SLEEP_TIME); // 等待生成文本
++-    std::string cmdEnd = "kill -37 " + std::to_string(reallocPid);
++-    system(cmdEnd.c_str());
++-    sleep(WAIT_FLUSH);
++-    StopProcess(reallocPid);
++-    StopProcess(daemonPid_);
++-
++-    int32_t ret = ReadFile(outFile);
++-    ASSERT_NE(ret, -1);
++-
++-    BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
++-    std::vector<std::string> hookVec;
++-    std::string mallocAddr = "";
++-    std::string reallocAddr = "";
++-    int depth = 0;
++-    int addrPos = 3;
++-    bool isFirstHook = true;
++-    bool isRealloc = false;
++-    do {
++-        char delimiter = ';';
++-        Getdata(totalbuffer, hookVec, delimiter);
++-
++-        if (hookVec[0] == "malloc" && !isFirstHook) {
++-            for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+++    for(size_t i = 0; i < 2 ;++i) {
+++        int setDepth = 100;
+++        outFileType_ = "realloc_";
+++        modeIndex_ = i;
+++        StartReallocProcess(setDepth);
+++        StartAndStopHook();
+++
+++        int32_t ret = ReadFile(outFile_);
+++        ASSERT_NE(ret, -1);
+++
+++        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
+++        std::vector<std::string> hookVec;
+++        std::string mallocAddr = "";
+++        std::string reallocAddr = "";
+++        int depth = 0;
+++        int addrPos = 3;
+++        bool isFirstHook = true;
+++        bool isRealloc = false;
+++        do {
+++            char delimiter = ';';
+++            Getdata(totalbuffer, hookVec, delimiter);
+++
+++            if (hookVec[0] == "malloc" && !isFirstHook) {
+++                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+++                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                }
+++                delimiter = '\n';
++                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            }
++-            delimiter = '\n';
++-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
++-
++-            if (isRealloc) {
++-                reallocAddr = hookVec[addrPos];
++-                ASSERT_GE(atoi(hookVec[4].c_str()), DEFAULT_REALLOC_SIZE);
++-                EXPECT_GE(depth, REALLOC_DEPTH);
++-                isFirstHook = false;
+++                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+++
+++                if (isRealloc) {
+++                    reallocAddr = hookVec[addrPos];
+++                    ASSERT_GE(atoi(hookVec[4].c_str()), DEFAULT_REALLOC_SIZE);
+++                    EXPECT_GE(depth, REALLOC_DEPTH);
+++                    isFirstHook = false;
+++                } else {
+++                    mallocAddr = hookVec[addrPos];
+++                    ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
+++                }
+++
+++                isRealloc = true;
+++                depth = 0;
+++            } else if (hookVec[0] == "free" && !isFirstHook) {
+++                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+++                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                }
+++                delimiter = '\n';
+++                EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+++
+++                if (isRealloc) {
+++                    EXPECT_STREQ(hookVec[addrPos].c_str(), reallocAddr.c_str());
+++                    reallocAddr = "";
+++                } else {
+++                    EXPECT_STREQ(hookVec[addrPos].c_str(), mallocAddr.c_str());
+++                    mallocAddr = "";
+++                }
+++
+++                isRealloc = false;
+++                depth = 0;
++             } else {
++-                mallocAddr = hookVec[addrPos];
++-                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
+++                depth++;
++             }
++ 
++-            isRealloc = true;
++-            depth = 0;
++-        } else if (hookVec[0] == "free" && !isFirstHook) {
++-            for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
++-                EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+++            hookVec.clear();
+++        } while (totalbuffer.NextLine());
+++    }
+++}
+++
+++/**
+++ * @tc.name: native hook
+++ * @tc.desc: Test hook dlopen normal process.
+++ * @tc.type: FUNC
+++ */
+++HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
+++{
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 6;
+++        outFileType_ = "dlopen_";
+++        modeIndex_ = i;
+++        StartDlopenProcess();
+++        StartAndStopHook();
+++        std::ifstream infile;
+++        infile.open(outFile_, std::ios::in);
+++        EXPECT_TRUE(infile.is_open());
+++        std::string buf;
+++        uint8_t mallocPos = 0;
+++        uint8_t mallocSizePos = 6;
+++        uint8_t libUnwindDepth = 3;
+++        while (getline(infile, buf))
+++        {
+++            std::vector<std::string>& resultVec = StringSplit(buf);
+++            if (resultVec[mallocPos] == "malloc") {
+++                if(resultVec[mallocSizePos] == std::to_string(LIBA_MALLOC_SIZE)) {
+++                    std::cout << buf << std::endl;
+++                    for (size_t i = 0; i < libUnwindDepth; i++) {
+++                        getline(infile, buf);
+++                    }
+++                    std::cout << buf << std::endl;
+++                    EXPECT_TRUE(buf.find("liba.z.so") != std::string::npos);
+++                } else if (resultVec[mallocSizePos] == std::to_string(LIBB_MALLOC_SIZE)) {
+++                    std::cout << buf << std::endl;
+++                    for (size_t i = 0; i < libUnwindDepth; i++) {
+++                        getline(infile, buf);
+++                    }
+++                    std::cout << buf << std::endl;
+++                    EXPECT_TRUE(buf.find("libb.z.so") != std::string::npos);
+++                }
++             }
++-            delimiter = '\n';
++-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
++-            ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+++        }
+++    }
+++}
++ 
++-            if (isRealloc) {
++-                EXPECT_STREQ(hookVec[addrPos].c_str(), reallocAddr.c_str());
++-                reallocAddr = "";
++-            } else {
++-                EXPECT_STREQ(hookVec[addrPos].c_str(), mallocAddr.c_str());
++-                mallocAddr = "";
+++/**
+++ * @tc.name: native hook
+++ * @tc.desc: Test hook statistics data normal process.
+++ * @tc.type: FUNC
+++ */
+++HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
+++{
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 10;
+++        statisticsInterval_ = 1;
+++        outFileType_ = "statistics_interval_";
+++        modeIndex_ = i;
+++        StartMallocProcess();
+++        sleep(1);
+++        StartDaemonProcessArgs();
+++        sleep(1);
+++        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+++        system(cmd.c_str());
+++
+++        sleep(SLEEP_TIME); // 等待生成文本
+++        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+++        system(cmdEnd.c_str());
+++        sleep(WAIT_FLUSH);
+++        StopProcess(hookPid_);
+++        cmdEnd = "kill -2 " + std::to_string(daemonPid_);
+++        system(cmdEnd.c_str());
+++
+++        std::ifstream infile;
+++        infile.open(outFile_, std::ios::in);
+++        EXPECT_TRUE(infile.is_open());
+++        std::string buf;
+++        std::string expectCallStackId;
+++        std::string statisticsCallStackId;
+++        while (getline(infile, buf)) {
+++            if(buf.find("stack_map")!=std::string::npos) {
+++                if (!expectCallStackId.empty()) {
+++                    continue;
+++                }
+++                getline(infile, buf); // read stack_map id
+++                std::vector<std::string>& resultVec = StringSplit(buf,':');
+++                expectCallStackId = resultVec[1];
+++                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+++            } else if (buf.find("statistics_event")!=std::string::npos) {
+++                getline(infile, buf); // read statistics_event pid
+++                getline(infile, buf); // read statistics_event callstack_id
+++                std::vector<std::string>& resultVec = StringSplit(buf,':');
+++                statisticsCallStackId = resultVec[1];
+++                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+++                if (expectCallStackId == statisticsCallStackId) {
+++                    break;
+++                }
++             }
+++        }
+++        getline(infile, buf); // read statistics_event apply_count
+++        std::vector<std::string>& resultVec = StringSplit(buf,':');
+++        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+++        std::cout << "applyCount: " << applyCount << std::endl;
+++        EXPECT_TRUE(applyCount > 0);
+++    }
+++}
++ 
++-            isRealloc = false;
++-            depth = 0;
++-        } else {
++-            depth++;
+++/**
+++ * @tc.name: native hook
+++ * @tc.desc: Test hook offline symbolization data normal process.
+++ * @tc.type: FUNC
+++ */
+++HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level1)
+++{
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 10;
+++        outFileType_ = "offline_symbolization_";
+++        modeIndex_ = i;
+++        offlineSymbolization_ = true;
+++        StartMallocProcess();
+++        StartAndStopHook();
+++
+++        std::ifstream infile;
+++        infile.open(outFile_, std::ios::in);
+++        EXPECT_TRUE(infile.is_open());
+++        std::string buf;
+++        std::string symTable;
+++        std::string strTable;
+++        std::string ipString;
+++        while (getline(infile, buf)) {
+++            if (buf.find("stack_map")!=std::string::npos) {
+++                getline(infile, buf); // read stack map id
+++                getline(infile, buf); // read stack map ip
+++                std::vector<std::string>& resultVec = StringSplit(buf,':');
+++                ipString = resultVec[0];
+++                ipString.erase(std::remove(ipString.begin(), ipString.end(), ' '), ipString.end()); // delete whitespace characters
+++                EXPECT_TRUE(ipString == "ip");
+++            } else if (buf.find("sym_table") != std::string::npos) {
+++                std::vector<std::string>& resultVec = StringSplit(buf,':');
+++                symTable = resultVec[1];
+++                EXPECT_TRUE(symTable.size() > 0);
+++            } else if (buf.find("str_table") != std::string::npos) {
+++                std::vector<std::string>& resultVec = StringSplit(buf,':');
+++                strTable = resultVec[1];
+++                EXPECT_TRUE(strTable.size() > 0);
+++                if (ipString == "ip" && symTable.size()) {
+++                    break;
+++                }
+++            }
+++        }
+++    }
+++}
+++
+++/**
+++ * @tc.name: native hook
+++ * @tc.desc: Test hook callframe compress normal process.
+++ * @tc.type: FUNC
+++ */
+++HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level3)
+++{
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 6;
+++        outFileType_ = "callframecompress_";
+++        modeIndex_ = i;
+++        callframeCompress_ = true;
+++        StartMallocProcess();
+++        StartAndStopHook();
+++
+++        std::ifstream infile;
+++        infile.open(outFile_, std::ios::in);
+++        EXPECT_TRUE(infile.is_open());
+++        std::string buf;
+++        bool findSymbolName;
+++        bool findfilePath;
+++        bool findFrameMap;
+++        bool findStackMap;
+++        while (getline(infile, buf))
+++        {
+++            if (!findSymbolName || buf.find("symbol_name") != std::string::npos) {
+++                findSymbolName = true;
+++            } else if (!findfilePath || buf.find("file_path") != std::string::npos) {
+++                findfilePath = true;
+++            } else if (!findFrameMap || buf.find("frame_map") != std::string::npos) {
+++                findFrameMap = true;
+++            } else if (!findStackMap || buf.find("stack_map") != std::string::npos) {
+++                findStackMap = true;
+++                if (findSymbolName && findfilePath && findFrameMap) {
+++                    break;
+++                }
+++            }
++         }
+++        EXPECT_TRUE(findSymbolName);
+++        EXPECT_TRUE(findfilePath);
+++        EXPECT_TRUE(findFrameMap);
+++        EXPECT_TRUE(findStackMap);
+++    }
+++}
++ 
++-        hookVec.clear();
++-    } while (totalbuffer.NextLine());
+++/**
+++ * @tc.name: native hook
+++ * @tc.desc: Test hook string compress normal process.
+++ * @tc.type: FUNC
+++ */
+++HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level3)
+++{
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 6;
+++        outFileType_ = "stringcompress_";
+++        modeIndex_ = i;
+++        stringCompress_ = true;
+++        StartMallocProcess();
+++        StartAndStopHook();
+++
+++        std::ifstream infile;
+++        infile.open(outFile_, std::ios::in);
+++        EXPECT_TRUE(infile.is_open());
+++        std::string buf;
+++        bool findFrameInfo;
+++        bool findSymbolNameId;
+++        while (getline(infile, buf))
+++        {
+++            if (!findFrameInfo || buf.find("frame_info") != std::string::npos) {
+++                findFrameInfo = true;
+++            } else if (!findSymbolNameId || buf.find("symbol_name_id") != std::string::npos) {
+++                findSymbolNameId = true;
+++                if (findFrameInfo) {
+++                    break;
+++                }
+++            }
+++        }
+++        EXPECT_TRUE(findFrameInfo);
+++        EXPECT_TRUE(findSymbolNameId);
+++    }
+++}
+++
+++/**
+++ * @tc.name: native hook
+++ * @tc.desc: Test hook raw string normal process.
+++ * @tc.type: FUNC
+++ */
+++HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level3)
+++{
+++    for(size_t i = 0; i < 2 ;++i) {
+++        unwindDepth_ = 6;
+++        outFileType_ = "rawstring_";
+++        modeIndex_ = i;
+++        rawString_ = true;
+++        StartMallocProcess();
+++        StartAndStopHook();
+++
+++        std::ifstream infile;
+++        infile.open(outFile_, std::ios::in);
+++        EXPECT_TRUE(infile.is_open());
+++        std::string buf;
+++        bool findFrameInfo;
+++        bool findSymbolName;
+++        while (getline(infile, buf))
+++        {
+++            if (!findFrameInfo || buf.find("frame_info") != std::string::npos) {
+++                findFrameInfo = true;
+++            } else if (!findSymbolName || buf.find("symbol_name") != std::string::npos) {
+++                findSymbolName = true;
+++                if (findFrameInfo) {
+++                    break;
+++                }
+++            }
+++        }
+++        EXPECT_TRUE(findFrameInfo);
+++        EXPECT_TRUE(findSymbolName);
+++    }
++ }
++ }
++ 

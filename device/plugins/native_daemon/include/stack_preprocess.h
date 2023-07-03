@@ -29,6 +29,7 @@
 #include "hook_common.h"
 #include "native_hook_config.pb.h"
 #include "native_hook_result.pb.h"
+#include "safe_map.h"
 
 class StackPreprocess {
 public:
@@ -43,7 +44,7 @@ public:
     };
 
     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
-        clockid_t pluginDataClockId);
+        clockid_t pluginDataClockId, bool isHookStandalone = false);
     explicit StackPreprocess(bool fpUnwind);
     ~StackPreprocess();
     void SetWriter(const std::shared_ptr<BufferWriter>& writer);
@@ -109,7 +110,7 @@ private:
     bool isStopTakeData_ = false;
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
     DISALLOW_COPY_AND_MOVE(StackPreprocess);
-    std::unordered_map<uint32_t, std::string> memTagMap_ = {};
+    OHOS::SafeMap<uint32_t, std::string> memTagMap_ = {};
     std::unordered_map<uint32_t, std::string> threadNameMap_ = {};
     NativeHookConfig hookConfig_;
     std::unique_ptr<FILE, decltype(&fclose)> fpHookData_;
@@ -121,7 +122,7 @@ private:
     std::vector<uint64_t> callStack_;
     // Key is callStack_, value is call stack id
     std::map<std::vector<uint64_t>, uint32_t> callStackMap_;
-    std::chrono::seconds statisticsInterval_;
+    std::chrono::seconds statisticsInterval_ {0};
     std::chrono::steady_clock::time_point lastStatisticsTime_;
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_ {STATISTICS_MAP_SZIE};
@@ -134,6 +135,7 @@ private:
     clockid_t pluginDataClockId_ = CLOCK_REALTIME;
     // used for clac wait time in StackDataRepeater::TakeRawData() or statistics HookData
     clockid_t hookDataClockId_ = CLOCK_REALTIME;
+    bool isHookStandaloneSerialize_ = false;
 };
 
 #endif // STACK_PREPROCESS_H

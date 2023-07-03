@@ -100,6 +100,51 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
                 return false;
             }
             printf("set unwind mode:%s\n", unwind.c_str());
+        } else if (args[idx] == "-S") {
+            hookData.statisticsInterval = std::stoi(args[idx + 1], nullptr);
+            if (std::to_string(hookData.statisticsInterval) != args[idx + 1]) {
+                return false;
+            }
+        } else if (args[idx] == "-O") {
+            std::string offline = args[idx + 1];
+            if (offline == "false") {
+                hookData.offlineSymbolization = false;
+            } else if (offline == "true") {
+                hookData.offlineSymbolization = true;
+            } else {
+                return false;
+            }
+            printf("set offlineSymbolization mode:%s\n", offline.c_str());
+        } else if (args[idx] == "-C") {
+            std::string callframeCompress = args[idx + 1];
+            if (callframeCompress == "false") {
+                hookData.callframeCompress = false;
+            } else if (callframeCompress == "true") {
+                hookData.callframeCompress = true;
+            } else {
+                return false;
+            }
+            printf("set callframeCompress mode:%s\n", callframeCompress.c_str());
+        } else if (args[idx] == "-c") {
+            std::string stringCompressed = args[idx + 1];
+            if (stringCompressed == "false") {
+                hookData.stringCompressed = false;
+            } else if (stringCompressed == "true") {
+                hookData.stringCompressed = true;
+            } else {
+                return false;
+            }
+            printf("set stringCompressed mode:%s\n", stringCompressed.c_str());
+        } else if (args[idx] == "-r") {
+            std::string rawString = args[idx + 1];
+            if (rawString == "false") {
+                hookData.rawString = false;
+            } else if (rawString == "true") {
+                hookData.rawString = true;
+            } else {
+                return false;
+            }
+            printf("set rawString mode:%s\n", rawString.c_str());
         } else {
             printf("args[%zu] = %s\n", idx, args[idx].c_str());
             return false;
@@ -177,13 +222,26 @@ int main(int argc, char* argv[])
         for (int i = 1; i < argc; i++) {
             args.push_back(argv[i]);
         }
-        HookData hookData = {0, 0, 0, 0, MAX_UNWIND_DEPTH, "", "", "", false, false, false, false};
+        HookData hookData = {0, 0, 0, 0, MAX_UNWIND_DEPTH, 0, "", "", "",
+                            false, false, false, false, false,
+                            false, false, false, false};
         if (VerifyCommand(args, hookData)) {
             GetHookedProceInfo(hookData);
         } else {
-            printf(
-                "Usage: native_daemon [-o file] [-s smb_size] <-p pid> <-n process_name> "
-                "<-f filter_size> <-d max_stack_depth> <-u fp|dwarf>\n");
+            std::string help = R"(Usage: native_daemon
+            [-o file]
+            [-s smb_size]
+            <-n process_name>
+            <-f filter_size>
+            <-d max_stack_depth>
+            <-u fp|dwarf>
+            <-S statistics_interval>
+            <-O offline_symbolization true|false>
+            <-C callframe_compress true|false>
+            <-c string_compressed true|false>
+            <-r raw_string true|false>
+            )";
+            printf("%s\n", help.c_str());
             return 0;
         }
     } else {

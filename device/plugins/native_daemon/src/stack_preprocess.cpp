@@ -22,7 +22,9 @@
 #include "plugin_service_types.pb.h"
 #include "elf_parser.h"
 #include "utilities.h"
-
+#include "native_hook_result_standard.pb.h"
+#include "native_hook_config_standard.pb.h"
+#include "google/protobuf/text_format.h"
 static std::atomic<uint64_t> timeCost = 0;
 static std::atomic<uint64_t> unwindTimes = 0;
 
@@ -38,8 +40,8 @@ constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
 using namespace OHOS::Developtools::NativeDaemon;
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
-    clockid_t pluginDataClockId) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
-    hookConfig_(hookConfig), fpHookData_(nullptr, nullptr), pluginDataClockId_(pluginDataClockId)
+    clockid_t pluginDataClockId, bool isHookStandalone) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
+    hookConfig_(hookConfig), fpHookData_(nullptr, nullptr), pluginDataClockId_(pluginDataClockId), isHookStandaloneSerialize_(isHookStandalone)
 {
     runtime_instance = std::make_shared<VirtualRuntime>(hookConfig_);
 
@@ -71,6 +73,16 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
             if (fp) {
                 fpHookData_.reset();
                 fpHookData_ = std::unique_ptr<FILE, decltype(&fclose)>(fp, fclose);
+                if (isHookStandaloneSerialize_) {
+                    std::string str;
+                    size_t length = hookConfig_.ByteSizeLong();
+                    hookConfig_.SerializeToArray(buffer_.get(), length);
+                    ForStandard::NativeHookConfig StandardNativeHookConfig;
+                    StandardNativeHookConfig.ParseFromArray(buffer_.get(), length);
+                    google::protobuf::TextFormat::PrintToString(StandardNativeHookConfig, &str);
+                    size_t n = fwrite(str.data(), 1, str.size() , fp);
+                    HILOG_DEBUG(LOG_CORE, "Flush hookConfig_ fwrite n = %zu strbuf.size() = %zu", n, str.size());
+                }
             } else {
                 fpHookData_.reset();
             }
@@ -78,6 +90,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
             HILOG_WARN(LOG_CORE, "If you need to save the file, please set the file_name");
         }
     }
+    HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize_ = %d\n", isHookStandaloneSerialize_);
 #if defined(__arm__)
     u64regs_.resize(PERF_REG_ARM_MAX);
 #else
@@ -181,6 +194,7 @@ void StackPreprocess::TakeResults()
                 ReportThreadNameMap(rawData->stackConext->tid, threadName, stackData);
                 continue;
             }
+
             if (!rawData->reportFlag) {
                 ignoreCnts_++;
                 if (ignoreCnts_ % LOG_PRINT_TIMES == 0) {
@@ -229,7 +243,9 @@ void StackPreprocess::TakeResults()
                 HILOG_ERROR(LOG_CORE, "unwind fatal error");
                 continue;
             }
-            if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
+            if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
+                SetHookData(rawData, callFrames_, stackData);
+            } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
                 WriteFrames(rawData, callFrames_);
             } else if (!hookConfig_.save_file()) {
                 SetHookData(rawData, callFrames_, stackData);
@@ -251,6 +267,9 @@ void StackPreprocess::TakeResults()
                     unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
             }
 #endif
+        }
+        if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
+            continue;
         }
         FlushData(stackData);
 
@@ -597,8 +616,8 @@ void StackPreprocess::WriteFrames(RawStackPtr rawStack, const std::vector<CallFr
     fprintf(fpHookData_.get(), "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
         rawStack->stackConext->pid, rawStack->stackConext->tid, (int64_t)rawStack->stackConext->ts.tv_sec,
         rawStack->stackConext->ts.tv_nsec, (uint64_t)rawStack->stackConext->addr, rawStack->stackConext->mallocSize);
-
-    for (size_t idx = 0; idx < callFrames.size(); ++idx) {
+    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    for (; idx < callFrames.size(); ++idx) {
         (void)fprintf(fpHookData_.get(), "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
             callFrames[idx].ip_, callFrames[idx].sp_, std::string(callFrames[idx].symbolName_).c_str(),
             std::string(callFrames[idx].filePath_).c_str(), callFrames[idx].offset_, callFrames[idx].symbolOffset_);
@@ -716,9 +735,19 @@ void StackPreprocess::FlushData(BatchNativeHookData& stackData)
 {
     if (stackData.events().size() > 0) {
         size_t length = stackData.ByteSizeLong();
+        stackData.SerializeToArray(buffer_.get(), length);
         if (length < MAX_BUFFER_SIZE) {
-            stackData.SerializeToArray(buffer_.get(), length);
-            Flush(buffer_.get(), length);
+            if (isHookStandaloneSerialize_) {
+                std::string str;
+                ForStandard::BatchNativeHookData StandardStackData;
+                StandardStackData.ParseFromArray(buffer_.get(), length);
+                google::protobuf::TextFormat::PrintToString(StandardStackData, &str);
+                size_t n = fwrite(str.data(), 1, str.size(), fpHookData_.get());
+                fflush(fpHookData_.get());
+                HILOG_DEBUG(LOG_CORE, "Flush Data fwrite n = %zu str.size() = %zu", n, str.size());
+            } else {
+                Flush(buffer_.get(), length);
+            }
         } else {
             HILOG_ERROR(LOG_CORE, "the data is larger than MAX_BUFFER_SIZE, flush failed");
         }
@@ -826,18 +855,14 @@ bool StackPreprocess::FlushRecordStatistics()
 
 void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
 {
-    auto it = memTagMap_.find(tagId);
-    if (it == memTagMap_.end()) {
+    std::string temp;
+    bool res = memTagMap_.Find(tagId, temp);
+    if (!res) {
         memTagMap_[tagId] = tagName;
     }
 }
 
 bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 {
-    auto it = memTagMap_.find(tagId);
-    if (it != memTagMap_.end()) {
-        tagName = it->second;
-        return true;
-    }
-    return false;
+    return memTagMap_.Find(tagId, tagName);
 }

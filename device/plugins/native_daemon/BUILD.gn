@@ -82,6 +82,7 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "../../base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/libunwind:unwind_source_${target_cpu}",
     "//third_party/zlib:libz",

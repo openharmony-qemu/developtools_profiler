@@ -22,6 +22,8 @@
 
 #include "buffer_splitter.h"
 #include "logging.h"
+#include <fstream>
+#include <iostream>
 
 #pragma clang optimize off
 
@@ -48,6 +50,13 @@ constexpr int FREE_VEC_SIZE = 4;
 constexpr int MALLOC_GET_DATE_SIZE = 3;
 constexpr int FREE_GET_DATA_SIZE = 2;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
+std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
+std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
+std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
+const int LIBA_MALLOC_SIZE = 888;
+const int LIBB_MALLOC_SIZE = 666;
+typedef char* (*DepthMallocSo)(int depth, int mallocSize);
+typedef void (*DepthFreeSo)(int depth, char *p);
 
 using StaticSpace = struct {
     int data[DATA_SIZE];
@@ -58,31 +67,63 @@ public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
 
-    void StartDaemonProcessArgs(int pid, std::string outFile)
+    void StartDaemonProcessArgs()
     {
+        outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
         int processNum = fork();
         if (processNum == 0) {
-            // start running native_daemon -o -s -p
-            execl(DEFAULT_NATIVE_DAEMON_PATH.c_str(), DEFAULT_NATIVE_DAEMON_PATH.c_str(), "-o", outFile.c_str(),
-                "-s", std::to_string(SHARE_MEMORY_SIZE).c_str(), "-p", std::to_string(pid).c_str(), nullptr);
+            command_.push_back(const_cast<char*>(DEFAULT_NATIVE_DAEMON_PATH.c_str()));
+            command_.push_back(const_cast<char*>("-o"));
+            command_.push_back(const_cast<char*>(outFile_.c_str()));
+            command_.push_back(const_cast<char*>("-s"));
+            command_.push_back(const_cast<char*>(std::to_string(SHARE_MEMORY_SIZE).c_str()));
+            command_.push_back(const_cast<char*>("-p"));
+            command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
+            command_.push_back(const_cast<char*>("-u"));
+            command_.push_back(const_cast<char*>(mode_[modeIndex_].c_str()));
+            if (unwindDepth_ > 0) {
+                command_.push_back(const_cast<char*>("-d"));
+                command_.push_back(const_cast<char*>(std::to_string(unwindDepth_).c_str()));
+            }
+            if (statisticsInterval_ > 0) {
+                command_.push_back(const_cast<char*>("-S"));
+                command_.push_back(const_cast<char*>(std::to_string(statisticsInterval_).c_str()));
+            }
+            if (offlineSymbolization_) {
+                command_.push_back(const_cast<char*>("-O"));
+                command_.push_back(const_cast<char*>("true"));
+            }
+            if (callframeCompress_) {
+                command_.push_back(const_cast<char*>("-C"));
+                command_.push_back(const_cast<char*>("true"));
+            }
+            if (stringCompress_) {
+                command_.push_back(const_cast<char*>("-c"));
+                command_.push_back(const_cast<char*>("true"));
+            }
+            if (rawString_) {
+                command_.push_back(const_cast<char*>("-r"));
+                command_.push_back(const_cast<char*>("true"));
+            }
+            command_.push_back(nullptr);
+            execv(DEFAULT_NATIVE_DAEMON_PATH.c_str(), command_.data());
             _exit(1);
         } else {
             daemonPid_ = processNum;
         }
     }
 
-    void StartDaemonProcessArgsDepth(int pid, int setHookDepth, std::string outFile)
-    {
-        int processNum = fork();
-        if (processNum == 0) {
-            // start running native_daemon -o -s -p -d
-            execl(DEFAULT_NATIVE_DAEMON_PATH.c_str(), DEFAULT_NATIVE_DAEMON_PATH.c_str(), "-o", outFile.c_str(),
-                "-s", std::to_string(SHARE_MEMORY_SIZE).c_str(), "-p", std::to_string(pid).c_str(),
-                "-d", std::to_string(setHookDepth).c_str(), nullptr);
-            _exit(1);
-        } else {
-            daemonSetDepthPid_ = processNum;
+    std::vector<std::string>& StringSplit(const std::string& str, char delim = ';') {
+        std::stringstream ss(str);
+        std::string item;
+        static std::vector<std::string> elems;
+        elems.clear();
+        while (std::getline(ss, item, delim)) {
+            if (!item.empty()) {
+                elems.push_back(item);
+            }
         }
+        return elems;
     }
 
     void StopProcess(int processNum)
@@ -173,16 +214,62 @@ public:
         DepthFree(depth, p);
     }
 
-    void StartMallocProcess(int depth, int& pid)
+    void dlopenAndCloseSo(std::string filePath, int size, int depth)
+    {
+        char *ptr = nullptr;
+        void *handle = nullptr;
+        DepthMallocSo mallocFunc = nullptr;
+        DepthFreeSo freeFunc = nullptr;
+
+        handle = dlopen(filePath.data(), RTLD_LAZY);
+        if (handle == nullptr) {
+            fprintf(stderr, "library not exist!\n");
+            exit(0);
+        }
+        mallocFunc = (DepthMallocSo)dlsym(handle, "DepthMallocSo");
+        freeFunc = (DepthFreeSo)dlsym(handle, "DepthFreeSo");
+
+        if (mallocFunc == nullptr || freeFunc == nullptr) {
+            fprintf(stderr, "function not exist!\n");
+            exit(0);
+        }
+        ptr = mallocFunc(depth, size);
+        *ptr = 'a';
+        freeFunc(depth, ptr);
+        if (handle != nullptr) {
+            usleep(100 * 1000);
+            dlclose(handle);
+        }
+    }
+
+    void StartMallocProcess()
     {
         int processNum = fork();
         if (processNum == 0) {
             while (1) {
-                ApplyForMalloc(depth);
-                sleep(1);
+                ApplyForMalloc(unwindDepth_);
+                usleep(500);
             }
         } else {
-            pid = processNum;
+            hookPid_ = processNum;
+        }
+    }
+
+    void StartDlopenProcess()
+    {
+        int processNum = fork();
+        if (processNum == 0) {
+            const std::vector<std::string> VEC_SO_PATH { DEFAULT_LIBA_PATH, DEFAULT_LIBB_PATH};
+            std::string cmdCopyLib{"cp " + DEFAULT_LIBNATIVETEST_PATH + " " + DEFAULT_LIBA_PATH};
+            system(cmdCopyLib.c_str());
+            cmdCopyLib = "cp " + DEFAULT_LIBA_PATH + " " + DEFAULT_LIBB_PATH;
+            system(cmdCopyLib.c_str());
+            while(1) {
+                dlopenAndCloseSo(VEC_SO_PATH[0], LIBA_MALLOC_SIZE, unwindDepth_);
+                dlopenAndCloseSo(VEC_SO_PATH[1], LIBB_MALLOC_SIZE, unwindDepth_);
+            }
+        } else {
+            hookPid_ = processNum;
         }
     }
 
@@ -210,7 +297,7 @@ public:
         DepthFree(depth, p);
     }
 
-    void StartCallocProcess(int depth, int& pid)
+    void StartCallocProcess(int depth)
     {
         int processNum = fork();
         if (processNum == 0) {
@@ -219,10 +306,10 @@ public:
             free(ret);
             while (1) {
                 ApplyForCalloc(depth);
-                sleep(1);
+                usleep(5000);
             }
         } else {
-            pid = processNum;
+            hookPid_ = processNum;
         }
     }
 
@@ -259,16 +346,16 @@ public:
         DepthFree(depth, np);
     }
 
-    void StartReallocProcess(int depth, int& pid)
+    void StartReallocProcess(int depth)
     {
         int processNum = fork();
         if (processNum == 0) {
             while (1) {
                 ApplyForRealloc(depth);
-                sleep(1);
+                usleep(500);
             }
         } else {
-            pid = processNum;
+            hookPid_ = processNum;
         }
     }
 
@@ -283,9 +370,35 @@ public:
         return true;
     }
 
-private:
+    void StartAndStopHook()
+    {
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(1);
+        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+        system(cmd.c_str());
+
+        sleep(SLEEP_TIME); // 等待生成文本
+        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+        system(cmdEnd.c_str());
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        StopProcess(daemonPid_);
+    }
+
     int daemonPid_ = -1;
-    int daemonSetDepthPid_ = -1;
+    int hookPid_ = -1;
+    int modeIndex_ = 0;
+    int unwindDepth_ = 0;
+    int statisticsInterval_ = 0;
+    bool offlineSymbolization_ = false;
+    bool callframeCompress_ = false;
+    bool stringCompress_ = false;
+    bool rawString_ = false;
+    std::string outFile_ = "";
+    std::string outFileType_ = "";
+    std::string mode_[2] = {"dwarf", "fp"};
+    std::vector<char*> command_;
 };
 
 /**
@@ -295,67 +408,57 @@ private:
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level1)
 {
-    int setDepth = 100; // 递归深度大于hook默认深度30，测试文本
-    int mallocPid = -1;
-    std::string outFile = DEFAULT_PATH + "hooktest_malloc.txt";
-    StartMallocProcess(setDepth, mallocPid);
-    sleep(1);
-    StartDaemonProcessArgs(mallocPid, outFile);
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 30;
+        outFileType_ = "malloc_";
+        modeIndex_ = i; // 0 is dwarf, 1 is fp mode
+        StartMallocProcess();
+        StartAndStopHook();
 
-    sleep(1);
-    std::string cmd = "kill -36 " + std::to_string(mallocPid);
-    system(cmd.c_str());
+        int32_t ret = ReadFile(outFile_);
+        ASSERT_NE(ret, -1);
 
-    sleep(SLEEP_TIME); // 等待生成文本
-    std::string cmdEnd = "kill -37 " + std::to_string(mallocPid);
-    system(cmdEnd.c_str());
-    sleep(WAIT_FLUSH);
-    StopProcess(mallocPid);
-    StopProcess(daemonPid_);
+        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
+        std::vector<std::string> hookVec;
+        std::string addr = "";
+        int depth = 0;
+        int addrPos = 3;
+        bool isFirstHook = true;
+        do {
+            char delimiter = ';';
+            Getdata(totalbuffer, hookVec, delimiter);
 
-    int32_t ret = ReadFile(outFile);
-    ASSERT_NE(ret, -1);
-
-    BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
-    std::vector<std::string> hookVec;
-    std::string addr = "";
-    int depth = 0;
-    int addrPos = 3;
-    bool isFirstHook = true;
-    do {
-        char delimiter = ';';
-        Getdata(totalbuffer, hookVec, delimiter);
-
-        if (hookVec[0] == "malloc" && !isFirstHook) {
-            for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+            if (hookVec[0] == "malloc" && !isFirstHook) {
+                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                }
+                delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            }
-            delimiter = '\n';
-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
-            ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
+                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
 
-            addr = hookVec[addrPos];
-            depth = 0;
-        } else if (hookVec[0] == "free" && !isFirstHook) {
-            for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+                addr = hookVec[addrPos];
+                depth = 0;
+            } else if (hookVec[0] == "free" && !isFirstHook) {
+                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                }
+                delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+                EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
+                EXPECT_EQ(depth, DEFAULT_DEPTH);
+
+                isFirstHook = false;
+                addr = "";
+                depth = 0;
+            } else {
+                depth++;
             }
-            delimiter = '\n';
-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
-            EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
-            EXPECT_EQ(depth, DEFAULT_DEPTH);
 
-            isFirstHook = false;
-            addr = "";
-            depth = 0;
-        } else {
-            depth++;
-        }
-
-        hookVec.clear();
-    } while (totalbuffer.NextLine());
+            hookVec.clear();
+        } while (totalbuffer.NextLine());
+    }
 }
 
 /**
@@ -365,68 +468,58 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Level3)
 {
-    int setDepth = 1; // 递归深度小于hook深度100，测试文本
-    int setHookDepth = 100;
-    int callocPid = -1;
-    std::string outFile = DEFAULT_PATH + "hooktest_calloc.txt";
-    StartCallocProcess(setDepth, callocPid);
-    sleep(1);
-    StartDaemonProcessArgsDepth(callocPid, setHookDepth, outFile);
+    for(size_t i = 0; i < 2 ;++i) {
+        int setDepth = 1;
+        unwindDepth_ = 100;
+        outFileType_ = "calloc_";
+        modeIndex_ = i;
+        StartCallocProcess(setDepth);
+        StartAndStopHook();
 
-    sleep(1);
-    std::string cmd = "kill -36 " + std::to_string(callocPid);
-    system(cmd.c_str());
+        int32_t ret = ReadFile(outFile_);
+        ASSERT_NE(ret, -1);
 
-    sleep(SLEEP_TIME); // 等待生成文本
-    std::string cmdEnd = "kill -37 " + std::to_string(callocPid);
-    system(cmdEnd.c_str());
-    sleep(WAIT_FLUSH);
-    StopProcess(callocPid);
-    StopProcess(daemonSetDepthPid_);
+        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
+        std::vector<std::string> hookVec;
+        std::string addr = "";
+        int depth = 0;
+        int addrPos = 3;
+        bool isFirstHook = true;
+        do {
+            char delimiter = ';';
+            Getdata(totalbuffer, hookVec, delimiter);
 
-    int32_t ret = ReadFile(outFile);
-    ASSERT_NE(ret, -1);
-
-    BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
-    std::vector<std::string> hookVec;
-    std::string addr = "";
-    int depth = 0;
-    int addrPos = 3;
-    bool isFirstHook = true;
-    do {
-        char delimiter = ';';
-        Getdata(totalbuffer, hookVec, delimiter);
-
-        if (hookVec[0] == "malloc" && !isFirstHook) {
-            for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+            if (hookVec[0] == "malloc" && !isFirstHook) {
+                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                }
+                delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            }
-            delimiter = '\n';
-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
-            ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_CALLOC_SIZE);
+                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_CALLOC_SIZE);
 
-            addr = hookVec[addrPos];
-            depth = 0;
-        } else if (hookVec[0] == "free" && !isFirstHook) {
-            for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+                addr = hookVec[addrPos];
+                depth = 0;
+            } else if (hookVec[0] == "free" && !isFirstHook) {
+                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                }
+                delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+                EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
+                EXPECT_GE(depth, CALLOC_DEPTH);
+
+                isFirstHook = false;
+                addr = "";
+                depth = 0;
+            } else {
+                depth++;
             }
-            delimiter = '\n';
-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
-            EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
-            EXPECT_GE(depth, CALLOC_DEPTH);
 
-            isFirstHook = false;
-            addr = "";
-            depth = 0;
-        } else {
-            depth++;
-        }
-
-        hookVec.clear();
-    } while (totalbuffer.NextLine());
+            hookVec.clear();
+        } while (totalbuffer.NextLine());
+    }
 }
 
 /**
@@ -436,83 +529,343 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Level3)
 {
-    int setDepth = 100; // realloc测试文本
-    int reallocPid = -1;
-    std::string outFile = DEFAULT_PATH + "hooktest_realloc.txt";
-    StartReallocProcess(setDepth, reallocPid);
-    sleep(1);
-    StartDaemonProcessArgs(reallocPid, outFile);
+    for(size_t i = 0; i < 2 ;++i) {
+        int setDepth = 100;
+        outFileType_ = "realloc_";
+        modeIndex_ = i;
+        StartReallocProcess(setDepth);
+        StartAndStopHook();
 
-    sleep(1);
-    std::string cmd = "kill -36 " + std::to_string(reallocPid);
-    system(cmd.c_str());
+        int32_t ret = ReadFile(outFile_);
+        ASSERT_NE(ret, -1);
 
-    sleep(SLEEP_TIME); // 等待生成文本
-    std::string cmdEnd = "kill -37 " + std::to_string(reallocPid);
-    system(cmdEnd.c_str());
-    sleep(WAIT_FLUSH);
-    StopProcess(reallocPid);
-    StopProcess(daemonPid_);
+        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
+        std::vector<std::string> hookVec;
+        std::string mallocAddr = "";
+        std::string reallocAddr = "";
+        int depth = 0;
+        int addrPos = 3;
+        bool isFirstHook = true;
+        bool isRealloc = false;
+        do {
+            char delimiter = ';';
+            Getdata(totalbuffer, hookVec, delimiter);
 
-    int32_t ret = ReadFile(outFile);
-    ASSERT_NE(ret, -1);
-
-    BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
-    std::vector<std::string> hookVec;
-    std::string mallocAddr = "";
-    std::string reallocAddr = "";
-    int depth = 0;
-    int addrPos = 3;
-    bool isFirstHook = true;
-    bool isRealloc = false;
-    do {
-        char delimiter = ';';
-        Getdata(totalbuffer, hookVec, delimiter);
-
-        if (hookVec[0] == "malloc" && !isFirstHook) {
-            for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+            if (hookVec[0] == "malloc" && !isFirstHook) {
+                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
+                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                }
+                delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            }
-            delimiter = '\n';
-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
 
-            if (isRealloc) {
-                reallocAddr = hookVec[addrPos];
-                ASSERT_GE(atoi(hookVec[4].c_str()), DEFAULT_REALLOC_SIZE);
-                EXPECT_GE(depth, REALLOC_DEPTH);
-                isFirstHook = false;
-            } else {
-                mallocAddr = hookVec[addrPos];
-                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
-            }
+                if (isRealloc) {
+                    reallocAddr = hookVec[addrPos];
+                    ASSERT_GE(atoi(hookVec[4].c_str()), DEFAULT_REALLOC_SIZE);
+                    EXPECT_GE(depth, REALLOC_DEPTH);
+                    isFirstHook = false;
+                } else {
+                    mallocAddr = hookVec[addrPos];
+                    ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
+                }
 
-            isRealloc = true;
-            depth = 0;
-        } else if (hookVec[0] == "free" && !isFirstHook) {
-            for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+                isRealloc = true;
+                depth = 0;
+            } else if (hookVec[0] == "free" && !isFirstHook) {
+                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
+                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
+                }
+                delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            }
-            delimiter = '\n';
-            EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-            ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
+                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
 
-            if (isRealloc) {
-                EXPECT_STREQ(hookVec[addrPos].c_str(), reallocAddr.c_str());
-                reallocAddr = "";
+                if (isRealloc) {
+                    EXPECT_STREQ(hookVec[addrPos].c_str(), reallocAddr.c_str());
+                    reallocAddr = "";
+                } else {
+                    EXPECT_STREQ(hookVec[addrPos].c_str(), mallocAddr.c_str());
+                    mallocAddr = "";
+                }
+
+                isRealloc = false;
+                depth = 0;
             } else {
-                EXPECT_STREQ(hookVec[addrPos].c_str(), mallocAddr.c_str());
-                mallocAddr = "";
+                depth++;
             }
 
-            isRealloc = false;
-            depth = 0;
-        } else {
-            depth++;
+            hookVec.clear();
+        } while (totalbuffer.NextLine());
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook dlopen normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
+{
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 6;
+        outFileType_ = "dlopen_";
+        modeIndex_ = i;
+        StartDlopenProcess();
+        StartAndStopHook();
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        uint8_t mallocPos = 0;
+        uint8_t mallocSizePos = 6;
+        uint8_t libUnwindDepth = 3;
+        while (getline(infile, buf))
+        {
+            std::vector<std::string>& resultVec = StringSplit(buf);
+            if (resultVec[mallocPos] == "malloc") {
+                if(resultVec[mallocSizePos] == std::to_string(LIBA_MALLOC_SIZE)) {
+                    std::cout << buf << std::endl;
+                    for (size_t i = 0; i < libUnwindDepth; i++) {
+                        getline(infile, buf);
+                    }
+                    std::cout << buf << std::endl;
+                    EXPECT_TRUE(buf.find("liba.z.so") != std::string::npos);
+                } else if (resultVec[mallocSizePos] == std::to_string(LIBB_MALLOC_SIZE)) {
+                    std::cout << buf << std::endl;
+                    for (size_t i = 0; i < libUnwindDepth; i++) {
+                        getline(infile, buf);
+                    }
+                    std::cout << buf << std::endl;
+                    EXPECT_TRUE(buf.find("libb.z.so") != std::string::npos);
+                }
+            }
         }
+    }
+}
 
-        hookVec.clear();
-    } while (totalbuffer.NextLine());
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook statistics data normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
+{
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 10;
+        statisticsInterval_ = 1;
+        outFileType_ = "statistics_interval_";
+        modeIndex_ = i;
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(1);
+        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+        system(cmd.c_str());
+
+        sleep(SLEEP_TIME); // 等待生成文本
+        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+        system(cmdEnd.c_str());
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        cmdEnd = "kill -2 " + std::to_string(daemonPid_);
+        system(cmdEnd.c_str());
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if(buf.find("stack_map")!=std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event")!=std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf,':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook offline symbolization data normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level1)
+{
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 10;
+        outFileType_ = "offline_symbolization_";
+        modeIndex_ = i;
+        offlineSymbolization_ = true;
+        StartMallocProcess();
+        StartAndStopHook();
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string symTable;
+        std::string strTable;
+        std::string ipString;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map")!=std::string::npos) {
+                getline(infile, buf); // read stack map id
+                getline(infile, buf); // read stack map ip
+                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                ipString = resultVec[0];
+                ipString.erase(std::remove(ipString.begin(), ipString.end(), ' '), ipString.end()); // delete whitespace characters
+                EXPECT_TRUE(ipString == "ip");
+            } else if (buf.find("sym_table") != std::string::npos) {
+                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                symTable = resultVec[1];
+                EXPECT_TRUE(symTable.size() > 0);
+            } else if (buf.find("str_table") != std::string::npos) {
+                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                strTable = resultVec[1];
+                EXPECT_TRUE(strTable.size() > 0);
+                if (ipString == "ip" && symTable.size()) {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook callframe compress normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level3)
+{
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 6;
+        outFileType_ = "callframecompress_";
+        modeIndex_ = i;
+        callframeCompress_ = true;
+        StartMallocProcess();
+        StartAndStopHook();
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        bool findSymbolName;
+        bool findfilePath;
+        bool findFrameMap;
+        bool findStackMap;
+        while (getline(infile, buf))
+        {
+            if (!findSymbolName || buf.find("symbol_name") != std::string::npos) {
+                findSymbolName = true;
+            } else if (!findfilePath || buf.find("file_path") != std::string::npos) {
+                findfilePath = true;
+            } else if (!findFrameMap || buf.find("frame_map") != std::string::npos) {
+                findFrameMap = true;
+            } else if (!findStackMap || buf.find("stack_map") != std::string::npos) {
+                findStackMap = true;
+                if (findSymbolName && findfilePath && findFrameMap) {
+                    break;
+                }
+            }
+        }
+        EXPECT_TRUE(findSymbolName);
+        EXPECT_TRUE(findfilePath);
+        EXPECT_TRUE(findFrameMap);
+        EXPECT_TRUE(findStackMap);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook string compress normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level3)
+{
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 6;
+        outFileType_ = "stringcompress_";
+        modeIndex_ = i;
+        stringCompress_ = true;
+        StartMallocProcess();
+        StartAndStopHook();
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        bool findFrameInfo;
+        bool findSymbolNameId;
+        while (getline(infile, buf))
+        {
+            if (!findFrameInfo || buf.find("frame_info") != std::string::npos) {
+                findFrameInfo = true;
+            } else if (!findSymbolNameId || buf.find("symbol_name_id") != std::string::npos) {
+                findSymbolNameId = true;
+                if (findFrameInfo) {
+                    break;
+                }
+            }
+        }
+        EXPECT_TRUE(findFrameInfo);
+        EXPECT_TRUE(findSymbolNameId);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook raw string normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level3)
+{
+    for(size_t i = 0; i < 2 ;++i) {
+        unwindDepth_ = 6;
+        outFileType_ = "rawstring_";
+        modeIndex_ = i;
+        rawString_ = true;
+        StartMallocProcess();
+        StartAndStopHook();
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        bool findFrameInfo;
+        bool findSymbolName;
+        while (getline(infile, buf))
+        {
+            if (!findFrameInfo || buf.find("frame_info") != std::string::npos) {
+                findFrameInfo = true;
+            } else if (!findSymbolName || buf.find("symbol_name") != std::string::npos) {
+                findSymbolName = true;
+                if (findFrameInfo) {
+                    break;
+                }
+            }
+        }
+        EXPECT_TRUE(findFrameInfo);
+        EXPECT_TRUE(findSymbolName);
+    }
 }
 }
 

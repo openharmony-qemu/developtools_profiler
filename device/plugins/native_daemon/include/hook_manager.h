@@ -50,6 +50,8 @@ namespace OHOS::Developtools::NativeDaemon {
 class HookManager : public ManagerInterface {
 public:
     HookManager();
+    HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock, std::shared_ptr<EventNotifier>& eventNotifier,
+                StackDataRepeaterPtr& stackData);
     bool RegisterAgentPlugin(const std::string& pluginPath);
     bool UnregisterAgentPlugin(const std::string& pluginPath);
 
@@ -69,9 +71,10 @@ public:
     bool ResetWriter(uint32_t pluginId) override;
     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
     void ResetStartupParam();
+    void ReadShareMemory();
+    void SetHookConfig(const NativeHookConfig& hookConfig);
 
 private:
-    void ReadShareMemory();
     void RegisterWriter(const BufferWriterPtr& writer);
     bool CheckProcess();
     void CheckProcessName();
