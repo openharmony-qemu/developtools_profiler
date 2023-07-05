@@ -109,7 +109,7 @@ HWTEST_F(SemaphoreTest, CreatePosixSemaphoreFactory, TestSize.Level1)
 
 /**
  * @tc.name: SemaphoreTest
- * @tc.desc: Post.
+ * @tc.desc: CreatePtheadSemaphoreFactory.
  * @tc.type: FUNC
  */
 HWTEST_F(SemaphoreTest, CreatePtheadSemaphoreFactory, TestSize.Level1)
