@@ -29,13 +29,13 @@ protected:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
 
-    void WriteFile(const std::string& filePath, const std::string& fileContent)
+    bool WriteFile(const std::string& filePath, const std::string& fileContent)
     {
         FILE* file = fopen(filePath.c_str(), "w");
         if (file == nullptr) {
             std::string errorMsg = GetErrorMsg();
             HILOG_ERROR(LOG_CORE, "WriteFile: fopen() fail, %s, %s", filePath.c_str(), errorMsg.c_str());
-            return;
+            return false;
         }
 
         size_t len = fwrite(const_cast<char*>(fileContent.c_str()), 1, fileContent.length(), file);
@@ -43,22 +43,23 @@ protected:
             std::string errorMsg = GetErrorMsg();
             HILOG_ERROR(LOG_CORE, "WriteFile: fwrite() fail, %s", errorMsg.c_str());
             (void)fclose(file);
-            return;
+            return false;
         }
 
         if (fflush(file) == EOF) {
             std::string errorMsg = GetErrorMsg();
             HILOG_ERROR(LOG_CORE, "WriteFile: fflush() error = %s", errorMsg.c_str());
             (void)fclose(file);
-            return;
+            return false;
         }
 
         fsync(fileno(file));
         if (fclose(file) != 0) {
             std::string errorMsg = GetErrorMsg();
             HILOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", errorMsg.c_str());
-            return;
+            return false;
         }
+        return true;
     }
 };
 
@@ -131,7 +132,7 @@ HWTEST_F(CommonTest, ReadFile, TestSize.Level1)
 {
     std::string fileName = "/data/local/tmp/config.txt";
     std::string fileContent = "Hello world";
-    WriteFile(fileName, fileContent);
+    EXPECT_TRUE(WriteFile(fileName, fileContent));
 
     // invalid path
     std::vector<std::string> validPaths = { "/tmp/" };
@@ -168,5 +169,28 @@ HWTEST_F(CommonTest, ReadFile, TestSize.Level1)
     fileName = "/data/local/tmp/config.txt";
     std::string cmd = "rm " + fileName;
     system(cmd.c_str());
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: WriteFileFailed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, WriteFileFailed, TestSize.Level1)
+{
+    std::string fileName = "/data/local/tmp/invalid/config.txt";
+    std::string fileContent = "Hello world";
+    EXPECT_FALSE(WriteFile(fileName, fileContent));
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: GetTimeStr.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetTimeStr, TestSize.Level1)
+{
+    std::string timeStr = GetTimeStr();
+    EXPECT_FALSE(timeStr.empty());
 }
 } // namespace

@@ -35,9 +35,6 @@ public:
 
     int GetFd() const;
 
-    bool IsNonBlocking() const;
-    bool IsSemaphore() const;
-
     uint64_t Take() const;
     bool Post(uint64_t value) const;
 

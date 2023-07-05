@@ -106,6 +106,7 @@ HWTEST_F(PluginManagerTest, SuccessPlugin, TestSize.Level1)
     EXPECT_TRUE(pluginManage->CreatePluginSession(configVec));
     EXPECT_TRUE(pluginManage->StartPluginSession(pluginIdsVector, configVec, result));
     std::this_thread::sleep_for(TEMP_DELAY);
+    EXPECT_FALSE(pluginManage->ReportPluginBasicData(pluginIdsVector));
     EXPECT_TRUE(pluginManage->StopPluginSession(pluginIdsVector));
     EXPECT_TRUE(pluginManage->DestroyPluginSession(pluginIdsVector));
 }

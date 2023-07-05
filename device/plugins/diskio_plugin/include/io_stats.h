@@ -145,10 +145,8 @@ private:
     bool OutputIoData();
     uint64_t GetSystime();
     bool ParseIoStatsEx();
-    bool StringToL(const char* word, long& value);
     bool FindFirstNum(char** p);
     bool RemoveSpaces(char** p);
-    bool FindFirstSpace(char** p);
     uint32_t ParseLineFields(const std::string& line);
     uint32_t ParseLineFields(const std::string& line, std::string& name);
 

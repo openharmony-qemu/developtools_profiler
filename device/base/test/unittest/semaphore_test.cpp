@@ -95,4 +95,26 @@ HWTEST_F(SemaphoreTest, WaitPost, TestSize.Level1)
 
     bgThread.join();
 }
+
+/**
+ * @tc.name: SemaphoreTest
+ * @tc.desc: CreatePosixSemaphoreFactory.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SemaphoreTest, CreatePosixSemaphoreFactory, TestSize.Level1)
+{
+    auto semaphore = GetSemaphoreFactory(POSIX_SEMAPHORE_FACTORY).Create(0);
+    EXPECT_NE(semaphore, nullptr);
+}
+
+/**
+ * @tc.name: SemaphoreTest
+ * @tc.desc: Post.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SemaphoreTest, CreatePtheadSemaphoreFactory, TestSize.Level1)
+{
+    auto semaphore = GetSemaphoreFactory(PTHREAD_SEMAPHORE_FACTORY).Create(0);
+    EXPECT_NE(semaphore, nullptr);
+}
 } // namespace
