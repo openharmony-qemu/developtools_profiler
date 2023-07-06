@@ -101,8 +101,13 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     ppc.set_name("abc.so");
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(20);
-
     ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    PluginInfo plugin;
+    plugin.name = "abc.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    pluginService_->AddPluginInfo(plugin);
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
 }
 
 /**
@@ -122,6 +127,14 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
     ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    PluginInfo plugin;
+    plugin.name = "abc.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    pluginService_->AddPluginInfo(plugin);
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+
+
 }
 
 /**
@@ -135,8 +148,15 @@ HWTEST_F(UnitTestPluginService, StartPluginSession, TestSize.Level1)
     ppc.set_name("abc.so");
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(20);
-
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
+    PluginInfo plugin;
+    plugin.name = "abc.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    pluginService_->AddPluginInfo(plugin);
+    EXPECT_TRUE(pluginService_->StartPluginSession(ppc));
+
+
 }
 
 /**
@@ -147,6 +167,12 @@ HWTEST_F(UnitTestPluginService, StartPluginSession, TestSize.Level1)
 HWTEST_F(UnitTestPluginService, StopPluginSession, TestSize.Level1)
 {
     ASSERT_FALSE(pluginService_->StopPluginSession("abc.so"));
+    PluginInfo plugin;
+    plugin.name = "abc.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    pluginService_->AddPluginInfo(plugin);
+    EXPECT_TRUE(pluginService_->StopPluginSession("abc.so"));
 }
 
 /**
@@ -157,6 +183,49 @@ HWTEST_F(UnitTestPluginService, StopPluginSession, TestSize.Level1)
 HWTEST_F(UnitTestPluginService, DestroyPluginSession, TestSize.Level1)
 {
     ASSERT_FALSE(pluginService_->DestroyPluginSession("abc.so"));
+    PluginInfo plugin;
+    plugin.name = "abc.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    pluginService_->AddPluginInfo(plugin);
+    EXPECT_TRUE(pluginService_->DestroyPluginSession("abc.so"));
+
+}
+/**
+ * @tc.name: Service
+ * @tc.desc: RefreshPluginSession  test.
+ * @tc.type: FUNC
+*/
+HWTEST_F(UnitTestPluginService, RefreshPluginSession, TestSize.Level1)
+{
+    ASSERT_FALSE(pluginService_->RefreshPluginSession("abc.so"));
+    PluginInfo plugin;
+    plugin.name = "abc.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    pluginService_->AddPluginInfo(plugin);
+    EXPECT_TRUE(pluginService_->RefreshPluginSession("abc.so"));
+}
+/**
+ * @tc.name: Service
+ * @tc.desc: GetPluginInfo  test.
+ * @tc.type: FUNC
+*/
+HWTEST_F(UnitTestPluginService, GetPluginInfo, TestSize.Level1)
+{
+    PluginInfo plugin;
+    EXPECT_FALSE(pluginService_->GetPluginInfo("edf.so", plugin));
+    EXPECT_TRUE(pluginService_->GetPluginInfo("abc.so", plugin));
+}
+
+/**
+ * @tc.name: Service
+ * @tc.desc: RemovePluginSessionCtx  test.
+ * @tc.type: FUNC
+*/
+HWTEST_F(UnitTestPluginService, RemovePluginSessionCtx, TestSize.Level1)
+{
+    EXPECT_TRUE(pluginService_->RemovePluginSessionCtx("abc.so"));
 }
 
 /**
@@ -173,6 +242,8 @@ HWTEST_F(UnitTestPluginService, RemovePluginInfo, TestSize.Level1)
     pi.path = "abc.so";
     pi.sha256 = "asdfasdf";
     ASSERT_FALSE(pluginService_->RemovePluginInfo(pi));
+    pluginService_->AddPluginInfo(pi);
+    EXPECT_TRUE(pluginService_->RemovePluginInfo(pi));
 }
 
 /**
@@ -263,6 +334,7 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession22, TestSize.Level1)
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+
 
     ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
 }
@@ -820,7 +892,7 @@ HWTEST_F(UnitTestPluginService, PluginServiceImpl_UnregisterPlugin, TestSize.Lev
  * @tc.desc: build create session command
  * @tc.type: FUNC
  */
-HWTEST_F(PluginCommandBuilderTest, pluginCommandBuilder, TestSize.Level1)
+HWTEST_F(UnitTestPluginService, pluginCommandBuilder, TestSize.Level1)
 {
     ProfilerPluginConfig ppc;
     ppc.set_name("abc.so");
@@ -833,4 +905,23 @@ HWTEST_F(PluginCommandBuilderTest, pluginCommandBuilder, TestSize.Level1)
     EXPECT_TRUE(commandBuilder_->BuildStopSessionCmd(pluginId) != nullptr);
     EXPECT_TRUE(commandBuilder_->BuildDestroySessionCmd(pluginId) != nullptr);
 }
+
+
+/**
+ * @tc.name: Service
+ * @tc.desc: test start service
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, startSevice, TestSize.Level1)
+{
+    const std::string unixSocketName = "/dev/unix/socket/hiprofiler_unix_socket_false";
+    EXPECT_FASLE(pluginService_->StartService(unixSocketName));
+    ProfilerSessionConfig::BufferConfig bc;
+    bc.set_pages(1);
+    bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+    EXPECT_TRUE(pluginService_->GetReusePolicy(bbc) == ShareMemoryBlock::DROP_OLD);
+    bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_FLATTEN);
+    EXPECT_TRUE(pluginService_->GetReusePolicy(bbc) == ShareMemoryBlock::DROP_NONE);
+}
+
 } // namespace
