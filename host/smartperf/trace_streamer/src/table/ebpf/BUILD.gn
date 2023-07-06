@@ -13,7 +13,7 @@
 
 import("../../../build/ohos.gni")
 
-import("../../ts.gni")
+import("../../../build/ts.gni")
 ohos_source_set("ebpf_tables") {
   subsystem_name = "trace_streamer"
   part_name = "table"

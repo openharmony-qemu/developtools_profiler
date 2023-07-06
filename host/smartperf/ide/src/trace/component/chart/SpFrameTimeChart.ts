@@ -115,6 +115,7 @@ export class SpFrameTimeChart {
     expectedTimeLineRow.style.height = `40px`;
     expectedTimeLineRow.style.height = `${maxHeight}px`;
     expectedTimeLineRow.name = `Expected Timeline`;
+    expectedTimeLineRow.addTemplateTypes('FrameTimeline');
     expectedTimeLineRow.setAttribute('height', `${maxHeight}`);
     expectedTimeLineRow.setAttribute('children', '');
     expectedTimeLineRow.supplier = () =>
@@ -184,6 +185,7 @@ export class SpFrameTimeChart {
     actualTimeLineRow.style.width = `100%`;
     actualTimeLineRow.style.height = `${maxHeight}px`;
     actualTimeLineRow.name = `Actual Timeline`;
+    actualTimeLineRow.addTemplateTypes('FrameTimeline');
     actualTimeLineRow.setAttribute('height', `${maxHeight}`);
     actualTimeLineRow.setAttribute('children', '');
     actualTimeLineRow.dataList = frameActualData;

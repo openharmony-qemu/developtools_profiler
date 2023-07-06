@@ -15,14 +15,15 @@
 
 //@ts-ignore
 import {
-  HeapTreeDataBean,
-  NativeHookStatistics,
-  NativeHookCallInfo,
-  ProcedureLogicWorkerNativeMemory,
-  NativeMemory,
   HeapStruct,
+  HeapTreeDataBean,
   NativeEvent,
+  NativeHookCallInfo,
+  NativeHookStatistics,
+  NativeMemory,
+  ProcedureLogicWorkerNativeMemory,
   StatisticsSelection,
+  //@ts-ignore
 } from '../../../../dist/trace/database/logic-worker/ProcedureLogicWorkerNativeNemory.js';
 
 describe('ProcedureLogicWorkerNativeNemory Test', () => {
@@ -570,13 +571,67 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
             action: '',
             type: 'native-memory-queryNativeHookStatistic',
         };
-        window.postMessage = jest.fn(() => true);
-        procedureLogicWorkerNativeMemory.initNMStack = jest.fn(() => true);
-        expect(procedureLogicWorkerNativeMemory.handle(data)).toBeUndefined();
+      window.postMessage = jest.fn(() => true);
+      procedureLogicWorkerNativeMemory.initNMStack = jest.fn(() => true);
+      expect(procedureLogicWorkerNativeMemory.handle(data)).toBeUndefined();
     });
-    it('procedureLogicWorkerFileSystemTest53', function () {
-        let procedureLogicWorkerNativeMemory = new ProcedureLogicWorkerNativeMemory();
-        window.postMessage = jest.fn(() => true);
-        expect(procedureLogicWorkerNativeMemory.queryNativeHookStatistic(1)).toBeUndefined();
-    });
+  it('procedureLogicWorkerFileSystemTest53', function () {
+    let procedureLogicWorkerNativeMemory = new ProcedureLogicWorkerNativeMemory();
+    window.postMessage = jest.fn(() => true);
+    expect(procedureLogicWorkerNativeMemory.queryNativeHookStatistic(1)).toBeUndefined();
+  });
+
+  it('procedureLogicWorkerFileSystemTest54', function () {
+    let procedureLogicWorkerNativeMemory = new ProcedureLogicWorkerNativeMemory();
+    expect(procedureLogicWorkerNativeMemory.statisticDataHandler([{
+      "callchainId": 4,
+      "ts": 0,
+      "applyCount": 1,
+      "applySize": 24,
+      "releaseCount": 0,
+      "releaseSize": 0
+    },
+      {
+        "callchainId": 3,
+        "ts": 0,
+        "applyCount": 1,
+        "applySize": 64,
+        "releaseCount": 0,
+        "releaseSize": 0
+      },
+      {
+        "callchainId": 2,
+        "ts": 0,
+        "applyCount": 1,
+        "applySize": 32,
+        "releaseCount": 1,
+        "releaseSize": 32
+      },
+      {
+        "callchainId": 1,
+        "ts": 0,
+        "applyCount": 1,
+        "applySize": 32,
+        "releaseCount": 0,
+        "releaseSize": 0
+      }])).toStrictEqual([{"density": 3, "dur": 0, "heapsize": 120, "startTime": 0}]);
+  });
+
+  it('procedureLogicWorkerFileSystemTest55', function () {
+    let procedureLogicWorkerNativeMemory = new ProcedureLogicWorkerNativeMemory();
+    expect(procedureLogicWorkerNativeMemory.handleNativeHookStatisticData(
+      [{"density": 3, "dur": 0, "heapsize": 120, "startTime": 0}])).toStrictEqual(
+      [
+        {
+          "density": 3,
+          "dur": 0,
+          "heapsize": 120,
+          "maxDensity": 3,
+          "maxHeapSize": 120,
+          "minDensity": 0,
+          "minHeapSize": 0,
+          "startTime": 0
+        }
+      ]);
+  });
 });

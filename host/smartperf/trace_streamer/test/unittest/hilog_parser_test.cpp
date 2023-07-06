@@ -19,6 +19,8 @@
 #include <memory>
 
 #include "htrace_hilog_parser.h"
+#include "hilog_plugin_result.pb.h"
+#include "hilog_plugin_result.pbreader.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/common_types.h"
 #include "trace_streamer_selector.h"
@@ -51,7 +53,10 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithoutHilogLine, TestSize.Level1)
     TS_LOGI("test8-1");
     HilogInfo* hilogInfo = new HilogInfo();
     HtraceHiLogParser htraceHiLogParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHiLogParser.Parse(*hilogInfo);
+    std::string hilogData = "";
+    hilogInfo->SerializeToString(&hilogData);
+    ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
+    htraceHiLogParser.Parse(hilogInfoData);
     auto size = stream_.traceDataCache_->GetConstHilogData().Size();
     EXPECT_FALSE(size);
 }
@@ -88,7 +93,10 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithOneHilogLine, TestSize.Level1)
     hilogLine->set_id(LOG_ID);
 
     HtraceHiLogParser htraceHiLogParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHiLogParser.Parse(*hilogInfo);
+    std::string hilogData = "";
+    hilogInfo->SerializeToString(&hilogData);
+    ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
+    htraceHiLogParser.Parse(hilogInfoData);
 
     auto seq = stream_.traceDataCache_->GetConstHilogData().HilogLineSeqs()[0];
     EXPECT_EQ(seq, LOG_ID);
@@ -176,7 +184,10 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithMultipleHilogLine, TestSize.Level1)
     hilogLineSecond->set_id(LOG_ID_02);
 
     HtraceHiLogParser htraceHiLogParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHiLogParser.Parse(*hilogInfo);
+    std::string hilogData = "";
+    hilogInfo->SerializeToString(&hilogData);
+    ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
+    htraceHiLogParser.Parse(hilogInfoData);
 
     auto seqFirst = stream_.traceDataCache_->GetConstHilogData().HilogLineSeqs()[0];
     auto seqSecond = stream_.traceDataCache_->GetConstHilogData().HilogLineSeqs()[1];
@@ -264,7 +275,10 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithErrLevelHilogLine, TestSize.Level1)
     hilogLine->set_id(LOG_ID);
 
     HtraceHiLogParser htraceHiLogParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHiLogParser.Parse(*hilogInfo);
+    std::string hilogData = "";
+    hilogInfo->SerializeToString(&hilogData);
+    ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
+    htraceHiLogParser.Parse(hilogInfoData);
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_HILOG, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
@@ -304,7 +318,10 @@ HWTEST_F(HilogParserTest, ParseHilogInfoLostHilogLine, TestSize.Level1)
     hilogLine->set_id(LOG_ID);
 
     HtraceHiLogParser htraceHiLogParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHiLogParser.Parse(*hilogInfo);
+    std::string hilogData = "";
+    hilogInfo->SerializeToString(&hilogData);
+    ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
+    htraceHiLogParser.Parse(hilogInfoData);
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_HILOG, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
@@ -348,7 +365,10 @@ HWTEST_F(HilogParserTest, ParseHilogInfoHasDuplicateHilogLine, TestSize.Level1)
     hilogLineSecond->set_id(LOG_ID);
 
     HtraceHiLogParser htraceHiLogParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHiLogParser.Parse(*hilogInfo);
+    std::string hilogData = "";
+    hilogInfo->SerializeToString(&hilogData);
+    ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
+    htraceHiLogParser.Parse(hilogInfoData);
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_HILOG, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(2 == eventCount);

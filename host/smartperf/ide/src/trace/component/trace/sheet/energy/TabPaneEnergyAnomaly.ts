@@ -20,7 +20,7 @@ import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { queryAnomalyDetailedData } from '../../../../database/SqlLite.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { EnergyAnomalyStruct } from '../../../../database/ui-worker/ProcedureWorkerEnergyAnomaly.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-anomaly-details')
 export class TabPaneEnergyAnomaly extends BaseElement {
@@ -142,7 +142,7 @@ export class TabPaneEnergyAnomaly extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.tblAnomaly!)
+    resizeObserver(this.parentElement!, this.tblAnomaly!);
   }
 
   initHtml(): string {

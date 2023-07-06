@@ -126,10 +126,10 @@ bool BytraceEventParser::SchedSwitchEvent(const ArgsMap& args, const BytraceLine
     }
     auto prevCommStr = std::string_view(args.at("prev_comm"));
     auto nextCommStr = std::string_view(args.at("next_comm"));
-    auto prevPrioValue = base::StrToInt32(args.at("prev_prio"));
-    auto nextPrioValue = base::StrToInt32(args.at("next_prio"));
-    auto prevPidValue = base::StrToUInt32(args.at("prev_pid"));
-    auto nextPidValue = base::StrToUInt32(args.at("next_pid"));
+    auto prevPrioValue = base::StrToInt<int32_t>(args.at("prev_prio"));
+    auto nextPrioValue = base::StrToInt<int32_t>(args.at("next_prio"));
+    auto prevPidValue = base::StrToInt<uint32_t>(args.at("prev_pid"));
+    auto nextPidValue = base::StrToInt<uint32_t>(args.at("next_pid"));
     DataIndex nextInfo = INVALID_DATAINDEX;
     auto nextInfoIt = args.find("next_info");
     if (nextInfoIt != args.end()) {
@@ -171,15 +171,15 @@ bool BytraceEventParser::BlockedReason(const ArgsMap& args, const BytraceLine& l
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_BLOCKED_REASON, STAT_EVENT_DATA_INVALID);
         return false;
     }
-    auto tid = base::StrToInt32(args.at("pid"));
+    auto tid = base::StrToInt<int32_t>(args.at("pid"));
     auto iowaitIt = args.find("iowait");
     if (iowaitIt == args.end()) {
         iowaitIt = args.find("io_wait");
     }
-    auto iowait = base::StrToInt32(iowaitIt->second);
+    auto iowait = base::StrToInt<int32_t>(iowaitIt->second);
     uint32_t delayValue = INVALID_UINT32;
     if (args.find("delay") != args.end()) {
-        auto delay = base::StrToInt32(args.at("delay"));
+        auto delay = base::StrToInt<int32_t>(args.at("delay"));
         delayValue = delay.has_value() ? delay.value() : INVALID_UINT32;
     }
     auto caller = traceDataCache_->GetDataIndex(std::string_view(args.at("caller")));
@@ -207,7 +207,7 @@ bool BytraceEventParser::TaskRenameEvent(const ArgsMap& args, const BytraceLine&
         return false;
     }
     auto prevCommStr = std::string_view(args.at("newcomm"));
-    auto pidValue = base::StrToUInt32(args.at("pid"));
+    auto pidValue = base::StrToInt<uint32_t>(args.at("pid"));
     streamFilters_->processFilter_->UpdateOrCreateThreadWithName(line.ts, pidValue.value(), prevCommStr);
     return true;
 }
@@ -234,7 +234,7 @@ bool BytraceEventParser::SchedWakeupEvent(const ArgsMap& args, const BytraceLine
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_WAKEUP, STAT_EVENT_DATA_INVALID);
         return false;
     }
-    std::optional<uint32_t> wakePidValue = base::StrToUInt32(args.at("pid"));
+    std::optional<uint32_t> wakePidValue = base::StrToInt<uint32_t>(args.at("pid"));
     if (!wakePidValue.has_value()) {
         TS_LOGD("Failed to convert wake_pid");
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_WAKEUP, STAT_EVENT_DATA_INVALID);
@@ -247,7 +247,7 @@ bool BytraceEventParser::SchedWakeupEvent(const ArgsMap& args, const BytraceLine
     InternalTid wakeupFromPid = streamFilters_->processFilter_->UpdateOrCreateThread(line.ts, line.pid);
 
     instants->AppendInstantEventData(line.ts, schedWakeupName_, internalTid, wakeupFromPid);
-    std::optional<uint32_t> targetCpu = base::StrToUInt32(args.at("target_cpu"));
+    std::optional<uint32_t> targetCpu = base::StrToInt<uint32_t>(args.at("target_cpu"));
     if (targetCpu.has_value()) {
         traceDataCache_->GetRawData()->AppendRawData(0, line.ts, RAW_SCHED_WAKEUP, targetCpu.value(), wakeupFromPid);
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_WAKEUP, STAT_EVENT_RECEIVED);
@@ -262,7 +262,7 @@ bool BytraceEventParser::SchedWakingEvent(const ArgsMap& args, const BytraceLine
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_WAKING, STAT_EVENT_DATA_INVALID);
         return false;
     }
-    std::optional<uint32_t> wakePidValue = base::StrToUInt32(args.at("pid"));
+    std::optional<uint32_t> wakePidValue = base::StrToInt<uint32_t>(args.at("pid"));
     if (!wakePidValue.has_value()) {
         TS_LOGD("Failed to convert wake_pid");
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_WAKING, STAT_EVENT_DATA_INVALID);
@@ -276,7 +276,7 @@ bool BytraceEventParser::SchedWakingEvent(const ArgsMap& args, const BytraceLine
     InternalTid wakeupFromPid = streamFilters_->processFilter_->UpdateOrCreateThread(line.ts, line.pid);
     streamFilters_->cpuFilter_->InsertWakeupEvent(line.ts, internalTid, true);
     instants->AppendInstantEventData(line.ts, schedWakingName_, internalTid, wakeupFromPid);
-    std::optional<uint32_t> targetCpu = base::StrToUInt32(args.at("target_cpu"));
+    std::optional<uint32_t> targetCpu = base::StrToInt<uint32_t>(args.at("target_cpu"));
     if (targetCpu.has_value()) {
         traceDataCache_->GetRawData()->AppendRawData(0, line.ts, RAW_SCHED_WAKING, targetCpu.value(),
                                                      internalTidWakeup);
@@ -293,8 +293,8 @@ bool BytraceEventParser::CpuIdleEvent(const ArgsMap& args, const BytraceLine& li
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CPU_IDLE, STAT_EVENT_DATA_INVALID);
         return false;
     }
-    std::optional<uint32_t> eventCpuValue = base::StrToUInt32(args.at("cpu_id"));
-    std::optional<int64_t> newStateValue = base::StrToInt64(args.at("state"));
+    std::optional<uint32_t> eventCpuValue = base::StrToInt<uint32_t>(args.at("cpu_id"));
+    std::optional<int64_t> newStateValue = base::StrToInt<int64_t>(args.at("state"));
     if (!eventCpuValue.has_value()) {
         TS_LOGD("Failed to convert event cpu");
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CPU_IDLE, STAT_EVENT_DATA_INVALID);
@@ -321,8 +321,8 @@ bool BytraceEventParser::CpuFrequencyEvent(const ArgsMap& args, const BytraceLin
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CPU_FREQUENCY, STAT_EVENT_DATA_INVALID);
         return false;
     }
-    std::optional<uint32_t> eventCpuValue = base::StrToUInt32(args.at("cpu_id"));
-    std::optional<int64_t> newStateValue = base::StrToInt64(args.at("state"));
+    std::optional<uint32_t> eventCpuValue = base::StrToInt<uint32_t>(args.at("cpu_id"));
+    std::optional<int64_t> newStateValue = base::StrToInt<int64_t>(args.at("state"));
 
     if (!newStateValue.has_value()) {
         TS_LOGD("Failed to convert state");
@@ -348,7 +348,7 @@ bool BytraceEventParser::CpuFrequencyLimitsEvent(const ArgsMap& args, const Bytr
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CPU_FREQUENCY_LIMITS, STAT_EVENT_DATA_INVALID);
         return false;
     }
-    std::optional<uint32_t> eventCpuValue = base::StrToUInt32(args.at("cpu_id"));
+    std::optional<uint32_t> eventCpuValue = base::StrToInt<uint32_t>(args.at("cpu_id"));
 
     auto minIt = args.find("min");
     if (minIt == args.end()) {
@@ -358,8 +358,8 @@ bool BytraceEventParser::CpuFrequencyLimitsEvent(const ArgsMap& args, const Bytr
     if (maxIt == args.end()) {
         maxIt = args.find("max_freq");
     }
-    std::optional<int64_t> minValue = base::StrToInt64(minIt->second);
-    std::optional<int64_t> maxValue = base::StrToInt64(maxIt->second);
+    std::optional<int64_t> minValue = base::StrToInt<int64_t>(minIt->second);
+    std::optional<int64_t> maxValue = base::StrToInt<int64_t>(maxIt->second);
 
     if (!minValue.has_value()) {
         TS_LOGD("Failed to get frequency minValue");
@@ -421,7 +421,7 @@ bool BytraceEventParser::ProcessExitEvent(const ArgsMap& args, const BytraceLine
         return false;
     }
     auto comm = std::string_view(args.at("comm"));
-    auto pid = base::StrToUInt32(args.at("pid"));
+    auto pid = base::StrToInt<uint32_t>(args.at("pid"));
     if (!pid.has_value()) {
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_PROCESS_EXIT, STAT_EVENT_DATA_INVALID);
         return false;
@@ -444,8 +444,8 @@ bool BytraceEventParser::SetRateEvent(const ArgsMap& args, const BytraceLine& li
         return false;
     }
     auto name = std::string_view(args.at("name"));
-    auto state = base::StrToInt64(args.at("state"));
-    auto cpu = base::StrToUInt64(args.at("cpu_id"));
+    auto state = base::StrToInt<int64_t>(args.at("state"));
+    auto cpu = base::StrToInt<uint64_t>(args.at("cpu_id"));
     DataIndex nameIndex = traceDataCache_->GetDataIndex(name);
     streamFilters_->clockRateFilter_->AppendNewMeasureData(cpu.value(), nameIndex, line.ts, state.value());
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CLOCK_SET_RATE, STAT_EVENT_RECEIVED);
@@ -460,8 +460,8 @@ bool BytraceEventParser::ClockEnableEvent(const ArgsMap& args, const BytraceLine
         return false;
     }
     auto name = std::string_view(args.at("name"));
-    auto state = base::StrToInt64(args.at("state"));
-    auto cpuId = base::StrToUInt64(args.at("cpu_id"));
+    auto state = base::StrToInt<int64_t>(args.at("state"));
+    auto cpuId = base::StrToInt<uint64_t>(args.at("cpu_id"));
     DataIndex nameIndex = traceDataCache_->GetDataIndex(name);
     streamFilters_->clockEnableFilter_->AppendNewMeasureData(cpuId.value(), nameIndex, line.ts, state.value());
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CLOCK_ENABLE, STAT_EVENT_RECEIVED);
@@ -475,8 +475,8 @@ bool BytraceEventParser::ClockDisableEvent(const ArgsMap& args, const BytraceLin
         return false;
     }
     auto name = std::string_view(args.at("name"));
-    auto state = base::StrToInt64(args.at("state"));
-    auto cpuId = base::StrToUInt64(args.at("cpu_id"));
+    auto state = base::StrToInt<int64_t>(args.at("state"));
+    auto cpuId = base::StrToInt<uint64_t>(args.at("cpu_id"));
     DataIndex nameIndex = traceDataCache_->GetDataIndex(name);
     streamFilters_->clockDisableFilter_->AppendNewMeasureData(cpuId.value(), nameIndex, line.ts, state.value());
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CLOCK_DISABLE, STAT_EVENT_RECEIVED);
@@ -552,7 +552,7 @@ bool BytraceEventParser::IrqHandlerExitEvent(const ArgsMap& args, const BytraceL
     }
     traceDataCache_->GetStatAndInfo()->IncreaseStat(TRACE_EVENT_IRQ_HANDLER_EXIT, STAT_EVENT_RECEIVED);
     uint32_t ret = (args.at("ret") == "handled") ? 1 : 0;
-    auto irq = base::StrToUInt32(args.at("irq"));
+    auto irq = base::StrToInt<uint32_t>(args.at("irq"));
     streamFilters_->irqFilter_->IrqHandlerExit(line.ts, line.cpu, irq.value(), ret);
     return true;
 }
@@ -572,7 +572,7 @@ bool BytraceEventParser::SoftIrqEntryEvent(const ArgsMap& args, const BytraceLin
         return false;
     }
     traceDataCache_->GetStatAndInfo()->IncreaseStat(TRACE_EVENT_SOFTIRQ_ENTRY, STAT_EVENT_RECEIVED);
-    auto vec = base::StrToUInt32(args.at("vec"));
+    auto vec = base::StrToInt<uint32_t>(args.at("vec"));
     streamFilters_->irqFilter_->SoftIrqEntry(line.ts, line.cpu, vec.value());
     return true;
 }
@@ -584,7 +584,7 @@ bool BytraceEventParser::SoftIrqExitEvent(const ArgsMap& args, const BytraceLine
         return false;
     }
     traceDataCache_->GetStatAndInfo()->IncreaseStat(TRACE_EVENT_SOFTIRQ_EXIT, STAT_EVENT_RECEIVED);
-    auto vec = base::StrToUInt32(args.at("vec"));
+    auto vec = base::StrToInt<uint32_t>(args.at("vec"));
     streamFilters_->irqFilter_->SoftIrqExit(line.ts, line.cpu, vec.value());
     return true;
 }
@@ -597,13 +597,13 @@ bool BytraceEventParser::BinderTransaction(const ArgsMap& args, const BytraceLin
         return false;
     }
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_BINDER_TRANSACTION, STAT_EVENT_RECEIVED);
-    auto transactionId = base::StrToInt64(args.at("transaction"));
-    auto destNode = base::StrToUInt32(args.at("dest_node"));
-    auto destProc = base::StrToUInt32(args.at("dest_proc"));
-    auto destThread = base::StrToUInt32(args.at("dest_thread"));
-    auto isReply = base::StrToUInt32(args.at("reply"));
-    auto flags = base::StrToUInt32(args.at("flags"), base::INTEGER_RADIX_TYPE_HEX);
-    auto codeStr = base::StrToUInt32(args.at("code"), base::INTEGER_RADIX_TYPE_HEX);
+    auto transactionId = base::StrToInt<int64_t>(args.at("transaction"));
+    auto destNode = base::StrToInt<uint32_t>(args.at("dest_node"));
+    auto destProc = base::StrToInt<uint32_t>(args.at("dest_proc"));
+    auto destThread = base::StrToInt<uint32_t>(args.at("dest_thread"));
+    auto isReply = base::StrToInt<uint32_t>(args.at("reply"));
+    auto flags = base::StrToInt<uint32_t>(args.at("flags"), base::INTEGER_RADIX_TYPE_HEX);
+    auto codeStr = base::StrToInt<uint32_t>(args.at("code"), base::INTEGER_RADIX_TYPE_HEX);
     TS_LOGD("ts:%lu, pid:%u, destNode:%u, destTgid:%u, destTid:%u, transactionId:%lu, isReply:%u flags:%u, code:%u",
             line.ts, line.pid, destNode.value(), destProc.value(), destThread.value(), transactionId.value(),
             isReply.value(), flags.value(), codeStr.value());
@@ -620,7 +620,7 @@ bool BytraceEventParser::BinderTransactionReceived(const ArgsMap& args, const By
         return false;
     }
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_BINDER_TRANSACTION_RECEIVED, STAT_EVENT_RECEIVED);
-    auto transactionId = base::StrToInt64(args.at("transaction"));
+    auto transactionId = base::StrToInt<int64_t>(args.at("transaction"));
     streamFilters_->binderFilter_->ReceiveTraction(line.ts, line.pid, transactionId.value());
     TS_LOGD("ts:%lu, pid:%u, transactionId:%lu", line.ts, line.pid, transactionId.value());
     return true;
@@ -633,8 +633,8 @@ bool BytraceEventParser::BinderTransactionAllocBufEvent(const ArgsMap& args, con
         return false;
     }
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_BINDER_TRANSACTION_ALLOC_BUF, STAT_EVENT_RECEIVED);
-    auto dataSize = base::StrToUInt64(args.at("data_size"));
-    auto offsetsSize = base::StrToUInt64(args.at("offsets_size"));
+    auto dataSize = base::StrToInt<uint64_t>(args.at("data_size"));
+    auto offsetsSize = base::StrToInt<uint64_t>(args.at("offsets_size"));
     streamFilters_->binderFilter_->TransactionAllocBuf(line.ts, line.pid, dataSize.value(), offsetsSize.value());
     TS_LOGD("dataSize:%lu, offsetSize:%lu", dataSize.value(), offsetsSize.value());
     return true;
@@ -647,7 +647,7 @@ void BytraceEventParser::ParseDataItem(const BytraceLine& line)
 void BytraceEventParser::GetDataSegArgs(BytraceLine& bufLine, ArgsMap& args, uint32_t& tgid) const
 {
     if (bufLine.tGidStr.size() && bufLine.tGidStr.at(0) != '-') {
-        tgid = base::StrToUInt32(bufLine.tGidStr).value_or(0);
+        tgid = base::StrToInt<uint32_t>(bufLine.tGidStr).value_or(0);
     } else {
         tgid = 0;
     }
@@ -690,25 +690,7 @@ void BytraceEventParser::FilterAllEventsTemp()
     auto endOfList = eventList_.begin() + maxBuffSize;
     for (auto itor = eventList_.begin(); itor != endOfList; itor++) {
         EventInfo* event = itor->get();
-        auto it = eventToFunctionMap_.find(event->line.eventName);
-        if (it != eventToFunctionMap_.end()) {
-            uint32_t tgid;
-            ArgsMap args;
-            GetDataSegArgs(event->line, args, tgid);
-            if (tgid) {
-                streamFilters_->processFilter_->UpdateOrCreateThreadWithPidAndName(event->line.pid, tgid,
-                                                                                   event->line.task);
-            } else {
-                // When tgid is zero, only use tid create thread
-                streamFilters_->processFilter_->GetOrCreateThreadWithPid(event->line.pid, tgid);
-            }
-            if (it->second(args, event->line)) {
-                traceDataCache_->UpdateTraceTime(event->line.ts);
-            }
-        } else {
-            traceDataCache_->GetStatAndInfo()->IncreaseStat(TRACE_EVENT_OTHER, STAT_EVENT_NOTSUPPORTED);
-            TS_LOGD("UnRecognizable event name:%s", event->line.eventName.c_str());
-        }
+        BeginFilterEvents(event);
         itor->reset();
     }
     eventList_.erase(eventList_.begin(), endOfList);

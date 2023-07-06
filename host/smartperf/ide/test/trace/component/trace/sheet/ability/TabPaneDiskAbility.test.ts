@@ -25,7 +25,7 @@ window.ResizeObserver =
 describe('TabPaneDiskAbility Test', () => {
   let tabPaneDiskAbility = new TabPaneDiskAbility();
   it('TabPaneDiskAbilityTest01', () => {
-    tabPaneDiskAbility.queryResult.length = 1;
+    tabPaneDiskAbility.queryDiskResult.length = 1;
     expect(tabPaneDiskAbility.filterData()).toBeUndefined();
   });
 

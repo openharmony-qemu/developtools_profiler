@@ -239,7 +239,14 @@ export class SdkSliceStruct extends BaseStruct {
     }
   }
 
-  static setSdkSliceFrame(SdkSliceNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any) {
+  static setSdkSliceFrame(
+    SdkSliceNode: any,
+    padding: number,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    frame: any
+  ) {
     let sdkSliceStartPointX: number, sdkSliceEndPointX: number;
 
     if ((SdkSliceNode.start_ts || 0) < startNS) {

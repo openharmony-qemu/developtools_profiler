@@ -67,25 +67,24 @@ describe('testLitIcon Test', () => {
 "
             <style>
                 :host{
-                    font-size: inherit;
                     display: inline-block;
-                    /*transition: .3s;*/
+                    font-size: inherit;
                  }
-                 :host([spin]){
-                    animation: rotate 1.75s linear infinite;
+                 .icon{
+                    width: 1em;
+                    height: 1em;
+                    display: block;
+                    fill: currentColor;
+                    overflow: hidden;
+                    margin: auto;
                  }
                  @keyframes rotate {
                     to{
                         transform: rotate(360deg);
                     }         
                  }
-                 .icon{
-                    display: block;
-                    width: 1em;
-                    height: 1em;
-                    margin: auto;
-                    fill: currentColor;
-                    overflow: hidden;
+                 :host([spin]){
+                    animation: rotate 1.75s linear infinite;
                  }
             </style>
             <svg class="icon" id="icon" aria-hidden="true" viewBox="0 0 1024 1024">

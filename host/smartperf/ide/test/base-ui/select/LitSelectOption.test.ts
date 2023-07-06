@@ -47,7 +47,9 @@ describe('LitSelectOption Test', () => {
             tab-index: -1;
             /*overflow: scroll;*/
             align-items: center;
-            /*justify-content: space-between;*/
+            width: max-content;
+            max-lines: 1;
+            white-space: nowrap;
             font-size: 0.8rem;
         }
         :host(:not([disabled])[selected]){

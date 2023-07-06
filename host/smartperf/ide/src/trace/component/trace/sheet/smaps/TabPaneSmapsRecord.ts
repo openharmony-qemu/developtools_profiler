@@ -20,7 +20,7 @@ import { getTabSmapsData } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
 import { log } from '../../../../../log/Log.js';
 import { Smaps } from '../../../../bean/SmapsStruct.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-smaps-record')
 export class TabPaneSmapsRecord extends BaseElement {
@@ -30,13 +30,13 @@ export class TabPaneSmapsRecord extends BaseElement {
 
   set data(valSmapsRecord: SelectionParam | any) {
     // @ts-ignore
-    this.tblSmapsRecord ?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
+    this.tblSmapsRecord?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
     this.queryDataByDB(valSmapsRecord);
   }
 
   initElements(): void {
-    this.tblSmapsRecord  = this.shadowRoot?.querySelector<LitTable>('#tb-smaps-record');
-    this.tblSmapsRecord !.addEventListener('column-click', (evt) => {
+    this.tblSmapsRecord = this.shadowRoot?.querySelector<LitTable>('#tb-smaps-record');
+    this.tblSmapsRecord!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.sortByColumn(evt.detail);
     });
@@ -44,7 +44,7 @@ export class TabPaneSmapsRecord extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!,this.tblSmapsRecord!)
+    resizeObserver(this.parentElement!, this.tblSmapsRecord!);
   }
 
   queryDataByDB(srVal: SelectionParam | any) {
@@ -81,11 +81,11 @@ export class TabPaneSmapsRecord extends BaseElement {
         }
         this.sourceSmapsRecord = result;
         this.querySmapsRecordResult = result;
-        this.tblSmapsRecord !.recycleDataSource = this.sourceSmapsRecord;
+        this.tblSmapsRecord!.recycleDataSource = this.sourceSmapsRecord;
       } else {
         this.sourceSmapsRecord = [];
         this.querySmapsRecordResult = [];
-        this.tblSmapsRecord !.recycleDataSource = [];
+        this.tblSmapsRecord!.recycleDataSource = [];
       }
     });
   }
@@ -162,6 +162,6 @@ export class TabPaneSmapsRecord extends BaseElement {
     } else {
       this.sourceSmapsRecord.sort(compare(detail.key, detail.sort, 'string'));
     }
-    this.tblSmapsRecord !.recycleDataSource = this.sourceSmapsRecord;
+    this.tblSmapsRecord!.recycleDataSource = this.sourceSmapsRecord;
   }
 }

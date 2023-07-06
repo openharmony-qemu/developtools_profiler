@@ -115,19 +115,7 @@ std::tuple<DataIndex, DataIndex> HiSysEventMeasureFilter::GetOrCreateFilterId(Da
                                                                               DataIndex appName,
                                                                               DataIndex key)
 {
-    DataIndex eventSourceFilterId = INVALID_DATAINDEX;
-    DataIndex appNameId = INVALID_DATAINDEX;
-    if (eventSource_.find(eventSource) == eventSource_.end()) {
-        eventSourceFilterId = streamFilters_->sysEventSourceFilter_->AppendNewMeasureFilter(eventSource);
-        eventSource_.insert(std::make_pair(eventSource, eventSourceFilterId));
-    } else {
-        eventSourceFilterId = eventSource_.at(eventSource);
-    }
-    appNameId = appName_.Find(eventSourceFilterId, appName);
-    if (appNameId == INVALID_DATAINDEX) {
-        appNameId = traceDataCache_->GetAppNamesData()->AppendAppName(0, eventSourceFilterId, appName);
-        appName_.Insert(eventSourceFilterId, appName, appNameId);
-    }
+    DataIndex appNameId = GetOrCreateFilterId(eventSource, appName);
     uint64_t appKeyId = appKey_.Find(appNameId, key);
     if (appKeyId == INVALID_DATAINDEX) {
         appKeyId = traceDataCache_->GetAppNamesData()->AppendAppName(1, appNameId, key);

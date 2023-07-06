@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 #include "htrace_process_parser.h"
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "htrace_event_parser.h"
 #include "process_filter.h"
 #include "stat_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {
 HtraceProcessParser::HtraceProcessParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
-    : HtracePluginTimeParser(dataCache, ctx)
+    : EventParserBase(dataCache, ctx)
 {
 }
 

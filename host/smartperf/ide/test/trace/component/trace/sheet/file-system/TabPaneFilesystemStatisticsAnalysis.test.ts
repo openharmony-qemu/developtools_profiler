@@ -130,7 +130,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
         tabPane.filter = filter;
         tabPane.loadingList = [];
         tabPane.data = param;
-        expect(tabPane.currentSelection).not.toBeUndefined();
+        expect(tabPane.fileStatisticsAnalysisCurrentSelection).not.toBeUndefined();
     });
 
     it('systemStatisticsAnalysis02', function () {
@@ -138,25 +138,25 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     });
 
     it('systemStatisticsAnalysis03', function () {
-        tabPane.processData = processData;
+        tabPane.fileStatisticsAnalysisProcessData = processData;
         tabPane.getFilesystemType(item, param);
-        expect(tabPane.progressEL.loading).toBeFalsy();
+        expect(tabPane.fileStatisticsAnalysisProgressEL.loading).toBeFalsy();
     });
 
     it('systemStatisticsAnalysis04', function () {
-        tabPane.processData = processData;
+        tabPane.fileStatisticsAnalysisProcessData = processData;
         tabPane.getFilesystemThread(item, param);
         expect(tabPane.currentLevel).toEqual(2);
     });
 
     it('systemStatisticsAnalysis05', function () {
-        tabPane.processData = processData;
+        tabPane.fileStatisticsAnalysisProcessData = processData;
         tabPane.getFilesystemSo(item, param);
         expect(tabPane.currentLevel).toEqual(3);
     });
 
     it('systemStatisticsAnalysis06', function () {
-        tabPane.processData = processData;
+        tabPane.fileStatisticsAnalysisProcessData = processData;
         tabPane.getFilesystemFunction(item, param);
         expect(tabPane.currentLevel).toEqual(4);
     });
@@ -178,8 +178,8 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     });
 
     it('systemStatisticsAnalysis11', function () {
-        tabPane.tableProcess.reMeauseHeight = jest.fn(() => true);
+        tabPane.fileStatisticsAnalysisProcessData.reMeauseHeight = jest.fn(() => true);
         tabPane.getFilesystemProcess(param, processData);
-        expect(tabPane.processData).not.toBeUndefined();
+        expect(tabPane.fileStatisticsAnalysisProcessData).not.toBeUndefined();
     });
 });

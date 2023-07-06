@@ -212,11 +212,6 @@ describe('ProcedureLogicWorkerFileSystem Test', () => {
     expect(handlerMap.setMerageName(currentNode)).toBeUndefined();
   });
 
-  it('procedureLogicWorkerFileSystemTest17', function () {
-    let handlerMap = procedureLogicWorkerF.handlerMap.get('fileSystem');
-    expect(handlerMap.freshCurrentCallchains([], 1)).toBeUndefined();
-  });
-
   it('procedureLogicWorkerFileSystemTest18', function () {
     let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
     expect(procedureLogicWorkerFileSystem.initCallChainTopDown([])).toBeUndefined();

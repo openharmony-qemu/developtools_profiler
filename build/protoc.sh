@@ -19,10 +19,10 @@ PROJECT_TOP=$(realpath $THIS_DIR/../../..)
 
 OHOS_X64_OUT=$PROJECT_TOP/$2/
 LIBCXX_X64_OUT=$PROJECT_TOP/$1/ndk/libcxx/linux_x86_64
-SUBSYS_X64_OUT=$PROJECT_TOP/$2/developtools/profiler
-PROTOC=$PROJECT_TOP/$2/developtools/profiler/protoc
-OPT_PLUGIN_PATH=$PROJECT_TOP/$2/developtools/profiler/protoencoder_plugin
-OPT_PLUGIN=--plugin=protoc-gen-opt=$PROJECT_TOP/$2/developtools/profiler/protoencoder_plugin
+SUBSYS_X64_OUT=$PROJECT_TOP/$2/developtools/hiprofiler
+PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
+OPT_PLUGIN_PATH=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
+OPT_PLUGIN=--plugin=protoc-gen-opt=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
 OPT_OUT=--opt_out
 PYTHON_SHELL=$THIS_DIR/make_standard_proto.py # shell path
 TMP=$2

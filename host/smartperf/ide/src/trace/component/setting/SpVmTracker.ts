@@ -111,7 +111,9 @@ export class SpVmTracker extends BaseElement {
       }
       configList!.appendChild(vmTrackerDiv);
     });
-    this.vmTrackerProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>("lit-allocation-select[title='Process']");
+    this.vmTrackerProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>(
+      "lit-allocation-select[title='Process']"
+    );
     let vmTrackerMul = this.vmTrackerProcessInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     this.vmTrackerSelectProcess = this.vmTrackerProcessInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
     let processData: Array<string> = [];

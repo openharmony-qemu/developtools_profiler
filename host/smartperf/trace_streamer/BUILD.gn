@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import("src/ts.gni")
+import("build/ts.gni")
 group("trace_streamer") {
   if (is_test) {
     deps = [ "test:unittest" ]
@@ -30,10 +30,6 @@ group("trace_streamer") {
     deps = [ "sdk/test:sdkunittest" ]
   } else if (use_wasm) {
     deps = [ "src:trace_streamer_builtin" ]
-  } else if (use_wasmpb) {
-    deps = [ "src:trace_streamer_builtin" ]
-  } else if (is_pbdecoder) {
-    deps = [ "src:trace_streamer" ]
   } else {
     deps = [ "src:trace_streamer" ]
   }

@@ -20,7 +20,7 @@ import { getTabMemoryAbilityData, queryStartTime } from '../../../../database/Sq
 import { SystemMemorySummary } from '../../../../bean/AbilityMonitor.js';
 import { Utils } from '../../base/Utils.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-memory-ability')
 export class TabPaneMemoryAbility extends BaseElement {
@@ -45,7 +45,7 @@ export class TabPaneMemoryAbility extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.memoryAbilityTbl!)
+    resizeObserver(this.parentElement!, this.memoryAbilityTbl!);
   }
 
   filterData() {
@@ -236,7 +236,9 @@ export class TabPaneMemoryAbility extends BaseElement {
           // @ts-ignore
           return sort === 2 ? parseFloat(memoryAbilityRightData[property]) - parseFloat(memoryAbilityLeftData[property]) : parseFloat(memoryAbilityLeftData[property]) - parseFloat(memoryAbilityRightData[property]);
         } else if (type === 'durationStr') {
-          return sort === 2 ? memoryAbilityRightData.durationNumber - memoryAbilityLeftData.durationNumber : memoryAbilityLeftData.durationNumber - memoryAbilityRightData.durationNumber;
+          return sort === 2
+            ? memoryAbilityRightData.durationNumber - memoryAbilityLeftData.durationNumber
+            : memoryAbilityLeftData.durationNumber - memoryAbilityRightData.durationNumber;
         } else {
           // @ts-ignore
           if (memoryAbilityRightData[property] > memoryAbilityLeftData[property]) {

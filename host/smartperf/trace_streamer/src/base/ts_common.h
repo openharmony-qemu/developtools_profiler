@@ -20,8 +20,8 @@
 #include <limits>
 #include <map>
 #include <string>
-
-const uint64_t INVALID_UTID = std::numeric_limits<uint32_t>::max();
+using ClockId = uint32_t;
+const uint64_t INVALID_ITID = std::numeric_limits<uint32_t>::max();
 const uint64_t INVALID_UINT64 = std::numeric_limits<uint64_t>::max();
 const uint64_t MAX_UINT32 = std::numeric_limits<uint32_t>::max();
 const uint64_t MAX_UINT64 = std::numeric_limits<uint64_t>::max();
@@ -47,7 +47,7 @@ enum BuiltinClocks {
     TS_MONOTONIC_COARSE = 5,
     TS_MONOTONIC_RAW = 6,
 };
-
+extern BuiltinClocks PRIMARY_CLOCK_ID;
 enum RefType {
     K_REF_NO_REF = 0,
     K_REF_ITID = 1,
@@ -59,7 +59,13 @@ enum RefType {
     K_REF_MAX
 };
 
-enum TraceFileType { TRACE_FILETYPE_BY_TRACE, TRACE_FILETYPE_H_TRACE, TRACE_FILETYPE_SYSEVENT, TRACE_FILETYPE_UN_KNOW };
+enum TraceFileType {
+    TRACE_FILETYPE_BY_TRACE,
+    TRACE_FILETYPE_H_TRACE,
+    TRACE_FILETYPE_SYSEVENT,
+    TRACE_FILETYPE_PERF,
+    TRACE_FILETYPE_UN_KNOW
+};
 
 enum EndState {
     // (R) ready state or running state, the process is ready to run, but not necessarily occupying the CPU
@@ -111,7 +117,6 @@ enum SchedWakeType {
     SCHED_WAKING = 0, // sched_waking
     SCHED_WAKEUP = 1, // sched_wakeup
 };
-#ifndef IS_PBDECODER
 enum DataSourceType {
     DATA_SOURCE_TYPE_TRACE,
     DATA_SOURCE_TYPE_MEM,
@@ -128,21 +133,6 @@ enum DataSourceType {
     DATA_SOURCE_TYPE_JSMEMORY,
     DATA_SOURCE_TYPE_JSMEMORY_CONFIG
 };
-#else
-enum DataSourceType {
-    DATA_SOURCE_TYPE_TRACE,
-    DATA_SOURCE_TYPE_MEM,
-    DATA_SOURCE_TYPE_HILOG,
-    DATA_SOURCE_TYPE_ALLOCATION,
-    DATA_SOURCE_TYPE_FPS,
-    DATA_SOURCE_TYPE_NETWORK,
-    DATA_SOURCE_TYPE_DISKIO,
-    DATA_SOURCE_TYPE_CPU,
-    DATA_SOURCE_TYPE_PROCESS,
-    DATA_SOURCE_TYPE_HISYSEVENT,
-    DATA_SOURCE_TYPE_HISYSEVENT_CONFIG
-};
-#endif
 using DataIndex = uint64_t;
 using TableRowId = int32_t;
 using InternalPid = uint32_t;

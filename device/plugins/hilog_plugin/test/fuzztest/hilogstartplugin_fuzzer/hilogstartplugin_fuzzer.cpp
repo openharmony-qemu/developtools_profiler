@@ -25,6 +25,7 @@ bool FuzzHilogStartPlugin(const uint8_t* data, size_t size)
 {
     std::unique_ptr<HilogPlugin> plugin = std::make_unique<HilogPlugin>();
     plugin->Start(data, size);
+    usleep(100000); // sleep 100000 us
     return true;
 }
 } // namespace OHOS

@@ -37,45 +37,31 @@ describe('SpSdkChart Test', () => {
     },
   ]);
   it('SpSdkChartTest01', function () {
-    let showType = {
-      columns: [{ showType: 'counter' }],
-    };
-    expect(spSdkChart.getTableType(showType)).toBe('');
-  });
-
-  it('SpSdkChartTest02', function () {
     expect(spSdkChart.createSliceSql(10, 8, [{ length: 5 }], '')).toBe('select undefined from 8 ');
   });
 
-  it('SpSdkChartTest03', function () {
+  it('SpSdkChartTest02', function () {
     expect(spSdkChart.createMaxValueSql('', '')).toBe('select max(value) as max_value from  ');
   });
 
-  it('SpSdkChartTest04', function () {
+  it('SpSdkChartTest03', function () {
     expect(spSdkChart.createMaxValueSql('a', 'c')).toBe('select max(value) as max_value from a c');
   });
 
-  it('SpSdkChartTest06', function () {
+  it('SpSdkChartTest04', function () {
     expect(spSdkChart.createSql(3, 'c', [{ length: 3 }], 'a')).toBe('select undefined from c a');
   });
 
-  it('SpSdkChartTest07', function () {
+  it('SpSdkChartTest05', function () {
     expect(spSdkChart.createSql(0, 'c', [{ length: 3 }], '')).toBe('select undefined from c ');
   });
 
-  it('SpSdkChartTest08', function () {
+  it('SpSdkChartTest06', function () {
     spSdkChart.init();
     expect(spSdkChart).toBeDefined();
   });
 
-  it('SpSdkChartTest09', function () {
-    let showType = {
-      columns: [{ showType: 'slice' }],
-    };
-    expect(spSdkChart.getTableType(showType)).toBe('');
-  });
-
-  it('SpSdkChartTest10', function () {
+  it('SpSdkChartTest07', function () {
     let spSystemTrace = new SpSdkChart();
     let sdkChart = new SpSdkChart(spSystemTrace);
     let map = new Map();

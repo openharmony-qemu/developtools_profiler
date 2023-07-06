@@ -94,6 +94,10 @@ class ProcedurePool {
   }
 
   newThread() {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     let newThread: ProcedureThread = new ProcedureThread('trace/database/ui-worker/ProcedureWorker.js', {
       type: 'module',
     });
@@ -127,6 +131,10 @@ class ProcedurePool {
   }
 
   logicDataThread() {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     let thread: ProcedureThread = new ProcedureThread('trace/database/logic-worker/ProcedureLogicWorker.js', {
       type: 'module',
     });

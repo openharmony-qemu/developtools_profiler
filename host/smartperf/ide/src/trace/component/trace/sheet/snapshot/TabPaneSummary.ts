@@ -16,18 +16,17 @@
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import '../../../../../base-ui/table/lit-table.js';
-import { ConstructorItem, FileType } from '../../../../../js-heap/model/UiStruct.js';
+import { ConstructorItem } from '../../../../../js-heap/model/UiStruct.js';
 import { HeapDataInterface } from '../../../../../js-heap/HeapDataInterface.js';
-import { LitTableColumn } from '../../../../../base-ui/table/lit-table-column.js';
 import '../../../../../base-ui/table/lit-table-column.js';
 import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 import '../TabPaneJsMemoryFilter.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { SpJsMemoryChart } from '../../../chart/SpJsMemoryChart.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
 import { HeapSnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
+import { HeapTraceFunctionInfo } from '../../../../../js-heap/model/DatabaseStruct.js';
 
 @element('tabpane-summary')
 export class TabPaneSummary extends BaseElement {
@@ -36,12 +35,12 @@ export class TabPaneSummary extends BaseElement {
   private stackTable: LitTable | null | undefined;
   private summary: Array<ConstructorItem> = [];
   private retainsData: Array<ConstructorItem> = [];
-  private stackData: Array<any> = [];
+  private stackData: Array<HeapTraceFunctionInfo> = [];
   private stackText: HTMLElement | undefined;
-  static fileSize: number;
+  private fileSize: number = 0;
   private tabFilter: TabPaneJsMemoryFilter | undefined | null;
   private progressEL: LitProgressBar | null | undefined;
-  private summaryFilter: Array<any> = [];
+  private summaryFilter: Array<ConstructorItem> = [];
   private summaryData: Array<ConstructorItem> = [];
   private search: HTMLInputElement | null | undefined;
   private tbsTable: HTMLDivElement | null | undefined;
@@ -52,8 +51,6 @@ export class TabPaneSummary extends BaseElement {
   private rightArray: ConstructorItem[] = [];
   private stack: HTMLLIElement | null | undefined;
   private retainers: HTMLLIElement | null | undefined;
-
-  set data(valSummary: SelectionParam | any) {}
 
   initElements(): void {
     this.tblSummary = this.shadowRoot?.querySelector<LitTable>('#left');
@@ -68,20 +65,22 @@ export class TabPaneSummary extends BaseElement {
     this.tblTable = this.tblSummary!.shadowRoot?.querySelector('.table') as HTMLDivElement;
     this.rightTheadTable = this.tbs!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
     this.leftTheadTable = this.tblSummary!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
-    this.tblSummary!.addEventListener('row-click', (evt: any) => {
+    this.tblSummary!.addEventListener('row-click', (evt) => {
       this.rightTheadTable!.removeAttribute('sort');
       this.tbsTable = this.tbs!.shadowRoot?.querySelector('.table') as HTMLDivElement;
       this.tbsTable!.scrollTop = 0;
+      //@ts-ignore
       let data = evt.detail.data as ConstructorItem;
       (data as any).isSelected = true;
       this.retainsData = [];
       this.retainsData = HeapDataInterface.getInstance().getRetains(data);
-      this.retainsData.forEach((element: any) => {
-        let shallow = Math.round((element.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-        let retained = Math.round((element.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+      this.retainsData.forEach((element) => {
+        let shallow = Math.round((element.shallowSize / this.fileSize) * 100) + '%';
+        let retained = Math.round((element.retainedSize / this.fileSize) * 100) + '%';
         element.shallowPercent = shallow;
         element.retainedPercent = retained;
         if (element.distance >= 100000000 || element.distance === -5) {
+          //@ts-ignore
           element.distance = '-';
         }
         let nodeId = element.nodeName + ` @${element.id}`;
@@ -94,19 +93,21 @@ export class TabPaneSummary extends BaseElement {
         }
         let i = 0;
         let that = this;
-        let retainsTable = function () {
-          const getList = function (list: any) {
-            list.forEach(function (row: any) {
-              let shallow = Math.round((row.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-              let retained = Math.round((row.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+        let retainsTable = () => {
+          const getList = (list: Array<ConstructorItem>) => {
+            list.forEach((row: ConstructorItem) => {
+              let shallow = Math.round((row.shallowSize / this.fileSize) * 100) + '%';
+              let retained = Math.round((row.retainedSize / this.fileSize) * 100) + '%';
               row.shallowPercent = shallow;
               row.retainedPercent = retained;
-              let nodeId = row.nodeName.concat(` @${row.id}`);
+              let nodeId = row.nodeName + ` @${row.id}`;
               row.objectName = row.edgeName + '\xa0' + 'in' + '\xa0' + nodeId;
               if (row.distance >= 100000000 || row.distance === -5) {
+                //@ts-ignore
                 row.distance = '-';
               }
               i++;
+              //@ts-ignore
               if (i < that.retainsData[0].distance - 1 && list[0].distance != '-') {
                 list[0].getChildren();
                 list[0].expanded = false;
@@ -125,7 +126,7 @@ export class TabPaneSummary extends BaseElement {
       } else {
         this.tbs!.snapshotDataSource = [];
       }
-      if (SpJsMemoryChart.file.file_name.includes('Timeline')) {
+      if (SpJsMemoryChart.file.name.includes('Timeline')) {
         this.stackData = HeapDataInterface.getInstance().getAllocationStackData(data);
         if (this.stackData.length > 0) {
           this.stackTable!.recycleDataSource = this.stackData;
@@ -156,6 +157,7 @@ export class TabPaneSummary extends BaseElement {
         this.stackTable!.style.height = 'calc(100% - 30px)';
         this.stackTable!.reMeauseHeight();
       }).observe(this.parentElement!);
+      // @ts-ignore
       if ((evt.detail as any).callBack) {
         // @ts-ignore
         (evt.detail as any).callBack(true);
@@ -171,28 +173,39 @@ export class TabPaneSummary extends BaseElement {
       }
     });
 
-    this.tblSummary!.addEventListener('icon-click', (evt: any) => {
-      if (evt.detail.data.status) {
-        evt.detail.data.getChildren();
-        evt.detail.data.children.sort(function (a: ConstructorItem, b: ConstructorItem) {
-          return b.retainedSize - a.retainedSize;
-        });
-        evt.detail.data.children.forEach((summaryDataEl: any) => {
-          let shallow = Math.round((summaryDataEl.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-          let retained = Math.round((summaryDataEl.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
-          summaryDataEl.shallowPercent = shallow;
-          summaryDataEl.retainedPercent = retained;
-          if (summaryDataEl.distance >= 100000000 || summaryDataEl.distance === -5) {
-            summaryDataEl.distance = '-';
-          }
-          let nodeId = summaryDataEl.nodeName.concat(` @${summaryDataEl.id}`);
-          summaryDataEl.objectName = nodeId;
-          if (summaryDataEl.edgeName != '') {
-            summaryDataEl.objectName = summaryDataEl.edgeName + '\xa0' + '::' + '\xa0' + nodeId;
-          }
-        });
+    this.tblSummary!.addEventListener('icon-click', (evt) => {
+      // @ts-ignore
+      let data = evt.detail.data;
+      if (data.status) {
+        data.getChildren();
+        if (data.children.length > 0) {
+          data.children.sort(function (a: ConstructorItem, b: ConstructorItem) {
+            return b.retainedSize - a.retainedSize;
+          });
+          data.children.forEach((summaryDataEl: any) => {
+            let shallow = Math.round((summaryDataEl.shallowSize / this.fileSize) * 100) + '%';
+            let retained = Math.round((summaryDataEl.retainedSize / this.fileSize) * 100) + '%';
+            summaryDataEl.shallowPercent = shallow;
+            summaryDataEl.retainedPercent = retained;
+            if (summaryDataEl.distance >= 100000000 || summaryDataEl.distance === -5) {
+              summaryDataEl.distance = '-';
+            }
+            let nodeId = summaryDataEl.nodeName + ` @${summaryDataEl.id}`;
+            summaryDataEl.nodeId = ` @${summaryDataEl.id}`;
+            if (data.isString()) {
+              summaryDataEl.objectName = '"' + summaryDataEl.nodeName + '"' + ` @${summaryDataEl.id}`;
+            } else {
+              summaryDataEl.objectName = nodeId;
+            }
+            if (summaryDataEl.edgeName != '') {
+              summaryDataEl.objectName = summaryDataEl.edgeName + '\xa0' + '::' + '\xa0' + nodeId;
+            }
+          });
+        } else {
+          this.tblSummary!.snapshotDataSource = [];
+        }
       } else {
-        evt.detail.data.status = true;
+        data.status = true;
       }
       if (this.search!.value != '') {
         if (this.leftTheadTable!.hasAttribute('sort')) {
@@ -214,24 +227,27 @@ export class TabPaneSummary extends BaseElement {
         }
       }).observe(this.parentElement!);
     });
-    this.tbs!.addEventListener('icon-click', (evt: any) => {
-      let that = this;
-      if (evt.detail.data.status) {
-        evt.detail.data.getChildren();
+    this.tbs!.addEventListener('icon-click', (evt) => {
+      // @ts-ignore
+      let data = evt.detail.data;
+      if (data.status) {
+        data.getChildren();
         let i = 0;
-        let retainsTable = function () {
-          const getList = function (list: any) {
-            list.forEach(function (currentRow: any) {
-              let shallow = Math.round((currentRow.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-              let retained = Math.round((currentRow.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+        let retainsTable = () => {
+          const getList = (list: Array<ConstructorItem>) => {
+            list.forEach((currentRow: ConstructorItem) => {
+              let shallow = Math.round((currentRow.shallowSize / this.fileSize) * 100) + '%';
+              let retained = Math.round((currentRow.retainedSize / this.fileSize) * 100) + '%';
               currentRow.shallowPercent = shallow;
               currentRow.retainedPercent = retained;
-              let nodeId = currentRow.nodeName.concat(` @${currentRow.id}`);
+              let nodeId = currentRow.nodeName + ` @${currentRow.id}`;
               currentRow.objectName = currentRow.edgeName + '\xa0' + 'in' + '\xa0' + nodeId;
               if (currentRow.distance >= 100000000 || currentRow.distance === -5) {
+                // @ts-ignore
                 currentRow.distance = '-';
               }
               i++;
+              // @ts-ignore
               if (i < evt.detail.data.distance - 1 && list[0].distance != '-') {
                 list[0].getChildren();
                 list[0].expanded = false;
@@ -243,11 +259,11 @@ export class TabPaneSummary extends BaseElement {
               }
             });
           };
-          getList(evt.detail.data.children);
+          getList(data.children);
         };
         retainsTable();
       } else {
-        evt.detail.data.status = true;
+        data.status = true;
       }
       if (this.rightTheadTable!.hasAttribute('sort')) {
         this.tbs!.snapshotDataSource = this.rightArray;
@@ -265,10 +281,12 @@ export class TabPaneSummary extends BaseElement {
     this.tblSummary!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.sortByLeftTable(evt.detail.key, evt.detail.sort);
+      this.tblSummary!.reMeauseHeight();
     });
     this.tbs!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.sortByRightTable(evt.detail.key, evt.detail.sort);
+      this.tbs!.reMeauseHeight();
     });
     this.classFilter();
   }
@@ -276,31 +294,31 @@ export class TabPaneSummary extends BaseElement {
   setSnapshotData(
     data: HeapSnapshotStruct,
     dataList: Array<HeapSnapshotStruct>,
-    scrollCallback: ((d: any, ds: any) => void) | undefined
+    scrollCallback: ((d: HeapSnapshotStruct, ds: Array<HeapSnapshotStruct>) => void) | undefined
   ) {
     if (scrollCallback) {
       scrollCallback(data, dataList);
     }
     this.summary = [];
-    this.initSummaryData(data.id);
+    this.initSummaryData(data);
   }
 
-  initSummaryData(fileId: number, minNodeId?: number, maxNodeId?: number) {
+  initSummaryData(file: HeapSnapshotStruct, minNodeId?: number, maxNodeId?: number) {
     this.clear();
     this.summary = [];
     this.progressEL!.loading = true;
-    this.summary = HeapDataInterface.getInstance().getClassesListForSummary(fileId, minNodeId, maxNodeId);
-    let dataList = HeapDataInterface.getInstance().getClassesListForSummary(SpJsMemoryChart.file.id);
-    TabPaneSummary.fileSize = dataList.reduce((sum, e) => sum + e.shallowSize, 0);
+    this.summary = HeapDataInterface.getInstance().getClassesListForSummary(file.id, minNodeId, maxNodeId);
+    this.fileSize = file.size;
     this.summary.forEach((summaryEl: any) => {
       if (summaryEl.childCount > 1) {
         let count = summaryEl.nodeName + ` ×${summaryEl.childCount}`;
         summaryEl.objectName = count;
+        summaryEl.count = ` ×${summaryEl.childCount}`;
       } else {
         summaryEl.objectName = summaryEl.nodeName;
       }
-      let shallow = Math.round((summaryEl.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-      let retained = Math.round((summaryEl.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+      let shallow = Math.round((summaryEl.shallowSize / file.size) * 100) + '%';
+      let retained = Math.round((summaryEl.retainedSize / file.size) * 100) + '%';
       summaryEl.shallowPercent = shallow;
       summaryEl.retainedPercent = retained;
       if (summaryEl.distance >= 100000000 || summaryEl.distance === -5) {
@@ -321,7 +339,7 @@ export class TabPaneSummary extends BaseElement {
         this.tblSummary!.reMeauseHeight();
       }
     }).observe(this.parentElement!);
-    if (SpJsMemoryChart.file.file_name.includes('Timeline')) {
+    if (SpJsMemoryChart.file.name.includes('Timeline')) {
       this.retainers!.classList.add('active');
       this.stack!.style.display = 'flex';
       this.retainers!.style.pointerEvents = 'auto';
@@ -355,11 +373,11 @@ export class TabPaneSummary extends BaseElement {
             });
             this.leftArray.forEach((currentLeftItem) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((leftA: any, rightB: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((leftA, rightB) => {
                     return sort === 1 ? leftA.distance - rightB.distance : rightB.distance - leftA.distance;
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -373,15 +391,17 @@ export class TabPaneSummary extends BaseElement {
             break;
           case 'shallowSize':
             this.tblSummary!.snapshotDataSource = this.leftArray.sort((leftData, rightData) => {
-              return sort === 1 ? leftData.shallowSize - rightData.shallowSize : rightData.shallowSize - leftData.shallowSize;
+              return sort === 1
+                ? leftData.shallowSize - rightData.shallowSize
+                : rightData.shallowSize - leftData.shallowSize;
             });
             this.leftArray.forEach((currentLeftItem) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((leftA: any, rightB: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((leftA, rightB) => {
                     return sort === 1 ? leftA.shallowSize - rightB.shallowSize : rightB.shallowSize - leftA.shallowSize;
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -395,15 +415,19 @@ export class TabPaneSummary extends BaseElement {
             break;
           case 'retainedSize':
             this.tblSummary!.snapshotDataSource = this.leftArray.sort((leftData, rightData) => {
-              return sort === 1 ? leftData.retainedSize - rightData.retainedSize : rightData.retainedSize - leftData.retainedSize;
+              return sort === 1
+                ? leftData.retainedSize - rightData.retainedSize
+                : rightData.retainedSize - leftData.retainedSize;
             });
             this.leftArray.forEach((currentLeftItem) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((leftA: any, rightB: any) => {
-                    return sort === 1 ? leftA.retainedSize - rightB.retainedSize : rightB.retainedSize - leftA.retainedSize;
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((leftA, rightB) => {
+                    return sort === 1
+                      ? leftA.retainedSize - rightB.retainedSize
+                      : rightB.retainedSize - leftA.retainedSize;
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -423,13 +447,13 @@ export class TabPaneSummary extends BaseElement {
             });
             this.leftArray.forEach((currentLeftItem) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((leftA: any, rightB: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((leftA, rightB) => {
                     return sort === 1
                       ? (leftA.objectName + '').localeCompare(rightB.objectName + '')
                       : (rightB.objectName + '').localeCompare(leftA.objectName + '');
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -460,11 +484,11 @@ export class TabPaneSummary extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((a: any, b: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((a, b) => {
                     return sort === 1 ? a.distance - b.distance : b.distance - a.distance;
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -482,11 +506,11 @@ export class TabPaneSummary extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((a: any, b: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((a, b) => {
                     return sort === 1 ? a.shallowSize - b.shallowSize : b.shallowSize - a.shallowSize;
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -504,11 +528,11 @@ export class TabPaneSummary extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((a: any, b: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((a, b) => {
                     return sort === 1 ? a.retainedSize - b.retainedSize : b.retainedSize - a.retainedSize;
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -528,13 +552,13 @@ export class TabPaneSummary extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (list: any) {
-                  list.sort((a: any, b: any) => {
+                const getList = function (list: Array<ConstructorItem>) {
+                  list.sort((a, b) => {
                     return sort === 1
                       ? (a.objectName + '').localeCompare(b.objectName + '')
                       : (b.objectName + '').localeCompare(a.objectName + '');
                   });
-                  list.forEach(function (row: any) {
+                  list.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -591,7 +615,7 @@ export class TabPaneSummary extends BaseElement {
   classFilter() {
     this.search!.addEventListener('keyup', () => {
       this.summaryFilter = [];
-      this.summaryData.forEach((a: any, key: number) => {
+      this.summaryData.forEach((a) => {
         if (a.objectName.toLowerCase().includes(this.search!.value.toLowerCase())) {
           this.summaryFilter.push(a);
         } else {
@@ -600,6 +624,7 @@ export class TabPaneSummary extends BaseElement {
       this.tblSummary!.snapshotDataSource = this.summaryFilter;
       let summaryTable = this.tblSummary!.shadowRoot?.querySelector('.table') as HTMLDivElement;
       summaryTable.scrollTop = 0;
+      this.tblSummary!.reMeauseHeight();
     });
   }
 
@@ -739,7 +764,7 @@ export class TabPaneSummary extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="left" style="height: auto" tree>
-                <lit-table-column width="40%" title="Constructor" data-index="objectName" key="objectName" align="flex-start" order>
+                <lit-table-column width="40%" title="Constructor" data-index="" key="objectName" align="flex-start" order>
                 </lit-table-column>
                 <lit-table-column width="2fr" title="Distance" data-index="distance" key="distance" align="flex-start" order>
                 </lit-table-column>
@@ -763,7 +788,7 @@ export class TabPaneSummary extends BaseElement {
                     </ul>
                 </div>
                 <lit-table id="right" tree>
-                    <lit-table-column width="40%" title="Object" data-index="objectName" key="objectName" align="flex-start" order>
+                    <lit-table-column width="40%" title="Object" data-index="" key="objectName" align="flex-start" order>
                     </lit-table-column>
                     <lit-table-column width="2fr" title="Distance" data-index="distance" key="distance" align="flex-start" order>
                     </lit-table-column>

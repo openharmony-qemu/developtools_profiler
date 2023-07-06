@@ -246,8 +246,8 @@ int ProcessUtils::Execute(const ExecuteArgs& args, std::string& output)
 
     // close pipe fds
     CHECK_TRUE(close(pipeFds[RD]) != -1, -1, "close pipe[RD] failed, %d", errno);
-    if (retval != 0 && cmdline != "bytrace -l") {
-        HILOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d, bytrace output is %s", cmdline.c_str(),
+    if (retval != 0 && cmdline != "hitrace -l") {
+        HILOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d, hitrace output is %s", cmdline.c_str(),
             retval, output.c_str());
     } else {
         HILOG_INFO(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);

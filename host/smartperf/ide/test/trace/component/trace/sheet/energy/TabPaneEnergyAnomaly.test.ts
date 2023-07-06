@@ -111,40 +111,44 @@ describe('TabPanePowerBattery Test', () => {
     expect(tabPaneEnergyAnomaly.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-            .current-title{
-                width: 95%;
+            .anomaly-title{
                 display: flex;
-                top: 0;
+                width: 95%;
                 background: var(--dark-background,#ffffff);
+                top: 0;
                 position: sticky;
             }
-            .current-title h2{
-                width: 50%;
+            .anomaly-title h2{
                 padding: 0 10px;
                 font-size: 16px;
                 font-weight: 400;
+                width: 50%;
                 visibility: visible;
             }
-            .bottom-scroll-area{
-                display: flex;
-                height: auto;
+            .scroll-area{
                 overflow-y: auto;
+                height: auto;
+                display: flex;
+                
             }
             .left-table{
-                width: 50%;
                 padding: 0 10px;
+                width: 50%;
+            }
+            .anomaly-table{
+                height: auto;
             }
         </style>
         <div style="width: 100%;height: auto;position: relative">
-            <div id="anomaly-details" class="current-title" style="margin-left: 12px;display: block">
+            <div id="anomaly-details" class="anomaly-title" style="margin-left: 12px;display: block">
                 <h2 id="leftTitle"></h2>
             </div>
-            <div class="bottom-scroll-area">
+            <div class="scroll-area">
                 <div class="left-table">
-                    <lit-table id="anomalyselectionTbl" no-head style="height: auto">
-                        <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px">
+                    <lit-table id="anomalyselectionTbl" no-head class="anomaly-table">
+                        <lit-table-column key="name" align="flex-start"  width="180px" title="name" data-index="name" >
                         </lit-table-column>
-                        <lit-table-column title="value" data-index="value" key="value" align="flex-start" >
+                        <lit-table-column key="value" align="flex-start" title="value" data-index="value">
                         </lit-table-column>
                     </lit-table>
                 </div>

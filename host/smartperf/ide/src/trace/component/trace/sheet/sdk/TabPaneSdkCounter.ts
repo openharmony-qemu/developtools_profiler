@@ -20,8 +20,8 @@ import { getTabSdkCounterData, getTabSdkCounterLeftData, queryStartTime } from '
 import { LitTableColumn } from '../../../../../base-ui/table/lit-table-column';
 import { Utils } from '../../base/Utils.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
-import {TabUtil} from "./TabUtil.js";
-import { resizeObserver } from "../SheetUtils.js";
+import { TabUtil } from './TabUtil.js';
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-sdk-counter')
 export class TabPaneSdkCounter extends BaseElement {
@@ -33,7 +33,8 @@ export class TabPaneSdkCounter extends BaseElement {
   private sqlMap: Map<number, any> = new Map<number, any>();
 
   set data(valSdkCounter: SelectionParam | any) {
-    this.sdkRange!.textContent = 'Selected range: ' + ((valSdkCounter.rightNs - valSdkCounter.leftNs) / 1000000.0).toFixed(5) + ' ms';
+    this.sdkRange!.textContent =
+      'Selected range: ' + ((valSdkCounter.rightNs - valSdkCounter.leftNs) / 1000000.0).toFixed(5) + ' ms';
     this.queryDataByDB(valSdkCounter);
   }
 
@@ -48,7 +49,7 @@ export class TabPaneSdkCounter extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.tblSdkCounter!)
+    resizeObserver(this.parentElement!, this.tblSdkCounter!);
   }
 
   queryDataByDB(sdkVal: SelectionParam | any) {
@@ -145,7 +146,8 @@ export class TabPaneSdkCounter extends BaseElement {
             if (type == 'counter') {
               let selectSql = 'select ';
               for (let counterColumnsIndex = 0; counterColumnsIndex < showType.columns.length; counterColumnsIndex++) {
-                this.columnMap[showType.columns[counterColumnsIndex].column] = showType.columns[counterColumnsIndex].displayName;
+                this.columnMap[showType.columns[counterColumnsIndex].column] =
+                  showType.columns[counterColumnsIndex].displayName;
                 if (showType.columns[counterColumnsIndex].showType.indexOf(3) > -1) {
                   selectSql += showType.columns[counterColumnsIndex].column + ',';
                 }

@@ -106,7 +106,9 @@ export class SpHisysEvent extends BaseElement {
       }
       hisysEventConfigList!.appendChild(hisysEventDiv);
     });
-    this.eventProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>("lit-allocation-select[title='AppName']");
+    this.eventProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>(
+      "lit-allocation-select[title='AppName']"
+    );
     let hisyEventProcessInput = this.eventProcessInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     this.selectProcess = this.eventProcessInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
     let hisysEventProcessData: Array<string> = [];

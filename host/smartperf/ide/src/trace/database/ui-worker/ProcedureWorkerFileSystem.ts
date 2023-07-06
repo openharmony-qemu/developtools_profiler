@@ -274,7 +274,9 @@ export class FileSysChartStruct extends BaseStruct {
     if ((fileSystemNode.startNS || 0) + (fileSystemNode.dur || 0) > endNS) {
       fileSystemNode.frame.width = frame.width - fileSystemNode.frame.x;
     } else {
-      fileSystemNode.frame.width = Math.ceil(((fileSystemNode.startNS || 0) + (fileSystemNode.dur || 0) - startNS) / pns - fileSystemNode.frame.x);
+      fileSystemNode.frame.width = Math.ceil(
+        ((fileSystemNode.startNS || 0) + (fileSystemNode.dur || 0) - startNS) / pns - fileSystemNode.frame.x
+      );
     }
     if (fileSystemNode.frame.width < 1) {
       fileSystemNode.frame.width = 1;

@@ -45,7 +45,8 @@ export class TabPanePerfSample extends BaseElement {
     this.perfSampleListModal!.style.display = 'none';
     this.perfSampleTbl!.style.visibility = 'visible';
     // @ts-ignore
-    this.perfSampleTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 40 + 'px';
+    this.perfSampleTbl?.shadowRoot?.querySelector('.table')?.style?.height =
+      this.parentElement!.clientHeight - 40 + 'px';
     this.perfSampleTbl!.recycleDataSource = [];
     // @ts-ignore
     this.tblData?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 25 + 'px';
@@ -142,11 +143,17 @@ export class TabPanePerfSample extends BaseElement {
         let perfSampleListAddr = data.vaddrInFile;
         let perfSampleListAddrHex = perfSampleListAddr.toString(16);
         if (perfSampleListPath.trim() === '[kernel.kallsyms]') {
-          this.perfSampleListModal?.showContent(`error : Symbol ${data.symbol} lib is [kernel.kallsyms] ,not support `, perfSampleListAddrHex);
+          this.perfSampleListModal?.showContent(
+            `error : Symbol ${data.symbol} lib is [kernel.kallsyms] ,not support `,
+            perfSampleListAddrHex
+          );
         } else if (perfSampleListPath.trim() === '') {
           this.perfSampleListModal?.showContent(`error : Symbol ${data.symbol} lib is null `, perfSampleListAddrHex);
         } else if (perfSampleListAddr < 0) {
-          this.perfSampleListModal?.showContent(`error : Symbol ${data.symbol} current addr is error ` + perfSampleListAddrHex, perfSampleListAddrHex);
+          this.perfSampleListModal?.showContent(
+            `error : Symbol ${data.symbol} current addr is error ` + perfSampleListAddrHex,
+            perfSampleListAddrHex
+          );
         } else {
           const binDir = 'C:/binary_cache';
           let binPath = binDir + perfSampleListPath;

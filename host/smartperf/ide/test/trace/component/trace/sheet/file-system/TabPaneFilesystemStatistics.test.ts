@@ -18,11 +18,17 @@ import { TabPaneFileStatistics } from '../../../../../../dist/trace/component/tr
 import '../../../../../../dist/trace/component/trace/sheet/file-system/TabPaneFilesystemStatistics.js';
 // @ts-ignore
 import { Utils } from '../../../../../../dist/trace/component/trace/base/Utils.js';
-// @ts-ignore
-import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
+import '../../../../../../dist/trace/component/trace/base/Utils.js';
+
 import crypto from 'crypto';
 // @ts-ignore
+import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
+
+import '../../../../../../dist/base-ui/table/lit-table.js';
+// @ts-ignore
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
+import  '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
+
 // @ts-ignore
 window.ResizeObserver =
     window.ResizeObserver ||
@@ -173,10 +179,4 @@ describe('TabPaneFileStatistics Test', () => {
         expect(FileStatistics.sortTable(node, '')).toBeUndefined();
     });
 
-    it('TabPaneFileStatisticsTest10', function () {
-        let litTable = new LitTable();
-        tabPaneFileStatistics.appendChild(litTable);
-        tabPaneFileStatistics.data = param;
-        expect(tabPaneFileStatistics.selectionParam).not.toBeUndefined();
-    });
 });

@@ -18,9 +18,11 @@ jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
 });
 
 // @ts-ignore
-import { mem, ProcessMemStruct, MemRender } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerMem.js';
+import {  ProcessMemStruct, MemRender } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerMem.js';
 // @ts-ignore
 import { Rect } from '../../../../dist/trace/component/trace/timer-shaft/Rect.js';
+// @ts-ignore
+import { mem } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerCommon.js';
 
 describe(' Test', () => {
   let frame = {

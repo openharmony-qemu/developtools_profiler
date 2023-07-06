@@ -60,21 +60,19 @@ ohos_source_set("native_hook_source") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
     "../../base:hiprofiler_base",
-    "//base/startup/init/interfaces/innerkits:libbegetutil",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/zlib:libz",
   ]
+  external_deps = [ "init:libbegetutil" ]
 
   public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps += [ "hilog:libhilog" ]
   }
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   defines += [ "NO_PROTOBUF" ]
   cflags = [
     "-Wno-error=inline-asm",
@@ -101,11 +99,7 @@ ohos_executable("nativetest_c") {
     if (use_musl && !is_asan) {
       defines += [ "HOOK_ENABLE" ]
     }
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps = [ "hilog:libhilog" ]
   }
   include_dirs = [ "//third_party/bounds_checking_function/include" ]
   deps = [ "//third_party/bounds_checking_function:libsec_static" ]
@@ -125,11 +119,7 @@ ohos_executable("nativetest_cpp") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps = [ "hilog:libhilog" ]
   }
 
   cflags = [
@@ -149,11 +139,7 @@ ohos_shared_library("nativetest_so") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps = [ "hilog:libhilog" ]
   }
 
   cflags = [
@@ -172,11 +158,7 @@ ohos_executable("malloctest_cpp") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps = [ "hilog:libhilog" ]
   }
 
   include_dirs = [ "//third_party/bounds_checking_function/include" ]
@@ -198,16 +180,34 @@ ohos_executable("perf_test_data") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps = [ "hilog:libhilog" ]
   }
 
   cflags = [ "-Wno-error=inline-asm" ]
   install_enable = false
   ldflags = [ "-rdynamic" ]
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_executable("statisticstest_cpp") {
+  output_name = "statisticstest_cpp"
+  sources = [ "test/statistics_test.cpp" ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps = [ "hilog:libhilog" ]
+  }
+
+  cflags = [
+    "-Wno-error=inline-asm",
+    "-O3",
+  ]
+
+  deps = [ "//third_party/bounds_checking_function:libsec_static" ]
+  include_dirs = [ "//third_party/bounds_checking_function/include" ]
+  ldflags = [ "-rdynamic" ]
+  install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

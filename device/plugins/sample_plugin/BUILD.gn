@@ -33,11 +33,7 @@ ohos_shared_library("sampleplugin") {
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [ "shared_library:libhilog" ]
-    } else {
-      external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps = [ "hilog:libhilog" ]
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = false

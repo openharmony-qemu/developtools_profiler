@@ -22,10 +22,12 @@ import {
   drawLoading,
   drawSelection,
   drawWakeUp,
+  drawWakeUpList,
   Render,
   RequestMessage,
 } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
+import { SpSystemTrace } from '../../component/SpSystemTrace.js';
 
 export class EmptyRender extends Render {
   renderMainThread(req: any, row: TraceRow<any>) {
@@ -101,11 +103,37 @@ export class CpuRender {
       currentCpu,
       true
     );
+    for (let i = 0; i < SpSystemTrace.wakeupList.length; i++) {
+      if (i + 1 == SpSystemTrace.wakeupList.length) {
+        return
+      }
+      drawWakeUpList(
+        req.context,
+        SpSystemTrace.wakeupList[i + 1],
+        TraceRow.range!.startNS,
+        TraceRow.range!.endNS,
+        TraceRow.range!.totalNS,
+        row.frame,
+        req.type == `cpu-data-${SpSystemTrace.wakeupList[i]?.cpu || 0}`
+          ? SpSystemTrace.wakeupList[i]
+          : undefined,
+        currentCpu,
+        true
+      );
+    };
   }
 
   render(cpuReq: RequestMessage, list: Array<any>, filter: Array<any>, translateY: number) {
     if (cpuReq.lazyRefresh) {
-      this.cpu(list, filter, cpuReq.startNS, cpuReq.endNS, cpuReq.totalNS, cpuReq.frame, cpuReq.useCache || !cpuReq.range.refresh);
+      this.cpu(
+        list,
+        filter,
+        cpuReq.startNS,
+        cpuReq.endNS,
+        cpuReq.totalNS,
+        cpuReq.frame,
+        cpuReq.useCache || !cpuReq.range.refresh
+      );
     } else {
       if (!cpuReq.useCache) {
         this.cpu(list, filter, cpuReq.startNS, cpuReq.endNS, cpuReq.totalNS, cpuReq.frame, false);
@@ -171,7 +199,15 @@ export class CpuRender {
     });
   }
 
-  cpu(cpuList: Array<any>, cpuRes: Array<any>, startNS: number, endNS: number, totalNS: number, frame: any, use: boolean) {
+  cpu(
+    cpuList: Array<any>,
+    cpuRes: Array<any>,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    frame: any,
+    use: boolean
+  ) {
     if (use && cpuRes.length > 0) {
       let pns = (endNS - startNS) / frame.width;
       let y = frame.y + 5;
@@ -360,7 +396,9 @@ export class CpuStruct extends BaseStruct {
     if ((cpuNode.startTime || 0) + (cpuNode.dur || 0) > endNS) {
       cpuNode.frame.width = frame.width - cpuNode.frame.x;
     } else {
-      cpuNode.frame.width = Math.ceil(((cpuNode.startTime || 0) + (cpuNode.dur || 0) - startNS) / pns - cpuNode.frame.x);
+      cpuNode.frame.width = Math.ceil(
+        ((cpuNode.startTime || 0) + (cpuNode.dur || 0) - startNS) / pns - cpuNode.frame.x
+      );
     }
     if (cpuNode.frame.width < 1) {
       cpuNode.frame.width = 1;
@@ -389,6 +427,8 @@ export class WakeupBean {
   tid: number | undefined;
   schedulingLatency: number | undefined;
   schedulingDesc: string | undefined;
+  ts: number | undefined;
+  itid: number | undefined;
 }
 
 const textPadding = 2;

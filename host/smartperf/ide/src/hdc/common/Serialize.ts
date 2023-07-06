@@ -253,7 +253,6 @@ export class Serialize {
     let channelDataBuffer = dataBuffer.slice(1);
     let channelDataView = new DataView(channelDataBuffer);
     let fileSize = this.parseU64(channelDataView, 1);
-    console.log('parseTransferConfig fileSize,', fileSize);
     return new TransferConfig(fileSize, 0, 0, '', '', '', false, 0, false, '', '', '', '');
   }
 

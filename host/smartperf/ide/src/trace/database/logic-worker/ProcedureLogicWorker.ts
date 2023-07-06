@@ -30,6 +30,10 @@ let logicWorker: any = {
 };
 
 function match(req: any) {
+  if (req.type === 'clear') {
+    Reflect.ownKeys(logicWorker).forEach(key => logicWorker[key].clearAll());
+    return;
+  }
   Reflect.ownKeys(logicWorker).filter((it) => {
     if (req.type && req.type.startsWith(it as string)) {
       logicWorker[it].handle(req);

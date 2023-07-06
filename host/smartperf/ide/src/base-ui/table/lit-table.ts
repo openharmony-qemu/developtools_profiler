@@ -20,7 +20,8 @@ import '../utils/Template.js';
 import { TableRowObject } from './TableRowObject.js';
 import { ExcelFormater } from '../utils/ExcelFormater.js';
 import { JSonToCSV } from '../utils/CSVFormater.js';
-import { LitIcon } from '../icon/LitIcon.js';
+import { NodeType } from '../../js-heap/model/DatabaseStruct.js';
+import { ConstructorType } from '../../js-heap/model/UiStruct.js';
 
 @element('lit-table')
 export class LitTable extends HTMLElement {
@@ -46,6 +47,7 @@ export class LitTable extends HTMLElement {
   private isRecycleList: boolean = true;
   private isScrollXOutSide: boolean = false;
   private exportLoading: boolean = false;
+  private _loading: boolean = false;
 
   constructor() {
     super();
@@ -259,7 +261,12 @@ export class LitTable extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['scroll-y', 'selectable', 'no-head', 'grid-line', 'defaultOrderColumn', 'hideDownload'];
+    return ['scroll-y', 'selectable', 'no-head', 'grid-line', 'defaultOrderColumn', 'hideDownload', 'loading'];
+  }
+
+  set loading(value: boolean) {
+    this._loading = value;
+    this.exportProgress!.loading = value;
   }
 
   get hideDownload() {
@@ -319,8 +326,10 @@ export class LitTable extends HTMLElement {
     if (this.rememberScrollTop) {
       this.currentScrollTop = this.tableElement!.scrollTop;
       this.tableElement!.scrollTop = 0;
+      this.tableElement!.scrollLeft = 0;
     } else {
       this.tableElement!.scrollTop = 0;
+      this.tableElement!.scrollLeft = 0;
     }
     if (this.hasAttribute('tree')) {
       this.recycleDs = this.meauseTreeRowElement(value);
@@ -355,7 +364,7 @@ export class LitTable extends HTMLElement {
   }
 
   exportData() {
-    if (this.exportLoading) {
+    if (this.exportLoading || this.ds.length === 0) {
       return;
     }
     this.exportLoading = true;
@@ -1129,15 +1138,54 @@ export class LitTable extends HTMLElement {
           let btn = this.createExpandBtn(rowData);
           td.title = rowData.data.objectName;
           td.insertBefore(btn, td.firstChild);
-          td.style.paddingLeft = rowData.depth * 15 + 'px';
         }
         if (rowData.data.hasNext) {
           td.title = rowData.data.objectName;
           let btn = this.createBtn(rowData);
           td.insertBefore(btn, td.firstChild);
-          td.style.paddingLeft = 15 * rowData.depth + 'px';
-        } else {
-          td.style.paddingLeft = rowData.depth * 15 + 20 + 'px';
+        }
+        td.style.paddingLeft = rowData.depth * 15 + 'px';
+        if (!rowData.data.children || rowData.data.children.length === 0) {
+          td.style.paddingLeft = (15 * rowData.depth + 16) + 'px';
+        }
+        if (rowData.data.rowName === 'js-memory') {
+          let nodeText = document.createElement('text');
+          nodeText.classList.add('nodeName');
+          nodeText.textContent = rowData.data.nodeName;
+          td.append(nodeText);
+          let countText = document.createElement('text');
+          countText.classList.add('countName');
+          countText.textContent = rowData.data.count;
+          td.append(countText);
+          let nodeIdText = document.createElement('text');
+          nodeIdText.classList.add('nodeIdText');
+          nodeIdText.textContent = rowData.data.nodeId;
+          td.append(nodeIdText);
+          if (rowData.data.edgeName != '') {
+            let edgeNameText = document.createElement('text');
+            edgeNameText.classList.add('edgeNameText');
+            edgeNameText.textContent = rowData.data.edgeName;
+            td.insertBefore(edgeNameText, nodeText);
+            let span = document.createElement('span');
+            span.classList.add('span');
+            if (rowData.data.type === ConstructorType.RetainersType) {
+              span.textContent = '\xa0' + 'in' + '\xa0';
+              nodeIdText.textContent = ` @${rowData.data.id}`;
+            } else {
+              span.textContent = '\xa0' + '::' + '\xa0';
+            }
+            edgeNameText.append(span);
+          }
+          if (
+            (rowData.data.nodeType == NodeType.STRING ||
+              rowData.data.nodeType == NodeType.CONCATENATED_STRING ||
+              rowData.data.nodeType == NodeType.SLICED_STRING) &&
+            rowData.data.type != ConstructorType.ClassType
+          ) {
+            nodeText.style.color = '#d53d3d';
+            nodeText.textContent = '"' + rowData.data.nodeName + '"';
+          }
+          td.title = rowData.data.objectName;
         }
         (td as any).data = rowData.data;
         td.classList.add('tree-first-body');
@@ -1186,7 +1234,10 @@ export class LitTable extends HTMLElement {
         newTableElement.append(td);
       }
     });
-    (this.treeElement?.lastChild as HTMLElement).style.transform = `translateY(${treeTop}px)`;
+    let lastChild = this.treeElement?.lastChild as HTMLElement;
+    if (lastChild) {
+      lastChild.style.transform = `translateY(${treeTop}px)`;
+    }
     (newTableElement as any).data = rowData.data;
     newTableElement.style.gridTemplateColumns = gridTemplateColumns.join(' ');
     newTableElement.style.position = 'absolute';
@@ -1425,15 +1476,55 @@ export class LitTable extends HTMLElement {
         if (rowObject.children && rowObject.children.length > 0 && !rowObject.data.hasNext) {
           let btn = this.createExpandBtn(rowObject);
           firstElement.insertBefore(btn, firstElement.firstChild);
-          firstElement.style.paddingLeft = 15 * rowObject.depth + 'px';
+        }
+        firstElement.style.paddingLeft = 15 * rowObject.depth + 'px';
+        if (!rowObject.children || rowObject.children.length === 0) {
+          firstElement.style.paddingLeft = 15 * rowObject.depth + 16 + 'px';
         }
         if (rowObject.data.hasNext) {
           let btn = this.createBtn(rowObject);
           firstElement.title = rowObject.data.objectName;
           firstElement.insertBefore(btn, firstElement.firstChild);
           firstElement.style.paddingLeft = 15 * rowObject.depth + 'px';
-        } else {
-          firstElement.style.paddingLeft = 20 + 15 * rowObject.depth + 'px';
+        }
+        if (rowObject.data.rowName === 'js-memory') {
+          let nodeText = document.createElement('text');
+          nodeText.classList.add('nodeName');
+          nodeText.textContent = rowObject.data.nodeName;
+          firstElement.append(nodeText);
+          let countText = document.createElement('text');
+          countText.classList.add('countName');
+          countText.textContent = rowObject.data.count;
+          firstElement.append(countText);
+          let nodeIdText = document.createElement('text');
+          nodeIdText.classList.add('nodeIdText');
+          nodeIdText.textContent = rowObject.data.nodeId;
+          firstElement.append(nodeIdText);
+          if (rowObject.data.edgeName != '') {
+            let edgeNameText = document.createElement('text');
+            edgeNameText.classList.add('edgeNameText');
+            edgeNameText.textContent = rowObject.data.edgeName;
+            firstElement.insertBefore(edgeNameText, nodeText);
+            let span = document.createElement('span');
+            span.classList.add('span');
+            if (rowObject.data.type === ConstructorType.RetainersType) {
+              span.textContent = '\xa0' + 'in' + '\xa0';
+              nodeIdText.textContent = ` @${rowObject.data.id}`;
+            } else {
+              span.textContent = '\xa0' + '::' + '\xa0';
+            }
+            edgeNameText.append(span);
+          }
+          if (
+            (rowObject.data.nodeType == NodeType.STRING ||
+              rowObject.data.nodeType == NodeType.CONCATENATED_STRING ||
+              rowObject.data.nodeType == NodeType.SLICED_STRING) &&
+            rowObject.data.type != ConstructorType.ClassType
+          ) {
+            nodeText.style.color = '#d53d3d';
+            nodeText.textContent = '"' + rowObject.data.nodeName + '"';
+          }
+          firstElement.title = rowObject.data.objectName;
         }
         firstElement.onclick = () => {
           this.dispatchRowClickEvent(rowObject, [firstElement, element]);

@@ -52,21 +52,24 @@ describe('TabPaneSlices Test', () => {
     expect(tabPaneSlices.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .slice-label{
+            height: 20px;
+        }
         :host{
             display: flex;
-            flex-direction: column;
             padding: 10px 10px;
+            flex-direction: column;
         }
         </style>
-        <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
+        <label id="time-range" class="slice-label" style="width: 100%;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
         <lit-table id="tb-slices" style="height: auto">
-            <lit-table-column title="Name" width="500px" data-index="name" key="name"  align="flex-start" order>
+            <lit-table-column class="slices-column" title="Name" width="500px" data-index="name" key="name"  align="flex-start" order>
             </lit-table-column>
-            <lit-table-column title="Wall duration(ms)" width="1fr" data-index="wallDuration" key="wallDuration"  align="flex-start" order >
+            <lit-table-column class="slices-column" title="Wall duration(ms)" width="1fr" data-index="wallDuration" key="wallDuration"  align="flex-start" order >
             </lit-table-column>
-            <lit-table-column title="Avg Wall duration(ms)" width="1fr" data-index="avgDuration" key="avgDuration"  align="flex-start" order >
+            <lit-table-column class="slices-column" title="Avg Wall duration(ms)" width="1fr" data-index="avgDuration" key="avgDuration"  align="flex-start" order >
             </lit-table-column>
-            <lit-table-column title="Occurrences" width="1fr" data-index="occurrences" key="occurrences"  align="flex-start" order >
+            <lit-table-column class="slices-column" title="Occurrences" width="1fr" data-index="occurrences" key="occurrences"  align="flex-start" order >
             </lit-table-column>
         </lit-table>
         "

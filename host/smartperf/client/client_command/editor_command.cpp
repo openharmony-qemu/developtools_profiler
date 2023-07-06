@@ -103,7 +103,7 @@ std::string EditorCommand::SlideFPS(std::vector<std::string> v)
     sleep(1);
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
-    std::string pathJson = cmdResult.substr(position + 1, position - position2 + typePKG);
+    std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
     std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
@@ -174,7 +174,7 @@ float EditorCommand::ColdStart(std::vector<std::string> v)
     sleep(1);
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
-    std::string pathJson = cmdResult.substr(position + 1, position - position2 + typePKG);
+    std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
     std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     if (sd.pointXY == "0 0") {
@@ -223,13 +223,14 @@ float EditorCommand::HotStart(std::vector<std::string> v)
         sleep(1);
         size_t position = cmdResult.find(":");
         size_t position2 = cmdResult.find("json");
-        std::string pathJson = cmdResult.substr(position + 1, position - position2 + typePKG);
+        std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
         sd.InitXY2(v[type], pathJson, v[typePKG]);
         if (sd.pointXY == "0 0") {
             return noNameType;
         } else {
             std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
             SPUtils::LoadCmd(cmd, cmdResult);
+            sleep(1);
             sd.ChangeToBackground();
             std::string topPkgBefore = SPUtils::GetTopPkgName();
             if (topPkgBefore.find(v[typePKG]) != std::string::npos) {

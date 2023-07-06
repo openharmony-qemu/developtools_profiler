@@ -18,12 +18,13 @@
 #include <map>
 #include <string>
 #include "common_types.h"
+#include "event_parser_base.h"
 #include "htrace_plugin_time_parser.h"
 #include "trace_streamer_filters.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
-class HtraceProcessParser : public HtracePluginTimeParser {
+class HtraceProcessParser : public EventParserBase, public HtracePluginTimeParser {
 public:
     HtraceProcessParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceProcessParser();

@@ -24,10 +24,10 @@
 #include <unistd.h>
 
 #include "codec_cov.h"
-#include "ext/sqlite_ext_funcs.h"
 #include "file.h"
 #include "log.h"
 #include "sqlite3.h"
+#include "sqlite_ext/sqlite_ext_funcs.h"
 #include "string_help.h"
 
 const int32_t ONCE_MAX_MB = 1024 * 1024 * 4;
@@ -270,17 +270,13 @@ int32_t TraceDataDB::SearchDatabase(const std::string& sql, bool print)
     int32_t rowCount = 0;
     sqlite3_stmt* stmt = nullptr;
     int32_t ret = sqlite3_prepare_v2(db_, sql.c_str(), static_cast<int32_t>(sql.size()), &stmt, nullptr);
+    printf("Executing sql: %s", sql.c_str());
     if (ret != SQLITE_OK) {
         TS_LOGE("sqlite3_prepare_v2(%s) failed: %d:%s", sql.c_str(), ret, sqlite3_errmsg(db_));
         return 0;
     }
 
     int32_t colCount = sqlite3_column_count(stmt);
-    if (colCount == 0) {
-        TS_LOGI("sqlite3_column_count(%s) no column", sql.c_str());
-        sqlite3_finalize(stmt);
-        return 0;
-    }
     if (print) {
         for (int32_t i = 0; i < colCount; i++) {
             printf("%s\t", sqlite3_column_name(stmt, i));

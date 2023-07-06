@@ -86,20 +86,20 @@ describe('SpAllocations Test', () => {
     expect(spEle.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-        :host{
-            display: block;
-            width: 100%;
-            height: 100%;
-            border-radius: 0px 16px 16px 0px;
-        }
         .root {
+            padding-top: 45px;
+            margin-left: 40px;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: min-content 1fr min-content;
-            padding-top: 45px;
-            margin-left: 40px;
             width: 90%;
             border-radius: 0px 16px 16px 0px;
+        }
+        :host{
+            display: block;
+            width: 100%;
+            border-radius: 0px 16px 16px 0px;
+            height: 100%;
         }
         .title {
             grid-column: span 2 / auto;
@@ -208,18 +208,18 @@ describe('SpAllocations Test', () => {
             grid-column: span 2;
         }
         .resultSize{
-            margin: 0 30px 0 0;
-            height: 40px;
-            background-color: var(--dark-background5,#F2F2F2);
-            -webkit-appearance:none;
-            outline:0;
-            border:1px solid var(--dark-border,#c8cccf);
-            color:var(--dark-color,#6a6f77);
-            border-radius:20px;
             display: grid;
             grid-template-rows: 1fr;
             grid-template-columns:  min-content min-content;
+            background-color: var(--dark-background5,#F2F2F2);
+            -webkit-appearance:none;
+            color:var(--dark-color,#6a6f77);
             width: 150px;
+            margin: 0 30px 0 0;
+            height: 40px;
+            border-radius:20px;
+            outline:0;
+            border:1px solid var(--dark-border,#c8cccf);
         }
         .record-mode{
             font-family: Helvetica-Bold;
@@ -239,15 +239,15 @@ describe('SpAllocations Test', () => {
               font-weight: 400;
         }
         .interval-result{
-            margin: 5px 0 5px 5px;
             background-color: var(--dark-background5,#F2F2F2);
             -webkit-appearance:none;
-            outline:0;
-            font-size:14px;
             color:var(--dark-color,#6a6f77);
             border: none;
             text-align: center;
             width: 90px;
+            font-size:14px;
+            outline:0;
+            margin: 5px 0 5px 5px;
         }
         
         </style>

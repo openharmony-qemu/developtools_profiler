@@ -751,8 +751,7 @@ public:
     void UpdateCallChainId(size_t row, uint32_t callChainId);
     void UpdateEndTimeStampAndDuration(size_t row, uint64_t endTimeStamp);
     void UpdateCurrentSizeDur(size_t row, uint64_t timeStamp);
-    void UpdateMemMapSubType();
-    void UpdateAddrToMemMapSubType(uint64_t addr, uint64_t tagId);
+    void UpdateMemMapSubType(uint64_t row, uint64_t tagId);
     void UpdateLastCallerPathIndexs(std::unordered_map<uint32_t, uint64_t>& callIdToLasLibId);
     const std::deque<uint32_t>& CallChainIds() const;
     const std::deque<uint32_t>& Ipids() const;
@@ -796,7 +795,6 @@ private:
     std::deque<int64_t> allMemSizes_ = {};
     std::deque<uint64_t> currentSizeDurs_ = {};
     std::deque<uint64_t> lastCallerPathIndexs_ = {};
-    std::unordered_map<uint64_t, uint64_t> addrToMmapTag_ = {};
     int64_t countHeapSizes_ = 0;
     int64_t countMmapSizes_ = 0;
     const std::string ALLOC_EVET = "AllocEvent";
@@ -1933,12 +1931,18 @@ private:
 
 class JsHeapFiles : public CacheBase {
 public:
-    size_t AppendNewData(uint32_t id, std::string filePath, uint64_t startTime, uint64_t endTime, uint32_t ipid);
+    size_t AppendNewData(uint32_t id,
+                         std::string filePath,
+                         uint64_t startTime,
+                         uint64_t endTime,
+                         uint32_t ipid,
+                         uint64_t selfSizeCount);
     const std::deque<uint32_t>& IDs() const;
     const std::deque<std::string>& FilePaths() const;
     const std::deque<uint64_t>& StartTimes() const;
     const std::deque<uint64_t>& EndTimes() const;
     const std::deque<uint32_t>& Pids() const;
+    const std::deque<uint64_t>& SelfSizeCount() const;
     void Clear() override
     {
         CacheBase::Clear();
@@ -1947,6 +1951,7 @@ public:
         startTimes_.clear();
         endTimes_.clear();
         ipids_.clear();
+        selfSizeCount_.clear();
     }
 
 private:
@@ -1955,6 +1960,7 @@ private:
     std::deque<uint64_t> startTimes_ = {};
     std::deque<uint64_t> endTimes_ = {};
     std::deque<uint32_t> ipids_ = {};
+    std::deque<uint64_t> selfSizeCount_ = {};
 };
 
 class JsHeapEdges : public CacheBase {

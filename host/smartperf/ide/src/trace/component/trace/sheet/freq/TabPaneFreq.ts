@@ -17,7 +17,7 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
 import { Utils } from '../../base/Utils.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-freq')
 export class TabPaneFreq extends BaseElement {
@@ -43,7 +43,7 @@ export class TabPaneFreq extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.freqTbl!)
+    resizeObserver(this.parentElement!, this.freqTbl!);
   }
 
   initHtml(): string {

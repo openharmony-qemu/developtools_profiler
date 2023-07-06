@@ -82,7 +82,6 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "../../base:hiprofiler_base",
-    "//base/startup/init/interfaces/innerkits:libbegetutil",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/libunwind:unwind_source_${target_cpu}",
     "//third_party/zlib:libz",
@@ -92,19 +91,10 @@ ohos_executable("native_daemon") {
     ":hook_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
+  external_deps = [ "init:libbegetutil" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps = [
-        "init:libbegetutil",
-        "shared_library:libhilog",
-      ]
-    } else {
-      external_deps = [
-        "hiviewdfx_hilog_native:libhilog",
-        "init:libbegetutil",
-      ]
-    }
+    external_deps += [ "hilog:libhilog" ]
   }
   use_exceptions = true
   install_enable = true

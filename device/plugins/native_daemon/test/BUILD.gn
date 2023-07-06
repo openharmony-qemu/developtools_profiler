@@ -121,7 +121,7 @@ ohos_unittest("native_daemon_ut") {
   }
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+    external_deps = [ "hilog:libhilog" ]
   }
 }
 

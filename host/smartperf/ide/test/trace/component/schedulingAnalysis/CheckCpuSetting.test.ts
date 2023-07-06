@@ -14,6 +14,10 @@
  */
 //@ts-ignore
 import { CpuSetting, CheckCpuSetting } from '../../../../dist/trace/component/schedulingAnalysis/CheckCpuSetting.js';
+import '../../../../dist/trace/component/schedulingAnalysis/CheckCpuSetting.js';
+//@ts-ignore
+import {SpSchedulingAnalysis} from "../../../../dist/trace/component/schedulingAnalysis/SpSchedulingAnalysis.js";
+
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
@@ -47,5 +51,10 @@ describe('CheckCpuSetting Test', () => {
     it('CheckCpuSettingTest05', () => {
         let checkCpuSetting = new CheckCpuSetting();
         expect(checkCpuSetting.createHeaderDiv()).toBeUndefined();
+    });
+
+    it('CheckCpuSettingTest06', () => {
+        CheckCpuSetting.resetCpuSettings();
+        expect(CheckCpuSetting.init_setting).toBeFalsy();
     });
 })

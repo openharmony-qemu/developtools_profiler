@@ -121,6 +121,8 @@ message RecordStatisticsEvent {
     enum MemoryType {
         MALLOC = 0;
         MMAP = 1;
+        FILE_PAGE_MSG = 2;
+        MEMORY_USING_MSG = 3;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;

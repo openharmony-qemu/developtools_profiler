@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../ts.gni")
+import("../../build/ts.gni")
 
 ohos_source_set("trace_data") {
   subsystem_name = "trace_streamer"

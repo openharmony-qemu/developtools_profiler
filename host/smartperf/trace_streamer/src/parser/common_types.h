@@ -19,7 +19,6 @@
 #include <atomic>
 #include <string>
 #include <unordered_map>
-#ifndef IS_PBDECODER
 #include "cpu_plugin_result.pbreader.h"
 #include "diskio_plugin_result.pbreader.h"
 #include "hidump_plugin_result.pbreader.h"
@@ -37,21 +36,6 @@
 #include "trace_plugin_result.pbreader.h"
 #include "ts_common.h"
 #include "native_hook_result.pbreader.h"
-#else
-#include "cpu_plugin_result.pb.h"
-#include "diskio_plugin_result.pb.h"
-#include "hidump_plugin_result.pb.h"
-#include "hilog_plugin_result.pb.h"
-#include "hisysevent_plugin_config.pb.h"
-#include "hisysevent_plugin_result.pb.h"
-#include "memory_plugin_result.pb.h"
-#include "native_hook_result.pb.h"
-#include "network_plugin_result.pb.h"
-#include "process_plugin_result.pb.h"
-#include "services/common_types.pb.h"
-#include "trace_plugin_result.pb.h"
-#include "ts_common.h"
-#endif
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -81,7 +65,6 @@ struct DataSegment {
     BytraceLine bufLine;
     std::atomic<ParseStatus> status{TS_PARSE_STATUS_INIT};
 };
-#ifndef IS_PBDECODER
 struct HtraceDataSegment {
     std::shared_ptr<std::string> seg;
     uint64_t timeStamp;
@@ -90,26 +73,6 @@ struct HtraceDataSegment {
     std::atomic<ParseStatus> status{TS_PARSE_STATUS_INIT};
     ProtoReader::BytesView protoData;
 };
-#else
-struct HtraceDataSegment {
-    std::string seg;
-    MemoryData memData;
-    HilogInfo logData;
-    BatchNativeHookData batchNativeHookData;
-    HidumpInfo hidumpInfo;
-    CpuData cpuInfo;
-    NetworkDatas networkInfo;
-    DiskioData diskIOInfo;
-    ProcessData processInfo;
-    HisyseventInfo hisyseventInfo;
-    HisyseventConfig hisyseventConfig;
-    uint64_t timeStamp;
-    std::unique_ptr<TracePluginResult> traceData;
-    BuiltinClocks clockId;
-    DataSourceType dataType;
-    std::atomic<ParseStatus> status{TS_PARSE_STATUS_INIT};
-};
-#endif
 
 class TracePoint {
 public:

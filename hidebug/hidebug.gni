@@ -13,3 +13,5 @@
 
 # hidebug path definitions
 hidebug_path = "//developtools/profiler/hidebug"
+OHOS_PROFILER_SUBSYS_NAME = "developtools"
+OHOS_PROFILER_PART_NAME = "hiprofiler"

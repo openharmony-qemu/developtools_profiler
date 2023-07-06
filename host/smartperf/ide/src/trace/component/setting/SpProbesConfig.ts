@@ -50,7 +50,7 @@ export class SpProbesConfig extends BaseElement {
     if (this.ftraceBufferSizeResult?.hasAttribute('percent')) {
       return Number(this.ftraceBufferSizeResult?.getAttribute('percent'));
     }
-    return 1024;
+    return 20480;
   }
 
   get memoryConfig() {
@@ -181,6 +181,7 @@ export class SpProbesConfig extends BaseElement {
       { value: 'app', isSelect: true },
       { value: 'ark', isSelect: true },
       { value: 'binder', isSelect: true },
+      { value: 'commonlibrary', isSelect: false },
       { value: 'daudio', isSelect: false },
       { value: 'dcamera', isSelect: false },
       { value: 'devicemanager', isSelect: false },
@@ -264,9 +265,9 @@ export class SpProbesConfig extends BaseElement {
     let ftraceBufferSizeSlider = this.shadowRoot?.querySelector<LitSlider>('#ftrace-buff-size-slider') as LitSlider;
     this.ftraceBufferSizeResult = this.shadowRoot?.querySelector('#ftrace-buff-size-div') as HTMLDivElement;
     ftraceBufferSizeSlider.sliderStyle = {
-      minRange: 1024,
-      maxRange: 65536,
-      defaultValue: '1024',
+      minRange: 2048,
+      maxRange: 307200,
+      defaultValue: '20480',
       resultUnit: 'KB',
       stepSize: 2,
       lineColor: 'var(--dark-color3,#46B1E3)',
@@ -280,10 +281,10 @@ export class SpProbesConfig extends BaseElement {
       if (this.ftraceBufferSizeResult!.hasAttribute('percent')) {
         ftraceBuffSizeResultInput.value = Number(this.ftraceBufferSizeResult!.getAttribute('percent')).toString();
       } else {
-        ftraceBuffSizeResultInput.value = '1024';
+        ftraceBuffSizeResultInput.value = '20480';
       }
     });
-    ftraceBufferSizeSliderParent.setAttribute('percent', '1024');
+    ftraceBufferSizeSliderParent.setAttribute('percent', '20480');
     ftraceBuffSizeResultInput.style.color = 'var(--dark-color1,#000000)';
     ftraceBuffSizeResultInput.addEventListener('input', (ev) => {
       if (this.ftraceBufferSizeResult!.hasAttribute('percent')) {
@@ -294,7 +295,7 @@ export class SpProbesConfig extends BaseElement {
       ftraceBuffSizeResultInput.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
       if (ftraceBuffSizeResultInput.value.trim() == '') {
         ftraceBuffSizeResultInput.style.color = 'red';
-        ftraceBufferSizeSliderParent.setAttribute('percent', '1024');
+        ftraceBufferSizeSliderParent.setAttribute('percent', '20480');
         return;
       }
       let ftraceBufferSize = Number(ftraceBuffSizeResultInput.value);
@@ -303,7 +304,7 @@ export class SpProbesConfig extends BaseElement {
         ftraceBufferSize > ftraceBufferSizeSlider!.sliderStyle.maxRange
       ) {
         ftraceBuffSizeResultInput.parentElement!.classList.add('border-red');
-        ftraceBufferSizeSliderParent.setAttribute('percent', '1024');
+        ftraceBufferSizeSliderParent.setAttribute('percent', '20480');
       } else {
         ftraceBuffSizeResultInput.parentElement!.classList.remove('border-red');
         ftraceBufferSizeSlider!.percent = ftraceBuffSizeResultInput.value;
@@ -316,8 +317,8 @@ export class SpProbesConfig extends BaseElement {
     ftraceBuffSizeResultInput.addEventListener('focusout', (ev) => {
       if (ftraceBuffSizeResultInput.value.trim() == '') {
         ftraceBuffSizeResultInput.parentElement!.classList.remove('border-red');
-        ftraceBufferSizeSliderParent.setAttribute('percent', '1024');
-        ftraceBuffSizeResultInput.value = '1024';
+        ftraceBufferSizeSliderParent.setAttribute('percent', '20480');
+        ftraceBuffSizeResultInput.value = '20480';
         ftraceBuffSizeResultInput.style.color = 'var(--dark-color,#6a6f77)';
         ftraceBufferSizeSliderParent.setAttribute('percent', ftraceBuffSizeResultInput.value);
         ftraceBufferSizeSliderParent.setAttribute('percentValue', ftraceBuffSizeResultInput.value);
@@ -472,13 +473,13 @@ export class SpProbesConfig extends BaseElement {
                     <div>
                        <div>
                           <p>Buffer Size</p>
-                          <p class="buffer-size-des">The ftrace buffer size range is 1024 Kb to 65536 KB</p>
+                          <p class="buffer-size-des">The ftrace buffer size range is 2048 KB to 307200 KB</p>
                        </div>
                        <div id="ftrace-buff-size-div">
                           <lit-slider id="ftrace-buff-size-slider" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
                           </lit-slider>
                           <div class='ftrace-buff-size-result-div'>
-                              <input class="ftrace-buff-size-result" type="text" value='0' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                              <input class="ftrace-buff-size-result" type="text" value='20480' onkeyup="this.value=this.value.replace(/\\D/g,'')">
                               <span style="text-align: center; margin: 8px"> KB </span>
                            </div>
                        </div>

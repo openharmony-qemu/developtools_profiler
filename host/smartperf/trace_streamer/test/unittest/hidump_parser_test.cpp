@@ -19,6 +19,8 @@
 #include <string>
 
 #include "htrace_hidump_parser.h"
+#include "hidump_plugin_result.pb.h"
+#include "hidump_plugin_result.pbreader.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/common_types.h"
 #include "trace_streamer_selector.h"
@@ -57,7 +59,10 @@ HWTEST_F(HidumpParserTest, ParseEmptyHidumpInfo, TestSize.Level1)
     TS_LOGI("test7-1");
     HidumpInfo hidumpInfo;
     HtraceHidumpParser htraceHidumpParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHidumpParser.Parse(hidumpInfo);
+    std::string hidumpDatas = "";
+    hidumpInfo.SerializeToString(&hidumpDatas);
+    ProtoReader::BytesView hidumpInfoData(reinterpret_cast<const uint8_t*>(hidumpDatas.data()), hidumpDatas.size());
+    htraceHidumpParser.Parse(hidumpInfoData);
     auto size = stream_.traceDataCache_->GetConstHidumpData().Size();
     EXPECT_EQ(0, size);
 }
@@ -84,7 +89,10 @@ HWTEST_F(HidumpParserTest, ParseLegalHidumpInfo, TestSize.Level1)
     fpsData->set_allocated_time(&timeSpec);
 
     HtraceHidumpParser htraceHidumpParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHidumpParser.Parse(*hidumpInfo);
+    std::string hidumpDatas = "";
+    hidumpInfo->SerializeToString(&hidumpDatas);
+    ProtoReader::BytesView hidumpInfoData(reinterpret_cast<const uint8_t*>(hidumpDatas.data()), hidumpDatas.size());
+    htraceHidumpParser.Parse(hidumpInfoData);
 
     auto Fps = stream_.traceDataCache_->GetConstHidumpData().Fpss()[0];
     EXPECT_EQ(FPS, Fps);
@@ -137,7 +145,10 @@ HWTEST_F(HidumpParserTest, ParseMultipleReasonableHidumpInfo, TestSize.Level1)
     fpsDataThird->set_allocated_time(&timeSpecThird);
 
     HtraceHidumpParser htraceHidumpParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceHidumpParser.Parse(*hidumpInfo);
+    std::string hidumpDatas = "";
+    hidumpInfo->SerializeToString(&hidumpDatas);
+    ProtoReader::BytesView hidumpInfoData(reinterpret_cast<const uint8_t*>(hidumpDatas.data()), hidumpDatas.size());
+    htraceHidumpParser.Parse(hidumpInfoData);
 
     auto Fps_00 = stream_.traceDataCache_->GetConstHidumpData().Fpss()[0];
     auto Fps_01 = stream_.traceDataCache_->GetConstHidumpData().Fpss()[1];

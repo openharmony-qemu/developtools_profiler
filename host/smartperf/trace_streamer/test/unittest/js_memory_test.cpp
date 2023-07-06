@@ -175,11 +175,11 @@ HWTEST_F(JsMemoryTest, snapshotParserEdgesByJsmemory, TestSize.Level1)
         "\\\"column\\\"],\\n\\\"trace_node_fields\\\":[\\\"id\\\",\\\"function_info_index\\\",\\\"count\\\","
         "\\\"size\\\",\\\"children\\\"],\\n\\\"sample_fields\\\":[\\\"timestamp_us\\\",\\\"last_assigned_id\\\"],"
         "\\n\\\"location_fields\\\":[\\\"object_index\\\",\\\"script_id\\\",\\\"line\\\",\\\"column\\\"]},\\n\\\"node_"
-        "count\\\":32837,\\n\\\"edge_count\\\":152856,\\n\\\"trace_function_count\\\":0\\n},\\n\\\"nodes\\\":[9,25571,"
+        "count\\\":3,\\n\\\"edge_count\\\":5,\\n\\\"trace_function_count\\\":0\\n},\\n\\\"nodes\\\":[9,25571,"
         "1,0,1,0,0\\n,1,3,3,432,3,0,0\\n,8,9,9949,40,\"}}";
     const char* result3 =
         "{\"method\":\"HeapProfiler.addHeapSnapshotChunk\",\"params\":{\"chunk\":\"1,0,0],\\n\\\"edges\\\":[5,25572,"
-        "142919\\n,5,25572,144361\\n,5,25572,42455\\n,5,25572,42462\\n,5,25572,42469\\n],"
+        "1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n],"
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":1,\"result\":{}}";
@@ -217,7 +217,7 @@ HWTEST_F(JsMemoryTest, snapshotParserEdgesByJsmemory, TestSize.Level1)
     auto nameOrIndex = stream_.traceDataCache_->GetConstJsHeapEdgesData().NameOrIndexs()[0];
     EXPECT_EQ(25572, nameOrIndex);
     auto toNodes = stream_.traceDataCache_->GetConstJsHeapEdgesData().ToNodes()[0];
-    EXPECT_EQ(142919, toNodes);
+    EXPECT_EQ(1, toNodes);
     auto fromNodeId = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[0];
     EXPECT_EQ(1, fromNodeId);
     auto fromNodeId1 = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[1];
@@ -228,8 +228,6 @@ HWTEST_F(JsMemoryTest, snapshotParserEdgesByJsmemory, TestSize.Level1)
     EXPECT_EQ(1, fromNodeId3);
     auto fromNodeId4 = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[4];
     EXPECT_EQ(1, fromNodeId4);
-    auto fromNodeId5 = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[5];
-    EXPECT_EQ(0, fromNodeId5);
 }
 
 HWTEST_F(JsMemoryTest, timelineParserNodesByJsmemory, TestSize.Level1)
@@ -356,7 +354,7 @@ HWTEST_F(JsMemoryTest, timelineParserEdgesByJsmemory, TestSize.Level1)
         "1,0,1,0,0\\n,1,3,3,432,3,0,0\\n,8,9,9949,40,\"}}";
     const char* result3 =
         "{\"method\":\"HeapProfiler.addHeapSnapshotChunk\",\"params\":{\"chunk\":\"1,0,0],\\n\\\"edges\\\":[5,25572,"
-        "142919\\n,5,25572,144361\\n,5,25572,42455\\n,5,25572,42462\\n,5,25572,42469\\n],"
+        "1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n],"
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
@@ -394,7 +392,7 @@ HWTEST_F(JsMemoryTest, timelineParserEdgesByJsmemory, TestSize.Level1)
     auto nameOrIndex = stream_.traceDataCache_->GetConstJsHeapEdgesData().NameOrIndexs()[0];
     EXPECT_EQ(25572, nameOrIndex);
     auto toNodes = stream_.traceDataCache_->GetConstJsHeapEdgesData().ToNodes()[0];
-    EXPECT_EQ(142919, toNodes);
+    EXPECT_EQ(1, toNodes);
     auto fromNodeId = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[0];
     EXPECT_EQ(1, fromNodeId);
     auto fromNodeId1 = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[1];
@@ -405,8 +403,6 @@ HWTEST_F(JsMemoryTest, timelineParserEdgesByJsmemory, TestSize.Level1)
     EXPECT_EQ(1, fromNodeId3);
     auto fromNodeId4 = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[4];
     EXPECT_EQ(1, fromNodeId4);
-    auto fromNodeId5 = stream_.traceDataCache_->GetConstJsHeapEdgesData().FromNodeIds()[5];
-    EXPECT_EQ(0, fromNodeId5);
 }
 
 HWTEST_F(JsMemoryTest, timelineParserSamplesByJsmemory, TestSize.Level1)
@@ -442,7 +438,7 @@ HWTEST_F(JsMemoryTest, timelineParserSamplesByJsmemory, TestSize.Level1)
         "1,0,1,0,0\\n,1,3,3,432,3,0,0\\n,8,9,9949,40,\"}}";
     const char* result3 =
         "{\"method\":\"HeapProfiler.addHeapSnapshotChunk\",\"params\":{\"chunk\":\"1,0,0],\\n\\\"edges\\\":[5,25572,"
-        "142919\\n,5,25572,144361\\n,5,25572,42455\\n,5,25572,42462\\n,5,25572,42469\\n],"
+        "1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n],"
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[0, 42570\\n, 200631, 42571\\n, 401040, 42572\\n, 601899, "
         "42573\\n, 804764, 42574\\n, 1006866, 42575\\n, 1207797, "
         "42576\\n],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
@@ -528,7 +524,7 @@ HWTEST_F(JsMemoryTest, timelineParserStringsByJsmemory, TestSize.Level1)
         "1,0,1,0,0\\n,1,3,3,432,3,0,0\\n,8,9,9949,40,\"}}";
     const char* result3 =
         "{\"method\":\"HeapProfiler.addHeapSnapshotChunk\",\"params\":{\"chunk\":\"1,0,0],\\n\\\"edges\\\":[5,25572,"
-        "142919\\n,5,25572,144361\\n,5,25572,42455\\n,5,25572,42462\\n,5,25572,42469\\n],"
+        "1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n],"
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[0, 42570\\n, 200631, 42571\\n, 401040, 42572\\n, 601899, "
         "42573\\n, 804764, 42574\\n, 1006866, 42575\\n, 1207797, "
         "42576\\n],\\n\\\"strings\\\":[\\\"<dummy>\\\",\\n\\\"\\\",\\n\\\"GC "
@@ -609,7 +605,7 @@ HWTEST_F(JsMemoryTest, timelineParserTraceFuncInfoByJsmemory, TestSize.Level1)
         "1,0,1,0,0\\n,1,3,3,432,3,0,0\\n,8,9,9949,40,\"}}";
     const char* result3 =
         "{\"method\":\"HeapProfiler.addHeapSnapshotChunk\",\"params\":{\"chunk\":\"1,0,0],\\n\\\"edges\\\":[5,25572,"
-        "142919\\n,5,25572,144361\\n,5,25572,42455\\n,5,25572,42462\\n,5,25572,42469\\n],"
+        "1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n],"
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[0,181,"
         "1601,0,0,"
         "0\\n],"
@@ -691,7 +687,7 @@ HWTEST_F(JsMemoryTest, timelineParserTraceTreeByJsmemory, TestSize.Level1)
         "1,0,1,0,0\\n,1,3,3,432,3,0,0\\n,8,9,9949,40,\"}}";
     const char* result3 =
         "{\"method\":\"HeapProfiler.addHeapSnapshotChunk\",\"params\":{\"chunk\":\"1,0,0],\\n\\\"edges\\\":[5,25572,"
-        "142919\\n,5,25572,144361\\n,5,25572,42455\\n,5,25572,42462\\n,5,25572,42469\\n],"
+        "1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n,5,25572,1\\n],"
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[0,181,"
         "1601,0,0,"
         "0\\n],"

@@ -47,7 +47,7 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "unittest/writer_adapter_test.cpp",
   ]
   configs = [ ":cflags_config" ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }
 

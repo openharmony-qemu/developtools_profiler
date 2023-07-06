@@ -19,7 +19,7 @@ import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabFps } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-fps')
 export class TabPaneFps extends BaseElement {
@@ -56,7 +56,7 @@ export class TabPaneFps extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.fpsTbl!)
+    resizeObserver(this.parentElement!, this.fpsTbl!);
   }
 
   initHtml(): string {

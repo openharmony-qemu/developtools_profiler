@@ -124,32 +124,32 @@ describe('TabPaneFileSystemEvents Test', () => {
 
     it('TabPaneFileStatisticsTest01', function () {
         tabPaneFileSystemEvents.filterSource = filterSource;
-        expect(tabPaneFileSystemEvents.sortTable('', 0)).toBeUndefined();
+        expect(tabPaneFileSystemEvents.sortFsSysEventTable('', 0)).toBeUndefined();
     });
 
     it('TabPaneFileStatisticsTest02', function () {
         tabPaneFileSystemEvents.filterSource = filterSource;
-        expect(tabPaneFileSystemEvents.sortTable('startTsStr', 1)).toBeUndefined();
+        expect(tabPaneFileSystemEvents.sortFsSysEventTable('startTsStr', 1)).toBeUndefined();
     });
 
     it('TabPaneFileStatisticsTest03', function () {
         tabPaneFileSystemEvents.filterSource = filterSource;
-        expect(tabPaneFileSystemEvents.sortTable('durStr', 1)).toBeUndefined();
+        expect(tabPaneFileSystemEvents.sortFsSysEventTable('durStr', 1)).toBeUndefined();
     });
 
     it('TabPaneFileStatisticsTest04', function () {
         tabPaneFileSystemEvents.filterSource = filterSource;
-        expect(tabPaneFileSystemEvents.sortTable('process', 2)).toBeUndefined();
+        expect(tabPaneFileSystemEvents.sortFsSysEventTable('process', 2)).toBeUndefined();
     });
 
     it('TabPaneFileStatisticsTest05', function () {
         tabPaneFileSystemEvents.filterSource = filterSource;
-        expect(tabPaneFileSystemEvents.sortTable('thread', 2)).toBeUndefined();
+        expect(tabPaneFileSystemEvents.sortFsSysEventTable('thread', 2)).toBeUndefined();
     });
 
     it('TabPaneFileStatisticsTest06', function () {
         tabPaneFileSystemEvents.filterSource = filterSource;
-        expect(tabPaneFileSystemEvents.sortTable('typeStr', 2)).toBeUndefined();
+        expect(tabPaneFileSystemEvents.sortFsSysEventTable('typeStr', 2)).toBeUndefined();
     });
 
     it('TabPaneFileStatisticsTest07', function () {

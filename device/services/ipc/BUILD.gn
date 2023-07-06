@@ -15,7 +15,8 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("ipc") {
-  part_name = "profiler"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
     "src/client_connection.cpp",
     "src/client_map.cpp",
@@ -34,15 +35,11 @@ ohos_source_set("ipc") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps += [ "shared_library:libhilog" ]
-    } else {
-      external_deps += [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps += [ "hilog:libhilog" ]
   }
   deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
     "//third_party/bounds_checking_function:libsec_static",
   ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
@@ -61,9 +58,9 @@ ohos_executable("protoc_gen_ipc") {
   ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc_lib(${host_toolchain})",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc_static_lib(${host_toolchain})",
   ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -82,9 +79,9 @@ ohos_executable("protoencoder_plugin") {
   ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc_lib(${host_toolchain})",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc_static_lib(${host_toolchain})",
   ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

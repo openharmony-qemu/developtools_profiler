@@ -74,7 +74,7 @@ export class StackBar extends BaseElement {
                 width: 10%;display: inline-block;overflow: hidden;white-space: nowrap;padding: 5px; margin-right: 2px;font-size: 9pt;
             }
             </style>
-            <div style="display: flex;flex-direction: row;width: 100%;" id="container">
+            <div style="display: flex;flex-direction: row;" id="container">
             </div>
         `;
   }

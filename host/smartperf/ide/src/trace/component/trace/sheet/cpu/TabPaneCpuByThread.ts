@@ -20,13 +20,14 @@ import { getTabCpuByThread } from '../../../../database/SqlLite.js';
 import { log } from '../../../../../log/Log.js';
 import { getProbablyTime } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
 import { Utils } from '../../base/Utils.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-cpu-thread')
 export class TabPaneCpuByThread extends BaseElement {
   private cpuByThreadTbl: LitTable | null | undefined;
   private range: HTMLLabelElement | null | undefined;
   private cpuByThreadSource: Array<SelectionData> = [];
+  private currentSelectionParam: SelectionParam | undefined;
   private pubColumns = `
             <lit-table-column order width="250px" title="Process" data-index="process" key="process" align="flex-start" order >
             </lit-table-column>
@@ -45,10 +46,18 @@ export class TabPaneCpuByThread extends BaseElement {
     `;
 
   set data(cpuByThreadValue: SelectionParam | any) {
+    if (this.currentSelectionParam === cpuByThreadValue) {
+      return;
+    }
+    this.currentSelectionParam = cpuByThreadValue;
     this.cpuByThreadTbl!.innerHTML = this.getTableColumns(cpuByThreadValue.cpus);
     this.range!.textContent =
-      'Selected range: ' + parseFloat(((cpuByThreadValue.rightNs - cpuByThreadValue.leftNs) / 1000000.0).toFixed(5)) + ' ms';
+      'Selected range: ' +
+      parseFloat(((cpuByThreadValue.rightNs - cpuByThreadValue.leftNs) / 1000000.0).toFixed(5)) +
+      ' ms';
+    this.cpuByThreadTbl!.loading = true;
     getTabCpuByThread(cpuByThreadValue.cpus, cpuByThreadValue.leftNs, cpuByThreadValue.rightNs).then((result) => {
+      this.cpuByThreadTbl!.loading = false;
       if (result != null && result.length > 0) {
         log('getTabCpuByThread size :' + result.length);
         let sumWall = 0.0;
@@ -63,7 +72,10 @@ export class TabPaneCpuByThread extends BaseElement {
             thread.occurrences += e.occurrences;
             thread[`cpu${e.cpu}`] = e.wallDuration || 0;
             thread[`cpu${e.cpu}TimeStr`] = getProbablyTime(e.wallDuration || 0);
-            thread[`cpu${e.cpu}Ratio`] = ((100.0 * (e.wallDuration || 0)) / (cpuByThreadValue.rightNs - cpuByThreadValue.leftNs)).toFixed(2);
+            thread[`cpu${e.cpu}Ratio`] = (
+              (100.0 * (e.wallDuration || 0)) /
+              (cpuByThreadValue.rightNs - cpuByThreadValue.leftNs)
+            ).toFixed(2);
           } else {
             let process = Utils.PROCESS_MAP.get(e.pid);
             let thread = Utils.THREAD_MAP.get(e.tid);
@@ -83,7 +95,10 @@ export class TabPaneCpuByThread extends BaseElement {
             }
             cpuByThreadObject[`cpu${e.cpu}`] = e.wallDuration || 0;
             cpuByThreadObject[`cpu${e.cpu}TimeStr`] = getProbablyTime(e.wallDuration || 0);
-            cpuByThreadObject[`cpu${e.cpu}Ratio`] = ((100.0 * (e.wallDuration || 0)) / (cpuByThreadValue.rightNs - cpuByThreadValue.leftNs)).toFixed(2);
+            cpuByThreadObject[`cpu${e.cpu}Ratio`] = (
+              (100.0 * (e.wallDuration || 0)) /
+              (cpuByThreadValue.rightNs - cpuByThreadValue.leftNs)
+            ).toFixed(2);
             map.set(`${e.tid}`, cpuByThreadObject);
           }
         }
@@ -138,7 +153,7 @@ export class TabPaneCpuByThread extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.cpuByThreadTbl!)
+    resizeObserver(this.parentElement!, this.cpuByThreadTbl!);
   }
 
   initHtml(): string {

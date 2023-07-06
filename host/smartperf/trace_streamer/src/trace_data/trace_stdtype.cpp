@@ -530,22 +530,13 @@ void NativeHook::UpdateCurrentSizeDur(size_t row, uint64_t timeStamp)
 {
     currentSizeDurs_[row] = timeStamp - timeStamps_[row];
 }
-void NativeHook::UpdateMemMapSubType()
+void NativeHook::UpdateMemMapSubType(uint64_t row, uint64_t tagId)
 {
-    if (addrToMmapTag_.empty()) {
-        return;
+    if (row < subTypes_.size()) {
+        subTypes_[row] = tagId;
+    } else {
+        TS_LOGE("subTypes_ row is invalid!");
     }
-    for (auto i = 0; i < Size(); ++i) {
-        if ((eventTypes_[i] == MMAP_EVENT || eventTypes_[i] == MUNMAP_EVENT) && subTypes_[i] == INVALID_UINT64) {
-            if (addrToMmapTag_.count(addrs_[i])) {
-                subTypes_[i] = addrToMmapTag_.at(addrs_[i]);
-            }
-        }
-    }
-}
-void NativeHook::UpdateAddrToMemMapSubType(uint64_t addr, uint64_t tagId)
-{
-    addrToMmapTag_.emplace(addr, tagId);
 }
 void NativeHook::UpdateLastCallerPathIndexs(std::unordered_map<uint32_t, uint64_t>& callIdToLasLibId)
 {
@@ -2110,7 +2101,6 @@ const std::deque<uint64_t>& BioLatencySampleData::DurPer4k() const
 {
     return durPer4ks_;
 }
-#ifndef IS_PBDECODER
 DataSourceClockIdData::DataSourceClockIdData()
     : dataSource2ClockIdMap_({{DATA_SOURCE_TYPE_TRACE, TS_CLOCK_UNKNOW},
                               {DATA_SOURCE_TYPE_MEM, TS_CLOCK_UNKNOW},
@@ -2134,36 +2124,10 @@ DataSourceClockIdData::DataSourceClockIdData()
           {DATA_SOURCE_TYPE_CPU, "cpu-plugin"},
           {DATA_SOURCE_TYPE_PROCESS, "process-plugin"},
           {DATA_SOURCE_TYPE_HISYSEVENT, "hisysevent-plugin"},
-          {DATA_SOURCE_TYPE_JSMEMORY, "js-memory"},
+          {DATA_SOURCE_TYPE_JSMEMORY, "arkts-plugin"},
       })
 {
 }
-#else
-DataSourceClockIdData::DataSourceClockIdData()
-    : dataSource2ClockIdMap_({{DATA_SOURCE_TYPE_TRACE, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_MEM, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_HILOG, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_ALLOCATION, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_FPS, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_NETWORK, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_DISKIO, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_CPU, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_PROCESS, TS_CLOCK_UNKNOW},
-                              {DATA_SOURCE_TYPE_HISYSEVENT, TS_CLOCK_UNKNOW}}),
-      dataSource2PluginNameMap_({{DATA_SOURCE_TYPE_TRACE, "ftrace-plugin"},
-                                 {DATA_SOURCE_TYPE_MEM, "memory-plugin"},
-                                 {DATA_SOURCE_TYPE_HILOG, "hilog-plugin"},
-                                 {DATA_SOURCE_TYPE_ALLOCATION, "nativehook"},
-                                 {DATA_SOURCE_TYPE_FPS, "hidump-plugin"},
-                                 {DATA_SOURCE_TYPE_NETWORK, "network-plugin"},
-                                 {DATA_SOURCE_TYPE_DISKIO, "diskio-plugin"},
-                                 {DATA_SOURCE_TYPE_CPU, "cpu-plugin"},
-                                 {DATA_SOURCE_TYPE_PROCESS, "process-plugin"},
-                                 {DATA_SOURCE_TYPE_HISYSEVENT, "hisysevent-plugin"}})
-
-{
-}
-#endif
 void DataSourceClockIdData::Finish()
 {
     for (auto i = dataSource2ClockIdMap_.begin(); i != dataSource2ClockIdMap_.end(); i++) {
@@ -2329,14 +2293,19 @@ const size_t GPUSlice::Size() const
     return durs_.size();
 }
 
-size_t
-    JsHeapFiles::AppendNewData(uint32_t id, std::string filePath, uint64_t startTime, uint64_t endTime, uint32_t ipid)
+size_t JsHeapFiles::AppendNewData(uint32_t id,
+                                  std::string filePath,
+                                  uint64_t startTime,
+                                  uint64_t endTime,
+                                  uint32_t ipid,
+                                  uint64_t selfSizeCount)
 {
     fileIds_.emplace_back(id);
     filePaths_.emplace_back(filePath);
     startTimes_.emplace_back(startTime);
     endTimes_.emplace_back(endTime);
     ipids_.emplace_back(ipid);
+    selfSizeCount_.emplace_back(selfSizeCount);
     ids_.emplace_back(Size());
     return Size() - 1;
 }
@@ -2359,6 +2328,11 @@ const std::deque<uint64_t>& JsHeapFiles::EndTimes() const
 const std::deque<uint32_t>& JsHeapFiles::Pids() const
 {
     return ipids_;
+}
+
+const std::deque<uint64_t>& JsHeapFiles::SelfSizeCount() const
+{
+    return selfSizeCount_;
 }
 
 size_t JsHeapEdges::AppendNewData(uint32_t fileId,

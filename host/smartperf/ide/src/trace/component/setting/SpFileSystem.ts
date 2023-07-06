@@ -280,7 +280,7 @@ export class SpFileSystem extends BaseElement {
               HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((res) => {
                 fileSystemProcessData = [];
                 if (res) {
-                    let fileSystemValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
+                  let fileSystemValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
                   for (let lineVal of fileSystemValues) {
                     if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
                       continue;

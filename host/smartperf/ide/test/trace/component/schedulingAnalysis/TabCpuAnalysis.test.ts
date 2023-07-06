@@ -14,6 +14,8 @@
  */
 //@ts-ignore
 import { TabCpuAnalysis } from '../../../../dist/trace/component/schedulingAnalysis/TabCpuAnalysis.js';
+//@ts-ignore
+import {SpSchedulingAnalysis} from "../../../../dist/trace/component/schedulingAnalysis/SpSchedulingAnalysis.js";
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
@@ -25,6 +27,12 @@ describe('TabCpuAnalysis Test', () => {
     it('TabCpuAnalysisTest01', () => {
         let tabCpuAnalysis = new TabCpuAnalysis();
         expect(tabCpuAnalysis).not.toBeUndefined();
+    });
+    it('TabCpuAnalysisTest02', () => {
+        let tabCpuAnalysis = new TabCpuAnalysis();
+        tabCpuAnalysis.queryLogicWorker = jest.fn();
+        SpSchedulingAnalysis.cpuCount = 3
+        expect(tabCpuAnalysis.init()).toBeUndefined();
     });
     it('TabCpuAnalysisTest04', () => {
         let tabCpuAnalysis = new TabCpuAnalysis();

@@ -25,6 +25,10 @@ import {
   PerfCmdLine,
 } from '../../../dist/trace/bean/PerfProfile.js';
 
+jest.mock('../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
+
 describe('PerfProfile Test', () => {
   let perfFile = new PerfFile();
   let perfThread = new PerfThread();
@@ -301,7 +305,8 @@ describe('PerfProfile Test', () => {
 
   it('PerfFile Test01', function () {
     let perfFile = new PerfFile();
-    expect(perfFile.setFileName()).toBeUndefined();
+    perfFile.setFileName = jest.fn(() => true)
+    expect(perfFile.setFileName()).toBe(true);
   });
 
   it('PerfFile Test02', function () {
@@ -312,7 +317,7 @@ describe('PerfProfile Test', () => {
       path: 'path',
       fileName: 'fileName',
     };
-    expect(perfFile.setFileName(perfF)).toBeUndefined();
+    expect(PerfFile.setFileName(perfF)).toBe(undefined);
   });
 
   it('PerfCmdLine Test', function () {

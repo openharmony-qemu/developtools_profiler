@@ -26,6 +26,7 @@ export function HeapNodeToConstructorItem(node: HeapNode): ConstructorComparison
   constructor.distance = node.distance;
   constructor.shallowSize = node.selfSize;
   constructor.retainedSize = node.retainedSize;
+  constructor.nodeType = node.type;
   return constructor;
 }
 

@@ -55,7 +55,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
   private libStatisticsData!: any;
   private functionStatisticsData!: any;
   set data(vmStatisticsAnalysisSelection: SelectionParam | any) {
-    if (vmStatisticsAnalysisSelection == this.vmStatisticsAnalysisCurrentSelection) {
+    if (vmStatisticsAnalysisSelection === this.vmStatisticsAnalysisCurrentSelection) {
       this.vmStatisticsAnalysisPidData.unshift(this.processStatisticsData);
       this.vmStatisticsAnalysisTableProcess!.recycleDataSource = this.vmStatisticsAnalysisPidData;
       // @ts-ignore
@@ -71,7 +71,11 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     this.vmStatisticsAnalysisTableFunction!.style.display = 'none';
     this.back!.style.visibility = 'hidden';
     this.vmStatisticsAnalysisRange!.textContent =
-      'Selected range: ' + parseFloat(((vmStatisticsAnalysisSelection.rightNs - vmStatisticsAnalysisSelection.leftNs) / 1000000.0).toFixed(5)) + ' ms';
+      'Selected range: ' +
+      parseFloat(
+        ((vmStatisticsAnalysisSelection.rightNs - vmStatisticsAnalysisSelection.leftNs) / 1000000.0).toFixed(5)
+      ) +
+      ' ms';
     this.vmStatisticsAnalysisProgressEL!.loading = true;
     this.getDataByWorker(
       [
@@ -166,17 +170,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.vmStatisticsAnalysisTableProcess!.style.display = 'none';
-          this.vmStatisticsAnalysisTableType!.style.display = 'grid';
-          this.vmStatisticsAnalysisTableProcess!.setAttribute('hideDownload', '');
-          this.vmStatisticsAnalysisTableType?.removeAttribute('hideDownload');
-          this.getVirtualMemoryType(it, val);
-          // @ts-ignore
-          this.processName = it.tableName;
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.processName;
-          this.vmStatisticsAnalysisPie?.hideTip();
+          this.vmProcessLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -215,6 +209,24 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.vmStatisticsAnalysisTableProcess!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.vmProcessLevelClickEvent(data, val);
+      }
+    });
+  }
+  vmProcessLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.vmStatisticsAnalysisTableProcess!.style.display = 'none';
+    this.vmStatisticsAnalysisTableType!.style.display = 'grid';
+    this.vmStatisticsAnalysisTableProcess!.setAttribute('hideDownload', '');
+    this.vmStatisticsAnalysisTableType?.removeAttribute('hideDownload');
+    this.getVirtualMemoryType(it, val);
+    this.processName = it.tableName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.processName;
+    this.vmStatisticsAnalysisPie?.hideTip();
   }
   typePieChart(val: any) {
     this.vmStatisticsAnalysisPie!.config = {
@@ -235,18 +247,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
                                 `;
       },
       angleClick: (it) => {
-        // @ts-ignore
-        this.clearData();
-        this.vmStatisticsAnalysisTableType!.style.display = 'none';
-        this.vmStatisticsAnalysisTableThread!.style.display = 'grid';
-        this.vmStatisticsAnalysisTableType!.setAttribute('hideDownload', '');
-        this.vmStatisticsAnalysisTableThread?.removeAttribute('hideDownload');
-        this.getVirtualMemoryThread(it, val);
-        // @ts-ignore
-        this.typeName = it.tableName;
-        this.vmStatisticsAnalysisPie?.hideTip();
-        this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-          this.processName + ' / ' + this.typeName;
+        this.vmTypeLevelClickEvent(it, val);
       },
       hoverHandler: (data) => {
         if (data) {
@@ -284,6 +285,23 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.vmStatisticsAnalysisTableType!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.vmTypeLevelClickEvent(data, val);
+      }
+    });
+  }
+  vmTypeLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.vmStatisticsAnalysisTableType!.style.display = 'none';
+    this.vmStatisticsAnalysisTableThread!.style.display = 'grid';
+    this.vmStatisticsAnalysisTableType!.setAttribute('hideDownload', '');
+    this.vmStatisticsAnalysisTableThread?.removeAttribute('hideDownload');
+    this.getVirtualMemoryThread(it, val);
+    this.typeName = it.tableName;
+    this.vmStatisticsAnalysisPie?.hideTip();
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.processName + ' / ' + this.typeName;
   }
   threadPieChart(val: any) {
     this.sumDur = this.threadStatisticsData.allDuration;
@@ -307,18 +325,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.vmStatisticsAnalysisTableThread!.style.display = 'none';
-          this.vmStatisticsAnalysisTableSo!.style.display = 'grid';
-          this.vmStatisticsAnalysisTableThread!.setAttribute('hideDownload', '');
-          this.vmStatisticsAnalysisTableSo?.removeAttribute('hideDownload');
-          this.getVirtualMemorySo(it, val);
-          // @ts-ignore
-          this.threadName = it.tableName;
-          this.vmStatisticsAnalysisPie?.hideTip();
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-            this.processName + ' / ' + this.typeName + ' / ' + this.threadName;
+          this.vmThreadLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -357,6 +364,25 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.vmStatisticsAnalysisTableThread!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.vmThreadLevelClickEvent(data, val);
+      }
+    });
+  }
+  vmThreadLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.vmStatisticsAnalysisTableThread!.style.display = 'none';
+    this.vmStatisticsAnalysisTableSo!.style.display = 'grid';
+    this.vmStatisticsAnalysisTableThread!.setAttribute('hideDownload', '');
+    this.vmStatisticsAnalysisTableSo?.removeAttribute('hideDownload');
+    this.getVirtualMemorySo(it, val);
+    this.threadName = it.tableName;
+    this.vmStatisticsAnalysisPie?.hideTip();
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      this.processName + ' / ' + this.typeName + ' / ' + this.threadName;
   }
   libraryPieChart(val: any) {
     this.sumDur = this.libStatisticsData.allDuration;
@@ -380,17 +406,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.vmStatisticsAnalysisTableSo!.style.display = 'none';
-          this.vmStatisticsAnalysisTableFunction!.style.display = 'grid';
-          this.vmStatisticsAnalysisTableSo!.setAttribute('hideDownload', '');
-          this.vmStatisticsAnalysisTableFunction?.removeAttribute('hideDownload');
-          this.getVirtualMemoryFunction(it, val);
-          this.vmStatisticsAnalysisPie?.hideTip();
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-            // @ts-ignore
-            this.processName + ' / ' + this.typeName + ' / ' + this.threadName + ' / ' + it.tableName;
+          this.vmSoLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -430,6 +446,24 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.vmStatisticsAnalysisTableSo!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.vmSoLevelClickEvent(data, val);
+      }
+    });
+  }
+  vmSoLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.vmStatisticsAnalysisTableSo!.style.display = 'none';
+    this.vmStatisticsAnalysisTableFunction!.style.display = 'grid';
+    this.vmStatisticsAnalysisTableSo!.setAttribute('hideDownload', '');
+    this.vmStatisticsAnalysisTableFunction?.removeAttribute('hideDownload');
+    this.getVirtualMemoryFunction(it, val);
+    this.vmStatisticsAnalysisPie?.hideTip();
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      this.processName + ' / ' + this.typeName + ' / ' + this.threadName + ' / ' + it.tableName;
   }
   sortByColumn(column: string, vmsSort: number) {
     this.vmStatisticsAnalysisSortColumn = column;
@@ -455,7 +489,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     if (!vmsCurrentTable) {
       return;
     }
-    if (vmsSort == 0) {
+    if (vmsSort === 0) {
       let vmsArr = [...this.currentLevelData];
       switch (this.currentLevel) {
         case 0:
@@ -477,12 +511,12 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       vmsCurrentTable!.recycleDataSource = vmsArr;
     } else {
       let vmsArr = [...this.currentLevelData];
-      if (column == 'tableName') {
+      if (column === 'tableName') {
         vmsCurrentTable!.recycleDataSource = vmsArr.sort((a, b) => {
-          if (vmsSort == 1) {
+          if (vmsSort === 1) {
             if (a.tableName > b.tableName) {
               return 1;
-            } else if (a.tableName == b.tableName) {
+            } else if (a.tableName === b.tableName) {
               return 0;
             } else {
               return -1;
@@ -490,20 +524,16 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
           } else {
             if (b.tableName > a.tableName) {
               return 1;
-            } else if (a.tableName == b.tableName) {
+            } else if (a.tableName === b.tableName) {
               return 0;
             } else {
               return -1;
             }
           }
         });
-      } else if (column == 'durFormat') {
+      } else if (column === 'durFormat' || column === 'percent') {
         vmsCurrentTable!.recycleDataSource = vmsArr.sort((a, b) => {
-          return vmsSort == 1 ? a.duration - b.duration : b.duration - a.duration;
-        });
-      } else if (column == 'percent') {
-        vmsCurrentTable!.recycleDataSource = vmsArr.sort((a, b) => {
-          return vmsSort == 1 ? a.duration - b.duration : b.duration - a.v;
+          return vmsSort === 1 ? a.duration - b.duration : b.duration - a.duration;
         });
       }
       switch (this.currentLevel) {
@@ -529,7 +559,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
   getVirtualMemoryProcess(val: any, result: Array<any>) {
     this.vmStatisticsAnalysisProgressEL!.loading = true;
     this.vmStatisticsAnalysisProcessData = JSON.parse(JSON.stringify(result));
-    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length == 0) {
+    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length === 0) {
       this.vmStatisticsAnalysisPidData = [];
       this.processStatisticsData = [];
       this.processPieChart(val);
@@ -553,7 +583,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       let pName = '';
       for (let item of value) {
         pName = item.processName =
-          item.processName == null || item.processName == undefined
+          item.processName === null || item.processName === undefined
             ? `Process(${item.pid})`
             : `${item.processName}(${item.pid})`;
         dur += item.dur;
@@ -572,13 +602,22 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     this.currentLevel = 0;
     this.vmStatisticsAnalysisProgressEL!.loading = false;
     this.processPieChart(val);
+    new ResizeObserver(() => {
+      if (this.parentElement?.clientHeight != 0) {
+        this.vmStatisticsAnalysisTableProcess!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.vmStatisticsAnalysisTableType!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.vmStatisticsAnalysisTableThread!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.vmStatisticsAnalysisTableSo!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.vmStatisticsAnalysisTableFunction!.style.height = this.parentElement!.clientHeight - 40 + 'px';
+      }
+    }).observe(this.parentElement!);
   }
   getVirtualMemoryType(item: any, val: any) {
     this.vmStatisticsAnalysisProgressEL!.loading = true;
     let typeMap = new Map<string, Array<any>>();
     let pid = item.pid;
     let allDur = 0;
-    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length == 0) {
+    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let vmsItem of this.vmStatisticsAnalysisProcessData) {
@@ -622,7 +661,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     let pid = item.pid;
     let type = item.type;
     let allDur = 0;
-    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length == 0) {
+    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let vmapItem of this.vmStatisticsAnalysisProcessData) {
@@ -645,7 +684,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         dur += item.dur;
         tName = item.threadName =
-          item.threadName == null || item.threadName == undefined ? `Thread(${item.tid})` : `${item.threadName}`;
+          item.threadName === null || item.threadName === undefined ? `Thread(${item.tid})` : `${item.threadName}`;
       }
       const threadData = {
         tableName: tName,
@@ -671,7 +710,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     let type = item.type;
     let allDur = 0;
     let libMap = new Map<number, Array<any>>();
-    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length == 0) {
+    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let vmItemData of this.vmStatisticsAnalysisProcessData) {
@@ -693,7 +732,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       let vmLibName = '';
       for (let item of value) {
         dur += item.dur;
-        if (key == null) {
+        if (key === null) {
           item.libName = 'unkown';
         }
         vmLibName = item.libName;
@@ -730,11 +769,16 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     let libId = item.libId;
     let allDur = 0;
     let symbolMap = new Map<number, Array<any>>();
-    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length == 0) {
+    if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let vmProcessData of this.vmStatisticsAnalysisProcessData) {
-      if (vmProcessData.pid !== pid || vmProcessData.tid !== tid || vmProcessData.type !== type || vmProcessData.libId !== libId) {
+      if (
+        vmProcessData.pid !== pid ||
+        vmProcessData.tid !== tid ||
+        vmProcessData.type !== type ||
+        vmProcessData.libId !== libId
+      ) {
         continue;
       }
       allDur += vmProcessData.dur;
@@ -827,9 +871,9 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
   }
   typeIdToString(type: any) {
     let releaseType: any;
-    if (type == 1) {
+    if (type === 1) {
       releaseType = 'File Backed In';
-    } else if (type == 7) {
+    } else if (type === 7) {
       releaseType = 'Copy On Writer';
     }
     return releaseType;

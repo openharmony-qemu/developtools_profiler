@@ -793,7 +793,7 @@ export class TabPaneFilter extends BaseElement {
             display: flex;
         }
 </style>
-    <lit-icon name="statistics" class="spacing" id="icon" size="20"></lit-icon>
+    <lit-icon name="menu" class="spacing" id="icon" size="20"></lit-icon>
     <span class="describe left-text spacing">Input Filter</span>
     <input id="filter-input" class="spacing" placeholder="${this.inputPlaceholder}"/>
     <button id="mark" class="spacing">Mark Snapshot</button>

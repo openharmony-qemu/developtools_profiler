@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../ts.gni")
+import("../../../build/ts.gni")
 ohos_source_set("hiperf_parser_src") {
   subsystem_name = "trace_streamer"
   part_name = "hiperf_parser_src"
@@ -29,7 +29,6 @@ ohos_source_set("hiperf_parser_src") {
     "../../filter",
     "../../trace_data",
     "..",
-    "../htrace_pbreader_parser",
     "../../trace_streamer",
     "${THIRD_PARTY}/sqlite/include",
     "${OHOS_PROTO_GEN}/types/plugins/memory_data",
@@ -62,7 +61,4 @@ group("hiperf_parser") {
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
   ]
-  if (target != "test" && !is_openharmony) {
-    deps += [ "${PREBUILTS}/protos:ts_proto_data_cpp" ]
-  }
 }

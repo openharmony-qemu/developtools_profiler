@@ -26,7 +26,7 @@ PRJ_ROOT_DIR=$(readlink -f -- "$(dirname $0)/")
 cd ${PRJ_ROOT_DIR}
 FORMAT_DIR_LIST=(
     "${PRJ_ROOT_DIR}/src"
-    "${PRJ_ROOT_DIR}/sdk/demo_sdk"
+    "${PRJ_ROOT_DIR}/sdk"
     "${PRJ_ROOT_DIR}/test"
 )
 echo "formatting code ..."

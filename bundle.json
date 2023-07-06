@@ -1,5 +1,5 @@
 {
-  "name": "@ohos/profiler",
+  "name": "@ohos/hiprofiler",
   "description": "Performance profiler that provides an analytics tool for the memory, bytrace plug-in, and IDE, as well as plug-in capabilities",
   "version": "3.09",
   "license": "Apache License 2.0",
@@ -10,10 +10,10 @@
   "dirs": {},
   "scripts": {},
   "component": {
-    "name": "profiler",
+    "name": "hiprofiler",
     "subsystem": "developtools",
     "features": [
-      "profiler_SmartPerf"
+      "hiprofiler_SmartPerf"
     ],
     "syscap": [
       "SystemCapability.HiviewDFX.HiProfiler.HiDebug"
@@ -25,25 +25,29 @@
     "ram": "2000KB",
     "deps": {
       "components": [
-        "hiviewdfx_hilog_native",
         "ability_runtime",
         "ability_base",
-        "common",
-        "zlib",
-        "hidumper",
         "bundle_framework",
+        "common_event_service",
+        "c_utils",
+        "faultloggerd",
+        "hidumper",
+        "hilog",
         "hiview",
-        "bounds_checking_function",
         "ipc",
         "init",
-        "hilog_native",
         "napi",
-        "samgr",
-        "c_utils"
+        "safwk",
+        "samgr"
       ],
       "third_party": [
+        "bounds_checking_function",
         "googletest",
-        "utils",
+        "grpc",
+        "libbpf",
+        "libunwind",
+        "openssl",
+        "protobuf",
         "zlib"
       ]
     },
@@ -55,7 +59,6 @@
         "//developtools/profiler/host/smartperf/client/:SmartPerf",
         "//developtools/profiler/host/smartperf/client/client_command_fps/:GP_daemon_fps",
         "//developtools/profiler/hiebpf:hiebpf_tool",
-        "//developtools/profiler/transitto:transitto_tool",
         "//developtools/profiler/timestamps:timestamps_tool"
       ],
       "inner_kits": [

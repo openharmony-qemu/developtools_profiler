@@ -80,7 +80,15 @@ export class SmapsRender extends Render {
 
   render(smapsReq: RequestMessage, list: Array<any>, filter: Array<any>) {
     if (smapsReq.lazyRefresh) {
-      smaps(list, filter, smapsReq.startNS, smapsReq.endNS, smapsReq.totalNS, smapsReq.frame, smapsReq.useCache || !smapsReq.range.refresh);
+      smaps(
+        list,
+        filter,
+        smapsReq.startNS,
+        smapsReq.endNS,
+        smapsReq.totalNS,
+        smapsReq.frame,
+        smapsReq.useCache || !smapsReq.range.refresh
+      );
     } else {
       if (!smapsReq.useCache) {
         smaps(list, filter, smapsReq.startNS, smapsReq.endNS, smapsReq.totalNS, smapsReq.frame, false);
@@ -219,7 +227,12 @@ export class SmapsStruct extends BaseStruct {
       if (data.startNS === SmapsStruct.hoverSmapsStruct?.startNS && isHover) {
         smapsContext.lineWidth = 1;
         let smapsDrawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxValue);
-        smapsContext.fillRect(data.frame.x, data.frame.y + data.frame.height - smapsDrawHeight + 4, width, smapsDrawHeight);
+        smapsContext.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - smapsDrawHeight + 4,
+          width,
+          smapsDrawHeight
+        );
         smapsContext.beginPath();
         smapsContext.arc(data.frame.x, data.frame.y + data.frame.height - smapsDrawHeight + 4, 3, 0, 2 * Math.PI, true);
         smapsContext.fill();
@@ -233,7 +246,12 @@ export class SmapsStruct extends BaseStruct {
       } else {
         smapsContext.lineWidth = 1;
         let smapsDrawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxValue);
-        smapsContext.fillRect(data.frame.x, data.frame.y + data.frame.height - smapsDrawHeight + 4, width, smapsDrawHeight);
+        smapsContext.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - smapsDrawHeight + 4,
+          width,
+          smapsDrawHeight
+        );
       }
     }
     smapsContext.globalAlpha = 1.0;

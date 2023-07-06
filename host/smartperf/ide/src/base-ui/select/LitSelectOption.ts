@@ -30,9 +30,10 @@ export class LitSelectOption extends BaseElement {
             transition: all .3s;
             color: var(--dark-color2,#333);
             tab-index: -1;
-            /*overflow: scroll;*/
             align-items: center;
-            /*justify-content: space-between;*/
+            width: 100%;
+            max-lines: 1;
+            white-space: nowrap;
             font-size: 0.8rem;
         }
         :host(:not([disabled])[selected]){

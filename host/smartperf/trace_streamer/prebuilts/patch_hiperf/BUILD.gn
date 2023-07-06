@@ -12,10 +12,32 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../src/ts.gni")
+import("../../build/ts.gni")
+ohos_source_set("elf") {
+  subsystem_name = "trace_streamer"
+  part_name = "elf"
+  configs -= [ "../../gn:trace_cfg" ]
+  configs += [ "../../gn:hiperf_trace_cfg" ]
+  sources = [
+    "include/elf_parser.h",
+    "src/elf_file.cpp",
+    "src/elf_header.cpp",
+    "src/program_header.cpp",
+    "src/section_header.cpp",
+    "src/utilities.cpp",
+  ]
+  include_dirs = [
+    "include",
+    "${SRC}/base",
+    "include/nonlinux/linux",
+    "include/nonlinux",
+    "${THIRD_PARTY}/perf_include/musl",
+    "${SRC}/../prebuilts/emsdk/node/16.20.0_64bit/include/node",
+  ]
+}
 ohos_source_set("hiperf_src") {
-  configs -= [ "${ROOT_DIR}gn:trace_cfg" ]
-  configs += [ "${ROOT_DIR}gn:hiperf_trace_cfg" ]
+  configs -= [ "../../gn:trace_cfg" ]
+  configs += [ "../../gn:hiperf_trace_cfg" ]
   subsystem_name = "trace_streamer"
   part_name = "hiperf_src"
   cflags = [ "-D ALWAYSTRUE" ]
@@ -24,22 +46,17 @@ ohos_source_set("hiperf_src") {
     "./src/callstack.h",
     "./src/dwarf_encoding.cpp",
     "./src/dwarf_encoding.h",
-    "./src/elf_file.cpp",
-    "./src/elf_header.cpp",
     "./src/elf_symbol.cpp",
     "./src/hashlist.h",
     "./src/option.cpp",
     "./src/perf_event_record.cpp",
     "./src/perf_file_format.cpp",
     "./src/perf_file_reader.cpp",
-    "./src/program_header.cpp",
     "./src/register.cpp",
     "./src/register.h",
     "./src/report.cpp",
-    "./src/section_header.cpp",
     "./src/subcommand.cpp",
     "./src/symbols_file.cpp",
-    "./src/utilities.cpp",
     "./src/virtual_runtime.cpp",
     "./src/virtual_thread.cpp",
     "include/symbols_file.h",
@@ -67,11 +84,9 @@ ohos_source_set("hiperf_src") {
 
 group("hiperf") {
   deps = [
+    ":elf",
     ":hiperf_src",
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
   ]
-  if (target != "test" && !is_openharmony) {
-    deps += [ "//prebuilts/protos:ts_proto_data_cpp" ]
-  }
 }

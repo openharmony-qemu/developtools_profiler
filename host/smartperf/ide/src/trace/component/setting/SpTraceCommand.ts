@@ -24,18 +24,6 @@ export class SpTraceCommand extends BaseElement {
   private copyEl: HTMLElement | undefined | null;
   private codeCopyText: HTMLInputElement | undefined;
 
-  set show(show: boolean) {
-    if (show) {
-      this.setAttribute('show', '');
-    } else {
-      this.removeAttribute('show');
-    }
-  }
-
-  get show() {
-    return this.hasAttribute('show');
-  }
-
   get hdcCommon(): string {
     return this.codeHl!.textContent + '';
   }
@@ -163,34 +151,12 @@ export class SpTraceCommand extends BaseElement {
           border-radius: 6px;
           background-color: var(--dark-background7,#e7c9c9);
         }
-        
-        #stop-button{
-           display: none;
-           border-radius: 15px;
-           background-color: #0A59F7;
-           width: 120px;
-           height: 32px;
-           font-family: Helvetica-Bold;
-           font-size: 14px;
-           color: #FFFFFF;
-           text-align: center;
-           line-height: 20px;
-           margin-left: 80%;
-           border: 1px solid #FFFFFF;
-           opacity: 0.6;
-           cursor:pointer;
-        }
-        
-        :host([show]) #stop-button {
-            display: block
-        } 
         </style>
         <div id="text-cmd">
             <button id="copy-button">
                 <img id="copy-image" src="img/copy.png">
             </button>
             <textarea id="code-text" readonly></textarea>
-            <button id="stop-button">Stop Cmd</button>
         </div>
         `;
   }

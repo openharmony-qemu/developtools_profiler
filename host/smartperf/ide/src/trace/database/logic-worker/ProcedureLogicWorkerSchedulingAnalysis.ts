@@ -31,6 +31,17 @@ export class ProcedureLogicWorkerSchedulingAnalysis extends LogicHandler {
   processMap: Map<number, string> = new Map<number, string>();
   cpuAnalysisMap: Map<string, any> = new Map<string, any>();
 
+  clearAll() {
+    this.bigCores.length = 0;
+    this.midCores.length = 0;
+    this.smallCores.length = 0;
+    this.cpuAnalysisMap.clear();
+    this.threadMap.clear();
+    this.processMap.clear();
+    this.cpuFreqMap.clear();
+    this.cpuIdle0Map.clear();
+  }
+
   handle(data: any): void {
     this.currentEventId = data.id;
     if (data.params.endTs) {
@@ -41,11 +52,7 @@ export class ProcedureLogicWorkerSchedulingAnalysis extends LogicHandler {
     if (data && data.type) {
       switch (data.type) {
         case 'scheduling-clearData':
-          this.cpuAnalysisMap.clear();
-          this.threadMap.clear();
-          this.processMap.clear();
-          this.cpuFreqMap.clear();
-          this.cpuIdle0Map.clear();
+          this.clearAll();
           self.postMessage({
             id: data.id,
             action: data.action,

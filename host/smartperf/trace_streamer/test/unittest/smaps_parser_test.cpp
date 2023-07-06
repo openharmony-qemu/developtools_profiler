@@ -17,6 +17,8 @@
 #include <hwext/gtest-tag.h>
 
 #include "htrace_mem_parser.h"
+#include "memory_plugin_result.pb.h"
+#include "memory_plugin_result.pbreader.h"
 #include "trace_streamer_selector.h"
 
 using namespace testing::ext;
@@ -60,7 +62,11 @@ HWTEST_F(SmapsParserTest, ParseSmapsParse, TestSize.Level1)
     uint64_t timeStamp = 1616439852302;
     BuiltinClocks clock = TS_CLOCK_BOOTTIME;
 
-    SmapsEvent.ParseProcessInfo(tracePacket, timeStamp);
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    ProtoReader::MemoryData_Reader memData(memBytesView);
+    SmapsEvent.ParseProcessInfo(&memData, timeStamp);
     SmapsEvent.Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -107,7 +113,11 @@ HWTEST_F(SmapsParserTest, ParseSmapsParseTestMeasureDataSize, TestSize.Level1)
     SmapsInfo->set_pss(pss);
     SmapsInfo->set_reside(reside);
 
-    SmapsEvent.ParseProcessInfo(tracePacket, timeStamp);
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    ProtoReader::MemoryData_Reader memData(memBytesView);
+    SmapsEvent.ParseProcessInfo(&memData, timeStamp);
     SmapsEvent.Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -189,7 +199,11 @@ HWTEST_F(SmapsParserTest, ParseSmapsParseTestMutiMeasureData, TestSize.Level1)
     smapsInfo1->set_pss(pss1);
     smapsInfo1->set_reside(reside1);
 
-    SmapsEvent.ParseProcessInfo(tracePacket, timeStamp);
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    ProtoReader::MemoryData_Reader memData(memBytesView);
+    SmapsEvent.ParseProcessInfo(&memData, timeStamp);
     SmapsEvent.Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -245,7 +259,11 @@ HWTEST_F(SmapsParserTest, ParseMutiEmptySmapsDataAndCountStatInfo, TestSize.Leve
     size = memInfo->smapinfo_size();
     EXPECT_TRUE(size == 2);
 
-    SmapsEvent.ParseProcessInfo(tracePacket, timeStamp);
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    ProtoReader::MemoryData_Reader memData(memBytesView);
+    SmapsEvent.ParseProcessInfo(&memData, timeStamp);
     SmapsEvent.Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -272,7 +290,11 @@ HWTEST_F(SmapsParserTest, ParseEmptySmapsData, TestSize.Level1)
     uint64_t timeStamp = 1616439852302;
     BuiltinClocks clock = TS_CLOCK_BOOTTIME;
 
-    SmapsEvent.ParseProcessInfo(tracePacket, timeStamp);
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    ProtoReader::MemoryData_Reader memData(memBytesView);
+    SmapsEvent.ParseProcessInfo(&memData, timeStamp);
     SmapsEvent.Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 

@@ -61,6 +61,12 @@ export class Utils {
     return Utils.instance;
   }
 
+  public static clearData() {
+    Utils.THREAD_MAP.clear();
+    Utils.PROCESS_MAP.clear();
+    Utils.SCHED_SLICE_MAP.clear();
+  }
+
   public static getEndState(state: string): string {
     if (Utils.getInstance().getStatusMap().has(state)) {
       return Utils.getInstance().getStatusMap().get(state) || 'Unknown State';

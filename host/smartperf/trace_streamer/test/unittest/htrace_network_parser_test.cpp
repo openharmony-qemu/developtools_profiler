@@ -19,6 +19,8 @@
 #include <memory>
 
 #include "htrace_network_parser.h"
+#include "network_plugin_result.pb.h"
+#include "network_plugin_result.pbreader.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/common_types.h"
 #include "trace_streamer_selector.h"
@@ -50,9 +52,13 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithoutNetworkData, TestSize
 {
     TS_LOGI("test17-1");
     uint64_t ts = 100;
-    auto networkDatas = std::make_unique<NetworkDatas>();
-    HtraceNetworkParser htraceProcessParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceProcessParser.Parse(*networkDatas, ts);
+    auto networkInfo = std::make_unique<NetworkDatas>();
+    std::string networkData = "";
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+
+    HtraceNetworkParser htraceNetworkParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
+    htraceNetworkParser.Parse(networkInfoData, ts);
     auto size = stream_.traceDataCache_->GetConstNetworkData().Size();
     EXPECT_FALSE(size);
 }
@@ -72,16 +78,20 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithNetworkData, TestSize.Le
     const uint64_t PACKETIN = 11431;
     const uint64_t PACKETOUT = 7373;
 
-    auto networkDatas = std::make_unique<NetworkDatas>();
+    auto networkInfo = std::make_unique<NetworkDatas>();
     NetworkSystemData* networkSystemData = new NetworkSystemData();
     networkSystemData->set_rx_bytes(RX);
     networkSystemData->set_tx_bytes(TX);
     networkSystemData->set_rx_packets(PACKETIN);
     networkSystemData->set_tx_packets(PACKETOUT);
-    networkDatas->set_allocated_network_system_info(networkSystemData);
+    networkInfo->set_allocated_network_system_info(networkSystemData);
+
+    std::string networkData = "";
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
 
     HtraceNetworkParser htraceNetworkParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    htraceNetworkParser.Parse(networkInfoData, ts);
     htraceNetworkParser.Finish();
     auto size = stream_.traceDataCache_->GetConstNetworkData().Size();
     EXPECT_FALSE(size);
@@ -96,7 +106,7 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithTwoNetworkData, TestSize
 {
     TS_LOGI("test17-3");
     uint64_t ts = 100;
-    auto networkDatas = std::make_unique<NetworkDatas>();
+    auto networkInfo = std::make_unique<NetworkDatas>();
 
     const uint64_t DURS_01 = 1999632781;
     const uint64_t TX_01 = 712921;
@@ -108,9 +118,14 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithTwoNetworkData, TestSize
     networkSystemDataFirst->set_tx_bytes(TX_01);
     networkSystemDataFirst->set_rx_packets(PACKETIN_01);
     networkSystemDataFirst->set_tx_packets(PACKETOUT_01);
-    networkDatas->set_allocated_network_system_info(networkSystemDataFirst);
+    networkInfo->set_allocated_network_system_info(networkSystemDataFirst);
+
+    std::string networkData = "";
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData01(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+
     HtraceNetworkParser htraceNetworkParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    htraceNetworkParser.Parse(networkInfoData01, ts);
 
     const uint64_t DURS_02 = 1999632782;
     const uint64_t TX_02 = 712922;
@@ -122,8 +137,12 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithTwoNetworkData, TestSize
     networkSystemDataSecond->set_tx_bytes(TX_02);
     networkSystemDataSecond->set_rx_packets(PACKETIN_02);
     networkSystemDataSecond->set_tx_packets(PACKETOUT_02);
-    networkDatas->set_allocated_network_system_info(networkSystemDataSecond);
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    networkInfo->set_allocated_network_system_info(networkSystemDataSecond);
+
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData02(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+
+    htraceNetworkParser.Parse(networkInfoData02, ts);
     htraceNetworkParser.Finish();
 
     auto tx = stream_.traceDataCache_->GetConstNetworkData().TxDatas()[0];
@@ -145,7 +164,7 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithThreeNetworkData, TestSi
 {
     TS_LOGI("test17-4");
     uint64_t ts = 100;
-    auto networkDatas = std::make_unique<NetworkDatas>();
+    auto networkInfo = std::make_unique<NetworkDatas>();
 
     const uint64_t DURS_01 = 1999632781;
     const uint64_t TX_01 = 712921;
@@ -157,9 +176,14 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithThreeNetworkData, TestSi
     networkSystemDataFirst->set_tx_bytes(TX_01);
     networkSystemDataFirst->set_rx_packets(PACKETIN_01);
     networkSystemDataFirst->set_tx_packets(PACKETOUT_01);
-    networkDatas->set_allocated_network_system_info(networkSystemDataFirst);
+    networkInfo->set_allocated_network_system_info(networkSystemDataFirst);
+
+    std::string networkData = "";
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData01(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+
     HtraceNetworkParser htraceNetworkParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    htraceNetworkParser.Parse(networkInfoData01, ts);
 
     const uint64_t DURS_02 = 1999632782;
     const uint64_t TX_02 = 712922;
@@ -171,8 +195,11 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithThreeNetworkData, TestSi
     networkSystemDataSecond->set_tx_bytes(TX_02);
     networkSystemDataSecond->set_rx_packets(PACKETIN_02);
     networkSystemDataSecond->set_tx_packets(PACKETOUT_02);
-    networkDatas->set_allocated_network_system_info(networkSystemDataSecond);
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    networkInfo->set_allocated_network_system_info(networkSystemDataSecond);
+
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData02(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+    htraceNetworkParser.Parse(networkInfoData02, ts);
 
     const uint64_t DURS_03 = 1999632783;
     const uint64_t TX_03 = 712923;
@@ -184,8 +211,11 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithThreeNetworkData, TestSi
     networkSystemDataThird->set_tx_bytes(TX_03);
     networkSystemDataThird->set_rx_packets(PACKETIN_03);
     networkSystemDataThird->set_tx_packets(PACKETOUT_03);
-    networkDatas->set_allocated_network_system_info(networkSystemDataThird);
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    networkInfo->set_allocated_network_system_info(networkSystemDataThird);
+
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData03(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+    htraceNetworkParser.Parse(networkInfoData03, ts);
     htraceNetworkParser.Finish();
 
     auto txFirst = stream_.traceDataCache_->GetConstNetworkData().TxDatas()[0];
@@ -215,7 +245,7 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithMultipleNetworkData, Tes
 {
     TS_LOGI("test17-5");
     uint64_t ts = 100;
-    auto networkDatas = std::make_unique<NetworkDatas>();
+    auto networkInfo = std::make_unique<NetworkDatas>();
 
     const uint64_t DURS_01 = 1999632781;
     const uint64_t TX_01 = 712921;
@@ -227,9 +257,14 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithMultipleNetworkData, Tes
     networkSystemDataFirst->set_tx_bytes(TX_01);
     networkSystemDataFirst->set_rx_packets(PACKETIN_01);
     networkSystemDataFirst->set_tx_packets(PACKETOUT_01);
-    networkDatas->set_allocated_network_system_info(networkSystemDataFirst);
+    networkInfo->set_allocated_network_system_info(networkSystemDataFirst);
+
+    std::string networkData = "";
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData01(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+
     HtraceNetworkParser htraceNetworkParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    htraceNetworkParser.Parse(networkInfoData01, ts);
 
     const uint64_t DURS_02 = 1999632782;
     const uint64_t TX_02 = 712922;
@@ -241,8 +276,11 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithMultipleNetworkData, Tes
     networkSystemDataSecond->set_tx_bytes(TX_02);
     networkSystemDataSecond->set_rx_packets(PACKETIN_02);
     networkSystemDataSecond->set_tx_packets(PACKETOUT_02);
-    networkDatas->set_allocated_network_system_info(networkSystemDataSecond);
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    networkInfo->set_allocated_network_system_info(networkSystemDataSecond);
+
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData02(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+    htraceNetworkParser.Parse(networkInfoData02, ts);
 
     const uint64_t DURS_03 = 1999632783;
     const uint64_t TX_03 = 712923;
@@ -254,8 +292,11 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithMultipleNetworkData, Tes
     networkSystemDataThird->set_tx_bytes(TX_03);
     networkSystemDataThird->set_rx_packets(PACKETIN_03);
     networkSystemDataThird->set_tx_packets(PACKETOUT_03);
-    networkDatas->set_allocated_network_system_info(networkSystemDataThird);
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    networkInfo->set_allocated_network_system_info(networkSystemDataThird);
+
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData03(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+    htraceNetworkParser.Parse(networkInfoData03, ts);
 
     const uint64_t DURS_04 = 1999632784;
     const uint64_t TX_04 = 712924;
@@ -267,8 +308,11 @@ HWTEST_F(HtraceNetworkParserTest, ParseHtraceNetworkWithMultipleNetworkData, Tes
     networkSystemDataForth->set_tx_bytes(TX_04);
     networkSystemDataForth->set_rx_packets(PACKETIN_04);
     networkSystemDataForth->set_tx_packets(PACKETOUT_04);
-    networkDatas->set_allocated_network_system_info(networkSystemDataForth);
-    htraceNetworkParser.Parse(*networkDatas, ts);
+    networkInfo->set_allocated_network_system_info(networkSystemDataForth);
+
+    networkInfo->SerializeToString(&networkData);
+    ProtoReader::BytesView networkInfoData04(reinterpret_cast<const uint8_t*>(networkData.data()), networkData.size());
+    htraceNetworkParser.Parse(networkInfoData04, ts);
     htraceNetworkParser.Finish();
 
     auto txFirst = stream_.traceDataCache_->GetConstNetworkData().TxDatas()[0];

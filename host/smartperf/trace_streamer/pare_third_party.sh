@@ -26,28 +26,24 @@ cd third_party
 
 if [ ! -f "sqlite/BUILD.gn" ];then
     rm -rf sqlite
-    git clone git@gitee.com:openharmony/third_party_sqlite.git
+    git clone https://gitee.com/openharmony/third_party_sqlite.git
     if [ -d "third_party_sqlite" ];then
         mv third_party_sqlite sqlite
-        $cp ../prebuilts/patch_sqlite/sqlite3build.gn ../third_party/sqlite/BUILD.gn 
-    else
-        echo 'third_party_sqlite not exist'
+        $cp ../prebuilts/patch_sqlite/sqlite3build.gn ../third_party/sqlite/BUILD.gn
     fi
 fi
 if [ ! -f "protobuf/BUILD.gn" ];then
     rm -rf protobuf
-    git clone git@gitee.com:openharmony/third_party_protobuf.git
+    git clone https://gitee.com/openharmony/third_party_protobuf.git
     if [ -d "third_party_protobuf" ];then
         mv third_party_protobuf protobuf
         $cp ../prebuilts/patch_protobuf/protobufbuild.gn ../third_party/protobuf/BUILD.gn
-    else
-        echo 'third_party_protobuf not exist'
     fi
 fi
 
 if [ ! -f "googletest/BUILD.gn" ];then
     rm -rf googletest
-    git clone git@gitee.com:openharmony/third_party_googletest.git
+    git clone https://gitee.com/openharmony/third_party_googletest.git
     if [ -d "third_party_googletest" ];then
         mv third_party_googletest googletest
         $cp ../prebuilts/patch_googletest/googletestbuild.gn ../third_party/googletest/BUILD.gn
@@ -55,30 +51,23 @@ if [ ! -f "googletest/BUILD.gn" ];then
         $patch -p0 ../third_party/googletest/googletest/include/gtest/internal/gtest-port.h ../prebuilts/patch_googletest/gtest_port.h.patch
         $patch -p0 ../third_party/googletest/googletest/include/gtest/gtest-message.h ../prebuilts/patch_googletest/gtest-message.h.patch
         $sed -i "/using ::std::string/s/^\(.*\)$/\/\/\1/g" ../third_party/googletest/googletest/include/gtest/hwext/gtest-tag.h
-
-    else
-        echo 'third_party_googletest not exist'
     fi
 fi
 
 if [ ! -f "json-master/BUILD.gn" ];then
     rm -rf json-master
-    git clone git@gitee.com:openharmony/third_party_json.git
+    git clone https://gitee.com/openharmony/third_party_json.git
     if [ -d "third_party_json" ];then
         mv third_party_json json-master
-    else
-        echo 'third_party_json not exist'
     fi
 fi
 
 if [ ! -f "libunwind/BUILD.gn" ];then
     rm -rf libunwind
-    git clone git@gitee.com:openharmony/third_party_libunwind.git
+    git clone https://gitee.com/openharmony/third_party_libunwind.git
     if [ -d "third_party_libunwind" ];then
         mv third_party_libunwind libunwind
         $cp ../prebuilts/patch_libunwind/libunwindbuild.gn libunwind/BUILD.gn
-    else
-        echo 'third_party_libunwind not exist'
     fi
 fi
 
@@ -99,7 +88,7 @@ fi
 
 if [ ! -f "hiperf/BUILD.gn" ];then
     rm -rf hiperf developtools_hiperf
-    git clone -b OpenHarmony-3.2-Release --depth=1 git@gitee.com:openharmony/developtools_hiperf.git
+    git clone -b OpenHarmony-3.2-Release --depth=1 https://gitee.com/openharmony/developtools_hiperf.git
     if [ -d "developtools_hiperf" ];then
         mv developtools_hiperf hiperf
         $cp ../prebuilts/patch_hiperf/BUILD.gn ../third_party/hiperf/BUILD.gn
@@ -124,14 +113,7 @@ if [ ! -f "hiperf/BUILD.gn" ];then
         $cp ../prebuilts/patch_hiperf/file_ex.h hiperf/include/nonlinux/linux
         $cp ../prebuilts/patch_hiperf/unique_fd.h hiperf/include/nonlinux/linux
         $sed -i "/using __s8 = char;/a #define unw_word_t uint64_t" hiperf/include/nonlinux/linux/types.h
-        $sed -i "/#include <zlib.h>/s/^\(.*\)$/\/\/\1/g" hiperf/src/utilities.cpp
-        $sed -i '/^bool CompressFile(/,/^}/ s/^.*$/\/\/&/; /^bool CompressFile(/,/return true;/ s/^[[:blank:]]*/    /' hiperf/src/utilities.cpp
-        $sed -i '/^bool UncompressFile(/,/^}/ s/^.*$/\/\/&/; /^bool UncompressFile(/,/return true;/ s/^[[:blank:]]*/    /' hiperf/src/utilities.cpp
         $sed -i '/^void Report::PrepareConsole(/,/^}/ s/^.*$/\/\/&/; /^void Report::PrepareConsole(/,/return;/ s/^[[:blank:]]*/    /' hiperf/src/report.cpp
-        $sed -i '/namespace HiPerf {/abool UncompressFile(const std::string &gzipFile, const std::string &dataFile){return true;}' hiperf/src/utilities.cpp
-        $sed -i '/namespace HiPerf {/abool CompressFile(const std::string &dataFile, const std::string &destFile){return true;}' hiperf/src/utilities.cpp
         $sed -i '/namespace HiPerf {/avoid Report::PrepareConsole(){ return;}' hiperf/src/report.cpp
-    else
-        echo 'hiperf not exist'
     fi
 fi

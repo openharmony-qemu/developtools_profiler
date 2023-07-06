@@ -46,6 +46,8 @@ template("wasm_lib") {
     "EXPORT_NAME=${target_name}",
     "-s",
     "MODULARIZE=1",
+    "-s",
+    "USE_ZLIB=1",
     "-lworkerfs.js",  # For FS.filesystems.WORKERFS
   ]
   _lib_name = invoker.name

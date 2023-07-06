@@ -63,7 +63,6 @@ export class SpHiPerf {
   private rowList: TraceRow<any>[] | undefined;
   private eventTypeList: Array<{ id: number; report_value: string }> = [];
 
-
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
   }
@@ -236,7 +235,7 @@ export class SpHiPerf {
       fold.rowHidden = !this.rowFolder.expansion;
       fold.folder = true;
       fold.name = `Event :${it.report_value}`;
-      fold.folderPaddingLeft = 30;
+      fold.folderPaddingLeft = 6;
       fold.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       fold.selectChangeHandler = this.trace.selectChangeHandler;
       fold.supplier = () => queryHiPerfEventListData(it.id);
@@ -309,7 +308,7 @@ export class SpHiPerf {
       row.rowHidden = !this.rowFolder.expansion;
       row.folder = true;
       row.name = `${process.processName || 'Process'} [${process.pid}]`;
-      row.folderPaddingLeft = 30;
+      row.folderPaddingLeft = 6;
       row.style.height = '40px';
       row.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       row.selectChangeHandler = this.trace.selectChangeHandler;
@@ -347,7 +346,7 @@ export class SpHiPerf {
         thread.folder = false;
         thread.name = `${thObj.threadName || 'Thread'} [${thObj.tid}]`;
         thread.setAttribute('children', '');
-        thread.folderPaddingLeft = 30;
+        thread.folderPaddingLeft = 0;
         thread.style.height = '40px';
         thread.favoriteChangeHandler = this.trace.favoriteChangeHandler;
         thread.selectChangeHandler = this.trace.selectChangeHandler;
@@ -376,12 +375,12 @@ export class SpHiPerf {
   }
 
   updateChartData() {
-    this.rowList?.forEach((it)=>{
+    this.rowList?.forEach((it) => {
       it.dataList = [];
       it.dataList2 = [];
       it.dataListCache = [];
       it.isComplete = false;
-    })
+    });
   }
 
   hoverTip(

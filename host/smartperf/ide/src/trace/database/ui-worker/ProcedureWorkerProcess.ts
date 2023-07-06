@@ -179,7 +179,9 @@ export class ProcessStruct extends BaseStruct {
     if ((processNode.startTime || 0) + (processNode.dur || 0) > endNS) {
       processNode.frame.width = frame.width - processNode.frame.x;
     } else {
-      processNode.frame.width = Math.ceil(((processNode.startTime || 0) + (processNode.dur || 0) - startNS) / pns - processNode.frame.x);
+      processNode.frame.width = Math.ceil(
+        ((processNode.startTime || 0) + (processNode.dur || 0) - startNS) / pns - processNode.frame.x
+      );
     }
     if (processNode.frame.width < 1) {
       processNode.frame.width = 1;

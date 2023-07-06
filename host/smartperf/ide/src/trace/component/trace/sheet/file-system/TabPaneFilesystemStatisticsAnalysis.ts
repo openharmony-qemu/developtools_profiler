@@ -55,7 +55,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
   private libStatisticsData!: any;
   private functionStatisticsData!: any;
   set data(val: SelectionParam | any) {
-    if (val == this.fileStatisticsAnalysisCurrentSelection) {
+    if (val === this.fileStatisticsAnalysisCurrentSelection) {
       this.fileStatisticsAnalysisPidData.unshift(this.processStatisticsData);
       this.fileStatisticsAnalysisTableProcess!.recycleDataSource = this.fileStatisticsAnalysisPidData;
       // @ts-ignore
@@ -166,17 +166,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.fileStatisticsAnalysisTableProcess!.style.display = 'none';
-          this.fileStatisticsAnalysisTableType!.style.display = 'grid';
-          this.fileStatisticsAnalysisTableProcess!.setAttribute('hideDownload', '');
-          this.fileStatisticsAnalysisTableType?.removeAttribute('hideDownload');
-          this.getFilesystemType(it, val);
-          // @ts-ignore
-          this.fileStatisticsAnalysisProcessName = it.tableName;
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.fileStatisticsAnalysisProcessName;
-          this.fileStatisticsAnalysisPie?.hideTip();
+          this.fileProcessLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -215,6 +205,25 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.fileStatisticsAnalysisTableProcess!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.fileProcessLevelClickEvent(data, val);
+      }
+    });
+  }
+  fileProcessLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.fileStatisticsAnalysisTableProcess!.style.display = 'none';
+    this.fileStatisticsAnalysisTableType!.style.display = 'grid';
+    this.fileStatisticsAnalysisTableProcess!.setAttribute('hideDownload', '');
+    this.fileStatisticsAnalysisTableType?.removeAttribute('hideDownload');
+    this.getFilesystemType(it, val);
+    // @ts-ignore
+    this.fileStatisticsAnalysisProcessName = it.tableName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.fileStatisticsAnalysisProcessName;
+    this.fileStatisticsAnalysisPie?.hideTip();
   }
   typePieChart(val: any) {
     this.fileStatisticsAnalysisPie!.config = {
@@ -235,18 +244,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
                                 `;
       },
       angleClick: (it) => {
-        // @ts-ignore
-        this.clearData();
-        this.fileStatisticsAnalysisTableType!.style.display = 'none';
-        this.fileStatisticsAnalysisTableThread!.style.display = 'grid';
-        this.fileStatisticsAnalysisTableType!.setAttribute('hideDownload', '');
-        this.fileStatisticsAnalysisTableThread?.removeAttribute('hideDownload');
-        this.getFilesystemThread(it, val);
-        // @ts-ignore
-        this.typeName = it.tableName;
-        this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-          this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName;
-        this.fileStatisticsAnalysisPie?.hideTip();
+        this.fileTypeLevelClickEvent(it, val);
       },
       hoverHandler: (data) => {
         if (data) {
@@ -284,6 +282,25 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.fileStatisticsAnalysisTableType!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.fileTypeLevelClickEvent(data, val);
+      }
+    });
+  }
+  fileTypeLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.fileStatisticsAnalysisTableType!.style.display = 'none';
+    this.fileStatisticsAnalysisTableThread!.style.display = 'grid';
+    this.fileStatisticsAnalysisTableType!.setAttribute('hideDownload', '');
+    this.fileStatisticsAnalysisTableThread?.removeAttribute('hideDownload');
+    this.getFilesystemThread(it, val);
+    // @ts-ignore
+    this.typeName = it.tableName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName;
+    this.fileStatisticsAnalysisPie?.hideTip();
   }
   threadPieChart(val: any) {
     this.sumDur = this.threadStatisticsData.allDuration;
@@ -307,18 +324,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.fileStatisticsAnalysisTableThread!.style.display = 'none';
-          this.fileStatisticsAnalysisTableSo!.style.display = 'grid';
-          this.fileStatisticsAnalysisTableThread!.setAttribute('hideDownload', '');
-          this.fileStatisticsAnalysisTableSo?.removeAttribute('hideDownload');
-          this.getFilesystemSo(it, val);
-          // @ts-ignore
-          this.fileStatisticsAnalysisThreadName = it.tableName;
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-            this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName + ' / ' + this.fileStatisticsAnalysisThreadName;
-          this.fileStatisticsAnalysisPie?.hideTip();
+          this.fileThreadLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -345,7 +351,8 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       this.fileStatisticsAnalysisPie?.showHover();
       this.fileStatisticsAnalysisPie?.hideTip();
     });
-    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName;
     this.tabName!.textContent = 'Statistic By Thread AllDuration';
     this.fileStatisticsAnalysisThreadData.unshift(this.threadStatisticsData);
     this.fileStatisticsAnalysisTableThread!.recycleDataSource = this.fileStatisticsAnalysisThreadData;
@@ -357,6 +364,26 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.fileStatisticsAnalysisTableThread!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.fileThreadLevelClickEvent(data, val);
+      }
+    });
+  }
+  fileThreadLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.fileStatisticsAnalysisTableThread!.style.display = 'none';
+    this.fileStatisticsAnalysisTableSo!.style.display = 'grid';
+    this.fileStatisticsAnalysisTableThread!.setAttribute('hideDownload', '');
+    this.fileStatisticsAnalysisTableSo?.removeAttribute('hideDownload');
+    this.getFilesystemSo(it, val);
+    // @ts-ignore
+    this.fileStatisticsAnalysisThreadName = it.tableName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName + ' / ' + this.fileStatisticsAnalysisThreadName;
+    this.fileStatisticsAnalysisPie?.hideTip();
   }
   libraryPieChart(val: any) {
     this.sumDur = this.libStatisticsData.allDuration;
@@ -380,17 +407,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.fileStatisticsAnalysisTableSo!.style.display = 'none';
-          this.fileStatisticsAnalysisTableFunction!.style.display = 'grid';
-          this.fileStatisticsAnalysisTableSo!.setAttribute('hideDownload', '');
-          this.fileStatisticsAnalysisTableFunction?.removeAttribute('hideDownload');
-          this.getFilesystemFunction(it, val);
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-            // @ts-ignore
-            this.fileStatisticsAnalysisProcessName + ' / ' + this.typeName + ' / ' + this.fileStatisticsAnalysisThreadName + ' / ' + it.tableName;
-          this.fileStatisticsAnalysisPie?.hideTip();
+          this.fileSoLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -430,6 +447,31 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.fileStatisticsAnalysisTableSo!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.duration !== 0) {
+        this.fileSoLevelClickEvent(data, val);
+      }
+    });
+  }
+  fileSoLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.fileStatisticsAnalysisTableSo!.style.display = 'none';
+    this.fileStatisticsAnalysisTableFunction!.style.display = 'grid';
+    this.fileStatisticsAnalysisTableSo!.setAttribute('hideDownload', '');
+    this.fileStatisticsAnalysisTableFunction?.removeAttribute('hideDownload');
+    this.getFilesystemFunction(it, val);
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      // @ts-ignore
+      this.fileStatisticsAnalysisProcessName +
+      ' / ' +
+      this.typeName +
+      ' / ' +
+      this.fileStatisticsAnalysisThreadName +
+      ' / ' +
+      it.tableName;
+    this.fileStatisticsAnalysisPie?.hideTip();
   }
   sortByColumn(column: string, fsaSort: number) {
     this.fileStatisticsAnalysisSortColumn = column;
@@ -455,7 +497,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     if (!fsaCurrentTable) {
       return;
     }
-    if (fsaSort == 0) {
+    if (fsaSort === 0) {
       let fsaArr = [...this.currentLevelData];
       switch (this.currentLevel) {
         case 0:
@@ -477,12 +519,12 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       fsaCurrentTable!.recycleDataSource = fsaArr;
     } else {
       let fsaArr = [...this.currentLevelData];
-      if (column == 'tableName') {
+      if (column === 'tableName') {
         fsaCurrentTable!.recycleDataSource = fsaArr.sort((a, b) => {
-          if (fsaSort == 1) {
+          if (fsaSort === 1) {
             if (a.tableName > b.tableName) {
               return 1;
-            } else if (a.tableName == b.tableName) {
+            } else if (a.tableName === b.tableName) {
               return 0;
             } else {
               return -1;
@@ -490,20 +532,16 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
           } else {
             if (b.tableName > a.tableName) {
               return 1;
-            } else if (a.tableName == b.tableName) {
+            } else if (a.tableName === b.tableName) {
               return 0;
             } else {
               return -1;
             }
           }
         });
-      } else if (column == 'durFormat') {
+      } else if (column === 'durFormat' || column === 'percent') {
         fsaCurrentTable!.recycleDataSource = fsaArr.sort((a, b) => {
-          return fsaSort == 1 ? a.duration - b.duration : b.duration - a.duration;
-        });
-      } else if (column == 'percent') {
-        fsaCurrentTable!.recycleDataSource = fsaArr.sort((a, b) => {
-          return fsaSort == 1 ? a.duration - b.duration : b.duration - a.v;
+          return fsaSort === 1 ? a.duration - b.duration : b.duration - a.duration;
         });
       }
       switch (this.currentLevel) {
@@ -528,7 +566,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
   }
   getFilesystemProcess(val: any, result: Array<any>) {
     this.fileStatisticsAnalysisProcessData = JSON.parse(JSON.stringify(result));
-    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length == 0) {
+    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length === 0) {
       this.fileStatisticsAnalysisPidData = [];
       this.processStatisticsData = [];
       this.processPieChart(val);
@@ -552,7 +590,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       let pName = '';
       for (let item of value) {
         pName = item.processName =
-          item.processName == null || item.processName == undefined
+          item.processName === null || item.processName === undefined
             ? `Process(${item.pid})`
             : `${item.processName}(${item.pid})`;
         dur += item.dur;
@@ -571,6 +609,15 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     this.currentLevel = 0;
     this.fileStatisticsAnalysisProgressEL!.loading = false;
     this.processPieChart(val);
+    new ResizeObserver(() => {
+      if (this.parentElement?.clientHeight != 0) {
+        this.fileStatisticsAnalysisTableProcess!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.fileStatisticsAnalysisTableThread!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.fileStatisticsAnalysisTableSo!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.fileStatisticsAnalysisTableFunction!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.fileStatisticsAnalysisTableType!.style.height = this.parentElement!.clientHeight - 40 + 'px';
+      }
+    }).observe(this.parentElement!);
   }
 
   getFilesystemType(item: any, val: any) {
@@ -623,7 +670,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     let pid = item.pid;
     let type = item.type;
     let allDur = 0;
-    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length == 0) {
+    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let fspItem of this.fileStatisticsAnalysisProcessData) {
@@ -646,7 +693,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         dur += item.dur;
         tName = item.threadName =
-          item.threadName == null || item.threadName == undefined ? `Thread(${item.tid})` : `${item.threadName}`;
+          item.threadName === null || item.threadName === undefined ? `Thread(${item.tid})` : `${item.threadName}`;
       }
       const threadData = {
         tableName: tName,
@@ -673,7 +720,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     let type = item.type;
     let allDur = 0;
     let libMap = new Map<number, Array<any>>();
-    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length == 0) {
+    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let itemData of this.fileStatisticsAnalysisProcessData) {
@@ -695,7 +742,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       let soName = '';
       for (let item of value) {
         dur += item.dur;
-        if (key == null) {
+        if (key === null) {
           item.libName = 'unkown';
         }
         soName = item.libName;
@@ -732,11 +779,16 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     let libId = item.libId;
     let allDur = 0;
     let symbolMap = new Map<number, Array<any>>();
-    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length == 0) {
+    if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length === 0) {
       return;
     }
     for (let fsProcessData of this.fileStatisticsAnalysisProcessData) {
-      if (fsProcessData.pid !== pid || fsProcessData.tid !== tid || fsProcessData.type !== type || fsProcessData.libId !== libId) {
+      if (
+        fsProcessData.pid !== pid ||
+        fsProcessData.tid !== tid ||
+        fsProcessData.type !== type ||
+        fsProcessData.libId !== libId
+      ) {
         continue;
       }
       allDur += fsProcessData.dur;

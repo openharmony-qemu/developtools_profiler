@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-import {BaseElement, element} from '../../../../../base-ui/BaseElement.js';
-import {LitTable} from '../../../../../base-ui/table/lit-table.js';
-import {SelectionParam} from '../../../../bean/BoxSelection.js';
-import {getTabPaneCounterSampleData} from '../../../../database/SqlLite.js';
-import {LitProgressBar} from '../../../../../base-ui/progress-bar/LitProgressBar.js';
-import {Utils} from '../../base/Utils.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
+import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { getTabPaneCounterSampleData } from '../../../../database/SqlLite.js';
+import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { Utils } from '../../base/Utils.js';
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-counter-sample')
 export class TabPaneCounterSample extends BaseElement {
@@ -42,7 +42,8 @@ export class TabPaneCounterSample extends BaseElement {
     this.counterLoadingPage.style.visibility = 'visible';
     this.selectionParam = counterSampleValue;
     // @ts-ignore
-    this.counterSampleTbl!.shadowRoot?.querySelector('.table').style.height = this.parentElement!.clientHeight - 25 + 'px';
+    this.counterSampleTbl!.shadowRoot?.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 25 + 'px';
     this.queryDataByDB(counterSampleValue);
   }
 
@@ -62,7 +63,7 @@ export class TabPaneCounterSample extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.counterSampleTbl!, 25, this.counterLoadingPage, 24)
+    resizeObserver(this.parentElement!, this.counterSampleTbl!, 25, this.counterLoadingPage, 24);
   }
 
   queryDataByDB(counterSampleParam: SelectionParam | any) {
@@ -90,7 +91,7 @@ export class TabPaneCounterSample extends BaseElement {
       });
       let counterSampleList: Array<any> = [];
       sampleMap.forEach((a) => {
-        a.timeStr = Utils.getProbablyTime(a.time);
+        a.timeStr = parseFloat((a.time / 1000000.0).toFixed(6));
         counterSampleList.push(a);
       });
       this.counterSampleSource = counterSampleList;
@@ -104,7 +105,10 @@ export class TabPaneCounterSample extends BaseElement {
     if (initCounterResultList.length == 0) return;
     let idx = initCounterResultList.findIndex((a) => a.ts >= leftNs);
     if (idx !== 0) {
-      initCounterResultList = initCounterResultList.slice(idx == -1 ? initCounterResultList.length - 1 : idx - 1, initCounterResultList.length);
+      initCounterResultList = initCounterResultList.slice(
+        idx == -1 ? initCounterResultList.length - 1 : idx - 1,
+        initCounterResultList.length
+      );
     }
     if (initCounterResultList[0].ts < leftNs && idx !== 0) initCounterResultList[0].ts = leftNs;
     initCounterResultList.forEach((item, idx) => {
@@ -190,7 +194,7 @@ export class TabPaneCounterSample extends BaseElement {
         <lit-table id="tb-counter-sample" class="counter-sample-table">
             <lit-table-column class="counter-sample-column" width="20%" order data-index="counter" key="counter" align="flex-start" title="Cpu" >
             </lit-table-column>
-            <lit-table-column class="counter-sample-column" width="1fr" order data-index="timeStr" key="timeStr" align="flex-start" title="Time" >
+            <lit-table-column class="counter-sample-column" width="1fr" order data-index="timeStr" key="timeStr" align="flex-start" title="Time(ms)" >
             </lit-table-column>
             <lit-table-column class="counter-sample-column" width="1fr" order data-index="value" key="value" align="flex-start" title="Value" >
             </lit-table-column>

@@ -49,6 +49,8 @@ declare global {
         KeyboardEnable: string; // SystemTrace Keyboard enable
         UploadSOFile: string; // Upload so file
         Loading: string; // Upload so file
+        Error: string; // load error
+        CheckALL: string; // Check all child chart
       };
     };
 
@@ -95,6 +97,8 @@ window.SmartEvent = {
     KeyboardEnable: 'SmartEvent-UI-StopWASD',
     UploadSOFile: 'SmartEvent-UI-UploadSoFile',
     Loading: 'SmartEvent-UI-Loading',
+    Error: 'SmartEvent-UI-Error',
+    CheckALL: 'SmartEvent-UI-CheckALL',
   },
 };
 Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);

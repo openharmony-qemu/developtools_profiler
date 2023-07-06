@@ -12,18 +12,25 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../ts.gni")
+import("../../build/ts.gni")
 ohos_source_set("base") {
   subsystem_name = "trace_streamer"
   part_name = "trace_streamer_source_base"
-  deps = []
-  public_deps = [ "../include:ibase" ]
+  deps = [
+    ":ibase",
+    ":parser",
+    ":table",
+  ]
+  public_deps = [
+    "../include:ibase",
+    "sqlite_ext:sqliteext",
+  ]
   include_dirs = [ "../include" ]
   sources = [
+    "clock_filter.cpp",
     "codec_cov.cpp",
     "file.cpp",
     "log.cpp",
-    "meta.cpp",
     "parting_string.cpp",
     "string_help.cpp",
   ]
@@ -38,4 +45,42 @@ ohos_source_set("base") {
       "--coverage",
     ]
   }
+}
+ohos_source_set("ibase") {
+  subsystem_name = "trace_streamer"
+  part_name = "ibase"
+  sources = [
+    "codec_cov.h",
+    "file.h",
+    "log.h",
+    "parting_string.h",
+    "string_to_numerical.h",
+    "ts_common.cpp",
+  ]
+  include_dirs = []
+  public_deps = []
+  deps = []
+  sources += [ "/usr/x86_64-w64-mingw32/include/windows.h" ]
+}
+ohos_source_set("parser") {
+  subsystem_name = "trace_streamer"
+  part_name = "parser"
+  sources = [
+    "htrace_plugin_time_parser.cpp",
+    "htrace_plugin_time_parser.h",
+  ]
+  include_dirs = []
+  public_deps = []
+  deps = []
+}
+ohos_source_set("table") {
+  subsystem_name = "trace_streamer"
+  part_name = "table"
+  sources = [
+    "filter_constraints.cpp",
+    "index_map.cpp",
+  ]
+  include_dirs = [ "${THIRD_PARTY}/sqlite/include" ]
+  public_deps = []
+  deps = []
 }

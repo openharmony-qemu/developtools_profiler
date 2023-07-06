@@ -22,13 +22,11 @@ is_sdkdemo = false
 is_dubai_sdk = false
 is_sdkdemo_test = false
 is_spb = false
-is_pbdecoder = false
 target_cpu = "x64"
 declare_args() {
   ar = "ar"
   is_debug = true
   use_wasm = false
-  use_wasmpb = false
   is_test = false
   is_sdkdemo = false
   is_dubai_sdk = false
@@ -37,7 +35,6 @@ declare_args() {
   is_fuzz = false
   is_macx = false
   is_spb = false
-  is_pbdecoder = false
   target = "trace_streamer"
 }
 if (target_os == "linux") {
@@ -54,17 +51,9 @@ if (target_os == "linux") {
 
 if (target == "wasm") {
   use_wasm = true
-} else if (target == "wasmpb") {
-  use_wasm = true
-  use_wasmpb = true
-  is_pbdecoder = true
 } else if (target == "test") {
   is_test = true
   testonly = true
-} else if (target == "testpb") {
-  is_test = true
-  testonly = true
-  is_pbdecoder = true
 } else if (target == "fuzz") {
   is_fuzz = true
   testonly = true
@@ -84,8 +73,6 @@ if (target == "wasm") {
 } else if (target == "spb") {
   is_linux = true
   is_spb = true
-} else if (target == "pbdecoder") {
-  is_pbdecoder = true
 } else {
   print("unknown target " + target_os)
   exit(-1)
@@ -130,7 +117,7 @@ set_defaults("executable") {
   configs = default_configs
   configs += [ "//gn:executable" ]
 }
-if (use_wasm || use_wasmpb) {
+if (use_wasm) {
   set_default_toolchain("//gn/toolchain:wasm")
 } else {
   print(use_wasm)

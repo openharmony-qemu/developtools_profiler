@@ -54,14 +54,6 @@ describe('LitSlider Test', () => {
     expect(litSliderPanel.formatSeconds(10)).toBe('00:00:10');
   });
 
-  it('LitSliderTest08', () => {
-    litSliderPanel.litSliderStyle = jest.fn(() => true);
-    litSliderPanel.litSliderStyle.minRange = jest.fn(() => 2);
-    litSliderPanel.litSliderStyle.maxRange = jest.fn(() => 1);
-    litSliderPanel.litSliderStyle.stepSize = jest.fn(() => 1);
-    expect(litSliderPanel.renderDefaultSlider()).toBeUndefined();
-  });
-
   it('LitSliderTest9', () => {
     expect(litSliderPanel.adoptedCallback()).toBeUndefined();
   });

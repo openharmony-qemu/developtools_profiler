@@ -24,7 +24,7 @@ class ProcessFilter;
 class CpuFilter;
 class MeasureFilter;
 class FilterFilter;
-class ClockFilter;
+class ClockFilterEx;
 class SymbolsFilter;
 class StatFilter;
 class BinderFilter;
@@ -40,7 +40,7 @@ class TraceStreamerFilters {
 public:
     TraceStreamerFilters();
     ~TraceStreamerFilters();
-    std::unique_ptr<ClockFilter> clockFilter_;
+    std::unique_ptr<ClockFilterEx> clockFilter_;
     std::unique_ptr<FilterFilter> filterFilter_;
     std::unique_ptr<SliceFilter> sliceFilter_;
     std::unique_ptr<ProcessFilter> processFilter_;

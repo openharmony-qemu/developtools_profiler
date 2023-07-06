@@ -131,7 +131,12 @@ export class RangeRuler extends Graph {
       timerShaftEL.ctx!,
       new Rect(range.startX, frame.y, 1, frame.height)
     );
-    this.markBObj = new Mark(timerShaftEL.canvas, 'B', timerShaftEL.ctx!, new Rect(range.endX, frame.y, 1, frame.height));
+    this.markBObj = new Mark(
+      timerShaftEL.canvas,
+      'B',
+      timerShaftEL.ctx!,
+      new Rect(range.endX, frame.y, 1, frame.height)
+    );
     this.rangeRect = new Rect(range.startX, frame.y, range.endX - range.startX, frame.height);
   }
 
@@ -147,8 +152,14 @@ export class RangeRuler extends Graph {
       let cpuUsageItem = this._cpuUsage[index];
       this.c.fillStyle = ColorUtils.MD_PALETTE[cpuUsageItem.cpu];
       this.c.globalAlpha = cpuUsageItem.rate;
-      this.c.fillRect(this.frame.x + miniWidth * cpuUsageItem.ro, this.frame.y + cpuUsageItem.cpu * miniHeight, miniWidth, miniHeight);
-    }``
+      this.c.fillRect(
+        this.frame.x + miniWidth * cpuUsageItem.ro,
+        this.frame.y + cpuUsageItem.cpu * miniHeight,
+        miniWidth,
+        miniHeight
+      );
+    }
+    ``;
   }
 
   draw(discardNotify: boolean = false): void {
@@ -377,7 +388,7 @@ export class RangeRuler extends Graph {
     this.range.refresh = this.cacheInterval.flag;
   }
 
-  setCacheInterval(){
+  setCacheInterval() {
     if (Math.trunc(this.currentDuration / this.cacheInterval.interval) != this.cacheInterval.value) {
       this.cacheInterval.flag = true;
       this.cacheInterval.value = Math.trunc(this.currentDuration / this.cacheInterval.interval);
@@ -445,7 +456,8 @@ export class RangeRuler extends Graph {
   keyPress(keyboardEvent: KeyboardEvent) {
     if (
       this.animaStartTime == undefined ||
-      (this.pressedKeys.length > 0 && this.pressedKeys[this.pressedKeys.length - 1] != keyboardEvent.key.toLocaleLowerCase())
+      (this.pressedKeys.length > 0 &&
+        this.pressedKeys[this.pressedKeys.length - 1] != keyboardEvent.key.toLocaleLowerCase())
     ) {
       let dat = new Date();
       dat.setTime(dat.getTime() - 400);
@@ -485,6 +497,7 @@ export class RangeRuler extends Graph {
   keyPressW() {
     let animW = () => {
       if (this.scale === 50) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -503,6 +516,7 @@ export class RangeRuler extends Graph {
   keyPressS() {
     let animS = () => {
       if (this.range.startNS <= 0 && this.range.endNS >= this.range.totalNS) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -520,13 +534,15 @@ export class RangeRuler extends Graph {
 
   keyPressA() {
     let animA = () => {
-      if (this.range.startNS == 0) {
+
+      if (this.range.startNS <= 0) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
         return;
       }
-      let s = (this.scale / this.p) * this.currentDuration * 1.2;
+      let s = (this.scale / this.p) * this.currentDuration * 0.4;
       this.range.startNS -= s;
       this.range.endNS -= s;
       this.fillX();
@@ -540,6 +556,7 @@ export class RangeRuler extends Graph {
   keyPressD() {
     let animD = () => {
       if (this.range.endNS >= this.range.totalNS) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;

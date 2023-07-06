@@ -212,18 +212,16 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
                     h.heap_size as heapSize,
                     (case when h.event_type = 'AllocEvent' then 0 else 1 end) as eventType
                 from native_hook h ,trace_range t
-                where h.start_ts >= t.start_ts 
-                    and h.start_ts <= t.end_ts 
+                where h.start_ts between t.start_ts and t.end_ts
                     and (h.event_type = 'AllocEvent' or h.event_type = 'MmapEvent')
-                union
+                union all
                 select 
                     h.end_ts - t.start_ts as startTime,
                     h.heap_size as heapSize,
                     (case when h.event_type = 'AllocEvent' then 2 else 3 end) as eventType
                 from native_hook h ,trace_range t
-                where h.start_ts >= t.start_ts
-                    and h.start_ts <= t.end_ts
-                    and h.end_ts not null 
+                where 
+                    h.end_ts between t.start_ts and t.end_ts
                     and (h.event_type = 'AllocEvent' or h.event_type = 'MmapEvent')
             )
             order by startTime;
@@ -232,6 +230,14 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
     );
   }
   queryNativeHookStatistic(type: number) {
+    let condition = ''
+    if (type === 0) {
+      condition = 'and type = 0';
+    } else if(type === 1) {
+      condition = 'and type > 0';
+    } else {
+      condition = '';
+    }
     let sql = `
 select callchain_id callchainId,
        ts - start_ts as ts,
@@ -240,7 +246,7 @@ select callchain_id callchainId,
        release_count releaseCount,
        release_size releaseSize
 from native_hook_statistic,trace_range
-where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
+where ts between start_ts and end_ts ${condition};
         `;
     this.queryData(this.currentEventId, 'native-memory-queryNativeHookStatistic', sql, {});
   }
@@ -389,7 +395,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
       tempDensity = 0;
     let filterLen = 0,
       filterLevel = 0;
-    let putArr = (ne: NativeEvent, filterLevel: number) => {
+    let putArr = (ne: NativeEvent, filterLevel: number, finish: boolean) => {
       let heap = new HeapStruct();
       heap.startTime = ne.startTime;
       if (arr.length == 0) {
@@ -408,7 +414,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
       } else {
         let last = arr[arr.length - 1];
         last.dur = heap.startTime! - last.startTime!;
-        if (last.dur > filterLevel) {
+        if (last.dur > filterLevel || finish) {
           if (ne.eventType == 0 || ne.eventType == 1) {
             heap.density = last.density! + tempDensity + 1;
             heap.heapsize = last.heapsize! + tempSize + ne.heapSize;
@@ -443,21 +449,21 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
       }
     };
     if (nativeMemoryType == 1) {
-      let temp = this.NATIVE_MEMORY_DATA.filter((ne) => ne.eventType == 0 || ne.eventType == 2);
+      let temp = this.NATIVE_MEMORY_DATA.filter((ne) => ne.eventType === 0 || ne.eventType === 2);
       filterLen = temp.length;
       filterLevel = this.getFilterLevel(filterLen);
-      temp.map((ne) => putArr(ne, filterLevel));
+      temp.map((ne, index) => putArr(ne, filterLevel, index === filterLen - 1));
       temp.length = 0;
     } else if (nativeMemoryType == 2) {
-      let temp = this.NATIVE_MEMORY_DATA.filter((ne) => ne.eventType == 1 || ne.eventType == 3);
+      let temp = this.NATIVE_MEMORY_DATA.filter((ne) => ne.eventType === 1 || ne.eventType === 3);
       filterLen = temp.length;
       filterLevel = this.getFilterLevel(filterLen);
-      temp.map((ne) => putArr(ne, filterLevel));
+      temp.map((ne, index) => putArr(ne, filterLevel, index === filterLen - 1));
       temp.length = 0;
     } else {
       filterLen = this.NATIVE_MEMORY_DATA.length;
       let filterLevel = this.getFilterLevel(filterLen);
-      this.NATIVE_MEMORY_DATA.map((ne) => putArr(ne, filterLevel));
+      this.NATIVE_MEMORY_DATA.map((ne, index) => putArr(ne, filterLevel, index === filterLen - 1));
     }
     if (arr.length > 0) {
       arr[arr.length - 1].dur = totalNS - arr[arr.length - 1].startTime!;
@@ -689,10 +695,13 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
         if (selectionElement.memoryTap.indexOf('Malloc') != -1) {
           return item.eventType == 'AllocEvent' && item.heapSize == selectionElement.max;
         } else if (selectionElement.memoryTap.indexOf('Mmap') != -1) {
-          return item.eventType == 'MmapEvent' && item.heapSize == selectionElement.max;
+          return item.eventType == 'MmapEvent' && item.heapSize == selectionElement.max && item.subTypeId === null;
         } else {
-          return item.subType == selectionElement.memoryTap && item.heapSize == selectionElement.max;
+          return item.subType == selectionElement.memoryTap;
         }
+      }
+      if (selectionElement.max === undefined && typeof selectionElement.memoryTap === 'number') {
+        return item.subTypeId === selectionElement.memoryTap;
       }
     }
     return false;
@@ -700,18 +709,19 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
   clearAll() {
     this.DATA_DICT.clear();
     this.FILE_DICT.clear();
+    this.HEAP_FRAME_MAP.clear();
     this.splitMapData = {};
     this.currentSamples = [];
     this.allThreads = [];
     this.queryAllCallchainsSamples = [];
-    this.HEAP_FRAME_MAP.clear();
     this.NATIVE_MEMORY_DATA = [];
     this.chartComplete.clear();
     this.realTimeDif = 0;
+    this.currentTreeMapData = {};
+    this.currentTreeList.length = 0;
+    this.responseTypes.length = 0;
   }
-  getCallChainData() {
-    this.HEAP_FRAME_MAP;
-  }
+
   queryCallchainsSamples(action: string, leftNs: number, rightNs: number, types: Array<string>) {
     this.queryData(
       this.currentEventId,
@@ -742,6 +752,14 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
     );
   }
   queryStatisticCallchainsSamples(action: string, leftNs: number, rightNs: number, types: Array<number>) {
+    let condition = '';
+    if(types.length === 1){
+      if(types[0] === 0){
+        condition = 'and type = 0';
+      } else {
+        condition = 'and type != 0';
+      }
+    }
     this.queryData(
       this.currentEventId,
       action,
@@ -749,6 +767,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
                 0 as tid,
                 callchain_id as eventId,
                 (case when type = 0 then 'AllocEvent' else 'MmapEvent' end) as eventType,
+                type as subTypeId,
                 apply_size as heapSize,
                 release_size as freeSize,
                 apply_count as count,
@@ -760,23 +779,66 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
             where
                 A.ts - B.start_ts
                 between ${leftNs} and ${rightNs}
-                and A.type in (${types.join(',')})
+                ${condition}
             group by callchain_id;
         `,
       {}
     );
   }
+
   combineStatisticAndCallChain(samples: NativeHookStatistics[]) {
     samples.sort((a, b) => a.id - b.id);
-    let analysisSampleList = new Array<AnalysisSample>();
-    samples.forEach((sample, idx, _) => {
-      let applySample = sample;
-      // @ts-ignore
-      if (['FreeEvent', 'MunmapEvent'].includes(sample.eventType)) {
-        applySample = this.releaseSetApplyCallChain(idx, samples);
-        if (!applySample) return;
+    const analysisSampleList = new Array<AnalysisSample>();
+    const applyAllocSamples = new Array<AnalysisSample>();
+    const applyMmapSamples = new Array<AnalysisSample>();
+
+    for (const sample of samples) {
+      const count = this.isStatistic ? sample.count : 1;
+      const analysisSample = new AnalysisSample(sample.id, sample.heapSize, count, sample.eventType, sample.startTs);
+
+      if (this.isStatistic) {
+        analysisSample.releaseCount = sample.freeCount;
+        analysisSample.releaseSize = sample.freeSize;
+        switch(sample.subTypeId){
+          case 1:
+            analysisSample.subType = 'MmapEvent';
+            break;
+          case 2:
+            analysisSample.subType = 'FILE_PAGE_MSG';
+            break;
+          case 3:
+            analysisSample.subType = 'MEMORY_USING_MSG';
+            break;
+          default:
+            analysisSample.subType = undefined;
+        }
+      } else {
+        let subType = undefined;
+        if (sample.subTypeId) {
+          subType = this.DATA_DICT.get(sample.subTypeId);
+        }
+        analysisSample.endTs = sample.endTs;
+        analysisSample.addr = sample.addr;
+        analysisSample.tid = sample.tid;
+        analysisSample.subType = subType;
       }
-      let callChains = this.createThreadSample(applySample);
+
+      if (['FreeEvent', 'MunmapEvent'].includes(sample.eventType)) {
+        if (sample.eventType === 'FreeEvent') {
+          this.setApplyIsRelease(analysisSample, applyAllocSamples);
+        } else {
+          this.setApplyIsRelease(analysisSample, applyMmapSamples);
+        }
+        continue;
+      } else {
+        if (sample.eventType === 'AllocEvent') {
+          applyAllocSamples.push(analysisSample);
+        } else {
+          applyMmapSamples.push(analysisSample);
+        }
+      }
+
+      const callChains = this.HEAP_FRAME_MAP.get(sample.eventId) || [];
       if (!callChains || callChains.length === 0) {
         return;
       }
@@ -790,7 +852,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
         }
 
         lastFilterCallChain = callChains[index];
-        let libPath = this.DATA_DICT.get(lastFilterCallChain.fileId);
+        const libPath = this.DATA_DICT.get(lastFilterCallChain.fileId);
         //ignore musl and libc++ so
         if (libPath?.includes('musl') || libPath?.includes('libc++')) {
           index--;
@@ -800,56 +862,34 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
         }
       }
 
-      let filePath = this.DATA_DICT.get(lastFilterCallChain.fileId)!;
+      const filePath = this.DATA_DICT.get(lastFilterCallChain.fileId)!;
       let libName = '';
       if (filePath) {
         const path = filePath.split('/');
         libName = path[path.length - 1];
       }
-      let count = this.isStatistic ? sample.count : 1;
       const symbolName = this.DATA_DICT.get(lastFilterCallChain.symbolId) || libName + ' (' + sample.addr + ')';
-      let subType = undefined;
-      if (sample.subTypeId) {
-        subType = this.DATA_DICT.get(sample.subTypeId);
-      }
 
-      let analysisSample = new AnalysisSample(
-        sample.id,
-        count,
-        sample.heapSize,
-        sample.eventId,
-        sample.eventType,
-        lastFilterCallChain.fileId,
-        libName,
-        lastFilterCallChain.symbolId,
-        symbolName,
-        subType
-      );
-      analysisSample.startTs = sample.startTs;
-      analysisSample.endTs = sample.endTs;
-      analysisSample.tid = sample.tid;
-      analysisSample.releaseCount = sample.freeCount;
-      analysisSample.releaseSize = sample.freeSize;
-      analysisSample.applyId = applySample.id;
+      analysisSample.libId = lastFilterCallChain.fileId;
+      analysisSample.libName = libName;
+      analysisSample.symbolId = lastFilterCallChain.symbolId;
+      analysisSample.symbolName = symbolName;
+
       analysisSampleList.push(analysisSample);
-    });
-    analysisSampleList.sort((a, b) => a.id - b.id);
+    }
     return analysisSampleList;
   }
 
-  releaseSetApplyCallChain(idx: number, arr: Array<any>) {
-    let releaseItem = arr[idx];
-    if (releaseItem.id === 15503) {
-      releaseItem;
-    }
-
+  setApplyIsRelease(sample: AnalysisSample, arr: Array<AnalysisSample>) {
+    let idx = arr.length - 1;
     for (idx; idx >= 0; idx--) {
       let item = arr[idx];
-      if (item.endTs === releaseItem.startTs && item.addr === releaseItem.addr) {
-        return item;
+      if (item.endTs === sample.startTs && item.addr === sample.addr) {
+        arr.splice(idx, 1);
+        item.isRelease = true;
+        return;
       }
     }
-    return null;
   }
 
   freshCurrentCallchains(samples: NativeHookStatistics[], isTopDown: boolean) {
@@ -872,6 +912,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
           ];
         if (root == undefined) {
           root = new NativeHookCallInfo();
+          root.threadName = sample.threadName;
           this.currentTreeMapData[
             sample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
           ] = root;
@@ -938,6 +979,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
     let leftNs = paramMap.get('leftNs');
     let rightNs = paramMap.get('rightNs');
     let nativeHookType = paramMap.get('nativeHookType');
+    let statisticsSelection = paramMap.get('statisticsSelection');
     if (filterAllocType == '0' && filterEventType == '0' && filterResponseType == -1) {
       this.currentSamples = this.queryAllCallchainsSamples;
       return;
@@ -966,7 +1008,7 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
         }
       }
       let filterLastLib = filterResponseType == -1 ? true : filterResponseType == item.lastLibId;
-      let filterNative = this.getTypeFromIndex(parseInt(filterEventType), item, []);
+      let filterNative = this.getTypeFromIndex(parseInt(filterEventType), item, statisticsSelection);
       return filterAllocation && filterNative && filterLastLib;
     });
     filter.forEach((sample) => {
@@ -1100,9 +1142,9 @@ where ts between start_ts and end_ts ${type === -1 ? '' : `and type = ${type}`};
     } else if (len > 50_0000) {
       return 5_0000;
     } else if (len > 30_0000) {
-      return 3_5000;
+      return 2_0000;
     } else if (len > 15_0000) {
-      return 1_5000;
+      return 5000;
     } else {
       return 0;
     }
@@ -1237,64 +1279,53 @@ export class StatisticsSelection {
 }
 
 class AnalysisSample {
-  id: number = 0;
-  count: number = 1;
-  size: number = 0;
-  callChainId: number = 0;
-  pid: number = 0;
+  id: number;
+  count: number;
+  size: number;
   type: number;
-  subType?: string;
+  startTs: number;
 
+  isRelease: boolean;
   releaseCount?: number;
   releaseSize?: number;
 
-  tid?: number;
-  startTs?: number;
   endTs?: number;
-  applyId?: number;
+  subType?: string;
+  tid?: number;
+  addr?: string;
 
-  libId: number;
-  libName: string;
-  symbolId: number;
-  symbolName: string;
-  constructor(
-    id: number,
-    count: number,
-    size: number,
-    callChainId: number,
-    type: number | string,
-    libId: number,
-    libName: string,
-    symbolId: number,
-    symbolName: string,
-    subType: string | undefined
-  ) {
+  libId!: number;
+  libName!: string;
+  symbolId!: number;
+  symbolName!: string;
+
+  constructor(id: number, size: number, count: number, type: number | string, startTs: number) {
     this.id = id;
-    this.count = count;
     this.size = size;
-    this.callChainId = callChainId;
+    this.count = count;
+    this.startTs = startTs;
     switch (type) {
       case 'AllocEvent':
       case '0':
         this.type = 0;
+        this.isRelease = false;
         break;
       case 'MmapEvent':
       case '1':
+        this.isRelease = false;
         this.type = 1;
         break;
       case 'FreeEvent':
+        this.isRelease = true;
         this.type = 2;
         break;
       case 'MunmapEvent':
+        this.isRelease = true;
         this.type = 3;
         break;
       default:
+        this.isRelease = false;
         this.type = -1;
     }
-    this.libId = libId;
-    this.libName = libName;
-    this.symbolId = symbolId;
-    this.symbolName = symbolName;
-    this.subType = subType;
   }
 }

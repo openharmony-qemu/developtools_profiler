@@ -16,7 +16,7 @@
 #include "trace_streamer_filters.h"
 #include "args_filter.h"
 #include "binder_filter.h"
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "cpu_filter.h"
 #include "filter_filter.h"
 #include "frame_filter.h"

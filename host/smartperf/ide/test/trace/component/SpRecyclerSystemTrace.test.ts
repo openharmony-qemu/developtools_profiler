@@ -118,7 +118,7 @@ describe('SpRecyclerSystemTrace Test', () => {
             width: 100%;
             height: 100%;
         }
-        .timer-shaft{
+        .recycle-timer-shaft{
             width: 100%;
             z-index: 2;
         }
@@ -142,11 +142,11 @@ describe('SpRecyclerSystemTrace Test', () => {
 
         </style>
         <div class="container">
-            <timer-shaft-element class="timer-shaft">
+            <timer-shaft-element class="recycle-timer-shaft">
             </timer-shaft-element>
             <trace-row-recycler-view class="rows">
             </trace-row-recycler-view>
-            <trace-sheet class="trace-sheet" mode="hidden">
+            <trace-sheet class="recycle-trace-sheet" mode="hidden">
             </trace-sheet>
         </div>
         "

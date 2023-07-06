@@ -23,4 +23,5 @@ export class WakeupBean {
   schedulingLatency: number | undefined;
   schedulingDesc: string | undefined;
   ts: number | undefined;
+  itid: number | undefined;
 }

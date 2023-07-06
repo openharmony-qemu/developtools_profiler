@@ -30,7 +30,7 @@ ohos_shared_library("libhidebug") {
   }
 
   external_deps = [
-    "hilog_native:libhilog",
+    "hilog:libhilog",
     "init:libbegetutil",
   ]
 
@@ -41,8 +41,8 @@ ohos_shared_library("libhidebug") {
 
   output_extension = "so"
 
-  part_name = "profiler"
-  subsystem_name = "developtools"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }
 
 ohos_static_library("libhidebug_init") {
@@ -54,6 +54,6 @@ ohos_static_library("libhidebug_init") {
 
   external_deps = [ "init:libinit_module_engine" ]
 
-  part_name = "profiler"
-  subsystem_name = "developtools"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }

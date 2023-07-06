@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 #include "htrace_native_hook_parser.h"
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "process_filter.h"
 #include "stat_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {
 HtraceNativeHookParser::HtraceNativeHookParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
-    : HtracePluginTimeParser(dataCache, ctx), nativeHookFilter_(std::make_unique<NativeHookFilter>(dataCache, ctx))
+    : EventParserBase(dataCache, ctx), nativeHookFilter_(std::make_unique<NativeHookFilter>(dataCache, ctx))
 {
 }
 
@@ -70,12 +70,6 @@ void HtraceNativeHookParser::ParseFrameMap(std::unique_ptr<NativeHookMetaData>& 
     // when callstack is compressed, Frame message only has ip data area.
     nativeHookFilter_->AppendFrameMaps(frameMapReader.id(), frameMapReader.frame());
 }
-void HtraceNativeHookParser::ParseTagEvent(const ProtoReader::BytesView& bytesView)
-{
-    ProtoReader::MemTagEvent_Reader memTagEventReader(bytesView);
-    auto tagIndex = traceDataCache_->dataDict_.GetStringIndex(memTagEventReader.tag().ToStdString());
-    traceDataCache_->GetNativeHookData()->UpdateAddrToMemMapSubType(memTagEventReader.addr(), tagIndex);
-}
 void HtraceNativeHookParser::ParseFileEvent(const ProtoReader::BytesView& bytesView)
 {
     ProtoReader::FilePathMap_Reader filePathMapReader(bytesView);
@@ -105,8 +99,6 @@ void HtraceNativeHookParser::ParseNativeHookAuxiliaryEvent(std::unique_ptr<Nativ
         ParseStackMap(reader->stack_map());
     } else if (reader->has_frame_map()) {
         ParseFrameMap(nativeHookMetaData);
-    } else if (reader->has_tag_event()) {
-        ParseTagEvent(reader->tag_event());
     } else if (reader->has_file_path()) {
         ParseFileEvent(reader->file_path());
     } else if (reader->has_symbol_name()) {
@@ -131,7 +123,7 @@ void HtraceNativeHookParser::Parse(HtraceDataSegment& dataSeg)
         auto timeStamp = nativeHookDataReader->tv_nsec() + nativeHookDataReader->tv_sec() * SEC_TO_NS;
         if (nativeHookDataReader->has_alloc_event() || nativeHookDataReader->has_free_event() ||
             nativeHookDataReader->has_mmap_event() || nativeHookDataReader->has_munmap_event() ||
-            nativeHookDataReader->has_statistics_event()) {
+            nativeHookDataReader->has_statistics_event() || nativeHookDataReader->has_tag_event()) {
             uint64_t newTimeStamp = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, timeStamp);
             UpdatePluginTimeRange(TS_CLOCK_REALTIME, timeStamp, newTimeStamp);
             auto nativeHookMetaData =

@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <string>
 #include "common_types.h"
+#include "event_parser_base.h"
 #include "htrace_plugin_time_parser.h"
 #include "memory_plugin_result.pbreader.h"
 #include "trace_data/trace_data_cache.h"
@@ -28,7 +29,7 @@
 #include "trace_streamer_filters.h"
 namespace SysTuning {
 namespace TraceStreamer {
-class HtraceMemParser : public HtracePluginTimeParser {
+class HtraceMemParser : public EventParserBase, public HtracePluginTimeParser {
 public:
     HtraceMemParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceMemParser();

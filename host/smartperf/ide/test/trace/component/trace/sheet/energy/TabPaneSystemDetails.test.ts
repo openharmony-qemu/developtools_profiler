@@ -35,9 +35,9 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 describe('TabPanePowerBattery Test', () => {
   it('TabPaneSystemDetailsTest01', function () {
     let tabPaneSystemDetails = new TabPaneSystemDetails();
-    tabPaneSystemDetails.tbl = jest.fn(() => true);
+    tabPaneSystemDetails.tblSystemDetails = jest.fn(() => true);
     tabPaneSystemDetails.detailsTbl = jest.fn(() => true);
-    tabPaneSystemDetails.tbl!.recycleDataSource = jest.fn(() => []);
+    tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let MockquerySystemWorkData = sqlit.querySystemWorkData;
     SpHiSysEventChart.app_name = '111';
@@ -171,9 +171,9 @@ describe('TabPanePowerBattery Test', () => {
 
   it('TabPaneSystemDetailsTest02', function () {
     let tabPaneSystem = new TabPaneSystemDetails();
-    tabPaneSystem.tbl = jest.fn(() => true);
+    tabPaneSystem.tblSystemDetails = jest.fn(() => true);
     tabPaneSystem.detailsTbl = jest.fn(() => true);
-    tabPaneSystem.tbl!.recycleDataSource = jest.fn(() => []);
+    tabPaneSystem.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystem.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let MockSystemWorkData = sqlit.querySystemWorkData;
     MockSystemWorkData.mockResolvedValue([]);
@@ -212,9 +212,9 @@ describe('TabPanePowerBattery Test', () => {
 
   it('TabPaneSystemDetailsTest03', function () {
     let tabPaneSystemDetails = new TabPaneSystemDetails();
-    tabPaneSystemDetails.tbl = jest.fn(() => true);
+    tabPaneSystemDetails.tblSystemDetails = jest.fn(() => true);
     tabPaneSystemDetails.detailsTbl = jest.fn(() => true);
-    tabPaneSystemDetails.tbl!.recycleDataSource = jest.fn(() => []);
+    tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let data = {
       ts: 0,
@@ -237,9 +237,9 @@ describe('TabPanePowerBattery Test', () => {
 
   it('TabPaneSystemDetailsTest04', function () {
     let tabPaneSystemDetails = new TabPaneSystemDetails();
-    tabPaneSystemDetails.tbl = jest.fn(() => true);
+    tabPaneSystemDetails.tblSystemDetails = jest.fn(() => true);
     tabPaneSystemDetails.detailsTbl = jest.fn(() => true);
-    tabPaneSystemDetails.tbl!.recycleDataSource = jest.fn(() => []);
+    tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let data = {
       ts: 0,
@@ -262,9 +262,9 @@ describe('TabPanePowerBattery Test', () => {
 
   it('TabPaneSystemDetailsTest05', function () {
     let tabPaneSystemDetails = new TabPaneSystemDetails();
-    tabPaneSystemDetails.tbl = jest.fn(() => true);
+    tabPaneSystemDetails.tblSystemDetails = jest.fn(() => true);
     tabPaneSystemDetails.detailsTbl = jest.fn(() => true);
-    tabPaneSystemDetails.tbl!.recycleDataSource = jest.fn(() => []);
+    tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let data = {
       ts: 0,
@@ -286,9 +286,9 @@ describe('TabPanePowerBattery Test', () => {
 
   it('TabPaneSystemDetailsTest06', function () {
     let tabPaneSystemDetails = new TabPaneSystemDetails();
-    tabPaneSystemDetails.tbl = jest.fn(() => true);
+    tabPaneSystemDetails.tblSystemDetails = jest.fn(() => true);
     tabPaneSystemDetails.detailsTbl = jest.fn(() => true);
-    tabPaneSystemDetails.tbl!.recycleDataSource = jest.fn(() => []);
+    tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let data = {
       ts: 0,
@@ -425,7 +425,7 @@ describe('TabPanePowerBattery Test', () => {
             flex-direction: column;
             padding: 10px 10px 0 10px;
         }
-        .progress{
+        .sys-detail-progress{
             bottom: 33px;
             position: absolute;
             height: 1px;
@@ -433,27 +433,27 @@ describe('TabPanePowerBattery Test', () => {
             right: 0;
         }
         </style>
-        <div style="display: flex;flex-direction: column">
+        <div class="sys-detail-content" style="display: flex;flex-direction: column">
             <div style="display: flex;flex-direction: row">
                 <lit-slicer style="width:100%">
                     <div class="box-details" style="width: 100%">
                         <lit-table id="tb-system-data" style="height: auto">
-                            <lit-table-column width="300px" title="" data-index="eventName" key="eventName"  align="flex-start" order>
+                            <lit-table-column class="sys-detail-column" width="300px" title="" data-index="eventName" key="eventName"  align="flex-start" order>
                             </lit-table-column>
-                            <lit-table-column width="300px" title="" data-index="ts" key="ts"  align="flex-start" order>
+                            <lit-table-column class="sys-detail-column" width="300px" title="" data-index="ts" key="ts"  align="flex-start" order>
                             </lit-table-column>
                         </lit-table>
                     </div>
                     <lit-slicer-track ></lit-slicer-track>
                     <lit-table id="tb-system-details-data" no-head hideDownload style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)">
-                        <lit-table-column width="100px" title="" data-index="key" key="key"  align="flex-start" >
+                        <lit-table-column class="sys-detail-column" width="100px" title="" data-index="key" key="key"  align="flex-start" >
                         </lit-table-column>
-                        <lit-table-column width="1fr" title="" data-index="value" key="value"  align="flex-start">
+                        <lit-table-column class="sys-detail-column" width="1fr" title="" data-index="value" key="value"  align="flex-start">
                         </lit-table-column>
                     </lit-table>
                 </lit-slicer>
             </div>
-            <lit-progress-bar class="progress"></lit-progress-bar>
+            <lit-progress-bar class="progress sys-detail-progress"></lit-progress-bar>
         </div>
         "
 `);

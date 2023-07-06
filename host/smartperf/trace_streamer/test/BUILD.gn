@@ -17,55 +17,48 @@ import("test_ts.gni")
 
 if (is_test) {
   ohos_unittest("trace_streamer_ut") {
-    if (is_test) {
-      if (is_pbdecoder) {
-        sources = [
-          "unittest/binder_filter_test.cpp",
-          "unittest/bio_parser_test.cpp",
-          "unittest/bytrace_parser_test.cpp",
-          "unittest/clock_filter_test.cpp",
-          "unittest/cpu_filter_test.cpp",
-          "unittest/ebpf_file_system_test.cpp",
-          "unittest/ebpf_parser_test.cpp",
-          "unittest/event_parser_test.cpp",
-          "unittest/filter_filter_test.cpp",
-          "unittest/frame_filter_test.cpp",
-          "unittest/hidump_parser_test.cpp",
-          "unittest/hilog_parser_test.cpp",
-          "unittest/hisys_event_parser_test.cpp",
-          "unittest/htrace_binder_event_test.cpp",
-          "unittest/htrace_cpu_data_parser_test.cpp",
-          "unittest/htrace_cpu_detail_parser_test.cpp",
-          "unittest/htrace_diskio_parser_test.cpp",
-          "unittest/htrace_event_parser_test.cpp",
-          "unittest/htrace_irq_event_test.cpp",
-          "unittest/htrace_mem_parser_test.cpp",
-          "unittest/htrace_network_parser_test.cpp",
-          "unittest/htrace_process_parser_test.cpp",
-          "unittest/htrace_sys_mem_parser_test.cpp",
-          "unittest/htrace_sys_vmem_parser_test.cpp",
-          "unittest/http_server_test.cpp",
-          "unittest/irq_filter_test.cpp",
-          "unittest/measure_filter_test.cpp",
-          "unittest/native_hook_parser_test.cpp",
-          "unittest/paged_memory_parser_test.cpp",
-          "unittest/parser_test.cpp",
-          "unittest/process_filter_test.cpp",
-          "unittest/proto_reader_test.cpp",
-          "unittest/rpc_server_test.cpp",
-          "unittest/slice_filter_test.cpp",
-          "unittest/smaps_parser_test.cpp",
-          "unittest/span_join_test.cpp",
-          "unittest/table_test.cpp",
-          "unittest/wasm_func_test.cpp",
-        ]
-      } else {
-        sources = [
-          "unittest/js_memory_test.cpp",
-          "unittest/parser_pbreader_test.cpp",
-        ]
-      }
-    }
+    sources = [
+      "unittest/binder_filter_test.cpp",
+      "unittest/bio_parser_test.cpp",
+      "unittest/bytrace_parser_test.cpp",
+      "unittest/clock_filter_test.cpp",
+      "unittest/cpu_filter_test.cpp",
+      "unittest/ebpf_file_system_test.cpp",
+      "unittest/ebpf_parser_test.cpp",
+      "unittest/event_parser_test.cpp",
+      "unittest/filter_filter_test.cpp",
+      "unittest/frame_filter_test.cpp",
+      "unittest/hidump_parser_test.cpp",
+      "unittest/hilog_parser_test.cpp",
+      "unittest/hisys_event_parser_test.cpp",
+      "unittest/htrace_binder_event_test.cpp",
+      "unittest/htrace_cpu_data_parser_test.cpp",
+      "unittest/htrace_cpu_detail_parser_test.cpp",
+      "unittest/htrace_diskio_parser_test.cpp",
+      "unittest/htrace_event_parser_test.cpp",
+      "unittest/htrace_irq_event_test.cpp",
+      "unittest/htrace_mem_parser_test.cpp",
+      "unittest/htrace_network_parser_test.cpp",
+      "unittest/htrace_process_parser_test.cpp",
+      "unittest/htrace_sys_mem_parser_test.cpp",
+      "unittest/htrace_sys_vmem_parser_test.cpp",
+      "unittest/http_server_test.cpp",
+      "unittest/irq_filter_test.cpp",
+      "unittest/js_memory_test.cpp",
+      "unittest/measure_filter_test.cpp",
+      "unittest/native_hook_parser_test.cpp",
+      "unittest/paged_memory_parser_test.cpp",
+      "unittest/parser_pbreader_test.cpp",
+      "unittest/process_filter_test.cpp",
+      "unittest/proto_reader_test.cpp",
+      "unittest/rpc_server_test.cpp",
+      "unittest/slice_filter_test.cpp",
+      "unittest/smaps_parser_test.cpp",
+      "unittest/span_join_test.cpp",
+      "unittest/table_test.cpp",
+      "unittest/wasm_func_test.cpp",
+    ]
+
     deps = [
       "${THIRD_PARTY}/googletest:gtest",
       "${THIRD_PARTY}/googletest:gtest_main",
@@ -74,17 +67,9 @@ if (is_test) {
       "${THIRD_PARTY}/sqlite:sqlite",
       "../prebuilts/protos:ts_proto_data_cpp",
       "../src:trace_streamer_source",
+      "../src/parser/htrace_pbreader_parser:htrace_pbreader_parser",
+      "../src/proto_reader:proto_reader",
     ]
-    if (is_test) {
-      if (is_pbdecoder) {
-        deps += [ "../src/parser/htrace_parser:htrace_parser" ]
-      } else {
-        deps += [
-          "../src/parser/htrace_pbreader_parser:htrace_pbreader_parser",
-          "../src/proto_reader:proto_reader",
-        ]
-      }
-    }
     include_dirs = [
       "../src",
       "../src/trace_data",
@@ -108,10 +93,10 @@ if (is_test) {
       "${THIRD_PARTY}/hiperf/include",
       "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
       "${THIRD_PARTY}/protobuf/src/google/protobuf",
-      "${THIRD_PARTY}/json-master/include",
-      "${THIRD_PARTY}/json-master/include/nlohmann",
+      "${THIRD_PARTY}/json-master/single_include/nlohmann",
       "${THIRD_PARTY}/perf_include/musl",
       "${OHOS_PROTO_GEN}",
+      "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
       "${OHOS_FTRACE_PROTO_DIR}",
       "${OHOS_MEMORY_PROTO_DIR}",
       "${OHOS_HILOG_PROTO_DIR}",
@@ -124,24 +109,12 @@ if (is_test) {
       "${OHOS_SERVICE_PROTO_DIR}",
       "${OHOS_TEST_PROTO_DIR}",
       "${OHOS_JSMEMORY_PROTO_DIR}",
+      "../src/parser/htrace_pbreader_parser",
+      "../src/parser/htrace_pbreader_parser/htrace_event_parser",
+      "../src/parser/htrace_pbreader_parser/htrace_cpu_parser",
+      "../src/proto_reader",
+      "../src/proto_reader/include",
     ]
-    if (is_test) {
-      if (is_pbdecoder) {
-        include_dirs += [
-          "../src/parser/htrace_parser",
-          "../src/parser/htrace_parser/htrace_event_parser",
-          "../src/parser/htrace_parser/htrace_cpu_parser",
-        ]
-      } else {
-        include_dirs += [
-          "../src/parser/htrace_pbreader_parser",
-          "../src/parser/htrace_pbreader_parser/htrace_event_parser",
-          "../src/parser/htrace_pbreader_parser/htrace_cpu_parser",
-          "../src/proto_reader",
-          "../src/proto_reader/include",
-        ]
-      }
-    }
 
     cflags = [
       "-Wno-inconsistent-missing-override",

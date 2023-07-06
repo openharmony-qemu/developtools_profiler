@@ -19,8 +19,8 @@ OHOS_PROFILER_3RDPARTY_GOOGLETEST_DIR =
     "${OHOS_PROFILER_3RDPARTY_DIR}/googletest"
 
 OHOS_PROFILER_SUBSYS_NAME = "developtools"
-OHOS_PROFILER_PART_NAME = "profiler"
-OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH = "profiler"
+OHOS_PROFILER_PART_NAME = "hiprofiler"
+OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH = "hiprofiler"
 
 build_l2 = false
 if (getenv("BUILD_L2") == "true") {
@@ -28,5 +28,5 @@ if (getenv("BUILD_L2") == "true") {
 }
 
 declare_args() {
-  profiler_SmartPerf = true
+  hiprofiler_SmartPerf = true
 }

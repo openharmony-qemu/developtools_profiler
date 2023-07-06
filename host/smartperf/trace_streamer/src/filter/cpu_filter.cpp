@@ -44,7 +44,6 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
         auto lastRow = RowOfInternalTidInStateTable(nextPid);
         if (lastRow != INVALID_UINT64) {
             // check if there are wakeup or waking events before
-            lastRow = RowOfInternalTidInStateTable(nextPid);
             traceDataCache_->GetThreadStateData()->UpdateDuration(static_cast<TableRowId>(lastRow), ts);
         }
         auto index =
@@ -75,7 +74,6 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
         auto lastRow = RowOfInternalTidInStateTable(prevPid);
         if (lastRow != INVALID_UINT64) {
             CheckWakeupEvent(prevPid);
-            lastRow = RowOfInternalTidInStateTable(prevPid);
             traceDataCache_->GetThreadStateData()->UpdateDuration(static_cast<TableRowId>(lastRow), ts);
             streamFilters_->processFilter_->AddCpuStateCount(prevPid);
             auto thread = traceDataCache_->GetThreadData(prevPid);

@@ -93,25 +93,6 @@ void PerfThreadTable::FilterByConstraint(FilterConstraints& fc, double& filterCo
     }
 }
 
-bool PerfThreadTable::CanFilterId(const char op, size_t& rowCount)
-{
-    switch (op) {
-        case SQLITE_INDEX_CONSTRAINT_EQ:
-            rowCount = 1;
-            break;
-        case SQLITE_INDEX_CONSTRAINT_GT:
-        case SQLITE_INDEX_CONSTRAINT_GE:
-        case SQLITE_INDEX_CONSTRAINT_LE:
-        case SQLITE_INDEX_CONSTRAINT_LT:
-            // assume filter out a half of rows
-            rowCount = (rowCount >> 1);
-            break;
-        default:
-            return false;
-    }
-    return true;
-}
-
 std::unique_ptr<TableBase::Cursor> PerfThreadTable::CreateCursor()
 {
     return std::make_unique<Cursor>(dataCache_, this);

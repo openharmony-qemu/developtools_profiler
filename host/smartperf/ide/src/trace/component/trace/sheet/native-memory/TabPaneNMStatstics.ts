@@ -28,7 +28,7 @@ import { SpSystemTrace } from '../../../SpSystemTrace.js';
 import '../TabProgressBar.js';
 import { SpNativeMemoryChart } from '../../../chart/SpNativeMemoryChart.js';
 import { procedurePool } from '../../../../database/Procedure.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-native-statistics')
 export class TabPaneNMStatstics extends BaseElement {
@@ -238,7 +238,7 @@ export class TabPaneNMStatstics extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!,this.nativeStatisticsTbl!,20)
+    resizeObserver(this.parentElement!, this.nativeStatisticsTbl!, 20);
   }
 
   sortByColumn(nmStatColumn: string, nmStatSort: number) {
@@ -249,35 +249,65 @@ export class TabPaneNMStatstics extends BaseElement {
     } else {
       let arr = [...this.nativeStatisticsSource];
       if (nmStatColumn == 'existingString') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1 ? nativeStatisticsLeftData.existing - nativeStatisticsRightData.existing : nativeStatisticsRightData.existing - nativeStatisticsLeftData.existing;
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.existing - nativeStatisticsRightData.existing
+              : nativeStatisticsRightData.existing - nativeStatisticsLeftData.existing;
+          }
+        );
       } else if (nmStatColumn == 'allocCount') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1 ? nativeStatisticsLeftData.allocCount - nativeStatisticsRightData.allocCount : nativeStatisticsRightData.allocCount - nativeStatisticsLeftData.allocCount;
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.allocCount - nativeStatisticsRightData.allocCount
+              : nativeStatisticsRightData.allocCount - nativeStatisticsLeftData.allocCount;
+          }
+        );
       } else if (nmStatColumn == 'freeByteString') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1
-            ? nativeStatisticsLeftData.totalBytes - nativeStatisticsLeftData.existing - (nativeStatisticsRightData.totalBytes - nativeStatisticsRightData.existing)
-            : nativeStatisticsRightData.totalBytes - nativeStatisticsRightData.existing - (nativeStatisticsLeftData.totalBytes - nativeStatisticsLeftData.existing);
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.totalBytes -
+                  nativeStatisticsLeftData.existing -
+                  (nativeStatisticsRightData.totalBytes - nativeStatisticsRightData.existing)
+              : nativeStatisticsRightData.totalBytes -
+                  nativeStatisticsRightData.existing -
+                  (nativeStatisticsLeftData.totalBytes - nativeStatisticsLeftData.existing);
+          }
+        );
       } else if (nmStatColumn == 'freeCount') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1 ? nativeStatisticsLeftData.freeCount - nativeStatisticsRightData.freeCount : nativeStatisticsRightData.freeCount - nativeStatisticsLeftData.freeCount;
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.freeCount - nativeStatisticsRightData.freeCount
+              : nativeStatisticsRightData.freeCount - nativeStatisticsLeftData.freeCount;
+          }
+        );
       } else if (nmStatColumn == 'totalBytesString') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1 ? nativeStatisticsLeftData.totalBytes - nativeStatisticsRightData.totalBytes : nativeStatisticsRightData.totalBytes - nativeStatisticsLeftData.totalBytes;
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.totalBytes - nativeStatisticsRightData.totalBytes
+              : nativeStatisticsRightData.totalBytes - nativeStatisticsLeftData.totalBytes;
+          }
+        );
       } else if (nmStatColumn == 'maxStr') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1 ? nativeStatisticsLeftData.max - nativeStatisticsRightData.max : nativeStatisticsRightData.max - nativeStatisticsLeftData.max;
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.max - nativeStatisticsRightData.max
+              : nativeStatisticsRightData.max - nativeStatisticsLeftData.max;
+          }
+        );
       } else if (nmStatColumn == 'totalCount') {
-        this.nativeStatisticsTbl!.recycleDataSource = arr.sort((nativeStatisticsLeftData, nativeStatisticsRightData) => {
-          return nmStatSort == 1 ? nativeStatisticsLeftData.totalCount - nativeStatisticsRightData.totalCount : nativeStatisticsRightData.totalCount - nativeStatisticsLeftData.totalCount;
-        });
+        this.nativeStatisticsTbl!.recycleDataSource = arr.sort(
+          (nativeStatisticsLeftData, nativeStatisticsRightData) => {
+            return nmStatSort == 1
+              ? nativeStatisticsLeftData.totalCount - nativeStatisticsRightData.totalCount
+              : nativeStatisticsRightData.totalCount - nativeStatisticsLeftData.totalCount;
+          }
+        );
       }
     }
   }

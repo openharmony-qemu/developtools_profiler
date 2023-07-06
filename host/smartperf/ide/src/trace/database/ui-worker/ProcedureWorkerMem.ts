@@ -147,9 +147,7 @@ export class ProcessMemStruct extends BaseProcessMemStruct {
       let width = data.frame.width || 0;
       memContext.fillStyle = ColorUtils.colorForTid(data.maxValue || 0);
       memContext.strokeStyle = ColorUtils.colorForTid(data.maxValue || 0);
-      if (
-        data === ProcessMemStruct.hoverProcessMemStruct
-      ) {
+      if (data === ProcessMemStruct.hoverProcessMemStruct) {
         memContext.lineWidth = 1;
         memContext.globalAlpha = 0.6;
         let memDrawHeight: number = Math.floor(

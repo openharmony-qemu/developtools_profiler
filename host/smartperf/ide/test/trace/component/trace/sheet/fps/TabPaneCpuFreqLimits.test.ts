@@ -32,9 +32,9 @@ describe('TabPaneCpuFreqLimits Test', () => {
         expect((tabPaneCpuFreqLimits.formatData([],1,1))).toBeUndefined();
     });
     it('TabPaneCpuFreqLimitsTest02', function () {
-        expect((tabPaneCpuFreqLimits.sortTable('',0))).toBeUndefined();
+        expect((tabPaneCpuFreqLimits.sortCpuFreqLimitTable('',0))).toBeUndefined();
     });
     it('TabPaneCpuFreqLimitsTest03', function () {
-        expect((tabPaneCpuFreqLimits.sortTable('timeStr',1))).toBeUndefined();
+        expect((tabPaneCpuFreqLimits.sortCpuFreqLimitTable('timeStr',1))).toBeUndefined();
     });
 })

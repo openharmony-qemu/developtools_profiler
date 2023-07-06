@@ -71,4 +71,6 @@ ohos_source_set("sample_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":sample_include_config" ]
   sources = sample_data_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }

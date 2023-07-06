@@ -15,6 +15,12 @@
 
 //@ts-ignore
 import { TabpanePerfProfile } from '../../../../../../dist/trace/component/trace/sheet/hiperf/TabPerfProfile.js';
+//@ts-ignore
+import {showButtonMenu} from "../../../../../../dist/trace/component/trace/sheet/SheetUtils.js";
+
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {}
+});
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -55,12 +61,9 @@ describe('TabPerfProfile Test', () => {
     };
     expect(tabpanePerfProfile.setRightTableData(call)).toBeUndefined();
   });
-  it('TabpanePerfProfileTest04 ', function () {
-    expect(tabpanePerfProfile.showButtomMenu()).toBeUndefined();
-  });
   it('TabpanePerfProfileTest05 ', function () {
-    let isShow = 1;
-    expect(tabpanePerfProfile.showButtomMenu(isShow)).toBeUndefined();
+    let htmlDivElement = document.createElement('div');
+    expect(showButtonMenu(htmlDivElement, true)).toBeUndefined();
   });
   it('TabpanePerfProfileTest06 ', function () {
     TabpanePerfProfile.getParentTree = jest.fn(() => true);
@@ -77,7 +80,7 @@ describe('TabPerfProfile Test', () => {
     let data = {
       icon: 'tree',
     };
-    tabpanePerfProfile.tbl!.reMeauseHeight = jest.fn(() => true);
+    tabpanePerfProfile.perfProfilerTbl!.reMeauseHeight = jest.fn(() => true);
     expect(tabpanePerfProfile.switchFlameChart(data)).toBeUndefined();
   });
   it('TabpanePerfProfileTest07 ', function () {
@@ -89,7 +92,7 @@ describe('TabPerfProfile Test', () => {
   it('TabpanePerfProfileTest09 ', function () {
     tabpanePerfProfile.sortTree = jest.fn(() => true);
     tabpanePerfProfile.sortTree.sort = jest.fn(() => true);
-    expect(tabpanePerfProfile.setLTableData()).toBeUndefined();
+    expect(tabpanePerfProfile.setPerfProfilerLeftTableData()).toBeUndefined();
   });
   it('TabpanePerfProfileTest10 ', function () {
     tabpanePerfProfile.getDataByWorker = jest.fn();

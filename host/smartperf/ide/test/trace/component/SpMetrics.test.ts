@@ -151,22 +151,17 @@ describe('SpMetrics Test', () => {
              text-align: left;
              width: 100%;
         }
-
-        /*Define scroll bar height, width and background*/
         ::-webkit-scrollbar
         {
           width: 8px;
           background-color: var(--dark-background3,#FFFFFF);
         }
-
-        /*define slider*/
         ::-webkit-scrollbar-thumb
         {
           border-radius: 6px;
           background-color: var(--dark-background7,rgba(0,0,0,0.1));
         }
-        
-        .load-metric{
+        .sp-load-metric{
             width: 95%;
             bottom: 0;
         }
@@ -179,7 +174,7 @@ describe('SpMetrics Test', () => {
                 <select class="sql-select">
                 </select>
                 <button class="sql-select-button">&nbsp;&nbsp; Run &nbsp;&nbsp;</button>
-                <lit-progress-bar class="load-metric"></lit-progress-bar>
+                <lit-progress-bar class="sp-load-metric"></lit-progress-bar>
             </div>
             <div class="metric-select response">
                  <textarea class="response-json" readonly>

@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../ts.gni")
+import("../../../build/ts.gni")
 ohos_source_set("ebpf_parser_src") {
   subsystem_name = "trace_streamer"
   part_name = "ebpf_parser_src"
@@ -34,7 +34,6 @@ ohos_source_set("ebpf_parser_src") {
   include_dirs = [
     ".",
     "../",
-    "../htrace_pbreader_parser",
     "../..",
     "../../trace_data",
     "../../base",

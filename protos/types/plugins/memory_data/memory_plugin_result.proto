@@ -41,6 +41,13 @@ message SmapsInfo {
     double reside = 8;
     uint64 dirty = 9;
     uint64 swapper = 10;
+    uint64 private_clean = 11;
+    uint64 private_dirty = 12;
+    uint64 shared_clean = 13;
+    uint64 shared_dirty = 14;
+    uint64 swap = 15;
+    uint64 swap_pss = 16;
+    string category = 17;
 };
 
 message AppSummary {

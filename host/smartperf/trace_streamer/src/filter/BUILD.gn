@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("../../build/ohos.gni")
-import("../ts.gni")
+import("../../build/ts.gni")
 
 ohos_source_set("filter") {
   subsystem_name = "trace_streamer"
@@ -22,8 +22,7 @@ ohos_source_set("filter") {
     "args_filter.h",
     "binder_filter.cpp",
     "binder_filter.h",
-    "clock_filter.cpp",
-    "clock_filter.h",
+    "clock_filter_ex.cpp",
     "cpu_filter.cpp",
     "filter_base.cpp",
     "filter_base.h",
@@ -37,6 +36,10 @@ ohos_source_set("filter") {
     "irq_filter.h",
     "measure_filter.cpp",
     "measure_filter.h",
+    "native_hook_filter.cpp",
+    "native_hook_filter.h",
+    "offline_symbolization_filter.cpp",
+    "offline_symbolization_filter.h",
     "process_filter.cpp",
     "process_filter.h",
     "slice_filter.cpp",
@@ -48,6 +51,7 @@ ohos_source_set("filter") {
     "system_event_measure_filter.cpp",
     "system_event_measure_filter.h",
   ]
+
   if (enable_ts_utest && !use_wasm) {
     cflags = [
       "-fprofile-arcs",
@@ -71,25 +75,14 @@ ohos_source_set("filter") {
     "${SRC}/filter",
     "${SRC}/cfg",
     "${OHOS_PROTO_GEN}/types/plugins/memory_data",
+    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
     "${SRC}",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
+    "${THIRD_PARTY}/perf_include/musl",
+    "../proto_reader/include",
     ".",
   ]
-
-  if (!is_pbdecoder) {
-    sources += [
-      "native_hook_filter.cpp",
-      "native_hook_filter.h",
-      "offline_symbolization_filter.cpp",
-      "offline_symbolization_filter.h",
-    ]
-    include_dirs += [
-      "../proto_reader/include",
-      "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-      "${THIRD_PARTY}/perf_include/musl",
-    ]
-  }
 
   if (with_perf) {
     sources += [

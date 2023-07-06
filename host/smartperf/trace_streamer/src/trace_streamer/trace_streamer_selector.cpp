@@ -20,7 +20,7 @@
 #include <regex>
 #include "args_filter.h"
 #include "binder_filter.h"
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "cpu_filter.h"
 #include "file.h"
 #include "filter_filter.h"
@@ -29,11 +29,7 @@
 #include "irq_filter.h"
 #include "measure_filter.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
-#ifndef IS_PBDECODER
 #include "parser/htrace_pbreader_parser/htrace_parser.h"
-#else
-#include "parser/htrace_parser/htrace_parser.h"
-#endif
 #if WITH_PERF
 #include "perf_data_filter.h"
 #endif
@@ -66,8 +62,10 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     if (start.find("# sysevent") != std::string::npos) {
         return TRACE_FILETYPE_SYSEVENT;
     }
-    if ((start.compare(0, std::string("<!DOCTYPE html>").length(), "<!DOCTYPE html>") == 0) ||
-        (start.compare(0, std::string("<html>").length(), "<html>") == 0)) {
+    std::string lowerStart(start);
+    transform(start.begin(), start.end(), lowerStart.begin(), ::tolower);
+    if ((lowerStart.compare(0, std::string("<!doctype html>").length(), "<!doctype html>") == 0) ||
+        (lowerStart.compare(0, std::string("<html>").length(), "<html>") == 0)) {
         return TRACE_FILETYPE_BY_TRACE;
     }
     if (start.compare(0, std::string("\x0a").length(), "\x0a") == 0) {
@@ -75,6 +73,12 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     }
     if (start.compare(0, std::string("OHOSPROF").length(), "OHOSPROF") == 0) {
         return TRACE_FILETYPE_H_TRACE;
+    }
+    if (start.compare(0, std::string("PERFILE2").length(), "PERFILE2") == 0) {
+        return TRACE_FILETYPE_PERF;
+    }
+    if (start.compare(0, std::string("\x1f\x8b").length(), "\x1f\x8b") == 0) {
+        return TRACE_FILETYPE_PERF;
     }
     const std::regex bytraceMatcher = std::regex(R"(-(\d+)\s+\(?\s*(\d+|-+)?\)?\s?\[(\d+)\]\s*)"
                                                  R"([a-zA-Z0-9.]{0,5}\s+(\d+\.\d+):\s+(\S+):)");
@@ -102,7 +106,7 @@ void TraceStreamerSelector::InitFilter()
     streamFilters_->sliceFilter_ = std::make_unique<SliceFilter>(traceDataCache_.get(), streamFilters_.get());
 
     streamFilters_->processFilter_ = std::make_unique<ProcessFilter>(traceDataCache_.get(), streamFilters_.get());
-    streamFilters_->clockFilter_ = std::make_unique<ClockFilter>(traceDataCache_.get(), streamFilters_.get());
+    streamFilters_->clockFilter_ = std::make_unique<ClockFilterEx>(traceDataCache_.get(), streamFilters_.get());
     streamFilters_->filterFilter_ = std::make_unique<FilterFilter>(traceDataCache_.get(), streamFilters_.get());
 
     streamFilters_->threadMeasureFilter_ =
@@ -154,6 +158,10 @@ void TraceStreamerSelector::WaitForParserEnd()
     if (fileType_ == TRACE_FILETYPE_BY_TRACE) {
         bytraceParser_->WaitForParserEnd();
     }
+    if (fileType_ == TRACE_FILETYPE_PERF) {
+        htraceParser_->TraceDataSegmentEnd();
+        htraceParser_->WaitForParserEnd();
+    }
     traceDataCache_->UpdateTraceRange();
 }
 
@@ -178,11 +186,9 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
     }
     if (fileType_ == TRACE_FILETYPE_UN_KNOW) {
         fileType_ = GuessFileType(data.get(), size);
-        if (fileType_ == TRACE_FILETYPE_H_TRACE) {
+        if (fileType_ == TRACE_FILETYPE_H_TRACE || fileType_ == TRACE_FILETYPE_PERF) {
             htraceParser_ = std::make_unique<HtraceParser>(traceDataCache_.get(), streamFilters_.get());
-#ifndef IS_PBDECODER
             htraceParser_->EnableFileSeparate(enableFileSeparate_);
-#endif
         } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT) {
             bytraceParser_ = std::make_unique<BytraceParser>(traceDataCache_.get(), streamFilters_.get());
             bytraceParser_->EnableBytrace(fileType_ == TRACE_FILETYPE_BY_TRACE);
@@ -190,7 +196,7 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
         if (fileType_ == TRACE_FILETYPE_UN_KNOW) {
             SetAnalysisResult(TRACE_PARSER_FILE_TYPE_ERROR);
             TS_LOGI(
-                "File type is not supported!,\nthe head content is:%s\n ---waring!!!---\n"
+                "File type is not supported!,\nthe head content is:%s\n ---warning!!!---\n"
                 "File type is not supported!,\n",
                 data.get());
             return false;
@@ -200,6 +206,8 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
         htraceParser_->ParseTraceDataSegment(std::move(data), size);
     } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT) {
         bytraceParser_->ParseTraceDataSegment(std::move(data), size);
+    } else if (fileType_ == TRACE_FILETYPE_PERF) {
+        htraceParser_->StoreTraceDataSegment(std::move(data), size);
     }
     SetAnalysisResult(TRACE_PARSER_NORMAL);
     return true;
@@ -234,10 +242,7 @@ bool TraceStreamerSelector::ReloadSymbolFiles(std::string& directory, std::vecto
     for (auto file : symbolsPaths) {
         TS_LOGE("files is %s", file.c_str());
     }
-#ifndef IS_PBDECODER
     return htraceParser_->ReparseSymbolFilesAndResymbolization(directory, symbolsPaths);
-#endif
-    return false;
 }
 void TraceStreamerSelector::Clear()
 {
@@ -260,23 +265,16 @@ int32_t TraceStreamerSelector::SearchDatabase(const std::string& sql, uint8_t* o
 {
     return traceDataCache_->SearchDatabase(sql, out, outLen);
 }
+int32_t TraceStreamerSelector::SearchDatabase(const std::string& sql, bool printf)
+{
+    return traceDataCache_->SearchDatabase(sql, printf);
+}
 int32_t TraceStreamerSelector::UpdateTraceRangeTime(uint8_t* data, int32_t len)
 {
     std::string traceRangeStr;
     memcpy(&traceRangeStr, data, len);
     int32_t size = traceRangeStr.size();
-    std::vector<string> vTraceRangeStr;
-    for (int32_t i = 0, pos = 0; i < size; i++) {
-        pos = traceRangeStr.find(";", i);
-        if (pos == std::string::npos) {
-            break;
-        }
-        if (pos < size) {
-            std::string s = traceRangeStr.substr(i, pos - i);
-            vTraceRangeStr.push_back(s);
-            i = pos;
-        }
-    }
+    std::vector<string> vTraceRangeStr = SplitStringToVec(traceRangeStr, ";");
     uint64_t minTs = std::stoull(vTraceRangeStr.at(0));
     uint64_t maxTs = std::stoull(vTraceRangeStr.at(1));
     traceDataCache_->UpdateTraceTime(minTs);

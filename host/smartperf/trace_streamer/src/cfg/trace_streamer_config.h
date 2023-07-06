@@ -93,6 +93,7 @@ enum SupportedTraceEventType {
     TRACE_NATIVE_HOOK_MMAP,
     TRACE_NATIVE_HOOK_MUNMAP,
     TRACE_NATIVE_HOOK_RECORD_STATISTICS,
+    TRACE_NATIVE_HOOK_MEMTAG,
     TRACE_SYS_MEMORY,
     TRACE_SYS_VIRTUAL_MEMORY,
     TRACE_DISKIO,
@@ -243,6 +244,7 @@ private:
     const std::string TRACE_ACTION_NATIVE_HOOK_MMAP = "native_hook_mmap";
     const std::string TRACE_ACTION_NATIVE_HOOK_MUNMAP = "native_hook_munmap";
     const std::string TRACE_ACTION_NATIVE_HOOK_RECORD_STATISTICS = "native_hook_record_statistics";
+    const std::string TRACE_ACTION_NATIVE_HOOK_MEMTAG = "native_hook_memtag";
     const std::string TRACE_ACTION_SIGNAL_GENERATE = "signal_generate";
     const std::string TRACE_ACTION_SIGNAL_DELIVER = "signal_deliver";
     const std::string TRACE_ACTION_BLOCK_BIO_BACKMERGE = "trace_block_bio_backmerge";

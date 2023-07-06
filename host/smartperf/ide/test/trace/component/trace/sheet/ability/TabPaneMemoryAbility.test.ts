@@ -55,8 +55,8 @@ describe('TabPaneMemoryAbility Test', () => {
     },
   ]);
 
-  tabPaneMemoryAbility.tbl = jest.fn(() => true);
-  tabPaneMemoryAbility.tbl.recycleDataSource = jest.fn(() => []);
+  tabPaneMemoryAbility.memoryAbilityTbl = jest.fn(() => true);
+  tabPaneMemoryAbility.memoryAbilityTbl.recycleDataSource = jest.fn(() => []);
   tabPaneMemoryAbility.data = {
     cpus: [],
     threadIds: [],
@@ -83,7 +83,7 @@ describe('TabPaneMemoryAbility Test', () => {
   };
 
   it('TabPaneMemoryAbilityTest01', function () {
-    tabPaneMemoryAbility.queryResult.length = 1;
+    tabPaneMemoryAbility.queryMemoryResult.length = 1;
     expect(tabPaneMemoryAbility.filterData()).toBeUndefined();
   });
 

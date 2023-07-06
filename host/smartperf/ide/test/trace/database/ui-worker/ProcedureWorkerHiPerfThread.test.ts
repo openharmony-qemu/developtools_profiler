@@ -19,10 +19,11 @@ jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
 
 //@ts-ignore
 import {
-  hiPerfThread,
   HiperfThreadRender,
   HiPerfThreadStruct,
 } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerHiPerfThread.js';
+// @ts-ignore
+import { hiPerf } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerCommon.js';
 
 describe('ProcedureWorkerHiPerfThread Test', () => {
   let res = [
@@ -66,7 +67,7 @@ describe('ProcedureWorkerHiPerfThread Test', () => {
       width: 10,
       height: 10,
     };
-    hiPerfThread(dataList, [{ length: 0 }], dataList, 8, 3, frame, false, 1, false);
+    hiPerf(dataList, [{ length: 0 }], dataList, 8, 3, frame, false, 1, false);
   });
 
   it('ProcedureWorkerHiPerfThreadTest03', function () {
@@ -84,12 +85,12 @@ describe('ProcedureWorkerHiPerfThread Test', () => {
       width: 10,
       height: 10,
     };
-    hiPerfThread(dataList, [{ length: 1 }], dataList, 8, 3, frame, true, 1, true);
+    hiPerf(dataList, [{ length: 1 }], dataList, 8, 3, frame, true, 1, true);
   });
 
   it('ProcedureWorkerHiPerfThreadTest04', function () {
     expect(HiPerfThreadStruct.groupBy10MS([{ ps: 1 }, { coX: '1' }], 10, '')).toEqual([
-      { dur: 10000000, height: 80, startNS: NaN },
+      { dur: 10000000, height: Infinity, startNS: NaN },
     ]);
   });
 

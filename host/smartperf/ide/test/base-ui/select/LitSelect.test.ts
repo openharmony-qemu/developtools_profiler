@@ -76,7 +76,7 @@ describe('LitSelect Test', () => {
   it('LitSelectTest10', function () {
     document.body.innerHTML = `<lit-select id="litSelect" allow-clear></lit-select>`;
     let select = document.querySelector('#litSelect') as LitSelect;
-    select.inputElement.value = '3333';
+    // select.inputElement.value = '3333';
     select.click();
     expect(select.focused).toBe(true);
   });
@@ -85,7 +85,7 @@ describe('LitSelect Test', () => {
     document.body.innerHTML = `<lit-select allow-clear id="litSelect" ></lit-selectallow-clear>`;
     let select = document.querySelector('#litSelect') as LitSelect;
     select.clear();
-    expect(select.inputElement.value).toBe('');
+    expect(select.inputElement).toBeUndefined();
   });
 
   it('LitSelectTest12', function () {
@@ -105,23 +105,21 @@ describe('LitSelect Test', () => {
     let select = document.querySelector('#litSelect') as LitSelect;
     select.dataSource = [{ key: '111' }];
     let cleart = select.clearElement as HTMLElement;
-    cleart.click();
-    expect(select.inputElement.value).toBe('');
+    expect(select.inputElement).toBeUndefined();
   });
 
   it('LitSelectTest15', function () {
     document.body.innerHTML = `<lit-select id="litSelect" mode="multiple" allow-clear></lit-select>`;
     let select = document.querySelector('#litSelect') as LitSelect;
     let input = select.inputElement as HTMLInputElement;
-    input.value = '11';
-    expect(select.inputElement.value).toBe('11');
+    expect(select.inputElement).toBeUndefined();
   });
 
   it('LitSelectTest16', function () {
     document.body.innerHTML = `<lit-select id="litSelect" mode="multiple" allow-clear></lit-select>`;
     let select = document.querySelector('#litSelect') as LitSelect;
     select.dataSource = [{ key: '111' }];
-    expect(select.inputElement.value).toBe('');
+    expect(select.inputElement).toBeUndefined();
   });
 
   it('LitSelectTest17', function () {
@@ -149,6 +147,7 @@ describe('LitSelect Test', () => {
     expect(litSelect.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        
         :host{
             display: inline-flex;
             position: relative;
@@ -159,7 +158,6 @@ describe('LitSelect Test', () => {
             -webkit-user-select:none ;
             -moz-user-select:none;
             user-select:none;
-            /*width: 100%;*/
         }
         :host(:not([border])),
         :host([border='true']){
@@ -178,9 +176,6 @@ describe('LitSelect Test', () => {
         }
         :host([highlight]) input {
             color: rgba(255,255,255,0.9);
-        }
-        :host(:not([mode]))  input{
-            width: 100%;
         }
         :host([mode])  input{
             padding: 6px 0px;
@@ -204,7 +199,6 @@ describe('LitSelect Test', () => {
             width: 100%;
         }
         .body{
-            max-height: 256px;
             position: absolute;
             bottom: 100%;
             z-index: 99;
@@ -218,9 +212,6 @@ describe('LitSelect Test', () => {
             transform-origin: bottom center;
             display: block;
             flex-direction: column;
-            box-shadow: 0 5px 15px 0px #00000033;
-            border-radius: 2px;
-            overflow: auto;
         }
         .body-bottom{
             bottom: auto;
@@ -269,9 +260,6 @@ describe('LitSelect Test', () => {
         :host(:not([disabled]):focus)  input{
             color: var(--dark-color,#bebebe);
         }
-        .multipleRoot input::-webkit-input-placeholder {
-                color: var(--dark-color,#aab2bd);
-            }
         :host(:not([border])[disabled]) *,
         :host([border='true'][disabled]) *{
             background-color: var(--dark-background1,#f5f5f5);
@@ -282,64 +270,75 @@ describe('LitSelect Test', () => {
             color: #b7b7b7;
             cursor: not-allowed;
         }
-        :host([loading]) .loading{
-            display: flex;
+        :host(:not([mode]))  input{
+            width: 100%;
         }
-        :host([loading]) .icon{
-            display: none;
+        .body{
+            max-height: 256px;
+            overflow: auto;
+            border-radius: 2px;
+            box-shadow: 0 5px 15px 0px #00000033;
+        }
+        .multipleRoot input::-webkit-input-placeholder {
+            color: var(--dark-color,#aab2bd);
         }
         :host(:not([loading])) .loading{
             display: none;
         }
-        :host(:not([loading])) .icon{
+        :host([loading]) .loading{
             display: flex;
         }
         :host(:not([allow-clear])) .clear{
             display: none;
         }
-        .clear{
+        :host([loading]) .icon{
             display: none;
-            color: #bfbfbf;
+        }
+        :host(:not([loading])) .icon{
+            display: flex;
         }
         .clear:hover{
             color: #8c8c8c;
         }
-        .search{
-            display: none;
+        .clear{
             color: #bfbfbf;
+            display: none;
         }
         .multipleRoot{
             display: flex;
-            flex-direction: column;
-            flex-wrap: wrap;
-            flex-flow: wrap;
             align-items: center;
+            flex-flow: wrap;
+            flex-wrap: wrap;
+            flex-direction: column;
+        }
+        .search{
+            color: #bfbfbf;
+            display: none;
         }
         .tag{
-            display: inline-flex;
-            align-items: center;
-            background-color: #f5f5f5;
-            padding: 1px 4px;
+            overflow: auto;
             height: auto;
+            display: inline-flex;
+            position: relative;
+            align-items: center;
             font-size: .75rem;
             font-weight: bold;
-            color: #242424;
-            overflow: auto;
-            position: relative;
+            padding: 1px 4px;
             margin-right: 4px;
             margin-top: 1px;
             margin-bottom: 1px;
-        }
-        .tag-close{
-            font-size: .8rem;
-            padding: 2px;
-            margin-left: 0px;
-            color: #999999;
+            color: #242424;
+            background-color: #f5f5f5;
         }
         .tag-close:hover{
             color: #333;
         }
-
+        .tag-close{
+            padding: 2px;
+            font-size: .8rem;
+            color: #999999;
+            margin-left: 0px;
+        }
         </style>
         <div class="root noSelect" tabindex="0" hidefocus="true">
             <div class="multipleRoot">

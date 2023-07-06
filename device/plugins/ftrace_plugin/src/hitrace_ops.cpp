@@ -20,7 +20,7 @@
 #include "string_utils.h"
 
 FTRACE_NS_BEGIN
-HitraceOps::HitraceOps() : TraceOps("/system/bin/bytrace", "bytrace", HITRACE) {}
+HitraceOps::HitraceOps() : TraceOps("/system/bin/hitrace", "hitrace", HITRACE) {}
 
 HitraceOps::~HitraceOps() {}
 

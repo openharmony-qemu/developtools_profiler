@@ -83,6 +83,8 @@ export class TabPaneCallTree extends BaseElement {
         this.frameChart!.data = this.callTreeDataSource;
         this.frameChart?.updateCanvas(true, this.clientWidth);
         this.frameChart?.calculateChartData();
+        this.switchFlameChart();
+        this.callTreeFilter.icon = 'block';
       }
     );
   }
@@ -441,10 +443,10 @@ export class TabPaneCallTree extends BaseElement {
     });
   }
 
-  switchFlameChart(data: any) {
+  switchFlameChart(data?: any) {
     let callTreePageTab = this.shadowRoot?.querySelector('#show_table');
     let callTreePageChart = this.shadowRoot?.querySelector('#show_chart');
-    if (data.icon == 'block') {
+    if (!data || data.icon == 'block') {
       callTreePageChart?.setAttribute('class', 'show');
       callTreePageTab?.setAttribute('class', '');
       this.isChartShow = true;

@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include "cpu_plugin_result.pbreader.h"
+#include "event_parser_base.h"
 #include "hilog_plugin_result.pbreader.h"
 #include "htrace_plugin_time_parser.h"
 #include "trace_data/trace_data_cache.h"
@@ -26,7 +27,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-class HtraceCpuDataParser : public HtracePluginTimeParser {
+class HtraceCpuDataParser : public EventParserBase, public HtracePluginTimeParser {
 public:
     HtraceCpuDataParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceCpuDataParser();

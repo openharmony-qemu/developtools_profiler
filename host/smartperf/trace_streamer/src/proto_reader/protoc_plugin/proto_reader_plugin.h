@@ -32,24 +32,6 @@ using google::protobuf::compiler::GeneratorContext;
 using google::protobuf::io::Printer;
 using google::protobuf::io::ZeroCopyOutputStream;
 
-inline std::vector<std::string> SplitStringToVec(std::string& str, const std::string& pat)
-{
-    std::vector<std::string> result = {};
-    str += pat;
-    int32_t size = str.size();
-    for (int32_t i = 0; i < size; i++) {
-        auto pos = str.find(pat, i);
-        if (pos == std::string::npos) {
-            break;
-        }
-        if (pos < size) {
-            std::string s = str.substr(i, pos - i);
-            result.push_back(s);
-            i = pos + pat.size() - 1;
-        }
-    }
-    return result;
-}
 inline char Uppercase(char c)
 {
     return ('a' <= c && c <= 'z') ? static_cast<char>(c + ('A' - 'a')) : c;

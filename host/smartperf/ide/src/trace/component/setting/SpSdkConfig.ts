@@ -163,6 +163,10 @@ export class SpSdkConfig extends BaseElement {
         })
         .catch((err) => {});
       if (this.worker == null) {
+        // @ts-ignore
+        if (window.useWb) {
+          return;
+        }
         this.worker = new Worker('trace/database/ConfigWorker.js');
       }
     } catch (e) {}

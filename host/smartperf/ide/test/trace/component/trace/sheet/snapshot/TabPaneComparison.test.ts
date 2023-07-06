@@ -29,14 +29,16 @@ jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
     };
 });
 
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+
 // @ts-ignore
 window.ResizeObserver =
-    window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+      disconnect: jest.fn(),
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+  }));
 
 describe('TabPaneComparison Test', () => {
     let data = {
@@ -61,7 +63,7 @@ describe('TabPaneComparison Test', () => {
 
     let childenData = [
         {
-            addedCount: 649,
+            addedCount: 6491111,
             addedIndx: [319, 326],
             addedSize: 38936,
             childCount: 1296,
@@ -133,7 +135,7 @@ describe('TabPaneComparison Test', () => {
     ];
     let ddd = [
         {
-            addedCount: 648,
+            addedCount: 6482222,
             addedIndx: [319, 326],
             addedSize: 38936,
             childCount: 1296,
@@ -166,9 +168,10 @@ describe('TabPaneComparison Test', () => {
             targetFileId: 1,
             traceNodeId: -1,
             type: 4,
+            isString: jest.fn(() => true),
         },
         {
-            addedCount: 648,
+            addedCount: 6483333,
             addedIndx: [319, 326],
             addedSize: 38936,
             childCount: 1296,
@@ -201,9 +204,10 @@ describe('TabPaneComparison Test', () => {
             targetFileId: 1,
             traceNodeId: -1,
             type: 4,
+            isString: jest.fn(() => true),
         },
         {
-            addedCount: 648,
+            addedCount: 6485555,
             addedIndx: [319, 326],
             addedSize: 38936,
             childCount: 1296,
@@ -236,6 +240,7 @@ describe('TabPaneComparison Test', () => {
             targetFileId: 1,
             traceNodeId: -1,
             type: 2,
+            isString: jest.fn(() => true),
         },
     ];
     let rowObjectData = {
@@ -253,6 +258,7 @@ describe('TabPaneComparison Test', () => {
         children: childenData,
         depth: -1,
     };
+
     let iconClick = new CustomEvent('icon-click', <CustomEventInit>{
         detail: {
             ...rowObjectData.data,
@@ -301,6 +307,7 @@ describe('TabPaneComparison Test', () => {
     heapDataInterface.fileStructs = [data];
     let htmlDivElement = document.createElement('div');
     tabPaneComparisons.leftTheadTable = jest.fn(() => htmlDivElement);
+    tabPaneComparisons.comparisonTable = jest.fn(() => htmlDivElement);
     tabPaneComparisons.rightTheadTable = jest.fn(() => htmlDivElement);
     tabPaneComparisons.rightTheadTable.removeAttribute = jest.fn(() => true);
     tabPaneComparisons.rightTheadTable.hasAttribute = jest.fn(() => {});
@@ -310,6 +317,7 @@ describe('TabPaneComparison Test', () => {
 
     it('TabPaneComparisonTest01', () => {
         tabPaneComparisons.comparisonsData = jest.fn(() => ddd);
+        tabPaneComparisons.comparisonTableEl.reMeauseHeight = jest.fn(() => true);
         tabPaneComparisons.initComparison(data, dataList);
 
         let retainsData = [
@@ -341,6 +349,7 @@ describe('TabPaneComparison Test', () => {
         tabPaneComparisons.comparisonTableEl!.dispatchEvent(iconClick);
         tabPaneComparisons.comparisonTableEl!.dispatchEvent(iconRowClick);
         tabPaneComparisons.comparisonTableEl!.dispatchEvent(iconColumnClickData);
+        tabPaneComparisons.retainerTableEl.reMeauseHeight = jest.fn(() => true);
         tabPaneComparisons.retainerTableEl!.dispatchEvent(iconColumnClick);
 
         tabPaneComparisons.sortComprisonByColumn('addedCount', 0);

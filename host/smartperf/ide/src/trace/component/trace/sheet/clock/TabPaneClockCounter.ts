@@ -16,7 +16,7 @@
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { Counter, SelectionData, SelectionParam } from '../../../../bean/BoxSelection.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-clock-counter')
 export class TabPaneClockCounter extends BaseElement {
@@ -26,9 +26,12 @@ export class TabPaneClockCounter extends BaseElement {
 
   set data(clockCounterValue: SelectionParam | any) {
     //@ts-ignore
-    this.clockCounterTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
+    this.clockCounterTbl?.shadowRoot?.querySelector('.table')?.style?.height =
+      this.parentElement!.clientHeight - 45 + 'px';
     this.clockCounterRange!.textContent =
-      'Selected range: ' + parseFloat(((clockCounterValue.rightNs - clockCounterValue.leftNs) / 1000000.0).toFixed(5)) + ' ms';
+      'Selected range: ' +
+      parseFloat(((clockCounterValue.rightNs - clockCounterValue.leftNs) / 1000000.0).toFixed(5)) +
+      ' ms';
     let dataSource: Array<SelectionData> = [];
     let collect = clockCounterValue.clockMapData;
     let sumCount = 0;
@@ -57,7 +60,7 @@ export class TabPaneClockCounter extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.clockCounterTbl!)
+    resizeObserver(this.parentElement!, this.clockCounterTbl!);
   }
 
   initHtml(): string {

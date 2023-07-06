@@ -20,6 +20,7 @@
 
 #include "htrace_native_hook_parser.h"
 #include "native_hook_result.pb.h"
+#include "native_hook_result.pbreader.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/common_types.h"
 #include "trace_streamer_selector.h"
@@ -384,7 +385,13 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOutNativeHookData, TestSi
     TS_LOGI("test24-1");
     BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     auto size = stream_.traceDataCache_->GetConstHilogData().Size();
     EXPECT_FALSE(size);
 }
@@ -423,7 +430,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMalloc, TestSize.Level
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -442,8 +457,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMalloc, TestSize.Level
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache expectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                          SYMBOL_OFFSET_01);
+    NativeHookFrameCache expectFrameCache(1, 0, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                          expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache resultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(expectFrameCache == resultFrameCache);
 
@@ -525,7 +540,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMalloc, TestSize.
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -551,16 +574,16 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMalloc, TestSize.
     auto firstExpectFilePath = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_02);
     auto secondExpectSymbol = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     auto secondExpectFilePath = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache firstMallocExpectFirstFrame(1, 0, 0, 0, firstExpectSymbol, firstExpectFilePath, OFFSET_02,
-                                                     SYMBOL_OFFSET_02);
+    NativeHookFrameCache firstMallocExpectFirstFrame(1, 0, CALL_STACK_IP_02, CALL_STACK_SP_02, firstExpectSymbol,
+                                                     firstExpectFilePath, OFFSET_02, SYMBOL_OFFSET_02);
     // Construct the NativeHookFrameCache object using the element with subscript 0 in NativeHookFrame and compare it
     // with the expected value
     NativeHookFrameCache firstMallocResultFirstFrame(nativeHookFrame, 0);
     EXPECT_TRUE(firstMallocExpectFirstFrame == firstMallocResultFirstFrame);
 
     // construct first Malloc event's second frame expect value.
-    NativeHookFrameCache firstMallocExpectSecondFrame(1, 1, 0, 0, secondExpectSymbol, secondExpectFilePath, OFFSET_01,
-                                                      SYMBOL_OFFSET_01);
+    NativeHookFrameCache firstMallocExpectSecondFrame(1, 1, CALL_STACK_IP_01, CALL_STACK_SP_01, secondExpectSymbol,
+                                                      secondExpectFilePath, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache firstMallocResultSecondFrame(nativeHookFrame, 1);
     EXPECT_TRUE(firstMallocExpectSecondFrame == firstMallocResultSecondFrame);
 
@@ -575,14 +598,14 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMalloc, TestSize.
 
     // construct second Malloc event's first frame expect value.
     // Note: the nativehookframe data is parsed in reverse order
-    NativeHookFrameCache secondMallocExpectFirstFrame(1, 0, 0, 0, firstExpectSymbol, firstExpectFilePath, OFFSET_02,
-                                                      SYMBOL_OFFSET_02);
+    NativeHookFrameCache secondMallocExpectFirstFrame(1, 0, CALL_STACK_IP_02, CALL_STACK_SP_02, firstExpectSymbol,
+                                                      firstExpectFilePath, OFFSET_02, SYMBOL_OFFSET_02);
     // Construct the NativeHookFrameCache object using the element with subscript 2 in NativeHookFrame and compare it
     // Verify the compression algorithm here=
     EXPECT_EQ(nativeHookFrame.CallChainIds()[1], 1);
     EXPECT_EQ(nativeHookFrame.Depths()[1], 1);
-    EXPECT_EQ(nativeHookFrame.Ips()[1], 0);
-    EXPECT_EQ(nativeHookFrame.Sps()[1], 0);
+    EXPECT_EQ(nativeHookFrame.Ips()[1], CALL_STACK_IP_01);
+    EXPECT_EQ(nativeHookFrame.Sps()[1], CALL_STACK_SP_01);
     EXPECT_EQ(nativeHookFrame.SymbolNames()[1], secondExpectSymbol);
     EXPECT_EQ(nativeHookFrame.FilePaths()[1], secondExpectFilePath);
     EXPECT_EQ(nativeHookFrame.Offsets()[1], OFFSET_01);
@@ -622,8 +645,17 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneFree, TestSize.Level1)
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
+
     auto size = stream_.traceDataCache_->GetConstNativeHookData().Size();
     EXPECT_EQ(0, size);
     size = stream_.traceDataCache_->GetConstNativeHookFrameData().Size();
@@ -701,7 +733,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleFree, TestSize.Le
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -768,7 +808,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOnePairsMallocAndFree, Te
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse Malloc event results
@@ -785,8 +833,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOnePairsMallocAndFree, Te
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache secondExpectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                                SYMBOL_OFFSET_01);
+    NativeHookFrameCache secondExpectFrameCache(1, 0, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                                expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache secondResultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(secondExpectFrameCache == secondResultFrameCache);
 
@@ -800,8 +848,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOnePairsMallocAndFree, Te
     // Verification parse Free Event Frame results
     expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_02);
     expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_02);
-    NativeHookFrameCache expectFrameCache(2, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_02,
-                                          SYMBOL_OFFSET_02);
+    NativeHookFrameCache expectFrameCache(2, 0, CALL_STACK_IP_02, CALL_STACK_SP_02, expectSymbolData,
+                                          expectFilePathData, OFFSET_02, SYMBOL_OFFSET_02);
     NativeHookFrameCache resultFrameCache(nativeHookFrame, 1);
     EXPECT_TRUE(expectFrameCache == resultFrameCache);
 
@@ -867,7 +915,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithNotMatchMallocAndFree, Te
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse Malloc event results
@@ -883,8 +939,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithNotMatchMallocAndFree, Te
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache firstExpectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                               SYMBOL_OFFSET_01);
+    NativeHookFrameCache firstExpectFrameCache(1, 0, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                               expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache firstResultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(firstExpectFrameCache == firstResultFrameCache);
 
@@ -955,7 +1011,15 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventMatched, TestSize.Level
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse first Malloc event results
@@ -996,7 +1060,8 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventMatched, TestSize.Level
 
 /**
  * @tc.name: ParseTwoMallocAndFreeEventPartialMatched
- * @tc.desc: Parse a BatchNativeHookData with two Malloc and two Free Event, that Malloc and Free was partial matched.
+ * @tc.desc: Parse a BatchNativeHookData with two Malloc and two Free Event, that Malloc and Free was partial
+ matched.
  * @tc.type: FUNC
  */
 HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventPartialMatched, TestSize.Level1)
@@ -1051,7 +1116,13 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventPartialMatched, TestSiz
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse first Malloc event results
@@ -1120,7 +1191,13 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMmap, TestSize.Level1)
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1140,8 +1217,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMmap, TestSize.Level1)
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache expectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                          SYMBOL_OFFSET_01);
+    NativeHookFrameCache expectFrameCache(1, 0, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                          expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache resultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(expectFrameCache == resultFrameCache);
 
@@ -1187,7 +1264,13 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMunmap, TestSize.Level
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     auto size = stream_.traceDataCache_->GetConstNativeHookData().Size();
@@ -1259,7 +1342,13 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMmap, TestSize.Le
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1288,15 +1377,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMmap, TestSize.Le
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache firstExpectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                               SYMBOL_OFFSET_01);
+    NativeHookFrameCache firstExpectFrameCache(1, 0, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                               expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache firstResultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(firstExpectFrameCache == firstResultFrameCache);
 
     expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_02);
     expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_02);
-    NativeHookFrameCache expectFrameCache(2, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_02,
-                                          SYMBOL_OFFSET_02);
+    NativeHookFrameCache expectFrameCache(2, 0, CALL_STACK_IP_02, CALL_STACK_SP_02, expectSymbolData,
+                                          expectFilePathData, OFFSET_02, SYMBOL_OFFSET_02);
     NativeHookFrameCache resultFrameCache(nativeHookFrame, 1);
     EXPECT_TRUE(expectFrameCache == resultFrameCache);
 
@@ -1361,7 +1450,13 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMunmap, TestSize.
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     auto size = stream_.traceDataCache_->GetConstNativeHookData().Size();
@@ -1431,7 +1526,13 @@ HWTEST_F(NativeHookParserTest, ParseOnePairsMmapAndMunmapEvent, TestSize.Level1)
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1457,15 +1558,15 @@ HWTEST_F(NativeHookParserTest, ParseOnePairsMmapAndMunmapEvent, TestSize.Level1)
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_02);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_02);
-    NativeHookFrameCache firstExpectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_02,
-                                               SYMBOL_OFFSET_02);
+    NativeHookFrameCache firstExpectFrameCache(1, 0, CALL_STACK_IP_02, CALL_STACK_SP_02, expectSymbolData,
+                                               expectFilePathData, OFFSET_02, SYMBOL_OFFSET_02);
     NativeHookFrameCache firstResultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(firstExpectFrameCache == firstResultFrameCache);
 
     expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache secondExpectFrameCache(1, 1, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                                SYMBOL_OFFSET_01);
+    NativeHookFrameCache secondExpectFrameCache(1, 1, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                                expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache secondResultFrameCache(nativeHookFrame, 1);
     EXPECT_TRUE(secondExpectFrameCache == secondResultFrameCache);
 
@@ -1532,7 +1633,13 @@ HWTEST_F(NativeHookParserTest, ParseNotMatchMmapAndMunmapEvent, TestSize.Level1)
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1552,15 +1659,15 @@ HWTEST_F(NativeHookParserTest, ParseNotMatchMmapAndMunmapEvent, TestSize.Level1)
     const NativeHookFrame& nativeHookFrame = stream_.traceDataCache_->GetConstNativeHookFrameData();
     auto expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_02);
     auto expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_02);
-    NativeHookFrameCache firstExpectFrameCache(1, 0, 0, 0, expectSymbolData, expectFilePathData, OFFSET_02,
-                                               SYMBOL_OFFSET_02);
+    NativeHookFrameCache firstExpectFrameCache(1, 0, CALL_STACK_IP_02, CALL_STACK_SP_02, expectSymbolData,
+                                               expectFilePathData, OFFSET_02, SYMBOL_OFFSET_02);
     NativeHookFrameCache firstResultFrameCache(nativeHookFrame, 0);
     EXPECT_TRUE(firstExpectFrameCache == firstResultFrameCache);
 
     expectSymbolData = stream_.traceDataCache_->dataDict_.GetStringIndex(SYMBOL_NAME_01);
     expectFilePathData = stream_.traceDataCache_->dataDict_.GetStringIndex(FILE_PATH_01);
-    NativeHookFrameCache secondExpectFrameCache(1, 1, 0, 0, expectSymbolData, expectFilePathData, OFFSET_01,
-                                                SYMBOL_OFFSET_01);
+    NativeHookFrameCache secondExpectFrameCache(1, 1, CALL_STACK_IP_01, CALL_STACK_SP_01, expectSymbolData,
+                                                expectFilePathData, OFFSET_01, SYMBOL_OFFSET_01);
     NativeHookFrameCache secondResultFrameCache(nativeHookFrame, 1);
     EXPECT_TRUE(secondExpectFrameCache == secondResultFrameCache);
 
@@ -1633,7 +1740,13 @@ HWTEST_F(NativeHookParserTest, ParseTwoPairsMatchedMmapAndMunmapEvent, TestSize.
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1733,7 +1846,13 @@ HWTEST_F(NativeHookParserTest, ParsePartialMatchedMmapAndMunmapEvent, TestSize.L
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1867,7 +1986,13 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithAllTypesEvents, TestSize.
 
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceNativeHookParser.Parse(*batchNativeHookData);
+    std::string hookStrMsg = "";
+    batchNativeHookData->SerializeToString(&hookStrMsg);
+    HtraceDataSegment dataSeg;
+    dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
+    ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
+    dataSeg.protoData = hookBytesView;
+    htraceNativeHookParser.Parse(dataSeg);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results

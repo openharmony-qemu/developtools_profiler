@@ -72,8 +72,14 @@ import { TabPanePerfAnalysis } from '../sheet/hiperf/TabPanePerfAnalysis.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { TabPaneFilesystemStatisticsAnalysis } from '../sheet/file-system/TabPaneFilesystemStatisticsAnalysis.js';
 import { TabPaneIOTierStatisticsAnalysis } from '../sheet/file-system/TabPaneIOTierStatisticsAnalysis.js';
+import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { TabPaneVirtualMemoryStatisticsAnalysis } from '../sheet/file-system/TabPaneVirtualMemoryStatisticsAnalysis.js';
 export let tabConfig: any = {
+  'tabpane-current': {
+    title: 'Current Selection',
+    type: TabPaneCurrent,
+    require: (param: SelectionParam) => param.isCurrentPane,
+  }, //current selection
   'current-selection': {
     title: 'Current Selection',
     type: TabPaneCurrentSelection,
@@ -119,6 +125,16 @@ export let tabConfig: any = {
     title: 'Thread States',
     type: TabPanePTS,
     require: (param: SelectionParam) => param.cpus.length > 0,
+  },
+  'box-thread-states': {
+    title: 'Thread States',
+    type: TabPaneThreadStates,
+    require: (param: SelectionParam) => param.threadIds.length > 0,
+  },
+  'box-thread-usage': {
+    title: 'Thread Usage',
+    type: TabPaneThreadUsage,
+    require: (param: SelectionParam) => param.threadIds.length > 0,
   },
   'box-slices': {
     title: 'Slices',
@@ -245,16 +261,7 @@ export let tabConfig: any = {
     type: TabPaneCounterSample,
     require: (param: SelectionParam) => param.cpuStateFilterIds.length > 0,
   },
-  'box-thread-states': {
-    title: 'Thread States',
-    type: TabPaneThreadStates,
-    require: (param: SelectionParam) => param.threadIds.length > 0,
-  },
-  'box-thread-usage': {
-    title: 'Thread Usage',
-    type: TabPaneThreadUsage,
-    require: (param: SelectionParam) => param.threadIds.length > 0,
-  },
+
   'box-frequency-sample': {
     title: 'Cpu Frequency',
     type: TabPaneFrequencySample,

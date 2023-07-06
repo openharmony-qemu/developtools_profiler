@@ -69,6 +69,14 @@ import { SdkSliceStruct } from './ui-worker/ProduceWorkerSdkSlice.js';
 import { SystemDetailsEnergy } from '../bean/EnergyStruct.js';
 import { ClockStruct } from './ui-worker/ProcedureWorkerClock.js';
 import { IrqStruct } from './ui-worker/ProcedureWorkerIrq.js';
+import {
+  HeapEdge,
+  HeapLocation,
+  HeapNode,
+  HeapSample,
+  HeapTraceFunctionInfo,
+} from '../../js-heap/model/DatabaseStruct';
+import { FileInfo } from '../../js-heap/model/UiStruct.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
@@ -152,6 +160,15 @@ class DbThread extends Worker {
       );
     });
   };
+
+  resetWASM() {
+    this.postMessage(
+      {
+        id: this.uuid(),
+        action: 'reset',
+      }
+    );
+  }
 }
 
 export class DbPool {
@@ -162,8 +179,14 @@ export class DbPool {
   num = Math.floor(Math.random() * 10 + 1) + 20;
   cutDownTimer: any | undefined;
   dataWorker: DataWorkerThread | undefined | null;
+  currentWasmThread: DbThread | undefined = undefined;
+
   init = async (type: string, threadBuild: (() => DbThread) | undefined = undefined) => {
     // wasm | server | sqlite
+    if (this.currentWasmThread) {
+      this.currentWasmThread.resetWASM();
+      this.currentWasmThread = undefined;
+    }
     await this.close();
     const { port1, port2 } = new MessageChannel();
     if (type === 'wasm') {
@@ -176,7 +199,7 @@ export class DbPool {
       this.maxThreadNumber = 1;
     }
     for (let i = 0; i < this.maxThreadNumber; i++) {
-      let thread: DbThread;
+      let thread: DbThread | undefined;
       if (threadBuild) {
         thread = threadBuild();
       } else {
@@ -188,42 +211,51 @@ export class DbPool {
           thread = new DbThread('trace/database/SqlLiteWorker.js');
         }
       }
-      thread!.onmessage = (event: MessageEvent) => {
-        thread.busy = false;
-        if (Reflect.has(thread.taskMap, event.data.id)) {
-          if (event.data.results) {
-            let fun = thread.taskMap[event.data.id];
-            if (fun) {
-              fun(event.data.results);
+      if (thread) {
+        this.currentWasmThread = thread;
+        thread!.onmessage = (event: MessageEvent) => {
+          thread!.busy = false;
+          if (Reflect.has(thread!.taskMap, event.data.id)) {
+            if (event.data.results) {
+              let fun = thread!.taskMap[event.data.id];
+              if (fun) {
+                fun(event.data.results);
+              }
+              Reflect.deleteProperty(thread!.taskMap, event.data.id);
+            } else if (Reflect.has(event.data, 'ready')) {
+              this.progress!('database opened', this.num + event.data.index);
+              this.progressTimer(this.num + event.data.index, this.progress!);
+            } else if (Reflect.has(event.data, 'init')) {
+              if (this.cutDownTimer != undefined) {
+                clearInterval(this.cutDownTimer);
+              }
+              let fun = thread!.taskMap[event.data.id];
+              if (!event.data.init && !event.data.status) {
+                if (fun) {
+                  fun(['error', event.data.msg]);
+                }
+              } else {
+                this.progress!('database ready', 40);
+                if (fun) {
+                  fun(event.data);
+                }
+              }
+              Reflect.deleteProperty(thread!.taskMap, event.data.id);
+            } else {
+              let fun = thread!.taskMap[event.data.id];
+              if (fun) {
+                fun([]);
+              }
+              Reflect.deleteProperty(thread!.taskMap, event.data.id);
             }
-            Reflect.deleteProperty(thread.taskMap, event.data.id);
-          } else if (Reflect.has(event.data, 'ready')) {
-            this.progress!('database opened', this.num + event.data.index);
-            this.progressTimer(this.num + event.data.index, this.progress!);
-          } else if (Reflect.has(event.data, 'init')) {
-            if (this.cutDownTimer != undefined) {
-              clearInterval(this.cutDownTimer);
-            }
-            this.progress!('database ready', 40);
-            let fun = thread.taskMap[event.data.id];
-            if (fun) {
-              fun(event.data);
-            }
-            Reflect.deleteProperty(thread.taskMap, event.data.id);
-          } else {
-            let fun = thread.taskMap[event.data.id];
-            if (fun) {
-              fun([]);
-            }
-            Reflect.deleteProperty(thread.taskMap, event.data.id);
           }
-        }
-      };
-      thread!.onmessageerror = (e) => {};
-      thread!.onerror = (e) => {};
-      thread!.id = i;
-      thread!.busy = false;
-      this.works?.push(thread!);
+        };
+        thread!.onmessageerror = (e) => {};
+        thread!.onerror = (e) => {};
+        thread!.id = i;
+        thread!.busy = false;
+        this.works?.push(thread!);
+      }
     }
   };
 
@@ -318,7 +350,12 @@ export function query<T extends any>(
       sql,
       args,
       (res: any) => {
-        resolve(res);
+        if (res[0] && res[0] === 'error') {
+          window.publish(window.SmartEvent.UI.Error, res[1]);
+          reject(res);
+        } else {
+          resolve(res);
+        }
       },
       action
     );
@@ -1005,6 +1042,9 @@ export const queryCpuMax = (): Promise<Array<any>> =>
     desc limit 1;`
   );
 
+export const queryCpuDataCount = () =>
+  query('queryCpuDataCount', 'select count(1) as count,cpu from thread_state where cpu not null group by cpu');
+
 export const queryCpuCount = (): Promise<Array<any>> =>
   query(
     'queryCpuCount',
@@ -1233,6 +1273,13 @@ export const queryWakeUpThread_Desc = (): Promise<Array<any>> =>
 (e.g.because of notifying a wait queue it was a suspended on) to when it started running.`
   );
 
+export const queryCPUWakeUpIdFromBean = (tid: number | undefined): Promise<Array<WakeupBean>> => {
+  let sql = `
+select itid from thread where tid=${tid} 
+    `;
+  return query('queryCPUWakeUpListFromBean', sql, {});
+};
+
 export const queryThreadWakeUp = (itid: number, startTime: number, dur: number): Promise<Array<WakeupBean>> =>
   query(
     'queryThreadWakeUp',
@@ -1418,6 +1465,36 @@ export const queryNativeHookStatisticsSubType = (leftNs: number, rightNs: number
     group by
       event_type,sub_type_id;
         `,
+    { $leftNs: leftNs, $rightNs: rightNs }
+  );
+
+export const queryNativeHookSubType = (leftNs: number, rightNs: number): Promise<Array<any>> =>
+  query(
+    'queryNativeHookSubType',
+    `select distinct sub_type_id as subTypeId, DD.data as subType
+      from
+        native_hook NH,
+        trace_range TR
+      left join data_dict DD on NH.sub_type_id = DD.id
+      where
+        NH.sub_type_id not null and
+        (NH.start_ts - TR.start_ts) between ${leftNs} and ${rightNs}
+        `,
+    { $leftNs: leftNs, $rightNs: rightNs }
+  );
+
+export const queryNativeHookStatisticSubType = (leftNs: number, rightNs: number): Promise<Array<any>> =>
+  query(
+    'queryNativeHookStatisticSubType',
+    `SELECT DISTINCT type as subTypeId,
+          CASE WHEN type = 2 THEN 'FILE_PAGE_MSG' WHEN type = 3 THEN 'MEMORY_USING_MSG' ELSE 'MmapEvent' END AS subType
+        FROM
+          native_hook_statistic NHS,
+          trace_range TR
+        WHERE
+          NHS.type > 1 AND
+          (NHS.ts - TR.start_ts) between ${leftNs} and ${rightNs}
+      `,
     { $leftNs: leftNs, $rightNs: rightNs }
   );
 
@@ -3889,40 +3966,41 @@ export const queryGpuDur = (id: number): Promise<any> =>
     { $id: id }
   );
 
-export const queryHeapFile = (): Promise<Array<any>> =>
+export const queryHeapFile = (): Promise<Array<FileInfo>> =>
   query(
     'queryHeapFile',
-    `SELECT f.id, f.file_name, f.start_time, f.end_time, f.pid, t.start_ts, t.end_ts
-        FROM js_heap_files f,trace_range t
-        where (t.end_ts >= f.end_time and f.file_name != 'Timeline')
-        OR f.file_name = 'Timeline'`
+    `SELECT f.id, f.file_name as name, f.start_time as startTs, f.end_time as endTs, f.pid, sum(n.self_size) as size
+    FROM js_heap_files f,trace_range t LEFT JOIN js_heap_nodes n on f.id = n.file_id
+    where (t.end_ts >= f.end_time and f.file_name != 'Timeline')
+    OR f.file_name = 'Timeline'
+    GROUP BY f.id`
   );
 
 export const queryHeapInfo = (fileId: number): Promise<Array<any>> =>
   query(
     'queryHeapInfo',
-    `SELECT file_id,key,type,int_value,str_value
+    `SELECT file_id as fileId, key, type, int_value as intValue, str_value as strValue
       FROM js_heap_info WHERE file_id = ${fileId}`
   );
 
-export const queryHeapNode = (fileId: number): Promise<Array<any>> =>
+export const queryHeapNode = (fileId: number): Promise<Array<HeapNode>> =>
   query(
     'queryHeapNode',
-    `SELECT node_index,type,name,id,self_size,edge_count,trace_node_id,detachedness 
+    `SELECT node_index as nodeIndex,type,name as nameIdx,id,self_size as selfSize,edge_count as edgeCount,trace_node_id as traceNodeId,detachedness 
       FROM js_heap_nodes WHERE file_id = ${fileId}`
   );
 
-export const queryHeapEdge = (fileId: number): Promise<Array<any>> =>
+export const queryHeapEdge = (fileId: number): Promise<Array<HeapEdge>> =>
   query(
     'queryHeapEdge',
-    `SELECT edge_index,type,name_or_index,to_node,from_node_id,to_node_id
+    `SELECT edge_index as edgeIndex,type,name_or_index as nameOrIndex,to_node as nodeId,from_node_id as fromNodeId,to_node_id as toNodeId
       FROM js_heap_edges WHERE file_id = ${fileId}`
   );
 
-export const queryHeapFunction = (fileId: number): Promise<Array<any>> =>
+export const queryHeapFunction = (fileId: number): Promise<Array<HeapTraceFunctionInfo>> =>
   query(
     'queryHeapFunction',
-    `SELECT function_index,function_id,name,script_name,script_id,line,column
+    `SELECT function_index as index ,function_id as id ,name,script_name as scriptName,script_id as scriptId,line,column
       FROM js_heap_trace_function_info WHERE file_id = ${fileId}`
   );
 
@@ -3930,24 +4008,24 @@ export const queryHeapTraceNode = (fileId: number): Promise<Array<any>> =>
   query(
     'queryHeapTraceNode',
     `SELECT F.name,
-        F.script_name,
-        F.script_id,
+        F.script_name as scriptName,
+        F.script_id as scriptId,
         F.column,
         F.line,
         N.id,
-        N.function_info_index,
-        N.parent_id,
+        N.function_info_index as functionInfoIndex,
+        N.parent_id as parentId,
         N.count,
         N.size,
-        IFNULL( S.live_count, 0 ) AS live_count,
-        IFNULL( S.live_size, 0 ) AS live_size
+        IFNULL( S.live_count, 0 ) AS liveCount,
+        IFNULL( S.live_size, 0 ) AS liveSize
     FROM
         js_heap_trace_node N
         LEFT JOIN (
             SELECT
-                trace_node_id,
-                SUM( self_size ) AS live_size,
-                count( * ) AS live_count
+                trace_node_id as traceNodeId,
+                SUM( self_size ) AS liveSize,
+                count( * ) AS liveCount
             FROM
                 js_heap_nodes
             WHERE
@@ -3964,17 +4042,17 @@ export const queryHeapTraceNode = (fileId: number): Promise<Array<any>> =>
         N.id`
   );
 
-export const queryHeapSample = (fileId: number): Promise<Array<any>> =>
+export const queryHeapSample = (fileId: number): Promise<Array<HeapSample>> =>
   query(
     'queryHeapSample',
-    `SELECT timestamp_us,last_assigned_id
+    `SELECT timestamp_us as timestamp , last_assigned_id as lastAssignedId, 0 as size
       FROM js_heap_sample WHERE file_id = ${fileId}`
   );
 
-export const queryHeapLocation = (fileId: number): Promise<Array<any>> =>
+export const queryHeapLocation = (fileId: number): Promise<Array<HeapLocation>> =>
   query(
     'queryHeapLocation',
-    `SELECT object_index,script_id,column
+    `SELECT object_index as objectIndex,script_id as scriptId ,column
       FROM js_heap_location WHERE file_id = ${fileId}`
   );
 
@@ -3987,8 +4065,7 @@ export const queryHeapString = (fileId: number): Promise<Array<any>> =>
 export const queryTraceRange = (): Promise<Array<any>> =>
   query(
     'queryTraceRange',
-    `SELECT
-      t.start_ts, t.end_ts FROM trace_range t`
+    `SELECT t.start_ts as startTs, t.end_ts as endTs FROM trace_range t`
   );
 
 export const queryHiPerfProcessCount = (

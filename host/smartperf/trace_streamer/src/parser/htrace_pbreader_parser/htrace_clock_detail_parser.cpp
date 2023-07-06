@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "htrace_clock_detail_parser.h"
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "htrace_event_parser.h"
 #include "measure_filter.h"
 #include "process_filter.h"

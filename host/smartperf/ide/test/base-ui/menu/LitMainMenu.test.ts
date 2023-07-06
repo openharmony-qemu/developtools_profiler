@@ -61,73 +61,72 @@ describe('LitMainMenu Test', () => {
 "
         <style>
         :host{
+            width: 248px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            width: 248px;
             background-color: null;
-            height: 100vh;
+        }
+        .menu-body ::-webkit-scrollbar-thumb
+        {
+            background-color: var(--dark-background,#FFFFFF);
+            border-radius:10px;
+
         }
         .menu-body ::-webkit-scrollbar-track
         {
             border-radius:10px;
             background-color:#F5F5F5;
-        }
-        .menu-body ::-webkit-scrollbar-thumb
-        {
-            border-radius:10px;
-            background-color: var(--dark-background,#FFFFFF);
-
+            
         }
         .header{
             display: grid;
-            background-color: var(--dark-background1);
-            border-bottom: 1px solid var(--dark-background1,#EFEFEF);
-            color: #47A7E0;
-            font-size: 1.4rem;
-            padding-left: 20px;
-            /*padding-right: 10px;*/
-            gap: 0 20px;
-            box-sizing: border-box;
             width: 100%;
             height: 56px;
+            font-size: 1.4rem;
+            padding-left: 20px;
+            gap: 0 20px;
+            box-sizing: border-box;
             grid-template-columns: min-content 1fr min-content;
             grid-template-rows: auto;
-        }
-        .header *{
-            align-self: center;
-            user-select: none;
+            color: #47A7E0;
+            background-color: var(--dark-background1);
+            border-bottom: 1px solid var(--dark-background1,#EFEFEF);
         }
         .bottom{
             width: 100%;
             display: flex;
             justify-content: space-between;
         }
-        .color{
-            padding: 20px;
-            font-size: 0.6rem;
-            cursor: pointer;
+        .header *{
+            user-select: none;
+            align-self: center;
         }
-        
         .version{
-            color: #94979d;
-            padding: 20px 0;
-            font-size: 0.6rem;
             width: 15rem;
+            padding: 20px 0;
             text-align: center;
+            color: #94979d;
+            font-size: 0.6rem;
+        }
+        .color{
+            cursor: pointer;
+            font-size: 0.6rem;
+            padding: 20px;
         }
         *{
             box-sizing: border-box;
         }
         .menu-button{
-            height: 47px;
-            width: 48px;
             display: flex;
             align-content: center;
             justify-content: right;
             cursor: pointer;
+            height: 47px;
+            width: 48px;
         }
         </style>
-        <div name="header" class="header">
+        <div class="header" name="header">
             <img src="img/logo.png"/>
                 <div class="menu-button">
                     <lit-icon name="menu" size="20" color="var(blue,#4D4D4D)"></lit-icon>

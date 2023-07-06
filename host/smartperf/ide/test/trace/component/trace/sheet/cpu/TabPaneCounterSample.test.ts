@@ -17,6 +17,8 @@
 import { TabPaneCounterSample } from '../../../../../../dist/trace/component/trace/sheet/cpu/TabPaneCounterSample.js';
 // @ts-ignore
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
+// @ts-ignore
+import {LitTable} from "../../../../../../dist/base-ui/table/lit-table.js";
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
@@ -107,8 +109,13 @@ describe('TabPaneCounterSample Test', () => {
         cpu: 'cpu',
       },
     ]);
-    tabPaneCounterSample.tbl.recycleDataSource = jest.fn(() => dataArray);
-    expect((tabPaneCounterSample.data = dataArray)).toBeTruthy();
+
+    document.body.innerHTML = `<div><tabpane-counter-sample></tabpane-counter-sample></div>`;
+    let tabPane = document.querySelector('tabpane-counter-sample') as TabPaneCounterSample;
+    let tab = document.querySelector('#tb-states') as LitTable;
+    tabPane.tbl = jest.fn(() => tab);
+    tabPane.tbl.recycleDataSource = jest.fn(() => dataArray);
+    expect((tabPane.data = dataArray)).toBeTruthy();
   });
 
   it('TabPaneCounterSampleTest02', function () {
@@ -119,38 +126,41 @@ describe('TabPaneCounterSample Test', () => {
     expect(tabPaneCounterSample.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        .progress{
-            bottom: 5px;
-            position: absolute;
+        .progressCounter{
             height: 1px;
             left: 0;
             right: 0;
-        }
-        .loading{
-            bottom: 0;
+            bottom: 5px;
             position: absolute;
+        }
+        :host{
+            display: flex;
+            padding: 10px 10px;
+            flex-direction: column;
+        }
+        .loadingCounter{
             left: 0;
             right: 0;
             width:100%;
+            bottom: 0;
+            position: absolute;
             background:transparent;
             z-index: 999999;
         }
+        .counter-sample-table{
+            height: auto;
+        }
         </style>
-        <lit-table id="tb-states" style="height: auto" >
-            <lit-table-column width="20%" title="Cpu" data-index="counter" key="counter" align="flex-start" order>
+        <lit-table id="tb-counter-sample" class="counter-sample-table">
+            <lit-table-column class="counter-sample-column" width="20%" order data-index="counter" key="counter" align="flex-start" title="Cpu" >
             </lit-table-column>
-            <lit-table-column width="1fr" title="Time" data-index="timeStr" key="timeStr" align="flex-start" order>
+            <lit-table-column class="counter-sample-column" width="1fr" order data-index="timeStr" key="timeStr" align="flex-start" title="Time" >
             </lit-table-column>
-            <lit-table-column width="1fr" title="Value" data-index="value" key="value" align="flex-start" order>
+            <lit-table-column class="counter-sample-column" width="1fr" order data-index="value" key="value" align="flex-start" title="Value" >
             </lit-table-column>
         </lit-table>
-        <lit-progress-bar class="progress"></lit-progress-bar>
-        <div class="loading"></div>
+        <lit-progress-bar class="progressCounter"></lit-progress-bar>
+        <div class="loadingCounter"></div>
         "
 `);
   });

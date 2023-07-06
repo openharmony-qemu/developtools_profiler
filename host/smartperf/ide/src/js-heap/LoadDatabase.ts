@@ -15,14 +15,7 @@
 import { HeapDataInterface, ParseListener } from './HeapDataInterface.js';
 import { AllocationFunction, FileType } from './model/UiStruct.js';
 import { getTimeForLog } from './utils/Utils.js';
-import {
-  HeapEdge,
-  HeapNode,
-  HeapTraceFunctionInfo,
-  HeapSample,
-  HeapLocation,
-  FileStruct,
-} from './model/DatabaseStruct.js';
+import { HeapNode, FileStruct } from './model/DatabaseStruct.js';
 import {
   queryHeapFile,
   queryHeapInfo,
@@ -31,7 +24,6 @@ import {
   queryHeapFunction,
   queryHeapTraceNode,
   queryHeapSample,
-  queryHeapLocation,
   queryHeapString,
 } from '../trace/database/SqlLite.js';
 import { info } from '../log/Log.js';
@@ -54,10 +46,11 @@ export class LoadDatabase {
     for (let row of result) {
       let fileStruct = new FileStruct();
       fileStruct.id = row.id;
-      fileStruct.name = row.file_name;
-      fileStruct.start_ts = row.start_time;
-      fileStruct.end_ts = row.end_time;
+      fileStruct.name = row.name;
+      fileStruct.startTs = row.startTs;
+      fileStruct.endTs = row.endTs;
       fileStruct.pid = row.pid;
+      fileStruct.size = row.size;
       if (fileStruct.name.startsWith('Snapshot')) {
         fileStruct.type = FileType.SNAPSHOT;
       } else {
@@ -72,7 +65,6 @@ export class LoadDatabase {
       await this.loadTraceFunctionInfos(fileStruct);
       await this.loadTraceTree(fileStruct);
       await this.loadSamples(fileStruct);
-      await this.loadLocations(fileStruct);
       let percent = Math.floor(50 / result.length) * (row.id + 1);
       listener.process('loading file ' + fileStruct.name + ' from db ', percent);
       info(`read ${fileStruct.name} from db Success  ${getTimeForLog()}`);
@@ -90,13 +82,13 @@ export class LoadDatabase {
       if (row.key.includes('types')) continue;
       switch (row.key) {
         case 'node_count':
-          file.snapshotStruct.nodeCount = row.int_value;
+          file.snapshotStruct.nodeCount = row.intValue;
           break;
         case 'edge_count':
-          file.snapshotStruct.edgeCount = row.int_value;
+          file.snapshotStruct.edgeCount = row.intValue;
           break;
         case 'trace_function_count':
-          file.snapshotStruct.functionCount = row.int_value;
+          file.snapshotStruct.functionCount = row.intValue;
           break;
       }
     }
@@ -105,69 +97,34 @@ export class LoadDatabase {
   private async loadNode(file: FileStruct) {
     let result = await queryHeapNode(file.id);
     let heapNodes = file.snapshotStruct.nodeMap;
-
-    let items = new Array<number>();
     let firstEdgeIndex = 0;
     for (let row of result) {
       let node = new HeapNode(
         file.id,
-        row.node_index,
+        row.nodeIndex,
         row.type,
-        file.snapshotStruct.strings[row.name],
+        file.snapshotStruct.strings[row.nameIdx],
         row.id,
-        row.self_size,
-        row.edge_count,
-        row.trace_node_id,
+        row.selfSize,
+        row.edgeCount,
+        row.traceNodeId,
         row.detachedness,
         firstEdgeIndex
       );
       if (file.snapshotStruct.rootNodeId === -1) {
         file.snapshotStruct.rootNodeId = row.id;
       }
-      heapNodes.set(row.id, node);
-      items.push(...[row.type, row.name, row.id, row.self_size, row.edge_count, row.trace_node_id, row.detachedness]);
-      firstEdgeIndex += node.edgeCount;
+      heapNodes.set(node.id, node);
+      firstEdgeIndex += row.edgeCount;
     }
   }
 
   private async loadEdge(file: FileStruct) {
-    let result = await queryHeapEdge(file.id);
-    let heapEdges = file.snapshotStruct.edges;
-
-    let items = new Array<number>();
-    for (let row of result) {
-      let edge = new HeapEdge(
-        row.edge_index,
-        row.type,
-        file.snapshotStruct.strings[row.name_or_index],
-        row.to_node,
-        row.from_node_id,
-        row.to_node_id
-      );
-      heapEdges.push(edge);
-      items.push(...[row.type, row.name_or_index, row.to_node]);
-    }
+    file.snapshotStruct.edges = await queryHeapEdge(file.id);
   }
 
   private async loadTraceFunctionInfos(file: FileStruct) {
-    let result = await queryHeapFunction(file.id);
-    let heapFunction = file.snapshotStruct.functionInfos;
-
-    let items = new Array<number>();
-    for (let row of result) {
-      let functionInfo = new HeapTraceFunctionInfo(
-        row.function_id,
-        row.function_index,
-        file.snapshotStruct.strings[row.name],
-        file.snapshotStruct.strings[row.script_name],
-        row.script_id,
-        row.line,
-        row.column
-      );
-      heapFunction.push(functionInfo);
-
-      items.push(...[row.function_id, row.name, row.script_name, row.script_id, row.line, row.column]);
-    }
+    file.snapshotStruct.functionInfos = await queryHeapFunction(file.id);
   }
 
   private async loadTraceTree(file: FileStruct) {
@@ -178,47 +135,31 @@ export class LoadDatabase {
       let traceNode = new AllocationFunction(
         row.id,
         strings[row.name],
-        strings[row.script_name],
-        row.script_id,
+        strings[row.scriptName],
+        row.scriptId,
         row.line,
         row.column,
         row.count,
         row.size,
-        row.live_count,
-        row.live_size,
+        row.liveCount,
+        row.liveSize,
         false
       );
-      traceNode.parentsId.push(row.parent_id);
-      traceNode.functionIndex = row.function_info_index;
+      traceNode.parentsId.push(row.parentId);
+      traceNode.functionIndex = row.functionInfoIndex;
       traceNode.fileId = file.id;
       heapTraceNode.push(traceNode);
     }
   }
 
   private async loadSamples(file: FileStruct) {
-    let result = await queryHeapSample(file.id);
-    let samples = file.snapshotStruct.samples;
-
-    for (let row of result) {
-      let functionInfo = new HeapSample(row.timestamp_us, row.last_assigned_id);
-      samples.push(functionInfo);
-    }
-  }
-
-  private async loadLocations(file: FileStruct) {
-    let result = await queryHeapLocation(file.id);
-    let locations = file.snapshotStruct.locations;
-
-    for (let row of result) {
-      let location = new HeapLocation(row.object_index / 7, row.script_id, row.line, row.column);
-      locations.set(location.objectIndex, location);
-    }
+    file.snapshotStruct.samples = await queryHeapSample(file.id);
   }
 
   private async loadStrings(file: FileStruct) {
     let result = await queryHeapString(file.id);
-    for (let row of result) {
-      file.snapshotStruct.strings.push(row.string);
+    for (let data of result) {
+      file.snapshotStruct.strings.push(data.string);
     }
   }
 

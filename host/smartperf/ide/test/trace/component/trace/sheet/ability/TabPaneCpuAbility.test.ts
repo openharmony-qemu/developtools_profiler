@@ -27,7 +27,7 @@ describe('TabPaneCpuAbility Test', () => {
   let tabPaneCpuAbility = new TabPaneCpuAbility();
 
   it('TabPaneCpuAbilityTest01', function () {
-    tabPaneCpuAbility.queryResult.length = 2;
+    tabPaneCpuAbility.queryCpuResult.length = 2;
     expect(tabPaneCpuAbility.filterData()).toBeUndefined();
   });
 

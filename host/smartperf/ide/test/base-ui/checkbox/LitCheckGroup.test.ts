@@ -36,27 +36,24 @@ describe('LitCheckGroup Test', () => {
   it('LitCheckGroupTest03', function () {
     let litCheckGroup = new LitCheckGroup();
     expect(litCheckGroup.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>   
+"<style>   
         :host {
             display: -webkit-flex; 
             display: flex;
             flex-direction: column;
         }
-        :host([direction]) {
-            flex-direction: null;
-        }
         :host(:not([direction])) {
             flex-direction: column;
         }
-        
-        :host([layout="compact"]) {
-            gap:5px;
+        :host([direction]) {
+            flex-direction: null;
         }
         :host([layout="dispersion"]) {
            gap:10px;
         }
-        
+        :host([layout="compact"]) {
+            gap:5px;
+        }
         </style>
         <slot class="check-group"></slot>"
 `);

@@ -115,25 +115,6 @@ void ProcessTable::FilterByConstraint(FilterConstraints& fc, double& filterCost,
     }
 }
 
-bool ProcessTable::CanFilterId(const char op, size_t& rowCount)
-{
-    switch (op) {
-        case SQLITE_INDEX_CONSTRAINT_EQ:
-            rowCount = 1;
-            break;
-        case SQLITE_INDEX_CONSTRAINT_GT:
-        case SQLITE_INDEX_CONSTRAINT_GE:
-        case SQLITE_INDEX_CONSTRAINT_LE:
-        case SQLITE_INDEX_CONSTRAINT_LT:
-            // assume filter out a half of rows
-            rowCount = (rowCount >> 1);
-            break;
-        default:
-            return false;
-    }
-    return true;
-}
-
 int32_t ProcessTable::Update(int32_t argc, sqlite3_value** argv, sqlite3_int64* pRowid)
 {
     if (argc <= 1) {

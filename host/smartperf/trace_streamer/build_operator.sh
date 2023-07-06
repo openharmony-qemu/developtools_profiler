@@ -23,9 +23,9 @@ gn="$6"
 ninja="$7"
 target_operator="$8"
 if [ "$#" -ge "7" ];then
-    if [ "$target" != "trace" ] && [ "$target" != "pbdecoder" ] && [ "$target" != "linux" ] && [ "$target" != "windows" ] &&
-        [ "$target" != "macx" ] && [ "$target" != "trace_streamer" ] && [ "$target" != "wasm" ] && [ "$target" != "wasmpb" ] &&
-        [ "$target" != "test" ] && [ "$target" != "testpb" ] && [ "$target" != "spb" ] && [ "$target" != "fuzz" ] &&
+    if [ "$target" != "trace" ] && [ "$target" != "linux" ] && [ "$target" != "windows" ] &&
+        [ "$target" != "macx" ] && [ "$target" != "trace_streamer" ] && [ "$target" != "wasm" ] &&
+        [ "$target" != "test" ] && [ "$target" != "spb" ] && [ "$target" != "fuzz" ] &&
         [ "$target" != "protoc" ] && [ "$target" != "sdkdemo" ] && [ "$target" != "dubaisdk" ] && [ "$target" != "sdkdemotest" ];then
         echo "failed"
         exit
@@ -64,16 +64,13 @@ if [ ! -d "third_party/protogen" ] && [ "$target" != "spb" ] && [ "$target" != "
     ./src/protos/protogen.sh
 fi
 
-if [ "$target" == "test" ] || [ "$target" == "fuzz" ] || [ "$target"="wasm" ] || [ "$target"="wasmpb" ] || [ "$target"="sdkdemo" ] || [ "$target"="sdkdemotest" ];then
+if [ "$target" == "test" ] || [ "$target" == "fuzz" ] || [ "$target"="wasm" ] || [ "$target"="sdkdemo" ] || [ "$target"="sdkdemotest" ];then
     target_dir=$target
 else
     target_dir=$target_os
 fi
-if [ "$target" == "trace_streamer" ] || [ "$target" == "trace" ] || [ "$target" == "spb" ]|| [ "$target" == "pbdecoder" ];then
+if [ "$target" == "trace_streamer" ] || [ "$target" == "trace" ] || [ "$target" == "spb" ];then
     target_dir=$target_os
-fi
-if [ "$target" == "testpb" ]; then
-    target_dir="test"
 fi
 echo "target_dir:" $target_dir
 echo "target:" $target

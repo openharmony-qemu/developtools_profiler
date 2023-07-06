@@ -62,8 +62,8 @@ ohos_source_set("proto_example_source") {
   include_dirs = [ "$proto_out_dir" ]
   sources = example_codegen_all
   public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

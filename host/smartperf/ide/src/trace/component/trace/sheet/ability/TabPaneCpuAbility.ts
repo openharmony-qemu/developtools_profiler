@@ -21,7 +21,7 @@ import { SystemCpuSummary } from '../../../../bean/AbilityMonitor.js';
 import { Utils } from '../../base/Utils.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-cpu-ability')
 export class TabPaneCpuAbility extends BaseElement {
@@ -46,7 +46,7 @@ export class TabPaneCpuAbility extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.cpuAbilityTbl!)
+    resizeObserver(this.parentElement!, this.cpuAbilityTbl!);
   }
 
   filterData() {
@@ -141,13 +141,21 @@ export class TabPaneCpuAbility extends BaseElement {
           // @ts-ignore
           return sort === 2 ? parseFloat(cpuAbilityRightData[property]) - parseFloat(cpuAbilityLeftData[property]) : parseFloat(cpuAbilityLeftData[property]) - parseFloat(cpuAbilityRightData[property]);
         } else if (type === 'durationStr') {
-          return sort === 2 ? cpuAbilityRightData.duration - cpuAbilityLeftData.duration : cpuAbilityLeftData.duration - cpuAbilityRightData.duration;
+          return sort === 2
+            ? cpuAbilityRightData.duration - cpuAbilityLeftData.duration
+            : cpuAbilityLeftData.duration - cpuAbilityRightData.duration;
         } else if (type === 'totalLoadStr') {
-          return sort === 2 ? cpuAbilityRightData.totalLoad - cpuAbilityLeftData.totalLoad : cpuAbilityLeftData.totalLoad - cpuAbilityRightData.totalLoad;
+          return sort === 2
+            ? cpuAbilityRightData.totalLoad - cpuAbilityLeftData.totalLoad
+            : cpuAbilityLeftData.totalLoad - cpuAbilityRightData.totalLoad;
         } else if (type === 'userLoadStr') {
-          return sort === 2 ? cpuAbilityRightData.userLoad - cpuAbilityLeftData.userLoad : cpuAbilityLeftData.userLoad - cpuAbilityRightData.userLoad;
+          return sort === 2
+            ? cpuAbilityRightData.userLoad - cpuAbilityLeftData.userLoad
+            : cpuAbilityLeftData.userLoad - cpuAbilityRightData.userLoad;
         } else if (type === 'systemLoadStr') {
-          return sort === 2 ? cpuAbilityRightData.systemLoad - cpuAbilityLeftData.systemLoad : cpuAbilityLeftData.systemLoad - cpuAbilityRightData.systemLoad;
+          return sort === 2
+            ? cpuAbilityRightData.systemLoad - cpuAbilityLeftData.systemLoad
+            : cpuAbilityLeftData.systemLoad - cpuAbilityRightData.systemLoad;
         } else {
           // @ts-ignore
           if (cpuAbilityRightData[property] > cpuAbilityLeftData[property]) {

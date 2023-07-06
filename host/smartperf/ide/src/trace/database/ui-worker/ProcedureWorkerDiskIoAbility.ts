@@ -186,7 +186,10 @@ export function diskIoAbility(
   if (use && res.length > 0) {
     for (let i = 0; i < res.length; i++) {
       let diskIoAbilityItem = res[i];
-      if ((diskIoAbilityItem.startNS || 0) + (diskIoAbilityItem.dur || 0) > (startNS || 0) && (diskIoAbilityItem.startNS || 0) < (endNS || 0)) {
+      if (
+        (diskIoAbilityItem.startNS || 0) + (diskIoAbilityItem.dur || 0) > (startNS || 0) &&
+        (diskIoAbilityItem.startNS || 0) < (endNS || 0)
+      ) {
         DiskAbilityMonitorStruct.setDiskIOFrame(diskIoAbilityItem, 5, startNS || 0, endNS || 0, totalNS || 0, frame);
       } else {
         diskIoAbilityItem.frame = null;
@@ -204,7 +207,14 @@ export function diskIoAbility(
         item.dur = (diskIoAbilityList[index + 1].startNS || 0) - (item.startNS || 0);
       }
       if ((item.startNS || 0) + (item.dur || 0) > (startNS || 0) && (item.startNS || 0) < (endNS || 0)) {
-        DiskAbilityMonitorStruct.setDiskIOFrame(diskIoAbilityList[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
+        DiskAbilityMonitorStruct.setDiskIOFrame(
+          diskIoAbilityList[index],
+          5,
+          startNS || 0,
+          endNS || 0,
+          totalNS || 0,
+          frame
+        );
         if (
           index > 0 &&
           (diskIoAbilityList[index - 1].frame?.x || 0) == (diskIoAbilityList[index].frame?.x || 0) &&
@@ -242,9 +252,21 @@ export class DiskAbilityMonitorStruct extends BaseStruct {
         diskIoAbilityContext.lineWidth = 1;
         diskIoAbilityContext.globalAlpha = 0.6;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxDiskRate);
-        diskIoAbilityContext.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        diskIoAbilityContext.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
         diskIoAbilityContext.beginPath();
-        diskIoAbilityContext.arc(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, 3, 0, 2 * Math.PI, true);
+        diskIoAbilityContext.arc(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         diskIoAbilityContext.fill();
         diskIoAbilityContext.globalAlpha = 1.0;
         diskIoAbilityContext.stroke();
@@ -257,7 +279,12 @@ export class DiskAbilityMonitorStruct extends BaseStruct {
         diskIoAbilityContext.globalAlpha = 0.6;
         diskIoAbilityContext.lineWidth = 1;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxDiskRate);
-        diskIoAbilityContext.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        diskIoAbilityContext.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
       }
     }
     diskIoAbilityContext.globalAlpha = 1.0;

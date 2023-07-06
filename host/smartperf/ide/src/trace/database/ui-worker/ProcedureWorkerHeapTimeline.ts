@@ -84,7 +84,7 @@ export class HeapTimelineStruct extends BaseStruct {
   static samples: Array<HeapSample>;
 
   static setFrame(
-    timestamp_us: any,
+    timestamp: number,
     size: number,
     maxSize: number,
     node: any,
@@ -95,9 +95,9 @@ export class HeapTimelineStruct extends BaseStruct {
   ) {
     node.frame = null;
     // us * 1000 = ns
-    if (node.timestamp_us * 1000 > startNS && node.timestamp_us * 1000 < endNS && node.timestamp_us == timestamp_us) {
+    if (node.timestamp * 1000 > startNS && node.timestamp * 1000 < endNS && node.timestamp == timestamp) {
       let rectangle: Rect = new Rect(
-        Math.floor(((timestamp_us * 1000 - startNS) / totalNS) * frame.width),
+        Math.floor(((timestamp * 1000 - startNS) / totalNS) * frame.width),
         0,
         2,
         Math.floor((size / maxSize) * frame.height) < 1 ? 1 : Math.floor((size / maxSize) * frame.height)

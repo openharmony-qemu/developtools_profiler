@@ -21,6 +21,8 @@
 #include "power.pb.h"
 #include "stat_filter.h"
 #include "trace_streamer_selector.h"
+#include "trace_plugin_result.pb.h"
+#include "trace_plugin_result.pbreader.h"
 
 using namespace testing::ext;
 using namespace SysTuning::TraceStreamer;
@@ -51,8 +53,17 @@ HWTEST_F(HtraceCpuDetailParserTest, ParseCpudetaulNoEvents, TestSize.Level1)
     TracePluginResult tracePacket;
     FtraceCpuDetailMsg* cpuDetail = tracePacket.add_ftrace_cpu_detail();
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceCpuDetailParser htraceCpuDetailParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceCpuDetailParser.Parse(&tracePacket, TS_CLOCK_REALTIME);
+    htraceCpuDetailParser.Parse(dataSeg, dataSeg.clockId);
     htraceCpuDetailParser.FilterAllEvents();
     auto size = tracePacket.ftrace_cpu_detail_size();
     auto eventSize = cpuDetail->event_size();
@@ -71,8 +82,16 @@ HWTEST_F(HtraceCpuDetailParserTest, ParseHtraceWithoutCpuDetailData, TestSize.Le
     FtraceCpuDetailMsg* cpuDetail = tracePacket.add_ftrace_cpu_detail();
     auto event = cpuDetail->add_event();
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
     HtraceCpuDetailParser htraceCpuDetailParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceCpuDetailParser.Parse(&tracePacket, TS_CLOCK_REALTIME);
+    htraceCpuDetailParser.Parse(dataSeg, dataSeg.clockId);
     htraceCpuDetailParser.FilterAllEvents();
     auto size = tracePacket.ftrace_cpu_detail_size();
     auto eventSize = cpuDetail->event_size();
@@ -98,8 +117,17 @@ HWTEST_F(HtraceCpuDetailParserTest, ParseHtraceCpuDetailData, TestSize.Level1)
     freq->set_state(1500);
     event->set_allocated_cpu_frequency_format(freq);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceCpuDetailParser htraceCpuDetailParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceCpuDetailParser.Parse(&tracePacket, TS_CLOCK_REALTIME);
+    htraceCpuDetailParser.Parse(dataSeg, dataSeg.clockId);
     htraceCpuDetailParser.FilterAllEvents();
     auto size = tracePacket.ftrace_cpu_detail_size();
     auto eventSize = cpuDetail->event_size();
@@ -137,8 +165,17 @@ HWTEST_F(HtraceCpuDetailParserTest, ParseMultipleCpuDetailData, TestSize.Level1)
     freq1->set_state(3000);
     event->set_allocated_cpu_frequency_format(freq1);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceCpuDetailParser htraceCpuDetailParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceCpuDetailParser.Parse(&tracePacket, TS_CLOCK_REALTIME);
+    htraceCpuDetailParser.Parse(dataSeg, dataSeg.clockId);
     htraceCpuDetailParser.FilterAllEvents();
     auto size = tracePacket.ftrace_cpu_detail_size();
     auto eventSize = cpuDetail->event_size();

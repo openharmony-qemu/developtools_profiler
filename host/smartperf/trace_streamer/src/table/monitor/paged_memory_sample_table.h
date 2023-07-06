@@ -29,8 +29,6 @@ public:
 
 private:
     void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei) override;
-    // filter out by operator[=, >, <...] from column(ID)
-    bool CanFilterId(const char op, size_t& rowCount);
     void FilterByConstraint(FilterConstraints& fc, double& filterCost, size_t rowCount);
 
     class Cursor : public TableBase::Cursor {
@@ -39,8 +37,6 @@ private:
         ~Cursor() override;
         int32_t Filter(const FilterConstraints& fc, sqlite3_value** argv) override;
         int32_t Column(int32_t column) const override;
-
-        void FilterId(unsigned char op, sqlite3_value* argv) override;
 
     private:
         const PagedMemorySampleData& PagedMemorySampleDataObj_;

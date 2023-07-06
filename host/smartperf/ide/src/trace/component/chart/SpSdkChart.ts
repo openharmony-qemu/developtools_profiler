@@ -28,7 +28,7 @@ import { CounterStruct, SdkCounterRender } from '../../database/ui-worker/Produc
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
 import { SdkSliceRender, SdkSliceStruct } from '../../database/ui-worker/ProduceWorkerSdkSlice.js';
 import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
-import {TabUtil} from "../trace/sheet/sdk/TabUtil.js";
+import { TabUtil } from '../trace/sheet/sdk/TabUtil.js';
 
 export class SpSdkChart {
   private trace: SpSystemTrace;

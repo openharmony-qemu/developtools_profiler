@@ -31,28 +31,24 @@ config("napi_hidebug_config") {
 
 ohos_shared_library("hidebug") {
   sources = [ "napi_hidebug.cpp" ]
-
   configs = [ ":napi_hidebug_config" ]
-
-  deps = [
-    "//base/hiviewdfx/hidumper/interfaces/innerkits:lib_dump_usage",
-    "//foundation/ability/ability_runtime/frameworks/native/appkit:app_context",
-    "//foundation/arkui/napi:ace_napi",
-  ]
 
   external_deps = [
     "ability_base:configuration",
     "ability_base:want",
+    "ability_runtime:app_context",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
-    "hilog_native:libhilog",
+    "hidumper:lib_dump_usage",
+    "hilog:libhilog",
     "ipc:ipc_core",
+    "napi:ace_napi",
     "samgr:samgr_proxy",
   ]
 
   relative_install_dir = "module"
 
-  part_name = "profiler"
+  part_name = "hiprofiler"
   subsystem_name = "developtools"
 }

@@ -16,15 +16,21 @@ gn_path="$1"
 if [ ! -d "prebuilts/$gn_path" ];then
     mkdir prebuilts/$gn_path
 fi
-if [ ! -f "prebuilts/$gn_path/gn" ];then
-    if [ ! -d "tools" ];then
-        mkdir tools
-    fi
-    if [ ! -d "tools/public_tools" ];then
-        cd tools
-        git clone git@gitee.com:su_ze1688/public_tools.git
-        cd ..
-        mv tools/public_tools/gn/$gn_path/gn prebuilts/$gn_path
-        mv tools/public_tools/gn/$gn_path/ninja prebuilts/$gn_path/ninja
+if [ ! -f "prebuilts/$gn_path/gn" ] || [ ! -f "prebuilts/$gn_path/ninja" ];then
+    if [ "$gn_path" == "linux" ];then
+        curl https://repo.huaweicloud.com/openharmony/compiler/gn/1717/linux/gn-linux-x86-1717.tar.gz  --output gn.tar.gz
+        tar -xvf gn.tar.gz --directory=prebuilts/$gn_path/
+        curl https://repo.huaweicloud.com/openharmony/compiler/ninja/1.11.0/linux/ninja-linux-x86-1.11.0.tar.gz  --output ninja.tar.gz
+        tar -xvf ninja.tar.gz --directory=prebuilts/$gn_path/
+    elif [ "$gn_path" == "macx" ];then
+        curl https://repo.huaweicloud.com/openharmony/compiler/gn/2024/darwin/gn-darwin-x86-20230425.tar.gz --output gn.tar.gz
+        tar -xvf gn.tar.gz --directory=prebuilts/$gn_path/
+        curl https://repo.huaweicloud.com/openharmony/compiler/ninja/1.11.0/darwin/ninja-darwin-x86-1.11.0.tar.gz  --output ninja.tar.gz
+        tar -xvf ninja.tar.gz --directory=prebuilts/$gn_path/
+    elif [ "$gn_path" == "windows" ];then
+        curl https://repo.huaweicloud.com/openharmony/compiler/gn/1744/windows/gn-windows-amd64.zip --output gn.zip
+        unzip gn.zip -d prebuilts/$gn_path/
+        curl https://repo.huaweicloud.com/openharmony/compiler/ninja/1.9.0/windows/ninja-win.zip  --output ninja.zip
+        unzip ninja.zip -d prebuilts/$gn_path/
     fi
 fi

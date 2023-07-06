@@ -20,10 +20,11 @@ jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
 // @ts-ignore
 import {
   setMemFrame,
-  mem,
   VirtualMemoryStruct,
   VirtualMemoryRender,
 } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerVirtualMemory.js';
+// @ts-ignore
+import { mem } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerCommon.js';
 
 describe('ProcedureWorkerVirtualMemory Test', () => {
   it('ProcedureWorkerVirtualMemoryTest01', function () {

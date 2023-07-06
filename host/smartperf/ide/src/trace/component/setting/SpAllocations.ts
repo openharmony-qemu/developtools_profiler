@@ -234,10 +234,7 @@ export class SpAllocations extends BaseElement {
         return;
       }
       let memorySize = Number(intervalResultInput.value);
-      if (
-        memorySize < statisticsSlider!.sliderStyle.minRange ||
-        memorySize > statisticsSlider!.sliderStyle.maxRange
-      ) {
+      if (memorySize < statisticsSlider!.sliderStyle.minRange || memorySize > statisticsSlider!.sliderStyle.maxRange) {
         intervalResultInput.style.color = 'red';
         parentElement.setAttribute('percent', '3600');
       } else {

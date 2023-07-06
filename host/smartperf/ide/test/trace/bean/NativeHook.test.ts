@@ -26,6 +26,9 @@ import {
   NativeHookCallInfo,
   NativeEvent,
 } from '../../../dist/trace/bean/NativeHook.js';
+jest.mock('../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 
 describe('NativeHook Test', () => {
   it('NativeHookStatisticsTest01', function () {

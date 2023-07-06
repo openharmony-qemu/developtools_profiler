@@ -10,14 +10,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import("../../ts.gni")
+import("../../../build/ts.gni")
 if (target != "wasm") {
   executable("protoreader_plugin") {
     sources = [ "proto_reader_plugin.cpp" ]
     deps = [
+      "${SRC}/base:base",
       "${THIRD_PARTY}/protobuf:protoc",
       "${THIRD_PARTY}/protobuf:protoc_lib",
     ]
-    include_dirs = [ "${THIRD_PARTY}/protobuf/src" ]
+    include_dirs = [
+      "${SRC}/base",
+      "${THIRD_PARTY}/protobuf/src",
+    ]
   }
 }

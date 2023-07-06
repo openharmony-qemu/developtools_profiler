@@ -27,12 +27,10 @@ window.ResizeObserver =
         unobserve: jest.fn(),
     }));
 
-jest.mock('../../../../../../dist/base-ui/chart/pie/LitChartPie.js', () => {
-    return {};
-});
-
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-    return {};
+    return {
+
+    }
 });
 
 Object.defineProperty(global.self, 'crypto', {
@@ -41,11 +39,19 @@ Object.defineProperty(global.self, 'crypto', {
     },
 });
 
+jest.mock('../../../../../../dist/base-ui/chart/pie/LitChartPie.js', () => {
+    return {};
+});
+
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+
 describe('TabPaneNMStatisticAnalysis Test', () => {
+    let htmlDivElement = document.createElement('div');
     let tabStatisticAnalysis = new TabPaneNMStatisticAnalysis();
     tabStatisticAnalysis.tableType.reMeauseHeight = jest.fn(() => true);
-    tabStatisticAnalysis.tableSo.reMeauseHeight = jest.fn(() => true);
-    tabStatisticAnalysis.tableFunction.reMeauseHeight = jest.fn(() => true);
+    tabStatisticAnalysis.soUsageTbl.reMeauseHeight = jest.fn(() => true);
+    tabStatisticAnalysis.functionUsageTbl.reMeauseHeight = jest.fn(() => true);
+    htmlDivElement.append(tabStatisticAnalysis);
     let dataArray = {
         applyCount: 25336,
         applyCountPercent: '99',
@@ -94,6 +100,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     tabStatisticAnalysis.processData = processData;
 
     it('statisticAnalysis01', function () {
+        tabStatisticAnalysis.initElements();
         tabStatisticAnalysis.data = select;
         expect(tabStatisticAnalysis.currentSelection).toEqual(select);
     });
@@ -188,4 +195,150 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
         tabStatisticAnalysis.calTypeSize(select, processData);
         expect(tabStatisticAnalysis.processData.length).toBe(1);
     });
+
+    it('statisticAnalysis09', function () {
+        tabStatisticAnalysis.currentLevel = 0;
+        tabStatisticAnalysis.sortByColumn('', 0);
+        expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(1);
+    });
+
+    it('statisticAnalysis10', function () {
+        tabStatisticAnalysis.currentLevel = 1;
+        tabStatisticAnalysis.sortByColumn('', 0);
+        expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(1);
+    });
+
+    it('statisticAnalysis11', function () {
+        tabStatisticAnalysis.currentLevel = 2;
+        tabStatisticAnalysis.sortByColumn('', 0);
+        expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(1);
+    });
+
+    it('statisticAnalysis12', function () {
+        tabStatisticAnalysis.currentLevel = 0;
+        tabStatisticAnalysis.currentLevelData = [{
+            tableName: 0
+        }, {
+            tableName: 1
+        }]
+        tabStatisticAnalysis.sortByColumn('tableName', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            existSize: 0
+        }, {
+            existSize: 1
+        }]
+        tabStatisticAnalysis.sortByColumn('existSizeFormat', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            existSize: 0
+        }, {
+            existSize: 1
+        }]
+        tabStatisticAnalysis.sortByColumn('existSizePercent', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            existCount: 0
+        }, {
+            existCount: 1
+        }]
+        tabStatisticAnalysis.sortByColumn('existCount', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            existCount: 0
+        }, {
+            existCount: 1
+        }]
+        tabStatisticAnalysis.sortByColumn('existCountPercent', 1)
+        expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(3);
+    });
+
+    it('statisticAnalysis13', function () {
+        tabStatisticAnalysis.currentLevel = 1;
+        tabStatisticAnalysis.currentLevelData = [{
+            releaseSize : 0
+        }, {
+            releaseSize : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('releaseSizeFormat', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            releaseSize : 0
+        }, {
+            releaseSize : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('releaseSizePercent', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            releaseCount : 0
+        }, {
+            releaseCount : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('releaseCount', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            releaseCount : 0
+        }, {
+            releaseCount : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('releaseCountPercent', 1)
+        expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(3);
+    });
+
+    it('statisticAnalysis14', function () {
+        tabStatisticAnalysis.currentLevel = 2;
+        tabStatisticAnalysis.currentLevelData = [{
+            applySize : 0
+        }, {
+            applySize : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('applySizeFormat', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            applySize : 0
+        }, {
+            applySize : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('applySizePercent', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            applyCount : 0
+        }, {
+            applyCount : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('applyCount', 1)
+        tabStatisticAnalysis.currentLevelData = [{
+            applyCount : 0
+        }, {
+            applyCount : 1
+        }]
+        tabStatisticAnalysis.sortByColumn('applyCountPercent', 1)
+        expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(3);
+    });
+
+    it('statisticAnalysis15', function () {
+        tabStatisticAnalysis.isStatistic = true;
+        let val = {
+            leftNs: 0,
+            rightNs: 1000,
+            nativeMemoryStatistic: ['All Heap & Anonymous VM', 'All Heap', 'Heap'],
+        }
+        expect(tabStatisticAnalysis.getNMEventTypeSize(val)).toBeUndefined();
+    });
+
+    it('statisticAnalysis16', function () {
+        tabStatisticAnalysis.isStatistic = false;
+        let val = {
+            leftNs: 0,
+            rightNs: 1000,
+            nativeMemory: ['All Heap & Anonymous VM', 'All Heap', 'Heap'],
+        }
+        expect(tabStatisticAnalysis.getNMEventTypeSize(val)).toBeUndefined();
+    });
+
+    it('statisticAnalysis17', function () {
+        tabStatisticAnalysis.tabName.textContent
+        let mouseMoveEvent: MouseEvent = new MouseEvent('click', <MouseEventInit>{ movementX: 1, movementY: 2 });
+        tabStatisticAnalysis.back.dispatchEvent(mouseMoveEvent);
+
+        tabStatisticAnalysis.isStatistic = false;
+        let val = {
+            leftNs: 0,
+            rightNs: 1000,
+            nativeMemory: ['All Heap & Anonymous VM', 'All Heap', 'Heap'],
+        }
+        expect(tabStatisticAnalysis.getNMEventTypeSize(val)).toBeUndefined();
+    });
+
 });

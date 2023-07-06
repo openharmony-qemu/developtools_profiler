@@ -29,8 +29,6 @@ public:
 
 private:
     void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei) override;
-    // filter out by operator[=, >, <...] from column(ID)
-    bool CanFilterId(const char op, size_t& rowCount);
     // the column is sorted
     bool CanFilterSorted(const char op, size_t& rowCount) const;
     void FilterByConstraint(FilterConstraints& fc, double& filterCost, size_t rowCount);

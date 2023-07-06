@@ -19,7 +19,7 @@ proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
 grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
-ipc_cpp_plugin = "$subsys_x64_out/protoc_gen_ipc"
+ipc_cpp_plugin = "$proto_gen_ipc_dir/protoc_gen_ipc"
 
 config("public_configs") {
   include_dirs = [ "$proto_out_dir" ]
@@ -85,6 +85,8 @@ ohos_source_set("profiler_service_type_source") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":public_configs" ]
   sources = profiler_service_type_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ohos_source_set("profiler_service_all_type_source") {
@@ -96,6 +98,8 @@ ohos_source_set("profiler_service_all_type_source") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":public_configs" ]
   sources = all_type_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ########################################################
@@ -150,6 +154,8 @@ ohos_source_set("profiler_service_proto") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":public_configs" ]
   sources = profiler_service_interface_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ########################################################
@@ -221,6 +227,8 @@ ohos_source_set("plugin_service_proto") {
   ]
   public_configs = [ ":public_configs" ]
   sources = plugin_service_interface_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 #######################################################
@@ -230,4 +238,6 @@ ohos_source_set("proto_services_cpp") {
     ":profiler_service_all_type_source",
     ":profiler_service_proto",
   ]
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }

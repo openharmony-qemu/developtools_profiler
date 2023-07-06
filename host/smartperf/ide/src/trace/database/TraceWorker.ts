@@ -18,19 +18,38 @@ importScripts('trace_streamer_builtin.js', 'TempSql.js');
 let Module: any = null;
 let enc = new TextEncoder();
 let dec = new TextDecoder();
-let arr: Uint8Array;
+let arr: Uint8Array | undefined;
 let start: number;
 const REQ_BUF_SIZE = 4 * 1024 * 1024;
 let reqBufferAddr: number = -1;
 let bufferSlice: Array<any> = [];
 let json: string;
 
-let headUnitArray: Uint8Array;
+let headUnitArray: Uint8Array | undefined;
 let thirdWasmMap = new Map();
 let thirdJsonResult = new Map();
 
 let currentAction: string = '';
 let currentActionId: string = '';
+
+function clear() {
+  if (Module != null) {
+    Module._TraceStreamerReset();
+    Module = null;
+  }
+  if (arr) {
+    arr = undefined;
+  }
+  if (headUnitArray) {
+      headUnitArray = undefined;
+  }
+  if (bufferSlice) {
+    bufferSlice.length = 0;
+  }
+  thirdWasmMap.clear();
+  thirdJsonResult.clear();
+}
+
 self.addEventListener('unhandledrejection', (err) => {
   self.postMessage({
     id: currentActionId,
@@ -91,28 +110,42 @@ let merged = () => {
   return mergedArray;
 };
 let convertJSON = () => {
-  let str = dec.decode(arr);
-  let jsonArray = [];
-  str = str.substring(str.indexOf('\n') + 1);
-  if (!str) {
-  } else {
-    let parse = JSON.parse(translateJsonString(str));
-    let columns = parse.columns;
-    let values = parse.values;
-    for (let i = 0; i < values.length; i++) {
-      let obj: any = {};
-      for (let j = 0; j < columns.length; j++) {
-        obj[columns[j]] = values[i][j];
+  try {
+    let str = dec.decode(arr);
+    let jsonArray = [];
+    str = str.substring(str.indexOf('\n') + 1);
+    if (!str) {
+    } else {
+      let parse = JSON.parse(translateJsonString(str));
+      let columns = parse.columns;
+      let values = parse.values;
+      for (let i = 0; i < values.length; i++) {
+        let obj: any = {};
+        for (let j = 0; j < columns.length; j++) {
+          obj[columns[j]] = values[i][j];
+        }
+        jsonArray.push(obj);
       }
-      jsonArray.push(obj);
     }
+    return jsonArray;
+  } catch (e) {
+    self.postMessage({
+      id: currentActionId,
+      action: currentAction,
+      init: false,
+      status: false,
+      msg: (e as any).message,
+    });
+    return [];
   }
-  return jsonArray;
 };
+
 self.onmessage = async (e: MessageEvent) => {
   currentAction = e.data.action;
   currentActionId = e.data.id;
-  if (e.data.action === 'open') {
+  if (e.data.action === 'reset') {
+    clear();
+  } else if (e.data.action === 'open') {
     await initWASM();
     // @ts-ignore
     self.postMessage({
@@ -194,7 +227,7 @@ self.onmessage = async (e: MessageEvent) => {
             let mm = thirdMode._InitTraceRange(traceRangeFn, 1024);
             thirdMode._TraceStreamer_In_JsonConfig();
             thirdMode.HEAPU8.set(headUnitArray, thirdreqBufferAddr);
-            thirdMode._ParserData(headUnitArray.length, 100);
+            thirdMode._ParserData(headUnitArray!.length, 100);
             let out: Uint8Array = Module.HEAPU8.slice(heapPtr, heapPtr + size);
             thirdMode.HEAPU8.set(out, thirdreqBufferAddr);
             thirdMode._ParserData(out.length, componentID);
@@ -269,7 +302,7 @@ self.onmessage = async (e: MessageEvent) => {
   } else if (e.data.action == 'exec-buf') {
     query(e.data.name, e.data.sql, e.data.params);
     self.postMessage(
-      { id: e.data.id, action: e.data.action, results: arr.buffer },
+      { id: e.data.id, action: e.data.action, results: arr!.buffer },
       // @ts-ignore
       [arr.buffer]
     );
@@ -289,9 +322,9 @@ self.onmessage = async (e: MessageEvent) => {
       let msg = {
         id: me.data.id,
         action: me.data.action,
-        results: arr.buffer,
+        results: arr!.buffer,
       };
-      port.postMessage(msg, [arr.buffer]);
+      port.postMessage(msg, [arr!.buffer]);
     };
   } else if (e.data.action == 'download-db') {
     let bufferSliceUint: Array<any> = [];
@@ -359,7 +392,6 @@ function uploadSoFile(files: Array<File>, callback: () => void) {
             data.length,
             fileNameBuffer.length,
             sliceLen,
-            files.length,
             uploadFileIndex === files.length - 1 ? 1 : 0
           );
         }

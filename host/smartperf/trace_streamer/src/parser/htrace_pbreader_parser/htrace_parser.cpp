@@ -61,7 +61,8 @@ void HtraceParser::GetSymbols(std::unique_ptr<ElfFile> elfPtr,
                               std::shared_ptr<ElfSymbolTable> symbols,
                               const std::string& filename)
 {
-    symbols->filePath = std::move(filename);
+
+    symbols->filePathIndex = traceDataCache_->dataDict_.GetStringIndex(filename.c_str());
     symbols->textVaddr = (std::numeric_limits<uint64_t>::max)();
     for (auto& item : elfPtr->phdrs_) {
         if ((item->type_ == PT_LOAD) && (item->flags_ & PF_X)) {
@@ -150,6 +151,7 @@ bool HtraceParser::ReparseSymbolFilesAndResymbolization(std::string& symbolsPath
 #endif
     auto parseFileSOStatus = ParserFileSO(symbolsPath, symbolsPaths);
     if (!parseFileSOStatus) {
+        elfSymbolTables_.reset();
         return parsePerfStatus;
     }
     if (htraceNativeHookParser_->SupportImportSymbolTable()) {
@@ -158,6 +160,7 @@ bool HtraceParser::ReparseSymbolFilesAndResymbolization(std::string& symbolsPath
     if (ebpfDataParser_->SupportImportSymbolTable()) {
         ebpfDataParser_->EBPFReloadElfSymbolTable(elfSymbolTables_);
     }
+    elfSymbolTables_.reset();
     return true;
 }
 void HtraceParser::WaitForParserEnd()
@@ -371,10 +374,10 @@ void HtraceParser::ParserData(HtraceDataSegment& dataSeg)
     } else if (pluginName == "hisysevent-plugin_config") {
         dataSeg.protoData = pluginDataZero.data();
         ParseHisyseventConfig(dataSeg);
-    } else if (pluginName == "js-memory") {
+    } else if (pluginName == "arkts-plugin") {
         dataSeg.protoData = pluginDataZero.data();
         ParseJSMemory(dataSeg);
-    } else if (pluginName == "js-memory_config") {
+    } else if (pluginName == "arkts-plugin_config") {
         dataSeg.protoData = pluginDataZero.data();
         ParseJSMemoryConfig(dataSeg);
     } else {
@@ -662,6 +665,17 @@ void HtraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, s
     if (ParseDataRecursively(packagesBegin, currentLength)) {
         packagesBuffer_.erase(packagesBuffer_.begin(), packagesBegin);
     }
+    return;
+}
+void HtraceParser::StoreTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
+{
+    packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
+    return;
+}
+void HtraceParser::TraceDataSegmentEnd()
+{
+    perfDataParser_->InitPerfDataAndLoad(packagesBuffer_, packagesBuffer_.size());
+    packagesBuffer_.clear();
     return;
 }
 

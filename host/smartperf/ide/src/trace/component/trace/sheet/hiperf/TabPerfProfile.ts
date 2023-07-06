@@ -91,11 +91,14 @@ export class TabpanePerfProfile extends BaseElement {
         this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
         this.perfProfileFrameChart?.updateCanvas(true, this.clientWidth);
         this.perfProfileFrameChart?.calculateChartData();
+        this.switchFlameChart();
+        this.perfProfilerFilter.icon = 'block';
       }
     );
   }
 
-  getParentTree(perfCallSrc: Array<PerfCallChainMerageData>,
+  getParentTree(
+    perfCallSrc: Array<PerfCallChainMerageData>,
     target: PerfCallChainMerageData,
     parentsData: Array<PerfCallChainMerageData>
   ): boolean {
@@ -113,7 +116,11 @@ export class TabpanePerfProfile extends BaseElement {
     return false;
   }
 
-  getChildTree(perfCallSrc: Array<PerfCallChainMerageData>, id: string, children: Array<PerfCallChainMerageData>): boolean {
+  getChildTree(
+    perfCallSrc: Array<PerfCallChainMerageData>,
+    id: string,
+    children: Array<PerfCallChainMerageData>
+  ): boolean {
     for (let perfCall of perfCallSrc) {
       if (perfCall.id == id && perfCall.children.length == 0) {
         children.push(perfCall);
@@ -221,11 +228,17 @@ export class TabpanePerfProfile extends BaseElement {
         let perfProfilerAddr = data.vaddrInFile;
         let perfProfilerAddrHex = perfProfilerAddr.toString(16);
         if (perfProfilerPath.trim() === '[kernel.kallsyms]') {
-          this.perfProfilerModal?.showContent(`error : Symbol ${data.symbol} lib is [kernel.kallsyms] ,not support `, perfProfilerAddrHex);
+          this.perfProfilerModal?.showContent(
+            `error : Symbol ${data.symbol} lib is [kernel.kallsyms] ,not support `,
+            perfProfilerAddrHex
+          );
         } else if (perfProfilerPath.trim() === '') {
           this.perfProfilerModal?.showContent(`error : Symbol ${data.symbol} lib is null `, perfProfilerAddrHex);
         } else if (perfProfilerAddr < 0) {
-          this.perfProfilerModal?.showContent(`error : Symbol ${data.symbol} current addr is error ` + perfProfilerAddrHex, perfProfilerAddrHex);
+          this.perfProfilerModal?.showContent(
+            `error : Symbol ${data.symbol} current addr is error ` + perfProfilerAddrHex,
+            perfProfilerAddrHex
+          );
         } else {
           const binDir = 'C:/binary_cache';
           let binPath = binDir + perfProfilerPath;
@@ -474,10 +487,10 @@ export class TabpanePerfProfile extends BaseElement {
     }).observe(this.parentElement!);
   }
 
-  switchFlameChart(data: any) {
+  switchFlameChart(data?: any) {
     let perfProfilerPageTab = this.shadowRoot?.querySelector('#show_table');
     let perfProfilerPageChart = this.shadowRoot?.querySelector('#show_chart');
-    if (data.icon == 'block') {
+    if (!data || data.icon == 'block') {
       perfProfilerPageChart?.setAttribute('class', 'show');
       perfProfilerPageTab?.setAttribute('class', '');
       this.isChartShow = true;

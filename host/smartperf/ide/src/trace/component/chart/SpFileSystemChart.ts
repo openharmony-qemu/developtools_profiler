@@ -159,7 +159,7 @@ export class SpFileSystemChart {
       );
       logicalWriteRow.canvasRestore(context);
     };
-      folder.addChildTraceRow(logicalWriteRow);
+    folder.addChildTraceRow(logicalWriteRow);
   }
 
   async initDiskIOLatency(folder: TraceRow<any>) {

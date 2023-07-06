@@ -23,7 +23,7 @@ import { log } from '../../../../../log/Log.js';
 import { getProbablyTime } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
 import { Utils } from '../../base/Utils.js';
 import { CpuStruct } from '../../../../database/ui-worker/ProcedureWorkerCPU.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-thread-usage')
 export class TabPaneThreadUsage extends BaseElement {
@@ -32,6 +32,7 @@ export class TabPaneThreadUsage extends BaseElement {
   private stackBar: StackBar | null | undefined;
   private threadUsageSource: Array<SelectionData> = [];
   private cpuCount = 0;
+  private currentSelectionParam: SelectionParam | undefined;
   private pubColumns = `
             <lit-table-column width="200px" title="Process" data-index="process" key="process"  align="flex-start" order>
             </lit-table-column>
@@ -46,56 +47,72 @@ export class TabPaneThreadUsage extends BaseElement {
     `;
 
   set data(threadUsageParam: SelectionParam | any) {
+    if (this.currentSelectionParam === threadUsageParam) {
+      return;
+    }
+    this.currentSelectionParam = threadUsageParam;
     if (this.cpuCount !== CpuStruct.cpuCount) {
       this.cpuCount = CpuStruct.cpuCount;
       this.threadUsageTbl!.innerHTML = this.getTableColumns();
     }
     //@ts-ignore
-    this.threadUsageTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
+    this.threadUsageTbl?.shadowRoot?.querySelector('.table')?.style?.height =
+      this.parentElement!.clientHeight - 45 + 'px';
     // // @ts-ignore
-    this.range!.textContent = 'Selected range: ' + ((threadUsageParam.rightNs - threadUsageParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
-    getTabThreadStatesCpu(threadUsageParam.threadIds, threadUsageParam.leftNs, threadUsageParam.rightNs).then((result) => {
-      if (result != null && result.length > 0) {
-        log('getTabThreadStates result size : ' + result.length);
-        let map: Map<number, any> = new Map<number, any>();
-        for (let resultEl of result) {
-          if (map.has(resultEl.tid)) {
-            map.get(resultEl.tid)[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
-            map.get(resultEl.tid)[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
-            map.get(resultEl.tid)[`cpu${resultEl.cpu}Ratio`] = ((100.0 * (resultEl.wallDuration || 0)) / (threadUsageParam.rightNs - threadUsageParam.leftNs)).toFixed(
-              2
-            );
-            map.get(resultEl.tid)[`wallDuration`] = map.get(resultEl.tid)[`wallDuration`] + (resultEl.wallDuration || 0);
-            map.get(resultEl.tid)[`wallDurationTimeStr`] = getProbablyTime(map.get(resultEl.tid)[`wallDuration`]);
-          } else {
-            let process = Utils.PROCESS_MAP.get(resultEl.pid);
-            let thread = Utils.THREAD_MAP.get(resultEl.tid);
-            let threadStatesStruct: any = {
-              tid: resultEl.tid,
-              pid: resultEl.pid,
-              thread: thread || 'null',
-              process: process || 'null',
-              wallDuration: resultEl.wallDuration || 0,
-              wallDurationTimeStr: getProbablyTime(resultEl.wallDuration || 0),
-            };
-            for (let i = 0; i < this.cpuCount; i++) {
-              threadStatesStruct[`cpu${i}`] = 0;
-              threadStatesStruct[`cpu${i}TimeStr`] = '0';
-              threadStatesStruct[`cpu${i}Ratio`] = '0';
+    this.range!.textContent =
+      'Selected range: ' + ((threadUsageParam.rightNs - threadUsageParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
+    this.threadUsageTbl!.loading = true;
+    getTabThreadStatesCpu(threadUsageParam.threadIds, threadUsageParam.leftNs, threadUsageParam.rightNs).then(
+      (result) => {
+        this.threadUsageTbl!.loading = false;
+        if (result != null && result.length > 0) {
+          log('getTabThreadStates result size : ' + result.length);
+          let filterArr = result.filter((it) => threadUsageParam.processIds.includes(it.pid));
+          let map: Map<number, any> = new Map<number, any>();
+          for (let resultEl of filterArr) {
+            if (map.has(resultEl.tid)) {
+              map.get(resultEl.tid)[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
+              map.get(resultEl.tid)[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
+              map.get(resultEl.tid)[`cpu${resultEl.cpu}Ratio`] = (
+                (100.0 * (resultEl.wallDuration || 0)) /
+                (threadUsageParam.rightNs - threadUsageParam.leftNs)
+              ).toFixed(2);
+              map.get(resultEl.tid)[`wallDuration`] =
+                map.get(resultEl.tid)[`wallDuration`] + (resultEl.wallDuration || 0);
+              map.get(resultEl.tid)[`wallDurationTimeStr`] = getProbablyTime(map.get(resultEl.tid)[`wallDuration`]);
+            } else {
+              let process = Utils.PROCESS_MAP.get(resultEl.pid);
+              let thread = Utils.THREAD_MAP.get(resultEl.tid);
+              let threadStatesStruct: any = {
+                tid: resultEl.tid,
+                pid: resultEl.pid,
+                thread: thread || 'null',
+                process: process || 'null',
+                wallDuration: resultEl.wallDuration || 0,
+                wallDurationTimeStr: getProbablyTime(resultEl.wallDuration || 0),
+              };
+              for (let i = 0; i < this.cpuCount; i++) {
+                threadStatesStruct[`cpu${i}`] = 0;
+                threadStatesStruct[`cpu${i}TimeStr`] = '0';
+                threadStatesStruct[`cpu${i}Ratio`] = '0';
+              }
+              threadStatesStruct[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
+              threadStatesStruct[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
+              threadStatesStruct[`cpu${resultEl.cpu}Ratio`] = (
+                (100.0 * (resultEl.wallDuration || 0)) /
+                (threadUsageParam.rightNs - threadUsageParam.leftNs)
+              ).toFixed(2);
+              map.set(resultEl.tid, threadStatesStruct);
             }
-            threadStatesStruct[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
-            threadStatesStruct[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
-            threadStatesStruct[`cpu${resultEl.cpu}Ratio`] = ((100.0 * (resultEl.wallDuration || 0)) / (threadUsageParam.rightNs - threadUsageParam.leftNs)).toFixed(2);
-            map.set(resultEl.tid, threadStatesStruct);
           }
+          this.threadUsageSource = Array.from(map.values());
+          this.threadUsageTbl!.recycleDataSource = this.threadUsageSource;
+        } else {
+          this.threadUsageSource = [];
+          this.threadUsageTbl!.recycleDataSource = [];
         }
-        this.threadUsageSource = Array.from(map.values());
-        this.threadUsageTbl!.recycleDataSource = this.threadUsageSource;
-      } else {
-        this.threadUsageSource = [];
-        this.threadUsageTbl!.recycleDataSource = [];
       }
-    });
+    );
   }
 
   getTableColumns() {
@@ -123,7 +140,7 @@ export class TabPaneThreadUsage extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!,this.threadUsageTbl!)
+    resizeObserver(this.parentElement!, this.threadUsageTbl!);
   }
 
   initHtml(): string {
@@ -171,10 +188,16 @@ export class TabPaneThreadUsage extends BaseElement {
       };
     }
 
-    if (treadUsageDetail.key === 'process' || treadUsageDetail.key === 'thread' || (treadUsageDetail.key as string).includes('Ratio')) {
+    if (
+      treadUsageDetail.key === 'process' ||
+      treadUsageDetail.key === 'thread' ||
+      (treadUsageDetail.key as string).includes('Ratio')
+    ) {
       this.threadUsageSource.sort(compare(treadUsageDetail.key, treadUsageDetail.sort, 'string'));
     } else {
-      this.threadUsageSource.sort(compare((treadUsageDetail.key as string).replace('TimeStr', ''), treadUsageDetail.sort, 'number'));
+      this.threadUsageSource.sort(
+        compare((treadUsageDetail.key as string).replace('TimeStr', ''), treadUsageDetail.sort, 'number')
+      );
     }
     this.threadUsageTbl!.recycleDataSource = this.threadUsageSource;
   }

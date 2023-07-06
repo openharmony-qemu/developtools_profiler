@@ -25,15 +25,8 @@
 #include <memory>
 
 namespace {
-struct PerfData {
-    long long mallocTotalTime;
-    long long freeTotalTime;
-    long long times;
-};
-
 static int g_duration;
 static int g_memSize;
-static std::vector<PerfData> g_threadData;
 static std::atomic<long long> g_times;
 static std::atomic<long long> g_mallocTotalTime;
 static std::atomic<long long> g_freeTotalTime;
@@ -177,8 +170,6 @@ int main(int argc, char *argv[])
         Usage();
         return 1;
     }
-
-    g_threadData.resize(threadNum);
     pthread_t* thrArray = (pthread_t*)malloc(sizeof(pthread_t) * threadNum);
     if (thrArray == nullptr) {
         printf("malloc thrArray memory failed.\n");

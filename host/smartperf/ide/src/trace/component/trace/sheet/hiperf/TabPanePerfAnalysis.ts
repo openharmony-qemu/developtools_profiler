@@ -54,7 +54,7 @@ export class TabPanePerfAnalysis extends BaseElement {
   private currentLevel = -1;
   private currentLevelData!: Array<any>;
   set data(val: SelectionParam | any) {
-    if (val == this.currentSelection) {
+    if (val === this.currentSelection) {
       this.pidData.unshift(this.allProcessCount);
       this.tableProcess!.recycleDataSource = this.pidData;
       // @ts-ignore
@@ -69,7 +69,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.tableFunction!.style.display = 'none';
     this.back!.style.visibility = 'hidden';
     this.perfAnalysisRange!.textContent =
-        'Selected range: ' + parseFloat(((val.rightNs - val.leftNs) / 1000000.0).toFixed(5)) + ' ms';
+      'Selected range: ' + parseFloat(((val.rightNs - val.leftNs) / 1000000.0).toFixed(5)) + ' ms';
     if (!this.callChainMap) {
       this.getCallChainDataFromWorker(val);
     }
@@ -147,18 +147,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.tableProcess!.style.display = 'none';
-          this.perfTableThread!.style.display = 'grid';
-          this.tableProcess!.setAttribute('hideDownload', '');
-          this.perfTableThread?.removeAttribute('hideDownload');
-          this.getHiperfThread(it, val);
-          // @ts-ignore
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = it.tableName;
-          // @ts-ignore
-          this.processName = it.tableName;
-          this.perfAnalysisPie?.hideTip();
+          this.perfProcessLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -189,17 +178,37 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.tabName!.textContent = 'Statistic By Process Count';
     this.pidData.unshift(this.allProcessCount);
     this.tableProcess!.recycleDataSource = this.pidData;
+    this.tableProcess?.reMeauseHeight();
     // @ts-ignore
     this.pidData.shift(this.allProcessCount);
     this.currentLevelData = this.pidData;
-    this.tableProcess?.reMeauseHeight();
     this.tableProcess!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.tableProcess!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.count !== 0) {
+        this.perfProcessLevelClickEvent(data, val);
+      }
+    });
+  }
+  perfProcessLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.tableProcess!.style.display = 'none';
+    this.perfTableThread!.style.display = 'grid';
+    this.tableProcess!.setAttribute('hideDownload', '');
+    this.perfTableThread?.removeAttribute('hideDownload');
+    this.getHiperfThread(it, val);
+    // @ts-ignore
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = it.tableName;
+    // @ts-ignore
+    this.processName = it.tableName;
+    this.perfAnalysisPie?.hideTip();
   }
   threadPieChart(val: any) {
-    if (val.perfThread.length > 0 && val.perfProcess.length == 0) {
+    if (val.perfThread.length > 0 && val.perfProcess.length === 0) {
       this.back!.style.visibility = 'hidden';
       this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = '';
       this.perfTableThread!.style.display = 'grid';
@@ -227,19 +236,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.back!.style.visibility = 'visible';
-          this.perfTableThread!.style.display = 'none';
-          this.tableSo!.style.display = 'grid';
-          this.perfTableThread!.setAttribute('hideDownload', '');
-          this.tableSo?.removeAttribute('hideDownload');
-          this.getHiperfSo(it, val);
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-              // @ts-ignore
-              this.processName + ' / ' + it.tableName;
-          // @ts-ignore
-          this.threadName = it.tableName;
-          this.perfAnalysisPie?.hideTip();
+          this.perfThreadLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -273,10 +270,31 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.tabName!.textContent = 'Statistic By Thread Count';
     this.threadData.unshift(this.allThreadCount);
     this.perfTableThread!.recycleDataSource = this.threadData;
+    this.perfTableThread?.reMeauseHeight();
     // @ts-ignore
     this.threadData.shift(this.allThreadCount);
     this.currentLevelData = this.threadData;
-    this.perfTableThread?.reMeauseHeight();
+    this.perfTableThread!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.count !== 0) {
+        this.perfThreadLevelClickEvent(data, val);
+      }
+    });
+  }
+  perfThreadLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.back!.style.visibility = 'visible';
+    this.perfTableThread!.style.display = 'none';
+    this.tableSo!.style.display = 'grid';
+    this.perfTableThread!.setAttribute('hideDownload', '');
+    this.tableSo?.removeAttribute('hideDownload');
+    this.getHiperfSo(it, val);
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      // @ts-ignore
+      this.processName + ' / ' + it.tableName;
+    // @ts-ignore
+    this.threadName = it.tableName;
+    this.perfAnalysisPie?.hideTip();
   }
   libraryPieChart(val: any) {
     this.sumCount = this.allLibCount.allCount;
@@ -300,16 +318,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       angleClick: (it) => {
         // @ts-ignore
         if (it.tableName != 'other') {
-          this.clearData();
-          this.tableSo!.style.display = 'none';
-          this.tableFunction!.style.display = 'grid';
-          this.tableSo!.setAttribute('hideDownload', '');
-          this.tableFunction?.removeAttribute('hideDownload');
-          this.getHiperfFunction(it, val);
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
-              // @ts-ignore
-              this.processName + ' / ' + this.threadName + ' / ' + it.tableName;
-          this.perfAnalysisPie?.hideTip();
+          this.perfSoLevelClickEvent(it, val);
         }
       },
       hoverHandler: (data) => {
@@ -340,14 +349,32 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.tabName!.textContent = 'Statistic By Library Count';
     this.soData.unshift(this.allLibCount);
     this.tableSo!.recycleDataSource = this.soData;
+    this.tableSo?.reMeauseHeight();
     // @ts-ignore
     this.soData.shift(this.allLibCount);
     this.currentLevelData = this.soData;
-    this.tableSo?.reMeauseHeight();
     this.tableSo!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
+    this.tableSo!.addEventListener('row-click', (evt: any) => {
+      let data = evt.detail.data;
+      if (data.tableName !== '' && data.count !== 0) {
+        this.perfSoLevelClickEvent(data, val);
+      }
+    });
+  }
+  perfSoLevelClickEvent(it: any, val: any) {
+    this.clearData();
+    this.tableSo!.style.display = 'none';
+    this.tableFunction!.style.display = 'grid';
+    this.tableSo!.setAttribute('hideDownload', '');
+    this.tableFunction?.removeAttribute('hideDownload');
+    this.getHiperfFunction(it, val);
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
+      // @ts-ignore
+      this.processName + ' / ' + this.threadName + ' / ' + it.tableName;
+    this.perfAnalysisPie?.hideTip();
   }
   sortByColumn(column: string, sort: number) {
     this.sortColumn = column;
@@ -370,7 +397,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     if (!currentTable) {
       return;
     }
-    if (sort == 0) {
+    if (sort === 0) {
       let arr = [...this.currentLevelData];
       switch (this.currentLevel) {
         case 0:
@@ -389,12 +416,12 @@ export class TabPanePerfAnalysis extends BaseElement {
       currentTable!.recycleDataSource = arr;
     } else {
       let arr = [...this.currentLevelData];
-      if (column == 'tableName') {
+      if (column === 'tableName') {
         currentTable!.recycleDataSource = arr.sort((leftA, rightB) => {
-          if (sort == 1) {
+          if (sort === 1) {
             if (leftA.tableName > rightB.tableName) {
               return 1;
-            } else if (leftA.tableName == rightB.tableName) {
+            } else if (leftA.tableName === rightB.tableName) {
               return 0;
             } else {
               return -1;
@@ -402,20 +429,16 @@ export class TabPanePerfAnalysis extends BaseElement {
           } else {
             if (rightB.tableName > leftA.tableName) {
               return 1;
-            } else if (leftA.tableName == rightB.tableName) {
+            } else if (leftA.tableName === rightB.tableName) {
               return 0;
             } else {
               return -1;
             }
           }
         });
-      } else if (column == 'countFormat') {
+      } else if (column === 'countFormat' || column === 'percent') {
         currentTable!.recycleDataSource = arr.sort((a, b) => {
-          return sort == 1 ? a.count - b.count : b.count - a.count;
-        });
-      } else if (column == 'percent') {
-        currentTable!.recycleDataSource = arr.sort((a, b) => {
-          return sort == 1 ? a.count - b.count : b.count - a.count;
+          return sort === 1 ? a.count - b.count : b.count - a.count;
         });
       }
       switch (this.currentLevel) {
@@ -437,9 +460,9 @@ export class TabPanePerfAnalysis extends BaseElement {
   }
   async getHiperfProcess(val: any) {
     this.progressEL!.loading = true;
-    if (!this.processData || this.processData.length == 0) {
+    if (!this.processData || this.processData.length === 0) {
       this.progressEL!.loading = false;
-      if (val.perfThread.length > 0 && val.perfProcess.length == 0) {
+      if (val.perfThread.length > 0 && val.perfProcess.length === 0) {
         this.threadData = [];
         this.allThreadCount = [];
         this.tableProcess!.style.display = 'none';
@@ -453,7 +476,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     }
     let allCount = 0;
     let pidMap = new Map<number, Array<any>>();
-    if (val.perfThread.length > 0 && val.perfProcess.length == 0) {
+    if (val.perfThread.length > 0 && val.perfProcess.length === 0) {
       this.tableProcess!.style.display = 'none';
       this.getHiperfThread(this.processData[0], val);
     } else {
@@ -470,10 +493,10 @@ export class TabPanePerfAnalysis extends BaseElement {
       this.pidData = [];
       pidMap.forEach((arr: Array<any>, pid: number) => {
         let count = 0;
-        for(let item of arr){
+        for (let item of arr) {
           count += item.count;
         }
-        let pName = arr[0].processName + '(' + pid + ')';
+        const pName = arr[0].processName + '(' + pid + ')';
         const pidData = {
           tableName: pName,
           pid: pid,
@@ -489,13 +512,21 @@ export class TabPanePerfAnalysis extends BaseElement {
       this.progressEL!.loading = false;
       this.processPieChart(val);
     }
+    new ResizeObserver(() => {
+      if (this.parentElement?.clientHeight != 0) {
+        this.tableProcess!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.perfTableThread!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.tableFunction!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.tableSo!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+      }
+    }).observe(this.parentElement!);
   }
   getHiperfThread(item: any, val: any) {
     this.progressEL!.loading = true;
     let threadMap = new Map<number, Array<any>>();
     let pid = item.pid;
     let allCount = 0;
-    if (!this.processData || this.processData.length == 0) {
+    if (!this.processData || this.processData.length === 0) {
       return;
     }
     for (let itemData of this.processData) {
@@ -541,7 +572,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     let pid = item.pid;
     let allCount = 0;
     let libMap = new Map<number, Array<any>>();
-    if (!this.processData || this.processData.length == 0) {
+    if (!this.processData || this.processData.length === 0) {
       return;
     }
     for (let itemData of this.processData) {
@@ -558,10 +589,10 @@ export class TabPanePerfAnalysis extends BaseElement {
       }
     }
     this.soData = [];
-    libMap.forEach((arr :Array<any>, libId: number) => {
+    libMap.forEach((arr: Array<any>, libId: number) => {
       let libCount = 0;
       let libName = arr[0].libName;
-      for(let item of arr){
+      for (let item of arr) {
         libCount += item.count;
       }
       const libData = {
@@ -590,7 +621,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     let libId = item.libId;
     let allCount = 0;
     let symbolMap = new Map<number, Array<any>>();
-    if (!this.processData || this.processData.length == 0) {
+    if (!this.processData || this.processData.length === 0) {
       return;
     }
     for (let itemData of this.processData) {
@@ -609,7 +640,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.functionData = [];
     symbolMap.forEach((arr, symbolId) => {
       let symbolCount = 0;
-      for(let item of arr){
+      for (let item of arr) {
         symbolCount += item.count;
       }
       let symbolName = arr[0].symbolName;
@@ -670,10 +701,10 @@ export class TabPanePerfAnalysis extends BaseElement {
     });
     this.functionData.unshift(this.allSymbolCount);
     this.tableFunction!.recycleDataSource = this.functionData;
+    this.tableFunction?.reMeauseHeight();
     // @ts-ignore
     this.functionData.shift(this.allSymbolCount);
     this.currentLevelData = this.functionData;
-    this.tableFunction?.reMeauseHeight();
     this.tableFunction!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
@@ -803,22 +834,22 @@ export class TabPanePerfAnalysis extends BaseElement {
                          <lit-chart-pie  id="chart-pie"></lit-chart-pie>
                      </div>
                      <div class="table-box" style="height:auto;overflow: auto">
-                    <lit-table id="tb-process-usage" style="max-height:565px;display: none;min-height: 350px" >
+                    <lit-table id="tb-process-usage" style="display: none;min-height: 380px" >
                         <lit-table-column width="1fr" title="ProcessName" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Weight" data-index="countFormat" key="countFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-thread-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-thread-usage" style="display: none;min-height: 380px"hideDownload>
                         <lit-table-column width="1fr" title="ThreadName" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Weight" data-index="countFormat" key="countFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-so-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-so-usage" style="display: none;min-height: 380px"hideDownload>
                         <lit-table-column width="1fr" title="Library" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Weight" data-index="countFormat" key="countFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-function-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-function-usage" style="display: none;min-height: 380px"hideDownload>
                         <lit-table-column width="1fr" title="Function" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Weight" data-index="countFormat" key="countFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>

@@ -38,7 +38,7 @@ JS内存数据解析对应两个proto文件
 
 ---
 
-js memory的数据包含在htrace文件中，由proto文件定义数据格式，解析规则如下：
+arkts-plugin的数据包含在htrace文件中，由proto文件定义数据格式，解析规则如下：
 
 1.js-memory相关数据携带js-memory_config和js-memory插件头，先通过接口ParseJSMemoryConfig获取对应的type和pid，其中type=0为snapshot类型数据，type=1为timeline数据。js-memory数据为json格式，json包含以下节点：snapshot，nodes，edges，locations，strings，samples，trace_function_infos，trace_tree。使用第三方json库nlohmann::json进行解析。
 

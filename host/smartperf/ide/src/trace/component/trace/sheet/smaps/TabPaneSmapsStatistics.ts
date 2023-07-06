@@ -19,7 +19,7 @@ import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabSmapsData, getTabSmapsMaxRss } from '../../../../database/SqlLite.js';
 import { Smaps, SmapsTreeObj } from '../../../../bean/SmapsStruct.js';
 import { Utils } from '../../base/Utils.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-smaps-statistics')
 export class TabPaneSmapsStatistics extends BaseElement {
@@ -37,7 +37,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.tblSmapsStatistics!)
+    resizeObserver(this.parentElement!, this.tblSmapsStatistics!);
   }
 
   queryDataByDB(smapsVal: SelectionParam | any) {

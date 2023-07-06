@@ -24,6 +24,10 @@ window.ResizeObserver =
     unobserve: jest.fn(),
   }));
 
+jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+    return {}
+});
+
 describe('FrameChart Test', () => {
     let node = [{ children: '' }, { children: { length: 0 } }];
     let node1 = [{ children: '' }, { children: { length: 10 } }];
@@ -118,11 +122,7 @@ describe('FrameChart Test', () => {
         expect(frameChart.initHtml()).toMatchInlineSnapshot(`
 "
             <style>
-            :host{
-                display: flex;
-                padding: 10px 10px;
-            }
-            .tip{
+            .frame-tip{
                 position:absolute;
                 left: 0;
                 background-color: white;
@@ -141,9 +141,13 @@ describe('FrameChart Test', () => {
                 max-width:350px;
                 word-break: break-all;
             }
+            :host{
+                display: flex;
+                padding: 10px 10px;
+            }
             </style>
             <canvas id="canvas"></canvas>
-            <div id ="float_hint" class="tip"></div>"
+            <div id ="float_hint" class="frame-tip"></div>"
 `);
   });
 

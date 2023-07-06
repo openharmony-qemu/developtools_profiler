@@ -16,7 +16,8 @@ import("../base/config.gni")
 import("../plugins/ftrace_plugin/ftrace.gni")
 
 ohos_source_set("command_line") {
-  part_name = "profiler"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
     "src/command_line.cpp",
     "src/command_param.cpp",
@@ -38,6 +39,7 @@ ohos_executable("hiprofiler_cmd") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_type_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/arkts_plugin:arkts_plugin_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/diskio_data:diskio_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_plugin_config_cpp_standard",

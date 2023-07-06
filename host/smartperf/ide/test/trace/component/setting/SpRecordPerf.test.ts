@@ -58,36 +58,55 @@ describe('SpRecordPerf Test', () => {
     expect(spRecordPerf.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+       input {
+           height: 25px;
+           border-radius: 16px;
+           outline:none;
+           text-indent:2%
+        }
+        
+        input::-webkit-input-placeholder{
+            color:var(--bark-prompt,#999999);
+        }
+        
+         :host([startSamp]) .record-perf-input {
+            background: var(--dark-background5,#FFFFFF);
+        }
+        
+        :host(:not([startSamp])) .record-perf-input {
+            color: #999999;
+        }
+        
         :host{
-            display: inline-block;
             width: 100%;
+            display: inline-block;
             height: 100%;
             background: var(--dark-background3,#FFFFFF);
             border-radius: 0px 16px 16px 0px;
         }
 
+        .record-perf-config-div {
+           display: flex;
+           flex-direction: column;
+           gap: 15px;
+           width: 80%;
+        }
+        
         .root {
             padding-top: 30px;
-            padding-left: 54px;
             margin-right: 30px;
+            padding-left: 54px;
             font-size:16px;
             margin-bottom: 30px;
         }
 
-        .config-div {
-           width: 80%;
-           display: flex;
-           flex-direction: column;
-           gap: 15px;
-        }
-
-        :host([show]) .config-div {
+        :host([show]) .record-perf-config-div {
            display: flex;
            flex-direction: column;
            margin-bottom: 1vh;
         }
 
-        :host(:not([show])) .config-div {
+        :host(:not([show])) .record-perf-config-div {
            margin-top: 5vh;
            margin-bottom: 5vh;
            gap: 25px;
@@ -119,63 +138,46 @@ describe('SpRecordPerf Test', () => {
            background: #3391FF;
         }
 
-        .title {
+        .record-perf-title {
           opacity: 0.9;
           font-family: Helvetica-Bold;
+          margin-right: 10px;
           font-size: 18px;
           text-align: center;
           line-height: 40px;
           font-weight: 700;
-          margin-right: 10px;
         }
 
-        .des {
+        .record-perf-des {
           opacity: 0.6;
           font-family: Helvetica;
+          line-height: 35px;
           font-size: 14px;
           text-align: center;
-          line-height: 35px;
           font-weight: 400;
         }
 
-        .select {
+        .record-perf-select {
           border-radius: 15px;
         }
 
         lit-switch {
-          display:inline;
-          float: right;
           height: 38px;
           margin-top: 10px;
+          display:inline;
+          float: right;
         }
-        input {
-           height: 25px;
-           outline:none;
-           border-radius: 16px;
-           text-indent:2%
-        }
-        input::-webkit-input-placeholder{
-            color:var(--bark-prompt,#999999);
-        }
-
-        .input {
+     
+        .record-perf-input {
+            line-height: 20px;
+            font-weight: 400;
             border: 1px solid var(--dark-background5,#ccc);
             font-family: Helvetica;
             font-size: 14px;
             color: var(--dark-color1,#212121);
             text-align: left;
-            line-height: 20px;
-            font-weight: 400;
         }
 
-        :host([startSamp]) .input {
-            background: var(--dark-background5,#FFFFFF);
-        }
-        
-        :host(:not([startSamp])) .input {
-            color: #999999;
-        }
-     
         .sliderBody{
             width: 100%;
             height: min-content;
@@ -197,7 +199,7 @@ describe('SpRecordPerf Test', () => {
         }
         </style>
         <div class="root">
-            <div class="configList">
+            <div class="configList record-perf-config">
             </div>
             <button id ="addOptions">Advance Options</button>
         </div>

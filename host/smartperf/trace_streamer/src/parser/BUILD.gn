@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../ts.gni")
+import("../../build/ts.gni")
 
 ohos_source_set("parser") {
   subsystem_name = "trace_streamer"
@@ -31,11 +31,8 @@ ohos_source_set("parser") {
     "thread_state.h",
   ]
   deps = [ "ebpf_parser:ebpf_parser" ]
-  if (is_pbdecoder) {
-    deps += [ "htrace_parser:htrace_parser" ]
-  } else {
-    deps += [ "htrace_pbreader_parser:htrace_pbreader_parser" ]
-  }
+  deps += [ "htrace_pbreader_parser:htrace_pbreader_parser" ]
+
   include_dirs = [
     "${THIRD_PARTY}/protobuf/src",
     "${OHOS_PROTO_GEN}/types/plugins/memory_data",
@@ -60,15 +57,11 @@ ohos_source_set("parser") {
     "${SRC}/filter",
     "${SRC}",
     ".",
-    "${THIRD_PARTY}/json-master/include",
-    "${THIRD_PARTY}/json-master/include/nlohmann",
+    "${THIRD_PARTY}/json-master/single_include/nlohmann",
   ]
-  if (is_pbdecoder) {
-    include_dirs += [ "htrace_parser" ]
-  } else {
-    include_dirs += [ "htrace_pbreader_parser" ]
-    include_dirs += [ "../proto_reader/include" ]
-  }
+
+  include_dirs += [ "htrace_pbreader_parser" ]
+  include_dirs += [ "../proto_reader/include" ]
 
   if (enable_ts_utest && !use_wasm) {
     cflags = [

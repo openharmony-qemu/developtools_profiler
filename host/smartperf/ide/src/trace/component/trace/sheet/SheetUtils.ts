@@ -13,29 +13,35 @@
  * limitations under the License.
  */
 
-import {LitTable} from "../../../../base-ui/table/lit-table.js";
+import { LitTable } from '../../../../base-ui/table/lit-table.js';
 
-export function resizeObserver(parentEl:HTMLElement, tableEl:LitTable, tblOffsetHeight: number = 45, loadingPage?: HTMLElement, loadingPageOffsetHeight:number = 24) {
-   new ResizeObserver((entries) => {
-        if (parentEl.clientHeight != 0) {
-            // @ts-ignore
-            tableEl?.shadowRoot.querySelector('.table').style.height = parentEl.clientHeight - tblOffsetHeight + 'px';
-            tableEl?.reMeauseHeight();
-            if (loadingPage) {
-              loadingPage.style.height = parentEl.clientHeight - loadingPageOffsetHeight + 'px';
-            }
-        }
-    }).observe(parentEl);
+export function resizeObserver(
+  parentEl: HTMLElement,
+  tableEl: LitTable,
+  tblOffsetHeight: number = 45,
+  loadingPage?: HTMLElement,
+  loadingPageOffsetHeight: number = 24
+) {
+  new ResizeObserver((entries) => {
+    if (parentEl.clientHeight != 0) {
+      // @ts-ignore
+      tableEl?.shadowRoot.querySelector('.table').style.height = parentEl.clientHeight - tblOffsetHeight + 'px';
+      tableEl?.reMeauseHeight();
+      if (loadingPage) {
+        loadingPage.style.height = parentEl.clientHeight - loadingPageOffsetHeight + 'px';
+      }
+    }
+  }).observe(parentEl);
 }
 
-export function showButtonMenu(filter: any, isShow: boolean){
-    if (isShow) {
-        filter.setAttribute('tree', '');
-        filter.setAttribute('input', '');
-        filter.setAttribute('inputLeftText', '');
-    } else {
-        filter.removeAttribute('tree');
-        filter.removeAttribute('input');
-        filter.removeAttribute('inputLeftText');
-    }
+export function showButtonMenu(filter: any, isShow: boolean) {
+  if (isShow) {
+    filter.setAttribute('tree', '');
+    filter.setAttribute('input', '');
+    filter.setAttribute('inputLeftText', '');
+  } else {
+    filter.removeAttribute('tree');
+    filter.removeAttribute('input');
+    filter.removeAttribute('inputLeftText');
+  }
 }

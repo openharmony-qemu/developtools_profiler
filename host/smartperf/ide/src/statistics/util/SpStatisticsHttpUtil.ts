@@ -37,7 +37,9 @@ export class SpStatisticsHttpUtil {
     let req = new XMLHttpRequest();
     req.open(
       'GET',
-      `${window.location.protocol}//${window.location.host.split(':')[0]}:${window.location.port}/application/serverInfo`,
+      `${window.location.protocol}//${window.location.host.split(':')[0]}:${
+        window.location.port
+      }/application/serverInfo`,
       false
     );
     req.send(null);
@@ -88,6 +90,10 @@ export class SpStatisticsHttpUtil {
   }
 
   static addUserVisitAction(requestUrl: string) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     if (SpStatisticsHttpUtil.requestServerInfo === '') {
       SpStatisticsHttpUtil.requestServerInfo = SpStatisticsHttpUtil.getRequestServerInfo();
     }
@@ -127,6 +133,10 @@ export class SpStatisticsHttpUtil {
   }
 
   static addOrdinaryVisitAction(requestBody: BurialPointRequestBody) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     if (SpStatisticsHttpUtil.requestServerInfo === '') {
       SpStatisticsHttpUtil.requestServerInfo = SpStatisticsHttpUtil.getRequestServerInfo();
     }

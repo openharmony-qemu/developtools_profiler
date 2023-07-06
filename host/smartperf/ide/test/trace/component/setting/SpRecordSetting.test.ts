@@ -38,25 +38,25 @@ describe('SpRecordSetting Test', () => {
     expect(spEle.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-        :host{
-            display: block;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background: background: var(--dark-background3,#FFFFFF);
-            border-radius: 0px 16px 16px 0px;
-        }
         .root {
-            display: grid;
-            grid-template-columns: repeat(1, 1fr);
-            grid-template-rows: min-content min-content min-content;
-            grid-gap: 50px;
             padding-top: 45px;
             padding-left: 41px;
             background: var(--dark-background3,#FFFFFF);
             font-size:16px;
             border-radius: 0px 16px 16px 0px;
             overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            grid-template-rows: min-content min-content min-content;
+            grid-gap: 50px;
+        }
+        :host{
+            display: block;
+            border-radius: 0px 16px 16px 0px;
+            background: background: var(--dark-background3,#FFFFFF);
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
         .record-mode{
             font-family: Helvetica-Bold;
@@ -128,41 +128,41 @@ describe('SpRecordSetting Test', () => {
         }
 
         .line{
+            width: 100%;
+            height: 1px;
+            overflow: hidden;
             border-top: 1px solid #C5C7CF;
             background: #E4E3E9;
             margin-top: 4px;
             display: inline-block;
-            width: 100%;
-            height: 1px;
-            overflow: hidden;
             vertical-align: middle;
         }
 
         .max_duration_result, .memory_buffer_result{
-            margin: 5px 0 5px 5px;
             background-color: var(--dark-background5,#F2F2F2);
-            -webkit-appearance:none;
-            outline:0;
-            font-size:14px;
             color:var(--dark-color,#6a6f77);
             border: none;
+             -webkit-appearance:none;
+            outline:0;
+            font-size:14px;
             text-align: center;
             width: 90px;
+            margin: 5px 0 5px 5px;
         }
         
         .resultValue, .resultSize{
-            margin: 0 30px 0 0;
-            height: 40px;
-            background-color: var(--dark-background5,#F2F2F2);
             -webkit-appearance:none;
-            outline:0;
-            border:1px solid var(--dark-border,#c8cccf);
             color:var(--dark-color,#6a6f77);
             border-radius:20px;
+            margin: 0 30px 0 0;
+            background-color: var(--dark-background5,#F2F2F2);
             display: grid;
             grid-template-rows: 1fr;
             grid-template-columns:  min-content min-content;
             width: 150px;
+            height: 40px;
+            outline:0;
+            border:1px solid var(--dark-border,#c8cccf);
         }
 
         #memory-buffer, #max-duration {

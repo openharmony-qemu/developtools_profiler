@@ -15,6 +15,9 @@
 
 // @ts-ignore
 import { ThreadStruct } from '../../../dist/trace/bean/ThreadStruct.js';
+jest.mock('../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 
 describe('ThreadStruct Test', () => {
   const canvas = document.createElement('canvas');
@@ -39,7 +42,6 @@ describe('ThreadStruct Test', () => {
     startTime: 1,
     dur: 1,
   };
-
   it('ThreadStructTest01', function () {
     expect(ThreadStruct.draw(ctx, dataSource)).toBeUndefined();
   });
@@ -67,15 +69,6 @@ describe('ThreadStruct Test', () => {
   it('ThreadStructTest11', function () {
     dataSource.state = 'T' || 't';
     expect(ThreadStruct.draw(ctx, dataSource)).toBeUndefined();
-  });
-
-  it('ThreadStructTest06', function () {
-    expect(ThreadStruct.drawString(ctx, '', 2, dataSource.frame)).toBeUndefined();
-  });
-
-  it('ThreadStructTest07', function () {
-    dataSource.frame.width = 10000000000000000;
-    expect(ThreadStruct.drawString(ctx, 'ThreadStructTest07', 1, dataSource.frame)).toBeUndefined();
   });
 
   it('ThreadStructTest08', function () {

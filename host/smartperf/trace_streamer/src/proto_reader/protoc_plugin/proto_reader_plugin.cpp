@@ -14,6 +14,7 @@
  */
 
 #include "proto_reader_plugin.h"
+#include "string_help.h"
 namespace SysTuning {
 namespace ProtoReader {
 const std::string SYS_NAMESPACE = "SysTuning";

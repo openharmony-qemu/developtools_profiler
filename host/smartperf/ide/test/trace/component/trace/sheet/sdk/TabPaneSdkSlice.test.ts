@@ -20,6 +20,9 @@ import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 // @ts-ignore
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 
+// @ts-ignore
+import {TabUtil} from "../../../../../../dist/trace/component/trace/sheet/sdk/TabUtil.js";
+
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -87,8 +90,8 @@ describe('TabPaneSdkSlice Test', () => {
     ];
     mockSdkSliceData.mockResolvedValue(sliceData);
     let slice = new TabPaneSdkSlice();
-    slice.tbl = jest.fn(() => litTable);
-    slice.tbl.appendChild = jest.fn(() => true);
+    slice.tblSdkSlice = jest.fn(() => litTable);
+    slice.tblSdkSlice.appendChild = jest.fn(() => true);
     let map = new Map();
     let jsonCofigStr =
       '{"settingConfig":{"configuration":{"counters":{"enum":["ARM_Mali-TTRx_JS1_ACTIVE","ARM_Mali-TTRx_JS0_ACTIVE","ARM_Mali-TTRx_GPU_ACTIVE","ARM_Mali-TTRx_FRAG_ACTIVE"],\n' +
@@ -129,7 +132,7 @@ describe('TabPaneSdkSlice Test', () => {
       perfAll: false,
       sdkSliceIds: ['a-b', 'b-c', 'd-e'],
     };
-    slice.tbl.recycleDataSource = jest.fn(() => data);
+    slice.tblSdkSlice.recycleDataSource = jest.fn(() => data);
     slice.data = data;
     expect(slice.data).toBeUndefined();
   });
@@ -142,7 +145,7 @@ describe('TabPaneSdkSlice Test', () => {
     let type = {
       columns: [{ showType: 'slice' }],
     };
-    expect(tabPaneSdkSlice.getTableType(type)).toBe('');
+    expect(TabUtil.getTableType(type)).toBe('');
   });
 
   it('TabPaneSdkSliceTest03', () => {
@@ -150,8 +153,8 @@ describe('TabPaneSdkSlice Test', () => {
   });
 
   it('TabPaneSdkSliceTest04', function () {
-    tabPaneSdkSlice.tbl = jest.fn(() => true);
-    tabPaneSdkSlice.tbl!.recycleDataSource = jest.fn(() => true);
+    tabPaneSdkSlice.tblSdkSlice = jest.fn(() => true);
+    tabPaneSdkSlice.tblSdkSlice!.recycleDataSource = jest.fn(() => true);
     expect(
       tabPaneSdkSlice.sortByColumn({
         key: '',
@@ -164,17 +167,21 @@ describe('TabPaneSdkSlice Test', () => {
     expect(tabPaneSdkSlice.initHtml()).toMatchInlineSnapshot(`
 "
 <style>
+.sdk-slice-table{
+    height: 20px;
+    margin-bottom: 5px;
+}
 :host{
-    display: flex;
-    flex-direction: column;
     padding: 10px 10px;
+    flex-direction: column;
+    display: flex;
 }
 </style>
-<div style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
-            <stack-bar id="stack-bar" style="flex: 1"></stack-bar>
-            <label id="time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
+<div class="sdk-slice-content" class="sdk-slice-table" style="display: flex;align-items: center;flex-direction: row;">
+            <stack-bar id="sdk-slice-stack-bar" style="flex: 1"></stack-bar>
+            <label id="sdk-slice-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
         </div>
-<lit-table id="tb-sdk-slice" style="height: auto">
+<lit-table id="tb-sdk-slice" class="sdk-slice-tbl" style="height: auto">
 </lit-table>
         "
 `);

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "print_event_parser.h"
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "frame_filter.h"
 #include "stat_filter.h"
 #include "string_to_numerical.h"
@@ -228,11 +228,11 @@ bool PrintEventParser::ReciveVsync(size_t callStackRow, std::string& args, const
         std::string key = match.str(1);
         std::string value = match.str(2);
         if (key == "now") {
-            now = base::StrToUInt64(value).value();
+            now = base::StrToInt<uint64_t>(value).value();
         } else if (key == "expectedEnd") {
-            expectEnd = base::StrToUInt64(value).value();
+            expectEnd = base::StrToInt<uint64_t>(value).value();
         } else if (key == "vsyncId") {
-            vsyncId = base::StrToUInt64(value).value();
+            vsyncId = base::StrToInt<uint64_t>(value).value();
         }
         ++it;
     }
@@ -266,7 +266,8 @@ bool PrintEventParser::OnRwTransaction(size_t callStackRow, std::string& args, c
     if (std::regex_search(args, match, transFlagPattern_)) {
         std::string flag2 = match.str(2);
         auto iTid = streamFilters_->processFilter_->GetInternalTid(line.pid);
-        return streamFilters_->frameFilter_->BeginRSTransactionData(line.ts, iTid, base::StrToUInt32(flag2).value());
+        return streamFilters_->frameFilter_->BeginRSTransactionData(line.ts, iTid,
+                                                                    base::StrToInt<uint32_t>(flag2).value());
     }
     return true;
 }
@@ -280,8 +281,8 @@ bool PrintEventParser::OnMainThreadProcessCmd(size_t callStackRow, std::string& 
         std::smatch match = *it;
         std::string value1 = match.str(1);
         std::string value2 = match.str(2);
-        frames.push_back({streamFilters_->processFilter_->GetInternalTid(base::StrToUInt32(value1).value()),
-                          base::StrToUInt32(value2).value()});
+        frames.push_back({streamFilters_->processFilter_->GetInternalTid(base::StrToInt<uint32_t>(value1).value()),
+                          base::StrToInt<uint32_t>(value2).value()});
         ++it;
     }
     auto iTid = streamFilters_->processFilter_->GetInternalTid(line.pid);
@@ -387,11 +388,11 @@ ParseResult PrintEventParser::HandlerCSF(std::string_view pointStr, TracePoint& 
     }
 
     std::string valueStr(pointStr.data() + valueIndex, valueLen);
-    if (!base::StrToUInt64(valueStr).has_value()) {
+    if (!base::StrToInt<uint64_t>(valueStr).has_value()) {
         TS_LOGD("point value is error!");
         return PARSE_ERROR;
     }
-    outPoint.value_ = base::StrToUInt64(valueStr).value();
+    outPoint.value_ = base::StrToInt<uint64_t>(valueStr).value();
 
     size_t valuePipe = pointStr.find('|', valueIndex);
     if (valuePipe != std::string_view::npos) {
@@ -460,7 +461,7 @@ uint32_t PrintEventParser::GetThreadGroupId(std::string_view pointStr, size_t& l
     }
 
     std::string str(pointStr.data() + maxPointLength_, length);
-    return base::StrToUInt32(str).value_or(0);
+    return base::StrToInt<uint32_t>(str).value_or(0);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

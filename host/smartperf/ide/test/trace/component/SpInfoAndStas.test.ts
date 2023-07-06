@@ -67,7 +67,6 @@ describe('SpInfoAndStasTest', () => {
                 margin: 0;
                 padding: 0;
             }
-        
             .info-stats{
                 display: flex;
                 flex-direction: column;
@@ -79,7 +78,6 @@ describe('SpInfoAndStasTest', () => {
                 right: 0;
                 grid-row-gap: 30px;
             }
-        
             .metadata{
                 width: 90%;
                 color: #121212;
@@ -89,7 +87,6 @@ describe('SpInfoAndStasTest', () => {
                 background-color: var(--dark-background3,#FFFFFF);
                 position: relative;
             }
-       
             #metaData-table{
                 background-color: var(--dark-background5,#F6F6F6);
                 margin-left: 10px;
@@ -97,13 +94,11 @@ describe('SpInfoAndStasTest', () => {
                 max-height: inherit;
                 padding: 10px;
             }
-            
             #stats-table{
                 margin-bottom: 2%;
                 margin-left: 10px;
                 padding: 10px;
             }
-            
             #dataValueResult{
                 overflow-y: auto;
                 background-color: var(--dark-background5,#F6F6F6);
@@ -121,7 +116,6 @@ describe('SpInfoAndStasTest', () => {
                 max-height: inherit;
                 margin-bottom: 2%;
             }
-            
             p{
                  display: table-cell;
                  padding: 7px 10px 20px 10px;
@@ -131,7 +125,6 @@ describe('SpInfoAndStasTest', () => {
                  font-weight: 400;
                  text-align: left;
             }
-            
             .stats{
                flex-grow: 1;
                height: min-content;
@@ -141,16 +134,13 @@ describe('SpInfoAndStasTest', () => {
                display: flex;
                flex-direction: column;
             }
-            
             .info{
                max-height: inherit;
                min-height: inherit;
             }
-            
             .tr{
                background-color: var(--dark-background5,#F6F6F6); 
             }
-            
             .load-metric{
                 width: 95%;
                 bottom: 0;

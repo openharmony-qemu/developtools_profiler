@@ -70,6 +70,8 @@ public:
                     std::shared_ptr<ElfSymbolTable> symbols,
                     const std::string& filename);
     bool ParserFileSO(std::string& directory, std::vector<std::string>& relativeFilePaths);
+    void TraceDataSegmentEnd();
+    void StoreTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size);
 
 private:
     bool ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength);

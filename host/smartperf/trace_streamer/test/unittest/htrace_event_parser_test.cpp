@@ -22,6 +22,8 @@
 #include "htrace_cpu_detail_parser.h"
 #include "parser/common_types.h"
 #include "src/filter/symbols_filter.h"
+#include "trace_plugin_result.pb.h"
+#include "trace_plugin_result.pbreader.h"
 #include "trace_streamer_filters.h"
 #include "trace_streamer_selector.h"
 
@@ -66,18 +68,28 @@ HWTEST_F(HtraceEventParserTest, ParseSchedSwitchEvent, TestSize.Level1)
     event->set_next_comm(THREAD_NAME_02);
     event->set_prev_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->unsafe_arena_set_allocated_sched_switch_format(event);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(1);
     auto realTimeStamp = stream_.traceDataCache_->GetConstSchedSliceData().TimeStampData()[0];
@@ -94,12 +106,22 @@ HWTEST_F(HtraceEventParserTest, ParseSchedSwitchEvent, TestSize.Level1)
 HWTEST_F(HtraceEventParserTest, ParseFtraceCpuDetailMsgHasNoEvent, TestSize.Level1)
 {
     TS_LOGI("test14-2");
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_OTHER, STAT_EVENT_DATA_LOST);
@@ -123,18 +145,28 @@ HWTEST_F(HtraceEventParserTest, ParseFtraceCpuDetailMsgOverwriteTrue, TestSize.L
     event->set_next_comm(THREAD_NAME_02);
     event->set_prev_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(1);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(1);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_sched_switch_format(event);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_OTHER, STAT_EVENT_DATA_LOST);
     EXPECT_TRUE(1 == eventCount);
@@ -154,18 +186,28 @@ HWTEST_F(HtraceEventParserTest, ParseTaskRenameEvent, TestSize.Level1)
     taskRenameEvent->set_newcomm(THREAD_NAME_02);
     taskRenameEvent->set_oom_score_adj(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_task_rename_format(taskRenameEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_TASK_RENAME, STAT_EVENT_RECEIVED);
@@ -186,18 +228,28 @@ HWTEST_F(HtraceEventParserTest, ParseTaskNewtaskEvent, TestSize.Level1)
     newTaskEvent->set_clone_flags(0);
     newTaskEvent->set_oom_score_adj(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_task_newtask_format(newTaskEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_TASK_NEWTASK, STAT_EVENT_RECEIVED);
@@ -218,18 +270,28 @@ HWTEST_F(HtraceEventParserTest, ParseSchedWakeupEvent, TestSize.Level1)
     wakeupEvent->set_prio(PID_01);
     wakeupEvent->set_target_cpu(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_sched_wakeup_format(wakeupEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_SCHED_WAKEUP, STAT_EVENT_RECEIVED);
@@ -250,18 +312,28 @@ HWTEST_F(HtraceEventParserTest, ParseSchedWakingEvent, TestSize.Level1)
     wakingEvent->set_prio(PID_01);
     wakingEvent->set_target_cpu(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_sched_waking_format(wakingEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_SCHED_WAKING, STAT_EVENT_RECEIVED);
@@ -280,18 +352,28 @@ HWTEST_F(HtraceEventParserTest, ParseCpuIdleEvent, TestSize.Level1)
     cpuIdleEvent->set_cpu_id(0);
     cpuIdleEvent->set_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_cpu_idle_format(cpuIdleEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CPU_IDLE, STAT_EVENT_RECEIVED);
@@ -310,18 +392,28 @@ HWTEST_F(HtraceEventParserTest, ParseCpuFrequencyEvent, TestSize.Level1)
     cpuFrequencyEvent->set_cpu_id(0);
     cpuFrequencyEvent->set_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_cpu_frequency_format(cpuFrequencyEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CPU_FREQUENCY, STAT_EVENT_RECEIVED);
@@ -342,18 +434,28 @@ HWTEST_F(HtraceEventParserTest, ParseWorkqueueExecuteStartEvent, TestSize.Level1
     workqueueExecuteStartEvent->set_work(0);
     workqueueExecuteStartEvent->set_function(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_workqueue_execute_start_format(workqueueExecuteStartEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_WORKQUEUE_EXECUTE_START,
                                                                               STAT_EVENT_RECEIVED);
@@ -371,18 +473,28 @@ HWTEST_F(HtraceEventParserTest, ParseWorkqueueExecuteEndEvent, TestSize.Level1)
     WorkqueueExecuteEndFormat* workqueueExecuteEndEvent = new WorkqueueExecuteEndFormat();
     workqueueExecuteEndEvent->set_work(0);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(1);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_workqueue_execute_end_format(workqueueExecuteEndEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_WORKQUEUE_EXECUTE_END, STAT_EVENT_RECEIVED);
@@ -402,18 +514,28 @@ HWTEST_F(HtraceEventParserTest, ParseClockDisableEvent, TestSize.Level1)
     clockDisableEvent->set_cpu_id(0);
     clockDisableEvent->set_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_clock_disable_format(clockDisableEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CLOCK_DISABLE, STAT_EVENT_RECEIVED);
@@ -433,18 +555,28 @@ HWTEST_F(HtraceEventParserTest, ParseClockEnableEvent, TestSize.Level1)
     clockEnableEvent->set_cpu_id(0);
     clockEnableEvent->set_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_clock_enable_format(clockEnableEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CLOCK_ENABLE, STAT_EVENT_RECEIVED);
@@ -464,18 +596,28 @@ HWTEST_F(HtraceEventParserTest, ParseClockSetRateEvent, TestSize.Level1)
     clockSetRateEvent->set_cpu_id(0);
     clockSetRateEvent->set_state(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_clock_set_rate_format(clockSetRateEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CLOCK_SET_RATE, STAT_EVENT_RECEIVED);
@@ -493,18 +635,28 @@ HWTEST_F(HtraceEventParserTest, ParseClkDisableEvent, TestSize.Level1)
     ClkDisableFormat* clkDisableEvent = new ClkDisableFormat();
     clkDisableEvent->set_name(THREAD_NAME_02);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_clk_disable_format(clkDisableEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CLK_DISABLE, STAT_EVENT_RECEIVED);
@@ -522,18 +674,28 @@ HWTEST_F(HtraceEventParserTest, ParseClkEnableEvent, TestSize.Level1)
     ClkEnableFormat* clkEnableEvent = new ClkEnableFormat();
     clkEnableEvent->set_name(THREAD_NAME_02);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_clk_enable_format(clkEnableEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CLK_ENABLE, STAT_EVENT_RECEIVED);
@@ -552,18 +714,28 @@ HWTEST_F(HtraceEventParserTest, ParseClkSetRateEvent, TestSize.Level1)
     clkSetRateEvent->set_name(THREAD_NAME_02);
     clkSetRateEvent->set_rate(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_clk_set_rate_format(clkSetRateEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_CLK_SET_RATE, STAT_EVENT_RECEIVED);
@@ -582,18 +754,28 @@ HWTEST_F(HtraceEventParserTest, ParseSysEnterEvent, TestSize.Level1)
     sysEnterEvent->set_id(1);
     sysEnterEvent->set_args(THREAD_NAME_02);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_sys_enter_format(sysEnterEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_SYS_ENTRY, STAT_EVENT_RECEIVED);
@@ -611,18 +793,28 @@ HWTEST_F(HtraceEventParserTest, ParseSystemExitEvent, TestSize.Level1)
     sysExitEvent->set_id(1);
     sysExitEvent->set_ret(1);
 
-    FtraceCpuDetailMsg ftraceCpuDetail;
-    ftraceCpuDetail.set_cpu(0);
-    ftraceCpuDetail.set_overwrite(0);
-    auto ftraceEvent = ftraceCpuDetail.add_event();
+    TracePluginResult tracePacket;
+    FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();
+    ftraceCpuDetail->set_cpu(0);
+    ftraceCpuDetail->set_overwrite(0);
+    auto ftraceEvent = ftraceCpuDetail->add_event();
 
     ftraceEvent->set_timestamp(TIMESTAMP);
     ftraceEvent->set_tgid(2);
     ftraceEvent->set_comm(THREAD_NAME_02);
     ftraceEvent->set_allocated_sys_exit_format(sysExitEvent);
 
+    HtraceDataSegment dataSeg;
+    dataSeg.clockId = TS_CLOCK_BOOTTIME;
+    std::string cpuDetailStrMsg = "";
+    tracePacket.SerializeToString(&cpuDetailStrMsg);
+    dataSeg.seg = std::make_shared<std::string>(cpuDetailStrMsg);
+    ProtoReader::BytesView cpuDetailBytesView(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
+                                              cpuDetailStrMsg.size());
+    dataSeg.protoData = cpuDetailBytesView;
+
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(&ftraceCpuDetail, TS_CLOCK_BOOTTIME);
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
     eventParser.FilterAllEvents();
     auto eventCount =
         stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_SYS_EXIT, STAT_EVENT_RECEIVED);

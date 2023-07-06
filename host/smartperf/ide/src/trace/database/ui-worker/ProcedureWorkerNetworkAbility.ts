@@ -14,13 +14,7 @@
  */
 
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
-import {
-  dataFilterHandler,
-  isFrameContainPoint,
-  Render,
-  RequestMessage,
-  BaseStruct,
-} from './ProcedureWorkerCommon.js';
+import { dataFilterHandler, isFrameContainPoint, Render, RequestMessage, BaseStruct } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 export class NetworkAbilityRender extends Render {
   renderMainThread(
@@ -92,9 +86,21 @@ export class NetworkAbilityMonitorStruct extends BaseStruct {
         networkAbilityContext2D.lineWidth = 1;
         networkAbilityContext2D.globalAlpha = 0.6;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxNetworkRate);
-        networkAbilityContext2D.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        networkAbilityContext2D.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
         networkAbilityContext2D.beginPath();
-        networkAbilityContext2D.arc(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, 3, 0, 2 * Math.PI, true);
+        networkAbilityContext2D.arc(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         networkAbilityContext2D.fill();
         networkAbilityContext2D.globalAlpha = 1.0;
         networkAbilityContext2D.stroke();
@@ -107,7 +113,12 @@ export class NetworkAbilityMonitorStruct extends BaseStruct {
         networkAbilityContext2D.globalAlpha = 0.6;
         networkAbilityContext2D.lineWidth = 1;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxNetworkRate);
-        networkAbilityContext2D.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        networkAbilityContext2D.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
       }
     }
     networkAbilityContext2D.globalAlpha = 1.0;

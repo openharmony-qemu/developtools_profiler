@@ -79,8 +79,8 @@ ohos_source_set("hiebpf.bpf") {
     ":common_config",
     ":kern_common_config",
   ]
-  subsystem_name = "developtools"
-  part_name = "profiler"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   output_name = "hiebpf.bpf.o"
 }
 
@@ -129,7 +129,8 @@ ohos_source_set("hiebpf_source_common") {
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/libbpf:libbpf",
   ]
-  part_name = "profiler"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ohos_executable("hiebpf") {
@@ -137,8 +138,8 @@ ohos_executable("hiebpf") {
 
   deps = [ ":hiebpf_source_common" ]
 
-  subsystem_name = "developtools"
-  part_name = "profiler"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   output_name = "hiebpf"
 }
 

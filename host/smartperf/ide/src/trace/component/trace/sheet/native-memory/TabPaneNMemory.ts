@@ -321,7 +321,9 @@ export class TabPaneNMemory extends BaseElement {
       let arr = [...this.memorySource];
       if (nmMemoryColumn == 'index') {
         this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          return nmMemorySort == 1 ? memoryLeftData.index - memoryRightData.index : memoryRightData.index - memoryLeftData.index;
+          return nmMemorySort == 1
+            ? memoryLeftData.index - memoryRightData.index
+            : memoryRightData.index - memoryLeftData.index;
         });
       } else if (nmMemoryColumn == 'addr') {
         this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
@@ -345,11 +347,15 @@ export class TabPaneNMemory extends BaseElement {
         });
       } else if (nmMemoryColumn == 'timestamp') {
         this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          return nmMemorySort == 1 ? memoryLeftData.startTs - memoryRightData.startTs : memoryRightData.startTs - memoryLeftData.startTs;
+          return nmMemorySort == 1
+            ? memoryLeftData.startTs - memoryRightData.startTs
+            : memoryRightData.startTs - memoryLeftData.startTs;
         });
       } else if (nmMemoryColumn == 'heapSizeUnit') {
         this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          return nmMemorySort == 1 ? memoryLeftData.heapSize - memoryRightData.heapSize : memoryRightData.heapSize - memoryLeftData.heapSize;
+          return nmMemorySort == 1
+            ? memoryLeftData.heapSize - memoryRightData.heapSize
+            : memoryRightData.heapSize - memoryLeftData.heapSize;
         });
       } else if (nmMemoryColumn == 'library') {
         this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {

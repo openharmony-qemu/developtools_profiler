@@ -47,12 +47,12 @@ describe('SpProcessChart Test', () => {
   MockqueryProcessAsyncFunc.mockResolvedValue([
     {
       tid: 1,
-      pid: 2,
+      pid: 1,
       threadName: '1',
       track_id: 3,
       startTs: 1111,
       dur: 2000000,
-      funName: 'func',
+      funName: 'deliverInputEvent',
       parent_id: 4,
       id: 5,
       cookie: 'ff',
@@ -75,7 +75,7 @@ describe('SpProcessChart Test', () => {
     {
       utid: 1,
       hasSched: 0,
-      pid: 3,
+      pid: 1,
       tid: 4,
       processName: 'process',
       threadName: 'thread',
@@ -103,7 +103,7 @@ describe('SpProcessChart Test', () => {
       trackId: 1,
       trackName: 'trackName',
       upid: 2,
-      pid: 3,
+      pid: 1,
       processName: 'processName',
     },
   ]);
@@ -165,7 +165,7 @@ describe('SpProcessChart Test', () => {
       name: 1160,
       type: 1,
       dur: 16657682,
-      pid: 1242,
+      pid: 1,
       cmdline: 'render_service',
     },
   ]);
@@ -194,7 +194,7 @@ describe('SpProcessChart Test', () => {
       src_slice: '38,42',
       jank_tag: 1,
       dst_slice: null,
-      pid: 1242,
+      pid: 1,
       cmdline: 'render_service',
       frame_type: 'render_service',
     },
@@ -203,7 +203,18 @@ describe('SpProcessChart Test', () => {
   let spSystemTrace = new SpSystemTrace();
   let spProcessChart = new SpProcessChart(spSystemTrace);
   it('SpProcessChart01', function () {
+    spProcessChart.initAsyncFuncData();
     spProcessChart.init();
     expect(spProcessChart).toBeDefined();
+  });
+
+  it('SpProcessChart02', function () {
+    expect(spProcessChart.initAsyncFuncData()).not.toBeUndefined();
+  });
+
+  it('SpProcessChart03', function () {
+    spProcessChart.initAsyncFuncData();
+    spProcessChart.initDeliverInputEvent();
+    expect(spProcessChart.processAsyncFuncArray.length).toEqual(1);
   });
 });

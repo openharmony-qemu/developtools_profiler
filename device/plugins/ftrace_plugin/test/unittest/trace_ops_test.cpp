@@ -49,7 +49,7 @@ HWTEST_F(TraceOpsTest, GetTraceType, TestSize.Level1)
 HWTEST_F(TraceOpsTest, GetCommand, TestSize.Level1)
 {
     std::unique_ptr<TraceOps> traceOps = std::make_unique<HitraceOps>();
-    EXPECT_STREQ(traceOps->GetCommand().c_str(), "/system/bin/bytrace");
+    EXPECT_STREQ(traceOps->GetCommand().c_str(), "/system/bin/hitrace");
 }
 
 /*
@@ -74,16 +74,16 @@ HWTEST_F(TraceOpsTest, HasCategoryFalse, TestSize.Level1)
     std::unique_ptr<TraceOps> traceOps = std::make_unique<HitraceOps>();
     EXPECT_FALSE(traceOps->HasCategory("12345"));
 
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "4567", TraceOps::TraceType::HITRACE);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "4567", TraceOps::TraceType::HITRACE);
     EXPECT_FALSE(traceOps->HasCategory("sched"));
 
-    traceOps = std::make_unique<TraceOps>("1234", "bytrace", TraceOps::TraceType::HITRACE);
+    traceOps = std::make_unique<TraceOps>("1234", "hitrace", TraceOps::TraceType::HITRACE);
     EXPECT_FALSE(traceOps->HasCategory("ability"));
 
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "4567", TraceOps::TraceType::UNKNOW);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "4567", TraceOps::TraceType::UNKNOW);
     EXPECT_FALSE(traceOps->HasCategory("idle"));
 
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "bytrace", TraceOps::TraceType::UNKNOW);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "hitrace", TraceOps::TraceType::UNKNOW);
     EXPECT_FALSE(traceOps->HasCategory("idle"));
 }
 
@@ -116,19 +116,19 @@ HWTEST_F(TraceOpsTest, EnableCategoriesFalse, TestSize.Level1)
     EXPECT_FALSE(traceOps->EnableCategories(categories));
 
     categories.push_back("sched");
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "4567", TraceOps::TraceType::HITRACE);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "4567", TraceOps::TraceType::HITRACE);
     EXPECT_FALSE(traceOps->EnableCategories(categories));
 
     categories.push_back("ability");
-    traceOps = std::make_unique<TraceOps>("1234", "bytrace", TraceOps::TraceType::HITRACE);
+    traceOps = std::make_unique<TraceOps>("1234", "hitrace", TraceOps::TraceType::HITRACE);
     EXPECT_FALSE(traceOps->EnableCategories(categories));
 
     categories.push_back("idle");
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "4567", TraceOps::TraceType::UNKNOW);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "4567", TraceOps::TraceType::UNKNOW);
     EXPECT_FALSE(traceOps->EnableCategories(categories));
 
     categories.push_back("1234");
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "bytrace", TraceOps::TraceType::UNKNOW);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "hitrace", TraceOps::TraceType::UNKNOW);
     EXPECT_FALSE(traceOps->EnableCategories(categories));
 }
 
@@ -150,10 +150,10 @@ HWTEST_F(TraceOpsTest, DisableCategoriesNormal, TestSize.Level1)
  */
 HWTEST_F(TraceOpsTest, DisableCategoriesFalse, TestSize.Level1)
 {
-    std::unique_ptr<TraceOps> traceOps = std::make_unique<TraceOps>("1234", "bytrace", TraceOps::TraceType::HITRACE);
+    std::unique_ptr<TraceOps> traceOps = std::make_unique<TraceOps>("1234", "hitrace", TraceOps::TraceType::HITRACE);
     EXPECT_FALSE(traceOps->DisableCategories());
 
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "4567", TraceOps::TraceType::UNKNOW);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "4567", TraceOps::TraceType::UNKNOW);
     EXPECT_FALSE(traceOps->DisableCategories());
 }
 
@@ -175,10 +175,10 @@ HWTEST_F(TraceOpsTest, IsSupportedNormal, TestSize.Level1)
  */
 HWTEST_F(TraceOpsTest, IsSupportedFalse, TestSize.Level1)
 {
-    std::unique_ptr<TraceOps> traceOps = std::make_unique<TraceOps>("1234", "bytrace", TraceOps::TraceType::HITRACE);
+    std::unique_ptr<TraceOps> traceOps = std::make_unique<TraceOps>("1234", "hitrace", TraceOps::TraceType::HITRACE);
     EXPECT_FALSE(traceOps->IsSupported());
 
-    traceOps = std::make_unique<TraceOps>("/system/bin/bytrace", "4567", TraceOps::TraceType::UNKNOW);
+    traceOps = std::make_unique<TraceOps>("/system/bin/hitrace", "4567", TraceOps::TraceType::UNKNOW);
     EXPECT_TRUE(traceOps->IsSupported());
 
     traceOps = std::make_unique<TraceOps>("1234", "4567", TraceOps::TraceType::HITRACE);

@@ -101,8 +101,10 @@ export class ClockStruct extends BaseStruct {
         clockContext.lineTo(data.frame.x + width, data.frame.y + data.frame.height - drawHeight);
         clockContext.stroke();
       } else {
-        clockContext.globalAlpha = 0.6;
         clockContext.lineWidth = 1;
+        clockContext.globalAlpha = 1.0;
+        clockContext.strokeRect(data.frame.x, data.frame.y + data.frame.height - drawHeight, width, drawHeight)
+        clockContext.globalAlpha = 0.6;
         clockContext.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight, width, drawHeight);
       }
     }

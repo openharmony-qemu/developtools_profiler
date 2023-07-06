@@ -43,4 +43,8 @@ describe('DrawerCpuTabs Test', () => {
         drawerCpuTabs.init(1,'3');
         expect(drawerCpuTabs.cpuNumber).toEqual(1);
     });
+    it('DrawerCpuTabsTest04', () => {
+        let drawerCpuTabs = new DrawerCpuTabs();
+        expect(drawerCpuTabs.clearData()).toBeUndefined()
+    });
 })

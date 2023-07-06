@@ -75,26 +75,6 @@ inline uint32_t CreateTagVarInt(uint32_t DataAreaId)
     return (DataAreaId << 3) | static_cast<uint32_t>(ProtoWireType::kVarInt);
 }
 
-inline std::vector<std::string> TableNameSplitToVec(std::string& str, const std::string& pat)
-{
-    std::string::size_type pos;
-    std::vector<std::string> result;
-    str += pat;
-    int32_t size = str.size();
-    for (int32_t i = 0; i < size; i++) {
-        pos = str.find(pat, i);
-        if (pos == std::string::npos) {
-            break;
-        }
-        if (pos < size) {
-            std::string s = str.substr(i, pos - i);
-            result.push_back(s);
-            i = pos + pat.size() - 1;
-        }
-    }
-    return result;
-}
-
 inline char Lowercase(char c)
 {
     return ('A' <= c && c <= 'Z') ? static_cast<char>(c - ('A' - 'a')) : c;

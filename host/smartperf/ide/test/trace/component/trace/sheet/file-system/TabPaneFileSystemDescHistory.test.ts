@@ -160,7 +160,7 @@ describe('TabPaneFileSystemDescHistory Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.filterSource = filterSource;
-        expect(tabPane.sortTable('startTsStr', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescHistoryTable('startTsStr', 1)).toBeUndefined();
     });
 
     it('TabPaneFileSystemDescHistoryTest05', function () {
@@ -171,7 +171,7 @@ describe('TabPaneFileSystemDescHistory Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.filterSource = filterSource;
-        expect(tabPane.sortTable('durStr', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescHistoryTable('durStr', 1)).toBeUndefined();
     });
 
     it('TabPaneFileSystemDescHistoryTest06', function () {
@@ -182,7 +182,7 @@ describe('TabPaneFileSystemDescHistory Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.filterSource = filterSource;
-        expect(tabPane.sortTable('typeStr', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescHistoryTable('typeStr', 1)).toBeUndefined();
     });
 
     it('TabPaneFileSystemDescHistoryTest07', function () {
@@ -193,6 +193,6 @@ describe('TabPaneFileSystemDescHistory Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.filterSource = filterSource;
-        expect(tabPane.sortTable('fd', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescHistoryTable('fd', 1)).toBeUndefined();
     });
 });

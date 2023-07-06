@@ -16,6 +16,18 @@
 import { HeapLoader } from '../logic/HeapLoader.js';
 import { AllocationFunction, FileInfo } from './UiStruct.js';
 
+export enum EdgeType {
+  CONTEXT = 0,
+  ELEMENT = 1,
+  PROPERTY = 2,
+  INTERNAL = 3,
+  HIDDEN = 4,
+  SHORTCUT = 5,
+  WEAK = 6,
+  STRING_OR_NUMBER = 6,
+  NODE = 7,
+  INVISIBLE = 8,
+}
 export enum NodeType {
   HIDDEN = 0,
   ARRAY = 1,
@@ -32,19 +44,6 @@ export enum NodeType {
   SYMBOL = 12,
   BIGINT = 13,
   OBJECT_SHAPE = 14,
-}
-
-export enum EdgeType {
-  CONTEXT = 0,
-  ELEMENT = 1,
-  PROPERTY = 2,
-  INTERNAL = 3,
-  HIDDEN = 4,
-  SHORTCUT = 5,
-  WEAK = 6,
-  STRING_OR_NUMBER = 6,
-  NODE = 7,
-  INVISIBLE = 8,
 }
 
 function getNodeTypeName(nodeType: NodeType): keyof typeof NodeType {
@@ -71,6 +70,7 @@ export class HeapNode {
   nodeOldIndex: number;
   type: NodeType;
   name: string;
+  nameIdx!: number;
   id: number;
   selfSize: number;
   edgeCount: number;
@@ -88,7 +88,7 @@ export class HeapNode {
 
   constructor(
     fileId: number,
-    node_index: number,
+    nodeIndex: number,
     type: number,
     name: string,
     id: number,
@@ -99,8 +99,8 @@ export class HeapNode {
     firstEdgeIndex: number
   ) {
     this.fileId = fileId;
-    this.nodeIndex = node_index;
-    this.nodeOldIndex = node_index * 7;
+    this.nodeIndex = nodeIndex;
+    this.nodeOldIndex = nodeIndex * 7;
     this.type = type;
     this.name = name;
     this.id = id;
@@ -218,16 +218,14 @@ export class HeapTraceFunctionInfo {
 export class HeapSample {
   timestamp: number;
   lastAssignedId: number;
-  size: number;
+  size: number = 0;
 
   constructor(timestamp: number, lastAssignedId: number) {
     this.timestamp = timestamp;
     this.lastAssignedId = lastAssignedId;
-    this.size = 0;
   }
 }
 export class HeapLocation {
-
   objectIndex: number;
   scriptId: number;
   line: number;
@@ -251,7 +249,6 @@ export class HeapSnapshotStruct {
   functionInfos: Array<HeapTraceFunctionInfo>;
   traceNodes: Array<AllocationFunction>;
   samples: Array<HeapSample>;
-  locations: Map<number, HeapLocation>;
   strings: Array<string>;
 
   rootNodeId: number = -1;
@@ -262,8 +259,16 @@ export class HeapSnapshotStruct {
     this.functionInfos = new Array<HeapTraceFunctionInfo>();
     this.traceNodes = new Array<AllocationFunction>();
     this.samples = new Array<HeapSample>();
-    this.locations = new Map<number, HeapLocation>();
     this.strings = new Array<string>();
+  }
+
+  public clear() {
+    this.nodeMap.clear();
+    this.edges.length = 0;
+    this.functionInfos.length = 0;
+    this.traceNodes.length = 0;
+    this.samples.length = 0;
+    this.strings.length = 0;
   }
 }
 

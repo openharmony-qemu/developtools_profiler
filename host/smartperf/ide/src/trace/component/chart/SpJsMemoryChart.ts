@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 import { SpSystemTrace } from '../SpSystemTrace.js';
-import { queryHeapFile, queryHeapSample, queryTraceRange } from '../../database/SqlLite.js';
+import { queryHeapFile, queryTraceRange } from '../../database/SqlLite.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
 import { info } from '../../../log/Log.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
@@ -23,6 +23,7 @@ import { HeapDataInterface, ParseListener } from '../../../js-heap/HeapDataInter
 import { LoadDatabase } from '../../../js-heap/LoadDatabase.js';
 import { FileInfo } from '../../../js-heap/model/UiStruct.js';
 import { HeapSnapshotRender, HeapSnapshotStruct } from '../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
+
 export class SpJsMemoryChart implements ParseListener {
   private trace: SpSystemTrace;
   private loadJsDatabase: LoadDatabase;
@@ -35,8 +36,8 @@ export class SpJsMemoryChart implements ParseListener {
     if (fileModule.length > 0) {
       let jsHeapRow = TraceRow.skeleton();
       let process = '';
-      let heapFile = await queryHeapFile();
-      process = heapFile[0].pid;
+      let heapFile = HeapDataInterface.getInstance().getFileStructs();
+      process = String(heapFile[0].pid);
       jsHeapRow.rowId = `js-memory`;
       jsHeapRow.index = 0;
       jsHeapRow.rowType = TraceRow.ROW_TYPE_JS_MEMORY;
@@ -68,7 +69,7 @@ export class SpJsMemoryChart implements ParseListener {
       this.trace.rowsEL?.appendChild(jsHeapRow);
       let file = heapFile[0];
       SpJsMemoryChart.file = file;
-      if (file.file_name.includes('Timeline')) {
+      if (file.name.includes('Timeline')) {
         let samples = HeapDataInterface.getInstance().getSamples(file.id);
         let heapTimelineRow = TraceRow.skeleton<HeapTimelineStruct>();
         heapTimelineRow.index = 0;
@@ -76,7 +77,7 @@ export class SpJsMemoryChart implements ParseListener {
         heapTimelineRow.rowHidden = !jsHeapRow.expansion;
         heapTimelineRow.style.height = '40px';
         heapTimelineRow.name = `Heaptimeline`;
-        heapTimelineRow.rowId = `heap_timeline` + file.id;
+        heapTimelineRow.rowId = `heaptimeline` + file.id;
         heapTimelineRow.drawType = 0;
         heapTimelineRow.isHover = true;
         heapTimelineRow.folder = false;
@@ -85,7 +86,7 @@ export class SpJsMemoryChart implements ParseListener {
         heapTimelineRow.selectChangeHandler = this.trace.selectChangeHandler;
         heapTimelineRow.setAttribute('children', '');
         heapTimelineRow.focusHandler = () => {};
-        heapTimelineRow.supplier = () => queryHeapSample(file.id);
+        heapTimelineRow.supplier = () => new Promise<any>((resolve) => resolve(samples));
         heapTimelineRow.onThreadHandler = (useCache) => {
           let context = heapTimelineRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           heapTimelineRow.canvasSave(context);
@@ -108,7 +109,7 @@ export class SpJsMemoryChart implements ParseListener {
         heapSnapshotRow.rowHidden = !jsHeapRow.expansion;
         heapSnapshotRow.style.height = '40px';
         heapSnapshotRow.name = `Heapsnapshot`;
-        heapSnapshotRow.rowId = `heap_snapshot`;
+        heapSnapshotRow.rowId = `heapsnapshot`;
         heapSnapshotRow.isHover = true;
         heapSnapshotRow.folder = false;
         heapSnapshotRow.rowType = TraceRow.ROW_TYPE_HEAP_SNAPSHOT;
@@ -116,7 +117,7 @@ export class SpJsMemoryChart implements ParseListener {
         heapSnapshotRow.selectChangeHandler = this.trace.selectChangeHandler;
         heapSnapshotRow.setAttribute('children', '');
         heapSnapshotRow.focusHandler = () => {};
-        heapSnapshotRow.supplier = () => queryHeapFile();
+        heapSnapshotRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(heapFile));
         heapSnapshotRow.onThreadHandler = (useCache) => {
           let context = heapSnapshotRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           heapSnapshotRow.canvasSave(context);

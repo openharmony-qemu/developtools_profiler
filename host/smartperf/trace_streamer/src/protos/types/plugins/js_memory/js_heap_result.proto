@@ -15,6 +15,6 @@ syntax = "proto3";
 option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
-message JsHeapResult {
+message ArkTSResult {
     bytes result = 1;
 }

@@ -35,6 +35,7 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_type_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/arkts_plugin:arkts_plugin_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/diskio_data:diskio_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/default:ftrace_plugin_config_cpp_standard",
@@ -62,7 +63,7 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

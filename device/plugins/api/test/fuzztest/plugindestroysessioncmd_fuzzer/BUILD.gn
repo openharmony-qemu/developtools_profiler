@@ -33,7 +33,7 @@ ohos_fuzztest("PluginDestroySessionCmdFuzzTest") {
     #"${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "../../..:plugins_sources",
   ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
 }
 
 ###############################################################################

@@ -99,13 +99,16 @@ describe('TabPaneCounter Test', () => {
     expect(tabPaneCounter.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .counter-label{
+            width: 100%;
+        }
         :host{
-            display: flex;
             flex-direction: column;
+            display: flex;
             padding: 10px 10px;
         }
         </style>
-        <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
+        <label id="time-range" class="counter-label" style="height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
         <lit-table id="tb-counter" style="height: auto">
             <lit-table-column width="25%" title="Name" data-index="name" key="name"  align="flex-start" order>
             </lit-table-column>

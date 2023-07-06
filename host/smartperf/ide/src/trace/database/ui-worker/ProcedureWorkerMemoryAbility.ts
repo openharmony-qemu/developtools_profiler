@@ -192,7 +192,10 @@ export function memoryAbility(
   if (use && res.length > 0) {
     for (let i = 0; i < res.length; i++) {
       let memoryAbilityItem = res[i];
-      if ((memoryAbilityItem.startNS || 0) + (memoryAbilityItem.dur || 0) > (startNS || 0) && (memoryAbilityItem.startNS || 0) < (endNS || 0)) {
+      if (
+        (memoryAbilityItem.startNS || 0) + (memoryAbilityItem.dur || 0) > (startNS || 0) &&
+        (memoryAbilityItem.startNS || 0) < (endNS || 0)
+      ) {
         MemoryAbilityMonitorStruct.setMemoryFrame(memoryAbilityItem, 5, startNS || 0, endNS || 0, totalNS || 0, frame);
       } else {
         memoryAbilityItem.frame = null;
@@ -210,11 +213,20 @@ export function memoryAbility(
         item.dur = (memoryAbilityList[memoryAbilityIndex + 1].startNS || 0) - (item.startNS || 0);
       }
       if ((item.startNS || 0) + (item.dur || 0) > (startNS || 0) && (item.startNS || 0) < (endNS || 0)) {
-        MemoryAbilityMonitorStruct.setMemoryFrame(memoryAbilityList[memoryAbilityIndex], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
+        MemoryAbilityMonitorStruct.setMemoryFrame(
+          memoryAbilityList[memoryAbilityIndex],
+          5,
+          startNS || 0,
+          endNS || 0,
+          totalNS || 0,
+          frame
+        );
         if (
-            memoryAbilityIndex > 0 &&
-          (memoryAbilityList[memoryAbilityIndex - 1].frame?.x || 0) == (memoryAbilityList[memoryAbilityIndex].frame?.x || 0) &&
-          (memoryAbilityList[memoryAbilityIndex - 1].frame?.width || 0) == (memoryAbilityList[memoryAbilityIndex].frame?.width || 0)
+          memoryAbilityIndex > 0 &&
+          (memoryAbilityList[memoryAbilityIndex - 1].frame?.x || 0) ==
+            (memoryAbilityList[memoryAbilityIndex].frame?.x || 0) &&
+          (memoryAbilityList[memoryAbilityIndex - 1].frame?.width || 0) ==
+            (memoryAbilityList[memoryAbilityIndex].frame?.width || 0)
         ) {
         } else {
           res.push(item);
@@ -249,9 +261,21 @@ export class MemoryAbilityMonitorStruct extends BaseStruct {
         memoryAbilityContext2D.lineWidth = 1;
         memoryAbilityContext2D.globalAlpha = 0.6;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxMemoryByte);
-        memoryAbilityContext2D.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        memoryAbilityContext2D.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
         memoryAbilityContext2D.beginPath();
-        memoryAbilityContext2D.arc(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, 3, 0, 2 * Math.PI, true);
+        memoryAbilityContext2D.arc(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         memoryAbilityContext2D.fill();
         memoryAbilityContext2D.globalAlpha = 1.0;
         memoryAbilityContext2D.stroke();
@@ -264,7 +288,12 @@ export class MemoryAbilityMonitorStruct extends BaseStruct {
         memoryAbilityContext2D.globalAlpha = 0.6;
         memoryAbilityContext2D.lineWidth = 1;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxMemoryByte);
-        memoryAbilityContext2D.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        memoryAbilityContext2D.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
       }
     }
     memoryAbilityContext2D.globalAlpha = 1.0;

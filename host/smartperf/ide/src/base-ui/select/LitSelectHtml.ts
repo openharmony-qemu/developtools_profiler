@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-export function selectHtmlStr(): string{
-    return `
+export function selectHtmlStr(): string {
+  return `
         :host{
             display: inline-flex;
             position: relative;
@@ -136,5 +136,5 @@ export function selectHtmlStr(): string{
         :host([border='false'][disabled]) *{
             color: #b7b7b7;
             cursor: not-allowed;
-        }`
+        }`;
 }

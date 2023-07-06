@@ -889,7 +889,6 @@ export interface DiskioConfig {
 }
 
 export interface NetworkConfig {
-  testFile: string;
 }
 
 export interface HiperfPluginConfig {
@@ -903,7 +902,7 @@ export interface HiSystemEventConfig {
   processName: string;
 }
 
-export interface JsHeapConfig {
+export interface ArkTSConfig {
   pid: number;
   type: number;
   interval: number;

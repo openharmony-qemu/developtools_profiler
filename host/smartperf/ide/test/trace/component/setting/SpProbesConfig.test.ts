@@ -64,21 +64,6 @@ describe('SpProbesConfig Test', () => {
     expect(spEle.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-        :host{
-            display: inline-block;
-            width: 100%;
-            height: 100%;
-            background: var(--dark-background3,#FFFFFF);
-            border-radius: 0px 16px 16px 0px;
-        }
-
-        .root {
-            padding-top: 30px;
-            padding-left: 54px;
-            margin-right: 30px;
-            font-size:16px;
-            margin-bottom: 30px;
-        }
         .recordText {
            font-family: Helvetica-Bold;
            font-size: 1em;
@@ -88,6 +73,22 @@ describe('SpProbesConfig Test', () => {
            margin-bottom: 20px;
         }
 
+        :host{
+            display: inline-block;
+            background: var(--dark-background3,#FFFFFF);
+            width: 100%;
+            height: 100%;
+            border-radius: 0px 16px 16px 0px;
+        }
+
+        .root {
+            margin-right: 30px;
+            padding-top: 30px;
+            padding-left: 54px;
+            margin-bottom: 30px;
+            font-size:16px;
+        }
+        
         .config-page {
             height: 95%;
             font-size: 0.875em;
@@ -145,6 +146,49 @@ describe('SpProbesConfig Test', () => {
            gap: 10px;
            margin-left: 15px;;
         }
+        #ftrace-buff-size-div {
+            width: 100%;
+            height: min-content;
+            display: grid;
+            grid-template-columns: 1fr min-content;
+        }
+        .buffer-size-des {
+            opacity: 0.6;
+            font-family: Helvetica;
+            font-size: 1em;
+            color: var(--dark-color,#000000);
+            text-align: left;
+            line-height: 20px;
+            font-weight: 400;
+        }
+        .ftrace-buff-size-result-div{
+            display: grid;
+            grid-template-rows: 1fr;
+            grid-template-columns:  min-content min-content;
+            background-color: var(--dark-background5,#F2F2F2);
+            -webkit-appearance:none;
+            color:var(--dark-color,#6a6f77);
+            width: 150px;
+            margin: 0 20px 0 0;
+            height: 40px;
+            border-radius:20px;
+            outline:0;
+            border:1px solid var(--dark-border,#c8cccf);
+        }
+        .ftrace-buff-size-result{
+            background-color: var(--dark-background5,#F2F2F2);
+            -webkit-appearance:none;
+            color:var(--dark-color,#6a6f77);
+            border: none;
+            text-align: center;
+            width: 90px;
+            font-size:14px;
+            outline:0;
+            margin: 5px 0 5px 5px;
+        }
+        .border-red {
+           border:1px solid red;
+        }
         </style>
         <div class="root">
             <div class="recordText" >Record mode</div>
@@ -158,9 +202,23 @@ describe('SpProbesConfig Test', () => {
                           <slot></slot>
                       </div>
                     </div>
+                    <div>
+                       <div>
+                          <p>Buffer Size</p>
+                          <p class="buffer-size-des">The ftrace buffer size range is 2048 KB to 307200 KB</p>
+                       </div>
+                       <div id="ftrace-buff-size-div">
+                          <lit-slider id="ftrace-buff-size-slider" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
+                          </lit-slider>
+                          <div class='ftrace-buff-size-result-div'>
+                              <input class="ftrace-buff-size-result" type="text" value='20480' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                              <span style="text-align: center; margin: 8px"> KB </span>
+                           </div>
+                       </div>
+                    </div>
                 </div>
                 <div class="memory-config">
-                    <div class="span-col-2">
+                    <div class="span-col-2">6有
                       <span>Memory Config</span>
                     </div>
                 </div>

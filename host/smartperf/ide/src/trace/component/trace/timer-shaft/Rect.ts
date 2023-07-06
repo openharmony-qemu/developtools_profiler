@@ -19,7 +19,6 @@ export class Rect {
   height: number = 0;
   width: number = 0;
 
-
   constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
     this.y = y;
@@ -47,7 +46,12 @@ export class Rect {
   }
 
   static containsWithMargin(rectObj: Rect, x: number, y: number, t: number, r: number, b: number, l: number): boolean {
-    return rectObj.x - l <= x && x <= rectObj.x + rectObj.width + r && rectObj.y - t <= y && y <= rectObj.y + rectObj.height + b;
+    return (
+      rectObj.x - l <= x &&
+      x <= rectObj.x + rectObj.width + r &&
+      rectObj.y - t <= y &&
+      y <= rectObj.y + rectObj.height + b
+    );
   }
 
   static intersect(rectA: Rect, rectB: Rect): boolean {

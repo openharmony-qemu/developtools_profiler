@@ -20,7 +20,7 @@ import { getTabLiveProcessData } from '../../../../database/SqlLite.js';
 import { LiveProcess } from '../../../../bean/AbilityMonitor.js';
 import { Utils } from '../../base/Utils.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-live-processes')
 export class TabPaneLiveProcesses extends BaseElement {
@@ -45,7 +45,7 @@ export class TabPaneLiveProcesses extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.liveProcessTbl!)
+    resizeObserver(this.parentElement!, this.liveProcessTbl!);
   }
 
   filterData() {
@@ -167,9 +167,13 @@ export class TabPaneLiveProcesses extends BaseElement {
           // @ts-ignore
           return sort === 2 ? parseFloat(liveProcessRightData[property]) - parseFloat(liveProcessLeftData[property]) : parseFloat(liveProcessLeftData[property]) - parseFloat(liveProcessRightData[property]);
         } else if (type === 'cpuTime') {
-          return sort === 2 ? liveProcessRightData.cpuTimeNumber - liveProcessLeftData.cpuTimeNumber : liveProcessLeftData.cpuTimeNumber - liveProcessRightData.cpuTimeNumber;
+          return sort === 2
+            ? liveProcessRightData.cpuTimeNumber - liveProcessLeftData.cpuTimeNumber
+            : liveProcessLeftData.cpuTimeNumber - liveProcessRightData.cpuTimeNumber;
         } else if (type === 'memory') {
-          return sort === 2 ? liveProcessRightData.memoryNumber - liveProcessLeftData.memoryNumber : liveProcessLeftData.memoryNumber - liveProcessRightData.memoryNumber;
+          return sort === 2
+            ? liveProcessRightData.memoryNumber - liveProcessLeftData.memoryNumber
+            : liveProcessLeftData.memoryNumber - liveProcessRightData.memoryNumber;
         } else {
           // @ts-ignore
           if (liveProcessRightData[property] > liveProcessLeftData[property]) {

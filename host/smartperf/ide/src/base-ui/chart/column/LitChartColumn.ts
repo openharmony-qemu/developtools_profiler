@@ -112,7 +112,11 @@ export class LitChartColumn extends BaseElement {
 
   private tipTypeShow(x: number, y: number, pillars: Pillar[], innerHtml: string) {
     if (x >= this.clientWidth - this.litChartColumnTipEL!.clientWidth) {
-      this.showTip(x - this.litChartColumnTipEL!.clientWidth - 10, y - 20, this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml);
+      this.showTip(
+        x - this.litChartColumnTipEL!.clientWidth - 10,
+        y - 20,
+        this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml
+      );
     } else {
       this.showTip(x + 10, y - 20, this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml);
     }
@@ -136,14 +140,22 @@ export class LitChartColumn extends BaseElement {
           .map((it) => it.obj[this.litChartColumnCfg?.yField!])
           .reduce((pre, current) => pre + current, 0)}</label>`;
         let innerHtml = `<div class="tip-content">${title}${msg}${sum}</div>`;
-        this.showTip(this.clientWidth / 2, this.clientHeight / 2, this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml);
+        this.showTip(
+          this.clientWidth / 2,
+          this.clientHeight / 2,
+          this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml
+        );
       }
     } else {
       if (pillars.length > 0) {
         let hoverData = pillars[0];
         let title = `<label>${pillars[0].xLabel}:${pillars[0].yLabel}</label>`;
         let innerHtml = `<div class="tip-content">${title}</div>`;
-        this.showTip(this.clientWidth / 2, this.clientHeight / 2, this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml);
+        this.showTip(
+          this.clientWidth / 2,
+          this.clientHeight / 2,
+          this.litChartColumnCfg!.tip ? this.litChartColumnCfg!.tip(pillars) : innerHtml
+        );
       }
     }
 
@@ -231,7 +243,9 @@ export class LitChartColumn extends BaseElement {
         });
     } else {
       let reduceGroup = this.litChartColumnCfg.data.reduce((pre, current, index, arr) => {
-        (pre[current[this.litChartColumnCfg!.xField]] = pre[current[this.litChartColumnCfg!.xField]] || []).push(current);
+        (pre[current[this.litChartColumnCfg!.xField]] = pre[current[this.litChartColumnCfg!.xField]] || []).push(
+          current
+        );
         return pre;
       }, {});
       let sums = Reflect.ownKeys(reduceGroup).map((k) =>
@@ -365,9 +379,9 @@ export class LitChartColumn extends BaseElement {
     }
     c.fillStyle = '#fff';
     if (this.litChartColumnCfg?.label) {
-      if (yMetricsH < it.frame!.h) {        
+      if (yMetricsH < it.frame!.h) {
         c.fillText(
-		  // @ts-ignore
+          // @ts-ignore
           this.litChartColumnCfg!.label!.content ? this.litChartColumnCfg!.label!.content(it.obj) : it.yLabel!,
           it.centerX! - yMetrics.width / 2,
           it.centerY! + (it.frame!.h - it.height!) / 2

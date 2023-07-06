@@ -18,6 +18,10 @@ import { TabPaneNMCallInfo } from '../../../../../../dist/trace/component/trace/
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {}
+});
+
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
@@ -73,6 +77,93 @@ describe('TabPaneNMCallInfo Test', () => {
     hasFps: false,
     statisticsSelectData: undefined,
   };
+
+  let sortArr = [{
+    id: '0',
+    pid: '',
+    library: '',
+    symbolId: 0,
+    title: '',
+    count: 0,
+    countValue: '',
+    countPercent: '',
+    type: 0,
+    heapSize: 0,
+    heapPercent: '',
+    heapSizeStr: '',
+    eventId: 0,
+    threadId: 0,
+    threadName: '',
+    isSelected: false,
+  }, {
+    id: '1',
+    pid: '',
+    library: '',
+    symbolId: 0,
+    title: '',
+    count: 0,
+    countValue: '',
+    countPercent: '',
+    type: 0,
+    heapSize: 0,
+    heapPercent: '',
+    heapSizeStr: '',
+    eventId: 0,
+    threadId: 0,
+    threadName: '',
+    isSelected: false,
+  }]
+
+  let iconRowClick = new CustomEvent('row-click', <CustomEventInit>{
+    detail: {
+      data: {
+        id: '',
+        pid: '',
+        library: '',
+        symbolId: 0,
+        title: '',
+        count: 0,
+        countValue: '',
+        countPercent: '',
+        type: 0,
+        heapSize: 0,
+        heapPercent: '',
+        heapSizeStr: '',
+        eventId: 0,
+        threadId: 0,
+        threadName: '',
+        isSelected: false,
+        children: []
+      },
+      callBack: (call: boolean) => {}
+    },
+    composed: true,
+  });
+
+  it('TabPaneNMCallInfoTest2', function () {
+    sortArr.map = jest.fn(()=>[])
+    expect(tabPaneNMCallInfo.sortTree(sortArr, 'size', 0)).toBe(sortArr);
+  });
+  it('TabPaneNMCallInfoTest3', function () {
+    sortArr.map = jest.fn(()=>[])
+    expect(tabPaneNMCallInfo.sortTree(sortArr, 'size', 1)).toBe(sortArr);
+  });
+  it('TabPaneNMCallInfoTest4', function () {
+    sortArr.map = jest.fn(()=>[])
+    expect(tabPaneNMCallInfo.sortTree(sortArr, 'size', 2)).toBe(sortArr);
+  });
+  it('TabPaneNMCallInfoTest5', function () {
+    sortArr.map = jest.fn(()=>[])
+    expect(tabPaneNMCallInfo.sortTree(sortArr, 'num', 0)).toBe(sortArr);
+  });
+  it('TabPaneNMCallInfoTest6', function () {
+    sortArr.map = jest.fn(()=>[])
+    expect(tabPaneNMCallInfo.sortTree(sortArr, 'num', 1)).toBe(sortArr);
+  });
+  it('TabPaneNMCallInfoTest7', function () {
+    sortArr.map = jest.fn(()=>[])
+    expect(tabPaneNMCallInfo.sortTree(sortArr, 'num', 2)).toBe(sortArr);
+  });
 
   it('TabPaneNMCallInfoTest08', function () {
     let hookLeft = {
@@ -132,11 +223,11 @@ describe('TabPaneNMCallInfo Test', () => {
 "
         <style>
         :host{
+            padding: 10px 10px 0 10px;
             display: flex;
             flex-direction: column;
-            padding: 10px 10px 0 10px;
         }
-        tab-pane-filter {
+        .nm-call-info-filter {
             border: solid rgb(216,216,216) 1px;
             float: left;
             position: fixed;
@@ -146,18 +237,18 @@ describe('TabPaneNMCallInfo Test', () => {
         selector{
             display: none;
         }
-        .progress{
+        .nm-call-info-progress{
             bottom: 33px;
             position: absolute;
             height: 1px;
             left: 0;
             right: 0;
         } 
-        .loading{
-            bottom: 0;
+        .nm-call-info-loading{
             position: absolute;
             left: 0;
             right: 0;
+            bottom: 0;
             width:100%;
             background:transparent;
             z-index: 999999;
@@ -167,22 +258,22 @@ describe('TabPaneNMCallInfo Test', () => {
             flex: 1;
         }
         </style>
-        <div style="display: flex;flex-direction: row">
+        <div class="nm-call-info-content" style="display: flex;flex-direction: row">
             <selector id='show_table' class="show">
             <lit-slicer style="width:100%">
                 <div style="width: 65%">
                     <lit-table id="tb-native-callinfo" style="height: auto" tree>
-                        <lit-table-column width="60%" title="Symbol Name" data-index="symbolName" key="symbolName"  align="flex-start">
+                        <lit-table-column class="nm-call-info-column" width="60%" title="Symbol Name" data-index="symbolName" key="symbolName"  align="flex-start">
                         </lit-table-column>
-                        <lit-table-column width="1fr" title="Size" data-index="heapSizeStr" key="heapSizeStr"  align="flex-start" order>
+                        <lit-table-column class="nm-call-info-column" width="1fr" title="Size" data-index="heapSizeStr" key="heapSizeStr"  align="flex-start" order>
                         </lit-table-column>
-                        <lit-table-column width="1fr" title="%" data-index="heapPercent" key="heapPercent" align="flex-start"  order>
+                        <lit-table-column class="nm-call-info-column" width="1fr" title="%" data-index="heapPercent" key="heapPercent" align="flex-start"  order>
                         </lit-table-column>
-                        <lit-table-column width="1fr" title="Count" data-index="countValue" key="countValue" align="flex-start" order>
+                        <lit-table-column class="nm-call-info-column" width="1fr" title="Count" data-index="countValue" key="countValue" align="flex-start" order>
                         </lit-table-column>
-                        <lit-table-column width="1fr" title="%" data-index="countPercent" key="countPercent" align="flex-start" order>
+                        <lit-table-column class="nm-call-info-column" width="1fr" title="%" data-index="countPercent" key="countPercent" align="flex-start" order>
                         </lit-table-column>
-                        <lit-table-column width="1fr" title="  " data-index="type" key="type"  align="flex-start" >
+                        <lit-table-column class="nm-call-info-column" width="1fr" title="  " data-index="type" key="type"  align="flex-start" >
                             <template>
                                 <img src="img/library.png" size="20" v-if=" type == 1 ">
                                 <img src="img/function.png" size="20" v-if=" type == 0 ">
@@ -193,46 +284,37 @@ describe('TabPaneNMCallInfo Test', () => {
                 </div>
                 <lit-slicer-track ></lit-slicer-track>
                 <lit-table id="tb-native-data" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
-                    <lit-table-column width="60px" title="" data-index="type" key="type"  align="flex-start" >
+                    <lit-table-column class="nm-call-info-column" title="" width="60px" data-index="type" key="type"  align="flex-start" >
                         <template>
                             <img src="img/library.png" size="20" v-if=" type == 1 ">
                             <img src="img/function.png" size="20" v-if=" type == 0 ">
                         </template>
                     </lit-table-column>
-                    <lit-table-column width="1fr" title="" data-index="symbolName" key="symbolName"  align="flex-start">
+                    <lit-table-column class="nm-call-info-column" width="1fr" title="" data-index="symbolName" key="symbolName"  align="flex-start">
                     </lit-table-column>
                 </lit-table>
                 </lit-slicer>
             </selector>
-            <selector id='show_chart'>
+            <selector class="nm-call-info-selector" id='show_chart'>
                 <tab-framechart id='framechart' style='width: 100%;height: auto'> </tab-framechart>
             </selector>
-            <lit-progress-bar class="progress"></lit-progress-bar>
-            <tab-pane-filter id="filter" icon first second></tab-pane-filter>
-            <div class="loading"></div>
+            <lit-progress-bar class="progress nm-call-info-progress"></lit-progress-bar>
+            <tab-pane-filter id="filter" class="nm-call-info-filter" icon first second></tab-pane-filter>
+            <div class="loading nm-call-info-loading"></div>
         </div>
         "
 `);
   });
-  it('TabPaneNMCallInfoTest04', function () {
-    TabPaneNMCallInfo.getParentTree = jest.fn(() => true);
+  it('TabPaneNMCallInfoTest11', function () {
     let hook = {
-      id: '1',
+      id: 1,
       dur: 1,
       children: [],
     };
     let id = '1';
-    expect(tabPaneNMCallInfo.getParentTree([hook], { id }, [])).not.toBeUndefined();
+    expect(tabPaneNMCallInfo.getParentTree([hook], { id: 1 }, [])).not.toBeUndefined();
   });
-  it('TabPaneNMCallInfoTest05', function () {
-    TabPaneNMCallInfo.getChildTree = jest.fn(() => true);
-    let hook = {
-      eventId: '1',
-      dur: 1,
-      children: [],
-    };
-    expect(tabPaneNMCallInfo.getChildTree([hook], '1', [])).not.toBeUndefined();
-  });
+
   it('TabPaneNMCallInfoTest13', function () {
     expect(tabPaneNMCallInfo.showButtomMenu()).toBeUndefined();
   });
@@ -242,5 +324,39 @@ describe('TabPaneNMCallInfo Test', () => {
   });
   it('TabPaneNMCallInfoTest15', function () {
     expect(tabPaneNMCallInfo.showButtomMenu({},{})).toBeUndefined();
+  });
+
+  it('TabPaneNMCallInfoTest16', function () {
+    let hook = {
+      eventId: 1,
+      dur: 1,
+      children: [],
+    };
+    expect(tabPaneNMCallInfo.getChildTree([hook], 1, [])).not.toBeUndefined();
+  });
+
+  it('TabPaneNMCallInfoTest17', function () {
+    let hook = {
+      eventId: 1,
+      dur: 1,
+      children: [],
+    };
+    expect(tabPaneNMCallInfo.getChildTree([hook], 2, [])).not.toBeUndefined();
+  });
+
+  it('TabPaneNMCallInfoTest18', function () {
+    tabPaneNMCallInfo.tblData.clearAllSelection = jest.fn(()=>true);
+    tabPaneNMCallInfo.tblData.setCurrentSelection = jest.fn(()=>[]);
+    tabPaneNMCallInfo.callInfoTbl.clearAllSelection = jest.fn(()=>true);
+    tabPaneNMCallInfo.callInfoTbl.scrollToData = jest.fn(()=>true);
+    tabPaneNMCallInfo.callInfoTbl.dispatchEvent(iconRowClick);
+    tabPaneNMCallInfo.tblData.dispatchEvent(iconRowClick);
+    let hook = {
+      id: 1,
+      dur: 1,
+      children: [],
+    };
+    let id = '1';
+    expect(tabPaneNMCallInfo.getParentTree([hook], { id: 2 }, [])).not.toBeUndefined();
   });
 });

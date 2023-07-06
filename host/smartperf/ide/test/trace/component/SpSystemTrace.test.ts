@@ -451,7 +451,8 @@ describe('SpSystemTrace Test', () => {
       isOffScreen: true,
     });
     let endParentRow = {
-      expansion: true
+      expansion: true,
+      childrenList:[]
     }
     let selectJankStruct = {
       frame_type:'frameTime',
@@ -472,6 +473,7 @@ describe('SpSystemTrace Test', () => {
         length:1
       }
     }
+
     expect(spSystemTrace.drawJankLine(endParentRow, selectJankStruct, data)).toBeUndefined();
   });
   it('SpSystemTraceTest36', function () {

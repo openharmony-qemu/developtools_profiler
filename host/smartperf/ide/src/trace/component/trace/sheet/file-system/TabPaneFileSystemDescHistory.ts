@@ -132,7 +132,9 @@ export class TabPaneFileSystemDescHistory extends BaseElement {
 
   initElements(): void {
     this.fsDescHistoryLoadingPage = this.shadowRoot?.querySelector('.filesystem-desc-history-loading');
-    this.fsDescHistoryProgressEL = this.shadowRoot?.querySelector('.filesystem-desc-history-progress') as LitProgressBar;
+    this.fsDescHistoryProgressEL = this.shadowRoot?.querySelector(
+      '.filesystem-desc-history-progress'
+    ) as LitProgressBar;
     this.fsDescHistoryTbl = this.shadowRoot?.querySelector<LitTable>('#tbl-file-system-desc-history');
     this.fsDescHistoryTblData = this.shadowRoot?.querySelector<LitTable>('#tbr-file-system-desc-history');
     this.fsDescHistoryTbl!.addEventListener('row-click', (e) => {

@@ -55,7 +55,8 @@ config("hiprofiler_base_config") {
 }
 
 ohos_source_set("hiprofiler_base") {
-  part_name = "profiler"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
     "src/common.cpp",
     "src/epoll_event_poller.cpp",
@@ -83,10 +84,6 @@ ohos_source_set("hiprofiler_base") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    if (build_l2) {
-      external_deps += [ "shared_library:libhilog" ]
-    } else {
-      external_deps += [ "hiviewdfx_hilog_native:libhilog" ]
-    }
+    external_deps += [ "hilog:libhilog" ]
   }
 }

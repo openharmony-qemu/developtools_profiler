@@ -25,7 +25,7 @@ window.ResizeObserver =
 describe('TabPaneHistoryProcesses Test', function () {
   let tabPaneHistoryProcesses = new TabPaneHistoryProcesses();
   it('TabPaneHistoryProcessesTest01 ', function () {
-    tabPaneHistoryProcesses.queryResult.length = 1;
+    tabPaneHistoryProcesses.queryHistoryResult.length = 1;
     expect(tabPaneHistoryProcesses.filterData()).toBeUndefined();
   });
 

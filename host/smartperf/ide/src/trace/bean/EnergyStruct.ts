@@ -18,7 +18,7 @@ export class PowerDetailsEnergy {
     this.event = eventName;
   }
 
-  event: string = '';
+  event: string;
   charge: number = 0;
   background_time: number = 0;
   screen_on_time: number = 0;

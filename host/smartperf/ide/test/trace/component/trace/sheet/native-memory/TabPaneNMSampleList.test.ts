@@ -26,6 +26,10 @@ import { queryAllHookData } from '../../../../../../dist/trace/database/SqlLite.
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {}
+});
+
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -89,6 +93,44 @@ describe('TabPaneNMSampleList Test', () => {
   let MockNativeHookSnapshotTypes = sqlit.queryNativeHookSnapshotTypes;
 
   MockNativeHookSnapshotTypes.mockResolvedValue([new NativeHookSampleQueryInfo()]);
+
+
+  let samplerInfo = [
+    {
+      current: '',
+      currentSize: 0,
+      startTs: 0,
+      heapSize: 0,
+      snapshot: '',
+      growth: '',
+      total: 0,
+      totalGrowth: '',
+      existing: 0,
+      children: [],
+      tempList: [],
+      timestamp: '',
+      eventId: -1,
+      threadId: 0,
+      threadName: '',
+    },
+    {
+      current: '',
+      currentSize: 0,
+      startTs: 0,
+      heapSize: 0,
+      snapshot: '',
+      growth: '',
+      total: 0,
+      totalGrowth: '',
+      existing: 0,
+      children: [],
+      tempList: [],
+      timestamp: '',
+      eventId: -1,
+      threadId: 0,
+      threadName: '',
+    }
+  ];
 
   tabPaneNMSampleList.data = dat;
   it('TabPaneNMSampleListTest01', function () {
@@ -167,38 +209,41 @@ describe('TabPaneNMSampleList Test', () => {
     expect(tabPaneNMSampleList.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .nm-sample-tbl {
+            height: auto;
+        }
         :host{
+            padding: 10px 10px 0 10px;
             display: flex;
             flex-direction: column;
-            padding: 10px 10px 0 10px;
         }
         </style>
         <lit-slicer style="width:100%">
-        <div style="width: 65%">
-            <lit-table id="tb-native-sample" style="height: auto" tree>
-                <lit-table-column width="25%" title="Snapshot" data-index="snapshot" key="snapshot"  align="flex-start" >
+        <div class="nm-sample-content" style="width: 65%">
+            <lit-table id="tb-native-sample" class="nm-sample-tbl" tree>
+                <lit-table-column class="nm-sample-column" width="25%" title="Snapshot" data-index="snapshot" key="snapshot"  align="flex-start" >
                 </lit-table-column>
-                <lit-table-column width="1fr" title="Timestamp" data-index="timestamp" key="timestamp"  align="flex-start"  >
+                <lit-table-column class="nm-sample-column" width="1fr" title="Timestamp" data-index="timestamp" key="timestamp"  align="flex-start"  >
                 </lit-table-column>
-                <lit-table-column width="1fr" title="Net Growth" data-index="growth" key="growth"  align="flex-start"  >
+                <lit-table-column class="nm-sample-column" width="1fr" title="Net Growth" data-index="growth" key="growth"  align="flex-start"  >
                 </lit-table-column>
-                <lit-table-column width="1fr" title="Total Growth" data-index="totalGrowth" key="totalGrowth"  align="flex-start"  >
+                <lit-table-column class="nm-sample-column" width="1fr" title="Total Growth" data-index="totalGrowth" key="totalGrowth"  align="flex-start"  >
                 </lit-table-column>
-                <lit-table-column width="1fr" title="# Existing" data-index="existing" key="existing"  align="flex-start"  >
+                <lit-table-column class="nm-sample-column" width="1fr" title="# Existing" data-index="existing" key="existing"  align="flex-start"  >
                 </lit-table-column>
             </lit-table>
             <tab-pane-filter id="filter" first></tab-pane-filter>
         </div>
         <lit-slicer-track ></lit-slicer-track>
         <lit-table id="tb-native-data" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
-            <lit-table-column width="80px" title="" data-index="type" key="type"  align="flex-start" >
+            <lit-table-column class="nm-sample-column" width="80px" title="" data-index="type" key="type"  align="flex-start" >
                 <template>
                     <div v-if=" type == -1 ">Thread:</div>
                     <img src="img/library.png" size="20" v-if=" type == 1 ">
                     <img src="img/function.png" size="20" v-if=" type == 0 ">
                 </template>
             </lit-table-column>
-            <lit-table-column width="1fr" title="" data-index="title" key="title"  align="flex-start">
+            <lit-table-column class="nm-sample-column" width="1fr" title="" data-index="title" key="title"  align="flex-start">
             </lit-table-column>
         </lit-table>
         </lit-slicer>
@@ -237,4 +282,116 @@ describe('TabPaneNMSampleList Test', () => {
     ]);
     expect(TabPaneNMSampleList.queryAllHookInfo(dat, rootSample)).toBeUndefined();
   });
+
+  it('TabPaneNMSampleListTest13', function () {
+    TabPaneNMSampleList.samplerInfoSource = [{
+      current:  '',
+      currentSize:  0,
+      startTs:  0,
+      heapSize:  0,
+      snapshot:  '',
+      growth:  '',
+      total:  0,
+      totalGrowth:  '',
+      existing:  0,
+      children: samplerInfo,
+      tempList: samplerInfo,
+      timestamp:  '',
+      eventId:  -1,
+      threadId:  0,
+      threadName:  '',
+    }]
+    TabPaneNMSampleList.filterSelect = '0';
+    expect(tabPaneNMSampleList.filterAllList()).toBeUndefined();
+  });
+
+  it('TabPaneNMSampleListTest14', function () {
+    TabPaneNMSampleList.samplerInfoSource = [{
+      current:  '',
+      currentSize:  0,
+      startTs:  0,
+      heapSize:  0,
+      snapshot:  '',
+      growth:  '',
+      total:  0,
+      totalGrowth:  '',
+      existing:  0,
+      children: samplerInfo,
+      tempList: samplerInfo,
+      timestamp:  '',
+      eventId:  -1,
+      threadId:  0,
+      threadName:  '',
+    }]
+    TabPaneNMSampleList.filterSelect = '1';
+    expect(tabPaneNMSampleList.filterAllList()).toBeUndefined();
+  });
+
+  it('TabPaneNMSampleListTest15', function () {
+    TabPaneNMSampleList.samplerInfoSource = [{
+      current:  '',
+      currentSize:  0,
+      startTs:  0,
+      heapSize:  0,
+      snapshot:  '',
+      growth:  '',
+      total:  0,
+      totalGrowth:  '',
+      existing:  0,
+      children: [],
+      tempList: [],
+      timestamp:  '',
+      eventId:  -1,
+      threadId:  0,
+      threadName:  '',
+    }]
+    TabPaneNMSampleList.filterSelect = '1';
+    expect(tabPaneNMSampleList.filterAllList()).toBeUndefined();
+  });
+
+  it('TabPaneNMSampleListTest16', function () {
+    TabPaneNMSampleList.samplerInfoSource = [{
+      current:  '',
+      currentSize:  0,
+      startTs:  0,
+      heapSize:  0,
+      snapshot:  '',
+      growth:  '',
+      total:  0,
+      totalGrowth:  '',
+      existing:  0,
+      children: samplerInfo,
+      tempList: samplerInfo,
+      timestamp:  '',
+      eventId:  -1,
+      threadId:  0,
+      threadName:  '',
+    }]
+    TabPaneNMSampleList.filterSelect = '2';
+    expect(tabPaneNMSampleList.filterAllList()).toBeUndefined();
+  });
+
+  it('TabPaneNMSampleListTest17', function () {
+    TabPaneNMSampleList.samplerInfoSource = [{
+      current:  '',
+      currentSize:  0,
+      startTs:  0,
+      heapSize:  0,
+      snapshot:  '',
+      growth:  '',
+      total:  0,
+      totalGrowth:  '',
+      existing:  0,
+      children: [],
+      tempList: [],
+      timestamp:  '',
+      eventId:  -1,
+      threadId:  0,
+      threadName:  '',
+    }]
+    TabPaneNMSampleList.filterSelect = '2';
+    expect(tabPaneNMSampleList.filterAllList()).toBeUndefined();
+  });
+
+
 });

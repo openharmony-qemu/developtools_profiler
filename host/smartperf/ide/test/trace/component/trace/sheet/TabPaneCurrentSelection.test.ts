@@ -439,40 +439,40 @@ describe('TabPaneCurrentSelection Test', () => {
         expect(tabPaneCurrentSelection.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-            .current-title{
-                width: 100%;
-                display: flex;
+            .table-title{
                 top: 0;
                 background: var(--dark-background,#ffffff);
                 position: sticky;
+                width: 100%;
+                display: flex;
             }
-            .current-title h2{
-                width: 50%;
-                padding: 0 10px;
+            .table-title h2{
                 font-size: 16px;
                 font-weight: 400;
                 visibility: visible;
+                width: 50%;
+                padding: 0 10px;
             }
-            .bottom-scroll-area{
+            .scroll-area{
                 display: flex;
                 height: auto;
                 overflow-y: auto;
             }
-            .left-table{
+            .table-left{
                 width: 50%;
                 padding: 0 10px;
             }
-            .right-table{
+            .table-right{
                 width: 50%;
             }
         </style>
         <div style="width: 100%;height: auto;position: relative">
-            <div class="current-title">
+            <div class="table-title">
                 <h2 id="leftTitle"></h2>
                 <h2 id="rightTitle">Scheduling Latency</h2>
             </div>
-            <div class="bottom-scroll-area">
-                <div class="left-table">
+            <div class="scroll-area">
+                <div class="table-left">
                     <lit-table id="selectionTbl" no-head hideDownload style="height: auto">
                         <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px">
                             <template><div>{{name}}</div></template>
@@ -482,7 +482,7 @@ describe('TabPaneCurrentSelection Test', () => {
                         </lit-table-column>
                     </lit-table>
                 </div>
-                <div class="right-table">
+                <div class="table-right">
                     <canvas id="rightDraw" style="width: 100%;height: 100%;"></canvas>
                 </div>
             </div>

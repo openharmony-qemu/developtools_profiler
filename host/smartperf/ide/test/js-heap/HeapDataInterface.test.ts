@@ -16,7 +16,7 @@
 import { HeapDataInterface } from '../../dist/js-heap/HeapDataInterface.js';
 //@ts-ignore
 import { HeapNode } from '../../dist/js-heap/model/DatabaseStruct.js';
-
+jest.mock('../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
 window.ResizeObserver =
     window.ResizeObserver ||
@@ -30,6 +30,7 @@ jest.mock('../../dist/js-heap/utils/Utils.js', () => {
         HeapNodeToConstructorItem: (node: HeapNode) => {},
     };
 });
+jest.mock('../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 describe('HeapDataInterface Test', () => {
     let data = {
@@ -172,5 +173,30 @@ describe('HeapDataInterface Test', () => {
         let heapDataInterface = new HeapDataInterface();
         heapDataInterface.fileStructs = [data];
         expect(heapDataInterface.getFileStructs().length).toBe(1);
+    });
+    it('HeapDataInterface12', () => {
+        let heapDataInterface = new HeapDataInterface();
+        heapDataInterface.fileStructs = [data];
+        expect(heapDataInterface.getSamples(1)).toStrictEqual([]);
+    });
+    it('HeapDataInterface13', () => {
+        let heapDataInterface = new HeapDataInterface();
+        heapDataInterface.fileStructs = [data];
+        let node = {
+            fileId:1,
+            type:0,
+            traceNodeId:1
+        }
+        expect(heapDataInterface.getAllocationStackData(node)).toStrictEqual([]);
+    });
+    it('HeapDataInterface14', () => {
+        let heapDataInterface = new HeapDataInterface();
+        heapDataInterface.fileStructs = [data];
+        expect(heapDataInterface.getMinNodeId(1)).toBeUndefined();
+    });
+    it('HeapDataInterface15', () => {
+        let heapDataInterface = new HeapDataInterface();
+        heapDataInterface.fileStructs = [data];
+        expect(heapDataInterface.getMaxNodeId(1)).toBeUndefined();
     });
 });

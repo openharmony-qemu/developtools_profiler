@@ -14,8 +14,11 @@
  */
 
 export class Cmd {
-
   static CmdSendPostUtils(uri: string, callback: Function, requestData: any) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     fetch(uri, {
       method: 'POST',
       headers: {
@@ -39,12 +42,20 @@ export class Cmd {
    * @param callback result callback
    */
   static execObjDump(command: string, addr: string, callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     const data = { cmd: command, addr: addr };
     let uri = `http://${window.location.host.split(':')[0]}:${window.location.port}/exec`;
     Cmd.CmdSendPostUtils(uri, callback, data);
   }
 
   static execHdcCmd(command: string, callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     const data = {
       cmd: command,
       tag: 'shell',
@@ -54,6 +65,10 @@ export class Cmd {
   }
 
   static async execFileRecv(command: string, filePath: string, callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     let fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
     const data = {
       cmd: command,
@@ -72,6 +87,10 @@ export class Cmd {
   }
 
   static execHdcTraceCmd(command: string, serialNumber: string, callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     const data = {
       cmd: command,
       tag: 'hiprofiler_cmd',
@@ -92,6 +111,10 @@ export class Cmd {
   }
 
   static showSaveFile(callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     let uri = `http://${window.location.host.split(':')[0]}:${window.location.port}/showSaveDialog`;
     fetch(uri, {
       method: 'GET',
@@ -106,6 +129,10 @@ export class Cmd {
   }
 
   static uploadFile(fd: FormData, callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     let uri = `http://${window.location.host.split(':')[0]}:${window.location.port}/upload`;
     fetch(uri, {
       method: 'POST',
@@ -116,6 +143,10 @@ export class Cmd {
   }
 
   static copyFile(fileName: string, distFile: string, callback: Function) {
+    // @ts-ignore
+    if (window.useWb) {
+      return;
+    }
     const data = {
       filename: fileName,
       distfile: distFile,
@@ -133,6 +164,10 @@ export class Cmd {
   }
 
   static async openFileDialog() {
+    // @ts-ignore
+    if (window.useWb) {
+      return '';
+    }
     let uri = `http://${window.location.host.split(':')[0]}:${window.location.port}/showOpenDialog`;
     let res = await fetch(uri, { method: 'POST' });
     let result = res.ok ? await res.text() : '';

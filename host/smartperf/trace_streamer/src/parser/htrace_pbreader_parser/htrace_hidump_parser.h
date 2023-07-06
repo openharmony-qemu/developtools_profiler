@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include "common_types.h"
+#include "event_parser_base.h"
 #include "htrace_plugin_time_parser.h"
 #include "trace_data/trace_data_cache.h"
 #include "trace_streamer_config.h"
@@ -25,7 +26,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-class HtraceHidumpParser : public HtracePluginTimeParser {
+class HtraceHidumpParser : public EventParserBase, public HtracePluginTimeParser {
 public:
     HtraceHidumpParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceHidumpParser();

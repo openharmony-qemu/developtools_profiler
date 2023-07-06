@@ -13,8 +13,7 @@
  * limitations under the License.
  */
 
-export class TabUtil  {
-
+export class TabUtil {
   static getTableType(showType: any) {
     let columns = showType.columns;
     for (let i = 0; i < columns.length; i++) {

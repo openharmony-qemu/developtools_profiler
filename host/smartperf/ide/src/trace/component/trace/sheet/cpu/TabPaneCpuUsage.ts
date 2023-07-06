@@ -18,23 +18,30 @@ import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabCpuFreq, getTabCpuUsage } from '../../../../database/SqlLite.js';
 import { CpuUsage, Freq } from '../../../../bean/CpuUsage.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-cpu-usage')
 export class TabPaneCpuUsage extends BaseElement {
   private cpuUsageTbl: LitTable | null | undefined;
   private range: HTMLLabelElement | null | undefined;
   private orderByOldList: any[] = [];
+  private currentSelectionParam: SelectionParam | undefined;
 
   set data(cpuUsageValue: SelectionParam | any) {
+    if (this.currentSelectionParam === cpuUsageValue) {
+      return;
+    }
+    this.currentSelectionParam = cpuUsageValue;
     // @ts-ignore
     this.cpuUsageTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
     this.range!.textContent =
       'Selected range: ' + parseFloat(((cpuUsageValue.rightNs - cpuUsageValue.leftNs) / 1000000.0).toFixed(5)) + ' ms';
+    this.cpuUsageTbl!.loading = true;
     Promise.all([
       getTabCpuUsage(cpuUsageValue.cpus, cpuUsageValue.leftNs, cpuUsageValue.rightNs),
       getTabCpuFreq(cpuUsageValue.cpus, cpuUsageValue.leftNs, cpuUsageValue.rightNs),
     ]).then((result) => {
+      this.cpuUsageTbl!.loading = false;
       let usages = result[0];
       let freqMap = this.groupByCpuToMap(result[1]);
       let data = [];
@@ -104,7 +111,7 @@ export class TabPaneCpuUsage extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.cpuUsageTbl!)
+    resizeObserver(this.parentElement!, this.cpuUsageTbl!);
   }
 
   sortTable(arr: any[], key: string, sort: boolean) {

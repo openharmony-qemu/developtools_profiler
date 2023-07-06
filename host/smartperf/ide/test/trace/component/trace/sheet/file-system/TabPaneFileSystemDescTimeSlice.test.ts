@@ -140,7 +140,7 @@ describe('TabPaneFileSystemDescTimeSlice Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.source = filterSource;
-        expect(tabPane.sortTable('startTsStr', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescTimeSliceTable('startTsStr', 1)).toBeUndefined();
     });
 
     it('descTimeSliceTest03', function () {
@@ -151,7 +151,7 @@ describe('TabPaneFileSystemDescTimeSlice Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.source = filterSource;
-        expect(tabPane.sortTable('durStr', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescTimeSliceTable('durStr', 1)).toBeUndefined();
     });
 
     it('descTimeSliceTest04', function () {
@@ -162,7 +162,7 @@ describe('TabPaneFileSystemDescTimeSlice Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.source = filterSource;
-        expect(tabPane.sortTable('typeStr', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescTimeSliceTable('typeStr', 1)).toBeUndefined();
     });
 
     it('descTimeSliceTest05', function () {
@@ -173,6 +173,6 @@ describe('TabPaneFileSystemDescTimeSlice Test', () => {
         tabPane.loadingList = [];
         tabPane.data = param;
         tabPane.source = filterSource;
-        expect(tabPane.sortTable('fd', 1)).toBeUndefined();
+        expect(tabPane.sortFsDescTimeSliceTable('fd', 1)).toBeUndefined();
     });
 });

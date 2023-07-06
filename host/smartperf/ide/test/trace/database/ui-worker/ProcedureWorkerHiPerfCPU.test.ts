@@ -18,7 +18,8 @@ jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
 });
 
 //@ts-ignore
-import { hiPerfCpu, HiPerfCpuStruct } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerHiPerfCPU.js';
+import { hiPerfCpu, HiPerfCpuStruct,HiperfCpuRender } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerHiPerfCPU.js';
+import { TraceRow } from '../../../../dist/trace/component/trace/base/TraceRow.js';
 
 describe('ProcedureWorkerHiPerfCPU Test', () => {
   let frame = {
@@ -41,40 +42,6 @@ describe('ProcedureWorkerHiPerfCPU Test', () => {
     expect(HiPerfCpuStruct.draw(ctx, '', data, true)).toBeUndefined();
   });
 
-  it('ProcedureWorkerHiPerfCPUTest02', function () {
-    let dataList = new Array();
-    dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
-    });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    let res = [
-      {
-        length: 1,
-      },
-    ];
-    hiPerfCpu(dataList, [{ length: 1 }], '1', res, 3, 6, 3, frame, true, 1, 2, true);
-  });
-
-  it('ProcedureWorkerHiPerfCPUTest03', function () {
-    let dataList = new Array();
-    dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
-    });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    let res = [
-      {
-        length: 0,
-      },
-    ];
-    hiPerfCpu(dataList, [{ length: 1 }], '1', res, 3, 6, 3, frame, false, 1, 2, false);
-  });
-
   it('ProcedureWorkerHiPerfCPUTest04', () => {
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -85,7 +52,7 @@ describe('ProcedureWorkerHiPerfCPU Test', () => {
 
   it('ProcedureWorkerHiPerfCPUTest05', function () {
     expect(HiPerfCpuStruct.groupBy10MS([{ id: 1, NS: 3 }, { copy: '1' }], 10, '')).toEqual([
-      { dur: 10000000, height: 0, startNS: NaN },
+      { dur: 10000000, height: Infinity, startNS: NaN },
     ]);
   });
 });

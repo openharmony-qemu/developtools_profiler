@@ -14,6 +14,8 @@
  */
 //@ts-ignore
 import { SpSchedulingAnalysis } from '../../../../dist/trace/component/schedulingAnalysis/SpSchedulingAnalysis.js';
+import '../../../../dist/trace/component/schedulingAnalysis/SpSchedulingAnalysis.js';
+
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
@@ -24,6 +26,10 @@ window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(()
 describe('SpSchedulingAnalysis Test', () => {
     it('SpSchedulingAnalysisTest01', () => {
         let spSchedulingAnalysis = new SpSchedulingAnalysis();
+        SpSchedulingAnalysis.traceChange = true
         expect(spSchedulingAnalysis.init()).toBeUndefined();
+    });
+    it('SpSchedulingAnalysisTest02', () => {
+        expect(SpSchedulingAnalysis.resetCpu()).toBeUndefined();
     });
 })

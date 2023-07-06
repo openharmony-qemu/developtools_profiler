@@ -68,6 +68,8 @@ ohos_source_set("bytrace_plugin_protos_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
   sources = bytrace_plugin_protos_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ohos_source_set("bytrace_plugin_protos_cpp_standard") {
@@ -79,4 +81,6 @@ ohos_source_set("bytrace_plugin_protos_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
   sources = bytrace_plugin_protos_codegen_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }

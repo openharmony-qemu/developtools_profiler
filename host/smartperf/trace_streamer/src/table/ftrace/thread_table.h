@@ -29,8 +29,6 @@ public:
 
 private:
     void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei) override;
-    // filter out by operator[=, >, <...] from column(ID)
-    bool CanFilterId(const char op, size_t& rowCount);
     int32_t Update(int32_t argc, sqlite3_value** argv, sqlite3_int64* pRowid) override;
     void FilterByConstraint(FilterConstraints& fc, double& filterCost, size_t rowCount);
 

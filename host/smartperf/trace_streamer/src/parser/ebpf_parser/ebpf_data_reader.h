@@ -18,7 +18,7 @@
 #include <elf.h>
 #include <string>
 #include "ebpf_stdtype.h"
-#include "htrace_plugin_time_parser.h"
+#include "event_parser_base.h"
 #include "process_filter.h"
 #include "quatra_map.h"
 #include "string_help.h"

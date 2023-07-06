@@ -223,12 +223,20 @@ export class PluginConvertUtils {
     return humpString.replace(/[A-Z]/g, (value) => '_' + value.toLowerCase());
   }
 
-  private static getMontageStrings(prefixText: string, spacesNumber: number, indentation: number, key: string, value: any): string{
-    return prefixText +
-    ' '.repeat(spacesNumber).repeat(indentation + 1) +
-    this.humpToSnake(key) +
-    ': ' +
-    value.toString() +
-    this.crlf;
+  private static getMontageStrings(
+    prefixText: string,
+    spacesNumber: number,
+    indentation: number,
+    key: string,
+    value: any
+  ): string {
+    return (
+      prefixText +
+      ' '.repeat(spacesNumber).repeat(indentation + 1) +
+      this.humpToSnake(key) +
+      ': ' +
+      value.toString() +
+      this.crlf
+    );
   }
 }

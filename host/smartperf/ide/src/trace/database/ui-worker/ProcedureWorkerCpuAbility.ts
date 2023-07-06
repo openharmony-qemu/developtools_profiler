@@ -149,9 +149,21 @@ export class CpuAbilityMonitorStruct extends BaseStruct {
         cpuAbilityContext2D.lineWidth = 1;
         cpuAbilityContext2D.globalAlpha = 0.6;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxCpuUtilization);
-        cpuAbilityContext2D.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        cpuAbilityContext2D.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
         cpuAbilityContext2D.beginPath();
-        cpuAbilityContext2D.arc(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, 3, 0, 2 * Math.PI, true);
+        cpuAbilityContext2D.arc(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         cpuAbilityContext2D.fill();
         cpuAbilityContext2D.globalAlpha = 1.0;
         cpuAbilityContext2D.stroke();
@@ -164,14 +176,26 @@ export class CpuAbilityMonitorStruct extends BaseStruct {
         cpuAbilityContext2D.globalAlpha = 0.6;
         cpuAbilityContext2D.lineWidth = 1;
         let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxCpuUtilization);
-        cpuAbilityContext2D.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight + 4, width, drawHeight);
+        cpuAbilityContext2D.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - drawHeight + 4,
+          width,
+          drawHeight
+        );
       }
     }
     cpuAbilityContext2D.globalAlpha = 1.0;
     cpuAbilityContext2D.lineWidth = 1;
   }
 
-  static setCpuAbilityFrame(cpuAbilityNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any) {
+  static setCpuAbilityFrame(
+    cpuAbilityNode: any,
+    padding: number,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    frame: any
+  ) {
     let cpuAbilityStartPointX: number, cpuAbilityEndPointX: number;
 
     if ((cpuAbilityNode.startNS || 0) < startNS) {
@@ -182,7 +206,13 @@ export class CpuAbilityMonitorStruct extends BaseStruct {
     if ((cpuAbilityNode.startNS || 0) + (cpuAbilityNode.dur || 0) > endNS) {
       cpuAbilityEndPointX = frame.width;
     } else {
-      cpuAbilityEndPointX = ns2x((cpuAbilityNode.startNS || 0) + (cpuAbilityNode.dur || 0), startNS, endNS, totalNS, frame);
+      cpuAbilityEndPointX = ns2x(
+        (cpuAbilityNode.startNS || 0) + (cpuAbilityNode.dur || 0),
+        startNS,
+        endNS,
+        totalNS,
+        frame
+      );
     }
     let frameWidth: number =
       cpuAbilityEndPointX - cpuAbilityStartPointX <= 1 ? 1 : cpuAbilityEndPointX - cpuAbilityStartPointX;

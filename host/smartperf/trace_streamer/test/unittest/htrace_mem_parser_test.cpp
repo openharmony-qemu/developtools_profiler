@@ -20,6 +20,8 @@
 #include <unordered_map>
 
 #include "htrace_mem_parser.h"
+#include "memory_plugin_result.pb.h"
+#include "memory_plugin_result.pbreader.h"
 #include "parser/common_types.h"
 #include "trace_streamer_selector.h"
 
@@ -62,10 +64,19 @@ HWTEST_F(HtraceMemParserTest, ParseMemParse, TestSize.Level1)
     EXPECT_TRUE(memoryInfo != nullptr);
     int32_t size = tracePacket.processesinfo_size();
     EXPECT_TRUE(size == 1);
-    uint64_t timeStamp = 1616439852302;
-    BuiltinClocks clock = TS_CLOCK_REALTIME;
 
-    memParser->Parse(tracePacket, timeStamp, clock);
+    HtraceDataSegment dataSeg;
+    dataSeg.dataType = DATA_SOURCE_TYPE_MEM;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+    dataSeg.status = TS_PARSE_STATUS_PARSED;
+    dataSeg.timeStamp = 1616439852302;
+
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    dataSeg.protoData = memBytesView;
+
+    memParser->Parse(dataSeg, dataSeg.timeStamp, dataSeg.clockId);
     memParser->Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -92,8 +103,6 @@ HWTEST_F(HtraceMemParserTest, ParseMemParseTestMeasureDataSize, TestSize.Level1)
     EXPECT_TRUE(memoryInfo != nullptr);
     int32_t size = tracePacket.processesinfo_size();
     EXPECT_TRUE(size == 1);
-    uint64_t timeStamp = 1616439852302;
-    BuiltinClocks clock = TS_CLOCK_REALTIME;
     uint32_t pid = 12;
     int64_t memKb = 1024;
     int64_t memRssKb = 512;
@@ -106,7 +115,18 @@ HWTEST_F(HtraceMemParserTest, ParseMemParseTestMeasureDataSize, TestSize.Level1)
     memoryInfo->set_rss_anon_kb(memAnonKb);
     memoryInfo->set_rss_file_kb(memFileKb);
 
-    memParser->Parse(tracePacket, timeStamp, clock);
+    HtraceDataSegment dataSeg;
+    dataSeg.dataType = DATA_SOURCE_TYPE_MEM;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+    dataSeg.status = TS_PARSE_STATUS_PARSED;
+    dataSeg.timeStamp = 1616439852302;
+
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    dataSeg.protoData = memBytesView;
+
+    memParser->Parse(dataSeg, dataSeg.timeStamp, dataSeg.clockId);
     memParser->Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -153,8 +173,6 @@ HWTEST_F(HtraceMemParserTest, ParseMemParseTestMutiMeasureData, TestSize.Level1)
     EXPECT_TRUE(memoryInfo != nullptr);
     int32_t size = tracePacket.processesinfo_size();
     EXPECT_TRUE(size == 1);
-    uint64_t timeStamp = 1616439852302;
-    BuiltinClocks clock = TS_CLOCK_REALTIME;
     uint32_t pid = 12;
     memoryInfo->set_pid(12);
     memoryInfo->set_name("Process1");
@@ -167,7 +185,6 @@ HWTEST_F(HtraceMemParserTest, ParseMemParseTestMutiMeasureData, TestSize.Level1)
     EXPECT_TRUE(memoryInfo2 != nullptr);
     size = tracePacket.processesinfo_size();
     EXPECT_TRUE(size == 2);
-    timeStamp = 1616439852402;
     uint32_t pid2 = 13;
     memoryInfo2->set_pid(pid2);
     memoryInfo2->set_name("Process2");
@@ -176,7 +193,18 @@ HWTEST_F(HtraceMemParserTest, ParseMemParseTestMutiMeasureData, TestSize.Level1)
     memoryInfo2->set_rss_anon_kb(128);
     memoryInfo2->set_rss_file_kb(128);
 
-    memParser->Parse(tracePacket, timeStamp, clock);
+    HtraceDataSegment dataSeg;
+    dataSeg.dataType = DATA_SOURCE_TYPE_MEM;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+    dataSeg.status = TS_PARSE_STATUS_PARSED;
+    dataSeg.timeStamp = 1616439852402;
+
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    dataSeg.protoData = memBytesView;
+
+    memParser->Parse(dataSeg, dataSeg.timeStamp, dataSeg.clockId);
     memParser->Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -206,15 +234,24 @@ HWTEST_F(HtraceMemParserTest, ParseMultiEmptyProcessMemoryInfo, TestSize.Level1)
     EXPECT_TRUE(memoryInfo != nullptr);
     int32_t size = tracePacket.processesinfo_size();
     EXPECT_TRUE(size == 1);
-    uint64_t timeStamp = 1616439852302;
-    BuiltinClocks clock = TS_CLOCK_REALTIME;
 
     ProcessMemoryInfo* memoryInfo2 = tracePacket.add_processesinfo();
     EXPECT_TRUE(memoryInfo2 != nullptr);
     size = tracePacket.processesinfo_size();
     EXPECT_TRUE(size == 2);
 
-    memParser->Parse(tracePacket, timeStamp, clock);
+    HtraceDataSegment dataSeg;
+    dataSeg.dataType = DATA_SOURCE_TYPE_MEM;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+    dataSeg.status = TS_PARSE_STATUS_PARSED;
+    dataSeg.timeStamp = 1616439852302;
+
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    dataSeg.protoData = memBytesView;
+
+    memParser->Parse(dataSeg, dataSeg.timeStamp, dataSeg.clockId);
     memParser->Finish();
     stream_.traceDataCache_->ExportDatabase(dbPath_);
 
@@ -244,7 +281,18 @@ HWTEST_F(HtraceMemParserTest, ParseEmptyMemoryData, TestSize.Level1)
     uint64_t timeStamp = 1616439852302;
     BuiltinClocks clock = TS_CLOCK_REALTIME;
 
-    memParser->Parse(tracePacket, timeStamp, clock);
+    HtraceDataSegment dataSeg;
+    dataSeg.dataType = DATA_SOURCE_TYPE_MEM;
+    dataSeg.clockId = TS_CLOCK_REALTIME;
+    dataSeg.status = TS_PARSE_STATUS_PARSED;
+    dataSeg.timeStamp = 1616439852302;
+
+    std::string memStrMsg = "";
+    tracePacket.SerializeToString(&memStrMsg);
+    ProtoReader::BytesView memBytesView(reinterpret_cast<const uint8_t*>(memStrMsg.data()), memStrMsg.size());
+    dataSeg.protoData = memBytesView;
+
+    memParser->Parse(dataSeg, dataSeg.timeStamp, dataSeg.clockId);
     memParser->Finish();
     delete memParser;
 

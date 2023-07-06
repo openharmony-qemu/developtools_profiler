@@ -194,18 +194,7 @@ describe('TabPaneFilter Test', () => {
         .constraints-input[disabled]{
             background: var(--dark-background5,#ededed);
         }
-        .mining-button{
-            opacity: 0.9;
-            font-size: 13px;
-            color: #0A59F7;
-            text-align: center;
-            line-height: 16px;
-            background: var(--dark-background3,#F4F3F4);
-            border: 1px solid var(--dark-background8,#F4F3F4);
-            border-radius: 16px;
-            padding: 2px 18px;
-        }
-        .library-button{
+        .reset-button{
             opacity: 0.9;
             font-size: 13px;
             color: #0A59F7;
@@ -310,7 +299,7 @@ describe('TabPaneFilter Test', () => {
                      
                  </div>
                  <div style="display: flex;justify-content: space-around; margin-top: 8px">
-                     <div class="mining-button">Reset</div>
+                     <div class="mining-button reset-button">Reset</div>
                  </div>
             </div>
             <span class="describe tree max-spacing" id="data-mining">Symbol Filter</span>
@@ -321,7 +310,7 @@ describe('TabPaneFilter Test', () => {
                      
                  </div>
                  <div style="display: flex;justify-content: space-around; margin-top: 8px">
-                     <div class="library-button">Reset</div>
+                     <div class="library-button reset-button">Reset</div>
                  </div>
             </div>
             <span class="describe tree max-spacing" id="data-library">Library Filter</span>

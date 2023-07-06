@@ -35,7 +35,7 @@ describe('TabPanePowerDetails Test', () => {
   let litTable = document.querySelector('#tb-power-details-energy') as LitTable;
   it('TabPanePowerDetailsTest01', function () {
     let tabPanePowerDetails = new TabPanePowerDetails();
-    tabPanePowerDetails.tbl = jest.fn(() => litTable);
+    tabPanePowerDetails.tblPowerDetails = jest.fn(() => litTable);
     let MockPowerDetailsData = sqlit.getTabPowerDetailsData;
     let detail = [
       {
@@ -100,7 +100,7 @@ describe('TabPanePowerDetails Test', () => {
       powerEnergy: [0, 1, 2],
       anomalyEnergy: [0, 1, 2],
     };
-    tabPanePowerDetails.tbl.recycleDataSource = jest.fn(() => list);
+    tabPanePowerDetails.tblPowerDetails.recycleDataSource = jest.fn(() => list);
     tabPanePowerDetails.data = list;
     expect(tabPanePowerDetails.data).toBeUndefined();
   });
@@ -110,14 +110,16 @@ describe('TabPanePowerDetails Test', () => {
     expect(tabPanePowerDetails.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .power-details-table{
+            height: auto;
+        }
         :host{
             display: flex;
             flex-direction: column;
             padding: 10px 10px;
         }
-
         </style>
-        <lit-table id="tb-power-details-energy" style="height: auto">
+        <lit-table id="tb-power-details-energy" class="power-details-table">
             <lit-table-column order width="100px" title="" data-index="event" key="event" align="flex-start" >
             </lit-table-column>
             <lit-table-column order width="60px" title="UID" data-index="uid" key="uid" align="flex-start" >

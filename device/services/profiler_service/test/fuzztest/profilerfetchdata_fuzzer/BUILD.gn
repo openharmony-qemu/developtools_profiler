@@ -38,7 +38,7 @@ ohos_fuzztest("ProfilerFetchDataFuzzTest") {
     "../../..:profiler_service",
     "../../../../plugin_service:hiprofiler_plugin_service",
   ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
 }
 
 ###############################################################################

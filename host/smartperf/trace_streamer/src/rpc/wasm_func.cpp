@@ -130,13 +130,14 @@ EMSCRIPTEN_KEEPALIVE int32_t TraceStreamerParseDataEx(int32_t dataLen)
     }
     return -1;
 }
-EMSCRIPTEN_KEEPALIVE int32_t
-    TraceStreamerDownloadELFEx(int32_t totalLen, int32_t fileNameLen, int32_t dataLen, int32_t count, int32_t finish)
+EMSCRIPTEN_KEEPALIVE int32_t TraceStreamerDownloadELFEx(int32_t totalLen,
+                                                        int32_t fileNameLen,
+                                                        int32_t dataLen,
+                                                        int32_t finish)
 {
     std::string fileName(reinterpret_cast<const char*>(g_FileNameBuf), fileNameLen);
 #if IS_WASM
-    if (g_wasmTraceStreamer.DownloadELFCallback(fileName, totalLen, g_reqBuf, dataLen, count, finish,
-                                                &ParseELFCallback)) {
+    if (g_wasmTraceStreamer.DownloadELFCallback(fileName, totalLen, g_reqBuf, dataLen, finish, &ParseELFCallback)) {
         return 0;
     }
 #endif

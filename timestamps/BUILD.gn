@@ -25,8 +25,8 @@ ohos_executable("timestamps") {
   install_images = [ "system" ]
 
   install_enable = true
-  subsystem_name = "developtools"
-  part_name = "profiler"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 group("timestamps_tool") {

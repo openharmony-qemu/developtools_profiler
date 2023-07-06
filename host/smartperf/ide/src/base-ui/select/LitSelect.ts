@@ -142,9 +142,9 @@ export class LitSelect extends BaseElement {
   set dataSource(selectDataSource: any) {
     selectDataSource.forEach((dateSourceBean: any) => {
       let selectOption = document.createElement('lit-select-option');
-      if (dateSourceBean.file_name) {
-        selectOption.textContent = dateSourceBean.file_name;
-        selectOption.setAttribute('value', dateSourceBean.file_name);
+      if (dateSourceBean.name) {
+        selectOption.textContent = dateSourceBean.name;
+        selectOption.setAttribute('value', dateSourceBean.name);
       }
       this.append(selectOption);
     });

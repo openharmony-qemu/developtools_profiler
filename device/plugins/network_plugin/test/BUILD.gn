@@ -45,7 +45,7 @@ ohos_unittest("networkplugin_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
 
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"

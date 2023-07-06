@@ -43,7 +43,7 @@ size_t SliceFilter::BeginSlice(const std::string& comm,
                                DataIndex cat,
                                DataIndex nameIndex)
 {
-    InternalTid internalTid = INVALID_UTID;
+    InternalTid internalTid = INVALID_ITID;
     if (threadGroupId > 0) {
         internalTid = streamFilters_->processFilter_->UpdateOrCreateThreadWithPidAndName(pid, threadGroupId, comm);
         pidTothreadGroupId_[pid] = threadGroupId;

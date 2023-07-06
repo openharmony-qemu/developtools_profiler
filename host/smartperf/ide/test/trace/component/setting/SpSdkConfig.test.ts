@@ -90,10 +90,7 @@ describe('spSdkConfig Test', () => {
   });
 
   it('spSdkConfigTest17', function () {
-    expect(spSdkConfig.initConfigList()).toBeUndefined();
-  });
-  it('spSdkConfigTest18', function () {
-    spSdkConfig.configList = {
+    spSdkConfig.sdkConfigList = {
       name: '',
       configuration: {
         ss: {
@@ -123,7 +120,7 @@ describe('spSdkConfig Test', () => {
     };
     expect(spSdkConfig.initConfig()).toBeUndefined();
   });
-  it('spSdkConfigTest19', function () {
+  it('spSdkConfigTest18', function () {
     expect(spSdkConfig.getGpuConfig()).toStrictEqual({
       aa: '11',
       cc: 0,

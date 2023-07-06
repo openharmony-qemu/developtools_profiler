@@ -209,7 +209,8 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     this.searchValue = '';
     this.dataSource = [];
     this.allProcess = [];
-    this.callChainMap = new Map<number, PerfCall>();
+    this.callChainMap.clear();
+    ProcedureLogicWorkerPerf.cmdLineResult = null;
   }
 
   initPerfCallChainBottomUp(callChains: PerfCallChain[]) {
@@ -637,11 +638,12 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
   }
 
   findSearchNode(sampleArray: PerfCallChainMerageData[], search: string, parentSearch: boolean) {
+    search = search.toLocaleLowerCase();
     sampleArray.forEach((sample) => {
-      if ((sample.symbol && sample.symbol.includes(search)) || parentSearch) {
+      if ((sample.symbol && sample.symbol.toLocaleLowerCase().includes(search)) || parentSearch) {
         sample.searchShow = true;
         let parentNode = sample.currentTreeParentNode;
-        sample.isSearch = sample.symbol != undefined && sample.symbol.includes(search);
+        sample.isSearch = sample.symbol != undefined && sample.symbol.toLocaleLowerCase().includes(search);
         while (parentNode != undefined && !parentNode.searchShow) {
           parentNode.searchShow = true;
           parentNode = parentNode.currentTreeParentNode;
@@ -733,8 +735,8 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     for (let sample of this.samplesData) {
       let callChains = [...this.callChainData[sample.sampleId]];
       const lastCallChain = callChains[callChains.length - 1];
-      const threadName = this.threadData[sample.tid].threadName || 'Thead' + '(' + sample.tid + ')';
-      const processName = this.threadData[sample.pid].threadName || 'Process' + '(' + sample.pid + ')';
+      const threadName = this.threadData[sample.tid].threadName || 'Thead';
+      const processName = this.threadData[sample.pid].threadName || 'Process';
       let analysisSample = new PerfAnalysisSample(
         threadName,
         processName,

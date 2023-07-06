@@ -19,7 +19,12 @@ import { TabPanePTS } from '../../../../../../dist/trace/component/trace/sheet/c
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 // @ts-ignore
 import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
-
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', ()=>{
+  return {
+    meauseAllRowHeight: ()=>{}
+  }
+})
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
@@ -140,6 +145,7 @@ describe('TabPanePTS Test', () => {
         cpu: 1111,
       },
     ]);
+    tab.recycleDataSource = jest.fn(() => []);
     tabPanePTS.tbl.recycleDataSource = jest.fn(() => dataArray);
     expect((tabPanePTS.data = dataArray)).toBeTruthy();
   });
@@ -154,19 +160,19 @@ describe('TabPanePTS Test', () => {
             padding: 10px 10px;
         }
         </style>
-        <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
-        <lit-table id="tb-states" style="height: auto" tree>
-            <lit-table-column width="27%" title="Process/Thread/State" data-index="title" key="title" align="flex-start">
+        <label id="pts-time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
+        <lit-table id="pts-tbl" style="height: auto" tree>
+            <lit-table-column class="pts-column" title="Process/Thread/State" data-index="title" key="title" align="flex-start" width="27%">
             </lit-table-column>
-            <lit-table-column width="1fr" title="Count" data-index="count" key="count" align="flex-start" >
+            <lit-table-column class="pts-column" title="Count" data-index="count" key="count" align="flex-start" width="1fr">
             </lit-table-column>
-            <lit-table-column width="1fr" title="Duration(ns)" data-index="wallDuration" key="wallDuration" align="flex-start" >
+            <lit-table-column class="pts-column" title="Duration(ns)" data-index="wallDuration" key="wallDuration" align="flex-start" width="1fr">
             </lit-table-column>
-            <lit-table-column width="1fr" title="Min Duration(ns)" data-index="minDuration" key="minDuration" align="flex-start" >
+            <lit-table-column class="pts-column" title="Min Duration(ns)" data-index="minDuration" key="minDuration" align="flex-start" width="1fr">
             </lit-table-column>
-            <lit-table-column width="1fr" title="Avg Duration(ns)" data-index="avgDuration" key="avgDuration" align="flex-start" >
+            <lit-table-column class="pts-column" title="Avg Duration(ns)" data-index="avgDuration" key="avgDuration" align="flex-start" width="1fr">
             </lit-table-column>
-            <lit-table-column width="1fr" title="Max Duration(ns)" data-index="maxDuration" key="maxDuration" align="flex-start" >
+            <lit-table-column class="pts-column" title="Max Duration(ns)" data-index="maxDuration" key="maxDuration" align="flex-start" width="1fr">
             </lit-table-column>
         </lit-table>
         "

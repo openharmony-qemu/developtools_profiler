@@ -23,6 +23,7 @@ import { ChartMode } from '../../../../bean/FrameChartStruct.js';
 import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { FileMerageBean } from '../../../../database/logic-worker/ProcedureLogicWorkerFileSystem.js';
+import { queryNativeHookSubType, queryNativeHookStatisticSubType } from '../../../../database/SqlLite.js';
 
 @element('tabpane-nm-calltree')
 export class TabpaneNMCalltree extends BaseElement {
@@ -51,6 +52,7 @@ export class TabpaneNMCalltree extends BaseElement {
   private filterResponseType: number = -1;
   private filterResponseSelect: string = '0';
   private responseTypes: any[] = [];
+  private subTypeArr: number[] = [];
 
   set data(nmCallTreeParam: SelectionParam | any) {
     if (nmCallTreeParam == this.currentSelection) {
@@ -110,11 +112,17 @@ export class TabpaneNMCalltree extends BaseElement {
         this.nmCallTreeFrameChart!.data = this.nmCallTreeSource;
         this.nmCallTreeFrameChart?.updateCanvas(true, this.clientWidth);
         this.nmCallTreeFrameChart?.calculateChartData();
+        this.switchFlameChart();
+        this.nmCallTreeFilter.icon = 'block';
       }
     );
   }
 
-  getParentTree(nmCallTreeSrc: Array<FileMerageBean>, nmCallTreeTarget: FileMerageBean, parents: Array<FileMerageBean>): boolean {
+  getParentTree(
+    nmCallTreeSrc: Array<FileMerageBean>,
+    nmCallTreeTarget: FileMerageBean,
+    parents: Array<FileMerageBean>
+  ): boolean {
     for (let nmCallTreeBean of nmCallTreeSrc) {
       if (nmCallTreeBean.id == nmCallTreeTarget.id) {
         parents.push(nmCallTreeBean);
@@ -176,7 +184,7 @@ export class TabpaneNMCalltree extends BaseElement {
     this.filesystemTbr!.dataSource = resultLength == 0 ? [] : resultValue;
   }
 
-  showButtomMenu(isShow: boolean) {
+  showBottomMenu(isShow: boolean) {
     if (isShow) {
       this.nmCallTreeFilter.showThird(true);
       this.nmCallTreeFilter.setAttribute('first', '');
@@ -194,8 +202,33 @@ export class TabpaneNMCalltree extends BaseElement {
     }
   }
 
-  initFilterTypes() {
+  async initFilterTypes() {
     let currentNMCallTreeFilter = this.shadowRoot?.querySelector<TabPaneFilter>('#nm-call-tree-filter');
+    let secondFilterList = ['All Heap & Anonymous VM', 'All Heap', 'All Anonymous VM'];
+
+    let that = this;
+    function addSubType(subTypeList: any) {
+      if (!subTypeList) {
+        return;
+      }
+      that.subTypeArr = [];
+      for (let data of subTypeList) {
+        secondFilterList.push(data.subType);
+        that.subTypeArr.push(data.subTypeId);
+      }
+    }
+
+    if (this.currentSelection!.nativeMemory!.length > 0) {
+      let subTypeList = await queryNativeHookSubType(this.currentSelection!.leftNs, this.currentSelection!.rightNs);
+      addSubType(subTypeList);
+    } else {
+      let subTypeList = await queryNativeHookStatisticSubType(
+        this.currentSelection!.leftNs,
+        this.currentSelection!.rightNs
+      );
+      addSubType(subTypeList);
+    }
+
     if (this.currentSelection!.nativeMemory.length > 0) {
       procedurePool.submitWithName('logic1', 'native-memory-get-responseType', {}, undefined, (res: any) => {
         this.responseTypes = res;
@@ -207,7 +240,7 @@ export class TabpaneNMCalltree extends BaseElement {
         }
         currentNMCallTreeFilter!.setSelectList(
           null,
-          null,
+          secondFilterList,
           'Allocation Lifespan',
           'Allocation Type',
           this.responseTypes.map((item: any) => {
@@ -226,7 +259,13 @@ export class TabpaneNMCalltree extends BaseElement {
         this.filterResponseType = -1;
       });
     } else {
-      currentNMCallTreeFilter!.setSelectList(null, null, 'Allocation Lifespan', 'Allocation Type', undefined);
+      currentNMCallTreeFilter!.setSelectList(
+        null,
+        secondFilterList,
+        'Allocation Lifespan',
+        'Allocation Type',
+        undefined
+      );
       currentNMCallTreeFilter!.setFilterModuleSelect('#first-select', 'width', '150px');
       currentNMCallTreeFilter!.setFilterModuleSelect('#second-select', 'width', '150px');
       currentNMCallTreeFilter!.firstSelect = '0';
@@ -244,7 +283,7 @@ export class TabpaneNMCalltree extends BaseElement {
     this.nmCallTreeLoadingPage = this.shadowRoot?.querySelector('.nm-call-tree-loading');
     this.nmCallTreeFrameChart!.addChartClickListener((needShowMenu: boolean) => {
       this.parentElement!.scrollTo(0, 0);
-      this.showButtomMenu(needShowMenu);
+      this.showBottomMenu(needShowMenu);
       this.needShowMenu = needShowMenu;
     });
     this.nmCallTreeTbl!.rememberScrollTop = true;
@@ -287,7 +326,11 @@ export class TabpaneNMCalltree extends BaseElement {
         if (nmCallTreeFuncData.item.checked) {
           nmCallTreeFuncArgs.push({
             funcName: 'splitTree',
-            funcArgs: [nmCallTreeFuncData.item.name, nmCallTreeFuncData.item.select == '0', nmCallTreeFuncData.item.type == 'symbol'],
+            funcArgs: [
+              nmCallTreeFuncData.item.name,
+              nmCallTreeFuncData.item.select == '0',
+              nmCallTreeFuncData.item.type == 'symbol',
+            ],
           });
         } else {
           nmCallTreeFuncArgs.push({
@@ -314,7 +357,11 @@ export class TabpaneNMCalltree extends BaseElement {
         });
         nmCallTreeFuncArgs.push({
           funcName: 'splitTree',
-          funcArgs: [nmCallTreeFuncData.item.name, nmCallTreeFuncData.item.select == '0', nmCallTreeFuncData.item.type == 'symbol'],
+          funcArgs: [
+            nmCallTreeFuncData.item.name,
+            nmCallTreeFuncData.item.select == '0',
+            nmCallTreeFuncData.item.type == 'symbol',
+          ],
         });
       } else if (nmCallTreeFuncData.type == 'button') {
         if (nmCallTreeFuncData.item == 'symbol') {
@@ -322,7 +369,10 @@ export class TabpaneNMCalltree extends BaseElement {
             return;
           }
           if (this.currentSelectedData != undefined) {
-            this.nmCallTreeFilter!.addDataMining({ name: this.currentSelectedData.symbolName }, nmCallTreeFuncData.item);
+            this.nmCallTreeFilter!.addDataMining(
+              { name: this.currentSelectedData.symbolName },
+              nmCallTreeFuncData.item
+            );
             nmCallTreeFuncArgs.push({
               funcName: 'splitTree',
               funcArgs: [this.currentSelectedData.symbolName, false, true],
@@ -515,10 +565,12 @@ export class TabpaneNMCalltree extends BaseElement {
           this.nmCallTreeFrameChart?.calculateChartData();
         }
         // @ts-ignore
-        this.nmCallTreeTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 35 + 'px';
+        this.nmCallTreeTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 35 + 'px';
         this.nmCallTreeTbl?.reMeauseHeight();
         // @ts-ignore
-        this.filesystemTbr?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 45 - 21 + 'px';
+        this.filesystemTbr?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 45 - 21 + 'px';
         this.filesystemTbr?.reMeauseHeight();
         this.nmCallTreeLoadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }
@@ -528,21 +580,21 @@ export class TabpaneNMCalltree extends BaseElement {
     };
   }
 
-  switchFlameChart(flameChartData: any) {
+  switchFlameChart(flameChartData?: any) {
     let nmCallTreePageTab = this.shadowRoot?.querySelector('#show_table');
     let nmCallTreePageChart = this.shadowRoot?.querySelector('#show_chart');
-    if (flameChartData.icon == 'block') {
+    if (!flameChartData || flameChartData.icon == 'block') {
       nmCallTreePageChart?.setAttribute('class', 'show');
       nmCallTreePageTab?.setAttribute('class', '');
       this.isChartShow = true;
       this.nmCallTreeFilter!.disabledMining = true;
-      this.showButtomMenu(this.needShowMenu);
+      this.showBottomMenu(this.needShowMenu);
       this.nmCallTreeFrameChart!.data = this.nmCallTreeSource;
       this.nmCallTreeFrameChart?.calculateChartData();
     } else if (flameChartData.icon == 'tree') {
       nmCallTreePageChart?.setAttribute('class', '');
       nmCallTreePageTab?.setAttribute('class', 'show');
-      this.showButtomMenu(true);
+      this.showBottomMenu(true);
       this.isChartShow = false;
       this.nmCallTreeFilter!.disabledMining = false;
       this.nmCallTreeFrameChart!.clearCanvas();
@@ -561,6 +613,15 @@ export class TabpaneNMCalltree extends BaseElement {
     groupArgs.set('filterResponseType', this.filterResponseType);
     groupArgs.set('leftNs', this.currentSelection?.leftNs || 0);
     groupArgs.set('rightNs', this.currentSelection?.rightNs || 0);
+    let selections: Array<any> = [];
+    if (this.subTypeArr.length > 0) {
+      this.subTypeArr.map((memory) => {
+        selections.push({
+          memoryTap: memory,
+        });
+      });
+    }
+    groupArgs.set('statisticsSelection', selections);
     groupArgs.set(
       'nativeHookType',
       this.currentSelection!.nativeMemory.length > 0 ? 'native-hook' : 'native-hook-statistic'
@@ -649,14 +710,20 @@ export class TabpaneNMCalltree extends BaseElement {
     this.loadingList.push(1);
     this.nmCallTreeProgressEL!.loading = true;
     this.nmCallTreeLoadingPage.style.visibility = 'visible';
-    procedurePool.submitWithName('logic1', 'native-memory-calltree-action', args, undefined, (callTreeActionResults: any) => {
-      handler(callTreeActionResults);
-      this.loadingList.splice(0, 1);
-      if (this.loadingList.length == 0) {
-        this.nmCallTreeProgressEL!.loading = false;
-        this.nmCallTreeLoadingPage.style.visibility = 'hidden';
+    procedurePool.submitWithName(
+      'logic1',
+      'native-memory-calltree-action',
+      args,
+      undefined,
+      (callTreeActionResults: any) => {
+        handler(callTreeActionResults);
+        this.loadingList.splice(0, 1);
+        if (this.loadingList.length == 0) {
+          this.nmCallTreeProgressEL!.loading = false;
+          this.nmCallTreeLoadingPage.style.visibility = 'hidden';
+        }
       }
-    });
+    );
   }
 
   getDataByWorkerQuery(args: any, handler: Function) {

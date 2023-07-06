@@ -25,7 +25,7 @@
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/cmdline -> /data/local/tmp/utresources/proc/" src="res"/>
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/meminfo -> /data/local/tmp/utresources/proc/" src="res"/>
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/vmstat -> /data/local/tmp/utresources/proc/" src="res"/>
-            <option name="push" value="developtools/profiler/memorytest -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/memorytest -> /data/local/tmp/" src="out"/>
         </preparer>
     </target>
     <target name="smaps_stats_ut">
@@ -62,13 +62,13 @@
             <option name="push" value="plugins/cpu_plugin/test/resources/sys/devices/system/cpu/cpu5/cpufreq/cpuinfo_cur_freq -> /data/local/tmp/resources/sys/devices/system/cpu/cpu5/cpufreq" src="res"/>
             <option name="push" value="plugins/cpu_plugin/test/resources/sys/devices/system/cpu/cpu5/cpufreq/cpuinfo_max_freq -> /data/local/tmp/resources/sys/devices/system/cpu/cpu5/cpufreq" src="res"/>
             <option name="push" value="plugins/cpu_plugin/test/resources/sys/devices/system/cpu/cpu5/cpufreq/cpuinfo_min_freq -> /data/local/tmp/resources/sys/devices/system/cpu/cpu5/cpufreq" src="res"/>
-            <option name="push" value="developtools/profiler/cpudataplugintest -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/cpudataplugintest -> /data/local/tmp/" src="out"/>
         </preparer>
     </target>
     <target name="diskiodataplugin_ut">
         <preparer>
             <option name="push" value="plugins/diskio_plugin/test/resources/proc/vmstat -> /data/local/tmp/resources/proc/" src="res"/>
-            <option name="push" value="developtools/profiler/diskiodataplugintest -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/diskiodataplugintest -> /data/local/tmp/" src="out"/>
         </preparer>
     </target>
     <target name="networkplugin_ut">

@@ -44,7 +44,7 @@ describe('TabCpuDetailsThreads Test', () => {
                 timeStr: '',
             }
         ]
-        tabCpuDetailsThreads.table.reMeauseHeight = jest.fn();
+        tabCpuDetailsThreads.cpuDetailsThreadUsageTbl.reMeauseHeight = jest.fn();
         expect(tabCpuDetailsThreads.queryPieChartDataByType(data)).toBeUndefined();
     });
     it('TabCpuDetailsThreadsTest02', () => {

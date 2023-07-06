@@ -34,7 +34,7 @@ describe('TabPanePowerBattery Test', () => {
     document.body.innerHTML = `<lit-table id="tb-power-battery-energy"></lit-table>`;
     let litTable = document.querySelector('#tb-power-battery-energy') as LitTable;
     let tabPanePowerBattery = new TabPanePowerBattery();
-    tabPanePowerBattery.tbl = jest.fn(() => litTable);
+    tabPanePowerBattery.tblPower = jest.fn(() => litTable);
     let MockPowerBatteryData = sqlit.getTabPowerBatteryData;
     let battery = [
       {
@@ -75,7 +75,7 @@ describe('TabPanePowerBattery Test', () => {
       powerEnergy: [0, 1, 2],
       anomalyEnergy: [0, 1, 2],
     };
-    tabPanePowerBattery.tbl.recycleDataSource = jest.fn(() => tabPanePowerBatteryData);
+    tabPanePowerBattery.tblPower.recycleDataSource = jest.fn(() => tabPanePowerBatteryData);
     tabPanePowerBattery.data = tabPanePowerBatteryData;
   });
 
@@ -84,43 +84,21 @@ describe('TabPanePowerBattery Test', () => {
     expect(tabPanePowerBattery.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-            .current-static{
-                width: 100%;
-                display: flex;
-                top: 0;
-                background: var(--dark-background,#ffffff);
-                position: sticky;
-            }
-            .current-static h2{
-                width: 50%;
-                padding: 0 10px;
-                font-size: 16px;
-                font-weight: 400;
-                visibility: visible;
-            }
-            .bottom-scroll-area{
+            .power-battery-bottom-scroll-area{
                 display: flex;
                 height: auto;
                 overflow-y: auto;
                 margin-top: 1.2em;
             }
-            .battery-canvas{
+            .power-battery-battery-canvas{
                 width: 50%;
                 padding: 0 10px;
             }
-            
-            #batteryTitle{
-                opacity: 0.9;
-                font-size: 14px;
-                color: #000000;
-                text-align: left;
-                line-height: 16px;
-                font-weight: 700;
-            }
+         
         </style>
         <div style="width: 100%;height: auto;position: relative">
-            <div class="bottom-scroll-area">
-                <div class="battery-canvas">
+            <div class="power-battery-bottom-scroll-area">
+                <div class="power-battery-battery-canvas">
                     <lit-table id="tb-power-battery-energy" no-head style="height: auto">
                         <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px"></lit-table-column>
                         <lit-table-column title="value" data-index="value" key="value" align="flex-start" ></lit-table-column>

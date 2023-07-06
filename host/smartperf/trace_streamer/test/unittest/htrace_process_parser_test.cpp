@@ -21,6 +21,8 @@
 #include "htrace_process_parser.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/common_types.h"
+#include "process_plugin_result.pb.h"
+#include "process_plugin_result.pbreader.h"
 #include "trace_streamer_selector.h"
 
 using namespace testing::ext;
@@ -49,10 +51,14 @@ public:
 HWTEST_F(HtraceProcessParserTest, ParseHtraceProcessWithoutProcessData, TestSize.Level1)
 {
     TS_LOGI("test18-1");
-    auto processData = std::make_unique<ProcessData>();
     uint64_t ts = 100;
+    auto processData = std::make_unique<ProcessData>();
+    std::string processStrMsg = "";
+    processData->SerializeToString(&processStrMsg);
+    ProtoReader::BytesView processBytesView(reinterpret_cast<const uint8_t*>(processStrMsg.data()),
+                                            processStrMsg.size());
     HtraceProcessParser htraceProcessParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceProcessParser.Parse(*processData, ts);
+    htraceProcessParser.Parse(processBytesView, ts);
     auto size = stream_.traceDataCache_->GetConstLiveProcessData().Size();
     EXPECT_FALSE(size);
 }
@@ -78,8 +84,12 @@ HWTEST_F(HtraceProcessParserTest, ParseHtraceProcessWithProcessData, TestSize.Le
     processInfo->set_ppid(PPID);
     processInfo->set_uid(UID);
 
+    std::string processStrMsg = "";
+    processData->SerializeToString(&processStrMsg);
+    ProtoReader::BytesView processBytesView(reinterpret_cast<const uint8_t*>(processStrMsg.data()),
+                                            processStrMsg.size());
     HtraceProcessParser htraceProcessParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceProcessParser.Parse(*processData, ts);
+    htraceProcessParser.Parse(processBytesView, ts);
     htraceProcessParser.Finish();
 
     auto size = stream_.traceDataCache_->GetConstLiveProcessData().Size();
@@ -118,8 +128,12 @@ HWTEST_F(HtraceProcessParserTest, ParseHtraceProcessWithTwoProcessData, TestSize
     processInfoSecond->set_ppid(PPID_02);
     processInfoSecond->set_uid(UID_02);
 
+    std::string processStrMsg = "";
+    processData->SerializeToString(&processStrMsg);
+    ProtoReader::BytesView processBytesView(reinterpret_cast<const uint8_t*>(processStrMsg.data()),
+                                            processStrMsg.size());
     HtraceProcessParser htraceProcessParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceProcessParser.Parse(*processData, ts);
+    htraceProcessParser.Parse(processBytesView, ts);
     htraceProcessParser.Finish();
 
     auto size = stream_.traceDataCache_->GetConstLiveProcessData().Size();
@@ -180,8 +194,12 @@ HWTEST_F(HtraceProcessParserTest, ParseHtraceProcessWithThreeProcessData, TestSi
     processInfoThird->set_ppid(PPID_03);
     processInfoThird->set_uid(UID_03);
 
+    std::string processStrMsg = "";
+    processData->SerializeToString(&processStrMsg);
+    ProtoReader::BytesView processBytesView(reinterpret_cast<const uint8_t*>(processStrMsg.data()),
+                                            processStrMsg.size());
     HtraceProcessParser htraceProcessParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceProcessParser.Parse(*processData, ts);
+    htraceProcessParser.Parse(processBytesView, ts);
     htraceProcessParser.Finish();
 
     auto pidFirst = stream_.traceDataCache_->GetConstLiveProcessData().ProcessID()[0];
@@ -260,8 +278,12 @@ HWTEST_F(HtraceProcessParserTest, ParseHtraceProcessWithMultipleProcessData, Tes
     processInfoFour->set_ppid(PPID_04);
     processInfoFour->set_uid(UID_04);
 
+    std::string processStrMsg = "";
+    processData->SerializeToString(&processStrMsg);
+    ProtoReader::BytesView processBytesView(reinterpret_cast<const uint8_t*>(processStrMsg.data()),
+                                            processStrMsg.size());
     HtraceProcessParser htraceProcessParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    htraceProcessParser.Parse(*processData, ts);
+    htraceProcessParser.Parse(processBytesView, ts);
     htraceProcessParser.Finish();
 
     auto pidFirst = stream_.traceDataCache_->GetConstLiveProcessData().ProcessID()[0];

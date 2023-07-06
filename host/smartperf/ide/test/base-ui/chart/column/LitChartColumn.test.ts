@@ -36,16 +36,6 @@ describe('litChartColumn Test', () => {
     expect(litChartColumn).not.toBeUndefined();
   });
 
-  it('litChartColumnTest02', function () {
-    document.body.innerHTML = `
-        <div>
-            <lit-chart-column id='chart-cloumn'>小按钮</lit-chart-column>
-        </div> `;
-    let clo = document.getElementById('chart-cloumn') as LitChartColumn;
-    let mouseMoveEvent: MouseEvent = new MouseEvent('mousemove', <MouseEventInit>{ movementX: 1, movementY: 2 });
-    clo.canvas.dispatchEvent(mouseMoveEvent);
-  });
-
   it('litChartColumnTest03', function () {
     document.body.innerHTML = `
         <div>
@@ -114,7 +104,6 @@ describe('litChartColumn Test', () => {
       label: null,
     };
     let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 2 });
-    clo.canvas.dispatchEvent(mouseOutEvent);
     expect(clo.config).not.toBeUndefined();
     LitChartColumn.contains = jest.fn().mockResolvedValue(true);
 

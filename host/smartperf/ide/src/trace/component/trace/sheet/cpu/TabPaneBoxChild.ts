@@ -18,34 +18,28 @@ import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { BoxJumpParam, SelectionData } from '../../../../bean/BoxSelection.js';
 import { getTabBoxChildData } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
-import { SpSystemTrace } from '../../../SpSystemTrace.js';
 import { SPTChild } from '../../../../bean/StateProcessThread.js';
-import { TraceRow } from '../../base/TraceRow.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-box-child')
 export class TabPaneBoxChild extends BaseElement {
   private boxChildTbl: LitTable | null | undefined;
   private boxChildRange: HTMLLabelElement | null | undefined;
   private boxChildSource: Array<SPTChild> = [];
-  private loadDataInCache: boolean = false;
 
   set data(boxChildValue: BoxJumpParam) {
     // @ts-ignore
     this.boxChildTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
     this.boxChildRange!.textContent =
       'Selected range: ' + parseFloat(((boxChildValue.rightNs - boxChildValue.leftNs) / 1000000.0).toFixed(5)) + ' ms';
-    if (boxChildValue.state != null && boxChildValue.state != undefined && boxChildValue.processId && boxChildValue.threadId) {
+    if (
+      boxChildValue.state != null &&
+      boxChildValue.state != undefined &&
+      boxChildValue.processId &&
+      boxChildValue.threadId
+    ) {
       this.boxChildTbl!.recycleDataSource = [];
-      if (this.loadDataInCache) {
-        this.getDataByCache(boxChildValue).then((arr) => {
-          this.boxChildSource = arr;
-          // @ts-ignore
-          this.boxChildTbl?.recycleDataSource = arr;
-        });
-      } else {
-        this.getDataByDB(boxChildValue);
-      }
+      this.getDataByDB(boxChildValue);
     }
   }
 
@@ -60,11 +54,13 @@ export class TabPaneBoxChild extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.boxChildTbl!)
+    resizeObserver(this.parentElement!, this.boxChildTbl!);
   }
 
   getDataByDB(val: BoxJumpParam) {
+    this.boxChildTbl!.loading = true;
     getTabBoxChildData(val.leftNs, val.rightNs, val.state, val.processId, val.threadId).then((result) => {
+      this.boxChildTbl!.loading = false;
       if (result.length != null && result.length > 0) {
         result.map((e) => {
           e.startTime = Utils.getTimeString(e.startNs);
@@ -85,38 +81,6 @@ export class TabPaneBoxChild extends BaseElement {
         // @ts-ignore
         this.boxChildTbl?.recycleDataSource = [];
       }
-    });
-  }
-
-  getDataByCache(val: BoxJumpParam): Promise<Array<SPTChild>> {
-    return new Promise<Array<SPTChild>>((resolve, reject) => {
-      let arr: Array<SPTChild> = [];
-      SpSystemTrace.SPT_DATA.map((spt) => {
-        let b1 = val.state != undefined && val.state != '' ? spt.state == val.state : true;
-        let b2 = val.processId != undefined && val.processId != -1 ? spt.processId == val.processId : true;
-        let b3 = val.threadId != undefined && val.threadId != -1 ? spt.threadId == val.threadId : true;
-        if (!(spt.end_ts < val.leftNs || spt.start_ts > val.rightNs) && b1 && b2 && b3) {
-          let sptChild = new SPTChild();
-          sptChild.startTime = Utils.getTimeString(spt.start_ts);
-          sptChild.absoluteTime = ((window as any).recordStartNS + spt.start_ts) / 1000000000;
-          sptChild.startNs = spt.start_ts;
-          sptChild.state = Utils.getEndState(spt.state)!;
-          sptChild.prior = spt.priority == undefined || spt.priority == null ? '-' : spt.priority + '';
-          sptChild.core = spt.cpu == undefined || spt.cpu == null ? '-' : 'CPU' + spt.cpu;
-          sptChild.processName =
-            (spt.process == undefined || spt.process == null || spt.process == '' ? 'process' : spt.process) +
-            '(' +
-            spt.processId +
-            ')';
-          sptChild.threadName =
-            (spt.thread == undefined || spt.thread == null || spt.thread == '' ? 'thread' : spt.thread) +
-            '(' +
-            spt.threadId +
-            ')';
-          arr.push(sptChild);
-        }
-      });
-      resolve(arr);
     });
   }
 
@@ -161,8 +125,11 @@ export class TabPaneBoxChild extends BaseElement {
     function compare(property, sort, type) {
       return function (boxChildLeftData: SelectionData, boxChildRightData: SelectionData) {
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(boxChildRightData[property]) - parseFloat(boxChildLeftData[property]) : parseFloat(boxChildLeftData[property]) - parseFloat(boxChildRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(boxChildRightData[property]) - parseFloat(boxChildLeftData[property])
+            : // @ts-ignore
+              parseFloat(boxChildLeftData[property]) - parseFloat(boxChildRightData[property]);
         } else {
           // @ts-ignore
           if (boxChildRightData[property] > boxChildLeftData[property]) {

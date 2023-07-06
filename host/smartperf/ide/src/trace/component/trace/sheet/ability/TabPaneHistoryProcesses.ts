@@ -20,7 +20,7 @@ import { getTabProcessHistoryData } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
 import { ProcessHistory } from '../../../../bean/AbilityMonitor.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-history-processes')
 export class TabPaneHistoryProcesses extends BaseElement {
@@ -45,7 +45,7 @@ export class TabPaneHistoryProcesses extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.historyProcessTbl!)
+    resizeObserver(this.parentElement!, this.historyProcessTbl!);
   }
 
   filterData() {
@@ -167,11 +167,17 @@ export class TabPaneHistoryProcesses extends BaseElement {
           // @ts-ignore
           return sort === 2 ? parseFloat(historyProcessRightData[property]) - parseFloat(historyProcessLeftData[property]) : parseFloat(historyProcessLeftData[property]) - parseFloat(historyProcessRightData[property]);
         } else if (type === 'cpuTime') {
-          return sort === 2 ? historyProcessRightData.cpuTimeNumber - historyProcessLeftData.cpuTimeNumber : historyProcessLeftData.cpuTimeNumber - historyProcessRightData.cpuTimeNumber;
+          return sort === 2
+            ? historyProcessRightData.cpuTimeNumber - historyProcessLeftData.cpuTimeNumber
+            : historyProcessLeftData.cpuTimeNumber - historyProcessRightData.cpuTimeNumber;
         } else if (type === 'lastSeen') {
-          return sort === 2 ? historyProcessRightData.lastSeenNumber - historyProcessLeftData.lastSeenNumber : historyProcessLeftData.lastSeenNumber - historyProcessRightData.lastSeenNumber;
+          return sort === 2
+            ? historyProcessRightData.lastSeenNumber - historyProcessLeftData.lastSeenNumber
+            : historyProcessLeftData.lastSeenNumber - historyProcessRightData.lastSeenNumber;
         } else if (type === 'firstSeen') {
-          return sort === 2 ? historyProcessRightData.firstSeenNumber - historyProcessLeftData.firstSeenNumber : historyProcessLeftData.firstSeenNumber - historyProcessRightData.firstSeenNumber;
+          return sort === 2
+            ? historyProcessRightData.firstSeenNumber - historyProcessLeftData.firstSeenNumber
+            : historyProcessLeftData.firstSeenNumber - historyProcessRightData.firstSeenNumber;
         } else if (type === 'alive') {
           let aaaa = 0;
           let bbbb = 0;

@@ -50,6 +50,7 @@ std::vector<std::string> presetPluginVec = {
     "libmemdataplugin.z.so",
     "libnetworkplugin.z.so",
     "libprocessplugin.z.so",
+    "libarktsplugin.z.so",
 };
 } // namespace
 

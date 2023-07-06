@@ -19,7 +19,7 @@ import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { Utils } from '../../base/Utils.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
 import { CpuFreqLimitsStruct } from '../../../../database/ui-worker/ProcedureWorkerCpuFreqLimits.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-cpu-freq-limits')
 export class TabPaneCpuFreqLimits extends BaseElement {
@@ -35,7 +35,8 @@ export class TabPaneCpuFreqLimits extends BaseElement {
     }
     this.selectionParam = cpuFreqLimitSelection;
     // @ts-ignore
-    this.cpuFreqLimitsTbl!.shadowRoot!.querySelector('.table').style.height = this.parentElement!.clientHeight - 25 + 'px';
+    this.cpuFreqLimitsTbl!.shadowRoot!.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 25 + 'px';
     let list: any[] = [];
     cpuFreqLimitSelection.cpuFreqLimitDatas.forEach((limitRowDatas: any) => {
       for (let i = 0, len = limitRowDatas.length; i < len; i++) {
@@ -68,7 +69,7 @@ export class TabPaneCpuFreqLimits extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.cpuFreqLimitsTbl!,25)
+    resizeObserver(this.parentElement!, this.cpuFreqLimitsTbl!, 25);
   }
 
   formatData(list: CpuFreqLimitsStruct[], start: number, end: number) {

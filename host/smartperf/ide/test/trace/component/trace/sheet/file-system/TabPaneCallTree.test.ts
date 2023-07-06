@@ -22,7 +22,13 @@ import '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
 import { FrameChart } from '../../../../../../dist/trace/component/chart/FrameChart.js';
 import '../../../../../../dist/trace/component/chart/FrameChart.js';
+
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+    return {};
+});
+
 import crypto from 'crypto';
+import {showButtonMenu} from "../../../../../../src/trace/component/trace/sheet/SheetUtils.js";
 
 // @ts-ignore
 window.ResizeObserver =
@@ -88,10 +94,10 @@ describe('TabPaneCallTree Test', () => {
         document.body.innerHTML = `<tabpane-calltree id="calltree"></tabpane-calltree>`;
         let calltree = document.querySelector<TabPaneCallTree>('#calltree');
         let filter = new TabPaneFilter();
-        calltree.filter = filter;
+        calltree.callTreeFilter = filter;
         let frameChart = new FrameChart();
         calltree.frameChart = frameChart;
-        calltree.filter.getDataLibrary = jest.fn(() => true);
+        calltree.callTreeFilter.getDataLibrary = jest.fn(() => true);
         calltree.data = data;
         expect(calltree.currentSelection).not.toBeUndefined();
     });
@@ -100,10 +106,10 @@ describe('TabPaneCallTree Test', () => {
         document.body.innerHTML = `<tabpane-calltree id="calltree"></tabpane-calltree>`;
         let calltree = document.querySelector<TabPaneCallTree>('#calltree');
         let filter = new TabPaneFilter();
-        calltree.filter = filter;
+        calltree.callTreeFilter = filter;
         let frameChart = new FrameChart();
         calltree.frameChart = frameChart;
-        calltree.filter.getDataLibrary = jest.fn(() => true);
+        calltree.callTreeFilter.getDataLibrary = jest.fn(() => true);
         calltree.data = data;
         let call = {
             id: '1',
@@ -117,10 +123,11 @@ describe('TabPaneCallTree Test', () => {
         document.body.innerHTML = `<tabpane-calltree id="calltree"></tabpane-calltree>`;
         let calltree = document.querySelector<TabPaneCallTree>('#calltree');
         let filter = new TabPaneFilter();
-        calltree.filter = filter;
-        calltree.showButtomMenu(true);
-        expect(calltree.filter.getAttribute('tree')).toBe('');
-        calltree.showButtomMenu(false);
+        calltree.callTreeFilter = filter;
+        calltree.showButtonMenu = jest.fn(() => true);
+        calltree.showButtonMenu(calltree.callTreeFilter, true);
+        expect(calltree.callTreeFilter.getAttribute('tree')).toBe(null);
+        calltree.showButtonMenu(calltree.callTreeFilter, false);
     });
 
     it('TabPaneCallTreeTest04', function () {
@@ -166,6 +173,6 @@ describe('TabPaneCallTree Test', () => {
             },
         ];
         calltree.setLTableData(resultData);
-        expect(calltree.dataSource.length).toEqual(1);
+        expect(calltree.callTreeDataSource.length).toEqual(1);
     });
 });

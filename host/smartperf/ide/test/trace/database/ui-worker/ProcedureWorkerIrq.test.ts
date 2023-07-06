@@ -50,7 +50,7 @@ describe('ProcedureWorkerIrq Test', () => {
     const ctx = canvas.getContext('2d');
     let data = {textMetricsWidth: 1}
     expect(
-      IrqStruct.drawString(ctx, '253', 2, {
+      IrqStruct.draw(ctx, '253', 2, {
         x: 20,
         y: 20,
         width: 100,

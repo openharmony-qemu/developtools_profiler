@@ -120,15 +120,19 @@ uint32_t ProcessFilter::UpdateOrCreateProcessWithName(uint32_t pid, std::string_
 uint32_t ProcessFilter::UpdateOrCreateThreadWithNameIndex(uint64_t timeStamp, uint32_t tid, DataIndex threadNameIndex)
 {
     TraceStdtype::Thread* thread = nullptr;
-    uint32_t internalTid = GetInternalTid(tid);
-    if (internalTid != INVALID_ID) {
-        if (threadNameIndex) {
-            thread = traceDataCache_->GetThreadData(internalTid);
+    auto& internalTids = GetInternalTids(tid);
+    if (internalTids.size()) {
+        if (!threadNameIndex) {
+            return internalTids.back();
+        }
+        for (auto i : internalTids) {
+            thread = traceDataCache_->GetThreadData(i);
             if (threadNameIndex != thread->nameIndex_) {
                 thread->nameIndex_ = threadNameIndex;
             }
         }
     } else {
+        InternalTid internalTid = INVALID_ITID;
         std::tie(internalTid, thread) = NewThread(tid);
         if (!thread) {
             return INVALID_ID;
@@ -139,8 +143,9 @@ uint32_t ProcessFilter::UpdateOrCreateThreadWithNameIndex(uint64_t timeStamp, ui
         if (timeStamp < thread->startT_) {
             thread->startT_ = timeStamp;
         }
+        return internalTid;
     }
-    return internalTid;
+    return internalTids.back();
 }
 uint32_t ProcessFilter::GetInternalTid(uint32_t tid, uint32_t pid) const
 {
@@ -172,6 +177,18 @@ uint32_t ProcessFilter::GetInternalTid(uint32_t tid) const
         return internalTid;
     }
     return INVALID_ID;
+}
+
+std::vector<InternalTid>& ProcessFilter::GetInternalTids(uint32_t tid)
+{
+    tmpTids_.clear();
+    auto itRange = tidMappingSet_.equal_range(tid);
+    auto it = itRange.first;
+    while (it != itRange.second) {
+        tmpTids_.push_back(it->second);
+        it++;
+    }
+    return tmpTids_;
 }
 
 bool ProcessFilter::isThreadNameEmpty(uint32_t tid) const

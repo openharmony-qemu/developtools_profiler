@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "common_types.h"
+#include "event_parser_base.h"
 #include "htrace_plugin_time_parser.h"
 #include "json.hpp"
 #include "trace_streamer_config.h"
@@ -26,7 +27,7 @@ using json = nlohmann::json;
 
 namespace SysTuning {
 namespace TraceStreamer {
-class HtraceJSMemoryParser : public HtracePluginTimeParser {
+class HtraceJSMemoryParser : public EventParserBase, public HtracePluginTimeParser {
 public:
     HtraceJSMemoryParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceJSMemoryParser();
@@ -57,6 +58,7 @@ private:
     int32_t fileId_ = 0;
     int32_t jsFileId_ = 0;
     std::list<int32_t> fileIds_ = {};
+    uint64_t selfSizeCount_ = 0;
     bool enableFileSave_ = false;
     const std::string tmpJsMemoryTimelineData_ = "ts_tmp.jsmemory_timeline.heapsnapshot";
     const std::string tmpJsMemorySnapshotData_ = "ts_tmp.jsmemory_snapshot";

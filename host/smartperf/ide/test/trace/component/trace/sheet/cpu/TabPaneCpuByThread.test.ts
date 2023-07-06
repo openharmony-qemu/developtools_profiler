@@ -68,13 +68,18 @@ describe('TabPaneCpuByThread Test', () => {
     expect(tabPaneCpuByThread.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .cpu-by-thread-label{
+            width: 100%;
+            height: 20px;
+        }
         :host{
+            width: auto;
             display: flex;
             flex-direction: column;
             padding: 10px 10px;
         }
         </style>
-        <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
+        <label id="time-range" class="cpu-by-thread-label" style="text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
         <lit-table id="tb-cpu-thread" style="height:calc( 30vh - 25px )" >
             
         </lit-table>

@@ -801,7 +801,8 @@ export class FrameChart extends BaseElement {
         let box = this.canvas!.getBoundingClientRect();
         let element = document.documentElement;
         this.startX = box.left + Math.max(element.scrollLeft, document.body.scrollLeft) - element.clientLeft;
-        this.startY = box.top + Math.max(element.scrollTop, document.body.scrollTop) - element.clientTop + this.canvasScrollTop;
+        this.startY =
+          box.top + Math.max(element.scrollTop, document.body.scrollTop) - element.clientTop + this.canvasScrollTop;
       }
     }).observe(document.documentElement);
   }

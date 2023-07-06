@@ -15,7 +15,8 @@ import("../build/config.gni")
 
 subsys_name = OHOS_PROFILER_SUBSYS_NAME
 part_name = OHOS_PROFILER_PART_NAME
-subsys_x64_out = "clang_x64/$subsys_name/$part_name"
+subsys_x64_out = "clang_x64/thirdparty/grpc"
+proto_gen_ipc_dir = "clang_x64/$subsys_name/$part_name"
 libc_dir_proto = rebase_path("$asdk_libs_dir", "//")
 root_output_dir_proto = rebase_path("$root_out_dir", "//")
 

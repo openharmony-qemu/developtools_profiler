@@ -42,7 +42,8 @@ export class TabPaneIOTierStatistics extends BaseElement {
     this.loadingPage.style.visibility = 'visible';
     this.ioTierStatisticsSelectionParam = ioTierStatisticsSelection;
     // @ts-ignore
-    this.ioTierStatisticsTbl!.shadowRoot!.querySelector('.table').style.height = this.parentElement!.clientHeight - 20 + 'px';
+    this.ioTierStatisticsTbl!.shadowRoot!.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 20 + 'px';
     this.queryDataByDB(ioTierStatisticsSelection);
   }
 
@@ -57,7 +58,8 @@ export class TabPaneIOTierStatistics extends BaseElement {
       this.ioTierStatisticsSortType = evt.detail.sort;
 
       let newSource = JSON.parse(JSON.stringify(this.ioTierStatisticsSource));
-      if (this.ioTierStatisticsSortType != 0 && newSource.length > 0) this.sortTable(newSource[0], this.ioTierStatisticsSortKey);
+      if (this.ioTierStatisticsSortType != 0 && newSource.length > 0)
+        this.sortTable(newSource[0], this.ioTierStatisticsSortKey);
       this.ioTierStatisticsTbl!.recycleDataSource = newSource;
     });
   }
@@ -67,7 +69,8 @@ export class TabPaneIOTierStatistics extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement!.clientHeight != 0) {
         // @ts-ignore
-        this.ioTierStatisticsTbl!.shadowRoot!.querySelector('.table').style.height = this.parentElement!.clientHeight - 25 + 'px';
+        this.ioTierStatisticsTbl!.shadowRoot!.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 25 + 'px';
         this.ioTierStatisticsTbl!.reMeauseHeight();
         this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }
@@ -76,7 +79,8 @@ export class TabPaneIOTierStatistics extends BaseElement {
 
   getInitData(initIoTierItem: any, nameTitle: any = 'pname', subtitle: any = null) {
     if (nameTitle == 'path') {
-      initIoTierItem.path = initIoTierItem.path != null ? SpSystemTrace.DATA_DICT.get(parseInt(initIoTierItem.path)) : '-';
+      initIoTierItem.path =
+        initIoTierItem.path != null ? SpSystemTrace.DATA_DICT.get(parseInt(initIoTierItem.path)) : '-';
     }
     return {
       ...initIoTierItem,
@@ -125,8 +129,14 @@ export class TabPaneIOTierStatistics extends BaseElement {
         let currentChildObject = ioTierChildMap.get(resultItem[firstLevel] + '_' + resultItem[secondLevel]);
         currentChildObject.count += resultItem.count;
         currentChildObject.allDuration += resultItem.allDuration;
-        currentChildObject.minDuration = currentChildObject.minDuration <= resultItem.minDuration ? currentChildObject.minDuration : resultItem.minDuration;
-        currentChildObject.maxDuration = currentChildObject.maxDuration >= resultItem.maxDuration ? currentChildObject.maxDuration : resultItem.maxDuration;
+        currentChildObject.minDuration =
+          currentChildObject.minDuration <= resultItem.minDuration
+            ? currentChildObject.minDuration
+            : resultItem.minDuration;
+        currentChildObject.maxDuration =
+          currentChildObject.maxDuration >= resultItem.maxDuration
+            ? currentChildObject.maxDuration
+            : resultItem.maxDuration;
         currentChildObject.children.push(this.getInitData(resultItem, 'path', null));
       } else {
         ioTierChildMap.set(resultItem[firstLevel] + '_' + resultItem[secondLevel], {
@@ -139,8 +149,14 @@ export class TabPaneIOTierStatistics extends BaseElement {
         let currentFatherObject = ioTierFatherMap.get(resultItem[firstLevel]);
         currentFatherObject.count += resultItem.count;
         currentFatherObject.allDuration += resultItem.allDuration;
-        currentFatherObject.minDuration = currentFatherObject.minDuration <= resultItem.minDuration ? currentFatherObject.minDuration : resultItem.minDuration;
-        currentFatherObject.maxDuration = currentFatherObject.maxDuration >= resultItem.maxDuration ? currentFatherObject.maxDuration : resultItem.maxDuration;
+        currentFatherObject.minDuration =
+          currentFatherObject.minDuration <= resultItem.minDuration
+            ? currentFatherObject.minDuration
+            : resultItem.minDuration;
+        currentFatherObject.maxDuration =
+          currentFatherObject.maxDuration >= resultItem.maxDuration
+            ? currentFatherObject.maxDuration
+            : resultItem.maxDuration;
         currentFatherObject.children.push(this.getInitData(resultItem));
       } else {
         ioTierFatherMap.set(resultItem[firstLevel], {
@@ -151,11 +167,13 @@ export class TabPaneIOTierStatistics extends BaseElement {
       if (idx == 0) {
         ioTierAllNode.minDuration = resultItem.minDuration;
       } else {
-        ioTierAllNode.minDuration = ioTierAllNode.minDuration <= resultItem.minDuration ? ioTierAllNode.minDuration : resultItem.minDuration;
+        ioTierAllNode.minDuration =
+          ioTierAllNode.minDuration <= resultItem.minDuration ? ioTierAllNode.minDuration : resultItem.minDuration;
       }
       ioTierAllNode.count += resultItem.count;
       ioTierAllNode.allDuration += resultItem.allDuration;
-      ioTierAllNode.maxDuration = ioTierAllNode.maxDuration >= resultItem.maxDuration ? ioTierAllNode.maxDuration : resultItem.maxDuration;
+      ioTierAllNode.maxDuration =
+        ioTierAllNode.maxDuration >= resultItem.maxDuration ? ioTierAllNode.maxDuration : resultItem.maxDuration;
     });
 
     for (let ks of ioTierFatherMap.keys()) {
@@ -199,7 +217,8 @@ export class TabPaneIOTierStatistics extends BaseElement {
     ioTierAllNode.path = { tier: null, pid: null, path: null, value: 'All' };
     this.ioTierStatisticsSource = result.length > 0 ? [ioTierAllNode] : [];
     let newSource = JSON.parse(JSON.stringify(this.ioTierStatisticsSource));
-    if (this.ioTierStatisticsSortType != 0 && result.length > 0) this.sortTable(newSource[0], this.ioTierStatisticsSortKey);
+    if (this.ioTierStatisticsSortType != 0 && result.length > 0)
+      this.sortTable(newSource[0], this.ioTierStatisticsSortKey);
     this.ioTierStatisticsTbl!.recycleDataSource = newSource;
   }
 

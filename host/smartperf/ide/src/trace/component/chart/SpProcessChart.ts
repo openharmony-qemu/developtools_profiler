@@ -94,7 +94,8 @@ export class SpProcessChart {
       let asyncFuncGroups: Array<any> = asyncFuncGroup[key];
       if (asyncFuncGroups.length > 0) {
         let isIntersect = (left: any, right: any) =>
-          Math.max(left.startTs + left.dur, right.startTs + right.dur) - Math.min(left.startTs, right.startTs) < left.dur + right.dur;
+          Math.max(left.startTs + left.dur, right.startTs + right.dur) - Math.min(left.startTs, right.startTs) <
+          left.dur + right.dur;
         let depths: any = [];
         let createDepth = (currentDepth: number, index: number) => {
           if (depths[currentDepth] == undefined || !isIntersect(depths[currentDepth], asyncFuncGroups[index])) {
@@ -289,6 +290,7 @@ export class SpProcessChart {
           expectedRow.setAttribute('height', `${maxHeight}`);
           expectedRow.setAttribute('frame_type', expectedData[0].frame_type);
           expectedRow.name = `Expected Timeline`;
+          expectedRow.addTemplateTypes('FrameTimeline');
           expectedRow.setAttribute('children', '');
           expectedRow.supplier = () =>
             new Promise((resolve) => {
@@ -352,6 +354,7 @@ export class SpProcessChart {
             actualRow.style.height = `${maxHeight}px`;
             actualRow.setAttribute('height', `${maxHeight}`);
             actualRow.name = `Actual Timeline`;
+            actualRow.addTemplateTypes('FrameTimeline');
             actualRow.setAttribute('frame_type', actualData[0].frame_type);
             actualRow.setAttribute('children', '');
             actualRow.dataList = actualData;
@@ -424,13 +427,15 @@ export class SpProcessChart {
               if (linkProcessItem[0].rowEL.collect) {
                 linkProcessItem[0].rowEL.translateY = linkProcessItem[0].rowEL.getBoundingClientRect().top - 195;
               } else {
-                linkProcessItem[0].rowEL.translateY = linkProcessItem[0].rowEL.offsetTop - this.trace.rowsPaneEL!.scrollTop;
+                linkProcessItem[0].rowEL.translateY =
+                  linkProcessItem[0].rowEL.offsetTop - this.trace.rowsPaneEL!.scrollTop;
               }
               linkProcessItem[0].y = linkProcessItem[0].rowEL!.translateY! + linkProcessItem[0].offsetY;
               if (linkProcessItem[1].rowEL.collect) {
                 linkProcessItem[1].rowEL.translateY = linkProcessItem[1].rowEL.getBoundingClientRect().top - 195;
               } else {
-                linkProcessItem[1].rowEL.translateY = linkProcessItem[1].rowEL.offsetTop - this.trace.rowsPaneEL!.scrollTop;
+                linkProcessItem[1].rowEL.translateY =
+                  linkProcessItem[1].rowEL.offsetTop - this.trace.rowsPaneEL!.scrollTop;
               }
               linkProcessItem[1].y = linkProcessItem[1].rowEL!.translateY! + linkProcessItem[1].offsetY;
               if (linkProcessItem[0].rowEL.rowParentId == e.detail.rowId) {

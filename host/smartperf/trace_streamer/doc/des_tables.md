@@ -12,8 +12,8 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 ![GitHub Logo](../figures/db_hisys_event.png)
 ## TraceStreamer输出数据库包含以下表格
 | 表名称 |作用|
-| ----          |----      | 
-| app_name | 记录HiSysEvent事件的事件名与IDE部分事件的字段名为APPNAME中存放的相关信息的映射关系 | 
+| ----          |----      |
+| app_name | 记录HiSysEvent事件的事件名与IDE部分事件的字段名为APPNAME中存放的相关信息的映射关系 |
 | args | 记录方法参数集合|
 | bio_latency_sample | 记录IO操作相关方法调用，及调用栈数据|
 | callstack | 记录调用堆栈和异步调用信息，其中depth,stack_id和parent_stack_id仅在非异步调用中有效。当cookid不为空时，为异步调用，此时callid为进程唯一号，否则为线程唯一号|
@@ -28,7 +28,7 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | file_system_samp | 记录了调用栈的相关信息|
 | hidump | 记录FPS（Frame Per Second）数据|
 | hisys_event_measure | 记录了HiSysEvent事件相关数据，目前HiSysEvent事件包括了异常事件，IDE事件，器件状态事件 |
-| instant |  记录Sched_waking, sched_wakeup事件， 用作ThreadState表的上下文使用 | 
+| instant |  记录Sched_waking, sched_wakeup事件， 用作ThreadState表的上下文使用 |
 | irq | 记录中断相关事件|
 | js_heap_edges | 记录了js内存数据类对象对应的成员的信息|
 | js_heap_files | 记录了js内存数据的名称和时间|
@@ -45,6 +45,7 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | meta | 记录执行解析操作相关的基本信息|
 | native_hook | 记录堆内存申请与释放相关的数据|
 | native_hook_frame | 记录堆内存申请与释放相关的调用栈|
+| native_hook_statistic | 记录堆内存申请与释放相关的统计信息|
 | network | 抓取网络信息传输时产生的一些相关信息|
 | paged_memory_sample | 记录内存操作相关方法调用，及调用栈数据|
 | perf_callchain | 记录Hiperf采样数据的调用栈信息|
@@ -58,7 +59,7 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | process_measure_filter | 将进程ID作为key1，进程的内存，界面刷新，屏幕亮度等信息作为key2，唯一确定一个filter_id|
 | raw | 此数据结构主要作为ThreadState的上下文使用，这张表是sched_waking,sched_wakup, cpu_idle事件的原始记录|
 | sched_slice | 此数据结构主要作为ThreadState的上下文使用，这张表是sched_switch事件的原始记录|
-| smaps | 记录进程的内存消耗的相关信息采样| 
+| smaps | 记录进程的内存消耗的相关信息采样|
 | stat | 此结果用来统计数据解析中各类数据的数据条数，数据和合法性，数据的匹配程度（begin-end），数据的损失等，查看此结构对应的表，可对数据源有基本的了解|
 | symbols | 记录系统调用名称和其函数指针的对应关系，trace中用addr来映射function_name来节省存储空间|
 | syscall | 记录用户空间函数与内核空间函数相互调用记录|
@@ -89,15 +90,15 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |hisys_event_measure   |    -         |hisysevent-plugin  |JSON数据源             |
 |instant               |    -         |ftrace-plugin      |waking和wakeup事件     |
 |irq                   |    -         |ftrace-plugin      |记录中断事件           |
-| js_heap_edges        |    -         |js-memory          | js内存数据            |
-| js_heap_files        |    -         |js-memory          | js内存数据            |
-| js_heap_info         |    -         |js-memory          | js内存数据            |
-| js_heap_location     |    -         |js-memory          | js内存数据            |
-| js_heap_nodes        |    -         |js-memory          | js内存数据            |
-| js_heap_sample       |    -         |js-memory          | js内存数据            |
-| js_heap_string       |    -         |js-memory          | js内存数据            |
-| js_heap_trace_function_info | -     |js-memory          | js内存数据            |
-| js_heap_trace_node   |    -         |js-memory          | js内存数据            |                
+| js_heap_edges        |    -         |arkts-plugin          | js内存数据            |
+| js_heap_files        |    -         |arkts-plugin          | js内存数据            |
+| js_heap_info         |    -         |arkts-plugin          | js内存数据            |
+| js_heap_location     |    -         |arkts-plugin          | js内存数据            |
+| js_heap_nodes        |    -         |arkts-plugin          | js内存数据            |
+| js_heap_sample       |    -         |arkts-plugin          | js内存数据            |
+| js_heap_string       |    -         |arkts-plugin          | js内存数据            |
+| js_heap_trace_function_info | -     |arkts-plugin          | js内存数据            |
+| js_heap_trace_node   |    -         |arkts-plugin          | js内存数据            |
 |live_process          |    -         |process-plugin     |Monitor数据            |
 |network               |    -         |network-plugin     |Monitor数据            |
 |diskio                |    -         |diskio-plugin      |Monitor数据            |
@@ -105,8 +106,9 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |measure               |  通用的      |    -              |系统中的计量值（数值型）|
 |measure_filter        |  通用的      |    -              |计量值的查询辅助表      |
 |meta                  |  通用的      |    -              |记录解析现场数据（解析时间，数据类型，解析工具等）|
-|native_hook           |    -         |nativehook/hookdaemon |内存数据            |
-|native_hook_frame     |    -         |nativehook/hookdaemon |内存数据            |
+|native_hook           |    -         |nativehook/hookdaemon |malloc && mmap内存数据            |
+|native_hook_frame     |    -         |nativehook/hookdaemon |native_hook调用栈数据            |
+|native_hook_statistic |    -         |nativehook/hookdaemon |malloc && mmap统计数据 |
 |perf_callchain        |    -         |perf-plugin        |perf数据（非插件模式） |
 |perf_files            |    -         |    -              |perf数据（非插件模式） |
 |perf_report           |    -         |    -              |perf数据（非插件模式） |
@@ -158,11 +160,17 @@ native_hook表字段解释如下：
 
 native_hook_frame表记录内存申请/释放的调用堆栈。通过callChainId区分一组调用堆栈，depth为堆栈深度，depth为0时，表示当前行为栈顶数据。  
 ![GitHub Logo](../figures/dump_and_mem.png) 
+
+native_hook_statistic表记录内存申请/释放的统计信息。通过callChainId区分一组调用堆栈。每个统计事件将记录当前事件的callChainId，并统计当前调用栈内存分配/释放的总次数和总大小。
+![GitHub Logo](../figures/db_native_hook_statistic.png) 
+
 ### 查询举例
 - 已知tid = 123，查看当前线程的所有堆内存变化信息，可以使用如下SQL语句：  
 ```select native_hook.* from thread, native_hook where thread.tid = 123 and thread.id = native_hook.itid```
-- 已知callchainid = 0, 查看当前内存变化调用堆栈  
-```select * from native_hook_frame where callChainId = 0```
+- 已知callchainid = 1, 查看当前内存变化调用堆栈  
+```select * from native_hook_frame where callchain_id = 1```
+- 已知callchainid = 1, 查看当前内存变化调用堆栈对应的统计信息
+```select * from native_hook_statistic where callchain_id = 1```
 
 ### 日志表与进程线程表关系图
 log表记录日志信息。可以根据seq字段的连续性，来判断是否存在日志丢失的情况。  
@@ -894,6 +902,32 @@ js_heap_sample:记录timeline的时间轴信息
 - symbol_id：函数名  
 - file_id：函数所属文件
 
+### native_hook_statistic表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id      |INT       |
+|callchain_id      |INT       |
+|ipid      |INT       |
+|ts      |INT       |
+|type      |INT       |
+|apply_count      |INT       |
+|release_count      |INT       |
+|apply_size      |INT       |
+|release_size      |INT       |
+
+#### 表描述
+该表记录了内存申请/释放的统计信息。
+#### 关键字段描述
+- callchain_id：内存分配的回调链id
+- ipid：进程id
+- ts：统计数据上报时间
+- type：事件类型，0代表malloc事件，1代表mmap事件
+- apply_count：当前调用栈内存分配总次数
+- release_count：当前调用栈内存释放总次数
+- apply_size：当前调用栈累计分配总大小
+- release_size：当前调用栈累计释放总大小
+
 ### network表
 #### 表结构
 | Columns Name | SQL TYPE |
@@ -1427,7 +1461,7 @@ js_heap_sample:记录timeline的时间轴信息
 |start_ts      |INT       |
 |end_ts        |INT       |
 #### 表描述
-记录解析解析开始时间以及结束时间。
+该表记录了解析开始时间以及结束时间。
 #### 关键字段描述
-- start_ts：trace的开始时间，纳秒为单位  
+- start_ts：trace的开始时间，纳秒为单位
 - end_ts：trace的结束时间，纳秒为单位

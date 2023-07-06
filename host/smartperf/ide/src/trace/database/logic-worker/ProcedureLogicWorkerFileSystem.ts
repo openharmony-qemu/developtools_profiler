@@ -66,8 +66,8 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
   handle(data: any): void {
     if (data.id) {
       this.currentEventId = data.id;
-      for(let handle of this.handlerMap.values()){
-        handle.setEventId(this.currentEventId)
+      for (let handle of this.handlerMap.values()) {
+        handle.setEventId(this.currentEventId);
       }
     }
     if (data && data.type) {
@@ -207,6 +207,17 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
           break;
       }
     }
+  }
+
+  clearAll() {
+    ProcedureLogicWorkerFileSystem.data_dict.clear();
+    ProcedureLogicWorkerFileSystem.callChainsMap.clear();
+    for (let key of this.handlerMap.keys()) {
+      if (this.handlerMap.get(key).clear) {
+        this.handlerMap.get(key).clear();
+      }
+    }
+    this.handlerMap.clear();
   }
 
   queryFileSysEvents(leftNs: number, rightNs: number, typeArr: Array<number>, tab: string) {
@@ -437,10 +448,7 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
     }
     this.handlerMap.set('fileSystem', new FileSystemCallTreeHandler('fileSystem', this.queryData));
     this.handlerMap.set('io', new FileSystemCallTreeHandler('io', this.queryData));
-    this.handlerMap.set(
-      'virtualMemory',
-      new FileSystemCallTreeHandler('virtualMemory', this.queryData)
-    );
+    this.handlerMap.set('virtualMemory', new FileSystemCallTreeHandler('virtualMemory', this.queryData));
     ProcedureLogicWorkerFileSystem.callChainsMap.clear();
     this.queryData(
       this.currentEventId,
@@ -529,8 +537,16 @@ class FileSystemCallTreeHandler {
     this.queryData = queryData;
   }
 
-  setEventId(eventId: string){
-    this.currentEventId = eventId; 
+  clear() {
+    this.allProcess.length = 0;
+    this.dataSource.length = 0;
+    this.currentTreeList.length = 0;
+    this.samplesList.length = 0;
+    this.splitMapData = {};
+  }
+
+  setEventId(eventId: string) {
+    this.currentEventId = eventId;
   }
   queryCallChainsSamples(selectionParam: any) {
     switch (this.currentDataType) {

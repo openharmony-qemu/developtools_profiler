@@ -21,7 +21,7 @@ import { SystemDiskIOSummary } from '../../../../bean/AbilityMonitor.js';
 import { Utils } from '../../base/Utils.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-disk-ability')
 export class TabPaneDiskAbility extends BaseElement {
@@ -46,7 +46,7 @@ export class TabPaneDiskAbility extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.diskAbilityTbl!)
+    resizeObserver(this.parentElement!, this.diskAbilityTbl!);
   }
 
   filterData() {
@@ -156,23 +156,41 @@ export class TabPaneDiskAbility extends BaseElement {
           // @ts-ignore
           return sort === 2 ? parseFloat(diskAbilityRightData[property]) - parseFloat(diskAbilityLeftData[property]) : parseFloat(diskAbilityLeftData[property]) - parseFloat(diskAbilityRightData[property]);
         } else if (type === 'durationStr') {
-          return sort === 2 ? diskAbilityRightData.duration - diskAbilityLeftData.duration : diskAbilityLeftData.duration - diskAbilityRightData.duration;
+          return sort === 2
+            ? diskAbilityRightData.duration - diskAbilityLeftData.duration
+            : diskAbilityLeftData.duration - diskAbilityRightData.duration;
         } else if (type === 'dataReadStr') {
-          return sort === 2 ? diskAbilityRightData.dataRead - diskAbilityLeftData.dataRead : diskAbilityLeftData.dataRead - diskAbilityRightData.dataRead;
+          return sort === 2
+            ? diskAbilityRightData.dataRead - diskAbilityLeftData.dataRead
+            : diskAbilityLeftData.dataRead - diskAbilityRightData.dataRead;
         } else if (type === 'dataReadSecStr') {
-          return sort === 2 ? diskAbilityRightData.dataReadSec - diskAbilityLeftData.dataReadSec : diskAbilityLeftData.dataReadSec - diskAbilityRightData.dataReadSec;
+          return sort === 2
+            ? diskAbilityRightData.dataReadSec - diskAbilityLeftData.dataReadSec
+            : diskAbilityLeftData.dataReadSec - diskAbilityRightData.dataReadSec;
         } else if (type === 'dataWriteStr') {
-          return sort === 2 ? diskAbilityRightData.dataWrite - diskAbilityLeftData.dataWrite : diskAbilityLeftData.dataWrite - diskAbilityRightData.dataWrite;
+          return sort === 2
+            ? diskAbilityRightData.dataWrite - diskAbilityLeftData.dataWrite
+            : diskAbilityLeftData.dataWrite - diskAbilityRightData.dataWrite;
         } else if (type === 'dataWriteSecStr') {
-          return sort === 2 ? diskAbilityRightData.dataWriteSec - diskAbilityLeftData.dataWriteSec : diskAbilityLeftData.dataWriteSec - diskAbilityRightData.dataWriteSec;
+          return sort === 2
+            ? diskAbilityRightData.dataWriteSec - diskAbilityLeftData.dataWriteSec
+            : diskAbilityLeftData.dataWriteSec - diskAbilityRightData.dataWriteSec;
         } else if (type === 'readsInStr') {
-          return sort === 2 ? diskAbilityRightData.readsIn - diskAbilityLeftData.readsIn : diskAbilityLeftData.readsIn - diskAbilityRightData.readsIn;
+          return sort === 2
+            ? diskAbilityRightData.readsIn - diskAbilityLeftData.readsIn
+            : diskAbilityLeftData.readsIn - diskAbilityRightData.readsIn;
         } else if (type === 'readsInSecStr') {
-          return sort === 2 ? diskAbilityRightData.readsInSec - diskAbilityLeftData.readsInSec : diskAbilityLeftData.readsInSec - diskAbilityRightData.readsInSec;
+          return sort === 2
+            ? diskAbilityRightData.readsInSec - diskAbilityLeftData.readsInSec
+            : diskAbilityLeftData.readsInSec - diskAbilityRightData.readsInSec;
         } else if (type === 'writeOutStr') {
-          return sort === 2 ? diskAbilityRightData.writeOut - diskAbilityLeftData.writeOut : diskAbilityLeftData.writeOut - diskAbilityRightData.writeOut;
+          return sort === 2
+            ? diskAbilityRightData.writeOut - diskAbilityLeftData.writeOut
+            : diskAbilityLeftData.writeOut - diskAbilityRightData.writeOut;
         } else if (type === 'writeOutSecStr') {
-          return sort === 2 ? diskAbilityRightData.writeOutSec - diskAbilityLeftData.writeOutSec : diskAbilityLeftData.writeOutSec - diskAbilityRightData.writeOutSec;
+          return sort === 2
+            ? diskAbilityRightData.writeOutSec - diskAbilityLeftData.writeOutSec
+            : diskAbilityLeftData.writeOutSec - diskAbilityRightData.writeOutSec;
         } else {
           // @ts-ignore
           if (diskAbilityRightData[property] > diskAbilityLeftData[property]) {

@@ -20,6 +20,10 @@ import '../../../../../../dist/trace/component/trace/sheet/hiperf/TabPerfSampleL
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {}
+});
+
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -78,6 +82,6 @@ describe('TabPerfSampleList Test', () => {
   it('TabPerfSampleListTest02', function () {});
 
   it('TabPerfSampleListTest03', function () {
-    expect(sampleList.sortTable('timeString', 2)).toBeUndefined();
+    expect(sampleList.sortPerfSampleTable('timeString', 2)).toBeUndefined();
   });
 });

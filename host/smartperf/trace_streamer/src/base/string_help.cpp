@@ -15,12 +15,11 @@
 #include "string_help.h"
 #include <cstdio>
 #include <memory.h>
-#include <string>
-#include <vector>
 #define UNUSED(expr)             \
     do {                         \
         static_cast<void>(expr); \
     } while (0)
+
 #if !is_mingw
 int32_t memcpy_s(void* dest, uint32_t destSize, const void* src, size_t srcSize)
 {
@@ -34,6 +33,7 @@ int32_t memcpy_s(void* dest, uint32_t destSize, const void* src, size_t srcSize)
     }
     return 0;
 }
+
 int32_t sscanf_s(const char* buffer, const char* format, ...)
 {
     va_list ap;
@@ -49,6 +49,7 @@ int32_t strncpy_s(char* strDest, size_t destMax, const char* strSrc, size_t coun
     return destMax;
 }
 #endif
+
 void* memset_s(void* dest, size_t destSize, int32_t ch, size_t n)
 {
     UNUSED(destSize);
@@ -86,6 +87,7 @@ const char* GetDemangleSymbolIndex(const char* mangled)
         return demangle;
     }
 }
+
 int GetProcessorNumFromString(char* str)
 {
     int processorNum = 0;
@@ -108,4 +110,34 @@ int GetProcessorNumFromString(char* str)
         }
     }
     return processorNum;
+}
+
+bool EndWith(const std::string& str, const std::string& res)
+{
+    if (res.size() > str.size()) {
+        return false;
+    }
+    return str.compare(str.size() - res.size(), res.size(), res) == 0;
+}
+
+std::vector<std::string> SplitStringToVec(const std::string& str, const std::string& pat)
+{
+    std::vector<std::string> result;
+    int32_t curPos = 0;
+    int32_t patPos = 0;
+    int32_t strSize = str.size();
+    int32_t patSize = pat.size();
+    while (curPos < strSize) {
+        patPos = str.find(pat, curPos);
+        if (patPos == std::string::npos) {
+            break;
+        }
+        result.emplace_back(str.substr(curPos, patPos - curPos));
+        curPos = patPos + patSize;
+    }
+    if (curPos < strSize) {
+        result.emplace_back(str.substr(curPos));
+    }
+
+    return result;
 }

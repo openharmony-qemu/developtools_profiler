@@ -17,6 +17,8 @@
 import { TabPaneFrequencySample } from '../../../../../../dist/trace/component/trace/sheet/cpu/TabPaneFrequencySample.js';
 // @ts-ignore
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
+// @ts-ignore
+import {LitTable} from "../../../../../../dist/base-ui/table/lit-table.js";
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
@@ -107,8 +109,12 @@ describe('TabPaneFrequencySample Test', () => {
         cpu: 'cpu',
       },
     ]);
-    tabPaneFreSample.tbl.recycleDataSource = jest.fn(() => dataArray);
-    expect((tabPaneFreSample.data = dataArray)).toBeTruthy();
+    document.body.innerHTML = `<div><tabpane-frequency-sample></tabpane-frequency-sample></div>`;
+    let tabPane = document.querySelector('tabpane-frequency-sample') as TabPaneFrequencySample;
+    let tab = document.querySelector('#tb-states') as LitTable;
+    tabPane.tbl = jest.fn(() => tab);
+    tabPane.tbl.recycleDataSource = jest.fn(() => dataArray);
+    expect((tabPane.data = dataArray)).toBeTruthy();
   });
 
   it('TabPaneCounterSampleTest02', function () {
@@ -119,19 +125,19 @@ describe('TabPaneFrequencySample Test', () => {
     expect(tabPaneFreSample.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        .progress{
+        .progressFre{
             bottom: 5px;
             position: absolute;
             height: 1px;
             left: 0;
             right: 0;
         }
-        .loading{
+        :host{
+            padding: 10px 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .loadingFre{
             bottom: 0;
             position: absolute;
             left: 0;
@@ -142,15 +148,15 @@ describe('TabPaneFrequencySample Test', () => {
         }
         </style>
         <lit-table id="tb-states" style="height: auto" >
-            <lit-table-column width="20%" title="Cpu" data-index="counter" key="counter" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="20%" title="Cpu" data-index="counter" key="counter" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column width="1fr" title="Time" data-index="timeStr" key="timeStr" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="1fr" title="Time" data-index="timeStr" key="timeStr" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column width="1fr" title="Value" data-index="valueStr" key="valueStr" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="1fr" title="Value" data-index="valueStr" key="valueStr" align="flex-start" order>
             </lit-table-column>
         </lit-table>
-        <lit-progress-bar class="progress"></lit-progress-bar>
-        <div class="loading"></div>
+        <lit-progress-bar class="progressFre"></lit-progress-bar>
+        <div class="loadingFre"></div>
         "
 `);
   });

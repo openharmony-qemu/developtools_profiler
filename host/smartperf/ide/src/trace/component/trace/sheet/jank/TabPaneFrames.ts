@@ -18,7 +18,7 @@ import { SelectionData, SelectionParam } from '../../../../bean/BoxSelection';
 import { LitTable } from '../../../../../base-ui/table/lit-table';
 import { JankFramesStruct } from '../../../../bean/JankFramesStruct.js';
 import { JanksStruct } from '../../../../bean/JanksStruct.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-frames')
 export class TabPaneFrames extends BaseElement {
@@ -169,7 +169,7 @@ export class TabPaneFrames extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.framesTbl!)
+    resizeObserver(this.parentElement!, this.framesTbl!);
   }
 
   initHtml(): string {

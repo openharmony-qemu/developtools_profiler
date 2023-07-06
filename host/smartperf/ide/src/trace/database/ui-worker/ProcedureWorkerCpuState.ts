@@ -180,7 +180,10 @@ export class CpuStateRender extends PerfRender {
   ) {
     if (use && cpuStateRes.length > 0) {
       for (let i = 0, len = cpuStateRes.length; i < len; i++) {
-        if ((cpuStateRes[i].startTs || 0) + (cpuStateRes[i].dur || 0) >= startNS && (cpuStateRes[i].startTs || 0) <= endNS) {
+        if (
+          (cpuStateRes[i].startTs || 0) + (cpuStateRes[i].dur || 0) >= startNS &&
+          (cpuStateRes[i].startTs || 0) <= endNS
+        ) {
           CpuStateStruct.setFrame(cpuStateRes[i], 5, startNS, endNS, totalNS, frame);
         } else {
           cpuStateRes[i].frame = null;
@@ -195,7 +198,8 @@ export class CpuStateRender extends PerfRender {
       let pns = (endNS - startNS) / frame.width; //每个像素多少ns
       let y = frame.y + 5;
       let frameHeight = frame.height - 10;
-      let left = 0, right = 0;
+      let left = 0,
+        right = 0;
       for (let i = 0, j = list.length - 1, ib = true, jb = true; i < list.length, j >= 0; i++, j--) {
         if (list[j].startTs <= endNS && jb) {
           right = j;

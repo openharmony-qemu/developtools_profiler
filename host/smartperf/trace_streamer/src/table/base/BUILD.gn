@@ -13,7 +13,7 @@
 
 import("../../../build/ohos.gni")
 
-import("../..//ts.gni")
+import("../../../build/ts.gni")
 ohos_source_set("base_tables") {
   subsystem_name = "trace_streamer"
   part_name = "table"
@@ -26,10 +26,6 @@ ohos_source_set("base_tables") {
     "data_type_table.h",
     "datasource_clockid_table.cpp",
     "datasource_clockid_table.h",
-    "filter_constraints.cpp",
-    "filter_constraints.h",
-    "index_map.cpp",
-    "index_map.h",
     "meta_table.cpp",
     "meta_table.h",
     "range_table.cpp",

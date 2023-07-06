@@ -47,7 +47,6 @@ describe('litChartPie Test', () => {
     let litChartPie = new LitChartPie();
     expect(litChartPie).not.toBeUndefined();
   });
-
   it('litChartPieTest03', function () {
     Utils.uuid = jest.fn(() => {
       return Math.floor(Math.random() * 10 + 1);

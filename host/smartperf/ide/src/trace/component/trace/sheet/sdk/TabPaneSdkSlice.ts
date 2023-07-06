@@ -20,8 +20,8 @@ import { getTabSdkSliceData, queryStartTime, queryTotalTime } from '../../../../
 import { LitTableColumn } from '../../../../../base-ui/table/lit-table-column.js';
 import { Utils } from '../../base/Utils.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
-import {TabUtil} from "./TabUtil.js";
-import { resizeObserver } from "../SheetUtils.js";
+import { TabUtil } from './TabUtil.js';
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-sdk-slice')
 export class TabPaneSdkSlice extends BaseElement {
@@ -33,7 +33,8 @@ export class TabPaneSdkSlice extends BaseElement {
   private sqlMap: Map<number, string> = new Map<number, string>();
 
   set data(valSdkSlice: SelectionParam | any) {
-    this.sdkSliceRange!.textContent = 'Selected range: ' + ((valSdkSlice.rightNs - valSdkSlice.leftNs) / 1000000.0).toFixed(5) + ' ms';
+    this.sdkSliceRange!.textContent =
+      'Selected range: ' + ((valSdkSlice.rightNs - valSdkSlice.leftNs) / 1000000.0).toFixed(5) + ' ms';
     this.queryDataByDB(valSdkSlice);
   }
 
@@ -48,7 +49,7 @@ export class TabPaneSdkSlice extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!,this.tblSdkSlice!)
+    resizeObserver(this.parentElement!, this.tblSdkSlice!);
   }
 
   queryDataByDB(sdkSliceVal: SelectionParam | any) {
@@ -68,71 +69,85 @@ export class TabPaneSdkSlice extends BaseElement {
       if (sql == undefined) {
         return;
       }
-      getTabSdkSliceData(sql, startTime, sdkSliceVal.leftNs, sdkSliceVal.rightNs, slices, componentId).then((sliceItem) => {
-        this.keyList = [];
-        this.tblSdkSlice!.innerHTML = '';
-        this.statDataArray = [];
-        if (sliceItem.length != null && sliceItem.length > 0) {
-          for (let sliceItemIndex = 0; sliceItemIndex < sliceItem.length; sliceItemIndex++) {
-            const dataResult = sliceItem[sliceItemIndex];
-            let keys = Object.keys(dataResult);
-            // @ts-ignore
-            let values = Object.values(dataResult);
-            let sliceJsonText = '{';
-            for (let sliceKeyIndex = 0; sliceKeyIndex < keys.length; sliceKeyIndex++) {
-              let sliceKey = keys[sliceKeyIndex];
-              if (this.keyList.indexOf(sliceKey) <= -1) {
-                this.keyList.push(sliceKey);
+      getTabSdkSliceData(sql, startTime, sdkSliceVal.leftNs, sdkSliceVal.rightNs, slices, componentId).then(
+        (sliceItem) => {
+          this.keyList = [];
+          this.tblSdkSlice!.innerHTML = '';
+          this.statDataArray = [];
+          if (sliceItem.length != null && sliceItem.length > 0) {
+            for (let sliceItemIndex = 0; sliceItemIndex < sliceItem.length; sliceItemIndex++) {
+              const dataResult = sliceItem[sliceItemIndex];
+              let keys = Object.keys(dataResult);
+              // @ts-ignore
+              let values = Object.values(dataResult);
+              let sliceJsonText = '{';
+              for (let sliceKeyIndex = 0; sliceKeyIndex < keys.length; sliceKeyIndex++) {
+                let sliceKey = keys[sliceKeyIndex];
+                if (this.keyList.indexOf(sliceKey) <= -1) {
+                  this.keyList.push(sliceKey);
+                }
+                let sliceValue = values[sliceKeyIndex];
+                if (this.columnMap[sliceKey] == 'TimeStamp') {
+                  sliceValue = Utils.getTimeString(Number(sliceValue));
+                } else if (this.columnMap[sliceKey] == 'ClockTime') {
+                  sliceValue = Utils.getTimeStampHMS(Number(sliceValue));
+                } else if (this.columnMap[sliceKey] == 'RangTime') {
+                  sliceValue = Utils.getDurString(Number(sliceValue));
+                } else if (this.columnMap[sliceKey] == 'PercentType') {
+                  sliceValue = sliceValue + '%';
+                } else if (this.columnMap[sliceKey] == 'CurrencyType') {
+                  // @ts-ignore
+                  sliceValue = sliceValue.toString().replace(/\B(?=(\d{3})+$)/g, ',');
+                } else if (this.columnMap[sliceKey] == 'FIXED') {
+                  sliceValue = sliceValue.toFixed(2);
+                }
+                if (typeof sliceValue == 'string') {
+                  sliceValue = sliceValue.replace(/</gi, '&lt;').replace(/>/gi, '&gt;');
+                }
+                sliceJsonText += '"' + sliceKey + '"' + ': ' + '"' + sliceValue + '"';
+                if (sliceKeyIndex != keys.length - 1) {
+                  sliceJsonText += ',';
+                } else {
+                  sliceJsonText += '}';
+                }
               }
-              let sliceValue = values[sliceKeyIndex];
-              if (this.columnMap[sliceKey] == 'TimeStamp') {
-                sliceValue = Utils.getTimeString(Number(sliceValue));
-              } else if (this.columnMap[sliceKey] == 'ClockTime') {
-                sliceValue = Utils.getTimeStampHMS(Number(sliceValue));
-              } else if (this.columnMap[sliceKey] == 'RangTime') {
-                sliceValue = Utils.getDurString(Number(sliceValue));
-              } else if (this.columnMap[sliceKey] == 'PercentType') {
-                sliceValue = sliceValue + '%';
-              } else if (this.columnMap[sliceKey] == 'CurrencyType') {
-                // @ts-ignore
-                sliceValue = sliceValue.toString().replace(/\B(?=(\d{3})+$)/g, ',');
-              } else if (this.columnMap[sliceKey] == 'FIXED') {
-                sliceValue = sliceValue.toFixed(2);
+              let sliceParseData = JSON.parse(sliceJsonText);
+              if (
+                sliceParseData.start_ts != null &&
+                sliceParseData.end_ts != null &&
+                sliceParseData.start_ts > sliceParseData.end_ts &&
+                sliceParseData.end_ts == 0
+              ) {
+                sliceParseData.end_ts = totalTime;
               }
-              if (typeof sliceValue == 'string') {
-                sliceValue = sliceValue.replace(/</gi, '&lt;').replace(/>/gi, '&gt;');
-              }
-              sliceJsonText += '"' + sliceKey + '"' + ': ' + '"' + sliceValue + '"';
-              if (sliceKeyIndex != keys.length - 1) {
-                sliceJsonText += ',';
-              } else {
-                sliceJsonText += '}';
+              if (
+                this.isDateIntersection(
+                  sdkSliceVal.leftNs,
+                  sdkSliceVal.rightNs,
+                  sliceParseData.start_ts,
+                  sliceParseData.end_ts
+                )
+              ) {
+                this.statDataArray.push(sliceParseData);
               }
             }
-            let sliceParseData = JSON.parse(sliceJsonText);
-            if (sliceParseData.start_ts != null && sliceParseData.end_ts != null && sliceParseData.start_ts > sliceParseData.end_ts && sliceParseData.end_ts == 0) {
-              sliceParseData.end_ts = totalTime;
-            }
-            if (this.isDateIntersection(sdkSliceVal.leftNs, sdkSliceVal.rightNs, sliceParseData.start_ts, sliceParseData.end_ts)) {
-              this.statDataArray.push(sliceParseData);
-            }
+            this.tblSdkSlice!.recycleDataSource = this.statDataArray;
+          } else {
+            this.tblSdkSlice!.recycleDataSource = [];
           }
-          this.tblSdkSlice!.recycleDataSource = this.statDataArray;
-        } else {
-          this.tblSdkSlice!.recycleDataSource = [];
-        }
-        this.initDataElement();
+          this.initDataElement();
 
-        setTimeout(() => {
-          this.tblSdkSlice!.recycleDataSource = this.statDataArray;
-          new ResizeObserver(() => {
-            if (this.parentElement?.clientHeight != 0) {
-              this.tblSdkSlice!.style.height = '100%';
-              this.tblSdkSlice!.reMeauseHeight();
-            }
-          }).observe(this.parentElement!);
-        }, 200);
-      });
+          setTimeout(() => {
+            this.tblSdkSlice!.recycleDataSource = this.statDataArray;
+            new ResizeObserver(() => {
+              if (this.parentElement?.clientHeight != 0) {
+                this.tblSdkSlice!.style.height = '100%';
+                this.tblSdkSlice!.reMeauseHeight();
+              }
+            }).observe(this.parentElement!);
+          }, 200);
+        }
+      );
     });
   }
 
@@ -166,7 +181,8 @@ export class TabPaneSdkSlice extends BaseElement {
             if (type == 'slice') {
               let sliceSelectSql = 'select ';
               for (let sliceColumnsIndex = 0; sliceColumnsIndex < showType.columns.length; sliceColumnsIndex++) {
-                this.columnMap[showType.columns[sliceColumnsIndex].column] = showType.columns[sliceColumnsIndex].displayName;
+                this.columnMap[showType.columns[sliceColumnsIndex].column] =
+                  showType.columns[sliceColumnsIndex].displayName;
                 if (showType.columns[sliceColumnsIndex].showType.indexOf(3) > -1) {
                   switch (showType.columns[sliceColumnsIndex].column) {
                     case 'slice_id':

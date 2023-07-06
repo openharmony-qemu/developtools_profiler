@@ -77,6 +77,10 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     }
     if (protoConfig_.need_clear()) {
         fullCmd_ = ClearHilog();
+        if (fullCmd_.empty()) {
+            HILOG_ERROR(LOG_CORE, "HilogPlugin: fullCmd_ is empty");
+            return -1;
+        }
         std::vector<std::string> cmdArg;
         COMMON::SplitString(fullCmd_, " ", cmdArg);
         cmdArg.emplace(cmdArg.begin(), BIN_COMMAND);

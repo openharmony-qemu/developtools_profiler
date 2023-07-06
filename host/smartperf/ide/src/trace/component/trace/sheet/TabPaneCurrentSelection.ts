@@ -28,6 +28,7 @@ import {
   queryThreadStateArgs,
   queryThreadWakeUp,
   queryThreadWakeUpFrom,
+  queryCPUWakeUpIdFromBean,
 } from '../../../database/SqlLite.js';
 import { WakeupBean } from '../../../bean/WakeupBean.js';
 import { SpApplication } from '../../../SpApplication.js';
@@ -43,6 +44,7 @@ import { BinderArgBean } from '../../../bean/BinderArgBean.js';
 import { JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
 import { LitIcon } from '../../../../base-ui/icon/LitIcon.js';
 import { Utils } from '../base/Utils.js';
+import { SpSystemTrace } from '../../SpSystemTrace.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -89,6 +91,7 @@ export class TabPaneCurrentSelection extends BaseElement {
   weakUpBean: WakeupBean | null | undefined;
   private currentSelectionTbl: LitTable | null | undefined;
   private tableObserver: MutationObserver | undefined;
+  private scrollView: HTMLDivElement | null | undefined;
   // @ts-ignore
   private dpr: any = window.devicePixelRatio || window.webkitDevicePixelRatio || window.mozDevicePixelRatio || 1;
 
@@ -101,6 +104,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     callback: ((data: WakeupBean | null) => void) | undefined = undefined,
     scrollCallback?: (data: CpuStruct) => void
   ) {
+    this.setTableHeight('300px');
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     if (leftTitle) {
       leftTitle.innerText = 'Slice Details';
@@ -124,7 +128,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     if (data.processId) {
       list.push({
         name: 'Thread',
-        value: `<div style="margin-left: 5px;white-space: nowrap;display: flex;align-items: center">
+        value: `<div style="white-space: nowrap;display: flex;align-items: center">
 <div style="white-space:pre-wrap">${name || 'Process'} [${data.tid}]</div>
 <lit-icon style="cursor:pointer;margin-left: 5px" id="thread-id" name="select" color="#7fa1e7" size="20"></lit-icon>
 </div>`,
@@ -132,7 +136,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     } else {
       list.push({
         name: 'Thread',
-        value: `<div style="margin-left: 5px;white-space: nowrap;display: flex;align-items: center">
+        value: `<div style="white-space: nowrap;display: flex;align-items: center">
 <div style="white-space:pre-wrap">${name || 'Process'} [${data.tid}]</div>
 </div>`,
       });
@@ -164,6 +168,8 @@ export class TabPaneCurrentSelection extends BaseElement {
       this.currentSelectionTbl!.dataSource = list;
       let rightArea: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#table-right');
       let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+      let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
+        ?.shadowRoot?.querySelector("#custom-button");
       let threadClick = this.currentSelectionTbl?.shadowRoot?.querySelector('#thread-id');
       threadClick?.addEventListener('click', () => {
         //cpu点击
@@ -179,6 +185,8 @@ export class TabPaneCurrentSelection extends BaseElement {
         }
         if (rightTitle != null && rightTitle) {
           rightTitle.style.visibility = 'visible';
+          rightButton!.style.visibility = 'visible';
+          SpSystemTrace.btnTimer = null;
         }
         this.drawRight(canvas, bean);
       } else {
@@ -188,6 +196,7 @@ export class TabPaneCurrentSelection extends BaseElement {
         }
         if (rightTitle != null && rightTitle) {
           rightTitle.style.visibility = 'hidden';
+          rightButton!.style.visibility = 'hidden';
         }
       }
     });
@@ -201,6 +210,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     let isBinder = FuncStruct.isBinder(data);
     let isAsyncBinder = isBinder && FuncStruct.isBinderAsync(data);
     if (data.argsetid != undefined && data.argsetid != null) {
+      this.setTableHeight('550px');
       if (isAsyncBinder) {
         Promise.all([
           queryBinderByArgsId(data.argsetid!, data.startTs!, !data.funName!.endsWith('rcv')),
@@ -224,7 +234,7 @@ export class TabPaneCurrentSelection extends BaseElement {
           if (asyncBinderStract != undefined) {
             list.unshift({
               name: 'Name',
-              value: `<div style="margin-left: 5px;white-space: nowrap;display: flex;align-items: center">
+              value: `<div style="white-space: nowrap;display: flex;align-items: center">
 <div style="white-space:pre-wrap">${name || 'binder'}</div>
 <lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="function-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
 </div>`,
@@ -256,7 +266,7 @@ export class TabPaneCurrentSelection extends BaseElement {
               binderSliceId = Number(item.strValue);
               list.unshift({
                 name: 'Name',
-                value: `<div style="margin-left: 5px;white-space: nowrap;display: flex;align-items: center">
+                value: `<div style="white-space: nowrap;display: flex;align-items: center">
 <div style="white-space:pre-wrap">${name || 'binder'}</div>
 <lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="function-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
 </div>`,
@@ -310,6 +320,7 @@ export class TabPaneCurrentSelection extends BaseElement {
         });
       }
     } else {
+      this.setTableHeight('auto');
       list.push({ name: 'Name', value: name });
       list.push({
         name: 'StartTime',
@@ -324,12 +335,15 @@ export class TabPaneCurrentSelection extends BaseElement {
     }
   }
 
-  private tabCurrentSelectionInit(leftTitleStr:string) {
+  private tabCurrentSelectionInit(leftTitleStr: string) {
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
+    ?.shadowRoot?.querySelector("#custom-button");
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
     }
     if (leftTitle) {
       leftTitle.innerText = leftTitleStr;
@@ -337,6 +351,7 @@ export class TabPaneCurrentSelection extends BaseElement {
   }
 
   setClockData(data: ClockStruct) {
+    this.setTableHeight('auto');
     //时钟信息
     this.tabCurrentSelectionInit('Counter Details');
     let list: any[] = [];
@@ -348,12 +363,12 @@ export class TabPaneCurrentSelection extends BaseElement {
       name: 'Value',
       value: ColorUtils.formatNumberComma(data.value || 0),
     });
-    // list.push({name: 'Delta', value: ColorUtils.formatNumberComma(data.delta||0)})
     list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
     this.currentSelectionTbl!.dataSource = list;
   }
 
   setMemData(data: ProcessMemStruct) {
+    this.setTableHeight('auto');
     //时钟信息
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
@@ -375,10 +390,14 @@ export class TabPaneCurrentSelection extends BaseElement {
   }
 
   setIrqData(data: IrqStruct) {
+    this.setTableHeight('300px');
     this.initCanvas();
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
+    ?.shadowRoot?.querySelector("#custom-button");
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
     }
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     if (leftTitle) {
@@ -407,11 +426,15 @@ export class TabPaneCurrentSelection extends BaseElement {
     scrollWakeUp: (d: any) => void | undefined
   ) {
     //线程信息
+    this.setTableHeight('350px');
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
+    ?.shadowRoot?.querySelector("#custom-button");
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
     }
     if (leftTitle) {
       leftTitle.innerText = 'Thread State';
@@ -470,7 +493,7 @@ export class TabPaneCurrentSelection extends BaseElement {
       if (fromBean != null && fromBean != undefined && fromBean.pid != 0 && fromBean.tid != 0) {
         list.push({
           name: 'wakeup from tid',
-          value: `<div style="margin-left: 5px;white-space: nowrap;display: flex;align-items: center">
+          value: `<div style="white-space: nowrap;display: flex;align-items: center">
             <div style="white-space:pre-wrap">${fromBean.tid}</div>
             <lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="wakeup-from"  class="wakeup-click"  name="select" color="#7fa1e7" size="20"></lit-icon>
             </div>`,
@@ -480,7 +503,7 @@ export class TabPaneCurrentSelection extends BaseElement {
         wakeUps.map((e) => {
           list.push({
             name: 'wakeup tid',
-            value: `<div style="margin-left: 5px;white-space: nowrap;display: flex;align-items: center">
+            value: `<div style="white-space: nowrap;display: flex;align-items: center">
             <div style="white-space:pre-wrap">${e.tid}</div>
             <lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="wakeup-${e.tid}" class="wakeup-click" name="select" color="#7fa1e7" size="20"></lit-icon>
             </div>`,
@@ -532,6 +555,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     scrollCallback: ((d: any) => void) | undefined
   ) {
     //线程信息
+    this.setTableHeight('550px');
     this.tabCurrentSelectionInit('Slice Details');
     let list: any[] = [];
     list.push({ name: 'Name', value: data.name });
@@ -750,7 +774,16 @@ export class TabPaneCurrentSelection extends BaseElement {
     }
   }
 
-  private addJankScrollCallBackEvent(scrollCallback: ((d: any) => void) | undefined, callback: ((data: Array<any>) => void) | undefined, jankJumperList: JankTreeNode[]) {
+  private setTableHeight(height: string) {
+    this.scrollView!.scrollTop = 0;
+    this.currentSelectionTbl!.style.height = height;
+  }
+
+  private addJankScrollCallBackEvent(
+    scrollCallback: ((d: any) => void) | undefined,
+    callback: ((data: Array<any>) => void) | undefined,
+    jankJumperList: JankTreeNode[]
+  ) {
     let all = this.currentSelectionTbl?.shadowRoot?.querySelectorAll(`.jank_cla`);
     all!.forEach((a) => {
       a.addEventListener('click', () => {
@@ -793,6 +826,10 @@ export class TabPaneCurrentSelection extends BaseElement {
       if (wf && wf[0]) {
         wb = wf[0];
         if (wb != null) {
+          let wd = await queryCPUWakeUpIdFromBean(wb.tid);
+          if (wd && wd[0]) {
+            wb.itid = wd[0].itid;
+          }
           wb.wakeupTime = wakeupTs - recordStartTs;
           wb.process = Utils.PROCESS_MAP.get(wb.pid!);
           wb.thread = Utils.THREAD_MAP.get(wb.tid!);
@@ -810,6 +847,40 @@ export class TabPaneCurrentSelection extends BaseElement {
     return wb;
   }
 
+  /**
+   * 查询出 线程被唤醒的 线程链信息
+   * @param data
+   */
+  static async queryCPUWakeUpListFromBean(data: WakeupBean) {
+    let wb: WakeupBean | null = null;
+    let wakeup = await queryRunnableTimeByRunning(data.tid!, data.ts!);
+    if (wakeup && wakeup[0]) {
+      let wakeupTs = wakeup[0].ts as number;
+      let recordStartTs = (window as any).recordStartNS;
+      let wf = await queryThreadWakeUpFrom(data.itid!, wakeupTs);
+      if (wf && wf[0]) {
+        wb = wf[0];
+        if (wb != null) {
+          let wd = await queryCPUWakeUpIdFromBean(wb.tid);
+          if (wd && wd[0]) {
+            wb.itid = wd[0].itid;
+          }
+          wb.wakeupTime = wakeupTs - recordStartTs;
+          wb.process = Utils.PROCESS_MAP.get(wb.pid!);
+          wb.thread = Utils.THREAD_MAP.get(wb.tid!);
+          wb.schedulingLatency = (data.ts || 0) - (wb.wakeupTime || 0);
+          if (wb.process === null) {
+            wb.process = wb.thread;
+          }
+          if (wb.pid === undefined) {
+            wb.pid = wb.tid;
+          }
+          wb.schedulingDesc = INPUT_WORD;
+        }
+      }
+    }
+    return wb;
+  }
   /**
    * 查询出 线程唤醒了哪些线程信息
    */
@@ -932,8 +1003,8 @@ export class TabPaneCurrentSelection extends BaseElement {
 
   initElements(): void {
     this.currentSelectionTbl = this.shadowRoot?.querySelector<LitTable>('#selectionTbl');
+    this.scrollView = this.shadowRoot?.querySelector<HTMLDivElement>('#scroll_view');
     this.currentSelectionTbl?.addEventListener('column-click', (ev: any) => {});
-    this.addTableObserver();
   }
 
   addTableObserver() {
@@ -955,46 +1026,70 @@ export class TabPaneCurrentSelection extends BaseElement {
                 width: 100%;
                 display: flex;
             }
-            .table-title h2{
+            .table-title > h2{
                 font-size: 16px;
                 font-weight: 400;
                 visibility: visible;
                 width: 50%;
                 padding: 0 10px;
             }
+            #rightTitle{
+                width: 50%;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 10px;
+                font-size: 16px;
+                font-weight: 400;
+                visibility: visible;
+            }
+            #rightTitle > h2{
+                font-size: 16px;
+                font-weight: 400;
+            }           
+            #rightButton{
+                padding-top:12px;
+            }
             .scroll-area{
                 display: flex;
-                height: auto;
-                overflow-y: auto;
+                flex-direction: row;
+                flex: 1;
             }
             .table-left{
                 width: 50%;
+                height: 500px;
                 padding: 0 10px;
             }
             .table-right{
                 width: 50%;
             }
         </style>
-        <div style="width: 100%;height: auto;position: relative">
-            <div class="table-title">
-                <h2 id="leftTitle"></h2>
-                <h2 id="rightTitle">Scheduling Latency</h2>
+        <div id="scroll_view" style="display: flex;flex-direction: column;width: 100%;height: 100%;overflow: auto">
+            <div style="width: 100%;height: auto;position: relative">
+                <div class="table-title">
+                    <h2 id="leftTitle"></h2>
+                    <div id="rightTitle" >
+                        <h2 id="rightText">Scheduling Latency</h2>
+                        <div class="right">
+                        <lit-button id="rightButton"  height="32px" width="164px" color="black" font_size="14px" border="1px solid black" 
+                        >GetWakeupList</lit-button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="scroll-area">
-                <div class="table-left">
-                    <lit-table id="selectionTbl" no-head hideDownload style="height: auto">
+                <lit-table id="selectionTbl" class="table-left" no-head hideDownload>
                         <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px">
                             <template><div>{{name}}</div></template>
                         </lit-table-column>
                         <lit-table-column title="value" data-index="value" key="value" align="flex-start" >
                             <template><div style="display: flex;">{{value}}</div></template>
                         </lit-table-column>
-                    </lit-table>
-                </div>
+                </lit-table>
                 <div class="table-right">
                     <canvas id="rightDraw" style="width: 100%;height: 100%;"></canvas>
                 </div>
             </div>
+        </div>
         </div>
         `;
   }

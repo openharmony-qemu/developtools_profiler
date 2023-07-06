@@ -16,7 +16,7 @@
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { HeapDataInterface } from '../../../../../js-heap/HeapDataInterface.js';
-import { ConstructorItem, ConstructorType } from '../../../../../js-heap/model/UiStruct.js';
+import { ConstructorComparison, ConstructorItem, ConstructorType } from '../../../../../js-heap/model/UiStruct.js';
 import { LitTableColumn } from '../../../../../base-ui/table/lit-table-column.js';
 import '../../../../../base-ui/table/lit-table-column.js';
 import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
@@ -24,30 +24,26 @@ import '../TabPaneJsMemoryFilter.js';
 import { HeapSnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
 import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
-import { TabPaneSummary } from './TabPaneSummary.js';
 
 @element('tabpane-comparison')
 export class TabPaneComparison extends BaseElement {
   private comparisonTableEl: LitTable | undefined | null;
   private retainerTableEl: LitTable | undefined | null;
-  private comparisonsData: any;
-  private clickRow: any;
-  private retainsData: any;
-  private retainerNext: any;
-  private sortColumn: string | undefined | null;
-  private sortType: number | undefined | null;
+  private comparisonsData: Array<ConstructorComparison> = [];
+  private retainsData: Array<ConstructorItem> = [];
   private baseFileId: number | undefined | null;
   private targetFileId: number | undefined | null;
   private filterEl: TabPaneJsMemoryFilter | undefined | null;
   private selectEl: LitSelect | undefined | null;
   private search: HTMLInputElement | undefined | null;
   private comparisonData: Array<ConstructorItem> = [];
-  private comparisonFilter: Array<any> = [];
-  private leftArray: Array<any> = [];
-  private rightArray: Array<any> = [];
+  private comparisonFilter: Array<ConstructorComparison> = [];
+  private leftArray: Array<ConstructorComparison> = [];
+  private rightArray: Array<ConstructorItem> = [];
   private rightTheadTable: HTMLDivElement | undefined | null;
   private leftTheadTable: HTMLDivElement | undefined | null;
   private comparisonTable: HTMLDivElement | undefined | null;
+  private fileSize: number = 0;
 
   initElements(): void {
     this.comparisonTableEl = this.shadowRoot!.querySelector<LitTable>('#tb-comparison') as LitTable;
@@ -60,15 +56,20 @@ export class TabPaneComparison extends BaseElement {
     this.comparisonTable = this.comparisonTableEl.shadowRoot?.querySelector('.table') as HTMLDivElement;
     this.comparisonTableEl!.addEventListener('icon-click', (e) => {
       // @ts-ignore
-      this.clickRow = e.detail.data;
-      if (this.clickRow.status) {
-        this.clickRow.targetFileId = this.targetFileId;
-        let next = HeapDataInterface.getInstance().getNextForComparison(this.clickRow);
-        this.clickRow.children = next;
-        if (this.clickRow.children.length > 0) {
-          for (let item of this.clickRow.children) {
-            let nodeName = item.nodeName.concat(` @${item.id}`);
-            item.objectName = nodeName;
+      let clickRow = e.detail.data;
+      if (clickRow.status) {
+        clickRow.targetFileId = this.targetFileId;
+        let next = HeapDataInterface.getInstance().getNextForComparison(clickRow);
+        clickRow.children = next;
+        if (clickRow.children.length > 0) {
+          for (let item of clickRow.children) {
+            let nodeName = item.nodeName + ` @${item.id}`;
+            item.nodeId = ` @${item.id}`;
+            if (item.isString()) {
+              item.objectName = '"' + item.nodeName + '"' + ` @${item.id}`;
+            } else {
+              item.objectName = nodeName;
+            }
             item.deltaCount = '-';
             item.deltaSize = '-';
             if (item.edgeName != '') {
@@ -97,7 +98,7 @@ export class TabPaneComparison extends BaseElement {
           this.comparisonTableEl!.snapshotDataSource = [];
         }
       } else {
-        this.clickRow.status = true;
+        clickRow.status = true;
       }
       if (this.search!.value != '') {
         if (this.leftTheadTable!.hasAttribute('sort')) {
@@ -119,26 +120,28 @@ export class TabPaneComparison extends BaseElement {
     });
     this.retainerTableEl!.addEventListener('icon-click', (e) => {
       // @ts-ignore
-      this.retainerNext = e.detail.data as ConstructorItem;
-      if (this.retainerNext) {
+      let retainerNext = e.detail.data as ConstructorItem;
+      if (retainerNext) {
         if (this.retainsData.length > 0) {
-          if (this.retainerNext.status) {
-            this.retainerNext.getChildren();
+          if (retainerNext.status) {
+            retainerNext.getChildren();
             let i = 0;
             let that = this;
-            let retainsTable = function () {
-              const getList = function (list: any) {
-                list.forEach(function (row: any) {
-                  let shallow = Math.round((row.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-                  let retained = Math.round((row.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+            let retainsTable = () => {
+              const getList = (list: Array<ConstructorItem>) => {
+                list.forEach((row) => {
+                  let shallow = Math.round((row.shallowSize / this.fileSize) * 100) + '%';
+                  let retained = Math.round((row.retainedSize / this.fileSize) * 100) + '%';
                   row.shallowPercent = shallow;
                   row.retainedPercent = retained;
-                  let nodeId = row.nodeName.concat(` @${row.id}`);
+                  let nodeId = row.nodeName + ` @${row.id}`;
                   row.objectName = row.edgeName + '\xa0' + 'in' + '\xa0' + nodeId;
                   if (row.distance >= 100000000 || row.distance == -5) {
+                    // @ts-ignore
                     row.distance = '-';
                   }
                   i++;
+                  // @ts-ignore
                   if (i < that.retainsData[0].distance - 1 && list[0].distance != '-') {
                     list[0].getChildren();
                     list[0].expanded = false;
@@ -150,11 +153,11 @@ export class TabPaneComparison extends BaseElement {
                   }
                 });
               };
-              getList(that.retainerNext.children);
+              getList(retainerNext.children);
             };
             retainsTable();
           } else {
-            this.retainerNext.status = true;
+            retainerNext.status = true;
           }
           if (this.rightTheadTable!.hasAttribute('sort')) {
             this.retainerTableEl!.snapshotDataSource = this.rightArray;
@@ -173,24 +176,27 @@ export class TabPaneComparison extends BaseElement {
     this.comparisonTableEl!.addEventListener('column-click', (e) => {
       // @ts-ignore
       this.sortComprisonByColumn(e.detail.key, e.detail.sort);
+      this.comparisonTableEl!.reMeauseHeight();
     });
     this.retainerTableEl!.addEventListener('column-click', (e) => {
       // @ts-ignore
       this.sortRetainerByColumn(e.detail.key, e.detail.sort);
+      this.retainerTableEl!.reMeauseHeight();
     });
-    this.comparisonTableEl!.addEventListener('row-click', (e: any) => {
+    this.comparisonTableEl!.addEventListener('row-click', (e) => {
       this.rightTheadTable!.removeAttribute('sort');
       // @ts-ignore
       let item = e.detail.data as ConstructorItem;
       (item as any).isSelected = true;
       this.retainsData = HeapDataInterface.getInstance().getRetains(item);
       if (this.retainsData && this.retainsData.length > 0) {
-        this.retainsData.forEach((comparisonRetainEl: any) => {
-          let shallow = Math.round((comparisonRetainEl.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-          let retained = Math.round((comparisonRetainEl.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+        this.retainsData.forEach((comparisonRetainEl) => {
+          let shallow = Math.round((comparisonRetainEl.shallowSize / this.fileSize) * 100) + '%';
+          let retained = Math.round((comparisonRetainEl.retainedSize / this.fileSize) * 100) + '%';
           comparisonRetainEl.shallowPercent = shallow;
           comparisonRetainEl.retainedPercent = retained;
           if (comparisonRetainEl.distance >= 100000000 || comparisonRetainEl.distance === -5) {
+            // @ts-ignore
             comparisonRetainEl.distance = '-';
           }
           let nodeId = comparisonRetainEl.nodeName + ` @${comparisonRetainEl.id}`;
@@ -202,19 +208,21 @@ export class TabPaneComparison extends BaseElement {
           this.retainsData[0].getChildren();
           this.retainsData[0].expanded = false;
         }
-        let retainsTable = function () {
-          const getList = function (list: any) {
-            list.forEach(function (structRow: any) {
-              let shallow = Math.round((structRow.shallowSize / TabPaneSummary.fileSize) * 100) + '%';
-              let retained = Math.round((structRow.retainedSize / TabPaneSummary.fileSize) * 100) + '%';
+        let retainsTable = () => {
+          const getList = (list: Array<ConstructorItem>) => {
+            list.forEach((structRow) => {
+              let shallow = Math.round((structRow.shallowSize / this.fileSize) * 100) + '%';
+              let retained = Math.round((structRow.retainedSize / this.fileSize) * 100) + '%';
               structRow.shallowPercent = shallow;
               structRow.retainedPercent = retained;
-              let nodeId = structRow.nodeName.concat(` @${structRow.id}`);
+              let nodeId = structRow.nodeName + ` @${structRow.id}`;
               structRow.objectName = structRow.edgeName + '\xa0' + 'in' + '\xa0' + nodeId;
               if (structRow.distance >= 100000000 || structRow.distance === -5) {
+                // @ts-ignore
                 structRow.distance = '-';
               }
               i++;
+              // @ts-ignore
               if (i < that.retainsData[0].distance - 1 && list[0].distance != '-') {
                 list[0].getChildren();
                 list[0].expanded = false;
@@ -237,6 +245,7 @@ export class TabPaneComparison extends BaseElement {
         this.retainerTableEl!.style.height = 'calc(100% - 21px)';
         this.retainerTableEl!.reMeauseHeight();
       }).observe(this.parentElement!);
+      // @ts-ignore
       if ((e.detail as any).callBack) {
         // @ts-ignore
         (e.detail as any).callBack(true);
@@ -246,28 +255,16 @@ export class TabPaneComparison extends BaseElement {
       let data = evt.detail.data as ConstructorItem;
       (data as any).isSelected = true;
       if ((evt.detail as any).callBack) {
-        // @ts-ignore
         (evt.detail as any).callBack(true);
       }
     });
     this.classFilter();
   }
 
-  setSnapshotData(
-    data: HeapSnapshotStruct,
-    dataList: Array<HeapSnapshotStruct>,
-    scrollCallback: ((d: any, ds: any) => void) | undefined
-  ) {
-    if (scrollCallback) {
-      scrollCallback(data, dataList);
-    }
-    this.initComparison(data, dataList);
-  }
-
   initComparison(data: HeapSnapshotStruct, dataList: Array<HeapSnapshotStruct>) {
     this.clear();
     this.retainerTableEl!.snapshotDataSource = [];
-    let fileArr: any[] = [];
+    let fileArr: HeapSnapshotStruct[] = [];
     let that = this;
     for (let file of dataList) {
       if (file.id !== data.id) {
@@ -275,6 +272,7 @@ export class TabPaneComparison extends BaseElement {
       }
     }
     fileArr = fileArr.sort();
+    this.fileSize = data.size;
     this.initSelect(data.id, fileArr);
     this.baseFileId = data.id;
     this.targetFileId = fileArr[0].id;
@@ -287,7 +285,7 @@ export class TabPaneComparison extends BaseElement {
 
   updateComparisonData(baseFileId: number, targetFileId: number) {
     this.comparisonsData = HeapDataInterface.getInstance().getClassListForComparison(baseFileId, targetFileId);
-    this.comparisonsData.forEach((dataList: any) => {
+    this.comparisonsData.forEach((dataList) => {
       dataList.objectName = dataList.nodeName;
     });
     if (this.comparisonsData.length > 0) {
@@ -296,9 +294,10 @@ export class TabPaneComparison extends BaseElement {
     } else {
       this.comparisonTableEl!.snapshotDataSource = [];
     }
+    this.comparisonTableEl!.reMeauseHeight();
   }
 
-  initSelect(fileId: number, fileArr: Array<any>) {
+  initSelect(fileId: number, fileArr: Array<HeapSnapshotStruct>) {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -306,15 +305,18 @@ export class TabPaneComparison extends BaseElement {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].file_name) option.setAttribute('value', fileArr[0].file_name);
-    this.selectEl!.defaultValue = fileArr[0].file_name;
-    this.selectEl!.placeholder = fileArr[0].file_name;
+    if (fileArr[0].name) {
+      option.setAttribute('value', fileArr[0].name);
+    }
+    this.selectEl!.defaultValue = fileArr[0].name || '';
+    this.selectEl!.placeholder = fileArr[0].name || '';
     this.selectEl!.dataSource = fileArr;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
-      a.addEventListener('onSelected', (e: any) => {
+      a.addEventListener('onSelected', (e) => {
         this.comparisonTable!.scrollTop = 0;
+        this.retainerTableEl!.snapshotDataSource = [];
         for (let f of fileArr) {
-          if (input.value == f.file_name) {
+          if (input.value == f.name) {
             that.updateComparisonData(fileId, f.id);
           }
         }
@@ -324,8 +326,6 @@ export class TabPaneComparison extends BaseElement {
   }
 
   sortComprisonByColumn(column: string, sort: number) {
-    this.sortColumn = column;
-    this.sortType = sort;
     switch (sort) {
       case 0:
         if (this.search!.value === '') {
@@ -384,8 +384,6 @@ export class TabPaneComparison extends BaseElement {
   }
 
   sortRetainerByColumn(column: string, sort: number) {
-    this.sortColumn = column;
-    this.sortType = sort;
     switch (sort) {
       case 0:
         this.retainerTableEl!.snapshotDataSource = this.retainsData;
@@ -399,11 +397,11 @@ export class TabPaneComparison extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (currentList: any) {
-                  currentList.sort((a: any, b: any) => {
+                const getList = function (currentList: Array<ConstructorItem>) {
+                  currentList.sort((a, b) => {
                     return sort === 1 ? a.distance - b.distance : b.distance - a.distance;
                   });
-                  currentList.forEach(function (currentRow: any) {
+                  currentList.forEach(function (currentRow) {
                     if (currentRow.children.length > 0) {
                       getList(currentRow.children);
                     }
@@ -423,13 +421,13 @@ export class TabPaneComparison extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (listArr: any) {
-                  listArr.sort((listArrA: any, listArrB: any) => {
+                const getList = function (listArr: Array<ConstructorItem>) {
+                  listArr.sort((listArrA, listArrB) => {
                     return sort === 1
                       ? listArrA.shallowSize - listArrB.shallowSize
                       : listArrB.shallowSize - listArrA.shallowSize;
                   });
-                  listArr.forEach(function (rowEl: any) {
+                  listArr.forEach(function (rowEl) {
                     if (rowEl.children.length > 0) {
                       getList(rowEl.children);
                     }
@@ -449,13 +447,13 @@ export class TabPaneComparison extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (listArr: any) {
-                  listArr.sort((listArrA: any, listArrB: any) => {
+                const getList = function (listArr: Array<ConstructorItem>) {
+                  listArr.sort((listArrA, listArrB) => {
                     return sort === 1
                       ? listArrA.retainedSize - listArrB.retainedSize
                       : listArrB.retainedSize - listArrA.retainedSize;
                   });
-                  listArr.forEach(function (row: any) {
+                  listArr.forEach(function (row) {
                     if (row.children.length > 0) {
                       getList(row.children);
                     }
@@ -475,13 +473,13 @@ export class TabPaneComparison extends BaseElement {
             });
             this.rightArray.forEach((list) => {
               let retainsTable = function () {
-                const getList = function (listArr: any) {
-                  listArr.sort((listArrA: any, listArrB: any) => {
+                const getList = function (listArr: Array<ConstructorItem>) {
+                  listArr.sort((listArrA, listArrB) => {
                     return sort === 1
                       ? (listArrA.objectName + '').localeCompare(listArrB.objectName + '')
                       : (listArrB.objectName + '').localeCompare(listArrA.objectName + '');
                   });
-                  listArr.forEach(function (currentRow: any) {
+                  listArr.forEach(function (currentRow) {
                     if (currentRow.children.length > 0) {
                       getList(currentRow.children);
                     }
@@ -510,6 +508,7 @@ export class TabPaneComparison extends BaseElement {
       this.comparisonTableEl!.snapshotDataSource = this.comparisonFilter;
       let summaryTable = this.comparisonTableEl!.shadowRoot?.querySelector('.table') as HTMLDivElement;
       summaryTable.scrollTop = 0;
+      this.comparisonTableEl!.reMeauseHeight();
     });
   }
 
@@ -579,7 +578,7 @@ export class TabPaneComparison extends BaseElement {
                 <lit-slicer style="width:100%">
                     <div style="width: 65%">
                         <lit-table id="tb-comparison" style="height: auto" tree>
-                            <lit-table-column width="30%" title="#Constructor" data-index="objectName" key="objectName"  align="flex-start" order>
+                            <lit-table-column width="30%" title="#Constructor" data-index="" key="objectName"  align="flex-start" order>
                             </lit-table-column>
                             <lit-table-column width="1fr" title="#New" data-index="addedCount" key="addedCount"  align="flex-start" order>
                             </lit-table-column>
@@ -600,7 +599,7 @@ export class TabPaneComparison extends BaseElement {
                         <div style="flex: 1;display: flex; flex-direction: column;">
                             <span slot="head" >Retainers</span>
                             <lit-table id="tb-retainer" style="height: calc(100% - 21px);" tree>
-                                <lit-table-column width="30%" title="Object" data-index="objectName" key="objectName"  align="flex-start" order>
+                                <lit-table-column width="30%" title="Object" data-index="" key="objectName"  align="flex-start" order>
                                 </lit-table-column>
                                 <lit-table-column width="1fr" title="distance" data-index="distance" key="distance"  align="flex-start" order>
                                 </lit-table-column>

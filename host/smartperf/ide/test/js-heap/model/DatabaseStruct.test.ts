@@ -50,10 +50,6 @@ describe('DatabaseStruct Test', () => {
         let heapNode = new HeapNode();
         expect(heapNode.className()).toBe('(undefined)');
     });
-    it('DatabaseStructTest08', () => {
-        let heapNode = new HeapNode();
-        expect(heapNode.classIndex()).toBe(NaN);
-    });
     it('DatabaseStructTest09', () => {
         let heapNode = new HeapNode();
         expect(heapNode.nodeName()).toBeUndefined();

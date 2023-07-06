@@ -50,57 +50,57 @@ describe('litMainMenuGroup Test', () => {
     expect(litMainMenuGroup.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-        :host{
-            transition: background-color .3s;
-            user-select: none;
-        }
         :host(:not([collapsed])){ 
-            display: flex;
-            flex-direction: column;
             width: 248px;
+            display: flex;
             background-color: var(--dark-background);
             cursor: pointer;
+            flex-direction: column;
+        }
+        :host{
+            user-select: none;
+            transition: background-color .3s;
         }
         :host(:not([collapsed])) ::slotted(lit-main-menu-item){
             display: flex;
         }
         :host(:not([collapsed])) .group-describe{
-            visibility: hidden;
             height: 0;
-        }
-        :host([collapsed]){
-            display: flex;
-            flex-direction: column;
-            width: 248px;
-            background-color: var(--dark-background);
-            cursor: pointer;
+            visibility: hidden;
         }
         :host([collapsed]):hover){
             background-color: #FFFFFF;
         }
-        :host([collapsed]) ::slotted(lit-main-menu-item){
-            display: none;
+        :host([collapsed]){
+            width: 248px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            background-color: var(--dark-background);
         }
         :host([collapsed]) .group-describe{
-            visibility: visible;
             height: auto;
+            visibility: visible;
         }
         :host([radius]) {
             border-radius: 16px 0px 0px 16px ;
         }
+        :host([collapsed]) ::slotted(lit-main-menu-item){
+            display: none;
+        }
         .group-name{
-            font-family: Helvetica;
             font-size: 14px;
+            font-family: Helvetica;
             color: black;
-            text-align: left;
+            padding: 20px 24px 0px 24px;
             line-height: 16px;
             font-weight: 400;
-            padding: 20px 24px 0px 24px;
+            text-align: left;
         }
         .group-describe{
             color: black;
+            font-size: 0.6rem;
             padding: 4px 24px 20px 24px;
-            font-size: .6rem;
         }
        
         </style>

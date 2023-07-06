@@ -25,6 +25,10 @@ import { DisassemblingWindow } from '../../../../../../dist/trace/component/Disa
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {}
+});
+
 window.ResizeObserver =
     window.ResizeObserver ||
     jest.fn().mockImplementation(() => ({
@@ -73,11 +77,15 @@ describe('TabPaneNMCallTree Test', () => {
 "
         <style>
         :host{
+            padding: 10px 10px 0 10px;
             display: flex;
             flex-direction: column;
-            padding: 10px 10px 0 10px;
         }
-        tab-pane-filter {
+        .show{
+            display: flex;
+            flex: 1;
+        }
+        #nm-call-tree-filter {
             border: solid rgb(216,216,216) 1px;
             float: left;
             position: fixed;
@@ -87,18 +95,14 @@ describe('TabPaneNMCallTree Test', () => {
         selector{
             display: none;
         }
-        .show{
-            display: flex;
-            flex: 1;
-        }
-        .progress{
+        .nm-call-tree-progress{
             bottom: 33px;
             position: absolute;
             height: 1px;
             left: 0;
             right: 0;
         }
-        .loading{
+        .nm-call-tree-loading{
             bottom: 0;
             position: absolute;
             left: 0;
@@ -108,24 +112,24 @@ describe('TabPaneNMCallTree Test', () => {
             z-index: 999999;
         }
     </style>
-    <div style="display: flex;flex-direction: row">
+    <div class="nm-call-tree-content" style="display: flex;flex-direction: row">
     
     <selector id='show_table' class="show">
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <tab-native-data-modal id="modal"></tab-native-data-modal>
             <lit-table id="tb-filesystem-calltree" style="height: auto" tree>
-                <lit-table-column width="60%" title="Symbol Name" data-index="symbolName" key="symbolName"  align="flex-start">
+                <lit-table-column class="nm-call-tree-column" width="60%" title="Symbol Name" data-index="symbolName" key="symbolName"  align="flex-start">
                 </lit-table-column>
-                <lit-table-column width="1fr" title="Size" data-index="heapSizeStr" key="heapSizeStr"  align="flex-start" order>
+                <lit-table-column class="nm-call-tree-column" width="1fr" title="Size" data-index="heapSizeStr" key="heapSizeStr"  align="flex-start" order>
                 </lit-table-column>
-                <lit-table-column width="1fr" title="%" data-index="heapPercent" key="heapPercent" align="flex-start"  order>
+                <lit-table-column class="nm-call-tree-column" width="1fr" title="%" data-index="heapPercent" key="heapPercent" align="flex-start"  order>
                 </lit-table-column>
-                <lit-table-column width="1fr" title="Count" data-index="countValue" key="countValue" align="flex-start" order>
+                <lit-table-column class="nm-call-tree-column" width="1fr" title="Count" data-index="countValue" key="countValue" align="flex-start" order>
                 </lit-table-column>
-                <lit-table-column width="1fr" title="%" data-index="countPercent" key="countPercent" align="flex-start" order>
+                <lit-table-column class="nm-call-tree-column" width="1fr" title="%" data-index="countPercent" key="countPercent" align="flex-start" order>
                 </lit-table-column>
-                <lit-table-column width="1fr" title="  " data-index="type" key="type"  align="flex-start" >
+                <lit-table-column class="nm-call-tree-column" width="1fr" title="  " data-index="type" key="type"  align="flex-start" >
                     <template>
                         <img src="img/library.png" size="20" v-if=" type == 1 ">
                         <img src="img/function.png" size="20" v-if=" type == 0 ">
@@ -135,26 +139,26 @@ describe('TabPaneNMCallTree Test', () => {
             </lit-table>
             
         </div>
-        <lit-slicer-track ></lit-slicer-track>
+        <lit-slicer-track class="nm-call-tree-slicer-track" ></lit-slicer-track>
         <lit-table id="tb-filesystem-list" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
             <span slot="head">Heaviest Stack Trace</span>
-            <lit-table-column width="30px" title="" data-index="type" key="type"  align="flex-start" >
+            <lit-table-column class="nm-call-tree-column" width="30px" title="" data-index="type" key="type"  align="flex-start" >
                 <template>
                     <img src="img/library.png" size="20" v-if=" type == 1 ">
                     <img src="img/function.png" size="20" v-if=" type == 0 ">
                 </template>
             </lit-table-column>
-            <lit-table-column width="1fr" title="" data-index="symbolName" key="symbolName"  align="flex-start"></lit-table-column>
+            <lit-table-column class="nm-call-tree-column" width="1fr" title="" data-index="symbolName" key="symbolName"  align="flex-start"></lit-table-column>
         </lit-table>
         </div>
         </lit-slicer>
      </selector>
-     <tab-pane-filter id="filter" first second icon ></tab-pane-filter>
-     <lit-progress-bar class="progress"></lit-progress-bar>
-    <selector id='show_chart'>
+     <tab-pane-filter id="nm-call-tree-filter" first second icon ></tab-pane-filter>
+     <lit-progress-bar class="progress nm-call-tree-progress"></lit-progress-bar>
+    <selector class="nm-call-tree-selector" id='show_chart'>
         <tab-framechart id='framechart' style='width: 100%;height: auto'> </tab-framechart>
     </selector>  
-    <div class="loading"></div>
+    <div class="loading nm-call-tree-loading"></div>
     </div>"
 `);
   });
@@ -215,7 +219,7 @@ describe('TabPaneNMCallTree Test', () => {
       { size: 11, count: 21, children: [] },
       { size: 21, count: 31, children: [] },
     ];
-    expect(tabPaneNMCallTree.setLTableData(data)).toBe();
+    expect(tabPaneNMCallTree.setLTableData(data)).toBeUndefined();
   });
   it('TabPaneNMCallTreeTest11', function () {
     let data = [
@@ -230,10 +234,10 @@ describe('TabPaneNMCallTree Test', () => {
           inputs:[1]
         }, dataMining: 31, callTree: [] ,icon : 'block'},
     ];
-    expect(tabPaneNMCallTree.switchFlameChart(data)).toBe();
+    expect(tabPaneNMCallTree.switchFlameChart(data)).toBeUndefined();
   });
   it('TabPaneNMCallTreeTest12', function () {
-    expect(tabPaneNMCallTree.initFilterTypes()).toBe();
+    expect(tabPaneNMCallTree.initFilterTypes()).toBeUndefined();
   });
   it('TabPaneNMCallTreeTest13', function () {
     let data = [
@@ -245,5 +249,21 @@ describe('TabPaneNMCallTree Test', () => {
   });
   it('TabPaneNMCallTreeTest14', function () {
     expect(tabPaneNMCallTree.getDataByWorkerQuery({},{})).toBeUndefined();
+  });
+
+  it('TabPaneNMCallTreeTest15', function () {
+    let data = [
+      { callTreeConstraints:{
+          inputs:[1]
+        }
+        , dataMining: 20, callTree: [] ,icon : 'tree'},
+      { callTreeConstraints:{
+          inputs:[1]
+        }, dataMining: 21, callTree: [] ,icon : 'tree'},
+      { callTreeConstraints:{
+          inputs:[1]
+        }, dataMining: 31, callTree: [] ,icon : 'tree'},
+    ];
+    expect(tabPaneNMCallTree.switchFlameChart(data)).toBeUndefined();
   });
 });

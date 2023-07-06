@@ -20,7 +20,7 @@ import { getTabPaneFrequencySampleData } from '../../../../database/SqlLite.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { Utils } from '../../base/Utils.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-frequency-sample')
 export class TabPaneFrequencySample extends BaseElement {
@@ -43,7 +43,8 @@ export class TabPaneFrequencySample extends BaseElement {
     this.frequencyLoadingPage.style.visibility = 'visible';
     this.selectionParam = frequencySampleValue;
     // @ts-ignore
-    this.frequencySampleTbl!.shadowRoot?.querySelector('.table').style.height = this.parentElement!.clientHeight - 25 + 'px';
+    this.frequencySampleTbl!.shadowRoot?.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 25 + 'px';
     this.queryDataByDB(frequencySampleValue);
   }
 
@@ -63,7 +64,7 @@ export class TabPaneFrequencySample extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.frequencySampleTbl!,25,this.frequencyLoadingPage, 24)
+    resizeObserver(this.parentElement!, this.frequencySampleTbl!, 25, this.frequencyLoadingPage, 24);
   }
 
   queryDataByDB(frqSampleParam: SelectionParam | any) {
@@ -92,7 +93,7 @@ export class TabPaneFrequencySample extends BaseElement {
 
       let frqSampleList: Array<any> = [];
       sampleMap.forEach((a) => {
-        a.timeStr = Utils.getProbablyTime(a.time);
+        a.timeStr = parseFloat((a.time / 1000000.0).toFixed(6));
         frqSampleList.push(a);
       });
       this.frequencySampleSource = frqSampleList;
@@ -106,7 +107,10 @@ export class TabPaneFrequencySample extends BaseElement {
     if (initFreqResult.length == 0) return;
     let includeData = initFreqResult.findIndex((a) => a.ts >= leftStartNs);
     if (includeData !== 0) {
-      initFreqResult = initFreqResult.slice(includeData == -1 ? initFreqResult.length - 1 : includeData - 1, initFreqResult.length);
+      initFreqResult = initFreqResult.slice(
+        includeData == -1 ? initFreqResult.length - 1 : includeData - 1,
+        initFreqResult.length
+      );
     }
     if (initFreqResult[0].ts < leftStartNs && includeData !== 0) initFreqResult[0].ts = leftStartNs;
     initFreqResult.forEach((item, idx) => {
@@ -122,7 +126,7 @@ export class TabPaneFrequencySample extends BaseElement {
         sampleMap.set(item.filterId + '-' + item.value, {
           ...item,
           counter: 'Cpu ' + item.cpu,
-          valueStr: ColorUtils.formatNumberComma(item.value) + ' kHz',
+          valueStr: ColorUtils.formatNumberComma(item.value),
         });
       }
     });
@@ -190,9 +194,9 @@ export class TabPaneFrequencySample extends BaseElement {
         <lit-table id="tb-states" style="height: auto" >
             <lit-table-column class="freq-sample-column" width="20%" title="Cpu" data-index="counter" key="counter" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" title="Time" data-index="timeStr" key="timeStr" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="1fr" title="Time(ms)" data-index="timeStr" key="timeStr" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" title="Value" data-index="valueStr" key="valueStr" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="1fr" title="Value(kHz)" data-index="valueStr" key="valueStr" align="flex-start" order>
             </lit-table-column>
         </lit-table>
         <lit-progress-bar class="progressFre"></lit-progress-bar>

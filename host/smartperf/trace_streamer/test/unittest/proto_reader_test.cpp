@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #include "file.h"
-#include "proto_reader.cpp"
 #include "test.pb.h"
 #include "test.pb.cc"
 #include "test.pbreader.h"

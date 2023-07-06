@@ -227,12 +227,13 @@ class MerageBeanDataSplit {
   }
 
   findSearchNode(data: MerageBean[], search: string, parentSearch: boolean) {
+    search = search.toLocaleLowerCase();
     data.forEach((node) => {
-      if ((node.symbolName != undefined && node.symbolName.includes(search)) || parentSearch) {
+      if ((node.symbolName && node.symbolName.toLocaleLowerCase().includes(search)) || parentSearch) {
         node.searchShow = true;
-        node.isSearch = node.symbolName != undefined && node.symbolName.includes(search);
+        node.isSearch = node.symbolName != undefined && node.symbolName.toLocaleLowerCase().includes(search);
         let parentNode = node.currentTreeParentNode;
-        while (parentNode != undefined && !parentNode.searchShow) {
+        while (parentNode && !parentNode.searchShow) {
           parentNode.searchShow = true;
           parentNode = parentNode.currentTreeParentNode;
         }
@@ -282,6 +283,8 @@ export abstract class LogicHandler {
       sql: sql,
     });
   }
+
+  abstract clearAll(): void
 }
 
 let dec = new TextDecoder();

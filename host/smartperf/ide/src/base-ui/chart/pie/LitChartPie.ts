@@ -107,13 +107,18 @@ export class LitChartPie extends BaseElement {
     let startDegree = 0;
     let full = Math.PI / 180; //每度
     let fullDegree = 0; //每度
-    let sum = this.litChartPieConfig.data.reduce((previousValue, currentValue) => currentValue[pieCfg.angleField] + previousValue, 0);
+    let sum = this.litChartPieConfig.data.reduce(
+      (previousValue, currentValue) => currentValue[pieCfg.angleField] + previousValue,
+      0
+    );
     this.labelsEL!.textContent = '';
     let labelArray: string[] = [];
     this.litChartPieConfig.data.forEach((pieItem, index) => {
       let item: Sector = {
         id: `id-${Utils.uuid()}`,
-        color: this.litChartPieConfig!.label.color ? this.litChartPieConfig!.label.color(pieItem) : pieChartColors[index % pieChartColors.length],
+        color: this.litChartPieConfig!.label.color
+          ? this.litChartPieConfig!.label.color(pieItem)
+          : pieChartColors[index % pieChartColors.length],
         obj: pieItem,
         key: pieItem[pieCfg.colorField],
         value: pieItem[pieCfg.angleField],

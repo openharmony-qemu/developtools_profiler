@@ -19,7 +19,6 @@
 #include "trace_streamer_filters.h"
 namespace SysTuning {
 namespace TraceStreamer {
-using namespace SysTuning::TraceCfg;
 class EventParserBase {
 public:
     EventParserBase(TraceDataCache* dataCache, const TraceStreamerFilters* filter);

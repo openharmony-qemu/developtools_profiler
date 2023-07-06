@@ -53,9 +53,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead1, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, ""};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "", ""};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "", "", -1};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_FALSE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -65,6 +64,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead1, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -78,9 +78,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead2, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, ""};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "", ""};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "", "", -1};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_FALSE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -90,6 +89,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead2, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -103,9 +103,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead3, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, ""};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", ""};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "", -1};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_FALSE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -115,6 +114,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead3, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -128,9 +128,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead4, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, ""};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", ""};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "", -1};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_FALSE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -140,6 +139,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead4, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -153,9 +153,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead5, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, ""};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", ""};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "", -1};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_FALSE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -165,6 +164,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead5, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -178,9 +178,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead6, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, "/usr/lib/gvfs/gvfsd-http"};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "/usr/lib/gvfs/gvfsd-http"};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "/usr/lib/gvfs/gvfsd-http", 426998};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_TRUE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -190,6 +189,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead6, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -203,9 +203,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead7, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x00400000, 0x00409000, "/usr/lib/gvfs/gvfsd-htt"};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "/usr/lib/gvfs/gvfsd-htt"};
+    SmapsHeadInfo expectSmapsHeadInfo = {"00400000", "00409000", "r-x", "/usr/lib/gvfs/gvfsd-htt", 426998};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_TRUE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -215,6 +214,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead7, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -228,9 +228,8 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead8, TestSize.Level1)
     SmapsStats plugin;
     MapPiecesInfo expectMappic = {0x564045dbe000, 0x564045ddf000, "[heap"};
     MapPiecesInfo targetMappic = {0};
-    SmapsHeadInfo expectSmapsHeadInfo = {"564045dbe000", "564045ddf000", "rw-", "[heap"};
+    SmapsHeadInfo expectSmapsHeadInfo = {"564045dbe000", "564045ddf000", "rw-", "[heap", 0};
     SmapsHeadInfo smapsHeadInfo = {};
-
     ASSERT_TRUE(plugin.ParseMapHead(line, targetMappic, smapsHeadInfo));
     // test result
     EXPECT_EQ(expectMappic.startAddr, targetMappic.startAddr);
@@ -240,6 +239,7 @@ HWTEST_F(SmapsStatsTest, TestParseMapHead8, TestSize.Level1)
     EXPECT_STREQ(expectSmapsHeadInfo.startAddrStr.c_str(), smapsHeadInfo.startAddrStr.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.permission.c_str(), smapsHeadInfo.permission.c_str());
     EXPECT_STREQ(expectSmapsHeadInfo.path.c_str(), smapsHeadInfo.path.c_str());
+    EXPECT_EQ(expectSmapsHeadInfo.iNode, smapsHeadInfo.iNode);
 }
 
 /**
@@ -889,6 +889,18 @@ HWTEST_F(SmapsStatsTest, TestFrameworkForPath, TestSize.Level1)
     uint64_t swapper = 0;
     double reside = static_cast<double>(rss) / size * PERCENT;
     uint64_t dirty2 = 4;
+    uint64_t privateClean = 4;
+    uint64_t privateDirty = 0;
+    uint64_t sharedClean = 0;
+    uint64_t sharedDirty = 0;
+    uint64_t swap = 0;
+    uint64_t swapPss = 0;
+    uint64_t privateClean2 = 0;
+    uint64_t privateDirty2 = 4;
+    uint64_t sharedClean2 = 0;
+    uint64_t sharedDirty2 = 0;
+    uint64_t swap2 = 0;
+    uint64_t swapPss2 = 0;
 
     ASSERT_EQ(access(DEFAULT_TEST_PATH.c_str(), F_OK), 0);
     SmapsStats plugin(DEFAULT_TEST_PATH + std::string("proc/"));
@@ -908,12 +920,24 @@ HWTEST_F(SmapsStatsTest, TestFrameworkForPath, TestSize.Level1)
     EXPECT_EQ(pss, processMemoryInfo.smapinfo(0).pss());
     EXPECT_EQ(dirty, processMemoryInfo.smapinfo(0).dirty());
     EXPECT_EQ(swapper, processMemoryInfo.smapinfo(0).swapper());
+    EXPECT_EQ(privateClean, processMemoryInfo.smapinfo(0).private_clean());
+    EXPECT_EQ(privateDirty, processMemoryInfo.smapinfo(0).private_dirty());
+    EXPECT_EQ(sharedClean, processMemoryInfo.smapinfo(0).shared_clean());
+    EXPECT_EQ(sharedDirty, processMemoryInfo.smapinfo(0).shared_dirty());
+    EXPECT_EQ(swap, processMemoryInfo.smapinfo(0).swap());
+    EXPECT_EQ(swapPss, processMemoryInfo.smapinfo(0).swap_pss());
     EXPECT_EQ(reside, processMemoryInfo.smapinfo(0).reside());
     EXPECT_EQ(size, processMemoryInfo.smapinfo(1).size());
     EXPECT_EQ(rss, processMemoryInfo.smapinfo(1).rss());
     EXPECT_EQ(pss, processMemoryInfo.smapinfo(1).pss());
     EXPECT_EQ(dirty2, processMemoryInfo.smapinfo(1).dirty());
     EXPECT_EQ(swapper, processMemoryInfo.smapinfo(1).swapper());
+    EXPECT_EQ(privateClean2, processMemoryInfo.smapinfo(1).private_clean());
+    EXPECT_EQ(privateDirty2, processMemoryInfo.smapinfo(1).private_dirty());
+    EXPECT_EQ(sharedClean2, processMemoryInfo.smapinfo(1).shared_clean());
+    EXPECT_EQ(sharedDirty2, processMemoryInfo.smapinfo(1).shared_dirty());
+    EXPECT_EQ(swap2, processMemoryInfo.smapinfo(1).swap());
+    EXPECT_EQ(swapPss2, processMemoryInfo.smapinfo(1).swap_pss());
     EXPECT_EQ(reside, processMemoryInfo.smapinfo(1).reside());
 }
 

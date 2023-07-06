@@ -24,15 +24,39 @@ bool MatchHead(const std::string& name, const char* str)
     return strncmp(name.c_str(), str, strlen(str)) == 0;
 }
 
-bool MatchTail(const std::string& name, std::string str)
+bool MatchTail(const std::string& name, const char* str)
 {
-    int index = name.size() - str.size();
+    CHECK_TRUE(name.size() >= strlen(str), false, "str is larger than name");
+    int index = name.size() - strlen(str);
     if (index < 0) {
         return false;
     }
     return (name.substr(index) == str);
 }
 } // namespace
+std::string SmapsStats::ParseCategory(const SmapsHeadInfo& smapsHeadInfo)
+{
+    std::string category;
+    if (GetCategoryFromMap(smapsHeadInfo.path, category, endMap_, &MatchTail) ||
+        GetCategoryFromMap(smapsHeadInfo.path, category, beginMap_, &MatchHead)) {
+        return category;
+    }
+    category = smapsHeadInfo.iNode > 0 ? FILE_PAGE_TAG : ANON_PAGE_TAG;
+    return category;
+}
+
+bool SmapsStats::GetCategoryFromMap(const std::string &name, std::string &category,
+                                    const std::map<std::string, std::string> &map, MatchFunc func)
+{
+    for (const auto &p : map) {
+        if (func(name, p.first.c_str())) {
+            category = p.second;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool SmapsStats::ParseMaps(int pid, ProcessMemoryInfo& processinfo, bool isReportApp, bool isReportSmaps)
 {
     std::string smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps");
@@ -78,6 +102,7 @@ bool SmapsStats::ReadVmemareasFile(const std::string& path, ProcessMemoryInfo& p
                 smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
                 smapsInfo->set_permission(smapsHeadInfo.permission);
                 smapsInfo->set_path(smapsHeadInfo.path);
+                smapsInfo->set_category(ParseCategory(smapsHeadInfo));
             }
             continue;
         }
@@ -92,6 +117,12 @@ bool SmapsStats::ReadVmemareasFile(const std::string& path, ProcessMemoryInfo& p
                 smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
                 smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
                 smapsInfo->set_reside(static_cast<double>(memusage.rss) / memusage.vss * PERCENT);
+                smapsInfo->set_private_clean(memusage.privateClean);
+                smapsInfo->set_private_dirty(memusage.privateDirty);
+                smapsInfo->set_shared_clean(memusage.sharedClean);
+                smapsInfo->set_shared_dirty(memusage.sharedDirty);
+                smapsInfo->set_swap(memusage.swap);
+                smapsInfo->set_swap_pss(memusage.swapPss);
             }
         }
         if (isReportApp) {
@@ -255,8 +286,9 @@ bool SmapsStats::ParseMapHead(std::string& line, MapPiecesInfo& head, SmapsHeadI
             }
         } else if (i == 1) {
             smapsHeadInfo.permission = word.substr(0, word.size() - 1);
+        } else if (i == 4) { // 4: iNode index
+            smapsHeadInfo.iNode = strtoll(word.substr(0, word.size()).c_str(), nullptr, DEC_BASE);
         }
-
         size_t newlineops = newline.find_first_not_of(" ", wordsz);
         newline = newline.substr(newlineops);
     }

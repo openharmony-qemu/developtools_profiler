@@ -135,12 +135,3 @@ Page Fault分为五级统计，分别按照进程，系统调用类型，线程�
 +     Function：函数名称。
 +     Duration：该函数的系统调用的总时长。
 +     %：总时长占比。
-## 可导入符号表说明
-符号表导入适用于所有支持调用栈的Tab页，选择一个文件夹，获取文件下及其子文件夹的所有so文件，更新数据库中符号数据。文件夹内so的格式需要与在设备上的路径一致，例如下图中，选择的文件夹为import，选择导入的libnative_hook.z.so，在设备上的路径是/system/lib64/，那么在本地选择的文件夹内也需要保证路径是import/system/lib64/libnative_hook.z.so。
-![GitHub Logo](../../figures/ImportSo/so_import_dir.jpg)
-以NativeMemory举例，导入NativeMemory文件，点击Call info的Tab页，在搜索框中输入libnative_hook.z.so，会发现该so下的调用栈没有符号化完全。
-![GitHub Logo](../../figures/ImportSo/so_import_nativehook.jpg)
-将本地编译的so通过导入按钮导入，本地导入路径是import/system/lib64/libnative_hook.z.so，红框处是导入按钮
-![GitHub Logo](../../figures/ImportSo/so_import_local.jpg)
-导入so以后，在搜索框中输入libnative_hook.z.so，会发现符号化数据已经更新
-![GitHub Logo](../../figures/ImportSo/so_import_new.jpg)

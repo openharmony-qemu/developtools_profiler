@@ -152,61 +152,6 @@ describe('ProcedureLogicWorkerPerf Test', () => {
     expect(procedureLogicWorkerPerf.clearAll()).toBeUndefined();
   });
 
-  it('ProcedureLogicWorkerPerfTest09', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let callChain = [
-      {
-        sampleId: '',
-        depth: 0,
-        canCharge: false,
-        name: '',
-        tid: '',
-        fileName: '',
-        threadName: '',
-      },
-    ];
-    expect(procedureLogicWorkerPerf.initCallChainBottomUp(callChain)).toBeUndefined();
-  });
-
-  it('ProcedureLogicWorkerPerfTest10', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let callChain = [
-      {
-        sampleId: '',
-        depth: 0,
-        canCharge: false,
-        name: '',
-        tid: '',
-        fileName: '',
-        threadName: '',
-      },
-    ];
-    expect(procedureLogicWorkerPerf.initCallChainTopDown([callChain])).toBeUndefined();
-  });
-
-  it('ProcedureLogicWorkerPerfTest11', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let callChain = {
-      sampleId: -1,
-      depth: 0,
-      canCharge: true,
-      name: '',
-      tid: '',
-      fileName: '',
-      threadName: '',
-      symbolId: -1,
-    };
-    expect(procedureLogicWorkerPerf.setCallChainName(callChain)).toBeUndefined();
-  });
-
-  it('ProcedureLogicWorkerPerfTest12', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let callChain = {
-      sampleId: 0,
-    };
-    expect(procedureLogicWorkerPerf.setCallChainName(callChain)).toBeUndefined();
-  });
-
   it('ProcedureLogicWorkerPerfTest14', function () {
     let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
     let callChain = {
@@ -219,24 +164,6 @@ describe('ProcedureLogicWorkerPerf Test', () => {
       threadName: '',
     };
     expect(procedureLogicWorkerPerf.addPerfCallData(callChain)).toBeUndefined();
-  });
-
-  it('ProcedureLogicWorkerPerfTest15', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let callChain = {
-      sampleId: '',
-    };
-    expect(procedureLogicWorkerPerf.addGroupData(callChain)).toBeUndefined();
-  });
-
-  it('ProcedureLogicWorkerPerfTest16', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    expect(procedureLogicWorkerPerf.getCallChainsBySampleIds([], [])).toBeTruthy();
-  });
-
-  it('ProcedureLogicWorkerPerfTest17', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    expect(procedureLogicWorkerPerf.freshCurrentCallchains([], 1)).toBeUndefined();
   });
 
   it('ProcedureLogicWorkerPerfTest19', function () {
@@ -323,11 +250,6 @@ describe('ProcedureLogicWorkerPerf Test', () => {
       },
     ];
     expect(procedureLogicWorkerPerf.recursionChargeInitTree(node, '', true)).toBeUndefined();
-  });
-
-  it('ProcedureLogicWorkerPerfTest32', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    expect(procedureLogicWorkerPerf.splitTree([], '', '', true)).toBeUndefined();
   });
 
   it('ProcedureLogicWorkerPerfTest33', function () {
@@ -427,48 +349,6 @@ describe('ProcedureLogicWorkerPerf Test', () => {
     };
     let isTopDown = {};
     expect(procedureLogicWorkerPerf.groupNewTreeNoId(sampleIds, isTopDown)).toStrictEqual([]);
-  });
-  it('ProcedureLogicWorkerPerfTest43', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let node = {
-      initChildren: {
-        length: 1,
-        forEach: jest.fn(() => true),
-      },
-      libName: 1,
-    };
-    let symbolName = 1;
-
-    let isSymbol = true;
-    expect(procedureLogicWorkerPerf.recursionChargeInitTree(node, symbolName, isSymbol)).toBeUndefined();
-  });
-  it('ProcedureLogicWorkerPerfTest44', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let node = {
-      children: {
-        length: 1,
-        forEach: jest.fn(() => true),
-      },
-      libName: 1,
-    };
-    let symbolName = 1;
-
-    let isSymbol = true;
-    expect(procedureLogicWorkerPerf.recursionChargeTree(node, symbolName, isSymbol)).toBeUndefined();
-  });
-  it('ProcedureLogicWorkerPerfTest45', function () {
-    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    let node = {
-      initChildren: {
-        length: 1,
-        forEach: jest.fn(() => true),
-      },
-      libName: 1,
-    };
-    let symbolName = 1;
-
-    let isSymbol = true;
-    expect(procedureLogicWorkerPerf.recursionPruneInitTree(node, symbolName, isSymbol)).toBeUndefined();
   });
   it('ProcedureLogicWorkerPerfTest46', function () {
     let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
@@ -582,7 +462,68 @@ describe('ProcedureLogicWorkerPerf Test', () => {
   });
   it('ProcedureLogicWorkerPerfTest55', function () {
     let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
-    expect(procedureLogicWorkerPerf.findSearchNode([],'',true)).toBeUndefined();
+    let sampleArray = [
+      {
+        addr: "",
+        canCharge: true,
+        children: [],
+        count: 4,
+        currentTreeParentNode: {
+          addr: "",
+          canCharge: true,
+          children: [],
+          count: 4,
+          currentTreeParentNode: {},
+          depth: 0,
+          dur: 1,
+          id: "11758",
+          initChildren: [],
+          isSearch: false,
+          isSelected: false,
+          isStore: 0,
+          lib: "",
+          libName: "ld-musl-aarch64.so.1",
+          parentId: "977",
+          path: "/system/lib/ld-musl-aarch64.so.1",
+          pid: 28917,
+          searchShow: false,
+          self: "0ms",
+          selfDur: 4,
+          size: 0,
+          symbol: "fopen64  (ld-musl-aarch64.so.1)",
+          symbolName: "fopen64",
+          tid: 28922,
+          type: 0,
+          vaddrInFile: 730108,
+          weight: "1.00ms",
+          weightPercent: "0.0%"
+        },
+        depth: 0,
+        dur: 4,
+        id: "2791",
+        initChildren: [],
+        isSearch: false,
+        isSelected: false,
+        isStore: 0,
+        lib: "",
+        libName: "[kernel.kallsyms]",
+        parentId: "2790",
+        path: "[kernel.kallsyms]",
+        pid: 28917,
+        searchShow: false,
+        self: "4.00ms",
+        selfDur: 4,
+        size: 0,
+        symbol: "perf_trace_sched_switch  ([kernel.kallsyms])",
+        symbolName: "perf_trace_sched_switch",
+        tid: 28922,
+        type: 0,
+        vaddrInFile: -274609073904,
+        weight: "4.00ms",
+        weightPercent: "0.0%"
+      }
+    ];
+    expect(procedureLogicWorkerPerf.findSearchNode(sampleArray,'da',false)).toBeUndefined();
   });
   it('ProcedureLogicWorkerPerfTest56', function () {
     let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();

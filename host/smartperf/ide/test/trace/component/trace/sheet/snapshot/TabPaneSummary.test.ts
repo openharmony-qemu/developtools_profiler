@@ -19,6 +19,8 @@ import { HeapDataInterface } from '../../../../../../dist/js-heap/HeapDataInterf
 //@ts-ignore
 import { SpJsMemoryChart } from '../../../../../../dist/trace/component/chart/SpJsMemoryChart.js';
 
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
     return {};
 });
@@ -291,7 +293,7 @@ describe('TabPaneSummary Test', () => {
         tabPaneSummary.tbs.meauseTreeRowElement = jest.fn(() => {
             return [];
         });
-        tabPaneSummary.tbl.meauseTreeRowElement = jest.fn(() => {
+        tabPaneSummary.tblSummary.meauseTreeRowElement = jest.fn(() => {
             return [];
         });
         let rowObjectData = {
@@ -323,8 +325,9 @@ describe('TabPaneSummary Test', () => {
             },
             composed: true,
         });
-        tabPaneSummary.tbl.dispatchEvent(iconRowClick);
-        tabPaneSummary.tbl.dispatchEvent(iconClick);
+        iconClick.detail.data.isString = jest.fn(() => true);
+        tabPaneSummary.tblSummary.dispatchEvent(iconRowClick);
+        tabPaneSummary.tblSummary.dispatchEvent(iconClick);
         tabPaneSummary.tbs.dispatchEvent(iconClick);
         tabPaneSummary.sortByLeftTable('distance', 0);
         tabPaneSummary.sortByLeftTable('shallowSize', 1);

@@ -19,7 +19,7 @@ import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabPowerBatteryData } from '../../../../database/SqlLite.js';
 import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
 import '../../../../../base-ui/table/lit-table.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-power-battery')
 export class TabPanePowerBattery extends BaseElement {
@@ -31,7 +31,7 @@ export class TabPanePowerBattery extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.tblPower!)
+    resizeObserver(this.parentElement!, this.tblPower!);
   }
 
   initElements(): void {

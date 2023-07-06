@@ -20,7 +20,7 @@ import { getTabPowerDetailsData } from '../../../../database/SqlLite.js';
 import { log } from '../../../../../log/Log.js';
 import { PowerDetailsEnergy } from '../../../../bean/EnergyStruct.js';
 import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-power-details')
 export class TabPanePowerDetails extends BaseElement {
@@ -34,7 +34,7 @@ export class TabPanePowerDetails extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.tblPowerDetails!)
+    resizeObserver(this.parentElement!, this.tblPowerDetails!);
   }
 
   initElements(): void {

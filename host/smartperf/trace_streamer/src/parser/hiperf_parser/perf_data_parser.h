@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <deque>
 #include <set>
+#include "event_parser_base.h"
 #include "htrace_plugin_time_parser.h"
 #include "log.h"
 #include "perf_events.h"
@@ -32,7 +33,7 @@
 namespace SysTuning {
 namespace TraceStreamer {
 using namespace OHOS::Developtools::HiPerf;
-class PerfDataParser : public HtracePluginTimeParser {
+class PerfDataParser : public EventParserBase, public HtracePluginTimeParser {
 public:
     PerfDataParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~PerfDataParser();

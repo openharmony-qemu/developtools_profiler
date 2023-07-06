@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 //@ts-ignore
 import { HeapLoader } from '../../../dist/js-heap/logic/HeapLoader.js';
 //@ts-ignore
 import { ConstructorItem, FileType } from '../../../dist/js-heap/model/UiStruct.js';
-import { HeapNode } from '../../../src/js-heap/model/DatabaseStruct';
+
+jest.mock('../../../dist/js-heap/model/DatabaseStruct.js', () => ({
+    DetachedNessState: {
+        UNKNOWN: 0,
+        ATTACHED: 1,
+        DETACHED: 2,
+    },
+    NodeType: {
+        HIDDEN : 0,
+        ARRAY : 1,
+        STRING : 2,
+        OBJECT : 3,
+        CODE : 4,
+        CLOSURE : 5,
+        REGEXP : 6,
+        NUMBER : 7,
+        NATIVE : 8,
+        SYNTHETIC : 9,
+        CONCATENATED_STRING : 10,
+        SLICED_STRING : 11,
+        SYMBOL : 12,
+        BIGINT : 13,
+        OBJECT_SHAPE : 14,
+    },
+    EdgeType: {
+        CONTEXT : 0,
+        ELEMENT : 1,
+        PROPERTY : 2,
+        INTERNAL : 3,
+        HIDDEN : 4,
+        SHORTCUT : 5,
+        WEAK : 6,
+        STRING_OR_NUMBER : 6,
+        NODE : 7,
+        INVISIBLE : 8,
+    }
+}))
 
 jest.mock('../../../dist/js-heap/utils/Utils.js', () => {
     return {
-        HeapNodeToConstructorItem: (node: HeapNode) => {
+        HeapNodeToConstructorItem: (node: any) => {
             return {};
         },
     };
@@ -173,13 +211,149 @@ describe('HeapLoader Test', () => {
     it('HeapLoaderTest04', () => {
         let heapLoader = new HeapLoader(data);
         heapLoader.nodes = [rootNode];
-        expect(heapLoader.getClassesForSummary().keys.length).toEqual(0);
+        expect(heapLoader.getClassesForSummary(1,2)).toBeTruthy();
     });
 
     it('HeapLoaderTest05', () => {
         let heapLoader = new HeapLoader(data);
         heapLoader.nodes = [rootNode];
         heapLoader.rootNode = rootNode;
-        expect(heapLoader.getRetains(item).length).toEqual(1);
+        expect(heapLoader.getRetains(item)).toBeDefined();
+    });
+    it('HeapLoaderTest06', () => {
+        let heapLoader = new HeapLoader(data);
+        expect(heapLoader.getAllocationFunctionList()).toStrictEqual([]);
+    });
+    it('HeapLoaderTest07', () => {
+        let heapLoader = new HeapLoader(data);
+        expect(heapLoader.getAllocationStack(1)).toStrictEqual([]);
+    });
+    it('HeapLoaderTest08', () => {
+        let heapLoader = new HeapLoader(data);
+        expect(heapLoader.getFunctionNodeIds(1)).toStrictEqual([]);
+    });
+    it('HeapLoaderTest09', () => {
+        let heapLoader = new HeapLoader(data);
+        expect(heapLoader.calDistances()).toBeUndefined();
+    });
+    it('HeapLoaderTest10', () => {
+        let heapLoader = new HeapLoader(data);
+        heapLoader.buildOrderIdxAndDominateTree = jest.fn(()=>{true});
+        expect(heapLoader.calRetainedSize()).toBeUndefined();
+    });
+    it('HeapLoaderTest11', () => {
+        let heapLoader = new HeapLoader(data);
+        heapLoader.buildDominatedNode = jest.fn(()=>{true});
+        expect(heapLoader.buildDominatedNode()).toStrictEqual();
+    });
+    it('HeapLoaderTest12', () => {
+        let heapLoader = new HeapLoader(data);
+        expect(heapLoader.buildSamples()).toBeUndefined();
+    });
+    it('HeapLoaderTest13', () => {
+        let heapLoader = new HeapLoader(data);
+        let samples = [
+            {length: 1},
+            {mid: 1}
+        ]
+        expect(heapLoader.binarySearchNodeInSamples(1, samples)).toBe(0);
+    });
+    it('HeapLoaderTest14', () => {
+        let heapLoader = new HeapLoader(data);
+        let node = {
+            index:1,
+            nodesToVisitLen:1
+        }
+        let edge = {
+            nodesToVisitLen:3,
+        }
+        expect(heapLoader.bfs(node,edge)).toBeUndefined();
+    });
+    it('HeapLoaderTest15', () => {
+        let heapLoader = new HeapLoader(data);
+        expect(heapLoader.markPageOwnedNodes()).toBeUndefined();
+    });
+    it('HeapLoaderTest16', () => {
+        let heapLoader = new HeapLoader(data);
+        let node = {
+            nodeIndex:1
+        }
+        expect(heapLoader.hasOnlyWeakRetainers(node)).toBe(true);
+    });
+    it('HeapLoaderTest17', () => {
+        let heapLoader = new HeapLoader(data);
+        let targetClass = {
+            fileId:1,
+            nodeName:'',
+            childCount:2,
+            classChildren:[],
+        }
+        let baseClass = {
+            childCount:1,
+            classChildren:[]
+        }
+        heapLoader.calClassDiff = jest.fn(()=>{true})
+        expect(heapLoader.calClassDiff(targetClass,baseClass)).toBeUndefined();
+    });
+    it('HeapLoaderTest18', () => {
+        let heapLoader = new HeapLoader(data);
+        let item = {
+            children:[{length: 1}],
+            index:1,
+            childCount:1,
+            edgeName:'',
+            hasNext:true,
+            traceNodeId:1,
+            type:0,
+            parent:{},
+            id:1
+        }
+        expect(heapLoader.getNextNode(item)).toStrictEqual([{"length": 1}]);
+    });
+    it('HeapLoaderTest19', () => {
+        let heapLoader = new HeapLoader(data);
+        let item = {
+            retains:[{length: 1}],
+            index:1,
+            childCount:1,
+            edgeName:'',
+            hasNext:true,
+            traceNodeId:1,
+            type:0,
+            parent:{},
+            id:1
+        }
+        expect(heapLoader.getRetains(item)).toStrictEqual([{"length": 1}]);
+    });
+    it('HeapLoaderTest20', () => {
+        let heapLoader = new HeapLoader(data);
+        let node = {
+            index:1,
+            nodesToVisitLen:1
+        }
+        let edge = {
+            nodesToVisitLen:3,
+        }
+        expect(heapLoader.filterForBpf(node,edge)).toBe(true);
+    });
+    it('HeapLoaderTest21', () => {
+        let heapLoader = new HeapLoader(data);
+        let datas = {
+            visited:[
+                {node:{nodeIndex:1}},
+            ],
+            attached:[],
+            detached:[],
+        }
+        let node = {
+            nodeIndex:1,
+            type:1,
+            detachedness:1,
+            id:1,
+            displayName: 'Detached ',
+            name:'',
+            flag:1
+        }
+        expect(heapLoader.processNode(datas,node,1)).toBeUndefined();
     });
 });

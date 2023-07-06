@@ -28,7 +28,6 @@ namespace SysTuning {
 namespace TraceStreamer {
 using namespace SysTuning::base;
 using namespace SysTuning::EbpfStdtype;
-
 class EbpfBase : virtual public EventParserBase {
 public:
     EbpfBase(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);

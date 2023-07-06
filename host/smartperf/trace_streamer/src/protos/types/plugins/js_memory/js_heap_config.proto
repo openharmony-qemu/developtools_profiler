@@ -15,15 +15,14 @@ syntax = "proto3";
 option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
-message JsHeapConfig {
+message ArkTSConfig {
     enum HeapType {
         SNAPSHOT = 0;
         TIMELINE = 1;
-        // ALLOC_SAMPLE = 2;
     }
     int32 pid = 1;
     HeapType type = 2;
-    uint32 interval = 3; // seconds
+    uint32 interval = 3;
     bool capture_numeric_value = 4;
     bool track_allocations = 5;
 }

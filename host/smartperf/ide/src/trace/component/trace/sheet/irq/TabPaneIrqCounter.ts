@@ -17,7 +17,7 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionData, SelectionParam } from '../../../../bean/BoxSelection.js';
 import { Utils } from '../../base/Utils.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-irq-counter')
 export class TabPaneIrqCounter extends BaseElement {
@@ -28,11 +28,9 @@ export class TabPaneIrqCounter extends BaseElement {
   set data(irqParam: SelectionParam | any) {
     //@ts-ignore
     this.irqCounterTbl?.shadowRoot?.querySelector('.table')?.style?.height =
-        this.parentElement!.clientHeight - 45 + 'px';
+      this.parentElement!.clientHeight - 45 + 'px';
     this.irqRange!.textContent =
-        'Selected range: ' +
-        parseFloat(((irqParam.rightNs - irqParam.leftNs) / 1000000.0).toFixed(5)) +
-        ' ms';
+      'Selected range: ' + parseFloat(((irqParam.rightNs - irqParam.leftNs) / 1000000.0).toFixed(5)) + ' ms';
     let dataSource: Array<SelectionData> = [];
     let collect = irqParam.irqMapData;
     let sumCount = 0;
@@ -40,7 +38,9 @@ export class TabPaneIrqCounter extends BaseElement {
       let counters = collect.get(key);
       let selectCounterData = this.createSelectCounterData(key, counters);
       sumCount += Number.parseInt(selectCounterData.count || '0');
-      selectCounterData.avgDuration = Utils.getProbablyTime(selectCounterData.wallDuration / parseInt(selectCounterData.count));
+      selectCounterData.avgDuration = Utils.getProbablyTime(
+        selectCounterData.wallDuration / parseInt(selectCounterData.count)
+      );
       dataSource.push(selectCounterData);
     }
     this.irqCounterSource = dataSource;
@@ -58,7 +58,7 @@ export class TabPaneIrqCounter extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.irqCounterTbl!)
+    resizeObserver(this.parentElement!, this.irqCounterTbl!);
   }
 
   initHtml(): string {
@@ -123,13 +123,13 @@ export class TabPaneIrqCounter extends BaseElement {
         } else if (key == 'avgDuration') {
           if (type == 1) {
             return (
-                irqCounterLeftData.wallDuration / parseInt(irqCounterLeftData.count) -
-                irqCounterRightData.wallDuration / parseInt(irqCounterRightData.count)
+              irqCounterLeftData.wallDuration / parseInt(irqCounterLeftData.count) -
+              irqCounterRightData.wallDuration / parseInt(irqCounterRightData.count)
             );
           } else {
             return (
-                irqCounterRightData.wallDuration / parseInt(irqCounterRightData.count) -
-                irqCounterLeftData.wallDuration / parseInt(irqCounterLeftData.count)
+              irqCounterRightData.wallDuration / parseInt(irqCounterRightData.count) -
+              irqCounterLeftData.wallDuration / parseInt(irqCounterLeftData.count)
             );
           }
         } else if (key == 'name') {

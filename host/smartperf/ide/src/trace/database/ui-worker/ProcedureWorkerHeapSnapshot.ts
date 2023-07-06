@@ -12,15 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BaseStruct, Rect, Render, isFrameContainPoint, drawString} from './ProcedureWorkerCommon.js';
+
+import { BaseStruct, Rect, Render, isFrameContainPoint } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
+import { Utils } from '../../component/trace/base/Utils.js';
 export class HeapSnapshotRender extends Render {
   renderMainThread(
     req: {
       context: CanvasRenderingContext2D;
       useCache: boolean;
       type: string;
-      traceRange: any;
+      traceRange: Array<any>;
     },
     row: TraceRow<HeapSnapshotStruct>
   ) {
@@ -28,8 +30,8 @@ export class HeapSnapshotRender extends Render {
     let filter = row.dataListCache;
     if (filter.length == 0) {
       for (let file of list) {
-        file.start_time = file.start_time - req.traceRange[0].start_ts;
-        file.end_time = file.end_time - req.traceRange[0].start_ts;
+        file.startTs = file.startTs - req.traceRange[0].startTs;
+        file.endTs = file.endTs - req.traceRange[0].startTs;
       }
     }
     HeapSnapshot(
@@ -57,15 +59,15 @@ export class HeapSnapshotRender extends Render {
   }
 }
 export function HeapSnapshot(
-  list: Array<any>,
-  filter: Array<any>,
+  list: Array<HeapSnapshotStruct>,
+  filter: Array<HeapSnapshotStruct>,
   startNS: number,
   endNS: number,
   totalNS: number,
-  frame: any
+  frame: Rect
 ) {
-  for (let i in list) {
-    HeapSnapshotStruct.setFrame(list[i], startNS || 0, endNS || 0, totalNS || 0, frame);
+  for (let file of list) {
+    HeapSnapshotStruct.setFrame(file, startNS || 0, endNS || 0, totalNS || 0, frame);
   }
   filter.length = 0;
   for (let i = 0, len = list.length; i < len; i++) {
@@ -76,22 +78,23 @@ export function HeapSnapshot(
 }
 const padding = 3;
 export class HeapSnapshotStruct extends BaseStruct {
-  start_time: number = 0;
-  end_time: number = 0;
+  startTs: number = 0;
+  endTs: number = 0;
   id: number = 0;
   pid: number = 0;
-  file_name: string | undefined;
-  textMetricsWidth: number | undefined;
+  name: string | undefined;
+  textWidth: number | undefined;
+  size: number = 0;
   static hoverSnapshotStruct: HeapSnapshotStruct | undefined;
   static selectSnapshotStruct: HeapSnapshotStruct | undefined;
 
-  static setFrame(node: any, startNS: number, endNS: number, totalNS: number, frame: Rect) {
-    node.frame = null;
-    if ((node.start_time - startNS || node.start_time - startNS === 0) && node.end_time - node.start_time) {
+  static setFrame(node: HeapSnapshotStruct, startNS: number, endNS: number, totalNS: number, frame: Rect) {
+    node.frame = undefined;
+    if ((node.startTs - startNS || node.startTs - startNS === 0) && node.endTs - node.startTs) {
       let rectangle: Rect = new Rect(
-        Math.floor(((node.start_time - startNS) / totalNS) * frame.width),
+        Math.floor(((node.startTs - startNS) / totalNS) * frame.width),
         0,
-        Math.ceil(((node.end_time - node.start_time) / totalNS) * frame.width),
+        Math.ceil(((node.endTs - node.startTs) / totalNS) * frame.width),
         40
       );
       node.frame = rectangle;
@@ -106,9 +109,10 @@ export class HeapSnapshotStruct extends BaseStruct {
         ctx.globalAlpha = 1.0;
         ctx.lineWidth = 1;
         ctx.fillStyle = '#fff';
-      ctx.textBaseline = 'middle';
-      ctx.font = '12px sans-serif'
-        drawString(ctx, data.file_name || '', 2, data.frame!,data);
+        ctx.textBaseline = 'middle';
+        ctx.font = '12px sans-serif';
+        HeapSnapshotStruct.drawString(ctx, data.name || '', 3, data.frame!, data, 4);
+        HeapSnapshotStruct.drawString(ctx, Utils.getBinaryByteWithUnit(data.size) || '', 9, data.frame!, data, 2);
       }
       if (
         HeapSnapshotStruct.selectSnapshotStruct &&
@@ -121,15 +125,63 @@ export class HeapSnapshotStruct extends BaseStruct {
     }
   }
 
+  /**
+   *
+   * @param ctx current context
+   * @param str text
+   * @param textPadding padding
+   * @param frame rectangle
+   * @param data HeapSnapshotStruct
+   * @param location the position of the string, the bigger the numerical value, the higher the position on the canvas
+   */
+  static drawString(
+    ctx: CanvasRenderingContext2D,
+    str: string,
+    textPadding: number,
+    frame: Rect,
+    data: HeapSnapshotStruct,
+    location: number
+  ) {
+    if (data.textWidth === undefined) {
+      data.textWidth = ctx.measureText(str).width;
+    }
+    let textWidth = Math.round(data.textWidth / str.length);
+    let fillTextWidth = frame.width - textPadding * 2;
+    if (data.textWidth < fillTextWidth) {
+      let x = Math.floor(frame.width / 2 - data.textWidth / 2 + frame.x + textPadding);
+      ctx.fillText(str, x, Math.floor(frame.y + frame.height / location + textPadding), fillTextWidth);
+    } else {
+      if (fillTextWidth >= textWidth) {
+        let characterNum = fillTextWidth / textWidth;
+        let x = frame.x + textPadding;
+        if (characterNum < 2) {
+          ctx.fillText(
+            str.substring(0, 1),
+            x,
+            Math.floor(frame.y + frame.height / location + textPadding),
+            fillTextWidth
+          );
+        } else {
+          ctx.fillText(
+            str.substring(0, characterNum - 1) + '...',
+            x,
+            Math.floor(frame.y + frame.height / location + textPadding),
+            fillTextWidth
+          );
+        }
+      }
+    }
+  }
+
   static equals(d1: HeapSnapshotStruct, d2: HeapSnapshotStruct): boolean {
     return (
       d1 &&
       d2 &&
-      d1.file_name == d2.file_name &&
+      d1.name == d2.name &&
       d1.id == d2.id &&
       d1.pid == d2.pid &&
-      d1.start_time == d2.start_time &&
-      d1.end_time == d2.end_time
+      d1.startTs == d2.startTs &&
+      d1.endTs == d2.endTs
     );
   }
 }

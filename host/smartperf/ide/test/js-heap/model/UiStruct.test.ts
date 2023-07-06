@@ -18,7 +18,7 @@ import { ConstructorItem, ConstructorComparison,FileInfo,AllocationFunction } fr
 jest.mock('../../../dist/js-heap/logic/HeapLoader.js', () => {
     return {};
 });
-
+jest.mock('../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 describe('UiStruct Test', () => {
     it('UiStructTest01', () => {
         let constructorItem = new ConstructorItem();

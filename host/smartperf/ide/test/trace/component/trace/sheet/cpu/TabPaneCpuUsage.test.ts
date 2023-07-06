@@ -197,29 +197,33 @@ describe('TabPaneCpuUsage Test', () => {
     expect(tabPaneCpuUsage.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .cpu-usage-label{
+            width: 100%;
+            height: 20px;
+        }
         :host{
+            padding: 10px 10px;
             display: flex;
             flex-direction: column;
-            padding: 10px 10px;
         }
         </style>
-        <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
+        <label id="time-range" class="cpu-usage-label" style="text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
         <lit-table id="tb-cpu-usage" style="height: auto">
-            <lit-table-column order width="1fr" title="CPU" data-index="cpu" key="cpu" align="flex-start">
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU" data-index="cpu" key="cpu" align="flex-start">
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Usage" data-index="usageStr" key="usageStr" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="Usage" data-index="usageStr" key="usageStr" align="flex-start" >
             </lit-table-column>
-            <lit-table-column order width="1fr" title="CPU Freq Top1(M)" data-index="top1" key="top1" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU Freq Top1(M)" data-index="top1" key="top1" align="flex-start" >
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Top1 percent(%)" data-index="top1PercentStr" key="top1PercentStr" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="Top1 percent(%)" data-index="top1PercentStr" key="top1PercentStr" align="flex-start" >
             </lit-table-column>
-            <lit-table-column order width="1fr" title="CPU Freq Top2(M)" data-index="top2" key="top2" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU Freq Top2(M)" data-index="top2" key="top2" align="flex-start" >
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Top2 percent(%)" data-index="top2PercentStr" key="top2PercentStr" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="Top2 percent(%)" data-index="top2PercentStr" key="top2PercentStr" align="flex-start" >
             </lit-table-column>
-            <lit-table-column order width="1fr" title="CPU Freq Top3(M)" data-index="top3" key="top3" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU Freq Top3(M)" data-index="top3" key="top3" align="flex-start" >
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Top3 percent(%)" data-index="top3PercentStr" key="top3PercentStr" align="flex-start" >
+            <lit-table-column class="cpu-usage-column" order width="1fr" title="Top3 percent(%)" data-index="top3PercentStr" key="top3PercentStr" align="flex-start" >
             </lit-table-column>
         </lit-table>
         "

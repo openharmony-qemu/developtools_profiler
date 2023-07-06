@@ -13,7 +13,7 @@
 
 import("//build/test.gni")
 
-module_output_path = "developtools/profiler/hidebug/test/"
+module_output_path = "hiprofiler/hidebug/test/"
 ohos_js_unittest("HidebugJsTest") {
   module_out_path = module_output_path
   hap_profile = "./config.json"

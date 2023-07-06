@@ -20,6 +20,11 @@ import '../../../../../../dist/trace/component/trace/sheet/file-system/TabpaneFi
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
 import { FrameChart } from '../../../../../../dist/trace/component/chart/FrameChart.js';
+
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
+
 import crypto from 'crypto';
 
 window.ResizeObserver =
@@ -37,7 +42,7 @@ Object.defineProperty(global.self, 'crypto', {
 });
 
 describe('TabpaneFilesystemCalltree Test', () => {
-  document.body.innerHTML = `<tabpane-filesystem-calltree id="tree"></tabpane-filesystem-calltree>`;
+  document.body.innerHTML = `<sp-application dark></sp-application><tabpane-filesystem-calltree id="tree"></tabpane-filesystem-calltree>`;
   let tabpaneFilesystemCalltree = document.querySelector<TabpaneFilesystemCalltree>('#tree');
   let val = {
     anomalyEnergy: [],
@@ -85,10 +90,10 @@ describe('TabpaneFilesystemCalltree Test', () => {
   };
 
   it('TabpaneFilesystemCalltreeTest02', function () {
-    tabpaneFilesystemCalltree!.showButtomMenu = jest.fn(() => '');
-    tabpaneFilesystemCalltree.filter = jest.fn(() => '');
-    tabpaneFilesystemCalltree.filter.setAttribute = jest.fn(() => '');
-    expect(tabpaneFilesystemCalltree.showButtomMenu(true)).toBe('');
+    tabpaneFilesystemCalltree!.showButtonMenu = jest.fn(() => '');
+    tabpaneFilesystemCalltree.fsCallTreeFilter = jest.fn(() => '');
+    tabpaneFilesystemCalltree.fsCallTreeFilter.setAttribute = jest.fn(() => '');
+    expect(tabpaneFilesystemCalltree.showButtonMenu(true)).toBe('');
   });
 
   it('TabpaneFilesystemCalltreeTest03', function () {
@@ -131,7 +136,7 @@ describe('TabpaneFilesystemCalltree Test', () => {
 
   it('TabpaneFilesystemCalltreeTest07', function () {
     let filter = new TabPaneFilter();
-    tabpaneFilesystemCalltree.filter = filter;
+    tabpaneFilesystemCalltree.fsCallTreeFilter = filter;
     tabpaneFilesystemCalltree.data = val;
     expect(tabpaneFilesystemCalltree.currentSelection).not.toBeUndefined();
   });
@@ -177,7 +182,7 @@ describe('TabpaneFilesystemCalltree Test', () => {
       },
     ];
     tabpaneFilesystemCalltree.setLTableData(resultData);
-    expect(tabpaneFilesystemCalltree.dataSource.length).toEqual(1);
+    expect(tabpaneFilesystemCalltree.fsCallTreeDataSource.length).toEqual(1);
   });
 
   it('TabpaneFilesystemCalltreeTest09', function () {
@@ -190,7 +195,7 @@ describe('TabpaneFilesystemCalltree Test', () => {
       thirdSelect: '',
       type: 'inputValue',
     };
-    tabpaneFilesystemCalltree.tbl.reMeauseHeight = jest.fn(() => true);
+    tabpaneFilesystemCalltree.fsCallTreeTbl.reMeauseHeight = jest.fn(() => true);
     tabpaneFilesystemCalltree.switchFlameChart(switchData);
     expect(tabpaneFilesystemCalltree.isChartShow).toBeFalsy();
   });
@@ -205,7 +210,7 @@ describe('TabpaneFilesystemCalltree Test', () => {
       thirdSelect: '',
       type: 'inputValue',
     };
-    tabpaneFilesystemCalltree.tbl.reMeauseHeight = jest.fn(() => true);
+    tabpaneFilesystemCalltree.fsCallTreeTbl.reMeauseHeight = jest.fn(() => true);
     let frameChart = new FrameChart();
     tabpaneFilesystemCalltree.frameChart = frameChart;
     tabpaneFilesystemCalltree.switchFlameChart(switchData);

@@ -12,11 +12,12 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../src/ts.gni")
+import("../../build/ts.gni")
 OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR = "${THIRD_PARTY}/protobuf"
 proto_dir = "${THIRD_PARTY}/protogen"
 services_dir = "$proto_dir/services"
 ftrace_data_dir = "$proto_dir/types/plugins/ftrace_data/${kernel_version}"
+js_memory_dir = "$proto_dir/types/plugins/js_memory"
 memory_data_dir = "$proto_dir/types/plugins/memory_data"
 hilog_data_dir = "$proto_dir/types/plugins/hilog_data"
 native_hook_dir = "$proto_dir/types/plugins/native_hook"
@@ -26,14 +27,17 @@ cpu_data_dir = "$proto_dir/types/plugins/cpu_data"
 diskio_data_dir = "$proto_dir/types/plugins/diskio_data"
 process_data_dir = "$proto_dir/types/plugins/process_data"
 hisysevent_data_dir = "$proto_dir/types/plugins/hisysevent_data"
+test_data_dir = "$proto_dir/types/plugins/test_data"
 config("ts_proto_include_config") {
   include_dirs = [
     "$ftrace_data_dir",
+    "$js_memory_dir",
     "$memory_data_dir",
     "$hilog_data_dir",
     "$native_hook_dir",
     "$hidump_data_dir",
     "$hisysevent_data_dir",
+    "$test_data_dir",
   ]
 }
 source_set("ts_proto_data_cpp") {
@@ -62,112 +66,59 @@ source_set("ts_proto_data_cpp") {
   }
 
   public_configs = [ ":ts_proto_include_config" ]
-  if (is_pbdecoder) {
-    sources = [
-      "$ftrace_data_dir/binder.pb.cc",
-      "$ftrace_data_dir/block.pb.cc",
-      "$ftrace_data_dir/cgroup.pb.cc",
-      "$ftrace_data_dir/clk.pb.cc",
-      "$ftrace_data_dir/compaction.pb.cc",
-      "$ftrace_data_dir/cpuhp.pb.cc",
-      "$ftrace_data_dir/dma_fence.pb.cc",
-      "$ftrace_data_dir/ext4.pb.cc",
-      "$ftrace_data_dir/filelock.pb.cc",
-      "$ftrace_data_dir/filemap.pb.cc",
-      "$ftrace_data_dir/ftrace.pb.cc",
-      "$ftrace_data_dir/ftrace_event.pb.cc",
-      "$ftrace_data_dir/gpio.pb.cc",
-      "$ftrace_data_dir/i2c.pb.cc",
-      "$ftrace_data_dir/ipi.pb.cc",
-      "$ftrace_data_dir/irq.pb.cc",
-      "$ftrace_data_dir/kmem.pb.cc",
-      "$ftrace_data_dir/net.pb.cc",
+  sources = [
+    "$ftrace_data_dir/binder.pb.cc",
+    "$ftrace_data_dir/block.pb.cc",
+    "$ftrace_data_dir/cgroup.pb.cc",
+    "$ftrace_data_dir/clk.pb.cc",
+    "$ftrace_data_dir/compaction.pb.cc",
+    "$ftrace_data_dir/cpuhp.pb.cc",
+    "$ftrace_data_dir/dma_fence.pb.cc",
+    "$ftrace_data_dir/ext4.pb.cc",
+    "$ftrace_data_dir/filelock.pb.cc",
+    "$ftrace_data_dir/filemap.pb.cc",
+    "$ftrace_data_dir/ftrace.pb.cc",
+    "$ftrace_data_dir/ftrace_event.pb.cc",
+    "$ftrace_data_dir/gpio.pb.cc",
+    "$ftrace_data_dir/i2c.pb.cc",
+    "$ftrace_data_dir/ipi.pb.cc",
+    "$ftrace_data_dir/irq.pb.cc",
+    "$ftrace_data_dir/kmem.pb.cc",
+    "$ftrace_data_dir/net.pb.cc",
 
-      # "$ftrace_data_dir/mmc.pb.cc",
-      # "$ftrace_data_dir/f2fs.pb.cc",
-      # "$ftrace_data_dir/gpu_mem.pb.cc",
-      # "$ftrace_data_dir/regulator.pb.cc",
-      "$ftrace_data_dir/oom.pb.cc",
-      "$ftrace_data_dir/pagemap.pb.cc",
-      "$ftrace_data_dir/power.pb.cc",
-      "$ftrace_data_dir/printk.pb.cc",
-      "$ftrace_data_dir/raw_syscalls.pb.cc",
-      "$ftrace_data_dir/rcu.pb.cc",
-      "$ftrace_data_dir/sched.pb.cc",
-      "$ftrace_data_dir/signal.pb.cc",
-      "$ftrace_data_dir/sunrpc.pb.cc",
-      "$ftrace_data_dir/task.pb.cc",
-      "$ftrace_data_dir/timer.pb.cc",
-      "$ftrace_data_dir/trace_plugin_result.pb.cc",
-      "$ftrace_data_dir/v4l2.pb.cc",
-      "$ftrace_data_dir/vmscan.pb.cc",
-      "$ftrace_data_dir/workqueue.pb.cc",
-      "$ftrace_data_dir/writeback.pb.cc",
-      "$hidump_data_dir/hidump_plugin_result.pb.cc",
-      "$hilog_data_dir/hilog_plugin_result.pb.cc",
-      "$memory_data_dir/memory_plugin_common.pb.cc",
-      "$memory_data_dir/memory_plugin_config.pb.cc",
-      "$memory_data_dir/memory_plugin_result.pb.cc",
-      "$native_hook_dir/native_hook_config.pb.cc",
-      "$native_hook_dir/native_hook_result.pb.cc",
-      "${cpu_data_dir}/cpu_plugin_result.pb.cc",
-      "${diskio_data_dir}/diskio_plugin_result.pb.cc",
-      "${hisysevent_data_dir}/hisysevent_plugin_config.pb.cc",
-      "${hisysevent_data_dir}/hisysevent_plugin_result.pb.cc",
-      "${network_data_dir}/network_plugin_result.pb.cc",
-      "${process_data_dir}/process_plugin_result.pb.cc",
-      "${services_dir}/common_types.pb.cc",
-    ]
-  } else {
-    sources = [
-      "$ftrace_data_dir/binder.pbreader.h",
-      "$ftrace_data_dir/block.pbreader.h",
-      "$ftrace_data_dir/cgroup.pbreader.h",
-      "$ftrace_data_dir/clk.pbreader.h",
-      "$ftrace_data_dir/compaction.pbreader.h",
-      "$ftrace_data_dir/cpuhp.pbreader.h",
-      "$ftrace_data_dir/dma_fence.pbreader.h",
-      "$ftrace_data_dir/ext4.pbreader.h",
-      "$ftrace_data_dir/filelock.pbreader.h",
-      "$ftrace_data_dir/filemap.pbreader.h",
-      "$ftrace_data_dir/ftrace.pbreader.h",
-      "$ftrace_data_dir/ftrace_event.pbreader.h",
-      "$ftrace_data_dir/gpio.pbreader.h",
-      "$ftrace_data_dir/i2c.pbreader.h",
-      "$ftrace_data_dir/ipi.pbreader.h",
-      "$ftrace_data_dir/irq.pbreader.h",
-      "$ftrace_data_dir/kmem.pbreader.h",
-      "$ftrace_data_dir/net.pbreader.h",
-      "$ftrace_data_dir/oom.pbreader.h",
-      "$ftrace_data_dir/pagemap.pbreader.h",
-      "$ftrace_data_dir/power.pbreader.h",
-      "$ftrace_data_dir/printk.pbreader.h",
-      "$ftrace_data_dir/raw_syscalls.pbreader.h",
-      "$ftrace_data_dir/rcu.pbreader.h",
-      "$ftrace_data_dir/sched.pbreader.h",
-      "$ftrace_data_dir/signal.pbreader.h",
-      "$ftrace_data_dir/sunrpc.pbreader.h",
-      "$ftrace_data_dir/task.pbreader.h",
-      "$ftrace_data_dir/timer.pbreader.h",
-      "$ftrace_data_dir/trace_plugin_result.pbreader.h",
-      "$ftrace_data_dir/v4l2.pbreader.h",
-      "$ftrace_data_dir/vmscan.pbreader.h",
-      "$ftrace_data_dir/workqueue.pbreader.h",
-      "$ftrace_data_dir/writeback.pbreader.h",
-      "$hidump_data_dir/hidump_plugin_result.pbreader.h",
-      "$hilog_data_dir/hilog_plugin_result.pbreader.h",
-      "$memory_data_dir/memory_plugin_common.pbreader.h",
-      "$memory_data_dir/memory_plugin_config.pbreader.h",
-      "$memory_data_dir/memory_plugin_result.pbreader.h",
-      "$native_hook_dir/native_hook_config.pbreader.h",
-      "$native_hook_dir/native_hook_result.pbreader.h",
-      "${cpu_data_dir}/cpu_plugin_result.pbreader.h",
-      "${diskio_data_dir}/diskio_plugin_result.pbreader.h",
-      "${hisysevent_data_dir}/hisysevent_plugin_config.pbreader.h",
-      "${hisysevent_data_dir}/hisysevent_plugin_result.pbreader.h",
-      "${network_data_dir}/network_plugin_result.pbreader.h",
-      "${process_data_dir}/process_plugin_result.pbreader.h",
-      "${services_dir}/common_types.pbreader.h",
-    ]
-  }
+    # "$ftrace_data_dir/mmc.pb.cc",
+    # "$ftrace_data_dir/f2fs.pb.cc",
+    # "$ftrace_data_dir/gpu_mem.pb.cc",
+    # "$ftrace_data_dir/regulator.pb.cc",
+    "$ftrace_data_dir/oom.pb.cc",
+    "$ftrace_data_dir/pagemap.pb.cc",
+    "$ftrace_data_dir/power.pb.cc",
+    "$ftrace_data_dir/printk.pb.cc",
+    "$ftrace_data_dir/raw_syscalls.pb.cc",
+    "$ftrace_data_dir/rcu.pb.cc",
+    "$ftrace_data_dir/sched.pb.cc",
+    "$ftrace_data_dir/signal.pb.cc",
+    "$ftrace_data_dir/sunrpc.pb.cc",
+    "$ftrace_data_dir/task.pb.cc",
+    "$ftrace_data_dir/timer.pb.cc",
+    "$ftrace_data_dir/trace_plugin_result.pb.cc",
+    "$ftrace_data_dir/v4l2.pb.cc",
+    "$ftrace_data_dir/vmscan.pb.cc",
+    "$ftrace_data_dir/workqueue.pb.cc",
+    "$ftrace_data_dir/writeback.pb.cc",
+    "$hidump_data_dir/hidump_plugin_result.pb.cc",
+    "$hilog_data_dir/hilog_plugin_result.pb.cc",
+    "$memory_data_dir/memory_plugin_common.pb.cc",
+    "$memory_data_dir/memory_plugin_config.pb.cc",
+    "$memory_data_dir/memory_plugin_result.pb.cc",
+    "$native_hook_dir/native_hook_config.pb.cc",
+    "$native_hook_dir/native_hook_result.pb.cc",
+    "${cpu_data_dir}/cpu_plugin_result.pb.cc",
+    "${diskio_data_dir}/diskio_plugin_result.pb.cc",
+    "${hisysevent_data_dir}/hisysevent_plugin_config.pb.cc",
+    "${hisysevent_data_dir}/hisysevent_plugin_result.pb.cc",
+    "${network_data_dir}/network_plugin_result.pb.cc",
+    "${process_data_dir}/process_plugin_result.pb.cc",
+    "${services_dir}/common_types.pb.cc",
+  ]
 }

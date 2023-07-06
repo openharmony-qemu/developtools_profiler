@@ -15,7 +15,8 @@ import("//build/ohos.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_source_set("libhidebug_source") {
-  part_name = "profiler"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   include_dirs = [
     "//commonlibrary/c_utils/base/include",
     "//developtools/profiler/hidebug/interfaces/native/innerkits/include",
@@ -25,23 +26,21 @@ ohos_source_set("libhidebug_source") {
 
   external_deps = [
     "c_utils:utils",
-    "hilog_native:libhilog",
+    "hilog:libhilog",
     "init:libbegetutil",
   ]
 }
 
 ohos_source_set("libhidebug_init_source") {
-  part_name = "profiler"
-
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   defines = [ "HIDEBUG_IN_INIT" ]
 
   include_dirs = [
     "//commonlibrary/c_utils/base/include",
     "//developtools/profiler/hidebug/interfaces/native/innerkits/include",
   ]
-
   sources = [ "hidebug_base.c" ]
-
   deps = [
     "//base/startup/init/services/param/base:parameterbase_ext",
     "//third_party/bounds_checking_function:libsec_static",

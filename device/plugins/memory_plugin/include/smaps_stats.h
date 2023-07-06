@@ -22,6 +22,7 @@
 #include <fstream>
 #include <inttypes.h>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 #include <sys/mman.h>
@@ -115,6 +116,7 @@ struct SmapsHeadInfo {
     std::string endAddrStr;
     std::string permission;
     std::string path;
+    int64_t iNode = -1;
 };
 
 enum VmemifoType {
@@ -266,6 +268,9 @@ public:
     SmapsStats() {}
     SmapsStats(const std::string path) : testpath_(path){};
     ~SmapsStats() {}
+
+    using MatchFunc = std::function<bool(const std::string& name, const char* str)>;
+
     bool ParseMaps(int pid, ProcessMemoryInfo& processinfo, bool isReportApp, bool isReportSmaps);
     int GetProcessJavaHeap();
     int GetProcessNativeHeap();
@@ -274,7 +279,6 @@ public:
     int GetProcessGraphics();
     int GetProcessPrivateOther();
     int GetProcessSystem();
-
 private:
     std::array<StatsInfo, VMHEAP_NUM_HEAP> stats_;
     bool lastline_ = false;
@@ -306,6 +310,22 @@ private:
                      int count,
                      int32_t heapIndex[2],
                      bool& swappable);
+    std::string ParseCategory(const SmapsHeadInfo& smapsHeadInfo);
+    bool GetCategoryFromMap(const std::string &name, std::string &group,
+                            const std::map<std::string, std::string> &map, MatchFunc func);
+    const std::map<std::string, std::string> beginMap_ = {
+        {"[heap]", "native heap"}, {"[stack]", "stack"}, {"[anon:stack", "stack"},
+        {"[anon:native_heap:", "native heap"}, {"[anon:ArkTS Heap]", "ark ts heap"},
+        {"[anon:guard", "guard"}, {"/dev", "dev"}, {"[anon:signal_stack", "stack"},
+        {"/dmabuf", "dmabuf"}, {"/data/storage", ".hap"}, {"[anon:libc_malloc", "native heap"},
+        {"[anon:scudo", "native heap"}, {"[anon:GWP-ASan", "native heap"},
+    };
+    const std::map<std::string, std::string> endMap_ = {
+        {".so", ".so"}, {".so.1", ".so"}, {".ttf", ".ttf"},
+        {".db", ".db"}, {".db-shm", ".db"},
+    };
+    const std::string FILE_PAGE_TAG = "FilePage other";
+    const std::string ANON_PAGE_TAG = "AnonPage other";
 };
 
 #endif

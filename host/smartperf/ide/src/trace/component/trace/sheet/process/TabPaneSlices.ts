@@ -17,15 +17,20 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionData, SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabSlices, getTabSlicesAsyncFunc } from '../../../../database/SqlLite.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-slices')
 export class TabPaneSlices extends BaseElement {
   private slicesTbl: LitTable | null | undefined;
   private slicesRange: HTMLLabelElement | null | undefined;
   private slicesSource: Array<SelectionData> = [];
+  private currentSelectionParam: SelectionParam | undefined;
 
   set data(slicesParam: SelectionParam | any) {
+    if (this.currentSelectionParam === slicesParam) {
+      return;
+    }
+    this.currentSelectionParam = slicesParam;
     this.slicesRange!.textContent =
       'Selected range: ' + parseFloat(((slicesParam.rightNs - slicesParam.leftNs) / 1000000.0).toFixed(5)) + ' ms';
     let asyncNames: Array<string> = [];
@@ -34,8 +39,10 @@ export class TabPaneSlices extends BaseElement {
       asyncNames.push(it.name);
       asyncPid.push(it.pid);
     });
+    this.slicesTbl!.loading = true;
     getTabSlicesAsyncFunc(asyncNames, asyncPid, slicesParam.leftNs, slicesParam.rightNs).then((res) => {
       getTabSlices(slicesParam.funTids, slicesParam.leftNs, slicesParam.rightNs).then((res2) => {
+        this.slicesTbl!.loading = false;
         let processSlicesResult = (res || []).concat(res2 || []);
         if (processSlicesResult != null && processSlicesResult.length > 0) {
           let sumWall = 0.0;
@@ -73,7 +80,7 @@ export class TabPaneSlices extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!,this.slicesTbl!)
+    resizeObserver(this.parentElement!, this.slicesTbl!);
   }
 
   initHtml(): string {

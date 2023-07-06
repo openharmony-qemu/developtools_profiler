@@ -39,6 +39,8 @@ export class ProcedureLogicWorkerCpuState extends LogicHandler {
     }
   }
 
+  clearAll() {}
+
   getCpuState(cpu: number) {
     this.queryData(
       this.currentEventId,

@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "hi_sysevent_measure_filter.h"
 #include "htrace_event_parser.h"
 #include "htrace_hisysevent_parser.h"
@@ -22,7 +22,7 @@
 namespace SysTuning {
 namespace TraceStreamer {
 HtraceHisyseventParser::HtraceHisyseventParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
-    : HtracePluginTimeParser(dataCache, ctx)
+    : EventParserBase(dataCache, ctx)
 {
 }
 HtraceHisyseventParser::~HtraceHisyseventParser()

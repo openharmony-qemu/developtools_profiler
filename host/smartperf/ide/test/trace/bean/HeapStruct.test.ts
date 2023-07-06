@@ -67,16 +67,4 @@ describe('HeapStruct Test', () => {
   it('HeapStructTest02', function () {
     expect(HeapStruct.draw(ctx, reachData)).toBeUndefined();
   });
-
-  it('HeapStructTest03', function () {
-    expect(HeapStruct.setFrame(nodeSource, 1, 10, 15, 30, nodeSource.frame)).toBeUndefined();
-  });
-
-  it('HeapStructTest04', function () {
-    expect(HeapStruct.setFrame(nodeSource, 1, 15, 20, 30, nodeSource.frame)).toBeUndefined();
-  });
-
-  it('HeapStructTest05', function () {
-    expect(HeapStruct.setFrame(nodeSource, 1, 10, 20, 30, nodeSource.frame)).toBeUndefined();
-  });
 });

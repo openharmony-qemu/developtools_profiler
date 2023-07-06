@@ -19,10 +19,11 @@ jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
 
 //@ts-ignore
 import {
-  hiPerfProcess,
   HiPerfProcessStruct,
   HiperfProcessRender,
 } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerHiPerfProcess.js';
+// @ts-ignore
+import { hiPerf } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerCommon.js';
 
 describe('ProcedureWorkerHiPerfProcess Test', () => {
   it('ProcedureWorkerHiPerfProcessTest01', () => {
@@ -48,7 +49,7 @@ describe('ProcedureWorkerHiPerfProcess Test', () => {
       frame: { x: 0, y: 9, width: 10, height: 10 },
     });
     dataList.push({ startNS: 1, dur: 2, length: 1 });
-    hiPerfProcess(dataList, [{ length: 0 }], dataList, 8, 3, '', true, 1, true);
+    hiPerf(dataList, [{ length: 0 }], dataList, 8, 3, '', true, 1, true);
   });
 
   it('ProcedureWorkerHiPerfProcessTest03', function () {
@@ -60,7 +61,7 @@ describe('ProcedureWorkerHiPerfProcess Test', () => {
       frame: { x: 0, y: 9, width: 10, height: 10 },
     });
     dataList.push({ startNS: 1, dur: 2, length: 1 });
-    hiPerfProcess(dataList, [{ length: 0 }], dataList, 8, 3, '', false, 1, false);
+    hiPerf(dataList, [{ length: 0 }], dataList, 8, 3, '', false, 1, false);
   });
 
   it('ProcedureWorkerHiPerfProcessTest04', function () {

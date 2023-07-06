@@ -16,7 +16,7 @@ import("../../../build/config.gni")
 
 group("SmartPerf") {
   deps = []
-  if (support_jsapi && profiler_SmartPerf) {
+  if (support_jsapi && hiprofiler_SmartPerf) {
     deps +=
         [ "//developtools/profiler/host/smartperf/client/client_ui/:SmartPerf" ]
   }

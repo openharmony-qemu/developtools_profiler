@@ -85,11 +85,16 @@ export class TabpaneFilesystemCalltree extends BaseElement {
         this.frameChart!.data = this.fsCallTreeDataSource;
         this.frameChart?.updateCanvas(true, this.clientWidth);
         this.frameChart?.calculateChartData();
+        this.switchFlameChart();
       }
     );
   }
 
-  getParentTree(fsCallTreeSrc: Array<FileMerageBean>, fsCallTreeTarget: FileMerageBean, parents: Array<FileMerageBean>): boolean {
+  getParentTree(
+    fsCallTreeSrc: Array<FileMerageBean>,
+    fsCallTreeTarget: FileMerageBean,
+    parents: Array<FileMerageBean>
+  ): boolean {
     for (let fsCallTreeBean of fsCallTreeSrc) {
       if (fsCallTreeBean.id == fsCallTreeTarget.id) {
         parents.push(fsCallTreeBean);
@@ -427,10 +432,10 @@ export class TabpaneFilesystemCalltree extends BaseElement {
     };
   }
 
-  switchFlameChart(data: any) {
+  switchFlameChart(data?: any) {
     let fsCallTreePageTab = this.shadowRoot?.querySelector('#show_table');
     let fsCallTreePageChart = this.shadowRoot?.querySelector('#show_chart');
-    if (data.icon == 'block') {
+    if (!data || data.icon == 'block') {
       fsCallTreePageChart?.setAttribute('class', 'show');
       fsCallTreePageTab?.setAttribute('class', '');
       this.isChartShow = true;

@@ -22,6 +22,8 @@ import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTr
 
 // @ts-ignore
 import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
+// @ts-ignore
+import {TabUtil} from "../../../../../../dist/trace/component/trace/sheet/sdk/TabUtil.js";
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -39,7 +41,7 @@ describe('TabPaneSdkCounter Test', () => {
   let litTable = document.querySelector('#tb-counter') as LitTable;
   it('TabPaneSdkCounterTest00', () => {
     let tabPaneSdkCounter = new TabPaneSdkCounter();
-    tabPaneSdkCounter.tbl = jest.fn(() => litTable);
+    tabPaneSdkCounter.tblSdkCounter = jest.fn(() => litTable);
     let a = new Map();
     let jsonCofigStr =
       '{"settingConfig":{"configuration":{"counters":{"enum":["ARM_Mali-TTRx_JS1_ACTIVE","ARM_Mali-TTRx_JS0_ACTIVE","ARM_Mali-TTRx_GPU_ACTIVE","ARM_Mali-TTRx_FRAG_ACTIVE"],\n' +
@@ -132,8 +134,8 @@ describe('TabPaneSdkCounter Test', () => {
       perfAll: false,
       sdkCounterIds: ['a-1', 'b-1', 'd-1'],
     };
-    tabPaneSdkCounter.tbl.recycleDataSource = jest.fn(() => d);
-    tabPaneSdkCounter.tbl.appendChild = jest.fn(() => true);
+    tabPaneSdkCounter.tblSdkCounter.recycleDataSource = jest.fn(() => d);
+    tabPaneSdkCounter.tblSdkCounter.appendChild = jest.fn(() => true);
     tabPaneSdkCounter.data = d;
     expect(tabPaneSdkCounter.data).toBeUndefined();
   });
@@ -148,7 +150,7 @@ describe('TabPaneSdkCounter Test', () => {
     let type = {
       columns: [{ showType: 'counter' }],
     };
-    expect(tabPaneSdkCounter.getTableType(type)).toBe('');
+    expect(TabUtil.getTableType(type)).toBe('');
   });
 
   it('TabPaneSdkCounterTest03', () => {
@@ -161,17 +163,21 @@ describe('TabPaneSdkCounter Test', () => {
     expect(tabPaneSdkCounter.initHtml()).toMatchInlineSnapshot(`
 "
 <style>
+.sdk-counter-table{
+    display: flex;
+    margin-bottom: 5px;
+}
 :host{
+    padding: 10px 10px;
     display: flex;
     flex-direction: column;
-    padding: 10px 10px;
 }
 </style>
-<div style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
-            <stack-bar id="stack-bar" style="flex: 1"></stack-bar>
-            <label id="time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
+<div class="sdk-counter-table" style="height: 20px;align-items: center;flex-direction: row;">
+            <stack-bar id="sdk-counter-stack-bar" style="flex: 1"></stack-bar>
+            <label id="sdk-counter-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
         </div>
-<lit-table id="tb-counter" style="height: auto">
+<lit-table id="tb-counter" class="sdk-counter-tbl" style="height: auto">
 </lit-table>
         "
 `);
@@ -179,8 +185,8 @@ describe('TabPaneSdkCounter Test', () => {
 
   it('TabPaneSdkCounterTest04', function () {
     let tabPaneSdkCounter = new TabPaneSdkCounter();
-    tabPaneSdkCounter.tbl = jest.fn(() => true);
-    tabPaneSdkCounter.tbl!.recycleDataSource = jest.fn(() => true);
+    tabPaneSdkCounter.tblSdkCounter = jest.fn(() => true);
+    tabPaneSdkCounter.tblSdkCounter!.recycleDataSource = jest.fn(() => true);
     expect(
       tabPaneSdkCounter.sortByColumn({
         key: '',

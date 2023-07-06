@@ -12,6 +12,7 @@ third_party
 .idea
 tools
 tmp
+*.tar.gz*
 out.perf
 perf.data
 out.floded

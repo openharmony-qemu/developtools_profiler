@@ -200,6 +200,9 @@ describe('RangeRuler Test', () => {
     rangeRuler.frame = jest.fn(() => false);
     rangeRuler.frame.containsWithMargin = jest.fn(() => true);
     rangeRuler.rangeRect.containsWithMargin = jest.fn(() => false);
+    rangeRuler.markB = jest.fn(() => {
+      return {};
+    });
     rangeRuler.markB.isHover = jest.fn(() => true);
     rangeRuler.markB.frame = jest.fn(() => true);
     rangeRuler.markB.frame.x = jest.fn(() => true);

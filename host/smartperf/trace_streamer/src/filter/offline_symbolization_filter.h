@@ -58,7 +58,7 @@ public:
     std::shared_ptr<FrameInfo> OfflineSymbolization(uint64_t ip);
     std::shared_ptr<std::vector<std::shared_ptr<FrameInfo>>> OfflineSymbolization(
         const std::shared_ptr<std::vector<uint64_t>> ips);
-    void OfflineSymbolization(const std::set<uint64_t>& ips);
+    DataIndex OfflineSymbolization(uint64_t symVaddr, DataIndex filePathIndex);
 
 protected:
     enum SYSTEM_ENTRY_VALUE { ELF32_SYM = 16, ELF64_SYM = 24 };
@@ -73,7 +73,12 @@ protected:
 
 private:
     template <class T>
-    void UpdateFrameInfo(T* elfSym, uint32_t& symbolStart, uint64_t symVaddr, uint64_t ip, FrameInfo* frameInfo);
+    void GetSymbolStartMaybeUpdateFrameInfo(T* elfSym,
+                                            uint32_t& symbolStart,
+                                            uint64_t symVaddr,
+                                            uint64_t ip,
+                                            FrameInfo* frameInfo);
+    bool FillFrameInfo(std::shared_ptr<FrameInfo>& frameInfo, uint64_t ip, uint64_t& vmStart, uint64_t& vmOffset);
 };
 
 } // namespace TraceStreamer

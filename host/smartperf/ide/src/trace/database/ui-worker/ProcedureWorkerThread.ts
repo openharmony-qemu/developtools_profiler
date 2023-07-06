@@ -24,7 +24,7 @@ import {
 } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { Utils } from '../../component/trace/base/Utils.js';
-import { ThreadStruct as  BaseThreadStruct} from '../../bean/ThreadStruct.js';
+import { ThreadStruct as BaseThreadStruct } from '../../bean/ThreadStruct.js';
 export class ThreadRender extends Render {
   renderMainThread(
     threadReq: {
@@ -97,7 +97,12 @@ export class ThreadStruct extends BaseThreadStruct {
       ) {
         threadContext.strokeStyle = '#232c5d';
         threadContext.lineWidth = 2;
-        threadContext.strokeRect(data.frame.x, data.frame.y + padding, data.frame.width - 2, data.frame.height - padding * 2);
+        threadContext.strokeRect(
+          data.frame.x,
+          data.frame.y + padding,
+          data.frame.width - 2,
+          data.frame.height - padding * 2
+        );
       }
     }
   }

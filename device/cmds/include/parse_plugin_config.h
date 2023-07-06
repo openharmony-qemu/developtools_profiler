@@ -42,6 +42,7 @@ public:
     bool SetSerializeProcessConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeHiperfConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeHisyseventConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
+    bool SetSerializeArkTSConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
 
     google::protobuf::TextFormat::Parser& GetParser()
     {

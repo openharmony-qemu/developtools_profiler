@@ -20,9 +20,7 @@
 namespace SysTuning {
 namespace TraceStreamer {
 PagedMemoryDataParser::PagedMemoryDataParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
-    : EventParserBase(dataCache, ctx),
-      EbpfBase(dataCache, ctx),
-      timeParser_(std::make_unique<HtracePluginTimeParser>(dataCache, ctx))
+    : EventParserBase(dataCache, ctx), EbpfBase(dataCache, ctx), timeParser_(std::make_unique<HtracePluginTimeParser>())
 {
 }
 PagedMemoryDataParser::~PagedMemoryDataParser()

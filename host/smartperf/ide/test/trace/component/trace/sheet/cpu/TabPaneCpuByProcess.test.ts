@@ -57,23 +57,29 @@ describe('TabPaneCpuByProcess Test', () => {
     expect(tabPaneCpuByProcess.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
+        .cpu-process-label{
+            font-size: 10pt;
+            margin-bottom: 5px;
+            text-align: end;
+        }
         :host{
+            border: 0;
+            padding: 10px 10px;
             display: flex;
             flex-direction: column;
-            padding: 10px 10px;
         }
         </style>
-        <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
+        <label id="cpu-process-time-range" class="cpu-process-label" style="width: 100%;height: 20px;">Selected range:0.0 ms</label>
         <lit-table id="tb-cpu-process" style="height: auto">
-            <lit-table-column order width="30%" title="Process" data-index="process" key="process" align="flex-start" order>
+            <lit-table-column class="cpu-process-column" order width="30%" title="Process" data-index="process" key="process" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column order width="1fr" title="PID" data-index="pid" key="pid" align="flex-start" order>
+            <lit-table-column class="cpu-process-column" order width="1fr" title="PID" data-index="pid" key="pid" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Wall duration(ms)" data-index="wallDuration" key="wallDuration" align="flex-start" order>
+            <lit-table-column class="cpu-process-column" order width="1fr" title="Wall duration(ms)" data-index="wallDuration" key="wallDuration" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Avg Wall duration(ms)" data-index="avgDuration" key="avgDuration" align="flex-start" order>
+            <lit-table-column class="cpu-process-column" order width="1fr" title="Avg Wall duration(ms)" data-index="avgDuration" key="avgDuration" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column order width="1fr" title="Occurrences" data-index="occurrences" key="occurrences" align="flex-start" order>
+            <lit-table-column class="cpu-process-column" order width="1fr" title="Occurrences" data-index="occurrences" key="occurrences" align="flex-start" order>
             </lit-table-column>
         </lit-table>
         "

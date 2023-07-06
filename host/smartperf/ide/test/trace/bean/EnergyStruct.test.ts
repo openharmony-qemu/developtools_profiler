@@ -14,180 +14,16 @@
  */
 
 // @ts-ignore
-import {
-  EnergyAnomalyStruct,
-  EnergySystemStruct,
-  EnergyPowerStruct,
-  EnergyStateStruct,
-  PowerDetailsEnergy,
-  PowerBatteryEnergy,
-  SystemDetailsEnergy,
-} from '../../../dist/trace/bean/EnergyStruct.js';
+import {PowerDetailsEnergy, SystemDetailsEnergy,} from '../../../dist/trace/bean/EnergyStruct.js';
 
 describe('EnergyStruct Test', () => {
-  let energyAnomalyStruct = new EnergyAnomalyStruct();
-  let energySystemStruct = new EnergySystemStruct();
-  let energyPowerStruct = new EnergyPowerStruct();
-  let energyStateStruct = new EnergyStateStruct();
   let powerDetailsEnergy = new PowerDetailsEnergy();
-  let powerBatteryEnergy = new PowerBatteryEnergy();
   let systemDetailsEnergy = new SystemDetailsEnergy();
 
-  it('energyAnomalyStructTest', function () {
-    energyAnomalyStruct = {
-      type: 0,
-      startNS: 0,
-      height: 0,
-      eventName: 'eventName',
-    };
-    expect(energyAnomalyStruct).not.toBeUndefined();
-    expect(energyAnomalyStruct).toMatchInlineSnapshot(
-{
-  type: expect.any(Number),
-  startNS: expect.any(Number),
-  height: expect.any(Number),
-  eventName: expect.any(String) }, `
-{
-  "eventName": Any<String>,
-  "height": Any<Number>,
-  "startNS": Any<Number>,
-  "type": Any<Number>,
-}
-`);
-  });
-
-  it('energySystemStructTest', function () {
-    energySystemStruct = {
-      type: 0,
-      startNs: 0,
-      dur: 0,
-      workScheduler: '',
-      power: '',
-      location: '',
-    };
-    expect(energySystemStruct).not.toBeUndefined();
-    expect(energySystemStruct).toMatchInlineSnapshot(
-{
-  type: expect.any(Number),
-  startNs: expect.any(Number),
-  dur: expect.any(Number),
-  workScheduler: expect.any(String),
-  power: expect.any(String),
-  location: expect.any(String) }, `
-{
-  "dur": Any<Number>,
-  "location": Any<String>,
-  "power": Any<String>,
-  "startNs": Any<Number>,
-  "type": Any<Number>,
-  "workScheduler": Any<String>,
-}
-`);
-  });
-
-  it('energyPowerStructTest', function () {
-    energyPowerStruct = {
-      type: 0,
-      name: '',
-      ts: 0,
-      cpu: 0,
-      location: 0,
-      gpu: 0,
-      display: 0,
-      camera: 0,
-      bluetooth: 0,
-      flashlight: 0,
-      audio: 0,
-      wifiscan: 0,
-    };
-    expect(energyPowerStruct).not.toBeUndefined();
-    expect(energyPowerStruct).toMatchInlineSnapshot(
-{
-  type: expect.any(Number),
-  name: expect.any(String),
-  ts: expect.any(Number),
-  cpu: expect.any(Number),
-  location: expect.any(Number),
-  gpu: expect.any(Number),
-  display: expect.any(Number),
-  camera: expect.any(Number),
-  bluetooth: expect.any(Number),
-  flashlight: expect.any(Number),
-  audio: expect.any(Number),
-  wifiscan: expect.any(Number) }, `
-{
-  "audio": Any<Number>,
-  "bluetooth": Any<Number>,
-  "camera": Any<Number>,
-  "cpu": Any<Number>,
-  "display": Any<Number>,
-  "flashlight": Any<Number>,
-  "gpu": Any<Number>,
-  "location": Any<Number>,
-  "name": Any<String>,
-  "ts": Any<Number>,
-  "type": Any<Number>,
-  "wifiscan": Any<Number>,
-}
-`);
-  });
-
-  it('energyStateStructTest', function () {
-    energyStateStruct = {
-      type: '',
-      startNs: 0,
-      dur: 0,
-      value: 0,
-    };
-    expect(energyStateStruct).not.toBeUndefined();
-    expect(energyStateStruct).toMatchInlineSnapshot(
-{
-  type: expect.any(String),
-  startNs: expect.any(Number),
-  dur: expect.any(Number),
-  value: expect.any(Number) }, `
-{
-  "dur": Any<Number>,
-  "startNs": Any<Number>,
-  "type": Any<String>,
-  "value": Any<Number>,
-}
-`);
-  });
-
   it('powerDetailsEnergyTest', function () {
-    powerDetailsEnergy = {
-      event: '',
-      charge: 0,
-      background_time: 0,
-      screen_on_time: 0,
-      screen_off_time: 0,
-      load: '-',
-      usage: 0,
-      duration: 0,
-      camera_id: 0,
-      foreground_count: 0,
-      background_count: 0,
-      screen_on_count: 0,
-      screen_off_count: 0,
-      count: 0,
-      appName: '',
-      uid: 0,
-      foreground_duration: 0,
-      foreground_energy: 0,
-      background_duration: 0,
-      background_energy: 0,
-      screen_on_duration: 0,
-      screen_on_energy: 0,
-      screen_off_duration: 0,
-      screen_off_energy: 0,
-      energy: 0,
-      energyConsumptionRatio: '',
-    };
     expect(powerDetailsEnergy).not.toBeUndefined();
     expect(powerDetailsEnergy).toMatchInlineSnapshot(
 {
-  event: expect.any(String),
   charge: expect.any(Number),
   background_time: expect.any(Number),
   screen_on_time: expect.any(Number),
@@ -225,7 +61,7 @@ describe('EnergyStruct Test', () => {
   "duration": Any<Number>,
   "energy": Any<Number>,
   "energyConsumptionRatio": Any<String>,
-  "event": Any<String>,
+  "event": undefined,
   "foreground_count": Any<Number>,
   "foreground_duration": Any<Number>,
   "foreground_energy": Any<Number>,
@@ -244,56 +80,7 @@ describe('EnergyStruct Test', () => {
 `);
   });
 
-  it('powerBatteryEnergyTest', function () {
-    powerBatteryEnergy = {
-      gasGauge: -1,
-      charge: -1,
-      screen: -1,
-      level: -1,
-      current: -1,
-      capacity: -1,
-      appName: '',
-      uid: -1,
-    };
-    expect(powerBatteryEnergy).not.toBeUndefined();
-    expect(powerBatteryEnergy).toMatchInlineSnapshot(
-{
-  gasGauge: expect.any(Number),
-  charge: expect.any(Number),
-  screen: expect.any(Number),
-  level: expect.any(Number),
-  current: expect.any(Number),
-  capacity: expect.any(Number),
-  appName: expect.any(String),
-  uid: expect.any(Number) }, `
-{
-  "appName": Any<String>,
-  "capacity": Any<Number>,
-  "charge": Any<Number>,
-  "current": Any<Number>,
-  "gasGauge": Any<Number>,
-  "level": Any<Number>,
-  "screen": Any<Number>,
-  "uid": Any<Number>,
-}
-`);
-  });
-
   it('systemDetailsEnergyTest', function () {
-    systemDetailsEnergy = {
-      eventName: '',
-      type: '',
-      pid: -1,
-      uid: -1,
-      state: -1,
-      workId: '',
-      name: '',
-      interval: -1,
-      level: -1,
-      tag: '',
-      message: '',
-      log_level: '',
-    };
     expect(systemDetailsEnergy).not.toBeUndefined();
     expect(systemDetailsEnergy).toMatchInlineSnapshot(
 {
@@ -319,6 +106,7 @@ describe('EnergyStruct Test', () => {
   "pid": Any<Number>,
   "state": Any<Number>,
   "tag": Any<String>,
+  "ts": 0,
   "type": Any<String>,
   "uid": Any<Number>,
   "workId": Any<String>,

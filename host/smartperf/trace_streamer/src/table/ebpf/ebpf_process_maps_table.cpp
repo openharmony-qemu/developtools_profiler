@@ -103,25 +103,6 @@ void EbpfProcessMapsTable::FilterByConstraint(FilterConstraints& fc, double& fil
     }
 }
 
-bool EbpfProcessMapsTable::CanFilterId(const char op, size_t& rowCount)
-{
-    switch (op) {
-        case SQLITE_INDEX_CONSTRAINT_EQ:
-            rowCount = 1;
-            break;
-        case SQLITE_INDEX_CONSTRAINT_GT:
-        case SQLITE_INDEX_CONSTRAINT_GE:
-        case SQLITE_INDEX_CONSTRAINT_LE:
-        case SQLITE_INDEX_CONSTRAINT_LT:
-            // assume filter out a half of rows
-            rowCount = (rowCount >> 1);
-            break;
-        default:
-            return false;
-    }
-    return true;
-}
-
 std::unique_ptr<TableBase::Cursor> EbpfProcessMapsTable::CreateCursor()
 {
     return std::make_unique<Cursor>(dataCache_, this);
@@ -210,40 +191,6 @@ int32_t EbpfProcessMapsTable::Cursor::Column(int32_t column) const
             break;
     }
     return SQLITE_OK;
-}
-
-void EbpfProcessMapsTable::Cursor::FilterId(unsigned char op, sqlite3_value* argv)
-{
-    auto type = sqlite3_value_type(argv);
-    if (type != SQLITE_INTEGER) {
-        // other type consider it NULL
-        indexMap_->Intersect(0, 0);
-        return;
-    }
-
-    auto v = static_cast<TableRowId>(sqlite3_value_int64(argv));
-    switch (op) {
-        case SQLITE_INDEX_CONSTRAINT_EQ:
-            indexMap_->Intersect(v, v + 1);
-            break;
-        case SQLITE_INDEX_CONSTRAINT_GE:
-            indexMap_->Intersect(v, rowCount_);
-            break;
-        case SQLITE_INDEX_CONSTRAINT_GT:
-            v++;
-            indexMap_->Intersect(v, rowCount_);
-            break;
-        case SQLITE_INDEX_CONSTRAINT_LE:
-            v++;
-            indexMap_->Intersect(0, v);
-            break;
-        case SQLITE_INDEX_CONSTRAINT_LT:
-            indexMap_->Intersect(0, v);
-            break;
-        default:
-            // can't filter, all rows
-            break;
-    }
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

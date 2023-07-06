@@ -58,7 +58,7 @@ ohos_unittest("profiler_service_ut") {
   ]
   configs = [ ":cflags_config" ]
 
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }
 

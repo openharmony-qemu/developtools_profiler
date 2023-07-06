@@ -35,15 +35,17 @@ Summary的Tab页，主要显示了总览视图，通过类的名称来分组显�
                     第二层为该类的实例名+id，id唯一。
                     第三层以下为实例中的成员变量。
 +     Distance：使用节点的最短简单路径显示到根的距离。
-    例如下图其中GC Root为根节点，distance为0,G为上次GC之后新申请内存的实例，distance为1000000。A、B、C、D、E、F、H为调用节点；以E为例，从A->D->F>E,distance为4，从A->D->E，depth为3;从B->E,depth为2,遵循最小distance原则，E的distance为2,同理D的distance为2,F的distance为2,H的distance也为2。
+    例如下图其中GC Root为根节点，distance为0,G为上次GC之后新申请内存的实例，distance为100000000。在界面上显示为-，A、B、C、D、E、F、H为调用节点；以E为例，从A->D->F>E,distance为4，从A->D->E，distance为3;从B->E,distance为2,遵循最小distance原则，E的distance为2,同理D的distance为2,F的distance为2,H的distance也为2。
+
+    其中第一层类的distance为该类所有实例中最小的distance,如果有实例的distance为-，类的distance也为-(-表示没有被root节点引用的实例，如下图的G)
     ![GitHub Logo](../../figures/Jsmemory/js_sample.png)
-+     ShallowSize：是指实例自身占用的内存, 可以理解为保存该'数据结构'需要多少内存。
-        例如下面的代码。：
++     ShallowSize：是指实例自身占用的内存, 可以理解为保存该'数据结构'需要多少内存
+        例如下面的代码：
 ``` javascript
     class X {
-    a: number = 0;
-    b: boolean = false;
-    c: ChartStruct = new ChartStruct();
+        a: number = 0;
+        b: boolean = false;
+        c: ChartStruct = new ChartStruct();
     }
 ```
         假设当前是在64位系统, 对于类X来说, 一个X实例的Shallow Size为:
@@ -57,7 +59,7 @@ Summary的Tab页，主要显示了总览视图，通过类的名称来分组显�
     * 如上图所示；假设所有的节点Size都为1,按照A->B->C的顺序回收。
         * 当A被回收时，H被D调用，先不回收，D没有被调用，D回收，由于D被回收，H没有被调用，H回收，由于F被C调用，E被B、F也调用了，所以不能被回收,此时A的Retained Size为3,D的Retained Size为2, H的Retained Size为1。
         * 当B被回收时，由于E被F占用，所以E不会被回收，此时B的Retained Size为1。
-        * 当C被回收时，F没有人被调用，E没有被调用,所以都会被回收，此时C的Retained Size为3，F的Retained Size为2, E的Retained Size为1。
+        * 当C被回收时，F没有被调用，E没有被调用,所以都会被回收，此时C的Retained Size为3，F的Retained Size为2, E的Retained Size为1。
 
 Comparison的Tab页，主要显示了比较视图，显示两份快照间的不同之处，主要比较类创建与释放的实例数量。
 ![GitHub Logo](../../figures/Jsmemory/JsComparison.jpg)

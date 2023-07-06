@@ -26,7 +26,7 @@ describe('TabPaneLiveProcesses Test', function () {
   let tabPaneLiveProcesses = new TabPaneLiveProcesses();
 
   it('TabPaneLiveProcessesTest01 ', function () {
-    tabPaneLiveProcesses.queryResult.length = 1;
+    tabPaneLiveProcesses.queryLiveResult.length = 1;
     expect(tabPaneLiveProcesses.filterData()).toBeUndefined();
   });
 

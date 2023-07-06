@@ -171,9 +171,21 @@ export class VirtualMemoryStruct extends BaseStruct {
         let virtualMemoryDrawHeight: number = Math.floor(
           ((data.value || 0) * (data.frame.height || 0) * 1.0) / (data.maxValue || 1)
         );
-        virtualMemoryContext.fillRect(data.frame.x, data.frame.y + data.frame.height - virtualMemoryDrawHeight, width, virtualMemoryDrawHeight);
+        virtualMemoryContext.fillRect(
+          data.frame.x,
+          data.frame.y + data.frame.height - virtualMemoryDrawHeight,
+          width,
+          virtualMemoryDrawHeight
+        );
         virtualMemoryContext.beginPath();
-        virtualMemoryContext.arc(data.frame.x, data.frame.y + data.frame.height - virtualMemoryDrawHeight, 3, 0, 2 * Math.PI, true);
+        virtualMemoryContext.arc(
+          data.frame.x,
+          data.frame.y + data.frame.height - virtualMemoryDrawHeight,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         virtualMemoryContext.fill();
         virtualMemoryContext.globalAlpha = 1.0;
         virtualMemoryContext.stroke();

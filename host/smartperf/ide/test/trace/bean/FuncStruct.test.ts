@@ -15,6 +15,9 @@
 
 // @ts-ignore
 import { FuncStruct } from '../../../dist/trace/bean/FuncStruct.js';
+jest.mock('../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 
 describe('FuncStruct Test', () => {
   const canvas = document.createElement('canvas');
@@ -48,12 +51,6 @@ describe('FuncStruct Test', () => {
   it('FuncStructTest02', function () {
     expect(FuncStruct.draw(ctx, durData)).toBeUndefined();
   });
-  it('FuncStructTest03', function () {
-    expect(FuncStruct.drawString(ctx, 2, durData, durData.frame)).toBeUndefined();
-  });
-  it('FuncStructTest06 ', function () {
-    expect(FuncStruct.drawString(ctx, 3, durData, durData.frame)).toBeUndefined();
-  });
 
   it('FuncStructTest04', function () {
     expect(
@@ -75,9 +72,6 @@ describe('FuncStruct Test', () => {
     ).toBeFalsy();
   });
 
-  it('FuncStructTest07', function () {
-    expect(FuncStruct.drawString(ctx, 300, durData, durData.frame)).toBeUndefined();
-  });
 
   it('FuncStructTest08', function () {
     expect(

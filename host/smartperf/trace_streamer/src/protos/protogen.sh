@@ -16,7 +16,7 @@ protoc='protoc'
 proto_dir='.'
 protoreader_plugin='protoreader_plugin'
 case "$OSTYPE" in
-  msys*)    out='../../out/windows' protoc='protoc.exe' protoreader_plugin='protoreader_plugin.exe' proto_dir=$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) ;;
+  msys*)    out='../../out/windows' protoreader_plugin='protoreader_plugin.exe' protoc='protoc.exe' proto_dir=$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) ;;
   darwin*)  out='../../out/macx' proto_dir=$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) ;;
   linux*)   out='../../out/linux'  proto_dir=$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) ;;
   *)        echo "other: $OSTYPE" ;;

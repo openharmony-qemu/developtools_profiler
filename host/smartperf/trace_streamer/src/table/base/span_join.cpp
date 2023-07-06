@@ -15,6 +15,7 @@
 
 #include "span_join.h"
 #include <vector>
+#include "string_help.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -93,29 +94,9 @@ bool SpanJoin::DeduplicationForColumn(const std::string& name, std::vector<Colum
     return true;
 }
 
-std::vector<std::string> SpanJoin::TableNameSplitToVec(std::string& str, const std::string& pat)
-{
-    std::string::size_type pos;
-    std::vector<std::string> result;
-    str += pat;
-    int32_t size = str.size();
-    for (int32_t i = 0; i < size; i++) {
-        pos = str.find(pat, i);
-        if (pos == std::string::npos) {
-            break;
-        }
-        if (pos < size) {
-            std::string s = str.substr(i, pos - i);
-            result.push_back(s);
-            i = pos + pat.size() - 1;
-        }
-    }
-    return result;
-}
-
 void SpanJoin::Parse(const std::string& tablePartition, TableParse& tableParse)
 {
-    std::vector<std::string> result = TableNameSplitToVec(const_cast<std::string&>(tablePartition), " ");
+    std::vector<std::string> result = SplitStringToVec(tablePartition, " ");
     if (result.size() < PARTITIONED_COUNT) {
         TS_LOGW("span_join sql is invalid!");
     }

@@ -16,7 +16,7 @@
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
 
-#include "clock_filter.h"
+#include "clock_filter_ex.h"
 #include "trace_data_cache.h"
 #include "trace_streamer_filters.h"
 
@@ -28,7 +28,7 @@ class ClockFilterTest : public ::testing::Test {
 public:
     void SetUp()
     {
-        streamFilters_.clockFilter_ = std::make_unique<ClockFilter>(&traceDataCache_, &streamFilters_);
+        streamFilters_.clockFilter_ = std::make_unique<ClockFilterEx>(&traceDataCache_, &streamFilters_);
     }
 
     void TearDown() {}

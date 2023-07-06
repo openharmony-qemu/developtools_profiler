@@ -21,7 +21,7 @@ import { getTabThreadStates } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
 import { StackBar } from '../../../StackBar.js';
 import { log } from '../../../../../log/Log.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-thread-states')
 export class TabPaneThreadStates extends BaseElement {
@@ -29,44 +29,56 @@ export class TabPaneThreadStates extends BaseElement {
   private range: HTMLLabelElement | null | undefined;
   private stackBar: StackBar | null | undefined;
   private threadStatesTblSource: Array<SelectionData> = [];
+  private currentSelectionParam: SelectionParam | undefined;
 
   set data(threadStatesParam: SelectionParam | any) {
+    if (this.currentSelectionParam === threadStatesParam) {
+      return;
+    }
+    this.currentSelectionParam = threadStatesParam;
     //@ts-ignore
-    this.threadStatesTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
+    this.threadStatesTbl?.shadowRoot?.querySelector('.table')?.style?.height =
+      this.parentElement!.clientHeight - 45 + 'px';
     // // @ts-ignore
-    this.range!.textContent = 'Selected range: ' + ((threadStatesParam.rightNs - threadStatesParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
-    getTabThreadStates(threadStatesParam.threadIds, threadStatesParam.leftNs, threadStatesParam.rightNs).then((result) => {
-      if (result != null && result.length > 0) {
-        log('getTabThreadStates result size : ' + result.length);
-        let sumWall = 0.0;
-        let sumOcc = 0;
-        for (let e of result) {
-          let process = Utils.PROCESS_MAP.get(e.pid);
-          let thread = Utils.THREAD_MAP.get(e.tid);
-          e.process = process == null || process.length == 0 ? '[NULL]' : process;
-          e.thread = thread == null || thread.length == 0 ? '[NULL]' : thread;
-          sumWall += e.wallDuration;
-          sumOcc += e.occurrences;
-          e.stateJX = e.state;
-          e.state = Utils.getEndState(e.stateJX);
-          e.wallDuration = parseFloat((e.wallDuration / 1000000.0).toFixed(5));
-          e.avgDuration = parseFloat((e.avgDuration / 1000000.0).toFixed(5));
+    this.range!.textContent =
+      'Selected range: ' + ((threadStatesParam.rightNs - threadStatesParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
+    this.threadStatesTbl!.loading = true;
+    getTabThreadStates(threadStatesParam.threadIds, threadStatesParam.leftNs, threadStatesParam.rightNs).then(
+      (result) => {
+        if (result != null && result.length > 0) {
+          log('getTabThreadStates result size : ' + result.length);
+          let sumWall = 0.0;
+          let sumOcc = 0;
+          for (let e of result) {
+            let process = Utils.PROCESS_MAP.get(e.pid);
+            let thread = Utils.THREAD_MAP.get(e.tid);
+            e.process = process == null || process.length == 0 ? '[NULL]' : process;
+            e.thread = thread == null || thread.length == 0 ? '[NULL]' : thread;
+            sumWall += e.wallDuration;
+            sumOcc += e.occurrences;
+            e.stateJX = e.state;
+            e.state = Utils.getEndState(e.stateJX);
+            e.wallDuration = parseFloat((e.wallDuration / 1000000.0).toFixed(5));
+            e.avgDuration = parseFloat((e.avgDuration / 1000000.0).toFixed(5));
+          }
+          let targetList = result.filter((it) => threadStatesParam.processIds.includes(it.pid));
+          let count: any = {};
+          count.process = ' ';
+          count.state = ' ';
+          count.wallDuration = parseFloat((sumWall / 1000000.0).toFixed(5));
+          count.occurrences = sumOcc;
+          targetList.splice(0, 0, count);
+          this.threadStatesTblSource = targetList;
+          this.threadStatesTbl!.recycleDataSource = targetList;
+          this.stackBar!.data = targetList;
+        } else {
+          this.threadStatesTblSource = [];
+          this.stackBar!.data = [];
+          this.threadStatesTbl!.recycleDataSource = [];
         }
-        let count: any = {};
-        count.process = ' ';
-        count.state = ' ';
-        count.wallDuration = parseFloat((sumWall / 1000000.0).toFixed(5));
-        count.occurrences = sumOcc;
-        result.splice(0, 0, count);
-        this.threadStatesTblSource = result;
-        this.threadStatesTbl!.recycleDataSource = result;
-        this.stackBar!.data = result;
-      } else {
-        this.threadStatesTblSource = [];
-        this.stackBar!.data = [];
-        this.threadStatesTbl!.recycleDataSource = [];
+        this.threadStatesTbl!.loading = false;
       }
-    });
+    );
   }
 
   initElements(): void {
@@ -80,7 +92,7 @@ export class TabPaneThreadStates extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!,this.threadStatesTbl!)
+    resizeObserver(this.parentElement!, this.threadStatesTbl!);
   }
 
   initHtml(): string {
@@ -97,10 +109,10 @@ export class TabPaneThreadStates extends BaseElement {
         }
         </style>
         <div class="tread-states-table" style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
-            <stack-bar id="thread-states-stack-bar" style="flex: 1"></stack-bar>
-            <label id="thread-states-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
+            <stack-bar id="thread-states-stack-bar" style="width: calc(100vw - 520px)"></stack-bar>
+            <label id="thread-states-time-range"  style="width: 250px;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
         </div>
-        <lit-table id="tb-thread-states" style="height: auto;overflow-x: auto">
+        <lit-table id="tb-thread-states" style="height: auto;overflow-x: auto;width: calc(100vw - 270px)">
             <lit-table-column class="tread-states-column" width="240px" title="Process" data-index="process" key="process"  align="flex-start" order>
             </lit-table-column>
             <lit-table-column class="tread-states-column" width="120px" title="PID" data-index="pid" key="pid"  align="flex-start" order >

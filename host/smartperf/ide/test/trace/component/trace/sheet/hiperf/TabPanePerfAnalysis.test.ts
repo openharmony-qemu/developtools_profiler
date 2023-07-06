@@ -50,20 +50,150 @@ describe('TabPanePerfAnalysis Test', () => {
         expect(tabPanePerfAnalysis.clearData()).toBeUndefined();
     });
     it('TabPanePerfAnalysisTest02 ', function () {
-        let tabPanePerfAnalysis = new TabPanePerfAnalysis()
+        let itemClick = new CustomEvent('click', <CustomEventInit>{
+            detail: {
+                ...{},
+                data: {},
+            },
+            composed: true,
+        });
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="stc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('stc') as TabPanePerfAnalysis;
+        tabPanePerfAnalysis.tabName!.textContent = "Statistic By Thread Count";
+        tabPanePerfAnalysis.allProcessCount = {
+            "countFormat": "14.00s",
+            "percent": "100.00",
+            "count": 0,
+            "allCount": 13773,
+            "pid": ""
+        };
+        tabPanePerfAnalysis.pidData = [{
+            "tableName": "hiperf(28917)",
+            "pid": 28917,
+            "percent": "43.42",
+            "countFormat": "10.00s",
+            "count": 10387
+        },{
+            "tableName": "render_service(388)",
+            "pid": 388,
+            "percent": "17.99",
+            "countFormat": "4.00s",
+            "count": 4303
+        },{
+            "tableName": "hilogd(233)",
+            "pid": 233,
+            "percent": "6.76",
+            "countFormat": "2.00s",
+            "count": 1616
+        },{
+            "tableName": "power_host(374)",
+            "pid": 374,
+            "percent": "0.25",
+            "countFormat": "59.00ms",
+            "count": 59
+        }];
+        tabPanePerfAnalysis.tableProcess.reMeauseHeight = jest.fn(() => true);
+        tabPanePerfAnalysis.back!.dispatchEvent(itemClick);
         expect(tabPanePerfAnalysis.getBack()).toBeUndefined();
     });
-    it('TabPanePerfAnalysisTest03 ', function () {
+    it('TabPanePerfAnalysisTest03', function () {
+        let itemClick = new CustomEvent('click', <CustomEventInit>{
+            detail: {
+                ...{},
+                data: {},
+            },
+            composed: true,
+        });
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
+        tabPanePerfAnalysis.tabName!.textContent = "Statistic By Library Count";
+        tabPanePerfAnalysis.allThreadCount = {
+            "countFormat": "24.00s",
+            "percent": "100.00",
+            "count": 0,
+            "allCount": 23922,
+            "pid": ""
+        };
+        tabPanePerfAnalysis.threadData = [{
+            "tableName": "kworker/0:0H-mmc_complete(28750)",
+            "pid": 28750,
+            "percent": "0.10",
+            "countFormat": "24.00ms",
+            "count": 24
+        },{
+            "tableName": "com.ohos.callui(1362)",
+            "pid": 1362,
+            "percent": "0.09",
+            "countFormat": "22.00ms",
+            "count": 22
+        }];
+        tabPanePerfAnalysis.currentSelection = {
+            leftNs: 14957548626,
+            recordStartNs: 30369799963682,
+            rightNs: 21422844177,
+            perfThread:[]
+        };
+        tabPanePerfAnalysis.perfTableThread.reMeauseHeight = jest.fn(() => true);
+        tabPanePerfAnalysis.back!.dispatchEvent(itemClick);
+        expect(tabPanePerfAnalysis.getBack()).toBeUndefined();
+    });
+
+    it('TabPanePerfAnalysisTest04', function () {
+        let itemClick = new CustomEvent('click', <CustomEventInit>{
+            detail: {
+                ...{},
+                data: {},
+            },
+            composed: true,
+        });
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
+        tabPanePerfAnalysis.tabName!.textContent = "Statistic By Function Count";
+        tabPanePerfAnalysis.allLibCount = {
+            "countFormat": "28.00s",
+            "percent": "200.00",
+            "count": 1,
+            "allCount": 23966,
+            "pid": ""
+        };
+        tabPanePerfAnalysis.soData = [{
+            "tableName": "kworker/0:0H-mmc_complete(28750)",
+            "pid": 28750,
+            "percent": "0.10",
+            "countFormat": "24.00ms",
+            "count": 24
+        },{
+            "tableName": "com.ohos.callui(1362)",
+            "pid": 1362,
+            "percent": "0.09",
+            "countFormat": "22.00ms",
+            "count": 22
+        }];
+        tabPanePerfAnalysis.currentSelection = {
+            leftNs: 1495754,
+            recordStartNs: 30369799,
+            rightNs: 214228,
+            perfThread:[]
+        };
+        tabPanePerfAnalysis.tableSo.reMeauseHeight = jest.fn(() => true);
+        tabPanePerfAnalysis.back!.dispatchEvent(itemClick);
+        expect(tabPanePerfAnalysis.getBack()).toBeUndefined();
+    });
+
+    it('TabPanePerfAnalysisTest05', function () {
         let tabPanePerfAnalysis = new TabPanePerfAnalysis()
         expect(tabPanePerfAnalysis.sortByColumn({key: 'startTime'}, {sort: 1})).toBeUndefined();
     });
-    it('TabPanePerfAnalysisTest04 ', function () {
+    it('TabPanePerfAnalysisTest06', function () {
         let tabPanePerfAnalysis = new TabPanePerfAnalysis()
         expect(tabPanePerfAnalysis.totalCountData(1)).toStrictEqual(
             {"allCount": 1, "count": 0, "countFormat": "1.00ms", "percent": "100.00", "pid": ""}
         );
     });
-    it('TabPanePerfAnalysisTest05 ', function () {
+    it('TabPanePerfAnalysisTest07', function () {
         let tabPanePerfAnalysis = new TabPanePerfAnalysis();
         let res = [{
             count:1,
@@ -74,7 +204,7 @@ describe('TabPanePerfAnalysis Test', () => {
         );
     });
 
-    it('TabPanePerfAnalysisTest06 ', function () {
+    it('TabPanePerfAnalysisTest08', function () {
         let tabPanePerfAnalysis = new TabPanePerfAnalysis()
         let queryHiPerf = sqlit.queryHiPerfProcessCount;
         queryHiPerf.mockResolvedValue([
@@ -129,7 +259,7 @@ describe('TabPanePerfAnalysis Test', () => {
         expect(tabPanePerfAnalysis.clearData()).toBeUndefined();
     });
 
-    it('TabPanePerfAnalysisTest07 ', function () {
+    it('TabPanePerfAnalysisTest09', function () {
         let tabPanePerfAnalysis = new TabPanePerfAnalysis()
         let para = {
             count: 5,
@@ -167,5 +297,136 @@ describe('TabPanePerfAnalysis Test', () => {
         tabPanePerfAnalysis.tableFunction.reMeauseHeight = jest.fn(() => true);
         tabPanePerfAnalysis.getHiperfFunction(para, null);
         expect(tabPanePerfAnalysis.clearData()).toBeUndefined();
+    });
+
+    it('TabPanePerfAnalysisTest10', function () {
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
+        tabPanePerfAnalysis.currentLevel = 0;
+        tabPanePerfAnalysis.currentLevelData = [
+            {
+                "pid": 28917,
+                "tid": 28922,
+                "percent": "93.37",
+                "countFormat": "3.00s",
+                "count": 3339,
+                "tableName": "ld-musl-aarch64.so.1",
+                "libId": 10,
+                "isHover": false
+            },
+            {
+                "pid": 28917,
+                "tid": 28922,
+                "percent": "0.73",
+                "countFormat": "26.00ms",
+                "count": 26,
+                "tableName": "libc++.so",
+                "libId": 6,
+                "isHover": false
+            }
+        ];
+        tabPanePerfAnalysis.allProcessCount = {
+            "countFormat": "13.00s",
+            "percent": "100.00",
+            "count": 0,
+            "allCount": 13186,
+            "pid": "",
+            "isHover": false
+        };
+        tabPanePerfAnalysis.allThreadCount = {
+            "countFormat": "6.00s",
+            "percent": "100.00",
+            "count": 0,
+            "allCount": 5662,
+            "pid": "",
+            "isHover": false
+        };
+        tabPanePerfAnalysis.allLibCount = {
+            "countFormat": "5.00s",
+            "percent": "100.00",
+            "count": 0,
+            "allCount": 4840,
+            "pid": "",
+            "isHover": false
+        };
+        tabPanePerfAnalysis.allSymbolCount = {
+            "countFormat": "4.00s",
+            "percent": "100.00",
+            "count": 0,
+            "allCount": 4489,
+            "pid": "",
+            "isHover": false
+        };
+        tabPanePerfAnalysis.sortByColumn("tableName", 0);
+        tabPanePerfAnalysis.sortByColumn("tableName", 1);
+        tabPanePerfAnalysis.sortByColumn("countFormat", 2);
+        tabPanePerfAnalysis.sortByColumn("percent", 3);
+        tabPanePerfAnalysis.currentLevel = 1;
+        tabPanePerfAnalysis.sortByColumn("tableName", 0);
+        tabPanePerfAnalysis.sortByColumn("tableName", 1);
+        tabPanePerfAnalysis.sortByColumn("countFormat", 2);
+        tabPanePerfAnalysis.sortByColumn("percent", 3);
+        tabPanePerfAnalysis.currentLevel = 2;
+        tabPanePerfAnalysis.sortByColumn("tableName", 0);
+        tabPanePerfAnalysis.sortByColumn("tableName", 1);
+        tabPanePerfAnalysis.sortByColumn("countFormat", 2);
+        tabPanePerfAnalysis.sortByColumn("percent", 3);
+        tabPanePerfAnalysis.currentLevel = 3;
+        tabPanePerfAnalysis.sortByColumn("tableName", 0);
+        tabPanePerfAnalysis.sortByColumn("tableName", 1);
+        tabPanePerfAnalysis.sortByColumn("countFormat", 2);
+        tabPanePerfAnalysis.sortByColumn("percent", 3);
+        expect(tabPanePerfAnalysis).toBeTruthy();
+    });
+
+    it('TabPanePerfAnalysisTest11', function () {
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
+        let item = {
+            "tableName": "hiperf(28917)",
+            "pid": 28917,
+            "percent": "43.53",
+            "countFormat": "8.00s",
+            "count": 8460,
+            "isHover": true
+        };
+        let val = {
+            perfThread: [],
+            perfProcess: [],
+        }
+        tabPanePerfAnalysis.processData = [
+            {
+                "sampleId": 0,
+                "tid": 12,
+                "count": 1,
+                "threadState": "Running",
+                "pid": 12,
+                "eventCount": 14,
+                "threadName": "rcu_sched",
+                "processName": "rcu_sched",
+                "libId": 106,
+                "libName": "[kernel.kallsyms]",
+                "symbolId": 148,
+                "symbolName": "perf_trace_sched_wakeup_template"
+            },
+            {
+                "sampleId": 0,
+                "tid": 193,
+                "count": 1,
+                "threadState": "Running",
+                "pid": 193,
+                "eventCount": 14,
+                "threadName": "irq/31-rga",
+                "processName": "irq/31-rga",
+                "libId": 106,
+                "libName": "[kernel.kallsyms]",
+                "symbolId": 148,
+                "symbolName": "perf_trace_sched_wakeup_template"
+            }];
+        tabPanePerfAnalysis.perfTableThread.reMeauseHeight = jest.fn(() => true);
+        tabPanePerfAnalysis.getHiperfThread(item, val);
+        expect(tabPanePerfAnalysis).toBeTruthy();
     });
 })

@@ -15,7 +15,6 @@
  */
 #ifndef SAPN_JOIN_H
 #define SAPN_JOIN_H
-#include "string_help.h"
 #include "table_base.h"
 #include "trace_data_cache.h"
 namespace SysTuning {
@@ -51,7 +50,6 @@ public:
     SpanJoin(const TraceDataCache*);
     ~SpanJoin() override{};
     void Parse(const std::string& tablePartition, TableParse& tableParse);
-    std::vector<std::string> TableNameSplitToVec(std::string& str, const std::string& pat);
     void GetTableField(const TableParse& tableParse, TableDesc& tableDesc);
     void GetColumns(const TraceDataCache* dataCache,
                     const std::string& tableName,

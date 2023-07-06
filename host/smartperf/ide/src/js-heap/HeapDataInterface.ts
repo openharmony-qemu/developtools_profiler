@@ -275,4 +275,18 @@ export class HeapDataInterface {
   public getFileStructs(): Array<FileInfo> {
     return this.fileStructs;
   }
+
+  /**
+   * clear Cache
+   */
+  public clearData() {
+    if (!this.fileStructs) {
+      return;
+    }
+    for (let file of this.fileStructs) {
+      file.snapshotStruct.clear();
+      file.heapLoader.clear();
+    }
+    this.fileStructs.length = 0;
+  }
 }

@@ -15,6 +15,8 @@ set -e
 PARAMS=$*
 echo $PARAMS
 echo "begin to check input"
+SOURCE="${BASH_SOURCE[0]}"
+cd $(dirname ${SOURCE})
 ./pare_third_party.sh
 target_os="linux"
 target_dir="linux"
@@ -58,12 +60,6 @@ if [ "$#" -ne "0" ];then
     if [ "$1" == "test" ];then
         target="test"
     fi
-    if [ "$1" == "testpb" ];then
-        target="testpb"
-    fi
-    if [ "$1" == "wasmpb" ];then
-        target="wasmpb"
-    fi
     if [ "$1" == "fuzz" ];then
         target="fuzz"
     fi
@@ -72,9 +68,6 @@ if [ "$#" -ne "0" ];then
     fi
     if [ "$1" == "sdkdemo" ];then
         target="sdkdemo"
-    fi
-    if [ "$1" == "pbdecoder" ];then
-        target="pbdecoder"
     fi
     if [ "$1" == "dubaisdk" ];then
         target="dubaisdk"

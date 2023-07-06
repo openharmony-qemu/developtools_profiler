@@ -17,10 +17,12 @@
 import { HeapNodeToConstructorItem } from "../../../dist/js-heap/utils/Utils.js";
 // @ts-ignore
 import {HeapNode} from "../../../dist/js-heap/model/DatabaseStruct.js";
+jest.mock('../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 jest.mock('../../../dist/js-heap/HeapDataInterface.js', () => {
     return {};
 });
+jest.mock('../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 describe('Utils Test', () => {
     it('HeapNodeToConstructorItemTest01', () => {

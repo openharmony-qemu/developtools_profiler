@@ -413,10 +413,24 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
 
     // statistical reporting must is compressed and accurate.
     if (hookConfig_.statistics_interval() > 0) {
-        if (rawStack->stackConext->type == FREE_MSG || rawStack->stackConext->type == MUNMAP_MSG) {
-            SetFreeStatisticsData((uint64_t)rawStack->stackConext->addr);
-        } else if (rawStack->stackConext->type == MALLOC_MSG || rawStack->stackConext->type == MMAP_MSG) {
-            SetAllocStatisticsFrame(rawStack, callFrames, batchNativeHookData);
+        switch (rawStack->stackConext->type) {
+            case FREE_MSG:
+            case MUNMAP_MSG:
+            case MEMORY_UNUSING_MSG: {
+                SetFreeStatisticsData((uint64_t)rawStack->stackConext->addr);
+                break;
+            }
+            case MALLOC_MSG:
+            case MMAP_MSG:
+            case MMAP_FILE_PAGE_MSG:
+            case MEMORY_USING_MSG: {
+                SetAllocStatisticsFrame(rawStack, callFrames, batchNativeHookData);
+                break;
+            }
+            default: {
+                HILOG_ERROR(LOG_CORE, "statistics event type:%d error", rawStack->stackConext->type);
+                break;
+            }
         }
         return;
     }
@@ -518,8 +532,29 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         record.callstackId = stackId;
         record.applyCount = 1;
         record.applySize = rawStack->stackConext->mallocSize;
-        record.type = (rawStack->stackConext->type == MALLOC_MSG ?
-            RecordStatisticsEvent::MALLOC : RecordStatisticsEvent::MMAP);
+        switch (rawStack->stackConext->type) {
+            case MALLOC_MSG: {
+                record.type = RecordStatisticsEvent::MALLOC;
+                break;
+            }
+            case MMAP_MSG: {
+                record.type = RecordStatisticsEvent::MMAP;
+                break;
+            }
+            case MMAP_FILE_PAGE_MSG: {
+                record.type = RecordStatisticsEvent::FILE_PAGE_MSG;
+                break;
+            }
+            case MEMORY_USING_MSG: {
+                record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+                break;
+            }
+            default: {
+                HILOG_ERROR(LOG_CORE, "SetAllocStatisticsData event type error");
+                break;
+            }
+        }
+
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
         allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
             std::pair(rawStack->stackConext->mallocSize, &recordIter->second);

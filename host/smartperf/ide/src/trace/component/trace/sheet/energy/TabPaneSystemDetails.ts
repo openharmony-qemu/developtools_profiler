@@ -23,7 +23,7 @@ import {
   querySystemWorkData,
 } from '../../../../database/SqlLite.js';
 import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
-import { resizeObserver } from "../SheetUtils.js";
+import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-system-details')
 export class TabPaneSystemDetails extends BaseElement {
@@ -39,7 +39,7 @@ export class TabPaneSystemDetails extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.tblSystemDetails!)
+    resizeObserver(this.parentElement!, this.tblSystemDetails!);
   }
 
   initElements(): void {

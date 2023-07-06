@@ -32,7 +32,7 @@ import { CpuFreqLimitRender, CpuFreqLimitsStruct } from '../../database/ui-worke
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
 import { CpuFreqStruct, FreqRender } from '../../database/ui-worker/ProcedureWorkerFreq.js';
 import { CpuStateRender, CpuStateStruct } from '../../database/ui-worker/ProcedureWorkerCpuState.js';
-import {Utils} from "../trace/base/Utils.js";
+import { Utils } from '../trace/base/Utils.js';
 
 export class SpFreqChart {
   private trace: SpSystemTrace;
@@ -182,7 +182,6 @@ export class SpFreqChart {
       this.trace.rowsEL?.appendChild(cpuFreqLimitRow);
     }
   }
-
 }
 
 export class CpuFreqRowLimit {
