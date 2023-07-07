@@ -28,6 +28,7 @@
 #include "profiler_data_repeater.h"
 #include "profiler_service.h"
 #include "schedule_task_manager.h"
+#include "common.h"
 
 using namespace testing::ext;
 
@@ -1364,11 +1365,33 @@ HWTEST_F(ProfilerServiceTest, StartService, TestSize.Level1)
     auto service = service_;
     EXPECT_NE(service, nullptr);
     EXPECT_FALSE(service->StartService(""));
-
+    std::string listenUri = std::string("0.0.0.0:") + std::to_string(COMMON::GetServicePort());
+    EXPECT_TRUE(service->StartService(listenUri));
     std::thread waiterThread(&ProfilerService::WaitServiceDone, service.get());
     sleep(1);
-
     service->StopService();
     waiterThread.join();
 }
+
+/**
+ * @tc.name: server
+ * @tc.desc: MergeStandaloneFile test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, MergeStandaloneFile, TestSize.Level1)
+{
+    std::string testPath = "testFile.bin";
+    std::string targetPath = "target.trace.bin";
+    auto writer = std::make_shared<TraceFileWriter>(testPath, false, 0, 0);
+    auto writerTarget = std::make_shared<TraceFileWriter>(targetPath, false, 0, 0);
+    EXPECT_NE(writer, nullptr);
+    EXPECT_NE(writerTarget, nullptr);
+    std::string testData = "this is a test case!this is a test case!";
+    std::string traceData = "test";
+    EXPECT_EQ(writer->Write(testData.data(), testData.size()), sizeof(uint32_t) + testData.size());
+    EXPECT_EQ(writerTarget->Write(traceData.data(), traceData.size()), sizeof(uint32_t) + traceData.size());
+    std::string pluginName = "destroy_session_standalone_test";
+    service_->MergeStandaloneFile(targetPath, pluginName, testPath, "1.02");
+}
+
 } // namespace

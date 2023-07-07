@@ -30,6 +30,8 @@ using namespace testing::ext;
 
 namespace {
 constexpr uint32_t BUFFER_SIZE = 4096;
+constexpr size_t QUEUE_MAX_SIZE = 4096;
+constexpr uint32_t SAMPLE_INTERVAL = 20;
 
 class PluginClientTest final : public IPluginServiceClient {
 public:
@@ -103,8 +105,8 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("abc1.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
     SocketContext ctx;
     plugin.name = "abc1.so";
@@ -112,7 +114,7 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     plugin.sha256 = "ASDFAADSF";
     plugin.context = &ctx;
     pluginService_->AddPluginInfo(plugin);
-    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     pluginService_->RemovePluginInfo(plugin);
 }
 
@@ -126,11 +128,11 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("abc2.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
     SocketContext ctx;
     plugin.name = "abc2.so";
@@ -138,7 +140,7 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     plugin.sha256 = "ASDFAADSF";
     plugin.context = &ctx;
     pluginService_->AddPluginInfo(plugin);
-    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     pluginService_->RemovePluginInfo(plugin);
 }
 
@@ -152,7 +154,7 @@ HWTEST_F(UnitTestPluginService, StartPluginSession, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("abc3.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
     PluginInfo plugin;
     SocketContext ctx;
@@ -338,9 +340,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession12, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("mem.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -353,13 +355,13 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession22, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("mem.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -372,7 +374,7 @@ HWTEST_F(UnitTestPluginService, StartPluginSession2, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("mem.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
 }
@@ -481,9 +483,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession13, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("cpu.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -496,13 +498,13 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession23, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("cpu.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -515,7 +517,7 @@ HWTEST_F(UnitTestPluginService, StartPluginSession3, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("cpu.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
 }
@@ -624,9 +626,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession14, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("stream.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -639,13 +641,13 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession24, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("stream.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -658,7 +660,7 @@ HWTEST_F(UnitTestPluginService, StartPluginSession4, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("stream.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
 }
@@ -767,9 +769,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession15, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("sample.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -782,13 +784,13 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession25, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("sample.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(4096)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -801,7 +803,7 @@ HWTEST_F(UnitTestPluginService, StartPluginSession5, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("sample.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
 
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
 }
@@ -920,7 +922,7 @@ HWTEST_F(UnitTestPluginService, pluginCommandBuilder, TestSize.Level1)
     ProfilerPluginConfig ppc;
     ppc.set_name("abc.so");
     ppc.set_plugin_sha256("ASDFAADSF");
-    ppc.set_sample_interval(20);
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
     const uint32_t pluginId = 1;
     EXPECT_TRUE(commandBuilder_->BuildCreateSessionCmd(ppc, BUFFER_SIZE) != nullptr);
     EXPECT_TRUE(commandBuilder_->BuildStartSessionCmd(ppc, pluginId) != nullptr);
