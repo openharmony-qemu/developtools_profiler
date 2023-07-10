@@ -23,6 +23,7 @@ ohos_source_set("libhidebug_source") {
 
   external_deps = [
     "c_utils:utils",
+    "hichecker:libhichecker",
     "hilog:libhilog",
     "init:libbegetutil",
   ]
