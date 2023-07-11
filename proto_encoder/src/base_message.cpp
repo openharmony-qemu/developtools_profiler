@@ -101,7 +101,7 @@ void BaseMessage::AddBytes(uint32_t fieldId, const void* data, uint32_t dataSize
         }
     }
     fieldSize += dataSize;
-    size_ += fieldSize;
+    size_ += static_cast<int32_t>(fieldSize);
     // seek to tail
     writeCtx_->seek(writeCtx_, fieldOffset + fieldSize);
 }
@@ -126,7 +126,7 @@ RandomWriteCtx* BaseMessage::StartAddBytes(uint32_t fieldId)
 
     uint32_t tagSize = EncodeVarint(fieldMemory, (fieldId << FIELDID_SHIFT) | ProtoMessageType::LEN);
     backfillOffset_ += tagSize;
-    size_ += tagSize;
+    size_ += static_cast<int32_t>(tagSize);
     // reserve length space
     writeCtx_->seek(writeCtx_, backfillOffset_ + SIZE_RESERVED_LEN);
     return writeCtx_;
@@ -186,7 +186,7 @@ void BaseMessage::AddBytesByCallBack(uint32_t fieldId, GetDataCallback getData)
 
     uint32_t tagSize = EncodeVarint(fieldMemory, (fieldId << FIELDID_SHIFT) | ProtoMessageType::LEN);
     fieldOffset += tagSize;
-    size_ += tagSize;
+    size_ += static_cast<int32_t>(tagSize);
     // reserve length space
     writeCtx_->seek(writeCtx_, fieldOffset + SIZE_RESERVED_LEN);
 
