@@ -407,4 +407,23 @@ HWTEST_F(ProcessDataPluginTest, TestPluginRegister, TestSize.Level1)
     // 反序列化失败导致的start失败
     EXPECT_EQ(processPlugin->callbacks->onPluginSessionStart(configBuffer.data(), configLength+1), RET_FAIL);
 }
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin anomaly branch test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginReportAnomaly, TestSize.Level1)
+{
+    g_path = g_testPath + "/other/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    EXPECT_EQ(processPlugin->Stop(), 0);
+}
 } // namespace

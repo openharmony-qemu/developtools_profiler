@@ -131,6 +131,15 @@
             <option name="push" value="plugins/process_plugin/test/resources/proc/1872/task/1872/cmdline -> /data/local/tmp/resources/proc/1872/task/1872/" src="res"/>
             <option name="push" value="plugins/process_plugin/test/resources/proc/1872/task/1873/cmdline -> /data/local/tmp/resources/proc/1872/task/1873/" src="res"/>
             <option name="push" value="plugins/process_plugin/test/resources/proc/1872/task/1965/cmdline -> /data/local/tmp/resources/proc/1872/task/1965/" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/11/status -> /data/local/tmp/resources/other/11" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/22/status -> /data/local/tmp/resources/other/22" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/33/status -> /data/local/tmp/resources/other/33" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/44/status -> /data/local/tmp/resources/other/44" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/55/status -> /data/local/tmp/resources/other/55" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/66/status -> /data/local/tmp/resources/other/66" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/77/status -> /data/local/tmp/resources/other/77" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/88/status -> /data/local/tmp/resources/other/88" src="res"/>
+            <option name="push" value="plugins/process_plugin/test/resources/other/99/status -> /data/local/tmp/resources/other/99" src="res"/>
         </preparer>
     </target>
     <target name="hiebpf_ut">
