@@ -37,6 +37,7 @@
 #include <parameter.h>
 #include <sysparam_errno.h>
 #include <hilog/log.h>
+#include "hichecker_wrapper.h"
 
 #undef LOG_DOMAIN
 #undef LOG_TAG
@@ -229,6 +230,9 @@ bool InitEnvironmentParam(const char *inputName)
         HIDEBUG_LOGE("input service name is illegal.");
         return false;
     }
+#ifndef HIDEBUG_IN_INIT
+    InitHicheckerParamWrapper(serviceName);
+#endif
     errno_t err = 0;
     char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
     char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
