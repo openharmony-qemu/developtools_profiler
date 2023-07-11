@@ -232,7 +232,7 @@ bool InitEnvironmentParam(const char *inputName)
     }
 #ifndef HIDEBUG_IN_INIT
     InitHicheckerParamWrapper(serviceName);
-#endif    
+#endif
     errno_t err = 0;
     char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
     char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
