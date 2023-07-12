@@ -755,7 +755,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         dur += item.dur;
         if (key === null) {
-          item.libName = 'unkown';
+          item.libName = 'unknown';
         }
         vmLibName = item.libName;
       }

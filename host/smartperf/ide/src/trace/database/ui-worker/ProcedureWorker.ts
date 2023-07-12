@@ -49,6 +49,8 @@ import { JankRender } from './ProcedureWorkerJank.js';
 import { HeapTimelineRender } from './ProcedureWorkerHeapTimeline.js';
 import { HeapSnapshotRender } from './ProcedureWorkerHeapSnapshot.js';
 import { translateJsonString } from '../logic-worker/ProcedureLogicWorkerCommon.js';
+import { AppStartupRender } from './ProcedureWorkerAppStartup.js';
+import { SoRender } from './ProcedureWorkerSoInit.js';
 
 let dataList: any = {};
 let dataList2: any = {};
@@ -67,6 +69,8 @@ export let renders: any = {
   'file-system-group': new EmptyRender(),
   'file-system-cell': new FileSystemRender(),
   process: new ProcessRender(),
+  'app-start-up': new AppStartupRender(),
+  'app-so-init': new SoRender(),
   heap: new HeapRender(),
   heapTimeline: new HeapTimelineRender(),
   heapSnapshot: new HeapSnapshotRender(),

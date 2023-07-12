@@ -575,7 +575,7 @@ export class SpHiSysEventChart {
       let stateTraceRow = TraceRow.skeleton<EnergyStateStruct>();
       stateTraceRow.rowParentId = `energy`;
       stateTraceRow.rowHidden = true;
-      stateTraceRow.rowId = 'energy-state';
+      stateTraceRow.rowId = `energy-state-${stateList[index]}`;
       stateTraceRow.rowType = TraceRow.ROW_TYPE_STATE_ENERGY;
       stateTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       stateTraceRow.selectChangeHandler = this.trace.selectChangeHandler;

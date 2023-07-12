@@ -181,6 +181,7 @@ export class SpProbesConfig extends BaseElement {
       { value: 'app', isSelect: true },
       { value: 'ark', isSelect: true },
       { value: 'binder', isSelect: true },
+      { value: 'commonlibrary', isSelect: false },
       { value: 'daudio', isSelect: false },
       { value: 'dcamera', isSelect: false },
       { value: 'devicemanager', isSelect: false },

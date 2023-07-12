@@ -16,7 +16,6 @@
 import { CpuStruct, WakeupBean } from './ProcedureWorkerCPU.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { TimerShaftElement } from '../../component/trace/TimerShaftElement';
-import { TimeRange } from '../../component/trace/timer-shaft/RangeRuler';
 
 export abstract class Render {
   abstract renderMainThread(req: any, row: TraceRow<any>): void;

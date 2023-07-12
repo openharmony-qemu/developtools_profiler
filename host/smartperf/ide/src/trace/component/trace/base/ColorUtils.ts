@@ -48,7 +48,7 @@ export class ColorUtils {
     '#AACEA0',
     '#E69553',
     '#7EC6BB',
-    '#C6D9F2',
+    '#8d9171',
   ];
 
   public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#E8BE44', '#009DFA', '#E97978'];

@@ -43,6 +43,8 @@ import { TabPaneSummary } from '../sheet/snapshot/TabPaneSummary.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { SlicesTime } from '../timer-shaft/SportRuler.js';
+import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
+import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
   private litTabs: LitTabs | undefined | null;
@@ -359,6 +361,10 @@ export class TraceSheet extends BaseElement {
   displayClockData = (data: ClockStruct) =>
     this.displayTab<TabPaneCurrentSelection>('current-selection').setClockData(data);
   displayIrqData = (data: IrqStruct) => this.displayTab<TabPaneCurrentSelection>('current-selection').setIrqData(data);
+  displayStartupData = (data: AppStartupStruct, scrollCallback: Function) =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setStartupData(data,scrollCallback);
+  displayStaticInitData = (data: SoStruct, scrollCallback: Function) =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setStaticInitData(data,scrollCallback);
 
   displayNativeHookData = (data: HeapStruct, rowType: string) => {
     let val = new SelectionParam();

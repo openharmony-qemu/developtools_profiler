@@ -284,7 +284,7 @@ export abstract class LogicHandler {
     });
   }
 
-  abstract clearAll(): void
+  abstract clearAll(): void;
 }
 
 let dec = new TextDecoder();
@@ -519,4 +519,72 @@ export function formatRealDate(date: Date, fmt: string) {
 
 export function formatRealDateMs(timeNs: number) {
   return formatRealDate(new Date(timeNs / 1000000), 'MM-dd hh:mm:ss.S');
+}
+
+export class HeapTreeDataBean {
+  MoudleName: string | undefined;
+  AllocationFunction: string | undefined;
+  symbolId: number = 0;
+  fileId: number = 0;
+  startTs: number = 0;
+  endTs: number = 0;
+  eventType: string | undefined;
+  depth: number = 0;
+  heapSize: number = 0;
+  eventId: number = 0;
+  addr: string = '';
+  callChinId: number = 0;
+}
+
+export class PerfCall {
+  sampleId: number = 0;
+  depth: number = 0;
+  name: string = '';
+}
+
+export class FileCallChain {
+  callChainId: number = 0;
+  depth: number = 0;
+  symbolsId: number = 0;
+  pathId: number = 0;
+  ip: string = '';
+}
+
+export class DataCache {
+  public static instance: DataCache | undefined;
+  public dataDict = new Map<number, string>();
+  public eBpfCallChainsMap = new Map<number, Array<FileCallChain>>();
+  public nmFileDict = new Map<number, string>();
+  public nmHeapFrameMap = new Map<number, Array<HeapTreeDataBean>>();
+  public perfCountToMs = 1; // 1000 / freq
+  public perfCallChainMap: Map<number, PerfCall> = new Map<number, PerfCall>();
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new DataCache();
+    }
+    return this.instance;
+  }
+
+  public clearAll() {
+    if (this.dataDict) {
+      this.dataDict.clear();
+    }
+    this.clearEBpf();
+    this.clearNM();
+    this.clearPerf();
+  }
+
+  public clearNM() {
+    this.nmFileDict.clear();
+    this.nmHeapFrameMap.clear();
+  }
+
+  public clearEBpf() {
+    this.eBpfCallChainsMap.clear();
+  }
+
+  public clearPerf() {
+    this.perfCallChainMap.clear();
+  }
 }

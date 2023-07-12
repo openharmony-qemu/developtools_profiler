@@ -18,6 +18,7 @@ import { Rect } from '../trace/timer-shaft/Rect.js';
 import { ChartMode, ChartStruct, draw, setFuncFrame } from '../../bean/FrameChartStruct.js';
 import { SpApplication } from '../../SpApplication.js';
 import { Utils } from '../trace/base/Utils.js';
+import { SpHiPerf } from './SpHiPerf.js';
 
 const TAG: string = 'FrameChart';
 const scaleHeight = 30;
@@ -381,7 +382,9 @@ export class FrameChart extends BaseElement {
           scale = Utils.getByteWithUnit(((this.currentSize * sizeRatio) / 10) * i);
           break;
         case ChartMode.Count:
-          scale = (((this.currentCount * sizeRatio) / 10) * i).toFixed(0) + '';
+          scale = Utils.timeMsFormat2p(
+            (((this.currentCount * (SpHiPerf.stringResult?.fValue || 1)) * sizeRatio) / 10) * i
+          );
           break;
         case ChartMode.Duration:
           scale = Utils.getProbablyTime(((this.currentDuration * sizeRatio) / 10) * i);
@@ -730,11 +733,15 @@ export class FrameChart extends BaseElement {
             break;
           case ChartMode.Count:
             let count = ChartStruct.hoverFuncStruct!.count;
+            const dur = Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1));
             this.hintContent = `
                         <span class="bold">Name: </span> <span class="text">${name} </span> <br>
                         <span class="bold">Lib: </span> <span class="text">${ChartStruct.hoverFuncStruct?.lib}</span>
                         <br>
-                        <span class="bold">Addr: </span> <span>${ChartStruct.hoverFuncStruct?.addr}</span> <br>
+                        <span class="bold">Addr: </span> <span>${ChartStruct.hoverFuncStruct?.addr}</span> 
+                        <br>
+                        <span class="bold">Dur: </span> <span>${dur}</span> 
+                        <br>
                         <span class="bold">Count: </span> <span> ${count}</span>`;
             break;
           case ChartMode.Duration:

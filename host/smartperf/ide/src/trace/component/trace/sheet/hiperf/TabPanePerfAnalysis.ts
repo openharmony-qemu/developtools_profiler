@@ -21,6 +21,7 @@ import '../../../../../base-ui/chart/pie/LitChartPie.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { Utils } from '../../base/Utils.js';
+import { SpHiPerf } from '../../../chart/SpHiPerf.js';
 
 @element('tabpane-perf-analysis')
 export class TabPanePerfAnalysis extends BaseElement {
@@ -514,7 +515,7 @@ export class TabPanePerfAnalysis extends BaseElement {
           tableName: pName,
           pid: pid,
           percent: ((count / allCount) * 100).toFixed(2),
-          countFormat: Utils.timeMsFormat2p(count),
+          countFormat: Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1)),
           count: count,
         };
         this.pidData.push(pidData);
@@ -570,7 +571,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         pid: item.pid,
         tid: tid,
         tableName: tName,
-        countFormat: Utils.timeMsFormat2p(threadCount),
+        countFormat: Utils.timeMsFormat2p(threadCount * (SpHiPerf.stringResult?.fValue || 1)),
         count: threadCount,
         percent: ((threadCount / allCount) * 100).toFixed(2),
       };
@@ -616,7 +617,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         pid: item.pid,
         tid: item.tid,
         percent: ((libCount / parentCount) * 100).toFixed(2),
-        countFormat: Utils.timeMsFormat2p(libCount),
+        countFormat: Utils.timeMsFormat2p(libCount * (SpHiPerf.stringResult?.fValue || 1)),
         count: libCount,
         tableName: libName,
         libId: libId,
@@ -665,7 +666,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         pid: item.pid,
         tid: item.tid,
         percent: ((symbolCount / parentCount) * 100).toFixed(2),
-        countFormat: Utils.timeMsFormat2p(symbolCount),
+        countFormat: Utils.timeMsFormat2p(symbolCount * (SpHiPerf.stringResult?.fValue || 1)),
         count: symbolCount,
         tableName: symbolName,
       };
@@ -733,7 +734,7 @@ export class TabPanePerfAnalysis extends BaseElement {
   totalCountData(count: number) {
     let allCount;
     allCount = {
-      countFormat: Utils.timeMsFormat2p(count),
+      countFormat: Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1)),
       percent: ((count / count) * 100).toFixed(2),
       count: 0,
       allCount: count,
@@ -756,7 +757,7 @@ export class TabPanePerfAnalysis extends BaseElement {
           pieChartArr.push(res[i]);
         } else {
           other.count += res[i].count;
-          other.countFormat = Utils.timeMsFormat2p(other.count);
+          other.countFormat = Utils.timeMsFormat2p(other.count * (SpHiPerf.stringResult?.fValue || 1));
           // @ts-ignore
           other.percent = ((other.count / this.sumCount) * 100).toFixed(2);
         }

@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-import { LogicHandler, ChartStruct, convertJSON } from './ProcedureLogicWorkerCommon.js';
+import { LogicHandler, ChartStruct, convertJSON, DataCache, PerfCall } from './ProcedureLogicWorkerCommon.js';
+const systemRuleName = '/system/';
+const numRuleName = '/max/min/';
 
 export class ProcedureLogicWorkerPerf extends LogicHandler {
-  systmeRuleName = '/system/';
-  numRuleName = '/max/min/';
   filesData: any = {};
   samplesData: any = {};
   threadData: any = {};
@@ -28,19 +28,18 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
   searchValue: string = '';
   dataSource: PerfCallChainMerageData[] = [];
   allProcess: PerfCallChainMerageData[] = [];
-  callChainMap: Map<number, PerfCall> = new Map<number, PerfCall>();
-  queryFunc: Function | undefined = undefined;
+  queryFunc?: Function | undefined;
   isActualQuery: boolean = false;
-  static cmdLineResult: any = undefined;
   currentEventId: string = '';
   isAnalysis: boolean = false;
+  private dataCache = DataCache.getInstance();
 
   handle(data: any): void {
     this.currentEventId = data.id;
     if (data && data.type) {
       switch (data.type) {
         case 'perf-init':
-          ProcedureLogicWorkerPerf.cmdLineResult = data.params;
+          this.dataCache.perfCountToMs = data.params.fValue;
           this.initPerfFiles();
           break;
         case 'perf-queryPerfFiles':
@@ -63,7 +62,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
           let perfCalls = convertJSON(data.params.list) || [];
           if (perfCalls.length != 0) {
             perfCalls.forEach((perfCall: any) => {
-              this.callChainMap.set(perfCall.sampleId, perfCall);
+              this.dataCache.perfCallChainMap.set(perfCall.sampleId, perfCall);
             });
           }
           this.initPerfCallchains();
@@ -75,7 +74,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
           self.postMessage({
             id: data.id,
             action: data.action,
-            results: this.callChainMap,
+            results: this.dataCache.perfCallChainMap,
           });
           break;
         case 'perf-queryCallchainsGroupSample':
@@ -209,8 +208,7 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     this.searchValue = '';
     this.dataSource = [];
     this.allProcess = [];
-    this.callChainMap.clear();
-    ProcedureLogicWorkerPerf.cmdLineResult = null;
+    this.dataCache.clearPerf();
   }
 
   initPerfCallChainBottomUp(callChains: PerfCallChain[]) {
@@ -249,14 +247,14 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
         callChain.fileName = this.filesData[callChain.fileId][0].fileName;
         callChain.path = this.filesData[callChain.fileId][0].path;
       } else {
-        callChain.fileName = 'unkown';
+        callChain.fileName = 'unknown';
       }
     } else {
       if (this.filesData[callChain.fileId] && this.filesData[callChain.fileId].length > callChain.symbolId) {
         callChain.fileName = this.filesData[callChain.fileId][callChain.symbolId].fileName;
         callChain.path = this.filesData[callChain.fileId][callChain.symbolId].path;
       } else {
-        callChain.fileName = 'unkown';
+        callChain.fileName = 'unknown';
       }
     }
   }
@@ -268,11 +266,11 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     threadCallChain.depth = 0;
     PerfCallChain.merageCallChain(threadCallChain, callChain);
     threadCallChain.canCharge = false;
-    threadCallChain.name = this.threadData[callChain.tid].threadName || 'Thead' + '(' + callChain.tid + ')';
+    threadCallChain.name = this.threadData[callChain.tid].threadName || 'Thread' + '(' + callChain.tid + ')';
     let threadStateCallChain = new PerfCallChain(); //新增的线程状态数据
     PerfCallChain.merageCallChain(threadStateCallChain, callChain);
-    threadStateCallChain.name = callChain.threadState || 'Unkown State';
-    threadStateCallChain.fileName = threadStateCallChain.name == '-' ? 'Unkown Thead State' : '';
+    threadStateCallChain.name = callChain.threadState || 'Unknown State';
+    threadStateCallChain.fileName = threadStateCallChain.name == '-' ? 'Unknown Thread State' : '';
     threadStateCallChain.canCharge = false;
     this.addPerfGroupData(threadCallChain);
     this.addPerfGroupData(threadStateCallChain);
@@ -285,7 +283,7 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     perfCall.depth = this.callChainData[callChain.sampleId]?.length || 0;
     perfCall.sampleId = callChain.sampleId;
     perfCall.name = callChain.name;
-    this.callChainMap.set(callChain.sampleId, perfCall);
+    this.dataCache.perfCallChainMap.set(callChain.sampleId, perfCall);
   }
 
   addPerfGroupData(callChain: PerfCallChain) {
@@ -569,8 +567,8 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
   hideSystemLibrary() {
     this.allProcess.forEach((item) => {
       item.children = [];
-      this.recursionChargeByRule(item, this.systmeRuleName, (node) => {
-        return node.path.startsWith(this.systmeRuleName);
+      this.recursionChargeByRule(item, systemRuleName, (node) => {
+        return node.path.startsWith(systemRuleName);
       });
     });
   }
@@ -579,7 +577,7 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     let max = endNum == '∞' ? Number.POSITIVE_INFINITY : parseInt(endNum);
     this.allProcess.forEach((item) => {
       item.children = [];
-      this.recursionChargeByRule(item, this.numRuleName, (node) => {
+      this.recursionChargeByRule(item, numRuleName, (node) => {
         return node.dur < startNum || node.dur > max;
       });
     });
@@ -878,7 +876,7 @@ export class PerfCallChainMerageData extends ChartStruct {
 
   set total(data: number) {
     this.#total = data;
-    this.weight = `${timeMsFormat2p(this.dur * (ProcedureLogicWorkerPerf.cmdLineResult?.fValue || 1))}`;
+    this.weight = `${timeMsFormat2p(this.dur * (DataCache.getInstance().perfCountToMs || 1))}`;
     this.weightPercent = `${((this.dur / data) * 100).toFixed(1)}%`;
   }
 
@@ -893,9 +891,7 @@ export class PerfCallChainMerageData extends ChartStruct {
       currentNode.pid = callChain.pid;
       currentNode.tid = callChain.tid;
       currentNode.libName = callChain.fileName;
-      currentNode.lib = callChain.fileName;
       currentNode.vaddrInFile = callChain.vaddrInFile;
-      currentNode.addr = '0x' + callChain.vaddrInFile.toString(16);
       currentNode.canCharge = callChain.canCharge;
       if (callChain.path) {
         currentNode.path = callChain.path;
@@ -903,7 +899,7 @@ export class PerfCallChainMerageData extends ChartStruct {
     }
     if (callChain[isTopDown ? 'nextNode' : 'previousNode'] == undefined) {
       currentNode.selfDur += callChain.count;
-      currentNode.self = timeMsFormat2p(currentNode.selfDur * (ProcedureLogicWorkerPerf.cmdLineResult?.fValue || 1));
+      currentNode.self = timeMsFormat2p(currentNode.selfDur * (DataCache.getInstance().perfCountToMs || 1));
     }
     currentNode.dur += callChain.count;
     currentNode.count += callChain.count;
@@ -920,9 +916,8 @@ export class PerfCallChainMerageData extends ChartStruct {
       currentNode.symbolName = callChain.name;
       currentNode.pid = sample.pid;
       currentNode.tid = sample.tid;
-      currentNode.libName = currentNode.lib = callChain.fileName;
+      currentNode.libName = callChain.fileName;
       currentNode.vaddrInFile = callChain.vaddrInFile;
-      currentNode.addr = '0x' + currentNode.vaddrInFile.toString(16);
       currentNode.canCharge = callChain.canCharge;
       if (callChain.path) {
         currentNode.path = callChain.path;
@@ -930,7 +925,7 @@ export class PerfCallChainMerageData extends ChartStruct {
     }
     if (isEnd) {
       currentNode.selfDur += sample.count;
-      currentNode.self = timeMsFormat2p(currentNode.selfDur * (ProcedureLogicWorkerPerf.cmdLineResult?.fValue || 1));
+      currentNode.self = timeMsFormat2p(currentNode.selfDur * (DataCache.getInstance().perfCountToMs || 1));
     }
     currentNode.dur += sample.count;
     currentNode.count += sample.count;
@@ -958,11 +953,6 @@ export class PerfCmdLine {
   report_value: string = '';
 }
 
-export class PerfCall {
-  sampleId: number = 0;
-  depth: number = 0;
-  name: string = '';
-}
 
 class PerfAnalysisSample extends PerfCountSample {
   threadName: string;

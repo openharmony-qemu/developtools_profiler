@@ -29,8 +29,12 @@ import {
   queryProcessData,
   queryProcessMem,
   queryProcessMemData,
+  queryProcessSoInitData,
+  queryProcessSoMaxDepth,
+  queryProcessStartup,
   queryProcessThreads,
   queryProcessThreadsByTable,
+  queryStartupPidArray,
   queryThreadData,
 } from '../../database/SqlLite.js';
 import { Utils } from '../trace/base/Utils.js';
@@ -44,6 +48,8 @@ import { MemRender, ProcessMemStruct } from '../../database/ui-worker/ProcedureW
 import { FolderSupplier, FolderThreadHandler } from './SpChartManager.js';
 import { JankRender, JankStruct } from '../../database/ui-worker/ProcedureWorkerJank.js';
 import { ns2xByTimeShaft } from '../../database/ui-worker/ProcedureWorkerCommon.js';
+import { AppStartupRender, AppStartupStruct } from '../../database/ui-worker/ProcedureWorkerAppStartup.js';
+import { SoRender, SoStruct } from '../../database/ui-worker/ProcedureWorkerSoInit.js';
 
 export class SpProcessChart {
   private readonly trace: SpSystemTrace;
@@ -58,6 +64,8 @@ export class SpProcessChart {
   private processFuncDataCountMap: Map<number, number> = new Map();
   private processMemDataCountMap: Map<number, number> = new Map();
   private threadFuncMaxDepthMap: Map<string, number> = new Map();
+  private startupProcessArr: { pid: number }[] = [];
+  private processSoMaxDepth: { pid: number; maxDepth: number }[] = [];
 
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
@@ -167,6 +175,8 @@ export class SpProcessChart {
     this.processAsyncEvent = await getAsyncEvents();
     info('The amount of initialized process Event data is : ', this.processAsyncEvent!.length);
     this.processMem = await queryProcessMem();
+    this.startupProcessArr = await queryStartupPidArray();
+    this.processSoMaxDepth = await queryProcessSoMaxDepth();
     info('The amount of initialized process memory data is : ', this.processMem!.length);
     let eventCountList: Array<any> = await queryEventCountMap();
     this.eventCountMap = eventCountList.reduce((pre, current) => {
@@ -237,6 +247,15 @@ export class SpProcessChart {
         processRow.canvasRestore(this.trace.canvasPanelCtx!);
       };
       this.trace.rowsEL?.appendChild(processRow);
+      let startupRow: TraceRow<AppStartupStruct> | undefined = undefined;
+      let soRow: TraceRow<SoStruct> | undefined = undefined;
+      if (this.startupProcessArr.find((sp) => sp.pid === it.pid)) {
+        startupRow = this.addStartUpRow(processRow);
+      }
+      let maxSoDepth = this.processSoMaxDepth.find((md) => md.pid === it.pid);
+      if (maxSoDepth) {
+        soRow = this.addSoInitRow(processRow, maxSoDepth.maxDepth);
+      }
       /**
        * Janks Frames
        */
@@ -624,6 +643,10 @@ export class SpProcessChart {
             processRow.addChildTraceRowAfter(threadRow, actualRow);
           } else if (expectedRow != null) {
             processRow.addChildTraceRowAfter(threadRow, expectedRow);
+          } else if (soRow) {
+            processRow.addChildTraceRowAfter(threadRow, soRow);
+          } else if (startupRow) {
+            processRow.addChildTraceRowAfter(threadRow, startupRow);
           } else {
             processRow.addChildTraceRowSpecifyLocation(threadRow, 0);
           }
@@ -690,6 +713,97 @@ export class SpProcessChart {
     }
     let durTime = new Date().getTime() - time;
     info('The time to load the Process data is: ', durTime);
+  }
+
+  addStartUpRow(processRow: TraceRow<ProcessStruct>) {
+    processRow.setAttribute('hasStartup','true');
+    let startupRow: TraceRow<AppStartupStruct> = TraceRow.skeleton<AppStartupStruct>();
+    startupRow.rowId = `app-start-${processRow.rowId}`;
+    startupRow.rowType = TraceRow.ROW_TYPE_APP_STARTUP;
+    startupRow.rowParentId = `${processRow.rowId}`;
+    startupRow.rowHidden = !processRow.expansion;
+    startupRow.index = 0;
+    startupRow.style.height = '30px';
+    startupRow.style.width = `100%`;
+    startupRow.name = `App Startups`;
+    startupRow.setAttribute('children', '');
+    startupRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+    startupRow.selectChangeHandler = this.trace.selectChangeHandler;
+    startupRow.supplier = () =>
+      queryProcessStartup(parseInt(processRow.rowId!)).then((res) => {
+        if (res.length <= 0) {
+          startupRow.rowDiscard = true;
+          this.trace.refreshCanvas(true);
+        }
+        for (let i = 0; i < res.length; i++) {
+          if (res[i].startName! < 4 && i < res.length - 1) {
+            res[i].endItid = res[i + 1].itid;
+          }
+        }
+        return res;
+      });
+    startupRow.focusHandler = (ev) => {};
+    startupRow.onThreadHandler = (useCache) => {
+      let context = startupRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      startupRow.canvasSave(context);
+      (renders['app-start-up'] as AppStartupRender).renderMainThread(
+        {
+          context: context,
+          useCache: useCache,
+          type: `app-startup ${processRow.rowId}`,
+        },
+        startupRow
+      );
+      startupRow.canvasRestore(context);
+    };
+    processRow.addChildTraceRow(startupRow);
+    return startupRow;
+  }
+
+  addSoInitRow(processRow: TraceRow<ProcessStruct>, maxDepth: number) {
+    processRow.setAttribute('hasStaticInit','true');
+    let maxHeight = (maxDepth + 1) * 20;
+    let soRow: TraceRow<SoStruct> = TraceRow.skeleton<SoStruct>();
+    soRow.rowId = `app-start-${processRow.rowId}`;
+    soRow.rowType = TraceRow.ROW_TYPE_STATIC_INIT;
+    soRow.rowParentId = `${processRow.rowId}`;
+    soRow.rowHidden = !processRow.expansion;
+    soRow.index = 0;
+    soRow.style.height = `${maxHeight}px`;
+    soRow.style.width = `100%`;
+    soRow.name = `Static Initialization`;
+    soRow.setAttribute('children', '');
+    soRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+    soRow.selectChangeHandler = this.trace.selectChangeHandler;
+    soRow.supplier = () =>
+      queryProcessSoInitData(parseInt(processRow.rowId!)).then((res) => {
+        if (res.length <= 0) {
+          soRow.rowDiscard = true;
+          this.trace.refreshCanvas(true);
+        }
+        res.forEach(so => {
+          if (so.soName) {
+            so.soName = so.soName.replace('dlopen: ', '');
+          }
+        })
+        return res;
+      });
+    soRow.focusHandler = (ev) => {};
+    soRow.onThreadHandler = (useCache) => {
+      let context = soRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      soRow.canvasSave(context);
+      (renders['app-so-init'] as SoRender).renderMainThread(
+        {
+          context: context,
+          useCache: useCache,
+          type: `static-init ${processRow.rowId}`,
+        },
+        soRow
+      );
+      soRow.canvasRestore(context);
+    };
+    processRow.addChildTraceRow(soRow);
+    return soRow;
   }
 
   insertAfter(newEl: HTMLElement, targetEl: HTMLElement) {

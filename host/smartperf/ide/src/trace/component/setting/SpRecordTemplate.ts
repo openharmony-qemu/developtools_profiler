@@ -78,11 +78,19 @@ export class SpRecordTemplate extends BaseElement {
   ];
   private frameTimeline: LitSwitch | undefined | null;
   private schedulingAnalysis: LitSwitch | undefined | null;
+  private appStartup: LitSwitch | undefined | null;
 
   initElements(): void {
     this.frameTimeline = this.shadowRoot?.querySelector<LitSwitch>('#frame_timeline');
     this.schedulingAnalysis = this.shadowRoot?.querySelector<LitSwitch>('#scheduling_analysis');
+    this.appStartup = this.shadowRoot?.querySelector<LitSwitch>('#app_startup');
     this.frameTimeline!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
+      let detail = event.detail;
+      if (detail!.checked) {
+        this.dispatchEvent(new CustomEvent('addProbe', {}));
+      }
+    });
+    this.appStartup!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
       let detail = event.detail;
       if (detail!.checked) {
         this.dispatchEvent(new CustomEvent('addProbe', {}));
@@ -101,7 +109,7 @@ export class SpRecordTemplate extends BaseElement {
     let traceEventSet = new Array<string>();
     let hitraceCategories = new Array<string>();
     let useFtracePlugin: boolean = false;
-    if (this.frameTimeline?.checked) {
+    if (this.frameTimeline?.checked || this.appStartup?.checked) {
       useFtracePlugin = true;
       SpRecordTemplate.FRAME_TIMELINE_CATEGORIES_EVENT.forEach((categories) => {
         if (hitraceCategories.indexOf(categories) == -1) {
@@ -201,6 +209,12 @@ export class SpRecordTemplate extends BaseElement {
                <div>
                  <span class="template-title">Scheduling analysis</span>
                  <lit-switch class="config_switch" id="scheduling_analysis"></lit-switch>
+               </div>
+            </div>
+            <div class="template-config-div">
+               <div>
+                 <span class="template-title">App startup</span>
+                 <lit-switch class="config_switch" id="app_startup"></lit-switch>
                </div>
             </div>
         </div>

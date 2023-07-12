@@ -56,7 +56,6 @@ import { CpuFreqStruct } from './ui-worker/ProcedureWorkerFreq.js';
 import { ThreadStruct } from './ui-worker/ProcedureWorkerThread.js';
 import { FuncStruct } from './ui-worker/ProcedureWorkerFunc.js';
 import { ProcessMemStruct } from './ui-worker/ProcedureWorkerMem.js';
-import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerNativeNemory.js';
 import { FpsStruct } from './ui-worker/ProcedureWorkerFPS.js';
 import { CpuAbilityMonitorStruct } from './ui-worker/ProcedureWorkerCpuAbility.js';
 import { MemoryAbilityMonitorStruct } from './ui-worker/ProcedureWorkerMemoryAbility.js';
@@ -77,15 +76,20 @@ import {
   HeapTraceFunctionInfo,
 } from '../../js-heap/model/DatabaseStruct';
 import { FileInfo } from '../../js-heap/model/UiStruct.js';
+import { AppStartupStruct } from './ui-worker/ProcedureWorkerAppStartup.js';
+import { SoStruct } from './ui-worker/ProcedureWorkerSoInit.js';
+import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerCommon.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
+
   uuid(): string {
     // @ts-ignore
     return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: any) =>
       (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
     );
   }
+
   //发送方法名 参数 回调
   queryFunc(action: string, args: any, handler: Function) {
     let id = this.uuid();
@@ -162,12 +166,10 @@ class DbThread extends Worker {
   };
 
   resetWASM() {
-    this.postMessage(
-      {
-        id: this.uuid(),
-        action: 'reset',
-      }
-    );
+    this.postMessage({
+      id: this.uuid(),
+      action: 'reset',
+    });
   }
 }
 
@@ -533,7 +535,7 @@ export const getFunDataByTid = (tid: number, ipid: number): Promise<Array<FuncSt
 from thread A,trace_range D
 left join callstack C on A.id = C.callid
 where startTs not null and c.cookie is null and tid = $tid and A.ipid = $ipid`,
-    { $tid: tid , $ipid: ipid}
+    { $tid: tid, $ipid: ipid }
   );
 
 export const getMaxDepthByTid = (): Promise<Array<any>> =>
@@ -830,7 +832,12 @@ export const getTabCpuByThread = (cpus: Array<number>, leftNS: number, rightNS: 
     { $rightNS: rightNS, $leftNS: leftNS }
   );
 
-export const getTabSlices = (funTids: Array<number>, pids: Array<number>, leftNS: number, rightNS: number): Promise<Array<any>> =>
+export const getTabSlices = (
+  funTids: Array<number>,
+  pids: Array<number>,
+  leftNS: number,
+  rightNS: number
+): Promise<Array<any>> =>
   query<SelectionData>(
     'getTabSlices',
     `
@@ -952,6 +959,38 @@ group by B.tid, B.pid, B.cpu;`;
     $leftNS: leftNS,
     $rightNS: rightNS,
   });
+};
+
+export const getTabStartups = (ids: Array<number>, leftNS: number, rightNS: number): Promise<Array<any>> => {
+  let sql = `
+select
+    P.pid,
+    P.name as process,
+    (A.start_time - B.start_ts) as startTs,
+    (case when A.end_time = -1 then 0 else (A.end_time - A.start_time) end) as dur,
+    A.start_name as startName
+from app_startup A,trace_range B
+left join process P on A.ipid = P.ipid
+where P.pid in (${ids.join(',')}) 
+and not ((startTs + dur < ${leftNS}) or (startTs > ${rightNS}))
+order by start_name;`;
+  return query('getTabStartups', sql, {});
+};
+
+export const getTabStaticInit = (ids: Array<number>, leftNS: number, rightNS: number): Promise<Array<any>> => {
+  let sql = `
+select
+    P.pid,
+    P.name as process,
+    (A.start_time - B.start_ts) as startTs,
+    (case when A.end_time = -1 then 0 else (A.end_time - A.start_time) end) as dur,
+    A.so_name as soName
+from static_initalize A,trace_range B
+left join process P on A.ipid = P.ipid
+where P.pid in (${ids.join(',')}) 
+and not ((startTs + dur < ${leftNS}) or (startTs > ${rightNS}))
+order by dur desc;`;
+  return query('getTabStaticInit', sql, {});
 };
 
 export const queryBinderArgsByArgset = (argset: number): Promise<Array<BinderArgBean>> =>
@@ -1254,6 +1293,63 @@ from thread_state AS B
     left join trace_range AS TR
 where B.tid = $tid and B.pid = $pid;`,
     { $tid: tid, $pid: pid }
+  );
+
+export const queryStartupPidArray = (): Promise<Array<{ pid: number }>> =>
+  query(
+    'queryStartupPidArray',
+    `
+    select distinct pid from app_startup A left join process P on A.ipid = p.ipid;`,
+    {}
+  );
+
+export const queryProcessStartup = (pid: number): Promise<Array<AppStartupStruct>> =>
+  query(
+    'queryProcessStartup',
+    `
+    select
+    P.pid,
+    A.tid,
+    A.call_id as itid,
+    (case when A.start_time < B.start_ts then 0 else (A.start_time - B.start_ts) end) as startTs,
+    (case 
+        when A.start_time < B.start_ts then (A.end_time - B.start_ts) 
+        when A.end_time = -1 then 0
+        else (A.end_time - A.start_time) end) as dur,
+    A.start_name as startName
+from app_startup A,trace_range B
+left join process P on A.ipid = P.ipid
+where P.pid = $pid
+order by start_name;`,
+    { $pid: pid }
+  );
+
+export const queryProcessSoMaxDepth = (): Promise<Array<{ pid: number; maxDepth: number }>> =>
+  query(
+    'queryProcessSoMaxDepth',
+    `select p.pid,max(depth) maxDepth 
+from static_initalize S left join process p on S.ipid = p.ipid 
+group by p.pid;`,
+    {}
+  );
+
+export const queryProcessSoInitData = (pid: number): Promise<Array<SoStruct>> =>
+  query(
+    'queryProcessSoInitData',
+    `
+    select
+    P.pid,
+    T.tid,
+    A.call_id as itid,
+    (A.start_time - B.start_ts) as startTs,
+    (A.end_time - A.start_time) as dur,
+    A.so_name as soName,
+    A.depth
+from static_initalize A,trace_range B
+left join process P on A.ipid = P.ipid
+left join thread T on A.call_id = T.itid
+where P.pid = $pid;`,
+    { $pid: pid }
   );
 
 export const queryThreadAndProcessName = (): Promise<Array<any>> =>
@@ -2669,6 +2765,16 @@ where cat = 'binder' and c.id = $id;`,
     { $id: id }
   );
 
+export const queryThreadByItid = (itid: number,ts: number): Promise<Array<any>> =>
+  query(
+    'queryThreadByItid',
+    `select tid,pid,c.dur,c.depth,c.name 
+from thread t left join process p on t.ipid = p.ipid
+left join callstack c on t.itid = c.callid
+where itid = $itid and c.ts = $ts;`,
+    { $itid: itid, $ts: ts }
+  );
+
 export const queryBinderByArgsId = (id: number, startTime: number, isNext: boolean): Promise<Array<any>> => {
   let sql = `select c.ts - D.start_ts as startTime,
     c.dur,
@@ -4064,10 +4170,7 @@ export const queryHeapString = (fileId: number): Promise<Array<any>> =>
       FROM js_heap_string WHERE file_id = ${fileId}`
   );
 export const queryTraceRange = (): Promise<Array<any>> =>
-  query(
-    'queryTraceRange',
-    `SELECT t.start_ts as startTs, t.end_ts as endTs FROM trace_range t`
-  );
+  query('queryTraceRange', `SELECT t.start_ts as startTs, t.end_ts as endTs FROM trace_range t`);
 
 export const queryHiPerfProcessCount = (
   leftNs: number,

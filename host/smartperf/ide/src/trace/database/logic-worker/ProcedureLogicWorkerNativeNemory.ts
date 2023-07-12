@@ -14,9 +14,11 @@
  */
 import {
   convertJSON,
+  DataCache,
   formatRealDateMs,
   getByteWithUnit,
   getTimeString,
+  HeapTreeDataBean,
   LogicHandler,
   MerageBean,
   merageBeanDataSplit,
@@ -27,9 +29,6 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
   selectTotalSize = 0;
   selectTotalCount = 0;
   stackCount = 0;
-  DATA_DICT: Map<number, string> = new Map<number, string>();
-  FILE_DICT: Map<number, string> = new Map<number, string>();
-  HEAP_FRAME_MAP: Map<number, Array<HeapTreeDataBean>> = new Map<number, Array<HeapTreeDataBean>>();
   NATIVE_MEMORY_DATA: Array<NativeEvent> = [];
   currentTreeMapData: any = {};
   currentTreeList: any[] = [];
@@ -45,6 +44,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
   totalNS: number = 0;
   isAnalysis: boolean = false;
   isStatistic: boolean = false;
+  private dataCache = DataCache.getInstance();
   handle(data: any): void {
     this.currentEventId = data.id;
     if (data && data.type) {
@@ -54,11 +54,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
           if (data.params.isRealtime) {
             this.realTimeDif = data.params.realTimeDif;
           }
-          this.initDataDict();
-          break;
-        case 'native-memory-queryDataDICT':
-          let dict = convertJSON(data.params.list) || [];
-          dict.map((d: any) => this.DATA_DICT.set(d['id'], d['data']));
+          this.dataCache.dataDict = data.params.dataDict;
           this.initNMChartData();
           break;
         case 'native-memory-queryNMChartData':
@@ -198,9 +194,6 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
     }
   }
 
-  initDataDict() {
-    this.queryData(this.currentEventId, 'native-memory-queryDataDICT', `select * from data_dict;`, {});
-  }
   initNMChartData() {
     this.queryData(
       this.currentEventId,
@@ -221,9 +214,9 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
                     (case when h.event_type = 'AllocEvent' then 2 else 3 end) as eventType
                 from native_hook h ,trace_range t
                 where 
-                    h.start_ts between t.start_ts and t.end_ts
-                    and h.end_ts between t.start_ts and t.end_ts
-                    and (h.event_type = 'AllocEvent' or h.event_type = 'MmapEvent')
+                  h.start_ts between t.start_ts and t.end_ts
+                  and h.end_ts between t.start_ts and t.end_ts
+                  and (h.event_type = 'AllocEvent' or h.event_type = 'MmapEvent')
             )
             order by startTime;
         `,
@@ -231,10 +224,10 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
     );
   }
   queryNativeHookStatistic(type: number) {
-    let condition = ''
+    let condition = '';
     if (type === 0) {
       condition = 'and type = 0';
-    } else if(type === 1) {
+    } else if (type === 1) {
       condition = 'and type > 0';
     } else {
       condition = '';
@@ -365,10 +358,10 @@ where ts between start_ts and end_ts ${condition};
   initNMStack(frameArr: Array<HeapTreeDataBean>) {
     frameArr.map((frame) => {
       let frameEventId = frame.eventId;
-      if (this.HEAP_FRAME_MAP.has(frameEventId)) {
-        this.HEAP_FRAME_MAP.get(frameEventId)!.push(frame);
+      if (this.dataCache.nmHeapFrameMap.has(frameEventId)) {
+        this.dataCache.nmHeapFrameMap.get(frameEventId)!.push(frame);
       } else {
-        this.HEAP_FRAME_MAP.set(frameEventId, [frame]);
+        this.dataCache.nmHeapFrameMap.set(frameEventId, [frame]);
       }
     });
   }
@@ -483,15 +476,15 @@ where ts between start_ts and end_ts ${condition};
   }
   resolvingActionNativeMemoryStack(paramMap: Map<string, any>) {
     let eventId = paramMap.get('eventId');
-    let frameArr = this.HEAP_FRAME_MAP.get(eventId) || [];
+    let frameArr = this.dataCache.nmHeapFrameMap.get(eventId) || [];
     let arr: Array<NativeHookCallInfo> = [];
     frameArr.map((frame) => {
       let target = new NativeHookCallInfo();
       target.eventId = frame.eventId;
       target.depth = frame.depth;
       target.addr = frame.addr;
-      target.symbol = this.groupCutFilePath(frame.symbolId, this.DATA_DICT.get(frame.symbolId) || '') ?? '';
-      target.library = this.groupCutFilePath(frame.fileId, this.DATA_DICT.get(frame.fileId) || '') ?? '';
+      target.symbol = this.groupCutFilePath(frame.symbolId, this.dataCache.dataDict.get(frame.symbolId) || '') ?? '';
+      target.library = this.groupCutFilePath(frame.fileId, this.dataCache.dataDict.get(frame.fileId) || '') ?? '';
       target.title = `[ ${target.symbol} ]  ${target.library}`;
       target.type =
         target.library.endsWith('.so.1') || target.library.endsWith('.dll') || target.library.endsWith('.so') ? 0 : 1;
@@ -509,7 +502,7 @@ where ts between start_ts and end_ts ${condition};
     let statisticsSelection = paramMap.get('statisticsSelection');
     let filter = dataSource.filter((item) => {
       if (item.subTypeId != null && item.subType == undefined) {
-        item.subType = this.DATA_DICT.get(item.subTypeId) || '-';
+        item.subType = this.dataCache.dataDict.get(item.subTypeId) || '-';
       }
       let filterAllocation = true;
       if (filterAllocType == '1') {
@@ -549,11 +542,11 @@ where ts between start_ts and end_ts ${condition};
       memory.threadName = hook.threadName;
       memory.lastLibId = hook.lastLibId;
       (memory as any).isSelected = hook.isSelected;
-      let arr = this.HEAP_FRAME_MAP.get(hook.eventId) || [];
+      let arr = this.dataCache.nmHeapFrameMap.get(hook.eventId) || [];
       let frame = Array.from(arr)
         .reverse()
         .find((item) => {
-          let fileName = this.DATA_DICT.get(item.fileId);
+          let fileName = this.dataCache.dataDict.get(item.fileId);
           return !((fileName ?? '').includes('libc++') || (fileName ?? '').includes('musl'));
         });
       if (frame == null || frame == undefined) {
@@ -562,8 +555,11 @@ where ts between start_ts and end_ts ${condition};
         }
       }
       if (frame != null && frame != undefined) {
-        memory.symbol = this.groupCutFilePath(frame.symbolId, this.DATA_DICT.get(frame.symbolId) || '');
-        memory.library = this.groupCutFilePath(frame.fileId, this.DATA_DICT.get(frame.fileId) || 'Unknown Path');
+        memory.symbol = this.groupCutFilePath(frame.symbolId, this.dataCache.dataDict.get(frame.symbolId) || '');
+        memory.library = this.groupCutFilePath(
+          frame.fileId,
+          this.dataCache.dataDict.get(frame.fileId) || 'Unknown Path'
+        );
       } else {
         memory.symbol = '-';
         memory.library = '-';
@@ -609,11 +605,11 @@ where ts between start_ts and end_ts ${condition};
   }
   groupCutFilePath(fileId: number, path: string): string {
     let name = '';
-    if (this.FILE_DICT.has(fileId)) {
-      name = this.FILE_DICT.get(fileId) ?? '';
+    if (this.dataCache.nmFileDict.has(fileId)) {
+      name = this.dataCache.nmFileDict.get(fileId) ?? '';
     } else {
       let currentPath = path.substring(path.lastIndexOf('/') + 1);
-      this.FILE_DICT.set(fileId, currentPath);
+      this.dataCache.nmFileDict.set(fileId, currentPath);
       name = currentPath;
     }
     return name == '' ? '-' : name;
@@ -708,9 +704,7 @@ where ts between start_ts and end_ts ${condition};
     return false;
   }
   clearAll() {
-    this.DATA_DICT.clear();
-    this.FILE_DICT.clear();
-    this.HEAP_FRAME_MAP.clear();
+    this.dataCache.clearNM();
     this.splitMapData = {};
     this.currentSamples = [];
     this.allThreads = [];
@@ -754,8 +748,8 @@ where ts between start_ts and end_ts ${condition};
   }
   queryStatisticCallchainsSamples(action: string, leftNs: number, rightNs: number, types: Array<number>) {
     let condition = '';
-    if(types.length === 1){
-      if(types[0] === 0){
+    if (types.length === 1) {
+      if (types[0] === 0) {
         condition = 'and type = 0';
       } else {
         condition = 'and type != 0';
@@ -800,7 +794,7 @@ where ts between start_ts and end_ts ${condition};
       if (this.isStatistic) {
         analysisSample.releaseCount = sample.freeCount;
         analysisSample.releaseSize = sample.freeSize;
-        switch(sample.subTypeId){
+        switch (sample.subTypeId) {
           case 1:
             analysisSample.subType = 'MmapEvent';
             break;
@@ -816,7 +810,7 @@ where ts between start_ts and end_ts ${condition};
       } else {
         let subType = undefined;
         if (sample.subTypeId) {
-          subType = this.DATA_DICT.get(sample.subTypeId);
+          subType = this.dataCache.dataDict.get(sample.subTypeId);
         }
         analysisSample.endTs = sample.endTs;
         analysisSample.addr = sample.addr;
@@ -839,7 +833,7 @@ where ts between start_ts and end_ts ${condition};
         }
       }
 
-      const callChains = this.HEAP_FRAME_MAP.get(sample.eventId) || [];
+      const callChains = this.dataCache.nmHeapFrameMap.get(sample.eventId) || [];
       if (!callChains || callChains.length === 0) {
         return;
       }
@@ -853,7 +847,7 @@ where ts between start_ts and end_ts ${condition};
         }
 
         lastFilterCallChain = callChains[index];
-        const libPath = this.DATA_DICT.get(lastFilterCallChain.fileId);
+        const libPath = this.dataCache.dataDict.get(lastFilterCallChain.fileId);
         //ignore musl and libc++ so
         if (libPath?.includes('musl') || libPath?.includes('libc++')) {
           index--;
@@ -863,13 +857,14 @@ where ts between start_ts and end_ts ${condition};
         }
       }
 
-      const filePath = this.DATA_DICT.get(lastFilterCallChain.fileId)!;
+      const filePath = this.dataCache.dataDict.get(lastFilterCallChain.fileId)!;
       let libName = '';
       if (filePath) {
         const path = filePath.split('/');
         libName = path[path.length - 1];
       }
-      const symbolName = this.DATA_DICT.get(lastFilterCallChain.symbolId) || libName + ' (' + sample.addr + ')';
+      const symbolName =
+        this.dataCache.dataDict.get(lastFilterCallChain.symbolId) || libName + ' (' + sample.addr + ')';
 
       analysisSample.libId = lastFilterCallChain.fileId;
       analysisSample.libName = libName;
@@ -1033,7 +1028,7 @@ where ts between start_ts and end_ts ${condition};
     this.currentSamples = Object.values(groupMap);
   }
   createThreadSample(sample: NativeHookStatistics) {
-    return this.HEAP_FRAME_MAP.get(sample.eventId) || [];
+    return this.dataCache.nmHeapFrameMap.get(sample.eventId) || [];
   }
   merageChildrenByIndex(
     currentNode: NativeHookCallInfo,
@@ -1066,8 +1061,8 @@ where ts between start_ts and end_ts ${condition};
   }
   setMerageName(currentNode: NativeHookCallInfo) {
     currentNode.symbol =
-      this.groupCutFilePath(currentNode.symbolId, this.DATA_DICT.get(currentNode.symbolId) || '') ?? 'unkown';
-    currentNode.path = this.DATA_DICT.get(currentNode.fileId) || 'unkown';
+      this.groupCutFilePath(currentNode.symbolId, this.dataCache.dataDict.get(currentNode.symbolId) || '') ?? 'unknown';
+    currentNode.path = this.dataCache.dataDict.get(currentNode.fileId) || 'unknown';
     currentNode.libName = setFileName(currentNode.path);
     currentNode.lib = currentNode.path;
     currentNode.symbolName = `[${currentNode.symbol}] ${currentNode.libName}`;
@@ -1151,20 +1146,7 @@ where ts between start_ts and end_ts ${condition};
     }
   }
 }
-export class HeapTreeDataBean {
-  MoudleName: string | undefined;
-  AllocationFunction: string | undefined;
-  symbolId: number = 0;
-  fileId: number = 0;
-  startTs: number = 0;
-  endTs: number = 0;
-  eventType: string | undefined;
-  depth: number = 0;
-  heapSize: number = 0;
-  eventId: number = 0;
-  addr: string = '';
-  callChinId: number = 0;
-}
+
 export class NativeHookStatistics {
   id: number = 0;
   eventId: number = 0;

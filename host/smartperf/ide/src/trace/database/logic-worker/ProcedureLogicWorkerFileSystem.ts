@@ -15,6 +15,8 @@
 
 import {
   convertJSON,
+  DataCache,
+  FileCallChain,
   getByteWithUnit,
   getProbablyTime,
   getTimeString,
@@ -56,8 +58,7 @@ const PF_TYPE = 1;
 const BIO_TYPE = 2;
 
 export class ProcedureLogicWorkerFileSystem extends LogicHandler {
-  static data_dict: Map<number, string> = new Map<number, string>();
-  static callChainsMap: Map<number, FileCallChain[]> = new Map<number, FileCallChain[]>();
+  private dataCache = DataCache.getInstance();
   handlerMap: Map<string, any> = new Map<string, any>();
   currentEventId: string = '';
   tab: string = '';
@@ -73,11 +74,12 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
     if (data && data.type) {
       switch (data.type) {
         case 'fileSystem-init':
-          ProcedureLogicWorkerFileSystem.data_dict = data.params as Map<number, string>;
+          this.dataCache.dataDict = data.params;
           this.initCallchains();
           break;
         case 'fileSystem-queryCallchains':
           let callChains = convertJSON(data.params.list) || [];
+          this.dataCache.clearEBpf();
           this.initCallChainTopDown(callChains);
           // @ts-ignore
           self.postMessage({
@@ -210,8 +212,7 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
   }
 
   clearAll() {
-    ProcedureLogicWorkerFileSystem.data_dict.clear();
-    ProcedureLogicWorkerFileSystem.callChainsMap.clear();
+    this.dataCache.clearEBpf();
     for (let key of this.handlerMap.keys()) {
       if (this.handlerMap.get(key).clear) {
         this.handlerMap.get(key).clear();
@@ -353,14 +354,12 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
   }
 
   getStacksByCallchainId(id: number) {
-    let stacks = ProcedureLogicWorkerFileSystem.callChainsMap.get(id) ?? [];
+    let stacks = this.dataCache.eBpfCallChainsMap.get(id) ?? [];
     let arr: Array<Stack> = [];
     for (let s of stacks) {
       let st: Stack = new Stack();
-      st.path = (ProcedureLogicWorkerFileSystem.data_dict.get(s.pathId) ?? 'Unknown Path').split('/').reverse()[0];
-      st.symbol = `${s.symbolsId == null ? s.ip : ProcedureLogicWorkerFileSystem.data_dict.get(s.symbolsId) ?? ''} (${
-        st.path
-      })`;
+      st.path = (this.dataCache.dataDict?.get(s.pathId) ?? 'Unknown Path').split('/').reverse()[0];
+      st.symbol = `${s.symbolsId == null ? s.ip : this.dataCache.dataDict?.get(s.symbolsId) ?? ''} (${st.path})`;
       st.type = st.path.endsWith('.so.1') || st.path.endsWith('.dll') || st.path.endsWith('.so') ? 0 : 1;
       arr.push(st);
     }
@@ -376,14 +375,14 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
       event.durPer4kStr = event.durPer4k == 0 ? '-' : getProbablyTime(event.durPer4k);
       event.sizeStr = getByteWithUnit(event.size);
       event.durStr = getProbablyTime(event.dur);
-      event.path = event.pathId ? ProcedureLogicWorkerFileSystem.data_dict.get(event.pathId) ?? '-' : '-';
+      event.path = event.pathId ? this.dataCache.dataDict?.get(event.pathId) ?? '-' : '-';
       // @ts-ignore
-      event.operation = DISKIO_TYPE_MAP[`${event.type}`] || 'UNKNOW';
-      let stacks = ProcedureLogicWorkerFileSystem.callChainsMap.get(event.callchainId) || [];
+      event.operation = DISKIO_TYPE_MAP[`${event.type}`] || 'UNKNOWN';
+      let stacks = this.dataCache.eBpfCallChainsMap.get(event.callchainId) || [];
       if (stacks.length > 0) {
         let stack = stacks[0];
         event.backtrace = [
-          stack.symbolsId == null ? stack.ip : ProcedureLogicWorkerFileSystem.data_dict.get(stack.symbolsId) ?? '',
+          stack.symbolsId == null ? stack.ip : this.dataCache.dataDict?.get(stack.symbolsId) ?? '',
           `(${stacks.length} other frames)`,
         ];
       } else {
@@ -399,14 +398,14 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
       event.sizeStr = getByteWithUnit(event.size * 4096);
       event.durStr = getProbablyTime(event.dur);
       // @ts-ignore
-      event.operation = VM_TYPE_MAP[`${event.type}`] || 'UNKNOW';
+      event.operation = VM_TYPE_MAP[`${event.type}`] || 'UNKNOWNN';
       return event;
     });
   }
 
   supplementFileSysEvents(res: Array<FileSysEvent>, tab: string) {
     res.map((r) => {
-      let stacks = ProcedureLogicWorkerFileSystem.callChainsMap.get(r.callchainId);
+      let stacks = this.dataCache.eBpfCallChainsMap.get(r.callchainId);
       r.startTsStr = getTimeString(r.startTs);
       r.durStr = getProbablyTime(r.dur);
       if (tab == 'events') {
@@ -416,17 +415,16 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
         r.fourthArg = r.fourthArg ?? '0x0';
         r.returnValue = r.returnValue ?? '0x0';
         r.error = r.error ?? '0x0';
-        r.path = ProcedureLogicWorkerFileSystem.data_dict.get(r.fileId) ?? '-';
+        r.path = this.dataCache.dataDict?.get(r.fileId) ?? '-';
       }
       // @ts-ignore
       r.typeStr = FILE_TYPE_MAP[`${r.type}`] ?? '';
       if (stacks && stacks.length > 0) {
         let stack = stacks[0];
         r.depth = stacks.length;
-        r.symbol =
-          stack.symbolsId == null ? stack.ip : ProcedureLogicWorkerFileSystem.data_dict.get(stack.symbolsId) ?? '';
+        r.symbol = stack.symbolsId == null ? stack.ip : this.dataCache.dataDict?.get(stack.symbolsId) ?? '';
         if (tab != 'events') {
-          r.path = ProcedureLogicWorkerFileSystem.data_dict.get(r.fileId) ?? '-';
+          r.path = this.dataCache.dataDict?.get(r.fileId) ?? '-';
         }
         r.backtrace = [r.symbol, `(${r.depth} other frames)`];
       } else {
@@ -449,7 +447,6 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
     this.handlerMap.set('fileSystem', new FileSystemCallTreeHandler('fileSystem', this.queryData));
     this.handlerMap.set('io', new FileSystemCallTreeHandler('io', this.queryData));
     this.handlerMap.set('virtualMemory', new FileSystemCallTreeHandler('virtualMemory', this.queryData));
-    ProcedureLogicWorkerFileSystem.callChainsMap.clear();
     this.queryData(
       this.currentEventId,
       'fileSystem-queryCallchains',
@@ -459,11 +456,12 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
   }
 
   initCallChainTopDown(list: any[]) {
+    const callChainsMap = this.dataCache.eBpfCallChainsMap;
     list.forEach((callchain: FileCallChain) => {
-      if (ProcedureLogicWorkerFileSystem.callChainsMap.has(callchain.callChainId)) {
-        ProcedureLogicWorkerFileSystem.callChainsMap.get(callchain.callChainId)!.push(callchain);
+      if (callChainsMap.has(callchain.callChainId)) {
+        callChainsMap.get(callchain.callChainId)!.push(callchain);
       } else {
-        ProcedureLogicWorkerFileSystem.callChainsMap.set(callchain.callChainId, [callchain]);
+        callChainsMap.set(callchain.callChainId, [callchain]);
       }
     });
   }
@@ -472,7 +470,7 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
     let analysisSampleList = new Array<FileAnalysisSample>();
     for (let sample of samplesList) {
       let analysisSample = new FileAnalysisSample(sample);
-      let callChainList = ProcedureLogicWorkerFileSystem.callChainsMap.get(sample.callChainId);
+      let callChainList = this.dataCache.eBpfCallChainsMap.get(sample.callChainId);
       if (!callChainList || callChainList.length === 0) {
         continue;
       }
@@ -486,14 +484,14 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
         }
         lastCallChain = callChainList[depth];
         if (type === BIO_TYPE) {
-          let symbolName = ProcedureLogicWorkerFileSystem.data_dict.get(lastCallChain.symbolsId);
+          let symbolName = this.dataCache.dataDict?.get(lastCallChain.symbolsId);
           if (symbolName?.includes('submit_bio')) {
             depth--;
           } else {
             break;
           }
         } else {
-          let libPath = ProcedureLogicWorkerFileSystem.data_dict.get(lastCallChain.pathId);
+          let libPath = this.dataCache.dataDict?.get(lastCallChain.pathId);
           if (libPath?.includes('musl') || libPath?.includes('libc++')) {
             depth--;
           } else {
@@ -506,10 +504,10 @@ export class ProcedureLogicWorkerFileSystem extends LogicHandler {
       }
       analysisSample.libId = lastCallChain.pathId;
       analysisSample.symbolId = lastCallChain.symbolsId;
-      let libPath = ProcedureLogicWorkerFileSystem.data_dict.get(analysisSample.libId) || '';
+      let libPath = this.dataCache.dataDict?.get(analysisSample.libId) || '';
       let pathArray = libPath.split('/');
       analysisSample.libName = pathArray[pathArray.length - 1];
-      let symbolName = ProcedureLogicWorkerFileSystem.data_dict.get(analysisSample.symbolId);
+      let symbolName = this.dataCache.dataDict?.get(analysisSample.symbolId);
       if (!symbolName) {
         symbolName = lastCallChain.ip + ' (' + analysisSample.libName + ')';
       }
@@ -720,7 +718,7 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
       map = VM_TYPE_MAP;
     }
     // @ts-ignore
-    typeCallChain.ip = map[sample.type.toString()] || 'UNKNOW';
+    typeCallChain.ip = map[sample.type.toString()] || 'UNKNOWN';
     typeCallChain.symbolsId = sample.type;
     typeCallChain.pathId = -1;
     let threadCallChain = new FileCallChain();
@@ -728,11 +726,8 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
     threadCallChain.ip = (sample.threadName || 'Thread') + `-${sample.tid}`;
     threadCallChain.symbolsId = sample.tid;
     threadCallChain.pathId = -1;
-    return [
-      typeCallChain,
-      threadCallChain,
-      ...(ProcedureLogicWorkerFileSystem.callChainsMap.get(sample.callChainId) || []),
-    ];
+    const eBpfCallChainsMap = DataCache.getInstance().eBpfCallChainsMap;
+    return [typeCallChain, threadCallChain, ...(eBpfCallChainsMap.get(sample.callChainId) || [])];
   }
 
   merageChildrenByIndex(
@@ -778,11 +773,10 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
       currentNode.libName = '';
       currentNode.path = '';
     } else {
-      currentNode.symbol =
-        ProcedureLogicWorkerFileSystem.data_dict.get(currentNode.symbolsId) || currentNode.ip || 'unkown';
-      currentNode.path = ProcedureLogicWorkerFileSystem.data_dict.get(currentNode.pathId) || 'unkown';
-      currentNode.lib = currentNode.libName = setFileName(currentNode.path);
-      currentNode.addr = currentNode.ip;
+      const dataCache = DataCache.getInstance();
+      currentNode.symbol = dataCache.dataDict?.get(currentNode.symbolsId) || currentNode.ip || 'unknown';
+      currentNode.path = dataCache.dataDict?.get(currentNode.pathId) || 'unknown';
+      currentNode.libName = setFileName(currentNode.path);
       currentNode.symbolName = `${currentNode.symbol} (${currentNode.libName})`;
     }
   }
@@ -859,14 +853,6 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
   clearSplitMapData(symbolName: string) {
     delete this.splitMapData[symbolName];
   }
-}
-
-class FileCallChain {
-  callChainId: number = 0;
-  depth: number = 0;
-  symbolsId: number = 0;
-  pathId: number = 0;
-  ip: string = '';
 }
 
 class FileSample {

@@ -206,7 +206,7 @@ export class SpNativeMemoryChart {
       procedurePool.submitWithName(
         'logic1',
         'native-memory-init',
-        { isRealtime, realTimeDif },
+        { isRealtime, realTimeDif, dataDict: SpSystemTrace.DATA_DICT },
         undefined,
         (res: any) => {
           resolve(res);
