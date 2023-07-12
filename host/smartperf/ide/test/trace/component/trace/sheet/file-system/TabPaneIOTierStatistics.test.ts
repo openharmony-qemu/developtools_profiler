@@ -22,19 +22,15 @@ import crypto from 'crypto';
 // @ts-ignore
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
-import {getTabPaneIOTierStatisticsData} from "../../../../../../dist/trace/database/SqlLite.js";
+import {getTabPaneIOTierStatisticsData} from '../../../../../../dist/trace/database/SqlLite.js';
 // @ts-ignore
-window.ResizeObserver =
-    window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
+window.ResizeObserver
+    = window.ResizeObserver
+    || jest.fn().mockImplementation(() => ({
         disconnect: jest.fn(),
         observe: jest.fn(),
         unobserve: jest.fn(),
     }));
-//
-// jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-//     return {};
-// });
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
@@ -46,7 +42,7 @@ Object.defineProperty(global.self, 'crypto', {
 });
 
 describe('TabPaneIOTierStatistics Test', () => {
-    document.body.innerHTML = `<tabpane-io-tier-statistics id="io-tier-statistics"></tabpane-io-tier-statistics>`;
+    document.body.innerHTML = '<tabpane-io-tier-statistics id="io-tier-statistics"></tabpane-io-tier-statistics>';
     let tabPane = document.querySelector<TabPaneIOTierStatistics>('#io-tier-statistics');
 
     let param = {
@@ -97,52 +93,52 @@ describe('TabPaneIOTierStatistics Test', () => {
         let queryResult = sqlit.getTabPaneIOTierStatisticsData;
         queryResult.mockResolvedValue([
             {
-                "pid": 186,
-                "pname": "kworker/u8:4",
-                "tier": 0,
-                "ipid": 2,
-                "path": "-",
-                "count": 3,
-                "allDuration": 19543418,
-                "minDuration": 6408209,
-                "maxDuration": 6668084,
-                "avgDuration": 6514472.66666667
+                'pid': 186,
+                'pname': 'kworker/u8:4',
+                'tier': 0,
+                'ipid': 2,
+                'path': '-',
+                'count': 3,
+                'allDuration': 19543418,
+                'minDuration': 6408209,
+                'maxDuration': 6668084,
+                'avgDuration': 6514472.66666667
             },
             {
-                "pid": 186,
-                "pname": "kworker/u8:4",
-                "tier": 0,
-                "ipid": 2,
-                "path": "/data/thermal/config/configLevel",
-                "count": 1,
-                "allDuration": 5916167,
-                "minDuration": 5916167,
-                "maxDuration": 5916167,
-                "avgDuration": 5916167
+                'pid': 186,
+                'pname': 'kworker/u8:4',
+                'tier': 0,
+                'ipid': 2,
+                'path': '/data/thermal/config/configLevel',
+                'count': 1,
+                'allDuration': 5916167,
+                'minDuration': 5916167,
+                'maxDuration': 5916167,
+                'avgDuration': 5916167
             },
             {
-                "pid": 186,
-                "pname": "kworker/u8:4",
-                "tier": 0,
-                "ipid": 2,
-                "path": "/data/local/tmp/hiebpf.data",
-                "count": 2,
-                "allDuration": 9192751,
-                "minDuration": 2386417,
-                "maxDuration": 6806334,
-                "avgDuration": 4596375.5
+                'pid': 186,
+                'pname': 'kworker/u8:4',
+                'tier': 0,
+                'ipid': 2,
+                'path': '/data/local/tmp/hiebpf.data',
+                'count': 2,
+                'allDuration': 9192751,
+                'minDuration': 2386417,
+                'maxDuration': 6806334,
+                'avgDuration': 4596375.5
             },
             {
-                "pid": 237,
-                "pname": "jbd2/mmcblk0p11",
-                "tier": 0,
-                "ipid": 7,
-                "path": "-",
-                "count": 7,
-                "allDuration": 32377630,
-                "minDuration": 2749251,
-                "maxDuration": 5033292,
-                "avgDuration": 4625375.71428571
+                'pid': 237,
+                'pname': 'jbd2/mmcblk0p11',
+                'tier': 0,
+                'ipid': 7,
+                'path': '-',
+                'count': 7,
+                'allDuration': 32377630,
+                'minDuration': 2749251,
+                'maxDuration': 5033292,
+                'avgDuration': 4625375.71428571
             }
         ]);
         tabPane.data = param;
