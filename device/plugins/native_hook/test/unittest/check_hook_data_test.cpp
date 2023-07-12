@@ -435,7 +435,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
                 delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
                 ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
-                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
+                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE); // 4: fifth hook data, default malloc size
 
                 addr = hookVec[addrPos];
                 depth = 0;
@@ -468,7 +468,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2 ;++i) {
+    for(size_t i = 0; i < 2 ;++i) { // 2: 0 is dwarf, 1 is fp mode
         int setDepth = 1;
         unwindDepth_ = 100;
         outFileType_ = "calloc_";
