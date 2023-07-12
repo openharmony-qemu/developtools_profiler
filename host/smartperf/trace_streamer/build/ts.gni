@@ -12,11 +12,11 @@
 # limitations under the License.
 # import("config.gni")
 if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
-
   clang_x64_folder = "."
   THIRD_PARTY = "//third_party"
   SRC = "//src"
   PREBUILTS = "//prebuilts"
+
   # kernel_version = "5.10.79_aarch64"
   kernel_version = "."
   if (target == "test") {
@@ -30,20 +30,21 @@ if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
 
   OHOS_TRACE_STREAMER_PROTOS_DIR = get_path_info("../src", "abspath")
   OHOS_TRACE_STREAMER_DIR = get_path_info("../", "abspath")
-  OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc.sh", "abspath")
-  
+  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc.sh", "abspath")
+
   if (target_os == "windows") {
-    OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc_w.sh", "abspath")
+    OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc_w.sh", "abspath")
   } else {
-  script_executable = "/usr/bin/env"
+    script_executable = "/usr/bin/env"
   }
-  OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR = get_path_info("../third_party/protobuf", "abspath")
+  OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR =
+      get_path_info("../third_party/protobuf", "abspath")
 } else {
   script_executable = "/usr/bin/env"
   clang_x64_folder = "clang_x64"
   with_ebpf_help_table = false
   OHOS_TRACE_STREAMER_DIR = get_path_info("..", "abspath")
-  OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("/protoc.sh", "abspath")
+  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("/protoc.sh", "abspath")
   THIRD_PARTY = get_path_info("../../../../../../third_party/", "abspath")
   PERF_DIR = get_path_info("../../../../../", "abspath")
   SRC = "${OHOS_TRACE_STREAMER_DIR}/src"
