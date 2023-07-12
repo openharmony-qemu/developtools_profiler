@@ -22,12 +22,10 @@ import {
   drawLoading,
   drawSelection,
   drawWakeUp,
-  drawWakeUpList,
   Render,
   RequestMessage,
 } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import { SpSystemTrace } from '../../component/SpSystemTrace.js';
 
 export class EmptyRender extends Render {
   renderMainThread(req: any, row: TraceRow<any>) {
@@ -103,24 +101,6 @@ export class CpuRender {
       currentCpu,
       true
     );
-    for (let i = 0; i < SpSystemTrace.wakeupList.length; i++) {
-      if (i + 1 == SpSystemTrace.wakeupList.length) {
-        return
-      }
-      drawWakeUpList(
-        req.context,
-        SpSystemTrace.wakeupList[i + 1],
-        TraceRow.range!.startNS,
-        TraceRow.range!.endNS,
-        TraceRow.range!.totalNS,
-        row.frame,
-        req.type == `cpu-data-${SpSystemTrace.wakeupList[i]?.cpu || 0}`
-          ? SpSystemTrace.wakeupList[i]
-          : undefined,
-        currentCpu,
-        true
-      );
-    };
   }
 
   render(cpuReq: RequestMessage, list: Array<any>, filter: Array<any>, translateY: number) {
@@ -427,8 +407,6 @@ export class WakeupBean {
   tid: number | undefined;
   schedulingLatency: number | undefined;
   schedulingDesc: string | undefined;
-  ts: number | undefined;
-  itid: number | undefined;
 }
 
 const textPadding = 2;

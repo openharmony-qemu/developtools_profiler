@@ -31,7 +31,6 @@ export class SelectionParam {
   diskIOLatency: boolean = false;
   fsCount: number = 0;
   vmCount: number = 0;
-  isCurrentPane: boolean = false;
 
   cpus: Array<number> = [];
   cpuStateFilterIds: Array<number> = [];

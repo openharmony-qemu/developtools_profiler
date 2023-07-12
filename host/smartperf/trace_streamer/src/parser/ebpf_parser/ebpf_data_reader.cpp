@@ -349,6 +349,7 @@ SymbolAndFilePathIndex EbpfDataReader::GetSymbolNameIndexFromElfSym(uint64_t ip)
             symbolAndFilePathIndex.flag = true;
             symbolAndFilePathIndex.symbolIndex = end->second.name;
             symbolAndFilePathIndex.filePathIndex = kernelFilePath_;
+            // TS_LOGD("ok for ip:%lu, kernelip:%lu, size:%lu", ip, end->first, end->second.size);
         } else {
             TS_LOGD("failed for ip:%lu, kernelip:%lu, size:%lu", ip, end->first, end->second.size);
         }

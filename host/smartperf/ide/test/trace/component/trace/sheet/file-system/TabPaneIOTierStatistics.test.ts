@@ -31,6 +31,10 @@ window.ResizeObserver =
         observe: jest.fn(),
         unobserve: jest.fn(),
     }));
+//
+// jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
+//     return {};
+// });
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');

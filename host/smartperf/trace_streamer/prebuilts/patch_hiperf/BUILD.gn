@@ -16,8 +16,8 @@ import("../../build/ts.gni")
 ohos_source_set("elf") {
   subsystem_name = "trace_streamer"
   part_name = "elf"
-  configs -= [ "../../gn:trace_cfg" ]
-  configs += [ "../../gn:hiperf_trace_cfg" ]
+  configs -= [ "//gn:trace_cfg" ]
+  configs += [ "//gn:hiperf_trace_cfg" ]
   sources = [
     "include/elf_parser.h",
     "src/elf_file.cpp",
@@ -32,12 +32,12 @@ ohos_source_set("elf") {
     "include/nonlinux/linux",
     "include/nonlinux",
     "${THIRD_PARTY}/perf_include/musl",
-    "${SRC}/../prebuilts/emsdk/node/16.20.0_64bit/include/node",
+    "${SRC}/../prebuilts/emsdk/node/14.18.2_64bit/include/node",
   ]
 }
 ohos_source_set("hiperf_src") {
-  configs -= [ "../../gn:trace_cfg" ]
-  configs += [ "../../gn:hiperf_trace_cfg" ]
+  configs -= [ "//gn:trace_cfg" ]
+  configs += [ "//gn:hiperf_trace_cfg" ]
   subsystem_name = "trace_streamer"
   part_name = "hiperf_src"
   cflags = [ "-D ALWAYSTRUE" ]

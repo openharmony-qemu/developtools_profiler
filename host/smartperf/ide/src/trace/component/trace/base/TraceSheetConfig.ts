@@ -72,14 +72,8 @@ import { TabPanePerfAnalysis } from '../sheet/hiperf/TabPanePerfAnalysis.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { TabPaneFilesystemStatisticsAnalysis } from '../sheet/file-system/TabPaneFilesystemStatisticsAnalysis.js';
 import { TabPaneIOTierStatisticsAnalysis } from '../sheet/file-system/TabPaneIOTierStatisticsAnalysis.js';
-import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { TabPaneVirtualMemoryStatisticsAnalysis } from '../sheet/file-system/TabPaneVirtualMemoryStatisticsAnalysis.js';
 export let tabConfig: any = {
-  'tabpane-current': {
-    title: 'Current Selection',
-    type: TabPaneCurrent,
-    require: (param: SelectionParam) => param.isCurrentPane,
-  }, //current selection
   'current-selection': {
     title: 'Current Selection',
     type: TabPaneCurrentSelection,

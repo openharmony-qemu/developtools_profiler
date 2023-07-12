@@ -41,8 +41,7 @@ import { HeapSnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerH
 import { TabPaneComparison } from '../sheet/snapshot/TabPaneComparison.js';
 import { TabPaneSummary } from '../sheet/snapshot/TabPaneSummary.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
-import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
-import { SlicesTime } from '../timer-shaft/SportRuler.js';
+
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
   private litTabs: LitTabs | undefined | null;
@@ -340,8 +339,7 @@ export class TraceSheet extends BaseElement {
                 </lit-tabs>
             </div>`;
   }
-  displayCurrent = (data: SlicesTime) =>
-    this.displayTab<TabPaneCurrent>('tabpane-current').setCurrentSlicesTime(data);
+
   displayThreadData = (
     data: ThreadStruct,
     scrollCallback: ((e: ThreadStruct) => void) | undefined,
@@ -520,7 +518,7 @@ export class TraceSheet extends BaseElement {
 
   clearMemory() {
     let allTabs = Array.from(this.shadowRoot?.querySelectorAll<LitTabpane>('#tabs lit-tabpane').values() || []);
-    allTabs.forEach(tab => {
+    allTabs.forEach( tab => {
       if (tab) {
         let tables = Array.from(
           (tab.firstChild as BaseElement).shadowRoot?.querySelectorAll<LitTable>('lit-table') || []

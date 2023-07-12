@@ -284,9 +284,17 @@ describe('TraceRow Test', () => {
   });
 
   it('TraceRow Test25', () => {
+    // let traceRow = new TraceRow<any>({canvasNumber:1,alpha: true, contextId: '2d', isOffScreen: true});
+    // traceRow.expansion = false;
+    // expect(traceRow.expansion).toBeFalsy();
   });
 
   it('TraceRow Test26', () => {
+    // let traceRow = new TraceRow<any>({canvasNumber:1,alpha: true, contextId: '2d', isOffScreen: true});
+    // traceRow.parentNode = jest.fn(()=>true);
+    // traceRow.parentNode.lastChild = jest.fn(()=>true);
+    // traceRow.expansion = true;
+    // expect(traceRow.expansion).toBeTruthy();
   });
 
   it('TraceRow Test27', () => {

@@ -157,7 +157,7 @@ public:
             }
         } else { // kFixed32 or kFixed64
             auto step = fixedTypeToSizeMap_.at(wireType);
-            memcpy_s(&currentValue_, sizeof(cppType), currentReadAddr_, sizeof(cppType));
+            memcpy(&currentValue_, currentReadAddr_, sizeof(cppType));
             currentReadAddr_ += step;
         }
 

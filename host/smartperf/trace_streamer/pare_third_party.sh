@@ -26,7 +26,7 @@ cd third_party
 
 if [ ! -f "sqlite/BUILD.gn" ];then
     rm -rf sqlite
-    git clone https://gitee.com/openharmony/third_party_sqlite.git
+    git clone git@gitee.com:openharmony/third_party_sqlite.git
     if [ -d "third_party_sqlite" ];then
         mv third_party_sqlite sqlite
         $cp ../prebuilts/patch_sqlite/sqlite3build.gn ../third_party/sqlite/BUILD.gn
@@ -34,7 +34,7 @@ if [ ! -f "sqlite/BUILD.gn" ];then
 fi
 if [ ! -f "protobuf/BUILD.gn" ];then
     rm -rf protobuf
-    git clone https://gitee.com/openharmony/third_party_protobuf.git
+    git clone git@gitee.com:openharmony/third_party_protobuf.git
     if [ -d "third_party_protobuf" ];then
         mv third_party_protobuf protobuf
         $cp ../prebuilts/patch_protobuf/protobufbuild.gn ../third_party/protobuf/BUILD.gn
@@ -43,7 +43,7 @@ fi
 
 if [ ! -f "googletest/BUILD.gn" ];then
     rm -rf googletest
-    git clone https://gitee.com/openharmony/third_party_googletest.git
+    git clone git@gitee.com:openharmony/third_party_googletest.git
     if [ -d "third_party_googletest" ];then
         mv third_party_googletest googletest
         $cp ../prebuilts/patch_googletest/googletestbuild.gn ../third_party/googletest/BUILD.gn
@@ -56,7 +56,7 @@ fi
 
 if [ ! -f "json-master/BUILD.gn" ];then
     rm -rf json-master
-    git clone https://gitee.com/openharmony/third_party_json.git
+    git clone git@gitee.com:openharmony/third_party_json.git
     if [ -d "third_party_json" ];then
         mv third_party_json json-master
     fi
@@ -64,7 +64,7 @@ fi
 
 if [ ! -f "libunwind/BUILD.gn" ];then
     rm -rf libunwind
-    git clone https://gitee.com/openharmony/third_party_libunwind.git
+    git clone git@gitee.com:openharmony/third_party_libunwind.git
     if [ -d "third_party_libunwind" ];then
         mv third_party_libunwind libunwind
         $cp ../prebuilts/patch_libunwind/libunwindbuild.gn libunwind/BUILD.gn
@@ -88,7 +88,7 @@ fi
 
 if [ ! -f "hiperf/BUILD.gn" ];then
     rm -rf hiperf developtools_hiperf
-    git clone -b OpenHarmony-3.2-Release --depth=1 https://gitee.com/openharmony/developtools_hiperf.git
+    git clone -b OpenHarmony-3.2-Release --depth=1 git@gitee.com:openharmony/developtools_hiperf.git
     if [ -d "developtools_hiperf" ];then
         mv developtools_hiperf hiperf
         $cp ../prebuilts/patch_hiperf/BUILD.gn ../third_party/hiperf/BUILD.gn

@@ -344,11 +344,12 @@ export let postMessage = (id: any, action: string, results: Array<any>) => {
     results.length = 0;
   }
 };
-let translateJsonString = (str: string): string => {
+export let translateJsonString = (str: string): string => {
   return str //   .padding
     .replace(/[\t|\r|\n]/g, '')
     .replace(/\\/g, '\\\\');
 };
+
 export let convertJSON = (arrBuf: ArrayBuffer | Array<any>) => {
   if (arrBuf instanceof ArrayBuffer) {
     let string = dec.decode(arrBuf);
@@ -356,7 +357,14 @@ export let convertJSON = (arrBuf: ArrayBuffer | Array<any>) => {
     string = string.substring(string.indexOf('\n') + 1);
     if (!string) {
     } else {
-      let parse = JSON.parse(translateJsonString(string));
+      let parse;
+      let tansStr = translateJsonString(string);
+      try {
+        parse = JSON.parse(translateJsonString(string));
+      } catch {
+        tansStr = tansStr.replace(/[^\x20-\x7E]/g, '?'); //匹配乱码字符，将其转换为？
+        parse = JSON.parse(tansStr);
+      }
       let columns = parse.columns;
       let values = parse.values;
       for (let i = 0; i < values.length; i++) {

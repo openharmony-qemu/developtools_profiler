@@ -497,7 +497,6 @@ export class RangeRuler extends Graph {
   keyPressW() {
     let animW = () => {
       if (this.scale === 50) {
-        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -516,7 +515,6 @@ export class RangeRuler extends Graph {
   keyPressS() {
     let animS = () => {
       if (this.range.startNS <= 0 && this.range.endNS >= this.range.totalNS) {
-        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -534,15 +532,13 @@ export class RangeRuler extends Graph {
 
   keyPressA() {
     let animA = () => {
-
-      if (this.range.startNS <= 0) {
-        this.fillX();
+      if (this.range.startNS == 0) {
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
         return;
       }
-      let s = (this.scale / this.p) * this.currentDuration * 0.4;
+      let s = (this.scale / this.p) * this.currentDuration * 1.2;
       this.range.startNS -= s;
       this.range.endNS -= s;
       this.fillX();
@@ -556,7 +552,6 @@ export class RangeRuler extends Graph {
   keyPressD() {
     let animD = () => {
       if (this.range.endNS >= this.range.totalNS) {
-        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;

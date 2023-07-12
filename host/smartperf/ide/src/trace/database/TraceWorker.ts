@@ -109,6 +109,13 @@ let merged = () => {
   });
   return mergedArray;
 };
+
+let translateJsonString = (str: string): string => {
+  return str //   .padding
+    .replace(/[\t|\r|\n]/g, '')
+    .replace(/\\/g, '\\\\');
+};
+
 let convertJSON = () => {
   try {
     let str = dec.decode(arr);
@@ -116,7 +123,15 @@ let convertJSON = () => {
     str = str.substring(str.indexOf('\n') + 1);
     if (!str) {
     } else {
-      let parse = JSON.parse(translateJsonString(str));
+      let parse;
+      let tansStr = translateJsonString(str);
+      try {
+        parse = JSON.parse(translateJsonString(str));
+      } catch {
+        tansStr = tansStr.replace(/[^\x20-\x7E]/g, '?'); //匹配乱码字符，将其转换为？
+        parse = JSON.parse(tansStr);
+      }
+
       let columns = parse.columns;
       let values = parse.values;
       for (let i = 0; i < values.length; i++) {

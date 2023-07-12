@@ -17,7 +17,7 @@
 #define INCLUDE_TS_BASE_LOGGING_H_
 
 #include <iostream>
-#include <cstring>
+#include <string.h>
 
 // namespace SysTuning {
 // namespace base {

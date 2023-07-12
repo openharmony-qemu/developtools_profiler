@@ -47,6 +47,18 @@ describe('litChartPie Test', () => {
     let litChartPie = new LitChartPie();
     expect(litChartPie).not.toBeUndefined();
   });
+
+  // it('litChartPieTest02', function () {
+  //   document.body.innerHTML = `
+  //       <div>
+  //           <lit-chart-pie id='chart-pie'></lit-chart-pie>
+  //       </div> `;
+  //   let clo = document.getElementById('chart-pie') as LitChartPie;
+  //   let mouseMoveEvent: MouseEvent = new MouseEvent('mousemove', <MouseEventInit>{ movementX: 1, movementY: 2 });
+  //   // this.cfg!.hoverHandler
+  //   clo.canvas.dispatchEvent(mouseMoveEvent);
+  // });
+
   it('litChartPieTest03', function () {
     Utils.uuid = jest.fn(() => {
       return Math.floor(Math.random() * 10 + 1);
@@ -352,6 +364,11 @@ describe('litChartPie Test', () => {
     let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 2 });
     clo.canvas.dispatchEvent(mouseOutEvent);
     expect(clo.config).not.toBeUndefined();
+    // clo.dataSource = [
+    //     {pid:1, pName:"1", tid:1, tName:"11", total:12, size:"big core",timeStr:'11'},
+    //     {pid:2, pName:"2", tid:2, tName: "222", total:13, size:"big core",timeStr:'22'}
+    // ]
+    // expect(clo.data[0].obj.pid).toBe(2)
   });
 
   it('litChartPieTest05', function () {

@@ -90,7 +90,6 @@ config("default") {
         "-DCC_IS_CLANG",
       ]
       libs += [ "z" ]
-
       # with_libunwind = true
     }
     if (!use_wasm && !is_win && !is_macx && !is_test) {
@@ -190,7 +189,7 @@ config("executable") {
   print("use_wasm", use_wasm)
   ldflags = []
 
-  if (is_linux || (is_macx && !use_wasm)) {
+  if (is_linux || ((is_macx && !use_wasm))) {
     ldflags += []
   }
   if (!is_macx && !use_wasm && !is_win) {

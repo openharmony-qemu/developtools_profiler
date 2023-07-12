@@ -17,17 +17,10 @@ import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import { TimeRuler } from './timer-shaft/TimeRuler.js';
 import { Rect } from './timer-shaft/Rect.js';
 import { RangeRuler, TimeRange } from './timer-shaft/RangeRuler.js';
-import { SlicesTime, SportRuler } from './timer-shaft/SportRuler.js';
+import { SportRuler } from './timer-shaft/SportRuler.js';
 import { procedurePool } from '../../database/Procedure.js';
 import { Flag } from './timer-shaft/Flag.js';
 import { info } from '../../../log/Log.js';
-import { tabConfig } from './base/TraceSheetConfig.js';
-import { TraceSheet } from './base/TraceSheet.js';
-import { LitTabs } from '../../../base-ui/tabs/lit-tabs.js';
-import { LitTabpane } from '../../../base-ui/tabs/lit-tabpane.js';
-import { TabPaneCurrent } from './sheet/TabPaneCurrent.js';
-import { SelectionParam } from '../../bean/BoxSelection.js';
-import { SpSystemTrace } from '../SpSystemTrace.js';
 
 //随机生成十六位进制颜色
 export function randomRgbColor() {
@@ -86,7 +79,6 @@ export class TimerShaftElement extends BaseElement {
   public loadComplete: boolean = false;
   public collecBtn: HTMLElement | null | undefined;
   rangeChangeHandler: ((timeRange: TimeRange) => void) | undefined = undefined;
-  rangeClickHandler: ((sliceTime: SlicesTime | undefined | null) => void) | undefined = undefined;
   flagChangeHandler: ((hoverFlag: Flag | undefined | null, selectFlag: Flag | undefined | null) => void) | undefined =
     undefined;
   flagClickHandler: ((flag: Flag | undefined | null) => void) | undefined = undefined;
@@ -108,12 +100,7 @@ export class TimerShaftElement extends BaseElement {
   private _totalNS: number = 10_000_000_000;
   private _startNS: number = 0;
   private _endNS: number = 10_000_000_000;
-  private traceSheetEL: TraceSheet | undefined | null;
-  private sliceTime: SlicesTime | undefined | null;
-  public selectionList: Array<SelectionParam> = [];
-  public selectionMap: Map<string, SelectionParam> = new Map<string, SelectionParam>();
-
-
+  
   get sportRuler(): SportRuler | undefined {
     return this._sportRuler;
   }
@@ -166,9 +153,6 @@ export class TimerShaftElement extends BaseElement {
       this.rangeRuler.markBObj.frame.x = this.rangeRuler.frame.width;
       this.rangeRuler.cpuUsage = [];
       this.sportRuler!.flagList.length = 0;
-      this.sportRuler!.slicesTimeList.length = 0;
-      this.selectionList.length = 0;
-      this.selectionMap.clear();
       this.sportRuler!.isRangeSelect = false;
       this.setSlicesMark();
     }
@@ -185,6 +169,10 @@ export class TimerShaftElement extends BaseElement {
     this.collecBtn = this.shadowRoot?.querySelector('.time-collect');
     procedurePool.timelineChange = (a: any) => this.rangeChangeHandler?.(a);
     window.subscribe(window.SmartEvent.UI.TimeRange, (b) => this.setRangeNS(b.startNS, b.endNS));
+  }
+
+  getRangeRuler() {
+    return this.rangeRuler;
   }
 
   connectedCallback() {
@@ -213,10 +201,8 @@ export class TimerShaftElement extends BaseElement {
         },
         (flag) => {
           this.flagClickHandler?.(flag);
-        },
-        (slicetime) => {
-          this.rangeClickHandler?.(slicetime);
-        });
+        }
+      );
     }
     if (!this.rangeRuler) {
       this.rangeRuler = new RangeRuler(
@@ -265,10 +251,6 @@ export class TimerShaftElement extends BaseElement {
     return this.rangeRuler?.getRange();
   }
 
-  getRangeRuler() {
-    return this.rangeRuler;
-  }
-
   updateWidth(width: number) {
     this.dpr = window.devicePixelRatio || 1;
     this.canvas!.width = width - (this.totalEL?.clientWidth || 0);
@@ -300,20 +282,11 @@ export class TimerShaftElement extends BaseElement {
   };
 
   documentOnMouseMove = (ev: MouseEvent) => {
-    let x = ev.offsetX - (this.canvas?.offsetLeft || 0);  // 鼠标的x轴坐标  
-    let y = ev.offsetY; // 鼠标的y轴坐标                  
-    let findSlicestime = this.sportRuler?.findSlicesTime(x, y); // 查找帽子    
-    if (!findSlicestime) { // 如果在该位置没有找到一个“帽子”，则可以显示一个旗子。
-      this.sportRuler?.showHoverFlag();
-      this.rangeRuler?.mouseMove(ev);
-      if (this.sportRuler?.edgeDetection(ev)) {
-        this.sportRuler?.mouseMove(ev);
-      } else {
-        this.sportRuler?.mouseOut(ev);
-      }
+    this.rangeRuler?.mouseMove(ev);
+    if (this.sportRuler?.edgeDetection(ev)) {
+      this.sportRuler?.mouseMove(ev);
     } else {
-      this.sportRuler?.clearHoverFlag();
-      this.sportRuler?.modifyFlagList(null);//重新绘制旗子，清除hover flag   
+      this.sportRuler?.mouseOut(ev);
     }
   };
 
@@ -382,10 +355,6 @@ export class TimerShaftElement extends BaseElement {
     this._sportRuler?.modifyFlagList(flag);
   }
 
-  modifySlicesList(slicestime: SlicesTime | null | undefined) {
-    this._sportRuler?.modifySicesTimeList(slicestime);
-  }
-
   cancelPressFrame() {
     this.rangeRuler?.cancelPressFrame();
   }
@@ -406,21 +375,8 @@ export class TimerShaftElement extends BaseElement {
     this._sportRuler?.removeTriangle(type);
   }
 
-  setSlicesMark(startTime: null | number = null, endTime: null | number = null, shiftKey: null | boolean = false): SlicesTime | null | undefined {
-    let sliceTime = this._sportRuler?.setSlicesMark(startTime, endTime, shiftKey);
-    if (sliceTime && sliceTime != undefined) {
-      this.traceSheetEL?.displayCurrent(sliceTime); // 给当前pane准备数据
-
-      // 取最新创建的那个selection对象
-      let selection = this.selectionList[this.selectionList.length - 1];
-      if (selection) {
-        selection.isCurrentPane = true;  // 设置当前面板为可以显示的状态
-        //把刚刚创建的slicetime和selection对象关联起来，以便后面再次选中“跑道”的时候显示对应的面板。
-        this.selectionMap.set(sliceTime.id, selection);
-        this.traceSheetEL?.rangeSelect(selection);  // 显示选中区域对应的面板                 
-      }
-    }
-    return sliceTime;
+  setSlicesMark(startTime: null | number = null, endTime: null | number = null) {
+    this._sportRuler?.setSlicesMark(startTime, endTime);
   }
 
 
@@ -499,7 +455,7 @@ export class TimerShaftElement extends BaseElement {
                     <span class="time-total">10</span>
                     <span class="time-offset">0</span>
                     <div class="time-collect">
-                        <lit-icon class="time-collect-arrow" name="caret-down" size="17"></lit-icon>
+                        <lit-icon class="time-collect-arrow" name="caret-down" size="23"></lit-icon>
                     </div>
                 </div>
             </div>
