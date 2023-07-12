@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import("ts.gni")
-asdk_libs_dir="."
+asdk_libs_dir = "."
 host_toolchain = ""
 OHOS_TRACE_STREAMER_PROTOS_DIR = get_path_info("../src", "abspath")
 OHOS_PROFILER_3RDPARTY_DIR = get_path_info("../third_party/", "abspath")
