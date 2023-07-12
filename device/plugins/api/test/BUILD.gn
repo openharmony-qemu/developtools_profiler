@@ -37,7 +37,10 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
   ]
-  include_dirs = [ "//third_party/googletest/googletest/include/gtest" ]
+  include_dirs = [
+    "${OHOS_PROFILER_DIR}/device/base/include",
+    "//third_party/googletest/googletest/include/gtest",
+  ]
   sources = [
     "unittest/buffer_write_test.cpp",
     "unittest/command_poller_test.cpp",

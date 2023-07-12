@@ -17,6 +17,7 @@
 #include <hwext/gtest-tag.h>
 #include <thread>
 
+#include "common.h"
 #include "plugin_module.h"
 #include "common_types.pb.h"
 
@@ -71,9 +72,8 @@ HWTEST_F(PluginModuleTest, PluginModuleNormal, TestSize.Level1)
     uint32_t size = 0;
     plugin->GetBufferSizeHint(size);
     EXPECT_EQ(size, READ_BUFFER_SIZE);
-
     std::string name;
-    plugin->GetPluginName(name);
+    EXPECT_TRUE(plugin->GetPluginName(name));
     EXPECT_STREQ(name.c_str(), "memory-plugin");
 
     const uint8_t configData[] = {74, 1, 10};
@@ -90,7 +90,12 @@ HWTEST_F(PluginModuleTest, PluginModuleNormal, TestSize.Level1)
 
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
     EXPECT_NE(buffer, nullptr);
+    plugin->SetClockId(COMMON::GetClockId("realtime"));
+    (void)plugin->GetClockId();
+    EXPECT_FALSE(plugin->GetPath().empty());
     EXPECT_TRUE(plugin->StartSession(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()));
+    EXPECT_FALSE(plugin->GetStandaloneFileData());
+    EXPECT_TRUE(plugin->IsRunning());
     EXPECT_NE(plugin->ReportResult(buffer.get(), size), 0);
     EXPECT_TRUE(plugin->StopSession());
 
@@ -131,11 +136,13 @@ HWTEST_F(PluginModuleTest, PluginModuleAbnormal, TestSize.Level1)
     EXPECT_EQ(size, 0);
 
     std::string name;
-    plugin->GetPluginName(name);
+    EXPECT_FALSE(plugin->GetPluginName(name));
     EXPECT_STREQ(name.c_str(), "");
 
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
     EXPECT_FALSE(plugin->StartSession(nullptr, 0));
+    EXPECT_FALSE(plugin->GetStandaloneFileData());
+    EXPECT_FALSE(plugin->IsRunning());
     EXPECT_EQ(plugin->ReportResult(buffer.get(), size), -1);
     EXPECT_FALSE(plugin->StopSession());
     EXPECT_FALSE(plugin->Unload());
