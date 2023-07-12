@@ -121,4 +121,19 @@ HWTEST_F(TraceFileWriterTest, WriteMessage, TestSize.Level1)
     pluginData.set_data("DEF");
     EXPECT_GT(writer->Write(pluginData), 0);
 }
+
+/**
+ * @tc.name: server
+ * @tc.desc: Split file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TraceFileWriterTest, SplitFileWriter, TestSize.Level1)
+{
+    path = "trace-write-test.bin";
+    auto writer = std::make_shared<TraceFileWriter>(path, true, 0, 0);
+    EXPECT_NE(writer, nullptr);
+    writer->SetStopSplitFile(false);
+    std::string testData = "this is a test case!";
+    EXPECT_EQ(writer->Write(testData.data(), testData.size()), sizeof(uint32_t) + testData.size());
+}
 } // namespace
