@@ -15,6 +15,7 @@
 
 #include "htrace_parser.h"
 #include <unistd.h>
+#include "app_start_filter.h"
 #include "binder_filter.h"
 #include "common_types.pbreader.h"
 #include "cpu_filter.h"

@@ -14,6 +14,7 @@
  */
 
 #include "trace_streamer_filters.h"
+#include "app_start_filter.h"
 #include "args_filter.h"
 #include "binder_filter.h"
 #include "clock_filter_ex.h"

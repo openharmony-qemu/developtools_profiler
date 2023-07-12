@@ -112,6 +112,14 @@ int GetProcessorNumFromString(char* str)
     return processorNum;
 }
 
+bool StartWith(const std::string& str, const std::string& res)
+{
+    if (res.size() > str.size()) {
+        return false;
+    }
+    return str.compare(0, res.length(), res) == 0;
+}
+
 bool EndWith(const std::string& str, const std::string& res)
 {
     if (res.size() > str.size()) {

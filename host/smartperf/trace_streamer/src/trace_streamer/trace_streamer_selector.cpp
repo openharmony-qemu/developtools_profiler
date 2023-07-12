@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <regex>
+#include "app_start_filter.h"
 #include "args_filter.h"
 #include "binder_filter.h"
 #include "clock_filter_ex.h"
@@ -141,6 +142,7 @@ void TraceStreamerSelector::InitFilter()
         std::make_unique<SystemEventMeasureFilter>(traceDataCache_.get(), streamFilters_.get(), E_SYS_MEMORY_FILTER);
     streamFilters_->sysEventVMemMeasureFilter_ = std::make_unique<SystemEventMeasureFilter>(
         traceDataCache_.get(), streamFilters_.get(), E_SYS_VIRTUAL_MEMORY_FILTER);
+    streamFilters_->appStartupFilter_ = std::make_unique<APPStartupFilter>(traceDataCache_.get(), streamFilters_.get());
 #if WITH_PERF
     streamFilters_->perfDataFilter_ = std::make_unique<PerfDataFilter>(traceDataCache_.get(), streamFilters_.get());
 #endif

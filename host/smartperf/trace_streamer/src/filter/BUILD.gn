@@ -18,6 +18,8 @@ ohos_source_set("filter") {
   subsystem_name = "trace_streamer"
   part_name = "trace_streamer_filter"
   sources = [
+    "app_start_filter.cpp",
+    "app_start_filter.h",
     "args_filter.cpp",
     "args_filter.h",
     "binder_filter.cpp",

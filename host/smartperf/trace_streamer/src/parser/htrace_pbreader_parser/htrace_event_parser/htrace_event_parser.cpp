@@ -14,6 +14,7 @@
  */
 #include "htrace_event_parser.h"
 #include <string>
+#include "app_start_filter.h"
 #include "binder_filter.h"
 #include "binder.pbreader.h"
 #include "clk.pbreader.h"
@@ -875,6 +876,7 @@ void HtraceEventParser::FilterAllEvents()
     streamFilters_->cpuFilter_->Finish();
     traceDataCache_->dataDict_.Finish();
     traceDataCache_->UpdataZeroThreadInfo();
+    streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
 }
 void HtraceEventParser::Clear()
 {

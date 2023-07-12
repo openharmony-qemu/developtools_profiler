@@ -18,6 +18,8 @@ ohos_source_set("ftrace_tables") {
   subsystem_name = "trace_streamer"
   part_name = "table"
   sources = [
+    "app_startup_table.cpp",
+    "app_startup_table.h",
     "callstack_table.cpp",
     "callstack_table.h",
     "clk_event_filter_table.cpp",
@@ -54,6 +56,8 @@ ohos_source_set("ftrace_tables") {
     "raw_table.h",
     "sched_slice_table.cpp",
     "sched_slice_table.h",
+    "so_static_initalization_table.cpp",
+    "so_static_initalization_table.h",
     "system_call_table.cpp",
     "system_call_table.h",
     "system_event_filter_table.cpp",

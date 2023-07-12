@@ -104,6 +104,8 @@ public:
     JsHeapString* GetJsHeapStringData();
     JsHeapTraceFuncInfo* GetJsHeapTraceFuncInfoData();
     JsHeapTraceNode* GetJsHeapTraceNodeData();
+    AppStartup* GetAppStartupData();
+    SoStaticInitalization* GetStaticInitalizationData();
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

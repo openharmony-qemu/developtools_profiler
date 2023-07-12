@@ -371,6 +371,14 @@ JsHeapTraceNode* TraceDataCacheWriter::GetJsHeapTraceNodeData()
 {
     return &jsHeapTraceNodeData_;
 }
+AppStartup* TraceDataCacheWriter::GetAppStartupData()
+{
+    return &appStartupData_;
+}
+SoStaticInitalization* TraceDataCacheWriter::GetStaticInitalizationData()
+{
+    return &staticInitalizationData_;
+}
 void TraceDataCacheWriter::Clear()
 {
     rawData_.Clear();
@@ -428,6 +436,8 @@ void TraceDataCacheWriter::Clear()
     jsHeapStringData_.Clear();
     jsHeapTraceFuncInfoData_.Clear();
     jsHeapTraceNodeData_.Clear();
+    appStartupData_.Clear();
+    staticInitalizationData_.Clear();
 
 #if WITH_EBPF_HELP
     ebpfProcessMaps_.Clear();

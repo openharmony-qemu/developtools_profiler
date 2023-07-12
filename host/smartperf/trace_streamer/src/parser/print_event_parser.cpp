@@ -46,6 +46,8 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
         return false;
     }
     if (point.tgid_) {
+        // tgid use 'B|' after with 'TGID', the '(TGID)' maybe wrong, eg: xxx-21675 ( 1264) ...: print: B|21675|...
+        const_cast<BytraceLine&>(line).tgid = point.tgid_;
         streamFilters_->processFilter_->GetOrCreateInternalPid(ts, point.tgid_);
     }
     switch (point.phase_) {

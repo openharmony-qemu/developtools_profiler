@@ -17,6 +17,7 @@
 #include <cmath>
 #include <sstream>
 #include <unistd.h>
+#include "app_start_filter.h"
 #include "binder_filter.h"
 #include "cpu_filter.h"
 #include "hi_sysevent_measure_filter.h"

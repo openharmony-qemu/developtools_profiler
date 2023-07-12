@@ -14,6 +14,7 @@
  */
 
 #include "trace_data_cache.h"
+#include "app_startup_table.h"
 #include "appname_table.h"
 #include "args_table.h"
 #include "bio_latency_sample_table.h"
@@ -79,6 +80,7 @@
 #include "span_join.h"
 #include "sqlite3.h"
 #include "stat_table.h"
+#include "so_static_initalization_table.h"
 #include "symbols_table.h"
 #include "sysevent_measure_table.h"
 #include "system_call_table.h"
@@ -175,6 +177,8 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<FrameSliceTable>(*db_, this, "frame_slice");
     TableBase::TableDeclare<FrameMapsTable>(*db_, this, "frame_maps");
     TableBase::TableDeclare<GPUSliceTable>(*db_, this, "gpu_slice");
+    TableBase::TableDeclare<AppStartupTable>(*db_, this, "app_startup");
+    TableBase::TableDeclare<SoStaticInitalizationTable>(*db_, this, "static_initalize");
 
 #if WITH_PERF
     TableBase::TableDeclare<PerfReportTable>(*db_, this, "perf_report");
@@ -245,6 +249,8 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<FrameSliceTable>(*db_, this, "_frame_slice");
     TableBase::TableDeclare<FrameMapsTable>(*db_, this, "_frame_maps");
     TableBase::TableDeclare<GPUSliceTable>(*db_, this, "_gpu_slice");
+    TableBase::TableDeclare<AppStartupTable>(*db_, this, "_app_startup");
+    TableBase::TableDeclare<SoStaticInitalizationTable>(*db_, this, "_static_initalize");
 #if WITH_EBPF_HELP
     TableBase::TableDeclare<EbpfProcessMapsTable>(*db_, this, "_ebpf_process_maps");
     TableBase::TableDeclare<EbpfElfTable>(*db_, this, "_ebpf_elf");

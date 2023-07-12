@@ -14,6 +14,7 @@
  */
 
 #include "bytrace_event_parser.h"
+#include "app_start_filter.h"
 #include "binder_filter.h"
 #include "cpu_filter.h"
 #include "filter_filter.h"
@@ -721,6 +722,7 @@ void BytraceEventParser::FilterAllEvents()
     streamFilters_->cpuFilter_->Finish();
     traceDataCache_->dataDict_.Finish();
     traceDataCache_->UpdataZeroThreadInfo();
+    streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
 }
 
 void BytraceEventParser::BeginFilterEvents(EventInfo* event)
