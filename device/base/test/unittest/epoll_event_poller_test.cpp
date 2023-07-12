@@ -171,7 +171,7 @@ HWTEST_F(EpollEventPollerTest, InitStartAddFd, TestSize.Level1)
     std::this_thread::yield();
     usleep(15 * 1000);
     EXPECT_EQ(readValue, writeValue);
-
+    eventPoller->RemoveFileDescriptor(eventFd);
     EXPECT_TRUE(eventPoller->Stop());
     EXPECT_TRUE(eventPoller->Finalize());
 

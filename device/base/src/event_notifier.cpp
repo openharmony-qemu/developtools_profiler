@@ -67,16 +67,6 @@ int EventNotifier::GetFd() const
     return fd_;
 }
 
-bool EventNotifier::IsNonBlocking() const
-{
-    return flags_ & O_NONBLOCK;
-}
-
-bool EventNotifier::IsSemaphore() const
-{
-    return flags_ & EFD_SEMAPHORE;
-}
-
 uint64_t EventNotifier::Take() const
 {
     uint64_t value = UINT64_MAX;

@@ -349,20 +349,6 @@ void IoStats::CalcIoStats(const DiskDatasPtr& ioData, IoStatData* ioInfo)
     ioInfo->set_dc_kb(KeepTowDigits(ioData->dSectors_, NUM_TWO));
 }
 
-bool IoStats::StringToL(const char* word, long& value)
-{
-    char* end = nullptr;
-    errno = 0;
-    value = strtol(word, &end, DEC_BASE);
-    if ((errno == ERANGE && (value == LONG_MAX)) || (errno != 0 && value == 0)) {
-        return false;
-    } else if (end == word && (*word >= '0' && *word <= '9')) {
-        return false;
-    }
-
-    return true;
-}
-
 bool IoStats::FindFirstNum(char** p)
 {
     CHECK_NOTNULL(*p, false, "IoStats:%s", __func__);
@@ -386,18 +372,6 @@ bool IoStats::RemoveSpaces(char** p)
         if (**p == '\0' || **p == '\n') {
             return false;
         }
-    }
-    return true;
-}
-
-bool IoStats::FindFirstSpace(char** p)
-{
-    CHECK_NOTNULL(*p, false, "IoStats:%s", __func__);
-    while (**p != ' ') {
-        if (**p == '\0' || **p == '\n') {
-            return false;
-        }
-        (*p)++;
     }
     return true;
 }

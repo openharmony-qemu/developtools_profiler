@@ -109,6 +109,7 @@ HWTEST_F(HiperfPluginUnittest, TestNoRecordTarget, TestSize.Level1)
 HWTEST_F(HiperfPluginUnittest, TestRepeatOutput, TestSize.Level1)
 {
     HiperfPluginConfig config;
+    config.set_log_level(HiperfPluginConfig_LogLevel_MUCH);
     config.set_outfile_name(DEFAULT_OUT_PATH); // 1: set output file
     // 2: set output file by "-o"
     config.set_record_args("-a -c 0 -d 2 -o /data/local/tmp/perf.data2");
@@ -121,6 +122,7 @@ HWTEST_F(HiperfPluginUnittest, TestRepeatOutput, TestSize.Level1)
 HWTEST_F(HiperfPluginUnittest, TestRepeatStart, TestSize.Level1)
 {
     HiperfPluginConfig config;
+    config.set_log_level(HiperfPluginConfig_LogLevel_VERBOSE);
     config.set_outfile_name(DEFAULT_OUT_PATH);
     config.set_record_args("-a -c 0 -d 2");
     std::vector<uint8_t> buffer(config.ByteSizeLong());
@@ -135,6 +137,7 @@ HWTEST_F(HiperfPluginUnittest, TestRepeatStart, TestSize.Level1)
 HWTEST_F(HiperfPluginUnittest, TestStopBeforeHiperfExit, TestSize.Level1)
 {
     HiperfPluginConfig config;
+    config.set_log_level(HiperfPluginConfig_LogLevel_DEBUG);
     config.set_outfile_name(DEFAULT_OUT_PATH);
     config.set_record_args("-a -c 0 -d 20"); // hiperf will exit after 20s
     std::vector<uint8_t> buffer(config.ByteSizeLong());
