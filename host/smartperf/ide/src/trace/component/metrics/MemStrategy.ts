@@ -15,7 +15,13 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initMemoryStrategy = (metricData: Array<any>): ProcessMetricsListItems => {
+export const initMemoryStrategy = (metricData: Array<{
+  maxNum: number;
+  minNum: number;
+  avgNum: number;
+  name: string;
+  processName: string;
+}>): ProcessMetricsListItems => {
   info('Memory Strategy data length is:', metricData.length);
   let processMetricsListItems: Array<ProcessMetricsItems> = [];
   for (let sqlIndex = 0; sqlIndex < metricData.length; sqlIndex++) {

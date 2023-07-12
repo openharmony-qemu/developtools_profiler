@@ -523,7 +523,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  private refreshDeviceTimer: any;
+  private refreshDeviceTimer: number | undefined;
 
   initElements(): void {
     let parentElement = this.parentNode as HTMLElement;
@@ -651,7 +651,7 @@ export class SpRecordTrace extends BaseElement {
     this.recordButtonText = this.shadowRoot?.querySelector('.record_text') as HTMLSpanElement;
     this.sp = document.querySelector('sp-application') as SpApplication;
     this.progressEL = this.sp.shadowRoot?.querySelector('.progress') as LitProgressBar;
-    this.litSearch = this.sp.shadowRoot?.querySelector('#lit-search') as LitSearch;
+    this.litSearch = this.sp.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     if (this.deviceSelect!.options && this.deviceSelect!.options.length > 0) {
       this.disconnectButton!.hidden = false;
       this.recordButton!.hidden = false;
@@ -666,16 +666,16 @@ export class SpRecordTrace extends BaseElement {
         this.stopRecordListener();
       }
     });
-    this.spRecordPerf!.addEventListener('addProbe', (event: any) => {
+    this.spRecordPerf!.addEventListener('addProbe', () => {
       this.showHint = false;
     });
-    this.spAllocations!.addEventListener('addProbe', (event: any) => {
+    this.spAllocations!.addEventListener('addProbe', () => {
       this.showHint = false;
     });
-    this.probesConfig!.addEventListener('addProbe', (event: any) => {
+    this.probesConfig!.addEventListener('addProbe', () => {
       this.showHint = false;
     });
-    this.spRecordTemplate!.addEventListener('addProbe', (event: any) => {
+    this.spRecordTemplate!.addEventListener('addProbe', () => {
       this.showHint = false;
     });
     this.menuGroup = this.shadowRoot?.querySelector('#menu-group') as LitMainMenuGroup;
@@ -1868,14 +1868,14 @@ export class SpRecordTrace extends BaseElement {
     return htraceProfilerPluginConfig;
   }
 
-  static appendSerialize(profilerPluginConfig: ProfilerPluginConfig<any>) {
+  static appendSerialize(profilerPluginConfig: ProfilerPluginConfig<{}>) {
     if (Number(SpRecordTrace.selectVersion) >= 4.0) {
     }
   }
 
   private createSdkConfig() {
     let gpuConfig = this.spSdkConfig!.getGpuConfig();
-    let gpuPluginConfig: ProfilerPluginConfig<any> = {
+    let gpuPluginConfig: ProfilerPluginConfig<{}> = {
       pluginName: this.spSdkConfig!.getPlugName(),
       sampleInterval: this.spSdkConfig!.getSampleInterval(),
       configData: gpuConfig,
@@ -1897,8 +1897,8 @@ export class SpRecordTrace extends BaseElement {
   }
 
   public startRefreshDeviceList() {
-    if (this.refreshDeviceTimer == null) {
-      this.refreshDeviceTimer = setInterval(() => {
+    if (this.refreshDeviceTimer === undefined) {
+      this.refreshDeviceTimer = window.setInterval(() => {
         this.refreshDeviceList();
       }, 5000);
     }

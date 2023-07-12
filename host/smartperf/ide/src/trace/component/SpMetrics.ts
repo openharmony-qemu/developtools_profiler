@@ -16,12 +16,7 @@
 import { BaseElement, element } from '../../base-ui/BaseElement.js';
 
 import {
-  queryDistributedTerm,
-  querySelectTraceStats,
-  querySystemCalls,
-  querySystemCallsTop,
-  queryTraceCpu,
-  queryTraceCpuTop,
+  querySelectTraceStats, querySystemCalls,
   queryTraceMemory,
   queryTraceMemoryTop,
   queryTraceMemoryUnAgg,
@@ -30,12 +25,8 @@ import {
 } from '../database/SqlLite.js';
 
 import '../../base-ui/table/lit-table.js';
-import { initCpuStrategyData, initTest } from './metrics/CpuStrategy.js';
-import { initDistributedTermData } from './metrics/DistributeTermStrategy.js';
 import { initMemoryAggStrategy } from './metrics/MemAggStrategy.js';
 import { initMemoryStrategy } from './metrics/MemStrategy.js';
-import { initSysCallsStrategy } from './metrics/SysCallsStrategy.js';
-import { initSysCallsTopStrategy } from './metrics/SysCallsTopStrategy.js';
 import { initTraceStateStrategy } from './metrics/TraceStatsStrategy.js';
 import { initTraceTaskStrategy } from './metrics/TraceTaskStrategy.js';
 import { initMetaDataStrategy } from './metrics/MetaDataStrategy.js';
@@ -43,6 +34,7 @@ import { PluginConvertUtils } from './setting/utils/PluginConvertUtils.js';
 import { info } from '../../log/Log.js';
 import { LitProgressBar } from '../../base-ui/progress-bar/LitProgressBar.js';
 import { SpStatisticsHttpUtil } from '../../statistics/util/SpStatisticsHttpUtil.js';
+import { initSysCallsStrategy } from './metrics/SysCallsStrategy.js';
 
 @element('sp-metrics')
 export class SpMetrics extends BaseElement {
@@ -121,7 +113,7 @@ export class SpMetrics extends BaseElement {
     }
   }
 
-  runClickListener = (event: any) => {
+  runClickListener = () => {
     SpStatisticsHttpUtil.addOrdinaryVisitAction({
       event: 'metrics',
       action: 'metrics',
@@ -339,9 +331,4 @@ export interface MetricQueryItem {
   metricName: string;
   metricQuery: Function;
   metricResultHandle: Function;
-}
-
-export class SpMetricsItem {
-  itemTip: string | undefined;
-  itemValue: any[] | undefined;
 }

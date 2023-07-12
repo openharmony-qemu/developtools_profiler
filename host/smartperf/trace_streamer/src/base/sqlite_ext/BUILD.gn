@@ -12,9 +12,10 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../../build/ts.gni")
 config("sqlite_config") {
   include_dirs = [
-    "../../../third_party/sqlite/include",
+    "${THIRD_PARTY}/sqlite/include",
     "..",
   ]
   cflags = [

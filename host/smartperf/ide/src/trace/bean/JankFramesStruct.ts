@@ -22,5 +22,5 @@ export class JankFramesStruct {
   meanDuration: number = -1;
   meanDurationStr: string = '';
   occurrences: number = 0;
-  flag: boolean = false;
+  flag: number | undefined = 0;
 }

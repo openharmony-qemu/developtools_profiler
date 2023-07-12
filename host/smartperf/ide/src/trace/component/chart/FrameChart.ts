@@ -732,12 +732,18 @@ export class FrameChart extends BaseElement {
             let count = ChartStruct.hoverFuncStruct!.count;
             this.hintContent = `
                         <span class="bold">Name: </span> <span class="text">${name} </span> <br>
+                        <span class="bold">Lib: </span> <span class="text">${ChartStruct.hoverFuncStruct?.lib}</span>
+                        <br>
+                        <span class="bold">Addr: </span> <span>${ChartStruct.hoverFuncStruct?.addr}</span> <br>
                         <span class="bold">Count: </span> <span> ${count}</span>`;
             break;
           case ChartMode.Duration:
             let duration = Utils.getProbablyTime(ChartStruct.hoverFuncStruct!.dur);
             this.hintContent = `
                         <span class="bold">Name: </span> <span class="text">${name} </span> <br>
+                        <span class="bold">Lib: </span> <span class="text">${ChartStruct.hoverFuncStruct?.lib}</span>
+                        <br>
+                        <span class="bold">Addr: </span> <span>${ChartStruct.hoverFuncStruct?.addr}</span> <br>
                         <span class="bold">Duration: </span> <span>${duration}</span>`;
             break;
         }

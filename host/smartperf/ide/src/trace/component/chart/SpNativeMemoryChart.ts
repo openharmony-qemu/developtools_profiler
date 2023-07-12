@@ -51,6 +51,7 @@ export class SpNativeMemoryChart {
     if (nativeProcess.length == 0) {
       return;
     }
+    await this.initNativeMemory();
     SpNativeMemoryChart.EVENT_HEAP = await queryHeapGroupByEvent(nativeMemoryType);
     let nativeRow = TraceRow.skeleton();
     let process = '';

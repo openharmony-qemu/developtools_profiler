@@ -15,7 +15,12 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initMemoryAggStrategy = (metricData: Array<any>): ProcessValuesListItem => {
+export const initMemoryAggStrategy = (metricData: Array<{
+  processName: string;
+  name: string;
+  value: string;
+  ts: string;
+}>): ProcessValuesListItem => {
   info('Memory Agg Strategy data length is:', metricData.length);
   let processValuesListItems: Array<ProcessValuesItem> = [];
   const splitChar: string = ',';
@@ -36,7 +41,7 @@ export const initMemoryAggStrategy = (metricData: Array<any>): ProcessValuesList
       let names = metricData[sqlIndex].name.split(splitChar);
       let values = metricData[sqlIndex].value.split(splitChar);
       let times = metricData[sqlIndex].ts.split(splitChar);
-      let oomScoreValue = 0;
+      let oomScoreValue = '0';
       for (let indexScore = 0; indexScore < names.length; indexScore++) {
         if ('oom_score_adj' === names[indexScore]) {
           oomScoreValue = values[indexScore];
@@ -84,7 +89,7 @@ export interface ProcessValuesItem {
 }
 
 export interface TypeItem {
-  ts: number;
-  oom_score: number;
-  value: number;
+  ts: string;
+  oom_score: string;
+  value: string;
 }

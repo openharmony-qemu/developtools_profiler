@@ -40,81 +40,13 @@ export class TabPaneFrames extends BaseElement {
     framesParam.jankFramesData.forEach((data: Array<JanksStruct>) => {
       sumRes.occurrences += data.length;
       data.forEach((structValue: JanksStruct) => {
-        if (structValue.dur == null || structValue.dur == undefined) {
-          structValue.dur = 0;
-        }
         if (structValue.frame_type == 'app') {
-          if (structValue.jank_tag) {
-            appJank.flag = structValue.jank_tag;
-            appJank.jankType = 'APP Deadline Missed';
-            appJank.occurrences += 1;
-            appJank.maxDuration = Math.max(structValue.dur, appJank.maxDuration!);
-            if (appJank.minDuration == -1) {
-              appJank.minDuration = structValue.dur;
-            } else {
-              appJank.minDuration = Math.min(structValue.dur, appJank.minDuration!);
-            }
-            if (appJank.meanDuration == -1) {
-              appJank.meanDuration = structValue.dur;
-            } else {
-              appJank.meanDuration = Number(((structValue.dur + appJank.meanDuration!) / 2).toFixed(2));
-            }
-          } else {
-            this.refreshNoJankData(noJank, structValue);
-          }
+          this.appJankDataHandle(structValue, appJank, noJank);
         } else if (structValue.frame_type == 'renderService') {
-          if (structValue.jank_tag) {
-            rsJank.flag = structValue.jank_tag;
-            rsJank.jankType = 'RenderService Deadline Missed';
-            rsJank.occurrences += 1;
-            rsJank.maxDuration = Math.max(structValue.dur, rsJank.maxDuration!);
-            if (rsJank.minDuration == -1) {
-              rsJank.minDuration = structValue.dur;
-            } else {
-              rsJank.minDuration = Math.min(structValue.dur, rsJank.minDuration!);
-            }
-            if (rsJank.meanDuration == -1) {
-              rsJank.meanDuration = structValue.dur;
-            } else {
-              rsJank.meanDuration = Number(((structValue.dur + rsJank.meanDuration!) / 2).toFixed(2));
-            }
-          } else {
-            this.refreshNoJankData(noJank, structValue);
-          }
+          this.rsJankDataHandle(structValue, rsJank, noJank);
         } else {
           // frameTime
-          if (structValue.jank_tag) {
-            appJank.flag = structValue.jank_tag;
-            appJank.jankType = 'Deadline Missed';
-            appJank.occurrences += 1;
-            appJank.maxDuration = Math.max(structValue.dur, appJank.maxDuration);
-            appJank.minDuration = Math.min(structValue.dur, appJank.minDuration);
-            if (appJank.minDuration == -1) {
-              appJank.minDuration = structValue.dur;
-            } else {
-              appJank.minDuration = Math.min(structValue.dur, appJank.minDuration!);
-            }
-            if (appJank.meanDuration == -1) {
-              appJank.meanDuration = structValue.dur;
-            } else {
-              appJank.meanDuration = Number(((structValue.dur + appJank.meanDuration) / 2).toFixed(2));
-            }
-          } else {
-            noJank.flag = structValue.jank_tag;
-            noJank.jankType = 'None';
-            noJank.occurrences += 1;
-            noJank.maxDuration = Math.max(structValue.dur, noJank.maxDuration);
-            if (noJank.minDuration == -1) {
-              noJank.minDuration = structValue.dur;
-            } else {
-              noJank.minDuration = Math.min(structValue.dur, noJank.minDuration!);
-            }
-            if (noJank.meanDuration == -1) {
-              noJank.meanDuration = structValue.dur;
-            } else {
-              noJank.meanDuration = Number(((structValue.dur + noJank.meanDuration) / 2).toFixed(2));
-            }
-          }
+          this.frameTimelineJankDataHandle(structValue, appJank, noJank);
         }
       });
     });
@@ -141,6 +73,89 @@ export class TabPaneFrames extends BaseElement {
     this.framesTbl!.recycleDataSource = tablelist;
   }
 
+  private frameTimelineJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct) {
+    if (structValue.dur == null || structValue.dur == undefined) {
+      structValue.dur = 0;
+    }
+    if (structValue && structValue.jank_tag && structValue.jank_tag > 0) {
+      appJank.flag = structValue.jank_tag;
+      appJank.jankType = 'Deadline Missed';
+      appJank.occurrences += 1;
+      appJank.maxDuration = Math.max(structValue.dur, appJank.maxDuration);
+      appJank.minDuration = Math.min(structValue.dur, appJank.minDuration);
+      if (appJank.minDuration == -1) {
+        appJank.minDuration = structValue.dur;
+      } else {
+        appJank.minDuration = Math.min(structValue.dur, appJank.minDuration!);
+      }
+      if (appJank.meanDuration == -1) {
+        appJank.meanDuration = structValue.dur;
+      } else {
+        appJank.meanDuration = Number(((structValue.dur + appJank.meanDuration) / 2).toFixed(2));
+      }
+    } else {
+      noJank.flag = structValue.jank_tag;
+      noJank.jankType = 'None';
+      noJank.occurrences += 1;
+      noJank.maxDuration = Math.max(structValue.dur, noJank.maxDuration);
+      if (noJank.minDuration == -1) {
+        noJank.minDuration = structValue.dur;
+      } else {
+        noJank.minDuration = Math.min(structValue.dur, noJank.minDuration!);
+      }
+      if (noJank.meanDuration == -1) {
+        noJank.meanDuration = structValue.dur;
+      } else {
+        noJank.meanDuration = Number(((structValue.dur + noJank.meanDuration) / 2).toFixed(2));
+      }
+    }
+  }
+  private rsJankDataHandle(structValue: JanksStruct, rsJank: JankFramesStruct, noJank: JankFramesStruct) {
+    if (structValue.dur == null || structValue.dur == undefined) {
+      structValue.dur = 0;
+    }
+    if (structValue.jank_tag && structValue.jank_tag > 0) {
+      rsJank.flag = structValue.jank_tag;
+      rsJank.jankType = 'RenderService Deadline Missed';
+      rsJank.occurrences += 1;
+      rsJank.maxDuration = Math.max(structValue.dur, rsJank.maxDuration!);
+      if (rsJank.minDuration == -1) {
+        rsJank.minDuration = structValue.dur;
+      } else {
+        rsJank.minDuration = Math.min(structValue.dur, rsJank.minDuration!);
+      }
+      if (rsJank.meanDuration == -1) {
+        rsJank.meanDuration = structValue.dur;
+      } else {
+        rsJank.meanDuration = Number(((structValue.dur + rsJank.meanDuration!) / 2).toFixed(2));
+      }
+    } else {
+      this.refreshNoJankData(noJank, structValue);
+    }
+  }
+  private appJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct) {
+    if (structValue.dur == null || structValue.dur == undefined) {
+      structValue.dur = 0;
+    }
+    if (structValue.jank_tag && structValue.jank_tag > 0) {
+      appJank.flag = structValue.jank_tag;
+      appJank.jankType = 'APP Deadline Missed';
+      appJank.occurrences += 1;
+      appJank.maxDuration = Math.max(structValue.dur, appJank.maxDuration!);
+      if (appJank.minDuration == -1) {
+        appJank.minDuration = structValue.dur;
+      } else {
+        appJank.minDuration = Math.min(structValue.dur, appJank.minDuration!);
+      }
+      if (appJank.meanDuration == -1) {
+        appJank.meanDuration = structValue.dur;
+      } else {
+        appJank.meanDuration = Number(((structValue.dur + appJank.meanDuration!) / 2).toFixed(2));
+      }
+    } else {
+      this.refreshNoJankData(noJank, structValue);
+    }
+  }
   private refreshNoJankData(noJank: JankFramesStruct, structValue: JanksStruct) {
     noJank.flag = structValue.jank_tag;
     noJank.jankType = 'None';

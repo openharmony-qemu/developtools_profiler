@@ -149,8 +149,10 @@ export class JankStruct extends JanksStruct {
       } else {
         ctx.globalAlpha = 1;
         ctx.fillStyle = ColorUtils.JANK_COLOR[0];
-        if (data.jank_tag) {
+        if (data.jank_tag === 1) {
           ctx.fillStyle = ColorUtils.JANK_COLOR[2];
+        } else if (data.jank_tag === 3) {
+          ctx.fillStyle = ColorUtils.JANK_COLOR[3];
         }
         let miniHeight = 20;
         if (
@@ -163,41 +165,10 @@ export class JankStruct extends JanksStruct {
           ctx.globalAlpha = 0.7;
         }
         if (data.type == '0') {
-          ctx.fillStyle = ColorUtils.JANK_COLOR[0];
-          if (data.jank_tag) {
-            ctx.fillStyle = ColorUtils.JANK_COLOR[2];
-          }
-          ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
+          this.drawActualFrame(ctx, data, miniHeight);
         } else {
-          if (data.frame.width * nsScale < 1.5) {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(data.frame.x, data.frame.y, data.frame.width * nsScale, miniHeight - padding * 2);
-            ctx.fillStyle = ColorUtils.JANK_COLOR[0];
-            if (data.jank_tag) {
-              ctx.fillStyle = ColorUtils.JANK_COLOR[2];
-            }
-            ctx.fillRect(
-              data.frame.x + data.frame.width * nsScale,
-              data.frame.y,
-              data.frame.width - nsScale * 2,
-              miniHeight - padding * 2
-            );
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(
-              data.frame.x + data.frame.width * nsScale + data.frame.width - nsScale * 2,
-              data.frame.y,
-              data.frame.width * nsScale,
-              miniHeight - padding * 2
-            );
-          } else {
-            ctx.fillStyle = ColorUtils.JANK_COLOR[0];
-            if (data.jank_tag) {
-              ctx.fillStyle = ColorUtils.JANK_COLOR[2];
-            }
-            ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
-          }
+          this.drawExpectedFrame(data, nsScale, ctx, miniHeight);
         }
-
         if (data.frame.width > 10) {
           ctx.fillStyle = '#fff';
           drawString(ctx, `${data.name || ''}`, 5, data.frame, data);
@@ -211,6 +182,47 @@ export class JankStruct extends JanksStruct {
     }
   }
 
+  private static drawExpectedFrame(
+    data: JankStruct,
+    nsScale: number,
+    ctx: CanvasRenderingContext2D,
+    miniHeight: number
+  ) {
+    if (data.frame && data.frame.width * nsScale < 1.5) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(data.frame.x, data.frame.y, data.frame.width * nsScale, miniHeight - padding * 2);
+      ctx.fillStyle = ColorUtils.JANK_COLOR[0];
+      ctx.fillRect(
+        data.frame.x + data.frame.width * nsScale,
+        data.frame.y,
+        data.frame.width - nsScale * 2,
+        miniHeight - padding * 2
+      );
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(
+        data.frame.x + data.frame.width * nsScale + data.frame.width - nsScale * 2,
+        data.frame.y,
+        data.frame.width * nsScale,
+        miniHeight - padding * 2
+      );
+    } else {
+      ctx.fillStyle = ColorUtils.JANK_COLOR[0];
+      if (data.frame) {
+        ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
+      }
+    }
+  }
+  private static drawActualFrame(ctx: CanvasRenderingContext2D, data: JankStruct, miniHeight: number) {
+    ctx.fillStyle = ColorUtils.JANK_COLOR[0];
+    if (data.jank_tag === 1) {
+      ctx.fillStyle = ColorUtils.JANK_COLOR[2];
+    } else if (data.jank_tag === 3) {
+      ctx.fillStyle = ColorUtils.JANK_COLOR[3];
+    }
+    if (data.frame) {
+      ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
+    }
+  }
   static isSelected(data: JankStruct): boolean {
     return (
       JankStruct.selectJankStruct != undefined &&

@@ -893,7 +893,9 @@ export class PerfCallChainMerageData extends ChartStruct {
       currentNode.pid = callChain.pid;
       currentNode.tid = callChain.tid;
       currentNode.libName = callChain.fileName;
+      currentNode.lib = callChain.fileName;
       currentNode.vaddrInFile = callChain.vaddrInFile;
+      currentNode.addr = '0x' + callChain.vaddrInFile.toString(16);
       currentNode.canCharge = callChain.canCharge;
       if (callChain.path) {
         currentNode.path = callChain.path;
@@ -918,8 +920,9 @@ export class PerfCallChainMerageData extends ChartStruct {
       currentNode.symbolName = callChain.name;
       currentNode.pid = sample.pid;
       currentNode.tid = sample.tid;
-      currentNode.libName = callChain.fileName;
+      currentNode.libName = currentNode.lib = callChain.fileName;
       currentNode.vaddrInFile = callChain.vaddrInFile;
+      currentNode.addr = '0x' + currentNode.vaddrInFile.toString(16);
       currentNode.canCharge = callChain.canCharge;
       if (callChain.path) {
         currentNode.path = callChain.path;

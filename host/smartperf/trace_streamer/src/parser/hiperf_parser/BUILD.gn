@@ -31,7 +31,6 @@ ohos_source_set("hiperf_parser_src") {
     "..",
     "../../trace_streamer",
     "${THIRD_PARTY}/sqlite/include",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/perf_include",
     "${THIRD_PARTY}/perf_include/libbpf",
@@ -57,7 +56,7 @@ ohos_source_set("hiperf_parser_src") {
 group("hiperf_parser") {
   deps = [
     ":hiperf_parser_src",
-    "${THIRD_PARTY}/hiperf:hiperf",
+    "${PERF_DIR}/hiperf:hiperf",
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
   ]

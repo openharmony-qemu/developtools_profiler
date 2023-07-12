@@ -24,13 +24,24 @@ proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
 sample_data_codegen = []
+sample_data_codegen_standard = []
+sample_data_codegen_reader = []
+sample_data_codegen_all = []
 foreach(proto, sample_data_sources) {
   name = get_path_info(proto, "name")
   sample_data_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
   ]
+  sample_data_codegen_standard += [
+    "$proto_out_dir/${name}_standard.pb.h",
+    "$proto_out_dir/${name}_standard.pb.cc",
+  ]
+  sample_data_codegen_reader += [ "$proto_out_dir/$name.pbreader.h" ]
 }
+sample_data_codegen_all += sample_data_codegen
+sample_data_codegen_all += sample_data_codegen_standard
+sample_data_codegen_all += sample_data_codegen_reader
 
 config("sample_include_config") {
   include_dirs = [ "$proto_out_dir" ]
@@ -38,22 +49,23 @@ config("sample_include_config") {
 
 #######################################################
 action("sample_data_cpp_gen") {
-  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
+  script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = sample_data_sources
-  outputs = sample_data_codegen
+  outputs = sample_data_codegen_all
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
+    "$proto_rel_out_dir",
     "--cpp_out",
     "$proto_rel_out_dir",
     "--proto_path",
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  deps = []
 }
 
-source_set("sample_data_cpp") {
+ohos_source_set("sample_data_cpp") {
   deps = [ ":sample_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
@@ -62,4 +74,11 @@ source_set("sample_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":sample_include_config" ]
   sources = sample_data_codegen
+}
+
+ohos_source_set("sample_data_encoder") {
+  deps = [ ":sample_data_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":sample_include_config" ]
+  sources = sample_data_codegen_reader
 }

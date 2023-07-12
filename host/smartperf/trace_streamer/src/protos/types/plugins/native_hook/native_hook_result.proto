@@ -116,6 +116,7 @@ message SymbolTable {
     bytes str_table = 6;
 }
 
+
 message RecordStatisticsEvent {
     uint32 pid = 1;
     uint32 callstack_id = 2;

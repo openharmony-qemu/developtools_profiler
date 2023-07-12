@@ -361,6 +361,7 @@ export class SpApplication extends BaseElement {
                         </svg>
                     </div>
                     <lit-search id="lit-search"></lit-search>
+                    <lit-search id="lit-record-search"></lit-search>
                 </div>
                 <img class="filter-config" title="Display Template" src="img/config_filter.png" style="display: block;text-align: right;position: absolute;right: 1.2em;cursor: pointer;top: 20px">
                 <lit-progress-bar class="progress"></lit-progress-bar>
@@ -411,6 +412,7 @@ export class SpApplication extends BaseElement {
     let menu = mainMenu.shadowRoot?.querySelector('.menu-button') as HTMLDivElement;
     let progressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
     let litSearch = this.shadowRoot?.querySelector('#lit-search') as LitSearch;
+    let litRecordSearch = this.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     let search = this.shadowRoot?.querySelector('.search-container') as HTMLElement;
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
     let childNodes = [
@@ -575,8 +577,8 @@ export class SpApplication extends BaseElement {
         menu!.style.pointerEvents = 'auto';
         sidebarButton!.style.pointerEvents = 'auto';
         that.search = true;
-        litSearch.setPercent('', 101);
-        litSearch.clear();
+        litRecordSearch.style.display = 'none';
+        litSearch.style.display = 'block';
         window.publish(window.SmartEvent.UI.KeyboardEnable, {
           enable: true,
         });
@@ -585,6 +587,8 @@ export class SpApplication extends BaseElement {
         menu!.style.pointerEvents = 'none';
         sidebarButton!.style.pointerEvents = 'none';
         that.search = litSearch.isLoading;
+        litSearch.style.display = 'none';
+        litRecordSearch.style.display = 'block';
         window.publish(window.SmartEvent.UI.KeyboardEnable, {
           enable: false,
         });
@@ -823,7 +827,7 @@ export class SpApplication extends BaseElement {
     function handleWasmMode(ev: any, showFileName: string, fileSize: string, fileName: string) {
       litSearch.setPercent('', 1);
       threadPool.init('wasm').then((res) => {
-        let reader = new FileReader();
+        let reader: FileReader | null = new FileReader();
         reader.readAsArrayBuffer(ev as any);
         reader.onloadend = function (ev) {
           info('read file onloadend');
@@ -878,6 +882,7 @@ export class SpApplication extends BaseElement {
                 mainMenu.menus = mainMenu.menus!;
               }
               spInfoAndStats.initInfoAndStatsData();
+              reader = null;
             }
           );
         };
@@ -1251,7 +1256,7 @@ export class SpApplication extends BaseElement {
     );
   }
 
-  private download(mainMenu: LitMainMenu, fileName: string, isServer: boolean, dbName?: string) {
+  private async download(mainMenu: LitMainMenu, fileName: string, isServer: boolean, dbName?: string) {
     let a = document.createElement('a');
     if (isServer) {
       if (dbName != '') {

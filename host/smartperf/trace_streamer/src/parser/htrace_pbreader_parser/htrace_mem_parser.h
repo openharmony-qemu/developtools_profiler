@@ -44,8 +44,8 @@ private:
     void ParseVMemInfoEasy(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
     void ParseSmapsInfoEasy(const ProtoReader::ProcessMemoryInfo_Reader* memInfo, uint64_t timeStamp) const;
     std::map<MemInfoType, DataIndex> memNameDictMap_ = {};
-    std::map<SysMeminfoType, DataIndex> sysMemNameDictMap_ = {};
-    std::map<SysVMeminfoType, DataIndex> sysVMemNameDictMap_ = {};
+    std::map<uint32_t, DataIndex> sysMemNameDictMap_ = {};
+    std::map<uint32_t, DataIndex> sysVMemNameDictMap_ = {};
     uint64_t zram_ = 0;
     const DataIndex zramIndex_ = traceDataCache_->GetDataIndex("sys.mem.zram");
     TraceStreamerConfig config_{};

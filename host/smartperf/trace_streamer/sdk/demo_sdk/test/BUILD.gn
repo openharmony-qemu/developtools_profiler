@@ -19,7 +19,6 @@ if (target == "sdkdemotest") {
   ohos_unittest("trace_streamer_sdk_ut") {
     sources = [ "unittest/sdk_api_test.cpp" ]
     deps = [
-      "${PREBUILTS}/protos:ts_proto_data_cpp",
       "${THIRD_PARTY}/googletest:gtest",
       "${THIRD_PARTY}/googletest:gtest_main",
       "${THIRD_PARTY}/protobuf:protobuf",

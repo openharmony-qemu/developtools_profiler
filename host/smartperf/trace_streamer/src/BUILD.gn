@@ -49,18 +49,6 @@ ohos_source_set("lib") {
     "proto_reader/include",
     "${THIRD_PARTY}/sqlite/include",
     "${THIRD_PARTY}/json-master/single_include/nlohmann",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
-    "${OHOS_PROTO_GEN}",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/hiperf/include",
   ]
@@ -81,6 +69,12 @@ ohos_source_set("lib") {
     ]
   }
   public_deps = []
+  if (!use_wasm && !is_test && !is_fuzz) {
+    public_deps += [
+      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc",
+      "proto_reader/protoc_plugin:protoreader_plugin",
+    ]
+  }
 }
 ohos_source_set("trace_streamer_source") {
   subsystem_name = "trace_streamer"
@@ -112,18 +106,6 @@ ohos_source_set("trace_streamer_source") {
     "proto_reader/include",
     "parser/ebpf_parser",
     "${THIRD_PARTY}/sqlite/include",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
-    "${OHOS_PROTO_GEN}",
     "${THIRD_PARTY}/protobuf/src",
   ]
   if (use_wasm) {
@@ -159,11 +141,19 @@ ohos_source_set("trace_streamer_source") {
       "${THIRD_PARTY}/perf_include/musl",
     ]
   }
+  public_deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:all_type_cpp_standard",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder",
+  ]
+
   deps = [
     "${THIRD_PARTY}/sqlite:sqlite",
     "base:base",
     "filter:filter",
-    "include:ibase",
     "parser:parser",
     "table:table",
     "trace_data:trace_data",
@@ -194,7 +184,6 @@ ohos_source_set("trace_streamer_source") {
       cflags += [ "-D IS_UT" ]
     }
   }
-  public_deps = []
 }
 if (use_wasm) {
   wasm_lib("trace_streamer_builtin_wasm") {

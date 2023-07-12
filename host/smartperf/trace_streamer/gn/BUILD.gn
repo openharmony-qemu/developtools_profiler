@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import("../build/ts.gni")
 print("target_os", target_os)
 print("target_name", target)
 group("default_deps") {
@@ -208,7 +209,9 @@ config("executable") {
   if (!is_macx && !use_wasm && !is_win) {
     ldflags += [ "-pie" ]
   }
-
+  if (!is_macx) {
+    ldflags += [ "-Wl,--gc-sections" ]
+  }
   if (is_macx) {
     ldflags += [
       "-fdata-sections",
@@ -223,5 +226,4 @@ config("executable") {
   } else if (!is_debug && is_macx) {
     ldflags += [ "-dead_strip" ]
   }
-  ldflags += [ "-Wl,--gc-sections" ]
 }

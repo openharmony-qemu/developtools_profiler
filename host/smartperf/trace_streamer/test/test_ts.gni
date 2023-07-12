@@ -16,38 +16,10 @@ THIRD_PARTY = "//third_party"
 SRC = "//src"
 PREBUILTS = "//prebuilts"
 if (target_os == "linux" || target_os == "windows" || target_os == "macx") {
-  OHOS_FTRACE_PROTO_DIR = "//src/multi_platform"
-  OHOS_MEMORY_PROTO_DIR = "//src/multi_platform"
-  OHOS_SERVICE_PROTO_DIR = "//src/multi_platform"
-  OHOS_PROTO_GEN = "//third_party/protogen"
   if (is_test) {
-    OHOS_MEMORY_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/memory_data"
-    OHOS_NETWORK_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/network_data"
-    OHOS_DISKIO_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/diskio_data"
-    OHOS_CPUDATA_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/cpu_data"
-    OHOS_PROCESS_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/process_data"
-    OHOS_HISYSEVENT_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/hisysevent_data"
-    OHOS_TEST_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/test_data"
-    OHOS_JSMEMORY_PROTO_DIR = "$OHOS_PROTO_GEN/types/plugins/js_memory"
     enable_ts_utest = true
-    OHOS_HILOG_PROTO_DIR = "//src/multi_platform"
-    OHOS_NATIVE_HOOK_PROTO_DIR = "//src/multi_platform"
-    OHOS_HIDUMP_PROTO_DIR = "//src/multi_platform"
   }
 } else {
   use_wasm = false
-  OHOS_FTRACE_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/ftrace_data"
-  OHOS_MEMORY_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/memory_data"
-  OHOS_HILOG_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/hilog_data"
-  OHOS_NATIVE_HOOK_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/native_hook"
-  OHOS_HIDUMP_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/hidump_data"
-  OHOS_SERVICE_PROTO_DIR = "//developtools/profiler/protos/services"
-  OHOS_PROTO_GEN =
-      "//developtools/profiler/trace_analyzer/third_party/protogen/"
   enable_ts_utest = true
 }

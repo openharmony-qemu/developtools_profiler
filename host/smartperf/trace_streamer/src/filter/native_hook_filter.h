@@ -14,7 +14,7 @@
  */
 #ifndef NATIVE_HOOK_FILTER_H
 #define NATIVE_HOOK_FILTER_H
-#include "native_hook_config.pbreader.h"
+#include <set>
 #include "numerical_to_string.h"
 #include "offline_symbolization_filter.h"
 #include "stat_filter.h"

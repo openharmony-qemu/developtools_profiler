@@ -61,7 +61,6 @@ ohos_source_set("trace_data") {
     "${SRC}/table/monitor",
     "${SRC}/table/native_hook",
     ".",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
     "${THIRD_PARTY}/protobuf/src",
   ]
 }

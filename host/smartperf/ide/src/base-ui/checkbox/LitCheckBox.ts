@@ -143,15 +143,14 @@ export class LitCheckBox extends BaseElement {
   }
 
   connectedCallback() {
-    this.checkbox!.addEventListener('change', (ev) => {
+    this.checkbox!.addEventListener('change', () => {
       this.checked = this.checkbox!.checked;
-      this.dispatchEvent(
-        new CustomEvent('change', {
-          detail: {
-            checked: this.checked,
-          },
-        })
-      );
+      let changeEvent: CustomEventInit<LitCheckBoxChangeEvent> = {
+        detail: {
+          checked: this.checked,
+        },
+      };
+      this.dispatchEvent(new CustomEvent('change', changeEvent));
     });
   }
 
@@ -164,4 +163,8 @@ export class LitCheckBox extends BaseElement {
       slot!.textContent = newValue;
     }
   }
+}
+
+export interface LitCheckBoxChangeEvent {
+  checked: boolean;
 }

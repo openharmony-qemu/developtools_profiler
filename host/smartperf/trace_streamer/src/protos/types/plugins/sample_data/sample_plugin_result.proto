@@ -15,5 +15,7 @@ option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
 message SampleData {
-  uint64 time_ms = 1;
+    uint64 time_ms = 1;
+    int32 int_data = 2;
+    double double_data = 3;
 }

@@ -49,25 +49,30 @@ export class TabPaneThreadStates extends BaseElement {
           log('getTabThreadStates result size : ' + result.length);
           let sumWall = 0.0;
           let sumOcc = 0;
+          let targetList = [];
           for (let e of result) {
-            let process = Utils.PROCESS_MAP.get(e.pid);
-            let thread = Utils.THREAD_MAP.get(e.tid);
-            e.process = process == null || process.length == 0 ? '[NULL]' : process;
-            e.thread = thread == null || thread.length == 0 ? '[NULL]' : thread;
-            sumWall += e.wallDuration;
-            sumOcc += e.occurrences;
-            e.stateJX = e.state;
-            e.state = Utils.getEndState(e.stateJX);
-            e.wallDuration = parseFloat((e.wallDuration / 1000000.0).toFixed(5));
-            e.avgDuration = parseFloat((e.avgDuration / 1000000.0).toFixed(5));
+            if (threadStatesParam.processIds.includes(e.pid)) {
+              let process = Utils.PROCESS_MAP.get(e.pid);
+              let thread = Utils.THREAD_MAP.get(e.tid);
+              e.process = process == null || process.length == 0 ? '[NULL]' : process;
+              e.thread = thread == null || thread.length == 0 ? '[NULL]' : thread;
+              sumWall += e.wallDuration;
+              sumOcc += e.occurrences;
+              e.stateJX = e.state;
+              e.state = Utils.getEndState(e.stateJX);
+              e.wallDuration = parseFloat((e.wallDuration / 1000000.0).toFixed(5));
+              e.avgDuration = parseFloat((e.avgDuration / 1000000.0).toFixed(5));
+              targetList.push(e);
+            }
           }
-          let targetList = result.filter((it) => threadStatesParam.processIds.includes(it.pid));
-          let count: any = {};
-          count.process = ' ';
-          count.state = ' ';
-          count.wallDuration = parseFloat((sumWall / 1000000.0).toFixed(5));
-          count.occurrences = sumOcc;
-          targetList.splice(0, 0, count);
+          if (targetList.length > 0) {
+            let count: any = {};
+            count.process = ' ';
+            count.state = ' ';
+            count.wallDuration = parseFloat((sumWall / 1000000.0).toFixed(5));
+            count.occurrences = sumOcc;
+            targetList.splice(0, 0, count);
+          }
           this.threadStatesTblSource = targetList;
           this.threadStatesTbl!.recycleDataSource = targetList;
           this.stackBar!.data = targetList;
@@ -108,7 +113,7 @@ export class TabPaneThreadStates extends BaseElement {
             padding: 10px 10px;
         }
         </style>
-        <div class="tread-states-table" style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
+        <div class="tread-states-table" style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px;justify-content: space-between">
             <stack-bar id="thread-states-stack-bar" style="width: calc(100vw - 520px)"></stack-bar>
             <label id="thread-states-time-range"  style="width: 250px;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
         </div>

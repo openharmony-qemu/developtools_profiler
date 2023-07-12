@@ -76,7 +76,7 @@ const ThreadMeasureFilter& TraceDataCacheReader::GetConstThreadMeasureFilterData
 {
     return threadMeasureFilterData_;
 }
-const ThreadState& TraceDataCacheReader::GetConstThreadStateData() const
+const ThreadStateData& TraceDataCacheReader::GetConstThreadStateData() const
 {
     return threadStateData_;
 }

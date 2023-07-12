@@ -19,8 +19,9 @@ option java_package = "ohos.devtools.datasources.transport.grpc.service";
 message ProfilerPluginConfig {
     string name = 1;
     string plugin_sha256 = 2;
-    uint32 sample_interval = 3;
-    bytes  config_data = 4;
+    uint32 sample_interval = 3; // Polling plugin collection interval(ms)
+    bytes config_data = 4;
+    bool protobuf_serialize = 5; // data encoding method, true is protobuf, false is protoencoder
 }
 
 message ProfilerPluginState {

@@ -45,7 +45,7 @@ int32_t sscanf_s(const char* buffer, const char* format, ...)
 
 int32_t strncpy_s(char* strDest, size_t destMax, const char* strSrc, size_t count)
 {
-    (void*)strncpy(strDest, strSrc, destMax);
+    (void)strncpy(strDest, strSrc, destMax);
     return destMax;
 }
 #endif
@@ -123,10 +123,10 @@ bool EndWith(const std::string& str, const std::string& res)
 std::vector<std::string> SplitStringToVec(const std::string& str, const std::string& pat)
 {
     std::vector<std::string> result;
-    int32_t curPos = 0;
-    int32_t patPos = 0;
-    int32_t strSize = str.size();
-    int32_t patSize = pat.size();
+    size_t curPos = 0;
+    size_t patPos = 0;
+    size_t strSize = str.size();
+    size_t patSize = pat.size();
     while (curPos < strSize) {
         patPos = str.find(pat, curPos);
         if (patPos == std::string::npos) {

@@ -48,6 +48,7 @@ import { IrqRender } from './ProcedureWorkerIrq.js';
 import { JankRender } from './ProcedureWorkerJank.js';
 import { HeapTimelineRender } from './ProcedureWorkerHeapTimeline.js';
 import { HeapSnapshotRender } from './ProcedureWorkerHeapSnapshot.js';
+import { translateJsonString } from '../logic-worker/ProcedureLogicWorkerCommon.js';
 
 let dataList: any = {};
 let dataList2: any = {};

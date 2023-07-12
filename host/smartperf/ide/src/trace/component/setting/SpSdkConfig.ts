@@ -18,10 +18,9 @@ import '../../../base-ui/select/LitSelectV.js';
 import '../../../base-ui/select/LitSelect.js';
 
 import '../../../base-ui/switch/lit-switch.js';
-import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import { LitSelectV } from '../../../base-ui/select/LitSelectV.js';
 import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
-import { SpRecordTrace } from '../SpRecordTrace.js';
 
 @element('sp-sdk-config')
 export class SpSdkConfig extends BaseElement {
@@ -114,15 +113,16 @@ export class SpSdkConfig extends BaseElement {
     return this.sampleInterval;
   }
 
-  getGpuConfig(): any {
+  getGpuConfig(): {} {
     let configVal = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
-    let gpuConfig: any = {};
+    let gpuConfig = {};
     for (let i = 0; i < configVal!.length; i++) {
       let configName = configVal![i].getAttribute('configName');
       let type = configVal![i].getAttribute('type');
       if (type == 'enum') {
         let enumValue = configVal![i].getAttribute('value');
         if (enumValue != undefined && enumValue != 'undefined') {
+          // @ts-ignore
           gpuConfig[configName!] = enumValue;
         }
       } else if (type == 'number' || type == 'integer' || type == 'num') {
@@ -130,6 +130,7 @@ export class SpSdkConfig extends BaseElement {
         gpuConfig[configName!] = Number(configVal![i].value);
       } else if (type == 'boolean') {
         let attribute = configVal![i].getAttribute('value');
+        // @ts-ignore
         gpuConfig[configName!] = attribute == 'true';
       } else {
         // @ts-ignore
@@ -172,9 +173,9 @@ export class SpSdkConfig extends BaseElement {
     } catch (e) {}
     this.customConfig = this.shadowRoot?.querySelector<HTMLDivElement>('.configList');
     let switchButton = this.shadowRoot?.querySelector('.config_switch') as LitSwitch;
-    switchButton.addEventListener('change', (event: any) => {
+    switchButton.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
       let detail = event.detail;
-      if (detail.checked) {
+      if (detail!.checked) {
         this.startSamp = true;
         this.isAbleShowConfig(false);
       } else {
@@ -292,12 +293,12 @@ export class SpSdkConfig extends BaseElement {
         select!.setAttribute('value', this.sdkConfigList.configuration[key].default);
         select!.dataSource(this.sdkConfigList.configuration[key].enum, '');
         this.list.push(select!);
-        select!.addEventListener('click', (event: any) => {
+        select!.addEventListener('click', () => {
           select!.setAttribute('value', select!.value);
         });
       }
     }
-    sdkConfigSwitch.addEventListener('change', (event: any) => {
+    sdkConfigSwitch.addEventListener('change', () => {
       if (sdkConfigSwitch.hasAttribute('checked')) {
         sdkConfigSwitch.setAttribute('value', 'true');
       } else {

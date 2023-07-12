@@ -13,6 +13,10 @@
  * limitations under the License.
  */
 
+import { SpRecordTrace } from '../trace/component/SpRecordTrace.js';
+import { CmdConstant } from './CmdConstant.js';
+import { HdcDeviceManager } from '../hdc/HdcDeviceManager.js';
+
 export class Cmd {
   static CmdSendPostUtils(uri: string, callback: Function, requestData: any) {
     // @ts-ignore
@@ -172,5 +176,65 @@ export class Cmd {
     let res = await fetch(uri, { method: 'POST' });
     let result = res.ok ? await res.text() : '';
     return result;
+  }
+
+  static convertOutProcessList(res: string): string[] {
+    let processData: string[] = [];
+    if (res) {
+      let lineValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
+      for (let lineVal of lineValues) {
+        lineVal = lineVal.trim();
+        if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('CMD') != -1 || lineVal.length === 0) {
+          continue;
+        } else {
+          let process: string[] = lineVal.split(' ');
+          if (process.length == 2) {
+            processData.push(process[1] + '(' + process[0] + ')');
+          }
+        }
+      }
+    }
+    return processData;
+  }
+  static getDebugProcess(): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      if (SpRecordTrace.isVscode) {
+        let cmd = Cmd.formatString(CmdConstant.CMD_GET_DEBUG_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
+        Cmd.execHdcCmd(cmd, (res: string) => {
+          resolve(Cmd.convertOutProcessList(res));
+        });
+      } else {
+        HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((conn) => {
+          if (conn) {
+            HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_DEBUG_PROCESS, false).then((res) => {
+              resolve(Cmd.convertOutProcessList(res));
+            });
+          } else {
+            reject(-1);
+          }
+        });
+      }
+    });
+  }
+
+  static getProcess(): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      if (SpRecordTrace.isVscode) {
+        let cmd = Cmd.formatString(CmdConstant.CMD_GET_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
+        Cmd.execHdcCmd(cmd, (res: string) => {
+          resolve(Cmd.convertOutProcessList(res));
+        });
+      } else {
+        HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((conn) => {
+          if (conn) {
+            HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((res) => {
+              resolve(Cmd.convertOutProcessList(res));
+            });
+          } else {
+            reject(-1);
+          }
+        });
+      }
+    });
   }
 }

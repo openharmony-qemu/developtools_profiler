@@ -17,25 +17,12 @@
 #define BYTRACE_COMMON_TYPES_H
 
 #include <atomic>
+#include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include "cpu_plugin_result.pbreader.h"
-#include "diskio_plugin_result.pbreader.h"
-#include "hidump_plugin_result.pbreader.h"
-#include "hilog_plugin_result.pbreader.h"
-#include "hisysevent_plugin_config.pbreader.h"
-#include "hisysevent_plugin_result.pbreader.h"
-#include "js_heap_config.pbreader.h"
-#include "js_heap_result.pbreader.h"
-#include "memory_plugin_result.pbreader.h"
-#include "native_hook_result.pbreader.h"
-#include "network_plugin_result.pbreader.h"
-#include "process_plugin_result.pbreader.h"
 #include "proto_reader_help.h"
-#include "services/common_types.pbreader.h"
-#include "trace_plugin_result.pbreader.h"
 #include "ts_common.h"
-#include "native_hook_result.pbreader.h"
 
 namespace SysTuning {
 namespace TraceStreamer {

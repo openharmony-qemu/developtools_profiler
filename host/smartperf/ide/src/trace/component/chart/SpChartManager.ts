@@ -115,8 +115,6 @@ export class SpChartManager {
     progress('fps', 85);
     await this.fps.init();
     info('FPS Data initialized');
-    progress('native memory', 86);
-    await this.nativeMemory.initNativeMemory();
     progress('native memory', 87);
     await this.nativeMemory.initChart();
     info('Native Memory Data initialized');
@@ -181,6 +179,8 @@ export class SpChartManager {
         endNS = startNS + 1;
       }
       this.trace.timerShaftEL.totalNS = total;
+      this.trace.timerShaftEL.getRangeRuler()!.drawMark = true;
+      this.trace.timerShaftEL.setRangeNS(0,total);
       (window as any).recordStartNS = startNS;
       (window as any).recordEndNS = endNS;
       (window as any).totalNS = total;

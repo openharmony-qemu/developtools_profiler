@@ -12,3 +12,4 @@
 # limitations under the License.
 
 buildconfig = "//gn/CONFIG.gn"
+script_executable = "/usr/bin/env"

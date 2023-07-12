@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("../../../build/ohos.gni")
+import("//build/ohos.gni")
 
 import("../../../build/ts.gni")
 ohos_source_set("ftrace_tables") {
@@ -74,10 +74,8 @@ ohos_source_set("ftrace_tables") {
     "${SRC}/trace_data",
     "${SRC}/include",
     "${SRC}",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
     "${THIRD_PARTY}/protobuf/src",
   ]
-
   if (enable_ts_utest && !use_wasm) {
     cflags = [
       "-fprofile-arcs",

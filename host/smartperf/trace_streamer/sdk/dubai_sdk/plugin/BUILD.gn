@@ -31,5 +31,5 @@ ohos_source_set("sdk_plugin") {
     "${THIRD_PARTY}/protobuf/src",
   ]
 
-  public_deps = []
+  public_deps = [ "../protos/types/plugins/mock_data:mock_data_cpp" ]
 }

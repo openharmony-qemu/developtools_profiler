@@ -55,6 +55,9 @@ message ProfilerSessionConfig {
     uint32 result_max_size = 4; // for OFFLINE mode, result file max size in KB
     uint32 sample_duration = 5; // for OFFLINE mode, sample duration in ms
     uint32 keep_alive_time = 6; // if set to non-zero value, session will auto-destroyed after CreateSession in ms
+    bool discard_cache_data = 7; // if set true, session will stop immediately.(cache data will be lost)
+    bool split_file = 8; // if set true, will split result_file
+    uint32 single_file_max_size_mb = 9; // limit the maximum size of a single file
 }
 
 message CreateSessionRequest {

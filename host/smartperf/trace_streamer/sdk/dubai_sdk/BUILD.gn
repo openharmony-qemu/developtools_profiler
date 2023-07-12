@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("../../build/ohos.gni")
+import("//build/ohos.gni")
 import("../../build/ts.gni")
 if (use_wasm) {
   import("../../gn/wasm.gni")
@@ -37,7 +37,6 @@ ohos_source_set("lib") {
     ":trace_streamer_sdk",
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
-    "protos:ts_proto_data_cpp",
   ]
   include_dirs = [
     "${SRC}/base",
@@ -51,14 +50,12 @@ ohos_source_set("lib") {
     "./",
     "cfg",
     "${THIRD_PARTY}/sqlite/include",
-    "${OHOS_PROTO_GEN}/types/plugins/mock_data",
-    "${OHOS_PROTO_GEN}",
     "${THIRD_PARTY}/protobuf/src",
   ]
   if (with_perf) {
     include_dirs += []
   }
-  public_deps = []
+  public_deps = [ "protos/types/plugins/mock_data:mock_data_cpp" ]
 }
 source_set("trace_streamer_sdk") {
   sources = [
@@ -109,8 +106,6 @@ source_set("trace_streamer_sdk") {
     "./",
     "cfg",
     "${THIRD_PARTY}/sqlite/include",
-    "${OHOS_PROTO_GEN}",
-    "${OHOS_PROTO_GEN}/types/plugins/mock_data",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/json-master/single_include/nlohmann",
   ]
@@ -128,7 +123,6 @@ source_set("trace_streamer_sdk") {
     "${SRC}/base:base",
     "${THIRD_PARTY}/sqlite:sqlite",
     "plugin:sdk_plugin",
-    "protos:ts_proto_data_cpp",
   ]
   if (with_perf) {
   }
@@ -151,7 +145,7 @@ source_set("trace_streamer_sdk") {
       "--coverage",
     ]
   }
-  public_deps = []
+  public_deps = [ "protos/types/plugins/mock_data:mock_data_cpp" ]
 }
 if (use_wasm) {
   wasm_lib("trace_streamer_dubai_builtin_wasm") {

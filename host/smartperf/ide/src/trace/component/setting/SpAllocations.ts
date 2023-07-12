@@ -111,7 +111,7 @@ export class SpAllocations extends BaseElement {
     this.processId = this.shadowRoot?.getElementById('pid') as LitAllocationSelect;
     let input = this.processId.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     let sp = document.querySelector('sp-application') as SpApplication;
-    let litSearch = sp?.shadowRoot?.querySelector('#lit-search') as LitSearch;
+    let litSearch = sp?.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     let allocationProcessData: Array<string> = [];
     input.addEventListener('mousedown', (ev) => {
       if (SpRecordTrace.serialNumber == '') {
@@ -124,56 +124,10 @@ export class SpAllocations extends BaseElement {
     input.addEventListener('inputClick', () => {
       allocationProcessData = [];
       if (SpRecordTrace.serialNumber != '') {
-        if (SpRecordTrace.isVscode) {
-          let cmd = Cmd.formatString(CmdConstant.CMD_GET_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
-          Cmd.execHdcCmd(cmd, (res: string) => {
-            let allocationsValuesVs: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-            for (let lineVal of allocationsValuesVs) {
-              if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                continue;
-              }
-              let allocationsVsProcess: string[] = lineVal.trim().split(' ');
-              if (allocationsVsProcess.length == 2) {
-                let processId = allocationsVsProcess[0];
-                let processName = allocationsVsProcess[1];
-                allocationProcessData.push(processName + '(' + processId + ')');
-              }
-            }
-            this.processId!.processData = allocationProcessData;
-            this.processId!.initData();
-          });
-        } else {
-          HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((rr) => {
-            if (sp.search) {
-              sp.search = false;
-              litSearch.clear();
-            }
-            if (rr) {
-              HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((res) => {
-                if (res) {
-                  let allocationsConfigValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-                  for (let lineVal of allocationsConfigValues) {
-                    if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                      continue;
-                    }
-                    let allocationsConfigProcess: string[] = lineVal.trim().split(' ');
-                    if (allocationsConfigProcess.length == 2) {
-                      let processId = allocationsConfigProcess[0];
-                      let processName = allocationsConfigProcess[1];
-                      allocationProcessData.push(processName + '(' + processId + ')');
-                    }
-                  }
-                }
-                this.processId!.processData = allocationProcessData;
-                this.processId!.initData();
-              });
-            } else {
-              sp.search = true;
-              litSearch.clear();
-              litSearch.setPercent('please kill other hdc-server! ', -2);
-            }
-          });
-        }
+        Cmd.getProcess().then((processList) => {
+          this.processId!.processData = processList;
+          this.processId!.initData();
+        });
       }
     });
     this.unwindEL = this.shadowRoot?.getElementById('unwind') as HTMLInputElement;

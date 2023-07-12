@@ -41,7 +41,7 @@ function clear() {
     arr = undefined;
   }
   if (headUnitArray) {
-      headUnitArray = undefined;
+    headUnitArray = undefined;
   }
   if (bufferSlice) {
     bufferSlice.length = 0;
@@ -93,6 +93,7 @@ function initThirdWASM(wasmFunctionName: string) {
       onAbort: () => {},
     });
   }
+
   return callModelFun(wasmFunctionName);
 }
 
@@ -371,67 +372,71 @@ self.onmessage = async (e: MessageEvent) => {
     let fn1 = Module.addFunction(getDownloadDb, 'viii');
     Module._WasmExportDatabase(fn1);
   } else if (e.data.action === 'upload-so') {
+    uploadSoActionId = e.data.id;
     let fileList = e.data.params as Array<File>;
     if (fileList) {
-      uploadSoFile(fileList, () => {
-        self.postMessage({
-          id: e.data.id,
-          action: e.data.action,
-          results: 'ok',
-        });
-      });
+      soFileList = fileList;
+      uploadFileIndex = 0;
+      if (!uploadSoCallbackFn) {
+        uploadSoCallbackFn = Module.addFunction(uploadSoCallBack, 'viii');
+      }
+      uploadSoFile(soFileList[uploadFileIndex]).then();
     }
   }
 };
 
+let uploadSoActionId: string = '';
 let uploadFileIndex: number = 0;
-
-function uploadSoFile(files: Array<File>, callback: () => void) {
-  let uploadFile = (file: File) => {
-    let reader = new FileReader();
-    reader.readAsArrayBuffer(file);
-    reader.onloadend = function (ev) {
-      if (this.result) {
-        let fileNameBuffer = enc.encode(file.webkitRelativePath);
-        let addr = Module._InitFileName(fn, fileNameBuffer.length);
-        Module.HEAPU8.set(fileNameBuffer, addr);
-        let data = new Uint8Array(this.result as ArrayBuffer);
-        let writeSize = 0;
-        let upRes = -1;
-        while (writeSize < data.length) {
-          const sliceLen = Math.min(data.length - writeSize, REQ_BUF_SIZE);
-          const dataSlice = data.subarray(writeSize, writeSize + sliceLen);
-          Module.HEAPU8.set(dataSlice, reqBufferAddr);
-          writeSize += sliceLen;
-          upRes = Module._TraceStreamerDownloadELFEx(
-            data.length,
-            fileNameBuffer.length,
-            sliceLen,
-            uploadFileIndex === files.length - 1 ? 1 : 0
-          );
-        }
-      }
-    };
-  };
-  let uploadSoCallBack = (heapPtr: number, size: number, isFinish: number) => {
-    let out: Uint8Array = Module.HEAPU8.slice(heapPtr, heapPtr + size);
-    let res = dec.decode(out);
-    if (res.includes('file send over')) {
-      if (uploadFileIndex < files.length - 1) {
-        uploadFileIndex = uploadFileIndex + 1;
-        uploadFile(files[uploadFileIndex]);
-      }
+let uploadSoCallbackFn: any;
+let soFileList : Array<File | null> = [];
+const uploadSoFile = async (file: File | null) => {
+  if (file) {
+    let fileNameBuffer: Uint8Array | null = enc.encode(file.webkitRelativePath);
+    let fileNameLength = fileNameBuffer.length;
+    let addr = Module._InitFileName(uploadSoCallbackFn, fileNameBuffer.length);
+    Module.HEAPU8.set(fileNameBuffer, addr);
+    let writeSize = 0;
+    let upRes = -1;
+    while (writeSize < file.size) {
+      let sliceLen = Math.min(file.size - writeSize, REQ_BUF_SIZE);
+      let blob: Blob | null = file.slice(writeSize,writeSize + sliceLen);
+      let buffer: ArrayBuffer | null = await blob.arrayBuffer();
+      let data: Uint8Array | null = new Uint8Array(buffer);
+      let size = file.size;
+      let lastFile = uploadFileIndex === soFileList.length - 1 ? 1 : 0
+      Module.HEAPU8.set(data, reqBufferAddr);
+      writeSize += sliceLen;
+      upRes = Module._TraceStreamerDownloadELFEx(size, fileNameLength, sliceLen, lastFile);
+      data = null;
+      buffer = null;
+      blob = null;
     }
-    if (res.includes('ok')) {
-      callback();
-    }
-  };
-  let fn = Module.addFunction(uploadSoCallBack, 'viii');
-  uploadFileIndex = 0;
-  if (files.length > 0) {
-    uploadFile(files[uploadFileIndex]);
+    file = null;
+    soFileList[uploadFileIndex] = null;
+    fileNameBuffer = null;
   }
-}
+};
+
+const uploadSoCallBack = (heapPtr: number, size: number, isFinish: number) => {
+  let out: Uint8Array | null = Module.HEAPU8.slice(heapPtr, heapPtr + size);
+  if (out) {
+    let res = dec.decode(out);
+    out = null;
+    if (res.includes('file send over')) {
+      if (uploadFileIndex < soFileList.length - 1) {
+        uploadFileIndex = uploadFileIndex + 1;
+        uploadSoFile(soFileList[uploadFileIndex]).then();
+      }
+    } else {
+      soFileList.length = 0;
+      self.postMessage({
+        id: uploadSoActionId,
+        action: 'upload-so',
+        results: res.includes('ok') ? 'ok' : 'failed',
+      });
+    }
+  }
+};
 
 function createView(sql: string) {
   let array = enc.encode(sql);

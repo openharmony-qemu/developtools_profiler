@@ -13,6 +13,7 @@
 
 import("../build/ohos.gni")
 import("../build/test.gni")
+import("../build/ts.gni")
 import("test_ts.gni")
 
 if (is_test) {
@@ -60,12 +61,23 @@ if (is_test) {
     ]
 
     deps = [
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/test_data:test_data_cpp",
       "${THIRD_PARTY}/googletest:gtest",
       "${THIRD_PARTY}/googletest:gtest_main",
       "${THIRD_PARTY}/protobuf:protobuf",
       "${THIRD_PARTY}/protobuf:protobuf_lite",
       "${THIRD_PARTY}/sqlite:sqlite",
-      "../prebuilts/protos:ts_proto_data_cpp",
       "../src:trace_streamer_source",
       "../src/parser/htrace_pbreader_parser:htrace_pbreader_parser",
       "../src/proto_reader:proto_reader",
@@ -95,20 +107,6 @@ if (is_test) {
       "${THIRD_PARTY}/protobuf/src/google/protobuf",
       "${THIRD_PARTY}/json-master/single_include/nlohmann",
       "${THIRD_PARTY}/perf_include/musl",
-      "${OHOS_PROTO_GEN}",
-      "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-      "${OHOS_FTRACE_PROTO_DIR}",
-      "${OHOS_MEMORY_PROTO_DIR}",
-      "${OHOS_HILOG_PROTO_DIR}",
-      "${OHOS_NATIVE_HOOK_PROTO_DIR}",
-      "${OHOS_HIDUMP_PROTO_DIR}",
-      "${OHOS_NETWORK_PROTO_DIR}",
-      "${OHOS_DISKIO_PROTO_DIR}",
-      "${OHOS_CPUDATA_PROTO_DIR}",
-      "${OHOS_PROCESS_PROTO_DIR}",
-      "${OHOS_SERVICE_PROTO_DIR}",
-      "${OHOS_TEST_PROTO_DIR}",
-      "${OHOS_JSMEMORY_PROTO_DIR}",
       "../src/parser/htrace_pbreader_parser",
       "../src/parser/htrace_pbreader_parser/htrace_event_parser",
       "../src/parser/htrace_pbreader_parser/htrace_cpu_parser",

@@ -132,17 +132,23 @@ export default class LitSwitch extends BaseElement {
     this.checked = this.checked;
     this.switch!.onchange = (ev) => {
       this.checked = this.switch!.checked;
-      this.dispatchEvent(new CustomEvent('change', { detail: { checked: this.checked } }));
+      let changeEvent: CustomEventInit<LitSwitchChangeEvent> = {
+        detail: {
+          checked: this.checked,
+        },
+      };
+      this.dispatchEvent(new CustomEvent('change', changeEvent));
     };
     this.switch.onkeydown = (ev) => {
       switch (ev.keyCode) {
         case 13: //enter
           this.checked = !this.checked;
-          this.dispatchEvent(
-            new CustomEvent('change', {
-              detail: { checked: this.checked },
-            })
-          );
+          let changeEvent: CustomEventInit<LitSwitchChangeEvent> = {
+            detail: {
+              checked: this.checked,
+            },
+          };
+          this.dispatchEvent(new CustomEvent('change', changeEvent));
           break;
         default:
           break;
@@ -189,4 +195,8 @@ export default class LitSwitch extends BaseElement {
       }
     }
   }
+}
+
+export interface LitSwitchChangeEvent {
+  checked: boolean;
 }

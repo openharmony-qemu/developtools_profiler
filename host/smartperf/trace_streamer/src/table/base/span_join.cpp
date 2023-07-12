@@ -150,7 +150,7 @@ void SpanJoin::GetColumns(const TraceDataCache* dataCache,
 {
     char sql[MAXSIZE];
     std::string querySql = "SELECT name, type from PRAGMA_table_info(\"%s\")";
-    int32_t n = snprintf(sql, sizeof(sql), querySql.c_str(), tableName.c_str());
+    int32_t n = snprintf_s(sql, sizeof(sql), 1, querySql.c_str(), tableName.c_str());
     sqlite3_stmt* stmt = nullptr;
     int32_t ret = sqlite3_prepare_v2(dataCache->db_, sql, n, &stmt, nullptr);
     while (!ret) {

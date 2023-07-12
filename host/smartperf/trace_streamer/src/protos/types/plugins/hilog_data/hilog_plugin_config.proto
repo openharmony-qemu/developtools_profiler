@@ -32,6 +32,7 @@ message HilogConfig {
     Type device_type = 1;
     Level log_level = 2;
 
+    // set the pid for get log e.g. hilogcat --pid=111
     int32 pid = 3;
     bool need_record = 4;
     bool need_clear = 5;

@@ -15,5 +15,6 @@ option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
 message StreamData {
-    uint64 time_ms = 1;
+  uint64 intdata = 1;
+  string stringdata = 2;
 }

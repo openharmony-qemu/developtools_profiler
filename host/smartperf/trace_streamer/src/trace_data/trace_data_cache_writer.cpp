@@ -117,7 +117,7 @@ Measure* TraceDataCacheWriter::GetProcessMeasureData()
     return &processMeasureData_;
 }
 
-ThreadState* TraceDataCacheWriter::GetThreadStateData()
+ThreadStateData* TraceDataCacheWriter::GetThreadStateData()
 {
     return &threadStateData_;
 }

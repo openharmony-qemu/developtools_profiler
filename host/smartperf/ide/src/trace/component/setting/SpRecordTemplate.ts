@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
-import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import { ProfilerPluginConfig, TracePluginConfig } from './bean/ProfilerServiceTypes.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
 
@@ -82,22 +82,22 @@ export class SpRecordTemplate extends BaseElement {
   initElements(): void {
     this.frameTimeline = this.shadowRoot?.querySelector<LitSwitch>('#frame_timeline');
     this.schedulingAnalysis = this.shadowRoot?.querySelector<LitSwitch>('#scheduling_analysis');
-    this.frameTimeline!.addEventListener('change', (event: any) => {
+    this.frameTimeline!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
       let detail = event.detail;
-      if (detail.checked) {
+      if (detail!.checked) {
         this.dispatchEvent(new CustomEvent('addProbe', {}));
       }
     });
-    this.schedulingAnalysis!.addEventListener('change', (event: any) => {
+    this.schedulingAnalysis!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
       let detail = event.detail;
-      if (detail.checked) {
+      if (detail!.checked) {
         this.dispatchEvent(new CustomEvent('addProbe', {}));
       }
     });
   }
 
-  getTemplateConfig(): Array<ProfilerPluginConfig<any>> {
-    let config: Array<any> = [];
+  getTemplateConfig(): Array<ProfilerPluginConfig<{}>> {
+    let config: Array<ProfilerPluginConfig<{}>> = [];
     let traceEventSet = new Array<string>();
     let hitraceCategories = new Array<string>();
     let useFtracePlugin: boolean = false;

@@ -15,6 +15,7 @@
 #include "htrace_network_parser.h"
 #include "clock_filter_ex.h"
 #include "htrace_event_parser.h"
+#include "network_plugin_result.pbreader.h"
 #include "process_filter.h"
 #include "stat_filter.h"
 namespace SysTuning {

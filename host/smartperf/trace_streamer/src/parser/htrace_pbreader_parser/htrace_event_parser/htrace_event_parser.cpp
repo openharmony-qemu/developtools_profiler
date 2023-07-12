@@ -37,7 +37,7 @@
 #include "symbols_filter.h"
 #include "system_event_measure_filter.h"
 #include "task.pbreader.h"
-#include "thread_state.h"
+#include "thread_state_flag.h"
 #include "trace_plugin_result.pbreader.h"
 #include "workqueue.pbreader.h"
 namespace SysTuning {

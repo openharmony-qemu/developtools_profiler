@@ -18,5 +18,5 @@ message MockConfig {
     uint32 version = 1;
 	string counters = 2;
 	bool stop_gator = 3;
-	uint32 duration = 1;
+	uint32 duration = 4;
 }

@@ -22,6 +22,7 @@ export class CmdConstant {
   static CMD_GET_CPU_COUNT = "hdc_std shell grep -c 'processor' /proc/cpuinfo";
   static CMD_GET_HIPERF_EVENTS = 'hdc_std shell hiperf list';
   static CMD_GET_VERSION = 'hdc_std shell param get const.product.software.version';
+  static CMD_GET_DEBUG_PROCESS = `hdc_std shell netstat -anp |grep Panda |grep -v grep | sed \'s/.* \\([0-9]*\\)\\/.*/\\1/\' |xargs -r ps -A -opid,cmd`;
   static CMD_HDC_DEVICES = 'hdc_std list targets';
   static CMD_MOUNT_DEVICES = 'hdc_std -t {0} shell mount -o remount,rw /';
   static CMD_GET_PROCESS_DEVICES = 'hdc_std -t {0} shell ps -A -opid,cmd';
@@ -33,4 +34,5 @@ export class CmdConstant {
     'hdc_std -t {0} shell killall hiprofilerd hiprofiler_plugins native_daemon hiperf hiebpf' + ' hiprofiler_cmd';
   static CMS_STOP = 'hdc_std shell killall hiprofilerd hiprofiler_plugins native_daemon hiperf hiebpf hiprofiler_cmd';
   static CMD_GET_VERSION_DEVICES = 'hdc_std -t {0} shell param get const.product.software.version';
+  static CMD_GET_DEBUG_PROCESS_DEVICES = `hdc_std -t {0} shell netstat -anp |grep Panda |grep -v grep | sed \'s/.* \\([0-9]*\\)\\/.*/\\1/\' |xargs -r ps -A -opid,cmd`;
 }

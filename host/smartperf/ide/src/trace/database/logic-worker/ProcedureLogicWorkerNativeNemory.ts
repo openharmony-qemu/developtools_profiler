@@ -221,7 +221,8 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
                     (case when h.event_type = 'AllocEvent' then 2 else 3 end) as eventType
                 from native_hook h ,trace_range t
                 where 
-                    h.end_ts between t.start_ts and t.end_ts
+                    h.start_ts between t.start_ts and t.end_ts
+                    and h.end_ts between t.start_ts and t.end_ts
                     and (h.event_type = 'AllocEvent' or h.event_type = 'MmapEvent')
             )
             order by startTime;

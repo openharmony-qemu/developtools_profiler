@@ -15,7 +15,7 @@
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import { LitSelectV } from '../../../base-ui/select/LitSelectV.js';
-import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitSelectV.js';
 import '../../../base-ui/select/LitSelect.js';
 
@@ -33,9 +33,6 @@ export class SpFileSystem extends BaseElement {
   private selectProcess: HTMLInputElement | undefined | null;
 
   private configList: Array<any> = [];
-  private list: Array<any> = [];
-
-  private eventList: Array<any> = ['open', 'close', 'read', 'write'];
 
   set startRecord(start: boolean) {
     if (start) {
@@ -194,9 +191,9 @@ export class SpFileSystem extends BaseElement {
             fileSystemSwitch.checked = false;
           }
           if (config.title == 'Start FileSystem Record') {
-            fileSystemSwitch.addEventListener('change', (event: any) => {
+            fileSystemSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
               let detail = event.detail;
-              if (detail.checked) {
+              if (detail!.checked) {
                 this.startFileSystem = true;
               } else {
                 this.startFileSystem = false;
@@ -204,9 +201,9 @@ export class SpFileSystem extends BaseElement {
             });
           }
           if (config.title == 'Start Page Fault Record') {
-            fileSystemSwitch.addEventListener('change', (event: any) => {
+            fileSystemSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
               let detail = event.detail;
-              if (detail.checked) {
+              if (detail!.checked) {
                 this.startVirtualMemory = true;
               } else {
                 this.startVirtualMemory = false;
@@ -214,9 +211,9 @@ export class SpFileSystem extends BaseElement {
             });
           }
           if (config.title == 'Start BIO Latency Record') {
-            fileSystemSwitch.addEventListener('change', (event: any) => {
+            fileSystemSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
               let detail = event.detail;
-              if (detail.checked) {
+              if (detail!.checked) {
                 this.startIo = true;
               } else {
                 this.startIo = false;
@@ -242,7 +239,6 @@ export class SpFileSystem extends BaseElement {
       }
     });
     this.selectProcess = this.processInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
-    let fileSystemProcessData: Array<string> = [];
     this.selectProcess!.addEventListener('mousedown', (ev) => {
       if (SpRecordTrace.serialNumber == '') {
         this.processInput!.dataSource([], '');
@@ -253,54 +249,12 @@ export class SpFileSystem extends BaseElement {
       if (SpRecordTrace.serialNumber == '') {
         this.processInput?.dataSource([], 'ALL-Process');
       } else {
-        if (SpRecordTrace.isVscode) {
-          let cmd = Cmd.formatString(CmdConstant.CMD_GET_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
-          Cmd.execHdcCmd(cmd, (res: string) => {
-            fileSystemProcessData = [];
-            let fileSystemValuesVs: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-            for (let lineVal of fileSystemValuesVs) {
-              if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                continue;
-              }
-              let fileSystemProcessVs: string[] = lineVal.trim().split(' ');
-              if (fileSystemProcessVs.length == 2) {
-                let processId = fileSystemProcessVs[0];
-                let processName = fileSystemProcessVs[1];
-                fileSystemProcessData.push(processName + '(' + processId + ')');
-              }
-            }
-            if (fileSystemProcessData.length > 0 && this.startRecord) {
-              this.processInput!.setAttribute('readonly', 'readonly');
-            }
-            this.processInput?.dataSource(fileSystemProcessData, 'ALL-Process');
-          });
-        } else {
-          HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((conn) => {
-            if (conn) {
-              HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((res) => {
-                fileSystemProcessData = [];
-                if (res) {
-                  let fileSystemValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-                  for (let lineVal of fileSystemValues) {
-                    if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                      continue;
-                    }
-                    let fileSystemProcess: string[] = lineVal.trim().split(' ');
-                    if (fileSystemProcess.length == 2) {
-                      let processId = fileSystemProcess[0];
-                      let processName = fileSystemProcess[1];
-                      fileSystemProcessData.push(processName + '(' + processId + ')');
-                    }
-                  }
-                }
-                if (fileSystemProcessData.length > 0 && this.startRecord) {
-                  this.selectProcess!.setAttribute('readonly', 'readonly');
-                }
-                this.processInput?.dataSource(fileSystemProcessData, 'ALL-Process');
-              });
-            }
-          });
-        }
+        Cmd.getProcess().then((processList) => {
+          if (processList.length > 0 && this.startRecord) {
+            this.processInput!.setAttribute('readonly', 'readonly');
+          }
+          this.processInput?.dataSource(processList, 'ALL-Process');
+        });
       }
     });
     this.disable();

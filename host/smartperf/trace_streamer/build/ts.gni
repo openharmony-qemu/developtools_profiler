@@ -10,30 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-OHOS_PROTO_DIR = ""
-THIRD_PARTY = "//third_party"
-SRC = "//src"
-PREBUILTS = "//prebuilts"
+# import("config.gni")
 if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
-  #  OHOS_FTRACE_PROTO_DIR="//third_party/protogen"
-  OHOS_FTRACE_PROTO_DIR = "//src/multi_platform"
 
-  #  OHOS_MEMORY_PROTO_DIR="//third_party/protogen"
-  OHOS_MEMORY_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_HILOG_PROTO_DIR="//third_party/protogen"
-  OHOS_HILOG_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_NATIVE_HOOK_PROTO_DIR="//third_party/protogen"
-  OHOS_NATIVE_HOOK_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_HIDUMP_PROTO_DIR="//third_party/protogen"
-  OHOS_HIDUMP_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_SERVICE_PROTO_DIR = "//third_party/protogen"
-  OHOS_SERVICE_PROTO_DIR = "//src/multi_platform"
-  OHOS_PROTO_GEN = "//third_party/protogen"
-
+  clang_x64_folder = "."
+  THIRD_PARTY = "//third_party"
+  SRC = "//src"
+  PREBUILTS = "//prebuilts"
   # kernel_version = "5.10.79_aarch64"
   kernel_version = "."
   if (target == "test") {
@@ -41,23 +24,46 @@ if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
   } else {
     enable_ts_utest = false
   }
-  is_openharmony = false
+  device_kernel_version = "default"
+  is_ohos = false
+  PERF_DIR = "//third_party"
+
+  OHOS_TRACE_STREAMER_PROTOS_DIR = get_path_info("../src", "abspath")
+  OHOS_TRACE_STREAMER_DIR = get_path_info("../", "abspath")
+  OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc.sh", "abspath")
+  
+  if (target_os == "windows") {
+    OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc_w.sh", "abspath")
+  } else {
+  script_executable = "/usr/bin/env"
+  }
+  OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR = get_path_info("../third_party/protobuf", "abspath")
 } else {
-  enable_ts_utest = true
+  script_executable = "/usr/bin/env"
+  clang_x64_folder = "clang_x64"
+  with_ebpf_help_table = false
+  OHOS_TRACE_STREAMER_DIR = get_path_info("..", "abspath")
+  OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("/protoc.sh", "abspath")
+  THIRD_PARTY = get_path_info("../../../../../../third_party/", "abspath")
+  PERF_DIR = get_path_info("../../../../../", "abspath")
+  SRC = "${OHOS_TRACE_STREAMER_DIR}/src"
+  PREBUILTS = "${OHOS_TRACE_STREAMER_DIR}/prebuilts"
+  target = "trace_steamer"
+  is_macx = false
+  with_perf = true
+  is_test = false
+  is_protoc = false
+  is_spb = false
+  is_sdkdemo = false
+  is_dubai_sdk = false
+  is_sdkdemo_test = false
   use_wasm = false
+  enable_ts_utest = true
   kernel_version = "."
   is_fuzz = false
   target = "trace_streamer"
-  is_openharmony = true
-  OHOS_FTRACE_PROTO_DIR = "//developtools/profiler/protos/types/plugins/ftrace_data/${kernel_version}"
-  OHOS_MEMORY_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/memory_data"
-  OHOS_HILOG_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/hilog_data"
-  OHOS_NATIVE_HOOK_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/native_hook"
-  OHOS_HIDUMP_PROTO_DIR =
-      "//developtools/profiler/protos/types/plugins/hidump_data"
-  OHOS_SERVICE_PROTO_DIR = "//developtools/profiler/protos/services"
-  OHOS_PROTO_GEN = "//out/ohos-arm-release/gen/cpp/developtools/profiler/protos"
+  is_ohos = true
+}
+if (is_ohos) {
+  import("../../../../build/config.gni")
 }

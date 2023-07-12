@@ -14,7 +14,7 @@
  */
 
 #include "thread_state_table.h"
-#include "thread_state.h"
+#include "thread_state_flag.h"
 
 #include <cmath>
 

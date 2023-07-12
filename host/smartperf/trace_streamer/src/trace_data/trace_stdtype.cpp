@@ -15,10 +15,12 @@
 
 #include "trace_stdtype.h"
 #include <algorithm>
+#include <cmath>
 #include <ctime>
 namespace SysTuning {
 namespace TraceStdtype {
 const int32_t MAX_SIZE_LEN = 80;
+const int32_t ONE_MILLION_NANOSECONDS = 1000000;
 #define UNUSED(expr)             \
     do {                         \
         static_cast<void>(expr); \
@@ -27,11 +29,11 @@ void CpuCacheBase::SetDur(uint64_t index, uint64_t dur)
 {
     durs_[index] = dur;
 }
-TableRowId ThreadState::AppendThreadState(InternalTime ts,
-                                          InternalTime dur,
-                                          InternalCpu cpu,
-                                          InternalTid itid,
-                                          TableRowId idState)
+TableRowId ThreadStateData::AppendThreadState(InternalTime ts,
+                                              InternalTime dur,
+                                              InternalCpu cpu,
+                                              InternalTid itid,
+                                              TableRowId idState)
 {
     timeStamps_.emplace_back(ts);
     durations_.emplace_back(dur);
@@ -44,7 +46,7 @@ TableRowId ThreadState::AppendThreadState(InternalTime ts,
     return itids_.size() - 1;
 }
 
-void ThreadState::SetDuration(TableRowId index, InternalTime dur)
+void ThreadStateData::SetDuration(TableRowId index, InternalTime dur)
 {
     durations_[index] = dur;
 }
@@ -64,7 +66,7 @@ void DataDict::Finish()
         }
     }
 }
-TableRowId ThreadState::UpdateDuration(TableRowId index, InternalTime ts)
+TableRowId ThreadStateData::UpdateDuration(TableRowId index, InternalTime ts)
 {
     if (durations_[index] == INVALID_TIME) {
         durations_[index] = ts - timeStamps_[index];
@@ -72,7 +74,7 @@ TableRowId ThreadState::UpdateDuration(TableRowId index, InternalTime ts)
     return itids_[index];
 }
 
-bool ThreadState::End(TableRowId index, InternalTime ts)
+bool ThreadStateData::End(TableRowId index, InternalTime ts)
 {
     if (durations_[index] == INVALID_TIME) {
         durations_[index] = -1;
@@ -80,28 +82,28 @@ bool ThreadState::End(TableRowId index, InternalTime ts)
     }
     return true;
 }
-void ThreadState::UpdateState(TableRowId index, TableRowId idState)
+void ThreadStateData::UpdateState(TableRowId index, TableRowId idState)
 {
     states_[index] = idState;
 }
-void ThreadState::SetArgSetId(TableRowId index, uint32_t setId)
+void ThreadStateData::SetArgSetId(TableRowId index, uint32_t setId)
 {
     argSetIds_[index] = setId;
 }
 
-void ThreadState::UpdateDuration(TableRowId index, InternalTime ts, TableRowId idState)
+void ThreadStateData::UpdateDuration(TableRowId index, InternalTime ts, TableRowId idState)
 {
     durations_[index] = ts - timeStamps_[index];
     states_[index] = idState;
 }
 
-void ThreadState::UpdateTidAndPid(TableRowId index, InternalTid tid, InternalTid pid)
+void ThreadStateData::UpdateTidAndPid(TableRowId index, InternalTid tid, InternalTid pid)
 {
     tids_[index] = tid;
     pids_[index] = pid;
 }
 
-TableRowId ThreadState::UpdateDuration(TableRowId index, InternalTime ts, InternalCpu cpu, TableRowId idState)
+TableRowId ThreadStateData::UpdateDuration(TableRowId index, InternalTime ts, InternalCpu cpu, TableRowId idState)
 {
     cpus_[index] = cpu;
     durations_[index] = ts - timeStamps_[index];
@@ -2198,6 +2200,10 @@ void FrameSlice::SetSrcs(uint64_t row, const std::vector<uint64_t>& fromSlices)
     s.pop_back();
     srcs_[row] = s;
 }
+void FrameSlice::SetFlags(uint64_t row, const uint32_t flags)
+{
+    flags_[row] = flags;
+}
 const std::deque<uint32_t> FrameSlice::Ipids() const
 {
     return ipids_;
@@ -2251,18 +2257,27 @@ void FrameSlice::SetEndTimeAndFlag(uint64_t row, uint64_t ts, uint64_t expectDur
 {
     UNUSED(expectDur);
     durs_[row] = ts - timeStamps_[row];
-    flags_[row] = expectEnd >= ts ? 0 : 1;
+    if (flags_[row] != ABNORMAL_START_END_TIME) {
+        flags_[row] = expectEnd >= ts ? 0 : 1;
+    }
 }
 void FrameSlice::Erase(uint64_t row)
 {
     flags_[row] = INVALID_ROW;
 }
-size_t FrameMaps::AppendNew(uint64_t src, uint64_t dst)
+size_t FrameMaps::AppendNew(FrameSlice* frameSlice, uint64_t src, uint64_t dst)
 {
     timeStamps_.emplace_back(0);
     ids_.emplace_back(ids_.size());
     srcs_.push_back(src);
     dsts_.push_back(dst);
+    uint64_t rsStartTime = frameSlice->TimeStampData().at(dst);
+    uint64_t appEndTime = frameSlice->TimeStampData().at(src) + frameSlice->Durs().at(src);
+    auto typeDesc = frameSlice->Types().at(dst);
+    if (typeDesc == FrameSlice::ACTURAL_SLICE &&
+        std::abs(static_cast<long long>(rsStartTime - appEndTime)) >= ONE_MILLION_NANOSECONDS) {
+        frameSlice->SetFlags(dst, FrameSlice::ABNORMAL_START_END_TIME);
+    }
     return Size() - 1;
 }
 const std::deque<uint64_t>& FrameMaps::SrcIndexs() const

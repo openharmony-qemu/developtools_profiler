@@ -17,12 +17,12 @@ import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import { LitSelectV } from '../../../base-ui/select/LitSelectV.js';
 import { LitSelect } from '../../../base-ui/select/LitSelect.js';
 import { LitSlider } from '../../../base-ui/slider/LitSlider.js';
-import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitSelectV.js';
 import '../../../base-ui/select/LitSelect.js';
 
 import '../../../base-ui/switch/lit-switch.js';
-import { info, log } from '../../../log/Log.js';
+import { info } from '../../../log/Log.js';
 import { HdcDeviceManager } from '../../../hdc/HdcDeviceManager.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
 import { SpApplication } from '../../SpApplication.js';
@@ -272,9 +272,9 @@ export class SpRecordPerf extends BaseElement {
             recordPerfSwitch.checked = false;
           }
           if (config.title == 'Start Hiperf Sampling') {
-            recordPerfSwitch.addEventListener('change', (event: any) => {
+            recordPerfSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
               let detail = event.detail;
-              if (detail.checked) {
+              if (detail!.checked) {
                 this.startSamp = true;
                 this.unDisable();
                 this.dispatchEvent(new CustomEvent('addProbe', {}));
@@ -294,11 +294,10 @@ export class SpRecordPerf extends BaseElement {
       recordPerfConfigList!.appendChild(recordPerfDiv);
     });
     let sp = document.querySelector('sp-application') as SpApplication;
-    let recordPerfSearch = sp?.shadowRoot?.querySelector('#lit-search') as LitSearch;
+    let recordPerfSearch = sp?.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     this.processSelect = this.shadowRoot?.querySelector<LitSelectV>("lit-select-v[title='Process']");
     this.recordProcessInput = this.processSelect?.shadowRoot?.querySelector<HTMLInputElement>('input');
     let querySelector = this.processSelect!.shadowRoot?.querySelector('input') as HTMLInputElement;
-    let recordPerfProcessData: Array<string> = [];
     querySelector.addEventListener('mousedown', (ev) => {
       if (SpRecordTrace.serialNumber == '') {
         this.processSelect!.dataSource([], 'ALL-Process');
@@ -312,58 +311,19 @@ export class SpRecordPerf extends BaseElement {
           sp.search = false;
           recordPerfSearch.clear();
         }
-        if (SpRecordTrace.isVscode) {
-          let cmd = Cmd.formatString(CmdConstant.CMD_GET_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
-          Cmd.execHdcCmd(cmd, (res: string) => {
-            recordPerfProcessData = [];
-            let recordPerfValuesVs: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-            for (let lineVal of recordPerfValuesVs) {
-              if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                continue;
-              }
-              let recordPerfProcessVs: string[] = lineVal.trim().split(' ');
-              if (recordPerfProcessVs.length == 2) {
-                let processId = recordPerfProcessVs[0];
-                let processName = recordPerfProcessVs[1];
-                recordPerfProcessData.push(processName + '(' + processId + ')');
-              }
-            }
-            if (recordPerfProcessData.length > 0 && this.startSamp) {
+        Cmd.getProcess().then(
+          (processList) => {
+            if (processList.length > 0 && this.startSamp) {
               this.recordProcessInput!.setAttribute('readonly', 'readonly');
             }
-            this.processSelect?.dataSource(recordPerfProcessData, 'ALL-Process');
-          });
-        } else {
-          HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((conn) => {
-            if (conn) {
-              HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((res) => {
-                recordPerfProcessData = [];
-                if (res) {
-                  let recordPerfValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-                  for (let lineVal of recordPerfValues) {
-                    if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                      continue;
-                    }
-                    let recordPerfProcess: string[] = lineVal.trim().split(' ');
-                    if (recordPerfProcess.length == 2) {
-                      let processId = recordPerfProcess[0];
-                      let processName = recordPerfProcess[1];
-                      recordPerfProcessData.push(processName + '(' + processId + ')');
-                    }
-                  }
-                }
-                if (recordPerfProcessData.length > 0 && this.startSamp) {
-                  this.recordProcessInput!.setAttribute('readonly', 'readonly');
-                }
-                this.processSelect?.dataSource(recordPerfProcessData, 'ALL-Process');
-              });
-            } else {
-              sp.search = true;
-              recordPerfSearch.clear();
-              recordPerfSearch.setPercent('please kill other hdc-server !', -2);
-            }
-          });
-        }
+            this.processSelect?.dataSource(processList, 'ALL-Process');
+          },
+          (rejected) => {
+            sp.search = true;
+            recordPerfSearch.clear();
+            recordPerfSearch.setPercent('please kill other hdc-server !', -2);
+          }
+        );
       }
     });
 

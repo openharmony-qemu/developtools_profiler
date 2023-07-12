@@ -93,7 +93,7 @@ export class SpQuerySQL extends BaseElement {
       copyResult += keyListKey + '\t';
     }
     copyResult += '\n';
-    let copyData: any = [];
+    let copyData = [];
     if (this.statDataArray.length > this.maxPageSize) {
       copyData = this.sliceData;
     } else {
@@ -105,10 +105,10 @@ export class SpQuerySQL extends BaseElement {
       });
       copyResult += '\n';
     }
-    await (navigator as any).clipboard.writeText(copyResult);
+    await navigator.clipboard.writeText(copyResult);
   }
 
-  selectEventListener = (event: any) => {
+  selectEventListener = (event: KeyboardEvent) => {
     let that = this;
     if (event.ctrlKey && event.keyCode == 13) {
       SpStatisticsHttpUtil.addOrdinaryVisitAction({
@@ -324,7 +324,7 @@ export class SpQuerySQL extends BaseElement {
     this.selector!.addEventListener('keydown', this.deleteSqlListener);
   }
 
-  deleteSqlListener = (event: any) => {
+  deleteSqlListener = (event: KeyboardEvent) => {
     if (event.key == 'Backspace') {
       this.resizeSqlHeight().then(() => {});
     }
@@ -346,7 +346,7 @@ export class SpQuerySQL extends BaseElement {
     this.selector?.style.height = selectHeight;
   }
 
-  inputSqlListener = async (event: any) => {
+  inputSqlListener = async (event: Event) => {
     this.resizeSqlHeight().then(() => {});
     let startData = new Date().getTime();
     if (this.selector!.value.trim() == '') {

@@ -28,6 +28,7 @@ import {
   queryThreadStateArgs,
   queryThreadWakeUp,
   queryThreadWakeUpFrom,
+  queryCPUWakeUpIdFromBean,
 } from '../../../database/SqlLite.js';
 import { WakeupBean } from '../../../bean/WakeupBean.js';
 import { SpApplication } from '../../../SpApplication.js';
@@ -43,6 +44,7 @@ import { BinderArgBean } from '../../../bean/BinderArgBean.js';
 import { JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
 import { LitIcon } from '../../../../base-ui/icon/LitIcon.js';
 import { Utils } from '../base/Utils.js';
+import { SpSystemTrace } from '../../SpSystemTrace.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -102,7 +104,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     callback: ((data: WakeupBean | null) => void) | undefined = undefined,
     scrollCallback?: (data: CpuStruct) => void
   ) {
-    this.setTableHeight('300px');
+    this.setTableHeight('550px');
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     if (leftTitle) {
       leftTitle.innerText = 'Slice Details';
@@ -166,6 +168,7 @@ export class TabPaneCurrentSelection extends BaseElement {
       this.currentSelectionTbl!.dataSource = list;
       let rightArea: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#table-right');
       let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+      let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')?.shadowRoot?.querySelector("#custom-button");
       let threadClick = this.currentSelectionTbl?.shadowRoot?.querySelector('#thread-id');
       threadClick?.addEventListener('click', () => {
         //cpu点击
@@ -181,6 +184,8 @@ export class TabPaneCurrentSelection extends BaseElement {
         }
         if (rightTitle != null && rightTitle) {
           rightTitle.style.visibility = 'visible';
+          rightButton!.style.visibility = 'visible';
+          SpSystemTrace.btnTimer = null;
         }
         this.drawRight(canvas, bean);
       } else {
@@ -190,6 +195,7 @@ export class TabPaneCurrentSelection extends BaseElement {
         }
         if (rightTitle != null && rightTitle) {
           rightTitle.style.visibility = 'hidden';
+          rightButton!.style.visibility = 'hidden';
         }
       }
     });
@@ -332,8 +338,10 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')?.shadowRoot?.querySelector("#custom-button");
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
     }
     if (leftTitle) {
       leftTitle.innerText = leftTitleStr;
@@ -380,11 +388,13 @@ export class TabPaneCurrentSelection extends BaseElement {
   }
 
   setIrqData(data: IrqStruct) {
-    this.setTableHeight('300px');
+    this.setTableHeight('550px');
     this.initCanvas();
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')?.shadowRoot?.querySelector("#custom-button");
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
     }
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     if (leftTitle) {
@@ -413,12 +423,15 @@ export class TabPaneCurrentSelection extends BaseElement {
     scrollWakeUp: (d: any) => void | undefined
   ) {
     //线程信息
-    this.setTableHeight('350px');
+    this.setTableHeight('550px');
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
+                                                          ?.shadowRoot?.querySelector("#custom-button");
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
     }
     if (leftTitle) {
       leftTitle.innerText = 'Thread State';
@@ -542,48 +555,14 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.setTableHeight('550px');
     this.tabCurrentSelectionInit('Slice Details');
     let list: any[] = [];
-    list.push({ name: 'Name', value: data.name });
-    list.push({ name: 'StartTime', value: getTimeString(data.ts || 0) });
-    list.push({
-      name: 'Absolute Time',
-      value: ((window as any).recordStartNS + data.ts) / 1000000000,
-    });
-    list.push({
-      name: 'Duration',
-      value: data.dur ? getTimeString(data.dur) : ' ',
-    });
-    if (data.frame_type != 'frameTime') {
-      list.push({
-        name: 'Process',
-        value: data.cmdline + ' ' + data.pid,
-      });
-    }
+    this.setJankCommonMessage(list, data);
     if (data.type == '0') {
-      if (data.jank_tag) {
-        if (data.frame_type === 'render_service') {
-          list.push({
-            name: 'Jank Type',
-            value: 'RenderService Deadline Missed',
-          });
-        } else if (data.frame_type === 'app') {
-          list.push({
-            name: 'Jank Type',
-            value: 'APP Deadline Missed',
-          });
-        } else if (data.frame_type === 'frameTime') {
-          list.push({ name: 'Jank Type', value: 'Deadline Missed' });
-        }
-      } else {
-        list.push({ name: 'Jank Type', value: 'NONE' });
-      }
+      this.setJankType(data, list);
       let jankJumperList = new Array<JankTreeNode>();
       if (data.frame_type === 'render_service') {
         queryGpuDur(data.id!).then((it) => {
           if (it.length > 0) {
-            list.push({
-              name: `<div>Gpu Duration</div>`,
-              value: getTimeString(it[0].gpu_dur),
-            });
+            list.push({ name: `<div>Gpu Duration</div>`, value: getTimeString(it[0].gpu_dur)});
           }
         });
         if (data.src_slice) {
@@ -595,12 +574,9 @@ export class TabPaneCurrentSelection extends BaseElement {
               });
               it.forEach((a: any) => {
                 let appNode = new JankTreeNode(a.name, a.pid, 'app');
-                let timeLineNode = new JankTreeNode(a.name, a.pid, 'frameTime');
-                appNode.children.push(timeLineNode);
+                appNode.children.push(new JankTreeNode(a.name, a.pid, 'frameTime'));
                 jankJumperList.push(appNode);
-                list.push({
-                  name: `<div>Slice</div>`,
-                  value:
+                list.push({name: `<div>Slice</div>`, value:
                     a.cmdline +
                     ' [' +
                     a.name +
@@ -736,21 +712,7 @@ export class TabPaneCurrentSelection extends BaseElement {
           appNode.children.push(rsNode);
           jankJumperList.push(appNode);
           this.currentSelectionTbl!.dataSource = list;
-          let all = this.currentSelectionTbl?.shadowRoot?.querySelectorAll<LitIcon>(`.jank_cla`);
-          all!.forEach((a) => {
-            a!.addEventListener('click', () => {
-              if (scrollCallback) {
-                scrollCallback({
-                  rowId: a.id,
-                  name: a.getAttribute('slice_name'),
-                  pid: a.getAttribute('pid'),
-                });
-              }
-            });
-          });
-          if (callback) {
-            callback(jankJumperList);
-          }
+          this.addJankScrollCallBackEvent(scrollCallback, callback, jankJumperList);
         });
       }
     } else {
@@ -758,6 +720,30 @@ export class TabPaneCurrentSelection extends BaseElement {
     }
   }
 
+  private setJankType(data: JankStruct, list: any[]) {
+    if (data.jank_tag === 1) {
+      if (data.frame_type === 'render_service') {
+        list.push({ name: 'Jank Type', value: 'RenderService Deadline Missed' });
+      } else if (data.frame_type === 'app') {
+        list.push({ name: 'Jank Type', value: 'APP Deadline Missed' });
+      } else if (data.frame_type === 'frameTime') {
+        list.push({ name: 'Jank Type', value: 'Deadline Missed' });
+      }
+    } else if (data.jank_tag === 3) {
+      list.push({ name: 'Jank Type', value: 'Deadline Missed' });
+    } else {
+      list.push({ name: 'Jank Type', value: 'NONE' });
+    }
+  }
+  private setJankCommonMessage(list: any[], data: JankStruct) {
+    list.push({ name: 'Name', value: data.name });
+    list.push({ name: 'StartTime', value: getTimeString(data.ts || 0) });
+    list.push({ name: 'Absolute Time', value: ((window as any).recordStartNS + data.ts) / 1000000000 });
+    list.push({ name: 'Duration', value: data.dur ? getTimeString(data.dur) : ' ' });
+    if (data.frame_type != 'frameTime') {
+      list.push({ name: 'Process', value: data.cmdline + ' ' + data.pid });
+    }
+  }
   private setTableHeight(height: string) {
     this.scrollView!.scrollTop = 0;
     this.currentSelectionTbl!.style.height = height;
@@ -810,6 +796,10 @@ export class TabPaneCurrentSelection extends BaseElement {
       if (wf && wf[0]) {
         wb = wf[0];
         if (wb != null) {
+          let wd = await queryCPUWakeUpIdFromBean(wb.tid);
+          if (wd && wd[0]) {
+            wb.itid = wd[0].itid;
+          }
           wb.wakeupTime = wakeupTs - recordStartTs;
           wb.process = Utils.PROCESS_MAP.get(wb.pid!);
           wb.thread = Utils.THREAD_MAP.get(wb.tid!);
@@ -818,6 +808,41 @@ export class TabPaneCurrentSelection extends BaseElement {
             wb.process = wb.thread;
           }
           if (wb.pid == undefined) {
+            wb.pid = wb.tid;
+          }
+          wb.schedulingDesc = INPUT_WORD;
+        }
+      }
+    }
+    return wb;
+  }
+
+  /**
+   * 查询出 线程被唤醒的 线程链信息
+   * @param data
+   */
+  static async queryCPUWakeUpListFromBean(data: WakeupBean) {
+    let wb: WakeupBean | null = null;
+    let wakeup = await queryRunnableTimeByRunning(data.tid!, data.ts!);
+    if (wakeup && wakeup[0]) {
+      let wakeupTs = wakeup[0].ts as number;
+      let recordStartTs = (window as any).recordStartNS;
+      let wf = await queryThreadWakeUpFrom(data.itid!, wakeupTs);
+      if (wf && wf[0]) {
+        wb = wf[0];
+        if (wb != null) {
+          let wd = await queryCPUWakeUpIdFromBean(wb.tid);
+          if (wd && wd[0]) {
+            wb.itid = wd[0].itid;
+          }
+          wb.wakeupTime = wakeupTs - recordStartTs;
+          wb.process = Utils.PROCESS_MAP.get(wb.pid!);
+          wb.thread = Utils.THREAD_MAP.get(wb.tid!);
+          wb.schedulingLatency = (data.ts || 0) - (wb.wakeupTime || 0);
+          if (wb.process === null) {
+            wb.process = wb.thread;
+          }
+          if (wb.pid === undefined) {
             wb.pid = wb.tid;
           }
           wb.schedulingDesc = INPUT_WORD;
@@ -972,12 +997,28 @@ export class TabPaneCurrentSelection extends BaseElement {
                 width: 100%;
                 display: flex;
             }
-            .table-title h2{
+            .table-title > h2{
                 font-size: 16px;
                 font-weight: 400;
                 visibility: visible;
                 width: 50%;
                 padding: 0 10px;
+            }
+            #rightTitle{
+                width: 50%;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 10px;
+                font-size: 16px;
+                font-weight: 400;
+                visibility: visible;
+            }
+            #rightTitle > h2{
+                font-size: 16px;
+                font-weight: 400;
+            }           
+            #rightButton{
+                padding-top:12px;
             }
             .scroll-area{
                 display: flex;
@@ -986,7 +1027,7 @@ export class TabPaneCurrentSelection extends BaseElement {
             }
             .table-left{
                 width: 50%;
-                height: 500px;
+                height: auto;
                 padding: 0 10px;
             }
             .table-right{
@@ -997,7 +1038,13 @@ export class TabPaneCurrentSelection extends BaseElement {
             <div style="width: 100%;height: auto;position: relative">
                 <div class="table-title">
                     <h2 id="leftTitle"></h2>
-                    <h2 id="rightTitle">Scheduling Latency</h2>
+                    <div id="rightTitle" >
+                        <h2 id="rightText">Scheduling Latency</h2>
+                        <div class="right">
+                        <lit-button id="rightButton"  height="32px" width="164px" color="black" font_size="14px" border="1px solid black" 
+                        >GetWakeupList</lit-button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="scroll-area">

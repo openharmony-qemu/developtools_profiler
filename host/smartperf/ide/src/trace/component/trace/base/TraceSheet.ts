@@ -41,7 +41,8 @@ import { HeapSnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerH
 import { TabPaneComparison } from '../sheet/snapshot/TabPaneComparison.js';
 import { TabPaneSummary } from '../sheet/snapshot/TabPaneSummary.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
-
+import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
+import { SlicesTime } from '../timer-shaft/SportRuler.js';
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
   private litTabs: LitTabs | undefined | null;
@@ -269,17 +270,24 @@ export class TraceSheet extends BaseElement {
           }
         }
         if (fileList.length > 0) {
+          importFileBt!.disabled = true;
           window.publish(window.SmartEvent.UI.Loading, true);
           threadPool.submit(
             'upload-so',
             '',
             fileList,
-            (res: any) => {
-              window.publish(window.SmartEvent.UI.UploadSOFile, {});
+            (res: string) => {
+              importFileBt!.disabled = false;
+              if (res === 'ok') {
+                window.publish(window.SmartEvent.UI.UploadSOFile, {});
+              } else {
+                window.publish(window.SmartEvent.UI.Error, 'parse so file failed!');
+              }
             },
             'upload-so'
           );
         }
+        fileList.length = 0;
       }
       importFileBt!.files = null;
       importFileBt!.value = '';
@@ -339,7 +347,8 @@ export class TraceSheet extends BaseElement {
                 </lit-tabs>
             </div>`;
   }
-
+  displayCurrent = (data: SlicesTime) =>
+    this.displayTab<TabPaneCurrent>('tabpane-current').setCurrentSlicesTime(data);
   displayThreadData = (
     data: ThreadStruct,
     scrollCallback: ((e: ThreadStruct) => void) | undefined,
@@ -518,7 +527,7 @@ export class TraceSheet extends BaseElement {
 
   clearMemory() {
     let allTabs = Array.from(this.shadowRoot?.querySelectorAll<LitTabpane>('#tabs lit-tabpane').values() || []);
-    allTabs.forEach( tab => {
+    allTabs.forEach(tab => {
       if (tab) {
         let tables = Array.from(
           (tab.firstChild as BaseElement).shadowRoot?.querySelectorAll<LitTable>('lit-table') || []

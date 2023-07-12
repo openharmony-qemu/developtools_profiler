@@ -16,12 +16,12 @@
 #include "htrace_parser.h"
 #include <unistd.h>
 #include "binder_filter.h"
+#include "common_types.pbreader.h"
 #include "cpu_filter.h"
 #include "data_area.h"
 #include "ftrace_event.pbreader.h"
 #include "log.h"
 #include "memory_plugin_result.pbreader.h"
-#include "services/common_types.pbreader.h"
 #include "stat_filter.h"
 #include "trace_plugin_result.pbreader.h"
 #if IS_WASM

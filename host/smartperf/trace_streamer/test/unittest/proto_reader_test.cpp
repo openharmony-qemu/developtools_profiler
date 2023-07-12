@@ -23,7 +23,6 @@
 
 #include "file.h"
 #include "test.pb.h"
-#include "test.pb.cc"
 #include "test.pbreader.h"
 #include "trace_streamer_selector.h"
 

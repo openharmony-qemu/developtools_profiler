@@ -37,6 +37,8 @@ export class SpJsMemoryChart implements ParseListener {
       let jsHeapRow = TraceRow.skeleton();
       let process = '';
       let heapFile = HeapDataInterface.getInstance().getFileStructs();
+      let file = heapFile[0];
+      let samples = HeapDataInterface.getInstance().getSamples(file.id);
       process = String(heapFile[0].pid);
       jsHeapRow.rowId = `js-memory`;
       jsHeapRow.index = 0;
@@ -49,7 +51,7 @@ export class SpJsMemoryChart implements ParseListener {
       jsHeapRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       jsHeapRow.selectChangeHandler = this.trace.selectChangeHandler;
       jsHeapRow.onDrawTypeChangeHandler = (type) => {};
-      jsHeapRow.supplier = () => new Promise<Array<any>>((resolve) => resolve([]));
+      jsHeapRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(samples));
       jsHeapRow.onThreadHandler = (useCache) => {
         jsHeapRow.canvasSave(this.trace.canvasPanelCtx!);
         if (jsHeapRow.expansion) {
@@ -67,10 +69,8 @@ export class SpJsMemoryChart implements ParseListener {
         jsHeapRow.canvasRestore(this.trace.canvasPanelCtx!);
       };
       this.trace.rowsEL?.appendChild(jsHeapRow);
-      let file = heapFile[0];
       SpJsMemoryChart.file = file;
       if (file.name.includes('Timeline')) {
-        let samples = HeapDataInterface.getInstance().getSamples(file.id);
         let heapTimelineRow = TraceRow.skeleton<HeapTimelineStruct>();
         heapTimelineRow.index = 0;
         heapTimelineRow.rowParentId = `js-memory`;

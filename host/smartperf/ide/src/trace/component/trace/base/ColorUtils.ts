@@ -20,19 +20,19 @@ export class ColorUtils {
 
   public static FUNC_COLOR_A: Array<string> = [
     '#40b3e7',
-    '#606e75',
+    '#23b0e7',
     '#8d9171',
-    '#8f8f8f',
+    '#FF0066',
     '#7a9160',
     '#9fafc4',
     '#8a8a8b',
-    '#9e8e00',
-    '#696e35',
-    '#5c4d21',
-    '#18a8a1',
+    '#e05b52',
+    '#9bb87a',
+    '#ebc247',
+    '#c2cc66',
     '#a16a40',
     '#a94eb9',
-    '#886EB4',
+    '#aa4fba',
   ];
   public static FUNC_COLOR_B: Array<string> = [
     '#9785D3',
@@ -51,7 +51,7 @@ export class ColorUtils {
     '#C6D9F2',
   ];
 
-  public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#FFE335', '#009DFA', '#E97978'];
+  public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#E8BE44', '#009DFA', '#E97978'];
   public static MD_PALETTE: Array<string> = ColorUtils.FUNC_COLOR_B;
   public static FUNC_COLOR: Array<string> = ColorUtils.FUNC_COLOR_B;
 

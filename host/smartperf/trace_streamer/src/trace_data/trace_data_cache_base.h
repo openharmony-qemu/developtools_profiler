@@ -87,7 +87,7 @@ public:
     uint64_t traceEndTime_ = 0;
 
     Raw rawData_;
-    ThreadState threadStateData_;
+    ThreadStateData threadStateData_;
     Instants instantsData_;
 
     Filter filterData_;

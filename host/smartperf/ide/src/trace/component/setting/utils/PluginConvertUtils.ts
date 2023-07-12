@@ -135,7 +135,7 @@ export class PluginConvertUtils {
 
   private static handleArray(
     key: string,
-    arr: Array<any>,
+    arr: Array<Object>,
     indentation: number,
     needColon: boolean,
     spacesNumber: number
@@ -223,12 +223,12 @@ export class PluginConvertUtils {
     return humpString.replace(/[A-Z]/g, (value) => '_' + value.toLowerCase());
   }
 
-  private static getMontageStrings(
+  private static getMontageStrings<T extends Object>(
     prefixText: string,
     spacesNumber: number,
     indentation: number,
     key: string,
-    value: any
+    value: T
   ): string {
     return (
       prefixText +

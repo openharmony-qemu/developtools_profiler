@@ -15,6 +15,9 @@
 
 #include "wasm_func.h"
 
+#ifndef NAME_MAX
+#define NAME_MAX 255
+#endif
 namespace SysTuning {
 namespace TraceStreamer {
 RpcServer g_wasmTraceStreamer;

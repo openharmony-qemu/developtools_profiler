@@ -15,40 +15,15 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initTest = (metricData: Array<any>): ProcessInfoListItem => {
-  let processInfoListItems: Array<ProcessInfoItem> = [];
-  for (let index = 0; index < metricData.length; index++) {
-    let eventName = metricData[index].event_name;
-    let stat_type = metricData[index].stat_type;
-    let count = metricData[index].count;
-    let source = metricData[index].source;
-    let serverity = metricData[index].serverity;
-
-    let processInfoSource: ProcessInfoItem = {
-      // @ts-ignore
-      processName: eventName,
-      threads: {
-        // @ts-ignore
-        threadName: stat_type,
-        cpu: [
-          {
-            cpu: eventName,
-            minFreq: stat_type,
-            maxFreq: count,
-            avgFrequency: source,
-            duration: serverity,
-          },
-        ],
-      },
-    };
-    processInfoListItems?.push(processInfoSource);
-  }
-  return {
-    processInfo: processInfoListItems,
-  };
-};
-
-export const initCpuStrategyData = (metricData: Array<any>): ProcessInfoListItem => {
+export const initCpuStrategyData = (metricData: Array<{
+  tid: string;
+  pid: string;
+  cpu: string;
+  dur: string;
+  min_freq: string;
+  max_freq: string;
+  avg_frequency: string;
+}>): ProcessInfoListItem => {
   info('Cpu Strategy data length is:', metricData.length);
   let processInfoListItems: Array<ProcessInfoItem> = [];
   if (metricData.length == 10) {

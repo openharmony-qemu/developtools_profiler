@@ -44,7 +44,7 @@ public:
     Measure* GetMeasureData();
     Measure* GetSysMemMeasureData();
     Measure* GetProcessMeasureData();
-    ThreadState* GetThreadStateData();
+    ThreadStateData* GetThreadStateData();
     SchedSlice* GetSchedSliceData();
     CpuMeasureFilter* GetCpuMeasuresData();
     ThreadMeasureFilter* GetThreadMeasureFilterData();

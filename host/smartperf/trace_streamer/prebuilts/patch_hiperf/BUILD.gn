@@ -32,7 +32,7 @@ ohos_source_set("elf") {
     "include/nonlinux/linux",
     "include/nonlinux",
     "${THIRD_PARTY}/perf_include/musl",
-    "${SRC}/../prebuilts/emsdk/node/14.18.2_64bit/include/node",
+    "${SRC}/../prebuilts/emsdk/node/16.20.0_64bit/include/node",
   ]
 }
 ohos_source_set("hiperf_src") {

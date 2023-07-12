@@ -91,7 +91,7 @@ export class TabPaneCounterSample extends BaseElement {
       });
       let counterSampleList: Array<any> = [];
       sampleMap.forEach((a) => {
-        a.timeStr = Utils.getProbablyTime(a.time);
+        a.timeStr = parseFloat((a.time / 1000000.0).toFixed(6));
         counterSampleList.push(a);
       });
       this.counterSampleSource = counterSampleList;
@@ -194,7 +194,7 @@ export class TabPaneCounterSample extends BaseElement {
         <lit-table id="tb-counter-sample" class="counter-sample-table">
             <lit-table-column class="counter-sample-column" width="20%" order data-index="counter" key="counter" align="flex-start" title="Cpu" >
             </lit-table-column>
-            <lit-table-column class="counter-sample-column" width="1fr" order data-index="timeStr" key="timeStr" align="flex-start" title="Time" >
+            <lit-table-column class="counter-sample-column" width="1fr" order data-index="timeStr" key="timeStr" align="flex-start" title="Time(ms)" >
             </lit-table-column>
             <lit-table-column class="counter-sample-column" width="1fr" order data-index="value" key="value" align="flex-start" title="Value" >
             </lit-table-column>

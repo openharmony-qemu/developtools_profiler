@@ -17,7 +17,6 @@
 #define TRACE_STREAMER_CONFIG_H
 #include <map>
 #include <string>
-#include "memory_plugin_common.pb.h"
 #include "ts_common.h"
 namespace SysTuning {
 namespace TraceCfg {
@@ -181,9 +180,9 @@ public:
     // process mem info desc
     std::map<MemInfoType, std::string> memNameMap_ = {};
     // sys memorty info desc
-    std::map<SysMeminfoType, std::string> sysMemNameMap_ = {};
+    std::map<uint32_t, std::string> sysMemNameMap_ = {};
     // sys virtual memorty info desc
-    std::map<SysVMeminfoType, std::string> sysVirtualMemNameMap_ = {};
+    std::map<uint32_t, std::string> sysVirtualMemNameMap_ = {};
 
 private:
     void InitEventNameMap();

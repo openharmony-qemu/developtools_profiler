@@ -53,18 +53,6 @@ ohos_source_set("htrace_pbreader_parser_src") {
     ".",
     "htrace_event_parser",
     "htrace_cpu_parser",
-    "${OHOS_PROTO_GEN}",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
     "../../include",
     "../../",
     "../",
@@ -108,7 +96,20 @@ ohos_source_set("htrace_pbreader_parser_src") {
     ]
   }
   public_deps = []
-  deps = []
+  deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:all_type_cpp_standard",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_encoder",
+  ]
 }
 group("htrace_pbreader_parser") {
   deps = [

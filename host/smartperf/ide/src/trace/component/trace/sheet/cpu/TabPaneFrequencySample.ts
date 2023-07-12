@@ -93,7 +93,7 @@ export class TabPaneFrequencySample extends BaseElement {
 
       let frqSampleList: Array<any> = [];
       sampleMap.forEach((a) => {
-        a.timeStr = Utils.getProbablyTime(a.time);
+        a.timeStr = parseFloat((a.time / 1000000.0).toFixed(6));
         frqSampleList.push(a);
       });
       this.frequencySampleSource = frqSampleList;
@@ -126,7 +126,7 @@ export class TabPaneFrequencySample extends BaseElement {
         sampleMap.set(item.filterId + '-' + item.value, {
           ...item,
           counter: 'Cpu ' + item.cpu,
-          valueStr: ColorUtils.formatNumberComma(item.value) + ' kHz',
+          valueStr: ColorUtils.formatNumberComma(item.value),
         });
       }
     });
@@ -194,9 +194,9 @@ export class TabPaneFrequencySample extends BaseElement {
         <lit-table id="tb-states" style="height: auto" >
             <lit-table-column class="freq-sample-column" width="20%" title="Cpu" data-index="counter" key="counter" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" title="Time" data-index="timeStr" key="timeStr" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="1fr" title="Time(ms)" data-index="timeStr" key="timeStr" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" title="Value" data-index="valueStr" key="valueStr" align="flex-start" order>
+            <lit-table-column class="freq-sample-column" width="1fr" title="Value(kHz)" data-index="valueStr" key="valueStr" align="flex-start" order>
             </lit-table-column>
         </lit-table>
         <lit-progress-bar class="progressFre"></lit-progress-bar>

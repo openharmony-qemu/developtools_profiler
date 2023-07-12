@@ -781,7 +781,8 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
       currentNode.symbol =
         ProcedureLogicWorkerFileSystem.data_dict.get(currentNode.symbolsId) || currentNode.ip || 'unkown';
       currentNode.path = ProcedureLogicWorkerFileSystem.data_dict.get(currentNode.pathId) || 'unkown';
-      currentNode.libName = setFileName(currentNode.path);
+      currentNode.lib = currentNode.libName = setFileName(currentNode.path);
+      currentNode.addr = currentNode.ip;
       currentNode.symbolName = `${currentNode.symbol} (${currentNode.libName})`;
     }
   }

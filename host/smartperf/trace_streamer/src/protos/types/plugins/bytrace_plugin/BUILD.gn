@@ -19,39 +19,46 @@ bytrace_plugin_protos_defines = [ "./bytrace_plugin_config.proto" ]
 #######################################################
 proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
-print("proto_out_dir", proto_out_dir, proto_rel_out_dir)
 
 #######################################################
 bytrace_plugin_protos_codegen = []
+bytrace_plugin_protos_codegen_standard = []
+bytrace_plugin_protos_codegen_all = []
 foreach(proto, bytrace_plugin_protos_defines) {
   name = get_path_info(proto, "name")
   bytrace_plugin_protos_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
   ]
+  bytrace_plugin_protos_codegen_standard += [
+    "$proto_out_dir/${name}_standard.pb.h",
+    "$proto_out_dir/${name}_standard.pb.cc",
+  ]
 }
+bytrace_plugin_protos_codegen_all += bytrace_plugin_protos_codegen
+bytrace_plugin_protos_codegen_all += bytrace_plugin_protos_codegen_standard
 
 action("bytrace_plugin_protos_protoc") {
-  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
+  script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = bytrace_plugin_protos_defines
-  outputs = bytrace_plugin_protos_codegen
+  outputs = bytrace_plugin_protos_codegen_all
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
+    "$proto_rel_out_dir",
     "--cpp_out",
     "$proto_rel_out_dir",
     "--proto_path",
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
 }
 
 config("bytrace_plugin_protos_config") {
   include_dirs = [ "$proto_out_dir" ]
 }
 
-source_set("bytrace_plugin_protos_cpp") {
+ohos_source_set("bytrace_plugin_protos_cpp") {
   deps = [ ":bytrace_plugin_protos_protoc" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
@@ -60,4 +67,15 @@ source_set("bytrace_plugin_protos_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
   sources = bytrace_plugin_protos_codegen
+}
+
+ohos_source_set("bytrace_plugin_protos_cpp_standard") {
+  deps = [ ":bytrace_plugin_protos_protoc" ]
+  public_deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":bytrace_plugin_protos_config" ]
+  sources = bytrace_plugin_protos_codegen_standard
 }

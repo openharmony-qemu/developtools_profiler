@@ -627,11 +627,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         info('checkBoxEL target not checked');
         this.rangeSelect = false;
         this.checkType = '0';
-        this.draw();
       } else {
         this.rangeSelect = true;
         this.checkType = '2';
-        this.draw();
       }
       this.setCheckBox(ev.target.checked);
     };
@@ -683,21 +681,23 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       });
     };
     this.collectEL!.onclick = (e) => {
-      this.collect = !this.collect;
-      if (this.collect) {
-        this.describeEl!.draggable = false;
-      } else {
-        this.describeEl!.draggable = false;
+      if (this.isComplete) {
+        this.collect = !this.collect;
+        if (this.collect) {
+          this.describeEl!.draggable = false;
+        } else {
+          this.describeEl!.draggable = false;
+        }
+        document.dispatchEvent(
+          new CustomEvent('collect', {
+            detail: {
+              type: e.type,
+              row: this,
+            },
+          })
+        );
+        this.favoriteChangeHandler?.(this);
       }
-      document.dispatchEvent(
-        new CustomEvent('collect', {
-          detail: {
-            type: e.type,
-            row: this,
-          },
-        })
-      );
-      this.favoriteChangeHandler?.(this);
     };
     if (!this.args['skeleton']) {
       this.initCanvas(this.canvas);
@@ -788,12 +788,10 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       checkList?.forEach((rowItem) => {
         rowItem.checkType = '2';
         rowItem.rangeSelect = true;
-        rowItem.draw();
       });
       checkList2?.forEach((it) => {
         it.checkType = '2';
         it.rangeSelect = true;
-        it.draw();
       });
     } else {
       this.parentRowEl?.setAttribute('check-type', '1');
@@ -804,22 +802,18 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       checkList?.forEach((it) => {
         it.checkType = '2';
         it.rangeSelect = true;
-        it.draw();
       });
       checkList2?.forEach((it) => {
         it.checkType = '2';
         it.rangeSelect = true;
-        it.draw();
       });
       unselectedList?.forEach((item) => {
         item.checkType = '0';
         item.rangeSelect = false;
-        item.draw();
       });
       unselectedList2?.forEach((it) => {
         it.checkType = '0';
         it.rangeSelect = false;
-        it.draw();
       });
     }
 
@@ -832,12 +826,10 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       unselectedList?.forEach((it) => {
         it.checkType = '0';
         it.rangeSelect = false;
-        it.draw();
       });
       unselectedList2?.forEach((it) => {
         it.checkType = '0';
         it.rangeSelect = false;
-        it.draw();
       });
     }
     let traceRowList: Array<TraceRow<any>> = [];

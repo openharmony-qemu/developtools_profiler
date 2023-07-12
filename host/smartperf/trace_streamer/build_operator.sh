@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -e
-ext=""
+ext="/clang_x64"
 target_dir="linux"
+subsys_name="developtools"
+part_name="profiler"
 is_debug="$1"
 target="$2"
 target_os="$3"
@@ -60,34 +62,29 @@ fi
 if [ "$is_debug" != "false" ];then
        	ext="_debug"
 fi
-if [ ! -d "third_party/protogen" ] && [ "$target" != "spb" ] && [ "$target" != "protoc" ];then
-    ./src/protos/protogen.sh
-fi
 
 if [ "$target" == "test" ] || [ "$target" == "fuzz" ] || [ "$target"="wasm" ] || [ "$target"="sdkdemo" ] || [ "$target"="sdkdemotest" ];then
     target_dir=$target
 else
     target_dir=$target_os
 fi
-if [ "$target" == "trace_streamer" ] || [ "$target" == "trace" ] || [ "$target" == "spb" ];then
+if [ "$target" == "trace_streamer" ] || [ "$target" == "trace" ] || [ "$target" == "spb" ] || [ "$target" == "protoc" ];then
     target_dir=$target_os
 fi
 echo "target_dir:" $target_dir
 echo "target:" $target
 # exit
 if [ "$is_clean" == "true"  ];then
-    prebuilts/$gn_path/$gn gen out/"$target_dir""$ext" --clean
-    prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext" -t clean
+    prebuilts/$gn_path/$gn gen out/"$target_dir""$ext"/$subsys_name/$part_name --clean
+    prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"/$subsys_name/$part_name -t clean
 else
-    prebuilts/$gn_path/$gn gen out/"$target_dir""$ext" --args='is_debug='"$is_debug"' target="'"$target"'" target_os="'"$target_os"'"'
+    prebuilts/$gn_path/$gn gen out/"$target_dir""$ext"/$subsys_name/$part_name --args='is_debug='"$is_debug"' target="'"$target"'" target_os="'"$target_os"'"'
     echo "begin to build ..."
     mkdir -p out/windows
     touch out/windows/trace_streamer.exe
-    prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"
-    if [ "$target_dir" == "protoc" ];then
-        if [ ! -d "out/$target_os" ];then
-            mkdir -p "out/$target_os"
-        fi
-        mv out/"$target_dir""$ext"/$target_dir out/$target_os/
+    prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"/$subsys_name/$part_name
+    if [ $target_dir == "linux" ] && [ -f "out/$target_dir$ext/$subsys_name/$part_name/trace_streamer" ];then
+        mkdir -p out/linux
+        cp out/"$target_dir""$ext"/$subsys_name/$part_name/trace_streamer out/linux/
     fi
 fi

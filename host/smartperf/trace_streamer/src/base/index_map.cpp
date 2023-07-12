@@ -152,17 +152,16 @@ void IndexMap::FilterTS(unsigned char op, sqlite3_value* argv, const std::deque<
         }
         case SQLITE_INDEX_CONSTRAINT_LE:
             v++;
-        case SQLITE_INDEX_CONSTRAINT_LT: {
+        case SQLITE_INDEX_CONSTRAINT_LT:
             IntersectLessEqual(times, v, getValue);
             break;
-            case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: {
-                RemoveNullElements(times, v);
-                break;
-            }
-            default:
-                break;
-        } // end of switch (op)
-    }
+        case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: {
+            RemoveNullElements(times, v);
+            break;
+        }
+        default:
+            break;
+    } // end of switch (op)
 }
 void IndexMap::Merge(IndexMap* other)
 {

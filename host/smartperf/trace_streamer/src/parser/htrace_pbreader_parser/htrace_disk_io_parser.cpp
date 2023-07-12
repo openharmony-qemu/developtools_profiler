@@ -14,6 +14,7 @@
  */
 #include "htrace_disk_io_parser.h"
 #include "clock_filter_ex.h"
+#include "diskio_plugin_result.pbreader.h"
 #include "htrace_event_parser.h"
 #include "process_filter.h"
 #include "stat_filter.h"

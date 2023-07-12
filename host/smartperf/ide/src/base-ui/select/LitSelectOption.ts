@@ -31,7 +31,8 @@ export class LitSelectOption extends BaseElement {
             color: var(--dark-color2,#333);
             tab-index: -1;
             align-items: center;
-            width: 100%;
+            width: max-content;
+            min-width: 100%;
             max-lines: 1;
             white-space: nowrap;
             font-size: 0.8rem;

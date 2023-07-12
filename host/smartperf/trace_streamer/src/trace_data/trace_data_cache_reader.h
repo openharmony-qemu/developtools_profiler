@@ -44,7 +44,7 @@ public:
     const Measure& GetConstSysMemMeasureData() const;
     const Measure& GetConstProcessMeasureData() const;
     const ThreadMeasureFilter& GetConstThreadMeasureFilterData() const;
-    const ThreadState& GetConstThreadStateData() const;
+    const ThreadStateData& GetConstThreadStateData() const;
     const SchedSlice& GetConstSchedSliceData() const;
     const CpuMeasureFilter& GetConstCpuMeasureData() const;
     const ThreadMeasureFilter& GetConstThreadFilterData() const;
