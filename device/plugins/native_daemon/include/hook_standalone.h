@@ -24,6 +24,7 @@ using HookData = struct {
     uint64_t duration;
     uint32_t filterSize;
     uint32_t maxStackDepth;
+    uint32_t statisticsInterval;
     std::string fileName;
     std::string processName;
     std::string performance_filename;
@@ -32,6 +33,10 @@ using HookData = struct {
     bool freemsgstack;
     bool munmapmsgstack;
     bool fpUnwind;
+    bool offlineSymbolization;
+    bool callframeCompress;
+    bool stringCompressed;
+    bool rawString;
 };
 
 namespace OHOS {

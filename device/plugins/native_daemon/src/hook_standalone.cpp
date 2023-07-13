@@ -13,19 +13,26 @@
  * limitations under the License.
  */
 #include "hook_standalone.h"
+
+#include <csignal>
 #include <functional>
 #include <linux/types.h>
 #include <sys/mman.h>
+
 #include "common.h"
-#include "utilities.h"
+#include "epoll_event_poller.h"
+#include "event_notifier.h"
 #include "hook_common.h"
+#include "hook_manager.h"
 #include "hook_service.h"
 #include "logging.h"
+#include "native_hook_config.pb.h"
 #include "share_memory_allocator.h"
-#include "event_notifier.h"
-#include "epoll_event_poller.h"
-#include "virtual_runtime.h"
+#include "stack_data_repeater.h"
 #include "stack_preprocess.h"
+#include "virtual_runtime.h"
+#include "hook_manager.h"
+#include "utilities.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
 namespace OHOS {
@@ -36,172 +43,27 @@ const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 const int MOVE_BIT_16 = 16;
 const int MOVE_BIT_32 = 32;
 std::string g_smbName = "hooknativesmb";
-std::shared_ptr<VirtualRuntime> g_runtimeInstance;
 std::unique_ptr<EpollEventPoller> g_eventPoller_;
 std::shared_ptr<ShareMemoryBlock> g_shareMemoryBlock;
 std::shared_ptr<EventNotifier> g_eventNotifier;
 std::shared_ptr<HookService> g_hookService;
+std::shared_ptr<HookManager> g_hookManager;
+std::shared_ptr<StackDataRepeater> g_stackDataRepeater;
+std::shared_ptr<StackPreprocess> g_stackpreprocess;
 uint32_t g_maxStackDepth;
 bool g_unwindErrorFlag = false;
 bool g_fpUnwind = false;
+uint32_t g_statisticsinterval;
 std::unique_ptr<FILE, decltype(&fclose)> g_fpHookFile(nullptr, nullptr);
 
-void WriteFrames(BaseStackRawData *data, const std::vector<CallFrame>& callFrames)
+static void SignalHandl(int signo)
 {
-    if (data->type == MALLOC_MSG) {
-        fprintf(g_fpHookFile.get(), "malloc;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
-    } else if (data->type == FREE_MSG) {
-        fprintf(g_fpHookFile.get(), "free;%" PRId64 ";%ld;0x%" PRIx64 "\n",
-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr);
-    } else if (data->type == MMAP_MSG) {
-        fprintf(g_fpHookFile.get(), "mmap;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
-    } else if (data->type == MUNMAP_MSG) {
-        fprintf(g_fpHookFile.get(), "munmap;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
-    }  else if (data->type == PR_SET_VMA_MSG) {
-        fprintf(g_fpHookFile.get(), "prctl;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n",
-                (int64_t)data->ts.tv_sec, data->ts.tv_nsec, (uint64_t)data->addr, data->mallocSize);
-    } else {
-        return;
+    HILOG_ERROR(LOG_CORE, "recv signal %d", signo);
+    g_stackpreprocess->StopTakeResults();
+    if (g_statisticsinterval > 0) {
+        g_stackpreprocess->FlushRecordStatistics();
     }
-
-    size_t idx = 0;
-    if (!g_fpUnwind) {
-        idx = FILTER_STACK_DEPTH;
-    }
-
-    for (; idx < callFrames.size(); ++idx) {
-        auto item = callFrames[idx];
-        (void)fprintf(g_fpHookFile.get(), "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
-                      item.ip_, item.sp_, std::string(item.symbolName_).c_str(),
-                      std::string(item.filePath_).c_str(), item.offset_, item.symbolOffset_);
-    }
-    fflush(g_fpHookFile.get());
-}
-
-void ReadShareMemory(uint64_t duration, const std::string& performance_filename)
-{
-    CHECK_NOTNULL(g_shareMemoryBlock, NO_RETVAL, "smb is null!");
-    uint64_t value = g_eventNotifier->Take();
-
-    static bool firstFlag = true;
-    static bool endFlag = false;
-    static uint64_t times = 0;
-
-    struct timespec firstTime;
-    struct timespec beginTime;
-    struct timespec endTime;
-    std::vector<u64> u64regs;
-    std::vector<CallFrame> callFrames;
-    uint64_t total_time = 0;
-#if defined(__arm__)
-    u64regs.resize(PERF_REG_ARM_MAX);
-#else
-    u64regs.resize(PERF_REG_ARM64_MAX);
-#endif
-    callFrames.reserve(g_maxStackDepth);
-    auto rawData = std::make_unique<StandaloneRawStack>();
-    uint16_t  rawRealSize = 0;
-    while (true) {
-        bool ret = g_shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            if (size < sizeof(BaseStackRawData)) {
-                HILOG_ERROR(LOG_CORE, "stack data invalid!");
-                return false;
-            }
-            rawData->stackConext = reinterpret_cast<BaseStackRawData *>(const_cast<int8_t *>(data));
-            rawData->data = const_cast<int8_t *>(data) + sizeof(BaseStackRawData);
-
-            if (rawData->stackConext->type == MMAP_FILE_TYPE) {
-                BaseStackRawData* mmapRawData = rawData->stackConext;
-                std::string filePath(reinterpret_cast<char *>(rawData->data));
-                COMMON::AdaptSandboxPath(filePath, rawData->stackConext->pid);
-                HILOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
-                    "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
-                    mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
-                    mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
-                g_runtimeInstance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr), mmapRawData->mallocSize,
-                    mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
-                return true;
-            } else if (rawData->stackConext->type == MUNMAP_MSG) {
-                g_runtimeInstance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
-            }
-            callFrames.clear();
-            if (g_fpUnwind) {
-                rawData->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
-                uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
-                for (int idx = 0; idx < rawData->fpDepth; ++idx) {
-                    if (fpIp[idx] == 0) {
-                        break;
-                    }
-                    callFrames.push_back(fpIp[idx]);
-                }
-            } else {
-                rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
-                rawData->stackSize = size - rawRealSize;
-                if (rawData->stackSize > 0) {
-                    rawData->stackData = reinterpret_cast<uint8_t *>(const_cast<int8_t *>(data)) + rawRealSize;
-                }
-#if defined(__arm__)
-                uint32_t *regAddrArm = reinterpret_cast<uint32_t *>(rawData->data);
-                u64regs.assign(regAddrArm, regAddrArm + PERF_REG_ARM_MAX);
-#else
-                if (memcpy_s(u64regs.data(), sizeof(uint64_t) * PERF_REG_ARM64_MAX, rawData->data,
-                    sizeof(uint64_t) * PERF_REG_ARM64_MAX) != EOK) {
-                    HILOG_ERROR(LOG_CORE, "memcpy_s regs failed");
-                }
-#endif
-            }
-
-            if (!endFlag && duration != 0) {
-                clock_gettime(CLOCK_REALTIME, &beginTime);
-                if (firstFlag) {
-                    firstFlag = false;
-                    firstTime = beginTime;
-                }
-            }
-
-            bool ret = g_runtimeInstance->UnwindStack(u64regs, rawData->stackData, rawData->stackSize,
-                rawData->stackConext->pid, rawData->stackConext->tid, callFrames,
-                (g_maxStackDepth > 0) ? g_maxStackDepth + FILTER_STACK_DEPTH : MAX_CALL_FRAME_UNWIND_SIZE);
-            if (!ret) {
-                HILOG_ERROR(LOG_CORE, "unwind fatal error");
-                return false;
-            }
-            if (!endFlag && duration != 0) {
-                clock_gettime(CLOCK_REALTIME, &endTime);
-                total_time += (endTime.tv_sec - beginTime.tv_sec) * 1000000000LLU +
-                    (endTime.tv_nsec - beginTime.tv_nsec);
-                ++times;
-                if (endTime.tv_sec - firstTime.tv_sec >= static_cast<long>(duration)) {
-                    endFlag = true;
-                    FILE *fp = fopen(performance_filename.c_str(), "a");
-                    if (fp) {
-                        time_t now = time(nullptr);
-                        struct tm nowTime;
-                        localtime_r(&now, &nowTime);
-                        // 1900: count of years
-                        fprintf(fp, "Current time: %04d-%02d-%02d %02d:%02d:%02d\n", nowTime.tm_year + 1900,
-                                nowTime.tm_mon + 1, nowTime.tm_mday, nowTime.tm_hour, nowTime.tm_min, nowTime.tm_sec);
-                        fprintf(fp, "Total durations: %" PRIu64 " nanoseconds\n", total_time);
-                        fprintf(fp, "Total times: %" PRIu64 "\n", times);
-                        fprintf(fp, "Average unwinding stack time: %.2f  nanoseconds\n\n",
-                                (double)(total_time) / times);
-                        fclose(fp);
-                        printf("Performance data has already been generated.\n");
-                    }
-                }
-            }
-
-            WriteFrames(rawData->stackConext, callFrames);
-
-            return true;
-        });
-        if (!ret) {
-            break;
-        }
-    }
+    exit(-1);
 }
 
 void GetClientConfig(const HookData& hookData, ClientConfig& clientConfig)
@@ -219,25 +81,18 @@ void GetClientConfig(const HookData& hookData, ClientConfig& clientConfig)
 
 bool StartHook(HookData& hookData)
 {
-    g_runtimeInstance = std::make_shared<VirtualRuntime>();
-    FILE *fp = fopen(hookData.fileName.c_str(), "wb+");
-    if (fp != nullptr) {
-        g_fpHookFile.reset();
-        g_fpHookFile = std::unique_ptr<FILE, decltype(&fclose)>(fp, fclose);
-    }
-    if (g_fpHookFile == nullptr) {
-        printf("create file failed!\n");
-        return false;
-    }
     // create smb and eventNotifier
     g_shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(g_smbName, hookData.smbSize);
     g_eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
+    g_stackDataRepeater = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
+    CHECK_TRUE(g_stackDataRepeater != nullptr, false, "Create StackDataRepeater FAIL");
+    g_hookManager = std::make_shared<HookManager>(g_shareMemoryBlock, g_eventNotifier, g_stackDataRepeater);
     // start event poller task
     g_eventPoller_ = std::make_unique<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
     g_eventPoller_->Init();
     g_eventPoller_->Start();
     g_eventPoller_->AddFileDescriptor(g_eventNotifier->GetFd(),
-                                      std::bind(ReadShareMemory, hookData.duration, hookData.performance_filename));
+                                      std::bind(&HookManager::ReadShareMemory, g_hookManager.get()));
 
     HILOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", g_shareMemoryBlock->GetfileDescriptor(),
                g_eventNotifier->GetFd());
@@ -262,6 +117,54 @@ bool StartHook(HookData& hookData)
 
     g_maxStackDepth = hookData.maxStackDepth;
     g_fpUnwind = hookData.fpUnwind;
+    g_statisticsinterval = hookData.statisticsInterval;
+
+    NativeHookConfig nativeConfig;
+    nativeConfig.set_fp_unwind(hookData.fpUnwind);
+    nativeConfig.set_max_stack_depth(hookData.maxStackDepth);
+    nativeConfig.set_filter_size(hookData.filterSize);
+    nativeConfig.set_save_file(true);
+    nativeConfig.set_file_name(hookData.fileName);
+    nativeConfig.set_statistics_interval(hookData.statisticsInterval);
+    nativeConfig.set_offline_symbolization(hookData.offlineSymbolization);
+    nativeConfig.set_callframe_compress(hookData.callframeCompress);
+    nativeConfig.set_string_compressed(hookData.stringCompressed);
+#if defined(__arm__)
+    nativeConfig.set_fp_unwind(false); // if OS is 32-bit,set fp_unwind false.
+#endif
+    bool isHookStandaloneSerialize = false;
+    // statistical reporting must be callframe compressed and accurate.
+    if (nativeConfig.statistics_interval() > 0) {
+        nativeConfig.set_callframe_compress(true);
+        nativeConfig.set_record_accurately(true);
+    }
+    // offlinem symbolization, callframe must be compressed
+    if (nativeConfig.offline_symbolization()) {
+        nativeConfig.set_callframe_compress(true);
+    }
+
+    // callframe compressed, string must be compressed.
+    if (nativeConfig.callframe_compress()) {
+        nativeConfig.set_string_compressed(true);
+    }
+
+    if (nativeConfig.string_compressed() || hookData.rawString) {
+        isHookStandaloneSerialize = true;
+    }
+    HILOG_INFO(LOG_CORE, "fp_unwind = %d", nativeConfig.fp_unwind());
+    HILOG_INFO(LOG_CORE, "offline_symbolization = %d", nativeConfig.offline_symbolization());
+    HILOG_INFO(LOG_CORE, "callframe_compress; = %d", nativeConfig.callframe_compress());
+    HILOG_INFO(LOG_CORE, "string_compressed; = %d", nativeConfig.string_compressed());
+    HILOG_INFO(LOG_CORE, "statistics_interval = %u", nativeConfig.statistics_interval());
+    HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize = %d", isHookStandaloneSerialize);
+    HILOG_INFO(LOG_CORE, "rawString = %d", hookData.rawString);
+    clockid_t pluginDataClockId = COMMON::GetClockId("realtime");
+    g_stackpreprocess = std::make_shared<StackPreprocess>(g_stackDataRepeater, nativeConfig,
+                                                          pluginDataClockId, isHookStandaloneSerialize);
+    CHECK_TRUE(g_stackpreprocess != nullptr, false, "Create StackPreprocess FAIL");
+    g_hookManager->SetHookConfig(nativeConfig);
+    g_stackpreprocess->StartTakeResults();
+    signal(SIGINT, SignalHandl);
     return true;
 }
 } // namespace Hook

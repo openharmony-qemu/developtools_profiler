@@ -57,6 +57,7 @@ common_deps = [
   "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
   "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+  "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
   "../../../base:hiprofiler_base",
   "//base/startup/init/interfaces/innerkits:libbegetutil",
   "//third_party/bounds_checking_function:libsec_static",
