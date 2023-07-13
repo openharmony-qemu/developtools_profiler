@@ -108,5 +108,6 @@ int main(int argc, char* argv[])
     while (g_isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
     }
+    pluginManager->StopAllPluginSession();
     return 0;
 }

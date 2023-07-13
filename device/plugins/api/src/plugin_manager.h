@@ -53,6 +53,7 @@ public:
     // call the 'PluginModule::ReportResult' and 'PluginManager::SubmitResult' according to 'pluginId'
     // creat PluginResult for  current plug-in inside
     bool PullResult(uint32_t pluginId);
+    bool StopAllPluginSession();
 
     // for test
     virtual bool SubmitResult(const PluginResult& pluginResult);
