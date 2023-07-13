@@ -80,4 +80,6 @@ ohos_source_set("diskio_data_encoder") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":diskio_include_config" ]
   sources = diskio_data_codegen_reader
+  subsystem_name = developtools
+  part_name = smartperf_host
 }
