@@ -166,10 +166,10 @@ struct TitleWindowPage {
           })
         }
 
-        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[0].toString() +"Frequency"] != undefined) {
+        if (this.tIndexInfo.cpu0Frequency != undefined) {
           ItemContent({
             icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
+            value: (parseInt(this.tIndexInfo.cpu0Frequency.toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
             tittle: "CPU-A频率",
             onClickCallBack: () => {
               this.floatWindowEvent("sp_cpu0Frequency", FloatWindowConstant.CPU0_FREQUENCY)
