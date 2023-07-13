@@ -266,10 +266,6 @@ double EditorCommand::HotStart(std::vector<std::string> v)
             SPUtils::LoadCmd(cmd, cmdResult);
             sleep(1);
             sd.ChangeToBackground();
-            std::string topPkgBefore = SPUtils::GetTopPkgName();
-            if (topPkgBefore.find(v[typePKG]) != std::string::npos) {
-                return noNameType;
-            }
             std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
             std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
             sleep(1);

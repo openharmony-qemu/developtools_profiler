@@ -76,6 +76,7 @@ namespace OHOS {
                         frameEndTime = std::stod(GetLineTime(line));
                         endTimes.frameId = frameNum;
                         endTimes.times = frameEndTime;
+                        endTimeArr.push_back(endTimes);
                         isNeedEnd = false;
                     }
                 }
