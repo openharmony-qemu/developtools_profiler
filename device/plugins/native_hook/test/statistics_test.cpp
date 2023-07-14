@@ -259,6 +259,7 @@ static void TestMemoryMap()
     void* mapAddr1 = mmap(nullptr, 4096, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
     if (mapAddr1 == MAP_FAILED) {
         printf("named mmap failed\n");
+        close(fd);
         return;
     }
     printf("named mmap size: 4096, fd: %d\n", fd);
@@ -266,6 +267,7 @@ static void TestMemoryMap()
     void* mapAddr2 = mmap(nullptr, 8192, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (mapAddr2 == MAP_FAILED) {
         printf("anonymous mmap failed\n");
+        close(fd);
         return;
     }
     printf("anonymous mmap size: 8192\n");
