@@ -22,7 +22,7 @@ if [ ! -d "prebuilts/emsdk" ];then
     fi
     if [ ! -d "tools/emsdk" ];then
         cd tools
-        git clone https://github.com/juj/emsdk.git --depth=1
+        git clone https://github.com/emscripten-core/emsdk.git --depth=1
         cd emsdk
         git pull
         ./emsdk install 3.1.12

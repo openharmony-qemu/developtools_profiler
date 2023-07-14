@@ -12,13 +12,14 @@
 # limitations under the License.
 
 #####################hydra-fuzz###################
-import("../../../build/ohos.gni")
+import("//build/ohos.gni")
 import("../../../build/test.gni")
 import("../../test_ts.gni")
 
 ##############################fuzztest##########################################
 ohos_fuzztest("ts_selector_fuzz_test") {
   include_dirs = [
+    "../../../src/proto_reader/include",
     "../../../src",
     "../../../src/base",
     "../../../src/table",
@@ -30,18 +31,6 @@ ohos_fuzztest("ts_selector_fuzz_test") {
     "../../../src/parser/bytrace_parser",
     "../../../src/cfg",
     "${THIRD_PARTY}/sqlite/include",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
-    "${OHOS_PROTO_GEN}",
     "${THIRD_PARTY}/protobuf/src",
   ]
   cflags = [
@@ -57,11 +46,11 @@ ohos_fuzztest("ts_selector_fuzz_test") {
     "--coverage",
   ]
   deps = [
-    "${PREBUILTS}/protos:ts_proto_data_cpp",
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
     "${THIRD_PARTY}/sqlite:sqlite",
     "../../../src:trace_streamer_source",
+    "../../../src/proto_reader:proto_reader",
   ]
 }
 

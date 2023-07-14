@@ -32,7 +32,7 @@ foreach(proto, hiperf_call_plugin_protos_defines) {
 }
 
 action("hiperf_call_plugin_protos_protoc") {
-  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
+  script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = hiperf_call_plugin_protos_defines
   outputs = hiperf_call_plugin_protos_codegen
   args = [
@@ -44,7 +44,6 @@ action("hiperf_call_plugin_protos_protoc") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
 }
 
 config("hiperf_call_plugin_protos_config") {

@@ -34,9 +34,11 @@ message MemoryConfig {
     bool report_process_mem_info = 6;
     // set true to report application memory usage summary, eg:java heap memory, native heap, stack memory, etc.
     bool report_app_mem_info = 7;
-    // set true to report application memory by dumpsys service, otherwise,
+    // set true to report application memory by memory service, otherwise,
     // application memory will count up by /proc/${pid}/smaps information
-    bool report_app_mem_by_dumpsys = 8;
+    bool report_app_mem_by_memory_service = 8;
     // set required pid list
     repeated int32 pid = 9;
+    // set true to report smaps meminfo from /proc/${pid}/smaps
+    bool report_smaps_mem_info = 10;
 }

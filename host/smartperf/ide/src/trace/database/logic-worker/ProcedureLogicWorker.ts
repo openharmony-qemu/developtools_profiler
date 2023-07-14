@@ -19,6 +19,7 @@ import { ProcedureLogicWorkerFileSystem } from './ProcedureLogicWorkerFileSystem
 import { ProcedureLogicWorkerSPT } from './ProcedureLogicWorkerSPT.js';
 import { ProcedureLogicWorkerCpuState } from './ProcedureLogicWorkerCpuState.js';
 import { ProcedureLogicWorkerSchedulingAnalysis } from './ProcedureLogicWorkerSchedulingAnalysis.js';
+import { DataCache } from './ProcedureLogicWorkerCommon.js';
 
 let logicWorker: any = {
   perf: new ProcedureLogicWorkerPerf(),
@@ -32,6 +33,7 @@ let logicWorker: any = {
 function match(req: any) {
   if (req.type === 'clear') {
     Reflect.ownKeys(logicWorker).forEach(key => logicWorker[key].clearAll());
+    DataCache.getInstance().clearAll();
     return;
   }
   Reflect.ownKeys(logicWorker).filter((it) => {

@@ -21,7 +21,7 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
-
+#include "log.h"
 namespace SysTuning {
 namespace base {
 enum IntegerRadixType { INTEGER_RADIX_TYPE_DEC = 10, INTEGER_RADIX_TYPE_HEX = 16 };

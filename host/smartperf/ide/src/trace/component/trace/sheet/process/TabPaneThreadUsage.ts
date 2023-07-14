@@ -70,39 +70,41 @@ export class TabPaneThreadUsage extends BaseElement {
           let filterArr = result.filter((it) => threadUsageParam.processIds.includes(it.pid));
           let map: Map<number, any> = new Map<number, any>();
           for (let resultEl of filterArr) {
-            if (map.has(resultEl.tid)) {
-              map.get(resultEl.tid)[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
-              map.get(resultEl.tid)[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
-              map.get(resultEl.tid)[`cpu${resultEl.cpu}Ratio`] = (
-                (100.0 * (resultEl.wallDuration || 0)) /
-                (threadUsageParam.rightNs - threadUsageParam.leftNs)
-              ).toFixed(2);
-              map.get(resultEl.tid)[`wallDuration`] =
-                map.get(resultEl.tid)[`wallDuration`] + (resultEl.wallDuration || 0);
-              map.get(resultEl.tid)[`wallDurationTimeStr`] = getProbablyTime(map.get(resultEl.tid)[`wallDuration`]);
-            } else {
-              let process = Utils.PROCESS_MAP.get(resultEl.pid);
-              let thread = Utils.THREAD_MAP.get(resultEl.tid);
-              let threadStatesStruct: any = {
-                tid: resultEl.tid,
-                pid: resultEl.pid,
-                thread: thread || 'null',
-                process: process || 'null',
-                wallDuration: resultEl.wallDuration || 0,
-                wallDurationTimeStr: getProbablyTime(resultEl.wallDuration || 0),
-              };
-              for (let i = 0; i < this.cpuCount; i++) {
-                threadStatesStruct[`cpu${i}`] = 0;
-                threadStatesStruct[`cpu${i}TimeStr`] = '0';
-                threadStatesStruct[`cpu${i}Ratio`] = '0';
+            if (threadUsageParam.processIds.includes(resultEl.pid)) {
+              if (map.has(resultEl.tid)) {
+                map.get(resultEl.tid)[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
+                map.get(resultEl.tid)[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
+                map.get(resultEl.tid)[`cpu${resultEl.cpu}Ratio`] = (
+                  (100.0 * (resultEl.wallDuration || 0)) /
+                  (threadUsageParam.rightNs - threadUsageParam.leftNs)
+                ).toFixed(2);
+                map.get(resultEl.tid)[`wallDuration`] =
+                  map.get(resultEl.tid)[`wallDuration`] + (resultEl.wallDuration || 0);
+                map.get(resultEl.tid)[`wallDurationTimeStr`] = getProbablyTime(map.get(resultEl.tid)[`wallDuration`]);
+              } else {
+                let process = Utils.PROCESS_MAP.get(resultEl.pid);
+                let thread = Utils.THREAD_MAP.get(resultEl.tid);
+                let threadStatesStruct: any = {
+                  tid: resultEl.tid,
+                  pid: resultEl.pid,
+                  thread: thread || 'null',
+                  process: process || 'null',
+                  wallDuration: resultEl.wallDuration || 0,
+                  wallDurationTimeStr: getProbablyTime(resultEl.wallDuration || 0),
+                };
+                for (let i = 0; i < this.cpuCount; i++) {
+                  threadStatesStruct[`cpu${i}`] = 0;
+                  threadStatesStruct[`cpu${i}TimeStr`] = '0';
+                  threadStatesStruct[`cpu${i}Ratio`] = '0';
+                }
+                threadStatesStruct[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
+                threadStatesStruct[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
+                threadStatesStruct[`cpu${resultEl.cpu}Ratio`] = (
+                  (100.0 * (resultEl.wallDuration || 0)) /
+                  (threadUsageParam.rightNs - threadUsageParam.leftNs)
+                ).toFixed(2);
+                map.set(resultEl.tid, threadStatesStruct);
               }
-              threadStatesStruct[`cpu${resultEl.cpu}`] = resultEl.wallDuration || 0;
-              threadStatesStruct[`cpu${resultEl.cpu}TimeStr`] = getProbablyTime(resultEl.wallDuration || 0);
-              threadStatesStruct[`cpu${resultEl.cpu}Ratio`] = (
-                (100.0 * (resultEl.wallDuration || 0)) /
-                (threadUsageParam.rightNs - threadUsageParam.leftNs)
-              ).toFixed(2);
-              map.set(resultEl.tid, threadStatesStruct);
             }
           }
           this.threadUsageSource = Array.from(map.values());

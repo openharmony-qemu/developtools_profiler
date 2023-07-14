@@ -44,7 +44,7 @@ public:
     Measure* GetMeasureData();
     Measure* GetSysMemMeasureData();
     Measure* GetProcessMeasureData();
-    ThreadState* GetThreadStateData();
+    ThreadStateData* GetThreadStateData();
     SchedSlice* GetSchedSliceData();
     CpuMeasureFilter* GetCpuMeasuresData();
     ThreadMeasureFilter* GetThreadMeasureFilterData();
@@ -104,6 +104,8 @@ public:
     JsHeapString* GetJsHeapStringData();
     JsHeapTraceFuncInfo* GetJsHeapTraceFuncInfoData();
     JsHeapTraceNode* GetJsHeapTraceNodeData();
+    AppStartup* GetAppStartupData();
+    SoStaticInitalization* GetStaticInitalizationData();
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -20,8 +20,6 @@ import '../../../base-ui/switch/lit-switch.js';
 import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
 import { Cmd } from '../../../command/Cmd.js';
-import { CmdConstant } from '../../../command/CmdConstant.js';
-import { HdcDeviceManager } from '../../../hdc/HdcDeviceManager.js';
 import { LitRadioBox } from '../../../base-ui/radiobox/LitRadioBox.js';
 import { SpCheckDesBox } from './SpCheckDesBox.js';
 
@@ -77,7 +75,6 @@ export class SpJsHeap extends BaseElement {
     this.interval = this.shadowRoot?.querySelector('#interval');
     this.processInput = this.shadowRoot?.querySelector<LitAllocationSelect>('lit-allocation-select');
     let processInput = this.processInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
-    let processData: Array<string> = [];
     processInput!.addEventListener('mousedown', (ev) => {
       if (SpRecordTrace.serialNumber == '') {
         this.processInput!.processData = [];
@@ -89,50 +86,10 @@ export class SpJsHeap extends BaseElement {
         this.processInput!.processData = [];
         this.processInput!.initData();
       } else {
-        if (SpRecordTrace.isVscode) {
-          let cmd = Cmd.formatString(CmdConstant.CMD_GET_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
-          Cmd.execHdcCmd(cmd, (res: string) => {
-            processData = [];
-            let lineValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-            for (let lineVal of lineValues) {
-              if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                continue;
-              }
-              let process: string[] = lineVal.trim().split(' ');
-              if (process.length == 2) {
-                let processId = process[0];
-                let processName = process[1];
-                processData.push(processName + '(' + processId + ')');
-              }
-            }
-            this.processInput!.processData = processData;
-            this.processInput!.initData();
-          });
-        } else {
-          HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((conn) => {
-            if (conn) {
-              HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((res) => {
-                processData = [];
-                if (res) {
-                  let lineValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-                  for (let lineVal of lineValues) {
-                    if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                      continue;
-                    }
-                    let process: string[] = lineVal.trim().split(' ');
-                    if (process.length == 2) {
-                      let processId = process[0];
-                      let processName = process[1];
-                      processData.push(processName + '(' + processId + ')');
-                    }
-                  }
-                }
-                this.processInput!.processData = processData;
-                this.processInput!.initData();
-              });
-            }
-          });
-        }
+        Cmd.getDebugProcess().then((processList) => {
+          this.processInput!.processData = processList;
+          this.processInput!.initData();
+        });
       }
     });
     this.interval!.addEventListener('focusout', () => {

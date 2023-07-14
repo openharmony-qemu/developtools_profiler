@@ -15,7 +15,12 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initTraceTaskStrategy = (metricData: Array<any>): ProcessListItem => {
+export const initTraceTaskStrategy = (metricData: Array<{
+  id: string;
+  pid: string;
+  process_name: string;
+  thread_name: string;
+}>): ProcessListItem => {
   info('Trace Task Strategy data length is:', metricData.length);
   let statListItems = [];
   for (let sqlIndex = 0; sqlIndex < metricData.length; sqlIndex++) {

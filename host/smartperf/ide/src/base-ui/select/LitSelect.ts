@@ -22,6 +22,7 @@ export class LitSelect extends BaseElement {
   private selectInputEl: any;
   private selectClearEl: any;
   private selectIconEl: any;
+  private bodyEl: any;
   private selectSearchEl: any;
   private selectMultipleRootEl: any;
 
@@ -278,6 +279,7 @@ export class LitSelect extends BaseElement {
   connectedCallback() {
     this.tabIndex = 0;
     this.focused = false;
+    this.bodyEl = this.shadowRoot!.querySelector('.body');
     this.selectInputEl = this.shadowRoot!.querySelector('input');
     this.selectClearEl = this.shadowRoot!.querySelector('.clear');
     this.selectIconEl = this.shadowRoot!.querySelector('.icon');
@@ -313,19 +315,20 @@ export class LitSelect extends BaseElement {
         if (this.focused === false) {
           this.selectInputEl.focus();
           this.focused = true;
+          this.bodyEl!.style.display = 'block';
         } else {
           this.blur();
+          this.bodyEl!.style.display = 'none';
           this.focused = false;
         }
       }
     };
     this.onmouseover = this.onfocus = (ev) => {
       if (this.focused === false && this.hasAttribute('adaptive-expansion')) {
-        let body = this.shadowRoot!.querySelector('.body');
-        if (this.parentElement!.offsetTop < body!.clientHeight) {
-          body!.classList.add('body-bottom');
+        if (this.parentElement!.offsetTop < this.bodyEl!.clientHeight) {
+          this.bodyEl!.classList.add('body-bottom');
         } else {
-          body!.classList.remove('body-bottom');
+          this.bodyEl!.classList.remove('body-bottom');
         }
       }
       if (this.hasAttribute('allow-clear')) {
@@ -487,6 +490,7 @@ export class LitSelect extends BaseElement {
         } else {
           [...this.querySelectorAll('lit-select-option')].forEach((a) => a.removeAttribute('selected'));
           this.blur();
+          this.bodyEl!.style.display = 'none';
           // @ts-ignore
           this.selectInputEl.value = e.detail.text;
         }

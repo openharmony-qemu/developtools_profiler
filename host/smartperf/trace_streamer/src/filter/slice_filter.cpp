@@ -297,7 +297,7 @@ size_t SliceFilter::StartSlice(uint64_t timeStamp,
                                ArgsSet& args,
                                SliceData sliceData)
 {
-    InternalTid internalTid = streamFilters_->processFilter_->UpdateOrCreateThread(timeStamp, pid);
+    InternalTid internalTid = sliceData.internalTid;
     auto& sliceStack = binderStackMap_[internalTid];
     auto& stack = sliceStack.sliceStack;
     if (sliceStack.isAsyncEvent) {
@@ -312,9 +312,9 @@ size_t SliceFilter::StartSlice(uint64_t timeStamp,
     uint32_t depth = stack.size();
     auto slices = traceDataCache_->GetInternalSlicesData();
     uint32_t parentId = depth == 0 ? INVALID_UINT32 : slices->IdsData()[stack.back().index];
-    size_t index = slices->AppendInternalSlice(
-        sliceData.timeStamp, sliceData.duration, sliceData.internalTid, sliceData.cat,
-        GetNameASCIISumNoNum(traceDataCache_->GetDataFromDict(sliceData.name)), sliceData.name, 0, parentId);
+    size_t index = slices->AppendInternalSlice(sliceData.timeStamp, sliceData.duration, internalTid, sliceData.cat,
+                                               GetNameASCIISumNoNum(traceDataCache_->GetDataFromDict(sliceData.name)),
+                                               sliceData.name, 0, parentId);
     if (depth >= std::numeric_limits<uint8_t>::max()) {
         return SIZE_MAX;
     }
@@ -335,7 +335,7 @@ size_t SliceFilter::StartSlice(uint64_t timeStamp,
         slices->SetArgSetId(index, argSetId);
     }
     sliceData.argSetId = argSetId;
-    RememberSliceData(sliceData.internalTid, binderStackMap_, sliceData, depth, index);
+    RememberSliceData(internalTid, binderStackMap_, sliceData, depth, index);
     return index;
 }
 size_t SliceFilter::BeginBinder(uint64_t timeStamp, uint32_t pid, DataIndex cat, DataIndex nameIndex, ArgsSet args)
@@ -345,9 +345,19 @@ size_t SliceFilter::BeginBinder(uint64_t timeStamp, uint32_t pid, DataIndex cat,
     return StartSlice(timeStamp, pid, cat, nameIndex, args, std::move(sliceData));
 }
 
-size_t SliceFilter::CompleteSlice(uint64_t timeStamp, uint32_t pid, DataIndex category, DataIndex name, ArgsSet args)
+size_t SliceFilter::CompleteSlice(uint64_t timeStamp,
+                                  uint32_t pid,
+                                  uint32_t threadGroupId,
+                                  DataIndex category,
+                                  DataIndex name,
+                                  ArgsSet args)
 {
-    InternalTid internalTid = streamFilters_->processFilter_->UpdateOrCreateThread(timeStamp, pid);
+    InternalTid internalTid = INVALID_ITID;
+    if (threadGroupId > 0) {
+        internalTid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(pid, threadGroupId);
+    } else {
+        internalTid = streamFilters_->processFilter_->UpdateOrCreateThread(timeStamp, pid);
+    }
     if (binderStackMap_.find(internalTid) == binderStackMap_.end()) {
         return SIZE_MAX;
     }
@@ -400,7 +410,7 @@ size_t SliceFilter::CompleteSlice(uint64_t timeStamp, uint32_t pid, DataIndex ca
 }
 size_t SliceFilter::EndBinder(uint64_t timeStamp, uint32_t pid, DataIndex category, DataIndex name, ArgsSet args)
 {
-    return CompleteSlice(timeStamp, pid, category, name, args);
+    return CompleteSlice(timeStamp, pid, 0, category, name, args);
 }
 std::tuple<uint64_t, uint32_t> SliceFilter::AddArgs(uint32_t tid, DataIndex key1, DataIndex key2, ArgsSet& args)
 {
@@ -483,7 +493,7 @@ uint64_t SliceFilter::FinishAsyncSlice(uint64_t timeStamp,
 size_t
     SliceFilter::EndSlice(uint64_t timeStamp, uint32_t pid, uint32_t threadGroupId, DataIndex category, DataIndex name)
 {
-    return CompleteSlice(timeStamp, pid, category, name);
+    return CompleteSlice(timeStamp, pid, threadGroupId, category, name);
 }
 
 void SliceFilter::Clear()

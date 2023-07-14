@@ -38,10 +38,10 @@ enum Stat : uint32_t {
     TASKNEW = 2048,
     VALID = 0X8000,
 };
-class ThreadState {
+class ThreadStateFlag {
 public:
-    explicit ThreadState(const std::string& stateStr);
-    ~ThreadState() {}
+    explicit ThreadStateFlag(const std::string& stateStr);
+    ~ThreadStateFlag() {}
 
     uint32_t State() const
     {

@@ -56,7 +56,6 @@ private:
     TraceFileType fileType_;
     std::unique_ptr<TraceStreamerFilters> streamFilters_ = {};
     std::unique_ptr<TraceDataCache> traceDataCache_ = {};
-
     std::unique_ptr<BytraceParser> bytraceParser_;
     std::unique_ptr<HtraceParser> htraceParser_;
     bool enableFileSeparate_ = false;

@@ -48,10 +48,10 @@ export class ColorUtils {
     '#AACEA0',
     '#E69553',
     '#7EC6BB',
-    '#C6D9F2',
+    '#8d9171',
   ];
 
-  public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#FFE335', '#009DFA', '#E97978'];
+  public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#E8BE44', '#009DFA', '#E97978'];
   public static MD_PALETTE: Array<string> = ColorUtils.FUNC_COLOR_B;
   public static FUNC_COLOR: Array<string> = ColorUtils.FUNC_COLOR_B;
 

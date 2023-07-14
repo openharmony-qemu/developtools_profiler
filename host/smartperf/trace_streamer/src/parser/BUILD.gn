@@ -27,27 +27,26 @@ ohos_source_set("parser") {
     "event_parser_base.h",
     "print_event_parser.cpp",
     "print_event_parser.h",
-    "thread_state.cpp",
-    "thread_state.h",
+    "thread_state_flag.cpp",
+    "thread_state_flag.h",
   ]
-  deps = [ "ebpf_parser:ebpf_parser" ]
+  deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_encoder",
+    "ebpf_parser:ebpf_parser",
+  ]
   deps += [ "htrace_pbreader_parser:htrace_pbreader_parser" ]
 
   include_dirs = [
     "${THIRD_PARTY}/protobuf/src",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
-    "${OHOS_PROTO_GEN}/types/plugins/",
-    "${OHOS_PROTO_GEN}",
     "${THIRD_PARTY}/sqlite/include",
     "${SRC}/base",
     "${SRC}/cfg",

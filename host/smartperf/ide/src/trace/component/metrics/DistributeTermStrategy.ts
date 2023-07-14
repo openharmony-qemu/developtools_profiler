@@ -15,7 +15,20 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initDistributedTermData = (metricData: Array<any>): DistributedTermListItem => {
+export const initDistributedTermData = (metricData: Array<{
+  threadId: string;
+  threadName: string;
+  processId: string;
+  processName: string;
+  funName: string;
+  dur: string;
+  ts: string;
+  chainId: string;
+  spanId: string;
+  parentSpanId: string;
+  flag: string;
+  trace_name: string;
+}>): DistributedTermListItem => {
   info('Distributed Term data length is:', metricData.length);
   let distributedTermListItems: Array<DistributedTermItem> = [];
   const splitChar = ',';
@@ -46,8 +59,8 @@ export const initDistributedTermData = (metricData: Array<any>): DistributedTerm
       let delay: number = 0;
       if (flag.indexOf('S,C') > -1 || flag.indexOf('C,S') > -1) {
         across = false;
-        if (flagList[index] == 'S') receiverTime = timeList[index];
-        if (flagList[index] == 'C') senderTime = timeList[index];
+        if (flagList[index] == 'S') receiverTime = Number(timeList[index]);
+        if (flagList[index] == 'C') senderTime = Number(timeList[index]);
         delay = receiverTime - senderTime;
       }
 

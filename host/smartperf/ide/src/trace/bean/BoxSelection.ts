@@ -32,6 +32,8 @@ export class SelectionParam {
   fsCount: number = 0;
   vmCount: number = 0;
   isCurrentPane: boolean = false;
+  startup: boolean = false;
+  staticInit: boolean = false;
 
   cpus: Array<number> = [];
   cpuStateFilterIds: Array<number> = [];

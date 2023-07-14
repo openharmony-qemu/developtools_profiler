@@ -14,6 +14,7 @@
  */
 #include "htrace_hidump_parser.h"
 #include "clock_filter_ex.h"
+#include "hidump_plugin_result.pbreader.h"
 #include "htrace_event_parser.h"
 #include "process_filter.h"
 #include "stat_filter.h"

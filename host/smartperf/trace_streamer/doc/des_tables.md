@@ -1362,17 +1362,24 @@ js_heap_sample:记录timeline的时间轴信息
 - state：线程实际的的状态值  
 ```  
 'R', Runnable状态  
-'S', interruptible sleep  
-'D', uninterruptible sleep  
-'T', Stoped  
-'t', Traced  
-'X', ExitedDead  
-'Z', ExitZombie  
-'x', TaskDead  
-'I', TaskDead  
-'K', WakeKill  
-'P', Parked  
-'N', NoLoad  
+"S", interruptible sleep  
+"D", uninterruptible sleep  
+"D-IO", uninterruptible io
+"D-NIO", uninterruptible nio
+"Runing", Runing状态
+"I", interrupted
+"T", Traced 
+"X", ExitedDead  
+"Z", Zombie 
+"I", CloneThread   
+"I", TaskKilled  
+"DK",  
+"DK-IO",   
+"DK-NIO",  
+"TK", TracedKill
+"R", WakeKill
+"P", Parked
+"R+", ForeGround
 ```
 
 ### clock_snapshot表

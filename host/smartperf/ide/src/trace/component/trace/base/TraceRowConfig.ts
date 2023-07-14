@@ -49,6 +49,7 @@ export class TraceRowConfig extends BaseElement {
     this.selectTypeList = [];
     this.sceneTable!.innerHTML = '';
     this.chartTable!.innerHTML = '';
+    this.inputElement!.value = '';
     this.spSystemTrace = this.parentElement!.querySelector<SpSystemTrace>('sp-system-trace');
     this.traceRowList =
       this.spSystemTrace!.shadowRoot?.querySelector('div[class=rows-pane]')!.querySelectorAll<TraceRow<any>>(
@@ -70,7 +71,7 @@ export class TraceRowConfig extends BaseElement {
     });
   }
 
-  initConfigSceneTable(item: any) {
+  initConfigSceneTable(item: string) {
     let div = document.createElement('div');
     div.className = 'scene-option-div';
     div.textContent = item;
@@ -112,29 +113,37 @@ export class TraceRowConfig extends BaseElement {
     optionCheckBox.title = templateType;
     optionCheckBox.setAttribute('search_text', row.name);
     optionCheckBox.addEventListener('change', (e) => {
-      TraceRowConfig.allTraceRowList.forEach((chartRow) => {
-        let upParentRow = getUpParentRow(chartRow);
-        if (upParentRow == row) {
-          if (optionCheckBox.checked) {
-            chartRow.removeAttribute('row-hidden');
-            chartRow.setAttribute('scene', '');
-          } else {
-            chartRow.removeAttribute('scene');
-            chartRow.setAttribute('row-hidden', '');
+      if (row.folder) {
+        TraceRowConfig.allTraceRowList.forEach((chartRow): void => {
+          let upParentRow = chartRow;
+          while (upParentRow.hasParentRowEl) {
+            if (upParentRow.parentRowEl) {
+              upParentRow = upParentRow.parentRowEl;
+            } else {
+              break;
+            }
           }
-        }
-      });
+          if (upParentRow == row) {
+            if (optionCheckBox.checked) {
+              chartRow.removeAttribute('row-hidden');
+              chartRow.setAttribute('scene', '');
+            } else {
+              row.expansion = true;
+              chartRow.removeAttribute('scene');
+              chartRow.setAttribute('row-hidden', '');
+            }
+          }
+        });
+      }
+      if (optionCheckBox.checked) {
+        row.removeAttribute('row-hidden');
+        row.setAttribute('scene', '');
+      } else {
+        row.removeAttribute('scene');
+        row.setAttribute('row-hidden', '');
+      }
       this.refreshSystemPanel();
     });
-
-    let getUpParentRow = (currentTraceRow: TraceRow<any>) => {
-      let newTraceRow = currentTraceRow;
-      if (currentTraceRow.hasParentRowEl) {
-        newTraceRow = currentTraceRow.parentRowEl!;
-        getUpParentRow(newTraceRow);
-      }
-      return newTraceRow;
-    };
     this.chartTable!.append(...[div, optionCheckBox]);
   }
 

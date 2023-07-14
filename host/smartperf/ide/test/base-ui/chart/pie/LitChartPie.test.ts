@@ -34,9 +34,9 @@ beforeAll(() => {
   jest.spyOn(document.documentElement, 'scrollTop', 'get').mockImplementation(() => fakeWindow.scrollTop);
 });
 
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
+window.ResizeObserver
+  = window.ResizeObserver
+  || jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
@@ -47,6 +47,7 @@ describe('litChartPie Test', () => {
     let litChartPie = new LitChartPie();
     expect(litChartPie).not.toBeUndefined();
   });
+
   it('litChartPieTest03', function () {
     Utils.uuid = jest.fn(() => {
       return Math.floor(Math.random() * 10 + 1);

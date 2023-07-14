@@ -44,7 +44,7 @@ public:
     const Measure& GetConstSysMemMeasureData() const;
     const Measure& GetConstProcessMeasureData() const;
     const ThreadMeasureFilter& GetConstThreadMeasureFilterData() const;
-    const ThreadState& GetConstThreadStateData() const;
+    const ThreadStateData& GetConstThreadStateData() const;
     const SchedSlice& GetConstSchedSliceData() const;
     const CpuMeasureFilter& GetConstCpuMeasureData() const;
     const ThreadMeasureFilter& GetConstThreadFilterData() const;
@@ -105,6 +105,8 @@ public:
     const JsHeapString& GetConstJsHeapStringData() const;
     const JsHeapTraceFuncInfo& GetConstJsHeapTraceFuncInfoData() const;
     const JsHeapTraceNode& GetConstJsHeapTraceNodeData() const;
+    const AppStartup& GetConstAppStartupData() const;
+    const SoStaticInitalization& GetConstStaticInitalizationData() const;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

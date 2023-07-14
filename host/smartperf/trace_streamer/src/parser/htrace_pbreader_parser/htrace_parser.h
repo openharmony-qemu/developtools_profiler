@@ -22,6 +22,7 @@
 #include <string>
 #include <thread>
 #include "common_types.h"
+#include "common_types.pbreader.h"
 #include "ebpf_data_parser.h"
 #include "elf_parser.h"
 #include "file.h"

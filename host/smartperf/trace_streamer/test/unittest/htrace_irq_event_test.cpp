@@ -23,7 +23,7 @@
 #include "trace_plugin_result.pbreader.h"
 #include "trace_streamer_selector.h"
 #include "ts_common.h"
-#include "types/plugins/ftrace_data/trace_plugin_result.pb.h"
+#include "trace_plugin_result.pb.h"
 
 using namespace testing::ext;
 using namespace SysTuning::TraceStreamer;

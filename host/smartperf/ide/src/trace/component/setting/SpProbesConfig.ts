@@ -15,7 +15,7 @@
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import { checkDesBean, SpCheckDesBox } from './SpCheckDesBox.js';
-import { LitCheckBox } from '../../../base-ui/checkbox/LitCheckBox.js';
+import { LitCheckBox, LitCheckBoxChangeEvent } from '../../../base-ui/checkbox/LitCheckBox.js';
 import { LitRadioGroup } from '../../../base-ui/radiobox/LitRadioGroup.js';
 import { info, log } from '../../../log/Log.js';
 import { LitSlider } from '../../../base-ui/slider/LitSlider';
@@ -122,7 +122,7 @@ export class SpProbesConfig extends BaseElement {
       checkDesBox.value = configBean.value;
       checkDesBox.checked = configBean.isSelect;
       checkDesBox.des = configBean.des;
-      checkDesBox.addEventListener('onchange', (ev: any) => {
+      checkDesBox.addEventListener('onchange', () => {
         this.dispatchEvent(new CustomEvent('addProbe', {}));
       });
       this._traceConfig?.appendChild(checkDesBox);
@@ -148,7 +148,7 @@ export class SpProbesConfig extends BaseElement {
       checkDesBox.value = configBean.value;
       checkDesBox.checked = configBean.isSelect;
       checkDesBox.des = configBean.des;
-      checkDesBox.addEventListener('onchange', (ev: any) => {
+      checkDesBox.addEventListener('onchange', () => {
         this.dispatchEvent(new CustomEvent('addProbe', {}));
       });
       this._memoryConfig?.appendChild(checkDesBox);
@@ -166,7 +166,7 @@ export class SpProbesConfig extends BaseElement {
       checkDesBox.value = configBean.value;
       checkDesBox.checked = configBean.isSelect;
       checkDesBox.des = configBean.des;
-      checkDesBox.addEventListener('onchange', (ev: any) => {
+      checkDesBox.addEventListener('onchange', () => {
         this.dispatchEvent(new CustomEvent('addProbe', {}));
       });
       this._abilityConfig?.appendChild(checkDesBox);
@@ -237,12 +237,12 @@ export class SpProbesConfig extends BaseElement {
       litCheckBox.setAttribute('name', 'userEvents');
       litCheckBox.value = hitraceConfig.value;
       litCheckBox.checked = hitraceConfig.isSelect;
-      litCheckBox.addEventListener('change', (ev: any) => {
+      litCheckBox.addEventListener('change', (ev: CustomEventInit<LitCheckBoxChangeEvent>) => {
         let detail = ev.detail;
         if (this.hitrace?.checked == false) {
-          this.hitrace.checked = detail.checked;
+          this.hitrace.checked = detail!.checked;
         }
-        if (detail.checked == false && this.hitrace?.checked == true) {
+        if (detail!.checked == false && this.hitrace?.checked == true) {
           let hasChecked = false;
           const nodes = parent?.querySelectorAll<LitCheckBox>(`lit-check-box[name=userEvents]`);
           nodes.forEach((vv) => {
@@ -504,10 +504,10 @@ export class SpProbesConfig extends BaseElement {
   public connectedCallback() {
     let parent = this.shadowRoot?.querySelector('.user-events') as Element;
     const siblingNode = parent?.querySelectorAll<LitCheckBox>(`lit-check-box[name=userEvents]`);
-    this.hitrace!.addEventListener('onchange', (ev: any) => {
+    this.hitrace!.addEventListener('onchange', (ev: CustomEventInit<LitCheckBoxChangeEvent>) => {
       let detail = ev.detail;
       siblingNode.forEach((node) => {
-        node.checked = detail.checked;
+        node.checked = detail!.checked;
       });
       this.dispatchEvent(new CustomEvent('addProbe', {}));
     });

@@ -20,4 +20,5 @@ option optimize_for = LITE_RUNTIME;
 // Cpu plug-in configuration, passed to plug-in by plug-in service.
 message CpuConfig {
     int32 pid = 1;
+    bool report_process_info = 2;
 }

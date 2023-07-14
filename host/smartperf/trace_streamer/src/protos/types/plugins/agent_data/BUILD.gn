@@ -28,13 +28,21 @@ proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
 agent_data_codegen = []
+agent_data_codegen_standard = []
+agent_data_codegen_all = []
 foreach(proto, agent_sources) {
   name = get_path_info(proto, "name")
   agent_data_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
   ]
+  agent_data_codegen_standard += [
+    "$proto_out_dir/${name}_standard.pb.h",
+    "$proto_out_dir/${name}_standard.pb.cc",
+  ]
 }
+agent_data_codegen_all += agent_data_codegen
+agent_data_codegen_all += agent_data_codegen_standard
 
 config("agent_include_config") {
   include_dirs = [ "$proto_out_dir" ]
@@ -42,22 +50,28 @@ config("agent_include_config") {
 
 #######################################################
 action("agent_data_cpp_gen") {
-  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
+  script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = agent_sources
-  outputs = agent_data_codegen
+  outputs = agent_data_codegen_all
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
+    "$proto_rel_out_dir",
     "--cpp_out",
     "$proto_rel_out_dir",
     "--proto_path",
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  if (!use_wasm && !is_test && !is_fuzz) {
+    deps = [
+      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc",
+      "${SRC}/proto_reader/protoc_plugin:protoreader_plugin",
+    ]
+  }
 }
 
-source_set("agent_data_cpp") {
+ohos_source_set("agent_data_cpp") {
   deps = [ ":agent_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",

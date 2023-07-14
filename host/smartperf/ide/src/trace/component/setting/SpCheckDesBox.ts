@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
-import { LitCheckBox } from '../../../base-ui/checkbox/LitCheckBox.js';
+import { LitCheckBox, LitCheckBoxChangeEvent } from '../../../base-ui/checkbox/LitCheckBox.js';
 
 @element('check-des-box')
 export class SpCheckDesBox extends BaseElement {
@@ -83,9 +83,9 @@ lit-check-box {
   }
 
   public connectedCallback() {
-    this._checkBox?.addEventListener('change', (ev: any) => {
+    this._checkBox?.addEventListener('change', (ev: CustomEventInit<LitCheckBoxChangeEvent>) => {
       let detail = ev.detail;
-      this.checked = detail.checked;
+      this.checked = detail!.checked;
       this.dispatchEvent(new CustomEvent('onchange', { detail }));
     });
   }

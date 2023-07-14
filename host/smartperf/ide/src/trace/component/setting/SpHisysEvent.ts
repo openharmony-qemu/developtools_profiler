@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
-import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitAllocationSelect.js';
 
 import '../../../base-ui/switch/lit-switch.js';
@@ -88,9 +88,9 @@ export class SpHisysEvent extends BaseElement {
             hisysEventSwitch.checked = false;
           }
           if (config.title == 'Start Hisystem Event Tracker Record') {
-            hisysEventSwitch.addEventListener('change', (event: any) => {
+            hisysEventSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
               let detail = event.detail;
-              if (detail.checked) {
+              if (detail!.checked) {
                 this.startSamp = true;
                 this.unDisable();
               } else {

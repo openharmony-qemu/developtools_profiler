@@ -15,7 +15,13 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initTraceStateStrategy = (metricData: Array<any>): StatListItem => {
+export const initTraceStateStrategy = (metricData: Array<{
+  event_name: string;
+  stat_type: string;
+  count: number;
+  source: string;
+  serverity: string;
+}>): StatListItem => {
   info('Trace State Strategy data length is:', metricData.length);
   let statListItems: Array<StatItem> = [];
   for (let sqlIndex = 0; sqlIndex < metricData.length; sqlIndex++) {
@@ -42,7 +48,7 @@ export interface StatListItem {
 
 export interface StatItem {
   name: string;
-  count: string;
+  count: number;
   source: string;
   severity: string;
 }

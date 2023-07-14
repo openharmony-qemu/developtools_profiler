@@ -399,8 +399,8 @@ group by A.pid, A.tid,A.cpu`;
   queryThreadRunTime(cpuMax: number) {
     let sql = `
         select (row_number() over (order by max(A.dur) desc)) no,A.tid, A.cpu,A.ts as timestamp,A.pid, max(A.dur) maxDuration
-    from thread_state A
-    where cpu not null
+    from thread_state A, trace_range B
+    where cpu not null and A.ts between B.start_ts and B.end_ts
     group by A.tid, A.pid
     order by maxDuration desc
     limit 20`;

@@ -14,8 +14,14 @@
  */
 #include "htrace_process_parser.h"
 #include "clock_filter_ex.h"
+#include "cpu_plugin_config.pbreader.h"
+#include "cpu_plugin_result.pbreader.h"
+#include "diskio_plugin_config.pbreader.h"
+#include "diskio_plugin_result.pbreader.h"
 #include "htrace_event_parser.h"
 #include "process_filter.h"
+#include "process_plugin_config.pbreader.h"
+#include "process_plugin_result.pbreader.h"
 #include "stat_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {

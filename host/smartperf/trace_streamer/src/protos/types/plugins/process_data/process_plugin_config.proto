@@ -19,4 +19,7 @@ option optimize_for = LITE_RUNTIME;
 message ProcessConfig {
     // set true to report process list
     bool report_process_tree = 1;
+    bool report_cpu = 2;
+    bool report_diskio = 3;
+    bool report_pss = 4;
 }

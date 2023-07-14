@@ -18,6 +18,14 @@ template("ohos_unittest") {
   executable(target_name) {
     forward_variables_from(invoker, "*")
     testonly = true
+
+    if (defined(invoker.deps)) {
+      deps += invoker.deps
+    }
+
+    if (defined(invoker.public_deps)) {
+      public_deps += invoker.public_deps
+    }
     if (defined(invoker.ldflags)) {
       print(invoker.ldflags)
     }

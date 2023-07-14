@@ -41,7 +41,7 @@ private:
         int32_t Column(int32_t col) const override;
 
     private:
-        const ThreadState& threadStateObj_;
+        const ThreadStateData& threadStateObj_;
     };
 };
 } // namespace TraceStreamer

@@ -37,10 +37,9 @@ import { info } from '../../../log/Log.js';
 import { HiperfEventRender, HiPerfEventStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfEvent.js';
 import { perfDataQuery } from './PerfDataQuery.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
-import { CpuRender, EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
+import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
 import { HiperfReportRender, HiPerfReportStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfReport.js';
-import { BaseStruct } from '../../database/ui-worker/ProcedureWorkerCommon.js';
-import { ProcessRender } from '../../database/ui-worker/ProcedureWorkerProcess.js';
+
 
 export interface ResultData {
   existA: boolean | null | undefined;
@@ -92,7 +91,7 @@ export class SpHiPerf {
     SpHiPerf.stringResult = {
       existA: sA !== -1,
       existF: sF !== -1,
-      fValue: Number((1000 / (sF !== -1 ? parseInt(list[sF + 1]) : 1000)).toFixed(1)),
+      fValue: Number((1000 / (sF !== -1 ? parseInt(list[sF + 1]) : 1000)).toFixed(2)),
     };
   }
 

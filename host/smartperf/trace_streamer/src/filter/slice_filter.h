@@ -67,6 +67,7 @@ public:
                      ArgsSet args = {});
     size_t CompleteSlice(uint64_t timeStamp,
                          uint32_t pid,
+                         uint32_t threadGroupId,
                          DataIndex category = INVALID_UINT64,
                          DataIndex name = INVALID_UINT64,
                          ArgsSet args = {});

@@ -20,6 +20,8 @@
 #include "fcntl.h"
 #include "file.h"
 #include "htrace_event_parser.h"
+#include "js_heap_config.pbreader.h"
+#include "js_heap_result.pbreader.h"
 #include "process_filter.h"
 #include "stat_filter.h"
 #include "unistd.h"

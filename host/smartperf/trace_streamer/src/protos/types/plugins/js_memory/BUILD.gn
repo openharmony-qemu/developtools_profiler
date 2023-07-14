@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../../protos.gni")
 
-js_memory_sources = [
+js_memory_data_sources = [
   "./js_heap_config.proto",
   "./js_heap_result.proto",
 ]
@@ -23,43 +23,61 @@ js_memory_sources = [
 proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
-js_memory_codegen = []
-foreach(proto, js_memory_sources) {
+js_memory_data_codegen = []
+js_memory_data_codegen_reader = []
+js_memory_data_codegen_all = []
+foreach(proto, js_memory_data_sources) {
   name = get_path_info(proto, "name")
-  js_memory_codegen += [
+  js_memory_data_codegen += [
     "$proto_out_dir/$name.pb.h",
     "$proto_out_dir/$name.pb.cc",
   ]
+  js_memory_data_codegen_reader += [ "$proto_out_dir/$name.pbreader.h" ]
 }
+js_memory_data_codegen_all += js_memory_data_codegen
+js_memory_data_codegen_all += js_memory_data_codegen_reader
 
 config("js_memory_include_config") {
   include_dirs = [ "$proto_out_dir" ]
 }
 
 #######################################################
-action("js_memory_cpp_gen") {
-  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
-  sources = js_memory_sources
-  outputs = js_memory_codegen
+action("js_memory_data_cpp_gen") {
+  script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
+  sources = js_memory_data_sources
+  outputs = js_memory_data_codegen_all
   args = [
     "$libc_dir_proto",
     "$root_output_dir_proto",
+    "$proto_rel_out_dir",
     "--cpp_out",
     "$proto_rel_out_dir",
     "--proto_path",
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  if (!use_wasm && !is_test && !is_fuzz) {
+    deps = [
+      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc",
+      "${SRC}/proto_reader/protoc_plugin:protoreader_plugin",
+    ]
+  }
 }
 
-source_set("js_memory_cpp") {
-  deps = [ ":js_memory_cpp_gen" ]
+ohos_source_set("js_memory_data_cpp") {
+  deps = [ ":js_memory_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":js_memory_include_config" ]
-  sources = js_memory_codegen
+  sources = js_memory_data_codegen
+}
+
+ohos_source_set("js_memory_data_encoder") {
+  deps = [ ":js_memory_data_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":js_memory_include_config" ]
+  sources = js_memory_data_codegen_reader
 }

@@ -18,11 +18,10 @@ import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
 import '../../../../../base-ui/chart/pie/LitChartPie.js';
-import { queryPerfProcess } from '../../../../database/SqlLite.js';
-import { PerfThread } from '../../../../bean/PerfProfile.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { Utils } from '../../base/Utils.js';
+import { SpHiPerf } from '../../../chart/SpHiPerf.js';
 
 @element('tabpane-perf-analysis')
 export class TabPanePerfAnalysis extends BaseElement {
@@ -37,23 +36,23 @@ export class TabPanePerfAnalysis extends BaseElement {
   private tableProcess: LitTable | null | undefined;
   private tableSo: LitTable | null | undefined;
   private tableFunction: LitTable | null | undefined;
-  private sumCount: any;
+  private sumCount: number | undefined | null;
   private perfAnalysisRange: HTMLLabelElement | null | undefined;
   private back: HTMLDivElement | null | undefined;
   private tabName: HTMLDivElement | null | undefined;
   private progressEL: LitProgressBar | null | undefined;
-  private processName: any;
-  private threadName: any;
+  private processName: HTMLDivElement | null | undefined;
+  private threadName: HTMLDivElement | null | undefined;
   private callChainMap!: Map<number, any>;
   private sortColumn: string = '';
   private sortType: number = 0;
-  private allProcessCount!: any;
-  private allThreadCount!: any;
-  private allLibCount!: any;
-  private allSymbolCount!: any;
+  private allProcessCount!: {};
+  private allThreadCount!: {};
+  private allLibCount!: {};
+  private allSymbolCount!: {};
   private currentLevel = -1;
   private currentLevelData!: Array<any>;
-  set data(val: SelectionParam | any) {
+  set data(val: SelectionParam) {
     if (val === this.currentSelection) {
       this.pidData.unshift(this.allProcessCount);
       this.tableProcess!.recycleDataSource = this.pidData;
@@ -68,6 +67,8 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.tableSo!.style.display = 'none';
     this.tableFunction!.style.display = 'none';
     this.back!.style.visibility = 'hidden';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = '';
+    this.tabName!.textContent = '';
     this.perfAnalysisRange!.textContent =
       'Selected range: ' + parseFloat(((val.rightNs - val.leftNs) / 1000000.0).toFixed(5)) + ' ms';
     if (!this.callChainMap) {
@@ -125,7 +126,8 @@ export class TabPanePerfAnalysis extends BaseElement {
       }
     });
   }
-  processPieChart(val: any) {
+  processPieChart(val: SelectionParam) {
+    // @ts-ignore
     this.sumCount = this.allProcessCount.allCount;
     this.perfAnalysisPie!.config = {
       appendPadding: 0,
@@ -163,12 +165,14 @@ export class TabPanePerfAnalysis extends BaseElement {
         },
       ],
     };
-    this.tableProcess!.addEventListener('row-hover', (tblProcessRowHover: any) => {
-      if (tblProcessRowHover.detail.data) {
-        let data = tblProcessRowHover.detail.data;
+    this.tableProcess!.addEventListener('row-hover', (tblProcessRowHover) => {
+      // @ts-ignore
+      let tblProcessData = tblProcessRowHover.detail;
+      if (tblProcessData.data) {
+        let data = tblProcessData.data;
         data.isHover = true;
-        if ((tblProcessRowHover.detail as any).callBack) {
-          (tblProcessRowHover.detail as any).callBack(true);
+        if (tblProcessData.callBack) {
+          tblProcessData.callBack(true);
         }
       }
       this.perfAnalysisPie?.showHover();
@@ -186,14 +190,15 @@ export class TabPanePerfAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
-    this.tableProcess!.addEventListener('row-click', (evt: any) => {
+    this.tableProcess!.addEventListener('row-click', (evt) => {
+      // @ts-ignore
       let data = evt.detail.data;
       if (data.tableName !== '' && data.count !== 0) {
         this.perfProcessLevelClickEvent(data, val);
       }
     });
   }
-  perfProcessLevelClickEvent(it: any, val: any) {
+  perfProcessLevelClickEvent(it: any, val: SelectionParam) {
     this.clearData();
     this.back!.style.visibility = 'visible';
     this.tableProcess!.style.display = 'none';
@@ -207,14 +212,16 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.processName = it.tableName;
     this.perfAnalysisPie?.hideTip();
   }
-  threadPieChart(val: any) {
+  threadPieChart(val: SelectionParam) {
     if (val.perfThread.length > 0 && val.perfProcess.length === 0) {
       this.back!.style.visibility = 'hidden';
       this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = '';
       this.perfTableThread!.style.display = 'grid';
     } else {
+      // @ts-ignore
       this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.processName;
     }
+    // @ts-ignore
     this.sumCount = this.allThreadCount.allCount;
     this.perfAnalysisPie!.config = {
       appendPadding: 0,
@@ -252,12 +259,14 @@ export class TabPanePerfAnalysis extends BaseElement {
         },
       ],
     };
-    this.perfTableThread!.addEventListener('row-hover', (perfTblThreadRowHover: any) => {
-      if (perfTblThreadRowHover.detail.data) {
-        let data = perfTblThreadRowHover.detail.data;
+    this.perfTableThread!.addEventListener('row-hover', (perfTblThreadRowHover) => {
+      // @ts-ignore
+      let perfTblThreadData = perfTblThreadRowHover.detail;
+      if (perfTblThreadData.data) {
+        let data = perfTblThreadData.data;
         data.isHover = true;
-        if ((perfTblThreadRowHover.detail as any).callBack) {
-          (perfTblThreadRowHover.detail as any).callBack(true);
+        if (perfTblThreadData.callBack) {
+          perfTblThreadData.callBack(true);
         }
       }
       this.perfAnalysisPie?.showHover();
@@ -274,14 +283,15 @@ export class TabPanePerfAnalysis extends BaseElement {
     // @ts-ignore
     this.threadData.shift(this.allThreadCount);
     this.currentLevelData = this.threadData;
-    this.perfTableThread!.addEventListener('row-click', (evt: any) => {
+    this.perfTableThread!.addEventListener('row-click', (evt) => {
+      // @ts-ignore
       let data = evt.detail.data;
       if (data.tableName !== '' && data.count !== 0) {
         this.perfThreadLevelClickEvent(data, val);
       }
     });
   }
-  perfThreadLevelClickEvent(it: any, val: any) {
+  perfThreadLevelClickEvent(it: any, val: SelectionParam) {
     this.clearData();
     this.back!.style.visibility = 'visible';
     this.perfTableThread!.style.display = 'none';
@@ -296,7 +306,8 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.threadName = it.tableName;
     this.perfAnalysisPie?.hideTip();
   }
-  libraryPieChart(val: any) {
+  libraryPieChart(val: SelectionParam) {
+    // @ts-ignore
     this.sumCount = this.allLibCount.allCount;
     this.perfAnalysisPie!.config = {
       appendPadding: 0,
@@ -334,12 +345,14 @@ export class TabPanePerfAnalysis extends BaseElement {
         },
       ],
     };
-    this.tableSo!.addEventListener('row-hover', (tableSoRowHover: any) => {
-      if (tableSoRowHover.detail.data) {
-        let data = tableSoRowHover.detail.data;
+    this.tableSo!.addEventListener('row-hover', (tableSoRowHover) => {
+      // @ts-ignore
+      let tableSoData = tableSoRowHover.detail;
+      if (tableSoData.data) {
+        let data = tableSoData.data;
         data.isHover = true;
-        if ((tableSoRowHover.detail as any).callBack) {
-          (tableSoRowHover.detail as any).callBack(true);
+        if (tableSoData.callBack) {
+          tableSoData.callBack(true);
         }
       }
       this.perfAnalysisPie?.showHover();
@@ -357,20 +370,21 @@ export class TabPanePerfAnalysis extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
-    this.tableSo!.addEventListener('row-click', (evt: any) => {
+    this.tableSo!.addEventListener('row-click', (evt) => {
+      // @ts-ignore
       let data = evt.detail.data;
       if (data.tableName !== '' && data.count !== 0) {
         this.perfSoLevelClickEvent(data, val);
       }
     });
   }
-  perfSoLevelClickEvent(it: any, val: any) {
+  perfSoLevelClickEvent(it: any, val: SelectionParam) {
     this.clearData();
     this.tableSo!.style.display = 'none';
     this.tableFunction!.style.display = 'grid';
     this.tableSo!.setAttribute('hideDownload', '');
     this.tableFunction?.removeAttribute('hideDownload');
-    this.getHiperfFunction(it, val);
+    this.getHiperfFunction(it);
     this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
       // @ts-ignore
       this.processName + ' / ' + this.threadName + ' / ' + it.tableName;
@@ -458,7 +472,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       currentTable!.recycleDataSource = arr;
     }
   }
-  async getHiperfProcess(val: any) {
+  async getHiperfProcess(val: SelectionParam) {
     this.progressEL!.loading = true;
     if (!this.processData || this.processData.length === 0) {
       this.progressEL!.loading = false;
@@ -475,7 +489,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       return;
     }
     let allCount = 0;
-    let pidMap = new Map<number, Array<any>>();
+    let pidMap = new Map<number, Array<number | string>>();
     if (val.perfThread.length > 0 && val.perfProcess.length === 0) {
       this.tableProcess!.style.display = 'none';
       this.getHiperfThread(this.processData[0], val);
@@ -485,7 +499,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         if (pidMap.has(itemData.pid)) {
           pidMap.get(itemData.pid)?.push(itemData);
         } else {
-          let itemArray = new Array<any>();
+          let itemArray = new Array<number | string>();
           itemArray.push(itemData);
           pidMap.set(itemData.pid, itemArray);
         }
@@ -501,7 +515,7 @@ export class TabPanePerfAnalysis extends BaseElement {
           tableName: pName,
           pid: pid,
           percent: ((count / allCount) * 100).toFixed(2),
-          countFormat: Utils.timeMsFormat2p(count),
+          countFormat: Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1)),
           count: count,
         };
         this.pidData.push(pidData);
@@ -514,16 +528,20 @@ export class TabPanePerfAnalysis extends BaseElement {
     }
     new ResizeObserver(() => {
       if (this.parentElement?.clientHeight != 0) {
-        this.tableProcess!.style.height = this.parentElement!.clientHeight - 30 + 'px';
-        this.perfTableThread!.style.height = this.parentElement!.clientHeight - 30 + 'px';
-        this.tableFunction!.style.height = this.parentElement!.clientHeight - 30 + 'px';
-        this.tableSo!.style.height = this.parentElement!.clientHeight - 30 + 'px';
+        this.tableProcess!.style.height = this.parentElement!.clientHeight - 50 + 'px';
+        this.tableProcess?.reMeauseHeight();
+        this.perfTableThread!.style.height = this.parentElement!.clientHeight - 50 + 'px';
+        this.perfTableThread?.reMeauseHeight();
+        this.tableFunction!.style.height = this.parentElement!.clientHeight - 50 + 'px';
+        this.tableFunction?.reMeauseHeight();
+        this.tableSo!.style.height = this.parentElement!.clientHeight - 50 + 'px';
+        this.tableSo?.reMeauseHeight();
       }
     }).observe(this.parentElement!);
   }
-  getHiperfThread(item: any, val: any) {
+  getHiperfThread(item: any, val: SelectionParam) {
     this.progressEL!.loading = true;
-    let threadMap = new Map<number, Array<any>>();
+    let threadMap = new Map<number, Array<number | string>>();
     let pid = item.pid;
     let allCount = 0;
     if (!this.processData || this.processData.length === 0) {
@@ -537,7 +555,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       if (threadMap.has(itemData.tid)) {
         threadMap.get(itemData.tid)?.push(itemData);
       } else {
-        let itemArray = new Array<any>();
+        let itemArray = new Array<number | string>();
         itemArray.push(itemData);
         threadMap.set(itemData.tid, itemArray);
       }
@@ -553,7 +571,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         pid: item.pid,
         tid: tid,
         tableName: tName,
-        countFormat: Utils.timeMsFormat2p(threadCount),
+        countFormat: Utils.timeMsFormat2p(threadCount * (SpHiPerf.stringResult?.fValue || 1)),
         count: threadCount,
         percent: ((threadCount / allCount) * 100).toFixed(2),
       };
@@ -565,13 +583,13 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.progressEL!.loading = false;
     this.threadPieChart(val);
   }
-  getHiperfSo(item: any, val: any) {
+  getHiperfSo(item: any, val: SelectionParam) {
     this.progressEL!.loading = true;
     let parentCount = item.count;
     let tid = item.tid;
     let pid = item.pid;
     let allCount = 0;
-    let libMap = new Map<number, Array<any>>();
+    let libMap = new Map<number, Array<number | string>>();
     if (!this.processData || this.processData.length === 0) {
       return;
     }
@@ -583,7 +601,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       if (libMap.has(itemData.libId)) {
         libMap.get(itemData.libId)?.push(itemData);
       } else {
-        let dataArray = new Array<any>();
+        let dataArray = new Array<number | string>();
         dataArray.push(itemData);
         libMap.set(itemData.libId, dataArray);
       }
@@ -599,7 +617,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         pid: item.pid,
         tid: item.tid,
         percent: ((libCount / parentCount) * 100).toFixed(2),
-        countFormat: Utils.timeMsFormat2p(libCount),
+        countFormat: Utils.timeMsFormat2p(libCount * (SpHiPerf.stringResult?.fValue || 1)),
         count: libCount,
         tableName: libName,
         libId: libId,
@@ -612,7 +630,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.progressEL!.loading = false;
     this.libraryPieChart(val);
   }
-  getHiperfFunction(item: any, val: any) {
+  getHiperfFunction(item: any) {
     this.progressEL!.loading = true;
     this.shadowRoot!.querySelector<HTMLDivElement>('.subheading')!.textContent = 'Statistic By Function Count';
     let parentCount = item.count;
@@ -632,7 +650,7 @@ export class TabPanePerfAnalysis extends BaseElement {
       if (symbolMap.has(itemData.symbolId)) {
         symbolMap.get(itemData.symbolId)?.push(itemData);
       } else {
-        let dataArray = new Array<any>();
+        let dataArray = new Array<number | string>();
         dataArray.push(itemData);
         symbolMap.set(itemData.symbolId, dataArray);
       }
@@ -648,7 +666,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         pid: item.pid,
         tid: item.tid,
         percent: ((symbolCount / parentCount) * 100).toFixed(2),
-        countFormat: Utils.timeMsFormat2p(symbolCount),
+        countFormat: Utils.timeMsFormat2p(symbolCount * (SpHiPerf.stringResult?.fValue || 1)),
         count: symbolCount,
         tableName: symbolName,
       };
@@ -658,6 +676,7 @@ export class TabPanePerfAnalysis extends BaseElement {
     this.allSymbolCount = this.totalCountData(allCount);
     this.currentLevel = 3;
     this.progressEL!.loading = false;
+    // @ts-ignore
     this.sumCount = this.allSymbolCount.allCount;
     this.perfAnalysisPie!.config = {
       appendPadding: 0,
@@ -688,12 +707,14 @@ export class TabPanePerfAnalysis extends BaseElement {
         },
       ],
     };
-    this.tableFunction!.addEventListener('row-hover', (evt: any) => {
-      if (evt.detail.data) {
-        let data = evt.detail.data;
+    this.tableFunction!.addEventListener('row-hover', (evt) => {
+      // @ts-ignore
+      let functionData = evt.detail;
+      if (functionData.data) {
+        let data = functionData.data;
         data.isHover = true;
-        if ((evt.detail as any).callBack) {
-          (evt.detail as any).callBack(true);
+        if (functionData.callBack) {
+          functionData.callBack(true);
         }
       }
       this.perfAnalysisPie?.showHover();
@@ -710,10 +731,10 @@ export class TabPanePerfAnalysis extends BaseElement {
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
   }
-  totalCountData(count: any) {
+  totalCountData(count: number) {
     let allCount;
     allCount = {
-      countFormat: Utils.timeMsFormat2p(count),
+      countFormat: Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1)),
       percent: ((count / count) * 100).toFixed(2),
       count: 0,
       allCount: count,
@@ -724,7 +745,7 @@ export class TabPanePerfAnalysis extends BaseElement {
 
   getPieChartData(res: any[]) {
     if (res.length > 20) {
-      let pieChartArr: any[] = [];
+      let pieChartArr: string[] = [];
       let other: any = {
         tableName: 'other',
         count: 0,
@@ -736,7 +757,8 @@ export class TabPanePerfAnalysis extends BaseElement {
           pieChartArr.push(res[i]);
         } else {
           other.count += res[i].count;
-          other.countFormat = Utils.timeMsFormat2p(other.count);
+          other.countFormat = Utils.timeMsFormat2p(other.count * (SpHiPerf.stringResult?.fValue || 1));
+          // @ts-ignore
           other.percent = ((other.count / this.sumCount) * 100).toFixed(2);
         }
       }
@@ -745,13 +767,13 @@ export class TabPanePerfAnalysis extends BaseElement {
     }
     return res;
   }
-  getCallChainDataFromWorker(val: any) {
+  getCallChainDataFromWorker(val: SelectionParam) {
     this.getDataByWorker(val, (results: any) => {
       this.processData = results;
       this.getHiperfProcess(val);
     });
   }
-  getDataByWorker(val: any, handler: Function) {
+  getDataByWorker(val: SelectionParam, handler: Function) {
     this.progressEL!.loading = true;
     const args = [
       {

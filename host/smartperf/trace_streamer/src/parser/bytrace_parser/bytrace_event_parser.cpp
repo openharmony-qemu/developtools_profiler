@@ -14,6 +14,7 @@
  */
 
 #include "bytrace_event_parser.h"
+#include "app_start_filter.h"
 #include "binder_filter.h"
 #include "cpu_filter.h"
 #include "filter_filter.h"
@@ -24,7 +25,7 @@
 #include "slice_filter.h"
 #include "stat_filter.h"
 #include "string_to_numerical.h"
-#include "thread_state.h"
+#include "thread_state_flag.h"
 #include "ts_common.h"
 namespace SysTuning {
 namespace TraceStreamer {
@@ -142,7 +143,7 @@ bool BytraceEventParser::SchedSwitchEvent(const ArgsMap& args, const BytraceLine
         return false;
     }
     auto prevStateStr = args.at("prev_state");
-    auto threadState = ThreadState(prevStateStr.c_str());
+    auto threadState = ThreadStateFlag(prevStateStr.c_str());
     uint64_t prevState = threadState.State();
     if (!threadState.IsValid()) {
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_SWITCH, STAT_EVENT_DATA_INVALID);
@@ -721,6 +722,7 @@ void BytraceEventParser::FilterAllEvents()
     streamFilters_->cpuFilter_->Finish();
     traceDataCache_->dataDict_.Finish();
     traceDataCache_->UpdataZeroThreadInfo();
+    streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
 }
 
 void BytraceEventParser::BeginFilterEvents(EventInfo* event)

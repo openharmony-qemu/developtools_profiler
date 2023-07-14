@@ -15,6 +15,7 @@
 #ifndef EBPF_BASE_H
 #define EBPF_BASE_H
 #include <algorithm>
+#include <set>
 #include <string>
 #include "double_map.h"
 #include "ebpf_data_reader.h"

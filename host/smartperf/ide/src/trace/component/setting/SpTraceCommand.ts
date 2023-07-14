@@ -44,7 +44,7 @@ export class SpTraceCommand extends BaseElement {
     this.copyEl?.removeEventListener('click', this.codeCopyEvent);
   }
 
-  codeCopyEvent = (event: any) => {
+  codeCopyEvent = () => {
     this.codeHl?.select();
     document.execCommand('copy');
     let allPlugin: Array<string> = [];
@@ -60,7 +60,7 @@ export class SpTraceCommand extends BaseElement {
     });
   };
 
-  textSelectEvent = (event: any) => {
+  textSelectEvent = () => {
     this.copyEl!.style.backgroundColor = '#FFFFFF';
   };
 

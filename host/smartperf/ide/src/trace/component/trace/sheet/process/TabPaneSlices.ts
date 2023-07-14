@@ -41,7 +41,7 @@ export class TabPaneSlices extends BaseElement {
     });
     this.slicesTbl!.loading = true;
     getTabSlicesAsyncFunc(asyncNames, asyncPid, slicesParam.leftNs, slicesParam.rightNs).then((res) => {
-      getTabSlices(slicesParam.funTids, slicesParam.leftNs, slicesParam.rightNs).then((res2) => {
+      getTabSlices(slicesParam.funTids, slicesParam.processIds, slicesParam.leftNs, slicesParam.rightNs).then((res2) => {
         this.slicesTbl!.loading = false;
         let processSlicesResult = (res || []).concat(res2 || []);
         if (processSlicesResult != null && processSlicesResult.length > 0) {

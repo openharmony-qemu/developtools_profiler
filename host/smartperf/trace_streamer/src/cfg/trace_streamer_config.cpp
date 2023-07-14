@@ -14,9 +14,12 @@
  */
 
 #include "trace_streamer_config.h"
+#include "memory_plugin_common.pbreader.h"
+#include "memory_plugin_result.pbreader.h"
 #include "log.h"
 namespace SysTuning {
 namespace TraceCfg {
+using namespace ProtoReader;
 TraceStreamerConfig::TraceStreamerConfig()
 {
     InitEventNameMap();

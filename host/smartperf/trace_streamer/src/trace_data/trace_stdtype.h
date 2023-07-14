@@ -117,7 +117,7 @@ public:
     uint32_t cpuStatesCount_ = 0;
 };
 
-class ThreadState {
+class ThreadStateData {
 public:
     TableRowId
         AppendThreadState(InternalTime ts, InternalTime dur, InternalCpu cpu, InternalTid itid, TableRowId idState);
@@ -1889,6 +1889,7 @@ public:
     void SetType(uint64_t row, uint8_t type);
     void SetDst(uint64_t row, uint64_t dst);
     void SetSrcs(uint64_t row, const std::vector<uint64_t>& fromSlices);
+    void SetFlags(uint64_t row, const uint32_t flags);
     const std::deque<uint32_t> Ipids() const;
     const std::deque<uint32_t> VsyncIds() const;
     const std::deque<uint64_t> CallStackIds() const;
@@ -1903,6 +1904,10 @@ public:
     void UpdateCallStackSliceId(uint64_t row, uint64_t callStackSliceId);
     void SetEndTimeAndFlag(uint64_t row, uint64_t ts, uint64_t expectDur, uint64_t expectEnd);
     void Erase(uint64_t row);
+
+public:
+    static const uint32_t ABNORMAL_START_END_TIME = 3;
+    typedef enum FrameSliceType { ACTURAL_SLICE, EXPECT_SLICE } FrameSliceType;
 
 private:
     std::deque<uint32_t> ipids_ = {};
@@ -1920,13 +1925,91 @@ private:
 };
 class FrameMaps : public CacheBase {
 public:
-    size_t AppendNew(uint64_t src, uint64_t dst);
+    size_t AppendNew(FrameSlice* frameSlice, uint64_t src, uint64_t dst);
     const std::deque<uint64_t>& SrcIndexs() const;
     const std::deque<uint64_t>& DstIndexs() const;
 
 private:
     std::deque<uint64_t> srcs_ = {};
     std::deque<uint64_t> dsts_ = {};
+};
+
+class AppStartup : public CacheBase {
+public:
+    size_t AppendNewData(uint32_t ipid,
+                         uint32_t tid,
+                         uint32_t callId,
+                         uint64_t startTime,
+                         uint64_t endTime,
+                         uint32_t startName,
+                         DataIndex packedName);
+    const std::deque<uint32_t>& Pids() const;
+    const std::deque<uint32_t>& Tids() const;
+    const std::deque<uint32_t>& CallIds() const;
+    const std::deque<uint64_t>& StartTimes() const;
+    const std::deque<uint64_t>& EndTimes() const;
+    const std::deque<uint32_t>& StartNames() const;
+    const std::deque<DataIndex>& PackedNames() const;
+
+    void Clear() override
+    {
+        CacheBase::Clear();
+        ipids_.clear();
+        tids_.clear();
+        callIds_.clear();
+        startTimes_.clear();
+        endTimes_.clear();
+        startNames_.clear();
+        packedNames_.clear();
+    }
+
+private:
+    std::deque<uint32_t> ipids_ = {};
+    std::deque<uint32_t> tids_ = {};
+    std::deque<uint32_t> callIds_ = {};
+    std::deque<uint64_t> startTimes_ = {};
+    std::deque<uint64_t> endTimes_ = {};
+    std::deque<uint32_t> startNames_ = {};
+    std::deque<DataIndex> packedNames_ = {};
+};
+
+class SoStaticInitalization : public CacheBase {
+public:
+    size_t AppendNewData(uint32_t ipid,
+                         uint32_t tid,
+                         uint32_t callId,
+                         uint64_t startTime,
+                         uint64_t endTime,
+                         DataIndex soName,
+                         uint32_t depth);
+    const std::deque<uint32_t>& Pids() const;
+    const std::deque<uint32_t>& Tids() const;
+    const std::deque<uint32_t>& CallIds() const;
+    const std::deque<uint64_t>& StartTimes() const;
+    const std::deque<uint64_t>& EndTimes() const;
+    const std::deque<DataIndex>& SoNames() const;
+    const std::deque<uint32_t> Depths() const;
+
+    void Clear() override
+    {
+        CacheBase::Clear();
+        ipids_.clear();
+        tids_.clear();
+        callIds_.clear();
+        startTimes_.clear();
+        endTimes_.clear();
+        soNames_.clear();
+        depths_.clear();
+    }
+
+private:
+    std::deque<uint32_t> ipids_ = {};
+    std::deque<uint32_t> tids_ = {};
+    std::deque<uint32_t> callIds_ = {};
+    std::deque<uint64_t> startTimes_ = {};
+    std::deque<uint64_t> endTimes_ = {};
+    std::deque<DataIndex> soNames_ = {};
+    std::deque<uint32_t> depths_ = {};
 };
 
 class JsHeapFiles : public CacheBase {

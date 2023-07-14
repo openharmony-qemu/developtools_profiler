@@ -105,7 +105,7 @@ export class CpuRender {
     );
     for (let i = 0; i < SpSystemTrace.wakeupList.length; i++) {
       if (i + 1 == SpSystemTrace.wakeupList.length) {
-        return
+        return;
       }
       drawWakeUpList(
         req.context,

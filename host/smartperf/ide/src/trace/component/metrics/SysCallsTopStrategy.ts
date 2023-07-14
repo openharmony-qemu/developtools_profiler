@@ -15,7 +15,15 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initSysCallsTopStrategy = (metricData: Array<any>): ProcessInfoListItem => {
+export const initSysCallsTopStrategy = (metricData: Array<{
+  tid: string;
+  pid: string;
+  funName: string;
+  frequency: string;
+  minDur: number;
+  maxDur: number;
+  avgDur: number;
+}>): ProcessInfoListItem => {
   info('System Calls Strategy data length is:', metricData.length);
   let ProcessInfoListItems: Array<ProcessInfoItem> = [];
 
@@ -25,7 +33,7 @@ export const initSysCallsTopStrategy = (metricData: Array<any>): ProcessInfoList
     let functionNames = metricData[sqlIndex].funName;
     let durMaxes = metricData[sqlIndex].maxDur;
     let durMines = metricData[sqlIndex].minDur < 0 ? 0 : metricData[sqlIndex].minDur;
-    let durAvgs = Math.floor(metricData[sqlIndex].avgDur).toString();
+    let durAvgs = Math.floor(metricData[sqlIndex].avgDur);
 
     let processInfoItem: ProcessInfoItem = {
       pid: pidList,
@@ -62,7 +70,7 @@ export interface ThreadsItem {
 
 export interface FunctionItem {
   functionName: string;
-  durMax: string;
-  durMin: string;
-  durAvg: string;
+  durMax: number;
+  durMin: number;
+  durAvg: number;
 }

@@ -72,8 +72,11 @@ import { TabPanePerfAnalysis } from '../sheet/hiperf/TabPanePerfAnalysis.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { TabPaneFilesystemStatisticsAnalysis } from '../sheet/file-system/TabPaneFilesystemStatisticsAnalysis.js';
 import { TabPaneIOTierStatisticsAnalysis } from '../sheet/file-system/TabPaneIOTierStatisticsAnalysis.js';
-import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { TabPaneVirtualMemoryStatisticsAnalysis } from '../sheet/file-system/TabPaneVirtualMemoryStatisticsAnalysis.js';
+import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
+import { TabPaneStartup } from '../sheet/process/TabPaneStartup.js';
+import { TabPaneStaticInit } from '../sheet/process/TabPaneStaticInit.js';
+
 export let tabConfig: any = {
   'tabpane-current': {
     title: 'Current Selection',
@@ -130,6 +133,16 @@ export let tabConfig: any = {
     title: 'Thread States',
     type: TabPaneThreadStates,
     require: (param: SelectionParam) => param.threadIds.length > 0,
+  },
+  'box-process-startup': {
+    title: 'App Startups',
+    type: TabPaneStartup,
+    require: (param: SelectionParam) => param.processIds.length > 0 && param.startup,
+  },
+  'box-process-static-init': {
+    title: 'Static Initialization',
+    type: TabPaneStaticInit,
+    require: (param: SelectionParam) => param.processIds.length > 0 && param.staticInit,
   },
   'box-thread-usage': {
     title: 'Thread Usage',

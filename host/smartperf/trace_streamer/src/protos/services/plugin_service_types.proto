@@ -17,6 +17,13 @@ import "common_types.proto";
 
 // Message define for IPC interface, imported by plugin service proto file.
 // for RegisterPlugin API
+
+enum ResponseStatus {
+    STATUS_UNSPECIFIED = 0;
+    OK = 1;
+    ERR = 2;
+}
+
 message RegisterPluginRequest {
     uint32 request_id = 1;
     string path = 2;
@@ -24,10 +31,14 @@ message RegisterPluginRequest {
 
     string name = 4;
     uint32 buffer_size_hint = 5;
+
+    bool is_standalone_data = 6;
+    string out_file_name = 7;
+    string plugin_version = 8;
 }
 
 message RegisterPluginResponse {
-    uint32 status = 1;
+    ResponseStatus status = 1;
     uint32 plugin_id = 2;
 }
 
@@ -38,7 +49,7 @@ message UnregisterPluginRequest {
 }
 
 message UnregisterPluginResponse {
-    uint32 status = 1;
+    ResponseStatus status = 1;
 }
 
 // for GetCommand API
@@ -64,8 +75,12 @@ message StopSessionCmd {
     repeated uint32 plugin_ids = 1;
 }
 
+message RefreshSessionCmd {
+    repeated uint32 plugin_ids = 1;
+}
+
 message GetCommandResponse {
-    uint32 status = 1;
+    ResponseStatus status = 1;
     bool has_more = 2;
     uint32 command_id = 3;
     oneof command {
@@ -73,6 +88,7 @@ message GetCommandResponse {
         DestroySessionCmd destroy_session_cmd = 11;
         StartSessionCmd start_session_cmd = 12;
         StopSessionCmd stop_session_cmd = 13;
+        RefreshSessionCmd refresh_session_cmd = 14;
     }
 }
 
@@ -90,6 +106,7 @@ message PluginResult {
         BufferDescriptor buffer = 3;
     };
     ProfilerPluginState status = 10;
+    string out_file_name = 11; // The standalone plugin needs to add the output file name in the response of startSession
 }
 
 message NotifyResultRequest {
@@ -99,5 +116,5 @@ message NotifyResultRequest {
 }
 
 message NotifyResultResponse {
-    uint32 status = 1;
+    ResponseStatus status = 1;
 }

@@ -76,7 +76,7 @@ const ThreadMeasureFilter& TraceDataCacheReader::GetConstThreadMeasureFilterData
 {
     return threadMeasureFilterData_;
 }
-const ThreadState& TraceDataCacheReader::GetConstThreadStateData() const
+const ThreadStateData& TraceDataCacheReader::GetConstThreadStateData() const
 {
     return threadStateData_;
 }
@@ -325,6 +325,14 @@ const FrameMaps& TraceDataCacheReader::GetConstFameMapsData() const
 const GPUSlice& TraceDataCacheReader::GetConstGPUSliceData() const
 {
     return gpuSliceData_;
+}
+const AppStartup& TraceDataCacheReader::GetConstAppStartupData() const
+{
+    return appStartupData_;
+}
+const SoStaticInitalization& TraceDataCacheReader::GetConstStaticInitalizationData() const
+{
+    return staticInitalizationData_;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

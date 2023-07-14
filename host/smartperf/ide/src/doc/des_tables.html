@@ -897,6 +897,42 @@
             <td>记录中断相关事件</td>
           </tr>
           <tr>
+            <td>js_heap_edges</td>
+            <td>记录了js内存数据类对象对应的成员的信息</td>
+          </tr>
+          <tr>
+            <td>js_heap_files</td>
+            <td>记录了js内存数据的名称和时间</td>
+          </tr>
+          <tr>
+            <td>js_heap_info</td>
+            <td>记录了js内存数据类型，如nodes和edges的字段类型和数据总数</td>
+          </tr>
+          <tr>
+            <td>js_heap_location</td>
+            <td>记录了js内存location节点相关数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_nodes</td>
+            <td>记录了js内存类对象和其成员的对应关系</td>
+          </tr>
+          <tr>
+            <td>js_heap_sample</td>
+            <td>记录了timeline模式下的时间轴信息</td>
+          </tr>
+          <tr>
+            <td>js_heap_string</td>
+            <td>记录了js内存数据中的字符串</td>
+          </tr>
+          <tr>
+            <td>js_heap_trace_function_info</td>
+            <td>记录了timeline模式下的调用栈的每个函数信息</td>
+          </tr>
+          <tr>
+            <td>js_heap_trace_node</td>
+            <td>记录了timeline模式下的调用栈信息</td>
+          </tr>
+          <tr>
             <td>live_process</td>
             <td>记录了一些实时的进程中执行的一些数据</td>
           </tr>
@@ -921,6 +957,10 @@
           <tr>
             <td>native_hook_frame</td>
             <td>记录堆内存申请与释放相关的调用栈</td>
+          </tr>
+          <tr>
+            <td>native_hook_statistic</td>
+            <td>记录堆内存申请与释放相关的统计信息</td>
           </tr>
           <tr>
             <td>network</td>
@@ -1135,6 +1175,60 @@
             <td>记录中断事件</td>
           </tr>
           <tr>
+            <td>js_heap_edges</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_files</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_info</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_location</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_nodes</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_sample</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_string</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_trace_function_info</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
+            <td>js_heap_trace_node</td>
+            <td>-</td>
+            <td>arkts-plugin</td>
+            <td>js内存数据</td>
+          </tr>
+          <tr>
             <td>live_process</td>
             <td>-</td>
             <td>process-plugin</td>
@@ -1180,13 +1274,19 @@
             <td>native_hook</td>
             <td>-</td>
             <td>nativehook/hookdaemon</td>
-            <td>内存数据</td>
+            <td>malloc &amp;&amp; mmap内存数据</td>
           </tr>
           <tr>
             <td>native_hook_frame</td>
             <td>-</td>
             <td>nativehook/hookdaemon</td>
-            <td>内存数据</td>
+            <td>native_hook调用栈数据</td>
+          </tr>
+          <tr>
+            <td>native_hook_statistic</td>
+            <td>-</td>
+            <td>nativehook/hookdaemon</td>
+            <td>malloc &amp;&amp; mmap统计数据</td>
           </tr>
           <tr>
             <td>perf_callchain</td>
@@ -1385,6 +1485,10 @@
         native_hook_frame表记录内存申请/释放的调用堆栈。通过callChainId区分一组调用堆栈，depth为堆栈深度，depth为0时，表示当前行为栈顶数据。<br />
         <img src="../figures/traceStreamer/dump_and_mem.png" alt="GitHub Logo" />
       </p>
+      <p class="fontColor">
+        native_hook_statistic表记录内存申请/释放的统计信息。通过callChainId区分一组调用堆栈。每个统计事件将记录当前事件的callChainId，并统计当前调用栈内存分配/释放的总次数和总大小。<br />
+        <img src="../figures/traceStreamer/db_native_hook_statistic.png" alt="GitHub Logo" />
+      </p>
       <h3 class="mume-header fontColor">查询举例</h3>
 
       <ul class="fontColor">
@@ -1395,25 +1499,28 @@
           >
         </li>
         <li>
-          已知callchainid = 0, 查看当前内存变化调用堆栈<br />
-          <code class="fontColor">select * from native_hook_frame where callChainId = 0</code>
+          已知callchainid = 1, 查看当前内存变化调用堆栈<br />
+          <code class="fontColor">select * from native_hook_frame where callchain_id = 1</code>
+        </li>
+        <li>
+          已知callchainid = 1, 查看当前内存变化调用堆栈对应的统计信息<br />
+          <code class="fontColor">select * from native_hook_statistic where callchain_id = 1</code>
         </li>
       </ul>
-      <h3 class="mume-header fontColor">日志表与进程线程表关系图</h3>
-
+      <h3>日志表与进程线程表关系图</h3>
       <p class="fontColor">
         log表记录日志信息。可以根据seq字段的连续性，来判断是否存在日志丢失的情况。<br />
         <img src="../figures/traceStreamer/log.png" alt="GitHub Logo" />
       </p>
-      <h3 class="mume-header fontColor">查询举例</h3>
-
+      <h3>查询举例</h3>
       <ul class="fontColor">
         <li>
           已知tid = 123，查看当前线程的所有error级别的日志，可以使用如下SQL语句：<br />
           <code class="fontColor">select * from log where tid = 123 and level = "error"</code>
         </li>
       </ul>
-      <h3>perf表之间关系图</h3>
+      <h3 class="mume-header fontColor">perf表之间关系图</h3>
+
       <ul class="fontColor">
         <li>perf_report：此表记录Hiperf工具采集数据时的配置信息。</li>
         <li>perf_thread：此表记录hiperf采集到的进程和线程数据。</li>
@@ -1426,7 +1533,8 @@
         </li>
       </ul>
       <p class="fontColor"><img src="../figures/traceStreamer/perf.png" alt="GitHub Logo" /></p>
-      <h3>查询举例</h3>
+      <h3 class="mume-header fontColor">查询举例</h3>
+
       <ul class="fontColor">
         <li>
           <p class="fontColor">
@@ -1477,14 +1585,16 @@
           </p>
         </li>
       </ul>
-      <h3>帧渲染表之间的关系图</h3>
+      <h3 class="mume-header fontColor">帧渲染表之间的关系图</h3>
+
       <p class="fontColor">
         frame_slice: 记录RS(RenderService)和应用的帧渲染。<br />
         gpu_slice: 记录RS的帧对应的gpu渲染时长。<br />
         frame_maps:记录应用到RS的帧的映射关系。<br />
         <img src="../figures/traceStreamer/frames.jpg" alt="GitHub Logo" />
       </p>
-      <h3>查询示例</h3>
+      <h3 class="mume-header fontColor">查询示例</h3>
+
       <ul class="fontColor">
         <li>
           <p class="fontColor">
@@ -1505,12 +1615,19 @@
           </p>
         </li>
       </ul>
-      <h2 class="mume-header fontColor">TraceStreamer输出数据库表格详细介绍</h2>
-
-      <h3 class="mume-header fontColor">app_name表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>JS内存数据表关系图</h3>
+      <p class="fontColor">js_heap_files：记录js内存数据的文件名和文件索引</p>
+      <p class="fontColor"><img src="../figures/traceStreamer/js_heap_files.png" alt="1683163158954" /></p>
+      <p class="fontColor">
+        js_heap_nodes:记录js内存类对象数据<br />
+        js_heap_edges:记录js内存类对象的成员数据<br />
+        js_heap_trace_node:记录timeline的调用栈信息<br />
+        js_heap_sample:记录timeline的时间轴信息<br />
+        <img src="../figures/traceStreamer/js_heap_nodes.png" alt="1683163373206" />
+      </p>
+      <h2>TraceStreamer输出数据库表格详细介绍</h2>
+      <h3>app_name表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1537,20 +1654,16 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录HiSysevent上报事件中的IDE相关事件中APPNAME的表关联信息。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>id：用于与表hisys_event_measure表中的key_id字段做对应</li>
         <li>app_name：对应的事件的信息ID</li>
         <li>app_key：对应的事件的APPNAME字段的信息ID</li>
       </ul>
-      <h3 class="mume-header fontColor">args表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>args表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1581,21 +1694,17 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录方法的参数集合。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>key：键</li>
         <li>datatype：数据类型</li>
         <li>value：取值</li>
         <li>argset：参数集合</li>
       </ul>
-      <h3 class="mume-header fontColor">bio_latency_sample表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>bio_latency_sample表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1662,11 +1771,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录IO操作相关方法调用，及调用栈数据。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>callchain_id：调用栈的唯一标识。与ebpf_callstack表中Callchain_id字段关联</li>
         <li>
@@ -1683,10 +1790,8 @@
         <li>path：路径id</li>
         <li>dur_per_4k：每4k数据的平均延迟</li>
       </ul>
-      <h3 class="mume-header fontColor">callstack表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>callstack表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1761,13 +1866,11 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         记录调用堆栈和异步调用信息，其中depth,stack_id和parent_stack_id仅在非异步的调用中有效。当cookid不为空时，为异步调用，此时callid为进程唯一号，否则为线程唯一号。
       </p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>dur：调用时长</li>
         <li>callid：调用者的ID，比如针对线程表里面的id</li>
@@ -1779,10 +1882,8 @@
         <li>flag：C表示分布式调用发送方，S表示接受方</li>
         <li>args：分布式调用函数参数</li>
       </ul>
-      <h3 class="mume-header fontColor">clk_event_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>clk_event_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1809,19 +1910,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录时钟信息。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>Type：时钟事件类型</li>
         <li>Name：时钟事件名称</li>
       </ul>
-      <h3 class="mume-header fontColor">clock_event_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>clock_event_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1848,19 +1945,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">此结构用来维护时钟事件，cpu与唯一的ID做关联。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>Type：时钟事件类型</li>
         <li>Name：时钟事件名称</li>
       </ul>
-      <h3 class="mume-header fontColor">cpu_measure_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>cpu_measure_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1887,18 +1980,14 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">将cpu号作为key1，cpu的频率，空闲等状态作为key2，唯一确定一个filter_id。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>Id(filterid), cpu：事件名称，cpu号</li>
       </ul>
-      <h3 class="mume-header fontColor">cpu_usage表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>cpu_usage表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1933,21 +2022,17 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了与CPU使用率相关的数据。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>total_load：总负荷</li>
         <li>user_load：用户负载</li>
         <li>system_load：系统负载</li>
         <li>process_num：线程数</li>
       </ul>
-      <h3 class="mume-header fontColor">data_dict表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>data_dict表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -1966,19 +2051,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">此表记录了一个数据类型ID和字符串的映射。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>id：索引值</li>
         <li>data：字符串</li>
       </ul>
-      <h3 class="mume-header fontColor">data_type表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>data_type表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2001,19 +2082,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">此表记录了一个数据类型ID和数据描述的映射。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>typeId:：数据类型id</li>
         <li>Desc：数据类型描述</li>
       </ul>
-      <h3 class="mume-header fontColor">diskio表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>diskio表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2064,20 +2141,16 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了与磁盘读写相关的数据。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>rd_sectors_kb：读数据的速度</li>
         <li>wr_sectors_kb：写入数据的速度</li>
         <li>ts：时间戳</li>
       </ul>
-      <h3 class="mume-header fontColor">ebpf_callstack表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>ebpf_callstack表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2112,11 +2185,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了与磁盘读写相关的数据。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>callchain_id：调用栈的唯一标识。与ebpf_callstack表中Callchain_id字段关联</li>
         <li>depth：调用栈深度。取值为零时表示栈顶</li>
@@ -2124,10 +2195,8 @@
         <li>symbols_id：调用栈函数名称, 与data_dict中的id字段关联</li>
         <li>file_path_id：调用栈函数所属文件路径, 与data_dict中的id字段关联</li>
       </ul>
-      <h3 class="mume-header fontColor">file_system_sample表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>file_system_sample表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2202,11 +2271,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了调用栈的相关信息。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>callchain_id：调用栈信息ID与file_system_callstack表中call_chain_id字段相关联</li>
         <li>type：对应文件操作open，close，read，write</li>
@@ -2224,10 +2291,8 @@
         <li>third_argument：参数三</li>
         <li>fourth_argument：参数四</li>
       </ul>
-      <h3 class="mume-header fontColor">hidump表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>hidump表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2250,18 +2315,14 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">此表记录了设备的帧率信息，fps。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>fps：帧率值</li>
       </ul>
-      <h3 class="mume-header fontColor">hisys_event_measure表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>hisys_event_measure表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2300,11 +2361,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录所有的system event事件的相关数据，及其相关表的映射信息。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>serial：每条数据过来携带唯一一条id作为标识</li>
         <li>name_id：存放事件对应的ID，与data_dict表相关联可以取出对应的字段</li>
@@ -2316,10 +2375,8 @@
         <li>int_value：存放本事件所包含的字段的int型的值</li>
         <li>string_value：存放本事件所包含的字段的string型的值</li>
       </ul>
-      <h3 class="mume-header fontColor">instant表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>instant表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2354,11 +2411,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了系统中的waking和wakeup事件。</p>
-      <h4 class="mume-header fontColor">字段描述</h4>
-
+      <h4>字段描述</h4>
       <ul class="fontColor">
         <li>ts：唤醒时间</li>
         <li>name：唤醒事件的名称</li>
@@ -2367,10 +2422,8 @@
         <li>ref_type：描述了value字段的类型（一般取值为itid）</li>
         <li>value：一般为当前线程的内部线程号取值</li>
       </ul>
-      <h3 class="mume-header fontColor">irq表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>irq表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2441,11 +2494,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录中断相关事件。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>dur：调用中断时长</li>
         <li>callid：调用中断者的ID，比如针对线程表里面的id</li>
@@ -2455,10 +2506,416 @@
         <li>parent_id：父调用中断的id</li>
         <li>spanId：分布式调用中断关联关系</li>
       </ul>
-      <h3 class="mume-header fontColor">live_process表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>js_heap_edges表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>edge_index</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>type</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>name_or_index</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>to_node</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>from_node_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>to_node_id</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录js内存数据类对象对应的成员的信息。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>edge_index：成员的索引号</li>
+        <li>type：成员的类型，取值范围为js_heap_info表中的edge_types</li>
+        <li>name_or_index：数据名称，取值为js_heap_string表中的下标索引</li>
+        <li>to_node：此成员指向的类对象在nodes数组中的索引</li>
+        <li>from_node_id：类对象ID，该类对象指向此成员数据</li>
+        <li>to_node_id：此成员指向到的类对象nodes数组中的ID</li>
+      </ul>
+      <h3>js_heap_files表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>file_name</td>
+            <td>TEXT</td>
+          </tr>
+          <tr>
+            <td>start_time</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>end_time</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>pid</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了js内存数据的文件名称和时间。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>id：文件ID</li>
+        <li>file_name：文件名称</li>
+        <li>start_time：数据抓取的起始时间</li>
+        <li>end_time：数据抓取的终止时间</li>
+        <li>pid：进程号</li>
+      </ul>
+      <h3>js_heap_info表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>key</td>
+            <td>TEXT</td>
+          </tr>
+          <tr>
+            <td>type</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>int_value</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>str_value</td>
+            <td>TEXT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了js内存数据类型，如nodes和edges的字段类型和数据总数。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>key：类型名称</li>
+        <li>type：数据类型索引</li>
+        <li>int_value：int类型的数据值，如count类型数据</li>
+        <li>str_value：string类型的数据值，如typename</li>
+      </ul>
+      <h3>js_heap_location表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>object_index</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>script_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>line</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>column</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了js内存location节点相关数据，此表目前无抓取到的数据。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>object_index：与location关联的类对象的索引，取值为js_heap_nodes的下标索引</li>
+        <li>script_id：关联到的类对象所在文件的绝对路径ID</li>
+        <li>line：在类对象所在的文件中的行号</li>
+        <li>column：在类对象所在的文件中的列号</li>
+      </ul>
+      <h3>js_heap_nodes表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>node_index</td>
+            <td>TEXT</td>
+          </tr>
+          <tr>
+            <td>type</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>name</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>id</td>
+            <td>TEXT</td>
+          </tr>
+          <tr>
+            <td>self_size</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>edge_count</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>trace_node_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>detachedness</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了js内存数据中类对象的数据。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>node_index：类对象的索引</li>
+        <li>type：类对象的类型</li>
+        <li>name：类对象的名称</li>
+        <li>id：类对象的唯一ID</li>
+        <li>self_size：该类对象所有成员的大小（以字节为单位）</li>
+        <li>edge_count：该类对象指向的类成员的个数</li>
+        <li>trace_node_id：该类对象关联到js_heap_trace_node表中的调用栈ID</li>
+        <li>detachedness：是否可以从window全局对象访问此节点，0表示是，1表示否</li>
+      </ul>
+      <h3>js_heap_sample表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>timestamp_us</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>last_assigned_id</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了timeline模式下的时间轴信息。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>timestamp_us：时间信息</li>
+        <li>last_assigned_id：当前时间点的id</li>
+      </ul>
+      <h3>js_heap_string表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>file_index</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>string</td>
+            <td>TEXT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了js内存数据中的字符串。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>file_index：索引</li>
+        <li>string：对应的字符串信息</li>
+      </ul>
+      <h3>js_heap_trace_function_info表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>function_index</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>function_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>name</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>script_name</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>script_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>line</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>column</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了timeline模式下的调用栈的每个函数信息。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>function_index：函数索引</li>
+        <li>function_id：函数ID</li>
+        <li>name：函数名称</li>
+        <li>script_name：关联到的类对象所在文件的绝对路径名称</li>
+        <li>script_id：关联到的类对象所在文件的绝对路径ID</li>
+        <li>line：在类对象所在的文件中的行号</li>
+        <li>column：在类对象所在的文件中的列号</li>
+      </ul>
+      <h3>js_heap_trace_node表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>file_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>function_info_index</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>count</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>size</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>parent_id</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">记录了timeline模式下的调用栈的信息。</p>
+      <h4>相关字段描述</h4>
+      <ul class="fontColor">
+        <li>file_id：文件ID</li>
+        <li>id：调用栈节点索引</li>
+        <li>function_info_index：函数信息索引</li>
+        <li>count：调用栈个数</li>
+        <li>size：调用栈大小</li>
+        <li>parent_id：调用栈父节点</li>
+      </ul>
+      <h3>live_process表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2521,11 +2978,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了一些实时的进程中执行的一些数据（Monitor）。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>process_id：进程id</li>
         <li>process_name：进程名</li>
@@ -2538,10 +2993,8 @@
         <li>disk_writes：磁盘写量</li>
         <li>disk_reads：磁盘读量</li>
       </ul>
-      <h3 class="mume-header fontColor">log表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>log表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2584,11 +3037,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录日志信息。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>Seq：日志序号，保证日志解析的准确性</li>
         <li>Ts：打印日志时间</li>
@@ -2598,10 +3049,8 @@
         <li>Tag：日志标签</li>
         <li>Context：日志内容</li>
       </ul>
-      <h3 class="mume-header fontColor">measure表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>measure表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2632,11 +3081,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录所有的计量值。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>type：固定字段（measure）</li>
         <li>ts：事件时间</li>
@@ -2644,10 +3091,8 @@
         <li>value：数值</li>
         <li>filter_id：对应filter表中的ID</li>
       </ul>
-      <h3 class="mume-header fontColor">measure_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>measure_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2674,21 +3119,17 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         记录一个递增的filterid队列，所有其他的filter类型在获取过程中，均从此数据列表中获取下一个可用的filter_id并做记录。
       </p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <p class="fontColor">
         过滤分类（type），过滤名称（key2），数据ID(key1)。<br />
         数据ID在process_measure_filter, sys_event_filter中作为id。
       </p>
-      <h3 class="mume-header fontColor">meta表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>meta表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2707,22 +3148,18 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         此表记录了数据解析或导出时的一些现场数据，比如使用的TraceStreamer版本，
         工具的发布时间，数据解析的时间，数据的持续时长，以及原始数据的格式。
       </p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>Name：指定元数据的key</li>
         <li>Value：指定元数据的value</li>
       </ul>
-      <h3 class="mume-header fontColor">native_hook表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>native_hook表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2789,11 +3226,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录native_hook抓取的某个进程的堆内存，内存映射相关数据。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>callChainId：唯一标识一条native_hook数据</li>
         <li>event_type：事件类型取值范围（AllocEvent,FreeEvent,MmapEvent, MunmapEvent）</li>
@@ -2810,10 +3245,8 @@
         <li>current_size_dur：表示当前活跃内存总量的持续时间</li>
         <li>last_lib_id：函数调用栈他最后一个函数所属的文件路径，除了文件名中带musl和libc++</li>
       </ul>
-      <h3 class="mume-header fontColor">native_hook_frame表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>native_hook_frame表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2852,21 +3285,78 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了内存的申请和释放的堆栈。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>callchain_id：标识一组调用堆栈</li>
         <li>depth：调用栈深度</li>
         <li>symbol_id：函数名</li>
         <li>file_id：函数所属文件</li>
       </ul>
-      <h3 class="mume-header fontColor">network表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>native_hook_statistic表</h3>
+      <h4>表结构</h4>
+      <table class="fontColor">
+        <thead>
+          <tr>
+            <th class="fontColor">Columns Name</th>
+            <th class="fontColor">SQL TYPE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>callchain_id</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>ipid</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>ts</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>type</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>apply_count</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>release_count</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>apply_size</td>
+            <td>INT</td>
+          </tr>
+          <tr>
+            <td>release_size</td>
+            <td>INT</td>
+          </tr>
+        </tbody>
+      </table>
+      <h4>表描述</h4>
+      <p class="fontColor">该表记录了内存申请/释放的统计信息。</p>
+      <h4>关键字段描述</h4>
+      <ul class="fontColor">
+        <li>callchain_id：内存分配的回调链id</li>
+        <li>ipid：进程id</li>
+        <li>ts：统计数据上报时间</li>
+        <li>type：事件类型，0代表malloc事件，1代表mmap事件</li>
+        <li>apply_count：当前调用栈内存分配总次数</li>
+        <li>release_count：当前调用栈内存释放总次数</li>
+        <li>apply_size：当前调用栈累计分配总大小</li>
+        <li>release_size：当前调用栈累计释放总大小</li>
+      </ul>
+      <h3>network表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2921,21 +3411,17 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了网络数据传输相关的信息。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>tv_sec：时间，秒为单位</li>
         <li>tv_nsec：时间，纳秒为单位</li>
         <li>tx_bytes：网络数据的写入量</li>
         <li>rx_bytes：网络数据的读取量</li>
       </ul>
-      <h3 class="mume-header fontColor">paged_memory_sample表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>paged_memory_sample表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -2986,11 +3472,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了网络数据传输相关的信息。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>callchain_id： 取值相同的一组数据，表示一个完整的调用栈</li>
         <li>type：事件类型</li>
@@ -3001,10 +3485,8 @@
         <li>size：操作页数</li>
         <li>itid：TS内部线程号</li>
       </ul>
-      <h3 class="mume-header fontColor">perf_callchain表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>perf_callchain表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3043,11 +3525,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了Hiperf采样数据的调用栈信息。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>callchain_id：标识一组调用堆栈</li>
         <li>depth：调用栈深度</li>
@@ -3056,10 +3536,8 @@
         <li>symbol_id：与PerfFiles中的symbol_id相关联</li>
         <li>name：函数名</li>
       </ul>
-      <h3 class="mume-header fontColor">perf_files表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>perf_files表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3090,21 +3568,17 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录Hiperf工具采集到的函数符号表和文件名。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>file_id：文件编号</li>
         <li>serial_id：一个文件中可能有多个函数，serial_id表示函数的编号</li>
         <li>symbol：函数名</li>
         <li>path：文件路径</li>
       </ul>
-      <h3 class="mume-header fontColor">perf_report表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>perf_report表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3127,13 +3601,11 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         记录Hiperf工具采集数据时的配置信息。包括：抓取的事件类型，抓取数据的命令， 抓数据时指定的进程名称。
       </p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>
           report_type：数据类型。取值只有三种类型：config_name（事件类型）, workload（抓取的进程名）,
@@ -3141,10 +3613,8 @@
         </li>
         <li>report_value：对应类型的取值</li>
       </ul>
-      <h3 class="mume-header fontColor">perf_sample表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>perf_sample表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3191,11 +3661,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录Hiperf工具的采样信息。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>timestamp：未进行时钟源同步的时间戳</li>
         <li>thread_id：线程号</li>
@@ -3207,10 +3675,8 @@
           thread_state：线程状态。采样对应Sched_Waking事件时，为Runing;对应Sched_Switch事件时，为Suspend。其余事件类型，为“-”
         </li>
       </ul>
-      <h3 class="mume-header fontColor">perf_thread表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>perf_thread表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3237,20 +3703,16 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录Hiperf工具采集到的进程和线程数据。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>thread_id：线程号</li>
         <li>process_id：进程号</li>
         <li>thread_name：线程名</li>
       </ul>
-      <h3 class="mume-header fontColor">process表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>process表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3301,11 +3763,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了进程相关数据。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>id：进程在数据库重新重新定义的id，从0开始序列增长</li>
         <li>ipid：TS内部进程id</li>
@@ -3318,10 +3778,8 @@
         <li>slice_count：进程内有多个线程有slice数据</li>
         <li>mem_count：进程是否有内存数据</li>
       </ul>
-      <h3 class="mume-header fontColor">process_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>process_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3348,24 +3806,20 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         将进程ID作为key1，进程的内存，界面刷新，屏幕亮度等信息作为key2，唯一确定一个filter_id,
         filter_id同时被记录在filter表中。
       </p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>id：进程id</li>
         <li>type：固定取值：process_filter</li>
         <li>name：进程名</li>
         <li>ipid：该进程表中的id与process表中的id相关联</li>
       </ul>
-      <h3 class="mume-header fontColor">process_measure表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>process_measure表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3392,20 +3846,16 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">保存进程的内存，堆栈值等所有计量值信息。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>ts：事件时间</li>
         <li>value：数值</li>
         <li>filter_id：对应process_measure_filter表中的ID</li>
       </ul>
-      <h3 class="mume-header fontColor">process_measure_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>process_measure_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3432,23 +3882,19 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         将进程ID作为key1，进程的内存，界面刷新，屏幕亮度等信息作为key2，唯一确定一个filter_id,
         filter_id同时被记录在measure_filter表中。
       </p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>type：固定取值：process_measure_filter</li>
         <li>name：cpu状态名</li>
         <li>ipid：进程内部编号</li>
       </ul>
-      <h3 class="mume-header fontColor">raw表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>raw表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3483,21 +3929,17 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了系统中的waking、wakup、cpu_idel、cpu_frequency数据。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>type：固定字段（raw）</li>
         <li>name：调度名称（取值：cpu_idle，sched_wakeup，sched_waking）</li>
         <li>cpu：事件发生在哪个CPU</li>
         <li>itid：时间对应哪个utid</li>
       </ul>
-      <h3 class="mume-header fontColor">sched_slice表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>sched_slice表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3544,11 +3986,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">此数据结构主要作为ThreadState的上下文使用，这张表是sched_switch事件的原始记录。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>ts：事件发生事件</li>
         <li>type：固定字段（sched_slice）</li>
@@ -3558,10 +3998,8 @@
         <li>itid：事件对应哪个utid</li>
         <li>end_state：线程的终结状态</li>
       </ul>
-      <h3 class="mume-header fontColor">smaps表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>smaps表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3620,11 +4058,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录进程的内存消耗的相关信息采样。</p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>id：状态持续时长</li>
         <li>timestamp：事件发生事件</li>
@@ -3639,10 +4075,8 @@
         <li>protection_id：内存段的权限id与表data_dict的id字段相关联</li>
         <li>path_id：如果区域是从文件映射的，则这是文件的名称对应的id序号与表data_dict的id字段相关联</li>
       </ul>
-      <h3 class="mume-header fontColor">stat表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>stat表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3673,13 +4107,11 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         此结果用来统计数据解析中各类数据的数据条数，数据和合法性，数据的匹配程度（begin-end），数据的损失等，查看此结构对应的表，可对数据源有基本的了解。
       </p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>event_name：数据类型</li>
         <li>stat_type：数据状态</li>
@@ -3687,10 +4119,8 @@
         <li>severity：严重级别</li>
         <li>source：数据来源</li>
       </ul>
-      <h3 class="mume-header fontColor">symbols表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>symbols表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3713,19 +4143,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">此表记录了被调用函数与其地址的映射关系。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>funcname：系统调用名称</li>
         <li>adr：系统调用地址</li>
       </ul>
-      <h3 class="mume-header fontColor">syscall表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>syscall表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3756,11 +4182,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录用户空间函数与内核空间函数相互调用记录。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>syscall_num：系统调用的序号</li>
         <li>type：固定取值：enter或者exit</li>
@@ -3768,10 +4192,8 @@
         <li>ts：时间戳</li>
         <li>ret：返回值，在type为exit时有效</li>
       </ul>
-      <h3 class="mume-header fontColor">sys_event_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>sys_event_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3794,19 +4216,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录所有的filter。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>type：文件类型</li>
         <li>name：文件名</li>
       </ul>
-      <h3 class="mume-header fontColor">sys_mem_measure表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>sys_mem_measure表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3833,20 +4251,16 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录系统内存与系统虚拟内存。</p>
-      <h4 class="mume-header fontColor">相关字段描述</h4>
-
+      <h4>相关字段描述</h4>
       <ul class="fontColor">
         <li>ts：事件时间</li>
         <li>value：数值</li>
         <li>filter_id：对应filter表中的ID</li>
       </ul>
-      <h3 class="mume-header fontColor">thread表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>thread表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3897,11 +4311,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了线程相关数据。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>id：线程在数据库重新重新定义的id，从0开始序列增长</li>
         <li>itid：TS内部线程id</li>
@@ -3914,10 +4326,8 @@
         <li>is_main_thread：是否主线程，主线程即该线程实际就是进程本身</li>
         <li>switch_count：当前线程的切换次数</li>
       </ul>
-      <h3 class="mume-header fontColor">thread_filter表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>thread_filter表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -3944,24 +4354,20 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">
         将线程ID作为key1，线程的内存，界面刷新，屏幕亮度等信息作为key2，唯一确定一个filter_id,
         filter_id同时被记录在filter表中。
       </p>
-      <h4 class="mume-header fontColor">主要字段描述</h4>
-
+      <h4>主要字段描述</h4>
       <ul class="fontColor">
         <li>id：线程id</li>
         <li>type：线程类型</li>
         <li>name：线程名称</li>
         <li>itid：该表中的tid与thread表中的tid相关联</li>
       </ul>
-      <h3 class="mume-header fontColor">thread_state表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>thread_state表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4008,11 +4414,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">记录了线程状态相关的数据。</p>
-      <h4 class="mume-header fontColor">字段详细描述</h4>
-
+      <h4>字段详细描述</h4>
       <ul class="fontColor">
         <li>id：线程状态在数据库中的id，从0开始序列增长</li>
         <li>ts：该线程状态的起始时间</li>
@@ -4027,22 +4431,27 @@
         data-role="codeBlock"
         data-info=""
         class="fontColor light smartperf-"><code class="fontColor">'R', Runnable状态
-'S', interruptible sleep
-'D', uninterruptible sleep
-'T', Stoped
-'t', Traced
-'X', ExitedDead
-'Z', ExitZombie
-'x', TaskDead
-'I', TaskDead
-'K', WakeKill
-'P', Parked
-'N', NoLoad
+"S", interruptible sleep
+"D", uninterruptible sleep
+"D-IO", uninterruptible io
+"D-NIO", uninterruptible nio
+"Runing", Runing状态
+"I", interrupted
+"T", Traced
+"X", ExitedDead
+"Z", Zombie
+"I", CloneThread
+"I", TaskKilled
+"DK",
+"DK-IO",
+"DK-NIO",
+"TK", TracedKill
+"R", WakeKill
+"P", Parked
+"R+", ForeGround
 </code></pre>
-      <h3 class="mume-header fontColor">clock_snapshot表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>clock_snapshot表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4065,11 +4474,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">时钟号和时间，时钟名的映射表。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>clock_id：时钟号</li>
         <li>ts：时钟快照报的时间</li>
@@ -4080,10 +4487,8 @@
           则时钟号为2 的250，转换为时钟号1的时间后，为150
         </li>
       </ul>
-      <h3 class="mume-header fontColor">datasource_clockid表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>datasource_clockid表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4102,11 +4507,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">数据源和时钟号的映射表。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>data_source_name：数据源的名称，和数据源的插件名保持一致</li>
         <li>
@@ -4114,10 +4517,8 @@
           这个表是用来告诉IDE，不同的事件源的事件，原始时钟号是多少，在数据库中保存的事件，通常是转换为boottime后的时间，但有些情况下，IDE仍然需要知道原始的时钟号是怎样的
         </li>
       </ul>
-      <h3 class="mume-header fontColor">frame_slice表</h3>
-
-      <h3 class="mume-header fontColor">表结构</h3>
-
+      <h3>frame_slice表</h3>
+      <h3>表结构</h3>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4176,11 +4577,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">应用的实际渲染帧和期望渲染帧的开始时间，持续时长，以及RenderService和App之间的关联关系。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>callstack_id：该帧数据对应着callstack表的调用栈所在的行数</li>
         <li>dur：该帧渲染时长（当数据不完整时，改行数据为空）</li>
@@ -4194,10 +4593,8 @@
         <li>depth：预留</li>
         <li>frame_no：预留</li>
       </ul>
-      <h3 class="mume-header fontColor">frame_maps表</h3>
-
-      <h3 class="mume-header fontColor">表结构</h3>
-
+      <h3>frame_maps表</h3>
+      <h3>表结构</h3>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4220,19 +4617,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">该表记录了app到RenderService的帧的映射关系，同frame_slice表中的src映射到dst的关系。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>src_row：frame_slice表中app的帧所在的行</li>
         <li>dst_row：frame_slice表中RenderService的帧所在的行</li>
       </ul>
-      <h3 class="mume-header fontColor">gpu_slice表</h3>
-
-      <h3 class="mume-header fontColor">表结构</h3>
-
+      <h3>gpu_slice表</h3>
+      <h3>表结构</h3>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4251,19 +4644,15 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
+      <h4>表描述</h4>
       <p class="fontColor">该表记录了每一帧数据在GPU上的渲染时长。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>frame_row：frame_slice表中渲染帧所在的行</li>
         <li>dur：帧渲染时长</li>
       </ul>
-      <h3 class="mume-header fontColor">trace_range表</h3>
-
-      <h4 class="mume-header fontColor">表结构</h4>
-
+      <h3>trace_range表</h3>
+      <h4>表结构</h4>
       <table class="fontColor">
         <thead>
           <tr>
@@ -4282,11 +4671,9 @@
           </tr>
         </tbody>
       </table>
-      <h4 class="mume-header fontColor">表描述</h4>
-
-      <p class="fontColor">记录解析解析开始时间以及结束时间。</p>
-      <h4 class="mume-header fontColor">关键字段描述</h4>
-
+      <h4>表描述</h4>
+      <p class="fontColor">该表记录了解析开始时间以及结束时间。</p>
+      <h4>关键字段描述</h4>
       <ul class="fontColor">
         <li>start_ts：trace的开始时间，纳秒为单位</li>
         <li>end_ts：trace的结束时间，纳秒为单位</li>

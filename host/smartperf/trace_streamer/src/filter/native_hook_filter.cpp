@@ -14,6 +14,7 @@
  */
 
 #include "native_hook_filter.h"
+#include "native_hook_config.pbreader.h"
 namespace SysTuning {
 namespace TraceStreamer {
 NativeHookFilter::NativeHookFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
@@ -39,7 +40,7 @@ void NativeHookFilter::ParseConfigInfo(ProtoReader::BytesView& protoData)
         isStringCompressedMode_ = true;
         return;
     }
-    if (configReader.has_callframe_compressed()) {
+    if (configReader.has_callframe_compress()) {
         isCallStackCompressedMode_ = true;
         isStringCompressedMode_ = true;
         return;

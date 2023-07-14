@@ -16,7 +16,6 @@
 import { CpuStruct, WakeupBean } from './ProcedureWorkerCPU.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { TimerShaftElement } from '../../component/trace/TimerShaftElement';
-import { TimeRange } from '../../component/trace/timer-shaft/RangeRuler';
 
 export abstract class Render {
   abstract renderMainThread(req: any, row: TraceRow<any>): void;
@@ -627,94 +626,6 @@ export function drawWakeUp(
   }
 }
 
-export function drawWakeUpList(
-  context: CanvasRenderingContext2D | any,
-  wake: WakeupBean | undefined | null,
-  startNS: number,
-  endNS: number,
-  totalNS: number,
-  frame: Rect,
-  wakeup: WakeupBean | undefined = undefined,
-  currentCpu: number | undefined | null = undefined,
-  noVerticalLine = false,
-) {
-  if (wake) {
-    let x1 = Math.floor(
-      ns2x(wake.wakeupTime || 0, startNS, endNS, totalNS, frame)
-    );
-    context.beginPath();
-    context.lineWidth = 2;
-    context.fillStyle = '#000000';
-    if (x1 > 0 && x1 < frame.x + frame.width) {
-      if (!noVerticalLine) {
-        context.moveTo(x1, frame.y);
-        context.lineTo(x1, frame.y + frame.height);
-      }
-      if (currentCpu == wake.cpu) {
-        let centerY = Math.floor(frame.y + frame.height / 2);
-        context.moveTo(x1, centerY - 6);
-        context.lineTo(x1 + 4, centerY);
-        context.lineTo(x1, centerY + 6);
-        context.lineTo(x1 - 4, centerY);
-        context.lineTo(x1, centerY - 6);
-        context.fill();
-      }
-    }
-    if (wakeup) {
-      let x2 = Math.floor(
-        ns2x(
-          wakeup.ts || 0,
-          startNS,
-          endNS,
-          totalNS,
-          frame
-        )
-      );
-      let y = frame.y + frame.height - 10;
-      context.moveTo(x1, y);
-      context.lineTo(x2, y);
-      context.moveTo(x2, y - 25);
-      context.lineTo(x2, y + 5);
-
-      let s = ns2s(
-        (wakeup.ts || 0) - (wake.wakeupTime || 0)
-      );
-      let distance = x2 - x1;
-      if (distance > 12) {
-        context.moveTo(x1, y);
-        context.lineTo(x1 + 6, y - 3);
-        context.moveTo(x1, y);
-        context.lineTo(x1 + 6, y + 3);
-        context.moveTo(x2, y);
-        context.lineTo(x2 - 6, y - 3);
-        context.moveTo(x2, y);
-        context.lineTo(x2 - 6, y + 3);
-        let measure = context.measureText(s);
-        let tHeight =
-          measure.actualBoundingBoxAscent +
-          measure.actualBoundingBoxDescent;
-        let xStart = x1 + Math.floor(distance / 2 - measure.width / 2);
-        if (distance > measure.width + 4) {
-          context.fillStyle = '#ffffff';
-          context.fillRect(
-            xStart - 2,
-            y - 4 - tHeight,
-            measure.width + 4,
-            tHeight + 4
-          );
-          context.font = '10px solid';
-          context.fillStyle = '#000000';
-          context.textBaseline = 'bottom';
-          context.fillText(s, xStart, y - 2);
-        }
-      }
-    }
-    context.strokeStyle = '#000000';
-    context.stroke();
-    context.closePath();
-  }
-}
-
 const wid = 5;
 const linkLineColor = '#ff0000';
 export function drawLinkLines(
@@ -1059,5 +970,93 @@ export function mem(
         }
       }
     }
+  }
+}
+
+export function drawWakeUpList(
+  context: CanvasRenderingContext2D | any,
+  wake: WakeupBean | undefined | null,
+  startNS: number,
+  endNS: number,
+  totalNS: number,
+  frame: Rect,
+  wakeup: WakeupBean | undefined = undefined,
+  currentCpu: number | undefined | null = undefined,
+  noVerticalLine = false,
+) {
+  if (wake) {
+    let x1 = Math.floor(
+      ns2x(wake.wakeupTime || 0, startNS, endNS, totalNS, frame)
+    );
+    context.beginPath();
+    context.lineWidth = 2;
+    context.fillStyle = '#000000';
+    if (x1 > 0 && x1 < frame.x + frame.width) {
+      if (!noVerticalLine) {
+        context.moveTo(x1, frame.y);
+        context.lineTo(x1, frame.y + frame.height);
+      }
+      if (currentCpu == wake.cpu) {
+        let centerY = Math.floor(frame.y + frame.height / 2);
+        context.moveTo(x1, centerY - 6);
+        context.lineTo(x1 + 4, centerY);
+        context.lineTo(x1, centerY + 6);
+        context.lineTo(x1 - 4, centerY);
+        context.lineTo(x1, centerY - 6);
+        context.fill();
+      }
+    }
+    if (wakeup) {
+      let x2 = Math.floor(
+        ns2x(
+          wakeup.ts || 0,
+          startNS,
+          endNS,
+          totalNS,
+          frame
+        )
+      );
+      let y = frame.y + frame.height - 10;
+      context.moveTo(x1, y);
+      context.lineTo(x2, y);
+      context.moveTo(x2, y - 25);
+      context.lineTo(x2, y + 5);
+
+      let s = ns2s(
+        (wakeup.ts || 0) - (wake.wakeupTime || 0)
+      );
+      let distance = x2 - x1;
+      if (distance > 12) {
+        context.moveTo(x1, y);
+        context.lineTo(x1 + 6, y - 3);
+        context.moveTo(x1, y);
+        context.lineTo(x1 + 6, y + 3);
+        context.moveTo(x2, y);
+        context.lineTo(x2 - 6, y - 3);
+        context.moveTo(x2, y);
+        context.lineTo(x2 - 6, y + 3);
+        let measure = context.measureText(s);
+        let tHeight =
+          measure.actualBoundingBoxAscent +
+          measure.actualBoundingBoxDescent;
+        let xStart = x1 + Math.floor(distance / 2 - measure.width / 2);
+        if (distance > measure.width + 4) {
+          context.fillStyle = '#ffffff';
+          context.fillRect(
+            xStart - 2,
+            y - 4 - tHeight,
+            measure.width + 4,
+            tHeight + 4
+          );
+          context.font = '10px solid';
+          context.fillStyle = '#000000';
+          context.textBaseline = 'bottom';
+          context.fillText(s, xStart, y - 2);
+        }
+      }
+    }
+    context.strokeStyle = '#000000';
+    context.stroke();
+    context.closePath();
   }
 }

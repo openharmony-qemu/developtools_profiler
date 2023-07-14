@@ -15,6 +15,7 @@
 #include "htrace_hilog_parser.h"
 #include "clock_filter_ex.h"
 #include "event_parser_base.h"
+#include "hilog_plugin_result.pbreader.h"
 #include "htrace_event_parser.h"
 #include "process_filter.h"
 #include "stat_filter.h"

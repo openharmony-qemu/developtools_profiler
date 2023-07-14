@@ -29,6 +29,7 @@ import {
   queryThreadWakeUp,
   queryThreadWakeUpFrom,
   queryCPUWakeUpIdFromBean,
+  queryThreadByItid,
 } from '../../../database/SqlLite.js';
 import { WakeupBean } from '../../../bean/WakeupBean.js';
 import { SpApplication } from '../../../SpApplication.js';
@@ -45,6 +46,8 @@ import { JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
 import { LitIcon } from '../../../../base-ui/icon/LitIcon.js';
 import { Utils } from '../base/Utils.js';
 import { SpSystemTrace } from '../../SpSystemTrace.js';
+import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
+import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -104,7 +107,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     callback: ((data: WakeupBean | null) => void) | undefined = undefined,
     scrollCallback?: (data: CpuStruct) => void
   ) {
-    this.setTableHeight('300px');
+    this.setTableHeight('550px');
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     if (leftTitle) {
       leftTitle.innerText = 'Slice Details';
@@ -168,8 +171,9 @@ export class TabPaneCurrentSelection extends BaseElement {
       this.currentSelectionTbl!.dataSource = list;
       let rightArea: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#table-right');
       let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-      let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
-        ?.shadowRoot?.querySelector("#custom-button");
+      let rightButton: HTMLElement | null | undefined = this?.shadowRoot
+        ?.querySelector('#rightButton')
+        ?.shadowRoot?.querySelector('#custom-button');
       let threadClick = this.currentSelectionTbl?.shadowRoot?.querySelector('#thread-id');
       threadClick?.addEventListener('click', () => {
         //cpu点击
@@ -339,8 +343,9 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
-    ?.shadowRoot?.querySelector("#custom-button");
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
+      ?.querySelector('#rightButton')
+      ?.shadowRoot?.querySelector('#custom-button');
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
       rightButton!.style.visibility = 'hidden';
@@ -390,11 +395,12 @@ export class TabPaneCurrentSelection extends BaseElement {
   }
 
   setIrqData(data: IrqStruct) {
-    this.setTableHeight('300px');
+    this.setTableHeight('550px');
     this.initCanvas();
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
-    ?.shadowRoot?.querySelector("#custom-button");
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
+      ?.querySelector('#rightButton')
+      ?.shadowRoot?.querySelector('#custom-button');
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
       rightButton!.style.visibility = 'hidden';
@@ -426,12 +432,13 @@ export class TabPaneCurrentSelection extends BaseElement {
     scrollWakeUp: (d: any) => void | undefined
   ) {
     //线程信息
-    this.setTableHeight('350px');
+    this.setTableHeight('550px');
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')
-    ?.shadowRoot?.querySelector("#custom-button");
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
+      ?.querySelector('#rightButton')
+      ?.shadowRoot?.querySelector('#custom-button');
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
       rightButton!.style.visibility = 'hidden';
@@ -555,51 +562,17 @@ export class TabPaneCurrentSelection extends BaseElement {
     scrollCallback: ((d: any) => void) | undefined
   ) {
     //线程信息
-    this.setTableHeight('550px');
+    this.setTableHeight('750px');
     this.tabCurrentSelectionInit('Slice Details');
     let list: any[] = [];
-    list.push({ name: 'Name', value: data.name });
-    list.push({ name: 'StartTime', value: getTimeString(data.ts || 0) });
-    list.push({
-      name: 'Absolute Time',
-      value: ((window as any).recordStartNS + data.ts) / 1000000000,
-    });
-    list.push({
-      name: 'Duration',
-      value: data.dur ? getTimeString(data.dur) : ' ',
-    });
-    if (data.frame_type != 'frameTime') {
-      list.push({
-        name: 'Process',
-        value: data.cmdline + ' ' + data.pid,
-      });
-    }
+    this.setJankCommonMessage(list, data);
     if (data.type == '0') {
-      if (data.jank_tag) {
-        if (data.frame_type === 'render_service') {
-          list.push({
-            name: 'Jank Type',
-            value: 'RenderService Deadline Missed',
-          });
-        } else if (data.frame_type === 'app') {
-          list.push({
-            name: 'Jank Type',
-            value: 'APP Deadline Missed',
-          });
-        } else if (data.frame_type === 'frameTime') {
-          list.push({ name: 'Jank Type', value: 'Deadline Missed' });
-        }
-      } else {
-        list.push({ name: 'Jank Type', value: 'NONE' });
-      }
+      this.setJankType(data, list);
       let jankJumperList = new Array<JankTreeNode>();
       if (data.frame_type === 'render_service') {
         queryGpuDur(data.id!).then((it) => {
           if (it.length > 0) {
-            list.push({
-              name: `<div>Gpu Duration</div>`,
-              value: getTimeString(it[0].gpu_dur),
-            });
+            list.push({ name: `<div>Gpu Duration</div>`, value: getTimeString(it[0].gpu_dur) });
           }
         });
         if (data.src_slice) {
@@ -611,8 +584,7 @@ export class TabPaneCurrentSelection extends BaseElement {
               });
               it.forEach((a: any) => {
                 let appNode = new JankTreeNode(a.name, a.pid, 'app');
-                let timeLineNode = new JankTreeNode(a.name, a.pid, 'frameTime');
-                appNode.children.push(timeLineNode);
+                appNode.children.push(new JankTreeNode(a.name, a.pid, 'frameTime'));
                 jankJumperList.push(appNode);
                 list.push({
                   name: `<div>Slice</div>`,
@@ -752,25 +724,175 @@ export class TabPaneCurrentSelection extends BaseElement {
           appNode.children.push(rsNode);
           jankJumperList.push(appNode);
           this.currentSelectionTbl!.dataSource = list;
-          let all = this.currentSelectionTbl?.shadowRoot?.querySelectorAll<LitIcon>(`.jank_cla`);
-          all!.forEach((a) => {
-            a!.addEventListener('click', () => {
-              if (scrollCallback) {
-                scrollCallback({
-                  rowId: a.id,
-                  name: a.getAttribute('slice_name'),
-                  pid: a.getAttribute('pid'),
-                });
-              }
-            });
-          });
-          if (callback) {
-            callback(jankJumperList);
-          }
+          this.addJankScrollCallBackEvent(scrollCallback, callback, jankJumperList);
         });
       }
     } else {
       this.currentSelectionTbl!.dataSource = list;
+    }
+  }
+
+  setStartupData(data: AppStartupStruct, scrollCallback: Function) {
+    this.setTableHeight('550px');
+    this.initCanvas();
+    let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
+      ?.querySelector('#rightButton')
+      ?.shadowRoot?.querySelector('#custom-button');
+    if (rightTitle) {
+      rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
+    }
+    let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
+    if (leftTitle) {
+      leftTitle.innerText = 'Details';
+    }
+    let list: any[] = [];
+    list.push({ name: 'Name', value: AppStartupStruct.getStartupName(data.startName) });
+    list.push({
+      name: 'StartTime(Relative)',
+      value: `
+      <div style="white-space: nowrap;display: flex;align-items: center">
+<div style="white-space:pre-wrap">${getTimeString(data.startTs || 0)}</div>
+<lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="start-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
+</div>`,
+    });
+    list.push({
+      name: 'StartTime(Absolute)',
+      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000,
+    });
+    if (data.dur && data.dur > 0) {
+      list.push({
+        name: 'EndTime(Relative)',
+        value: `<div style="white-space: nowrap;display: flex;align-items: center">
+<div style="white-space:pre-wrap">${getTimeString((data.startTs || 0) + (data.dur || 0))}</div>
+<lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="end-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
+</div>`,
+      });
+      list.push({
+        name: 'EndTime(Absolute)',
+        value: ((data.startTs || 0) + (data.dur || 0) + (window as any).recordStartNS) / 1000000000,
+      });
+    } else {
+      list.push({
+        name: 'EndTime(Relative)',
+        value: `Unknown Time`,
+      });
+      list.push({
+        name: 'EndTime(Absolute)',
+        value: 'Unknown Time',
+      });
+    }
+    list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
+    this.currentSelectionTbl!.dataSource = list;
+    let startIcon = this.currentSelectionTbl?.shadowRoot?.querySelector('#start-jump');
+    let endIcon = this.currentSelectionTbl?.shadowRoot?.querySelector('#end-jump');
+    let scrollClick = (type: number) => {
+      let recordNs: number = (window as any).recordStartNS;
+      let useEnd = type === 1 && data.startName! < 4;
+      queryThreadByItid(
+        useEnd ? data.endItid! : data.itid!,
+        useEnd ? recordNs + data.startTs! + data.dur! : recordNs + data.startTs!
+      ).then((result) => {
+        if (result.length > 0) {
+          let pt: { pid: number; tid: number; dur: number,name: string, depth: number } = result[0];
+          scrollCallback({
+            pid: pt.pid,
+            tid: pt.tid,
+            type: 'func',
+            dur: pt.dur,
+            depth: pt.depth,
+            funName: pt.name,
+            startTime: useEnd ? (data.startTs || 0) + (data.dur || 0) : data.startTs,
+            keepOpen: true,
+          });
+        }
+      });
+    };
+    if (startIcon) {
+      startIcon.addEventListener('click', () => scrollClick(0));
+    }
+    if (endIcon) {
+      endIcon.addEventListener('click', () => scrollClick(1));
+    }
+  }
+
+  setStaticInitData(data: SoStruct, scrollCallback: Function) {
+    this.setTableHeight('550px');
+    this.initCanvas();
+    let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
+      ?.querySelector('#rightButton')
+      ?.shadowRoot?.querySelector('#custom-button');
+    if (rightTitle) {
+      rightTitle.style.visibility = 'hidden';
+      rightButton!.style.visibility = 'hidden';
+    }
+    let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
+    if (leftTitle) {
+      leftTitle.innerText = 'Details';
+    }
+    let list: any[] = [];
+    list.push({ name: 'Name', value: data.soName });
+    list.push({
+      name: 'StartTime(Relative)',
+      value: `<div style="white-space: nowrap;display: flex;align-items: center">
+<div style="white-space:pre-wrap">${getTimeString(data.startTs || 0)}</div>
+<lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="start-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
+</div>`,
+    });
+    list.push({
+      name: 'StartTime(Absolute)',
+      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000,
+    });
+    list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
+    this.currentSelectionTbl!.dataSource = list;
+    let startIcon = this.currentSelectionTbl?.shadowRoot?.querySelector('#start-jump');
+    if (startIcon) {
+      startIcon.addEventListener('click', () => {
+        let recordNs: number = (window as any).recordStartNS;
+        queryThreadByItid(data.itid!, recordNs + data.startTs!).then((result) => {
+          if (result.length > 0) {
+            let pt: { pid: number; tid: number; dur: number,name: string, depth: number } = result[0];
+            scrollCallback({
+              pid: pt.pid,
+              tid: pt.tid,
+              type: 'func',
+              dur: pt.dur,
+              depth: pt.depth,
+              funName: pt.name,
+              startTime: data.startTs,
+              keepOpen: true,
+            });
+          }
+        });
+      });
+    }
+  }
+
+  private setJankType(data: JankStruct, list: any[]) {
+    if (data.jank_tag === 1) {
+      if (data.frame_type === 'render_service') {
+        list.push({ name: 'Jank Type', value: 'RenderService Deadline Missed' });
+      } else if (data.frame_type === 'app') {
+        list.push({ name: 'Jank Type', value: 'APP Deadline Missed' });
+      } else if (data.frame_type === 'frameTime') {
+        list.push({ name: 'Jank Type', value: 'Deadline Missed' });
+      }
+    } else if (data.jank_tag === 3) {
+      list.push({ name: 'Jank Type', value: 'Deadline Missed' });
+    } else {
+      list.push({ name: 'Jank Type', value: 'NONE' });
+    }
+  }
+
+  private setJankCommonMessage(list: any[], data: JankStruct) {
+    list.push({ name: 'Name', value: data.name });
+    list.push({ name: 'StartTime', value: getTimeString(data.ts || 0) });
+    list.push({ name: 'Absolute Time', value: ((window as any).recordStartNS + data.ts) / 1000000000 });
+    list.push({ name: 'Duration', value: data.dur ? getTimeString(data.dur) : ' ' });
+    if (data.frame_type != 'frameTime') {
+      list.push({ name: 'Process', value: data.cmdline + ' ' + data.pid });
     }
   }
 
@@ -881,6 +1003,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     }
     return wb;
   }
+
   /**
    * 查询出 线程唤醒了哪些线程信息
    */
@@ -1056,7 +1179,7 @@ export class TabPaneCurrentSelection extends BaseElement {
             }
             .table-left{
                 width: 50%;
-                height: 500px;
+                height: auto;
                 padding: 0 10px;
             }
             .table-right{

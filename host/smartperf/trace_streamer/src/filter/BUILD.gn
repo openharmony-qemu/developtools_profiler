@@ -11,13 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("../../build/ohos.gni")
+import("//build/ohos.gni")
 import("../../build/ts.gni")
 
 ohos_source_set("filter") {
   subsystem_name = "trace_streamer"
   part_name = "trace_streamer_filter"
   sources = [
+    "app_start_filter.cpp",
+    "app_start_filter.h",
     "args_filter.cpp",
     "args_filter.h",
     "binder_filter.cpp",
@@ -66,6 +68,7 @@ ohos_source_set("filter") {
       cflags += [ "-D IS_UT" ]
     }
   }
+  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_encoder" ]
   deps = []
   include_dirs = [
     "${SRC}/base",
@@ -74,8 +77,6 @@ ohos_source_set("filter") {
     "${SRC}/include",
     "${SRC}/filter",
     "${SRC}/cfg",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
     "${SRC}",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",

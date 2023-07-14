@@ -129,6 +129,7 @@ export class SportRuler extends Graph {
     }
     this.draw();
   }
+
   modifySicesTimeList(slicestime: SlicesTime | null | undefined) {
     if (slicestime) {
       let i = this.slicesTimeList.findIndex((it) => it.id == slicestime.id);
@@ -147,7 +148,6 @@ export class SportRuler extends Graph {
     }
     this.draw();
   }
-
   draw(): void {
     this.rulerW = this.canvas!.offsetWidth;
     this.c.clearRect(this.frame.x, this.frame.y, this.frame.width, this.frame.height + 1);
@@ -174,7 +174,7 @@ export class SportRuler extends Graph {
     this.range.xs?.forEach((item, index) => {
       this.c.moveTo(item, this.frame.y);
       this.c.lineTo(item, this.frame.y + this.frame.height);
-      this.c.fillText(`+${this.range.xsTxt[index]}`, item + 3, this.frame.y + 12);
+      this.c.fillText(`${this.range.xsTxt[index]}`, item + 3, this.frame.y + 12);
     });
     this.c.stroke();
     this.c.closePath();
@@ -299,7 +299,6 @@ export class SportRuler extends Graph {
       );
   }
 
-  // 绘制一个倒三角 ▼
   drawInvertedTriangle(time: number, color: string = '#000000') {
     if (time != null && typeof time != undefined) {
       let x = Math.round((this.rulerW * (time - this.range.startNS)) / (this.range.endNS - this.range.startNS));
@@ -330,7 +329,6 @@ export class SportRuler extends Graph {
       let startX = Math.round(
         (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS)
       );
-
       let endX = Math.round((this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS));
       let color = randomRgbColor();
       this.slicesTime.color = color;
@@ -344,7 +342,6 @@ export class SportRuler extends Graph {
         color,
         true
       );
-
       if (!shiftKey) {
         this.clearTempSlicesTime(); // 清除临时对象
 
@@ -388,24 +385,19 @@ export class SportRuler extends Graph {
     this.hoverFlag.hidden = false;
   }
 
-  //功能描述： 绘制多个帽子(两个三角形中间加一条横线)
-  // ________________
-  // |/            \|
   drawSlicesMarks(slicesTime: SlicesTime) {
     if (
       slicesTime.startTime != null &&
       typeof slicesTime.startTime != undefined &&
       slicesTime.endTime != null &&
       typeof slicesTime.endTime != undefined
-    ) {
+    )  {
       let startX = Math.round(
         (this.rulerW * (slicesTime.startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS)
       );
-
       let endX = Math.round(
         (this.rulerW * (slicesTime.endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS)
       );
-     
       // 放大、缩小、左右移动之后重置小三角的x轴坐标
       slicesTime.startX = startX;
       slicesTime.endX = endX;
@@ -516,6 +508,7 @@ export class SportRuler extends Graph {
     }
     return slicestime;
   }
+
   mouseUp(ev: MouseEvent) {
     if (this.edgeDetection(ev)) {
       let x = ev.offsetX - (this.canvas?.offsetLeft || 0); // 鼠标点击的x轴坐标
@@ -546,7 +539,6 @@ export class SportRuler extends Graph {
   }
 
   mouseMove(ev: MouseEvent) {
-    let x = ev.offsetX - (this.canvas?.offsetLeft || 0);
     if (this.edgeDetection(ev)) {
       let x = ev.offsetX - (this.canvas?.offsetLeft || 0);
       let flg = this.flagList.find((it) => x >= it.x && x <= it.x + 18);

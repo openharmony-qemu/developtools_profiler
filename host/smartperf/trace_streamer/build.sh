@@ -37,11 +37,23 @@ esac
 usage="Usage: $basename $0 wasm/test/fuzz/protoc debug/release/clean"
 
 ./dl_tools.sh $gn_path
-if [ ! -f "out/$target_os/protoc" ] && [ "$1" != "protoc" ];then
-    ./build.sh protoc
+
+if { [ "$1" == "dubaisdk" ] || [ "$1" == "sdkdemo" ] || [ "$1" == "wasm" ] || [ "$1" == "test" ] || [ "$1" == "fuzz" ]; } && [ "$#" -ne 0 ];then
+    if [ ! -f "out/$1/clang_x64/developtools/profiler/protoc" ] && [ "$1" != "protoc" ];then
+        ./build.sh protoc
+        mkdir -p out/$1/clang_x64/developtools/profiler
+        cp out/$target_os/clang_x64/developtools/profiler/protoc out/$1/clang_x64/developtools/profiler/protoc
+    fi
+    if [ ! -f "out/$1/clang_x64/developtools/profiler/protoreader_plugin" ] && [ "$1" != "spb" ] && [ -f "out/$1/clang_x64/developtools/profiler/protoc" ];then
+        ./build.sh spb
+        mkdir -p out/$1/clang_x64/developtools/profiler
+        cp out/$target_os/clang_x64/developtools/profiler/protoreader_plugin out/$1/clang_x64/developtools/profiler/protoreader_plugin
+    fi
 fi
-if [ ! -f "out/$target_os/protoreader_plugin" ] && [ "$1" != "spb" ] && [ -f "out/$target_os/protoc" ];then
-    ./build.sh spb
+if [ $target_os == "windows" ];then
+    cp .gn_win .gn
+else
+    cp .gn_unix .gn
 fi
 if [ "$1" == "windows" ];then
     echo "gn only support linux and wasm build currently"

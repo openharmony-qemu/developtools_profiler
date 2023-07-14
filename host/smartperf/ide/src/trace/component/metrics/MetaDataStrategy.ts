@@ -15,7 +15,10 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initMetaDataStrategy = (metricData: Array<any>): TraceMetadata => {
+export const initMetaDataStrategy = (metricData: Array<{
+  name: string;
+  valueText: string;
+}>): TraceMetadata => {
   info('Meta Strategy data length is:', metricData.length);
   let traceMetaDataList: Array<TraceMetadataItem> = [];
   let statDataArray = [];

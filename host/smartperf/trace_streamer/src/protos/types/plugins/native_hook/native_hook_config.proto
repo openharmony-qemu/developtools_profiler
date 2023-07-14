@@ -38,6 +38,8 @@ message NativeHookConfig {
     bool startup_mode = 18;
     bool memtrace_enable = 19;
     bool offline_symbolization = 20;
-    bool callframe_compressed = 21;
+    bool callframe_compress = 21;
+    // Configure zero to disable the data statistics function,
+    // greater than zero reports statistical data according to the configured numeric interval
     uint32 statistics_interval = 22;
 }

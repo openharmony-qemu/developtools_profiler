@@ -752,7 +752,7 @@ HWTEST_F(HtraceEventParserTest, ParseSysEnterEvent, TestSize.Level1)
     TS_LOGI("test14-18");
     SysEnterFormat* sysEnterEvent = new SysEnterFormat();
     sysEnterEvent->set_id(1);
-    sysEnterEvent->set_args(THREAD_NAME_02);
+    sysEnterEvent->set_args(0, 1);
 
     TracePluginResult tracePacket;
     FtraceCpuDetailMsg* ftraceCpuDetail = tracePacket.add_ftrace_cpu_detail();

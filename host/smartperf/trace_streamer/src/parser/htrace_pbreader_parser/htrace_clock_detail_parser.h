@@ -24,7 +24,6 @@
 #include "proto_reader_help.h"
 #include "htrace_file_header.h"
 #include "trace_data/trace_data_cache.h"
-#include "trace_plugin_result.pbreader.h"
 #include "trace_streamer_config.h"
 #include "trace_streamer_filters.h"
 

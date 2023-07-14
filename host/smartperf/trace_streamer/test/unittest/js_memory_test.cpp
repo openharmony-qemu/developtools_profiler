@@ -24,10 +24,8 @@
 #include "file.h"
 #include "htrace_js_memory_parser.h"
 #include "js_heap_config.pb.h"
-#include "js_heap_config.pb.cc"
 #include "js_heap_config.pbreader.h"
 #include "js_heap_result.pb.h"
-#include "js_heap_result.pb.cc"
 #include "js_heap_result.pbreader.h"
 #include "trace_streamer_selector.h"
 
@@ -57,11 +55,11 @@ HWTEST_F(JsMemoryTest, snapshotParserNodesByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-1");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(0));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(0));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -90,28 +88,28 @@ HWTEST_F(JsMemoryTest, snapshotParserNodesByJsmemory, TestSize.Level1)
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":1,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -149,11 +147,11 @@ HWTEST_F(JsMemoryTest, snapshotParserEdgesByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-2");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(0));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(0));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -183,28 +181,28 @@ HWTEST_F(JsMemoryTest, snapshotParserEdgesByJsmemory, TestSize.Level1)
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":1,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -234,11 +232,11 @@ HWTEST_F(JsMemoryTest, timelineParserNodesByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-3");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(1));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(1));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -266,28 +264,28 @@ HWTEST_F(JsMemoryTest, timelineParserNodesByJsmemory, TestSize.Level1)
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -325,11 +323,11 @@ HWTEST_F(JsMemoryTest, timelineParserEdgesByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-4");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(1));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(1));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -358,28 +356,28 @@ HWTEST_F(JsMemoryTest, timelineParserEdgesByJsmemory, TestSize.Level1)
         "\\n\\\"locations\\\":[],\\n\\\"samples\\\":[],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -409,11 +407,11 @@ HWTEST_F(JsMemoryTest, timelineParserSamplesByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-5");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(1));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(1));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -444,28 +442,28 @@ HWTEST_F(JsMemoryTest, timelineParserSamplesByJsmemory, TestSize.Level1)
         "42576\\n],\\n\\\"strings\\\":[],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -495,11 +493,11 @@ HWTEST_F(JsMemoryTest, timelineParserStringsByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-6");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(1));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(1));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -531,28 +529,28 @@ HWTEST_F(JsMemoryTest, timelineParserStringsByJsmemory, TestSize.Level1)
         "roots\\\",\\n\\\"TaggedDict[52]\\\",\\n\\\"JSFunction\\\"],\\n\\\"trace_function_infos\\\":[],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -576,11 +574,11 @@ HWTEST_F(JsMemoryTest, timelineParserTraceFuncInfoByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-7");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(1));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(1));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -611,28 +609,28 @@ HWTEST_F(JsMemoryTest, timelineParserTraceFuncInfoByJsmemory, TestSize.Level1)
         "0\\n],"
         "\\n\\\"trace_tree\\\":[]}\\n\"}}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
@@ -658,11 +656,11 @@ HWTEST_F(JsMemoryTest, timelineParserTraceTreeByJsmemory, TestSize.Level1)
 {
     TS_LOGI("test35-8");
     const int32_t pid = 1734;
-    JsHeapConfig jsHeapConfig;
-    jsHeapConfig.set_pid(pid);
-    jsHeapConfig.set_type(::JsHeapConfig_HeapType(1));
+    ArkTSConfig arkTSConfig;
+    arkTSConfig.set_pid(pid);
+    arkTSConfig.set_type(::ArkTSConfig_HeapType(1));
     std::string strConfig = "";
-    jsHeapConfig.SerializeToString(&strConfig);
+    arkTSConfig.SerializeToString(&strConfig);
 
     HtraceJSMemoryParser htraceJSMemoryParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     ProtoReader::BytesView tracePacket(reinterpret_cast<const uint8_t*>(strConfig.data()), strConfig.size());
@@ -696,28 +694,28 @@ HWTEST_F(JsMemoryTest, timelineParserTraceTreeByJsmemory, TestSize.Level1)
         "2,28,[]],16,15,5,188,[17,16,7,196,[]]]]],18,17,10,560,[19,9,2,28,[],20,18,172,7896,[21,19,4,3196,[]]]]]}\\n\"}"
         "}";
     const char* result4 = "{\"id\":2,\"result\":{}}";
-    JsHeapResult jsHeapResult1;
+    ArkTSResult jsHeapResult1;
     jsHeapResult1.set_result(result1);
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
     htraceJSMemoryParser.Parse(tracePacket1, 10000);
 
-    JsHeapResult jsHeapResult2;
+    ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
     htraceJSMemoryParser.Parse(tracePacket2, 11000);
 
-    JsHeapResult jsHeapResult3;
+    ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
     htraceJSMemoryParser.Parse(tracePacket3, 12000);
 
-    JsHeapResult jsHeapResult4;
+    ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);

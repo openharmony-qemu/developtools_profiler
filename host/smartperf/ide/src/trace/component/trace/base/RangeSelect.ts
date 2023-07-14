@@ -232,6 +232,11 @@ export class RangeSelect {
         rt = new Rect(xMin, Math.min(this.startY2, this.endY2), xMax - xMin, Math.abs(this.startY2 - this.endY2));
       } else {
         bound = it.getBoundingClientRect();
+        if (spacerRect.height > 0 &&
+          (bound.y + bound.height) < (spacerRect.y + spacerRect.height)) {
+          it.rangeSelect = false;
+          return false;
+        }
         itRect = Rect.getIntersect(
           bound,
           new Rect(rowsRect.x, rowsRect.y + spacerRect.height, rowsRect.width, rowsRect.height - spacerRect.height)

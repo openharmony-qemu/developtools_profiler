@@ -31,6 +31,7 @@ import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { showButtonMenu } from '../SheetUtils.js';
+import { SpHiPerf } from '../../../chart/SpHiPerf.js';
 
 @element('tabpane-perf-profile')
 export class TabpanePerfProfile extends BaseElement {
@@ -45,7 +46,7 @@ export class TabpanePerfProfile extends BaseElement {
   private currentSelectedData: any = undefined;
   private perfProfileFrameChart: FrameChart | null | undefined;
   private isChartShow: boolean = false;
-  private systmeRuleName = '/system/';
+  private systemRuleName = '/system/';
   private numRuleName = '/max/min/';
   private perfProfilerModal: DisassemblingWindow | null | undefined;
   private needShowMenu = true;
@@ -53,7 +54,6 @@ export class TabpanePerfProfile extends BaseElement {
   private perfProfileLoadingList: number[] = [];
   private perfProfileLoadingPage: any;
   private currentSelection: SelectionParam | undefined;
-  private isCurrentIsTopDown: boolean = true;
 
   set data(perfProfilerSelection: SelectionParam | any) {
     if (perfProfilerSelection == this.currentSelection) {
@@ -72,7 +72,6 @@ export class TabpanePerfProfile extends BaseElement {
     this.perfProfilerFilter!.filterValue = '';
     this.perfProfileProgressEL!.loading = true;
     this.perfProfileLoadingPage.style.visibility = 'visible';
-    this.isCurrentIsTopDown = true;
     this.getDataByWorker(
       [
         {
@@ -375,7 +374,7 @@ export class TabpanePerfProfile extends BaseElement {
         } else {
           perfProfileArgs.push({
             funcName: 'resotreAllNode',
-            funcArgs: [[this.systmeRuleName]],
+            funcArgs: [[this.systemRuleName]],
           });
           perfProfileArgs.push({
             funcName: 'resetAllNode',
@@ -383,7 +382,7 @@ export class TabpanePerfProfile extends BaseElement {
           });
           perfProfileArgs.push({
             funcName: 'clearSplitMapData',
-            funcArgs: [this.systmeRuleName],
+            funcArgs: [this.systemRuleName],
           });
         }
         this.getDataByWorker(perfProfileArgs, (result: any[]) => {
@@ -512,7 +511,6 @@ export class TabpanePerfProfile extends BaseElement {
   refreshAllNode(filterData: any) {
     let perfProfileArgs: any[] = [];
     let isTopDown: boolean = !filterData.callTree[0];
-    this.isCurrentIsTopDown = isTopDown;
     let isHideSystemLibrary = filterData.callTree[1];
     let list = filterData.dataMining.concat(filterData.dataLibrary);
     perfProfileArgs.push({

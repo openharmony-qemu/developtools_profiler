@@ -25,7 +25,7 @@ export class JanksStruct extends BaseStruct {
   dur: number | undefined;
   name: string | undefined;
   depth: number | undefined;
-  jank_tag: boolean = false;
+  jank_tag: number | undefined;
   cmdline: string | undefined; // process
   jank_type: string | undefined;
   type: string | undefined;

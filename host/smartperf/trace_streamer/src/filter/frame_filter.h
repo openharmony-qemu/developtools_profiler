@@ -47,7 +47,6 @@ public:
     void Finish();
 
 private:
-    typedef enum FrameSliceType { ACTURAL_SLICE, EXPECT_SLICE } FrameSliceType;
     class FrameSlice {
     public:
         FrameSlice() {}
@@ -61,7 +60,7 @@ private:
         uint64_t expectedDur_ = INVALID_UINT64;
         uint64_t endTs_ = INVALID_UINT64;
         bool gpuEnd_ = true;
-        FrameSliceType frameType_ = ACTURAL_SLICE;
+        TraceStdtype::FrameSlice::FrameSliceType frameType_ = TraceStdtype::FrameSlice::ACTURAL_SLICE;
         uint32_t vsyncId_ = INVALID_UINT32;
         uint64_t frameQueueStartTs_ = INVALID_UINT64;
         bool vsyncEnd_ = false;

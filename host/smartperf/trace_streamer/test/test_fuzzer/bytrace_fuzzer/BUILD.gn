@@ -12,7 +12,7 @@
 # limitations under the License.
 
 #####################hydra-fuzz###################
-import("../../../build/ohos.gni")
+import("//build/ohos.gni")
 import("../../../build/test.gni")
 import("../../test_ts.gni")
 
@@ -27,21 +27,10 @@ ohos_fuzztest("ts_bytrace_fuzz_test") {
     "../../../src/parser",
     "../../../src/trace_streamer",
     "../../../src/include",
+    "../../../src/proto_reader/include",
     "../../../src/parser/bytrace_parser",
     "../../../src/cfg",
     "${THIRD_PARTY}/sqlite/include",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
-    "${OHOS_PROTO_GEN}",
     "${THIRD_PARTY}/protobuf/src",
   ]
   cflags = [
@@ -60,8 +49,8 @@ ohos_fuzztest("ts_bytrace_fuzz_test") {
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
     "${THIRD_PARTY}/sqlite:sqlite",
-    "../../../prebuilts/protos:ts_proto_data_cpp",
     "../../../src:trace_streamer_source",
+    "../../../src/proto_reader:proto_reader",
   ]
 }
 

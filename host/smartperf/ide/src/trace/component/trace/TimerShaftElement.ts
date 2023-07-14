@@ -59,6 +59,27 @@ export function ns2s(ns: number): string {
   return result;
 }
 
+export function ns2UnitS(ns: number, scale: number): string {
+  let one_second = 1_000_000_000; // 1 second
+  let result;
+  if (scale >= 10_000_000_000) {
+    result = (ns / one_second).toFixed(0) + ' s';
+  } else if (scale >= 1_000_000_000) {
+    result = (ns / one_second).toFixed(1) + ' s';
+  } else if (scale >= 100_000_000) {
+    result = (ns / one_second).toFixed(2) + ' s';
+  } else if (scale >= 10_000_000) {
+    result = (ns / one_second).toFixed(3) + ' s';
+  } else if (scale >= 1_000_000) {
+    result = (ns / one_second).toFixed(4) + ' s';
+  } else if (scale >= 100_000) {
+    result = (ns / one_second).toFixed(5) + ' s';
+  } else {
+    result = (ns / one_second).toFixed(6) + ' s';
+  }
+  return result;
+}
+
 export function ns2x(ns: number, startNS: number, endNS: number, duration: number, rect: Rect) {
   if (endNS == 0) {
     endNS = duration;
@@ -113,7 +134,6 @@ export class TimerShaftElement extends BaseElement {
   public selectionList: Array<SelectionParam> = [];
   public selectionMap: Map<string, SelectionParam> = new Map<string, SelectionParam>();
 
-
   get sportRuler(): SportRuler | undefined {
     return this._sportRuler;
   }
@@ -161,7 +181,12 @@ export class TimerShaftElement extends BaseElement {
 
   reset(): void {
     this.loadComplete = false;
+    this.totalNS = 10_000_000_000;
+    this.startNS = 0;
+    this.endNS = 10_000_000_000;
     if (this.rangeRuler) {
+      this.rangeRuler.drawMark = false;
+      this.rangeRuler.range.totalNS = this.totalNS;
       this.rangeRuler.markAObj.frame.x = 0;
       this.rangeRuler.markBObj.frame.x = this.rangeRuler.frame.width;
       this.rangeRuler.cpuUsage = [];
@@ -169,11 +194,12 @@ export class TimerShaftElement extends BaseElement {
       this.sportRuler!.slicesTimeList.length = 0;
       this.selectionList.length = 0;
       this.selectionMap.clear();
+      this.rangeRuler.rangeRect = new Rect(0, 25, this.canvas?.clientWidth || 0, 75);
       this.sportRuler!.isRangeSelect = false;
       this.setSlicesMark();
     }
     this.removeTriangle('inverted');
-    this.totalNS = 10_000_000_000;
+    this.setRangeNS(0,this.endNS);
   }
 
   initElements(): void {
@@ -187,6 +213,10 @@ export class TimerShaftElement extends BaseElement {
     window.subscribe(window.SmartEvent.UI.TimeRange, (b) => this.setRangeNS(b.startNS, b.endNS));
   }
 
+  getRangeRuler() {
+    return this.rangeRuler;
+  }
+
   connectedCallback() {
     if (this.canvas) {
       if (this.isOffScreen) {
@@ -198,7 +228,8 @@ export class TimerShaftElement extends BaseElement {
       }
     }
     if (this.timeTotalEL) this.timeTotalEL.textContent = ns2s(this._totalNS);
-    if (this.timeOffsetEL) this.timeOffsetEL.textContent = ns2s(this._startNS);
+    if (this.timeOffsetEL && this.rangeRuler)
+      this.timeOffsetEL.textContent = ns2UnitS(this._startNS,this.rangeRuler.getScale());
     const width = this.canvas?.clientWidth || 0;
     const height = this.canvas?.clientHeight || 0;
     if (!this.timeRuler) {
@@ -242,8 +273,8 @@ export class TimerShaftElement extends BaseElement {
           if (this._sportRuler) {
             this._sportRuler.range = a;
           }
-          if (this.timeOffsetEL) {
-            this.timeOffsetEL.textContent = ns2s(a.startNS);
+          if (this.timeOffsetEL && this.rangeRuler) {
+            this.timeOffsetEL.textContent = ns2UnitS(a.startNS,this.rangeRuler.getScale());
           }
           if (this.loadComplete) {
             this.rangeChangeHandler?.(a);
@@ -263,10 +294,6 @@ export class TimerShaftElement extends BaseElement {
 
   getRange(): TimeRange | undefined {
     return this.rangeRuler?.getRange();
-  }
-
-  getRangeRuler() {
-    return this.rangeRuler;
   }
 
   updateWidth(width: number) {
@@ -300,9 +327,9 @@ export class TimerShaftElement extends BaseElement {
   };
 
   documentOnMouseMove = (ev: MouseEvent) => {
-    let x = ev.offsetX - (this.canvas?.offsetLeft || 0);  // 鼠标的x轴坐标  
-    let y = ev.offsetY; // 鼠标的y轴坐标                  
-    let findSlicestime = this.sportRuler?.findSlicesTime(x, y); // 查找帽子    
+    let x = ev.offsetX - (this.canvas?.offsetLeft || 0);  // 鼠标的x轴坐标
+    let y = ev.offsetY; // 鼠标的y轴坐标
+    let findSlicestime = this.sportRuler?.findSlicesTime(x, y); // 查找帽子
     if (!findSlicestime) { // 如果在该位置没有找到一个“帽子”，则可以显示一个旗子。
       this.sportRuler?.showHoverFlag();
       this.rangeRuler?.mouseMove(ev);
@@ -313,7 +340,7 @@ export class TimerShaftElement extends BaseElement {
       }
     } else {
       this.sportRuler?.clearHoverFlag();
-      this.sportRuler?.modifyFlagList(null);//重新绘制旗子，清除hover flag   
+      this.sportRuler?.modifyFlagList(null);//重新绘制旗子，清除hover flag
     }
   };
 
@@ -385,7 +412,6 @@ export class TimerShaftElement extends BaseElement {
   modifySlicesList(slicestime: SlicesTime | null | undefined) {
     this._sportRuler?.modifySicesTimeList(slicestime);
   }
-
   cancelPressFrame() {
     this.rangeRuler?.cancelPressFrame();
   }
@@ -417,7 +443,7 @@ export class TimerShaftElement extends BaseElement {
         selection.isCurrentPane = true;  // 设置当前面板为可以显示的状态
         //把刚刚创建的slicetime和selection对象关联起来，以便后面再次选中“跑道”的时候显示对应的面板。
         this.selectionMap.set(sliceTime.id, selection);
-        this.traceSheetEL?.rangeSelect(selection);  // 显示选中区域对应的面板                 
+        this.traceSheetEL?.rangeSelect(selection);  // 显示选中区域对应的面板
       }
     }
     return sliceTime;

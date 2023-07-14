@@ -23,7 +23,6 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-using namespace SysTuning::base;
 bool TraceStreamerSelectorFuzzTest(const uint8_t* data, size_t size)
 {
     TraceStreamerSelector stream_ = {};

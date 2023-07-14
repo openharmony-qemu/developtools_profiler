@@ -34,7 +34,7 @@
 #include "rpc_server.h"
 #include "string_help.h"
 
-#include "thread_state.h"
+#include "thread_state_flag.h"
 #include "trace_streamer/trace_streamer_selector.h"
 #include "trace_streamer_filters.h"
 #include "version.h"

@@ -41,21 +41,10 @@ ohos_source_set("ebpf_parser_src") {
     "../../filter",
     "../../cfg",
     "../../trace_streamer",
-    "${OHOS_PROTO_GEN}",
-    "${OHOS_PROTO_GEN}/types/plugins/memory_data",
-    "${OHOS_PROTO_GEN}/types/plugins/ftrace_data/${kernel_version}",
-    "${OHOS_PROTO_GEN}/types/plugins/hilog_data",
-    "${OHOS_PROTO_GEN}/types/plugins/native_hook",
-    "${OHOS_PROTO_GEN}/types/plugins/hidump_data",
-    "${OHOS_PROTO_GEN}/types/plugins/network_data",
-    "${OHOS_PROTO_GEN}/types/plugins/cpu_data",
-    "${OHOS_PROTO_GEN}/types/plugins/diskio_data",
-    "${OHOS_PROTO_GEN}/types/plugins/process_data",
-    "${OHOS_PROTO_GEN}/types/plugins/hisysevent_data",
-    "${OHOS_PROTO_GEN}/types/plugins/js_memory",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
   ]
+  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder" ]
   if (is_win || is_macx) {
     include_dirs += [
       "${THIRD_PARTY}/perf_include/linux",

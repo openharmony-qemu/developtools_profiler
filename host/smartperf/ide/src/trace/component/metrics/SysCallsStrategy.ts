@@ -15,7 +15,13 @@
 
 import { info } from '../../../log/Log.js';
 
-export const initSysCallsStrategy = (metricData: Array<any>): FunctionListItem => {
+export const initSysCallsStrategy = (metricData: Array<{
+  frequency: string;
+  minDur: string;
+  maxDur: string;
+  avgDur: number;
+  funName: string;
+}>): FunctionListItem => {
   info('System Calls Strategy data length is:', metricData.length);
   let functionListItems: Array<FunctionItem> = [];
   for (let sqlIndex = 0; sqlIndex < metricData.length; sqlIndex++) {

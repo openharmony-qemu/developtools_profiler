@@ -160,17 +160,24 @@ export class ProcessMemStruct extends BaseProcessMemStruct {
         memContext.fill();
         memContext.globalAlpha = 1.0;
         memContext.stroke();
+        memContext.closePath();
         memContext.beginPath();
         memContext.moveTo(data.frame.x + 3, data.frame.y + data.frame.height - memDrawHeight);
         memContext.lineWidth = 3;
         memContext.lineTo(data.frame.x + width, data.frame.y + data.frame.height - memDrawHeight);
         memContext.stroke();
+        memContext.closePath();
       } else {
         memContext.globalAlpha = 0.6;
         memContext.lineWidth = 1;
         let drawHeight: number = ((data.value || 0) * (data.frame.height || 0) * 1.0) / (data.maxValue || 1);
         drawHeight = drawHeight > 0 ? drawHeight : 1;
         memContext.fillRect(data.frame.x, data.frame.y + data.frame.height - drawHeight, width, drawHeight);
+        if (width > 2) {
+          memContext.lineWidth = 1;
+          memContext.globalAlpha = 1.0;
+          memContext.strokeRect(data.frame.x, data.frame.y + data.frame.height - drawHeight, width, drawHeight);
+        }
       }
     }
     memContext.globalAlpha = 1.0;

@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
-import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitAllocationSelect.js';
 
 import '../../../base-ui/switch/lit-switch.js';
@@ -93,9 +93,9 @@ export class SpVmTracker extends BaseElement {
             vmTrackerSwitch.checked = false;
           }
           if (config.title == 'Start VM Tracker Record') {
-            vmTrackerSwitch.addEventListener('change', (event: any) => {
+            vmTrackerSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
               let detail = event.detail;
-              if (detail.checked) {
+              if (detail!.checked) {
                 this.startSamp = true;
                 this.unDisable();
               } else {
@@ -116,7 +116,6 @@ export class SpVmTracker extends BaseElement {
     );
     let vmTrackerMul = this.vmTrackerProcessInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     this.vmTrackerSelectProcess = this.vmTrackerProcessInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
-    let processData: Array<string> = [];
     vmTrackerMul!.addEventListener('mousedown', (ev) => {
       if (SpRecordTrace.serialNumber == '') {
         this.vmTrackerProcessInput!.processData = [];
@@ -128,50 +127,10 @@ export class SpVmTracker extends BaseElement {
         this.vmTrackerProcessInput!.processData = [];
         this.vmTrackerProcessInput!.initData();
       } else {
-        if (SpRecordTrace.isVscode) {
-          let vmTrackerCmd = Cmd.formatString(CmdConstant.CMD_GET_PROCESS_DEVICES, [SpRecordTrace.serialNumber]);
-          Cmd.execHdcCmd(vmTrackerCmd, (res: string) => {
-            processData = [];
-            let lineArray: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-            for (let lineVal of lineArray) {
-              if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('PID CMD') != -1) {
-                continue;
-              }
-              let processArray: string[] = lineVal.trim().split(' ');
-              if (processArray.length == 2) {
-                let processId = processArray[0];
-                let processName = processArray[1];
-                processData.push(processName + '(' + processId + ')');
-              }
-            }
-            this.vmTrackerProcessInput!.processData = processData;
-            this.vmTrackerProcessInput!.initData();
-          });
-        } else {
-          HdcDeviceManager.connect(SpRecordTrace.serialNumber).then((conn) => {
-            if (conn) {
-              HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_PROCESS, false).then((result) => {
-                processData = [];
-                if (result) {
-                  let lineValues: string[] = result.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
-                  for (let lineItem of lineValues) {
-                    if (lineItem.indexOf('__progname') != -1 || lineItem.indexOf('PID CMD') != -1) {
-                      continue;
-                    }
-                    let process: string[] = lineItem.trim().split(' ');
-                    if (process.length == 2) {
-                      let processId = process[0];
-                      let processName = process[1];
-                      processData.push(processName + '(' + processId + ')');
-                    }
-                  }
-                }
-                this.vmTrackerProcessInput!.processData = processData;
-                this.vmTrackerProcessInput!.initData();
-              });
-            }
-          });
-        }
+        Cmd.getProcess().then((processList) => {
+          this.vmTrackerProcessInput!.processData = processList;
+          this.vmTrackerProcessInput!.initData();
+        });
       }
     });
     this.disable();
