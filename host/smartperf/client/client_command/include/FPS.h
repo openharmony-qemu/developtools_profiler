@@ -40,6 +40,7 @@ public:
     void SetCaptureOn();
     void SetTraceCatch();
     FpsInfo GetFpsInfo();
+    std::string GetSurface();
     std::string GetLayer(std::string pkgSurface);
     FpsInfo mFpsInfo;
     static FPS &GetInstance()
