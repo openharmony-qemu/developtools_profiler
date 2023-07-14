@@ -37,7 +37,6 @@ namespace {
 typedef char* (*DepthMallocSo)(int depth, int mallocSize);
 typedef void (*DepthFreeSo)(int depth, char *p);
 constexpr int MALLOC_SIZE = 1000;
-constexpr int DATA_SIZE = 200;
 constexpr int ARGC_NUM_MAX = 3;
 constexpr int DOUBLE = 2;
 
@@ -48,13 +47,10 @@ const std::vector<std::string> VEC_SO_PATH { "/system/lib/liba.z.so", "/system/l
 #else
 const std::vector<std::string> VEC_SO_PATH { "/system/lib64/liba.z.so", "/system/lib64/libb.z.so" };
 #endif
-using StaticSpace = struct {
-    int data[DATA_SIZE];
-};
 unsigned int g_stickDepth = 1;
 }
 
-void CallocFun()
+static void CallocFun()
 {
     static int i = 0;
     char* ptr = static_cast<char*>(calloc(1, MALLOC_SIZE / 100));
@@ -62,12 +58,12 @@ void CallocFun()
         fprintf(stderr, "calloc err.\n");
         return;
     }
-    fprintf(stderr, "calloc %p i=%d\n", ptr, i);
+    fprintf(stderr, "calloc i=%d\n", i);
     free(ptr);
     i++;
 }
 
-void ReallocFun()
+static void ReallocFun()
 {
     static int i = 0;
     char* ptr = static_cast<char*>(calloc(1, MALLOC_SIZE / 10)); // 10: multiple num
@@ -80,12 +76,12 @@ void ReallocFun()
         fprintf(stderr, "realloc err.\n");
         return;
     }
-    fprintf(stderr, "realloc %p i=%d\n", ptr, i);
+    fprintf(stderr, "realloc i=%d\n", i);
     free(ptr);
     i++;
 }
 
-bool DepthMallocFree(int depth = 0, int mallocSize = 100)
+static bool DepthMallocFree(int depth = 0, int mallocSize = 100)
 {
     if (depth < 0 || mallocSize <= 0) {
         return false;
@@ -96,7 +92,7 @@ bool DepthMallocFree(int depth = 0, int mallocSize = 100)
             fprintf(stderr, "malloc err.\n");
             return false;
         }
-        fprintf(stderr, "%s:%p\n", __func__, ptr);
+        fprintf(stderr, "%s\n", __func__);
         *ptr = 'a';
         free(ptr);
         return true;
@@ -104,7 +100,7 @@ bool DepthMallocFree(int depth = 0, int mallocSize = 100)
     return (DepthMallocFree(depth - 1, mallocSize));
 }
 
-void DlopenAndCloseSo(std::string filePath, int size)
+static void DlopenAndCloseSo(const std::string filePath, int size)
 {
     void* handle = nullptr;
     DepthMallocSo mallocFunc = nullptr;
@@ -135,7 +131,7 @@ void DlopenAndCloseSo(std::string filePath, int size)
     }
 }
 
-int MmapAndMunMap()
+static int MmapAndMunMap()
 {
     size_t size = (1024);
 
@@ -151,7 +147,7 @@ int MmapAndMunMap()
     return 0;
 }
 
-void Fun1()
+static void Fun1()
 {
     static int i = 0;
     char* ptr = static_cast<char*>(malloc(MALLOC_SIZE));
@@ -159,7 +155,7 @@ void Fun1()
         fprintf(stderr, "malloc err.\n");
         return;
     }
-    fprintf(stderr, "%p i=%d\n", ptr, i);
+    fprintf(stderr, "i=%d\n", i);
     *ptr = 'a';
     free(ptr);
     i++;
@@ -168,7 +164,7 @@ void Fun1()
     ReallocFun();
 }
 
-void Fun2()
+static void Fun2()
 {
     Fun1();
     static int i = 0;
@@ -177,7 +173,7 @@ void Fun2()
         fprintf(stderr, "malloc err.\n");
         return;
     }
-    fprintf(stderr, "%p i=%d\n", ptr, i);
+    fprintf(stderr, "i=%d\n", i);
     *ptr = 'a';
     if (i % DOUBLE == 0) {
         free(ptr);
@@ -185,7 +181,7 @@ void Fun2()
     i++;
 }
 
-void Fun3()
+static void Fun3()
 {
     Fun2();
     static int i = 0;
@@ -194,7 +190,7 @@ void Fun3()
         fprintf(stderr, "malloc err.\n");
         return;
     }
-    fprintf(stderr, "%p i=%d\n", ptr, i);
+    fprintf(stderr, "i=%d\n", i);
     *ptr = 'a';
     if (i % DOUBLE == 0) {
         free(ptr);
@@ -203,7 +199,7 @@ void Fun3()
     DlopenAndCloseSo(VEC_SO_PATH[0], MALLOC_SIZE * DOUBLE);
 }
 
-void Fun4()
+static void Fun4()
 {
     Fun3();
     static int i = 0;
@@ -212,7 +208,7 @@ void Fun4()
         fprintf(stderr, "malloc err.\n");
         return;
     }
-    fprintf(stderr, "%p i=%d\n", ptr, i);
+    fprintf(stderr, "i=%d\n", i);
     *ptr = 'a';
     if (i % DOUBLE == 0) {
         free(ptr);
@@ -220,7 +216,7 @@ void Fun4()
     i++;
 }
 
-void Fun5()
+static void Fun5()
 {
     Fun4();
     static int i = 0;
@@ -229,7 +225,7 @@ void Fun5()
         fprintf(stderr, "malloc err.\n");
         return;
     }
-    fprintf(stderr, "%p i=%d\n", ptr, i);
+    fprintf(stderr, "i=%d\n", i);
     *ptr = 'a';
     if (i % DOUBLE == 0) {
         free(ptr);
@@ -239,7 +235,7 @@ void Fun5()
     DlopenAndCloseSo(VEC_SO_PATH[1], MALLOC_SIZE * 3); // 3: multiple num
 }
 
-void* HhreadFuncCpp(void* param)
+static void* HhreadFuncCpp(void* param)
 {
     std::string name = "thread";
     name = name + std::to_string(gettid());
@@ -252,7 +248,7 @@ void* HhreadFuncCpp(void* param)
     return nullptr;
 }
 
-void TestMemoryMap()
+static void TestMemoryMap()
 {
     int fd = open("/bin/hiebpf", O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd < 0) {
@@ -265,20 +261,21 @@ void TestMemoryMap()
         printf("named mmap failed\n");
         return;
     }
-    printf("named mmap addr: %p, size: 4096, fd: %d\n", mapAddr1, fd);
+    printf("named mmap size: 4096, fd: %d\n", fd);
 
     void* mapAddr2 = mmap(nullptr, 8192, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (mapAddr2 == MAP_FAILED) {
         printf("anonymous mmap failed\n");
         return;
     }
-    printf("anonymous mmap addr: %p, size: 8192\n", mapAddr2);
+    printf("anonymous mmap size: 8192\n");
 
     memtrace(reinterpret_cast<void*>(0x123456), 3333, "memtrace_test", true); // 3333 num
     printf("memtrace(0x123456, 3333, \"memtrace_test\", true)\n");
 
     memtrace(reinterpret_cast<void*>(0x123456), 3333, "memtrace_test", false); // 3333 num
     printf("memtrace(0x123456, 3333, \"memtrace_test\", false)\n");
+    close(fd);
 }
 
 int main(int argc, char *argv[])
@@ -286,10 +283,10 @@ int main(int argc, char *argv[])
     int threadNum = 1;
     int forNum = 10;
     if  (argc == ARGC_NUM_MAX) {
-        if (atoi(argv[1]) > 0) {
+        if (atoi(argv[1]) > 0 && atoi(argv[1]) <= 10) { // 10: max threads
             threadNum = atoi(argv[1]);
         }
-        if (atoi(argv[2]) > 0) { // 2: args num
+        if (atoi(argv[2]) > 0 && atoi(argv[2]) <= 100) { // 2: args num. 100: max value
             forNum = atoi(argv[2]); // 2: args num
         }
     } else if (argc > ARGC_NUM_MAX) {
