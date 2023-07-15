@@ -16,6 +16,7 @@
 import { CpuFreqLimitsStruct } from '../database/ui-worker/ProcedureWorkerCpuFreqLimits.js';
 import { ClockStruct } from '../database/ui-worker/ProcedureWorkerClock.js';
 import { IrqStruct } from '../database/ui-worker/ProcedureWorkerIrq.js';
+import { FuncStruct } from '../database/ui-worker/ProcedureWorkerFunc.js';
 
 export class SelectionParam {
   recordStartNs: number = 0;
@@ -70,6 +71,7 @@ export class SelectionParam {
   promiseList: Array<Promise<any>> = [];
   jankFramesData: Array<any> = [];
   jsMemory: Array<any> = [];
+  taskFramesData: Array<Array<FuncStruct>> = [];
 }
 
 export class BoxJumpParam {

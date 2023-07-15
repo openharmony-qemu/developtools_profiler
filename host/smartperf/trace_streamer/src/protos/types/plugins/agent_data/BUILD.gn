@@ -80,4 +80,6 @@ ohos_source_set("agent_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":agent_include_config" ]
   sources = agent_data_codegen
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

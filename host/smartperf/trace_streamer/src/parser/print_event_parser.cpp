@@ -61,6 +61,7 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
                 if (pid == point.tgid_) {
                     HandleFrameSliceBeginEvent(point.funcPrefixId_, index, point.funcArgs_, line);
                 }
+                streamFilters_->taskPoolFilter_->TaskPoolEvent(point.name_, index);
             } else {
                 streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_LOST);
             }

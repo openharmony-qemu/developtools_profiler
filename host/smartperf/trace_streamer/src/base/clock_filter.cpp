@@ -105,32 +105,32 @@ int32_t ClockFilter::InitSnapShotTimeRange(const uint8_t* data, int32_t len)
 
     std::vector<SnapShot> snapShot;
 
-    TS_LOGI("SDK clockid: TS_CLOCK_BOOTTIME, ts:%llu", profilerSDKTraceFileHeader_->data.boottime);
+    TS_LOGI("SDK clockid: TS_CLOCK_BOOTTIME, ts:%lu", profilerSDKTraceFileHeader_->data.boottime);
     if (profilerSDKTraceFileHeader_->data.boottime) {
         snapShot.push_back(SnapShot{TS_CLOCK_BOOTTIME, profilerSDKTraceFileHeader_->data.boottime});
     }
 
-    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME, ts:%llu", profilerSDKTraceFileHeader_->data.realtime);
+    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME, ts:%lu", profilerSDKTraceFileHeader_->data.realtime);
     if (profilerSDKTraceFileHeader_->data.realtime) {
         snapShot.push_back(SnapShot{TS_CLOCK_REALTIME, profilerSDKTraceFileHeader_->data.realtime});
     }
 
-    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME_COARSE, ts:%llu", profilerSDKTraceFileHeader_->data.realtimeCoarse);
+    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME_COARSE, ts:%lu", profilerSDKTraceFileHeader_->data.realtimeCoarse);
     if (profilerSDKTraceFileHeader_->data.realtimeCoarse) {
         snapShot.push_back(SnapShot{TS_CLOCK_REALTIME_COARSE, profilerSDKTraceFileHeader_->data.realtimeCoarse});
     }
 
-    TS_LOGI("SDK clockid: TS_MONOTONIC, ts:%llu", profilerSDKTraceFileHeader_->data.monotonic);
+    TS_LOGI("SDK clockid: TS_MONOTONIC, ts:%lu", profilerSDKTraceFileHeader_->data.monotonic);
     if (profilerSDKTraceFileHeader_->data.monotonic) {
         snapShot.push_back(SnapShot{TS_MONOTONIC, profilerSDKTraceFileHeader_->data.monotonic});
     }
 
-    TS_LOGI("SDK clockid: TS_MONOTONIC_COARSE, ts:%llu", profilerSDKTraceFileHeader_->data.monotonicCoarse);
+    TS_LOGI("SDK clockid: TS_MONOTONIC_COARSE, ts:%lu", profilerSDKTraceFileHeader_->data.monotonicCoarse);
     if (profilerSDKTraceFileHeader_->data.monotonicCoarse) {
         snapShot.push_back(SnapShot{TS_MONOTONIC_COARSE, profilerSDKTraceFileHeader_->data.monotonicCoarse});
     }
 
-    TS_LOGI("SDK clockid: TS_MONOTONIC_RAW, ts:%llu", profilerSDKTraceFileHeader_->data.monotonicRaw);
+    TS_LOGI("SDK clockid: TS_MONOTONIC_RAW, ts:%lu", profilerSDKTraceFileHeader_->data.monotonicRaw);
     if (profilerSDKTraceFileHeader_->data.monotonicRaw) {
         snapShot.push_back(SnapShot{TS_MONOTONIC_RAW, profilerSDKTraceFileHeader_->data.monotonicRaw});
     }

@@ -13,8 +13,8 @@
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
 ohos_executable("protoreader_plugin") {
-  subsystem_name = "protoreader_plugin"
-  part_name = "protoreader_plugin"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [ "proto_reader_plugin.cpp" ]
   deps = [
     "${SRC}/base:string_help",

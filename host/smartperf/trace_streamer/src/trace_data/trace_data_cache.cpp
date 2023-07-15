@@ -86,6 +86,7 @@
 #include "system_call_table.h"
 #include "system_event_filter_table.h"
 #include "table_base.h"
+#include "task_pool_table.h"
 #include "thread_filter_table.h"
 #include "thread_state_table.h"
 #include "thread_table.h"
@@ -143,6 +144,7 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<ProcessMeasureFilterTable>(*db_, this, "process_measure_filter");
     TableBase::TableDeclare<ClockEventFilterTable>(*db_, this, "clock_event_filter");
     TableBase::TableDeclare<ClkEventFilterTable>(*db_, this, "clk_event_filter");
+    TableBase::TableDeclare<TaskPoolTable>(*db_, this, "task_pool");
     TableBase::TableDeclare<JsHeapFilesTable>(*db_, this, "js_heap_files");
     TableBase::TableDeclare<JsHeapEdgesTable>(*db_, this, "js_heap_edges");
     TableBase::TableDeclare<JsHeapInfoTable>(*db_, this, "js_heap_info");
@@ -225,6 +227,7 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<ProcessMeasureFilterTable>(*db_, this, "_process_measure_filter");
     TableBase::TableDeclare<ClockEventFilterTable>(*db_, this, "_clock_event_filter");
     TableBase::TableDeclare<ClkEventFilterTable>(*db_, this, "_clk_event_filter");
+    TableBase::TableDeclare<TaskPoolTable>(*db_, this, "_task_pool");
     TableBase::TableDeclare<JsHeapFilesTable>(*db_, this, "_js_heap_files");
     TableBase::TableDeclare<JsHeapEdgesTable>(*db_, this, "_js_heap_edges");
     TableBase::TableDeclare<JsHeapInfoTable>(*db_, this, "_js_heap_info");

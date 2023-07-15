@@ -20,7 +20,7 @@ import { SpFreqChart } from './SpFreqChart.js';
 import { SpFpsChart } from './SpFpsChart.js';
 import {
   getCpuUtilizationRate,
-  queryDataDICT,
+  queryDataDICT, queryTaskPoolCallStack,
   queryThreadAndProcessName,
   queryTotalTime,
 } from '../../database/SqlLite.js';
@@ -87,6 +87,9 @@ export class SpChartManager {
     SpSystemTrace.DATA_DICT.clear();
     let dict = await queryDataDICT();
     dict.map((d) => SpSystemTrace.DATA_DICT.set(d['id'], d['data']));
+    SpSystemTrace.DATA_TASK_POOL_CALLSTACK.clear();
+    let taskPoolCallStack = await queryTaskPoolCallStack();
+    taskPoolCallStack.map((d) => SpSystemTrace.DATA_TASK_POOL_CALLSTACK.set(d.id, d));
     progress('time range', 65);
     await this.initTotalTime();
     let ptArr = await queryThreadAndProcessName();

@@ -74,6 +74,8 @@ ohos_source_set("sample_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":sample_include_config" ]
   sources = sample_data_codegen
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }
 
 ohos_source_set("sample_data_encoder") {
@@ -81,6 +83,6 @@ ohos_source_set("sample_data_encoder") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":sample_include_config" ]
   sources = sample_data_codegen_reader
-  subsystem_name = developtools
-  part_name = smartperf_host
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

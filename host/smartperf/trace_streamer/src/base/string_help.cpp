@@ -132,11 +132,10 @@ std::vector<std::string> SplitStringToVec(const std::string& str, const std::str
 {
     std::vector<std::string> result;
     size_t curPos = 0;
-    size_t patPos = 0;
     size_t strSize = str.size();
     size_t patSize = pat.size();
     while (curPos < strSize) {
-        patPos = str.find(pat, curPos);
+        auto patPos = str.find(pat, curPos);
         if (patPos == std::string::npos) {
             break;
         }

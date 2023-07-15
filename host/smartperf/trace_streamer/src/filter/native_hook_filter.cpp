@@ -501,7 +501,7 @@ inline void NativeHookFilter::FillOfflineSymbolizationFrames(
     stackIdToCallChainIdMap_.insert(std::make_pair(itor->first, ++callChainId_));
     auto framesInfo = OfflineSymbolization(itor->second);
     uint64_t depth = 0;
-    uint64_t filePathIndex = INVALID_UINT64;
+    uint64_t filePathIndex;
     for (auto itor = framesInfo->rbegin(); itor != framesInfo->rend(); itor++) {
         // Note that the filePathId here is provided for the end side. Not a true TS internal index dictionary.
         auto frameInfo = itor->get();

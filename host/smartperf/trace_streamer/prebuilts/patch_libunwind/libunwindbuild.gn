@@ -359,8 +359,8 @@ config("unwind_config_x64") {
 }
 if (target_cpu == "arm") {
   ohos_source_set("unwind_source_arm") {
-    subsystem_name = "trace_streamer"
-    part_name = "unwind_source_arm"
+    subsystem_name = "developtools"
+    part_name = "smartperf_host"
     configs += [ ":unwind_config_remote" ]
     public_configs = [
       ":unwind_config_public",
@@ -384,8 +384,8 @@ if (target_cpu == "arm") {
 }
 if (target_cpu == "arm64") {
   ohos_source_set("unwind_source_arm64") {
-    subsystem_name = "trace_streamer"
-    part_name = "unwind_source_arm64"
+    subsystem_name = "developtools"
+    part_name = "smartperf_host"
     configs += [ ":unwind_config_remote" ]
     public_configs = [
       ":unwind_config_public",
@@ -402,8 +402,8 @@ if (target_cpu == "arm64") {
 }
 if (target_cpu == "x86") {
   ohos_source_set("unwind_source_x64") {
-    subsystem_name = "trace_streamer"
-    part_name = "unwind_source_x64"
+    subsystem_name = "developtools"
+    part_name = "smartperf_host"
     configs += [ ":unwind_config_remote" ]
     public_configs = [
       ":unwind_config_public",
@@ -422,8 +422,8 @@ if (target_cpu == "x86") {
   }
 }
 ohos_source_set("unwind_source") {
-  subsystem_name = "trace_streamer"
-  part_name = "unwind_source"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   configs += [ ":unwind_config_public" ]
   sources = common_source
   if (target_cpu == "arm") {
@@ -465,7 +465,7 @@ if (defined(ohos_lite)) {
     # ]
     public_configs = [ ":unwind_config_public" ]
 
-    # part_name = "faultloggerd"
-    # subsystem_name = "hiviewdfx"
+    # part_name = "smartperf_host"
+    # subsystem_name = "developtools"
   }
 }

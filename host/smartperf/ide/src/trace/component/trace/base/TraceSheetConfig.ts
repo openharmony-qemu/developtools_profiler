@@ -76,6 +76,7 @@ import { TabPaneVirtualMemoryStatisticsAnalysis } from '../sheet/file-system/Tab
 import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { TabPaneStartup } from '../sheet/process/TabPaneStartup.js';
 import { TabPaneStaticInit } from '../sheet/process/TabPaneStaticInit.js';
+import { TabPaneTaskFrames } from '../sheet/task/TabPaneTaskFrames.js';
 
 export let tabConfig: any = {
   'tabpane-current': {
@@ -394,4 +395,9 @@ export let tabConfig: any = {
     title: 'Comparison',
     type: TabPaneComparison,
   }, // snapshot data click
+  'box-task-frames': {
+    title: 'Frames',
+    type: TabPaneTaskFrames,
+    require: (param: SelectionParam) => param.taskFramesData.length > 0,
+  },
 };

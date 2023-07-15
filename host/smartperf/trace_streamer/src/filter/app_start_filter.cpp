@@ -216,13 +216,14 @@ void APPStartupFilter::CalcDepthByTimeStamp(std::map<uint32_t, std::map<uint64_t
             it->second.insert(std::make_pair(endTime, it->second.size()));
         } else {
             depth = itor->second;
+            for (auto itorSecond = itor; itorSecond != it->second.end(); ++itorSecond) {
+                if (itorSecond->first < startTime && depth > itorSecond->second) {
+                    depth = itorSecond->second;
+                    itor = itorSecond;
+                }
+            }
             it->second.erase(itor);
             it->second.insert(std::make_pair(endTime, depth));
-        }
-        for (const auto& item : it->second) {
-            if (item.first < startTime && depth > item.second) {
-                depth = item.second;
-            }
         }
     } else {
         it->second.insert(std::make_pair(endTime, 0));

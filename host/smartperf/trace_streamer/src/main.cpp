@@ -96,8 +96,6 @@ void LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sql
     auto fd = fopen(sqlOperator.c_str(), "r");
     if (!fd) {
         TS_LOGE("open file failed!");
-        fclose(fd);
-        fd = nullptr;
         return;
     }
     char buffer[G_CHUNK_SIZE];
@@ -128,7 +126,7 @@ void ReadSqlFileAndPrintResult(TraceStreamerSelector& ts, const std::string& sql
 {
     std::vector<std::string> sqlStrings;
     LoadQueryFile(sqlOperator, sqlStrings);
-    for (auto& str : sqlStrings) {
+    for (const auto& str : sqlStrings) {
         ts.SearchDatabase(str, true);
     }
 }

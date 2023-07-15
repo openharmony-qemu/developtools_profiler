@@ -15,8 +15,8 @@ import("//build/ohos.gni")
 
 import("../../build/ts.gni")
 ohos_source_set("table") {
-  subsystem_name = "trace_streamer"
-  part_name = "table"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   include_dirs = [
     "${THIRD_PARTY}/sqlite/include",
     "${SRC}/base",

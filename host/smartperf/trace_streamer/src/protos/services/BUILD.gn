@@ -75,6 +75,6 @@ ohos_source_set("all_type_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":public_configs" ]
   sources = all_type_codegen_standard
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

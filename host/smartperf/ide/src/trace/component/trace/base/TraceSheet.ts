@@ -377,8 +377,8 @@ export class TraceSheet extends BaseElement {
     this.showUploadSoBt(val);
   };
 
-  displayFuncData = (data: FuncStruct, scrollCallback: Function) =>
-    this.displayTab<TabPaneCurrentSelection>('current-selection').setFunctionData(data, scrollCallback);
+  displayFuncData = (names: string[], data: FuncStruct, scrollCallback: Function) =>
+    this.displayTab<TabPaneCurrentSelection>(...names).setFunctionData(data, scrollCallback);
   displayCpuData = (
     data: CpuStruct,
     callback: ((data: WakeupBean | null) => void) | undefined = undefined,

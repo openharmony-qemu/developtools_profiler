@@ -14,8 +14,8 @@
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
 ohos_source_set("ebpf_parser_src") {
-  subsystem_name = "trace_streamer"
-  part_name = "ebpf_parser_src"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [
     "bio_latency_data_parser.cpp",
     "bio_latency_data_parser.h",

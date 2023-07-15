@@ -23,8 +23,7 @@ struct ProfilerTraceFileHeader {
     static constexpr uint64_t HEADER_MAGIC = 0x464F5250534F484FuLL;
     static constexpr uint32_t V_MAJOR = 0x0001;
     static constexpr uint32_t V_MAJOR_BITS = 16;
-    static constexpr uint32_t V_MINOR = 0x0000;
-    static constexpr uint32_t TRACE_VERSION = (V_MAJOR << V_MAJOR_BITS) | V_MINOR;
+    static constexpr uint32_t TRACE_VERSION = V_MAJOR << V_MAJOR_BITS;
     static constexpr uint8_t PLUGIN_MODULE_NAME_MAX = 127;
     static constexpr uint8_t PLUGIN_MODULE_VERSION_MAX = 7;
     enum DataType {

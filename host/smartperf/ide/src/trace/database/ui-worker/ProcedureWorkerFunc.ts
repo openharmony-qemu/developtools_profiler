@@ -170,8 +170,25 @@ export class FuncStruct extends BaseFuncStruct {
           ctx.lineWidth = 2;
           ctx.strokeRect(data.frame.x, data.frame.y + 1, data.frame.width, miniHeight - padding * 2 - 2);
         }
+        if (data.funName!.indexOf('H:Task PerformTask End:') >= 0 && data.funName!.indexOf('Successful') < 0) {
+          if (data.frame!.width < 10) {
+            FuncStruct.drawRoundRectPath(ctx, data.frame!.x, 30, 3, data!);
+          } else {
+            FuncStruct.drawRoundRectPath(ctx, data.frame!.x, 28, 6, data!);
+          }
+        }
       }
     }
+  }
+
+  static drawRoundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, data: FuncStruct) {
+    ctx.beginPath();
+    ctx.arc(x + data.frame!.width, y, radius, 0, Math.PI * 2);
+    ctx.closePath();
+    // 填充背景颜色
+    ctx.fillStyle = '#E64566';
+    ctx.fill();
+    ctx.stroke();
   }
 
   static isSelected(data: FuncStruct): boolean {
