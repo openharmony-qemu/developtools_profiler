@@ -67,7 +67,7 @@ std::string FPS::GetSurface()
     LoadCmd(cmdString, cmdResult);
     size_t position1 = cmdResult.find("[");
     size_t position2 = cmdResult.find("]");
-    return cmdResult.substr(position1 + 1, position2 - position1 -1);
+    return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
 
 FpsInfo FPS::GetFpsInfo()
