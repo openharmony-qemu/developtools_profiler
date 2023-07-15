@@ -16,7 +16,7 @@ import("../../build/ts.gni")
 ohos_source_set("elf") {
   subsystem_name = "developtools"
   part_name = "smartperf_host"
-  configs -= [ trace_cfg_path  ]
+  configs -= [ trace_cfg_path ]
   configs += [ "../../gn:hiperf_trace_cfg" ]
   sources = [
     "include/elf_parser.h",
@@ -36,7 +36,7 @@ ohos_source_set("elf") {
   ]
 }
 ohos_source_set("hiperf_src") {
-  configs -= [ trace_cfg_path  ]
+  configs -= [ trace_cfg_path ]
   configs += [ "../../gn:hiperf_trace_cfg" ]
   subsystem_name = "developtools"
   part_name = "smartperf_host"
