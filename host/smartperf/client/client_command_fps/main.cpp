@@ -280,8 +280,9 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
 static std::string GetSurFace()
 {
     std::string cmdResult;
-    std::string cmdString = "hidumper -s -10 -a surface | grep surface";
-    LoadCmd(cmdString, cmdResult);
+    std::string cmdString = "hidumper -s -10 -a surface ";
+    std::string cmdString2 = "| grep surface";
+    LoadCmd(cmdString + cmdString2, cmdResult);
     size_t position1 = cmdResult.find("[");
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
