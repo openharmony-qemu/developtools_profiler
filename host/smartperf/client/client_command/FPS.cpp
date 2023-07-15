@@ -63,7 +63,8 @@ void FPS::SetPackageName(std::string pName)
 std::string FPS::GetSurface()
 {
     std::string cmdResult;
-    LoadCmd("hidumper -s -10 -a surface | grep surface", cmdResult);
+    std::string cmdString = "hidumper -s -10 -a surface | grep surface";
+    LoadCmd(cmdString, cmdResult);
     size_t position1 = cmdResult.find("[");
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 -1);
@@ -86,7 +87,7 @@ FpsInfo FPS::GetFpsInfo()
     const uint64_t pNameLastPos = sps.size();
     std::string pkgSuffix = sps[pNameLastPos - 1];
     layerName = std::string(pkgSuffix.c_str() + addEndChar);
-    std::string uniteLayer;
+    std::string uniteLayer = "DisplayNode";
     uniteLayer = GetSurface();
     std::string spSurfacePrefix = "sp_";
     std::string line = GetLayer(layerName);

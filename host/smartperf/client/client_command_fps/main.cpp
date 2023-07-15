@@ -280,7 +280,8 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
 static std::string GetSurFace()
 {
     std::string cmdResult;
-    LoadCmd("hidumper -s -10 -a surface | grep surface", cmdResult);
+    std::string cmdString = "hidumper -s -10 -a surface | grep surface";
+    LoadCmd(cmdString, cmdResult);
     size_t position1 = cmdResult.find("[");
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 -1);
@@ -306,7 +307,7 @@ int main(int argc, char *argv[])
         std::string tempLayerName;
         struct timeval start;
         struct timeval end;
-        std::string uniteLayer;
+        std::string uniteLayer = "DisplayNode";
         uniteLayer = GetSurFace();
         unsigned long oneSec = 1000000;
         std::string cmdResult;
