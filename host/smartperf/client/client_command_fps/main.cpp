@@ -280,12 +280,13 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
 static std::string GetSurFace()
 {
     std::string cmdResult;
-    std::string cmdString = "hidumper -s -10 -a surface ";
-    std::string cmdString2 = "| grep surface";
-    LoadCmd(cmdString + cmdString2, cmdResult);
+    std::string cmdString1 = "hidumper -s -10 -a sur";
+    std::string cmdString2 = "face | grep sur";
+    std::string cmdString3 = "face";
+    LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
     size_t position1 = cmdResult.find("[");
     size_t position2 = cmdResult.find("]");
-    return cmdResult.substr(position1 + 1, position2 - position1 - 1);
+    return cmdResult.substr(position1 + 1, position2 - position1 -1);
 }
 int main(int argc, char *argv[])
 {
