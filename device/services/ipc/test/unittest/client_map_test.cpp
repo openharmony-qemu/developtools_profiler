@@ -39,7 +39,14 @@ public:
 HWTEST_F(ClientMapTest, ClientSocket, TestSize.Level1)
 {
     ServiceEntry serviceEntry;
+    ServiceEntry serviceTest;
     ASSERT_EQ(ClientMap::GetInstance().PutClientSocket(1, serviceEntry), 1);
+    ClientMap::GetInstance().PutClientSocket(2, serviceTest)
+    ASSERT_EQ(ClientMap::GetInstance().PutClientSocket(2, serviceTest), -1);
+    ASSERT_EQ(ClientMap::GetInstance().AutoRelease(), 1);
+    ClientMap::GetInstance().socketClients_[2]->clientState_ = CLIENT_STAT_THREAD_EXITED;
+    ASSERT_EQ(ClientMap::GetInstance().AutoRelease(), 1);
+    ASSERT_EQ(ClientMap::GetInstance().ClearClientSocket(), 0);
     ASSERT_EQ(ClientMap::GetInstance().AutoRelease(), 1);
 }
 } // namespace
