@@ -47,9 +47,7 @@ bool HitraceOps::PrepareEnableCategoriesCmd(int traceTime)
 
 bool HitraceOps::PrepareDisableCategoriesCmd()
 {
-    args_.push_back("--trace_finish");
-    args_.push_back("-o");
-    args_.push_back("/dev/null");
+    args_.push_back("--trace_finish_nodump");
     return true;
 }
 FTRACE_NS_END
