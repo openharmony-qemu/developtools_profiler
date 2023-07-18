@@ -27,7 +27,7 @@ bool PartingString::Next()
 {
     while (begin_ != end_) {
         if (*begin_ == delimiter_) {
-            begin_++;
+            ++begin_;
             continue;
         }
 
@@ -43,11 +43,11 @@ bool PartingString::Next()
             }
         } while (begin_++ != end_);
 
-        if (*cur_) {
+        if (*cur_ != '\0') {
             return true;
         }
 
-        begin_++;
+        ++begin_;
     }
 
     cur_ = nullptr;

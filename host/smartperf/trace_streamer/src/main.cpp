@@ -96,8 +96,6 @@ void LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sql
     auto fd = fopen(sqlOperator.c_str(), "r");
     if (!fd) {
         TS_LOGE("open file failed!");
-        fclose(fd);
-        fd = nullptr;
         return;
     }
     char buffer[G_CHUNK_SIZE];
@@ -128,7 +126,7 @@ void ReadSqlFileAndPrintResult(TraceStreamerSelector& ts, const std::string& sql
 {
     std::vector<std::string> sqlStrings;
     LoadQueryFile(sqlOperator, sqlStrings);
-    for (auto& str : sqlStrings) {
+    for (const auto& str : sqlStrings) {
         ts.SearchDatabase(str, true);
     }
 }
@@ -237,7 +235,16 @@ struct HttpOption {
     bool enable = false;
     int port = 9001;
 };
-
+int CheckFinal(char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
+{
+    if ((traceExportOption.traceFilePath.empty() ||
+         (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
+        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
+        ShowHelpInfo(argv[0]);
+        return 1;
+    }
+    return 0;
+}
 int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
 {
     for (int i = 1; i < argc; i++) {
@@ -285,13 +292,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
         }
         traceExportOption.traceFilePath = std::string(argv[i]);
     }
-    if ((traceExportOption.traceFilePath.empty() ||
-         (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
-        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
-        ShowHelpInfo(argv[0]);
-        return 1;
-    }
-    return 0;
+    return CheckFinal(argv, traceExportOption, httpOption);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning
