@@ -105,37 +105,37 @@ int32_t ClockFilter::InitSnapShotTimeRange(const uint8_t* data, int32_t len)
 
     std::vector<SnapShot> snapShot;
 
-    TS_LOGI("SDK clockid: TS_CLOCK_BOOTTIME, ts:%lu", profilerSDKTraceFileHeader_->data.boottime);
-    if (profilerSDKTraceFileHeader_->data.boottime) {
+    TS_LOGI("SDK clockid: TS_CLOCK_BOOTTIME, ts:%" PRIu64 " ", profilerSDKTraceFileHeader_->data.boottime);
+    if (profilerSDKTraceFileHeader_->data.boottime != 0) {
         snapShot.push_back(SnapShot{TS_CLOCK_BOOTTIME, profilerSDKTraceFileHeader_->data.boottime});
     }
 
-    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME, ts:%lu", profilerSDKTraceFileHeader_->data.realtime);
-    if (profilerSDKTraceFileHeader_->data.realtime) {
+    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME, ts:%" PRIu64 " ", profilerSDKTraceFileHeader_->data.realtime);
+    if (profilerSDKTraceFileHeader_->data.realtime != 0) {
         snapShot.push_back(SnapShot{TS_CLOCK_REALTIME, profilerSDKTraceFileHeader_->data.realtime});
     }
 
-    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME_COARSE, ts:%lu", profilerSDKTraceFileHeader_->data.realtimeCoarse);
-    if (profilerSDKTraceFileHeader_->data.realtimeCoarse) {
+    TS_LOGI("SDK clockid: TS_CLOCK_REALTIME_COARSE, ts:%" PRIu64 " ", profilerSDKTraceFileHeader_->data.realtimeCoarse);
+    if (profilerSDKTraceFileHeader_->data.realtimeCoarse != 0) {
         snapShot.push_back(SnapShot{TS_CLOCK_REALTIME_COARSE, profilerSDKTraceFileHeader_->data.realtimeCoarse});
     }
 
-    TS_LOGI("SDK clockid: TS_MONOTONIC, ts:%lu", profilerSDKTraceFileHeader_->data.monotonic);
-    if (profilerSDKTraceFileHeader_->data.monotonic) {
+    TS_LOGI("SDK clockid: TS_MONOTONIC, ts:%" PRIu64 " ", profilerSDKTraceFileHeader_->data.monotonic);
+    if (profilerSDKTraceFileHeader_->data.monotonic != 0) {
         snapShot.push_back(SnapShot{TS_MONOTONIC, profilerSDKTraceFileHeader_->data.monotonic});
     }
 
-    TS_LOGI("SDK clockid: TS_MONOTONIC_COARSE, ts:%lu", profilerSDKTraceFileHeader_->data.monotonicCoarse);
-    if (profilerSDKTraceFileHeader_->data.monotonicCoarse) {
+    TS_LOGI("SDK clockid: TS_MONOTONIC_COARSE, ts:%" PRIu64 " ", profilerSDKTraceFileHeader_->data.monotonicCoarse);
+    if (profilerSDKTraceFileHeader_->data.monotonicCoarse != 0) {
         snapShot.push_back(SnapShot{TS_MONOTONIC_COARSE, profilerSDKTraceFileHeader_->data.monotonicCoarse});
     }
 
-    TS_LOGI("SDK clockid: TS_MONOTONIC_RAW, ts:%lu", profilerSDKTraceFileHeader_->data.monotonicRaw);
-    if (profilerSDKTraceFileHeader_->data.monotonicRaw) {
+    TS_LOGI("SDK clockid: TS_MONOTONIC_RAW, ts:%" PRIu64 " ", profilerSDKTraceFileHeader_->data.monotonicRaw);
+    if (profilerSDKTraceFileHeader_->data.monotonicRaw != 0) {
         snapShot.push_back(SnapShot{TS_MONOTONIC_RAW, profilerSDKTraceFileHeader_->data.monotonicRaw});
     }
 
-    if (snapShot.size()) {
+    if (!snapShot.empty()) {
         AddClockSnapshot(snapShot);
     }
     return 0;

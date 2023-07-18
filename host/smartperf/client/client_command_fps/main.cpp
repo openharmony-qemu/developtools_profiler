@@ -277,6 +277,17 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
     ReplaceString(result);
     return ret >= 0 ? true : false;
 }
+static std::string GetSurFace()
+{
+    std::string cmdResult;
+    std::string cmdString1 = "hidumper -s -10 -a sur";
+    std::string cmdString2 = "face | grep sur";
+    std::string cmdString3 = "face";
+    LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
+    size_t position1 = cmdResult.find("[");
+    size_t position2 = cmdResult.find("]");
+    return cmdResult.substr(position1 + 1, position2 - position1 - 1);
+}
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -299,6 +310,7 @@ int main(int argc, char *argv[])
         struct timeval start;
         struct timeval end;
         std::string uniteLayer = "DisplayNode";
+        uniteLayer = GetSurFace();
         unsigned long oneSec = 1000000;
         std::string cmdResult;
         for (int i = 0; i < num; i++) {

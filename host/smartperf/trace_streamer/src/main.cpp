@@ -235,7 +235,16 @@ struct HttpOption {
     bool enable = false;
     int port = 9001;
 };
-
+int CheckFinal(char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
+{
+    if ((traceExportOption.traceFilePath.empty() ||
+         (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
+        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
+        ShowHelpInfo(argv[0]);
+        return 1;
+    }
+    return 0;
+}
 int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
 {
     for (int i = 1; i < argc; i++) {
@@ -283,13 +292,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
         }
         traceExportOption.traceFilePath = std::string(argv[i]);
     }
-    if ((traceExportOption.traceFilePath.empty() ||
-         (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
-        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
-        ShowHelpInfo(argv[0]);
-        return 1;
-    }
-    return 0;
+    return CheckFinal(argv, traceExportOption, httpOption);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -52,13 +52,13 @@ public:
     ClockFilter();
     ~ClockFilter();
 
-    void SetPrimaryClock(ClockId primary)
+    static void SetPrimaryClock(ClockId primary)
     {
-        PRIMARY_CLOCK_ID = static_cast<BuiltinClocks>(primary);
+        g_primaryClockId = static_cast<BuiltinClocks>(primary);
     }
-    ClockId GetPrimaryClock() const
+    static ClockId GetPrimaryClock()
     {
-        return PRIMARY_CLOCK_ID;
+        return g_primaryClockId;
     }
     uint64_t ToPrimaryTraceTime(ClockId srcClockId, uint64_t srcTs) const;
     uint64_t Convert(ClockId srcClockId, uint64_t srcTs, ClockId desClockId) const;

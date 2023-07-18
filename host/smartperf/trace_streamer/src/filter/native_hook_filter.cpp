@@ -15,6 +15,7 @@
 
 #include "native_hook_filter.h"
 #include "native_hook_config.pbreader.h"
+#include <cstddef>
 namespace SysTuning {
 namespace TraceStreamer {
 NativeHookFilter::NativeHookFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
@@ -112,13 +113,12 @@ std::unique_ptr<NativeHookFrameInfo> NativeHookFilter::ParseFrame(const ProtoRea
     }
     auto frameInfo = std::make_unique<NativeHookFrameInfo>(reader.ip(), reader.sp(), symbolIndex, filePathIndex,
                                                            reader.offset(), reader.symbol_offset());
-    return std::move(frameInfo);
+    return frameInfo;
 }
 
 void NativeHookFilter::CompressStackAndFrames(ProtoReader::RepeatedDataAreaIterator<ProtoReader::BytesView> frames)
 {
     std::vector<uint64_t> framesHash;
-    uint64_t frameHash = INVALID_UINT64;
     std::string framesHashStr = "";
     for (auto itor = frames; itor; itor++) {
         std::string_view frameStr(reinterpret_cast<const char*>(itor->Data()), itor->Size());
@@ -496,10 +496,10 @@ std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRan
 }
 
 inline void NativeHookFilter::FillOfflineSymbolizationFrames(
-    std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>>::iterator itor)
+    std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>>::iterator mapItor)
 {
-    stackIdToCallChainIdMap_.insert(std::make_pair(itor->first, ++callChainId_));
-    auto framesInfo = OfflineSymbolization(itor->second);
+    stackIdToCallChainIdMap_.insert(std::make_pair(mapItor->first, ++callChainId_));
+    auto framesInfo = OfflineSymbolization(mapItor->second);
     uint64_t depth = 0;
     uint64_t filePathIndex;
     for (auto itor = framesInfo->rbegin(); itor != framesInfo->rend(); itor++) {
@@ -671,7 +671,7 @@ void NativeHookFilter::MaybeUpdateCurrentSizeDur(uint64_t row, uint64_t timeStam
 void NativeHookFilter::UpdateSymbolIdsForSymbolizationFailed()
 {
     auto size = traceDataCache_->GetNativeHookFrameData()->Size();
-    for (auto i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         if (traceDataCache_->GetNativeHookFrameData()->SymbolNames()[i] == INVALID_UINT64) {
             auto filePathIndex = traceDataCache_->GetNativeHookFrameData()->FilePaths()[i];
             auto filePathStr = traceDataCache_->dataDict_.GetDataFromDict(filePathIndex);
@@ -873,7 +873,7 @@ bool NativeHookFilter::GetIpsWitchNeedResymbolization(DataIndex filePathId, std:
     bool value = false;
     for (auto itor = ipToFrameInfo_.begin(); itor != ipToFrameInfo_.end(); itor++) {
         if (!itor->second) {
-            TS_LOGI("ip :%lu can not symbolization! FrameInfo is nullptr", itor->first);
+            TS_LOGI("ip :%llu can not symbolization! FrameInfo is nullptr", itor->first);
             continue;
         }
         if (itor->second->filePathId_ == filePathId) {
