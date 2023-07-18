@@ -127,7 +127,7 @@ uint32_t ProcessFilter::UpdateOrCreateThreadWithNameIndex(uint64_t timeStamp, ui
         }
         for (auto i : internalTids) {
             thread = traceDataCache_->GetThreadData(i);
-            if (threadNameIndex != thread->nameIndex_) {
+            if (thread && threadNameIndex != thread->nameIndex_) {
                 thread->nameIndex_ = threadNameIndex;
             }
         }
