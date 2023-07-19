@@ -24,6 +24,7 @@
 #include "plugin_service_impl.h"
 #include "profiler_data_repeater.h"
 #include "profiler_service_types.pb.h"
+#include "plugin_session_manager.h"
 #include "socket_context.h"
 
 using namespace testing::ext;
@@ -48,11 +49,12 @@ public:
 
     void SetUp()
     {
-        pluginService_ = std::make_unique<PluginService>();
+        pluginService_ = std::make_shared<PluginService>();
         usleep(100000); // sleep for 100000 us.
         pluginClient_ = std::make_unique<PluginClientTest>();
         pluginServiceImp_ = std::make_unique<PluginServiceImpl>(*pluginService_);
         commandBuilder_ = std::make_unique<PluginCommandBuilder>();
+        pluginSessionMgr_ = std::make_shared<PluginSessionManager>(pluginService_);
         pluginClient_->Connect(DEFAULT_UNIX_SOCKET_FULL_PATH);
     }
 
@@ -61,13 +63,15 @@ public:
         pluginClient_ = nullptr;
         pluginService_ = nullptr;
         commandBuilder_ = nullptr;
+        pluginSessionMgr_ = nullptr;
     }
 
 public:
-    std::unique_ptr<PluginService> pluginService_ = nullptr;
+    std::shared_ptr<PluginService> pluginService_ = nullptr;
     std::unique_ptr<PluginClientTest> pluginClient_ = nullptr;
     std::unique_ptr<PluginServiceImpl> pluginServiceImp_ = nullptr;
     std::unique_ptr<PluginCommandBuilder> commandBuilder_ = nullptr;
+    std::shared_ptr<PluginSessionManager> pluginSessionMgr_ = nullptr;
     uint32_t pluginId_;
 };
 
@@ -897,6 +901,11 @@ HWTEST_F(UnitTestPluginService, PluginServiceImpl_RegisterPlugin, TestSize.Level
     EXPECT_TRUE(pluginServiceImp_->RegisterPlugin(ctx, request, response));
     request.set_sha256("abcdsfdsfad");
     EXPECT_FALSE(pluginServiceImp_->RegisterPlugin(ctx, request, response));
+    UnregisterPluginRequest unRequest;
+    UnregisterPluginResponse unResponse;
+    unRequest.set_plugin_id(5);
+    EXPECT_TRUE(pluginServiceImp_->UnregisterPlugin(ctx, unRequest, unResponse));
+
 }
 
 /**
@@ -911,6 +920,14 @@ HWTEST_F(UnitTestPluginService, PluginServiceImpl_UnregisterPlugin, TestSize.Lev
     SocketContext ctx;
     request.set_plugin_id(1);
     EXPECT_FALSE(pluginServiceImp_->UnregisterPlugin(ctx, request, response));
+
+    GetCommandRequest gcRequest;
+    GetCommandResponse gcResponse;
+    EXPECT_FALSE(pluginServiceImp_->GetCommand(ctx, gcRequest, gcResponse));
+
+    NotifyResultRequest nResRequest;
+    NotifyResultResponse nResResponse;
+    EXPECT_FALSE(pluginServiceImp_->NotifyResult(ctx, nResRequest, nResResponse));
 }
 /**
  * @tc.name: BuildCreateSessionCmd
@@ -929,5 +946,70 @@ HWTEST_F(UnitTestPluginService, pluginCommandBuilder, TestSize.Level1)
     EXPECT_TRUE(commandBuilder_->BuildRefreshSessionCmd(pluginId) != nullptr);
     EXPECT_TRUE(commandBuilder_->BuildStopSessionCmd(pluginId) != nullptr);
     EXPECT_TRUE(commandBuilder_->BuildDestroySessionCmd(pluginId) != nullptr);
+    EXPECT_FALSE(commandBuilder_->GetedCommandResponse(0));
+    EXPECT_TRUE(commandBuilder_->GetedCommandResponse(1));
 }
+
+/**
+ * @tc.name: PluginSessionManager
+ * @tc.desc: test plugin session manager checkBufferConfig
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, PluginSessionManager_Check, TestSize.Level1)
+{
+    ProfilerSessionConfig::BufferConfig bc;
+    bc.set_pages(1);
+    bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+    EXPECT_TRUE(pluginSessionMgr_->CheckBufferConfig(bc));
+    ProfilerPluginConfig ppc;
+    ppc.set_name("abc.so");
+    ppc.set_plugin_sha256("ASDFAADSF");
+    EXPECT_TRUE(pluginSessionMgr_->CheckPluginSha256(ppc));
+   
+}
+/**
+ * @tc.name: PluginSessionManager
+ * @tc.desc: test plugin session manager by creating sesssion
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSession, TestSize.Level1)
+{
+    ProfilerPluginConfig ppc;
+    ppc.set_name("testsample.so");
+    ppc.set_plugin_sha256("ASDFAADSF");
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
+
+    ProfilerSessionConfig::BufferConfig bc;
+    bc.set_pages(1);
+    bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+
+    EXPECT_TRUE(pluginSessionMgr_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)) != nullptr);
+}
+/**
+ * @tc.name: PluginSessionManager
+ * @tc.desc: test plugin session manager by creating a lot of sesssions
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSessions, TestSize.Level1)
+{
+    ProfilerPluginConfig ppc;
+    ppc.set_name("testsample1.so");
+    ppc.set_plugin_sha256("ASDFAADSF");
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
+
+    ProfilerSessionConfig::BufferConfig bc;
+    bc.set_pages(1);
+    bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+    std::vector<ProfilerPluginConfig> vecConfig;
+    std::vector<ProfilerSessionConfig::BufferConfig> vecBuf;
+    vecConfig.push_back(ppc);
+    vecBuf.push_back(bc);
+    EXPECT_TRUE(pluginSessionMgr_->CreatePluginSessions(vecConfig, vecBuf, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    std::vector<std::string> nameList {"testsample.so", "testsample1.so"};
+    EXPECT_TRUE(pluginSessionMgr_->InvalidatePluginSessions(nameList));
+    std::vector<PluginSession::State> vecRet = pluginSessionMgr_->GetStatus(nameList);
+    EXPECT_TRUE(vecRet.size() != 0);
+    EXPECT_TRUE(pluginSessionMgr_->RefreshPluginSession());
+}
+
 } // namespace
