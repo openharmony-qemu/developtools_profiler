@@ -34,6 +34,7 @@ class SystemEventMeasureFilter;
 class HiSysEventMeasureFilter;
 class FrameFilter;
 class APPStartupFilter;
+class TaskPoolFilter;
 #if WITH_PERF
 class PerfDataFilter;
 #endif
@@ -68,6 +69,7 @@ public:
     std::unique_ptr<HiSysEventMeasureFilter> hiSysEventMeasureFilter_;
     std::unique_ptr<FrameFilter> frameFilter_;
     std::unique_ptr<APPStartupFilter> appStartupFilter_;
+    std::unique_ptr<TaskPoolFilter> taskPoolFilter_;
 #if WITH_PERF
     std::unique_ptr<PerfDataFilter> perfDataFilter_;
 #endif

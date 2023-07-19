@@ -366,6 +366,11 @@ export class Point {
   }
 }
 
+export enum LineType {
+  brokenLine,
+  bezierCurve,
+}
+
 export class PairPoint {
   x: number = 0;
   ns: number = 0;
@@ -373,14 +378,25 @@ export class PairPoint {
   offsetY: number = 0;
   rowEL: TraceRow<any>;
   isRight: boolean = true;
-
-  constructor(rowEL: TraceRow<any>, x: number, y: number, ns: number, offsetY: number, isRight: boolean) {
+  lineType?: LineType;
+  business: string = '';
+  hidden?: boolean = false;
+  constructor(
+    rowEL: TraceRow<any>,
+    x: number,
+    y: number,
+    ns: number,
+    offsetY: number,
+    isRight: boolean,
+    business: string
+  ) {
     this.rowEL = rowEL;
     this.x = x;
     this.y = y;
     this.ns = ns;
     this.offsetY = offsetY;
     this.isRight = isRight;
+    this.business = business;
   }
 }
 
@@ -639,81 +655,174 @@ export function drawLinkLines(
   let maxWidth = tm.getBoundingClientRect().width - 268;
   for (let i = 0; i < nodes.length; i++) {
     let it = nodes[i];
+    if (it[0].hidden) {
+      continue;
+    }
     if (isFavorite) {
       if (!it[0].rowEL.collect && !it[1].rowEL.collect) {
         continue;
       }
     }
-    let start = it[0].x > it[1].x ? it[1] : it[0];
-    let end = it[0].x > it[1].x ? it[0] : it[1];
-    if (start && end) {
-      //左移到边界，不画线
-      if (start.x <= 0) {
-        start.x = -100;
-      }
-      if (end.x <= 0) {
-        end.x = -100;
-      }
-      //右移到边界，不画线
-      if (start.x >= maxWidth) {
-        start.x = maxWidth + 100;
-      }
-      if (end.x >= maxWidth) {
-        end.x = maxWidth + 100;
-      }
-      context.beginPath();
-      context.lineWidth = 2;
-      context.fillStyle = linkLineColor;
-      context.strokeStyle = linkLineColor;
-      let x0, y0, x1, x2, y1, y2, x3, y3;
-      x0 = start.x ?? 0;
-      y0 = start.y ?? 0;
-      x3 = end.x ?? 0;
-      y3 = end.y ?? 0;
-      if (end.isRight) {
-        x2 = x3 - 100 * percentage;
-      } else {
-        x2 = x3 + 100 * percentage;
-      }
-      y2 = y3 - 40 * percentage;
-      if (start.isRight) {
-        x1 = x0 - 100 * percentage;
-      } else {
-        x1 = x0 + 100 * percentage;
-      }
-      y1 = y0 + 40 * percentage;
-      //向右箭头终点在x轴正向有偏移
-      if (!start.isRight) {
-        x0 -= 5;
-      }
-      context.moveTo(x0, y0);
-      //箭头向左还是向右
-      if (start.isRight) {
-        context.lineTo(x0 - wid, y0 + wid);
-        context.moveTo(x0, y0);
-        context.lineTo(x0 - wid, y0 - wid);
-      } else {
-        context.lineTo(x0 + wid, y0 + wid);
-        context.moveTo(x0, y0);
-        context.lineTo(x0 + wid, y0 - wid);
-      }
-      context.moveTo(x0, y0);
-      context.bezierCurveTo(x1, y1, x2, y2, x3, y3);
-      context.moveTo(x3, y3);
-      //箭头向左还是向右
-      if (end.isRight) {
-        context.lineTo(x3 - wid, y3 + wid);
-        context.moveTo(x3, y3);
-        context.lineTo(x3 - wid, y3 - wid);
-      } else {
-        context.lineTo(x3 + wid, y3 + wid);
-        context.moveTo(x3, y3);
-        context.lineTo(x3 + wid, y3 - wid);
-      }
-      context.moveTo(x3, y3);
-      context.stroke();
-      context.closePath();
+    switch (it[0].lineType) {
+      case LineType.brokenLine:
+        drawBrokenLine(it, maxWidth, context);
+        break;
+      case LineType.bezierCurve:
+        drawBezierCurve(it, maxWidth, context, percentage);
+        break;
+      default:
+        drawBezierCurve(it, maxWidth, context, percentage);
     }
+  }
+}
+
+function drawBezierCurve(it: PairPoint[], maxWidth: number, context: CanvasRenderingContext2D, percentage: number) {
+  let start = it[0].x > it[1].x ? it[1] : it[0];
+  let end = it[0].x > it[1].x ? it[0] : it[1];
+  if (start && end) {
+    //左移到边界，不画线
+    if (start.x <= 0) {
+      start.x = -100;
+    }
+    if (end.x <= 0) {
+      end.x = -100;
+    }
+    //右移到边界，不画线
+    if (start.x >= maxWidth) {
+      start.x = maxWidth + 100;
+    }
+    if (end.x >= maxWidth) {
+      end.x = maxWidth + 100;
+    }
+    context.beginPath();
+    context.lineWidth = 2;
+    context.fillStyle = linkLineColor;
+    context.strokeStyle = linkLineColor;
+    let x0;
+    let y0;
+    let x1;
+    let x2;
+    let y1;
+    let y2;
+    let x3;
+    let y3;
+    x0 = start.x ?? 0;
+    y0 = start.y ?? 0;
+    x3 = end.x ?? 0;
+    y3 = end.y ?? 0;
+    if (end.isRight) {
+      x2 = x3 - 100 * percentage;
+    } else {
+      x2 = x3 + 100 * percentage;
+    }
+    y2 = y3 - 40 * percentage;
+    if (start.isRight) {
+      x1 = x0 - 100 * percentage;
+    } else {
+      x1 = x0 + 100 * percentage;
+    }
+    y1 = y0 + 40 * percentage;
+    //向右箭头终点在x轴正向有偏移
+    if (!start.isRight) {
+      x0 -= 5;
+    }
+    context.moveTo(x0, y0);
+    //箭头向左还是向右
+    if (start.isRight) {
+      context.lineTo(x0 - wid, y0 + wid);
+      context.moveTo(x0, y0);
+      context.lineTo(x0 - wid, y0 - wid);
+    } else {
+      context.lineTo(x0 + wid, y0 + wid);
+      context.moveTo(x0, y0);
+      context.lineTo(x0 + wid, y0 - wid);
+    }
+    context.moveTo(x0, y0);
+    context.bezierCurveTo(x1, y1, x2, y2, x3, y3);
+    context.moveTo(x3, y3);
+    //箭头向左还是向右
+    if (end.isRight) {
+      context.lineTo(x3 - wid, y3 + wid);
+      context.moveTo(x3, y3);
+      context.lineTo(x3 - wid, y3 - wid);
+    } else {
+      context.lineTo(x3 + wid, y3 + wid);
+      context.moveTo(x3, y3);
+      context.lineTo(x3 + wid, y3 - wid);
+    }
+    context.moveTo(x3, y3);
+    context.stroke();
+    context.closePath();
+  }
+}
+
+function drawBrokenLine(it: PairPoint[], maxWidth: number, context: CanvasRenderingContext2D) {
+  let start = it[0].x > it[1].x ? it[1] : it[0];
+  let end = it[0].x > it[1].x ? it[0] : it[1];
+  if (start && end) {
+    if (start.x <= 0) {
+      start.x = -100;
+    }
+    if (end.x <= 0) {
+      end.x = -100;
+    }
+    //右移到边界，不画线
+    if (start.x >= maxWidth) {
+      start.x = maxWidth + 100;
+    }
+    if (end.x >= maxWidth) {
+      end.x = maxWidth + 100;
+    }
+    context.beginPath();
+    context.lineWidth = 2;
+    context.fillStyle = '#46B1E3';
+    context.strokeStyle = '#46B1E3';
+    let x0;
+    let y0;
+    let x1;
+    let y1;
+    let x2;
+    let y2;
+    x0 = start.x ?? 0;
+    y0 = start.y ?? 0;
+    y2 = end.y ?? 0;
+    x2 = end.x ?? 0;
+    let leftEndpointX;
+    let leftEndpointY;
+    let rightEndpointX;
+    let rightEndpointY;
+
+    if (start.y < end.y) {
+      x1 = start.x ?? 0;
+      y1 = end.y ?? 0;
+      leftEndpointX = x2 - wid;
+      leftEndpointY = y2 - wid;
+      rightEndpointX = x2 - wid;
+      rightEndpointY = y2 + wid;
+    } else {
+      x2 = end.x - wid ?? 0;
+      x1 = end.x - wid ?? 0;
+      y1 = start.y ?? 0;
+      leftEndpointX = x2 - wid;
+      leftEndpointY = y2 + wid;
+      rightEndpointX = x2 + wid;
+      rightEndpointY = y2 + wid;
+    }
+    context.moveTo(x0, y0);
+    context.lineTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+    context.closePath();
+    context.beginPath();
+    context.lineWidth = 2;
+    context.fillStyle = '#46B1E3';
+    context.strokeStyle = '#46B1E3';
+    context.moveTo(x2, y2);
+    context.lineTo(leftEndpointX, leftEndpointY);
+    context.lineTo(rightEndpointX, rightEndpointY);
+    context.lineTo(x2, y2);
+    context.fill();
+    context.closePath();
   }
 }
 

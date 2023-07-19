@@ -59,4 +59,6 @@ source_set("hiperf_call_plugin_protos_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":hiperf_call_plugin_protos_config" ]
   sources = hiperf_call_plugin_protos_codegen
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

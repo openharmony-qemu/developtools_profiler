@@ -29,6 +29,7 @@
 #include "hi_sysevent_measure_filter.h"
 #include "irq_filter.h"
 #include "measure_filter.h"
+#include "task_pool_filter.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/htrace_pbreader_parser/htrace_parser.h"
 #include "perf_data_filter.h"
@@ -146,6 +147,7 @@ void TraceStreamerSelector::InitFilter()
         traceDataCache_.get(), streamFilters_.get(), E_SYS_EVENT_SOURCE_FILTER);
     streamFilters_->hiSysEventMeasureFilter_ =
         std::make_unique<HiSysEventMeasureFilter>(traceDataCache_.get(), streamFilters_.get());
+    streamFilters_->taskPoolFilter_ = std::make_unique<TaskPoolFilter>(traceDataCache_.get(), streamFilters_.get());
 }
 
 void TraceStreamerSelector::WaitForParserEnd()
@@ -271,7 +273,6 @@ int32_t TraceStreamerSelector::UpdateTraceRangeTime(uint8_t* data, int32_t len)
 {
     std::string traceRangeStr;
     memcpy(&traceRangeStr, data, len);
-    int32_t size = traceRangeStr.size();
     std::vector<string> vTraceRangeStr = SplitStringToVec(traceRangeStr, ";");
     uint64_t minTs = std::stoull(vTraceRangeStr.at(0));
     uint64_t maxTs = std::stoull(vTraceRangeStr.at(1));

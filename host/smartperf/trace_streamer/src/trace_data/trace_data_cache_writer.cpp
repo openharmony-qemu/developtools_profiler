@@ -334,7 +334,10 @@ GPUSlice* TraceDataCacheWriter::GetGPUSliceData()
 {
     return &gpuSliceData_;
 }
-
+TaskPoolInfo* TraceDataCacheWriter::GetTaskPoolData()
+{
+    return &taskPoolInfo_;
+}
 JsHeapFiles* TraceDataCacheWriter::GetJsHeapFilesData()
 {
     return &jsHeapFilesData_;
@@ -449,6 +452,7 @@ void TraceDataCacheWriter::Clear()
     deviceStateData_.Clear();
     smapsData_.Clear();
     bioLatencySampleData_.Clear();
+    taskPoolInfo_.Clear();
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

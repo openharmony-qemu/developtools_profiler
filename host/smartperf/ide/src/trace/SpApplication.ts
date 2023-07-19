@@ -49,6 +49,8 @@ import './component/trace/base/TraceRowConfig.js';
 import { TraceRowConfig } from './component/trace/base/TraceRowConfig.js';
 import { ColorUtils } from './component/trace/base/ColorUtils.js';
 import { SpStatisticsHttpUtil } from '../statistics/util/SpStatisticsHttpUtil.js';
+import { SpFlags } from './component/SpFlags.js';
+import './component/SpFlags.js';
 
 @element('sp-application')
 export class SpApplication extends BaseElement {
@@ -384,6 +386,8 @@ export class SpApplication extends BaseElement {
                 </sp-info-and-stats>
                 <sp-help style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 103" id="sp-help">
                 </sp-help>
+                <sp-flags style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 104" id="sp-flags">
+                </sp-flags>
                 <trace-row-config class="chart-filter" style="overflow-y: clip;"></trace-row-config>
             </div>
         </div>
@@ -402,6 +406,7 @@ export class SpApplication extends BaseElement {
     let spInfoAndStats = this.shadowRoot!.querySelector<SpInfoAndStats>('#sp-info-and-stats') as SpInfoAndStats; // new SpInfoAndStats();
     let spSystemTrace = this.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.spHelp = this.shadowRoot!.querySelector<SpHelp>('#sp-help');
+    let spFlags = this.shadowRoot!.querySelector<SpFlags>('#sp-flags') as SpFlags;
     let spRecordTrace = this.shadowRoot!.querySelector<SpRecordTrace>('#sp-record-trace');
     let spRecordTemplate = this.shadowRoot!.querySelector<SpRecordTrace>('#sp-record-template');
     let spSchedulingAnalysis = this.shadowRoot!.querySelector<SpSchedulingAnalysis>(
@@ -425,6 +430,7 @@ export class SpApplication extends BaseElement {
       spInfoAndStats,
       this.spHelp,
       spRecordTemplate,
+      spFlags,
     ];
     let sideColor = mainMenu.shadowRoot?.querySelector('.color') as HTMLDivElement;
     //修改侧边导航栏配色
@@ -859,6 +865,18 @@ export class SpApplication extends BaseElement {
                       showContent(that.spHelp!);
                     },
                   },
+                  {
+                    title: 'Flags',
+                    icon: 'menu',
+                    clickHandler: function (item: MenuItem) {
+                      SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                        event: 'flags',
+                        action: 'flags',
+                      });
+                      that.search = false;
+                      showContent(spFlags);
+                    },
+                  },
                 ],
               });
               if (res.status) {
@@ -1071,6 +1089,18 @@ export class SpApplication extends BaseElement {
               that.search = false;
               that.spHelp!.dark = that.dark;
               showContent(that.spHelp!);
+            },
+          },
+          {
+            title: 'Flags',
+            icon: 'menu',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'flags',
+                action: 'flags',
+              });
+              that.search = false;
+              showContent(spFlags);
             },
           },
         ],

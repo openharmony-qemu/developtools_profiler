@@ -48,6 +48,7 @@ import { Utils } from '../base/Utils.js';
 import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
+import { SelectionParam } from '../../../bean/BoxSelection.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -99,7 +100,10 @@ export class TabPaneCurrentSelection extends BaseElement {
   private dpr: any = window.devicePixelRatio || window.webkitDevicePixelRatio || window.mozDevicePixelRatio || 1;
 
   set data(currentSelectionValue: any) {
-    this.setCpuData(currentSelectionValue);
+    if (currentSelectionValue !== undefined && currentSelectionValue.constructor
+      && currentSelectionValue.constructor.name !== 'SelectionParam') {
+      this.setCpuData(currentSelectionValue);
+    }
   }
 
   setCpuData(

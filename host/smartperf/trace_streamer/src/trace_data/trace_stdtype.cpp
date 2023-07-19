@@ -2271,13 +2271,15 @@ size_t FrameMaps::AppendNew(FrameSlice* frameSlice, uint64_t src, uint64_t dst)
     ids_.emplace_back(ids_.size());
     srcs_.push_back(src);
     dsts_.push_back(dst);
-    uint64_t rsStartTime = frameSlice->TimeStampData().at(dst);
-    uint64_t appEndTime = frameSlice->TimeStampData().at(src) + frameSlice->Durs().at(src);
-    auto typeDesc = frameSlice->Types().at(dst);
-    if (typeDesc == FrameSlice::ACTURAL_SLICE &&
-        std::abs(static_cast<long long>(rsStartTime - appEndTime)) >= ONE_MILLION_NANOSECONDS) {
-        frameSlice->SetFlags(dst, FrameSlice::ABNORMAL_START_END_TIME);
+    if (frameSlice->Types().at(dst) == FrameSlice::EXPECT_SLICE) {
+        uint64_t expRsStartTime = frameSlice->TimeStampData().at(dst);
+        uint64_t expUiEndTime = frameSlice->TimeStampData().at(src) + frameSlice->Durs().at(src);
+        if (std::abs(static_cast<long long>(expRsStartTime - expUiEndTime)) >= ONE_MILLION_NANOSECONDS) {
+            auto acturalRow = dst - 1;
+            frameSlice->SetFlags(acturalRow, FrameSlice::ABNORMAL_START_END_TIME);
+        }
     }
+
     return Size() - 1;
 }
 const std::deque<uint64_t>& FrameMaps::SrcIndexs() const
@@ -2753,5 +2755,128 @@ const std::deque<int32_t>& JsHeapTraceNode::ParentIds() const
     return parentIds_;
 }
 
+size_t TaskPoolInfo::AppendAllocationTaskData(uint32_t allocationTaskRow,
+                                              uint32_t allocationTaskId,
+                                              uint32_t executeId,
+                                              uint32_t priority,
+                                              uint32_t executeState)
+{
+    allocationTaskRows_.emplace_back(allocationTaskRow);
+    executeTaskRows_.emplace_back(INVALID_INT32);
+    returnTaskRows_.emplace_back(INVALID_INT32);
+    allocationTaskIds_.emplace_back(allocationTaskId);
+    executeTaskIds_.emplace_back(INVALID_INT32);
+    returnTaskIds_.emplace_back(INVALID_INT32);
+    executeIds_.emplace_back(executeId);
+    prioritys_.emplace_back(priority);
+    executeStates_.emplace_back(executeState);
+    returnStates_.emplace_back(INVALID_INT32);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+size_t TaskPoolInfo::AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t executeTaskId, uint32_t executeId)
+{
+    allocationTaskRows_.emplace_back(INVALID_INT32);
+    executeTaskRows_.emplace_back(executeTaskRow);
+    returnTaskRows_.emplace_back(INVALID_INT32);
+    allocationTaskIds_.emplace_back(INVALID_INT32);
+    executeTaskIds_.emplace_back(executeTaskId);
+    returnTaskIds_.emplace_back(INVALID_INT32);
+    executeIds_.emplace_back(executeId);
+    prioritys_.emplace_back(INVALID_INT32);
+    executeStates_.emplace_back(INVALID_INT32);
+    returnStates_.emplace_back(INVALID_INT32);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+size_t TaskPoolInfo::AppendReturnTaskData(uint32_t returnTaskRow,
+                                          uint32_t returnTaskId,
+                                          uint32_t executeId,
+                                          uint32_t returnState)
+{
+    allocationTaskRows_.emplace_back(INVALID_INT32);
+    executeTaskRows_.emplace_back(INVALID_INT32);
+    returnTaskRows_.emplace_back(returnTaskRow);
+    allocationTaskIds_.emplace_back(INVALID_INT32);
+    executeTaskIds_.emplace_back(INVALID_INT32);
+    returnTaskIds_.emplace_back(returnTaskId);
+    executeIds_.emplace_back(executeId);
+    prioritys_.emplace_back(INVALID_INT32);
+    executeStates_.emplace_back(INVALID_INT32);
+    returnStates_.emplace_back(returnState);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+const std::deque<uint32_t>& TaskPoolInfo::AllocationTaskRows() const
+{
+    return allocationTaskRows_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ExecuteTaskRows() const
+{
+    return executeTaskRows_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ReturnTaskRows() const
+{
+    return returnTaskRows_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::AllocationTaskIds() const
+{
+    return allocationTaskIds_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ExecuteTaskIds() const
+{
+    return executeTaskIds_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ReturnTaskIds() const
+{
+    return returnTaskIds_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ExecuteIds() const
+{
+    return executeIds_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::Prioritys() const
+{
+    return prioritys_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ExecuteStates() const
+{
+    return executeStates_;
+}
+const std::deque<uint32_t>& TaskPoolInfo::ReturnStates() const
+{
+    return returnStates_;
+}
+void TaskPoolInfo::UpdateAllocationTaskData(uint32_t index,
+                                            uint32_t allocationTaskRow,
+                                            uint32_t allocationTaskId,
+                                            uint32_t priority,
+                                            uint32_t executeState)
+{
+    if (index < Size()) {
+        allocationTaskRows_[index] = allocationTaskRow;
+        allocationTaskIds_[index] = allocationTaskId;
+        prioritys_[index] = priority;
+        executeStates_[index] = executeState;
+    }
+}
+void TaskPoolInfo::UpdateExecuteTaskData(uint32_t index, uint32_t executeTaskRow, uint32_t executeTaskId)
+{
+    if (index < Size()) {
+        executeTaskRows_[index] = executeTaskRow;
+        executeTaskIds_[index] = executeTaskId;
+    }
+}
+void TaskPoolInfo::UpdateReturnTaskData(uint32_t index,
+                                        uint32_t returnTaskRow,
+                                        uint32_t returnTaskId,
+                                        uint32_t returnState)
+{
+    if (index < Size()) {
+        returnTaskRows_[index] = returnTaskRow;
+        returnTaskIds_[index] = returnTaskId;
+        returnStates_[index] = returnState;
+    }
+}
 } // namespace TraceStdtype
 } // namespace SysTuning

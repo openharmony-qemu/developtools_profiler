@@ -79,6 +79,7 @@ import { FileInfo } from '../../js-heap/model/UiStruct.js';
 import { AppStartupStruct } from './ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from './ui-worker/ProcedureWorkerSoInit.js';
 import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerCommon.js';
+import { TaskTabStruct } from '../component/trace/sheet/task/TabPaneTaskFrames.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
@@ -531,7 +532,8 @@ export const getFunDataByTid = (tid: number, ipid: number): Promise<Array<FuncSt
     c.dur,
     c.name as funName,
     c.argsetid,
-    c.depth
+    c.depth,
+    c.id as id
 from thread A,trace_range D
 left join callstack C on A.id = C.callid
 where startTs not null and c.cookie is null and tid = $tid and A.ipid = $ipid`,
@@ -1299,7 +1301,9 @@ export const queryStartupPidArray = (): Promise<Array<{ pid: number }>> =>
   query(
     'queryStartupPidArray',
     `
-    select distinct pid from app_startup A left join process P on A.ipid = p.ipid;`,
+    select distinct pid 
+from app_startup A,trace_range B left join process P on A.ipid = p.ipid
+where A.start_time between B.start_ts and B.end_ts;`,
     {}
   );
 
@@ -1328,7 +1332,8 @@ export const queryProcessSoMaxDepth = (): Promise<Array<{ pid: number; maxDepth:
   query(
     'queryProcessSoMaxDepth',
     `select p.pid,max(depth) maxDepth 
-from static_initalize S left join process p on S.ipid = p.ipid 
+from static_initalize S,trace_range B left join process p on S.ipid = p.ipid 
+where S.start_time between B.start_ts and B.end_ts
 group by p.pid;`,
     {}
   );
@@ -1694,13 +1699,15 @@ export const queryNativeHookResponseTypes = (
   query(
     'queryNativeHookResponseTypes',
     `
-        select last_lib_id as lastLibId,data_dict.data as value from 
-        native_hook A ,trace_range B
-        left join data_dict on A.last_lib_id = data_dict.id 
+        select 
+          distinct last_lib_id as lastLibId,
+          data_dict.data as value 
+        from 
+          native_hook A ,trace_range B
+          left join data_dict on A.last_lib_id = data_dict.id 
         where
         A.start_ts - B.start_ts
-        between ${leftNs} and ${rightNs} and A.event_type in (${types.join(',')})
-        group by last_lib_id;
+        between ${leftNs} and ${rightNs} and A.event_type in (${types.join(',')});
     `,
     { $leftNs: leftNs, $rightNs: rightNs, $types: types }
   );
@@ -2765,7 +2772,7 @@ where cat = 'binder' and c.id = $id;`,
     { $id: id }
   );
 
-export const queryThreadByItid = (itid: number,ts: number): Promise<Array<any>> =>
+export const queryThreadByItid = (itid: number, ts: number): Promise<Array<any>> =>
   query(
     'queryThreadByItid',
     `select tid,pid,c.dur,c.depth,c.name 
@@ -4212,3 +4219,121 @@ export const queryHiPerfProcessCount = (
     { $leftNs: leftNs, $rightNs: rightNs }
   );
 };
+
+export const queryConcurrencyTask = (funName: string, selectStartTime: number, selectEndTime: number) =>
+  query<TaskTabStruct>(
+    'queryConcurrencyTask',
+    `SELECT thread.tid,
+            thread.ipid,
+            callstack.name                AS funName,
+            callstack.ts                  AS startTs,
+            callstack.dur,
+            callstack.id,
+            task_pool.priority,
+            task_pool.allocation_task_row AS allocationTaskRow,
+            task_pool.execute_task_row    AS executeTaskRow,
+            task_pool.return_task_row     AS returnTaskRow,
+            task_pool.execute_id          AS executeId
+     FROM thread
+            LEFT JOIN callstack ON thread.id = callstack.callid
+            LEFT JOIN task_pool ON callstack.id = task_pool.execute_task_row
+     WHERE ipid = (SELECT thread.ipid
+                   FROM thread
+                          LEFT JOIN callstack ON thread.id = callstack.callid
+                   WHERE callstack.name = $funName)
+       AND thread.name = 'TaskWorkThread'
+       AND -- 左包含
+           ($selectStartTime <= callstack.ts AND $selectEndTime > callstack.ts AND callstack.name LIKE 'H:Task Perform:%')
+        OR -- 右包含
+       ($selectStartTime < callstack.ts + callstack.dur AND $selectEndTime >= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+        OR -- 包含
+       ($selectStartTime >= callstack.ts AND $selectEndTime <= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+        OR -- 被包含
+       ($selectStartTime <= callstack.ts AND $selectEndTime >= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+     ORDER BY callstack.ts;`,
+    { $funName: funName, $selectStartTime: selectStartTime, $selectEndTime: selectEndTime}
+  );
+
+export const queryBySelectExecute = (
+  executeId: string
+): Promise<
+  Array<{
+    tid: number;
+    allocation_task_row: number;
+    execute_task_row: number;
+    return_task_row: number;
+    priority: number;
+  }>
+> => {
+  let sqlStr = `SELECT thread.tid,
+                       task_pool.allocation_task_row,
+                       task_pool.execute_task_row,
+                       task_pool.return_task_row,
+                       task_pool.priority
+                FROM task_pool
+                       LEFT JOIN callstack ON callstack.id = task_pool.allocation_task_row
+                       LEFT JOIN thread ON thread.id = callstack.callid
+                WHERE task_pool.execute_id = $executeId;
+    `;
+  return query('queryBySelectExecute', sqlStr, { $executeId: executeId });
+};
+
+export const queryBySelectAllocationOrReturn = (
+  executeId: string
+): Promise<
+  Array<{
+    tid: number;
+    allocation_task_row: number;
+    execute_task_row: number;
+    return_task_row: number;
+    priority: number;
+  }>
+> => {
+  let sqlStr = `SELECT thread.tid,
+                       task_pool.allocation_task_row,
+                       task_pool.execute_task_row,
+                       task_pool.return_task_row,
+                       task_pool.priority
+                FROM task_pool
+                       LEFT JOIN callstack ON callstack.id = task_pool.execute_task_row
+                       LEFT JOIN thread ON thread.id = callstack.callid
+                WHERE task_pool.execute_task_row IS NOT NULL AND task_pool.execute_id = $executeId;
+    `;
+  return query('queryBySelectAllocationOrReturn', sqlStr, { $executeId: executeId });
+};
+
+export const queryTaskListByExecuteTaskIds = (executeTaskIds: Array<number>): Promise<Array<TaskTabStruct>> => {
+  let sqlStr = `
+  SELECT
+    task_pool.allocation_task_row as allocationTaskRow,
+    task_pool.execute_task_row as executeTaskRow,
+    task_pool.return_task_row as returnTaskRow,
+    task_pool.execute_id as executeId,
+    task_pool.priority
+  FROM task_pool
+         LEFT JOIN callstack ON callstack.id = task_pool.allocation_task_row
+  WHERE task_pool.execute_id IN (${executeTaskIds.join(',')}) AND task_pool.execute_task_row IS NOT NULL;
+    `;
+  return query('queryTaskListByExecuteTaskIds', sqlStr, { $executeTaskIds: executeTaskIds });
+};
+
+export const queryTaskPoolCallStack = (): Promise<Array<{ id: number; ts: number; dur: number; name: string }>> => {
+  let sqlStr = `select * from callstack where name like 'H:Task%';`;
+  return query('queryTaskPoolCallStack', sqlStr, {});
+};
+
+
+export const queryTaskPoolTotalNum = (funName: string) =>
+    query<number>(
+        'queryTaskPoolTotalNum',
+        `SELECT thread.tid
+         FROM thread
+                LEFT JOIN callstack ON thread.id = callstack.callid
+         WHERE ipid = (SELECT thread.ipid
+                       FROM thread
+                              LEFT JOIN callstack ON thread.id = callstack.callid
+                       WHERE callstack.name = $funName)
+           AND thread.name = 'TaskWorkThread'
+         GROUP BY thread.tid;`,
+        { $funName: funName}
+    );

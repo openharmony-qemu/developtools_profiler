@@ -18,8 +18,8 @@ if (use_wasm) {
 }
 if (use_wasm) {
   ohos_source_set("trace_streamer_builtin") {
-    subsystem_name = "trace_streamer"
-    part_name = "src"
+    subsystem_name = "developtools"
+    part_name = "smartperf_host"
     sources = []
     include_dirs = []
     deps = []
@@ -27,8 +27,8 @@ if (use_wasm) {
   }
 }
 ohos_source_set("lib") {
-  subsystem_name = "trace_streamer"
-  part_name = "lib"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [ "main.cpp" ]
   deps = [
     ":trace_streamer_source",
@@ -77,8 +77,8 @@ ohos_source_set("lib") {
   }
 }
 ohos_source_set("trace_streamer_source") {
-  subsystem_name = "trace_streamer"
-  part_name = "trace_streamer_source"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [
     "cfg/trace_streamer_config.cpp",
     "cfg/trace_streamer_config.h",

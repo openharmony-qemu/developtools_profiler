@@ -81,6 +81,7 @@ export class AppStartupStruct extends BaseStruct {
   endItid: number | undefined;
   tid: number | undefined;
   startName: number | undefined;
+  stepName: string | undefined;
 
   static draw(ctx: CanvasRenderingContext2D, data: AppStartupStruct) {
     if (data.frame) {
@@ -91,7 +92,10 @@ export class AppStartupStruct extends BaseStruct {
         ctx.fillStyle = '#fff';
         ctx.textBaseline = 'middle';
         ctx.font = '8px sans-serif';
-        drawString(ctx, AppStartupStruct.getStartupName(data.startName), 2, data.frame, data);
+        if (data.stepName === undefined) {
+          data.stepName = `${AppStartupStruct.getStartupName(data.startName)} (${(data.dur! / 1000000).toFixed(2)}ms)`
+        }
+        drawString(ctx, data.stepName, 2, data.frame, data);
       }
       if (data === AppStartupStruct.selectStartupStruct) {
         ctx.strokeStyle = '#232c5d';

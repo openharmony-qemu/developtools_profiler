@@ -777,6 +777,8 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
       currentNode.symbol = dataCache.dataDict?.get(currentNode.symbolsId) || currentNode.ip || 'unknown';
       currentNode.path = dataCache.dataDict?.get(currentNode.pathId) || 'unknown';
       currentNode.libName = setFileName(currentNode.path);
+      currentNode.lib = currentNode.libName;
+      currentNode.addr = currentNode.ip;
       currentNode.symbolName = `${currentNode.symbol} (${currentNode.libName})`;
     }
   }

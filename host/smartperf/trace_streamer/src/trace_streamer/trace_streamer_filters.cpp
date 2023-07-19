@@ -30,6 +30,7 @@
 #include "stat_filter.h"
 #include "symbols_filter.h"
 #include "system_event_measure_filter.h"
+#include "task_pool_filter.h"
 
 namespace SysTuning {
 namespace TraceStreamer {

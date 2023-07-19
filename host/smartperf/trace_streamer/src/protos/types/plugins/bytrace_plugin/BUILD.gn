@@ -67,6 +67,8 @@ ohos_source_set("bytrace_plugin_protos_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
   sources = bytrace_plugin_protos_codegen
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }
 
 ohos_source_set("bytrace_plugin_protos_cpp_standard") {
@@ -78,6 +80,6 @@ ohos_source_set("bytrace_plugin_protos_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
   sources = bytrace_plugin_protos_codegen_standard
-  subsystem_name = developtools
-  part_name = smartperf_host
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

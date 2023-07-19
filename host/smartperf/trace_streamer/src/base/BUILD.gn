@@ -14,8 +14,8 @@
 import("//build/ohos.gni")
 import("../../build/ts.gni")
 ohos_source_set("base") {
-  subsystem_name = "trace_streamer"
-  part_name = "trace_streamer_source_base"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   deps = [
     ":base_parser",
     ":base_table",
@@ -44,13 +44,13 @@ ohos_source_set("base") {
   }
 }
 ohos_source_set("string_help") {
-  subsystem_name = "trace_streamer"
-  part_name = "string_help"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [ "string_help.cpp" ]
 }
 ohos_source_set("ibase") {
-  subsystem_name = "trace_streamer"
-  part_name = "ibase"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [
     "codec_cov.h",
     "file.h",
@@ -65,8 +65,8 @@ ohos_source_set("ibase") {
   sources += [ "/usr/x86_64-w64-mingw32/include/windows.h" ]
 }
 ohos_source_set("base_parser") {
-  subsystem_name = "trace_streamer"
-  part_name = "parser"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [
     "htrace_plugin_time_parser.cpp",
     "htrace_plugin_time_parser.h",
@@ -76,8 +76,8 @@ ohos_source_set("base_parser") {
   deps = []
 }
 ohos_source_set("base_table") {
-  subsystem_name = "trace_streamer"
-  part_name = "table"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [
     "filter_constraints.cpp",
     "index_map.cpp",

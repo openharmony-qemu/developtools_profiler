@@ -15,8 +15,8 @@ import("//build/ohos.gni")
 import("../../build/ts.gni")
 
 ohos_source_set("filter") {
-  subsystem_name = "trace_streamer"
-  part_name = "trace_streamer_filter"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [
     "app_start_filter.cpp",
     "app_start_filter.h",
@@ -52,6 +52,8 @@ ohos_source_set("filter") {
     "symbols_filter.h",
     "system_event_measure_filter.cpp",
     "system_event_measure_filter.h",
+    "task_pool_filter.cpp",
+    "task_pool_filter.h",
   ]
 
   if (enable_ts_utest && !use_wasm) {

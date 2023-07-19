@@ -43,8 +43,8 @@ config("sqlite_config") {
   ]
 }
 ohos_source_set("sqlite") {
-  subsystem_name = "trace_streamer"
-  part_name = "sqlite"
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
   sources = [ "src/sqlite3.c" ]
   public_configs = [ ":sqlite_config" ]
 }

@@ -80,8 +80,6 @@ if [ "$is_clean" == "true"  ];then
 else
     prebuilts/$gn_path/$gn gen out/"$target_dir""$ext"/$subsys_name/$part_name --args='is_debug='"$is_debug"' target="'"$target"'" target_os="'"$target_os"'"'
     echo "begin to build ..."
-    mkdir -p out/windows
-    touch out/windows/trace_streamer.exe
     prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"/$subsys_name/$part_name
     if [ $target_dir == "linux" ] && [ -f "out/$target_dir$ext/$subsys_name/$part_name/trace_streamer" ];then
         mkdir -p out/linux

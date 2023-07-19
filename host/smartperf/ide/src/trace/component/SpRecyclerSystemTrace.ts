@@ -258,7 +258,7 @@ export class SpRecyclerSystemTrace extends BaseElement {
       this.traceSheetEL?.displayThreadData(ThreadStruct.hoverThreadStruct);
     } else if (FuncStruct.hoverFuncStruct) {
       FuncStruct.selectFuncStruct = FuncStruct.hoverFuncStruct;
-      this.traceSheetEL?.displayFuncData(FuncStruct.hoverFuncStruct);
+      this.traceSheetEL?.displayFuncData(['current-selection'], FuncStruct.hoverFuncStruct);
     } else if (SportRuler.rulerFlagObj) {
     } else {
       this.traceSheetEL?.setAttribute('mode', 'hidden');

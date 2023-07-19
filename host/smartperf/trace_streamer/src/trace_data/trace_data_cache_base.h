@@ -152,6 +152,7 @@ public:
     FrameSlice frameSliceData_;
     FrameMaps frameMapsData_;
     GPUSlice gpuSliceData_;
+    TaskPoolInfo taskPoolInfo_;
     JsHeapFiles jsHeapFilesData_;
     JsHeapEdges jsHeapEdgesData_;
     JsHeapInfo jsHeapInfoData_;

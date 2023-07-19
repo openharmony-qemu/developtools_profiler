@@ -73,8 +73,10 @@ ohos_source_set("native_hook_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":native_hook_include_config" ]
   sources = native_hook_codegen
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }
-source_set("native_hook_data_encoder") {
+ohos_source_set("native_hook_data_encoder") {
   deps = [ ":native_hook_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
@@ -83,4 +85,6 @@ source_set("native_hook_data_encoder") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":native_hook_include_config" ]
   sources = native_hook_codegen_reader
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

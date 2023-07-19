@@ -61,7 +61,7 @@ action("test_data_cpp_gen") {
   }
 }
 
-source_set("test_data_cpp") {
+ohos_source_set("test_data_cpp") {
   deps = [ ":test_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
@@ -77,6 +77,6 @@ ohos_source_set("test_data_encoder") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":test_include_config" ]
   sources = test_data_codegen_reader
-  subsystem_name = developtools
-  part_name = smartperf_host
+  subsystem_name = "developtools"
+  part_name = "smartperf_host"
 }

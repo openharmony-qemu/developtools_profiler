@@ -30,7 +30,7 @@ public:
     {
         return minTs_;
     }
-    uint64_t MaxTs()
+    uint64_t MaxTs() const
     {
         return maxTs_;
     }

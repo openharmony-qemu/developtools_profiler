@@ -2309,6 +2309,64 @@ private:
     std::deque<uint32_t> frameRows_ = {};
     std::deque<uint64_t> durs_ = {};
 };
+
+class TaskPoolInfo : public CacheBase {
+public:
+    size_t AppendAllocationTaskData(uint32_t allocationTaskRow,
+                                    uint32_t allocationTaskId,
+                                    uint32_t executeId,
+                                    uint32_t priority,
+                                    uint32_t executeState);
+    size_t AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t executeTaskId, uint32_t executeId);
+    size_t AppendReturnTaskData(uint32_t returnTaskRow,
+                                uint32_t returnTaskId,
+                                uint32_t executeId,
+                                uint32_t returnState);
+    void UpdateAllocationTaskData(uint32_t index,
+                                  uint32_t allocationTaskRow,
+                                  uint32_t allocationTaskId,
+                                  uint32_t priority,
+                                  uint32_t executeState);
+    void UpdateExecuteTaskData(uint32_t index, uint32_t executeTaskRow, uint32_t executeTaskId);
+    void UpdateReturnTaskData(uint32_t index, uint32_t returnTaskRow, uint32_t returnTaskId, uint32_t returnState);
+
+    const std::deque<uint32_t>& AllocationTaskRows() const;
+    const std::deque<uint32_t>& ExecuteTaskRows() const;
+    const std::deque<uint32_t>& ReturnTaskRows() const;
+    const std::deque<uint32_t>& AllocationTaskIds() const;
+    const std::deque<uint32_t>& ExecuteTaskIds() const;
+    const std::deque<uint32_t>& ReturnTaskIds() const;
+    const std::deque<uint32_t>& ExecuteIds() const;
+    const std::deque<uint32_t>& Prioritys() const;
+    const std::deque<uint32_t>& ExecuteStates() const;
+    const std::deque<uint32_t>& ReturnStates() const;
+    void Clear() override
+    {
+        TaskPoolInfo::Clear();
+        allocationTaskRows_.clear();
+        executeTaskRows_.clear();
+        returnTaskRows_.clear();
+        allocationTaskIds_.clear();
+        executeTaskIds_.clear();
+        returnTaskIds_.clear();
+        executeIds_.clear();
+        prioritys_.clear();
+        executeStates_.clear();
+        returnStates_.clear();
+    }
+
+private:
+    std::deque<uint32_t> allocationTaskRows_ = {};
+    std::deque<uint32_t> executeTaskRows_ = {};
+    std::deque<uint32_t> returnTaskRows_ = {};
+    std::deque<uint32_t> allocationTaskIds_ = {};
+    std::deque<uint32_t> executeTaskIds_ = {};
+    std::deque<uint32_t> returnTaskIds_ = {};
+    std::deque<uint32_t> executeIds_ = {};
+    std::deque<uint32_t> prioritys_ = {};
+    std::deque<uint32_t> executeStates_ = {};
+    std::deque<uint32_t> returnStates_ = {};
+};
 } // namespace TraceStdtype
 } // namespace SysTuning
 

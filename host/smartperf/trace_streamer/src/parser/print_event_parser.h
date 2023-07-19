@@ -21,6 +21,7 @@
 #include "filter/measure_filter.h"
 #include "filter/process_filter.h"
 #include "filter/slice_filter.h"
+#include "filter/task_pool_filter.h"
 #include "string_to_numerical.h"
 #include "trace_streamer_config.h"
 namespace SysTuning {

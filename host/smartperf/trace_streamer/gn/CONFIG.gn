@@ -78,11 +78,12 @@ if (target == "wasm") {
   exit(-1)
 }
 
+trace_cfg_path = "//gn:trace_cfg"
 print("platform " + target_os)
 default_configs = [
   "//gn:symbols",
   "//gn:default",
-  "//gn:trace_cfg",
+  trace_cfg_path,
 ]
 hiperf_default_configs = [
   "//gn:symbols",

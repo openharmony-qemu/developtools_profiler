@@ -192,6 +192,10 @@ const ArgSet& TraceDataCacheReader::GetConstArgSetData() const
 {
     return argSet_;
 }
+const TaskPoolInfo& TraceDataCacheReader::GetConstTaskPoolData() const
+{
+    return taskPoolInfo_;
+}
 const JsHeapFiles& TraceDataCacheReader::GetConstJsHeapFilesData() const
 {
     return jsHeapFilesData_;

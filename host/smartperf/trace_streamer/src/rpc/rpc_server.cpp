@@ -70,7 +70,6 @@ int32_t RpcServer::TraceStreamer_Init_ThirdParty_Config(const uint8_t* data, int
     TS_LOGE("TraceStreamer_Init_ThirdParty_Config is comming!");
     std::string thirdPartyConfig = reinterpret_cast<const char*>(data);
     TS_LOGE("thirdPartyConfig = %s", thirdPartyConfig.c_str());
-    int32_t size = thirdPartyConfig.size();
     std::vector<std::string> comPonentStr = SplitStringToVec(thirdPartyConfig, ";");
     const int32_t EVENT_COUNT_PAIR = 2;
     if (comPonentStr.size() % EVENT_COUNT_PAIR != 0) {
