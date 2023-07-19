@@ -140,10 +140,7 @@ bool HookManager::UnregisterAgentPlugin(const std::string& pluginPath)
     request.set_plugin_id(agentIndex_);
     UnregisterPluginResponse response;
     if (commandPoller_->UnregisterPlugin(request, response)) {
-        if (response.status() != ResponseStatus::OK) {
-            HILOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL 1");
-            return false;
-        }
+        CHECK_TRUE(response.status() != ResponseStatus::OK, false, "UnregisterPlugin FAIL 1");
     } else {
         HILOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL 2");
         return false;
@@ -189,15 +186,11 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     smbName_ = "hooknativesmb";
     // save config
     std::string cfgData = config[0].config_data();
-    if (hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
-        return false;
-    }
+    CHECK_TRUE(hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0,
+               false, "%s: ParseFromArray failed", __func__);
 
-    if (getuid() != 0 && !COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
-        HILOG_ERROR(LOG_CORE, "Application debug permisson denied!");
-        return false;
-    }
+    CHECK_TRUE(getuid() != 0 && !COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name()),
+               false, "Application debug permisson denied!");
 
     pid_ = hookConfig_.pid();
 
@@ -283,16 +276,11 @@ void HookManager::ReadShareMemory()
     while (true) {
         auto rawStack = std::make_shared<StackDataRepeater::RawStack>();
         bool ret = shareMemoryBlock_->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            if (size < sizeof(BaseStackRawData)) {
-                HILOG_ERROR(LOG_CORE, "stack data invalid!");
-                return false;
-            }
+            CHECK_TRUE(size < sizeof(BaseStackRawData), false, "stack data invalid!");
 
             rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
-            if (memcpy_s(rawStack->baseStackData.get(), size, data, size) != EOK) {
-                HILOG_ERROR(LOG_CORE, "memcpy_s raw data failed!");
-                return false;
-            }
+            CHECK_TRUE(memcpy_s(rawStack->baseStackData.get(), size, data, size) != EOK, false,
+                       "memcpy_s raw data failed!");
 
             rawStack->stackConext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
             rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);

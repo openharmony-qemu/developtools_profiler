@@ -26,18 +26,9 @@ std::shared_ptr<HiebpfDataFile> HiebpfDataFile::MakeShared(
     const std::size_t pages)
 {
     std::shared_ptr<HiebpfDataFile> obj {new(std::nothrow) HiebpfDataFile {cmd, filename, pages}};
-    if (obj == nullptr) {
-        HHLOGE(true, "failed to make HiebpfDataFile");
-        return nullptr;
-    }
-    if (obj->OpenFile() != 0) {
-        HHLOGE(true, "failed to open hiebpf data file");
-        return nullptr;
-    }
-    if (obj->MapFile() != 0) {
-        HHLOGE(true, "failed to map hiebpf data file into memory");
-        return nullptr;
-    }
+    CHECK_NOTNULL(obj, nullptr, "failed to make HiebpfDataFile");
+    CHECK_TRUE(obj->OpenFile() != 0, nullptr, "failed to open hiebpf data file");
+    CHECK_TRUE(obj->MapFile() != 0, nullptr, "failed to map hiebpf data file into memory");
     return obj;
 }
 
@@ -106,26 +97,18 @@ void HiebpfDataFile::Submit(void *data)
 
 int HiebpfDataFile::MapFile()
 {
-    if (ExtendFile(mapPos_, length_) != 0) {
-        HHLOGE(true, "failed to extend data file from %u with %u bytes", mapPos_, length_);
-        return -1;
-    }
+    CHECK_TRUE(ExtendFile(mapPos_, length_) != 0, -1,
+               "failed to extend data file from %u with %u bytes", mapPos_, length_);
     HHLOGI(true, "done extending the data file");
     // map the file
     mapAddr_ = mmap(
         nullptr, length_,
         PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE,
         fd_, mapPos_);
-    if (mapAddr_ == MAP_FAILED) {
-        HHLOGE(true, "mmap() failed: %s", strerror(errno));
-        return -1;
-    }
+    CHECK_TRUE(mapAddr_ == MAP_FAILED, -1, "mmap() failed: %s", strerror(errno));
     HHLOGI(true, "done mem mapping hiebpf data file");
     // hiebpf data file header
-    if (WriteFileHeader() != 0) {
-        HHLOGE(true, "failed to write hiebpf data file header");
-        return -1;
-    }
+    CHECK_TRUE(WriteFileHeader() != 0, -1, "failed to write hiebpf data file header");
     HHLOGI(true, "done writing hiebpf data file header");
     return 0;
 }
@@ -144,19 +127,14 @@ int HiebpfDataFile::RemapFile(const std::size_t size)
         extendLength += DEFAULT_MMAP_LENGTH;
     }
 
-    if (ExtendFile(remapPos, extendLength) != 0) {
-        HHLOGE(true, "failed to extend file from %u with %u bytes", remapPos, length_);
-        return -1;
-    }
+    CHECK_TRUE(ExtendFile(remapPos, extendLength) != 0, -1,
+               "failed to extend file from %u with %u bytes", remapPos, length_);
     HHLOGI(true, "done extending the data file");
     mapAddr_ = mmap(
         nullptr, extendLength,
         PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE,
         fd_, remapPos);
-    if (mapAddr_ == MAP_FAILED) {
-        HHLOGE(true, "failed to remap data file from %u to %u", mapPos_, remapPos);
-        return -1;
-    }
+    CHECK_TRUE(mapAddr_ == MAP_FAILED, -1, "failed to remap data file from %u to %u", mapPos_, remapPos);
     HHLOGI(true, "done remapping data file from %u, to %u", mapPos_, remapPos);
     mapPos_ = remapPos;
     offset_ = remapOff;

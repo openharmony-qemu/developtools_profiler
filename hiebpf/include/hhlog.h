@@ -182,5 +182,22 @@ private:
 #define HHLOGE(expression, format, ...) {}
 #define HHLOGF(expression, format, ...) {}
 
+#define CHECK_NOTNULL(ptr, retval, fmt, ...)                                                                        \
+    do {                                                                                                            \
+        if (ptr == nullptr) {                                                                                       \
+            HILOG_WARN(true, "CHECK_NOTNULL(%s) in %s:%d FAILED, " fmt, #ptr, __func__, \
+                       __LINE__, ##__VA_ARGS__);                                                                    \
+            return retval;                                                                                          \
+        }                                                                                                           \
+    } while (0)
+
+#define CHECK_TRUE(expr, retval, fmt, ...)                                                                          \
+    do {                                                                                                            \
+        if (!(expr)) {                                                                                              \
+            HILOG_WARN(true, "CHECK_TRUE(%s) in %s:%d FAILED, " fmt, #expr, __func__, __LINE__, ##__VA_ARGS__);     \
+            return retval;                                                                                          \
+        }                                                                                                           \
+    } while (0)
+
 #endif
 #endif  // HHLOG_H

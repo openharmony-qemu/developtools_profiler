@@ -25,10 +25,7 @@ namespace Hiebpf {
 bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &symbolTable)
 {
     std::unique_ptr<ElfFile> elfFile = ElfFile::MakeUnique(fileName);
-    if (elfFile == nullptr) {
-        HHLOGE(true, "elf '%s' load failed\n", fileName.c_str());
-        return false;
-    }
+    CHECK_NOTNULL(elfFile, false, "elf '%s' load failed\n", fileName.c_str());
 
     // get .text
     symbolTable.textVaddr_ = (std::numeric_limits<uint64_t>::max)();
@@ -41,74 +38,48 @@ bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &
             }
         }
     }
-    if (symbolTable.textVaddr_ == (std::numeric_limits<uint64_t>::max)()) {
-        HHLOGE(true, "get text vaddr failed");
-        return false;
-    }
+    CHECK_TRUE(symbolTable.textVaddr_ == (std::numeric_limits<uint64_t>::max)(), false, "get text vaddr failed");
 
     const std::string symTab {".symtab"};
     if (elfFile->shdrs_.find(symTab) != elfFile->shdrs_.end()) {
         // get .symtab
         const auto &shdr = elfFile->shdrs_[symTab];
         const uint8_t *data = elfFile->GetSectionData(shdr->secIndex_);
-        if (data == nullptr) {
-            HHLOGE(true, "get section data failed");
-            return false;
-        }
+        CHECK_NOTNULL(, false, "get section data failed");
         symbolTable.symTable_.resize(shdr->secSize_);
         std::copy(data, data + shdr->secSize_, symbolTable.symTable_.data());
         symbolTable.symEntSize_ = shdr->secEntrySize_;
 
         // get .strtab
         const std::string strTab {".strtab"};
-        if (elfFile->shdrs_.find(strTab) == elfFile->shdrs_.end()) {
-            HHLOGE(true, "get symbol tab failed");
-            return false;
-        }
+        CHECK_TRUE(elfFile->shdrs_.find(strTab) == elfFile->shdrs_.end(), false, "get symbol tab failed");
         const auto &strshdr = elfFile->shdrs_[strTab];
         data = elfFile->GetSectionData(strshdr->secIndex_);
-        if (data == nullptr) {
-            HHLOGE(true, "get section data failed");
-            return false;
-        }
+        CHECK_NOTNULL(data, false, "get section data failed");
         symbolTable.strTable_.resize(strshdr->secSize_);
         std::copy(data, data + strshdr->secSize_, symbolTable.strTable_.data());
     } else {
         // get .dynsym
         const std::string dynSym {".dynsym"};
-        if (elfFile->shdrs_.find(dynSym) == elfFile->shdrs_.end()) {
-            HHLOGE(true, "get symbol tab failed");
-            return false;
-        }
+        CHECK_TRUE(elfFile->shdrs_.find(dynSym) == elfFile->shdrs_.end(), false, "get symbol tab failed");
         const auto &shdr = elfFile->shdrs_[dynSym];
         const uint8_t *data = elfFile->GetSectionData(shdr->secIndex_);
-        if (data == nullptr) {
-            HHLOGE(true, "get section data failed");
-            return false;
-        }
+        CHECK_NOTNULL(data, false, "get section data failed");
         symbolTable.symTable_.resize(shdr->secSize_);
         std::copy(data, data + shdr->secSize_, symbolTable.symTable_.data());
         symbolTable.symEntSize_ = shdr->secEntrySize_;
 
         // get .dynstr
         const std::string dynStr {".dynstr"};
-        if (elfFile->shdrs_.find(dynStr) == elfFile->shdrs_.end()) {
-            HHLOGE(true, "get symbol tab failed");
-            return false;
-        }
+        CHECK_TRUE(elfFile->shdrs_.find(dynStr) == elfFile->shdrs_.end(), false, "get symbol tab failed");
         const auto &strshdr = elfFile->shdrs_[dynStr];
         data = elfFile->GetSectionData(strshdr->secIndex_);
-        if (data == nullptr) {
-            HHLOGE(true, "get section data failed");
-            return false;
-        }
+        CHECK_NOTNULL(data, false, "get section data failed");
         symbolTable.strTable_.resize(strshdr->secSize_);
         std::copy(data, data + strshdr->secSize_, symbolTable.strTable_.data());
     }
-    if (symbolTable.strTable_.size() == 0 || symbolTable.symTable_.size() == 0) {
-        HHLOGE(true, "get strTable_ or symTable failed");
-        return false;
-    }
+    CHECK_TRUE(symbolTable.strTable_.size() == 0 || symbolTable.symTable_.size() == 0, false,
+               "get strTable_ or symTable failed");
     symbolTable.fileName_ = fileName;
 
     return true;

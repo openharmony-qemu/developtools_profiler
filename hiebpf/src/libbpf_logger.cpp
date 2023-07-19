@@ -91,9 +91,7 @@ std::string LIBBPFLogger::GetLogFileName() const
     time_t now = (time_t) timer.tv_sec;
     struct tm* tmPtr {nullptr};
     tmPtr = localtime(&now);
-    if (tmPtr == nullptr) {
-        return "";
-    }
+    CHECK_NOTNULL(tmPtr, "", "GetLogFileName fail");
     std::stringstream ss;
     constexpr int yearStart {1900};
     constexpr int monthStart {1};
