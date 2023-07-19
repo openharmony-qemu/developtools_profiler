@@ -41,6 +41,7 @@ public:
         uint64_t releaseCount {0};
         uint64_t applySize {0};
         uint64_t releaseSize {0};
+        uint32_t tagId {0};
     };
 
     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,

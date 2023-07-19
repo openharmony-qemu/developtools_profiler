@@ -569,6 +569,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
             }
             case MEMORY_USING_MSG: {
                 record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+                record.tagId = rawStack->stackConext->tagId;
                 break;
             }
             default: {
@@ -849,6 +850,11 @@ bool StackPreprocess::FlushRecordStatistics()
         recordEvent->set_release_count(statistics->releaseCount);
         recordEvent->set_apply_size(statistics->applySize);
         recordEvent->set_release_size(statistics->releaseSize);
+
+        std::string temp;
+        if (statistics->type == RecordStatisticsEvent::MEMORY_USING_MSG && GetMemTag(statistics->tagId, temp)) {
+            recordEvent->set_tag_name(temp);
+        }
     }
     FlushData(statisticsData);
     statisticsPeriodData_.clear();
