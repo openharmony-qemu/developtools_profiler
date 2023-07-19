@@ -49,15 +49,10 @@ ProcessDataPlugin::~ProcessDataPlugin()
 
 int ProcessDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    if (buffer_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:buffer_ == null", __func__);
-        return RET_FAIL;
-    }
+    CHECK_NOTNULL(buffer_, RET_FAIL, "%s:buffer_ == null", __func__);
 
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
-        return RET_FAIL;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, RET_FAIL,
+               "%s:parseFromArray failed!", __func__);
 
     HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
@@ -380,10 +375,7 @@ bool ProcessDataPlugin::ReadBootTime(int pid, CpuInfo* protoc, uint64_t& bootTim
 {
     std::string path = path_ + "stat";
     std::ifstream input(path, std::ios::in);
-    if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
-        return false;
-    }
+    CHECK_TRUE(input.fail(), false, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
     do {
         if (!input.good()) {
             return false;
@@ -431,10 +423,7 @@ bool ProcessDataPlugin::ReadCpuUsage(int pid, CpuInfo* protoc, uint64_t& cpuTime
 {
     std::string path = path_ + std::to_string(pid) + "/stat";
     std::ifstream input(path, std::ios::in);
-    if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
-        return false;
-    }
+    CHECK_TRUE(input.fail(), false, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
     do {
         if (!input.good()) {
             return false;
@@ -571,11 +560,10 @@ bool ProcessDataPlugin::WritePssData(int pid, PssInfo* protoc)
 {
     std::string path = path_ + std::to_string(pid) + "/smaps_rollup";
     std::ifstream input(path, std::ios::in);
-    if (input.fail()) {
-        // Not capturing ENOENT (file does not exist) errors, it is common for node smaps_rollup files to be unreadable.
-        HILOG_ERROR(LOG_CORE, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
-        return false;
-    }
+
+    // Not capturing ENOENT (file does not exist) errors, it is common for node smaps_rollup files to be unreadable.
+    CHECK_TRUE(input.fail(), false, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
+
     // set ifstream to O_NONBLOCK mode
     CHECK_NOTNULL(input.rdbuf(), false, "%s:input rdbuf is nullptr", __func__);
     input.rdbuf()->pubsetbuf(nullptr, 0);

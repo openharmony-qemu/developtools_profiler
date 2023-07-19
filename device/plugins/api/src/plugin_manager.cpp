@@ -141,10 +141,8 @@ bool PluginManager::RegisterPlugin(const PluginModulePtr& plugin, const std::str
 
 bool PluginManager::RemovePlugin(const std::string& pluginPath)
 {
-    if (pluginPathAndNameMap_.count(pluginPath) == 0) {
-        HILOG_DEBUG(LOG_CORE, "%s:not find plugin: %s", __func__, pluginPath.c_str());
-        return false;
-    }
+    CHECK_TRUE(pluginPathAndNameMap_.count(pluginPath) == 0, false,
+               "%s:not find plugin: %s", __func__, pluginPath.c_str());
 
     std::string pluginName = pluginPathAndNameMap_[pluginPath];
     auto it = pluginIds_.find(pluginName);
@@ -207,10 +205,7 @@ bool PluginManager::LoadPlugin(const std::string& pluginName)
 {
     HILOG_DEBUG(LOG_CORE, "%s:size = %zu", __func__, pluginIds_.size());
     auto it = pluginIds_.find(pluginName);
-    if (it == pluginIds_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
-        return false;
-    }
+    CHECK_TRUE(it == pluginIds_.end(), false, "%s:plugin not exist", __func__);
     uint32_t index = it->second;
 
     if (!pluginModules_[index]->Load()) {
@@ -358,15 +353,9 @@ bool PluginManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds
 {
     HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
     for (uint32_t id : pluginIds) {
-        if (pluginModules_.find(id) == pluginModules_.end()) {
-            HILOG_ERROR(LOG_CORE, "%s:plugin not find", __func__);
-            return false;
-        }
+        CHECK_TRUE(pluginModules_.find(id) == pluginModules_.end(), false, "%s:plugin not find", __func__);
         // notify plugin to report basic data
-        if (!pluginModules_[id]->ReportBasicData()) {
-            HILOG_ERROR(LOG_CORE, "%s:report basic data failed", __func__);
-            return false;
-        }
+        CHECK_TRUE(!pluginModules_[id]->ReportBasicData(), false, "%s:report basic data failed", __func__);
     }
     return true;
 }
@@ -375,10 +364,7 @@ bool PluginManager::SubmitResult(const PluginResult& pluginResult)
 {
     HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
     NotifyResultRequest request;
-    if (commandPoller_ == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "%s:commandPoller_ is null", __func__);
-        return false;
-    }
+    CHECK_NOTNULL(commandPoller_, false, "%s:commandPoller_ is null", __func__);
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_command_id(0);
     PluginResult* p = request.add_result();

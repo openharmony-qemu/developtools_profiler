@@ -66,10 +66,7 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
         prepareCmd += " -o " + config.outfile_name();
         size_t fileSize = sizeof(g_pluginModule.outFileName);
         int ret = strncpy_s(g_pluginModule.outFileName, fileSize, config.outfile_name().c_str(), fileSize - 1);
-        if (ret != EOK) {
-            HILOG_ERROR(LOG_CORE, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
-            return false;
-        }
+        CHECK_TRUE(ret != EOK, false, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
     }
     if (!config.record_args().empty()) {
         prepareCmd += " " + config.record_args();
@@ -93,10 +90,7 @@ bool RunCommand(const std::string& cmd)
     volatile pid_t childPid = -1;
     int pipeFds[2] = {-1, -1};
     FILE* fp = COMMON::CustomPopen(cmdArg, "r", pipeFds, childPid);
-    if (fp == nullptr) {
-        HILOG_ERROR(LOG_CORE, "HiperfPlugin::RunCommand CustomPopen FAILED!r");
-        return false;
-    }
+    CHECK_NOTNULL(fp, false, "HiperfPlugin::RunCommand CustomPopen FAILED!r");
     constexpr uint32_t readBufferSize = 4096;
     std::array<char, readBufferSize> buffer;
     std::string result;

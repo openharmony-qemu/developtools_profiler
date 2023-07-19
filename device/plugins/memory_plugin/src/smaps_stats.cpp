@@ -81,10 +81,7 @@ bool SmapsStats::ReadVmemareasFile(const std::string& path, ProcessMemoryInfo& p
     uint64_t prevEnd = 0;
     int prevHeap = 0;
     std::ifstream input(path, std::ios::in);
-    if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, path.c_str(), errno);
-        return false;
-    }
+    CHECK_TRUE(input.fail(), false, "%s:open %s failed, errno = %d", __func__, path.c_str(), errno);
     do {
         if (!input.good()) {
             return false;
@@ -255,14 +252,10 @@ bool SmapsStats::SetMapAddrInfo(std::string& line, MapPiecesInfo& head)
     const char* pStr = line.c_str();
     char* end = nullptr;
     head.startAddr = strtoull(pStr, &end, HEX_BASE);
-    if (end == pStr || *end != '-') {
-        return false;
-    }
+    CHECK_TRUE(end == pStr || *end != '-', false, "SetMapAddrInfo fail");
     pStr = end + 1;
     head.endAddr = strtoull(pStr, &end, HEX_BASE);
-    if (end == pStr) {
-        return false;
-    }
+    CHECK_TRUE(end == pStr, false, "end == pStr");
     return true;
 }
 
@@ -272,9 +265,7 @@ bool SmapsStats::ParseMapHead(std::string& line, MapPiecesInfo& head, SmapsHeadI
     for (int i = 0; i < FIFTH_FIELD; i++) {
         std::string word = newline;
         size_t wordsz = word.find(" ");
-        if (wordsz == std::string::npos) {
-            return false;
-        }
+        CHECK_TRUE(wordsz == std::string::npos, false, "wordsz == std::string::npos");
         word = newline.substr(0, wordsz);
         if (i == 0) {
             size_t pos = word.find("-");

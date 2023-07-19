@@ -399,10 +399,7 @@ bool FtraceParser::ParseFieldType(const std::string& type, FieldFormat& field)
 
     // for flex array with __data_loc mark, likes: __data_loc char[] name; __data_loc __u8[] buf;
     if (std::regex_match(typeName, flexDataLocArrayRegex_)) {
-        if (field.size != sizeof(uint32_t)) {
-            HILOG_WARN(LOG_CORE, "__data_loc %s, size: %hu", typeName.c_str(), field.size);
-            return false;
-        }
+        CHECK_TRUE(field.size != sizeof(uint32_t), false, "__data_loc %s, size: %hu", typeName.c_str(), field.size);
         field.filedType = FIELD_TYPE_DATALOC;
         return true;
     }

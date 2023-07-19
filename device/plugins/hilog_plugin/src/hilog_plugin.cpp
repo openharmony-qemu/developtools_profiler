@@ -71,16 +71,10 @@ HilogPlugin::~HilogPlugin()
 
 int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "HilogPlugin: ParseFromArray failed");
-        return -1;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, -1, "HilogPlugin: ParseFromArray failed");
     if (protoConfig_.need_clear()) {
         fullCmd_ = ClearHilog();
-        if (fullCmd_.empty()) {
-            HILOG_ERROR(LOG_CORE, "HilogPlugin: fullCmd_ is empty");
-            return -1;
-        }
+        CHECK_TRUE(fullCmd_.empty(), -1, "HilogPlugin: fullCmd_ is empty");
         std::vector<std::string> cmdArg;
         COMMON::SplitString(fullCmd_, " ", cmdArg);
         cmdArg.emplace(cmdArg.begin(), BIN_COMMAND);
@@ -88,16 +82,10 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
         volatile pid_t childPid = -1;
         int pipeFds[2] = {-1, -1};
         FILE* fp = COMMON::CustomPopen(cmdArg, "r", pipeFds, childPid);
-        if (fp == nullptr) {
-            HILOG_ERROR(LOG_CORE, "%s:clear hilog error", __func__);
-            return false;
-        }
+        CHECK_NOTNULL(fp, -1, "%s:clear hilog error", __func__);
         COMMON::CustomPclose(fp, pipeFds, childPid);
     }
-    if (!InitHilogCmd()) {
-        HILOG_ERROR(LOG_CORE, "HilogPlugin: Init HilogCmd failed");
-        return -1;
-    }
+    CHECK_TRUE(!InitHilogCmd(), -1, "HilogPlugin: Init HilogCmd failed");
 
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(fullCmd_.c_str(), "r"), CustomPclose);
     CHECK_NOTNULL(fp_.get(), -1, "HilogPlugin: open(%s) Failed, errno(%d)", fullCmd_.c_str(), errno);
@@ -242,9 +230,6 @@ void HilogPlugin::Run(void)
 {
     HILOG_INFO(LOG_CORE, "HilogPlugin::Run start!");
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(BUF_MAX_LEN);
-    if (buffer == nullptr) {
-        return;
-    }
 
     HilogInfo dataProto;
 
@@ -486,10 +471,7 @@ int HilogPlugin::GetDateTime(char* psDateTime, uint32_t size)
 
 FILE* HilogPlugin::CustomPopen(const char* command, const char* type)
 {
-    if (command == nullptr || type == nullptr) {
-        HILOG_ERROR(LOG_CORE, "HilogPlugin:%s param invalid", __func__);
-        return nullptr;
-    }
+    CHECK_TRUE(command == nullptr || type == nullptr, nullptr, "HilogPlugin:%s param invalid", __func__);
 
     int fd[PIPE_LEN];
     pipe(fd);

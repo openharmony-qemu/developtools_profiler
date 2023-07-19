@@ -101,10 +101,7 @@ bool IsProcessRunning(int& lockFileFd)
 bool IsProcessExist(const std::string& processName, int& pid)
 {
     DIR* dir = opendir("/proc");
-    if (dir == nullptr) {
-        HILOG_ERROR(LOG_CORE, "open /proc dir failed");
-        return false;
-    }
+    CHECK_NOTNULL(dir, false, "open /proc dir failed");
     struct dirent* ptr;
     int pidValue = INVALID_PID;
     while ((ptr = readdir(dir)) != nullptr) {
@@ -359,10 +356,8 @@ int GetServicePort()
 {
     const std::string portRangePath = "/proc/sys/net/ipv4/ip_local_port_range";
     std::ifstream file(portRangePath.c_str());
-    if (!file.is_open()) {
-        HILOG_ERROR(LOG_CORE, "Open file failed! filePath:%s", portRangePath.c_str());
-        return -1;
-    }
+    CHECK_TRUE(!file.is_open(), -1, "Open file failed! filePath:%s", portRangePath.c_str());
+
     std::string rangeStr;
     copy(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), std::back_inserter(rangeStr));
 
@@ -414,27 +409,15 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     } else {
         bundleName = processName;
     }
-    if (bundleName.empty()) {
-        HILOG_ERROR(LOG_CORE, "Pid or process name is illegal!");
-        return false;
-    }
+    CHECK_TRUE(bundleName.empty(), false, "Pid or process name is illegal!");
 
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (sam == nullptr) {
-        HILOG_ERROR(LOG_CORE, "GetSystemAbilityManager failed!");
-        return false;
-    }
+    CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
     sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    if (remoteObject == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Get BundleMgr SA failed!");
-        return false;
-    }
+    CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
     sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
     int uid = proxy->GetUidByDebugBundleName(bundleName, Constants::ANY_USERID);
-    if (uid < 0) {
-        HILOG_ERROR(LOG_CORE, "Get %s uid = %d", bundleName.c_str(), uid);
-        return false;
-    }
+    CHECK_TRUE(uid < 0, false, "Get %s uid = %d", bundleName.c_str(), uid);
     return true;
 }
 
@@ -455,23 +438,14 @@ bool VerifyPath(const std::string& filePath, const std::vector<std::string>& val
 bool ReadFile(const std::string &filePath, const std::vector<std::string>& validPaths, std::string& fileContent)
 {
     char* realFilePath = realpath(filePath.c_str(), nullptr);
-    if (realFilePath == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Fail to realPath: %s", filePath.c_str());
-        return false;
-    }
+    CHECK_NOTNULL(realFilePath, false, "Fail to realPath: %s", filePath.c_str());
 
     std::string realFilePathStr(realFilePath);
     free(realFilePath);
-    if (!VerifyPath(realFilePathStr, validPaths)) {
-        HILOG_ERROR(LOG_CORE, "Fail to VerifyPath: %s", realFilePathStr.c_str());
-        return false;
-    }
+    CHECK_TRUE(!VerifyPath(realFilePathStr, validPaths), false, "Fail to VerifyPath: %s", realFilePathStr.c_str());
 
     std::ifstream fileStream(realFilePathStr, std::ios::in);
-    if (!fileStream.is_open()) {
-        HILOG_ERROR(LOG_CORE, "Fail to open file %s", realFilePathStr.c_str());
-        return false;
-    }
+    CHECK_TRUE(!fileStream.is_open(), false, "Fail to open file %s", realFilePathStr.c_str());
 
     std::istreambuf_iterator<char> firstIt = { fileStream };
     std::string content(firstIt, {});

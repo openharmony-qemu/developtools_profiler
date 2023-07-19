@@ -96,9 +96,7 @@ pid_t GetRealPid(void)
     const char *path = "/proc/self/status";
     char buf[STATUS_LINE_SIZE] = {0};
     FILE *fp = fopen(path, "r");
-    if (fp == nullptr) {
-        return -1;
-    }
+    CHECK_NOTNULL(fp, -1, "fopen fail");
     while (!feof(fp)) {
         if (fgets(buf, STATUS_LINE_SIZE, fp) == nullptr) {
             fclose(fp);

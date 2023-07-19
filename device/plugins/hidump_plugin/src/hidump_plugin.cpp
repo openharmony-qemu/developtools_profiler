@@ -64,10 +64,7 @@ HidumpPlugin::~HidumpPlugin()
 int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     HILOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "HidumpPlugin: ParseFromArray failed");
-        return -1;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, -1, "HidumpPlugin: ParseFromArray failed");
 
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(g_fpsFormat, "r"), CustomPclose);
     if (fp_.get() == nullptr) {
@@ -157,10 +154,7 @@ bool HidumpPlugin::ParseHidumpInfo(HidumpInfo& dataProto, char *buf)
 
     buf += strlen("fps:");
     char *tmp = strchr(buf, '|');
-    if (tmp == nullptr) {
-        HILOG_ERROR(LOG_CORE, "format error. %s", buf);
-        return false;
-    }
+    CHECK_NOTNULL(tmp, false, "format error. %s", buf);
     *tmp = ' ';
     std::stringstream strvalue(buf);
     uint32_t fps = 0;
@@ -179,10 +173,7 @@ bool HidumpPlugin::ParseHidumpInfo(HidumpInfo& dataProto, char *buf)
 
 FILE* HidumpPlugin::CustomPopen(const char* command, const char* type)
 {
-    if (command == nullptr || type == nullptr) {
-        HILOG_ERROR(LOG_CORE, "HidumpPlugin:%s param invalid", __func__);
-        return nullptr;
-    }
+    CHECK_TRUE(command == nullptr || type == nullptr, nullptr, "HidumpPlugin:%s param invalid", __func__);
 
     int fd[PIPE_LEN];
     pipe(fd);

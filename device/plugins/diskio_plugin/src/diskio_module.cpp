@@ -34,9 +34,7 @@ static int DiskioDataPluginSessionStart(const uint8_t* configData, uint32_t conf
 static int DiskioPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    if (g_plugin == nullptr) {
-        return -1;
-    }
+    CHECK_NOTNULL(g_plugin, -1, "g_plugin -s nullptr");
     return g_plugin->Report(bufferData, bufferSize);
 }
 
