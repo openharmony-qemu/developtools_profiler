@@ -225,6 +225,11 @@ HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level1)
 
     EXPECT_EQ(controller.StartCapture(), 0);
     EXPECT_EQ(controller.StopCapture(), 0);
+
+    sleep(3);
+    controller.parseMode_ = TracePluginConfig_ParseMode_DELAY_PARSE;
+    EXPECT_EQ(controller.StartCapture(), 0);
+    EXPECT_EQ(controller.StopCapture(), 0);
 }
 
 /*
