@@ -408,7 +408,7 @@ public:
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level1)
 {
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 30;
         outFileType_ = "malloc_";
         modeIndex_ = i; // 0 is dwarf, 1 is fp mode
@@ -468,7 +468,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         int setDepth = 1;
         unwindDepth_ = 100;
         outFileType_ = "calloc_";
@@ -529,7 +529,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         int setDepth = 100;
         outFileType_ = "realloc_";
         modeIndex_ = i;
@@ -651,7 +651,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
 {
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
         outFileType_ = "statistics_interval_";
@@ -731,7 +731,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
             if (buf.find("stack_map") != std::string::npos) {
                 getline(infile, buf); // read stack map id
                 getline(infile, buf); // read stack map ip
-                std::vector<std::string>& resultVec = StringSplit(buf,':');
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 ipString = resultVec[0];
                 // delete whitespace characters
                 ipString.erase(std::remove(ipString.begin(), ipString.end(), ' '), ipString.end());
@@ -759,7 +759,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 6;
         outFileType_ = "callframecompress_";
         modeIndex_ = i;
@@ -841,7 +841,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level3)
 {
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 6;
         outFileType_ = "rawstring_";
         modeIndex_ = i;

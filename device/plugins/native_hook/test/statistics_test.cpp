@@ -100,7 +100,7 @@ static bool DepthMallocFree(int depth = 0, int mallocSize = 100)
     return (DepthMallocFree(depth - 1, mallocSize));
 }
 
-static void DlopenAndCloseSo(const std::string filePath, int size)
+static void DlopenAndCloseSo(const std::string& filePath, int size)
 {
     void* handle = nullptr;
     DepthMallocSo mallocFunc = nullptr;
