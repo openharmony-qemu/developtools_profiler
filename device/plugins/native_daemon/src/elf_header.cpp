@@ -41,8 +41,8 @@ bool ElfHeader::Init(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
     std::string magicStr {ehdrBuf, ehdrBuf + SELFMAG};
     std::string elfMagic {ELFMAG};
-    CHECK_TRUE(magicStr.compare(elfMagic) != 0, false, "elf magic not found");
-    CHECK_TRUE(memcpy_s(ehdrIdent_, EI_NIDENT, ehdrBuf, EI_NIDENT) != EOK, false, "init ehdrIdent_ failed");
+    CHECK_TRUE(magicStr.compare(elfMagic) == 0, false, "elf magic not found");
+    CHECK_TRUE(memcpy_s(ehdrIdent_, EI_NIDENT, ehdrBuf, EI_NIDENT) == EOK, false, "init ehdrIdent_ failed");
     if (ehdrBuf[EI_CLASS] == ELFCLASS32 and ParseElf32Header(ehdrBuf, bufSize)) {
         return true;
     }
@@ -121,7 +121,7 @@ bool ElfHeader::ParseElf32Header(unsigned char * const ehdrBuf, const std::size_
 
 bool ElfHeader::ParseElf64Header(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
-    CHECK_TRUE(bufSize < ehdr64Size, false, "bad elf64 header buffer");
+    CHECK_TRUE(bufSize >= ehdr64Size, false, "bad elf64 header buffer");
     size_t curIndex {EI_NIDENT};
     uint16_t *u2Buf = reinterpret_cast<uint16_t *>(ehdrBuf + curIndex);
     type_ = u2Buf[0];

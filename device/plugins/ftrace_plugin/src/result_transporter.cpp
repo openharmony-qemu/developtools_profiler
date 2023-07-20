@@ -70,12 +70,12 @@ long ResultTransporter::Write(ResultPtr&& packet)
 
     size_t size = packet->ByteSizeLong();
     buffer_.resize(size);
-    CHECK_TRUE(buffer_.size() != size, -1,
+    CHECK_TRUE(buffer_.size() == size, -1,
                "%s: buffer resize failed, size: %zu, buffer size: %zu, errno: %d(%s)",
                __func__, size, buffer_.size(), errno, strerror(errno));
 
     int ret = packet->SerializeToArray(buffer_.data(), buffer_.size());
-    CHECK_TRUE(ret <= 0, ret, "%s: SerializeToArray failed with %d, size: %zu", __func__, ret, size);
+    CHECK_TRUE(ret > 0, ret, "%s: SerializeToArray failed with %d, size: %zu", __func__, ret, size);
 
     writer_->write(writer_, buffer_.data(), buffer_.size());
     return buffer_.size();

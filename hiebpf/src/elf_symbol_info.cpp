@@ -38,7 +38,7 @@ bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &
             }
         }
     }
-    CHECK_TRUE(symbolTable.textVaddr_ == (std::numeric_limits<uint64_t>::max)(), false, "get text vaddr failed");
+    CHECK_TRUE(symbolTable.textVaddr_ != (std::numeric_limits<uint64_t>::max)(), false, "get text vaddr failed");
 
     const std::string symTab {".symtab"};
     if (elfFile->shdrs_.find(symTab) != elfFile->shdrs_.end()) {
@@ -52,7 +52,7 @@ bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &
 
         // get .strtab
         const std::string strTab {".strtab"};
-        CHECK_TRUE(elfFile->shdrs_.find(strTab) == elfFile->shdrs_.end(), false, "get symbol tab failed");
+        CHECK_TRUE(elfFile->shdrs_.find(strTab) != elfFile->shdrs_.end(), false, "get symbol tab failed");
         const auto &strshdr = elfFile->shdrs_[strTab];
         data = elfFile->GetSectionData(strshdr->secIndex_);
         CHECK_NOTNULL(data, false, "get section data failed");
@@ -61,7 +61,7 @@ bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &
     } else {
         // get .dynsym
         const std::string dynSym {".dynsym"};
-        CHECK_TRUE(elfFile->shdrs_.find(dynSym) == elfFile->shdrs_.end(), false, "get symbol tab failed");
+        CHECK_TRUE(elfFile->shdrs_.find(dynSym) != elfFile->shdrs_.end(), false, "get symbol tab failed");
         const auto &shdr = elfFile->shdrs_[dynSym];
         const uint8_t *data = elfFile->GetSectionData(shdr->secIndex_);
         CHECK_NOTNULL(data, false, "get section data failed");
@@ -71,14 +71,14 @@ bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &
 
         // get .dynstr
         const std::string dynStr {".dynstr"};
-        CHECK_TRUE(elfFile->shdrs_.find(dynStr) == elfFile->shdrs_.end(), false, "get symbol tab failed");
+        CHECK_TRUE(elfFile->shdrs_.find(dynStr) != elfFile->shdrs_.end(), false, "get symbol tab failed");
         const auto &strshdr = elfFile->shdrs_[dynStr];
         data = elfFile->GetSectionData(strshdr->secIndex_);
         CHECK_NOTNULL(data, false, "get section data failed");
         symbolTable.strTable_.resize(strshdr->secSize_);
         std::copy(data, data + strshdr->secSize_, symbolTable.strTable_.data());
     }
-    CHECK_TRUE(symbolTable.strTable_.size() == 0 || symbolTable.symTable_.size() == 0, false,
+    CHECK_TRUE(symbolTable.strTable_.size() != 0 && symbolTable.symTable_.size() != 0, false,
                "get strTable_ or symTable failed");
     symbolTable.fileName_ = fileName;
 

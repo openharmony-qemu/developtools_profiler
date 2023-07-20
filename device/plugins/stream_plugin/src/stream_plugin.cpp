@@ -26,7 +26,7 @@ StreamPlugin::~StreamPlugin() {}
 int StreamPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     // 反序列化
-    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, -1, "%s:parseFromArray failed!", __func__);
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
     // 启动线程写数据
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = true;

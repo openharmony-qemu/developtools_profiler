@@ -55,7 +55,7 @@ bool FtraceFieldParser::ReadData(const uint8_t start[], const uint8_t end[], voi
         return false;
     }
 
-    CHECK_TRUE(memcpy_s(out, size, start, size) != EOK, false, "copy %zu byte to memory FAILED!", size);
+    CHECK_TRUE(memcpy_s(out, size, start, size) == EOK, false, "copy %zu byte to memory FAILED!", size);
     return true;
 }
 
@@ -89,7 +89,7 @@ std::string FtraceFieldParser::ParseStrField(const FieldFormat& format, uint8_t 
             break;
         case FIELD_TYPE_STRINGPTR:
             strSize = std::min(static_cast<size_t>(format.size), sizeof(strPtr));
-            CHECK_TRUE(memcpy_s(&strPtr, sizeof(strPtr), start, strSize) != EOK, "",
+            CHECK_TRUE(memcpy_s(&strPtr, sizeof(strPtr), start, strSize) == EOK, "",
                        "parse STRINGPTR at %" PRIx64 " with %zu size FAILED!", strPtr, strSize);
             retval = PrintkFormatsParser::GetInstance().GetSymbol(strPtr);
             break;

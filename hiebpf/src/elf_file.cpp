@@ -56,28 +56,28 @@ std::unique_ptr<ElfFile> ElfFile::MakeUnique(const std::string &filename)
 {
     std::unique_ptr<ElfFile> file {new (std::nothrow) ElfFile(filename)};
     CHECK_NOTNULL(file, nullptr, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
-    CHECK_TRUE(!file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended");
-    CHECK_TRUE(!file->ParseFile(), nullptr, "parse elf file failed");
+    CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended");
+    CHECK_TRUE(file->ParseFile(), nullptr, "parse elf file failed");
     return file;
 }
 
 bool ElfFile::ParseFile()
 {
-    CHECK_TRUE(!ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
-    CHECK_TRUE(!ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
-    CHECK_TRUE(!ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
-    CHECK_TRUE(!ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
+    CHECK_TRUE(ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
+    CHECK_TRUE(ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
+    CHECK_TRUE(ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
+    CHECK_TRUE(ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
     return true;
 }
 
 bool ElfFile::ParseElfHeader()
 {
     ssize_t ret = lseek(fd_, 0, SEEK_SET);
-    CHECK_TRUE(ret != 0, false, "lseek ret %zu", ret);
+    CHECK_TRUE(ret == 0, false, "lseek ret %zu", ret);
 
     unsigned char ehdrBuf[ehdr64Size] {0};
     size_t readsize = ReadFile(ehdrBuf, ehdr64Size);
-    CHECK_TRUE(readsize < ehdr64Size, false, "file size not enough, try read %zu, only have %zu", ehdr64Size, readsize);
+    CHECK_TRUE(readsize >= ehdr64Size, false, "file size not enough, try read %zu, only have %zu", ehdr64Size, readsize);
     ehdr_ = ElfHeader::MakeUnique(ehdrBuf, readsize);
     return !(ehdr_ == nullptr);
 }
@@ -231,7 +231,7 @@ std::unique_ptr<ElfHeader> ElfHeader::MakeUnique(unsigned char * const ehdrBuf,
 {
     std::unique_ptr<ElfHeader> ehdr {new (std::nothrow) ElfHeader()};
     CHECK_NOTNULL(ehdr, nullptr, "ElfHeader() failed");
-    CHECK_TRUE(!ehdr->Init(ehdrBuf, bufSize, nullptr, "ElfHeader::Init(ehdrBuf, bufSize) failed\n");
+    CHECK_TRUE(ehdr->Init(ehdrBuf, bufSize), nullptr, "ElfHeader::Init(ehdrBuf, bufSize) failed\n");
     return ehdr;
 }
 
@@ -239,7 +239,7 @@ bool ElfHeader::Init(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
     std::string magicStr {ehdrBuf, ehdrBuf + SELFMAG};
     std::string elfMagic {ELFMAG};
-    CHECK_TRUE(magicStr.compare(elfMagic) != 0, false, "elf magic not found");
+    CHECK_TRUE(magicStr.compare(elfMagic) == 0, false, "elf magic not found");
     std::copy(ehdrBuf, ehdrBuf + EI_NIDENT, ehdrIdent_);
 
     if (ehdrBuf[EI_CLASS] == ELFCLASS32 and ParseElf32Header(ehdrBuf, bufSize)) {
@@ -315,7 +315,7 @@ bool ElfHeader::ParseElf32Header(unsigned char * const ehdrBuf, const std::size_
 
 bool ElfHeader::ParseElf64Header(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
-    CHECK_TRUE(bufSize < ehdr64Size, false, "bad elf64 header buffer");
+    CHECK_TRUE(bufSize >= ehdr64Size, false, "bad elf64 header buffer");
     size_t curIndex {EI_NIDENT};
     uint16_t *u2Buf = reinterpret_cast<uint16_t *>(ehdrBuf + curIndex);
     type_ = u2Buf[0];
@@ -395,7 +395,7 @@ std::unique_ptr<SectionHeader> SectionHeader::MakeUnique(char * const shdrBuf, c
     if (shdr == nullptr) {
         return nullptr;
     }
-    CHECK_TRUE(!shdr->Init(shdrBuf, bufSize, index), nullptr, "SectionHeader::Init(shdrBuf, bufSize, index) failed");
+    CHECK_TRUE(shdr->Init(shdrBuf, bufSize, index), nullptr, "SectionHeader::Init(shdrBuf, bufSize, index) failed");
     return shdr;
 }
 
@@ -456,7 +456,7 @@ std::unique_ptr<ProgramHeader> ProgramHeader::MakeUnique(char * const phdrBuf, c
 {
     std::unique_ptr<ProgramHeader> phdr {new (std::nothrow) ProgramHeader()};
     CHECK_NOTNULL(phdr, nullptr, "ProgramHeader() failed");
-    CHECK_TRUE(!phdr->Init(phdrBuf, bufSize), nullptr, "ProgramHeader::Init(phdrBuf, bufSize) failed");
+    CHECK_TRUE(phdr->Init(phdrBuf, bufSize), nullptr, "ProgramHeader::Init(phdrBuf, bufSize) failed");
     return phdr;
 }
 

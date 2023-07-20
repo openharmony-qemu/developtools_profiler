@@ -53,12 +53,12 @@ int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
     HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     CHECK_NOTNULL(configData, -1, "NOTE %s: param invalid", __func__);
 
-    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, -1,
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1,
                "NOTE HisyseventPlugin: ParseFromArray failed");
 
     HILOG_DEBUG(LOG_CORE, "NOTE configData ParseFromArray sucessed,sourse data:%s", protoConfig_.msg().c_str());
 
-    CHECK_TRUE(!InitHisyseventCmd(), -1, "HisyseventPlugin: Init HisyseventCmd failed");
+    CHECK_TRUE(InitHisyseventCmd(), -1, "HisyseventPlugin: Init HisyseventCmd failed");
 
     fp_ = std::unique_ptr<FILE, std::function<int (FILE*)>>(
         COMMON::CustomPopen(fullCmd_, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {
@@ -158,7 +158,7 @@ inline bool HisyseventPlugin::InitHisyseventCmd()
 
 inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len, HisyseventInfo& dataProto)
 {
-    CHECK_TRUE(data == nullptr || len < MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
+    CHECK_TRUE(data != nullptr && len >= MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
 
     if (google::protobuf::internal::IsStructurallyValidUTF8(data, strlen(data) - 1)) {
         auto* info = dataProto.add_info();

@@ -63,24 +63,24 @@ std::unique_ptr<ElfFile> ElfFile::MakeUnique(const std::string &filename)
 {
     std::unique_ptr<ElfFile> file {new (std::nothrow) ElfFile(filename)};
     CHECK_NOTNULL(file, nullptr, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
-    CHECK_TRUE(!file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended");
-    CHECK_TRUE(!file->ParseFile(), nullptr, "parse elf file failed");
+    CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended");
+    CHECK_TRUE(file->ParseFile(), nullptr, "parse elf file failed");
     return file;
 }
 
 bool ElfFile::ParseFile()
 {
-    CHECK_TRUE(!ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
-    CHECK_TRUE(!ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
-    CHECK_TRUE(!ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
-    CHECK_TRUE(!ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
+    CHECK_TRUE(ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
+    CHECK_TRUE(ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
+    CHECK_TRUE(ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
+    CHECK_TRUE(ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
     return true;
 }
 
 bool ElfFile::ParseElfHeader()
 {
     size_t ret = lseek(fd_, 0, SEEK_SET);
-    CHECK_TRUE(ret != 0, false, "lseek ret %zu", ret);
+    CHECK_TRUE(ret == 0, false, "lseek ret %zu", ret);
     HLOG_ASSERT(ret == 0);
     unsigned char ehdrBuf[ehdr64Size] {0};
     ret = ReadFile(ehdrBuf, ehdr64Size);
@@ -254,13 +254,13 @@ bool ElfFile::ParseSymTable(const SectionHeader *shdr)
 bool ElfFile::ParseSymNamesStr()
 {
     const std::string secName {".strtab"};
-    CHECK_TRUE(shdrs_.find(secName) == shdrs_.end(), false,
+    CHECK_TRUE(shdrs_.find(secName) != shdrs_.end(), false,
                "Error in ElfFile::ParseSymNamesStr(): section %s  does not exist", secName.c_str());
     const auto &shdr = shdrs_[secName];
     uint64_t secOffset = shdr->fileOffset_;
     uint64_t secSize = shdr->secSize_;
     int64_t ret = lseek(fd_, secOffset, SEEK_SET);
-    CHECK_TRUE(ret < 0, false, "Error in ElfFile::ParsesymNamesStr(): lseek failed");
+    CHECK_TRUE(ret >= 0, false, "Error in ElfFile::ParsesymNamesStr(): lseek failed");
     char *secBuf = new (std::nothrow) char[secSize];
     CHECK_NOTNULL(secBuf, false, "Error in ElfFile::ParsesymNamesStr(): new failed");
     if (memset_s(secBuf, secSize, '\0', secSize) != EOK) {
@@ -282,7 +282,7 @@ bool ElfFile::ParseSymNamesStr()
 bool ElfFile::ParseDynSymTable()
 {
     const std::string secName {".dynsym"};
-    CHECK_TRUE(shdrs_.find(secName) == shdrs_.end(), false,
+    CHECK_TRUE(shdrs_.find(secName) != shdrs_.end(), false,
                "Error in ELF::ElfFile::ParseSymTable(): section %s does not exist", secName.c_str());
     const auto &shdr = shdrs_[secName];
     uint64_t secOffset = shdr->fileOffset_;

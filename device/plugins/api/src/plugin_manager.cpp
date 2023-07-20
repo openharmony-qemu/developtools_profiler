@@ -141,7 +141,7 @@ bool PluginManager::RegisterPlugin(const PluginModulePtr& plugin, const std::str
 
 bool PluginManager::RemovePlugin(const std::string& pluginPath)
 {
-    CHECK_TRUE(pluginPathAndNameMap_.count(pluginPath) == 0, false,
+    CHECK_TRUE(pluginPathAndNameMap_.count(pluginPath) > 0, false,
                "%s:not find plugin: %s", __func__, pluginPath.c_str());
 
     std::string pluginName = pluginPathAndNameMap_[pluginPath];
@@ -205,7 +205,7 @@ bool PluginManager::LoadPlugin(const std::string& pluginName)
 {
     HILOG_DEBUG(LOG_CORE, "%s:size = %zu", __func__, pluginIds_.size());
     auto it = pluginIds_.find(pluginName);
-    CHECK_TRUE(it == pluginIds_.end(), false, "%s:plugin not exist", __func__);
+    CHECK_TRUE(it != pluginIds_.end(), false, "%s:plugin not exist", __func__);
     uint32_t index = it->second;
 
     if (!pluginModules_[index]->Load()) {
@@ -353,9 +353,9 @@ bool PluginManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds
 {
     HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
     for (uint32_t id : pluginIds) {
-        CHECK_TRUE(pluginModules_.find(id) == pluginModules_.end(), false, "%s:plugin not find", __func__);
+        CHECK_TRUE(pluginModules_.find(id) != pluginModules_.end(), false, "%s:plugin not find", __func__);
         // notify plugin to report basic data
-        CHECK_TRUE(!pluginModules_[id]->ReportBasicData(), false, "%s:report basic data failed", __func__);
+        CHECK_TRUE(pluginModules_[id]->ReportBasicData(), false, "%s:report basic data failed", __func__);
     }
     return true;
 }

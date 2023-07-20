@@ -66,7 +66,7 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
         prepareCmd += " -o " + config.outfile_name();
         size_t fileSize = sizeof(g_pluginModule.outFileName);
         int ret = strncpy_s(g_pluginModule.outFileName, fileSize, config.outfile_name().c_str(), fileSize - 1);
-        CHECK_TRUE(ret != EOK, false, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
+        CHECK_TRUE(ret == EOK, false, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
     }
     if (!config.record_args().empty()) {
         prepareCmd += " " + config.record_args();

@@ -33,10 +33,10 @@ IpcUnixSocketServer::~IpcUnixSocketServer()
 
 bool IpcUnixSocketServer::Start(const std::string &pathname)
 {
-    CHECK_TRUE(serverFd_ != -1, false, "Unix Socket Server is running");
+    CHECK_TRUE(serverFd_ == -1, false, "Unix Socket Server is running");
 
     serverFd_ = socket(AF_UNIX, SOCK_STREAM, 0);
-    CHECK_TRUE(serverFd_ == -1, false, "create Unix Socket Server failed, %d: %s", errno, strerror(errno));
+    CHECK_TRUE(serverFd_ != -1, false, "create Unix Socket Server failed, %d: %s", errno, strerror(errno));
 
     unlink(pathname.c_str());
     struct sockaddr_un addr = {0};
@@ -81,9 +81,9 @@ bool IpcUnixSocketServer::Stop()
 
 bool IpcUnixSocketServer::SendMessage(const void *buf, size_t size)
 {
-    CHECK_TRUE(clientFd_ == -1, false, "no available Unix Socket");
+    CHECK_TRUE(clientFd_ != -1, false, "no available Unix Socket");
 
-    CHECK_TRUE(send(clientFd_, buf, size, 0) == -1, false,
+    CHECK_TRUE(send(clientFd_, buf, size, 0) != -1, false,
                "send failed, Unix Socket(%d) %zu bytes, %d: %s", clientFd_, size, errno, strerror(errno));
     return true;
 }
@@ -137,10 +137,10 @@ IpcUnixSocketClient::~IpcUnixSocketClient()
 
 bool IpcUnixSocketClient::Connect(const std::string &pathname)
 {
-    CHECK_TRUE(sockFd_ != -1, false, "Unix Socket has connected");
+    CHECK_TRUE(sockFd_ == -1, false, "Unix Socket has connected");
 
     sockFd_ = socket(AF_UNIX, SOCK_STREAM, 0);
-    CHECK_TRUE(sockFd_ == -1, false, "create Unix Socket Server failed, %d: %s", errno, strerror(errno));
+    CHECK_TRUE(sockFd_ != -1, false, "create Unix Socket Server failed, %d: %s", errno, strerror(errno));
 
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
@@ -164,7 +164,7 @@ void IpcUnixSocketClient::Disconnect()
 
 bool IpcUnixSocketClient::SendMessage(const void *buf, size_t size)
 {
-    CHECK_TRUE(sockFd_ == -1, false, "Unix Socket disconnected");
+    CHECK_TRUE(sockFd_ != -1, false, "Unix Socket disconnected");
 
     if (send(sockFd_, buf, size, 0) != -1) {
         return true;
@@ -175,7 +175,7 @@ bool IpcUnixSocketClient::SendMessage(const void *buf, size_t size)
 
 bool IpcUnixSocketClient::RecvMessage(void *buf, size_t &size, uint32_t timeout)
 {
-    CHECK_TRUE(sockFd_ == -1, false, "Unix Socket disconnected");
+    CHECK_TRUE(sockFd_ != -1, false, "Unix Socket disconnected");
 
     struct pollfd pollFd {sockFd_, POLLIN | POLLERR | POLLHUP, 0};
     int polled = poll(&pollFd, 1, timeout);

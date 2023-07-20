@@ -353,7 +353,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
 bool ProfilerService::AddSessionContext(uint32_t sessionId, const SessionContextPtr& sessionCtx)
 {
     std::unique_lock<std::mutex> lock(sessionContextMutex_);
-    CHECK_TRUE(sessionContext_.count(sessionId) > 0, false, "sessionId already exists!");
+    CHECK_TRUE(sessionContext_.count(sessionId) == 0, false, "sessionId already exists!");
     sessionContext_[sessionId] = sessionCtx;
     return true;
 }
@@ -683,7 +683,7 @@ protected:
 
 bool ProfilerService::StartService(const std::string& listenUri)
 {
-    CHECK_TRUE(listenUri == "", false, "listenUri empty!");
+    CHECK_TRUE(!listenUri.empty(), false, "listenUri empty!");
 
     ServerBuilder builder;
     builder.AddListeningPort(listenUri, grpc::InsecureServerCredentials());

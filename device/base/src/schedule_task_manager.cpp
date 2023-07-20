@@ -93,7 +93,7 @@ bool ScheduleTaskManager::ScheduleTask(const std::string& name,
     task->nextRunTime = currentTime + initialDelay;
 
     std::lock_guard<std::mutex> guard(taskMutex_);
-    CHECK_TRUE(taskMap_.count(name) > 0, false, "task name %s already exists!", name.c_str());
+    CHECK_TRUE(!(taskMap_.count(name) > 0), false, "task name %s already exists!", name.c_str());
 
     taskMap_[name] = task;
     timeMap_.insert(std::make_pair(task->nextRunTime, task));

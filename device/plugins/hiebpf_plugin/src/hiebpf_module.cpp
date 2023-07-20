@@ -58,13 +58,13 @@ static int32_t HiebpfSessionStart(const uint8_t* configData, uint32_t configSize
         return RET_ERR;
     }
     HiebpfConfig config;
-    CHECK_TRUE(config.ParseFromArray(configData, configSize) <= 0, RET_ERR, "Parameter parsing failed");
+    CHECK_TRUE(config.ParseFromArray(configData, configSize) > 0, RET_ERR, "Parameter parsing failed");
 
     size_t defaultSize = sizeof(g_pluginModule.outFileName);
-    CHECK_TRUE(sizeof(config.outfile_name().c_str()) > defaultSize - 1, RET_ERR,
+    CHECK_TRUE(sizeof(config.outfile_name().c_str()) <= defaultSize - 1, RET_ERR,
                "The out file path more than %zu bytes", defaultSize);
     int32_t ret = strncpy_s(g_pluginModule.outFileName, defaultSize, config.outfile_name().c_str(), defaultSize - 1);
-    CHECK_TRUE(ret != EOK, RET_ERR, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
+    CHECK_TRUE(ret == EOK, RET_ERR, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
     std::string cmd = config.cmd_line();
     cmd += " --start true --output_file " + config.outfile_name();
     RunCmd(cmd);

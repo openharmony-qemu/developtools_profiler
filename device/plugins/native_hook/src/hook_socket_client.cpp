@@ -65,7 +65,7 @@ bool HookSocketClient::Connect(const std::string addrname)
 
 bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
-    CHECK_TRUE(size != sizeof(ClientConfig), true, "HookSocketClient::config config size not match = %u\n", size);
+    CHECK_TRUE(size == sizeof(ClientConfig), true, "HookSocketClient::config config size not match = %u\n", size);
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();

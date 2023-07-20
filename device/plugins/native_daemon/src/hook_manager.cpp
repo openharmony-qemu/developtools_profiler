@@ -140,7 +140,7 @@ bool HookManager::UnregisterAgentPlugin(const std::string& pluginPath)
     request.set_plugin_id(agentIndex_);
     UnregisterPluginResponse response;
     if (commandPoller_->UnregisterPlugin(request, response)) {
-        CHECK_TRUE(response.status() != ResponseStatus::OK, false, "UnregisterPlugin FAIL 1");
+        CHECK_TRUE(response.status() == ResponseStatus::OK, false, "UnregisterPlugin FAIL 1");
     } else {
         HILOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL 2");
         return false;
@@ -186,10 +186,10 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     smbName_ = "hooknativesmb";
     // save config
     std::string cfgData = config[0].config_data();
-    CHECK_TRUE(hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0,
+    CHECK_TRUE(hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) > 0,
                false, "%s: ParseFromArray failed", __func__);
 
-    CHECK_TRUE(getuid() != 0 && !COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name()),
+    CHECK_TRUE(getuid() == 0 || COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name()),
                false, "Application debug permisson denied!");
 
     pid_ = hookConfig_.pid();
@@ -276,10 +276,10 @@ void HookManager::ReadShareMemory()
     while (true) {
         auto rawStack = std::make_shared<StackDataRepeater::RawStack>();
         bool ret = shareMemoryBlock_->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            CHECK_TRUE(size < sizeof(BaseStackRawData), false, "stack data invalid!");
+            CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
 
             rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
-            CHECK_TRUE(memcpy_s(rawStack->baseStackData.get(), size, data, size) != EOK, false,
+            CHECK_TRUE(memcpy_s(rawStack->baseStackData.get(), size, data, size) == EOK, false,
                        "memcpy_s raw data failed!");
 
             rawStack->stackConext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());

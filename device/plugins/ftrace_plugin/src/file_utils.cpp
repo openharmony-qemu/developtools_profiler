@@ -49,7 +49,7 @@ std::string FileUtils::ReadFile(int fd)
 std::string FileUtils::ReadFile(const std::string& path)
 {
     char realPath[PATH_MAX + 1] = {0};
-    CHECK_TRUE((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr), "",
+    CHECK_TRUE((path.length() < PATH_MAX) && (realpath(path.c_str(), realPath) != nullptr), "",
                "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
     int fd = open(realPath, O_RDONLY);
     if (fd == -1) {
@@ -85,10 +85,10 @@ int FileUtils::WriteFile(const std::string& path, const std::string& content, in
     if (pos != std::string::npos) {
         std::string dirName = path.substr(0, pos+1);
         std::string fileName = path.substr(pos+1, path.length()-pos-1);
-        CHECK_TRUE(std::regex_search(dirName, dirNameRegex) || std::regex_search(fileName, fileNameRegex), -1,
+        CHECK_TRUE(!(std::regex_search(dirName, dirNameRegex) || std::regex_search(fileName, fileNameRegex)), -1,
                    "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
     } else {
-        CHECK_TRUE(std::regex_search(path, fileNameRegex), -1,
+        CHECK_TRUE(!std::regex_search(path, fileNameRegex), -1,
                    "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
     }
 

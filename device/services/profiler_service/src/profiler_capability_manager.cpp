@@ -33,7 +33,7 @@ bool ProfilerCapabilityManager::AddCapability(const ProfilerPluginCapability& ca
 {
     std::lock_guard<std::mutex> guard(mutex_);
     for (auto it = pluginCapabilities_.begin(); it != pluginCapabilities_.end(); it++) {
-        CHECK_TRUE(it->name() == capability.name(), false,
+        CHECK_TRUE(it->name() != capability.name(), false,
                    "capability.name conflict with %zu", (it - pluginCapabilities_.begin()));
     }
     pluginCapabilities_.push_back(capability);

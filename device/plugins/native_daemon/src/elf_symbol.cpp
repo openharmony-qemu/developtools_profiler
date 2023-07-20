@@ -25,7 +25,7 @@ std::unique_ptr<ElfSymbol> ElfSymbol::MakeUnique(char * const symBuf, const std:
 {
     std::unique_ptr<ElfSymbol> sym {new (std::nothrow) ElfSymbol()};
     CHECK_NOTNULL(sym, nullptr, "Error in ElfSymbol::MakeUnique(): ElfSymbol::ElfSymbol() failed");
-    CHECK_TRUE(!sym->Init(symBuf, bufSize), nullptr, "ElfSymbol::Init(symBuf, bufSize) failed");
+    CHECK_TRUE(sym->Init(symBuf, bufSize), nullptr, "ElfSymbol::Init(symBuf, bufSize) failed");
     return sym;
 }
 

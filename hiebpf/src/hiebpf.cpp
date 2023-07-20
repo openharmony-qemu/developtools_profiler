@@ -98,11 +98,11 @@ static void HandleIpcMessage(const void *data, size_t size)
 static bool SendIpcCommand(OHOS::Developtools::Hiebpf::IpcUnixSocketClient &client,
                            HiebpfIpcCommand cmd, uint32_t timeout)
 {
-    CHECK_TRUE(!client.SendMessage(&cmd, sizeof(HiebpfIpcCommand)), false, "send request(0x%x) failed\n", cmd);
+    CHECK_TRUE(client.SendMessage(&cmd, sizeof(HiebpfIpcCommand)), false, "send request(0x%x) failed\n", cmd);
 
     size_t size = OHOS::Developtools::Hiebpf::UNIX_SOCKET_BUFFER_SIZE;
     char buf[OHOS::Developtools::Hiebpf::UNIX_SOCKET_BUFFER_SIZE] = {0};
-    CHECK_TRUE(!client.RecvMessage(buf, size, timeout), false, "recv reply failed\n");
+    CHECK_TRUE(client.RecvMessage(buf, size, timeout), false, "recv reply failed\n");
     if (size == 0) { // timeout
         HHLOGE(true, "recv reply timeout(%dms)\n", timeout);
         return false;
@@ -111,7 +111,7 @@ static bool SendIpcCommand(OHOS::Developtools::Hiebpf::IpcUnixSocketClient &clie
         return false;
     }
     HiebpfIpcCommand reply = *(reinterpret_cast<HiebpfIpcCommand*>(buf));
-    CHECK_TRUE(reply != HiebpfIpcCommand::RET_OK, false, "recv unknown reply: 0x%x\n", reply);
+    CHECK_TRUE(reply == HiebpfIpcCommand::RET_OK, false, "recv unknown reply: 0x%x\n", reply);
     return true;
 }
 

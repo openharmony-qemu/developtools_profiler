@@ -38,7 +38,7 @@ bool PluginModule::Load()
         HILOG_DEBUG(LOG_CORE, "%s:already open", __func__);
         return false;
     }
-    CHECK_TRUE((path_.length() >= PATH_MAX) || (realpath(path_.c_str(), realPath) == nullptr), false,
+    CHECK_TRUE((path_.length() < PATH_MAX) && (realpath(path_.c_str(), realPath) != nullptr), false,
                "%s:so filename invalid, errno=%d", __func__, errno);
 
     std::string rpath = realPath; // for SC warning

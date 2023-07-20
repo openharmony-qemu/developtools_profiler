@@ -71,7 +71,7 @@ int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     buffer_ = malloc(READ_BUFFER_SIZE);
     CHECK_NOTNULL(buffer_, RET_FAIL, "%s:malloc buffer_ failed!", __func__);
 
-    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, RET_FAIL,
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
 
     if (protoConfig_.pid() > 0) {
@@ -348,7 +348,7 @@ void CpuDataPlugin::SetCpuFrequency(CpuCoreUsageInfo& cpuCore, int32_t coreNum)
 bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuTimeData& cpuTimeData)
 {
     // 获取到的数据不包含user, nice, system, idle, iowait, irq, softirq, steal八个数值时返回
-    CHECK_TRUE(cpuUsageVec.size() != SYSTEM_UNSPECIFIED, false,
+    CHECK_TRUE(cpuUsageVec.size() == SYSTEM_UNSPECIFIED, false,
                "%s:failed to get system cpu usage, size=%zu", __func__, cpuUsageVec.size());
 
     int64_t user = 0;
@@ -493,7 +493,7 @@ bool CpuDataPlugin::addTidBySort(int32_t tid)
 {
     auto tidsEnd = tidVec_.end();
     auto it = std::lower_bound(tidVec_.begin(), tidsEnd, tid);
-    CHECK_TRUE(it != tidsEnd && *it == tid, false, "addTidBySort failed");
+    CHECK_TRUE(!(it != tidsEnd && *it == tid), false, "addTidBySort failed");
     it = tidVec_.insert(it, std::move(tid));
     return true;
 }
@@ -510,7 +510,7 @@ DIR* CpuDataPlugin::OpenDestDir(std::string& dirPath)
 
 int32_t CpuDataPlugin::GetValidTid(DIR* dirp)
 {
-    CHECK_TRUE(!dirp, 0, "dirp is nullptr");
+    CHECK_TRUE(dirp, 0, "dirp is nullptr");
     while (struct dirent* dirEnt = readdir(dirp)) {
         if (dirEnt->d_type != DT_DIR) {
             continue;

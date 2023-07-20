@@ -409,7 +409,7 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     } else {
         bundleName = processName;
     }
-    CHECK_TRUE(bundleName.empty(), false, "Pid or process name is illegal!");
+    CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
 
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
@@ -417,7 +417,7 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
     sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
     int uid = proxy->GetUidByDebugBundleName(bundleName, Constants::ANY_USERID);
-    CHECK_TRUE(uid < 0, false, "Get %s uid = %d", bundleName.c_str(), uid);
+    CHECK_TRUE(uid >= 0, false, "Get %s uid = %d", bundleName.c_str(), uid);
     return true;
 }
 
@@ -442,10 +442,10 @@ bool ReadFile(const std::string &filePath, const std::vector<std::string>& valid
 
     std::string realFilePathStr(realFilePath);
     free(realFilePath);
-    CHECK_TRUE(!VerifyPath(realFilePathStr, validPaths), false, "Fail to VerifyPath: %s", realFilePathStr.c_str());
+    CHECK_TRUE(VerifyPath(realFilePathStr, validPaths), false, "Fail to VerifyPath: %s", realFilePathStr.c_str());
 
     std::ifstream fileStream(realFilePathStr, std::ios::in);
-    CHECK_TRUE(!fileStream.is_open(), false, "Fail to open file %s", realFilePathStr.c_str());
+    CHECK_TRUE(fileStream.is_open(), false, "Fail to open file %s", realFilePathStr.c_str());
 
     std::istreambuf_iterator<char> firstIt = { fileStream };
     std::string content(firstIt, {});

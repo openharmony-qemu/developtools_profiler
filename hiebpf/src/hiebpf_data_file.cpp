@@ -27,8 +27,8 @@ std::shared_ptr<HiebpfDataFile> HiebpfDataFile::MakeShared(
 {
     std::shared_ptr<HiebpfDataFile> obj {new(std::nothrow) HiebpfDataFile {cmd, filename, pages}};
     CHECK_NOTNULL(obj, nullptr, "failed to make HiebpfDataFile");
-    CHECK_TRUE(obj->OpenFile() != 0, nullptr, "failed to open hiebpf data file");
-    CHECK_TRUE(obj->MapFile() != 0, nullptr, "failed to map hiebpf data file into memory");
+    CHECK_TRUE(obj->OpenFile() == 0, nullptr, "failed to open hiebpf data file");
+    CHECK_TRUE(obj->MapFile() == 0, nullptr, "failed to map hiebpf data file into memory");
     return obj;
 }
 
@@ -97,7 +97,7 @@ void HiebpfDataFile::Submit(void *data)
 
 int HiebpfDataFile::MapFile()
 {
-    CHECK_TRUE(ExtendFile(mapPos_, length_) != 0, -1,
+    CHECK_TRUE(ExtendFile(mapPos_, length_) == 0, -1,
                "failed to extend data file from %u with %u bytes", mapPos_, length_);
     HHLOGI(true, "done extending the data file");
     // map the file
@@ -105,10 +105,10 @@ int HiebpfDataFile::MapFile()
         nullptr, length_,
         PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE,
         fd_, mapPos_);
-    CHECK_TRUE(mapAddr_ == MAP_FAILED, -1, "mmap() failed: %s", strerror(errno));
+    CHECK_TRUE(mapAddr_ != MAP_FAILED, -1, "mmap() failed: %s", strerror(errno));
     HHLOGI(true, "done mem mapping hiebpf data file");
     // hiebpf data file header
-    CHECK_TRUE(WriteFileHeader() != 0, -1, "failed to write hiebpf data file header");
+    CHECK_TRUE(WriteFileHeader() == 0, -1, "failed to write hiebpf data file header");
     HHLOGI(true, "done writing hiebpf data file header");
     return 0;
 }
@@ -127,14 +127,14 @@ int HiebpfDataFile::RemapFile(const std::size_t size)
         extendLength += DEFAULT_MMAP_LENGTH;
     }
 
-    CHECK_TRUE(ExtendFile(remapPos, extendLength) != 0, -1,
+    CHECK_TRUE(ExtendFile(remapPos, extendLength) == 0, -1,
                "failed to extend file from %u with %u bytes", remapPos, length_);
     HHLOGI(true, "done extending the data file");
     mapAddr_ = mmap(
         nullptr, extendLength,
         PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE,
         fd_, remapPos);
-    CHECK_TRUE(mapAddr_ == MAP_FAILED, -1, "failed to remap data file from %u to %u", mapPos_, remapPos);
+    CHECK_TRUE(mapAddr_ != MAP_FAILED, -1, "failed to remap data file from %u to %u", mapPos_, remapPos);
     HHLOGI(true, "done remapping data file from %u, to %u", mapPos_, remapPos);
     mapPos_ = remapPos;
     offset_ = remapOff;

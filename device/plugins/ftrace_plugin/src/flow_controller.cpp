@@ -342,7 +342,7 @@ bool FlowController::ParseEventDataOnNomalMode(int cpuid, long dataSize)
 
 bool FlowController::ParseEventDataOnDelayMode()
 {
-    CHECK_TRUE(fseek(rawDataFile_.get(), 0, SEEK_SET) != 0, false, "fseek failed!");
+    CHECK_TRUE(fseek(rawDataFile_.get(), 0, SEEK_SET) == 0, false, "fseek failed!");
     while (!feof(rawDataFile_.get())) {
         uint8_t cpuId = 0;
         long dataBytes = 0;

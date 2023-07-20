@@ -64,7 +64,7 @@ HidumpPlugin::~HidumpPlugin()
 int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     HILOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
-    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, -1, "HidumpPlugin: ParseFromArray failed");
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HidumpPlugin: ParseFromArray failed");
 
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(g_fpsFormat, "r"), CustomPclose);
     if (fp_.get() == nullptr) {
@@ -173,7 +173,7 @@ bool HidumpPlugin::ParseHidumpInfo(HidumpInfo& dataProto, char *buf)
 
 FILE* HidumpPlugin::CustomPopen(const char* command, const char* type)
 {
-    CHECK_TRUE(command == nullptr || type == nullptr, nullptr, "HidumpPlugin:%s param invalid", __func__);
+    CHECK_TRUE(command != nullptr && type != nullptr, nullptr, "HidumpPlugin:%s param invalid", __func__);
 
     int fd[PIPE_LEN];
     pipe(fd);

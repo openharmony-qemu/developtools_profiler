@@ -49,7 +49,7 @@ int DiskioDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     buffer_ = malloc(READ_BUFFER_SIZE);
     CHECK_NOTNULL(buffer_, RET_FAIL, "%s:malloc buffer_ failed!", __func__);
 
-    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) <= 0, RET_FAIL,
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
 
     if (protoConfig_.report_io_stats()) {
@@ -100,7 +100,7 @@ int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
     int fd = -1;
     ssize_t bytesRead = 0;
     char realPath[PATH_MAX + 1] = {0};
-    CHECK_TRUE((fileName.length() >= PATH_MAX) || (realpath(fileName.c_str(), realPath) == nullptr), RET_FAIL,
+    CHECK_TRUE((fileName.length() < PATH_MAX) && (realpath(fileName.c_str(), realPath) != nullptr), RET_FAIL,
                "%s:path is invalid: %s, errno=%d", __func__, fileName.c_str(), errno);
     fd = open(realPath, O_RDONLY | O_CLOEXEC);
     if (fd == -1) {
