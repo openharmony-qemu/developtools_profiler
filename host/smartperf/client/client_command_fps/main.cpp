@@ -280,7 +280,7 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
 static std::string GetSurFace()
 {
     std::string cmdResult;
-    std::string cmdString1 = "hidumper -s -10 -a sur";
+    std::string cmdString1 = "hidumper -s 10 -a sur";
     std::string cmdString2 = "face | grep sur";
     std::string cmdString3 = "face";
     LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
