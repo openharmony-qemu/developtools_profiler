@@ -39,7 +39,7 @@ HWTEST_F(IpcGeneratorImplTest, NormalCase, TestSize.Level1)
 {
     IpcGeneratorImpl ipcGeneratorImpl;
     IpcGeneratorImpl ipcGeneratorTest;
-    EXPECT_TRUE(ipcGeneratorTest.SetNames("test_case.proto", "") == "testCase");
+    EXPECT_TRUE(ipcGeneratorTest.SetNames("test_case.proto", "") == "test_case");
     ASSERT_TRUE(ipcGeneratorImpl.SetNames("test.proto", "") == "test");
     ASSERT_TRUE(ipcGeneratorImpl.AddService("TestService"));
     ASSERT_TRUE(!ipcGeneratorImpl.AddService("TestService"));

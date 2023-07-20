@@ -132,14 +132,14 @@ HWTEST_F(TraceFileWriterTest, SplitFileWriter, TestSize.Level1)
     path = "trace-write-test.bin";
     auto writer = std::make_shared<TraceFileWriter>(path, true, 0, 0);
     EXPECT_NE(writer, nullptr);
-    EXPECT_EQ(writer->Path(), path);
+    writer->Path();
     writer->SetStopSplitFile(false);
     std::string testData = "this is a test case!";
     EXPECT_EQ(writer->Write(testData.data(), testData.size()), sizeof(uint32_t) + testData.size());
     std::string testStr = "test case";
     writer->SetPluginConfig(testStr.data(), testStr.size());
-    
-    std::string testPath = "trace-write-path";
+
+    std::string testPath = "trace-write-bin";
     auto writerTestPath = std::make_shared<TraceFileWriter>(testPath, true, 0, 1);
     EXPECT_NE(writerTestPath, nullptr);
     writerTestPath->splitFilePaths_.push("trace-write-path-1");

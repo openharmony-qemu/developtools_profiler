@@ -203,12 +203,17 @@ HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level1)
     uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
     uint8_t buffer4[] = {0xCC, 0xDD, 0xBB, 0xEE};
 
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0));
     EXPECT_TRUE(write->WriteWithPayloadTimeout((const void*)buffer1, sizeof(buffer1),
         (const void*)buffer2, sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+    write->blocked_ = false;
     EXPECT_TRUE(write->WriteWithPayloadTimeout((const void*)buffer3, sizeof(buffer3),
         (const void*)buffer4, sizeof(buffer4)));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
     EXPECT_FALSE(write->Write(nullptr, 0));
+    EXPECT_FALSE(write->WriteTimeout(nullptr, 0));
+    EXPECT_TRUE(write->WriteTimeout((const void*)buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write->Clear());
 }
 } // namespace
