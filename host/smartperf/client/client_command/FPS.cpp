@@ -63,7 +63,7 @@ void FPS::SetPackageName(std::string pName)
 std::string FPS::GetSurface()
 {
     std::string cmdResult;
-    std::string cmdString1 = "hidumper -s -10 -a sur";
+    std::string cmdString1 = "hidumper -s 10 -a sur";
     std::string cmdString2 = "face | grep sur";
     std::string cmdString3 = "face";
     SPUtils::LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
