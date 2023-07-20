@@ -56,6 +56,7 @@ public:
         commandBuilder_ = std::make_unique<PluginCommandBuilder>();
         pluginSessionMgr_ = std::make_shared<PluginSessionManager>(pluginService_);
         pluginClient_->Connect(DEFAULT_UNIX_SOCKET_FULL_PATH);
+        pluginService_->SetPluginSessionManager(pluginSessionMgr_);
     }
 
     void TearDown()
@@ -144,7 +145,17 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     plugin.sha256 = "ASDFAADSF";
     plugin.context = &ctx;
     pluginService_->AddPluginInfo(plugin);
+    ProfilerSessionConfig psc;
+    psc.set_session_mode(ProfilerSessionConfig::OFFLINE);
+    pluginService_->SetProfilerSessionConfig(psc);
+    TraceFileWriterPtr traceWriter = std::make_shared<TraceFileWriter>("/data/local/tmp/tracewrite.trace");
+    pluginService_->SetTraceWriter(traceWriter);
     EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    uint32_t pluginId = pluginService_->GetPluginIdByName("abc2.so");
+    PluginContextPtr pluginCtx = pluginService_->GetPluginContextById(pluginId);
+    pluginService_->ReadShareMemoryOffline(*pluginCtx);
+    EXPECT_TRUE(pluginService_->DestroyPluginSession("abc2.so"));
+    EXPECT_TRUE(pluginService_->RemovePluginSessionCtx("abc2.so"));
     pluginService_->RemovePluginInfo(plugin);
 }
 
@@ -618,6 +629,11 @@ HWTEST_F(UnitTestPluginService, AddPluginInfo4, TestSize.Level1)
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "";
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
+    plugin.bufferSizeHint = 10;
+    plugin.isStandaloneFileData = true;
+    plugin.outFileName = "test-file.bin";
+    plugin.pluginVersion = "1.02";
+    EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
 }
 
 /**
@@ -1012,4 +1028,44 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSessions, TestSize.Le
     EXPECT_TRUE(pluginSessionMgr_->RefreshPluginSession());
 }
 
+/**
+ * @tc.name: plugin service
+ * @tc.desc: test createpluginsession online
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, PluginService_CreatePluginSession_Online, TestSize.Level1)
+{
+    ProfilerPluginConfig ppc;
+    ppc.set_name("abconline.so");
+    ppc.set_plugin_sha256("ASDFAADSF");
+    ppc.set_sample_interval(SAMPLE_INTERVAL);
+    ProfilerSessionConfig::BufferConfig bc;
+    bc.set_pages(1);
+    bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+
+    PluginInfo plugin;
+    SocketContext ctx;
+    plugin.name = "abconline.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "ASDFAADSF";
+    plugin.context = &ctx;
+    pluginService_->AddPluginInfo(plugin);
+    ProfilerSessionConfig psc;
+    psc.set_session_mode(ProfilerSessionConfig::ONLINE);
+    pluginService_->SetProfilerSessionConfig(psc);
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    uint32_t pluginId = pluginService_->GetPluginIdByName("abconline.so");
+    PluginContextPtr pluginCtx = pluginService_->GetPluginContextById(pluginId);
+    pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
+    pluginService_->ReadShareMemoryOnline(*pluginCtx);
+    NotifyResultRequest nrr;
+    nrr.set_request_id(5);
+    nrr.set_command_id(5);
+    PluginResult* result = nrr.add_result();
+    result->set_plugin_id(pluginId);
+    result->set_out_file_name("/data/local/tmp/testonline.trace");
+    result->set_data("test plugin result!");
+    EXPECT_TRUE(pluginService_->AppendResult(nrr));
+    EXPECT_TRUE(pluginService_->RemovePluginInfo(plugin));
+}
 } // namespace
