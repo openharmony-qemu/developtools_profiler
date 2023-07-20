@@ -356,7 +356,7 @@ int GetServicePort()
 {
     const std::string portRangePath = "/proc/sys/net/ipv4/ip_local_port_range";
     std::ifstream file(portRangePath.c_str());
-    CHECK_TRUE(!file.is_open(), -1, "Open file failed! filePath:%s", portRangePath.c_str());
+    CHECK_TRUE(file.is_open(), -1, "Open file failed! filePath:%s", portRangePath.c_str());
 
     std::string rangeStr;
     copy(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), std::back_inserter(rangeStr));

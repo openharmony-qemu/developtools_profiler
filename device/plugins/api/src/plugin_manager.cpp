@@ -141,7 +141,7 @@ bool PluginManager::RegisterPlugin(const PluginModulePtr& plugin, const std::str
 
 bool PluginManager::RemovePlugin(const std::string& pluginPath)
 {
-    CHECK_TRUE(pluginPathAndNameMap_.count(pluginPath) > 0, false,
+    CHECK_TRUE(pluginPathAndNameMap_.count(pluginPath) != 0, false,
                "%s:not find plugin: %s", __func__, pluginPath.c_str());
 
     std::string pluginName = pluginPathAndNameMap_[pluginPath];

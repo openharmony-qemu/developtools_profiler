@@ -272,7 +272,7 @@ int CallStack::AccessMem([[maybe_unused]] unw_addr_space_t as, unw_word_t addr,
     HLOG_ASSERT(writeOperation == 0);
 
     /* Check overflow. */
-    CHECK_TRUE(!(addr + sizeof(unw_word_t) < addr), -UNW_EUNSPEC,
+    CHECK_TRUE(addr + sizeof(unw_word_t) >= addr, -UNW_EUNSPEC,
                "address overfolw at 0x%" UNW_WORD_PFLAG " increase 0x%zu", addr, sizeof(unw_word_t));
 
     if (addr < unwindInfoPtr->callStack.stackPoint_ or

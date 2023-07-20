@@ -76,7 +76,7 @@ int FileUtils::WriteFile(const std::string& path, const std::string& content, in
 
 int FileUtils::WriteFile(const std::string& path, const std::string& content, int flags, int mode)
 {
-    CHECK_TRUE(path.empty() || (path.length() >= PATH_MAX), -1,
+    CHECK_TRUE(!path.empty() && (path.length() < PATH_MAX), -1,
                "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
 
     std::regex dirNameRegex("[.~-]");

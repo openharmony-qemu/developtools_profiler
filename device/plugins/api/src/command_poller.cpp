@@ -74,7 +74,7 @@ bool CommandPoller::OnCreateSessionCmd(const CreateSessionCmd& cmd, SocketContex
 bool CommandPoller::OnDestroySessionCmd(const DestroySessionCmd& cmd) const
 {
     HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
-    CHECK_TRUE(cmd.plugin_ids().size() > 0, false, "%s:cmd invalid!", __func__);
+    CHECK_TRUE(cmd.plugin_ids().size() != 0, false, "%s:cmd invalid!", __func__);
     uint32_t pluginId = cmd.plugin_ids(0);
     std::vector<uint32_t> pluginIdVec;
     pluginIdVec.push_back(pluginId);
@@ -92,7 +92,7 @@ bool CommandPoller::OnDestroySessionCmd(const DestroySessionCmd& cmd) const
 bool CommandPoller::OnStartSessionCmd(const StartSessionCmd& cmd, PluginResult& result) const
 {
     HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
-    CHECK_TRUE(cmd.plugin_ids().size() > 0 && cmd.plugin_configs().size() > 0, false,
+    CHECK_TRUE(cmd.plugin_ids().size() != 0 && cmd.plugin_configs().size() != 0, false,
                "%s:cmd invalid!", __func__);
     std::vector<uint32_t> pluginIds;
     pluginIds.push_back(cmd.plugin_ids(0));
@@ -110,7 +110,7 @@ bool CommandPoller::OnStartSessionCmd(const StartSessionCmd& cmd, PluginResult& 
 bool CommandPoller::OnStopSessionCmd(const StopSessionCmd& cmd) const
 {
     HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
-    CHECK_TRUE(cmd.plugin_ids().size() > 0, false, "%s:cmd invalid!", __func__);
+    CHECK_TRUE(cmd.plugin_ids().size() != 0, false, "%s:cmd invalid!", __func__);
     std::vector<uint32_t> pluginIds;
     pluginIds.push_back(cmd.plugin_ids(0));
 
@@ -124,7 +124,7 @@ bool CommandPoller::OnStopSessionCmd(const StopSessionCmd& cmd) const
 bool CommandPoller::OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const
 {
     HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
-    CHECK_TRUE(cmd.plugin_ids().size() > 0, false, "%s:cmd invalid!", __func__);
+    CHECK_TRUE(cmd.plugin_ids().size() != 0, false, "%s:cmd invalid!", __func__);
     std::vector<uint32_t> pluginIds;
     pluginIds.push_back(cmd.plugin_ids(0));
 
