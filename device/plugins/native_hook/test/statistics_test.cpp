@@ -268,6 +268,7 @@ static void TestMemoryMap()
     if (mapAddr2 == MAP_FAILED) {
         printf("anonymous mmap failed\n");
         close(fd);
+        munmap(mapAddr1, 4096);
         return;
     }
     printf("anonymous mmap size: 8192\n");
@@ -278,6 +279,8 @@ static void TestMemoryMap()
     memtrace(reinterpret_cast<void*>(0x123456), 3333, "memtrace_test", false); // 3333 num
     printf("memtrace(0x123456, 3333, \"memtrace_test\", false)\n");
     close(fd);
+    munmap(mapAddr1, 4096);
+    munmap(mapAddr2, 8192);
 }
 
 int main(int argc, char *argv[])
