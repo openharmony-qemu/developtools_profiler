@@ -54,22 +54,19 @@ std::vector<std::string> presetPluginVec = {
     "libprocessplugin.z.so",
     "libarktsplugin.z.so",
 };
-static int g_lockFileFd = -1;
-static std::atomic<bool> g_isRunning = true;
+
+volatile sig_atomic_t g_isRunning = true;
 void SignalSigtermHandler(int sig)
 {
     HILOG_INFO(LOG_CORE, "hiprofiler plugin receive sigterm signal!");
-    if (flock(g_lockFileFd, LOCK_UN) == -1) {
-        HILOG_INFO(LOG_CORE, "release lockfile failed!");
-    }
-    close(g_lockFileFd);
     g_isRunning = false;
 }
 } // namespace
 
 int main(int argc, char* argv[])
 {
-    if (COMMON::IsProcessRunning(g_lockFileFd)) { // process is running
+    int lockFileFd = -1;
+    if (COMMON::IsProcessRunning(lockFileFd)) { // process is running
         return 0;
     }
     signal(SIGTERM, SignalSigtermHandler);
@@ -108,6 +105,10 @@ int main(int argc, char* argv[])
     while (g_isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
     }
+    if (flock(lockFileFd, LOCK_UN) == -1) {
+        HILOG_INFO(LOG_CORE, "release lockfile failed!");
+    }
+    close(lockFileFd);
     pluginManager->StopAllPluginSession();
     return 0;
 }
