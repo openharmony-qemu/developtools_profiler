@@ -22,7 +22,9 @@
 #include <cstdlib>
 #include <climits>
 #include "sys/time.h"
+#include "securec.h"
 #include "include/sp_utils.h"
+#define LARGE_BUFF_MAX_LEN (256)
 namespace OHOS {
 namespace SmartPerf {
 bool SPUtils::FileAccess(const std::string &fileName)
@@ -257,6 +259,36 @@ std::map<std::string, std::string> SPUtils::GetGpuInfo()
     }
     return resultMap;
 }
-
+std::map<std::string, std::string> SPUtils::GetNetwork()
+{
+    std::cout << "GetNetwork is called" << std::endl;
+    std::map<std::string, std::string> result;
+    long long allTx = 0;
+    long long allRx = 0;
+    long long curTx = 0;
+    long long curRx = 0;
+    char buff[LARGE_BUFF_MAX_LEN];
+    FILE *fp = fopen("/proc/net/dev", "r");
+    if (fp == nullptr) {
+        std::cout << "net work node is not accessed" << std::endl;
+        return result;
+    } else {
+        std::cout << "net work node is accessed" << std::endl;
+    }
+    while (fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
+        if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
+            if (sscanf_s(buff, "%*s%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu",
+                &curRx, &curTx) < 0) {
+                return result;
+            }
+            allTx += curTx;
+            allRx += curRx;
+        }
+    }
+    fclose(fp);
+    result["networkUp"] = std::to_string(allTx);
+    result["networkDown"] = std::to_string(allRx);
+    return result;
+}
 }
 }
