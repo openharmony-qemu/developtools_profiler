@@ -66,6 +66,7 @@ private:
     std::vector<SPData> vmap;
     bool isRunning = false;
     bool isInit = false;
+    bool isInitNet = false;
     std::mutex mtx;
     const std::string baseOutPath = "/data/local/tmp/smartperf";
 };

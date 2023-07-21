@@ -25,7 +25,7 @@ namespace SmartPerf {
 class SmartPerfCommand {
 public:
     const std::string smartPerfExeName = "SP_daemon";
-    const std::string smartPerfVersion = "1.0.1\n";
+    const std::string smartPerfVersion = "1.0.2\n";
     const std::string smartPerfMsgErr = "error input!\n use command '--help' get more information\n";
     const std::string smartPerfMsg = "usage: SP_daemon <options> <arguments> \n"
         "--------------------------------------------------------------------\n"
