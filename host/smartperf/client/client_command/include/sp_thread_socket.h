@@ -19,6 +19,7 @@
 #include "sp_server_socket.h"
 #include "sp_utils.h"
 #include "sp_task.h"
+#include "control_call_cmd.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -95,6 +96,20 @@ public:
         } else if (recvStr.find("stop::") != std::string::npos) {
             SPTask::GetInstance().StopTask();
             spSocket.Send("stop::True");
+        } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
+            std::vector<std::string> vec;
+	        int size = recvStr.size();
+            int j = 0;
+            for (int i = 0; i < size; i++) {
+                if (recvStr[i] == ' ') {
+                    vec.push_back(recvStr.substr(j, i - j));
+                    j = i+1;
+                }
+            }
+            vec.push_back(recvStr.substr(j, size - j));
+            OHOS::SmartPerf::ControlCallCmd controlCallCmd;
+            std::string result = controlCallCmd.getResult(vec.size(), vec);
+            spSocket.Send(result);
         }
     }
     // UDP
