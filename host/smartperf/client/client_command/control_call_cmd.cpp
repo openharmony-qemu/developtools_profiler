@@ -148,7 +148,7 @@ double ControlCallCmd::ResponseTime()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
     thGetTrace.join();
-    double time = pcrt.ParseResponseTrace(traceName);
+    time = pcrt.ParseResponseTrace(traceName);
     return time;
 }
 double ControlCallCmd::ColdStartHM(std::vector<std::string> v)
@@ -173,7 +173,7 @@ double ControlCallCmd::CompleteTime()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
     thGetTrace.join();
-    double time = pcct.ParseCompleteTrace(traceName);
+    time = pcct.ParseCompleteTrace(traceName);
     return time;
 }
 double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
@@ -211,7 +211,6 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
-    double noNameType = -1.0;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
@@ -236,7 +235,6 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
         if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
             return noNameType;
         }
-        double time = 0.0;
         if (isOhTest) {
             time = parseTrace.ParseTraceCold(traceName, pid);
         } else {
@@ -260,7 +258,6 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
     } else {
         int type = 4;
         int typePKG = 3;
-        double noNameType = -1.0;
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
         SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
