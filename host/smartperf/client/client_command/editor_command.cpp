@@ -27,7 +27,7 @@ namespace SmartPerf {
 EditorCommand::EditorCommand(int argc, std::vector<std::string> v)
 {
     OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-    controlCallCmd.getResult(argc,v);
+    controlCallCmd.GetResult(argc, v);
 }
 }
 }

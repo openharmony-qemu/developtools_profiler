@@ -31,9 +31,14 @@ public:
     static std::string SlideFps(std::vector<std::string> v);
     double PageFps();
     double StartFrameFps(std::vector<std::string> v);
-    std::string getResult(int argc, std::vector<std::string> v);
+    std::string GetResult(int argc, std::vector<std::string> v);
 private:
     bool isOhTest = false;
+    std::string result = "";
+    int ohType = 5;
+    int type = 2;
+    double time = 0.0;
+    double noNameType = -1.0;
 };
 }
 }

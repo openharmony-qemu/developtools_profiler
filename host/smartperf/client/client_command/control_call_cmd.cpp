@@ -31,61 +31,53 @@
 
 namespace OHOS {
 namespace SmartPerf {
-std::string ControlCallCmd::getResult(int argc, std::vector<std::string> v)
-{   
-    int threeParamMore = 3;
-    std::string result = "";
-    if (argc >= threeParamMore) {
-        int ohType = 5;
-        int type = 2;
-        double time = 0.0;
-        double noNameType = -1.0;
-        std::ostringstream stream;
-        if (v[ohType] == "ohtest") {
-            isOhTest = true;
-        }
-        if (v[type] == "coldStart") {
-            time = SmartPerf::ControlCallCmd::ColdStart(v);
-            stream << time;
-            result = "time:" + stream.str();
-        } else if (v[type] == "hotStart") {
-            time = SmartPerf::ControlCallCmd::HotStart(v);
-            stream << time;
-            result = "time:" + stream.str();
-        } else if (v[type] == "responseTime") {
-            time = SmartPerf::ControlCallCmd::ResponseTime();
-            stream << time;
-            result = "time:" + stream.str();
-        } else if (v[type] == "completeTime") {
-            time = SmartPerf::ControlCallCmd::CompleteTime();
-            stream << time;
-            result = "time:" + stream.str();
-        } else if (v[type] == "coldStartHM") {
-            time = SmartPerf::ControlCallCmd::ColdStartHM(v);
-            stream << time;
-            result = "time:" + stream.str();
-        } else if (v[type] == "fps") {
-            result = SmartPerf::ControlCallCmd::SlideFps(v);
-            std::cout << result << std::endl;          
-        }  else if (v[type] == "pagefps") {
-            double fps = SmartPerf::ControlCallCmd::PageFps();
-            stream << fps;
-            result = "FPS:" + stream.str() + "fps";
-        } else if (v[type] == "FPS") {
-            result = SmartPerf::ControlCallCmd::SlideFPS(v);
-            std::cout << result << std::endl;
-        } else if (v[type] == "startFrame") {
-            double fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
-            stream << fps;
-            result = "FPS:" + stream.str() + "fps";
-        } else if (v[type] == "fpsohtest") {
-            SPUtils::LoadCmd("GP_daemon_fps 10", result);
-        }
-        if (time == noNameType) {
-            std::cout << "Startup error, unknown application or application not responding"<< std::endl;
-        } else {
-            std::cout << result << std::endl;
-        }
+std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
+{
+    std::ostringstream stream;
+    if (v[ohType] == "ohtest") {
+        isOhTest = true;
+    }
+    if (v[type] == "coldStart") {
+        time = SmartPerf::ControlCallCmd::ColdStart(v);
+        stream << time;
+        result = "time:" + stream.str();
+    } else if (v[type] == "hotStart") {
+        time = SmartPerf::ControlCallCmd::HotStart(v);
+        stream << time;
+        result = "time:" + stream.str();
+    } else if (v[type] == "responseTime") {
+        time = SmartPerf::ControlCallCmd::ResponseTime();
+        stream << time;
+        result = "time:" + stream.str();
+    } else if (v[type] == "completeTime") {
+        time = SmartPerf::ControlCallCmd::CompleteTime();
+        stream << time;
+        result = "time:" + stream.str();
+    } else if (v[type] == "coldStartHM") {
+        time = SmartPerf::ControlCallCmd::ColdStartHM(v);
+        stream << time;
+        result = "time:" + stream.str();
+    } else if (v[type] == "fps") {
+        result = SmartPerf::ControlCallCmd::SlideFps(v);
+        std::cout << result << std::endl;
+    }  else if (v[type] == "pagefps") {
+        double fps = SmartPerf::ControlCallCmd::PageFps();
+        stream << fps;
+        result = "FPS:" + stream.str() + "fps";
+    } else if (v[type] == "FPS") {
+        result = SmartPerf::ControlCallCmd::SlideFPS(v);
+        std::cout << result << std::endl;
+    } else if (v[type] == "startFrame") {
+        double fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
+        stream << fps;
+        result = "FPS:" + stream.str() + "fps";
+    } else if (v[type] == "fpsohtest") {
+        SPUtils::LoadCmd("GP_daemon_fps 10", result);
+    }
+    if (time == noNameType) {
+        std::cout << "Startup error, unknown application or application not responding"<< std::endl;
+    } else {
+        std::cout << result << std::endl;
     }
     return result;
 }
@@ -210,7 +202,7 @@ double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     std::string pid = sd.GetPidByPkg(v[typePKG]);
     thGetTrace.join();
     double fps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
-    return fps;  
+    return fps;
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)
 {
