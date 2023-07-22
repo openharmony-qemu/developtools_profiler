@@ -49,6 +49,7 @@ ohos_executable("SP_daemon") {
     "parse_page_fps_trace.cpp",
     "parse_start_frame_trace.cpp",
     "parse_start_trace_noh.cpp",
+    "control_call_cmd.cpp",
     "parse_trace.cpp",
     "smartperf_command.cpp",
     "smartperf_main.cpp",

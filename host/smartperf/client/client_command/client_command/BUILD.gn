@@ -1,0 +1,70 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../../build/config.gni")
+
+## Build so {{{
+config("config") {
+  visibility = [ ":*" ]
+
+  cflags = [
+    "-Wall",
+    "-Werror",
+    "-g3",
+    "-Wunused-variable",
+    "-Wno-unused-but-set-variable",
+  ]
+  cflags_cc = [ "-fexceptions" ]
+}
+
+config("public_config") {
+}
+
+ohos_executable("SP_daemon") {
+  sources = [
+    "ByTrace.cpp",
+    "CPU.cpp",
+    "Capture.cpp",
+    "DDR.cpp",
+    "Dubai.cpp",
+    "FPS.cpp",
+    "GPU.cpp",
+    "Power.cpp",
+    "RAM.cpp",
+    "Temperature.cpp",
+    "editor_command.cpp",
+    "parse_click_complete_trace.cpp",
+    "parse_click_response_trace.cpp",
+    "parse_page_fps_trace.cpp",
+    "parse_start_frame_trace.cpp",
+    "parse_start_trace_noh.cpp",
+    "control_call_cmd.cpp",
+    "parse_trace.cpp",
+    "smartperf_command.cpp",
+    "smartperf_main.cpp",
+    "sp_parse_fps.cpp",
+    "sp_profiler_factory.cpp",
+    "sp_server_socket.cpp",
+    "sp_task.cpp",
+    "sp_utils.cpp",
+    "startup_delay.cpp",
+  ]
+  include_dirs = [ "include" ]
+  configs = [ ":config" ]
+
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  external_deps = [ "c_utils:utils" ]
+}
+## Build so }}}
