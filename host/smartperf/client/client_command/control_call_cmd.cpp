@@ -37,41 +37,41 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
     if (v[ohType] == "ohtest") {
         isOhTest = true;
     }
-    if (v[type] == "coldStart") {
+    if (v[typeName] == "coldStart") {
         time = SmartPerf::ControlCallCmd::ColdStart(v);
         stream << time;
         result = "time:" + stream.str();
-    } else if (v[type] == "hotStart") {
+    } else if (v[typeName] == "hotStart") {
         time = SmartPerf::ControlCallCmd::HotStart(v);
         stream << time;
         result = "time:" + stream.str();
-    } else if (v[type] == "responseTime") {
+    } else if (v[typeName] == "responseTime") {
         time = SmartPerf::ControlCallCmd::ResponseTime();
         stream << time;
         result = "time:" + stream.str();
-    } else if (v[type] == "completeTime") {
+    } else if (v[typeName] == "completeTime") {
         time = SmartPerf::ControlCallCmd::CompleteTime();
         stream << time;
         result = "time:" + stream.str();
-    } else if (v[type] == "coldStartHM") {
+    } else if (v[typeName] == "coldStartHM") {
         time = SmartPerf::ControlCallCmd::ColdStartHM(v);
         stream << time;
         result = "time:" + stream.str();
-    } else if (v[type] == "fps") {
+    } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
         std::cout << result << std::endl;
-    }  else if (v[type] == "pagefps") {
+    }  else if (v[typeName] == "pagefps") {
         double fps = SmartPerf::ControlCallCmd::PageFps();
         stream << fps;
         result = "FPS:" + stream.str() + "fps";
-    } else if (v[type] == "FPS") {
+    } else if (v[typeName] == "FPS") {
         result = SmartPerf::ControlCallCmd::SlideFPS(v);
         std::cout << result << std::endl;
-    } else if (v[type] == "startFrame") {
+    } else if (v[typeName] == "startFrame") {
         double fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
         stream << fps;
         result = "FPS:" + stream.str() + "fps";
-    } else if (v[type] == "fpsohtest") {
+    } else if (v[typeName] == "fpsohtest") {
         SPUtils::LoadCmd("GP_daemon_fps 10", result);
     }
     if (time == noNameType) {

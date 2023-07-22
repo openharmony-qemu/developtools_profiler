@@ -36,7 +36,7 @@ private:
     bool isOhTest = false;
     std::string result = "";
     int ohType = 5;
-    int type = 2;
+    int typeName = 2;
     double time = 0.0;
     double noNameType = -1.0;
 };
