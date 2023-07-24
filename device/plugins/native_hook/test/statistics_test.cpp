@@ -250,7 +250,7 @@ static void* HhreadFuncCpp(void* param)
 
 static void TestMemoryMap()
 {
-    constexpr int smartSize = 4096;
+    constexpr int smallSize = 4096;
     constexpr int bigSize = 8192;
     int fd = open("/bin/hiebpf", O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd < 0) {
@@ -258,7 +258,7 @@ static void TestMemoryMap()
         return;
     }
 
-    void* mapAddr1 = mmap(nullptr, smartSize, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
+    void* mapAddr1 = mmap(nullptr, smallSize, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
     if (mapAddr1 == MAP_FAILED) {
         printf("named mmap failed\n");
         close(fd);
@@ -270,7 +270,7 @@ static void TestMemoryMap()
     if (mapAddr2 == MAP_FAILED) {
         printf("anonymous mmap failed\n");
         close(fd);
-        munmap(mapAddr1, smartSize);
+        munmap(mapAddr1, smallSize);
         return;
     }
     printf("anonymous mmap size: 8192\n");
@@ -281,7 +281,7 @@ static void TestMemoryMap()
     memtrace(reinterpret_cast<void*>(0x123456), 3333, "memtrace_test", false); // 3333 num
     printf("memtrace(0x123456, 3333, \"memtrace_test\", false)\n");
     close(fd);
-    munmap(mapAddr1, smartSize);
+    munmap(mapAddr1, smallSize);
     munmap(mapAddr2, bigSize);
 }
 
