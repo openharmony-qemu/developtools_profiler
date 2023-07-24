@@ -63,7 +63,6 @@ ohos_source_set("hiprofiler_base") {
     "src/event_notifier.cpp",
     "src/i_semaphore.cpp",
     "src/posix_semaphore.cpp",
-    "src/pthread_semaphore.cpp",
     "src/schedule_task_manager.cpp",
     "src/std_semaphore.cpp",
   ]

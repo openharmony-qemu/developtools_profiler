@@ -51,22 +51,14 @@ int HisyseventPlugin::SetWriter(WriterStruct* writer)
 int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
-    if (configData == nullptr) {
-        HILOG_ERROR(LOG_CORE, "NOTE %s: param invalid", __func__);
-        return -1;
-    }
+    CHECK_NOTNULL(configData, -1, "NOTE %s: param invalid", __func__);
 
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "NOTE HisyseventPlugin: ParseFromArray failed");
-        return -1;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1,
+               "NOTE HisyseventPlugin: ParseFromArray failed");
 
     HILOG_DEBUG(LOG_CORE, "NOTE configData ParseFromArray sucessed,sourse data:%s", protoConfig_.msg().c_str());
 
-    if (!InitHisyseventCmd()) {
-        HILOG_ERROR(LOG_CORE, "HisyseventPlugin: Init HisyseventCmd failed");
-        return -1;
-    }
+    CHECK_TRUE(InitHisyseventCmd(), -1, "HisyseventPlugin: Init HisyseventCmd failed");
 
     fp_ = std::unique_ptr<FILE, std::function<int (FILE*)>>(
         COMMON::CustomPopen(fullCmd_, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {
@@ -107,9 +99,6 @@ void HisyseventPlugin::Run(void)
 {
     HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_STRING_LEN);
-    if (buffer == nullptr) {
-        return;
-    }
 
     HILOG_INFO(LOG_CORE, "NOTE hisysevent_plugin_result.proto->HisyseventInfo:dataProto;Ready to output the result!");
     HisyseventInfo dataProto;
@@ -169,10 +158,7 @@ inline bool HisyseventPlugin::InitHisyseventCmd()
 
 inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len, HisyseventInfo& dataProto)
 {
-    if (data == nullptr || len < MIN_STRING_LEN) {
-        HILOG_ERROR(LOG_CORE, "NOTE %s: param invalid", __func__);
-        return false;
-    }
+    CHECK_TRUE(data != nullptr && len >= MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
 
     if (google::protobuf::internal::IsStructurallyValidUTF8(data, strlen(data) - 1)) {
         auto* info = dataProto.add_info();

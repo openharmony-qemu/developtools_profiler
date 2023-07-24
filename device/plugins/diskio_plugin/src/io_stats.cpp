@@ -46,10 +46,7 @@ uint64_t IoStats::GetSystime()
 {
     uint64_t systime = 1;
     std::ifstream input(SYSTIME_PATH, std::ios::in);
-    if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, SYSTIME_PATH, errno);
-        return systime;
-    }
+    CHECK_TRUE(!input.fail(), systime, "%s:open %s failed, errno = %d", __func__, SYSTIME_PATH, errno);
     do {
         if (!input.good()) {
             return systime;
@@ -85,10 +82,7 @@ bool IoStats::GetIoData()
 bool IoStats::ParseCpuStats()
 {
     std::ifstream input(CPU_PATH, std::ios::in);
-    if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s: open %s failed, errno = %d", __func__, CPU_PATH, errno);
-        return false;
-    }
+    CHECK_TRUE(!input.fail(), false, "%s: open %s failed, errno = %d", __func__, CPU_PATH, errno);
     do {
         if (!input.good()) {
             return false;
@@ -146,10 +140,7 @@ bool IoStats::GetCpuStats(std::string& line)
 bool IoStats::ParseIoStats()
 {
     std::ifstream input(DISKSTATS_PATH, std::ios::in);
-    if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s:%d open failed, errno = %d", __func__, __LINE__, errno);
-        return false;
-    }
+    CHECK_TRUE(!input.fail(), false, "%s:%d open failed, errno = %d", __func__, __LINE__, errno);
     do {
         if (!input.good()) {
             return false;
@@ -270,9 +261,7 @@ bool IoStats::PutPluginStatsData(StatsData* pluginStats)
 uint32_t IoStats::PutCpuStatsData(StatsData* pluginStats)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    if (cpuDatas_.empty()) {
-        return 0;
-    }
+    CHECK_TRUE(!cpuDatas_.empty(), 0, "cpuDatas_ is empty");
 
     uint32_t count = 0;
     while (cpuDatas_.size() > 0) {
@@ -316,9 +305,7 @@ double IoStats::KeepTowDigits(const uint64_t& data, uint64_t div)
 uint32_t IoStats::PutIoStatsData(StatsData* pluginStats)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    if (ioDatas_.empty()) {
-        return 0;
-    }
+    CHECK_TRUE(!ioDatas_.empty(), 0, "ioDatas_ is empty");
 
     uint32_t count = 0;
     while (ioDatas_.size() > 0) {

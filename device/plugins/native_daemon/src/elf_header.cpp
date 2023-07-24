@@ -15,6 +15,8 @@
 
 #include <elf_parser.h>
 
+#include "logging.h"
+
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
@@ -39,14 +41,8 @@ bool ElfHeader::Init(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
     std::string magicStr {ehdrBuf, ehdrBuf + SELFMAG};
     std::string elfMagic {ELFMAG};
-    if (magicStr.compare(elfMagic) != 0) {
-        HLOGE("elf magic not found");
-        return false;
-    }
-    if (memcpy_s(ehdrIdent_, EI_NIDENT, ehdrBuf, EI_NIDENT) != EOK) {
-        HLOGE("init ehdrIdent_ failed");
-        return false;
-    }
+    CHECK_TRUE(magicStr.compare(elfMagic) == 0, false, "elf magic not found");
+    CHECK_TRUE(memcpy_s(ehdrIdent_, EI_NIDENT, ehdrBuf, EI_NIDENT) == EOK, false, "init ehdrIdent_ failed");
     if (ehdrBuf[EI_CLASS] == ELFCLASS32 and ParseElf32Header(ehdrBuf, bufSize)) {
         return true;
     }
@@ -125,10 +121,7 @@ bool ElfHeader::ParseElf32Header(unsigned char * const ehdrBuf, const std::size_
 
 bool ElfHeader::ParseElf64Header(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
-    if (bufSize < ehdr64Size) {
-        HLOGE("bad elf64 header buffer");
-        return false;
-    }
+    CHECK_TRUE(bufSize >= ehdr64Size, false, "bad elf64 header buffer");
     size_t curIndex {EI_NIDENT};
     uint16_t *u2Buf = reinterpret_cast<uint16_t *>(ehdrBuf + curIndex);
     type_ = u2Buf[0];

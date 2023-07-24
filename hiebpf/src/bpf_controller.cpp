@@ -80,22 +80,13 @@ BPFController::~BPFController()
 std::unique_ptr<BPFController> BPFController::MakeUnique(const BPFConfig& config)
 {
     std::unique_ptr<BPFController> bpfctlr {new(std::nothrow) BPFController {config}};
-    if (bpfctlr == nullptr) {
-        HHLOGD(true, "failed to instantiate BPFController");
-        return nullptr;
-    }
+    CHECK_NOTNULL(bpfctlr, nullptr, "failed to instantiate BPFController");
     HHLOGI(true, "BPFController instantiated");
 
-    if (bpfctlr->VerifyConfigurations() != 0) {
-        HHLOGD(true, "failed to verify config");
-        return nullptr;
-    }
+    CHECK_TRUE(bpfctlr->VerifyConfigurations() == 0, nullptr, "failed to verify config");
     HHLOGI(true, "BPFConfig verified");
 
-    if (bpfctlr->SetUpBPF() != 0) {
-        HHLOGD(true, "failed to set up BPF");
-        return nullptr;
-    }
+    CHECK_TRUE(bpfctlr->SetUpBPF() == 0, nullptr, "failed to set up BPF");
     HHLOGI(true, "BPF setup done");
 
     return bpfctlr;
@@ -103,71 +94,48 @@ std::unique_ptr<BPFController> BPFController::MakeUnique(const BPFConfig& config
 
 static inline int VerifyDumpEvents(const __u32 nr)
 {
-    if (nr > BPFController::DUMP_EVENTS_LIMIT) {
-        HHLOGD(true, "dump events exceeds limit");
-        return -1;
-    }
+    CHECK_TRUE(nr <= BPFController::DUMP_EVENTS_LIMIT, -1, "dump events exceeds limit");
     return 0;
 }
 
 static inline int VerifyTraceDuration(const __u32 duration)
 {
-    if (duration > BPFController::TRACE_DURATION_LIMIT) {
-        HHLOGD(true, "trace duration exceeds limit");
-        return -1;
-    }
+    CHECK_TRUE(duration <= BPFController::TRACE_DURATION_LIMIT, -1, "trace duration exceeds limit");
     return 0;
 }
 
 static inline int VerifyMaxStackDepth(const __u32 depth)
 {
-    if (depth > MAX_STACK_LIMIT) {
-        HHLOGD(true, "max stack depth exceeds limit");
-        return -1;
-    }
+    CHECK_TRUE(depth <= MAX_STACK_LIMIT, -1, "max stack depth exceeds limit");
     return 0;
 }
 
 int BPFController::VerifySelectEventGroups(const std::set<HiebpfEventGroup> &selectEventGroups)
 {
-    if (selectEventGroups.empty()) {
-        HHLOGE(true, "VerifySelectEventGroups() failed: event group list is empty");
-        return -1;
-    }
+    CHECK_TRUE(!selectEventGroups.empty(), -1, "VerifySelectEventGroups() failed: event group list is empty");
     selectEventGroups_ = selectEventGroups;
     return 0;
 }
 
 int BPFController::VerifyConfigurations()
 {
-    if (VerifySelectEventGroups(config_.selectEventGroups_) != 0) {
-        return -1;
-    }
+    CHECK_TRUE(VerifySelectEventGroups(config_.selectEventGroups_) == 0, -1, "VerifySelectEventGroups fail");
     HHLOGI(true, "VerifySelectEventGroups() done");
-    if (VerifyDumpEvents(config_.dumpEvents_) != 0) {
-        HHLOGD(true, "VerifyDumpEvents() failed: dump events = %u", config_.dumpEvents_);
-        return -1;
-    }
+    CHECK_TRUE(VerifyDumpEvents(config_.dumpEvents_) == 0, -1,
+               "VerifyDumpEvents() failed: dump events = %u", config_.dumpEvents_);
     HHLOGI(true, "VerifyDumpEents() done");
-    if (VerifyTraceDuration(config_.traceDuration_) != 0) {
-        HHLOGD(true, "VerifyTraceDuration() failed: duration = %u", config_.traceDuration_);
-        return -1;
-    }
+    CHECK_TRUE(VerifyTraceDuration(config_.traceDuration_) == 0, -1,
+               "VerifyTraceDuration() failed: duration = %u", config_.traceDuration_);
     HHLOGI(true, "VerifyTraceDuration() done");
-    if (VerifyMaxStackDepth(config_.maxStackDepth_) != 0) {
-        HHLOGD(true, "VerifyMaxStackDepth() failed: max stack depth = %u", config_.maxStackDepth_);
-        return -1;
-    }
+    CHECK_TRUE(VerifyMaxStackDepth(config_.maxStackDepth_) == 0, -1,
+               "VerifyMaxStackDepth() failed: max stack depth = %u", config_.maxStackDepth_);
     HHLOGI(true, "VerifyMaxStackDepth() done");
     return 0;
 }
 
 int BPFController::SetUpBPF()
 {
-    if (ConfigLIBBPFLogger() != 0) {
-        HHLOGD(true, "failed to configure LIBBPF logger");
-        return -1;
-    }
+    CHECK_TRUE(ConfigLIBBPFLogger() == 0, -1, "failed to configure LIBBPF logger");
     HHLOGI(true, "ConfigLIBBPFLogger() done");
 
     // set up libbpf deubug level
@@ -178,39 +146,21 @@ int BPFController::SetUpBPF()
 
     skel_ = hiebpf_bpf__open();
     int err = libbpf_get_error(skel_);
-    if (err) {
-        HHLOGD(true, "failed to open BPF skeleton: %s", strerror(-err));
-        return err;
-    }
+    CHECK_TRUE(!err, err, "failed to open BPF skeleton: %s", strerror(-err));
     HHLOGI(true, "BPF skeleton opened");
     if (config_.unwindStack_) {
         ips_ = new(std::nothrow) __u64[config_.maxStackDepth_];
-        if (ips_ == nullptr) {
-            HHLOGD(true, "failed to allocate memory for ips");
-            return -1;
-        }
+        CHECK_NOTNULL(ips_, -1, "failed to allocate memory for ips");
     }
     HHLOGI(true, "allocate ips buffer done");
     dataFile_ = HiebpfDataFile::MakeShared(config_.cmd_, config_.outputFile_);
-    if (dataFile_ == nullptr) {
-        HHLOGD(true, "failed to make hiebpf data file");
-        return -1;
-    }
-    if (FilterProgByEvents() != 0) {
-        HHLOGD(true, "failed to load BPF objects");
-        return -1;
-    }
+    CHECK_NOTNULL(dataFile_, -1, "failed to make hiebpf data file");
+    CHECK_TRUE(FilterProgByEvents() == 0, -1, "failed to load BPF objects");
     HHLOGI(true, "make HiebpfDataFile done");
     skel_->rodata->g_stack_limit = config_.maxStackDepth_;
     err = hiebpf_bpf__load(skel_);
-    if (err) {
-        HHLOGD(true, "failed to load BPF skeleton: %s", strerror(-err));
-        return err;
-    }
-    if (ConfigureBPF() != 0) {
-        HHLOGD(true, "failed to configure BPF");
-        return -1;
-    }
+    CHECK_TRUE(!err, err, "failed to load BPF skeleton: %s", strerror(-err));
+    CHECK_TRUE(ConfigureBPF() == 0, -1, "failed to configure BPF");
     HHLOGI(true, "BPF configuration done");
 
     return 0;
@@ -297,17 +247,11 @@ static int InitTracerPid(const int fd, bool excludeTracer)
          * to exclude the tracer itself
         */
         pid = static_cast<int32_t>(getpid());
-        if (pid < 0) {
-            HHLOGD(true, "failed to get current pid");
-            return -1;
-        }
+        CHECK_TRUE(pid >= 0, -1, "failed to get current pid");
     }
     constexpr __u32 pididx {TRACER_PID_INDEX};
     int err = bpf_map_update_elem(fd, &pididx, &pid, BPF_ANY);
-    if (err) {
-        HHLOGD(true, "failed to update tracer pid %d in config_var_map", pid);
-        return -1;
-    }
+    CHECK_TRUE(!err, -1, "failed to update tracer pid %d in config_var_map", pid);
     return 0;
 }
 
@@ -319,10 +263,7 @@ static inline int InitBPFLogLevel(const int fd, const __u32 level)
     }
     constexpr __u32 levelidx {BPF_LOG_LEVEL_INDEX};
     int err = bpf_map_update_elem(fd, &levelidx, &level, BPF_ANY);
-    if (err) {
-        HHLOGD(true, "failed to set bpf log level in config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(!err, -1, "failed to set bpf log level in config_var_map");
     return 0;
 }
 
@@ -334,35 +275,23 @@ static inline int InitUnwindFlag(const int fd, bool unwind)
         uflag = 1;
     }
     int err = bpf_map_update_elem(fd, &uflagidx, &uflag, BPF_ANY);
-    if (err) {
-        HHLOGD(true, "failed to set unwind stack flag in config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(!err, -1, "failed to set unwind stack flag in config_var_map");
     return 0;
 }
 
 int BPFController::InitBPFVariables() const
 {
     int fd = bpf_map__fd(skel_->maps.config_var_map);
-    if (fd < 0) {
-        HHLOGD(true, "failed to get fd of config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(fd >= 0, -1, "failed to get fd of config_var_map");
     HHLOGI(true, "InitBPFVariables() done");
-    if (InitTracerPid(fd, config_.excludeTracer_) != 0) {
-        HHLOGD(true, "failed to init tracer pid in config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(InitTracerPid(fd, config_.excludeTracer_) == 0, -1,
+               "failed to init tracer pid in config_var_map");
     HHLOGI(true, "InitTracerPid() done");
-    if (InitBPFLogLevel(fd, config_.BPFLogLevel_) != 0) {
-        HHLOGD(true, "failed to init BPF log level in config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(InitBPFLogLevel(fd, config_.BPFLogLevel_) == 0, -1,
+               "failed to init BPF log level in config_var_map");
     HHLOGI(true, "InitBPFLogLevel() done");
-    if (InitUnwindFlag(fd, config_.unwindStack_) != 0) {
-        HHLOGD(true, "failed to init unwind stack flag in config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(InitUnwindFlag(fd, config_.unwindStack_) == 0, -1,
+               "failed to init unwind stack flag in config_var_map");
     HHLOGI(true, "InitUnwindFlag() done");
     return 0;
 }
@@ -370,10 +299,7 @@ int BPFController::InitBPFVariables() const
 int BPFController::FillTargetPidMap() const
 {
     int fd = bpf_map__fd(skel_->maps.target_pid_map);
-    if (fd < 0) {
-        HHLOGD(true, "failed to get fd of target_pid_map");
-        return -1;
-    }
+    CHECK_TRUE(fd >= 0, -1, "failed to get fd of target_pid_map");
     int index {0};
     uint32_t val {1}; // target_pid_Map[0] = 1 means tracing all processes
     int err {0};
@@ -382,10 +308,7 @@ int BPFController::FillTargetPidMap() const
     if (numPids == 0) {
         // no target pid specified, trace all processes
         err = bpf_map_update_elem(fd, &index, &val, BPF_ANY);
-        if (err) {
-            HHLOGD(true, "failed to set target pid = %u", val);
-            return -1;
-        }
+        CHECK_TRUE(!err, -1, "failed to set target pid = %u", val);
         return 0;
     }
     if (numPids > MAX_TARGET_PIDS) {
@@ -397,10 +320,7 @@ int BPFController::FillTargetPidMap() const
         HHLOGD(true, "target pid = %d", val);
         std::cout << "target pid = " << val << std::endl;
         err = bpf_map_update_elem(fd, &index, &val, BPF_ANY);
-        if (err) {
-            HHLOGD(true, "failed to set target pid = %d", val);
-            return -1;
-        }
+        CHECK_TRUE(!err, -1, "failed to set target pid = %d", val);
     }
     return 0;
 }
@@ -414,10 +334,7 @@ inline int BPFController::ConfigBPFLogger()
 #if defined(BPF_LOGGER_DEBUG) || defined(BPF_LOGGER_INFO) || defined(BPF_LOGGER_WARN) ||    \
     defined(BPF_LOGGER_ERROR) || defined(BPF_LOGGER_FATAL)
     bpfLogReader_ = BPFLogReader::MakeUnique(config_.BPFLogFile_);
-    if (bpfLogReader_ == nullptr) {
-        HHLOGD(true, "failed to initialize BPFLogReader");
-        return -1;
-    }
+    CHECK_NOTNULL(bpfLogReader_, -1, "failed to initialize BPFLogReader");
 #endif
     return 0;
 }
@@ -432,9 +349,7 @@ inline int BPFController::ConfigLIBBPFLogger() const
         return 0;
     }
     libbpfLogger = LIBBPFLogger::MakeUnique(config_.LIBBPFLogFile_, config_.LIBBPFLogLevel_);
-    if (libbpfLogger == nullptr) {
-        return -1;
-    }
+    CHECK_NOTNULL(libbpfLogger, -1, "libbpfLogger is nullptr");
     return 0;
 }
 
@@ -446,20 +361,14 @@ int BPFController::ConfigReceivers()
             BPFController::HandleEvent,
             this, nullptr);
         int err = libbpf_get_error(rb_);
-        if (err) {
-            HHLOGD(true, "failed to make BPF ring buffer: %s", strerror(-err));
-            return err;
-        }
+        CHECK_TRUE(!err, err, "failed to make BPF ring buffer: %s", strerror(-err));
         if (config_.pipelines_ == 0) {
             config_.pipelines_ = MIN_PIPELINES_LIMIT;
         }
         for (__u32 cnt = config_.pipelines_; cnt != 0; --cnt) {
             receivers_.push_back(BPFEventReceiver::MakeShared(dataFile_));
         }
-        if (receivers_.size() != config_.pipelines_) {
-            HHLOGD(true, "failed to make BPF event receivers");
-            return -1;
-        }
+        CHECK_TRUE(receivers_.size() == config_.pipelines_, -1, "failed to make BPF event receivers");
         last_ = 0;
     } else {
         rb_ = ring_buffer__new(
@@ -467,39 +376,24 @@ int BPFController::ConfigReceivers()
             BPFController::DumpEvent,
             this, nullptr);
         int err = libbpf_get_error(rb_);
-        if (err) {
-            HHLOGD(true, "failed to make BPF ring buffer: %s", strerror(-err));
-            return err;
-        }
+        CHECK_TRUE(!err, err, "failed to make BPF ring buffer: %s", strerror(-err));
     }
     return 0;
 }
 
 uint64_t BPFController::GetSymOffset(const std::string &path, const std::string &symbol)
 {
-    if (access(path.c_str(), F_OK) != 0) {
-        HHLOGD(true, "the file does not exist");
-        return 0;
-    }
+    CHECK_TRUE(access(path.c_str(), F_OK) == 0, 0, "the file does not exist");
     using namespace OHOS::Developtools::Hiebpf;
     std::unique_ptr<ElfFile> elfFile = ElfFile::MakeUnique(path);
-    if (elfFile == nullptr) {
-        HHLOGD(true, "ELF file open failed");
-        return 0;
-    }
+    CHECK_NOTNULL(elfFile, 0, "ELF file open failed");
     const std::string dynsym {".dynsym"};
-    if (elfFile->shdrs_.find(dynsym) == elfFile->shdrs_.end()) {
-        HHLOGD(true, "section dynsym failed to obtain data");
-        return 0;
-    }
+    CHECK_TRUE(elfFile->shdrs_.find(dynsym) != elfFile->shdrs_.end(), 0, "section dynsym failed to obtain data");
     const auto &sym = elfFile->shdrs_[dynsym];
     const uint8_t *symData = elfFile->GetSectionData(sym->secIndex_);
 
     const std::string dynstr {".dynstr"};
-    if (elfFile->shdrs_.find(dynstr) == elfFile->shdrs_.end()) {
-        HHLOGD(true, "section dynstr failed to obtain data");
-        return 0;
-    }
+    CHECK_TRUE(elfFile->shdrs_.find(dynstr) != elfFile->shdrs_.end(), 0, "section dynstr failed to obtain data");
     const auto &str = elfFile->shdrs_[dynstr];
     const uint8_t *strData = elfFile->GetSectionData(str->secIndex_);
 
@@ -508,33 +402,21 @@ uint64_t BPFController::GetSymOffset(const std::string &path, const std::string 
     uint64_t vaddr = 0;
     while (stepLength < sym->secSize_) {
         int ret = memcpy_s(&st_name, sizeof(uint32_t), symData + stepLength, sizeof(uint32_t));
-        if (ret != EOK) {
-            HHLOGE(true, "failed to memcpy symData");
-            return 0;
-        }
+        CHECK_TRUE(ret == EOK, 0, "failed to memcpy symData");
         auto name = const_cast<uint8_t*>(strData + st_name);
         if (name != nullptr && std::string(reinterpret_cast<char*>(name)).compare(symbol) == 0) {
             int32_t valueOffset = sym->secEntrySize_ == sizeof(Elf64_Sym) ? SYM_64_VALUE_OFFSET : SYM_32_VALUE_OFFSET;
             int32_t valueSize = valueOffset == SYM_64_VALUE_OFFSET ? sizeof(uint64_t) : sizeof(uint32_t);
             ret = memcpy_s(&vaddr, sizeof(uint64_t), symData + stepLength + valueOffset, valueSize);
-            if (ret != EOK) {
-                HHLOGE(true, "failed to memcpy symData");
-                return 0;
-            }
+            CHECK_TRUE(ret == EOK, 0, "failed to memcpy symData");
             break;
         }
         stepLength += sym->secEntrySize_;
     }
-    if (vaddr == 0) {
-        HHLOGD(true, "get vaddr failed");
-        return 0;
-    }
+    CHECK_TRUE(vaddr != 0, 0, "get vaddr failed");
 
     const std::string text {".text"};
-    if (elfFile->shdrs_.find(text) == elfFile->shdrs_.end()) {
-        HHLOGD(true, "section text failed to obtain data");
-        return 0;
-    }
+    CHECK_TRUE(elfFile->shdrs_.find(text) != elfFile->shdrs_.end(), 0, "section text failed to obtain data");
     const auto &textPtr = elfFile->shdrs_[text];
     return vaddr - textPtr->secVaddr_ + textPtr->fileOffset_;
 }
@@ -542,48 +424,27 @@ uint64_t BPFController::GetSymOffset(const std::string &path, const std::string 
 int32_t BPFController::ConfigDlopenBPFProg()
 {
     uint64_t symOffset = GetSymOffset(THIRD_PARTY_MUSL_ADDR, "dlopen");
-    if (symOffset == 0) {
-        HHLOGD(true, "get symOffset failed");
-        return -1;
-    }
+    CHECK_TRUE(symOffset != 0, -1, "get symOffset failed");
     skel_->links.uretprobe_dlopen = bpf_program__attach_uprobe(skel_->progs.uretprobe_dlopen,
                                                                true,
                                                                -1,
                                                                THIRD_PARTY_MUSL_ADDR.c_str(),
                                                                symOffset);
-    if (!skel_->links.uretprobe_dlopen) {
-        HHLOGD(true, "failed to attach uretprobe_dlopen");
-        return -1;
-    }
+    CHECK_TRUE(skel_->links.uretprobe_dlopen, -1, "failed to attach uretprobe_dlopen");
     return 0;
 }
 
 int BPFController::ConfigureBPF()
 {
-    if (InitBPFVariables() != 0) {
-        HHLOGD(true, "failed to fill config_var_map");
-        return -1;
-    }
+    CHECK_TRUE(InitBPFVariables() == 0, -1, "failed to fill config_var_map");
     HHLOGI(true, "InitBPFVariables() done");
-    if (FillTargetPidMap() != 0) {
-        HHLOGD(true, "failed to fill target_pid_map");
-        return -1;
-    }
+    CHECK_TRUE(FillTargetPidMap() == 0, -1, "failed to fill target_pid_map");
     HHLOGI(true, "FillTargetPidMap() done");
-    if (ConfigBPFLogger() != 0) {
-        HHLOGW(true, "failed to configure BPF logger");
-        return -1;
-    }
+    CHECK_TRUE(ConfigBPFLogger() == 0, -1, "failed to configure BPF logger");
     HHLOGI(true, "ConfigBPFLogger() done");
-    if (ConfigReceivers() != 0) {
-        HHLOGD(true, "failed to configure BPF ringbuffer");
-        return -1;
-    }
+    CHECK_TRUE(ConfigReceivers() == 0, -1, "failed to configure BPF ringbuffer");
     HHLOGI(true, "ConfigReceivers() done");
-    if (ConfigDlopenBPFProg() != 0) {
-        HHLOGD(true, "failed to configure user BPF prog");
-        return -1;
-    }
+    CHECK_TRUE(ConfigDlopenBPFProg() == 0, -1, "failed to configure user BPF prog");
     return 0;
 }
 
@@ -591,23 +452,14 @@ int BPFController::Start()
 {
 #if defined(BPF_LOGGER_DEBUG) || defined(BPF_LOGGER_INFO) || defined(BPF_LOGGER_WARN) ||    \
     defined(BPF_LOGGER_ERROR) || defined(BPF_LOGGER_FATAL)
-    if (StartBPFLogReader() != 0) {
-        HHLOGD(true, "failed to start BPF log reader");
-        return -1;
-    }
+    CHECK_TRUE(StartBPFLogReader() == 0, -1, "failed to start BPF log reader");
 #endif
     HHLOGI(true, "BPF log reader started");
-    if (StartReceivers() != 0) {
-        HHLOGD(true, "failed to start receivers");
-        return -1;
-    }
+    CHECK_TRUE(StartReceivers() == 0, -1, "failed to start receivers");
     HHLOGI(true, "receivers started");
     // activate events
     int err = hiebpf_bpf__attach(skel_);
-    if (err) {
-        HHLOGD(true, "failed to attach bpf object: %s", strerror(-err));
-        return -1;
-    }
+    CHECK_TRUE(!err, -1, "failed to attach bpf object: %s", strerror(-err));
     HHLOGI(true, "BPF events activated");
 
     const auto endTime = std::chrono::steady_clock::now() + std::chrono::seconds(config_.traceDuration_);

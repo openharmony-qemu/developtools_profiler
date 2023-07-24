@@ -55,56 +55,29 @@ ElfFile::~ElfFile()
 std::unique_ptr<ElfFile> ElfFile::MakeUnique(const std::string &filename)
 {
     std::unique_ptr<ElfFile> file {new (std::nothrow) ElfFile(filename)};
-    if (file == nullptr) {
-        HHLOGE(true, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
-        return nullptr;
-    }
-    if (!file->IsOpened()) {
-        HHLOGE(true, "Error in ElfFile::MakeUnique(): elf file not opended");
-        return nullptr;
-    }
-    if (!file->ParseFile()) {
-        HHLOGE(true, "parse elf file failed");
-        return nullptr;
-    }
+    CHECK_NOTNULL(file, nullptr, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
+    CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended");
+    CHECK_TRUE(file->ParseFile(), nullptr, "parse elf file failed");
     return file;
 }
 
 bool ElfFile::ParseFile()
 {
-    if (!ParseElfHeader()) {
-        HHLOGE(true, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
-        return false;
-    }
-    if (!ParsePrgHeaders()) {
-        HHLOGE(true, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
-        return false;
-    }
-    if (!ParseSecNamesStr()) {
-        HHLOGE(true, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
-        return false;
-    }
-    if (!ParseSecHeaders()) {
-        HHLOGE(true, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
-        return false;
-    }
+    CHECK_TRUE(ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
+    CHECK_TRUE(ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
+    CHECK_TRUE(ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
+    CHECK_TRUE(ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
     return true;
 }
 
 bool ElfFile::ParseElfHeader()
 {
     ssize_t ret = lseek(fd_, 0, SEEK_SET);
-    if (ret != 0) {
-        HHLOGW(true, "lseek ret %zu", ret);
-        return false;
-    }
+    CHECK_TRUE(ret == 0, false, "lseek ret %zu", ret);
 
     unsigned char ehdrBuf[ehdr64Size] {0};
     size_t readsize = ReadFile(ehdrBuf, ehdr64Size);
-    if (readsize < ehdr64Size) {
-        HHLOGW(true, "file size not enough, try read %zu, only have %zu", ehdr64Size, readsize);
-        return false;
-    }
+    CHECK_TRUE(readsize >= ehdr64Size, false, "file size not enough, try read %zu, only have %zu", ehdr64Size, readsize);
     ehdr_ = ElfHeader::MakeUnique(ehdrBuf, readsize);
     return !(ehdr_ == nullptr);
 }
@@ -119,10 +92,7 @@ bool ElfFile::ParsePrgHeaders()
         return false;
     }
     char *phdrsBuf = new (std::nothrow) char[phdrSize * numPhdrs];
-    if (phdrsBuf == nullptr) {
-        HHLOGE(true, "Error in ELF::ElfFile::ParsePrgHeaders(): new failed");
-        return false;
-    }
+    CHECK_NOTNULL(phdrsBuf, false, "Error in ELF::ElfFile::ParsePrgHeaders(): new failed");
 
     ret = ReadFile(phdrsBuf, phdrSize * numPhdrs);
     if (ret != static_cast<int64_t>(phdrSize * numPhdrs)) {
@@ -159,10 +129,7 @@ bool ElfFile::ParseSecNamesStr()
     }
 
     char *shdrBuf = new (std::nothrow) char[shdrSize];
-    if (shdrBuf == nullptr) {
-        HHLOGE(true, "Error in ElfFile::ParseSecNamesStr(): new failed");
-        return false;
-    }
+    CHECK_NOTNULL(shdrBuf, false, "Error in ElfFile::ParseSecNamesStr(): new failed");
 
     ret = ReadFile(shdrBuf, shdrSize);
     if (ret != static_cast<int64_t>(shdrSize)) {
@@ -189,10 +156,7 @@ bool ElfFile::ParseSecNamesStr()
         return false;
     }
     char *secNamesBuf = new (std::nothrow) char[secSize];
-    if (secNamesBuf == nullptr) {
-        HHLOGE(true, "Error in ElfFile::ParseSecNamesStr(): new secNamesBuf failed");
-        return false;
-    }
+    CHECK_NOTNULL(secNamesBuf, false, "Error in ElfFile::ParseSecNamesStr(): new secNamesBuf failed");
     ret = ReadFile(secNamesBuf, secSize);
     if (ret != static_cast<int64_t>(secSize)) {
         delete[] secNamesBuf;
@@ -215,10 +179,7 @@ bool ElfFile::ParseSecHeaders()
         return false;
     }
     char *shdrsBuf = new (std::nothrow) char[shdrSize * numShdrs];
-    if (shdrsBuf == nullptr) {
-        HHLOGE(true, "Error in ELF::ElfFile::ParseSecHeaders(): new failed");
-        return false;
-    }
+    CHECK_NOTNULL(shdrsBuf, false, "Error in ELF::ElfFile::ParseSecHeaders(): new failed");
 
     ret = ReadFile(shdrsBuf, shdrSize * numShdrs);
     if (ret != static_cast<int64_t>(shdrSize * numShdrs)) {
@@ -269,14 +230,8 @@ std::unique_ptr<ElfHeader> ElfHeader::MakeUnique(unsigned char * const ehdrBuf,
                                                  const std::size_t bufSize)
 {
     std::unique_ptr<ElfHeader> ehdr {new (std::nothrow) ElfHeader()};
-    if (ehdr == nullptr) {
-        HHLOGD(true, "ElfHeader() failed");
-        return nullptr;
-    }
-    if (!ehdr->Init(ehdrBuf, bufSize)) {
-        HHLOGD(true, "ElfHeader::Init(ehdrBuf, bufSize) failed\n");
-        return nullptr;
-    }
+    CHECK_NOTNULL(ehdr, nullptr, "ElfHeader() failed");
+    CHECK_TRUE(ehdr->Init(ehdrBuf, bufSize), nullptr, "ElfHeader::Init(ehdrBuf, bufSize) failed\n");
     return ehdr;
 }
 
@@ -284,10 +239,7 @@ bool ElfHeader::Init(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
     std::string magicStr {ehdrBuf, ehdrBuf + SELFMAG};
     std::string elfMagic {ELFMAG};
-    if (magicStr.compare(elfMagic) != 0) {
-        HHLOGE(true, "elf magic not found");
-        return false;
-    }
+    CHECK_TRUE(magicStr.compare(elfMagic) == 0, false, "elf magic not found");
     std::copy(ehdrBuf, ehdrBuf + EI_NIDENT, ehdrIdent_);
 
     if (ehdrBuf[EI_CLASS] == ELFCLASS32 and ParseElf32Header(ehdrBuf, bufSize)) {
@@ -363,10 +315,7 @@ bool ElfHeader::ParseElf32Header(unsigned char * const ehdrBuf, const std::size_
 
 bool ElfHeader::ParseElf64Header(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
-    if (bufSize < ehdr64Size) {
-        HHLOGE(true, "bad elf64 header buffer");
-        return false;
-    }
+    CHECK_TRUE(bufSize >= ehdr64Size, false, "bad elf64 header buffer");
     size_t curIndex {EI_NIDENT};
     uint16_t *u2Buf = reinterpret_cast<uint16_t *>(ehdrBuf + curIndex);
     type_ = u2Buf[0];
@@ -446,10 +395,7 @@ std::unique_ptr<SectionHeader> SectionHeader::MakeUnique(char * const shdrBuf, c
     if (shdr == nullptr) {
         return nullptr;
     }
-    if (!shdr->Init(shdrBuf, bufSize, index)) {
-        HHLOGE(true, "SectionHeader::Init(shdrBuf, bufSize, index) failed");
-        return nullptr;
-    }
+    CHECK_TRUE(shdr->Init(shdrBuf, bufSize, index), nullptr, "SectionHeader::Init(shdrBuf, bufSize, index) failed");
     return shdr;
 }
 
@@ -509,14 +455,8 @@ bool SectionHeader::ParseSecHeader64(char * const shdrBuf)
 std::unique_ptr<ProgramHeader> ProgramHeader::MakeUnique(char * const phdrBuf, const size_t bufSize)
 {
     std::unique_ptr<ProgramHeader> phdr {new (std::nothrow) ProgramHeader()};
-    if (phdr == nullptr) {
-        HHLOGE(true, "ProgramHeader() failed");
-        return nullptr;
-    }
-    if (!phdr->Init(phdrBuf, bufSize)) {
-        HHLOGE(true, "ProgramHeader::Init(phdrBuf, bufSize) failed");
-        return nullptr;
-    }
+    CHECK_NOTNULL(phdr, nullptr, "ProgramHeader() failed");
+    CHECK_TRUE(phdr->Init(phdrBuf, bufSize), nullptr, "ProgramHeader::Init(phdrBuf, bufSize) failed");
     return phdr;
 }
 

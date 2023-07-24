@@ -90,10 +90,8 @@ int MemoryDataPlugin::InitMemVmemFd()
     if (protoConfig_.report_sysmem_mem_info()) {
         char fileName[PATH_MAX + 1] = {0};
         char realPath[PATH_MAX + 1] = {0};
-        if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/meminfo", testpath_) < 0) {
-            HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
-            return RET_FAIL;
-        }
+        CHECK_TRUE(snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/meminfo", testpath_) >= 0, RET_FAIL,
+                   "%s:snprintf_s error", __func__);
         if (realpath(fileName, realPath) == nullptr) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
@@ -114,10 +112,8 @@ int MemoryDataPlugin::InitMemVmemFd()
     if (protoConfig_.report_sysmem_vmem_info()) {
         char fileName[PATH_MAX + 1] = {0};
         char realPath[PATH_MAX + 1] = {0};
-        if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/vmstat", testpath_) < 0) {
-            HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
-            return RET_FAIL;
-        }
+        CHECK_TRUE(snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/vmstat", testpath_) >= 0, RET_FAIL,
+                   "%s:snprintf_s error", __func__);
         if (realpath(fileName, realPath) == nullptr) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
@@ -140,26 +136,17 @@ int MemoryDataPlugin::InitMemVmemFd()
 
 int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    if (buffer_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:buffer_ == null", __func__);
-        return RET_FAIL;
-    }
+    CHECK_NOTNULL(buffer_, RET_FAIL, "%s:buffer_ == null", __func__);
 
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
-        return RET_FAIL;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
+               "%s:parseFromArray failed!", __func__);
 
-    if (InitMemVmemFd() != RET_SUCC) {
-        return RET_FAIL;
-    }
+    CHECK_TRUE(InitMemVmemFd() == RET_SUCC, RET_FAIL, "InitMemVmemFd fail");
 
     if (protoConfig_.sys_meminfo_counters().size() > 0) {
         for (int i = 0; i < protoConfig_.sys_meminfo_counters().size(); i++) {
-            if ((size_t)protoConfig_.sys_meminfo_counters(i) >= meminfoStrList_.size()) {
-                HILOG_ERROR(LOG_CORE, "%s:sys meminfo counter index invalid!", __func__);
-                return RET_FAIL;
-            }
+            CHECK_TRUE((size_t)protoConfig_.sys_meminfo_counters(i) < meminfoStrList_.size(), RET_FAIL,
+                       "%s:sys meminfo counter index invalid!", __func__);
             if (meminfoStrList_[protoConfig_.sys_meminfo_counters(i)]) {
                 meminfoCounters_.emplace(meminfoStrList_[protoConfig_.sys_meminfo_counters(i)],
                                          protoConfig_.sys_meminfo_counters(i));
@@ -169,10 +156,8 @@ int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     if (protoConfig_.sys_vmeminfo_counters().size() > 0) {
         for (int i = 0; i < protoConfig_.sys_vmeminfo_counters().size(); i++) {
-            if ((size_t)protoConfig_.sys_vmeminfo_counters(i) >= vmstatStrList_.size()) {
-                HILOG_ERROR(LOG_CORE, "%s:vmstat counter index invalid!", __func__);
-                return RET_FAIL;
-            }
+            CHECK_TRUE((size_t)protoConfig_.sys_vmeminfo_counters(i) < vmstatStrList_.size(), RET_FAIL,
+                       "%s:vmstat counter index invalid!", __func__);
             if (vmstatStrList_[protoConfig_.sys_vmeminfo_counters(i)]) {
                 vmstatCounters_.emplace(vmstatStrList_[protoConfig_.sys_vmeminfo_counters(i)],
                                         protoConfig_.sys_vmeminfo_counters(i));
@@ -353,10 +338,7 @@ bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t pid, ProcessMemoryInfo
 
     std::unique_ptr<uint8_t[]> buffer {new (std::nothrow) uint8_t[BUF_MAX_LEN]};
     std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(fullCmd.c_str(), "r"), pclose);
-    if (!fp) {
-        HILOG_ERROR(LOG_CORE, "%s:popen error", __func__);
-        return false;
-    }
+    CHECK_TRUE(fp, false, "%s:popen error", __func__);
 
     size_t ret = fread(buffer.get(), 1, BUF_MAX_LEN, fp.get());
     if (ret == 0) {
@@ -472,10 +454,8 @@ int32_t MemoryDataPlugin::ReadFile(int fd)
 std::string MemoryDataPlugin::ReadFile(const std::string& path)
 {
     char realPath[PATH_MAX] = {0};
-    if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
-        HILOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
-        return "";
-    }
+    CHECK_TRUE((path.length() < PATH_MAX) && (realpath(path.c_str(), realPath) != nullptr), "",
+               "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
     int fd = open(realPath, O_RDONLY);
     if (fd == -1) {
         const int maxSize = 256;
@@ -569,11 +549,8 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
     char realPath[PATH_MAX + 1] = {0};
     int fd = -1;
     ssize_t bytesRead = 0;
-
-    if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/%d/%s", testpath_, pid, pFileName) < 0) {
-        HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
-        return RET_FAIL;
-    }
+    CHECK_TRUE(snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/%d/%s", testpath_, pid, pFileName) >= 0,
+               RET_FAIL, "%s:snprintf_s error", __func__);
     if (realpath(fileName, realPath) == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = { 0 };

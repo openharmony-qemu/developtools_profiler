@@ -90,10 +90,7 @@ bool SymbolsFile::UpdateBuildIdIfMatch(std::string buildId)
 std::string SymbolsFile::SearchReadableFile(const std::vector<std::string> &searchPaths,
                                             const std::string &filePath) const
 {
-    if (filePath.empty()) {
-        HLOGW("nothing to found");
-        return filePath;
-    }
+    CHECK_TRUE(!filePath.empty(), filePath, "nothing to found");
     for (auto searchPath : searchPaths) {
         if (searchPath.back() != PATH_SEPARATOR) {
             searchPath += PATH_SEPARATOR;
@@ -175,10 +172,7 @@ public:
     {
         symbolsLoaded_ = true;
         std::string findPath = FindSymbolFile(symbolsFileSearchPaths_, symbolFilePath);
-        if (findPath.empty()) {
-            HLOGW("elf found failed (belong to %s)", filePath_.c_str());
-            return false;
-        }
+        CHECK_TRUE(!findPath.empty(), false, "elf found failed (belong to %s)", filePath_.c_str());
         if (LoadElfSymbols(findPath)) {
             return true;
         } else {
@@ -326,10 +320,7 @@ protected:
             debugInfoLoaded_ = true;
         }
         std::string elfPath = FindSymbolFile(symbolsFileSearchPaths_, symbolFilePath);
-        if (elfPath.empty()) {
-            HLOGW("elf found failed (belong to %s)", filePath_.c_str());
-            return false;
-        }
+        CHECK_TRUE(!elfPath.empty(), false, "elf found failed (belong to %s)", filePath_.c_str());
         std::unique_ptr<ElfFile> elfFile = LoadElfFile(elfPath);
         if (elfFile == nullptr) {
             HLOGD("elf load failed");
@@ -611,10 +602,7 @@ private:
                 elfFile->GetStrPtr(elfFile->ehdr_->shdrStrTabIdx_, shdr->nameIndex_);
             const unsigned char *data = elfFile->GetSectionData(shdr->secIndex_);
 
-            if (sh_name == nullptr || data == nullptr) {
-                HLOGE("sh_name or data get failed.");
-                return false;
-            }
+            CHECK_TRUE(sh_name != nullptr && data != nullptr, false, "sh_name or data get failed.");
 
             HLOGV("shdr name '%s' vaddr 0x%" PRIx64 " offset 0x%" PRIx64 " size 0x%" PRIx64
                   " type 0x%" PRIx64 "(%s) index %u link 0x%u entry 0x%" PRIx64 "",

@@ -422,17 +422,12 @@ bool ArkTSPlugin::DecodeMessage(WebSocketFrame& wsFrame)
     }
     wsFrame.payload = std::make_unique<char[]>(wsFrame.payloadLen + 1);
     if (wsFrame.mask == 1) {
-        if (!Recv(client_, wsFrame.maskingKey, SOCKET_MASK_LEN, 0)) {
-            HILOG_ERROR(LOG_CORE, "DecodeMessage: Recv maskingKey failed");
-            return false;
-        }
+        CHECK_TRUE(Recv(client_, wsFrame.maskingKey, SOCKET_MASK_LEN, 0), false,
+                   "DecodeMessage: Recv maskingKey failed");
         wsFrame.maskingKey[SOCKET_MASK_LEN] = '\0';
 
         char buf[wsFrame.payloadLen + 1];
-        if (!Recv(client_, buf, wsFrame.payloadLen, 0)) {
-            HILOG_ERROR(LOG_CORE, "DecodeMessage: Recv message with mask failed");
-            return false;
-        }
+        CHECK_TRUE(Recv(client_, buf, wsFrame.payloadLen, 0), false, "DecodeMessage: Recv message with mask failed");
         buf[wsFrame.payloadLen] = '\0';
 
         for (uint64_t i = 0; i < wsFrame.payloadLen; i++) {
@@ -453,10 +448,7 @@ bool ArkTSPlugin::Recv(int32_t client, char* buf, size_t totalLen, int32_t flags
     size_t recvLen = 0;
     while (recvLen < totalLen) {
         ssize_t len = recv(client, buf + recvLen, totalLen - recvLen, flags);
-        if (len <= 0) {
-            HILOG_ERROR(LOG_CORE, "Recv payload in while failed, websocket disconnect");
-            return false;
-        }
+        CHECK_TRUE(len > 0, false, "Recv payload in while failed, websocket disconnect");
         recvLen += static_cast<size_t>(len);
     }
     buf[totalLen] = '\0';
