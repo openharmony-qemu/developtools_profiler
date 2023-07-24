@@ -317,7 +317,7 @@ int BPFController::FillTargetPidMap() const
     }
     for (index = 1; index <= numPids; ++index) {
         val = static_cast<uint32_t>(config_.targetPids_[index - 1]);
-        HHLOGD(true, "target pid = %d", val);
+        HHLOGD(true, "target pid = %u", val);
         std::cout << "target pid = " << val << std::endl;
         err = bpf_map_update_elem(fd, &index, &val, BPF_ANY);
         CHECK_TRUE(!err, -1, "failed to set target pid = %d", val);

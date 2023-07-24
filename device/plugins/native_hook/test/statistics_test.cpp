@@ -100,7 +100,7 @@ static bool DepthMallocFree(int depth = 0, int mallocSize = 100)
     return (DepthMallocFree(depth - 1, mallocSize));
 }
 
-static void DlopenAndCloseSo(const std::string filePath, int size)
+static void DlopenAndCloseSo(const std::string& filePath, int size)
 {
     void* handle = nullptr;
     DepthMallocSo mallocFunc = nullptr;
@@ -250,13 +250,15 @@ static void* HhreadFuncCpp(void* param)
 
 static void TestMemoryMap()
 {
+    constexpr int smallSize = 4096;
+    constexpr int bigSize = 8192;
     int fd = open("/bin/hiebpf", O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd < 0) {
         printf("open %s failed\n", "/bin/hiebpf");
         return;
     }
 
-    void* mapAddr1 = mmap(nullptr, 4096, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
+    void* mapAddr1 = mmap(nullptr, smallSize, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
     if (mapAddr1 == MAP_FAILED) {
         printf("named mmap failed\n");
         close(fd);
@@ -264,10 +266,11 @@ static void TestMemoryMap()
     }
     printf("named mmap size: 4096, fd: %d\n", fd);
 
-    void* mapAddr2 = mmap(nullptr, 8192, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    void* mapAddr2 = mmap(nullptr, bigSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (mapAddr2 == MAP_FAILED) {
         printf("anonymous mmap failed\n");
         close(fd);
+        munmap(mapAddr1, smallSize);
         return;
     }
     printf("anonymous mmap size: 8192\n");
@@ -278,6 +281,8 @@ static void TestMemoryMap()
     memtrace(reinterpret_cast<void*>(0x123456), 3333, "memtrace_test", false); // 3333 num
     printf("memtrace(0x123456, 3333, \"memtrace_test\", false)\n");
     close(fd);
+    munmap(mapAddr1, smallSize);
+    munmap(mapAddr2, bigSize);
 }
 
 int main(int argc, char *argv[])
