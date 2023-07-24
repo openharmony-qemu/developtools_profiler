@@ -36,12 +36,12 @@ public:
     struct RecordStatistic {
         uint32_t pid {0};
         uint32_t callstackId {0};
+        uint32_t tagId {0};
         RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
         uint64_t applyCount {0};
         uint64_t releaseCount {0};
         uint64_t applySize {0};
         uint64_t releaseSize {0};
-        uint32_t tagId {0};
     };
 
     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
