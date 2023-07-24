@@ -36,6 +36,7 @@ public:
     struct RecordStatistic {
         uint32_t pid {0};
         uint32_t callstackId {0};
+        uint32_t tagId {0};
         RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
         uint64_t applyCount {0};
         uint64_t releaseCount {0};
