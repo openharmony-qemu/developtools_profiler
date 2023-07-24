@@ -38,11 +38,8 @@ bool PluginModule::Load()
         HILOG_DEBUG(LOG_CORE, "%s:already open", __func__);
         return false;
     }
-
-    if ((path_.length() >= PATH_MAX) || (realpath(path_.c_str(), realPath) == nullptr)) {
-        HILOG_ERROR(LOG_CORE, "%s:so filename invalid, errno=%d", __func__, errno);
-        return false;
-    }
+    CHECK_TRUE((path_.length() < PATH_MAX) && (realpath(path_.c_str(), realPath) != nullptr), false,
+               "%s:so filename invalid, errno=%d", __func__, errno);
 
     std::string rpath = realPath; // for SC warning
     handle_ = dlopen(rpath.c_str(), RTLD_NOW);
@@ -122,9 +119,7 @@ clockid_t PluginModule::GetClockId() const
 bool PluginModule::GetPluginName(std::string& pluginName)
 {
     if (handle_ != nullptr) {
-        if (structPtr_ == nullptr) {
-            return false;
-        }
+        CHECK_NOTNULL(structPtr_, false, "structPtr_ is nullptr");
         pluginName.assign(structPtr_->name);
         return true;
     }
@@ -134,9 +129,7 @@ bool PluginModule::GetPluginName(std::string& pluginName)
 bool PluginModule::GetBufferSizeHint(uint32_t& bufferSizeHint)
 {
     if (handle_ != nullptr) {
-        if (structPtr_ == nullptr) {
-            return false;
-        }
+        CHECK_NOTNULL(structPtr_, false, "structPtr_ is nullptr");
         bufferSizeHint = structPtr_->resultBufferSizeHint;
         return true;
     }
@@ -146,9 +139,7 @@ bool PluginModule::GetBufferSizeHint(uint32_t& bufferSizeHint)
 bool PluginModule::GetStandaloneFileData()
 {
     if (handle_ != nullptr) {
-        if (structPtr_ == nullptr) {
-            return false;
-        }
+        CHECK_NOTNULL(structPtr_, false, "structPtr_ is nullptr");
         return structPtr_->isStandaloneFileData;
     }
     return false;
@@ -157,9 +148,7 @@ bool PluginModule::GetStandaloneFileData()
 bool PluginModule::GetOutFileName(std::string& outFileName)
 {
     if (handle_ != nullptr) {
-        if (structPtr_ == nullptr) {
-            return false;
-        }
+        CHECK_NOTNULL(structPtr_, false, "structPtr_ is nullptr");
         outFileName.assign(structPtr_->outFileName);
         return true;
     }
@@ -187,9 +176,7 @@ std::string PluginModule::GetPluginName()
 {
     if (pluginName_ == "") {
         if (handle_ != nullptr) {
-            if (structPtr_ == nullptr) {
-                return "";
-            }
+            CHECK_NOTNULL(structPtr_, "", "structPtr_ is nullptr");
             pluginName_.assign(structPtr_->name);
         }
     }
@@ -208,10 +195,7 @@ bool PluginModule::IsRunning()
 
 bool PluginModule::BindFunctions()
 {
-    if (handle_ == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not load", __func__);
-        return false;
-    }
+    CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ == nullptr) {
         structPtr_ = static_cast<PluginModuleStruct*>(dlsym(handle_, "g_pluginModule"));
         if (structPtr_ == nullptr) {
@@ -237,11 +221,7 @@ bool PluginModule::BindFunctions()
 bool PluginModule::StartSession(const uint8_t* buffer, uint32_t size)
 {
     HILOG_DEBUG(LOG_CORE, "StartSession");
-    if (handle_ == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not load", __func__);
-        return false;
-    }
-
+    CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onPluginSessionStart) {
             running_ = true;
@@ -254,10 +234,7 @@ bool PluginModule::StartSession(const uint8_t* buffer, uint32_t size)
 bool PluginModule::StopSession()
 {
     HILOG_INFO(LOG_CORE, "%s:stop Session ready!", __func__);
-    if (handle_ == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not load", __func__);
-        return false;
-    }
+    CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onPluginSessionStop != nullptr) {
             running_ = false;
@@ -270,10 +247,7 @@ bool PluginModule::StopSession()
 bool PluginModule::ReportBasicData()
 {
     HILOG_INFO(LOG_CORE, "%s:report basic data ready!", __func__);
-    if (handle_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:plugin not load", __func__);
-        return false;
-    }
+    CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onReportBasicDataCallback != nullptr) {
             auto write = GetWriter();
@@ -287,10 +261,7 @@ bool PluginModule::ReportBasicData()
 
 int32_t PluginModule::ReportResult(uint8_t* buffer, uint32_t size)
 {
-    if (handle_ == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not open", __func__);
-        return -1;
-    }
+    CHECK_NOTNULL(handle_, -1, "%s:plugin not load", __func__);
     if (first_) {
         lastTime_ = std::chrono::steady_clock::now();
         first_ = false;
@@ -327,9 +298,6 @@ bool PluginModule::RegisterWriter(const BufferWriterPtr writer)
 
 WriterPtr PluginModule::GetWriter()
 {
-    if (writerAdapter_ == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "%s:pluginModule nullptr", __func__);
-        return nullptr;
-    }
+    CHECK_NOTNULL(writerAdapter_, nullptr, "%s:pluginModule nullptr", __func__);
     return writerAdapter_->GetWriter();
 }

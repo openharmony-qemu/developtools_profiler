@@ -69,15 +69,10 @@ CpuDataPlugin::~CpuDataPlugin()
 int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     buffer_ = malloc(READ_BUFFER_SIZE);
-    if (buffer_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:malloc buffer_ failed!", __func__);
-        return RET_FAIL;
-    }
+    CHECK_NOTNULL(buffer_, RET_FAIL, "%s:malloc buffer_ failed!", __func__);
 
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
-        return RET_FAIL;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
+               "%s:parseFromArray failed!", __func__);
 
     if (protoConfig_.pid() > 0) {
         pid_ = protoConfig_.pid();
@@ -285,9 +280,7 @@ int CpuDataPlugin::GetCpuCoreSize()
     int coreSize = 0;
     DIR* procDir = nullptr;
     procDir = OpenDestDir(freqPath_);
-    if (procDir == nullptr) {
-        return -1;
-    }
+    CHECK_NOTNULL(procDir, -1, "procDir is nullptr");
 
     while (struct dirent* dirEnt = readdir(procDir)) {
         if (dirEnt->d_type != DT_DIR) {
@@ -355,10 +348,8 @@ void CpuDataPlugin::SetCpuFrequency(CpuCoreUsageInfo& cpuCore, int32_t coreNum)
 bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuTimeData& cpuTimeData)
 {
     // 获取到的数据不包含user, nice, system, idle, iowait, irq, softirq, steal八个数值时返回
-    if (cpuUsageVec.size() != SYSTEM_UNSPECIFIED) {
-        HILOG_ERROR(LOG_CORE, "%s:failed to get system cpu usage, size=%zu", __func__, cpuUsageVec.size());
-        return false;
-    }
+    CHECK_TRUE(cpuUsageVec.size() == SYSTEM_UNSPECIFIED, false,
+               "%s:failed to get system cpu usage, size=%zu", __func__, cpuUsageVec.size());
 
     int64_t user = 0;
     int64_t nice = 0;
@@ -502,9 +493,7 @@ bool CpuDataPlugin::addTidBySort(int32_t tid)
 {
     auto tidsEnd = tidVec_.end();
     auto it = std::lower_bound(tidVec_.begin(), tidsEnd, tid);
-    if (it != tidsEnd && *it == tid) {
-        return false;
-    }
+    CHECK_TRUE(!(it != tidsEnd && *it == tid), false, "addTidBySort failed");
     it = tidVec_.insert(it, std::move(tid));
     return true;
 }
@@ -514,18 +503,14 @@ DIR* CpuDataPlugin::OpenDestDir(std::string& dirPath)
     DIR* destDir = nullptr;
 
     destDir = opendir(dirPath.c_str());
-    if (destDir == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:failed to opendir(%s), errno=%d", __func__, dirPath.c_str(), errno);
-    }
+    CHECK_NOTNULL(destDir, nullptr, "%s:failed to opendir(%s), errno=%d", __func__, dirPath.c_str(), errno);
 
     return destDir;
 }
 
 int32_t CpuDataPlugin::GetValidTid(DIR* dirp)
 {
-    if (!dirp) {
-        return 0;
-    }
+    CHECK_TRUE(dirp, 0, "dirp is nullptr");
     while (struct dirent* dirEnt = readdir(dirp)) {
         if (dirEnt->d_type != DT_DIR) {
             continue;
