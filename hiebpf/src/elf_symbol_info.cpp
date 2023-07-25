@@ -45,7 +45,7 @@ bool ElfSymbolInfo::GetSymbolTable(const std::string &fileName, ElfSymbolTable &
         // get .symtab
         const auto &shdr = elfFile->shdrs_[symTab];
         const uint8_t *data = elfFile->GetSectionData(shdr->secIndex_);
-        CHECK_NOTNULL(, false, "get section data failed");
+        CHECK_NOTNULL(data, false, "get section data failed");
         symbolTable.symTable_.resize(shdr->secSize_);
         std::copy(data, data + shdr->secSize_, symbolTable.symTable_.data());
         symbolTable.symEntSize_ = shdr->secEntrySize_;
