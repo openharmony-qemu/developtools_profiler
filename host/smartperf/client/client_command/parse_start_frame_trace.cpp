@@ -35,7 +35,6 @@ namespace OHOS {
             } else {
                 frameRate = SmartPerf::StartFrameTraceNoh::CalculateTime();
             }
-            std::cout << "FPS:"<< frameRate << "fps" << std::endl;
             return frameRate;
         }
         double StartFrameTraceNoh::CalculateTime()
