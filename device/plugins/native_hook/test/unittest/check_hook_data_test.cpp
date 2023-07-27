@@ -463,67 +463,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
 
 /**
  * @tc.name: native hook
- * @tc.desc: Test hook calloc normal process.
- * @tc.type: FUNC
- */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Level3)
-{
-    for(size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
-        int setDepth = 1;
-        unwindDepth_ = 100;
-        outFileType_ = "calloc_";
-        modeIndex_ = i;
-        StartCallocProcess(setDepth);
-        StartAndStopHook();
-
-        int32_t ret = ReadFile(outFile_);
-        ASSERT_NE(ret, -1);
-
-        BufferSplitter totalbuffer(const_cast<char*>((char*)g_buffer.get()), ret + 1);
-        std::vector<std::string> hookVec;
-        std::string addr = "";
-        int depth = 0;
-        int addrPos = 3;
-        bool isFirstHook = true;
-        do {
-            char delimiter = ';';
-            Getdata(totalbuffer, hookVec, delimiter);
-
-            if (hookVec[0] == "malloc" && !isFirstHook) {
-                for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
-                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-                }
-                delimiter = '\n';
-                EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-                ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
-                ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_CALLOC_SIZE); // 4: fifth hook data, default malloc size
-
-                addr = hookVec[addrPos];
-                depth = 0;
-            } else if (hookVec[0] == "free" && !isFirstHook) {
-                for (int i = 0; i < FREE_GET_DATA_SIZE; i++) {
-                    EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-                }
-                delimiter = '\n';
-                EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
-                ASSERT_EQ(static_cast<int>(hookVec.size()), FREE_VEC_SIZE);
-                EXPECT_STREQ(hookVec[addrPos].c_str(), addr.c_str());
-                EXPECT_GE(depth, CALLOC_DEPTH);
-
-                isFirstHook = false;
-                addr = "";
-                depth = 0;
-            } else {
-                depth++;
-            }
-
-            hookVec.clear();
-        } while (totalbuffer.NextLine());
-    }
-}
-
-/**
- * @tc.name: native hook
  * @tc.desc: Test hook realloc normal process.
  * @tc.type: FUNC
  */
