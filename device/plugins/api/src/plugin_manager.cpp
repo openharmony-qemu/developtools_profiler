@@ -349,6 +349,16 @@ bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     return true;
 }
 
+bool PluginManager::StopAllPluginSession()
+{
+    std::vector<uint32_t> vecPluginIds;
+    for (std::map<uint32_t, std::shared_ptr<PluginModule>>::iterator it = pluginModules_.begin();
+         it != pluginModules_.end(); ++it) {
+        vecPluginIds.push_back(it->first);
+    }
+    return StopPluginSession(vecPluginIds);
+}
+
 bool PluginManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds)
 {
     HILOG_INFO(LOG_CORE, "%s:ready!", __func__);

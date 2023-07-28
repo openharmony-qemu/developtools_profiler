@@ -98,6 +98,9 @@ bool BufferWriter::WriteMessage(const google::protobuf::Message& pmsg, const std
 bool BufferWriter::Flush()
 {
     ++flushCount_;
+    if (eventNotifier_ == nullptr) {
+        return false;
+    }
     eventNotifier_->Post(flushCount_.load());
     lastFlushTime_ = std::chrono::steady_clock::now();
     bytesPending_ = 0;
