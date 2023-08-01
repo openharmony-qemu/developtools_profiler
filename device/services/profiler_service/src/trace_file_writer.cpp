@@ -104,8 +104,8 @@ bool TraceFileWriter::WriteHeader()
     LogDiskUsage();
     if (isSplitFile_) {
         std::string timeStr = COMMON::GetTimeStr();
-        int pos = static_cast<int>(oldPath_.find_last_of('.'));
-        if (pos != 0) {
+        std::size_t pos = oldPath_.find_last_of('.');
+        if (pos != std::string::npos) {
             path_ = oldPath_.substr(0, pos) + "_" + timeStr + "_" + std::to_string(fileNum_) +
                 oldPath_.substr(pos, oldPath_.size());
         } else {
