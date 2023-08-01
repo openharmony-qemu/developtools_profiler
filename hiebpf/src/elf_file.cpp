@@ -77,7 +77,8 @@ bool ElfFile::ParseElfHeader()
 
     unsigned char ehdrBuf[ehdr64Size] {0};
     size_t readsize = ReadFile(ehdrBuf, ehdr64Size);
-    CHECK_TRUE(readsize >= ehdr64Size, false, "file size not enough, try read %zu, only have %zu", ehdr64Size, readsize);
+    CHECK_TRUE(readsize >= ehdr64Size, false,
+               "file size not enough, try read %zu, only have %zu", ehdr64Size, readsize);
     ehdr_ = ElfHeader::MakeUnique(ehdrBuf, readsize);
     return !(ehdr_ == nullptr);
 }
