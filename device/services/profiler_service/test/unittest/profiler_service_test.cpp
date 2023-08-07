@@ -1392,6 +1392,10 @@ HWTEST_F(ProfilerServiceTest, MergeStandaloneFile, TestSize.Level1)
     EXPECT_EQ(writerTarget->Write(traceData.data(), traceData.size()), sizeof(uint32_t) + traceData.size());
     std::string pluginName = "destroy_session_standalone_test";
     service_->MergeStandaloneFile(targetPath, pluginName, testPath, "1.02");
+    service_->MergeStandaloneFile(targetPath, "", testPath, "1.02");
+    service_->MergeStandaloneFile(targetPath, pluginName, "", "1.02");
+    service_->MergeStandaloneFile("", pluginName, testPath, "1.02");
+    service_->MergeStandaloneFile(targetPath, "hiperf-plugin", testPath, "1.02");
 }
 
 } // namespace

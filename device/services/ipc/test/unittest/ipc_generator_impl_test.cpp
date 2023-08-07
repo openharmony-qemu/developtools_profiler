@@ -38,15 +38,16 @@ public:
 HWTEST_F(IpcGeneratorImplTest, NormalCase, TestSize.Level1)
 {
     IpcGeneratorImpl ipcGeneratorImpl;
+    IpcGeneratorImpl ipcGeneratorTest;
+    EXPECT_TRUE(ipcGeneratorTest.SetNames("test_case.proto", "") == "test_case");
     ASSERT_TRUE(ipcGeneratorImpl.SetNames("test.proto", "") == "test");
-
     ASSERT_TRUE(ipcGeneratorImpl.AddService("TestService"));
     ASSERT_TRUE(!ipcGeneratorImpl.AddService("TestService"));
-
     ASSERT_TRUE(ipcGeneratorImpl.AddServiceMethod("TestService", "DoTest", "DoTestRequest", "DoTestResponse"));
     ASSERT_TRUE(ipcGeneratorImpl.AddServiceMethod("TestService", "DoTest2", "DoTest2Request", "DoTest2Response"));
     ASSERT_TRUE(!ipcGeneratorImpl.AddServiceMethod("TestService", "DoTest", "DoTestRequest", "DoTestResponse"));
     ipcGeneratorImpl.GenHeader();
+    ipcGeneratorTest.GenHeader();
     ipcGeneratorImpl.GenSource();
 }
 } // namespace

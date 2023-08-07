@@ -21,6 +21,7 @@
 #include "hook_service.h"
 #include "service_entry.h"
 #include "socket_context.h"
+#include "unix_socket_client.h"
 #include "logging.h"
 
 using namespace testing::ext;
@@ -63,13 +64,12 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
  */
 HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
 {
-    uint64_t config = FILTER_SIZE;
-    config <<= MOBILE_BIT;
-    config |= SMB_SIZE;
+    ClientConfig config = {0};
+    config.shareMemroySize = SMB_SIZE;
     HookSocketClient hookClient(1, &g_ClientConfigTest);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
-    auto size = sizeof(uint64_t);
+    auto size = sizeof(ClientConfig);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
 
     struct timespec ts = {};
@@ -80,7 +80,11 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
         HILOG_ERROR(LOG_CORE, "memcpy_s ts failed");
     }
     metaSize = sizeof(ts);
-    ASSERT_FALSE(hookClient.SendStack(buffer.get(), metaSize));
+    EXPECT_FALSE(hookClient.SendStack(buffer.get(), metaSize));
+    EXPECT_FALSE(hookClient.SendStackWithPayload(buffer.get(), metaSize, buffer.get(), metaSize));
+    hookClient.unixSocketClient_ = std::make_shared<UnixSocketClient>();
+    EXPECT_FALSE(hookClient.SendStack(buffer.get(), metaSize));
+    EXPECT_TRUE(hookClient.SendStackWithPayload(buffer.get(), metaSize, buffer.get(), metaSize));
 }
 
 /*

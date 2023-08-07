@@ -43,6 +43,8 @@ HWTEST_F(ClientConnectionTest, RawProtocolProc, TestSize.Level1)
     std::unique_ptr<ClientConnection> clientConnection = std::make_unique<ClientConnection>(0, serviceEntry);
     ASSERT_EQ(clientConnection->RawProtocolProc(RAW_PROTOCOL_POINTTO_SERVICE,
         (const int8_t *)serviceName.c_str(), sizeof(struct RawPointToService)), 1);
+    ASSERT_EQ(clientConnection->RawProtocolProc(0,
+        (const int8_t *)serviceName.c_str(), sizeof(struct RawPointToService)), -1);
     clientConnection.reset(nullptr);
 }
 } // namespace

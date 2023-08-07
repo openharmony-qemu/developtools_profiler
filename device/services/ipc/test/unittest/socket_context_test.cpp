@@ -51,7 +51,11 @@ HWTEST_F(SocketContextTest, RawProtocolProc, TestSize.Level1)
 {
     std::string s="abc";
     SocketContext socketContext;
+    std::vector<unsigned char> buf(64); // 64: the buf size
     ASSERT_EQ(socketContext.RawProtocolProc(2, (const int8_t *)s.c_str(), s.size()), -1);
+    EXPECT_FALSE(socketContext.ReceiveData(-1, buf.data(), buf.size()));
+    EXPECT_FALSE(socketContext.ReceiveData(1, nullptr, 0));
+    EXPECT_FALSE(socketContext.SendRaw(1, (const int8_t *)s.c_str(), s.size(), -1));
 }
 
 /**
@@ -64,4 +68,16 @@ HWTEST_F(SocketContextTest, ReceiveFileDiscriptor, TestSize.Level1)
     SocketContext socketContext;
     ASSERT_EQ(socketContext.ReceiveFileDiscriptor(), -1);
 }
+/**
+ * @tc.name: Service
+ * @tc.desc: Socket send heart beat test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SocketContextTest, SendHeartBeat, TestSize.Level1)
+{
+    SocketContext socketContext;
+    EXPECT_FALSE(socketContext.SendHeartBeat());
+    EXPECT_FALSE(socketContext.SendHookConfig(nullptr, 0));
+}
+
 } // namespace
