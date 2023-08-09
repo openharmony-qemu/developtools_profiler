@@ -175,7 +175,6 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
             (fpsInfo.timeStampQ).push(frameReadyTime);
         } else if (tFrameReadyTime == tLastReadyTime + 1) {
             jump = true;
-            lastFrame = fpsInfo.lastFrameReadyTime;
             lastReadyTime = frameReadyTime;
             int fpsTmp = 0;
             fpsInfo.jitters.clear();
