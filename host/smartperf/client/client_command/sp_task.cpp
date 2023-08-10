@@ -94,6 +94,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     }
     isRunning = true;
     startTime = SPUtils::GetCurTime();
+    SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     std::string pidCmd = "pidof " + curTaskInfo.packageName;
     std::string pidResult;
     if (SPUtils::LoadCmd(pidCmd, pidResult)) {
@@ -103,6 +104,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         std::cout << "Task " << curTaskInfo.sessionId << ": collecting data loop..." << std::endl;
         while (isRunning) {
             // 执行采集任务
+            long long lastTime = SPUtils::GetCurTime();
             std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
             for (std::string itConfig:curTaskInfo.taskConfig) {
@@ -117,7 +119,11 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             SPData spdata;
             spdata.values = dataMap;
             vmap.push_back(spdata);
-            std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq));
+            long long nextTime = SPUtils::GetCurTime();
+            long long costTime = nextTime - lastTime;
+            if (costTime < curTaskInfo.freq) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq - costTime));
+            }
             if (isRunning) {
                 msgTask(MapToString(dataMap));
             }
