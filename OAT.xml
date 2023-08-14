@@ -59,10 +59,6 @@ Note:If the text contains special characters, please escape them according to th
         <policylist>
             <policy name="projectPolicy" desc="Project policy">
                 <policyitem type="copyright" name="*" path=".*" rule="may" group="defaultGroup" filefilter="copyrightPolicyFilter" desc=""/>
-                <policyitem type="copyright" name="Huawei Technologies Co., Ltd." path=".*" rule="may" group="defaultGroup" filefilter="copyrightPolicyFilter" desc="hiprofiler use Huawei copyright"/>
-                <policyitem type="copyright" name="Huawei Technologies Co., Ltd. All rights reserved." path=".*" rule="may" group="defaultGroup" filefilter="copyrightPolicyFilter" desc="hiprofiler use Huawei copyright"/>
-                <policyitem type="copyright" name="Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved." path=".*" rule="may" group="defaultGroup" filefilter="copyrightPolicyFilter" desc="hiprofiler use Huawei copyright"/>
-                <policyitem type="copyright" name="Huawei Technologies Co., Ltd. 2022. All rights reserved." path=".*" rule="may" group="defaultGroup" filefilter="copyrightPolicyFilter" desc="hiprofiler use Huawei copyright"/>
             </policy>
         </policylist>
         <filefilterlist>
