@@ -124,6 +124,7 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.gitignore" desc="gitignore file, no copyright header"/>
             </filefilter>
             <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
+                <filteritem type="filepath" name="device/plugins/arkts_plugin/test/resources/.*" desc="test binary file, the file is self-developed"/>
                 <filteritem type="filepath" name="device/plugins/native_daemon/test/unittest/resource/testdata/.*" desc="test binary file, the file is self-developed"/>
                 <filteritem type="filepath" name="device/plugins/ftrace_plugin/tools/trace_converter/test/unittest/resource/.*" desc="test binary file, the file is self-developed"/>
                 <filteritem type="filepath" name="host/ohosprofiler/src/main/resources/trace.db" desc="the binary file for host, the file is self-developed"/>

@@ -58,6 +58,7 @@ group("unittest") {
     "base/test:unittest",
     "cmds/test:unittest",
     "plugins/api/test:unittest",
+    "plugins/arkts_plugin/test:unittest",
     "plugins/cpu_plugin/test:unittest",
     "plugins/diskio_plugin/test:unittest",
     "plugins/ftrace_plugin/test:unittest",
