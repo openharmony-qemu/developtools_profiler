@@ -27,17 +27,15 @@ class PluginServiceImpl final : public IPluginServiceServer {
 public:
     explicit PluginServiceImpl(PluginService& p);
     ~PluginServiceImpl();
-    bool RegisterPlugin(SocketContext& context,
-                        ::RegisterPluginRequest& request,
+    bool RegisterPlugin(SocketContext& context, ::RegisterPluginRequest& request,
                         ::RegisterPluginResponse& response) override;
-    bool UnregisterPlugin(SocketContext& context,
-                          ::UnregisterPluginRequest& request,
+    bool UnregisterPlugin(SocketContext& context, ::UnregisterPluginRequest& request,
                           ::UnregisterPluginResponse& response) override;
     bool GetCommand(SocketContext& context, ::GetCommandRequest& request, ::GetCommandResponse& response) override;
-    bool
-        NotifyResult(SocketContext& context, ::NotifyResultRequest& request, ::NotifyResultResponse& response) override;
-
+    bool NotifyResult(SocketContext& context, ::NotifyResultRequest& request,
+                      ::NotifyResultResponse& response) override;
     bool PushCommand(SocketContext& context, GetCommandResponsePtr command);
+    bool SendHeartBeat(SocketContext& context);
 
 private:
     PluginService* pluginService;

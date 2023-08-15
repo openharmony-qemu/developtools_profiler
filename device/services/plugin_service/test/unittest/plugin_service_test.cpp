@@ -61,7 +61,6 @@ public:
 
     void TearDown()
     {
-        pluginClient_ = nullptr;
         pluginService_ = nullptr;
         commandBuilder_ = nullptr;
         pluginSessionMgr_ = nullptr;
@@ -113,12 +112,12 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     ppc.set_sample_interval(SAMPLE_INTERVAL);
     ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "abc1.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
-    pluginService_->AddPluginInfo(plugin);
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
+    EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
+    ASSERT_TRUE(plugin.context != nullptr);
     EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     pluginService_->RemovePluginInfo(plugin);
 }
@@ -139,11 +138,10 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
     ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "abc2.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     pluginService_->AddPluginInfo(plugin);
     ProfilerSessionConfig psc;
     psc.set_session_mode(ProfilerSessionConfig::OFFLINE);
@@ -172,11 +170,10 @@ HWTEST_F(UnitTestPluginService, StartPluginSession, TestSize.Level1)
     ppc.set_sample_interval(SAMPLE_INTERVAL);
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "abc3.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     pluginService_->AddPluginInfo(plugin);
     EXPECT_TRUE(pluginService_->StartPluginSession(ppc));
 }
@@ -208,11 +205,10 @@ HWTEST_F(UnitTestPluginService, DestroyPluginSession, TestSize.Level1)
 {
     ASSERT_FALSE(pluginService_->DestroyPluginSession("abc.so"));
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "abc5.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     pluginService_->AddPluginInfo(plugin);
     EXPECT_TRUE(pluginService_->DestroyPluginSession("abc5.so"));
 }
@@ -229,7 +225,7 @@ HWTEST_F(UnitTestPluginService, RefreshPluginSession, TestSize.Level1)
     plugin.name = "abc6.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     pluginService_->AddPluginInfo(plugin);
     EXPECT_TRUE(pluginService_->RefreshPluginSession("abc6.so"));
 }
@@ -997,11 +993,10 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_Check, TestSize.Level1)
 HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSession, TestSize.Level1)
 {
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "testsample.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
     ProfilerPluginConfig ppc;
     ppc.set_name("testsample.so");
@@ -1022,11 +1017,10 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSession, TestSize.Lev
 HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSessions, TestSize.Level1)
 {
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "testsample1.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
     ProfilerPluginConfig ppc;
     ppc.set_name("testsample1.so");
@@ -1065,11 +1059,10 @@ HWTEST_F(UnitTestPluginService, PluginService_CreatePluginSession_Online, TestSi
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
     PluginInfo plugin;
-    SocketContext ctx;
     plugin.name = "abconline.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "ASDFAADSF";
-    plugin.context = &ctx;
+    plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
     ProfilerSessionConfig psc;
     psc.set_session_mode(ProfilerSessionConfig::ONLINE);

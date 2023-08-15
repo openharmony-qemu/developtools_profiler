@@ -130,22 +130,21 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
 
     auto notifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
     CHECK_NOTNULL(notifier, false, "create EventNotifier for %s failed!", pluginName.c_str());
-
+    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
+               "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->shareMemoryBlock = smb;
     pluginCtx->eventNotifier = notifier;
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
-
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-
     pluginCtx->context->SendFileDescriptor(smb->GetfileDescriptor());
     pluginCtx->context->SendFileDescriptor(notifier->GetFd());
 
     if (profilerSessionConfig_.session_mode() == ProfilerSessionConfig::OFFLINE) {
         eventPoller_->AddFileDescriptor(notifier->GetFd(),
-            std::bind(&PluginService::ReadShareMemoryOffline, this, *pluginCtx));
+                                        std::bind(&PluginService::ReadShareMemoryOffline, this, *pluginCtx));
     } else if (profilerSessionConfig_.session_mode() == ProfilerSessionConfig::ONLINE) {
         eventPoller_->AddFileDescriptor(notifier->GetFd(),
-            std::bind(&PluginService::ReadShareMemoryOnline, this, *pluginCtx));
+                                        std::bind(&PluginService::ReadShareMemoryOnline, this, *pluginCtx));
     }
     HILOG_DEBUG(LOG_CORE, "CreatePluginSession %s done, shmem fd = %d", pluginName.c_str(), smb->GetfileDescriptor());
     return true;
@@ -166,10 +165,10 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
 
     auto cmd = pluginCommandBuilder_->BuildCreateSessionCmd(pluginConfig, 0);
     CHECK_TRUE(cmd != nullptr, false, "CreatePluginSession BuildCreateSessionCmd FAIL %s", pluginName.c_str());
-
+    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
+               "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-
     HILOG_DEBUG(LOG_CORE, "CreatePluginSession %s done!", pluginName.c_str());
     return true;
 }
@@ -184,7 +183,8 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& config)
 
     auto cmd = pluginCommandBuilder_->BuildStartSessionCmd(config, pluginId);
     CHECK_TRUE(cmd != nullptr, false, "StartPluginSession BuildStartSessionCmd FAIL %s", pluginName.c_str());
-
+    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
+               "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::IN_SESSION);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     HILOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
@@ -200,10 +200,10 @@ bool PluginService::StopPluginSession(const std::string& pluginName)
 
     auto cmd = pluginCommandBuilder_->BuildStopSessionCmd(pluginId);
     CHECK_TRUE(cmd != nullptr, false, "StopPluginSession BuildStopSessionCmd FAIL %s", pluginName.c_str());
-
+    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
+               "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-
     auto sem = GetSemaphoreFactory().Create(0);
     CHECK_NOTNULL(sem, false, "create Semaphore for stop %s FAILED!", pluginName.c_str());
 
@@ -246,7 +246,8 @@ bool PluginService::DestroyPluginSession(const std::string& pluginName)
         eventPoller_->RemoveFileDescriptor(pluginCtx->eventNotifier->GetFd());
         pluginCtx->eventNotifier = nullptr;
     }
-
+    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
+               "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::REGISTERED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     HILOG_INFO(LOG_CORE, "DestroyPluginSession %s done!", pluginName.c_str());
@@ -262,7 +263,8 @@ bool PluginService::RefreshPluginSession(const std::string& pluginName)
 
     auto cmd = pluginCommandBuilder_->BuildRefreshSessionCmd(pluginId);
     CHECK_TRUE(cmd != nullptr, false, "RefreshPluginSession BuildRefreshSessionCmd FAIL %s", pluginName.c_str());
-
+    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
+               "%s hiprofiler_plugin process is off line!", __func__);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     HILOG_INFO(LOG_CORE, "RefreshPluginSession %s done!", pluginName.c_str());
     return true;
