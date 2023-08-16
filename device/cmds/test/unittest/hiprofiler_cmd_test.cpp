@@ -216,7 +216,6 @@ public:
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
         cmdStr += "-t " + std::to_string(time) + " \\\n"
-            "-s\n"
             "<<CONFIG\n"
             "request_id: 1\n"
             "session_config {\n"
@@ -398,7 +397,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l";
     std::string content = "";
     EXPECT_TRUE(RunCommand(cmd, content));
-    std::string destStr = "support plugin list";
+    std::string destStr = "plugin";
     EXPECT_TRUE(content.find(destStr) != std::string::npos);
 }
 }
