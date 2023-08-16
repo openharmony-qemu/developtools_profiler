@@ -47,13 +47,13 @@ HWTEST_F(IpcUnicSocketTest, ServerStartStop, TestSize.Level1)
     ASSERT_TRUE(server.Stop());
 }
 
-HWTEST_F(IpcUnicSocketTest, CleintConnectFailed, TestSize.Level1)
+HWTEST_F(IpcUnicSocketTest, ClientConnectFailed, TestSize.Level1)
 {
     IpcUnixSocketClient client;
     ASSERT_FALSE(client.Connect(TEST_PATH_NAME));
 }
 
-HWTEST_F(IpcUnicSocketTest, ServerCleintCommunicate, TestSize.Level1)
+HWTEST_F(IpcUnicSocketTest, ServerClientCommunicate, TestSize.Level1)
 {
     IpcUnixSocketServer server;
     ASSERT_TRUE(server.Start(TEST_PATH_NAME));
@@ -83,7 +83,7 @@ HWTEST_F(IpcUnicSocketTest, ServerCleintCommunicate, TestSize.Level1)
     ASSERT_TRUE(server.Stop());
 }
 
-HWTEST_F(IpcUnicSocketTest, ServerCleintException, TestSize.Level1)
+HWTEST_F(IpcUnicSocketTest, ServerClientException, TestSize.Level1)
 {
     IpcUnixSocketServer server;
     std::string cmd = "test command";

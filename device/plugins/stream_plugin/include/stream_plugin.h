@@ -35,7 +35,6 @@ public:
 
     int SetWriter(WriterStruct* writer);
     void Loop(void);
-    uint64_t GetTimeMS();
 
 private:
     StreamConfig protoConfig_;

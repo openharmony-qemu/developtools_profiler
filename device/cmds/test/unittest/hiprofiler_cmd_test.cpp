@@ -383,4 +383,21 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
     StopProcessStub(hiprofilerPluginsPid_);
     StopProcessStub(hiprofilerdPid_);
 }
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hiprofiler_cmd with -s -l.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level1)
+{
+    KillProcess(DEFAULT_HIPROFILERD_NAME);
+    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l";
+    std::string content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    std::string destStr = "plugin";
+    EXPECT_TRUE(content.find(destStr) != std::string::npos);
+}
 }
