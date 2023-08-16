@@ -127,11 +127,6 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
     sleep(1);
     SPUtils::LoadCmd(cmd, cmdResult);
     sleep(1);
-    std::string topPkg = SPUtils::GetTopPkgName();
-    std::string pid = sd.GetPidByPkg(v[typePKG]);
-    if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
-        return "";
-    }
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     cmd = "uinput -T -m 650 1500 650 500 30";
     SPUtils::LoadCmd(cmd, cmdResult);
@@ -198,8 +193,6 @@ double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     sleep(1);
     SPUtils::LoadCmd(cmd, cmdResult);
     sleep(1);
-    std::string topPkg = SPUtils::GetTopPkgName();
-    std::string pid = sd.GetPidByPkg(v[typePKG]);
     thGetTrace.join();
     double fps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
     return fps;
@@ -229,12 +222,8 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
         sleep(1);
         SPUtils::LoadCmd(cmd, cmdResult);
         sleep(1);
-        std::string topPkg = SPUtils::GetTopPkgName();
         std::string pid = sd.GetPidByPkg(v[typePKG]);
         thGetTrace.join();
-        if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
-            return noNameType;
-        }
         if (isOhTest) {
             time = parseTrace.ParseTraceCold(traceName, pid);
         } else {
@@ -278,12 +267,8 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
             sleep(1);
             SPUtils::LoadCmd(cmd, cmdResult);
             sleep(1);
-            std::string topPkg = SPUtils::GetTopPkgName();
             std::string pid = sd.GetPidByPkg(v[typePKG]);
             thGetTrace.join();
-            if (topPkg.find(v[typePKG]) == std::string::npos || pid == "") {
-                return noNameType;
-            }
             return parseTrace.ParseTraceNoh(traceName, pid);
         }
     }
