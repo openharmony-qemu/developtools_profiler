@@ -44,8 +44,8 @@ namespace OHOS {
                 if (line.find("H:touchEventDispatch") != std::string::npos) {
                     startLine = line;
                     frameNum = 0;
-                } else if (line.find("H:RSUniRender::Process:[leashWindow") != std::string::npos) {
-                    std::string tmpStr = Split(line, "H:RSUniRender::Process:[leashWindow")[1];
+                } else if (line.find("H:RSUniRender::Process:[WindowScene") != std::string::npos) {
+                    std::string tmpStr = Split(line, "H:RSUniRender::Process:[WindowScene")[1];
                     std::string numsStr = CutString(tmpStr, "(", ")", 1);
                     std::vector<std::string> nums = Split(numsStr, ",");
                     std::string alpha = Split(tmpStr, "Alpha:")[1];
@@ -88,7 +88,7 @@ namespace OHOS {
             if (startLine.compare("") == 0) {
                 std::cout << "can not find start point {H:touchEventDispatch}" << std::endl;
             } else if (fullScreenLine.compare("") == 0) {
-                std::cout << "can not find complete point {H:RSMainThread::leashWindow}" << std::endl;
+                std::cout << "can not find complete point {H:RSMainThread::WindowScene}" << std::endl;
             } else {
                 double startTime = std::stod(SmartPerf::StartFrameTraceNoh::GetLineTime(startLine));
                 double endTime = std::stod(SmartPerf::StartFrameTraceNoh::GetLineTime(fullScreenLine));
