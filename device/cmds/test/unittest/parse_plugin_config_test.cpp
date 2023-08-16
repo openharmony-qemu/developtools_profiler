@@ -82,12 +82,19 @@ HWTEST_F(ParsePluginConfigTest, TestParsePluginConfig, TestSize.Level1)
         "process-plugin",
         "hiperf-plugin",
         "hisysevent-plugin",
+        "hiebpf-plugin",
+        "arkts-plugin",
+        "invalid-plugin",
     };
     for (const std::string &pluginName : pluginNames) {
         CreateCommand(pluginName, parseConfig, config);
         auto profilerConfig = GetProfilerPluginConfig(config);
         bool res = parseConfig.SetSerializePluginsConfig(pluginName, profilerConfig);
-        EXPECT_TRUE(res);
+        if (pluginName == "invalid-plugin") {
+            EXPECT_FALSE(res);
+        } else {
+            EXPECT_TRUE(res);
+        }
     }
     ProfilerPluginConfig profilerConfig;
     bool res = parseConfig.SetSerializePluginsConfig("testplugin", profilerConfig);

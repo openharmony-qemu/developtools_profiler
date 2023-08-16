@@ -53,15 +53,6 @@ int StreamPlugin::SetWriter(WriterStruct* writer)
     return 0;
 }
 
-uint64_t StreamPlugin::GetTimeMS()
-{
-    const int MS_PER_S = 1000;
-    const int NS_PER_MS = 1000000;
-    struct timespec ts;
-    clock_gettime(CLOCK_BOOTTIME, &ts);
-    return ts.tv_sec * MS_PER_S + ts.tv_nsec / NS_PER_MS;
-}
-
 void StreamPlugin::Loop(void)
 {
     HILOG_INFO(LOG_CORE, "%s:transporter thread %d start !!!!!", __func__, gettid());

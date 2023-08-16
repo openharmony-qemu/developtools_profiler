@@ -216,6 +216,7 @@ public:
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
         cmdStr += "-t " + std::to_string(time) + " \\\n"
+            "-s\n"
             "<<CONFIG\n"
             "request_id: 1\n"
             "session_config {\n"
@@ -382,5 +383,22 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
     system(cmd.c_str());
     StopProcessStub(hiprofilerPluginsPid_);
     StopProcessStub(hiprofilerdPid_);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hiprofiler_cmd with -s -l.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level1)
+{
+    KillProcess(DEFAULT_HIPROFILERD_NAME);
+    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l";
+    std::string content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    std::string destStr = "support plugin list";
+    EXPECT_TRUE(content.find(destStr) != std::string::npos);
 }
 }
