@@ -59,14 +59,12 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
         result = "time:" + stream.str();
     } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
-        std::cout << result << std::endl;
     }  else if (v[typeName] == "pagefps") {
         double fps = SmartPerf::ControlCallCmd::PageFps();
         stream << fps;
         result = "FPS:" + stream.str() + "fps";
     } else if (v[typeName] == "FPS") {
         result = SmartPerf::ControlCallCmd::SlideFPS(v);
-        std::cout << result << std::endl;
     } else if (v[typeName] == "startFrame") {
         double fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
         stream << fps;
