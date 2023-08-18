@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#   Copyright (c) 2022 Huawei Device Co., Ltd.
+#   Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
@@ -23,7 +23,7 @@ FSTRACE_TYPES_FILE = "../include/fstrace_types.h"
 FSTRACE_TARGETS_FILE = "../data/fstrace_target_funcs.txt"
 OVERWRITE = False
 LICENSE_HEAD = '''/*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at

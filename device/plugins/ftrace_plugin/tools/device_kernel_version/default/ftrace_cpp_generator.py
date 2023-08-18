@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -35,7 +35,7 @@ class Common:
     cpp_copyright_header = (
         ""
         "/* THIS FILE IS GENERATE BY {}, PLEASE DON'T EDIT IT!\n"
-        " * Copyright (c) 2021 Huawei Device Co., Ltd.\n"
+        " * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.\n"
         ' * Licensed under the Apache License, Version 2.0 (the "License");\n'
         " * you may not use this file except in compliance with the License.\n"
         " * You may obtain a copy of the License at\n"
@@ -53,7 +53,7 @@ class Common:
     gn_copyright_header = (
         ""
         "# THIS FILE IS GENERATE BY {}, PLEASE DON'T EDIT IT!\n"
-        "# Copyright (C) 2021 Huawei Device Co., Ltd.\n"
+        "# Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.\n"
         '# Licensed under the Apache License, Version 2.0 (the "License");\n'
         "# you may not use this file except in compliance with the License.\n"
         "# You may obtain a copy of the License at\n"
