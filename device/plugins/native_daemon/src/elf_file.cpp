@@ -251,60 +251,6 @@ bool ElfFile::ParseSymTable(const SectionHeader *shdr)
     return true;
 }
 
-bool ElfFile::ParseSymNamesStr()
-{
-    const std::string secName {".strtab"};
-    CHECK_TRUE(shdrs_.find(secName) != shdrs_.end(), false,
-               "Error in ElfFile::ParseSymNamesStr(): section %s  does not exist", secName.c_str());
-    const auto &shdr = shdrs_[secName];
-    uint64_t secOffset = shdr->fileOffset_;
-    uint64_t secSize = shdr->secSize_;
-    int64_t ret = lseek(fd_, secOffset, SEEK_SET);
-    CHECK_TRUE(ret >= 0, false, "Error in ElfFile::ParsesymNamesStr(): lseek failed");
-    char *secBuf = new (std::nothrow) char[secSize];
-    CHECK_NOTNULL(secBuf, false, "Error in ElfFile::ParsesymNamesStr(): new failed");
-    if (memset_s(secBuf, secSize, '\0', secSize) != EOK) {
-        HLOGE("memset_s failed");
-    }
-    ret = ReadFile(secBuf, secSize);
-    HLOG_ASSERT(ret == static_cast<int64_t>(secSize));
-    symNamesStr_ = std::string(secBuf, secSize);
-    if (symNamesStr_ == "") {
-        delete[] secBuf;
-        secBuf = nullptr;
-        return false;
-    }
-    delete[] secBuf;
-    secBuf = nullptr;
-    return true;
-}
-
-bool ElfFile::ParseDynSymTable()
-{
-    const std::string secName {".dynsym"};
-    CHECK_TRUE(shdrs_.find(secName) != shdrs_.end(), false,
-               "Error in ELF::ElfFile::ParseSymTable(): section %s does not exist", secName.c_str());
-    const auto &shdr = shdrs_[secName];
-    uint64_t secOffset = shdr->fileOffset_;
-    int64_t ret = lseek(fd_, secOffset, SEEK_SET);
-    HLOG_ASSERT(ret == static_cast<int64_t>(secOffset));
-    uint64_t secSize = shdr->secSize_;
-    uint64_t entrySize = shdr->secEntrySize_;
-    char *secBuf = new (std::nothrow) char[secSize];
-    CHECK_NOTNULL(secBuf, false, "Error in EFL::ElfFile::ParseDynSymTable(): new failed");
-    ret = ReadFile(secBuf, secSize);
-    HLOG_ASSERT(ret == static_cast<int64_t>(secSize));
-    dynSymTable_ = SymbolTable::MakeUnique(symNamesStr_, secBuf, secSize, entrySize);
-    if (dynSymTable_ == nullptr) {
-        delete[] secBuf;
-        secBuf = nullptr;
-        return false;
-    }
-    delete[] secBuf;
-    secBuf = nullptr;
-    return true;
-}
-
 std::string ElfFile::GetSectionName(const uint32_t startIndex)
 {
     if (startIndex >= secNamesStr_.size()) {

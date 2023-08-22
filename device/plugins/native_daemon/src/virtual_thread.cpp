@@ -45,29 +45,6 @@ bool VirtualThread::IsSorted() const
 }
 #endif
 
-const MemMapItem *VirtualThread::FindMapByAddr2(uint64_t addr) const
-{
-    HLOGM("try found vaddr 0x%" PRIx64 " in maps %zu ", addr, memMaps_->size());
-    if (memMaps_->size() == 0) {
-        return nullptr;
-    }
-    auto foundIt =
-        std::upper_bound(memMaps_->begin(), memMaps_->end(), addr, MemMapItem::ValueLessThan);
-    if (foundIt == memMaps_->begin()) {
-        // have map 2 3 4 5
-        // find 1 , will return 2 (index 0, begin elem)
-        // this same as not found any thins
-    } else {
-        // include memMaps_->end()
-        foundIt = std::prev(foundIt);
-        if (foundIt->Contain(addr)) {
-            HLOGM("found '%s' for vaddr 0x%016" PRIx64 "", foundIt->ToString().c_str(), addr);
-            return &(*foundIt);
-        }
-    }
-    return nullptr;
-}
-
 const std::pair<MemMaps*, uint32_t> VirtualThread::FindMemMapsByAddr(uint64_t addr) const
 {
     return virtualruntime_->FindMap(addr);
@@ -130,24 +107,6 @@ std::string VirtualThread::ReadThreadName(pid_t tid)
     comm.erase(std::remove(comm.begin(), comm.end(), '\r'), comm.end());
     comm.erase(std::remove(comm.begin(), comm.end(), '\n'), comm.end());
     return comm;
-}
-
-int32_t VirtualThread::FindMapByOffset(const MemMaps* curMemMaps, uint64_t offset) const
-{
-    for (auto curMemMapItem = curMemMaps->maps_.begin();
-        curMemMapItem != curMemMaps->maps_.end(); ++curMemMapItem) {
-        // check begin and length
-        if (offset >= curMemMapItem->pageoffset_ &&
-            (offset - curMemMapItem->pageoffset_) < (curMemMapItem->end_ - curMemMapItem->begin_)) {
-            HLOGMMM("found fileoffset 0x%" PRIx64 " in map (0x%" PRIx64 " - 0x%" PRIx64
-                    " pageoffset 0x%" PRIx64 ")  from %s",
-                    offset, curMemMapItem->begin_, curMemMapItem->end_,
-                    curMemMapItem->pageoffset_, curMemMaps->name_.c_str());
-            return curMemMapItem - curMemMaps->maps_.begin();
-        }
-    }
-
-    return -1;
 }
 
 const MemMapItem *VirtualThread::FindMapByFileInfo(const std::string name, uint64_t offset) const

@@ -214,6 +214,7 @@ public:
         std::string cmdStr =
             "hiprofiler_cmd \\\n"
             "-c - \\\n";
+        cmdStr += "-k \\\n";
         cmdStr += "-o " + outFile + " \\\n";
         cmdStr += "-t " + std::to_string(time) + " \\\n"
             "<<CONFIG\n"
@@ -386,7 +387,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
 
 /**
  * @tc.name: native hook
- * @tc.desc: Test hiprofiler_cmd with -s -l.
+ * @tc.desc: Test hiprofiler_cmd with -s -l -k.
  * @tc.type: FUNC
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level1)
@@ -394,10 +395,40 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
     KillProcess(DEFAULT_HIPROFILERD_NAME);
     KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
 
-    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l";
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l -k";
     std::string content = "";
     EXPECT_TRUE(RunCommand(cmd, content));
     std::string destStr = "plugin";
     EXPECT_TRUE(content.find(destStr) != std::string::npos);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hiprofiler_cmd with -l -k.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level1)
+{
+    KillProcess(DEFAULT_HIPROFILERD_NAME);
+    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -l -k";
+    std::string content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hiprofiler_cmd with -k.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level1)
+{
+    KillProcess(DEFAULT_HIPROFILERD_NAME);
+    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -k";
+    std::string content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
 }
 }

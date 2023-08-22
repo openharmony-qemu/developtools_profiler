@@ -317,9 +317,7 @@ private:
     bool ParsePrgHeaders();
     bool ParseSecNamesStr();
     bool ParseSecHeaders();
-    bool ParseSymNamesStr();
     bool ParseSymTable(const std::string = ".symtab");
-    bool ParseDynSymTable();
 
     void *mmap_ = MMAP_FAILED;
     uint64_t mmapSize_ = 0;

@@ -25,10 +25,7 @@ std::unique_ptr<ElfHeader> ElfHeader::MakeUnique(unsigned char * const ehdrBuf,
                                                  const std::size_t bufSize)
 {
     std::unique_ptr<ElfHeader> ehdr {new (std::nothrow) ElfHeader()};
-    if (ehdr == nullptr) {
-        HLOGV("ElfHeader() failed");
-        return nullptr;
-    }
+    CHECK_NOTNULL(ehdr, nullptr, "ElfHeader() failed");
     if (!ehdr->Init(ehdrBuf, bufSize)) {
         HLOGV("ElfHeader::Init(ehdrBuf, bufSize) failed\n");
         DumpEhdrBuf(reinterpret_cast<char *>(ehdrBuf), bufSize);
@@ -55,10 +52,7 @@ bool ElfHeader::Init(unsigned char * const ehdrBuf, const std::size_t bufSize)
 
 bool ElfHeader::ParseElf32Header(unsigned char * const ehdrBuf, const std::size_t bufSize)
 {
-    if (bufSize < ehdr32Size) {
-        HLOGE("bad elf32 header buffer");
-        return false;
-    }
+    CHECK_TRUE(bufSize >= ehdr32Size, false, "bad elf32 header buffer");
     size_t curIndex {EI_NIDENT};
     uint16_t *u2Buf = reinterpret_cast<uint16_t *>(ehdrBuf + curIndex);
     type_ = u2Buf[0];
