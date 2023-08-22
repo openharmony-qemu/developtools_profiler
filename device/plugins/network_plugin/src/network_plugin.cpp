@@ -59,16 +59,11 @@ int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
 
     struct stat s;
     lstat(file.c_str(), &s);
-    if (S_ISDIR(s.st_mode)) {
-        HILOG_ERROR(LOG_CORE, "%s:path(%s) is directory, no data to report", __func__, file.c_str());
-        return -1;
-    }
+    CHECK_TRUE(!S_ISDIR(s.st_mode), -1, "%s:path(%s) is directory, no data to report", __func__, file.c_str());
 
     char realPath[PATH_MAX + 1] = {0};
-    if ((file.length() >= PATH_MAX) || (realpath(file.c_str(), realPath) == nullptr)) {
-        HILOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, file.c_str(), errno);
-        return -1;
-    }
+    CHECK_TRUE((file.length() < PATH_MAX) && (realpath(file.c_str(), realPath) != nullptr), -1,
+               "%s:path is invalid: %s, errno=%d", __func__, file.c_str(), errno);
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(fopen(realPath, "r"), fclose);
     CHECK_NOTNULL(fp_, -1, "%s:NetworkPlugin, open(%s) Failed, errno(%d)", __func__, file.c_str(), errno);
 
@@ -167,10 +162,7 @@ std::string NetworkPlugin::GetRateNodePath()
 
 int32_t NetworkPlugin::GetUid(int32_t pid)
 {
-    if (pid <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:NetworkPlugin, check param fail, pid less than 0!", __func__);
-        return -1;
-    }
+    CHECK_TRUE(pid > 0, -1, "%s:NetworkPlugin, check param fail, pid less than 0!", __func__);
 
     char* end = nullptr;
     std::string path = std::string("/proc/") + std::to_string(pid) + std::string("/status");

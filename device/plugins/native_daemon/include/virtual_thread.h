@@ -71,9 +71,7 @@ public:
     bool ParseMap(std::vector<MemMapItem> &memMaps, bool update = false);
     void CreateMapItem(const std::string filename, uint64_t begin, uint64_t len, uint64_t offset);
     const MemMapItem *FindMapByAddr(uint64_t addr) const;
-    const MemMapItem *FindMapByAddr2(uint64_t addr) const;
     const std::pair<MemMaps*, uint32_t> FindMemMapsByAddr(uint64_t addr) const;
-    int32_t FindMapByOffset(const MemMaps* curMemMaps, uint64_t offset) const;
     const MemMapItem *FindMapByFileInfo(const std::string name, uint64_t offset) const;
     SymbolsFile *FindSymbolsFileByMap(const MemMapItem &inMap) const;
     SymbolsFile *FindSymbolsFileByName(const std::string &name) const;
