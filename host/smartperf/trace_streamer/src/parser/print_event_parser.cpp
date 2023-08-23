@@ -13,10 +13,12 @@
  * limitations under the License.
  */
 #include "print_event_parser.h"
+#include "animation_filter.h"
 #include "clock_filter_ex.h"
 #include "frame_filter.h"
 #include "stat_filter.h"
 #include "string_to_numerical.h"
+#include <cinttypes>
 namespace SysTuning {
 namespace TraceStreamer {
 PrintEventParser::PrintEventParser(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
@@ -59,9 +61,13 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
                 traceDataCache_->GetInternalSlicesData()->SetDistributeInfo(
                     index, point.chainId_, point.spanId_, point.parentSpanId_, point.flag_, point.args_);
                 if (pid == point.tgid_) {
-                    HandleFrameSliceBeginEvent(point.funcPrefixId_, index, point.funcArgs_, line);
+                    if (HandleFrameSliceBeginEvent(point.funcPrefixId_, index, point.funcArgs_, line)) {
+                        break;
+                    }
                 }
-                streamFilters_->taskPoolFilter_->TaskPoolEvent(point.name_, index);
+                if (!streamFilters_->taskPoolFilter_->TaskPoolEvent(point.name_, index)) {
+                    HandleAnimationBeginEvent(point, index, line);
+                }
             } else {
                 streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_LOST);
             }
@@ -80,6 +86,9 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
                                                                        traceDataCache_->GetDataIndex(point.name_));
             if (point.name_ == onFrameQueeuStartEvent_ && index != INVALID_UINT64) {
                 OnFrameQueueStart(ts, index, point.tgid_);
+            } else if (index != INVALID_UINT64 && EndWith(comm, onLauncherVsyncEvent_) && // the comm is taskName
+                       onAnimationStartEvent_ == traceDataCache_->GetDataIndex(point.name_)) {
+                HandleAnimationStartEvent(line, index);
             }
             break;
         }
@@ -88,6 +97,7 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
             auto index = streamFilters_->sliceFilter_->FinishAsyncSlice(ts, pid, point.tgid_, cookie,
                                                                         traceDataCache_->GetDataIndex(point.name_));
             HandleFrameQueueEndEvent(ts, point.tgid_, point.tgid_, index);
+            HandleAnimationFinishEvent(line, index);
             break;
         }
         case 'C': {
@@ -107,6 +117,31 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
     }
     return true;
 }
+bool PrintEventParser::HandleAnimationBeginEvent(const TracePoint& point, size_t callStackRow, const BytraceLine& line)
+{
+    if (traceDataCache_->AnimationTraceEnabled()) {
+        if (!streamFilters_->animationFilter_->UpdateDeviceInfoEvent(point, line)) {
+            return streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, callStackRow);
+        }
+        return true;
+    }
+    return false;
+}
+bool PrintEventParser::HandleAnimationStartEvent(const BytraceLine& line, size_t callStackRow)
+{
+    if (traceDataCache_->AnimationTraceEnabled()) {
+        streamFilters_->animationFilter_->StartAnimationEvent(line, callStackRow);
+        return true;
+    }
+    return false;
+}
+bool PrintEventParser::HandleAnimationFinishEvent(const BytraceLine& line, size_t callStackRow)
+{
+    if (traceDataCache_->AnimationTraceEnabled()) {
+        return streamFilters_->animationFilter_->FinishAnimationEvent(line, callStackRow);
+    }
+    return false;
+}
 void PrintEventParser::SetTraceType(TraceFileType traceType)
 {
     traceType_ = traceType;
@@ -122,6 +157,7 @@ void PrintEventParser::Finish()
     eventToFrameFunctionMap_.clear();
     frameCallIds_.clear();
     vsyncSliceIds_.clear();
+    streamFilters_->animationFilter_->Clear();
     streamFilters_->frameFilter_->Finish();
 }
 ParseResult PrintEventParser::CheckTracePoint(std::string_view pointStr) const
@@ -164,6 +200,8 @@ std::string_view PrintEventParser::GetPointNameForBegin(std::string_view pointSt
 
     size_t length = pointStr.size() - index - ((pointStr.back() == '\n') ? 1 : 0);
     std::string_view name = std::string_view(pointStr.data() + index, length);
+    // remove space at the end
+    name = std::string_view(name.data(), name.find_last_not_of(" ") + 1);
     return name;
 }
 
@@ -206,7 +244,7 @@ ParseResult PrintEventParser::HandlerB(std::string_view pointStr, TracePoint& ou
     return PARSE_SUCCESS;
 }
 
-void PrintEventParser::HandleFrameSliceBeginEvent(DataIndex eventName,
+bool PrintEventParser::HandleFrameSliceBeginEvent(DataIndex eventName,
                                                   size_t callStackRow,
                                                   std::string& args,
                                                   const BytraceLine& line)
@@ -214,7 +252,9 @@ void PrintEventParser::HandleFrameSliceBeginEvent(DataIndex eventName,
     auto it = eventToFrameFunctionMap_.find(eventName);
     if (it != eventToFrameFunctionMap_.end()) {
         it->second(callStackRow, args, line);
+        return true;
     }
+    return false;
 }
 bool PrintEventParser::ReciveVsync(size_t callStackRow, std::string& args, const BytraceLine& line)
 {
@@ -307,10 +347,10 @@ void PrintEventParser::HandleFrameSliceEndEvent(uint64_t ts, uint64_t pid, uint6
     auto iTid = streamFilters_->processFilter_->GetInternalTid(tid);
     auto pos = std::find(vsyncSliceIds_.begin(), vsyncSliceIds_.end(), callStackRow);
     if (pos != vsyncSliceIds_.end()) {
-        TS_LOGD("ts:%llu, RenderSliceEnd:%llu, callStackRow:%zu", ts, tid, callStackRow);
+        TS_LOGD("ts:%" PRIu64 ", RenderSliceEnd:%" PRIu64 ", callStackRow:%zu", ts, tid, callStackRow);
         if (!streamFilters_->frameFilter_->EndVsyncEvent(ts, iTid)) {
             streamFilters_->statFilter_->IncreaseStat(TRACE_VSYNC, STAT_EVENT_NOTMATCH);
-            TS_LOGW("ts:%llu, RenderSliceEnd:%llu, callStackRow:%zu failed", ts, tid, callStackRow);
+            TS_LOGW("ts:%" PRIu64 ", RenderSliceEnd:%" PRIu64 ", callStackRow:%zu failed", ts, tid, callStackRow);
         }
         vsyncSliceIds_.erase(pos);
     }
@@ -323,10 +363,10 @@ void PrintEventParser::HandleFrameQueueEndEvent(uint64_t ts, uint64_t pid, uint6
     auto iTid = streamFilters_->processFilter_->GetInternalTid(tid);
     auto pos = std::find(frameCallIds_.begin(), frameCallIds_.end(), callStackRow);
     if (pos != frameCallIds_.end()) {
-        TS_LOGD("ts:%llu, frameSliceEnd:%u", ts, tid);
+        TS_LOGD("ts:%" PRIu64 ", frameSliceEnd:%" PRIu64 "", ts, tid);
         if (!streamFilters_->frameFilter_->EndFrameQueue(ts, iTid)) {
             streamFilters_->statFilter_->IncreaseStat(TRACE_FRAMEQUEUE, STAT_EVENT_NOTMATCH);
-            TS_LOGW("ts:%llu, frameSliceEnd:%lu failed", ts, tid);
+            TS_LOGW("ts:%" PRIu64 ", frameSliceEnd:%" PRIu64 " failed", ts, tid);
         }
         frameCallIds_.erase(pos);
     }

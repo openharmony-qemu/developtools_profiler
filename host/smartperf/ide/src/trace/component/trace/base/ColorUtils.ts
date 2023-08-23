@@ -49,9 +49,23 @@ export class ColorUtils {
     '#E69553',
     '#7EC6BB',
     '#8d9171',
+
   ];
 
-  public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#E8BE44', '#009DFA', '#E97978'];
+  public static ANIMATION_COLOR: Array<string> = [
+    '#ECECEC',
+    '#FE3000',
+    '#61CFBE',
+    '#000',
+    '#FFFFFF',
+    '#C6D9F2',
+    '#BFEBE5',
+    '#0A59F7',
+    '#25ACF5',
+    '#FFFFFF'
+  ];
+
+  public static JANK_COLOR: Array<string> = ['#42A14D', '#C0CE85', '#FF651D', '#E8BE44', '#009DFA', '#E97978', '#A8D1F4'];
   public static MD_PALETTE: Array<string> = ColorUtils.FUNC_COLOR_B;
   public static FUNC_COLOR: Array<string> = ColorUtils.FUNC_COLOR_B;
 

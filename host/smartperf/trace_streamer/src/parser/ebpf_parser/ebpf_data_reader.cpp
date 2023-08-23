@@ -16,6 +16,7 @@
 #include "ebpf_data_reader.h"
 #include "file_system_data_parser.h"
 #include "string_help.h"
+#include <cinttypes>
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -23,7 +24,7 @@ using namespace SysTuning::base;
 using namespace SysTuning::EbpfStdtype;
 EbpfDataReader::EbpfDataReader(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
     : EventParserBase(dataCache, filter),
-      ebpfDataHeader_(reinterpret_cast<EbpfDataHeader*>(startAddr_)),
+      ebpfDataHeader_(nullptr),
       pidAndStartAddrToMapsAddr_(nullptr),
       elfAddrAndStValueToSymAddr_(nullptr),
       tracerEventToStrIndex_(INVALID_UINT64),
@@ -47,20 +48,20 @@ bool EbpfDataReader::InitEbpfData(const std::deque<uint8_t>& dequeBuffer, uint64
 bool EbpfDataReader::InitEbpfHeader()
 {
     if (bufferSize_ < EbpfDataHeader::EBPF_DATA_HEADER_SIZE) {
-        TS_LOGE("buffer size less than ebpf data header!!!, bufferSize_ = %lu ", bufferSize_);
+        TS_LOGE("buffer size less than ebpf data header!!!, bufferSize_ = %llu ", bufferSize_);
         return false;
     }
     ebpfDataHeader_ = reinterpret_cast<EbpfDataHeader*>(startAddr_);
 
     if (ebpfDataHeader_->header.magic != EbpfDataHeader::HEADER_MAGIC) {
-        TS_LOGE("Get EBPF file header failed! magic = %lx", ebpfDataHeader_->header.magic);
+        TS_LOGE("Get EBPF file header failed! magic = %llx", ebpfDataHeader_->header.magic);
         return false;
     }
     if (ebpfDataHeader_->header.headSize != EbpfDataHeader::EBPF_DATA_HEADER_SIZE) {
         TS_LOGE("Get ebpf file header failed! headSize = %u", ebpfDataHeader_->header.headSize);
         return false;
     }
-    TS_LOGI("EBPF data header : magic = %llx, headSize = %llu, clock = %llu, cmdline = %s",
+    TS_LOGI("EBPF data header : magic = %" PRIu64 ", headSize = %u, clock = %u, cmdline = %s",
             ebpfDataHeader_->header.magic, ebpfDataHeader_->header.headSize, ebpfDataHeader_->header.clock,
             ebpfDataHeader_->cmdline);
     startAddr_ += EbpfDataHeader::EBPF_DATA_HEADER_SIZE;
@@ -76,7 +77,7 @@ bool EbpfDataReader::ReadEbpfData()
         unresolvedLen_ -= EBPF_TITLE_SIZE;
         if (dataTitle->length > unresolvedLen_) {
             TS_LOGE("Get EBPF data Title failed!");
-            TS_LOGE("type = %lx, length = %lx", dataTitle->type, dataTitle->length);
+            TS_LOGE("type = %x, length = %x", dataTitle->type, dataTitle->length);
             return false;
         }
         if (dataTitle->length == 0) {
@@ -186,7 +187,7 @@ void EbpfDataReader::ReadKernelSymAddrMap(const KernelSymbolInfoHeader* elfAddr,
     maxKernelAddr_ = elfAddr->vaddrEnd;
     minKernelAddr_ = elfAddr->vaddrStart;
     for (auto i = 0; i < sysItemSize; i++) {
-        (void*)memset_s(strSymbolName_, MAX_SYMBOL_LENGTH, 0, MAX_SYMBOL_LENGTH);
+        (void)memset_s(strSymbolName_, MAX_SYMBOL_LENGTH, 0, MAX_SYMBOL_LENGTH);
         auto item = start + i;
         if (strncpy_s(strSymbolName_, MAX_SYMBOL_LENGTH, strTab + item->nameOffset, MAX_SYMBOL_LENGTH) < 0) {
             TS_LOGE("get kernel symbol name error");
@@ -321,7 +322,7 @@ bool EbpfDataReader::ReadItemEventStr(const uint8_t* buffer, uint32_t size)
         streamFilters_->processFilter_->GetOrCreateThreadWithPid(strFixedHeaderAddr->tid, strFixedHeaderAddr->pid);
     auto strAddr = const_cast<char*>(reinterpret_cast<const char*>(strFixedHeaderAddr + 1));
     if ((strFixedHeaderAddr->strLen > size - sizeof(StrEventFixedHeader)) || !strFixedHeaderAddr->strLen) {
-        TS_LOGE("invalid str event, strEventFixedHeader = %u, strlen = %d, size = %d", sizeof(StrEventFixedHeader),
+        TS_LOGE("invalid str event, strEventFixedHeader = %lu, strlen = %d, size = %d", sizeof(StrEventFixedHeader),
                 strFixedHeaderAddr->strLen, size);
         return true;
     }

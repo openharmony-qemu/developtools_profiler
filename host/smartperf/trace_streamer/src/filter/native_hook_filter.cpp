@@ -167,9 +167,13 @@ void NativeHookFilter::ParseStatisticEvent(uint64_t timeStamp, const ProtoReader
         callChainId = reader.callstack_id();
     }
 
+    DataIndex memSubType = INVALID_UINT64;
+    if (reader.has_tag_name()) {
+        memSubType = traceDataCache_->GetDataIndex(reader.tag_name().ToStdString());
+    }
     traceDataCache_->GetNativeHookStatisticsData()->AppendNewNativeHookStatistic(
-        ipid_, timeStamp, callChainId, reader.type(), reader.apply_count(), reader.release_count(), reader.apply_size(),
-        reader.release_size());
+        ipid_, timeStamp, callChainId, reader.type(), memSubType, reader.apply_count(), reader.release_count(),
+        reader.apply_size(), reader.release_size());
 }
 void NativeHookFilter::ParseAllocEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView)
 {

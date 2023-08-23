@@ -13,25 +13,23 @@
  * limitations under the License.
  */
 
-export class JSonToCSV {
-  static setDataConver(obj: any) {
+export class JSONToCSV {
+  static setCsvData(obj: any) {
     let that = this;
-    let bw = this.browser();
-    if (bw['ie'] < 9) return;
-    let data = obj['data'],
-      Show = typeof obj['showLabel'] === 'undefined' ? true : obj['showLabel'],
-      fileName = (obj['fileName'] || 'UserExport') + '.csv',
-      columns = obj['columns'] || {
-        title: [],
-        key: [],
-        formatter: undefined,
-      };
-    let ShowLabel = typeof Show === 'undefined' ? true : Show;
-    let row = '',
-      CSV = '',
-      key;
+    let browserType = this.browserType();
+    if (browserType['ie'] < 9) return;
+    let data = obj['data'];
+    let isShowLabel = typeof obj['showLabel'] === 'undefined' ? true : obj['showLabel'];
+    let fileName = (obj['fileName'] || 'UserExport') + '.csv';
+    let columns = obj['columns'] || {
+      title: [],
+      key: [],
+      formatter: undefined,
+    };
+    let showLabel = typeof isShowLabel === 'undefined' ? true : isShowLabel;
+    let row = '', csv = '', key;
     // 如果要现实表头文字
-    if (ShowLabel) {
+    if (showLabel) {
       // 如果有传入自定义的表头文字
       if (columns.title.length) {
         columns.title.map(function (n: any) {
@@ -42,7 +40,7 @@ export class JSonToCSV {
         for (key in data[0]) row += key + ',';
       }
       row = row.slice(0, -1);
-      CSV += row + '\r\n';
+      csv += row + '\r\n';
     }
     // 具体的数据处理
     data.map(function (n: any) {
@@ -75,29 +73,27 @@ export class JSonToCSV {
         }
       }
       row.slice(0, row.length - 1); // 删除最后一个,
-      CSV += row + '\r\n'; // 添加换行符号
+      csv += row + '\r\n'; // 添加换行符号
     });
-    if (!CSV) return;
-    this.SaveAs(fileName, CSV);
+    if (!csv) return;
+    this.saveCsvFile(fileName, csv);
   }
 
-  static SaveAs(fileName: any, csvData: any) {
-    let bw: any = this.browser();
-    if (!bw['edge'] || !bw['ie']) {
+  static saveCsvFile(fileName: any, csvData: any) {
+    let browserType: any = this.browserType();
+    if (!browserType['edge'] || !browserType['ie']) {
       let alink: any = document.createElement('a');
-      alink.id = 'linkDwnldLink';
+      alink.id = 'csvDownloadLink';
       alink.href = this.getDownloadUrl(csvData);
       document.body.appendChild(alink);
-      let linkDom: any = document.getElementById('linkDwnldLink');
+      let linkDom: any = document.getElementById('csvDownloadLink');
       linkDom.setAttribute('download', fileName);
       linkDom.click();
       document.body.removeChild(linkDom);
-    } else if (bw['ie'] >= 10 || bw['edge'] == 'edge') {
-      let _utf = '\uFEFF';
-      let _csvData = new Blob([_utf + csvData], {
+    } else if (browserType['ie'] >= 10 || browserType['edge'] == 'edge') {
+      (navigator as any).msSaveBlob(new Blob(['\uFEFF' + csvData], {
         type: 'text/csv',
-      });
-      (navigator as any).msSaveBlob(_csvData, fileName);
+      }), fileName);
     } else {
       let oWin: any = window.top?.open('about:blank', '_blank');
       oWin.document.write('sep=,\r\n' + csvData);
@@ -108,33 +104,31 @@ export class JSonToCSV {
   }
 
   static getDownloadUrl(csvData: any) {
-    let _utf = '\uFEFF';
     if (window.Blob && window.URL && (window.URL as any).createObjectURL) {
-      var csvData: any = new Blob([_utf + csvData], {
+      return URL.createObjectURL(new Blob(['\uFEFF' + csvData], {
         type: 'text/csv',
-      });
-      return URL.createObjectURL(csvData);
+      }));
     }
   }
 
-  static browser() {
-    let Sys: any = {};
-    let ua = navigator.userAgent.toLowerCase();
-    let s;
-    (s = ua.indexOf('edge') !== -1 ? (Sys.edge = 'edge') : ua.match(/rv:([\d.]+)\) like gecko/))
-      ? (Sys.ie = s[1])
-      : (s = ua.match(/msie ([\d.]+)/))
-      ? (Sys.ie = s[1])
-      : (s = ua.match(/firefox\/([\d.]+)/))
-      ? (Sys.firefox = s[1])
-      : (s = ua.match(/chrome\/([\d.]+)/))
-      ? (Sys.chrome = s[1])
-      : (s = ua.match(/opera.([\d.]+)/))
-      ? (Sys.opera = s[1])
-      : (s = ua.match(/version\/([\d.]+).*safari/))
-      ? (Sys.safari = s[1])
-      : 0;
-    return Sys;
+  static browserType() {
+    let type: any = {};
+    let agent = navigator.userAgent.toLowerCase();
+    let has;
+    (has = agent.indexOf('edge') !== -1 ? (type.edge = 'edge') : agent.match(/rv:([\d.]+)\) like gecko/))
+      ? (type.ie = has[1])
+      : (has = agent.match(/msie ([\d.]+)/))
+        ? (type.ie = has[1])
+        : (has = agent.match(/firefox\/([\d.]+)/))
+          ? (type.firefox = has[1])
+          : (has = agent.match(/chrome\/([\d.]+)/))
+            ? (type.chrome = has[1])
+            : (has = agent.match(/opera.([\d.]+)/))
+              ? (type.opera = has[1])
+              : (has = agent.match(/version\/([\d.]+).*safari/))
+                ? (type.safari = has[1])
+                : 0;
+    return type;
   }
 
   static treeDepth(depth: number) {
@@ -150,7 +144,7 @@ export class JSonToCSV {
     data.forEach((item: any) => {
       let depthCSV = 0;
       const loop = (data: any, depth: any) => {
-        result.push({ depthCSV: depth, ...data });
+        result.push({depthCSV: depth, ...data});
         let child = data.children;
         if (child) {
           for (let i = 0; i < child.length; i++) {
@@ -163,7 +157,7 @@ export class JSonToCSV {
     return result;
   }
 
-  static columnDatas(columns: Array<any>) {
+  static columnsData(columns: Array<any>) {
     let titleList: Array<any> = [];
     let ketList: Array<any> = [];
     columns.forEach((column) => {
@@ -185,9 +179,9 @@ export class JSonToCSV {
 
   static async csvExport(dataSource: { columns: any[]; tables: any[]; fileName: string }): Promise<string> {
     return new Promise((resolve) => {
-      let data: any = this.columnDatas(dataSource.columns);
-      let resultArr = JSonToCSV.treeToArr(dataSource.tables);
-      JSonToCSV.setDataConver({
+      let data: any = this.columnsData(dataSource.columns);
+      let resultArr = JSONToCSV.treeToArr(dataSource.tables);
+      JSONToCSV.setCsvData({
         data: resultArr,
         fileName: dataSource.fileName,
         columns: {

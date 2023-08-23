@@ -81,7 +81,7 @@ public:
     const DeviceStateData& GetConstDeviceStateData() const;
     const EbpfCallStackData& GetConstEbpfCallStackData() const;
     const PagedMemorySampleData& GetConstPagedMemorySampleData() const;
-#if WITH_EBPF_HELP
+#ifdef WITH_EBPF_HELP
     const EbpfProcessMaps& GetConstEbpfProcessMaps() const;
     const EbpfElf& GetConstEbpfElf() const;
     const EbpfElfSymbol& GetConstEbpfElfSymbol() const;
@@ -106,8 +106,14 @@ public:
     const JsHeapString& GetConstJsHeapStringData() const;
     const JsHeapTraceFuncInfo& GetConstJsHeapTraceFuncInfoData() const;
     const JsHeapTraceNode& GetConstJsHeapTraceNodeData() const;
+    const JsCpuProfilerNode& GetConstJsCpuProfilerNodeData() const;
+    const JsCpuProfilerSample& GetConstJsCpuProfilerSampleData() const;
+    const JsConfig& GetConstJsConfigData() const;
     const AppStartup& GetConstAppStartupData() const;
     const SoStaticInitalization& GetConstStaticInitalizationData() const;
+    const Animation& GetConstAnimation() const;
+    const DeviceInfo& GetConstDeviceInfo() const;
+    const DynamicFrame& GetConstDynamicFrame() const;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

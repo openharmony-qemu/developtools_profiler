@@ -17,6 +17,10 @@ import { CpuFreqLimitsStruct } from '../database/ui-worker/ProcedureWorkerCpuFre
 import { ClockStruct } from '../database/ui-worker/ProcedureWorkerClock.js';
 import { IrqStruct } from '../database/ui-worker/ProcedureWorkerIrq.js';
 import { FuncStruct } from '../database/ui-worker/ProcedureWorkerFunc.js';
+import { FrameDynamicStruct } from '../database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import { FrameAnimationStruct } from '../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import { FrameSpacingStruct } from '../database/ui-worker/ProcedureWorkerFrameSpacing.js';
+import { JsCpuProfilerChartFrame } from './JsStruct.js';
 
 export class SelectionParam {
   recordStartNs: number = 0;
@@ -71,7 +75,11 @@ export class SelectionParam {
   promiseList: Array<Promise<any>> = [];
   jankFramesData: Array<any> = [];
   jsMemory: Array<any> = [];
-  taskFramesData: Array<Array<FuncStruct>> = [];
+  taskFramesData: Array<FuncStruct> = [];
+  frameDynamic: Array<FrameDynamicStruct> = [];
+  frameAnimation: Array<FrameAnimationStruct> = [];
+  frameSpacing: Array<FrameSpacingStruct> = [];
+  jsCpuProfilerData: Array<JsCpuProfilerChartFrame> = [];
 }
 
 export class BoxJumpParam {

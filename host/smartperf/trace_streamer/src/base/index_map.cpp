@@ -21,7 +21,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-IndexMap::IndexMap(TableRowId start, TableRowId end) : end_(end), current_(start), start_(start), type_(COMPACT) {}
+IndexMap::IndexMap(TableRowId start, TableRowId end) : end_(end), current_(start), start_(start) {}
 
 void IndexMap::CovertToIndexMap()
 {
@@ -146,12 +146,14 @@ void IndexMap::FilterTS(unsigned char op, sqlite3_value* argv, const std::deque<
             break;
         case SQLITE_INDEX_CONSTRAINT_GT:
             v++;
+            [[fallthrough]];
         case SQLITE_INDEX_CONSTRAINT_GE: {
             IntersectGreaterEqual(times, v, getValue);
             break;
         }
         case SQLITE_INDEX_CONSTRAINT_LE:
             v++;
+            [[fallthrough]];
         case SQLITE_INDEX_CONSTRAINT_LT:
             IntersectLessEqual(times, v, getValue);
             break;

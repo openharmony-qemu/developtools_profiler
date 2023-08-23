@@ -47,6 +47,7 @@ declare global {
         TimeRange: string; //Set the timeline range
         TraceRowComplete: string; //Triggered after the row component has finished loading data
         KeyboardEnable: string; // SystemTrace Keyboard enable
+        MouseEventEnable: string; // Mouse Event Keyboard enable
         UploadSOFile: string; // Upload so file
         Loading: string; // Upload so file
         Error: string; // load error
@@ -95,6 +96,7 @@ window.SmartEvent = {
     TimeRange: 'SmartEvent-UI-TimeRange',
     TraceRowComplete: 'SmartEvent-UI-TraceRowComplete',
     KeyboardEnable: 'SmartEvent-UI-StopWASD',
+    MouseEventEnable: 'SmartEvent-UI-StopMouseEvent',
     UploadSOFile: 'SmartEvent-UI-UploadSoFile',
     Loading: 'SmartEvent-UI-Loading',
     Error: 'SmartEvent-UI-Error',

@@ -19,6 +19,7 @@
 #include <vector>
 #include "common_types.h"
 #include "event_parser_base.h"
+#include "htrace_js_cpu_profiler_parser.h"
 #include "htrace_plugin_time_parser.h"
 #include "json.hpp"
 #include "trace_streamer_config.h"
@@ -52,8 +53,10 @@ private:
     int32_t pid_ = 0;
     const std::string snapshotEnd_ = "{\"id\":1,\"result\":{}}";
     const std::string timeLineEnd_ = "{\"id\":2,\"result\":{}}";
+    const std::string jsCpuProfilerStart_ = "{\"id\":3,\"result\":{}}";
     uint64_t startTime_ = std::numeric_limits<uint64_t>::max();
     bool isFirst_ = true;
+    bool cpuTimeFirst_ = true;
     std::string jsMemoryString_ = "";
     int32_t fileId_ = 0;
     int32_t jsFileId_ = 0;
@@ -63,6 +66,9 @@ private:
     const std::string tmpJsMemoryTimelineData_ = "ts_tmp.jsmemory_timeline.heapsnapshot";
     const std::string tmpJsMemorySnapshotData_ = "ts_tmp.jsmemory_snapshot";
     const std::string jsSnapshotFileTail = ".heapsnapshot";
+    const std::string tmpJsCpuProfilerData_ = "Profile";
+    const std::string jsCpuProFiler = ".cpuprofile";
+    std::unique_ptr<HtraceJsCpuProfilerParser> jsCpuProfilerParser_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

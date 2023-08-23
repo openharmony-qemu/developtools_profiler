@@ -38,7 +38,7 @@ foreach(proto, bytrace_plugin_protos_defines) {
 bytrace_plugin_protos_codegen_all += bytrace_plugin_protos_codegen
 bytrace_plugin_protos_codegen_all += bytrace_plugin_protos_codegen_standard
 
-action("bytrace_plugin_protos_protoc") {
+action("ts_bytrace_plugin_protos_protoc") {
   script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = bytrace_plugin_protos_defines
   outputs = bytrace_plugin_protos_codegen_all
@@ -58,8 +58,10 @@ config("bytrace_plugin_protos_config") {
   include_dirs = [ "$proto_out_dir" ]
 }
 
-ohos_source_set("bytrace_plugin_protos_cpp") {
-  deps = [ ":bytrace_plugin_protos_protoc" ]
+ohos_source_set("ts_bytrace_plugin_protos_cpp") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_bytrace_plugin_protos_protoc" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
@@ -67,12 +69,12 @@ ohos_source_set("bytrace_plugin_protos_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
   sources = bytrace_plugin_protos_codegen
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }
 
-ohos_source_set("bytrace_plugin_protos_cpp_standard") {
-  deps = [ ":bytrace_plugin_protos_protoc" ]
+ohos_source_set("ts_bytrace_plugin_protos_cpp_standard") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_bytrace_plugin_protos_protoc" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",

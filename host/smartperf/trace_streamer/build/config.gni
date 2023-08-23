@@ -11,24 +11,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import("ts.gni")
-asdk_libs_dir = "."
-host_toolchain = ""
-OHOS_TRACE_STREAMER_PROTOS_DIR = get_path_info("../src", "abspath")
-OHOS_PROFILER_3RDPARTY_DIR = get_path_info("../third_party/", "abspath")
-OHOS_PROFILER_3RDPARTY_GRPC_DIR = "${OHOS_PROFILER_3RDPARTY_DIR}/grpc"
-OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR = "${OHOS_PROFILER_3RDPARTY_DIR}/protobuf"
-OHOS_PROFILER_3RDPARTY_GOOGLETEST_DIR =
-    "${OHOS_PROFILER_3RDPARTY_DIR}/googletest"
-
-OHOS_PROFILER_SUBSYS_NAME = "developtools"
-OHOS_PROFILER_PART_NAME = "profiler"
-OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH = "profiler"
-
-build_l2 = false
-if (getenv("BUILD_L2") == "true") {
-  build_l2 = true
-}
-
-declare_args() {
-  profiler_SmartPerf = true
-}

@@ -131,6 +131,7 @@ message RecordStatisticsEvent {
     uint64 release_count = 5;
     uint64 apply_size = 6;
     uint64 release_size = 7;
+    string tag_name = 8;
 }
 
 message NativeHookData {

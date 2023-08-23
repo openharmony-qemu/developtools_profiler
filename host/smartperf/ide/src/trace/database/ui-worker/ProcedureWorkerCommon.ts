@@ -91,6 +91,15 @@ export function ns2s(ns: number): string {
 export function isFrameContainPoint(frame: Rect, x: number, y: number): boolean {
   return x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height;
 }
+export const isSurroundingPoint = function (pointX: number, currentRect: Rect, unitPointXRange: number): boolean {
+  return (pointX >= currentRect.x - unitPointXRange) && pointX <= currentRect.x + unitPointXRange;
+};
+
+export const computeUnitWidth = function (preTs: number,currentTs: number, frameWidth: number): number {
+  let max = 150;
+  let unitWidth = ((currentTs - preTs) * frameWidth) / (TraceRow.range!.endNS - TraceRow.range!.startNS);
+  return unitWidth > max ? max : unitWidth;
+};
 
 class FilterConfig {
   startNS: number = 0;

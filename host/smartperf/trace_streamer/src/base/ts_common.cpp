@@ -12,5 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ts_common.h"
-BuiltinClocks PRIMARY_CLOCK_ID = TS_CLOCK_BOOTTIME;
+BuiltinClocks g_primaryClockId = TS_CLOCK_BOOTTIME;

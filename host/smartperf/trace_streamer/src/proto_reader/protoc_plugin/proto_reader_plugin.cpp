@@ -18,7 +18,6 @@
 namespace SysTuning {
 namespace ProtoReader {
 const std::string SYS_NAMESPACE = "SysTuning";
-const int32_t MAX_DECODER_FIELDID = 999;
 const int32_t MIN_OPTIONS_SIZE = 2;
 
 bool ProtoReaderPlugin::Generate(const FileDescriptor* file,

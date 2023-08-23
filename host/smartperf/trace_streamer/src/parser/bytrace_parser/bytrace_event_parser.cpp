@@ -642,7 +642,7 @@ bool BytraceEventParser::BinderTransactionAllocBufEvent(const ArgsMap& args, con
 }
 void BytraceEventParser::ParseDataItem(const BytraceLine& line)
 {
-    eventList_.push_back(std::move(std::make_unique<EventInfo>(line.ts, std::move(line))));
+    eventList_.push_back(std::make_unique<EventInfo>(line.ts, std::move(line)));
     return;
 }
 void BytraceEventParser::GetDataSegArgs(BytraceLine& bufLine, ArgsMap& args, uint32_t& tgid) const

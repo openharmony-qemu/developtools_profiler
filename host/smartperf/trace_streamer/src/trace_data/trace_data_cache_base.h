@@ -162,8 +162,14 @@ public:
     JsHeapString jsHeapStringData_;
     JsHeapTraceFuncInfo jsHeapTraceFuncInfoData_;
     JsHeapTraceNode jsHeapTraceNodeData_;
+    JsCpuProfilerNode jsCpuProfilerNodeData_;
+    JsCpuProfilerSample jsCpuProfilerSampleData_;
+    JsConfig jsConfigData_;
     AppStartup appStartupData_;
     SoStaticInitalization staticInitalizationData_;
+    Animation animation_;
+    DeviceInfo deviceInfo_;
+    DynamicFrame dynamicFrame_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

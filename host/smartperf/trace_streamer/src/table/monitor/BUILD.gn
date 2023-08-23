@@ -15,8 +15,8 @@ import("//build/ohos.gni")
 
 import("../../../build/ts.gni")
 ohos_source_set("monitor_tables") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "cpu_usage_info_table.cpp",
     "cpu_usage_info_table.h",

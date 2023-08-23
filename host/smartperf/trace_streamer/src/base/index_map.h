@@ -331,7 +331,7 @@ public:
             }
         } else {
             auto size = rows.size();
-            for (auto i = 0; i < size; i++) {
+            for (size_t i = 0; i < size; i++) {
                 if (rows[i] != invalidValue) {
                     rowIndex_.push_back(i);
                 }
@@ -354,11 +354,8 @@ private:
         INDEX_TYPE_OUTER_INDEX,
     };
     FindIndexType indexType_ = INDEX_TYPE_ID;
-    uint32_t indexSize_ = 0;
-    uint32_t index_ = 0;
 
     enum IndexType { COMPACT, SPARSE };
-    uint8_t type_ = COMPACT;
     bool empty_ = true;
     bool desc_ = false;
     bool converted_ = false;

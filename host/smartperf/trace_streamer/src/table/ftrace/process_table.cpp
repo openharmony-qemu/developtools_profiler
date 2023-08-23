@@ -294,7 +294,6 @@ void ProcessTable::Cursor::FilterPid(unsigned char op, uint64_t value)
 }
 void ProcessTable::Cursor::FilterIndex(int32_t col, unsigned char op, sqlite3_value* argv)
 {
-    auto type = sqlite3_value_type(argv);
     switch (col) {
         case PID:
             /* code */
@@ -307,7 +306,6 @@ void ProcessTable::Cursor::FilterIndex(int32_t col, unsigned char op, sqlite3_va
 }
 void ProcessTable::Cursor::FilterId(unsigned char op, sqlite3_value* argv)
 {
-    auto type = sqlite3_value_type(argv);
     auto v = static_cast<TableRowId>(sqlite3_value_int64(argv));
     switch (op) {
         case SQLITE_INDEX_CONSTRAINT_EQ:

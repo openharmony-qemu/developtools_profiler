@@ -80,6 +80,10 @@ import { AppStartupStruct } from './ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from './ui-worker/ProcedureWorkerSoInit.js';
 import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerCommon.js';
 import { TaskTabStruct } from '../component/trace/sheet/task/TabPaneTaskFrames.js';
+import { DeviceStruct } from '../bean/FrameComponentBean.js';
+import { FrameSpacingStruct } from './ui-worker/ProcedureWorkerFrameSpacing.js';
+import { FrameDynamicStruct } from './ui-worker/ProcedureWorkerFrameDynamic.js';
+import { FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnimation.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
@@ -533,7 +537,9 @@ export const getFunDataByTid = (tid: number, ipid: number): Promise<Array<FuncSt
     c.name as funName,
     c.argsetid,
     c.depth,
-    c.id as id
+    c.id as id,
+    A.itid as itid,
+    A.ipid as ipid
 from thread A,trace_range D
 left join callstack C on A.id = C.callid
 where startTs not null and c.cookie is null and tid = $tid and A.ipid = $ipid`,
@@ -1590,14 +1596,24 @@ export const queryNativeHookSubType = (leftNs: number, rightNs: number): Promise
 export const queryNativeHookStatisticSubType = (leftNs: number, rightNs: number): Promise<Array<any>> =>
   query(
     'queryNativeHookStatisticSubType',
-    `SELECT DISTINCT type as subTypeId,
-          CASE WHEN type = 2 THEN 'FILE_PAGE_MSG' WHEN type = 3 THEN 'MEMORY_USING_MSG' ELSE 'MmapEvent' END AS subType
-        FROM
-          native_hook_statistic NHS,
-          trace_range TR
-        WHERE
-          NHS.type > 1 AND
-          (NHS.ts - TR.start_ts) between ${leftNs} and ${rightNs}
+    `SELECT DISTINCT
+      CASE
+        WHEN type = 3 AND sub_type_id NOT NULL THEN sub_type_id
+        ELSE type
+      END AS subTypeId,
+      CASE
+        WHEN type = 2 THEN 'FILE_PAGE_MSG'
+        WHEN type = 3 AND sub_type_id NOT NULL THEN D.data
+        WHEN type = 3 THEN 'MEMORY_USING_MSG'
+        ELSE 'MmapEvent'
+      END AS subType
+      FROM
+        native_hook_statistic NHS
+        LEFT JOIN data_dict D ON NHS.sub_type_id = D.id,
+        trace_range TR
+      WHERE
+        NHS.type > 1 AND
+        (NHS.ts - TR.start_ts) between ${leftNs} and ${rightNs}
       `,
     { $leftNs: leftNs, $rightNs: rightNs }
   );
@@ -4084,10 +4100,19 @@ export const queryGpuDur = (id: number): Promise<any> =>
 export const queryHeapFile = (): Promise<Array<FileInfo>> =>
   query(
     'queryHeapFile',
-    `SELECT f.id, f.file_name as name, f.start_time as startTs, f.end_time as endTs, f.pid, f.self_size as size
-    FROM js_heap_files f,trace_range t
-    WHERE (t.end_ts >= f.end_time and f.file_name != 'Timeline')
-    OR f.file_name = 'Timeline'`
+    `SELECT f.id,
+        f.file_name AS name,
+        f.start_time - t.start_ts AS startTs,
+        f.end_time - t.start_ts AS endTs,
+        f.self_size AS size,
+        c.pid
+      FROM
+        js_heap_files f,
+        trace_range t,
+        js_config c
+      WHERE
+        ( t.end_ts >= f.end_time AND f.file_name != 'Timeline' )
+        OR f.file_name = 'Timeline'`
   );
 
 export const queryHeapInfo = (fileId: number): Promise<Array<any>> =>
@@ -4220,14 +4245,14 @@ export const queryHiPerfProcessCount = (
   );
 };
 
-export const queryConcurrencyTask = (funName: string, selectStartTime: number, selectEndTime: number) =>
+export const queryConcurrencyTask = (itid: number, selectStartTime: number, selectEndTime: number) =>
   query<TaskTabStruct>(
     'queryConcurrencyTask',
     `SELECT thread.tid,
             thread.ipid,
             callstack.name                AS funName,
             callstack.ts                  AS startTs,
-            callstack.dur,
+            (case when callstack.dur = -1 then (SELECT end_ts FROM trace_range) else callstack.dur end) as dur,
             callstack.id,
             task_pool.priority,
             task_pool.allocation_task_row AS allocationTaskRow,
@@ -4239,23 +4264,25 @@ export const queryConcurrencyTask = (funName: string, selectStartTime: number, s
             LEFT JOIN task_pool ON callstack.id = task_pool.execute_task_row
      WHERE ipid = (SELECT thread.ipid
                    FROM thread
-                          LEFT JOIN callstack ON thread.id = callstack.callid
-                   WHERE callstack.name = $funName)
+                   WHERE thread.itid = $itid)
        AND thread.name = 'TaskWorkThread'
+       AND callstack.name LIKE 'H:Task Perform:%'
        AND -- 左包含
-           ($selectStartTime <= callstack.ts AND $selectEndTime > callstack.ts AND callstack.name LIKE 'H:Task Perform:%')
+           (($selectStartTime <= callstack.ts AND $selectEndTime > callstack.ts)
         OR -- 右包含
-       ($selectStartTime < callstack.ts + callstack.dur AND $selectEndTime >= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+       ($selectStartTime < callstack.ts + callstack.dur AND $selectEndTime >= callstack.ts + callstack.dur)
         OR -- 包含
-       ($selectStartTime >= callstack.ts AND $selectEndTime <= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+       ($selectStartTime >= callstack.ts AND $selectEndTime <= callstack.ts +
+        (case when callstack.dur = -1 then (SELECT end_ts FROM trace_range) else callstack.dur end))
         OR -- 被包含
-       ($selectStartTime <= callstack.ts AND $selectEndTime >= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+       ($selectStartTime <= callstack.ts AND $selectEndTime >= callstack.ts + callstack.dur))
      ORDER BY callstack.ts;`,
-    { $funName: funName, $selectStartTime: selectStartTime, $selectEndTime: selectEndTime}
+    { $itid: itid, $selectStartTime: selectStartTime, $selectEndTime: selectEndTime }
   );
 
 export const queryBySelectExecute = (
-  executeId: string
+  executeId: string,
+  itid: number
 ): Promise<
   Array<{
     tid: number;
@@ -4273,13 +4300,14 @@ export const queryBySelectExecute = (
                 FROM task_pool
                        LEFT JOIN callstack ON callstack.id = task_pool.allocation_task_row
                        LEFT JOIN thread ON thread.id = callstack.callid
-                WHERE task_pool.execute_id = $executeId;
+                WHERE task_pool.execute_id = $executeId AND task_pool.execute_itid = $itid;
     `;
-  return query('queryBySelectExecute', sqlStr, { $executeId: executeId });
+  return query('queryBySelectExecute', sqlStr, { $executeId: executeId, $itid: itid });
 };
 
 export const queryBySelectAllocationOrReturn = (
-  executeId: string
+  executeId: string,
+  itid: number
 ): Promise<
   Array<{
     tid: number;
@@ -4297,24 +4325,31 @@ export const queryBySelectAllocationOrReturn = (
                 FROM task_pool
                        LEFT JOIN callstack ON callstack.id = task_pool.execute_task_row
                        LEFT JOIN thread ON thread.id = callstack.callid
-                WHERE task_pool.execute_task_row IS NOT NULL AND task_pool.execute_id = $executeId;
+                WHERE task_pool.execute_task_row IS NOT NULL AND task_pool.execute_id = $executeId
+                AND task_pool.allocation_itid = $itid;
     `;
-  return query('queryBySelectAllocationOrReturn', sqlStr, { $executeId: executeId });
+  return query('queryBySelectAllocationOrReturn', sqlStr, { $executeId: executeId, $itid: itid });
 };
 
-export const queryTaskListByExecuteTaskIds = (executeTaskIds: Array<number>): Promise<Array<TaskTabStruct>> => {
+export const queryTaskListByExecuteTaskIds = (
+  executeTaskIds: Array<number>,
+  ipid: number
+): Promise<Array<TaskTabStruct>> => {
   let sqlStr = `
-  SELECT
-    task_pool.allocation_task_row as allocationTaskRow,
-    task_pool.execute_task_row as executeTaskRow,
-    task_pool.return_task_row as returnTaskRow,
-    task_pool.execute_id as executeId,
-    task_pool.priority
-  FROM task_pool
-         LEFT JOIN callstack ON callstack.id = task_pool.allocation_task_row
-  WHERE task_pool.execute_id IN (${executeTaskIds.join(',')}) AND task_pool.execute_task_row IS NOT NULL;
+    SELECT thread.ipid,
+           task_pool.allocation_task_row AS allocationTaskRow,
+           task_pool.execute_task_row    AS executeTaskRow,
+           task_pool.return_task_row     AS returnTaskRow,
+           task_pool.execute_id          AS executeId,
+           task_pool.priority
+    FROM task_pool
+           LEFT JOIN callstack ON callstack.id = task_pool.allocation_task_row
+           LEFT JOIN thread ON thread.id = callstack.callid
+    WHERE task_pool.execute_id IN (${executeTaskIds.join(',')})
+      AND thread.ipid = $ipid
+      AND task_pool.execute_task_row IS NOT NULL;
     `;
-  return query('queryTaskListByExecuteTaskIds', sqlStr, { $executeTaskIds: executeTaskIds });
+  return query('queryTaskListByExecuteTaskIds', sqlStr, { $executeTaskIds: executeTaskIds, $ipid: ipid });
 };
 
 export const queryTaskPoolCallStack = (): Promise<Array<{ id: number; ts: number; dur: number; name: string }>> => {
@@ -4322,18 +4357,141 @@ export const queryTaskPoolCallStack = (): Promise<Array<{ id: number; ts: number
   return query('queryTaskPoolCallStack', sqlStr, {});
 };
 
-
-export const queryTaskPoolTotalNum = (funName: string) =>
-    query<number>(
-        'queryTaskPoolTotalNum',
-        `SELECT thread.tid
+export const queryTaskPoolTotalNum = (itid: number) =>
+  query<number>(
+    'queryTaskPoolTotalNum',
+    `SELECT thread.tid
          FROM thread
                 LEFT JOIN callstack ON thread.id = callstack.callid
          WHERE ipid = (SELECT thread.ipid
                        FROM thread
-                              LEFT JOIN callstack ON thread.id = callstack.callid
-                       WHERE callstack.name = $funName)
+                       WHERE thread.itid = $itid)
            AND thread.name = 'TaskWorkThread'
          GROUP BY thread.tid;`,
-        { $funName: funName}
-    );
+    { $itid: itid }
+  );
+
+export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> =>
+  query(
+    'queryFrameAnimationData',
+    `SELECT
+           a.id AS animationId,
+           (CASE
+               WHEN a.input_time not null THEN (a.input_time - R.start_ts)
+               ELSE (a.start_point- R.start_ts)
+               END) AS ts,
+           (a.start_point - R.start_ts) AS dynamicStartTs,
+           (a.end_point - R.start_ts) AS dynamicEndTs
+        FROM 
+            animation AS a,
+            trace_range AS R
+        ORDER BY 
+            ts;`
+  );
+
+export const queryFrameDynamicData = (componentName: string): Promise<Array<FrameDynamicStruct>> =>
+  query(
+    'queryFrameDynamicData',
+    `SELECT
+           d.id,
+           d.x,
+           d.y,
+           d.width,
+           d.height,
+           d.alpha,
+           d.name AS appName,
+           (d.end_time - R.start_ts) AS ts
+        FROM 
+            dynamic_frame AS d,
+            trace_range AS R
+        WHERE
+            d.name = $componentName
+        ORDER BY 
+            d.end_time;`,
+    { $componentName: componentName }
+  );
+
+export const queryFrameApp = (): Promise<
+  Array<{
+    appName: string;
+  }>
+> =>
+  query(
+    'queryFrameApp',
+    `SELECT 
+            DISTINCT d.name as appName
+         FROM 
+             dynamic_frame AS d, 
+             trace_range AS R
+         WHERE 
+            d.end_time >= R.start_ts
+            AND
+            d.end_time <= R.end_ts;`
+  );
+
+export const queryAnimationFrameFps = (
+  startTime: number,
+  endTime: number
+): Promise<
+  Array<{
+    fps: number;
+  }>
+> =>
+  query(
+    'queryAnimationFrameFps',
+    `SELECT
+            count(*) as fps
+        FROM
+            dynamic_frame AS d,
+            trace_range AS R
+        WHERE 
+            d.end_time >= (${startTime} + R.start_ts)
+        AND
+            d.end_time <= (${endTime} + R.start_ts)`
+  );
+
+export const queryFrameSpacing = (appName: string): Promise<Array<FrameSpacingStruct>> =>
+  query(
+    'queryFrameSpacing',
+    `SELECT
+         d.id,
+         d.width AS currentFrameWidth,
+         d.height AS currentFrameHeight,
+         d.name AS nameId,
+         (d.end_time - R.start_ts) AS currentTs,
+         d.x,
+         d.y
+     FROM
+         dynamic_frame AS d,
+         trace_range AS R
+     WHERE
+         d.name = $appName
+     ORDER BY
+         d.end_time;`,
+    { $appName: appName }
+  );
+
+export const queryPhysicalData = (): Promise<Array<DeviceStruct>> =>
+  query(
+    'queryPhysicalData',
+    `SELECT physical_width AS physicalWidth,
+            physical_height AS physicalHeight,
+            physical_frame_rate AS physicalFrameRate
+     FROM device_info;`
+  );
+
+export const queryJsCpuProfilerConfig = (): Promise<Array<any>> =>
+  query('queryJsCpuProfilerConfig', `SELECT pid, type, enable_cpu_Profiler as enableCpuProfiler FROM js_config`);
+export const queryJsCpuProfilerData = (): Promise<Array<any>> =>
+  query('queryJsCpuProfilerData', `SELECT 1 WHERE EXISTS(select 1 from js_cpu_profiler_node)`);
+
+export const queryJsMemoryData = (): Promise<Array<any>> =>
+  query('queryJsMemoryData', `SELECT 1 WHERE EXISTS(SELECT 1 FROM js_heap_nodes)`);
+
+export const queryAllTaskPoolPid = (): Promise<Array<{ pid: number }>> =>
+  query(
+    'queryAllTaskPoolPid',
+    `SELECT DISTINCT pid from task_pool LEFT JOIN callstack ON callstack.id = task_pool.execute_task_row
+    LEFT JOIN thread ON thread.id = callstack.callid LEFT JOIN process ON
+        process.id = thread.ipid WHERE task_pool.execute_task_row IS NOT NULL`
+  );

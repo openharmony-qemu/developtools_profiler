@@ -82,7 +82,7 @@ ohos_source_set("hiperf_src") {
   ]
 }
 
-group("hiperf") {
+group("hiperf_platform_common") {
   deps = [
     ":elf",
     ":hiperf_src",

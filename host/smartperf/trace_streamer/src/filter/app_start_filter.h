@@ -26,7 +26,7 @@
 namespace SysTuning {
 namespace TraceStreamer {
 constexpr uint32_t INVAILD_DATA = 2;
-constexpr uint32_t MIN_VECTOR_SIZE_ = 2;
+constexpr uint32_t MIN_VECTOR_SIZE = 2;
 constexpr uint32_t VAILD_DATA_COUNT = 4;
 const std::string PROCESS_CREATE = "H:int OHOS::AAFwk::MissionListManager::StartAbilityLocked(";
 const std::string START_ABILITY = "H:virtual int OHOS::AAFwk::AbilityManagerService::StartAbility(";
@@ -75,12 +75,14 @@ private:
                               uint64_t endTime,
                               uint64_t startTime);
     void ParserAppStartup();
-    bool CaclRsDataByPid();
     bool GetProcessCreate(uint32_t row, uint64_t& startTime, std::string nameString);
-    void UpdatePidByNameIndex();
-    void AppendData();
-    DataIndex GetThreadNameAndUpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex);
-    std::unordered_map<DataIndex, std::map<uint32_t, std::unique_ptr<APPStartupData>>> mAPPStartupData_;
+    using appMap = std::unordered_map<DataIndex, std::map<uint32_t, std::unique_ptr<APPStartupData>>>;
+    void UpdatePidByNameIndex(const appMap& mAPPStartupData);
+    bool CaclRsDataByPid(appMap& mAPPStartupData);
+    void AppendData(const appMap& mAPPStartupData);
+    void UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex);
+    appMap mAPPStartupData_;
+    std::unordered_map<uint32_t, appMap> mAPPStartupDataWithPid_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

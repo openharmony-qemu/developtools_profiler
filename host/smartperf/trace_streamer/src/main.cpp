@@ -88,7 +88,7 @@ void PrintInformation()
 }
 void PrintVersion()
 {
-    fprintf(stderr, "version %s\n", TRACE_STREAM_VERSION.c_str());
+    fprintf(stderr, "version %s\n", g_traceStreamerVersion.c_str());
 }
 
 void LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sqlStrings)
@@ -203,8 +203,8 @@ int ExportDatabase(TraceStreamerSelector& ts, const std::string& sqliteFilePath)
         }
 #endif
         metaData->SetOutputFileName(fileNameTmp);
-        metaData->SetParserToolVersion(TRACE_STREAM_VERSION);
-        metaData->SetParserToolPublishDateTime(TRACE_STREAM_PUBLISHVERSION);
+        metaData->SetParserToolVersion(g_traceStreamerVersion);
+        metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion);
         metaData->SetTraceDataSize(g_loadSize);
         fprintf(stdout, "ExportDatabase begin...\n");
         if (ts.ExportDatabase(sqliteFilePath)) {
@@ -330,8 +330,8 @@ int main(int argc, char** argv)
     if (tsOption.interactiveState) {
         MetaData* metaData = ts.GetMetaData();
         metaData->SetOutputFileName("command line mode");
-        metaData->SetParserToolVersion(TRACE_STREAM_VERSION.c_str());
-        metaData->SetParserToolPublishDateTime(TRACE_STREAM_PUBLISHVERSION.c_str());
+        metaData->SetParserToolVersion(g_traceStreamerVersion.c_str());
+        metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion.c_str());
         metaData->SetTraceDataSize(g_loadSize);
         while (1) {
             auto values = ts.SearchData();

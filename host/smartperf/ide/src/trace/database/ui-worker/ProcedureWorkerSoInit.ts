@@ -23,6 +23,7 @@ import {
   RequestMessage,
   drawString,
 } from './ProcedureWorkerCommon.js';
+
 export class SoRender extends Render {
   renderMainThread(
     req: {
@@ -31,7 +32,7 @@ export class SoRender extends Render {
       type: string;
     },
     row: TraceRow<SoStruct>
-  ) {
+  ): void {
     let soList = row.dataList;
     let soFilter = row.dataListCache;
     soDataFilter(
@@ -71,7 +72,7 @@ export class SoRender extends Render {
     req.context.closePath();
   }
 
-  render(req: RequestMessage, list: Array<any>, filter: Array<any>) {}
+  render(req: RequestMessage, list: Array<any>, filter: Array<any>): void {}
 }
 
 export function soDataFilter(
@@ -82,9 +83,9 @@ export function soDataFilter(
   totalNS: number,
   frame: any,
   use: boolean
-) {
+): void {
   if (use && soFilter.length > 0) {
-    for (let i = 0, len = soFilter.length; i < len; i++) {
+    for (let i = 0, len = soFilter.length ; i < len ; i++) {
       if ((soFilter[i].startTs || 0) + (soFilter[i].dur || 0) >= startNS && (soFilter[i].startTs || 0) <= endNS) {
         SoStruct.setSoFrame(soFilter[i], 0, startNS, endNS, totalNS, frame);
       } else {
@@ -102,8 +103,8 @@ export function soDataFilter(
         return it;
       })
       .reduce((pre: any, current, index, arr) => {
-        if(current.frame) {
-          (pre[`${current.frame.x}-${current.depth}`] = pre[`${current.frame.x}-${current.depth}`] || []).push(current);
+        if (current.frame) {
+          (pre[`${ current.frame.x }-${ current.depth }`] = pre[`${ current.frame.x }-${ current.depth }`] || []).push(current);
         }
         return pre;
       }, {});
@@ -114,7 +115,7 @@ export function soDataFilter(
   }
 }
 
-export class SoStruct extends BaseStruct{
+export class SoStruct extends BaseStruct {
   static hoverSoStruct: SoStruct | undefined;
   static selectSoStruct: SoStruct | undefined;
   textMetricsWidth: number | undefined;
@@ -127,8 +128,9 @@ export class SoStruct extends BaseStruct{
   pid: number | undefined;
   itid: number | undefined;
 
-  static setSoFrame(soNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any) {
-    let x1: number, x2: number;
+  static setSoFrame(soNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any): void {
+    let x1: number;
+    let x2: number;
     if ((soNode.startTs || 0) > startNS && (soNode.startTs || 0) < endNS) {
       x1 = ns2x(soNode.startTs || 0, startNS, endNS, totalNS, frame);
     } else {
@@ -152,15 +154,16 @@ export class SoStruct extends BaseStruct{
     soNode.frame.height = 20;
   }
 
-  static draw(ctx: CanvasRenderingContext2D, data: SoStruct) {
+  static draw(ctx: CanvasRenderingContext2D, data: SoStruct): void {
     if (data.frame) {
       if (data.dur === undefined || data.dur === null) {
       } else {
+
         ctx.globalAlpha = 1;
         ctx.fillStyle = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.soName || '', 0, ColorUtils.FUNC_COLOR.length)];
         let textColor = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.soName || '', 0, ColorUtils.FUNC_COLOR.length)];
         let miniHeight = 20;
-        if (SoStruct.hoverSoStruct && data.soName == SoStruct.hoverSoStruct.soName) {
+        if (SoStruct.hoverSoStruct && data.soName === SoStruct.hoverSoStruct.soName) {
           ctx.globalAlpha = 0.7;
         }
         ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
@@ -169,7 +172,7 @@ export class SoStruct extends BaseStruct{
           ctx.lineWidth = 1;
           ctx.strokeRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
           ctx.fillStyle = ColorUtils.funcTextColor(textColor);
-          drawString(ctx, `${data.soName || ''}`, 5, data.frame, data);
+          drawString(ctx, `${ data.soName || '' }`, 5, data.frame, data);
         }
         if (data === SoStruct.selectSoStruct) {
           ctx.strokeStyle = '#000';

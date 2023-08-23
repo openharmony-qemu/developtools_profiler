@@ -15,8 +15,8 @@ import("//build/ohos.gni")
 import("../../build/ts.gni")
 
 ohos_source_set("parser") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "bytrace_parser/bytrace_event_parser.cpp",
     "bytrace_parser/bytrace_event_parser.h",
@@ -31,16 +31,16 @@ ohos_source_set("parser") {
     "thread_state_flag.h",
   ]
   deps = [
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_reader",
     "ebpf_parser:ebpf_parser",
   ]
   deps += [ "htrace_pbreader_parser:htrace_pbreader_parser" ]
@@ -56,7 +56,7 @@ ohos_source_set("parser") {
     "${SRC}/filter",
     "${SRC}",
     ".",
-    "${THIRD_PARTY}/json-master/single_include/nlohmann",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
   ]
 
   include_dirs += [ "htrace_pbreader_parser" ]

@@ -19,10 +19,13 @@ message ArkTSConfig {
     enum HeapType {
         SNAPSHOT = 0;
         TIMELINE = 1;
+        INVALID = -1;
     }
     int32 pid = 1;
     HeapType type = 2;
     uint32 interval = 3;
     bool capture_numeric_value = 4;
     bool track_allocations = 5;
+    bool enable_cpu_profiler = 6;
+    uint32 cpu_profiler_interval = 7;
 }

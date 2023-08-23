@@ -762,7 +762,7 @@ where ts between start_ts and end_ts ${condition};
                 0 as tid,
                 callchain_id as eventId,
                 (case when type = 0 then 'AllocEvent' else 'MmapEvent' end) as eventType,
-                type as subTypeId,
+                (case when sub_type_id not null then sub_type_id else type end) as subTypeId,
                 apply_size as heapSize,
                 release_size as freeSize,
                 apply_count as count,
@@ -805,7 +805,7 @@ where ts between start_ts and end_ts ${condition};
             analysisSample.subType = 'MEMORY_USING_MSG';
             break;
           default:
-            analysisSample.subType = undefined;
+            analysisSample.subType = this.dataCache.dataDict.get(sample.subTypeId);
         }
       } else {
         let subType = undefined;

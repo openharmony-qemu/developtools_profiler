@@ -92,8 +92,8 @@ bool RpcServer::ParseDataOver(const uint8_t* data, size_t len, ResultCallBack re
     MetaData* metaData = ts_->GetMetaData();
     metaData->SetSourceFileName("input stream mode");
     metaData->SetOutputFileName("wasm mode");
-    metaData->SetParserToolVersion(TRACE_STREAM_VERSION);
-    metaData->SetParserToolPublishDateTime(TRACE_STREAM_PUBLISHVERSION);
+    metaData->SetParserToolVersion(g_traceStreamerVersion);
+    metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion);
     metaData->SetTraceDataSize(g_loadSize);
     metaData->SetTraceType((ts_->DataType() == TRACE_FILETYPE_H_TRACE) ? "proto-based-trace" : "txt-based-trace");
     TS_LOGI("RPC ParseDataOver, has parsed len %zu", lenParseData_);

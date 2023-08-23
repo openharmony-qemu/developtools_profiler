@@ -14,8 +14,8 @@
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
 ohos_source_set("ebpf_parser_src") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "bio_latency_data_parser.cpp",
     "bio_latency_data_parser.h",
@@ -44,7 +44,7 @@ ohos_source_set("ebpf_parser_src") {
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
   ]
-  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder" ]
+  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader" ]
   if (is_win || is_macx) {
     include_dirs += [
       "${THIRD_PARTY}/perf_include/linux",

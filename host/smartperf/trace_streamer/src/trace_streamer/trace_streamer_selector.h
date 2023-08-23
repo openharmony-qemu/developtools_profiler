@@ -49,6 +49,7 @@ public:
     {
         return fileType_;
     }
+    void UpdateAnimationTraceStatus(bool status);
 
 private:
     void InitFilter();

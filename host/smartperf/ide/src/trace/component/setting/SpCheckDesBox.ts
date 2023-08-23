@@ -22,7 +22,19 @@ export class SpCheckDesBox extends BaseElement {
   private _des: HTMLSpanElement | undefined;
 
   static get observedAttributes() {
-    return ['checked', 'value', 'des'];
+    return ['checked', 'value', 'des', 'disabled'];
+  }
+
+  get disabled() {
+    return this.getAttribute('disabled') !== null;
+  }
+
+  set disabled(value) {
+    if (value === null || value === false) {
+      this.removeAttribute('disabled');
+    } else {
+      this.setAttribute('disabled', '');
+    }
   }
 
   set des(des: string) {
@@ -75,8 +87,11 @@ lit-check-box {
 #des-con{
   margin-left: 30px;
 }
+:host([disabled]){
+  pointer-events: none;
+}
 </style>
-<lit-check-box id="checkBox"></lit-check-box>    
+<lit-check-box id="checkBox"></lit-check-box>
 <div id="des-con">
     <span id="des" class="check-des"></span>
 </div>`;

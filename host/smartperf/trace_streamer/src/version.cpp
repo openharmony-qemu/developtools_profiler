@@ -14,5 +14,5 @@
  */
 #include "version.h"
 size_t g_loadSize = 0;
-std::string TRACE_STREAM_VERSION = "3.2.10";           // version
-std::string TRACE_STREAM_PUBLISHVERSION = "2023/6/25"; // publish datetime
+const std::string g_traceStreamerVersion = "3.4.4";            // version
+const std::string g_traceStreamerPublishVersion = "2023/7/19"; // publish datetime

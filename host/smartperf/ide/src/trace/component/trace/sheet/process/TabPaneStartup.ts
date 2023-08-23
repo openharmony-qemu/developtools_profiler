@@ -52,7 +52,7 @@ export class TabPaneStartup extends BaseElement {
       (result: AppStartupStruct[]) => {
         this.startupTbl!.loading = false;
         if (result != null && result.length > 0) {
-          log('getTabStartups result size : ' + result.length);
+          log('getTabStartups result  size : ' + result.length);
           let map: Map<number, StartupTreeItem> = new Map<number, StartupTreeItem>();
           result.forEach((item) => {
             let startup = {
@@ -71,7 +71,7 @@ export class TabPaneStartup extends BaseElement {
               }
             } else {
               map.set(item.pid!, {
-                name: item.process || `Process ${item.pid}`,
+                name: item.process || `Process ${ item.pid }`,
                 dur: item.dur || 0,
                 durStr: '',
                 ratio: `100%`,
@@ -112,7 +112,7 @@ export class TabPaneStartup extends BaseElement {
     });
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     super.connectedCallback();
     resizeObserver(this.parentElement!, this.startupTbl!);
   }
@@ -147,8 +147,8 @@ export class TabPaneStartup extends BaseElement {
         `;
   }
 
-  sortByColumn(startupDetail: any) {
-    let compare = (startupA: StartupTreeItem, startupB: StartupTreeItem) => {
+  sortByColumn(startupDetail: any): void {
+    let compare = (startupA: StartupTreeItem, startupB: StartupTreeItem): number => {
       if (startupDetail.sort === 0) {
         return startupA.step - startupB.step;
       } else if (startupDetail.sort === 1) {

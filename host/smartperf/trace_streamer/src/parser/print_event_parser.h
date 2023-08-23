@@ -45,12 +45,15 @@ private:
     uint32_t GetThreadGroupId(std::string_view pointStr, size_t& length) const;
     std::string_view GetPointNameForBegin(std::string_view pointStr, size_t tGidlength) const;
     ParseResult HandlerB(std::string_view pointStr, TracePoint& outPoint, size_t tGidlength) const;
-    void HandleFrameSliceBeginEvent(DataIndex eventName,
+    bool HandleFrameSliceBeginEvent(DataIndex eventName,
                                     size_t callStackRow,
                                     std::string& args,
                                     const BytraceLine& line);
     void HandleFrameSliceEndEvent(uint64_t ts, uint64_t pid, uint64_t tid, size_t callStackRow);
     void HandleFrameQueueEndEvent(uint64_t ts, uint64_t pid, uint64_t tid, size_t callStackRow);
+    bool HandleAnimationBeginEvent(const TracePoint& point, size_t callStackRow, const BytraceLine& line);
+    bool HandleAnimationStartEvent(const BytraceLine& line, size_t callStackRow);
+    bool HandleAnimationFinishEvent(const BytraceLine& line, size_t callStackRow);
     static ParseResult HandlerE(void);
     ParseResult HandlerCSF(std::string_view pointStr, TracePoint& outPoint, size_t tGidlength) const;
     static size_t GetNameLength(std::string_view pointStr, size_t nameIndex);
@@ -69,8 +72,10 @@ private:
     const DataIndex recvievVsync_ = traceDataCache_->GetDataIndex("H:ReceiveVsync");
     const DataIndex rsOnVsyncEvent_ = traceDataCache_->GetDataIndex("H:RSMainThread::OnVsync");
     const std::string onFrameQueeuStartEvent_ = "H:M: Frame queued";
+    const std::string onLauncherVsyncEvent_ = "launcher";
     const DataIndex marshRwTransactionData_ = traceDataCache_->GetDataIndex("H:MarshRSTransactionData");
     const DataIndex rsMainThreadProcessCmd_ = traceDataCache_->GetDataIndex("H:RSMainThread::ProcessCommandUni");
+    const DataIndex onAnimationStartEvent_ = traceDataCache_->GetDataIndex("H:L:TracestartAppAnimation");
     const std::regex recvVsyncPattern_ = std::regex("(\\w+):(\\w+)");
     const std::regex transFlagPattern_ = std::regex("transactionFlag:\\[(\\d+),(\\d+)\\]");
     const std::regex mainProcessCmdPattern = std::regex("\\[(\\d+),(\\d+)\\]");

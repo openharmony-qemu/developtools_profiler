@@ -27,11 +27,11 @@
         __builtin_unreachable(); \
     } while (0)
 enum LogLevel { LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
-const enum LogLevel g_currentLogLevel = LOG_DEBUG;
+const enum LogLevel CURRENT_LOG_LEVEL = LOG_DEBUG;
 extern bool g_cleanMode;
 #define LOGWITHLEVEL(level, motify, fmt, ...)                                                               \
     do {                                                                                                    \
-        if (level >= g_currentLogLevel) {                                                                   \
+        if (level >= CURRENT_LOG_LEVEL) {                                                                   \
             if (!g_cleanMode) {                                                                             \
                 fprintf(stdout, "[-%c][%s][%d]: " fmt "\n", motify, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
             }                                                                                               \

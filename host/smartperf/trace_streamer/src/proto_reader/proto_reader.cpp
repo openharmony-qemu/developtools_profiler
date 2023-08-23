@@ -109,7 +109,7 @@ bool ProtoReaderBase::ParseFixed64Value(ParseDataAreaResult& result,
         return false;
     }
 
-    (void*)memcpy_s(&intValue, sizeof(uint64_t), startAddr, sizeof(uint64_t));
+    (void)memcpy_s(&intValue, sizeof(uint64_t), startAddr, sizeof(uint64_t));
     result.dataArea.SetDataAreaIntValue(intValue);
     result.next = cursor;
     result.status = OK;
@@ -125,7 +125,7 @@ bool ProtoReaderBase::ParseFixed32Value(ParseDataAreaResult& result,
     if (cursor > endAddr) {
         return false;
     }
-    (void*)memcpy_s(&intValue, sizeof(uint64_t), startAddr, sizeof(uint32_t));
+    (void)memcpy_s(&intValue, sizeof(uint64_t), startAddr, sizeof(uint32_t));
     result.dataArea.SetDataAreaIntValue(intValue);
     result.next = cursor;
     result.status = OK;
@@ -227,7 +227,7 @@ void ProtoReaderBase::MoveToLargerHeapStorage()
 {
     uint32_t largerVolume = volume_ << 1;
     std::unique_ptr<DataArea[]> largerVolumeStorage(new DataArea[largerVolume]);
-    (void*)memcpy_s(&largerVolumeStorage[0], sizeof(DataArea) * largerVolume, dataAreas_, sizeof(DataArea) * size_);
+    (void)memcpy_s(&largerVolumeStorage[0], sizeof(DataArea) * largerVolume, dataAreas_, sizeof(DataArea) * size_);
     lagerHeapStorage_ = std::move(largerVolumeStorage);
     dataAreas_ = &lagerHeapStorage_[0];
     volume_ = largerVolume;

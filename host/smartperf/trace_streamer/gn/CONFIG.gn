@@ -14,7 +14,6 @@ is_win = false
 is_linux = false
 is_macx = false
 is_protoc = false
-with_perf = true
 with_ebpf_help_table = false
 is_mingw = false
 with_libunwind = false

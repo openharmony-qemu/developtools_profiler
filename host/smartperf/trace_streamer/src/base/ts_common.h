@@ -47,7 +47,7 @@ enum BuiltinClocks {
     TS_MONOTONIC_COARSE = 5,
     TS_MONOTONIC_RAW = 6,
 };
-extern BuiltinClocks PRIMARY_CLOCK_ID;
+extern BuiltinClocks g_primaryClockId;
 enum RefType {
     K_REF_NO_REF = 0,
     K_REF_ITID = 1,

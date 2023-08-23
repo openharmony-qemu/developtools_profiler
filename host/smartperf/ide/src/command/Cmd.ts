@@ -41,7 +41,7 @@ export class Cmd {
 
   /**
    * exec objdump to disassembling binary and find addr to show 100 line
-   * @param command obj dump command
+   * @param command  obj dump command
    * @param addr addr of select line
    * @param callback result callback
    */
@@ -105,7 +105,7 @@ export class Cmd {
   }
 
   static formatString(string: string, params: string[]) {
-    if (params.length == 0) {
+    if (params.length === 0) {
       return string;
     }
     for (let i = 0; i < params.length; i++) {
@@ -184,11 +184,11 @@ export class Cmd {
       let lineValues: string[] = res.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
       for (let lineVal of lineValues) {
         lineVal = lineVal.trim();
-        if (lineVal.indexOf('__progname') != -1 || lineVal.indexOf('CMD') != -1 || lineVal.length === 0) {
+        if (lineVal.indexOf('__progname') !== -1 || lineVal.indexOf('CMD') !== -1 || lineVal.length === 0) {
           continue;
         } else {
           let process: string[] = lineVal.split(' ');
-          if (process.length == 2) {
+          if (process.length === 2) {
             processData.push(process[1] + '(' + process[0] + ')');
           }
         }

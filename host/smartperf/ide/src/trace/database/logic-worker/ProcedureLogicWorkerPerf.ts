@@ -270,7 +270,7 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     let threadStateCallChain = new PerfCallChain(); //新增的线程状态数据
     PerfCallChain.merageCallChain(threadStateCallChain, callChain);
     threadStateCallChain.name = callChain.threadState || 'Unknown State';
-    threadStateCallChain.fileName = threadStateCallChain.name == '-' ? 'Unknown Thread State' : '';
+    threadStateCallChain.fileName = threadStateCallChain.name === '-' ? 'Unknown Thread State' : '';
     threadStateCallChain.canCharge = false;
     this.addPerfGroupData(threadCallChain);
     this.addPerfGroupData(threadStateCallChain);

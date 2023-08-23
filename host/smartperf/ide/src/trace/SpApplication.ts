@@ -420,6 +420,8 @@ export class SpApplication extends BaseElement {
     let litRecordSearch = this.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     let search = this.shadowRoot?.querySelector('.search-container') as HTMLElement;
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
+    let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
+    chartFilter!.setAttribute('mode', '');
     let childNodes = [
       spSystemTrace,
       spRecordTrace,
@@ -485,6 +487,9 @@ export class SpApplication extends BaseElement {
     });
     window.subscribe(window.SmartEvent.UI.Loading, (loading) => {
       litSearch.setPercent(loading ? 'Import So File' : '', loading ? -1 : 101);
+      window.publish(window.SmartEvent.UI.MouseEventEnable, {
+        mouseEnable: !loading,
+      });
       progressEL.loading = loading;
     });
     litSearch.addEventListener('focus', () => {
@@ -816,6 +821,7 @@ export class SpApplication extends BaseElement {
                     children: getTraceOptionMenus(showFileName, fileSize, fileName, true, dbName),
                   });
                   litSearch.setPercent('', 101);
+                  chartFilter!.setAttribute('mode', '');
                   progressEL.loading = false;
                   that.freshMenuDisable(false);
                 }
@@ -889,6 +895,7 @@ export class SpApplication extends BaseElement {
                 });
                 showContent(spSystemTrace!);
                 litSearch.setPercent('', 101);
+                chartFilter!.setAttribute('mode', '');
                 progressEL.loading = false;
                 that.freshMenuDisable(false);
               } else {
@@ -1014,6 +1021,7 @@ export class SpApplication extends BaseElement {
                     children: getTraceOptionMenus(showFileName, fileSize, fileName, false),
                   });
                   litSearch.setPercent('', 101);
+                  chartFilter!.setAttribute('mode', '');
                   progressEL.loading = false;
                   that.freshMenuDisable(false);
                 }
@@ -1255,8 +1263,7 @@ export class SpApplication extends BaseElement {
   private getUrlParams(url: string) {
     const _url = url || window.location.href;
     const _urlParams = _url.match(/([?&])(.+?=[^&]+)/gim);
-    return _urlParams
-      ? _urlParams.reduce((a: any, b) => {
+    return _urlParams ? _urlParams.reduce((a: any, b) => {
           const value = b.slice(1).split('=');
           a[`${value[0]}`] = decodeURIComponent(value[1]);
           return a;
@@ -1407,8 +1414,6 @@ export class SpApplication extends BaseElement {
       litIcon.style.visibility = 'hidden';
     } else {
       litIcon.style.visibility = 'visible';
-      let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
-      chartFilter!.setAttribute('mode', '');
     }
   }
 }

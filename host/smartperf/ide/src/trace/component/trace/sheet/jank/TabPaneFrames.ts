@@ -27,11 +27,11 @@ export class TabPaneFrames extends BaseElement {
   private framesSource: Array<any> = [];
   set data(framesParam: SelectionParam | any) {
     this.range!.textContent =
-      'Selected range: ' + parseFloat(((framesParam.rightNs - framesParam.leftNs) / 1000000.0).toFixed(5)) + ' ms';
+      'Selected range: ' + parseFloat(((framesParam.rightNs - framesParam.leftNs) / 1000000.0).toFixed(5)) + '  ms';
     this.queryDataByDB(framesParam);
   }
 
-  queryDataByDB(framesParam: SelectionParam | any) {
+  queryDataByDB(framesParam: SelectionParam | any): void {
     let tablelist = new Array<JankFramesStruct>();
     let sumRes: JankFramesStruct = new JankFramesStruct();
     let appJank: JankFramesStruct = new JankFramesStruct();
@@ -40,9 +40,9 @@ export class TabPaneFrames extends BaseElement {
     framesParam.jankFramesData.forEach((data: Array<JanksStruct>) => {
       sumRes.occurrences += data.length;
       data.forEach((structValue: JanksStruct) => {
-        if (structValue.frame_type == 'app') {
+        if (structValue.frame_type === 'app') {
           this.appJankDataHandle(structValue, appJank, noJank);
-        } else if (structValue.frame_type == 'renderService') {
+        } else if (structValue.frame_type === 'renderService') {
           this.rsJankDataHandle(structValue, rsJank, noJank);
         } else {
           // frameTime
@@ -73,8 +73,8 @@ export class TabPaneFrames extends BaseElement {
     this.framesTbl!.recycleDataSource = tablelist;
   }
 
-  private frameTimelineJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct) {
-    if (structValue.dur == null || structValue.dur == undefined) {
+  private frameTimelineJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct): void {
+    if (structValue.dur === null || structValue.dur === undefined) {
       structValue.dur = 0;
     }
     if (structValue && structValue.jank_tag && structValue.jank_tag > 0) {
@@ -83,12 +83,12 @@ export class TabPaneFrames extends BaseElement {
       appJank.occurrences += 1;
       appJank.maxDuration = Math.max(structValue.dur, appJank.maxDuration);
       appJank.minDuration = Math.min(structValue.dur, appJank.minDuration);
-      if (appJank.minDuration == -1) {
+      if (appJank.minDuration === -1) {
         appJank.minDuration = structValue.dur;
       } else {
         appJank.minDuration = Math.min(structValue.dur, appJank.minDuration!);
       }
-      if (appJank.meanDuration == -1) {
+      if (appJank.meanDuration === -1) {
         appJank.meanDuration = structValue.dur;
       } else {
         appJank.meanDuration = Number(((structValue.dur + appJank.meanDuration) / 2).toFixed(2));
@@ -98,20 +98,20 @@ export class TabPaneFrames extends BaseElement {
       noJank.jankType = 'None';
       noJank.occurrences += 1;
       noJank.maxDuration = Math.max(structValue.dur, noJank.maxDuration);
-      if (noJank.minDuration == -1) {
+      if (noJank.minDuration === -1) {
         noJank.minDuration = structValue.dur;
       } else {
         noJank.minDuration = Math.min(structValue.dur, noJank.minDuration!);
       }
-      if (noJank.meanDuration == -1) {
+      if (noJank.meanDuration === -1) {
         noJank.meanDuration = structValue.dur;
       } else {
         noJank.meanDuration = Number(((structValue.dur + noJank.meanDuration) / 2).toFixed(2));
       }
     }
   }
-  private rsJankDataHandle(structValue: JanksStruct, rsJank: JankFramesStruct, noJank: JankFramesStruct) {
-    if (structValue.dur == null || structValue.dur == undefined) {
+  private rsJankDataHandle(structValue: JanksStruct, rsJank: JankFramesStruct, noJank: JankFramesStruct): void {
+    if (structValue.dur === null || structValue.dur === undefined) {
       structValue.dur = 0;
     }
     if (structValue.jank_tag && structValue.jank_tag > 0) {
@@ -119,12 +119,12 @@ export class TabPaneFrames extends BaseElement {
       rsJank.jankType = 'RenderService Deadline Missed';
       rsJank.occurrences += 1;
       rsJank.maxDuration = Math.max(structValue.dur, rsJank.maxDuration!);
-      if (rsJank.minDuration == -1) {
+      if (rsJank.minDuration === -1) {
         rsJank.minDuration = structValue.dur;
       } else {
         rsJank.minDuration = Math.min(structValue.dur, rsJank.minDuration!);
       }
-      if (rsJank.meanDuration == -1) {
+      if (rsJank.meanDuration === -1) {
         rsJank.meanDuration = structValue.dur;
       } else {
         rsJank.meanDuration = Number(((structValue.dur + rsJank.meanDuration!) / 2).toFixed(2));
@@ -133,8 +133,8 @@ export class TabPaneFrames extends BaseElement {
       this.refreshNoJankData(noJank, structValue);
     }
   }
-  private appJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct) {
-    if (structValue.dur == null || structValue.dur == undefined) {
+  private appJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct): void {
+    if (structValue.dur === null || structValue.dur === undefined) {
       structValue.dur = 0;
     }
     if (structValue.jank_tag && structValue.jank_tag > 0) {
@@ -142,12 +142,12 @@ export class TabPaneFrames extends BaseElement {
       appJank.jankType = 'APP Deadline Missed';
       appJank.occurrences += 1;
       appJank.maxDuration = Math.max(structValue.dur, appJank.maxDuration!);
-      if (appJank.minDuration == -1) {
+      if (appJank.minDuration === -1) {
         appJank.minDuration = structValue.dur;
       } else {
         appJank.minDuration = Math.min(structValue.dur, appJank.minDuration!);
       }
-      if (appJank.meanDuration == -1) {
+      if (appJank.meanDuration === -1) {
         appJank.meanDuration = structValue.dur;
       } else {
         appJank.meanDuration = Number(((structValue.dur + appJank.meanDuration!) / 2).toFixed(2));
@@ -156,17 +156,17 @@ export class TabPaneFrames extends BaseElement {
       this.refreshNoJankData(noJank, structValue);
     }
   }
-  private refreshNoJankData(noJank: JankFramesStruct, structValue: JanksStruct) {
+  private refreshNoJankData(noJank: JankFramesStruct, structValue: JanksStruct): void {
     noJank.flag = structValue.jank_tag;
     noJank.jankType = 'None';
     noJank.occurrences += 1;
     noJank.maxDuration = Math.max(structValue.dur!, noJank.maxDuration!);
-    if (noJank.minDuration == -1) {
+    if (noJank.minDuration === -1) {
       noJank.minDuration = structValue.dur!;
     } else {
       noJank.minDuration = Math.min(structValue.dur!, noJank.minDuration!);
     }
-    if (noJank.meanDuration == -1) {
+    if (noJank.meanDuration === -1) {
       noJank.meanDuration = structValue.dur!;
     } else {
       noJank.meanDuration = Number(((structValue.dur! + noJank.meanDuration!) / 2).toFixed(2));
@@ -182,7 +182,7 @@ export class TabPaneFrames extends BaseElement {
     });
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     super.connectedCallback();
     resizeObserver(this.parentElement!, this.framesTbl!);
   }
@@ -216,11 +216,11 @@ export class TabPaneFrames extends BaseElement {
         `;
   }
 
-  sortByColumn(framesDetail: any) {
+  sortByColumn(framesDetail: any): void {
     // @ts-ignore
     function compare(property, sort, type) {
       return function (framesLeftData: SelectionData, framesRightData: SelectionData) {
-        if (framesLeftData.process == ' ' || framesRightData.process == ' ') {
+        if (framesLeftData.process === ' ' || framesRightData.process === ' ') {
           return 0;
         }
         if (type === 'number') {
@@ -232,7 +232,7 @@ export class TabPaneFrames extends BaseElement {
             return sort === 2 ? 1 : -1;
           } else {
             // @ts-ignore
-            if (framesRightData[property] == framesLeftData[property]) {
+            if (framesRightData[property] === framesLeftData[property]) {
               return 0;
             } else {
               return sort === 2 ? -1 : 1;

@@ -80,13 +80,15 @@ export class SpRecordTemplate extends BaseElement {
   private schedulingAnalysis: LitSwitch | undefined | null;
   private appStartup: LitSwitch | undefined | null;
   private taskPoolEl: LitSwitch | undefined | null;
+  private dynamicEffectEl: LitSwitch | undefined | null;
 
   initElements(): void {
     this.frameTimeline = this.shadowRoot?.querySelector<LitSwitch>('#frame_timeline');
     this.schedulingAnalysis = this.shadowRoot?.querySelector<LitSwitch>('#scheduling_analysis');
     this.appStartup = this.shadowRoot?.querySelector<LitSwitch>('#app_startup');
     this.taskPoolEl = this.shadowRoot?.querySelector<LitSwitch>('#task_pool');
-    this.addProbeListener(this.frameTimeline!, this.schedulingAnalysis!, this.appStartup!, this.taskPoolEl!)
+    this.dynamicEffectEl = this.shadowRoot?.querySelector<LitSwitch>('#dynamic_effect');
+    this.addProbeListener(this.frameTimeline!, this.schedulingAnalysis!, this.appStartup!, this.taskPoolEl!, this.dynamicEffectEl!);
   }
 
   addProbeListener(...elements: HTMLElement[]) {
@@ -96,15 +98,15 @@ export class SpRecordTemplate extends BaseElement {
         if (detail!.checked) {
           this.dispatchEvent(new CustomEvent('addProbe', {}));
         }
-      })
-    })
+      });
+    });
   }
   getTemplateConfig(): Array<ProfilerPluginConfig<{}>> {
     let config: Array<ProfilerPluginConfig<{}>> = [];
     let traceEventSet = new Array<string>();
     let hitraceCategories = new Array<string>();
     let useFtracePlugin: boolean = false;
-    if (this.frameTimeline?.checked || this.appStartup?.checked) {
+    if (this.frameTimeline?.checked || this.appStartup?.checked || this.dynamicEffectEl?.checked) {
       useFtracePlugin = true;
       SpRecordTemplate.FRAME_TIMELINE_CATEGORIES_EVENT.forEach((categories) => {
         if (hitraceCategories.indexOf(categories) == -1) {
@@ -127,7 +129,7 @@ export class SpRecordTemplate extends BaseElement {
     }
     if (this.taskPoolEl!.checked) {
       useFtracePlugin = true;
-      traceEventSet.push('commonlibrary')
+      traceEventSet.push('commonlibrary');
     }
     if (useFtracePlugin) {
       let tracePluginConfig: TracePluginConfig = {
@@ -220,6 +222,12 @@ export class SpRecordTemplate extends BaseElement {
                <div>
                  <span class="template-title">Task pool</span>
                  <lit-switch class="config_switch" id="task_pool"></lit-switch>
+               </div>
+            </div>
+            <div class="template-config-div">
+               <div>
+                 <span class="template-title">Dynamic effect</span>
+                 <lit-switch class="config_switch" id="dynamic_effect"></lit-switch>
                </div>
             </div> 
         </div>

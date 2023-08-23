@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BaseStruct, Rect } from './ProcedureWorkerCommon.js';
+import { BaseStruct, Rect, isFrameContainPoint } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { HeapSample } from '../../../js-heap/model/DatabaseStruct.js';
 
@@ -38,9 +38,30 @@ export class HeapTimelineRender {
       (TraceRow.range?.endNS ?? 0) - (TraceRow.range?.startNS! ?? 0),
       row.frame
     );
+    let heapTimelineFind = false;
     for (let re of filter) {
       HeapTimelineStruct.draw(req.context, re);
+      if (row.isHover) {
+        if (re.size === 0) {
+          if (
+            re.frame &&
+            row.hoverX >= re.frame.x &&
+            row.hoverX <= re.frame.x &&
+            row.hoverY >= re.frame.y &&
+            row.hoverY <= re.frame.y + re.frame.height
+          ) {
+            HeapTimelineStruct.hoverHeapTimelineStruct = re;
+            heapTimelineFind = true;
+          }
+        } else {
+          if (re.frame && isFrameContainPoint(re.frame, row.hoverX, row.hoverY)) {
+            HeapTimelineStruct.hoverHeapTimelineStruct = re;
+            heapTimelineFind = true;
+          }
+        }
+      }
     }
+    if (!heapTimelineFind && row.isHover) HeapTimelineStruct.hoverHeapTimelineStruct = undefined;
   }
 }
 export function HeapTimeline(
@@ -81,7 +102,9 @@ export function HeapTimeline(
   }
 }
 export class HeapTimelineStruct extends BaseStruct {
+  static hoverHeapTimelineStruct: HeapTimelineStruct | undefined;
   static samples: Array<HeapSample>;
+  size: number = 0;
 
   static setFrame(
     timestamp: number,

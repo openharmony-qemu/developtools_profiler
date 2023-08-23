@@ -77,7 +77,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       parseFloat(
         ((ioTierStatisticsAnalysisSelection.rightNs - ioTierStatisticsAnalysisSelection.leftNs) / 1000000.0).toFixed(5)
       ) +
-      ' ms';
+      '  ms';
     this.progressEL!.loading = true;
     this.getDataByWorker(
       [
@@ -108,7 +108,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.progressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
     this.goBack();
   }
-  clearData() {
+  clearData(): void {
     this.iOTierStatisticsAnalysisPie!.dataSource = [];
     this.tableProcess!.recycleDataSource = [];
     this.tableType!.recycleDataSource = [];
@@ -116,7 +116,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.tableSo!.recycleDataSource = [];
     this.tableFunction!.recycleDataSource = [];
   }
-  goBack() {
+  goBack(): void {
     this.iOTierStatisticsAnalysisBack!.addEventListener('click', () => {
       if (this.tabName!.textContent === 'Statistic By type AllDuration') {
         this.tableProcess!.style.display = 'grid';
@@ -150,7 +150,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       }
     });
   }
-  processPieChart() {
+  processPieChart(): void {
     // @ts-ignore
     this.sumDur = this.processStatisticsData.allDuration;
     this.iOTierStatisticsAnalysisPie!.config = {
@@ -162,21 +162,21 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
-                                <div>ProcessName:${obj.obj.tableName}</div>
-                                <div>Duration:${obj.obj.durFormat}</div>
-                                <div>Percent:${obj.obj.percent}%</div> 
+                                <div>ProcessName:${ obj.obj.tableName }</div>
+                                <div>Duration:${ obj.obj.durFormat }</div>
+                                <div>Percent:${ obj.obj.percent }%</div> 
                             </div>
                                 `;
       },
-      angleClick: (it) => {
+      angleClick: (it): void => {
         // @ts-ignore
         if (it.tableName != 'other') {
           this.ioTierProcessLevelClickEvent(it);
         }
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.tableProcess!.setCurrentHover(data);
         } else {
@@ -222,7 +222,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       }
     });
   }
-  ioTierProcessLevelClickEvent(it: any) {
+  ioTierProcessLevelClickEvent(it: any): void {
     this.clearData();
     this.iOTierStatisticsAnalysisBack!.style.visibility = 'visible';
     this.tableProcess!.style.display = 'none';
@@ -234,7 +234,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.iOTierStatisticsAnalysisPie?.hideTip();
     this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.processName;
   }
-  typePieChart() {
+  typePieChart(): void {
     this.iOTierStatisticsAnalysisPie!.config = {
       appendPadding: 0,
       data: this.typeData,
@@ -244,18 +244,18 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
-                                <div>Type:${obj.obj.tableName}</div>
-                                <div>Duration:${obj.obj.durFormat}</div>
-                                <div>Percent:${obj.obj.percent}%</div> 
+                                <div>Type:${ obj.obj.tableName }</div>
+                                <div>Duration:${ obj.obj.durFormat }</div>
+                                <div>Percent:${ obj.obj.percent }%</div> 
                             </div>
                                 `;
       },
-      angleClick: (it) => {
+      angleClick: (it): void => {
         this.ioTierTypeLevelClickEvent(it);
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.tableType!.setCurrentHover(data);
         } else {
@@ -301,7 +301,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       }
     });
   }
-  ioTierTypeLevelClickEvent(it: any) {
+  ioTierTypeLevelClickEvent(it: any): void {
     this.clearData();
     this.tableType!.style.display = 'none';
     this.tableThread!.style.display = 'grid';
@@ -312,7 +312,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.iOTierStatisticsAnalysisPie?.hideTip();
     this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.processName + ' / ' + this.typeName;
   }
-  threadPieChart() {
+  threadPieChart(): void {
     // @ts-ignore
     this.sumDur = this.threadStatisticsData.allDuration;
     this.iOTierStatisticsAnalysisPie!.config = {
@@ -324,21 +324,21 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
-                                <div>ThreadName:${obj.obj.tableName}</div>
-                                <div>Duration:${obj.obj.durFormat}</div>
-                                <div>Percent:${obj.obj.percent}%</div> 
+                                <div>ThreadName:${ obj.obj.tableName }</div>
+                                <div>Duration:${ obj.obj.durFormat }</div>
+                                <div>Percent:${ obj.obj.percent }%</div> 
                             </div>
                                 `;
       },
-      angleClick: (it) => {
+      angleClick: (it): void => {
         // @ts-ignore
         if (it.tableName != 'other') {
           this.ioTierThreadLevelClickEvent(it);
         }
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.tableThread!.setCurrentHover(data);
         } else {
@@ -384,7 +384,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       }
     });
   }
-  ioTierThreadLevelClickEvent(it: any) {
+  ioTierThreadLevelClickEvent(it: any): void {
     this.clearData();
     this.iOTierStatisticsAnalysisBack!.style.visibility = 'visible';
     this.tableThread!.style.display = 'none';
@@ -397,7 +397,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
       this.processName + ' / ' + this.typeName + ' / ' + this.threadName;
   }
-  libraryPieChart() {
+  libraryPieChart(): void {
     // @ts-ignore
     this.sumDur = this.libStatisticsData.allDuration;
     this.iOTierStatisticsAnalysisPie!.config = {
@@ -409,21 +409,21 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
-                                <div>Library:${obj.obj.tableName}</div>
-                                <div>Duration:${obj.obj.durFormat}</div>
-                                <div>Percent:${obj.obj.percent}%</div> 
+                                <div>Library:${ obj.obj.tableName }</div>
+                                <div>Duration:${ obj.obj.durFormat }</div>
+                                <div>Percent:${ obj.obj.percent }%</div> 
                             </div>
                                 `;
       },
-      angleClick: (it) => {
+      angleClick: (it): void => {
         // @ts-ignore
         if (it.tableName != 'other') {
           this.ioTierSoLevelClickEvent(it);
         }
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.tableSo!.setCurrentHover(data);
         } else {
@@ -470,7 +470,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       }
     });
   }
-  ioTierSoLevelClickEvent(it: any) {
+  ioTierSoLevelClickEvent(it: any): void {
     this.clearData();
     this.iOTierStatisticsAnalysisBack!.style.visibility = 'visible';
     this.tableSo!.style.display = 'none';
@@ -482,7 +482,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent =
       this.processName + ' / ' + this.typeName + ' / ' + this.threadName + ' / ' + it.tableName;
   }
-  sortByColumn(column: string, ioSort: number) {
+  sortByColumn(column: string, ioSort: number): void {
     this.sortColumn = column;
     this.sortType = ioSort;
     let currentTable: LitTable | null | undefined;
@@ -573,7 +573,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       currentTable!.recycleDataSource = ioArr;
     }
   }
-  getIOTierProcess(result: Array<any>) {
+  getIOTierProcess(result: Array<any>): void {
     this.processData = JSON.parse(JSON.stringify(result));
     if (!this.processData || this.processData.length === 0) {
       this.pidData = [];
@@ -600,8 +600,8 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         pName = item.processName =
           item.processName === null || item.processName === undefined
-            ? `Process(${item.pid})`
-            : `${item.processName}(${item.pid})`;
+            ? `Process(${ item.pid })`
+            : `${ item.processName }(${ item.pid })`;
         dur += item.dur;
       }
       const pidData = {
@@ -633,7 +633,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       }
     }).observe(this.parentElement!);
   }
-  getIOTierType(item: any) {
+  getIOTierType(item: any): void {
     this.progressEL!.loading = true;
     let typeMap = new Map<number, Array<number | string>>();
     let pid = item.pid;
@@ -676,7 +676,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.typePieChart();
     this.progressEL!.loading = false;
   }
-  getIOTierThread(item: any) {
+  getIOTierThread(item: any): void {
     this.progressEL!.loading = true;
     let threadMap = new Map<string, Array<number | string>>();
     let pid = item.pid;
@@ -705,7 +705,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         dur += item.dur;
         tName = item.threadName =
-          item.threadName === null || item.threadName === undefined ? `Thread(${item.tid})` : `${item.threadName}`;
+          item.threadName === null || item.threadName === undefined ? `Thread(${ item.tid })` : `${ item.threadName }`;
       }
       const threadData = {
         tableName: tName,
@@ -724,7 +724,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.progressEL!.loading = false;
     this.threadPieChart();
   }
-  getIOTierSo(item: any) {
+  getIOTierSo(item: any): void {
     this.progressEL!.loading = true;
     let tid = item.tid;
     let pid = item.pid;
@@ -780,7 +780,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     this.progressEL!.loading = false;
     this.libraryPieChart();
   }
-  getIOTierFunction(item: any) {
+  getIOTierFunction(item: any): void {
     this.progressEL!.loading = true;
     this.shadowRoot!.querySelector<HTMLDivElement>('.subheading')!.textContent = 'Statistic By Function AllDuration';
     let tid = item.tid;
@@ -847,15 +847,15 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
-                                    <div>Function:${obj.obj.tableName}</div>
-                                    <div>Duration:${obj.obj.durFormat}</div>
-                                    <div>percent:${obj.obj.percent}</div>
+                                    <div>Function:${ obj.obj.tableName }</div>
+                                    <div>Duration:${ obj.obj.durFormat }</div>
+                                    <div>percent:${ obj.obj.percent }</div>
                                         </div>
                                                 `;
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.tableFunction!.setCurrentHover(data);
         } else {
@@ -892,7 +892,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
       this.sortByColumn(evt.detail.key, evt.detail.sort);
     });
   }
-  typeIdToString(type: number) {
+  typeIdToString(type: number): string {
     let releaseType: string;
     if (type === 1) {
       releaseType = 'DATA_READ';
@@ -906,7 +906,10 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     // @ts-ignore
     return releaseType;
   }
-  totalDurationData(duration: number) {
+  totalDurationData(duration: number): {
+    durFormat: string; percent: string; tableName: string;
+    duration: number; allDuration: number;
+  } {
     let allDuration;
     allDuration = {
       durFormat: Utils.getProbablyTime(duration),
@@ -917,7 +920,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     };
     return allDuration;
   }
-  getPieChartData(res: any[]) {
+  getPieChartData(res: any[]): unknown[] {
     if (res.length > 20) {
       let pieChartArr: string[] = [];
       let other: any = {
@@ -926,7 +929,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
         percent: 0,
         durFormat: 0,
       };
-      for (let i = 0; i < res.length; i++) {
+      for (let i = 0 ; i < res.length ; i++) {
         if (i < 19) {
           pieChartArr.push(res[i]);
         } else {
@@ -941,7 +944,7 @@ export class TabPaneIOTierStatisticsAnalysis extends BaseElement {
     return res;
   }
 
-  getDataByWorker(args: any[], handler: Function) {
+  getDataByWorker(args: any[], handler: Function): void {
     procedurePool.submitWithName(
       'logic0',
       'fileSystem-action',

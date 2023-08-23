@@ -138,9 +138,6 @@ config("default") {
       "-D __KERNEL__",
     ]
   }
-  if (with_perf) {
-    cflags += [ "-D WITH_PERF" ]
-  }
   if (with_ebpf_help_table) {
     cflags += [ "-D WITH_EBPF_HELP" ]
   }

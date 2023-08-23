@@ -14,10 +14,12 @@
 
 set -e
 THIS_DIR=$(dirname ${BASH_SOURCE[0]})
-PROJECT_TOP=$(realpath $THIS_DIR/../../..)
-TAIL_DIR="developtools/profiler"
-if [[ "$2" == *"developtools"* ]]; then
+PROJECT_TOP=$(realpath $THIS_DIR/../../../..)
+TAIL_DIR="thirdparty/protobuf"
+SUBSYS_DIR="developtools/smartperf_host"
+if [[ $2 == *"developtools"* ]]; then
   TAIL_DIR="."
+  SUBSYS_DIR="."
   PROJECT_TOP=$(realpath $THIS_DIR/..)
 fi
 OHOS_X64_OUT=$PROJECT_TOP/$2/
@@ -25,8 +27,8 @@ LIBCXX_X64_OUT=$PROJECT_TOP/$1/ndk/libcxx/linux_x86_64
 SUBSYS_X64_OUT=$PROJECT_TOP/$2/$TAIL_DIR
 
 PROTOC=$PROJECT_TOP/$2/$TAIL_DIR/protoc
-OPT_PLUGIN_PROTOREADER_PATH=$PROJECT_TOP/$2/$TAIL_DIR/protoreader_plugin
-OPT_PLUGIN_PROTOREADER="--plugin=protoc-gen-plugin=$PROJECT_TOP/$2/$TAIL_DIR/protoreader_plugin --plugin_out=wrapper_namespace=ProtoReader"
+OPT_PLUGIN_PROTOREADER_PATH=$PROJECT_TOP/$2/$SUBSYS_DIR/protoreader_plugin
+OPT_PLUGIN_PROTOREADER="--plugin=protoc-gen-plugin=$PROJECT_TOP/$2/$SUBSYS_DIR/protoreader_plugin --plugin_out=wrapper_namespace=ProtoReader"
 OPT_OUT=--opt_out
 OPT_PROTOREADER_OUT=--cpp_out
 PYTHON_SHELL=$THIS_DIR/make_standard_proto.py # shell path
@@ -74,7 +76,7 @@ done
 PARAMS_ALL="$PARAMS_SRC $PARAMS_STANDARD" # add new argument list to old argument list
 
 # avoid conflict, param4=--plugin* means ipc plugin, generate encode file if opt plugin exist
-if [[ "$4" != --plugin* ]]; then
+if [[ $4 != --plugin* ]]; then
   if [ -f "$OPT_PLUGIN_PROTOREADER_PATH" ]; then
     echo "generate protobuf optimize code OPT_PLUGIN_PROTOREADER = $OPT_PLUGIN_PROTOREADER"
     LD_LIBRARY_PATH=$LIBCXX_X64_OUT:$SUBSYS_X64_OUT exec $PROTOC $OPT_PLUGIN_PROTOREADER:$5 $PARAMS_ALL

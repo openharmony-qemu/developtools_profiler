@@ -20,6 +20,7 @@ import { ProcedureLogicWorkerSPT } from './ProcedureLogicWorkerSPT.js';
 import { ProcedureLogicWorkerCpuState } from './ProcedureLogicWorkerCpuState.js';
 import { ProcedureLogicWorkerSchedulingAnalysis } from './ProcedureLogicWorkerSchedulingAnalysis.js';
 import { DataCache } from './ProcedureLogicWorkerCommon.js';
+import { ProcedureLogicWorkerJsCpuProfiler } from './ProcedureLogicWorkerJsCpuProfiler.js';
 
 let logicWorker: any = {
   perf: new ProcedureLogicWorkerPerf(),
@@ -28,6 +29,7 @@ let logicWorker: any = {
   CpuState: new ProcedureLogicWorkerCpuState(),
   spt: new ProcedureLogicWorkerSPT(),
   scheduling: new ProcedureLogicWorkerSchedulingAnalysis(),
+  jsCpuProfile: new ProcedureLogicWorkerJsCpuProfiler(),
 };
 
 function match(req: any) {

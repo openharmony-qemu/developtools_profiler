@@ -48,7 +48,7 @@ inline std::string number(uint64_t value, int32_t base = INTEGER_RADIX_TYPE_DEC)
 }
 
 template <typename T>
-inline std::optional<T> StrToInt(const std::string& str, int32_t base = INTEGER_RADIX_TYPE_DEC)
+std::optional<T> StrToInt(const std::string& str, int32_t base = INTEGER_RADIX_TYPE_DEC)
 {
     if (!str.empty()) {
         char* endPtr = nullptr;

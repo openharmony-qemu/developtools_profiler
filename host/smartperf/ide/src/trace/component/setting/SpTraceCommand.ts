@@ -34,17 +34,17 @@ export class SpTraceCommand extends BaseElement {
   }
 
   //当 custom element首次被插入文档DOM时，被调用。
-  public connectedCallback() {
+  public connectedCallback(): void {
     this.codeHl!.textContent = '';
     this.copyEl?.addEventListener('click', this.codeCopyEvent);
     this.codeHl?.addEventListener('selectionchange', this.textSelectEvent);
   }
 
-  public disconnectedCallback() {
+  public disconnectedCallback(): void {
     this.copyEl?.removeEventListener('click', this.codeCopyEvent);
   }
 
-  codeCopyEvent = () => {
+  codeCopyEvent = (): void => {
     this.codeHl?.select();
     document.execCommand('copy');
     let allPlugin: Array<string> = [];
@@ -60,7 +60,7 @@ export class SpTraceCommand extends BaseElement {
     });
   };
 
-  textSelectEvent = () => {
+  textSelectEvent = (): void => {
     this.copyEl!.style.backgroundColor = '#FFFFFF';
   };
 

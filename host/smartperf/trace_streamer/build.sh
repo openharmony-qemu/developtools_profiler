@@ -39,15 +39,19 @@ usage="Usage: $basename $0 wasm/test/fuzz/protoc debug/release/clean"
 ./dl_tools.sh $gn_path
 
 if { [ "$1" == "dubaisdk" ] || [ "$1" == "sdkdemo" ] || [ "$1" == "wasm" ] || [ "$1" == "test" ] || [ "$1" == "fuzz" ]; } && [ "$#" -ne 0 ];then
-    if [ ! -f "out/$1/clang_x64/developtools/profiler/protoc" ] && [ "$1" != "protoc" ];then
-        ./build.sh protoc
-        mkdir -p out/$1/clang_x64/developtools/profiler
-        cp out/$target_os/clang_x64/developtools/profiler/protoc out/$1/clang_x64/developtools/profiler/protoc
+    TARGET_DIR=$1
+    if [[ $PARAMS == *"debug"* ]]; then
+        TARGET_DIR=$1"_debug"
     fi
-    if [ ! -f "out/$1/clang_x64/developtools/profiler/protoreader_plugin" ] && [ "$1" != "spb" ] && [ -f "out/$1/clang_x64/developtools/profiler/protoc" ];then
+    if [ ! -f "out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoc" ] && [ "$1" != "protoc" ];then
+        ./build.sh protoc
+        mkdir -p out/$TARGET_DIR/clang_x64/developtools/smartperf_host
+        cp out/$target_os/clang_x64/developtools/smartperf_host/protoc out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoc
+    fi
+    if [ ! -f "out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoreader_plugin" ] && [ "$1" != "spb" ] && [ -f "out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoc" ];then
         ./build.sh spb
-        mkdir -p out/$1/clang_x64/developtools/profiler
-        cp out/$target_os/clang_x64/developtools/profiler/protoreader_plugin out/$1/clang_x64/developtools/profiler/protoreader_plugin
+        mkdir -p out/$TARGET_DIR/clang_x64/developtools/smartperf_host
+        cp out/$target_os/clang_x64/developtools/smartperf_host/protoreader_plugin out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoreader_plugin
     fi
 fi
 if [ $target_os == "windows" ];then

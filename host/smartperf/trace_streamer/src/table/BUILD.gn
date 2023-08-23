@@ -15,8 +15,8 @@ import("//build/ohos.gni")
 
 import("../../build/ts.gni")
 ohos_source_set("table") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   include_dirs = [
     "${THIRD_PARTY}/sqlite/include",
     "${SRC}/base",
@@ -47,11 +47,9 @@ ohos_source_set("table") {
     "ebpf:ebpf_tables",
     "ftrace:ftrace_tables",
     "hi_sysevent:hi_sysevent_tables",
+    "hiperf:hiperf_tables",
     "js_memory:js_memory_tables",
     "monitor:monitor_tables",
     "native_hook:native_hook_tables",
   ]
-  if (with_perf) {
-    deps += [ "hiperf:hiperf_tables" ]
-  }
 }

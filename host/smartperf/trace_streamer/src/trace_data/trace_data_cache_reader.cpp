@@ -232,6 +232,19 @@ const JsHeapTraceNode& TraceDataCacheReader::GetConstJsHeapTraceNodeData() const
 {
     return jsHeapTraceNodeData_;
 }
+const JsCpuProfilerNode& TraceDataCacheReader::GetConstJsCpuProfilerNodeData() const
+{
+    return jsCpuProfilerNodeData_;
+}
+const JsCpuProfilerSample& TraceDataCacheReader::GetConstJsCpuProfilerSampleData() const
+{
+    return jsCpuProfilerSampleData_;
+}
+
+const JsConfig& TraceDataCacheReader::GetConstJsConfigData() const
+{
+    return jsConfigData_;
+}
 
 const DataType& TraceDataCacheReader::GetConstDataTypeData() const
 {
@@ -337,6 +350,18 @@ const AppStartup& TraceDataCacheReader::GetConstAppStartupData() const
 const SoStaticInitalization& TraceDataCacheReader::GetConstStaticInitalizationData() const
 {
     return staticInitalizationData_;
+}
+const Animation& TraceDataCacheReader::GetConstAnimation() const
+{
+    return animation_;
+}
+const DeviceInfo& TraceDataCacheReader::GetConstDeviceInfo() const
+{
+    return deviceInfo_;
+}
+const DynamicFrame& TraceDataCacheReader::GetConstDynamicFrame() const
+{
+    return dynamicFrame_;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

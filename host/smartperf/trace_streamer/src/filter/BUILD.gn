@@ -15,9 +15,11 @@ import("//build/ohos.gni")
 import("../../build/ts.gni")
 
 ohos_source_set("filter") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
+    "animation_filter.cpp",
+    "animation_filter.h",
     "app_start_filter.cpp",
     "app_start_filter.h",
     "args_filter.cpp",
@@ -42,6 +44,8 @@ ohos_source_set("filter") {
     "native_hook_filter.h",
     "offline_symbolization_filter.cpp",
     "offline_symbolization_filter.h",
+    "perf_data_filter.cpp",
+    "perf_data_filter.h",
     "process_filter.cpp",
     "process_filter.h",
     "slice_filter.cpp",
@@ -70,12 +74,13 @@ ohos_source_set("filter") {
       cflags += [ "-D IS_UT" ]
     }
   }
-  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_encoder" ]
+  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_reader" ]
   deps = []
   include_dirs = [
     "${SRC}/base",
     "${SRC}/trace_streamer",
     "${SRC}/trace_data",
+    "${SRC}/parser",
     "${SRC}/include",
     "${SRC}/filter",
     "${SRC}/cfg",
@@ -86,11 +91,4 @@ ohos_source_set("filter") {
     "../proto_reader/include",
     ".",
   ]
-
-  if (with_perf) {
-    sources += [
-      "perf_data_filter.cpp",
-      "perf_data_filter.h",
-    ]
-  }
 }

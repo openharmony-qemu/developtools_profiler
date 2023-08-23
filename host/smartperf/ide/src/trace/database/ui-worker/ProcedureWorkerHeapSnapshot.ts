@@ -22,18 +22,11 @@ export class HeapSnapshotRender extends Render {
       context: CanvasRenderingContext2D;
       useCache: boolean;
       type: string;
-      traceRange: Array<any>;
     },
     row: TraceRow<HeapSnapshotStruct>
   ) {
     let list = row.dataList;
     let filter = row.dataListCache;
-    if (filter.length == 0) {
-      for (let file of list) {
-        file.startTs = file.startTs - req.traceRange[0].startTs;
-        file.endTs = file.endTs - req.traceRange[0].startTs;
-      }
-    }
     HeapSnapshot(
       list,
       filter,

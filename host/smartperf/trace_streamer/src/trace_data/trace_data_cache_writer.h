@@ -79,7 +79,7 @@ public:
     FileSystemSample* GetFileSystemSample();
     EbpfCallStackData* GetEbpfCallStack();
     PagedMemorySampleData* GetPagedMemorySampleData();
-#if WITH_EBPF_HELP
+#ifdef WITH_EBPF_HELP
     EbpfProcessMaps* GetEbpfProcessMaps();
     EbpfElf* GetEbpfElf();
     EbpfElfSymbol* GetEbpfElfSymbol();
@@ -105,8 +105,14 @@ public:
     JsHeapString* GetJsHeapStringData();
     JsHeapTraceFuncInfo* GetJsHeapTraceFuncInfoData();
     JsHeapTraceNode* GetJsHeapTraceNodeData();
+    JsCpuProfilerNode* GetJsCpuProfilerNodeData();
+    JsCpuProfilerSample* GetJsCpuProfilerSampleData();
+    JsConfig* GetJsConfigData();
     AppStartup* GetAppStartupData();
     SoStaticInitalization* GetStaticInitalizationData();
+    Animation* GetAnimation();
+    DeviceInfo* GetDeviceInfo();
+    DynamicFrame* GetDynamicFrame();
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

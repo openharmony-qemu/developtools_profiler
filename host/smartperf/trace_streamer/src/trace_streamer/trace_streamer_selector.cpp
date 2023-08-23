@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <regex>
+#include "animation_filter.h"
 #include "app_start_filter.h"
 #include "args_filter.h"
 #include "binder_filter.h"
@@ -102,6 +103,7 @@ void TraceStreamerSelector::InitFilter()
 {
     streamFilters_ = std::make_unique<TraceStreamerFilters>();
     traceDataCache_ = std::make_unique<TraceDataCache>();
+    streamFilters_->animationFilter_ = std::make_unique<AnimationFilter>(traceDataCache_.get(), streamFilters_.get());
     streamFilters_->cpuFilter_ = std::make_unique<CpuFilter>(traceDataCache_.get(), streamFilters_.get());
     streamFilters_->sliceFilter_ = std::make_unique<SliceFilter>(traceDataCache_.get(), streamFilters_.get());
 
@@ -163,6 +165,9 @@ void TraceStreamerSelector::WaitForParserEnd()
         htraceParser_->WaitForParserEnd();
     }
     traceDataCache_->UpdateTraceRange();
+    if (traceDataCache_->AnimationTraceEnabled()) {
+        streamFilters_->animationFilter_->UpdateDynamicFrameInfo();
+    }
 }
 
 MetaData* TraceStreamerSelector::GetMetaData()
@@ -283,6 +288,10 @@ int32_t TraceStreamerSelector::UpdateTraceRangeTime(uint8_t* data, int32_t len)
 void TraceStreamerSelector::SetCancel(bool cancel)
 {
     traceDataCache_->SetCancel(cancel);
+}
+void TraceStreamerSelector::UpdateAnimationTraceStatus(bool status)
+{
+    traceDataCache_->UpdateAnimationTraceStatus(status);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -26,7 +26,7 @@ public:
     void UpdatePluginTimeRange(ClockId clockId, uint64_t asyncTimestamp, uint64_t syncTimestamp);
     uint64_t GetPluginStartTime() const;
     uint64_t GetPluginEndTime() const;
-    uint64_t MinTs()
+    uint64_t MinTs() const
     {
         return minTs_;
     }

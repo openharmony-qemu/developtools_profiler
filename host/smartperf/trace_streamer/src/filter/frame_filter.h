@@ -77,7 +77,6 @@ private:
     std::unordered_map<uint32_t /* tid */, std::vector<std::shared_ptr<FrameSlice>>> vsyncRenderSlice_ = {};
     std::unordered_map<uint32_t /* tid */, std::unordered_map<uint32_t /* frameNum */, std::shared_ptr<FrameSlice>>>
         dstRenderSlice_ = {};
-    bool checkFrameAlwasy_ = false;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -176,8 +176,7 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
             ProtoReader::BytesView event(i->ToBytes());
             uint64_t timeStamp = 0;
             if (event.size_ > MIN_DATA_AREA && event.data_[0] == tsTag) {
-                const uint8_t* nextData =
-                    ProtoReader::VarIntDecode(event.data_ + DATA_AREA_START, event.data_ + DATA_AREA_END, &timeStamp);
+                (void)ProtoReader::VarIntDecode(event.data_ + DATA_AREA_START, event.data_ + DATA_AREA_END, &timeStamp);
             }
             eventTimeStamp_ = timeStamp;
             ftraceOriginStartTime_ = std::min(ftraceOriginStartTime_, eventTimeStamp_);
@@ -188,7 +187,7 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
             traceDataCache_->UpdateTraceTime(eventTimeStamp_);
             ProtoReader::BytesView commonField;
             eventList_.push_back(
-                std::move(std::make_unique<EventInfo>(eventTimeStamp_, eventCpu_, tracePacket.seg, i->ToBytes())));
+                std::make_unique<EventInfo>(eventTimeStamp_, eventCpu_, tracePacket.seg, i->ToBytes()));
             FilterAllEventsReader();
         }
     }

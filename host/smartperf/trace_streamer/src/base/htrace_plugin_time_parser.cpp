@@ -21,7 +21,7 @@ void HtracePluginTimeParser::UpdatePluginTimeRange(ClockId clockId, uint64_t asy
 {
     minTs_ = std::min(minTs_, asyncTimestamp);
     maxTs_ = std::max(maxTs_, asyncTimestamp);
-    if (clockId == PRIMARY_CLOCK_ID) {
+    if (clockId == g_primaryClockId) {
         syncHtracePluginStartTime_ = std::min(syncHtracePluginStartTime_, syncTimestamp);
         syncHtracePluginEndTime_ = std::max(syncHtracePluginEndTime_, syncTimestamp);
         return;
@@ -34,7 +34,7 @@ void HtracePluginTimeParser::UpdatePluginTimeRange(ClockId clockId, uint64_t asy
         asyncHtracePluginEndTime_ = std::max(asyncHtracePluginEndTime_, syncTimestamp);
     }
 }
-uint64_t HtracePluginTimeParser::GetPluginStartTime()
+uint64_t HtracePluginTimeParser::GetPluginStartTime() const
 {
     if (syncHtracePluginStartTime_ != std::numeric_limits<uint64_t>::max()) {
         return syncHtracePluginStartTime_;
@@ -44,7 +44,7 @@ uint64_t HtracePluginTimeParser::GetPluginStartTime()
     return std::numeric_limits<uint64_t>::max();
 }
 
-uint64_t HtracePluginTimeParser::GetPluginEndTime()
+uint64_t HtracePluginTimeParser::GetPluginEndTime() const
 {
     if (syncHtracePluginEndTime_ != 0) {
         return syncHtracePluginEndTime_;

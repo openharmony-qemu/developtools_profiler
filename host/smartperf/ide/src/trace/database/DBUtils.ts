@@ -11,12 +11,12 @@ const db_version = 6;
 export function initIndexedDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     let request = indexedDB.open('smart_perf', db_version);
-    request.onerror = function (event) {};
-    request.onsuccess = function (event) {
+    request.onerror = function (event): void {};
+    request.onsuccess = function (event): void {
       let db = request.result;
       resolve(db);
     };
-    request.onupgradeneeded = function (event) {
+    request.onupgradeneeded = function (event): void {
       // @ts-ignore
       let db = event!.target!.result;
       if (db.objectStoreNames.contains('trace_file')) {
@@ -37,11 +37,11 @@ export function initIndexedDB(): Promise<IDBDatabase> {
  * 删除过期数据
  * @param db
  */
-export function deleteExpireData(db: IDBDatabase) {
+export function deleteExpireData(db: IDBDatabase): void {
   if (db && db.objectStoreNames.contains('trace_file')) {
     let objectStore = db.transaction(['trace_file'], 'readwrite').objectStore('trace_file');
     let request = objectStore.getAll();
-    request.onsuccess = function (event) {
+    request.onsuccess = function (event): void {
       let now = new Date().getTime();
       for (let re of request.result) {
         if (now - re.file_time > file_cache_due) {
@@ -50,7 +50,7 @@ export function deleteExpireData(db: IDBDatabase) {
       }
       db.close();
     };
-    request.onerror = function () {
+    request.onerror = function (): void {
       info('delete expire data failed');
     };
   }
@@ -63,11 +63,11 @@ export function deleteExpireData(db: IDBDatabase) {
  * @param fileId 当前打开的文件id
  * @param buffer 二进制数据
  */
-export function cacheTraceFileBuffer(db: IDBDatabase, oldFileId: string, fileId: string, buffer: ArrayBuffer) {
+export function cacheTraceFileBuffer(db: IDBDatabase, oldFileId: string, fileId: string, buffer: ArrayBuffer): void {
   if (db && db.objectStoreNames.contains('trace_file')) {
     let objectStore = db.transaction(['trace_file'], 'readwrite').objectStore('trace_file');
     let request = objectStore.index('file_id').getAll(oldFileId);
-    request.onsuccess = function (event) {
+    request.onsuccess = function (event): void {
       for (let re of request.result) {
         objectStore.delete(re.file_index);
       }
@@ -91,7 +91,7 @@ export function cacheTraceFileBuffer(db: IDBDatabase, oldFileId: string, fileId:
       info('cache file success', fileId, buffer.byteLength);
       db.close();
     };
-    request.onerror = function (ev) {
+    request.onerror = function (ev): void {
       info('delete error', fileId);
     };
   }
@@ -120,7 +120,7 @@ export function getTraceFileBuffer(fileId: string): Promise<ArrayBuffer | null> 
             .objectStore('trace_file')
             .index('file_id')
             .getAll(fileId);
-          request.onsuccess = function (ev) {
+          request.onsuccess = function (ev): void {
             let totalLen = 0;
             let arr = request.result.sort((a, b) => a.file_no - b.file_no);
             for (let re of arr) {

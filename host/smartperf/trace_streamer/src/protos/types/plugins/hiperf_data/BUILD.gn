@@ -38,7 +38,7 @@ foreach(proto, hiperf_data_protos_defines) {
 hiperf_data_protos_codegen_all += hiperf_data_protos_codegen
 hiperf_data_protos_codegen_all += hiperf_data_protos_codegen_standard
 
-action("hiperf_data_protos_protoc") {
+action("ts_hiperf_data_protos_protoc") {
   script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = hiperf_data_protos_defines
   outputs = hiperf_data_protos_codegen_all
@@ -58,8 +58,10 @@ config("hiperf_data_protos_config") {
   include_dirs = [ "$proto_out_dir" ]
 }
 
-ohos_source_set("hiperf_data_cpp") {
-  deps = [ ":hiperf_data_protos_protoc" ]
+ohos_source_set("ts_hiperf_data_cpp") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_hiperf_data_protos_protoc" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
@@ -67,12 +69,12 @@ ohos_source_set("hiperf_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":hiperf_data_protos_config" ]
   sources = hiperf_data_protos_codegen
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }
 
-ohos_source_set("hiperf_data_cpp_standard") {
-  deps = [ ":hiperf_data_protos_protoc" ]
+ohos_source_set("ts_hiperf_data_cpp_standard") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_hiperf_data_protos_protoc" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
@@ -80,6 +82,4 @@ ohos_source_set("hiperf_data_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":hiperf_data_protos_config" ]
   sources = hiperf_data_protos_codegen_standard
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }

@@ -16,12 +16,11 @@
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import '../../../../../base-ui/table/lit-table.js';
-import { ConstructorItem } from '../../../../../js-heap/model/UiStruct.js';
+import { ConstructorItem, FileInfo } from '../../../../../js-heap/model/UiStruct.js';
 import { HeapDataInterface } from '../../../../../js-heap/HeapDataInterface.js';
 import '../../../../../base-ui/table/lit-table-column.js';
 import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 import '../TabPaneJsMemoryFilter.js';
-import { SpJsMemoryChart } from '../../../chart/SpJsMemoryChart.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
@@ -51,6 +50,7 @@ export class TabPaneSummary extends BaseElement {
   private rightArray: ConstructorItem[] = [];
   private stack: HTMLLIElement | null | undefined;
   private retainers: HTMLLIElement | null | undefined;
+  private file: FileInfo | undefined | null;
 
   initElements(): void {
     this.tblSummary = this.shadowRoot?.querySelector<LitTable>('#left');
@@ -126,7 +126,7 @@ export class TabPaneSummary extends BaseElement {
       } else {
         this.tbs!.snapshotDataSource = [];
       }
-      if (SpJsMemoryChart.file.name.includes('Timeline')) {
+      if (this.file!.name.includes('Timeline')) {
         this.stackData = HeapDataInterface.getInstance().getAllocationStackData(data);
         if (this.stackData.length > 0) {
           this.stackTable!.recycleDataSource = this.stackData;
@@ -303,7 +303,8 @@ export class TabPaneSummary extends BaseElement {
     this.initSummaryData(data);
   }
 
-  initSummaryData(file: HeapSnapshotStruct, minNodeId?: number, maxNodeId?: number) {
+  initSummaryData(file: FileInfo | HeapSnapshotStruct, minNodeId?: number, maxNodeId?: number) {
+    this.file = file as FileInfo;
     this.clear();
     this.summary = [];
     this.progressEL!.loading = true;
@@ -339,7 +340,7 @@ export class TabPaneSummary extends BaseElement {
         this.tblSummary!.reMeauseHeight();
       }
     }).observe(this.parentElement!);
-    if (SpJsMemoryChart.file.name.includes('Timeline')) {
+    if (this.file!.name.includes('Timeline')) {
       this.retainers!.classList.add('active');
       this.stack!.style.display = 'flex';
       this.retainers!.style.pointerEvents = 'auto';
@@ -646,7 +647,10 @@ export class TabPaneSummary extends BaseElement {
   connectedCallback() {
     super.connectedCallback();
     let filterHeight = 0;
-    new ResizeObserver((entries) => {
+    let system = document
+      .querySelector('body > sp-application')
+      ?.shadowRoot?.querySelector('#app-content > sp-system-trace');
+    new ResizeObserver(() => {
       let summaryPaneFilter = this.shadowRoot!.querySelector('#filter') as HTMLElement;
       if (summaryPaneFilter.clientHeight > 0) filterHeight = summaryPaneFilter.clientHeight;
       if (this.parentElement!.clientHeight > filterHeight) {
@@ -654,7 +658,13 @@ export class TabPaneSummary extends BaseElement {
       } else {
         summaryPaneFilter.style.display = 'none';
       }
+      this.tbs!.style.height = 'calc(100% - 30px)';
+      this.tbs!.reMeauseHeight();
     }).observe(this.parentElement!);
+    new ResizeObserver(() => {
+      this.parentElement!.style.width = system!.clientWidth + 'px';
+      this.style.width = system!.clientWidth + 'px';
+    }).observe(system!);
   }
 
   initHtml(): string {
@@ -663,8 +673,8 @@ export class TabPaneSummary extends BaseElement {
         :host{
             display: flex;
             flex-direction: column;
-            padding: 10px 10px 0 10px;
-            height: calc(100% - 10px - 31px);
+            padding: 10px 1px 0 0px;
+            height: calc(100% - 25px);
         }
         .container {
             /* overflow: hidden; */
@@ -681,13 +691,6 @@ export class TabPaneSummary extends BaseElement {
             height: 70vh;
             box-sizing: border-box;
             overflow: hidden;
-        }
-        .left_table {
-            position: absolute;
-            top: 0;
-            right: 5px;
-            bottom: 0;
-            left: 0;
         }
         .text{
             opacity: 0.9;
@@ -762,7 +765,7 @@ export class TabPaneSummary extends BaseElement {
     <div style="display: flex;flex-direction: row;height: 100%;">
     <selector id='show_table' class="show">
         <lit-slicer style="width:100%">
-        <div id="left_table" style="width: 65%">
+        <div id="left_table" style="width: 65%;">
             <lit-table id="left" style="height: auto" tree>
                 <lit-table-column width="40%" title="Constructor" data-index="" key="objectName" align="flex-start" order>
                 </lit-table-column>
