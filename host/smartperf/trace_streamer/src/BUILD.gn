@@ -11,74 +11,82 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("../build/ohos.gni")
+import("//build/ohos.gni")
 import("../build/ts.gni")
 if (use_wasm) {
   import("//gn/wasm.gni")
 }
-if (use_wasm) {
-  ohos_source_set("trace_streamer_builtin") {
-    subsystem_name = "developtools"
-    part_name = "smartperf_host"
-    sources = []
-    include_dirs = []
-    deps = []
-    public_deps = []
-  }
-}
-ohos_source_set("lib") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
-  sources = [ "main.cpp" ]
-  deps = [
-    ":trace_streamer_source",
-    "proto_reader:proto_reader",
-  ]
-  include_dirs = [
-    "base",
-    "..",
-    "trace_streamer",
-    "filter",
-    "table",
-    "trace_data",
-    "include",
-    "rpc",
-    "./",
-    "parser",
-    "cfg",
-    "proto_reader/include",
-    "${THIRD_PARTY}/sqlite/include",
-    "${THIRD_PARTY}/json-master/single_include/nlohmann",
-    "${THIRD_PARTY}/protobuf/src",
-    "${THIRD_PARTY}/hiperf/include",
-  ]
 
-  include_dirs += [
-    "parser/htrace_pbreader_parser",
-    "parser/htrace_pbreader_parser/htrace_event_parser",
-    "parser/htrace_pbreader_parser/htrace_cpu_parser",
+ohos_source_set("ts_sqlite") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  sources = [ "//third_party/sqlite/src/sqlite3.c" ]
+  include_dirs = [ "//third_party/sqlite/include" ]
+  cflags = [
+    "-Wno-shorten-64-to-32",
+    "-Wno-double-promotion",
+    "-Wno-disabled-macro-expansion",
+    "-Wno-float-equal",
+    "-Wno-cast-qual",
+    "-Wno-conversion",
+    "-Wno-cast-align",
+    "-Wno-unused-macros",
+    "-Wno-comma",
+    "-Wno-unreachable-code-break",
+    "-Wno-unreachable-code",
+    "-Wno-unreachable-code-return",
+    "-DSQLITE_THREADSAFE=1",
+    "-DQLITE_DEFAULT_MEMSTATUS=0",
+    "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS",
+    "-DSQLITE_OMIT_DEPRECATED",
+    "-DSQLITE_OMIT_SHARED_CACHE",
+    "-DHAVE_USLEEP",
+    "-DHAVE_UTIME",
+    "-DSQLITE_BYTEORDER=1234",
+    "-DSQLITE_DEFAULT_AUTOVACUUM=0",
+    "-DSQLITE_DEFAULT_MMAP_SIZE=0",
+    "-DSQLITE_CORE",
+    "-DSQLITE_TEMP_STORE=3",
+    "-DSQLITE_OMIT_LOAD_EXTENSION",
   ]
-
-  if (with_perf) {
-    include_dirs += [
-      "parser/hiperf_parser",
-      "${THIRD_PARTY}/hiperf/include",
-      "${THIRD_PARTY}/hiperf/include/nonlinux",
-      "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
-      "${THIRD_PARTY}/perf_include/musl",
-    ]
-  }
-  public_deps = []
-  if (!use_wasm && !is_test && !is_fuzz) {
-    public_deps += [
-      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc",
-      "proto_reader/protoc_plugin:protoreader_plugin",
-    ]
-  }
 }
+
+trace_streamer_include = [
+  "base",
+  "..",
+  "trace_streamer",
+  "filter",
+  "table",
+  "trace_data",
+  "include",
+  "rpc",
+  "./",
+  "parser",
+  "cfg",
+  "proto_reader/include",
+  "parser/ebpf_parser",
+  "parser/htrace_pbreader_parser",
+  "parser/htrace_pbreader_parser/htrace_event_parser",
+  "parser/htrace_pbreader_parser/htrace_cpu_parser",
+  "parser/hiperf_parser",
+  "//developtools/hiperf/include",
+  "${THIRD_PARTY}/sqlite/include",
+  "${THIRD_PARTY}/json/single_include/nlohmann",
+  "${THIRD_PARTY}/protobuf/src",
+  "${THIRD_PARTY}/hiperf/include",
+  "${THIRD_PARTY}/hiperf/include/nonlinux",
+  "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
+  "${THIRD_PARTY}/perf_include/musl",
+  "${THIRD_PARTY}/musl",
+  "${THIRD_PARTY}/libunwind/include",
+  "${THIRD_PARTY}/libunwind/src",
+  "${THIRD_PARTY}/perf_include/libbpf",
+  "${THIRD_PARTY}/googletest/googletest/include",
+]
+
 ohos_source_set("trace_streamer_source") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "cfg/trace_streamer_config.cpp",
     "cfg/trace_streamer_config.h",
@@ -91,87 +99,31 @@ ohos_source_set("trace_streamer_source") {
     "trace_streamer/trace_streamer_selector.h",
     "version.cpp",
   ]
-  include_dirs = [
-    "base",
-    "..",
-    "trace_streamer",
-    "filter",
-    "table",
-    "trace_data",
-    "include",
-    "rpc",
-    "./",
-    "parser",
-    "cfg",
-    "proto_reader/include",
-    "parser/ebpf_parser",
-    "${THIRD_PARTY}/sqlite/include",
-    "${THIRD_PARTY}/protobuf/src",
-  ]
-  if (use_wasm) {
-    include_dirs +=
-        [ "../prebuilts/emsdk/emsdk/emscripten/cache/sysroot/include" ]
+  if (!is_test && !is_fuzz) {
+    sources += [ "main.cpp" ]
   }
-  if (is_macx && !is_test) {
-    cflags = [ "-D_XOPEN_SOURCE=600" ]
-  }
-  if (is_test) {
-    include_dirs += [ "../prebuilts/emsdk/emsdk/emscripten/system/include" ]
-  }
-
-  include_dirs += [
-    "parser/htrace_pbreader_parser",
-    "parser/htrace_pbreader_parser/htrace_event_parser",
-    "parser/htrace_pbreader_parser/htrace_cpu_parser",
-  ]
-
-  include_dirs += [
-    "${THIRD_PARTY}/libunwind/include",
-    "${THIRD_PARTY}/libunwind/src",
-    "${THIRD_PARTY}/json-master/single_include/nlohmann",
-    "${THIRD_PARTY}/hiperf/include",
-    "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
-    "${THIRD_PARTY}/hiperf/include/nonlinux",
-  ]
-
-  if (with_perf) {
-    include_dirs += [
-      "parser/hiperf_parser",
-      "${THIRD_PARTY}/perf_include/libbpf",
-      "${THIRD_PARTY}/perf_include/musl",
-    ]
-  }
-  public_deps = [
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:all_type_cpp_standard",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder",
-  ]
-
-  deps = [
-    "${THIRD_PARTY}/sqlite:sqlite",
-    "base:base",
-    "filter:filter",
-    "parser:parser",
-    "table:table",
-    "trace_data:trace_data",
-  ]
-  if (with_perf) {
-    deps += [ "parser/hiperf_parser:hiperf_parser" ]
-  } else {
-    deps += [ "${THIRD_PARTY}/hiperf:elf" ]
-  }
-
   if (use_wasm) {
     sources += [
       "rpc/wasm_func.cpp",
       "rpc/wasm_func.h",
     ]
   }
+
+  include_dirs = trace_streamer_include
+  if (use_wasm) {
+    include_dirs +=
+        [ "../prebuilts/emsdk/emsdk/emscripten/cache/sysroot/include" ]
+  }
+  if (is_test) {
+    include_dirs += [ "../prebuilts/emsdk/emsdk/emscripten/system/include" ]
+  }
+
+  cflags = [ "-D target_cpu_${target_cpu}" ]
+  if (!use_wasm && !is_win && !is_macx && !is_test) {
+    cflags += [ "-D HAVE_LIBUNWIND" ]
+  }
   if (enable_ts_utest && !use_wasm) {
-    cflags = [
+    cflags += [
       "-fprofile-arcs",
       "-ftest-coverage",
     ]
@@ -184,16 +136,55 @@ ohos_source_set("trace_streamer_source") {
       cflags += [ "-D IS_UT" ]
     }
   }
+
+  public_deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp_standard",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader",
+  ]
+  if (!use_wasm && !is_test && !is_fuzz) {
+    public_deps += [
+      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+      "proto_reader/protoc_plugin:protoreader_plugin(${host_toolchain})",
+    ]
+  }
+
+  deps = [
+    ":ts_sqlite",
+    "base:base",
+    "filter:filter",
+    "parser:parser",
+    "parser/hiperf_parser:hiperf_parser",
+    "proto_reader:proto_reader",
+    "table:table",
+    "trace_data:trace_data",
+  ]
 }
+
 if (use_wasm) {
+  ohos_source_set("trace_streamer_builtin") {
+    subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+    part_name = "${OHOS_PROFILER_PART_NAME}"
+    sources = []
+    include_dirs = []
+    deps = []
+    public_deps = []
+  }
   wasm_lib("trace_streamer_builtin_wasm") {
     name = "trace_streamer_builtin"
-    deps = [ ":lib" ]
+    deps = [ ":trace_streamer_source" ]
   }
 } else {
   if (!is_test && !is_fuzz) {
-    executable("trace_streamer") {
-      deps = [ ":lib" ]
+    ohos_executable("trace_streamer") {
+      subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+      part_name = "${OHOS_PROFILER_PART_NAME}"
+      sources = []
+      include_dirs = trace_streamer_include
+      deps = [ ":trace_streamer_source" ]
     }
   }
 }

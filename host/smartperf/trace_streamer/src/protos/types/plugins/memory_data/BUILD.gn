@@ -44,7 +44,7 @@ config("memory_include_config") {
 }
 
 #######################################################
-action("memory_data_cpp_gen") {
+action("ts_memory_data_cpp_gen") {
   script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = memory_data_sources
   outputs = memory_data_codegen_all
@@ -60,14 +60,16 @@ action("memory_data_cpp_gen") {
   args += rebase_path(sources, root_build_dir)
   if (!use_wasm && !is_test && !is_fuzz) {
     deps = [
-      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc",
-      "${SRC}/proto_reader/protoc_plugin:protoreader_plugin",
+      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+      "${SRC}/proto_reader/protoc_plugin:protoreader_plugin(${host_toolchain})",
     ]
   }
 }
 
-ohos_source_set("memory_data_cpp") {
-  deps = [ ":memory_data_cpp_gen" ]
+ohos_source_set("ts_memory_data_cpp") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_memory_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
@@ -75,15 +77,13 @@ ohos_source_set("memory_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":memory_include_config" ]
   sources = memory_data_codegen
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }
 
-ohos_source_set("memory_data_encoder") {
-  deps = [ ":memory_data_cpp_gen" ]
+ohos_source_set("memory_data_reader") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_memory_data_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":memory_include_config" ]
   sources = memory_data_codegen_reader
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }

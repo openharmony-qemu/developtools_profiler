@@ -1129,14 +1129,15 @@ export class LitTable extends HTMLElement {
         if (column.template) {
           td = column.template.render(rowData.data).content.cloneNode(true);
           td.template = column.template;
+          td.title = rowData.data[dataIndex];
         } else {
           td = document.createElement('div');
           td.innerHTML = this.formatName(rowData.data[dataIndex]);
           td.dataIndex = dataIndex;
+          td.title = rowData.data[dataIndex];
         }
         if (rowData.data.children && rowData.data.children.length > 0 && !rowData.data.hasNext) {
           let btn = this.createExpandBtn(rowData);
-          td.title = rowData.data.objectName;
           td.insertBefore(btn, td.firstChild);
         }
         if (rowData.data.hasNext) {

@@ -64,8 +64,8 @@ import { SpSdkConfig } from './setting/SpSdkConfig.js';
 import { SpVmTracker } from './setting/SpVmTracker.js';
 import { SpHisysEvent } from './setting/SpHisysEvent.js';
 import { SpRecordTemplate } from './setting/SpRecordTemplate.js';
-import { SpJsHeap } from './setting/SpJsHeap.js';
 import { SpStatisticsHttpUtil } from '../../statistics/util/SpStatisticsHttpUtil.js';
+import { SpArkTs } from './setting/SpArkTs.js';
 
 @element('sp-record-trace')
 export class SpRecordTrace extends BaseElement {
@@ -85,7 +85,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  get record_template() {
+  get record_template(): boolean {
     return this.hasAttribute('record_template');
   }
 
@@ -387,7 +387,7 @@ export class SpRecordTrace extends BaseElement {
   private spVmTracker: SpVmTracker | undefined;
   private spHisysEvent: SpHisysEvent | undefined;
   private spRecordTemplate: SpRecordTemplate | undefined;
-  private spJsHeap: SpJsHeap | undefined;
+  private spArkTs: SpArkTs | undefined;
 
   private menuGroup: LitMainMenuGroup | undefined | null;
   private appContent: HTMLElement | undefined | null;
@@ -400,7 +400,7 @@ export class SpRecordTrace extends BaseElement {
       clearFlag = true;
     } else {
       let optionArray = new Array();
-      for (let i = 0; i < this.deviceSelect!.options.length; i++) {
+      for (let i = 0 ; i < this.deviceSelect!.options.length ; i++) {
         optionArray.push(this.deviceSelect!.options[i].value);
       }
       devs.forEach((value) => {
@@ -412,7 +412,7 @@ export class SpRecordTrace extends BaseElement {
     return clearFlag;
   }
 
-  refreshDeviceList() {
+  refreshDeviceList(): void {
     if (this.vs) {
       Cmd.execHdcCmd(CmdConstant.CMD_HDC_DEVICES, (res: string) => {
         let devs: string[] = res.trim().replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);
@@ -427,7 +427,7 @@ export class SpRecordTrace extends BaseElement {
             this.recordButton!.hidden = true;
             this.disconnectButton!.hidden = true;
           }
-          for (let i = 0; i < devs.length; i++) {
+          for (let i = 0 ; i < devs.length ; i++) {
             let dev = devs[i];
             let option = document.createElement('option');
             option.className = 'select';
@@ -450,7 +450,7 @@ export class SpRecordTrace extends BaseElement {
           this.recordButton!.hidden = true;
           this.disconnectButton!.hidden = true;
         }
-        for (let len = 0; len < devs.length; len++) {
+        for (let len = 0 ; len < devs.length ; len++) {
           let dev = devs[len];
           let option = document.createElement('option');
           option.className = 'select';
@@ -497,7 +497,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  freshMenuDisable(disable: boolean) {
+  freshMenuDisable(disable: boolean): void {
     let mainMenu = this.sp!.shadowRoot?.querySelector('#main-menu') as LitMainMenu;
     mainMenu.menus?.forEach((men) => {
       men.children.forEach((child) => {
@@ -537,7 +537,7 @@ export class SpRecordTrace extends BaseElement {
     this.spSdkConfig = new SpSdkConfig();
     this.spVmTracker = new SpVmTracker();
     this.spHisysEvent = new SpHisysEvent();
-    this.spJsHeap = new SpJsHeap();
+    this.spArkTs = new SpArkTs();
     this.spRecordTemplate = new SpRecordTemplate(this);
     this.addButton = this.shadowRoot?.querySelector<LitButton>('.add');
     this.addButton!.addEventListener('click', () => {
@@ -553,7 +553,7 @@ export class SpRecordTrace extends BaseElement {
     });
     this.deviceSelect = this.shadowRoot?.querySelector('#device-select') as HTMLSelectElement;
     this.deviceVersion = this.shadowRoot?.querySelector('#device-version') as HTMLSelectElement;
-    this.deviceSelect!.onchange = () => {
+    this.deviceSelect!.onchange = (): void => {
       if (this.deviceSelect!.options.length > 0) {
         this.recordButton!.hidden = false;
         this.disconnectButton!.hidden = false;
@@ -597,7 +597,7 @@ export class SpRecordTrace extends BaseElement {
         });
       }
     };
-    this.deviceVersion.onchange = () => {
+    this.deviceVersion.onchange = (): void => {
       let versionItem = this.deviceVersion!.options[this.deviceVersion!.selectedIndex];
       SpRecordTrace.selectVersion = versionItem.getAttribute('device-version');
       this.traceCommand!.hdcCommon = PluginConvertUtils.createHdcCmd(
@@ -688,7 +688,7 @@ export class SpRecordTrace extends BaseElement {
     this.initMenuItems();
   }
 
-  private selectedDevice(deviceVersion: string) {
+  private selectedDevice(deviceVersion: string): void {
     let deviceVersionItem = SpRecordTrace.supportVersions.filter((item) => deviceVersion.indexOf(item) != -1);
     if (deviceVersionItem.length > 0) {
       SpRecordTrace.selectVersion = deviceVersionItem[0];
@@ -698,19 +698,19 @@ export class SpRecordTrace extends BaseElement {
     this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
   }
 
-  private appendDeviceVersion() {
+  private appendDeviceVersion(): void {
     SpRecordTrace.supportVersions.forEach((supportVersion) => {
       let option = document.createElement('option');
       option.className = 'select';
-      option.textContent = `OpenHarmony-${supportVersion}`;
+      option.textContent = `OpenHarmony-${ supportVersion }`;
       option.setAttribute('device-version', supportVersion);
       this.deviceVersion!.append(option);
     });
   }
 
-  private setDeviceVersionSelect(selected: string) {
+  private setDeviceVersionSelect(selected: string): void {
     let children = this.deviceVersion!.children;
-    for (let i = 0; i < children.length; i++) {
+    for (let i = 0 ; i < children.length ; i++) {
       let child = children[i] as HTMLOptionElement;
       if (child.getAttribute('device-version') === selected) {
         child.selected = true;
@@ -719,7 +719,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  stopRecordListener() {
+  stopRecordListener(): void {
     this.recordButtonText!.textContent = 'Record';
     if (this.vs) {
       let cmd = Cmd.formatString(CmdConstant.CMS_HDC_STOP, [SpRecordTrace.serialNumber]);
@@ -758,7 +758,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  private initMenuItems() {
+  private initMenuItems(): void {
     let that = this;
     if (this.record_template) {
       this._menuItems = [
@@ -766,7 +766,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Record setting',
           icon: 'properties',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.recordSetting!);
             that.freshMenuItemsStatus('Record setting');
@@ -775,7 +775,7 @@ export class SpRecordTrace extends BaseElement {
         {
           title: 'Trace template',
           icon: 'realIntentionBulb',
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spRecordTemplate!);
             that.freshMenuItemsStatus('Trace template');
@@ -785,7 +785,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Trace command',
           icon: 'dbsetbreakpoint',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.traceCommand!);
             that.traceCommand!.hdcCommon = PluginConvertUtils.createHdcCmd(
@@ -803,7 +803,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Record setting',
           icon: 'properties',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.recordSetting!);
             that.freshMenuItemsStatus('Record setting');
@@ -813,7 +813,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Trace command',
           icon: 'dbsetbreakpoint',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.freshMenuItemsStatus('Trace command');
             let request = that.makeRequest();
             that.appContent!.innerHTML = '';
@@ -829,7 +829,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Probes config',
           icon: 'realIntentionBulb',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.probesConfig!);
             that.freshMenuItemsStatus('Probes config');
@@ -839,7 +839,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Native Memory',
           icon: 'externaltools',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spAllocations!);
             that.freshMenuItemsStatus('Native Memory');
@@ -849,7 +849,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Hiperf',
           icon: 'realIntentionBulb',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spRecordPerf!);
             that.freshMenuItemsStatus('Hiperf');
@@ -859,7 +859,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'eBPF Config',
           icon: 'file-config',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spFileSystem!);
             that.freshMenuItemsStatus('eBPF Config');
@@ -869,7 +869,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'VM Tracker',
           icon: 'vm-tracker',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spVmTracker!);
             that.freshMenuItemsStatus('VM Tracker');
@@ -879,27 +879,27 @@ export class SpRecordTrace extends BaseElement {
           title: 'HiSystemEvent',
           icon: 'externaltools',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spHisysEvent!);
             that.freshMenuItemsStatus('HiSystemEvent');
           },
         },
         {
-          title: 'JS Heap',
+          title: 'Ark Ts',
           icon: 'file-config',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
-            that.appContent!.append(that.spJsHeap!);
-            that.freshMenuItemsStatus('JS Heap');
+            that.appContent!.append(that.spArkTs!);
+            that.freshMenuItemsStatus('Ark Ts');
           },
         },
         {
           title: 'SDK Config',
           icon: 'file-config',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent) {
+          clickHandler: function (ev: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spSdkConfig!);
             that.freshMenuItemsStatus('SDK Config');
@@ -927,7 +927,7 @@ export class SpRecordTrace extends BaseElement {
     });
   }
   // @ts-ignore
-  usbConnectionListener(event: USBConnectionEvent) {
+  usbConnectionListener(event: USBConnectionEvent): void {
     if (event.isTrusted) {
       this.recordButton!.hidden = false;
       this.disconnectButton!.hidden = false;
@@ -946,10 +946,10 @@ export class SpRecordTrace extends BaseElement {
   }
 
   // @ts-ignore
-  usbDisConnectionListener(event: USBConnectionEvent) {
+  usbDisConnectionListener(event: USBConnectionEvent): void {
     // @ts-ignore
     let disConnectDevice: USBDevice = event.device;
-    for (let index = 0; index < this.deviceSelect!.children.length; index++) {
+    for (let index = 0 ; index < this.deviceSelect!.children.length ; index++) {
       let option = this.deviceSelect!.children[index] as HTMLOptionElement;
       if (option.value == disConnectDevice.serialNumber) {
         let optValue = option.value;
@@ -970,7 +970,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  recordButtonListener() {
+  recordButtonListener(): void {
     SpRecordTrace.stopRecord = false;
     let request = this.makeRequest();
     if (request.pluginConfigs.length == 0) {
@@ -1164,7 +1164,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  private initRecordUIState() {
+  private initRecordUIState(): void {
     this.buttonDisable(true);
     this.freshMenuDisable(true);
     this.freshConfigMenuDisable(true);
@@ -1182,7 +1182,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  private makeRequest = () => {
+  private makeRequest = (): CreateSessionRequest => {
     let request = this.createSessionRequest();
     if (this.record_template) {
       let templateConfigs = this.spRecordTemplate?.getTemplateConfig();
@@ -1242,14 +1242,14 @@ export class SpRecordTrace extends BaseElement {
       if (this.spHisysEvent?.startSamp) {
         request.pluginConfigs.push(this.createHiSystemEventPluginConfig(this.spHisysEvent.process));
       }
-      if (this.spJsHeap!.process != '') {
-        request.pluginConfigs.push(this.createJsHeapConfig());
+      if (this.spArkTs!.process != '' && this.spArkTs!.startSamp) {
+        request.pluginConfigs.push(this.createArkTsConfig());
       }
     }
     return request;
   };
 
-  private createSessionRequest() {
+  private createSessionRequest(): CreateSessionRequest {
     let bufferConfig: ProfilerSessionConfigBufferConfig = {
       pages: this.recordSetting!.bufferSize * 256,
       policy: ProfilerSessionConfigBufferConfigPolicy.RECYCLE,
@@ -1270,7 +1270,7 @@ export class SpRecordTrace extends BaseElement {
     return request;
   }
 
-  private createMonitorPlugin(that: this, request: CreateSessionRequest) {
+  private createMonitorPlugin(that: this, request: CreateSessionRequest): void {
     let processPlugin = that.createProcessPlugin();
     let cpuPlugin = that.createCpuPlugin();
     let diskIoPlugin = that.createDiskIOPlugin();
@@ -1281,7 +1281,7 @@ export class SpRecordTrace extends BaseElement {
     request.pluginConfigs.push(netWorkPlugin);
   }
 
-  private createNetworkPlugin() {
+  private createNetworkPlugin(): ProfilerPluginConfig<NetworkConfig> {
     let netWorkConfig: NetworkConfig = {};
     let netWorkPlugin: ProfilerPluginConfig<NetworkConfig> = {
       pluginName: 'network-plugin',
@@ -1292,7 +1292,7 @@ export class SpRecordTrace extends BaseElement {
     return netWorkPlugin;
   }
 
-  private createDiskIOPlugin() {
+  private createDiskIOPlugin(): ProfilerPluginConfig<DiskioConfig> {
     let diskIoConfig: DiskioConfig = {
       reportIoStats: 'IO_REPORT',
     };
@@ -1305,7 +1305,7 @@ export class SpRecordTrace extends BaseElement {
     return diskIoPlugin;
   }
 
-  private createCpuPlugin() {
+  private createCpuPlugin(): ProfilerPluginConfig<CpuConfig> {
     let cpuConfig: CpuConfig = {
       pid: 0,
       reportProcessInfo: true,
@@ -1319,7 +1319,7 @@ export class SpRecordTrace extends BaseElement {
     return cpuPlugin;
   }
 
-  private createProcessPlugin() {
+  private createProcessPlugin(): ProfilerPluginConfig<ProcessConfig> {
     let processConfig: ProcessConfig = {
       report_process_tree: true,
       report_cpu: true,
@@ -1549,7 +1549,7 @@ export class SpRecordTrace extends BaseElement {
         `;
   }
 
-  private createHilogConfig(probesConfig: SpProbesConfig, reportingFrequency: number) {
+  private createHilogConfig(probesConfig: SpProbesConfig, reportingFrequency: number): ProfilerPluginConfig<HilogConfig> {
     let hilogConfig: HilogConfig = {
       deviceType: Type.HI3516,
       logLevel: levelFromJSON(probesConfig.hilogConfig[0]),
@@ -1564,11 +1564,11 @@ export class SpRecordTrace extends BaseElement {
     return hilogConfigProfilerPluginConfig;
   }
 
-  private isNumber(str: string) {
+  private isNumber(str: string): boolean {
     return !isNaN(Number(str));
   }
 
-  private createHiperConfig(reportingFrequency: number) {
+  private createHiperConfig(reportingFrequency: number): ProfilerPluginConfig<HiperfPluginConfig> {
     let perfConfig = this.spRecordPerf!.getPerfConfig();
     let recordArgs = '';
     recordArgs = recordArgs + '-f ' + perfConfig?.frequency;
@@ -1645,7 +1645,7 @@ export class SpRecordTrace extends BaseElement {
     return hiPerfPluginConfig;
   }
 
-  private createSystemConfig() {
+  private createSystemConfig(): ProfilerPluginConfig<FileSystemConfig> {
     let systemConfig = this.spFileSystem!.getSystemConfig();
     let recordArgs = 'hiebpf';
     let recordEvent = [];
@@ -1678,7 +1678,7 @@ export class SpRecordTrace extends BaseElement {
     return ebpfPluginConfig;
   }
 
-  private createNativePluginConfig(reportingFrequency: number) {
+  private createNativePluginConfig(reportingFrequency: number): ProfilerPluginConfig<NativeHookConfig> {
     let appProcess = this.spAllocations!.appProcess;
     let re = /^[0-9]+.?[0-9]*/;
     let pid = 0;
@@ -1727,7 +1727,7 @@ export class SpRecordTrace extends BaseElement {
     hasmemoryConfig: boolean,
     hasMonitorMemory: boolean,
     hasSmaps: boolean
-  ) {
+  ): ProfilerPluginConfig<MemoryConfig> {
     let memoryconfig: MemoryConfig = {
       reportProcessTree: false,
       reportSysmemMemInfo: false,
@@ -1785,8 +1785,8 @@ export class SpRecordTrace extends BaseElement {
     return profilerPluginConfig;
   }
 
-  private createJsHeapConfig() {
-    let process = this.spJsHeap!.process;
+  private createArkTsConfig(): ProfilerPluginConfig<ArkTSConfig> {
+    let process = this.spArkTs!.process;
     let re = /^[0-9]+.?[0-9]*/;
     let pid = 0;
     let processId = '';
@@ -1800,10 +1800,12 @@ export class SpRecordTrace extends BaseElement {
     }
     let arkTSConfig: ArkTSConfig = {
       pid: pid,
-      type: this.spJsHeap!.radioBoxType,
-      interval: this.spJsHeap!.intervalValue,
-      capture_numeric_value: this.spJsHeap!.grabNumeric,
-      track_allocations: this.spJsHeap!.grabAllocations,
+      type: this.spArkTs!.radioBoxType,
+      interval: this.spArkTs!.intervalValue,
+      capture_numeric_value: this.spArkTs!.grabNumeric,
+      track_allocations: this.spArkTs!.grabAllocations,
+      enable_cpu_profiler: this.spArkTs!.grabCpuProfiler,
+      cpu_profiler_interval: this.spArkTs!.intervalCpuValue,
     };
     let arkTSPluginConfig: ProfilerPluginConfig<ArkTSConfig> = {
       pluginName: 'arkts-plugin',
@@ -1814,7 +1816,7 @@ export class SpRecordTrace extends BaseElement {
     return arkTSPluginConfig;
   }
 
-  private createFpsPluginConfig() {
+  private createFpsPluginConfig(): ProfilerPluginConfig<FpsConfig> {
     let fpsConfig: FpsConfig = {
       reportFps: true,
     };
@@ -1827,7 +1829,7 @@ export class SpRecordTrace extends BaseElement {
     return fpsPlugin;
   }
 
-  private createHiSystemEventPluginConfig(appName: string) {
+  private createHiSystemEventPluginConfig(appName: string): ProfilerPluginConfig<HiSystemEventConfig> {
     let hiSystemEventConfig: HiSystemEventConfig = {
       msg: 'hisysevent-plugin',
       processName: appName,
@@ -1840,7 +1842,7 @@ export class SpRecordTrace extends BaseElement {
     return hiSystemEventPlugin;
   }
 
-  private createHtracePluginConfig() {
+  private createHtracePluginConfig(): ProfilerPluginConfig<TracePluginConfig> {
     let tracePluginConfig: TracePluginConfig = {
       ftraceEvents: this.createTraceEvents(this.probesConfig!.traceConfig),
       hitraceCategories: [],
@@ -1868,12 +1870,12 @@ export class SpRecordTrace extends BaseElement {
     return htraceProfilerPluginConfig;
   }
 
-  static appendSerialize(profilerPluginConfig: ProfilerPluginConfig<{}>) {
+  static appendSerialize(profilerPluginConfig: ProfilerPluginConfig<{}>): void {
     if (Number(SpRecordTrace.selectVersion) >= 4.0) {
     }
   }
 
-  private createSdkConfig() {
+  private createSdkConfig(): ProfilerPluginConfig<{}> {
     let gpuConfig = this.spSdkConfig!.getGpuConfig();
     let gpuPluginConfig: ProfilerPluginConfig<{}> = {
       pluginName: this.spSdkConfig!.getPlugName(),
@@ -1884,7 +1886,7 @@ export class SpRecordTrace extends BaseElement {
     return gpuPluginConfig;
   }
 
-  freshConfigMenuDisable(disable: boolean) {
+  freshConfigMenuDisable(disable: boolean): void {
     let querySelectors = this.shadowRoot?.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
     querySelectors!.forEach((item) => {
       if (disable) {
@@ -1896,7 +1898,7 @@ export class SpRecordTrace extends BaseElement {
     });
   }
 
-  public startRefreshDeviceList() {
+  public startRefreshDeviceList(): void {
     if (this.refreshDeviceTimer === undefined) {
       this.refreshDeviceTimer = window.setInterval(() => {
         this.refreshDeviceList();
@@ -1904,7 +1906,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  buttonDisable(disable: boolean) {
+  buttonDisable(disable: boolean): void {
     if (disable) {
       this.disconnectButton!.style.pointerEvents = 'none';
       this.recordButtonText!.textContent = this.stop;
@@ -1920,7 +1922,7 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  freshMenuItemsStatus(currentValue: string) {
+  freshMenuItemsStatus(currentValue: string): void {
     let litMainMenuGroup = this.shadowRoot?.querySelector<LitMainMenuGroup>('lit-main-menu-group');
     let litMainMenuItemNodeListOf = litMainMenuGroup!.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
     litMainMenuItemNodeListOf.forEach((item) => {
@@ -1928,7 +1930,7 @@ export class SpRecordTrace extends BaseElement {
     });
   }
 
-  synchronizeDeviceList() {
+  synchronizeDeviceList(): void {
     this.deviceSelect!.innerHTML = '';
     if (SpRecordTrace.serialNumber != '') {
       let option = document.createElement('option');

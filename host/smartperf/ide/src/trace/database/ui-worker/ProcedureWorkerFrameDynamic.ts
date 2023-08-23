@@ -14,7 +14,7 @@
  */
 
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import { BaseStruct, isSurroundingPoint, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
+import { BaseStruct, computeUnitWidth, isSurroundingPoint, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
 import { AnimationRanges } from '../../bean/FrameComponentBean.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 
@@ -30,25 +30,20 @@ export class FrameDynamicRender extends Render {
   ): void {
     let frameDynamicList: FrameDynamicStruct[] = row.dataList;
     let frameDynamicFilter: FrameDynamicStruct[] = row.dataListCache;
-    frameDynamic(frameDynamicList, frameDynamicFilter, row, req.animationRanges, req.useCache);
+    this.frameDynamic(frameDynamicList, frameDynamicFilter, row, req.animationRanges, req.useCache);
     if (req.animationRanges.length > 0 && req.animationRanges[0] && frameDynamicFilter.length > 0) {
       let modelType: string = row.getAttribute('modelType') || 'x';
       let [minValue, maxValue] = this.getMinAndMaxData(frameDynamicFilter, modelType);
       let find: boolean = false;
       let preDynamic: FrameDynamicStruct = frameDynamicFilter[0];
-      let findStructList = frameDynamicFilter.filter(filter =>
-        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, xScaleNumber));
-      if (findStructList.length > 0) {
-        find = true;
-        let hoverIndex: number = 0;
-        if (findStructList.length > unitIndex) {
-          hoverIndex = Math.ceil(findStructList.length / multiple);
-        }
-        FrameDynamicStruct.hoverFrameDynamicStruct = findStructList[hoverIndex];
-      }
       let isDraw = false;
+      let selectUnitWidthList: number[] = [];
       for (let index: number = 0; index < frameDynamicFilter.length; index++) {
         let currDynamic: FrameDynamicStruct = frameDynamicFilter[index];
+        if (index > 0) {
+          let selectUnitWidth = computeUnitWidth(preDynamic.ts, currDynamic.ts, row.frame.width);
+          selectUnitWidthList.push(selectUnitWidth);
+        }
         this.refreshPointY(currDynamic, row, modelType, minValue, maxValue);
         if (currDynamic.groupId === 0) {
           if (currDynamic.ts > TraceRow.range!.startNS && currDynamic.ts < TraceRow.range!.endNS) {
@@ -64,6 +59,17 @@ export class FrameDynamicRender extends Render {
       }
       if(isDraw) {
         this.drawDynamicPointYStr(req.context, frameDynamicFilter, row.frame, minValue, maxValue);
+      }
+      let unitWidth = Math.min.apply(Math, selectUnitWidthList);
+      let findStructList = frameDynamicFilter.filter(filter =>
+        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, unitWidth / multiple));
+      if (findStructList.length > 0) {
+        find = true;
+        let hoverIndex: number = 0;
+        if (findStructList.length > unitIndex) {
+          hoverIndex = Math.ceil(findStructList.length / multiple);
+        }
+        FrameDynamicStruct.hoverFrameDynamicStruct = findStructList[hoverIndex];
       }
       if (!find && row.isHover) {
         FrameDynamicStruct.hoverFrameDynamicStruct = undefined;
@@ -165,6 +171,57 @@ export class FrameDynamicRender extends Render {
     }
     return [min, max];
   };
+
+  private frameDynamic (
+    frameDynamicList: FrameDynamicStruct[],
+    frameDynamicFilter: FrameDynamicStruct[],
+    row: TraceRow<FrameDynamicStruct>,
+    animationRanges: AnimationRanges[],
+    use: boolean
+  ): void {
+    let startNS: number = TraceRow.range!.startNS;
+    let endNS: number = TraceRow.range!.endNS;
+    let totalNS: number = TraceRow.range!.totalNS;
+    let frame: Rect = row.frame;
+    if (use && !TraceRow.range!.refresh && frameDynamicFilter.length > 0) {
+      refreshDynamicFrame(frameDynamicFilter, frame, startNS, endNS, totalNS);
+      return;
+    }
+    frameDynamicFilter.length = 0;
+    if (frameDynamicList) {
+      let groupIdList: number[] = [];
+      for (let dataIndex: number = 0; dataIndex < frameDynamicList.length; dataIndex++) {
+        let currentDynamic: FrameDynamicStruct = frameDynamicList[dataIndex];
+        currentDynamic.groupId = invalidGroupId;
+        for (let rangeIndex = 0; rangeIndex < animationRanges.length; rangeIndex++) {
+          let currentRange = animationRanges[rangeIndex];
+          if (currentDynamic.ts >= currentRange.start && currentDynamic.ts <= currentRange.end) {
+            currentDynamic.groupId = currentRange.start;
+            break;
+          }
+        }
+        if (currentDynamic.ts < startNS && (dataIndex + unitIndex) < frameDynamicList.length &&
+          frameDynamicList[dataIndex + unitIndex].ts >= startNS && currentDynamic.groupId !== invalidGroupId) {
+          refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
+        }
+        if (currentDynamic.ts >= startNS && currentDynamic.ts <= endNS && currentDynamic.groupId !== invalidGroupId) {
+          refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
+        }
+        if (currentDynamic.ts >= endNS && currentDynamic.groupId !== invalidGroupId) {
+          refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
+          break;
+        }
+      }
+      let simpleGroup = groupIdList.filter(groupId => {
+        return groupId !== invalidGroupId && groupIdList.indexOf(groupId) === groupIdList.lastIndexOf(groupId);
+      });
+      frameDynamicFilter.forEach(dynamic => {
+        if (simpleGroup.indexOf(dynamic.groupId!) > invalidGroupId) {
+          dynamic.groupId = 0;
+        }
+      });
+    }
+  };
 }
 
 let refreshDynamicFrame = function (
@@ -192,57 +249,6 @@ let refreshFilterDynamicFrame = function (
   groupIdList.push(currentFrameDynamic.groupId!);
   frameDynamicFilter.push(currentFrameDynamic);
   FrameDynamicStruct.setFrameDynamic(currentFrameDynamic, padding, startNS, endNS, totalNS, frame);
-};
-
-let frameDynamic = function (
-  frameDynamicList: FrameDynamicStruct[],
-  frameDynamicFilter: FrameDynamicStruct[],
-  row: TraceRow<FrameDynamicStruct>,
-  animationRanges: AnimationRanges[],
-  use: boolean
-): void {
-  let startNS: number = TraceRow.range!.startNS;
-  let endNS: number = TraceRow.range!.endNS;
-  let totalNS: number = TraceRow.range!.totalNS;
-  let frame: Rect = row.frame;
-  if (use && !TraceRow.range!.refresh && frameDynamicFilter.length > 0) {
-    refreshDynamicFrame(frameDynamicFilter, frame, startNS, endNS, totalNS);
-    return;
-  }
-  frameDynamicFilter.length = 0;
-  if (frameDynamicList) {
-    let groupIdList: number[] = [];
-    for (let dataIndex: number = 0; dataIndex < frameDynamicList.length; dataIndex++) {
-      let currentDynamic: FrameDynamicStruct = frameDynamicList[dataIndex];
-      currentDynamic.groupId = invalidGroupId;
-      for (let rangeIndex = 0; rangeIndex < animationRanges.length; rangeIndex++) {
-        let currentRange = animationRanges[rangeIndex];
-        if (currentDynamic.ts >= currentRange.start && currentDynamic.ts <= currentRange.end) {
-          currentDynamic.groupId = currentRange.start;
-          break;
-        }
-      }
-      if (currentDynamic.ts < startNS && (dataIndex + unitIndex) < frameDynamicList.length &&
-        frameDynamicList[dataIndex + unitIndex].ts >= startNS && currentDynamic.groupId !== invalidGroupId) {
-        refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
-      }
-      if (currentDynamic.ts >= startNS && currentDynamic.ts <= endNS && currentDynamic.groupId !== invalidGroupId) {
-        refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
-      }
-      if (currentDynamic.ts >= endNS && currentDynamic.groupId !== invalidGroupId) {
-        refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
-        break;
-      }
-    }
-    let simpleGroup = groupIdList.filter(groupId => {
-      return groupId !== invalidGroupId && groupIdList.indexOf(groupId) === groupIdList.lastIndexOf(groupId);
-    });
-    frameDynamicFilter.forEach(dynamic => {
-      if (simpleGroup.indexOf(dynamic.groupId!) > invalidGroupId) {
-        dynamic.groupId = 0;
-      }
-    });
-  }
 };
 
 export class FrameDynamicStruct extends BaseStruct {
@@ -351,4 +357,3 @@ const invalidGroupId: number = -1;
 const multiple: number = 2;
 const unitIndex: number = 1;
 const yScaleNumber: number = 5;
-const xScaleNumber: number = 2;

@@ -10,48 +10,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# import("config.gni")
-if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
-  clang_x64_folder = "."
-  THIRD_PARTY = "//third_party"
-  SRC = "//src"
-  PREBUILTS = "//prebuilts"
 
-  # kernel_version = "5.10.79_aarch64"
-  kernel_version = "."
-  if (target == "test") {
-    enable_ts_utest = true
-  } else {
-    enable_ts_utest = false
-  }
-  device_kernel_version = "default"
-  is_ohos = false
+declare_args() {
+  profiler_SmartPerf = true
+  is_independent_compile = false
+}
+
+if (is_independent_compile) {
+  asdk_libs_dir="."
+  host_toolchain = ""
   PERF_DIR = "//third_party"
-
-  OHOS_TRACE_STREAMER_PROTOS_DIR = get_path_info("../src", "abspath")
-  OHOS_TRACE_STREAMER_DIR = get_path_info("../", "abspath")
-  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc.sh", "abspath")
-
-  if (target_os == "windows") {
-    OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc_w.sh", "abspath")
-  } else {
-    script_executable = "/usr/bin/env"
-  }
-  OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR =
-      get_path_info("../third_party/protobuf", "abspath")
+  clang_x64_folder = "."
+  enable_ts_utest = (target == "test")
 } else {
-  script_executable = "/usr/bin/env"
-  clang_x64_folder = "clang_x64"
+  PERF_DIR = "//developtools"
   with_ebpf_help_table = false
-  OHOS_TRACE_STREAMER_DIR = get_path_info("..", "abspath")
-  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("/protoc.sh", "abspath")
-  THIRD_PARTY = get_path_info("../../../../../../third_party/", "abspath")
-  PERF_DIR = get_path_info("../../../../../", "abspath")
-  SRC = "${OHOS_TRACE_STREAMER_DIR}/src"
-  PREBUILTS = "${OHOS_TRACE_STREAMER_DIR}/prebuilts"
-  target = "trace_steamer"
+  clang_x64_folder = "clang_x64"
   is_macx = false
-  with_perf = true
   is_test = false
   is_protoc = false
   is_spb = false
@@ -59,12 +34,34 @@ if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
   is_dubai_sdk = false
   is_sdkdemo_test = false
   use_wasm = false
-  enable_ts_utest = true
-  kernel_version = "."
+  enable_ts_utest = false
   is_fuzz = false
-  target = "trace_streamer"
-  is_ohos = true
 }
-if (is_ohos) {
-  import("../../../../build/config.gni")
+
+script_executable = "/usr/bin/env"
+device_kernel_version = "default"
+OHOS_TRACE_STREAMER_PROTOS_DIR = get_path_info("../src", "abspath")
+
+OHOS_TRACE_STREAMER_DIR = get_path_info("../", "abspath")
+SRC = "${OHOS_TRACE_STREAMER_DIR}/src"
+PREBUILTS = "//prebuilts"
+THIRD_PARTY = "//third_party"
+kernel_version = "."
+
+OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc.sh", "abspath")
+
+if (target_os == "windows") {
+  OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc_w.sh", "abspath")
+}
+
+OHOS_PROFILER_3RDPARTY_GRPC_DIR = "${THIRD_PARTY}/grpc"
+OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR = "${THIRD_PARTY}/protobuf"
+OHOS_PROFILER_3RDPARTY_GOOGLETEST_DIR = "${THIRD_PARTY}/googletest"
+OHOS_PROFILER_SUBSYS_NAME = "developtools"
+OHOS_PROFILER_PART_NAME = "smartperf_host"
+OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH = "smartperf_host"
+
+build_l2 = false
+if (getenv("BUILD_L2") == "true") {
+  build_l2 = true
 }

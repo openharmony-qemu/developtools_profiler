@@ -66,7 +66,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_FILE_SYSTEM_GROUP = 'file-system-group';
   static ROW_TYPE_FILE_SYSTEM = 'file-system-cell';
   static ROW_TYPE_HEAP = 'heap';
-  static ROW_TYPE_JS_MEMORY = 'js-memory';
+  static ROW_TYPE_ARK_TS = 'ark-ts';
   static ROW_TYPE_HEAP_SNAPSHOT = 'heap-snapshot';
   static ROW_TYPE_HEAP_TIMELINE = 'heap-timeline';
   static ROW_TYPE_FUNC = 'func';
@@ -92,6 +92,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_FRAME_ANIMATION = 'frame-animation';
   static ROW_TYPE_FRAME_DYNAMIC = 'frame-dynamic';
   static ROW_TYPE_FRAME_SPACING = 'frame-spacing';
+  static ROW_TYPE_JS_CPU_PROFILER = 'js-cpu-profiler-cell';
   static FRAME_WIDTH: number = 0;
   static range: TimeRange | undefined | null;
   static rangeSelectObject: RangeSelectStruct | undefined;
@@ -349,6 +350,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
 
   addTemplateTypes(...type: string[]) {
     this.templateType.push(...type);
+    if (this.hasParentRowEl) {
+      this.toParentAddTemplateType(this);
+    }
   }
 
   replaceTraceRow(newNode: any, oldNode: any) {

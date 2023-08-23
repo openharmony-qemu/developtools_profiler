@@ -20,7 +20,7 @@ import {
   getMaxDepthByTid,
   queryAllActualData,
   queryAllExpectedData,
-  queryAllJankProcess,
+  queryAllJankProcess, queryAllTaskPoolPid,
   queryEventCountMap,
   queryProcess,
   queryProcessAsyncFunc,
@@ -72,14 +72,14 @@ export class SpProcessChart {
     this.trace = trace;
   }
 
-  initAsyncFuncData = async () => {
+  initAsyncFuncData = async (): Promise<void> => {
     let asyncFuncList: any[] = await queryProcessAsyncFunc();
     info('AsyncFuncData Count is: ', asyncFuncList!.length);
     this.processAsyncFuncArray = asyncFuncList;
     this.processAsyncFuncMap = Utils.groupBy(asyncFuncList, 'pid');
   };
 
-  initDeliverInputEvent = async () => {
+  initDeliverInputEvent = async (): Promise<void> => {
     let row = TraceRow.skeleton();
     row.setAttribute('disabled-check', '');
     row.rowId = 'DeliverInputEvent';
@@ -102,11 +102,11 @@ export class SpProcessChart {
     Reflect.ownKeys(asyncFuncGroup).map((key: any) => {
       let asyncFuncGroups: Array<any> = asyncFuncGroup[key];
       if (asyncFuncGroups.length > 0) {
-        let isIntersect = (left: any, right: any) =>
+        let isIntersect = (left: any, right: any): boolean =>
           Math.max(left.startTs + left.dur, right.startTs + right.dur) - Math.min(left.startTs, right.startTs) <
           left.dur + right.dur;
         let depths: any = [];
-        let createDepth = (currentDepth: number, index: number) => {
+        let createDepth = (currentDepth: number, index: number): void => {
           if (depths[currentDepth] == undefined || !isIntersect(depths[currentDepth], asyncFuncGroups[index])) {
             asyncFuncGroups[index].depth = currentDepth;
             depths[currentDepth] = asyncFuncGroups[index];
@@ -124,28 +124,28 @@ export class SpProcessChart {
         let max = Math.max(...asyncFuncGroups.map((it) => it.depth || 0)) + 1;
         let maxHeight = max * 20;
         let funcRow = TraceRow.skeleton<FuncStruct>();
-        funcRow.rowId = `${asyncFuncGroups[0].funName}-${key}`;
+        funcRow.rowId = `${ asyncFuncGroups[0].funName }-${ key }`;
         funcRow.asyncFuncName = asyncFuncGroups[0].funName;
         funcRow.asyncFuncNamePID = key;
         funcRow.rowType = TraceRow.ROW_TYPE_FUNC;
-        funcRow.rowParentId = `${row.rowId}`;
+        funcRow.rowParentId = `${ row.rowId }`;
         funcRow.rowHidden = !row.expansion;
         funcRow.style.width = '100%';
-        funcRow.style.height = `${maxHeight}px`;
-        funcRow.setAttribute('height', `${maxHeight}`);
-        funcRow.name = `${asyncFuncGroups[0].funName} ${key}`;
+        funcRow.style.height = `${ maxHeight }px`;
+        funcRow.setAttribute('height', `${ maxHeight }`);
+        funcRow.name = `${ asyncFuncGroups[0].funName } ${ key }`;
         funcRow.setAttribute('children', '');
-        funcRow.supplier = () => new Promise((resolve) => resolve(asyncFuncGroups));
+        funcRow.supplier = (): Promise<any> => new Promise((resolve) => resolve(asyncFuncGroups));
         funcRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
         funcRow.selectChangeHandler = this.trace.selectChangeHandler;
-        funcRow.onThreadHandler = (useCache) => {
+        funcRow.onThreadHandler = (useCache): void => {
           let context = funcRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           funcRow.canvasSave(context);
           (renders['func'] as FuncRender).renderMainThread(
             {
               context: context,
               useCache: useCache,
-              type: `func-${asyncFuncGroups[0].funName}-${key}`,
+              type: `func-${ asyncFuncGroups[0].funName }-${ key }`,
             },
             funcRow
           );
@@ -156,11 +156,12 @@ export class SpProcessChart {
     });
   };
 
-  async init() {
+  async init(): Promise<void> {
+
     let threadFuncMaxDepthArray = await getMaxDepthByTid();
     info('Gets the maximum tier per thread , tid and maxDepth');
     threadFuncMaxDepthArray.forEach((it) => {
-      this.threadFuncMaxDepthMap.set(`${it.ipid}-${it.tid}`, it.maxDepth);
+      this.threadFuncMaxDepthMap.set(`${ it.ipid }-${ it.tid }`, it.maxDepth);
     });
     info('convert tid and maxDepth array to map');
     let pidCountArray = await queryProcessContentCount();
@@ -188,7 +189,7 @@ export class SpProcessChart {
     info('The amount of initialized process memory data is : ', this.processMem!.length);
     let eventCountList: Array<any> = await queryEventCountMap();
     this.eventCountMap = eventCountList.reduce((pre, current) => {
-      pre[`${current.eventName}`] = current.count;
+      pre[`${ current.eventName }`] = current.count;
       return pre;
     }, {});
     this.processThreads = Utils.removeDuplicates(queryProcessThreadResult, queryProcessThreadsByTableResult, 'tid');
@@ -215,8 +216,13 @@ export class SpProcessChart {
       allExpectedProcess = await queryAllExpectedData();
       allActualProcess = await queryAllActualData();
     }
+    let allTaskPoolPid = await queryAllTaskPoolPid();
+    let allTaskPoolProcess: Array<number> = [];
+    allTaskPoolPid.forEach(value => {
+      allTaskPoolProcess.push(value.pid);
+    });
     info('ProcessList Data size is: ', processList!.length);
-    for (let i = 0; i < processList.length; i++) {
+    for (let i = 0 ; i < processList.length ; i++) {
       const it = processList[i];
       if (
         (this.processThreadDataCountMap.get(it.pid) || 0) == 0 &&
@@ -227,17 +233,17 @@ export class SpProcessChart {
         continue;
       }
       let processRow = TraceRow.skeleton<ProcessStruct>();
-      processRow.rowId = `${it.pid}`;
+      processRow.rowId = `${ it.pid }`;
       processRow.index = i;
       processRow.rowType = TraceRow.ROW_TYPE_PROCESS;
       processRow.rowParentId = '';
       processRow.style.height = '40px';
       processRow.folder = true;
-      processRow.name = `${it.processName || 'Process'} ${it.pid}`;
-      processRow.supplier = () => queryProcessData(it.pid || -1, 0, TraceRow.range?.totalNS || 0);
+      processRow.name = `${ it.processName || 'Process' } ${ it.pid }`;
+      processRow.supplier = (): Promise<Array<any>> => queryProcessData(it.pid || -1, 0, TraceRow.range?.totalNS || 0);
       processRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       processRow.selectChangeHandler = this.trace.selectChangeHandler;
-      processRow.onThreadHandler = (useCache) => {
+      processRow.onThreadHandler = (useCache): void => {
         processRow.canvasSave(this.trace.canvasPanelCtx!);
         if (processRow.expansion) {
           this.trace.canvasPanelCtx?.clearRect(0, 0, processRow.frame.width, processRow.frame.height);
@@ -247,7 +253,7 @@ export class SpProcessChart {
               context: this.trace.canvasPanelCtx,
               pid: it.pid,
               useCache: useCache,
-              type: `process ${processRow.index} ${it.processName}`,
+              type: `process ${ processRow.index } ${ it.processName }`,
             },
             processRow
           );
@@ -280,10 +286,10 @@ export class SpProcessChart {
         let expectedData = allExpectedProcess.filter((ite) => ite.pid == it.pid);
         if (expectedData.length > 0) {
           // @ts-ignore
-          let isIntersect = (a: JanksStruct, b: JanksStruct) =>
+          let isIntersect = (a: JanksStruct, b: JanksStruct): boolean =>
             Math.max(a.ts + a.dur, b.ts + b.dur) - Math.min(a.ts, b.ts) < a.dur + b.dur;
           let depthArray: any = [];
-          for (let j = 0; j < expectedData.length; j++) {
+          for (let j = 0 ; j < expectedData.length ; j++) {
             let expectedItem = expectedData[j];
             if (expectedItem.cmdline != 'render_service') {
               expectedItem.frame_type = 'app';
@@ -312,26 +318,26 @@ export class SpProcessChart {
           let maxHeight = max * 20;
           expectedRow = TraceRow.skeleton<JankStruct>();
           let timeLineType = expectedData[0].type;
-          expectedRow.rowId = `${timeLineType}-${it.pid}`;
+          expectedRow.rowId = `${ timeLineType }-${ it.pid }`;
           expectedRow.asyncFuncName = it.processName;
           expectedRow.asyncFuncNamePID = it.pid;
           expectedRow.rowType = TraceRow.ROW_TYPE_JANK;
-          expectedRow.rowParentId = `${it.pid}`;
+          expectedRow.rowParentId = `${ it.pid }`;
           expectedRow.rowHidden = !processRow.expansion;
           expectedRow.style.width = '100%';
-          expectedRow.style.height = `${maxHeight}px`;
-          expectedRow.setAttribute('height', `${maxHeight}`);
+          expectedRow.style.height = `${ maxHeight }px`;
+          expectedRow.setAttribute('height', `${ maxHeight }`);
           expectedRow.setAttribute('frame_type', expectedData[0].frame_type);
           expectedRow.name = 'Expected Timeline';
           expectedRow.addTemplateTypes('FrameTimeline');
           expectedRow.setAttribute('children', '');
-          expectedRow.supplier = () =>
+          expectedRow.supplier = (): Promise<any> =>
             new Promise((resolve) => {
               resolve(expectedData);
             });
           expectedRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
           expectedRow.selectChangeHandler = this.trace.selectChangeHandler;
-          expectedRow.onThreadHandler = (useCache) => {
+          expectedRow.onThreadHandler = (useCache): void => {
             let context = expectedRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
             expectedRow!.canvasSave(context);
             (renders['jank'] as JankRender).renderMainThread(
@@ -347,10 +353,10 @@ export class SpProcessChart {
           processRow.addChildTraceRow(expectedRow);
           let actualData = allActualProcess.filter((ite) => ite.pid == it.pid);
           if (actualData.length > 0) {
-            let isIntersect = (a: any, b: any) =>
+            let isIntersect = (a: any, b: any): boolean =>
               Math.max(a.ts + a.dur, b.ts + b.dur) - Math.min(a.ts, b.ts) < a.dur + b.dur;
             let depthArray: any = [];
-            for (let j = 0; j < actualData.length; j++) {
+            for (let j = 0 ; j < actualData.length ; j++) {
               let actualItem = actualData[j];
               if (actualItem.cmdline != 'render_service') {
                 actualItem.frame_type = 'app';
@@ -382,22 +388,22 @@ export class SpProcessChart {
             let maxHeight = max * 20;
             actualRow = TraceRow.skeleton<JankStruct>();
             let timeLineType = actualData[0].type;
-            actualRow.rowId = `${timeLineType}-${it.pid}`;
+            actualRow.rowId = `${ timeLineType }-${ it.pid }`;
             actualRow.rowType = TraceRow.ROW_TYPE_JANK;
-            actualRow.rowParentId = `${it.pid}`;
+            actualRow.rowParentId = `${ it.pid }`;
             actualRow.rowHidden = !processRow.expansion;
             actualRow.style.width = '100%';
-            actualRow.style.height = `${maxHeight}px`;
-            actualRow.setAttribute('height', `${maxHeight}`);
+            actualRow.style.height = `${ maxHeight }px`;
+            actualRow.setAttribute('height', `${ maxHeight }`);
             actualRow.name = 'Actual Timeline';
             actualRow.addTemplateTypes('FrameTimeline');
             actualRow.setAttribute('frame_type', actualData[0].frame_type);
             actualRow.setAttribute('children', '');
             actualRow.dataList = actualData;
-            actualRow.supplier = () => new Promise((resolve) => resolve(actualData));
+            actualRow.supplier = (): Promise<any> => new Promise((resolve) => resolve(actualData));
             actualRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
             actualRow.selectChangeHandler = this.trace.selectChangeHandler;
-            actualRow.onThreadHandler = (useCache) => {
+            actualRow.onThreadHandler = (useCache): void => {
               let context = actualRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
               actualRow!.canvasSave(context);
               (renders['jank'] as JankRender).renderMainThread(
@@ -456,7 +462,7 @@ export class SpProcessChart {
           }, 300);
         } else {
           if (JankStruct!.selectJankStruct) {
-            JankStruct.selectJankStructList?.push(<JankStruct>JankStruct!.selectJankStruct);
+            JankStruct.selectJankStructList?.push(<JankStruct> JankStruct!.selectJankStruct);
           }
           offsetYTimeOut = setTimeout(() => {
             this.trace.linkNodes?.forEach((linkProcessItem) => {
@@ -501,10 +507,10 @@ export class SpProcessChart {
       Reflect.ownKeys(asyncFuncGroup).map((key: any) => {
         let asyncFunctions: Array<any> = asyncFuncGroup[key];
         if (asyncFunctions.length > 0) {
-          let isIntersect = (a: any, b: any) =>
+          let isIntersect = (a: any, b: any): boolean =>
             Math.max(a.startTs + a.dur, b.startTs + b.dur) - Math.min(a.startTs, b.startTs) < a.dur + b.dur;
           let depthArray: any = [];
-          let createDepth = (currentDepth: number, index: number) => {
+          let createDepth = (currentDepth: number, index: number): void => {
             if (
               depthArray[currentDepth] == undefined ||
               !isIntersect(depthArray[currentDepth], asyncFunctions[index])
@@ -525,28 +531,28 @@ export class SpProcessChart {
           let max = Math.max(...asyncFunctions.map((it) => it.depth || 0)) + 1;
           let maxHeight = max * 20;
           let funcRow = TraceRow.skeleton<FuncStruct>();
-          funcRow.rowId = `${asyncFunctions[0].funName}-${it.pid}`;
+          funcRow.rowId = `${ asyncFunctions[0].funName }-${ it.pid }`;
           funcRow.asyncFuncName = asyncFunctions[0].funName;
           funcRow.asyncFuncNamePID = it.pid;
           funcRow.rowType = TraceRow.ROW_TYPE_FUNC;
-          funcRow.rowParentId = `${it.pid}`;
+          funcRow.rowParentId = `${ it.pid }`;
           funcRow.rowHidden = !processRow.expansion;
           funcRow.style.width = '100%';
-          funcRow.style.height = `${maxHeight}px`;
-          funcRow.setAttribute('height', `${maxHeight}`);
-          funcRow.name = `${asyncFunctions[0].funName}`;
+          funcRow.style.height = `${ maxHeight }px`;
+          funcRow.setAttribute('height', `${ maxHeight }`);
+          funcRow.name = `${ asyncFunctions[0].funName }`;
           funcRow.setAttribute('children', '');
-          funcRow.supplier = () => new Promise((resolve) => resolve(asyncFunctions));
+          funcRow.supplier = (): Promise<any> => new Promise((resolve) => resolve(asyncFunctions));
           funcRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
           funcRow.selectChangeHandler = this.trace.selectChangeHandler;
-          funcRow.onThreadHandler = (cacheFlag) => {
+          funcRow.onThreadHandler = (cacheFlag): void => {
             let context = funcRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
             funcRow.canvasSave(context);
             (renders['func'] as FuncRender).renderMainThread(
               {
                 context: context,
                 useCache: cacheFlag,
-                type: `func-${asyncFunctions[0].funName}-${it.pid}`,
+                type: `func-${ asyncFunctions[0].funName }-${ it.pid }`,
               },
               funcRow
             );
@@ -562,27 +568,27 @@ export class SpProcessChart {
       let processMem = this.processMem.filter((mem) => mem.pid === it.pid);
       processMem.forEach((mem) => {
         let row = TraceRow.skeleton<ProcessMemStruct>();
-        row.rowId = `${mem.trackId}`;
+        row.rowId = `${ mem.trackId }`;
         row.rowType = TraceRow.ROW_TYPE_MEM;
-        row.rowParentId = `${it.pid}`;
+        row.rowParentId = `${ it.pid }`;
         row.rowHidden = !processRow.expansion;
         row.style.height = '40px';
         row.style.width = '100%';
-        row.name = `${mem.trackName}`;
+        row.name = `${ mem.trackName }`;
         row.setAttribute('children', '');
         row.favoriteChangeHandler = this.trace.favoriteChangeHandler;
         row.selectChangeHandler = this.trace.selectChangeHandler;
-        row.focusHandler = () => {
+        row.focusHandler = (): void => {
           this.trace.displayTip(
             row,
             ProcessMemStruct.hoverProcessMemStruct,
-            `<span>${ProcessMemStruct.hoverProcessMemStruct?.value || '0'}</span>`
+            `<span>${ ProcessMemStruct.hoverProcessMemStruct?.value || '0' }</span>`
           );
         };
-        row.supplier = () =>
+        row.supplier = (): Promise<Array<ProcessMemStruct>> =>
           queryProcessMemData(mem.trackId).then((resultProcess) => {
             let maxValue = Math.max(...resultProcess.map((it) => it.value || 0));
-            for (let j = 0; j < resultProcess.length; j++) {
+            for (let j = 0 ; j < resultProcess.length ; j++) {
               resultProcess[j].maxValue = maxValue;
               if (j == resultProcess.length - 1) {
                 resultProcess[j].duration = (TraceRow.range?.totalNS || 0) - (resultProcess[j].startTime || 0);
@@ -597,14 +603,14 @@ export class SpProcessChart {
             }
             return resultProcess;
           });
-        row.onThreadHandler = (useCache) => {
+        row.onThreadHandler = (useCache): void => {
           let context = row.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           row.canvasSave(context);
           (renders['mem'] as MemRender).renderMainThread(
             {
               context: context,
               useCache: useCache,
-              type: `mem ${mem.trackId} ${mem.trackName}`,
+              type: `mem ${ mem.trackId } ${ mem.trackName }`,
             },
             row
           );
@@ -616,21 +622,21 @@ export class SpProcessChart {
        * add thread list
        */
       let threads = this.processThreads.filter((thread) => thread.pid === it.pid && thread.tid != 0);
-      for (let j = 0; j < threads.length; j++) {
+      for (let j = 0 ; j < threads.length ; j++) {
         let thread = threads[j];
         let threadRow = TraceRow.skeleton<ThreadStruct>();
-        threadRow.rowId = `${thread.tid}`;
+        threadRow.rowId = `${ thread.tid }`;
         threadRow.rowType = TraceRow.ROW_TYPE_THREAD;
-        threadRow.rowParentId = `${it.pid}`;
+        threadRow.rowParentId = `${ it.pid }`;
         threadRow.rowHidden = !processRow.expansion;
         threadRow.index = j;
         threadRow.style.height = '30px';
         threadRow.style.width = '100%';
-        threadRow.name = `${thread.threadName || 'Thread'} ${thread.tid}`;
+        threadRow.name = `${ thread.threadName || 'Thread' } ${ thread.tid }`;
         threadRow.setAttribute('children', '');
         threadRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
         threadRow.selectChangeHandler = this.trace.selectChangeHandler;
-        threadRow.supplier = () =>
+        threadRow.supplier = (): Promise<Array<ThreadStruct>> =>
           queryThreadData(thread.tid || 0, it.pid || 0).then((res) => {
             if (res.length <= 0) {
               threadRow.rowDiscard = true;
@@ -638,25 +644,25 @@ export class SpProcessChart {
             }
             return res;
           });
-        threadRow.focusHandler = (ev) => {};
-        threadRow.onThreadHandler = (useCache) => {
+        threadRow.focusHandler = (ev): void => {};
+        threadRow.onThreadHandler = (useCache): void => {
           let context = threadRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           threadRow.canvasSave(context);
           (renders['thread'] as ThreadRender).renderMainThread(
             {
               context: context,
               useCache: useCache,
-              type: `thread ${thread.tid} ${thread.threadName}`,
+              type: `thread ${ thread.tid } ${ thread.threadName }`,
               translateY: threadRow.translateY,
             },
             threadRow
           );
           threadRow.canvasRestore(context);
         };
-        if (threadRow.rowId == threadRow.rowParentId) {
-          if (actualRow != null) {
+        if (threadRow.rowId === threadRow.rowParentId) {
+          if (actualRow !== null) {
             processRow.addChildTraceRowAfter(threadRow, actualRow);
-          } else if (expectedRow != null) {
+          } else if (expectedRow !== null) {
             processRow.addChildTraceRowAfter(threadRow, expectedRow);
           } else if (soRow) {
             processRow.addChildTraceRowAfter(threadRow, soRow);
@@ -668,20 +674,25 @@ export class SpProcessChart {
         } else {
           processRow.addChildTraceRow(threadRow);
         }
-        if (this.threadFuncMaxDepthMap.get(`${thread.upid}-${thread.tid}`) != undefined) {
-          let max = this.threadFuncMaxDepthMap.get(`${thread.upid}-${thread.tid}`) || 1;
+        if (this.threadFuncMaxDepthMap.get(`${ thread.upid }-${ thread.tid }`) != undefined) {
+          let max = this.threadFuncMaxDepthMap.get(`${ thread.upid }-${ thread.tid }`) || 1;
           let maxHeight = max * 20;
           let funcRow = TraceRow.skeleton<FuncStruct>();
-          funcRow.rowId = `${thread.tid}`;
+          funcRow.rowId = `${ thread.tid }`;
           funcRow.rowType = TraceRow.ROW_TYPE_FUNC;
-          funcRow.rowParentId = `${it.pid}`;
+          funcRow.rowParentId = `${ it.pid }`;
           funcRow.rowHidden = !processRow.expansion;
           funcRow.checkType = threadRow.checkType;
           funcRow.style.width = '100%';
-          funcRow.style.height = `${maxHeight}px`;
-          funcRow.name = `${thread.threadName || 'Thread'} ${thread.tid}`;
+          funcRow.style.height = `${ maxHeight }px`;
+          funcRow.name = `${ thread.threadName || 'Thread' } ${ thread.tid }`;
           funcRow.setAttribute('children', '');
-          funcRow.supplier = () =>
+          if (allTaskPoolProcess.indexOf(it.pid) !== -1) {
+            if (funcRow.name.startsWith('TaskWorkThread') || thread.is_main_thread === 1) {
+              funcRow.addTemplateTypes('Task Pool');
+            }
+          }
+          funcRow.supplier = (): Promise<Array<FuncStruct>> =>
             getFunDataByTid(thread.tid || 0, thread.upid || 0).then((funs: Array<FuncStruct>) => {
               if (funs.length > 0) {
                 let isBinder = (data: FuncStruct): boolean => {
@@ -709,14 +720,14 @@ export class SpProcessChart {
             });
           funcRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
           funcRow.selectChangeHandler = this.trace.selectChangeHandler;
-          funcRow.onThreadHandler = (useCache) => {
+          funcRow.onThreadHandler = (useCache): void => {
             let context = funcRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
             funcRow.canvasSave(context);
             (renders['func'] as FuncRender).renderMainThread(
               {
                 context: context,
                 useCache: useCache,
-                type: `func${thread.tid}${thread.threadName}`,
+                type: `func${ thread.tid }${ thread.threadName }`,
               },
               funcRow
             );
@@ -731,12 +742,12 @@ export class SpProcessChart {
     info('The time to load the Process data is: ', durTime);
   }
 
-  addStartUpRow(processRow: TraceRow<ProcessStruct>) {
-    processRow.setAttribute('hasStartup','true');
+  addStartUpRow(processRow: TraceRow<ProcessStruct>): TraceRow<AppStartupStruct> {
+    processRow.setAttribute('hasStartup', 'true');
     let startupRow: TraceRow<AppStartupStruct> = TraceRow.skeleton<AppStartupStruct>();
-    startupRow.rowId = `app-start-${processRow.rowId}`;
+    startupRow.rowId = `app-start-${ processRow.rowId }`;
     startupRow.rowType = TraceRow.ROW_TYPE_APP_STARTUP;
-    startupRow.rowParentId = `${processRow.rowId}`;
+    startupRow.rowParentId = `${ processRow.rowId }`;
     startupRow.rowHidden = !processRow.expansion;
     startupRow.index = 0;
     startupRow.style.height = '30px';
@@ -745,28 +756,28 @@ export class SpProcessChart {
     startupRow.setAttribute('children', '');
     startupRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     startupRow.selectChangeHandler = this.trace.selectChangeHandler;
-    startupRow.supplier = () =>
+    startupRow.supplier = (): Promise<Array<AppStartupStruct>> =>
       queryProcessStartup(parseInt(processRow.rowId!)).then((res) => {
         if (res.length <= 0) {
           startupRow.rowDiscard = true;
           this.trace.refreshCanvas(true);
         }
-        for (let i = 0; i < res.length; i++) {
+        for (let i = 0 ; i < res.length ; i++) {
           if (res[i].startName! < 4 && i < res.length - 1) {
             res[i].endItid = res[i + 1].itid;
           }
         }
         return res;
       });
-    startupRow.focusHandler = (ev) => {};
-    startupRow.onThreadHandler = (useCache) => {
+    startupRow.focusHandler = (ev): void => {};
+    startupRow.onThreadHandler = (useCache): void => {
       let context = startupRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       startupRow.canvasSave(context);
       (renders['app-start-up'] as AppStartupRender).renderMainThread(
         {
           context: context,
           useCache: useCache,
-          type: `app-startup ${processRow.rowId}`,
+          type: `app-startup ${ processRow.rowId }`,
         },
         startupRow
       );
@@ -776,22 +787,22 @@ export class SpProcessChart {
     return startupRow;
   }
 
-  addSoInitRow(processRow: TraceRow<ProcessStruct>, maxDepth: number) {
-    processRow.setAttribute('hasStaticInit','true');
+  addSoInitRow(processRow: TraceRow<ProcessStruct>, maxDepth: number): TraceRow<SoStruct> {
+    processRow.setAttribute('hasStaticInit', 'true');
     let maxHeight = (maxDepth + 1) * 20;
     let soRow: TraceRow<SoStruct> = TraceRow.skeleton<SoStruct>();
-    soRow.rowId = `app-start-${processRow.rowId}`;
+    soRow.rowId = `app-start-${ processRow.rowId }`;
     soRow.rowType = TraceRow.ROW_TYPE_STATIC_INIT;
-    soRow.rowParentId = `${processRow.rowId}`;
+    soRow.rowParentId = `${ processRow.rowId }`;
     soRow.rowHidden = !processRow.expansion;
     soRow.index = 0;
-    soRow.style.height = `${maxHeight}px`;
+    soRow.style.height = `${ maxHeight }px`;
     soRow.style.width = `100%`;
     soRow.name = `Static Initialization`;
     soRow.setAttribute('children', '');
     soRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     soRow.selectChangeHandler = this.trace.selectChangeHandler;
-    soRow.supplier = () =>
+    soRow.supplier = (): Promise<Array<SoStruct>> =>
       queryProcessSoInitData(parseInt(processRow.rowId!)).then((res) => {
         if (res.length <= 0) {
           soRow.rowDiscard = true;
@@ -801,18 +812,18 @@ export class SpProcessChart {
           if (so.soName) {
             so.soName = so.soName.replace('dlopen: ', '');
           }
-        })
+        });
         return res;
       });
-    soRow.focusHandler = (ev) => {};
-    soRow.onThreadHandler = (useCache) => {
+    soRow.focusHandler = (ev): void => {};
+    soRow.onThreadHandler = (useCache): void => {
       let context = soRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       soRow.canvasSave(context);
       (renders['app-so-init'] as SoRender).renderMainThread(
         {
           context: context,
           useCache: useCache,
-          type: `static-init ${processRow.rowId}`,
+          type: `static-init ${ processRow.rowId }`,
         },
         soRow
       );
@@ -822,7 +833,7 @@ export class SpProcessChart {
     return soRow;
   }
 
-  insertAfter(newEl: HTMLElement, targetEl: HTMLElement) {
+  insertAfter(newEl: HTMLElement, targetEl: HTMLElement): void {
     let parentEl = targetEl.parentNode;
     if (parentEl!.lastChild == targetEl) {
       parentEl!.appendChild(newEl);

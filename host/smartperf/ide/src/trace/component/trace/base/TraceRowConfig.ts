@@ -21,18 +21,19 @@ import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { LitSearch } from '../search/Search.js';
 import { TraceSheet } from './TraceSheet.js';
 import { CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
+import { BaseStruct } from '../../../bean/BaseStruct.js';
 
 @element('trace-row-config')
 export class TraceRowConfig extends BaseElement {
-  static allTraceRowList: Array<TraceRow<any>> = [];
+  static allTraceRowList: Array<TraceRow<BaseStruct>> = [];
   selectTypeList: Array<string> | undefined = [];
   private spSystemTrace: SpSystemTrace | null | undefined;
   private sceneTable: HTMLDivElement | null | undefined;
   private chartTable: HTMLDivElement | null | undefined;
   private inputElement: HTMLInputElement | null | undefined;
-  private traceRowList: NodeListOf<TraceRow<any>> | undefined;
+  private traceRowList: NodeListOf<TraceRow<BaseStruct>> | undefined;
 
-  get value() {
+  get value(): string {
     return this.getAttribute('value') || '';
   }
 
@@ -40,28 +41,28 @@ export class TraceRowConfig extends BaseElement {
     this.setAttribute('value', value);
   }
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ['mode'];
   }
 
-  init() {
-    let sceneList = ['FrameTimeline'];
+  init(): void {
+    let sceneList = ['FrameTimeline', 'Task Pool', 'Animation Effect', 'Ark Ts'];
     this.selectTypeList = [];
     this.sceneTable!.innerHTML = '';
     this.chartTable!.innerHTML = '';
     this.inputElement!.value = '';
     this.spSystemTrace = this.parentElement!.querySelector<SpSystemTrace>('sp-system-trace');
     this.traceRowList =
-      this.spSystemTrace!.shadowRoot?.querySelector('div[class=rows-pane]')!.querySelectorAll<TraceRow<any>>(
-        "trace-row[row-parent-id='']"
+      this.spSystemTrace!.shadowRoot?.querySelector('div[class=rows-pane]')!.querySelectorAll<TraceRow<BaseStruct>>(
+        'trace-row[row-parent-id=\'\']'
       );
     let allowSceneList: Array<string> = [];
     TraceRowConfig.allTraceRowList.push(...this.traceRowList!);
-    this.traceRowList!.forEach((traceRow: TraceRow<any>) => {
+    this.traceRowList!.forEach((traceRow: TraceRow<BaseStruct>) => {
       traceRow.setAttribute('scene', '');
       if (traceRow.templateType.length > 0) {
         traceRow.templateType.forEach((type) => {
-          if (sceneList.indexOf(type) > -1 && allowSceneList.indexOf(type) === -1) {
+          if (sceneList.indexOf(type) >= 0 && allowSceneList.indexOf(type) < 0) {
             allowSceneList.push(type);
             this.initConfigSceneTable(type);
           }
@@ -71,7 +72,8 @@ export class TraceRowConfig extends BaseElement {
     });
   }
 
-  initConfigSceneTable(item: string) {
+  initConfigSceneTable(item: string): void {
+    let spliceIndex = 1;
     let div = document.createElement('div');
     div.className = 'scene-option-div';
     div.textContent = item;
@@ -80,13 +82,13 @@ export class TraceRowConfig extends BaseElement {
     optionCheckBox.style.justifySelf = 'center';
     optionCheckBox.style.height = '100%';
     optionCheckBox.title = item;
-    optionCheckBox.addEventListener('change', (e) => {
+    optionCheckBox.addEventListener('change', () => {
       if (optionCheckBox.checked) {
         this.selectTypeList!.push(item);
       } else {
         if (this.selectTypeList!.length > 0) {
           let indexNum = this.selectTypeList!.indexOf(item);
-          this.selectTypeList!.splice(indexNum, 1);
+          this.selectTypeList!.splice(indexNum, spliceIndex);
         }
       }
       this.resetChartOption();
@@ -95,15 +97,15 @@ export class TraceRowConfig extends BaseElement {
     this.sceneTable?.append(...[div, optionCheckBox]);
   }
 
-  initConfigChartTable(row: TraceRow<any>) {
+  initConfigChartTable(row: TraceRow<BaseStruct>): void {
     let templateType = '';
     if (row.templateType.length > 0) {
-      templateType = row.templateType.reduce((pre, cur) => pre + ':' + cur);
+      templateType = row.templateType.reduce((pre, cur) => `${pre  }:${  cur}`);
     }
     let div = document.createElement('div');
     div.className = 'chart-option-div chart-item';
     div.textContent = row.name;
-    div.title = templateType;
+    div.title = row.name;
     div.setAttribute('search_text', row.name);
     let optionCheckBox: LitCheckBox = new LitCheckBox();
     optionCheckBox.checked = true;
@@ -112,18 +114,17 @@ export class TraceRowConfig extends BaseElement {
     optionCheckBox.style.justifySelf = 'center';
     optionCheckBox.title = templateType;
     optionCheckBox.setAttribute('search_text', row.name);
-    optionCheckBox.addEventListener('change', (e) => {
+    optionCheckBox.addEventListener('change', () => {
       if (row.folder) {
         TraceRowConfig.allTraceRowList.forEach((chartRow): void => {
           let upParentRow = chartRow;
           while (upParentRow.hasParentRowEl) {
-            if (upParentRow.parentRowEl) {
-              upParentRow = upParentRow.parentRowEl;
-            } else {
+            if (!upParentRow.parentRowEl) {
               break;
             }
+            upParentRow = upParentRow.parentRowEl;
           }
-          if (upParentRow == row) {
+          if (upParentRow === row) {
             if (optionCheckBox.checked) {
               chartRow.removeAttribute('row-hidden');
               chartRow.setAttribute('scene', '');
@@ -147,17 +148,17 @@ export class TraceRowConfig extends BaseElement {
     this.chartTable!.append(...[div, optionCheckBox]);
   }
 
-  resetChartOption() {
+  resetChartOption(): void {
     this.shadowRoot!.querySelectorAll<LitCheckBox>('.chart-item').forEach((litCheckBox: LitCheckBox) => {
       let isShowCheck: boolean = false;
-      if (this.selectTypeList!.length == 0) {
+      if (this.selectTypeList!.length === 0) {
         isShowCheck = true;
       } else {
         if (litCheckBox.title !== '') {
           let divTemplateTypeList = litCheckBox.title.split(':');
           for (let index = 0; index < divTemplateTypeList.length; index++) {
             let type = divTemplateTypeList[index];
-            if (this.selectTypeList!.indexOf(type) > -1) {
+            if (this.selectTypeList!.indexOf(type) >= 0) {
               isShowCheck = true;
               break;
             }
@@ -168,17 +169,17 @@ export class TraceRowConfig extends BaseElement {
     });
   }
 
-  resetChartTable() {
+  resetChartTable(): void {
     if (this.traceRowList && this.traceRowList.length > 0) {
-      TraceRowConfig.allTraceRowList.forEach((traceRow: TraceRow<any>) => {
+      TraceRowConfig.allTraceRowList.forEach((traceRow: TraceRow<BaseStruct>) => {
         let isShowRow: boolean = false;
-        if (this.selectTypeList!.length == 0) {
+        if (this.selectTypeList!.length === 0) {
           traceRow.removeAttribute('row-hidden');
           traceRow.setAttribute('scene', '');
         } else {
           for (let index = 0; index < traceRow.templateType!.length; index++) {
             let type = traceRow.templateType![index];
-            if (this.selectTypeList!.indexOf(type) > -1) {
+            if (this.selectTypeList!.indexOf(type) >= 0) {
               isShowRow = true;
               break;
             }
@@ -199,7 +200,7 @@ export class TraceRowConfig extends BaseElement {
     }
   }
 
-  refreshSystemPanel() {
+  refreshSystemPanel(): void {
     this.clearSearchAndFlag();
     this.spSystemTrace!.rowsPaneEL!.scroll({
       top: 0 - this.spSystemTrace!.canvasPanel!.offsetHeight,
@@ -210,7 +211,7 @@ export class TraceRowConfig extends BaseElement {
     this.spSystemTrace!.refreshCanvas(true);
   }
 
-  clearSearchAndFlag() {
+  clearSearchAndFlag(): void {
     let traceSheet = this.spSystemTrace!.shadowRoot?.querySelector('.trace-sheet') as TraceSheet;
     if (traceSheet) {
       traceSheet!.setAttribute('mode', 'hidden');
@@ -219,7 +220,7 @@ export class TraceRowConfig extends BaseElement {
     if (search) {
       search.clear();
     }
-    let highlightRow = this.spSystemTrace!.shadowRoot?.querySelector<TraceRow<any>>('trace-row[highlight]');
+    let highlightRow = this.spSystemTrace!.shadowRoot?.querySelector<TraceRow<BaseStruct>>('trace-row[highlight]');
     if (highlightRow) {
       highlightRow.highlight = false;
     }
@@ -231,15 +232,14 @@ export class TraceRowConfig extends BaseElement {
 
   initElements(): void {}
 
-  connectedCallback() {
+  connectedCallback(): void {
     this.sceneTable = this.shadowRoot!.querySelector<HTMLDivElement>('#scene-select');
     this.chartTable = this.shadowRoot!.querySelector<HTMLDivElement>('#chart-select');
-    let bar = this.shadowRoot!.querySelector<HTMLDivElement>('.processBar');
     this.inputElement = this.shadowRoot!.querySelector('input');
     this.inputElement?.addEventListener('keyup', () => {
       this.shadowRoot!.querySelectorAll<HTMLElement>('.chart-item').forEach((elementOption: HTMLElement) => {
         let searchText = elementOption.getAttribute('search_text') || '';
-        if (searchText!.indexOf(this.inputElement!.value) <= -1) {
+        if (searchText!.indexOf(this.inputElement!.value) < 0) {
           elementOption.style.display = 'none';
         } else {
           elementOption.style.display = 'block';
@@ -261,18 +261,12 @@ export class TraceRowConfig extends BaseElement {
                     background-color: #F6F6F6;
                 }
                 .config-title {
-                    border-top: 1px solid var(--dark-border1,#D5D5D5);
+                    border-top: 1px solid #D5D5D5;
                     background-color: #0A59F7;
                     display: flex;
-                    height: 10%;
+                    height: 12%;
                     align-items: center;
-                    padding: 0 20px 0 12px;
-                }
-                .config-scene {
-                    height: 14%;
-                }
-                .config-chart {
-                     height: 75%;
+                    padding: 0 20px;
                 }
                 .title-text {
                     font-family: Helvetica-Bold;
@@ -296,30 +290,16 @@ export class TraceRowConfig extends BaseElement {
                     align-items: center;
                     padding-left: 15px;
                     padding-right: 15px;
-                    border-bottom: 1px solid #e0e0e0;
                     background-color: #F6F6F6;
-                }
-                .search_bt{
-                    height: 26px;
-                    color: #ffffff;
-                    cursor: pointer;
-                    line-height: 40px;
-                    text-align: center;
-                    margin: auto;
-                    width: 20vh;
-                    background: #FFFFFF;
-                    border: 1px solid rgba(0,0,0,0.6);
-                    border-radius: 12px;
+                    height: 3.2em;
                 }
                 .config-select {
-                    padding-top: 12px;
+                    display: grid;
                     background: #FFFFFF;
-                    overflow-y: scroll;
+
                     overflow-x: hidden;
                     border-radius: 5px;
                     border: solid 1px #e0e0e0;
-                    display: grid;
-                    padding-left: 40px;
                     grid-template-columns: auto auto;
                     grid-template-rows: repeat(auto-fit, 35px);
                 }
@@ -329,10 +309,13 @@ export class TraceRowConfig extends BaseElement {
                 .chart-option-div {
                     height: 35px;
                     line-height: 35px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
                 .scene-option-div {
                     height: 35px;
                     line-height: 35px;
+                    margin-left: 28px;
                 }
                 input{
                     border: 0;
@@ -344,75 +327,61 @@ export class TraceRowConfig extends BaseElement {
                     user-select:none;
                     display: inline-flex;
                     width:100%;
-                    color: var(--dark-color2,rgba(0,0,0,0.6));
+                    color: rgba(0,0,0,0.6);
                 }
                 .multipleSelect{
                     outline: none;
                     font-size: 1rem;
-                    -webkit-user-select:none ;
+                    -webkit-user-select:none;
                     -moz-user-select:none;
                     position: relative;
-                    padding: 3px 6px;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    transition: all .3s;
+                    transition: all 0.3s;
                     user-select:none;
                     width: 250px;
                     color: #ffffff;
                     cursor: pointer;
                     line-height: 40px;
                     text-align: center;
-                    border:1px solid var(--bark-prompt,#dcdcdc);
+                    border:1px solid #dcdcdc;
                     border-radius:16px;
                     background-color: #FFFFFF;
-                    height: 50%;
+                    height: 70%;
                     margin: auto 4.2em auto auto;
-                }
-                .processBar {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 12px;
-                    height: 100%;
-                    z-index: 20;
-                    opacity: 0;
-                }
-                .processBar:hover {
-                    cursor: col-resize;
                 }
             </style>
             <div class="config-title">
                <span class="title-text">Display Template</span>
                <lit-icon class="config-close" name="config-close" title="Config Close"></lit-icon>
             </div>
-            <div class="config-scene">
-                <div class="title_div" style="height: 43%">
+            <div class="config-scene" style="display: contents;">
+                <div class="title_div">
                     <img class="config-img" title="Template Select" src="img/config_scene.png">
                     <div>Template Select</div>
                 </div>
-                <div class="config-select" id="scene-select" style="height: 45%;overflow: hidden;">
-                </div>
             </div>
-            <div class="config-chart">
-                 <div class="title_div" style="height: 8%">
+            <div class="config-select" id="scene-select" style="height: 8%;"></div>
+            <div class="config-chart" style="display: contents;">
+                 <div class="title_div">
                     <img class="config-img" title="Timeline Details" src="img/config_chart.png">
                     <div>Timeline Details</div>
                     <div class="multipleSelect" tabindex="0">
                         <div class="multipleRoot" id="select" style="width:100%">
-                            <input id="singleInput"/>
+                            <input id="singleInput"/> 
                         </div>
                         <lit-icon class="icon" name='search' color="#c3c3c3"></lit-icon>
                     </div>
                 </div>
-                <div class="config-select" id="chart-select" style="height: 91%">
-                </div>
+            </div>
+            <div class="config-select" id="chart-select" style="height: 66%; overflow-y: scroll; padding: 10px 30px;">
             </div>
 `;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (name === 'mode' && newValue == '') {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
+    if (name === 'mode' && newValue === '') {
       this.init();
     }
   }

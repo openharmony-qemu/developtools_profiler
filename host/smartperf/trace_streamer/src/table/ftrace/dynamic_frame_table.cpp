@@ -195,7 +195,6 @@ int32_t DynamicFrameTable::Cursor::Column(int32_t col) const
                     dataCache_->GetDataFromDict(static_cast<size_t>(dynamicFrameObj_.Alphas()[CurrentRow()]));
                 sqlite3_result_text(context_, str.c_str(), STR_DEFAULT_LEN, nullptr);
             }
-
             break;
         }
         case NAME: {

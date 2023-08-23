@@ -54,7 +54,7 @@ ssize_t Read(int32_t fd, uint8_t* dst, size_t dstSize)
 }
 int32_t OpenFile(const std::string& path, int32_t flags, uint32_t mode)
 {
-    TS_ASSERT((flags & O_CREAT) == 0 || mode != kFileModeInvalid);
+    TS_ASSERT((flags & O_CREAT) == 0 || mode != K_FILE_MODE_INVALID);
 #if defined(_WIN32)
     int32_t fd(_open(path.c_str(), flags | O_BINARY, mode));
 #else
@@ -70,7 +70,7 @@ std::string GetExecutionDirectoryPath()
     ::GetModuleFileNameA(NULL, currPath, MAX_PATH);
     (strrchr(currPath, '\\'))[1] = 0;
 #else
-    readlink("/proc/self/exe", currPath, sizeof(currPath) - 1);
+    (void)readlink("/proc/self/exe", currPath, sizeof(currPath) - 1);
 #endif
     std::string str(currPath);
     return str.substr(0, str.find_last_of('/'));

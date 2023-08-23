@@ -54,6 +54,7 @@ import { SoRender } from './ProcedureWorkerSoInit.js';
 import { FrameDynamicRender } from './ProcedureWorkerFrameDynamic.js';
 import { FrameAnimationRender } from './ProcedureWorkerFrameAnimation.js';
 import { FrameSpacingRender } from './ProcedureWorkerFrameSpacing.js';
+import { JsCpuProfilerRender } from './ProcedureWorkerCpuProfiler.js';
 
 let dataList: any = {};
 let dataList2: any = {};
@@ -75,8 +76,8 @@ export let renders: any = {
   'app-start-up': new AppStartupRender(),
   'app-so-init': new SoRender(),
   heap: new HeapRender(),
-  heapTimeline: new HeapTimelineRender(),
-  heapSnapshot: new HeapSnapshotRender(),
+  'heap-timeline': new HeapTimelineRender(),
+  'heap-snapshot': new HeapSnapshotRender(),
   mem: new MemRender(),
   thread: new ThreadRender(),
   func: new FuncRender(),
@@ -105,6 +106,7 @@ export let renders: any = {
   frameDynamicCurve: new FrameDynamicRender(),
   frameAnimation: new FrameAnimationRender(),
   frameSpacing: new FrameSpacingRender(),
+  'js-cpu-profiler': new JsCpuProfilerRender(),
 };
 
 function match(type: string, req: RequestMessage) {

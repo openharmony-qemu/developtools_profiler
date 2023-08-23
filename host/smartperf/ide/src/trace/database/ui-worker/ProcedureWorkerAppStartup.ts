@@ -16,7 +16,6 @@
 import {
   BaseStruct,
   dataFilterHandler, drawString,
-  ns2x,
 } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
@@ -29,7 +28,7 @@ export class AppStartupRender {
       type: string;
     },
     row: TraceRow<AppStartupStruct>
-  ) {
+  ): void {
     let list = row.dataList;
     let filter = row.dataListCache;
     dataFilterHandler(list, filter, {
@@ -58,6 +57,7 @@ export class AppStartupRender {
   }
 
 }
+
 const padding = 3;
 
 export class AppStartupStruct extends BaseStruct {
@@ -70,7 +70,7 @@ export class AppStartupStruct extends BaseStruct {
     'UI Ability OnForeground',
     'First Frame - APP Phase',
     'First Frame - Render Phase'
-  ]
+  ];
   dur: number | undefined;
   value: string | undefined;
   startTs: number | undefined;
@@ -82,16 +82,16 @@ export class AppStartupStruct extends BaseStruct {
   startName: number | undefined;
   stepName: string | undefined;
 
-  static draw(ctx: CanvasRenderingContext2D, data: AppStartupStruct) {
+  static draw(ctx: CanvasRenderingContext2D, data: AppStartupStruct): void {
     if (data.frame) {
       ctx.globalAlpha = 1.0;
       ctx.fillStyle = ColorUtils.colorForTid(data.startName!);
       ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, data.frame.height);
-      if(data.frame.width > 7) {
+      if (data.frame.width > 7) {
         ctx.textBaseline = 'middle';
         ctx.lineWidth = 1;
         if (data.stepName === undefined) {
-          data.stepName = `${AppStartupStruct.getStartupName(data.startName)} (${(data.dur! / 1000000).toFixed(2)}ms)`
+          data.stepName = `${ AppStartupStruct.getStartupName(data.startName) } (${ (data.dur! / 1000000).toFixed(2) }ms)`;
         }
         let textColor = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.stepName || '', 0, ColorUtils.FUNC_COLOR.length)];
         ctx.fillStyle = ColorUtils.funcTextColor(textColor);
@@ -110,7 +110,7 @@ export class AppStartupStruct extends BaseStruct {
     }
   }
 
-  static getStartupName(step: number | undefined) {
+  static getStartupName(step: number | undefined): string {
     if (step === undefined || step < 0 || step > 5) {
       return 'Unknown Start Step';
     } else {

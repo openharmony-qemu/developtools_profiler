@@ -13,7 +13,6 @@
 OHOS_PROTO_DIR = ""
 kernel_version = "."
 THIRD_PARTY = "//third_party"
-SRC = "//src"
 PREBUILTS = "//prebuilts"
 if (target_os == "linux" || target_os == "windows" || target_os == "macx") {
   if (is_test) {

@@ -46,7 +46,7 @@ export class SpMetrics extends BaseElement {
   private metricOptionalSelects: Array<MetricQueryItem> | undefined;
   private metricProgressLoad: LitProgressBar | undefined;
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ['metric', 'metricResult'];
   }
 
@@ -67,7 +67,7 @@ export class SpMetrics extends BaseElement {
     this.setAttribute('metricResult', value);
   }
 
-  reset() {
+  reset(): void {
     this.selectMetricEl!.selectedIndex = 0;
     this.responseJson!.textContent = '';
   }
@@ -86,13 +86,13 @@ export class SpMetrics extends BaseElement {
     this.initMetricSelectOption();
   }
 
-  async initMetric(queryItem: MetricQueryItem) {
+  async initMetric(queryItem: MetricQueryItem): Promise<void> {
     this.initMetricData(queryItem).then((item) => {
       this.metricProgressLoad!.loading = false;
     });
   }
 
-  async initMetricData(queryItem: MetricQueryItem) {
+  async initMetricData(queryItem: MetricQueryItem): Promise<void> {
     let metricQuery = queryItem.metricQuery;
     let queryList = await metricQuery();
     info('current Metric Data size is: ', queryList!.length);
@@ -102,7 +102,7 @@ export class SpMetrics extends BaseElement {
     this.responseJson!.textContent = jsonText;
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
     switch (name) {
       case 'metric':
         if (this.selectMetricEl) this.selectMetricEl.textContent = newValue;
@@ -113,7 +113,7 @@ export class SpMetrics extends BaseElement {
     }
   }
 
-  runClickListener = () => {
+  runClickListener = (): void => {
     SpStatisticsHttpUtil.addOrdinaryVisitAction({
       event: 'metrics',
       action: 'metrics',
@@ -128,17 +128,17 @@ export class SpMetrics extends BaseElement {
     this.initMetric(resultQuery[0]);
   };
 
-  connectedCallback() {
+  connectedCallback(): void {
     // Run metric button to add listener
     this.runButtonEl?.addEventListener('click', this.runClickListener);
   }
 
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     this.runButtonEl?.removeEventListener('click', this.runClickListener);
   }
 
-  initMetricSelectOption() {
-    for (let index = 0; index < this.metricOptionalSelects!.length; index++) {
+  initMetricSelectOption(): void {
+    for (let index = 0 ; index < this.metricOptionalSelects!.length ; index++) {
       let htmlElement = document.createElement('option');
       if (this.metricOptionalSelects) {
         htmlElement.textContent = this.metricOptionalSelects[index].metricName;
@@ -147,7 +147,7 @@ export class SpMetrics extends BaseElement {
     }
   }
 
-  initMetricDataHandle() {
+  initMetricDataHandle(): void {
     this.metricOptionalSelects = [
       {
         metricName: 'trace_mem',

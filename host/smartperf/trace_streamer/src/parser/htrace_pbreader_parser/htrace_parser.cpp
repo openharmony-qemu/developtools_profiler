@@ -46,9 +46,7 @@ HtraceParser::HtraceParser(TraceDataCache* dataCache, const TraceStreamerFilters
       processParser_(std::make_unique<HtraceProcessParser>(dataCache, filters)),
       hisyseventParser_(std::make_unique<HtraceHisyseventParser>(dataCache, filters)),
       jsMemoryParser_(std::make_unique<HtraceJSMemoryParser>(dataCache, filters)),
-#if WITH_PERF
       perfDataParser_(std::make_unique<PerfDataParser>(dataCache, filters)),
-#endif
 #ifdef SUPPORTTHREAD
       supportThread_(true),
       dataSegArray_(std::make_unique<HtraceDataSegment[]>(MAX_SEG_ARRAY_SIZE))
@@ -62,7 +60,6 @@ void HtraceParser::GetSymbols(std::unique_ptr<ElfFile> elfPtr,
                               std::shared_ptr<ElfSymbolTable> symbols,
                               const std::string& filename)
 {
-
     symbols->filePathIndex = traceDataCache_->dataDict_.GetStringIndex(filename.c_str());
     symbols->textVaddr = (std::numeric_limits<uint64_t>::max)();
     for (auto& item : elfPtr->phdrs_) {
@@ -145,11 +142,9 @@ bool HtraceParser::ReparseSymbolFilesAndResymbolization(std::string& symbolsPath
                                                         std::vector<std::string>& symbolsPaths)
 {
     auto parsePerfStatus = false;
-#if WITH_PERF
     std::vector<std::string> dir;
     dir.emplace_back(symbolsPath);
     parsePerfStatus = perfDataParser_->PerfReloadSymbolFiles(dir);
-#endif
     auto parseFileSOStatus = ParserFileSO(symbolsPath, symbolsPaths);
     if (!parseFileSOStatus) {
         elfSymbolTables_.reset();
@@ -184,9 +179,7 @@ void HtraceParser::WaitForParserEnd()
     jsMemoryParser_->Finish();
     // keep final upate perf and ebpf data time range
     ebpfDataParser_->Finish();
-#if WITH_PERF
     perfDataParser_->Finish();
-#endif
     htraceNativeHookParser_->Finish();
     htraceMemParser_->Finish();
     traceDataCache_->GetDataSourceClockIdData()->SetDataSourceClockId(DATA_SOURCE_TYPE_TRACE,
@@ -391,7 +384,7 @@ void HtraceParser::ParserData(HtraceDataSegment& dataSeg)
         return;
     }
     if (!supportThread_) { // do it only in wasm mode, wasm noThead_ will be true
-        if (dataSeg.status == STAT_EVENT_DATA_INVALID) {
+        if (dataSeg.status == TS_PARSE_STATUS_INVALID) {
             streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_OTHER, STAT_EVENT_DATA_INVALID);
             return;
         }
@@ -586,7 +579,6 @@ bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesB
     }
     if (profilerTraceFileHeader_.data.dataType == ProfilerTraceFileHeader::HIPERF_DATA) {
         if (packagesBuffer_.size() >= profilerTraceFileHeader_.data.length - PACKET_HEADER_LENGTH) {
-#if WITH_PERF
             auto size = profilerTraceFileHeader_.data.length - PACKET_HEADER_LENGTH;
             perfDataParser_->InitPerfDataAndLoad(packagesBuffer_, size);
             currentLength -= size;
@@ -594,7 +586,6 @@ bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesB
             profilerTraceFileHeader_.data.dataType = ProfilerTraceFileHeader::UNKNOW_TYPE;
             hasGotHeader_ = false;
             return true;
-#endif
         }
         return false;
     }
@@ -644,7 +635,7 @@ bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesB
         packagesBegin += nextLength_;
         currentLength -= nextLength_;
         if (nextLength_ > htraceCurentLength_) {
-            TS_LOGE("fatal error, data length not match nextLength_:%u, htraceCurentLength_:%llu", nextLength_,
+            TS_LOGE("fatal error, data length not match nextLength_:%u, htraceCurentLength_:%" PRIu64 "", nextLength_,
                     htraceCurentLength_);
         }
         htraceCurentLength_ -= nextLength_;
@@ -694,7 +685,7 @@ bool HtraceParser::InitProfilerTraceFileHeader()
     }
     auto ret = memcpy_s(&profilerTraceFileHeader_, sizeof(profilerTraceFileHeader_), buffer, PACKET_HEADER_LENGTH);
     if (ret == -1 || profilerTraceFileHeader_.data.magic != ProfilerTraceFileHeader::HEADER_MAGIC) {
-        TS_LOGE("Get profiler trace file header failed! ret = %d, magic = %lx", ret,
+        TS_LOGE("Get profiler trace file header failed! ret = %d, magic = %llx", ret,
                 profilerTraceFileHeader_.data.magic);
         return false;
     }
@@ -702,9 +693,9 @@ bool HtraceParser::InitProfilerTraceFileHeader()
         TS_LOGE("Profiler Trace data is truncated!!!");
         return false;
     }
-    TS_LOGI("magic = %lx, length = %llx, dataType = %llx, boottime = %llx", profilerTraceFileHeader_.data.magic,
-            profilerTraceFileHeader_.data.length, profilerTraceFileHeader_.data.dataType,
-            profilerTraceFileHeader_.data.boottime);
+    TS_LOGI("magic = %llx, length = %" PRIu64 ", dataType = %x, boottime = %" PRIu64 "",
+            profilerTraceFileHeader_.data.magic, profilerTraceFileHeader_.data.length,
+            profilerTraceFileHeader_.data.dataType, profilerTraceFileHeader_.data.boottime);
 #if IS_WASM
     const int32_t DATA_TYPE_CLOCK = 100;
     TraceStreamer_Plugin_Out_SendData(reinterpret_cast<char*>(&profilerTraceFileHeader_),

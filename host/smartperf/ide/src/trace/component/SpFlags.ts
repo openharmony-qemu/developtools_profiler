@@ -42,83 +42,88 @@ export class SpFlags extends BaseElement {
     return `
       <style>
         .container {
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows:1fr;
-            background-color: var(--dark-background5,#F6F6F6);
-            min-height: 100%;
+          display: grid;
+          grid-template-columns: 1fr;
+          grid-template-rows:1fr;
+          background-color: var(--dark-background5,#F6F6F6);
+          min-height: 100%;
         }
         :host{
-            display: block;
-            width: 100%;
-            height: 100%;
-            background-color: var(--dark-background5,#F6F6F6);
+          display: block;
+          width: 100%;
+          height: 100%;
+          background-color: var(--dark-background5,#F6F6F6);
         }
         .body{
-            width: 60%;
-            margin-left: 20%;
-            margin-top: 2%;
-            margin-bottom: 2%;
-            background-color: var(--dark-background3,#FFFFFF);
-            border-radius: 16px 16px 16px 16px;
-            padding-left: 5%;
-            padding-right: 5%;
+          width: 85%;
+          margin: 2% 5% 2% 5%;
+          background-color: var(--dark-background3,#FFFFFF);
+          border-radius: 16px 16px 16px 16px;
+          padding-left: 2%;
+          padding-right: 4%;
+        }
+        .title {
+          padding-left: 2%;
+          margin-left: 8%;
         }
         .flag-widget {
-           width: 100%;
-           margin-bottom: 2%;
+          width: 80%;
+          padding: 1% 2% 1% 2%;
+          margin-left: 8%;
+          margin-right: 8%;
+          border-radius: 10px 10px 10px 10px;
+        }
+        .flag-widget:nth-child(2n+1) {
+          background-color: #F5F5F5;
         }
         .flag-title-label {
-            line-height: 40px;
-            font-weight: 700;
-            margin-right: 10px;
-            opacity: 0.9;
-            font-family: Helvetica-Bold;
-            font-size: 18px;
-            flex-grow: 1;
-            text-align: left;
+          margin-right: 10px;
+          flex-grow: 1;
+          text-align: left;
+          opacity: 0.9;
+          font-family: Helvetica-Bold;
+          font-size: 16px;
+          color: #000000;
+          line-height: 28px;
+          font-weight: 700;
         }
         .flag-head-div {
-            display: flex;
-            align-items: center;
-            margin-top: 2%;
+          display: flex;
+          align-items: center;
         }
         .flag-des-div {
-           opacity: 0.6;
-           font-family: Helvetica;
-           font-size: 1em;
-           color: var(--dark-color,#000000);
-           text-align: left;
-           line-height: 20px;
-           font-weight: 400;
-           margin-top: 2%;
+          opacity: 0.6;
+          font-family: Helvetica;
+          font-size: 12px;
+          color: var(--dark-color,#000000);
+          text-align: left;
+          line-height: 20px;
+          font-weight: 400;
+          margin-top: 0.1%;
         }
         .config_footer {
-          margin-top: 2%;
+          margin-top: 1%;
         }
         .flag-select {
-            text-align: right;
-            width: 12rem;
-            background: var(--dark-background1,#ffffff);
-            border: 1px solid var(--dark-color1,#4D4D4D);
-            border-radius: 16px;
-            opacity: 0.6;
-            font-family: Helvetica;
-            font-size: 12px;
-            color: var(--dark-color1,#000000);
-            text-align: center;
-            line-height: 20px;
-            font-weight: 400;
-            padding: 5px 10px 5px 10px;
-            -webkit-appearance: none;
-            background: url(img/down.png) no-repeat 96% center;
+          width: 12rem;
+          border: 1px solid var(--dark-color1,#4D4D4D);
+          border-radius: 16px;
+          opacity: 0.6;
+          font-family: Helvetica;
+          font-size: 12px;
+          color: var(--dark-color1,#000000);
+          text-align: center;
+          line-height: 20px;
+          font-weight: 400;
+          -webkit-appearance: none;
+          background: url(img/down.png) no-repeat 96% center;
         }
         .device_label {
-            font-weight: 500;
-            margin-right: 10px;
-            opacity: 0.9;
-            font-family: Helvetica-Bold;
-            font-size: 18px;
+          font-weight: 500;
+          margin-right: 10px;
+          opacity: 0.9;
+          font-family: Helvetica-Bold;
+          font-size: 14px;
         }
         .device_input {
           line-height: 20px;
@@ -181,7 +186,7 @@ export class SpFlags extends BaseElement {
         deviceWidthLabelEl.className = 'device_label';
         deviceWidthLabelEl.textContent = 'PhysicalWidth :';
         let deviceWidthEl = document.createElement('input');
-        deviceWidthEl.value = <string>config.addInfo!.physicalWidth;
+        deviceWidthEl.value = <string> config.addInfo!.physicalWidth;
         deviceWidthEl.addEventListener('keyup', () => {
           deviceWidthEl.value = deviceWidthEl.value.replace(/\D/g, '');
         });
@@ -196,7 +201,7 @@ export class SpFlags extends BaseElement {
         deviceHeightLabelEl.className = 'device_label';
         let deviceHeightEl = document.createElement('input');
         deviceHeightEl.className = 'device_input';
-        deviceHeightEl.value = <string>config.addInfo!.physicalHeight;
+        deviceHeightEl.value = <string> config.addInfo!.physicalHeight;
         deviceHeightEl.addEventListener('keyup', () => {
           deviceHeightEl.value = deviceHeightEl.value.replace(/\D/g, '');
         });
@@ -230,9 +235,9 @@ export class FlagsConfig {
     },
     {
       title: 'AnimationAnalysis',
-      switchOptions: [{option: 'Enabled'}, {option: 'Disabled', selected: true}],
+      switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
       describeContent: 'Analyze Animation effect templates',
-      addInfo: {physicalWidth: 0, physicalHeight: 0}
+      addInfo: { physicalWidth: 0, physicalHeight: 0 }
     },
     {
       title: 'AppStartup',
@@ -286,6 +291,20 @@ export class FlagsConfig {
       });
     }
     return FlagsConfig.DEFAULT_CONFIG;
+  }
+
+  static getSpTraceStreamParseConfig(): string {
+    let parseConfig = {};
+    FlagsConfig.getAllFlagConfig().forEach(
+      configItem => {
+        let selectedOption = configItem.switchOptions.filter((option) => {
+          return option.selected;
+        });
+        // @ts-ignore
+        parseConfig[configItem.title] = selectedOption[0].option === 'Enabled' ? 1 : 0;
+      }
+    );
+    return JSON.stringify({ 'config': parseConfig });
   }
 
   static getFlagsConfig(flagName: string): Params | undefined {

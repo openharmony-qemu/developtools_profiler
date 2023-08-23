@@ -24,6 +24,7 @@ import {
 } from '../../../../database/SqlLite.js';
 import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
 import { resizeObserver } from '../SheetUtils.js';
+import { LitSlicerTrack } from '../../../../../base-ui/slicer/lit-slicer.js';
 
 @element('tabpane-system-details')
 export class TabPaneSystemDetails extends BaseElement {
@@ -32,8 +33,10 @@ export class TabPaneSystemDetails extends BaseElement {
   private eventSource: Array<any> = [];
   private detailsSource: Array<any> = [];
   private boxDetails: HTMLDivElement | null | undefined;
+  private slicerTrack: LitSlicerTrack | null | undefined;
 
   set data(valSystemDetails: SelectionParam | any) {
+    this.slicerTrack!.style.visibility = 'hidden';
     this.queryDataByDB(valSystemDetails);
   }
 
@@ -46,7 +49,7 @@ export class TabPaneSystemDetails extends BaseElement {
     this.boxDetails = this.shadowRoot?.querySelector<HTMLDivElement>('.box-details');
     this.tblSystemDetails = this.shadowRoot?.querySelector<LitTable>('#tb-system-data');
     this.detailsTbl = this.shadowRoot?.querySelector<LitTable>('#tb-system-details-data');
-
+    this.slicerTrack = this.shadowRoot?.querySelector<LitSlicerTrack>('lit-slicer-track');
     this.tblSystemDetails!.addEventListener('row-click', (e) => {
       this.detailsSource = [];
       // @ts-ignore
@@ -57,9 +60,11 @@ export class TabPaneSystemDetails extends BaseElement {
 
   convertData(data: SystemDetailsEnergy) {
     if (data.eventName === 'Event Name') {
+      this.slicerTrack!.style.visibility = 'hidden';
       this.detailsTbl!.recycleDataSource = [];
       this.boxDetails!.style.width = '100%';
     } else {
+      this.slicerTrack!.style.visibility = 'visible';
       this.detailsSource.push({
         key: 'EVENT_NAME : ',
         value: data.eventName,

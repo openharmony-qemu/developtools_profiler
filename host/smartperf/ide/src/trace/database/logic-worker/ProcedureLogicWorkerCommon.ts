@@ -61,17 +61,17 @@ export class MerageBean extends ChartStruct {
     this.#parentNode = data;
   }
 
-  get parentNode() {
+  get parentNode(): MerageBean | undefined {
     return this.#parentNode;
   }
 
   set total(data: number) {
     this.#total = data;
-    this.weight = `${getProbablyTime(this.dur)}`;
-    this.weightPercent = `${((this.dur / data) * 100).toFixed(1)}%`;
+    this.weight = `${ getProbablyTime(this.dur) }`;
+    this.weightPercent = `${ ((this.dur / data) * 100).toFixed(1) }%`;
   }
 
-  get total() {
+  get total(): number {
     return this.#total;
   }
 }
@@ -80,7 +80,7 @@ class MerageBeanDataSplit {
   systmeRuleName = '/system/';
   numRuleName = '/max/min/';
 
-  //所有的操作都是针对整个树结构的 不区分特定的数据
+  //所有的操作都是针对整个树结构的, 不区分特定的数据
   splitTree(
     splitMapData: any,
     data: MerageBean[],
@@ -89,7 +89,7 @@ class MerageBeanDataSplit {
     isSymbol: boolean,
     currentTreeList: any[],
     searchValue: string
-  ) {
+  ): void {
     data.forEach((process) => {
       process.children = [];
       if (isCharge) {
@@ -101,7 +101,7 @@ class MerageBeanDataSplit {
     this.resetAllNode(data, currentTreeList, searchValue);
   }
 
-  recursionChargeInitTree(splitMapData: any, node: MerageBean, symbolName: string, isSymbol: boolean) {
+  recursionChargeInitTree(splitMapData: any, node: MerageBean, symbolName: string, isSymbol: boolean): void {
     if ((isSymbol && node.symbolName == symbolName) || (!isSymbol && node.libName == symbolName)) {
       (splitMapData[symbolName] = splitMapData[symbolName] || []).push(node);
       node.isStore++;
@@ -113,7 +113,7 @@ class MerageBeanDataSplit {
     }
   }
 
-  recursionPruneInitTree(splitMapData: any, node: MerageBean, symbolName: string, isSymbol: boolean) {
+  recursionPruneInitTree(splitMapData: any, node: MerageBean, symbolName: string, isSymbol: boolean): void {
     if ((isSymbol && node.symbolName == symbolName) || (!isSymbol && node.libName == symbolName)) {
       (splitMapData[symbolName] = splitMapData[symbolName] || []).push(node);
       node.isStore++;
@@ -126,10 +126,10 @@ class MerageBeanDataSplit {
   }
 
   //symbol lib prune
-  recursionPruneTree(node: MerageBean, symbolName: string, isSymbol: boolean) {
+  recursionPruneTree(node: MerageBean, symbolName: string, isSymbol: boolean): void {
     if ((isSymbol && node.symbolName == symbolName) || (!isSymbol && node.libName == symbolName)) {
       node.currentTreeParentNode &&
-        node.currentTreeParentNode.children.splice(node.currentTreeParentNode.children.indexOf(node), 1);
+      node.currentTreeParentNode.children.splice(node.currentTreeParentNode.children.indexOf(node), 1);
     } else {
       node.children.forEach((child) => {
         this.recursionPruneTree(child, symbolName, isSymbol);
@@ -137,7 +137,7 @@ class MerageBeanDataSplit {
     }
   }
 
-  recursionChargeByRule(splitMapData: any, node: MerageBean, ruleName: string, rule: (node: MerageBean) => boolean) {
+  recursionChargeByRule(splitMapData: any, node: MerageBean, ruleName: string, rule: (node: MerageBean) => boolean): void {
     if (node.initChildren.length > 0) {
       node.initChildren.forEach((child) => {
         if (rule(child)) {
@@ -149,7 +149,7 @@ class MerageBeanDataSplit {
     }
   }
 
-  pruneChildren(splitMapData: any, node: MerageBean, symbolName: string) {
+  pruneChildren(splitMapData: any, node: MerageBean, symbolName: string): void {
     if (node.initChildren.length > 0) {
       node.initChildren.forEach((child) => {
         child.isStore++;
@@ -159,7 +159,7 @@ class MerageBeanDataSplit {
     }
   }
 
-  hideSystemLibrary(allProcess: MerageBean[], splitMapData: any) {
+  hideSystemLibrary(allProcess: MerageBean[], splitMapData: any): void {
     allProcess.forEach((item) => {
       item.children = [];
       this.recursionChargeByRule(splitMapData, item, this.systmeRuleName, (node) => {
@@ -168,7 +168,7 @@ class MerageBeanDataSplit {
     });
   }
 
-  hideNumMaxAndMin(allProcess: MerageBean[], splitMapData: any, startNum: number, endNum: string) {
+  hideNumMaxAndMin(allProcess: MerageBean[], splitMapData: any, startNum: number, endNum: string): void {
     let max = endNum == '∞' ? Number.POSITIVE_INFINITY : parseInt(endNum);
     allProcess.forEach((item) => {
       item.children = [];
@@ -178,7 +178,7 @@ class MerageBeanDataSplit {
     });
   }
 
-  resotreAllNode(splitMapData: any, symbols: string[]) {
+  resotreAllNode(splitMapData: any, symbols: string[]): void {
     symbols.forEach((symbol) => {
       let list = splitMapData[symbol];
       if (list != undefined) {
@@ -189,7 +189,7 @@ class MerageBeanDataSplit {
     });
   }
 
-  resetAllNode(data: MerageBean[], currentTreeList: any[], searchValue: string) {
+  resetAllNode(data: MerageBean[], currentTreeList: any[], searchValue: string): void {
     this.clearSearchNode(currentTreeList);
     data.forEach((process) => {
       process.searchShow = true;
@@ -202,7 +202,7 @@ class MerageBeanDataSplit {
     }
   }
 
-  resetNewAllNode(data: MerageBean[], currentTreeList: any[]) {
+  resetNewAllNode(data: MerageBean[], currentTreeList: any[]): void {
     data.forEach((process) => {
       process.children = [];
     });
@@ -226,7 +226,7 @@ class MerageBeanDataSplit {
     });
   }
 
-  findSearchNode(data: MerageBean[], search: string, parentSearch: boolean) {
+  findSearchNode(data: MerageBean[], search: string, parentSearch: boolean): void {
     search = search.toLocaleLowerCase();
     data.forEach((node) => {
       if ((node.symbolName && node.symbolName.toLocaleLowerCase().includes(search)) || parentSearch) {
@@ -247,14 +247,14 @@ class MerageBeanDataSplit {
     });
   }
 
-  clearSearchNode(currentTreeList: any[]) {
+  clearSearchNode(currentTreeList: any[]): void {
     currentTreeList.forEach((node) => {
       node.searchShow = true;
       node.isSearch = false;
     });
   }
 
-  splitAllProcess(allProcess: any[], splitMapData: any, list: any[]) {
+  splitAllProcess(allProcess: any[], splitMapData: any, list: any[]): void {
     list.forEach((item: any) => {
       allProcess.forEach((process) => {
         if (item.select == '0') {
@@ -274,7 +274,7 @@ export let merageBeanDataSplit = new MerageBeanDataSplit();
 
 export abstract class LogicHandler {
   abstract handle(data: any): void;
-  queryData(eventId: string, queryName: string, sql: string, args: any) {
+  queryData(eventId: string, queryName: string, sql: string, args: any): void {
     self.postMessage({
       id: eventId,
       type: queryName,
@@ -289,7 +289,7 @@ export abstract class LogicHandler {
 
 let dec = new TextDecoder();
 
-export let setFileName = (path: string) => {
+export let setFileName = (path: string): string => {
   let fileName = '';
   if (path) {
     let number = path.lastIndexOf('/');
@@ -301,7 +301,7 @@ export let setFileName = (path: string) => {
   return path;
 };
 
-let pagination = (page: number, pageSize: number, source: Array<any>) => {
+let pagination = (page: number, pageSize: number, source: Array<any>): any[] => {
   let offset = (page - 1) * pageSize;
   return offset + pageSize >= source.length
     ? source.slice(offset, source.length)
@@ -309,10 +309,10 @@ let pagination = (page: number, pageSize: number, source: Array<any>) => {
 };
 
 const PAGE_SIZE: number = 50_0000;
-export let postMessage = (id: any, action: string, results: Array<any>) => {
+export let postMessage = (id: any, action: string, results: Array<any>): void => {
   if (results.length > PAGE_SIZE) {
     let pageCount = Math.ceil(results.length / PAGE_SIZE);
-    for (let i = 1; i <= pageCount; i++) {
+    for (let i = 1 ; i <= pageCount ; i++) {
       let tag = 'start';
       if (i == 1) {
         tag = 'start';
@@ -350,7 +350,7 @@ export let translateJsonString = (str: string): string => {
     .replace(/\\/g, '\\\\');
 };
 
-export let convertJSON = (arrBuf: ArrayBuffer | Array<any>) => {
+export let convertJSON = (arrBuf: ArrayBuffer | Array<any>): any[] => {
   if (arrBuf instanceof ArrayBuffer) {
     let string = dec.decode(arrBuf);
     let jsonArray = [];
@@ -367,9 +367,9 @@ export let convertJSON = (arrBuf: ArrayBuffer | Array<any>) => {
       }
       let columns = parse.columns;
       let values = parse.values;
-      for (let i = 0; i < values.length; i++) {
+      for (let i = 0 ; i < values.length ; i++) {
         let object: any = {};
-        for (let j = 0; j < columns.length; j++) {
+        for (let j = 0 ; j < columns.length ; j++) {
           object[columns[j]] = values[i][j];
         }
         jsonArray.push(object);
@@ -465,7 +465,7 @@ export function getProbablyTime(ns: number): string {
   return res;
 }
 
-export function timeMsFormat2p(ns: number) {
+export function timeMsFormat2p(ns: number): string {
   let currentNs = ns;
   let hour1 = 3600_000;
   let minute1 = 60_000;
@@ -493,7 +493,7 @@ export function timeMsFormat2p(ns: number) {
   return res;
 }
 
-export function formatRealDate(date: Date, fmt: string) {
+export function formatRealDate(date: Date, fmt: string): string {
   let obj = {
     'M+': date.getMonth() + 1,
     'd+': date.getDate(),
@@ -517,8 +517,36 @@ export function formatRealDate(date: Date, fmt: string) {
   return fmt;
 }
 
-export function formatRealDateMs(timeNs: number) {
+export function formatRealDateMs(timeNs: number): string {
   return formatRealDate(new Date(timeNs / 1000000), 'MM-dd hh:mm:ss.S');
+}
+
+export class JsProfilerSymbol {
+  id: number = 0;
+  nameId: number = 0;
+  name?: string;
+  scriptId: number = 0;
+  urlId: number = 0;
+  url: string = '';
+  line: number = 0;
+  column: number = 0;
+  hitCount: number = 0;
+  childrenString?: string;
+  childrenIds?: Array<number>;
+  children?: Array<JsProfilerSymbol>;
+  parentId: number = 0;
+  depth: number = -1;
+
+  public clone(): JsProfilerSymbol {
+    const cloneSymbol = new JsProfilerSymbol();
+    cloneSymbol.name = this.name;
+    cloneSymbol.url = this.url;
+    cloneSymbol.hitCount = this.hitCount;
+    cloneSymbol.children = new Array<JsProfilerSymbol>();
+    cloneSymbol.parentId = this.parentId;
+    cloneSymbol.depth = this.depth;
+    return cloneSymbol;
+  }
 }
 
 export class HeapTreeDataBean {
@@ -558,33 +586,43 @@ export class DataCache {
   public nmHeapFrameMap = new Map<number, Array<HeapTreeDataBean>>();
   public perfCountToMs = 1; // 1000 / freq
   public perfCallChainMap: Map<number, PerfCall> = new Map<number, PerfCall>();
+  public jsCallChain: Array<JsProfilerSymbol> | undefined;
+  public jsSymbolMap = new Map<number, JsProfilerSymbol>();
 
-  public static getInstance() {
+  public static getInstance(): DataCache {
     if (!this.instance) {
       this.instance = new DataCache();
     }
     return this.instance;
   }
 
-  public clearAll() {
+  public clearAll(): void {
     if (this.dataDict) {
       this.dataDict.clear();
     }
     this.clearEBpf();
     this.clearNM();
     this.clearPerf();
+    this.clearJsCache();
   }
 
-  public clearNM() {
+  public clearNM(): void {
     this.nmFileDict.clear();
     this.nmHeapFrameMap.clear();
   }
 
-  public clearEBpf() {
+  public clearEBpf(): void {
     this.eBpfCallChainsMap.clear();
   }
 
-  public clearPerf() {
+  public clearJsCache(): void {
+    if (this.jsCallChain) {
+      this.jsCallChain.length = 0;
+    }
+    this.jsSymbolMap.clear();
+  }
+
+  public clearPerf(): void {
     this.perfCallChainMap.clear();
   }
 }

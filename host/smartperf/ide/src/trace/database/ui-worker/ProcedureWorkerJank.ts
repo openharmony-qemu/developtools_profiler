@@ -20,7 +20,6 @@ import {
   BaseStruct,
   isFrameContainPoint,
   ns2x,
-  Rect,
   Render,
   RequestMessage,
   drawString,
@@ -34,7 +33,7 @@ export class JankRender extends Render {
       type: string;
     },
     row: TraceRow<JankStruct>
-  ) {
+  ): void {
     let jankList = row.dataList;
     let jankFilter = row.dataListCache;
     jank(
@@ -75,7 +74,7 @@ export class JankRender extends Render {
     req.context.closePath();
   }
 
-  render(req: RequestMessage, list: Array<any>, filter: Array<any>) {}
+  render(req: RequestMessage, list: Array<any>, filter: Array<any>): void {}
 }
 
 export function jank(
@@ -86,9 +85,9 @@ export function jank(
   totalNS: number,
   frame: any,
   use: boolean
-) {
+): void {
   if (use && jankFilter.length > 0) {
-    for (let i = 0, len = jankFilter.length; i < len; i++) {
+    for (let i = 0, len = jankFilter.length ; i < len ; i++) {
       if ((jankFilter[i].ts || 0) + (jankFilter[i].dur || 0) >= startNS && (jankFilter[i].ts || 0) <= endNS) {
         JankStruct.setJankFrame(jankFilter[i], 0, startNS, endNS, totalNS, frame);
       } else {
@@ -106,7 +105,7 @@ export function jank(
         return it;
       })
       .reduce((pre, current, index, arr) => {
-        (pre[`${current.frame.x}-${current.depth}`] = pre[`${current.frame.x}-${current.depth}`] || []).push(current);
+        (pre[`${ current.frame.x }-${ current.depth }`] = pre[`${ current.frame.x }-${ current.depth }`] || []).push(current);
         return pre;
       }, {});
     Reflect.ownKeys(groups).map((kv) => {
@@ -121,7 +120,7 @@ export class JankStruct extends JanksStruct {
   static selectJankStruct: JankStruct | undefined;
   static selectJankStructList: Array<JankStruct> = new Array<JankStruct>();
 
-  static setJankFrame(jankNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any) {
+  static setJankFrame(jankNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any): void {
     let x1: number, x2: number;
     if ((jankNode.ts || 0) > startNS && (jankNode.ts || 0) < endNS) {
       x1 = ns2x(jankNode.ts || 0, startNS, endNS, totalNS, frame);
@@ -143,7 +142,7 @@ export class JankStruct extends JanksStruct {
     jankNode.frame.height = 20;
   }
 
-  static draw(ctx: CanvasRenderingContext2D, data: JankStruct, nsScale: number) {
+  static draw(ctx: CanvasRenderingContext2D, data: JankStruct, nsScale: number): void {
     if (data.frame) {
       if (data.dur == undefined || data.dur == null || data.dur == 0) {
       } else {
@@ -171,7 +170,7 @@ export class JankStruct extends JanksStruct {
         }
         if (data.frame.width > 10) {
           ctx.fillStyle = '#fff';
-          drawString(ctx, `${data.name || ''}`, 5, data.frame, data);
+          drawString(ctx, `${ data.name || '' }`, 5, data.frame, data);
         }
         if (JankStruct.isSelected(data)) {
           ctx.strokeStyle = '#000';
@@ -187,7 +186,7 @@ export class JankStruct extends JanksStruct {
     nsScale: number,
     ctx: CanvasRenderingContext2D,
     miniHeight: number
-  ) {
+  ): void {
     if (data.frame && data.frame.width * nsScale < 1.5) {
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(data.frame.x, data.frame.y, data.frame.width * nsScale, miniHeight - padding * 2);
@@ -212,7 +211,7 @@ export class JankStruct extends JanksStruct {
       }
     }
   }
-  private static drawActualFrame(ctx: CanvasRenderingContext2D, data: JankStruct, miniHeight: number) {
+  private static drawActualFrame(ctx: CanvasRenderingContext2D, data: JankStruct, miniHeight: number): void {
     ctx.fillStyle = ColorUtils.JANK_COLOR[0];
     if (data.jank_tag === 1) {
       ctx.fillStyle = ColorUtils.JANK_COLOR[2];

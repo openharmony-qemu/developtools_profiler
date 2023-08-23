@@ -41,7 +41,7 @@ public:
 
 public:
     SysTuning::TraceStreamer::TraceStreamerSelector stream_ = {};
-    const std::string dbPath_ = "data/resource/out.db";
+    const std::string dbPath_ = "../../../data/resource/out.db";
 };
 /**
  * @tc.name: ParseSmapsParse

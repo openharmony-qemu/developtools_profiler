@@ -14,7 +14,7 @@
  */
 
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import { BaseStruct, isSurroundingPoint, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
+import { BaseStruct, computeUnitWidth, isSurroundingPoint, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
 import { AnimationRanges } from '../../bean/FrameComponentBean.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 
@@ -54,8 +54,34 @@ export class FrameSpacingRender extends Render {
       let smallTickStandard = smallTick[req.frameRate];
       let [minValue, maxValue] = this.maxMinData(smallTickStandard.firstLine,
         smallTickStandard.thirdLine, frameSpacingFilter);
+      let isDraw = false;
+      let selectUnitWidthList: number[] = [];
+      for (let index: number = 0; index < frameSpacingFilter.length; index++) {
+        let currentStruct = frameSpacingFilter[index];
+        if (index > 0) {
+          let selectUnitWidth = computeUnitWidth(preFrameSpacing.currentTs, currentStruct.currentTs, row.frame.width);
+          selectUnitWidthList.push(selectUnitWidth);
+        }
+        FrameSpacingStruct.refreshHoverStruct(preFrameSpacing, currentStruct, row, minValue, maxValue);
+        if (currentStruct.groupId === 0) {
+          if (currentStruct.currentTs > TraceRow.range!.startNS && currentStruct.currentTs < TraceRow.range!.endNS) {
+            isDraw = true;
+            this.drawPoint(req.context, currentStruct, row, minValue, maxValue);
+          }
+        } else if (currentStruct.groupId !== invalidGroupId && index > 0 &&
+          currentStruct.groupId === preFrameSpacing!.groupId) {
+          isDraw = true;
+          FrameSpacingStruct.draw(req.context, preFrameSpacing, currentStruct, row, minValue, maxValue);
+        }
+        FrameSpacingStruct.drawSelect(currentStruct, req.context, row);
+        preFrameSpacing = currentStruct;
+      }
+      if (isDraw) {
+        this.drawDashedLines(Object.values(smallTickStandard), req, row, minValue, maxValue);
+      }
+      let unitWidth = Math.min.apply(Math, selectUnitWidthList);
       let findStructList = frameSpacingFilter.filter(filter =>
-        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, xScaleNumber));
+        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, unitWidth / multiple));
       if (findStructList.length > 0) {
         find = true;
         let hoverIndex: number = 0;
@@ -64,41 +90,10 @@ export class FrameSpacingRender extends Render {
         }
         FrameSpacingStruct.hoverFrameSpacingStruct = findStructList[hoverIndex];
       }
-      let isDraw = false;
-      for (let index: number = 0; index < frameSpacingFilter.length; index++) {
-        let currentStruct = frameSpacingFilter[index];
-        FrameSpacingStruct.refreshHoverStruct(preFrameSpacing, currentStruct, row, minValue, maxValue);
-        if (currentStruct.groupId === 0) {
-          if (currentStruct.currentTs > TraceRow.range!.startNS && currentStruct.currentTs < TraceRow.range!.endNS) {
-            isDraw = true;
-            this.drawPoint(req.context, currentStruct, row, minValue, maxValue);
-          }
-          this.resetData(currentStruct);
-        } else if (currentStruct.groupId !== invalidGroupId) {
-          if (index === 0 || currentStruct.groupId !== preFrameSpacing!.groupId) {
-            this.resetData(currentStruct);
-          } else {
-            isDraw = true;
-            FrameSpacingStruct.draw(req.context, preFrameSpacing, currentStruct, row, minValue, maxValue);
-          }
-        }
-        FrameSpacingStruct.drawSelect(currentStruct, req.context, row);
-        preFrameSpacing = currentStruct;
-      }
-      if (isDraw) {
-        this.drawDashedLines(Object.values(smallTickStandard), req, row, minValue, maxValue);
-      }
       if (!find && row.isHover) {
         FrameSpacingStruct.hoverFrameSpacingStruct = undefined;
       }
     }
-  }
-
-  private resetData(currentStruct: FrameSpacingStruct): void {
-    currentStruct.frameSpacingResult = 0;
-    currentStruct.preFrameWidth = 0;
-    currentStruct.preFrameHeight = 0;
-    currentStruct.preTs = 0;
   }
 
   private drawPoint(ctx: CanvasRenderingContext2D, currentStruct: FrameSpacingStruct,
@@ -181,6 +176,10 @@ export class FrameSpacingRender extends Render {
     frameSpacingFilter.forEach(frameSpacing => {
       if (simpleGroup.indexOf(frameSpacing.groupId!) > invalidGroupId) {
         frameSpacing.groupId = 0;
+        frameSpacing.frameSpacingResult = 0;
+        frameSpacing.preFrameWidth = 0;
+        frameSpacing.preFrameHeight = 0;
+        frameSpacing.preTs = 0;
       }
     });
   }
@@ -200,7 +199,7 @@ export class FrameSpacingRender extends Render {
       return filterData.frameSpacingResult!;
     }));
     if (max < tickStandardMax) {
-      max = tickStandardMax + 3;
+      max = tickStandardMax + padding;
     }
     if (min > tickStandardMin) {
       min = tickStandardMin;
@@ -364,7 +363,6 @@ const invalidGroupId: number = -1;
 const multiple: number = 2;
 const unitIndex: number = 1;
 const selectRadius: number = 3;
-const xScaleNumber: number = 2;
 
 const smallTick = {
   60: {

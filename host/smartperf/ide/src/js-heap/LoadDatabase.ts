@@ -42,7 +42,6 @@ export class LoadDatabase {
   private async loadFile(listener: ParseListener) {
     this.fileModule = new Array<FileStruct>();
     let result = await queryHeapFile();
-    listener.process('start loading file  ', 1);
     for (let row of result) {
       let fileStruct = new FileStruct();
       fileStruct.id = row.id;
@@ -65,12 +64,9 @@ export class LoadDatabase {
       await this.loadTraceFunctionInfos(fileStruct);
       await this.loadTraceTree(fileStruct);
       await this.loadSamples(fileStruct);
-      let percent = Math.floor(50 / result.length) * (row.id + 1);
-      listener.process('loading file ' + fileStruct.name + ' from db ', percent);
       info(`read ${fileStruct.name} from db Success  ${getTimeForLog()}`);
       this.fileModule.push(fileStruct);
     }
-    listener.process('Loading completed ', 50);
     let dataParse = HeapDataInterface.getInstance();
     dataParse.setPraseListener(listener);
     dataParse.parseData(this.fileModule);

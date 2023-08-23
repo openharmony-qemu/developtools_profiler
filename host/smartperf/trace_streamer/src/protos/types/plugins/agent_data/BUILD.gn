@@ -49,7 +49,7 @@ config("agent_include_config") {
 }
 
 #######################################################
-action("agent_data_cpp_gen") {
+action("ts_agent_data_cpp_gen") {
   script = "${OHOS_TRACE_STREAMER_DIR_PROTOC}"
   sources = agent_sources
   outputs = agent_data_codegen_all
@@ -65,14 +65,16 @@ action("agent_data_cpp_gen") {
   args += rebase_path(sources, root_build_dir)
   if (!use_wasm && !is_test && !is_fuzz) {
     deps = [
-      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc",
-      "${SRC}/proto_reader/protoc_plugin:protoreader_plugin",
+      "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+      "${SRC}/proto_reader/protoc_plugin:protoreader_plugin(${host_toolchain})",
     ]
   }
 }
 
-ohos_source_set("agent_data_cpp") {
-  deps = [ ":agent_data_cpp_gen" ]
+ohos_source_set("ts_agent_data_cpp") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  deps = [ ":ts_agent_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",

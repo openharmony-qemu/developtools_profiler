@@ -46,7 +46,7 @@ if (target == "sdkdemotest") {
       "${OHOS_PROTO_GEN}/types/plugins/mock_data",
       "${THIRD_PARTY}/googletest/googletest/include/gtest",
       "${THIRD_PARTY}/protobuf/src",
-      "${THIRD_PARTY}/json-master/single_include/nlohmann",
+      "${THIRD_PARTY}/json/single_include/nlohmann",
     ]
     cflags = [
       "-Wno-inconsistent-missing-override",

@@ -12,8 +12,8 @@
 # limitations under the License.
 import("//build/ohos.gni")
 ohos_source_set("ibase") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "codec_cov.h",
     "file.h",

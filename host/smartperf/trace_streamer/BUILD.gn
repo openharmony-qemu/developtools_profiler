@@ -21,7 +21,7 @@ group("trace_streamer") {
   } else if (is_protoc) {
     deps = [ "${THIRD_PARTY}/protobuf:protoc" ]
   } else if (is_spb) {
-    deps = [ "src/proto_reader/protoc_plugin:protoreader_plugin" ]
+    deps = [ "src/proto_reader/protoc_plugin:protoreader_plugin(${host_toolchain})" ]
   } else if (is_sdkdemo) {
     deps = [ "sdk/demo_sdk:trace_streamer_sdk_builtin" ]
   } else if (is_dubai_sdk) {

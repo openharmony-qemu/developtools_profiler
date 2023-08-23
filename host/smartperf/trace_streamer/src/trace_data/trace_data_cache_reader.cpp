@@ -232,6 +232,19 @@ const JsHeapTraceNode& TraceDataCacheReader::GetConstJsHeapTraceNodeData() const
 {
     return jsHeapTraceNodeData_;
 }
+const JsCpuProfilerNode& TraceDataCacheReader::GetConstJsCpuProfilerNodeData() const
+{
+    return jsCpuProfilerNodeData_;
+}
+const JsCpuProfilerSample& TraceDataCacheReader::GetConstJsCpuProfilerSampleData() const
+{
+    return jsCpuProfilerSampleData_;
+}
+
+const JsConfig& TraceDataCacheReader::GetConstJsConfigData() const
+{
+    return jsConfigData_;
+}
 
 const DataType& TraceDataCacheReader::GetConstDataTypeData() const
 {

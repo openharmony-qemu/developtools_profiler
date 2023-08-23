@@ -231,7 +231,7 @@ export class SpFrameTimeChart {
     frameAnimationRow.style.width = '100%';
     frameAnimationRow.style.height = '40px';
     frameAnimationRow.name = 'Animation';
-    frameAnimationRow.addTemplateTypes('Dynamic');
+    frameAnimationRow.addTemplateTypes('Animation Effect');
     frameAnimationRow.setAttribute('children', '');
     frameAnimationRow.supplier = (): Promise<FrameAnimationStruct[]> =>
       new Promise((resolve) => {
@@ -276,7 +276,7 @@ export class SpFrameTimeChart {
     let labelName = dynamicCurveRow.shadowRoot?.querySelector('.name') as HTMLLabelElement;
     labelName.style.marginRight = '77px';
     dynamicCurveRow.name = `Animation Effect Curve (${componentName})`;
-    dynamicCurveRow.addTemplateTypes('Dynamic');
+    dynamicCurveRow.addTemplateTypes('Animation Effect');
     dynamicCurveRow.setAttribute('height', '100px');
     dynamicCurveRow.setAttribute('children', '');
     dynamicCurveRow.supplier = (): Promise<FrameDynamicStruct[]> =>
@@ -333,7 +333,7 @@ export class SpFrameTimeChart {
     frameSpacingRow.style.width = '100%';
     frameSpacingRow.style.height = '140px';
     frameSpacingRow.name = `Frame spacing (${componentName})`;
-    frameSpacingRow.addTemplateTypes('Dynamic');
+    frameSpacingRow.addTemplateTypes('Animation Effect');
     frameSpacingRow.setAttribute('height', '140');
     frameSpacingRow.setAttribute('children', '');
     frameSpacingRow.supplier = (): Promise<FrameSpacingStruct[]> =>
@@ -384,6 +384,11 @@ export class SpFrameTimeChart {
         frameData[index].preTs = frameData[index - unitIndex].currentTs;
         frameData[index].preFrameWidth = frameData[index - unitIndex].currentFrameWidth;
         frameData[index].preFrameHeight = frameData[index - unitIndex].currentFrameHeight;
+      } else {
+        frameData[index].frameSpacingResult = 0;
+        frameData[index].preTs = 0;
+        frameData[index].preFrameWidth = 0;
+        frameData[index].preFrameHeight = 0;
       }
     }
   }

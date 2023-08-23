@@ -26,7 +26,7 @@
 namespace SysTuning {
 namespace TraceStreamer {
 constexpr uint32_t INVAILD_DATA = 2;
-constexpr uint32_t MIN_VECTOR_SIZE_ = 2;
+constexpr uint32_t MIN_VECTOR_SIZE = 2;
 constexpr uint32_t VAILD_DATA_COUNT = 4;
 const std::string PROCESS_CREATE = "H:int OHOS::AAFwk::MissionListManager::StartAbilityLocked(";
 const std::string START_ABILITY = "H:virtual int OHOS::AAFwk::AbilityManagerService::StartAbility(";

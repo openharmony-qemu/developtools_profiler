@@ -43,8 +43,8 @@ protected:
 HWTEST_F(ParserPbreaderTest, HtracePbreaderParserTest, TestSize.Level1)
 {
     TS_LOGI("test34-1");
-    const std::string tracePath = "data/resource/pbreader.htrace";
-    const std::string dbPath = "data/resource/test34-1_out.db";
+    const std::string tracePath = "../../../data/resource/pbreader.htrace";
+    const std::string dbPath = "../../../data/resource/test34-1_out.db";
     constexpr size_t readSize = 1024;
     constexpr uint32_t lineLength = 256;
 
@@ -52,7 +52,6 @@ HWTEST_F(ParserPbreaderTest, HtracePbreaderParserTest, TestSize.Level1)
         std::unique_ptr<SysTuning::TraceStreamer::TraceStreamerSelector> ta =
             std::make_unique<SysTuning::TraceStreamer::TraceStreamerSelector>();
         ta->EnableMetaTable(false);
-        ta->SetCleanMode(false);
         int32_t fd(base::OpenFile(tracePath, O_RDONLY, G_FILE_PERMISSION));
         while (true) {
             std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(readSize);
@@ -72,7 +71,6 @@ HWTEST_F(ParserPbreaderTest, HtracePbreaderParserTest, TestSize.Level1)
         ta->WaitForParserEnd();
         close(fd);
         ta->ExportDatabase(dbPath);
-        ta->Clear();
         EXPECT_TRUE(access(dbPath.c_str(), F_OK) == 0);
         remove(dbPath.c_str());
     } else {
@@ -88,8 +86,8 @@ HWTEST_F(ParserPbreaderTest, HtracePbreaderParserTest, TestSize.Level1)
 HWTEST_F(ParserPbreaderTest, BytraceParserTest, TestSize.Level1)
 {
     TS_LOGI("test34-2");
-    const std::string tracePath = "data/resource/ut_bytrace_input_full.txt";
-    const std::string dbPath = "data/resource/test34-2_out.db";
+    const std::string tracePath = "../../../data/resource/ut_bytrace_input_full.txt";
+    const std::string dbPath = "../../../data/resource/test34-2_out.db";
     constexpr size_t readSize = 1024 * 1024;
     constexpr uint32_t lineLength = 256;
 
@@ -97,7 +95,6 @@ HWTEST_F(ParserPbreaderTest, BytraceParserTest, TestSize.Level1)
         std::unique_ptr<SysTuning::TraceStreamer::TraceStreamerSelector> ta =
             std::make_unique<SysTuning::TraceStreamer::TraceStreamerSelector>();
         ta->EnableMetaTable(false);
-        ta->SetCleanMode(false);
         int32_t fd(base::OpenFile(tracePath, O_RDONLY, G_FILE_PERMISSION));
         while (true) {
             std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(readSize);
@@ -116,7 +113,6 @@ HWTEST_F(ParserPbreaderTest, BytraceParserTest, TestSize.Level1)
         ta->WaitForParserEnd();
         close(fd);
         ta->ExportDatabase(dbPath);
-        ta->Clear();
         EXPECT_TRUE(access(dbPath.c_str(), F_OK) == 0);
         remove(dbPath.c_str());
     } else {
@@ -132,8 +128,8 @@ HWTEST_F(ParserPbreaderTest, BytraceParserTest, TestSize.Level1)
 HWTEST_F(ParserPbreaderTest, HtraceAndPerfParserTest, TestSize.Level1)
 {
     TS_LOGI("test34-3");
-    const std::string tracePath = "data/resource/htrace_perf.bin";
-    const std::string dbPath = "data/resource/test34-3_out.db";
+    const std::string tracePath = "../../../data/resource/htrace_perf.bin";
+    const std::string dbPath = "../../../data/resource/test34-3_out.db";
     constexpr size_t readSize = 1024;
     constexpr uint32_t lineLength = 256;
 
@@ -141,7 +137,6 @@ HWTEST_F(ParserPbreaderTest, HtraceAndPerfParserTest, TestSize.Level1)
         std::unique_ptr<SysTuning::TraceStreamer::TraceStreamerSelector> ta =
             std::make_unique<SysTuning::TraceStreamer::TraceStreamerSelector>();
         ta->EnableMetaTable(false);
-        ta->SetCleanMode(false);
         int32_t fd(base::OpenFile(tracePath, O_RDONLY, G_FILE_PERMISSION));
         while (true) {
             std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(readSize);
@@ -161,7 +156,6 @@ HWTEST_F(ParserPbreaderTest, HtraceAndPerfParserTest, TestSize.Level1)
         ta->WaitForParserEnd();
         close(fd);
         ta->ExportDatabase(dbPath);
-        ta->Clear();
         EXPECT_TRUE(access(dbPath.c_str(), F_OK) == 0);
         remove(dbPath.c_str());
     } else {
@@ -177,8 +171,8 @@ HWTEST_F(ParserPbreaderTest, HtraceAndPerfParserTest, TestSize.Level1)
 HWTEST_F(ParserPbreaderTest, HtraceAndEbpfParserTest, TestSize.Level1)
 {
     TS_LOGI("test34-4");
-    const std::string tracePath = "data/resource/htrace_ebpf.bin";
-    const std::string dbPath = "data/resource/test34-4_out.db";
+    const std::string tracePath = "../../../data/resource/htrace_ebpf.bin";
+    const std::string dbPath = "../../../data/resource/test34-4_out.db";
     constexpr size_t readSize = 1024;
     constexpr uint32_t lineLength = 256;
 
@@ -186,7 +180,6 @@ HWTEST_F(ParserPbreaderTest, HtraceAndEbpfParserTest, TestSize.Level1)
         std::unique_ptr<SysTuning::TraceStreamer::TraceStreamerSelector> ta =
             std::make_unique<SysTuning::TraceStreamer::TraceStreamerSelector>();
         ta->EnableMetaTable(false);
-        ta->SetCleanMode(false);
         int32_t fd(base::OpenFile(tracePath, O_RDONLY, G_FILE_PERMISSION));
         while (true) {
             std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(readSize);
@@ -206,7 +199,6 @@ HWTEST_F(ParserPbreaderTest, HtraceAndEbpfParserTest, TestSize.Level1)
         ta->WaitForParserEnd();
         close(fd);
         ta->ExportDatabase(dbPath);
-        ta->Clear();
         EXPECT_TRUE(access(dbPath.c_str(), F_OK) == 0);
         remove(dbPath.c_str());
     } else {

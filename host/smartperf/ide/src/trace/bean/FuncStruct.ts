@@ -31,6 +31,8 @@ export class FuncStruct extends BaseStruct {
   startTs: number | undefined;
   threadName: string | undefined;
   tid: number | undefined;
+  itid: number | undefined;
+  ipid: number | undefined;
   identify: number | undefined;
   track_id: number | undefined;
 

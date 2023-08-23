@@ -908,4 +908,6 @@ export interface ArkTSConfig {
   interval: number;
   capture_numeric_value: boolean;
   track_allocations: boolean;
+  enable_cpu_profiler: boolean;
+  cpu_profiler_interval: number;
 }

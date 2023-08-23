@@ -20,6 +20,12 @@ ohos_source_set("js_memory_tables") {
   sources = [
     "appname_table.cpp",
     "appname_table.h",
+    "js_config_table.cpp",
+    "js_config_table.h",
+    "js_cpu_profiler_node_table.cpp",
+    "js_cpu_profiler_node_table.h",
+    "js_cpu_profiler_sample_table.cpp",
+    "js_cpu_profiler_sample_table.h",
     "js_heap_edges_table.cpp",
     "js_heap_edges_table.h",
     "js_heap_files_table.cpp",

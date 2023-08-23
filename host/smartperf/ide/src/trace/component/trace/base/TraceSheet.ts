@@ -36,10 +36,8 @@ import { IrqStruct } from '../../../database/ui-worker/ProcedureWorkerIrq.js';
 import { JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
 import { HeapStruct } from '../../../database/ui-worker/ProcedureWorkerHeap.js';
 import { LitTable } from '../../../../base-ui/table/lit-table.js';
-import { threadPool } from '../../../database/SqlLite.js';
+import { queryNativeHookResponseTypes, threadPool } from '../../../database/SqlLite.js';
 import { HeapSnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
-import { TabPaneComparison } from '../sheet/snapshot/TabPaneComparison.js';
-import { TabPaneSummary } from '../sheet/snapshot/TabPaneSummary.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { SlicesTime } from '../timer-shaft/SportRuler.js';
@@ -51,6 +49,12 @@ import { FrameDynamicStruct } from '../../../database/ui-worker/ProcedureWorkerF
 import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
 import { FrameSpacingStruct } from '../../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
 import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
+import { procedurePool } from '../../../database/Procedure.js';
+import { JsCpuProfilerChartFrame } from '../../../bean/JsStruct.js';
+import { TabPaneJsCpuTopDown } from '../sheet/ark-ts/TabPaneJsCpuCallTree.js';
+import { TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
+import { TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
+
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
   private litTabs: LitTabs | undefined | null;
@@ -60,11 +64,11 @@ export class TraceSheet extends BaseElement {
   private currentPaneID: string = 'current-selection';
   private fragment: DocumentFragment | undefined;
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ['mode'];
   }
 
-  buildTabs(litTabs: LitTabs | undefined | null) {
+  buildTabs(litTabs: LitTabs | undefined | null): void {
     this.fragment = document.createDocumentFragment();
     Reflect.ownKeys(tabConfig).forEach((key, index) => {
       let pane = new LitTabpane();
@@ -106,7 +110,7 @@ export class TraceSheet extends BaseElement {
     this.buildTabs(this.litTabs);
     let minBtn = this.shadowRoot?.querySelector('#min-btn');
     minBtn?.addEventListener('click', () => {});
-    this.litTabs!.onTabClick = (e: any) => this.loadTabPaneData(e.detail.key);
+    this.litTabs!.onTabClick = (e: any): void => this.loadTabPaneData(e.detail.key);
     this.litTabs!.addEventListener('close-handler', () => {
       Reflect.ownKeys(tabConfig)
         .reverse()
@@ -154,8 +158,7 @@ export class TraceSheet extends BaseElement {
       }
     });
   }
-
-  connectedCallback() {
+  connectedCallback(): void {
     this.nav = this.shadowRoot?.querySelector('#tabs')?.shadowRoot?.querySelector('.tab-nav-container');
     let tabs: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('#tabs');
     let navRoot: HTMLDivElement | null | undefined = this.shadowRoot
@@ -170,13 +173,13 @@ export class TraceSheet extends BaseElement {
 
     let borderTop: number = 1;
     let initialHeight = { tabs: `calc(30vh + 39px)`, node: '30vh' };
-    this.nav!.onmousedown = (event) => {
+    this.nav!.onmousedown = (event): void => {
       (window as any).isSheetMove = true;
       let litTabpane: NodeListOf<HTMLDivElement> | undefined | null =
         this.shadowRoot?.querySelectorAll('#tabs > lit-tabpane');
       let preY = event.pageY;
       let preHeight = tabs!.offsetHeight;
-      document.onmousemove = function (event) {
+      document.onmousemove = function (event): void {
         let moveY: number = preHeight - (event.pageY - preY);
         litTabpane!.forEach((node: HTMLDivElement) => {
           if (spacer!.offsetHeight > rowsPaneEL!.offsetHeight) {
@@ -218,7 +221,7 @@ export class TraceSheet extends BaseElement {
           }
         });
       };
-      document.onmouseup = function () {
+      document.onmouseup = function (): void {
         setTimeout(() => {
           (window as any).isSheetMove = false;
         }, 100);
@@ -237,7 +240,7 @@ export class TraceSheet extends BaseElement {
     let importFileBt: HTMLInputElement | undefined | null =
       this.shadowRoot?.querySelector<HTMLInputElement>('#import-file');
     let exportDataBt: LitIcon | undefined | null = this.shadowRoot?.querySelector<LitIcon>('#export-btn');
-    tabsOpenUp!.onclick = () => {
+    tabsOpenUp!.onclick = (): void => {
       tabs!.style.height = window.innerHeight - search!.offsetHeight - timerShaft!.offsetHeight - borderTop + 'px';
       let litTabpane: NodeListOf<HTMLDivElement> | undefined | null =
         this.shadowRoot?.querySelectorAll('#tabs > lit-tabpane');
@@ -254,7 +257,7 @@ export class TraceSheet extends BaseElement {
       initialHeight.tabs = tabs!.style.height;
       tabsPackUp!.name = 'down';
     };
-    tabsPackUp!.onclick = () => {
+    tabsPackUp!.onclick = (): void => {
       let litTabpane: NodeListOf<HTMLDivElement> | undefined | null =
         this.shadowRoot?.querySelectorAll('#tabs > lit-tabpane');
       if (tabsPackUp!.name == 'down') {
@@ -300,7 +303,7 @@ export class TraceSheet extends BaseElement {
       importFileBt!.files = null;
       importFileBt!.value = '';
     });
-    exportDataBt!.onclick = () => {
+    exportDataBt!.onclick = (): void => {
       let currentTab = this.getTabpaneByKey(this.litTabs?.activekey!);
       if (currentTab) {
         let tables = Array.from(
@@ -355,24 +358,26 @@ export class TraceSheet extends BaseElement {
                 </lit-tabs>
             </div>`;
   }
-  displayCurrent = (data: SlicesTime) =>
+  displayCurrent = (data: SlicesTime): void =>
     this.displayTab<TabPaneCurrent>('tabpane-current').setCurrentSlicesTime(data);
   displayThreadData = (
     data: ThreadStruct,
     scrollCallback: ((e: ThreadStruct) => void) | undefined,
     scrollWakeUp: (d: any) => void | undefined
-  ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setThreadData(data, scrollCallback, scrollWakeUp);
-  displayMemData = (data: ProcessMemStruct) =>
+  ): void =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setThreadData(data, scrollCallback, scrollWakeUp);
+  displayMemData = (data: ProcessMemStruct): void =>
     this.displayTab<TabPaneCurrentSelection>('current-selection').setMemData(data);
-  displayClockData = (data: ClockStruct) =>
+  displayClockData = (data: ClockStruct): void =>
     this.displayTab<TabPaneCurrentSelection>('current-selection').setClockData(data);
-  displayIrqData = (data: IrqStruct) => this.displayTab<TabPaneCurrentSelection>('current-selection').setIrqData(data);
-  displayStartupData = (data: AppStartupStruct, scrollCallback: Function) =>
-    this.displayTab<TabPaneCurrentSelection>('current-selection').setStartupData(data,scrollCallback);
-  displayStaticInitData = (data: SoStruct, scrollCallback: Function) =>
-    this.displayTab<TabPaneCurrentSelection>('current-selection').setStaticInitData(data,scrollCallback);
+  displayIrqData = (data: IrqStruct): void =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setIrqData(data);
+  displayStartupData = (data: AppStartupStruct, scrollCallback: Function): void =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setStartupData(data, scrollCallback);
+  displayStaticInitData = (data: SoStruct, scrollCallback: Function): void =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setStaticInitData(data, scrollCallback);
 
-  displayNativeHookData = (data: HeapStruct, rowType: string) => {
+  displayNativeHookData = (data: HeapStruct, rowType: string): void => {
     let val = new SelectionParam();
     val.nativeMemoryStatistic.push(rowType);
     val.nativeMemory = [];
@@ -383,23 +388,23 @@ export class TraceSheet extends BaseElement {
     this.showUploadSoBt(val);
   };
 
-  displayFuncData = (names: string[], data: FuncStruct, scrollCallback: Function) =>
+  displayFuncData = (names: string[], data: FuncStruct, scrollCallback: Function): void =>
     this.displayTab<TabPaneCurrentSelection>(...names).setFunctionData(data, scrollCallback);
   displayCpuData = (
     data: CpuStruct,
     callback: ((data: WakeupBean | null) => void) | undefined = undefined,
     scrollCallback?: (data: CpuStruct) => void
-  ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setCpuData(data, callback, scrollCallback);
+  ): void => this.displayTab<TabPaneCurrentSelection>('current-selection').setCpuData(data, callback, scrollCallback);
   displayJankData = (
     data: JankStruct,
     callback: ((data: Array<any>) => void) | undefined = undefined,
     scrollCallback: ((e: JankStruct) => void) | undefined
-  ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setJankData(data, callback, scrollCallback);
+  ): void => this.displayTab<TabPaneCurrentSelection>('current-selection').setJankData(data, callback, scrollCallback);
   displaySnapshotData = (
     data: HeapSnapshotStruct,
     dataList: Array<HeapSnapshotStruct>,
     scrollCallback?: (data: HeapSnapshotStruct, dataList: Array<HeapSnapshotStruct>) => void
-  ) => {
+  ): void => {
     if (dataList.length > 1) {
       this.displayTab<TabPaneSummary>('box-heap-summary', 'box-heap-comparison').setSnapshotData(
         data,
@@ -412,30 +417,37 @@ export class TraceSheet extends BaseElement {
       let tabPaneComparison = this.shadowRoot!.querySelector(
         '#box-heap-comparison > tabpane-comparison'
       ) as TabPaneComparison;
-      nav!.onclick = () => {
+      nav!.onclick = (): void => {
         tabPaneComparison.initComparison(data, dataList);
       };
     } else {
       this.displayTab<TabPaneSummary>('box-heap-summary').setSnapshotData(data, dataList, scrollCallback);
     }
   };
-  displayFlagData = (flagObj: Flag) => this.displayTab<TabPaneFlag>('box-flag').setFlagObj(flagObj);
-  displayFreqData = () =>
+  displayFlagData = (flagObj: Flag): void => this.displayTab<TabPaneFlag>('box-flag').setFlagObj(flagObj);
+  displayFreqData = (): CpuFreqStruct | undefined =>
     (this.displayTab<TabPaneCurrentSelection>('box-freq').data = CpuFreqStruct.selectCpuFreqStruct);
-  displayCpuStateData = () =>
+  displayCpuStateData = (): CpuStateStruct | undefined =>
     (this.displayTab<TabPaneCurrentSelection>('cpu-state-click').data = CpuStateStruct.selectStateStruct);
-  displayFreqLimitData = () =>
+  displayFreqLimitData = (): CpuFreqLimitsStruct | undefined =>
     (this.displayTab<TabPaneCurrentSelection>('box-freq-limit').data = CpuFreqLimitsStruct.selectCpuFreqLimitsStruct);
 
-  displayFrameAnimationData = (
-    data: FrameAnimationStruct
-  ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setFrameAnimationData(data);
-  displayFrameDynamicData = (
-    row: TraceRow<FrameDynamicStruct>,
-    data: FrameDynamicStruct
-  ) => this.displayTab<TabPaneFrameDynamic>('box-frame-dynamic').buildDynamicTable([data], true);
+  displayFrameAnimationData = (data: FrameAnimationStruct): Promise<void> =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setFrameAnimationData(data);
+  displayFrameDynamicData = (row: TraceRow<FrameDynamicStruct>, data: FrameDynamicStruct): void =>
+    this.displayTab<TabPaneFrameDynamic>('box-frame-dynamic').buildDynamicTable([data], true);
   displayFrameSpacingData = (data: FrameSpacingStruct): void =>
     this.displayTab<TabFrameSpacing>('box-frames-spacing').setFrameSpacingData(data);
+  displayJsProfilerData = (data: Array<JsCpuProfilerChartFrame>): void => {
+    let val = new SelectionParam();
+    val.jsCpuProfilerData = data;
+    this.selection = val;
+    this.displayTab<TabPaneJsCpuTopDown>(
+      'box-js-Profiler-statistics',
+      'box-js-Profiler-top-down',
+      'box-js-Profiler-bottom-up'
+    ).data = data;
+  };
 
   rangeSelect(selection: SelectionParam, restore = false): boolean {
     this.selection = selection;
@@ -493,6 +505,9 @@ export class TraceSheet extends BaseElement {
     ) {
       let param: SelectionParam = new SelectionParam();
       Object.assign(param, this.selection);
+      if (param.nativeMemory.length > 0 || param.nativeMemoryStatistic.length > 0) {
+        this.initFilterLibList(param);
+      }
       this.rangeSelect(param, true);
       return true;
     } else {
@@ -500,7 +515,25 @@ export class TraceSheet extends BaseElement {
     }
   }
 
-  showUploadSoBt(selection: SelectionParam | null | undefined) {
+  initFilterLibList(param: SelectionParam | any) {
+    let nmTypes: Array<string> = [];
+    if (param.nativeMemory.indexOf('All Heap & Anonymous VM') != -1) {
+      nmTypes.push("'AllocEvent'");
+      nmTypes.push("'MmapEvent'");
+    } else {
+      if (param.nativeMemory.indexOf('All Heap') != -1) {
+        nmTypes.push("'AllocEvent'");
+      }
+      if (param.nativeMemory.indexOf('All Anonymous VM') != -1) {
+        nmTypes.push("'MmapEvent'");
+      }
+    }
+    queryNativeHookResponseTypes(param.leftNs, param.rightNs, nmTypes).then((res) => {
+      procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => {});
+    });
+  }
+
+  showUploadSoBt(selection: SelectionParam | null | undefined): void {
     if (
       selection &&
       (selection.nativeMemory.length > 0 ||
@@ -519,7 +552,7 @@ export class TraceSheet extends BaseElement {
     }
   }
 
-  loadTabPaneData(key: string) {
+  loadTabPaneData(key: string): void {
     let component: any = this.shadowRoot
       ?.querySelector<LitTabpane>(`#tabs lit-tabpane[key='${key}']`)
       ?.children.item(0);
@@ -528,7 +561,7 @@ export class TraceSheet extends BaseElement {
     }
   }
 
-  rowClickHandler(e: any) {
+  rowClickHandler(e: any): void {
     this.currentPaneID = e.target.parentElement.id;
     this.shadowRoot!.querySelectorAll<LitTabpane>(`lit-tabpane`).forEach((it) =>
       it.id != this.currentPaneID ? (it.hidden = true) : (it.hidden = false)
@@ -547,9 +580,9 @@ export class TraceSheet extends BaseElement {
     (pane.children.item(0) as TabPaneBoxChild).data = param;
   }
 
-  clearMemory() {
+  clearMemory(): void {
     let allTabs = Array.from(this.shadowRoot?.querySelectorAll<LitTabpane>('#tabs lit-tabpane').values() || []);
-    allTabs.forEach(tab => {
+    allTabs.forEach((tab) => {
       if (tab) {
         let tables = Array.from(
           (tab.firstChild as BaseElement).shadowRoot?.querySelectorAll<LitTable>('lit-table') || []

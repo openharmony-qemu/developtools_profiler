@@ -26,12 +26,12 @@ export const initCpuStrategyData = (metricData: Array<{
 }>): ProcessInfoListItem => {
   info('Cpu Strategy data length is:', metricData.length);
   let processInfoListItems: Array<ProcessInfoItem> = [];
-  if (metricData.length == 10) {
+  if (metricData.length === 10) {
   } else {
   }
   const splitChar: string = ',';
   for (let sqlIndex = 0; sqlIndex < metricData.length; sqlIndex++) {
-    if (metricData[sqlIndex].avg_frequency == null) {
+    if (metricData[sqlIndex].avg_frequency === null) {
       continue;
     }
     let cpus = metricData[sqlIndex].cpu.split(splitChar);

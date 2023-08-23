@@ -153,51 +153,51 @@ struct JsonBuild {
     JsonBuild() = default;
     void AppendHead()
     {
-        body_ += "{";
+        body += "{";
     }
     void AppendTail()
     {
-        body_ += "}";
+        body += "}";
     }
     void AppendCommon()
     {
-        body_ += ",";
+        body += ",";
     }
     bool AppendSqlValue(const std::string& field_name, const TSSqlValue& value)
     {
-        body_ += "\"" + field_name + "\":";
+        body += "\"" + field_name + "\":";
         return AppendSqlValue(value);
     }
     bool AppendSqlValue(const TSSqlValue& value)
     {
         switch (value.type) {
             case TS_LONG:
-                body_ += std::to_string(value.longValue) + ",";
+                body += std::to_string(value.longValue) + ",";
                 break;
             case TS_DOUBLE:
-                body_ += std::to_string(value.doubleValue) + ",";
+                body += std::to_string(value.doubleValue) + ",";
                 break;
             case TS_STRING:
-                body_ += "\"" + std::string(value.stringValue) + "\"" + ",";
+                body += "\"" + std::string(value.stringValue) + "\"" + ",";
                 break;
             case TS_BYTES:
-                body_ += "\"" + std::string(static_cast<const char*>(value.bytesValue), value.bytesCount) + "\"" + ",";
+                body += "\"" + std::string(static_cast<const char*>(value.bytesValue), value.bytesCount) + "\"" + ",";
                 break;
             case TS_NULL:
-                body_ += std::to_string(0) + ",";
+                body += std::to_string(0) + ",";
                 break;
         }
         return true;
     }
-    std::string body_;
-    bool poped_ = false;
+    std::string body;
+    bool poped = false;
     void PopLast()
     {
-        body_.pop_back();
+        body.pop_back();
     }
     const std::string& Body() const
     {
-        return body_;
+        return body;
     }
 };
 

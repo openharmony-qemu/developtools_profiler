@@ -88,7 +88,7 @@ void PrintInformation()
 }
 void PrintVersion()
 {
-    fprintf(stderr, "version %s\n", TRACE_STREAM_VERSION.c_str());
+    fprintf(stderr, "version %s\n", g_traceStreamerVersion.c_str());
 }
 
 void LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sqlStrings)
@@ -203,8 +203,8 @@ int ExportDatabase(TraceStreamerSelector& ts, const std::string& sqliteFilePath)
         }
 #endif
         metaData->SetOutputFileName(fileNameTmp);
-        metaData->SetParserToolVersion(TRACE_STREAM_VERSION);
-        metaData->SetParserToolPublishDateTime(TRACE_STREAM_PUBLISHVERSION);
+        metaData->SetParserToolVersion(g_traceStreamerVersion);
+        metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion);
         metaData->SetTraceDataSize(g_loadSize);
         fprintf(stdout, "ExportDatabase begin...\n");
         if (ts.ExportDatabase(sqliteFilePath)) {
@@ -235,7 +235,16 @@ struct HttpOption {
     bool enable = false;
     int port = 9001;
 };
-
+int CheckFinal(char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
+{
+    if ((traceExportOption.traceFilePath.empty() ||
+         (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
+        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
+        ShowHelpInfo(argv[0]);
+        return 1;
+    }
+    return 0;
+}
 int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
 {
     for (int i = 1; i < argc; i++) {
@@ -283,13 +292,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
         }
         traceExportOption.traceFilePath = std::string(argv[i]);
     }
-    if ((traceExportOption.traceFilePath.empty() ||
-         (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
-        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
-        ShowHelpInfo(argv[0]);
-        return 1;
-    }
-    return 0;
+    return CheckFinal(argv, traceExportOption, httpOption);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning
@@ -327,8 +330,8 @@ int main(int argc, char** argv)
     if (tsOption.interactiveState) {
         MetaData* metaData = ts.GetMetaData();
         metaData->SetOutputFileName("command line mode");
-        metaData->SetParserToolVersion(TRACE_STREAM_VERSION.c_str());
-        metaData->SetParserToolPublishDateTime(TRACE_STREAM_PUBLISHVERSION.c_str());
+        metaData->SetParserToolVersion(g_traceStreamerVersion.c_str());
+        metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion.c_str());
         metaData->SetTraceDataSize(g_loadSize);
         while (1) {
             auto values = ts.SearchData();

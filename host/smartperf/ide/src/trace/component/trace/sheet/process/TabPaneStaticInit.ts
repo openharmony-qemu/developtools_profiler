@@ -52,7 +52,7 @@ export class TabPaneStaticInit extends BaseElement {
       (result: SoStruct[]) => {
         this.staticinitTbl!.loading = false;
         if (result != null && result.length > 0) {
-          log('getTabStaticInit result size : ' + result.length);
+          log('getTabStaticInit  result size : ' + result.length);
           let map: Map<number, SoTreeItem> = new Map<number, SoTreeItem>();
           result.forEach((item) => {
             let so: SoTreeItem = {
@@ -70,7 +70,7 @@ export class TabPaneStaticInit extends BaseElement {
               }
             } else {
               map.set(item.pid!, {
-                name: item.process || `Process ${item.pid}`,
+                name: item.process || `Process ${ item.pid }`,
                 dur: item.dur || 0,
                 durStr: '',
                 ratio: `100%`,
@@ -103,7 +103,7 @@ export class TabPaneStaticInit extends BaseElement {
     });
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     super.connectedCallback();
     resizeObserver(this.parentElement!, this.staticinitTbl!);
   }
@@ -136,8 +136,8 @@ export class TabPaneStaticInit extends BaseElement {
         `;
   }
 
-  sortByColumn(soDetail: any) {
-    let compare = (soA: SoTreeItem, soB: SoTreeItem) => (soDetail.sort === 1 ? soA.dur - soB.dur : soB.dur - soA.dur);
+  sortByColumn(soDetail: any): void {
+    let compare = (soA: SoTreeItem, soB: SoTreeItem): number => (soDetail.sort === 1 ? soA.dur - soB.dur : soB.dur - soA.dur);
     this.staticinitSource.forEach((it) => it.children?.sort(compare));
     this.staticinitSource.sort(compare);
     this.staticinitTbl!.recycleDataSource = this.staticinitSource;

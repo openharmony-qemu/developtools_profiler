@@ -85,7 +85,7 @@ public:
         int32_t missPartitionStart_ = 0;
         int32_t missPartitionEnd_ = 0;
         std::string sqlQuery_;
-        sqlite3_stmt* stmt_;
+        sqlite3_stmt* stmt_ = nullptr;
         const TableDesc* desc_ = nullptr;
         sqlite3* db_ = nullptr;
         SpanJoin* table_ = nullptr;

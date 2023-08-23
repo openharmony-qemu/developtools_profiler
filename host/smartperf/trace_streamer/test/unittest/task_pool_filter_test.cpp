@@ -49,7 +49,6 @@ HWTEST_F(TaskPoolFilterTest, CheckTheSameTaskTest, TestSize.Level1)
     int32_t executeId = 0;
     uint32_t res = stream_.streamFilters_->taskPoolFilter_->CheckTheSameTask(executeId);
     EXPECT_EQ(res, INVALID_INT32);
-
 }
 
 /**

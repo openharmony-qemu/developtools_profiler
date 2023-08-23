@@ -13,12 +13,13 @@
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
 ohos_executable("protoreader_plugin") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [ "proto_reader_plugin.cpp" ]
   deps = [
     "${SRC}/base:string_help",
-    "${THIRD_PARTY}/protobuf:protoc_lib",
+    "${THIRD_PARTY}/protobuf:protobuf(${host_toolchain})",
+    "${THIRD_PARTY}/protobuf:protoc_lib(${host_toolchain})",
   ]
   include_dirs = [
     "${SRC}/base",

@@ -286,9 +286,11 @@ void from_json(const json& j, TraceTree& v)
 
 const int32_t END_POS = 3;
 const int32_t CHUNK_POS = 8;
+const int32_t PROFILE_POS = 9;
+const int32_t END_PROFILE_POS = 2;
 
 HtraceJSMemoryParser::HtraceJSMemoryParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
-    : EventParserBase(dataCache, ctx)
+    : EventParserBase(dataCache, ctx), jsCpuProfilerParser_(std::make_unique<HtraceJsCpuProfilerParser>(dataCache, ctx))
 {
     DIR* dir = opendir(".");
     if (dir != nullptr) {
@@ -312,8 +314,15 @@ HtraceJSMemoryParser::~HtraceJSMemoryParser()
 void HtraceJSMemoryParser::ParseJSMemoryConfig(ProtoReader::BytesView tracePacket)
 {
     ProtoReader::ArkTSConfig_Reader jsHeapConfig(tracePacket.data_, tracePacket.size_);
+    auto pid = jsHeapConfig.pid();
     type_ = jsHeapConfig.type();
-    pid_ = jsHeapConfig.pid();
+    auto interval = jsHeapConfig.interval();
+    auto captureNumericValue = jsHeapConfig.capture_numeric_value() ? 1 : 0;
+    auto trackAllocation = jsHeapConfig.track_allocations() ? 1 : 0;
+    auto cpuProfiler = jsHeapConfig.enable_cpu_profiler() ? 1 : 0;
+    auto cpuProfilerInterval = jsHeapConfig.cpu_profiler_interval();
+    (void)traceDataCache_->GetJsConfigData()->AppendNewData(pid, type_, interval, captureNumericValue, trackAllocation,
+                                                            cpuProfiler, cpuProfilerInterval);
 }
 
 void HtraceJSMemoryParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts)
@@ -343,12 +352,16 @@ void HtraceJSMemoryParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts
         }
         ts = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, ts);
         UpdatePluginTimeRange(TS_CLOCK_REALTIME, ts, ts);
-        (void)traceDataCache_->GetJsHeapFilesData()->AppendNewData(fileId_, fileName, startTime_, ts, pid_,
-                                                                   selfSizeCount_);
+        (void)traceDataCache_->GetJsHeapFilesData()->AppendNewData(fileId_, fileName, startTime_, ts, selfSizeCount_);
         selfSizeCount_ = 0;
         fileId_++;
         isFirst_ = true;
         return;
+    } else if (cpuTimeFirst_ && result == jsCpuProfilerStart_) {
+        ts = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, ts);
+        UpdatePluginTimeRange(TS_CLOCK_REALTIME, ts, ts);
+        startTime_ = ts;
+        cpuTimeFirst_ = false;
     }
     auto pos = result.find("chunk");
     if (pos != string::npos) {
@@ -360,6 +373,30 @@ void HtraceJSMemoryParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts
         }
         auto resultJson = result.substr(pos + CHUNK_POS, result.size() - pos - CHUNK_POS - END_POS);
         jsMemoryString_ += resultJson;
+    } else {
+        auto jsCpuProfilerPos = result.find("profile");
+        if (jsCpuProfilerPos != string::npos) {
+            auto jsCpuProfilerString = result.substr(jsCpuProfilerPos + PROFILE_POS,
+                                                     result.size() - jsCpuProfilerPos - PROFILE_POS - END_PROFILE_POS);
+            std::regex strEscapeInvalid("\\\\n");
+            std::regex strInvalid("\\\\\"");
+            auto strEscape = std::regex_replace(jsCpuProfilerString, strEscapeInvalid, "");
+            auto str = std::regex_replace(strEscape, strInvalid, "\"");
+            ts = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, ts);
+            UpdatePluginTimeRange(TS_CLOCK_REALTIME, ts, ts);
+            if (enableFileSave_) {
+                auto fd = base::OpenFile(tmpJsCpuProfilerData_ + jsCpuProFiler, O_CREAT | O_RDWR, TS_PERMISSION_RW);
+                if (!fd) {
+                    fprintf(stdout, "Failed to create file: %s", jsCpuProFiler.c_str());
+                    exit(-1);
+                }
+                (void)ftruncate(fd, 0);
+                (void)write(fd, str.data(), str.size());
+                close(fd);
+                fd = 0;
+            }
+            jsCpuProfilerParser_->ParseJsCpuProfiler(str);
+        }
     }
 }
 

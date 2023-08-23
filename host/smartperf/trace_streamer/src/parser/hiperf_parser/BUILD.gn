@@ -14,8 +14,8 @@
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
 ohos_source_set("hiperf_parser_src") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [ "perf_data_parser.cpp" ]
   include_dirs = [
     "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
@@ -34,11 +34,18 @@ ohos_source_set("hiperf_parser_src") {
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/perf_include",
     "${THIRD_PARTY}/perf_include/libbpf",
+    "//developtools/hiperf/include",
+    "//commonlibrary/c_utils/base/include",
+    "${THIRD_PARTY}/googletest/googletest/include",
   ]
   include_dirs += [ "${THIRD_PARTY}/libunwind/include" ]
 
+  cflags = [ "-D target_cpu_${target_cpu}" ]
+  if (!use_wasm && !is_win && !is_macx && !is_test) {
+    cflags += [ "-D HAVE_LIBUNWIND" ]
+  }
   if (enable_ts_utest && !use_wasm) {
-    cflags = [
+    cflags += [
       "-fprofile-arcs",
       "-ftest-coverage",
     ]
@@ -56,7 +63,7 @@ ohos_source_set("hiperf_parser_src") {
 group("hiperf_parser") {
   deps = [
     ":hiperf_parser_src",
-    "${PERF_DIR}/hiperf:hiperf",
+    "${PERF_DIR}/hiperf:hiperf_platform_common",
     "${THIRD_PARTY}/protobuf:protobuf",
     "${THIRD_PARTY}/protobuf:protobuf_lite",
   ]

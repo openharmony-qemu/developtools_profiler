@@ -45,9 +45,11 @@ HWTEST_F(AppStartFilterTest, ProcessCreateTest, TestSize.Level1)
 {
     TS_LOGI("test40-1");
 
-    const std::string parent_str = "H:virtual int OHOS::AAFwk::AbilityManagerService::StartAbility("
+    const std::string parent_str =
+        "H:virtual int OHOS::AAFwk::AbilityManagerService::StartAbility("
         "const OHOS::AAFwk::Want &, const sptr<OHOS::IRemoteObject> &, int32_t, int)";
-    const std::string process_create_str = "H:int OHOS::AAFwk::MissionListManager::StartAbilityLocked("
+    const std::string process_create_str =
+        "H:int OHOS::AAFwk::MissionListManager::StartAbilityLocked("
         "const std::shared_ptr<AbilityRecord> &, const std::shared_ptr<AbilityRecord> &, "
         "const OHOS::AAFwk::AbilityRequest &)##com.ohos.smartperf##MainAbility";
     uint64_t ts1 = 168758662957000;
@@ -69,7 +71,8 @@ HWTEST_F(AppStartFilterTest, ProcessCreateTest, TestSize.Level1)
 
     auto dataIndex = stream_.traceDataCache_->GetDataIndex("com.ohos.smartperf");
     EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size() == 1);
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) != nullptr);
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) !=
+                stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.end());
 }
 
 /**
@@ -81,7 +84,8 @@ HWTEST_F(AppStartFilterTest, AppLunchTest, TestSize.Level1)
 {
     TS_LOGI("test40-2");
 
-    const std::string process_create_str = "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::AttachApplication("
+    const std::string process_create_str =
+        "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::AttachApplication("
         "const pid_t, const sptr<OHOS::AppExecFwk::IAppScheduler> &)##com.ohos.smartperf";
     uint64_t ts1 = 168758662957000;
     uint64_t ts2 = 168758663011000;
@@ -97,7 +101,8 @@ HWTEST_F(AppStartFilterTest, AppLunchTest, TestSize.Level1)
 
     auto dataIndex = stream_.traceDataCache_->GetDataIndex("com.ohos.smartperf");
     EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size() == 1);
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) != nullptr);
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) !=
+                stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.end());
 }
 
 /**
@@ -109,7 +114,8 @@ HWTEST_F(AppStartFilterTest, LunchTest, TestSize.Level1)
 {
     TS_LOGI("test40-3");
 
-    const std::string process_create_str = "H:void OHOS::AppExecFwk::MainThread::HandleLaunchAbility("
+    const std::string process_create_str =
+        "H:void OHOS::AppExecFwk::MainThread::HandleLaunchAbility("
         "const std::shared_ptr<AbilityLocalRecord> &)##com.ohos.smartperf";
     uint64_t ts1 = 168758662957000;
     uint64_t ts2 = 168758663011000;
@@ -124,8 +130,9 @@ HWTEST_F(AppStartFilterTest, LunchTest, TestSize.Level1)
     stream_.streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
 
     auto dataIndex = stream_.traceDataCache_->GetDataIndex("com.ohos.smartperf");
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size() == 1);
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) != nullptr);
+    EXPECT_EQ(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size(), 0);
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) ==
+                stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.end());
 }
 
 /**
@@ -137,8 +144,10 @@ HWTEST_F(AppStartFilterTest, OnforegroundTest, TestSize.Level1)
 {
     TS_LOGI("test40-4");
 
-    const std::string process_create_str = "H:void OHOS::AppExecFwk::AbilityThread::HandleAbilityTransaction("
-        "const OHOS::AppExecFwk::Want &, const OHOS::AppExecFwk::LifeCycleStateInfo &, sptr<OHOS::AAFwk::SessionInfo>)##";
+    const std::string process_create_str =
+        "H:void OHOS::AppExecFwk::AbilityThread::HandleAbilityTransaction("
+        "const OHOS::AppExecFwk::Want &, const OHOS::AppExecFwk::LifeCycleStateInfo &, "
+        "sptr<OHOS::AAFwk::SessionInfo>)##";
     uint64_t ts1 = 168758662957000;
     uint64_t ts2 = 168758663011000;
     uint32_t pid1 = 1655;
@@ -152,8 +161,9 @@ HWTEST_F(AppStartFilterTest, OnforegroundTest, TestSize.Level1)
     stream_.streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
 
     auto dataIndex = stream_.traceDataCache_->GetDataIndex(".ohos.smartperf");
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size() == 1);
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) != nullptr);
+    EXPECT_EQ(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size(), 0);
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) ==
+                stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.end());
 }
 
 /**

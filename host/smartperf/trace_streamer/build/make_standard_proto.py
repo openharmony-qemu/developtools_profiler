@@ -19,9 +19,7 @@ import shutil
 def replace_lite_option(target_path, protofilepath):
     target_file_path = os.path.basename(protofilepath)
     target_file_path = target_path + '/' + target_file_path.replace(".proto", "_standard.proto")
-    # print("-------",target_path, target_file_path, protofilepath)
     os.makedirs(target_path, exist_ok=True)
-    # os.makedirs(target_path)
     shutil.copyfile(protofilepath, target_file_path)
     # replease lite flag, import file name, add package name
     with open(target_file_path, 'r+') as content:

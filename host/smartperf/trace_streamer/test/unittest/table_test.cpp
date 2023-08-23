@@ -303,15 +303,15 @@ HWTEST_F(TableTest, DataDictTableTest, TestSize.Level1)
     std::string sqlSelect5 = "select * from data_dict where data <= 1";
     stream_.traceDataCache_->GetDataFromDict(1);
     auto row = stream_.traceDataCache_->SearchDatabase(sqlSelect.c_str(), false);
-    EXPECT_EQ(row, 59);
+    EXPECT_EQ(row, 61);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect1.c_str(), false);
     EXPECT_EQ(row, 1);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect2.c_str(), false);
-    EXPECT_EQ(row, 57);
+    EXPECT_EQ(row, 59);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect3.c_str(), false);
     EXPECT_EQ(row, 1);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect4.c_str(), false);
-    EXPECT_EQ(row, 58);
+    EXPECT_EQ(row, 60);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect5.c_str(), false);
     EXPECT_EQ(row, 1);
 }

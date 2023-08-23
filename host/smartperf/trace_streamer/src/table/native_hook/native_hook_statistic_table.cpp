@@ -17,7 +17,18 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, CALLCHAIN_ID, IPID, TS, MEMORY_TYPE, APPLY_COUNT, RELEASE_COUNT, APPLY_SIZE, RELEASE_SIZE };
+enum Index {
+    ID = 0,
+    CALLCHAIN_ID,
+    IPID,
+    TS,
+    MEMORY_TYPE,
+    MEMORY_SUB_TYPE,
+    APPLY_COUNT,
+    RELEASE_COUNT,
+    APPLY_SIZE,
+    RELEASE_SIZE
+};
 NativeHookStatisticTable::NativeHookStatisticTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -25,6 +36,7 @@ NativeHookStatisticTable::NativeHookStatisticTable(const TraceDataCache* dataCac
     tableColumn_.push_back(TableBase::ColumnInfo("ipid", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("ts", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("type", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("sub_type_id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("apply_count", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("release_count", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("apply_size", "INTEGER"));
@@ -179,6 +191,12 @@ int32_t NativeHookStatisticTable::Cursor::Column(int32_t column) const
         case MEMORY_TYPE:
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(nativeHookStatisticInfoObj_.MemoryTypes()[CurrentRow()]));
+            break;
+        case MEMORY_SUB_TYPE:
+            if (nativeHookStatisticInfoObj_.MemorySubTypes()[CurrentRow()] != INVALID_UINT64) {
+                sqlite3_result_int64(context_,
+                                     static_cast<int64_t>(nativeHookStatisticInfoObj_.MemorySubTypes()[CurrentRow()]));
+            }
             break;
         case APPLY_COUNT:
             sqlite3_result_int64(context_,

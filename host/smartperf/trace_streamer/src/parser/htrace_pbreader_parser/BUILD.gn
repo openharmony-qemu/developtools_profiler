@@ -13,8 +13,8 @@
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
 ohos_source_set("htrace_pbreader_parser_src") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "../parser_base.cpp",
     "htrace_clock_detail_parser.cpp",
@@ -34,6 +34,8 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "htrace_hilog_parser.h",
     "htrace_hisysevent_parser.cpp",
     "htrace_hisysevent_parser.h",
+    "htrace_js_cpu_profiler_parser.cpp",
+    "htrace_js_cpu_profiler_parser.h",
     "htrace_js_memory_parser.cpp",
     "htrace_js_memory_parser.h",
     "htrace_mem_parser.cpp",
@@ -61,7 +63,7 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "../../trace_streamer",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
-    "${THIRD_PARTY}/json-master/single_include/nlohmann",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
     "../../filter",
     "../../base",
     "../ebpf_parser",
@@ -72,20 +74,24 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "${THIRD_PARTY}/hiperf/include",
     "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
     "${THIRD_PARTY}/hiperf/include/nonlinux",
+    "//developtools/hiperf/include",
+    "${THIRD_PARTY}/musl",
+    "${THIRD_PARTY}/googletest/googletest/include",
+    "${THIRD_PARTY}/perf_include/musl",
+    "${THIRD_PARTY}/perf_include/libbpf",
+    "${THIRD_PARTY}/perf_include/include",
+    "${THIRD_PARTY}/perf_include",
+    "${THIRD_PARTY}/perf_include/linux",
+    "../hiperf_parser",
+    "../hiperf_parser/include",
   ]
-  if (with_perf) {
-    include_dirs += [
-      "${THIRD_PARTY}/perf_include/musl",
-      "${THIRD_PARTY}/perf_include/libbpf",
-      "${THIRD_PARTY}/perf_include/include",
-      "${THIRD_PARTY}/perf_include",
-      "${THIRD_PARTY}/perf_include/linux",
-      "../hiperf_parser",
-      "../hiperf_parser/include",
-    ]
+
+  cflags = [ "-D target_cpu_${target_cpu}" ]
+  if (!use_wasm && !is_win && !is_macx && !is_test) {
+    cflags += [ "-D HAVE_LIBUNWIND" ]
   }
   if (enable_ts_utest && !use_wasm) {
-    cflags = [
+    cflags += [
       "-fprofile-arcs",
       "-ftest-coverage",
     ]
@@ -97,18 +103,18 @@ ohos_source_set("htrace_pbreader_parser_src") {
   }
   public_deps = []
   deps = [
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:all_type_cpp_standard",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_encoder",
-    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_encoder",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp_standard",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:diskio_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:hidump_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:js_memory_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:network_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:process_data_reader",
   ]
 }
 group("htrace_pbreader_parser") {

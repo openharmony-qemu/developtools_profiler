@@ -239,10 +239,10 @@ export class SpProbesConfig extends BaseElement {
       litCheckBox.checked = hitraceConfig.isSelect;
       litCheckBox.addEventListener('change', (ev: CustomEventInit<LitCheckBoxChangeEvent>) => {
         let detail = ev.detail;
-        if (this.hitrace?.checked == false) {
+        if (this.hitrace?.checked === false) {
           this.hitrace.checked = detail!.checked;
         }
-        if (detail!.checked == false && this.hitrace?.checked == true) {
+        if (detail!.checked === false && this.hitrace?.checked === true) {
           let hasChecked = false;
           const nodes = parent?.querySelectorAll<LitCheckBox>(`lit-check-box[name=userEvents]`);
           nodes.forEach((vv) => {
@@ -293,7 +293,7 @@ export class SpProbesConfig extends BaseElement {
       ftraceBuffSizeResultInput.style.color = 'var(--dark-color1,#000000)';
       ftraceBuffSizeResultInput.parentElement!.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
       ftraceBuffSizeResultInput.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
-      if (ftraceBuffSizeResultInput.value.trim() == '') {
+      if (ftraceBuffSizeResultInput.value.trim() === '') {
         ftraceBuffSizeResultInput.style.color = 'red';
         ftraceBufferSizeSliderParent.setAttribute('percent', '20480');
         return;
@@ -315,7 +315,7 @@ export class SpProbesConfig extends BaseElement {
       }
     });
     ftraceBuffSizeResultInput.addEventListener('focusout', (ev) => {
-      if (ftraceBuffSizeResultInput.value.trim() == '') {
+      if (ftraceBuffSizeResultInput.value.trim() === '') {
         ftraceBuffSizeResultInput.parentElement!.classList.remove('border-red');
         ftraceBufferSizeSliderParent.setAttribute('percent', '20480');
         ftraceBuffSizeResultInput.value = '20480';

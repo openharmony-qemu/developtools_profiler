@@ -17,9 +17,11 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include "string_to_numerical.h"
 namespace SysTuning {
 namespace TraceStdtype {
-const int32_t MAX_SIZE_LEN = 80;
+constexpr int32_t MAX_SIZE_LEN = 80;
+constexpr uint8_t DEVICEINFO_MATCH_LAST = 2;
 #define UNUSED(expr)             \
     do {                         \
         static_cast<void>(expr); \
@@ -736,6 +738,7 @@ size_t NativeHookStatistic::AppendNewNativeHookStatistic(uint32_t ipid,
                                                          uint64_t timeStamp,
                                                          uint32_t callChainId,
                                                          uint32_t memoryType,
+                                                         DataIndex subMemType,
                                                          uint64_t applyCount,
                                                          uint64_t releaseCount,
                                                          uint64_t applySize,
@@ -747,6 +750,7 @@ size_t NativeHookStatistic::AppendNewNativeHookStatistic(uint32_t ipid,
     callChainIds_.emplace_back(callChainId);
     memoryTypes_.emplace_back(memoryType);
     applyCounts_.emplace_back(applyCount);
+    memSubTypes_.emplace_back(subMemType);
     releaseCounts_.emplace_back(releaseCount);
     applySizes_.emplace_back(applySize);
     releaseSizes_.emplace_back(releaseSize);
@@ -763,6 +767,10 @@ const std::deque<uint32_t>& NativeHookStatistic::CallChainIds() const
 const std::deque<uint32_t>& NativeHookStatistic::MemoryTypes() const
 {
     return memoryTypes_;
+}
+const std::deque<DataIndex>& NativeHookStatistic::MemorySubTypes() const
+{
+    return memSubTypes_;
 }
 const std::deque<uint64_t>& NativeHookStatistic::ApplyCounts() const
 {
@@ -2256,7 +2264,7 @@ void FrameSlice::SetEndTimeAndFlag(uint64_t row, uint64_t ts, uint64_t expectDur
 {
     UNUSED(expectDur);
     durs_[row] = ts - timeStamps_[row];
-    if (flags_[row] != ABNORMAL_START_END_TIME) {
+    if (flags_[row] != abnormalStartEndTimeState_) {
         flags_[row] = expectEnd >= ts ? 0 : 1;
     }
 }
@@ -2275,7 +2283,7 @@ size_t FrameMaps::AppendNew(FrameSlice* frameSlice, uint64_t src, uint64_t dst)
         uint64_t expUiEndTime = frameSlice->TimeStampData().at(src) + frameSlice->Durs().at(src);
         if (std::abs(static_cast<long long>(expRsStartTime - expUiEndTime)) >= ONE_MILLION_NANOSECONDS) {
             auto acturalRow = dst - 1;
-            frameSlice->SetFlags(acturalRow, FrameSlice::ABNORMAL_START_END_TIME);
+            frameSlice->SetFlags(acturalRow, FrameSlice::GetAbnormalStartEndTimeState());
         }
     }
 
@@ -2304,7 +2312,7 @@ const std::deque<uint64_t>& GPUSlice::Durs() const
 {
     return durs_;
 }
-const size_t GPUSlice::Size() const
+size_t GPUSlice::Size() const
 {
     return durs_.size();
 }
@@ -2407,14 +2415,12 @@ size_t JsHeapFiles::AppendNewData(uint32_t id,
                                   std::string filePath,
                                   uint64_t startTime,
                                   uint64_t endTime,
-                                  uint32_t ipid,
                                   uint64_t selfSizeCount)
 {
     fileIds_.emplace_back(id);
     filePaths_.emplace_back(filePath);
     startTimes_.emplace_back(startTime);
     endTimes_.emplace_back(endTime);
-    ipids_.emplace_back(ipid);
     selfSizeCount_.emplace_back(selfSizeCount);
     ids_.emplace_back(Size());
     return Size() - 1;
@@ -2434,10 +2440,6 @@ const std::deque<uint64_t>& JsHeapFiles::StartTimes() const
 const std::deque<uint64_t>& JsHeapFiles::EndTimes() const
 {
     return endTimes_;
-}
-const std::deque<uint32_t>& JsHeapFiles::Pids() const
-{
-    return ipids_;
 }
 
 const std::deque<uint64_t>& JsHeapFiles::SelfSizeCount() const
@@ -2754,8 +2756,141 @@ const std::deque<int32_t>& JsHeapTraceNode::ParentIds() const
     return parentIds_;
 }
 
+size_t JsCpuProfilerNode::AppendNewData(uint32_t functionId,
+                                        uint32_t functionName,
+                                        std::string scriptId,
+                                        uint32_t url,
+                                        uint32_t lineNumber,
+                                        uint32_t columnNumber,
+                                        uint32_t hitCount,
+                                        std::string children,
+                                        uint32_t parentId)
+{
+    functionIds_.emplace_back(functionId);
+    functionNames_.emplace_back(functionName);
+    scriptIds_.emplace_back(scriptId);
+    urls_.emplace_back(url);
+    lineNumbers_.emplace_back(lineNumber);
+    columnNumbers_.emplace_back(columnNumber);
+    hitCounts_.emplace_back(hitCount);
+    children_.emplace_back(children);
+    parents_.emplace_back(parentId);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+
+const std::deque<uint32_t>& JsCpuProfilerNode::FunctionIds() const
+{
+    return functionIds_;
+}
+const std::deque<uint32_t>& JsCpuProfilerNode::FunctionNames() const
+{
+    return functionNames_;
+}
+const std::deque<std::string>& JsCpuProfilerNode::ScriptIds() const
+{
+    return scriptIds_;
+}
+const std::deque<uint32_t>& JsCpuProfilerNode::Urls() const
+{
+    return urls_;
+}
+const std::deque<uint32_t>& JsCpuProfilerNode::LineNumbers() const
+{
+    return lineNumbers_;
+}
+const std::deque<int32_t>& JsCpuProfilerNode::ColumnNumbers() const
+{
+    return columnNumbers_;
+}
+const std::deque<int32_t>& JsCpuProfilerNode::HitCounts() const
+{
+    return hitCounts_;
+}
+const std::deque<std::string>& JsCpuProfilerNode::Children() const
+{
+    return children_;
+}
+const std::deque<uint32_t>& JsCpuProfilerNode::Parents() const
+{
+    return parents_;
+}
+
+size_t JsCpuProfilerSample::AppendNewData(uint32_t functionId, uint64_t startTime, uint64_t endTime, uint64_t dur)
+{
+    functionIds_.emplace_back(functionId);
+    startTimes_.emplace_back(startTime);
+    endTimes_.emplace_back(endTime);
+    durs_.emplace_back(dur);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+const std::deque<uint32_t>& JsCpuProfilerSample::FunctionIds() const
+{
+    return functionIds_;
+}
+const std::deque<uint64_t>& JsCpuProfilerSample::StartTimes() const
+{
+    return startTimes_;
+}
+const std::deque<uint64_t>& JsCpuProfilerSample::EndTimes() const
+{
+    return endTimes_;
+}
+const std::deque<uint64_t>& JsCpuProfilerSample::Durs() const
+{
+    return durs_;
+}
+
+size_t JsConfig::AppendNewData(uint32_t pid,
+                               uint64_t type,
+                               uint32_t interval,
+                               uint32_t captureNumericValue,
+                               uint32_t trackAllocation,
+                               uint32_t cpuProfiler,
+                               uint32_t cpuProfilerInterval)
+{
+    pids_.emplace_back(pid);
+    types_.emplace_back(type);
+    intervals_.emplace_back(interval);
+    captureNumericValues_.emplace_back(captureNumericValue);
+    trackAllocations_.emplace_back(trackAllocation);
+    cpuProfilers_.emplace_back(cpuProfiler);
+    cpuProfilerIntervals_.emplace_back(cpuProfilerInterval);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+const std::deque<uint32_t>& JsConfig::Pids() const
+{
+    return pids_;
+}
+const std::deque<uint64_t>& JsConfig::Types() const
+{
+    return types_;
+}
+const std::deque<uint32_t>& JsConfig::Intervals() const
+{
+    return intervals_;
+}
+const std::deque<uint32_t>& JsConfig::CaptureNumericValue() const
+{
+    return captureNumericValues_;
+}
+const std::deque<uint32_t>& JsConfig::TrackAllocations() const
+{
+    return trackAllocations_;
+}
+const std::deque<uint32_t>& JsConfig::CpuProfiler() const
+{
+    return cpuProfilers_;
+}
+const std::deque<uint32_t>& JsConfig::CpuProfilerInterval() const
+{
+    return cpuProfilerIntervals_;
+}
+
 size_t TaskPoolInfo::AppendAllocationTaskData(uint32_t allocationTaskRow,
-                                              uint32_t allocationTaskId,
+                                              uint32_t allocationItid,
                                               uint32_t executeId,
                                               uint32_t priority,
                                               uint32_t executeState)
@@ -2763,9 +2898,9 @@ size_t TaskPoolInfo::AppendAllocationTaskData(uint32_t allocationTaskRow,
     allocationTaskRows_.emplace_back(allocationTaskRow);
     executeTaskRows_.emplace_back(INVALID_INT32);
     returnTaskRows_.emplace_back(INVALID_INT32);
-    allocationTaskIds_.emplace_back(allocationTaskId);
-    executeTaskIds_.emplace_back(INVALID_INT32);
-    returnTaskIds_.emplace_back(INVALID_INT32);
+    allocationItids_.emplace_back(allocationItid);
+    executeItids_.emplace_back(INVALID_INT32);
+    returnItids_.emplace_back(INVALID_INT32);
     executeIds_.emplace_back(executeId);
     prioritys_.emplace_back(priority);
     executeStates_.emplace_back(executeState);
@@ -2773,14 +2908,14 @@ size_t TaskPoolInfo::AppendAllocationTaskData(uint32_t allocationTaskRow,
     ids_.emplace_back(Size());
     return Size() - 1;
 }
-size_t TaskPoolInfo::AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t executeTaskId, uint32_t executeId)
+size_t TaskPoolInfo::AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t executeItid, uint32_t executeId)
 {
     allocationTaskRows_.emplace_back(INVALID_INT32);
     executeTaskRows_.emplace_back(executeTaskRow);
     returnTaskRows_.emplace_back(INVALID_INT32);
-    allocationTaskIds_.emplace_back(INVALID_INT32);
-    executeTaskIds_.emplace_back(executeTaskId);
-    returnTaskIds_.emplace_back(INVALID_INT32);
+    allocationItids_.emplace_back(INVALID_INT32);
+    executeItids_.emplace_back(executeItid);
+    returnItids_.emplace_back(INVALID_INT32);
     executeIds_.emplace_back(executeId);
     prioritys_.emplace_back(INVALID_INT32);
     executeStates_.emplace_back(INVALID_INT32);
@@ -2789,16 +2924,16 @@ size_t TaskPoolInfo::AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t exe
     return Size() - 1;
 }
 size_t TaskPoolInfo::AppendReturnTaskData(uint32_t returnTaskRow,
-                                          uint32_t returnTaskId,
+                                          uint32_t returnItid,
                                           uint32_t executeId,
                                           uint32_t returnState)
 {
     allocationTaskRows_.emplace_back(INVALID_INT32);
     executeTaskRows_.emplace_back(INVALID_INT32);
     returnTaskRows_.emplace_back(returnTaskRow);
-    allocationTaskIds_.emplace_back(INVALID_INT32);
-    executeTaskIds_.emplace_back(INVALID_INT32);
-    returnTaskIds_.emplace_back(returnTaskId);
+    allocationItids_.emplace_back(INVALID_INT32);
+    executeItids_.emplace_back(INVALID_INT32);
+    returnItids_.emplace_back(returnItid);
     executeIds_.emplace_back(executeId);
     prioritys_.emplace_back(INVALID_INT32);
     executeStates_.emplace_back(INVALID_INT32);
@@ -2818,17 +2953,17 @@ const std::deque<uint32_t>& TaskPoolInfo::ReturnTaskRows() const
 {
     return returnTaskRows_;
 }
-const std::deque<uint32_t>& TaskPoolInfo::AllocationTaskIds() const
+const std::deque<uint32_t>& TaskPoolInfo::AllocationItids() const
 {
-    return allocationTaskIds_;
+    return allocationItids_;
 }
-const std::deque<uint32_t>& TaskPoolInfo::ExecuteTaskIds() const
+const std::deque<uint32_t>& TaskPoolInfo::ExecuteItids() const
 {
-    return executeTaskIds_;
+    return executeItids_;
 }
-const std::deque<uint32_t>& TaskPoolInfo::ReturnTaskIds() const
+const std::deque<uint32_t>& TaskPoolInfo::ReturnItids() const
 {
-    return returnTaskIds_;
+    return returnItids_;
 }
 const std::deque<uint32_t>& TaskPoolInfo::ExecuteIds() const
 {
@@ -2848,32 +2983,32 @@ const std::deque<uint32_t>& TaskPoolInfo::ReturnStates() const
 }
 void TaskPoolInfo::UpdateAllocationTaskData(uint32_t index,
                                             uint32_t allocationTaskRow,
-                                            uint32_t allocationTaskId,
+                                            uint32_t allocationItid,
                                             uint32_t priority,
                                             uint32_t executeState)
 {
     if (index < Size()) {
         allocationTaskRows_[index] = allocationTaskRow;
-        allocationTaskIds_[index] = allocationTaskId;
+        allocationItids_[index] = allocationItid;
         prioritys_[index] = priority;
         executeStates_[index] = executeState;
     }
 }
-void TaskPoolInfo::UpdateExecuteTaskData(uint32_t index, uint32_t executeTaskRow, uint32_t executeTaskId)
+void TaskPoolInfo::UpdateExecuteTaskData(uint32_t index, uint32_t executeTaskRow, uint32_t executeItid)
 {
     if (index < Size()) {
         executeTaskRows_[index] = executeTaskRow;
-        executeTaskIds_[index] = executeTaskId;
+        executeItids_[index] = executeItid;
     }
 }
 void TaskPoolInfo::UpdateReturnTaskData(uint32_t index,
                                         uint32_t returnTaskRow,
-                                        uint32_t returnTaskId,
+                                        uint32_t returnItid,
                                         uint32_t returnState)
 {
     if (index < Size()) {
         returnTaskRows_[index] = returnTaskRow;
-        returnTaskIds_[index] = returnTaskId;
+        returnItids_[index] = returnItid;
         returnStates_[index] = returnState;
     }
 }
@@ -2936,10 +3071,13 @@ const uint32_t DeviceInfo::PhysicalFrameRate() const
 {
     return physicalFrameRate_;
 }
-void DeviceInfo::UpdateWidthAndHeight(uint32_t width, uint32_t height)
+void DeviceInfo::UpdateWidthAndHeight(const std::smatch& matcheLine)
 {
-    physicalWidth_ = width;
-    physicalHeight_ = height;
+    if (matcheLine.size() > DEVICEINFO_MATCH_LAST) {
+        uint8_t matcheIndex = 0;
+        physicalWidth_ = base::StrToInt<uint32_t>(matcheLine[++matcheIndex].str()).value();
+        physicalHeight_ = base::StrToInt<uint32_t>(matcheLine[++matcheIndex].str()).value();
+    }
 }
 void DeviceInfo::UpdateFrameRate(uint32_t frameRate)
 {
@@ -2969,18 +3107,14 @@ void DynamicFrame::UpdateNameIndex(TableRowId index, DataIndex nameId)
         names_[index] = nameId;
     }
 }
-void DynamicFrame::UpdatePosition(TableRowId index,
-                                  uint32_t x,
-                                  uint32_t y,
-                                  uint32_t width,
-                                  uint32_t height,
-                                  DataIndex alpha)
+void DynamicFrame::UpdatePosition(TableRowId index, const std::smatch& matcheLine, DataIndex alpha)
 {
-    if (index <= Size()) {
-        xs_[index] = x;
-        ys_[index] = y;
-        widths_[index] = width;
-        heights_[index] = height;
+    if (index <= Size() && matcheLine.size() > DYNAMICFRAME_MATCH_LAST) {
+        uint8_t matcheIndex = 0;
+        xs_[index] = base::StrToInt<uint32_t>(matcheLine[++matcheIndex].str()).value();
+        ys_[index] = base::StrToInt<uint32_t>(matcheLine[++matcheIndex].str()).value();
+        widths_[index] = base::StrToInt<uint32_t>(matcheLine[++matcheIndex].str()).value();
+        heights_[index] = base::StrToInt<uint32_t>(matcheLine[++matcheIndex].str()).value();
         alphas_[index] = alpha;
     }
 }

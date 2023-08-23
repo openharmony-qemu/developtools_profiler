@@ -32,15 +32,16 @@ public:
     TaskPoolFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter);
     TaskPoolFilter(const TaskPoolFilter&) = delete;
     ~TaskPoolFilter() override;
-    uint32_t CheckTheSameTask(int32_t executeId);
+    uint32_t GetIpId(uint32_t index);
+    uint32_t CheckTheSameTask(int32_t executeId, uint32_t index);
     bool TaskPoolEvent(const std::string& taskPoolStr, int32_t index);
     void TaskPoolFieldSegmentation(const std::string& taskPoolStr, std::unordered_map<std::string, std::string>& args);
-    void UpdateAssignData(const std::unordered_map<std::string, std::string>& args, int32_t index);
-    void UpdateExecuteData(const std::unordered_map<std::string, std::string>& args, int32_t index);
-    void UpdateReturnData(const std::unordered_map<std::string, std::string>& args, int32_t index);
+    bool UpdateAssignData(const std::unordered_map<std::string, std::string>& args, int32_t index);
+    bool UpdateExecuteData(const std::unordered_map<std::string, std::string>& args, int32_t index);
+    bool UpdateReturnData(const std::unordered_map<std::string, std::string>& args, int32_t index);
 
 private:
-    std::unordered_map<int32_t, int32_t> executeMap_ = {};
+    DoubleMap<InternalPid, int32_t, int32_t> IpidExecuteMap_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

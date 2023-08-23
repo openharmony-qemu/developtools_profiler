@@ -42,9 +42,7 @@
 #include "htrace_symbols_detail_parser.h"
 #include "log.h"
 #include "parser_base.h"
-#if WITH_PERF
 #include "perf_data_parser.h"
-#endif
 #include "proto_reader_help.h"
 #include "string_help.h"
 #include "trace_data/trace_data_cache.h"
@@ -55,9 +53,7 @@ namespace SysTuning {
 namespace TraceStreamer {
 using namespace SysTuning::base;
 using namespace OHOS::Developtools::HiPerf::ELF;
-#if WITH_PERF
 using namespace OHOS::Developtools::HiPerf;
-#endif
 class HtraceParser : public ParserBase {
 public:
     HtraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters);
@@ -119,9 +115,7 @@ private:
     std::unique_ptr<HtraceProcessParser> processParser_;
     std::unique_ptr<HtraceHisyseventParser> hisyseventParser_;
     std::unique_ptr<HtraceJSMemoryParser> jsMemoryParser_;
-#if WITH_PERF
     std::unique_ptr<PerfDataParser> perfDataParser_;
-#endif
     std::unique_ptr<EbpfDataParser> ebpfDataParser_;
     std::atomic<bool> filterThreadStarted_{false};
     const int32_t MAX_SEG_ARRAY_SIZE = 10000;
@@ -131,7 +125,6 @@ private:
     bool exited_ = false;
     int32_t filterHead_ = 0;
     int32_t parseHead_ = 0;
-    size_t sizeAll_ = 0;
     size_t htraceLength_ = 1024;
     const int32_t sleepDur_ = 100;
     bool parseThreadStarted_ = false;

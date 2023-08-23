@@ -28,7 +28,7 @@ export class FrameAnimationRender extends Render {
   ): void {
     let frameAnimationList: FrameAnimationStruct[] = row.dataList;
     let frameAnimationFilter: FrameAnimationStruct[] = row.dataListCache;
-    frameAnimation(
+    this.frameAnimation(
       frameAnimationList,
       frameAnimationFilter,
       TraceRow.range!.startNS,
@@ -53,51 +53,51 @@ export class FrameAnimationRender extends Render {
     }
     req.context.closePath();
   }
-}
 
-let frameAnimation = function (
-  frameAnimationList: FrameAnimationStruct[],
-  frameAnimationFilter: FrameAnimationStruct[],
-  startNS: number = 0,
-  endNS: number = 0,
-  totalNS: number,
-  frame: Rect,
-  use: boolean
-): void {
-  if (use && frameAnimationFilter.length > 0) {
-    for (let index: number = 0; index < frameAnimationFilter.length; index++) {
-      let frameAnimationNode: FrameAnimationStruct = frameAnimationFilter[index];
-      frameAnimationNode.frame = undefined;
-      FrameAnimationStruct.setFrameAnimation(frameAnimationNode, padding, startNS, endNS, totalNS, frame);
-    }
-    return;
-  }
-  frameAnimationFilter.length = 0;
-  if (frameAnimationList) {
-    for (let index: number = 0; index < frameAnimationList.length; index++) {
-      let currentFrameAnimation: FrameAnimationStruct = frameAnimationList[index];
-      let currentResponseFrame: FrameAnimationStruct = JSON.parse(JSON.stringify(currentFrameAnimation));
-      currentResponseFrame.status = 'Response delay';
-      currentResponseFrame.dur = currentFrameAnimation.dynamicStartTs - currentFrameAnimation.ts;
-      if ((currentResponseFrame.ts || 0) + (currentResponseFrame.dur || 0) > startNS &&
-        (currentResponseFrame.ts || 0) < endNS) {
-        FrameAnimationStruct.setFrameAnimation(currentResponseFrame, padding, startNS,
-          endNS || 0, totalNS || 0, frame);
-        frameAnimationFilter.push(currentResponseFrame);
+  private frameAnimation (
+    frameAnimationList: FrameAnimationStruct[],
+    frameAnimationFilter: FrameAnimationStruct[],
+    startNS: number = 0,
+    endNS: number = 0,
+    totalNS: number,
+    frame: Rect,
+    use: boolean
+  ): void {
+    if (use && frameAnimationFilter.length > 0) {
+      for (let index: number = 0; index < frameAnimationFilter.length; index++) {
+        let frameAnimationNode: FrameAnimationStruct = frameAnimationFilter[index];
+        frameAnimationNode.frame = undefined;
+        FrameAnimationStruct.setFrameAnimation(frameAnimationNode, padding, startNS, endNS, totalNS, frame);
       }
-      let currentCompletionFrame: FrameAnimationStruct = JSON.parse(JSON.stringify(currentFrameAnimation));
-      currentCompletionFrame.status = 'Completion delay';
-      currentCompletionFrame.ts = currentFrameAnimation.dynamicStartTs;
-      currentCompletionFrame.dur = currentFrameAnimation.dynamicEndTs - currentFrameAnimation.dynamicStartTs;
-      if ((currentCompletionFrame.ts || 0) + (currentCompletionFrame.dur || 0) > startNS &&
-        (currentCompletionFrame.ts || 0) < endNS) {
-        FrameAnimationStruct.setFrameAnimation(currentCompletionFrame, padding, startNS,
-          endNS || 0, totalNS || 0, frame);
-        frameAnimationFilter.push(currentCompletionFrame);
+      return;
+    }
+    frameAnimationFilter.length = 0;
+    if (frameAnimationList) {
+      for (let index: number = 0; index < frameAnimationList.length; index++) {
+        let currentFrameAnimation: FrameAnimationStruct = frameAnimationList[index];
+        let currentResponseFrame: FrameAnimationStruct = JSON.parse(JSON.stringify(currentFrameAnimation));
+        currentResponseFrame.status = 'Response delay';
+        currentResponseFrame.dur = currentFrameAnimation.dynamicStartTs - currentFrameAnimation.ts;
+        if ((currentResponseFrame.ts || 0) + (currentResponseFrame.dur || 0) > startNS &&
+          (currentResponseFrame.ts || 0) < endNS) {
+          FrameAnimationStruct.setFrameAnimation(currentResponseFrame, padding, startNS,
+            endNS || 0, totalNS || 0, frame);
+          frameAnimationFilter.push(currentResponseFrame);
+        }
+        let currentCompletionFrame: FrameAnimationStruct = JSON.parse(JSON.stringify(currentFrameAnimation));
+        currentCompletionFrame.status = 'Completion delay';
+        currentCompletionFrame.ts = currentFrameAnimation.dynamicStartTs;
+        currentCompletionFrame.dur = currentFrameAnimation.dynamicEndTs - currentFrameAnimation.dynamicStartTs;
+        if ((currentCompletionFrame.ts || 0) + (currentCompletionFrame.dur || 0) > startNS &&
+          (currentCompletionFrame.ts || 0) < endNS) {
+          FrameAnimationStruct.setFrameAnimation(currentCompletionFrame, padding, startNS,
+            endNS || 0, totalNS || 0, frame);
+          frameAnimationFilter.push(currentCompletionFrame);
+        }
       }
     }
-  }
-};
+  };
+}
 
 export class FrameAnimationStruct extends BaseStruct {
   static hoverFrameAnimationStruct: FrameAnimationStruct | undefined;

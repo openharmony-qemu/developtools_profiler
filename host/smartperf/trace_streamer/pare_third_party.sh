@@ -54,11 +54,11 @@ if [ ! -f "googletest/BUILD.gn" ];then
     fi
 fi
 
-if [ ! -f "json-master/BUILD.gn" ];then
-    rm -rf json-master
+if [ ! -f "json/BUILD.gn" ];then
+    rm -rf json
     git clone git@gitee.com:openharmony/third_party_json.git
     if [ -d "third_party_json" ];then
-        mv third_party_json json-master
+        mv third_party_json json
     fi
 fi
 

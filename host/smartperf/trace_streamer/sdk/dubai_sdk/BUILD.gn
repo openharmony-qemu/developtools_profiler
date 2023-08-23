@@ -52,9 +52,6 @@ ohos_source_set("lib") {
     "${THIRD_PARTY}/sqlite/include",
     "${THIRD_PARTY}/protobuf/src",
   ]
-  if (with_perf) {
-    include_dirs += []
-  }
   public_deps = [ "protos/types/plugins/mock_data:mock_data_cpp" ]
 }
 source_set("trace_streamer_sdk") {
@@ -107,7 +104,7 @@ source_set("trace_streamer_sdk") {
     "cfg",
     "${THIRD_PARTY}/sqlite/include",
     "${THIRD_PARTY}/protobuf/src",
-    "${THIRD_PARTY}/json-master/single_include/nlohmann",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
   ]
   if (!use_wasm) {
     include_dirs += [
@@ -115,17 +112,11 @@ source_set("trace_streamer_sdk") {
       "${THIRD_PARTY}/libunwind/src",
     ]
   }
-  if (with_perf) {
-    sources += []
-    include_dirs += []
-  }
   deps = [
     "${SRC}/base:base",
     "${THIRD_PARTY}/sqlite:sqlite",
     "plugin:sdk_plugin",
   ]
-  if (with_perf) {
-  }
 
   if (use_wasm || enable_ts_utest) {
     sources += [

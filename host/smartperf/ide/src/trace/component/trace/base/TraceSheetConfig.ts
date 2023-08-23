@@ -66,8 +66,6 @@ import { TabpaneNMCalltree } from '../sheet/native-memory/TabPaneNMCallTree.js';
 import { TabPaneClockCounter } from '../sheet/clock/TabPaneClockCounter.js';
 import { TabPaneIrqCounter } from '../sheet/irq/TabPaneIrqCounter.js';
 import { TabPaneFrames } from '../sheet/jank/TabPaneFrames.js';
-import { TabPaneSummary } from '../sheet/snapshot/TabPaneSummary.js';
-import { TabPaneComparison } from '../sheet/snapshot/TabPaneComparison.js';
 import { TabPanePerfAnalysis } from '../sheet/hiperf/TabPanePerfAnalysis.js';
 import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { TabPaneFilesystemStatisticsAnalysis } from '../sheet/file-system/TabPaneFilesystemStatisticsAnalysis.js';
@@ -80,7 +78,11 @@ import { TabPaneTaskFrames } from '../sheet/task/TabPaneTaskFrames.js';
 import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
 import { TabPaneFrameAnimation } from '../sheet/frame/TabPaneFrameAnimation.js';
 import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
-
+import { TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
+import { TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
+import { TabPaneJsCpuTopDown } from '../sheet/ark-ts/TabPaneJsCpuCallTree.js';
+import { TabPaneJsCpuBottomUp } from '../sheet/ark-ts/TabPaneJsCpuBottomUp.js';
+import { TabPaneJsCpuStatistics } from '../sheet/ark-ts/TabPaneJsCpuStatistics.js';
 export let tabConfig: any = {
   'tabpane-current': {
     title: 'Current Selection',
@@ -417,5 +419,20 @@ export let tabConfig: any = {
     title: 'Frame spacing',
     type: TabFrameSpacing,
     require: (param: SelectionParam) => param.frameSpacing.length > 0,
+  },
+  'box-js-Profiler-statistics': {
+    title: 'Js Profiler Statistics',
+    type: TabPaneJsCpuStatistics,
+    require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
+  },
+  'box-js-Profiler-top-down': {
+    title: 'Js Profiler CallTree',
+    type: TabPaneJsCpuTopDown,
+    require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
+  },
+  'box-js-Profiler-bottom-up': {
+    title: 'Js Profiler BottomUp',
+    type: TabPaneJsCpuBottomUp,
+    require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
   },
 };

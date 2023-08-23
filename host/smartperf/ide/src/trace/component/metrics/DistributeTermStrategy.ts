@@ -59,8 +59,8 @@ export const initDistributedTermData = (metricData: Array<{
       let delay: number = 0;
       if (flag.indexOf('S,C') > -1 || flag.indexOf('C,S') > -1) {
         across = false;
-        if (flagList[index] == 'S') receiverTime = Number(timeList[index]);
-        if (flagList[index] == 'C') senderTime = Number(timeList[index]);
+        if (flagList[index] === 'S') receiverTime = Number(timeList[index]);
+        if (flagList[index] === 'C') senderTime = Number(timeList[index]);
         delay = receiverTime - senderTime;
       }
 
@@ -84,7 +84,7 @@ export const initDistributedTermData = (metricData: Array<{
         dur: durList[index],
         delay: delay,
       };
-      if ('C' == flagList[index]) {
+      if ('C' === flagList[index]) {
         distributedTermListItem.sender = type;
       } else {
         distributedTermListItem.receiver = type;

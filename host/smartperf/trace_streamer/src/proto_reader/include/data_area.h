@@ -83,14 +83,14 @@ public:
     {
         float res;
         uint32_t value32 = static_cast<uint32_t>(intValue_);
-        (void*)memcpy_s(&res, sizeof(res), &value32, sizeof(value32));
+        (void)memcpy_s(&res, sizeof(res), &value32, sizeof(value32));
         return res;
     }
 
     double ToDouble() const
     {
         double res;
-        (void*)memcpy_s(&res, sizeof(res), &intValue_, sizeof(intValue_));
+        (void)memcpy_s(&res, sizeof(res), &intValue_, sizeof(intValue_));
         return res;
     }
 

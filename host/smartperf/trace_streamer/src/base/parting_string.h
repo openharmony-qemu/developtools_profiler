@@ -22,7 +22,7 @@ namespace SysTuning {
 namespace base {
 class PartingString {
 public:
-    PartingString(std::string, char delimiter);
+    PartingString(std::string str, char delimiter);
 
     bool Next();
 

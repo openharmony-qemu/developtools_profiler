@@ -26,7 +26,6 @@ import { FileStruct, HeapSample, HeapTraceFunctionInfo } from './model/DatabaseS
 
 export interface ParseListener {
   parseDone(fileModule: Array<FileInfo>): void;
-  process(info: string, process: number): void;
 }
 
 export class HeapDataInterface {
@@ -259,12 +258,10 @@ export class HeapDataInterface {
       let heapLoader = new HeapLoader(fileStruct);
       fileStruct.heapLoader = heapLoader;
       percent = 50 + Math.floor(50 / fileModule.length) * (fileModule.indexOf(fileStruct) + 1);
-      this.parseListener.process('parsing data of ' + fileStruct.name + ' ', percent);
     }
     this.isParseDone = true;
     if (this.parseListener) {
       this.parseListener.parseDone(fileModule);
-      this.parseListener.process('parsing completed', 100);
     }
   }
 

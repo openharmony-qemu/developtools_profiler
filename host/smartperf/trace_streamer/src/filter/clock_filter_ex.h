@@ -23,6 +23,14 @@
 #include <vector>
 #include "htrace_file_header.h"
 #include "ts_common.h"
+#include <vector>
+#include "clock_filter.h"
+#include "filter_base.h"
+#include <string>
+namespace SysTuning {
+namespace TraceStreamer {
+class TraceDataCache;
+class TraceStreamerFilters;
 /*
  * TS_REALTIME:  A settable system-wide clock that measures real time. Its time represents seconds and nanoseconds
  * since the Epoch.
@@ -37,18 +45,10 @@
  * TS_BOOTTIME:  A nonsettable system-wide clock that is identical to TS_MONOTONIC, except that it also includes
  * any time that the system is suspended.
  */
-#include <vector>
-#include "clock_filter.h"
-#include "filter_base.h"
-#include <string>
-namespace SysTuning {
-namespace TraceStreamer {
-class TraceDataCache;
-class TraceStreamerFilters;
 class ClockFilterEx : public FilterBase, public ClockFilter {
 public:
     ClockFilterEx(TraceDataCache* dataCache, const TraceStreamerFilters* filter);
-    ~ClockFilterEx();
+    ~ClockFilterEx() override;
     void AddClockSnapshot(const std::vector<SnapShot>& snapShot);
 
 private:

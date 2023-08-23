@@ -54,7 +54,7 @@ void PagedMemoryDataParser::ParsePagedMemoryEvent()
                 currentCallId_ = callChainId_++;
             }
         } else {
-            currentCallId_ = INVALID_UINT64;
+            currentCallId_ = INVALID_UINT32;
         }
 
         auto type = pagedMemoryFixedHeadrAddr->type;
@@ -71,7 +71,7 @@ void PagedMemoryDataParser::ParsePagedMemoryEvent()
         auto newEndTs = streamFilters_->clockFilter_->ToPrimaryTraceTime(clockId_, endTs);
         timeParser_->UpdatePluginTimeRange(clockId_, endTs, newEndTs);
         if (newStartTs > newEndTs) {
-            TS_LOGE("paged memory startTs = %lu, endTs = %lu, newStartTs = %lu, newEndTs = %lu", startTs, endTs,
+            TS_LOGE("paged memory startTs = %llu, endTs = %llu, newStartTs = %llu, newEndTs = %llu", startTs, endTs,
                     newStartTs, newEndTs);
             streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_EBPF_PAGED_MEMORY, STAT_EVENT_DATA_INVALID);
             return;

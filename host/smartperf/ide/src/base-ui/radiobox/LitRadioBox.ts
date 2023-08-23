@@ -23,7 +23,19 @@ export class LitRadioBox extends BaseElement {
   private radio: HTMLInputElement | undefined | null;
 
   static get observedAttributes() {
-    return ['checked', 'value'];
+    return ['checked', 'value', 'disabled'];
+  }
+
+  get disabled() {
+    return this.getAttribute('disabled') !== null;
+  }
+
+  set disabled(value) {
+    if (value === null || value === false) {
+      this.removeAttribute('disabled');
+    } else {
+      this.setAttribute('disabled', '');
+    }
   }
 
   get checked() {
@@ -180,6 +192,9 @@ export class LitRadioBox extends BaseElement {
         :host([checked][dis=check]) {
             background-color: #1A83FF;
             color:#ffffff
+        }
+        :host([disabled]){ 
+            pointer-events: none;
         }
         </style>
         <input type="checkbox" id="radio" >

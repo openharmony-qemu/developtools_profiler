@@ -162,6 +162,9 @@ public:
     JsHeapString jsHeapStringData_;
     JsHeapTraceFuncInfo jsHeapTraceFuncInfoData_;
     JsHeapTraceNode jsHeapTraceNodeData_;
+    JsCpuProfilerNode jsCpuProfilerNodeData_;
+    JsCpuProfilerSample jsCpuProfilerSampleData_;
+    JsConfig jsConfigData_;
     AppStartup appStartupData_;
     SoStaticInitalization staticInitalizationData_;
     Animation animation_;

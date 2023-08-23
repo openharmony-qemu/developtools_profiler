@@ -94,6 +94,13 @@ export function isFrameContainPoint(frame: Rect, x: number, y: number): boolean 
 export const isSurroundingPoint = function (pointX: number, currentRect: Rect, unitPointXRange: number): boolean {
   return (pointX >= currentRect.x - unitPointXRange) && pointX <= currentRect.x + unitPointXRange;
 };
+
+export const computeUnitWidth = function (preTs: number,currentTs: number, frameWidth: number): number {
+  let max = 150;
+  let unitWidth = ((currentTs - preTs) * frameWidth) / (TraceRow.range!.endNS - TraceRow.range!.startNS);
+  return unitWidth > max ? max : unitWidth;
+};
+
 class FilterConfig {
   startNS: number = 0;
   endNS: number = 0;

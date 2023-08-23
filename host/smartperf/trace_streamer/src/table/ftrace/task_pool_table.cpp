@@ -22,9 +22,9 @@ enum Index {
     ALLOCATION_TASK_ROW,
     EXECUTE_TASK_ROW,
     RETURN_TASK_ROW,
-    ALLOCATION_TASK_ID,
-    EXECUTE_TASK_ID,
-    RETURN_TASK_ID,
+    ALLOCATION_ITID,
+    EXECUTE_ITID,
+    RETURN_ITID,
     EXECUTE_ID,
     PRIORITY,
     EXECUTE_STATE,
@@ -36,9 +36,9 @@ TaskPoolTable::TaskPoolTable(const TraceDataCache* dataCache) : TableBase(dataCa
     tableColumn_.push_back(TableBase::ColumnInfo("allocation_task_row", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("execute_task_row", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("return_task_row", "INTEGER"));
-    tableColumn_.push_back(TableBase::ColumnInfo("allocation_task_id", "INTEGER"));
-    tableColumn_.push_back(TableBase::ColumnInfo("execute_task_id", "INTEGER"));
-    tableColumn_.push_back(TableBase::ColumnInfo("return_task_id", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("allocation_itid", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("execute_itid", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("return_itid", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("execute_id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("priority", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("execute_state", "INTEGER"));
@@ -86,23 +86,23 @@ int32_t TaskPoolTable::Cursor::Column(int32_t column) const
                                                    dataCache_->GetConstTaskPoolData().ReturnTaskRows()[CurrentRow()]));
             }
             break;
-        case ALLOCATION_TASK_ID:
-            if (taskPoolObj_.AllocationTaskIds()[CurrentRow()] != INVALID_INT32) {
+        case ALLOCATION_ITID:
+            if (taskPoolObj_.AllocationItids()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(
                     context_,
-                    static_cast<sqlite3_int64>(dataCache_->GetConstTaskPoolData().AllocationTaskIds()[CurrentRow()]));
+                    static_cast<sqlite3_int64>(dataCache_->GetConstTaskPoolData().AllocationItids()[CurrentRow()]));
             }
             break;
-        case EXECUTE_TASK_ID:
-            if (taskPoolObj_.ExecuteTaskIds()[CurrentRow()] != INVALID_INT32) {
+        case EXECUTE_ITID:
+            if (taskPoolObj_.ExecuteItids()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
-                                                   dataCache_->GetConstTaskPoolData().ExecuteTaskIds()[CurrentRow()]));
+                                                   dataCache_->GetConstTaskPoolData().ExecuteItids()[CurrentRow()]));
             }
             break;
-        case RETURN_TASK_ID:
-            if (taskPoolObj_.ReturnTaskIds()[CurrentRow()] != INVALID_INT32) {
+        case RETURN_ITID:
+            if (taskPoolObj_.ReturnItids()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
-                                                   dataCache_->GetConstTaskPoolData().ReturnTaskIds()[CurrentRow()]));
+                                                   dataCache_->GetConstTaskPoolData().ReturnItids()[CurrentRow()]));
             }
             break;
         case EXECUTE_ID:

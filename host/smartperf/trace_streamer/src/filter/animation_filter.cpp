@@ -67,7 +67,7 @@ bool AnimationFilter::UpdateDeviceInfoEvent(const TracePoint& point, const Bytra
             uint8_t index = 0;
             uint32_t width = base::StrToInt<uint32_t>(matcheLine[++index].str()).value();
             uint32_t height = base::StrToInt<uint32_t>(matcheLine[++index].str()).value();
-            traceDataCache_->GetDeviceInfo()->UpdateWidthAndHeight(width, height);
+            traceDataCache_->GetDeviceInfo()->UpdateWidthAndHeight(matcheLine);
             TS_LOGI("physical width is %u, height is %u", width, height);
         } else {
             TS_LOGE("Not support this event: %s\n", point.name_.data());
@@ -147,12 +147,9 @@ void AnimationFilter::UpdateDynamicFrameInfo()
         const std::string& curStackName = traceDataCache_->GetDataFromDict(nameDataIndex);
         const std::string& funcArgs = curStackName.substr(leashWindowCmd_.size());
         if (std::regex_search(funcArgs, matcheLine, leashWindowPattern)) {
-            uint8_t index = 0;
-            dynamicFrame->UpdatePosition(curFrameRow, base::StrToInt<uint32_t>(matcheLine[++index].str()).value(), // x
-                                         base::StrToInt<uint32_t>(matcheLine[++index].str()).value(),              // y
-                                         base::StrToInt<uint32_t>(matcheLine[++index].str()).value(), // width
-                                         base::StrToInt<uint32_t>(matcheLine[++index].str()).value(), // height
-                                         traceDataCache_->GetDataIndex((matcheLine[++index].str()))); // alpha
+            dynamicFrame->UpdatePosition(
+                curFrameRow, matcheLine,
+                traceDataCache_->GetDataIndex((matcheLine[DYNAMICFRAME_MATCH_LAST].str()))); // alpha
         } else {
             TS_LOGE("Not support this event: %s\n", funcArgs.data());
             break;

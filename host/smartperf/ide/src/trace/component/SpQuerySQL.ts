@@ -72,14 +72,14 @@ export class SpQuerySQL extends BaseElement {
     });
   }
 
-  freshTableHeadResizeStyle() {
+  freshTableHeadResizeStyle(): void {
     let th = this.queryTableEl!.shadowRoot?.querySelector<HTMLDivElement>('.th');
     if (th) {
       let td = th.querySelectorAll<HTMLDivElement>('.td');
       let firstChild = this.queryTableEl!.shadowRoot?.querySelector<HTMLDivElement>('.body')!.firstElementChild;
       if (firstChild) {
         let bodyList = firstChild.querySelectorAll<HTMLDivElement>('.td');
-        for (let index = 0; index < bodyList.length; index++) {
+        for (let index = 0 ; index < bodyList.length ; index++) {
           td[index].style.width = bodyList[index].offsetWidth + 'px';
           td[index].style.overflow = 'hidden';
         }
@@ -87,7 +87,7 @@ export class SpQuerySQL extends BaseElement {
     }
   }
 
-  async copyTableData() {
+  async copyTableData(): Promise<void> {
     let copyResult = '';
     for (let keyListKey of this.keyList!) {
       copyResult += keyListKey + '\t';
@@ -108,7 +108,7 @@ export class SpQuerySQL extends BaseElement {
     await navigator.clipboard.writeText(copyResult);
   }
 
-  selectEventListener = (event: KeyboardEvent) => {
+  selectEventListener = (event: KeyboardEvent): void => {
     let that = this;
     if (event.ctrlKey && event.keyCode == 13) {
       SpStatisticsHttpUtil.addOrdinaryVisitAction({
@@ -127,13 +127,13 @@ export class SpQuerySQL extends BaseElement {
         let dur = new Date().getTime() - startData;
         this.statDataArray = [];
         this.keyList = [];
-        for (let index = 0; index < resultList.length; index++) {
+        for (let index = 0 ; index < resultList.length ; index++) {
           const dataResult = resultList[index];
           let keys = Object.keys(dataResult);
           // @ts-ignore
           let values = Object.values(dataResult);
           let jsonText = '{';
-          for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+          for (let keyIndex = 0 ; keyIndex < keys.length ; keyIndex++) {
             let key = keys[keyIndex];
             if (this.keyList.indexOf(key) <= -1) {
               this.keyList.push(key);
@@ -164,7 +164,7 @@ export class SpQuerySQL extends BaseElement {
               current: 1,
               total: total,
               pageSize: this.pageSize,
-              change(num: number) {
+              change(num: number): void {
                 that.sliceData = that.statDataArray!.slice((num - 1) * that.pageSize, num * that.pageSize);
                 that.queryTableEl!.recycleDataSource = that.sliceData;
               },
@@ -189,7 +189,7 @@ export class SpQuerySQL extends BaseElement {
     }
   };
 
-  reset() {
+  reset(): void {
     this.pagination!.style.opacity = '0';
     this.response!.innerHTML = '';
     this.keyList = [];
@@ -200,7 +200,7 @@ export class SpQuerySQL extends BaseElement {
   }
 
   initDataTableStyle(styleTable: HTMLDivElement): void {
-    for (let index = 0; index < styleTable.children.length; index++) {
+    for (let index = 0 ; index < styleTable.children.length ; index++) {
       // @ts-ignore
       styleTable.children[index].style.backgroundColor = 'var(--dark-background5,#F6F6F6)';
     }
@@ -212,7 +212,7 @@ export class SpQuerySQL extends BaseElement {
     }
     if (this.queryText == '' || this.queryText == null) {
       let statList = await querySelectTraceStats();
-      for (let index = 0; index < statList.length; index++) {
+      for (let index = 0 ; index < statList.length ; index++) {
         const statsResult = statList[index];
         let indexArray = {
           event_name: statsResult.event_name,
@@ -279,7 +279,7 @@ export class SpQuerySQL extends BaseElement {
     let tableNameList = [];
     let splitSql = this.selector?.value.split(str);
     if (splitSql) {
-      for (let index = 1; index < splitSql?.length; index++) {
+      for (let index = 1 ; index < splitSql?.length ; index++) {
         let splitSqlItem = splitSql[index].trim();
         let tableItem = splitSqlItem.split(' ');
         let tableName = tableItem[0].trim();
@@ -297,7 +297,7 @@ export class SpQuerySQL extends BaseElement {
     return tableNameList;
   }
 
-  initDataElement() {
+  initDataElement(): void {
     if (this.keyList) {
       info('Metric query Table Colum size is: ', this.keyList.length);
       this.keyList.forEach((item) => {
@@ -312,7 +312,7 @@ export class SpQuerySQL extends BaseElement {
     }
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     let selectQuery = this.shadowRoot?.querySelector('.query_select');
     if (selectQuery) {
       let querySql = selectQuery.textContent;
@@ -324,13 +324,13 @@ export class SpQuerySQL extends BaseElement {
     this.selector!.addEventListener('keydown', this.deleteSqlListener);
   }
 
-  deleteSqlListener = (event: KeyboardEvent) => {
+  deleteSqlListener = (event: KeyboardEvent): void => {
     if (event.key == 'Backspace') {
       this.resizeSqlHeight().then(() => {});
     }
   };
 
-  async resizeSqlHeight() {
+  async resizeSqlHeight(): Promise<void> {
     let valueLength = this.selector?.value.split('\n').length;
     let rowNumber = Number(valueLength) - 1;
     let selectHeight = '3.2em';
@@ -346,7 +346,7 @@ export class SpQuerySQL extends BaseElement {
     this.selector?.style.height = selectHeight;
   }
 
-  inputSqlListener = async (event: Event) => {
+  inputSqlListener = async (event: Event): Promise<void> => {
     this.resizeSqlHeight().then(() => {});
     let startData = new Date().getTime();
     if (this.selector!.value.trim() == '') {
@@ -360,8 +360,8 @@ export class SpQuerySQL extends BaseElement {
       return;
     }
     this.querySelectTables = this.getSelectSqlTableName('from')
-      .concat(this.getSelectSqlTableName('join'))
-      .toLocaleString();
+                                 .concat(this.getSelectSqlTableName('join'))
+                                 .toLocaleString();
     info('metric query sql table size is: ', this.querySelectTables.length);
     this.isSupportSql = true;
   };
@@ -370,14 +370,14 @@ export class SpQuerySQL extends BaseElement {
     return await queryCustomizeSelect(sql);
   }
 
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     this.removeEventListener('keydown', this.selectEventListener);
     this.selector!.removeEventListener('input', this.inputSqlListener);
     this.selector!.removeEventListener('change', this.inputSqlListener);
     this.selector!.removeEventListener('keydown', this.deleteSqlListener);
   }
 
-  initData() {
+  initData(): void {
     if (this.statDataArray.length > 0) {
       this.querySize!.textContent = 'Error: ' + this.selector?.value;
     }
@@ -392,7 +392,7 @@ export class SpQuerySQL extends BaseElement {
       'div.th'
     ) as HTMLDivElement;
     if (queryHeadStyle && queryHeadStyle.hasChildNodes()) {
-      for (let index = 0; index < queryHeadStyle.children.length; index++) {
+      for (let index = 0 ; index < queryHeadStyle.children.length ; index++) {
         // @ts-ignore
         queryHeadStyle.children[index].style.gridArea = null;
       }
@@ -401,16 +401,16 @@ export class SpQuerySQL extends BaseElement {
     this.queryTableEl!.style.height = '100%';
   }
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ['queryStr'];
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
     let queryDataSty: HTMLDivElement | undefined | null = this.queryTableEl?.shadowRoot?.querySelector(
       'div.tbody'
     ) as HTMLDivElement;
     if (queryDataSty && queryDataSty.hasChildNodes()) {
-      for (let index = 0; index < queryDataSty.children.length; index++) {
+      for (let index = 0 ; index < queryDataSty.children.length ; index++) {
         // @ts-ignore
         queryDataSty.children[index].style.backgroundColor = 'var(--dark-background5,#F6F6F6)';
       }

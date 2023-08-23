@@ -374,6 +374,18 @@ JsHeapTraceNode* TraceDataCacheWriter::GetJsHeapTraceNodeData()
 {
     return &jsHeapTraceNodeData_;
 }
+JsCpuProfilerNode* TraceDataCacheWriter::GetJsCpuProfilerNodeData()
+{
+    return &jsCpuProfilerNodeData_;
+}
+JsCpuProfilerSample* TraceDataCacheWriter::GetJsCpuProfilerSampleData()
+{
+    return &jsCpuProfilerSampleData_;
+}
+JsConfig* TraceDataCacheWriter::GetJsConfigData()
+{
+    return &jsConfigData_;
+}
 AppStartup* TraceDataCacheWriter::GetAppStartupData()
 {
     return &appStartupData_;
@@ -451,6 +463,9 @@ void TraceDataCacheWriter::Clear()
     jsHeapStringData_.Clear();
     jsHeapTraceFuncInfoData_.Clear();
     jsHeapTraceNodeData_.Clear();
+    jsCpuProfilerNodeData_.Clear();
+    jsCpuProfilerSampleData_.Clear();
+    jsConfigData_.Clear();
     appStartupData_.Clear();
     staticInitalizationData_.Clear();
     animation_.Clear();

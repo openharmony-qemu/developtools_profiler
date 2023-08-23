@@ -129,15 +129,15 @@ let convertJSON = () => {
       try {
         parse = JSON.parse(translateJsonString(str));
       } catch {
-        tansStr = tansStr.replace(/[^\x20-\x7E]/g, '?'); //匹配乱码字符，将其转换为？
+        tansStr = tansStr.replace(/[^\x20-\x7E]/g, '?'); //匹配乱码字 符，将其转换为？
         parse = JSON.parse(tansStr);
       }
 
       let columns = parse.columns;
       let values = parse.values;
-      for (let i = 0; i < values.length; i++) {
+      for (let i = 0 ; i < values.length ; i++) {
         let obj: any = {};
-        for (let j = 0; j < columns.length; j++) {
+        for (let j = 0 ; j < columns.length ; j++) {
           obj[columns[j]] = values[i][j];
         }
         jsonArray.push(obj);
@@ -388,8 +388,8 @@ self.onmessage = async (e: MessageEvent) => {
 let uploadSoActionId: string = '';
 let uploadFileIndex: number = 0;
 let uploadSoCallbackFn: any;
-let soFileList : Array<File | null> = [];
-const uploadSoFile = async (file: File | null) => {
+let soFileList: Array<File | null> = [];
+const uploadSoFile = async (file: File | null): Promise<void> => {
   if (file) {
     let fileNameBuffer: Uint8Array | null = enc.encode(file.webkitRelativePath);
     let fileNameLength = fileNameBuffer.length;
@@ -399,11 +399,11 @@ const uploadSoFile = async (file: File | null) => {
     let upRes = -1;
     while (writeSize < file.size) {
       let sliceLen = Math.min(file.size - writeSize, REQ_BUF_SIZE);
-      let blob: Blob | null = file.slice(writeSize,writeSize + sliceLen);
+      let blob: Blob | null = file.slice(writeSize, writeSize + sliceLen);
       let buffer: ArrayBuffer | null = await blob.arrayBuffer();
       let data: Uint8Array | null = new Uint8Array(buffer);
       let size = file.size;
-      let lastFile = uploadFileIndex === soFileList.length - 1 ? 1 : 0
+      let lastFile = uploadFileIndex === soFileList.length - 1 ? 1 : 0;
       Module.HEAPU8.set(data, reqBufferAddr);
       writeSize += sliceLen;
       upRes = Module._TraceStreamerDownloadELFEx(size, fileNameLength, sliceLen, lastFile);
@@ -417,7 +417,7 @@ const uploadSoFile = async (file: File | null) => {
   }
 };
 
-const uploadSoCallBack = (heapPtr: number, size: number, isFinish: number) => {
+const uploadSoCallBack = (heapPtr: number, size: number, isFinish: number): void => {
   let out: Uint8Array | null = Module.HEAPU8.slice(heapPtr, heapPtr + size);
   if (out) {
     let res = dec.decode(out);
@@ -454,7 +454,7 @@ function query(name: string, sql: string, params: any) {
   if (params) {
     Reflect.ownKeys(params).forEach((key: any) => {
       if (typeof params[key] === 'string') {
-        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${params[key]}'`);
+        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${ params[key] }'`);
       } else {
         sql = sql.replace(new RegExp(`\\${key}`, 'g'), params[key]);
       }
@@ -470,7 +470,7 @@ function querySdk(name: string, sql: string, params: any, action: string) {
   if (params) {
     Reflect.ownKeys(params).forEach((key: any) => {
       if (typeof params[key] === 'string') {
-        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${params[key]}'`);
+        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${ params[key] }'`);
       } else {
         sql = sql.replace(new RegExp(`\\${key}`, 'g'), params[key]);
       }

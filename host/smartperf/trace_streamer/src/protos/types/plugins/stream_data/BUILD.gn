@@ -66,6 +66,8 @@ action("stream_data_cpp_gen") {
 }
 
 ohos_source_set("stream_data_cpp") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   deps = [ ":stream_data_cpp_gen" ]
   public_deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
@@ -74,15 +76,13 @@ ohos_source_set("stream_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":stream_include_config" ]
   sources = stream_data_codegen
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }
 
 ohos_source_set("stream_data_encoder") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   deps = [ ":stream_data_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":stream_include_config" ]
   sources = stream_data_codegen_reader
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
 }

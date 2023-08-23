@@ -77,7 +77,7 @@ void FileSystemDataParser::ParseFileSystemEvent()
         auto newEndTs = streamFilters_->clockFilter_->ToPrimaryTraceTime(clockId_, fsFixedHeadrAddr->endTime);
         timeParser_->UpdatePluginTimeRange(clockId_, fsFixedHeadrAddr->endTime, newEndTs);
         if (newStartTs > newEndTs) {
-            TS_LOGE("File system event origin startTs = %lu, endTs = %lu, newStartTs = %lu, newEndTs = %lu",
+            TS_LOGE("File system event origin startTs = %llu, endTs = %llu, newStartTs = %llu, newEndTs = %llu",
                     fsFixedHeadrAddr->startTime, fsFixedHeadrAddr->endTime, newStartTs, newEndTs);
             streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_EBPF_FILE_SYSTEM, STAT_EVENT_DATA_INVALID);
             return;

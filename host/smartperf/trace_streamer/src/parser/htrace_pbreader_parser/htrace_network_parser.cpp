@@ -44,7 +44,7 @@ void HtraceNetworkParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts)
 
     ts = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, ts);
     streamFilters_->statFilter_->IncreaseStat(TRACE_NETWORK, STAT_EVENT_RECEIVED);
-    networkData_.push_back(std::move(TsNetworkData{ts, tv_sec, tv_nsec, rx_bytes, rx_packets, tx_bytes, tx_packets}));
+    networkData_.push_back(TsNetworkData{ts, tv_sec, tv_nsec, rx_bytes, rx_packets, tx_bytes, tx_packets});
 }
 void HtraceNetworkParser::Finish()
 {

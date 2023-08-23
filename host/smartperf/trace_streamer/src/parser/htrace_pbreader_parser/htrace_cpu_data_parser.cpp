@@ -36,7 +36,6 @@ void HtraceCpuDataParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts)
         return;
     }
     if (cpuData.has_cpu_usage_info()) {
-        auto cpuInfo = cpuData.cpu_usage_info();
         auto userLoad = cpuData.user_load();
         auto sysLoad = cpuData.sys_load();
         auto process_num = cpuData.process_num();

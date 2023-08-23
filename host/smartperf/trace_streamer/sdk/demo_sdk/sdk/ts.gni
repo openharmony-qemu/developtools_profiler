@@ -13,22 +13,11 @@
 OHOS_PROTO_DIR = ""
 
 if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
-  #  OHOS_FTRACE_PROTO_DIR="//third_party/protogen"
   OHOS_FTRACE_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_MEMORY_PROTO_DIR="//third_party/protogen"
   OHOS_MEMORY_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_HILOG_PROTO_DIR="//third_party/protogen"
   OHOS_HILOG_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_NATIVE_HOOK_PROTO_DIR="//third_party/protogen"
   OHOS_NATIVE_HOOK_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_HIDUMP_PROTO_DIR="//third_party/protogen"
   OHOS_HIDUMP_PROTO_DIR = "//src/multi_platform"
-
-  #  OHOS_SERVICE_PROTO_DIR = "//third_party/protogen"
   OHOS_SERVICE_PROTO_DIR = "//src/multi_platform"
   OHOS_PROTO_GEN = "//third_party/protogen"
 

@@ -39,6 +39,8 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | js_heap_string | 记录了js内存数据中的字符串|
 | js_heap_trace_function_info | 记录了timeline模式下的调用栈的每个函数信息|
 | js_heap_trace_node | 记录了timeline模式下的调用栈信息|
+| app_startup | 记录了应用启动相关数据|
+| static_initalize | 记录了so初始化相关数据|
 | live_process | 记录了一些实时的进程中执行的一些数据|
 | log | 记录hilog打印日志数据|
 | measure_filter | 记录一个递增的filterid队列，所有其他的filter类型在获取过程中，均从此数据列表中获取下一个可用的filter_id并做记录|
@@ -71,9 +73,11 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | trace_range | 记录ftrace数据与其他类型数据的时间交集，供前端展示数据时使用|
 | clock_snapshot | 时钟号和时间，时钟名的映射表|
 | datasource_clockid | 数据源和时钟号的映射表|
+| task_pool | 记录任务池相关数据，与callstack表相关联|
 ## 表与事件来源
 |        表名称        |   事件源     |      插件名       |          备注         |
 |         ----         |    ----      |         ----      |           ----        |
+|animation    |    -         |ftrace-plugin      |记录动效的响应时延和完成时延   |
 |app_name              |    -         |hisysevent-plugin  |JSON数据源             |
 |args                  |    -         |ftrace-plugin      |配合callstack使用      |
 |callstack             |    -         |ftrace-plugin      |异步或非异步的调用     |
@@ -81,6 +85,8 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |cpu_usage             |    -         |cpu-plugin         |cpu使用率              |
 |data_dict             |  通用的      |    -              |所有字符串的记录       |
 |data_type             |  通用的      |    -              |辅助表                 |
+|device_info    |    -         |ftrace-plugin      |记录设备分辨率和帧率   |
+|dynamic_frame    |    -         |ftrace-plugin      |记录动效帧的分辨率和结束时间等   |
 |file_system_callstack |    -         |    -              |ebpf文件系统           |
 |file_system_sample    |    -         |    -              |ebpf文件系统           |
 |frame_maps    |    -         |ftrace-plugin              |帧渲染数据，app到RS的映射           |
@@ -99,6 +105,8 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | js_heap_string       |    -         |arkts-plugin          | js内存数据            |
 | js_heap_trace_function_info | -     |arkts-plugin          | js内存数据            |
 | js_heap_trace_node   |    -         |arkts-plugin          | js内存数据            |
+| app_startup   |    -         |ftrace-plugin          | 应用启动数据            |
+| static_initalize   |    -         |ftrace-plugin          | so初始化数据            |
 |live_process          |    -         |process-plugin     |Monitor数据            |
 |network               |    -         |network-plugin     |Monitor数据            |
 |diskio                |    -         |diskio-plugin      |Monitor数据            |
@@ -132,6 +140,7 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |thread_filter         |  通用的      |ftrace-plugin      |线程计量跟踪表（比较少用）|
 |clock_snapshot         |  通用的      |通用的      |时钟号和时间，时钟名的映射表|
 |datasource_clockid         |  通用的      |通用的      |数据源和时钟号的映射表|
+|task_pool             |    -         |    -             |任务池数据              |
 
 ## ___表格关系图___
 ---
@@ -751,6 +760,50 @@ js_heap_sample:记录timeline的时间轴信息
 - count：调用栈个数
 - size：调用栈大小
 - parent_id：调用栈父节点
+
+### app_startup表
+#### 表结构
+| Columns Name        | SQL TYPE |
+| ------------------- | -------- |
+| call_id             | INT      |
+| ipid                | INT      |
+| tid                 | INT      |
+| start_time          | INT      |
+| end_time            | INT      |
+| start_name          | INT      |
+| packed_name         | INT      |
+#### 表描述
+记录了应用启动的相关信息。
+#### 相关字段描述
+- call_id：调用者的ID，比如针对线程表里面的id
+- ipid：内部进程号
+- tid：内部线程号
+- start_time：阶段开始时间
+- end_time：阶段结束时间
+- start_name：阶段名称
+- packed_name：应用名称
+
+### static_intialize表
+#### 表结构
+| Columns Name        | SQL TYPE |
+| ------------------- | -------- |
+| call_id             | INT      |
+| ipid                | INT      |
+| tid                 | INT      |
+| start_time          | INT      |
+| end_time            | INT      |
+| so_name             | INT      |
+| depth               | INT      |
+#### 表描述
+记录了so初始化的相关信息。
+#### 相关字段描述
+- call_id：调用者的ID，比如针对线程表里面的id
+- ipid：内部进程号
+- tid：内部线程号
+- start_time：阶段开始时间
+- end_time：阶段结束时间
+- so_name：so文件名称
+- depth：泳道图的深度
 
 ### live_process表
 #### 表结构
@@ -1472,3 +1525,81 @@ js_heap_sample:记录timeline的时间轴信息
 #### 关键字段描述
 - start_ts：trace的开始时间，纳秒为单位
 - end_ts：trace的结束时间，纳秒为单位
+### task_pool表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id                   |INT       |
+|allocation_task_row  |INT       |
+|execute_task_row     |INT       |
+|return_task_row      |INT       |
+|allocation_task_id   |INT       |
+|execute_task_id      |INT       |
+|return_task_id       |INT       |
+|execute_id           |INT       |
+|priority             |INT       |
+|execute_state        |INT       |
+|return_state         |INT       |
+#### 表描述
+该表记录了任务池相关数据，与callstack表关联。
+#### 关键字段描述
+- allocation_task_row：与callstack表id号相关联
+- execute_task_row：与callstack表id号相关联
+- return_task_row：与callstack表id号相关联
+- allocation_task_id：任务分发的id号
+- execute_task_id：任务执行的id号
+- return_task_id：任务返回的id号
+- execute_id：任务执行id
+- priority：任务分发独有的，优先级{HIGH : 0，MEDIUM : 1，LOW : 2}
+- execute_state：任务执行独有的执行状态{NOT_FOUND : 0，WAITING : 1，RUNNING : 2，CANCELED : 3}
+- return_state：任务返回独有的任务返回状态[IsCanceled DeserializeFailed Successful Unsuccessful]
+### animation表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id                   |INT       |
+|input_time           |INT       |
+|start_point          |INT       |
+|end_point            |INT       |
+#### 表描述
+该表记录动效的响应时延和完成时延。
+#### 关键字段描述
+- input_time：输入时间点
+- start_point：开始时间点
+- end_point：结束时间点
+### dynamic_frame表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id                   |INT       |
+|x                    |INT       |
+|y                    |INT       |
+|width                |INT       |
+|height               |INT       |
+|alpha                |TEXT      |
+|name                 |INT       |
+|end_time             |INT       |
+#### 表描述
+该表记录动效帧的坐标、分辨率、结束时间等。
+#### 关键字段描述
+- x：坐标x
+- y：坐标y
+- width：宽
+- height：高
+- alpha：透明度
+- name：当前动效帧名字
+- end_time：结束时间
+### dynamic_frame表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id                   |INT       |
+|physical_width       |INT       |
+|physical_height      |INT       |
+|physical_frame_rate  |INT       |
+#### 表描述
+该表记录设备分辨率和帧率。
+#### 关键字段描述
+- physical_width：设备宽
+- physical_height：设备高
+- physical_frame_rate：设备帧率

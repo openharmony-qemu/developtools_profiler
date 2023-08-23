@@ -20,7 +20,8 @@ import { SpFreqChart } from './SpFreqChart.js';
 import { SpFpsChart } from './SpFpsChart.js';
 import {
   getCpuUtilizationRate,
-  queryDataDICT, queryTaskPoolCallStack,
+  queryDataDICT,
+  queryTaskPoolCallStack,
   queryThreadAndProcessName,
   queryTotalTime,
 } from '../../database/SqlLite.js';
@@ -41,7 +42,7 @@ import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
 import { SpFrameTimeChart } from './SpFrameTimeChart.js';
 import { Utils } from '../trace/base/Utils.js';
-import { SpJsMemoryChart } from './SpJsMemoryChart.js';
+import { SpArkTsChart } from './SpArkTsChart.js';
 
 export class SpChartManager {
   private trace: SpSystemTrace;
@@ -60,7 +61,7 @@ export class SpChartManager {
   private clockChart: SpClockChart;
   private irqChart: SpIrqChart;
   frameTimeChart: SpFrameTimeChart;
-  private jsMemory: SpJsMemoryChart;
+  public arkTsChart: SpArkTsChart;
 
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
@@ -79,7 +80,7 @@ export class SpChartManager {
     this.clockChart = new SpClockChart(trace);
     this.irqChart = new SpIrqChart(trace);
     this.frameTimeChart = new SpFrameTimeChart(trace);
-    this.jsMemory = new SpJsMemoryChart(trace);
+    this.arkTsChart = new SpArkTsChart(trace);
   }
 
   async init(progress: Function) {
@@ -121,9 +122,6 @@ export class SpChartManager {
     progress('native memory', 87);
     await this.nativeMemory.initChart();
     info('Native Memory Data initialized');
-    progress('js memory', 87.5);
-    await this.jsMemory.initChart();
-    info('js Memory Data initialized');
     progress('ability monitor', 88);
     await this.abilityMonitor.init();
     progress('hiSysevent', 88.2);
@@ -140,8 +138,11 @@ export class SpChartManager {
     info('Ability Monitor Data initialized');
     await perfDataQuery.initPerfCache();
     info('HiPerf Data initialized');
+    progress('ark ts', 90);
+    await this.arkTsChart.initFolder();
+    info('ark ts initialized');
     await this.frameTimeChart.init();
-    progress('process', 90);
+    progress('process', 92);
     await this.process.initAsyncFuncData();
     await this.process.initDeliverInputEvent();
     await this.process.init();
@@ -183,7 +184,7 @@ export class SpChartManager {
       }
       this.trace.timerShaftEL.totalNS = total;
       this.trace.timerShaftEL.getRangeRuler()!.drawMark = true;
-      this.trace.timerShaftEL.setRangeNS(0,total);
+      this.trace.timerShaftEL.setRangeNS(0, total);
       (window as any).recordStartNS = startNS;
       (window as any).recordEndNS = endNS;
       (window as any).totalNS = total;
