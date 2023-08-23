@@ -69,7 +69,6 @@ trace_streamer_include = [
   "parser/htrace_pbreader_parser/htrace_event_parser",
   "parser/htrace_pbreader_parser/htrace_cpu_parser",
   "parser/hiperf_parser",
-  "//developtools/hiperf/include",
   "${THIRD_PARTY}/sqlite/include",
   "${THIRD_PARTY}/json/single_include/nlohmann",
   "${THIRD_PARTY}/protobuf/src",
