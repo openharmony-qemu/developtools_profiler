@@ -25,7 +25,7 @@ import {
 } from '../../../../database/SqlLite.js';
 import { BaseStruct } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
-import {LitProgressBar} from "../../../../../base-ui/progress-bar/LitProgressBar.js";
+import {LitProgressBar} from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 
 @element('tabpane-task-frames')
 export class TabPaneTaskFrames extends BaseElement {
@@ -58,7 +58,7 @@ export class TabPaneTaskFrames extends BaseElement {
       this.taskFramesTbl!!.recycleDataSource = [];
       return;
     } else {
-      let sTime = 0, eTime = 0, rTime = 0;
+      let sTime, eTime = 0, rTime;
       let aStartTime = 0, pStartTime = 0, rEndTime = 0;
       let priorityId = 1;
       let executeId = '';
@@ -279,13 +279,11 @@ export class TabPaneTaskFrames extends BaseElement {
           let tasks:Array<TaskTabStruct> = res[1]
           for (let i = 0; i < tasks.length; i++) {
             const task = tasks[i];
-            // @ts-ignore
-            const endTime = task!.startTs + task!.dur;
+            const endTime = task!.startTs! + task!.dur!;
             currentConcurrency++;
             for (let j = i + 1; j < tasks.length; j++) {
               const nextTask = tasks[j];
-              // @ts-ignore
-              if (nextTask.startTs < endTime) {
+              if (nextTask.startTs! < endTime) {
                 currentConcurrency++;
               }
             }
@@ -387,5 +385,4 @@ export class TaskTabStruct extends BaseStruct {
   priority: number | undefined;
   taskPriority: string | undefined;
   isUse: boolean = false;
-  isTimeOut: boolean | undefined;
 }

@@ -80,6 +80,10 @@ import { AppStartupStruct } from './ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from './ui-worker/ProcedureWorkerSoInit.js';
 import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerCommon.js';
 import { TaskTabStruct } from '../component/trace/sheet/task/TabPaneTaskFrames.js';
+import { DeviceStruct } from '../bean/FrameComponentBean.js';
+import { FrameSpacingStruct } from './ui-worker/ProcedureWorkerFrameSpacing.js';
+import { FrameDynamicStruct } from './ui-worker/ProcedureWorkerFrameDynamic.js';
+import { FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnimation.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
@@ -4242,14 +4246,15 @@ export const queryConcurrencyTask = (funName: string, selectStartTime: number, s
                           LEFT JOIN callstack ON thread.id = callstack.callid
                    WHERE callstack.name = $funName)
        AND thread.name = 'TaskWorkThread'
+       AND callstack.name LIKE 'H:Task Perform:%'
        AND -- 左包含
-           ($selectStartTime <= callstack.ts AND $selectEndTime > callstack.ts AND callstack.name LIKE 'H:Task Perform:%')
+           (($selectStartTime <= callstack.ts AND $selectEndTime > callstack.ts)
         OR -- 右包含
-       ($selectStartTime < callstack.ts + callstack.dur AND $selectEndTime >= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+       ($selectStartTime < callstack.ts + callstack.dur AND $selectEndTime >= callstack.ts + callstack.dur)
         OR -- 包含
-       ($selectStartTime >= callstack.ts AND $selectEndTime <= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+       ($selectStartTime >= callstack.ts AND $selectEndTime <= callstack.ts + callstack.dur)
         OR -- 被包含
-       ($selectStartTime <= callstack.ts AND $selectEndTime >= callstack.ts + callstack.dur AND callstack.name LIKE 'H:Task Perform:%')
+       ($selectStartTime <= callstack.ts AND $selectEndTime >= callstack.ts + callstack.dur))
      ORDER BY callstack.ts;`,
     { $funName: funName, $selectStartTime: selectStartTime, $selectEndTime: selectEndTime}
   );
@@ -4337,3 +4342,104 @@ export const queryTaskPoolTotalNum = (funName: string) =>
          GROUP BY thread.tid;`,
         { $funName: funName}
     );
+
+
+export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> =>
+  query(
+    'queryFrameAnimationData',
+    `SELECT
+           a.id AS animationId,
+           (CASE
+               WHEN a.input_time not null THEN (a.input_time - R.start_ts)
+               ELSE (a.start_point- R.start_ts)
+               END) AS ts,
+           (a.start_point - R.start_ts) AS dynamicStartTs,
+           (a.end_point - R.start_ts) AS dynamicEndTs
+        FROM 
+            animation AS a,
+            trace_range AS R
+        ORDER BY 
+            ts;`
+  );
+
+export const queryFrameDynamicData = (componentName: string): Promise<Array<FrameDynamicStruct>> =>
+  query(
+    'queryFrameDynamicData',
+    `SELECT
+           d.id,
+           d.x,
+           d.y,
+           d.width,
+           d.height,
+           d.alpha,
+           d.name AS appName,
+           (d.end_time - R.start_ts) AS ts
+        FROM 
+            dynamic_frame AS d,
+            trace_range AS R
+        WHERE
+            d.name = $componentName
+        ORDER BY 
+            d.end_time;`, {$componentName: componentName}
+  );
+
+export const queryFrameApp = (): Promise<Array<{
+  appName: string
+}>> =>
+  query(
+    'queryFrameApp',
+    `SELECT 
+            DISTINCT d.name as appName
+         FROM 
+             dynamic_frame AS d, 
+             trace_range AS R
+         WHERE 
+            d.end_time >= R.start_ts
+            AND
+            d.end_time <= R.end_ts;`
+  );
+
+export const queryAnimationFrameFps = (startTime: number, endTime: number): Promise<Array<{
+  fps: number
+}>> =>
+  query(
+    'queryAnimationFrameFps',
+    `SELECT
+            count(*) as fps
+        FROM
+            dynamic_frame AS d,
+            trace_range AS R
+        WHERE 
+            d.end_time >= (${startTime} + R.start_ts)
+        AND
+            d.end_time <= (${endTime} + R.start_ts)`
+  );
+
+export const queryFrameSpacing = (appName: string): Promise<Array<FrameSpacingStruct>> =>
+  query(
+    'queryFrameSpacing',
+    `SELECT
+         d.id,
+         d.width AS currentFrameWidth,
+         d.height AS currentFrameHeight,
+         d.name AS nameId,
+         (d.end_time - R.start_ts) AS currentTs,
+         d.x,
+         d.y
+     FROM
+         dynamic_frame AS d,
+         trace_range AS R
+     WHERE
+         d.name = $appName
+     ORDER BY
+         d.end_time;`, {$appName: appName}
+  );
+
+export const queryPhysicalData = (): Promise<Array<DeviceStruct>> =>
+  query(
+    'queryPhysicalData',
+    `SELECT physical_width AS physicalWidth,
+            physical_height AS physicalHeight,
+            physical_frame_rate AS physicalFrameRate
+     FROM device_info;`
+  );

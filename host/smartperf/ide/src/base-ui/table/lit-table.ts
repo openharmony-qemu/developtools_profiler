@@ -19,7 +19,7 @@ import { element } from '../BaseElement.js';
 import '../utils/Template.js';
 import { TableRowObject } from './TableRowObject.js';
 import { ExcelFormater } from '../utils/ExcelFormater.js';
-import { JSonToCSV } from '../utils/CSVFormater.js';
+import { JSONToCSV } from '../utils/CSVFormater.js';
 import { NodeType } from '../../js-heap/model/DatabaseStruct.js';
 import { ConstructorType } from '../../js-heap/model/UiStruct.js';
 
@@ -370,7 +370,7 @@ export class LitTable extends HTMLElement {
     this.exportLoading = true;
     this.exportProgress!.loading = true;
     let date = new Date();
-    JSonToCSV.csvExport({
+    JSONToCSV.csvExport({
       columns: this.columns as any[],
       tables: this.ds,
       fileName: date.getTime() + '',

@@ -90,6 +90,9 @@ import { AppStartupStruct } from '../database/ui-worker/ProcedureWorkerAppStartu
 import { SoStruct } from '../database/ui-worker/ProcedureWorkerSoInit.js';
 import { TabPaneTaskFrames } from './trace/sheet/task/TabPaneTaskFrames.js';
 import { FlagsConfig } from './SpFlags.js';
+import { FrameDynamicStruct } from '../database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import { FrameAnimationStruct } from '../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import { FrameSpacingStruct } from '../database/ui-worker/ProcedureWorkerFrameSpacing.js';
 
 function dpr() {
   return window.devicePixelRatio || 1;
@@ -152,7 +155,7 @@ export class SpSystemTrace extends BaseElement {
   public timerShaftEL: TimerShaftElement | null | undefined;
   private traceSheetEL: TraceSheet | undefined | null;
   private rangeSelect!: RangeSelect;
-  private chartManager: SpChartManager | undefined | null;
+  chartManager: SpChartManager | undefined | null;
   private loadTraceCompleted: boolean = false;
   private rangeTraceRow: Array<TraceRow<any>> | undefined = [];
   canvasFavoritePanel: HTMLCanvasElement | null | undefined; //绘制收藏泳道图
@@ -824,6 +827,30 @@ export class SpSystemTrace extends BaseElement {
             ?.querySelector('#box-heap-summary')
             ?.querySelector('tabpane-summary') as TabPaneSummary;
           summary.initSummaryData(SpJsMemoryChart.file, minNodeId, maxNodeId);
+        } else if (it.rowType == TraceRow.ROW_TYPE_FRAME_ANIMATION) {
+          let isIntersect = (animationStruct: FrameAnimationStruct, selectStruct: RangeSelectStruct) =>
+            Math.max(animationStruct.ts! + animationStruct.dur!, selectStruct!.endNS || 0)
+            - Math.min(animationStruct.ts!, selectStruct!.startNS || 0) < animationStruct.dur! + (selectStruct!
+              .endNS || 0) - (selectStruct!.startNS || 0);
+          let frameAnimationList = it.dataList.filter((frameAnimationBean: FrameAnimationStruct) => {
+            return isIntersect(frameAnimationBean, TraceRow.rangeSelectObject!);
+          });
+          selection.frameAnimation.push(...frameAnimationList);
+        } else if (it.rowType == TraceRow.ROW_TYPE_FRAME_DYNAMIC) {
+          let isSelect = (dynamicStruct: FrameDynamicStruct, b: RangeSelectStruct) =>
+            (dynamicStruct.ts >= b.startNS! && dynamicStruct.ts <= b.endNS!);
+          let frameDynamicList = it.dataList.filter((frameAnimationBean: FrameDynamicStruct) =>
+            isSelect(frameAnimationBean, TraceRow.rangeSelectObject!) && frameAnimationBean.groupId !== -1
+          );
+          selection.frameDynamic.push(...frameDynamicList);
+        } else if (it.rowType == TraceRow.ROW_TYPE_FRAME_SPACING) {
+          let isSelect = (a: FrameSpacingStruct, b: RangeSelectStruct) =>
+            (a.currentTs >= b.startNS! && a.currentTs <= b.endNS!);
+          let frameDatas = it.dataList.filter((frameData: FrameSpacingStruct) => {
+            return isSelect(frameData, TraceRow.rangeSelectObject!) && frameData.groupId !== -1
+              && frameData.frameSpacingResult !== -1;
+          });
+          selection.frameSpacing.push(...frameDatas);
         }
         if (this.rangeTraceRow!.length !== rows.length) {
           let event = this.createPointEvent(it);
@@ -1480,6 +1507,12 @@ export class SpSystemTrace extends BaseElement {
         (SoStruct.selectSoStruct.startTs || 0) + (SoStruct.selectSoStruct.dur || 0),
         shiftKey
       );
+    } else if (FrameAnimationStruct.selectFrameAnimationStruct) {
+      this.timerShaftEL?.setSlicesMark(
+        FrameAnimationStruct.selectFrameAnimationStruct.ts || 0,
+        (FrameAnimationStruct.selectFrameAnimationStruct.ts || 0)
+        + (FrameAnimationStruct.selectFrameAnimationStruct.dur || 0)
+      );
     } else {
       this.slicestime = this.timerShaftEL?.setSlicesMark();
     }
@@ -1657,6 +1690,9 @@ export class SpSystemTrace extends BaseElement {
     AppStartupStruct.hoverStartupStruct = undefined;
     SoStruct.hoverSoStruct = undefined;
     HeapSnapshotStruct.hoverSnapshotStruct = undefined;
+    FrameAnimationStruct.hoverFrameAnimationStruct = undefined;
+    FrameDynamicStruct.hoverFrameDynamicStruct = undefined;
+    FrameSpacingStruct.hoverFrameSpacingStruct = undefined;
   }
 
   selectStructNull() {
@@ -1675,6 +1711,9 @@ export class SpSystemTrace extends BaseElement {
     AppStartupStruct.selectStartupStruct = undefined;
     SoStruct.selectSoStruct = undefined;
     HeapSnapshotStruct.selectSnapshotStruct = undefined;
+    FrameSpacingStruct.selectFrameSpacingStruct = undefined;
+    FrameAnimationStruct.selectFrameAnimationStruct = undefined;
+    FrameDynamicStruct.selectFrameDynamicStruct = undefined;
   }
 
   isWASDKeyPress() {
@@ -1783,6 +1822,12 @@ export class SpSystemTrace extends BaseElement {
       TraceRow.ROW_TYPE_HEAP_SNAPSHOT,
       () => HeapSnapshotStruct.hoverSnapshotStruct !== null && HeapSnapshotStruct.hoverSnapshotStruct !== undefined,
     ],
+    [TraceRow.ROW_TYPE_FRAME_ANIMATION, () => FrameAnimationStruct.hoverFrameAnimationStruct !== null
+      && FrameAnimationStruct.hoverFrameAnimationStruct !== undefined],
+    [TraceRow.ROW_TYPE_FRAME_DYNAMIC, () => FrameDynamicStruct.hoverFrameDynamicStruct !== null
+      && FrameDynamicStruct.hoverFrameDynamicStruct !== undefined],
+    [TraceRow.ROW_TYPE_FRAME_SPACING, () => FrameSpacingStruct.hoverFrameSpacingStruct !== null
+      && FrameSpacingStruct.hoverFrameSpacingStruct !== undefined],
   ]);
 
   onClickHandler(clickRowType: string, row?: TraceRow<any>) {
@@ -2068,6 +2113,18 @@ export class SpSystemTrace extends BaseElement {
     } else if (clickRowType === TraceRow.ROW_TYPE_STATIC_INIT && SoStruct.hoverSoStruct) {
       SoStruct.selectSoStruct = SoStruct.hoverSoStruct;
       this.traceSheetEL?.displayStaticInitData(SoStruct.selectSoStruct, scrollToFuncHandler);
+      this.timerShaftEL?.modifyFlagList(undefined);
+    } else if (clickRowType === TraceRow.ROW_TYPE_FRAME_ANIMATION && FrameAnimationStruct.hoverFrameAnimationStruct) {
+      FrameAnimationStruct.selectFrameAnimationStruct = FrameAnimationStruct.hoverFrameAnimationStruct;
+      this.traceSheetEL?.displayFrameAnimationData(FrameAnimationStruct.selectFrameAnimationStruct);
+      this.timerShaftEL?.modifyFlagList(undefined);
+    } else if (clickRowType === TraceRow.ROW_TYPE_FRAME_DYNAMIC && FrameDynamicStruct.hoverFrameDynamicStruct) {
+      FrameDynamicStruct.selectFrameDynamicStruct = FrameDynamicStruct.hoverFrameDynamicStruct;
+      this.traceSheetEL?.displayFrameDynamicData(row!, FrameDynamicStruct.selectFrameDynamicStruct);
+      this.timerShaftEL?.modifyFlagList(undefined);
+    } else if (clickRowType === TraceRow.ROW_TYPE_FRAME_SPACING && FrameSpacingStruct.hoverFrameSpacingStruct) {
+      FrameSpacingStruct.selectFrameSpacingStruct = FrameSpacingStruct.hoverFrameSpacingStruct;
+      this.traceSheetEL?.displayFrameSpacingData(FrameSpacingStruct.selectFrameSpacingStruct);
       this.timerShaftEL?.modifyFlagList(undefined);
     } else {
       if (!JankStruct.hoverJankStruct && JankStruct.delJankLineFlag) {

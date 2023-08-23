@@ -42,7 +42,6 @@ export class AppStartupRender {
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
-    req.context.font = '11px sans-serif';
     req.context.globalAlpha = 0.6;
     let find = false;
     let offset = 3;
@@ -89,12 +88,13 @@ export class AppStartupStruct extends BaseStruct {
       ctx.fillStyle = ColorUtils.colorForTid(data.startName!);
       ctx.fillRect(data.frame.x, data.frame.y, data.frame.width, data.frame.height);
       if(data.frame.width > 7) {
-        ctx.fillStyle = '#fff';
         ctx.textBaseline = 'middle';
-        ctx.font = '8px sans-serif';
+        ctx.lineWidth = 1;
         if (data.stepName === undefined) {
           data.stepName = `${AppStartupStruct.getStartupName(data.startName)} (${(data.dur! / 1000000).toFixed(2)}ms)`
         }
+        let textColor = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.stepName || '', 0, ColorUtils.FUNC_COLOR.length)];
+        ctx.fillStyle = ColorUtils.funcTextColor(textColor);
         drawString(ctx, data.stepName, 2, data.frame, data);
       }
       if (data === AppStartupStruct.selectStartupStruct) {

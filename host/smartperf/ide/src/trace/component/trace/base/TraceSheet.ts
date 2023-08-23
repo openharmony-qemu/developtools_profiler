@@ -45,6 +45,12 @@ import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { SlicesTime } from '../timer-shaft/SportRuler.js';
 import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
+import { FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import { TraceRow } from './TraceRow.js';
+import { FrameDynamicStruct } from '../../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
+import { FrameSpacingStruct } from '../../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
+import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
   private litTabs: LitTabs | undefined | null;
@@ -420,6 +426,16 @@ export class TraceSheet extends BaseElement {
     (this.displayTab<TabPaneCurrentSelection>('cpu-state-click').data = CpuStateStruct.selectStateStruct);
   displayFreqLimitData = () =>
     (this.displayTab<TabPaneCurrentSelection>('box-freq-limit').data = CpuFreqLimitsStruct.selectCpuFreqLimitsStruct);
+
+  displayFrameAnimationData = (
+    data: FrameAnimationStruct
+  ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setFrameAnimationData(data);
+  displayFrameDynamicData = (
+    row: TraceRow<FrameDynamicStruct>,
+    data: FrameDynamicStruct
+  ) => this.displayTab<TabPaneFrameDynamic>('box-frame-dynamic').buildDynamicTable([data], true);
+  displayFrameSpacingData = (data: FrameSpacingStruct): void =>
+    this.displayTab<TabFrameSpacing>('box-frames-spacing').setFrameSpacingData(data);
 
   rangeSelect(selection: SelectionParam, restore = false): boolean {
     this.selection = selection;

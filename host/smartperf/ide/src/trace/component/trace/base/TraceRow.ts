@@ -89,6 +89,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_IRQ_GROUP = 'irq-group';
   static ROW_TYPE_IRQ = 'irq';
   static ROW_TYPE_JANK = 'janks';
+  static ROW_TYPE_FRAME_ANIMATION = 'frame-animation';
+  static ROW_TYPE_FRAME_DYNAMIC = 'frame-dynamic';
+  static ROW_TYPE_FRAME_SPACING = 'frame-spacing';
   static FRAME_WIDTH: number = 0;
   static range: TimeRange | undefined | null;
   static rangeSelectObject: RangeSelectStruct | undefined;
@@ -376,10 +379,24 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   addChildTraceRowAfter(child: TraceRow<any>, targetRow: TraceRow<any>) {
     TraceRowConfig.allTraceRowList.push(child);
     child.parentRowEl = this;
+    this.toParentAddTemplateType(child);
     let index = this.childrenList.indexOf(targetRow);
     child.setAttribute('scene', '');
     if (index != -1) {
       this.childrenList.splice(index + 1, 0, child);
+    } else {
+      this.childrenList.push(child);
+    }
+  }
+
+  addChildTraceRowBefore(child: TraceRow<BaseStruct>, targetRow: TraceRow<BaseStruct>) {
+    TraceRowConfig.allTraceRowList.push(child);
+    child.parentRowEl = this;
+    this.toParentAddTemplateType(child);
+    let index = this.childrenList.indexOf(targetRow);
+    child.setAttribute('scene', '');
+    if (index != -1) {
+      this.childrenList.splice(index, 0, child);
     } else {
       this.childrenList.push(child);
     }

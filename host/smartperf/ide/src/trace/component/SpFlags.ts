@@ -174,7 +174,7 @@ export class SpFlags extends BaseElement {
     allConfig.forEach((config) => {
       let configDiv = this.createConfigDiv();
       this.createCustomDiv(config, configDiv);
-      if (config.title === 'DynamicAnalysis') {
+      if (config.title === 'AnimationAnalysis') {
         let configFooterDiv = document.createElement('div');
         configFooterDiv.className = 'config_footer';
         let deviceWidthLabelEl = document.createElement('label');
@@ -227,6 +227,17 @@ export class FlagsConfig {
       title: 'TaskPool',
       switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
       describeContent: 'Analyze TaskPool templates',
+    },
+    {
+      title: 'AnimationAnalysis',
+      switchOptions: [{option: 'Enabled'}, {option: 'Disabled', selected: true}],
+      describeContent: 'Analyze Animation effect templates',
+      addInfo: {physicalWidth: 0, physicalHeight: 0}
+    },
+    {
+      title: 'AppStartup',
+      switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
+      describeContent: 'App Startup templates',
     },
   ];
 

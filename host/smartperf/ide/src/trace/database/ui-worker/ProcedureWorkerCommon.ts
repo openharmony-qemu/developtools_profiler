@@ -91,7 +91,9 @@ export function ns2s(ns: number): string {
 export function isFrameContainPoint(frame: Rect, x: number, y: number): boolean {
   return x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height;
 }
-
+export const isSurroundingPoint = function (pointX: number, currentRect: Rect, unitPointXRange: number): boolean {
+  return (pointX >= currentRect.x - unitPointXRange) && pointX <= currentRect.x + unitPointXRange;
+};
 class FilterConfig {
   startNS: number = 0;
   endNS: number = 0;

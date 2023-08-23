@@ -77,6 +77,9 @@ import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
 import { TabPaneStartup } from '../sheet/process/TabPaneStartup.js';
 import { TabPaneStaticInit } from '../sheet/process/TabPaneStaticInit.js';
 import { TabPaneTaskFrames } from '../sheet/task/TabPaneTaskFrames.js';
+import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
+import { TabPaneFrameAnimation } from '../sheet/frame/TabPaneFrameAnimation.js';
+import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
 
 export let tabConfig: any = {
   'tabpane-current': {
@@ -399,5 +402,20 @@ export let tabConfig: any = {
     title: 'Frames',
     type: TabPaneTaskFrames,
     require: (param: SelectionParam) => param.taskFramesData.length > 0,
+  },
+  'box-frame-dynamic': {
+    title: 'Frame Dynamic',
+    type: TabPaneFrameDynamic,
+    require: (param: SelectionParam) => param.frameDynamic.length > 0
+  },
+  'box-frame-animation': {
+    title: 'Frame Animation',
+    type: TabPaneFrameAnimation,
+    require: (param: SelectionParam) => param.frameAnimation.length > 0
+  },
+  'box-frames-spacing': {
+    title: 'Frame spacing',
+    type: TabFrameSpacing,
+    require: (param: SelectionParam) => param.frameSpacing.length > 0,
   },
 };

@@ -59,7 +59,7 @@ export class SpChartManager {
   private smapsChart: SmapsChart;
   private clockChart: SpClockChart;
   private irqChart: SpIrqChart;
-  private frameTimeChart: SpFrameTimeChart;
+  frameTimeChart: SpFrameTimeChart;
   private jsMemory: SpJsMemoryChart;
 
   constructor(trace: SpSystemTrace) {

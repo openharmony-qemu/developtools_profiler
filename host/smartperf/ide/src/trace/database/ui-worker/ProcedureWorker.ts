@@ -51,6 +51,9 @@ import { HeapSnapshotRender } from './ProcedureWorkerHeapSnapshot.js';
 import { translateJsonString } from '../logic-worker/ProcedureLogicWorkerCommon.js';
 import { AppStartupRender } from './ProcedureWorkerAppStartup.js';
 import { SoRender } from './ProcedureWorkerSoInit.js';
+import { FrameDynamicRender } from './ProcedureWorkerFrameDynamic.js';
+import { FrameAnimationRender } from './ProcedureWorkerFrameAnimation.js';
+import { FrameSpacingRender } from './ProcedureWorkerFrameSpacing.js';
 
 let dataList: any = {};
 let dataList2: any = {};
@@ -99,6 +102,9 @@ export let renders: any = {
   clock: new ClockRender(),
   irq: new IrqRender(),
   jank: new JankRender(),
+  frameDynamicCurve: new FrameDynamicRender(),
+  frameAnimation: new FrameAnimationRender(),
+  frameSpacing: new FrameSpacingRender(),
 };
 
 function match(type: string, req: RequestMessage) {

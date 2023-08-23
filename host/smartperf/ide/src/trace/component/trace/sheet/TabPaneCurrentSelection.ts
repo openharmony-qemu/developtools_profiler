@@ -29,7 +29,7 @@ import {
   queryThreadWakeUp,
   queryThreadWakeUpFrom,
   queryCPUWakeUpIdFromBean,
-  queryThreadByItid,
+  queryThreadByItid, queryAnimationFrameFps,
 } from '../../../database/SqlLite.js';
 import { WakeupBean } from '../../../bean/WakeupBean.js';
 import { SpApplication } from '../../../SpApplication.js';
@@ -49,6 +49,7 @@ import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
 import { SelectionParam } from '../../../bean/BoxSelection.js';
+import { FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -872,6 +873,29 @@ export class TabPaneCurrentSelection extends BaseElement {
         });
       });
     }
+  }
+
+  async setFrameAnimationData(
+    data: FrameAnimationStruct
+  ): Promise<void>{
+    this.setTableHeight('550px');
+    this.tabCurrentSelectionInit('Animation Details');
+    let list = [];
+    let dataTs: number = data.ts < 0 ? 0 : data.ts;
+    list.push({ name: 'Name', value: data.animationId });
+    list.push({ name: 'Start time', value: `${Utils.getTimeString(dataTs)}`});
+    list.push({ name: 'End time', value: `${Utils.getTimeString(dataTs + (data.dur || 0))}`});
+    list.push({ name: 'Duration', value: `${Utils.getTimeString(data.dur || 0)}`,});
+    if (data.status === 'Completion delay') {
+      let result = await queryAnimationFrameFps(dataTs, dataTs + data.dur);
+      if (result.length > 0) {
+        let percentageNumber: number = 1;
+        let fixedNumber: number = 2;
+        let fpsValue: number = percentageNumber / result[0].fps;
+        list.push({ name: 'Frame', value: `${fpsValue.toFixed(fixedNumber) || 0} fps` });
+      }
+    }
+    this.currentSelectionTbl!.dataSource = list;
   }
 
   private setJankType(data: JankStruct, list: any[]) {

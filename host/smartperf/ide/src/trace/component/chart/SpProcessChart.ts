@@ -50,6 +50,7 @@ import { JankRender, JankStruct } from '../../database/ui-worker/ProcedureWorker
 import { ns2xByTimeShaft } from '../../database/ui-worker/ProcedureWorkerCommon.js';
 import { AppStartupRender, AppStartupStruct } from '../../database/ui-worker/ProcedureWorkerAppStartup.js';
 import { SoRender, SoStruct } from '../../database/ui-worker/ProcedureWorkerSoInit.js';
+import { FlagsConfig } from '../SpFlags.js';
 
 export class SpProcessChart {
   private readonly trace: SpSystemTrace;
@@ -175,8 +176,15 @@ export class SpProcessChart {
     this.processAsyncEvent = await getAsyncEvents();
     info('The amount of initialized process Event data is : ', this.processAsyncEvent!.length);
     this.processMem = await queryProcessMem();
-    this.startupProcessArr = await queryStartupPidArray();
-    this.processSoMaxDepth = await queryProcessSoMaxDepth();
+    let startupConfig = FlagsConfig.getFlagsConfig('AppStartup');
+    let loadAppStartup: boolean = false;
+    if (startupConfig && startupConfig.AppStartup) {
+      loadAppStartup = startupConfig.AppStartup === 'Enabled';
+    }
+    if (loadAppStartup) {
+      this.startupProcessArr = await queryStartupPidArray();
+      this.processSoMaxDepth = await queryProcessSoMaxDepth();
+    }
     info('The amount of initialized process memory data is : ', this.processMem!.length);
     let eventCountList: Array<any> = await queryEventCountMap();
     this.eventCountMap = eventCountList.reduce((pre, current) => {
@@ -247,15 +255,22 @@ export class SpProcessChart {
         processRow.canvasRestore(this.trace.canvasPanelCtx!);
       };
       this.trace.rowsEL?.appendChild(processRow);
+
+      /**
+       * App Startup row
+       */
       let startupRow: TraceRow<AppStartupStruct> | undefined = undefined;
       let soRow: TraceRow<SoStruct> | undefined = undefined;
-      if (this.startupProcessArr.find((sp) => sp.pid === it.pid)) {
-        startupRow = this.addStartUpRow(processRow);
+      if (loadAppStartup) {
+        if (this.startupProcessArr.find((sp) => sp.pid === it.pid)) {
+          startupRow = this.addStartUpRow(processRow);
+        }
+        let maxSoDepth = this.processSoMaxDepth.find((md) => md.pid === it.pid);
+        if (maxSoDepth) {
+          soRow = this.addSoInitRow(processRow, maxSoDepth.maxDepth);
+        }
       }
-      let maxSoDepth = this.processSoMaxDepth.find((md) => md.pid === it.pid);
-      if (maxSoDepth) {
-        soRow = this.addSoInitRow(processRow, maxSoDepth.maxDepth);
-      }
+
       /**
        * Janks Frames
        */
@@ -710,6 +725,7 @@ export class SpProcessChart {
           processRow.addChildTraceRowAfter(funcRow, threadRow);
         }
       }
+      await this.trace.chartManager?.frameTimeChart.initAnimatedScenesChart(processRow, it, expectedRow!);
     }
     let durTime = new Date().getTime() - time;
     info('The time to load the Process data is: ', durTime);
