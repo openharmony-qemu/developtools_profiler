@@ -82,8 +82,6 @@ Status ProfilerService::GetCapabilities(ServerContext* context,
                                         ::GetCapabilitiesResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "GetCapabilities from '%s'", context->peer().c_str());
-
     HILOG_INFO(LOG_CORE, "GetCapabilities %d start", request->request_id());
     std::vector<ProfilerPluginCapability> capabilities = ProfilerCapabilityManager::GetInstance().GetCapabilities();
 
@@ -228,9 +226,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
                                       ::CreateSessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "CreateSession from '%s'", context->peer().c_str());
     CHECK_POINTER_NOTNULL(pluginService_, "plugin service not ready!");
-
     // check plugin configs
     HILOG_INFO(LOG_CORE, "CreateSession %d start", request->request_id());
     const int nConfigs = request->plugin_configs_size();
@@ -465,8 +461,7 @@ Status ProfilerService::StartSession(ServerContext* context,
                                      ::StartSessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "StartSession from '%s'", context->peer().c_str());
-
+ 
     uint32_t sessionId = request->session_id();
     HILOG_INFO(LOG_CORE, "StartSession %d %u start", request->request_id(), sessionId);
 
@@ -518,7 +513,6 @@ Status ProfilerService::FetchData(ServerContext* context,
     CHECK_POINTER_NOTNULL(request, "request ptr invalid!");
     CHECK_POINTER_NOTNULL(writer, "writer ptr invalid!");
 
-    HILOG_INFO(LOG_CORE, "FetchData from '%s'", context->peer().c_str());
     CHECK_POINTER_NOTNULL(request, "request invalid!");
     CHECK_POINTER_NOTNULL(writer, "writer invalid!");
 
@@ -576,8 +570,6 @@ Status ProfilerService::StopSession(ServerContext* context,
                                     ::StopSessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "StopSession from '%s'", context->peer().c_str());
-
     uint32_t sessionId = request->session_id();
     HILOG_INFO(LOG_CORE, "StopSession %d %u start", request->request_id(), sessionId);
 
@@ -593,7 +585,6 @@ Status ProfilerService::DestroySession(ServerContext* context,
                                        ::DestroySessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "DestroySession from '%s'", context->peer().c_str());
 
     uint32_t sessionId = request->session_id();
     HILOG_INFO(LOG_CORE, "DestroySession %d %u start", request->request_id(), sessionId);
@@ -630,8 +621,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
                                             ::KeepSessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "KeepSession from '%s'", context->peer().c_str());
-
+    
     uint32_t sessionId = request->session_id();
     HILOG_INFO(LOG_CORE, "KeepSession %d %u start", request->request_id(), sessionId);
 
@@ -690,9 +680,8 @@ bool ProfilerService::StartService(const std::string& listenUri)
     builder.RegisterService(this);
 
     auto server = builder.BuildAndStart();
-    CHECK_NOTNULL(server, false, "start service on %s failed!", listenUri.c_str());
-    HILOG_INFO(LOG_CORE, "Server listening on %s", listenUri.c_str());
-
+    CHECK_NOTNULL(server, false, "start service failed!");
+    HILOG_INFO(LOG_CORE, "Service started successfully.");
     server_ = std::move(server);
     return true;
 }
