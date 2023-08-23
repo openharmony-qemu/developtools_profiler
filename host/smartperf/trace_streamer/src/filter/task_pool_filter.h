@@ -33,7 +33,7 @@ public:
     TaskPoolFilter(const TaskPoolFilter&) = delete;
     ~TaskPoolFilter() override;
     uint32_t CheckTheSameTask(int32_t executeId);
-    void TaskPoolEvent(const std::string& taskPoolStr, int32_t index);
+    bool TaskPoolEvent(const std::string& taskPoolStr, int32_t index);
     void TaskPoolFieldSegmentation(const std::string& taskPoolStr, std::unordered_map<std::string, std::string>& args);
     void UpdateAssignData(const std::unordered_map<std::string, std::string>& args, int32_t index);
     void UpdateExecuteData(const std::unordered_map<std::string, std::string>& args, int32_t index);

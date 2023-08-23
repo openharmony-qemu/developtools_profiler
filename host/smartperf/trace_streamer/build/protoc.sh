@@ -16,7 +16,7 @@ set -e
 THIS_DIR=$(dirname ${BASH_SOURCE[0]})
 PROJECT_TOP=$(realpath $THIS_DIR/../../..)
 TAIL_DIR="developtools/profiler"
-if [[ "$2" == *"developtools"* ]]; then
+if [[ $2 == *"developtools"* ]]; then
   TAIL_DIR="."
   PROJECT_TOP=$(realpath $THIS_DIR/..)
 fi
@@ -74,7 +74,7 @@ done
 PARAMS_ALL="$PARAMS_SRC $PARAMS_STANDARD" # add new argument list to old argument list
 
 # avoid conflict, param4=--plugin* means ipc plugin, generate encode file if opt plugin exist
-if [[ "$4" != --plugin* ]]; then
+if [[ $4 != --plugin* ]]; then
   if [ -f "$OPT_PLUGIN_PROTOREADER_PATH" ]; then
     echo "generate protobuf optimize code OPT_PLUGIN_PROTOREADER = $OPT_PLUGIN_PROTOREADER"
     LD_LIBRARY_PATH=$LIBCXX_X64_OUT:$SUBSYS_X64_OUT exec $PROTOC $OPT_PLUGIN_PROTOREADER:$5 $PARAMS_ALL

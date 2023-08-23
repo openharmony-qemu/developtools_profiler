@@ -164,6 +164,9 @@ public:
     JsHeapTraceNode jsHeapTraceNodeData_;
     AppStartup appStartupData_;
     SoStaticInitalization staticInitalizationData_;
+    Animation animation_;
+    DeviceInfo deviceInfo_;
+    DynamicFrame dynamicFrame_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

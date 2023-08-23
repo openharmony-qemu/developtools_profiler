@@ -108,6 +108,9 @@ public:
     const JsHeapTraceNode& GetConstJsHeapTraceNodeData() const;
     const AppStartup& GetConstAppStartupData() const;
     const SoStaticInitalization& GetConstStaticInitalizationData() const;
+    const Animation& GetConstAnimation() const;
+    const DeviceInfo& GetConstDeviceInfo() const;
+    const DynamicFrame& GetConstDynamicFrame() const;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

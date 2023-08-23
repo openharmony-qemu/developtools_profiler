@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <regex>
+#include "animation_filter.h"
 #include "app_start_filter.h"
 #include "args_filter.h"
 #include "binder_filter.h"
@@ -32,7 +33,9 @@
 #include "task_pool_filter.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/htrace_pbreader_parser/htrace_parser.h"
+#if WITH_PERF
 #include "perf_data_filter.h"
+#endif
 #include "process_filter.h"
 #include "slice_filter.h"
 #include "stat_filter.h"
@@ -102,6 +105,7 @@ void TraceStreamerSelector::InitFilter()
 {
     streamFilters_ = std::make_unique<TraceStreamerFilters>();
     traceDataCache_ = std::make_unique<TraceDataCache>();
+    streamFilters_->animationFilter_ = std::make_unique<AnimationFilter>(traceDataCache_.get(), streamFilters_.get());
     streamFilters_->cpuFilter_ = std::make_unique<CpuFilter>(traceDataCache_.get(), streamFilters_.get());
     streamFilters_->sliceFilter_ = std::make_unique<SliceFilter>(traceDataCache_.get(), streamFilters_.get());
 
@@ -142,7 +146,9 @@ void TraceStreamerSelector::InitFilter()
     streamFilters_->sysEventVMemMeasureFilter_ = std::make_unique<SystemEventMeasureFilter>(
         traceDataCache_.get(), streamFilters_.get(), E_SYS_VIRTUAL_MEMORY_FILTER);
     streamFilters_->appStartupFilter_ = std::make_unique<APPStartupFilter>(traceDataCache_.get(), streamFilters_.get());
+#if WITH_PERF
     streamFilters_->perfDataFilter_ = std::make_unique<PerfDataFilter>(traceDataCache_.get(), streamFilters_.get());
+#endif
     streamFilters_->sysEventSourceFilter_ = std::make_unique<SystemEventMeasureFilter>(
         traceDataCache_.get(), streamFilters_.get(), E_SYS_EVENT_SOURCE_FILTER);
     streamFilters_->hiSysEventMeasureFilter_ =
@@ -163,6 +169,9 @@ void TraceStreamerSelector::WaitForParserEnd()
         htraceParser_->WaitForParserEnd();
     }
     traceDataCache_->UpdateTraceRange();
+    if (traceDataCache_->AnimationTraceEnabled()) {
+        streamFilters_->animationFilter_->UpdateDynamicFrameInfo();
+    }
 }
 
 MetaData* TraceStreamerSelector::GetMetaData()
@@ -283,6 +292,10 @@ int32_t TraceStreamerSelector::UpdateTraceRangeTime(uint8_t* data, int32_t len)
 void TraceStreamerSelector::SetCancel(bool cancel)
 {
     traceDataCache_->SetCancel(cancel);
+}
+void TraceStreamerSelector::UpdateAnimationTraceStatus(bool status)
+{
+    traceDataCache_->UpdateAnimationTraceStatus(status);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

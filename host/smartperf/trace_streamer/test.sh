@@ -22,5 +22,5 @@ mkdir -p out/test/data/resource
 mkdir -p out/test_debug/data/resource
 cp test/resource/* out/test/data/resource/
 cp test/resource/* out/test_debug/data/resource/
-cd out/test
+cd out/test/clang_x64/developtools/profiler
 ./trace_streamer_ut

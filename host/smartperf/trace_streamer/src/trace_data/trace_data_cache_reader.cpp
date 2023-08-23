@@ -338,5 +338,17 @@ const SoStaticInitalization& TraceDataCacheReader::GetConstStaticInitalizationDa
 {
     return staticInitalizationData_;
 }
+const Animation& TraceDataCacheReader::GetConstAnimation() const
+{
+    return animation_;
+}
+const DeviceInfo& TraceDataCacheReader::GetConstDeviceInfo() const
+{
+    return deviceInfo_;
+}
+const DynamicFrame& TraceDataCacheReader::GetConstDynamicFrame() const
+{
+    return dynamicFrame_;
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

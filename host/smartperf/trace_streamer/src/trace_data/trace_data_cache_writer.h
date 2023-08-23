@@ -107,6 +107,9 @@ public:
     JsHeapTraceNode* GetJsHeapTraceNodeData();
     AppStartup* GetAppStartupData();
     SoStaticInitalization* GetStaticInitalizationData();
+    Animation* GetAnimation();
+    DeviceInfo* GetDeviceInfo();
+    DynamicFrame* GetDynamicFrame();
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

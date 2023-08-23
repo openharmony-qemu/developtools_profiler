@@ -20,7 +20,6 @@
 namespace SysTuning {
 namespace TraceStdtype {
 const int32_t MAX_SIZE_LEN = 80;
-const int32_t ONE_MILLION_NANOSECONDS = 1000000;
 #define UNUSED(expr)             \
     do {                         \
         static_cast<void>(expr); \
@@ -2877,6 +2876,166 @@ void TaskPoolInfo::UpdateReturnTaskData(uint32_t index,
         returnTaskIds_[index] = returnTaskId;
         returnStates_[index] = returnState;
     }
+}
+TableRowId Animation::AppendAnimation(InternalTime startPoint)
+{
+    inputTimes_.emplace_back(INVALID_TIME);
+    startPoints_.emplace_back(startPoint);
+    endPoins_.emplace_back(INVALID_TIME);
+    ids_.emplace_back(Size());
+    return ids_.size() - 1;
+}
+void Animation::UpdateStartPoint(TableRowId index, InternalTime startPoint)
+{
+    if (index <= Size()) {
+        startPoints_[index] = startPoint;
+    }
+}
+void Animation::UpdateEndPoint(TableRowId index, InternalTime endPoint)
+{
+    if (index <= Size()) {
+        endPoins_[index] = endPoint;
+    }
+}
+size_t Animation::Size() const
+{
+    return ids_.size();
+}
+const std::deque<InternalTime>& Animation::InputTimes() const
+{
+    return inputTimes_;
+}
+const std::deque<InternalTime>& Animation::StartPoints() const
+{
+    return startPoints_;
+}
+const std::deque<InternalTime>& Animation::EndPoints() const
+{
+    return endPoins_;
+}
+const std::deque<uint64_t>& Animation::IdsData() const
+{
+    return ids_;
+}
+void Animation::Clear()
+{
+    inputTimes_.clear();
+    startPoints_.clear();
+    endPoins_.clear();
+    ids_.clear();
+}
+const uint32_t DeviceInfo::PhysicalWidth() const
+{
+    return physicalWidth_;
+}
+const uint32_t DeviceInfo::PhysicalHeight() const
+{
+    return physicalHeight_;
+}
+const uint32_t DeviceInfo::PhysicalFrameRate() const
+{
+    return physicalFrameRate_;
+}
+void DeviceInfo::UpdateWidthAndHeight(uint32_t width, uint32_t height)
+{
+    physicalWidth_ = width;
+    physicalHeight_ = height;
+}
+void DeviceInfo::UpdateFrameRate(uint32_t frameRate)
+{
+    physicalFrameRate_ = frameRate;
+}
+void DeviceInfo::Clear()
+{
+    physicalWidth_ = INVALID_UINT32;
+    physicalHeight_ = INVALID_UINT32;
+    physicalFrameRate_ = INVALID_UINT32;
+}
+TableRowId DynamicFrame::AppendDynamicFrame(DataIndex nameId)
+{
+    names_.emplace_back(nameId);
+    ids_.emplace_back(Size());
+    xs_.emplace_back(INVALID_UINT32);
+    ys_.emplace_back(INVALID_UINT32);
+    widths_.emplace_back(INVALID_UINT32);
+    heights_.emplace_back(INVALID_UINT32);
+    alphas_.emplace_back(INVALID_UINT64);
+    endTimes_.emplace_back(INVALID_TIME);
+    return ids_.size() - 1;
+}
+void DynamicFrame::UpdateNameIndex(TableRowId index, DataIndex nameId)
+{
+    if (index <= Size()) {
+        names_[index] = nameId;
+    }
+}
+void DynamicFrame::UpdatePosition(TableRowId index,
+                                  uint32_t x,
+                                  uint32_t y,
+                                  uint32_t width,
+                                  uint32_t height,
+                                  DataIndex alpha)
+{
+    if (index <= Size()) {
+        xs_[index] = x;
+        ys_[index] = y;
+        widths_[index] = width;
+        heights_[index] = height;
+        alphas_[index] = alpha;
+    }
+}
+void DynamicFrame::UpdateEndTime(TableRowId index, InternalTime endTime)
+{
+    if (index <= Size()) {
+        endTimes_[index] = endTime;
+    }
+}
+size_t DynamicFrame::Size() const
+{
+    return ids_.size();
+}
+const std::deque<uint64_t>& DynamicFrame::IdsData() const
+{
+    return ids_;
+}
+const std::deque<uint32_t>& DynamicFrame::Xs() const
+{
+    return xs_;
+}
+const std::deque<uint32_t>& DynamicFrame::Ys() const
+{
+    return ys_;
+}
+const std::deque<uint32_t>& DynamicFrame::Widths() const
+{
+    return widths_;
+}
+const std::deque<uint32_t>& DynamicFrame::Heights() const
+{
+    return heights_;
+}
+const std::deque<DataIndex>& DynamicFrame::Alphas() const
+{
+    return alphas_;
+}
+const std::deque<DataIndex>& DynamicFrame::Names() const
+{
+    return names_;
+}
+const std::deque<InternalTime>& DynamicFrame::EndTimes() const
+{
+    return endTimes_;
+}
+void DynamicFrame::Clear()
+{
+    xs_.clear();
+    ys_.clear();
+    widths_.clear();
+    heights_.clear();
+    alphas_.clear();
+    names_.clear();
+    endTimes_.clear();
+    ids_.clear();
 }
 } // namespace TraceStdtype
 } // namespace SysTuning

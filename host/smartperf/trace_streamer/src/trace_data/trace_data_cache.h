@@ -31,9 +31,13 @@ public:
     TraceDataCache* operator=(const TraceDataCache* dataCache) = delete;
     ~TraceDataCache() override;
 
+    bool AnimationTraceEnabled();
+    void UpdateAnimationTraceStatus(bool status);
+
 private:
     void InitDB() override;
-    bool dbInited = false;
+    bool dbInited_ = false;
+    bool animationTraceEnabled_ = true;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

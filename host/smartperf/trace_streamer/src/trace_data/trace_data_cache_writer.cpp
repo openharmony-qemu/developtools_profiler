@@ -382,6 +382,18 @@ SoStaticInitalization* TraceDataCacheWriter::GetStaticInitalizationData()
 {
     return &staticInitalizationData_;
 }
+Animation* TraceDataCacheWriter::GetAnimation()
+{
+    return &animation_;
+}
+DeviceInfo* TraceDataCacheWriter::GetDeviceInfo()
+{
+    return &deviceInfo_;
+}
+DynamicFrame* TraceDataCacheWriter::GetDynamicFrame()
+{
+    return &dynamicFrame_;
+}
 void TraceDataCacheWriter::Clear()
 {
     rawData_.Clear();
@@ -441,6 +453,9 @@ void TraceDataCacheWriter::Clear()
     jsHeapTraceNodeData_.Clear();
     appStartupData_.Clear();
     staticInitalizationData_.Clear();
+    animation_.Clear();
+    deviceInfo_.Clear();
+    dynamicFrame_.Clear();
 
 #if WITH_EBPF_HELP
     ebpfProcessMaps_.Clear();

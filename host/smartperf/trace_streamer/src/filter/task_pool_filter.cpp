@@ -52,7 +52,7 @@ void TaskPoolFilter::TaskPoolFieldSegmentation(const std::string& taskPoolStr,
     }
 }
 
-void TaskPoolFilter::TaskPoolEvent(const std::string& taskPoolStr, int32_t index)
+bool TaskPoolFilter::TaskPoolEvent(const std::string& taskPoolStr, int32_t index)
 {
     std::string targetStr = "H:Task ";
     if (!taskPoolStr.compare(0, targetStr.length(), targetStr)) {
@@ -62,23 +62,24 @@ void TaskPoolFilter::TaskPoolEvent(const std::string& taskPoolStr, int32_t index
             allocationStr = taskPoolStr.substr(allocationStr.length(), taskPoolStr.length());
             TaskPoolFieldSegmentation(allocationStr, args);
             UpdateAssignData(args, index);
-            return;
+            return true;
         }
         std::string executeStr = "H:Task Perform: ";
         if (StartWith(taskPoolStr, executeStr)) {
             executeStr = taskPoolStr.substr(executeStr.length(), taskPoolStr.length());
             TaskPoolFieldSegmentation(executeStr, args);
             UpdateExecuteData(args, index);
-            return;
+            return true;
         }
         std::string returnStr = "H:Task PerformTask End: ";
         if (StartWith(taskPoolStr, returnStr)) {
             returnStr = taskPoolStr.substr(returnStr.length(), taskPoolStr.length());
             TaskPoolFieldSegmentation(returnStr, args);
             UpdateReturnData(args, index);
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 void TaskPoolFilter::UpdateAssignData(const std::unordered_map<std::string, std::string>& args, int32_t index)

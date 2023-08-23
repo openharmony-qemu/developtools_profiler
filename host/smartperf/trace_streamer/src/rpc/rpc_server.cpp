@@ -31,6 +31,7 @@
     } while (0)
 namespace SysTuning {
 namespace TraceStreamer {
+const int32_t MAX_LEN_STR = 100;
 uint32_t g_fileLen = 0;
 FILE* g_importFileFd = nullptr;
 bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack)

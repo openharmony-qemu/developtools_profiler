@@ -18,6 +18,8 @@ ohos_source_set("filter") {
   subsystem_name = "developtools"
   part_name = "smartperf_host"
   sources = [
+    "animation_filter.cpp",
+    "animation_filter.h",
     "app_start_filter.cpp",
     "app_start_filter.h",
     "args_filter.cpp",
@@ -76,6 +78,7 @@ ohos_source_set("filter") {
     "${SRC}/base",
     "${SRC}/trace_streamer",
     "${SRC}/trace_data",
+    "${SRC}/parser",
     "${SRC}/include",
     "${SRC}/filter",
     "${SRC}/cfg",

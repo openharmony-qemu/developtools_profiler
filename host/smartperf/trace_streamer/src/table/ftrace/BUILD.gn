@@ -18,6 +18,8 @@ ohos_source_set("ftrace_tables") {
   subsystem_name = "developtools"
   part_name = "smartperf_host"
   sources = [
+    "animation_table.cpp",
+    "animation_table.h",
     "app_startup_table.cpp",
     "app_startup_table.h",
     "callstack_table.cpp",
@@ -30,6 +32,8 @@ ohos_source_set("ftrace_tables") {
     "clock_snapshot_table.h",
     "cpu_measure_filter_table.cpp",
     "cpu_measure_filter_table.h",
+    "dynamic_frame_table.cpp",
+    "dynamic_frame_table.h",
     "filter_table.cpp",
     "filter_table.h",
     "frame_maps_table.cpp",

@@ -26,6 +26,8 @@ ohos_source_set("base_tables") {
     "data_type_table.h",
     "datasource_clockid_table.cpp",
     "datasource_clockid_table.h",
+    "device_info.cpp",
+    "device_info.h",
     "meta_table.cpp",
     "meta_table.h",
     "range_table.cpp",

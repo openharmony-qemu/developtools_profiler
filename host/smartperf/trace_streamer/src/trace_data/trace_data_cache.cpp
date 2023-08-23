@@ -14,6 +14,7 @@
  */
 
 #include "trace_data_cache.h"
+#include "animation_table.h"
 #include "app_startup_table.h"
 #include "appname_table.h"
 #include "args_table.h"
@@ -27,8 +28,10 @@
 #include "data_dict_table.h"
 #include "data_type_table.h"
 #include "datasource_clockid_table.h"
+#include "device_info.h"
 #include "device_state_table.h"
 #include "disk_io_table.h"
+#include "dynamic_frame_table.h"
 #include "ebpf_callstack_table.h"
 #if WITH_EBPF_HELP
 #include "ebpf_elf_symbol_table.h"
@@ -103,10 +106,12 @@ TraceDataCache::~TraceDataCache() {}
 
 void TraceDataCache::InitDB()
 {
-    if (dbInited) {
+    if (dbInited_) {
         return;
     }
 #ifdef USE_VTABLE
+    TableBase::TableDeclare<AnimationTable>(*db_, this, "animation");
+    TableBase::TableDeclare<DynamicFrameTable>(*db_, this, "dynamic_frame");
     TableBase::TableDeclare<ProcessTable>(*db_, this, "process");
     TableBase::TableDeclare<SchedSliceTable>(*db_, this, "sched_slice");
     TableBase::TableDeclare<CallStackTable>(*db_, this, "callstack");
@@ -127,6 +132,7 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<SpanJoin>(*db_, this, "span_join");
 
     // no id
+    TableBase::TableDeclare<DeviceInfoTable>(*db_, this, "device_info");
     TableBase::TableDeclare<InstantsTable>(*db_, this, "instant");
     TableBase::TableDeclare<MeasureTable>(*db_, this, "measure");
     TableBase::TableDeclare<MeasureTable>(*db_, this, "sys_mem_measure");
@@ -190,6 +196,8 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<PerfFilesTable>(*db_, this, "perf_files");
 #endif
 #else
+    TableBase::TableDeclare<AnimationTable>(*db_, this, "_animation");
+    TableBase::TableDeclare<DynamicFrameTable>(*db_, this, "_dynamic_frame");
     TableBase::TableDeclare<ProcessTable>(*db_, this, "_process");
     TableBase::TableDeclare<SchedSliceTable>(*db_, this, "_sched_slice");
     TableBase::TableDeclare<CallStackTable>(*db_, this, "_callstack");
@@ -210,6 +218,7 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<SpanJoin>(*db_, this, "_span_join");
 
     // no id
+    TableBase::TableDeclare<DeviceInfoTable>(*db_, this, "_device_info");
     TableBase::TableDeclare<InstantsTable>(*db_, this, "_instant");
     TableBase::TableDeclare<MeasureTable>(*db_, this, "_measure");
     TableBase::TableDeclare<MeasureTable>(*db_, this, "_sys_mem_measure");
@@ -271,7 +280,15 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<PerfFilesTable>(*db_, this, "_perf_files");
 #endif
 #endif
-    dbInited = true;
+    dbInited_ = true;
+}
+bool TraceDataCache::AnimationTraceEnabled()
+{
+    return animationTraceEnabled_;
+}
+void TraceDataCache::UpdateAnimationTraceStatus(bool status)
+{
+    animationTraceEnabled_ = status;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -37,6 +37,8 @@ namespace SysTuning {
 namespace TraceStdtype {
 using namespace SysTuning::TraceCfg;
 using namespace SysTuning::TraceStreamer;
+constexpr uint32_t ONE_MILLION_NANOSECONDS = 1000000;
+constexpr uint32_t BILLION_NANOSECONDS = 1000000000;
 class CacheBase {
 public:
     size_t Size() const
@@ -2366,6 +2368,67 @@ private:
     std::deque<uint32_t> prioritys_ = {};
     std::deque<uint32_t> executeStates_ = {};
     std::deque<uint32_t> returnStates_ = {};
+};
+class Animation {
+public:
+    TableRowId AppendAnimation(InternalTime startPoint);
+    void UpdateStartPoint(TableRowId index, InternalTime startPoint);
+    void UpdateEndPoint(TableRowId index, InternalTime endPoint);
+    size_t Size() const;
+    const std::deque<InternalTime>& InputTimes() const;
+    const std::deque<InternalTime>& StartPoints() const;
+    const std::deque<InternalTime>& EndPoints() const;
+    const std::deque<uint64_t>& IdsData() const;
+    void Clear();
+
+private:
+    std::deque<InternalTime> inputTimes_ = {};
+    std::deque<InternalTime> startPoints_ = {};
+    std::deque<InternalTime> endPoins_ = {};
+    std::deque<uint64_t> ids_ = {};
+};
+class DeviceInfo {
+public:
+    const uint32_t PhysicalWidth() const;
+    const uint32_t PhysicalHeight() const;
+    const uint32_t PhysicalFrameRate() const;
+    void UpdateWidthAndHeight(uint32_t width, uint32_t height);
+    void UpdateFrameRate(uint32_t frameRate);
+
+    void Clear();
+
+private:
+    uint32_t physicalWidth_ = INVALID_UINT32;
+    uint32_t physicalHeight_ = INVALID_UINT32;
+    uint32_t physicalFrameRate_ = INVALID_UINT32;
+};
+class DynamicFrame {
+public:
+    TableRowId AppendDynamicFrame(DataIndex nameId);
+    void UpdateNameIndex(TableRowId index, DataIndex nameId);
+    void UpdatePosition(TableRowId index, uint32_t x, uint32_t y, uint32_t width, uint32_t height, DataIndex alpha);
+    void UpdateEndTime(TableRowId index, InternalTime endTime);
+
+    size_t Size() const;
+    const std::deque<uint64_t>& IdsData() const;
+    const std::deque<uint32_t>& Xs() const;
+    const std::deque<uint32_t>& Ys() const;
+    const std::deque<uint32_t>& Widths() const;
+    const std::deque<uint32_t>& Heights() const;
+    const std::deque<DataIndex>& Alphas() const;
+    const std::deque<DataIndex>& Names() const;
+    const std::deque<InternalTime>& EndTimes() const;
+    void Clear();
+
+private:
+    std::deque<uint32_t> xs_ = {};
+    std::deque<uint32_t> ys_ = {};
+    std::deque<uint32_t> widths_ = {};
+    std::deque<uint32_t> heights_ = {};
+    std::deque<DataIndex> alphas_ = {};
+    std::deque<DataIndex> names_ = {};
+    std::deque<InternalTime> endTimes_ = {};
+    std::deque<uint64_t> ids_ = {};
 };
 } // namespace TraceStdtype
 } // namespace SysTuning
