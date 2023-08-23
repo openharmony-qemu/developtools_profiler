@@ -93,3 +93,8 @@ bool PluginServiceImpl::PushCommand(SocketContext& context, GetCommandResponsePt
     SendResponseGetCommandResponse(context, *command.get());
     return true;
 }
+
+bool PluginServiceImpl::SendHeartBeat(SocketContext& context)
+{
+    return context.SendHeartBeat();
+}
