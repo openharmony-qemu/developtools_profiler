@@ -17,11 +17,11 @@ declare_args() {
 }
 
 if (is_independent_compile) {
-  asdk_libs_dir = "."
+  asdk_libs_dir="."
   host_toolchain = ""
   PERF_DIR = "//third_party"
   clang_x64_folder = "."
-  enable_ts_utest = target == "test"
+  enable_ts_utest = (target == "test")
 } else {
   PERF_DIR = "//developtools"
   with_ebpf_help_table = false
@@ -48,10 +48,10 @@ PREBUILTS = "//prebuilts"
 THIRD_PARTY = "//third_party"
 kernel_version = "."
 
-OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc.sh", "abspath")
+OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc.sh", "abspath")
 
 if (target_os == "windows") {
-  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc_w.sh", "abspath")
+  OHOS_TRACE_STREAMER_DIR_PROTOC= get_path_info("./protoc_w.sh", "abspath")
 }
 
 OHOS_PROFILER_3RDPARTY_GRPC_DIR = "${THIRD_PARTY}/grpc"

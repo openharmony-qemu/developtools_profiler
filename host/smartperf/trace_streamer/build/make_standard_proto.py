@@ -21,7 +21,6 @@ def replace_lite_option(target_path, protofilepath):
     target_file_path = target_path + '/' + target_file_path.replace(".proto", "_standard.proto")
     os.makedirs(target_path, exist_ok=True)
     shutil.copyfile(protofilepath, target_file_path)
-    # replease lite flag, import file name, add package name
     with open(target_file_path, 'r+') as content:
         newcontent = content.read()
         newcontent = newcontent.replace('option optimize_for = LITE_RUNTIME;\n', '')
