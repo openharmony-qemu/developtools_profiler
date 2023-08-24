@@ -351,10 +351,7 @@ bool FlowController::ParseEventDataOnDelayMode()
         for (long i = 0; i < dataBytes; i += PAGE_SIZE) {
             uint8_t page[PAGE_SIZE] = {0};
             fread(page, sizeof(uint8_t), PAGE_SIZE, rawDataFile_.get());
-            if (!ParseFtraceEvent(cpuId, page)) {
-                HILOG_ERROR(LOG_CORE, "ParseFtraceEvent failed!");
-                return false;
-            }
+            CHECK_TRUE(ParseFtraceEvent(cpuId, page), false, "ParseFtraceEvent failed!");
         }
     }
     return true;
@@ -366,10 +363,8 @@ int FlowController::StopCapture(void)
     CHECK_NOTNULL(tansporter_, -1, "crate ResultTransporter FAILED!");
     CHECK_NOTNULL(traceOps_, -1, "create TraceOps FAILED!");
 
-    if (requestEvents_.size() == 0 && traceApps_.size() == 0 && traceCategories_.size() == 0) {
-        HILOG_INFO(LOG_CORE, "StopCapture: ftrace event is not set, return false");
-        return -1;
-    }
+    CHECK_TRUE(requestEvents_.size() != 0 || traceApps_.size() != 0 || traceCategories_.size() != 0, -1,
+               "StopCapture: ftrace event is not set, return false");
 
     // disable ftrace event switches
     DisableTraceEvents();
@@ -531,10 +526,8 @@ int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
     traceApps_.assign(traceConfig.hitrace_apps().begin(), traceConfig.hitrace_apps().end());
     traceCategories_.assign(traceConfig.hitrace_categories().begin(), traceConfig.hitrace_categories().end());
 
-    if (requestEvents_.size() == 0 && traceApps_.size() == 0 && traceCategories_.size() == 0) {
-        HILOG_INFO(LOG_CORE, "LoadConfig: ftrace event is not set, return false");
-        return -1;
-    }
+    CHECK_TRUE(requestEvents_.size() != 0 || traceApps_.size() != 0 || traceCategories_.size() != 0, -1,
+               "LoadConfig: ftrace event is not set, return false");
 
     // setup trace clock
     if (g_availableClocks.count(traceConfig.clock()) > 0) {

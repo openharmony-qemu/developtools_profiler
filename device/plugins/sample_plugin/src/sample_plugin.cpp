@@ -42,10 +42,7 @@ int SamplePlugin::Start(const uint8_t* configData, uint32_t configSize)
     }
 
     // 反序列化
-    if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
-        return -1;
-    }
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
     HILOG_INFO(LOG_CORE, "%s:pid = %d", __func__, protoConfig_.pid());
     // 插件准备工作
 
@@ -64,9 +61,7 @@ int SamplePlugin::Report(uint8_t* data, uint32_t dataSize)
     dataProto.set_double_data(doubleData);
 
     uint32_t length = dataProto.ByteSizeLong();
-    if (length > dataSize) {
-        return -length;
-    }
+    CHECK_TRUE(length <= dataSize, -length, "%s:Report failed!", __func__);
     // 序列化
     if (dataProto.SerializeToArray(data, length) > 0) {
         HILOG_DEBUG(LOG_CORE, "%s:report success! length = %d", __func__, length);
