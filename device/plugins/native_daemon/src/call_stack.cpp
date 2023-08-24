@@ -108,7 +108,7 @@ bool CallStack::fillUDI(unw_dyn_info_t &di, SymbolsFile &symbolsFile, const MemM
         */
         const MemMapItem *ehFrameMmap = thread.FindMapByFileInfo(mmap.name_, ehFrameHdrElfOffset);
 
-        CHECK_NOTNULL(ehFrameMmap, false, "no ehframe mmap found.");
+        UNWIND_CHECK_NOTNULL(ehFrameMmap, false, "no ehframe mmap found.");
 
         di.u.rti.segbase = ehFrameMmap->begin_ + ehFrameHdrElfOffset - ehFrameMmap->pageoffset_;
         di.u.rti.table_data = ehFrameMmap->begin_ + fdeTableElfOffset - ehFrameMmap->pageoffset_;
@@ -124,7 +124,7 @@ bool CallStack::fillUDI(unw_dyn_info_t &di, SymbolsFile &symbolsFile, const MemM
     if ((UNW_INFO_FORMAT_ARM_EXIDX == di.format) &&
         symbolsFile.GetSectionInfo(ARM_EXIDX, SectionVaddr, SectionSize, SectionFileOffset)) {
         const MemMapItem *targetMmap = thread.FindMapByFileInfo(mmap.name_, SectionFileOffset);
-        CHECK_NOTNULL(targetMmap, false, "no debug mmap found.");
+        UNWIND_CHECK_NOTNULL(targetMmap, false, "no debug mmap found.");
         HLOGV(" begin: %" PRIx64 " offset:%" PRIx64 "", targetMmap->begin_,
               targetMmap->pageoffset_);
 
@@ -272,7 +272,7 @@ int CallStack::AccessMem([[maybe_unused]] unw_addr_space_t as, unw_word_t addr,
     HLOG_ASSERT(writeOperation == 0);
 
     /* Check overflow. */
-    CHECK_TRUE(addr + sizeof(unw_word_t) >= addr, -UNW_EUNSPEC,
+    UNWIND_CHECK_TRUE(addr + sizeof(unw_word_t) >= addr, -UNW_EUNSPEC,
                "address overfolw at 0x%" UNW_WORD_PFLAG " increase 0x%zu", addr, sizeof(unw_word_t));
 
     if (addr < unwindInfoPtr->callStack.stackPoint_ or
@@ -306,12 +306,12 @@ int CallStack::AccessReg([[maybe_unused]] unw_addr_space_t as, unw_regnum_t regn
         HLOGE("access_reg not expected %d", regnum);
     }
     /* Don't support write, I suspect we don't need it. */
-    CHECK_TRUE(!writeOperation, -UNW_EINVAL, "access_reg %d", regnum);
+    UNWIND_CHECK_TRUE(!writeOperation, -UNW_EINVAL, "access_reg %d", regnum);
 
     if (unwindInfoPtr->callStack.regsNum_ == 0) {
         return -UNW_EUNSPEC;
     }
-    CHECK_TRUE(RegisterGetValue(val, unwindInfoPtr->callStack.regs_, perfRegIndex, unwindInfoPtr->callStack.regsNum_),
+    UNWIND_CHECK_TRUE(RegisterGetValue(val, unwindInfoPtr->callStack.regs_, perfRegIndex, unwindInfoPtr->callStack.regsNum_),
                -UNW_EUNSPEC, "can't read reg %zu", perfRegIndex);
     *valuePoint = (unw_word_t)val;
     HLOGV("reg %d:%s, val 0x%" UNW_WORD_PFLAG "", regnum, RegisterGetName(perfRegIndex).c_str(),
@@ -394,8 +394,8 @@ void CallStack::UnwindStep(unw_cursor_t &c, std::vector<CallFrame> &callStack, s
 bool CallStack::GetIpSP(uint64_t &ip, uint64_t &sp, const u64 *regs, size_t regNum) const
 {
     if (regNum > 0) {
-        CHECK_TRUE(RegisterGetSPValue(sp, arch_, regs, regNum), false, "unable get sp");
-        CHECK_TRUE(RegisterGetIPValue(ip, arch_, regs, regNum), false, "unable get ip");
+        UNWIND_CHECK_TRUE(RegisterGetSPValue(sp, arch_, regs, regNum), false, "unable get sp");
+        UNWIND_CHECK_TRUE(RegisterGetIPValue(ip, arch_, regs, regNum), false, "unable get ip");
         if (ip != 0) {
             return true;
         }
@@ -418,7 +418,7 @@ bool CallStack::DoUnwind(const VirtualThread &thread, std::vector<CallFrame> &ca
     unw_cursor_t c;
     if (unwindAddrSpaceMap_.count(thread.tid_) == 0) {
         addr_space = unw_create_addr_space(&accessors_, 0);
-        CHECK_TRUE(addr_space, false, "Can't create unwind vaddress space.");
+        UNWIND_CHECK_TRUE(addr_space, false, "Can't create unwind vaddress space.");
         unwindAddrSpaceMap_.emplace(thread.tid_, addr_space);
         unw_set_caching_policy(addr_space, UNW_CACHE_GLOBAL);
         unw_flush_cache(addr_space, 0, 0);
