@@ -68,9 +68,7 @@ config("default") {
       "-fsanitize=address",
       "-fno-omit-frame-pointer",
     ]
-    ldflags += [
-      "-fsanitize=address",
-    ]
+    ldflags += [ "-fsanitize=address" ]
   }
   if (target_os == "windows") {
     cflags += [ "-D target_cpu_x86_64" ]
