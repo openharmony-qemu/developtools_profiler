@@ -1684,15 +1684,19 @@ export class SpRecordTrace extends BaseElement {
     let pid = 0;
     let processName = '';
     let processId = '';
-    if (appProcess.indexOf('(') != -1) {
-      processId = appProcess.slice(appProcess.lastIndexOf('(') + 1, appProcess.lastIndexOf(')'));
-    } else {
-      processId = appProcess;
-    }
-    if (re.test(processId)) {
-      pid = Number(processId);
-    } else {
+    if (this.spAllocations!.startup_mode && Number(SpRecordTrace.selectVersion) >= 4.0) {
       processName = appProcess;
+    } else {
+      if (appProcess.indexOf('(') != -1) {
+        processId = appProcess.slice(appProcess.lastIndexOf('(') + 1, appProcess.lastIndexOf(')'));
+      } else {
+        processId = appProcess;
+      }
+      if (re.test(processId)) {
+        pid = Number(processId);
+      } else {
+        processName = appProcess;
+      }
     }
     let nativeConfig: NativeHookConfig = {
       pid: pid,
@@ -1713,6 +1717,7 @@ export class SpRecordTrace extends BaseElement {
       if (this.spAllocations!.record_statistics) {
         nativeConfig.statisticsInterval = this.spAllocations!.statistics_interval;
       }
+      nativeConfig.startupMode = this.spAllocations!.startup_mode;
     }
     let nativePluginConfig: ProfilerPluginConfig<NativeHookConfig> = {
       pluginName: 'nativehook',
@@ -1745,8 +1750,14 @@ export class SpRecordTrace extends BaseElement {
       memoryconfig.reportSysmemVmemInfo = true;
       memoryconfig.reportProcessMemInfo = true;
     }
+    if (hasSmaps || hasMonitorMemory){
+      memoryconfig.reportPurgeableAshmemInfo = true;
+      memoryconfig.reportDmaMemInfo = true;
+      memoryconfig.reportGpuMemInfo = true;
+    }
     if (hasSmaps) {
       memoryconfig.reportSmapsMemInfo = true;
+      memoryconfig.reportGpuDumpInfo = true;
       let pid = Number(this.spVmTracker?.process);
       memoryconfig.pid.push(pid);
     }

@@ -29,6 +29,7 @@ export class LitTable extends HTMLElement {
   currentRecycleList: HTMLDivElement[] = [];
   currentTreeDivList: HTMLDivElement[] = [];
   public rememberScrollTop = false;
+  public getItemTextColor?: (data: any) => string;
   private ds: Array<any> = [];
   private recycleDs: Array<any> = [];
   private normalDs: Array<any> = [];
@@ -1445,6 +1446,9 @@ export class LitTable extends HTMLElement {
     newTableElement.style.position = 'absolute';
     newTableElement.style.top = '0px';
     newTableElement.style.left = '0px';
+    if (this.getItemTextColor) {
+      newTableElement.style.color = this.getItemTextColor(rowData.data);
+    }
     return newTableElement;
   }
 
@@ -1576,6 +1580,9 @@ export class LitTable extends HTMLElement {
       this.setMouseIn(rowObject.data.isHover, [element]);
     } else {
       this.setMouseIn(false, [element]);
+    }
+    if (this.getItemTextColor) {
+      element.style.color = this.getItemTextColor((element as any).data);
     }
   }
 

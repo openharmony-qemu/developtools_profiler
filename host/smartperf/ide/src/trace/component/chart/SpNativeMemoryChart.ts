@@ -68,13 +68,26 @@ export class SpNativeMemoryChart {
     nativeRow.name = `Native Memory` + process;
     nativeRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     nativeRow.selectChangeHandler = this.trace.selectChangeHandler;
-    nativeRow.onDrawTypeChangeHandler = (type) => {
-      nativeRow.childrenList.forEach((row) => (row.drawType = type));
+    nativeRow.rowSetting = 'enable';
+    nativeRow.rowSettingPopoverDirection = 'bottomLeft';
+    nativeRow.rowSettingList = [
+      {
+        key: '0',
+        title: 'Current Bytes',
+        checked: true,
+      },
+      {
+        key: '1',
+        title: 'Native Memory Density'
+      }
+    ]
+    nativeRow.onRowSettingChangeHandler = (value) => {
+      nativeRow.childrenList.forEach((row) => (row.drawType = parseInt(value[0])));
       this.trace.favoriteRowsEL?.querySelectorAll<TraceRow<any>>(`trace-row[row-type='heap']`).forEach((it) => {
-        it.drawType = type;
+        it.drawType = parseInt(value[0]);
       });
       this.trace.refreshCanvas(false);
-    };
+    }
     nativeRow.supplier = () => new Promise<Array<any>>((resolve) => resolve([]));
     nativeRow.onThreadHandler = (useCache) => {
       nativeRow.canvasSave(this.trace.canvasPanelCtx!);

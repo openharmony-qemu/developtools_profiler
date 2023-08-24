@@ -26,42 +26,24 @@ export class SpInfoAndStats extends BaseElement {
   private infoData: Array<InfoDataTable> = [];
   private metaTableEl: LitTable | undefined;
   private infoTableEl: LitTable | undefined;
-  private th: HTMLElement | undefined;
-  private progressLoad: LitProgressBar | undefined;
-
-  static get observedAttributes() {
-    return [];
-  }
 
   initElements(): void {
-    this.progressLoad = this.shadowRoot?.querySelector('.load-metric') as LitProgressBar;
     this.metaTableEl = this.shadowRoot!.querySelector<LitTable>('#metaData-table') as LitTable;
     this.infoTableEl = this.shadowRoot!.querySelector<LitTable>('#stats-table') as LitTable;
-
-    this.infoTableEl.style.overflow = 'visible';
-    this.metaTableEl.style.overflow = 'visible';
-    this.infoTableEl.style.width = 'auto';
-    this.metaTableEl.style.width = 'auto';
-    this.th = this.shadowRoot!.querySelector('.th') as HTMLElement;
   }
 
-  initInfoAndStatsData() {
-    this.progressLoad!.loading = true;
+  initInfoAndStatsData(): void {
+    let progressLoad = this.shadowRoot?.querySelector('.load-metric') as LitProgressBar;
+    progressLoad!.loading = true;
     let time = new Date().getTime();
     this.initMetricItemData().then(() => {
       let durTime = new Date().getTime() - time;
-      info('InfoAndStatsData query time is: ' + durTime + 'ms');
+      info(`InfoAndStatsData query time is: ${durTime}ms`);
       if (this.metaData.length > 0) {
         this.metaTableEl!.recycleDataSource = this.metaData;
       } else {
         this.metaTableEl!.recycleDataSource = [];
       }
-      new ResizeObserver(() => {
-        if (this.parentElement?.clientHeight != 0) {
-          this.metaTableEl!.style.height = '100%';
-          this.metaTableEl!.reMeauseHeight();
-        }
-      }).observe(this.parentElement!);
       info('metaData(metric) size is: ', this.metaData.length);
       if (this.infoData.length > 0) {
         this.infoTableEl!.recycleDataSource = this.infoData;
@@ -69,32 +51,29 @@ export class SpInfoAndStats extends BaseElement {
         this.infoTableEl!.recycleDataSource = [];
       }
       new ResizeObserver(() => {
-        if (this.parentElement?.clientHeight != 0) {
+        if (this.parentElement?.clientHeight !== 0) {
+          this.metaTableEl!.style.height = '100%';
+          this.metaTableEl!.reMeauseHeight();
           this.infoTableEl!.reMeauseHeight();
         }
       }).observe(this.parentElement!);
       info('infoData(metric) size is: ', this.infoData.length);
-      let metaDataStyle: HTMLDivElement | undefined | null = this.shadowRoot
-        ?.querySelector('#metaData-table')
-        ?.shadowRoot?.querySelector('div.body') as HTMLDivElement;
-      let metaDataHeadStyle: HTMLDivElement | undefined | null = this.shadowRoot
-        ?.querySelector('#metaData-table')
-        ?.shadowRoot?.querySelector('div.thead') as HTMLDivElement;
-      let statsStyle: HTMLDivElement | undefined | null = this.shadowRoot
-        ?.querySelector('#stats-table')
-        ?.shadowRoot?.querySelector('div.body') as HTMLDivElement;
-      let statsHeadStyle: HTMLDivElement | undefined | null = this.shadowRoot
-        ?.querySelector('#stats-table')
-        ?.shadowRoot?.querySelector('div.thead') as HTMLDivElement;
-
+      let metaDataStyle: HTMLDivElement | undefined | null = this.metaTableEl!.shadowRoot?.
+        querySelector('div.body') as HTMLDivElement;
+      let metaDataHeadStyle: HTMLDivElement | undefined | null = this.metaTableEl!.shadowRoot?.
+        querySelector('div.thead') as HTMLDivElement;
+      let statsStyle: HTMLDivElement | undefined | null = this.infoTableEl!.shadowRoot?.
+        querySelector('div.body') as HTMLDivElement;
+      let statsHeadStyle: HTMLDivElement | undefined | null = this.infoTableEl!.shadowRoot?.
+        querySelector('div.thead') as HTMLDivElement;
+      let timeOutTs = 20;
       setTimeout(() => {
         this.initDataTableStyle(metaDataStyle!);
         this.initDataTableStyle(metaDataHeadStyle!);
         this.initDataTableStyle(statsStyle!);
         this.initDataTableStyle(statsHeadStyle!);
-      }, 20);
-
-      this.progressLoad!.loading = false;
+      }, timeOutTs);
+      progressLoad!.loading = false;
     });
   }
 
@@ -111,7 +90,7 @@ export class SpInfoAndStats extends BaseElement {
     this.infoTableEl!.style.borderRadius = '16';
   }
 
-  async initMetricItemData() {
+  async initMetricItemData(): Promise<void> {
     this.metaData = [];
     this.infoData = [];
     let mete = await queryTraceMetaData();
@@ -127,110 +106,106 @@ export class SpInfoAndStats extends BaseElement {
     if (info) {
       for (let index = 0; index < info.length; index++) {
         this.infoData.push({
-          event_name: info[index].event_name,
-          stat_type: info[index].stat_type,
+          eventName: info[index].event_name,
+          statType: info[index].stat_type,
           count: info[index].count,
         });
       }
     }
   }
 
-  connectedCallback() {}
-
-  disconnectedCallback() {}
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {}
-
   initHtml(): string {
     return `
         <style>
             :host{
-                width: 100%;
-                background-color: var(--dark-background5,#F6F6F6);
-                margin: 0;
-                padding: 0;
+              width: 100%;
+              background-color: var(--dark-background5,#F6F6F6);
+              margin: 0;
+              padding: 0;
             }
             .info-stats{
-                display: flex;
-                flex-direction: column;
-                background-color: var(--dark-background5,#F6F6F6);
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                grid-row-gap: 30px;
+              display: flex;
+              flex-direction: column;
+              background-color: var(--dark-background5,#F6F6F6);
+              position: absolute;
+              top: 0;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              grid-row-gap: 30px;
             }
             .metadata{
-                width: 90%;
-                color: #121212;
-                padding: 1% 2% 0 2%;
-                margin: 1% 2.5% 0 2.5%;
-                border-radius: 16px;
-                background-color: var(--dark-background3,#FFFFFF);
-                position: relative;
+              width: 90%;
+              color: #121212;
+              padding: 1% 2% 0 2%;
+              margin: 1% 2.5% 0 2.5%;
+              border-radius: 16px;
+              background-color: var(--dark-background3,#FFFFFF);
+              position: relative;
             }
             #metaData-table{
-                background-color: var(--dark-background5,#F6F6F6);
-                margin-left: 10px;
-                min-height: inherit;
-                max-height: inherit;
-                padding: 10px;
+              background-color: var(--dark-background5,#F6F6F6);
+              margin-left: 10px;
+              min-height: inherit;
+              max-height: inherit;
+              padding: 10px;
+              overflow: visible;
+              width: auto;
             }
             #stats-table{
-                margin-bottom: 2%;
-                margin-left: 10px;
-                padding: 10px;
+              margin-bottom: 2%;
+              margin-left: 10px;
+              padding: 10px;
+              overflow: visible;
+              width: auto;
             }
             #dataValueResult{
-                overflow-y: auto;
-                background-color: var(--dark-background5,#F6F6F6);
-                border-radius: 16px;
-                min-height: inherit;
-                max-height: inherit;
-                margin-bottom: 1%;
+              overflow-y: auto;
+              background-color: var(--dark-background5,#F6F6F6);
+              border-radius: 16px;
+              min-height: inherit;
+              max-height: inherit;
+              margin-bottom: 1%;
             }
             
             #dataKeyResult{
-                overflow-y: auto;
-                background-color: var(--dark-background5,#F6F6F6);
-                border-radius: 16px;
-                min-height: inherit;
-                max-height: inherit;
-                margin-bottom: 2%;
+              overflow-y: auto;
+              background-color: var(--dark-background5,#F6F6F6);
+              border-radius: 16px;
+              min-height: inherit;
+              max-height: inherit;
+              margin-bottom: 2%;
             }
             p{
-                 display: table-cell;
-                 padding: 7px 10px 20px 10px;
-                 color: #999999;
-                 font-size:14px;
-                 line-height: 20px;
-                 font-weight: 400;
-                 text-align: left;
+              display: table-cell;
+              padding: 7px 10px 20px 10px;
+              color: #999999;
+              font-size:14px;
+              line-height: 20px;
+              font-weight: 400;
+              text-align: left;
             }
             .stats{
-               flex-grow: 1;
-               height: min-content;
-               margin-bottom: 1%;
-               max-height: 37vh;
-               min-height: inherit;
-               display: flex;
-               flex-direction: column;
+              flex-grow: 1;
+              height: min-content;
+              margin-bottom: 1%;
+              max-height: 37vh;
+              min-height: inherit;
+              display: flex;
+              flex-direction: column;
             }
             .info{
-               max-height: inherit;
-               min-height: inherit;
+              max-height: inherit;
+              min-height: inherit;
             }
             .tr{
-               background-color: var(--dark-background5,#F6F6F6); 
+              background-color: var(--dark-background5,#F6F6F6); 
             }
             .load-metric{
-                width: 95%;
-                bottom: 0;
+              width: 95%;
+              bottom: 0;
             }
-
         </style>
-
         <div class="info-stats">
             <div class="metadata info">
                 <p>System info and metadata</p>
@@ -248,11 +223,11 @@ export class SpInfoAndStats extends BaseElement {
                 <p>Debugging stats</p>
                 <div id="dataValueResult">
                     <lit-table id="stats-table" hideDownload>
-                            <lit-table-column title="name" data-index="event_name" key="name" align="flex-start">
+                            <lit-table-column title="name" data-index="eventName" key="eventName" align="flex-start">
                             </lit-table-column>
-                            <lit-table-column title="value" data-index="count" key="value" align="flex-start">
+                            <lit-table-column title="value" data-index="count" key="count" align="flex-start">
                             </lit-table-column>
-                            <lit-table-column title="type" data-index="stat_type" key="type" align="flex-start">
+                            <lit-table-column title="type" data-index="statType" key="statType" align="flex-start">
                             </lit-table-column>
                     </lit-table>
                 </div>
@@ -269,8 +244,8 @@ export class MetaDataTable {
 }
 
 export class InfoDataTable {
-  event_name: string | undefined;
-  stat_type: string | undefined;
+  eventName: string | undefined;
+  statType: string | undefined;
   count: number | undefined;
   source?: string | undefined;
   serverity?: string | undefined;

@@ -25,6 +25,7 @@ import {
   drawString,
 } from './ProcedureWorkerCommon.js';
 import { FuncStruct as BaseFuncStruct } from '../../bean/FuncStruct.js';
+import { FlagsConfig } from '../../component/SpFlags.js';
 export class FuncRender extends Render {
   renderMainThread(
     req: {
@@ -170,25 +171,61 @@ export class FuncStruct extends BaseFuncStruct {
           ctx.lineWidth = 2;
           ctx.strokeRect(data.frame.x, data.frame.y + 1, data.frame.width, miniHeight - padding * 2 - 2);
         }
-        if (data.funName!.indexOf('H:Task PerformTask End:') >= 0 && data.funName!.indexOf('Successful') < 0) {
+        let flagConfig = FlagsConfig.getFlagsConfig('TaskPool');
+        if (
+          flagConfig!.TaskPool === 'Enabled' &&
+          data.funName!.indexOf('H:Task PerformTask End:') >= 0 &&
+          data.funName!.indexOf('Successful') < 0
+        ) {
           if (data.frame!.width < 10) {
-            FuncStruct.drawRoundRectPath(ctx, data.frame!.x, 30, 3, data!);
+            FuncStruct.drawTaskPoolUnSuccessFlag(ctx, data.frame!.x, (data.depth! + 0.5) * 20, 3, data!);
           } else {
-            FuncStruct.drawRoundRectPath(ctx, data.frame!.x, 28, 6, data!);
+            FuncStruct.drawTaskPoolUnSuccessFlag(ctx, data.frame!.x, (data.depth! + 0.5) * 20, 6, data!);
           }
+        }
+        if (flagConfig!.TaskPool === 'Enabled' && data.funName!.indexOf('H:Thread Timeout Exit') >= 0) {
+          FuncStruct.drawTaskPoolTimeOutFlag(ctx, data.frame!.x, (data.depth! + 0.5) * 20, 10, data!);
         }
       }
     }
   }
 
-  static drawRoundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, data: FuncStruct) {
+  static drawTaskPoolUnSuccessFlag(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    radius: number,
+    data: FuncStruct
+  ) {
+    ctx.strokeStyle = '#FFC880';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(x + data.frame!.width, y, radius, 0, Math.PI * 2);
     ctx.closePath();
-    // 填充背景颜色
     ctx.fillStyle = '#E64566';
     ctx.fill();
     ctx.stroke();
+  }
+
+  static drawTaskPoolTimeOutFlag(
+    canvas: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    radius: number,
+    data: FuncStruct
+  ) {
+    canvas.strokeStyle = '#FFC880';
+    canvas.lineWidth = 1;
+    canvas.beginPath();
+    canvas.arc(x + data.frame!.width + 20, y, radius, 0, Math.PI * 2);
+    canvas.closePath();
+    canvas.fillStyle = '#FFC880';
+    canvas.fill();
+    canvas.stroke();
+    canvas.font = '18px Arial';
+    canvas.fillStyle = ColorUtils.GREY_COLOR;
+    canvas.textAlign = 'center';
+    canvas.fillText('¡', x + data.frame!.width + 20, y);
   }
 
   static isSelected(data: FuncStruct): boolean {

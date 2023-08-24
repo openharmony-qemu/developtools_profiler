@@ -45,7 +45,7 @@ import { ProcessRender, ProcessStruct } from '../../database/ui-worker/Procedure
 import { ThreadRender, ThreadStruct } from '../../database/ui-worker/ProcedureWorkerThread.js';
 import { FuncRender, FuncStruct } from '../../database/ui-worker/ProcedureWorkerFunc.js';
 import { MemRender, ProcessMemStruct } from '../../database/ui-worker/ProcedureWorkerMem.js';
-import { FolderSupplier, FolderThreadHandler } from './SpChartManager.js';
+import {FolderSupplier, FolderThreadHandler, SpChartManager} from './SpChartManager.js';
 import { JankRender, JankStruct } from '../../database/ui-worker/ProcedureWorkerJank.js';
 import { ns2xByTimeShaft } from '../../database/ui-worker/ProcedureWorkerCommon.js';
 import { AppStartupRender, AppStartupStruct } from '../../database/ui-worker/ProcedureWorkerAppStartup.js';
@@ -157,7 +157,6 @@ export class SpProcessChart {
   };
 
   async init(): Promise<void> {
-
     let threadFuncMaxDepthArray = await getMaxDepthByTid();
     info('Gets the maximum tier per thread , tid and maxDepth');
     threadFuncMaxDepthArray.forEach((it) => {
@@ -239,6 +238,9 @@ export class SpProcessChart {
       processRow.rowParentId = '';
       processRow.style.height = '40px';
       processRow.folder = true;
+      if (SpChartManager.APP_STARTUP_PID_ARR.find(pid => pid === it.pid) !== undefined || it.processName === 'render_service') {
+        processRow.addTemplateTypes('AppStartup');
+      }
       processRow.name = `${ it.processName || 'Process' } ${ it.pid }`;
       processRow.supplier = (): Promise<Array<any>> => queryProcessData(it.pid || -1, 0, TraceRow.range?.totalNS || 0);
       processRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;

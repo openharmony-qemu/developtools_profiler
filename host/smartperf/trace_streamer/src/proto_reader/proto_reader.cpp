@@ -147,10 +147,10 @@ ParseDataAreaResult ProtoReaderBase::ParseOneDataArea(const uint8_t* const start
     if (dataAreaId == 0) {
         return result;
     }
-
     if (TS_UNLIKELY(dataAreaId > std::numeric_limits<uint16_t>::max())) {
         TS_LOGD("Skip dataArea %d because its too big", dataAreaId);
         result.status = ParseProtoStatus::SKIP;
+        result.next = cursor;
         return result;
     }
     result.dataArea.SetDataAreaId(dataAreaId);

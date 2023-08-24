@@ -130,3 +130,51 @@ export class SystemMemorySummary {
   cmaFree: string = '0';
   zram: string = '0';
 }
+
+export class Dma {
+  processId: number = -1;
+  timeStamp: string = '';
+  startNs: number = -1;
+  expTaskComm: string| number = '';
+  avgSize: number = -1;
+  minSize: number = -1;
+  maxSize: number = -1;
+  bufName: string | number = '';
+  expName: string | number = '';
+  size: number = -1;
+  processName: string = '';
+  process: string = ''; //processName + processId
+  fd: number = -1;
+  ino: number = -1;
+  expPid: number = -1;
+  flag: number = -1;
+  avgSizes: string = '';
+  minSizes: string = '';
+  maxSizes: string = '';
+  sizes: string = '';
+  sumSize: number = -1;
+  sumSizes: string = '';
+}
+
+export class GpuMemory {
+  processId: number = -1;
+  threadId: number = -1;
+  timeStamp: string = '';
+  expTaskComm: string = '';
+  startNs: number = -1;
+  avgSize: number = -1;
+  minSize: number = -1;
+  maxSize: number = -1;
+  gpuName: string = '';
+  processName: string = '';
+  process: string = ''; //processName + processId
+  threadName: string = '';
+  thread: string = ''; //threadName + threadI
+  size: number = -1;
+  avgSizes: string = '';
+  minSizes: string = '';
+  maxSizes: string = '';
+  sizes: string = '';
+  sumSize: number = -1;
+  sumSizes: string = '';
+}

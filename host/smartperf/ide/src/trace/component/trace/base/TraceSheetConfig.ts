@@ -83,6 +83,25 @@ import { TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
 import { TabPaneJsCpuTopDown } from '../sheet/ark-ts/TabPaneJsCpuCallTree.js';
 import { TabPaneJsCpuBottomUp } from '../sheet/ark-ts/TabPaneJsCpuBottomUp.js';
 import { TabPaneJsCpuStatistics } from '../sheet/ark-ts/TabPaneJsCpuStatistics.js';
+import { TabPaneGpuClickSelect } from '../sheet/gpu/TabPaneGpuClickSelect.js';
+import { TabPaneGpuTotalBoxSelect } from '../sheet/gpu/TabPaneGpuTotalBoxSelect.js';
+import { TabPaneGpuWindowBoxSelect } from '../sheet/gpu/TabPaneGpuWindowBoxSelect.js';
+import { TabPaneGpuGL } from '../sheet/gpu/TabPaneGpuGL.js';
+import { TabPanePurgTotal } from '../sheet/ability/TabPanePurgTotal.js';
+import { TabPanePurgTotalSelection } from '../sheet/ability/TabPanePurgTotalSelection.js';
+import { TabPanePurgPin } from '../sheet/ability/TabPanePurgPin.js';
+import { TabPanePurgPinSelection } from '../sheet/ability/TabPanePurgPinSelection.js';
+import { TabPaneVmTrackerShmSelection } from '../sheet/vmtracker/TabPaneVmTrackerShmSelection.js';
+import { TabPaneVmTrackerShm } from '../sheet/vmtracker/TabPaneVmTrackerShm.js';
+import { TabPaneDmaAbility } from '../sheet/ability/TabPaneDmaAbility.js';
+import { TabPaneDmaSelectAbility } from '../sheet/ability/TabPaneDmaSelectAbility.js';
+import { TabPaneGpuMemoryAbility } from '../sheet/ability/TabPaneGpuMemoryAbility.js';
+import { TabPaneDmaVmTracker } from '../sheet/vmtracker/TabPaneDmaVmTracker.js';
+import { TabPaneGpuMemoryVmTracker } from '../sheet/vmtracker/TabPaneGpuMemoryVmTracker.js';
+import { TabPaneGpuMemorySelectAbility } from '../sheet/ability/TabPaneGpuMemorySelectAbility.js';
+import { TabPaneGpuMemorySelectVmTracker } from '../sheet/vmtracker/TabPaneGpuMemorySelectVmTracker.js';
+import { TabPaneDmaSelectVmTracker } from '../sheet/vmtracker/TabPaneDmaSelectVmTracker.js';
+
 export let tabConfig: any = {
   'tabpane-current': {
     title: 'Current Selection',
@@ -377,14 +396,23 @@ export let tabConfig: any = {
     require: (param: SelectionParam) => param.diskIOLatency,
   },
   'box-smaps-statistics': {
-    title: 'VM Tracker Statistics',
+    title: 'Smaps Statistic',
     type: TabPaneSmapsStatistics,
     require: (param: SelectionParam) => param.smapsType.length > 0,
   },
   'box-smaps-record': {
-    title: 'VM Tracker Record List',
+    title: 'Smaps sample',
     type: TabPaneSmapsRecord,
     require: (param: SelectionParam) => param.smapsType.length > 0,
+  },
+  'box-vmtracker-shm': {
+    title: 'SHM',
+    type: TabPaneVmTrackerShm,
+    require: (param: SelectionParam) => param.vmtrackershm.length > 0,
+  },
+  'box-vmtracker-shm-selection': {
+    title: 'SHM Selection',
+    type: TabPaneVmTrackerShmSelection,
   },
   'box-frames': {
     title: 'Frames',
@@ -408,12 +436,12 @@ export let tabConfig: any = {
   'box-frame-dynamic': {
     title: 'Frame Dynamic',
     type: TabPaneFrameDynamic,
-    require: (param: SelectionParam) => param.frameDynamic.length > 0
+    require: (param: SelectionParam) => param.frameDynamic.length > 0,
   },
   'box-frame-animation': {
     title: 'Frame Animation',
     type: TabPaneFrameAnimation,
-    require: (param: SelectionParam) => param.frameAnimation.length > 0
+    require: (param: SelectionParam) => param.frameAnimation.length > 0,
   },
   'box-frames-spacing': {
     title: 'Frame spacing',
@@ -435,4 +463,77 @@ export let tabConfig: any = {
     type: TabPaneJsCpuBottomUp,
     require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
   },
+  'gpu-click-select': {
+    title: 'Gpu Dump Selection',
+    type: TabPaneGpuClickSelect
+  },
+  'gpu-gl-box-select': {
+    title: 'GL',
+    type: TabPaneGpuGL,
+    require: (param: SelectionParam) => param.gpu.gl,
+  },
+  'gpu-total-box-select': {
+    title: 'Gpu Total',
+    type: TabPaneGpuTotalBoxSelect,
+    require: (param: SelectionParam) => param.gpu.gpuTotal,
+  },
+  'gpu-window-box-select': {
+    title: 'Gpu Window',
+    type: TabPaneGpuWindowBoxSelect,
+    require: (param: SelectionParam) => param.gpu.gpuWindow,
+  },
+  'box-purgeable-total': {
+    title: 'Purg Total',
+    type: TabPanePurgTotal,
+    require: (param: SelectionParam) => param.purgeableTotalAbility.length > 0 || param.purgeableTotalVM.length > 0,
+  },
+  'box-purgeable-total-selection': {
+    title: 'Purg Total Selection',
+    type: TabPanePurgTotalSelection,
+  },
+  'box-purgeable-pin': {
+    title: 'Purg Pin',
+    type: TabPanePurgPin,
+    require: (param: SelectionParam) => param.purgeablePinAbility.length > 0 || param.purgeablePinVM.length > 0,
+  },
+  'box-purgeable-pin-selection': {
+    title: 'Purg Pin Selection',
+    type: TabPanePurgPinSelection,
+  },
+  'box-dma-ability': {
+    title: 'DMA',
+    type: TabPaneDmaAbility,
+    require: (param: SelectionParam) => param.dmaAbilityData.length > 0,
+  },
+  'box-dma-selection-ability': {
+    title: 'DMA Selection',
+    type: TabPaneDmaSelectAbility,
+  }, //DMA Ability click
+  'box-gpu-memory-ability': {
+    title: 'Gpu Memory',
+    type: TabPaneGpuMemoryAbility,
+    require: (param: SelectionParam) => param.gpuMemoryAbilityData.length > 0,
+  },
+  'box-smaps-dma': {
+    title: 'DMA',
+    type: TabPaneDmaVmTracker,
+    require: (param: SelectionParam) => param.dmaVmTrackerData.length > 0,
+  },
+  'box-smaps-gpu-memory': {
+    title: 'Gpu Memory',
+    type: TabPaneGpuMemoryVmTracker,
+    require: (param: SelectionParam) => param.gpuMemoryTrackerData.length > 0,
+  },
+  'box-dma-selection-vmTracker': {
+    title: 'DMA Selection',
+    type: TabPaneDmaSelectVmTracker,
+  }, //DMA VmTracker click
+  'box-gpu-memory-selection-ability': {
+    title: 'Gpu Memory Selection',
+    type: TabPaneGpuMemorySelectAbility,
+  }, // Gpu Memory ability click
+  'box-gpu-memory-selection-vmTracker': {
+    title: 'Gpu Memory Selection',
+    type: TabPaneGpuMemorySelectVmTracker,
+  }, //Gpu Memory DMA VmTracker click
 };

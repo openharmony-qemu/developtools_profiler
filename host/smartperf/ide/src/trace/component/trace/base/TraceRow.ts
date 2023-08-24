@@ -18,17 +18,18 @@ import { TimeRange } from '../timer-shaft/RangeRuler.js';
 import '../../../../base-ui/icon/LitIcon.js';
 import { Rect } from '../timer-shaft/Rect.js';
 import { BaseStruct } from '../../../bean/BaseStruct.js';
-import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { ns2x } from '../TimerShaftElement.js';
 import { TraceRowObject } from './TraceRowObject.js';
 import { LitCheckBox } from '../../../../base-ui/checkbox/LitCheckBox.js';
 import { LitIcon } from '../../../../base-ui/icon/LitIcon';
 import '../../../../base-ui/popover/LitPopoverV.js';
+import '../../../../base-ui/tree/LitTree.js';
 import { LitPopover } from '../../../../base-ui/popover/LitPopoverV.js';
 import { info } from '../../../../log/Log.js';
 import { ColorUtils } from './ColorUtils.js';
 import { drawSelectionRange } from '../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { TraceRowConfig } from './TraceRowConfig.js';
+import { TreeItemData, LitTree } from '../../../../base-ui/tree/LitTree.js';
 
 export class RangeSelectStruct {
   startX: number | undefined;
@@ -75,6 +76,8 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_MEMORY_ABILITY = 'memory-ability';
   static ROW_TYPE_DISK_ABILITY = 'disk-ability';
   static ROW_TYPE_NETWORK_ABILITY = 'network-ability';
+  static ROW_TYPE_DMA_ABILITY = 'dma-ability';
+  static ROW_TYPE_GPU_MEMORY_ABILITY = 'gpu-memory-ability';
   static ROW_TYPE_SDK = 'sdk';
   static ROW_TYPE_SDK_COUNTER = 'sdk-counter';
   static ROW_TYPE_SDK_SLICE = 'sdk-slice';
@@ -83,16 +86,29 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_SYSTEM_ENERGY = 'system-energy';
   static ROW_TYPE_POWER_ENERGY = 'power-energy';
   static ROW_TYPE_STATE_ENERGY = 'state-energy';
-  static ROW_TYPE_SMAPS = 'smaps';
+  static ROW_TYPE_SYS_MEMORY_GPU = 'sys-memory-gpu';
+  static ROW_TYPE_SYS_MEMORY_GPU_GL = 'sys-memory-gpu-gl';
+  static ROW_TYPE_SYS_MEMORY_GPU_TOTAL = 'sys-memory-gpu-total';
+  static ROW_TYPE_SYS_MEMORY_GPU_WINDOW = 'sys-memory-gpu-window';
+  static ROW_TYPE_VM_TRACKER_SMAPS = 'smaps';
+  static ROW_TYPE_VM_TRACKER = 'VmTracker';
+  static ROW_TYPE_DMA_VMTRACKER = 'dma-vmTracker';
+  static ROW_TYPE_GPU_MEMORY_VMTRACKER = 'gpu-memory-vmTracker';
+  static ROW_TYPE_VMTRACKER_SHM = 'VmTracker-shm';
   static ROW_TYPE_CLOCK_GROUP = 'clock-group';
   static ROW_TYPE_CLOCK = 'clock';
   static ROW_TYPE_IRQ_GROUP = 'irq-group';
   static ROW_TYPE_IRQ = 'irq';
   static ROW_TYPE_JANK = 'janks';
+  static ROW_TYPE_FRAME = 'frame';
   static ROW_TYPE_FRAME_ANIMATION = 'frame-animation';
   static ROW_TYPE_FRAME_DYNAMIC = 'frame-dynamic';
   static ROW_TYPE_FRAME_SPACING = 'frame-spacing';
   static ROW_TYPE_JS_CPU_PROFILER = 'js-cpu-profiler-cell';
+  static ROW_TYPE_PURGEABLE_TOTAL_ABILITY = 'purgeable-total-ability';
+  static ROW_TYPE_PURGEABLE_PIN_ABILITY = 'purgeable-pin-ability';
+  static ROW_TYPE_PURGEABLE_TOTAL_VM = 'purgeable-total-vm';
+  static ROW_TYPE_PURGEABLE_PIN_VM = 'purgeable-pin-vm';
   static FRAME_WIDTH: number = 0;
   static range: TimeRange | undefined | null;
   static rangeSelectObject: RangeSelectStruct | undefined;
@@ -115,7 +131,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   public checkBoxEL: LitCheckBox | null | undefined;
   public collectEL: LitIcon | null | undefined;
   public onThreadHandler: ((useCache: boolean, buf: ArrayBuffer | undefined | null) => void) | undefined | null;
-  public onDrawTypeChangeHandler: ((type: number) => void) | undefined | null;
+  public onRowSettingChangeHandler: ((keys: Array<string>, nodes: Array<any>) => void) | undefined | null;
   public supplier: (() => Promise<Array<T>>) | undefined | null;
   public favoriteChangeHandler: ((fav: TraceRow<any>) => void) | undefined | null;
   public selectChangeHandler: ((list: Array<TraceRow<any>>) => void) | undefined | null;
@@ -130,6 +146,8 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   public templateType: Array<string> = [];
   private rootEL: HTMLDivElement | null | undefined;
   private nameEL: HTMLLabelElement | null | undefined;
+  private rowSettingTree: LitTree | null | undefined;
+  private rowSettingPop: LitPopover | null | undefined;
   private _rangeSelect: boolean = false;
   private _drawType: number = 0;
   private folderIconEL: LitIcon | null | undefined;
@@ -140,6 +158,8 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   translateY: number = 0; //single canvas offsetY;
   childrenList: Array<TraceRow<any>> = [];
   parentRowEl: TraceRow<any> | undefined;
+  _rowSettingList: Array<TreeItemData> | null | undefined;
+
   focusHandler?: (ev: MouseEvent) => void | undefined;
 
   constructor(
@@ -190,6 +210,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       'collect-type',
       'disabled-check',
       'row-discard',
+      'row-setting',
+      'row-setting-list',
+      'row-setting-popover-direction',
     ];
   }
 
@@ -209,6 +232,31 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       this.removeAttribute('row-discard');
       this.style.display = 'block';
     }
+  }
+
+  set rowSetting(value: string) {
+    this.setAttribute('row-setting',value);
+  }
+
+  get rowSetting() {
+    return this.getAttribute('row-setting') || 'disable';
+  }
+
+  set rowSettingPopoverDirection(value: string) {
+    this.rowSettingPop!.placement = value;
+  }
+
+  get rowSettingPopoverDirection() {
+    return this.rowSettingPop?.placement || 'bottomLeft';
+  }
+
+  set rowSettingList(value: Array<TreeItemData> | null | undefined) {
+    this._rowSettingList = value;
+    this.rowSettingTree!.treeData = value || [];
+  }
+
+  get rowSettingList() {
+    return this._rowSettingList;
   }
 
   get collect() {
@@ -534,6 +582,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   set folderPaddingLeft(value: number) {
     this.folderIconEL!.style.marginLeft = value + 'px';
   }
+  set folderTextLeft(value: number) {
+    this.nameEL!.style.marginLeft = value + 'px';
+  }
 
   initElements(): void {
     this.rootEL = this.shadowRoot?.querySelector('.root');
@@ -543,6 +594,8 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.folderIconEL = this.shadowRoot?.querySelector<LitIcon>('.icon');
     this.nameEL = this.shadowRoot?.querySelector('.name');
     this.canvasContainer = this.shadowRoot?.querySelector('.panel-container');
+    this.rowSettingTree = this.shadowRoot?.querySelector('#rowSettingTree');
+    this.rowSettingPop = this.shadowRoot?.querySelector('#rowSetting');
     this.tipEL = this.shadowRoot?.querySelector('.tip');
     let canvasNumber = this.args['canvasNumber'];
     if (!this.args['skeleton']) {
@@ -560,6 +613,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         this.expansion = !this.expansion;
       }
     });
+    this.rowSettingTree!.onChange = (e: any) => {
+      this.onRowSettingChangeHandler?.(this.rowSettingTree!.getCheckdKeys(), this.rowSettingTree!.getCheckdNodes());
+    };
   }
 
   initCanvas(list: Array<HTMLCanvasElement>): void {
@@ -725,26 +781,6 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     if (!this.args['skeleton']) {
       this.initCanvas(this.canvas);
     }
-    let radioList = this.shadowRoot!.querySelectorAll('input[type=radio][name=status]');
-    let popover = this.shadowRoot!.querySelector<LitPopover>('.popover');
-    this.shadowRoot?.querySelector<HTMLDivElement>('#first-radio')?.addEventListener('click', (e) => {
-      // @ts-ignore
-      radioList[0]!.checked = true;
-      // @ts-ignore
-      popover!.visible = false;
-      setTimeout(() => {
-        this.onDrawTypeChangeHandler?.(0);
-      }, 300);
-    });
-    this.shadowRoot?.querySelector<HTMLDivElement>('#second-radio')?.addEventListener('click', (e) => {
-      // @ts-ignore
-      radioList[1]!.checked = true;
-      // @ts-ignore
-      popover!.visible = false;
-      setTimeout(() => {
-        this.onDrawTypeChangeHandler?.(1);
-      }, 300);
-    });
   }
 
   rowDragstart(ev: any) {
@@ -1266,9 +1302,10 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         :host(:not([check-type])) .lit-check-box{
             display: none;
         }
-        :host([collect-type]) {
-            /*position:fixed;*/
-            /*z-index:1000;*/
+        :host([collect-type]) .setting{
+            position:fixed;
+            z-index:1003;
+            left: 473px;
         }
         :host(:not([collect-type])) {
             /*position:static;*/
@@ -1287,9 +1324,12 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         :host(:not([folder])) .describe:hover .collect{
             display: block;
         }
-        :host([row-type="native-memory"]) #nativeRadioList{
+        :host([row-setting='enable']) #rowSetting{
             display: flex;
-        }
+        } 
+        :host([row-setting='enable']) .collect{
+            margin-right: 20px;
+        } 
         .popover{
             color: var(--dark-color1,#4b5766);
             display: none;
@@ -1297,9 +1337,12 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
             align-items: center;
             margin-right: 5px;
         }
+        .setting{
+            position:absolute;
+            left: 225px;
+        }
         .radio{
             margin-right: 10px;
-
         }
         #setting{
             color: var(--dark-color1,#606060);
@@ -1310,39 +1353,32 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         :host([highlight]) .flash{
             background-color: #ffe263;
         }
-        
         :host([row-type="energy"]) #appNameList{
             display: flex;
         }
-        
          #listprocess::-webkit-scrollbar{
          width: 6px;
         }
-        
         /*定义滑块 内阴影+圆角*/
         #listprocess::-webkit-scrollbar-thumb
         {
           border-radius: 6px;
           background-color: var(--dark-background7,#e7c9c9);
         }
-
         </style>
         <div class="root">
             <div class="describe flash" style="position: inherit">
                 <lit-icon class="icon" name="caret-down" size="19"></lit-icon>
                 <label class="name"></label>
                 <lit-icon class="collect" name="star-fill" size="19"></lit-icon>
-                <lit-popover placement="bottomLeft" trigger="click" id = "nativeRadioList" class="popover" haveRadio="true" style="z-index: 1;position: absolute;left: 230px">
-                    <div style="display: block" slot="content">
-                        <div id="first-radio" style="margin-bottom: 5px">
-                        <input class="radio" name="status" type="radio" value="0" />Current Bytes</div>
-                        <div id="second-radio" style="margin-bottom: 5px">
-                        <input class="radio" name="status" type="radio" value="1" />Native Memory Density</div>
+                <lit-popover placement="bottomLeft" trigger="click" id="appNameList" class="popover" haveRadio="true" style="z-index: 1;position: absolute;left: 230px">
+                    <div slot="content" id="listprocess" style="height:200px;overflow-y:auto">
                     </div>
                     <lit-icon name="setting" size="19" id="setting"></lit-icon>
                 </lit-popover>
-                <lit-popover placement="bottomLeft" trigger="click" id="appNameList" class="popover" haveRadio="true" style="z-index: 1;position: absolute;left: 230px">
-                    <div slot="content" id="listprocess" style="height:200px;overflow-y:auto">
+                <lit-popover placement="bottomLeft" trigger="click" id="rowSetting" class="popover setting" haveRadio="true">
+                    <div slot="content" id="settingList" style="display: block;height: auto;max-height:200px;overflow-y:auto">
+                        <lit-tree id="rowSettingTree" checkable="true"></lit-tree>
                     </div>
                     <lit-icon name="setting" size="19" id="setting"></lit-icon>
                 </lit-popover>

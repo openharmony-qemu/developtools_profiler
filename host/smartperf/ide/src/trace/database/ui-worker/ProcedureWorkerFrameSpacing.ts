@@ -37,7 +37,7 @@ export class FrameSpacingRender extends Render {
       TraceRow.range!.startNS,
       TraceRow.range!.endNS,
       TraceRow.range!.totalNS,
-      row.frame,
+      row,
       req.animationRanges,
       req.useCache || !TraceRow.range!.refresh
     );
@@ -48,20 +48,17 @@ export class FrameSpacingRender extends Render {
   animationRanges: AnimationRanges[] }, frameSpacingFilter: Array<FrameSpacingStruct>,
   row: TraceRow<FrameSpacingStruct>) : void {
     if (req.animationRanges.length > 0 && req.animationRanges[0] && frameSpacingFilter.length > 0) {
-      let find = false;
       let preFrameSpacing: FrameSpacingStruct = frameSpacingFilter[0];
       // @ts-ignore
       let smallTickStandard = smallTick[req.frameRate];
       let [minValue, maxValue] = this.maxMinData(smallTickStandard.firstLine,
         smallTickStandard.thirdLine, frameSpacingFilter);
       let isDraw = false;
-      let selectUnitWidthList: number[] = [];
+      let selectUnitWidth: number = 0;
       for (let index: number = 0; index < frameSpacingFilter.length; index++) {
         let currentStruct = frameSpacingFilter[index];
-        if (index > 0) {
-          let selectUnitWidth = computeUnitWidth(preFrameSpacing.currentTs, currentStruct.currentTs, row.frame.width);
-          selectUnitWidthList.push(selectUnitWidth);
-        }
+        selectUnitWidth = computeUnitWidth(preFrameSpacing.currentTs, currentStruct.currentTs,
+          row.frame.width, selectUnitWidth);
         FrameSpacingStruct.refreshHoverStruct(preFrameSpacing, currentStruct, row, minValue, maxValue);
         if (currentStruct.groupId === 0) {
           if (currentStruct.currentTs > TraceRow.range!.startNS && currentStruct.currentTs < TraceRow.range!.endNS) {
@@ -79,9 +76,9 @@ export class FrameSpacingRender extends Render {
       if (isDraw) {
         this.drawDashedLines(Object.values(smallTickStandard), req, row, minValue, maxValue);
       }
-      let unitWidth = Math.min.apply(Math, selectUnitWidthList);
       let findStructList = frameSpacingFilter.filter(filter =>
-        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, unitWidth / multiple));
+        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple));
+      let find = false;
       if (findStructList.length > 0) {
         find = true;
         let hoverIndex: number = 0;
@@ -130,13 +127,17 @@ export class FrameSpacingRender extends Render {
     startNS: number,
     endNS: number,
     totalNS: number,
-    frame: Rect,
+    row: TraceRow<FrameSpacingStruct>,
     animationRanges: AnimationRanges[],
     use: boolean
   ): void {
+    let frame: Rect = row.frame;
+    let modelName: string | undefined | null = row.getAttribute('model-name');
     if (use && frameSpacingFilter.length > 0) {
       for (let index = 0, len = frameSpacingFilter.length; index < len; index++) {
-        FrameSpacingStruct.setFrameSpacingFrame(frameSpacingFilter[index], startNS, endNS, totalNS, frame);
+        if (frameSpacingFilter[index].nameId === modelName) {
+          FrameSpacingStruct.setFrameSpacingFrame(frameSpacingFilter[index], startNS, endNS, totalNS, frame);
+        }
       }
       return;
     }
@@ -145,24 +146,26 @@ export class FrameSpacingRender extends Render {
       let groupIdList: number[] = [];
       for (let index = 0; index < frameSpacingList.length; index++) {
         let item = frameSpacingList[index];
-        item.groupId = invalidGroupId;
-        for (let rangeIndex = 0; rangeIndex < animationRanges.length; rangeIndex++) {
-          let currentRange = animationRanges[rangeIndex];
-          if (item.currentTs >= currentRange.start && item.currentTs <= currentRange.end) {
-            item.groupId = currentRange.start;
+        if (modelName === item.nameId) {
+          item.groupId = invalidGroupId;
+          for (let rangeIndex = 0; rangeIndex < animationRanges.length; rangeIndex++) {
+            let currentRange = animationRanges[rangeIndex];
+            if (item.currentTs >= currentRange.start && item.currentTs <= currentRange.end) {
+              item.groupId = currentRange.start;
+              break;
+            }
+          }
+          if (item.currentTs < startNS && index + unitIndex < frameSpacingList.length &&
+            frameSpacingList[index + unitIndex].currentTs >= startNS && item.groupId !== invalidGroupId) {
+            this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
+          }
+          if (item.currentTs >= startNS && item.currentTs <= endNS && item.groupId !== invalidGroupId) {
+            this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
+          }
+          if (item.currentTs > endNS && item.groupId !== invalidGroupId) {
+            this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
             break;
           }
-        }
-        if (item.currentTs < startNS && index + unitIndex < frameSpacingList.length &&
-          frameSpacingList[index + unitIndex].currentTs >= startNS && item.groupId !== invalidGroupId) {
-          this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
-        }
-        if (item.currentTs >= startNS && item.currentTs <= endNS && item.groupId !== invalidGroupId) {
-          this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
-        }
-        if (item.currentTs > endNS && item.groupId !== invalidGroupId) {
-          this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
-          break;
         }
       }
       this.grouping(groupIdList, frameSpacingFilter);
@@ -224,6 +227,7 @@ export class FrameSpacingStruct extends BaseStruct {
   preFrameHeight: number | undefined;
   x: number | undefined;
   y: number | undefined;
+  nameId: string | undefined;
 
   static setFrameSpacingFrame(
     frameSpacingNode: FrameSpacingStruct,
@@ -250,10 +254,9 @@ export class FrameSpacingStruct extends BaseStruct {
   static refreshHoverStruct(preFrameSpacing: FrameSpacingStruct, frameSpacing: FrameSpacingStruct,
     row: TraceRow<FrameSpacingStruct>, minValue: number, maxValue: number): void {
     if (frameSpacing.frame) {
-      let currentPointY = row.frame.height - Math.floor((frameSpacing.frameSpacingResult! -
+      frameSpacing.frame.y = row.frame.height - Math.floor((frameSpacing.frameSpacingResult! -
         minValue) * (row.frame.height - padding * multiple) /
         (maxValue - minValue)) - padding;
-      frameSpacing.frame.y = currentPointY;
     }
   };
 

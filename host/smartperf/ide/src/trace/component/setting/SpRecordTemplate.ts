@@ -113,6 +113,9 @@ export class SpRecordTemplate extends BaseElement {
           hitraceCategories.push(categories);
         }
       });
+      if (this.appStartup?.checked){
+        hitraceCategories.push('musl');
+      }
       SpRecordTemplate.FRAME_TIMELINE_EVENTS.forEach((ev) => {
         if (traceEventSet.indexOf(ev) == -1) {
           traceEventSet.push(ev);
@@ -226,7 +229,7 @@ export class SpRecordTemplate extends BaseElement {
             </div>
             <div class="template-config-div">
                <div>
-                 <span class="template-title">Dynamic effect</span>
+                 <span class="template-title">Animation effect</span>
                  <lit-switch class="config_switch" id="dynamic_effect"></lit-switch>
                </div>
             </div> 

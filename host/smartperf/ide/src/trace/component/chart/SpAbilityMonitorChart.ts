@@ -27,21 +27,22 @@ import {
   queryCpuAbilitySystemData,
   queryCpuAbilityUserData,
   queryDiskIoMaxData,
+  queryDmaAbilityData,
+  queryGpuMemoryAbilityData,
   queryMemoryMaxData,
   queryMemoryUsedAbilityData,
   queryNetWorkMaxData,
   queryPacketsInAbilityData,
   queryPacketsOutAbilityData,
+  queryPurgeableSysData,
   queryReadAbilityData,
   queryWrittenAbilityData,
 } from '../../database/SqlLite.js';
 import { info } from '../../../log/Log.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
-import { procedurePool } from '../../database/Procedure.js';
 import { Utils } from '../trace/base/Utils.js';
-import { CpuStruct, EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
-import { ProcessRender, ProcessStruct } from '../../database/ui-worker/ProcedureWorkerProcess.js';
-import { CpuFreqStruct, FreqRender } from '../../database/ui-worker/ProcedureWorkerFreq.js';
+import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
+import { ProcessStruct } from '../../database/ui-worker/ProcedureWorkerProcess.js';
 import { CpuAbilityMonitorStruct, CpuAbilityRender } from '../../database/ui-worker/ProcedureWorkerCpuAbility.js';
 import {
   MemoryAbilityMonitorStruct,
@@ -56,14 +57,14 @@ import {
   NetworkAbilityRender,
 } from '../../database/ui-worker/ProcedureWorkerNetworkAbility.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
-import { ColorUtils } from '../trace/base/ColorUtils.js';
+import { SnapshotRender, SnapshotStruct } from '../../database/ui-worker/ProcedureWorkerSnapshot.js';
 
 export class SpAbilityMonitorChart {
   private trace: SpSystemTrace;
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
   }
-  memoryMath = (maxByte: number) => {
+  memoryMath = (maxByte: number): string => {
     let maxByteName = '';
     if (maxByte > 0) {
       maxByteName = Utils.getBinaryKBWithUnit(maxByte);
@@ -71,15 +72,15 @@ export class SpAbilityMonitorChart {
     return maxByteName;
   };
 
-  diskIOMath = (maxByte: number) => {
+  diskIOMath = (maxByte: number): string => {
     let maxByteName = '';
     if (maxByte > 0) {
-      maxByteName = maxByte + 'KB/S';
+      maxByteName = `${maxByte}KB/S`;
     }
     return maxByteName;
   };
 
-  networkMath = (maxValue: number) => {
+  networkMath = (maxValue: number): string => {
     let maxByteName = '';
     if (maxValue > 0) {
       maxByteName = Utils.getBinaryByteWithUnit(maxValue);
@@ -105,6 +106,10 @@ export class SpAbilityMonitorChart {
     if (this.hasTable(result, 'trace_network')) {
       await this.initNetworkAbility(processRow);
     }
+    // 初始化PurgeableToTal和PurgeablePin泳道图
+    await this.initPurgeableAbility(processRow);
+    await this.initDmaAbility(processRow);
+    await this.initGpuMemoryAbility(processRow);
     let durTime = new Date().getTime() - time;
     info('The time to load the AbilityMonitor data is: ', durTime);
   }
@@ -117,7 +122,7 @@ export class SpAbilityMonitorChart {
 
   private initAbilityRow = () => {
     let abilityRow = TraceRow.skeleton<ProcessStruct>();
-    abilityRow.rowId = `abilityMonitor`;
+    abilityRow.rowId = 'abilityMonitor';
     abilityRow.rowType = TraceRow.ROW_TYPE_MONITOR;
     abilityRow.style.height = '40px';
     abilityRow.rowParentId = '';
@@ -131,11 +136,11 @@ export class SpAbilityMonitorChart {
       if (abilityRow.expansion) {
         this.trace.canvasPanelCtx?.clearRect(0, 0, abilityRow.frame.width, abilityRow.frame.height);
       } else {
-        (renders['empty'] as EmptyRender).renderMainThread(
+        (renders.empty as EmptyRender).renderMainThread(
           {
             context: this.trace.canvasPanelCtx,
             useCache: useCache,
-            type: ``,
+            type: '',
           },
           abilityRow
         );
@@ -710,5 +715,190 @@ export class SpAbilityMonitorChart {
     processRow.addChildTraceRow(packetOutTraceRow);
     let durTime = new Date().getTime() - time;
     info('The time to load the Ability Network is: ', durTime);
+  };
+
+  private initPurgeableAbility = async (processRow: TraceRow<ProcessStruct>) => {
+    let time = new Date().getTime();
+    let purgeableTotalData = await queryPurgeableSysData();
+    if (purgeableTotalData.length > 0) {
+      for (let i = 0; i < purgeableTotalData.length; i++) {
+        purgeableTotalData[i].name = 'Snapshot' + i;
+      }
+      let totalTraceRow = TraceRow.skeleton<SnapshotStruct>();
+      totalTraceRow.rowParentId = `abilityMonitor`;
+      totalTraceRow.rowHidden = !processRow.expansion;
+      totalTraceRow.rowId = 'System Purgeable Total';
+      totalTraceRow.rowType = TraceRow.ROW_TYPE_PURGEABLE_TOTAL_ABILITY;
+      totalTraceRow.style.height = '40px';
+      totalTraceRow.style.width = `100%`;
+      totalTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+      totalTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
+      totalTraceRow.setAttribute('children', '');
+      totalTraceRow.name = `System Purgeable Total`;
+      totalTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeableTotalData));
+      totalTraceRow.focusHandler = (ev) => {
+        this.trace?.displayTip(
+          totalTraceRow,
+          SnapshotStruct.hoverSnapshotStruct,
+          `<span>Name: ${SnapshotStruct.hoverSnapshotStruct?.name || ''}</span>
+			   <span>Value: ${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
+        );
+      };
+      totalTraceRow.onThreadHandler = (useCache) => {
+        let context = totalTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        totalTraceRow.canvasSave(context);
+        (renders['snapshot'] as SnapshotRender).renderMainThread(
+          {
+            context: context,
+            useCache: useCache,
+            type: `snapshot`,
+          },
+          totalTraceRow
+        );
+        totalTraceRow.canvasRestore(context);
+      };
+      processRow.addChildTraceRow(totalTraceRow);
+    }
+    let purgeablePinData = await queryPurgeableSysData(true);
+    if (purgeablePinData.length > 0) {
+      for (let i = 0; i < purgeablePinData.length; i++) {
+        purgeablePinData[i].name = 'Snapshot' + i;
+      }
+      let pinTraceRow = TraceRow.skeleton<SnapshotStruct>();
+      pinTraceRow.rowParentId = `abilityMonitor`;
+      pinTraceRow.rowHidden = !processRow.expansion;
+      pinTraceRow.rowId = 'System Purgeable Pin';
+      pinTraceRow.rowType = TraceRow.ROW_TYPE_PURGEABLE_PIN_ABILITY;
+      pinTraceRow.style.height = '40px';
+      pinTraceRow.style.width = `100%`;
+      pinTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+      pinTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
+      pinTraceRow.setAttribute('children', '');
+      pinTraceRow.name = `System Purgeable Pin`;
+      pinTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeablePinData));
+      pinTraceRow.focusHandler = (ev) => {
+        this.trace?.displayTip(
+          pinTraceRow,
+          SnapshotStruct.hoverSnapshotStruct,
+          `<span>Name: ${SnapshotStruct.hoverSnapshotStruct?.name || ''}</span>
+         <span>Value: ${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
+        );
+      };
+      pinTraceRow.onThreadHandler = (useCache) => {
+        let context = pinTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        pinTraceRow.canvasSave(context);
+        (renders['snapshot'] as SnapshotRender).renderMainThread(
+          {
+            context: context,
+            useCache: useCache,
+            type: `snapshot`,
+          },
+          pinTraceRow
+        );
+        pinTraceRow.canvasRestore(context);
+      };
+      processRow.addChildTraceRow(pinTraceRow);
+    }
+
+    let durTime = new Date().getTime() - time;
+    info('The time to load the Ability Purgeable is: ', durTime);
+  };
+
+  /**
+   * DMA
+   * @param processRow
+   */
+  private initDmaAbility = async (processRow: TraceRow<ProcessStruct>) => {
+    let dmaAbilityData = await queryDmaAbilityData();
+    for (let i = 0; i < dmaAbilityData.length; i++) {
+      dmaAbilityData[i].name = 'snapshot' + i;
+    }
+    let time = new Date().getTime();
+    let dmaTraceRow = TraceRow.skeleton<SnapshotStruct>();
+    dmaTraceRow.rowParentId = `abilityMonitor`;
+    dmaTraceRow.rowHidden = !processRow.expansion;
+    dmaTraceRow.rowId = 'abilityMonitorDma';
+    dmaTraceRow.rowType = TraceRow.ROW_TYPE_DMA_ABILITY;
+    dmaTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+    dmaTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
+    dmaTraceRow.style.height = '40px';
+    dmaTraceRow.style.width = `100%`;
+    dmaTraceRow.setAttribute('children', '');
+    dmaTraceRow.name = 'DMA';
+    dmaTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(dmaAbilityData));
+    //文字悬浮提示
+    dmaTraceRow.focusHandler = (ev) => {
+      this.trace?.displayTip(
+        dmaTraceRow,
+        SnapshotStruct.hoverSnapshotStruct,
+        `<span>${SnapshotStruct.hoverSnapshotStruct?.name || ''}</span>
+         <span>${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
+      );
+    };
+    dmaTraceRow.onThreadHandler = (useCache) => {
+      let context = dmaTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      dmaTraceRow.canvasSave(context);
+      (renders.snapshot as SnapshotRender).renderMainThread(
+        {
+          context: context,
+          useCache: useCache,
+          type: 'snapshot',
+        },
+        dmaTraceRow!
+      );
+      dmaTraceRow.canvasRestore(context);
+    };
+    processRow.addChildTraceRow(dmaTraceRow);
+    let durTime = new Date().getTime() - time;
+    info('The time to load the Ability Dma is: ', durTime);
+  };
+
+  /**
+   * Skia Gpu Memory
+   * @param processRow
+   */
+  private initGpuMemoryAbility = async (processRow: TraceRow<ProcessStruct>) => {
+    let gpuMemoryAbilityData = await queryGpuMemoryAbilityData();
+    for (let i = 0; i < gpuMemoryAbilityData.length; i++) {
+      gpuMemoryAbilityData[i].name = 'snapshot' + i;
+    }
+    let time = new Date().getTime();
+    let gpuMemoryTraceRow = TraceRow.skeleton<SnapshotStruct>();
+    gpuMemoryTraceRow.rowParentId = `abilityMonitor`;
+    gpuMemoryTraceRow.rowHidden = !processRow.expansion;
+    gpuMemoryTraceRow.rowId = 'abilityMonitorGpuMemory';
+    gpuMemoryTraceRow.rowType = TraceRow.ROW_TYPE_GPU_MEMORY_ABILITY;
+    gpuMemoryTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+    gpuMemoryTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
+    gpuMemoryTraceRow.style.height = '40px';
+    gpuMemoryTraceRow.style.width = `100%`;
+    gpuMemoryTraceRow.setAttribute('children', '');
+    gpuMemoryTraceRow.name = 'Skia Gpu Memory';
+    gpuMemoryTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(gpuMemoryAbilityData));
+    //文字悬浮提示
+    gpuMemoryTraceRow.focusHandler = (ev) => {
+      this.trace?.displayTip(
+        gpuMemoryTraceRow,
+        SnapshotStruct.hoverSnapshotStruct,
+        `<span>${SnapshotStruct.hoverSnapshotStruct?.name || ''}</span>
+        <span>${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
+      );
+    };
+    gpuMemoryTraceRow.onThreadHandler = (useCache) => {
+      let context = gpuMemoryTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      gpuMemoryTraceRow.canvasSave(context);
+      (renders.snapshot as SnapshotRender).renderMainThread(
+        {
+          context: context,
+          useCache: useCache,
+          type: 'snapshot',
+        },
+        gpuMemoryTraceRow!
+      );
+      gpuMemoryTraceRow.canvasRestore(context);
+    };
+    processRow.addChildTraceRow(gpuMemoryTraceRow);
+    let durTime = new Date().getTime() - time;
+    info('The time to load the Ability Dma is: ', durTime);
   };
 }

@@ -41,7 +41,6 @@ import { EnergyAnomalyRender } from './ProcedureWorkerEnergyAnomaly.js';
 import { EnergySystemRender } from './ProcedureWorkerEnergySystem.js';
 import { EnergyPowerRender } from './ProcedureWorkerEnergyPower.js';
 import { EnergyStateRender } from './ProcedureWorkerEnergyState.js';
-import { SmapsRender } from './ProcedureWorkerSmaps.js';
 import { CpuFreqLimitRender } from './ProcedureWorkerCpuFreqLimits.js';
 import { ClockRender } from './ProcedureWorkerClock.js';
 import { IrqRender } from './ProcedureWorkerIrq.js';
@@ -55,6 +54,7 @@ import { FrameDynamicRender } from './ProcedureWorkerFrameDynamic.js';
 import { FrameAnimationRender } from './ProcedureWorkerFrameAnimation.js';
 import { FrameSpacingRender } from './ProcedureWorkerFrameSpacing.js';
 import { JsCpuProfilerRender } from './ProcedureWorkerCpuProfiler.js';
+import { SnapshotRender } from './ProcedureWorkerSnapshot.js';
 
 let dataList: any = {};
 let dataList2: any = {};
@@ -99,7 +99,6 @@ export let renders: any = {
   energySystem: new EnergySystemRender(),
   energyPower: new EnergyPowerRender(),
   energyState: new EnergyStateRender(),
-  smaps: new SmapsRender(),
   clock: new ClockRender(),
   irq: new IrqRender(),
   jank: new JankRender(),
@@ -107,6 +106,7 @@ export let renders: any = {
   frameAnimation: new FrameAnimationRender(),
   frameSpacing: new FrameSpacingRender(),
   'js-cpu-profiler': new JsCpuProfilerRender(),
+  snapshot: new SnapshotRender(),
 };
 
 function match(type: string, req: RequestMessage) {

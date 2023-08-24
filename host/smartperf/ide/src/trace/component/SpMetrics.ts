@@ -79,36 +79,43 @@ export class SpMetrics extends BaseElement {
     this.responseJson = this.shadowRoot?.querySelector('.response-json') as HTMLPreElement;
     if (this.selectMetricEl) {
       this.selectMetricEl.addEventListener('selectionchange', () => {
-        if (this.selectMetricEl) this.selectMetricEl.textContent = '';
+        if (this.selectMetricEl) {
+          this.selectMetricEl.textContent = '';
+        }
       });
     }
     this.initMetricDataHandle();
     this.initMetricSelectOption();
   }
 
-  async initMetric(queryItem: MetricQueryItem): Promise<void> {
-    this.initMetricData(queryItem).then((item) => {
+  initMetric(queryItem: MetricQueryItem): void {
+    this.initMetricData(queryItem).then(() => {
       this.metricProgressLoad!.loading = false;
     });
   }
 
   async initMetricData(queryItem: MetricQueryItem): Promise<void> {
+    let spacesNumber = 4;
     let metricQuery = queryItem.metricQuery;
     let queryList = await metricQuery();
     info('current Metric Data size is: ', queryList!.length);
     let metric = queryItem.metricResultHandle;
     let resultData = metric(queryList);
-    let jsonText = PluginConvertUtils.BeanToCmdTxtWithObjName(resultData, true, queryItem.metricName, 4);
-    this.responseJson!.textContent = jsonText;
+    this.responseJson!.textContent = PluginConvertUtils.BeanToCmdTxtWithObjName(resultData, true,
+      queryItem.metricName, spacesNumber);
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
     switch (name) {
       case 'metric':
-        if (this.selectMetricEl) this.selectMetricEl.textContent = newValue;
+        if (this.selectMetricEl) {
+          this.selectMetricEl.textContent = newValue;
+        }
         break;
       case 'metricResult':
-        if (this.selectMetricEl) this.selectMetricEl.textContent = newValue;
+        if (this.selectMetricEl) {
+          this.selectMetricEl.textContent = newValue;
+        }
         break;
     }
   }
@@ -122,9 +129,11 @@ export class SpMetrics extends BaseElement {
     let selectedIndex = this.selectMetricEl!.selectedIndex;
     let value = this.selectMetricEl!.options[selectedIndex].value;
     let resultQuery = this.metricOptionalSelects?.filter((item) => {
-      return item.metricName == value;
+      return item.metricName === value;
     });
-    if (!resultQuery || resultQuery.length < 1) return;
+    if (!resultQuery || resultQuery.length === 0) {
+      return;
+    }
     this.initMetric(resultQuery[0]);
   };
 
@@ -190,7 +199,6 @@ export class SpMetrics extends BaseElement {
   initHtml(): string {
     return `
         <style>
-
         :host{
             width: 100%;
             height: 100%;
@@ -199,7 +207,6 @@ export class SpMetrics extends BaseElement {
             padding: 0;
             font-size:16px;
         }
-
         .metric{
             display: flex;
             flex-direction: column;
@@ -210,7 +217,6 @@ export class SpMetrics extends BaseElement {
             right: 0;
             background-color: var(--dark-background5,#F6F6F6);
         }
-
         .metric-select{
             color: #121212;
             border-radius: 16px;
@@ -219,13 +225,11 @@ export class SpMetrics extends BaseElement {
             margin: 2% 2.5% 0 2.5%;
             grid-row-gap: 30px;
         }
-
         .request{
             min-height: 15vh;
             overflow: auto;
             position: relative;
         }
-
         .sql-select{
             font-family: Helvetica,serif;
             color: var(--dark-color1,#212121);
@@ -243,7 +247,6 @@ export class SpMetrics extends BaseElement {
             -webkit-appearance: none;
             background: url('img/down.png') no-repeat 98% center var(--dark-background3,#FFFFFF);
         }
-
         button{
             border-radius: 16px;
             flex-grow: 1;
@@ -260,12 +263,10 @@ export class SpMetrics extends BaseElement {
             opacity: 0.6;
             cursor:pointer;
         }
-
         .response{
             flex-grow: 1;
             margin-bottom: 1%;
         }
-
         .response-json{
             background-color: var(--dark-background3,#FFFFFF);
             border-radius: 16px;
@@ -282,7 +283,6 @@ export class SpMetrics extends BaseElement {
             outline:none;
             resize:none;
         }
-
         p{
              display: table-cell;
              padding: 20% 0;
@@ -307,9 +307,7 @@ export class SpMetrics extends BaseElement {
             width: 95%;
             bottom: 0;
         }
-
         </style>
-
         <div class="metric">
             <div class="metric-select request">
                 <p>Select a metric</p>

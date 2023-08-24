@@ -46,7 +46,7 @@ export class TraceRowConfig extends BaseElement {
   }
 
   init(): void {
-    let sceneList = ['FrameTimeline', 'Task Pool', 'Animation Effect', 'Ark Ts'];
+    let sceneList = ['FrameTimeline', 'Task Pool', 'Animation Effect', 'Ark Ts', 'AppStartup'];
     this.selectTypeList = [];
     this.sceneTable!.innerHTML = '';
     this.chartTable!.innerHTML = '';
@@ -94,7 +94,12 @@ export class TraceRowConfig extends BaseElement {
       this.resetChartOption();
       this.resetChartTable();
     });
-    this.sceneTable?.append(...[div, optionCheckBox]);
+    let htmlDivElement = document.createElement('div');
+    htmlDivElement.style.display = 'grid';
+    htmlDivElement.style.gridTemplateColumns = '1fr 1fr';
+    htmlDivElement.appendChild(div);
+    htmlDivElement.appendChild(optionCheckBox);
+    this.sceneTable?.appendChild(htmlDivElement);
   }
 
   initConfigChartTable(row: TraceRow<BaseStruct>): void {
@@ -171,7 +176,7 @@ export class TraceRowConfig extends BaseElement {
 
   resetChartTable(): void {
     if (this.traceRowList && this.traceRowList.length > 0) {
-      TraceRowConfig.allTraceRowList.forEach((traceRow: TraceRow<BaseStruct>) => {
+      this.traceRowList.forEach((traceRow: TraceRow<BaseStruct>) => {
         let isShowRow: boolean = false;
         if (this.selectTypeList!.length === 0) {
           traceRow.removeAttribute('row-hidden');
@@ -186,18 +191,41 @@ export class TraceRowConfig extends BaseElement {
           }
           if (isShowRow) {
             if (traceRow.templateType.length > 0) {
-              traceRow.expansion = false;
               traceRow.removeAttribute('row-hidden');
               traceRow.setAttribute('scene', '');
+              if (traceRow.childrenList && traceRow.childrenList.length > 0) {
+                this.refreshChildRow(traceRow.childrenList, isShowRow);
+              }
+              traceRow.expansion = false;
             }
           } else {
             traceRow.removeAttribute('scene');
             traceRow.setAttribute('row-hidden', '');
+            this.refreshChildRow(traceRow.childrenList);
           }
         }
       });
       this.refreshSystemPanel();
     }
+  }
+
+  refreshChildRow(childRows: Array<TraceRow<BaseStruct>>, isShowScene: boolean = false): void{
+    childRows.forEach(row => {
+      if (isShowScene) {
+        row.removeAttribute('row-hidden');
+        row.setAttribute('scene', '');
+        if (row.childrenList && row.childrenList.length > 0) {
+          this.refreshChildRow(row.childrenList, isShowScene);
+        }
+        row.expansion = false;
+      } else {
+        row.removeAttribute('scene');
+        row.setAttribute('row-hidden', '');
+        if (row.childrenList && row.childrenList.length > 0) {
+          this.refreshChildRow(row.childrenList);
+        }
+      }
+    });
   }
 
   refreshSystemPanel(): void {
@@ -256,15 +284,14 @@ export class TraceRowConfig extends BaseElement {
                     visibility: hidden;
                 }
                 :host{
-                    display: block;
                     visibility: visible;
                     background-color: #F6F6F6;
                 }
                 .config-title {
+                    height: 100px;
                     border-top: 1px solid #D5D5D5;
                     background-color: #0A59F7;
                     display: flex;
-                    height: 12%;
                     align-items: center;
                     padding: 0 20px;
                 }
@@ -285,23 +312,34 @@ export class TraceRowConfig extends BaseElement {
                     opacity: 0.7;
                 }
                 .title_div{
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                    padding-left: 15px;
-                    padding-right: 15px;
-                    background-color: #F6F6F6;
-                    height: 3.2em;
+                  display: flex;
+                  flex-direction: row;
+                  align-items: center;
+                  padding-left: 15px;
+                  padding-right: 15px;
+                  background-color: #F6F6F6;
+                  height: 3.2em;
                 }
-                .config-select {
-                    display: grid;
-                    background: #FFFFFF;
-
-                    overflow-x: hidden;
-                    border-radius: 5px;
-                    border: solid 1px #e0e0e0;
-                    grid-template-columns: auto auto;
-                    grid-template-rows: repeat(auto-fit, 35px);
+                .config-scene-select {
+                  height: auto;
+                  max-height: 120px;
+                  overflow-y: auto;
+                  background: #FFFFFF;
+                  overflow-x: hidden;
+                  border-radius: 5px;
+                  border: solid 1px #e0e0e0;
+                }
+                .config-chart-select {
+                  display: grid;
+                  height: inherit;
+                  padding: 10px 30px;
+                  background: #FFFFFF;
+                  overflow-y: scroll; 
+                  overflow-x: hidden;
+                  border-radius: 5px;
+                  border: solid 1px #e0e0e0;
+                  grid-template-columns: auto auto;
+                  grid-template-rows: repeat(auto-fit, 35px);
                 }
                 .config-img {
                     margin-right: 12px;
@@ -362,7 +400,7 @@ export class TraceRowConfig extends BaseElement {
                     <div>Template Select</div>
                 </div>
             </div>
-            <div class="config-select" id="scene-select" style="height: 8%;"></div>
+            <div class="config-select config-scene-select" id="scene-select"></div>
             <div class="config-chart" style="display: contents;">
                  <div class="title_div">
                     <img class="config-img" title="Timeline Details" src="img/config_chart.png">
@@ -375,7 +413,7 @@ export class TraceRowConfig extends BaseElement {
                     </div>
                 </div>
             </div>
-            <div class="config-select" id="chart-select" style="height: 66%; overflow-y: scroll; padding: 10px 30px;">
+            <div class="config-select config-chart-select" id="chart-select">
             </div>
 `;
   }

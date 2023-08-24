@@ -54,7 +54,7 @@ export class FrameAnimationRender extends Render {
     req.context.closePath();
   }
 
-  private frameAnimation (
+  private frameAnimation(
     frameAnimationList: FrameAnimationStruct[],
     frameAnimationFilter: FrameAnimationStruct[],
     startNS: number = 0,
@@ -147,6 +147,7 @@ export class FrameAnimationStruct extends BaseStruct {
     frameAnimationNode: FrameAnimationStruct,
     row: TraceRow<FrameAnimationStruct>
   ): void {
+    let tsFixed: number = 6;
     let isHover: boolean = row.isHover;
     if (frameAnimationNode.frame) {
       let nsToMillisecond = 1000_000;
@@ -159,8 +160,8 @@ export class FrameAnimationStruct extends BaseStruct {
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[3];
       ctx.textBaseline = 'middle';
       ctx.font = '8px sans-serif';
-      drawString(ctx, `${frameAnimationNode.status} (${(frameAnimationNode.dur / nsToMillisecond).toFixed(6)} ms)`, textPadding,
-        frameAnimationNode.frame, frameAnimationNode);
+      drawString(ctx, `${frameAnimationNode.status} (${(frameAnimationNode.dur / nsToMillisecond).
+        toFixed(tsFixed)} ms)`, textPadding, frameAnimationNode.frame, frameAnimationNode);
       ctx.lineWidth = 2;
       if ((frameAnimationNode === FrameAnimationStruct.hoverFrameAnimationStruct && isHover) ||
         frameAnimationNode === FrameAnimationStruct.selectFrameAnimationStruct) {

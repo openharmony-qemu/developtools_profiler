@@ -20,18 +20,32 @@ import { SpSystemTrace } from '../SpSystemTrace.js';
 import {
   queryActualFrameDate,
   queryExpectedFrameDate,
-  queryFrameAnimationData, queryFrameApp, queryFrameDynamicData, queryFrameSpacing,
-  queryFrameTimeData, queryPhysicalData
+  queryFrameAnimationData,
+  queryFrameApp,
+  queryFrameDynamicData,
+  queryFrameSpacing,
+  queryFrameTimeData,
+  queryPhysicalData
 } from '../../database/SqlLite.js';
 import { JanksStruct } from '../../bean/JanksStruct.js';
 import { ns2xByTimeShaft, PairPoint } from '../../database/ui-worker/ProcedureWorkerCommon.js';
 import { LitPopover } from '../../../base-ui/popover/LitPopoverV.js';
-import { FrameDynamicRender, FrameDynamicStruct } from '../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
-import { FrameAnimationRender, FrameAnimationStruct } from '../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import {
+  FrameDynamicRender,
+  FrameDynamicStruct
+} from '../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import {
+  FrameAnimationRender,
+  FrameAnimationStruct
+} from '../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
 import { BaseStruct } from '../../bean/BaseStruct.js';
-import { FrameSpacingRender, FrameSpacingStruct } from '../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
+import {
+  FrameSpacingRender,
+  FrameSpacingStruct
+} from '../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
 import { FlagsConfig, Params } from '../SpFlags.js';
 import { AnimationRanges, DeviceStruct } from '../../bean/FrameComponentBean.js';
+import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
 
 export class SpFrameTimeChart {
   private trace: SpSystemTrace;
@@ -60,31 +74,28 @@ export class SpFrameTimeChart {
     frameTimeLineRow.folder = true;
     frameTimeLineRow.name = 'FrameTimeline';
     frameTimeLineRow.setAttribute('children', '');
-    frameTimeLineRow.supplier = (): Promise<JanksStruct[]> =>
-      new Promise((resolve) => {
-        resolve([]);
-      });
+    frameTimeLineRow.supplier = (): Promise<JanksStruct[]> => new Promise((resolve) => {
+      resolve([]);
+    });
+    frameTimeLineRow.addTemplateTypes('AppStartup');
     frameTimeLineRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     frameTimeLineRow.selectChangeHandler = this.trace.selectChangeHandler;
     frameTimeLineRow.onThreadHandler = (useCache: boolean): void => {
-      let context: CanvasRenderingContext2D = frameTimeLineRow!.collect ?
-        this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D = frameTimeLineRow!.collect ? this.trace.canvasFavoritePanelCtx! :
+        this.trace.canvasPanelCtx!;
       frameTimeLineRow!.canvasSave(context);
-      (renders.jank as JankRender).renderMainThread(
-        {
-          context: context,
-          useCache: useCache,
-          type: 'expected_frame_timeline_slice'
-        },
-        frameTimeLineRow!
-      );
+      (renders.jank as JankRender).renderMainThread({
+        context: context, useCache: useCache, type: 'expected_frame_timeline_slice'
+      }, frameTimeLineRow!);
       frameTimeLineRow!.canvasRestore(context);
     };
     this.trace.rowsEL?.appendChild(frameTimeLineRow);
     return frameTimeLineRow;
   }
 
-  async initExpectedChart(frameTimeLineRow: TraceRow<JanksStruct>): Promise<void> {
+  async initExpectedChart(
+    frameTimeLineRow: TraceRow<JanksStruct>
+  ): Promise<void> {
     let frameExpectedData = await this.getExpectedFrameDate();
     let unitIndex: number = 1;
     let unitHeight: number = 20;
@@ -102,30 +113,26 @@ export class SpFrameTimeChart {
     expectedTimeLineRow.addTemplateTypes('FrameTimeline');
     expectedTimeLineRow.setAttribute('height', `${maxHeight}`);
     expectedTimeLineRow.setAttribute('children', '');
-    expectedTimeLineRow.supplier = (): Promise<JanksStruct[]> =>
-      new Promise((resolve): void => {
-        resolve(frameExpectedData);
-      });
+    expectedTimeLineRow.supplier = (): Promise<JanksStruct[]> => new Promise((resolve): void => {
+      resolve(frameExpectedData);
+    });
     expectedTimeLineRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     expectedTimeLineRow.selectChangeHandler = this.trace.selectChangeHandler;
     expectedTimeLineRow.onThreadHandler = (useCache: boolean): void => {
-      let context: CanvasRenderingContext2D = expectedTimeLineRow!.collect ?
-        this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D = expectedTimeLineRow!.collect ? this.trace.canvasFavoritePanelCtx! :
+        this.trace.canvasPanelCtx!;
       expectedTimeLineRow!.canvasSave(context);
-      (renders.jank as JankRender).renderMainThread(
-        {
-          context: context,
-          useCache: useCache,
-          type: 'expected_frame_timeline_slice'
-        },
-        expectedTimeLineRow!
-      );
+      (renders.jank as JankRender).renderMainThread({
+        context: context, useCache: useCache, type: 'expected_frame_timeline_slice'
+      }, expectedTimeLineRow!);
       expectedTimeLineRow!.canvasRestore(context);
     };
     frameTimeLineRow.addChildTraceRow(expectedTimeLineRow);
   }
 
-  async initActualChart(frameTimeLineRow: TraceRow<JanksStruct>): Promise<void> {
+  async initActualChart(
+    frameTimeLineRow: TraceRow<JanksStruct>
+  ): Promise<void> {
     let frameActualData = await this.getActualFrameDate();
     let unitIndex: number = 1;
     let unitHeight: number = 20;
@@ -151,14 +158,9 @@ export class SpFrameTimeChart {
       let context: CanvasRenderingContext2D = actualTimeLineRow!.collect ? this.trace.canvasFavoritePanelCtx! :
         this.trace.canvasPanelCtx!;
       actualTimeLineRow!.canvasSave(context);
-      (renders.jank as JankRender).renderMainThread(
-        {
-          context: context,
-          useCache: useCache,
-          type: 'expected_frame_timeline_slice'
-        },
-        actualTimeLineRow!
-      );
+      (renders.jank as JankRender).renderMainThread({
+        context: context, useCache: useCache, type: 'expected_frame_timeline_slice'
+      }, actualTimeLineRow!);
       actualTimeLineRow!.canvasRestore(context);
     };
     frameTimeLineRow.addChildTraceRow(actualTimeLineRow);
@@ -178,34 +180,76 @@ export class SpFrameTimeChart {
 
   async initAnimatedScenesChart(
     processRow: TraceRow<BaseStruct>,
-    process: {
-      pid: number | null;
-      processName: string | null;
-    },
+    process: { pid: number | null; processName: string | null; },
     firstRow: TraceRow<BaseStruct>
   ): Promise<void> {
     this.flagConfig = FlagsConfig.getFlagsConfig('AnimationAnalysis');
     if (this.flagConfig?.AnimationAnalysis === 'Enabled') {
       if (process.processName?.startsWith('render_service')) {
         let targetRowList = processRow.childrenList.filter(childRow =>
-          childRow.rowType === 'thread' && childRow.name.startsWith('render_service')
-        );
-        let animationRanges = await this.initAnimationChart(processRow, firstRow);
-        let nameArr = await queryFrameApp();
-        let addRowList: Array<TraceRow<BaseStruct>> = [];
-        for (let index = 0; index < nameArr.length; index++) {
-          let name = nameArr[index].appName;
-          let dynamicChart = await this.initDynamicCurveChart(processRow, name, animationRanges);
-          let frameSpacingChart = await this.initFrameSpacing(processRow, name, animationRanges);
-          addRowList.push(dynamicChart);
-          addRowList.push(frameSpacingChart);
+          childRow.rowType === 'thread' && childRow.name.startsWith('render_service'));
+        let nameArr: { name: string }[] = await queryFrameApp();
+        if (nameArr && nameArr.length > 0) {
+          let currentName = nameArr[0].name;
+          let frameChart = await this.initFrameChart(processRow, nameArr);
+          processRow.addChildTraceRowAfter(frameChart, targetRowList[0]);
+          let animationRanges = await this.initAnimationChart(processRow, firstRow);
+          await this.initDynamicCurveChart(frameChart, currentName, animationRanges);
+          await this.initFrameSpacing(nameArr, frameChart, currentName, animationRanges);
         }
-        let resultRow = addRowList.reverse();
-        resultRow.forEach(row => {
-          processRow.addChildTraceRowAfter(row, targetRowList[0]);
-        });
       }
     }
+  }
+
+  private async initFrameChart(
+    processRow: TraceRow<BaseStruct>,
+    nameArr: { name: string }[]
+  ): Promise<TraceRow<BaseStruct>> {
+    let frameChart: TraceRow<BaseStruct> = TraceRow.skeleton<BaseStruct>();
+    let systemPopover = this.addSystemConfigButton(frameChart, nameArr);
+    systemPopover.style.zIndex = '101';
+    let radioList = systemPopover.querySelectorAll<HTMLInputElement>('.radio');
+    let divElement = systemPopover.querySelectorAll<HTMLDivElement>('.option');
+    radioList[0].checked = true;
+    divElement.forEach((divEl, index) => {
+      divEl.addEventListener('click', () => {
+        if (radioList[index]) {
+          radioList[index].checked = true;
+          frameChart.name = radioList[index].value;
+          frameChart.childrenList.forEach(childrenRow => {
+            childrenRow.setAttribute('model-name', `${radioList[index].value}`);
+          });
+          systemPopover.blur();
+          TraceRow.range!.refresh = true;
+          this.trace.refreshCanvas(true);
+        }
+      });
+    });
+    frameChart.rowId = 'frame';
+    frameChart.rowType = TraceRow.ROW_TYPE_FRAME;
+    frameChart.rowHidden = !processRow.expansion;
+    frameChart.rowParentId = processRow.rowId;
+    frameChart.style.width = '100%';
+    frameChart.style.height = '40px';
+    frameChart.folder = true;
+    frameChart.name = nameArr[0].name;
+    frameChart.setAttribute('children', '');
+    frameChart.supplier = (): Promise<BaseStruct[]> => new Promise((resolve) => {
+      resolve([]);
+    });
+    frameChart.favoriteChangeHandler = this.trace.favoriteChangeHandler;
+    frameChart.selectChangeHandler = this.trace.selectChangeHandler;
+    frameChart.onThreadHandler = (useCache: boolean): void => {
+      let context: CanvasRenderingContext2D = frameChart!.collect ? this.trace.canvasFavoritePanelCtx! :
+        this.trace.canvasPanelCtx!;
+      frameChart!.canvasSave(context);
+      (renders.empty as EmptyRender).renderMainThread({
+        context: context, useCache: useCache, type: 'frame'
+      }, frameChart!);
+      frameChart!.canvasRestore(context);
+    };
+    this.trace.rowsEL?.appendChild(frameChart);
+    return frameChart;
   }
 
   async initAnimationChart(
@@ -217,8 +261,7 @@ export class SpFrameTimeChart {
     if (frameAnimationData.length > 0) {
       frameAnimationData.forEach(data => {
         let range = {
-          start: data.dynamicStartTs,
-          end: data.dynamicEndTs
+          start: data.dynamicStartTs, end: data.dynamicEndTs
         };
         animationRanges.push(range);
       });
@@ -233,24 +276,18 @@ export class SpFrameTimeChart {
     frameAnimationRow.name = 'Animation';
     frameAnimationRow.addTemplateTypes('Animation Effect');
     frameAnimationRow.setAttribute('children', '');
-    frameAnimationRow.supplier = (): Promise<FrameAnimationStruct[]> =>
-      new Promise((resolve) => {
-        resolve(frameAnimationData);
-      });
+    frameAnimationRow.supplier = (): Promise<FrameAnimationStruct[]> => new Promise((resolve) => {
+      resolve(frameAnimationData);
+    });
     frameAnimationRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     frameAnimationRow.selectChangeHandler = this.trace.selectChangeHandler;
     frameAnimationRow.onThreadHandler = (useCache): void => {
-      let context: CanvasRenderingContext2D = frameAnimationRow!.collect ?
-        this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D = frameAnimationRow!.collect ? this.trace.canvasFavoritePanelCtx! :
+        this.trace.canvasPanelCtx!;
       frameAnimationRow!.canvasSave(context);
-      (renders.frameAnimation as FrameAnimationRender).renderMainThread(
-        {
-          context: context,
-          useCache: useCache,
-          type: 'frameAnimation'
-        },
-        frameAnimationRow!
-      );
+      (renders.frameAnimation as FrameAnimationRender).renderMainThread({
+        context: context, useCache: useCache, type: 'frameAnimation'
+      }, frameAnimationRow!);
       frameAnimationRow!.canvasRestore(context);
     };
     processRow.addChildTraceRowBefore(frameAnimationRow, firstRow);
@@ -258,32 +295,36 @@ export class SpFrameTimeChart {
   }
 
   async initDynamicCurveChart(
-    processRow: TraceRow<BaseStruct>,
-    componentName: string,
+    frameChart: TraceRow<BaseStruct>,
+    name: string,
     animationRanges: AnimationRanges[]
-  ): Promise<TraceRow<FrameDynamicStruct>> {
-    let frameDynamicCurveData: FrameDynamicStruct[] = await queryFrameDynamicData(componentName);
-    let systemConfigList: string[] = [' '];
+  ): Promise<void> {
+    let frameDynamicCurveData: FrameDynamicStruct[] = await queryFrameDynamicData();
+    let systemConfigList: {
+      name: string
+    }[] = [{name: 'x'}, {name: 'y'}, {name: 'width'}, {name: 'height'}, {name: 'alpha'}];
     let dynamicCurveRow: TraceRow<FrameDynamicStruct> = TraceRow.skeleton<FrameDynamicStruct>();
     let systemPopover = this.addSystemConfigButton(dynamicCurveRow, systemConfigList);
-    dynamicCurveRow.rowId = `animation Effect Curve-${componentName}`;
+    this.initSystemConfig(systemPopover, dynamicCurveRow);
+    dynamicCurveRow.rowId = 'animation-Effect-Curve';
     dynamicCurveRow.rowType = TraceRow.ROW_TYPE_FRAME_DYNAMIC;
-    dynamicCurveRow.rowHidden = !processRow.expansion;
-    dynamicCurveRow.rowParentId = processRow.rowId;
+    dynamicCurveRow.rowHidden = !frameChart.expansion;
+    dynamicCurveRow.rowParentId = frameChart.rowId;
     dynamicCurveRow.style.width = '100%';
     dynamicCurveRow.style.height = '40px';
     dynamicCurveRow.style.height = '100px';
     let labelName = dynamicCurveRow.shadowRoot?.querySelector('.name') as HTMLLabelElement;
     labelName.style.marginRight = '77px';
-    dynamicCurveRow.name = `Animation Effect Curve (${componentName})`;
+    dynamicCurveRow.name = 'Animation Effect Curve';
     dynamicCurveRow.addTemplateTypes('Animation Effect');
     dynamicCurveRow.setAttribute('height', '100px');
     dynamicCurveRow.setAttribute('children', '');
-    dynamicCurveRow.supplier = (): Promise<FrameDynamicStruct[]> =>
-      new Promise((resolve): void => {
-        resolve(frameDynamicCurveData);
-      });
-    dynamicCurveRow.favoriteChangeHandler = () : void => {
+    dynamicCurveRow.setAttribute('model-type', systemConfigList[0].name);
+    dynamicCurveRow.setAttribute('model-name', name);
+    dynamicCurveRow.supplier = (): Promise<FrameDynamicStruct[]> => new Promise((resolve): void => {
+      resolve(frameDynamicCurveData);
+    });
+    dynamicCurveRow.favoriteChangeHandler = (): void => {
       this.favoriteSelect(systemPopover, dynamicCurveRow);
     };
     dynamicCurveRow.selectChangeHandler = this.trace.selectChangeHandler;
@@ -291,21 +332,43 @@ export class SpFrameTimeChart {
       let context: CanvasRenderingContext2D = dynamicCurveRow!.collect ? this.trace.canvasFavoritePanelCtx! :
         this.trace.canvasPanelCtx!;
       dynamicCurveRow!.canvasSave(context);
-      (renders.frameDynamicCurve as FrameDynamicRender).renderMainThread(
-        {
-          context: context,
-          useCache: useCache,
-          type: 'dynamicEffectCurve',
-          animationRanges: animationRanges
-        },
-        dynamicCurveRow!
-      );
+      (renders.frameDynamicCurve as FrameDynamicRender).renderMainThread({
+        context: context,
+        useCache: useCache,
+        type: 'dynamicEffectCurve',
+        animationRanges: animationRanges
+      }, dynamicCurveRow!);
       dynamicCurveRow!.canvasRestore(context);
     };
-    return dynamicCurveRow;
+    frameChart.addChildTraceRow(dynamicCurveRow);
   }
 
-  private favoriteSelect(systemPopover: LitPopover, dynamicCurveRow: TraceRow<FrameDynamicStruct>) : void {
+  private initSystemConfig(
+    systemPopover: LitPopover,
+    dynamicCurveRow: TraceRow<FrameDynamicStruct>
+  ): void {
+    let radioList = systemPopover.querySelectorAll<HTMLInputElement>('.radio');
+    let divElement = systemPopover.querySelectorAll<HTMLDivElement>('.option');
+    radioList[0].checked = true;
+    dynamicCurveRow.setAttribute('model-type', radioList[0].value);
+    divElement.forEach((divEl, index) => {
+      divEl.addEventListener('click', () => {
+        if (radioList[index]) {
+          radioList[index].checked = true;
+          dynamicCurveRow.setAttribute('model-type', `${radioList[index].value}`);
+          systemPopover.blur();
+          TraceRow.range!.refresh = true;
+          this.trace.refreshCanvas(true);
+          this.trace.clickEmptyArea();
+        }
+      });
+    });
+  }
+
+  private favoriteSelect(
+    systemPopover: LitPopover,
+    dynamicCurveRow: TraceRow<FrameDynamicStruct>
+  ): void {
     let popover = systemPopover.querySelector('.dynamicPopover') as HTMLDivElement;
     if (dynamicCurveRow.collect) {
       systemPopover.setAttribute('placement', 'right');
@@ -317,51 +380,57 @@ export class SpFrameTimeChart {
   }
 
   async initFrameSpacing(
-    processRow: TraceRow<BaseStruct>,
-    componentName: string,
+    nameArr: { name: string }[],
+    frameChart: TraceRow<BaseStruct>,
+    name: string,
     animationRanges: AnimationRanges[]
-  ): Promise<TraceRow<FrameSpacingStruct>> {
-    let frameData: FrameSpacingStruct[] = await queryFrameSpacing(componentName);
+  ): Promise<void> {
+    let frameData: FrameSpacingStruct[] = await queryFrameSpacing();
     let deviceStructArray = await queryPhysicalData();
     let deviceStruct: DeviceStruct = deviceStructArray[0];
-    this.dataProcessing(frameData, deviceStruct);
+    let frameResultData: FrameSpacingStruct[] = [];
+    for (let index = 0; index < nameArr.length; index++) {
+      let appName: string = nameArr[index].name;
+      let filterData = frameData.filter(spacingData => spacingData.nameId === appName);
+      this.dataProcessing(filterData, deviceStruct);
+      frameResultData.push(...filterData);
+    }
     let frameSpacingRow = TraceRow.skeleton<FrameSpacingStruct>();
-    frameSpacingRow.rowId = `frame spacing-${componentName}`;
+    frameSpacingRow.rowId = 'frame spacing';
     frameSpacingRow.rowType = TraceRow.ROW_TYPE_FRAME_SPACING;
-    frameSpacingRow.rowHidden = !processRow.expansion;
-    frameSpacingRow.rowParentId = processRow.rowId;
+    frameSpacingRow.rowHidden = !frameChart.expansion;
+    frameSpacingRow.rowParentId = frameChart.rowId;
     frameSpacingRow.style.width = '100%';
     frameSpacingRow.style.height = '140px';
-    frameSpacingRow.name = `Frame spacing (${componentName})`;
+    frameSpacingRow.name = 'Frame spacing';
     frameSpacingRow.addTemplateTypes('Animation Effect');
     frameSpacingRow.setAttribute('height', '140');
     frameSpacingRow.setAttribute('children', '');
-    frameSpacingRow.supplier = (): Promise<FrameSpacingStruct[]> =>
-      new Promise((resolve): void => {
-        resolve(frameData);
-      });
+    frameSpacingRow.setAttribute('model-name', name);
+    frameSpacingRow.supplier = (): Promise<FrameSpacingStruct[]> => new Promise((resolve): void => {
+      resolve(frameResultData);
+    });
     frameSpacingRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     frameSpacingRow.selectChangeHandler = this.trace.selectChangeHandler;
     frameSpacingRow.onThreadHandler = (useCache: boolean): void => {
-      let context = frameSpacingRow!.collect ?
-        this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context = frameSpacingRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       frameSpacingRow!.canvasSave(context);
-      (renders.frameSpacing as FrameSpacingRender).renderMainThread(
-        {
-          context: context,
-          useCache: useCache,
-          type: 'frame_spacing_slice',
-          frameRate: deviceStruct.physicalFrameRate,
-          animationRanges: animationRanges
-        },
-        frameSpacingRow!
-      );
+      (renders.frameSpacing as FrameSpacingRender).renderMainThread({
+        context: context,
+        useCache: useCache,
+        type: 'frame_spacing_slice',
+        frameRate: deviceStruct.physicalFrameRate,
+        animationRanges: animationRanges
+      }, frameSpacingRow!);
       frameSpacingRow!.canvasRestore(context);
     };
-    return frameSpacingRow;
+    frameChart.addChildTraceRow(frameSpacingRow);
   }
 
-  dataProcessing(frameData: FrameSpacingStruct[], deviceStruct: DeviceStruct): void {
+  dataProcessing(
+    frameData: FrameSpacingStruct[],
+    deviceStruct: DeviceStruct
+  ): void {
     let unitIndex: number = 1;
     let secondToNanosecond: number = 1000_000_000;
     let physicalWidth = Number(this.flagConfig!.physicalWidth);
@@ -393,8 +462,11 @@ export class SpFrameTimeChart {
     }
   }
 
-  addSystemConfigButton(dynamicCurveRow: TraceRow<FrameDynamicStruct>, systemConfigList: Array<string>): LitPopover {
-    let rowContent: HTMLDivElement = dynamicCurveRow.shadowRoot?.querySelector('.describe') as HTMLDivElement;
+  addSystemConfigButton(
+    systemTraceRow: TraceRow<BaseStruct>,
+    systemConfigList: { name: string }[]
+  ): LitPopover {
+    let rowContent: HTMLDivElement = systemTraceRow.shadowRoot?.querySelector('.describe') as HTMLDivElement;
     let systemPopover: LitPopover = document.createElement('lit-popover') as LitPopover;
     systemPopover.style.zIndex = '100';
     systemPopover.style.position = 'absolute';
@@ -405,47 +477,25 @@ export class SpFrameTimeChart {
     systemPopover.setAttribute('haveRadio', 'true');
     systemPopover.innerHTML = `
     <div style="display: block; overflow: auto" slot="content" class="dynamicPopover">
-      ${systemConfigList.map((): string => `
+      ${systemConfigList.map((it): string => `
               <div class="option" style="margin-bottom: 5px; color: black;">
-                <input class="radio" name="status" type="radio" value="x" style="margin-right: 10px;" checked/>X
-              </div>
-              <div class="option" style="margin-bottom: 5px; color: black;">
-                <input class="radio" name="status" type="radio" value="y" style="margin-right: 10px;"/>Y
-              </div>
-              <div class="option" style="margin-bottom: 5px; color: black;">
-                <input class="radio" name="status" type="radio" value="width" style="margin-right: 10px;"/>Width
-              </div>
-              <div class="option" style="margin-bottom: 5px; color: black;">
-                <input class="radio" name="status" type="radio" value="height" style="margin-right: 10px;"/>Height
-              </div>
-              <div class="option" style="margin-bottom: 5px; color: black;">
-                <input class="radio" name="status" type="radio" value="alpha" style="margin-right: 10px;"/>Alpha
-              </div>`).join('')}
+                <input class="radio" name="status" type="radio" value='${it.name}' 
+                style="margin-right: 10px;"/>${it.name}</div>`).join('')}
     </div>
     <lit-icon name="setting" size="19" id="setting"></lit-icon>`;
     rowContent.appendChild(systemPopover);
-    let radioList = systemPopover.querySelectorAll<HTMLInputElement>('.radio');
-    let divElement = systemPopover.querySelectorAll<HTMLDivElement>('.option');
-    divElement.forEach((divEl, index) => {
-      divEl.addEventListener('click', () => {
-        if (radioList[index]) {
-          radioList[index].checked = true;
-          dynamicCurveRow.setAttribute('modelType', `${radioList[index].value}`);
-          systemPopover.blur();
-          this.trace.refreshCanvas(false);
-          this.trace.clickEmptyArea();
-        }
-      });
-    });
     return systemPopover;
   }
 
-  private frameNoExpandTimeOut(event: CustomEventInit<{
-    expansion: boolean,
-    rowType: string,
-    rowId: string,
-    rowParentId: string,
-  }>, frameTimeLineRow: TraceRow<JanksStruct>): number {
+  private frameNoExpandTimeOut(
+    event: CustomEventInit<{
+      expansion: boolean,
+      rowType: string,
+      rowId: string,
+      rowParentId: string
+    }>,
+    frameTimeLineRow: TraceRow<JanksStruct>
+  ): number {
     if (JankStruct!.selectJankStruct) {
       JankStruct.selectJankStructList?.push(<JankStruct>JankStruct!.selectJankStruct);
     }
@@ -487,12 +537,10 @@ export class SpFrameTimeChart {
     return offsetYTimeOut;
   }
 
-  private frameExpandTimeOut(event: CustomEventInit<{
-    expansion: boolean,
-    rowType: string,
-    rowId: string,
-    rowParentId: string,
-  }>, actualTimeLineRow: TraceRow<JanksStruct>): number {
+  private frameExpandTimeOut(
+    event: CustomEventInit<{ expansion: boolean, rowType: string, rowId: string, rowParentId: string }>,
+    actualTimeLineRow: TraceRow<JanksStruct>
+  ): number {
     let topPadding: number = 195;
     let halfNumber: number = 2;
     let offsetYTime: number = 300;
@@ -541,8 +589,8 @@ export class SpFrameTimeChart {
     let frameExpectedData = await queryExpectedFrameDate();
     if (frameExpectedData.length > 0) {
       let unitIndex: number = 1;
-      let isIntersect = (a: JanksStruct, b: JanksStruct): boolean =>
-        Math.max(a.ts! + a.dur!, b.ts! + b.dur!) - Math.min(a.ts!, b.ts!) < a.dur! + b.dur!;
+      let isIntersect = (a: JanksStruct, b: JanksStruct): boolean => Math.max(a.ts! + a.dur!, b.ts! + b.dur!) -
+        Math.min(a.ts!, b.ts!) < a.dur! + b.dur!;
       let depths = [];
       for (let i: number = 0; i < frameExpectedData.length; i++) {
         let it = frameExpectedData[i];
@@ -612,48 +660,5 @@ export class SpFrameTimeChart {
       }
     }
     return frameActualData;
-  }
-
-  private dynamicHoverTip(dynamicCurveRow: TraceRow<FrameDynamicStruct>): void {
-    if (FrameDynamicStruct.hoverFrameDynamicStruct) {
-      this.trace?.displayTip(
-        dynamicCurveRow,
-        FrameDynamicStruct.hoverFrameDynamicStruct,
-        `<div style="width: 250px;z-index: 100;">
-                   <div style="display: flex">
-                      <div style="width: 80%;text-align: left">prev </div>
-                      <div style="width: 20%;text-align: left"></div>
-                   </div>
-                   <div style="display: flex">
-                      <div style="width: 70%;padding-left: 10%; text-align: left">ts: </div>
-                      <div style="width: 20%;text-align: left">
-        ${(FrameDynamicStruct.hoverFrameDynamicStruct.ts) || ''}
-                      </div>
-                   </div>
-                   <div style="display: flex"><div style="width: 70%;padding-left: 10%; text-align: left">x: 
-                   </div>
-                   <div style="width: 20%;text-align: left">
-        ${(FrameDynamicStruct.hoverFrameDynamicStruct.x) || ''}</div>
-                   </div>
-                   <div style="display: flex"><div style="width: 70%;padding-left: 10%; text-align: left">y: 
-                   </div>
-                   <div style="width: 20%;text-align: left">
-        ${(FrameDynamicStruct.hoverFrameDynamicStruct.y) || ''}</div>
-                   </div>
-                   <div style="display: flex"><div style="width: 70%;padding-left: 10%; text-align: left">width: 
-                   </div>
-                   <div style="width: 20%;text-align: left">
-        ${(FrameDynamicStruct.hoverFrameDynamicStruct.width) || ''}</div>
-                   </div>
-                   <div style="display: flex"><div style="width: 70%;padding-left: 10%; text-align: left">height: 
-                   </div>
-                   <div style="width: 20%;text-align: left">
-        ${(FrameDynamicStruct.hoverFrameDynamicStruct.height) || ''}</div>
-                   </div>
-                   <div style="display: flex"><div style="width: 70%;padding-left: 10%; text-align: left">alpha: 
-                   </div>
-                </div>`
-      );
-    }
   }
 }
