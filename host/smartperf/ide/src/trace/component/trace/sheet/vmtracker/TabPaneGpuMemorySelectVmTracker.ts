@@ -27,12 +27,6 @@ export class TabPaneGpuMemorySelectVmTracker extends BaseElement {
   private gpuMemoryClickSource: Array<GpuMemory> = [];
   private tableThead: HTMLDivElement | undefined | null;
 
-  set data(data: number) {
-    // @ts-ignore
-    this.queryDataByDB(data);
-    this.init();
-  }
-
   initElements(): void {
     this.gpuMemoryClickTable = this.shadowRoot?.querySelector<LitTable>('#gpuMemoryClickTable');
     this.tableThead = this.gpuMemoryClickTable?.shadowRoot?.querySelector('.thead') as HTMLDivElement;
@@ -67,7 +61,8 @@ export class TabPaneGpuMemorySelectVmTracker extends BaseElement {
     }
   }
 
-  queryDataByDB(startNs: number): void {
+  queryGpuMemoryVmTrackerClickDataByDB(startNs: number): void {
+    this.init();
     getTabGpuMemoryVMTrackerClickData(startNs, MemoryConfig.getInstance().iPid).then((data) => {
       if (data.length !== null && data.length > 0) {
         data.forEach((item) => {

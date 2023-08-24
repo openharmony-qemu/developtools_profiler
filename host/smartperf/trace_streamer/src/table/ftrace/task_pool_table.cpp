@@ -28,7 +28,8 @@ enum Index {
     EXECUTE_ID,
     PRIORITY,
     EXECUTE_STATE,
-    RETURN_STATE
+    RETURN_STATE,
+    TIMEOUT_ROW
 };
 TaskPoolTable::TaskPoolTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
@@ -43,6 +44,7 @@ TaskPoolTable::TaskPoolTable(const TraceDataCache* dataCache) : TableBase(dataCa
     tableColumn_.push_back(TableBase::ColumnInfo("priority", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("execute_state", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("return_state", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("timeout_row", "INTEGER"));
     tablePriKey_.push_back("id");
 }
 
@@ -88,9 +90,8 @@ int32_t TaskPoolTable::Cursor::Column(int32_t column) const
             break;
         case ALLOCATION_ITID:
             if (taskPoolObj_.AllocationItids()[CurrentRow()] != INVALID_INT32) {
-                sqlite3_result_int64(
-                    context_,
-                    static_cast<sqlite3_int64>(dataCache_->GetConstTaskPoolData().AllocationItids()[CurrentRow()]));
+                sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
+                                                   dataCache_->GetConstTaskPoolData().AllocationItids()[CurrentRow()]));
             }
             break;
         case EXECUTE_ITID:
@@ -127,6 +128,12 @@ int32_t TaskPoolTable::Cursor::Column(int32_t column) const
             if (taskPoolObj_.ReturnStates()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ReturnStates()[CurrentRow()]));
+            }
+            break;
+        case TIMEOUT_ROW:
+            if (taskPoolObj_.TimeoutRows()[CurrentRow()] != INVALID_INT32) {
+                sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
+                                                   dataCache_->GetConstTaskPoolData().TimeoutRows()[CurrentRow()]));
             }
             break;
         default:

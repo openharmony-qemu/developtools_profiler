@@ -114,6 +114,10 @@ public:
     const Animation& GetConstAnimation() const;
     const DeviceInfo& GetConstDeviceInfo() const;
     const DynamicFrame& GetConstDynamicFrame() const;
+    const AshMemData& GetConstAshMemData() const;
+    const DmaMemData& GetConstDmaMemData() const;
+    const GpuProcessMemData& GetConstGpuProcessMemData() const;
+    const GpuWindowMemData& GetConstGpuWindowMemData() const;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

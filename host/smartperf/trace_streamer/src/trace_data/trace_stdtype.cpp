@@ -1965,6 +1965,7 @@ const std::deque<std::string>& TraceConfigData::Value() const
     return value_;
 }
 void SmapsData::AppendNewData(uint64_t timeStamp,
+                              uint64_t ipid,
                               std::string startAddr,
                               std::string endAddr,
                               uint64_t dirty,
@@ -1974,9 +1975,17 @@ void SmapsData::AppendNewData(uint64_t timeStamp,
                               uint64_t size,
                               double reside,
                               DataIndex protectionId,
-                              DataIndex pathId)
+                              DataIndex pathId,
+                              uint64_t shared_clean,
+                              uint64_t shared_dirty,
+                              uint64_t private_clean,
+                              uint64_t private_dirty,
+                              uint64_t swap,
+                              uint64_t swap_pss,
+                              uint32_t type)
 {
     timeStamps_.emplace_back(timeStamp);
+    ipids_.emplace_back(ipid);
     startAddrs_.emplace_back(startAddr);
     endAddrs_.emplace_back(endAddr);
     dirtys_.emplace_back(dirty);
@@ -1987,12 +1996,23 @@ void SmapsData::AppendNewData(uint64_t timeStamp,
     resides_.emplace_back(reside);
     protectionIds_.emplace_back(protectionId);
     pathIds_.emplace_back(pathId);
+    sharedClean_.emplace_back(shared_clean);
+    sharedDirty_.emplace_back(shared_dirty);
+    privateClean_.emplace_back(private_clean);
+    privateDirty_.emplace_back(private_dirty);
+    swap_.emplace_back(swap);
+    swapPss_.emplace_back(swap_pss);
+    type_.emplace_back(type);
     ids_.push_back(rowCount_);
     rowCount_++;
 }
 const std::deque<uint64_t>& SmapsData::TimeStamps() const
 {
     return timeStamps_;
+}
+const std::deque<uint64_t>& SmapsData::Ipids() const
+{
+    return ipids_;
 }
 const std::deque<std::string>& SmapsData::StartAddrs() const
 {
@@ -2033,6 +2053,34 @@ const std::deque<DataIndex>& SmapsData::ProtectionIds() const
 const std::deque<DataIndex>& SmapsData::PathIds() const
 {
     return pathIds_;
+}
+const std::deque<uint64_t>& SmapsData::SharedClean() const
+{
+    return sharedClean_;
+}
+const std::deque<uint64_t>& SmapsData::SharedDirty() const
+{
+    return sharedDirty_;
+}
+const std::deque<uint64_t>& SmapsData::PrivateClean() const
+{
+    return privateClean_;
+}
+const std::deque<uint64_t>& SmapsData::PrivateDirty() const
+{
+    return privateDirty_;
+}
+const std::deque<uint64_t>& SmapsData::Swap() const
+{
+    return swap_;
+}
+const std::deque<uint64_t>& SmapsData::SwapPss() const
+{
+    return swapPss_;
+}
+const std::deque<uint32_t>& SmapsData::Type() const
+{
+    return type_;
 }
 void BioLatencySampleData::AppendNewData(uint32_t callChainId,
                                          uint64_t type,
@@ -2764,7 +2812,7 @@ size_t JsCpuProfilerNode::AppendNewData(uint32_t functionId,
                                         uint32_t columnNumber,
                                         uint32_t hitCount,
                                         std::string children,
-                                        uint32_t parentId)
+                                        uint32_t parent)
 {
     functionIds_.emplace_back(functionId);
     functionNames_.emplace_back(functionName);
@@ -2774,7 +2822,7 @@ size_t JsCpuProfilerNode::AppendNewData(uint32_t functionId,
     columnNumbers_.emplace_back(columnNumber);
     hitCounts_.emplace_back(hitCount);
     children_.emplace_back(children);
-    parents_.emplace_back(parentId);
+    parents_.emplace_back(parent);
     ids_.emplace_back(Size());
     return Size() - 1;
 }
@@ -2905,6 +2953,7 @@ size_t TaskPoolInfo::AppendAllocationTaskData(uint32_t allocationTaskRow,
     prioritys_.emplace_back(priority);
     executeStates_.emplace_back(executeState);
     returnStates_.emplace_back(INVALID_INT32);
+    timeoutRows_.emplace_back(INVALID_INT32);
     ids_.emplace_back(Size());
     return Size() - 1;
 }
@@ -2920,6 +2969,7 @@ size_t TaskPoolInfo::AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t exe
     prioritys_.emplace_back(INVALID_INT32);
     executeStates_.emplace_back(INVALID_INT32);
     returnStates_.emplace_back(INVALID_INT32);
+    timeoutRows_.emplace_back(INVALID_INT32);
     ids_.emplace_back(Size());
     return Size() - 1;
 }
@@ -2938,6 +2988,7 @@ size_t TaskPoolInfo::AppendReturnTaskData(uint32_t returnTaskRow,
     prioritys_.emplace_back(INVALID_INT32);
     executeStates_.emplace_back(INVALID_INT32);
     returnStates_.emplace_back(returnState);
+    timeoutRows_.emplace_back(INVALID_INT32);
     ids_.emplace_back(Size());
     return Size() - 1;
 }
@@ -2981,13 +3032,17 @@ const std::deque<uint32_t>& TaskPoolInfo::ReturnStates() const
 {
     return returnStates_;
 }
+const std::deque<uint32_t>& TaskPoolInfo::TimeoutRows() const
+{
+    return timeoutRows_;
+}
 void TaskPoolInfo::UpdateAllocationTaskData(uint32_t index,
                                             uint32_t allocationTaskRow,
                                             uint32_t allocationItid,
                                             uint32_t priority,
                                             uint32_t executeState)
 {
-    if (index < Size()) {
+    if (index <= Size()) {
         allocationTaskRows_[index] = allocationTaskRow;
         allocationItids_[index] = allocationItid;
         prioritys_[index] = priority;
@@ -2996,7 +3051,7 @@ void TaskPoolInfo::UpdateAllocationTaskData(uint32_t index,
 }
 void TaskPoolInfo::UpdateExecuteTaskData(uint32_t index, uint32_t executeTaskRow, uint32_t executeItid)
 {
-    if (index < Size()) {
+    if (index <= Size()) {
         executeTaskRows_[index] = executeTaskRow;
         executeItids_[index] = executeItid;
     }
@@ -3006,10 +3061,16 @@ void TaskPoolInfo::UpdateReturnTaskData(uint32_t index,
                                         uint32_t returnItid,
                                         uint32_t returnState)
 {
-    if (index < Size()) {
+    if (index <= Size()) {
         returnTaskRows_[index] = returnTaskRow;
         returnItids_[index] = returnItid;
         returnStates_[index] = returnState;
+    }
+}
+void TaskPoolInfo::AppendTimeoutRow(uint32_t index, uint32_t timeoutRow)
+{
+    if (index <= Size()) {
+        timeoutRows_[index] = timeoutRow;
     }
 }
 TableRowId Animation::AppendAnimation(InternalTime startPoint)
@@ -3059,15 +3120,15 @@ void Animation::Clear()
     endPoins_.clear();
     ids_.clear();
 }
-const uint32_t DeviceInfo::PhysicalWidth() const
+uint32_t DeviceInfo::PhysicalWidth() const
 {
     return physicalWidth_;
 }
-const uint32_t DeviceInfo::PhysicalHeight() const
+uint32_t DeviceInfo::PhysicalHeight() const
 {
     return physicalHeight_;
 }
-const uint32_t DeviceInfo::PhysicalFrameRate() const
+uint32_t DeviceInfo::PhysicalFrameRate() const
 {
     return physicalFrameRate_;
 }
@@ -3171,5 +3232,240 @@ void DynamicFrame::Clear()
     endTimes_.clear();
     ids_.clear();
 }
+
+void AshMemData::AppendNewData(InternalPid ipid,
+                               uint64_t ts,
+                               uint32_t adj,
+                               uint32_t fd,
+                               DataIndex ashmemNameId,
+                               uint64_t size,
+                               uint64_t pss,
+                               uint32_t ashmemId,
+                               uint64_t time,
+                               uint64_t refCount,
+                               uint64_t purged,
+                               uint32_t flag)
+{
+    ipids_.emplace_back(ipid);
+    timeStamps_.emplace_back(ts);
+    adjs_.emplace_back(adj);
+    fds_.emplace_back(fd);
+    ashmemNameIds_.emplace_back(ashmemNameId);
+    sizes_.emplace_back(size);
+    psss_.emplace_back(pss);
+    ashmemIds_.emplace_back(ashmemId);
+    times_.emplace_back(time);
+    refCounts_.emplace_back(refCount);
+    purgeds_.emplace_back(purged);
+    flags_.emplace_back(flag);
+    ids_.push_back(rowCount_);
+    rowCount_++;
+}
+void AshMemData::SetFlag(uint64_t rowId, uint32_t Flag)
+{
+    flags_[rowId] = Flag;
+}
+const std::deque<InternalPid>& AshMemData::Ipids() const
+{
+    return ipids_;
+}
+const std::deque<uint32_t>& AshMemData::Adjs() const
+{
+    return adjs_;
+}
+const std::deque<uint32_t>& AshMemData::Fds() const
+{
+    return fds_;
+}
+const std::deque<DataIndex>& AshMemData::AshmemNameIds() const
+{
+    return ashmemNameIds_;
+}
+const std::deque<uint64_t>& AshMemData::Sizes() const
+{
+    return sizes_;
+}
+const std::deque<uint64_t>& AshMemData::Psss() const
+{
+    return psss_;
+}
+const std::deque<uint32_t>& AshMemData::AshmemIds() const
+{
+    return ashmemIds_;
+}
+const std::deque<uint64_t>& AshMemData::Times() const
+{
+    return times_;
+}
+const std::deque<uint64_t>& AshMemData::RefCounts() const
+{
+    return refCounts_;
+}
+const std::deque<uint64_t>& AshMemData::Purgeds() const
+{
+    return purgeds_;
+}
+const std::deque<uint32_t>& AshMemData::Flags() const
+{
+    return flags_;
+}
+
+void DmaMemData::AppendNewData(InternalPid ipid,
+                               uint64_t ts,
+                               uint32_t fd,
+                               uint64_t size,
+                               uint32_t ino,
+                               uint32_t expPid,
+                               DataIndex expTaskCommId,
+                               DataIndex bufNameId,
+                               DataIndex expNameId,
+                               uint32_t flag)
+{
+    ipids_.emplace_back(ipid);
+    timeStamps_.emplace_back(ts);
+    fds_.emplace_back(fd);
+    sizes_.emplace_back(size);
+    inos_.emplace_back(ino);
+    expPids_.emplace_back(expPid);
+    expTaskCommIds_.emplace_back(expTaskCommId);
+    bufNameIds_.emplace_back(bufNameId);
+    expNameIds_.emplace_back(expNameId);
+    flags_.emplace_back(flag);
+    ids_.push_back(rowCount_);
+    rowCount_++;
+}
+void DmaMemData::SetFlag(uint64_t rowId, uint32_t Flag)
+{
+    flags_[rowId] = Flag;
+}
+const std::deque<InternalPid>& DmaMemData::Ipids() const
+{
+    return ipids_;
+}
+const std::deque<uint32_t>& DmaMemData::Fds() const
+{
+    return fds_;
+}
+const std::deque<uint64_t>& DmaMemData::Sizes() const
+{
+    return sizes_;
+}
+const std::deque<uint32_t>& DmaMemData::Inos() const
+{
+    return inos_;
+}
+const std::deque<uint32_t>& DmaMemData::ExpPids() const
+{
+    return expPids_;
+}
+const std::deque<DataIndex>& DmaMemData::ExpTaskCommIds() const
+{
+    return expTaskCommIds_;
+}
+const std::deque<DataIndex>& DmaMemData::BufNameIds() const
+{
+    return bufNameIds_;
+}
+const std::deque<DataIndex>& DmaMemData::ExpNameIds() const
+{
+    return expNameIds_;
+}
+const std::deque<uint32_t>& DmaMemData::Flags() const
+{
+    return flags_;
+}
+
+void GpuProcessMemData::AppendNewData(uint64_t ts,
+                                      DataIndex gpuNameId,
+                                      uint64_t allGpuSize,
+                                      std::string addr,
+                                      InternalPid ipid,
+                                      InternalPid itid,
+                                      uint64_t usedGpuSize)
+{
+    timeStamps_.emplace_back(ts);
+    gpuNameIds_.emplace_back(gpuNameId);
+    allGpuSizes_.emplace_back(allGpuSize);
+    addrs_.emplace_back(addr);
+    ipids_.emplace_back(ipid);
+    itids_.emplace_back(itid);
+    usedGpuSizes_.emplace_back(usedGpuSize);
+    ids_.push_back(rowCount_);
+    rowCount_++;
+}
+const std::deque<DataIndex>& GpuProcessMemData::GpuNameIds() const
+{
+    return gpuNameIds_;
+}
+const std::deque<uint64_t>& GpuProcessMemData::AllGpuSizes() const
+{
+    return allGpuSizes_;
+}
+const std::deque<std::string>& GpuProcessMemData::Addrs() const
+{
+    return addrs_;
+}
+const std::deque<InternalPid>& GpuProcessMemData::Ipids() const
+{
+    return ipids_;
+}
+const std::deque<InternalPid>& GpuProcessMemData::Itids() const
+{
+    return itids_;
+}
+const std::deque<uint64_t>& GpuProcessMemData::UsedGpuSizes() const
+{
+    return usedGpuSizes_;
+}
+
+void GpuWindowMemData::AppendNewData(uint64_t ts,
+                                     DataIndex windowNameId,
+                                     uint64_t windowId,
+                                     DataIndex moduleNameId,
+                                     DataIndex categoryNameId,
+                                     uint64_t size,
+                                     uint32_t count,
+                                     uint64_t purgeableSize)
+{
+    timeStamps_.emplace_back(ts);
+    windowNameIds_.emplace_back(windowNameId);
+    windowIds_.emplace_back(windowId);
+    moduleNameIds_.emplace_back(moduleNameId);
+    categoryNameIds_.emplace_back(categoryNameId);
+    sizes_.emplace_back(size);
+    counts_.emplace_back(count);
+    purgeableSizes_.emplace_back(purgeableSize);
+    ids_.push_back(rowCount_);
+    rowCount_++;
+}
+const std::deque<DataIndex>& GpuWindowMemData::WindowNameIds() const
+{
+    return windowNameIds_;
+}
+const std::deque<uint64_t>& GpuWindowMemData::WindowIds() const
+{
+    return windowIds_;
+}
+const std::deque<DataIndex>& GpuWindowMemData::ModuleNameIds() const
+{
+    return moduleNameIds_;
+}
+const std::deque<DataIndex>& GpuWindowMemData::CategoryNameIds() const
+{
+    return categoryNameIds_;
+}
+const std::deque<uint64_t>& GpuWindowMemData::Sizes() const
+{
+    return sizes_;
+}
+const std::deque<uint32_t>& GpuWindowMemData::Counts() const
+{
+    return counts_;
+}
+const std::deque<uint64_t>& GpuWindowMemData::PurgeableSizes() const
+{
+    return purgeableSizes_;
+}
+
 } // namespace TraceStdtype
 } // namespace SysTuning

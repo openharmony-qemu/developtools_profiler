@@ -530,4 +530,57 @@ describe('ProcedureLogicWorkerPerf Test', () => {
     let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
     expect(procedureLogicWorkerPerf.splitAllProcess([])).toBeUndefined();
   });
+  it('ProcedureLogicWorkerPerfTest57', function () {
+    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
+    let callChains = [{
+      tid:1,
+      sampleId:20,
+    },
+      {
+        tid:2,
+        sampleId:30,
+      }
+    ]
+    expect(procedureLogicWorkerPerf.initPerfCallChainBottomUp(callChains)).toBeUndefined();
+  });
+  it('ProcedureLogicWorkerPerfTest58', function () {
+    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
+    let callChains = [{
+      tid:1,
+      sampleId:20,
+      symbolId:-1,
+      fileName:'a'
+    },
+      {
+        tid:2,
+        sampleId:30,
+        symbolId:0,
+        fileName:'a'
+      }
+    ]
+    expect(procedureLogicWorkerPerf.setPerfCallChainFrameName(callChains)).toBeUndefined();
+  });
+  it('ProcedureLogicWorkerPerfTest59', function () {
+    let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
+    let callChains = [{
+      sampleId: '',
+      depth: 0,
+      canCharge: false,
+      name: '',
+      tid: '',
+      fileName: '',
+      threadName: '',
+    },
+      {
+        sampleId: '',
+        depth: 0,
+        canCharge: false,
+        name: '',
+        tid: '',
+        fileName: '',
+        threadName: '',
+      }
+    ]
+    expect(procedureLogicWorkerPerf.addPerfGroupData(callChains)).toBeUndefined();
+  });
 });

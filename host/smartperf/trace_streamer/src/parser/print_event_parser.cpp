@@ -12,13 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "print_event_parser.h"
+
+#include <cinttypes>
+
 #include "animation_filter.h"
 #include "clock_filter_ex.h"
 #include "frame_filter.h"
 #include "stat_filter.h"
 #include "string_to_numerical.h"
-#include <cinttypes>
+
 namespace SysTuning {
 namespace TraceStreamer {
 PrintEventParser::PrintEventParser(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
@@ -54,61 +58,23 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
     }
     switch (point.phase_) {
         case 'B': {
-            uint32_t index = streamFilters_->sliceFilter_->BeginSlice(comm, ts, pid, point.tgid_, INVALID_DATAINDEX,
-                                                                      traceDataCache_->GetDataIndex(point.name_));
-            if (index != INVALID_UINT32) {
-                // add distributed data
-                traceDataCache_->GetInternalSlicesData()->SetDistributeInfo(
-                    index, point.chainId_, point.spanId_, point.parentSpanId_, point.flag_, point.args_);
-                if (pid == point.tgid_) {
-                    if (HandleFrameSliceBeginEvent(point.funcPrefixId_, index, point.funcArgs_, line)) {
-                        break;
-                    }
-                }
-                if (!streamFilters_->taskPoolFilter_->TaskPoolEvent(point.name_, index)) {
-                    HandleAnimationBeginEvent(point, index, line);
-                }
-            } else {
-                streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_LOST);
-            }
+            ParseBeginEvent(comm, ts, pid, point, line);
             break;
         }
         case 'E': {
-            uint32_t index = streamFilters_->sliceFilter_->EndSlice(ts, pid, point.tgid_);
-            if (pid == point.tgid_) {
-                HandleFrameSliceEndEvent(ts, point.tgid_, pid, index);
-            }
+            ParseEndEvent(ts, pid, point);
             break;
         }
         case 'S': {
-            auto cookie = static_cast<uint64_t>(point.value_);
-            auto index = streamFilters_->sliceFilter_->StartAsyncSlice(ts, pid, point.tgid_, cookie,
-                                                                       traceDataCache_->GetDataIndex(point.name_));
-            if (point.name_ == onFrameQueeuStartEvent_ && index != INVALID_UINT64) {
-                OnFrameQueueStart(ts, index, point.tgid_);
-            } else if (index != INVALID_UINT64 && EndWith(comm, onLauncherVsyncEvent_) && // the comm is taskName
-                       onAnimationStartEvent_ == traceDataCache_->GetDataIndex(point.name_)) {
-                HandleAnimationStartEvent(line, index);
-            }
+            ParseStartEvent(comm, ts, pid, point, line);
             break;
         }
         case 'F': {
-            auto cookie = static_cast<uint64_t>(point.value_);
-            auto index = streamFilters_->sliceFilter_->FinishAsyncSlice(ts, pid, point.tgid_, cookie,
-                                                                        traceDataCache_->GetDataIndex(point.name_));
-            HandleFrameQueueEndEvent(ts, point.tgid_, point.tgid_, index);
-            HandleAnimationFinishEvent(line, index);
+            ParseFinishEvent(ts, pid, point, line);
             break;
         }
         case 'C': {
-            DataIndex nameIndex = traceDataCache_->GetDataIndex(point.name_);
-            uint32_t internalPid = streamFilters_->processFilter_->GetInternalPid(point.tgid_);
-            if (internalPid != INVALID_ID) {
-                streamFilters_->processMeasureFilter_->AppendNewMeasureData(internalPid, nameIndex, ts, point.value_);
-                streamFilters_->processFilter_->AddProcessMemory(internalPid);
-            } else {
-                streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_INVALID);
-            }
+            ParseCreateEvent(ts, point);
             break;
         }
         default:
@@ -117,30 +83,85 @@ bool PrintEventParser::ParsePrintEvent(const std::string& comm,
     }
     return true;
 }
+void PrintEventParser::ParseBeginEvent(const std::string& comm,
+                                       uint64_t ts,
+                                       uint32_t pid,
+                                       TracePoint& point,
+                                       const BytraceLine& line)
+{
+    uint32_t index = streamFilters_->sliceFilter_->BeginSlice(comm, ts, pid, point.tgid_, INVALID_DATAINDEX,
+                                                              traceDataCache_->GetDataIndex(point.name_));
+    if (index != INVALID_UINT32) {
+        // add distributed data
+        traceDataCache_->GetInternalSlicesData()->SetDistributeInfo(index, point.chainId_, point.spanId_,
+                                                                    point.parentSpanId_, point.flag_, point.args_);
+        if (pid == point.tgid_) {
+            if (HandleFrameSliceBeginEvent(point.funcPrefixId_, index, point.funcArgs_, line)) {
+                return;
+            }
+        }
+        bool isDiscontinued = false;
+        if (traceDataCache_->TaskPoolTraceEnabled()) {
+            isDiscontinued = streamFilters_->taskPoolFilter_->TaskPoolEvent(point.name_, index);
+        }
+        if (traceDataCache_->AnimationTraceEnabled() && !isDiscontinued) {
+            isDiscontinued = HandleAnimationBeginEvent(point, index, line);
+        }
+    } else {
+        streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_LOST);
+    }
+}
+void PrintEventParser::ParseEndEvent(uint64_t ts, uint32_t pid, const TracePoint& point)
+{
+    uint32_t index = streamFilters_->sliceFilter_->EndSlice(ts, pid, point.tgid_);
+    if (pid == point.tgid_) {
+        HandleFrameSliceEndEvent(ts, point.tgid_, pid, index);
+    }
+}
+void PrintEventParser::ParseStartEvent(const std::string& comm,
+                                       uint64_t ts,
+                                       uint32_t pid,
+                                       const TracePoint& point,
+                                       const BytraceLine& line)
+{
+    auto cookie = static_cast<uint64_t>(point.value_);
+    auto index = streamFilters_->sliceFilter_->StartAsyncSlice(ts, pid, point.tgid_, cookie,
+                                                               traceDataCache_->GetDataIndex(point.name_));
+    if (point.name_ == onFrameQueeuStartEvent_ && index != INVALID_UINT64) {
+        OnFrameQueueStart(ts, index, point.tgid_);
+    } else if (traceDataCache_->AnimationTraceEnabled() && index != INVALID_UINT64 &&
+               EndWith(comm, onLauncherVsyncEvent_) && // the comm is taskName
+               onAnimationStartEvent_ == traceDataCache_->GetDataIndex(point.name_)) {
+        streamFilters_->animationFilter_->StartAnimationEvent(line, index);
+    }
+}
+void PrintEventParser::ParseFinishEvent(uint64_t ts, uint32_t pid, const TracePoint& point, const BytraceLine& line)
+{
+    auto cookie = static_cast<uint64_t>(point.value_);
+    auto index = streamFilters_->sliceFilter_->FinishAsyncSlice(ts, pid, point.tgid_, cookie,
+                                                                traceDataCache_->GetDataIndex(point.name_));
+    HandleFrameQueueEndEvent(ts, point.tgid_, point.tgid_, index);
+    if (traceDataCache_->AnimationTraceEnabled()) {
+        streamFilters_->animationFilter_->FinishAnimationEvent(line, index);
+    }
+}
+void PrintEventParser::ParseCreateEvent(uint64_t ts, const TracePoint& point)
+{
+    DataIndex nameIndex = traceDataCache_->GetDataIndex(point.name_);
+    uint32_t internalPid = streamFilters_->processFilter_->GetInternalPid(point.tgid_);
+    if (internalPid != INVALID_ID) {
+        streamFilters_->processMeasureFilter_->AppendNewMeasureData(internalPid, nameIndex, ts, point.value_);
+        streamFilters_->processFilter_->AddProcessMemory(internalPid);
+    } else {
+        streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_INVALID);
+    }
+}
 bool PrintEventParser::HandleAnimationBeginEvent(const TracePoint& point, size_t callStackRow, const BytraceLine& line)
 {
-    if (traceDataCache_->AnimationTraceEnabled()) {
-        if (!streamFilters_->animationFilter_->UpdateDeviceInfoEvent(point, line)) {
-            return streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, callStackRow);
-        }
-        return true;
+    if (!streamFilters_->animationFilter_->UpdateDeviceInfoEvent(point, line)) {
+        return streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, callStackRow);
     }
-    return false;
-}
-bool PrintEventParser::HandleAnimationStartEvent(const BytraceLine& line, size_t callStackRow)
-{
-    if (traceDataCache_->AnimationTraceEnabled()) {
-        streamFilters_->animationFilter_->StartAnimationEvent(line, callStackRow);
-        return true;
-    }
-    return false;
-}
-bool PrintEventParser::HandleAnimationFinishEvent(const BytraceLine& line, size_t callStackRow)
-{
-    if (traceDataCache_->AnimationTraceEnabled()) {
-        return streamFilters_->animationFilter_->FinishAnimationEvent(line, callStackRow);
-    }
-    return false;
+    return true;
 }
 void PrintEventParser::SetTraceType(TraceFileType traceType)
 {

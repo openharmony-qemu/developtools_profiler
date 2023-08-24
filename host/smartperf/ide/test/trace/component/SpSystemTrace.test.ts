@@ -198,6 +198,9 @@ describe('SpSystemTrace Test', () => {
             background: var(--dark-background5,#ffffff);
             box-shadow: 0 10px 10px #00000044;
         }
+        :host([disable]) .container{
+            pointer-events: none;
+        }
         .container{
             width: 100%;
             box-sizing: border-box;

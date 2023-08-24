@@ -170,6 +170,10 @@ public:
     Animation animation_;
     DeviceInfo deviceInfo_;
     DynamicFrame dynamicFrame_;
+    AshMemData ashMemData_;
+    DmaMemData dmaMemData_;
+    GpuProcessMemData gpuProcessMemData_;
+    GpuWindowMemData gpuWindowMemData_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

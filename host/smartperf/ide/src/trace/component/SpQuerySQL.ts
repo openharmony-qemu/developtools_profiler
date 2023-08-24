@@ -126,6 +126,7 @@ export class SpQuerySQL extends BaseElement {
       });
       this.statDataArray = [];
       this.keyList = [];
+      this.response!.innerHTML = '';
       this.queryTableEl!.innerHTML = '';
       if (this.isSupportSql) {
         this.progressLoad!.loading = true;

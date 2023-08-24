@@ -22,6 +22,7 @@ import { getTabGpuMemoryAbilityData } from '../../../../database/SqlLite.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { Utils } from '../../base/Utils.js';
+import { SpSystemTrace } from '../../../SpSystemTrace.js';
 
 @element('tabpane-gpu-memory-ability')
 export class TabPaneGpuMemoryAbility extends BaseElement {
@@ -29,6 +30,7 @@ export class TabPaneGpuMemoryAbility extends BaseElement {
   private gpuMemorySource: Array<GpuMemory> = [];
   private tableThead: HTMLDivElement | undefined | null;
   private gpuMemoryTimeRange: HTMLLabelElement | undefined | null;
+  private total: GpuMemory = new GpuMemory();
 
   set data(gpuMemoryAbilityValue: SelectionParam | any) {
     if (gpuMemoryAbilityValue.gpuMemoryAbilityData.length > 0) {
@@ -75,23 +77,38 @@ export class TabPaneGpuMemoryAbility extends BaseElement {
       (data) => {
         this.gpuMemoryTableTbl!.loading = false;
         if (data.length !== null && data.length > 0) {
+          this.total = new GpuMemory();
+          this.total.process = '*All*';
+          this.total.gpuName = '*All*';
           data.forEach((item) => {
             if (item.processName !== null) {
               item.process = `${item.processName}(${item.processId})`;
             } else {
               item.process = `Process(${item.processId})`;
             }
+
+            this.total.avgSize += item.avgSize;
+            if (this.total.minSize < 0) {
+              this.total.minSize = item.minSize;
+            }
+            if (this.total.maxSize < 0) {
+              this.total.maxSize = item.maxSize;
+            }
+            this.total.minSize = Math.min(this.total.minSize, item.minSize);
+            this.total.maxSize = Math.max(this.total.maxSize, item.maxSize);
+            item.gpuName = SpSystemTrace.DATA_DICT.get(item.gpuNameId) || '';
             item.avgSizes = Utils.getBinaryByteWithUnit(Math.round(item.avgSize));
             item.minSizes = Utils.getBinaryByteWithUnit(item.minSize);
             item.maxSizes = Utils.getBinaryByteWithUnit(item.maxSize);
           });
+          this.total.avgSizes = Utils.getBinaryByteWithUnit(Math.round(this.total.avgSize / data.length));
+          this.total.minSizes = Utils.getBinaryByteWithUnit(this.total.minSize);
+          this.total.maxSizes = Utils.getBinaryByteWithUnit(this.total.maxSize);
           this.gpuMemorySource = data;
-          this.gpuMemoryTableTbl!.recycleDataSource = this.gpuMemorySource.sort(function (
-            gpuMemoryLeftData: GpuMemory,
-            gpuMemoryRightData: GpuMemory
-          ) {
+          this.gpuMemorySource.sort(function (gpuMemoryLeftData: GpuMemory, gpuMemoryRightData: GpuMemory) {
             return gpuMemoryRightData.avgSize - gpuMemoryLeftData.avgSize;
           });
+          this.gpuMemoryTableTbl!.recycleDataSource = [this.total, ...this.gpuMemorySource];
         } else {
           this.gpuMemoryTableTbl!.recycleDataSource = [];
           this.gpuMemorySource = [];
@@ -129,7 +146,7 @@ export class TabPaneGpuMemoryAbility extends BaseElement {
         <lit-table id="gpuMemoryTable" class="gpuMemoryTable">
             <lit-table-column order title="GpuName" data-index="gpuName" key="gpuName" align="flex-start" width="1fr" >
             </lit-table-column>
-            <lit-table-column order title="Process(pid)" data-index="process" key="process" align="flex-start" width="1fr" >
+            <lit-table-column order title="Process" data-index="process" key="process" align="flex-start" width="1fr" >
             </lit-table-column>
             <lit-table-column order title="AvgSize" data-index="avgSizes" key="avgSize" align="flex-start" width="1fr" >
             </lit-table-column>
@@ -145,47 +162,48 @@ export class TabPaneGpuMemoryAbility extends BaseElement {
   sortGpuMemoryByColumn(column: string, sort: number): void {
     switch (sort) {
       case 0:
-        this.gpuMemoryTableTbl!.recycleDataSource = this.gpuMemorySource;
+        this.gpuMemoryTableTbl!.recycleDataSource = [this.total, this.gpuMemorySource];
         break;
       default:
         let array = [...this.gpuMemorySource];
         switch (column) {
           case 'process':
-            this.gpuMemoryTableTbl!.recycleDataSource = array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
+            array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
               return sort === 1
                 ? `${gpuMemoryLeftData.process}`.localeCompare(`${gpuMemoryRightData.process}`)
                 : `${gpuMemoryRightData.process}`.localeCompare(`${gpuMemoryLeftData.process}`);
             });
             break;
           case 'gpuName':
-            this.gpuMemoryTableTbl!.recycleDataSource = array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
+            array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
               return sort === 1
-                  ? `${gpuMemoryLeftData.gpuName}`.localeCompare(`${gpuMemoryRightData.gpuName}`)
-                  : `${gpuMemoryRightData.gpuName}`.localeCompare(`${gpuMemoryLeftData.gpuName}`);
+                ? `${gpuMemoryLeftData.gpuName}`.localeCompare(`${gpuMemoryRightData.gpuName}`)
+                : `${gpuMemoryRightData.gpuName}`.localeCompare(`${gpuMemoryLeftData.gpuName}`);
             });
             break;
           case 'avgSize':
-            this.gpuMemoryTableTbl!.recycleDataSource = array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
+            array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
               return sort === 1
                 ? gpuMemoryLeftData.avgSize - gpuMemoryRightData.avgSize
                 : gpuMemoryRightData.avgSize - gpuMemoryLeftData.avgSize;
             });
             break;
           case 'minSize':
-            this.gpuMemoryTableTbl!.recycleDataSource = array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
+            array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
               return sort === 1
                 ? gpuMemoryLeftData.minSize - gpuMemoryRightData.minSize
                 : gpuMemoryRightData.minSize - gpuMemoryLeftData.minSize;
             });
             break;
           case 'maxSize':
-            this.gpuMemoryTableTbl!.recycleDataSource = array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
+            array.sort((gpuMemoryLeftData, gpuMemoryRightData) => {
               return sort === 1
                 ? gpuMemoryLeftData.maxSize - gpuMemoryRightData.maxSize
                 : gpuMemoryRightData.maxSize - gpuMemoryLeftData.maxSize;
             });
             break;
         }
+        this.gpuMemoryTableTbl!.recycleDataSource = [this.total, ...array];
         break;
     }
   }

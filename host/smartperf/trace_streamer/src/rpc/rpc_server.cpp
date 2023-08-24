@@ -21,6 +21,7 @@
 #if IS_WASM
 #include <filesystem>
 #endif
+#include "json.hpp"
 #include "log.h"
 #include "string_help.h"
 #include "version.h"
@@ -33,6 +34,20 @@ namespace SysTuning {
 namespace TraceStreamer {
 uint32_t g_fileLen = 0;
 FILE* g_importFileFd = nullptr;
+using json = nlohmann::json;
+namespace jsonns {
+struct ParserConfig {
+    int32_t taskConfigValue;
+    int32_t appConfigValue;
+    int32_t aniConfigValue;
+};
+void from_json(const json& j, ParserConfig& v)
+{
+    j.at("TaskPool").get_to(v.taskConfigValue);
+    j.at("AppStartup").get_to(v.appConfigValue);
+    j.at("AnimationAnalysis").get_to(v.aniConfigValue);
+}
+} // namespace jsonns
 bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack)
 {
     g_loadSize += len;
@@ -260,5 +275,15 @@ int32_t RpcServer::DownloadELFCallback(const std::string& fileName,
     return true;
 }
 #endif
+
+bool RpcServer::ParserConfig(std::string parserConfigJson)
+{
+    json jMessage = json::parse(parserConfigJson);
+    jsonns::ParserConfig parserConfig = jMessage.at("config");
+    ts_->UpdateAppStartTraceStatus(parserConfig.appConfigValue);
+    ts_->UpdateAnimationTraceStatus(parserConfig.aniConfigValue);
+    ts_->UpdateTaskPoolTraceStatus(parserConfig.taskConfigValue);
+    return true;
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

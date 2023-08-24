@@ -298,6 +298,10 @@ export class Utils {
     let mib1 = 1024 * 1024;
     let gib1 = 1024 * 1024 * 1024;
     let res = '';
+    if (bytes < 0) {
+      res = '-';
+      currentBytes = Math.abs(currentBytes);
+    }
     if (currentBytes >= gib1) {
       res += (currentBytes / gib1).toFixed(2) + 'GB';
     } else if (currentBytes >= mib1) {

@@ -29,8 +29,56 @@ window.ResizeObserver =
 
 describe('TabPaneSlices Test', () => {
   let tabPaneSlices = new TabPaneSlices();
-
+  sqlit.getTabSlicesAsyncFunc.mockResolvedValue([]);
+  sqlit.getTabSlices.mockResolvedValue([
+    {
+      "name": "binder reply",
+      "wallDuration": 61.847,
+      "avgDuration": 30.9235,
+      "occurrences": 2,
+      "isHover": false
+    },
+    {
+      "name": "binder transaction",
+      "wallDuration": 1.64,
+      "avgDuration": 0.54667,
+      "occurrences": 3,
+      "isHover": false
+    }
+  ]);
   it('TabPaneSlicesTest01', function () {
+
+    expect(
+      tabPaneSlices.data = {
+        "recordStartNs": 26014913992000,
+        "leftNs": 530809208,
+        "rightNs": 532115193,
+        "hasFps": false,
+        "perfAll": false,
+        "fileSysVirtualMemory": false,
+        "diskIOLatency": false,
+        "fsCount": 0,
+        "vmCount": 0,
+        "isCurrentPane": false,
+        "startup": false,
+        "staticInit": false,
+        "cpus": [],
+        "cpuStateFilterIds": [],
+        "cpuFreqFilterIds": [],
+        "cpuFreqLimitDatas": [],
+        "threadIds": [],
+        "processIds": [
+          578
+        ],
+        "funTids": [
+          915
+        ],
+        "funAsync": [],
+      }
+    );
+  });
+
+  it('TabPaneSlicesTest02', function () {
     expect(
       tabPaneSlices.sortByColumn({
         key: 'name',

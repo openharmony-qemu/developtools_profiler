@@ -28,6 +28,7 @@ export class TabPaneDmaAbility extends BaseElement {
   private dmaSource: Array<Dma> = [];
   private tableThead: HTMLDivElement | undefined | null;
   private dmaTimeRange: HTMLLabelElement | null | undefined;
+  private total: Dma = new Dma();
 
   set data(dmaAbilityValue: SelectionParam | any) {
     if (dmaAbilityValue.dmaAbilityData.length > 0) {
@@ -69,25 +70,39 @@ export class TabPaneDmaAbility extends BaseElement {
 
   queryDataByDB(val: SelectionParam | any): void {
     getTabDmaAbilityData(val.leftNs, val.rightNs, (MemoryConfig.getInstance().interval * 1000000) / 5).then((data) => {
+      this.dmaSource = data;
       this.dmaTbl!.loading = false;
       if (data.length !== null && data.length > 0) {
+        this.total = new Dma();
+        this.total.process = '*All*';
         data.forEach((item) => {
           if (item.processName !== null) {
             item.process = `${item.processName}(${item.processId})`;
           } else {
             item.process = `Process(${item.processId})`;
           }
+
+          this.total.avgSize += item.avgSize;
+          if (this.total.minSize < 0) {
+            this.total.minSize = item.minSize;
+          }
+          if (this.total.maxSize < 0) {
+            this.total.maxSize = item.maxSize;
+          }
+          this.total.minSize = Math.min(this.total.minSize, item.minSize);
+          this.total.maxSize = Math.max(this.total.maxSize, item.maxSize);
+
           item.avgSizes = Utils.getBinaryByteWithUnit(Math.round(item.avgSize));
           item.minSizes = Utils.getBinaryByteWithUnit(item.minSize);
           item.maxSizes = Utils.getBinaryByteWithUnit(item.maxSize);
         });
-        this.dmaSource = data;
-        this.dmaTbl!.recycleDataSource = this.dmaSource.sort(function (
-          dmaAbilityLeftData: Dma,
-          dmaAbilityRightData: Dma
-        ) {
+        this.total.avgSizes = Utils.getBinaryByteWithUnit(Math.round(this.total.avgSize / data.length));
+        this.total.minSizes = Utils.getBinaryByteWithUnit(this.total.minSize);
+        this.total.maxSizes = Utils.getBinaryByteWithUnit(this.total.maxSize);
+        this.dmaSource.sort(function (dmaAbilityLeftData: Dma, dmaAbilityRightData: Dma) {
           return dmaAbilityRightData.avgSize - dmaAbilityLeftData.avgSize;
         });
+        this.dmaTbl!.recycleDataSource = [this.total, ...this.dmaSource];
       } else {
         this.dmaTbl!.recycleDataSource = [];
         this.dmaSource = [];
@@ -114,13 +129,13 @@ export class TabPaneDmaAbility extends BaseElement {
         </div>
         <div style="overflow: auto">
         <lit-table id="damTable" class="damTable">
-            <lit-table-column order title="Process(pid)" data-index="process" key="process" align="flex-start" width="2fr" >
+            <lit-table-column order title="Process" data-index="process" key="process" align="flex-start" width="2fr" >
             </lit-table-column>
             <lit-table-column order title="AvgSize" data-index="avgSizes" key="avgSize" align="flex-start" width="1fr" >
             </lit-table-column>
-            <lit-table-column order title="MinSize" data-index="minSizes" key="minSize" align="flex-start" width="1fr" >
-            </lit-table-column>
             <lit-table-column order title="MaxSize" data-index="maxSizes" key="maxSize" align="flex-start" width="1fr" >
+            </lit-table-column>
+            <lit-table-column order title="MinSize" data-index="minSizes" key="minSize" align="flex-start" width="1fr" >
             </lit-table-column>
         </lit-table>
         </div>
@@ -130,40 +145,41 @@ export class TabPaneDmaAbility extends BaseElement {
   sortDmaByColumn(column: string, sort: number): void {
     switch (sort) {
       case 0:
-        this.dmaTbl!.recycleDataSource = this.dmaSource;
+        this.dmaTbl!.recycleDataSource = [this.total, ...this.dmaSource];
         break;
       default:
         let array = [...this.dmaSource];
         switch (column) {
           case 'process':
-            this.dmaTbl!.recycleDataSource = array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
+            array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
               return sort === 1
                 ? `${dmaAbilityLeftData.process}`.localeCompare(`${dmaAbilityRightData.process}`)
                 : `${dmaAbilityRightData.process}`.localeCompare(`${dmaAbilityLeftData.process}`);
             });
             break;
           case 'avgSize':
-            this.dmaTbl!.recycleDataSource = array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
+            array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
               return sort === 1
                 ? dmaAbilityLeftData.avgSize - dmaAbilityRightData.avgSize
                 : dmaAbilityRightData.avgSize - dmaAbilityLeftData.avgSize;
             });
             break;
           case 'minSize':
-            this.dmaTbl!.recycleDataSource = array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
+            array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
               return sort === 1
                 ? dmaAbilityLeftData.minSize - dmaAbilityRightData.minSize
                 : dmaAbilityRightData.minSize - dmaAbilityLeftData.minSize;
             });
             break;
           case 'maxSize':
-            this.dmaTbl!.recycleDataSource = array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
+            array.sort((dmaAbilityLeftData, dmaAbilityRightData) => {
               return sort === 1
                 ? dmaAbilityLeftData.maxSize - dmaAbilityRightData.maxSize
                 : dmaAbilityRightData.maxSize - dmaAbilityLeftData.maxSize;
             });
             break;
         }
+        this.dmaTbl!.recycleDataSource = [this.total, ...array];
         break;
     }
   }

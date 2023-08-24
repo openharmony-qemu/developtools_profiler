@@ -495,7 +495,6 @@ export class LitTree extends BaseElement {
       insertNode.arrow = false;
     }
     li.onclick = (e) => {
-      // e.preventDefault()
       e.stopPropagation()
       if (this.hasAttribute('foldable')) {
         // @ts-ignore

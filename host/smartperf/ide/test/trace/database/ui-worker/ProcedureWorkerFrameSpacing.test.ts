@@ -100,7 +100,7 @@ describe('FrameSpacing Test', () => {
       TraceRow.range.startNS,
       TraceRow.range.endNS,
       TraceRow.range.totalNS,
-      TraceRow.skeleton().frame,
+      TraceRow.skeleton(),
       req.animationRanges,
       false
     );

@@ -27,6 +27,8 @@ window.ResizeObserver = window.ResizeObserver ||
         unobserve: jest.fn(),
     }));
 
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+
 Object.defineProperty(global.self, 'crypto', {
     value: {
         getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
@@ -435,6 +437,96 @@ describe('TabPanePerfAnalysis Test', () => {
             }];
         tabPanePerfAnalysis.perfTableThread.reMeauseHeight = jest.fn(() => true);
         tabPanePerfAnalysis.getHiperfThread(item, val);
+        expect(tabPanePerfAnalysis).toBeTruthy();
+    });
+    it('TabPanePerfAnalysisTest12', function () {
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
+        let item = {
+            "tableName": "hiperf(28917)",
+            "pid": 28917,
+            "percent": "43.53",
+            "countFormat": "8.00s",
+            "count": 8460,
+            "isHover": true
+        };
+        let val = {
+            perfThread: [],
+            perfProcess: [],
+        }
+        tabPanePerfAnalysis.processData = [
+            {
+                "sampleId": 0,
+                "tid": 12,
+                "count": 1,
+                "threadState": "Running",
+                "pid": 12,
+                "eventCount": 14,
+                "threadName": "rcu_sched",
+                "processName": "rcu_sched",
+                "libId": 106,
+                "libName": "[kernel.kallsyms]",
+                "symbolId": 148,
+                "symbolName": "perf_trace_sched_wakeup_template"
+            },
+            {
+                "sampleId": 0,
+                "tid": 193,
+                "count": 1,
+                "threadState": "Running",
+                "pid": 193,
+                "eventCount": 14,
+                "threadName": "irq/31-rga",
+                "processName": "irq/31-rga",
+                "libId": 106,
+                "libName": "[kernel.kallsyms]",
+                "symbolId": 148,
+                "symbolName": "perf_trace_sched_wakeup_template"
+            }];
+        tabPanePerfAnalysis.tableSo.reMeauseHeight = jest.fn(() => true);
+        tabPanePerfAnalysis.getHiperfSo(item, val);
+        expect(tabPanePerfAnalysis).toBeTruthy();
+    });
+    it('TabPanePerfAnalysisTest13', function () {
+        document.body.innerHTML = `
+        <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
+        let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
+        let val = {
+            perfThread: [],
+            perfProcess: [],
+        }
+        tabPanePerfAnalysis.processData = [
+            {
+                "sampleId": 0,
+                "tid": 12,
+                "count": 1,
+                "threadState": "Running",
+                "pid": 12,
+                "eventCount": 14,
+                "threadName": "rcu_sched",
+                "processName": "rcu_sched",
+                "libId": 106,
+                "libName": "[kernel.kallsyms]",
+                "symbolId": 148,
+                "symbolName": "perf_trace_sched_wakeup_template"
+            },
+            {
+                "sampleId": 0,
+                "tid": 193,
+                "count": 1,
+                "threadState": "Running",
+                "pid": 193,
+                "eventCount": 14,
+                "threadName": "irq/31-rga",
+                "processName": "irq/31-rga",
+                "libId": 106,
+                "libName": "[kernel.kallsyms]",
+                "symbolId": 148,
+                "symbolName": "perf_trace_sched_wakeup_template"
+            }];
+        tabPanePerfAnalysis.tableSo.reMeauseHeight = jest.fn(() => true);
+        tabPanePerfAnalysis.data = jest.fn(() => true);
         expect(tabPanePerfAnalysis).toBeTruthy();
     });
 })

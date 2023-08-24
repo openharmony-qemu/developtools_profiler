@@ -734,7 +734,7 @@ export class SpAbilityMonitorChart {
       totalTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       totalTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
       totalTraceRow.setAttribute('children', '');
-      totalTraceRow.name = `System Purgeable Total`;
+      totalTraceRow.name = `Purgeable Total`;
       totalTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeableTotalData));
       totalTraceRow.focusHandler = (ev) => {
         this.trace?.displayTip(
@@ -774,7 +774,7 @@ export class SpAbilityMonitorChart {
       pinTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       pinTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
       pinTraceRow.setAttribute('children', '');
-      pinTraceRow.name = `System Purgeable Pin`;
+      pinTraceRow.name = `Purgeable Pin`;
       pinTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeablePinData));
       pinTraceRow.focusHandler = (ev) => {
         this.trace?.displayTip(

@@ -317,7 +317,11 @@ describe('SpRecordTrace Test', () => {
                     "reportProcessTree": true,
                     "reportSmapsMemInfo": true,
                     "reportSysmemMemInfo": true,
+                    "reportDmaMemInfo": true,
+                    "reportGpuDumpInfo": true,
+                    "reportGpuMemInfo": true,
                     "reportSysmemVmemInfo": true,
+                    "reportPurgeableAshmemInfo": true,
                     "sysMeminfoCounters":  [
                       "PMEM_MEM_TOTAL",
                           "PMEM_MEM_FREE",

@@ -22,128 +22,108 @@ import { SpStatisticsHttpUtil } from '../../../dist/statistics/util/SpStatistics
 const sqlite = require('../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../dist/trace/database/SqlLite.js');
 
+window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+  disconnect: jest.fn(),
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+}));
+
 SpStatisticsHttpUtil.addOrdinaryVisitAction = jest.fn(() => true);
 describe('SpQuerySQL Test', () => {
   let spQuerySQL = new SpQuerySQL();
 
   it('SpQuerySQLTest01', function () {
-    expect(spQuerySQL.checkSupportSqlAbility()).toBeFalsy();
+    expect(spQuerySQL.checkSafetySelectSql()).toBeFalsy();
   });
 
   it('SpQuerySQLTest02', function () {
-    expect(spQuerySQL.checkSafetySelectSql()).toBeTruthy();
-  });
-
-  it('SpQuerySQLTest03', function () {
-    expect(spQuerySQL.getSelectSqlField()).toBe('');
-  });
-
-  it('SpQuerySQLTest04', function () {
-    expect(spQuerySQL.getSelectSqlTableName()).not.toBeUndefined();
-  });
-
-  it('SpQuerySQLTest05', function () {
     expect(spQuerySQL.initDataElement()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest06', function () {
-    spQuerySQL.statDataArray.length = 1;
-    expect(spQuerySQL.initData()).toBeUndefined();
-  });
-
-  it('SpQuerySQLTest07', function () {
+  it('SpQuerySQLTest03', function () {
     expect(spQuerySQL.attributeChangedCallback()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest08', function () {
+  it('SpQuerySQLTest04', function () {
     expect(spQuerySQL.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
         :host{
-            width: 100%;
-            height: 100%;
-            font-size: 16px;
-            background-color: var(--dark-background5,#F6F6F6);
-            margin: 0;
-            padding: 0;
+          width: 100%;
+          height: 100%;
+          font-size: 16px;
+          background-color: var(--dark-background5,#F6F6F6);
+          margin: 0;
+          padding: 0;
         }
-
         .sql-select{
-            box-sizing: border-box;
-            width: 95%;
-            font-family: Helvetica,serif;
-            font-size: inherit;
-            color: var(--dark-color1,#212121);
-            text-align: left;
-            line-height: 1.2em;
-            font-weight: 400;
-            height: 3.2em;
-            margin-left: 10px;
-            resize: vertical;
-            border-width: 2px;
+          box-sizing: border-box;
+          width: 95%;
+          font-family: Helvetica,serif;
+          font-size: inherit;
+          color: var(--dark-color1,#212121);
+          text-align: left;
+          line-height: 1.2em;
+          font-weight: 400;
+          height: 3.2em;
+          margin-left: 10px;
+          resize: vertical;
+          border-width: 2px;
         }
-        
         .query{
-            display: flex;
-            flex-direction: column;
-            background-color: var(--dark-background5,#F6F6F6);
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
+          display: flex;
+          flex-direction: column;
+          background-color: var(--dark-background5,#F6F6F6);
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
         }
-
         .query-message{
-            background-color: var(--dark-background3,#FFFFFF);
-            padding: 1% 2%;
-            margin: 2% 2.5% 0 2.5%;
-            border-radius: 16px;
-            width: 90%;
+          background-color: var(--dark-background3,#FFFFFF);
+          padding: 1% 2%;
+          margin: 2% 2.5% 0 2.5%;
+          border-radius: 16px;
+          width: 90%;
         }
-
         .request{
-            display: flex;
-            flex-direction: column;
-            position: relative;
+          display: flex;
+          flex-direction: column;
+          position: relative;
         }
-
         .response{
-            flex-grow: 1;
-            margin-bottom: 1%;
-            display: flex;
-            flex-direction: column;
-            min-height: inherit;
-            max-height: 70vh;
+          flex-grow: 1;
+          margin-bottom: 1%;
+          display: flex;
+          flex-direction: column;
+          min-height: inherit;
+          max-height: 70vh;
         }
-
         #dataResult{
-            flex-grow: 1;
-            overflow-y: auto;
-            overflow-x: visible;
-            margin-bottom: 1%;
-            border-radius: 16px;
+          flex-grow: 1;
+          overflow-y: auto;
+          overflow-x: visible;
+          margin-bottom: 1%;
+          border-radius: 16px;
         }
-
         p{
-            display: table-cell;
-            padding: 7px 10px;
-            font-size:0.875em;
-            line-height: 20px;
-            font-weight: 400;
-            text-align: left;
+          display: table-cell;
+          padding: 7px 10px;
+          font-size:0.875em;
+          line-height: 20px;
+          font-weight: 400;
+          text-align: left;
         }
-
         #response-json{
-             margin-top: 20px;
-             background-color: var(--dark-background5,#F6F6F6);
-             margin-left: 10px;
-             flex-grow: 1;
-             scroll-y: visible;
+          margin-top: 20px;
+          background-color: var(--dark-background5,#F6F6F6);
+          margin-left: 10px;
+          flex-grow: 1;
+          scroll-y: visible;
         }
-
         .sql-select{
-            background-color: var(--dark-background5, #F6F6F6);
+          background-color: var(--dark-background5, #F6F6F6);
         }
         ::-webkit-scrollbar
         {
@@ -155,40 +135,35 @@ describe('SpQuerySQL Test', () => {
           border-radius: 6px;
           background-color: var(--dark-background7,rgba(0,0,0,0.1));
         }
-        
         .load-query-sql{
-            width: 95%;
-            bottom: 0;
+          width: 95%;
+          bottom: 0;
         }
-        
         #copy-button{
-           margin-right: 10%;
-           cursor:pointer;
-           opacity: 0.6;
+          margin-right: 10%;
+          cursor:pointer;
+          opacity: 0.6;
         }
-        
         #close-button{
-           margin-right: 5%;
-           cursor:pointer;
-           opacity: 0.6;
+          margin-right: 5%;
+          cursor:pointer;
+          opacity: 0.6;
         }
-        
         .button-option{
-           border-radius: 15px;
-           background-color: #0A59F7;
-           width: 120px;
-           height: 25px;
-           font-family: Helvetica-Bold;
-           color: var(--dark-background3,#FFFFFF);
-           text-align: center;
-           line-height: 20px;
-           font-weight: 400;
-           border:0 solid;
+          border-radius: 15px;
+          background-color: #0A59F7;
+          width: 120px;
+          height: 25px;
+          font-family: Helvetica-Bold;
+          color: var(--dark-background3,#FFFFFF);
+          text-align: center;
+          line-height: 20px;
+          font-weight: 400;
+          border:0 solid;
         }
         .pagination-box {
-            opacity: 0;
+          opacity: 0;
         }
-
         </style>
         <div class="query">
             <div class="query-message request">
@@ -212,66 +187,31 @@ describe('SpQuerySQL Test', () => {
 `);
   });
 
-  it('SpQuerySQLTest09', function () {
-    expect(
-        spQuerySQL.initDataTableStyle({
-          children: [
-            {
-              length: 3,
-              style: {
-                backgroundColor: 'var(--dark-background5,#F6F6F6)',
-              },
-            },
-          ],
-        })
-    ).toBeUndefined();
-  });
-
-  it('SpQuerySQLTest010', function () {
+  it('SpQuerySQLTest005', function () {
     expect(spQuerySQL.freshTableHeadResizeStyle()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest011', function () {
+  it('SpQuerySQLTest06', function () {
     expect(spQuerySQL.reset()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest012', function () {
-    let spQuerySQL = new SpQuerySQL();
-    expect(
-        spQuerySQL.initDataTableStyle({
-          children: [
-            {
-              length: 1,
-              style: {
-                backgroundColor: 'var(--dark-background5,#F6F6F6)',
-              },
-            },
-          ],
-        })
-    ).toBeUndefined();
-  });
-
-  it('SpQuerySQLTest013', function () {
+  it('SpQuerySQLTest007', function () {
     expect(spQuerySQL.initDataElement()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest014', function () {
+  it('SpQuerySQLTest008', function () {
     expect(spQuerySQL.connectedCallback()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest015', function () {
+  it('SpQuerySQLTest009', function () {
     expect(spQuerySQL.disconnectedCallback()).toBeUndefined();
   });
 
-  it('SpQuerySQLTest016', function () {
-    expect(spQuerySQL.initData()).toBeUndefined();
-  });
-
-  it('SpQuerySQLTest017', function () {
+  it('SpQuerySQLTest010', function () {
     expect(spQuerySQL.attributeChangedCallback('', '', '')).toBeUndefined();
   });
 
-  it('SpQuerySQLTest018', function () {
+  it('SpQuerySQLTest011', function () {
     document.body.innerHTML = `
          <sp-query-sql id="query-sql"></sp-query-sql>
         `;

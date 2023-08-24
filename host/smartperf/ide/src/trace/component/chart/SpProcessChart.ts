@@ -176,11 +176,7 @@ export class SpProcessChart {
     this.processAsyncEvent = await getAsyncEvents();
     info('The amount of initialized process Event data is : ', this.processAsyncEvent!.length);
     this.processMem = await queryProcessMem();
-    let startupConfig = FlagsConfig.getFlagsConfig('AppStartup');
-    let loadAppStartup: boolean = false;
-    if (startupConfig && startupConfig.AppStartup) {
-      loadAppStartup = startupConfig.AppStartup === 'Enabled';
-    }
+    let loadAppStartup: boolean = FlagsConfig.getFlagsConfigEnableStatus('AppStartup');
     if (loadAppStartup) {
       this.startupProcessArr = await queryStartupPidArray();
       this.processSoMaxDepth = await queryProcessSoMaxDepth();

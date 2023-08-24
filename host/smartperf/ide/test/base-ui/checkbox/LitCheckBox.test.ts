@@ -92,13 +92,13 @@ describe('checkBox Test', () => {
             cursor:pointer;
             display:flex;
             align-items:center;
+            gap: 12px;
         }
         .chekebox{
             position:relative;
             display:flex;
             justify-content: center;
             align-items: center;
-            margin-right:12px;
             width: 16px;
             height:16px;
             border: 1px solid var(--dark-color1,#4D4D4D);

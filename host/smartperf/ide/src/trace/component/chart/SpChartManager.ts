@@ -45,6 +45,7 @@ import { SpFrameTimeChart } from './SpFrameTimeChart.js';
 import { Utils } from '../trace/base/Utils.js';
 import { SpArkTsChart } from './SpArkTsChart.js';
 import { MemoryConfig } from '../../bean/MemoryConfig.js';
+import { FlagsConfig } from '../SpFlags.js';
 
 export class SpChartManager {
   static APP_STARTUP_PID_ARR: Array<number> = [];
@@ -92,8 +93,10 @@ export class SpChartManager {
     SpSystemTrace.DATA_DICT.clear();
     SpChartManager.APP_STARTUP_PID_ARR = [];
     let dict = await queryDataDICT();
-    let appStartUpPids = await queryAppStartupProcessIds();
-    appStartUpPids.forEach(it => SpChartManager.APP_STARTUP_PID_ARR.push(it.pid));
+    if (FlagsConfig.getFlagsConfigEnableStatus('AppStartup')) {
+      let appStartUpPids = await queryAppStartupProcessIds();
+      appStartUpPids.forEach(it => SpChartManager.APP_STARTUP_PID_ARR.push(it.pid));
+    }
     await this.initTraceConfig();
     dict.map((d) => SpSystemTrace.DATA_DICT.set(d['id'], d['data']));
     SpSystemTrace.DATA_TASK_POOL_CALLSTACK.clear();
@@ -109,9 +112,11 @@ export class SpChartManager {
     info('cpu Data initialized');
     progress('process/thread state', 73);
     await this.cpu.initProcessThreadStateData(progress);
-    await this.cpu.initCpuIdle0Data(progress);
-    await this.cpu.initSchedulingPTData(progress);
-    await this.cpu.initSchedulingFreqData(progress);
+    if (FlagsConfig.getFlagsConfigEnableStatus('SchedulingAnalysis')) {
+      await this.cpu.initCpuIdle0Data(progress);
+      await this.cpu.initSchedulingPTData(progress);
+      await this.cpu.initSchedulingFreqData(progress);
+    }
     info('ProcessThreadState Data initialized');
     progress('cpu rate', 75);
     await this.initCpuRate();

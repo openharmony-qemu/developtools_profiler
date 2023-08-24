@@ -363,5 +363,21 @@ const DynamicFrame& TraceDataCacheReader::GetConstDynamicFrame() const
 {
     return dynamicFrame_;
 }
+const AshMemData& TraceDataCacheReader::GetConstAshMemData() const
+{
+    return ashMemData_;
+}
+const DmaMemData& TraceDataCacheReader::GetConstDmaMemData() const
+{
+    return dmaMemData_;
+}
+const GpuProcessMemData& TraceDataCacheReader::GetConstGpuProcessMemData() const
+{
+    return gpuProcessMemData_;
+}
+const GpuWindowMemData& TraceDataCacheReader::GetConstGpuWindowMemData() const
+{
+    return gpuWindowMemData_;
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

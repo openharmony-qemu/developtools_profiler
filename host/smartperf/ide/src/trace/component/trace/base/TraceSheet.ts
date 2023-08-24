@@ -59,10 +59,23 @@ import { TabPanePurgTotalSelection } from '../sheet/ability/TabPanePurgTotalSele
 import { TabPanePurgPinSelection } from '../sheet/ability/TabPanePurgPinSelection.js';
 import { TabPaneVmTrackerShmSelection } from '../sheet/vmtracker/TabPaneVmTrackerShmSelection.js';
 import { TabPaneSmapsStatistics } from '../sheet/smaps/TabPaneSmapsStatistics.js';
+import { TabPaneSmapsComparison } from '../sheet/smaps/TabPaneSmapsComparison.js';
 import { SnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerSnapshot.js';
 import { TabPaneDmaSelectAbility } from '../sheet/ability/TabPaneDmaSelectAbility.js';
 import { TabPaneGpuMemorySelectAbility } from '../sheet/ability/TabPaneGpuMemorySelectAbility.js';
 import { TabPaneDmaSelectVmTracker } from '../sheet/vmtracker/TabPaneDmaSelectVmTracker.js';
+import { TabPanePurgTotalComparisonAbility } from '../sheet/ability/TabPanePurgTotalComparisonAbility.js';
+import { TabPanePurgPinComparisonAbility } from '../sheet/ability/TabPanePurgPinComparisonAbility.js';
+import { TabPanePurgTotalComparisonVM } from '../sheet/vmtracker/TabPanePurgTotalComparisonVM.js';
+import { TabPanePurgPinComparisonVM } from '../sheet/vmtracker/TabPanePurgPinComparisonVM.js';
+import { TabPaneDmaAbilityComparison } from '../sheet/ability/TabPaneDmaAbilityComparison.js';
+import { TabPaneGpuMemoryComparison } from '../sheet/ability/TabPaneGpuMemoryComparison.js';
+import { TabPaneDmaVmTrackerComparison } from '../sheet/vmtracker/TabPaneDmaVmTrackerComparison.js';
+import { TabPaneGpuMemorySelectVmTracker } from '../sheet/vmtracker/TabPaneGpuMemorySelectVmTracker.js';
+import { TabPaneGpuMemoryVmTrackerComparison } from '../sheet/vmtracker/TabPaneGpuMemoryVmTrackerComparison.js';
+import { TabPaneVmTrackerShmComparison } from '../sheet/vmtracker/TabPaneVmTrackerShmComparison.js';
+import { TabPaneJsCpuStatistics } from '../sheet/ark-ts/TabPaneJsCpuStatistics.js';
+import { TabPaneGpuClickSelectComparison } from '../sheet/gpu/TabPaneGpuClickSelectComparison.js';
 
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
@@ -372,9 +385,17 @@ export class TraceSheet extends BaseElement {
   displayThreadData = (
     data: ThreadStruct,
     scrollCallback: ((e: ThreadStruct) => void) | undefined,
-    scrollWakeUp: (d: any) => void | undefined
-  ): void =>
-    this.displayTab<TabPaneCurrentSelection>('current-selection').setThreadData(data, scrollCallback, scrollWakeUp);
+    scrollWakeUp: (d: any) => void | undefined,
+    scrollPreviousData: (d: ThreadStruct) => void,
+    scrollNextData: (d: ThreadStruct) => void
+  ) =>
+    this.displayTab<TabPaneCurrentSelection>('current-selection').setThreadData(
+      data,
+      scrollCallback,
+      scrollWakeUp,
+      scrollPreviousData,
+      scrollNextData
+    );
   displayMemData = (data: ProcessMemStruct): void =>
     this.displayTab<TabPaneCurrentSelection>('current-selection').setMemData(data);
   displayClockData = (data: ClockStruct): void =>
@@ -397,12 +418,15 @@ export class TraceSheet extends BaseElement {
     this.showUploadSoBt(val);
   };
 
-  displayGpuSelectedData = (type: string, startTs: number) => {
-    this.displayTab<TabPaneGpuClickSelect>('gpu-click-select').data = {
-      type: type,
-      startTs: startTs
-    };
-  }
+  displayGpuSelectedData = (type: string, startTs: number, dataList: Array<SnapshotStruct>) => {
+    this.displayTab<TabPaneGpuClickSelectComparison>('gpu-click-select-comparison').getGpuClickDataByDB(
+      type,
+      startTs,
+      dataList
+    );
+    let dataObject = { type: type, startTs: startTs };
+    this.displayTab<TabPaneGpuClickSelect>('gpu-click-select', 'gpu-click-select-comparison').gpuClickData(dataObject);
+  };
 
   displayFuncData = (names: string[], data: FuncStruct, scrollCallback: Function): void =>
     this.displayTab<TabPaneCurrentSelection>(...names).setFunctionData(data, scrollCallback);
@@ -417,6 +441,7 @@ export class TraceSheet extends BaseElement {
     scrollCallback: ((e: JankStruct) => void) | undefined
   ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setJankData(data, callback, scrollCallback);
   displayShmData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+    this.displayTab<TabPaneVmTrackerShmComparison>('box-vmtracker-shm-comparison').setShmData(data, dataList);
     this.displayTab<TabPaneVmTrackerShmSelection>(
       'box-vmtracker-shm-selection',
       'box-vmtracker-shm-comparison'
@@ -425,10 +450,11 @@ export class TraceSheet extends BaseElement {
   displaySmapsData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
     let val = new SelectionParam();
     val.smapsType = [];
-    val.rightNs = data.startNs;
+    val.leftNs = data.startNs;
     this.selection = val;
     val.smapsType = [];
-    this.displayTab<TabPaneSmapsStatistics>('box-smaps-statistics', 'box-smaps-record',).data =
+    this.displayTab<TabPaneSmapsComparison>('box-smaps-comparison').setData(val, dataList);
+    this.displayTab<TabPaneSmapsStatistics>('box-smaps-statistics', 'box-smaps-record', 'box-smaps-comparison').data =
       val;
   };
   displaySnapshotData = (
@@ -473,39 +499,93 @@ export class TraceSheet extends BaseElement {
     let val = new SelectionParam();
     val.jsCpuProfilerData = data;
     this.selection = val;
-    this.displayTab<TabPaneJsCpuTopDown>(
+    this.displayTab<TabPaneJsCpuStatistics>(
       'box-js-Profiler-statistics',
-      'box-js-Profiler-top-down',
-      'box-js-Profiler-bottom-up'
+      'box-js-Profiler-bottom-up',
+      'box-js-Profiler-top-down'
     ).data = data;
   };
-    displayPurgTotalAbilityData = (data: SnapshotStruct) => {
+  displayPurgTotalAbilityData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
     data.type = 'ability';
-    this.displayTab<TabPanePurgTotalSelection>('box-purgeable-total-selection').data = data;
+    this.displayTab<TabPanePurgTotalComparisonAbility>('box-purgeable-total-comparison-ability').totalData(
+      data,
+      dataList
+    );
+    this.displayTab<TabPanePurgTotalSelection>(
+      'box-purgeable-total-selection',
+      'box-purgeable-total-comparison-ability'
+    ).data = data;
   };
-  displayPurgPinAbilityData = (data: SnapshotStruct) => {
+  displayPurgPinAbilityData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
     data.type = 'ability';
-    this.displayTab<TabPanePurgPinSelection>('box-purgeable-pin-selection').data = data;
+    this.displayTab<TabPanePurgPinComparisonAbility>('box-purgeable-pin-comparison-ability').totalData(data, dataList);
+    this.displayTab<TabPanePurgPinSelection>(
+      'box-purgeable-pin-selection',
+      'box-purgeable-pin-comparison-ability'
+    ).data = data;
   };
-  displayPurgTotalVMData = (data: SnapshotStruct) => {
+  displayPurgTotalVMData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
     data.type = 'VM';
-    this.displayTab<TabPanePurgTotalSelection>('box-purgeable-total-selection').data = data;
+    this.displayTab<TabPanePurgTotalComparisonVM>('box-purgeable-total-comparison-vm').totalData(data, dataList);
+    this.displayTab<TabPanePurgTotalSelection>(
+      'box-purgeable-total-selection',
+      'box-purgeable-total-comparison-vm'
+    ).data = data;
   };
-  displayPurgPinVMData = (data: SnapshotStruct) => {
+  displayPurgPinVMData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
     data.type = 'VM';
-    this.displayTab<TabPanePurgPinSelection>('box-purgeable-pin-selection').data = data;
+    this.displayTab<TabPanePurgPinComparisonVM>('box-purgeable-pin-comparison-vm').totalData(data, dataList);
+    this.displayTab<TabPanePurgPinSelection>('box-purgeable-pin-selection', 'box-purgeable-pin-comparison-vm').data =
+      data;
   };
-  displayDmaAbility = (data: number) => {
-    this.displayTab<TabPaneDmaSelectAbility>('box-dma-selection-ability').queryDmaClickDataByDB(data);
+  displayDmaAbility = (data: number, dataList: Array<SnapshotStruct>) => {
+    if (dataList.length > 0) {
+      this.displayTab<TabPaneDmaAbilityComparison>('box-dma-ability-comparison').comparisonDataByDB(data, dataList);
+      this.displayTab<TabPaneDmaSelectAbility>(
+        'box-dma-selection-ability',
+        'box-dma-ability-comparison'
+      ).queryDmaClickDataByDB(data);
+    } else {
+      this.displayTab<TabPaneDmaSelectAbility>('box-dma-selection-ability').queryDmaClickDataByDB(data);
+    }
   };
-  displayDmaVmTracker = (data: number) => {
-    this.displayTab<TabPaneDmaSelectVmTracker>('box-dma-selection-vmTracker').data = data;
+  displayDmaVmTracker = (data: number, dataList: Array<SnapshotStruct>) => {
+    if (dataList.length > 0) {
+      this.displayTab<TabPaneDmaVmTrackerComparison>('box-vmTracker-comparison').comparisonDataByDB(data, dataList);
+      this.displayTab<TabPaneDmaSelectVmTracker>(
+        'box-dma-selection-vmTracker',
+        'box-vmTracker-comparison'
+      ).queryDmaVmTrackerClickDataByDB(data);
+    } else {
+      this.displayTab<TabPaneDmaSelectVmTracker>('box-dma-selection-vmTracker').queryDmaVmTrackerClickDataByDB(data);
+    }
   };
-  displayGpuMemoryAbility = (data: number) => {
-    this.displayTab<TabPaneGpuMemorySelectAbility>('box-gpu-memory-selection-ability').data = data;
+  displayGpuMemoryAbility = (data: number, dataList: Array<SnapshotStruct>) => {
+    if (dataList.length > 0) {
+      this.displayTab<TabPaneGpuMemoryComparison>('box-gpu-memory-comparison').comparisonDataByDB(data, dataList);
+      this.displayTab<TabPaneGpuMemorySelectAbility>(
+        'box-gpu-memory-selection-ability',
+        'box-gpu-memory-comparison'
+      ).queryGpuMemoryClickDataByDB(data);
+    } else {
+      this.displayTab<TabPaneGpuMemorySelectAbility>('box-gpu-memory-selection-ability').data = data;
+    }
   };
-  displayGpuMemoryVmTracker = (data: number) => {
-    this.displayTab<TabPaneDmaSelectVmTracker>('box-gpu-memory-selection-vmTracker').data = data;
+  displayGpuMemoryVmTracker = (data: number, dataList: Array<SnapshotStruct>) => {
+    if (dataList.length > 0) {
+      this.displayTab<TabPaneGpuMemoryVmTrackerComparison>('box-gpu-memory-vmTracker-comparison').comparisonDataByDB(
+        data,
+        dataList
+      );
+      this.displayTab<TabPaneGpuMemorySelectVmTracker>(
+        'box-gpu-memory-selection-vmTracker',
+        'box-gpu-memory-vmTracker-comparison'
+      ).queryGpuMemoryVmTrackerClickDataByDB(data);
+    } else {
+      this.displayTab<TabPaneGpuMemorySelectVmTracker>(
+        'box-gpu-memory-selection-vmTracker'
+      ).queryGpuMemoryVmTrackerClickDataByDB(data);
+    }
   };
 
   rangeSelect(selection: SelectionParam, restore = false): boolean {

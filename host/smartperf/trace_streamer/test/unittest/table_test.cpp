@@ -1276,11 +1276,21 @@ HWTEST_F(TableTest, SmapsTest, TestSize.Level1)
     uint64_t pss = 1;
     uint64_t size = 2;
     double reside = 1;
+    uint32_t ipid = 1;
+    uint64_t sharedClean = 1;
+    uint64_t sharedDirty = 1;
+    uint64_t privateClean = 1;
+    uint64_t privateDirty = 1;
+    uint64_t swap = 1;
+    uint64_t swapPss = 1;
+    uint64_t type = 1;
+
     DataIndex protectionId = stream_.traceDataCache_->GetDataIndex("protection");
     DataIndex pathId = stream_.traceDataCache_->GetDataIndex("path");
 
-    stream_.traceDataCache_->GetSmapsData()->AppendNewData(timeStamp, startAddr, endAddr, dirty, swapper, rss, pss,
-                                                           size, reside, protectionId, pathId);
+    stream_.traceDataCache_->GetSmapsData()->AppendNewData(
+        timeStamp, ipid, startAddr, endAddr, dirty, swapper, rss, pss, size, reside, protectionId, pathId, sharedClean,
+        sharedDirty, privateClean, privateDirty, swap, swapPss, type);
     auto row = stream_.traceDataCache_->SearchDatabase(sqlSelect.c_str(), false);
     EXPECT_EQ(row, 1);
 }

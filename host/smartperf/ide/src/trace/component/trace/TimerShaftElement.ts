@@ -27,7 +27,7 @@ import { LitTabs } from '../../../base-ui/tabs/lit-tabs.js';
 import { LitTabpane } from '../../../base-ui/tabs/lit-tabpane.js';
 import { TabPaneCurrent } from './sheet/TabPaneCurrent.js';
 import { SelectionParam } from '../../bean/BoxSelection.js';
-import { SpSystemTrace } from '../SpSystemTrace.js';
+import { SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
 
 //随机生成十六位进制颜色
 export function randomRgbColor() {
@@ -199,7 +199,7 @@ export class TimerShaftElement extends BaseElement {
       this.setSlicesMark();
     }
     this.removeTriangle('inverted');
-    this.setRangeNS(0,this.endNS);
+    this.setRangeNS(0, this.endNS);
   }
 
   initElements(): void {
@@ -229,7 +229,7 @@ export class TimerShaftElement extends BaseElement {
     }
     if (this.timeTotalEL) this.timeTotalEL.textContent = ns2s(this._totalNS);
     if (this.timeOffsetEL && this.rangeRuler)
-      this.timeOffsetEL.textContent = ns2UnitS(this._startNS,this.rangeRuler.getScale());
+      this.timeOffsetEL.textContent = ns2UnitS(this._startNS, this.rangeRuler.getScale());
     const width = this.canvas?.clientWidth || 0;
     const height = this.canvas?.clientHeight || 0;
     if (!this.timeRuler) {
@@ -247,7 +247,8 @@ export class TimerShaftElement extends BaseElement {
         },
         (slicetime) => {
           this.rangeClickHandler?.(slicetime);
-        });
+        }
+      );
     }
     if (!this.rangeRuler) {
       this.rangeRuler = new RangeRuler(
@@ -274,7 +275,7 @@ export class TimerShaftElement extends BaseElement {
             this._sportRuler.range = a;
           }
           if (this.timeOffsetEL && this.rangeRuler) {
-            this.timeOffsetEL.textContent = ns2UnitS(a.startNS,this.rangeRuler.getScale());
+            this.timeOffsetEL.textContent = ns2UnitS(a.startNS, this.rangeRuler.getScale());
           }
           if (this.loadComplete) {
             this.rangeChangeHandler?.(a);
@@ -349,10 +350,10 @@ export class TimerShaftElement extends BaseElement {
     this.sportRuler?.mouseOut(ev);
   };
 
-  documentOnKeyPress = (ev: KeyboardEvent) => {
+  documentOnKeyPress = (ev: KeyboardEvent, currentSlicesTime?: CurrentSlicesTime) => {
     if ((window as any).isSheetMove) return;
     if ((window as any).flagInputFocus) return;
-    this.rangeRuler?.keyPress(ev);
+    this.rangeRuler?.keyPress(ev, currentSlicesTime);
     this.sportRuler?.clearHoverFlag();
   };
 
@@ -432,7 +433,11 @@ export class TimerShaftElement extends BaseElement {
     this._sportRuler?.removeTriangle(type);
   }
 
-  setSlicesMark(startTime: null | number = null, endTime: null | number = null, shiftKey: null | boolean = false): SlicesTime | null | undefined {
+  setSlicesMark(
+    startTime: null | number = null,
+    endTime: null | number = null,
+    shiftKey: null | boolean = false
+  ): SlicesTime | null | undefined {
     let sliceTime = this._sportRuler?.setSlicesMark(startTime, endTime, shiftKey);
     if (sliceTime && sliceTime != undefined) {
       this.traceSheetEL?.displayCurrent(sliceTime); // 给当前pane准备数据
@@ -440,10 +445,10 @@ export class TimerShaftElement extends BaseElement {
       // 取最新创建的那个selection对象
       let selection = this.selectionList[this.selectionList.length - 1];
       if (selection) {
-        selection.isCurrentPane = true;  // 设置当前面板为可以显示的状态
+        selection.isCurrentPane = true; // 设置当前面板为可以显示的状态
         //把刚刚创建的slicetime和selection对象关联起来，以便后面再次选中“跑道”的时候显示对应的面板。
         this.selectionMap.set(sliceTime.id, selection);
-        this.traceSheetEL?.rangeSelect(selection);  // 显示选中区域对应的面板
+        this.traceSheetEL?.rangeSelect(selection); // 显示选中区域对应的面板
       }
     }
     return sliceTime;

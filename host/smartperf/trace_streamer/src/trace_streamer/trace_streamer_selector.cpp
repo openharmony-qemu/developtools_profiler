@@ -293,5 +293,13 @@ void TraceStreamerSelector::UpdateAnimationTraceStatus(bool status)
 {
     traceDataCache_->UpdateAnimationTraceStatus(status);
 }
+void TraceStreamerSelector::UpdateTaskPoolTraceStatus(bool status)
+{
+    traceDataCache_->UpdateTaskPoolTraceStatus(status);
+}
+void TraceStreamerSelector::UpdateAppStartTraceStatus(bool status)
+{
+    traceDataCache_->UpdateAppStartTraceStatus(status);
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 export class Smaps {
-  tsNS: number = -1;
-  start_addr: string = '';
-  end_addr: string = '';
-  permission: string = '';
-  path: string = '';
-  size: number = 0;
-  rss: number = 0;
-  pss: number = 0;
-  reside: number = 0;
-  dirty: number = 0;
-  swapper: number = 0;
+  startNs: number = -1;
+  startAddr: string = '';
+  endAddr: string = '';
   address: string = '';
+  permission: string = '';
   type: SmapsType = 0;
   typeName: string = '';
-  dirtyStr: string = '';
-  swapperStr: string = '';
-  rssStr: string = '';
-  pssStr: string = '';
+  path: string = '';
+  size: number = 0;
   sizeStr: string = '';
-  resideStr: string = '';
-  shared_clean : number = 0;
-  shared_dirty:number = 0;
-  private_clean:number = 0;
-  private_dirty:number = 0;
-  swap:number = 0;
-  swap_pss:number = 0;
   count:number = 0;
+  rss: number = 0;
+  rssStr: string = '';
+  pss: number = 0;
+  pssStr: string = '';
+  sharedClean : number = 0;
+  sharedDirty:number = 0;
+  privateClean:number = 0;
+  privateDirty:number = 0;
+  swap:number = 0;
+  swapPss:number = 0;
+  resideStr: string = '';
 }
 export class SmapsTreeObj {
   constructor(id: string, pid: string, type: string) {
@@ -50,27 +45,17 @@ export class SmapsTreeObj {
   }
   id: string = '';
   pid: string = '';
-  rsspro: number = 0;
-  rssproStr: string = '';
   typeName: string = '';
-  reg: number = 0;
-  regStr: string = '';
   path: any = '';
-  rss: number = 0;
-  rssStr: string = '';
-  dirty: number = 0;
-  dirtyStr: string = '';
-  swapper: number = 0;
-  swapperStr: string = '';
-  pss: number = 0;
-  pssStr: string = '';
   size: number = 0;
   sizeStr: string = '';
-  respro: number = 0;
-  resproStr: string = '';
   sizePro:number = 0;
   sizeProStr :string = '';
   count :number = 0 ;
+  rss: number = 0;
+  rssStr: string = '';
+  pss: number = 0;
+  pssStr: string = '';
   sharedClean : number = 0;
   sharedCleanStr:string = '';
   sharedDirty:number = 0;

@@ -34,6 +34,16 @@ public:
                          uint32_t pid,
                          std::string_view event,
                          const BytraceLine& line);
+    void
+        ParseBeginEvent(const std::string& comm, uint64_t ts, uint32_t pid, TracePoint& point, const BytraceLine& line);
+    void ParseEndEvent(uint64_t ts, uint32_t pid, const TracePoint& point);
+    void ParseStartEvent(const std::string& comm,
+                         uint64_t ts,
+                         uint32_t pid,
+                         const TracePoint& point,
+                         const BytraceLine& line);
+    void ParseFinishEvent(uint64_t ts, uint32_t pid, const TracePoint& point, const BytraceLine& line);
+    void ParseCreateEvent(uint64_t ts, const TracePoint& point);
     void Finish();
     void SetTraceType(TraceFileType traceType);
     void SetTraceClockId(BuiltinClocks clock);
@@ -52,8 +62,6 @@ private:
     void HandleFrameSliceEndEvent(uint64_t ts, uint64_t pid, uint64_t tid, size_t callStackRow);
     void HandleFrameQueueEndEvent(uint64_t ts, uint64_t pid, uint64_t tid, size_t callStackRow);
     bool HandleAnimationBeginEvent(const TracePoint& point, size_t callStackRow, const BytraceLine& line);
-    bool HandleAnimationStartEvent(const BytraceLine& line, size_t callStackRow);
-    bool HandleAnimationFinishEvent(const BytraceLine& line, size_t callStackRow);
     static ParseResult HandlerE(void);
     ParseResult HandlerCSF(std::string_view pointStr, TracePoint& outPoint, size_t tGidlength) const;
     static size_t GetNameLength(std::string_view pointStr, size_t nameIndex);

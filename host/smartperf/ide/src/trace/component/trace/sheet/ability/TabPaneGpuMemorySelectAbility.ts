@@ -66,7 +66,8 @@ export class TabPaneGpuMemorySelectAbility extends BaseElement {
     }
   }
 
-  queryDataByDB(startNs: number): void {
+  queryGpuMemoryClickDataByDB(startNs: number): void {
+    this.init();
     getTabGpuMemoryAbilityClickData(startNs).then((data) => {
       if (data.length !== null && data.length > 0) {
         data.forEach((item) => {

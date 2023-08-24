@@ -171,10 +171,6 @@ export class TabPaneVmTrackerShm extends BaseElement {
         </style>
          <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
                         <lit-table id="tb-shm" style="height: auto">
-                            <lit-table-column width="1fr" title="TimeStamp" data-index="time" key="time"  align="flex-start" order>
-                            </lit-table-column>
-                            <lit-table-column width="1fr" title="flag" data-index="flag" key="flag"  align="flex-start" order>
-                            </lit-table-column>
                             <lit-table-column width="1fr" title="AvgSize" data-index="avgSizeStr" key="avgSizeStr" align="flex-start"  order>
                             </lit-table-column>
                             <lit-table-column width="1fr" title="MinSize" data-index="minSizeStr" key="minSizeStr" align="flex-start" order>

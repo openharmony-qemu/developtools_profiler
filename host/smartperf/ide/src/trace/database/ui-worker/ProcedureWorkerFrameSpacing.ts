@@ -317,7 +317,7 @@ export class FrameSpacingStruct extends BaseStruct {
     let pointY = rowFrame.height - Math.floor((dashedLines[index] - minValue) *
       (rowFrame.height - padding * multiple) / (maxValue - minValue)) - padding;
     let lineDash = 10;
-    let textPadding = 5;
+    let textPadding = 4;
     ctx.beginPath();
     ctx.lineWidth = 2;
     ctx.setLineDash([lineDash]);
@@ -326,9 +326,15 @@ export class FrameSpacingStruct extends BaseStruct {
     ctx.moveTo(0, pointY);
     ctx.lineTo(rowFrame.width, pointY);
     ctx.stroke();
-    ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[8];
-    ctx.fillStyle = ColorUtils.ANIMATION_COLOR[8];
-    ctx.fillText(dashedLines[index].toString(), 0, pointY - textPadding);
+    ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[3];
+    ctx.fillStyle = ColorUtils.ANIMATION_COLOR[3];
+    if (index === 0) {
+      ctx.fillText(dashedLines[index].toString(), 0, pointY + multiple * textPadding);
+    } else if (index === unitIndex) {
+      ctx.fillText(dashedLines[index].toString(), 0, pointY + textPadding);
+    } else {
+      ctx.fillText(dashedLines[index].toString(), 0, pointY - textPadding);
+    }
     ctx.closePath();
   }
 

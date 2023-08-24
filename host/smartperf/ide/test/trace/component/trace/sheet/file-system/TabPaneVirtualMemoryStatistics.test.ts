@@ -16,6 +16,9 @@
 // @ts-ignore
 import { TabPaneVirtualMemoryStatistics } from '../../../../../../dist/trace/component/trace/sheet/file-system/TabPaneVirtualMemoryStatistics.js';
 import '../../../../../../dist/trace/component/trace/sheet/file-system/TabPaneVirtualMemoryStatistics.js';
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -28,7 +31,34 @@ describe('TabPaneVirtualMemoryStatistics Test', () => {
   document.body.innerHTML = `<tabpane-virtual-memory-statistics  id="statistics">                      
 </tabpane-virtual-memory-statistics >`;
   let tabPaneVirtualMemoryStatistics = document.querySelector('#statistics') as TabPaneVirtualMemoryStatistics;
+    let val = [
+        {
+            leftNs: 0,
+            rightNs: 1000,
+        },
+    ];
+    let VMStatisticData = sqlite.getTabPaneVirtualMemoryStatisticsData;
+    let VMData = [
+        {
+            pid: 0,
+            tid: 1,
+            pname: 'aa',
+            tname: 'bb',
+            type: 1,
+            ipid:1,
+            itid:100,
+            count:1000,
+            allDuration:10,
+            minDuration:10,
+            maxDuration:10,
+            avgDuration:10,
+        },
+    ];
+    VMStatisticData.mockResolvedValue(VMData);
   it('TabPaneVirtualMemoryStatisticsTest01', function () {
     expect(tabPaneVirtualMemoryStatistics).toBeDefined();
   });
+    it('TabPaneVirtualMemoryStatisticsTest02', function () {
+        expect(tabPaneVirtualMemoryStatistics.queryDataByDB(val)).toBeUndefined();
+    });
 });

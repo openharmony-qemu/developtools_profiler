@@ -31,7 +31,9 @@ import {
 } from '../bean/NativeHook.js';
 import {
   Dma,
+  DmaComparison,
   GpuMemory,
+  GpuMemoryComparison,
   LiveProcess,
   ProcessHistory,
   SystemCpuSummary,
@@ -1256,8 +1258,6 @@ export const queryAppStartupProcessIds = (): Promise<Array<{ pid: number }>> => 
     SELECT ipid FROM app_startup 
     UNION
     SELECT t.ipid FROM app_startup a LEFT JOIN thread t ON a.call_id = t.itid 
-    UNION
-    SELECT ipid FROM static_initalize 
 );`);
 export const queryProcessContentCount = (): Promise<Array<any>> =>
   query(`queryProcessContentCount`, `select pid,switch_count,thread_count,slice_count,mem_count from process;`);
@@ -1399,13 +1399,6 @@ export const queryWakeUpThread_Desc = (): Promise<Array<any>> =>
 (e.g.because of notifying a wait queue it was a suspended on) to when it started running.`
   );
 
-export const queryCPUWakeUpIdFromBean = (tid: number | undefined): Promise<Array<WakeupBean>> => {
-  let sql = `
-select itid from thread where tid=${tid} 
-    `;
-  return query('queryCPUWakeUpListFromBean', sql, {});
-};
-
 export const queryThreadWakeUp = (itid: number, startTime: number, dur: number): Promise<Array<WakeupBean>> =>
   query(
     'queryThreadWakeUp',
@@ -1438,6 +1431,7 @@ export const queryThreadWakeUpFrom = (itid: number, startTime: number): Promise<
   let sql = `
 select (A.ts - B.start_ts) as ts,
        A.tid,
+       A.itid,
        A.pid,
        A.cpu,
        A.dur
@@ -1632,38 +1626,6 @@ export const queryNativeHookStatisticSubType = (leftNs: number, rightNs: number)
         (NHS.ts - TR.start_ts) between ${leftNs} and ${rightNs}
       `,
     { $leftNs: leftNs, $rightNs: rightNs }
-  );
-
-export const queryNativeHookEventTid = (
-  leftNs: number,
-  rightNs: number,
-  types: Array<string>
-): Promise<Array<NativeHookStatistics>> =>
-  query(
-    'queryNativeHookEventTid',
-    `
-    select
-      callchain_id as eventId,
-      event_type as eventType,
-      heap_size as heapSize,
-      addr,
-      (A.start_ts - B.start_ts) as startTs,
-      (A.end_ts - B.start_ts) as endTs,
-      tid,
-      sub_type_id as subTypeId,
-      ifnull(last_lib_id,0) as lastLibId,
-      t.name as threadName
-    from
-      native_hook A,
-      trace_range B
-    left join
-      thread t
-    on
-      A.itid = t.id
-    where
-      A.start_ts - B.start_ts
-    between ${leftNs} and ${rightNs} and A.event_type in (${types.join(',')})`,
-    { $leftNs: leftNs, $rightNs: rightNs, $types: types }
   );
 
 export const queryNativeHookStatisticsCount = (): Promise<Array<NativeHookProcess>> =>
@@ -3601,8 +3563,9 @@ export const queryGpuTotalType = (): Promise<Array<{ id: number; data: string }>
     'queryGpuTotalType',
     `
   select distinct module_name_id id,data
-    from memory_window_gpu A left join data_dict B on A.module_name_id = B.id
-    where window_name_id = 0;
+    from memory_window_gpu A, trace_range TR left join data_dict B on A.module_name_id = B.id
+    where window_name_id = 0
+    and A.ts < TR.end_ts;
   `
   );
 
@@ -3612,6 +3575,7 @@ export const queryGpuDataByTs = (
   module: number | null
 ): Promise<
   Array<{
+    windowNameId: number;
     windowId: number;
     moduleId: number;
     categoryId: number;
@@ -3622,7 +3586,8 @@ export const queryGpuDataByTs = (
     module === null
       ? `and window_name_id = ${window}`
       : `and window_name_id = ${window} and module_name_id = ${module}`;
-  let sql = `select window_name_id as windowId,
+  let sql = `select window_name_id as windowNameId,
+       window_id as windowId,
        module_name_id as moduleId,
        category_name_id as categoryId,
        size
@@ -3637,6 +3602,7 @@ export const queryGpuTotalData = (moduleId: number | null): Promise<Array<{ star
   select (ts - start_ts) startNs, sum(size) value
     from memory_window_gpu,trace_range
     where window_name_id = 0 ${moduleCondition}
+    and ts< end_ts
     group by ts;
   `;
   return query('queryGpuTotalData', sql);
@@ -3687,24 +3653,22 @@ export const queryGpuDataByRange = (
     windowId: number;
     moduleId: number;
     categoryId: number;
-    sumSize: number;
     avgSize: number;
     maxSize: number;
     minSize: number;
   }>
 > => {
-  let sql = `
-  select (ts - start_ts) startTs,
+  let sql = `select (ts - start_ts) startTs,
     window_name_id windowId,
     module_name_id moduleId,
     category_name_id categoryId,
-    sum(size) sumSize,
     avg(size) avgSize,
     max(size) maxSize,
     min(size) minSize
   from memory_window_gpu,trace_range
   where not ((startTs + ${interval} < ${leftNs}) or (startTs > ${rightNs}))
-  group by ts,window_name_id,module_name_id,category_name_id;
+  group by window_name_id,module_name_id,category_name_id
+  order by avgSize DESC;
   `;
   return query('queryGpuWindowData', sql);
 };
@@ -3718,6 +3682,7 @@ export const queryGpuWindowData = (
   select (ts - start_ts) startNs, sum(size) value
     from memory_window_gpu,trace_range
     where window_name_id = ${windowId} ${moduleCondition}
+    and ts < end_ts
     group by ts;
   `;
   return query('queryGpuWindowData', sql);
@@ -3728,12 +3693,14 @@ export const queryGpuWindowType = (): Promise<Array<{ id: number; data: string; 
     'queryGpuWindowType',
     `
   select distinct A.window_name_id as id,B.data, null as pid
-from memory_window_gpu A left join data_dict B on A.window_name_id = B.id
+from memory_window_gpu A, trace_range tr left join data_dict B on A.window_name_id = B.id
 where window_name_id != 0
+and A.ts < tr.end_ts
 union all
 select distinct A.module_name_id id, B.data, A.window_name_id pid
-from memory_window_gpu A left join data_dict B on A.module_name_id = B.id
-where window_name_id != 0;
+from memory_window_gpu A, trace_range TR left join data_dict B on A.module_name_id = B.id
+where window_name_id != 0
+and A.ts < TR.end_ts
   `
   );
 
@@ -3750,7 +3717,7 @@ export const querySmapsExits = (): Promise<Array<any>> =>
 export const querySmapsData = (columnName: string): Promise<Array<any>> =>
   query(
     'querySmapsCounterData',
-    `SELECT (A.timestamp - B.start_ts) as startNs, sum(${columnName}) * 1024 as value, $columnName as name FROM smaps A,trace_range B GROUP by A.timestamp;`,
+    `SELECT (A.timestamp - B.start_ts) as startNs, sum(${columnName}) * 1024 as value, $columnName as name FROM smaps A,trace_range B WHERE A.timestamp < B.end_ts GROUP by A.timestamp;`,
     { $columnName: columnName }
   );
 
@@ -3773,21 +3740,19 @@ export const getTabSmapsData = (leftNs: number, rightNs: number, dur: number): P
   query<Smaps>(
     'getTabSmapsData',
     `
-    SELECT 
-     (A.timestamp - t.start_ts) AS tsNS,
-     start_addr,
-     end_addr,
-     dirty * 1024 as dirty,
+    SELECT
+     (A.timestamp - t.start_ts) AS startNs,
+     start_addr as startAddr,
+     end_addr as endAddr,
      A.type,
-     swapper * 1024 as swapper,
      resident_size * 1024 AS rss,
      protection_id as pid,
      pss * 1024 as pss,virtaul_size * 1024 AS size,reside,A.path_id AS path,
-     shared_clean * 1024 as shared_clean,shared_dirty * 1024 as shared_dirty,private_clean * 1024 as private_clean ,
-     private_dirty * 1024 as private_dirty,swap * 1024 as swap,swap_pss * 1024 as swap_pss
+     shared_clean * 1024 as sharedClean,shared_dirty * 1024 as sharedDirty,private_clean * 1024 as privateClean,
+     private_dirty * 1024 as privateDirty,swap * 1024 as swap,swap_pss * 1024 as swapPss
      FROM smaps A,
-     trace_range AS t 
-     WHERE (tsNS) <= $rightNs and (tsNs+$dur) >=$leftNs`,
+     trace_range AS t
+     WHERE (startNs) <= $rightNs and (startNs+$dur) >=$leftNs`,
     { $rightNs: rightNs, $leftNs: leftNs, $dur: dur },
     'exec'
   );
@@ -4658,6 +4623,7 @@ export const queryVmTrackerShmData = (iPid: number): Promise<Array<any>> =>
       memory_ashmem A,trace_range B 
     where
       A.ipid = ${iPid}
+      AND A.ts < B.end_ts
     and
       flag = 0
     GROUP by A.ts`,
@@ -4683,8 +4649,7 @@ export const queryVmTrackerShmSizeData = (
         trace_range B 
       WHERE 
         startNS <= ${rightNs}  and (startNS+ ${dur}) >=${leftNs}
-        AND ipid = ${iPid}
-      GROUP by flag`,
+        AND ipid = ${iPid}`,
     {}
   );
 
@@ -4703,21 +4668,19 @@ export const getTabSmapsRecordData = (rightNs: number): Promise<Array<Smaps>> =>
   query<Smaps>(
     'getTabSmapsRecordData',
     `
-      SELECT 
-     (A.timestamp - t.start_ts) AS tsNS,
-     start_addr,
-     end_addr,
-     dirty * 1024 as dirty,
+      SELECT
+     (A.timestamp - t.start_ts) AS startNs,
+     start_addr as startAddr,
+     end_addr as endAddr,
      A.type,
-     swapper * 1024 as swapper,
      resident_size * 1024 AS rss,
      protection_id as pid,
      pss * 1024 as pss,virtaul_size * 1024 AS size,reside,A.path_id AS path,
-     shared_clean * 1024 as shared_clean,shared_dirty * 1024 as shared_dirty,private_clean * 1024 as private_clean ,
-     private_dirty * 1024 as private_dirty,swap * 1024 as swap,swap_pss * 1024 as swap_pss
+     shared_clean * 1024 as sharedClean,shared_dirty * 1024 as sharedDirty,private_clean * 1024 as privateClean,
+     private_dirty * 1024 as privateDirty,swap * 1024 as swap,swap_pss * 1024 as swapPss
      FROM smaps A,
-     trace_range AS t 
-     WHERE (tsNS) = $rightNs`,
+     trace_range AS t
+     WHERE (startNs) = $rightNs`,
     { $rightNs: rightNs },
     'exec'
   );
@@ -4755,8 +4718,9 @@ export const queryDmaAbilityData = (): Promise<Array<SnapshotStruct>> =>
       A.flag as flag
     FROM memory_dma A,trace_range B
     left join data_dict as E on E.id=A.exp_task_comm_id
-    WHERE 
+    WHERE
       A.flag = 0
+      AND A.ts < B.end_ts
     GROUP by A.ts;`
   );
 
@@ -4767,7 +4731,8 @@ export const queryGpuMemoryAbilityData = (): Promise<Array<SnapshotStruct>> =>
     `SELECT 
     (A.ts - B.start_ts) as startNs,
     sum(A.used_gpu_size) as value
-    FROM memory_process_gpu A,trace_range B 
+    FROM memory_process_gpu A,trace_range B
+    WHERE A.ts < B.end_ts
     GROUP by A.ts;`
   );
 
@@ -4785,8 +4750,8 @@ export const queryDmaSampsData = (process: number): Promise<Array<SnapshotStruct
       left join data_dict as E on E.id=A.exp_task_comm_id
     WHERE
       A.flag = 0
-    and 
-      $pid = A.ipid
+      AND  $pid = A.ipid
+      AND A.ts < B.end_ts
     GROUP by A.ts;`,
     { $pid: process }
   );
@@ -4802,6 +4767,7 @@ export const queryGpuMemoryData = (processId: number): Promise<Array<SnapshotStr
     FROM memory_process_gpu A,trace_range B
     WHERE
     $pid = A.ipid
+    AND A.ts < B.end_ts
     GROUP by A.ts;`,
     { $pid: processId }
   );
@@ -4825,7 +4791,8 @@ export const queryPurgeableSysData = (isPin?: boolean): Promise<Array<any>> => {
           trace_range tr
           LEFT JOIN sys_event_filter f ON f.id = m.filter_id 
       WHERE
-          f.name IN ${names}
+          m.ts < tr.end_ts 
+          AND f.name IN ${names}
       GROUP BY
           m.ts UNION ALL
       SELECT
@@ -4861,7 +4828,8 @@ export const queryPurgeableProcessData = (ipid: number, isPin?: boolean): Promis
             trace_range tr
             LEFT JOIN process_measure_filter f ON f.id = m.filter_id
         WHERE
-            f.name = ${names}
+            m.ts < tr.end_ts
+            AND f.name = ${names}
             AND f.ipid = ${ipid}
         GROUP BY m.ts
         UNION ALL
@@ -5045,23 +5013,20 @@ export const queryProcessPurgeableSelectionTab = (
 export const getTabSmapsStatisticData = (rightNs: number): Promise<Array<Smaps>> =>
   query<Smaps>(
     'getTabSmapsStatisticData',
-    `
-        SELECT 
-     (A.timestamp - t.start_ts) AS tsNS,
-     start_addr,
-     end_addr,
-     (dirty * 1021) as dirty,
-     (swapper *1024) as swapper,
+    `SELECT
+     (A.timestamp - t.start_ts) AS startNs,
+     start_addr as startAddr,
+     end_addr as endAddr,
      A.type,
-     sum(resident_size) * 1024 AS rss, 
+     sum(resident_size) * 1024 AS rss,
      protection_id as pid,
      count(A.path_id) as count,
      sum(pss) * 1024 as pss ,sum(virtaul_size) * 1024 AS size,sum(reside) as reside,A.path_id AS path,
-     sum(shared_clean) * 1024 as shared_clean,sum(shared_dirty) * 1024 as shared_dirty,sum(private_clean) * 1024 as private_clean,sum(private_dirty) * 1024 as private_dirty,
-     sum(swap) * 1024 as swap,sum(swap_pss) * 1024 as swap_pss
+     sum(shared_clean) * 1024 as sharedClean,sum(shared_dirty) * 1024 as sharedDirty,sum(private_clean) * 1024 as privateClean,sum(private_dirty) * 1024 as privateDirty,
+     sum(swap) * 1024 as swap,sum(swap_pss) * 1024 as swapPss
      FROM smaps A,
-     trace_range AS t 
-     WHERE (tsNS) =$rightNs
+     trace_range AS t
+     WHERE (startNs) =$rightNs
      group by type,path`,
     { $rightNs: rightNs },
     'exec'
@@ -5070,23 +5035,20 @@ export const getTabSmapsStatisticData = (rightNs: number): Promise<Array<Smaps>>
 export const getTabSmapsStatisticSelectData = (leftNs: number, rightNs: number, dur: number): Promise<Array<Smaps>> =>
   query<Smaps>(
     'getTabSmapsStatisticData',
-    `
-       SELECT 
-     (A.timestamp - t.start_ts) AS tsNS,
-     start_addr,
-     end_addr,
-     (dirty * 1021) as dirty,
-     (swapper *1024) as swapper,
+    `SELECT
+     (A.timestamp - t.start_ts) AS startNs,
+     start_addr as startAddr,
+     end_addr as endAddr,
      A.type,
-     sum(resident_size) * 1024 AS rss, 
+     sum(resident_size) * 1024 AS rss,
      protection_id as pid,
      count(A.path_id) as count,
      sum(pss) * 1024 as pss ,sum(virtaul_size) * 1024 AS size,sum(reside) as reside,A.path_id AS path,
-     sum(shared_clean) * 1024 as shared_clean,sum(shared_dirty) * 1024 as shared_dirty,sum(private_clean) * 1024 as private_clean,sum(private_dirty) * 1024 as private_dirty,
-     sum(swap) * 1024 as swap,sum(swap_pss) * 1024 as swap_pss
+     sum(shared_clean) * 1024 as sharedClean,sum(shared_dirty) * 1024 as sharedDirty,sum(private_clean) * 1024 as privateClean,sum(private_dirty) * 1024 as privateDirty,
+     sum(swap) * 1024 as swap,sum(swap_pss) * 1024 as swapPss
      FROM smaps A,
-     trace_range AS t 
-     WHERE (tsNS) <=$rightNs and (tsNS+$dur)>=$leftNs
+     trace_range AS t
+     WHERE (startNs) <=$rightNs and (startNs+$dur)>=$leftNs
      group by type,path`,
     { $rightNs: rightNs, $leftNs: leftNs, $dur: dur },
     'exec'
@@ -5116,16 +5078,14 @@ export const getTabDmaAbilityData = (leftNs: number, rightNs: number, dur: numbe
 export const getTabGpuMemoryAbilityData = (leftNs: number, rightNs: number, dur: number): Promise<Array<GpuMemory>> =>
   query<GpuMemory>(
     'getTabGpuMemoryAbilityData',
-    `SELECT
-    (S.ts-TR.start_ts) as startNs,
-    A.data as gpuName,
+    `SELECT (S.ts-TR.start_ts) as startNs,
+    gpu_name_id as gpuNameId,
     MAX(S.used_gpu_size) as maxSize,
     MIN(S.used_gpu_size) as minSize,
     Avg(S.used_gpu_size) as avgSize,
     E.pid as processId,
     E.name as processName
     from trace_range as TR,memory_process_gpu as S
-    left join data_dict as A on A.id=S.gpu_name_id
     left join process as E on E.ipid=S.ipid
     WHERE
     $leftNS <= startNs + ${dur}
@@ -5171,14 +5131,13 @@ export const getTabGpuMemoryData = (
     'getTabGpuMemoryData',
     `SELECT  
       (S.ts-TR.start_ts) as startNs,
-      A.data as gpuName,
+      gpu_name_id as gpuNameId,
       T.tid as threadId,
       T.name as threadName,
       MAX(S.used_gpu_size) as maxSize,
       MIN(S.used_gpu_size) as minSize,
       Avg(S.used_gpu_size) as avgSize
       from trace_range as TR,memory_process_gpu as S
-      left join data_dict as A on A.id=S.gpu_name_id
       left join thread as T on T.itid=S.itid
       where
        $leftNS <= startNs + ${dur}
@@ -5186,6 +5145,7 @@ export const getTabGpuMemoryData = (
       $rightNS >= startNs
       and
         $pid = S.ipid
+      group by gpu_name_id,threadId
               `,
     { $leftNS: leftNs, $rightNS: rightNs, $pid: processId }
   );
@@ -5274,5 +5234,83 @@ export const getTabGpuMemoryVMTrackerClickData = (startNs: number, processId: nu
     AND
     $pid = S.ipid
               `,
+    { $startNs: startNs, $pid: processId }
+  );
+
+//Ability Monitor Dma 点选比较
+export const getTabDmaAbilityComparisonData = (startNs: number): Promise<Array<DmaComparison>> =>
+  query<DmaComparison>(
+    'getTabDmaAbilityComparisonData',
+    `SELECT
+      (S.ts-TR.start_ts) as startNs,
+      sum(S.size) as value,
+      E.pid as processId,
+      E.name as processName
+      from trace_range as TR,memory_dma as S
+      left join process as E on E.ipid=S.ipid
+      WHERE
+      startNs = ${startNs}
+      GROUP by
+      E.pid
+                `,
+    { $startNs: startNs }
+  );
+
+//Ability Monitor Gpu Memory 点选比较
+export const getTabGpuMemoryComparisonData = (startNs: number): Promise<Array<GpuMemoryComparison>> =>
+  query<GpuMemoryComparison>(
+    'getTabGpuMemoryComparisonData',
+    `SELECT
+      (S.ts-TR.start_ts) as startNs,
+      sum(S.used_gpu_size) as value,
+      E.pid as processId,
+      S.gpu_name_id as gpuNameId,
+      E.name as processName
+      from trace_range as TR,memory_process_gpu as S
+      left join process as E on E.ipid=S.ipid
+      WHERE
+      startNs = ${startNs}
+      GROUP by
+      E.pid, S.gpu_name_id
+                `,
+    { $startNs: startNs }
+  );
+
+//VM Tracker Dma 点选比较
+export const getTabDmaVmTrackerComparisonData = (startNs: number, processId: number): Promise<Array<DmaComparison>> =>
+  query<DmaComparison>(
+    'getTabDmaVmTrackerComparisonData',
+    `SELECT
+    (S.ts-TR.start_ts) as startNs,
+    sum(S.size) as value
+    from trace_range as TR,memory_dma as S
+    WHERE
+    startNs = ${startNs}
+    AND
+    $pid = S.ipid
+                `,
+    { $startNs: startNs, $pid: processId }
+  );
+
+//VM Tracker Gpu Memory 点选比较
+export const getTabGpuMemoryVmTrackerComparisonData = (
+  startNs: number,
+  processId: number
+): Promise<Array<GpuMemoryComparison>> =>
+  query<GpuMemoryComparison>(
+    'getTabGpuMemoryVmTrackerComparisonData',
+    `SELECT
+    (S.ts-TR.start_ts) as startNs,
+    sum(S.used_gpu_size) as value,
+    T.tid as threadId,
+    T.name as threadName,
+    S.gpu_name_id as gpuNameId
+    from trace_range as TR,memory_process_gpu as S
+    left join thread as T on T.itid=S.itid
+    WHERE
+    startNs = ${startNs}
+    AND
+    $pid = S.ipid
+                `,
     { $startNs: startNs, $pid: processId }
   );

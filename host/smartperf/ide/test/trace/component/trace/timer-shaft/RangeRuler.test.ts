@@ -279,4 +279,10 @@ describe('RangeRuler Test', () => {
   it('RangeRulerTest25', function () {
     expect(rangeRuler.delayDraw()).toBeUndefined();
   });
+  it('RangeRulerTest26', function () {
+    expect(rangeRuler.keyPressF()).toBeUndefined();
+  });
+  it('RangeRulerTest27', function () {
+    expect(rangeRuler.zoomFit('100','200')).toBeUndefined();
+  });
 });

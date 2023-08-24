@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+import { CompareStruct } from '../component/trace/sheet/SheetUtils.js';
+
 export class SystemCpuSummary {
   startTime: number = -1;
   startTimeStr: string = '';
@@ -135,8 +137,8 @@ export class Dma {
   processId: number = -1;
   timeStamp: string = '';
   startNs: number = -1;
-  expTaskComm: string| number = '';
-  avgSize: number = -1;
+  expTaskComm: string | number = '';
+  avgSize: number = 0;
   minSize: number = -1;
   maxSize: number = -1;
   bufName: string | number = '';
@@ -166,6 +168,7 @@ export class GpuMemory {
   minSize: number = -1;
   maxSize: number = -1;
   gpuName: string = '';
+  gpuNameId: number = -1;
   processName: string = '';
   process: string = ''; //processName + processId
   threadName: string = '';
@@ -177,4 +180,46 @@ export class GpuMemory {
   sizes: string = '';
   sumSize: number = -1;
   sumSizes: string = '';
+}
+
+export class DmaComparison extends CompareStruct {
+  processId: number = -1;
+  processName: string = '';
+  process: string = ''; //processName + processId
+  sizes: string = '';
+  thread: string = '';
+
+  constructor(process: string, value: number) {
+    super(process, value);
+    this.process = process;
+  }
+
+  clone(isBase?: boolean): DmaComparison {
+    const value = isBase ? this.value : -this.value;
+    return new DmaComparison(this.process, value);
+  }
+}
+
+export class GpuMemoryComparison extends CompareStruct {
+  processId: number = -1;
+  processName: string = '';
+  process: string = ''; //processName + processId
+  sizes: string = '';
+  gpuNameId: number = -1;
+  gpuName: string = '';
+  threadName: string = '';
+  threadId: number = -1;
+  thread: string = '';
+
+  constructor(process: string, thread: string, gpuName: string, value: number) {
+    super(process + '' + thread + '' + gpuName, value);
+    this.process = process;
+    this.gpuName = gpuName;
+    this.thread = thread;
+  }
+
+  clone(isBase?: boolean): GpuMemoryComparison {
+    const value = isBase ? this.value : -this.value;
+    return new GpuMemoryComparison(this.process, this.thread, this.gpuName, value);
+  }
 }

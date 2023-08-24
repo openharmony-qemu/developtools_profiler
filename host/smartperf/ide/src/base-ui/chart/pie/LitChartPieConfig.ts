@@ -18,6 +18,7 @@ export interface LitChartPieConfig {
   data: any[];
   angleField: string;
   colorField: string;
+  colorFieldTransferHandler?: (value: any) => any;
   radius: number;
   angleClick?: (it: object) => void;
   label: {

@@ -309,9 +309,9 @@ let pagination = (page: number, pageSize: number, source: Array<any>): any[] => 
 };
 
 const PAGE_SIZE: number = 50_0000;
-export let postMessage = (id: any, action: string, results: Array<any>): void => {
-  if (results.length > PAGE_SIZE) {
-    let pageCount = Math.ceil(results.length / PAGE_SIZE);
+export let postMessage = (id: any, action: string, results: Array<any>, pageSize: number = PAGE_SIZE): void => {
+  if (results.length > pageSize) {
+    let pageCount = Math.ceil(results.length / pageSize);
     for (let i = 1 ; i <= pageCount ; i++) {
       let tag = 'start';
       if (i == 1) {

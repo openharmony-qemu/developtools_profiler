@@ -49,7 +49,7 @@ import './component/trace/base/TraceRowConfig.js';
 import { TraceRowConfig } from './component/trace/base/TraceRowConfig.js';
 import { ColorUtils } from './component/trace/base/ColorUtils.js';
 import { SpStatisticsHttpUtil } from '../statistics/util/SpStatisticsHttpUtil.js';
-import { SpFlags } from './component/SpFlags.js';
+import { FlagsConfig, SpFlags } from './component/SpFlags.js';
 import './component/SpFlags.js';
 
 @element('sp-application')
@@ -735,8 +735,8 @@ export class SpApplication extends BaseElement {
           });
         }
       }
-      if ((window as any).cpuCount === 0) {
-        //if cpu count > 1 then show Scheduling-Analysis menu else hide it
+      if ((window as any).cpuCount === 0 || !FlagsConfig.getFlagsConfigEnableStatus('SchedulingAnalysis')) {
+        //if cpu count > 1 or SchedulingAnalysis config 'enable'  then show Scheduling-Analysis menu else hide it
         menus.splice(1, 1);
       }
       return menus;

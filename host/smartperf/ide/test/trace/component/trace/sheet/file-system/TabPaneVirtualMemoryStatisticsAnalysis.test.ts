@@ -190,4 +190,65 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     it('tabPaneVirtualMemoryStatisticsAnalysis10', function () {
         expect(tabPane.getPieChartData(res).length).toEqual(1);
     });
+    it('tabPaneVirtualMemoryStatisticsAnalysis11', function () {
+        tabPane.currentLevel = 0;
+        let paras = [
+            {
+                type: 2,
+                callChainId: 1,
+                dur: 4757959,
+                pid: 237,
+                tid: 237,
+                threadName: 'jbd2/mmcblk0p11',
+                processName: 'jbd2/mmcblk0p11(237)',
+                libId: 263,
+                symbolId: 12560,
+                libName: 'kallsyms',
+                symbolName: 'submit_bh',
+            },
+            {
+                type: 2,
+                callChainId: 1,
+                dur: 4673084,
+                pid: 237,
+                tid: 237,
+                threadName: 'jbd2/mmcblk0p11',
+                processName: 'jbd2/mmcblk0p11(237)',
+                libId: 263,
+                symbolId: 12560,
+                libName: 'kallsyms',
+                symbolName: 'submit_bh',
+            },
+        ];
+        tabPane.currentLevelData = paras;
+        expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+        tabPane.currentLevel = 1;
+        expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+        tabPane.currentLevel = 2;
+        expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+        tabPane.currentLevel = 3;
+        expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+        tabPane.currentLevel = 4;
+        expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+        tabPane.currentLevel = 0;
+        expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+        tabPane.currentLevel = 1;
+        expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+        tabPane.currentLevel = 2;
+        expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+        tabPane.currentLevel = 3;
+        expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+        tabPane.currentLevel = 4;
+        expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+        tabPane.currentLevel = 0;
+        expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+        tabPane.currentLevel = 1;
+        expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+        tabPane.currentLevel = 2;
+        expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+        tabPane.currentLevel = 3;
+        expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+        tabPane.currentLevel = 4;
+        expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+    });
 })

@@ -23,185 +23,247 @@ import crypto from 'crypto';
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
 window.ResizeObserver =
-    window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 Object.defineProperty(global.self, 'crypto', {
-    value: {
-        getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
-    },
+  value: {
+    getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
+  },
 });
 
 describe('TabPaneIOTierStatisticsAnalysis Test', () => {
-    document.body.innerHTML = `<tabpane-tb-vm-statistics id="statistics-analysis"></tabpane-tb-vm-statistics>`;
-    let tabPane = document.querySelector<TabPaneIOTierStatisticsAnalysis>('#statistics-analysis');
-    let param = {
-        anomalyEnergy: [],
-        clockMapData: { size: 0 },
-        cpuAbilityIds: [],
-        cpuFreqFilterIds: [],
-        cpuFreqLimitDatas: [],
-        cpuStateFilterIds: [],
-        cpus: [],
-        diskAbilityIds: [],
-        diskIOLatency: false,
-        diskIOReadIds: [2, 7, 1, 3, 4, 5, 6],
-        diskIOWriteIds: [2, 7, 1, 3, 4, 5, 6],
-        diskIOipids: [2, 7, 1, 3, 4, 5, 6],
-        fileSysVirtualMemory: false,
-        fileSystemType: [],
-        fsCount: 0,
-        funAsync: [],
-        funTids: [],
-        hasFps: false,
-        irqMapData: { size: 0 },
-        jsMemory: [],
-        leftNs: 964699689,
-        memoryAbilityIds: [],
-        nativeMemory: [],
-        nativeMemoryStatistic: [],
-        networkAbilityIds: [],
-        perfAll: false,
-        perfCpus: [],
-        perfProcess: [],
-        perfSampleIds: [],
-        perfThread: [],
-        powerEnergy: [],
-        processTrackIds: [],
-        promiseList: [],
-        recordStartNs: 780423789228,
-        rightNs: 24267556624,
-        sdkCounterIds: [],
-        sdkSliceIds: [],
-        smapsType: [],
-        systemEnergy: [],
-        threadIds: [],
-        virtualTrackIds: [],
-        vmCount: 0,
-    };
-    let processData = [
-        {
-            callChainId: 13,
-            dur: 240916,
-            libId: 539,
-            libName: 'libName.z.so',
-            pid: 911,
-            processName: 'processName(911)',
-            symbolId: 799,
-            symbolName: 'symbolName',
-            threadName: 'threadName',
-            tid: 404,
-            type: 0,
-        },
+  document.body.innerHTML = `<tabpane-tb-vm-statistics id="statistics-analysis"></tabpane-tb-vm-statistics>`;
+  let tabPane = document.querySelector<TabPaneIOTierStatisticsAnalysis>('#statistics-analysis');
+  let param = {
+    anomalyEnergy: [],
+    clockMapData: { size: 0 },
+    cpuAbilityIds: [],
+    cpuFreqFilterIds: [],
+    cpuFreqLimitDatas: [],
+    cpuStateFilterIds: [],
+    cpus: [],
+    diskAbilityIds: [],
+    diskIOLatency: false,
+    diskIOReadIds: [2, 7, 1, 3, 4, 5, 6],
+    diskIOWriteIds: [2, 7, 1, 3, 4, 5, 6],
+    diskIOipids: [2, 7, 1, 3, 4, 5, 6],
+    fileSysVirtualMemory: false,
+    fileSystemType: [],
+    fsCount: 0,
+    funAsync: [],
+    funTids: [],
+    hasFps: false,
+    irqMapData: { size: 0 },
+    jsMemory: [],
+    leftNs: 964699689,
+    memoryAbilityIds: [],
+    nativeMemory: [],
+    nativeMemoryStatistic: [],
+    networkAbilityIds: [],
+    perfAll: false,
+    perfCpus: [],
+    perfProcess: [],
+    perfSampleIds: [],
+    perfThread: [],
+    powerEnergy: [],
+    processTrackIds: [],
+    promiseList: [],
+    recordStartNs: 780423789228,
+    rightNs: 24267556624,
+    sdkCounterIds: [],
+    sdkSliceIds: [],
+    smapsType: [],
+    systemEnergy: [],
+    threadIds: [],
+    virtualTrackIds: [],
+    vmCount: 0,
+  };
+  let processData = [
+    {
+      callChainId: 13,
+      dur: 240916,
+      libId: 539,
+      libName: 'libName.z.so',
+      pid: 911,
+      processName: 'processName(911)',
+      symbolId: 799,
+      symbolName: 'symbolName',
+      threadName: 'threadName',
+      tid: 404,
+      type: 0,
+    },
+  ];
+  let item = {
+    durFormat: '194.23ms ',
+    duration: 194230478,
+    isHover: true,
+    percent: '99.00',
+    pid: 3744,
+    tableName: 'test(3744)',
+  };
+  let res = [
+    {
+      durFormat: '194.23ms ',
+      duration: 194230478,
+      isHover: true,
+      percent: '99.00',
+      pid: 3744,
+      tableName: 'test(3744)',
+    },
+  ];
+  let itemClick = new CustomEvent('click', <CustomEventInit>{
+    detail: {
+      ...{},
+      data: {},
+    },
+    composed: true,
+  });
+  it('tabPaneIOTierStatisticsAnalysis01', function () {
+    let litTable = new LitTable();
+    tabPane.appendChild(litTable);
+    let filter = new TabPaneFilter();
+    tabPane.filter = filter;
+    tabPane.loadingList = [];
+    tabPane.data = param;
+    expect(tabPane.ioTierStatisticsAnalysisSelection).toBeUndefined();
+  });
+  it('tabPaneIOTierStatisticsAnalysis02', function () {
+    expect(tabPane.clearData()).toBeUndefined();
+  });
+  it('tabPaneIOTierStatisticsAnalysis03', function () {
+    tabPane.processData = jest.fn(() => true);
+    let paras = [
+      {
+        type: 2,
+        callChainId: 1,
+        dur: 4757959,
+        pid: 237,
+        tid: 237,
+        threadName: 'jbd2/mmcblk0p11',
+        processName: 'jbd2/mmcblk0p11(237)',
+        libId: 263,
+        symbolId: 12560,
+        libName: 'kallsyms',
+        symbolName: 'submit_bh',
+      },
+      {
+        type: 2,
+        callChainId: 1,
+        dur: 4673084,
+        pid: 237,
+        tid: 237,
+        threadName: 'jbd2/mmcblk0p11',
+        processName: 'jbd2/mmcblk0p11(237)',
+        libId: 263,
+        symbolId: 12560,
+        libName: 'kallsyms',
+        symbolName: 'submit_bh',
+      },
     ];
-    let item = {
-        durFormat: '194.23ms ',
-        duration: 194230478,
-        isHover: true,
-        percent: '99.00',
-        pid: 3744,
-        tableName: 'test(3744)',
-    };
-    let res = [
-        {
-            durFormat: '194.23ms ',
-            duration: 194230478,
-            isHover: true,
-            percent: '99.00',
-            pid: 3744,
-            tableName: 'test(3744)',
-        },
+    tabPane.getIOTierProcess(paras, processData);
+    expect(tabPane.processData).not.toBeUndefined();
+  });
+  it('tabPaneIOTierStatisticsAnalysis04', function () {
+    tabPane.processData = processData;
+    tabPane.getIOTierType(item, param);
+    expect(tabPane.progressEL.loading).toBeFalsy();
+  });
+  it('tabPaneIOTierStatisticsAnalysis05', function () {
+    tabPane.processData = processData;
+    tabPane.getIOTierThread(item, param);
+    expect(tabPane.currentLevel).toEqual(2);
+  });
+  it('tabPaneIOTierStatisticsAnalysis06', function () {
+    tabPane.processData = processData;
+    tabPane.getIOTierSo(item, param);
+    expect(tabPane.currentLevel).toEqual(3);
+  });
+  it('tabPaneIOTierStatisticsAnalysis07', function () {
+    tabPane.processData = processData;
+    tabPane.getIOTierFunction(item, param);
+    expect(tabPane.currentLevel).toEqual(4);
+  });
+  it('tabPaneIOTierStatisticsAnalysis08', function () {
+    expect(tabPane.typeIdToString(1)).toEqual('DATA_READ');
+  });
+
+  it('tabPaneIOTierStatisticsAnalysis09', function () {
+    expect(tabPane.typeIdToString(2)).toEqual('DATA_WRITE');
+  });
+
+  it('tabPaneIOTierStatisticsAnalysis10', function () {
+    expect(tabPane.typeIdToString(3)).toEqual('METADATA_READ');
+  });
+  it('tabPaneIOTierStatisticsAnalysis11', function () {
+    expect(tabPane.typeIdToString(4)).toEqual('METADATA_WRITE');
+  });
+  it('tabPaneIOTierStatisticsAnalysis12', function () {
+    expect(tabPane.getPieChartData(res).length).toEqual(1);
+  });
+
+  it('tabPaneIOTierStatisticsAnalysis13', function () {
+    tabPane.currentLevel = 0;
+    let paras = [
+      {
+        type: 2,
+        callChainId: 1,
+        dur: 4757959,
+        pid: 237,
+        tid: 237,
+        threadName: 'jbd2/mmcblk0p11',
+        processName: 'jbd2/mmcblk0p11(237)',
+        libId: 263,
+        symbolId: 12560,
+        libName: 'kallsyms',
+        symbolName: 'submit_bh',
+      },
+      {
+        type: 2,
+        callChainId: 1,
+        dur: 4673084,
+        pid: 237,
+        tid: 237,
+        threadName: 'jbd2/mmcblk0p11',
+        processName: 'jbd2/mmcblk0p11(237)',
+        libId: 263,
+        symbolId: 12560,
+        libName: 'kallsyms',
+        symbolName: 'submit_bh',
+      },
     ];
-    let itemClick = new CustomEvent('click', <CustomEventInit>{
-        detail: {
-            ...{},
-            data: {},
-        },
-        composed: true,
-    });
-    it('tabPaneIOTierStatisticsAnalysis01', function () {
-        let litTable = new LitTable();
-        tabPane.appendChild(litTable);
-        let filter = new TabPaneFilter();
-        tabPane.filter = filter;
-        tabPane.loadingList = [];
-        tabPane.data = param;
-        expect(tabPane.ioTierStatisticsAnalysisSelection).toBeUndefined();
-    });
-    it('tabPaneIOTierStatisticsAnalysis02', function () {
-        expect(tabPane.clearData()).toBeUndefined();
-    });
-    it('tabPaneIOTierStatisticsAnalysis03', function () {
-        tabPane.processData = jest.fn(() => true);
-        let paras = [
-            {
-                "type": 2,
-                "callChainId": 1,
-                "dur": 4757959,
-                "pid": 237,
-                "tid": 237,
-                "threadName": "jbd2/mmcblk0p11",
-                "processName": "jbd2/mmcblk0p11(237)",
-                "libId": 263,
-                "symbolId": 12560,
-                "libName": "kallsyms",
-                "symbolName": "submit_bh"
-            },
-            {
-                "type": 2,
-                "callChainId": 1,
-                "dur": 4673084,
-                "pid": 237,
-                "tid": 237,
-                "threadName": "jbd2/mmcblk0p11",
-                "processName": "jbd2/mmcblk0p11(237)",
-                "libId": 263,
-                "symbolId": 12560,
-                "libName": "kallsyms",
-                "symbolName": "submit_bh"
-            }
-        ];
-        tabPane.getIOTierProcess(paras, processData);
-        expect(tabPane.processData).not.toBeUndefined();
-    });
-    it('tabPaneIOTierStatisticsAnalysis04', function () {
-        tabPane.processData = processData;
-        tabPane.getIOTierType(item, param);
-        expect(tabPane.progressEL.loading).toBeFalsy();
-    });
-    it('tabPaneIOTierStatisticsAnalysis05', function () {
-        tabPane.processData = processData;
-        tabPane.getIOTierThread(item, param);
-        expect(tabPane.currentLevel).toEqual(2);
-    });
-    it('tabPaneIOTierStatisticsAnalysis06', function () {
-        tabPane.processData = processData;
-        tabPane.getIOTierSo(item, param);
-        expect(tabPane.currentLevel).toEqual(3);
-    });
-    it('tabPaneIOTierStatisticsAnalysis07', function () {
-        tabPane.processData = processData;
-        tabPane.getIOTierFunction(item, param);
-        expect(tabPane.currentLevel).toEqual(4);
-    });
-    it('tabPaneIOTierStatisticsAnalysis08', function () {
-        expect(tabPane.typeIdToString(1)).toEqual('DATA_READ');
-    });
-
-    it('tabPaneIOTierStatisticsAnalysis09', function () {
-        expect(tabPane.typeIdToString(2)).toEqual('DATA_WRITE');
-    });
-
-    it('tabPaneIOTierStatisticsAnalysis10', function () {
-        expect(tabPane.typeIdToString(3)).toEqual('METADATA_READ');
-    });
-    it('tabPaneIOTierStatisticsAnalysis11', function () {
-        expect(tabPane.typeIdToString(4)).toEqual('METADATA_WRITE');
-    });
-    it('tabPaneIOTierStatisticsAnalysis12', function () {
-        expect(tabPane.getPieChartData(res).length).toEqual(1);
-    });
-})
+    tabPane.currentLevelData = paras;
+    expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+    tabPane.currentLevel = 1;
+    expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+    tabPane.currentLevel = 2;
+    expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+    tabPane.currentLevel = 3;
+    expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+    tabPane.currentLevel = 4;
+    expect(tabPane.sortByColumn('tableName', 0)).toBeUndefined();
+    tabPane.currentLevel = 0;
+    expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+    tabPane.currentLevel = 1;
+    expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+    tabPane.currentLevel = 2;
+    expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+    tabPane.currentLevel = 3;
+    expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+    tabPane.currentLevel = 4;
+    expect(tabPane.sortByColumn('tableName', 1)).toBeUndefined();
+    tabPane.currentLevel = 0;
+    expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+    tabPane.currentLevel = 1;
+    expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+    tabPane.currentLevel = 2;
+    expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+    tabPane.currentLevel = 3;
+    expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+    tabPane.currentLevel = 4;
+    expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
+  });
+});

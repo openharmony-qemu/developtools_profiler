@@ -30,8 +30,9 @@ export class LitTable extends HTMLElement {
   currentTreeDivList: HTMLDivElement[] = [];
   public rememberScrollTop = false;
   public getItemTextColor?: (data: any) => string;
+  public itemTextHandleMap: Map<string,(value: any) => string> = new Map<string, (value: any) => string>();
   private ds: Array<any> = [];
-  private recycleDs: Array<any> = [];
+  public recycleDs: Array<any> = [];
   private normalDs: Array<any> = [];
   private gridTemplateColumns: any;
   /*Grid css layout descriptions are obtained according to the clustern[] nested structure*/
@@ -753,7 +754,7 @@ export class LitTable extends HTMLElement {
           if (tblColumn.hasAttribute('fixed')) {
             this.fixed(tblDiv, tblColumn.getAttribute('fixed') || '', '#ffffff');
           }
-          tblDiv.innerHTML = this.formatName(rowData[dataIndex]);
+          tblDiv.innerHTML = this.formatName(dataIndex, rowData[dataIndex]);
           tblRowElement.append(tblDiv);
         }
       });
@@ -868,7 +869,7 @@ export class LitTable extends HTMLElement {
                 this.fixed(treeTblEl, treeTblColumn.getAttribute('fixed') || '', '#ffffff');
               }
               // @ts-ignore
-              treeTblEl.innerHTML = this.formatName(rowData[dataIndex]);
+              treeTblEl.innerHTML = this.formatName(dataIndex, rowData[dataIndex]);
             }
             treeTblRowElement.append(treeTblEl);
           } else {
@@ -893,7 +894,7 @@ export class LitTable extends HTMLElement {
                 this.fixed(treeTblEl, treeTblColumn.getAttribute('fixed') || '', '#ffffff');
               }
               // @ts-ignore
-              treeTblEl.innerHTML = this.formatName(rowData[dataIndex]);
+              treeTblEl.innerHTML = this.formatName(dataIndex, rowData[dataIndex]);
             }
             if (rowData.children && rowData.children.length > 0) {
               let treeTblIcon = document.createElement('lit-icon');
@@ -965,6 +966,8 @@ export class LitTable extends HTMLElement {
     return 27;
   }
 
+
+
   meauseAllRowHeight(list: any[]): TableRowObject[] {
     this.tbodyElement!.innerHTML = '';
     this.meauseRowElement = undefined;
@@ -974,7 +977,7 @@ export class LitTable extends HTMLElement {
     let headHeight = 0;
     let totalHeight = headHeight;
     let visibleObjects: TableRowObject[] = [];
-    list.forEach((rowData, index) => {
+    let itemHandler = (rowData: any, index: number) => {
       let height = this.meauseElementHeight(rowData);
       let tableRowObject = new TableRowObject();
       tableRowObject.height = height;
@@ -989,9 +992,24 @@ export class LitTable extends HTMLElement {
         newTableElement.style.transform = `translateY(${totalHeight}px)`;
         this.tbodyElement?.append(newTableElement);
         this.currentRecycleList.push(newTableElement);
+        let td = newTableElement?.querySelectorAll('.td');
+        if (tableRowObject.data.rowName === 'cpu-profiler') {
+          this.createTextColor(tableRowObject, td[0]);
+        }
       }
       totalHeight += height;
       visibleObjects.push(tableRowObject);
+    }
+    let realIndex = 0;
+    list.forEach((item, index) => {
+      if (Array.isArray(item)) {
+        item.forEach((rowData, childIndex) => {
+          itemHandler(rowData, realIndex);
+          realIndex++;
+        });
+      } else {
+        itemHandler(item, index);
+      }
     });
     this.tbodyElement && (this.tbodyElement.style.height = totalHeight + (this.isScrollXOutSide ? 0 : 0) + 'px');
     this.tableElement &&
@@ -1019,6 +1037,11 @@ export class LitTable extends HTMLElement {
         }
         for (let i = 0; i < this.currentRecycleList.length; i++) {
           this.freshCurrentLine(this.currentRecycleList[i], visibleObjects[i + skip]);
+          if (visibleObjects[i + skip]) {
+            if (visibleObjects[i + skip].data.rowName === 'cpu-profiler') {
+              this.createTextColor(visibleObjects[i + skip], this.currentRecycleList[i].childNodes[0]);
+            }
+          }
         }
       });
     return visibleObjects;
@@ -1133,7 +1156,7 @@ export class LitTable extends HTMLElement {
           td.title = rowData.data[dataIndex];
         } else {
           td = document.createElement('div');
-          td.innerHTML = this.formatName(rowData.data[dataIndex]);
+          td.innerHTML = this.formatName(dataIndex, rowData.data[dataIndex]);
           td.dataIndex = dataIndex;
           td.title = rowData.data[dataIndex];
         }
@@ -1189,6 +1212,9 @@ export class LitTable extends HTMLElement {
           }
           td.title = rowData.data.objectName;
         }
+        if (rowData.data.rowName === 'cpu-profiler') {
+          this.createTextColor(rowData, td);
+        }
         (td as any).data = rowData.data;
         td.classList.add('tree-first-body');
         td.style.position = 'absolute';
@@ -1231,7 +1257,7 @@ export class LitTable extends HTMLElement {
           td.appendChild(column.template.render(rowData.data).content.cloneNode(true));
           td.template = column.template;
         } else {
-          td.innerHTML = this.formatName(rowData.data[dataIndex]);
+          td.innerHTML = this.formatName(dataIndex, rowData.data[dataIndex]);
         }
         newTableElement.append(td);
       }
@@ -1403,6 +1429,11 @@ export class LitTable extends HTMLElement {
         );
       } else {
         this.freshCurrentLine(this.currentRecycleList[i], visibleObjects[i + skip]);
+        if (visibleObjects[i + skip]) {
+          if (visibleObjects[i + skip].data.rowName === 'cpu-profiler') {
+            this.createTextColor(visibleObjects[i + skip], this.currentRecycleList[i].childNodes[0]);
+          }
+        }
       }
     }
   }
@@ -1427,7 +1458,7 @@ export class LitTable extends HTMLElement {
         td.appendChild(column.template.render(rowData.data).content.cloneNode(true));
         td.template = column.template;
       } else {
-        td.innerHTML = this.formatName(rowData.data[dataIndex]);
+        td.innerHTML = this.formatName(dataIndex, rowData.data[dataIndex]);
       }
       newTableElement.append(td);
     });
@@ -1475,7 +1506,7 @@ export class LitTable extends HTMLElement {
             .content.cloneNode(true).innerHTML;
         } else {
           let dataIndex = this.columns![0].getAttribute('data-index') || '1';
-          firstElement.innerHTML = this.formatName(rowObject.data[dataIndex]);
+          firstElement.innerHTML = this.formatName(dataIndex, rowObject.data[dataIndex]);
           firstElement.title = rowObject.data[dataIndex];
         }
         if (rowObject.children && rowObject.children.length > 0 && !rowObject.data.hasNext) {
@@ -1531,6 +1562,9 @@ export class LitTable extends HTMLElement {
           }
           firstElement.title = rowObject.data.objectName;
         }
+        if (rowObject.data.rowName === 'cpu-profiler') {
+          this.createTextColor(rowObject, firstElement);
+        }
         firstElement.onclick = () => {
           this.dispatchRowClickEvent(rowObject, [firstElement, element]);
         };
@@ -1549,7 +1583,7 @@ export class LitTable extends HTMLElement {
         );
         (child as HTMLElement).title = rowObject.data[dataIndex];
       } else {
-        (child as HTMLElement).innerHTML = this.formatName(rowObject.data[dataIndex]);
+        (child as HTMLElement).innerHTML = this.formatName(dataIndex, rowObject.data[dataIndex]);
         (child as HTMLElement).title = rowObject.data[dataIndex];
       }
     });
@@ -1810,9 +1844,13 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  formatName(name: any) {
-    if (name != undefined && name !== null) {
-      return name.toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  formatName(key: string, name: any) {
+    let content = name;
+    if (this.itemTextHandleMap.has(key)) {
+      content = this.itemTextHandleMap.get(key)?.(name) || '';
+    }
+    if (content !== undefined && content !== null) {
+      return content.toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
     return '';
   }
@@ -1823,5 +1861,20 @@ export class LitTable extends HTMLElement {
     } else {
       element.removeAttribute('high-light');
     }
+  }
+
+  createTextColor(rowData: any, divElement: any) {
+    let nodeText = document.createElement('text');
+    nodeText.classList.add('functionName');
+    nodeText.textContent = rowData.data.name;
+    divElement.append(nodeText);
+    if (rowData.data.scriptName !== 'unknown') {
+      let scriptText = document.createElement('text');
+      scriptText.classList.add('scriptName');
+      scriptText.textContent = rowData.data.scriptName;
+      divElement.append(scriptText);
+      scriptText.style.color = '#a1a1a1';
+    }
+    divElement.title = rowData.data.symbolName;
   }
 }

@@ -21,6 +21,7 @@ import {TraceRow} from '../../../../dist/trace/component/trace/base/TraceRow.js'
 jest.mock('../../../../dist/trace/component/SpSystemTrace.js', () => {
     return {};
 });
+jest.mock('../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 const intersectionObserverMock = () => ({
     observe: () => null,

@@ -164,6 +164,9 @@ describe('LitRadioBox Test', () => {
             background-color: #1A83FF;
             color:#ffffff
         }
+        :host([disabled]){ 
+            pointer-events: none;
+        }
         </style>
         <input type="checkbox" id="radio" >
         <label id="label" for="radio">

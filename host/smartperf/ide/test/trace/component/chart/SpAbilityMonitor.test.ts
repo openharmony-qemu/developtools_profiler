@@ -17,7 +17,7 @@
 import { SpAbilityMonitorChart } from '../../../../dist/trace/component/chart/SpAbilityMonitorChart.js';
 import '../../../../dist/trace/component/chart/SpAbilityMonitorChart.js';
 // @ts-ignore
-import {SpChartManager} from "../../../../dist/trace/component/chart/SpChartManager.js";
+import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
 const sqlit = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
 
@@ -94,6 +94,59 @@ describe('SpAbilityMonitorChart Test', () => {
       maxOut: 1,
       maxPacketIn: 1,
       maxPacketOut: 1,
+    },
+  ]);
+  let queryDmaAbilityData = sqlit.queryDmaAbilityData;
+  queryDmaAbilityData.mockResolvedValue([
+    {
+      startNs: 1,
+      value: 1,
+      flag: 1,
+      ipid: 1,
+      expTaskComm: ''
+    },
+  ]);
+  let queryGpuMemoryAbilityData = sqlit.queryGpuMemoryAbilityData;
+  queryGpuMemoryAbilityData.mockResolvedValue([
+    {
+      startNs: 1,
+      value: 1,
+    },
+  ]);
+  let queryPurgeableSysData = sqlit.queryPurgeableSysData;
+  queryPurgeableSysData.mockResolvedValue([
+    {
+      startNs: 1,
+      value: 1,
+    },
+  ]);
+
+  let purgeableSysData = sqlit.queryPurgeableSysData;
+  purgeableSysData.mockResolvedValue([
+    {
+      name: 'test',
+      startNs: 15255,
+      value: 0,
+    },
+  ]);
+
+  let dmaAbilityData = sqlit.queryDmaAbilityData;
+  dmaAbilityData.mockResolvedValue([
+    {
+      startNs: 15255,
+      value: 2,
+      expTaskComm: 'allocator_host',
+      flag: 0,
+      name: 'test',
+    },
+  ]);
+
+  let gpuMemoryAbilityData = sqlit.queryGpuMemoryAbilityData;
+  gpuMemoryAbilityData.mockResolvedValue([
+    {
+      name: 'test',
+      startNs: 15255,
+      value: 0,
     },
   ]);
   let manager = new SpChartManager();

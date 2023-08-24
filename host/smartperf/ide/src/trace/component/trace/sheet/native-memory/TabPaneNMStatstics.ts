@@ -54,11 +54,13 @@ export class TabPaneNMStatstics extends BaseElement {
     this.nativeStatisticsTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 + 'px';
     // @ts-ignore
     this.nativeStatisticsTbl?.recycleDataSource = [];
+    this.nativeStatisticsTbl!.loading = true;
     Promise.all([
       queryNativeHookStatistics(nativeStatisticsParam.leftNs, nativeStatisticsParam.rightNs),
       queryNativeHookStatisticsSubType(nativeStatisticsParam.leftNs, nativeStatisticsParam.rightNs),
       queryNativeHookStatisticsMalloc(nativeStatisticsParam.leftNs, nativeStatisticsParam.rightNs),
     ]).then((values) => {
+      this.nativeStatisticsTbl!.loading = false;
       let arr: Array<NativeHookStatisticsTableData> = [];
       let index1 = nativeStatisticsParam.nativeMemory.indexOf(this.native_type[0]);
       let index2 = nativeStatisticsParam.nativeMemory.indexOf(this.native_type[1]);

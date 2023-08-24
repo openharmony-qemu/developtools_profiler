@@ -308,16 +308,18 @@ describe('spApplication Test', () => {
             color: var(--dark-color1,#47A7E0);
          }
          .chart-filter {
-            display: block;
             visibility: hidden;
             z-index: -1;
         }
         
         :host([chart_filter]) .chart-filter {
+            display: grid;
+            grid-template-rows: min-content min-content min-content max-content auto;
+            overflow-y: clip;
+            height: 99%;
             visibility: visible;
             position: absolute;
             width: 40%;
-            height: 100%;
             right: 0;
             z-index: 1001;
             top: 0;
@@ -361,13 +363,11 @@ describe('spApplication Test', () => {
                 </sp-query-sql>
                 <sp-info-and-stats style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0;left:0;right:0;bottom:0;position:absolute;z-index: 99" id="sp-info-and-stats">
                 </sp-info-and-stats>
-                <sp-convert-trace style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0;left:0;right:0;bottom:0;position:absolute;z-index: 99" id="sp-convert-trace">
-                </sp-convert-trace>
                 <sp-help style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 103" id="sp-help">
                 </sp-help>
                 <sp-flags style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 104" id="sp-flags">
                 </sp-flags>
-                <trace-row-config class="chart-filter" style="overflow-y: clip;"></trace-row-config>
+                <trace-row-config class="chart-filter"></trace-row-config>
             </div>
         </div>
         "

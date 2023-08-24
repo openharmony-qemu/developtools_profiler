@@ -53,6 +53,9 @@ enum SysMeminfoType {
     PMEM_CMA_TOTAL = 32;
     PMEM_CMA_FREE = 33;
     PMEM_KERNEL_RECLAIMABLE = 34;
+    PMEM_ACTIVE_PURG = 35;
+    PMEM_INACTIVE_PURG = 36;
+    PMEM_PINED_PURG = 37;
 }
 
 enum SysVMeminfoType {

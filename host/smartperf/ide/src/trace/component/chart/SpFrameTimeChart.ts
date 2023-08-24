@@ -222,6 +222,7 @@ export class SpFrameTimeChart {
           systemPopover.blur();
           TraceRow.range!.refresh = true;
           this.trace.refreshCanvas(true);
+          this.trace.clickEmptyArea();
         }
       });
     });
@@ -446,7 +447,7 @@ export class SpFrameTimeChart {
         let yDifference = frameData[index].y! - frameData[index - unitIndex].y!;
         let frameWidth = Math.abs(widthDifference / FrameSpacingStruct.physicalWidth / intervalTime);
         let frameHeight = Math.abs(heightDifference / FrameSpacingStruct.physicalHeight / intervalTime);
-        let frameX = Math.abs(xDifference / FrameSpacingStruct.physicalHeight / intervalTime);
+        let frameX = Math.abs(xDifference / FrameSpacingStruct.physicalWidth / intervalTime);
         let frameY = Math.abs(yDifference / FrameSpacingStruct.physicalHeight / intervalTime);
         let result = Math.max(frameWidth, frameHeight, frameX, frameY);
         frameData[index].frameSpacingResult = Number(result.toFixed(unitIndex));

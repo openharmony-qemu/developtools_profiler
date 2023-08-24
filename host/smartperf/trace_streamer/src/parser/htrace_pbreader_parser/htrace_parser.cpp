@@ -282,6 +282,8 @@ void HtraceParser::FilterData(HtraceDataSegment& seg)
     } else if (seg.dataType == DATA_SOURCE_TYPE_HISYSEVENT_CONFIG) {
         ProtoReader::HisyseventConfig_Reader hisyseventConfig(seg.protoData.data_, seg.protoData.size_);
         hisyseventParser_->Parse(&hisyseventConfig, seg.timeStamp);
+    } else if (seg.dataType == DATA_SOURCE_TYPE_MEM_CONFIG) {
+        htraceMemParser_->ParseMemoryConfig(seg);
     }
     if (supportThread_) {
         filterHead_ = (filterHead_ + 1) % MAX_SEG_ARRAY_SIZE;
@@ -374,6 +376,14 @@ void HtraceParser::ParserData(HtraceDataSegment& dataSeg)
     } else if (pluginName == "arkts-plugin_config") {
         dataSeg.protoData = pluginDataZero.data();
         ParseJSMemoryConfig(dataSeg);
+    } else if (pluginName == "memory-plugin_config") {
+        if (pluginDataZero.has_sample_interval()) {
+            uint32_t sampleInterval = pluginDataZero.sample_interval();
+            traceDataCache_->GetTraceConfigData()->AppendNewData("memory_config", "sample_interval",
+                                                                 std::to_string(sampleInterval));
+        }
+        dataSeg.dataType = DATA_SOURCE_TYPE_MEM_CONFIG;
+        dataSeg.protoData = pluginDataZero.data();
     } else {
 #if IS_WASM
         TraceStreamer_Plugin_Out_Filter(reinterpret_cast<const char*>(pluginDataZero.data().data_),

@@ -125,8 +125,6 @@ HWTEST_F(JsMemoryTest, snapshotParserNodesByJsmemory, TestSize.Level1)
     EXPECT_EQ(11000, startTime);
     auto endTime = stream_.traceDataCache_->GetConstJsHeapFilesData().EndTimes()[0];
     EXPECT_EQ(13000, endTime);
-    auto pidFiles = stream_.traceDataCache_->GetConstJsHeapFilesData().Pids()[0];
-    EXPECT_EQ(1734, pidFiles);
     auto type = stream_.traceDataCache_->GetConstJsHeapNodesData().Types()[0];
     EXPECT_EQ(9, type);
     auto name = stream_.traceDataCache_->GetConstJsHeapNodesData().Names()[0];
@@ -301,8 +299,6 @@ HWTEST_F(JsMemoryTest, timelineParserNodesByJsmemory, TestSize.Level1)
     EXPECT_EQ(10000, startTime);
     auto endTime = stream_.traceDataCache_->GetConstJsHeapFilesData().EndTimes()[0];
     EXPECT_EQ(13000, endTime);
-    auto pidFiles = stream_.traceDataCache_->GetConstJsHeapFilesData().Pids()[0];
-    EXPECT_EQ(1734, pidFiles);
     auto type = stream_.traceDataCache_->GetConstJsHeapNodesData().Types()[0];
     EXPECT_EQ(9, type);
     auto name = stream_.traceDataCache_->GetConstJsHeapNodesData().Names()[0];

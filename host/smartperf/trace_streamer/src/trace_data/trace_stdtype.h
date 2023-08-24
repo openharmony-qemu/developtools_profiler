@@ -1708,6 +1708,7 @@ private:
 class SmapsData : public CacheBase {
 public:
     void AppendNewData(uint64_t timeStamp,
+                       uint64_t ipid,
                        std::string startAddr,
                        std::string endAddr,
                        uint64_t dirty,
@@ -1717,9 +1718,17 @@ public:
                        uint64_t size,
                        double reside,
                        DataIndex protectionId,
-                       DataIndex pathId);
+                       DataIndex pathId,
+                       uint64_t shared_clean,
+                       uint64_t shared_dirty,
+                       uint64_t private_clean,
+                       uint64_t private_dirty,
+                       uint64_t swap,
+                       uint64_t swap_pss,
+                       uint32_t type);
     const std::deque<uint64_t>& Id() const;
     const std::deque<uint64_t>& TimeStamps() const;
+    const std::deque<uint64_t>& Ipids() const;
     const std::deque<std::string>& StartAddrs() const;
     const std::deque<std::string>& EndAddrs() const;
     const std::deque<uint64_t>& Dirtys() const;
@@ -1730,9 +1739,17 @@ public:
     const std::deque<double>& Resides() const;
     const std::deque<DataIndex>& ProtectionIds() const;
     const std::deque<DataIndex>& PathIds() const;
+    const std::deque<uint64_t>& SharedClean() const;
+    const std::deque<uint64_t>& SharedDirty() const;
+    const std::deque<uint64_t>& PrivateClean() const;
+    const std::deque<uint64_t>& PrivateDirty() const;
+    const std::deque<uint64_t>& Swap() const;
+    const std::deque<uint64_t>& SwapPss() const;
+    const std::deque<uint32_t>& Type() const;
     void Clear() override
     {
         CacheBase::Clear();
+        ipids_.clear();
         startAddrs_.clear();
         endAddrs_.clear();
         dirtys_.clear();
@@ -1743,9 +1760,17 @@ public:
         resides_.clear();
         protectionIds_.clear();
         pathIds_.clear();
+        sharedClean_.clear();
+        sharedDirty_.clear();
+        privateClean_.clear();
+        privateDirty_.clear();
+        swap_.clear();
+        swapPss_.clear();
+        type_.clear();
     }
 
 private:
+    std::deque<uint64_t> ipids_ = {};
     std::deque<std::string> startAddrs_ = {};
     std::deque<std::string> endAddrs_ = {};
     std::deque<uint64_t> dirtys_ = {};
@@ -1756,6 +1781,13 @@ private:
     std::deque<double> resides_ = {};
     std::deque<DataIndex> protectionIds_ = {};
     std::deque<DataIndex> pathIds_ = {};
+    std::deque<uint64_t> sharedClean_ = {};
+    std::deque<uint64_t> sharedDirty_ = {};
+    std::deque<uint64_t> privateClean_ = {};
+    std::deque<uint64_t> privateDirty_ = {};
+    std::deque<uint64_t> swap_ = {};
+    std::deque<uint64_t> swapPss_ = {};
+    std::deque<uint32_t> type_ = {};
     uint32_t rowCount_ = 0;
 };
 class BioLatencySampleData : public CacheBase {
@@ -2385,7 +2417,7 @@ private:
 
 class JsCpuProfilerSample : public CacheBase {
 public:
-    size_t AppendNewData(uint32_t functionId, uint64_t startTimes, uint64_t endTimes, uint64_t durs);
+    size_t AppendNewData(uint32_t functionId, uint64_t startTime, uint64_t endTime, uint64_t dur);
     const std::deque<uint32_t>& FunctionIds() const;
     const std::deque<uint64_t>& StartTimes() const;
     const std::deque<uint64_t>& EndTimes() const;
@@ -2426,10 +2458,7 @@ public:
                                     uint32_t priority,
                                     uint32_t executeState);
     size_t AppendExecuteTaskData(uint32_t executeTaskRow, uint32_t executeItid, uint32_t executeId);
-    size_t AppendReturnTaskData(uint32_t returnTaskRow,
-                                uint32_t returnItid,
-                                uint32_t executeId,
-                                uint32_t returnState);
+    size_t AppendReturnTaskData(uint32_t returnTaskRow, uint32_t returnItid, uint32_t executeId, uint32_t returnState);
     void UpdateAllocationTaskData(uint32_t index,
                                   uint32_t allocationTaskRow,
                                   uint32_t allocationItid,
@@ -2437,6 +2466,7 @@ public:
                                   uint32_t executeState);
     void UpdateExecuteTaskData(uint32_t index, uint32_t executeTaskRow, uint32_t executeItid);
     void UpdateReturnTaskData(uint32_t index, uint32_t returnTaskRow, uint32_t returnItid, uint32_t returnState);
+    void AppendTimeoutRow(uint32_t index, uint32_t timeoutRow);
 
     const std::deque<uint32_t>& AllocationTaskRows() const;
     const std::deque<uint32_t>& ExecuteTaskRows() const;
@@ -2448,9 +2478,10 @@ public:
     const std::deque<uint32_t>& Prioritys() const;
     const std::deque<uint32_t>& ExecuteStates() const;
     const std::deque<uint32_t>& ReturnStates() const;
+    const std::deque<uint32_t>& TimeoutRows() const;
     void Clear() override
     {
-        TaskPoolInfo::Clear();
+        CacheBase::Clear();
         allocationTaskRows_.clear();
         executeTaskRows_.clear();
         returnTaskRows_.clear();
@@ -2461,6 +2492,7 @@ public:
         prioritys_.clear();
         executeStates_.clear();
         returnStates_.clear();
+        timeoutRows_.clear();
     }
 
 private:
@@ -2474,6 +2506,7 @@ private:
     std::deque<uint32_t> prioritys_ = {};
     std::deque<uint32_t> executeStates_ = {};
     std::deque<uint32_t> returnStates_ = {};
+    std::deque<uint32_t> timeoutRows_ = {};
 };
 class Animation {
 public:
@@ -2495,9 +2528,9 @@ private:
 };
 class DeviceInfo {
 public:
-    const uint32_t PhysicalWidth() const;
-    const uint32_t PhysicalHeight() const;
-    const uint32_t PhysicalFrameRate() const;
+    uint32_t PhysicalWidth() const;
+    uint32_t PhysicalHeight() const;
+    uint32_t PhysicalFrameRate() const;
     void UpdateWidthAndHeight(const std::smatch& matcheLine);
     void UpdateFrameRate(uint32_t frameRate);
 
@@ -2536,6 +2569,189 @@ private:
     std::deque<InternalTime> endTimes_ = {};
     std::deque<uint64_t> ids_ = {};
 };
+
+class AshMemData : public CacheBase {
+public:
+    void AppendNewData(InternalPid ipid,
+                       uint64_t ts,
+                       uint32_t adj,
+                       uint32_t fd,
+                       DataIndex ashmemNameId,
+                       uint64_t size,
+                       uint64_t pss,
+                       uint32_t ashmemId,
+                       uint64_t time,
+                       uint64_t refCount,
+                       uint64_t purged,
+                       uint32_t flag);
+    const std::deque<InternalPid>& Ipids() const;
+    const std::deque<uint32_t>& Adjs() const;
+    const std::deque<uint32_t>& Fds() const;
+    const std::deque<DataIndex>& AshmemNameIds() const;
+    const std::deque<uint64_t>& Sizes() const;
+    const std::deque<uint64_t>& Psss() const;
+    const std::deque<uint32_t>& AshmemIds() const;
+    const std::deque<uint64_t>& Times() const;
+    const std::deque<uint64_t>& RefCounts() const;
+    const std::deque<uint64_t>& Purgeds() const;
+    const std::deque<uint32_t>& Flags() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        ipids_.clear();
+        adjs_.clear();
+        fds_.clear();
+        ashmemNameIds_.clear();
+        sizes_.clear();
+        psss_.clear();
+        ashmemIds_.clear();
+        times_.clear();
+        refCounts_.clear();
+        purgeds_.clear();
+        flags_.clear();
+    }
+    void SetFlag(uint64_t rowId, uint32_t Flag);
+
+private:
+    std::deque<InternalPid> ipids_ = {};
+    std::deque<uint32_t> adjs_ = {};
+    std::deque<uint32_t> fds_ = {};
+    std::deque<DataIndex> ashmemNameIds_ = {};
+    std::deque<uint64_t> sizes_ = {};
+    std::deque<uint64_t> psss_ = {};
+    std::deque<uint32_t> ashmemIds_ = {};
+    std::deque<uint64_t> times_ = {};
+    std::deque<uint64_t> refCounts_ = {};
+    std::deque<uint64_t> purgeds_ = {};
+    std::deque<uint32_t> flags_ = {};
+    uint32_t rowCount_ = 0;
+};
+
+class DmaMemData : public CacheBase {
+public:
+    void AppendNewData(InternalPid ipid,
+                       uint64_t ts,
+                       uint32_t fd,
+                       uint64_t size,
+                       uint32_t ino,
+                       uint32_t expPid,
+                       DataIndex expTaskCommId,
+                       DataIndex bufNameId,
+                       DataIndex expNameId,
+                       uint32_t flag);
+    const std::deque<InternalPid>& Ipids() const;
+    const std::deque<uint32_t>& Fds() const;
+    const std::deque<uint64_t>& Sizes() const;
+    const std::deque<uint32_t>& Inos() const;
+    const std::deque<uint32_t>& ExpPids() const;
+    const std::deque<DataIndex>& ExpTaskCommIds() const;
+    const std::deque<DataIndex>& BufNameIds() const;
+    const std::deque<DataIndex>& ExpNameIds() const;
+    const std::deque<uint32_t>& Flags() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        ipids_.clear();
+        fds_.clear();
+        sizes_.clear();
+        inos_.clear();
+        expPids_.clear();
+        expTaskCommIds_.clear();
+        bufNameIds_.clear();
+        expNameIds_.clear();
+        flags_.clear();
+    }
+    void SetFlag(uint64_t rowId, uint32_t Flag);
+
+private:
+    std::deque<InternalPid> ipids_ = {};
+    std::deque<uint32_t> fds_ = {};
+    std::deque<uint64_t> sizes_ = {};
+    std::deque<uint32_t> inos_ = {};
+    std::deque<uint32_t> expPids_ = {};
+    std::deque<DataIndex> expTaskCommIds_ = {};
+    std::deque<DataIndex> bufNameIds_ = {};
+    std::deque<DataIndex> expNameIds_ = {};
+    std::deque<uint32_t> flags_ = {};
+    uint32_t rowCount_ = 0;
+};
+
+class GpuProcessMemData : public CacheBase {
+public:
+    void AppendNewData(uint64_t ts,
+                       DataIndex gpuNameId,
+                       uint64_t allGpuSize,
+                       std::string addr,
+                       InternalPid ipid,
+                       InternalPid itid,
+                       uint64_t usedGpuSize);
+    const std::deque<DataIndex>& GpuNameIds() const;
+    const std::deque<uint64_t>& AllGpuSizes() const;
+    const std::deque<std::string>& Addrs() const;
+    const std::deque<InternalPid>& Ipids() const;
+    const std::deque<InternalPid>& Itids() const;
+    const std::deque<uint64_t>& UsedGpuSizes() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        gpuNameIds_.clear();
+        allGpuSizes_.clear();
+        addrs_.clear();
+        ipids_.clear();
+        itids_.clear();
+        usedGpuSizes_.clear();
+    }
+
+private:
+    std::deque<DataIndex> gpuNameIds_ = {};
+    std::deque<uint64_t> allGpuSizes_ = {};
+    std::deque<std::string> addrs_ = {};
+    std::deque<InternalPid> ipids_ = {};
+    std::deque<InternalPid> itids_ = {};
+    std::deque<uint64_t> usedGpuSizes_ = {};
+    uint32_t rowCount_ = 0;
+};
+
+class GpuWindowMemData : public CacheBase {
+public:
+    void AppendNewData(uint64_t ts,
+                       DataIndex windowNameId,
+                       uint64_t windowId,
+                       DataIndex moduleNameId,
+                       DataIndex categoryNameId,
+                       uint64_t size,
+                       uint32_t count,
+                       uint64_t purgeableSize);
+    const std::deque<DataIndex>& WindowNameIds() const;
+    const std::deque<uint64_t>& WindowIds() const;
+    const std::deque<DataIndex>& ModuleNameIds() const;
+    const std::deque<DataIndex>& CategoryNameIds() const;
+    const std::deque<uint64_t>& Sizes() const;
+    const std::deque<uint32_t>& Counts() const;
+    const std::deque<uint64_t>& PurgeableSizes() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        windowNameIds_.clear();
+        windowIds_.clear();
+        moduleNameIds_.clear();
+        categoryNameIds_.clear();
+        sizes_.clear();
+        counts_.clear();
+        purgeableSizes_.clear();
+    }
+
+private:
+    std::deque<DataIndex> windowNameIds_ = {};
+    std::deque<uint64_t> windowIds_ = {};
+    std::deque<DataIndex> moduleNameIds_ = {};
+    std::deque<DataIndex> categoryNameIds_ = {};
+    std::deque<uint64_t> sizes_ = {};
+    std::deque<uint32_t> counts_ = {};
+    std::deque<uint64_t> purgeableSizes_ = {};
+    uint32_t rowCount_ = 0;
+};
+
 } // namespace TraceStdtype
 } // namespace SysTuning
 

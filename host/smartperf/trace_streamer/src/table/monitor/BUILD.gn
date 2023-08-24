@@ -19,21 +19,17 @@ ohos_source_set("monitor_tables") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "cpu_usage_info_table.cpp",
-    "cpu_usage_info_table.h",
     "disk_io_table.cpp",
-    "disk_io_table.h",
     "hidump_table.cpp",
-    "hidump_table.h",
     "live_process_table.cpp",
-    "live_process_table.h",
     "log_table.cpp",
-    "log_table.h",
+    "memory_ashmem_table.cpp",
+    "memory_dma_table.cpp",
+    "memory_process_gpu_table.cpp",
+    "memory_window_gpu_table.cpp",
     "network_table.cpp",
-    "network_table.h",
     "paged_memory_sample_table.cpp",
-    "paged_memory_sample_table.h",
     "smaps_table.cpp",
-    "smaps_table.h",
   ]
   include_dirs = [
     "../base",

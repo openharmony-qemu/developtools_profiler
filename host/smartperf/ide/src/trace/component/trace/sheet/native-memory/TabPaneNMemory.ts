@@ -17,18 +17,25 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { query, queryNativeHookEventTid } from '../../../../database/SqlLite.js';
-import { NativeHookStatistics, NativeMemory, NativeHookCallInfo } from '../../../../bean/NativeHook.js';
+import { NativeMemory, NativeHookCallInfo } from '../../../../bean/NativeHook.js';
 import '../TabPaneFilter.js';
 import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { TabPaneNMSampleList } from './TabPaneNMSampleList.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
+import {
+  formatRealDateMs,
+  getByteWithUnit,
+  getTimeString
+} from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
+import { SpNativeMemoryChart } from '../../../chart/SpNativeMemoryChart.js';
+import { Utils } from '../../base/Utils.js';
 
 @element('tabpane-native-memory')
 export class TabPaneNMemory extends BaseElement {
   private defaultNativeTypes = ['All Heap & Anonymous VM', 'All Heap', 'All Anonymous VM'];
   private memoryTbl: LitTable | null | undefined;
+  private filter: TabPaneFilter | null | undefined;
   private tblData: LitTable | null | undefined;
   private progressEL: LitProgressBar | null | undefined;
   private loadingList: number[] = [];
@@ -36,7 +43,6 @@ export class TabPaneNMemory extends BaseElement {
   private memorySource: Array<NativeMemory> = [];
   private native_type: Array<string> = [...this.defaultNativeTypes];
   private statsticsSelection: Array<any> = [];
-  private queryResult: Array<NativeHookStatistics> = [];
   private filterAllocationType: string = '0';
   private filterNativeType: string = '0';
   private filterResponseType: number = -1;
@@ -45,30 +51,28 @@ export class TabPaneNMemory extends BaseElement {
   private rowSelectData: any = undefined;
   private sortColumn: string = '';
   private sortType: number = 0;
-  private leftNs: number = 0;
-  private rightNs: number = 0;
   private responseTypes: any[] = [];
+  private eventTypes: string[] = [];
 
   set data(memoryParam: SelectionParam | any) {
     if (memoryParam == this.currentSelection) {
       return;
     }
     this.currentSelection = memoryParam;
-    this.initFilterTypes();
     this.queryData(memoryParam);
   }
 
   queryData(memoryParam: SelectionParam | any) {
-    let types: Array<string> = [];
+    this.eventTypes = [];
     if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[0]) != -1) {
-      types.push("'AllocEvent'");
-      types.push("'MmapEvent'");
+      this.eventTypes.push("'AllocEvent'");
+      this.eventTypes.push("'MmapEvent'");
     } else {
       if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[1]) != -1) {
-        types.push("'AllocEvent'");
+        this.eventTypes.push("'AllocEvent'");
       }
       if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[2]) != -1) {
-        types.push("'MmapEvent'");
+        this.eventTypes.push("'MmapEvent'");
       }
     }
     TabPaneNMSampleList.serSelection(memoryParam);
@@ -80,24 +84,19 @@ export class TabPaneNMemory extends BaseElement {
     this.tblData?.recycleDataSource = [];
     // @ts-ignore
     this.memoryTbl?.recycleDataSource = [];
-    this.leftNs = memoryParam.leftNs;
-    this.rightNs = memoryParam.rightNs;
-    this.progressEL!.loading = true;
-    this.loadingPage.style.visibility = 'visible';
-    queryNativeHookEventTid(memoryParam.leftNs, memoryParam.rightNs, types).then((result) => {
-      this.queryResult = result;
-      this.getDataByNativeMemoryWorker(memoryParam);
-    });
+    this.resetFilter();
+    this.getDataByNativeMemoryWorker(memoryParam, true);
   }
 
-  getDataByNativeMemoryWorker(val: SelectionParam | any) {
+  getDataByNativeMemoryWorker(val: SelectionParam | any, refresh = false) {
     let args = new Map<string, any>();
-    args.set('data', this.queryResult);
     args.set('filterAllocType', this.filterAllocationType);
     args.set('filterEventType', this.filterNativeType);
     args.set('filterResponseType', this.filterResponseType);
     args.set('leftNs', val.leftNs);
     args.set('rightNs', val.rightNs);
+    args.set('types', this.eventTypes);
+    args.set('refresh', refresh);
     let selections: Array<any> = [];
     if (this.statsticsSelection.length > 0) {
       this.statsticsSelection.map((memory) => {
@@ -108,13 +107,21 @@ export class TabPaneNMemory extends BaseElement {
       });
     }
     args.set('statisticsSelection', selections);
-    args.set('actionType', 'native-memory');
-    this.startWorker(args, (results: any[]) => {
+    args.set('sortColumn', this.sortColumn);
+    args.set('sortType', this.sortType);
+    this.memorySource = [];
+    if (this.memoryTbl!.recycleDs.length > 1_0000) {
+      this.memoryTbl!.recycleDataSource = [];
+    }
+    this.startWorker('native-memory-queryNativeHookEvent', args, (results: any[]) => {
       this.tblData!.recycleDataSource = [];
-      this.progressEL!.loading = false;
+      if (refresh) {
+        this.setLoading(true);
+        this.initFilterTypes(() => this.setLoading(false));
+      }
       if (results.length > 0) {
         this.memorySource = results;
-        this.sortByColumn(this.sortColumn, this.sortType);
+        this.memoryTbl!.recycleDataSource = this.memorySource;
       } else {
         this.memorySource = [];
         this.memoryTbl!.recycleDataSource = [];
@@ -122,18 +129,34 @@ export class TabPaneNMemory extends BaseElement {
     });
   }
 
-  startWorker(args: Map<string, any>, handler: Function) {
-    this.loadingList.push(1);
-    this.progressEL!.loading = true;
-    this.loadingPage.style.visibility = 'visible';
-    procedurePool.submitWithName('logic1', 'native-memory-action', args, undefined, (res: any) => {
-      handler(res);
+  startWorker(type: string, args: any, handler: Function) {
+    this.setLoading(true);
+    procedurePool.submitWithName('logic1', type, args, undefined, (res: any) => {
+      if (res.data && res.tag) {
+        this.memorySource.push(res.data);
+        if (res.tag == 'end') {
+          handler(this.memorySource);
+          this.setLoading(false);
+        }
+      } else {
+        handler(res);
+        this.setLoading(false)
+      }
+    });
+  }
+
+  setLoading(loading: boolean) {
+    if (loading) {
+      this.loadingList.push(1);
+      this.progressEL!.loading = true;
+      this.loadingPage.style.visibility = 'visible';
+    } else {
       this.loadingList.splice(0, 1);
       if (this.loadingList.length == 0) {
         this.progressEL!.loading = false;
         this.loadingPage.style.visibility = 'hidden';
       }
-    });
+    }
   }
 
   fromStastics(val: SelectionParam | any) {
@@ -188,12 +211,10 @@ export class TabPaneNMemory extends BaseElement {
   }
 
   initFilterTypes(initCallback?: () => void) {
-    let filter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
-    this.queryResult = [];
     this.native_type = [...this.defaultNativeTypes];
     this.statsticsSelection = [];
     procedurePool.submitWithName('logic1', 'native-memory-get-responseType', {}, undefined, (res: any) => {
-      filter!.setSelectList(
+      this.filter!.setSelectList(
         null,
         this.native_type,
         'Allocation Lifespan',
@@ -202,17 +223,11 @@ export class TabPaneNMemory extends BaseElement {
           return item.value;
         })
       );
-      filter!.setFilterModuleSelect('#first-select', 'width', '150px');
-      filter!.setFilterModuleSelect('#second-select', 'width', '150px');
-      filter!.setFilterModuleSelect('#third-select', 'width', '150px');
+      this.filter!.setFilterModuleSelect('#first-select', 'width', '150px');
+      this.filter!.setFilterModuleSelect('#second-select', 'width', '150px');
+      this.filter!.setFilterModuleSelect('#third-select', 'width', '150px');
       this.responseTypes = res;
-      filter!.firstSelect = '0';
-      filter!.secondSelect = '0';
-      filter!.thirdSelect = '0';
-      this.filterResponseSelect = '0';
-      this.filterAllocationType = '0';
-      this.filterNativeType = '0';
-      this.filterResponseType = -1;
+      this.resetFilter();
       this.rowSelectData = undefined;
       if (initCallback) {
         initCallback();
@@ -220,11 +235,22 @@ export class TabPaneNMemory extends BaseElement {
     });
   }
 
+  resetFilter() {
+    this.filter!.firstSelect = '0';
+    this.filter!.secondSelect = '0';
+    this.filter!.thirdSelect = '0';
+    this.filterResponseSelect = '0';
+    this.filterAllocationType = '0';
+    this.filterNativeType = '0';
+    this.filterResponseType = -1;
+  }
+
   initElements(): void {
     this.loadingPage = this.shadowRoot?.querySelector('.loading');
     this.progressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
     this.memoryTbl = this.shadowRoot?.querySelector<LitTable>('#tb-native-memory');
     this.tblData = this.shadowRoot?.querySelector<LitTable>('#tb-native-data');
+    this.filter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
     this.memoryTbl!.addEventListener('row-click', (e) => {
       // @ts-ignore
       let data = e.detail.data as NativeMemory;
@@ -236,12 +262,24 @@ export class TabPaneNMemory extends BaseElement {
         })
       );
     });
-    this.memoryTbl!.addEventListener('column-click', (evt) => {
-      // @ts-ignore
-      this.sortByColumn(evt.detail.key, evt.detail.sort);
+    this.memoryTbl!.addEventListener('column-click', (evt: any) => {
+      this.sortColumn = evt.detail.key;
+      this.sortType = evt.detail.sort;
+      this.getDataByNativeMemoryWorker(this.currentSelection);
     });
-    let filter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
-
+    this.memoryTbl!.itemTextHandleMap.set('startTs', (startTs) => {
+      return SpNativeMemoryChart.REAL_TIME_DIF === 0 ? getTimeString(startTs) : formatRealDateMs(startTs + SpNativeMemoryChart.REAL_TIME_DIF);
+    });
+    this.memoryTbl!.itemTextHandleMap.set('endTs', (endTs) => {
+      return (endTs > this.currentSelection!.leftNs &&
+        endTs <= this.currentSelection!.rightNs &&
+        endTs !== 0 &&
+        endTs !== null
+      ) ? 'Freed' : 'Existing';
+    });
+    this.memoryTbl!.itemTextHandleMap.set('heapSize', (heapSize) => {
+      return getByteWithUnit(heapSize);
+    })
     this.shadowRoot?.querySelector<TabPaneFilter>('#filter')!.getFilterData((data: FilterData) => {
       if (data.mark) {
         document.dispatchEvent(
@@ -269,12 +307,10 @@ export class TabPaneNMemory extends BaseElement {
                 }
                 if (filterTemp.length > 0) {
                   this.rowSelectData = filterTemp[0];
-                  let currentSelection = this.queryResult.filter((item) => {
-                    return item.startTs == this.rowSelectData.startTs;
-                  });
-                  if (currentSelection.length > 0) {
-                    currentSelection[0].isSelected = true;
-                  }
+                  let args = new Map<string, any>();
+                  args.set('startTs', this.rowSelectData.startTs);
+                  args.set('actionType', 'native-memory-state-change');
+                  this.startWorker('native-memory-action', args, (results: any[]) => {});
                   TabPaneNMSampleList.addSampleData(this.rowSelectData);
                   this.memoryTbl!.scrollToData(this.rowSelectData);
                 }
@@ -294,7 +330,7 @@ export class TabPaneNMemory extends BaseElement {
         this.getDataByNativeMemoryWorker(this.currentSelection);
       }
     });
-    filter!.firstSelect = '1';
+    this.filter!.firstSelect = '1';
   }
 
   connectedCallback() {
@@ -312,103 +348,14 @@ export class TabPaneNMemory extends BaseElement {
     }).observe(this.parentElement!);
   }
 
-  sortByColumn(nmMemoryColumn: string, nmMemorySort: number) {
-    this.sortColumn = nmMemoryColumn;
-    this.sortType = nmMemorySort;
-    if (nmMemorySort == 0) {
-      this.memoryTbl!.recycleDataSource = this.memorySource;
-    } else {
-      let arr = [...this.memorySource];
-      if (nmMemoryColumn == 'index') {
-        this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          return nmMemorySort == 1
-            ? memoryLeftData.index - memoryRightData.index
-            : memoryRightData.index - memoryLeftData.index;
-        });
-      } else if (nmMemoryColumn == 'addr') {
-        this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          if (nmMemorySort == 1) {
-            if (memoryLeftData.addr > memoryRightData.addr) {
-              return 1;
-            } else if (memoryLeftData.addr == memoryRightData.addr) {
-              return 0;
-            } else {
-              return -1;
-            }
-          } else {
-            if (memoryRightData.addr > memoryLeftData.addr) {
-              return 1;
-            } else if (memoryLeftData.addr == memoryRightData.addr) {
-              return 0;
-            } else {
-              return -1;
-            }
-          }
-        });
-      } else if (nmMemoryColumn == 'timestamp') {
-        this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          return nmMemorySort == 1
-            ? memoryLeftData.startTs - memoryRightData.startTs
-            : memoryRightData.startTs - memoryLeftData.startTs;
-        });
-      } else if (nmMemoryColumn == 'heapSizeUnit') {
-        this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          return nmMemorySort == 1
-            ? memoryLeftData.heapSize - memoryRightData.heapSize
-            : memoryRightData.heapSize - memoryLeftData.heapSize;
-        });
-      } else if (nmMemoryColumn == 'library') {
-        this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          if (nmMemorySort == 1) {
-            if (memoryLeftData.library > memoryRightData.library) {
-              return 1;
-            } else if (memoryLeftData.library == memoryRightData.library) {
-              return 0;
-            } else {
-              return -1;
-            }
-          } else {
-            if (memoryRightData.library > memoryLeftData.library) {
-              return 1;
-            } else if (memoryLeftData.library == memoryRightData.library) {
-              return 0;
-            } else {
-              return -1;
-            }
-          }
-        });
-      } else if (nmMemoryColumn == 'symbol') {
-        this.memoryTbl!.recycleDataSource = arr.sort((memoryLeftData, memoryRightData) => {
-          if (nmMemorySort == 1) {
-            if (memoryLeftData.symbol > memoryRightData.symbol) {
-              return 1;
-            } else if (memoryLeftData.symbol == memoryRightData.symbol) {
-              return 0;
-            } else {
-              return -1;
-            }
-          } else {
-            if (memoryRightData.symbol > memoryLeftData.symbol) {
-              return 1;
-            } else if (memoryLeftData.symbol == memoryRightData.symbol) {
-              return 0;
-            } else {
-              return -1;
-            }
-          }
-        });
-      }
-    }
-  }
-
   setRightTableData(nativeMemoryHook: NativeMemory) {
     let args = new Map<string, any>();
     args.set('eventId', nativeMemoryHook.eventId);
     args.set('actionType', 'memory-stack');
-    this.startWorker(args, (results: any[]) => {
+    this.startWorker('native-memory-action', args, (results: any[]) => {
       let thread = new NativeHookCallInfo();
       thread.threadId = nativeMemoryHook.threadId;
-      thread.threadName = nativeMemoryHook.threadName;
+      thread.threadName = Utils.THREAD_MAP.get(thread.threadId) || 'Thread';
       thread.title = `${nativeMemoryHook.threadName ?? ''}【${nativeMemoryHook.threadId}】`;
       thread.type = -1;
       let currentSource = [];
@@ -462,15 +409,15 @@ export class TabPaneNMemory extends BaseElement {
                             </lit-table-column>
                             <lit-table-column class="nm-memory-column" width="1fr" title="Memory Type" data-index="eventType" key="eventType"  align="flex-start">
                             </lit-table-column>
-                            <lit-table-column class="nm-memory-column" width="1fr" title="Timestamp" data-index="timestamp" key="timestamp"  align="flex-start" order>
+                            <lit-table-column class="nm-memory-column" width="1fr" title="Timestamp" data-index="startTs" key="startTs"  align="flex-start" order>
                             </lit-table-column>
-                            <lit-table-column class="nm-memory-column" width="1fr" title="State" data-index="state" key="state"  align="flex-start">
+                            <lit-table-column class="nm-memory-column" width="1fr" title="State" data-index="endTs" key="endTs"  align="flex-start">
                             </lit-table-column>
-                            <lit-table-column class="nm-memory-column" width="1fr" title="Size" data-index="heapSizeUnit" key="heapSizeUnit"  align="flex-start" order>
+                            <lit-table-column class="nm-memory-column" width="1fr" title="Size" data-index="heapSize" key="heapSize"  align="flex-start" order>
                             </lit-table-column>
-                            <lit-table-column class="nm-memory-column" width="20%" title="Responsible Library" data-index="library" key="library"  align="flex-start" order>
+                            <lit-table-column class="nm-memory-column" width="20%" title="Responsible Library" data-index="library" key="library"  align="flex-start">
                             </lit-table-column>
-                            <lit-table-column class="nm-memory-column" width="20%" title="Responsible Caller" data-index="symbol" key="symbol"  align="flex-start" order>
+                            <lit-table-column class="nm-memory-column" width="20%" title="Responsible Caller" data-index="symbol" key="symbol"  align="flex-start">
                             </lit-table-column>
                         </lit-table>
                     </div>

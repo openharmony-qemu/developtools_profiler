@@ -24,6 +24,10 @@ import { Rect } from '../../../../dist/trace/component/trace/timer-shaft/Rect.js
 
 describe(' FPSTest', () => {
   it('FpsTest01', () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
     let dataList = new Array();
     dataList.push({
       startTime: 0,

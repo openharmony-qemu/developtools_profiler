@@ -12,11 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
-  return {};
-});
-
 // @ts-ignore
 import {
   HiPerfEventStruct,
@@ -24,6 +19,11 @@ import {
 } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerHiPerfEvent.js';
 // @ts-ignore
 import { Rect } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerCommon';
+import { TraceRow } from '../../../../dist/trace/component/trace/base/TraceRow.js';
+
+jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 
 describe('ProcedureWorkerHiPerfEvent Test', () => {
   it('ProcedureWorkerHiPerfEventTest03', () => {
@@ -92,8 +92,8 @@ describe('ProcedureWorkerHiPerfEvent Test', () => {
   });
 
   it('ProcedureWorkerHiPerfEventTest06', function () {
-    expect(HiPerfEventStruct.groupBy10MS([{ ps: 1 }, { coX: '1' }], 10, '')).toEqual([
-      { dur: 10000000, height: Infinity, startNS: NaN},
+    expect(HiPerfEventStruct.eventGroupBy10MS([{ ps: 1 }, { coX: '1' }], 10, '')).toEqual([
+      { dur: 10000000, height: NaN, startNS: NaN,max: 0,sum:NaN},
     ]);
   });
 });

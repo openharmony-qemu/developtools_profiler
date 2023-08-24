@@ -99,7 +99,7 @@ describe('LitPopoverV Test', () => {
             border-bottom: 1px solid #f0f0f0;
         }
         .content{
-            padding: 10px 15px;
+            padding: 10px;
         }
        .trigger-click {
             position: absolute;

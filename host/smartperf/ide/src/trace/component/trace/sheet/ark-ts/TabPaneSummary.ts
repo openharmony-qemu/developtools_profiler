@@ -51,6 +51,7 @@ export class TabPaneSummary extends BaseElement {
   private stack: HTMLLIElement | null | undefined;
   private retainers: HTMLLIElement | null | undefined;
   private file: FileInfo | undefined | null;
+  private leftTable: HTMLDivElement | null | undefined;
 
   initElements(): void {
     this.tblSummary = this.shadowRoot?.querySelector<LitTable>('#left');
@@ -65,9 +66,10 @@ export class TabPaneSummary extends BaseElement {
     this.tblTable = this.tblSummary!.shadowRoot?.querySelector('.table') as HTMLDivElement;
     this.rightTheadTable = this.tbs!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
     this.leftTheadTable = this.tblSummary!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
+    this.tbsTable = this.tbs!.shadowRoot?.querySelector('.table') as HTMLDivElement;
+    this.leftTable = this.shadowRoot?.querySelector('#left_table') as HTMLDivElement;
     this.tblSummary!.addEventListener('row-click', (evt) => {
       this.rightTheadTable!.removeAttribute('sort');
-      this.tbsTable = this.tbs!.shadowRoot?.querySelector('.table') as HTMLDivElement;
       this.tbsTable!.scrollTop = 0;
       //@ts-ignore
       let data = evt.detail.data as ConstructorItem;
@@ -647,6 +649,7 @@ export class TabPaneSummary extends BaseElement {
   connectedCallback() {
     super.connectedCallback();
     let filterHeight = 0;
+    let parentWidth = this.parentElement!.clientWidth + 'px';
     let system = document
       .querySelector('body > sp-application')
       ?.shadowRoot?.querySelector('#app-content > sp-system-trace');
@@ -658,13 +661,19 @@ export class TabPaneSummary extends BaseElement {
       } else {
         summaryPaneFilter.style.display = 'none';
       }
+      parentWidth = this.parentElement!.clientWidth + 'px';
       this.tbs!.style.height = 'calc(100% - 30px)';
+      this.tbsTable!.style.width = `calc(${parentWidth} - ${this.leftTable!.style.width} - 5px)`;
       this.tbs!.reMeauseHeight();
+      this.tblSummary!.reMeauseHeight();
     }).observe(this.parentElement!);
     new ResizeObserver(() => {
       this.parentElement!.style.width = system!.clientWidth + 'px';
       this.style.width = system!.clientWidth + 'px';
     }).observe(system!);
+    new ResizeObserver(() => {
+      this.tbsTable!.style.width = `calc(${parentWidth} - ${this.leftTable!.style.width} - 5px)`;
+    }).observe(this.leftTable!);
   }
 
   initHtml(): string {

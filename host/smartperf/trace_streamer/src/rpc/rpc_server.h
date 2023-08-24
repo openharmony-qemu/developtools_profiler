@@ -40,6 +40,7 @@ public:
     int32_t UpdateTraceTime(const uint8_t* data, int32_t len);
     int32_t TraceStreamer_Init_ThirdParty_Config(const uint8_t* data, int32_t len);
     int32_t WasmExportDatabase(ResultCallBack resultCallBack);
+    bool ParserConfig(std::string parserConfigJson);
 #ifdef IS_WASM
     int32_t DownloadELFCallback(const std::string& fileName,
                                 size_t totalLen,

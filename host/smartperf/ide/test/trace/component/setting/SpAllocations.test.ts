@@ -292,9 +292,12 @@ describe('SpAllocations Test', () => {
           </div>
           <div class="switchstyle">
               <span class="inner-font-style" id="offline_symbolization">Use Offline Symbolization (Available on recent OpenHarmony 4.0)</span> 
-              <lit-switch   class="lts" id="use_offline_symbolization" title="offline_symbolization" checked="true"></lit-switch>
+              <lit-switch class="lts" id="use_offline_symbolization" title="offline_symbolization" checked="true"></lit-switch>
           </div>
-            
+           <div class="switchstyle">
+              <span class="inner-font-style" id="startup_mode">Use Startup Mode (Available on recent OpenHarmony 4.0)</span> 
+              <lit-switch class="lts" id="use_startup_mode" title="startup_mode"></lit-switch>
+          </div>   
           <div class="switchstyle record-statistics-result" style="grid-row: 6; grid-column: 1 / 3;height: min-content;display: grid;grid-template-rows: 1fr;grid-template-columns: 1fr min-content;">
             <div class="record-title">
                 <span class="record-mode">Use Record Statistics (Available on recent OpenHarmony 4.0)</span> 

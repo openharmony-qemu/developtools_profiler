@@ -789,9 +789,10 @@ describe('TraceRow Test', () => {
         :host(:not([check-type])) .lit-check-box{
             display: none;
         }
-        :host([collect-type]) {
-            /*position:fixed;*/
-            /*z-index:1000;*/
+        :host([collect-type]) .setting{
+            position:fixed;
+            z-index:1003;
+            left: 473px;
         }
         :host(:not([collect-type])) {
             /*position:static;*/
@@ -810,9 +811,6 @@ describe('TraceRow Test', () => {
         :host(:not([folder])) .describe:hover .collect{
             display: block;
         }
-        :host([row-type="native-memory"]) #nativeRadioList{
-            display: flex;
-        }
         .popover{
             color: var(--dark-color1,#4b5766);
             display: none;
@@ -820,9 +818,12 @@ describe('TraceRow Test', () => {
             align-items: center;
             margin-right: 5px;
         }
+        .setting{
+            position:absolute;
+            left: 225px;
+        }
         .radio{
             margin-right: 10px;
-
         }
         #setting{
             color: var(--dark-color1,#606060);
@@ -833,43 +834,51 @@ describe('TraceRow Test', () => {
         :host([highlight]) .flash{
             background-color: #ffe263;
         }
-        
         :host([row-type="energy"]) #appNameList{
             display: flex;
         }
-        
          #listprocess::-webkit-scrollbar{
          width: 6px;
         }
-        
         /*定义滑块 内阴影+圆角*/
         #listprocess::-webkit-scrollbar-thumb
         {
           border-radius: 6px;
           background-color: var(--dark-background7,#e7c9c9);
         }
-
+        .lit-check-box{
+          margin-right: 15px;
+        }
+        :host([row-setting='enable'][check-type]) .lit-check-box{
+            margin-right: 25px;
+        }
+        :host([row-setting='enable'][check-type='-1']) .collect{
+            margin-right: 20px;
+        }
+        :host([row-setting='enable']) #rowSetting{
+            display: flex;
+        } 
+        :host([row-setting='enable']:not([check-type='-1'])) .collect{
+            margin-right: 5px;
+        } 
         </style>
         <div class="root">
             <div class="describe flash" style="position: inherit">
                 <lit-icon class="icon" name="caret-down" size="19"></lit-icon>
                 <label class="name"></label>
                 <lit-icon class="collect" name="star-fill" size="19"></lit-icon>
-                <lit-popover placement="bottomLeft" trigger="click" id = "nativeRadioList" class="popover" haveRadio="true" style="z-index: 1;position: absolute;left: 230px">
-                    <div style="display: block" slot="content">
-                        <div id="first-radio" style="margin-bottom: 5px">
-                        <input class="radio" name="status" type="radio" value="0" />Current Bytes</div>
-                        <div id="second-radio" style="margin-bottom: 5px">
-                        <input class="radio" name="status" type="radio" value="1" />Native Memory Density</div>
-                    </div>
-                    <lit-icon name="setting" size="19" id="setting"></lit-icon>
-                </lit-popover>
                 <lit-popover placement="bottomLeft" trigger="click" id="appNameList" class="popover" haveRadio="true" style="z-index: 1;position: absolute;left: 230px">
                     <div slot="content" id="listprocess" style="height:200px;overflow-y:auto">
                     </div>
                     <lit-icon name="setting" size="19" id="setting"></lit-icon>
                 </lit-popover>
-                <lit-check-box class="lit-check-box" style="margin-right: 10px;"></lit-check-box>
+                <lit-popover placement="bottomLeft" trigger="click" id="rowSetting" class="popover setting" haveRadio="true">
+                    <div slot="content" id="settingList" style="display: block;height: auto;max-height:200px;overflow-y:auto">
+                        <lit-tree id="rowSettingTree" checkable="true"></lit-tree>
+                    </div>
+                    <lit-icon name="setting" size="19" id="setting"></lit-icon>
+                </lit-popover>
+                <lit-check-box class="lit-check-box"></lit-check-box>
             </div>
         </div>
         "

@@ -28,12 +28,6 @@ export class TabPaneDmaSelectVmTracker extends BaseElement {
   private dmaClickSource: Array<Dma> = [];
   private tableThead: HTMLDivElement | undefined | null;
 
-  set data(data: number) {
-    // @ts-ignore
-    this.queryDataByDB(data);
-    this.init();
-  }
-
   initElements(): void {
     this.damClickTable = this.shadowRoot?.querySelector<LitTable>('#damClickTable');
     this.tableThead = this.damClickTable?.shadowRoot?.querySelector('.thead') as HTMLDivElement;
@@ -68,7 +62,8 @@ export class TabPaneDmaSelectVmTracker extends BaseElement {
     }
   }
 
-  queryDataByDB(startNs: number): void {
+  queryDmaVmTrackerClickDataByDB(startNs: number): void {
+    this.init();
     getTabDmaVMTrackerClickData(startNs, MemoryConfig.getInstance().iPid).then((data) => {
       if (data.length !== null && data.length > 0) {
         data.forEach((item) => {
@@ -79,9 +74,9 @@ export class TabPaneDmaSelectVmTracker extends BaseElement {
           item.sizes = Utils.getBinaryByteWithUnit(item.size);
           this.damClickTable!.getItemTextColor = (item: Dma): any => {
             if (item.flag === 1) {
-              return '#6b6b6b96';
+              return '#d4b550';
             } else if (item.flag === 2) {
-              return '#4a4a4a';
+              return '#f86b6b';
             } else {
               return '#000000';
             }

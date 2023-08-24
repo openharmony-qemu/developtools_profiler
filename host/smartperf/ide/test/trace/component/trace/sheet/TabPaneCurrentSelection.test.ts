@@ -15,14 +15,6 @@
 
 // @ts-ignore
 import { getTimeString, TabPaneCurrentSelection } from '../../../../../dist/trace/component/trace/sheet/TabPaneCurrentSelection.js';
-
-window.ResizeObserver =
-    window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
 const sqlite = require('../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../dist/trace/database/SqlLite.js');
 
@@ -469,6 +461,13 @@ describe('TabPaneCurrentSelection Test', () => {
             #rightButton{
                 padding-top:12px;
             }
+            .right{
+                display: flex;
+            }
+            #right-star{
+                padding-top: 10px;
+                visibility: hidden;
+            }
             .scroll-area{
                 display: flex;
                 flex-direction: row;
@@ -492,6 +491,7 @@ describe('TabPaneCurrentSelection Test', () => {
                         <div class="right">
                         <lit-button id="rightButton"  height="32px" width="164px" color="black" font_size="14px" border="1px solid black" 
                         >GetWakeupList</lit-button>
+                        <lit-icon id="right-star" class="collect" name="star-fill" size="30"></lit-icon>
                         </div>
                     </div>
                 </div>

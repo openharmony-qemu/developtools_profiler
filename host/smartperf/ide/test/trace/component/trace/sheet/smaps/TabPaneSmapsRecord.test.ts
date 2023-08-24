@@ -15,10 +15,24 @@
 
 // @ts-ignore
 import { TabPaneSmapsRecord } from '../../../../../../dist/trace/component/trace/sheet/smaps/TabPaneSmapsRecord.js';
+// @ts-ignore
+import { Smaps } from '../../../../../../dist/trace/bean/SmapsStruct.js';
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
+  return {};
+});
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
+jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
+  return {};
+});
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
+
+// @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -34,26 +48,55 @@ describe('TabPaneSmapsRecord Test', () => {
       start_addr: 'start_addr',
       end_addr: 'end_addr',
       dirty: 0,
-      swapper: 0,
+      swap: 0,
       rss: 0,
       pss: 0,
       size: 1,
       reside: 1,
       permission: 'rw-',
       path: 'path',
+      shared_dirty: 1,
+      private_clean: 1,
+      shared_clean: 2,
+      private_dirty: 1,
+      swap_pss: 2,
     },
   ]);
 
   let tabPaneSmapsRecord = new TabPaneSmapsRecord();
-  tabPaneSmapsRecord.data = {
-    leftNs: 0,
-    rightNs: 500,
-    smapsType: [0, 1, 2],
-  };
+  tabPaneSmapsRecord.init = jest.fn(() => true);
+  let smaps = new Smaps();
+  smaps.tsNS = -1;
+  smaps.start_addr = 'aaaaa';
+  smaps.end_addr = 'bbbbb';
+  smaps.permission = 'dddd';
+  smaps.path = '/asdasdas';
+  smaps.size = 0;
+  smaps.rss = 0;
+  smaps.pss = 0;
+  smaps.reside = 0;
+  smaps.dirty = 0;
+  smaps.swapper = 0;
+  smaps.address = 'aaaaa-bbbbb';
+  smaps.type = 'Dta';
+  smaps.dirtyStr = '1212';
+  smaps.swapperStr = '222';
+  smaps.rssStr = '333';
+  smaps.pssStr = '444';
+  smaps.sizeStr = '555';
+  smaps.resideStr = '666';
+  smaps.pss = 2;
+  smaps.typeName = 'aaa';
+  smaps.sharedCleanStr = 'aaa';
+  smaps.sharedDirtyStr = 'aaa';
+  smaps.privateCleanStr = 'ab';
+  smaps.type = 1;
+  smaps.sharedClean = 1;
+  smaps.sharedDirty = 2;
+  smaps.privateClean = 3;
+  let result = [smaps, smaps];
 
   it('tabPaneSmapsRecord01', function () {
-    tabPaneSmapsRecord.tbl = jest.fn(() => true);
-    tabPaneSmapsRecord.tbl!.recycleDataSource = jest.fn(() => true);
     expect(
       tabPaneSmapsRecord.sortByColumn({
         key: '',
@@ -61,8 +104,10 @@ describe('TabPaneSmapsRecord Test', () => {
       })
     ).toBeUndefined();
   });
-
   it('tabPaneSmapsRecord02', () => {
     expect(tabPaneSmapsRecord.initElements()).toBeUndefined();
+  });
+  it('tabPaneSmapsRecord03', () => {
+    expect(tabPaneSmapsRecord.filteredData(result)).toBeUndefined();
   });
 });

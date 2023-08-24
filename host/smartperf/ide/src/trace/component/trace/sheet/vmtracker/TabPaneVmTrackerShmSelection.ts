@@ -52,9 +52,9 @@ export class TabPaneVmTrackerShmSelection extends BaseElement {
           filter.sizeStr = Utils.getBinaryByteWithUnit(filter.size);
           this.TableEl!.getItemTextColor = (filter): any => {
             if (filter.flag === 1) {
-              return '#6b6b6b96';
+              return '#d4b550';
             } else if (filter.flag === 2) {
-              return '#4a4a4a';
+              return '#f86b6b';
             } else {
               return '#000000';
             }

@@ -17,7 +17,27 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TIME_STAMP, START_ADDRESS, END_ADDRESS, DIRTY, SWAPPER, RSS, PSS, SIZE, RESIDE, PROTECTION, PATH };
+enum Index {
+    ID = 0,
+    TIME_STAMP,
+    START_ADDRESS,
+    END_ADDRESS,
+    DIRTY,
+    SWAPPER,
+    RSS,
+    PSS,
+    SIZE,
+    RESIDE,
+    PROTECTION,
+    PATH,
+    SHARED_CLEAN,
+    SHARED_DIRTY,
+    PRIVATE_CLEAN,
+    PRIVATE_DIRTY,
+    SWAP,
+    SWAP_PSS,
+    TYPE
+};
 SmapsTable::SmapsTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -32,6 +52,13 @@ SmapsTable::SmapsTable(const TraceDataCache* dataCache) : TableBase(dataCache)
     tableColumn_.push_back(TableBase::ColumnInfo("reside", "REAL"));
     tableColumn_.push_back(TableBase::ColumnInfo("protection_id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("path_id", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("shared_clean", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("shared_dirty", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("private_clean", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("private_dirty", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("swap", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("swap_pss", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("type", "INTEGER"));
     tablePriKey_.push_back("id");
 }
 
@@ -88,6 +115,27 @@ int32_t SmapsTable::Cursor::Column(int32_t col) const
             break;
         case PATH:
             sqlite3_result_int64(context_, smapsObj_.PathIds()[CurrentRow()]);
+            break;
+        case SHARED_CLEAN:
+            sqlite3_result_int64(context_, smapsObj_.SharedClean()[CurrentRow()]);
+            break;
+        case SHARED_DIRTY:
+            sqlite3_result_int64(context_, smapsObj_.SharedDirty()[CurrentRow()]);
+            break;
+        case PRIVATE_CLEAN:
+            sqlite3_result_int64(context_, smapsObj_.PrivateClean()[CurrentRow()]);
+            break;
+        case PRIVATE_DIRTY:
+            sqlite3_result_int64(context_, smapsObj_.PrivateDirty()[CurrentRow()]);
+            break;
+        case SWAP:
+            sqlite3_result_int64(context_, smapsObj_.Swap()[CurrentRow()]);
+            break;
+        case SWAP_PSS:
+            sqlite3_result_int64(context_, smapsObj_.SwapPss()[CurrentRow()]);
+            break;
+        case TYPE:
+            sqlite3_result_int64(context_, smapsObj_.Type()[CurrentRow()]);
             break;
         default:
             TS_LOGF("Unregistered column : %d", col);

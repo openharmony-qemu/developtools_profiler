@@ -19,6 +19,7 @@ import { TabPaneTaskFrames } from '../../../../../../dist/trace/component/trace/
 import { FuncStruct } from '../../../../../../dist/trace/database/ui-worker/ProcedureWorkerFunc.js';
 // @ts-ignore
 import {SpSystemTrace} from '../../../../../../dist/trace/component/SpSystemTrace.js';
+import {queryTaskListByExecuteTaskIds} from "../../../../../../src/trace/database/SqlLite.js";
 
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
@@ -373,6 +374,7 @@ describe('TabPaneTaskFrames Test', () => {
     mockQueryTaskListByExecuteTaskIds.mockResolvedValue(
         [
           {
+            "ipid": 33,
             "allocationTaskRow": 294,
             "executeTaskRow": 310,
             "returnTaskRow": 785,
@@ -380,6 +382,7 @@ describe('TabPaneTaskFrames Test', () => {
             "priority": 1
           },
           {
+            "ipid": 36,
             "allocationTaskRow": 300,
             "executeTaskRow": 331,
             "returnTaskRow": 799,
@@ -393,42 +396,42 @@ describe('TabPaneTaskFrames Test', () => {
       leftNs: 7957675110,
       rightNs: 8705376127,
       taskFramesData: [
-        [
-          {
-            "startTs": 5628901000,
-            "dur": 4999979000,
-            "funName": "H:Task Perform: taskId : 2, executeId : 2",
-            "argsetid": null,
-            "depth": 1,
-            "id": 310,
-            "frame": {
-              "x": 526,
-              "y": 20,
-              "width": 469,
-              "height": 20
-            },
-            "textMetricsWidth": 185.634765625,
-            "tid": 28573
-          }
-        ],
-        [
-          {
-            "startTs": 5636834000,
-            "dur": 5001023000,
-            "funName": "H:Task Perform: taskId : 4, executeId : 4",
-            "argsetid": null,
-            "depth": 1,
-            "id": 331,
-            "frame": {
-              "x": 527,
-              "y": 20,
-              "width": 469,
-              "height": 20
-            },
-            "textMetricsWidth": 185.634765625,
-            "tid": 28600
-          }
-        ]
+        {
+          "startTs": 5628901000,
+          "dur": 4999979000,
+          "funName": "H:Task Perform: taskId : 2, executeId : 2",
+          "argsetid": null,
+          "depth": 1,
+          "id": 310,
+          "itid": 111,
+          "ipid": 33,
+          "frame": {
+            "x": 526,
+            "y": 20,
+            "width": 469,
+            "height": 20
+          },
+          "textMetricsWidth": 185.634765625,
+          "tid": 28573
+        },
+        {
+          "startTs": 5636834000,
+          "dur": 5001023000,
+          "funName": "H:Task Perform: taskId : 4, executeId : 4",
+          "argsetid": null,
+          "depth": 1,
+          "id": 331,
+          "itid": 153,
+          "ipid": 33,
+          "frame": {
+            "x": 527,
+            "y": 20,
+            "width": 469,
+            "height": 20
+          },
+          "textMetricsWidth": 185.634765625,
+          "tid": 28600
+        }
       ]
     };
     tabPaneTaskFrames.taskFramesTbl = jest.fn(() => true);
@@ -444,23 +447,24 @@ describe('TabPaneTaskFrames Test', () => {
       leftNs: 96132987,
       rightNs: 2563546344,
       taskFramesData: [
-        [
-          {
-            "startTs": 622055000,
-            "dur": 168000,
-            "funName": "H:Task Allocation: taskId : 1, executeId : 1, priority : 1, executeState : 1",
-            "argsetid": null,
-            "depth": 3,
-            "id": 87,
-            "frame": {
-              "x": 58,
-              "y": 60,
-              "width": 1,
-              "height": 20
-            },
-            "tid": 28549
-          }
-        ]
+        {
+          "startTs": 625142000,
+          "dur": 5001738000,
+          "funName": "H:Task Perform: taskId : 1, executeId : 1",
+          "argsetid": null,
+          "depth": 1,
+          "id": 99,
+          "itid": 111,
+          "ipid": 33,
+          "frame": {
+            "x": 58,
+            "y": 20,
+            "width": 469,
+            "height": 20
+          },
+          "textMetricsWidth": 185.634765625,
+          "tid": 28573
+        }
       ]
     };
     let mockQueryTaskListByExecuteTaskIds = sqlite.queryTaskListByExecuteTaskIds;

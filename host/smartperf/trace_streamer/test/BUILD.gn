@@ -47,6 +47,7 @@ if (is_test) {
       "unittest/htrace_sys_vmem_parser_test.cpp",
       "unittest/http_server_test.cpp",
       "unittest/irq_filter_test.cpp",
+      "unittest/js_cpu_profiler_test.cpp",
       "unittest/js_memory_test.cpp",
       "unittest/measure_filter_test.cpp",
       "unittest/native_hook_parser_test.cpp",

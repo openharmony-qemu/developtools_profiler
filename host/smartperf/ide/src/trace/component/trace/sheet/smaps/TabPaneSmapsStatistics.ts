@@ -16,16 +16,13 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import {
-  getTabSmapsData,
   getTabSmapsMaxSize,
-  getTabSmapsRecordData,
   getTabSmapsStatisticData,
   getTabSmapsStatisticMaxSize,
   getTabSmapsStatisticSelectData,
 } from '../../../../database/SqlLite.js';
 import { Smaps, SmapsTreeObj, SmapsType, TYPE_STRING } from '../../../../bean/SmapsStruct.js';
 import { Utils } from '../../base/Utils.js';
-import { resizeObserver } from '../SheetUtils.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
 @element('tabpane-smaps-statistics')
@@ -34,14 +31,29 @@ export class TabPaneSmapsStatistics extends BaseElement {
   private isClick = false;
   private currentSelection: SelectionParam | null | undefined;
   private sumSize: number = 0;
-  private sortArray: Array<any> = [];
-  private totalTree: Array<any> = [];
-  private tabTitle: HTMLDivElement | undefined | null;
+  private sortArray: Array<SmapsTreeObj> = [];
+  private totalTree: Array<SmapsTreeObj> = [];
+  public tabTitle: HTMLDivElement | undefined | null;
+  private allTree: SmapsTreeObj | undefined | null;
+
+  public initElements(): void {
+    this.tblSmapsStatistics = this.shadowRoot?.querySelector<LitTable>('lit-table');
+    this.tabTitle = this.tblSmapsStatistics!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
+    this.tblSmapsStatistics!.addEventListener('column-click', (evt) => {
+      //   @ts-ignore
+      this.sortByColumn(evt.detail.key, evt.detail.sort, this.tblSmapsStatistics);
+    });
+  }
+
   set data(valSmapsStatistics: SelectionParam) {
+    if (!this.tblSmapsStatistics) {
+      return;
+    }
+    this.parentElement!.style.overflow = 'unset';
     this.currentSelection = valSmapsStatistics;
     this.isClick = valSmapsStatistics.smapsType.length === 0;
-    this.init();
     this.tblSmapsStatistics!.loading = true;
+    this.init(this.tabTitle!);
     if (!this.isClick) {
       if (valSmapsStatistics.smapsType.length > 0) {
         this.queryDataByDB(valSmapsStatistics);
@@ -50,20 +62,14 @@ export class TabPaneSmapsStatistics extends BaseElement {
       this.setSmaps(valSmapsStatistics);
     }
   }
-  initElements(): void {
-    this.tblSmapsStatistics = this.shadowRoot?.querySelector<LitTable>('#tb-smaps-statistics');
-    this.tabTitle = this.tblSmapsStatistics!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
-    this.tblSmapsStatistics!.addEventListener('column-click', (evt) => {
-      // @ts-ignore
-      this.sortByColumn(evt.detail.key, evt.detail.sort);
-    });
-  }
+
   connectedCallback(): void {
     super.connectedCallback();
     new ResizeObserver(() => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.tblSmapsStatistics?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight  - 15+ 'px';
+        this.tblSmapsStatistics?.shadowRoot?.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 15 + 'px';
         this.tblSmapsStatistics?.reMeauseHeight();
       }
     }).observe(this.parentElement!);
@@ -80,9 +86,10 @@ export class TabPaneSmapsStatistics extends BaseElement {
       (MemoryConfig.getInstance().interval * 1000_000) / 5
     ).then((result) => {
       this.tblSmapsStatistics!.loading = false;
-      this.filteredData(result, this.sumSize);
+      this.filteredData(result, this.tblSmapsStatistics!, this.sumSize);
     });
   }
+
   private calculatePercentage(divisor: number, dividend: number) {
     if (dividend === 0) {
       return 0;
@@ -90,11 +97,12 @@ export class TabPaneSmapsStatistics extends BaseElement {
       return (divisor / dividend) * 100;
     }
   }
-  private init(): void {
-    const thTable = this.tabTitle!.querySelector('.th');
+
+  public init(tabTitle: HTMLDivElement): void {
+    const thTable = tabTitle!.querySelector('.th');
     const list = thTable!.querySelectorAll('div');
-    if (this.tabTitle!.hasAttribute('sort')) {
-      this.tabTitle!.removeAttribute('sort');
+    if (tabTitle!.hasAttribute('sort')) {
+      tabTitle!.removeAttribute('sort');
       list.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
@@ -102,16 +110,12 @@ export class TabPaneSmapsStatistics extends BaseElement {
       });
     }
   }
-  private handleSmapsTreeObj(smapsTreeObj: SmapsTreeObj, sumRss: number): void {
-    smapsTreeObj.regStr = smapsTreeObj.reg + '';
-    smapsTreeObj.rssStr = Utils.getBinaryByteWithUnit(smapsTreeObj.rss);
-    smapsTreeObj.dirtyStr = Utils.getBinaryByteWithUnit(smapsTreeObj.dirty);
-    smapsTreeObj.swapperStr = Utils.getBinaryByteWithUnit(smapsTreeObj.swapper);
+
+  private handleSmapsTreeObj(smapsTreeObj: SmapsTreeObj, sumSize?: number): void {
     smapsTreeObj.sizeStr = Utils.getBinaryByteWithUnit(smapsTreeObj.size);
-    smapsTreeObj.respro = this.calculatePercentage(smapsTreeObj.rss, smapsTreeObj.size);
+    smapsTreeObj.rssStr = Utils.getBinaryByteWithUnit(smapsTreeObj.rss);
     smapsTreeObj.pssStr = Utils.getBinaryByteWithUnit(smapsTreeObj.pss);
-    smapsTreeObj.resproStr = smapsTreeObj.respro.toFixed(2) + '%';
-    smapsTreeObj.sizePro = this.calculatePercentage(smapsTreeObj.size, sumRss);
+    smapsTreeObj.sizePro = this.calculatePercentage(smapsTreeObj.size, sumSize!);
     smapsTreeObj.sizeProStr = smapsTreeObj.sizePro.toFixed(2) + '%';
     smapsTreeObj.sharedCleanStr = Utils.getBinaryByteWithUnit(smapsTreeObj.sharedClean);
     smapsTreeObj.sharedDirtyStr = Utils.getBinaryByteWithUnit(smapsTreeObj.sharedDirty);
@@ -120,105 +124,101 @@ export class TabPaneSmapsStatistics extends BaseElement {
     smapsTreeObj.swapStr = Utils.getBinaryByteWithUnit(smapsTreeObj.swap);
     smapsTreeObj.swapPssStr = Utils.getBinaryByteWithUnit(smapsTreeObj.swapPss);
   }
-  private handleAllDataTree(smaps: Smaps, id: number, parentId: string, dataTree: SmapsTreeObj, sumRss: number): void {
+
+  private handleAllDataTree(
+    smaps: Smaps,
+    id: number,
+    parentId: string,
+    dataTree: SmapsTreeObj,
+    sumSize?: number
+  ): void {
     let type = smaps.typeName;
     let objTree = new SmapsTreeObj(id + '', parentId, type);
     objTree.path = SpSystemTrace.DATA_DICT.get(Number(smaps.path))?.split('/');
-    objTree.rss = smaps.rss;
-    objTree.sizePro = this.calculatePercentage(smaps.size, sumRss);
-    objTree.sizeProStr = objTree.sizePro.toFixed(2) + '%';
-    objTree.rssStr = Utils.getBinaryByteWithUnit(smaps.rss);
-    objTree.dirty = smaps.dirty;
-    objTree.dirtyStr = Utils.getBinaryByteWithUnit(smaps.dirty);
-    objTree.swapper = smaps.swapper;
-    objTree.swapperStr = Utils.getBinaryByteWithUnit(smaps.swapper);
+    if (sumSize) {
+      objTree.sizePro = this.calculatePercentage(smaps.size, sumSize);
+      objTree.sizeProStr = objTree.sizePro.toFixed(2) + '%';
+    }
     objTree.size = smaps.size;
     objTree.sizeStr = Utils.getBinaryByteWithUnit(smaps.size);
+    objTree.rss = smaps.rss;
+    objTree.rssStr = Utils.getBinaryByteWithUnit(smaps.rss);
     objTree.pss = smaps.pss;
     objTree.pssStr = Utils.getBinaryByteWithUnit(smaps.pss);
-    objTree.respro = smaps.reside;
-    objTree.resproStr = smaps.reside.toFixed(2) + '%';
-    dataTree.reg += 1;
     if (dataTree.children.length >= 1 && dataTree.path !== '< multiple >') {
       dataTree.path = '< multiple >';
     }
-    dataTree.rss += smaps.rss;
-    dataTree.dirty += smaps.dirty;
-    dataTree.swapper += smaps.swapper;
+
     dataTree.size += smaps.size;
-    dataTree.respro += smaps.reside;
-    dataTree.pss += smaps.pss;
     dataTree.count += smaps.count;
-    dataTree.sharedClean += smaps.shared_clean;
-    dataTree.sharedDirty += smaps.shared_dirty;
-    dataTree.privateClean += smaps.private_clean;
-    dataTree.privateDirty += smaps.private_dirty;
+    dataTree.rss += smaps.rss;
+    dataTree.pss += smaps.pss;
+    dataTree.sharedClean += smaps.sharedClean;
+    dataTree.sharedDirty += smaps.sharedDirty;
+    dataTree.privateClean += smaps.privateClean;
+    dataTree.privateDirty += smaps.privateDirty;
     dataTree.swap += smaps.swap;
-    dataTree.swapPss += smaps.swap_pss;
+    dataTree.swapPss += smaps.swapPss;
   }
-  private handleTree(smaps: Smaps, id: number, parentId: string, dataTree: SmapsTreeObj, sumRss: number): void {
+
+  private handleTree(smaps: Smaps, id: number, parentId: string, dataTree: SmapsTreeObj, sumSize?: number): void {
     let type = TYPE_STRING[smaps.type];
     let treeObj = new SmapsTreeObj(id + '', parentId, type);
     treeObj.path = SpSystemTrace.DATA_DICT.get(Number(smaps.path))?.split('/');
-    treeObj.rss = smaps.rss;
-    treeObj.pss = smaps.pss;
-    treeObj.sizePro = this.calculatePercentage(smaps.size, sumRss);
-    treeObj.sizeProStr = treeObj.sizePro.toFixed(2) + '%';
-    treeObj.rssStr = Utils.getBinaryByteWithUnit(smaps.rss);
-    treeObj.dirty = smaps.dirty;
-    treeObj.count = smaps.count;
-    treeObj.dirtyStr = Utils.getBinaryByteWithUnit(smaps.dirty);
-    treeObj.swapper = smaps.swapper;
-    treeObj.swapperStr = Utils.getBinaryByteWithUnit(smaps.swapper);
     treeObj.size = smaps.size;
     treeObj.sizeStr = Utils.getBinaryByteWithUnit(smaps.size);
+    treeObj.count = smaps.count;
+    treeObj.rss = smaps.rss;
+    treeObj.rssStr = Utils.getBinaryByteWithUnit(smaps.rss);
     treeObj.pss = smaps.pss;
     treeObj.pssStr = Utils.getBinaryByteWithUnit(smaps.pss);
-    treeObj.respro = smaps.reside;
-    treeObj.resproStr = smaps.reside.toFixed(2) + '%';
-    treeObj.sharedClean = smaps.shared_clean;
-    treeObj.sharedCleanStr = Utils.getBinaryByteWithUnit(smaps.shared_clean);
-    treeObj.sharedDirty = smaps.shared_dirty;
-    treeObj.sharedDirtyStr = Utils.getBinaryByteWithUnit(smaps.shared_dirty);
-    treeObj.privateClean = smaps.private_clean;
-    treeObj.privateCleanStr = Utils.getBinaryByteWithUnit(smaps.private_clean);
-    treeObj.privateDirty = smaps.private_dirty;
-    treeObj.privateDirtyStr = Utils.getBinaryByteWithUnit(smaps.private_dirty);
+    treeObj.sharedClean = smaps.sharedClean;
+    treeObj.sharedCleanStr = Utils.getBinaryByteWithUnit(smaps.sharedClean);
+    treeObj.sharedDirty = smaps.sharedDirty;
+    treeObj.sharedDirtyStr = Utils.getBinaryByteWithUnit(smaps.sharedDirty);
+    treeObj.privateClean = smaps.privateClean;
+    treeObj.privateCleanStr = Utils.getBinaryByteWithUnit(smaps.privateClean);
+    treeObj.privateDirty = smaps.privateDirty;
+    treeObj.privateDirtyStr = Utils.getBinaryByteWithUnit(smaps.privateDirty);
     treeObj.swap = smaps.swap;
     treeObj.swapStr = Utils.getBinaryByteWithUnit(smaps.swap);
-    treeObj.swapPss = smaps.swap_pss;
-    treeObj.swapPssStr = Utils.getBinaryByteWithUnit(smaps.swap_pss);
-    dataTree.reg += 1;
+    treeObj.swapPss = smaps.swapPss;
+    treeObj.swapPssStr = Utils.getBinaryByteWithUnit(smaps.swapPss);
+
+    if (sumSize) {
+      treeObj.sizePro = this.calculatePercentage(smaps.size, sumSize || 0);
+      treeObj.sizeProStr = treeObj.sizePro.toFixed(2) + '%';
+    }
+
     if (dataTree.children.length >= 1 && dataTree.path !== '< multiple >') {
       dataTree.path = '< multiple >';
     }
-    dataTree.rss += smaps.rss;
-    dataTree.dirty += smaps.dirty;
-    dataTree.swapper += smaps.swapper;
+
     dataTree.size += smaps.size;
-    dataTree.pss += smaps.pss;
     dataTree.count += smaps.count;
-    dataTree.sharedClean += smaps.shared_clean;
-    dataTree.sharedDirty += smaps.shared_dirty;
-    dataTree.privateClean += smaps.private_clean;
-    dataTree.privateDirty += smaps.private_dirty;
+    dataTree.rss += smaps.rss;
+    dataTree.pss += smaps.pss;
+    dataTree.sharedClean += smaps.sharedClean;
+    dataTree.sharedDirty += smaps.sharedDirty;
+    dataTree.privateClean += smaps.privateClean;
+    dataTree.privateDirty += smaps.privateDirty;
     dataTree.swap += smaps.swap;
-    dataTree.swapPss += smaps.swap_pss;
-    dataTree.swap += smaps.swap;
-    dataTree.swapPss += smaps.swap_pss;
+    dataTree.swapPss += smaps.swapPss;
     dataTree.children.push(treeObj);
   }
+
   async setSmaps(data: SelectionParam) {
-    getTabSmapsStatisticMaxSize(data.rightNs).then((maxRes) => {
+    getTabSmapsStatisticMaxSize(data.leftNs).then((maxRes) => {
       this.sumSize = maxRes[0].max_value;
     });
-    await getTabSmapsStatisticData(data.rightNs).then((result) => {
+    await getTabSmapsStatisticData(data.leftNs).then((result) => {
       this.tblSmapsStatistics!.loading = false;
-      this.filteredData(result, this.sumSize);
+      this.filteredData(result, this.tblSmapsStatistics!, this.sumSize);
     });
   }
-  filteredData(result: any, sumRss: number): void {
-    let allTree: SmapsTreeObj = new SmapsTreeObj('All', '', '*All*');
+
+  public filteredData(result: Array<any>, table: LitTable, sumSize?: number): void {
+    this.allTree = new SmapsTreeObj('All', '', '*All*');
     let codeSysTree: SmapsTreeObj = new SmapsTreeObj('CODE_SYS', '', 'CODE_SYS');
     let codeAppTree: SmapsTreeObj = new SmapsTreeObj('CODE_APP', '', 'CODE_APP');
     let dataSysTree: SmapsTreeObj = new SmapsTreeObj('DATA_SYS', '', 'DATA_SYS');
@@ -237,61 +237,62 @@ export class TabPaneSmapsStatistics extends BaseElement {
         smaps.typeName = TYPE_STRING[smaps.type];
         switch (smaps.type) {
           case SmapsType.TYPE_CODE_SYS:
-            this.handleTree(smaps, id, smaps.typeName, codeSysTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, codeSysTree, sumSize);
             break;
           case SmapsType.TYPE_CODE_APP:
-            this.handleTree(smaps, id, smaps.typeName, codeAppTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, codeAppTree, sumSize);
             break;
           case SmapsType.TYPE_DATA_SYS:
-            this.handleTree(smaps, id, smaps.typeName, dataSysTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, dataSysTree, sumSize);
             break;
           case SmapsType.TYPE_DATA_APP:
-            this.handleTree(smaps, id, smaps.typeName, dataAppTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, dataAppTree, sumSize);
             break;
           case SmapsType.TYPE_UNKNOWN_ANON:
-            this.handleTree(smaps, id, smaps.typeName, unKownTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, unKownTree, sumSize);
             break;
           case SmapsType.TYPE_STACK:
-            this.handleTree(smaps, id, smaps.typeName, stackTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, stackTree, sumSize);
             break;
           case SmapsType.TYPE_JS_HEAP:
-            this.handleTree(smaps, id, smaps.typeName, jsTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, jsTree, sumSize);
             break;
           case SmapsType.TYPE_JAVA_VM:
-            this.handleTree(smaps, id, smaps.typeName, javaVmTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, javaVmTree, sumSize);
             break;
           case SmapsType.TYPE_NATIVE_HEAP:
-            this.handleTree(smaps, id, smaps.typeName, nativeTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, nativeTree, sumSize);
             break;
           case SmapsType.TYPE_ASHMEM:
-            this.handleTree(smaps, id, smaps.typeName, ashMemTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, ashMemTree, sumSize);
             break;
           case SmapsType.TYPE_OTHER_SYS:
-            this.handleTree(smaps, id, smaps.typeName, otherSysTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, otherSysTree, sumSize);
             break;
           case SmapsType.TYPE_OTHER_APP:
-            this.handleTree(smaps, id, smaps.typeName, otherAppTree, sumRss);
+            this.handleTree(smaps, id, smaps.typeName, otherAppTree, sumSize);
             break;
         }
-        this.handleAllDataTree(smaps, id, 'All', allTree, sumRss);
+
+        this.handleAllDataTree(smaps, id, 'All', this.allTree, sumSize!);
         if (id === result.length - 1) {
-          this.handleSmapsTreeObj(codeSysTree, sumRss);
-          this.handleSmapsTreeObj(codeAppTree, sumRss);
-          this.handleSmapsTreeObj(dataSysTree, sumRss);
-          this.handleSmapsTreeObj(dataAppTree, sumRss);
-          this.handleSmapsTreeObj(unKownTree, sumRss);
-          this.handleSmapsTreeObj(stackTree, sumRss);
-          this.handleSmapsTreeObj(jsTree, sumRss);
-          this.handleSmapsTreeObj(javaVmTree, sumRss);
-          this.handleSmapsTreeObj(nativeTree, sumRss);
-          this.handleSmapsTreeObj(ashMemTree, sumRss);
-          this.handleSmapsTreeObj(otherSysTree, sumRss);
-          this.handleSmapsTreeObj(otherAppTree, sumRss);
-          this.handleSmapsTreeObj(allTree, sumRss);
+          this.handleSmapsTreeObj(codeSysTree, sumSize);
+          this.handleSmapsTreeObj(codeAppTree, sumSize);
+          this.handleSmapsTreeObj(dataSysTree, sumSize);
+          this.handleSmapsTreeObj(dataAppTree, sumSize);
+          this.handleSmapsTreeObj(unKownTree, sumSize);
+          this.handleSmapsTreeObj(stackTree, sumSize);
+          this.handleSmapsTreeObj(jsTree, sumSize);
+          this.handleSmapsTreeObj(javaVmTree, sumSize);
+          this.handleSmapsTreeObj(nativeTree, sumSize);
+          this.handleSmapsTreeObj(ashMemTree, sumSize);
+          this.handleSmapsTreeObj(otherSysTree, sumSize);
+          this.handleSmapsTreeObj(otherAppTree, sumSize);
+          this.handleSmapsTreeObj(this.allTree, sumSize!);
         }
       }
       let treeList = [
-        allTree,
+        this.allTree,
         codeSysTree,
         codeAppTree,
         dataSysTree,
@@ -312,100 +313,103 @@ export class TabPaneSmapsStatistics extends BaseElement {
           this.totalTree.push(tree);
         }
       }
-      this.totalTree.push(allTree);
+
       // @ts-ignore
-      this.totalTree.sort((a, b) => b.size - a.size);
-      this.tblSmapsStatistics!.recycleDataSource = this.totalTree;
-      this.tblSmapsStatistics?.reMeauseHeight();
+      this.totalTree.sort((previous, next) => next.size - previous.size);
+      this.totalTree.unshift(this.allTree);
+      table!.recycleDataSource = this.totalTree;
+      this.totalTree.shift();
+      table?.reMeauseHeight();
     } else {
-      this.tblSmapsStatistics!.recycleDataSource = [];
-      this.tblSmapsStatistics?.reMeauseHeight();
+      table!.recycleDataSource = [];
+      table?.reMeauseHeight();
     }
   }
-  sortByColumn(column: string, sort: number) {
+
+  public sortByColumn(column: string, sort: number, table: LitTable) {
+    this.sortArray = [...this.totalTree];
     switch (sort) {
       case 0:
-        this.tblSmapsStatistics!.snapshotDataSource = this.totalTree;
+        this.sortArray.sort((previous, next) => {
+          return next.size - previous.size;
+        });
+        this.sortArray.unshift(this.allTree!);
+        table!.recycleDataSource = this.totalTree;
+        this.sortArray.shift();
         break;
       default:
-        this.sortArray = [...this.totalTree];
         switch (column) {
           case 'sizeStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.size - b.size : b.size - a.size;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.size - next.size : next.size - previous.size;
+            });
+            break;
+          case 'sizeProStr':
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.size - next.size : next.size - previous.size;
             });
             break;
           case 'count':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.count - b.count : b.count - a.count;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.count - next.count : next.count - previous.count;
             });
             break;
           case 'rssStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.rss - b.rss : b.rss - a.rss;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.rss - next.rss : next.rss - previous.rss;
             });
             break;
           case 'typeName':
-            this.tblSmapsStatistics!.recycleDataSource = this.sortArray.sort((a, b) => {
-              if (sort === 1) {
-                if (a.typeName > b.typeName) {
-                  return 1;
-                } else if (a.typeName === b.typeName) {
-                  return 0;
-                } else {
-                  return -1;
-                }
-              } else {
-                if (b.typeName > a.typeName) {
-                  return 1;
-                } else if (a.typeName === b.typeName) {
-                  return 0;
-                } else {
-                  return -1;
-                }
-              }
+            this.sortArray.sort((previous, next) => {
+              return sort === 1
+                ? previous.typeName.toString().localeCompare(next.typeName.toString())
+                : next.typeName.toString().localeCompare(previous.typeName.toString());
             });
             break;
           case 'pssStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.pss - b.pss : b.pss - a.pss;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.pss - next.pss : next.pss - previous.pss;
             });
             break;
           case 'sharedCleanStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.sharedClean - b.sharedClean : b.sharedClean - a.sharedClean;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.sharedClean - next.sharedClean : next.sharedClean - previous.sharedClean;
             });
             break;
           case 'sharedDirtyStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.sharedDirty - b.sharedDirty : b.sharedDirty - a.sharedDirty;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.sharedDirty - next.sharedDirty : next.sharedDirty - previous.sharedDirty;
             });
             break;
           case 'privateCleanStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.privateClean - b.privateClean : b.privateClean - a.privateClean;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.privateClean - next.privateClean : next.privateClean - previous.privateClean;
             });
             break;
           case 'privateDirtyStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.privateDirty - b.privateDirty : b.privateDirty - a.privateDirty;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.privateDirty - next.privateDirty : next.privateDirty - previous.privateDirty;
             });
             break;
           case 'swapStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.swap - b.swap : b.swap - a.swap;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.swap - next.swap : next.swap - previous.swap;
             });
             break;
           case 'swapPssStr':
-            this.tblSmapsStatistics!.snapshotDataSource = this.sortArray.sort((a, b) => {
-              return sort === 1 ? a.swapPss - b.swapPss : b.swapPss - a.swapPss;
+            this.sortArray.sort((previous, next) => {
+              return sort === 1 ? previous.swapPss - next.swapPss : next.swapPss - previous.swapPss;
             });
             break;
         }
         break;
     }
+    this.sortArray.unshift(this.allTree!);
+    table!.recycleDataSource = this.sortArray;
+    this.sortArray.shift();
   }
-  initHtml(): string {
+
+  public initHtml(): string {
     return `
         <style>
         :host{
@@ -418,7 +422,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
             <lit-table id="tb-smaps-statistics" class="smaps-statistics-table" style="height: auto;" tree>
                 <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order>
                 </lit-table-column>
-                <lit-table-column width="150px" title="Path" data-index="path" key="path" align="flex-start" >
+                <lit-table-column width="150px" title="Path" data-index="path" key="path" align="flex-start">
                 </lit-table-column>
                 <lit-table-column  width="150px" title="Size" data-index="sizeStr" key="sizeStr" align="flex-start" order>
                 </lit-table-column>

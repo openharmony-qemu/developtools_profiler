@@ -180,15 +180,29 @@ export class JSONToCSV {
   static async csvExport(dataSource: { columns: any[]; tables: any[]; fileName: string }): Promise<string> {
     return new Promise((resolve) => {
       let data: any = this.columnsData(dataSource.columns);
-      let resultArr = JSONToCSV.treeToArr(dataSource.tables);
-      JSONToCSV.setCsvData({
-        data: resultArr,
-        fileName: dataSource.fileName,
-        columns: {
+      let columns = {
           title: data.titleList,
           key: data.ketList,
-        },
-      });
+      };
+      if (dataSource.tables.length > 0) {
+        if (Array.isArray(dataSource.tables[0])) {
+          dataSource.tables.forEach((childArr, childIndex) => {
+            let resultArr = JSONToCSV.treeToArr(childArr);
+            JSONToCSV.setCsvData({
+              data: resultArr,
+              fileName: `${dataSource.fileName}_${childIndex}`,
+              columns: columns
+            });
+          })
+        } else {
+          let resultArr = JSONToCSV.treeToArr(dataSource.tables);
+          JSONToCSV.setCsvData({
+            data: resultArr,
+            fileName: dataSource.fileName,
+            columns: columns,
+          });
+        }
+      }
       resolve('ok');
     });
   }

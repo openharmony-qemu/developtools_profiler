@@ -82,6 +82,7 @@ export class Top20FrequencyThread extends BaseElement {
       }
       this.frequencyThreadPie?.showHover();
     });
+    this.frequencyThreadTbl!.itemTextHandleMap.set('freq',(value) => value === -1 ? 'unknown' : value);
   }
 
   sortByColumn(detail: any) {
@@ -167,13 +168,14 @@ export class Top20FrequencyThread extends BaseElement {
         data: this.getPieChartData(res),
         angleField: 'time',
         colorField: 'freq',
+        colorFieldTransferHandler: (value) => value === -1 ? 'unknown' : value,
         radius: 0.8,
         label: {
           type: 'outer',
         },
         tip: (obj) => {
           return `<div>
-                             <div>freq:${obj.obj.freq}</div> 
+                             <div>freq:${obj.obj.freq===-1 ? 'unknown' : obj.obj.freq}</div> 
                              <div>cpu:${obj.obj.cpu}</div> 
                              <div>time:${obj.obj.timeStr}</div> 
                              <div>ratio:${obj.obj.ratio}%</div>

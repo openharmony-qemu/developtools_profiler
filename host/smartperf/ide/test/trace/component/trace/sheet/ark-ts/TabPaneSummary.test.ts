@@ -40,6 +40,14 @@ window.ResizeObserver =
 
 describe('TabPaneSummary Test', () => {
     let tabPaneSummary = new TabPaneSummary();
+    tabPaneSummary.tbs = jest.fn(() => {
+        return {
+            scrollTop: 0,
+        };
+    });
+    tabPaneSummary.tbs.snapshotDataSource = jest.fn(() => {
+        return [];
+    });
     it('TabPaneSummaryTest01', () => {
         document.body.innerHTML = `<tabpane-summary id="sss"> </tabpane-summary>`;
         let tabPaneSummary = document.querySelector('#sss') as TabPaneSummary;
@@ -344,21 +352,44 @@ describe('TabPaneSummary Test', () => {
 
         expect(tabPaneSummary.initSummaryData({  name: 'Timeline', id: ''}, 0, 0)).toBeUndefined();
     });
-    it('TabPaneSummaryTest12', () => {
-        document.body.innerHTML = `<tabpane-summary id="sss"> </tabpane-summary>`;
-        let tabPaneSummary = document.querySelector('#sss') as TabPaneSummary;
+    it('TabPaneSummaryTest02', () => {
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
         expect(tabPaneSummary.sortByLeftTable('shallowSize', 1)).toBeUndefined();
     });
     it('TabPaneSummaryTest03', () => {
-        document.body.innerHTML = `<tabpane-summary id="sss"> </tabpane-summary>`;
-        let tabPaneSummary = document.querySelector('#sss') as TabPaneSummary;
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
         expect(tabPaneSummary.sortByLeftTable('retainedSize', 1)).toBeUndefined();
     });
     it('TabPaneSummaryTest04', () => {
-        document.body.innerHTML = `<tabpane-summary id="sss"> </tabpane-summary>`;
-        let tabPaneSummary = document.querySelector('#sss') as TabPaneSummary;
-        expect(tabPaneSummary.sortByLeftTable('objectName', 1)).toBeUndefined();
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
+        expect(tabPaneSummary.sortByLeftTable('distance', 1)).toBeUndefined();
     });
+
+    it('TabPaneSummaryTest05', () => {
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
+        expect(tabPaneSummary.sortByRightTable('shallowSize', 1)).toBeUndefined();
+    });
+    it('TabPaneSummaryTest06', () => {
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
+        expect(tabPaneSummary.sortByRightTable('retainedSize', 1)).toBeUndefined();
+    });
+    it('TabPaneSummaryTest07', () => {
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
+        expect(tabPaneSummary.sortByRightTable('distance', 1)).toBeUndefined();
+    });
+
+    it('TabPaneSummaryTest08', () => {
+        document.body.innerHTML = `<tabpane-summary id="ts"> </tabpane-summary>`;
+        let tabPaneSummary = document.querySelector('#ts') as TabPaneSummary;
+        expect(tabPaneSummary.sortByRightTable('objectName', 1)).toBeUndefined();
+    });
+
     it('TabPaneSummaryTest09', () => {
         expect(tabPaneSummary.clickToggleTable()).toBeUndefined();
     });

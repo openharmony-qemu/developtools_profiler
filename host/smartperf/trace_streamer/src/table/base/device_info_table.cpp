@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "device_info.h"
+#include "device_info_table.h"
 
 namespace SysTuning {
 namespace TraceStreamer {

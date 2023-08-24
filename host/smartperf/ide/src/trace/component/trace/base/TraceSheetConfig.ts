@@ -101,6 +101,18 @@ import { TabPaneGpuMemoryVmTracker } from '../sheet/vmtracker/TabPaneGpuMemoryVm
 import { TabPaneGpuMemorySelectAbility } from '../sheet/ability/TabPaneGpuMemorySelectAbility.js';
 import { TabPaneGpuMemorySelectVmTracker } from '../sheet/vmtracker/TabPaneGpuMemorySelectVmTracker.js';
 import { TabPaneDmaSelectVmTracker } from '../sheet/vmtracker/TabPaneDmaSelectVmTracker.js';
+import { TabpanePerfBottomUp } from '../sheet/hiperf/TabPerfBottomUp.js';
+import { TabPanePurgTotalComparisonAbility } from '../sheet/ability/TabPanePurgTotalComparisonAbility.js';
+import { TabPanePurgPinComparisonAbility } from '../sheet/ability/TabPanePurgPinComparisonAbility.js';
+import { TabPanePurgTotalComparisonVM } from '../sheet/vmtracker/TabPanePurgTotalComparisonVM.js';
+import { TabPanePurgPinComparisonVM } from '../sheet/vmtracker/TabPanePurgPinComparisonVM.js';
+import { TabPaneDmaAbilityComparison } from '../sheet/ability/TabPaneDmaAbilityComparison.js';
+import { TabPaneGpuMemoryComparison } from '../sheet/ability/TabPaneGpuMemoryComparison.js';
+import { TabPaneDmaVmTrackerComparison } from '../sheet/vmtracker/TabPaneDmaVmTrackerComparison.js';
+import { TabPaneGpuMemoryVmTrackerComparison } from '../sheet/vmtracker/TabPaneGpuMemoryVmTrackerComparison.js';
+import { TabPaneVmTrackerShmComparison } from '../sheet/vmtracker/TabPaneVmTrackerShmComparison.js';
+import { TabPaneSmapsComparison } from '../sheet/smaps/TabPaneSmapsComparison.js';
+import { TabPaneGpuClickSelectComparison } from '../sheet/gpu/TabPaneGpuClickSelectComparison.js';
 
 export let tabConfig: any = {
   'tabpane-current': {
@@ -237,6 +249,11 @@ export let tabConfig: any = {
     type: TabPanePerfAnalysis,
     require: (param: SelectionParam) => param.perfSampleIds.length > 0,
   },
+  'box-perf-bottom-up': {
+    title: 'Bottom Up',
+    type: TabpanePerfBottomUp,
+    require: (param: SelectionParam) => param.perfSampleIds.length > 0,
+  },
   'box-perf-profile': {
     title: 'Perf Profile',
     type: TabpanePerfProfile,
@@ -247,6 +264,7 @@ export let tabConfig: any = {
     type: TabPanePerfSample,
     require: (param: SelectionParam) => param.perfSampleIds.length > 0,
   },
+
   'box-live-processes-child': {
     title: 'Live Processes',
     type: TabPaneLiveProcesses,
@@ -405,6 +423,10 @@ export let tabConfig: any = {
     type: TabPaneSmapsRecord,
     require: (param: SelectionParam) => param.smapsType.length > 0,
   },
+  'box-smaps-comparison': {
+    title: 'Smaps Comparison',
+    type: TabPaneSmapsComparison,
+  },
   'box-vmtracker-shm': {
     title: 'SHM',
     type: TabPaneVmTrackerShm,
@@ -453,19 +475,19 @@ export let tabConfig: any = {
     type: TabPaneJsCpuStatistics,
     require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
   },
-  'box-js-Profiler-top-down': {
-    title: 'Js Profiler CallTree',
-    type: TabPaneJsCpuTopDown,
-    require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
-  },
   'box-js-Profiler-bottom-up': {
     title: 'Js Profiler BottomUp',
     type: TabPaneJsCpuBottomUp,
     require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
   },
+  'box-js-Profiler-top-down': {
+    title: 'Js Profiler CallTree',
+    type: TabPaneJsCpuTopDown,
+    require: (param: SelectionParam) => param.jsCpuProfilerData.length > 0,
+  },
   'gpu-click-select': {
     title: 'Gpu Dump Selection',
-    type: TabPaneGpuClickSelect
+    type: TabPaneGpuClickSelect,
   },
   'gpu-gl-box-select': {
     title: 'GL',
@@ -499,6 +521,22 @@ export let tabConfig: any = {
   'box-purgeable-pin-selection': {
     title: 'Purg Pin Selection',
     type: TabPanePurgPinSelection,
+  },
+  'box-purgeable-total-comparison-ability': {
+    title: 'Purg Total Comparison',
+    type: TabPanePurgTotalComparisonAbility,
+  },
+  'box-purgeable-pin-comparison-ability': {
+    title: 'Purg Pin Comparison',
+    type: TabPanePurgPinComparisonAbility,
+  },
+  'box-purgeable-total-comparison-vm': {
+    title: 'Purg Total Comparison',
+    type: TabPanePurgTotalComparisonVM,
+  },
+  'box-purgeable-pin-comparison-vm': {
+    title: 'Purg Pin Comparison',
+    type: TabPanePurgPinComparisonVM,
   },
   'box-dma-ability': {
     title: 'DMA',
@@ -536,4 +574,28 @@ export let tabConfig: any = {
     title: 'Gpu Memory Selection',
     type: TabPaneGpuMemorySelectVmTracker,
   }, //Gpu Memory DMA VmTracker click
+  'box-dma-ability-comparison': {
+    title: 'DMA Comparison',
+    type: TabPaneDmaAbilityComparison,
+  }, // dma Comparison ability click
+  'box-gpu-memory-comparison': {
+    title: 'Gpu Memory Comparison',
+    type: TabPaneGpuMemoryComparison,
+  }, // Gpu Memory Comparison click
+  'box-vmTracker-comparison': {
+    title: 'DMA Comparison',
+    type: TabPaneDmaVmTrackerComparison,
+  }, // DMA Comparison click
+  'box-gpu-memory-vmTracker-comparison': {
+    title: 'Gpu Memory Comparison',
+    type: TabPaneGpuMemoryVmTrackerComparison,
+  }, // DMA Comparison click
+  'box-vmtracker-shm-comparison': {
+    title: 'SHM Comparison',
+    type: TabPaneVmTrackerShmComparison,
+  },
+  'gpu-click-select-comparison': {
+    title: 'Gpu Dump Comparison',
+    type: TabPaneGpuClickSelectComparison,
+  },
 };

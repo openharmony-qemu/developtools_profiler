@@ -14,6 +14,8 @@
  */
 //@ts-ignore
 import { TabPaneDiskAbility } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneDiskAbility.js';
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -24,6 +26,29 @@ window.ResizeObserver =
 
 describe('TabPaneDiskAbility Test', () => {
   let tabPaneDiskAbility = new TabPaneDiskAbility();
+  let val = [
+    {
+      startNs: 0,
+      rightNs: 1000,
+      leftNs:0,
+    }
+  ];
+  let getTabDiskAbilityData = sqlite.getTabDiskAbilityData;
+  let diskAbilityData = [
+    {
+      startTime: 0,
+      duration: 1000,
+      dataRead:2,
+      dataReadSec:2,
+      dataWrite:3,
+      dataWriteSec:1,
+      readsIn:2,
+      readsInSec:4,
+      writeOut:2,
+      writeOutSec:5
+    }
+  ];
+  getTabDiskAbilityData.mockResolvedValue(diskAbilityData);
   it('TabPaneDiskAbilityTest01', () => {
     tabPaneDiskAbility.queryDiskResult.length = 1;
     expect(tabPaneDiskAbility.filterData()).toBeUndefined();
@@ -129,6 +154,13 @@ describe('TabPaneDiskAbility Test', () => {
       tabPaneDiskAbility.sortByColumn({
         key: 'writeOutSecStr',
       })
+    ).toBeUndefined();
+  });
+  it('TabPaneDiskAbilityTest14', function () {
+    expect(
+        tabPaneDiskAbility.queryDataByDB({
+         val
+        })
     ).toBeUndefined();
   });
 });

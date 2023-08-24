@@ -53,7 +53,7 @@ config("default") {
   cflags_c = []
   cflags_cc = []
   libs = []
-
+  ldflags = []
   cflags = [
     "-fstrict-aliasing",
     "-g",
@@ -61,7 +61,16 @@ config("default") {
     "-Wno-unused-variable",
   ]
   if (is_debug && is_win) {
-    ldflags = [ "-fstack-protector" ]
+    ldflags += [ "-fstack-protector" ]
+  }
+  if (is_debug && is_linux) {
+    cflags += [
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+    ]
+    ldflags += [
+      "-fsanitize=address",
+    ]
   }
   if (target_os == "windows") {
     cflags += [ "-D target_cpu_x86_64" ]
@@ -192,7 +201,7 @@ config("executable") {
     ldflags += []
   }
   if (!is_macx && !use_wasm && !is_win) {
-    ldflags = [
+    ldflags += [
       "-Wl,--disable-new-dtags",
       "-Wl,-z,noexecstack",
       "-lrt",

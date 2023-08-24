@@ -88,7 +88,7 @@ describe(' Test', () => {
       startNS: 200,
       value: 50,
     };
-    expect(HeapStruct.draw(ctx, data)).toBeUndefined();
+    expect(HeapStruct.drawHeap(ctx, data, 0)).toBeUndefined();
   });
   it('HeapTest04', () => {
     const canvas = document.createElement('canvas');
@@ -106,7 +106,7 @@ describe(' Test', () => {
       maxHeapSize: 200,
       value: 50,
     };
-    expect(HeapStruct.draw(ctx, data)).toBeUndefined();
+    expect(HeapStruct.drawHeap(ctx, data, 1)).toBeUndefined();
   });
 
   it('HeapTest05', function () {
@@ -149,5 +149,33 @@ describe(' Test', () => {
     };
     window.postMessage = jest.fn(() => true);
     expect(nativeMemoryRender.render(req, [], [])).toBeUndefined();
+  });
+  it('HeapTest04', () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+
+    const data = {
+      frame: {
+        x: 20,
+        y: 20,
+        width: 100,
+        height: 100,
+      },
+      startNS: 200,
+      value: 50,
+    };
+    const node = {
+      frame: {
+        x: 20,
+        y: 20,
+        width: 100,
+        height: 100,
+      },
+      startNS: 200,
+      value: 50,
+    };
+    expect(HeapStruct.setFrame(node, 2, 1, 5, 4, data)).toBeUndefined();
   });
 });

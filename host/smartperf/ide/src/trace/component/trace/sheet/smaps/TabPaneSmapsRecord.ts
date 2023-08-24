@@ -30,6 +30,7 @@ export class TabPaneSmapsRecord extends BaseElement {
   private isClick = false;
   private tabTitle: HTMLDivElement | undefined | null;
   set data(valSmapsRecord: SelectionParam) {
+    this.parentElement!.style.overflow = 'unset';
     this.isClick = valSmapsRecord.smapsType.length === 0;
     this.init();
     this.tblSmapsRecord!.loading = true;
@@ -90,17 +91,17 @@ export class TabPaneSmapsRecord extends BaseElement {
     if (result.length !== null && result.length > 0) {
       for (const smaps of result) {
         smaps.typeName = TYPE_STRING[smaps.type];
-        smaps.address = smaps.start_addr + ' - ' + smaps.end_addr;
+        smaps.address = smaps.startAddr + ' - ' + smaps.endAddr;
         smaps.swapStr = Utils.getBinaryByteWithUnit(smaps.swap);
         smaps.rssStr = Utils.getBinaryByteWithUnit(smaps.rss);
         smaps.pssStr = Utils.getBinaryByteWithUnit(smaps.pss);
         smaps.sizeStr = Utils.getBinaryByteWithUnit(smaps.size);
-        smaps.sharedCleanStr = Utils.getBinaryByteWithUnit(smaps.shared_clean);
-        smaps.sharedDirtyStr = Utils.getBinaryByteWithUnit(smaps.shared_dirty);
-        smaps.privateCleanStr = Utils.getBinaryByteWithUnit(smaps.private_clean);
-        smaps.privateDirtyStr = Utils.getBinaryByteWithUnit(smaps.private_dirty);
-        smaps.swapPssStr = Utils.getBinaryByteWithUnit(smaps.swap_pss);
-        smaps.time = Utils.getTimeString(smaps.tsNS);
+        smaps.sharedCleanStr = Utils.getBinaryByteWithUnit(smaps.sharedClean);
+        smaps.sharedDirtyStr = Utils.getBinaryByteWithUnit(smaps.sharedDirty);
+        smaps.privateCleanStr = Utils.getBinaryByteWithUnit(smaps.privateClean);
+        smaps.privateDirtyStr = Utils.getBinaryByteWithUnit(smaps.privateDirty);
+        smaps.swapPssStr = Utils.getBinaryByteWithUnit(smaps.swapPss);
+        smaps.time = Utils.getTimeString(smaps.startNs);
         smaps.path = SpSystemTrace.DATA_DICT.get(smaps.path)?.split('/');
         smaps.permission = SpSystemTrace.DATA_DICT.get(smaps.pid)?.split('/');
         let resideS = smaps.reside.toFixed(2);
@@ -186,8 +187,6 @@ export class TabPaneSmapsRecord extends BaseElement {
       };
     }
     if (
-      detail.key === 'dirtyStr' ||
-      detail.key === 'swapperStr' ||
       detail.key === 'rssStr' ||
       detail.key === 'sizeStr' ||
       detail.key === 'resideStr'

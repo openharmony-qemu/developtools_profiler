@@ -20,6 +20,7 @@ import {
   LiveProcess,
   SystemNetworkSummary,
   SystemMemorySummary,
+  Dma
 } from '../../../dist/trace/bean/AbilityMonitor.js';
 
 describe('AbilityMonitor Test', () => {
@@ -29,6 +30,7 @@ describe('AbilityMonitor Test', () => {
   let liveProcess = new LiveProcess();
   let systemNetworkSummary = new SystemNetworkSummary();
   let systemMemorySummary = new SystemMemorySummary();
+  let dma = new Dma()
 
   it('SystemCpuSummaryTest', function () {
     systemCpuSummary = {
@@ -398,6 +400,59 @@ describe('AbilityMonitor Test', () => {
   "swapTotalStr": Any<String>,
   "swapUsed": Any<Number>,
   "wiredMemory": Any<Number>,
+}
+`);
+  });
+  it('DmaTest', function () {
+    dma = {
+      processId: -1,
+      timeStamp:'',
+      startNs:-1,
+      expTaskComm:  '',
+      avgSize: -1,
+      minSize:-1,
+      maxSize: -1,
+      bufName:'',
+      expName:  '',
+      size: -1,
+      processName: '',
+      process: '',
+      fd: -1,
+      ino: -1,
+      expPid: -1,
+      flag:  -1,
+      avgSizes: '',
+      minSizes: '',
+      maxSizes: '',
+      sizes:  '',
+      sumSize: -1,
+      sumSizes: '',
+    };
+    expect(dma).not.toBeUndefined();
+    expect(dma).toMatchInlineSnapshot(`
+{
+  "avgSize": -1,
+  "avgSizes": "",
+  "bufName": "",
+  "expName": "",
+  "expPid": -1,
+  "expTaskComm": "",
+  "fd": -1,
+  "flag": -1,
+  "ino": -1,
+  "maxSize": -1,
+  "maxSizes": "",
+  "minSize": -1,
+  "minSizes": "",
+  "process": "",
+  "processId": -1,
+  "processName": "",
+  "size": -1,
+  "sizes": "",
+  "startNs": -1,
+  "sumSize": -1,
+  "sumSizes": "",
+  "timeStamp": "",
 }
 `);
   });

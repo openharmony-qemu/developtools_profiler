@@ -100,19 +100,6 @@ HWTEST_F(AnimationFilterTest, InvalidCallStack, TestSize.Level1)
         EXPECT_FALSE(res);
         depth++;
     }
-    // invalid parentId
-    depth = 4;
-    for (size_t i = 0; i < callStackNames.size() - 1; i++) {
-        std::optional<uint64_t> parentId;
-        auto callStackId =
-            callStackSlice->AppendInternalSlice(INVALID_TIME, INVALID_TIME, INVALID_UINT32, INVALID_UINT64,
-                                                INVALID_UINT16, callStackNames[i], depth, parentId);
-        point.funcPrefix_ = funcPrefixs[1];
-        auto res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, callStackId);
-        EXPECT_FALSE(res);
-    }
-    callStackSlice->Clear();
-    callStackSlice->parentIds_.clear();
     // the current or the parent callStackNames haven't leashWindow
     uint64_t index = INVALID_UINT64;
     for (size_t i = 0; i < callStackNames.size(); i++) {
@@ -130,9 +117,7 @@ HWTEST_F(AnimationFilterTest, InvalidCallStack, TestSize.Level1)
     EXPECT_FALSE(res);
     // valid callStack
     point.funcPrefix_ = funcPrefixs[1];
-    curStackRow = 4;
-    res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, curStackRow - 1);
-    EXPECT_TRUE(res);
+    curStackRow = 3;
     res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, curStackRow);
     EXPECT_TRUE(res);
 }
@@ -172,14 +157,14 @@ HWTEST_F(AnimationFilterTest, UpdateDevicePos, TestSize.Level1)
  */
 HWTEST_F(AnimationFilterTest, UpdateDeviceFps, TestSize.Level1)
 {
-    TS_LOGI("test36-3");
+    TS_LOGI("test36-4");
     TracePoint point;
     BytraceLine line;
 
     std::string validName{"H:GenerateVsyncCount:1"};
-    auto timeDiffFps60 = (1000 * ONE_MILLION_NANOSECONDS) / FPS_60;
+    auto timeDiffFps60 = BILLION_NANOSECONDS / FPS_60;
     line.ts = 59557002299000;
-    for (size_t i = 0; i < GENERATE_VSYNC_EVENT_MAX; i++) {
+    for (uint8_t i = 0; i < GENERATE_VSYNC_EVENT_MAX; i++) {
         point.name_ = validName;
         point.funcPrefixId_ = stream_.traceDataCache_->GetDataIndex(point.name_);
         line.ts += timeDiffFps60;
@@ -191,8 +176,8 @@ HWTEST_F(AnimationFilterTest, UpdateDeviceFps, TestSize.Level1)
 
     stream_.traceDataCache_->GetDeviceInfo()->Clear();
     stream_.streamFilters_->animationFilter_->Clear();
-    auto timeDiffFps90 = (1000 * ONE_MILLION_NANOSECONDS) / FPS_90;
-    for (size_t i = 0; i < GENERATE_VSYNC_EVENT_MAX; i++) {
+    auto timeDiffFps90 = BILLION_NANOSECONDS / FPS_90;
+    for (uint8_t i = 0; i < GENERATE_VSYNC_EVENT_MAX; i++) {
         point.name_ = validName;
         point.funcPrefixId_ = stream_.traceDataCache_->GetDataIndex(point.name_);
         line.ts += timeDiffFps90;
@@ -204,8 +189,8 @@ HWTEST_F(AnimationFilterTest, UpdateDeviceFps, TestSize.Level1)
 
     stream_.traceDataCache_->GetDeviceInfo()->Clear();
     stream_.streamFilters_->animationFilter_->Clear();
-    auto timeDiffFps120 = (1000 * ONE_MILLION_NANOSECONDS) / FPS_120;
-    for (size_t i = 0; i < GENERATE_VSYNC_EVENT_MAX; i++) {
+    auto timeDiffFps120 = BILLION_NANOSECONDS / FPS_120;
+    for (uint8_t i = 0; i < GENERATE_VSYNC_EVENT_MAX; i++) {
         point.name_ = validName;
         point.funcPrefixId_ = stream_.traceDataCache_->GetDataIndex(point.name_);
         line.ts += timeDiffFps120;
@@ -222,7 +207,7 @@ HWTEST_F(AnimationFilterTest, UpdateDeviceFps, TestSize.Level1)
  */
 HWTEST_F(AnimationFilterTest, UpdateDynamicFrameInfo, TestSize.Level1)
 {
-    TS_LOGI("test36-4");
+    TS_LOGI("test36-5");
     TracePoint point;
 
     CallStack* callStackSlice = stream_.traceDataCache_->GetInternalSlicesData();
@@ -250,13 +235,37 @@ HWTEST_F(AnimationFilterTest, UpdateDynamicFrameInfo, TestSize.Level1)
     point.funcPrefix_ = funcPrefix;
     auto res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, index - 1); // for leashWindow
     EXPECT_TRUE(res);
-    res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, index); // for xxx
-    EXPECT_TRUE(res);
     stream_.streamFilters_->animationFilter_->UpdateDynamicFrameInfo();
     for (size_t i = 0; i < stream_.traceDataCache_->GetDynamicFrame()->Size(); i++) {
         EXPECT_TRUE(stream_.traceDataCache_->GetDynamicFrame()->EndTimes()[i] != INVALID_TIME);
         EXPECT_TRUE(stream_.traceDataCache_->GetDynamicFrame()->Xs()[i] != INVALID_UINT32);
     }
+}
+/**
+ * @tc.name: AnimationStartAndEnd
+ * @tc.desc: update Animation startPoint and endPoint
+ * @tc.type: FUNC
+ */
+HWTEST_F(AnimationFilterTest, AnimationStartAndEnd, TestSize.Level1)
+{
+    TS_LOGI("test36-6");
+    BytraceLine line;
+    line.ts = 59557002299000;
+
+    CallStack* callStackSlice = stream_.traceDataCache_->GetInternalSlicesData();
+    uint8_t depth = 1;
+    uint64_t dur = ONE_MILLION_NANOSECONDS;
+    std::optional<uint64_t> parentId;
+    DataIndex callStackName =
+        stream_.traceDataCache_->GetDataIndex("H:RSUniRender::Process:[leashWindow25] (0, 0, 1344, 2772) Alpha: 1.00");
+
+    auto callStackRow = callStackSlice->AppendInternalSlice(line.ts, dur, INVALID_UINT32, INVALID_UINT64,
+                                                            INVALID_UINT16, callStackName, depth, parentId);
+
+    stream_.streamFilters_->animationFilter_->StartAnimationEvent(line, callStackRow);
+    EXPECT_TRUE(!stream_.streamFilters_->animationFilter_->animationCallIds_.empty());
+    stream_.streamFilters_->animationFilter_->FinishAnimationEvent(line, callStackRow);
+    EXPECT_TRUE(stream_.streamFilters_->animationFilter_->animationCallIds_.empty());
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

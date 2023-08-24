@@ -17,6 +17,7 @@
 #include <hwext/gtest-tag.h>
 
 #include "rpc/rpc_server.h"
+#include "print_event_parser.h"
 
 using namespace testing::ext;
 namespace SysTuning {
@@ -83,6 +84,30 @@ HWTEST_F(RpcServerTest, WrongTraceData, TestSize.Level1)
     ret = rpcServer.SqlQuery((const uint8_t*)SQLQUERY.c_str(), SQLQUERY.length(), res);
     EXPECT_TRUE(g_result == "dberror\r\n");
     EXPECT_FALSE(ret);
+}
+
+/**
+ * @tc.name: ParserConfig
+ * @tc.desc: Test the ParserConfig method
+ * @tc.type: FUNC
+ */
+HWTEST_F(RpcServerTest, ParserConfig, TestSize.Level1)
+{
+    TS_LOGI("test27-3");
+    std::string comm("e.myapplication");
+    uint64_t ts = 89227707307481;
+    uint32_t pid = 16502;
+    std::string event("B|16502|H:Task Allocation: taskId : 1, executeId : 9, priority : 9, executeState : 1");
+    BytraceLine line;
+    std::string json("{\"config\": {\"TaskPool\": 1,\"AnimationAnalysis\": 0,\"AppStartup\": 0}}");
+
+    RpcServer rpcServer;
+    auto ret = rpcServer.ParserConfig(json);
+    EXPECT_EQ(rpcServer.ts_->traceDataCache_->taskPoolTraceEnabled_, true);
+    PrintEventParser printEvent(rpcServer.ts_->traceDataCache_.get(), rpcServer.ts_->streamFilters_.get());
+    printEvent.ParsePrintEvent(comm, ts, pid, event, line);
+    auto res = rpcServer.ts_->traceDataCache_->GetConstTaskPoolData().prioritys_[0];
+    EXPECT_EQ(res, 9);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

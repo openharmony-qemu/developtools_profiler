@@ -65,7 +65,7 @@ describe('FrameAnimation Test', () => {
     frameAnimationRender.frameAnimation(dataList, [],  TraceRow.range.startNS,
       TraceRow.range.endNS,
       TraceRow.range.totalNS,
-      TraceRow.skeleton().frame,
+      TraceRow.skeleton(),
       false);
     let node = {
       animationId: 1,

@@ -368,7 +368,7 @@ describe('TabPaneComparison Test', () => {
         expect(tabPaneComparisons.comparisonTableEl!.snapshotDataSource).toEqual([]);
     });
 
-    it('TabPaneComparisonTest2', () => {
+    it('TabPaneComparisonTest02', () => {
         tabPaneComparisons.retainsData = [
             {
                 distance: 1,
@@ -378,7 +378,7 @@ describe('TabPaneComparison Test', () => {
         expect(tabPaneComparisons.retainsData).not.toBe([]);
     });
 
-    it('TabPaneComparisonTest12', () => {
+    it('TabPaneComparisonTest03', () => {
         let tabPaneComparison = new TabPaneComparison();
         let data = [
             {

@@ -31,8 +31,6 @@ interface GpuTotal {
   moduleId: number;
   categoryId: number;
   gpuName?: string;
-  sumSize: number;
-  sumSizeStr?: string;
   avgSize: number;
   avgSizeStr?: string;
   maxSize: number;
@@ -69,7 +67,6 @@ export class TabPaneGpuTotalBoxSelect extends BaseElement {
           it.gpuName = `${moduleName} / ${categoryName}`;
           it.startTsStr = getProbablyTime(it.startTs);
           it.avgSizeStr = Utils.getBinaryByteWithUnit(it.avgSize);
-          it.sumSizeStr = Utils.getBinaryByteWithUnit(it.sumSize);
           it.minSizeStr = Utils.getBinaryByteWithUnit(it.minSize);
           it.maxSizeStr = Utils.getBinaryByteWithUnit(it.maxSize);
         });
@@ -114,7 +111,6 @@ export class TabPaneGpuTotalBoxSelect extends BaseElement {
         </div>
         <div style="overflow: auto">
             <lit-table id="tb-gpu-box" style="height: auto">
-                <lit-table-column width="200px" title="Timestamp"  data-index="startTsStr" key="startTsStr"  align="flex-start" >
                 </lit-table-column>
                 <lit-table-column width="500px" title="Module / Category" data-index="gpuName" key="gpuName"  align="flex-start">
                 </lit-table-column>

@@ -244,6 +244,11 @@ export class FlagsConfig {
       switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
       describeContent: 'App Startup templates',
     },
+    {
+      title: 'SchedulingAnalysis',
+      switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
+      describeContent: 'Scheduling analysis templates',
+    },
   ];
 
   static getAllFlagConfig(): Array<FlagConfigItem> {
@@ -330,6 +335,15 @@ export class FlagsConfig {
     } else {
       return configItem;
     }
+  }
+
+  static getFlagsConfigEnableStatus(flagName: string): boolean {
+    let config = FlagsConfig.getFlagsConfig(flagName);
+    let enable: boolean = false;
+    if (config && config[flagName]) {
+      enable = config[flagName] === 'Enabled';
+    }
+    return enable;
   }
 
   static updateFlagsConfig(key: string, value: unknown): void {

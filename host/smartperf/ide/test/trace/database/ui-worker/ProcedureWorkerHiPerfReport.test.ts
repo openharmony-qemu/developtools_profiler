@@ -177,8 +177,8 @@ describe('ProcedureWorkerHiPerfReport Test', () => {
   });
 
   it('ProcedureWorkerHiPerfReportTest06', function () {
-    expect(HiPerfReportStruct.groupBy10MS([{ ps: 1 }, { coX: '1' }], 10, '')).toEqual([
-      { dur: 10000000, height: Infinity, startNS: NaN},
+    expect(HiPerfReportStruct.reportGroupBy10MS([{ ps: 1 }, { coX: '1' }], 10)).toEqual([
+      { dur: 10000000, height: NaN, startNS: NaN, sum:NaN},
     ]);
   });
 });

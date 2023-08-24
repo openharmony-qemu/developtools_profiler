@@ -28,8 +28,9 @@ export class TabPanePurgPinSelection extends BaseElement {
   private purgeableSelectionSource: Array<any> = [];
 
   set data(selection: SelectionParam | any) {
-    this.purgeableSelectionSource = [];
-    this.queryTableData(selection.type, selection.startNs);
+    if (selection && selection.type) {
+      this.queryTableData(selection.type, selection.startNs);
+    }
   }
 
   async queryTableData(type: string, startNs: number) {

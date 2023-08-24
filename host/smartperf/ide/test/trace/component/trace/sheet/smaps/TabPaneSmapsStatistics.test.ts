@@ -20,6 +20,21 @@ import { Smaps, SmapsTreeObj } from '../../../../../../dist/trace/bean/SmapsStru
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
+  return {};
+});
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+
+jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
+  return {};
+});
+
+jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
+  return {};
+});
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -30,7 +45,7 @@ window.ResizeObserver =
   }));
 
 describe('TabPaneSmapsStatistics Test', () => {
-  let MockgetTabSmapsMaxRss = sqlit.getTabSmapsMaxRss;
+  let MockgetTabSmapsMaxRss = sqlit.getTabSmapsMaxSize;
   MockgetTabSmapsMaxRss.mockResolvedValue([
     {
       startNS: 0,
@@ -71,21 +86,47 @@ describe('TabPaneSmapsStatistics Test', () => {
 
   it('TabPaneSmapsStatisticsTest02', () => {
     tabPaneSmapsStatistics.handleAllDataTree(new Smaps(), 0, 'All', dataTree, 3);
-    expect(dataTree.children.length).toBe(1);
+    expect(dataTree.children.length).toBe(0);
   });
 
   it('TabPaneSmapsStatisticsTest03', () => {
     tabPaneSmapsStatistics.handleTree(smaps, 0, 'TEXT', dataTree, 4);
     expect(dataTree.pss).toBe(2);
   });
-
   it('TabPaneSmapsStatisticsTest04', () => {
-    let select = {
-      leftNs: 0,
-      rightNs: 500,
-      smapsType: [0, 1, 2],
-    };
-    tabPaneSmapsStatistics.data = select;
-    expect((tabPaneSmapsStatistics.data = select)).toBeTruthy();
+    expect(tabPaneSmapsStatistics.sortByColumn('sizeStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest05', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('', 0)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest06', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('count', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest07', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('rssStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest08', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('typeName', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest09', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('pssStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest10', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('sharedCleanStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest11', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('sharedDirtyStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest12', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('privateCleanStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest13', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('privateDirtyStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest14', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('swapStr', 1)).toBeUndefined();
+  });
+  it('TabPaneSmapsStatisticsTest15', () => {
+    expect(tabPaneSmapsStatistics.sortByColumn('swapPssStr', 1)).toBeUndefined();
   });
 });

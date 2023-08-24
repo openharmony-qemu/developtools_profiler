@@ -17,6 +17,7 @@
 import { SpProcessChart } from '../../../../dist/trace/component/chart/SpProcessChart.js';
 // @ts-ignore
 import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
+
 const sqlit = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
 
@@ -208,6 +209,328 @@ describe('SpProcessChart Test', () => {
     },
   ]);
 
+  let queryProcessStartup = sqlit.queryProcessStartup;
+  queryProcessStartup.mockResolvedValue([
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 366,
+      'startTs': 5651745832,
+      'dur': 38654167,
+      'startName': 0,
+      'endItid': 341,
+      'frame': {
+        'y': 5,
+        'height': 20,
+        'x': 1154,
+        'width': 9
+      },
+      'v': true,
+      'stepName': 'Process Creating (38.65ms)',
+      'textMetricsWidth': 129.072265625
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 341,
+      'startTs': 5690399999,
+      'dur': 43619792,
+      'startName': 1,
+      'endItid': 486,
+      'frame': {
+        'y': 5,
+        'height': 20,
+        'x': 1162,
+        'width': 10
+      },
+      'v': true,
+      'stepName': 'Application Launching (43.62ms)',
+      'textMetricsWidth': 156.416015625
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5734019791,
+      'dur': 23194270,
+      'startName': 2,
+      'endItid': 486,
+      'frame': {
+        'y': 5,
+        'height': 20,
+        'x': 1171,
+        'width': 6
+      },
+      'v': true
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5757214061,
+      'dur': 115679167,
+      'startName': 3,
+      'endItid': 486,
+      'frame': {
+        'y': 5,
+        'height': 20,
+        'x': 1176,
+        'width': 24
+      },
+      'v': true,
+      'stepName': 'UI Ability OnForeground (115.68ms)',
+      'textMetricsWidth': 172.59765625
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5872893228,
+      'dur': 62756250,
+      'startName': 4,
+      'frame': {
+        'y': 5,
+        'height': 20,
+        'x': 1199,
+        'width': 14
+      },
+      'v': true,
+      'stepName': 'First Frame - APP Phase (62.76ms)',
+      'textMetricsWidth': 162.9638671875
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 17,
+      'startTs': 5968040103,
+      'dur': 29438021,
+      'startName': 5,
+      'frame': {
+        'y': 5,
+        'height': 20,
+        'x': 1219,
+        'width': 7
+      },
+      'v': true
+    }
+  ]);
+
+  let queryProcessSoInitData = sqlit.queryProcessSoInitData;
+  queryProcessSoInitData.mockResolvedValue([
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5678439061,
+      'dur': 1137500,
+      'soName': ' /system/lib64/seccomp/libapp_filter.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1160,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5682777082,
+      'dur': 1130729,
+      'soName': ' /system/lib64/libhidebug.so',
+      'depth': 0,
+      'frame': {
+        'x': 1160,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5696226041,
+      'dur': 4319791,
+      'soName': ' system/lib64/extensionability/libinputmethod_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1163,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5700671874,
+      'dur': 4128125,
+      'soName': ' system/lib64/extensionability/libbackup_extension_ability_native.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1164,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5704894270,
+      'dur': 2187500,
+      'soName': ' system/lib64/extensionability/libwindow_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1165,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5707165624,
+      'dur': 1503125,
+      'soName': ' system/lib64/extensionability/libdatashare_ext_ability_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1165,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5708719791,
+      'dur': 2018229,
+      'soName': ' system/lib64/extensionability/libpush_extension.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1166,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5710788020,
+      'dur': 846875,
+      'soName': ' system/lib64/extensionability/libenterprise_admin_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1166,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5711693749,
+      'dur': 1522917,
+      'soName': ' system/lib64/extensionability/libstatic_subscriber_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1166,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5713377603,
+      'dur': 1327604,
+      'soName': ' system/lib64/extensionability/libui_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1167,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5714757291,
+      'dur': 2567187,
+      'soName': ' system/lib64/extensionability/libauthorization_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1167,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5717385936,
+      'dur': 2341146,
+      'soName': ' system/lib64/extensionability/libaccessibility_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1167,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5719780728,
+      'dur': 1603646,
+      'soName': ' system/lib64/extensionability/libservice_extension_module.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1168,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    },
+    {
+      'pid': 3913,
+      'tid': 3913,
+      'itid': 486,
+      'startTs': 5721437499,
+      'dur': 1314583,
+      'soName': ' system/lib64/extensionability/libworkschedextension.z.so',
+      'depth': 0,
+      'frame': {
+        'x': 1168,
+        'y': 0,
+        'width': 1,
+        'height': 20
+      }
+    }
+  ]);
+
+  spProcessChart.setAttribute = jest.fn();
+  spProcessChart.addChildTraceRow = jest.fn();
   it('SpProcessChart01', function () {
     spProcessChart.initAsyncFuncData();
     spProcessChart.init();
@@ -222,5 +545,15 @@ describe('SpProcessChart Test', () => {
     spProcessChart.initAsyncFuncData();
     spProcessChart.initDeliverInputEvent();
     expect(spProcessChart.processAsyncFuncArray.length).toEqual(1);
+  });
+
+  it('SpProcessChart04', function () {
+    let startUpRow = spProcessChart.addStartUpRow(spProcessChart);
+    expect(startUpRow).not.toBeUndefined();
+  });
+
+  it('SpProcessChart05', function () {
+    let soInitRow = spProcessChart.addSoInitRow(spProcessChart, 1);
+    expect(soInitRow).not.toBeUndefined();
   });
 });

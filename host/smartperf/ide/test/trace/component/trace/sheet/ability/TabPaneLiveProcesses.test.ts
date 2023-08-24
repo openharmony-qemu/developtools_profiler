@@ -14,6 +14,11 @@
  */
 //@ts-ignore
 import { TabPaneLiveProcesses } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneLiveProcesses.js';
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
+  return {};
+});
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -24,7 +29,29 @@ window.ResizeObserver =
 
 describe('TabPaneLiveProcesses Test', function () {
   let tabPaneLiveProcesses = new TabPaneLiveProcesses();
-
+  let val = [
+    {
+      startNs: 0,
+      rightNs: 1000,
+      leftNs:0,
+    }
+  ];
+  let getTabLiveProcessData = sqlite.getTabLiveProcessData;
+  let liveProcessData = [
+    {
+      processId: 0,
+      cpu: 1000,
+      threads:2,
+      memory:2,
+      processName:'aa',
+      responsibleProcess:1,
+      userName:2,
+      cpuTime:4,
+      diskReads:20,
+      diskWrite:10,
+    }
+  ];
+  getTabLiveProcessData.mockResolvedValue(liveProcessData);
   it('TabPaneLiveProcessesTest01 ', function () {
     tabPaneLiveProcesses.queryLiveResult.length = 1;
     expect(tabPaneLiveProcesses.filterData()).toBeUndefined();
@@ -91,5 +118,8 @@ describe('TabPaneLiveProcesses Test', function () {
 
   it('TabPaneLiveProcessesTest08', function () {
     expect(tabPaneLiveProcesses.timeFormat(10)).toBe('10 ms ');
+  });
+  it('TabPaneLiveProcessesTest09', function () {
+    expect(tabPaneLiveProcesses.queryDataByDB(val)).toBeUndefined();
   });
 });

@@ -18,7 +18,10 @@ jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => 
 });
 
 // @ts-ignore
-import { FrameDynamicRender, FrameDynamicStruct, } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import {
+  FrameDynamicRender,
+  FrameDynamicStruct,
+} from '../../../../dist/trace/database/ui-worker/ProcedureWorkerFrameDynamic.js';
 // @ts-ignore
 import { Rect } from '../../../../dist/trace/component/trace/timer-shaft/Rect.js';
 // @ts-ignore
@@ -79,7 +82,7 @@ describe('FrameDynamic Test', () => {
     useCache: false,
     context: ctx,
     type: 'dynamicEffectCurve',
-    animationRanges: [{ start: 4091445476, end: 4774481414 }],
+    animationRanges: [{start: 4091445476, end: 4774481414}],
   };
   TraceRow.range = {
     startNS: 0,
@@ -87,7 +90,7 @@ describe('FrameDynamic Test', () => {
     totalNS: 16868000000,
   };
 
-  let animationRanges = [{ start: 4091445476, end: 4774481414 }];
+  let animationRanges = [{start: 4091445476, end: 4774481414}];
   frameDynamicRender.frameDynamic(dataList, [], TraceRow.skeleton(), animationRanges, false);
 
   it('FrameDynamicTest01', function () {
@@ -113,10 +116,10 @@ describe('FrameDynamic Test', () => {
   });
 
   it('FrameDynamicTest03', function () {
-    frameDynamicRender.renderMainThread(req, {
-      dataList: dataList,
-      dataListCache: dataList,
-    });
+    let row = TraceRow.skeleton();
+    row.dataList = dataList;
+    row.dataListCache = dataList;
+    frameDynamicRender.renderMainThread(req, row);
     let currDynamicStruct = {
       alpha: '1.00',
       appName: 'test',

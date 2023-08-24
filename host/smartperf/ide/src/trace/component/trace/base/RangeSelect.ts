@@ -90,7 +90,8 @@ export class RangeSelect {
         this.endY = 0;
         this.endY2 = mouseEventUp.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
       } else {
-	    this.endY = mouseEventUp.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
+        this.endY =
+          mouseEventUp.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
         this.endY2 = mouseEventUp.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
       }
       if (this.selectHandler) {
@@ -125,7 +126,8 @@ export class RangeSelect {
         this.endY = 0;
         this.endY2 = mouseEventOut.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
       } else {
-	    this.endY = mouseEventOut.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
+        this.endY =
+          mouseEventOut.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
         this.endY2 = mouseEventOut.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
       }
       if (this.selectHandler && this.isMouseDown) {
@@ -232,8 +234,7 @@ export class RangeSelect {
         rt = new Rect(xMin, Math.min(this.startY2, this.endY2), xMax - xMin, Math.abs(this.startY2 - this.endY2));
       } else {
         bound = it.getBoundingClientRect();
-        if (spacerRect.height > 0 &&
-          (bound.y + bound.height) < (spacerRect.y + spacerRect.height)) {
+        if (spacerRect.height > 0 && bound.y + bound.height < spacerRect.y + spacerRect.height) {
           it.rangeSelect = false;
           return false;
         }

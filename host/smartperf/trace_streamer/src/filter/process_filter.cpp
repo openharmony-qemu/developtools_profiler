@@ -105,14 +105,14 @@ uint32_t ProcessFilter::UpdateOrCreateProcessWithName(uint32_t pid, std::string_
     uint32_t internalPid = 0;
     TraceStdtype::Process* process = nullptr;
     std::tie(internalPid, process) = CreateProcessMaybe(pid, 0);
-    if (process && process->cmdLine_ != name) {
+    if (process && name != "" && process->cmdLine_ != name) {
         process->cmdLine_ = std::string(name);
     }
     // update main thread name
     auto internalTid = GetInternalTid(pid, pid);
     if (internalTid != INVALID_ID) {
         auto thread = traceDataCache_->GetThreadData(internalTid);
-        thread->nameIndex_ = traceDataCache_->GetDataIndex(name);
+        thread->nameIndex_ = traceDataCache_->GetDataIndex(process->cmdLine_);
     }
     return internalPid;
 }

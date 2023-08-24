@@ -231,6 +231,7 @@ export class SpProbesConfig extends BaseElement {
       { value: 'sensors', isSelect: false },
       { value: 'sync', isSelect: true },
       { value: 'usb', isSelect: false },
+      { value: 'ufs', isSelect: false },
       { value: 'useriam', isSelect: false },
       { value: 'window', isSelect: true },
       { value: 'workq', isSelect: true },

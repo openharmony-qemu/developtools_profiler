@@ -48,7 +48,6 @@ describe('SpMetrics Test', () => {
     expect(spMetrics.initHtml()).toMatchInlineSnapshot(`
 "
         <style>
-
         :host{
             width: 100%;
             height: 100%;
@@ -57,7 +56,6 @@ describe('SpMetrics Test', () => {
             padding: 0;
             font-size:16px;
         }
-
         .metric{
             display: flex;
             flex-direction: column;
@@ -68,7 +66,6 @@ describe('SpMetrics Test', () => {
             right: 0;
             background-color: var(--dark-background5,#F6F6F6);
         }
-
         .metric-select{
             color: #121212;
             border-radius: 16px;
@@ -77,13 +74,11 @@ describe('SpMetrics Test', () => {
             margin: 2% 2.5% 0 2.5%;
             grid-row-gap: 30px;
         }
-
         .request{
             min-height: 15vh;
             overflow: auto;
             position: relative;
         }
-
         .sql-select{
             font-family: Helvetica,serif;
             color: var(--dark-color1,#212121);
@@ -101,7 +96,6 @@ describe('SpMetrics Test', () => {
             -webkit-appearance: none;
             background: url('img/down.png') no-repeat 98% center var(--dark-background3,#FFFFFF);
         }
-
         button{
             border-radius: 16px;
             flex-grow: 1;
@@ -118,12 +112,10 @@ describe('SpMetrics Test', () => {
             opacity: 0.6;
             cursor:pointer;
         }
-
         .response{
             flex-grow: 1;
             margin-bottom: 1%;
         }
-
         .response-json{
             background-color: var(--dark-background3,#FFFFFF);
             border-radius: 16px;
@@ -140,7 +132,6 @@ describe('SpMetrics Test', () => {
             outline:none;
             resize:none;
         }
-
         p{
              display: table-cell;
              padding: 20% 0;
@@ -165,9 +156,7 @@ describe('SpMetrics Test', () => {
             width: 95%;
             bottom: 0;
         }
-
         </style>
-
         <div class="metric">
             <div class="metric-select request">
                 <p>Select a metric</p>

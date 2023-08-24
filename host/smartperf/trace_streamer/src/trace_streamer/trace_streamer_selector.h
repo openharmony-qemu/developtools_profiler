@@ -50,6 +50,8 @@ public:
         return fileType_;
     }
     void UpdateAnimationTraceStatus(bool status);
+    void UpdateTaskPoolTraceStatus(bool status);
+    void UpdateAppStartTraceStatus(bool status);
 
 private:
     void InitFilter();

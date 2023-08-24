@@ -14,6 +14,8 @@
  */
 //@ts-ignore
 import { TabPaneHistoryProcesses } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneHistoryProcesses.js';
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -24,6 +26,27 @@ window.ResizeObserver =
 
 describe('TabPaneHistoryProcesses Test', function () {
   let tabPaneHistoryProcesses = new TabPaneHistoryProcesses();
+  let val = [
+    {
+      startNs: 0,
+      rightNs: 1000,
+      leftNs:0,
+    }
+  ];
+  let getTabProcessHistoryData = sqlite.getTabProcessHistoryData;
+  let processHistoryData = [
+    {
+      processId: 0,
+      alive: 1000,
+      firstSeen:2,
+      lastSeen:2,
+      processName:'aa',
+      responsibleProcess:1,
+      userName:2,
+      cpuTime:4,
+    }
+  ];
+  getTabProcessHistoryData.mockResolvedValue(processHistoryData);
   it('TabPaneHistoryProcessesTest01 ', function () {
     tabPaneHistoryProcesses.queryHistoryResult.length = 1;
     expect(tabPaneHistoryProcesses.filterData()).toBeUndefined();
@@ -93,5 +116,8 @@ describe('TabPaneHistoryProcesses Test', function () {
 
   it('TabPaneHistoryProcessesTest10', function () {
     expect(tabPaneHistoryProcesses.timeFormat(0)).toBe('0 ms ');
+  });
+  it('TabPaneHistoryProcessesTest11', function () {
+    expect(tabPaneHistoryProcesses.queryDataByDB(val)).toBeUndefined();
   });
 });

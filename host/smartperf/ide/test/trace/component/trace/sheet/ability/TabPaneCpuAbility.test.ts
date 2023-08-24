@@ -14,6 +14,8 @@
  */
 // @ts-ignore
 import { TabPaneCpuAbility } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneCpuAbility.js';
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -25,7 +27,25 @@ window.ResizeObserver =
 
 describe('TabPaneCpuAbility Test', () => {
   let tabPaneCpuAbility = new TabPaneCpuAbility();
-
+  let val = [
+    {
+      startNs: 0,
+      rightNs: 1000,
+      leftNs:0,
+    }
+  ];
+  let getTabCpuData = sqlite.getTabCpuAbilityData;
+  let cpuData = [
+    {
+      startTime: 0,
+      duration: 1000,
+      totalLoad:2,
+      userLoad:2,
+      systemLoad:3,
+      threads:1,
+    }
+  ];
+  getTabCpuData.mockResolvedValue(cpuData);
   it('TabPaneCpuAbilityTest01', function () {
     tabPaneCpuAbility.queryCpuResult.length = 2;
     expect(tabPaneCpuAbility.filterData()).toBeUndefined();
@@ -88,6 +108,12 @@ describe('TabPaneCpuAbility Test', () => {
       tabPaneCpuAbility.sortByColumn({
         key: 'durationStr',
       })
+    ).toBeUndefined();
+  });
+  it('TabPaneCpuAbilityTest09 ', function () {
+    expect(
+        tabPaneCpuAbility.queryDataByDB({val
+        })
     ).toBeUndefined();
   });
 });
