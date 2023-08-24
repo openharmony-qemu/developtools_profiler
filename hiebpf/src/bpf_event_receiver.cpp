@@ -299,7 +299,7 @@ int BPFEventReceiver::EncodeFSTraceEvent(
     item->type_ = static_cast<uint16_t>(cmplt_event->start_event.type);
     CHECK_TRUE(strncpy_s(item->typeName_, MAX_TYPE_NAME_LEN,
                          gFSTraceTypeTable[item->type_].c_str(),
-                         gFSTraceTypeTable[item->type_].size() == EOK),
+                         gFSTraceTypeTable[item->type_].size()) == EOK,
                -1, "failed to copy fstrace type name");
     CHECK_TRUE(ConvertFSTraceArgsToArray(item->args_, &cmplt_event->start_event) == 0, -1,
                "failed to convert fstrace event args");
@@ -326,7 +326,7 @@ int BPFEventReceiver::EncodePFTraceEvent(
     item->pid_ = cmplt_event->tgid;
     item->tid_ = cmplt_event->pid;
     CHECK_TRUE(strncpy_s(item->tracerName_, MAX_TRACER_NAME_LEN,
-                         gTracerTable[PFTRACE].c_str(), gTracerTable[PFTRACE].size() == EOK),
+                         gTracerTable[PFTRACE].c_str(), gTracerTable[PFTRACE].size()) == EOK,
                -1, "failed to copy pftrace tracer name");
     item->stime_ = cmplt_event->start_event.stime;
     item->ctime_ = cmplt_event->ctime;
