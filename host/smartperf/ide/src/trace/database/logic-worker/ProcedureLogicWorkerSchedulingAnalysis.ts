@@ -550,7 +550,18 @@ where cpu not null
         if (map.has(ca.cpu)) {
           map.get(ca.cpu)!.push(ca);
         } else {
-          map.set(ca.cpu, [ca]);
+          let cpuArr: CpuMeasure[] = [];
+          if (ca.ts > 0) {
+            cpuArr.push({
+              cpu: ca.cpu,
+              value: -1,
+              block: '',
+              ts: 0,
+              dur: ca.ts,
+            })
+          }
+          cpuArr.push(ca)
+          map.set(ca.cpu, cpuArr);
         }
       }
     }

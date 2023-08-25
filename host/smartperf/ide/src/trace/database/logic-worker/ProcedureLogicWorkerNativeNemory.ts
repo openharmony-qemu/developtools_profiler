@@ -15,9 +15,7 @@
 import {
   convertJSON,
   DataCache,
-  formatRealDateMs,
   getByteWithUnit,
-  getTimeString,
   HeapTreeDataBean,
   LogicHandler,
   MerageBean,
@@ -25,6 +23,7 @@ import {
   postMessage,
   setFileName,
 } from './ProcedureLogicWorkerCommon.js';
+
 export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
   selectTotalSize = 0;
   selectTotalCount = 0;
@@ -44,7 +43,11 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
   totalNS: number = 0;
   isAnalysis: boolean = false;
   isStatistic: boolean = false;
+  boxRangeNativeHook: Array<NativeMemory> = [];
+  clearBoxSelectionData: boolean = false;
+  nativeMemoryArgs?: Map<string, any>
   private dataCache = DataCache.getInstance();
+
   handle(data: any): void {
     this.currentEventId = data.id;
     if (data && data.type) {
@@ -142,9 +145,36 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
             }
           }
           break;
+        case 'native-memory-queryNativeHookEvent':
+          if (data.params) {
+            if (data.params.list) {
+              this.boxRangeNativeHook = convertJSON(data.params.list);
+              if (this.nativeMemoryArgs?.get('refresh')) {
+                this.clearBoxSelectionData = this.boxRangeNativeHook.length > 100_0000;
+              }
+              this.supplementNativeHoodData();
+              postMessage(data.id, data.action, this.resolvingActionNativeMemory(this.nativeMemoryArgs!), 100_0000);
+              if (this.clearBoxSelectionData) {
+                this.boxRangeNativeHook = [];
+              }
+            } else if (data.params.get('refresh') || this.boxRangeNativeHook.length === 0) {
+              this.nativeMemoryArgs = data.params;
+              let leftNs = data.params.get('leftNs');
+              let rightNs = data.params.get('rightNs');
+              let types = data.params.get('types');
+              this.boxRangeNativeHook = [];
+              this.queryNativeHookEvent(leftNs, rightNs, types);
+            } else {
+              this.nativeMemoryArgs = data.params;
+              postMessage(data.id, data.action, this.resolvingActionNativeMemory(this.nativeMemoryArgs!), 100_0000);
+              if (this.clearBoxSelectionData) {
+                this.boxRangeNativeHook = [];
+              }
+            }
+          }
+          break;
         case 'native-memory-action':
           if (data.params) {
-            // @ts-ignore
             self.postMessage({
               id: data.id,
               action: data.action,
@@ -223,8 +253,9 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
       {}
     );
   }
+
   queryNativeHookStatistic(type: number) {
-    let condition = '';
+    let condition: string;
     if (type === 0) {
       condition = 'and type = 0';
     } else if (type === 1) {
@@ -243,6 +274,89 @@ from native_hook_statistic,trace_range
 where ts between start_ts and end_ts ${condition};
         `;
     this.queryData(this.currentEventId, 'native-memory-queryNativeHookStatistic', sql, {});
+  }
+
+  queryNativeHookEvent(leftNs: number, rightNs: number, types: Array<string>) {
+    let condition = types.length === 1 ? `and A.event_type = ${types[0]}` : `and (A.event_type = 'AllocEvent' or A.event_type = 'MmapEvent')`;
+    let libId = this.nativeMemoryArgs?.get('filterResponseType');
+    let allocType = this.nativeMemoryArgs?.get('filterAllocType');
+    let eventType = this.nativeMemoryArgs?.get('filterEventType');
+    if (libId !== undefined && libId !== -1) {
+      condition = `${condition} and last_lib_id = ${libId}`;// filter lib
+    }
+    if (eventType === '1') {
+      condition = `${condition} and event_type = 'AllocEvent'`;
+    }
+    if (eventType === '2') {
+      condition = `${condition} and event_type = 'MmapEvent'`;
+    }
+    if (allocType === '1') {
+      condition = `${condition} and ((A.end_ts - B.start_ts) > ${rightNs} or A.end_ts is null)`;
+    }
+    if (allocType === '2') {
+      condition = `${condition} and (A.end_ts - B.start_ts) <= ${rightNs}`;
+    }
+    let sql = `
+    select
+      callchain_id as eventId,
+      event_type as eventType,
+      heap_size as heapSize,
+      ('0x' || addr) as addr,
+      (A.start_ts - B.start_ts) as startTs,
+      (A.end_ts - B.start_ts) as endTs,
+      tid as threadId,
+      sub_type_id as subTypeId,
+      ifnull(last_lib_id,0) as lastLibId
+    from
+      native_hook A,
+      trace_range B
+    left join
+      thread t
+    on
+      A.itid = t.id
+    where
+    A.start_ts - B.start_ts between ${leftNs} and ${rightNs} ${condition}
+    `;
+    this.queryData(this.currentEventId, 'native-memory-queryNativeHookEvent', sql, {});
+  }
+
+  supplementNativeHoodData() {
+    let len = this.boxRangeNativeHook.length;
+    for(let i = 0, j = len -1; i <= j; i++, j--){
+      this.fillNativeHook(this.boxRangeNativeHook[i], i);
+      if (i !== j) {
+        this.fillNativeHook(this.boxRangeNativeHook[j], j);
+      }
+    }
+  }
+
+  fillNativeHook(memory: NativeMemory, index: number) {
+    if (memory.subTypeId !== null && memory.subType === undefined) {
+      memory.subType = this.dataCache.dataDict.get(memory.subTypeId) || '-';
+    }
+    memory.index = index;
+    let arr = this.dataCache.nmHeapFrameMap.get(memory.eventId) || [];
+    let frame = Array.from(arr)
+      .reverse()
+      .find((item) => {
+        let fileName = this.dataCache.dataDict.get(item.fileId);
+        return !((fileName ?? '').includes('libc++') || (fileName ?? '').includes('musl'));
+      });
+    if (frame === null || frame === undefined) {
+      if (arr.length > 0) {
+        frame = arr[0];
+      }
+    }
+    if (frame !== null && frame !== undefined) {
+      memory.symbol = this.groupCutFilePath(frame.symbolId, this.dataCache.dataDict.get(frame.symbolId) || '');
+      memory.library = this.groupCutFilePath(
+        frame.fileId,
+        this.dataCache.dataDict.get(frame.fileId) || 'Unknown Path'
+      );
+    } else {
+      memory.symbol = '-';
+      memory.library = '-';
+    }
   }
 
   statisticDataHandler(arr: Array<any>) {
@@ -367,12 +481,17 @@ where ts between start_ts and end_ts ${condition};
   }
   resolvingAction(paramMap: Map<string, any>): Array<NativeHookCallInfo | NativeMemory | HeapStruct> {
     let actionType = paramMap.get('actionType');
-    if (actionType == 'call-info') {
-      return this.resolvingActionCallInfo(paramMap);
-    } else if (actionType == 'native-memory') {
-      return this.resolvingActionNativeMemory(paramMap);
-    } else if (actionType == 'memory-stack') {
+    if (actionType === 'memory-stack') {
       return this.resolvingActionNativeMemoryStack(paramMap);
+    } else if (actionType === 'native-memory-state-change') {
+      let startTs = paramMap.get('startTs');
+      let currentSelection = this.boxRangeNativeHook.filter((item) => {
+        return item.startTs === startTs;
+      });
+      if (currentSelection.length > 0) {
+        currentSelection[0].isSelected = true;
+      }
+      return [];
     } else {
       return [];
     }
@@ -492,119 +611,78 @@ where ts between start_ts and end_ts ${condition};
     });
     return arr;
   }
+
   resolvingActionNativeMemory(paramMap: Map<string, any>): Array<NativeMemory> {
-    let dataSource = paramMap.get('data') as Array<NativeHookStatistics>;
     let filterAllocType = paramMap.get('filterAllocType');
     let filterEventType = paramMap.get('filterEventType');
     let filterResponseType = paramMap.get('filterResponseType');
     let leftNs = paramMap.get('leftNs');
     let rightNs = paramMap.get('rightNs');
+    let sortColumn = paramMap.get('sortColumn');
+    let sortType = paramMap.get('sortType');
     let statisticsSelection = paramMap.get('statisticsSelection');
-    let filter = dataSource.filter((item) => {
-      if (item.subTypeId != null && item.subType == undefined) {
-        item.subType = this.dataCache.dataDict.get(item.subTypeId) || '-';
-      }
-      let filterAllocation = true;
-      if (filterAllocType == '1') {
-        filterAllocation =
-          item.startTs >= leftNs &&
-          item.startTs <= rightNs &&
-          (item.endTs > rightNs || item.endTs == 0 || item.endTs == null);
-      } else if (filterAllocType == '2') {
-        filterAllocation =
-          item.startTs >= leftNs &&
-          item.startTs <= rightNs &&
+    let filter = this.boxRangeNativeHook;
+    if ((filterAllocType !== undefined && filterAllocType !== 0) ||
+      (filterEventType !== undefined && filterEventType !== 0) ||
+      (filterResponseType !== undefined && filterResponseType !== -1)
+    ) {
+      filter = this.boxRangeNativeHook.filter((item) => {
+        let filterAllocation = true;
+        let freed = item.endTs > leftNs &&
           item.endTs <= rightNs &&
-          item.endTs != 0 &&
-          item.endTs != null;
-      }
-      let filterNative = this.getTypeFromIndex(parseInt(filterEventType), item, statisticsSelection);
-      let filterLastLib = filterResponseType == -1 ? true : filterResponseType == item.lastLibId;
-      return filterAllocation && filterNative && filterLastLib;
-    });
-    let data: Array<NativeMemory> = [];
-    for (let i = 0, len = filter.length; i < len; i++) {
-      let hook = filter[i];
-      let memory = new NativeMemory();
-      memory.index = i;
-      memory.eventId = hook.eventId;
-      memory.eventType = hook.eventType;
-      memory.subType = hook.subType;
-      memory.heapSize = hook.heapSize;
-      memory.endTs = hook.endTs;
-      memory.heapSizeUnit = getByteWithUnit(hook.heapSize);
-      memory.addr = '0x' + hook.addr;
-      memory.startTs = hook.startTs;
-      memory.timestamp =
-        this.realTimeDif == 0 ? getTimeString(hook.startTs) : formatRealDateMs(hook.startTs + this.realTimeDif);
-      memory.state = hook.endTs > leftNs && hook.endTs <= rightNs ? 'Freed' : 'Existing';
-      memory.threadId = hook.tid;
-      memory.threadName = hook.threadName;
-      memory.lastLibId = hook.lastLibId;
-      (memory as any).isSelected = hook.isSelected;
-      let arr = this.dataCache.nmHeapFrameMap.get(hook.eventId) || [];
-      let frame = Array.from(arr)
-        .reverse()
-        .find((item) => {
-          let fileName = this.dataCache.dataDict.get(item.fileId);
-          return !((fileName ?? '').includes('libc++') || (fileName ?? '').includes('musl'));
-        });
-      if (frame == null || frame == undefined) {
-        if (arr.length > 0) {
-          frame = arr[0];
+          item.endTs !== 0 &&
+          item.endTs !== null;
+        if (filterAllocType === '1') {
+          filterAllocation = !freed;
+        } else if (filterAllocType == '2') {
+          filterAllocation = freed;
         }
-      }
-      if (frame != null && frame != undefined) {
-        memory.symbol = this.groupCutFilePath(frame.symbolId, this.dataCache.dataDict.get(frame.symbolId) || '');
-        memory.library = this.groupCutFilePath(
-          frame.fileId,
-          this.dataCache.dataDict.get(frame.fileId) || 'Unknown Path'
-        );
-      } else {
-        memory.symbol = '-';
-        memory.library = '-';
-      }
-      data.push(memory);
+        let filterNative = this.getTypeFromIndex(parseInt(filterEventType), item, statisticsSelection);
+        let filterLastLib = filterResponseType == -1 ? true : filterResponseType == item.lastLibId;
+        return filterAllocation && filterNative && filterLastLib;
+      });
     }
-    return data;
+    if (sortColumn !== undefined && sortType !== undefined && sortColumn !== '' && sortType !== 0) {
+      return this.sortByNativeMemoryColumn(sortColumn, sortType, filter);
+    } else {
+      return filter;
+    }
   }
-  resolvingActionCallInfo(paramMap: Map<string, any>): Array<NativeHookCallInfo> {
-    let dataSource = paramMap.get('data') as Array<NativeHookStatistics>;
-    let filterAllocType = paramMap.get('filterAllocType');
-    let filterEventType = paramMap.get('filterEventType');
-    let leftNs = paramMap.get('leftNs');
-    let rightNs = paramMap.get('rightNs');
-    let filter: Array<NativeHookStatistics> = [];
-    dataSource.map((item) => {
-      let filterAllocation = true;
-      let filterNative = true;
-      if (filterAllocType == '1') {
-        filterAllocation =
-          item.startTs >= leftNs &&
-          item.startTs <= rightNs &&
-          (item.endTs > rightNs || item.endTs == 0 || item.endTs == null);
-      } else if (filterAllocType == '2') {
-        filterAllocation =
-          item.startTs >= leftNs &&
-          item.startTs <= rightNs &&
-          item.endTs <= rightNs &&
-          item.endTs != 0 &&
-          item.endTs != null;
-      }
-      if (filterEventType == '1') {
-        filterNative = item.eventType == 'AllocEvent';
-      } else if (filterEventType == '2') {
-        filterNative = item.eventType == 'MmapEvent';
-      }
-      if (filterAllocation && filterNative) {
-        filter.push(item);
-      }
-    });
-    this.freshCurrentCallchains(filter, true);
-    return this.allThreads;
+
+  sortByNativeMemoryColumn(nmMemoryColumn: string, nmMemorySort: number, list: Array<NativeMemory>) {
+    if (nmMemorySort === 0) {
+      return list;
+    } else {
+      return list.sort((memoryLeftData: any, memoryRightData: any) => {
+        if (nmMemoryColumn === 'index' || nmMemoryColumn === 'startTs' || nmMemoryColumn === 'heapSize') {
+          return nmMemorySort == 1
+            ? memoryLeftData[nmMemoryColumn] - memoryRightData[nmMemoryColumn]
+            : memoryRightData[nmMemoryColumn] - memoryLeftData[nmMemoryColumn];
+        } else {
+          if (nmMemorySort == 1) {
+            if (memoryLeftData[nmMemoryColumn] > memoryRightData[nmMemoryColumn]) {
+              return 1;
+            } else if (memoryLeftData[nmMemoryColumn] === memoryRightData[nmMemoryColumn]) {
+              return 0;
+            } else {
+              return -1;
+            }
+          } else {
+            if (memoryRightData[nmMemoryColumn] > memoryLeftData[nmMemoryColumn]) {
+              return 1;
+            } else if (memoryLeftData[nmMemoryColumn] == memoryRightData[nmMemoryColumn]) {
+              return 0;
+            } else {
+              return -1;
+            }
+          }
+        }
+      });
+    }
   }
+
   groupCutFilePath(fileId: number, path: string): string {
-    let name = '';
+    let name: string;
     if (this.dataCache.nmFileDict.has(fileId)) {
       name = this.dataCache.nmFileDict.get(fileId) ?? '';
     } else {
@@ -614,32 +692,7 @@ where ts between start_ts and end_ts ${condition};
     }
     return name == '' ? '-' : name;
   }
-  mergeTree(target: NativeHookCallInfo, src: NativeHookCallInfo) {
-    let len = src.children.length;
-    src.size += target.size;
-    src.heapSizeStr = `${getByteWithUnit(src!.size)}`;
-    src.heapPercent = `${((src!.size / this.selectTotalSize) * 100).toFixed(1)}%`;
-    if (len == 0) {
-      src.children.push(target);
-    } else {
-      let index = src.children.findIndex((hook) => hook.symbol == target.symbol && hook.depth == target.depth);
-      if (index != -1) {
-        let srcChild = <NativeHookCallInfo>src.children[index];
-        srcChild.count += target.count;
-        srcChild!.countValue = `${srcChild.count}`;
-        srcChild!.countPercent = `${((srcChild!.count / this.selectTotalCount) * 100).toFixed(1)}%`;
-        if (target.children.length > 0) {
-          this.mergeTree(<NativeHookCallInfo>target.children[0], <NativeHookCallInfo>srcChild);
-        } else {
-          srcChild.size += target.size;
-          srcChild.heapSizeStr = `${getByteWithUnit(src!.size)}`;
-          srcChild.heapPercent = `${((srcChild!.size / this.selectTotalSize) * 100).toFixed(1)}%`;
-        }
-      } else {
-        src.children.push(target);
-      }
-    }
-  }
+
   traverseSampleTree(stack: NativeHookCallInfo, hook: NativeHookStatistics) {
     stack.count += 1;
     stack.countValue = `${stack.count}`;
@@ -672,7 +725,7 @@ where ts between start_ts and end_ts ${condition};
   }
   getTypeFromIndex(
     indexOf: number,
-    item: NativeHookStatistics,
+    item: NativeHookStatistics | NativeMemory,
     statisticsSelection: Array<StatisticsSelection>
   ): boolean {
     if (indexOf == -1) {
@@ -715,6 +768,8 @@ where ts between start_ts and end_ts ${condition};
     this.currentTreeMapData = {};
     this.currentTreeList.length = 0;
     this.responseTypes.length = 0;
+    this.boxRangeNativeHook = [];
+    this.nativeMemoryArgs?.clear();
   }
 
   queryCallchainsSamples(action: string, leftNs: number, rightNs: number, types: Array<string>) {
@@ -1133,14 +1188,18 @@ where ts between start_ts and end_ts ${condition};
     });
   }
   getFilterLevel(len: number): number {
-    if (len > 100_0000) {
+    if (len > 300_0000) {
+      return 50_0000;
+    } else if (len > 200_0000) {
+      return 30_0000;
+    } else if (len > 100_0000) {
       return 10_0000;
     } else if (len > 50_0000) {
       return 5_0000;
     } else if (len > 30_0000) {
       return 2_0000;
     } else if (len > 15_0000) {
-      return 5000;
+      return 1_0000;
     } else {
       return 0;
     }
@@ -1226,20 +1285,18 @@ export class NativeMemory {
   eventId: number = 0;
   eventType: string = '';
   subType: string = '';
+  subTypeId: number = 0;
   addr: string = '';
   startTs: number = 0;
   endTs: number = 0;
-  timestamp: string = '';
   heapSize: number = 0;
-  heapSizeUnit: string = '';
   symbol: string = '';
   library: string = '';
   lastLibId: number = 0;
   isSelected: boolean = false;
-  state: string = '';
   threadId: number = 0;
-  threadName: string = '';
 }
+
 export class HeapStruct {
   startTime: number | undefined;
   endTime: number | undefined;

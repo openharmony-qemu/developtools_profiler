@@ -84,6 +84,5 @@ else
     prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name
     if [ "$target" != "protoc" ] && [ "$target" != "spb" ];then
         cp -r out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name/* out/"$target_dir""$ext"/
-        rm -rf out/"$target_dir""$ext"/$clang_dir
     fi
 fi

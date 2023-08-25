@@ -875,7 +875,9 @@ void HtraceEventParser::FilterAllEvents()
     streamFilters_->cpuFilter_->Finish();
     traceDataCache_->dataDict_.Finish();
     traceDataCache_->UpdataZeroThreadInfo();
-    streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
+    if (traceDataCache_->AppStartTraceEnabled()) {
+        streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
+    }
 }
 void HtraceEventParser::Clear()
 {

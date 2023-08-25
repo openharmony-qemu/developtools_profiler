@@ -110,6 +110,10 @@ enum SupportedTraceEventType {
     TRACE_VSYNC,
     TRACE_ONVSYNC,
     TRACE_FRAMEQUEUE,
+    TRACE_ASHMEM,
+    TRACE_DMAMEM,
+    TRACE_GPU_PROCESS_MEM,
+    TRACE_GPU_WINDOW_MEM,
     TRACE_EVENT_OTHER,
     TRACE_EVENT_MAX
 };
@@ -123,6 +127,9 @@ enum MemInfoType {
     MEM_VM_LOCKED,
     MEM_VM_HWM,
     MEM_OOM_SCORE_ADJ,
+    MEM_PURG_SUM,
+    MEM_PURG_PIN,
+    MEM_GL_PSS,
     MEM_MAX
 };
 enum StatType {
@@ -277,6 +284,10 @@ private:
     const std::string TRACE_ACTION_VSYNC = "trace_vsync";
     const std::string TRACE_ACTION_ONVSYNC = "trace_on_vsync";
     const std::string TRACE_ACTION_FRAMEQUEUE = "trace_frame_queue";
+    const std::string TRACE_ACTION_ASHMEM = "trace_ash_mem";
+    const std::string TRACE_ACTION_DMAMEM = "trace_dma_mem";
+    const std::string TRACE_ACTION_GPU_PROCESS_MEM = "trace_gpu_process_mem";
+    const std::string TRACE_ACTION_GPU_WINDOW_MEM = "trace_gpu_window_mem";
     const std::string TRACE_ACTION_OTHER = "other";
 
     const std::string MEM_INFO_VM_SIZE_DESC = "mem.vm.size";
@@ -289,6 +300,9 @@ private:
     const std::string MEM_INFO_VIRT_DESC = "mem.virt";
     const std::string MEM_INFO_HWM_DESC = "mem.hwm";
     const std::string MEM_INFO_SCORE_ADJ_DESC = "mm.oom_score_adj";
+    const std::string MEM_INFO_PURG_SUM_DESC = "mem.purg_sum";
+    const std::string MEM_INFO_PURG_PIN_DESC = "mem.purg_pin";
+    const std::string MEM_INFO_GL_PSS_DESC = "mem.gl_pss";
 
     const std::string SYS_MEMINFO_UNSPECIFIED_DESC = "sys.mem.unspecified";
     const std::string SYS_MEMINFO_MEM_TOTAL_DESC = "sys.mem.total";
@@ -325,6 +339,9 @@ private:
     const std::string SYS_MEMINFO_CMA_TOTAL_DESC = "sys.mem.cma.total";
     const std::string SYS_MEMINFO_CMA_FREE_DESC = "sys.mem.cma.free";
     const std::string SYS_MEMINFO_KERNEL_RECLAIMABLE_DESC = "sys.mem.kernel.reclaimable";
+    const std::string SYS_MEMINFO_ACTIVE_PURG_DESC = "sys.mem.active.purg";
+    const std::string SYS_MEMINFO_INACTIVE_PURG_DESC = "sys.mem.inactive.purg";
+    const std::string SYS_MEMINFO_PINED_PURG_DESC = "sys.mem.pined.purg";
     const std::string SYS_VMEMINFO_UNSPECIFIED_DESC = "sys.virtual.mem.unspecified";
     const std::string SYS_VMEMINFO_NR_FREE_PAGES_DESC = "sys.virtual.mem.nr.free.pages";
     const std::string SYS_VMEMINFO_NR_ALLOC_BATCH_DESC = "sys.virtual.mem.nr.alloc.batch";

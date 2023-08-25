@@ -284,7 +284,7 @@ export class TabPaneJsCpuCallTree extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="callTreeTable" style="height: 100%" tree>
-                <lit-table-column width="60%" title="Symbol" data-index="symbolName" key="symbolName"  align="flex-start" order></lit-table-column>
+                <lit-table-column width="60%" title="Symbol" data-index="" key="symbolName"  align="flex-start" order></lit-table-column>
                 <lit-table-column width="1fr" title="SelfTime" data-index="selfTimeStr" key="selfTimeStr" align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="%" data-index="selfTimePercent" key="selfTimePercent"  align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="TotalTime" data-index="totalTimeStr" key="totalTimeStr"  align="flex-start"  order></lit-table-column>
@@ -296,7 +296,7 @@ export class TabPaneJsCpuCallTree extends BaseElement {
             <div style="flex: 1;display: block;">
               <span slot="head" style="height: 22px">Heaviest Stack</span>
               <lit-table id="stackTable" style="height: auto;">
-                  <lit-table-column width="50%" title="Symbol" data-index="symbolName" key="symbolName"  align="flex-start"></lit-table-column>
+                  <lit-table-column width="50%" title="Symbol" data-index="" key="symbolName"  align="flex-start"></lit-table-column>
                   <lit-table-column width="1fr" title="TotalTime" data-index="totalTimeStr" key="totalTimeStr"  align="flex-start" ></lit-table-column>
                   <lit-table-column width="1fr" title="%" data-index="totalTimePercent" key="totalTimePercent"  align="flex-start"></lit-table-column>
               </lit-table>

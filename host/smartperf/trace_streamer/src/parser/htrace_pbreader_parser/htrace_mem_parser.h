@@ -34,7 +34,32 @@ public:
     HtraceMemParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceMemParser();
     void Parse(HtraceDataSegment& seg, uint64_t, BuiltinClocks clock);
+    void ParseMemoryConfig(HtraceDataSegment& seg);
     void Finish();
+    enum smaps_mem_type {
+        SMAPS_MEM_TYPE_CODE_SYS = 0,     // 系统代码段
+        SMAPS_MEM_TYPE_CODE_APP = 1,     // 应用代码段
+        SMAPS_MEM_TYPE_DATA_SYS = 2,     // 系统数据段
+        SMAPS_MEM_TYPE_DATA_APP = 3,     // 应用数据段
+        SMAPS_MEM_TYPE_UNKNOWN_ANON = 4, // 系统未知匿名内存
+        SMAPS_MEM_TYPE_STACK = 5,        // 栈
+        SMAPS_MEM_TYPE_JS_HEAP = 6,      // js堆
+        SMAPS_MEM_TYPE_JAVA_VM = 7,      // java虚拟机
+        SMAPS_MEM_TYPE_NATIVE_HEAP = 8,  // native堆
+        SMAPS_MEM_TYPE_ASHMEM = 9,       // Ashmem
+        SMAPS_MEM_TYPE_OTHER_SYS = 10,   // 系统其他杂类资源
+        SMAPS_MEM_TYPE_OTHER_APP = 11,   // 应用其他杂类资源
+    };
+    enum mem_process_type {
+        PID_TYPE_COMPOSER = 0,
+        PID_TYPE_RENDER_SERVICES,
+        PID_TYPE_APP,
+    };
+    enum mem_deduplicate_flag {
+        MEM_DEDUPLICATE_FLAG_NOMAL = 0,
+        MEM_DEDUPLICATE_FLAG_DUP_SAME_PROCESS,
+        MEM_DEDUPLICATE_FLAG_DUP_DIFF_PROCESS,
+    };
 
 private:
     void ParseProcessInfo(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
@@ -42,12 +67,28 @@ private:
     void ParseMemInfoEasy(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
     void ParseVMemInfo(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
     void ParseVMemInfoEasy(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
-    void ParseSmapsInfoEasy(const ProtoReader::ProcessMemoryInfo_Reader* memInfo, uint64_t timeStamp) const;
+    void ParseSmapsInfoEasy(const ProtoReader::ProcessMemoryInfo_Reader* memInfo,
+                            uint64_t timeStamp,
+                            uint64_t ipid) const;
+    uint32_t ParseSmapsBlockType(ProtoReader::SmapsInfo_Reader& smapsInfo) const;
+    void ParseAshmemInfo(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
+    void ParseDmaMemInfo(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
+    void ParseGpuProcessMemInfo(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
+    void ParseGpuWindowMemInfo(const ProtoReader::MemoryData_Reader* tracePacket, uint64_t timeStamp) const;
+    void AshMemDeduplicate() const;
+    void DmaMemDeduplicate() const;
+    mem_process_type GetMemProcessType(uint64_t ipid) const;
+
     std::map<MemInfoType, DataIndex> memNameDictMap_ = {};
     std::map<uint32_t, DataIndex> sysMemNameDictMap_ = {};
     std::map<uint32_t, DataIndex> sysVMemNameDictMap_ = {};
     uint64_t zram_ = 0;
+    uint64_t gpuLimit_ = 0;
+    uint64_t gpuUsed_ = 0;
     const DataIndex zramIndex_ = traceDataCache_->GetDataIndex("sys.mem.zram");
+    const DataIndex gpuLimitSizeIndex_ = traceDataCache_->GetDataIndex("sys.mem.gpu.limit");
+    const DataIndex gpuUsedSizeIndex_ = traceDataCache_->GetDataIndex("sys.mem.gpu.used");
+
     TraceStreamerConfig config_{};
 };
 } // namespace TraceStreamer

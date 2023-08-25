@@ -115,6 +115,14 @@ export interface MemoryConfig {
   pid: number[];
   /** set true to report smaps meminfo from /proc/${pid}/smaps */
   reportSmapsMemInfo?: boolean;
+  /** set true to report ashmem meminfo from /proc/purgeable_ashmem_trigger*/
+  reportPurgeableAshmemInfo?: boolean;
+  /** set true to report DMA meminfo from /proc/process_dmabuf_info. */
+  reportDmaMemInfo?: boolean;
+  /** set true to report gpu meminfo from /proc/gpu_memory. */
+  reportGpuMemInfo?: boolean;
+  /** set true to report gpu info from hidumper. */
+  reportGpuDumpInfo?: boolean;
 }
 
 export function sysVMeminfoTypeFromJSON(object: any): SysVMeminfoType {
@@ -859,6 +867,7 @@ export interface NativeHookConfig {
   recordAccurately?: boolean;
   offlineSymbolization?: boolean;
   callframeCompress?: boolean;
+  startupMode?: boolean;
   statisticsInterval?: number;
 }
 

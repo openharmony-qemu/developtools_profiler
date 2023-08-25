@@ -792,6 +792,9 @@ export class TabPaneFilter extends BaseElement {
         .popover{
             display: flex;
         }
+        .lit-check-box{
+            margin-right: 5px;
+        }
 </style>
     <lit-icon name="menu" class="spacing" id="icon" size="20"></lit-icon>
     <span class="describe left-text spacing">Input Filter</span>

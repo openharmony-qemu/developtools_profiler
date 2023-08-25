@@ -14,7 +14,7 @@
  */
 
 import { SampleType } from '../database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
-
+const ROW_TYPE = 'cpu-profiler';
 export class JsCpuProfilerUIStruct {
   name: string;
   depth: number;
@@ -83,6 +83,7 @@ export class JsCpuProfilerChartFrame extends JsCpuProfilerUIStruct {
 }
 
 export class JsCpuProfilerTabStruct extends JsCpuProfilerUIStruct {
+  rowName = ROW_TYPE;
   parent?: JsCpuProfilerTabStruct | null | undefined;
   children: Array<JsCpuProfilerTabStruct>;
   chartFrameChildren?: Array<JsCpuProfilerChartFrame>;

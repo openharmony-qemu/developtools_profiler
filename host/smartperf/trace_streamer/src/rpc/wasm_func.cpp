@@ -27,6 +27,9 @@ ReplyFunction g_reply;
 uint8_t* g_reqBuf;
 uint32_t g_reqBufferSize;
 
+uint8_t* g_parserConfigBuf;
+uint32_t g_parserConfigSize;
+
 using SendDataCallBack = void (*)(const char* data, int32_t len, int32_t componentId);
 SendDataCallBack g_sendData = nullptr;
 uint8_t* g_sendDataBuf;
@@ -55,6 +58,22 @@ EMSCRIPTEN_KEEPALIVE uint8_t* Initialize(ReplyFunction replyFunction, uint32_t r
     g_reqBuf = new uint8_t[reqBufferSize];
     g_reqBufferSize = reqBufferSize;
     return g_reqBuf;
+}
+
+EMSCRIPTEN_KEEPALIVE uint8_t* InitializeParseConfig(uint32_t reqBufferSize)
+{
+    g_parserConfigBuf = new uint8_t[reqBufferSize];
+    g_parserConfigSize = reqBufferSize;
+    return g_parserConfigBuf;
+}
+
+EMSCRIPTEN_KEEPALIVE int TraceStreamerParserConfigEx(int dataLen)
+{
+    std::string parserConfig(reinterpret_cast<const char*>(g_parserConfigBuf), dataLen);
+    if (g_wasmTraceStreamer.ParserConfig(parserConfig)) {
+        return 0;
+    }
+    return -1;
 }
 
 EMSCRIPTEN_KEEPALIVE uint8_t* InitFileName(ParseELFFunction parseELFCallback, uint32_t reqBufferSize)

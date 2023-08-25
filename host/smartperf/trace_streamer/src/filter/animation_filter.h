@@ -44,7 +44,7 @@ private:
     std::map<uint64_t, uint64_t> callStackRowMap_ = {};
     // for update animationInfo, first is callStackRow, second is animationRow
     std::unordered_map<uint64_t, uint64_t> animationCallIds_ = {};
-    uint64_t generateCurTimePoint_ = 0;
+    uint64_t generateFirstTime_ = INVALID_UINT64;
     uint8_t generateVsyncCnt_ = 0;
 };
 } // namespace TraceStreamer

@@ -92,13 +92,21 @@ export function isFrameContainPoint(frame: Rect, x: number, y: number): boolean 
   return x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height;
 }
 export const isSurroundingPoint = function (pointX: number, currentRect: Rect, unitPointXRange: number): boolean {
-  return (pointX >= currentRect.x - unitPointXRange) && pointX <= currentRect.x + unitPointXRange;
+  return (pointX >= currentRect?.x - unitPointXRange) && pointX <= currentRect?.x + unitPointXRange;
 };
 
-export const computeUnitWidth = function (preTs: number,currentTs: number, frameWidth: number): number {
+export const computeUnitWidth = function (
+  preTs: number,
+  currentTs: number,
+  frameWidth: number,
+  selectUnitWidth: number
+): number {
   let max = 150;
   let unitWidth = ((currentTs - preTs) * frameWidth) / (TraceRow.range!.endNS - TraceRow.range!.startNS);
-  return unitWidth > max ? max : unitWidth;
+  if (unitWidth < selectUnitWidth) {
+    return unitWidth > max || unitWidth === 0 ? max : unitWidth;
+  }
+  return selectUnitWidth > max || selectUnitWidth === 0 ? max : selectUnitWidth;
 };
 
 class FilterConfig {
@@ -862,6 +870,53 @@ export function drawString(ctx: CanvasRenderingContext2D, str: string, textPaddi
         ctx.fillText(str.substring(0, 1), x1, Math.floor(frame.y + frame.height / 2), fillTextWidth);
       } else {
         ctx.fillText(str.substring(0, chatNum - 1) + '...', x1, Math.floor(frame.y + frame.height / 2), fillTextWidth);
+      }
+    }
+  }
+}
+
+export function drawString2Line(
+  ctx: CanvasRenderingContext2D,
+  str1: string,
+  str2: string,
+  textPadding: number,
+  frame: Rect,
+  data: any
+) {
+  if (frame.height < 30) return;
+  if (data.textMetrics1Width === undefined) {
+    data.textMetrics1Width = ctx.measureText(str1).width;
+    data.textMetrics2Width = ctx.measureText(str2).width;
+  }
+  let charWidth = Math.round(data.textMetrics1Width / str1.length);
+  let fillTextWidth = frame.width - textPadding * 2;
+  let y1 = frame.y + 12;
+  let y2 = y1 + 14;
+  if (data.textMetrics1Width < fillTextWidth) {
+    let x = Math.floor(frame.width / 2 - data.textMetrics1Width / 2 + frame.x + textPadding - 1);
+    ctx.fillText(str1, x, y1, fillTextWidth);
+  } else {
+    if (fillTextWidth >= charWidth) {
+      let chatNum = fillTextWidth / charWidth;
+      let x = frame.x + textPadding - 1;
+      if (chatNum < 2) {
+        ctx.fillText(str1.substring(0, 1), x, y1, fillTextWidth);
+      } else {
+        ctx.fillText(str1.substring(0, chatNum - 1) + '...', x, y1, fillTextWidth);
+      }
+    }
+  }
+  if (data.textMetrics2Width < fillTextWidth) {
+    let x = Math.floor(frame.width / 2 - data.textMetrics2Width / 2 + frame.x + textPadding - 1);
+    ctx.fillText(str2, x, y2, fillTextWidth);
+  } else {
+    if (fillTextWidth >= charWidth) {
+      let chatNum = fillTextWidth / charWidth;
+      let x = frame.x + textPadding - 1;
+      if (chatNum < 2) {
+        ctx.fillText(str2.substring(0, 1), x, y2, fillTextWidth);
+      } else {
+        ctx.fillText(str2.substring(0, chatNum - 1) + '...', x, y2, fillTextWidth);
       }
     }
   }

@@ -38,6 +38,7 @@ export class SpAllocations extends BaseElement {
 
   private recordAccurately: LitSwitch | null | undefined;
   private offlineSymbol: LitSwitch | null | undefined;
+  private startupMode: LitSwitch | null | undefined;
   private recordStatisticsResult: HTMLDivElement | null | undefined;
 
   get appProcess(): string {
@@ -107,6 +108,14 @@ export class SpAllocations extends BaseElement {
     return 3600;
   }
 
+  get startup_mode(): boolean {
+    let value = this.startupMode?.checked;
+    if (value != undefined) {
+      return value;
+    }
+    return false;
+  }
+
   initElements(): void {
     this.processId = this.shadowRoot?.getElementById('pid') as LitAllocationSelect;
     let input = this.processId.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
@@ -138,6 +147,7 @@ export class SpAllocations extends BaseElement {
     this.fpUnWind = this.shadowRoot?.getElementById('use_fp_unwind') as LitSwitch;
     this.recordAccurately = this.shadowRoot?.getElementById('use_record_accurately') as LitSwitch;
     this.offlineSymbol = this.shadowRoot?.getElementById('use_offline_symbolization') as LitSwitch;
+    this.startupMode = this.shadowRoot?.getElementById('use_startup_mode') as LitSwitch;
     let stepValue = [0, 1, 10, 30, 60, 300, 600, 1800, 3600];
     let statisticsSlider = this.shadowRoot?.querySelector<LitSlider>('#interval-slider') as LitSlider;
 
@@ -441,9 +451,12 @@ export class SpAllocations extends BaseElement {
           </div>
           <div class="switchstyle">
               <span class="inner-font-style" id="offline_symbolization">Use Offline Symbolization (Available on recent OpenHarmony 4.0)</span> 
-              <lit-switch   class="lts" id="use_offline_symbolization" title="offline_symbolization" checked="true"></lit-switch>
+              <lit-switch class="lts" id="use_offline_symbolization" title="offline_symbolization" checked="true"></lit-switch>
           </div>
-            
+           <div class="switchstyle">
+              <span class="inner-font-style" id="startup_mode">Use Startup Mode (Available on recent OpenHarmony 4.0)</span> 
+              <lit-switch class="lts" id="use_startup_mode" title="startup_mode"></lit-switch>
+          </div>   
           <div class="switchstyle record-statistics-result" style="grid-row: 6; grid-column: 1 / 3;height: min-content;display: grid;grid-template-rows: 1fr;grid-template-columns: 1fr min-content;">
             <div class="record-title">
                 <span class="record-mode">Use Record Statistics (Available on recent OpenHarmony 4.0)</span> 

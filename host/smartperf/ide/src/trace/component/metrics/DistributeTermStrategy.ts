@@ -37,10 +37,8 @@ export const initDistributedTermData = (metricData: Array<{
     let threadNamesList = metricData[sqlIndex].threadName.split(splitChar);
     let processIdList = metricData[sqlIndex].processId.split(splitChar);
     let processNameList =
-      metricData[sqlIndex].processName === null
-        ? threadIdsList.length + ''
-        : metricData[sqlIndex].processName.split(splitChar);
-
+      metricData[sqlIndex].processName === null ?
+        `${threadIdsList.length  }` : metricData[sqlIndex].processName.split(splitChar);
     let funNameList = metricData[sqlIndex].funName.split(splitChar);
     let timeList = metricData[sqlIndex].ts.split(splitChar);
     let durList = metricData[sqlIndex].dur.split(splitChar);
@@ -50,20 +48,22 @@ export const initDistributedTermData = (metricData: Array<{
     let chainIdList = metricData[sqlIndex].chainId;
     let spanIdList = metricData[sqlIndex].spanId;
     let parentSpanIdList = metricData[sqlIndex].parentSpanId;
-
     let distributedTermListItem: DistributedTermItem = {};
     for (let index = 0; index < flagList.length; index++) {
       let across: boolean = true;
       let receiverTime: number = 0;
       let senderTime: number = 0;
       let delay: number = 0;
-      if (flag.indexOf('S,C') > -1 || flag.indexOf('C,S') > -1) {
+      if (flag.indexOf('S,C') >= 0 || flag.indexOf('C,S') >= 0) {
         across = false;
-        if (flagList[index] === 'S') receiverTime = Number(timeList[index]);
-        if (flagList[index] === 'C') senderTime = Number(timeList[index]);
+        if (flagList[index] === 'S') {
+          receiverTime = Number(timeList[index]);
+        }
+        if (flagList[index] === 'C') {
+          senderTime = Number(timeList[index]);
+        }
         delay = receiverTime - senderTime;
       }
-
       let type = {
         acrossTheDevice: across,
         traceName: traceNameList,

@@ -33,6 +33,14 @@ export class LitPopover extends BaseElement {
     }
   }
 
+  set placement(value) {
+    this.setAttribute('placement',value || 'bottomLeft');
+  }
+
+  get placement() {
+    return this.getAttribute('placement')
+  }
+
   get trigger() {
     return this.getAttribute('trigger') || 'hover';
   }
@@ -80,7 +88,7 @@ export class LitPopover extends BaseElement {
             border-bottom: 1px solid #f0f0f0;
         }
         .content{
-            padding: 10px 15px;
+            padding: 10px;
         }
        .trigger-click {
             position: absolute;

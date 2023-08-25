@@ -32,18 +32,14 @@ export class FrameDynamicRender extends Render {
     let frameDynamicFilter: FrameDynamicStruct[] = row.dataListCache;
     this.frameDynamic(frameDynamicList, frameDynamicFilter, row, req.animationRanges, req.useCache);
     if (req.animationRanges.length > 0 && req.animationRanges[0] && frameDynamicFilter.length > 0) {
-      let modelType: string = row.getAttribute('modelType') || 'x';
+      let modelType: string = row.getAttribute('model-type') || 'x';
       let [minValue, maxValue] = this.getMinAndMaxData(frameDynamicFilter, modelType);
-      let find: boolean = false;
       let preDynamic: FrameDynamicStruct = frameDynamicFilter[0];
       let isDraw = false;
-      let selectUnitWidthList: number[] = [];
+      let selectUnitWidth: number = 0;
       for (let index: number = 0; index < frameDynamicFilter.length; index++) {
         let currDynamic: FrameDynamicStruct = frameDynamicFilter[index];
-        if (index > 0) {
-          let selectUnitWidth = computeUnitWidth(preDynamic.ts, currDynamic.ts, row.frame.width);
-          selectUnitWidthList.push(selectUnitWidth);
-        }
+        selectUnitWidth = computeUnitWidth(preDynamic.ts, currDynamic.ts, row.frame.width, selectUnitWidth);
         this.refreshPointY(currDynamic, row, modelType, minValue, maxValue);
         if (currDynamic.groupId === 0) {
           if (currDynamic.ts > TraceRow.range!.startNS && currDynamic.ts < TraceRow.range!.endNS) {
@@ -57,25 +53,114 @@ export class FrameDynamicRender extends Render {
         FrameDynamicStruct.drawSelect(req.context, currDynamic, row);
         preDynamic = currDynamic;
       }
-      if(isDraw) {
+      if (isDraw) {
         this.drawDynamicPointYStr(req.context, frameDynamicFilter, row.frame, minValue, maxValue);
       }
-      let unitWidth = Math.min.apply(Math, selectUnitWidthList);
-      let findStructList = frameDynamicFilter.filter(filter =>
-        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, unitWidth / multiple));
-      if (findStructList.length > 0) {
-        find = true;
-        let hoverIndex: number = 0;
-        if (findStructList.length > unitIndex) {
-          hoverIndex = Math.ceil(findStructList.length / multiple);
-        }
-        FrameDynamicStruct.hoverFrameDynamicStruct = findStructList[hoverIndex];
-      }
-      if (!find && row.isHover) {
+      if (!this.setHoverFrameDynamic(row, frameDynamicFilter, selectUnitWidth) && row.isHover) {
         FrameDynamicStruct.hoverFrameDynamicStruct = undefined;
       }
     }
   }
+
+  private setHoverFrameDynamic(
+    row: TraceRow<FrameDynamicStruct>,
+    frameDynamicFilter: FrameDynamicStruct[],
+    selectUnitWidth: number
+  ): boolean {
+    let find: boolean = false;
+    let findStructList = frameDynamicFilter.filter(filter =>
+      row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple));
+    if (findStructList.length > 0) {
+      find = true;
+      let hoverIndex: number = 0;
+      if (findStructList.length > unitIndex) {
+        hoverIndex = Math.ceil(findStructList.length / multiple);
+      }
+      FrameDynamicStruct.hoverFrameDynamicStruct = findStructList[hoverIndex];
+    }
+    return find;
+  }
+
+  private frameDynamic(
+    frameDynamicList: FrameDynamicStruct[],
+    frameDynamicFilter: FrameDynamicStruct[],
+    row: TraceRow<FrameDynamicStruct>,
+    animationRanges: AnimationRanges[],
+    use: boolean
+  ): void {
+    let startNS: number = TraceRow.range!.startNS;
+    let endNS: number = TraceRow.range!.endNS;
+    let totalNS: number = TraceRow.range!.totalNS;
+    let frame: Rect = row.frame;
+    let modelName: string | undefined | null = row.getAttribute('model-name');
+    if ((use || !TraceRow.range!.refresh) && frameDynamicFilter.length > 0) {
+      this.refreshDynamicFrame(frameDynamicFilter, frame, startNS, endNS, totalNS, modelName!);
+      return;
+    }
+    frameDynamicFilter.length = 0;
+    if (frameDynamicList) {
+      let groupIdList: number[] = [];
+      for (let dataIndex: number = 0; dataIndex < frameDynamicList.length; dataIndex++) {
+        let currentDynamic: FrameDynamicStruct = frameDynamicList[dataIndex];
+        if (currentDynamic.appName === modelName) {
+          currentDynamic.groupId = invalidGroupId;
+          for (let rangeIndex = 0; rangeIndex < animationRanges.length; rangeIndex++) {
+            let currentRange = animationRanges[rangeIndex];
+            if (currentDynamic.ts >= currentRange.start && currentDynamic.ts <= currentRange.end) {
+              currentDynamic.groupId = currentRange.start;
+              break;
+            }
+          }
+          if (currentDynamic.ts < startNS && (dataIndex + unitIndex) < frameDynamicList.length &&
+            frameDynamicList[dataIndex + unitIndex].ts >= startNS && currentDynamic.groupId !== invalidGroupId) {
+            this.refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS,
+              endNS, totalNS, groupIdList);
+          }
+          if (currentDynamic.ts >= startNS && currentDynamic.ts <= endNS && currentDynamic.groupId !== invalidGroupId) {
+            this.refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS,
+              endNS, totalNS, groupIdList);
+          }
+          if (currentDynamic.ts >= endNS && currentDynamic.groupId !== invalidGroupId) {
+            this.refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS,
+              endNS, totalNS, groupIdList);
+            break;
+          }
+        }
+      }
+      this.setSimpleGroupId(groupIdList, frameDynamicFilter);
+    }
+  };
+
+  private setSimpleGroupId(
+    groupIdList: number[],
+    frameDynamicFilter: FrameDynamicStruct[]
+  ): void {
+    let simpleGroup = groupIdList.filter(groupId => {
+      return groupId !== invalidGroupId && groupIdList.indexOf(groupId) === groupIdList.lastIndexOf(groupId);
+    });
+    frameDynamicFilter.forEach(dynamic => {
+      if (simpleGroup.indexOf(dynamic.groupId!) > invalidGroupId) {
+        dynamic.groupId = 0;
+      }
+    });
+  }
+
+  private refreshDynamicFrame(
+    frameDynamicFilter: FrameDynamicStruct[],
+    frame: Rect,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    modelName: string
+  ): void {
+    for (let index: number = 0; index < frameDynamicFilter.length; index++) {
+      let frameDynamicNode: FrameDynamicStruct = frameDynamicFilter[index];
+      frameDynamicNode.frame = undefined;
+      if (frameDynamicNode.appName === modelName) {
+        FrameDynamicStruct.setFrameDynamic(frameDynamicNode, startNS, endNS, totalNS, frame);
+      }
+    }
+  };
 
   private drawSinglePoint(
     ctx: CanvasRenderingContext2D,
@@ -128,6 +213,7 @@ export class FrameDynamicRender extends Render {
       ctx.lineWidth = 1;
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[3];
       let minUnitValue: number = 10;
+      let fixedNumber = 2;
       let totalValue = maxValue - minValue;
       let pointYInterval = totalValue / (yScaleNumber - unitIndex);
       for (let index = 0; index < yScaleNumber; index++) {
@@ -136,7 +222,7 @@ export class FrameDynamicRender extends Render {
         let pointY = frame.height - multiple * padding - pointYHeight;
         if (pointYValue !== 0) {
           if (maxValue - minValue <= minUnitValue) {
-            ctx.fillText(`- ${pointYValue}`, 0, pointY);
+            ctx.fillText(`- ${pointYValue.toFixed(fixedNumber)}`, 0, pointY);
           } else {
             ctx.fillText(`- ${Math.ceil(pointYValue)}`, 0, pointY);
           }
@@ -145,7 +231,10 @@ export class FrameDynamicRender extends Render {
     }
   };
 
-  private getMinAndMaxData(frameDynamicFilter: FrameDynamicStruct[], modelType: string): [number, number] {
+  private getMinAndMaxData(
+    frameDynamicFilter: FrameDynamicStruct[],
+    modelType: string
+  ): [number, number] {
     let min: number = Math.min.apply(Math, frameDynamicFilter.map(filterData => {
       // @ts-ignore
       return filterData[modelType];
@@ -172,84 +261,20 @@ export class FrameDynamicRender extends Render {
     return [min, max];
   };
 
-  private frameDynamic (
-    frameDynamicList: FrameDynamicStruct[],
+  private refreshFilterDynamicFrame(
     frameDynamicFilter: FrameDynamicStruct[],
-    row: TraceRow<FrameDynamicStruct>,
-    animationRanges: AnimationRanges[],
-    use: boolean
+    currentFrameDynamic: FrameDynamicStruct,
+    frame: Rect,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    groupIdList: number[]
   ): void {
-    let startNS: number = TraceRow.range!.startNS;
-    let endNS: number = TraceRow.range!.endNS;
-    let totalNS: number = TraceRow.range!.totalNS;
-    let frame: Rect = row.frame;
-    if (use && !TraceRow.range!.refresh && frameDynamicFilter.length > 0) {
-      refreshDynamicFrame(frameDynamicFilter, frame, startNS, endNS, totalNS);
-      return;
-    }
-    frameDynamicFilter.length = 0;
-    if (frameDynamicList) {
-      let groupIdList: number[] = [];
-      for (let dataIndex: number = 0; dataIndex < frameDynamicList.length; dataIndex++) {
-        let currentDynamic: FrameDynamicStruct = frameDynamicList[dataIndex];
-        currentDynamic.groupId = invalidGroupId;
-        for (let rangeIndex = 0; rangeIndex < animationRanges.length; rangeIndex++) {
-          let currentRange = animationRanges[rangeIndex];
-          if (currentDynamic.ts >= currentRange.start && currentDynamic.ts <= currentRange.end) {
-            currentDynamic.groupId = currentRange.start;
-            break;
-          }
-        }
-        if (currentDynamic.ts < startNS && (dataIndex + unitIndex) < frameDynamicList.length &&
-          frameDynamicList[dataIndex + unitIndex].ts >= startNS && currentDynamic.groupId !== invalidGroupId) {
-          refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
-        }
-        if (currentDynamic.ts >= startNS && currentDynamic.ts <= endNS && currentDynamic.groupId !== invalidGroupId) {
-          refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
-        }
-        if (currentDynamic.ts >= endNS && currentDynamic.groupId !== invalidGroupId) {
-          refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS, endNS, totalNS, groupIdList);
-          break;
-        }
-      }
-      let simpleGroup = groupIdList.filter(groupId => {
-        return groupId !== invalidGroupId && groupIdList.indexOf(groupId) === groupIdList.lastIndexOf(groupId);
-      });
-      frameDynamicFilter.forEach(dynamic => {
-        if (simpleGroup.indexOf(dynamic.groupId!) > invalidGroupId) {
-          dynamic.groupId = 0;
-        }
-      });
-    }
+    groupIdList.push(currentFrameDynamic.groupId!);
+    frameDynamicFilter.push(currentFrameDynamic);
+    FrameDynamicStruct.setFrameDynamic(currentFrameDynamic, startNS, endNS, totalNS, frame);
   };
 }
-
-let refreshDynamicFrame = function (
-  frameDynamicFilter: FrameDynamicStruct[],
-  frame: Rect,
-  startNS: number,
-  endNS: number,
-  totalNS: number): void {
-  for (let index: number = 0; index < frameDynamicFilter.length; index++) {
-    let frameDynamicNode: FrameDynamicStruct = frameDynamicFilter[index];
-    frameDynamicNode.frame = undefined;
-    FrameDynamicStruct.setFrameDynamic(frameDynamicNode, padding, startNS, endNS, totalNS, frame);
-  }
-};
-
-let refreshFilterDynamicFrame = function (
-  frameDynamicFilter: FrameDynamicStruct[],
-  currentFrameDynamic: FrameDynamicStruct,
-  frame: Rect,
-  startNS: number,
-  endNS: number,
-  totalNS: number,
-  groupIdList: number[]
-): void {
-  groupIdList.push(currentFrameDynamic.groupId!);
-  frameDynamicFilter.push(currentFrameDynamic);
-  FrameDynamicStruct.setFrameDynamic(currentFrameDynamic, padding, startNS, endNS, totalNS, frame);
-};
 
 export class FrameDynamicStruct extends BaseStruct {
   static hoverFrameDynamicStruct: FrameDynamicStruct | undefined;
@@ -267,7 +292,6 @@ export class FrameDynamicStruct extends BaseStruct {
 
   static setFrameDynamic(
     dynamicNode: FrameDynamicStruct,
-    padding: number,
     startNS: number,
     endNS: number,
     totalNS: number,

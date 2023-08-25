@@ -33,11 +33,17 @@ public:
 
     bool AnimationTraceEnabled();
     void UpdateAnimationTraceStatus(bool status);
+    bool TaskPoolTraceEnabled();
+    void UpdateTaskPoolTraceStatus(bool status);
+    bool AppStartTraceEnabled();
+    void UpdateAppStartTraceStatus(bool status);
 
 private:
     void InitDB() override;
     bool dbInited_ = false;
-    bool animationTraceEnabled_ = true;
+    bool animationTraceEnabled_ = false;
+    bool taskPoolTraceEnabled_ = false;
+    bool appStartTraceEnabled_ = false;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -15,7 +15,6 @@
 
 import { SpSystemTrace } from '../SpSystemTrace.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
-import { procedurePool } from '../../database/Procedure.js';
 import {
   queryHiPerfCpuData,
   queryHiPerfCpuMergeData,
@@ -39,7 +38,7 @@ import { perfDataQuery } from './PerfDataQuery.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
 import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
 import { HiperfReportRender, HiPerfReportStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfReport.js';
-
+import { SpChartManager } from './SpChartManager.js';
 
 export interface ResultData {
   existA: boolean | null | undefined;
@@ -306,6 +305,9 @@ export class SpHiPerf {
       row.rowParentId = 'HiPerf';
       row.rowHidden = !this.rowFolder.expansion;
       row.folder = true;
+      if (SpChartManager.APP_STARTUP_PID_ARR.find(pid => pid === process.pid) !== undefined) {
+        row.addTemplateTypes('AppStartup');
+      }
       row.name = `${process.processName || 'Process'} [${process.pid}]`;
       row.folderPaddingLeft = 6;
       row.style.height = '40px';

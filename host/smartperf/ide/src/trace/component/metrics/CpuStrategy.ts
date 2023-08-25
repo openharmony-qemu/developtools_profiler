@@ -25,8 +25,9 @@ export const initCpuStrategyData = (metricData: Array<{
   avg_frequency: string;
 }>): ProcessInfoListItem => {
   info('Cpu Strategy data length is:', metricData.length);
+  let metricNumber = 10;
   let processInfoListItems: Array<ProcessInfoItem> = [];
-  if (metricData.length === 10) {
+  if (metricData.length === metricNumber) {
   } else {
   }
   const splitChar: string = ',';

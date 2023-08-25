@@ -33,7 +33,7 @@ import { SelectionParam } from '../bean/BoxSelection.js';
 import { procedurePool } from '../database/Procedure.js';
 import { SpApplication } from '../SpApplication.js';
 import { Flag } from './trace/timer-shaft/Flag.js';
-import { SportRuler, SlicesTime } from './trace/timer-shaft/SportRuler.js';
+import { SlicesTime, SportRuler } from './trace/timer-shaft/SportRuler.js';
 import { SpHiPerf } from './chart/SpHiPerf.js';
 import { SearchSdkBean, SearchThreadProcessBean } from '../bean/SearchFuncBean.js';
 import { error, info } from '../../log/Log.js';
@@ -56,7 +56,7 @@ import { ProcessStruct } from '../database/ui-worker/ProcedureWorkerProcess.js';
 import { CpuFreqStruct } from '../database/ui-worker/ProcedureWorkerFreq.js';
 import { CpuFreqLimitsStruct } from '../database/ui-worker/ProcedureWorkerCpuFreqLimits.js';
 import { ThreadStruct } from '../database/ui-worker/ProcedureWorkerThread.js';
-import { FuncStruct } from '../database/ui-worker/ProcedureWorkerFunc.js';
+import { func, FuncStruct } from '../database/ui-worker/ProcedureWorkerFunc.js';
 import { CpuStateStruct } from '../database/ui-worker/ProcedureWorkerCpuState.js';
 import { HiPerfCpuStruct } from '../database/ui-worker/ProcedureWorkerHiPerfCPU.js';
 import { HiPerfProcessStruct } from '../database/ui-worker/ProcedureWorkerHiPerfProcess.js';
@@ -92,7 +92,8 @@ import { JsCpuProfilerStruct } from '../database/ui-worker/ProcedureWorkerCpuPro
 import { TabPaneSummary } from './trace/sheet/ark-ts/TabPaneSummary.js';
 import { JsCpuProfilerChartFrame } from '../bean/JsStruct.js';
 import { FileInfo } from '../../js-heap/model/UiStruct.js';
-import { setSelectState } from './Utils.js';
+import { SnapshotStruct } from '../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { setSelectState, intersectData } from './Utils.js';
 
 function dpr() {
   return window.devicePixelRatio || 1;
@@ -114,6 +115,11 @@ function throttle(fn: any, t: number, ev: any): any {
   };
 }
 
+export class CurrentSlicesTime {
+  startTime: number | undefined;
+  endTime: number | undefined;
+}
+
 @element('sp-system-trace')
 export class SpSystemTrace extends BaseElement {
   static mouseCurrentPosition = 0;
@@ -129,6 +135,7 @@ export class SpSystemTrace extends BaseElement {
   static SDK_CONFIG_MAP: any;
   static sliceRangeMark: any;
   static wakeupList: Array<WakeupBean> = [];
+  currentSlicesTime: CurrentSlicesTime = new CurrentSlicesTime();
   intersectionObserver: IntersectionObserver | undefined;
   tipEL: HTMLDivElement | undefined | null;
   rowsEL: HTMLDivElement | undefined | null;
@@ -137,6 +144,7 @@ export class SpSystemTrace extends BaseElement {
   favoriteRowsEL: HTMLDivElement | undefined | null;
   visibleRows: Array<TraceRow<any>> = [];
   collectRows: Array<TraceRow<any>> = [];
+  currentRow: TraceRow<any> | undefined | null;
   keyboardEnable = true;
   mouseEventEnable = true;
   currentRowType = ''; /*保存当前鼠标所在行的类型*/
@@ -175,20 +183,20 @@ export class SpSystemTrace extends BaseElement {
     this.snapshotFiles = data;
   }
 
-  addPointPair(a: PairPoint, b: PairPoint) {
-    if (a.rowEL.collect) {
-      a.rowEL.translateY = a.rowEL.getBoundingClientRect().top - 195;
+  addPointPair(startPoint: PairPoint, endPoint: PairPoint) {
+    if (startPoint.rowEL.collect) {
+      startPoint.rowEL.translateY = startPoint.rowEL.getBoundingClientRect().top - 195;
     } else {
-      a.rowEL.translateY = a.rowEL.offsetTop - this.rowsPaneEL!.scrollTop;
+      startPoint.rowEL.translateY = startPoint.rowEL.offsetTop - this.rowsPaneEL!.scrollTop;
     }
-    if (b.rowEL.collect) {
-      b.rowEL.translateY = b.rowEL.getBoundingClientRect().top - 195;
+    if (endPoint.rowEL.collect) {
+      endPoint.rowEL.translateY = endPoint.rowEL.getBoundingClientRect().top - 195;
     } else {
-      b.rowEL.translateY = b.rowEL.offsetTop - this.rowsPaneEL!.scrollTop;
+      endPoint.rowEL.translateY = endPoint.rowEL.offsetTop - this.rowsPaneEL!.scrollTop;
     }
-    a.y = a.rowEL!.translateY! + a.offsetY;
-    b.y = b.rowEL!.translateY! + b.offsetY;
-    this.linkNodes.push([a, b]);
+    startPoint.y = startPoint.rowEL!.translateY! + startPoint.offsetY;
+    endPoint.y = endPoint.rowEL!.translateY! + endPoint.offsetY;
+    this.linkNodes.push([startPoint, endPoint]);
   }
 
   clearPointPair() {
@@ -224,17 +232,19 @@ export class SpSystemTrace extends BaseElement {
       document!.querySelector('body > sp-application')?.shadowRoot?.querySelector!(
         '#main-menu'
       )?.shadowRoot?.querySelector('div.bottom > div.color');
-    let rightButton: HTMLElement | null | undefined = this.shadowRoot
-      ?.querySelector('div > trace-sheet')
-      ?.shadowRoot?.querySelector('#current-selection > tabpane-current-selection')
+    this.traceSheetEL = this.shadowRoot?.querySelector('.trace-sheet');
+    let rightButton: HTMLElement | null | undefined = this.traceSheetEL?.shadowRoot
+      ?.querySelector('#current-selection > tabpane-current-selection')
       ?.shadowRoot?.querySelector('#rightButton');
+    let rightStar: HTMLElement | null | undefined = this.traceSheetEL?.shadowRoot
+      ?.querySelector('#current-selection > tabpane-current-selection')
+      ?.shadowRoot?.querySelector('#right-star');
     this.rowsEL = this.shadowRoot?.querySelector<HTMLDivElement>('.rows');
     this.tipEL = this.shadowRoot?.querySelector<HTMLDivElement>('.tip');
     this.rowsPaneEL = this.shadowRoot?.querySelector<HTMLDivElement>('.rows-pane');
     this.spacerEL = this.shadowRoot?.querySelector<HTMLDivElement>('.spacer');
     this.canvasFavoritePanel = this.shadowRoot?.querySelector<HTMLCanvasElement>('.panel-canvas-favorite');
     this.timerShaftEL = this.shadowRoot?.querySelector('.timer-shaft');
-    this.traceSheetEL = this.shadowRoot?.querySelector('.trace-sheet');
     this.favoriteRowsEL = this.shadowRoot?.querySelector('.favorite-rows');
     this.rangeSelect = new RangeSelect(this);
     rightButton?.addEventListener('click', (event: any) => {
@@ -247,9 +257,76 @@ export class SpSystemTrace extends BaseElement {
       setTimeout(() => {
         requestAnimationFrame(() => this.refreshCanvas(false));
       }, 300);
+      rightStar!.style.visibility = 'visible';
+      rightStar!.style.cursor = 'pointer';
       SpSystemTrace.btnTimer = setTimeout(() => {
         SpSystemTrace.btnTimer = null; // 2.清空节流阀，方便下次开启定时器
       }, 2000);
+    });
+    rightStar?.addEventListener('click', () => {
+      let wakeupLists = [];
+      for (let i = 0; i < SpSystemTrace.wakeupList.length; i++) {
+        wakeupLists.unshift(CpuStruct.selectCpuStruct?.cpu);
+        wakeupLists.push(SpSystemTrace.wakeupList[i].cpu);
+      }
+      let wakeupCpuLists = Array.from(new Set(wakeupLists)).sort();
+      for (let i = 0; i < wakeupCpuLists.length; i++) {
+        let cpuFavoriteRow: any = this.shadowRoot?.querySelector<TraceRow<any>>(
+          `trace-row[row-type='cpu-data'][row-id='${wakeupCpuLists[i]}']`
+        );
+        cpuFavoriteRow!.setAttribute('collect-type', '');
+        let replaceRow = document.createElement('div');
+        replaceRow.setAttribute('row-id', cpuFavoriteRow.rowId + '-' + cpuFavoriteRow.rowType);
+        replaceRow.setAttribute('type', 'replaceRow');
+        replaceRow.setAttribute('row-parent-id', cpuFavoriteRow.rowParentId);
+        replaceRow.style.display = 'none';
+        cpuFavoriteRow.rowHidden = !cpuFavoriteRow.hasAttribute('scene');
+        if (this.rowsEL!.contains(cpuFavoriteRow)) {
+          this.rowsEL!.replaceChild(replaceRow, cpuFavoriteRow);
+        }
+        this.favoriteRowsEL!.append(cpuFavoriteRow);
+        this.currentClickRow = null;
+        cpuFavoriteRow.setAttribute('draggable', 'true');
+        cpuFavoriteRow.addEventListener('dragstart', () => {
+          this.currentClickRow = cpuFavoriteRow;
+        });
+        cpuFavoriteRow.addEventListener('dragover', (ev: any) => {
+          ev.preventDefault();
+          ev.dataTransfer.dropEffect = 'move';
+        });
+        cpuFavoriteRow.addEventListener('drop', (ev: any) => {
+          if (this.favoriteRowsEL != null && this.currentClickRow != null && this.currentClickRow !== cpuFavoriteRow) {
+            let rect = cpuFavoriteRow.getBoundingClientRect();
+            if (ev.clientY >= rect.top && ev.clientY < rect.top + rect.height / 2) {
+              //向上移动
+              this.favoriteRowsEL.insertBefore(this.currentClickRow, cpuFavoriteRow);
+            } else if (ev.clientY <= rect.bottom && ev.clientY > rect.top + rect.height / 2) {
+              //向下移动
+              this.favoriteRowsEL.insertBefore(this.currentClickRow, cpuFavoriteRow.nextSibling);
+            }
+            this.refreshFavoriteCanvas();
+          }
+        });
+        cpuFavoriteRow.addEventListener('dragend', () => {
+          this.linkNodes.forEach((itln) => {
+            if (itln[0].rowEL.collect) {
+              itln[0].rowEL.translateY = itln[0].rowEL.getBoundingClientRect().top - 195;
+            } else {
+              itln[0].rowEL.translateY = itln[0].rowEL.offsetTop - this.rowsPaneEL!.scrollTop;
+            }
+            if (itln[1].rowEL.collect) {
+              itln[1].rowEL.translateY = itln[1].rowEL.getBoundingClientRect().top - 195;
+            } else {
+              itln[1].rowEL.translateY = itln[1].rowEL.offsetTop - this.rowsPaneEL!.scrollTop;
+            }
+            itln[0].y = itln[0].rowEL.translateY + itln[0].offsetY;
+            itln[1].y = itln[1].rowEL.translateY + itln[1].offsetY;
+          });
+          this.currentClickRow = null;
+        });
+      }
+      this.refreshFavoriteCanvas();
+      this.refreshCanvas(true);
     });
     sideColor?.addEventListener('click', (event: any) => {
       requestAnimationFrame(() => this.refreshCanvas(true));
@@ -485,8 +562,8 @@ export class SpSystemTrace extends BaseElement {
         this.rangeTraceRow = [];
       }
       let selection = new SelectionParam();
-      selection.leftNs = 0;
-      selection.rightNs = 0;
+      selection.leftNs = TraceRow.rangeSelectObject?.startNS || 0;
+      selection.rightNs = TraceRow.rangeSelectObject?.endNS || 0;
       selection.recordStartNs = (window as any).recordStartNS;
       let native_memory = ['All Heap & Anonymous VM', 'All Heap', 'All Anonymous VM'];
       rows.forEach((it) => {
@@ -580,9 +657,9 @@ export class SpSystemTrace extends BaseElement {
             selection.funTids.push(parseInt(it.rowId!));
           }
 
-          let isIntersect = (a: FuncStruct, b: RangeSelectStruct) =>
-            Math.max(a.startTs! + a.dur!, b!.endNS || 0) - Math.min(a.startTs!, b!.startNS || 0) <
-              a.dur! + (b!.endNS || 0) - (b!.startNS || 0) && a.funName!.indexOf('H:Task ') >= 0;
+          let isIntersect = (filterFunc: FuncStruct, rangeData: RangeSelectStruct) =>
+            Math.max(filterFunc.startTs! + filterFunc.dur!, rangeData!.endNS || 0) - Math.min(filterFunc.startTs!, rangeData!.startNS || 0) <
+              filterFunc.dur! + (rangeData!.endNS || 0) - (rangeData!.startNS || 0) && filterFunc.funName!.indexOf('H:Task ') >= 0;
           let taskData = it.dataList.filter((taskData: FuncStruct) => {
             taskData!.tid = parseInt(it.rowId!);
             return isIntersect(taskData, TraceRow.rangeSelectObject!);
@@ -626,6 +703,14 @@ export class SpSystemTrace extends BaseElement {
               selection.diskAbilityIds.push(th.rowId!);
             } else if (th.rowType == TraceRow.ROW_TYPE_NETWORK_ABILITY) {
               selection.networkAbilityIds.push(th.rowId!);
+            } else if (th.rowType == TraceRow.ROW_TYPE_DMA_ABILITY) {
+              selection.dmaAbilityData.push(...intersectData(th)!);
+            } else if (th.rowType == TraceRow.ROW_TYPE_GPU_MEMORY_ABILITY) {
+              selection.gpuMemoryAbilityData.push(...intersectData(th)!);
+            } else if (th.rowType === TraceRow.ROW_TYPE_PURGEABLE_TOTAL_ABILITY) {
+              selection.purgeableTotalAbility.push(...intersectData(th));
+            } else if (th.rowType === TraceRow.ROW_TYPE_PURGEABLE_PIN_ABILITY) {
+              selection.purgeablePinAbility.push(...intersectData(th));
             }
           });
         } else if (it.rowType == TraceRow.ROW_TYPE_CPU_ABILITY) {
@@ -640,6 +725,10 @@ export class SpSystemTrace extends BaseElement {
         } else if (it.rowType == TraceRow.ROW_TYPE_NETWORK_ABILITY) {
           selection.networkAbilityIds.push(it.rowId!);
           info('load Network Ability traceRow id is : ', it.rowId);
+        } else if (it.rowType == TraceRow.ROW_TYPE_DMA_ABILITY) {
+          selection.dmaAbilityData.push(...intersectData(it)!);
+        } else if (it.rowType == TraceRow.ROW_TYPE_GPU_MEMORY_ABILITY) {
+          selection.gpuMemoryAbilityData.push(...intersectData(it)!);
         } else if (it.rowType?.startsWith(TraceRow.ROW_TYPE_SDK)) {
           if (it.rowType == TraceRow.ROW_TYPE_SDK) {
             let sdkRows: Array<TraceRow<any>> = [
@@ -731,8 +820,22 @@ export class SpSystemTrace extends BaseElement {
           selection.anomalyEnergy.push(it.rowId!);
         } else if (it.rowType == TraceRow.ROW_TYPE_SYSTEM_ENERGY) {
           info('load anomaly Energy traceRow id is : ', it.rowId);
-        } else if (it.rowType == TraceRow.ROW_TYPE_SMAPS) {
-          selection.smapsType.push(it.rowId!);
+        } else if (it.rowType == TraceRow.ROW_TYPE_VM_TRACKER_SMAPS) {
+          selection.smapsType.push(...intersectData(it)!);
+          let sMapsChildRows: Array<TraceRow<any>> = [
+            ...this.shadowRoot!.querySelectorAll<TraceRow<any>>(`trace-row[row-parent-id='${it.rowId}']`),
+          ];
+          if (!it.expansion) {
+            sMapsChildRows = [...it.childrenList];
+          }
+          sMapsChildRows.forEach((item) => {
+            item.rangeSelect = true;
+            if (item.rowType == TraceRow.ROW_TYPE_VM_TRACKER_SMAPS) {
+              selection.smapsType.push(...intersectData(item)!);
+            }
+          });
+        } else if (it.rowType == TraceRow.ROW_TYPE_VMTRACKER_SHM) {
+          selection.vmtrackershm.push(...intersectData(it)!);
         } else if (it.rowType == TraceRow.ROW_TYPE_CLOCK) {
           selection.clockMapData.set(
             it.rowId || '',
@@ -762,10 +865,135 @@ export class SpSystemTrace extends BaseElement {
               }
             }
           });
+        } else if (it.rowType === TraceRow.ROW_TYPE_VM_TRACKER) {
+          let vMTrackerChildRows: Array<TraceRow<any>> = [
+            ...this.shadowRoot!.querySelectorAll<TraceRow<any>>(`trace-row[row-parent-id='${it.rowId}']`),
+          ];
+          if (!it.expansion) {
+            vMTrackerChildRows = [...it.childrenList];
+          }
+          vMTrackerChildRows.forEach((th) => {
+            th.rangeSelect = true;
+            if (th.rowType === TraceRow.ROW_TYPE_DMA_VMTRACKER) {
+              selection.dmaVmTrackerData.push(...intersectData(th)!);
+            } else if (th.rowType === TraceRow.ROW_TYPE_SYS_MEMORY_GPU) {
+              let vMTrackerGpuChildRows: Array<TraceRow<any>> = [
+                ...this.shadowRoot!.querySelectorAll<TraceRow<any>>(`trace-row[row-parent-id='${th.rowId}']`),
+              ];
+              if (!th.expansion) {
+                vMTrackerGpuChildRows = [...th.childrenList];
+              }
+              vMTrackerGpuChildRows.forEach((item) => {
+                item.rangeSelect = true;
+                if (item.rowType == TraceRow.ROW_TYPE_GPU_MEMORY_VMTRACKER) {
+                  selection.gpuMemoryTrackerData.push(...intersectData(item)!);
+                } else if (item.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_GL) {
+                  selection.gpu.gl =
+                    item.dataList.filter(
+                      (it) =>
+                        (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                        (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+                    ).length > 0;
+                } else if (item.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_TOTAL) {
+                  selection.gpu.gpuTotal =
+                    item.dataList.filter(
+                      (it) =>
+                        (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                        (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+                    ).length > 0;
+                } else if (item.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_WINDOW) {
+                  selection.gpu.gpuWindow =
+                    item.dataList.filter(
+                      (it) =>
+                        (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                        (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+                    ).length > 0;
+                }
+              });
+            } else if (th.rowType === TraceRow.ROW_TYPE_PURGEABLE_TOTAL_VM) {
+              selection.purgeableTotalVM.push(...intersectData(th));
+            } else if (th.rowType === TraceRow.ROW_TYPE_PURGEABLE_PIN_VM) {
+              selection.purgeablePinVM.push(...intersectData(th));
+            } else if (th.rowType === TraceRow.ROW_TYPE_VM_TRACKER_SMAPS) {
+              let sMapsChildRows: Array<TraceRow<any>> = [
+                ...this.shadowRoot!.querySelectorAll<TraceRow<any>>(`trace-row[row-parent-id='${th.rowId}']`),
+              ];
+              if (!th.expansion) {
+                sMapsChildRows = [...th.childrenList];
+              }
+              sMapsChildRows.forEach((item) => {
+                item.rangeSelect = true;
+                if (item.rowType == TraceRow.ROW_TYPE_VM_TRACKER_SMAPS) {
+                  selection.smapsType.push(...intersectData(item)!);
+                }
+              });
+            } else if (th.rowType == TraceRow.ROW_TYPE_VMTRACKER_SHM) {
+              selection.vmtrackershm.push(...intersectData(th)!);
+            }
+          });
+        } else if (it.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU) {
+          let vMTrackerGpuChildRows: Array<TraceRow<any>> = [
+            ...this.shadowRoot!.querySelectorAll<TraceRow<any>>(`trace-row[row-parent-id='${it.rowId}']`),
+          ];
+          if (!it.expansion) {
+            vMTrackerGpuChildRows = [...it.childrenList];
+          }
+          vMTrackerGpuChildRows.forEach((th) => {
+            th.rangeSelect = true;
+            if (th.rowType == TraceRow.ROW_TYPE_GPU_MEMORY_VMTRACKER) {
+              selection.gpuMemoryTrackerData.push(...intersectData(th)!);
+            } else if (th.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_GL) {
+              selection.gpu.gl =
+                th.dataList.filter(
+                  (it) =>
+                    (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                    (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+                ).length > 0;
+            } else if (th.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_TOTAL) {
+              selection.gpu.gpuTotal =
+                th.dataList.filter(
+                  (it) =>
+                    (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                    (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+                ).length > 0;
+            } else if (th.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_WINDOW) {
+              selection.gpu.gpuWindow =
+                th.dataList.filter(
+                  (it) =>
+                    (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                    (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+                ).length > 0;
+            }
+          });
+        } else if (it.rowType == TraceRow.ROW_TYPE_GPU_MEMORY_VMTRACKER) {
+          selection.gpuMemoryTrackerData.push(...intersectData(it)!);
+        } else if (it.rowType == TraceRow.ROW_TYPE_DMA_VMTRACKER) {
+          selection.dmaVmTrackerData.push(...intersectData(it)!);
+        } else if (it.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_GL) {
+          selection.gpu.gl =
+            it.dataList.filter(
+              (it) =>
+                (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+            ).length > 0;
+        } else if (it.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_TOTAL) {
+          selection.gpu.gpuTotal =
+            it.dataList.filter(
+              (it) =>
+                (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+            ).length > 0;
+        } else if (it.rowType == TraceRow.ROW_TYPE_SYS_MEMORY_GPU_WINDOW) {
+          selection.gpu.gpuWindow =
+            it.dataList.filter(
+              (it) =>
+                (it.startNs >= selection.leftNs && it.startNs <= selection.rightNs) ||
+                (it.endNs >= selection.leftNs && it.endNs <= selection.rightNs)
+            ).length > 0;
         } else if (it.rowType == TraceRow.ROW_TYPE_JANK) {
-          let isIntersect = (a: JanksStruct, b: RangeSelectStruct) =>
-            Math.max(a.ts! + a.dur!, b!.endNS || 0) - Math.min(a.ts!, b!.startNS || 0) <
-            a.dur! + (b!.endNS || 0) - (b!.startNS || 0);
+          let isIntersect = (filterJank: JanksStruct, rangeData: RangeSelectStruct) =>
+            Math.max(filterJank.ts! + filterJank.dur!, rangeData!.endNS || 0) - Math.min(filterJank.ts!, rangeData!.startNS || 0) <
+            filterJank.dur! + (rangeData!.endNS || 0) - (rangeData!.startNS || 0);
           if (it.name == 'Actual Timeline') {
             selection.jankFramesData = [];
             let jankDatas = it.dataList.filter((jankData: any) => {
@@ -834,7 +1062,7 @@ export class SpSystemTrace extends BaseElement {
           }
           let jsCpuProfilerData = copyFrameSelectData.filter((item: any) => {
             if (item.depth == 0) {
-              setSelectState(item,frameSelectDataIdArr);
+              setSelectState(item, frameSelectDataIdArr);
               return item;
             }
           });
@@ -849,24 +1077,37 @@ export class SpSystemTrace extends BaseElement {
           });
           selection.frameAnimation.push(...frameAnimationList);
         } else if (it.rowType == TraceRow.ROW_TYPE_FRAME_DYNAMIC) {
+          let appName = it.getAttribute('model-name');
           let isSelect = (dynamicStruct: FrameDynamicStruct, b: RangeSelectStruct) =>
             dynamicStruct.ts >= b.startNS! && dynamicStruct.ts <= b.endNS!;
           let frameDynamicList = it.dataList.filter(
             (frameAnimationBean: FrameDynamicStruct) =>
-              isSelect(frameAnimationBean, TraceRow.rangeSelectObject!) && frameAnimationBean.groupId !== -1
+              isSelect(frameAnimationBean, TraceRow.rangeSelectObject!) &&
+              frameAnimationBean.groupId !== -1 &&
+              frameAnimationBean.appName === appName
           );
           selection.frameDynamic.push(...frameDynamicList);
         } else if (it.rowType == TraceRow.ROW_TYPE_FRAME_SPACING) {
+          let appName = it.getAttribute('model-name');
           let isSelect = (a: FrameSpacingStruct, b: RangeSelectStruct) =>
             a.currentTs >= b.startNS! && a.currentTs <= b.endNS!;
           let frameDatas = it.dataList.filter((frameData: FrameSpacingStruct) => {
             return (
               isSelect(frameData, TraceRow.rangeSelectObject!) &&
               frameData.groupId !== -1 &&
-              frameData.frameSpacingResult !== -1
+              frameData.frameSpacingResult !== -1 &&
+              frameData.nameId === appName
             );
           });
           selection.frameSpacing.push(...frameDatas);
+        } else if (it.rowType == TraceRow.ROW_TYPE_PURGEABLE_TOTAL_ABILITY) {
+          selection.purgeableTotalAbility.push(...intersectData(it));
+        } else if (it.rowType == TraceRow.ROW_TYPE_PURGEABLE_PIN_ABILITY) {
+          selection.purgeablePinAbility.push(...intersectData(it));
+        } else if (it.rowType == TraceRow.ROW_TYPE_PURGEABLE_TOTAL_VM) {
+          selection.purgeableTotalVM.push(...intersectData(it));
+        } else if (it.rowType == TraceRow.ROW_TYPE_PURGEABLE_PIN_VM) {
+          selection.purgeablePinVM.push(...intersectData(it));
         }
         if (this.rangeTraceRow!.length !== rows.length) {
           let event = this.createPointEvent(it);
@@ -893,8 +1134,6 @@ export class SpSystemTrace extends BaseElement {
           })
         );
       }
-      selection.leftNs = TraceRow.rangeSelectObject?.startNS || 0;
-      selection.rightNs = TraceRow.rangeSelectObject?.endNS || 0;
       this.selectStructNull();
       this.timerShaftEL?.removeTriangle('inverted');
       if (selection.promiseList.length > 0) {
@@ -1004,6 +1243,11 @@ export class SpSystemTrace extends BaseElement {
     });
     window.subscribe(window.SmartEvent.UI.MouseEventEnable, (tr) => {
       this.mouseEventEnable = tr.mouseEnable;
+      if (this.mouseEventEnable) {
+        this.removeAttribute('disable');
+      } else {
+        this.setAttribute('disable', '');
+      }
     });
   }
 
@@ -1041,7 +1285,7 @@ export class SpSystemTrace extends BaseElement {
         }
       } else if (it.rowType === TraceRow.ROW_TYPE_STATE_ENERGY) {
         event = it.name;
-      } else if (it.rowType === TraceRow.ROW_TYPE_SMAPS) {
+      } else if (it.rowType === TraceRow.ROW_TYPE_VM_TRACKER) {
         if (it.rowParentId === '') {
           event = 'VM Tracker';
         } else {
@@ -1436,6 +1680,7 @@ export class SpSystemTrace extends BaseElement {
     ['s', false],
     ['a', false],
     ['d', false],
+    ['f', false],
   ]);
   documentOnKeyPress = (ev: KeyboardEvent) => {
     if (!this.loadTraceCompleted) return;
@@ -1466,16 +1711,67 @@ export class SpSystemTrace extends BaseElement {
           }
         });
       }
+      if (keyPress === 'f') {
+        // 设置当前的slicesTime
+        this.setCurrentSlicesTime();
+      }
       let keyPressWASD = keyPress === 'w' || keyPress === 'a' || keyPress === 's' || keyPress === 'd';
       if (keyPressWASD) {
         this.keyPressMap.set(keyPress, true);
         this.hoverFlag = null;
       }
-      this.timerShaftEL!.documentOnKeyPress(ev);
+      this.timerShaftEL!.documentOnKeyPress(ev, this.currentSlicesTime);
+      if (keyPress === 'f') {
+        this.verticalScrollToRow();
+      }
     } else {
       this.stopWASD();
     }
   };
+
+  verticalScrollToRow() {
+    if (this.currentRow) {
+      this.currentRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  setCurrentSlicesTime() {
+    if (CpuStruct.selectCpuStruct) {
+      if (CpuStruct.selectCpuStruct.startTime && CpuStruct.selectCpuStruct.dur) {
+        this.currentSlicesTime.startTime = CpuStruct.selectCpuStruct.startTime;
+        this.currentSlicesTime.endTime = CpuStruct.selectCpuStruct.startTime + CpuStruct.selectCpuStruct.dur;
+      }
+    } else if (ThreadStruct.selectThreadStruct) {
+      if (ThreadStruct.selectThreadStruct.startTime && ThreadStruct.selectThreadStruct.dur) {
+        this.currentSlicesTime.startTime = ThreadStruct.selectThreadStruct.startTime;
+        this.currentSlicesTime.endTime =
+          ThreadStruct.selectThreadStruct.startTime + ThreadStruct.selectThreadStruct.dur;
+      }
+    } else if (FuncStruct.selectFuncStruct) {
+      if (FuncStruct.selectFuncStruct.startTs && FuncStruct.selectFuncStruct.dur) {
+        this.currentSlicesTime.startTime = FuncStruct.selectFuncStruct.startTs;
+        this.currentSlicesTime.endTime = FuncStruct.selectFuncStruct.startTs + FuncStruct.selectFuncStruct.dur;
+      }
+    } else if (IrqStruct.selectIrqStruct) {
+      if (IrqStruct.selectIrqStruct.startNS && IrqStruct.selectIrqStruct.dur) {
+        this.currentSlicesTime.startTime = IrqStruct.selectIrqStruct.startNS;
+        this.currentSlicesTime.endTime = IrqStruct.selectIrqStruct.startNS + IrqStruct.selectIrqStruct.dur;
+      }
+    } else if (TraceRow.rangeSelectObject) {
+      if (TraceRow.rangeSelectObject.startNS && TraceRow.rangeSelectObject.endNS) {
+        this.currentSlicesTime.startTime = TraceRow.rangeSelectObject.startNS;
+        this.currentSlicesTime.endTime = TraceRow.rangeSelectObject.endNS;
+      }
+    } else if (JankStruct.selectJankStruct) {
+      if (JankStruct.selectJankStruct.ts && JankStruct.selectJankStruct.dur) {
+        this.currentSlicesTime.startTime = JankStruct.selectJankStruct.ts;
+        this.currentSlicesTime.endTime = JankStruct.selectJankStruct.ts + JankStruct.selectJankStruct.dur;
+      }
+    } else {
+      this.currentSlicesTime.startTime = 0;
+      this.currentSlicesTime.endTime = 0;
+    }
+  }
 
   setSLiceMark(shiftKey: boolean): SlicesTime | null | undefined {
     if (CpuStruct.selectCpuStruct) {
@@ -1595,6 +1891,9 @@ export class SpSystemTrace extends BaseElement {
     info('favoriteChangeHandler', row.frame, row.offsetTop, row.offsetHeight);
   };
 
+  verticalScrollHandler = (row: TraceRow<any>) => {
+    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
   selectChangeHandler = (rows: Array<TraceRow<any>>) => {
     this.isSelectClick = true;
     this.rangeSelect.rangeTraceRow = rows;
@@ -1719,6 +2018,7 @@ export class SpSystemTrace extends BaseElement {
     FrameDynamicStruct.hoverFrameDynamicStruct = undefined;
     FrameSpacingStruct.hoverFrameSpacingStruct = undefined;
     JsCpuProfilerStruct.hoverJsCpuProfilerStruct = undefined;
+    SnapshotStruct.hoverSnapshotStruct = undefined;
   }
 
   selectStructNull() {
@@ -1741,6 +2041,7 @@ export class SpSystemTrace extends BaseElement {
     FrameAnimationStruct.selectFrameAnimationStruct = undefined;
     FrameDynamicStruct.selectFrameDynamicStruct = undefined;
     JsCpuProfilerStruct.selectJsCpuProfilerStruct = undefined;
+    SnapshotStruct.selectSnapshotStruct = undefined;
   }
 
   isWASDKeyPress() {
@@ -1846,6 +2147,14 @@ export class SpSystemTrace extends BaseElement {
     [TraceRow.ROW_TYPE_JANK, () => JankStruct.hoverJankStruct !== null && JankStruct.hoverJankStruct !== undefined],
     [TraceRow.ROW_TYPE_HEAP, () => HeapStruct.hoverHeapStruct !== null && HeapStruct.hoverHeapStruct !== undefined],
     [
+      TraceRow.ROW_TYPE_SYS_MEMORY_GPU_TOTAL,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_SYS_MEMORY_GPU_WINDOW,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
       TraceRow.ROW_TYPE_HEAP_SNAPSHOT,
       () => HeapSnapshotStruct.hoverSnapshotStruct !== null && HeapSnapshotStruct.hoverSnapshotStruct !== undefined,
     ],
@@ -1871,10 +2180,51 @@ export class SpSystemTrace extends BaseElement {
         JsCpuProfilerStruct.hoverJsCpuProfilerStruct !== null &&
         JsCpuProfilerStruct.hoverJsCpuProfilerStruct !== undefined,
     ],
+    [
+      TraceRow.ROW_TYPE_PURGEABLE_TOTAL_ABILITY,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_PURGEABLE_PIN_ABILITY,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_PURGEABLE_TOTAL_VM,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_PURGEABLE_PIN_VM,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_DMA_ABILITY,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_DMA_VMTRACKER,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_GPU_MEMORY_ABILITY,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_GPU_MEMORY_VMTRACKER,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_VMTRACKER_SHM,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
+    [
+      TraceRow.ROW_TYPE_VM_TRACKER_SMAPS,
+      () => SnapshotStruct.hoverSnapshotStruct !== null && SnapshotStruct.hoverSnapshotStruct !== undefined,
+    ],
   ]);
 
   onClickHandler(clickRowType: string, row?: TraceRow<any>) {
     if (row) {
+      this.currentRow = row;
       this.setAttribute('clickRow', clickRowType);
       this.setAttribute('rowName', row.name!);
       this.setAttribute('rowId', row.rowId!);
@@ -1884,6 +2234,8 @@ export class SpSystemTrace extends BaseElement {
     this.selectStructNull();
     this.wakeupListNull();
     let threadClickHandler: any;
+    let threadClickPreviousHandler: any;
+    let threadClickNextHandler: any;
     let cpuClickHandler: any;
     let jankClickHandler: any;
     let snapshotClickHandler: any;
@@ -1920,6 +2272,50 @@ export class SpSystemTrace extends BaseElement {
       );
     };
 
+    threadClickPreviousHandler = (d: ThreadStruct) => {
+      this.observerScrollHeightEnable = false;
+      let threadRow = this.shadowRoot?.querySelector<TraceRow<ThreadStruct>>(
+        `trace-row[row-id='${d.tid}'][row-type='thread']`
+      );
+      threadRow?.dataList.forEach((item, index) => {
+        if (item === d && index !== 0) {
+          let findEntry = threadRow?.dataList[index - 1];
+          this.hoverStructNull();
+          this.selectStructNull();
+          this.wakeupListNull();
+          ThreadStruct.hoverThreadStruct = findEntry;
+          ThreadStruct.selectThreadStruct = findEntry;
+          this.timerShaftEL?.drawTriangle(findEntry!.startTime || 0, 'inverted');
+          this.traceSheetEL?.displayThreadData(
+            ThreadStruct.selectThreadStruct!,
+            threadClickHandler,
+            cpuClickHandler,
+            threadClickPreviousHandler,
+            threadClickNextHandler
+          );
+        }
+      });
+    };
+    threadClickNextHandler = (d: ThreadStruct) => {
+      this.observerScrollHeightEnable = false;
+      let threadRow = this.shadowRoot?.querySelector<TraceRow<ThreadStruct>>(
+        `trace-row[row-id='${d.tid}'][row-type='thread']`
+      );
+      let findEntry = threadRow?.dataList.find((dat: any) => dat.startTime === d.startTime! + d.dur!);
+      this.hoverStructNull();
+      this.selectStructNull();
+      this.wakeupListNull();
+      ThreadStruct.hoverThreadStruct = findEntry;
+      ThreadStruct.selectThreadStruct = findEntry;
+      this.timerShaftEL?.drawTriangle(findEntry!.startTime || 0, 'inverted');
+      this.traceSheetEL?.displayThreadData(
+        ThreadStruct.selectThreadStruct!,
+        threadClickHandler,
+        cpuClickHandler,
+        threadClickPreviousHandler,
+        threadClickNextHandler
+      );
+    };
     cpuClickHandler = (d: CpuStruct) => {
       let traceRow = this.shadowRoot?.querySelector<TraceRow<any>>(
         `trace-row[row-id='${d.processId}'][row-type='process']`
@@ -1949,7 +2345,13 @@ export class SpSystemTrace extends BaseElement {
           ThreadStruct.hoverThreadStruct = findEntry;
           ThreadStruct.selectThreadStruct = findEntry;
           this.timerShaftEL?.drawTriangle(findEntry!.startTime || 0, 'inverted');
-          this.traceSheetEL?.displayThreadData(ThreadStruct.selectThreadStruct!, threadClickHandler, cpuClickHandler);
+          this.traceSheetEL?.displayThreadData(
+            ThreadStruct.selectThreadStruct!,
+            threadClickHandler,
+            cpuClickHandler,
+            threadClickPreviousHandler,
+            threadClickNextHandler
+          );
           this.scrollToProcess(`${d.tid}`, `${d.processId}`, 'thread', true);
         }
       };
@@ -2067,7 +2469,13 @@ export class SpSystemTrace extends BaseElement {
     } else if (clickRowType === TraceRow.ROW_TYPE_THREAD && ThreadStruct.hoverThreadStruct) {
       ThreadStruct.selectThreadStruct = ThreadStruct.hoverThreadStruct;
       this.timerShaftEL?.drawTriangle(ThreadStruct.selectThreadStruct!.startTime || 0, 'inverted');
-      this.traceSheetEL?.displayThreadData(ThreadStruct.selectThreadStruct, threadClickHandler, cpuClickHandler);
+      this.traceSheetEL?.displayThreadData(
+        ThreadStruct.selectThreadStruct,
+        threadClickHandler,
+        cpuClickHandler,
+        threadClickPreviousHandler,
+        threadClickNextHandler
+      );
       this.timerShaftEL?.modifyFlagList(undefined);
     } else if (clickRowType === TraceRow.ROW_TYPE_FUNC && FuncStruct.hoverFuncStruct) {
       TabPaneTaskFrames.TaskArray = [];
@@ -2103,6 +2511,28 @@ export class SpSystemTrace extends BaseElement {
     } else if (clickRowType === TraceRow.ROW_TYPE_CLOCK && ClockStruct.hoverClockStruct) {
       ClockStruct.selectClockStruct = ClockStruct.hoverClockStruct;
       this.traceSheetEL?.displayClockData(ClockStruct.selectClockStruct);
+      this.timerShaftEL?.modifyFlagList(undefined);
+    } else if (clickRowType === TraceRow.ROW_TYPE_SYS_MEMORY_GPU_TOTAL && SnapshotStruct.hoverSnapshotStruct) {
+      let gpuDumpTotalRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='Skia Gpu Dump Total']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayGpuSelectedData(
+        'total',
+        SnapshotStruct.selectSnapshotStruct.startNs,
+        gpuDumpTotalRow!.dataList
+      );
+      this.timerShaftEL?.modifyFlagList(undefined);
+    } else if (clickRowType === TraceRow.ROW_TYPE_SYS_MEMORY_GPU_WINDOW && SnapshotStruct.hoverSnapshotStruct) {
+      let gpuDumpWindowRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='Skia Gpu Dump Window']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayGpuSelectedData(
+        'window',
+        SnapshotStruct.selectSnapshotStruct.startNs,
+        gpuDumpWindowRow!.dataList
+      );
       this.timerShaftEL?.modifyFlagList(undefined);
     } else if (clickRowType === TraceRow.ROW_TYPE_IRQ && IrqStruct.hoverIrqStruct) {
       IrqStruct.selectIrqStruct = IrqStruct.hoverIrqStruct;
@@ -2231,6 +2661,64 @@ export class SpSystemTrace extends BaseElement {
       FrameSpacingStruct.selectFrameSpacingStruct = FrameSpacingStruct.hoverFrameSpacingStruct;
       this.traceSheetEL?.displayFrameSpacingData(FrameSpacingStruct.selectFrameSpacingStruct);
       this.timerShaftEL?.modifyFlagList(undefined);
+    } else if (clickRowType === TraceRow.ROW_TYPE_VM_TRACKER_SMAPS && SnapshotStruct.hoverSnapshotStruct) {
+      let smapsRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(`trace-row[row-id='Dirty']`);
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displaySmapsData(SnapshotStruct.selectSnapshotStruct!, smapsRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_VMTRACKER_SHM && SnapshotStruct.hoverSnapshotStruct) {
+      let shmRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(`trace-row[row-id='SHM']`);
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayShmData(SnapshotStruct.selectSnapshotStruct!, shmRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_PURGEABLE_TOTAL_ABILITY && SnapshotStruct.hoverSnapshotStruct) {
+      let totalAbilityRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='System Purgeable Total']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayPurgTotalAbilityData(SnapshotStruct.hoverSnapshotStruct, totalAbilityRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_PURGEABLE_PIN_ABILITY && SnapshotStruct.hoverSnapshotStruct) {
+      let pinAbilityRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='System Purgeable Pin']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayPurgPinAbilityData(SnapshotStruct.hoverSnapshotStruct, pinAbilityRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_PURGEABLE_TOTAL_VM && SnapshotStruct.hoverSnapshotStruct) {
+      let totalVMRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(`trace-row[row-id='Purgeable Total']`);
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayPurgTotalVMData(SnapshotStruct.hoverSnapshotStruct, totalVMRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_PURGEABLE_PIN_VM && SnapshotStruct.hoverSnapshotStruct) {
+      let pinVMRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(`trace-row[row-id='Purgeable Pin']`);
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayPurgPinVMData(SnapshotStruct.hoverSnapshotStruct, pinVMRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_DMA_ABILITY && SnapshotStruct.hoverSnapshotStruct) {
+      let dmaAbilityRow = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='abilityMonitorDma']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayDmaAbility(SnapshotStruct.selectSnapshotStruct.startNs, dmaAbilityRow!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_DMA_VMTRACKER && SnapshotStruct.hoverSnapshotStruct) {
+      let dmaVmTracker = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-type='dma-vmTracker']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayDmaVmTracker(SnapshotStruct.selectSnapshotStruct.startNs, dmaVmTracker!.dataList);
+    } else if (clickRowType === TraceRow.ROW_TYPE_GPU_MEMORY_ABILITY && SnapshotStruct.hoverSnapshotStruct) {
+      let gpuMemoryAbilityMonitor = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='abilityMonitorGpuMemory']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayGpuMemoryAbility(
+        SnapshotStruct.selectSnapshotStruct.startNs,
+        gpuMemoryAbilityMonitor!.dataList
+      );
+    } else if (clickRowType === TraceRow.ROW_TYPE_GPU_MEMORY_VMTRACKER && SnapshotStruct.hoverSnapshotStruct) {
+      let gpuMemoryVmTracker = this.shadowRoot?.querySelector<TraceRow<SnapshotStruct>>(
+        `trace-row[row-id='Skia Gpu Memory']`
+      );
+      SnapshotStruct.selectSnapshotStruct = SnapshotStruct.hoverSnapshotStruct;
+      this.traceSheetEL?.displayGpuMemoryVmTracker(
+        SnapshotStruct.selectSnapshotStruct.startNs,
+        gpuMemoryVmTracker!.dataList
+      );
     } else {
       if (!JankStruct.hoverJankStruct && JankStruct.delJankLineFlag) {
         this.removeLinkLinesByBusinessType('janks');
@@ -2311,7 +2799,7 @@ export class SpSystemTrace extends BaseElement {
                   0,
                   row?.translateY!,
                   row,
-                  25,
+                  (FuncStruct.selectFuncStruct!.depth! + 0.5) * 20,
                   'task',
                   LineType.bezierCurve,
                   true
@@ -2327,7 +2815,7 @@ export class SpSystemTrace extends BaseElement {
                   FuncStruct.selectFuncStruct!.dur!,
                   row?.translateY!,
                   row,
-                  25,
+                  (FuncStruct.selectFuncStruct!.depth! + 0.5) * 20,
                   'task',
                   LineType.bezierCurve,
                   false
@@ -2390,28 +2878,30 @@ export class SpSystemTrace extends BaseElement {
                   true
                 )
               );
-              this.addPointPair(
-                this.makePoint(
-                  value.startTs!,
-                  value.dur!,
-                  executeRow?.translateY!,
-                  executeRow,
-                  (value.depth! + 0.5) * 20,
-                  'task',
-                  LineType.bezierCurve,
-                  false
-                ),
-                this.makePoint(
-                  endStruct.startTs!,
-                  endStruct.dur!,
-                  row?.translateY!,
-                  row,
-                  (endStruct.depth! + 0.5) * 20,
-                  'task',
-                  LineType.bezierCurve,
-                  false
-                )
-              );
+              if (endStruct) {
+                this.addPointPair(
+                  this.makePoint(
+                    value.startTs!,
+                    value.dur!,
+                    executeRow?.translateY!,
+                    executeRow,
+                    (value.depth! + 0.5) * 20,
+                    'task',
+                    LineType.bezierCurve,
+                    false
+                  ),
+                  this.makePoint(
+                    endStruct.startTs!,
+                    endStruct.dur!,
+                    row?.translateY!,
+                    row,
+                    (endStruct.depth! + 0.5) * 20,
+                    'task',
+                    LineType.bezierCurve,
+                    false
+                  )
+                );
+              }
             }
           });
         } else if (FuncStruct.selectFuncStruct!.funName!.indexOf('H:Task PerformTask End:') >= 0) {
@@ -2481,6 +2971,7 @@ export class SpSystemTrace extends BaseElement {
     }
   }
   drawJankLine(endParentRow: any, selectJankStruct: JankStruct, data: any) {
+    let collectList = this.favoriteRowsEL?.querySelectorAll<TraceRow<any>>(`trace-row[collect-type]`) || [];
     let startRow: any;
     if (selectJankStruct == undefined || selectJankStruct == null) {
       return;
@@ -2494,6 +2985,16 @@ export class SpSystemTrace extends BaseElement {
         `trace-row[row-id='${`${selectJankStruct?.type}-${selectJankStruct?.pid}`}'][row-type='janks']`
       );
     }
+
+    function collectionHasJank(jankRow: any): boolean {
+      for (let item of collectList!) {
+        if (item.rowId === jankRow.rowId && item.rowType === jankRow.rowType) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     if (endParentRow) {
       //终点的父泳道过滤出选中的Struct
       let endRowStruct: any;
@@ -2558,7 +3059,8 @@ export class SpSystemTrace extends BaseElement {
             let endY = endRowStruct!.translateY! + 20 * (findJankEntry!.depth! + 0.5);
             let endRowEl = endRowStruct;
             let endOffSetY = 20 * (findJankEntry!.depth! + 0.5);
-            if (!endParentRow.expansion) {
+            let expansionFlag = collectionHasJank(endRowStruct);
+            if (!endParentRow.expansion && expansionFlag) {
               endY = endParentRow!.translateY! + 10 * (findJankEntry!.depth! + 0.5);
               endRowEl = endParentRow;
               endOffSetY = 10 * (findJankEntry!.depth! + 0.5);
@@ -2566,7 +3068,8 @@ export class SpSystemTrace extends BaseElement {
             let startY = startRow!.translateY! + 20 * (selectJankStruct!.depth! + 0.5);
             let startRowEl = startRow;
             let startOffSetY = 20 * (selectJankStruct!.depth! + 0.5);
-            if (startParentRow && !startParentRow.expansion) {
+            expansionFlag = collectionHasJank(startRow);
+            if (startParentRow && !startParentRow.expansion && expansionFlag) {
               startY = startParentRow!.translateY! + 10 * (selectJankStruct!.depth! + 0.5);
               startRowEl = startParentRow;
               startOffSetY = 10 * (selectJankStruct!.depth! + 0.5);
@@ -2598,18 +3101,20 @@ export class SpSystemTrace extends BaseElement {
             let endY = endRowStruct!.translateY! + 20 * (findJankEntry!.depth! + 0.5);
             let endRowEl = endRowStruct;
             let endOffSetY = 20 * (findJankEntry!.depth! + 0.5);
-            if (!endParentRow.expansion) {
+            let expansionFlag = collectionHasJank(endRowStruct);
+            if (!endParentRow.expansion && expansionFlag) {
               endY = endParentRow!.translateY! + 10 * (findJankEntry!.depth! + 0.5);
               endRowEl = endParentRow;
               endOffSetY = 10 * (findJankEntry!.depth! + 0.5);
             }
             let startY = startRow!.translateY! + 20 * (selectJankStruct!.depth! + 0.5);
             let startRowEl = startRow;
+            expansionFlag = collectionHasJank(startRow);
             let startOffsetY = 20 * (selectJankStruct!.depth! + 0.5);
             let startParentRow = this.shadowRoot?.querySelector<TraceRow<JankStruct>>(
               `trace-row[row-id='${startRow.rowParentId}'][folder]`
             );
-            if (startParentRow && !startParentRow.expansion) {
+            if (startParentRow && !startParentRow.expansion && expansionFlag) {
               startY = startParentRow!.translateY! + 10 * (selectJankStruct!.depth! + 0.5);
               startRowEl = startParentRow;
               startOffsetY = 10 * (selectJankStruct!.depth! + 0.5);
@@ -2955,6 +3460,9 @@ export class SpSystemTrace extends BaseElement {
     this.init({ url: url }, '', progress).then((res) => {
       if (complete) {
         complete(res);
+        window.publish(window.SmartEvent.UI.MouseEventEnable, {
+          mouseEnable: true,
+        });
       }
     });
   }
@@ -2972,6 +3480,9 @@ export class SpSystemTrace extends BaseElement {
       this.rowsEL?.querySelectorAll('trace-row').forEach((it: any) => this.observer.observe(it));
       if (complete) {
         complete(res);
+        window.publish(window.SmartEvent.UI.MouseEventEnable, {
+          mouseEnable: true,
+        });
       }
     });
   }
@@ -3446,7 +3957,8 @@ export class SpSystemTrace extends BaseElement {
       } catch (e) {
         error('getWasmConfigFailed', e);
       }
-      let { status, msg, sdkConfigMap } = await threadPool.initSqlite(param.buf, configJson, progress);
+      let parseConfig = FlagsConfig.getSpTraceStreamParseConfig();
+      let { status, msg, sdkConfigMap } = await threadPool.initSqlite(param.buf, parseConfig, configJson, progress);
       if (!status) {
         return { status: false, msg: msg };
       }
@@ -3472,6 +3984,9 @@ export class SpSystemTrace extends BaseElement {
     this.rowsEL!.querySelectorAll<TraceRow<any>>('trace-row').forEach((it) => {
       if (rowId !== '' && (it.rowId?.includes(rowId) || it.name.includes(rowId))) {
         it.addTemplateTypes('Ark Ts');
+        for (let child of it.childrenList) {
+          child.addTemplateTypes('Ark Ts');
+        }
       }
       if (it.folder) {
         let offsetYTimeOut: any = undefined;
@@ -3671,6 +4186,9 @@ export class SpSystemTrace extends BaseElement {
             z-index:1001;
             background: var(--dark-background5,#ffffff);
             box-shadow: 0 10px 10px #00000044;
+        }
+        :host([disable]) .container{
+            pointer-events: none;
         }
         .container{
             width: 100%;

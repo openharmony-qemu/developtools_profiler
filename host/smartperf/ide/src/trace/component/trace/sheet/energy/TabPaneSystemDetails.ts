@@ -61,7 +61,7 @@ export class TabPaneSystemDetails extends BaseElement {
   convertData(data: SystemDetailsEnergy) {
     if (data.eventName === 'Event Name') {
       this.slicerTrack!.style.visibility = 'hidden';
-      this.detailsTbl!.recycleDataSource = [];
+      this.detailsTbl!.dataSource = [];
       this.boxDetails!.style.width = '100%';
     } else {
       this.slicerTrack!.style.visibility = 'visible';
@@ -98,7 +98,7 @@ export class TabPaneSystemDetails extends BaseElement {
           value: data.interval,
         });
       }
-      this.detailsTbl!.recycleDataSource = this.detailsSource;
+      this.detailsTbl!.dataSource = this.detailsSource;
       this.boxDetails!.style.width = '65%';
     }
     this.detailsTbl!.shadowRoot?.querySelectorAll<HTMLDivElement>('.td').forEach((td) => {
@@ -161,7 +161,7 @@ export class TabPaneSystemDetails extends BaseElement {
       });
 
       this.tblSystemDetails!.recycleDataSource = this.eventSource.concat(itemList);
-      this.detailsTbl!.recycleDataSource = [];
+      this.detailsTbl!.dataSource = [];
       this.boxDetails!.style.width = '100%';
       this.tblSystemDetails?.shadowRoot?.querySelectorAll<HTMLDivElement>('.td').forEach((td) => {
         td.style.fontSize = '14px';

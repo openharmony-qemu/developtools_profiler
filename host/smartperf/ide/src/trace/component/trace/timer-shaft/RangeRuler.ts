@@ -15,11 +15,15 @@
 
 import { Graph } from './Graph.js';
 import { Rect } from './Rect.js';
-import {ns2s, ns2UnitS, TimerShaftElement} from '../TimerShaftElement.js';
+import { ns2s, ns2UnitS, TimerShaftElement } from '../TimerShaftElement.js';
 import { ColorUtils } from '../base/ColorUtils.js';
 import { CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
+import { CurrentSlicesTime } from '../../SpSystemTrace.js';
 
 const MarkPadding = 5;
+const FIT_TOTALX_MIN: number = 280;
+const FIT_TOTALX_MAX: number = 300;
+const MID_OFFSET: number = 10;
 
 export class Mark extends Graph {
   name: string | undefined;
@@ -80,6 +84,7 @@ export interface TimeRange {
 
 export class RangeRuler extends Graph {
   public rangeRect: Rect;
+  public currentSlicesTime: CurrentSlicesTime;
   public markAObj: Mark;
   public markBObj: Mark;
   public drawMark: boolean = false;
@@ -94,6 +99,7 @@ export class RangeRuler extends Graph {
   markAX: number = 0;
   markBX: number = 0;
   isPress: boolean = false;
+  pressFrameIdF: number = -1;
   pressFrameIdW: number = -1;
   pressFrameIdS: number = -1;
   pressFrameIdA: number = -1;
@@ -114,6 +120,8 @@ export class RangeRuler extends Graph {
   private readonly notifyHandler: (r: TimeRange) => void;
   private scale: number = 0;
   private delayTimer: any = null;
+  private rulerW = 0;
+
   //缩放级别
   private scales: Array<number> = [
     50, 100, 200, 500, 1_000, 2_000, 5_000, 10_000, 20_000, 50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000,
@@ -139,6 +147,7 @@ export class RangeRuler extends Graph {
       new Rect(range.endX, frame.y, 1, frame.height)
     );
     this.rangeRect = new Rect(range.startX, frame.y, range.endX - range.startX, frame.height);
+    this.currentSlicesTime = new CurrentSlicesTime();
   }
 
   set cpuUsage(value: Array<{ cpu: number; ro: number; rate: number }>) {
@@ -160,7 +169,6 @@ export class RangeRuler extends Graph {
         miniHeight
       );
     }
-    ``;
   }
 
   draw(discardNotify: boolean = false): void {
@@ -448,6 +456,7 @@ export class RangeRuler extends Graph {
     if (this.pressFrameIdD != -1) cancelAnimationFrame(this.pressFrameIdD);
     if (this.pressFrameIdW != -1) cancelAnimationFrame(this.pressFrameIdW);
     if (this.pressFrameIdS != -1) cancelAnimationFrame(this.pressFrameIdS);
+    if (this.pressFrameIdF != -1) cancelAnimationFrame(this.pressFrameIdF);
   }
 
   cancelUpFrame() {
@@ -459,7 +468,10 @@ export class RangeRuler extends Graph {
 
   cancelTimeOut: any = undefined;
 
-  keyPress(keyboardEvent: KeyboardEvent) {
+  keyPress(keyboardEvent: KeyboardEvent, currentSlicesTime?: CurrentSlicesTime) {
+    if (currentSlicesTime) {
+      this.currentSlicesTime = currentSlicesTime;
+    }
     if (
       this.animaStartTime == undefined ||
       (this.pressedKeys.length > 0 &&
@@ -500,6 +512,124 @@ export class RangeRuler extends Graph {
     }, 1000);
   }
 
+  keyPressF() {
+    const DIS = 100;
+    let clientWidth = this.canvas?.clientWidth || 0;
+    let midX = Math.round(clientWidth / 2);
+    let sliceMidX = 0;
+    let startTime = 0;
+    let endTime = 0;
+    this.rulerW = this.canvas!.offsetWidth;
+    if (this.currentSlicesTime.startTime) {
+      startTime = this.currentSlicesTime.startTime;
+    } else {
+      return;
+    }
+    if (this.currentSlicesTime.endTime) {
+      endTime = this.currentSlicesTime.endTime;
+    } else {
+      return;
+    }
+    let startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+    let endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+    let totalX = 0;
+    totalX = Math.round(endX - startX);
+    sliceMidX = Math.round(startX + totalX / 2);
+    let count1 = 0;
+    let count2 = 0;
+    let sliceMidXMap = new Map();
+    let animF = () => {
+      startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+      endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+      totalX = Math.round(endX - startX);
+      sliceMidX = Math.round(startX + totalX / 2);
+      let x = 1;
+      do {
+        startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+        endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+        totalX = Math.round(endX - startX);
+        sliceMidX = Math.round(startX + (endX - startX) / 2);
+        if (sliceMidX !== sliceMidXMap.get('tempMid1') && sliceMidX !== sliceMidXMap.get('tempMid2')) {
+          if (x % 2 === 0) {
+            sliceMidXMap.set('tempMid2', sliceMidX); // 偶数
+          } else {
+            sliceMidXMap.set('tempMid1', sliceMidX); // 奇数
+          }
+        } else {
+          if (sliceMidX === sliceMidXMap.get('tempMid1')) {
+            count1++;
+          }
+          if (sliceMidX === sliceMidXMap.get('tempMid2')) {
+            count2++;
+          }
+        }
+        if (count1 >= 10 || count2 >= 10) {
+          let tempMid1 = sliceMidXMap.get('tempMid1') || 0;
+          let tempMid2 = sliceMidXMap.get('tempMid2') || 0;
+          if (sliceMidX === tempMid1 && tempMid1 === tempMid2) {
+            sliceMidX += 11;
+          }
+          if (sliceMidX === tempMid1 && sliceMidX !== tempMid2) {
+            if (sliceMidX < tempMid2) {
+              sliceMidX += 15;
+            } else {
+              sliceMidX -= 10;
+            }
+          }
+          if (sliceMidX === tempMid2 && sliceMidX !== tempMid1) {
+            if (sliceMidX < tempMid1) {
+              sliceMidX += 15;
+            } else {
+              sliceMidX -= 10;
+            }
+          }
+        }
+        x++;
+        if (sliceMidX >= midX - MID_OFFSET && sliceMidX <= midX + MID_OFFSET) {
+          if ((totalX < FIT_TOTALX_MIN && totalX >= 0) || totalX > FIT_TOTALX_MAX) {
+            this.zoomFit(startTime, endTime);
+          }
+          this.fillX();
+          this.range.refresh = true;
+          this.notifyHandler(this.range);
+          this.range.refresh = false;
+          return;
+        }
+        let s = (this.scale / this.p) * this.currentDuration * 0.2;
+        let big_s = (this.scale / this.p) * this.currentDuration * 1.2;
+        if (sliceMidX > midX + MID_OFFSET) {
+          let distance = sliceMidX - midX;
+          if (distance > DIS) {
+            this.range.startNS += big_s;
+            this.range.endNS += big_s;
+          } else {
+            this.range.startNS += s;
+            this.range.endNS += s;
+          }
+        }
+        if (sliceMidX < midX - MID_OFFSET) {
+          let distance = midX - sliceMidX; // 28.5
+          if (distance > DIS) {
+            this.range.startNS -= big_s;
+            this.range.endNS -= big_s;
+          } else {
+            this.range.startNS -= s;
+            this.range.endNS -= s;
+          }
+        }
+        this.fillX();
+        this.draw();
+        this.range.refresh = false;
+      } while (sliceMidX < midX - MID_OFFSET || sliceMidX > midX + MID_OFFSET);
+      this.pressFrameIdF = requestAnimationFrame(animF);
+    };
+    if (totalX <= 3) {
+      this.zoomFit(startTime, endTime);
+      this.pressFrameIdF = requestAnimationFrame(animF);
+    }
+    this.zoomFit(startTime, endTime);
+    this.pressFrameIdF = requestAnimationFrame(animF);
+  }
   keyPressW() {
     let animW = () => {
       if (this.scale === 50) {
@@ -567,7 +697,7 @@ export class RangeRuler extends Graph {
         this.range.refresh = false;
         return;
       }
-      let s = (this.scale / this.p) * this.currentDuration * 1.2;
+      let s = (this.scale / this.p) * this.currentDuration * 0.4;
       this.range.startNS += s;
       this.range.endNS += s;
       this.fillX();
@@ -583,6 +713,7 @@ export class RangeRuler extends Graph {
     s: this.keyPressS,
     a: this.keyPressA,
     d: this.keyPressD,
+    f: this.keyPressF,
   };
 
   keyboardKeyUpMap: any = {
@@ -612,6 +743,7 @@ export class RangeRuler extends Graph {
     let startTime = new Date().getTime();
     let animW = () => {
       if (this.scale === 50) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -638,6 +770,7 @@ export class RangeRuler extends Graph {
     let startTime = new Date().getTime();
     let animS = () => {
       if (this.range.startNS <= 0 && this.range.endNS >= this.range.totalNS) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -664,6 +797,7 @@ export class RangeRuler extends Graph {
     let startTime = new Date().getTime();
     let animA = () => {
       if (this.range.startNS <= 0) {
+        this.fillX();
         this.range.refresh = true;
         this.notifyHandler(this.range);
         this.range.refresh = false;
@@ -712,5 +846,129 @@ export class RangeRuler extends Graph {
       }
     };
     this.upFrameIdD = requestAnimationFrame(animD);
+  }
+  zoomFit(startTime: number, endTime: number) {
+    let startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+    let endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+    let totalX = Math.round(endX - startX);
+    this.centerXPercentage = 0.5;
+    let clientWidth = this.canvas?.clientWidth || 0; // 1424
+    let midX = Math.round(clientWidth / 2);
+    this.currentDuration = 1000;
+
+    let totalXMap = new Map();
+    let count1 = 0;
+    let count2 = 0;
+    let animW = () => {
+      if (this.scale === 50) {
+        this.fillX();
+        this.range.refresh = true;
+        this.notifyHandler(this.range);
+        this.range.refresh = false;
+        return;
+      }
+      if (totalX < 5 && this.scale >= 10_000_000) {
+        for (let i = 0; i < 15; i++) {
+          this.range.startNS += (this.centerXPercentage * this.currentDuration * this.scale) / this.p;
+          this.range.endNS -= ((1 - this.centerXPercentage) * this.currentDuration * this.scale) / this.p;
+        }
+      } else if (totalX < 100 && this.scale >= 10_000) {
+        for (let i = 0; i < 10; i++) {
+          this.range.startNS += (this.centerXPercentage * this.currentDuration * this.scale) / this.p;
+          this.range.endNS -= ((1 - this.centerXPercentage) * this.currentDuration * this.scale) / this.p;
+        }
+      } else {
+        this.range.startNS += (this.centerXPercentage * this.currentDuration * this.scale) / this.p;
+        this.range.endNS -= ((1 - this.centerXPercentage) * this.currentDuration * this.scale) / this.p;
+      }
+      this.fillX();
+      this.draw();
+      startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+      endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
+      totalX = Math.round(endX - startX);
+      if (totalX !== totalXMap.get('totalX1')) {
+        totalXMap.set('totalX1', totalX);
+      } else {
+        if (totalX === totalXMap.get('totalX1')) {
+          count1++;
+        }
+      }
+      if (totalX >= FIT_TOTALX_MIN && totalX <= FIT_TOTALX_MAX) {
+        this.fillX();
+        this.range.refresh = true;
+        this.notifyHandler(this.range);
+        this.range.refresh = false;
+        return;
+      }
+      if (totalX > FIT_TOTALX_MAX) {
+        if (count1 >= 10) {
+          return;
+        }
+        this.pressFrameIdS = requestAnimationFrame(animS);
+        this.fillX();
+        this.range.refresh = true;
+        this.notifyHandler(this.range);
+        this.range.refresh = false;
+        return;
+      }
+      this.pressFrameIdW = requestAnimationFrame(animW);
+    };
+    let animS = () => {
+      startX = Math.round((this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS));
+      endX = Math.round((this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS));
+      totalX = endX - startX;
+      if (totalX >= FIT_TOTALX_MIN && totalX <= FIT_TOTALX_MAX) {
+        this.fillX();
+        this.range.refresh = true;
+        this.notifyHandler(this.range);
+        this.range.refresh = false;
+        return;
+      }
+      if (totalX > midX) {
+        for (let i = 0; i < 10; i++) {
+          this.range.startNS -= ((this.centerXPercentage * this.scale) / this.p) * this.currentDuration;
+          this.range.endNS += (((1 - this.centerXPercentage) * this.scale) / this.p) * this.currentDuration;
+        }
+      } else if (totalX >= 500) {
+        for (let i = 0; i < 5; i++) {
+          this.range.startNS -= ((this.centerXPercentage * this.scale) / this.p) * this.currentDuration;
+          this.range.endNS += (((1 - this.centerXPercentage) * this.scale) / this.p) * this.currentDuration;
+        }
+      } else {
+        this.range.startNS -= ((this.centerXPercentage * this.scale) / this.p) * this.currentDuration;
+        this.range.endNS += (((1 - this.centerXPercentage) * this.scale) / this.p) * this.currentDuration;
+      }
+      this.fillX();
+      this.draw();
+      this.range.refresh = false;
+      startX = Math.round((this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS));
+      endX = Math.round((this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS));
+      totalX = endX - startX;
+      if (totalX !== totalXMap.get('totalX2')) {
+        totalXMap.set('totalX2', totalX);
+      } else {
+        if (totalX === totalXMap.get('totalX2')) {
+          count2++;
+        }
+      }
+      if (totalX <= FIT_TOTALX_MIN) {
+        if (count2 >= 10) {
+          return;
+        }
+        this.pressFrameIdW = requestAnimationFrame(animW);
+        this.fillX();
+        this.range.refresh = true;
+        this.notifyHandler(this.range);
+        this.range.refresh = false;
+        return;
+      }
+      this.pressFrameIdS = requestAnimationFrame(animS);
+    };
+    if (totalX > FIT_TOTALX_MAX) {
+      this.pressFrameIdS = requestAnimationFrame(animS);
+    }
+    if (totalX < FIT_TOTALX_MIN && totalX >= 0) {
+      this.pressFrameIdW = requestAnimationFrame(animW);
+    }
   }
 }

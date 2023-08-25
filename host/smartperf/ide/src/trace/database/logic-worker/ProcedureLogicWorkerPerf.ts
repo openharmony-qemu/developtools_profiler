@@ -14,6 +14,8 @@
  */
 
 import { LogicHandler, ChartStruct, convertJSON, DataCache, PerfCall } from './ProcedureLogicWorkerCommon.js';
+import { PerfBottomUpStruct } from '../../bean/PerfBottomUpStruct.js';
+
 const systemRuleName = '/system/';
 const numRuleName = '/max/min/';
 
@@ -32,6 +34,8 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
   isActualQuery: boolean = false;
   currentEventId: string = '';
   isAnalysis: boolean = false;
+  isPerfBottomUp: boolean = false;
+
   private dataCache = DataCache.getInstance();
 
   handle(data: any): void {
@@ -60,7 +64,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
           break;
         case 'perf-queryPerfCalls':
           let perfCalls = convertJSON(data.params.list) || [];
-          if (perfCalls.length != 0) {
+          if (perfCalls.length !== 0) {
             perfCalls.forEach((perfCall: any) => {
               this.dataCache.perfCallChainMap.set(perfCall.sampleId, perfCall);
             });
@@ -79,12 +83,18 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
           break;
         case 'perf-queryCallchainsGroupSample':
           this.samplesData = convertJSON(data.params.list) || [];
-
           let result;
           if (this.isAnalysis) {
             result = this.resolvingAction([
               {
                 funcName: 'combineAnalysisCallChain',
+                funcArgs: [true],
+              },
+            ]);
+          } else if (this.isPerfBottomUp) {
+            result = this.resolvingAction([
+              {
+                funcName: 'getBottomUp',
                 funcArgs: [true],
               },
             ]);
@@ -126,7 +136,8 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     this.queryData(
       this.currentEventId,
       'perf-queryPerfFiles',
-      `select file_id as fileId,symbol,path from perf_files`,
+      `select file_id as fileId, symbol, path
+       from perf_files`,
       {}
     );
   }
@@ -135,7 +146,9 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     this.queryData(
       this.currentEventId,
       'perf-queryPerfThread',
-      `select a.thread_id as tid,a.thread_name as threadName,a.process_id as pid,b.thread_name as processName from perf_thread a left join (select * from perf_thread where thread_id = process_id) b on a.process_id = b.thread_id`,
+      `select a.thread_id as tid, a.thread_name as threadName, a.process_id as pid, b.thread_name as processName
+       from perf_thread a
+                left join (select * from perf_thread where thread_id = process_id) b on a.process_id = b.thread_id`,
       {}
     );
   }
@@ -144,10 +157,10 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     this.queryData(
       this.currentEventId,
       'perf-queryPerfCalls',
-      `select count(callchain_id) as depth,callchain_id as sampleId,name 
-from perf_callchain 
-where callchain_id != -1
-group by callchain_id`,
+      `select count(callchain_id) as depth, callchain_id as sampleId, name
+       from perf_callchain
+       where callchain_id != -1
+       group by callchain_id`,
       {}
     );
   }
@@ -156,9 +169,13 @@ group by callchain_id`,
     this.queryData(
       this.currentEventId,
       'perf-queryPerfCallchains',
-      `select c.name,c.callchain_id as sampleId,c.vaddr_in_file as vaddrInFile,c.file_id as fileId,c.symbol_id as symbolId  
-from perf_callchain c
-where callchain_id != -1;`,
+      `select c.name,
+              c.callchain_id  as sampleId,
+              c.vaddr_in_file as vaddrInFile,
+              c.file_id       as fileId,
+              c.symbol_id     as symbolId
+       from perf_callchain c
+       where callchain_id != -1;`,
       {}
     );
   }
@@ -179,16 +196,21 @@ where callchain_id != -1;`,
       this.currentEventId,
       'perf-queryCallchainsGroupSample',
       `
-select p.callchain_id as sampleId, p.thread_state as threadState, p.thread_id as tid, p.count, p.process_id as pid,p.event_count as eventCount
-from (select callchain_id, s.thread_id, thread_state, process_id, count(callchain_id) as count,event_count
-      from perf_sample s,
-           trace_range t
-               left join perf_thread thread on s.thread_id = thread.thread_id
-      where timestamp_trace between $startTime + t.start_ts and $endTime + t.start_ts
-        and callchain_id != -1
-        and s.thread_id != 0 
-        ${sql}
-      group by callchain_id, s.thread_id, thread_state, process_id) p`,
+          select p.callchain_id as sampleId,
+                 p.thread_state as threadState,
+                 p.thread_id    as tid,
+                 p.count,
+                 p.process_id   as pid,
+                 p.event_count  as eventCount
+          from (select callchain_id, s.thread_id, thread_state, process_id, count(callchain_id) as count,event_count
+                from perf_sample s, trace_range t
+                    left join perf_thread thread
+                on s.thread_id = thread.thread_id
+                where timestamp_trace between $startTime + t.start_ts
+                  and $endTime + t.start_ts
+                  and callchain_id != -1
+                  and s.thread_id != 0 ${sql}
+                group by callchain_id, s.thread_id, thread_state, process_id) p`,
       {
         $startTime: selectionParam.leftNs,
         $endTime: selectionParam.rightNs,
@@ -266,7 +288,7 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     threadCallChain.depth = 0;
     PerfCallChain.merageCallChain(threadCallChain, callChain);
     threadCallChain.canCharge = false;
-    threadCallChain.name = this.threadData[callChain.tid].threadName || 'Thread' + '(' + callChain.tid + ')';
+    threadCallChain.name = (this.threadData[callChain.tid].threadName || 'Thread') + '(' + callChain.tid + ')';
     let threadStateCallChain = new PerfCallChain(); //新增的线程状态数据
     PerfCallChain.merageCallChain(threadStateCallChain, callChain);
     threadStateCallChain.name = callChain.threadState || 'Unknown State';
@@ -300,11 +322,11 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     let threadCallChain = new PerfCallChain(); //新增的线程数据
     threadCallChain.tid = countSample.tid;
     threadCallChain.canCharge = false;
-    threadCallChain.name = this.threadData[countSample.tid].threadName || 'Thead' + '(' + countSample.tid + ')';
+    threadCallChain.name = this.threadData[countSample.tid].threadName || 'Thread' + '(' + countSample.tid + ')';
     let threadStateCallChain = new PerfCallChain(); //新增的线程状态数据
     threadStateCallChain.tid = countSample.tid;
-    threadStateCallChain.name = countSample.threadState || 'Unkown State';
-    threadStateCallChain.fileName = threadStateCallChain.name == '-' ? 'Unkown Thead State' : '';
+    threadStateCallChain.name = countSample.threadState || 'Unknown State';
+    threadStateCallChain.fileName = threadStateCallChain.name == '-' ? 'Unknown Thread State' : '';
     threadStateCallChain.canCharge = false;
     list.unshift(threadCallChain, threadStateCallChain);
   }
@@ -337,7 +359,8 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
       if (rootMerageMap[merageData.pid] == undefined) {
         let processMerageData = new PerfCallChainMerageData(); //新增进程的节点数据
         processMerageData.canCharge = false;
-        processMerageData.symbolName = this.threadData[merageData.tid].processName || `Process(${merageData.pid})`;
+        processMerageData.symbolName =
+          (this.threadData[merageData.tid].processName || 'Process') + `(${merageData.pid})`;
         processMerageData.symbol = processMerageData.symbolName;
         processMerageData.tid = merageData.tid;
         processMerageData.children.push(merageData);
@@ -716,8 +739,13 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
             case 'setCombineCallChain':
               this.isAnalysis = true;
               break;
+            case 'setPerfBottomUp':
+              this.isPerfBottomUp = true;
+              break;
             case 'combineAnalysisCallChain':
               return this.combineCallChainForAnalysis();
+            case 'getBottomUp':
+              return this.getBottomUp();
           }
         }
       }
@@ -733,7 +761,7 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
     for (let sample of this.samplesData) {
       let callChains = [...this.callChainData[sample.sampleId]];
       const lastCallChain = callChains[callChains.length - 1];
-      const threadName = this.threadData[sample.tid].threadName || 'Thead';
+      const threadName = this.threadData[sample.tid].threadName || 'Thread';
       const processName = this.threadData[sample.pid].threadName || 'Process';
       let analysisSample = new PerfAnalysisSample(
         threadName,
@@ -754,6 +782,122 @@ from (select callchain_id, s.thread_id, thread_state, process_id, count(callchai
       this.isAnalysis = false;
     }
     return sampleCallChainList;
+  }
+
+  getBottomUp() {
+    const topUp = new PerfBottomUpStruct('topUp');
+    let perfTime = this.dataCache.perfCountToMs;
+    for (let sample of this.samplesData) {
+      let currentNode = topUp;
+      let callChains = this.callChainData[sample.sampleId];
+      for (let i = 0; i < callChains.length; i++) {
+        if (i === 0) {
+          currentNode = topUp;
+        }
+        let item = callChains[i];
+        const existingNode = currentNode.children.find(
+          (child) => child.symbolName === item.name + '(' + item.fileName + ')'
+        );
+        if (existingNode) {
+          currentNode = existingNode;
+          existingNode.totalTime += perfTime * sample.count;
+          existingNode.calculateSelfTime();
+          existingNode.notifyParentUpdateSelfTime();
+        } else {
+          let newNode = new PerfBottomUpStruct(item.name + '(' + item.fileName + ')');
+          newNode.totalTime = perfTime * sample.count;
+          currentNode.addChildren(newNode);
+          newNode.calculateSelfTime();
+          newNode.notifyParentUpdateSelfTime();
+          currentNode = newNode;
+        }
+      }
+    }
+    topUp.children.forEach((child) => {
+      child.parentNode = undefined;
+    });
+
+    let date = this.topUpDataToBottomUpData(topUp.children);
+    if (this.isPerfBottomUp) {
+      this.isPerfBottomUp = false;
+    }
+    return date;
+  }
+
+  private topUpDataToBottomUpData(perfPositiveArray: Array<PerfBottomUpStruct>): Array<PerfBottomUpStruct> {
+    let reverseTreeArray: Array<PerfBottomUpStruct> = [];
+    const recursionTree = (perfBottomUpStruct: PerfBottomUpStruct) => {
+      if (perfBottomUpStruct.selfTime > 0) {
+        const clonePerfBottomUpStruct = new PerfBottomUpStruct(perfBottomUpStruct.symbolName);
+        clonePerfBottomUpStruct.selfTime = perfBottomUpStruct.selfTime;
+        clonePerfBottomUpStruct.totalTime = perfBottomUpStruct.totalTime;
+        reverseTreeArray.push(clonePerfBottomUpStruct);
+        this.copyParentNode(clonePerfBottomUpStruct, perfBottomUpStruct);
+      }
+      if (perfBottomUpStruct.children.length > 0) {
+        for (const children of perfBottomUpStruct.children) {
+          children.parentNode = perfBottomUpStruct;
+          recursionTree(children);
+        }
+      }
+    };
+    for (const perfBottomUpStruct of perfPositiveArray) {
+      recursionTree(perfBottomUpStruct);
+    }
+    return this.mergeTreeBifurcation(reverseTreeArray, null);
+  }
+
+  private mergeTreeBifurcation(
+    reverseTreeArray: Array<PerfBottomUpStruct> | null,
+    parent: PerfBottomUpStruct | null
+  ): Array<PerfBottomUpStruct> {
+    const sameSymbolMap = new Map<string, PerfBottomUpStruct>();
+    const currentLevelData = new Array<PerfBottomUpStruct>();
+    const dataArray = reverseTreeArray || parent?.frameChildren;
+    if (!dataArray) {
+      return [];
+    }
+    for (const perfBottomUpStruct of dataArray) {
+      let symbolKey = perfBottomUpStruct.symbolName;
+      let bottomUpStruct: PerfBottomUpStruct;
+      if (sameSymbolMap.has(symbolKey)) {
+        bottomUpStruct = sameSymbolMap.get(symbolKey)!;
+        bottomUpStruct.totalTime += perfBottomUpStruct.totalTime;
+        bottomUpStruct.selfTime += perfBottomUpStruct.selfTime;
+      } else {
+        bottomUpStruct = perfBottomUpStruct;
+        sameSymbolMap.set(symbolKey, bottomUpStruct);
+        currentLevelData.push(bottomUpStruct);
+        if (parent) {
+          parent.addChildren(bottomUpStruct);
+        }
+      }
+      bottomUpStruct.frameChildren?.push(...perfBottomUpStruct.children);
+    }
+
+    for (const data of currentLevelData) {
+      this.mergeTreeBifurcation(null, data);
+      data.frameChildren = [];
+    }
+    if (reverseTreeArray) {
+      return currentLevelData;
+    } else {
+      return [];
+    }
+  }
+
+  /**
+   * copy整体调用链，从栈顶函数一直copy到栈底函数，
+   * 给Parent设置selfTime，totalTime设置为children的selfTime,totalTime
+   *  */
+  private copyParentNode(perfBottomUpStruct: PerfBottomUpStruct, bottomUpStruct: PerfBottomUpStruct): void {
+    if (bottomUpStruct.parentNode) {
+      const copyParent = new PerfBottomUpStruct(bottomUpStruct.parentNode.symbolName);
+      copyParent.selfTime = perfBottomUpStruct.selfTime;
+      copyParent.totalTime = perfBottomUpStruct.totalTime;
+      perfBottomUpStruct.addChildren(copyParent);
+      this.copyParentNode(copyParent, bottomUpStruct.parentNode);
+    }
   }
 }
 
@@ -956,7 +1100,6 @@ export class PerfStack {
 export class PerfCmdLine {
   report_value: string = '';
 }
-
 
 class PerfAnalysisSample extends PerfCountSample {
   threadName: string;

@@ -135,11 +135,15 @@ export class LitChartPie extends BaseElement {
       this.data.push(item);
       startAngle += full * ((pieItem[pieCfg.angleField] / sum) * 360);
       startDegree += fullDegree + (pieItem[pieCfg.angleField] / sum) * 360;
+      let colorFieldValue = item.obj[pieCfg.colorField];
+      if (this.config?.colorFieldTransferHandler) {
+        colorFieldValue = this.config.colorFieldTransferHandler(colorFieldValue);
+      }
       labelArray.push(`<label class="label">
                     <div style="display: flex;flex-direction: row;margin-left: 5px;align-items: center;overflow: hidden;text-overflow: ellipsis" 
                         id="${item.id}">
                         <div class="tag" style="background-color: ${item.color}"></div>
-                        <span class="name">${item.obj[pieCfg.colorField]}</span>
+                        <span class="name">${colorFieldValue}</span>
                     </div>
                 </label>`);
     });

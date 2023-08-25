@@ -29,7 +29,7 @@ export const initTraceTaskStrategy = (metricData: Array<{
     let threadNameList = metricData[sqlIndex].thread_name;
     let threadNames = [];
     let newArr = '';
-    if (threadNameList != null) {
+    if (threadNameList !== null) {
       threadNames = threadNameList.split(',');
       newArr = threadNames.reduce((prev: any, item: any) => (prev.includes(item) ? prev : prev.concat(item)), []);
     }

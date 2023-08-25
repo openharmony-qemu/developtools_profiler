@@ -27,6 +27,11 @@ import { BaseStruct } from '../../../../database/ui-worker/ProcedureWorkerCommon
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 
+const ALLOCATION_TASK = 'H:Task Allocation:';
+const PERFORM_TASK = 'H:Task Perform:';
+const END_TASK = 'H:Task PerformTask End:';
+const TABLE_CURRENCY = 'Task Concurrency';
+
 @element('tabpane-task-frames')
 export class TabPaneTaskFrames extends BaseElement {
   private taskFramesTbl: LitTable | null | undefined;
@@ -45,6 +50,8 @@ export class TabPaneTaskFrames extends BaseElement {
     } else {
       if (!framesParam) {
         this.taskFramesTbl!!.recycleDataSource = [];
+        this.taskFramesSource = [];
+        this.taskFramesGroupSource = [];
         return;
       }
       //框选
@@ -58,46 +65,48 @@ export class TabPaneTaskFrames extends BaseElement {
   setTaskData(taskArray: Array<FuncStruct>, framesParam: SelectionParam, isClick: boolean): void {
     if (taskArray.length < 2) {
       this.taskFramesTbl!!.recycleDataSource = [];
+      this.taskFramesSource = [];
+      this.taskFramesGroupSource = [];
       return;
     } else {
-      let sTime = 0;
-      let eTime = 0;
-      let rTime = 0;
-      let aStartTime = 0;
-      let pStartTime = 0;
-      let rEndTime = 0;
+      let allocationTime = 0;
+      let executeTime = 0;
+      let returnTime = 0;
+      let allocationStartTime = 0;
+      let executeStartTime = 0;
+      let returnEndTime = 0;
       let priorityId = 1;
       let executeId = '';
       let executeStruct: FuncStruct | undefined = undefined;
       taskArray.forEach((item) => {
-        if (item.funName!.indexOf('H:Task Allocation:') >= 0) {
-          aStartTime = item.startTs!;
+        if (item.funName!.indexOf(ALLOCATION_TASK) >= 0) {
+          allocationStartTime = item.startTs!;
           priorityId = TabPaneTaskFrames.getPriorityId(item.funName!);
           executeId = TabPaneTaskFrames.getExecuteId(item.funName!);
-        } else if (item.funName!.indexOf('H:Task Perform:') >= 0) {
+        } else if (item.funName!.indexOf(PERFORM_TASK) >= 0) {
           executeStruct = item;
-          pStartTime = item.startTs!;
-          eTime = item.dur!;
-        } else if (item.funName!.indexOf('H:Task PerformTask End:') >= 0) {
-          rEndTime = item.startTs! + item.dur!;
+          executeStartTime = item.startTs!;
+          executeTime = item.dur!;
+        } else if (item.funName!.indexOf(END_TASK) >= 0) {
+          returnEndTime = item.startTs! + item.dur!;
         }
       });
-      sTime = pStartTime - aStartTime;
-      rTime = rEndTime - (pStartTime + eTime);
+      allocationTime = executeStartTime - allocationStartTime;
+      returnTime = returnEndTime == 0 ? 0 : returnEndTime - (executeStartTime + executeTime);
       if (TabPaneTaskFrames.IsShowConcurrency) {
         let tableList: TaskTabStruct[] = [];
         this.buildConcurrencyTable(executeStruct!, tableList, framesParam, isClick);
       } else {
-        this.buildNoConcurrencyTable(executeId, priorityId, sTime, eTime, rTime);
+        this.buildNoConcurrencyTable(executeId, priorityId, allocationTime, executeTime, returnTime);
       }
     }
   }
 
   private buildConcurrencyTable(executeStruct: FuncStruct,
-    tableList: TaskTabStruct[], framesParam: SelectionParam, isClick: boolean): void {
+                                tableList: TaskTabStruct[], framesParam: SelectionParam, isClick: boolean): void {
     this.countConcurrency(executeStruct, tableList, framesParam, isClick).then((result) => {
       let concurrencyColumn: TaskTabStruct = new TaskTabStruct();
-      concurrencyColumn.executeId = 'Task Concurrency';
+      concurrencyColumn.executeId = TABLE_CURRENCY;
       concurrencyColumn.taskPriority = `${ result }`;
       tableList.push(concurrencyColumn);
       let filterList = [];
@@ -108,13 +117,14 @@ export class TabPaneTaskFrames extends BaseElement {
           filterList.push(item);
         }
       }
+      this.taskFramesGroupSource = [filterList];
       this.taskFramesSource = filterList;
       this.taskFramesTbl!!.recycleDataSource = this.taskFramesSource;
       this.progressEL!.loading = false;
     });
   }
   private buildNoConcurrencyTable(executeId: string, priorityId: number, sTime: number,
-    eTime: number, rTime: number): void {
+                                  eTime: number, rTime: number): void {
     let task: TaskTabStruct = new TaskTabStruct();
     task.executeId = executeId;
     task.taskPriority = Priority[priorityId];
@@ -122,6 +132,7 @@ export class TabPaneTaskFrames extends BaseElement {
     task.taskET = this.getMsTime(eTime);
     task.taskRT = this.getMsTime(rTime);
     this.taskFramesSource = [task];
+    this.taskFramesGroupSource = [[task]];
     this.taskFramesTbl!!.recycleDataSource = this.taskFramesSource;
     this.progressEL!.loading = false;
   }
@@ -144,7 +155,7 @@ export class TabPaneTaskFrames extends BaseElement {
       for (let index = 0 ; index < groupsValue.length ; index++) {
         let data = groupsValue[index];
         let executeId = TabPaneTaskFrames.getExecuteId(data.funName!);
-        if (data.funName!.indexOf('H:Task Perform:') >= 0) {
+        if (data.funName!.indexOf(PERFORM_TASK) >= 0) {
           tempExecuteTaskList.push(data);
         }
         tempExecuteTaskIds.push(parseInt(executeId));
@@ -226,7 +237,7 @@ export class TabPaneTaskFrames extends BaseElement {
     // @ts-ignore
     let compare = function (property, sort, type) {
       return function (taskFramesLeftData: TaskTabStruct, taskFramesRightData: TaskTabStruct): number {
-        if (taskFramesLeftData.executeId === 'Task Concurrency') {
+        if (taskFramesLeftData.executeId === TABLE_CURRENCY) {
           return 1;
         }
         if (type === 'number') {
@@ -270,9 +281,9 @@ export class TabPaneTaskFrames extends BaseElement {
     let endStr = '';
     if (strArray.length >= 2) {
       executeStr = strArray[1];
-      if (funName.indexOf('H:Task Allocation:') >= 0 || funName.indexOf('H:Task Perform:') >= 0) {
+      if (funName.indexOf(ALLOCATION_TASK) >= 0 || funName.indexOf(PERFORM_TASK) >= 0) {
         executeId = executeStr.split(':')[1].trim();
-      } else if (funName.indexOf('H:Task PerformTask End:') >= 0) {
+      } else if (funName.indexOf(END_TASK) >= 0) {
         endStr = executeStr.split(':')[1].trim();
         if (endStr.indexOf('[') >= 0) {
           executeId = endStr.substring(0, endStr.indexOf('['));
@@ -289,7 +300,7 @@ export class TabPaneTaskFrames extends BaseElement {
     let priorityId = '';
     if (strArray.length >= 2) {
       let executeStr = strArray[2];
-      if (funName.indexOf('H:Task Allocation:') >= 0) {
+      if (funName.indexOf(ALLOCATION_TASK) >= 0) {
         priorityId = executeStr.split(':')[1].trim();
       }
     }
@@ -308,22 +319,29 @@ export class TabPaneTaskFrames extends BaseElement {
       selectStartTime = framesParam.recordStartNs + framesParam.leftNs;
       selectEndTime = framesParam.recordStartNs + framesParam.rightNs;
     }
-    let maxConcurrency = 0;
     let res = await Promise.all([
       queryTaskPoolTotalNum(selectFuncStruct!.itid!),
       queryConcurrencyTask(selectFuncStruct!.itid!, selectStartTime, selectEndTime),
     ]);
-    let currentConcurrency = 0;
     let tasks: Array<TaskTabStruct> = res[1];
+    let maxConcurrency = 0;
+    let timePointArray: { time: number, isStart: boolean }[] = [];
     for (let i = 0 ; i < tasks.length ; i++) {
-      const task = tasks[i];
-      const endTime = task!.startTs! + task!.dur!;
-      currentConcurrency++;
-      for (let j = i + 1 ; j < tasks.length ; j++) {
-        const nextTask = tasks[j];
-        if (nextTask.startTs! < endTime) {
-          currentConcurrency++;
-        }
+      timePointArray.push({ time: tasks[i].startTs!, isStart: true });
+      timePointArray.push({ time: tasks[i].startTs! + tasks[i].dur!, isStart: false });
+    }
+    timePointArray.sort((timePointA, timePointB) => {
+      if (timePointA.time === timePointB.time) {
+        return timePointA.isStart ? -1 : 1;
+      }
+      return timePointA.time - timePointB.time;
+    });
+    let currentConcurrency = 0;
+    for (let i = 0; i < timePointArray.length; i++) {
+      if (timePointArray[i].isStart) {
+        currentConcurrency++;
+      } else {
+        currentConcurrency--;
       }
       if (currentConcurrency > maxConcurrency) {
         maxConcurrency = currentConcurrency;
@@ -331,7 +349,6 @@ export class TabPaneTaskFrames extends BaseElement {
           break;
         }
       }
-      currentConcurrency = 0;
     }
     for (const item of res[1]) {
       this.pushTaskToList(item, tableList);
@@ -350,7 +367,7 @@ export class TabPaneTaskFrames extends BaseElement {
       let countConcurrencyPromise = await this.countConcurrency(executeTaskList[0], tableList, framesParam, isClick);
       maxNumConcurrency = countConcurrencyPromise;
       let concurrencyColumn: TaskTabStruct = new TaskTabStruct();
-      concurrencyColumn.executeId = 'Task Concurrency';
+      concurrencyColumn.executeId = TABLE_CURRENCY;
       concurrencyColumn.taskPriority = `${ maxNumConcurrency }`;
       tableList.push(concurrencyColumn);
       //去重
@@ -374,16 +391,16 @@ export class TabPaneTaskFrames extends BaseElement {
     let tempTask: TaskTabStruct = new TaskTabStruct();
     let executeStartTime = executeTask!.ts!;
     let executeTime = executeTask!.dur! === -1 ? (window as any).recordEndNS - executeTask!.ts : executeTask!.dur;
-    let aStartTime = allocationTask!.ts!;
-    let rEndTime = 0;
+    let allocationStartTime = allocationTask!.ts!;
+    let returnEndTime = 0;
     if (returnTask) {
-      rEndTime = returnTask!.ts! + returnTask!.dur! - (executeStartTime + executeTime);
+      returnEndTime = returnTask!.ts! + returnTask!.dur! - (executeStartTime + executeTime);
     }
     tempTask.executeId = value.executeId;
     tempTask.taskPriority = Priority[value.priority!];
-    tempTask.taskST = this.getMsTime(executeStartTime - aStartTime);
+    tempTask.taskST = this.getMsTime(executeStartTime - allocationStartTime);
     tempTask.taskET = this.getMsTime(executeTime);
-    tempTask.taskRT = this.getMsTime(rEndTime);
+    tempTask.taskRT = this.getMsTime(returnEndTime);
     tableList.push(tempTask);
   }
 }

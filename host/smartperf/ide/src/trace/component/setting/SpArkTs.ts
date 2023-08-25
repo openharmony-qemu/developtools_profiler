@@ -388,7 +388,7 @@ export class SpArkTs extends BaseElement {
                     <span class="des">Interval(Available on recent OpenHarmony 4.0)</span>
                     <div style="margin-top: 12px;">
                         <input class="inputstyle inputBoxes" id='cpuInterval' type="text" id="interval" placeholder="" onkeyup="this.value=this.value.replace(/\\D/g,'').replace(/^0{1,}/g,'')" value="1000">
-                        <span class="unit">US</span>
+                        <span class="unit">μs</span>
                     </div>
                 </div>
                 <div>

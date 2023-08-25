@@ -240,18 +240,12 @@ export class SpFileSystem extends BaseElement {
     });
     this.selectProcess = this.processInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectProcess!.addEventListener('mousedown', (ev) => {
-      if (SpRecordTrace.serialNumber == '') {
+      if (SpRecordTrace.serialNumber === '') {
         this.processInput!.dataSource([], '');
-      }
-    });
-
-    this.selectProcess!.addEventListener('mouseup', () => {
-      if (SpRecordTrace.serialNumber == '') {
-        this.processInput?.dataSource([], 'ALL-Process');
       } else {
         Cmd.getProcess().then((processList) => {
           if (processList.length > 0 && this.startRecord) {
-            this.processInput!.setAttribute('readonly', 'readonly');
+            this.selectProcess!.setAttribute('readonly', 'readonly');
           }
           this.processInput?.dataSource(processList, 'ALL-Process');
         });

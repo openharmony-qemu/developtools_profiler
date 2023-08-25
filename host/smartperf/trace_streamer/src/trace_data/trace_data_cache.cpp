@@ -28,7 +28,7 @@
 #include "data_dict_table.h"
 #include "data_type_table.h"
 #include "datasource_clockid_table.h"
-#include "device_info.h"
+#include "device_info_table.h"
 #include "device_state_table.h"
 #include "disk_io_table.h"
 #include "dynamic_frame_table.h"
@@ -95,6 +95,10 @@
 #include "thread_state_table.h"
 #include "thread_table.h"
 #include "trace_config_table.h"
+#include "memory_ashmem_table.h"
+#include "memory_dma_table.h"
+#include "memory_process_gpu_table.h"
+#include "memory_window_gpu_table.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -191,6 +195,10 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<GPUSliceTable>(*db_, this, "gpu_slice");
     TableBase::TableDeclare<AppStartupTable>(*db_, this, "app_startup");
     TableBase::TableDeclare<SoStaticInitalizationTable>(*db_, this, "static_initalize");
+    TableBase::TableDeclare<MemoryAshMemTable>(*db_, this, "memory_ashmem");
+    TableBase::TableDeclare<MemoryDmaTable>(*db_, this, "memory_dma");
+    TableBase::TableDeclare<MemoryProcessGpuTable>(*db_, this, "memory_process_gpu");
+    TableBase::TableDeclare<MemoryWindowGpuTable>(*db_, this, "memory_window_gpu");
 
     TableBase::TableDeclare<PerfReportTable>(*db_, this, "perf_report");
     TableBase::TableDeclare<PerfSampleTable>(*db_, this, "perf_sample");
@@ -268,6 +276,10 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<GPUSliceTable>(*db_, this, "_gpu_slice");
     TableBase::TableDeclare<AppStartupTable>(*db_, this, "_app_startup");
     TableBase::TableDeclare<SoStaticInitalizationTable>(*db_, this, "_static_initalize");
+    TableBase::TableDeclare<MemoryAshMemTable>(*db_, this, "_memory_ashmem");
+    TableBase::TableDeclare<MemoryDmaTable>(*db_, this, "_memory_dma");
+    TableBase::TableDeclare<MemoryProcessGpuTable>(*db_, this, "_memory_process_gpu");
+    TableBase::TableDeclare<MemoryWindowGpuTable>(*db_, this, "_memory_window_gpu");
 #if WITH_EBPF_HELP
     TableBase::TableDeclare<EbpfProcessMapsTable>(*db_, this, "_ebpf_process_maps");
     TableBase::TableDeclare<EbpfElfTable>(*db_, this, "_ebpf_elf");
@@ -292,6 +304,22 @@ bool TraceDataCache::AnimationTraceEnabled()
 void TraceDataCache::UpdateAnimationTraceStatus(bool status)
 {
     animationTraceEnabled_ = status;
+}
+bool TraceDataCache::TaskPoolTraceEnabled()
+{
+    return taskPoolTraceEnabled_;
+}
+void TraceDataCache::UpdateTaskPoolTraceStatus(bool status)
+{
+    taskPoolTraceEnabled_ = status;
+}
+bool TraceDataCache::AppStartTraceEnabled()
+{
+    return appStartTraceEnabled_;
+}
+void TraceDataCache::UpdateAppStartTraceStatus(bool status)
+{
+    appStartTraceEnabled_ = status;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

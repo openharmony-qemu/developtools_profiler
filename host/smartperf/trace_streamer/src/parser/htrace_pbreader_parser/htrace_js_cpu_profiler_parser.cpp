@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 #include "htrace_js_cpu_profiler_parser.h"
-#include <dirent.h>
-#include <memory>
-#include <regex>
+#include "clock_filter_ex.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -93,15 +91,19 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
             id, functionNameKey, scriptId, urlKey, lineNumber, columnNumber, hitCount, children, parentId);
     }
     uint64_t startTime = jMessage.at("startTime");
-    uint64_t endTime = jMessage.at("endTime");
     uint32_t sample = std::numeric_limits<uint32_t>::max();
     uint64_t sampleEndTime = startTime;
     uint64_t dur = 0;
     for (auto i = 0; i < jMessage.at("samples").size(); i++) {
         if (sample != std::numeric_limits<uint32_t>::max() && sample != jMessage.at("samples")[i]) {
             dur = (sampleEndTime * TIME_SECOND_COVER) - (startTime * TIME_SECOND_COVER);
-            (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startTime * TIME_SECOND_COVER,
-                                                                               sampleEndTime * TIME_SECOND_COVER, dur);
+            auto startNewTime =
+                streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, startTime * TIME_SECOND_COVER);
+            UpdatePluginTimeRange(TS_MONOTONIC, startNewTime, startNewTime);
+            auto endNewTime =
+                streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, sampleEndTime * TIME_SECOND_COVER);
+            UpdatePluginTimeRange(TS_MONOTONIC, endNewTime, endNewTime);
+            (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startNewTime, endNewTime, dur);
             sample = jMessage.at("samples")[i];
             startTime = sampleEndTime;
         } else if (sample == std::numeric_limits<uint32_t>::max()) {
@@ -113,8 +115,11 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
         }
     }
     dur = (sampleEndTime * TIME_SECOND_COVER) - (startTime * TIME_SECOND_COVER);
-    (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startTime * TIME_SECOND_COVER,
-                                                                       sampleEndTime * TIME_SECOND_COVER, dur);
+    auto startNewTime = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, startTime * TIME_SECOND_COVER);
+    UpdatePluginTimeRange(TS_MONOTONIC, startNewTime, startNewTime);
+    auto endNewTime = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, sampleEndTime * TIME_SECOND_COVER);
+    UpdatePluginTimeRange(TS_MONOTONIC, endNewTime, endNewTime);
+    (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startNewTime, endNewTime, dur);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

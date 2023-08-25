@@ -181,6 +181,13 @@ self.onmessage = async (e: MessageEvent) => {
     };
     let fn = Module.addFunction(callback, 'viii');
     reqBufferAddr = Module._Initialize(fn, REQ_BUF_SIZE);
+    let parseConfig = e.data.parseConfig;
+    if (parseConfig !== '') {
+      let parseConfigArray = enc.encode(parseConfig);
+      let parseConfigAddr = Module._InitializeParseConfig(1024);
+      Module.HEAPU8.set(parseConfigArray, parseConfigAddr);
+      Module._TraceStreamerParserConfigEx(parseConfigArray.length);
+    }
     let wasmConfigStr = e.data.wasmConfig;
     if (wasmConfigStr != '' && wasmConfigStr.indexOf('WasmFiles') != -1) {
       let wasmConfig = JSON.parse(wasmConfigStr);

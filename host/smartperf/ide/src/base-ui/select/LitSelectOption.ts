@@ -93,6 +93,7 @@ export class LitSelectOption extends BaseElement {
             },
           })
         );
+        ev.stopPropagation();
       };
     }
   }

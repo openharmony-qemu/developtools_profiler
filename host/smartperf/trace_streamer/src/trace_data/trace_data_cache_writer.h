@@ -113,6 +113,10 @@ public:
     Animation* GetAnimation();
     DeviceInfo* GetDeviceInfo();
     DynamicFrame* GetDynamicFrame();
+    AshMemData* GetAshMemData();
+    DmaMemData* GetDmaMemData();
+    GpuProcessMemData* GetGpuProcessMemData();
+    GpuWindowMemData* GetGpuWindowMemData();
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

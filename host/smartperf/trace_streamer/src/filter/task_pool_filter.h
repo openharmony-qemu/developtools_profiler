@@ -31,17 +31,25 @@ class TaskPoolFilter : private FilterBase {
 public:
     TaskPoolFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter);
     TaskPoolFilter(const TaskPoolFilter&) = delete;
+    TaskPoolFilter& operator=(const TaskPoolFilter&) = delete;
     ~TaskPoolFilter() override;
     uint32_t GetIpId(uint32_t index);
-    uint32_t CheckTheSameTask(int32_t executeId, uint32_t index);
-    bool TaskPoolEvent(const std::string& taskPoolStr, int32_t index);
+    uint32_t CheckTheSameTask(uint32_t executeId, uint32_t index);
+    bool TaskPoolEvent(const std::string& taskPoolStr, uint32_t index);
     void TaskPoolFieldSegmentation(const std::string& taskPoolStr, std::unordered_map<std::string, std::string>& args);
-    bool UpdateAssignData(const std::unordered_map<std::string, std::string>& args, int32_t index);
-    bool UpdateExecuteData(const std::unordered_map<std::string, std::string>& args, int32_t index);
-    bool UpdateReturnData(const std::unordered_map<std::string, std::string>& args, int32_t index);
+    bool UpdateAssignData(const std::unordered_map<std::string, std::string>& args, uint32_t index);
+    bool UpdateExecuteData(const std::unordered_map<std::string, std::string>& args, uint32_t index);
+    bool UpdateReturnData(const std::unordered_map<std::string, std::string>& args, uint32_t index);
+    bool AppendTimeoutRow(uint32_t index);
 
 private:
-    DoubleMap<InternalPid, int32_t, int32_t> IpidExecuteMap_;
+    const std::string targetStr_ = "H:Task ";
+    const std::string allocationStr_ = "H:Task Allocation: ";
+    const std::string executeStr_ = "H:Task Perform: ";
+    const std::string returnStr_ = "H:Task PerformTask End: ";
+    const std::string timeoutStr_ = "H:Thread Timeout Exit";
+    DoubleMap<InternalPid, uint32_t, uint32_t> IpidExecuteMap_;
+    std::unordered_map<uint32_t, uint32_t> timeoutMap_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

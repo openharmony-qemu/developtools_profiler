@@ -13,7 +13,8 @@
  * limitations under the License.
  */
 import { JsCpuProfilerChartFrame } from '../bean/JsStruct.js';
-import { TraceRow } from './trace/base/TraceRow.js';
+import { SnapshotStruct } from '../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { RangeSelectStruct, TraceRow } from './trace/base/TraceRow.js';
 
 export function setSelectState(
   data: JsCpuProfilerChartFrame,
@@ -48,4 +49,14 @@ export function setSelectState(
       }
     }
   }
+}
+
+export function intersectData(row:TraceRow<any>) {
+  let isIntersect = (snapshotStruct: SnapshotStruct, rangeSelectStruct: RangeSelectStruct) =>
+    Math.max(snapshotStruct.startNs! + snapshotStruct.dur!, rangeSelectStruct!.endNS || 0) - Math.min(snapshotStruct.startNs!, rangeSelectStruct!.startNS || 0) <
+    snapshotStruct.dur! + (rangeSelectStruct!.endNS || 0) - (rangeSelectStruct!.startNS || 0);
+  let intersectData = row.dataList.filter((struct: SnapshotStruct) => {
+    return isIntersect(struct, TraceRow.rangeSelectObject!);
+  });
+  return intersectData;
 }

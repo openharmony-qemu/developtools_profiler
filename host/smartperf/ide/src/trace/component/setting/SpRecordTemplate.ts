@@ -15,7 +15,7 @@
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
-import { ProfilerPluginConfig, TracePluginConfig } from './bean/ProfilerServiceTypes.js';
+import { HiperfPluginConfig, ProfilerPluginConfig, TracePluginConfig } from './bean/ProfilerServiceTypes.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
 
 @element('sp-record-template')
@@ -76,6 +76,8 @@ export class SpRecordTemplate extends BaseElement {
     'zimage',
     'zmedia',
   ];
+  static HIPERF_DEFAULT_RECORD_ARGS = '-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking' +
+    ' --call-stack dwarf --clockid monotonic --offcpu -m 256';
   private frameTimeline: LitSwitch | undefined | null;
   private schedulingAnalysis: LitSwitch | undefined | null;
   private appStartup: LitSwitch | undefined | null;
@@ -113,6 +115,10 @@ export class SpRecordTemplate extends BaseElement {
           hitraceCategories.push(categories);
         }
       });
+      if (this.appStartup?.checked) {
+        hitraceCategories.push('musl');
+        config.push(this.createHiperfDefaultConfig());
+      }
       SpRecordTemplate.FRAME_TIMELINE_EVENTS.forEach((ev) => {
         if (traceEventSet.indexOf(ev) == -1) {
           traceEventSet.push(ev);
@@ -158,6 +164,19 @@ export class SpRecordTemplate extends BaseElement {
     return config;
   }
 
+  private createHiperfDefaultConfig() {
+    let hiPerf: HiperfPluginConfig = {
+      isRoot: false,
+      outfileName: '/data/local/tmp/perf.data',
+      recordArgs: SpRecordTemplate.HIPERF_DEFAULT_RECORD_ARGS,
+    };
+    let htraceProfilerPluginConfig: ProfilerPluginConfig<HiperfPluginConfig> = {
+      pluginName: 'hiperf-plugin',
+      sampleInterval: 5000,
+      configData: hiPerf,
+    };
+    return htraceProfilerPluginConfig;
+  }
   initHtml(): string {
     return `
         <style>
@@ -226,7 +245,7 @@ export class SpRecordTemplate extends BaseElement {
             </div>
             <div class="template-config-div">
                <div>
-                 <span class="template-title">Dynamic effect</span>
+                 <span class="template-title">Animation effect</span>
                  <lit-switch class="config_switch" id="dynamic_effect"></lit-switch>
                </div>
             </div> 

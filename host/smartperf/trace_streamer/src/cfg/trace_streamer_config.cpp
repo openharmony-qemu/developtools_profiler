@@ -42,6 +42,8 @@ TraceStreamerConfig::TraceStreamerConfig()
         {MEM_RSS_FILE, MEM_INFO_RSS_FILE_DESC}, {MEM_RSS_SHMEM, MEM_INFO_RSS_SCHEM_DESC},
         {MEM_VM_SWAP, MEM_INFO_SWAP_DESC},      {MEM_VM_LOCKED, MEM_INFO_VIRT_DESC},
         {MEM_VM_HWM, MEM_INFO_HWM_DESC},        {MEM_OOM_SCORE_ADJ, MEM_INFO_SCORE_ADJ_DESC},
+        {MEM_PURG_SUM, MEM_INFO_PURG_SUM_DESC}, {MEM_PURG_PIN, MEM_INFO_PURG_PIN_DESC},
+        {MEM_GL_PSS, MEM_INFO_GL_PSS_DESC},
     };
 
     InitSysMemMap();
@@ -174,6 +176,10 @@ void TraceStreamerConfig::InitEventNameMap()
                      {TRACE_NATIVE_HOOK_MEMTAG, TRACE_ACTION_NATIVE_HOOK_MEMTAG},
                      {TRACE_HISYSEVENT, TRACE_ACTION_HISYS_EVENT},
                      {TRACE_SMAPS, TRACE_ACTION_SMAPS},
+                     {TRACE_ASHMEM, TRACE_ACTION_ASHMEM},
+                     {TRACE_DMAMEM, TRACE_ACTION_DMAMEM},
+                     {TRACE_GPU_PROCESS_MEM, TRACE_ACTION_GPU_PROCESS_MEM},
+                     {TRACE_GPU_WINDOW_MEM, TRACE_ACTION_GPU_WINDOW_MEM},
                      {TRACE_VSYNC, TRACE_ACTION_VSYNC},
                      {TRACE_ONVSYNC, TRACE_ACTION_ONVSYNC},
                      {TRACE_FRAMEQUEUE, TRACE_ACTION_FRAMEQUEUE},
@@ -218,7 +224,10 @@ void TraceStreamerConfig::InitSysMemMap()
                       {SysMeminfoType::PMEM_VMALLOC_CHUNK, SYS_MEMINFO_VMALLOC_CHUNK_DESC},
                       {SysMeminfoType::PMEM_CMA_TOTAL, SYS_MEMINFO_CMA_TOTAL_DESC},
                       {SysMeminfoType::PMEM_CMA_FREE, SYS_MEMINFO_CMA_FREE_DESC},
-                      {SysMeminfoType::PMEM_KERNEL_RECLAIMABLE, SYS_MEMINFO_KERNEL_RECLAIMABLE_DESC}};
+                      {SysMeminfoType::PMEM_KERNEL_RECLAIMABLE, SYS_MEMINFO_KERNEL_RECLAIMABLE_DESC},
+                      {SysMeminfoType::PMEM_ACTIVE_PURG, SYS_MEMINFO_ACTIVE_PURG_DESC},
+                      {SysMeminfoType::PMEM_INACTIVE_PURG, SYS_MEMINFO_INACTIVE_PURG_DESC},
+                      {SysMeminfoType::PMEM_PINED_PURG, SYS_MEMINFO_PINED_PURG_DESC}};
 }
 
 void TraceStreamerConfig::InitSysVmemMap()
@@ -1169,6 +1178,46 @@ void TraceStreamerConfig::InitSecurityMap()
         },
         {
             TRACE_SMAPS,
+            {
+                {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},
+                {STAT_EVENT_NOTMATCH, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_NOTSUPPORTED, STAT_SEVERITY_LEVEL_WARN},
+                {STAT_EVENT_DATA_INVALID, STAT_SEVERITY_LEVEL_ERROR},
+            },
+        },
+        {
+            TRACE_ASHMEM,
+            {
+                {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},
+                {STAT_EVENT_NOTMATCH, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_NOTSUPPORTED, STAT_SEVERITY_LEVEL_WARN},
+                {STAT_EVENT_DATA_INVALID, STAT_SEVERITY_LEVEL_ERROR},
+            },
+        },
+        {
+            TRACE_DMAMEM,
+            {
+                {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},
+                {STAT_EVENT_NOTMATCH, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_NOTSUPPORTED, STAT_SEVERITY_LEVEL_WARN},
+                {STAT_EVENT_DATA_INVALID, STAT_SEVERITY_LEVEL_ERROR},
+            },
+        },
+        {
+            TRACE_GPU_PROCESS_MEM,
+            {
+                {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},
+                {STAT_EVENT_NOTMATCH, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_NOTSUPPORTED, STAT_SEVERITY_LEVEL_WARN},
+                {STAT_EVENT_DATA_INVALID, STAT_SEVERITY_LEVEL_ERROR},
+            },
+        },
+        {
+            TRACE_GPU_WINDOW_MEM,
             {
                 {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
                 {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},

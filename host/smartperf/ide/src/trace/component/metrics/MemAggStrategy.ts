@@ -29,12 +29,12 @@ export const initMemoryAggStrategy = (metricData: Array<{
     let processInfoSource: ProcessValuesItem = {
       processName: processNames,
     };
-    if (metricData[sqlIndex].name == null) {
+    if (metricData[sqlIndex].name === null) {
       let values = metricData[sqlIndex].value.split(splitChar);
-      let times = metricData[sqlIndex].ts.split(splitChar);
-      let oomScoreValue = 0;
       for (let index = 0; index < values.length; index++) {
-        if (!processInfoSource) continue;
+        if (!processInfoSource) {
+          continue;
+        }
         processValuesListItems?.push(processInfoSource);
       }
     } else {
@@ -54,7 +54,9 @@ export const initMemoryAggStrategy = (metricData: Array<{
           oom_score: oomScoreValue,
           value: values[index],
         };
-        if (!processInfoSource) continue;
+        if (!processInfoSource) {
+          continue;
+        }
         if ('mem.rss.anon' === names[index]) {
           processInfoSource.anonRss = typeItem;
         }

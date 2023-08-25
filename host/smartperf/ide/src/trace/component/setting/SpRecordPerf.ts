@@ -299,13 +299,8 @@ export class SpRecordPerf extends BaseElement {
     this.recordProcessInput = this.processSelect?.shadowRoot?.querySelector<HTMLInputElement>('input');
     let querySelector = this.processSelect!.shadowRoot?.querySelector('input') as HTMLInputElement;
     querySelector.addEventListener('mousedown', (ev) => {
-      if (SpRecordTrace.serialNumber == '') {
+      if (SpRecordTrace.serialNumber === '') {
         this.processSelect!.dataSource([], 'ALL-Process');
-      }
-    });
-    querySelector!.addEventListener('mouseup', () => {
-      if (SpRecordTrace.serialNumber == '') {
-        this.processSelect?.dataSource([], 'ALL-Process');
       } else {
         if (sp.search) {
           sp.search = false;

@@ -32,7 +32,7 @@ JsCpuProfilerNodeTable::JsCpuProfilerNodeTable(const TraceDataCache* dataCache) 
 {
     tableColumn_.push_back(TableBase::ColumnInfo("function_id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("function_index", "INTEGER"));
-    tableColumn_.push_back(TableBase::ColumnInfo("script_id", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("script_id", "TEXT"));
     tableColumn_.push_back(TableBase::ColumnInfo("url_index", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("line_number", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("column_number", "INTEGER"));

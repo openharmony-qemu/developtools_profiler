@@ -72,6 +72,7 @@ export class SelectionParam {
   powerEnergy: Array<string> = [];
   anomalyEnergy: Array<string> = [];
   smapsType: Array<string> = [];
+  vmtrackershm: Array<string> = [];
   promiseList: Array<Promise<any>> = [];
   jankFramesData: Array<any> = [];
   jsMemory: Array<any> = [];
@@ -80,6 +81,25 @@ export class SelectionParam {
   frameAnimation: Array<FrameAnimationStruct> = [];
   frameSpacing: Array<FrameSpacingStruct> = [];
   jsCpuProfilerData: Array<JsCpuProfilerChartFrame> = [];
+  gpu: {
+    gl:boolean,
+    gpuTotal: boolean,
+    gpuWindow: boolean
+  } = {
+    gl: false,
+    gpuWindow:false,
+    gpuTotal: false
+  }
+  purgeableTotalAbility: Array<any> = [];
+  purgeableTotalVM: Array<any> = [];
+  purgeablePinAbility: Array<any> = [];
+  purgeablePinVM: Array<any> = [];
+  purgeableTotalSelection: Array<any> = [];
+  purgeablePinSelection: Array<any> = [];
+  dmaAbilityData: Array<any> = [];
+  gpuMemoryAbilityData: Array<any> = [];
+  dmaVmTrackerData: Array<any> = [];
+  gpuMemoryTrackerData: Array<any> = [];
 }
 
 export class BoxJumpParam {

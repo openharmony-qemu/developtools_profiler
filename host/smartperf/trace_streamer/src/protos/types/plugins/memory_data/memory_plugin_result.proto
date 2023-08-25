@@ -41,6 +41,13 @@ message SmapsInfo {
     double reside = 8;
     uint64 dirty = 9;
     uint64 swapper = 10;
+    uint64 private_clean = 11;
+    uint64 private_dirty = 12;
+    uint64 shared_clean = 13;
+    uint64 shared_dirty = 14;
+    uint64 swap = 15;
+    uint64 swap_pss = 16;
+    string category = 17;
 };
 
 message AppSummary {
@@ -69,6 +76,67 @@ message ProcessMemoryInfo {
     // data from /proc/$pid/smaps
     repeated SmapsInfo smapinfo = 12;
     AppSummary memsummary = 13;
+    uint64 purg_sum_kb = 14;
+    uint64 purg_pin_kb = 15;
+    // data from hidumper
+    uint64 gl_pss_kb = 16;
+}
+
+message AshmemInfo {
+    // data from /proc/purgeable_ashmem_trigger
+    string name = 1;
+    int32 pid = 2;
+    int32 adj = 3;
+    int32 fd = 4;
+    string ashmem_name = 5;
+    uint64 size = 6; // bytes
+    int32 id = 7;
+    uint64 time = 8;
+    uint64 ref_count = 9;
+    uint64 purged = 10;
+}
+
+message DmaInfo {
+    // data from /proc/process_dmabuf_info
+    string name = 1;
+    int32 pid = 2;
+    int32 fd = 3;
+    uint64 size = 4; // bytes
+    int32 ino = 5;
+    int32 exp_pid = 6;
+    string exp_task_comm = 7;
+    string buf_name = 8;
+    string exp_name = 9;
+}
+
+message GpuProcessInfo {
+    string addr = 1;
+    int32 pid = 2;
+    int32 tid = 3;
+    uint64 used_gpu_size = 4; // bytes
+};
+message GpuMemoryInfo {
+    // data from /proc/gpu_memory
+    string gpu_name = 1;
+    uint64 all_gpu_size = 2; // bytes
+    repeated GpuProcessInfo gpu_process_info = 3;
+}
+
+message GpuSubInfo {
+    string category_name = 1;
+    uint64 size = 2; // bytes
+    int32 entry_num = 3;
+};
+message GpuDetailInfo {
+    string module_name = 1;
+    repeated GpuSubInfo gpu_sub_info = 2;
+};
+message GpuDumpInfo {
+    // data from hidumper
+    string window_name = 1;
+    uint64 id = 2;
+    repeated GpuDetailInfo gpu_detail_info = 3;
+    uint64 gpu_purgeable_size = 4; // bytes
 }
 
 message MemoryData {
@@ -76,4 +144,10 @@ message MemoryData {
     repeated SysMeminfo meminfo = 2;
     repeated SysVMeminfo vmeminfo = 3;
     uint64 zram = 4;
+    repeated AshmemInfo ashmeminfo = 5;
+    repeated DmaInfo dmainfo = 6;
+    repeated GpuMemoryInfo gpumemoryinfo = 7;
+    repeated GpuDumpInfo gpudumpinfo = 8;
+    uint64 gpu_limit_size = 9; // bytes
+    uint64 gpu_used_size = 10; // bytes
 }

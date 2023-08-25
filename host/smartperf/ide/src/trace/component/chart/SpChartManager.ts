@@ -19,8 +19,9 @@ import { SpCpuChart } from './SpCpuChart.js';
 import { SpFreqChart } from './SpFreqChart.js';
 import { SpFpsChart } from './SpFpsChart.js';
 import {
-  getCpuUtilizationRate,
+  getCpuUtilizationRate, queryAppStartupProcessIds,
   queryDataDICT,
+  queryMemoryConfig,
   queryTaskPoolCallStack,
   queryThreadAndProcessName,
   queryTotalTime,
@@ -34,7 +35,7 @@ import { SpVirtualMemChart } from './SpVirtualMemChart.js';
 import { SpFileSystemChart } from './SpFileSystemChart.js';
 import { SpSdkChart } from './SpSdkChart.js';
 import { SpHiSysEventChart } from './SpHiSysEventChart.js';
-import { SmapsChart } from './SmapsChart.js';
+import { VmTrackerChart } from './SpVmTrackerChart.js';
 import { SpClockChart } from './SpClockChart.js';
 import { SpIrqChart } from './SpIrqChart.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
@@ -43,8 +44,12 @@ import { TraceRow } from '../trace/base/TraceRow.js';
 import { SpFrameTimeChart } from './SpFrameTimeChart.js';
 import { Utils } from '../trace/base/Utils.js';
 import { SpArkTsChart } from './SpArkTsChart.js';
+import { MemoryConfig } from '../../bean/MemoryConfig.js';
+import { FlagsConfig } from '../SpFlags.js';
 
 export class SpChartManager {
+  static APP_STARTUP_PID_ARR: Array<number> = [];
+
   private trace: SpSystemTrace;
   public perf: SpHiPerf;
   private cpu: SpCpuChart;
@@ -57,7 +62,7 @@ export class SpChartManager {
   private fileSystem: SpFileSystemChart;
   private sdkChart: SpSdkChart;
   private hiSyseventChart: SpHiSysEventChart;
-  private smapsChart: SmapsChart;
+  private smapsChart: VmTrackerChart;
   private clockChart: SpClockChart;
   private irqChart: SpIrqChart;
   frameTimeChart: SpFrameTimeChart;
@@ -76,7 +81,7 @@ export class SpChartManager {
     this.process = new SpProcessChart(trace);
     this.sdkChart = new SpSdkChart(trace);
     this.hiSyseventChart = new SpHiSysEventChart(trace);
-    this.smapsChart = new SmapsChart(trace);
+    this.smapsChart = new VmTrackerChart(trace);
     this.clockChart = new SpClockChart(trace);
     this.irqChart = new SpIrqChart(trace);
     this.frameTimeChart = new SpFrameTimeChart(trace);
@@ -86,7 +91,13 @@ export class SpChartManager {
   async init(progress: Function) {
     progress('load data dict', 50);
     SpSystemTrace.DATA_DICT.clear();
+    SpChartManager.APP_STARTUP_PID_ARR = [];
     let dict = await queryDataDICT();
+    if (FlagsConfig.getFlagsConfigEnableStatus('AppStartup')) {
+      let appStartUpPids = await queryAppStartupProcessIds();
+      appStartUpPids.forEach(it => SpChartManager.APP_STARTUP_PID_ARR.push(it.pid));
+    }
+    await this.initTraceConfig();
     dict.map((d) => SpSystemTrace.DATA_DICT.set(d['id'], d['data']));
     SpSystemTrace.DATA_TASK_POOL_CALLSTACK.clear();
     let taskPoolCallStack = await queryTaskPoolCallStack();
@@ -101,9 +112,11 @@ export class SpChartManager {
     info('cpu Data initialized');
     progress('process/thread state', 73);
     await this.cpu.initProcessThreadStateData(progress);
-    await this.cpu.initCpuIdle0Data(progress);
-    await this.cpu.initSchedulingPTData(progress);
-    await this.cpu.initSchedulingFreqData(progress);
+    if (FlagsConfig.getFlagsConfigEnableStatus('SchedulingAnalysis')) {
+      await this.cpu.initCpuIdle0Data(progress);
+      await this.cpu.initSchedulingPTData(progress);
+      await this.cpu.initSchedulingFreqData(progress);
+    }
     info('ProcessThreadState Data initialized');
     progress('cpu rate', 75);
     await this.initCpuRate();
@@ -196,6 +209,15 @@ export class SpChartManager {
     let rates = await getCpuUtilizationRate(0, this.trace.timerShaftEL?.totalNS || 0);
     if (this.trace.timerShaftEL) this.trace.timerShaftEL.cpuUsage = rates;
     info('Cpu UtilizationRate data size is: ', rates.length);
+  };
+
+  initTraceConfig = async (): Promise<void> => {
+    queryMemoryConfig().then((result) => {
+      if (result && result.length > 0) {
+        const config = result[0];
+        MemoryConfig.getInstance().updateConfig(config.pid, config.iPid, config.processName, config.interval);
+      }
+    });
   };
 }
 

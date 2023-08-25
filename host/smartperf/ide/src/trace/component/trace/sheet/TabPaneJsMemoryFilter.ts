@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { BaseElement, element } from '../../../../base-ui/BaseElement.js';
 import '../../../../base-ui/icon/LitIcon.js';
 import { LitIcon } from '../../../../base-ui/icon/LitIcon.js';
@@ -21,11 +20,9 @@ import { LitCheckBox } from '../../../../base-ui/checkbox/LitCheckBox.js';
 import { LitSelect } from '../../../../base-ui/select/LitSelect.js';
 import '../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../base-ui/select/LitSelectOption.js';
-
 @element('tab-pane-js-memory-filter')
 export class TabPaneJsMemoryFilter extends BaseElement {
   initElements(): void {}
-
   initHtml(): string {
     return `
         <style>
@@ -61,21 +58,23 @@ export class TabPaneJsMemoryFilter extends BaseElement {
             text-overflow: ellipsis;
             min-width: 50px;
         }
-        :host(:not([first])) #first-select{
+        :host(:not([first])) #comparison-select{
             display: none;
         }
-        :host(:not([input])) #filter-input{
+        :host(:not([input])) .filter-wrap{
             display: none;
         }
-        #first-select{
+        #comparison-select{
             width:150px;
             margin-left: 10px;
         }
         </style>
-        <span class="describe left-text spacing">Class Filter</span>
-        <input id="filter-input" class="spacing" placeholder="Class filter" value=""/>
+        <div class='filter-wrap'>
+            <span class="describe left-text spacing">Class Filter</span>
+            <input id="filter-input" class="spacing" placeholder="Class filter" value=""/>
+        </div>
         <div class='select-wrap'>
-            <lit-select id='first-select' title='Select View'></lit-select>
+            <lit-select id='comparison-select' title='Select View'></lit-select>
         </div>
         `;
   }

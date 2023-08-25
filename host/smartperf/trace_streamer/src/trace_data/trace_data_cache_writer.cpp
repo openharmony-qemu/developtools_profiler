@@ -406,6 +406,23 @@ DynamicFrame* TraceDataCacheWriter::GetDynamicFrame()
 {
     return &dynamicFrame_;
 }
+AshMemData* TraceDataCacheWriter::GetAshMemData()
+{
+    return &ashMemData_;
+}
+DmaMemData* TraceDataCacheWriter::GetDmaMemData()
+{
+    return &dmaMemData_;
+}
+GpuProcessMemData* TraceDataCacheWriter::GetGpuProcessMemData()
+{
+    return &gpuProcessMemData_;
+}
+GpuWindowMemData* TraceDataCacheWriter::GetGpuWindowMemData()
+{
+    return &gpuWindowMemData_;
+}
+
 void TraceDataCacheWriter::Clear()
 {
     rawData_.Clear();
@@ -483,6 +500,10 @@ void TraceDataCacheWriter::Clear()
     smapsData_.Clear();
     bioLatencySampleData_.Clear();
     taskPoolInfo_.Clear();
+    ashMemData_.Clear();
+    dmaMemData_.Clear();
+    gpuProcessMemData_.Clear();
+    gpuWindowMemData_.Clear();
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

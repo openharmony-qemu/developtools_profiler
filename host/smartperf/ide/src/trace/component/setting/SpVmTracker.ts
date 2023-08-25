@@ -21,13 +21,10 @@ import '../../../base-ui/switch/lit-switch.js';
 import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
 import { Cmd } from '../../../command/Cmd.js';
-import { CmdConstant } from '../../../command/CmdConstant.js';
-import { HdcDeviceManager } from '../../../hdc/HdcDeviceManager.js';
 
 @element('sp-vm-tracker')
 export class SpVmTracker extends BaseElement {
   private vmTrackerProcessInput: LitAllocationSelect | undefined | null;
-  private vmTrackerSelectProcess: HTMLInputElement | undefined | null;
   private configList: Array<any> = [];
 
   set startSamp(start: boolean) {
@@ -115,7 +112,6 @@ export class SpVmTracker extends BaseElement {
       "lit-allocation-select[title='Process']"
     );
     let vmTrackerMul = this.vmTrackerProcessInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
-    this.vmTrackerSelectProcess = this.vmTrackerProcessInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
     vmTrackerMul!.addEventListener('mousedown', (ev) => {
       if (SpRecordTrace.serialNumber == '') {
         this.vmTrackerProcessInput!.processData = [];

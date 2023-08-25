@@ -21,17 +21,17 @@ export const initMetaDataStrategy = (metricData: Array<{
 }>): TraceMetadata => {
   info('Meta Strategy data length is:', metricData.length);
   let traceMetaDataList: Array<TraceMetadataItem> = [];
-  let statDataArray = [];
-  let jsonText = `{`;
+  let jsonText = '{';
   for (let index = 0; index < metricData.length; index++) {
     let name = metricData[index].name;
     let value = metricData[index].valueText;
     if (!value.match('^-?\\d+$')) {
-      value = '"' + value.replace('\r|\n', '') + '"';
+      value = `"${  value.replace('\r|\n', '')  }"`;
     }
-    jsonText += `'` + name + `'` + `: ` + `'` + value.toString() + `'` + `,`;
-    if (index >= metricData.length - 1) {
-      jsonText += `}`;
+    jsonText += `'${  name  }'` + ': ' + `'${  value.toString()  }'` + ',';
+    let indexNumber = 1;
+    if (index >= metricData.length - indexNumber) {
+      jsonText += '}';
     }
   }
 
@@ -39,7 +39,7 @@ export const initMetaDataStrategy = (metricData: Array<{
     let name = metricData[sqlIndex].name;
     let value = metricData[sqlIndex].valueText;
     if (!value.match('^-?\\d+$')) {
-      value = '"' + value.replace('\r|\n', '') + '"';
+      value = `"${  value.replace('\r|\n', '')  }"`;
     }
     let traceMetaData = {
       name: name,

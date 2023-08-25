@@ -21,12 +21,12 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "htrace_file_header.h"
-#include "ts_common.h"
-#include <vector>
+
 #include "clock_filter.h"
 #include "filter_base.h"
-#include <string>
+#include "htrace_file_header.h"
+#include "ts_common.h"
+
 namespace SysTuning {
 namespace TraceStreamer {
 class TraceDataCache;
