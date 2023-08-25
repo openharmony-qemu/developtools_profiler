@@ -50,7 +50,6 @@ private:
     void ParseTraceNode(int32_t fileId, const json& jMessage);
     void ParserSnapInfo(int32_t fileId, const std::string& key, const std::vector<std::vector<std::string>>& types);
     int32_t type_ = 0;
-    int32_t pid_ = 0;
     const std::string snapshotEnd_ = "{\"id\":1,\"result\":{}}";
     const std::string timeLineEnd_ = "{\"id\":2,\"result\":{}}";
     const std::string jsCpuProfilerStart_ = "{\"id\":3,\"result\":{}}";

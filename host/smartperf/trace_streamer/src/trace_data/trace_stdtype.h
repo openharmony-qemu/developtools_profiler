@@ -1941,7 +1941,7 @@ public:
     void UpdateCallStackSliceId(uint64_t row, uint64_t callStackSliceId);
     void SetEndTimeAndFlag(uint64_t row, uint64_t ts, uint64_t expectDur, uint64_t expectEnd);
     void Erase(uint64_t row);
-    static const uint32_t GetAbnormalStartEndTimeState()
+    static uint32_t GetAbnormalStartEndTimeState()
     {
         return abnormalStartEndTimeState_;
     }

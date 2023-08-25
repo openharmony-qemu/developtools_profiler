@@ -19,6 +19,7 @@ ohos_source_set("base") {
   public_deps = [ "sqlite_ext:sqliteext" ]
   include_dirs = [
     "../include",
+    "${THIRD_PARTY}/sqlite/include",
     "//third_party/bounds_checking_function/include",
   ]
   sources = [

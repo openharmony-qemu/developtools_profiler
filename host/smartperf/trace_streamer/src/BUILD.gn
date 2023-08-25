@@ -50,7 +50,7 @@ ohos_source_set("ts_sqlite") {
     "-DSQLITE_OMIT_LOAD_EXTENSION",
   ]
 
-  if (is_mingw) {
+  if (is_mingw || is_mac) {
     include_dirs += [ "${THIRD_PARTY}/libbpf/include/uapi" ]
   }
 }
@@ -81,12 +81,13 @@ trace_streamer_include = [
   "${PERF_DIR}/hiperf/include/nonlinux",
   "${PERF_DIR}/hiperf/include/nonlinux/linux",
   "${THIRD_PARTY}/perf_include/musl",
-  "${THIRD_PARTY}/musl",
   "${THIRD_PARTY}/libunwind/include",
   "${THIRD_PARTY}/libunwind/src",
   "${THIRD_PARTY}/perf_include/libbpf",
   "${THIRD_PARTY}/googletest/googletest/include",
   "${COMMON_LIBRARY}/c_utils/base/include",
+  "//prebuilts/clang/ohos/darwin-arm64/llvm/include/c++/v1",
+  "include/dummy/musl",
 ]
 
 ohos_source_set("trace_streamer_source") {
@@ -94,14 +95,11 @@ ohos_source_set("trace_streamer_source") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "cfg/trace_streamer_config.cpp",
-    "cfg/trace_streamer_config.h",
     "rpc/http_server.cpp",
     "rpc/http_socket.cpp",
     "rpc/rpc_server.cpp",
     "trace_streamer/trace_streamer_filters.cpp",
-    "trace_streamer/trace_streamer_filters.h",
     "trace_streamer/trace_streamer_selector.cpp",
-    "trace_streamer/trace_streamer_selector.h",
     "version.cpp",
   ]
   if (!is_test && !is_fuzz) {
@@ -126,8 +124,13 @@ ohos_source_set("trace_streamer_source") {
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
   }
+  if (is_mingw || is_mac) {
+    include_dirs += [
+      "${THIRD_PARTY}/libbpf/include/uapi",
+      "${THIRD_PARTY}/elfutils/libelf",
+    ]
+  }
   if (is_mingw) {
-    include_dirs += [ "${THIRD_PARTY}/libbpf/include/uapi" ]
     cflags = [ "-includeMingW64Fix.h" ]
   }
 

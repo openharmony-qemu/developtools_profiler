@@ -289,6 +289,10 @@ void TraceStreamerSelector::SetCancel(bool cancel)
 {
     traceDataCache_->SetCancel(cancel);
 }
+void TraceStreamerSelector::UpdateBinderRunnableTraceStatus(bool status)
+{
+    traceDataCache_->UpdateBinderRunnableTraceStatus(status);
+}
 void TraceStreamerSelector::UpdateAnimationTraceStatus(bool status)
 {
     traceDataCache_->UpdateAnimationTraceStatus(status);
@@ -300,10 +304,6 @@ void TraceStreamerSelector::UpdateTaskPoolTraceStatus(bool status)
 void TraceStreamerSelector::UpdateAppStartTraceStatus(bool status)
 {
     traceDataCache_->UpdateAppStartTraceStatus(status);
-}
-void TraceStreamerSelector::UpdateBinderRunnableTraceStatus(bool status)
-{
-    traceDataCache_->UpdateBinderRunnableTraceStatus(status);
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

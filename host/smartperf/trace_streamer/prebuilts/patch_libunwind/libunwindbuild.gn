@@ -213,8 +213,6 @@ libunwind_la_SOURCES_local_nounwind = [
   "src/mi/dyn-register.c",
   "src/mi/Ldyn-extract.c",
   "src/mi/Lfind_dynamic_proc_info.c",
-
-  # "src/mi/Lget_accessors.c", # miss
   "src/mi/Lget_proc_info_by_ip.c",
   "src/mi/Lget_proc_name.c",
   "src/mi/Lput_dynamic_unwind_info.c",
@@ -254,8 +252,6 @@ config("unwind_config_public") {
   cflags = [
     "-D_GNU_SOURCE",
     "-DHAVE_CONFIG_H",
-
-    # "-DNDEBUG",
     "-DCC_IS_CLANG",
     "-fcommon",
     "-Werror",
@@ -274,19 +270,6 @@ config("unwind_config_public") {
       "-Wno-attributes",
       "-Wno-pointer-to-int-cast",
       "-Wno-implicit-function-declaration",
-
-      # "-Wno-absolute-value",
-      # "-Wno-header-guard",
-      # "-Wno-tautological-constant-out-of-range-compare",
-      # "-Wno-sometimes-uninitialized",
-      # "-Wno-int-to-void-pointer-cast",
-    ]
-  }
-
-  if (use_wasm) {
-    cflags += [
-      # "-D __mips__"
-      # "-D WASM",
     ]
   }
 
@@ -339,10 +322,6 @@ config("unwind_config_remote_public") {
 
   defines += [ "build_remote=1" ]
   defines += [ "target_cpu=${target_cpu}" ]
-
-  # defines += [ "host_toolchain=${host_toolchain}" ]
-  # defines += [ "current_toolchain=${current_toolchain}" ]
-  # defines += [ "default_toolchain=${default_toolchain}" ]
 }
 
 config("unwind_config_arm") {
@@ -435,22 +414,14 @@ ohos_source_set("unwind_source") {
     sources += arm64_source
     public_configs = [ ":unwind_config_arm64" ]
   } else if (target_cpu == "x64") {
-    # deps = [ "unwind_source_x64" ]
     sources += x64_source
     public_configs = [ ":unwind_config_x64" ]
-
-    # public_configs = [
-    # ":unwind_config_public",
-    # ":unwind_config_remote_public",
-    # ":unwind_config_x64",
-    # ]
   }
 
   sources += [ "src/os-ohos.c" ]
 }
 
 if (defined(ohos_lite)) {
-  # shared_library("libunwind") {
   source_set("libunwind") {
     deps = [ ":unwind_source" ]
     public_configs = [ ":unwind_config_public" ]
@@ -458,14 +429,6 @@ if (defined(ohos_lite)) {
 } else {
   source_set("libunwind") {
     deps = [ ":unwind_source" ]
-
-    # install_images = [
-    # "system",
-    # "updater",
-    # ]
     public_configs = [ ":unwind_config_public" ]
-
-    # part_name = "smartperf_host"
-    # subsystem_name = "developtools"
   }
 }

@@ -81,6 +81,9 @@ ohos_source_set("filter") {
     "${THIRD_PARTY}/json/single_include/nlohmann",
     "../proto_reader/include",
     ".",
-    "${THIRD_PARTY}/musl",
   ]
+
+  if (is_mingw || is_mac) {
+    include_dirs += [ "${THIRD_PARTY}/elfutils/libelf" ]
+  }
 }

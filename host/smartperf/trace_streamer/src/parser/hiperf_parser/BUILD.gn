@@ -42,8 +42,10 @@ ohos_source_set("hiperf_parser_src") {
     "${THIRD_PARTY}/googletest/googletest/include",
   ]
   include_dirs += [ "${THIRD_PARTY}/libunwind/include" ]
-  if (is_mingw) {
+  if (is_mingw || is_mac) {
     include_dirs += [ "${THIRD_PARTY}/libbpf/include/uapi" ]
+  }
+  if (is_mingw) {
     cflags = [ "-includeMingW64Fix.h" ]
   }
 }

@@ -303,23 +303,6 @@ export class LitSelectV extends BaseElement {
   }
 
   initOptions() {
-    this.selectVOptions!.addEventListener('click', (ev) => {
-      let items = this.selectVInputEl!.value.split(',');
-      this.customItem = [];
-      items.forEach((item: string) => {
-        if (item.trim() != '') {
-          let indexItem = this.itemValue.indexOf(item.trim());
-          if (indexItem == -1) {
-            this.customItem.push(item.trim());
-          }
-        }
-      });
-      if (this.customItem.length > 0) {
-        this.selectVInputEl.value = this.customItem.concat(this.showItems);
-      } else {
-        this.selectVInputEl.value = this.showItems;
-      }
-    });
     this.shadowRoot?.querySelectorAll('lit-select-option').forEach((a) => {
       a.setAttribute('check', '');
       a.addEventListener('onSelected', (e: any) => {
@@ -329,13 +312,27 @@ export class LitSelectV extends BaseElement {
             this.showItems.splice(number, 1);
           }
           a.removeAttribute('selected');
-          return;
         } else {
           let index = this.itemValue.indexOf(a.textContent!);
           if (index > -1) {
             this.showItems.push(a.textContent!);
           }
           a.setAttribute('selected', '');
+        }
+        let items = this.selectVInputEl!.value.split(',');
+        this.customItem = [];
+        items.forEach((item: string) => {
+          if (item.trim() != '') {
+            let indexItem = this.itemValue.indexOf(item.trim());
+            if (indexItem == -1) {
+              this.customItem.push(item.trim());
+            }
+          }
+        });
+        if (this.customItem.length > 0) {
+          this.selectVInputEl.value = this.customItem.concat(this.showItems);
+        } else {
+          this.selectVInputEl.value = this.showItems;
         }
       });
     });

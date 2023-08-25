@@ -116,9 +116,6 @@ if (use_wasm) {
       "-D HAVE_PTHREAD",
       "-std=c++17",
     ]
-
-    #configs = default_configs
-
     public_configs = [ ":protobuf_config" ]
   }
 } else {
@@ -136,9 +133,6 @@ if (use_wasm) {
       "-D HAVE_PTHREAD",
       "-std=c++17",
     ]
-
-    # configs = default_configs
-
     public_configs = [ ":protobuf_config" ]
   }
 }
@@ -158,9 +152,6 @@ if (use_wasm) {
     ]
 
     deps = [ ":protobuf_lite_static" ]
-
-    #configs = default_configs
-
     public_configs = [ ":protobuf_config" ]
   }
 } else {
@@ -172,14 +163,6 @@ if (use_wasm) {
       "src",
     ]
 
-    #cflags_cc = [
-    #  "-Wno-sign-compare",
-    #  "-ftrapv",
-    #  "-fstack-protector-strong",
-    #  "-fstack-protector-all",
-    #  "-D_FORTIFY_SOURCE=2 -O2",
-
-    #]
     cflags = [
       "-Wno-sign-compare",
       "-D HAVE_PTHREAD",
@@ -188,12 +171,10 @@ if (use_wasm) {
       "-fstack-protector-all",
       "-D_FORTIFY_SOURCE=2 -O2",
       "-std=c++17",
-
-      #    "-Wl,--disable-new-dtags,--rpath,/libpath1:/libpath2"
     ]
 
     ldflags = [ "-fstack-protector" ]
-    if (!is_macx) {
+    if (!is_mac) {
       ldflags += [
         "-fuse-ld=gold",
         "-Wl,--gc-sections",
@@ -302,13 +283,6 @@ if (use_wasm) {
       "$protobuf_dir/**/*.h",
       "$protobuf_dir/**/*.inc",
       "src",
-
-      # "/opt/clang-mingw/i686-w64-mingw32/x86_64-linux-gnu",
-      # "/opt/clang-mingw/i686-w64-mingw32/x86_64-linux-gnu/c++/7",
-      # "/opt/clang-mingw/i686-w64-mingw32/include/c++/7",
-      # "/usr/include",
-      # "/usr/include/c++/7",
-      # "/usr/include/x86_64-linux-gnu/c++/7",
     ]
     if (!use_wasm) {
       configs = default_configs
@@ -317,21 +291,17 @@ if (use_wasm) {
       "-Wno-sign-compare",
       "-Wno-unused-function",
       "-Wno-unused-private-field",
-
-      # "-std=gnu++17",
     ]
     cflags = [
       "-Wno-sign-compare",
       "-D HAVE_PTHREAD",
       "-Wno-unused-function",
       "-std=c++17",
-
-      #    "-Wl,--disable-new-dtags,--rpath,/libpath1:/libpath2"
     ]
 
     deps = [
-      ":protobuf_static",
       ":protobuf_lite_static",
+      ":protobuf_static",
     ]
 
     public_configs = [ ":protobuf_config" ]

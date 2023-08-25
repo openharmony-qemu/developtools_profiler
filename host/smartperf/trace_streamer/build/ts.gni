@@ -28,7 +28,6 @@ if (is_independent_compile) {
   PERF_DIR = "//developtools"
   with_ebpf_help_table = false
   clang_x64_folder = "clang_x64"
-  is_macx = false
   is_test = false
   is_protoc = false
   is_spb = false

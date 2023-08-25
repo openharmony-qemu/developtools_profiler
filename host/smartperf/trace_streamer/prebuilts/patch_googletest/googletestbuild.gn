@@ -29,8 +29,6 @@ static_library("gtest") {
 
   cflags = [
     "-Wno-inconsistent-missing-override",
-
-    # "-Dprivate=public",  #allow test code access private members
     "-fprofile-arcs",
     "-ftest-coverage",
     "-Wno-unused-command-line-argument",
@@ -86,8 +84,6 @@ static_library("gtest") {
   sources -= [ "googletest/src/gtest-all.cc" ]
   public_configs = [ ":gtest_config" ]
   configs += [ ":gtest_private_config" ]
-
-  #  configs -= ["//build/config/coverage:default_coverage"]
 }
 
 static_library("gtest_main") {
@@ -96,8 +92,6 @@ static_library("gtest_main") {
 
   cflags = [
     "-Wno-inconsistent-missing-override",
-
-    #  "-Dprivate=public",  #allow test code access private members
     "-fprofile-arcs",
     "-ftest-coverage",
     "-Wno-unused-command-line-argument",
@@ -109,8 +103,6 @@ static_library("gtest_main") {
     "-Wno-missing-noreturn",
   ]
   public_deps = [ ":gtest" ]
-
-  #  configs -= ["//build/config/coverage:default_coverage"]
 }
 
 config("gmock_private_config") {
@@ -132,7 +124,6 @@ config("gmock_config") {
   cflags = [
     "-Wno-inconsistent-missing-override",
 
-    #  "-Dprivate=public",  #allow test code access private members
     "-fprofile-arcs",
     "-ftest-coverage",
     "-Wno-unused-command-line-argument",
@@ -151,7 +142,6 @@ static_library("gmock") {
   cflags = [
     "-Wno-inconsistent-missing-override",
 
-    #    "-Dprivate=public",  #allow test code access private members
     "-fprofile-arcs",
     "-ftest-coverage",
     "-Wno-unused-command-line-argument",
@@ -189,8 +179,6 @@ static_library("gmock") {
   sources -= [ "googlemock/src/gmock-all.cc" ]
   public_configs = [ ":gmock_config" ]
   configs += [ ":gmock_private_config" ]
-
-  #  configs -= ["//build/config/coverage:default_coverage"]
   deps = [ ":gtest" ]
 }
 
@@ -199,8 +187,6 @@ static_library("gmock_main") {
 
   cflags = [
     "-Wno-inconsistent-missing-override",
-
-    #    "-Dprivate=public",  #allow test code access private members
     "-fprofile-arcs",
     "-ftest-coverage",
     "-Wno-unused-command-line-argument",
@@ -216,6 +202,4 @@ static_library("gmock_main") {
     ":gmock",
     ":gtest",
   ]
-
-  #  configs -= ["//build/config/coverage:default_coverage"]
 }

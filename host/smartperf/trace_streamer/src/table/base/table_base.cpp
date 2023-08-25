@@ -272,14 +272,14 @@ void TableBase::Cursor::FilterTS(unsigned char op, sqlite3_value* argv, const st
         case SQLITE_INDEX_CONSTRAINT_LT: {
             indexMap_->IntersectLessEqual(times, v, getValue);
             break;
-            case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: {
-                indexMap_->RemoveNullElements(times, v);
-                break;
-            }
-            default:
-                break;
-        } // end of switch (op)
-    }
+        }
+        case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: {
+            indexMap_->RemoveNullElements(times, v);
+            break;
+        }
+        default:
+            break;
+    } // end of switch (op)
 }
 
 int32_t TableBase::Cursor::RowId(sqlite3_int64* id)

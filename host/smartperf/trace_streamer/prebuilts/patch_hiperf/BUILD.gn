@@ -43,6 +43,9 @@ ohos_source_set("hiperf_src") {
   subsystem_name = "developtools"
   part_name = "smartperf_host"
   cflags = [ "-D ALWAYSTRUE" ]
+  if (is_mingw) {
+    cflags += [ "-includeMingW64Fix.h" ]
+  }
   sources = [
     "./src/callstack.cpp",
     "./src/callstack.h",

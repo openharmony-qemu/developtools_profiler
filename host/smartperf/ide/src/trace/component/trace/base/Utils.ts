@@ -43,7 +43,7 @@ export class Utils {
     Utils.statusMap.set('R', 'Runnable');
     Utils.statusMap.set('Running', 'Running');
     Utils.statusMap.set('R+', 'Runnable (Preempted)');
-    Utils.statusMap.set('R-B', 'Runnable (Binder)')
+    Utils.statusMap.set('R-B', 'Runnable (Binder)');
     Utils.statusMap.set('I', 'Task Dead');
     Utils.statusMap.set('T', 'Traced');
     Utils.statusMap.set('t', 'Traced');

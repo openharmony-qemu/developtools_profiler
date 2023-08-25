@@ -611,7 +611,8 @@ bool BytraceEventParser::BinderTransaction(const ArgsMap& args, const BytraceLin
     streamFilters_->binderFilter_->SendTraction(line.ts, line.pid, transactionId.value(), destNode.value(),
                                                 destProc.value(), destThread.value(), isReply.value(), flags.value(),
                                                 codeStr.value());
-    if (traceDataCache_->BinderRunnableTraceEnabled() && transactionId.has_value() && flags.has_value() && !streamFilters_->binderFilter_->IsAsync(flags.value())) {
+    if (traceDataCache_->BinderRunnableTraceEnabled() && transactionId.has_value() && flags.has_value() &&
+        !streamFilters_->binderFilter_->IsAsync(flags.value())) {
         streamFilters_->cpuFilter_->InsertRunnableBinderEvent(transactionId.value(),
                                                               streamFilters_->processFilter_->GetInternalTid(line.pid));
     }

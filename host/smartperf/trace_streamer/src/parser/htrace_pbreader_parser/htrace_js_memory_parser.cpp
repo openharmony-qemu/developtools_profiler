@@ -52,13 +52,13 @@ struct Snapshot {
 };
 void from_json(const json& j, Meta& v)
 {
-    for (int32_t i = 0; i < j["node_fields"].size(); i++) {
+    for (size_t i = 0; i < j["node_fields"].size(); i++) {
         v.nodeFields.emplace_back(j["node_fields"][i]);
     }
-    for (int32_t i = 0; i < j["node_types"].size(); i++) {
+    for (size_t i = 0; i < j["node_types"].size(); i++) {
         std::vector<std::string> nodeTypes;
         if (j["node_types"][i].is_array()) {
-            for (int32_t m = 0; m < j["node_types"][i].size(); m++) {
+            for (size_t m = 0; m < j["node_types"][i].size(); m++) {
                 nodeTypes.emplace_back(j["node_types"][i][m]);
             }
             v.nodeTypes.emplace_back(nodeTypes);
@@ -67,13 +67,13 @@ void from_json(const json& j, Meta& v)
             v.nodeTypes.emplace_back(nodeTypes);
         }
     }
-    for (int32_t i = 0; i < j["edge_fields"].size(); i++) {
+    for (size_t i = 0; i < j["edge_fields"].size(); i++) {
         v.edgeFields.emplace_back(j["edge_fields"][i]);
     }
-    for (int32_t i = 0; i < j["edge_types"].size(); i++) {
+    for (size_t i = 0; i < j["edge_types"].size(); i++) {
         std::vector<std::string> edgeTypes;
         if (j["edge_types"][i].is_array()) {
-            for (int32_t m = 0; m < j["edge_types"][i].size(); m++) {
+            for (size_t m = 0; m < j["edge_types"][i].size(); m++) {
                 edgeTypes.emplace_back(j["edge_types"][i][m]);
             }
             v.edgeTypes.emplace_back(edgeTypes);
@@ -82,16 +82,16 @@ void from_json(const json& j, Meta& v)
             v.edgeTypes.emplace_back(edgeTypes);
         }
     }
-    for (int32_t i = 0; i < j["trace_function_info_fields"].size(); i++) {
+    for (size_t i = 0; i < j["trace_function_info_fields"].size(); i++) {
         v.traceFunctionInfoFields.emplace_back(j["trace_function_info_fields"][i]);
     }
-    for (int32_t i = 0; i < j["trace_node_fields"].size(); i++) {
+    for (size_t i = 0; i < j["trace_node_fields"].size(); i++) {
         v.traceNodeFields.emplace_back(j["trace_node_fields"][i]);
     }
-    for (int32_t i = 0; i < j["sample_fields"].size(); i++) {
+    for (size_t i = 0; i < j["sample_fields"].size(); i++) {
         v.sampleFields.emplace_back(j["sample_fields"][i]);
     }
-    for (int32_t i = 0; i < j["location_fields"].size(); i++) {
+    for (size_t i = 0; i < j["location_fields"].size(); i++) {
         v.locationFields.emplace_back(j["location_fields"][i]);
     }
     return;
@@ -121,20 +121,20 @@ std::vector<uint32_t> g_ids;
 void from_json(const json& j, Nodes& v)
 {
     int32_t edgeIndex = 0;
-    for (int32_t i = 0; i < j.size() / NODES_SINGLE_LENGTH; i++) {
+    for (size_t i = 0; i < j.size() / NODES_SINGLE_LENGTH; i++) {
         v.types.emplace_back(j[i * NODES_SINGLE_LENGTH]);
         v.names.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_FIRST]);
         v.ids.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_SECOND]);
         v.selfSizes.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_THIRD]);
         v.edgeCounts.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_FOURTH]);
-        for (int32_t m = edgeIndex; m < edgeIndex + v.edgeCounts.at(i); m++) {
+        for (size_t m = edgeIndex; m < edgeIndex + v.edgeCounts.at(i); m++) {
             g_fromNodeIds.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_SECOND]);
         }
         edgeIndex += v.edgeCounts.at(i);
         v.traceNodeIds.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_FIFTH]);
         v.detachedness.emplace_back(j[i * NODES_SINGLE_LENGTH + OFFSET_SIXTH]);
     }
-    for (int32_t m = 0; m < j.size(); m++) {
+    for (size_t m = 0; m < j.size(); m++) {
         g_ids.emplace_back(j[m]);
     }
 }
@@ -150,7 +150,7 @@ const int32_t EDGES_SINGLE_LENGTH = 3;
 void from_json(const json& j, Edges& v)
 {
     v.fromNodeIds = g_fromNodeIds;
-    for (int32_t i = 0; i < j.size() / EDGES_SINGLE_LENGTH; i++) {
+    for (size_t i = 0; i < j.size() / EDGES_SINGLE_LENGTH; i++) {
         v.types.emplace_back(j[i * EDGES_SINGLE_LENGTH]);
         v.nameOrIndexes.emplace_back(j[i * EDGES_SINGLE_LENGTH + OFFSET_FIRST]);
         v.toNodes.emplace_back(j[i * EDGES_SINGLE_LENGTH + OFFSET_SECOND]);
@@ -168,7 +168,7 @@ struct Location {
 const int32_t LOCATION_SINGLE_LENGTH = 4;
 void from_json(const json& j, Location& v)
 {
-    for (int32_t i = 0; i < j.size() / LOCATION_SINGLE_LENGTH; i++) {
+    for (size_t i = 0; i < j.size() / LOCATION_SINGLE_LENGTH; i++) {
         v.objectIndexes.emplace_back(j[i * LOCATION_SINGLE_LENGTH]);
         v.scriptIds.emplace_back(j[i * LOCATION_SINGLE_LENGTH + OFFSET_FIRST]);
         v.lines.emplace_back(j[i * LOCATION_SINGLE_LENGTH + OFFSET_SECOND]);
@@ -183,7 +183,7 @@ struct Sample {
 const int32_t SAMPLE_SINGLE_LENGTH = 2;
 void from_json(const json& j, Sample& v)
 {
-    for (int32_t i = 0; i < j.size() / SAMPLE_SINGLE_LENGTH; i++) {
+    for (size_t i = 0; i < j.size() / SAMPLE_SINGLE_LENGTH; i++) {
         v.timestampUs.emplace_back(j[i * SAMPLE_SINGLE_LENGTH]);
         v.lastAssignedIds.emplace_back(j[i * SAMPLE_SINGLE_LENGTH + OFFSET_FIRST]);
     }
@@ -194,7 +194,7 @@ struct Strings {
 };
 void from_json(const json& j, Strings& v)
 {
-    for (int32_t i = 0; i < j.size(); i++) {
+    for (size_t i = 0; i < j.size(); i++) {
         v.strings.emplace_back(j[i]);
     }
 }
@@ -210,7 +210,7 @@ struct TraceFuncInfo {
 const int32_t TRACE_FUNC_INFO_SINGLE_LENGTH = 6;
 void from_json(const json& j, TraceFuncInfo& v)
 {
-    for (int32_t i = 0; i < j.size() / TRACE_FUNC_INFO_SINGLE_LENGTH; i++) {
+    for (size_t i = 0; i < j.size() / TRACE_FUNC_INFO_SINGLE_LENGTH; i++) {
         v.functionIds.emplace_back(j[i * TRACE_FUNC_INFO_SINGLE_LENGTH]);
         v.names.emplace_back(j[i * TRACE_FUNC_INFO_SINGLE_LENGTH + OFFSET_FIRST]);
         v.scriptNames.emplace_back(j[i * TRACE_FUNC_INFO_SINGLE_LENGTH + OFFSET_SECOND]);
@@ -421,11 +421,11 @@ void HtraceJSMemoryParser::ParserSnapInfo(int32_t fileId,
                                           const std::string& key,
                                           const std::vector<std::vector<std::string>>& types)
 {
-    for (int32_t m = 0; m < types[0].size(); ++m) {
+    for (size_t m = 0; m < types[0].size(); ++m) {
         (void)traceDataCache_->GetJsHeapInfoData()->AppendNewData(fileId, key, 0, std::numeric_limits<uint32_t>::max(),
                                                                   types[0][m]);
     }
-    for (int32_t i = 1; i < types.size(); ++i) {
+    for (size_t i = 1; i < types.size(); ++i) {
         (void)traceDataCache_->GetJsHeapInfoData()->AppendNewData(fileId, key, 1, std::numeric_limits<uint32_t>::max(),
                                                                   types[i][0]);
     }
@@ -451,7 +451,7 @@ void HtraceJSMemoryParser::ParserJSSnapInfo(int32_t fileId, const json& jMessage
 void HtraceJSMemoryParser::ParseNodes(int32_t fileId, const json& jMessage)
 {
     jsonns::Nodes node = jMessage.at("nodes");
-    for (int32_t i = 0; i < node.names.size(); ++i) {
+    for (size_t i = 0; i < node.names.size(); ++i) {
         auto type = node.types[i];
         auto name = node.names[i];
         auto id = node.ids[i];
@@ -469,7 +469,7 @@ void HtraceJSMemoryParser::ParseNodes(int32_t fileId, const json& jMessage)
 void HtraceJSMemoryParser::ParseEdges(int32_t fileId, const json& jMessage)
 {
     jsonns::Edges edge = jMessage.at("edges");
-    for (int32_t i = 0; i < edge.types.size(); ++i) {
+    for (size_t i = 0; i < edge.types.size(); ++i) {
         auto type = edge.types[i];
         auto nameOrIndex = edge.nameOrIndexes[i];
         auto toNode = edge.toNodes[i];
@@ -484,7 +484,7 @@ void HtraceJSMemoryParser::ParseEdges(int32_t fileId, const json& jMessage)
 void HtraceJSMemoryParser::ParseLocation(int32_t fileId, const json& jMessage)
 {
     jsonns::Location location = jMessage.at("locations");
-    for (int32_t i = 0; i < location.columns.size(); ++i) {
+    for (size_t i = 0; i < location.columns.size(); ++i) {
         auto objectIndex = location.objectIndexes[i];
         auto scriptId = location.scriptIds[i];
         auto line = location.lines[i];
@@ -496,7 +496,7 @@ void HtraceJSMemoryParser::ParseLocation(int32_t fileId, const json& jMessage)
 void HtraceJSMemoryParser::ParseSample(int32_t fileId, const json& jMessage)
 {
     jsonns::Sample sample = jMessage.at("samples");
-    for (int32_t i = 0; i < sample.timestampUs.size(); ++i) {
+    for (size_t i = 0; i < sample.timestampUs.size(); ++i) {
         auto timestampUs = sample.timestampUs[i];
         auto lastAssignedId = sample.lastAssignedIds[i];
         (void)traceDataCache_->GetJsHeapSampleData()->AppendNewData(fileId, timestampUs, lastAssignedId);
@@ -506,7 +506,7 @@ void HtraceJSMemoryParser::ParseSample(int32_t fileId, const json& jMessage)
 void HtraceJSMemoryParser::ParseString(int32_t fileId, const json& jMessage)
 {
     jsonns::Strings string = jMessage.at("strings");
-    for (int32_t i = 0; i < string.strings.size(); ++i) {
+    for (size_t i = 0; i < string.strings.size(); ++i) {
         (void)traceDataCache_->GetJsHeapStringData()->AppendNewData(fileId, i, string.strings[i]);
     }
     return;
@@ -514,7 +514,7 @@ void HtraceJSMemoryParser::ParseString(int32_t fileId, const json& jMessage)
 void HtraceJSMemoryParser::ParseTraceFuncInfo(int32_t fileId, const json& jMessage)
 {
     jsonns::TraceFuncInfo traceFuncInfo = jMessage.at("trace_function_infos");
-    for (int32_t i = 0; i < traceFuncInfo.functionIds.size(); ++i) {
+    for (size_t i = 0; i < traceFuncInfo.functionIds.size(); ++i) {
         auto functionId = traceFuncInfo.functionIds[i];
         auto name = traceFuncInfo.names[i];
         auto scriptName = traceFuncInfo.scriptNames[i];
@@ -529,7 +529,7 @@ void HtraceJSMemoryParser::ParseTraceFuncInfo(int32_t fileId, const json& jMessa
 void HtraceJSMemoryParser::ParseTraceNode(int32_t fileId, const json& jMessage)
 {
     jsonns::TraceTree traceTree = jMessage.at("trace_tree");
-    for (int32_t i = 0; i < traceTree.ids.size(); ++i) {
+    for (size_t i = 0; i < traceTree.ids.size(); ++i) {
         auto id = traceTree.ids[i];
         auto funcInfoIndex = traceTree.functionInfoIndexes[i];
         auto count = traceTree.counts[i];

@@ -59,7 +59,6 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "${PERF_DIR}/hiperf/include",
     "${PERF_DIR}/hiperf/include/nonlinux/linux",
     "${PERF_DIR}/hiperf/include/nonlinux",
-    "${THIRD_PARTY}/musl",
     "${THIRD_PARTY}/googletest/googletest/include",
     "${THIRD_PARTY}/perf_include/musl",
     "${THIRD_PARTY}/perf_include/libbpf",
@@ -68,7 +67,15 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "${THIRD_PARTY}/perf_include/linux",
     "../hiperf_parser",
     "../hiperf_parser/include",
+    "../../../commonlibrary/c_utils/base/include",
+    "../../include/dummy/musl",
   ]
+  if (is_mingw || is_mac) {
+    include_dirs += [
+      "${THIRD_PARTY}/elfutils/libelf",
+      "${THIRD_PARTY}/libbpf/include/uapi",
+    ]
+  }
 
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
@@ -100,7 +107,7 @@ group("htrace_pbreader_parser") {
     "${THIRD_PARTY}/protobuf:protobuf_static",
   ]
 
-  if (!use_wasm && !is_win && !is_mingw && !is_macx && !is_test) {
+  if (!use_wasm && !is_win && !is_mingw && !is_mac && !is_test) {
     if (!is_independent_compile) {
       if (target_cpu == "arm64") {
         deps += [ "//third_party/libunwind:unwind_source_arm64_opt" ]
