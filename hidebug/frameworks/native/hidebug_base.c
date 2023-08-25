@@ -203,7 +203,7 @@ static bool MatchMallocHookStartupProp(const char *thisName)
         return false;
     }
 
-    if (strncmp(thisName, targetProcName, targetProcNameSize) == 0) {
+    if (strcmp(thisName, targetProcName) == 0) {
         return true;
     }
     return false;
