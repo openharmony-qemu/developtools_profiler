@@ -88,23 +88,23 @@ export class TabPaneGpuClickSelectComparison extends TabPaneGpuClickSelect {
     this.selectStamps(dataArray, type);
     this.getComparisonData(dataArray[0].startNs, type);
   }
-  selectStamps(dataList: Array<SnapshotStruct>, type: string): void {
+  selectStamps(gpuSelectComList: Array<SnapshotStruct>, type: string): void {
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
     let option = new LitSelectOption();
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (dataList[0].name) {
-      option.setAttribute('value', dataList[0].name);
+    if (gpuSelectComList[0].name) {
+      option.setAttribute('value', gpuSelectComList[0].name);
     }
-    option.setAttribute('value', dataList[0].name);
-    this.selectEl!.defaultValue = dataList[0].name || '';
-    this.selectEl!.placeholder = dataList[0].name || '';
-    this.selectEl!.dataSource = dataList;
+    option.setAttribute('value', gpuSelectComList[0].name);
+    this.selectEl!.defaultValue = gpuSelectComList[0].name || '';
+    this.selectEl!.placeholder = gpuSelectComList[0].name || '';
+    this.selectEl!.dataSource = gpuSelectComList;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((option) => {
       option.addEventListener('onSelected', async (e) => {
-        for (let f of dataList) {
+        for (let f of gpuSelectComList) {
           if (input.value === f.name) {
             this.getComparisonData(f.startNs, type);
           }

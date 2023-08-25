@@ -18,23 +18,24 @@ const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 
 describe('TabPaneCpuFreqLimits Test', () => {
-    let tabPaneCpuFreqLimits = new TabPaneCpuFreqLimits();
+  let tabPaneCpuFreqLimits = new TabPaneCpuFreqLimits();
 
-    it('TabPaneCpuFreqLimitsTest01', function () {
-        expect((tabPaneCpuFreqLimits.formatData([],1,1))).toBeUndefined();
-    });
-    it('TabPaneCpuFreqLimitsTest02', function () {
-        expect((tabPaneCpuFreqLimits.sortCpuFreqLimitTable('',0))).toBeUndefined();
-    });
-    it('TabPaneCpuFreqLimitsTest03', function () {
-        expect((tabPaneCpuFreqLimits.sortCpuFreqLimitTable('timeStr',1))).toBeUndefined();
-    });
-})
+  it('TabPaneCpuFreqLimitsTest01', function () {
+    expect(tabPaneCpuFreqLimits.formatData([], 1, 1)).toBeUndefined();
+  });
+  it('TabPaneCpuFreqLimitsTest02', function () {
+    expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('', 0)).toBeUndefined();
+  });
+  it('TabPaneCpuFreqLimitsTest03', function () {
+    expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('timeStr', 1)).toBeUndefined();
+  });
+});

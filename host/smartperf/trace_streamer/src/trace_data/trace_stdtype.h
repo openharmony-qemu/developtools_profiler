@@ -202,6 +202,7 @@ public:
                             uint64_t priority);
     void SetDuration(size_t index, uint64_t duration);
     void Update(uint64_t index, uint64_t ts, uint64_t state);
+    void UpdateEndState(uint64_t index, uint64_t state);
     void UpdateArg(uint64_t index, uint32_t argsetId);
 
     const std::deque<uint64_t>& EndStatesData() const

@@ -24,38 +24,41 @@ export class AppStartupRender {
   renderMainThread(
     req: {
       useCache: boolean;
-      context: CanvasRenderingContext2D;
+      appStartupContext: CanvasRenderingContext2D;
       type: string;
     },
-    row: TraceRow<AppStartupStruct>
+    appStartUpRow: TraceRow<AppStartupStruct>
   ): void {
-    let list = row.dataList;
-    let filter = row.dataListCache;
+    let list = appStartUpRow.dataList;
+    let filter = appStartUpRow.dataListCache;
     dataFilterHandler(list, filter, {
       startKey: 'startTs',
       durKey: 'dur',
       startNS: TraceRow.range?.startNS ?? 0,
       endNS: TraceRow.range?.endNS ?? 0,
       totalNS: TraceRow.range?.totalNS ?? 0,
-      frame: row.frame,
+      frame: appStartUpRow.frame,
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
-    req.context.globalAlpha = 0.6;
+    req.appStartupContext.globalAlpha = 0.6;
     let find = false;
     let offset = 3;
     for (let re of filter) {
-      AppStartupStruct.draw(req.context, re);
-      if (row.isHover) {
-        if (re.frame && row.hoverX >= re.frame.x - offset && row.hoverX <= re.frame.x + re.frame.width + offset) {
+      AppStartupStruct.draw(req.appStartupContext, re);
+      if (appStartUpRow.isHover) {
+        if (re.frame && appStartUpRow.hoverX >= re.frame.x - offset &&
+          appStartUpRow.hoverX <= re.frame.x + re.frame.width + offset
+        ) {
           AppStartupStruct.hoverStartupStruct = re;
           find = true;
         }
       }
     }
-    if (!find && row.isHover) AppStartupStruct.hoverStartupStruct = undefined;
+    if (!find && appStartUpRow.isHover) {
+      AppStartupStruct.hoverStartupStruct = undefined;
+    }
   }
-
 }
 
 const padding = 3;

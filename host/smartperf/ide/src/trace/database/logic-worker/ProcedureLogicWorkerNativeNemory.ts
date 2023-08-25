@@ -500,92 +500,92 @@ where ts between start_ts and end_ts ${condition};
     let nativeMemoryType: number = paramMap.get('nativeMemoryType') as number;
     let totalNS: number = paramMap.get('totalNS') as number;
     let arr: Array<HeapStruct> = [];
-    let maxSize = 0,
-      maxDensity = 0,
-      minSize = 0,
-      minDensity = 0;
-    let tempSize = 0,
-      tempDensity = 0;
-    let filterLen = 0,
-      filterLevel = 0;
+    let nmMaxSize = 0;
+    let nmMaxDensity = 0;
+    let nmMinSize = 0;
+    let nmMinDensity = 0;
+    let nmTempSize = 0;
+    let nmTempDensity = 0;
+    let nmFilterLen = 0;
+    let nmFilterLevel = 0;
     let putArr = (ne: NativeEvent, filterLevel: number, finish: boolean) => {
-      let heap = new HeapStruct();
-      heap.startTime = ne.startTime;
+      let nmHeapStruct = new HeapStruct();
+      nmHeapStruct.startTime = ne.startTime;
       if (arr.length == 0) {
         if (ne.eventType == 0 || ne.eventType == 1) {
-          heap.density = 1;
-          heap.heapsize = ne.heapSize;
+          nmHeapStruct.density = 1;
+          nmHeapStruct.heapsize = ne.heapSize;
         } else {
-          heap.density = -1;
-          heap.heapsize = 0 - ne.heapSize;
+          nmHeapStruct.density = -1;
+          nmHeapStruct.heapsize = 0 - ne.heapSize;
         }
-        maxSize = heap.heapsize;
-        maxDensity = heap.density;
-        minSize = heap.heapsize;
-        minDensity = heap.density;
-        arr.push(heap);
+        nmMaxSize = nmHeapStruct.heapsize;
+        nmMaxDensity = nmHeapStruct.density;
+        nmMinSize = nmHeapStruct.heapsize;
+        nmMinDensity = nmHeapStruct.density;
+        arr.push(nmHeapStruct);
       } else {
         let last = arr[arr.length - 1];
-        last.dur = heap.startTime! - last.startTime!;
+        last.dur = nmHeapStruct.startTime! - last.startTime!;
         if (last.dur > filterLevel || finish) {
           if (ne.eventType == 0 || ne.eventType == 1) {
-            heap.density = last.density! + tempDensity + 1;
-            heap.heapsize = last.heapsize! + tempSize + ne.heapSize;
+            nmHeapStruct.density = last.density! + nmTempDensity + 1;
+            nmHeapStruct.heapsize = last.heapsize! + nmTempSize + ne.heapSize;
           } else {
-            heap.density = last.density! + tempDensity - 1;
-            heap.heapsize = last.heapsize! + tempSize - ne.heapSize;
+            nmHeapStruct.density = last.density! + nmTempDensity - 1;
+            nmHeapStruct.heapsize = last.heapsize! + nmTempSize - ne.heapSize;
           }
-          tempDensity = 0;
-          tempSize = 0;
-          if (heap.density > maxDensity) {
-            maxDensity = heap.density;
+          nmTempDensity = 0;
+          nmTempSize = 0;
+          if (nmHeapStruct.density > nmMaxDensity) {
+            nmMaxDensity = nmHeapStruct.density;
           }
-          if (heap.density < minDensity) {
-            minDensity = heap.density;
+          if (nmHeapStruct.density < nmMinDensity) {
+            nmMinDensity = nmHeapStruct.density;
           }
-          if (heap.heapsize > maxSize) {
-            maxSize = heap.heapsize;
+          if (nmHeapStruct.heapsize > nmMaxSize) {
+            nmMaxSize = nmHeapStruct.heapsize;
           }
-          if (heap.heapsize < minSize) {
-            minSize = heap.heapsize;
+          if (nmHeapStruct.heapsize < nmMinSize) {
+            nmMinSize = nmHeapStruct.heapsize;
           }
-          arr.push(heap);
+          arr.push(nmHeapStruct);
         } else {
           if (ne.eventType == 0 || ne.eventType == 1) {
-            tempDensity = tempDensity + 1;
-            tempSize = tempSize + ne.heapSize;
+            nmTempDensity = nmTempDensity + 1;
+            nmTempSize = nmTempSize + ne.heapSize;
           } else {
-            tempDensity = tempDensity - 1;
-            tempSize = tempSize - ne.heapSize;
+            nmTempDensity = nmTempDensity - 1;
+            nmTempSize = nmTempSize - ne.heapSize;
           }
         }
       }
     };
     if (nativeMemoryType == 1) {
       let temp = this.NATIVE_MEMORY_DATA.filter((ne) => ne.eventType === 0 || ne.eventType === 2);
-      filterLen = temp.length;
-      filterLevel = this.getFilterLevel(filterLen);
-      temp.map((ne, index) => putArr(ne, filterLevel, index === filterLen - 1));
+      nmFilterLen = temp.length;
+      nmFilterLevel = this.getFilterLevel(nmFilterLen);
+      temp.map((ne, index) => putArr(ne, nmFilterLevel, index === nmFilterLen - 1));
       temp.length = 0;
     } else if (nativeMemoryType == 2) {
       let temp = this.NATIVE_MEMORY_DATA.filter((ne) => ne.eventType === 1 || ne.eventType === 3);
-      filterLen = temp.length;
-      filterLevel = this.getFilterLevel(filterLen);
-      temp.map((ne, index) => putArr(ne, filterLevel, index === filterLen - 1));
+      nmFilterLen = temp.length;
+      nmFilterLevel = this.getFilterLevel(nmFilterLen);
+      temp.map((ne, index) => putArr(ne, nmFilterLevel, index === nmFilterLen - 1));
       temp.length = 0;
     } else {
-      filterLen = this.NATIVE_MEMORY_DATA.length;
-      let filterLevel = this.getFilterLevel(filterLen);
-      this.NATIVE_MEMORY_DATA.map((ne, index) => putArr(ne, filterLevel, index === filterLen - 1));
+      nmFilterLen = this.NATIVE_MEMORY_DATA.length;
+      let filterLevel = this.getFilterLevel(nmFilterLen);
+      this.NATIVE_MEMORY_DATA.map((ne, index) => putArr(ne, filterLevel, index === nmFilterLen - 1));
     }
     if (arr.length > 0) {
       arr[arr.length - 1].dur = totalNS - arr[arr.length - 1].startTime!;
     }
-    arr.map((heap) => {
-      heap.maxHeapSize = maxSize;
-      heap.maxDensity = maxDensity;
-      heap.minHeapSize = minSize;
-      heap.minDensity = minDensity;
+    arr.map((heapStruct) => {
+      heapStruct.maxHeapSize = nmMaxSize;
+      heapStruct.maxDensity = nmMaxDensity;
+      heapStruct.minHeapSize = nmMinSize;
+      heapStruct.minDensity = nmMinDensity;
     });
     this.chartComplete.set(nativeMemoryType, true);
     if (this.chartComplete.has(0) && this.chartComplete.has(1) && this.chartComplete.has(2)) {
@@ -948,30 +948,30 @@ where ts between start_ts and end_ts ${condition};
     this.currentTreeList = [];
     let totalSize = 0;
     let totalCount = 0;
-    samples.forEach((sample) => {
-      if (sample.eventId == -1) {
+    samples.forEach((nativeHookSample) => {
+      if (nativeHookSample.eventId == -1) {
         return;
       }
-      totalSize += sample.heapSize;
-      totalCount += sample.count || 1;
-      let callChains = this.createThreadSample(sample);
+      totalSize += nativeHookSample.heapSize;
+      totalCount += nativeHookSample.count || 1;
+      let callChains = this.createThreadSample(nativeHookSample);
       let topIndex = isTopDown ? 0 : callChains.length - 1;
       if (callChains.length > 0) {
         let root =
           this.currentTreeMapData[
-            sample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
+            nativeHookSample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
           ];
         if (root == undefined) {
           root = new NativeHookCallInfo();
-          root.threadName = sample.threadName;
+          root.threadName = nativeHookSample.threadName;
           this.currentTreeMapData[
-            sample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
+            nativeHookSample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
           ] = root;
           this.currentTreeList.push(root);
         }
-        NativeHookCallInfo.merageCallChainSample(root, callChains[topIndex], sample);
+        NativeHookCallInfo.merageCallChainSample(root, callChains[topIndex], nativeHookSample);
         if (callChains.length > 1) {
-          this.merageChildrenByIndex(root, callChains, topIndex, sample, isTopDown);
+          this.merageChildrenByIndex(root, callChains, topIndex, nativeHookSample, isTopDown);
         }
       }
     });
@@ -1003,20 +1003,20 @@ where ts between start_ts and end_ts ${condition};
       merageData.parentNode = rootMerageMap[merageData.tid]; //子节点添加父节点的引用
     });
     let id = 0;
-    this.currentTreeList.forEach((node) => {
-      node.totalCount = totalCount;
-      node.totalSize = totalSize;
-      this.setMerageName(node);
-      if (node.id == '') {
-        node.id = id + '';
+    this.currentTreeList.forEach((nmTreeNode) => {
+      nmTreeNode.totalCount = totalCount;
+      nmTreeNode.totalSize = totalSize;
+      this.setMerageName(nmTreeNode);
+      if (nmTreeNode.id == '') {
+        nmTreeNode.id = id + '';
         id++;
       }
-      if (node.parentNode) {
-        if (node.parentNode.id == '') {
-          node.parentNode.id = id + '';
+      if (nmTreeNode.parentNode) {
+        if (nmTreeNode.parentNode.id == '') {
+          nmTreeNode.parentNode.id = id + '';
           id++;
         }
-        node.parentId = node.parentNode.id;
+        nmTreeNode.parentId = nmTreeNode.parentNode.id;
       }
     });
     // @ts-ignore

@@ -15,28 +15,30 @@
 //@ts-ignore
 import { Top20ProcessThreadCount } from '../../../../dist/trace/component/schedulingAnalysis/Top20ProcessThreadCount.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('Top20ProcessSwitchCount Test', () => {
-    it('Top20ProcessSwitchCountTest01', () => {
-        let top20ProcessThreadCount = new Top20ProcessThreadCount();
-        expect(top20ProcessThreadCount).not.toBeUndefined();
-    });
-    it('Top20ProcessSwitchCountTest02', () => {
-        let top20ProcessThreadCount = new Top20ProcessThreadCount();
-        expect(
-            top20ProcessThreadCount.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-    it('Top20ProcessSwitchCountTest03', () => {
-        let top20ProcessThreadCount = new Top20ProcessThreadCount();
-        top20ProcessThreadCount.queryLogicWorker = jest.fn();
-        expect(top20ProcessThreadCount.queryLogicWorker('','',{})).toBeUndefined();
-    });
-})
+  it('Top20ProcessSwitchCountTest01', () => {
+    let top20ProcessThreadCount = new Top20ProcessThreadCount();
+    expect(top20ProcessThreadCount).not.toBeUndefined();
+  });
+  it('Top20ProcessSwitchCountTest02', () => {
+    let top20ProcessThreadCount = new Top20ProcessThreadCount();
+    expect(
+      top20ProcessThreadCount.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+  it('Top20ProcessSwitchCountTest03', () => {
+    let top20ProcessThreadCount = new Top20ProcessThreadCount();
+    top20ProcessThreadCount.queryLogicWorker = jest.fn();
+    expect(top20ProcessThreadCount.queryLogicWorker('', '', {})).toBeUndefined();
+  });
+});

@@ -15,23 +15,25 @@
 //@ts-ignore
 import { TabCpuDetailsFrequency } from '../../../../dist/trace/component/schedulingAnalysis/TabCpuDetailsFrequency.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('SpSchedulingAnalysis Test', () => {
-    it('SpSchedulingAnalysisTest01', () => {
-        let tabCpuDetailsFrequency = new TabCpuDetailsFrequency();
-        expect(tabCpuDetailsFrequency.clearData()).toBeUndefined();
-    });
-    it('SpSchedulingAnalysisTest02', () => {
-        let tabCpuDetailsFrequency = new TabCpuDetailsFrequency();
-        expect(
-            tabCpuDetailsFrequency.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-})
+  it('SpSchedulingAnalysisTest01', () => {
+    let tabCpuDetailsFrequency = new TabCpuDetailsFrequency();
+    expect(tabCpuDetailsFrequency.clearData()).toBeUndefined();
+  });
+  it('SpSchedulingAnalysisTest02', () => {
+    let tabCpuDetailsFrequency = new TabCpuDetailsFrequency();
+    expect(
+      tabCpuDetailsFrequency.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+});

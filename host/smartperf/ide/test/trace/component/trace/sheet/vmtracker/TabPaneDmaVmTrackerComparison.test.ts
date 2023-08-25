@@ -47,13 +47,13 @@ describe('TabPaneDmaVmTrackerComparison Test', () => {
   let datalist = [
     {
       name: 'Snapshot2',
-      startNs: 9800526561,
+      startNs: 980052,
       type: 'VmTracker',
       value: 0,
     },
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
+      startNs: 478261,
       type: 'VmTracker',
       value: 0,
     },

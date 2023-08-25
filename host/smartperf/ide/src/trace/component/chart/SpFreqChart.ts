@@ -123,7 +123,7 @@ export class SpFreqChart {
         cpuStateRow.canvasSave(context);
         (renders['cpu-state'] as CpuStateRender).renderMainThread(
           {
-            context: context,
+            cpuStateContext: context,
             useCache: useCache,
             type: `cpu-state-${it.cpu}`,
             cpu: it.cpu,

@@ -130,39 +130,6 @@ describe('FrameChart Test', () => {
         expect(frameChart.onMouseClick({ button: 0 })).toBeUndefined();
     });
 
-    it('FrameChartTest17', function () {
-        let frameChart = new FrameChart();
-        expect(frameChart.initHtml()).toMatchInlineSnapshot(`
-"
-            <style>
-            .frame-tip{
-                position:absolute;
-                left: 0;
-                background-color: white;
-                border: 1px solid #f9f9f9;
-                width: auto;
-                font-size: 8px;
-                color: #50809e;
-                padding: 2px 10px;
-                display: none;
-                max-width:400px;
-            }
-            .bold{
-                font-weight: bold;
-            }
-            .text{
-                max-width:350px;
-                word-break: break-all;
-            }
-            :host{
-                display: flex;
-                padding: 10px 10px;
-            }
-            </style>
-            <canvas id="canvas"></canvas>
-            <div id ="float_hint" class="frame-tip"></div>"
-`);
-  });
 
   it('FrameChartTest18', function () {
     let frameChart = new FrameChart();

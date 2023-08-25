@@ -39,18 +39,18 @@ describe('ProcedureWorkerNetworkAbility Test', () => {
       width: 10,
       height: 10,
     },
-    startNS: 21,
-    value: 5,
+    startNS: 11,
+    value: 15,
   };
   let res = [
     {
-      startNS: 0,
-      dur: 10,
+      startNS: 12,
+      dur: 13,
       frame: {
-        x: 0,
-        y: 9,
-        width: 10,
-        height: 10,
+        x: 440,
+        y: 94,
+        width: 40,
+        height: 140,
       },
     },
   ];
@@ -61,17 +61,17 @@ describe('ProcedureWorkerNetworkAbility Test', () => {
 
   it('ProcedureWorkerNetworkAbilityTest02', function () {
     let networkAbilityRender = new NetworkAbilityRender();
-    let req = {
+    let networkAbility = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
+      startNS: 32,
+      endNS: 33,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 23,
+        y: 23,
+        width: 603,
+        height: 103,
       },
       useCache: false,
       range: {
@@ -80,25 +80,25 @@ describe('ProcedureWorkerNetworkAbility Test', () => {
       canvas: '',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
+        fillStyle: '#272822',
         globalAlpha: 0.6,
       },
-      lineColor: '',
+      lineColor: '#120f82',
       isHover: '',
-      hoverX: 1,
+      hoverX: 10,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 13,
       id: 1,
-      x: 20,
-      y: 20,
+      x: 60,
+      y: 60,
       width: 100,
-      height: 100,
+      height: 106,
     };
     window.postMessage = jest.fn(() => true);
-    expect(networkAbilityRender.render(req, [], [])).toBeUndefined();
+    expect(networkAbilityRender.render(networkAbility, [], [])).toBeUndefined();
   });
   it('ProcedureWorkerNetworkAbilityTest03', function () {
     let networkAbilityRender = new NetworkAbilityRender();

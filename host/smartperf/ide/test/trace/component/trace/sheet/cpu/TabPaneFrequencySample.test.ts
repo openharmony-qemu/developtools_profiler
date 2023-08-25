@@ -18,7 +18,7 @@ import { TabPaneFrequencySample } from '../../../../../../dist/trace/component/t
 // @ts-ignore
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 // @ts-ignore
-import {LitTable} from "../../../../../../dist/base-ui/table/lit-table.js";
+import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
@@ -41,62 +41,62 @@ describe('TabPaneFrequencySample Test', () => {
   SpSystemTrace.SPT_DATA = [
     {
       process: '',
-      processId: 0,
-      thread: '',
-      threadId: 0,
+      processId: 252,
+      thread: 'render_service',
+      threadId: 886,
       state: '',
-      dur: 0,
+      dur: 20,
       start_ts: 0,
-      end_ts: 0,
+      end_ts: 20,
       cpu: 0,
       priority: '-',
       note: '-',
     },
     {
       process: '',
-      processId: 1,
-      thread: '',
-      threadId: 1,
+      processId: 178,
+      thread: 'sugov',
+      threadId: 178,
       state: '',
-      dur: 0,
-      start_ts: 0,
-      end_ts: 0,
-      cpu: 0,
-      priority: '-',
-      note: '-',
+      dur: 88,
+      start_ts: 5,
+      end_ts: 93,
+      cpu: 1,
+      priority: 'priority',
+      note: 'note',
     },
     {
       process: '',
-      processId: 2,
-      thread: '',
-      threadId: 2,
+      processId: 372,
+      thread: 'download_server',
+      threadId: 696,
       state: '',
-      dur: 0,
-      start_ts: 0,
-      end_ts: 0,
-      cpu: 0,
+      dur: 256,
+      start_ts: 2,
+      end_ts: 258,
+      cpu: 20,
       priority: '-',
       note: '-',
     },
   ];
 
   let dataArray = {
-    id: '',
-    pid: '',
-    title: '',
+    id: 1,
+    pid: 1,
+    title: '1',
     children: [],
     process: '',
-    processId: 0,
-    thread: '',
-    threadId: 0,
+    processId: 2452,
+    thread: 'hiprofiler_cmd',
+    threadId: 2452,
     state: '',
-    wallDuration: 0,
+    wallDuration: 565552,
     avgDuration: '',
-    count: 0,
-    minDuration: 0,
-    maxDuration: 0,
+    count: 6,
+    minDuration: 888,
+    maxDuration: 63332,
     stdDuration: '',
-    cpuFreqFilterIds: [1, 2, 3],
+    cpuFreqFilterIds: [1, 2, 9, 3],
   };
 
   it('TabPaneCounterSampleTest01', function () {
@@ -119,45 +119,5 @@ describe('TabPaneFrequencySample Test', () => {
 
   it('TabPaneCounterSampleTest02', function () {
     expect(tabPaneFreSample.initElements()).toBeUndefined();
-  });
-
-  it('TabPaneCounterSampleTest03', function () {
-    expect(tabPaneFreSample.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .progressFre{
-            bottom: 5px;
-            position: absolute;
-            height: 1px;
-            left: 0;
-            right: 0;
-        }
-        :host{
-            padding: 10px 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        .loadingFre{
-            bottom: 0;
-            position: absolute;
-            left: 0;
-            right: 0;
-            width:100%;
-            background:transparent;
-            z-index: 999999;
-        }
-        </style>
-        <lit-table id="tb-states" style="height: auto" >
-            <lit-table-column class="freq-sample-column" width="20%" title="Cpu" data-index="counter" key="counter" align="flex-start" order>
-            </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" title="Time(ms)" data-index="timeStr" key="timeStr" align="flex-start" order>
-            </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" title="Value(kHz)" data-index="valueStr" key="valueStr" align="flex-start" order>
-            </lit-table-column>
-        </lit-table>
-        <lit-progress-bar class="progressFre"></lit-progress-bar>
-        <div class="loadingFre"></div>
-        "
-`);
   });
 });

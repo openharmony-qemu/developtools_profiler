@@ -15,16 +15,14 @@
 
 //@ts-ignore
 import { TabPaneVmTrackerShmSelection } from '../../../../../../dist/trace/component/trace/sheet/vmtracker/TabPaneVmTrackerShmSelection.js';
-//@ts-ignore
-import { HeapDataInterface } from '../../../../../../dist/js-heap/HeapDataInterface.js';
-//@ts-ignore
-import { SpArkTsChart } from '../../../../../../dist/trace/component/chart/SpArkTsChart.js';
 
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
   return {};
 });
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
@@ -35,9 +33,6 @@ jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () =>
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {};
 });
-const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -68,8 +63,8 @@ describe('TabPaneVmTrackerShmSelection Test', () => {
   ]);
   let data = {
     startNs: 0,
-    endNs: 0,
-    dur: 0,
+    endNs: 3421,
+    dur: 3421,
     name: '',
     textWidth: 0,
     value: 0,
@@ -80,10 +75,10 @@ describe('TabPaneVmTrackerShmSelection Test', () => {
       startNs: 0,
       endNs: 0,
       dur: 0,
-      name: '',
+      name: 'b',
       textWidth: 0,
       value: 0,
-      type: '',
+      type: 'b',
     },
     {
       startNs: 1,

@@ -40,8 +40,8 @@ export class TabCpuDetailsIdle extends BaseElement {
   initElements(): void {
     this.tableNoData = this.shadowRoot!.querySelector<TableNoData>('#table-no-data');
     this.cpuDetailsLdlProgress = this.shadowRoot!.querySelector<LitProgressBar>('#loading');
-    this.cpuDetailsLdlPie = this.shadowRoot!.querySelector<LitChartPie>('#chart-pie');
-    this.cpuDetailsLdlUsageTbl = this.shadowRoot!.querySelector<LitTable>('#tb-cpu-usage');
+    this.cpuDetailsLdlPie = this.shadowRoot!.querySelector<LitChartPie>('#cpu_idle_chart-pie');
+    this.cpuDetailsLdlUsageTbl = this.shadowRoot!.querySelector<LitTable>('#idle-tb-cpu-usage');
 
     this.cpuDetailsLdlUsageTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
@@ -110,14 +110,14 @@ export class TabCpuDetailsIdle extends BaseElement {
             this.cpuDetailsLdlUsageTbl!.mouseOut();
           }
         },
-        tip: (obj) => {
+        tip: (idleObj) => {
           return `<div>
-                                <div>idle:${obj.obj.value}</div> 
-                                <div>min:${obj.obj.min}</div>
-                                <div>max:${obj.obj.max}</div>
-                                <div>average:${obj.obj.avg}</div>
-                                <div>duration:${obj.obj.sumTimeStr}</div>
-                                <div>ratio:${obj.obj.ratio}%</div>
+                                <div>idle:${idleObj.obj.value}</div> 
+                                <div>min:${idleObj.obj.min}</div>
+                                <div>max:${idleObj.obj.max}</div>
+                                <div>average:${idleObj.obj.avg}</div>
+                                <div>duration:${idleObj.obj.sumTimeStr}</div>
+                                <div>ratio:${idleObj.obj.ratio}%</div>
                             </div>
                                 `;
         },
@@ -140,8 +140,8 @@ export class TabCpuDetailsIdle extends BaseElement {
   }
 
   noData(value: boolean) {
-    this.shadowRoot!.querySelector<HTMLDivElement>('.chart-box')!.style.display = value ? 'none' : 'block';
-    this.shadowRoot!.querySelector<HTMLDivElement>('.table-box')!.style.width = value ? '100%' : '60%';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.idle-chart-box')!.style.display = value ? 'none' : 'block';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu_idle_table-box')!.style.width = value ? '100%' : '60%';
   }
 
   clearData() {
@@ -151,11 +151,11 @@ export class TabCpuDetailsIdle extends BaseElement {
     this.noData(false);
   }
 
-  queryLoginWorker(option: string, log: string, handler: (res: any) => void) {
+  queryLoginWorker(idleType: string, log: string, handler: (res: any) => void) {
     let cpuDetailsldleTime = new Date().getTime();
     procedurePool.submitWithName(
       'logic1',
-      option,
+      idleType,
       {
         endTs: SpSchedulingAnalysis.endTs,
         total: SpSchedulingAnalysis.totalDur,
@@ -209,15 +209,15 @@ export class TabCpuDetailsIdle extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        .d-box{
+        .idle-box{
             display: flex;
             margin: 20px;
             height: calc(100vh - 165px);
         }
-        .chart-box{
+        .idle-chart-box{
             width: 40%;
         }
-        #tb-cpu-usage{
+        #idle-tb-cpu-usage{
             height: 100%;
         }
         :host {
@@ -225,26 +225,27 @@ export class TabCpuDetailsIdle extends BaseElement {
             height: 100%;
             background-color: var(--dark-background,#FFFFFF);
         }
-        .table-box{
+        #cpu_idle_chart-pie{
+            height: 360px;
+        }
+        
+        .cpu_idle_table-box{
             width: 60%;
             max-height: calc(100vh - 165px);
             border: solid 1px var(--dark-border1,#e0e0e0);
             border-radius: 5px;
             padding: 10px;
         }
-        #chart-pie{
-            height: 360px;
-        }
         </style>
         <lit-progress-bar id="loading" style="height: 1px;width: 100%"></lit-progress-bar>
-        <div class="d-box">
-            <div class="chart-box">
+        <div class="idle-box">
+            <div class="idle-chart-box">
                 <div style="text-align: center">Statistics By Duration</div>
-                <lit-chart-pie  id="chart-pie"></lit-chart-pie>
+                <lit-chart-pie  id="cpu_idle_chart-pie"></lit-chart-pie>
             </div>
-            <div class="table-box">
+            <div class="cpu_idle_table-box">
                 <table-no-data id="table-no-data">
-                    <lit-table id="tb-cpu-usage" hideDownload>
+                    <lit-table id="idle-tb-cpu-usage" hideDownload>
                         <lit-table-column width="100px" title="No" data-index="index" key="index" align="flex-start" order></lit-table-column>
                         <lit-table-column width="100px" title="idle" data-index="value" key="value" align="flex-start" order></lit-table-column>
                         <lit-table-column width="100px" title="min" data-index="min" key="min" align="flex-start" order></lit-table-column>

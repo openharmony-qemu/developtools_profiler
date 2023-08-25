@@ -98,6 +98,7 @@ config("default") {
         "-DCC_IS_CLANG",
       ]
       libs += [ "z" ]
+
       # with_libunwind = true
     }
     if (!use_wasm && !is_win && !is_macx && !is_test && !is_mingw) {
@@ -139,9 +140,7 @@ config("default") {
     defines = [ "WIN32_LEAN_AND_MEAN" ]
     libs += [ "wsock32" ]
     libs += [ "ws2_32" ]
-    cflags += [
-      "-Wno-attributes",
-    ]
+    cflags += [ "-Wno-attributes" ]
   }
   if (with_ebpf_help_table) {
     cflags += [ "-D WITH_EBPF_HELP" ]

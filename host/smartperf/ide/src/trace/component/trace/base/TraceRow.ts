@@ -893,10 +893,10 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         it.rangeSelect = false;
       });
     }
-    let traceRowList: Array<TraceRow<any>> = [];
+    let rowList: Array<TraceRow<any>> = [];
     this.parentElement!.parentElement!.querySelectorAll<TraceRow<any>>("trace-row[check-type='2'][folder]").forEach(
       (it) => {
-        traceRowList.push(
+        rowList.push(
           ...it.childrenList.filter((it) => {
             return it.checkType === '2';
           })
@@ -905,7 +905,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     );
     this.selectChangeHandler?.([
       ...this.parentElement!.parentElement!.querySelectorAll<TraceRow<any>>("trace-row[check-type='2']"),
-      ...traceRowList,
+      ...rowList,
     ]);
   }
 

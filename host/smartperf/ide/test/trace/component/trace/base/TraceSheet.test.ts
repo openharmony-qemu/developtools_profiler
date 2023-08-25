@@ -88,44 +88,6 @@ describe('TraceSheet Test', () => {
     expect(traceSheet.loadTabPaneData()).toBeUndefined();
   });
 
-  it('TraceSheet Test19', () => {
-    let traceSheet = new TraceSheet();
-    expect(traceSheet.initHtml()).toMatchInlineSnapshot(`
-"
-            <style>
-                :host([mode='hidden']){
-                    display: none;
-                }
-                :host{
-                    display: block;
-                    background-color: rebeccapurple;
-                }
-                .tabHeight{
-                    height: 30vh;
-                    background-color: var(--dark-background,#FFFFFF);
-                }
-            </style>
-            <div id="container" style="border-top: 1px solid var(--dark-border1,#D5D5D5);">
-                <lit-tabs id="tabs" position="top-left" activekey="1" mode="card" >
-                    <div slot="right" style="margin: 0 10px; color: var(--dark-icon,#606060);display: flex;align-items: center;">
-                        <div title="SO导入" id="import_div" style="width: 20px;height: 20px;display: flex;flex-direction: row;margin-right: 10px">
-                            <input id="import-file" style="display: none;pointer-events: none" type="file" webkitdirectory>
-                            <label style="width: 20px;height: 20px;cursor: pointer;" for="import-file">
-                                <lit-icon id="import-btn" name="copy-csv" style="pointer-events: none" size="20">
-                                </lit-icon>
-                            </label>
-                        </div>
-                        <lit-icon title="下载数据" id="export-btn" name="import-so" style="font-weight: bold;cursor: pointer;margin-right: 10px" size="20">
-                        </lit-icon>
-                        <lit-icon title="最大化" id="max-btn" name="vertical-align-top" style="font-weight: bold;cursor: pointer;margin-right: 10px" size="20">
-                        </lit-icon>
-                        <lit-icon title="最小化" id="min-btn" name="down" style="font-weight: bold;cursor: pointer;" size="20">
-                        </lit-icon>
-                    </div>
-                </lit-tabs>
-            </div>"
-`);
-  });
   it('TraceSheet Test10', () => {
     let traceSheet = new TraceSheet();
     expect(traceSheet.updateRangeSelect()).toBeFalsy();

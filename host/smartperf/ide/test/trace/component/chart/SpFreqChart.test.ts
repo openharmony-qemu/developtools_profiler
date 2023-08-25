@@ -14,20 +14,18 @@
  */
 
 // @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
+    jest.fn().mockImplementation(() => ({
+      disconnect: jest.fn(),
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+    }));
 import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
 // @ts-ignore
 import { SpFreqChart } from '../../../../dist/trace/component/chart/SpFreqChart.js';
 
 const sqlit = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
-
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
 describe('spFpsChart Test', () => {
   let spFpsChart = new SpFreqChart(new SpChartManager());
 

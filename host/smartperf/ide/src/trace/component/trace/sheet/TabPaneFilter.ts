@@ -85,7 +85,7 @@ export class TabPaneFilter extends BaseElement {
   initElements(): void {
     this.cutList = [];
     this.libraryList = [];
-    this.filterInputEL = this.shadowRoot?.querySelector('#filter-input');
+    this.filterInputEL = this.shadowRoot?.querySelector('#pane-filter-input');
     this.markButtonEL = this.shadowRoot?.querySelector('#mark');
     this.iconEL = this.shadowRoot?.querySelector<LitIcon>('#icon');
     this.statisticsName = this.shadowRoot?.querySelector<HTMLDivElement>('.statistics-name');
@@ -626,18 +626,18 @@ export class TabPaneFilter extends BaseElement {
         .disabled{
         color: rgba(0,0,0,0.4);
         }
-        #filter-input{
+        #pane-filter-input{
         background: var(--dark-background4,#FFFFFF);
         border: 1px solid var(--dark-border,rgba(0,0,0,0.60));
         color: var(--dark-color2,#000000);
         border-radius: 8px;
         width: 200px;
         }
-        #filter-input:focus{
+        #pane-filter-input:focus{
             outline: none;
             box-shadow: 1px 1px 1px var(--dark-color,#bebebe);
         }
-        #filter-input::-webkit-input-placeholder {
+        #pane-filter-input::-webkit-input-placeholder {
                 color: var(--dark-color,#aab2bd);
             }
         .describe{
@@ -679,7 +679,7 @@ export class TabPaneFilter extends BaseElement {
         :host(:not([inputLeftText])) .left-text{
             display: none;
         }
-        :host(:not([input])) #filter-input{
+        :host(:not([input])) #pane-filter-input{
             display: none;
         }
         :host(:not([mark])) #mark{
@@ -798,7 +798,7 @@ export class TabPaneFilter extends BaseElement {
 </style>
     <lit-icon name="menu" class="spacing" id="icon" size="20"></lit-icon>
     <span class="describe left-text spacing">Input Filter</span>
-    <input id="filter-input" class="spacing" placeholder="${this.inputPlaceholder}"/>
+    <input id="pane-filter-input" class="spacing" placeholder="${this.inputPlaceholder}"/>
     <button id="mark" class="spacing">Mark Snapshot</button>
     <div id="load" style="display: flex">
     

@@ -16,45 +16,47 @@
 import { CpuSetting, CheckCpuSetting } from '../../../../dist/trace/component/schedulingAnalysis/CheckCpuSetting.js';
 import '../../../../dist/trace/component/schedulingAnalysis/CheckCpuSetting.js';
 //@ts-ignore
-import {SpSchedulingAnalysis} from "../../../../dist/trace/component/schedulingAnalysis/SpSchedulingAnalysis.js";
+import { SpSchedulingAnalysis } from '../../../../dist/trace/component/schedulingAnalysis/SpSchedulingAnalysis.js';
 
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('CheckCpuSetting Test', () => {
-    it('CheckCpuSettingTest01', () => {
-        let cpuSetting = new CpuSetting();
-        expect(cpuSetting).not.toBeUndefined();
-    });
-    it('CheckCpuSettingTest02', () => {
-        let checkCpuSetting = new CheckCpuSetting();
-        expect(checkCpuSetting.init()).toBeUndefined();
-    });
-    it('CheckCpuSettingTest03', () => {
-        let checkCpuSetting = new CheckCpuSetting();
-        expect(checkCpuSetting.initDefaultSetting()).toBeUndefined();
-    });
-    it('CheckCpuSettingTest04', () => {
-        let checkCpuSetting = new CheckCpuSetting();
-        let cpuSetting = {
-            cpu: 1,
-            big: true,
-            middle: true,
-            small: true,
-        }
-        expect(checkCpuSetting.createTableLine(cpuSetting)).toBeUndefined();
-    });
-    it('CheckCpuSettingTest05', () => {
-        let checkCpuSetting = new CheckCpuSetting();
-        expect(checkCpuSetting.createHeaderDiv()).toBeUndefined();
-    });
+  it('CheckCpuSettingTest01', () => {
+    let cpuSetting = new CpuSetting();
+    expect(cpuSetting).not.toBeUndefined();
+  });
+  it('CheckCpuSettingTest02', () => {
+    let checkCpuSetting = new CheckCpuSetting();
+    expect(checkCpuSetting.init()).toBeUndefined();
+  });
+  it('CheckCpuSettingTest03', () => {
+    let checkCpuSetting = new CheckCpuSetting();
+    expect(checkCpuSetting.initDefaultSetting()).toBeUndefined();
+  });
+  it('CheckCpuSettingTest04', () => {
+    let checkCpuSetting = new CheckCpuSetting();
+    let cpuSetting = {
+      cpu: 1,
+      big: true,
+      middle: true,
+      small: true,
+    };
+    expect(checkCpuSetting.createTableLine(cpuSetting)).toBeUndefined();
+  });
+  it('CheckCpuSettingTest05', () => {
+    let checkCpuSetting = new CheckCpuSetting();
+    expect(checkCpuSetting.createHeaderDiv()).toBeUndefined();
+  });
 
-    it('CheckCpuSettingTest06', () => {
-        CheckCpuSetting.resetCpuSettings();
-        expect(CheckCpuSetting.init_setting).toBeFalsy();
-    });
-})
+  it('CheckCpuSettingTest06', () => {
+    CheckCpuSetting.resetCpuSettings();
+    expect(CheckCpuSetting.init_setting).toBeFalsy();
+  });
+});

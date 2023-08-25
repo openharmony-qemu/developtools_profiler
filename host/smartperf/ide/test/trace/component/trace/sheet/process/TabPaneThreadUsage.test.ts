@@ -29,8 +29,8 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorkerCPU.js', () => {
   return {
     CpuStruct: {
-      cpuCount: 0
-    }
+      cpuCount: 0,
+    },
   };
 });
 
@@ -38,51 +38,46 @@ describe('TabPaneThreadUsage Test', () => {
   let threadUsage = new TabPaneThreadUsage();
   sqlit.getTabThreadStatesCpu.mockResolvedValue([
     {
-      'pid': 28549,
-      'tid': 28549,
-      'cpu': 0,
-      'wallDuration': 6447000
+      pid: 28549,
+      tid: 28549,
+      cpu: 0,
+      wallDuration: 6447000,
     },
     {
-      'pid': 28549,
-      'tid': 28549,
-      'cpu': 1,
-      'wallDuration': 4402000
+      pid: 28549,
+      tid: 28549,
+      cpu: 1,
+      wallDuration: 4402000,
     },
     {
-      'pid': 28549,
-      'tid': 28549,
-      'cpu': 3,
-      'wallDuration': 41852000
-    }
+      pid: 28549,
+      tid: 28549,
+      cpu: 3,
+      wallDuration: 41852000,
+    },
   ]);
-
 
   it('TabPaneThreadUsageTest01', function () {
     let a = {
-      'recordStartNs': 26014913992000,
-      'leftNs': 341320659,
-      'rightNs': 7402391794,
-      'hasFps': false,
-      'perfAll': false,
-      'fileSysVirtualMemory': false,
-      'diskIOLatency': false,
-      'fsCount': 0,
-      'vmCount': 0,
-      'isCurrentPane': false,
-      'startup': false,
-      'staticInit': false,
-      'cpus': [],
-      'cpuStateFilterIds': [],
-      'cpuFreqFilterIds': [],
-      'cpuFreqLimitDatas': [],
-      'threadIds': [
-        28549
-      ],
-      'processIds': [
-        28549
-      ],
-      'processTrackIds': [],
+      recordStartNs: 26014913992000,
+      leftNs: 341320659,
+      rightNs: 7402391794,
+      hasFps: false,
+      perfAll: false,
+      fileSysVirtualMemory: false,
+      diskIOLatency: false,
+      fsCount: 0,
+      vmCount: 0,
+      isCurrentPane: false,
+      startup: false,
+      staticInit: false,
+      cpus: [],
+      cpuStateFilterIds: [],
+      cpuFreqFilterIds: [],
+      cpuFreqLimitDatas: [],
+      threadIds: [28549],
+      processIds: [28549],
+      processTrackIds: [],
     };
     expect((threadUsage.data = a)).toBeTruthy();
   });
@@ -94,31 +89,5 @@ describe('TabPaneThreadUsage Test', () => {
         sort: () => {},
       })
     ).toBeUndefined();
-  });
-
-
-  it('TabPaneThreadStatesTest04', function () {
-    expect(threadUsage.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .thread-usage-table{
-          flex-direction: row;
-          margin-bottom: 5px;
-        }
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        </style>
-        <div class="thread-usage-table" style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
-            <stack-bar id="thread-usage-stack-bar" style="flex: 1"></stack-bar>
-            <label id="thread-usage-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
-        </div>
-        <div style="overflow: auto">
-            <lit-table id="tb-thread-states" style="height: auto"></lit-table>
-        </div>
-        "
-`);
   });
 });

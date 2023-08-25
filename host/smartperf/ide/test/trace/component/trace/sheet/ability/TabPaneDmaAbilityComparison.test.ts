@@ -21,8 +21,8 @@ jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
 });
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
     return {
-        snapshotDataSource: () => {},
         removeAttribute: () => {},
+        snapshotDataSource: () => {},
     };
 });
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
@@ -49,15 +49,15 @@ describe('TabPaneDmaAbilityComparison Test', () => {
     let datalist = [
         {
             name: 'Snapshot2',
-            startNs: 9800526561,
+            startNs: 333526561,
             type: 'ability',
-            value: 0,
+            value: 110,
         },
         {
             name: 'Snapshot1',
-            startNs: 4778214061,
+            startNs: 13454688,
             type: 'ability',
-            value: 0,
+            value: 78,
         },
     ];
     tabPaneDmaComparisonAbility.init = jest.fn(() => true);

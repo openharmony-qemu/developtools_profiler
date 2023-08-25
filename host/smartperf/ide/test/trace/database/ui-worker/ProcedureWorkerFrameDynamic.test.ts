@@ -54,7 +54,7 @@ describe('FrameDynamic Test', () => {
       y: 0,
     },
     {
-      alpha: '0.00',
+      alpha: '70.00',
       appName: 'test',
       groupId: 6970503809,
       height: 0,
@@ -65,15 +65,15 @@ describe('FrameDynamic Test', () => {
       y: 0,
     },
     {
-      alpha: '1.00',
-      appName: 'test',
+      alpha: '13.00',
+      appName: 'test1',
       frame: rect,
-      groupId: 11095334538,
+      groupId: 32238,
       height: 2766,
       id: 717,
-      ts: 11720232454,
+      ts: 611455,
       typeValue: 0,
-      width: 1343,
+      width: 11223,
       x: 0,
       y: 1,
     },
@@ -99,16 +99,16 @@ describe('FrameDynamic Test', () => {
   });
   it('FrameDynamicTest02', function () {
     let currDynamic = {
-      alpha: '1.00',
-      appName: 'test',
+      alpha: '16.00',
+      appName: 'test2',
       frame: rect,
-      groupId: 11095334538,
-      height: 2766,
-      id: 717,
-      ts: 11720232454,
-      typeValue: 0,
-      width: 1343,
-      x: 0,
+      groupId: 19312108,
+      height: 206,
+      id: 9654,
+      ts: 10242454,
+      typeValue: 10,
+      width: 1233,
+      x: 10,
       y: 1,
     };
     frameDynamicRender.drawDynamicPointYStr(ctx, dataList, rect, 0, 20);
@@ -121,17 +121,17 @@ describe('FrameDynamic Test', () => {
     row.dataListCache = dataList;
     frameDynamicRender.renderMainThread(req, row);
     let currDynamicStruct = {
-      alpha: '1.00',
-      appName: 'test',
+      alpha: '11.00',
+      appName: 'test4',
       frame: rect,
-      groupId: 11095334538,
+      groupId: 2011538,
       height: 2766,
       id: 717,
-      ts: 11720232454,
+      ts: 12100454,
       typeValue: 0,
-      width: 1343,
-      x: 0,
-      y: 1,
+      width: 321,
+      x: 10,
+      y: 11,
     };
 
     let preDynamicStruct = {

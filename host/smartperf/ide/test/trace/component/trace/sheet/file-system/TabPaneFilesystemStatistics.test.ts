@@ -29,74 +29,64 @@ import '../../../../../../dist/base-ui/table/lit-table.js';
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 import '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 
-// @ts-ignore
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
-
 Object.defineProperty(global.self, 'crypto', {
   value: {
     getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
   },
 });
-
+// @ts-ignore
 window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
+    window.ResizeObserver ||
+    jest.fn().mockImplementation(() => ({
+      disconnect: jest.fn(), observe: jest.fn(), unobserve: jest.fn(),
+    }));
+
 describe('TabPaneFileStatistics Test', () => {
   document.body.innerHTML = `<div><tabpane-file-statistics id="statistics"></tabpane-file-statistics></div>`;
   let tabPaneFileStatistics = document.querySelector<TabPaneFileStatistics>('#statistics');
   let param = {
     anomalyEnergy: [],
-    clockMapData: { size: 0 },
-    cpuAbilityIds: [],
-    cpuFreqFilterIds: [],
+    clockMapData: { size: 50 },
+    cpuAbilityIds: [23,25],
+    cpuFreqFilterIds: [34,66],
     cpuFreqLimitDatas: [],
-    cpuStateFilterIds: [],
-    cpus: [],
-    diskAbilityIds: [],
+    cpuStateFilterIds: [77,96],
+    cpus: [0],
+    diskAbilityIds: [10,34],
     diskIOLatency: false,
-    diskIOReadIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOWriteIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOipids: [2, 7, 1, 3, 4, 5, 6],
-    fileSysVirtualMemory: false,
+    diskIOReadIds: [2,11, 4, 12],
+    diskIOWriteIds: [2, 54, 64],
+    diskIOipids: [25, 7, 58, 6],
+    fileSysVirtualMemory: true,
     fileSystemType: [],
-    fsCount: 0,
+    fsCount: 30,
     funAsync: [],
-    funTids: [],
+    funTids: [45,22],
     hasFps: false,
-    irqMapData: { size: 0 },
+    irqMapData: { size: 32 },
     jsMemory: [],
-    leftNs: 964699689,
-    memoryAbilityIds: [],
+    leftNs: 964667689,
+    memoryAbilityIds: [23,78,9],
     nativeMemory: [],
     nativeMemoryStatistic: [],
-    networkAbilityIds: [],
+    networkAbilityIds: [10,154,55],
     perfAll: false,
-    perfCpus: [],
+    perfCpus: [1],
     perfProcess: [],
-    perfSampleIds: [],
+    perfSampleIds: [233,120,4],
     perfThread: [],
     powerEnergy: [],
-    processTrackIds: [],
+    processTrackIds: [34,21],
     promiseList: [],
-    recordStartNs: 780423789228,
-    rightNs: 24267556624,
-    sdkCounterIds: [],
-    sdkSliceIds: [],
+    recordStartNs: 780423722428,
+    rightNs: 33236556624,
+    sdkCounterIds: [12,56],
+    sdkSliceIds: [45,98],
     smapsType: [],
     systemEnergy: [],
-    threadIds: [],
-    virtualTrackIds: [],
-    vmCount: 0,
+    threadIds: [88,12],
+    virtualTrackIds: [34,87],
+    vmCount: 31,
   };
 
   it('TabPaneFileStatisticsTest01', function () {

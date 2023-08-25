@@ -26,14 +26,14 @@ jest.mock('../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
 
 describe('FpsStruct Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
+  canvas.width = 4;
+  canvas.height = 2;
   const ctx = canvas.getContext('2d');
 
   const data = {
     frame: {
-      x: 20,
-      y: 20,
+      x: 201,
+      y: 202,
       width: 100,
       height: 100,
     },

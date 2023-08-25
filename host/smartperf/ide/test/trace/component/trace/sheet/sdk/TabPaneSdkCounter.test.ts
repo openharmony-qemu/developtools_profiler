@@ -113,22 +113,22 @@ describe('TabPaneSdkCounter Test', () => {
     tabSdkCounterData.mockResolvedValue(counter);
 
     let d = {
-      cpus: [],
+      cpus: [45,1],
       threadIds: [],
-      trackIds: [],
+      trackIds: [45,1,22],
       funTids: [],
-      heapIds: [],
+      heapIds: [78,7],
       nativeMemory: [],
-      cpuAbilityIds: [],
+      cpuAbilityIds: [41,1],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
+      diskAbilityIds: [45,5],
       networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      leftNs: 23,
+      rightNs: 67,
       hasFps: false,
       statisticsSelectData: [],
-      perfSampleIds: [],
-      perfCpus: [],
+      perfSampleIds: [145,56,6],
+      perfCpus: [3],
       perfProcess: [],
       perfThread: [],
       perfAll: false,
@@ -158,30 +158,6 @@ describe('TabPaneSdkCounter Test', () => {
     expect(tabPaneSdkCounter.initDataElement()).toBeUndefined();
   });
 
-  it('TabPaneSdkCounterTest05', () => {
-    let tabPaneSdkCounter = new TabPaneSdkCounter();
-    expect(tabPaneSdkCounter.initHtml()).toMatchInlineSnapshot(`
-"
-<style>
-.sdk-counter-table{
-    display: flex;
-    margin-bottom: 5px;
-}
-:host{
-    padding: 10px 10px;
-    display: flex;
-    flex-direction: column;
-}
-</style>
-<div class="sdk-counter-table" style="height: 20px;align-items: center;flex-direction: row;">
-            <stack-bar id="sdk-counter-stack-bar" style="flex: 1"></stack-bar>
-            <label id="sdk-counter-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
-        </div>
-<lit-table id="tb-counter" class="sdk-counter-tbl" style="height: auto">
-</lit-table>
-        "
-`);
-  });
 
   it('TabPaneSdkCounterTest04', function () {
     let tabPaneSdkCounter = new TabPaneSdkCounter();

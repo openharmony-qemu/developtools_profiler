@@ -26,18 +26,18 @@ describe('ProduceWorkerSdkSlice Test', () => {
     let sdkSliceRender = new SdkSliceRender();
     let list = [
       {
-        length: 1,
+        length: 19,
         frame: {
-          x: 1,
-          Y: 10,
-          width: 100,
-          height: 20,
+          x: 46,
+          Y: 140,
+          width: 780,
+          height: 80,
         },
       },
     ];
     let res = [
       {
-        length: 1,
+        length: 81,
         frame: null,
       },
     ];
@@ -48,18 +48,18 @@ describe('ProduceWorkerSdkSlice Test', () => {
     let sdkSliceRender = new SdkSliceRender();
     let list = [
       {
-        length: 1,
+        length: 891,
         frame: {
-          x: 1,
-          Y: 10,
-          width: 100,
-          height: 20,
+          x: 17,
+          Y: 175,
+          width: 550,
+          height: 870,
         },
       },
     ];
     let res = [
       {
-        length: 0,
+        length: 430,
         frame: null,
       },
     ];
@@ -131,17 +131,17 @@ describe('ProduceWorkerSdkSlice Test', () => {
 
   it('ProduceWorkerSdkSliceTest06', function () {
     let sdkSliceRender = new SdkSliceRender();
-    let req = {
+    let sdkSliceReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 21,
+      endNS: 31,
+      totalNS: 10,
       frame: {
         x: 20,
-        y: 20,
+        y: 10,
         width: 100,
-        height: 100,
+        height: 200,
       },
       useCache: false,
       range: {
@@ -150,32 +150,32 @@ describe('ProduceWorkerSdkSlice Test', () => {
       canvas: 'a',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        fillStyle: '#2c441b',
+        globalAlpha: 0.75,
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
         closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
+        measureText: jest.fn(() => ''),
         fillRect: jest.fn(() => true),
-        fillText: jest.fn(() => true),
+        fillText: jest.fn(() => false),
       },
-      lineColor: '',
+      lineColor: '#993e00',
       isHover: '',
-      hoverX: 1,
+      hoverX: 51,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 66,
       id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 70,
+      y: 80,
+      width: 15,
+      height: 15,
     };
     window.postMessage = jest.fn(() => true);
-    expect(sdkSliceRender.render(req, [], [])).toBeUndefined();
+    expect(sdkSliceRender.render(sdkSliceReq, [], [])).toBeUndefined();
   });
   it('ProduceWorkerSdkSliceTest07', function () {
     let sdkSliceRender = new SdkSliceRender();

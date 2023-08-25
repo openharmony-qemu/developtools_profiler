@@ -27,50 +27,50 @@ import {
 describe('ProcedureWorkerEnergyAnomaly Test', () => {
   it('ProcedureWorkerEnergyAnomalyTest01', function () {
     let frame = {
-      x: 20,
+      x: 30,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 550,
+      height: 500,
     };
-    let dataList = new Array();
-    dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let energyAnomalyDataList = new Array();
+    energyAnomalyDataList.push({
+      startNS: 111,
+      dur: 40,
+      length: 23,
+      frame: { x: 0, y: 29, width: 22, height: 101 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    anomaly(dataList, [{ length: 1 }], 1, 3, 2, frame, '', true);
+    energyAnomalyDataList.push({ startNS: 11, dur: 21, length: 10 });
+    anomaly(energyAnomalyDataList, [{ length: 1 }], 1, 3, 2, frame, '', true);
   });
 
   it('ProcedureWorkerEnergyAnomalyTest02', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 50,
+      y: 32,
+      width: 600,
+      height: 200,
     };
-    let dataList = new Array();
-    dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let energyAnomalyDataList = new Array();
+    energyAnomalyDataList.push({
+      startNS: 22,
+      dur: 30,
+      length: 25,
+      frame: { x: 0, y: 19, width: 32, height: 102 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    anomaly(dataList, [{ length: 0 }], 1, 3, 2, frame, '', false);
+    energyAnomalyDataList.push({ startNS: 12, dur: 22, length: 12 });
+    anomaly(energyAnomalyDataList, [{ length: 0 }], 1, 3, 2, frame, '', false);
   });
 
   it('ProcedureWorkerEnergyAnomalyTest03', function () {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 7;
+    canvas.height = 7;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 207,
+        y: 207,
         width: 100,
         height: 100,
       },
@@ -83,21 +83,21 @@ describe('ProcedureWorkerEnergyAnomaly Test', () => {
     let node = {
       frame: {
         x: 20,
-        y: 20,
+        y: 50,
         width: 100,
-        height: 100,
+        height: 500,
       },
-      startNS: 1,
-      value: 50,
+      startNS: 56,
+      value: 60,
       startTs: 3,
-      dur: 3,
+      dur: 1,
       height: 2,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 22,
+      y: 22,
+      width: 130,
+      height: 130,
     };
     expect(EnergyAnomalyStruct.setAnomalyFrame(node, 1, 2, 5, frame)).toBeUndefined();
   });
@@ -127,53 +127,53 @@ describe('ProcedureWorkerEnergyAnomaly Test', () => {
 
   it('ProcedureWorkerEnergyAnomalyTest06', function () {
     let energyAnomalyRender = new EnergyAnomalyRender();
-    let req = {
+    let energyAnomalyReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 0,
+      endNS: 9,
+      totalNS: 9,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 30,
+        y: 30,
+        width: 140,
+        height: 140,
       },
       useCache: false,
       range: {
-        refresh: '',
+        refresh: '12',
       },
-      canvas: 'a',
+      canvas: 'b',
       context: {
-        font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        font: '13px sans-serif',
+        fillStyle: '#e00f55',
+        globalAlpha: 0.4,
         canvas: {
-          clientWidth: 10,
+          clientWidth: 12,
         },
         clearRect: jest.fn(() => true),
+        closePath: jest.fn(() => true),
+        measureText: jest.fn(() => false),
+        fillRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
         fillText: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#000000',
       isHover: '',
       hoverX: 1,
       params: '',
-      wakeupBean: undefined,
+      wakeupBean: true,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 6,
       id: 1,
       x: 20,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 150,
+      height: 150,
     };
     window.postMessage = jest.fn(() => true);
-    expect(energyAnomalyRender.render(req, [], [])).toBeUndefined();
+    expect(energyAnomalyRender.render(energyAnomalyReq, [], [])).toBeUndefined();
   });
 });

@@ -190,6 +190,10 @@ void BinderFilter::TractionUnlock(int64_t ts, uint32_t pid, const std::string& t
     lastEventTs_.erase(pid);
     lastEventTs_[pid] = ts;
 }
+bool BinderFilter::IsAsync(int32_t flags) const
+{
+    return (flags & noReturnMsgFlag_) == noReturnMsgFlag_;
+}
 void BinderFilter::Clear()
 {
     lastEventTs_.clear();

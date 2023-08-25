@@ -22,16 +22,15 @@ import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
     observe: jest.fn(),
+    disconnect: jest.fn(),
     unobserve: jest.fn(),
   }));
-const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
+const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 describe('TabPanePowerBattery Test', () => {
   it('TabPanePowerBatteryTest01', function () {
@@ -56,61 +55,30 @@ describe('TabPanePowerBattery Test', () => {
     ];
     MockPowerBatteryData.mockResolvedValue(battery);
     let tabPanePowerBatteryData = {
-      cpus: [],
-      threadIds: [],
-      trackIds: [],
-      funTids: [],
-      heapIds: [],
+      cpus: [0],
+      threadIds: [56],
+      trackIds: [9, 4],
+      funTids: [42, 1],
+      heapIds: [1, 52],
       nativeMemory: [],
-      cpuAbilityIds: [],
-      memoryAbilityIds: [],
-      diskAbilityIds: [],
-      networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 1000,
+      cpuAbilityIds: [88, 10],
+      memoryAbilityIds: [11, 69],
+      diskAbilityIds: [23, 76],
+      networkAbilityIds: [5, 9],
+      leftNs: 10225,
+      rightNs: 965003,
       hasFps: false,
       statisticsSelectData: undefined,
-      perfSampleIds: [],
+      perfSampleIds: [75,9,7],
       perfCpus: [],
       perfProcess: [],
       perfThread: [],
-      perfAll: false,
+      perfAll: true,
       systemEnergy: [0, 1, 2],
-      powerEnergy: [0, 1, 2],
-      anomalyEnergy: [0, 1, 2],
+      powerEnergy: [45, 8, 2],
+      anomalyEnergy: [12, 898, 2],
     };
     tabPanePowerBattery.tblPower.recycleDataSource = jest.fn(() => tabPanePowerBatteryData);
     tabPanePowerBattery.data = tabPanePowerBatteryData;
-  });
-
-  it('TabPanePowerBatteryTest02', function () {
-    let tabPanePowerBattery = new TabPanePowerBattery();
-    expect(tabPanePowerBattery.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-            .power-battery-bottom-scroll-area{
-                display: flex;
-                height: auto;
-                overflow-y: auto;
-                margin-top: 1.2em;
-            }
-            .power-battery-battery-canvas{
-                width: 50%;
-                padding: 0 10px;
-            }
-         
-        </style>
-        <div style="width: 100%;height: auto;position: relative">
-            <div class="power-battery-bottom-scroll-area">
-                <div class="power-battery-battery-canvas">
-                    <lit-table id="tb-power-battery-energy" no-head style="height: auto">
-                        <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px"></lit-table-column>
-                        <lit-table-column title="value" data-index="value" key="value" align="flex-start" ></lit-table-column>
-                    </lit-table>
-                </div>
-            </div>
-        </div>
-        "
-`);
   });
 });

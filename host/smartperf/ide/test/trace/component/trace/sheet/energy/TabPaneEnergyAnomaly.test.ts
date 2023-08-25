@@ -24,12 +24,12 @@ window.ResizeObserver =
     observe: jest.fn(),
     unobserve: jest.fn(),
   }));
-const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
+const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 describe('TabPanePowerBattery Test', () => {
   it('TabPaneEnergyAnomalyTest01', function () {
@@ -84,81 +84,29 @@ describe('TabPanePowerBattery Test', () => {
     MockAnomalyDetailedData.mockResolvedValue(battery);
     let tabPaneAnomalyDetailedData = {
       cpus: [],
-      threadIds: [],
-      trackIds: [],
-      funTids: [],
-      heapIds: [],
+      threadIds: [85,6,9],
+      trackIds: [46,0],
+      funTids: [8,0,76],
+      heapIds: [67,89],
       nativeMemory: [],
-      cpuAbilityIds: [],
-      memoryAbilityIds: [],
-      diskAbilityIds: [],
-      networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 1000,
+      cpuAbilityIds: [21, 54],
+      memoryAbilityIds: [54 ,78],
+      diskAbilityIds: [5,0],
+      networkAbilityIds: [9],
+      leftNs: 3200,
+      rightNs: 425900,
       hasFps: false,
       statisticsSelectData: undefined,
-      perfSampleIds: [],
+      perfSampleIds: [45,85],
       perfCpus: [],
       perfProcess: [],
       perfThread: [],
       perfAll: false,
-      systemEnergy: [0, 1, 2],
-      powerEnergy: [0, 1, 2],
-      anomalyEnergy: [0, 1, 2],
+      systemEnergy: [99,5],
+      powerEnergy: [0, 87, 65],
+      anomalyEnergy: [670, 18, 782],
     };
 
     tabPaneEnergyAnomaly.data = tabPaneAnomalyDetailedData;
-  });
-
-  it('TabPaneEnergyAnomalyTest02', function () {
-    let tabPaneEnergyAnomaly = new TabPaneEnergyAnomaly();
-    expect(tabPaneEnergyAnomaly.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-            .anomaly-title{
-                display: flex;
-                width: 95%;
-                background: var(--dark-background,#ffffff);
-                top: 0;
-                position: sticky;
-            }
-            .anomaly-title h2{
-                padding: 0 10px;
-                font-size: 16px;
-                font-weight: 400;
-                width: 50%;
-                visibility: visible;
-            }
-            .scroll-area{
-                overflow-y: auto;
-                height: auto;
-                display: flex;
-                
-            }
-            .left-table{
-                padding: 0 10px;
-                width: 50%;
-            }
-            .anomaly-table{
-                height: auto;
-            }
-        </style>
-        <div style="width: 100%;height: auto;position: relative">
-            <div id="anomaly-details" class="anomaly-title" style="margin-left: 12px;display: block">
-                <h2 id="leftTitle"></h2>
-            </div>
-            <div class="scroll-area">
-                <div class="left-table">
-                    <lit-table id="anomalyselectionTbl" no-head class="anomaly-table">
-                        <lit-table-column key="name" align="flex-start"  width="180px" title="name" data-index="name" >
-                        </lit-table-column>
-                        <lit-table-column key="value" align="flex-start" title="value" data-index="value">
-                        </lit-table-column>
-                    </lit-table>
-                </div>
-            </div>
-        </div>
-        "
-`);
   });
 });

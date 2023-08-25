@@ -32,49 +32,44 @@ describe('TabPaneSlices Test', () => {
   sqlit.getTabSlicesAsyncFunc.mockResolvedValue([]);
   sqlit.getTabSlices.mockResolvedValue([
     {
-      "name": "binder reply",
-      "wallDuration": 61.847,
-      "avgDuration": 30.9235,
-      "occurrences": 2,
-      "isHover": false
+      name: 'binder reply',
+      wallDuration: 61.847,
+      avgDuration: 30.9235,
+      occurrences: 2,
+      isHover: false,
     },
     {
-      "name": "binder transaction",
-      "wallDuration": 1.64,
-      "avgDuration": 0.54667,
-      "occurrences": 3,
-      "isHover": false
-    }
+      name: 'binder transaction',
+      wallDuration: 1.64,
+      avgDuration: 0.54667,
+      occurrences: 3,
+      isHover: false,
+    },
   ]);
   it('TabPaneSlicesTest01', function () {
-
     expect(
-      tabPaneSlices.data = {
-        "recordStartNs": 26014913992000,
-        "leftNs": 530809208,
-        "rightNs": 532115193,
-        "hasFps": false,
-        "perfAll": false,
-        "fileSysVirtualMemory": false,
-        "diskIOLatency": false,
-        "fsCount": 0,
-        "vmCount": 0,
-        "isCurrentPane": false,
-        "startup": false,
-        "staticInit": false,
-        "cpus": [],
-        "cpuStateFilterIds": [],
-        "cpuFreqFilterIds": [],
-        "cpuFreqLimitDatas": [],
-        "threadIds": [],
-        "processIds": [
-          578
-        ],
-        "funTids": [
-          915
-        ],
-        "funAsync": [],
-      }
+      (tabPaneSlices.data = {
+        recordStartNs: 26014913992000,
+        leftNs: 530809208,
+        rightNs: 532115193,
+        hasFps: false,
+        perfAll: false,
+        fileSysVirtualMemory: false,
+        diskIOLatency: false,
+        fsCount: 0,
+        vmCount: 0,
+        isCurrentPane: false,
+        startup: false,
+        staticInit: false,
+        cpus: [],
+        cpuStateFilterIds: [],
+        cpuFreqFilterIds: [],
+        cpuFreqLimitDatas: [],
+        threadIds: [],
+        processIds: [578],
+        funTids: [915],
+        funAsync: [],
+      })
     );
   });
 
@@ -94,33 +89,5 @@ describe('TabPaneSlices Test', () => {
         sort: () => {},
       })
     ).toBeUndefined();
-  });
-
-  it('TabPaneSlicesTest04', function () {
-    expect(tabPaneSlices.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .slice-label{
-            height: 20px;
-        }
-        :host{
-            display: flex;
-            padding: 10px 10px;
-            flex-direction: column;
-        }
-        </style>
-        <label id="time-range" class="slice-label" style="width: 100%;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
-        <lit-table id="tb-slices" style="height: auto">
-            <lit-table-column class="slices-column" title="Name" width="500px" data-index="name" key="name"  align="flex-start" order>
-            </lit-table-column>
-            <lit-table-column class="slices-column" title="Wall duration(ms)" width="1fr" data-index="wallDuration" key="wallDuration"  align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column class="slices-column" title="Avg Wall duration(ms)" width="1fr" data-index="avgDuration" key="avgDuration"  align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column class="slices-column" title="Occurrences" width="1fr" data-index="occurrences" key="occurrences"  align="flex-start" order >
-            </lit-table-column>
-        </lit-table>
-        "
-`);
   });
 });

@@ -52,6 +52,7 @@ public:
     void UpdateAnimationTraceStatus(bool status);
     void UpdateTaskPoolTraceStatus(bool status);
     void UpdateAppStartTraceStatus(bool status);
+    void UpdateBinderRunnableTraceStatus(bool status);
 
 private:
     void InitFilter();

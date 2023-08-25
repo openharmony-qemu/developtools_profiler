@@ -37,30 +37,34 @@ export class MemoryAbilityRender extends Render {
       maxMemoryByte: number;
       maxMemoryByteName: string;
     },
-    row: TraceRow<MemoryAbilityMonitorStruct>
-  ) {
-    let memoryAbilityList = row.dataList;
-    let memoryAbilityFilter = row.dataListCache;
+    memoryAbilityRow: TraceRow<MemoryAbilityMonitorStruct>
+  ): void {
+    let memoryAbilityList = memoryAbilityRow.dataList;
+    let memoryAbilityFilter = memoryAbilityRow.dataListCache;
     dataFilterHandler(memoryAbilityList, memoryAbilityFilter, {
       startKey: 'startNS',
       durKey: 'dur',
       startNS: TraceRow.range?.startNS ?? 0,
       endNS: TraceRow.range?.endNS ?? 0,
       totalNS: TraceRow.range?.totalNS ?? 0,
-      frame: row.frame,
+      frame: memoryAbilityRow.frame,
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
     req.context.beginPath();
     let find = false;
     for (let re of memoryAbilityFilter) {
-      MemoryAbilityMonitorStruct.draw(req.context, re, req.maxMemoryByte, row.isHover);
-      if (row.isHover && re.frame && isFrameContainPoint(re.frame, row.hoverX, row.hoverY)) {
+      MemoryAbilityMonitorStruct.draw(req.context, re, req.maxMemoryByte, memoryAbilityRow.isHover);
+      if (memoryAbilityRow.isHover && re.frame &&
+        isFrameContainPoint(re.frame, memoryAbilityRow.hoverX, memoryAbilityRow.hoverY)
+      ) {
         MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct = re;
         find = true;
       }
     }
-    if (!find && row.isHover) MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct = undefined;
+    if (!find && memoryAbilityRow.isHover) {
+      MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct = undefined;
+    }
     req.context.closePath();
     let textMetrics = req.context.measureText(req.maxMemoryByteName);
     req.context.globalAlpha = 0.8;
@@ -72,7 +76,7 @@ export class MemoryAbilityRender extends Render {
     req.context.fillText(req.maxMemoryByteName, 4, 5 + 9);
   }
 
-  render(memoryAbilityRequest: RequestMessage, list: Array<any>, filter: Array<any>) {
+  render(memoryAbilityRequest: RequestMessage, list: Array<any>, filter: Array<any>): void {
     if (memoryAbilityRequest.lazyRefresh) {
       memoryAbility(
         list,
@@ -248,29 +252,29 @@ export class MemoryAbilityMonitorStruct extends BaseStruct {
 
   static draw(
     memoryAbilityContext2D: CanvasRenderingContext2D,
-    data: MemoryAbilityMonitorStruct,
+    memoryAbilityData: MemoryAbilityMonitorStruct,
     maxMemoryByte: number,
     isHover: boolean
   ) {
-    if (data.frame) {
-      let width = data.frame.width || 0;
+    if (memoryAbilityData.frame) {
+      let width = memoryAbilityData.frame.width || 0;
       let index = 2;
       memoryAbilityContext2D.fillStyle = ColorUtils.colorForTid(index);
       memoryAbilityContext2D.strokeStyle = ColorUtils.colorForTid(index);
-      if (data.startNS === MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct?.startNS && isHover) {
+      if (memoryAbilityData.startNS === MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct?.startNS && isHover) {
         memoryAbilityContext2D.lineWidth = 1;
         memoryAbilityContext2D.globalAlpha = 0.6;
-        let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxMemoryByte);
+        let drawHeight: number = Math.floor(((memoryAbilityData.value || 0) * (memoryAbilityData.frame.height || 0) * 1.0) / maxMemoryByte);
         memoryAbilityContext2D.fillRect(
-          data.frame.x,
-          data.frame.y + data.frame.height - drawHeight + 4,
+          memoryAbilityData.frame.x,
+          memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4,
           width,
           drawHeight
         );
         memoryAbilityContext2D.beginPath();
         memoryAbilityContext2D.arc(
-          data.frame.x,
-          data.frame.y + data.frame.height - drawHeight + 4,
+          memoryAbilityData.frame.x,
+          memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4,
           3,
           0,
           2 * Math.PI,
@@ -280,17 +284,17 @@ export class MemoryAbilityMonitorStruct extends BaseStruct {
         memoryAbilityContext2D.globalAlpha = 1.0;
         memoryAbilityContext2D.stroke();
         memoryAbilityContext2D.beginPath();
-        memoryAbilityContext2D.moveTo(data.frame.x + 3, data.frame.y + data.frame.height - drawHeight + 4);
+        memoryAbilityContext2D.moveTo(memoryAbilityData.frame.x + 3, memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4);
         memoryAbilityContext2D.lineWidth = 3;
-        memoryAbilityContext2D.lineTo(data.frame.x + width, data.frame.y + data.frame.height - drawHeight + 4);
+        memoryAbilityContext2D.lineTo(memoryAbilityData.frame.x + width, memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4);
         memoryAbilityContext2D.stroke();
       } else {
         memoryAbilityContext2D.globalAlpha = 0.6;
         memoryAbilityContext2D.lineWidth = 1;
-        let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxMemoryByte);
+        let drawHeight: number = Math.floor(((memoryAbilityData.value || 0) * (memoryAbilityData.frame.height || 0)) / maxMemoryByte);
         memoryAbilityContext2D.fillRect(
-          data.frame.x,
-          data.frame.y + data.frame.height - drawHeight + 4,
+          memoryAbilityData.frame.x,
+          memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4,
           width,
           drawHeight
         );

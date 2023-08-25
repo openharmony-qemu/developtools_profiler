@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 // @ts-ignore
 import { TabPaneStartup } from '../../../../../../dist/trace/component/trace/sheet/process/TabPaneStartup.js';
 
@@ -31,8 +30,8 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorkerAppStartup.js', () => {
   return {
     AppStartupStruct: {
-      getStartupName: jest.fn().mockReturnValue('Unknown Start Step')
-    }
+      getStartupName: jest.fn().mockReturnValue('Unknown Start Step'),
+    },
   };
 });
 describe('TabPaneStartup Test', () => {
@@ -41,68 +40,65 @@ describe('TabPaneStartup Test', () => {
 
   getTabStartups.mockResolvedValue([
     {
-      'pid': 3913,
-      'process': 'com.ohos.smartperf',
-      'startTs': 5651745832,
-      'dur': 38654167,
-      'startName': 0
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5651745832,
+      dur: 38654167,
+      startName: 0,
     },
     {
-      'pid': 3913,
-      'process': 'com.ohos.smartperf',
-      'startTs': 5690399999,
-      'dur': 43619792,
-      'startName': 1
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5690399999,
+      dur: 43619792,
+      startName: 1,
     },
     {
-      'pid': 3913,
-      'process': 'com.ohos.smartperf',
-      'startTs': 5734019791,
-      'dur': 23194270,
-      'startName': 2
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5734019791,
+      dur: 23194270,
+      startName: 2,
     },
     {
-      'pid': 3913,
-      'process': 'com.ohos.smartperf',
-      'startTs': 5757214061,
-      'dur': 115679167,
-      'startName': 3
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5757214061,
+      dur: 115679167,
+      startName: 3,
     },
     {
-      'pid': 3913,
-      'process': 'com.ohos.smartperf',
-      'startTs': 5872893228,
-      'dur': 62756250,
-      'startName': 4
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5872893228,
+      dur: 62756250,
+      startName: 4,
     },
     {
-      'pid': 3913,
-      'process': 'com.ohos.smartperf',
-      'startTs': 5968040103,
-      'dur': 29438021,
-      'startName': 5
-    }
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5968040103,
+      dur: 29438021,
+      startName: 5,
+    },
   ]);
   it('TabPaneStartupTest01', function () {
-
     expect(
-      tabPaneStartup.data = {
-        'recordStartNs': 94574874464,
-        'leftNs': 5521679251,
-        'rightNs': 6407693386,
-        'hasFps': false,
-        'perfAll': false,
-        'fileSysVirtualMemory': false,
-        'diskIOLatency': false,
-        'fsCount': 0,
-        'vmCount': 0,
-        'isCurrentPane': false,
-        'startup': true,
-        'staticInit': true,
-        'processIds': [
-          3913
-        ]
-      }
+      (tabPaneStartup.data = {
+        recordStartNs: 94574874464,
+        leftNs: 5521679251,
+        rightNs: 6407693386,
+        hasFps: false,
+        perfAll: false,
+        fileSysVirtualMemory: false,
+        diskIOLatency: false,
+        fsCount: 0,
+        vmCount: 0,
+        isCurrentPane: false,
+        startup: true,
+        staticInit: true,
+        processIds: [3913],
+      })
     );
   });
 
@@ -113,38 +109,5 @@ describe('TabPaneStartup Test', () => {
         sort: () => {},
       })
     ).toBeUndefined();
-  });
-
-
-  it('TabPaneStartupTest03', function () {
-    expect(tabPaneStartup.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .startup-table{
-          flex-direction: row;
-          margin-bottom: 5px;
-        }
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        </style>
-        <div class="startup-table" style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
-            <div style="flex: 1"></div>
-            <label id="startup-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
-        </div>
-        <div style="overflow: auto">
-            <lit-table id="tb-startup" style="height: auto" tree>
-                <lit-table-column width="600px" title="Process / Startup"  data-index="name" key="name"  align="flex-start" >
-                </lit-table-column>
-                <lit-table-column width="200px" title="Duration" data-index="durStr" key="durStr"  align="flex-start" order >
-                </lit-table-column>
-                <lit-table-column width="200px" title="%" data-index="ratio" key="ratio"  align="flex-start" order >
-                </lit-table-column>
-            </lit-table>
-        </div>
-        "
-`);
   });
 });

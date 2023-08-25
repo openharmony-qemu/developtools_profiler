@@ -339,6 +339,10 @@ bool HtraceEventParser::BinderTractionEvent(const ProtoReader::DataArea& event) 
             destTid, transactionId, isReply, flags, msg.code());
     streamFilters_->binderFilter_->SendTraction(eventTimeStamp_, eventTid_, transactionId, destNode, destTgid, destTid,
                                                 isReply, flags, msg.code());
+    if (traceDataCache_->BinderRunnableTraceEnabled() && !streamFilters_->binderFilter_->IsAsync(flags)) {
+        streamFilters_->cpuFilter_->InsertRunnableBinderEvent(
+            transactionId, streamFilters_->processFilter_->GetInternalTid(eventTid_));
+    }
     return true;
 }
 bool HtraceEventParser::BinderTractionReceivedEvent(const ProtoReader::DataArea& event) const
@@ -347,6 +351,10 @@ bool HtraceEventParser::BinderTractionReceivedEvent(const ProtoReader::DataArea&
     ProtoReader::BinderTransactionReceivedFormat_Reader msg(event.Data(), event.Size());
     int32_t transactionId = msg.debug_id();
     streamFilters_->binderFilter_->ReceiveTraction(eventTimeStamp_, eventTid_, transactionId);
+    if (traceDataCache_->BinderRunnableTraceEnabled()) {
+        streamFilters_->cpuFilter_->InsertRunnableBinderRecvEvent(
+            transactionId, streamFilters_->processFilter_->GetInternalTid(eventTid_));
+    }
     TS_LOGD("transactionId:%d", transactionId);
     return true;
 }

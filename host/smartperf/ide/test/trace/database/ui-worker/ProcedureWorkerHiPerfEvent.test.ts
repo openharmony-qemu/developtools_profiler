@@ -34,14 +34,14 @@ describe('ProcedureWorkerHiPerfEvent Test', () => {
   it('ProcedureWorkerHiPerfEventTest03', () => {
     const data = {
       frame: {
-        x: 0,
-        y: 9,
-        width: 10,
-        height: 10,
+        x: 50,
+        y: 21,
+        width: 60,
+        height: 16,
       },
-      cpu: 1,
-      startNs: 1,
-      value: 1,
+      cpu: 3,
+      startNs: 41,
+      value: 14,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -53,22 +53,22 @@ describe('ProcedureWorkerHiPerfEvent Test', () => {
   it('ProcedureWorkerHiPerfEventTest04', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 22,
+        y: 30,
+        width: 90,
+        height: 80,
       },
-      startNS: 0,
-      value: 50,
-      startTs: 3,
-      dur: 1,
-      height: 2,
+      startNS: 3,
+      value: 33,
+      startTs: 35,
+      dur: 35,
+      height: 55,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 37,
+      y: 77,
+      width: 460,
+      height: 600,
     };
     expect(HiPerfEventStruct.setFrame(node, 2, 1, 2, frame)).toBeUndefined();
   });
@@ -76,22 +76,22 @@ describe('ProcedureWorkerHiPerfEvent Test', () => {
   it('ProcedureWorkerHiPerfEventTest05', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 30,
+        y: 30,
+        width: 660,
+        height: 660,
       },
-      startNS: 2,
-      value: 50,
+      startNS: 20,
+      value: 60,
       startTs: 3,
-      dur: 3,
-      height: 2,
+      dur: 61,
+      height: 63,
     };
     let frame = {
-      x: 20,
+      x: 10,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 166,
+      height: 330,
     };
     expect(HiPerfEventStruct.setFrame(node, 2, 1, 2, frame)).toBeUndefined();
   });
@@ -110,8 +110,8 @@ describe('ProcedureWorkerHiPerfEvent Test', () => {
       endNS: 1,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
+        x: 234,
+        y: 120,
         width: 100,
         height: 100,
       },
@@ -119,19 +119,19 @@ describe('ProcedureWorkerHiPerfEvent Test', () => {
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: 'event',
       context: {
         font: '11px sans-serif',
         fillStyle: '#ec407a',
         globalAlpha: 0.6,
         clearRect: jest.fn(() => true),
-        beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
         fillText: jest.fn(() => true),
         fill: jest.fn(() => true),
+        beginPath: jest.fn(() => true),
+        stroke: jest.fn(() => true),
+        closePath: jest.fn(() => true),
       },
       lineColor: '',
       isHover: '',

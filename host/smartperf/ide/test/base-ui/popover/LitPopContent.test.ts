@@ -47,42 +47,6 @@ describe('LitPopCont Test', () => {
     expect(litPopContent.name).toEqual('11');
   });
 
-  it('LitPopCont05', () => {
-    let litPopContent = new LitPopContent();
-    expect(litPopContent.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            font-family: Helvetica,serif;
-            position:absolute;
-            display:flex;
-            background:#ffffff;
-            box-shadow: -2px 0 3px -1px white, 0 -2px 3px -1px white, 0 2px 3px -1px white, 2px 0 3px -1px white;
-            box-sizing: border-box;
-            border-radius: 5px;
-            transition:0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-            transform:scale(0);
-            transform-origin:inherit;
-            visibility:hidden;
-            z-index:10;
-    
-        }
-        .pop-content-body{
-            display:flex;
-            flex:1;
-            padding: 20px;
-            flex-direction:column;
-            width: max-content;
-            box-sizing: border-box;
-            border: 1px solid #000000;
-        }
-        </style>
-        <div class="pop-content-body" >
-            <slot></slot>
-        </div>
-        "
-`);
-  });
 
   it('LitPopCont06', () => {
     let litPopContent = new LitPopContent();

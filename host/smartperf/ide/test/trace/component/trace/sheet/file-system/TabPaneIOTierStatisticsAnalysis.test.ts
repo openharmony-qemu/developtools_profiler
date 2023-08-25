@@ -12,7 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
+    jest.fn().mockImplementation(() => ({
+      disconnect: jest.fn(),
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+    }));
 // @ts-ignore
 import { TabPaneIOTierStatisticsAnalysis } from '../../../../../../dist/trace/component/trace/sheet/file-system/TabPaneIOTierStatisticsAnalysis.js';
 import '../../../../../../dist/trace/component/trace/sheet/file-system/TabPaneIOTierStatisticsAnalysis.js';
@@ -21,14 +27,6 @@ import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 import crypto from 'crypto';
 // @ts-ignore
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
-// @ts-ignore
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
 Object.defineProperty(global.self, 'crypto', {
   value: {
     getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
@@ -40,79 +38,79 @@ describe('TabPaneIOTierStatisticsAnalysis Test', () => {
   let tabPane = document.querySelector<TabPaneIOTierStatisticsAnalysis>('#statistics-analysis');
   let param = {
     anomalyEnergy: [],
-    clockMapData: { size: 0 },
-    cpuAbilityIds: [],
-    cpuFreqFilterIds: [],
+    clockMapData: { size: 985 },
+    cpuAbilityIds: [12,45,7],
+    cpuFreqFilterIds: [10,67,9],
     cpuFreqLimitDatas: [],
-    cpuStateFilterIds: [],
+    cpuStateFilterIds: [23,4],
     cpus: [],
-    diskAbilityIds: [],
+    diskAbilityIds: [43,45,4],
     diskIOLatency: false,
-    diskIOReadIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOWriteIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOipids: [2, 7, 1, 3, 4, 5, 6],
+    diskIOReadIds: [24, 17, 71],
+    diskIOWriteIds: [2, 14, 5, 36],
+    diskIOipids: [42, 7, 65],
     fileSysVirtualMemory: false,
     fileSystemType: [],
-    fsCount: 0,
+    fsCount: 44,
     funAsync: [],
-    funTids: [],
+    funTids: [23,78],
     hasFps: false,
-    irqMapData: { size: 0 },
+    irqMapData: { size: 966 },
     jsMemory: [],
-    leftNs: 964699689,
-    memoryAbilityIds: [],
+    leftNs: 964696659,
+    memoryAbilityIds: [65,67,89,11],
     nativeMemory: [],
     nativeMemoryStatistic: [],
-    networkAbilityIds: [],
+    networkAbilityIds: [12,56,88],
     perfAll: false,
-    perfCpus: [],
+    perfCpus: [0,2],
     perfProcess: [],
-    perfSampleIds: [],
+    perfSampleIds: [11,53,110],
     perfThread: [],
     powerEnergy: [],
-    processTrackIds: [],
+    processTrackIds: [12,110,889],
     promiseList: [],
-    recordStartNs: 780423789228,
-    rightNs: 24267556624,
-    sdkCounterIds: [],
-    sdkSliceIds: [],
+    recordStartNs: 780423782222,
+    rightNs: 24267332224,
+    sdkCounterIds: [12,4,55,1],
+    sdkSliceIds: [45,12],
     smapsType: [],
     systemEnergy: [],
-    threadIds: [],
+    threadIds: [66,3,10],
     virtualTrackIds: [],
-    vmCount: 0,
+    vmCount: 17,
   };
   let processData = [
     {
-      callChainId: 13,
-      dur: 240916,
-      libId: 539,
+      callChainId: 213,
+      dur: 295432,
+      libId: 511,
       libName: 'libName.z.so',
       pid: 911,
-      processName: 'processName(911)',
+      processName: 'mdss_fb0 8544',
       symbolId: 799,
-      symbolName: 'symbolName',
-      threadName: 'threadName',
-      tid: 404,
-      type: 0,
+      symbolName: 'mdss_fb0',
+      threadName: 'mdss_fb0',
+      tid: 30,
+      type: 90,
     },
   ];
   let item = {
-    durFormat: '194.23ms ',
-    duration: 194230478,
+    durFormat: '183.23ms ',
+    duration: 19965478,
     isHover: true,
-    percent: '99.00',
-    pid: 3744,
-    tableName: 'test(3744)',
+    percent: '502.00',
+    pid: 320,
+    tableName: 'sumb(3745)',
   };
   let res = [
     {
-      durFormat: '194.23ms ',
-      duration: 194230478,
+      durFormat: '201.33ms ',
+      duration: 365130478,
       isHover: true,
-      percent: '99.00',
-      pid: 3744,
-      tableName: 'test(3744)',
+      percent: '3599.00',
+      pid: 301,
+      tableName: 'test(3204)',
     },
   ];
   let itemClick = new CustomEvent('click', <CustomEventInit>{
@@ -202,7 +200,7 @@ describe('TabPaneIOTierStatisticsAnalysis Test', () => {
     expect(tabPane.typeIdToString(4)).toEqual('METADATA_WRITE');
   });
   it('tabPaneIOTierStatisticsAnalysis12', function () {
-    expect(tabPane.getPieChartData(res).length).toEqual(1);
+    expect(tabPane.getIOTierPieChartData(res).length).toEqual(1);
   });
 
   it('tabPaneIOTierStatisticsAnalysis13', function () {

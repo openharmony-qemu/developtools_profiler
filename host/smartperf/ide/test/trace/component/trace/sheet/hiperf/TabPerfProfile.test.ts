@@ -16,12 +16,12 @@
 //@ts-ignore
 import { TabpanePerfProfile } from '../../../../../../dist/trace/component/trace/sheet/hiperf/TabPerfProfile.js';
 //@ts-ignore
-import {showButtonMenu} from "../../../../../../dist/trace/component/trace/sheet/SheetUtils.js";
+import { showButtonMenu } from '../../../../../../dist/trace/component/trace/sheet/SheetUtils.js';
 
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
-  return {}
+  return {};
 });
-
+// @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -92,14 +92,14 @@ describe('TabPerfProfile Test', () => {
   it('TabpanePerfProfileTest09 ', function () {
     tabpanePerfProfile.sortTree = jest.fn(() => true);
     tabpanePerfProfile.sortTree.sort = jest.fn(() => true);
-    tabpanePerfProfile.perfProfilerTbl  = jest.fn(() => true);
-    tabpanePerfProfile.perfProfilerTbl.recycleDataSource  = jest.fn(() => true);
+    tabpanePerfProfile.perfProfilerTbl = jest.fn(() => true);
+    tabpanePerfProfile.perfProfilerTbl.recycleDataSource = jest.fn(() => true);
     expect(tabpanePerfProfile.setPerfProfilerLeftTableData([])).toBeUndefined();
   });
   it('TabpanePerfProfileTest10 ', function () {
     tabpanePerfProfile.getDataByWorker = jest.fn();
-    tabpanePerfProfile.perfProfilerTbl  = jest.fn(() => true);
-    tabpanePerfProfile.perfProfilerTbl.style  = jest.fn(() => true);
+    tabpanePerfProfile.perfProfilerTbl = jest.fn(() => true);
+    tabpanePerfProfile.perfProfilerTbl.style = jest.fn(() => true);
     tabpanePerfProfile.data = [
       {
         leftNs: 2565,

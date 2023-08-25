@@ -14,9 +14,6 @@
  */
 // @ts-ignore
 import { TabPaneDmaAbility } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneDmaAbility.js';
-
-const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver ||
     jest.fn().mockImplementation(() => ({
@@ -24,55 +21,56 @@ window.ResizeObserver = window.ResizeObserver ||
         observe: jest.fn(),
         unobserve: jest.fn(),
     }));
-
+const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 describe('TabPaneDmaAbility Test', () => {
     let tabPaneDmaAbility = new TabPaneDmaAbility();
     let getTabDmaAbilityData = sqlit.getTabDmaAbilityData;
     getTabDmaAbilityData.mockResolvedValue([
         {
-            avgSize: 25165824,
-            avgSizes: "24.00MB",
+            avgSize: 1111211,
+            avgSizes: "32.00MB",
             expTaskComm: "allocator_host",
             maxSize: 25165822,
             maxSizes: "24.00MB",
-            minSize: 25165824,
-            minSizes: "24.00MB",
+            minSize: 32222222,
+            minSizes: "42.00MB",
             process: "com.ohos.camera(22)",
             processId: 22,
             processName: "com.ohos.camera",
             startNs: 4568285416,
-            sumSize: 25165824,
-            sumSizes: "24.00MB",
+            sumSize: 3222225664,
+            sumSizes: "98.00MB",
         },
         {
-            avgSize: 25165824,
-            avgSizes: "24.00MB",
+            avgSize: 2453422,
+            avgSizes: "7.00MB",
             expTaskComm: "11allocator_host",
-            maxSize: 25165824,
-            maxSizes: "24.00MB",
-            minSize: 25165824,
+            maxSize: 4355333,
+            maxSizes: "55.00MB",
+            minSize: 5333211,
             minSizes: "24.00MB",
             process: "com.ohos.camera(1)",
             processId: 1,
             processName: "com.ohos.camera",
             startNs: 4568285416,
-            sumSize: 25165824,
-            sumSizes: "24.00MB",
+            sumSize: 13335433,
+            sumSizes: "57.00MB",
         },
         {
-            avgSize: 25165824,
-            avgSizes: "24.00MB",
+            avgSize: 43332178,
+            avgSizes: "85.00MB",
             expTaskComm: "alloca11tor_host",
-            maxSize: 25165824,
-            maxSizes: "24.00MB",
-            minSize: 25165824,
+            maxSize: 7753333,
+            maxSizes: "55.00MB",
+            minSize: 2314425,
             minSizes: "24.00MB",
             process: "com.ohos.c11amera(33)",
             processId: 33,
             processName: "com.ohos.camera",
             startNs: 4568285416,
-            sumSize: 25165824,
-            sumSizes: "24.00MB",
+            sumSize: 23113453,
+            sumSizes: "7.00MB",
         },
     ]);
     tabPaneDmaAbility.init = jest.fn(() => true);
@@ -84,6 +82,12 @@ describe('TabPaneDmaAbility Test', () => {
         cpuFreqLimitDatas: [],
         cpuStateFilterIds: [],
         cpus: [],
+        fsCount:0,
+        funAsync:[],
+        funTids:[],
+        gpu:{gl: false, gpuWindow: false, gpuTotal: false},
+        gpuMemoryAbilityData:[],
+        gpuMemoryTrackerData:[],
         diskAbilityIds: [],
         diskIOLatency: false,
         diskIOReadIds: [],
@@ -91,23 +95,17 @@ describe('TabPaneDmaAbility Test', () => {
         diskIOipids: [],
         dmaAbilityData: [],
         dmaVmTrackerData:[],
-        fsCount:0,
-        funAsync:[],
-        funTids:[],
-        gpu:{gl: false, gpuWindow: false, gpuTotal: false},
-        gpuMemoryAbilityData:[],
-        gpuMemoryTrackerData:[],
         hasFps:false,
         irqMapData:{size: 0},
         isCurrentPane:false,
         jankFramesData:[],
         jsCpuProfilerData:[],
         jsMemory:[],
-        leftNs:486814455,
+        leftNs:42999114455,
         memoryAbilityIds:[],
         networkAbilityIds:[],
-        recordStartNs:333185936669149,
-        rightNs:16125728831,
+        recordStartNs:3133366669149,
+        rightNs:33532121,
         sdkCounterIds:[],
         sdkSliceIds:[],
         smapsType:[],

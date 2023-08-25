@@ -97,7 +97,7 @@ describe('SpFrameTimeChart Test', () => {
 
   let frameAnimation = sqlite.queryFrameAnimationData;
   let frameAnimationData = [
-    {animationId: 1, dynamicEndTs: 4774481414, dynamicStartTs: 4091445476, ts: 4091445476},
+    { animationId: 1, dynamicEndTs: 4774481414, dynamicStartTs: 4091445476, ts: 4091445476 },
     {
       animationId: 2,
       dynamicEndTs: 8325095997,
@@ -109,7 +109,7 @@ describe('SpFrameTimeChart Test', () => {
 
   let frameDynamic = sqlite.queryFrameDynamicData;
   let frameDynamicData = [
-    {alpha: '1.00', appName: 'test0', height: 2772, id: 74, ts: 28565790, width: 1344, x: 0, y: 0},
+    { alpha: '1.00', appName: 'test0', height: 2772, id: 74, ts: 28565790, width: 1344, x: 0, y: 0 },
     {
       alpha: '1.00',
       appName: 'test0',
@@ -155,7 +155,7 @@ describe('SpFrameTimeChart Test', () => {
   frameSpacing.mockResolvedValue(frameSpacingData);
 
   let physical = sqlite.queryPhysicalData;
-  let physicalData = [{physicalFrameRate: 90, physicalHeight: 2772, physicalWidth: 1344}];
+  let physicalData = [{ physicalFrameRate: 90, physicalHeight: 2772, physicalWidth: 1344 }];
   physical.mockResolvedValue(physicalData);
 
   it('TabPaneFramesTest01', function () {
@@ -164,10 +164,14 @@ describe('SpFrameTimeChart Test', () => {
 
   it('TabPaneFramesTest02', function () {
     FlagsConfig.updateFlagsConfig('AnimationAnalysis', 'Enabled');
-    spFrameTimeChart.initAnimatedScenesChart(TraceRow.skeleton(), {
-      pid: 1,
-      processName: 'render_service'
-    }, TraceRow.skeleton());
+    spFrameTimeChart.initAnimatedScenesChart(
+      TraceRow.skeleton(),
+      {
+        pid: 1,
+        processName: 'render_service',
+      },
+      TraceRow.skeleton()
+    );
     expect(spFrameTimeChart.flagConfig?.AnimationAnalysis).toEqual('Enabled');
   });
 });

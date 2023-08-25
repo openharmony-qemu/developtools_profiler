@@ -20,18 +20,18 @@ import { CpuStruct } from '../database/ui-worker/ProcedureWorkerCPU.js';
 const padding = 1;
 
 export class ProcessStruct extends BaseStruct {
+  startTime: number | undefined;
   cpu: number | undefined;
   dur: number | undefined;
   id: number | undefined;
+  utid: number | undefined;
   pid: number | undefined;
   process: string | undefined;
-  startTime: number | undefined;
   state: string | undefined;
   thread: string | undefined;
   tid: number | undefined;
   ts: number | undefined;
   type: string | undefined;
-  utid: number | undefined;
 
   static draw(processBeanCanvasCtx: CanvasRenderingContext2D, processBeanStruct: ProcessStruct) {
     if (processBeanStruct.frame) {

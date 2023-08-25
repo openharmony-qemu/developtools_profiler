@@ -30,22 +30,22 @@ describe('ProcedureWorkerCpuState Test', () => {
   it('ProcedureWorkerCpuStateTest01', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 43,
+        y: 40,
+        width: 135,
+        height: 190,
       },
-      startNS: 200,
-      value: 50,
-      startTs: 1,
-      dur: 10,
-      height: 2,
+      startNS: 220,
+      value: 20,
+      startTs: 15,
+      dur: 12,
+      height: 62,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 80,
+      y: 28,
+      width: 180,
+      height: 80,
     };
     expect(CpuStateStruct.setFrame(node, 2, 2, 6, 4, frame)).toBeUndefined();
   });
@@ -53,22 +53,22 @@ describe('ProcedureWorkerCpuState Test', () => {
   it('ProcedureWorkerCpuStateTest01', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 10,
+        y: 22,
+        width: 540,
+        height: 700,
       },
-      startNS: 200,
-      value: 50,
-      startTs: 3,
-      dur: 1,
-      height: 2,
+      startNS: 560,
+      value: 10,
+      startTs: 7,
+      dur: 74,
+      height: 12,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 30,
+      y: 50,
+      width: 760,
+      height: 660,
     };
     expect(CpuStateStruct.setFrame(node, 2, 2, 6, 4, frame)).toBeUndefined();
   });
@@ -101,31 +101,31 @@ describe('ProcedureWorkerCpuState Test', () => {
     let cpuStateRender = new CpuStateRender();
     let dataList = new Array();
     dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startNS: 55,
+      dur: 120,
+      length: 53,
+      frame: { x: 0, y: 54, width: 30, height: 350 },
     });
     dataList.push({ startNS: 1, dur: 2, length: 1 });
     let res = [
       {
         frame: {
-          x: 20,
-          y: 20,
-          width: 100,
-          height: 100,
+          x: 77,
+          y: 67,
+          width: 170,
+          height: 700,
         },
-        startNS: 1,
-        length: 1,
-        height: 2,
-        dur: 1,
+        startNS: 17,
+        length: 61,
+        height: 25,
+        dur: 12,
       },
     ];
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 30,
+      y: 23,
+      width: 173,
+      height: 350,
     };
     expect(cpuStateRender.cpuState([], dataList, '', res, 1, 6, 5, frame, true)).toBeUndefined();
   });
@@ -134,31 +134,31 @@ describe('ProcedureWorkerCpuState Test', () => {
     let cpuStateRender = new CpuStateRender();
     let dataList = new Array();
     dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startNS: 23,
+      dur: 120,
+      length: 21,
+      frame: { x: 20, y: 45, width: 50, height: 150 },
     });
     dataList.push({ startNS: 1, dur: 2, length: 1 });
     let res = [
       {
         frame: {
-          x: 20,
-          y: 20,
-          width: 100,
-          height: 100,
+          x: 57,
+          y: 30,
+          width: 770,
+          height: 503,
         },
-        startNS: 10,
-        length: 1,
-        height: 2,
-        dur: 1,
+        startNS: 13,
+        length: 21,
+        height: 22,
+        dur: 156,
       },
     ];
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 60,
+      y: 23,
+      width: 170,
+      height: 900,
     };
     expect(cpuStateRender.cpuState([], dataList, '', res, 1, 6, 5, frame, true)).toBeUndefined();
   });
@@ -211,11 +211,11 @@ describe('ProcedureWorkerCpuState Test', () => {
       lazyRefresh: true,
       type: '',
       startNS: 1,
-      endNS: 1,
+      endNS: 11,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
+        x: 201,
+        y: 201,
         width: 100,
         height: 100,
       },
@@ -223,14 +223,14 @@ describe('ProcedureWorkerCpuState Test', () => {
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: 'b',
       context: {
         font: '11px sans-serif',
         fillStyle: '#ec407a',
         globalAlpha: 0.6,
-        clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
+        clearRect: jest.fn(() => true),
         closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
@@ -254,12 +254,12 @@ describe('ProcedureWorkerCpuState Test', () => {
     window.postMessage = jest.fn(() => true);
     expect(cpuStateRender.render(req, [], [], [])).toBeUndefined();
   });
-  it('ProcedureWorkerCpuStateTest07', function () {
+  it('ProcedureWorkerCpuStateTest08', function () {
     let cpuStateRender = new CpuStateRender();
     let canvas = document.createElement('canvas') as HTMLCanvasElement;
     let context = canvas.getContext('2d');
     const data = {
-      context: context!,
+      cpuStateContext: context!,
       useCache: true,
       type: '',
       traceRange: [],

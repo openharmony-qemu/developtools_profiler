@@ -15,8 +15,8 @@
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
+import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { queryProcessPurgeableSelectionTab, querySysPurgeableSelectionTab } from '../../../../database/SqlLite.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { Utils } from '../../base/Utils.js';
@@ -35,12 +35,12 @@ export class TabPanePurgPinSelection extends BaseElement {
 
   async queryTableData(type: string, startNs: number) {
     if (type === 'ability') {
-      await querySysPurgeableSelectionTab(startNs, true).then((results) => {
+      await querySysPurgeableSelectionTab(startNs, true).then((purgePinSelectResults) => {
         this.purgeableSelectionSource = [];
         this.purgeableSelectionSource.push({ name: 'TimeStamp', value: ns2s(startNs) });
-        for (let i = 0; i < results.length; i++) {
-          results[i].value = Utils.getBinaryByteWithUnit(results[i].value);
-          this.purgeableSelectionSource.push(results[i]);
+        for (let i = 0; i < purgePinSelectResults.length; i++) {
+          purgePinSelectResults[i].value = Utils.getBinaryByteWithUnit(purgePinSelectResults[i].value);
+          this.purgeableSelectionSource.push(purgePinSelectResults[i]);
           this.purgeableSelectionTable!.recycleDataSource = this.purgeableSelectionSource;
         }
       });

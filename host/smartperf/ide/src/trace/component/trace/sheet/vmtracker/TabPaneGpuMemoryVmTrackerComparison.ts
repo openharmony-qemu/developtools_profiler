@@ -37,8 +37,8 @@ export class TabPaneGpuMemoryVmTrackerComparison extends BaseElement {
 
   initElements(): void {
     this.gpuMemoryClickTable = this.shadowRoot?.querySelector<LitTable>('#gpuMemoryClickTable');
-    this.comparisonSelect = this.shadowRoot?.querySelector('#filter') as TabPaneJsMemoryFilter;
     this.selectEl = this.comparisonSelect?.shadowRoot?.querySelector<LitSelect>('lit-select');
+    this.comparisonSelect = this.shadowRoot?.querySelector('#filter') as TabPaneJsMemoryFilter;
     this.gpuMemoryClickTable!.addEventListener('column-click', (e) => {
       // @ts-ignore
       this.sortGpuMemoryByColumn(e.detail.key, e.detail.sort);
@@ -142,19 +142,19 @@ export class TabPaneGpuMemoryVmTrackerComparison extends BaseElement {
             break;
           case 'gpuName':
             this.gpuMemoryClickTable!.recycleDataSource = array.sort(
-              (gpuMComparisonLeftData, gpuMComparisonRightData) => {
+              (gpuMCompVmLeftData, gpuMCompVmRightData) => {
                 return sort === 1
-                  ? `${gpuMComparisonLeftData.gpuName}`.localeCompare(`${gpuMComparisonRightData.gpuName}`)
-                  : `${gpuMComparisonRightData.gpuName}`.localeCompare(`${gpuMComparisonLeftData.gpuName}`);
+                  ? `${gpuMCompVmLeftData.gpuName}`.localeCompare(`${gpuMCompVmRightData.gpuName}`)
+                  : `${gpuMCompVmRightData.gpuName}`.localeCompare(`${gpuMCompVmLeftData.gpuName}`);
               }
             );
             break;
           case 'sizeDelta':
             this.gpuMemoryClickTable!.recycleDataSource = array.sort(
-              (gpuMComparisonLeftData, gpuMComparisonRightData) => {
+              (gpuMCompVmLeftData, gpuMCompVmRightData) => {
                 return sort === 1
-                  ? gpuMComparisonLeftData.value - gpuMComparisonRightData.value
-                  : gpuMComparisonRightData.value - gpuMComparisonLeftData.value;
+                  ? gpuMCompVmLeftData.value - gpuMCompVmRightData.value
+                  : gpuMCompVmRightData.value - gpuMCompVmLeftData.value;
               }
             );
             break;

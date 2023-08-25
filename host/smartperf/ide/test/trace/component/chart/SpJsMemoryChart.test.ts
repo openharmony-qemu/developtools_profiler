@@ -17,12 +17,13 @@ const sqlite = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
 
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 
 // @ts-ignore
 import { SpArkTsChart } from '../../../../dist/trace/component/chart/SpArkTsChart.js';
@@ -30,20 +31,20 @@ import { SpArkTsChart } from '../../../../dist/trace/component/chart/SpArkTsChar
 import { SpIrqChart } from '../../../../dist/trace/component/chart/SpIrqChart.js';
 
 jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
-    return {};
+  return {};
 });
 
 describe('SpIrqChart Test', () => {
-    let spArkTsChart = new SpArkTsChart();
-    let irqList = sqlite.queryIrqList;
-    let irqListData = [
-        {
-            name: 'test',
-            cpu: 0,
-        },
-    ];
-    irqList.mockResolvedValue(irqListData);
-    it('SpArkTsChart01', function () {
-        expect(spArkTsChart).not.toBe({"initChart": [], "loadJsDatabase": {}, "trace": undefined});
-    });
-})
+  let spArkTsChart = new SpArkTsChart();
+  let irqList = sqlite.queryIrqList;
+  let irqListData = [
+    {
+      name: 'test',
+      cpu: 0,
+    },
+  ];
+  irqList.mockResolvedValue(irqListData);
+  it('SpArkTsChart01', function () {
+    expect(spArkTsChart).not.toBe({ initChart: [], loadJsDatabase: {}, trace: undefined });
+  });
+});

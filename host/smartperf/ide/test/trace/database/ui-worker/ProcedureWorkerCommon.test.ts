@@ -57,23 +57,18 @@ declare global {
   interface Window {
     SmartEvent: {
       UI: {
-        MenuTrace: string; //selected menu trace
         RefreshCanvas: string; //selected menu trace
         SliceMark: string; //Set the tag scope
-        TimeRange: string; //Set the timeline range
         TraceRowComplete: string; //Triggered after the row component has finished loading data
+        MenuTrace: string; //selected menu trace
+        TimeRange: string; //Set the timeline range
       };
     };
-
-    subscribe(evt: string, fn: (b: any) => void): void;
-
     subscribeOnce(evt: string, fn: (b: any) => void): void;
-
-    unsubscribe(evt: string, fn: (b: any) => void): void;
-
-    publish(evt: string, data: any): void;
-
     clearTraceRowComplete(): void;
+    unsubscribe(evt: string, fn: (b: any) => void): void;
+    publish(evt: string, data: any): void;
+    subscribe(evt: string, fn: (b: any) => void): void;
   }
 }
 
@@ -86,9 +81,8 @@ window.SmartEvent = {
     TraceRowComplete: 'SmartEvent-UI-TraceRowComplete',
   },
 };
-
-Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);
 Window.prototype.unsubscribe = (ev, fn) => EventCenter.unsubscribe(ev, fn);
+Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);
 Window.prototype.publish = (ev, data) => EventCenter.publish(ev, data);
 Window.prototype.subscribeOnce = (ev, data) => EventCenter.subscribeOnce(ev, data);
 Window.prototype.clearTraceRowComplete = () => EventCenter.clearTraceRowComplete();
@@ -119,21 +113,21 @@ describe('ProcedureWorkerCommon Test', () => {
   let filterData = [
     {
       cpu: 0,
-      dur: 9030000,
-      end_state: 'R',
-      frame: { y: 5, height: 30, x: 1, width: 3 },
+      dur: 69444,
+      end_state: 'sR',
+      frame: { y: 15, height: 10, x: 13, width: 34 },
       id: 4,
       name: 'test',
-      priority: 120,
+      priority: 23,
       processCmdLine: 'test',
-      processId: 3303,
+      processId: 3255,
       processName: 'test',
-      schedId: 55,
-      startTime: 4060000,
-      tid: 3303,
+      schedId: 3,
+      startTime: 53333,
+      tid: 6,
       translateY: 0,
       type: 'thread',
-      v: true,
+      v: false,
     },
   ];
   let condition = {
@@ -301,16 +295,16 @@ describe('ProcedureWorkerCommon Test', () => {
     let params = {
       isRangeSelect: true,
       rangeSelectObject: {
-        startX: 1,
-        endX: 10,
-        startNS: 1,
-        endNS: 10,
+        startX: 31,
+        endX: 13,
+        startNS: 132,
+        endNS: 120,
       },
-      startNS: 1,
-      endNS: 10,
-      totalNS: 9,
+      startNS: 21,
+      endNS: 120,
+      totalNS: 49,
       frame: {
-        y: 0,
+        y: 1,
       },
     };
     expect(drawSelection(context, params)).toBeUndefined();
@@ -322,26 +316,26 @@ describe('ProcedureWorkerCommon Test', () => {
     canvas.height = 1;
     const context = canvas.getContext('2d');
     let wake = {
-      wakeupTime: 2,
-      cpu: 1,
+      wakeupTime: 12,
+      cpu: 2,
     };
-    let frame = new Rect(20, 10, 10, 10);
+    let frame = new Rect(20, 30, 10, 30);
     let selectCpuStruct = [
       {
-        cpu: 0,
-        dur: 9030000,
+        cpu: 3,
+        dur: 9031110,
         end_state: 'R',
-        frame: { y: 5, height: 30, x: 1, width: 3 },
-        id: 4,
+        frame: { y: 0, height: 60, x: 31, width: 3 },
+        id: 9,
         name: 'test',
         priority: 120,
-        processCmdLine: 'test',
+        processCmdLine: 'lin',
         processId: 3303,
         processName: 'test',
         schedId: 55,
-        startTime: 4060000,
+        startTime: 4064044,
         tid: 3303,
-        translateY: 0,
+        translateY: 40,
         type: 'thread',
         v: true,
       },
@@ -380,10 +374,10 @@ describe('ProcedureWorkerCommon Test', () => {
     canvas.height = 1;
     const ctx = canvas.getContext('2d');
     const hoverFlag = {
-      x: 100,
-      y: 100,
-      width: 1000,
-      height: 1000,
+      x: 300,
+      y: 300,
+      width: 1300,
+      height: 1030,
       time: 2550,
       color: 'red',
       selected: false,
@@ -392,11 +386,11 @@ describe('ProcedureWorkerCommon Test', () => {
       type: 'type',
     };
     const selectFlag = {
-      x: 10,
-      y: 10,
-      width: 100,
-      height: 100,
-      time: 255,
+      x: 180,
+      y: 180,
+      width: 800,
+      height: 80,
+      time: 258,
       color: 'green',
       selected: false,
       text: 'test',
@@ -404,9 +398,9 @@ describe('ProcedureWorkerCommon Test', () => {
       type: 'type',
     };
     TraceRow.range = {
-      startNS: 125,
-      endNS: 25336,
-      totalNS: 33333,
+      startNS: 64,
+      endNS: 25453,
+      totalNS: 333,
     };
     let data = {
       sportRuler: {
@@ -430,10 +424,10 @@ describe('ProcedureWorkerCommon Test', () => {
         hoverFlag,
         selectFlag,
         {
-          y: 5,
-          height: 30,
-          x: 1,
-          width: 3,
+          y: 15,
+          height: 10,
+          x: 11,
+          width: 53,
         },
         data
       )
@@ -448,21 +442,21 @@ describe('ProcedureWorkerCommon Test', () => {
     let params = {
       rangeSelect: true,
       rangeSelectObject: {
-        startX: 1,
-        endX: 10,
-        startNS: 1,
-        endNS: 10,
+        startX: 71,
+        endX: 100,
+        startNS: 61,
+        endNS: 100,
       },
-      startNS: 1,
-      endNS: 10,
-      totalNS: 9,
+      startNS: 401,
+      endNS: 190,
+      totalNS: 999,
       frame: {
-        y: 0,
+        y: 3,
       },
     };
     TraceRow.rangeSelectObject = {
       startX: 125,
-      endX: 25336,
+      endX: 25226,
     };
     expect(drawSelectionRange(context, params)).toBeUndefined();
   });

@@ -19,13 +19,13 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
   return {};
 });
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {
     snapshotDataSource: () => {},
     removeAttribute: () => {},
   };
 });
-jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -45,32 +45,29 @@ describe('TabPanePurgPinComparisonVM Test', () => {
     },
     {
       value: 25165824,
-      name: '24.00MB',
+      name: '25.00MB',
     },
     {
       value: 25165824,
-      name: '24.00MB',
+      name: '26.00MB',
     },
   ]);
   let data = [
     {
-      name: 'Snapshot1',
-      startNs: 4778214061,
-      type: 'ability',
+      name: 'Snapshot0',
+      startNs: 4778211,
       value: 0,
     },
   ];
   let datalist = [
     {
       name: 'Snapshot2',
-      startNs: 9800526561,
-      type: 'ability',
+      startNs: 98526561,
       value: 0,
     },
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
-      type: 'ability',
+      startNs: 48214061,
       value: 0,
     },
   ];

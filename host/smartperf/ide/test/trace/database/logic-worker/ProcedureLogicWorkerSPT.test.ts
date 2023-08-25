@@ -104,7 +104,7 @@ describe('ProcedureLogicWorkerSPT Test', () => {
   it('ProcedureLogicWorkerSPTTest12', function () {
     let procedureLogicWorkerSPT = new ProcedureLogicWorkerSPT();
     window.postMessage = jest.fn(() => true);
-    expect(procedureLogicWorkerSPT.getSPT()).toBeUndefined();
+    expect(procedureLogicWorkerSPT.getSPTData()).toBeTruthy();
   });
   it('ProcedureLogicWorkerSPTTest13', function () {
     let procedureLogicWorkerSPT = new ProcedureLogicWorkerSPT();

@@ -13,26 +13,17 @@
  * limitations under the License.
  */
 
-import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
-import {
-  BaseStruct,
-  drawFlagLine,
-  drawLines,
-  drawLoading,
-  drawSelection,
-  HiPerfStruct,
-  PerfRender,
-  RequestMessage,
-} from './ProcedureWorkerCommon.js';
+import {ColorUtils} from '../../component/trace/base/ColorUtils.js';
+import {HiPerfStruct, PerfRender, RequestMessage,} from './ProcedureWorkerCommon.js';
 
-import { TraceRow } from '../../component/trace/base/TraceRow.js';
+import {TraceRow} from '../../component/trace/base/TraceRow.js';
 
 export class HiperfReportRender extends PerfRender {
-  renderMainThread(hiPerfReportReq: any, row: TraceRow<HiPerfReportStruct>) {
+  renderMainThread(hiPerfReportReq: any, row: TraceRow<HiPerfReportStruct>): void {
     let list = row.dataList;
     let filter = row.dataListCache;
     let groupBy10MS = hiPerfReportReq.scale > 30_000_000;
-    if (list && row.dataList2.length == 0) {
+    if (list && row.dataList2.length === 0) {
       row.dataList2 = HiPerfReportStruct.reportGroupBy10MS(list, hiPerfReportReq.intervalPerf);
     }
     HiPerfReport(
@@ -51,11 +42,12 @@ export class HiperfReportRender extends PerfRender {
     hiPerfReportReq.context.beginPath();
     hiPerfReportReq.context.fillStyle = ColorUtils.FUNC_COLOR[0];
     hiPerfReportReq.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-    let path = new Path2D();
+    let normalPath = new Path2D();
+    let specPath = new Path2D();
     let offset = groupBy10MS ? 0 : 3;
     let find = false;
     for (let re of filter) {
-      HiPerfReportStruct.draw(hiPerfReportReq.context, path, re, groupBy10MS);
+      HiPerfReportStruct.draw(hiPerfReportReq.context, normalPath, specPath, re, groupBy10MS);
       if (row.isHover) {
         if (re.frame && row.hoverX >= re.frame.x - offset && row.hoverX <= re.frame.x + re.frame.width + offset) {
           HiPerfReportStruct.hoverStruct = re;
@@ -63,123 +55,26 @@ export class HiperfReportRender extends PerfRender {
         }
       }
     }
-    if (!find && row.isHover) HiPerfReportStruct.hoverStruct = undefined;
-    groupBy10MS ? hiPerfReportReq.context.fill(path) : hiPerfReportReq.context.stroke(path);
+    if (!find && row.isHover) {
+      HiPerfReportStruct.hoverStruct = undefined;
+    }
+    if (groupBy10MS) {
+      hiPerfReportReq.context.fill(normalPath);
+    } else {
+      hiPerfReportReq.context.stroke(normalPath);
+      HiPerfStruct.drawSpecialPath(hiPerfReportReq.context, specPath);
+    }
     hiPerfReportReq.context.closePath();
   }
 
-  render(hiPerfReportRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
-    let groupBy10MS = hiPerfReportRequest.scale > 100_000_000;
-    if (hiPerfReportRequest.lazyRefresh) {
-      HiPerfReport(
-        list,
-        dataList2,
-        hiPerfReportRequest.type!,
-        filter,
-        hiPerfReportRequest.startNS,
-        hiPerfReportRequest.endNS,
-        hiPerfReportRequest.totalNS,
-        hiPerfReportRequest.frame,
-        groupBy10MS,
-        hiPerfReportRequest.intervalPerf,
-        hiPerfReportRequest.useCache || !hiPerfReportRequest.range.refresh
-      );
-    } else {
-      if (!hiPerfReportRequest.useCache) {
-        HiPerfReport(
-          list,
-          dataList2,
-          hiPerfReportRequest.type!,
-          filter,
-          hiPerfReportRequest.startNS,
-          hiPerfReportRequest.endNS,
-          hiPerfReportRequest.totalNS,
-          hiPerfReportRequest.frame,
-          groupBy10MS,
-          hiPerfReportRequest.intervalPerf,
-          false
-        );
-      }
-    }
-    if (hiPerfReportRequest.canvas) {
-      hiPerfReportRequest.context.clearRect(0, 0, hiPerfReportRequest.frame.width, hiPerfReportRequest.frame.height);
-      let arr = filter;
-      if (
-        arr.length > 0 &&
-        !hiPerfReportRequest.range.refresh &&
-        !hiPerfReportRequest.useCache &&
-        hiPerfReportRequest.lazyRefresh
-      ) {
-        drawLoading(
-          hiPerfReportRequest.context,
-          hiPerfReportRequest.startNS,
-          hiPerfReportRequest.endNS,
-          hiPerfReportRequest.totalNS,
-          hiPerfReportRequest.frame,
-          arr[0].startNS,
-          arr[arr.length - 1].startNS + arr[arr.length - 1].dur
-        );
-      }
-      drawLines(
-        hiPerfReportRequest.context,
-        hiPerfReportRequest.xs,
-        hiPerfReportRequest.frame.height,
-        hiPerfReportRequest.lineColor
-      );
-      hiPerfReportRequest.context.stroke();
-      hiPerfReportRequest.context.beginPath();
-      HiPerfReportStruct.hoverStruct = undefined;
-      hiPerfReportRequest.context.fillStyle = ColorUtils.FUNC_COLOR[0];
-      hiPerfReportRequest.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-      if (hiPerfReportRequest.isHover) {
-        let offset = groupBy10MS ? 0 : 3;
-        for (let re of filter) {
-          if (
-            re.frame &&
-            hiPerfReportRequest.hoverX >= re.frame.x - offset &&
-            hiPerfReportRequest.hoverX <= re.frame.x + re.frame.width + offset
-          ) {
-            HiPerfReportStruct.hoverStruct = re;
-            break;
-          }
-        }
-      } else {
-        HiPerfReportStruct.hoverStruct = hiPerfReportRequest.params.hoverStruct;
-      }
-      HiPerfReportStruct.selectStruct = hiPerfReportRequest.params.selectStruct;
-      let path = new Path2D();
-      for (let re of filter) {
-        HiPerfReportStruct.draw(hiPerfReportRequest.context, path, re, groupBy10MS);
-      }
-      groupBy10MS ? hiPerfReportRequest.context.fill(path) : hiPerfReportRequest.context.stroke(path);
-      hiPerfReportRequest.context.closePath();
-      drawSelection(hiPerfReportRequest.context, hiPerfReportRequest.params);
-      drawFlagLine(
-        hiPerfReportRequest.context,
-        hiPerfReportRequest.flagMoveInfo,
-        hiPerfReportRequest.flagSelectedInfo,
-        hiPerfReportRequest.startNS,
-        hiPerfReportRequest.endNS,
-        hiPerfReportRequest.totalNS,
-        hiPerfReportRequest.frame,
-        hiPerfReportRequest.slicesTime
-      );
-    }
-    // @ts-ignore
-    self.postMessage({
-      id: hiPerfReportRequest.id,
-      type: hiPerfReportRequest.type,
-      results: hiPerfReportRequest.canvas ? undefined : filter,
-      hover: HiPerfReportStruct.hoverStruct,
-    });
-  }
+  render(hiPerfReportRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>): void {}
 }
 
 export function HiPerfReport(
   arr: Array<any>,
   arr2: any,
   type: string,
-  res: Array<any>,
+  hiPerfFilters: Array<any>,
   startNS: number,
   endNS: number,
   totalNS: number,
@@ -187,26 +82,26 @@ export function HiPerfReport(
   groupBy10MS: boolean,
   intervalPerf: number,
   use: boolean
-) {
-  if (use && res.length > 0) {
+): void {
+  if (use && hiPerfFilters.length > 0) {
     let pns = (endNS - startNS) / frame.width;
     let y = frame.y;
-    for (let i = 0; i < res.length; i++) {
-      let it = res[i];
-      if ((it.startNS || 0) + (it.dur || 0) > startNS && (it.startNS || 0) < endNS) {
-        if (!it.frame) {
-          it.frame = {};
-          it.frame.y = y;
+    for (let i = 0; i < hiPerfFilters.length; i++) {
+      let hiPerfData = hiPerfFilters[i];
+      if ((hiPerfData.startNS || 0) + (hiPerfData.dur || 0) > startNS && (hiPerfData.startNS || 0) < endNS) {
+        if (!hiPerfData.frame) {
+          hiPerfData.frame = {};
+          hiPerfData.frame.y = y;
         }
-        it.frame.height = it.height;
-        HiPerfReportStruct.setFrame(it, pns, startNS, endNS, frame);
+        hiPerfData.frame.height = hiPerfData.height;
+        HiPerfReportStruct.setFrame(hiPerfData, pns, startNS, endNS, frame);
       } else {
-        it.frame = null;
+        hiPerfData.frame = null;
       }
     }
     return;
   }
-  res.length = 0;
+  hiPerfFilters.length = 0;
   if (arr) {
     let list: Array<any> = groupBy10MS ? arr2 : arr;
     let pns = (endNS - startNS) / frame.width;
@@ -227,13 +122,15 @@ export function HiPerfReport(
           pre[`${current.frame.x}`] = [];
           pre[`${current.frame.x}`].push(current);
           if (groupBy10MS) {
-            res.push(current);
+            hiPerfFilters.push(current);
           } else {
-            if (res.length == 0) {
-              res.push(current);
+            if (hiPerfFilters.length == 0) {
+              hiPerfFilters.push(current);
             }
-            if (res[res.length - 1] && Math.abs(current.frame.x - res[res.length - 1].frame.x) > 4) {
-              res.push(current);
+            if (hiPerfFilters[hiPerfFilters.length - 1] &&
+              Math.abs(current.frame.x - hiPerfFilters[hiPerfFilters.length - 1].frame.x) > 4
+            ) {
+              hiPerfFilters.push(current);
             }
           }
         }

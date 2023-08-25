@@ -40,7 +40,7 @@ export class TabCpuDetailsIrq extends BaseElement {
     this.tableNoData = this.shadowRoot!.querySelector<TableNoData>('#table-no-data');
     this.cpuDetailsLrqProgress = this.shadowRoot!.querySelector<LitProgressBar>('#loading');
     this.cpuDetailsLrqPie = this.shadowRoot!.querySelector<LitChartPie>('#chart-pie');
-    this.cpuDetailsLrqUsageTbl = this.shadowRoot!.querySelector<LitTable>('#tb-cpu-usage');
+    this.cpuDetailsLrqUsageTbl = this.shadowRoot!.querySelector<LitTable>('#tb-cpu-irq');
 
     this.cpuDetailsLrqUsageTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
@@ -96,15 +96,15 @@ export class TabCpuDetailsIrq extends BaseElement {
         label: {
           type: 'outer',
         },
-        tip: (obj) => {
+        tip: (irqObj) => {
           return `<div>
-                                <div>block:${obj.obj.block}</div> 
-                                <div>name:${obj.obj.value}</div>
-                                <div>min:${obj.obj.min}</div>
-                                <div>max:${obj.obj.max}</div>
-                                <div>average:${obj.obj.avg}</div>
-                                <div>duration:${obj.obj.sumTimeStr}</div>
-                                <div>ratio:${obj.obj.ratio}%</div>
+                                <div>block:${irqObj.obj.block}</div> 
+                                <div>name:${irqObj.obj.value}</div>
+                                <div>min:${irqObj.obj.min}</div>
+                                <div>max:${irqObj.obj.max}</div>
+                                <div>average:${irqObj.obj.avg}</div>
+                                <div>duration:${irqObj.obj.sumTimeStr}</div>
+                                <div>ratio:${irqObj.obj.ratio}%</div>
                             </div>
                                 `;
         },
@@ -134,7 +134,7 @@ export class TabCpuDetailsIrq extends BaseElement {
   }
 
   noData(value: boolean) {
-    this.shadowRoot!.querySelector<HTMLDivElement>('.chart-box')!.style.display = value ? 'none' : 'block';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.irq-chart-box')!.style.display = value ? 'none' : 'block';
     this.shadowRoot!.querySelector<HTMLDivElement>('.table-box')!.style.width = value ? '100%' : '60%';
   }
 
@@ -145,11 +145,11 @@ export class TabCpuDetailsIrq extends BaseElement {
     this.noData(false);
   }
 
-  queryLoginWorker(option: string, log: string, handler: (res: any) => void) {
+  queryLoginWorker(irqType: string, log: string, handler: (res: any) => void) {
     let cpuDetailsLrqTime = new Date().getTime();
     procedurePool.submitWithName(
       'logic1',
-      option,
+      irqType,
       {
         endTs: SpSchedulingAnalysis.endTs,
         total: SpSchedulingAnalysis.totalDur,
@@ -203,22 +203,22 @@ export class TabCpuDetailsIrq extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        .d-box{
+        .irq-box{
             display: flex;
             margin: 20px;
             height: calc(100vh - 165px);
         }
-        .chart-box{
+        .irq-chart-box{
             width: 40%;
         }
-        #tb-cpu-usage{
+        #tb-cpu-irq{
             height: 100%;
         }
         .table-box{
-            width: 60%;
-            max-height: calc(100vh - 165px);
             border: solid 1px var(--dark-border1,#e0e0e0);
             border-radius: 5px;
+            width: 60%;
+            max-height: calc(100vh - 165px);
             padding: 10px;
         }
         :host {
@@ -231,23 +231,23 @@ export class TabCpuDetailsIrq extends BaseElement {
         }
         </style>
         <lit-progress-bar id="loading" style="height: 1px;width: 100%"></lit-progress-bar>
-        <div class="d-box">
-            <div class="chart-box">
+        <div class="irq-box">
+            <div class="irq-chart-box">
                 <div style="text-align: center">Statistics By Duration</div>
                 <lit-chart-pie  id="chart-pie"></lit-chart-pie>
             </div>
             <div class="table-box">
                 <table-no-data id="table-no-data">
-                    <lit-table id="tb-cpu-usage" hideDownload>
+                    <lit-table id="tb-cpu-irq" hideDownload>
                         <lit-table-column width="100px" title="No" data-index="index" key="index" align="flex-start" order></lit-table-column>
                         <lit-table-column width="150px" title="block" data-index="block" key="block" align="flex-start" order></lit-table-column>
                         <!--<lit-table-column width="100px" title="id" data-index="id" key="id" align="flex-start" order></lit-table-column>-->
-                        <lit-table-column width="150px" title="name" data-index="value" key="value" align="flex-start" order></lit-table-column>
-                        <lit-table-column width="100px" title="min" data-index="min" key="min" align="flex-start" order></lit-table-column>
-                        <lit-table-column width="100px" title="max" data-index="max" key="max" align="flex-start" order></lit-table-column>
-                        <lit-table-column width="100px" title="average" data-index="avg" key="avg" align="flex-start" order></lit-table-column>
-                        <lit-table-column width="100px" title="duration" data-index="sumTimeStr" key="sumTimeStr" align="flex-start" order></lit-table-column>
-                        <lit-table-column width="100px" title="%" data-index="ratio" key="ratio" align="flex-start" order></lit-table-column>
+                        <lit-table-column title="name" data-index="value" key="value" align="flex-start" order width="150px"></lit-table-column>
+                        <lit-table-column title="min" data-index="min" key="min" align="flex-start" order width="100px"></lit-table-column>
+                        <lit-table-column title="max" data-index="max" key="max" align="flex-start" order width="100px"></lit-table-column>
+                        <lit-table-column title="average" data-index="avg" key="avg" align="flex-start" order width="100px"></lit-table-column>
+                        <lit-table-column title="duration" data-index="sumTimeStr" key="sumTimeStr" align="flex-start" order width="100px"></lit-table-column>
+                        <lit-table-column title="%" data-index="ratio" key="ratio" align="flex-start" order width="100px"></lit-table-column>
                     </lit-table>
                 </table-no-data>
             </div>

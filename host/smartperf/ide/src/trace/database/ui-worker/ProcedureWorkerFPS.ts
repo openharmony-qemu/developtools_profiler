@@ -235,20 +235,20 @@ export class FpsStruct extends BaseStruct {
   }
 
   static setFrame(fpsNode: FpsStruct, padding: number, startNS: number, endNS: number, totalNS: number, frame: Rect) {
-    let x1: number, x2: number;
+    let fpsLeftPointX: number, fpsRightPointX: number;
     if ((fpsNode.startNS || 0) < startNS) {
-      x1 = 0;
+      fpsLeftPointX = 0;
     } else {
-      x1 = ns2x(fpsNode.startNS || 0, startNS, endNS, totalNS, frame);
+      fpsLeftPointX = ns2x(fpsNode.startNS || 0, startNS, endNS, totalNS, frame);
     }
     if ((fpsNode.startNS || 0) + (fpsNode.dur || 0) > endNS) {
-      x2 = frame.width;
+      fpsRightPointX = frame.width;
     } else {
-      x2 = ns2x((fpsNode.startNS || 0) + (fpsNode.dur || 0), startNS, endNS, totalNS, frame);
+      fpsRightPointX = ns2x((fpsNode.startNS || 0) + (fpsNode.dur || 0), startNS, endNS, totalNS, frame);
     }
-    let getV: number = x2 - x1 <= 1 ? 1 : x2 - x1;
+    let getV: number = fpsRightPointX - fpsLeftPointX <= 1 ? 1 : fpsRightPointX - fpsLeftPointX;
     let rectangle: Rect = new Rect(
-      Math.floor(x1),
+      Math.floor(fpsLeftPointX),
       Math.ceil(frame.y + padding),
       Math.ceil(getV),
       Math.floor(frame.height - padding * 2)

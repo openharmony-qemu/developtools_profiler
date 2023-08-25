@@ -40,12 +40,14 @@ struct ParserConfig {
     int32_t taskConfigValue;
     int32_t appConfigValue;
     int32_t aniConfigValue;
+    int32_t binderConfigValue;
 };
 void from_json(const json& j, ParserConfig& v)
 {
     j.at("TaskPool").get_to(v.taskConfigValue);
     j.at("AppStartup").get_to(v.appConfigValue);
     j.at("AnimationAnalysis").get_to(v.aniConfigValue);
+    j.at("BinderRunnable").get_to(v.binderConfigValue);
 }
 } // namespace jsonns
 bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack)
@@ -283,6 +285,7 @@ bool RpcServer::ParserConfig(std::string parserConfigJson)
     ts_->UpdateAppStartTraceStatus(parserConfig.appConfigValue);
     ts_->UpdateAnimationTraceStatus(parserConfig.aniConfigValue);
     ts_->UpdateTaskPoolTraceStatus(parserConfig.taskConfigValue);
+    ts_->UpdateBinderRunnableTraceStatus(parserConfig.binderConfigValue);
     return true;
 }
 } // namespace TraceStreamer

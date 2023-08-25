@@ -27,38 +27,38 @@ import {
 describe('ProcedureWorkerEnergyState Test', () => {
   it('ProcedureWorkerEnergyStateTest01', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 40,
+      y: 27,
+      width: 300,
+      height: 370,
     };
-    let dataList = new Array();
-    dataList.push({
+    let energyStateDataList = new Array();
+    energyStateDataList.push({
       startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 20,
+      length: 51,
+      frame: { x: 0, y: 9, width: 105, height: 110 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    state(dataList, [{ length: 1 }], 1, 3, 2, frame, true);
+    energyStateDataList.push({ startNS: 1, dur: 42, length: 32 });
+    state(energyStateDataList, [{ length: 1 }], 1, 3, 2, frame, true);
   });
 
   it('ProcedureWorkerEnergyStateTest02', function () {
     let frame = {
       x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      y: 30,
+      width: 520,
+      height: 230,
     };
-    let dataList = new Array();
-    dataList.push({
+    let energyStateDataList = new Array();
+    energyStateDataList.push({
       startNS: 0,
       dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      length: 15,
+      frame: { x: 50, y: 59, width: 177, height: 70 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    state(dataList, [{ length: 0 }], 1, 3, 2, frame, false);
+    energyStateDataList.push({ startNS: 15, dur: 23, length: 17 });
+    state(energyStateDataList, [{ length: 0 }], 1, 3, 2, frame, false);
   });
 
   it('ProcedureWorkerEnergyStateTest03', function () {
@@ -115,61 +115,61 @@ describe('ProcedureWorkerEnergyState Test', () => {
 
   it('ProcedureWorkerEnergyStateTest12', function () {
     let energyStateRender = new EnergyStateRender();
-    let req = {
+    let energyStateReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
+      startNS: 7,
+      endNS: 8,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 50,
+        y: 25,
+        width: 500,
+        height: 220,
       },
       useCache: false,
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: '',
       context: {
-        font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        font: '14px sans-serif',
+        fillStyle: '#151212',
+        globalAlpha: 0.62,
         height: 150,
-        width: 100,
+        width: 110,
         canvas: {
-          clientWidth: 10,
+          clientWidth: 50,
         },
         clearRect: jest.fn(() => true),
-        beginPath: jest.fn(() => true),
+        measureText: jest.fn(() => true),
+        fillRect: jest.fn(() => []),
+        fillText: jest.fn(() => true),
         stroke: jest.fn(() => true),
         closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
-        fillText: jest.fn(() => true),
+        beginPath: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#1a4dff',
       isHover: '',
-      hoverX: 1,
+      hoverX: 22,
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
-      x: 20,
-      y: 20,
+      slicesTime: 584,
+      id: 2,
+      x: 32,
+      y: 30,
       width: 100,
       height: 100,
       params: {
-        isLive: false,
-        maxHeight: 2,
+        isLive: true,
+        maxHeight: 21,
         dpr: 1,
         hoverFuncStruct: '',
         selectFuncStruct: undefined,
       },
     };
     window.postMessage = jest.fn(() => true);
-    expect(energyStateRender.render(req, [{}], [])).toBeUndefined();
+    expect(energyStateRender.render(energyStateReq, [{}], [])).toBeUndefined();
   });
 });

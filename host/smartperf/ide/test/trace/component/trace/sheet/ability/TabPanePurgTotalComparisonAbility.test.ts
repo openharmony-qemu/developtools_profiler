@@ -40,22 +40,22 @@ describe('TabPanePurgTotalComparisonAbility Test', () => {
   let querySysPurgeableSelectionTab = sqlite.querySysPurgeableSelectionTab;
   querySysPurgeableSelectionTab.mockResolvedValue([
     {
-      value: 25165824,
-      name: '24.00MB',
+      value: 47865824,
+      name: '22.00MB',
     },
     {
-      value: 25165824,
-      name: '24.00MB',
+      value: 345165824,
+      name: '21.00MB',
     },
     {
-      value: 25165824,
-      name: '24.00MB',
+      value: 23465824,
+      name: '786.00MB',
     },
   ]);
   let data = [
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
+      startNs: 4546114061,
       type: 'ability',
       value: 0,
     },
@@ -63,13 +63,13 @@ describe('TabPanePurgTotalComparisonAbility Test', () => {
   let datalist = [
     {
       name: 'Snapshot2',
-      startNs: 9800526561,
+      startNs: 765526561,
       type: 'ability',
       value: 0,
     },
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
+      startNs: 476533061,
       type: 'ability',
       value: 0,
     },

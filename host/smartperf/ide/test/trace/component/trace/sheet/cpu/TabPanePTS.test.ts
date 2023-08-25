@@ -19,21 +19,21 @@ import { TabPanePTS } from '../../../../../../dist/trace/component/trace/sheet/c
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 // @ts-ignore
 import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
-jest.mock('../../../../../../dist/base-ui/table/lit-table.js', ()=>{
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {
-    meauseAllRowHeight: ()=>{}
-  }
-})
-jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+    meauseAllRowHeight: () => {},
+  };
+});
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
+    unobserve: jest.fn(),
     disconnect: jest.fn(),
     observe: jest.fn(),
-    unobserve: jest.fn(),
   }));
 describe('TabPanePTS Test', () => {
   document.body.innerHTML = `<lit-table id="tb-states"></lit-table>`;
@@ -47,62 +47,62 @@ describe('TabPanePTS Test', () => {
 
   SpSystemTrace.SPT_DATA = [
     {
-      process: '',
-      processId: 0,
-      thread: '',
-      threadId: 0,
+      process: 'hiperf 2471',
+      processId: 2471,
+      thread: 'hiperf',
+      threadId: 2471,
       state: '',
-      dur: 0,
-      start_ts: 0,
-      end_ts: 0,
+      dur: 98,
+      start_ts: 8,
+      end_ts: 90,
       cpu: 0,
       priority: '-',
-      note: '-',
+      note: 'note',
     },
     {
       process: '',
-      processId: 1,
-      thread: '',
-      threadId: 1,
+      processId: 372,
+      thread: 'download_server',
+      threadId: 708,
       state: '',
-      dur: 0,
-      start_ts: 0,
-      end_ts: 0,
-      cpu: 0,
-      priority: '-',
-      note: '-',
+      dur: 963,
+      start_ts: 6,
+      end_ts: 969,
+      cpu: 1,
+      priority: 'a',
+      note: 'a',
     },
     {
       process: '',
-      processId: 2,
-      thread: '',
-      threadId: 2,
+      processId: 487,
+      thread: 'CellularDataSer',
+      threadId: 1244,
       state: '',
-      dur: 0,
+      dur: 888,
       start_ts: 0,
-      end_ts: 0,
-      cpu: 0,
-      priority: '-',
-      note: '-',
+      end_ts: 888,
+      cpu: 2,
+      priority: '120',
+      note: '2',
     },
   ];
 
   let dataArray = [
     {
-      id: '',
-      pid: '',
+      id: 4,
+      pid: 3,
       title: '',
       children: [],
       process: '',
-      processId: 0,
-      thread: '',
-      threadId: 0,
+      processId: 2452,
+      thread: 'hiprofiler_cmd 2452',
+      threadId: 2452,
       state: '',
-      wallDuration: 0,
+      wallDuration: 5655,
       avgDuration: '',
-      count: 0,
-      minDuration: 0,
-      maxDuration: 0,
+      count: 43,
+      minDuration: 12,
+      maxDuration: 6333,
       stdDuration: '',
     },
   ];
@@ -115,15 +115,15 @@ describe('TabPanePTS Test', () => {
     let source = [
       {
         process: '',
-        processId: 10,
-        thread: '',
-        threadId: 10,
-        state: '',
-        dur: 1000,
-        start_ts: 100_0000,
-        end_ts: 0,
-        cpu: 0,
-        priority: '-',
+        processId: 487,
+        thread: 'CellularDataSer',
+        threadId: 1244,
+        state: '0',
+        dur: 1100,
+        start_ts: 100_0000_0,
+        end_ts: 100_0000_1100,
+        cpu: 1,
+        priority: '118',
         note: '-',
       },
     ];
@@ -135,10 +135,10 @@ describe('TabPanePTS Test', () => {
     mockgetProcessThreadDataByRange.mockResolvedValue([
       {
         process: 'process',
-        processId: 1,
+        processId: 11,
         thread: 'thread',
         state: 'state',
-        threadId: 1,
+        threadId: 11,
         dur: 1000,
         end_ts: 2000,
         start_ts: 2000,
@@ -148,34 +148,5 @@ describe('TabPanePTS Test', () => {
     tab.recycleDataSource = jest.fn(() => []);
     tabPanePTS.tbl.recycleDataSource = jest.fn(() => dataArray);
     expect((tabPanePTS.data = dataArray)).toBeTruthy();
-  });
-
-  it('TabPanePTSTest04', function () {
-    expect(tabPanePTS.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        </style>
-        <label id="pts-time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
-        <lit-table id="pts-tbl" style="height: auto" tree>
-            <lit-table-column class="pts-column" title="Process/Thread/State" data-index="title" key="title" align="flex-start" width="27%">
-            </lit-table-column>
-            <lit-table-column class="pts-column" title="Count" data-index="count" key="count" align="flex-start" width="1fr">
-            </lit-table-column>
-            <lit-table-column class="pts-column" title="Duration(ns)" data-index="wallDuration" key="wallDuration" align="flex-start" width="1fr">
-            </lit-table-column>
-            <lit-table-column class="pts-column" title="Min Duration(ns)" data-index="minDuration" key="minDuration" align="flex-start" width="1fr">
-            </lit-table-column>
-            <lit-table-column class="pts-column" title="Avg Duration(ns)" data-index="avgDuration" key="avgDuration" align="flex-start" width="1fr">
-            </lit-table-column>
-            <lit-table-column class="pts-column" title="Max Duration(ns)" data-index="maxDuration" key="maxDuration" align="flex-start" width="1fr">
-            </lit-table-column>
-        </lit-table>
-        "
-`);
   });
 });

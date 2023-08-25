@@ -73,13 +73,13 @@ describe('SpHiSysEventChart Test', () => {
   let powerData = sqlite.queryPowerData;
   let power = [
     {
-      startNS: 5999127353,
+      startNS: 5999127351,
       eventName: 'POWER_IDE_AUDIO',
       appKey: 'APPNAME',
       eventValue: 'com.example.himusicdemo,com.example.himusicdemo_js,com.example.himusicdemo_app',
     },
     {
-      startNS: 5999127353,
+      startNS: 1291120516,
       eventName: 'POWER_IDE_AUDIO',
       appKey: 'BACKGROUND_ENERGY',
       eventValue: '854,258,141',
@@ -104,13 +104,13 @@ describe('SpHiSysEventChart Test', () => {
   let queryConfigSysEventAppName = sqlite.queryConfigSysEventAppName;
   let location = [
     {
-      ts: 1005938319,
+      ts: 100652222,
       eventName: 'GNSS_STATE',
       appKey: 'TYPE',
       Value: '1',
     },
     {
-      ts: 3005933657,
+      ts: 3333332224,
       eventName: 'GNSS_STATE',
       appKey: 'TAG',
       Value: '2',
@@ -119,13 +119,13 @@ describe('SpHiSysEventChart Test', () => {
 
   let lock = [
     {
-      ts: 1005938319,
+      ts: 96555551,
       eventName: 'POWER_RUNNINGLOCK',
       appKey: 'TYPE',
       Value: '1',
     },
     {
-      ts: 3005933657,
+      ts: 333234222,
       eventName: 'POWER_RUNNINGLOCK',
       appKey: 'TAG',
       Value: '2',
@@ -134,13 +134,13 @@ describe('SpHiSysEventChart Test', () => {
 
   let work = [
     {
-      ts: 1005938319,
+      ts: 100593835619,
       eventName: 'WORK_ADD',
       appKey: 'TYPE',
       Value: '1',
     },
     {
-      ts: 3005933657,
+      ts: 2315652241,
       eventName: 'WORK_STOP',
       appKey: 'TAG',
       Value: '2',
@@ -165,7 +165,7 @@ describe('SpHiSysEventChart Test', () => {
   it('spHiSysEventChartTest02', function () {
     let result = [
       {
-        ts: 1005938319,
+        ts: 210000001,
         eventName: 'WORK_START',
         appKey: 'TYPE',
         Value: '1',
@@ -213,7 +213,7 @@ describe('SpHiSysEventChart Test', () => {
         { count: 0, startNs: 6005938319, token: undefined, type: 1 },
       ],
       '1': [
-        { count: 1, startNs: 1005938319, state: 'start', type: 2 },
+        { count: 1, startNs: 210000001, state: 'start', type: 2 },
         { count: 2, startNs: 3005933657, state: 'start', type: 2 },
         { count: 1, startNs: 4005938319, state: 'stop', type: 2 },
         { count: 2, startNs: 5005933657, state: 'start', type: 2 },
@@ -222,7 +222,7 @@ describe('SpHiSysEventChart Test', () => {
         { count: 5, startNs: 10005938319, state: 'start', type: 2 },
       ],
       '2': [
-        { count: 1, startNs: 1005938319, type: 0 },
+        { count: 1, startNs: 210000001, type: 0 },
         { count: 0, startNs: undefined, type: 0 },
       ],
     });
@@ -235,37 +235,37 @@ describe('SpHiSysEventChart Test', () => {
   it('spHiSysEventChartTest04', function () {
     let result = [
       {
-        startNS: 5999127353,
+        startNS: 33255112,
         eventName: 'POWER_IDE_AUDIO',
         appKey: 'APPNAME',
         eventValue: 'com.example.himusicdemo,com.example.himusicdemo_js,com.example.himusicdemo_app',
       },
       {
-        startNS: 5999127353,
+        startNS: 5999127352,
         eventName: 'POWER_IDE_AUDIO',
         appKey: 'BACKGROUND_ENERGY',
         eventValue: '854,258,141',
       },
       {
-        startNS: 5999127353,
+        startNS: 223224352,
         eventName: 'POWER_IDE_BLUETOOTH',
         appKey: 'APPNAME',
         eventValue: 'com.ohos.settings,bt_switch,bt_switch_js,bt_switch_app',
       },
       {
-        startNS: 5999127353,
+        startNS: 86222222,
         eventName: 'POWER_IDE_BLUETOOTH',
         appKey: 'BACKGROUND_ENERGY',
         eventValue: '76,12,43,431',
       },
       {
-        startNS: 5999127388,
+        startNS: 5999127382,
         eventName: 'POWER_IDE_CAMERA',
         appKey: 'APPNAME',
         eventValue: 'com.ohos.camera,com.ohos.camera_app,com.ohos.camera_js,com.ohos.camera_ts',
       },
       {
-        startNS: 5999127388,
+        startNS: 264166822,
         eventName: 'POWER_IDE_CAMERA',
         appKey: 'BACKGROUND_ENERGY',
         eventValue: '375,475,255,963',

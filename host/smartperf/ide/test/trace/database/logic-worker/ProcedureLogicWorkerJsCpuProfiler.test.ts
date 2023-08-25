@@ -14,9 +14,7 @@
  */
 
 //@ts-ignore
-import {
-  ProcedureLogicWorkerJsCpuProfiler
-} from '../../../../dist/trace/database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
+import { ProcedureLogicWorkerJsCpuProfiler } from '../../../../dist/trace/database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
 
 describe('ProcedureLogicWorkerJsCpuProfiler Test', () => {
   it('ProcedureLogicWorkerJsCpuProfiler01', function () {
@@ -27,11 +25,11 @@ describe('ProcedureLogicWorkerJsCpuProfiler Test', () => {
   it('ProcedureLogicWorkerJsCpuProfiler02', function () {
     let procedureLogicWorkerJsCpuProfiler = new ProcedureLogicWorkerJsCpuProfiler();
     let data = {
-      id: "3b21cea8-3554-4aa6-8e4d-7d30672dedca",
-      type: "jsCpuProfiler-init",
+      id: '3b21cea8-3554-4aa6-8e4d-7d30672dedca',
+      type: 'jsCpuProfiler-init',
       params: {
-        list: new ArrayBuffer(20)
-      }
+        list: new ArrayBuffer(20),
+      },
     };
     window.postMessage = jest.fn(() => true);
     expect(procedureLogicWorkerJsCpuProfiler.handle(data)).toBeUndefined();
@@ -40,25 +38,25 @@ describe('ProcedureLogicWorkerJsCpuProfiler Test', () => {
   it('ProcedureLogicWorkerJsCpuProfiler03', function () {
     let procedureLogicWorkerJsCpuProfiler = new ProcedureLogicWorkerJsCpuProfiler();
     let data = {
-      type: "jsCpuProfiler-call-chain",
+      type: 'jsCpuProfiler-call-chain',
       params: {
-        list: []
+        list: [],
       },
-      id: "3b21cea8-3554-4aa6-8e4d-7d30672dedca"
+      id: '3b21cea8-3554-4aa6-8e4d-7d30672dedca',
     };
     window.postMessage = jest.fn(() => true);
-    procedureLogicWorkerJsCpuProfiler.dataCache = []
+    procedureLogicWorkerJsCpuProfiler.dataCache = [];
     expect(procedureLogicWorkerJsCpuProfiler.handle(data)).toBeUndefined();
   });
 
   it('ProcedureLogicWorkerJsCpuProfiler04', function () {
     let procedureLogicWorkerJsCpuProfiler = new ProcedureLogicWorkerJsCpuProfiler();
     let data = {
-      type: "jsCpuProfiler-samples",
+      type: 'jsCpuProfiler-samples',
       params: {
-        list: []
+        list: [],
       },
-      id: "3b21cea8-3554-4aa6-8e4d-7d30672dedca"
+      id: '3b21cea8-3554-4aa6-8e4d-7d30672dedca',
     };
     window.postMessage = jest.fn(() => true);
     expect(procedureLogicWorkerJsCpuProfiler.handle(data)).toBeUndefined();
@@ -67,15 +65,17 @@ describe('ProcedureLogicWorkerJsCpuProfiler Test', () => {
   it('ProcedureLogicWorkerJsCpuProfiler05', function () {
     let procedureLogicWorkerJsCpuProfiler = new ProcedureLogicWorkerJsCpuProfiler();
     let data = {
-      type: "jsCpuProfiler-call-tree",
-      params: [{
-        startTime: 0,
-        endTime: 0,
-        children: [],
-        samplesIds: [],
-        isSelect: false
-      }],
-      id: "3b21cea8-3554-4aa6-8e4d-7d30672dedca"
+      type: 'jsCpuProfiler-call-tree',
+      params: [
+        {
+          startTime: 0,
+          endTime: 0,
+          children: [],
+          samplesIds: [],
+          isSelect: false,
+        },
+      ],
+      id: '3b21cea8-3554-4aa6-8e4d-7d30672dedca',
     };
     window.postMessage = jest.fn(() => true);
     expect(procedureLogicWorkerJsCpuProfiler.handle(data)).toBeUndefined();
@@ -84,15 +84,17 @@ describe('ProcedureLogicWorkerJsCpuProfiler Test', () => {
   it('ProcedureLogicWorkerJsCpuProfiler06', function () {
     let procedureLogicWorkerJsCpuProfiler = new ProcedureLogicWorkerJsCpuProfiler();
     let data = {
-      type: "jsCpuProfiler-bottom-up",
-      params: [{
-        startTime: 0,
-        endTime: 0,
-        children: [],
-        samplesIds: [],
-        isSelect: false
-      }],
-      id: "3b21cea8-3554-4aa6-8e4d-7d30672dedca"
+      type: 'jsCpuProfiler-bottom-up',
+      params: [
+        {
+          startTime: 0,
+          endTime: 0,
+          children: [],
+          samplesIds: [],
+          isSelect: false,
+        },
+      ],
+      id: '3b21cea8-3554-4aa6-8e4d-7d30672dedca',
     };
     window.postMessage = jest.fn(() => true);
     expect(procedureLogicWorkerJsCpuProfiler.handle(data)).toBeUndefined();
@@ -101,13 +103,13 @@ describe('ProcedureLogicWorkerJsCpuProfiler Test', () => {
   it('ProcedureLogicWorkerJsCpuProfiler07', function () {
     let procedureLogicWorkerJsCpuProfiler = new ProcedureLogicWorkerJsCpuProfiler();
     let data = {
-      type: "jsCpuProfiler-statistics",
+      type: 'jsCpuProfiler-statistics',
       params: {
         leftNs: 0,
         rightNs: 10000000000,
-        data: []
+        data: [],
       },
-      id: "3b21cea8-3554-4aa6-8e4d-7d30672dedca"
+      id: '3b21cea8-3554-4aa6-8e4d-7d30672dedca',
     };
     window.postMessage = jest.fn(() => true);
     expect(procedureLogicWorkerJsCpuProfiler.handle(data)).toBeUndefined();

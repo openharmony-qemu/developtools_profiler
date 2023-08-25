@@ -210,8 +210,7 @@ export class TabPanePerfSample extends BaseElement {
   }
 
   initHtml(): string {
-    return `
-<style>
+    return `<style>
 :host{
     display: flex;
     flex-direction: column;

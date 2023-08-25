@@ -16,20 +16,20 @@
 import { ChartStruct } from '../../trace/bean/FrameChartStruct.js';
 
 export class PerfFile {
+  path: string = '';
   fileId: number = 0;
   symbol: string = '';
-  path: string = '';
   fileName: string = '';
 
-  static setFileName(data: PerfFile) {
-    if (data.path) {
-      let number = data.path.lastIndexOf('/');
+  static setFileName(perfData: PerfFile) {
+    if (perfData.path) {
+      let number = perfData.path.lastIndexOf('/');
       if (number > 0) {
-        data.fileName = data.path.substring(number + 1);
+        perfData.fileName = perfData.path.substring(number + 1);
         return;
       }
     }
-    data.fileName = data.path;
+    perfData.fileName = perfData.path;
   }
 }
 
@@ -49,23 +49,23 @@ export class PerfCall {
 export class PerfCallChain {
   tid: number = 0;
   pid: number = 0;
+  parentId: string = ''; //合并之后区分的id
+  id: string = '';
+  fileId: number = 0;
+  symbolId: number = 0;
+  topDownMerageId: string = ''; //top down合并使用的id
+  topDownMerageParentId: string = ''; //top down合并使用的id
+  bottomUpMerageId: string = ''; //bottom up合并使用的id
+  bottomUpMerageParentId: string = ''; //bottom up合并使用的id
+  sampleId: number = 0;
+  callChainId: number = 0;
   name: string = '';
   fileName: string = '';
   threadState: string = '';
   startNS: number = 0;
   dur: number = 0;
-  sampleId: number = 0;
-  callChainId: number = 0;
   vaddrInFile: number = 0;
-  fileId: number = 0;
-  symbolId: number = 0;
   path: string = '';
-  parentId: string = ''; //合并之后区分的id
-  id: string = '';
-  topDownMerageId: string = ''; //top down合并使用的id
-  topDownMerageParentId: string = ''; //top down合并使用的id
-  bottomUpMerageId: string = ''; //bottom up合并使用的id
-  bottomUpMerageParentId: string = ''; //bottom up合并使用的id
   depth: number = 0;
   canCharge: boolean = true;
   previousNode: PerfCallChain | undefined = undefined; //将list转换为一个链表结构
@@ -75,25 +75,25 @@ export class PerfCallChain {
 export class PerfCallChainMerageData extends ChartStruct {
   id: string = '';
   parentId: string = '';
+  tid: number = 0;
+  pid: number = 0;
   currentTreeParentNode: PerfCallChainMerageData | undefined = undefined;
   symbolName: string = '';
-  symbol: string = '';
   libName: string = '';
+  symbol: string = '';
   path: string = '';
   self: string = '0s';
   weight: string = '';
   weightPercent: string = '';
   selfDur: number = 0;
   dur: number = 0;
-  tid: number = 0;
-  pid: number = 0;
-  isStore = 0;
-  canCharge: boolean = true;
   children: PerfCallChainMerageData[] = [];
   initChildren: PerfCallChainMerageData[] = [];
+  isStore = 0;
+  isSelected: boolean = false;
+  canCharge: boolean = true;
   type: number = 0;
   vaddrInFile: number = 0;
-  isSelected: boolean = false;
   searchShow: boolean = true;
 }
 

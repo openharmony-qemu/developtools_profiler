@@ -118,7 +118,7 @@ export class SpSdkChart {
   }
 
   private createSliceSql(startTime: number, tableName: string, columns: Array<any>, where?: string): string {
-    let selectSql = 'select ';
+    let sliceSelectSql = 'select ';
     for (let i = 0; i < columns.length; i++) {
       let column = columns[i];
       if (column.column == 'start_ts') {
@@ -128,16 +128,16 @@ export class SpSdkChart {
         column.column = '(end_ts - ' + startTime + ') AS end_ts';
       }
       if (i == columns.length - 1) {
-        selectSql = selectSql + column.column + ' ';
+        sliceSelectSql = sliceSelectSql + column.column + ' ';
       } else {
-        selectSql = selectSql + column.column + ', ';
+        sliceSelectSql = sliceSelectSql + column.column + ', ';
       }
     }
-    selectSql = selectSql + 'from ' + tableName;
+    sliceSelectSql = sliceSelectSql + 'from ' + tableName;
     if (where != undefined) {
-      selectSql = selectSql + ' ' + where;
+      sliceSelectSql = sliceSelectSql + ' ' + where;
     }
-    return selectSql;
+    return sliceSelectSql;
   }
 
   private createMaxValueSql(tableName: string, where?: string): string {

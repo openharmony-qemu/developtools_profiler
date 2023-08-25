@@ -29,14 +29,14 @@ import { Rect } from '../../../dist/trace/database/ProcedureWorkerCommon';
 
 describe('CpuAbilityMonitorStruct Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
+  canvas.width = 14;
+  canvas.height = 11;
   const ctx = canvas.getContext('2d');
 
   const data = {
     frame: {
-      x: 20,
-      y: 20,
+      x: 201,
+      y: 204,
       width: 100,
       height: 100,
     },
@@ -90,44 +90,44 @@ describe('CpuAbilityMonitorStruct Test', () => {
 
   it('CpuAbilityMonitorStructTest06', function () {
     let cpuAbilityRender = new CpuAbilityRender();
-    let req = {
+    let cpuAbilityReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
+      startNS: 2,
+      endNS: 3,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 11,
+        y: 11,
+        width: 90,
+        height: 90,
       },
       useCache: false,
       range: {
-        refresh: '',
+        refresh: 'refresh',
       },
       canvas: '',
       context: {
         font: '11px sans-serif',
         fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        globalAlpha: 0.7,
       },
-      lineColor: '',
+      lineColor: '#ec407a',
       isHover: '',
-      hoverX: 1,
+      hoverX: 0,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
-      flagSelectedInfo: '',
-      slicesTime: 3,
+      flagSelectedInfo: 'k',
+      slicesTime: 1,
       id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 12,
+      y: 12,
+      width: 102,
+      height: 102,
     };
     window.postMessage = jest.fn(() => true);
-    expect(cpuAbilityRender.render(req, [], [])).toBeUndefined();
+    expect(cpuAbilityRender.render(cpuAbilityReq, [], [])).toBeUndefined();
   });
   it('CpuAbilityMonitorStructTest07', function () {
     let cpuAbilityRender = new CpuAbilityRender();

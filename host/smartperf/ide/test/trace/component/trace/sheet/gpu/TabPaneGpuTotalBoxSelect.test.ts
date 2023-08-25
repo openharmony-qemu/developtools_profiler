@@ -25,9 +25,9 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
+    unobserve: jest.fn(),
     disconnect: jest.fn(),
     observe: jest.fn(),
-    unobserve: jest.fn(),
   }));
 
 describe('TabPaneGpuTotalBoxSelect Test', () => {

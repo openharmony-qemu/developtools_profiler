@@ -16,11 +16,10 @@
 // @ts-ignore
 import { TabPaneIrqCounter } from '../../../../../../dist/trace/component/trace/sheet/irq/TabPaneIrqCounter.js';
 // @ts-ignore
-import { IrqStruct } from '../../../../../../dist/trace/database/ui-worker/ProcedureWorkerIrq.js';
-
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
+import { IrqStruct } from '../../../../../../dist/trace/database/ui-worker/ProcedureWorkerIrq.js';
 
 window.ResizeObserver =
   window.ResizeObserver ||

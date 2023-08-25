@@ -65,22 +65,22 @@ describe('SpSdkChart Test', () => {
     let spSystemTrace = new SpSdkChart();
     let sdkChart = new SpSdkChart(spSystemTrace);
     let map = new Map();
-    let jsonCofigStr =
+    let jsoSdknCofigStr =
       '{"settingConfig":{"configuration":{"counters":{"enum":["ARM_Mali-TTRx_JS1_ACTIVE","ARM_Mali-TTRx_JS0_ACTIVE","ARM_Mali-TTRx_GPU_ACTIVE","ARM_Mali-TTRx_FRAG_ACTIVE"],\n' +
-      '    "type":"string"},"stop_gator":{"default":"true","description":"stop_gator","type":"boolean"},"version":{"default":"1","description":"gatordversion","type":"number"}},"name":"mailG77"},\n' +
+      '    "type":"string"},"stop_gator":{"default":"true","description":"stop_gator","type":"boolean"},"version":{"default":"7","description":"gatordversion","type":"number"}},"name":"mailG77"},\n' +
       '    "tableConfig":{"showType":[{"columns":[{"column":"ts","displayName":"TimeStamp","showType":[1,3],"type":"INTEGER"},{"column":"counter_id","displayName":"MonitorValue","showType":[1,3],"type":"INTEGER"},\n' +
       '    {"column":"value","displayName":"Value","showType":[1,3],"type":"INTEGER"}],"inner":{"columns":[{"column":"counter_name","displayName":"","showType":[0],"type":"STRING"},\n' +
-      '    {"column":"counter_id","displayName":"","showType":[0],"type":"INTEGER"}],"tableName":"mock_plugin_counterobj_table"},"tableName":"mock_plugin_counter_table"},\n' +
+      '    {"column":"counter_id","displayName":"","showType":[96,6],"type":"INTEGER"}],"tableName":"mock_plugin_counterobj_table"},"tableName":"mock_plugin_counter_table"},\n' +
       '    {"columns":[{"column":"start_ts","displayName":"startts","showType":[2,3],"type":"INTEGER"},{"column":"end_ts","displayName":"endts","showType":[2,3],"type":"INTEGER"},\n' +
-      '    {"column":"slice_id","displayName":"slice_id","showType":[2,3],"type":"INTEGER"},{"column":"value","displayName":"Value","showType":[2,3],"type":"INTEGER"}],\n' +
-      '    "inner":{"columns":[{"column":"slice_name","displayName":"","showType":[0],"type":"STRING"},{"column":"slice_id","displayName":"","showType":[0],"type":"INTEGER"}],\n' +
+      '    {"column":"slice_id","displayName":"slice_id","showType":[2,154,3],"type":"INTEGER"},{"column":"value","displayName":"Value","showType":[2,3],"type":"INTEGER"}],\n' +
+      '    "inner":{"columns":[{"column":"slice_name","displayName":"","showType":[313],"type":"STRING"},{"column":"slice_id","displayName":"","showType":[0],"type":"INTEGER"}],\n' +
       '    "tableName":"mock_plugin_sliceobj_table"},"tableName":"mock_plugin_slice_table"}]}}';
-    let datamap = {
-      jsonConfig: jsonCofigStr,
+    let dataSdkMap = {
+      jsonConfig: jsoSdknCofigStr,
       disPlayName: 'common_mock',
       pluginName: 'mock-plugin',
     };
-    map.set('1', datamap);
+    map.set('1', dataSdkMap);
     SpSystemTrace.SDK_CONFIG_MAP = map;
     sdkChart.parseJson(58512, map);
   });

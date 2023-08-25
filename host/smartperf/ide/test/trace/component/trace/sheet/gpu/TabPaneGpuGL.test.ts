@@ -15,11 +15,12 @@
 //@ts-ignore
 import { TabPaneGpuGL } from '../../../../../../dist/trace/component/trace/sheet/gpu/TabPaneGpuGL.js';
 
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
-const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 // @ts-ignore
 window.ResizeObserver =

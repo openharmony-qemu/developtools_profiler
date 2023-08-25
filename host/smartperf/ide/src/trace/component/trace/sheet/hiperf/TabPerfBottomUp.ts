@@ -129,18 +129,18 @@ export class TabpanePerfBottomUp extends BaseElement {
     };
 
     //@ts-ignore
-    const data = evt.detail.data as PerfBottomUpStruct;
-    callStack!.push(data);
-    if (data.parentNode && data.parentNode!.symbolName !== 'root') {
-      callStack.push(data.parentNode!);
-      getParent(data.parentNode!);
+    const bottomUpData = evt.detail.data as PerfBottomUpStruct;
+    callStack!.push(bottomUpData);
+    if (bottomUpData.parentNode && bottomUpData.parentNode!.symbolName !== 'root') {
+      callStack.push(bottomUpData.parentNode!);
+      getParent(bottomUpData.parentNode!);
     }
     callStack.reverse();
-    getCallStackChildren(data.children);
+    getCallStackChildren(bottomUpData.children);
     this.stackTable!.recycleDataSource = callStack;
-    data.isSelected = true;
-    this.stackTable?.clearAllSelection(data);
-    this.stackTable?.setCurrentSelection(data);
+    bottomUpData.isSelected = true;
+    this.stackTable?.clearAllSelection(bottomUpData);
+    this.stackTable?.setCurrentSelection(bottomUpData);
     // @ts-ignore
     if (evt.detail.callBack) {
       // @ts-ignore

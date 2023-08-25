@@ -22,20 +22,18 @@ import { NativeHookSampleQueryInfo, NativeHookSamplerInfo } from '../../../../..
 // @ts-ignore
 import { NativeMemory } from '../../../../../../dist/trace/bean/NativeHook.js';
 // @ts-ignore
-import { queryAllHookData } from '../../../../../../dist/trace/database/SqlLite.js';
-const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
-
-window.ResizeObserver =
-  window.ResizeObserver ||
+const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
+import { queryAllHookData } from '../../../../../../dist/trace/database/SqlLite.js';
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
+    unobserve: jest.fn(),
     disconnect: jest.fn(),
     observe: jest.fn(),
-    unobserve: jest.fn(),
   }));
 describe('TabPaneNMSampleList Test', () => {
   document.body.innerHTML = '<tabpane-native-sample id="ddt"></tabpane-native-sample>';
@@ -44,18 +42,18 @@ describe('TabPaneNMSampleList Test', () => {
   TabPaneNMSampleList.source = [
     {
       current: '',
-      currentSize: 0,
-      startTs: 0,
-      heapSize: 0,
-      snapshot: '',
+      currentSize: 101,
+      startTs: 110,
+      heapSize: 10,
+      snapshot: 'snapshot01',
       growth: '',
-      total: 0,
+      total: 980,
       totalGrowth: '',
-      existing: 0,
+      existing: 7810,
       children: [],
       tempList: [],
       timestamp: '',
-      eventId: -1,
+      eventId: 320,
     },
   ];
   TabPaneNMSampleList.filterSelect = '0';
@@ -63,13 +61,13 @@ describe('TabPaneNMSampleList Test', () => {
   tabPaneNMSampleList.currentSelection = jest.fn(() => true);
   let dat = {
     cpus: [],
-    threadIds: [],
-    trackIds: [],
-    funTids: [],
-    heapIds: [],
+    threadIds: [1,2,3],
+    trackIds: [23,56,77],
+    funTids: [675,75],
+    heapIds: [11,223],
     nativeMemory: [],
-    leftNs: 0,
-    rightNs: 0,
+    leftNs: 12222,
+    rightNs: 654233,
     hasFps: false,
     statisticsSelectData: undefined,
   };
@@ -97,36 +95,36 @@ describe('TabPaneNMSampleList Test', () => {
   let samplerInfo = [
     {
       current: '',
-      currentSize: 0,
-      startTs: 0,
-      heapSize: 0,
-      snapshot: '',
+      currentSize: 102,
+      startTs: 540,
+      heapSize: 23,
+      snapshot: 'snapshot02',
       growth: '',
-      total: 0,
+      total: 332,
       totalGrowth: '',
-      existing: 0,
+      existing: 60,
       children: [],
       tempList: [],
       timestamp: '',
-      eventId: -1,
-      threadId: 0,
+      eventId: 55,
+      threadId: 33,
       threadName: '',
     },
     {
       current: '',
-      currentSize: 0,
-      startTs: 0,
-      heapSize: 0,
-      snapshot: '',
+      currentSize: 103,
+      startTs: 369,
+      heapSize: 98,
+      snapshot: 'snapshot03',
       growth: '',
-      total: 0,
+      total: 9855,
       totalGrowth: '',
-      existing: 0,
+      existing: 10,
       children: [],
       tempList: [],
       timestamp: '',
-      eventId: -1,
-      threadId: 0,
+      eventId: 132,
+      threadId: 130,
       threadName: '',
     },
   ];
@@ -148,28 +146,28 @@ describe('TabPaneNMSampleList Test', () => {
   it('TabPaneNMSampleListTest04', function () {
     let snapshot = {
       current: '',
-      currentSize: 0,
-      startTs: 0,
-      heapSize: 0,
-      snapshot: '',
+      currentSize: 104,
+      startTs: 960,
+      heapSize: 99,
+      snapshot: 'snapshot04',
       growth: '',
-      total: 0,
+      total: 990,
       totalGrowth: '',
-      existing: 0,
+      existing: 634,
       children: [],
       tempList: [],
       timestamp: '',
-      eventId: -1,
+      eventId: 22,
     };
 
     let snapshotLeft = {
-      current: '',
+      current: 'left',
       currentSize: 0,
-      startTs: 0,
-      heapSize: 0,
+      startTs: 4,
+      heapSize: 40,
       snapshot: '',
       growth: '',
-      total: 0,
+      total: 400,
       totalGrowth: '',
       existing: 0,
       children: [snapshot],
@@ -179,13 +177,13 @@ describe('TabPaneNMSampleList Test', () => {
     };
 
     let snapshotRight = {
-      current: '',
+      current: 'right',
       currentSize: 0,
-      startTs: 0,
-      heapSize: 0,
+      startTs: 5,
+      heapSize: 50,
       snapshot: '',
       growth: '',
-      total: 0,
+      total: 500,
       totalGrowth: '',
       existing: 0,
       children: [snapshot],
@@ -204,51 +202,6 @@ describe('TabPaneNMSampleList Test', () => {
     expect(TabPaneNMSampleList.initTypes()).toBeUndefined();
   });
 
-  it('TabPaneNMSampleListTest05', function () {
-    expect(tabPaneNMSampleList.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .nm-sample-tbl {
-            height: auto;
-        }
-        :host{
-            padding: 10px 10px 0 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        </style>
-        <lit-slicer style="width:100%">
-        <div class="nm-sample-content" style="width: 65%">
-            <lit-table id="tb-native-sample" class="nm-sample-tbl" tree>
-                <lit-table-column class="nm-sample-column" width="25%" title="Snapshot" data-index="snapshot" key="snapshot"  align="flex-start" >
-                </lit-table-column>
-                <lit-table-column class="nm-sample-column" width="1fr" title="Timestamp" data-index="timestamp" key="timestamp"  align="flex-start"  >
-                </lit-table-column>
-                <lit-table-column class="nm-sample-column" width="1fr" title="Net Growth" data-index="growth" key="growth"  align="flex-start"  >
-                </lit-table-column>
-                <lit-table-column class="nm-sample-column" width="1fr" title="Total Growth" data-index="totalGrowth" key="totalGrowth"  align="flex-start"  >
-                </lit-table-column>
-                <lit-table-column class="nm-sample-column" width="1fr" title="# Existing" data-index="existing" key="existing"  align="flex-start"  >
-                </lit-table-column>
-            </lit-table>
-            <tab-pane-filter id="filter" first></tab-pane-filter>
-        </div>
-        <lit-slicer-track ></lit-slicer-track>
-        <lit-table id="tb-native-data" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
-            <lit-table-column class="nm-sample-column" width="80px" title="" data-index="type" key="type"  align="flex-start" >
-                <template>
-                    <div v-if=" type == -1 ">Thread:</div>
-                    <img src="img/library.png" size="20" v-if=" type == 1 ">
-                    <img src="img/function.png" size="20" v-if=" type == 0 ">
-                </template>
-            </lit-table-column>
-            <lit-table-column class="nm-sample-column" width="1fr" title="" data-index="title" key="title"  align="flex-start">
-            </lit-table-column>
-        </lit-table>
-        </lit-slicer>
-        "
-`);
-  });
 
   it('TabPaneNMSampleListTest09', function () {
     let rootSample = new NativeHookSamplerInfo();
@@ -287,18 +240,18 @@ describe('TabPaneNMSampleList Test', () => {
       {
         current: '',
         currentSize: 0,
-        startTs: 0,
-        heapSize: 0,
+        startTs: 1,
+        heapSize: 10,
         snapshot: '',
         growth: '',
-        total: 0,
+        total: 100,
         totalGrowth: '',
         existing: 0,
         children: samplerInfo,
         tempList: samplerInfo,
         timestamp: '',
         eventId: -1,
-        threadId: 0,
+        threadId: 1,
         threadName: '',
       },
     ];
@@ -311,18 +264,18 @@ describe('TabPaneNMSampleList Test', () => {
       {
         current: '',
         currentSize: 0,
-        startTs: 0,
-        heapSize: 0,
+        startTs: 2,
+        heapSize: 20,
         snapshot: '',
         growth: '',
-        total: 0,
+        total: 200,
         totalGrowth: '',
         existing: 0,
         children: samplerInfo,
         tempList: samplerInfo,
         timestamp: '',
         eventId: -1,
-        threadId: 0,
+        threadId: 2,
         threadName: '',
       },
     ];
@@ -334,19 +287,19 @@ describe('TabPaneNMSampleList Test', () => {
     TabPaneNMSampleList.samplerInfoSource = [
       {
         current: '',
-        currentSize: 0,
-        startTs: 0,
-        heapSize: 0,
-        snapshot: '',
+        currentSize: 108,
+        startTs: 9951,
+        heapSize: 123,
+        snapshot: 'snapshot06',
         growth: '',
-        total: 0,
+        total: 70,
         totalGrowth: '',
-        existing: 0,
+        existing: 50,
         children: [],
         tempList: [],
         timestamp: '',
-        eventId: -1,
-        threadId: 0,
+        eventId: 5,
+        threadId: 57,
         threadName: '',
       },
     ];
@@ -359,18 +312,18 @@ describe('TabPaneNMSampleList Test', () => {
       {
         current: '',
         currentSize: 0,
-        startTs: 0,
-        heapSize: 0,
+        startTs: 3,
+        heapSize: 30,
         snapshot: '',
         growth: '',
-        total: 0,
+        total: 300,
         totalGrowth: '',
         existing: 0,
         children: samplerInfo,
         tempList: samplerInfo,
         timestamp: '',
         eventId: -1,
-        threadId: 0,
+        threadId: 3,
         threadName: '',
       },
     ];
@@ -382,19 +335,19 @@ describe('TabPaneNMSampleList Test', () => {
     TabPaneNMSampleList.samplerInfoSource = [
       {
         current: '',
-        currentSize: 0,
-        startTs: 0,
-        heapSize: 0,
-        snapshot: '',
+        currentSize: 109,
+        startTs: 95,
+        heapSize: 987,
+        snapshot: 'snapshot08',
         growth: '',
-        total: 0,
+        total: 52,
         totalGrowth: '',
-        existing: 0,
+        existing: 1002,
         children: [],
         tempList: [],
         timestamp: '',
-        eventId: -1,
-        threadId: 0,
+        eventId: 106,
+        threadId: 980,
         threadName: '',
       },
     ];

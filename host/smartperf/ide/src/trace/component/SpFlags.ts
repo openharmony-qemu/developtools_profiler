@@ -30,7 +30,7 @@ export class SpFlags extends BaseElement {
   initHtml(): string {
     return `
         ${this.initHtmlStyle()}
-        <div class="container">
+        <div class="sp-flags-container">
          <div class="body">
            <h3 class="title">Feature flags</h3>
          </div>
@@ -41,18 +41,18 @@ export class SpFlags extends BaseElement {
   private initHtmlStyle(): string {
     return `
       <style>
-        .container {
+        .sp-flags-container {
+          background-color: var(--dark-background5,#F6F6F6);
+          min-height: 100%;
           display: grid;
           grid-template-columns: 1fr;
           grid-template-rows:1fr;
-          background-color: var(--dark-background5,#F6F6F6);
-          min-height: 100%;
         }
         :host{
-          display: block;
           width: 100%;
           height: 100%;
           background-color: var(--dark-background5,#F6F6F6);
+          display: block;
         }
         .body{
           width: 85%;
@@ -248,6 +248,11 @@ export class FlagsConfig {
       title: 'SchedulingAnalysis',
       switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
       describeContent: 'Scheduling analysis templates',
+    },
+    {
+      title: 'BinderRunnable',
+      switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
+      describeContent: 'support Cpu State Binder-Runnable',
     },
   ];
 

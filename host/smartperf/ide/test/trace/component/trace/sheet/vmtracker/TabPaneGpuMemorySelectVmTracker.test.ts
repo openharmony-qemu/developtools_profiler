@@ -21,14 +21,14 @@ jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {};
 });
-const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 // @ts-ignore
 window.ResizeObserver =

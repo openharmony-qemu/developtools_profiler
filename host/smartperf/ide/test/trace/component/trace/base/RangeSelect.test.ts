@@ -21,7 +21,6 @@ jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () 
   return {};
 });
 
-
 describe('RangeSelect Test', () => {
   beforeAll(() => {});
 
@@ -34,12 +33,12 @@ describe('RangeSelect Test', () => {
     let rangeSelect = new RangeSelect();
     rangeSelect.rowsEL = document.createElement('div');
     let mouseEvent = new MouseEvent('mousedown', {
-      button: 0,
+      button: 1,
       buttons: 0,
-      clientX: 2,
+      clientX: 21,
       clientY: 100,
       screenX: 255,
-      screenY: 325,
+      screenY: 321,
     });
     let htmlElement = document.createElement('div');
     rangeSelect.rowsPaneEL = htmlElement;
@@ -52,10 +51,10 @@ describe('RangeSelect Test', () => {
     rangeSelect.rowsEL = document.createElement('div');
     let mouseEvent = new MouseEvent('mousedown', {
       button: 0,
-      buttons: 0,
-      clientX: 2,
-      clientY: 100,
-      screenX: 255,
+      buttons: 65,
+      clientX: 63,
+      clientY: 1300,
+      screenX: 325,
       screenY: 325,
     });
     let htmlElement = document.createElement('div');
@@ -68,20 +67,20 @@ describe('RangeSelect Test', () => {
     rangeSelect.isInRowsEl = jest.fn(() => true);
     rangeSelect.rowsEL = {
       // offsetTop: 100,
-      offsetHeight: 200,
-      offsetLeft: 0,
-      offsetWidth: 100,
+      offsetHeight: 71,
+      offsetLeft: 15,
+      offsetWidth: 134,
     };
     let mouseEvent = new MouseEvent('mousedown', {
       // @ts-ignore
       offsetY: 1,
       offsetX: 1,
-      button: 0,
+      button: 1,
       buttons: 0,
       clientX: 2,
-      clientY: 100,
+      clientY: 101,
       screenX: 255,
-      screenY: 325,
+      screenY: 321,
     });
     let divElement = document.createElement('div');
     rangeSelect.rowsPaneEL = divElement;
@@ -100,20 +99,20 @@ describe('RangeSelect Test', () => {
     rangeSelect.isDrag = jest.fn(() => true);
 
     rangeSelect.rowsEL = {
-      offsetTop: 100,
-      offsetHeight: 200,
-      offsetLeft: 0,
-      offsetWidth: 100,
+      offsetTop: 102,
+      offsetHeight: 540,
+      offsetLeft: 390,
+      offsetWidth: 1102,
     };
     let mouseEvent = new MouseEvent('mousedown', {
       // @ts-ignore
       offsetY: 1,
       offsetX: 1,
-      button: 0,
+      button: 2,
       buttons: 0,
       clientX: 2,
       clientY: 100,
-      screenX: 255,
+      screenX: 252,
       screenY: 325,
     });
     rangeSelect.spacerEL = jest.fn(() => true);
@@ -144,13 +143,13 @@ describe('RangeSelect Test', () => {
     ];
     let mouseEvent = new MouseEvent('mousedown', {
       // @ts-ignore
-      offsetY: 1,
+      offsetY: 12,
       offsetX: 1,
       button: 0,
       buttons: 0,
-      clientX: 2,
+      clientX: 3,
       clientY: 100,
-      screenX: 255,
+      screenX: 252,
       screenY: 325,
     });
     rangeSelect.timerShaftDragEL = jest.fn(() => true);
@@ -180,21 +179,21 @@ describe('RangeSelect Test', () => {
     rangeSelect.isDrag = jest.fn(() => true);
 
     rangeSelect.rowsEL = {
-      offsetTop: 100,
-      offsetHeight: 200,
-      offsetLeft: 0,
-      offsetWidth: 100,
+      offsetTop: 93,
+      offsetHeight: 1030,
+      offsetLeft: 93,
+      offsetWidth: 210,
     };
     let mouseEvent = new MouseEvent('mousedown', {
       // @ts-ignore
-      offsetY: 1,
+      offsetY: 123,
       offsetX: 1,
-      button: 0,
+      button: 3,
       buttons: 0,
-      clientX: 2,
+      clientX: 22,
       clientY: 100,
       screenX: 255,
-      screenY: 325,
+      screenY: 322,
     });
     let htmlElement = document.createElement('div');
     rangeSelect.rowsPaneEL = htmlElement;
@@ -208,12 +207,12 @@ describe('RangeSelect Test', () => {
     rangeSelect.isHover = true;
     let mouseEvent = new MouseEvent('mousedown', {
       // @ts-ignore
-      offsetY: 1,
+      offsetY: 14,
       offsetX: 1,
-      button: 0,
+      button: 4,
       buttons: 0,
       clientX: 2,
-      clientY: 100,
+      clientY: 104,
       screenX: 255,
       screenY: 325,
     });

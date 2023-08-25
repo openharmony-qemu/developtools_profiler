@@ -15,8 +15,8 @@
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
+import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import '../../../../../base-ui/chart/pie/LitChartPie.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar';
 import { Utils } from '../../base/Utils.js';
@@ -93,13 +93,13 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
   }
   initElements(): void {
     this.fileStatisticsAnalysisRange = this.shadowRoot?.querySelector('#time-range');
-    this.fileStatisticsAnalysisPie = this.shadowRoot!.querySelector<LitChartPie>('#chart-pie');
+    this.fileStatisticsAnalysisPie = this.shadowRoot!.querySelector<LitChartPie>('#fs-chart-pie');
     this.fileStatisticsAnalysisTableProcess = this.shadowRoot!.querySelector<LitTable>('#tb-process-usage');
     this.fileStatisticsAnalysisTableThread = this.shadowRoot!.querySelector<LitTable>('#tb-thread-usage');
     this.fileStatisticsAnalysisTableSo = this.shadowRoot!.querySelector<LitTable>('#tb-so-usage');
     this.fileStatisticsAnalysisTableFunction = this.shadowRoot!.querySelector<LitTable>('#tb-function-usage');
-    this.back = this.shadowRoot!.querySelector<HTMLDivElement>('.go-back');
-    this.tabName = this.shadowRoot!.querySelector<HTMLDivElement>('.subheading');
+    this.back = this.shadowRoot!.querySelector<HTMLDivElement>('.fs-go-back');
+    this.tabName = this.shadowRoot!.querySelector<HTMLDivElement>('.fs-subheading');
     this.fileStatisticsAnalysisTableType = this.shadowRoot!.querySelector<LitTable>('#tb-type-usage');
     this.fileStatisticsAnalysisProgressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
     this.goBack();
@@ -151,30 +151,23 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     this.sumDur = this.processStatisticsData.allDuration;
     this.fileStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.fileStatisticsAnalysisPidData),
+      data: this.getFsPieChartData(this.fileStatisticsAnalysisPidData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
-        return `<div>
-                    <div>ProcessName:${ obj.obj.tableName }</div>
-                    <div>Duration:${ obj.obj.durFormat }</div>
-                    <div>Percent:${ obj.obj.percent }%</div> 
-                </div>
-                                `;
-      },
-      angleClick: (it): void => {
+      tip: this.getFsTip(),
+      angleClick: (fsPieClickItem): void => {
         // @ts-ignore
-        if (it.tableName != 'other') {
-          this.fileProcessLevelClickEvent(it);
+        if (fsPieClickItem.tableName != 'other') {
+          this.fileProcessLevelClickEvent(fsPieClickItem);
         }
       },
-      hoverHandler: (data): void => {
-        if (data) {
-          this.fileStatisticsAnalysisTableProcess!.setCurrentHover(data);
+      hoverHandler: (fsPieData): void => {
+        if (fsPieData) {
+          this.fileStatisticsAnalysisTableProcess!.setCurrentHover(fsPieData);
         } else {
           this.fileStatisticsAnalysisTableProcess!.mouseOut();
         }
@@ -241,14 +234,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
-        return `<div>
-                    <div>Type:${ obj.obj.tableName }</div>
-                    <div>Duration:${ obj.obj.durFormat }</div>
-                    <div>Percent:${ obj.obj.percent }%</div> 
-                </div>
-                `;
-      },
+      tip: this.getFileTypeTip(),
       angleClick: (it): void => {
         this.fileTypeLevelClickEvent(it);
       },
@@ -298,6 +284,16 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       }
     });
   }
+  private getFileTypeTip() {
+    return (obj: { obj: { tableName: any; durFormat: any; percent: any; }; }): string => {
+      return `<div>
+                    <div>Type:${ obj.obj.tableName }</div>
+                    <div>Duration:${ obj.obj.durFormat }</div>
+                    <div>Percent:${ obj.obj.percent }%</div> 
+                </div>
+                `;
+    };
+  }
   fileTypeLevelClickEvent(it: any): void {
     this.clearData();
     this.fileStatisticsAnalysisTableType!.style.display = 'none';
@@ -316,21 +312,14 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     this.sumDur = this.threadStatisticsData.allDuration;
     this.fileStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.fileStatisticsAnalysisThreadData),
+      data: this.getFsPieChartData(this.fileStatisticsAnalysisThreadData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
-        return `<div>
-                                <div>ThreadName:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
-                            </div>
-                                `;
-      },
+      tip: this.getFileTypeTip(),
       angleClick: (it): void => {
         // @ts-ignore
         if (it.tableName != 'other') {
@@ -384,6 +373,16 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       }
     });
   }
+  private getFsTip() {
+    return (obj: { obj: { tableName: any; durFormat: any; percent: any; }; }): string => {
+      return `<div>
+                                <div>ThreadName:${ obj.obj.tableName }</div>
+                                <div>Duration:${ obj.obj.durFormat }</div>
+                                <div>Percent:${ obj.obj.percent }%</div> 
+                            </div>
+                                `;
+    };
+  }
   fileThreadLevelClickEvent(it: any): void {
     this.clearData();
     this.back!.style.visibility = 'visible';
@@ -403,25 +402,25 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     this.sumDur = this.libStatisticsData.allDuration;
     this.fileStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.fileStatisticsAnalysisSoData),
+      data: this.getFsPieChartData(this.fileStatisticsAnalysisSoData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
+      tip: (fileSysObj): string => {
         return `<div>
-                                <div>Library:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
+                                <div>Library:${ fileSysObj.obj.tableName }</div>
+                                <div>Duration:${ fileSysObj.obj.durFormat }</div>
+                                <div>Percent:${ fileSysObj.obj.percent }%</div> 
                             </div>
                                 `;
       },
-      angleClick: (it): void => {
+      angleClick: (fileSysBean): void => {
         // @ts-ignore
-        if (it.tableName != 'other') {
-          this.fileSoLevelClickEvent(it);
+        if (fileSysBean.tableName != 'other') {
+          this.fileSoLevelClickEvent(fileSysBean);
         }
       },
       hoverHandler: (data): void => {
@@ -535,21 +534,21 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       }
       fsaCurrentTable!.recycleDataSource = fsaArr;
     } else {
-      let fsaArr = [...this.currentLevelData];
+      let fsaArray = [...this.currentLevelData];
       if (column === 'tableName') {
-        fsaCurrentTable!.recycleDataSource = fsaArr.sort((a, b) => {
+        fsaCurrentTable!.recycleDataSource = fsaArray.sort((firstElement, secondElement) => {
           if (fsaSort === 1) {
-            if (a.tableName > b.tableName) {
+            if (firstElement.tableName > secondElement.tableName) {
               return 1;
-            } else if (a.tableName === b.tableName) {
+            } else if (firstElement.tableName === secondElement.tableName) {
               return 0;
             } else {
               return -1;
             }
           } else {
-            if (b.tableName > a.tableName) {
+            if (secondElement.tableName > firstElement.tableName) {
               return 1;
-            } else if (a.tableName === b.tableName) {
+            } else if (firstElement.tableName === secondElement.tableName) {
               return 0;
             } else {
               return -1;
@@ -557,28 +556,28 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
           }
         });
       } else if (column === 'durFormat' || column === 'percent') {
-        fsaCurrentTable!.recycleDataSource = fsaArr.sort((a, b) => {
+        fsaCurrentTable!.recycleDataSource = fsaArray.sort((a, b) => {
           return fsaSort === 1 ? a.duration - b.duration : b.duration - a.duration;
         });
       }
       switch (this.currentLevel) {
         case 0:
-          fsaArr.unshift(this.processStatisticsData);
+          fsaArray.unshift(this.processStatisticsData);
           break;
         case 1:
-          fsaArr.unshift(this.typeStatisticsData);
+          fsaArray.unshift(this.typeStatisticsData);
           break;
         case 2:
-          fsaArr.unshift(this.threadStatisticsData);
+          fsaArray.unshift(this.threadStatisticsData);
           break;
         case 3:
-          fsaArr.unshift(this.libStatisticsData);
+          fsaArray.unshift(this.libStatisticsData);
           break;
         case 4:
-          fsaArr.unshift(this.functionStatisticsData);
+          fsaArray.unshift(this.functionStatisticsData);
           break;
       }
-      fsaCurrentTable!.recycleDataSource = fsaArr;
+      fsaCurrentTable!.recycleDataSource = fsaArray;
     }
   }
   getFilesystemProcess(result: Array<any>): void {
@@ -603,23 +602,21 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     }
     this.fileStatisticsAnalysisPidData = [];
     pidMap.forEach((value: Array<any>, key: string) => {
-      let dur = 0;
+      let analysisPidDataDur = 0;
       let pName = '';
-      for (let item of value) {
-        pName = item.processName =
-          item.processName === null || item.processName === undefined
-            ? `Process(${ item.pid })`
-            : `${ item.processName }(${ item.pid })`;
-        dur += item.dur;
+      for (let fileSysStatPidItem of value) {
+        pName = fileSysStatPidItem.processName =
+          fileSysStatPidItem.processName === null || fileSysStatPidItem.processName === undefined ?
+            `Process(${ fileSysStatPidItem.pid })` : `${ fileSysStatPidItem.processName }(${ fileSysStatPidItem.pid })`;
+        analysisPidDataDur += fileSysStatPidItem.dur;
       }
-      const pidData = {
+      this.fileStatisticsAnalysisPidData.push({
         tableName: pName,
         pid: key,
-        percent: ((dur / allDur) * 100).toFixed(2),
-        durFormat: Utils.getProbablyTime(dur),
-        duration: dur,
-      };
-      this.fileStatisticsAnalysisPidData.push(pidData);
+        percent: ((analysisPidDataDur / allDur) * 100).toFixed(2),
+        durFormat: Utils.getProbablyTime(analysisPidDataDur),
+        duration: analysisPidDataDur,
+      });
     });
     this.fileStatisticsAnalysisPidData.sort((a, b) => b.duration - a.duration);
     this.processStatisticsData = this.totalDurationData(allDur);
@@ -642,10 +639,10 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     }).observe(this.parentElement!);
   }
 
-  getFilesystemType(item: any): void {
+  getFilesystemType(fileSysStatTypeItem: any): void {
     this.fileStatisticsAnalysisProgressEL!.loading = true;
     let typeMap = new Map<number, Array<number | string>>();
-    let pid = item.pid;
+    let pid = fileSysStatTypeItem.pid;
     let allDur = 0;
     if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length == 0) {
       return;
@@ -671,7 +668,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       }
       const typeData = {
         tableName: this.typeIdToString(key),
-        pid: item.pid,
+        pid: fileSysStatTypeItem.pid,
         type: key,
         percent: ((dur / allDur) * 100).toFixed(2),
         durFormat: Utils.getProbablyTime(dur),
@@ -686,11 +683,11 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     this.fileStatisticsAnalysisProgressEL!.loading = false;
   }
 
-  getFilesystemThread(item: any): void {
+  getFilesystemThread(fileSysStatThreadItem: any): void {
     this.fileStatisticsAnalysisProgressEL!.loading = true;
     let threadMap = new Map<string, Array<number | string>>();
-    let pid = item.pid;
-    let type = item.type;
+    let pid = fileSysStatThreadItem.pid;
+    let type = fileSysStatThreadItem.type;
     let allDur = 0;
     if (!this.fileStatisticsAnalysisProcessData || this.fileStatisticsAnalysisProcessData.length === 0) {
       return;
@@ -712,15 +709,15 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     threadMap.forEach((value: Array<any>, key: string) => {
       let dur = 0;
       let tName = '';
-      for (let item of value) {
-        dur += item.dur;
-        tName = item.threadName =
-          item.threadName === null || item.threadName === undefined ? `Thread(${ item.tid })` : `${ item.threadName }`;
+      for (let fileSysStatThreadItem of value) {
+        dur += fileSysStatThreadItem.dur;
+        tName = fileSysStatThreadItem.threadName =
+          fileSysStatThreadItem.threadName === null || fileSysStatThreadItem.threadName === undefined ? `Thread(${ fileSysStatThreadItem.tid })` : `${ fileSysStatThreadItem.threadName }`;
       }
       const threadData = {
         tableName: tName,
-        pid: item.pid,
-        type: item.type,
+        pid: fileSysStatThreadItem.pid,
+        type: fileSysStatThreadItem.type,
         tid: key,
         percent: ((dur / allDur) * 100).toFixed(2),
         durFormat: Utils.getProbablyTime(dur),
@@ -794,7 +791,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
 
   getFilesystemFunction(item: any): void {
     this.fileStatisticsAnalysisProgressEL!.loading = true;
-    this.shadowRoot!.querySelector<HTMLDivElement>('.subheading')!.textContent = 'Statistic By Function AllDuration';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.fs-subheading')!.textContent = 'Statistic By Function AllDuration';
     let tid = item.tid;
     let pid = item.pid;
     let type = item.type;
@@ -852,18 +849,18 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     this.sumDur = this.functionStatisticsData.allDuration;
     this.fileStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.fileStatisticsAnalysisFunctionData),
+      data: this.getFsPieChartData(this.fileStatisticsAnalysisFunctionData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
+      tip: (fsaObj): string => {
         return `<div>
-                                    <div>Function:${ obj.obj.tableName }</div>
-                                    <div>Duration:${ obj.obj.durFormat }</div>
-                                    <div>percent:${ obj.obj.percent }</div>
+                                    <div>Function:${ fsaObj.obj.tableName }</div>
+                                    <div>Duration:${ fsaObj.obj.durFormat }</div>
+                                    <div>percent:${ fsaObj.obj.percent }</div>
                                         </div>
                                                 `;
       },
@@ -905,51 +902,49 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     });
   }
   typeIdToString(transformType: number): string {
-    let releaseType: string;
+    let fsReleaseType: string;
     if (transformType === 0) {
-      releaseType = 'OPEN';
+      fsReleaseType = 'OPEN';
     } else if (transformType === 2) {
-      releaseType = 'READ';
+      fsReleaseType = 'READ';
     } else if (transformType === 3) {
-      releaseType = 'WRITE';
+      fsReleaseType = 'WRITE';
     } else if (transformType === 1) {
-      releaseType = 'CLOSE';
+      fsReleaseType = 'CLOSE';
     }
     // @ts-ignore
-    return releaseType;
+    return fsReleaseType;
   }
-  totalDurationData(duration: number): { durFormat: string; percent: string; tableName: string; duration: number; } {
-    let allDuration;
-    allDuration = {
-      durFormat: Utils.getProbablyTime(duration),
-      percent: ((duration / duration) * 100).toFixed(2),
+  totalDurationData(durationTS: number): { durFormat: string; percent: string; tableName: string; duration: number; } {
+    return {
+      durFormat: Utils.getProbablyTime(durationTS),
+      percent: ((durationTS / durationTS) * 100).toFixed(2),
       tableName: '',
       duration: 0,
     };
-    return allDuration;
   }
-  getPieChartData(pieChartData: any[]): unknown[] {
-    if (pieChartData.length > 20) {
-      let pieChartArr: string[] = [];
+  getFsPieChartData(fsPieChartData: any[]): unknown[] {
+    if (fsPieChartData.length > 20) {
+      let fsPieChartArr: string[] = [];
       let other: any = {
         tableName: 'other',
         duration: 0,
         percent: 0,
         durFormat: 0,
       };
-      for (let pieDataIndex = 0 ; pieDataIndex < pieChartData.length ; pieDataIndex++) {
+      for (let pieDataIndex = 0 ; pieDataIndex < fsPieChartData.length ; pieDataIndex++) {
         if (pieDataIndex < 19) {
-          pieChartArr.push(pieChartData[pieDataIndex]);
+          fsPieChartArr.push(fsPieChartData[pieDataIndex]);
         } else {
-          other.duration += pieChartData[pieDataIndex].duration;
+          other.duration += fsPieChartData[pieDataIndex].duration;
           other.durFormat = Utils.getProbablyTime(other.duration);
           other.percent = ((other.duration / this.sumDur) * 100).toFixed(2);
         }
       }
-      pieChartArr.push(other);
-      return pieChartArr;
+      fsPieChartArr.push(other);
+      return fsPieChartArr;
     }
-    return pieChartData;
+    return fsPieChartData;
   }
 
   getDataByWorker(args: any[], handler: Function): void {
@@ -972,34 +967,34 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
             display: flex;
             flex-direction: column;
         }
-        #chart-pie{
+        #fs-chart-pie{
              height: 300px;
         }
-        .table-box{
+        .fs-table-box{
             width: 60%;
             border-left: solid 1px var(--dark-border1,#e0e0e0);
             border-radius: 5px;
             padding: 10px;
         }
-        .go-back{
+        .fs-go-back{
             display:flex;
             align-items: center;
             cursor: pointer;
             margin-left: 20px;
             visibility: hidden;
         }
-        .back-box{
+        .fs-back-box{
+            width: 40px;
+            height: 20px;
             background-color: var(--bark-expansion,#0C65D1);
             border-radius: 5px;
             color: #fff;
             display: flex;
             margin-right: 10px;
-            width: 40px;
-            height: 20px;
             justify-content: center;
             align-items: center;
         }
-        .subheading{
+        .fs-subheading{
             font-weight: bold;
             text-align: center;
         }
@@ -1015,38 +1010,38 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
             <lit-progress-bar class="progress fs-stat-analysis-progress"></lit-progress-bar>
                      <div id="left_table" style="width: 40%;height:auto;">
                          <div style="display: flex;margin-bottom: 10px">
-                           <div class="go-back">
-                              <div class="back-box">
-                                  <lit-icon name="arrowleft"></lit-icon>
+                           <div class="fs-go-back">
+                              <div class="fs-back-box">
+                                  <lit-icon class="file-analysis" name="arrowleft"></lit-icon>
                               </div>
                            </div>
                          <div class="title"></div>
                         </div>
-                         <div class="subheading"></div>                     
-                         <lit-chart-pie  id="chart-pie"></lit-chart-pie>     
+                         <div class="fs-subheading"></div>                     
+                         <lit-chart-pie  id="fs-chart-pie"></lit-chart-pie>     
                      </div>
-                     <div class="table-box" style="height:auto;overflow: auto">
-                    <lit-table id="tb-process-usage" style="max-height:565px;min-height: 350px">
+                     <div class="fs-table-box" style="height:auto;overflow: auto">
+                    <lit-table id="tb-process-usage"class="file-analysis" style="max-height:565px;min-height: 350px">
                         <lit-table-column width="1fr" title="ProcessName" data-index="tableName" key="tableName" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-type-usage" style="max-height:565px;min-height: 350px"hideDownload>
+                    <lit-table id="tb-type-usage" class="file-analysis" style="max-height:565px;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="Type" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-thread-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-thread-usage" class="file-analysis" style="max-height:565px;display: none;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="ThreadName" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                     <lit-table id="tb-so-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                     <lit-table id="tb-so-usage" class="file-analysis" style="max-height:565px;display: none;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="Library" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-function-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-function-usage" class="file-analysis" style="max-height:565px;display: none;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="Function" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>

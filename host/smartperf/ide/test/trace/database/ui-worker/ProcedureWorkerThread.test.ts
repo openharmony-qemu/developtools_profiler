@@ -35,14 +35,14 @@ describe('ProcedureWorkerThread Test', () => {
 
   it('ProcedureWorkerThreadTest01', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 3;
+    canvas.height = 3;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 201,
+        y: 201,
         width: 100,
         height: 100,
       },
@@ -54,14 +54,14 @@ describe('ProcedureWorkerThread Test', () => {
 
   it('ProcedureWorkerThreadTest02', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 4;
+    canvas.height = 4;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 202,
+        y: 202,
         width: 100,
         height: 100,
       },
@@ -74,14 +74,14 @@ describe('ProcedureWorkerThread Test', () => {
 
   it('ProcedureWorkerThreadTest03', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 5;
+    canvas.height = 5;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 203,
+        y: 203,
         width: 100,
         height: 100,
       },
@@ -94,14 +94,14 @@ describe('ProcedureWorkerThread Test', () => {
 
   it('ProcedureWorkerThreadTest04', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
+    canvas.width = 6;
     canvas.height = 1;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 204,
+        y: 240,
         width: 100,
         height: 100,
       },
@@ -114,14 +114,14 @@ describe('ProcedureWorkerThread Test', () => {
 
   it('ProcedureWorkerThreadTest05', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 7;
+    canvas.height = 7;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 207,
+        y: 201,
         width: 100,
         height: 100,
       },
@@ -135,13 +135,13 @@ describe('ProcedureWorkerThread Test', () => {
   it('ProcedureWorkerThreadTest06', () => {
     const canvas = document.createElement('canvas');
     canvas.width = 1;
-    canvas.height = 1;
+    canvas.height = 2;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 202,
+        y: 203,
         width: 100,
         height: 100,
       },
@@ -172,16 +172,16 @@ describe('ProcedureWorkerThread Test', () => {
 
   it('ProcedureWorkerThreadTest08', function () {
     let threadRender = new ThreadRender();
-    let req = {
+    let threadReq = {
       lazyRefresh: true,
       type: '',
       startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      endNS: 19,
+      totalNS: 18,
       frame: {
         x: 20,
         y: 20,
-        width: 100,
+        width: 106,
         height: 100,
       },
       useCache: false,
@@ -191,25 +191,25 @@ describe('ProcedureWorkerThread Test', () => {
       canvas: '',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        fillStyle: '#780229',
+        globalAlpha: 0.62,
       },
-      lineColor: '',
+      lineColor: '#519043',
       isHover: '',
-      hoverX: 1,
+      hoverX: 37,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
+      slicesTime: 332,
+      id: 8,
       x: 20,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 170,
+      height: 170,
     };
     window.postMessage = jest.fn(() => true);
-    expect(threadRender.render(req, [], [])).toBeUndefined();
+    expect(threadRender.render(threadReq, [], [])).toBeUndefined();
   });
   it('ProcedureWorkerThreadTest08', function () {
     let threadRender = new ThreadRender();

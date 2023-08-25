@@ -12,14 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 //@ts-ignore
 import { TabPaneGpuWindowBoxSelect } from '../../../../../../dist/trace/component/trace/sheet/gpu/TabPaneGpuWindowBoxSelect.js';
 
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
-const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 // @ts-ignore
 window.ResizeObserver =
@@ -36,21 +36,21 @@ describe('TabPaneGpuWindowBoxSelect Test', () => {
   let queryGpuDataByRange = sqlite.queryGpuDataByRange;
   queryGpuDataByRange.mockResolvedValue([
     {
-      startTs: 23,
-      windowId: 1,
+      startTs: 34,
+      windowId: 53,
       moduleId: 2,
       categoryId: 0,
-      sumSize: 10,
+      sumSize: 20,
       avgSize: 1,
-      maxSize: 1,
+      maxSize: 11,
       minSize: 0,
     },
     {
-      startTs: 23,
+      startTs: 48,
       windowId: 1,
-      moduleId: 2,
+      moduleId: 28,
       categoryId: 0,
-      sumSize: 10,
+      sumSize: 51,
       avgSize: 1,
       maxSize: 1,
       minSize: 0,

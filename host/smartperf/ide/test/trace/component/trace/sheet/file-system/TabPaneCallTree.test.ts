@@ -48,7 +48,7 @@ Object.defineProperty(global.self, 'crypto', {
 describe('TabPaneCallTree Test', () => {
   let data = {
     anomalyEnergy: [],
-    clockMapData: { size: 0 },
+    clockMapData: { size: 12 },
     cpuAbilityIds: [],
     cpuFreqFilterIds: [],
     cpuFreqLimitDatas: [],

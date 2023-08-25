@@ -30,14 +30,14 @@ import { Rect } from '../../../dist/trace/database/ProcedureWorkerCommon';
 
 describe('ProcedureWorkerDiskIoAbility Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
+  canvas.width = 6;
+  canvas.height = 6;
   const ctx = canvas.getContext('2d');
 
   const data = {
     frame: {
-      x: 20,
-      y: 20,
+      x: 206,
+      y: 206,
       width: 100,
       height: 100,
     },
@@ -51,18 +51,18 @@ describe('ProcedureWorkerDiskIoAbility Test', () => {
       width: 100,
       height: 100,
     },
-    maxDiskRate: 200,
-    value: 50,
+    maxDiskRate: 300,
+    value: 80,
   };
   let res = [
     {
-      startNS: 0,
-      dur: 10,
+      startNS: 11,
+      dur: 30,
       frame: {
-        x: 0,
-        y: 9,
-        width: 10,
-        height: 10,
+        x: 6,
+        y: 49,
+        width: 30,
+        height: 60,
       },
     },
   ];
@@ -98,51 +98,51 @@ describe('ProcedureWorkerDiskIoAbility Test', () => {
 
   it('CpuAbilityMonitorStructTest04', function () {
     let diskIoAbilityRender = new DiskIoAbilityRender();
-    let req = {
+    let diskIoReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 5,
+      endNS: 9,
+      totalNS: 4,
       frame: {
-        x: 20,
+        x: 32,
         y: 20,
-        width: 100,
-        height: 100,
+        width: 180,
+        height: 180,
       },
-      useCache: false,
+      useCache: true,
       range: {
         refresh: '',
       },
       canvas: 'a',
       context: {
-        font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
-        clearRect: jest.fn(() => true),
-        beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
+        font: '12px sans-serif',
+        fillStyle: '#a1697d',
+        globalAlpha: 0.3,
         measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
+        clearRect: jest.fn(() => true),
+        stroke: jest.fn(() => true),
+        closePath: jest.fn(() => false),
+        beginPath: jest.fn(() => true),
+        fillRect: jest.fn(() => false),
         fillText: jest.fn(() => true),
       },
       lineColor: '',
-      isHover: '',
-      hoverX: 1,
+      isHover: 'true',
+      hoverX: 0,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 4,
       id: 1,
-      x: 20,
-      y: 20,
+      x: 24,
+      y: 24,
       width: 100,
       height: 100,
     };
     window.postMessage = jest.fn(() => true);
-    expect(diskIoAbilityRender.render(req, [], [])).toBeUndefined();
+    expect(diskIoAbilityRender.render(diskIoReq, [], [])).toBeUndefined();
   });
   it('CpuAbilityMonitorStructTest05', function () {
     let diskIoAbilityRender = new DiskIoAbilityRender();

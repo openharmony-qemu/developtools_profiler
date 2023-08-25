@@ -16,20 +16,15 @@
 //@ts-ignore
 import { TabPerfSampleList } from '../../../../../../dist/trace/component/trace/sheet/hiperf/TabPerfSampleList.js';
 import '../../../../../../dist/trace/component/trace/sheet/hiperf/TabPerfSampleList.js';
-
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
-jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
-  return {}
-});
-
-window.ResizeObserver =
-  window.ResizeObserver ||
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
+    unobserve: jest.fn(), disconnect: jest.fn(), observe: jest.fn(),
   }));
 
 describe('TabPerfSampleList Test', () => {

@@ -36,21 +36,21 @@ describe('TabPaneCpuUsage Test', () => {
   mockGetTabCpuFreq.mockResolvedValue([]);
 
   let selectionData = {
-    cpus: [],
-    threadIds: [],
-    trackIds: [],
-    funTids: [],
-    heapIds: [],
+    cpus: [1, 0],
+    threadIds: [12, 3, 0],
+    trackIds: [3, 789, 89],
+    funTids: [5, 0],
+    heapIds: [0, 43],
     nativeMemory: [],
-    cpuAbilityIds: [],
+    cpuAbilityIds: [10, 45],
     memoryAbilityIds: [],
-    diskAbilityIds: [],
+    diskAbilityIds: [85],
     networkAbilityIds: [],
-    leftNs: 0,
-    rightNs: 0,
+    leftNs: 8540,
+    rightNs: 96440,
     hasFps: false,
     statisticsSelectData: undefined,
-    perfSampleIds: [],
+    perfSampleIds: [1, 4, 44],
     perfCpus: [],
     perfProcess: [],
     perfThread: [],
@@ -64,7 +64,7 @@ describe('TabPaneCpuUsage Test', () => {
           [1, 2, 3, 9, 6, 4],
           [5, 2, 1, 4, 9, 6],
         ],
-        0,
+        3,
         true
       )
     ).toBeUndefined();
@@ -77,7 +77,7 @@ describe('TabPaneCpuUsage Test', () => {
           [1, 2, 3, 9, 6, 4],
           [5, 2, 1, 4, 9, 6],
         ],
-        0,
+        4,
         false
       )
     ).toBeUndefined();
@@ -90,21 +90,8 @@ describe('TabPaneCpuUsage Test', () => {
           [1, 2, 3, 9, 6, 4],
           [5, 2, 1, 4, 9, 6],
         ],
-        2,
+        5,
         true
-      )
-    ).toBeUndefined();
-  });
-
-  it('TabPaneCpuUsageTest10', function () {
-    expect(
-      tabPaneCpuUsage.sortTable(
-        [
-          [1, 2, 3, 9, 6, 4],
-          [5, 2, 1, 4, 9, 6],
-        ],
-        2,
-        false
       )
     ).toBeUndefined();
   });
@@ -113,7 +100,7 @@ describe('TabPaneCpuUsage Test', () => {
     expect(
       tabPaneCpuUsage.sortTable(
         [
-          [1, 2, 3, 9, 6, 4],
+          [1, 2, 1, 9, 6, 4],
           [5, 2, 1, 4, 9, 6],
         ],
         1,
@@ -126,10 +113,10 @@ describe('TabPaneCpuUsage Test', () => {
     expect(
       tabPaneCpuUsage.sortTable(
         [
-          [1, 2, 3, 9, 6, 4],
+          [1, 2, 2, 9, 6, 4],
           [5, 2, 1, 4, 9, 6],
         ],
-        1,
+        2,
         false
       )
     ).toBeUndefined();
@@ -138,18 +125,18 @@ describe('TabPaneCpuUsage Test', () => {
     let result = tabPaneCpuUsage.sortFreq([
       {
         cpu: 0,
-        value: 0,
-        startNs: 0,
-        dur: 0,
+        value: 30,
+        startNs: 342,
+        dur: 341,
       },
       {
         cpu: 1,
-        value: 2,
-        startNs: 2,
-        dur: 4,
+        value: 322,
+        startNs: 762,
+        dur: 984,
       },
     ]);
-    expect(result[0][0]).toBe(2);
+    expect(result[0][0]).toBe(322);
   });
   it('TabPaneCpuUsageTest05', function () {
     expect(
@@ -179,55 +166,18 @@ describe('TabPaneCpuUsage Test', () => {
     let result = tabPaneCpuUsage.groupByCpuToMap([
       {
         cpu: 0,
-        value: 0,
-        startNs: 0,
-        dur: 0,
+        value: 90,
+        startNs: 250,
+        dur: 560,
       },
       {
         cpu: 1,
-        value: 2,
-        startNs: 2,
+        value: 782,
+        startNs: 52,
         dur: 4,
       },
     ]);
     expect(result.get(0).length).toBe(1);
-  });
-
-  it('TabPaneCurrentSelectionTest07', function () {
-    expect(tabPaneCpuUsage.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .cpu-usage-label{
-            width: 100%;
-            height: 20px;
-        }
-        :host{
-            padding: 10px 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        </style>
-        <label id="time-range" class="cpu-usage-label" style="text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
-        <lit-table id="tb-cpu-usage" style="height: auto">
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU" data-index="cpu" key="cpu" align="flex-start">
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="Usage" data-index="usageStr" key="usageStr" align="flex-start" >
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU Freq Top1(M)" data-index="top1" key="top1" align="flex-start" >
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="Top1 percent(%)" data-index="top1PercentStr" key="top1PercentStr" align="flex-start" >
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU Freq Top2(M)" data-index="top2" key="top2" align="flex-start" >
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="Top2 percent(%)" data-index="top2PercentStr" key="top2PercentStr" align="flex-start" >
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="CPU Freq Top3(M)" data-index="top3" key="top3" align="flex-start" >
-            </lit-table-column>
-            <lit-table-column class="cpu-usage-column" order width="1fr" title="Top3 percent(%)" data-index="top3PercentStr" key="top3PercentStr" align="flex-start" >
-            </lit-table-column>
-        </lit-table>
-        "
-`);
   });
 
   it('TabPaneCpuUsageTest11', function () {

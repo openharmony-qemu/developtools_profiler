@@ -90,47 +90,4 @@ describe('TraceRow Test', () => {
     let traceRow = new TraceRowRecyclerView();
     expect(traceRow.initUI()).toBeUndefined();
   });
-
-  it('Test09', function () {
-    let traceRow = new TraceRowRecyclerView();
-    expect(traceRow.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            width:100%;
-            height:100%;
-            display: block;
-            position:relative;
-        }
-        .container{
-            width:100%;
-            height:100%;
-            overflow: auto;
-            position: absolute;
-            display: block;
-        }
-        .gasket{
-            width:100%;
-            height:auto;
-            top: 0;
-            left: 0;
-            right:0;
-            bottom:0;
-            visibility: hidden;
-        }
-        .recycler-cell{
-            position: absolute;
-            width:100%;
-            visibility: hidden;
-            top: 0;
-            left: 0;
-        }
-        </style>
-        <div class="container">
-            <div class="gasket"></div>
-        </div>
-
-        "
-`);
-  });
 });

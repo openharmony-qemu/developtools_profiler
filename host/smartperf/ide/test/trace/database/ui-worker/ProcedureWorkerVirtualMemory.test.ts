@@ -32,52 +32,52 @@ import { mem } from '../../../../dist/trace/database/ui-worker/ProcedureWorkerCo
 describe('ProcedureWorkerVirtualMemory Test', () => {
   it('ProcedureWorkerVirtualMemoryTest01', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 34,
+      y: 44,
+      width: 144,
+      height: 430,
     };
     let dataList = new Array();
     dataList.push({
       startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 130,
+      frame: { x: 30, y: 44, width: 10, height: 140 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
+    dataList.push({ startTime: 41, dur: 411 });
     mem(dataList, [{ length: 1 }], 1, 1, 1, frame, true);
   });
 
   it('ProcedureWorkerVirtualMemoryTest02', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 70,
+      y: 77,
+      width: 443,
+      height: 180,
     };
     let dataList = new Array();
     dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startTime: 80,
+      dur: 180,
+      frame: { x: 870, y: 97, width: 177, height: 107 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
+    dataList.push({ startTime: 71, dur: 178 });
     mem(dataList, [{ length: 0 }], 1, 1, 1, frame, false);
   });
 
   it('ProcedureWorkerVirtualMemoryTest03', () => {
     const data = {
       cpu: 1,
-      startNs: 1,
-      value: 1,
+      startNs: 14,
+      value: 143,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 44,
+        y: 43,
+        width: 120,
+        height: 233,
       },
       maxValue: undefined,
       startTime: 1,
-      filterID: 2,
+      filterID: 5,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -88,16 +88,16 @@ describe('ProcedureWorkerVirtualMemory Test', () => {
 
   it('ProcedureWorkerVirtualMemoryTest04', function () {
     let virtualMemoryRender = new VirtualMemoryRender();
-    let req = {
+    let virtualMemoryReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 22,
+      endNS: 155,
+      totalNS: 133,
       frame: {
         x: 20,
         y: 20,
-        width: 100,
+        width: 165,
         height: 100,
       },
       useCache: false,
@@ -107,31 +107,31 @@ describe('ProcedureWorkerVirtualMemory Test', () => {
       canvas: 'a',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
+        fillStyle: '#f3a97e',
         globalAlpha: 0.6,
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
         closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
+        measureText: jest.fn(() => []),
         fillRect: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#ff0000',
       isHover: '',
-      hoverX: 1,
+      hoverX: 71,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 557,
       id: 1,
       x: 20,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 121,
+      height: 121,
     };
     window.postMessage = jest.fn(() => true);
-    expect(virtualMemoryRender.render(req, [], [])).toBeUndefined();
+    expect(virtualMemoryRender.render(virtualMemoryReq, [], [])).toBeUndefined();
   });
   it('ProcedureWorkerVirtualMemoryTest05', function () {
     let virtualMemoryRender = new VirtualMemoryRender();

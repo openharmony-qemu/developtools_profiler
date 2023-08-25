@@ -278,11 +278,6 @@ export class TabPaneVirtualMemoryEvents extends BaseElement {
   initHtml(): string {
     return `
     <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
         .vm-event-loading{
             bottom: 0;
             position: absolute;
@@ -291,6 +286,11 @@ export class TabPaneVirtualMemoryEvents extends BaseElement {
             width:100%;
             background:transparent;
             z-index: 999999;
+        }
+        :host{
+            padding: 10px 10px 0 10px;
+            display: flex;
+            flex-direction: column;
         }
         .vm-event-progress{
             bottom: 33px;

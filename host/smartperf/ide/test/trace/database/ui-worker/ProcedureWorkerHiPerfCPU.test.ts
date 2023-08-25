@@ -41,13 +41,13 @@ describe('ProcedureWorkerHiPerfCPU Test', () => {
   it('ProcedureWorkerHiPerfCPUTest01', () => {
     const data = {
       frame: undefined,
-      cpu: 1,
-      startNs: 1,
-      value: 1,
+      cpu: 3,
+      startNs: 56,
+      value: 45,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;
-    canvas.height = 1;
+    canvas.height = 4;
     const ctx = canvas.getContext('2d');
     expect(HiPerfCpuStruct.draw(ctx, '', data, true)).toBeUndefined();
   });
@@ -76,7 +76,7 @@ describe('ProcedureWorkerHiPerfCPU Test', () => {
         x: 20,
         y: 20,
         width: 100,
-        height: 100,
+        height: 300,
       },
       useCache: false,
       range: {
@@ -86,14 +86,14 @@ describe('ProcedureWorkerHiPerfCPU Test', () => {
       context: {
         font: '11px sans-serif',
         fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        globalAlpha: 0.7,
+        fill: jest.fn(() => true),
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
         closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
-        fill: jest.fn(() => true),
       },
       lineColor: '',
       isHover: '',

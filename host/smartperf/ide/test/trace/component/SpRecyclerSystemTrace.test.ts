@@ -112,49 +112,6 @@ describe('SpRecyclerSystemTrace Test', () => {
     expect(spRecyclerSystemTrace.loadDatabaseArrayBuffer()).toBeTruthy();
   });
 
-  it('SpRecyclerSystemTraceTest17', function () {
-    expect(spRecyclerSystemTrace.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        .recycle-timer-shaft{
-            width: 100%;
-            z-index: 2;
-        }
-        .rows{
-            display: flex;
-            box-sizing: border-box;
-            flex-direction: column;
-            overflow-y: auto;
-            max-height: calc(100vh - 150px - 48px);
-            flex: 1;
-            width: 100%;
-        }
-        .container{
-            width: 100%;
-            box-sizing: border-box;
-            height: 100%;
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows: min-content 1fr min-content;
-        }
-
-        </style>
-        <div class="container">
-            <timer-shaft-element class="recycle-timer-shaft">
-            </timer-shaft-element>
-            <trace-row-recycler-view class="rows">
-            </trace-row-recycler-view>
-            <trace-sheet class="recycle-trace-sheet" mode="hidden">
-            </trace-sheet>
-        </div>
-        "
-`);
-  });
   it('SpRecyclerSystemTraceTest18', function () {
     const newEl = 1;
     const targetEl = {

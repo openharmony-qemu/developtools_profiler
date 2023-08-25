@@ -34,50 +34,58 @@ export class CpuStateRender extends PerfRender {
   renderMainThread(
     req: {
       useCache: boolean;
-      context: CanvasRenderingContext2D;
+      cpuStateContext: CanvasRenderingContext2D;
       type: string;
       cpu: number;
     },
-    row: TraceRow<CpuStateStruct>
-  ) {
-    let list = row.dataList;
-    let filter = row.dataListCache;
-    let chartColor = ColorUtils.colorForTid(req.cpu);
+    cpuStateRow: TraceRow<CpuStateStruct>
+  ): void {
+    let list = cpuStateRow.dataList;
+    let filter = cpuStateRow.dataListCache;
     dataFilterHandler(list, filter, {
       startKey: 'startTs',
       durKey: 'dur',
       startNS: TraceRow.range?.startNS ?? 0,
       endNS: TraceRow.range?.endNS ?? 0,
       totalNS: TraceRow.range?.totalNS ?? 0,
-      frame: row.frame,
+      frame: cpuStateRow.frame,
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
-    req.context.beginPath();
-    req.context.font = '11px sans-serif';
-    req.context.fillStyle = chartColor;
-    req.context.strokeStyle = chartColor;
-    req.context.globalAlpha = 0.6;
+    let chartColor = ColorUtils.colorForTid(req.cpu);
+    req.cpuStateContext.beginPath();
+    req.cpuStateContext.font = '11px sans-serif';
+    req.cpuStateContext.fillStyle = chartColor;
+    req.cpuStateContext.strokeStyle = chartColor;
+    req.cpuStateContext.globalAlpha = 0.6;
     let path = new Path2D();
     let find = false;
     let offset = 3;
     let heights = [4, 12, 21, 30];
     for (let re of filter) {
       re.height = heights[(re as any).value];
-      CpuStateStruct.draw(req.context, path, re);
-      if (row.isHover) {
-        if (re.frame && row.hoverX >= re.frame.x - offset && row.hoverX <= re.frame.x + re.frame.width + offset) {
+      CpuStateStruct.draw(req.cpuStateContext, path, re);
+      if (cpuStateRow.isHover) {
+        if (re.frame && cpuStateRow.hoverX >= re.frame.x - offset &&
+          cpuStateRow.hoverX <= re.frame.x + re.frame.width + offset
+        ) {
           CpuStateStruct.hoverStateStruct = re;
           find = true;
         }
       }
     }
-    if (!find && row.isHover) CpuStateStruct.hoverStateStruct = undefined;
-    req.context.fill(path);
+    if (!find && cpuStateRow.isHover) {
+      CpuStateStruct.hoverStateStruct = undefined;
+    }
+    req.cpuStateContext.fill(path);
   }
 
   render(cpuStateReq: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
-    if (cpuStateReq.lazyRefresh) {
+    if (cpuStateReq.lazyRefresh || !cpuStateReq.useCache) {
+      let cpuStateUse = false;
+      if (cpuStateReq.lazyRefresh) {
+        cpuStateUse = cpuStateReq.useCache || !cpuStateReq.range.refresh;
+      }
       this.cpuState(
         list,
         dataList2,
@@ -88,23 +96,8 @@ export class CpuStateRender extends PerfRender {
         cpuStateReq.endNS,
         cpuStateReq.totalNS,
         cpuStateReq.frame,
-        cpuStateReq.useCache || !cpuStateReq.range.refresh
+        cpuStateUse
       );
-    } else {
-      if (!cpuStateReq.useCache) {
-        this.cpuState(
-          list,
-          dataList2,
-          cpuStateReq.type!,
-          filter,
-          cpuStateReq.params.cpu,
-          cpuStateReq.startNS,
-          cpuStateReq.endNS,
-          cpuStateReq.totalNS,
-          cpuStateReq.frame,
-          false
-        );
-      }
     }
     CpuStateStruct.hoverStateStruct = undefined;
     if (cpuStateReq.canvas) {

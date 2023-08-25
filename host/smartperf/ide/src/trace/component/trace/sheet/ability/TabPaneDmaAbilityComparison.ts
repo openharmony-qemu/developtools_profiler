@@ -34,8 +34,8 @@ export class TabPaneDmaAbilityComparison extends BaseElement {
   private comparisonSource: Array<DmaComparison> = [];
 
   initElements(): void {
-    this.damClickTable = this.shadowRoot?.querySelector<LitTable>('#damClickTable');
     this.comparisonSelect = this.shadowRoot?.querySelector('#filter') as TabPaneJsMemoryFilter;
+    this.damClickTable = this.shadowRoot?.querySelector<LitTable>('#damClickTable');
     this.selectEl = this.comparisonSelect?.shadowRoot?.querySelector<LitSelect>('lit-select');
     this.damClickTable!.addEventListener('column-click', (e) => {
       // @ts-ignore
@@ -79,22 +79,22 @@ export class TabPaneDmaAbilityComparison extends BaseElement {
     this.getComparisonData(dataArray[0].startNs);
   }
 
-  selectStamps(dataList: Array<SnapshotStruct>): void {
+  selectStamps(dmaAbilityComList: Array<SnapshotStruct>): void {
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
     let option = new LitSelectOption();
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (dataList[0].name) {
-      option.setAttribute('value', dataList[0].name);
+    if (dmaAbilityComList[0].name) {
+      option.setAttribute('value', dmaAbilityComList[0].name);
     }
-    this.selectEl!.defaultValue = dataList[0].name || '';
-    this.selectEl!.placeholder = dataList[0].name || '';
-    this.selectEl!.dataSource = dataList;
+    this.selectEl!.defaultValue = dmaAbilityComList[0].name || '';
+    this.selectEl!.placeholder = dmaAbilityComList[0].name || '';
+    this.selectEl!.dataSource = dmaAbilityComList;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((option) => {
       option.addEventListener('onSelected', (e) => {
-        for (let f of dataList) {
+        for (let f of dmaAbilityComList) {
           if (input.value === f.name) {
             this.getComparisonData(f.startNs);
           }

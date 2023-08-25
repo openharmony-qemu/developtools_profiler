@@ -32,47 +32,47 @@ describe(' Test', () => {
     height: 10,
   };
   it('MemTest01', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      duration: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let memDataList = new Array();
+    memDataList.push({
+      startTime: 10,
+      duration: 12,
+      frame: { x: 0, y: 12, width: 14, height: 120 },
     });
-    dataList.push({
-      startTime: 1,
-      duration: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    memDataList.push({
+      startTime: 2,
+      duration: 131,
+      frame: { x: 0, y: 3, width: 30, height: 30 },
     });
-    let rect = new Rect(0, 10, 10, 10);
-    mem(dataList, [{ length: 0 }], 2, 100254, 100254, frame, false);
+    let rect = new Rect(0, 33, 10, 7);
+    mem(memDataList, [{ length: 0 }], 2, 100254, 100254, frame, false);
   });
 
   it('MemTest02', () => {
-    let dataList = new Array();
-    dataList.push({
+    let memDataList = new Array();
+    memDataList.push({
       startTime: 0,
-      duration: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      duration: 40,
+      frame: { x: 0, y: 44, width: 144, height: 40 },
     });
-    dataList.push({
-      startTime: 1,
-      duration: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    memDataList.push({
+      startTime: 22,
+      duration: 16,
+      frame: { x: 0, y: 49, width: 130, height: 3 },
     });
-    let rect = new Rect(0, 10, 10, 10);
-    mem(dataList, [{ length: 0 }], 2, 100254, 100254, frame, true);
+    let rect = new Rect(0, 14, 10, 40);
+    mem(memDataList, [{ length: 0 }], 2, 100254, 100254, frame, true);
   });
 
   it('MemTest03', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 4;
+    canvas.height = 4;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 270,
+        y: 207,
         width: 100,
         height: 100,
       },
@@ -84,17 +84,17 @@ describe(' Test', () => {
 
   it('MemTest04', function () {
     let memRender = new MemRender();
-    let req = {
+    let memReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 2,
+      endNS: 45,
+      totalNS: 43,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 150,
+        y: 210,
+        width: 200,
+        height: 220,
       },
       useCache: false,
       range: {
@@ -103,31 +103,31 @@ describe(' Test', () => {
       canvas: 'a',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        fillStyle: '#408dec',
+        globalAlpha: 0.49,
         clearRect: jest.fn(() => true),
+        fillRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
         closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
+        measureText: jest.fn(() => []),
         fillText: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#d90606',
       isHover: '',
       hoverX: 1,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 5,
       id: 1,
-      x: 20,
-      y: 20,
+      x: 66,
+      y: 66,
       width: 100,
       height: 100,
     };
     window.postMessage = jest.fn(() => true);
-    expect(memRender.render(req, [], [])).toBeUndefined();
+    expect(memRender.render(memReq, [], [])).toBeUndefined();
   });
 });

@@ -355,7 +355,7 @@ export class TabPaneIoCompletionTimes extends BaseElement {
                             </lit-table-column>
                         </lit-table>
                     </div>
-                    <lit-slicer-track ></lit-slicer-track>
+                    <lit-slicer-track class="io-completion-slicer-tracker"></lit-slicer-track>
                     <lit-table id="tbr-io-completion-times" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
                         <lit-table-column class="io-completion-column" width="60px" title="" data-index="type" key="type"  align="flex-start" >
                             <template>

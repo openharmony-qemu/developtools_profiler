@@ -19,12 +19,6 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
     return {};
 });
-jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-    return {
-        snapshotDataSource: () => {},
-        removeAttribute: () => {},
-    };
-});
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
 window.ResizeObserver =
@@ -34,6 +28,12 @@ window.ResizeObserver =
         observe: jest.fn(),
         unobserve: jest.fn(),
     }));
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
+    return {
+        snapshotDataSource: () => {},
+        removeAttribute: () => {},
+    };
+});
 
 describe('TabPaneGpuMemoryComparison Test', () => {
     let tabPaneGpuMemoryComparison = new TabPaneGpuMemoryComparison();
@@ -50,15 +50,15 @@ describe('TabPaneGpuMemoryComparison Test', () => {
     let datalist = [
         {
             name: 'Snapshot2',
-            startNs: 9800526561,
+            startNs: 201326561,
             type: 'ability',
-            value: 0,
+            value: 17,
         },
         {
             name: 'Snapshot1',
-            startNs: 4778214061,
+            startNs: 32110343,
             type: 'ability',
-            value: 0,
+            value: 67,
         },
     ];
     tabPaneGpuMemoryComparison.init = jest.fn(() => true);

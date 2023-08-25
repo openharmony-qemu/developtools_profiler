@@ -25,7 +25,6 @@ import { Cmd } from '../../../command/Cmd.js';
 @element('sp-vm-tracker')
 export class SpVmTracker extends BaseElement {
   private vmTrackerProcessInput: LitAllocationSelect | undefined | null;
-  private configList: Array<any> = [];
 
   set startSamp(start: boolean) {
     if (start) {
@@ -54,72 +53,27 @@ export class SpVmTracker extends BaseElement {
   }
 
   initElements(): void {
-    this.initConfigList();
-    let configList = this.shadowRoot?.querySelector<HTMLDivElement>('.configList');
-    this.configList.forEach((config) => {
-      let vmTrackerDiv = document.createElement('div');
-      if (config.hidden) {
-        vmTrackerDiv.className = 'vm-config-div hidden';
+    let vmTrackerSwitch = this.shadowRoot?.querySelector('lit-switch') as LitSwitch;
+    vmTrackerSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
+      let detail = event.detail;
+      if (detail!.checked) {
+        this.startSamp = true;
+        this.unDisable();
       } else {
-        vmTrackerDiv.className = 'vm-config-div';
+        this.startSamp = false;
+        this.disable();
       }
-      let headDiv = document.createElement('div');
-      vmTrackerDiv.appendChild(headDiv);
-      let vmTrackerTitle = document.createElement('span');
-      vmTrackerTitle.className = 'title';
-      vmTrackerTitle.textContent = config.title;
-      headDiv.appendChild(vmTrackerTitle);
-      let des = document.createElement('span');
-      des.textContent = config.des;
-      des.className = 'des';
-      headDiv.appendChild(des);
-      switch (config.type) {
-        case 'select':
-          let html1 = '';
-          html1 += `<lit-allocation-select style="width: 100%;" rounded="" default-value="" class="select config" placement="bottom" title="${config.title}"  placeholder="${config.selectArray[0]}">`;
-          html1 += `</lit-allocation-select>`;
-          vmTrackerDiv.innerHTML = vmTrackerDiv.innerHTML + html1;
-          break;
-        case 'switch':
-          let vmTrackerSwitch = document.createElement('lit-switch') as LitSwitch;
-          vmTrackerSwitch.className = 'config';
-          vmTrackerSwitch.title = config.title;
-          if (config.value) {
-            vmTrackerSwitch.checked = true;
-          } else {
-            vmTrackerSwitch.checked = false;
-          }
-          if (config.title == 'Start VM Tracker Record') {
-            vmTrackerSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
-              let detail = event.detail;
-              if (detail!.checked) {
-                this.startSamp = true;
-                this.unDisable();
-              } else {
-                this.startSamp = false;
-                this.disable();
-              }
-            });
-          }
-          headDiv.appendChild(vmTrackerSwitch);
-          break;
-        default:
-          break;
-      }
-      configList!.appendChild(vmTrackerDiv);
     });
-    this.vmTrackerProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>(
-      "lit-allocation-select[title='Process']"
-    );
+    this.vmTrackerProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>('lit-allocation-select');
     let vmTrackerMul = this.vmTrackerProcessInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     vmTrackerMul!.addEventListener('mousedown', (ev) => {
-      if (SpRecordTrace.serialNumber == '') {
+      if (SpRecordTrace.serialNumber === '') {
         this.vmTrackerProcessInput!.processData = [];
         this.vmTrackerProcessInput!.initData();
       }
     });
     vmTrackerMul!.addEventListener('mouseup', () => {
-      if (SpRecordTrace.serialNumber == '') {
+      if (SpRecordTrace.serialNumber === '') {
         this.vmTrackerProcessInput!.processData = [];
         this.vmTrackerProcessInput!.initData();
       } else {
@@ -132,39 +86,20 @@ export class SpVmTracker extends BaseElement {
     this.disable();
   }
 
-  private unDisable() {
+  private unDisable(): void {
     let configVal = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
     configVal!.forEach((configVal1) => {
       configVal1.removeAttribute('disabled');
     });
   }
 
-  private disable() {
+  private disable(): void {
     let configVal = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
     configVal!.forEach((configVal1) => {
-      if (configVal1.title != 'Start VM Tracker Record') {
+      if (configVal1.title !== 'Start VM Tracker Record') {
         configVal1.setAttribute('disabled', '');
       }
     });
-  }
-
-  initConfigList(): void {
-    this.configList = [
-      {
-        title: 'Start VM Tracker Record',
-        des: '',
-        hidden: false,
-        type: 'switch',
-        value: false,
-      },
-      {
-        title: 'Process',
-        des: 'Record process',
-        hidden: false,
-        type: 'select',
-        selectArray: [''],
-      },
-    ];
   }
 
   initHtml(): string {
@@ -255,8 +190,20 @@ export class SpVmTracker extends BaseElement {
         }
         </style>
         <div class="root vm-tracker">
-            <div class="configList">
+            <div class="vm-config-div">
+              <div>
+                 <span class="title">Start VM Tracker Record</span>
+                 <lit-switch></lit-switch>
+              </div>
             </div>
+            <div class="vm-config-div">
+              <div>
+                 <span class="title">Process</span>
+                 <span class="des">Record process</span>
+              </div>
+              <lit-allocation-select style="width: 100%;" rounded="" default-value="" 
+              class="select config" placement="bottom" title="Process"></lit-allocation-select>
+          </div>
         </div>
         `;
   }

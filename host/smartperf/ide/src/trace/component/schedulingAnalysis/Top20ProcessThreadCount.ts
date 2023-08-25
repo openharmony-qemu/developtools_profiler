@@ -175,17 +175,17 @@ export class Top20ProcessThreadCount extends BaseElement {
             margin: 15px;
             padding: 5px 15px
         }
-        .root{
+        .thread-root{
             width: 100%;
             height: 100%;
+            box-sizing: border-box;
             display: flex;
             flex-direction: row;
-            box-sizing: border-box;
         }
         </style>
         <lit-progress-bar id="loading" style="height: 1px;width: 100%" loading></lit-progress-bar>
         <table-no-data id="nodata" contentHeight="500px">
-        <div class="root">
+        <div class="thread-root">
             <div style="display: flex;flex-direction: column;align-items: center">
                 <div>Statistics By Thread Count</div>
                 <lit-chart-pie id="pie" class="pie-chart"></lit-chart-pie>

@@ -16,10 +16,19 @@
 import { initMemoryAggStrategy } from '../../../../dist/trace/component/metrics/MemAggStrategy.js';
 
 describe('MemAggStrategy Test', () => {
+  let metricData = [
+    {
+      length: 1,
+      processName: 'name',
+      name: 'oom_score_adj',
+      value: '',
+      ts: '',
+    },
+  ];
   it('initMemoryAggStrategyTest01', () => {
     const metricData = [
       {
-        length: 1,
+        length: 11,
         processName: 'name',
         name: 'oom_score_adj',
         value: '',
@@ -32,7 +41,7 @@ describe('MemAggStrategy Test', () => {
   it('initMemoryAggStrategyTest02', () => {
     const metricData = [
       {
-        length: 1,
+        length: 12,
         processName: 'name',
         name: 'mem.rss.anon',
         value: '',
@@ -45,7 +54,7 @@ describe('MemAggStrategy Test', () => {
   it('initMemoryAggStrategyTest03', () => {
     const metricData = [
       {
-        length: 1,
+        length: 13,
         processName: 'name',
         name: 'mem.swap',
         value: '',
@@ -58,7 +67,7 @@ describe('MemAggStrategy Test', () => {
   it('initMemoryAggStrategyTest04', () => {
     const metricData = [
       {
-        length: 1,
+        length: 14,
         processName: 'name',
         name: 'mem.rss.file',
         value: '',
@@ -71,7 +80,7 @@ describe('MemAggStrategy Test', () => {
   it('initMemoryAggStrategyTest05', () => {
     const metricData = [
       {
-        length: 1,
+        length: 15,
         processName: 'name',
         name: 'oom_score_adj',
         value: '',

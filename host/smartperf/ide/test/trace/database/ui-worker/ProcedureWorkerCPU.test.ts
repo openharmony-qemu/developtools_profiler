@@ -39,25 +39,25 @@ jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => 
 describe(' Test', () => {
   const dataSource = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 310,
+      y: 130,
+      width: 1430,
+      height: 1430,
     },
-    startNS: 200,
+    startNS: 430,
     processId: '',
   };
 
   it('CPUTest03', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 13;
+    canvas.height = 13;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 203,
+        y: 203,
         width: 100,
         height: 100,
       },
@@ -83,8 +83,8 @@ describe(' Test', () => {
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 230,
+        y: 202,
         width: 100,
         height: 100,
       },
@@ -118,7 +118,7 @@ describe(' Test', () => {
     let list = [
       {
         frame: {
-          x: 20,
+          x: 10,
           y: 20,
           width: 100,
           height: 100,
@@ -136,32 +136,32 @@ describe(' Test', () => {
     let node = [
       {
         frame: {
-          x: 20,
-          y: 20,
-          width: 100,
-          height: 100,
+          x: 207,
+          y: 201,
+          width: 110,
+          height: 200,
         },
         startNS: 200,
-        length: 1,
-        height: 0,
+        length: 31,
+        height: 30,
       },
     ];
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 29,
+      y: 69,
+      width: 330,
+      height: 430,
     };
     let list = [
       {
         frame: {
-          x: 20,
-          y: 20,
-          width: 100,
-          height: 100,
+          x: 42,
+          y: 42,
+          width: 143,
+          height: 430,
         },
         startNS: 200,
-        length: 2,
+        length: 32,
         height: 2,
       },
     ];
@@ -171,16 +171,16 @@ describe(' Test', () => {
   it('CPUTest08', () => {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 9,
+        y: 87,
+        width: 878,
+        height: 80,
       },
-      startNS: 200,
-      length: 1,
-      height: 0,
-      startTime: 0,
-      dur: 1,
+      startNS: 700,
+      length: 135,
+      height: 40,
+      startTime: 450,
+      dur: 9,
     };
     expect(CpuStruct.setCpuFrame(node, 1, 1, 1, { width: 10 })).toBeUndefined();
   });
@@ -188,16 +188,16 @@ describe(' Test', () => {
   it('CPUTest09', () => {
     let node = {
       frame: {
-        x: 20,
+        x: 90,
         y: 20,
-        width: 100,
-        height: 100,
+        width: 25,
+        height: 98,
       },
-      startNS: 200,
-      length: 1,
-      height: 0,
+      startNS: 690,
+      length: 28,
+      height: 60,
       startTime: 2,
-      dur: 1,
+      dur: 221,
     };
     expect(CpuStruct.setCpuFrame(node, 1, 1, 1, { width: 10 })).toBeUndefined();
   });
@@ -206,38 +206,38 @@ describe(' Test', () => {
     let emptyRender = new EmptyRender();
     let req = {
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 0,
+      endNS: 100,
+      totalNS: 100,
       frame: {
         x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        y: 31,
+        width: 75,
+        height: 90,
       },
-      canvas: 'a',
+      canvas: '',
       context: {
+        measureText: jest.fn(() => true),
         clearRect: jest.fn(() => true),
+        closePath: jest.fn(() => true),
+        fillRect: jest.fn(() => []),
+        fillText: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
-        fillText: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#0084b3',
       isHover: '',
       hoverX: 1,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      slicesTime: 121,
+      id: 231,
+      x: 40,
+      y: 40,
+      width: 140,
+      height: 104,
     };
     window.postMessage = jest.fn(() => true);
     expect(emptyRender.render(req, [], [])).toBeUndefined();
@@ -245,17 +245,17 @@ describe(' Test', () => {
 
   it('CPUTest11', function () {
     let cpuRender = new CpuRender();
-    let req = {
+    let cpuReq = {
       lazyRefresh: true,
-      type: '',
+      type: '1',
       startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      endNS: 4,
+      totalNS: 3,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 334,
+        y: 442,
+        width: 230,
+        height: 330,
       },
       useCache: false,
       range: {
@@ -264,32 +264,32 @@ describe(' Test', () => {
       canvas: 'a',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
+        fillStyle: '#221786',
         globalAlpha: 0.6,
-        clearRect: jest.fn(() => true),
+        closePath: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
+        clearRect: jest.fn(() => true),
         fillText: jest.fn(() => true),
+        fillRect: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#112d7d',
       isHover: '',
       hoverX: 1,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      slicesTime: 1113,
+      id: 111,
+      x: 212,
+      y: 2230,
+      width: 156,
+      height: 600,
     };
     window.postMessage = jest.fn(() => true);
-    expect(cpuRender.render(req, [], [])).toBeUndefined();
+    expect(cpuRender.render(cpuReq, [], [])).toBeUndefined();
   });
   it('CPUTest12', function () {
     let emptyRender = new EmptyRender();

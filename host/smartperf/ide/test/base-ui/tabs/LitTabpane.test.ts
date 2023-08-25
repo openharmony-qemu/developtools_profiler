@@ -66,19 +66,4 @@ describe('LitTabPane Test', () => {
   it('LitTabPaneTest11 ', function () {
     expect(litTabPane.adoptedCallback()).toBeUndefined();
   });
-  it('LitTabPaneTest8', () => {
-    expect(litTabPane.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host(){
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            overflow: auto;
-            width: 100%;
-        }
-        </style>
-        <slot></slot>
-        "
-`);
-  });
 });

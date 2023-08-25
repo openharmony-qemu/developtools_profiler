@@ -49,10 +49,10 @@ export class TabPaneJsCpuStatistics extends BaseElement {
 
   private init() {
     const thTable = this.tabTitle!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const jsCpuStatTblNodes = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
       this.tabTitle!.removeAttribute('sort');
-      list.forEach((item) => {
+      jsCpuStatTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });

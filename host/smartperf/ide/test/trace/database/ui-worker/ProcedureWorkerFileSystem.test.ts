@@ -46,57 +46,57 @@ describe('ProcedureWorkerFileSystem Test', () => {
 
   it('ProcedureWorkerFileSystemTest03', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 40,
+      y: 24,
+      width: 440,
+      height: 500,
     };
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 1 },
+    let fileSystemDataList = new Array();
+    fileSystemDataList.push({
+      startTime: 60,
+      dur: 110,
+      frame: { x: 40, y: 59, width: 140, height: 142 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
-    fileSysChart(dataList, dataList, '', [{ length: 0 }], 1, 2, 1, frame, true, false, false);
+    fileSystemDataList.push({ startTime: 14, dur: 41 });
+    fileSysChart(fileSystemDataList, fileSystemDataList, '', [{ length: 0 }], 1, 2, 1, frame, true, false, false);
   });
 
   it('ProcedureWorkerFileSystemTest03', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 24,
+      y: 21,
+      width: 121,
+      height: 230,
     };
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 0 },
+    let fileSystemDataList = new Array();
+    fileSystemDataList.push({
+      startTime: 20,
+      dur: 11,
+      frame: { x: 10, y: 91, width: 40, height: 540 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
-    fileSysChart(dataList, dataList, '', [{ length: 0 }], 1, 2, 1, frame, true, false, false);
+    fileSystemDataList.push({ startTime: 41, dur: 141 });
+    fileSysChart(fileSystemDataList, fileSystemDataList, '', [{ length: 0 }], 1, 2, 1, frame, true, false, false);
   });
 
   it('ProcedureWorkerFileSystemTest04', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 60,
+        y: 24,
+        width: 440,
+        height: 460,
       },
-      startNS: 0,
-      value: 50,
-      startTs: 3,
-      dur: 1,
-      height: 2,
+      startNS: 100,
+      value: 980,
+      startTs: 63,
+      dur: 21,
+      height: 222,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 2,
+      y: 21,
+      width: 15,
+      height: 84,
     };
     expect(FileSysChartStruct.setFrame(node, 2, 1, 2, frame)).toBeUndefined();
   });
@@ -104,22 +104,22 @@ describe('ProcedureWorkerFileSystem Test', () => {
   it('ProcedureWorkerFileSystemTest05', function () {
     let node = {
       frame: {
-        x: 20,
+        x: 80,
         y: 20,
-        width: 100,
-        height: 100,
+        width: 330,
+        height: 330,
       },
       startNS: 2,
-      value: 50,
-      startTs: 3,
-      dur: 3,
-      height: 2,
+      value: 61,
+      startTs: 32,
+      dur: 8,
+      height: 10,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 66,
+      y: 2,
+      width: 600,
+      height: 188,
     };
     expect(FileSysChartStruct.setFrame(node, 2, 1, 2, frame)).toBeUndefined();
   });

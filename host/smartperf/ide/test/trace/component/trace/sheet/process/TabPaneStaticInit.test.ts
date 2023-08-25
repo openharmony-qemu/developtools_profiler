@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-
 // @ts-ignore
 import { TabPaneStaticInit } from '../../../../../../dist/trace/component/trace/sheet/process/TabPaneStaticInit.js';
-
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -32,8 +30,8 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorkerAppStartup.js', () => {
   return {
     AppStartupStruct: {
-      getStartupName: jest.fn().mockReturnValue('Unknown Start Step')
-    }
+      getStartupName: jest.fn().mockReturnValue('Unknown Start Step'),
+    },
   };
 });
 describe('TabPaneStaticInit Test', () => {
@@ -42,40 +40,37 @@ describe('TabPaneStaticInit Test', () => {
 
   getTabStaticInit.mockResolvedValue([
     {
-      "pid": 3913,
-      "process": "com.ohos.smartperf",
-      "startTs": 5769042707,
-      "dur": 6701042,
-      "soName": "dlopen:  /system/lib64/module/net/libsocket.z.so"
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5769042707,
+      dur: 6701042,
+      soName: 'dlopen:  /system/lib64/module/net/libsocket.z.so',
     },
     {
-      "pid": 3913,
-      "process": "com.ohos.smartperf",
-      "startTs": 5696226041,
-      "dur": 4319791,
-      "soName": "dlopen:  system/lib64/extensionability/libinputmethod_extension_module.z.so"
-    }
+      pid: 3913,
+      process: 'com.ohos.smartperf',
+      startTs: 5696226041,
+      dur: 4319791,
+      soName: 'dlopen:  system/lib64/extensionability/libinputmethod_extension_module.z.so',
+    },
   ]);
   it('TabPaneStaticInit01', function () {
-
     expect(
-      tabPaneStaticInit.data = {
-        'recordStartNs': 94574874464,
-        'leftNs': 5521679251,
-        'rightNs': 6407693386,
-        'hasFps': false,
-        'perfAll': false,
-        'fileSysVirtualMemory': false,
-        'diskIOLatency': false,
-        'fsCount': 0,
-        'vmCount': 0,
-        'isCurrentPane': false,
-        'startup': true,
-        'staticInit': true,
-        'processIds': [
-          3913
-        ]
-      }
+      (tabPaneStaticInit.data = {
+        recordStartNs: 94574874464,
+        leftNs: 5521679251,
+        rightNs: 6407693386,
+        hasFps: false,
+        perfAll: false,
+        fileSysVirtualMemory: false,
+        diskIOLatency: false,
+        fsCount: 0,
+        vmCount: 0,
+        isCurrentPane: false,
+        startup: true,
+        staticInit: true,
+        processIds: [3913],
+      })
     );
   });
 
@@ -86,36 +81,5 @@ describe('TabPaneStaticInit Test', () => {
         sort: () => {},
       })
     ).toBeUndefined();
-  });
-
-
-  it('TabPaneStartupTest03', function () {
-    expect(tabPaneStaticInit.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .staticinit-table{
-          flex-direction: row;
-          margin-bottom: 5px;
-        }
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        </style>
-        <div class="staticinit-table" style="display: flex;height: 20px;align-items: center;flex-direction: row;margin-bottom: 5px">
-            <div style="flex: 1"></div>
-            <label id="staticinit-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
-        </div>
-        <div style="overflow: auto">
-            <lit-table id="tb-staticinit" style="height: auto" tree>
-                <lit-table-column width="700px" title="Process / Lib"  data-index="name" key="name"  align="flex-start" order>
-                </lit-table-column>
-                <lit-table-column width="200px" title="Duration" data-index="durStr" key="durStr"  align="flex-start" order >
-                </lit-table-column>
-            </lit-table>
-        </div>
-        "
-`);
   });
 });

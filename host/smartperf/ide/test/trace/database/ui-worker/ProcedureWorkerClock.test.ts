@@ -25,14 +25,14 @@ import { ClockStruct, ClockRender } from '../../../../dist/trace/database/ui-wor
 describe('ProcedureWorkerClock Test', () => {
   it('ProcedureWorkerClock01', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 12;
+    canvas.height = 12;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 202,
+        y: 202,
         width: 100,
         height: 100,
       },

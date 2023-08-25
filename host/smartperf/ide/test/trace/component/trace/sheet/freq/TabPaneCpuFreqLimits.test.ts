@@ -17,35 +17,36 @@ import { TabPaneCpuFreqLimits } from '../../../../../../dist/trace/component/tra
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
-    return {};
+  return {};
 });
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
-    return {};
+  return {};
 });
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-    return {};
+  return {};
 });
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 describe('TabPaneCpuFreqLimits Test', () => {
-    let tabPaneCpuFreqLimits = new TabPaneCpuFreqLimits();
-    it('TabPaneCpuFreqLimits01', function () {
-        expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('timeStr',1)).toBeUndefined();
-    });
-    it('TabPaneCpuFreqLimits02', function () {
-        expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('valueStr',1)).toBeUndefined();
-    });
-    it('TabPaneCpuFreqLimits03', function () {
-        expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('cpu',1)).toBeUndefined();
-    });
-    it('TabPaneCpuFreqLimits04', function () {
-        expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('type',1)).toBeUndefined();
-    });
-})
+  let tabPaneCpuFreqLimits = new TabPaneCpuFreqLimits();
+  it('TabPaneCpuFreqLimits01', function () {
+    expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('timeStr', 1)).toBeUndefined();
+  });
+  it('TabPaneCpuFreqLimits02', function () {
+    expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('valueStr', 1)).toBeUndefined();
+  });
+  it('TabPaneCpuFreqLimits03', function () {
+    expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('cpu', 1)).toBeUndefined();
+  });
+  it('TabPaneCpuFreqLimits04', function () {
+    expect(tabPaneCpuFreqLimits.sortCpuFreqLimitTable('type', 1)).toBeUndefined();
+  });
+});

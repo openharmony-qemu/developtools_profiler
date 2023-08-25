@@ -925,22 +925,7 @@ export class HeapLoader {
     let clickNode = childNodes[0].parent;
     // If there are duplicate IDs in the third layer and beyond, they will not be expanded again
     if (clickNode!.type == ConstructorType.FiledType) {
-      function findParents(clickNode: any, parents: any): any {
-        if (!clickNode.parent) {
-          return parents;
-        }
-        // add the parent of the current node to the result array
-        parents.push(clickNode);
-        for (let childNode of childNodes) {
-          for (let p of parents) {
-            if (p.id === childNode!.id) {
-              childNode.hasNext = false;
-            }
-          }
-        }
-        return findParents(clickNode.parent, parents);
-      }
-      findParents(clickNode, []);
+      this.findParentsFunc(childNodes, clickNode);
     }
     let filterChildNodes = new Array<ConstructorItem>();
     for (let item of childNodes) {
@@ -950,6 +935,25 @@ export class HeapLoader {
     }
     item.children = filterChildNodes;
     return filterChildNodes;
+  }
+
+  private findParentsFunc(childNodes: ConstructorItem[], clickNode: ConstructorItem) {
+    function findParents(clickNode: any, parents: any): any {
+      if (!clickNode.parent) {
+        return parents;
+      }
+      // add the parent of the current node to the result array
+      parents.push(clickNode);
+      for (let childNode of childNodes) {
+        for (let heapParent of parents) {
+          if (heapParent.id === childNode!.id) {
+            childNode.hasNext = false;
+          }
+        }
+      }
+      return findParents(clickNode.parent, parents);
+    }
+    findParents(clickNode, []);
   }
 
   /**
@@ -1004,22 +1008,7 @@ export class HeapLoader {
       let clickNode = retains[0].parent;
       // If there are duplicate IDs in the third layer and beyond, they will not be expanded again
       if (clickNode!.type == ConstructorType.RetainersType) {
-        function findParents(clickNode: any, parents: any): any {
-          if (!clickNode.parent) {
-            return parents;
-          }
-          // add the parent of the current node to the result array
-          parents.push(clickNode);
-          for (let childNode of retains) {
-            for (let p of parents) {
-              if (p.id === childNode!.id) {
-                childNode.hasNext = false;
-              }
-            }
-          }
-          return findParents(clickNode.parent, parents);
-        }
-        findParents(clickNode, []);
+        this.findParentsFunc(retains, clickNode);
       }
     }
 

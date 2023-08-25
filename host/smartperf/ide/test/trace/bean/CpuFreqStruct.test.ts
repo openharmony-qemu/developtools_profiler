@@ -25,41 +25,38 @@ describe('CpuFreqStruct Test', () => {
   CpuFreqStruct.hoverCpuFreqStruct = void 0;
   const data = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 244,
+      y: 466,
+      width: 34,
+      height: 600,
     },
-    startNS: 200,
-    value: 50,
+    startNS: 400,
+    value: 43,
   };
 
   const dataSource = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 35,
+      y: 66,
+      width: 560,
+      height: 600,
     },
-    value: 50,
-    maxFreq: 50,
+    value: 60,
+    maxFreq: 88,
   };
 
   it('CpuFreqStructTest01', function () {
     expect(CpuFreqStruct.draw(ctx, data)).toBeUndefined();
-    expect(data).toMatchInlineSnapshot(
-{
-  startNS: expect.any(Number),
-  value: expect.any(Number) }, `
+    expect(data).toMatchInlineSnapshot(`
 {
   "frame": {
-    "height": 100,
-    "width": 100,
-    "x": 20,
-    "y": 20,
+    "height": 600,
+    "width": 34,
+    "x": 244,
+    "y": 466,
   },
-  "startNS": Any<Number>,
-  "value": Any<Number>,
+  "startNS": 400,
+  "value": 43,
 }
 `);
   });

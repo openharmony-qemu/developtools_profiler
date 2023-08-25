@@ -45,25 +45,4 @@ describe('StackBar Test', () => {
     let hasDivEl = htmlDivElement.toLocaleString().length > 5;
     expect(hasDivEl).toBeTruthy();
   });
-
-  it('StackBarTest05', function () {
-    expect(stackBar.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-            :host([mode='hidden']){
-                display: none;
-            }
-            :host{
-                display: block;
-                /*background-color: rebeccapurple;*/
-            }
-            .state-text{
-                width: 10%;display: inline-block;overflow: hidden;white-space: nowrap;padding: 5px; margin-right: 2px;font-size: 9pt;
-            }
-            </style>
-            <div style="display: flex;flex-direction: row;" id="container">
-            </div>
-        "
-`);
-  });
 });

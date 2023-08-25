@@ -23,16 +23,12 @@ import crypto from 'crypto';
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
 window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
+  window.ResizeObserver || jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
+    unobserve: jest.fn(), observe: jest.fn(),
+    }));
 Object.defineProperty(global.self, 'crypto', {
-  value: {
-    getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
-  },
+  value: { getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length)},
 });
 
 describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
@@ -40,79 +36,79 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
   let tabPane = document.querySelector<TabPaneVirtualMemoryStatisticsAnalysis>('#statistics-analysis');
   let param = {
     anomalyEnergy: [],
-    clockMapData: { size: 0 },
-    cpuAbilityIds: [],
-    cpuFreqFilterIds: [],
+    clockMapData: { size: 623 },
+    cpuAbilityIds: [234,56],
+    cpuFreqFilterIds: [46,87,9],
     cpuFreqLimitDatas: [],
-    cpuStateFilterIds: [],
-    cpus: [],
-    diskAbilityIds: [],
+    cpuStateFilterIds: [77,97,3],
+    cpus: [2,1],
+    diskAbilityIds: [43,98],
     diskIOLatency: false,
-    diskIOReadIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOWriteIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOipids: [2, 7, 1, 3, 4, 5, 6],
-    fileSysVirtualMemory: false,
+    diskIOReadIds: [1],
+    diskIOWriteIds: [12, 4 ,55, 6],
+    diskIOipids: [6,88, 3, 551, 6],
+    fileSysVirtualMemory: true,
     fileSystemType: [],
-    fsCount: 0,
+    fsCount: 56,
     funAsync: [],
-    funTids: [],
+    funTids: [6,87,2],
     hasFps: false,
-    irqMapData: { size: 0 },
+    irqMapData: { size: 158 },
     jsMemory: [],
-    leftNs: 964699689,
-    memoryAbilityIds: [],
+    leftNs: 964699699,
+    memoryAbilityIds: [25,87,8],
     nativeMemory: [],
     nativeMemoryStatistic: [],
-    networkAbilityIds: [],
+    networkAbilityIds: [67,12,9],
     perfAll: false,
     perfCpus: [],
     perfProcess: [],
-    perfSampleIds: [],
+    perfSampleIds: [12,66,6],
     perfThread: [],
     powerEnergy: [],
-    processTrackIds: [],
+    processTrackIds: [42,87,43],
     promiseList: [],
-    recordStartNs: 780423789228,
-    rightNs: 24267556624,
-    sdkCounterIds: [],
-    sdkSliceIds: [],
+    recordStartNs: 780621789228,
+    rightNs: 24269616624,
+    sdkCounterIds: [33,87,21],
+    sdkSliceIds: [2,7,2],
     smapsType: [],
     systemEnergy: [],
-    threadIds: [],
+    threadIds: [2,9,1],
     virtualTrackIds: [],
-    vmCount: 0,
+    vmCount: 450,
   };
   let processData = [
     {
-      callChainId: 13,
-      dur: 240916,
-      libId: 539,
-      libName: 'libName.z.so',
-      pid: 911,
-      processName: 'processName(911)',
-      symbolId: 799,
-      symbolName: 'symbolName',
-      threadName: 'threadName',
-      tid: 404,
-      type: 0,
+      callChainId: 154,
+      dur: 240768,
+      libId: 102,
+      libName: 'libName.com',
+      pid: 91,
+      processName: 'ssioncontroller 3675',
+      symbolId: 320,
+      symbolName: 'ssioncontroller',
+      threadName: 'ssioncontroller',
+      tid: 920,
+      type: 20,
     },
   ];
   let item = {
-    durFormat: '194.23ms ',
-    duration: 194230478,
+    durFormat: '133.23ms ',
+    duration: 265930478,
     isHover: true,
-    percent: '99.00',
-    pid: 3744,
-    tableName: 'test(3744)',
+    percent: '8023.00',
+    pid: 1520,
+    tableName: 'test(6124)',
   };
   let res = [
     {
-      durFormat: '194.23ms ',
-      duration: 194230478,
+      durFormat: '1964.3ms ',
+      duration: 210230478,
       isHover: true,
-      percent: '99.00',
-      pid: 3744,
-      tableName: 'test(3744)',
+      percent: '1099.00',
+      pid: 5214,
+      tableName: 'test(5624)',
     },
   ];
   it('tabPaneVirtualMemoryStatisticsAnalysis01', function () {
@@ -188,7 +184,7 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     expect(tabPane.typeIdToString(7)).toEqual('Copy On Writer');
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis10', function () {
-    expect(tabPane.getPieChartData(res).length).toEqual(1);
+    expect(tabPane.getVmPieChartData(res).length).toEqual(1);
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis11', function () {
     tabPane.currentLevel = 0;

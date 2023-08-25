@@ -22,14 +22,12 @@ import crypto from 'crypto';
 // @ts-ignore
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
-window.ResizeObserver =
-  window.ResizeObserver ||
+window.ResizeObserver = window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
-    observe: jest.fn(),
     unobserve: jest.fn(),
+    observe: jest.fn(),
   }));
-
 Object.defineProperty(global.self, 'crypto', {
   value: {
     getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
@@ -42,47 +40,47 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
 
   let param = {
     anomalyEnergy: [],
-    clockMapData: { size: 0 },
-    cpuAbilityIds: [],
-    cpuFreqFilterIds: [],
+    clockMapData: { size: 193 },
+    cpuAbilityIds: [10,8],
+    cpuFreqFilterIds: [56],
     cpuFreqLimitDatas: [],
-    cpuStateFilterIds: [],
+    cpuStateFilterIds: [12,98],
     cpus: [],
     diskAbilityIds: [],
     diskIOLatency: false,
-    diskIOReadIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOWriteIds: [2, 7, 1, 3, 4, 5, 6],
-    diskIOipids: [2, 7, 1, 3, 4, 5, 6],
+    diskIOReadIds: [2,33],
+    diskIOWriteIds: [54, 4, 54, 6],
+    diskIOipids: [2, 17, 45, 5, 16],
     fileSysVirtualMemory: false,
     fileSystemType: [],
-    fsCount: 0,
+    fsCount: 3,
     funAsync: [],
     funTids: [],
     hasFps: false,
-    irqMapData: { size: 0 },
+    irqMapData: { size: 996 },
     jsMemory: [],
-    leftNs: 964699689,
-    memoryAbilityIds: [],
+    leftNs: 964699125,
+    memoryAbilityIds: [12,34],
     nativeMemory: [],
     nativeMemoryStatistic: [],
-    networkAbilityIds: [],
+    networkAbilityIds: [34,87],
     perfAll: false,
     perfCpus: [],
     perfProcess: [],
-    perfSampleIds: [],
+    perfSampleIds: [67,33],
     perfThread: [],
     powerEnergy: [],
-    processTrackIds: [],
+    processTrackIds: [122,34],
     promiseList: [],
-    recordStartNs: 780423789228,
-    rightNs: 24267556624,
-    sdkCounterIds: [],
-    sdkSliceIds: [],
+    recordStartNs: 780423788588,
+    rightNs: 69267555654,
+    sdkCounterIds: [34,22,12],
+    sdkSliceIds: [221],
     smapsType: [],
     systemEnergy: [],
-    threadIds: [],
+    threadIds: [12,45],
     virtualTrackIds: [],
-    vmCount: 0,
+    vmCount: 850,
   };
 
   let item = {
@@ -96,26 +94,26 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
 
   let res = [
     {
-      durFormat: '194.23ms ',
-      duration: 194230478,
+      durFormat: '1334.23ms ',
+      duration: 13230478,
       isHover: true,
-      percent: '99.00',
-      pid: 3744,
-      tableName: 'test(3744)',
+      percent: '232.00',
+      pid: 34,
+      tableName: 'test(3554)',
     },
   ];
 
   let processData = [
     {
-      callChainId: 13,
-      dur: 240916,
+      callChainId: 113,
+      dur: 24010,
       libId: 539,
       libName: 'libName.z.so',
       pid: 911,
-      processName: 'processName(911)',
+      processName: 'ksoftirqd/1',
       symbolId: 799,
-      symbolName: 'symbolName',
-      threadName: 'threadName',
+      symbolName: 'ksoftirqd/1 17',
+      threadName: 'ksoftirqd/1',
       tid: 404,
       type: 0,
     },
@@ -174,7 +172,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
   });
 
   it('systemStatisticsAnalysis10', function () {
-    expect(tabPane.getPieChartData(res).length).toEqual(1);
+    expect(tabPane.getFsPieChartData(res).length).toEqual(1);
   });
 
   it('systemStatisticsAnalysis11', function () {

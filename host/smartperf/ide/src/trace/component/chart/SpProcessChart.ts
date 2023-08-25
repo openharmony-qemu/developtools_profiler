@@ -771,7 +771,7 @@ export class SpProcessChart {
       startupRow.canvasSave(context);
       (renders['app-start-up'] as AppStartupRender).renderMainThread(
         {
-          context: context,
+          appStartupContext: context,
           useCache: useCache,
           type: `app-startup ${ processRow.rowId }`,
         },

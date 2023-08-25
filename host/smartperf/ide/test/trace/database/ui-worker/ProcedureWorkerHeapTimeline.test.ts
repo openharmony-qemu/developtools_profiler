@@ -27,34 +27,34 @@ import {
 
 describe('ProcedureWorkerHeapTimeline Test', () => {
   it('HeapTimelineTest', () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext('2d');
+    const heapTimelineCanvas = document.createElement('canvas');
+    heapTimelineCanvas.width = 11;
+    heapTimelineCanvas.height = 11;
+    const ctx = heapTimelineCanvas.getContext('2d');
     let dataList = new Array();
     dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startTime: 1,
+      dur: 101,
+      frame: { x: 0, y: 10, width: 10, height: 10 },
     });
     dataList.push({ startTime: 1, dur: 111 });
     let rect = new Rect(0, 10, 10, 10);
-    HeapTimeline(canvas, ctx, 1, 100254, 100254, rect, (e: any) => {});
+    HeapTimeline(heapTimelineCanvas, ctx, 1, 100254, 100254, rect, (e: any) => {});
   });
   it('HeapTimelineStructTest01', () => {
     const data = {
-      cpu: 1,
-      startNs: 1,
-      value: 1,
+      cpu: 3,
+      startNs: 3,
+      value: 111,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 40,
+        y: 40,
+        width: 230,
+        height: 132,
       },
       maxValue: undefined,
       startTime: 1,
-      filterID: 2,
+      filterID: 3,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;

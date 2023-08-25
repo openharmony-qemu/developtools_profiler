@@ -50,7 +50,7 @@ export class TabPaneComparison extends BaseElement {
     this.retainerTableEl = this.shadowRoot!.querySelector<LitTable>('#tb-retainer') as LitTable;
     this.filterEl = this.shadowRoot!.querySelector<TabPaneJsMemoryFilter>('#filter');
     this.selectEl = this.filterEl?.shadowRoot?.querySelector<LitSelect>('lit-select');
-    this.search = this.filterEl?.shadowRoot?.querySelector('#filter-input') as HTMLInputElement;
+    this.search = this.filterEl?.shadowRoot?.querySelector('#js-memory-filter-input') as HTMLInputElement;
     this.rightTheadTable = this.retainerTableEl!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
     this.leftTheadTable = this.comparisonTableEl!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
     this.comparisonTable = this.comparisonTableEl.shadowRoot?.querySelector('.table') as HTMLDivElement;
@@ -128,8 +128,8 @@ export class TabPaneComparison extends BaseElement {
             let i = 0;
             let that = this;
             let retainsTable = () => {
-              const getList = (list: Array<ConstructorItem>) => {
-                list.forEach((row) => {
+              const getList = (comList: Array<ConstructorItem>) => {
+                comList.forEach((row) => {
                   let shallow = Math.round((row.shallowSize / this.fileSize) * 100) + '%';
                   let retained = Math.round((row.retainedSize / this.fileSize) * 100) + '%';
                   row.shallowPercent = shallow;
@@ -142,9 +142,9 @@ export class TabPaneComparison extends BaseElement {
                   }
                   i++;
                   // @ts-ignore
-                  if (i < that.retainsData[0].distance - 1 && list[0].distance != '-') {
-                    list[0].getChildren();
-                    list[0].expanded = false;
+                  if (i < that.retainsData[0].distance - 1 && comList[0].distance != '-') {
+                    comList[0].getChildren();
+                    comList[0].expanded = false;
                     if (row.hasNext) {
                       getList(row.children);
                     }
@@ -297,7 +297,7 @@ export class TabPaneComparison extends BaseElement {
     this.comparisonTableEl!.reMeauseHeight();
   }
 
-  initSelect(fileId: number, fileArr: Array<HeapSnapshotStruct>) {
+  initSelect(fileId: number, comFileArr: Array<HeapSnapshotStruct>) {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -305,17 +305,17 @@ export class TabPaneComparison extends BaseElement {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].name) {
-      option.setAttribute('value', fileArr[0].name);
+    if (comFileArr[0].name) {
+      option.setAttribute('value', comFileArr[0].name);
     }
-    this.selectEl!.defaultValue = fileArr[0].name || '';
-    this.selectEl!.placeholder = fileArr[0].name || '';
-    this.selectEl!.dataSource = fileArr;
+    this.selectEl!.defaultValue = comFileArr[0].name || '';
+    this.selectEl!.placeholder = comFileArr[0].name || '';
+    this.selectEl!.dataSource = comFileArr;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
       a.addEventListener('onSelected', (e) => {
         this.comparisonTable!.scrollTop = 0;
         this.retainerTableEl!.snapshotDataSource = [];
-        for (let f of fileArr) {
+        for (let f of comFileArr) {
           if (input.value == f.name) {
             that.updateComparisonData(fileId, f.id);
           }
@@ -542,16 +542,6 @@ export class TabPaneComparison extends BaseElement {
             padding: 10px 10px 0 10px;
             height: calc(100% - 10px - 31px);
         }
-        tab-pane-filter {
-            border: solid rgb(216,216,216) 1px;
-            float: left;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-        selector{
-            display: none;
-        }
         .show{
             display: flex;
             flex: 1;
@@ -562,6 +552,16 @@ export class TabPaneComparison extends BaseElement {
             height: 1px;
             left: 0;
             right: 0;
+        }
+        selector{
+            display: none;
+        }
+        tab-pane-filter {
+            border: solid rgb(216,216,216) 1px;
+            float: left;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
         }
         .loading{
             bottom: 0;

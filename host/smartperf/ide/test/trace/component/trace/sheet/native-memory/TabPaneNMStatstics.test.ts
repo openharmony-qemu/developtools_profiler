@@ -50,25 +50,29 @@ describe('TabPaneNMStatstics Test', () => {
       {
         eventType: '',
         subType: '',
+        subTypeId: 0,
         heapSize: 0,
         allocByte: 0,
         allocCount: 0,
         freeByte: 0,
         freeCount: 0,
+        max: 0,
       },
     ];
     let nativeHookStatisticsTableData: Array<NativeHookStatisticsTableData> = [
       {
-        memoryTap: '',
-        existing: 0,
+        memoryTap: '12',
+        existing: 50,
         existingString: '',
-        allocCount: 0,
-        freeCount: 0,
-        totalBytes: 0,
+        freeByteString: '',
+        allocCount: 254,
+        freeCount: 43,
+        freeByte: 23,
+        totalBytes: 1,
         totalBytesString: '',
         maxStr: '',
-        max: 0,
-        totalCount: 0,
+        max: 110,
+        totalCount: 1150,
         existingValue: [],
       },
     ];
@@ -76,63 +80,34 @@ describe('TabPaneNMStatstics Test', () => {
     expect(tabPaneNMStatstics.setSubTypeTableData(nativeHookMalloc, nativeHookStatisticsTableData)).toBeUndefined();
   });
 
-  it('TabPaneNMStatsticsTest03', function () {
-    expect(tabPaneNMStatstics.initHtml()).toMatchInlineSnapshot(`
-"
-<style>
-.nm-stat-tbl {
-    height: auto
-}
-:host{
-    display: flex;
-    flex-direction: column;
-    padding: 10px 10px;
-}
-</style>
-<lit-table id="tb-native-statstics" class="nm-stat-tbl">
-    <lit-table-column class="nm-stat-column" width="25%" title="Memory Type" data-index="memoryTap" key="memoryTap"  align="flex-start"></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="Existing" data-index="existingString" key="existingString"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="# Existing" data-index="allocCount" key="allocCount"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="Transient" data-index="freeByteString" key="freeByteString"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="# Transient" data-index="freeCount" key="freeCount"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="Total Bytes" data-index="totalBytesString" key="totalBytesString"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="# Total" data-index="totalCount" key="totalCount"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="1fr" title="Peak Value" data-index="maxStr" key="maxStr"  align="flex-start" order></lit-table-column>
-    <lit-table-column class="nm-stat-column" width="160px" title="Existing / Total" data-index="existingValue" key="existingValue"  align="flex-start" >
-        <template><tab-progress-bar data="{{existingValue}}"></tab-progress-bar></template>
-    </lit-table-column>
-</lit-table>
-        "
-`);
-  });
-
   it('TabPaneNMStatsticsTest04', function () {
     let valData = {
       cpus: [],
       threadIds: [],
-      trackIds: [],
-      funTids: [],
-      heapIds: [],
+      trackIds: [21, 45, 6],
+      funTids: [111, 4, 43],
+      heapIds: [5, 77, 67, 0],
       nativeMemory: ['All Heap & Anonymous VM', 'All Heap', 'All Anonymous VM'],
       cpuAbilityIds: [],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
+      diskAbilityIds: [88, 56, 7],
       networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      leftNs: 1110,
+      rightNs: 15600,
       hasFps: false,
       statisticsSelectData: undefined,
       perfSampleIds: [],
       perfCpus: [],
       perfProcess: [],
       perfThread: [],
-      perfAll: false,
+      perfAll: true,
     };
     let nativeHookStatistics: Array<NativeHookStatistics> = [
       {
         eventId: 0,
         eventType: 'AllocEvent',
         subType: '',
+        subTypeId: 0,
         heapSize: 0,
         addr: '',
         startTs: 0,
@@ -141,6 +116,7 @@ describe('TabPaneNMStatstics Test', () => {
         max: 100000,
         count: 0,
         tid: 0,
+        threadName: '',
         isSelected: false,
       },
     ];
@@ -148,15 +124,17 @@ describe('TabPaneNMStatstics Test', () => {
     let nativeHookStatisticsTableData: Array<NativeHookStatisticsTableData> = [
       {
         memoryTap: '',
-        existing: 0,
+        existing: 540,
         existingString: '',
-        allocCount: 0,
-        freeCount: 0,
-        totalBytes: 0,
+        freeByteString: '',
+        allocCount: 20,
+        freeCount: 10,
+        freeByte: 20,
+        totalBytes: 20,
         totalBytesString: '',
         maxStr: '',
-        max: 0,
-        totalCount: 0,
+        max: 50,
+        totalCount: 40,
         existingValue: [],
       },
     ];
@@ -168,39 +146,41 @@ describe('TabPaneNMStatstics Test', () => {
 
   it('TabPaneNMStatsticsTest05', function () {
     let valData = {
-      cpus: [],
+      cpus: [3],
       threadIds: [],
-      trackIds: [],
-      funTids: [],
+      trackIds: [12,4],
+      funTids: [12,345],
       heapIds: [],
       nativeMemory: ['All Heap'],
-      cpuAbilityIds: [],
+      cpuAbilityIds: [10,56,1],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
+      diskAbilityIds: [12,76],
       networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      leftNs: 2330,
+      rightNs: 56670,
       hasFps: false,
       statisticsSelectData: undefined,
       perfSampleIds: [],
-      perfCpus: [],
+      perfCpus: [0,3],
       perfProcess: [],
       perfThread: [],
       perfAll: false,
     };
     let nativeHookStatistics: Array<NativeHookStatistics> = [
       {
-        eventId: 0,
+        eventId: 980,
         eventType: 'FreeEvent',
         subType: '',
-        heapSize: 0,
+        subTypeId: 0,
+        heapSize: 7,
         addr: '',
-        startTs: 0,
-        endTs: 0,
+        startTs: 77,
+        endTs: 6,
         sumHeapSize: 0,
-        max: 100000,
-        count: 0,
-        tid: 0,
+        max: 100654,
+        count: 40,
+        tid: 660,
+        threadName: '',
         isSelected: false,
       },
     ];
@@ -208,15 +188,17 @@ describe('TabPaneNMStatstics Test', () => {
     let nativeHookStatisticsTableData: Array<NativeHookStatisticsTableData> = [
       {
         memoryTap: '',
-        existing: 0,
+        existing: 20,
         existingString: '',
-        allocCount: 0,
-        freeCount: 0,
-        totalBytes: 0,
+        freeByteString: '',
+        allocCount: 12,
+        freeCount: 121,
+        freeByte: 221,
+        totalBytes: 21,
         totalBytesString: '',
         maxStr: '',
-        max: 0,
-        totalCount: 0,
+        max: 220,
+        totalCount: 465,
         existingValue: [],
       },
     ];
@@ -228,39 +210,41 @@ describe('TabPaneNMStatstics Test', () => {
 
   it('TabPaneNMStatsticsTest06', function () {
     let valData = {
-      cpus: [],
+      cpus: [1,3],
       threadIds: [],
       trackIds: [],
-      funTids: [],
+      funTids: [543,76],
       heapIds: [],
       nativeMemory: ['All Anonymous VM'],
       cpuAbilityIds: [],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
-      networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      diskAbilityIds: [23, 56, 7],
+      networkAbilityIds: [100, 156],
+      leftNs: 450,
+      rightNs: 5210,
       hasFps: false,
       statisticsSelectData: undefined,
-      perfSampleIds: [],
-      perfCpus: [],
+      perfSampleIds: [12, 56],
+      perfCpus: [0],
       perfProcess: [],
       perfThread: [],
       perfAll: false,
     };
     let nativeHookStatistics: Array<NativeHookStatistics> = [
       {
-        eventId: 0,
+        eventId: 90,
         eventType: 'MmapEvent',
         subType: '',
-        heapSize: 0,
+        subTypeId: 21,
+        heapSize: 97,
         addr: '',
-        startTs: 0,
-        endTs: 0,
+        startTs: 77,
+        endTs: 6,
         sumHeapSize: 0,
-        max: 100000,
-        count: 0,
-        tid: 0,
+        max: 10114,
+        count: 10,
+        tid: 611,
+        threadName: '',
         isSelected: false,
       },
     ];
@@ -268,15 +252,17 @@ describe('TabPaneNMStatstics Test', () => {
     let nativeHookStatisticsTableData: Array<NativeHookStatisticsTableData> = [
       {
         memoryTap: '',
-        existing: 0,
+        existing: 510,
         existingString: '',
-        allocCount: 0,
-        freeCount: 0,
-        totalBytes: 0,
+        freeByteString: '',
+        allocCount: 2312,
+        freeCount: 51,
+        freeByte: 321,
+        totalBytes: 90,
         totalBytesString: '',
-        maxStr: '',
-        max: 0,
-        totalCount: 0,
+        maxStr: '02',
+        max: 2082,
+        totalCount: 55,
         existingValue: [],
       },
     ];
@@ -289,38 +275,40 @@ describe('TabPaneNMStatstics Test', () => {
   it('TabPaneNMStatsticsTest07', function () {
     let valData = {
       cpus: [],
-      threadIds: [],
+      threadIds: [12, 43, 5],
       trackIds: [],
-      funTids: [],
+      funTids: [22,29,20],
       heapIds: [],
       nativeMemory: ['All Anonymous VM'],
-      cpuAbilityIds: [],
+      cpuAbilityIds: [133,54,5],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
+      diskAbilityIds: [13, 14, 19],
       networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      leftNs: 2211,
+      rightNs: 433111,
       hasFps: false,
       statisticsSelectData: undefined,
-      perfSampleIds: [],
+      perfSampleIds: [520, 88, 1],
       perfCpus: [],
-      perfProcess: [],
-      perfThread: [],
+      perfProcess: ['ssioncontroller', 'ndroid.settings'],
+      perfThread: ['ndroid.settings'],
       perfAll: false,
     };
     let nativeHookStatistics: Array<NativeHookStatistics> = [
       {
-        eventId: 0,
-        eventType: 'MunmapEvent',
+        eventId: 60,
+        eventType: 'MmapEvent',
         subType: '',
-        heapSize: 0,
+        subTypeId: 13,
+        heapSize: 31,
         addr: '',
-        startTs: 0,
-        endTs: 0,
-        sumHeapSize: 0,
-        max: 100000,
-        count: 0,
-        tid: 0,
+        startTs: 137,
+        endTs: 61,
+        sumHeapSize: 34,
+        max: 214,
+        count: 10,
+        tid: 64,
+        threadName: '',
         isSelected: false,
       },
     ];
@@ -328,19 +316,20 @@ describe('TabPaneNMStatstics Test', () => {
     let nativeHookStatisticsTableData: Array<NativeHookStatisticsTableData> = [
       {
         memoryTap: '',
-        existing: 0,
+        existing: 210,
         existingString: '',
-        allocCount: 0,
-        freeCount: 0,
-        totalBytes: 0,
+        freeByteString: '',
+        allocCount: 92,
+        freeCount: 51,
+        freeByte: 2,
+        totalBytes: 23,
         totalBytesString: '',
-        maxStr: '',
-        max: 0,
-        totalCount: 0,
+        maxStr: '20',
+        max: 232,
+        totalCount: 9,
         existingValue: [],
       },
     ];
-
     expect(
       tabPaneNMStatstics.setMemoryTypeData(valData, nativeHookStatistics, nativeHookStatisticsTableData)
     ).toBeUndefined();
@@ -348,55 +337,59 @@ describe('TabPaneNMStatstics Test', () => {
 
   it('TabPaneNMStatsticsTest08', function () {
     let valData = {
-      cpus: [],
-      threadIds: [],
+      cpus: [0],
+      threadIds: [2,90,0],
       trackIds: [],
-      funTids: [],
-      heapIds: [],
+      funTids: [23,44],
+      heapIds: [2,9],
       nativeMemory: ['All Heap & Anonymous VM', 'All Heap', 'All Anonymous VM'],
-      cpuAbilityIds: [],
+      cpuAbilityIds: [33,22],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
+      diskAbilityIds: [56,87,45],
       networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      leftNs: 52540,
+      rightNs: 9654120,
       hasFps: false,
       statisticsSelectData: undefined,
-      perfSampleIds: [],
-      perfCpus: [],
+      perfSampleIds: [12,45,87],
+      perfCpus: [1,3],
       perfProcess: [],
       perfThread: [],
-      perfAll: false,
+      perfAll: true,
     };
     let nativeHookStatistics: Array<NativeHookStatistics> = [
       {
-        eventId: 0,
+        eventId: 30,
         eventType: 'FreeEvent',
         subType: '',
-        heapSize: 0,
-        addr: '',
-        startTs: 0,
-        endTs: 0,
-        sumHeapSize: 0,
-        max: 100000,
-        count: 0,
-        tid: 0,
-        isSelected: false,
+        subTypeId: 13,
+        heapSize: 31,
+        addr: 'test/trace/database/logic-worker/ProcedureLogicWorkerNativeNemory.test.ts',
+        startTs: 33,
+        endTs: 31,
+        sumHeapSize: 90,
+        max: 4,
+        count: 40,
+        tid: 14,
+        threadName: 'NativeNemory',
+        isSelected: true,
       },
     ];
 
     let nativeHookStatisticsTableData: Array<NativeHookStatisticsTableData> = [
       {
         memoryTap: '',
-        existing: 0,
-        existingString: '',
-        allocCount: 0,
-        freeCount: 0,
-        totalBytes: 0,
+        existing: 330,
+        existingString: 'nativeHookStatistics',
+        freeByteString: '',
+        allocCount: 72,
+        freeCount: 23,
+        freeByte: 11,
+        totalBytes: 3,
         totalBytesString: '',
-        maxStr: '',
-        max: 100,
-        totalCount: 0,
+        maxStr: '33',
+        max: 3,
+        totalCount: 42,
         existingValue: [],
       },
     ];

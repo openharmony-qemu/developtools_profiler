@@ -21,18 +21,20 @@ describe('TabPaneFrameDynamic Test', () => {
   let frameDynamicParam = {
     leftNs: 211,
     rightNs: 1252,
-    frameDynamic: [{
-      ts: 4153254331,
-      id: 288,
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      alpha: 0,
-      appName: 'test',
-      groupId: 4153254331,
-      typeValue: 2,
-    }],
+    frameDynamic: [
+      {
+        ts: 4153254331,
+        id: 288,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        alpha: 0,
+        appName: 'test',
+        groupId: 4153254331,
+        typeValue: 2,
+      },
+    ],
   };
 
   it('TabPaneFrameDynamicTest01', function () {

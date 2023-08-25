@@ -40,36 +40,36 @@ describe(' FPSTest', () => {
   });
 
   it('FpsTest02', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let fpsDataList = new Array();
+    fpsDataList.push({
+      startTime: 34,
+      dur: 14,
+      frame: { x: 40, y: 442, width: 230, height: 340 },
     });
-    dataList.push({
-      startTime: 1,
-      dur: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    fpsDataList.push({
+      startTime: 61,
+      dur: 156,
+      frame: { x: 60, y: 9, width: 10, height: 10 },
     });
-    let rect = new Rect(0, 10, 10, 10);
-    fps(dataList, [{ length: 0 }], 1, 100254, 100254, rect, false);
+    let rect = new Rect(0, 50, 50, 16);
+    fps(fpsDataList, [{ length: 0 }], 1, 100254, 100254, rect, false);
   });
 
   it('FpsTest03', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 8;
+    canvas.height = 8;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 218,
+        y: 201,
+        width: 220,
+        height: 320,
       },
-      startNS: 200,
-      value: 50,
+      startNS: 255,
+      value: 4,
     };
 
     expect(FpsStruct.draw(ctx, data)).toBeUndefined();
@@ -78,15 +78,15 @@ describe(' FPSTest', () => {
   it('FpsTest04', () => {
     const canvas = document.createElement('canvas');
     canvas.width = 1;
-    canvas.height = 1;
+    canvas.height = 8;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 80,
+        y: 30,
+        width: 320,
+        height: 220,
       },
       startNS: 200,
       value: 50,
@@ -105,30 +105,30 @@ describe(' FPSTest', () => {
     const ctx = canvas.getContext('2d');
     const Sourcedate = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 520,
+        y: 50,
+        width: 300,
+        height: 300,
       },
-      maxFps: 200,
-      value: 50,
+      maxFps: 255,
+      value: 550,
     };
     expect(FpsStruct.draw(ctx, Sourcedate)).toBeUndefined();
   });
 
   it('FpsTest06', function () {
     let fpsRender = new FpsRender();
-    let req = {
+    let fpsReq = {
       lazyRefresh: true,
       type: '',
       startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      endNS: 32,
+      totalNS: 31,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 54,
+        y: 50,
+        width: 133,
+        height: 133,
       },
       useCache: false,
       range: {
@@ -136,40 +136,40 @@ describe(' FPSTest', () => {
       },
       canvas: 'a',
       context: {
-        font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
-        height: 150,
+        font: '12px sans-serif',
+        fillStyle: '#af919b',
+        globalAlpha: 0.56,
+        height: 120,
         width: 100,
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
+        closePath: jest.fn(() => true),
+        fillRect: jest.fn(() => []),
         fillText: jest.fn(() => true),
+        stroke: jest.fn(() => true),
       },
       lineColor: '',
       isHover: '',
-      hoverX: 1,
+      hoverX: 21,
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 34,
       id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 220,
+      y: 203,
+      width: 1030,
+      height: 890,
       params: {
         isLive: false,
-        maxHeight: 2,
-        dpr: 1,
+        maxHeight: 52,
+        dpr: 41,
         hoverFuncStruct: '',
         selectFuncStruct: undefined,
       },
     };
     window.postMessage = jest.fn(() => true);
-    expect(fpsRender.render(req, [], [])).toBeUndefined();
+    expect(fpsRender.render(fpsReq, [], [])).toBeUndefined();
   });
 });

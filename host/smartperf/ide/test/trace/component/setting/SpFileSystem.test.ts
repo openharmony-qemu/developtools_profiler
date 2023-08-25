@@ -42,10 +42,6 @@ describe('spFileSystem Test', () => {
     expect(spFileSystem.disable()).toBeUndefined();
   });
 
-  it('SpFileSystemTest06', function () {
-    expect(spFileSystem.initConfigList()).toBeUndefined();
-  });
-
   it('SpFileSystemTest07', function () {
     spFileSystem.startRecord = true;
     expect(spFileSystem.startRecord).toBeTruthy();

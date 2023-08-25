@@ -160,7 +160,7 @@ export class Top20ProcessSwitchCount extends BaseElement {
             height: 100%;
             background-color: var(--dark-background5,#F6F6F6);
         }
-        .tb_switch_count{
+        .top-process-tb-switch-count{
             flex: 1;        
             overflow: auto ;
             border-radius: 5px;
@@ -168,28 +168,28 @@ export class Top20ProcessSwitchCount extends BaseElement {
             margin: 15px;
             padding: 5px 15px
         }
-        .pie-chart{
+        .top-process-pie-chart{
             display: flex;
             box-sizing: border-box;
             width: 500px;
             height: 500px;
         }
-        .root{
-            width: 100%;
-            height: 100%;
+        .top-process-switch-root{
             display: flex;
             flex-direction: row;
             box-sizing: border-box;
+            width: 100%;
+            height: 100%;
         }
         </style>
         <lit-progress-bar id="loading" style="height: 1px;width: 100%" loading></lit-progress-bar>
         <table-no-data id="nodata" contentHeight="500px">
-        <div class="root">
+        <div class="top-process-switch-root">
             <div style="display: flex;flex-direction: column;align-items: center">
                 <div>Statistics By Sched_Switch Count</div>
-                <lit-chart-pie id="pie" class="pie-chart"></lit-chart-pie>
+                <lit-chart-pie id="pie" class="top-process-pie-chart"></lit-chart-pie>
             </div>
-            <div class="tb_switch_count" >
+            <div class="top-process-tb-switch-count" >
                 <lit-table id="tb-process-switch-count" hideDownload style="height: auto">
                     <lit-table-column width="1fr" title="NO" data-index="NO" key="NO" align="flex-start" order></lit-table-column>
                     <lit-table-column width="1fr" title="tid" data-index="tid" key="tid" align="flex-start" order></lit-table-column>

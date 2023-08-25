@@ -15,28 +15,30 @@
 //@ts-ignore
 import { Top20ProcessSwitchCount } from '../../../../dist/trace/component/schedulingAnalysis/Top20ProcessSwitchCount.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('Top20ProcessSwitchCount Test', () => {
-    it('Top20ProcessSwitchCountTest01', () => {
-        let top20ProcessSwitchCount = new Top20ProcessSwitchCount();
-        expect(top20ProcessSwitchCount).not.toBeUndefined();
-    });
-    it('Top20ProcessSwitchCountTest02', () => {
-        let top20ProcessSwitchCount = new Top20ProcessSwitchCount();
-        expect(
-            top20ProcessSwitchCount.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-    it('Top20ProcessSwitchCountTest03', () => {
-        let top20ProcessSwitchCount = new Top20ProcessSwitchCount();
-        top20ProcessSwitchCount.queryLogicWorker = jest.fn();
-        expect(top20ProcessSwitchCount.queryLogicWorker('','',{})).toBeUndefined();
-    });
-})
+  it('Top20ProcessSwitchCountTest01', () => {
+    let top20ProcessSwitchCount = new Top20ProcessSwitchCount();
+    expect(top20ProcessSwitchCount).not.toBeUndefined();
+  });
+  it('Top20ProcessSwitchCountTest02', () => {
+    let top20ProcessSwitchCount = new Top20ProcessSwitchCount();
+    expect(
+      top20ProcessSwitchCount.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+  it('Top20ProcessSwitchCountTest03', () => {
+    let top20ProcessSwitchCount = new Top20ProcessSwitchCount();
+    top20ProcessSwitchCount.queryLogicWorker = jest.fn();
+    expect(top20ProcessSwitchCount.queryLogicWorker('', '', {})).toBeUndefined();
+  });
+});

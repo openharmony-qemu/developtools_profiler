@@ -197,7 +197,7 @@ export class TabPaneTaskFrames extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        .frames-label{
+        .task-frames-label{
           height: 20px;
           text-align: end;
         }
@@ -207,7 +207,7 @@ export class TabPaneTaskFrames extends BaseElement {
             flex-direction: column;
         }
         </style>
-        <label id="task-frames-time-range" class="frames-label" style="width: 100%;font-size: 10pt;margin-bottom: 5px">
+        <label id="task-frames-time-range" class="task-frames-label" style="width: 100%;font-size: 10pt;margin-bottom: 5px">
         Selected range:0.0 ms</label>
         <lit-progress-bar class="progress"></lit-progress-bar>
         <lit-table id="tb-frames" style="height: auto">
@@ -373,10 +373,10 @@ export class TabPaneTaskFrames extends BaseElement {
       //去重
       let filterList = [];
       let map = new Map();
-      for (const item of tableList) {
-        if (!map.has(item.executeId)) {
-          map.set(item.executeId, true);
-          filterList.push(item);
+      for (const ConcurrencyTblItem of tableList) {
+        if (!map.has(ConcurrencyTblItem.executeId)) {
+          map.set(ConcurrencyTblItem.executeId, true);
+          filterList.push(ConcurrencyTblItem);
         }
       }
       return filterList;

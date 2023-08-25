@@ -35,7 +35,7 @@ export class TabPaneJsMemoryFilter extends BaseElement {
             position: fixed;
             bottom: 0px;
         }
-        #filter-input{
+        #js-memory-filter-input{
             background: var(--dark-background4,#FFFFFF);
             border: 1px solid var(--dark-border,rgba(0,0,0,0.60));
             color: var(--dark-color2,#000000);
@@ -43,11 +43,11 @@ export class TabPaneJsMemoryFilter extends BaseElement {
             margin-left: 10px;
             width: 200px;
         }
-        #filter-input:focus{
+        #js-memory-filter-input:focus{
             outline: none;
             box-shadow: 1px 1px 1px var(--dark-color,#bebebe);
         }
-        #filter-input::-webkit-input-placeholder {
+        #js-memory-filter-input::-webkit-input-placeholder {
             color: var(--dark-color,#aab2bd);
         }
         .describe{
@@ -71,7 +71,7 @@ export class TabPaneJsMemoryFilter extends BaseElement {
         </style>
         <div class='filter-wrap'>
             <span class="describe left-text spacing">Class Filter</span>
-            <input id="filter-input" class="spacing" placeholder="Class filter" value=""/>
+            <input id="js-memory-filter-input" class="spacing" placeholder="Class filter" value=""/>
         </div>
         <div class='select-wrap'>
             <lit-select id='comparison-select' title='Select View'></lit-select>

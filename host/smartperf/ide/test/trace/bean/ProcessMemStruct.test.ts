@@ -18,19 +18,19 @@ import { ProcessMemStruct } from '../../../dist/trace/bean/ProcessMemStruct.js';
 
 describe('ProcessMemStruct Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
+  canvas.width = 2;
+  canvas.height = 3;
   const ctx = canvas.getContext('2d');
 
   const data = {
     frame: {
-      x: 20,
+      x: 43,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 240,
+      height: 140,
     },
-    startNS: 200,
-    value: 50,
+    startNS: 243,
+    value: 4,
   };
   it('ProcessMemStructTest01', function () {
     expect(ProcessMemStruct.draw(ctx, data)).toBeUndefined();

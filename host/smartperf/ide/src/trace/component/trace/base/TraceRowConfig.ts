@@ -181,6 +181,7 @@ export class TraceRowConfig extends BaseElement {
         if (this.selectTypeList!.length === 0) {
           traceRow.removeAttribute('row-hidden');
           traceRow.setAttribute('scene', '');
+          this.refreshChildRow(traceRow.childrenList, true);
         } else {
           for (let index = 0; index < traceRow.templateType!.length; index++) {
             let type = traceRow.templateType![index];
@@ -205,6 +206,32 @@ export class TraceRowConfig extends BaseElement {
           }
         }
       });
+      this.spSystemTrace?.collectRows.forEach(favoriteRow => {
+        let isShowRow: boolean = false;
+        if (favoriteRow.parentRowEl) {
+          favoriteRow.parentRowEl.expansion = false;
+        }
+        if (this.selectTypeList!.length === 0) {
+          favoriteRow.removeAttribute('row-hidden');
+          favoriteRow.setAttribute('scene', '');
+        } else {
+          for (let index = 0; index < favoriteRow.templateType!.length; index++) {
+            if (this.selectTypeList!.indexOf(favoriteRow.templateType![index]) >= 0) {
+              isShowRow = true;
+              break;
+            }
+          }
+          if (isShowRow) {
+            if (favoriteRow.templateType.length > 0) {
+              favoriteRow.removeAttribute('row-hidden');
+              favoriteRow.setAttribute('scene', '');
+            }
+          } else {
+            favoriteRow.removeAttribute('scene');
+            favoriteRow.setAttribute('row-hidden', '');
+          }
+        }
+      });
       this.refreshSystemPanel();
     }
   }
@@ -212,7 +239,6 @@ export class TraceRowConfig extends BaseElement {
   refreshChildRow(childRows: Array<TraceRow<BaseStruct>>, isShowScene: boolean = false): void{
     childRows.forEach(row => {
       if (isShowScene) {
-        row.removeAttribute('row-hidden');
         row.setAttribute('scene', '');
         if (row.childrenList && row.childrenList.length > 0) {
           this.refreshChildRow(row.childrenList, isShowScene);

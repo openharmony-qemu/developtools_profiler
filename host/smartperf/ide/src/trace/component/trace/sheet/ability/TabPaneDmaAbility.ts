@@ -61,8 +61,8 @@ export class TabPaneDmaAbility extends BaseElement {
     if (this.tableThead!.hasAttribute('sort')) {
       this.tableThead!.removeAttribute('sort');
       list.forEach((item) => {
-        item.querySelectorAll('svg').forEach((svg) => {
-          svg.style.display = 'none';
+        item.querySelectorAll('svg').forEach((svgEl) => {
+          svgEl.style.display = 'none';
         });
       });
     }
@@ -75,26 +75,26 @@ export class TabPaneDmaAbility extends BaseElement {
       if (data.length !== null && data.length > 0) {
         this.total = new Dma();
         this.total.process = '*All*';
-        data.forEach((item) => {
-          if (item.processName !== null) {
-            item.process = `${item.processName}(${item.processId})`;
+        data.forEach((dmaItem) => {
+          if (dmaItem.processName !== null) {
+            dmaItem.process = `${dmaItem.processName}(${dmaItem.processId})`;
           } else {
-            item.process = `Process(${item.processId})`;
+            dmaItem.process = `Process(${dmaItem.processId})`;
           }
 
-          this.total.avgSize += item.avgSize;
+          this.total.avgSize += dmaItem.avgSize;
           if (this.total.minSize < 0) {
-            this.total.minSize = item.minSize;
+            this.total.minSize = dmaItem.minSize;
           }
           if (this.total.maxSize < 0) {
-            this.total.maxSize = item.maxSize;
+            this.total.maxSize = dmaItem.maxSize;
           }
-          this.total.minSize = Math.min(this.total.minSize, item.minSize);
-          this.total.maxSize = Math.max(this.total.maxSize, item.maxSize);
+          this.total.minSize = Math.min(this.total.minSize, dmaItem.minSize);
+          this.total.maxSize = Math.max(this.total.maxSize, dmaItem.maxSize);
 
-          item.avgSizes = Utils.getBinaryByteWithUnit(Math.round(item.avgSize));
-          item.minSizes = Utils.getBinaryByteWithUnit(item.minSize);
-          item.maxSizes = Utils.getBinaryByteWithUnit(item.maxSize);
+          dmaItem.avgSizes = Utils.getBinaryByteWithUnit(Math.round(dmaItem.avgSize));
+          dmaItem.minSizes = Utils.getBinaryByteWithUnit(dmaItem.minSize);
+          dmaItem.maxSizes = Utils.getBinaryByteWithUnit(dmaItem.maxSize);
         });
         this.total.avgSizes = Utils.getBinaryByteWithUnit(Math.round(this.total.avgSize / data.length));
         this.total.minSizes = Utils.getBinaryByteWithUnit(this.total.minSize);

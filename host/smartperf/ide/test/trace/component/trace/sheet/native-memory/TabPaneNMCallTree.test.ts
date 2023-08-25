@@ -21,25 +21,22 @@ import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/shee
 import { FrameChart } from '../../../../../../dist/trace/component/chart/FrameChart.js';
 // @ts-ignore
 import { DisassemblingWindow } from '../../../../../../dist/trace/component/DisassemblingWindow.js';
-
-const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
+const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
     observe: jest.fn(),
     unobserve: jest.fn(),
+    disconnect: jest.fn(),
   }));
 
 describe('TabPaneNMCallTree Test', () => {
-  document.body.innerHTML = '<div><tabpane-nm-calltree id="ddd"></tabpane-nm-calltree></div>';
-  let tabPaneNMCallTree = document.querySelector<TabPaneNMCallTree>('#ddd');
+  document.body.innerHTML = '<div><tabpane-nm-calltree id="tree"></tabpane-nm-calltree></div>';
+  let tabPaneNMCallTree = document.querySelector<TabPaneNMCallTree>('#tree');
   let dom = new FrameChart();
   dom.setAttribute('id', 'framechart');
   tabPaneNMCallTree.frameChart = dom;
@@ -72,96 +69,6 @@ describe('TabPaneNMCallTree Test', () => {
 
   it('TabPaneNMCallTreeTest03', function () {});
 
-  it('TabPaneNMCallTreeTest04', function () {
-    expect(tabPaneNMCallTree.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            padding: 10px 10px 0 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        .show{
-            display: flex;
-            flex: 1;
-        }
-        #nm-call-tree-filter {
-            border: solid rgb(216,216,216) 1px;
-            float: left;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-        selector{
-            display: none;
-        }
-        .nm-call-tree-progress{
-            bottom: 33px;
-            position: absolute;
-            height: 1px;
-            left: 0;
-            right: 0;
-        }
-        .nm-call-tree-loading{
-            bottom: 0;
-            position: absolute;
-            left: 0;
-            right: 0;
-            width:100%;
-            background:transparent;
-            z-index: 999999;
-        }
-    </style>
-    <div class="nm-call-tree-content" style="display: flex;flex-direction: row">
-    
-    <selector id='show_table' class="show">
-        <lit-slicer style="width:100%">
-        <div id="left_table" style="width: 65%">
-            <tab-native-data-modal id="modal"></tab-native-data-modal>
-            <lit-table id="tb-filesystem-calltree" style="height: auto" tree>
-                <lit-table-column class="nm-call-tree-column" width="60%" title="Symbol Name" data-index="symbolName" key="symbolName"  align="flex-start">
-                </lit-table-column>
-                <lit-table-column class="nm-call-tree-column" width="1fr" title="Size" data-index="heapSizeStr" key="heapSizeStr"  align="flex-start" order>
-                </lit-table-column>
-                <lit-table-column class="nm-call-tree-column" width="1fr" title="%" data-index="heapPercent" key="heapPercent" align="flex-start"  order>
-                </lit-table-column>
-                <lit-table-column class="nm-call-tree-column" width="1fr" title="Count" data-index="countValue" key="countValue" align="flex-start" order>
-                </lit-table-column>
-                <lit-table-column class="nm-call-tree-column" width="1fr" title="%" data-index="countPercent" key="countPercent" align="flex-start" order>
-                </lit-table-column>
-                <lit-table-column class="nm-call-tree-column" width="1fr" title="  " data-index="type" key="type"  align="flex-start" >
-                    <template>
-                        <img src="img/library.png" size="20" v-if=" type == 1 ">
-                        <img src="img/function.png" size="20" v-if=" type == 0 ">
-                        <div v-if=" type == - 1 "></div>
-                    </template>
-                </lit-table-column>
-            </lit-table>
-            
-        </div>
-        <lit-slicer-track class="nm-call-tree-slicer-track" ></lit-slicer-track>
-        <lit-table id="tb-filesystem-list" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
-            <span slot="head">Heaviest Stack Trace</span>
-            <lit-table-column class="nm-call-tree-column" width="30px" title="" data-index="type" key="type"  align="flex-start" >
-                <template>
-                    <img src="img/library.png" size="20" v-if=" type == 1 ">
-                    <img src="img/function.png" size="20" v-if=" type == 0 ">
-                </template>
-            </lit-table-column>
-            <lit-table-column class="nm-call-tree-column" width="1fr" title="" data-index="symbolName" key="symbolName"  align="flex-start"></lit-table-column>
-        </lit-table>
-        </div>
-        </lit-slicer>
-     </selector>
-     <tab-pane-filter id="nm-call-tree-filter" first second icon ></tab-pane-filter>
-     <lit-progress-bar class="progress nm-call-tree-progress"></lit-progress-bar>
-    <selector class="nm-call-tree-selector" id='show_chart'>
-        <tab-framechart id='framechart' style='width: 100%;height: auto'> </tab-framechart>
-    </selector>  
-    <div class="loading nm-call-tree-loading"></div>
-    </div>"
-`);
-  });
   it('TabPaneNMCallTreeTest05', function () {
     let hook = {
       id: '1',

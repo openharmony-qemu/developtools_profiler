@@ -362,8 +362,8 @@ export class SpRecordPerf extends BaseElement {
                 this.cpuSelect?.dataSource(cpuData, 'ALL-CPU');
               });
             } else {
-              sp.search = true;
               recordPerfSearch.clear();
+              sp.search = true;
               recordPerfSearch.setPercent('please kill other hdc-server !', -2);
             }
           });
@@ -548,10 +548,10 @@ export class SpRecordPerf extends BaseElement {
         value: false,
       },
       {
+        type: 'select-multiple',
         title: 'Process',
         des: 'Record process',
         hidden: false,
-        type: 'select-multiple',
         selectArray: [''],
       },
       {

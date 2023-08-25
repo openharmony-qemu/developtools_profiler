@@ -34,30 +34,34 @@ export class CpuAbilityRender extends Render {
       maxCpuUtilization: number;
       maxCpuUtilizationName: string;
     },
-    row: TraceRow<CpuAbilityMonitorStruct>
-  ) {
-    let cpuAbilityList = row.dataList;
-    let cpuAbilityFilter = row.dataListCache;
+    cpuAbilityRow: TraceRow<CpuAbilityMonitorStruct>
+  ): void {
+    let cpuAbilityList = cpuAbilityRow.dataList;
+    let cpuAbilityFilter = cpuAbilityRow.dataListCache;
     dataFilterHandler(cpuAbilityList, cpuAbilityFilter, {
       startKey: 'startNS',
       durKey: 'dur',
       startNS: TraceRow.range?.startNS ?? 0,
       endNS: TraceRow.range?.endNS ?? 0,
       totalNS: TraceRow.range?.totalNS ?? 0,
-      frame: row.frame,
+      frame: cpuAbilityRow.frame,
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
-    req.context.beginPath();
     let find = false;
+    req.context.beginPath();
     for (let re of cpuAbilityFilter) {
-      CpuAbilityMonitorStruct.draw(req.context, re, req.maxCpuUtilization, row.isHover);
-      if (row.isHover && re.frame && isFrameContainPoint(re.frame, row.hoverX, row.hoverY)) {
+      CpuAbilityMonitorStruct.draw(req.context, re, req.maxCpuUtilization, cpuAbilityRow.isHover);
+      if (cpuAbilityRow.isHover && re.frame &&
+        isFrameContainPoint(re.frame, cpuAbilityRow.hoverX, cpuAbilityRow.hoverY)
+      ) {
         CpuAbilityMonitorStruct.hoverCpuAbilityStruct = re;
         find = true;
       }
     }
-    if (!find && row.isHover) CpuAbilityMonitorStruct.hoverCpuAbilityStruct = undefined;
+    if (!find && cpuAbilityRow.isHover) {
+      CpuAbilityMonitorStruct.hoverCpuAbilityStruct = undefined;
+    }
     req.context.closePath();
     let textMetrics = req.context.measureText(req.maxCpuUtilizationName);
     req.context.globalAlpha = 0.8;
@@ -74,25 +78,25 @@ export class CpuAbilityRender extends Render {
 
 export function cpuAbility(
   cpuAbilityList: Array<any>,
-  res: Array<any>,
+  cpuAbilityFilters: Array<any>,
   startNS: number,
   endNS: number,
   totalNS: number,
   frame: any,
   use: boolean
 ) {
-  if (use && res.length > 0) {
-    for (let index = 0; index < res.length; index++) {
-      let item = res[index];
+  if (use && cpuAbilityFilters.length > 0) {
+    for (let index = 0; index < cpuAbilityFilters.length; index++) {
+      let item = cpuAbilityFilters[index];
       if ((item.startNS || 0) + (item.dur || 0) > (startNS || 0) && (item.startNS || 0) < (endNS || 0)) {
-        CpuAbilityMonitorStruct.setCpuAbilityFrame(res[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
+        CpuAbilityMonitorStruct.setCpuAbilityFrame(cpuAbilityFilters[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
       } else {
-        res[index].frame = null;
+        cpuAbilityFilters[index].frame = null;
       }
     }
     return;
   }
-  res.length = 0;
+  cpuAbilityFilters.length = 0;
   if (cpuAbilityList) {
     for (let cpuAbilityIndex = 0; cpuAbilityIndex < cpuAbilityList.length; cpuAbilityIndex++) {
       let item = cpuAbilityList[cpuAbilityIndex];
@@ -116,7 +120,7 @@ export function cpuAbility(
           (cpuAbilityList[cpuAbilityIndex - 1].frame?.width || 0) == (cpuAbilityList[cpuAbilityIndex].frame?.width || 0)
         ) {
         } else {
-          res.push(item);
+          cpuAbilityFilters.push(item);
         }
       }
     }
@@ -136,29 +140,29 @@ export class CpuAbilityMonitorStruct extends BaseStruct {
 
   static draw(
     cpuAbilityContext2D: CanvasRenderingContext2D,
-    data: CpuAbilityMonitorStruct,
+    cpuAbilityData: CpuAbilityMonitorStruct,
     maxCpuUtilization: number,
     isHover: boolean
   ) {
-    if (data.frame) {
-      let width = data.frame.width || 0;
+    if (cpuAbilityData.frame) {
+      let width = cpuAbilityData.frame.width || 0;
       let index = 2;
       cpuAbilityContext2D.fillStyle = ColorUtils.colorForTid(index);
       cpuAbilityContext2D.strokeStyle = ColorUtils.colorForTid(index);
-      if (data.startNS === CpuAbilityMonitorStruct.hoverCpuAbilityStruct?.startNS && isHover) {
+      if (cpuAbilityData.startNS === CpuAbilityMonitorStruct.hoverCpuAbilityStruct?.startNS && isHover) {
         cpuAbilityContext2D.lineWidth = 1;
         cpuAbilityContext2D.globalAlpha = 0.6;
-        let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0) * 1.0) / maxCpuUtilization);
+        let drawHeight: number = Math.floor(((cpuAbilityData.value || 0) * (cpuAbilityData.frame.height || 0) * 1.0) / maxCpuUtilization);
         cpuAbilityContext2D.fillRect(
-          data.frame.x,
-          data.frame.y + data.frame.height - drawHeight + 4,
+          cpuAbilityData.frame.x,
+          cpuAbilityData.frame.y + cpuAbilityData.frame.height - drawHeight + 4,
           width,
           drawHeight
         );
         cpuAbilityContext2D.beginPath();
         cpuAbilityContext2D.arc(
-          data.frame.x,
-          data.frame.y + data.frame.height - drawHeight + 4,
+          cpuAbilityData.frame.x,
+          cpuAbilityData.frame.y + cpuAbilityData.frame.height - drawHeight + 4,
           3,
           0,
           2 * Math.PI,
@@ -168,17 +172,17 @@ export class CpuAbilityMonitorStruct extends BaseStruct {
         cpuAbilityContext2D.globalAlpha = 1.0;
         cpuAbilityContext2D.stroke();
         cpuAbilityContext2D.beginPath();
-        cpuAbilityContext2D.moveTo(data.frame.x + 3, data.frame.y + data.frame.height - drawHeight + 4);
+        cpuAbilityContext2D.moveTo(cpuAbilityData.frame.x + 3, cpuAbilityData.frame.y + cpuAbilityData.frame.height - drawHeight + 4);
         cpuAbilityContext2D.lineWidth = 3;
-        cpuAbilityContext2D.lineTo(data.frame.x + width, data.frame.y + data.frame.height - drawHeight + 4);
+        cpuAbilityContext2D.lineTo(cpuAbilityData.frame.x + width, cpuAbilityData.frame.y + cpuAbilityData.frame.height - drawHeight + 4);
         cpuAbilityContext2D.stroke();
       } else {
         cpuAbilityContext2D.globalAlpha = 0.6;
         cpuAbilityContext2D.lineWidth = 1;
-        let drawHeight: number = Math.floor(((data.value || 0) * (data.frame.height || 0)) / maxCpuUtilization);
+        let drawHeight: number = Math.floor(((cpuAbilityData.value || 0) * (cpuAbilityData.frame.height || 0)) / maxCpuUtilization);
         cpuAbilityContext2D.fillRect(
-          data.frame.x,
-          data.frame.y + data.frame.height - drawHeight + 4,
+          cpuAbilityData.frame.x,
+          cpuAbilityData.frame.y + cpuAbilityData.frame.height - drawHeight + 4,
           width,
           drawHeight
         );

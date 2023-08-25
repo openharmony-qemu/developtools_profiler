@@ -64,20 +64,20 @@ describe('TabPaneVmTrackerShmComparison Test', () => {
   ]);
   let data = [
     {
-      name: 'Snapshot1',
-      startNs: 4778214061,
+      name: 'Snapshot0',
+      startNs: 8214061,
       value: 0,
     },
   ];
   let datalist = [
     {
       name: 'Snapshot2',
-      startNs: 9800526561,
+      startNs: 9806561,
       value: 0,
     },
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
+      startNs: 47781,
       value: 0,
     },
   ];

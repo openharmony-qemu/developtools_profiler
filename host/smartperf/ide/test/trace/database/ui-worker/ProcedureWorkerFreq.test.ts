@@ -27,14 +27,14 @@ import { Rect } from '../../../../dist/trace/component/trace/timer-shaft/Rect.js
 describe('freqTest', () => {
   it('freqTest01', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 10;
+    canvas.height = 10;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 210,
+        y: 210,
         width: 100,
         height: 100,
       },

@@ -32,8 +32,6 @@ export class SpFileSystem extends BaseElement {
   private maximum: HTMLInputElement | undefined | null;
   private selectProcess: HTMLInputElement | undefined | null;
 
-  private configList: Array<any> = [];
-
   set startRecord(start: boolean) {
     if (start) {
       this.unDisable();
@@ -116,7 +114,7 @@ export class SpFileSystem extends BaseElement {
           break;
         case 'Max Unwind Level':
           let maxUnwindLevel = value as HTMLInputElement;
-          if (maxUnwindLevel.value != '') {
+          if (maxUnwindLevel.value !== '') {
             systemConfig.unWindLevel = Number(maxUnwindLevel.value);
           }
       }
@@ -125,113 +123,12 @@ export class SpFileSystem extends BaseElement {
   }
 
   initElements(): void {
-    this.initConfigList();
-    let fileSystemConfigList = this.shadowRoot?.querySelector<HTMLDivElement>('.configList');
-    this.configList.forEach((config) => {
-      let fileSystemDiv = document.createElement('div');
-      if (config.hidden) {
-        fileSystemDiv.className = 'file-system-config-div hidden';
-      } else {
-        fileSystemDiv.className = 'file-system-config-div';
-      }
-      let fileSystemHeadDiv = document.createElement('div');
-      fileSystemDiv.appendChild(fileSystemHeadDiv);
-      let fileSystemTitle = document.createElement('span');
-      fileSystemTitle.className = 'file-system-title';
-      fileSystemTitle.textContent = config.title;
-      fileSystemHeadDiv.appendChild(fileSystemTitle);
-      let fileSystemDes = document.createElement('span');
-      fileSystemDes.textContent = config.des;
-      fileSystemDes.className = 'file-system-des';
-      fileSystemHeadDiv.appendChild(fileSystemDes);
-      switch (config.type) {
-        case 'select-multiple':
-          let multipleSelect = '';
-          let placeholder = config.selectArray[0];
-          if (config.title == 'Process') {
-          } else if (config.title == 'SystemCall Event') {
-            placeholder = 'ALL-Event';
-          }
-          multipleSelect += `<lit-select-v default-value="" rounded="" class="file-system-select config" mode="multiple" canInsert="" title="${config.title}" rounded placement = "bottom" placeholder="${placeholder}">`;
-          config.selectArray.forEach((value: string) => {
-            multipleSelect += `<lit-select-option value="${value}">${value}</lit-select-option>`;
-          });
-          multipleSelect += `</lit-select-v>`;
-          fileSystemDiv.innerHTML = fileSystemDiv.innerHTML + multipleSelect;
-          break;
-        case 'input':
-          let fileSystemInput = document.createElement('input');
-          fileSystemInput.className = 'fileSystem-input config';
-          fileSystemInput.textContent = config.value;
-          fileSystemInput.value = config.value;
-          fileSystemInput.title = config.title;
-          if (config.title == 'Record Time') {
-            fileSystemInput.oninput = (ev) => {
-              fileSystemInput.value = fileSystemInput.value.replace(/\D/g, '');
-            };
-          }
-          fileSystemDiv.appendChild(fileSystemInput);
-          break;
-        case 'select':
-          let fileSystemSelect = '';
-          fileSystemSelect += `<lit-select rounded="" default-value="" class="file-system-select config" placement="bottom" title="${config.title}"  placeholder="${config.selectArray[0]}">`;
-          config.selectArray.forEach((value: string) => {
-            fileSystemSelect += `<lit-select-option value="${value}">${value}</lit-select-option>`;
-          });
-          fileSystemSelect += `</lit-select>`;
-          fileSystemDiv.innerHTML = fileSystemDiv.innerHTML + fileSystemSelect;
-          break;
-        case 'switch':
-          let fileSystemSwitch = document.createElement('lit-switch') as LitSwitch;
-          fileSystemSwitch.className = 'config';
-          fileSystemSwitch.title = config.title;
-          if (config.value) {
-            fileSystemSwitch.checked = true;
-          } else {
-            fileSystemSwitch.checked = false;
-          }
-          if (config.title == 'Start FileSystem Record') {
-            fileSystemSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
-              let detail = event.detail;
-              if (detail!.checked) {
-                this.startFileSystem = true;
-              } else {
-                this.startFileSystem = false;
-              }
-            });
-          }
-          if (config.title == 'Start Page Fault Record') {
-            fileSystemSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
-              let detail = event.detail;
-              if (detail!.checked) {
-                this.startVirtualMemory = true;
-              } else {
-                this.startVirtualMemory = false;
-              }
-            });
-          }
-          if (config.title == 'Start BIO Latency Record') {
-            fileSystemSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
-              let detail = event.detail;
-              if (detail!.checked) {
-                this.startIo = true;
-              } else {
-                this.startIo = false;
-              }
-            });
-          }
-          fileSystemHeadDiv.appendChild(fileSystemSwitch);
-          break;
-        default:
-          break;
-      }
-      fileSystemConfigList!.appendChild(fileSystemDiv);
-    });
-    this.processInput = this.shadowRoot?.querySelector<LitSelectV>("lit-select-v[title='Process']");
-    this.maximum = this.shadowRoot?.querySelector<HTMLInputElement>("input[title='Max Unwind Level']");
+    this.switchChange();
+    this.processInput = this.shadowRoot?.querySelector<LitSelectV>('lit-select-v');
+    this.maximum = this.shadowRoot?.querySelector<HTMLInputElement>('#maxUnwindLevel');
     this.maximum?.addEventListener('keyup', (eve: Event) => {
       this.maximum!.value = this.maximum!.value.replace(/\D/g, '');
-      if (this.maximum!.value != '') {
+      if (this.maximum!.value !== '') {
         let mun = parseInt(this.maximum!.value);
         if (mun > 64 || mun < 0) {
           this.maximum!.value = '10';
@@ -254,65 +151,55 @@ export class SpFileSystem extends BaseElement {
     this.disable();
   }
 
-  private unDisable() {
+  private switchChange(): void {
+    let fileSystemSwitch = this.shadowRoot?.querySelector<LitSwitch>('#fileSystem');
+    fileSystemSwitch!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
+      let detail = event.detail;
+      if (detail!.checked) {
+        this.startFileSystem = true;
+      } else {
+        this.startFileSystem = false;
+      }
+    });
+    let pageFaultSwitch = this.shadowRoot?.querySelector<LitSwitch>('#pageFault');
+    pageFaultSwitch!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
+      let detail = event.detail;
+      if (detail!.checked) {
+        this.startVirtualMemory = true;
+      } else {
+        this.startVirtualMemory = false;
+      }
+    });
+    let bioLatencySwitch = this.shadowRoot?.querySelector<LitSwitch>('#bioLatency');
+    bioLatencySwitch!.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
+      let detail = event.detail;
+      if (detail!.checked) {
+        this.startIo = true;
+      } else {
+        this.startIo = false;
+      }
+    });
+  }
+
+  private unDisable(): void {
     let fileSystemConfigVals = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
     fileSystemConfigVals!.forEach((fileSystemConfigVal) => {
       fileSystemConfigVal.removeAttribute('disabled');
     });
   }
 
-  private disable() {
+  private disable(): void {
     let fileSystemConfigVals = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
     fileSystemConfigVals!.forEach((fileSystemConfigVal) => {
       if (
-        fileSystemConfigVal.title == 'Start FileSystem Record' ||
-        fileSystemConfigVal.title == 'Start Page Fault Record' ||
-        fileSystemConfigVal.title == 'Start BIO Latency Record'
+        fileSystemConfigVal.title === 'Start FileSystem Record' ||
+        fileSystemConfigVal.title === 'Start Page Fault Record' ||
+        fileSystemConfigVal.title === 'Start BIO Latency Record'
       ) {
       } else {
         fileSystemConfigVal.setAttribute('disabled', '');
       }
     });
-  }
-
-  initConfigList(): void {
-    this.configList = [
-      {
-        title: 'Start FileSystem Record',
-        des: '',
-        hidden: false,
-        type: 'switch',
-        value: false,
-      },
-      {
-        title: 'Start Page Fault Record',
-        des: '',
-        hidden: false,
-        type: 'switch',
-        value: false,
-      },
-      {
-        title: 'Start BIO Latency Record',
-        des: '',
-        hidden: false,
-        type: 'switch',
-        value: false,
-      },
-      {
-        title: 'Process',
-        des: 'Record process',
-        hidden: false,
-        type: 'select-multiple',
-        selectArray: [''],
-      },
-      {
-        title: 'Max Unwind Level',
-        des: '',
-        hidden: false,
-        type: 'input',
-        value: '10',
-      },
-    ];
   }
 
   initHtml(): string {
@@ -401,8 +288,38 @@ export class SpFileSystem extends BaseElement {
         }
         </style>
         <div class="root">
-            <div class="configList file-system-config">
+          <div class="file-system-config-div">
+            <div>
+               <span class="file-system-title">Start FileSystem Record</span>
+               <lit-switch id="fileSystem"></lit-switch>
             </div>
+          </div>
+          <div class="file-system-config-div">
+            <div>
+               <span class="file-system-title">Start Page Fault Record</span>
+               <lit-switch id="pageFault"></lit-switch>
+            </div>
+          </div>
+          <div class="file-system-config-div">
+            <div>
+               <span class="file-system-title">Start BIO Latency Record</span>
+               <lit-switch id="bioLatency"></lit-switch>
+            </div>
+          </div>
+          <div class="file-system-config-div">
+             <div>
+                 <span class="file-system-title">Process</span>
+                 <span class="file-system-des">Record process</span>
+              </div>
+            <lit-select-v default-value="" rounded="" class="file-system-select config" mode="multiple" canInsert="" 
+            rounded placement = "bottom" title="Process"></lit-select-v>
+          </div>
+          <div class="file-system-config-div">
+             <div>
+                 <span class="file-system-title">Max Unwind Level</span>
+              </div>
+            <input class="fileSystem-input config" title="Max Unwind Level" id="maxUnwindLevel" value="10"/>
+          </div>
         </div>
         `;
   }

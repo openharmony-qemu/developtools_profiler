@@ -33,7 +33,7 @@ export class TabPanePurgTotalComparisonAbility extends BaseElement {
     this.filterEl = this.shadowRoot!.querySelector<TabPaneJsMemoryFilter>('#filter');
     this.selectEl = this.filterEl?.shadowRoot?.querySelector<LitSelect>('lit-select');
   }
-  public totalData(data: SelectionParam | any, dataList: any): void {
+  public totalData(purgeTotalComParam: SelectionParam | any, dataList: any): void {
     //@ts-ignore
     this.purgeableTotalTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
       this.parentElement!.clientHeight - 45
@@ -41,15 +41,15 @@ export class TabPanePurgTotalComparisonAbility extends BaseElement {
     this.purgeableTotalSource = [];
     let fileArr: any[] = [];
     for (let file of dataList) {
-      if (file.startNs !== data.startNs) {
+      if (file.startNs !== purgeTotalComParam.startNs) {
         fileArr.push(file);
       }
     }
     fileArr = fileArr.sort();
-    this.initSelect(data.startNs, fileArr);
-    this.updateComparisonData(data.startNs, fileArr[0].startNs);
+    this.initSelect(purgeTotalComParam.startNs, fileArr);
+    this.updateComparisonData(purgeTotalComParam.startNs, fileArr[0].startNs);
   }
-  private initSelect(fileStartNs: number, fileArr: Array<any>): void {
+  private initSelect(fileStartNs: number, purgeTotalComFileArr: Array<any>): void {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -57,13 +57,13 @@ export class TabPanePurgTotalComparisonAbility extends BaseElement {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].name) option.setAttribute('value', fileArr[0].name);
-    this.selectEl!.defaultValue = fileArr[0].name;
-    this.selectEl!.placeholder = fileArr[0].name;
-    this.selectEl!.dataSource = fileArr;
+    if (purgeTotalComFileArr[0].name) option.setAttribute('value', purgeTotalComFileArr[0].name);
+    this.selectEl!.defaultValue = purgeTotalComFileArr[0].name;
+    this.selectEl!.placeholder = purgeTotalComFileArr[0].name;
+    this.selectEl!.dataSource = purgeTotalComFileArr;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
       a.addEventListener('onSelected', (e: any) => {
-        for (let f of fileArr) {
+        for (let f of purgeTotalComFileArr) {
           if (input.value === f.name) {
             that.updateComparisonData(fileStartNs, f.startNs);
           }

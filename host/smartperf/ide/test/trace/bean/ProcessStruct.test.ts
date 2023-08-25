@@ -26,19 +26,19 @@ jest.mock('../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
 
 describe('ProcessStruct Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
+  canvas.width = 2;
   canvas.height = 1;
   const ctx = canvas.getContext('2d');
 
   const data = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 7,
+      y: 9,
+      width: 80,
+      height: 78,
     },
-    startNS: 200,
-    value: 50,
+    startNS: 870,
+    value: 9,
   };
   it('ProcessStructTest01', function () {
     expect(ProcessStruct.draw(ctx, data)).toBeUndefined();

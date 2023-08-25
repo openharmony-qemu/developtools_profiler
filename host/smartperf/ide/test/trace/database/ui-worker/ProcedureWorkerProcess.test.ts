@@ -33,13 +33,13 @@ jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => 
 describe(' ProcessTest', () => {
   let res = [
     {
-      startNS: 0,
-      dur: 10,
+      startNS: 6,
+      dur: 650,
       frame: {
-        x: 0,
-        y: 9,
-        width: 10,
-        height: 10,
+        x: 99,
+        y: 92,
+        width: 190,
+        height: 193,
       },
     },
   ];
@@ -56,37 +56,37 @@ describe(' ProcessTest', () => {
   });
 
   it('ProcessTest02', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let processDataList = new Array();
+    processDataList.push({
+      startTime: 450,
+      dur: 150,
+      frame: { x: 32, y: 3, width: 10, height: 120 },
     });
-    dataList.push({
+    processDataList.push({
       startTime: 1,
-      dur: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 51,
+      frame: { x: 30, y: 93, width: 20, height: 10 },
     });
-    let rect = new Rect(0, 10, 10, 10);
-    proc(dataList, res, 1, 100254, 100254, rect);
+    let rect = new Rect(0, 10, 10, 50);
+    proc(processDataList, res, 1, 100254, 100254, rect);
   });
 
   it('ProcessTest04', () => {
     const node = {
       frame: {
-        x: 20,
+        x: 104,
         y: 20,
-        width: 100,
+        width: 105,
         height: 100,
       },
       startNS: 200,
-      value: 50,
+      value: 30,
       startTime: 0,
       dur: 0,
     };
     const frame = {
       x: 20,
-      y: 20,
+      y: 120,
       width: 100,
       height: 100,
     };
@@ -96,9 +96,9 @@ describe(' ProcessTest', () => {
   it('ProcessTest05', () => {
     const node = {
       frame: {
-        x: 20,
+        x: 201,
         y: 20,
-        width: 0,
+        width: 3,
         height: 100,
       },
       startNS: 200,
@@ -108,7 +108,7 @@ describe(' ProcessTest', () => {
     };
     const frame = {
       x: 20,
-      y: 20,
+      y: 40,
       width: 100,
       height: 100,
     };
@@ -117,17 +117,17 @@ describe(' ProcessTest', () => {
 
   it('ProcessTest06', function () {
     let processRender = new ProcessRender();
-    let req = {
+    let processReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
+      startNS: 15,
+      endNS: 16,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 55,
+        y: 55,
+        width: 125,
+        height: 105,
       },
       useCache: false,
       range: {
@@ -136,31 +136,31 @@ describe(' ProcessTest', () => {
       canvas: 'a',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        fillStyle: '#26e2c5',
+        globalAlpha: 0.7,
         clearRect: jest.fn(() => true),
-        beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
+        beginPath: jest.fn(() => false),
         closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
+        stroke: jest.fn(() => []),
         fill: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#a50101',
       isHover: '',
-      hoverX: 1,
+      hoverX: 34,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 55,
       id: 1,
       x: 20,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 123,
+      height: 123,
     };
     window.postMessage = jest.fn(() => true);
-    expect(processRender.render(req, [], [])).toBeUndefined();
+    expect(processRender.render(processReq, [], [])).toBeUndefined();
   });
 });

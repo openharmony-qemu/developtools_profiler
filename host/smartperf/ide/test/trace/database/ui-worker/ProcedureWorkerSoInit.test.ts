@@ -35,27 +35,27 @@ describe('ProcedureWorkerSoInit Test', () => {
         let rect = new Rect(0, 10, 10, 10);
         let filter = [
             {
-                startTs: 50,
-                dur: 1520000,
+                startTs: 520,
+                dur: 15400,
                 soName: 'Snapshot0',
                 tid: 0,
-                pid: 4243,
-                depth: 0,
-                itid: 2,
-                textMetricsWidth: 50.5810546875,
+                pid: 21,
+                depth: 5,
+                itid: 42,
+                textMetricsWidth: 52.875,
                 process: ''
             },
         ];
         let list = [
             {
-                startTs: 50,
-                dur: 1520000,
-                soName: 'Snapshot0',
-                tid: 0,
-                pid: 4243,
-                depth: 0,
-                itid: 2,
-                textMetricsWidth: 50.5810546875,
+                startTs: 32,
+                dur: 1320000,
+                soName: 'Snapshot1',
+                tid: 120,
+                pid: 213,
+                depth: 21,
+                itid: 22,
+                textMetricsWidth: 54.6875,
                 process: ''
             },
         ];
@@ -65,19 +65,19 @@ describe('ProcedureWorkerSoInit Test', () => {
     it('SoStructTest01', () => {
         const data = {
             frame: {
-                x: 20,
-                y: 20,
-                width: 100,
+                x: 432,
+                y: 222,
+                width: 340,
                 height: 100,
             },
             startTs: 50,
-            dur: 1520000,
+            dur: 1544000,
             soName: 'Snapshot0',
             tid: 0,
             pid: 4243,
-            depth: 0,
+            depth: 6,
             itid: 2,
-            textMetricsWidth: 50.5810546875,
+            textMetricsWidth: 55.75,
             process: ''
         };
         const canvas = document.createElement('canvas');
@@ -91,35 +91,35 @@ describe('ProcedureWorkerSoInit Test', () => {
         const data = {
             frame: {
                 x: 20,
-                y: 20,
-                width: 100,
+                y: 43,
+                width: 120,
                 height: 100,
             },
             startTs: 50,
-            dur: 1520000,
-            soName: 'Snapshot0',
-            tid: 0,
-            pid: 4243,
-            depth: 0,
+            dur: 152500,
+            soName: 'Snapshot1',
+            tid: 240,
+            pid: 45,
+            depth: 35,
             itid: 2,
-            textMetricsWidth: 50.5810546875,
+            textMetricsWidth: 66.650546875,
             process: ''
         };
         let node = {
             frame: {
                 x: 20,
-                y: 20,
+                y: 90,
                 width: 100,
-                height: 100,
+                height: 500,
             },
-            startTs: 50,
-            dur: 1520000,
-            soName: 'Snapshot0',
-            tid: 0,
-            pid: 4243,
-            depth: 0,
+            startTs: 3200,
+            dur: 42000,
+            soName: 'Snapshot2',
+            tid: 240,
+            pid: 210,
+            depth: 10,
             itid: 2,
-            textMetricsWidth: 50.5810546875,
+            textMetricsWidth: 96.2646875,
             process: ''
         };
         expect(SoStruct.setSoFrame(node, 2, 0, 1, 2, data)).toBeUndefined();

@@ -56,7 +56,7 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     this.initSelect(data.leftNs, fileArr);
     this.querySmapsData(data.leftNs, fileArr[0].startNs);
   }
-  private initSelect(fileStartNs: number, fileArr: Array<any>): void {
+  private initSelect(fileStartNs: number, smapsComFileArr: Array<any>): void {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -64,15 +64,15 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].name) {
-      option.setAttribute('value', fileArr[0].name);
+    if (smapsComFileArr[0].name) {
+      option.setAttribute('value', smapsComFileArr[0].name);
     }
-    this.selectEl!.defaultValue = fileArr[0].name;
-    this.selectEl!.placeholder = fileArr[0].name;
-    this.selectEl!.dataSource = fileArr;
+    this.selectEl!.defaultValue = smapsComFileArr[0].name;
+    this.selectEl!.placeholder = smapsComFileArr[0].name;
+    this.selectEl!.dataSource = smapsComFileArr;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
       a.addEventListener('onSelected', (e: any) => {
-        for (let f of fileArr) {
+        for (let f of smapsComFileArr) {
           if (input.value === f.name) {
             that.querySmapsData(fileStartNs, f.startNs);
           }
@@ -86,23 +86,23 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     const baseArr: SmapsCompareStruct[] = [];
     const targetArr: SmapsCompareStruct[] = [];
     // 点击的
-    await getTabSmapsStatisticData(baseTime).then(async (results) => {
+    await getTabSmapsStatisticData(baseTime).then(async (smapsComResults) => {
       this.smapsCompariosnTable!.loading = false;
-      for (let i = 0; i < results.length; i++) {
+      for (let i = 0; i < smapsComResults.length; i++) {
         baseArr.push(
           new SmapsCompareStruct(
-            results[i].type,
-            results[i].path,
-            results[i].size,
-            results[i].count,
-            results[i].rss,
-            results[i].pss,
-            results[i].sharedClean,
-            results[i].sharedDirty,
-            results[i].privateClean,
-            results[i].privateDirty,
-            results[i].swap,
-            results[i].swapPss
+            smapsComResults[i].type,
+            smapsComResults[i].path,
+            smapsComResults[i].size,
+            smapsComResults[i].count,
+            smapsComResults[i].rss,
+            smapsComResults[i].pss,
+            smapsComResults[i].sharedClean,
+            smapsComResults[i].sharedDirty,
+            smapsComResults[i].privateClean,
+            smapsComResults[i].privateDirty,
+            smapsComResults[i].swap,
+            smapsComResults[i].swapPss
           )
         );
       }

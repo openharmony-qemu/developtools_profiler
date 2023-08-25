@@ -293,19 +293,17 @@ export class SpMetrics extends BaseElement {
              text-align: left;
              width: 100%;
         }
-        ::-webkit-scrollbar
-        {
-          width: 8px;
-          background-color: var(--dark-background3,#FFFFFF);
-        }
-        ::-webkit-scrollbar-thumb
-        {
-          border-radius: 6px;
+        ::-webkit-scrollbar-thumb{
           background-color: var(--dark-background7,rgba(0,0,0,0.1));
+          border-radius: 6px;
         }
         .sp-load-metric{
             width: 95%;
             bottom: 0;
+        }
+        ::-webkit-scrollbar{
+          background-color: var(--dark-background3,#FFFFFF);
+          width: 8px;
         }
         </style>
         <div class="metric">

@@ -28,24 +28,23 @@ import {
 import { Rect } from '../../../../dist/trace/component/trace/timer-shaft/Rect.js';
 
 jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
-    return {};
-});
+    return {}; });
 
 describe(' ProcedureWorkerTimelineTest', () => {
   it('timelineTest', () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext('2d');
+    const timelineCanvas = document.createElement('canvas');
+    timelineCanvas.width = 12;
+    timelineCanvas.height = 12;
+    const ctx = timelineCanvas.getContext('2d');
     let dataList = new Array();
     dataList.push({
       startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 120,
+      frame: { x: 0, y: 9, width: 120, height: 10 },
     });
     dataList.push({ startTime: 1, dur: 111 });
     let rect = new Rect(0, 10, 10, 10);
-    timeline(canvas, ctx, 1, 100254, 100254, rect, null, null, null, null, null, null, 0, 0, (e: any) => {});
+    timeline(timelineCanvas, ctx, 1, 100254, 100254, rect, null, null, null, null, null, null, 0, 0, (e: any) => {});
   });
 
     it('SportRulerTest01', () => {
@@ -66,20 +65,20 @@ describe(' ProcedureWorkerTimelineTest', () => {
 
     it('SportRulerTest02', () => {
         const canvas = document.createElement('canvas');
-        canvas.width = 1;
+        canvas.width = 2;
         canvas.height = 1;
         const ctx = canvas.getContext('2d');
-        let rect = new Rect(0, 10, 10, 10);
+        let rect = new Rect(0, 20, 10, 20);
         let rangeRuler = new RangeRuler(
             canvas,
             ctx,
             rect,
             {
-                startX: 0,
+                startX: 10,
                 endX: rect.width,
-                startNS: 0,
-                endNS: 111,
-                totalNS: 111,
+                startNS: 40,
+                endNS: 14,
+                totalNS: 155,
                 xs: [],
                 xsTxt: [],
             },
@@ -107,19 +106,19 @@ describe(' ProcedureWorkerTimelineTest', () => {
   it('SportRulerTest03', () => {
     const canvas = document.createElement('canvas');
     canvas.width = 1;
-    canvas.height = 1;
+    canvas.height = 4;
     const ctx = canvas.getContext('2d');
-    let rect = new Rect(0, 10, 10, 10);
+    let rect = new Rect(0, 50, 10, 50);
     let rangeRuler = new RangeRuler(
       canvas,
       ctx,
       rect,
       {
-        startX: 0,
+        startX: 60,
         endX: rect.width,
-        startNS: 0,
-        endNS: 111,
-        totalNS: 111,
+        startNS: 660,
+        endNS: 116,
+        totalNS: 661,
         xs: [],
         xsTxt: [],
       },

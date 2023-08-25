@@ -25,59 +25,59 @@ import { markAsUntransferable } from 'worker_threads';
 
 describe(' ProcedureWorkerFuncTest', () => {
   it('FuncTest01', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
+    let funcDataList = new Array();
+    funcDataList.push({
+      startTime: 10,
+      dur: 410,
       frame: { x: 0, y: 9, width: 10, height: 10 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
-    let rect = new Rect(0, 10, 10, 10);
+    funcDataList.push({ startTime: 17, dur: 141 });
+    let rect = new Rect(0, 30, 30, 30);
     let res = [
       {
-        startTs: 0,
-        dur: 10,
-        length: 1,
+        startTs: 31,
+        dur: 140,
+        length: 16,
         frame: '',
       },
     ];
-    func(dataList, res, 1, 100254, 100254, rect, true);
+    func(funcDataList, res, 1, 100254, 100254, rect, true);
   });
 
   it('FuncTest02', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let funcDataList = new Array();
+    funcDataList.push({
+      startTime: 450,
+      dur: 140,
+      frame: { x: 0, y: 93, width: 120, height: 320 },
     });
-    dataList.push({
-      startTime: 1,
-      dur: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    funcDataList.push({
+      startTime: 41,
+      dur: 661,
+      frame: { x: 70, y: 9, width: 16, height: 17 },
     });
-    let rect = new Rect(0, 10, 10, 10);
+    let rect = new Rect(30, 50, 53, 13);
     let res = [
       {
-        startTs: 0,
+        startTs: 10,
         dur: 10,
-        length: 0,
+        length: 60,
         frame: '',
       },
     ];
-    func(dataList, res, 1, 100254, 100254, rect, false);
+    func(funcDataList, res, 1, 100254, 100254, rect, false);
   });
 
   it('FuncTest03', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 9;
+    canvas.height = 9;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 209,
+        y: 209,
         width: 100,
         height: 100,
       },
@@ -97,8 +97,8 @@ describe(' ProcedureWorkerFuncTest', () => {
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 240,
+        y: 240,
         width: 100,
         height: 100,
       },
@@ -128,14 +128,14 @@ describe(' ProcedureWorkerFuncTest', () => {
     let req = {
       lazyRefresh: undefined,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 31,
+      endNS: 71,
+      totalNS: 40,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 30,
+        y: 22,
+        width: 550,
+        height: 150,
       },
       useCache: false,
       range: {
@@ -144,27 +144,27 @@ describe(' ProcedureWorkerFuncTest', () => {
       canvas: '',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
-        height: 150,
-        width: 100,
+        fillStyle: '#30a16f',
+        globalAlpha: 0.556,
+        height: 177,
+        width: 150,
       },
-      lineColor: '',
+      lineColor: '#014d5f',
       isHover: '',
-      hoverX: 1,
+      hoverX: 21,
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      slicesTime: 53,
+      id: 64,
+      x: 760,
+      y: 67,
+      width: 106,
+      height: 170,
       params: {
         isLive: false,
-        maxHeight: 2,
-        dpr: 1,
+        maxHeight: 222,
+        dpr: 431,
         hoverFuncStruct: '',
         selectFuncStruct: undefined,
       },

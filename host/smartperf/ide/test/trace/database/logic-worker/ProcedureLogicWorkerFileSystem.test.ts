@@ -402,20 +402,20 @@ describe('ProcedureLogicWorkerFileSystem Test', () => {
     expect(virtualMemoryEvent).toBeDefined();
   });
   it('procedureLogicWorkerFileSystemTest47', function () {
-    let procedureLogicWorkerFileSystem   = new ProcedureLogicWorkerFileSystem ();
-    expect(procedureLogicWorkerFileSystem.queryFileSysEvents(1,0,[1],true)).toBeUndefined();
+    let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
+    expect(procedureLogicWorkerFileSystem.queryFileSysEvents(1, 0, [1], true)).toBeUndefined();
   });
   it('procedureLogicWorkerFileSystemTest48', function () {
-    let procedureLogicWorkerFileSystem   = new ProcedureLogicWorkerFileSystem ();
-    expect(procedureLogicWorkerFileSystem.queryVMEvents(1,0,[1])).toBeUndefined();
+    let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
+    expect(procedureLogicWorkerFileSystem.queryVMEvents(1, 0, [1])).toBeUndefined();
   });
   it('procedureLogicWorkerFileSystemTest49', function () {
-    let procedureLogicWorkerFileSystem   = new ProcedureLogicWorkerFileSystem ();
-    expect(procedureLogicWorkerFileSystem.queryVMEvents(1,0,[1])).toBeUndefined();
+    let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
+    expect(procedureLogicWorkerFileSystem.queryVMEvents(1, 0, [1])).toBeUndefined();
   });
   it('procedureLogicWorkerFileSystemTest50', function () {
-    let procedureLogicWorkerFileSystem   = new ProcedureLogicWorkerFileSystem ();
-    expect(procedureLogicWorkerFileSystem.queryIOEvents(1,0,[1])).toBeUndefined();
+    let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
+    expect(procedureLogicWorkerFileSystem.queryIOEvents(1, 0, [1])).toBeUndefined();
   });
   it('procedureLogicWorkerFileSystemTest51', function () {
     let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
@@ -459,7 +459,7 @@ describe('ProcedureLogicWorkerFileSystem Test', () => {
     expect(procedureLogicWorkerF.handle(data)).toBeUndefined();
   });
   it('procedureLogicWorkerFileSystemTest55', function () {
-    let procedureLogicWorkerFileSystem   = new ProcedureLogicWorkerFileSystem ();
+    let procedureLogicWorkerFileSystem = new ProcedureLogicWorkerFileSystem();
     expect(procedureLogicWorkerFileSystem.clearAll()).toBeUndefined();
   });
   it('procedureLogicWorkerFileSystemTest56', function () {

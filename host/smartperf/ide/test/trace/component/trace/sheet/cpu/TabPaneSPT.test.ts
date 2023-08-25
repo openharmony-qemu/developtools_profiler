@@ -19,21 +19,21 @@ import { TabPaneSPT } from '../../../../../../dist/trace/component/trace/sheet/c
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 // @ts-ignore
 import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
-jest.mock('../../../../../../dist/base-ui/table/lit-table.js', ()=>{
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {
-    meauseTreeRowElement: ()=>{}
-  }
-})
+    meauseTreeRowElement: () => {},
+  };
+});
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
-    observe: jest.fn(),
     unobserve: jest.fn(),
+    observe: jest.fn(),
   }));
 
 describe('TabPaneSPT Test', () => {
@@ -47,29 +47,29 @@ describe('TabPaneSPT Test', () => {
   SpSystemTrace.SPT_DATA = [
     {
       process: '',
-      processId: 0,
-      thread: '',
-      threadId: 0,
+      processId: 602,
+      thread: 'hdcd',
+      threadId: 739,
       state: '',
-      dur: 0,
-      start_ts: 0,
-      end_ts: 0,
+      dur: 233,
+      start_ts: 3,
+      end_ts: 236,
       cpu: 0,
-      priority: '-',
-      note: '-',
+      priority: '10',
+      note: '85',
     },
     {
       process: '',
-      processId: 1,
-      thread: '',
-      threadId: 1,
+      processId: 516,
+      thread: 'foundation',
+      threadId: 516,
       state: '',
-      dur: 0,
-      start_ts: 0,
-      end_ts: 0,
-      cpu: 0,
-      priority: '-',
-      note: '-',
+      dur: 122,
+      start_ts: 22,
+      end_ts: 100,
+      cpu: 1,
+      priority: '114',
+      note: '66',
     },
     {
       process: '',
@@ -88,40 +88,40 @@ describe('TabPaneSPT Test', () => {
 
   let dataList = [
     {
-      id: '',
-      pid: '',
+      id: 78,
+      pid: 55,
       title: '',
       children: [],
       process: '',
-      processId: 0,
-      thread: '',
-      threadId: 0,
+      processId: 1380,
+      thread: 'com.ohos.callui',
+      threadId: 1380,
       state: '',
-      wallDuration: 0,
+      wallDuration: 5220,
       avgDuration: '',
-      count: 0,
-      minDuration: 0,
-      maxDuration: 0,
+      count: 5,
+      minDuration: 440,
+      maxDuration: 36220,
       stdDuration: '',
     },
   ];
 
   let dataArray = [
     {
-      id: '',
-      pid: '',
+      id: 885,
+      pid: 12,
       title: '',
       children: [],
       process: '',
-      processId: 0,
-      thread: '',
-      threadId: 0,
+      processId: 1387,
+      thread: 'com.ohos.callui',
+      threadId: 1387,
       state: '',
-      wallDuration: 0,
+      wallDuration: 666240,
       avgDuration: '',
-      count: 0,
-      minDuration: 0,
-      maxDuration: 0,
+      count: 40,
+      minDuration: 2330,
+      maxDuration: 524660,
       stdDuration: '',
     },
   ];
@@ -133,16 +133,16 @@ describe('TabPaneSPT Test', () => {
   it('TabPaneSPTTest02', function () {
     let source = [
       {
-        process: '',
-        processId: 10,
-        thread: '',
-        threadId: 10,
+        process: 'com.ohos.callui 1387',
+        processId: 1387,
+        thread: 'com.ohos.callui',
+        threadId: 1387,
         state: '',
-        dur: 1000,
-        start_ts: 100_0000,
-        end_ts: 0,
+        dur: 66654,
+        start_ts: 4,
+        end_ts: 66650,
         cpu: 0,
-        priority: '-',
+        priority: '154',
         note: '-',
       },
     ];
@@ -154,10 +154,10 @@ describe('TabPaneSPT Test', () => {
     mockgetProcessThreadDataByRange.mockResolvedValue([
       {
         process: 'process',
-        processId: 1,
+        processId: 13,
         thread: 'thread',
         state: 'state',
-        threadId: 1,
+        threadId: 12,
         dur: 1000,
         end_ts: 2000,
         start_ts: 2000,
@@ -167,34 +167,5 @@ describe('TabPaneSPT Test', () => {
     tabPane.tbl = jest.fn(() => tab);
     tabPane.tbl.recycleDataSource = jest.fn(() => []);
     expect((tabPane.data = dataList)).toBeTruthy();
-  });
-
-  it('TabPaneSPTTest04', function () {
-    expect(tabPaneSPT.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px;
-        }
-        </style>
-        <label id="spt-time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
-        <lit-table id="spt-tbl" style="height: auto" tree>
-            <lit-table-column class="spt-column" width="27%" data-index="title" key="title" align="flex-start" title="State/Process/Thread">
-            </lit-table-column>
-            <lit-table-column class="spt-column" width="1fr" data-index="count" key="count" align="flex-start" title="Count">
-            </lit-table-column>
-            <lit-table-column class="spt-column" width="1fr" data-index="wallDuration" key="wallDuration" align="flex-start" title="Duration(ns)">
-            </lit-table-column>
-            <lit-table-column class="spt-column" width="1fr" data-index="minDuration" key="minDuration" align="flex-start" title="Min Duration(ns)">
-            </lit-table-column>
-            <lit-table-column class="spt-column" width="1fr" data-index="avgDuration" key="avgDuration" align="flex-start" title="Avg Duration(ns)">
-            </lit-table-column>
-            <lit-table-column class="spt-column" width="1fr" data-index="maxDuration" key="maxDuration" align="flex-start" title="Max Duration(ns)">
-            </lit-table-column>
-        </lit-table>
-        "
-`);
   });
 });

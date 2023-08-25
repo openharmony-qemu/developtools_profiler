@@ -15,23 +15,25 @@
 //@ts-ignore
 import { TabCpuDetailsIrq } from '../../../../dist/trace/component/schedulingAnalysis/TabCpuDetailsIrq.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('TabCpuDetailsIrq Test', () => {
-    it('TabCpuDetailsIrqTest01', () => {
-        let tabCpuDetailsIrq = new TabCpuDetailsIrq();
-        expect(tabCpuDetailsIrq.clearData()).toBeUndefined();
-    });
-    it('TabCpuDetailsIrqTest02', () => {
-        let tabCpuDetailsIrq = new TabCpuDetailsIrq();
-        expect(
-            tabCpuDetailsIrq.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-})
+  it('TabCpuDetailsIrqTest01', () => {
+    let tabCpuDetailsIrq = new TabCpuDetailsIrq();
+    expect(tabCpuDetailsIrq.clearData()).toBeUndefined();
+  });
+  it('TabCpuDetailsIrqTest02', () => {
+    let tabCpuDetailsIrq = new TabCpuDetailsIrq();
+    expect(
+      tabCpuDetailsIrq.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+});

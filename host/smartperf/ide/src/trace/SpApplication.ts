@@ -870,6 +870,10 @@ export class SpApplication extends BaseElement {
                     title: 'Help Documents',
                     icon: 'smart-help',
                     clickHandler: function (item: MenuItem) {
+                      SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                        event: 'help_page',
+                        action: 'help_doc',
+                      });
                       that.search = false;
                       that.spHelp!.dark = that.dark;
                       showContent(that.spHelp!);
@@ -1097,25 +1101,25 @@ export class SpApplication extends BaseElement {
             title: 'Help Documents',
             icon: 'smart-help',
             clickHandler: function (item: MenuItem) {
+              that.spHelp!.dark = that.dark;
+              that.search = false;
+              showContent(that.spHelp!);
               SpStatisticsHttpUtil.addOrdinaryVisitAction({
                 event: 'help_page',
                 action: 'help_doc',
               });
-              that.search = false;
-              that.spHelp!.dark = that.dark;
-              showContent(that.spHelp!);
             },
           },
           {
             title: 'Flags',
             icon: 'menu',
             clickHandler: function (item: MenuItem) {
+              that.search = false;
+              showContent(spFlags);
               SpStatisticsHttpUtil.addOrdinaryVisitAction({
                 event: 'flags',
                 action: 'flags',
               });
-              that.search = false;
-              showContent(spFlags);
             },
           },
         ],

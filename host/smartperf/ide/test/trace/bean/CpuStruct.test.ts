@@ -25,40 +25,37 @@ describe('CpuStruct Test', () => {
 
   const data = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 653,
+      y: 109,
+      width: 654,
+      height: 332,
     },
     startNS: 200,
     value: 50,
   };
   const data1 = {
     frame: {
-      x: 100,
-      y: 100,
-      width: 10,
-      height: 10,
+      x: 23,
+      y: 9,
+      width: 90,
+      height: 60,
     },
-    startNS: 1000,
-    value: 500,
+    startNS: 132,
+    value: 980,
   };
 
   it('CpuStructTest01', function () {
     expect(CpuStruct.draw(ctx, data)).toBeUndefined();
-    expect(data).toMatchInlineSnapshot(
-{
-  startNS: expect.any(Number),
-  value: expect.any(Number) }, `
+    expect(data).toMatchInlineSnapshot(`
 {
   "frame": {
-    "height": 100,
-    "width": 100,
-    "x": 20,
-    "y": 20,
+    "height": 332,
+    "width": 654,
+    "x": 653,
+    "y": 109,
   },
-  "startNS": Any<Number>,
-  "value": Any<Number>,
+  "startNS": 200,
+  "value": 50,
 }
 `);
   });
@@ -77,39 +74,33 @@ describe('CpuStruct Test', () => {
 
   it('CpuStructTest05', function () {
     expect(CpuStruct.draw(ctx, data1)).toBeUndefined();
-    expect(data1).toMatchInlineSnapshot(
-{
-  startNS: expect.any(Number),
-  value: expect.any(Number) }, `
+    expect(data1).toMatchInlineSnapshot(`
 {
   "frame": {
-    "height": 10,
-    "width": 10,
-    "x": 100,
-    "y": 100,
+    "height": 60,
+    "width": 90,
+    "x": 23,
+    "y": 9,
   },
-  "startNS": Any<Number>,
-  "value": Any<Number>,
+  "startNS": 132,
+  "value": 980,
 }
 `);
   });
 
   it('CpuStructTest06', function () {
-    expect(CpuStruct.equals({}, data)).toBeTruthy();
-    expect(CpuStruct.draw(ctx, data1)).toBeUndefined();
-    expect(data1).toMatchInlineSnapshot(
-{
-  startNS: expect.any(Number),
-  value: expect.any(Number) }, `
+    expect(CpuStruct.equals({}, data1)).toBeTruthy();
+    expect(CpuStruct.draw(ctx, data)).toBeUndefined();
+    expect(data).toMatchInlineSnapshot(`
 {
   "frame": {
-    "height": 10,
-    "width": 10,
-    "x": 100,
-    "y": 100,
+    "height": 332,
+    "width": 654,
+    "x": 653,
+    "y": 109,
   },
-  "startNS": Any<Number>,
-  "value": Any<Number>,
+  "startNS": 200,
+  "value": 50,
 }
 `);
   });

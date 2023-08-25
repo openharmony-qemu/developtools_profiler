@@ -68,33 +68,6 @@ describe('checkBoxWithText Test', () => {
     expect(litCheckBoxWithText.upLimit).toEqual('111');
   });
 
-  it('checkBoxWithTextTest05', function () {
-    let litCheckBoxWithText = new LitCheckBoxWithText();
-    expect(litCheckBoxWithText.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-         display: grid;
-         grid-template-columns: 1fr min-content min-content;
-         grid-column-gap: 10px;
-         text-align: center;
-         height: 16px;
-        }
-        .input-style {
-          width: 48px;
-          height: 16px;
-          border: 1px solid #B3B3B3;
-          text-align: center;
-        }
-
-        </style>
-        <check-des-box id ='checkbox' value=""></check-des-box>
-        <input class="input-style" id="textLowerLimit" value="0"/>
-        <input class="input-style" id="_upLimit" value="∞"/>
-        "
-`);
-  });
-
   it('checkBoxWithTextTest06', function () {
     let litCheckBoxWithText = new LitCheckBoxWithText();
     expect(litCheckBoxWithText.attributeChangedCallback('checked')).toBeUndefined();

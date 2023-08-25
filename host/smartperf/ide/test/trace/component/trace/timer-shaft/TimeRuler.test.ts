@@ -15,59 +15,49 @@
 
 // @ts-ignore
 import { EventCenter } from '../../../../../dist/trace/component/trace/base/EventCenter.js';
-
-jest.mock('../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
-  return {};
-});
-
 // @ts-ignore
 import { TimeRuler } from '../../../../../dist/trace/component/trace/timer-shaft/TimeRuler.js';
 // @ts-ignore
 import { TimerShaftElement } from '../../../../../dist/trace/component/trace/TimerShaftElement.js';
-
-jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
-  return {};
-});
 
 declare global {
   interface Window {
     SmartEvent: {
       UI: {
         MenuTrace: string; //selected menu trace
-        RefreshCanvas: string; //selected menu trace
         SliceMark: string; //Set the tag scope
-        TimeRange: string; //Set the timeline range
+        RefreshCanvas: string; //selected menu trace
         TraceRowComplete: string; //Triggered after the row component has finished loading data
+        TimeRange: string; //Set the timeline range
       };
     };
-
     subscribe(evt: string, fn: (b: any) => void): void;
-
-    subscribeOnce(evt: string, fn: (b: any) => void): void;
-
     unsubscribe(evt: string, fn: (b: any) => void): void;
-
     publish(evt: string, data: any): void;
-
     clearTraceRowComplete(): void;
+    subscribeOnce(evt: string, fn: (b: any) => void): void;
   }
 }
-
+jest.mock('../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
+jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
+  return {};
+});
 window.SmartEvent = {
   UI: {
     MenuTrace: 'SmartEvent-UI-MenuTrace',
     RefreshCanvas: 'SmartEvent-UI-RefreshCanvas',
-    SliceMark: 'SmartEvent-UI-SliceMark',
     TimeRange: 'SmartEvent-UI-TimeRange',
     TraceRowComplete: 'SmartEvent-UI-TraceRowComplete',
+    SliceMark: 'SmartEvent-UI-SliceMark',
   },
 };
-
 Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);
 Window.prototype.unsubscribe = (ev, fn) => EventCenter.unsubscribe(ev, fn);
-Window.prototype.publish = (ev, data) => EventCenter.publish(ev, data);
 Window.prototype.subscribeOnce = (ev, data) => EventCenter.subscribeOnce(ev, data);
 Window.prototype.clearTraceRowComplete = () => EventCenter.clearTraceRowComplete();
+Window.prototype.publish = (ev, data) => EventCenter.publish(ev, data);
 
 describe('TimeRuler Test', () => {
   const canvas = document.createElement('canvas');

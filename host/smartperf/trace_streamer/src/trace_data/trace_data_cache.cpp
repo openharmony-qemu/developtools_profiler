@@ -321,5 +321,13 @@ void TraceDataCache::UpdateAppStartTraceStatus(bool status)
 {
     appStartTraceEnabled_ = status;
 }
+bool TraceDataCache::BinderRunnableTraceEnabled()
+{
+    return binderRunnableTraceEnabled_;
+}
+void TraceDataCache::UpdateBinderRunnableTraceStatus(bool status)
+{
+    binderRunnableTraceEnabled_ = status;
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

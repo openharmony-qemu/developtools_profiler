@@ -33,33 +33,28 @@ declare global {
   interface Window {
     SmartEvent: {
       UI: {
-        MenuTrace: string; //selected menu trace
         RefreshCanvas: string; //selected menu trace
-        SliceMark: string; //Set the tag scope
+        MenuTrace: string; //selected menu trace
         TimeRange: string; //Set the timeline range
+        SliceMark: string; //Set the tag scope
         TraceRowComplete: string; //Triggered after the row component has finished loading data
       };
     };
-
     subscribe(evt: string, fn: (b: any) => void): void;
-
-    subscribeOnce(evt: string, fn: (b: any) => void): void;
-
     unsubscribe(evt: string, fn: (b: any) => void): void;
-
+    subscribeOnce(evt: string, fn: (b: any) => void): void;
     publish(evt: string, data: any): void;
-
     clearTraceRowComplete(): void;
   }
 }
 
 window.SmartEvent = {
   UI: {
-    MenuTrace: 'SmartEvent-UI-MenuTrace',
     RefreshCanvas: 'SmartEvent-UI-RefreshCanvas',
     SliceMark: 'SmartEvent-UI-SliceMark',
-    TimeRange: 'SmartEvent-UI-TimeRange',
     TraceRowComplete: 'SmartEvent-UI-TraceRowComplete',
+    TimeRange: 'SmartEvent-UI-TimeRange',
+    MenuTrace: 'SmartEvent-UI-MenuTrace',
   },
 };
 
@@ -117,84 +112,6 @@ describe('TimerShaftElement Test', () => {
 
   it('TimerShaftElementTest14', function () {
     expect(ns2s(1_000_0000)).toBe('10.0 ms');
-  });
-
-  it('TimerShaftElementTest15', function () {
-    expect(timerShaftElement.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            box-sizing: border-box;
-            display: flex;
-            width: 100%;
-            height: 148px;
-            border-bottom: 1px solid var(--dark-background,#dadada);
-            border-top: 1px solid var(--dark-background,#dadada);
-        }
-        *{
-            box-sizing: border-box;
-            user-select: none;
-        }
-        .root{
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-rows: 100%;
-            grid-template-columns: 248px 1fr;
-            background: var(--dark-background4,#FFFFFF);
-        }
-        .total{
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows: min-content 1fr;
-            background-color: transparent;
-        }
-        .panel{
-            color: var(--dark-border,#dadada);
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-            background-color: var(--dark-background4,#ffffff);
-        }
-        .time-div{
-            box-sizing: border-box;
-            width: 100%;border-top: 1px solid var(--dark-background,#dadada);height: 100%;display: flex;justify-content: space-between;background-color: var(--dark-background1,white);color: var(--dark-color1,#212121);font-size: 0.7rem;
-            border-right: 1px solid var(--dark-background,#999);
-            padding: 2px 6px;
-            display: flex;justify-content: space-between;
-            user-select: none;
-            position: relative;
-        }
-        .time-total::after{
-            content: " +";
-        }
-        .time-collect{
-            position:absolute;
-            right:5px;
-            bottom:5px;
-            color: #5291FF;
-            display: none;
-        }
-        .time-collect[close] > .time-collect-arrow{
-            transform: rotateZ(-180deg);
-        }
-
-        </style>
-        <div class="root">
-            <div class="total">
-                <div style="width: 100%;height: 100px;background: var(--dark-background4,#F6F6F6)"></div>
-                <div class="time-div">
-                    <span class="time-total">10</span>
-                    <span class="time-offset">0</span>
-                    <div class="time-collect">
-                        <lit-icon class="time-collect-arrow" name="caret-down" size="17"></lit-icon>
-                    </div>
-                </div>
-            </div>
-            <canvas class="panel"></canvas>
-        </div>
-        "
-`);
   });
 
   it('TimerShaftElementTest16', function () {

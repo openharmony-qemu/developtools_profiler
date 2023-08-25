@@ -31,8 +31,8 @@ describe('ProcedureWorkerAppStartup Test', () => {
       frame: {
         x: 20,
         y: 20,
-        width: 100,
-        height: 100,
+        width: 6,
+        height: 3,
       },
       dur: 1,
       value: 'aa',
@@ -62,10 +62,9 @@ describe('ProcedureWorkerAppStartup Test', () => {
     let canvas = document.createElement('canvas') as HTMLCanvasElement;
     let context = canvas.getContext('2d');
     const data = {
-      context: context!,
       useCache: true,
+      appStartupContext: context,
       type: '',
-      traceRange: [],
     };
     let appStartupRender = new AppStartupRender();
     expect(appStartupRender.renderMainThread(data, new TraceRow())).toBeUndefined();

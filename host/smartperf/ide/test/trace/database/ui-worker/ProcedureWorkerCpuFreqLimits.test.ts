@@ -41,14 +41,14 @@ describe('ProcedureWorkerCpuFreqLimits Test', () => {
   };
   it('Test01', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 15;
+    canvas.height = 15;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 205,
+        y: 205,
         width: 100,
         height: 100,
       },
@@ -72,16 +72,16 @@ describe('ProcedureWorkerCpuFreqLimits Test', () => {
   it('Test03', () => {
     let node = {
       frame: {
-        x: 20,
+        x: 24,
         y: 20,
         width: 100,
-        height: 100,
+        height: 150,
       },
       startNS: 200,
       length: 1,
-      height: 0,
+      height: 40,
       startTime: 2,
-      dur: 1,
+      dur: 41,
     };
     expect(
       CpuFreqLimitsStruct.setFreqLimitFrame(node, 1, 1, 1, 1, {
@@ -94,38 +94,38 @@ describe('ProcedureWorkerCpuFreqLimits Test', () => {
     let cpuFreqLimitRender = new CpuFreqLimitRender();
     let req = {
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 10,
+      endNS: 101,
+      totalNS: 91,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 43,
+        y: 230,
+        width: 340,
+        height: 342,
       },
       canvas: 'a',
       context: {
-        clearRect: jest.fn(() => true),
-        beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
+        clearRect: jest.fn(() => true),
+        stroke: jest.fn(() => false),
+        closePath: jest.fn(() => true),
         fillText: jest.fn(() => true),
+        beginPath: jest.fn(() => true),
+        fillRect: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#ffae8a',
       isHover: '',
       hoverX: 1,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
-      x: 20,
-      y: 20,
+      slicesTime: 133,
+      id: 36,
+      x: 565,
+      y: 600,
       width: 100,
-      height: 100,
+      height: 230,
     };
     window.postMessage = jest.fn(() => true);
     expect(cpuFreqLimitRender.render(req, [], [])).toBeUndefined();

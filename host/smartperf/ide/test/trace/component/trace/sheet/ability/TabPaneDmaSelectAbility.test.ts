@@ -40,13 +40,13 @@ describe('TabPaneDmaSelectAbility Test', () => {
     let dmaSelectionData = [
         {
             startNs: 0,
-            fd: 1,
-            size: 1000,
+            fd: 11,
+            size: 3200,
             ino: 10,
             expPid: 0,
             bufName: 'aa',
             expName: 'bb',
-            expTaskComm: 'cc',
+            expTaskComm: 'expTask',
             processId:2,
             processName:'dd',
             flag:0,

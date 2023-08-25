@@ -43,6 +43,7 @@ export class Utils {
     Utils.statusMap.set('R', 'Runnable');
     Utils.statusMap.set('Running', 'Running');
     Utils.statusMap.set('R+', 'Runnable (Preempted)');
+    Utils.statusMap.set('R-B', 'Runnable (Binder)')
     Utils.statusMap.set('I', 'Task Dead');
     Utils.statusMap.set('T', 'Traced');
     Utils.statusMap.set('t', 'Traced');
@@ -85,6 +86,8 @@ export class Utils {
       return '#f19b38';
     } else if (state == 'R' || state == 'R+') {
       return '#a0b84d';
+    } else if (state == 'R-B') {
+      return '#87CEFA';
     } else if (state == 'I') {
       return '#673ab7';
     } else if (state == 'Running') {
@@ -133,28 +136,28 @@ export class Utils {
     return res;
   }
 
-  public static getProbablyTime(ns: number): string {
-    let currentNs = ns;
-    let hour1 = 3600_000_000_000;
-    let minute1 = 60_000_000_000;
-    let second1 = 1_000_000_000;
-    let millisecond1 = 1_000_000;
-    let microsecond1 = 1_000;
+  public static getProbablyTime(timeNs: number): string {
+    let currentNs = timeNs;
+    let probablyHour = 3600_000_000_000;
+    let probablyMinute1 = 60_000_000_000;
+    let probablySecond1 = 1_000_000_000;
+    let probablyMillisecond1 = 1_000_000;
+    let probablyMicrosecond1 = 1_000;
     let res = '';
-    if (currentNs >= hour1) {
-      res += (currentNs / hour1).toFixed(2) + 'h ';
-    } else if (currentNs >= minute1) {
-      res += (currentNs / minute1).toFixed(2) + 'm ';
-    } else if (currentNs >= second1) {
-      res += (currentNs / second1).toFixed(2) + 's ';
-    } else if (currentNs >= millisecond1) {
-      res += (currentNs / millisecond1).toFixed(2) + 'ms ';
-    } else if (currentNs >= microsecond1) {
-      res += (currentNs / microsecond1).toFixed(2) + 'μs ';
+    if (currentNs >= probablyHour) {
+      res += (currentNs / probablyHour).toFixed(2) + 'h ';
+    } else if (currentNs >= probablyMinute1) {
+      res += (currentNs / probablyMinute1).toFixed(2) + 'm ';
+    } else if (currentNs >= probablySecond1) {
+      res += (currentNs / probablySecond1).toFixed(2) + 's ';
+    } else if (currentNs >= probablyMillisecond1) {
+      res += (currentNs / probablyMillisecond1).toFixed(2) + 'ms ';
+    } else if (currentNs >= probablyMicrosecond1) {
+      res += (currentNs / probablyMicrosecond1).toFixed(2) + 'μs ';
     } else if (currentNs > 0) {
       res += currentNs + 'ns ';
     } else if (res == '') {
-      res = ns + '';
+      res = timeNs + '';
     }
     return res;
   }
@@ -241,27 +244,27 @@ export class Utils {
     let hour1 = 3600_000;
     let minute1 = 60_000;
     let second1 = 1_000; // 1 second
-    let res = '';
+    let result = '';
     if (currentNs >= hour1) {
-      res += Math.round(currentNs / hour1).toFixed(2) + 'h';
-      return res;
+      result += Math.round(currentNs / hour1).toFixed(2) + 'h';
+      return result;
     }
     if (currentNs >= minute1) {
-      res += Math.round(currentNs / minute1).toFixed(2) + 'min';
-      return res;
+      result += Math.round(currentNs / minute1).toFixed(2) + 'min';
+      return result;
     }
     if (currentNs >= second1) {
-      res += Math.round(currentNs / second1).toFixed(2) + 's';
-      return res;
+      result += Math.round(currentNs / second1).toFixed(2) + 's';
+      return result;
     }
     if (currentNs > 0) {
-      res += currentNs.toFixed(2) + 'ms';
-      return res;
+      result += currentNs.toFixed(2) + 'ms';
+      return result;
     }
-    if (res == '') {
-      res = '0s';
+    if (result == '') {
+      result = '0s';
     }
-    return res;
+    return result;
   }
 
   public static uuid(): string {

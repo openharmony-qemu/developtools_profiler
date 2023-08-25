@@ -103,6 +103,8 @@ enum EndState {
     TASK_PARKED = 512,
     // (R+) Process groups in the foreground
     TASK_FOREGROUND = 2048,
+    // Hisi spec state
+    TASK_RUNNABLE_BINDER = 2049,
     TASK_MAX = 4096,
     TASK_INVALID = 9999
 };

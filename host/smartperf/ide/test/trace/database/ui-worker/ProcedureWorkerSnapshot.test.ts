@@ -25,10 +25,10 @@ jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => 
 
 describe('ProcedureWorkerSnapshot Test', () => {
     it('HeapSnapshotTest', () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        const ctx = canvas.getContext('2d');
+        const snapshotCanvas = document.createElement('canvas');
+        snapshotCanvas.width = 1;
+        snapshotCanvas.height = 1;
+        const ctx = snapshotCanvas.getContext('2d');
         let dataList = new Array();
         dataList.push({
             startTime: 0,
@@ -68,14 +68,14 @@ describe('ProcedureWorkerSnapshot Test', () => {
 
     it('SnapshotStructTest01', () => {
         const data = {
-            cpu: 1,
+            cpu: 2,
             startNs: 1,
-            value: 1,
+            value: 2444523,
             frame: {
-                x: 20,
-                y: 20,
-                width: 100,
-                height: 100,
+                x: 40,
+                y: 40,
+                width: 650,
+                height: 144,
             },
             maxValue: undefined,
             startTime: 1,
@@ -93,12 +93,12 @@ describe('ProcedureWorkerSnapshot Test', () => {
         const data = {
             cpu: 1,
             startNs: 1,
-            value: 1,
+            value: 1854521,
             frame: {
-                x: 20,
-                y: 20,
+                x: 60,
+                y: 60,
                 width: 100,
-                height: 100,
+                height: 66,
             },
             maxValue: undefined,
             startTime: 1,

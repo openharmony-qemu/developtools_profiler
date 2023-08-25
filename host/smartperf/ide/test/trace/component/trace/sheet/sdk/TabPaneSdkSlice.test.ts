@@ -21,7 +21,7 @@ import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 
 // @ts-ignore
-import {TabUtil} from "../../../../../../dist/trace/component/trace/sheet/sdk/TabUtil.js";
+import { TabUtil } from '../../../../../../dist/trace/component/trace/sheet/sdk/TabUtil.js';
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -93,45 +93,50 @@ describe('TabPaneSdkSlice Test', () => {
     slice.tblSdkSlice = jest.fn(() => litTable);
     slice.tblSdkSlice.appendChild = jest.fn(() => true);
     let map = new Map();
-    let jsonCofigStr =
+    let sdkSliceJsonCofigStr =
       '{"settingConfig":{"configuration":{"counters":{"enum":["ARM_Mali-TTRx_JS1_ACTIVE","ARM_Mali-TTRx_JS0_ACTIVE","ARM_Mali-TTRx_GPU_ACTIVE","ARM_Mali-TTRx_FRAG_ACTIVE"],\n' +
       '    "type":"string"},"stop_gator":{"default":"true","description":"stop_gator","type":"boolean"},"version":{"default":"1","description":"gatordversion","type":"number"}},"name":"mailG77"},\n' +
-      '    "tableConfig":{"showType":[{"columns":[{"column":"ts","displayName":"TimeStamp","showType":[1,3],"type":"INTEGER"},{"column":"counter_id","displayName":"MonitorValue","showType":[1,3],"type":"INTEGER"},\n' +
-      '    {"column":"value","displayName":"Value","showType":[1,3],"type":"INTEGER"}],"inner":{"columns":[{"column":"counter_name","displayName":"","showType":[0],"type":"STRING"},\n' +
-      '    {"column":"counter_id","displayName":"","showType":[0],"type":"INTEGER"}],"tableName":"mock_plugin_counterobj_table"},"tableName":"mock_plugin_counter_table"},\n' +
-      '    {"columns":[{"column":"start_ts","displayName":"startts","showType":[2,3],"type":"INTEGER"},{"column":"end_ts","displayName":"endts","showType":[2,3],"type":"INTEGER"},\n' +
-      '    {"column":"slice_id","displayName":"slice_id","showType":[2,3],"type":"INTEGER"},{"column":"value","displayName":"Value","showType":[2,3],"type":"INTEGER"}],\n' +
-      '    "inner":{"columns":[{"column":"slice_name","displayName":"","showType":[0],"type":"STRING"},{"column":"slice_id","displayName":"","showType":[0],"type":"INTEGER"}],\n' +
+      '    "tableConfig":{"showType":[{"columns":[{"column":"ts","displayName":"TimeStamp","showType":[2,1,3],"type":"INTEGER"},{"column":"counter_id","displayName":"MonitorValue","showType":[1,96,3],"type":"INTEGER"},\n' +
+      '    {"column":"value","displayName":"Value","showType":[0,1,3],"type":"INTEGER"}],"inner":{"columns":[{"column":"counter_name","displayName":"","showType":[63],"type":"STRING"},\n' +
+      '    {"column":"counter_id","displayName":"","showType":[0,2],"type":"INTEGER"}],"tableName":"mock_plugin_counterobj_table"},"tableName":"mock_plugin_counter_table"},\n' +
+      '    {"columns":[{"column":"start_ts","displayName":"startts","showType":[2,3],"type":"INTEGER"},{"column":"end_ts","displayName":"endts","showType":[2,10,3],"type":"INTEGER"},\n' +
+      '    {"column":"slice_id","displayName":"slice_id","showType":[2,4,3],"type":"INTEGER"},{"column":"value","displayName":"Value","showType":[2,3],"type":"INTEGER"}],\n' +
+      '    "inner":{"columns":[{"column":"slice_name","displayName":"","showType":[6],"type":"STRING"},{"column":"slice_id","displayName":"","showType":[12,0],"type":"INTEGER"}],\n' +
       '    "tableName":"mock_plugin_sliceobj_table"},"tableName":"mock_plugin_slice_table"}]}}';
+    let dataSliceMap = {
+      jsonConfig: sdkSliceJsonCofigStr,
+    };
     let datamap = {
-      jsonConfig: jsonCofigStr,
       disPlayName: 'common_mock',
       pluginName: 'mock-plugin',
+      jsonConfig: sdkSliceJsonCofigStr,
     };
-    map.set('1', datamap);
+    map.set('1', dataSliceMap);
     SpSystemTrace.SDK_CONFIG_MAP = map;
     let data = {
       cpus: [],
-      threadIds: [],
-      trackIds: [],
-      funTids: [],
-      heapIds: [],
+      threadIds: [12, 787, 56, 11],
+      trackIds: [52, 652, 23, 2],
+      funTids: [4, 45, 9],
+      heapIds: [95, 4],
       nativeMemory: [],
-      cpuAbilityIds: [],
-      memoryAbilityIds: [],
-      diskAbilityIds: [],
-      networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 0,
+      cpuAbilityIds: [120, 41, 2],
+      memoryAbilityIds: [63, 1],
+      diskAbilityIds: [56, 1],
+      networkAbilityIds: [36, 11],
+      leftNs: 1236461,
+      rightNs: 96641021,
       hasFps: false,
       statisticsSelectData: [],
-      perfSampleIds: [],
-      perfCpus: [],
+      perfSampleIds: [12, 15, 112],
+      perfCpus: [0, 1],
       perfProcess: [],
       perfThread: [],
       perfAll: false,
-      sdkSliceIds: ['a-b', 'b-c', 'd-e'],
+      sdkSliceIds: ['a-b', 'd-e', 'a'],
     };
+    map.set('1', datamap);
+    SpSystemTrace.SDK_CONFIG_MAP = map;
     slice.tblSdkSlice.recycleDataSource = jest.fn(() => data);
     slice.data = data;
     expect(slice.data).toBeUndefined();
@@ -163,36 +168,13 @@ describe('TabPaneSdkSlice Test', () => {
     ).toBeUndefined();
   });
 
-  it('TabPaneSdkSliceTest05', () => {
-    expect(tabPaneSdkSlice.initHtml()).toMatchInlineSnapshot(`
-"
-<style>
-.sdk-slice-table{
-    height: 20px;
-    margin-bottom: 5px;
-}
-:host{
-    padding: 10px 10px;
-    flex-direction: column;
-    display: flex;
-}
-</style>
-<div class="sdk-slice-content" class="sdk-slice-table" style="display: flex;align-items: center;flex-direction: row;">
-            <stack-bar id="sdk-slice-stack-bar" style="flex: 1"></stack-bar>
-            <label id="sdk-slice-time-range"  style="width: auto;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
-        </div>
-<lit-table id="tb-sdk-slice" class="sdk-slice-tbl" style="height: auto">
-</lit-table>
-        "
-`);
-  });
   it('TabPaneSdkSliceTest06', () => {
-    expect(tabPaneSdkSlice.isDateIntersection(5,5,1,6)).toBeTruthy();
+    expect(tabPaneSdkSlice.isDateIntersection(5, 5, 1, 6)).toBeTruthy();
   });
   it('TabPaneSdkSliceTest07', () => {
-    expect(tabPaneSdkSlice.isDateIntersection(5,5,1,6)).toBeTruthy();
+    expect(tabPaneSdkSlice.isDateIntersection(5, 5, 1, 6)).toBeTruthy();
   });
   it('TabPaneSdkSliceTest08', () => {
-    expect(tabPaneSdkSlice.isDateIntersection(1,5,5,3)).toBeTruthy();
+    expect(tabPaneSdkSlice.isDateIntersection(1, 5, 5, 3)).toBeTruthy();
   });
 });

@@ -101,6 +101,9 @@ export class TabPaneSystemDetails extends BaseElement {
       this.detailsTbl!.dataSource = this.detailsSource;
       this.boxDetails!.style.width = '65%';
     }
+    this.detailsTbl!.shadowRoot?.querySelectorAll<HTMLDivElement>('.tr').forEach((tr) => {
+      tr.style.gridTemplateColumns = '120px 1fr';
+    });
     this.detailsTbl!.shadowRoot?.querySelectorAll<HTMLDivElement>('.td').forEach((td) => {
       let item = td.getAttribute('title');
       td.style.fontSize = '14px';

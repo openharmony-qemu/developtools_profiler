@@ -18,24 +18,22 @@ import { SpAbilityMonitorChart } from '../../../../dist/trace/component/chart/Sp
 import '../../../../dist/trace/component/chart/SpAbilityMonitorChart.js';
 // @ts-ignore
 import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
-const sqlit = require('../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../dist/trace/database/SqlLite.js');
-
 jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
-
+const sqlit = require('../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../dist/trace/database/SqlLite.js');
 const intersectionObserverMock = () => ({
   observe: () => null,
 });
+jest.mock('../../../../dist/trace/database/SqlLite.js');
 window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
-
-window.ResizeObserver =
-  window.ResizeObserver ||
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
+    disconnect: jest.fn(),
   }));
 describe('SpAbilityMonitorChart Test', () => {
   let MockqueryAbilityExits = sqlit.queryAbilityExits;
@@ -103,7 +101,7 @@ describe('SpAbilityMonitorChart Test', () => {
       value: 1,
       flag: 1,
       ipid: 1,
-      expTaskComm: ''
+      expTaskComm: '',
     },
   ]);
   let queryGpuMemoryAbilityData = sqlit.queryGpuMemoryAbilityData;

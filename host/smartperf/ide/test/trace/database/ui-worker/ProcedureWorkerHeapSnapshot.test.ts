@@ -58,13 +58,13 @@ describe('ProcedureWorkerHeapTimeline Test', () => {
       {
         end_time: 50,
         end_ts: 1520000,
-        file_name: 'Snapshot0',
-        frame: { x: 0, y: 0, width: 6222, height: 62222 },
-        id: 0,
         pid: 4243,
         start_time: 0,
         start_ts: 88473061693464,
         textMetricsWidth: 50.5810546875,
+        file_name: 'Snapshot0',
+        frame: { x: 0, y: 0, width: 6222, height: 62222 },
+        id: 0,
       },
     ];
     HeapSnapshot(list, filter, 100254, 100254, rect, { height: 40, width: 1407, x: 0, y: 0 });
@@ -72,19 +72,19 @@ describe('ProcedureWorkerHeapTimeline Test', () => {
 
   it('HeapSnapshotStructTest01', () => {
     const data = {
-      cpu: 1,
-      startNs: 1,
-      value: 1,
+      cpu: 3,
+      startNs: 31,
+      value: 91,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 23,
+        y: 22,
+        width: 200,
+        height: 120,
       },
       maxValue: undefined,
-      startTime: 1,
-      filterID: 2,
-      size: 102,
+      startTime: 31,
+      filterID: 23,
+      size: 106,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -95,22 +95,22 @@ describe('ProcedureWorkerHeapTimeline Test', () => {
 
   it('HeapSnapshotStructTest02', () => {
     const data = {
-      cpu: 1,
-      startNs: 1,
-      value: 1,
+      cpu: 0,
+      startNs: 71,
+      value: 17,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 270,
+        y: 250,
+        width: 500,
+        height: 606,
       },
       maxValue: undefined,
-      startTime: 1,
-      filterID: 2,
+      startTime: 61,
+      filterID: 21,
     };
     let node = {
-      start_time: 1,
-      end_time: 2,
+      start_time: 3,
+      end_time: 4,
       frame: null,
     };
     expect(HeapSnapshotStruct.setFrame(node, 0, 1, 2, data)).toBeUndefined();

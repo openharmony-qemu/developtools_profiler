@@ -50,18 +50,18 @@ export class Mark extends Graph {
   }
 
   draw(): void {
-    this.c.beginPath();
-    this.c.strokeStyle = '#999999';
-    this.c.lineWidth = 7;
-    this.c.moveTo(this.frame.x, this.frame.y);
-    this.c.lineTo(this.frame.x, this.frame.y + this.frame.height / 3);
-    this.c.stroke();
-    this.c.strokeStyle = '#999999';
-    this.c.lineWidth = 1;
-    this.c.moveTo(this.frame.x, this.frame.y);
-    this.c.lineTo(this.frame.x, this.frame.y + this.frame.height);
-    this.c.stroke();
-    this.c.closePath();
+    this.context2D.beginPath();
+    this.context2D.strokeStyle = '#999999';
+    this.context2D.lineWidth = 7;
+    this.context2D.moveTo(this.frame.x, this.frame.y);
+    this.context2D.lineTo(this.frame.x, this.frame.y + this.frame.height / 3);
+    this.context2D.stroke();
+    this.context2D.strokeStyle = '#999999';
+    this.context2D.lineWidth = 1;
+    this.context2D.moveTo(this.frame.x, this.frame.y);
+    this.context2D.lineTo(this.frame.x, this.frame.y + this.frame.height);
+    this.context2D.stroke();
+    this.context2D.closePath();
   }
 }
 
@@ -160,9 +160,9 @@ export class RangeRuler extends Graph {
     let miniWidth = Math.ceil(this.frame.width / 100); //每格宽度
     for (let index = 0; index < this._cpuUsage.length; index++) {
       let cpuUsageItem = this._cpuUsage[index];
-      this.c.fillStyle = ColorUtils.MD_PALETTE[cpuUsageItem.cpu];
-      this.c.globalAlpha = cpuUsageItem.rate;
-      this.c.fillRect(
+      this.context2D.fillStyle = ColorUtils.MD_PALETTE[cpuUsageItem.cpu];
+      this.context2D.globalAlpha = cpuUsageItem.rate;
+      this.context2D.fillRect(
         this.frame.x + miniWidth * cpuUsageItem.ro,
         this.frame.y + cpuUsageItem.cpu * miniHeight,
         miniWidth,
@@ -172,34 +172,17 @@ export class RangeRuler extends Graph {
   }
 
   draw(discardNotify: boolean = false): void {
-    this.c.clearRect(this.frame.x - MarkPadding, this.frame.y, this.frame.width + MarkPadding * 2, this.frame.height);
-    this.c.beginPath();
+    this.context2D.clearRect(this.frame.x - MarkPadding, this.frame.y, this.frame.width + MarkPadding * 2, this.frame.height);
+    this.context2D.beginPath();
     if (this._cpuUsage.length > 0) {
       this.drawCpuUsage();
-      this.c.globalAlpha = 0;
+      this.context2D.globalAlpha = 0;
     } else {
-      this.c.globalAlpha = 1;
+      this.context2D.globalAlpha = 1;
     }
     //绘制选中区域
     if (this.drawMark) {
-      this.c.fillStyle = window.getComputedStyle(this.canvas!, null).getPropertyValue('background-color');
-      this.rangeRect.x = this.markAObj.frame.x < this.markBObj.frame.x ? this.markAObj.frame.x : this.markBObj.frame.x;
-      this.rangeRect.width = Math.abs(this.markBObj.frame.x - this.markAObj.frame.x);
-      this.c.fillRect(this.rangeRect.x, this.rangeRect.y, this.rangeRect.width, this.rangeRect.height);
-      this.c.globalAlpha = 1;
-      this.c.globalAlpha = 0.5;
-      this.c.fillStyle = '#999999';
-      this.c.fillRect(this.frame.x, this.frame.y, this.rangeRect.x, this.rangeRect.height);
-      this.c.fillRect(
-        this.rangeRect.x + this.rangeRect.width,
-        this.frame.y,
-        this.frame.width - this.rangeRect.width,
-        this.rangeRect.height
-      );
-      this.c.globalAlpha = 1;
-      this.c.closePath();
-      this.markAObj.draw();
-      this.markBObj.draw();
+      this.drawSelectionRange();
     }
     if (this.notifyHandler) {
       this.range.startX = this.rangeRect.x;
@@ -207,55 +190,55 @@ export class RangeRuler extends Graph {
       this.range.startNS = (this.range.startX * this.range.totalNS) / (this.canvas?.clientWidth || 0);
       this.range.endNS = (this.range.endX * this.range.totalNS) / (this.canvas?.clientWidth || 0);
       let l20 = (this.range.endNS - this.range.startNS) / 20;
-      let min = 0;
-      let max = 0;
+      let minScale = 0;
+      let maxScale = 0;
       let weight = 0;
       for (let scalesIndex = 0; scalesIndex < this.scales.length; scalesIndex++) {
         if (this.scales[scalesIndex] > l20) {
           if (scalesIndex > 0) {
-            min = this.scales[scalesIndex - 1];
+            minScale = this.scales[scalesIndex - 1];
           } else {
-            min = 0;
+            minScale = 0;
           }
-          max = this.scales[scalesIndex];
-          weight = ((l20 - min) * 1.0) / (max - min);
+          maxScale = this.scales[scalesIndex];
+          weight = ((l20 - minScale) * 1.0) / (maxScale - minScale);
           if (weight > 0.243) {
-            this.scale = max;
+            this.scale = maxScale;
           } else {
-            this.scale = min;
+            this.scale = minScale;
           }
           break;
         }
       }
-      if (this.scale == 0) {
+      if (this.scale === 0) {
         this.scale = this.scales[0];
       }
       let tempNs = 0;
-      let yu = this.range.startNS % this.scale;
-      let realW = (this.scale * this.frame.width) / (this.range.endNS - this.range.startNS);
-      let startX = 0;
-      if (this.range.xs) {
-        this.range.xs.length = 0;
-      } else {
-        this.range.xs = [];
-      }
+      let rangeStartX = 0;
+      let rangeYu = this.range.startNS % this.scale;
+      let rangeRealW = (this.scale * this.frame.width) / (this.range.endNS - this.range.startNS);
       if (this.range.xsTxt) {
         this.range.xsTxt.length = 0;
       } else {
         this.range.xsTxt = [];
       }
+      if (this.range.xs) {
+        this.range.xs.length = 0;
+      } else {
+        this.range.xs = [];
+      }
       this.range.scale = this.scale;
-      if (yu != 0) {
-        let first_NodeWidth = ((this.scale - yu) / this.scale) * realW;
-        startX += first_NodeWidth;
-        tempNs += yu;
-        this.range.xs.push(startX);
+      if (rangeYu != 0) {
+        let first_NodeWidth = ((this.scale - rangeYu) / this.scale) * rangeRealW;
+        rangeStartX += first_NodeWidth;
+        tempNs += rangeYu;
+        this.range.xs.push(rangeStartX);
         this.range.xsTxt.push(ns2UnitS(tempNs + this.range.startNS, this.scale));
       }
       while (tempNs < this.range.endNS - this.range.startNS) {
-        startX += realW;
+        rangeStartX += rangeRealW;
         tempNs += this.scale;
-        this.range.xs.push(startX);
+        this.range.xs.push(rangeStartX);
         this.range.xsTxt.push(ns2UnitS(tempNs + this.range.startNS, this.scale));
       }
       if (!discardNotify) {
@@ -264,15 +247,36 @@ export class RangeRuler extends Graph {
     }
   }
 
-  getScale() {
+  private drawSelectionRange() {
+    this.context2D.fillStyle = window.getComputedStyle(this.canvas!, null).getPropertyValue('background-color');
+    this.rangeRect.x = this.markAObj.frame.x < this.markBObj.frame.x ? this.markAObj.frame.x : this.markBObj.frame.x;
+    this.rangeRect.width = Math.abs(this.markBObj.frame.x - this.markAObj.frame.x);
+    this.context2D.fillRect(this.rangeRect.x, this.rangeRect.y, this.rangeRect.width, this.rangeRect.height);
+    this.context2D.globalAlpha = 1;
+    this.context2D.globalAlpha = 0.5;
+    this.context2D.fillStyle = '#999999';
+    this.context2D.fillRect(this.frame.x, this.frame.y, this.rangeRect.x, this.rangeRect.height);
+    this.context2D.fillRect(
+      this.rangeRect.x + this.rangeRect.width,
+      this.frame.y,
+      this.frame.width - this.rangeRect.width,
+      this.rangeRect.height
+    );
+    this.context2D.globalAlpha = 1;
+    this.context2D.closePath();
+    this.markAObj.draw();
+    this.markBObj.draw();
+  }
+
+  getScale(): number {
     return this.scale;
   }
 
   mouseDown(mouseEventDown: MouseEvent) {
-    let down_x = mouseEventDown.offsetX - (this.canvas?.offsetLeft || 0);
-    let down_y = mouseEventDown.offsetY - (this.canvas?.offsetTop || 0);
+    let mouseDown_x = mouseEventDown.offsetX - (this.canvas?.offsetLeft || 0);
+    let mouseDown_y = mouseEventDown.offsetY - (this.canvas?.offsetTop || 0);
     this.isMouseDown = true;
-    this.mouseDownOffsetX = down_x;
+    this.mouseDownOffsetX = mouseDown_x;
     if (this.markAObj.isHover) {
       this.movingMark = this.markAObj;
       this.mouseDownMovingMarkX = this.movingMark.frame.x || 0;
@@ -282,14 +286,14 @@ export class RangeRuler extends Graph {
     } else {
       this.movingMark = null;
     }
-    if (this.rangeRect.containsWithPadding(down_x, down_y, 5, 0)) {
+    if (this.rangeRect.containsWithPadding(mouseDown_x, mouseDown_y, 5, 0)) {
       this.isMovingRange = true;
       this.markAX = this.markAObj.frame.x;
       this.markBX = this.markBObj.frame.x;
       document.body.style.cursor = 'move';
     } else if (
-      this.frame.containsWithMargin(down_x, down_y, 20, 0, 0, 0) &&
-      !this.rangeRect.containsWithMargin(down_x, down_y, 0, MarkPadding, 0, MarkPadding)
+      this.frame.containsWithMargin(mouseDown_x, mouseDown_y, 20, 0, 0, 0) &&
+      !this.rangeRect.containsWithMargin(mouseDown_x, mouseDown_y, 0, MarkPadding, 0, MarkPadding)
     ) {
       this.isNewRange = true;
     }

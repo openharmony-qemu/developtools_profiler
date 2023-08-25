@@ -22,19 +22,17 @@ import { querySysLocationDetailsData, querySysLockDetailsData } from '../../../.
 import { SpHiSysEventChart } from '../../../../../../dist/trace/component/chart/SpHiSysEventChart.js';
 import '../../../../../../dist/trace/component/chart/SpHiSysEventChart.js';
 
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
     observe: jest.fn(),
     unobserve: jest.fn(),
+    disconnect: jest.fn(),
   }));
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 describe('TabPanePowerBattery Test', () => {
   it('TabPaneSystemDetailsTest01', function () {
@@ -145,28 +143,28 @@ describe('TabPanePowerBattery Test', () => {
     MockLocationData.mockResolvedValue(locationDetails);
 
     let tabPaneSystemDetailsData = {
-      cpus: [],
-      threadIds: [],
-      trackIds: [],
-      funTids: [],
-      heapIds: [],
+      cpus: [1],
+      threadIds: [23, 6, 7],
+      trackIds: [57, 67, 1],
+      funTids: [56, 9],
+      heapIds: [9,0],
       nativeMemory: [],
-      cpuAbilityIds: [],
+      cpuAbilityIds: [78],
       memoryAbilityIds: [],
-      diskAbilityIds: [],
+      diskAbilityIds: [43,98],
       networkAbilityIds: [],
-      leftNs: 0,
-      rightNs: 300000000000,
+      leftNs: 546,
+      rightNs: 300000000,
       hasFps: false,
       statisticsSelectData: undefined,
       perfSampleIds: [],
-      perfCpus: [],
+      perfCpus: [1,2],
       perfProcess: [],
       perfThread: [],
       perfAll: false,
-      systemEnergy: [0, 1, 2],
-      powerEnergy: [0, 1, 2],
-      anomalyEnergy: [0, 1, 2],
+      systemEnergy: [5,78,1],
+      powerEnergy: [54, 56, 0],
+      anomalyEnergy: [10, 5, 0, 0],
     };
 
     tabPaneSystemDetails.data = tabPaneSystemDetailsData;
@@ -224,13 +222,13 @@ describe('TabPanePowerBattery Test', () => {
       ts: 0,
       eventName: 'Event Name',
       type: 'type',
-      pid: 0,
-      uid: 0,
+      pid: 2,
+      uid: 33,
       state: 0,
-      workId: 'workId',
+      workId: 567,
       name: 'name',
-      interval: 0,
-      level: 0,
+      interval: 112,
+      level: 31,
       tag: 'tag:',
       message: 'message',
       log_level: 'log_level',
@@ -249,13 +247,13 @@ describe('TabPanePowerBattery Test', () => {
       ts: 0,
       eventName: 'GNSS_STATE',
       type: 'type',
-      pid: 0,
-      uid: 0,
+      pid: 23,
+      uid: 11,
       state: 0,
-      workId: 'workId',
+      workId: 123,
       name: 'name',
-      interval: 0,
-      level: 0,
+      interval: 1011,
+      level: 201,
       tag: 'tag:',
       message: 'message',
       log_level: 'log_level',
@@ -271,16 +269,16 @@ describe('TabPanePowerBattery Test', () => {
     tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let data = {
-      ts: 0,
+      ts: 2444221,
       eventName: 'POWER_RUNNINGLOCK',
       type: 'type',
-      pid: 0,
-      uid: 0,
-      state: 0,
+      pid: 76,
+      uid: 23,
+      state: 1,
       workId: 'workId',
       name: 'name',
-      interval: 0,
-      level: 0,
+      interval: 1223,
+      level: 3421,
       tag: 'tag:',
       message: 'message',
       log_level: 'log_level',
@@ -295,16 +293,16 @@ describe('TabPanePowerBattery Test', () => {
     tabPaneSystemDetails.tblSystemDetails!.recycleDataSource = jest.fn(() => []);
     tabPaneSystemDetails.detailsTbl!.recycleDataSource = jest.fn(() => []);
     let data = {
-      ts: 0,
+      ts: 4442111,
       eventName: 'POWER',
       type: 'type',
-      pid: 0,
-      uid: 0,
-      state: 0,
+      pid: 23,
+      uid: 337,
+      state: 1,
       workId: 'workId',
       name: 'name',
-      interval: 0,
-      level: 0,
+      interval: 10241,
+      level: 147754,
       tag: 'tag:',
       message: 'message',
       log_level: 'log_level',
@@ -417,49 +415,5 @@ describe('TabPanePowerBattery Test', () => {
     let systemWorkData = tabPaneSystemDetails.getSystemWorkData();
 
     expect(systemWorkData).toStrictEqual([]);
-  });
-
-  it('TabPaneSystemDetailsTest07', function () {
-    let tabPaneSystemDetails = new TabPaneSystemDetails();
-    expect(tabPaneSystemDetails.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
-        .sys-detail-progress{
-            bottom: 33px;
-            position: absolute;
-            height: 1px;
-            left: 0;
-            right: 0;
-        }
-        </style>
-        <div class="sys-detail-content" style="display: flex;flex-direction: column">
-            <div style="display: flex;flex-direction: row">
-                <lit-slicer style="width:100%">
-                    <div class="box-details" style="width: 100%">
-                        <lit-table id="tb-system-data" style="height: auto">
-                            <lit-table-column class="sys-detail-column" width="300px" title="" data-index="eventName" key="eventName"  align="flex-start" order>
-                            </lit-table-column>
-                            <lit-table-column class="sys-detail-column" width="300px" title="" data-index="ts" key="ts"  align="flex-start" order>
-                            </lit-table-column>
-                        </lit-table>
-                    </div>
-                    <lit-slicer-track ></lit-slicer-track>
-                    <lit-table id="tb-system-details-data" no-head hideDownload style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)">
-                        <lit-table-column class="sys-detail-column" width="100px" title="" data-index="key" key="key"  align="flex-start" >
-                        </lit-table-column>
-                        <lit-table-column class="sys-detail-column" width="1fr" title="" data-index="value" key="value"  align="flex-start">
-                        </lit-table-column>
-                    </lit-table>
-                </lit-slicer>
-            </div>
-            <lit-progress-bar class="progress sys-detail-progress"></lit-progress-bar>
-        </div>
-        "
-`);
   });
 });

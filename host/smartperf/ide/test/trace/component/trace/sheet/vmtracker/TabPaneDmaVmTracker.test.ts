@@ -16,6 +16,9 @@
 //@ts-ignore
 import { TabPaneDmaVmTracker } from '../../../../../../dist/trace/component/trace/sheet/vmtracker/TabPaneDmaVmTracker.js';
 
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
@@ -31,8 +34,6 @@ jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () =>
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {};
 });
-const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
-jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
 // @ts-ignore
 window.ResizeObserver =
@@ -47,7 +48,7 @@ describe('TabPaneDmaSelectVmTracker Test', () => {
   let val = [
     {
       leftNs: 0,
-      rightNs: 1000,
+      rightNs: 1030,
       startNs: 0,
     },
   ];

@@ -30,36 +30,36 @@ import { Rect } from '../../../../dist/trace/component/trace/timer-shaft/Rect.js
 
 describe(' Test', () => {
   it('HeapTest01', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let heapDataList = new Array();
+    heapDataList.push({
+      startTime: 40,
+      dur: 150,
+      frame: { x: 0, y: 19, width: 20, height: 10 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
-    let rect = new Rect(0, 10, 10, 10);
+    heapDataList.push({ startTime: 12, dur: 21 });
+    let rect = new Rect(0, 10, 30, 10);
     let res = [
       {
-        startTs: 0,
-        dur: 10,
-        length: 1,
+        startTs: 11,
+        dur: 166,
+        length: 15,
         frame: '',
       },
     ];
-    heap(dataList, res, 1, 100254, 100254, rect, true);
+    heap(heapDataList, res, 1, 100254, 100254, rect, true);
   });
 
   it('HeapTest02', () => {
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
-    });
-    dataList.push({
+    let heapHataList = new Array();
+    heapHataList.push({
       startTime: 1,
-      dur: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 118,
+      frame: { x: 60, y: 9, width: 10, height: 10 },
+    });
+    heapHataList.push({
+      startTime: 1,
+      dur: 15,
+      frame: { x: 0, y: 19, width: 110, height: 130 },
     });
     let rect = new Rect(0, 10, 10, 10);
     let res = [
@@ -70,19 +70,19 @@ describe(' Test', () => {
         frame: '',
       },
     ];
-    heap(dataList, res, 1, 100254, 100254, rect, false);
+    heap(heapHataList, res, 1, 100254, 100254, rect, false);
   });
 
   it('HeapTest03', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 11;
+    canvas.height = 12;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 250,
+        y: 250,
         width: 100,
         height: 100,
       },
@@ -93,14 +93,14 @@ describe(' Test', () => {
   });
   it('HeapTest04', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 11;
+    canvas.height = 11;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 205,
+        y: 205,
         width: 100,
         height: 100,
       },
@@ -111,52 +111,52 @@ describe(' Test', () => {
   });
 
   it('HeapTest05', function () {
-    let nativeMemoryRender = new HeapRender();
-    let req = {
+    let heapRender = new HeapRender();
+    let heapReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 3,
+      endNS: 9,
+      totalNS: 6,
       frame: {
         x: 20,
         y: 20,
-        width: 100,
-        height: 100,
+        width: 200,
+        height: 200,
       },
       useCache: false,
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: 'canvas',
       context: {
         font: '11px sans-serif',
         fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        globalAlpha: 0.56,
         clearRect: jest.fn(() => true),
-        beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
+        beginPath: jest.fn(() => false),
         closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
+        stroke: jest.fn(() => true),
         fillRect: jest.fn(() => true),
         fillText: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#666666',
       isHover: '',
       hoverX: 1,
-      params: '',
+      params: 'params',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 1,
       id: 1,
       x: 20,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 320,
+      height: 320,
     };
     window.postMessage = jest.fn(() => true);
-    expect(nativeMemoryRender.render(req, [], [])).toBeUndefined();
+    expect(heapRender.render(heapReq, [], [])).toBeUndefined();
   });
   it('HeapTest04', () => {
     const canvas = document.createElement('canvas');
@@ -187,7 +187,7 @@ describe(' Test', () => {
     expect(HeapStruct.setFrame(node, 2, 1, 5, 4, data)).toBeUndefined();
   });
   it('HeapTest07', function () {
-    let nativeMemoryRender = new HeapRender();
+    let heapRender = new HeapRender();
     let canvas = document.createElement('canvas') as HTMLCanvasElement;
     let context = canvas.getContext('2d');
     const data = {
@@ -197,6 +197,6 @@ describe(' Test', () => {
       traceRange: [],
     };
     window.postMessage = jest.fn(() => true);
-    expect(nativeMemoryRender.renderMainThread(data, new TraceRow())).toBeUndefined();
+    expect(heapRender.renderMainThread(data, new TraceRow())).toBeUndefined();
   });
 });

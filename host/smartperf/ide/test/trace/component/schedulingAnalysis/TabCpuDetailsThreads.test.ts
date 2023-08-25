@@ -15,41 +15,43 @@
 //@ts-ignore
 import { TabCpuDetailsThreads } from '../../../../dist/trace/component/schedulingAnalysis/TabCpuDetailsThreads.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('TabCpuDetailsThreads Test', () => {
-    it('TabCpuDetailsThreadsTest01', () => {
-        let tabCpuDetailsThreads = new TabCpuDetailsThreads();
-        expect(
-            tabCpuDetailsThreads.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-    it('TabCpuDetailsThreadsTest02', () => {
-        let tabCpuDetailsThreads = new TabCpuDetailsThreads();
-        let data = [
-            {
-                pid: 1,
-                pName: 1,
-                tid: 2,
-                tName: '',
-                total: 1,
-                size: 'middle core',
-                no: '',
-                timeStr: '',
-            }
-        ]
-        tabCpuDetailsThreads.cpuDetailsThreadUsageTbl.reMeauseHeight = jest.fn();
-        expect(tabCpuDetailsThreads.queryPieChartDataByType(data)).toBeUndefined();
-    });
-    it('TabCpuDetailsThreadsTest02', () => {
-        let tabCpuDetailsThreads = new TabCpuDetailsThreads();
-        tabCpuDetailsThreads.init = jest.fn();
-        expect(tabCpuDetailsThreads.init(1,{})).toBeUndefined();
-    });
-})
+  it('TabCpuDetailsThreadsTest01', () => {
+    let tabCpuDetailsThreads = new TabCpuDetailsThreads();
+    expect(
+      tabCpuDetailsThreads.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+  it('TabCpuDetailsThreadsTest02', () => {
+    let tabCpuDetailsThreads = new TabCpuDetailsThreads();
+    let data = [
+      {
+        pid: 32,
+        pName: 22,
+        tid: 162,
+        tName: '',
+        total: 132,
+        size: 'middle core',
+        no: '',
+        timeStr: '56.09kb',
+      },
+    ];
+    tabCpuDetailsThreads.cpuDetailsThreadUsageTbl.reMeauseHeight = jest.fn();
+    expect(tabCpuDetailsThreads.queryPieChartDataByType(data)).toBeUndefined();
+  });
+  it('TabCpuDetailsThreadsTest02', () => {
+    let tabCpuDetailsThreads = new TabCpuDetailsThreads();
+    tabCpuDetailsThreads.init = jest.fn();
+    expect(tabCpuDetailsThreads.init(1, {})).toBeUndefined();
+  });
+});

@@ -18,8 +18,7 @@ import { TabPaneGpuMemoryAbility } from '../../../../../../dist/trace/component/
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-    return {
-    }
+    return {}
 });
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
@@ -68,23 +67,23 @@ describe('TabPaneGpuMemoryAbility Test', () => {
     ]);
     tabPaneGpuMemoryAbility.init = jest.fn(() => true);
     getTabGpuMemoryAbilityData.data = {
+        cpuFreqLimitDatas: [],
+        cpuStateFilterIds: [],
         anomalyEnergy: [],
         clockMapData: {},
         cpuAbilityIds: [],
         cpuFreqFilterIds: [],
-        cpuFreqLimitDatas: [],
-        cpuStateFilterIds: [],
         cpus: [],
         diskAbilityIds: [],
         diskIOLatency: false,
         diskIOReadIds: [],
-        diskIOWriteIds: [],
-        diskIOipids: [],
-        dmaAbilityData: [],
         dmaVmTrackerData:[],
         fsCount:0,
         funAsync:[],
         funTids:[],
+        diskIOWriteIds: [],
+        diskIOipids: [],
+        dmaAbilityData: [],
         gpu:{gl: false, gpuWindow: false, gpuTotal: false},
         gpuMemoryAbilityData:[1,23,''],
         gpuMemoryTrackerData:[],
@@ -94,11 +93,11 @@ describe('TabPaneGpuMemoryAbility Test', () => {
         jankFramesData:[],
         jsCpuProfilerData:[],
         jsMemory:[],
-        leftNs:486814455,
+        leftNs:3244455,
         memoryAbilityIds:[],
         networkAbilityIds:[],
-        recordStartNs:333185936669149,
-        rightNs:16125728831,
+        recordStartNs:44443669149,
+        rightNs:6543728831,
         sdkCounterIds:[],
         sdkSliceIds:[],
         smapsType:[],

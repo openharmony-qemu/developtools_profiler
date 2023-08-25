@@ -45,22 +45,22 @@ describe('litChartColumn Test', () => {
     clo.config = {
       data: [
         {
-          pid: 1,
-          pName: '1',
-          tid: 1,
+          pid: 11,
+          pName: 'process01',
+          tid: 332,
           tName: '11',
-          total: 12,
+          total: 45,
           size: 'big core',
-          timeStr: '11',
+          timeStr: '91.11kb',
         },
         {
-          pid: 2,
-          pName: '2',
-          tid: 2,
+          pid: 21,
+          pName: 'process02',
+          tid: 21,
           tName: '222',
           total: 13,
           size: 'big core',
-          timeStr: '22',
+          timeStr: '211.00kb',
         },
       ],
       appendPadding: 10,
@@ -70,10 +70,6 @@ describe('litChartColumn Test', () => {
       color: (a: any) => {
         if (a.size === 'big core') {
           return '#2f72f8';
-        } else if (a.size === 'middle core') {
-          return '#ffab67';
-        } else if (a.size === 'small core') {
-          return '#a285d2';
         } else {
           return '#0a59f7';
         }
@@ -86,15 +82,11 @@ describe('litChartColumn Test', () => {
             total += obj.obj.total;
             tip = `${tip}
                                 <div style="display:flex;flex-direction: row;align-items: center;">
-                                    <div style="width: 10px;height: 5px;background-color: ${obj.color};margin-right: 5px"></div>
-                                    <div>${obj.type}:${obj.obj.timeStr}</div>
                                 </div>
                             `;
           }
           tip = `<div>
                                         <div>tid:${a[0].obj.tid}</div>
-                                        ${tip}
-                                        ${a.length > 1 ? `<div>total:${getProbablyTime(total)}</div>` : ''}
                                     </div>`;
           return tip;
         } else {
@@ -103,28 +95,26 @@ describe('litChartColumn Test', () => {
       },
       label: null,
     };
-    let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 2 });
     expect(clo.config).not.toBeUndefined();
     LitChartColumn.contains = jest.fn().mockResolvedValue(true);
-
     clo.dataSource = [
       {
-        pid: 1,
-        pName: '1',
-        tid: 1,
+        pid: 110,
+        pName: 'process03',
+        tid: 32,
         tName: '11',
-        total: 12,
+        total: 121,
         size: 'big core',
-        timeStr: '11',
+        timeStr: '11.09kb',
       },
       {
         pid: 2,
-        pName: '2',
-        tid: 2,
-        tName: '222',
-        total: 13,
+        pName: 'process04',
+        tid: 22,
+        tName: 'thread',
+        total: 131,
         size: 'big core',
-        timeStr: '22',
+        timeStr: '22.30kb',
       },
     ];
     expect(clo.data[0].obj.pid).toBe(2);

@@ -89,7 +89,7 @@ group("hiperf_platform_common") {
   deps = [
     ":elf",
     ":hiperf_src",
-    "${THIRD_PARTY}/protobuf:protobuf_static",
     "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+    "${THIRD_PARTY}/protobuf:protobuf_static",
   ]
 }

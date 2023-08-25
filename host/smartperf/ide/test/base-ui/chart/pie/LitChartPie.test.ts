@@ -53,122 +53,119 @@ describe('litChartPie Test', () => {
       return Math.floor(Math.random() * 10 + 1);
     });
     LitChartPieData.isPointIsCircle = jest.fn().mockResolvedValue(true);
-    document.body.innerHTML = `
-        <div>
-            <lit-chart-pie id='chart-pie'></lit-chart-pie>
-        </div> `;
+    document.body.innerHTML = ` <div><lit-chart-pie id='chart-pie'></lit-chart-pie></div> `;
     let clo = document.getElementById('chart-pie') as LitChartPie;
     clo.config = {
-      appendPadding: 0,
+      appendPadding: 20,
       data: [
         {
           cpu: 1,
-          value: 1325000,
-          sum: 204991136,
-          sumTimeStr: '204.99ms ',
-          min: '22.92μs ',
-          max: '28.37ms ',
-          avg: '1.09ms ',
-          count: 188,
-          ratio: '35.46',
+          value: 345021,
+          sum: 2111136,
+          sumTimeStr: '233.99ms ',
+          min: '32.12μs ',
+          max: '3.47ms ',
+          avg: '1.19ms ',
+          count: 238,
+          ratio: '33.46',
         },
         {
           cpu: 1,
-          value: 1700000,
-          sum: 113649487,
+          value: 1100000,
+          sum: 111649487,
           sumTimeStr: '113.65ms ',
           min: '9.90μs ',
           max: '14.07ms ',
           avg: '697.24μs ',
-          count: 163,
+          count: 113,
           ratio: '19.66',
         },
         {
           cpu: 1,
-          value: 1421000,
-          sum: 100750003,
+          value: 1411000,
+          sum: 1005403,
           sumTimeStr: '100.75ms ',
           min: '32.81μs ',
           max: '25.12ms ',
           avg: '3.73ms ',
-          count: 27,
+          count: 17,
           ratio: '17.43',
         },
         {
           cpu: 1,
-          value: 884000,
-          sum: 66958334,
+          value: 884100,
+          sum: 66958331,
           sumTimeStr: '66.96ms ',
           min: '16.82ms ',
           max: '27.30ms ',
           avg: '22.32ms ',
-          count: 3,
+          count: 31,
           ratio: '11.58',
         },
         {
           cpu: 1,
-          value: 960000,
-          sum: 62210416,
+          value: 960001,
+          sum: 6223411,
           sumTimeStr: '62.21ms ',
           min: '93.23μs ',
           max: '20.34ms ',
           avg: '6.91ms ',
-          count: 9,
+          count: 91,
           ratio: '10.76',
         },
         {
           cpu: 1,
-          value: 1517000,
-          sum: 21867712,
+          value: 1517001,
+          sum: 2131,
           sumTimeStr: '21.87ms ',
           min: '9.90μs ',
           max: '8.28ms ',
           avg: '1.21ms ',
-          count: 18,
+          count: 181,
           ratio: '3.78',
         },
         {
           cpu: 1,
-          value: 1604000,
-          sum: 6372917,
+          value: 1632,
+          sum: 637321,
           sumTimeStr: '6.37ms ',
           min: '33.85μs ',
           max: '2.80ms ',
           avg: '531.08μs ',
-          count: 12,
-          ratio: '1.10',
+          count: 121,
+          ratio: '21.10',
         },
         {
           cpu: 1,
-          value: 1037000,
-          sum: 1141667,
-          sumTimeStr: '1.14ms ',
+          value: 103201,
+          sum: 13261,
+          sumTimeStr: '31.14ms ',
           min: '25.00μs ',
           max: '1.12ms ',
           avg: '570.83μs ',
-          count: 2,
+          count: 21,
           ratio: '0.20',
         },
         {
           cpu: 1,
-          value: 1229000,
-          sum: 91667,
+          value: 12321,
+          sum: 91661,
           sumTimeStr: '91.67μs ',
-          min: '91.67μs ',
-          max: '91.67μs ',
-          avg: '91.67μs ',
-          count: 1,
+          min: '3.67μs ',
+          max: '65.67μs ',
+          avg: '32.67μs ',
+          count: 11,
           ratio: '0.02',
         },
         {
           cpu: 1,
-          value: 1133000,
-          sum: 76042,
+          value: 113201,
+          sum: 76041,
           sumTimeStr: '76.04μs ',
-          min: '76.04μs ',
-          max: '76.04μs ',
-          avg: '76.04μs ',
-          count: 1,
+          min: '23.04μs ',
+          max: '56.04μs ',
+          avg: '32.04μs ',
+          count: 11,
           ratio: '0.01',
         },
       ],
@@ -179,14 +176,14 @@ describe('litChartPie Test', () => {
         type: 'outer',
       },
 
-      tip: (obj: any) => {
+      tip: (test: any) => {
         return `<div>
-                                <div>frequency:${obj.obj.value}</div> 
-                                <div>min:${obj.obj.min}</div>
-                                <div>max:${obj.obj.max}</div>
-                                <div>average:${obj.obj.avg}</div>
-                                <div>duration:${obj.obj.sumTimeStr}</div>
-                                <div>ratio:${obj.obj.ratio}%</div>
+                                <div>frequency:${test.obj.value}</div> 
+                                <div>min:${test.obj.min}</div>
+                                <div>max:${test.obj.max}</div>
+                                <div>average:${test.obj.avg}</div>
+                                <div>duration:${test.obj.sumTimeStr}</div>
+                                <div>ratio:${test.obj.ratio}%</div>
                             </div>
                                 `;
       },
@@ -197,7 +194,7 @@ describe('litChartPie Test', () => {
         },
       ],
     };
-    let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 2 });
+    let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 3 });
     clo.canvas.dispatchEvent(mouseOutEvent);
     expect(clo.config).not.toBeUndefined();
   });
@@ -213,144 +210,144 @@ describe('litChartPie Test', () => {
         </div> `;
     let clo = document.getElementById('chart-pie') as LitChartPie;
     clo.config = {
-      appendPadding: 0,
+      appendPadding: 3,
       data: [
         {
-          cpu: 1,
-          value: 1325000,
-          sum: 204991136,
+          cpu: 4,
+          value: 1325300,
+          sum: 204992136,
           sumTimeStr: '204.99ms ',
-          min: '22.92μs ',
-          max: '28.37ms ',
-          avg: '1.09ms ',
+          min: '12.92μs ',
+          max: '38.37ms ',
+          avg: '2.09ms ',
           count: 188,
           ratio: '35.46',
         },
         {
           cpu: 1,
-          value: 1700000,
-          sum: 113649487,
+          value: 1200000,
+          sum: 112649487,
           sumTimeStr: '113.65ms ',
           min: '9.90μs ',
           max: '14.07ms ',
           avg: '697.24μs ',
-          count: 163,
+          count: 123,
           ratio: '19.66',
         },
         {
           cpu: 1,
-          value: 1421000,
-          sum: 100750003,
+          value: 1421002,
+          sum: 100750002,
           sumTimeStr: '100.75ms ',
           min: '32.81μs ',
           max: '25.12ms ',
           avg: '3.73ms ',
-          count: 27,
+          count: 22,
           ratio: '17.43',
         },
         {
           cpu: 1,
-          value: 884000,
-          sum: 66958334,
+          value: 884002,
+          sum: 66958332,
           sumTimeStr: '66.96ms ',
           min: '16.82ms ',
           max: '27.30ms ',
           avg: '22.32ms ',
-          count: 3,
+          count: 32,
           ratio: '11.58',
         },
         {
           cpu: 1,
-          value: 960000,
-          sum: 62210416,
+          value: 960020,
+          sum: 62210426,
           sumTimeStr: '62.21ms ',
           min: '93.23μs ',
           max: '20.34ms ',
           avg: '6.91ms ',
-          count: 9,
+          count: 29,
           ratio: '10.76',
         },
         {
           cpu: 1,
-          value: 1517000,
+          value: 1517020,
           sum: 21867712,
           sumTimeStr: '21.87ms ',
           min: '9.90μs ',
           max: '8.28ms ',
           avg: '1.21ms ',
-          count: 18,
+          count: 28,
           ratio: '3.78',
         },
         {
           cpu: 1,
-          value: 1604000,
-          sum: 6372917,
+          value: 1602000,
+          sum: 6372217,
           sumTimeStr: '6.37ms ',
           min: '33.85μs ',
           max: '2.80ms ',
           avg: '531.08μs ',
-          count: 12,
+          count: 212,
           ratio: '1.10',
         },
         {
           cpu: 1,
-          value: 1037000,
-          sum: 1141667,
+          value: 1037002,
+          sum: 1141627,
           sumTimeStr: '1.14ms ',
           min: '25.00μs ',
           max: '1.12ms ',
           avg: '570.83μs ',
-          count: 2,
+          count: 22,
           ratio: '0.20',
         },
         {
           cpu: 1,
-          value: 1229000,
-          sum: 91667,
+          value: 1229200,
+          sum: 91662,
           sumTimeStr: '91.67μs ',
           min: '91.67μs ',
           max: '91.67μs ',
           avg: '91.67μs ',
-          count: 1,
+          count: 21,
           ratio: '0.02',
         },
         {
           cpu: 1,
-          value: 1133000,
-          sum: 76042,
+          value: 12100,
+          sum: 7122,
           sumTimeStr: '76.04μs ',
-          min: '76.04μs ',
-          max: '76.04μs ',
-          avg: '76.04μs ',
-          count: 1,
+          min: '71.04μs ',
+          max: '79.04μs ',
+          avg: '98.04μs ',
+          count: 12,
           ratio: '0.01',
         },
       ],
-      angleField: 'sum',
-      colorField: 'value',
-      radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj: any) => {
+      angleField: 'sum',
+      colorField: 'value',
+      radius: 22,
+      tip: (testObj: any) => {
         return `<div>
-                                <div>frequency:${obj.obj.value}</div> 
-                                <div>min:${obj.obj.min}</div>
-                                <div>max:${obj.obj.max}</div>
-                                <div>average:${obj.obj.avg}</div>
-                                <div>duration:${obj.obj.sumTimeStr}</div>
-                                <div>ratio:${obj.obj.ratio}%</div>
+                                <div>frequency:${testObj.obj.value}</div> 
+                                <div>min:${testObj.obj.min}</div>
+                                <div>max:${testObj.obj.max}</div>
+                                <div>average:${testObj.obj.avg}</div>
+                                <div>duration:${testObj.obj.sumTimeStr}</div>
+                                <div>ratio:${testObj.obj.ratio}%</div>
                             </div>
                                 `;
       },
-      angleClick: () => {},
       interactions: [
         {
-          type: 'element-active',
+          type: 'active',
         },
       ],
+      angleClick: () => {},
     };
-    let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 2 });
+    let mouseOutEvent: MouseEvent = new MouseEvent('mouseout', <MouseEventInit>{ movementX: 1, movementY: 4 });
     clo.canvas.dispatchEvent(mouseOutEvent);
     expect(clo.config).not.toBeUndefined();
   });
@@ -373,121 +370,115 @@ describe('litChartPie Test', () => {
       data: [
         {
           cpu: 1,
-          value: 1325000,
-          sum: 204991136,
+          value: 1335000,
+          sum: 234991136,
           sumTimeStr: '204.99ms ',
           min: '22.92μs ',
           max: '28.37ms ',
           avg: '1.09ms ',
-          count: 188,
+          count: 388,
           ratio: '35.46',
         },
         {
           cpu: 1,
-          value: 1700000,
-          sum: 113649487,
+          value: 1730000,
+          sum: 113349487,
           sumTimeStr: '113.65ms ',
           min: '9.90μs ',
           max: '14.07ms ',
           avg: '697.24μs ',
-          count: 163,
+          count: 133,
           ratio: '19.66',
         },
         {
           cpu: 1,
-          value: 1421000,
+          value: 1421003,
           sum: 100750003,
           sumTimeStr: '100.75ms ',
           min: '32.81μs ',
           max: '25.12ms ',
           avg: '3.73ms ',
-          count: 27,
+          count: 23,
           ratio: '17.43',
         },
         {
           cpu: 1,
-          value: 884000,
+          value: 884300,
           sum: 66958334,
           sumTimeStr: '66.96ms ',
           min: '16.82ms ',
           max: '27.30ms ',
           avg: '22.32ms ',
-          count: 3,
+          count: 33,
           ratio: '11.58',
         },
         {
           cpu: 1,
-          value: 960000,
-          sum: 62210416,
+          value: 960003,
+          sum: 62213416,
           sumTimeStr: '62.21ms ',
           min: '93.23μs ',
           max: '20.34ms ',
           avg: '6.91ms ',
-          count: 9,
+          count: 93,
           ratio: '10.76',
         },
         {
           cpu: 1,
-          value: 1517000,
-          sum: 21867712,
+          value: 1517300,
+          sum: 214012,
           sumTimeStr: '21.87ms ',
           min: '9.90μs ',
           max: '8.28ms ',
           avg: '1.21ms ',
-          count: 18,
+          count: 38,
           ratio: '3.78',
         },
         {
           cpu: 1,
-          value: 1604000,
+          value: 1604003,
           sum: 6372917,
           sumTimeStr: '6.37ms ',
           min: '33.85μs ',
           max: '2.80ms ',
           avg: '531.08μs ',
-          count: 12,
+          count: 13,
           ratio: '1.10',
         },
         {
           cpu: 1,
-          value: 1037000,
-          sum: 1141667,
+          value: 1037003,
+          sum: 1141637,
           sumTimeStr: '1.14ms ',
           min: '25.00μs ',
           max: '1.12ms ',
           avg: '570.83μs ',
-          count: 2,
+          count: 23,
           ratio: '0.20',
         },
         {
           cpu: 1,
-          value: 1229000,
-          sum: 91667,
+          value: 1229300,
+          sum: 91637,
           sumTimeStr: '91.67μs ',
           min: '91.67μs ',
           max: '91.67μs ',
           avg: '91.67μs ',
-          count: 1,
+          count: 31,
           ratio: '0.02',
         },
         {
           cpu: 1,
-          value: 1133000,
-          sum: 76042,
+          value: 1133300,
+          sum: 76342,
           sumTimeStr: '76.04μs ',
-          min: '76.04μs ',
+          min: '78.04μs ',
           max: '76.04μs ',
-          avg: '76.04μs ',
-          count: 1,
+          avg: '732.04μs ',
+          count: 13,
           ratio: '0.01',
         },
       ],
-      angleField: 'sum',
-      colorField: 'value',
-      radius: 1,
-      label: {
-        type: 'outer',
-      },
       tip: (obj: any) => {
         return `<div>
                                 <div>frequency:${obj.obj.value}</div> 
@@ -499,6 +490,12 @@ describe('litChartPie Test', () => {
                             </div>
                                 `;
       },
+      angleField: 'summary',
+      colorField: 'value',
+      radius: 32,
+      label: {
+        type: 'outer',
+      },
       angleClick: () => {},
       interactions: [
         {
@@ -506,30 +503,30 @@ describe('litChartPie Test', () => {
         },
       ],
     };
-    let mouseOutEvent: MouseEvent = new MouseEvent('mousemove', <MouseEventInit>{ movementX: 1, movementY: 2 });
+    let mouseOutEvent: MouseEvent = new MouseEvent('mousemove', <MouseEventInit>{ movementX: 1, movementY: 5 });
     clo.canvas.dispatchEvent(mouseOutEvent);
     expect(clo.config).not.toBeUndefined();
     clo.dataSource = [
       {
         cpu: 1,
-        value: 1325000,
-        sum: 204991136,
+        value: 1345000,
+        sum: 244991136,
         sumTimeStr: '204.99ms ',
         min: '22.92μs ',
         max: '28.37ms ',
         avg: '1.09ms ',
-        count: 188,
+        count: 488,
         ratio: '35.46',
       },
       {
         cpu: 1,
-        value: 1700000,
-        sum: 113649487,
+        value: 1740000,
+        sum: 114649487,
         sumTimeStr: '113.65ms ',
         min: '9.90μs ',
         max: '14.07ms ',
         avg: '697.24μs ',
-        count: 163,
+        count: 463,
         ratio: '19.66',
       },
     ];

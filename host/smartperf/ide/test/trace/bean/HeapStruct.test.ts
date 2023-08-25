@@ -22,31 +22,31 @@ import { HeapStruct } from '../../../dist/trace/bean/HeapStruct.js';
 
 describe('HeapStruct Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
+  canvas.width = 5;
+  canvas.height = 3;
   const ctx = canvas.getContext('2d');
 
   const dataSource = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 15,
+      y: 53,
+      width: 33,
+      height: 33,
     },
-    value: 50,
-    maxHeapSize: 50,
-    heapsize: 10,
+    value: 9,
+    maxHeapSize: 3,
+    heapsize: 98,
   };
 
   const reachData = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 256,
+      y: 230,
+      width: 322,
+      height: 431,
     },
-    value: 50,
-    startTime: 1,
+    value: 150,
+    startTime: 3461,
   };
 
   const nodeSource = {

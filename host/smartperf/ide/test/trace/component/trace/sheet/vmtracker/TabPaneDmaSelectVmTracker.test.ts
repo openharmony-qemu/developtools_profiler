@@ -21,14 +21,13 @@ jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
   return {};
 });
-
-jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
-  return {};
-});
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
+  return {};
+});
+jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
@@ -47,7 +46,7 @@ describe('TabPaneDmaSelectVmTracker Test', () => {
   let val = [
     {
       leftNs: 0,
-      rightNs: 1000,
+      rightNs: 1040,
       startNs: 0,
     },
   ];

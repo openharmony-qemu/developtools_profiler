@@ -595,15 +595,9 @@ export class TraceSheet extends BaseElement {
       .reverse()
       .forEach((id) => {
         let element = tabConfig[id];
-        if (element.require) {
-          if (element.require(selection)) {
-            let pane = this.shadowRoot!.querySelector<LitTabpane>(`#${id as string}`);
-            pane!.hidden = false;
-          } else {
-            this.shadowRoot!.querySelector<LitTabpane>(`#${id as string}`)!.hidden = true;
-          }
-        } else {
-          this.shadowRoot!.querySelector<LitTabpane>(`#${id as string}`)!.hidden = true;
+        let pane = this.shadowRoot!.querySelector<LitTabpane>(`#${id as string}`);
+        if (pane) {
+          pane.hidden = !(element.require && element.require(selection));
         }
       });
     if (restore) {

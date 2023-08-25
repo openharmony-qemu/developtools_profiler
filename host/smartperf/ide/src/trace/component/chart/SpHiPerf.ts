@@ -19,9 +19,7 @@ import {
   queryHiPerfCpuData,
   queryHiPerfCpuMergeData,
   queryHiPerfCpuMergeData2,
-  queryHiPerfEventData,
   queryHiPerfEventList,
-  queryHiPerfEventListData,
   queryHiPerfProcessData,
   queryHiPerfThreadData,
   queryPerfCmdline,
@@ -33,11 +31,11 @@ import { HiperfCpuRender, HiPerfCpuStruct } from '../../database/ui-worker/Proce
 import { HiperfThreadRender, HiPerfThreadStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfThread.js';
 import { HiperfProcessRender, HiPerfProcessStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfProcess.js';
 import { info } from '../../../log/Log.js';
-import { HiperfEventRender, HiPerfEventStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfEvent.js';
+import { HiPerfEventStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfEvent.js';
 import { perfDataQuery } from './PerfDataQuery.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
 import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
-import { HiperfReportRender, HiPerfReportStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfReport.js';
+import { HiPerfReportStruct } from '../../database/ui-worker/ProcedureWorkerHiPerfReport.js';
 import { SpChartManager } from './SpChartManager.js';
 
 export interface ResultData {
@@ -221,77 +219,6 @@ export class SpHiPerf {
       this.rowFolder.addChildTraceRow(perfCpuRow);
       this.rowList?.push(perfCpuRow);
     }
-  }
-
-  async initReport() {
-    this.eventTypeList.forEach((it, index) => {
-      let fold = TraceRow.skeleton<HiPerfReportStruct>();
-      fold.rowId = `Perf-Report-${it.id}-${it.report_value}`;
-      fold.index = index;
-      fold.rowType = TraceRow.ROW_TYPE_HIPERF_REPORT;
-      fold.rowParentId = 'HiPerf';
-      fold.rowHidden = !this.rowFolder.expansion;
-      fold.folder = true;
-      fold.name = `Event :${it.report_value}`;
-      fold.folderPaddingLeft = 6;
-      fold.favoriteChangeHandler = this.trace.favoriteChangeHandler;
-      fold.selectChangeHandler = this.trace.selectChangeHandler;
-      fold.supplier = () => queryHiPerfEventListData(it.id);
-      fold.onThreadHandler = (useCache) => {
-        let context = fold.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
-        fold.canvasSave(context);
-        (renders['HiPerf-Report-Fold'] as HiperfReportRender).renderMainThread(
-          {
-            context: context,
-            useCache: useCache,
-            scale: TraceRow.range?.scale || 50,
-            type: `HiPerf-Report-Fold-${it.report_value}-${it.id}`,
-            maxCpu: this.maxCpuId + 1,
-            intervalPerf: SpHiPerf.stringResult?.fValue || 1,
-            range: TraceRow.range,
-          },
-          fold
-        );
-        fold.canvasRestore(context);
-      };
-      this.trace.rowsEL?.appendChild(fold);
-      this.rowList?.push(fold);
-      for (let i = 0; i <= this.maxCpuId; i++) {
-        let row = TraceRow.skeleton<HiPerfEventStruct>();
-        row.rowId = `HiPerf-Report-Event-${it.report_value}-${i}`;
-        row.index = i;
-        row.rowType = TraceRow.ROW_TYPE_HIPERF_EVENT;
-        row.rowParentId = fold.rowId;
-        row.rowHidden = !fold.expansion;
-        row.folder = false;
-        row.name = `Cpu ${i}`;
-        row.style.height = '40px';
-        row.setAttribute('children', '');
-        row.favoriteChangeHandler = this.trace.favoriteChangeHandler;
-        row.selectChangeHandler = this.trace.selectChangeHandler;
-        row.supplier = () => queryHiPerfEventData(it.id, row.index);
-        row.focusHandler = () => this.hoverTip(row, HiPerfEventStruct.hoverStruct);
-        row.onThreadHandler = (useCache) => {
-          let context = fold.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
-          fold.canvasSave(context);
-          (renders['HiPerf-Report-Event'] as HiperfEventRender).renderMainThread(
-            {
-              context: context,
-              useCache: useCache,
-              scale: TraceRow.range?.scale || 50,
-              type: `HiPerf-Report-Event-${it.report_value}-${i}`,
-              maxCpu: this.maxCpuId + 1,
-              intervalPerf: SpHiPerf.stringResult?.fValue || 1,
-              range: TraceRow.range,
-            },
-            row
-          );
-          fold.canvasRestore(context);
-        };
-        this.trace.rowsEL?.appendChild(row);
-        this.rowList?.push(row);
-      }
-    });
   }
 
   async initProcess() {

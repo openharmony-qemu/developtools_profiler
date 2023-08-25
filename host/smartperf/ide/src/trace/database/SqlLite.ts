@@ -1748,15 +1748,14 @@ export const queryHiPerfCpuData = (cpu: number): Promise<Array<any>> =>
     from perf_sample s,trace_range t 
     where 
         cpu_id=${cpu} 
-        and s.thread_id != 0
-        and s.callchain_id != -1;`,
+        and s.thread_id != 0;`,
     { $cpu: cpu }
   );
 export const queryHiPerfCpuMergeData = (): Promise<Array<any>> =>
   query(
     'queryHiPerfCpuData',
     `select s.callchain_id,(s.timestamp_trace-t.start_ts) startNS from perf_sample s,trace_range t 
-where s.thread_id != 0 and s.callchain_id != -1;`,
+where s.thread_id != 0;`,
     {}
   );
 export const queryHiPerfCpuMergeData2 = (): Promise<Array<any>> =>
@@ -1778,7 +1777,7 @@ SELECT sp.callchain_id,
 from perf_sample sp,
      trace_range tr
          left join perf_thread th on th.thread_id = sp.thread_id
-where pid = ${pid} and sp.thread_id != 0 and sp.callchain_id != -1;`,
+where pid = ${pid} and sp.thread_id != 0 `,
     { $pid: pid }
   );
 
@@ -1794,7 +1793,7 @@ SELECT sp.callchain_id,
 from perf_sample sp,
      trace_range tr
          left join perf_thread th on th.thread_id = sp.thread_id
-where tid = ${tid} and sp.thread_id != 0 and sp.callchain_id != -1;`,
+where tid = ${tid} and sp.thread_id != 0 ;`,
     { $tid: tid }
   );
 
@@ -1911,14 +1910,14 @@ export const queryTraceCpuTop = (): Promise<
 > =>
   query(
     'queryTraceCpuTop',
-    `SELECT 
-        itid AS tid, 
-        ipid AS pid, 
+    `SELECT
+         ipid AS pid,
+         itid AS tid, 
         group_concat(cpu, ',') AS cpu, 
-        group_concat(dur, ',') AS dur, 
+        group_concat(dur, ',') AS dur,
+        group_concat(avg_frequency, ',') AS avg_frequency,
         group_concat(min_freq, ',') AS min_freq, 
         group_concat(max_freq, ',') AS max_freq, 
-        group_concat(avg_frequency, ',') AS avg_frequency, 
         sum(dur * avg_frequency) AS sumNum 
         FROM 
         (SELECT 
@@ -2332,25 +2331,25 @@ export const getTabMemoryAbilityData = (
         sys_mem_measure AS m
         INNER JOIN sys_event_filter AS f ON m.filter_id = f.id 
         AND m.ts <= $leftNS 
-        AND (f.name = 'sys.mem.total' 
+        AND (f.name = 'sys.mem.total'
+         or f.name = 'sys.mem.kernel.stack'
          or f.name = 'sys.mem.free'
+         or f.name = 'sys.mem.swap.free'
+         or f.name = 'sys.mem.cma.free'
+         or f.name = 'sys.mem.inactive'
          or f.name = 'sys.mem.buffers'
          or f.name = 'sys.mem.cached' 
          or f.name = 'sys.mem.shmem'
          or f.name = 'sys.mem.slab'
          or f.name = 'sys.mem.swap.total'
-         or f.name = 'sys.mem.swap.free'
-         or f.name = 'sys.mem.mapped'
          or f.name = 'sys.mem.vmalloc.used'
          or f.name = 'sys.mem.page.tables'
-         or f.name = 'sys.mem.kernel.stack'
          or f.name = 'sys.mem.active'
-         or f.name = 'sys.mem.inactive'
          or f.name = 'sys.mem.unevictable'
          or f.name = 'sys.mem.vmalloc.total'
          or f.name = 'sys.mem.slab.unreclaimable'
          or f.name = 'sys.mem.cma.total'
-         or f.name = 'sys.mem.cma.free'
+         or f.name = 'sys.mem.mapped'
          or f.name = 'sys.mem.kernel.reclaimable'
          or f.name = 'sys.mem.zram'
          ) 
@@ -2827,8 +2826,8 @@ export const getTabPaneFilesystemStatisticsChild = (leftNs: number, rightNs: num
         max(dur)    as maxDuration,
         round(avg(dur),2)    as avgDuration,
         p.name,
-        f.type,
         p.pid,
+        f.type,
         sum(ifnull(size,0))    as size
         from file_system_sample as f left join process as p on f.ipid=p.ipid
         where f.start_ts >= $leftNs

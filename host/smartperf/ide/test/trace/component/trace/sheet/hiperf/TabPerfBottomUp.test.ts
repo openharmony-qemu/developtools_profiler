@@ -16,34 +16,33 @@
 //@ts-ignore
 import { TabpanePerfBottomUp } from '../../../../../../dist/trace/component/trace/sheet/hiperf/TabPerfBottomUp.js';
 //@ts-ignore
-import {showButtonMenu} from "../../../../../../dist/trace/component/trace/sheet/SheetUtils.js";
+import { showButtonMenu } from '../../../../../../dist/trace/component/trace/sheet/SheetUtils.js';
 
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
-    return {}
+  return {};
 });
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-    return {
-        snapshotDataSource: () => {},
-        removeAttribute: () => {},
-
-    };
+  return {
+    snapshotDataSource: () => {},
+    removeAttribute: () => {},
+  };
 });
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 window.ResizeObserver =
-    window.ResizeObserver ||
-    jest.fn().mockImplementation(() => ({
-        disconnect: jest.fn(),
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-    }));
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 describe('TabPanePerfBottomUp Test', () => {
-    let tabPanePerfBottomUp = new TabpanePerfBottomUp();
-    let data = {
-        leftNs: 1222,
-        rightNs: 5286,
-    };
-    it('TabPanePerfBottomUp02 ', function () {
-        tabPanePerfBottomUp.data = data
-        expect(tabPanePerfBottomUp.data).toBeUndefined();
-    });
-})
+  let tabPanePerfBottomUp = new TabpanePerfBottomUp();
+  let data = {
+    leftNs: 1222,
+    rightNs: 5286,
+  };
+  it('TabPanePerfBottomUp02 ', function () {
+    tabPanePerfBottomUp.data = data;
+    expect(tabPanePerfBottomUp.data).toBeUndefined();
+  });
+});

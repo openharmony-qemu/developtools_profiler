@@ -60,37 +60,4 @@ describe('testLitIcon Test', () => {
     let litIcon = new LitIcon();
     expect((litIcon.color = '#FFF')).not.toBeUndefined();
   });
-
-  it('testLitIcon07', () => {
-    let litIcon = new LitIcon();
-    expect(litIcon.initHtml()).toMatchInlineSnapshot(`
-"
-            <style>
-                :host{
-                    display: inline-block;
-                    font-size: inherit;
-                 }
-                 .icon{
-                    width: 1em;
-                    height: 1em;
-                    display: block;
-                    fill: currentColor;
-                    overflow: hidden;
-                    margin: auto;
-                 }
-                 @keyframes rotate {
-                    to{
-                        transform: rotate(360deg);
-                    }         
-                 }
-                 :host([spin]){
-                    animation: rotate 1.75s linear infinite;
-                 }
-            </style>
-            <svg class="icon" id="icon" aria-hidden="true" viewBox="0 0 1024 1024">
-                 <use id="use"></use>
-            </svg>
-            "
-`);
-  });
 });

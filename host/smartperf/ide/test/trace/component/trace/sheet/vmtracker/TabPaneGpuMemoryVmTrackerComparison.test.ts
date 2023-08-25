@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// @ts-ignore
 import { TabPaneGpuMemoryVmTrackerComparison } from '../../../../../../dist/trace/component/trace/sheet/vmtracker/TabPaneGpuMemoryVmTrackerComparison.js';
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
@@ -25,10 +24,8 @@ jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
     removeAttribute: () => {},
   };
 });
-jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
-window.ResizeObserver =
-  window.ResizeObserver ||
+window.ResizeObserver = window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
@@ -47,13 +44,13 @@ describe('TabPaneGpuMemoryVmTrackerComparison Test', () => {
   let datalist = [
     {
       name: 'Snapshot2',
-      startNs: 9800526561,
+      startNs: 98012526561,
       type: 'VmTracker',
       value: 0,
     },
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
+      startNs: 47735214061,
       type: 'VmTracker',
       value: 0,
     },

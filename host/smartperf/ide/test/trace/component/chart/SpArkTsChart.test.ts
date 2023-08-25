@@ -24,17 +24,21 @@ describe('SpClockChart Test', () => {
   let arkTsChart = new SpArkTsChart(new SpChartManager());
 
   let jsCpuProfilerConfig = sqlite.queryJsCpuProfilerConfig;
-  let cpuProfilerConfigData = [{
-    enableCpuProfiler: 1,
-    pid:1553,
-    type  : -1
-  }];
+  let cpuProfilerConfigData = [
+    {
+      enableCpuProfiler: 1,
+      pid: 1553,
+      type: -1,
+    },
+  ];
   jsCpuProfilerConfig.mockResolvedValue(cpuProfilerConfigData);
 
   let jsCpuProfiler = sqlite.queryJsCpuProfilerData;
-  let cpuProfilerData = [{
-    1: 1
-  }];
+  let cpuProfilerData = [
+    {
+      1: 1,
+    },
+  ];
   jsCpuProfiler.mockResolvedValue(cpuProfilerData);
 
   let jsMemory = sqlite.queryJsMemoryData;

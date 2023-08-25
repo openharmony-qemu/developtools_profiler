@@ -18,9 +18,6 @@ import {
   StateProcessThread,
   SPTChild,
   SPT,
-  ThreadState,
-  ThreadProcess,
-  SptSlice,
 } from '../../../dist/trace/bean/StateProcessThread.js';
 
 describe('StateProcessThread Test', () => {
@@ -180,89 +177,4 @@ describe('StateProcessThread Test', () => {
 `
     );
   });
-
-    it('ThreadStateTest04', function () {
-        let threadState = new ThreadState();
-        threadState = {
-            itid: 0,
-            state: 'state',
-            dur: 0,
-            ts: 0,
-            end_ts: 0,
-            start_ts: 0,
-            cpu: 0,
-        };
-        expect(threadState).not.toBeUndefined();
-        expect(threadState).toMatchInlineSnapshot(
-{
-  itid: expect.any(Number),
-  state: expect.any(String),
-  dur: expect.any(Number),
-  ts: expect.any(Number),
-  end_ts: expect.any(Number),
-  start_ts: expect.any(Number),
-  cpu: expect.any(Number) }, `
-{
-  "cpu": Any<Number>,
-  "dur": Any<Number>,
-  "end_ts": Any<Number>,
-  "itid": Any<Number>,
-  "start_ts": Any<Number>,
-  "state": Any<String>,
-  "ts": Any<Number>,
-}
-`
-    );
-  });
-
-    it('ThreadProcessTest05', function () {
-        let threadProcess = new ThreadProcess();
-        threadProcess = {
-            id: 0,
-            threadId: 0,
-            thread: 'thread',
-            processId: 0,
-            process: 'process',
-        };
-        expect(threadProcess).not.toBeUndefined();
-        expect(threadProcess).toMatchInlineSnapshot(
-{
-  id: expect.any(Number),
-  threadId: expect.any(Number),
-  thread: expect.any(String),
-  processId: expect.any(Number),
-  process: expect.any(String) }, `
-{
-  "id": Any<Number>,
-  "process": Any<String>,
-  "processId": Any<Number>,
-  "thread": Any<String>,
-  "threadId": Any<Number>,
-}
-`
-    );
-  });
-
-    it('SptSliceTest06', function () {
-        let sptSlice = new SptSlice();
-        sptSlice = {
-            itid: 0,
-            ts: 0,
-            priority: 0,
-        };
-        expect(sptSlice).not.toBeUndefined();
-        expect(sptSlice).toMatchInlineSnapshot(
-{
-  itid: expect.any(Number),
-  ts: expect.any(Number),
-  priority: expect.any(Number) }, `
-{
-  "itid": Any<Number>,
-  "priority": Any<Number>,
-  "ts": Any<Number>,
-}
-`
-    );
-  });
-
 });

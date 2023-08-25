@@ -12,7 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
+    jest.fn().mockImplementation(() => ({
+      disconnect: jest.fn(), observe: jest.fn(), unobserve: jest.fn(),
+    }));
 // @ts-ignore
 import { SpVirtualMemChart } from '../../../../dist/trace/component/chart/SpVirtualMemChart.js';
 // @ts-ignore
@@ -20,28 +24,17 @@ import { SpSystemTrace } from '../../../../dist/trace/component/SpSystemTrace.js
 // @ts-ignore
 import { TraceRow } from '../../../../dist/trace/component/trace/base/TraceRow.js';
 // @ts-ignore
-import {SpChartManager} from "../../../../dist/trace/component/chart/SpChartManager.js";
+import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
 
 jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
-
-
+window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
 const sqlit = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
-
 const intersectionObserverMock = () => ({
   observe: () => null,
 });
-window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
-
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
 
 describe('SpVirtualMemChart Test', () => {
   let manager = new SpChartManager();

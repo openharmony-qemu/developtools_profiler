@@ -36,7 +36,7 @@ export class SdkCounterRender extends Render {
       maxValue: number;
     },
     row: TraceRow<CounterStruct>
-  ) {
+  ): void {
     let counterList = row.dataList;
     let counterFilter = row.dataListCache;
     let maxCounter = req.maxValue;
@@ -59,7 +59,9 @@ export class SdkCounterRender extends Render {
       }
       CounterStruct.draw(req.context, re, maxCounter);
     }
-    if (!sdkCounterFind && row.isHover) CounterStruct.hoverCounterStruct = undefined;
+    if (!sdkCounterFind && row.isHover) {
+      CounterStruct.hoverCounterStruct = undefined;
+    }
     req.context.closePath();
     let textMetrics = req.context.measureText(maxCounterName);
     req.context.globalAlpha = 0.8;
@@ -71,7 +73,7 @@ export class SdkCounterRender extends Render {
     req.context.fillText(maxCounterName, 4, 5 + 9);
   }
 
-  render(sdkCounterRequest: RequestMessage, list: Array<any>, filter: Array<any>) {
+  render(sdkCounterRequest: RequestMessage, list: Array<any>, filter: Array<any>): void {
     if (sdkCounterRequest.lazyRefresh) {
       this.counter(
         list,
@@ -173,43 +175,43 @@ export class SdkCounterRender extends Render {
   }
 
   counter(
-    sdkCounteraList: Array<any>,
-    res: Array<any>,
+    sdkCounterList: Array<any>,
+    sdkCounterFilters: Array<any>,
     startNS: number,
     endNS: number,
     totalNS: number,
     frame: any,
     use: boolean
   ) {
-    if (use && res.length > 0) {
-      for (let index = 0; index < res.length; index++) {
-        let item = res[index];
+    if (use && sdkCounterFilters.length > 0) {
+      for (let index = 0; index < sdkCounterFilters.length; index++) {
+        let item = sdkCounterFilters[index];
         if ((item.ts || 0) + (item.dur || 0) > (startNS || 0) && (item.ts || 0) < (endNS || 0)) {
-          CounterStruct.setCounterFrame(res[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
+          CounterStruct.setCounterFrame(sdkCounterFilters[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
         } else {
-          res[index].frame = null;
+          sdkCounterFilters[index].frame = null;
         }
       }
       return;
     }
-    res.length = 0;
-    if (sdkCounteraList) {
-      for (let index = 0; index < sdkCounteraList.length; index++) {
-        let item = sdkCounteraList[index];
-        if (index === sdkCounteraList.length - 1) {
+    sdkCounterFilters.length = 0;
+    if (sdkCounterList) {
+      for (let index = 0; index < sdkCounterList.length; index++) {
+        let item = sdkCounterList[index];
+        if (index === sdkCounterList.length - 1) {
           item.dur = (endNS || 0) - (item.ts || 0);
         } else {
-          item.dur = (sdkCounteraList[index + 1].ts || 0) - (item.ts || 0);
+          item.dur = (sdkCounterList[index + 1].ts || 0) - (item.ts || 0);
         }
         if ((item.ts || 0) + (item.dur || 0) > (startNS || 0) && (item.ts || 0) < (endNS || 0)) {
-          CounterStruct.setCounterFrame(sdkCounteraList[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
+          CounterStruct.setCounterFrame(sdkCounterList[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
           if (
             index > 0 &&
-            (sdkCounteraList[index - 1].frame?.x || 0) == (sdkCounteraList[index].frame?.x || 0) &&
-            (sdkCounteraList[index - 1].frame?.width || 0) == (sdkCounteraList[index].frame?.width || 0)
+            (sdkCounterList[index - 1].frame?.x || 0) == (sdkCounterList[index].frame?.x || 0) &&
+            (sdkCounterList[index - 1].frame?.width || 0) == (sdkCounterList[index].frame?.width || 0)
           ) {
           } else {
-            res.push(item);
+            sdkCounterFilters.push(item);
           }
         }
       }

@@ -86,7 +86,7 @@ trace_streamer_include = [
   "${THIRD_PARTY}/libunwind/src",
   "${THIRD_PARTY}/perf_include/libbpf",
   "${THIRD_PARTY}/googletest/googletest/include",
-  "//commonlibrary/c_utils/base/include",
+  "${COMMON_LIBRARY}/c_utils/base/include",
 ]
 
 ohos_source_set("trace_streamer_source") {

@@ -32,26 +32,25 @@ export class FileSystemRender extends PerfRender {
       type: string;
       chartColor: string;
     },
-    row: TraceRow<FileSysChartStruct>
-  ) {
-    let list = row.dataList;
-    let filter = row.dataListCache;
+    fileSystemRow: TraceRow<FileSysChartStruct>
+  ): void {
+    let list = fileSystemRow.dataList;
+    let filter = fileSystemRow.dataListCache;
     let groupBy10MS = (TraceRow.range?.scale || 50) > 40_000_000;
     let isDiskIO: boolean = req.type.includes('disk-io');
-    if (list && row.dataList2.length == 0) {
-      row.dataList2 = isDiskIO
-        ? FileSysChartStruct.groupBy10MSWithMaxLatency(list)
-        : FileSysChartStruct.groupBy10MSWithCount(list);
+    if (list && fileSystemRow.dataList2.length === 0) {
+      fileSystemRow.dataList2 = isDiskIO ?
+        FileSysChartStruct.groupBy10MSWithMaxLatency(list) : FileSysChartStruct.groupBy10MSWithCount(list);
     }
     fileSysChart(
       list,
-      row.dataList2,
+      fileSystemRow.dataList2,
       req.type,
       filter,
       TraceRow.range?.startNS ?? 0,
       TraceRow.range?.endNS ?? 0,
       TraceRow.range?.totalNS ?? 0,
-      row.frame,
+      fileSystemRow.frame,
       groupBy10MS,
       isDiskIO,
       req.useCache || (TraceRow.range?.refresh ?? false)
@@ -60,13 +59,15 @@ export class FileSystemRender extends PerfRender {
     let find = false;
     let hoverRect: FileSysChartStruct | undefined = undefined;
     for (let re of filter) {
-      if (row.isHover && re.frame && row.hoverX >= re.frame.x && row.hoverX <= re.frame.x + re.frame.width) {
+      if (fileSystemRow.isHover && re.frame && fileSystemRow.hoverX >= re.frame.x &&
+        fileSystemRow.hoverX <= re.frame.x + re.frame.width
+      ) {
         if (hoverRect == undefined || re.size! > hoverRect.size!) {
           hoverRect = re;
           find = true;
         }
       }
-      if (re.frame && re.frame!.x > row.hoverX + 3) {
+      if (re.frame && re.frame!.x > fileSystemRow.hoverX + 3) {
         break;
       }
     }
@@ -76,17 +77,23 @@ export class FileSystemRender extends PerfRender {
     for (let re of filter) {
       FileSysChartStruct.draw(req.context, re, req.chartColor);
     }
-    if (!find && row.isHover) FileSysChartStruct.hoverFileSysStruct = undefined;
+    if (!find && fileSystemRow.isHover) {
+      FileSysChartStruct.hoverFileSysStruct = undefined;
+    }
     req.context.closePath();
   }
 
-  render(fileSysRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
+  render(fileSysRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>): void {
     let groupBy10MS = fileSysRequest.scale > 20_000_000;
     let isDiskIO: boolean = fileSysRequest.type!.includes('disk-io');
     if (isDiskIO) {
       groupBy10MS = true;
     }
-    if (fileSysRequest.lazyRefresh) {
+    if (fileSysRequest.lazyRefresh || !fileSysRequest.useCache) {
+      let use = false;
+      if (fileSysRequest.lazyRefresh) {
+        use = fileSysRequest.useCache || !fileSysRequest.range.refresh;
+      }
       fileSysChart(
         list,
         dataList2,
@@ -98,24 +105,8 @@ export class FileSystemRender extends PerfRender {
         fileSysRequest.frame,
         groupBy10MS,
         isDiskIO,
-        fileSysRequest.useCache || !fileSysRequest.range.refresh
+        use
       );
-    } else {
-      if (!fileSysRequest.useCache) {
-        fileSysChart(
-          list,
-          dataList2,
-          fileSysRequest.type!,
-          filter,
-          fileSysRequest.startNS,
-          fileSysRequest.endNS,
-          fileSysRequest.totalNS,
-          fileSysRequest.frame,
-          groupBy10MS,
-          isDiskIO,
-          false
-        );
-      }
     }
     let hoverStruct: FileSysChartStruct | undefined;
     if (fileSysRequest.canvas) {
@@ -178,7 +169,7 @@ export function fileSysChart(
   arr: Array<any>,
   arr2: Array<any>,
   type: string,
-  res: Array<any>,
+  fileSysFilters: Array<any>,
   startNS: number,
   endNS: number,
   totalNS: number,
@@ -187,26 +178,26 @@ export function fileSysChart(
   isDiskIO: boolean,
   use: boolean
 ) {
-  if (use && res.length > 0) {
+  if (use && fileSysFilters.length > 0) {
     //&& !groupBy10MS
     let pns = (endNS - startNS) / frame.width;
     let y = frame.y;
-    for (let i = 0; i < res.length; i++) {
-      let it = res[i];
-      if ((it.startNS || 0) + (it.dur || 0) > startNS && (it.startNS || 0) < endNS) {
-        if (!it.frame) {
-          it.frame = {};
-          it.frame.y = y;
+    for (let i = 0; i < fileSysFilters.length; i++) {
+      let fileSysData = fileSysFilters[i];
+      if ((fileSysData.startNS || 0) + (fileSysData.dur || 0) > startNS && (fileSysData.startNS || 0) < endNS) {
+        if (!fileSysData.frame) {
+          fileSysData.frame = {};
+          fileSysData.frame.y = y;
         }
-        it.frame.height = it.height;
-        FileSysChartStruct.setFrame(it, pns, startNS, endNS, frame);
+        fileSysData.frame.height = fileSysData.height;
+        FileSysChartStruct.setFrame(fileSysData, pns, startNS, endNS, frame);
       } else {
-        it.frame = null;
+        fileSysData.frame = null;
       }
     }
     return;
   }
-  res.length = 0;
+  fileSysFilters.length = 0;
   if (arr) {
     let list: Array<any> = [];
     let pns = (endNS - startNS) / frame.width;
@@ -228,7 +219,7 @@ export function fileSysChart(
           return pre;
         }, {});
       Reflect.ownKeys(groups).map((kv) => {
-        res.push(groups[kv][0]);
+        fileSysFilters.push(groups[kv][0]);
       });
     } else {
       let filter = arr.filter((it) => (it.startNS || 0) + (it.dur || 0) > startNS && (it.startNS || 0) < endNS);
@@ -242,7 +233,7 @@ export function fileSysChart(
         }
         it.frame.height = it.height;
         FileSysChartStruct.setFrame(it, pns, startNS, endNS, frame);
-        res.push(it);
+        fileSysFilters.push(it);
       });
     }
   }
@@ -327,9 +318,9 @@ export class FileSysChartStruct extends BaseStruct {
 
   static groupBy10MSWithCount(array: Array<any>): Array<any> {
     let obj = array
-      .map((it) => {
-        it.timestamp_group = Math.trunc(it.startNS / 1_000_000_0) * 1_000_000_0;
-        return it;
+      .map((dataItem) => {
+        dataItem.timestamp_group = Math.trunc(dataItem.startNS / 1_000_000_0) * 1_000_000_0;
+        return dataItem;
       })
       .reduce((pre, current) => {
         (pre[current['timestamp_group']] = pre[current['timestamp_group']] || []).push(current);

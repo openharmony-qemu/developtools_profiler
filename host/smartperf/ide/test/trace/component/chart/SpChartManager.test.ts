@@ -18,14 +18,6 @@ const intersectionObserverMock = () => ({
 });
 window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
 
-window.ResizeObserver =
-  window.ResizeObserver ||
-  jest.fn().mockImplementation(() => ({
-    disconnect: jest.fn(),
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-  }));
-
 // @ts-ignore
 import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
 // @ts-ignore
@@ -34,6 +26,13 @@ import { SpSystemTrace } from '../../../../dist/trace/component/SpSystemTrace.js
 const sqlite = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
 
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
+    jest.fn().mockImplementation(() => ({
+      disconnect: jest.fn(),
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+    }));
 describe('SpChartManager Test', () => {
   let chartManager = new SpChartManager();
   let queryDataDICT = sqlite.queryDataDICT;

@@ -30,25 +30,25 @@ import { hiPerf } from '../../../../dist/trace/database/ui-worker/ProcedureWorke
 describe('ProcedureWorkerHiPerfThread Test', () => {
   let res = [
     {
-      startNS: 0,
-      dur: 10,
+      startNS: 13,
+      dur: 50,
       frame: {
-        x: 0,
-        y: 9,
-        width: 10,
-        height: 10,
+        x: 60,
+        y: 69,
+        width: 16,
+        height: 69,
       },
     },
   ];
   it('ProcedureWorkerHiPerfThreadTest01', () => {
     const data = {
       frame: undefined,
-      cpu: 1,
-      startNs: 1,
-      value: 1,
+      cpu: 0,
+      startNs: 58,
+      value: 5,
     };
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
+    canvas.width = 4;
     canvas.height = 1;
     const ctx = canvas.getContext('2d');
     expect(HiPerfThreadStruct.draw(ctx, '', data, true)).toBeUndefined();
@@ -57,17 +57,17 @@ describe('ProcedureWorkerHiPerfThread Test', () => {
   it('ProcedureWorkerHiPerfThreadTest02', function () {
     let dataList = new Array();
     dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startNS: 80,
+      dur: 17,
+      length: 17,
+      frame: { x: 7, y: 9, width: 17, height: 170 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
+    dataList.push({ startNS: 1, dur: 2, length: 71 });
     let frame = {
-      x: 0,
+      x: 70,
       y: 9,
-      width: 10,
-      height: 10,
+      width: 70,
+      height: 107,
     };
     hiPerf(dataList, [{ length: 0 }], dataList, 8, 3, frame, false, 1, false);
   });
@@ -75,17 +75,17 @@ describe('ProcedureWorkerHiPerfThread Test', () => {
   it('ProcedureWorkerHiPerfThreadTest03', function () {
     let dataList = new Array();
     dataList.push({
-      startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startNS: 30,
+      dur: 350,
+      length: 551,
+      frame: { x: 7, y: 76, width: 610, height: 106 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
+    dataList.push({ startNS: 1, dur: 62, length: 1 });
     let frame = {
-      x: 0,
-      y: 9,
-      width: 10,
-      height: 10,
+      x: 60,
+      y: 96,
+      width: 160,
+      height: 160,
     };
     hiPerf(dataList, [{ length: 1 }], dataList, 8, 3, frame, true, 1, true);
   });
@@ -98,50 +98,50 @@ describe('ProcedureWorkerHiPerfThread Test', () => {
 
   it('ProcedureWorkerHiPerfThreadTest05', function () {
     let hiperfThreadRender = new HiperfThreadRender();
-    let req = {
+    let hiperfThreadReq = {
       lazyRefresh: true,
       type: '',
-      startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      startNS: 21,
+      endNS: 31,
+      totalNS: 10,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
+        x: 134,
+        y: 120,
+        width: 102,
         height: 100,
       },
       useCache: false,
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: 'thread',
       context: {
-        font: '11px sans-serif',
-        fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        font: '15px sans-serif',
+        fillStyle: '#b4617b',
+        globalAlpha: 0.65,
+        closePath: jest.fn(() => true),
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
+        stroke: jest.fn(() => []),
         measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
-        fillText: jest.fn(() => true),
+        fillText: jest.fn(() => []),
         fill: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#210202',
       isHover: '',
-      hoverX: 1,
+      hoverX: 3,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
-      id: 1,
-      x: 20,
-      y: 20,
+      slicesTime: 9,
+      id: 7,
+      x: 71,
+      y: 21,
       width: 100,
-      height: 100,
-      scale: 100_000_001,
+      height: 107,
+      scale: 100_000_006,
     };
     window.postMessage = jest.fn(() => true);
     let a = {
@@ -165,7 +165,7 @@ describe('ProcedureWorkerHiPerfThread Test', () => {
       ],
     };
 
-    expect(hiperfThreadRender.render(req, [], [], [])).toBeUndefined();
+    expect(hiperfThreadRender.render(hiperfThreadReq, [], [], [])).toBeUndefined();
   });
   it('ProcedureWorkerHiPerfThreadTest06', function () {
     let hiperfThreadRender = new HiperfThreadRender();

@@ -15,15 +15,12 @@
 
 // @ts-ignore
 import { EventCenter } from '../../../../../dist/trace/component/trace/base/EventCenter.js';
-
 jest.mock('../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
-
 jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
-
 jest.mock('../../../../../dist/trace/component/SpSystemTrace.js', () => {
   return {
     CurrentSlicesTime:() => {},
@@ -51,46 +48,38 @@ window.ResizeObserver = window.ResizeObserver ||
       observe: jest.fn(),
       unobserve: jest.fn(),
     }));
-
-
 declare global {
   interface Window {
     SmartEvent: {
       UI: {
+        TraceRowComplete: string; //Triggered after the row component has finished loading data
         MenuTrace: string; //selected menu trace
         RefreshCanvas: string; //selected menu trace
-        SliceMark: string; //Set the tag scope
         TimeRange: string; //Set the timeline range
-        TraceRowComplete: string; //Triggered after the row component has finished loading data
+        SliceMark: string; //Set the tag scope
       };
     };
-
-    subscribe(evt: string, fn: (b: any) => void): void;
-
     subscribeOnce(evt: string, fn: (b: any) => void): void;
-
-    unsubscribe(evt: string, fn: (b: any) => void): void;
-
-    publish(evt: string, data: any): void;
-
     clearTraceRowComplete(): void;
+    subscribe(evt: string, fn: (b: any) => void): void;
+    publish(evt: string, data: any): void;
+    unsubscribe(evt: string, fn: (b: any) => void): void;
   }
 }
 
 window.SmartEvent = {
   UI: {
     MenuTrace: 'SmartEvent-UI-MenuTrace',
-    RefreshCanvas: 'SmartEvent-UI-RefreshCanvas',
     SliceMark: 'SmartEvent-UI-SliceMark',
     TimeRange: 'SmartEvent-UI-TimeRange',
+    RefreshCanvas: 'SmartEvent-UI-RefreshCanvas',
     TraceRowComplete: 'SmartEvent-UI-TraceRowComplete',
   },
 };
-
-Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);
 Window.prototype.unsubscribe = (ev, fn) => EventCenter.unsubscribe(ev, fn);
-Window.prototype.publish = (ev, data) => EventCenter.publish(ev, data);
+Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);
 Window.prototype.subscribeOnce = (ev, data) => EventCenter.subscribeOnce(ev, data);
+Window.prototype.publish = (ev, data) => EventCenter.publish(ev, data);
 Window.prototype.clearTraceRowComplete = () => EventCenter.clearTraceRowComplete();
 
 describe('SportRuler Test', () => {
@@ -156,26 +145,26 @@ describe('SportRuler Test', () => {
     numbers.push(56);
     sportRuler.flagList = [
       {
-        totalNS: 10000,
-        startX: 0,
-        endX: 1000,
+        totalNS: 10550,
+        startX: 6,
+        endX: 109550,
         startNS: 0,
-        endNS: 10000,
+        endNS: 10550,
         xs: numbers,
-        xsTxt: ['s', 'f'],
+        xsTxt: ['s', 'f', ''],
       },
     ];
     sportRuler.flagList.xs = jest.fn(() => numbers);
     let flags = new Array<Flag>();
     flags.push({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      time: 20,
-      color: '',
+      x: 10,
+      y: 11,
+      width: 10,
+      height: 13,
+      time: 330,
+      color: '#3e340c',
       selected: false,
-      text: '',
+      text: 'w',
       hidden: false,
       type: '',
     });
@@ -186,14 +175,14 @@ describe('SportRuler Test', () => {
   it('SportRulerTest09', function () {
     let flags = new Array<Flag>();
     flags.push({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      time: 20,
-      color: '',
+      x: 6,
+      y: 6,
+      width: 15,
+      height: 15,
+      time: 260,
+      color: '#361f1f',
       selected: false,
-      text: '',
+      text: 'callui',
       hidden: false,
       type: '',
     });
@@ -207,8 +196,8 @@ describe('SportRuler Test', () => {
     sportRuler.draw = jest.fn(() => true);
     expect(
       sportRuler.mouseMove({
-        offsetX: 10000,
-        offsetY: 10000,
+        offsetX: 10005,
+        offsetY: 10005,
       })
     ).toBeUndefined();
   });
@@ -221,14 +210,14 @@ describe('SportRuler Test', () => {
   it('SportRulerTest12', function () {
     let flags = new Array<Flag>();
     flags.push({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
+      x: 3,
+      y: 3,
+      width: 12,
+      height: 12,
       time: 0,
       color: '',
-      selected: false,
-      text: '',
+      selected: true,
+      text: 'abb',
       hidden: false,
       type: '',
     });
@@ -239,14 +228,14 @@ describe('SportRuler Test', () => {
   it('SportRulerTest13', function () {
     let flags = new Array<Flag>();
     flags.push({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      time: 1000,
+      x: 7,
+      y: 7,
+      width: 2,
+      height: 2,
+      time: 102200,
       color: '',
       selected: false,
-      text: '',
+      text: 'com.ohos.callui',
       hidden: false,
       type: 'triangle',
     });
@@ -257,16 +246,16 @@ describe('SportRuler Test', () => {
   it('SportRulerTest14', function () {
     let flags = new Array<Flag>();
     flags.push({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      time: 0,
-      color: '',
+      x: 3,
+      y: 3,
+      width: 67,
+      height: 67,
+      time: 30,
+      color: '#8e4f22',
       selected: false,
-      text: '',
-      hidden: false,
-      type: 'triangle',
+      text: 'ohos',
+      hidden: true,
+      type: 'triangles',
     });
     sportRuler.flagList = flags;
     sportRuler.drawTriangle(1000, 'square');
@@ -275,19 +264,19 @@ describe('SportRuler Test', () => {
   it('SportRulerTest22', function () {
     let flags = new Array<Flag>();
     flags.push({
-      x: 0,
+      x: 3,
       y: 0,
-      width: 0,
-      height: 0,
+      width: 33,
+      height: 33,
       time: 0,
-      color: '',
-      selected: false,
-      text: '',
+      color: '#689e3e',
+      selected: true,
+      text: 'fase',
       hidden: false,
-      type: 'triangle',
+      type: 'square',
     });
     sportRuler.flagList = flags;
-    sportRuler.drawTriangle(1000, 'inverted');
+    sportRuler.drawTriangle(10000, 'inverted');
   });
 
   it('SportRulerTest17', function () {

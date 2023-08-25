@@ -294,9 +294,9 @@ export class TabPaneFileSystemEvents extends BaseElement {
     return `
     <style>
         :host{
+            padding: 10px 10px 0 10px;
             display: flex;
             flex-direction: column;
-            padding: 10px 10px 0 10px;
         }
         .fs-event-loading{
             bottom: 0;
@@ -352,7 +352,7 @@ export class TabPaneFileSystemEvents extends BaseElement {
                             </lit-table-column>
                         </lit-table>
                     </div>
-                    <lit-slicer-track ></lit-slicer-track>
+                    <lit-slicer-track class="fs-evnet-slicer-tracker"></lit-slicer-track>
                     <lit-table id="tbr-filesystem-event" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
                         <lit-table-column class="fs-event-column" width="60px" title="" data-index="type" key="type"  align="flex-start" >
                             <template>

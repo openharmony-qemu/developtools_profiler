@@ -30,98 +30,98 @@ import { TraceRow } from '../../../../dist/trace/component/trace/base/TraceRow.j
 describe('ProcedureWorkerHiPerfReport Test', () => {
   it('ProcedureWorkerHiPerfReportTest01', () => {
     let frame = {
-      x: 0,
-      y: 9,
-      width: 10,
+      x: 5,
+      y: 95,
+      width: 50,
       height: 10,
     };
     let dataList = new Array();
     dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      startTime: 50,
+      dur: 50,
+      frame: { x: 50, y: 9, width: 105, height: 150 },
     });
-    dataList.push({ startTime: 1, dur: 111 });
+    dataList.push({ startTime: 51, dur: 511 });
     let dataList2 = new Array();
     dataList2.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 1 },
+      startTime: 50,
+      dur: 190,
+      frame: { x: 60, y: 99, width: 610, height: 16 },
     });
-    dataList2.push({ startTime: 1, dur: 111 });
-    let rect = new Rect(0, 10, 10, 10);
+    dataList2.push({ startTime: 61, dur: 691 });
+    let rect = new Rect(0, 10, 60, 10);
     HiPerfReport(dataList, dataList2, '', [{ length: 1 }], 1, 1024, 1024, frame, true, 1, true);
   });
 
   it('ProcedureWorkerHiPerfReportTest02', () => {
     let frame = {
-      x: 0,
-      y: 9,
-      width: 10,
-      height: 10,
+      x: 33,
+      y: 39,
+      width: 130,
+      height: 130,
     };
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
-    });
-    dataList.push({
+    let hiPerfReportDataList = new Array();
+    hiPerfReportDataList.push({
       startTime: 1,
-      dur: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 11,
+      frame: { x: 10, y: 91, width: 110, height: 310 },
     });
-    let rect = new Rect(0, 10, 10, 10);
+    hiPerfReportDataList.push({
+      startTime: 31,
+      dur: 131,
+      frame: { x: 30, y: 4, width: 130, height: 103 },
+    });
+    let rect = new Rect(0, 30, 13, 13);
     let dataList2 = new Array();
     dataList2.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 1 },
+      startTime: 3,
+      dur: 132,
+      frame: { x: 23, y: 32, width: 130, height: 32 },
     });
-    dataList2.push({ startTime: 1, dur: 111 });
-    HiPerfReport(dataList, dataList2, '', [{ length: 0 }], 1, 1024, 1024, frame, true, 1, false);
+    dataList2.push({ startTime: 21, dur: 133 });
+    HiPerfReport(hiPerfReportDataList, dataList2, '', [{ length: 0 }], 1, 1024, 1024, frame, true, 1, false);
   });
 
   it('ProcedureWorkerHiPerfReportTest07', () => {
     let frame = {
-      x: 0,
-      y: 9,
-      width: 10,
-      height: 10,
+      x: 70,
+      y: 97,
+      width: 60,
+      height: 170,
     };
-    let dataList = new Array();
-    dataList.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    let hiPerfReportDataList = new Array();
+    hiPerfReportDataList.push({
+      startTime: 5,
+      dur: 5,
+      frame: { x: 4, y: 93, width: 350, height: 130 },
     });
-    dataList.push({
-      startTime: 1,
-      dur: 111,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+    hiPerfReportDataList.push({
+      startTime: 12,
+      dur: 21,
+      frame: { x: 50, y: 95, width: 50, height: 640 },
     });
-    let rect = new Rect(0, 10, 10, 10);
+    let rect = new Rect(0, 60, 60, 60);
     let dataList2 = new Array();
     dataList2.push({
-      startTime: 0,
-      dur: 10,
-      frame: { x: 0, y: 9, width: 10, height: 1 },
+      startTime: 60,
+      dur: 40,
+      frame: { x: 40, y: 49, width: 40, height: 14 },
     });
-    dataList2.push({ startTime: 1, dur: 111 });
-    HiPerfReport(dataList, dataList2, '', [{ length: 0 }], 1, 1024, 1024, frame, false, 1, false);
+    dataList2.push({ startTime: 17, dur: 16 });
+    HiPerfReport(hiPerfReportDataList, dataList2, '', [{ length: 0 }], 1, 1024, 1024, frame, false, 1, false);
   });
 
   it('ProcedureWorkerHiPerfReportTest03', () => {
     const data = {
       frame: {
-        x: 0,
-        y: 9,
-        width: 10,
-        height: 10,
+        x: 15,
+        y: 8,
+        width: 98,
+        height: 80,
       },
       cpu: 1,
-      startNs: 1,
-      value: 1,
+      startNs: 13,
+      value: 198,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -133,22 +133,22 @@ describe('ProcedureWorkerHiPerfReport Test', () => {
   it('ProcedureWorkerHiPerfReportTest04', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 29,
+        y: 27,
+        width: 107,
+        height: 170,
       },
-      startNS: 0,
-      value: 50,
-      startTs: 3,
-      dur: 1,
-      height: 2,
+      startNS: 70,
+      value: 57,
+      startTs: 34,
+      dur: 121,
+      height: 22,
     };
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 30,
+      y: 690,
+      width: 199,
+      height: 109,
     };
     expect(HiPerfReportStruct.setFrame(node, 2, 1, 2, frame)).toBeUndefined();
   });
@@ -156,22 +156,22 @@ describe('ProcedureWorkerHiPerfReport Test', () => {
   it('ProcedureWorkerHiPerfReportTest05', function () {
     let node = {
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 30,
+        y: 90,
+        width: 220,
+        height: 1520,
       },
-      startNS: 2,
-      value: 50,
-      startTs: 3,
-      dur: 3,
-      height: 2,
+      startNS: 55,
+      value: 522,
+      startTs: 19,
+      dur: 98,
+      height: 8
     };
     let frame = {
-      x: 20,
+      x: 150,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 400,
+      height: 400,
     };
     expect(HiPerfReportStruct.setFrame(node, 2, 1, 2, frame)).toBeUndefined();
   });
@@ -190,8 +190,8 @@ describe('ProcedureWorkerHiPerfReport Test', () => {
       endNS: 1,
       totalNS: 1,
       frame: {
-        x: 20,
-        y: 20,
+        x: 210,
+        y: 120,
         width: 100,
         height: 100,
       },
@@ -206,12 +206,12 @@ describe('ProcedureWorkerHiPerfReport Test', () => {
         globalAlpha: 0.6,
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
-        stroke: jest.fn(() => true),
-        closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
         fillText: jest.fn(() => true),
         fill: jest.fn(() => true),
+        stroke: jest.fn(() => true),
+        closePath: jest.fn(() => true),
+        measureText: jest.fn(() => true),
       },
       lineColor: '',
       isHover: '',

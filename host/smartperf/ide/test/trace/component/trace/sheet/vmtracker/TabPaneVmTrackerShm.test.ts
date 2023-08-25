@@ -18,10 +18,6 @@ import { TabPaneVmTrackerShm } from '../../../../../../dist/trace/component/trac
 
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 
-jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
-  return {};
-});
-
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
@@ -33,7 +29,9 @@ jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
 });
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
-
+jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
+  return {};
+});
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||

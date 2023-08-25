@@ -473,13 +473,13 @@ function query(name: string, sql: string, params: any) {
   Module._TraceStreamerSqlQueryEx(sqlUintArray.length);
 }
 
-function querySdk(name: string, sql: string, params: any, action: string) {
-  if (params) {
-    Reflect.ownKeys(params).forEach((key: any) => {
-      if (typeof params[key] === 'string') {
-        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${ params[key] }'`);
+function querySdk(name: string, sql: string, sdkParams: any, action: string) {
+  if (sdkParams) {
+    Reflect.ownKeys(sdkParams).forEach((key: any) => {
+      if (typeof sdkParams[key] === 'string') {
+        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${ sdkParams[key] }'`);
       } else {
-        sql = sql.replace(new RegExp(`\\${key}`, 'g'), params[key]);
+        sql = sql.replace(new RegExp(`\\${key}`, 'g'), sdkParams[key]);
       }
     });
   }

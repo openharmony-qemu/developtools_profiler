@@ -15,19 +15,28 @@
 //@ts-ignore
 import { TabThreadAnalysis } from '../../../../dist/trace/component/schedulingAnalysis/TabThreadAnalysis.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
+jest.mock('../../../../dist/trace/component/schedulingAnalysis/Top20FrequencyThread.js', () => {
+  return {
+    clearData: () => {},
+  };
+});
 
 describe('TabThreadAnalysis Test', () => {
-    it('TabThreadAnalysisTest01', () => {
-        let tabThreadAnalysis = new TabThreadAnalysis();
-        expect(tabThreadAnalysis.init()).toBeUndefined();
-    });
-    it('TabThreadAnalysisTest02', () => {
-        let tabThreadAnalysis = new TabThreadAnalysis();
-        expect(tabThreadAnalysis.hideCurrentTab()).toBeUndefined();
-    });
-})
+  it('TabThreadAnalysisTest01', () => {
+    let tabThreadAnalysis = new TabThreadAnalysis();
+    tabThreadAnalysis.top20FrequencyThread = jest.fn(() => true);
+    tabThreadAnalysis.top20FrequencyThread.clearData = jest.fn(() => true);
+    expect(tabThreadAnalysis.init()).toBeUndefined();
+  });
+  it('TabThreadAnalysisTest02', () => {
+    let tabThreadAnalysis = new TabThreadAnalysis();
+    expect(tabThreadAnalysis.hideCurrentTab()).toBeUndefined();
+  });
+});

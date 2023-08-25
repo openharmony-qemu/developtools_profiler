@@ -14,9 +14,9 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { queryGpuDataByRange } from '../../../../database/SqlLite.js';
+import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { log } from '../../../../../log/Log.js';
 import { getProbablyTime } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
 import { resizeObserver } from '../SheetUtils.js';
@@ -46,17 +46,17 @@ export class TabPaneGpuTotalBoxSelect extends BaseElement {
   private gpuBoxSource: Array<GpuTotal> = [];
   private currentSelectionParam: SelectionParam | undefined;
 
-  set data(gpuBoxParam: SelectionParam | any) {
-    if (this.currentSelectionParam === gpuBoxParam) {
+  set data(gpuTotalBoxParam: SelectionParam | any) {
+    if (this.currentSelectionParam === gpuTotalBoxParam) {
       return;
     }
-    this.currentSelectionParam = gpuBoxParam;
+    this.currentSelectionParam = gpuTotalBoxParam;
     //@ts-ignore
     this.gpuBoxTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
     this.range!.textContent =
-      'Selected range: ' + ((gpuBoxParam.rightNs - gpuBoxParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
+      'Selected range: ' + ((gpuTotalBoxParam.rightNs - gpuTotalBoxParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
     this.gpuBoxTbl!.loading = true;
-    queryGpuDataByRange(gpuBoxParam.leftNs, gpuBoxParam.rightNs, MemoryConfig.getInstance().snapshotDur).then((result) => {
+    queryGpuDataByRange(gpuTotalBoxParam.leftNs, gpuTotalBoxParam.rightNs, MemoryConfig.getInstance().snapshotDur).then((result) => {
       this.gpuBoxTbl!.loading = false;
       if (result != null && result.length > 0) {
         log('getTabStartups result size : ' + result.length);
@@ -125,15 +125,15 @@ export class TabPaneGpuTotalBoxSelect extends BaseElement {
         `;
   }
 
-  sortByColumn(detail: { key: string; sort: number }): void {
+  sortByColumn(gpuTotalBoxDetail: { key: string; sort: number }): void {
     this.gpuBoxSource.sort((gpuA, gpuB) => {
-      if (detail.sort === 0) {
+      if (gpuTotalBoxDetail.sort === 0) {
         return gpuA.startTs - gpuB.startTs;
       } else {
-        let key = detail.key.replace('Str', '');
+        let key = gpuTotalBoxDetail.key.replace('Str', '');
         let valueA = (gpuA as any)[key];
         let valueB = (gpuB as any)[key];
-        return detail.sort === 1 ? valueA - valueB : valueB - valueA;
+        return gpuTotalBoxDetail.sort === 1 ? valueA - valueB : valueB - valueA;
       }
     });
     this.gpuBoxTbl!.recycleDataSource = this.gpuBoxSource;

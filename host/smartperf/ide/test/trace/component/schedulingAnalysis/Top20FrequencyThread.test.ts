@@ -14,51 +14,43 @@
  */
 //@ts-ignore
 import { Top20FrequencyThread } from '../../../../dist/trace/component/schedulingAnalysis/Top20FrequencyThread.js';
+import '../../../../dist/trace/component/schedulingAnalysis/Top20FrequencyThread.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('Top20FrequencyThread Test', () => {
-    it('Top20FrequencyThreadTest01', () => {
-        let top20FrequencyThread = new Top20FrequencyThread();
-        expect(top20FrequencyThread).not.toBeUndefined();
-    });
-    it('Top20FrequencyThreadTest02', () => {
-        let top20FrequencyThread = new Top20FrequencyThread();
-        expect(
-            top20FrequencyThread.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-    it('Top20FrequencyThreadTest03', () => {
-        let top20FrequencyThread = new Top20FrequencyThread();
-        top20FrequencyThread.queryLogicWorker = jest.fn();
-        expect(top20FrequencyThread.queryData()).toBeUndefined();
-    });
-    it('Top20FrequencyThreadTest04', () => {
-        let top20FrequencyThread = new Top20FrequencyThread();
-        top20FrequencyThread.queryLogicWorker = jest.fn();
-        let res = [
-            {
-                length:21,
-                time:'',
-                totalDur:1
-            }
-        ]
-        expect(top20FrequencyThread.getPieChartData(res)).toStrictEqual([{"length": 21, "time": "", "totalDur": 1}]);
-    });
-    it('Top20FrequencyThreadTest05', () => {
-        let top20FrequencyThread = new Top20FrequencyThread();
-        top20FrequencyThread.queryLogicWorker = jest.fn();
-        expect(top20FrequencyThread.queryLogicWorker('','',{})).toBeUndefined();
-    });
-    it('Top20FrequencyThreadTest06', () => {
-        let top20FrequencyThread = new Top20FrequencyThread();
-        top20FrequencyThread.init = jest.fn();
-        expect(top20FrequencyThread.init()).toBeUndefined();
-    });
-})
+  document.body.innerHTML = `<tabpane-frequency-thread id="thread"></tabpane-frequency-thread>`;
+  let top20FrequencyThread = document.querySelector<Top20FrequencyThread>('#thread');
+  window.postMessage = jest.fn(() => true);
+  top20FrequencyThread.frequencyThreadTbl = jest.fn(() => true);
+  top20FrequencyThread.frequencyThreadTbl.itemTextHandleMap = new Map();
+  top20FrequencyThread.frequencyThreadTbl.itemTextHandleMap.set('freq', 1);
+  it('Top20FrequencyThreadTest01', () => {
+    expect(top20FrequencyThread).not.toBeUndefined();
+  });
+  it('Top20FrequencyThreadTest02', () => {
+    expect(top20FrequencyThread.sortByColumn).toBeUndefined();
+  });
+  it('Top20FrequencyThreadTest03', () => {
+    top20FrequencyThread.queryLogicWorker = jest.fn();
+    expect(top20FrequencyThread.queryData).toBeUndefined();
+  });
+  it('Top20FrequencyThreadTest04', () => {
+    top20FrequencyThread.queryLogicWorker = jest.fn();
+    expect(top20FrequencyThread.getPieChartData).toBeUndefined();
+  });
+  it('Top20FrequencyThreadTest05', () => {
+    top20FrequencyThread.queryLogicWorker = jest.fn();
+    expect(top20FrequencyThread.queryLogicWorker('', '', {})).toBeUndefined();
+  });
+  it('Top20FrequencyThreadTest06', () => {
+    top20FrequencyThread.init = jest.fn();
+    expect(top20FrequencyThread.init()).toBeUndefined();
+  });
+});

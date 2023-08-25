@@ -23,14 +23,14 @@ import { IrqRender, IrqStruct } from '../../../../dist/trace/database/ui-worker/
 describe('ProcedureWorkerIrq Test', () => {
   it('ProcedureWorkerIrq01', () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
+    canvas.width = 4;
+    canvas.height = 4;
     const ctx = canvas.getContext('2d');
 
     const data = {
       frame: {
-        x: 20,
-        y: 20,
+        x: 210,
+        y: 210,
         width: 100,
         height: 100,
       },

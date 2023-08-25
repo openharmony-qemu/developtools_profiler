@@ -38,7 +38,7 @@ ohos_source_set("hiperf_parser_src") {
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/perf_include",
     "${THIRD_PARTY}/perf_include/libbpf",
-    "//commonlibrary/c_utils/base/include",
+    "${COMMON_LIBRARY}/c_utils/base/include",
     "${THIRD_PARTY}/googletest/googletest/include",
   ]
   include_dirs += [ "${THIRD_PARTY}/libunwind/include" ]

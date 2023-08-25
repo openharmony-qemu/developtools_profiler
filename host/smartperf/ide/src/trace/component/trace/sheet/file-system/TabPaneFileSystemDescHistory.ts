@@ -288,15 +288,15 @@ export class TabPaneFileSystemDescHistory extends BaseElement {
                             <lit-table-column class="fs-history-column"width="600px" title="Backtrace" data-index="backtrace" key="backtrace" align="flex-start" >
                                 <template>
                                     <div>
-                                        <span>{{backtrace[0]}}</span>
+                                        <span class="fs-desc-backtrace-data-span">{{backtrace[0]}}</span>
                                         <span v-if="backtrace.length > 1">⬅</span>
-                                        <span v-if="backtrace.length > 1"style="color: #565656"> {{backtrace[1]}}</span>
+                                        <span v-if="backtrace.length > 1" style="color: #565656"> {{backtrace[1]}}</span>
                                     </div>
                                 </template>
                             </lit-table-column>
                         </lit-table>
                     </div>
-                    <lit-slicer-track ></lit-slicer-track>
+                    <lit-slicer-track class="fs-desc-history-tracker"></lit-slicer-track>
                     <lit-table id="tbr-file-system-desc-history" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
                         <lit-table-column class="fs-history-column"width="60px" title="" data-index="type" key="type"  align="flex-start" >
                             <template>

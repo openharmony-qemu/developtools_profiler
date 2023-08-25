@@ -117,7 +117,7 @@ export class TabPaneThreadStates extends BaseElement {
             <stack-bar id="thread-states-stack-bar" style="width: calc(100vw - 520px)"></stack-bar>
             <label id="thread-states-time-range"  style="width: 250px;text-align: end;font-size: 10pt;">Selected range:0.0 ms</label>
         </div>
-        <lit-table id="tb-thread-states" style="height: auto;overflow-x: auto;width: calc(100vw - 270px)">
+        <lit-table id="tb-thread-states" style="height: auto;overflow-x: auto;width: 100%">
             <lit-table-column class="tread-states-column" width="240px" title="Process" data-index="process" key="process"  align="flex-start" order>
             </lit-table-column>
             <lit-table-column class="tread-states-column" width="120px" title="PID" data-index="pid" key="pid"  align="flex-start" order >

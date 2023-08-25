@@ -21,17 +21,17 @@ jest.mock('../../../dist/trace/component/trace/base/TraceRow.js', () => {
 
 describe('ThreadStruct Test', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
+  canvas.width = 18;
+  canvas.height = 18;
   const ctx = canvas.getContext('2d');
   const dataSource = {
     frame: {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 55,
+      y: 55,
+      width: 32,
+      height: 111,
     },
-    startNS: 200,
+    startNS: 2400,
     state: '',
   };
   const equalsData = {

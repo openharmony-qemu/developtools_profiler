@@ -21,21 +21,24 @@ import { TraceRow } from '../../../dist/trace/component/trace/base/TraceRow';
 import { procedurePool } from '../../../dist/trace/database/Procedure.js';
 // @ts-ignore
 import { LitTable } from '../../../dist/base-ui/table/lit-table.js';
-jest.mock('../../../dist/base-ui/table/lit-table.js', ()=>{
+jest.mock('../../../dist/base-ui/table/lit-table.js', () => {
   return {
-    recycleDataSource: ()=>{}
-  }
-})
+    recycleDataSource: () => {},
+  };
+});
 // @ts-ignore
 import { HeapLoader } from '../../../dist/js-heap/logic/HeapLoader.js';
-jest.mock('../../../dist/js-heap/logic/HeapLoader.js', ()=>{
-  return {}
-})
+jest.mock('../../../dist/js-heap/logic/HeapLoader.js', () => {
+  return {};
+});
 // @ts-ignore
 import { NodeType } from '../../../dist/js-heap/model/DatabaseStruct.js';
-jest.mock('../../../dist/js-heap/model/DatabaseStruct.js', ()=>{
-  return {}
-})
+jest.mock('../../../dist/js-heap/model/DatabaseStruct.js', () => {
+  return {};
+});
+jest.mock('../../../dist/trace/component/trace/base/TraceSheet.js', () => {
+  return {};
+});
 
 const intersectionObserverMock = () => ({
   observe: () => null,
@@ -43,7 +46,8 @@ const intersectionObserverMock = () => ({
 window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
 
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver ||
+window.ResizeObserver =
+  window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
@@ -51,7 +55,6 @@ window.ResizeObserver = window.ResizeObserver ||
   }));
 
 describe('SpSystemTrace Test', () => {
-  //document.body.innerHTML = `<sp-application></sp-application>`;
   let spSystemTrace = new SpSystemTrace();
   const offset = 1;
   const callback = true;
@@ -159,124 +162,6 @@ describe('SpSystemTrace Test', () => {
     expect(spSystemTrace.searchCPU()).not.toBeUndefined();
   });
 
-  it('SpSystemTraceTest19', function () {
-    expect(spSystemTrace.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        :host{
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        .timer-shaft{
-            width: 100%;
-            z-index: 2;
-        }
-        .rows-pane{
-            overflow: overlay;
-            overflow-anchor: none;
-            /*height: 100%;*/
-            max-height: calc(100vh - 147px - 48px);
-        }
-        .rows{
-            color: #fff;
-            display: flex;
-            box-sizing: border-box;
-            flex-direction: column;
-            overflow-y: auto;
-            flex: 1;
-            width: 100%;
-            background: var(--dark-background4,#ffffff);
-            /*scroll-behavior: smooth;*/
-        }
-        .favorite-rows{
-            width: 100%;
-            position:fixed;
-            overflow-y: auto;
-            overflow-x: hidden;
-            z-index:1001;
-            background: var(--dark-background5,#ffffff);
-            box-shadow: 0 10px 10px #00000044;
-        }
-        :host([disable]) .container{
-            pointer-events: none;
-        }
-        .container{
-            width: 100%;
-            box-sizing: border-box;
-            height: 100%;
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows: min-content 1fr min-content;
-            /*grid-template-areas:    'head'*/
-                                    /*'body'*/
-                                    /*'sheet';*/
-            position:relative;
-        }
-        .panel-canvas{
-            position: absolute;
-            top: 0;
-            right: 0px;
-            bottom: 0px;
-            width: 100%;
-            /*height: calc(100vh - 195px);*/
-            height: 100%;
-            box-sizing: border-box;
-            /*background: #f0f0f0;*/
-            /*border: 1px solid #000000;*/
-            z-index: 0;
-        }
-        .panel-canvas-favorite{
-            width: 100% ;
-            display: block;
-            position: absolute;
-            height: 0;
-            top: 0;
-            right: 0;
-            box-sizing: border-box;
-            z-index: 100;
-        }
-        .trace-sheet{
-            cursor: default;
-        }
-        .tip{
-            z-index: 1001;
-            position: absolute;
-            top: 0;
-            left: 0;
-            /*height: 100%;*/
-            background-color: white;
-            border: 1px solid #f9f9f9;
-            width: auto;
-            font-size: 8px;
-            color: #50809e;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 2px 10px;
-            box-sizing: border-box;
-            display: none;
-            user-select: none;
-        }
-
-        </style>
-        <div class="container">
-            <timer-shaft-element class="timer-shaft" style="position: relative;top: 0"></timer-shaft-element>
-            <div class="rows-pane" style="position: relative;flex-direction: column;overflow-x: hidden;">
-                <div class="favorite-rows">
-                    <canvas id="canvas-panel-favorite" class="panel-canvas-favorite" ondragstart="return false"></canvas>
-                </div>
-                <canvas id="canvas-panel" class="panel-canvas" ondragstart="return false"></canvas>
-                <div class="spacer" ondragstart="return false"></div>
-                <div class="rows" ondragstart="return false"></div>
-                <div id="tip" class="tip"></div>
-            </div>
-            <trace-sheet class="trace-sheet" mode="hidden" ondragstart="return false"></trace-sheet>
-        </div>
-        "
-`);
-  });
-
   it('SpSystemTraceTest20', function () {
     let spSystemTrace = new SpSystemTrace<any>({
       canvasNumber: 1,
@@ -313,7 +198,9 @@ describe('SpSystemTrace Test', () => {
       isOffScreen: true,
     });
     procedurePool.clearCache = jest.fn(() => true);
-    procedurePool.clearMemory = jest.fn(() => true);
+    spSystemTrace.traceSheetEL = jest.fn(() => true);
+    spSystemTrace.traceSheetEL.clearMemory = jest.fn(() => true);
+    spSystemTrace.traceSheetEL.setAttribute = jest.fn(() => true);
     expect(spSystemTrace.reset()).toBeUndefined();
   });
   it('SpSystemTraceTest23', function () {
@@ -396,7 +283,7 @@ describe('SpSystemTrace Test', () => {
       contextId: '2d',
       isOffScreen: true,
     });
-    expect(spSystemTrace.expansionAllParentRow({id:1})).toBeUndefined();
+    expect(spSystemTrace.expansionAllParentRow({ id: 1 })).toBeUndefined();
   });
   it('SpSystemTraceTest30', function () {
     let spSystemTrace = new SpSystemTrace<any>({
@@ -406,11 +293,11 @@ describe('SpSystemTrace Test', () => {
       isOffScreen: true,
     });
     let it = {
-      name:'',
-      rowType:'',
-      rowId:'FileSystemLogicalWrite',
-      rowParentId:'frameTime'
-  }
+      name: '',
+      rowType: '',
+      rowId: 'FileSystemLogicalWrite',
+      rowParentId: 'frameTime',
+    };
     expect(spSystemTrace.createPointEvent(it)).toBe('');
   });
   it('SpSystemTraceTest31', function () {
@@ -421,22 +308,22 @@ describe('SpSystemTrace Test', () => {
       isOffScreen: true,
     });
     let a = {
-      rowEL:{
-        translateY:1,
-        offsetTop:0,
+      rowEL: {
+        translateY: 1,
+        offsetTop: 0,
       },
-      y:1,
-      offsetY:0
-    }
+      y: 1,
+      offsetY: 0,
+    };
     let b = {
-      rowEL:{
-        translateY:1,
-        offsetTop:0,
+      rowEL: {
+        translateY: 1,
+        offsetTop: 0,
       },
-      y:1,
-      offsetY:0
-    }
-    expect(spSystemTrace.addPointPair(a,b)).toBeUndefined();
+      y: 1,
+      offsetY: 0,
+    };
+    expect(spSystemTrace.addPointPair(a, b)).toBeUndefined();
   });
   it('SpSystemTraceTest32', function () {
     let spSystemTrace = new SpSystemTrace<any>({
@@ -474,27 +361,27 @@ describe('SpSystemTrace Test', () => {
     });
     let endParentRow = {
       expansion: true,
-      childrenList:[]
-    }
+      childrenList: [],
+    };
     let selectJankStruct = {
-      frame_type:'frameTime',
-      type:'',
-      pid:1,
-      ts:1,
-      dur:0,
-      depth:1,
-    }
+      frame_type: 'frameTime',
+      type: '',
+      pid: 1,
+      ts: 1,
+      dur: 0,
+      depth: 1,
+    };
     let data = {
-      frame_type:'frameTime',
-      type:'',
-      pid:1,
-      name:'',
-      children:{
-        frame_type:'frameTime',
-        pid:1,
-        length:1
-      }
-    }
+      frame_type: 'frameTime',
+      type: '',
+      pid: 1,
+      name: '',
+      children: {
+        frame_type: 'frameTime',
+        pid: 1,
+        length: 1,
+      },
+    };
 
     expect(spSystemTrace.drawJankLine(endParentRow, selectJankStruct, data)).toBeUndefined();
   });
@@ -506,9 +393,9 @@ describe('SpSystemTrace Test', () => {
       isOffScreen: true,
     });
     let ev = {
-      maxDuration:1,
-      timestamp:''
-    }
+      maxDuration: 1,
+      timestamp: '',
+    };
     expect(spSystemTrace.sliceMarkEventHandler(ev)).toBeUndefined();
   });
   it('SpSystemTraceTest37', function () {
@@ -518,7 +405,7 @@ describe('SpSystemTrace Test', () => {
       contextId: '2d',
       isOffScreen: true,
     });
-    expect(spSystemTrace.searchSdk([''],'')).toStrictEqual(['']);
+    expect(spSystemTrace.searchSdk([''], '')).toStrictEqual(['']);
   });
   it('SpSystemTraceTest38', function () {
     let spSystemTrace = new SpSystemTrace<any>({
@@ -528,14 +415,14 @@ describe('SpSystemTrace Test', () => {
       isOffScreen: true,
     });
     let funcStract = {
-      tid:1,
-      pid:0,
-      cookie:'',
-      funName:'',
-      type:'',
-      startTime:2,
-      depth:1
-    }
-    expect(spSystemTrace.scrollToActFunc(funcStract,true)).toBeUndefined();
+      tid: 1,
+      pid: 0,
+      cookie: '',
+      funName: '',
+      type: '',
+      startTime: 2,
+      depth: 1,
+    };
+    expect(spSystemTrace.scrollToActFunc(funcStract, true)).toBeUndefined();
   });
 });

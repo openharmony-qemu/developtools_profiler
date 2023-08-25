@@ -14,8 +14,8 @@
  */
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
-import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { querySysPurgeableSelectionTab } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
@@ -33,7 +33,7 @@ export class TabPanePurgPinComparisonAbility extends BaseElement {
     this.filterEl = this.shadowRoot!.querySelector<TabPaneJsMemoryFilter>('#filter');
     this.selectEl = this.filterEl?.shadowRoot?.querySelector<LitSelect>('lit-select');
   }
-  public totalData(data: SelectionParam | any, dataList: any): void {
+  public totalData(purgePinComParam: SelectionParam | any, dataList: any): void {
     //@ts-ignore
     this.purgeablePinTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
       this.parentElement!.clientHeight - 45
@@ -41,15 +41,15 @@ export class TabPanePurgPinComparisonAbility extends BaseElement {
     this.purgeablePinSource = [];
     let fileArr: any[] = [];
     for (let file of dataList) {
-      if (file.startNs !== data.startNs) {
+      if (file.startNs !== purgePinComParam.startNs) {
         fileArr.push(file);
       }
     }
     fileArr = fileArr.sort();
-    this.initSelect(data.startNs, fileArr);
-    this.updateComparisonData(data.startNs, fileArr[0].startNs);
+    this.initSelect(purgePinComParam.startNs, fileArr);
+    this.updateComparisonData(purgePinComParam.startNs, fileArr[0].startNs);
   }
-  private initSelect(fileStartNs: number, fileArr: Array<any>): void {
+  private initSelect(fileStartNs: number, purgePinComFileArr: Array<any>): void {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -57,15 +57,15 @@ export class TabPanePurgPinComparisonAbility extends BaseElement {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].name) {
-      option.setAttribute('value', fileArr[0].name);
+    if (purgePinComFileArr[0].name) {
+      option.setAttribute('value', purgePinComFileArr[0].name);
     }
-    this.selectEl!.defaultValue = fileArr[0].name;
-    this.selectEl!.placeholder = fileArr[0].name;
-    this.selectEl!.dataSource = fileArr;
+    this.selectEl!.defaultValue = purgePinComFileArr[0].name;
+    this.selectEl!.placeholder = purgePinComFileArr[0].name;
+    this.selectEl!.dataSource = purgePinComFileArr;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
       a.addEventListener('onSelected', (e: any) => {
-        for (let f of fileArr) {
+        for (let f of purgePinComFileArr) {
           if (input.value === f.name) {
             that.updateComparisonData(fileStartNs, f.startNs);
           }

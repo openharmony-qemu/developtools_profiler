@@ -31,12 +31,12 @@ describe('ProcedureWorkerHiPerfProcess Test', () => {
     const data = {
       frame: undefined,
       cpu: 1,
-      startNs: 1,
-      value: 1,
+      startNs: 41,
+      value: 41,
     };
     const canvas = document.createElement('canvas');
     canvas.width = 1;
-    canvas.height = 1;
+    canvas.height = 2;
     const ctx = canvas.getContext('2d');
     expect(HiPerfProcessStruct.draw(ctx, '', data, true)).toBeUndefined();
   });
@@ -73,53 +73,53 @@ describe('ProcedureWorkerHiPerfProcess Test', () => {
 
   it('ProcedureWorkerHiPerfProcessTest05', function () {
     let hiperfProcessRender = new HiperfProcessRender();
-    let req = {
+    let hiperfProcessReq = {
       lazyRefresh: true,
       type: '',
       startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      endNS: 12,
+      totalNS: 11,
       frame: {
-        x: 20,
-        y: 20,
-        width: 100,
-        height: 100,
+        x: 145,
+        y: 202,
+        width: 110,
+        height: 101,
       },
       useCache: false,
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: 's',
       context: {
         font: '11px sans-serif',
         fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        globalAlpha: 0.3,
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
+        fillText: jest.fn(() => true),
+        fill: jest.fn(() => false),
         stroke: jest.fn(() => true),
         closePath: jest.fn(() => true),
-        measureText: jest.fn(() => true),
+        measureText: jest.fn(() => ''),
         fillRect: jest.fn(() => true),
-        fillText: jest.fn(() => true),
-        fill: jest.fn(() => true),
       },
       lineColor: '',
       isHover: '',
       hoverX: 1,
-      params: '',
+      params: 'q',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 7,
       id: 1,
-      x: 20,
-      y: 20,
+      x: 27,
+      y: 27,
       width: 100,
       height: 100,
-      scale: 100_000_001,
+      scale: 100_070_001,
     };
     window.postMessage = jest.fn(() => true);
-    expect(hiperfProcessRender.render(req, [], [], [])).toBeUndefined();
+    expect(hiperfProcessRender.render(hiperfProcessReq, [], [], [])).toBeUndefined();
   });
   it('ProcedureWorkerHiPerfProcessTest06', function () {
     let hiperfProcessRender = new HiperfProcessRender();

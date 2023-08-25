@@ -253,16 +253,7 @@ export class TabPaneCurrentSelection extends BaseElement {
           } else {
             list.unshift({ name: 'Name', value: name });
           }
-          list.push({
-            name: 'StartTime',
-            value: getTimeString(data.startTs || 0),
-          });
-          list.push({
-            name: 'Duration',
-            value: getTimeString(data.dur || 0),
-          });
-          list.push({ name: 'depth', value: data.depth });
-          list.push({ name: 'arg_set_id', value: data.argsetid });
+          this.addTabPanelContent(list, data);
           this.currentSelectionTbl!.dataSource = list;
           let funcClick = this.currentSelectionTbl?.shadowRoot?.querySelector('#function-jump');
           funcClick?.addEventListener('click', () => {
@@ -288,16 +279,7 @@ export class TabPaneCurrentSelection extends BaseElement {
           if (binderSliceId === -1) {
             list.unshift({ name: 'Name', value: name });
           }
-          list.push({
-            name: 'StartTime',
-            value: getTimeString(data.startTs || 0),
-          });
-          list.push({
-            name: 'Duration',
-            value: getTimeString(data.dur || 0),
-          });
-          list.push({ name: 'depth', value: data.depth });
-          list.push({ name: 'arg_set_id', value: data.argsetid });
+          this.addTabPanelContent(list, data);
           this.currentSelectionTbl!.dataSource = list;
           let funcClick = this.currentSelectionTbl?.shadowRoot?.querySelector('#function-jump');
           funcClick?.addEventListener('click', () => {
@@ -317,16 +299,7 @@ export class TabPaneCurrentSelection extends BaseElement {
           argset.forEach((item) => {
             list.push({ name: item.keyName, value: item.strValue });
           });
-          list.push({
-            name: 'StartTime',
-            value: getTimeString(data.startTs || 0),
-          });
-          list.push({
-            name: 'Duration',
-            value: getTimeString(data.dur || 0),
-          });
-          list.push({ name: 'depth', value: data.depth });
-          list.push({ name: 'arg_set_id', value: data.argsetid });
+          this.addTabPanelContent(list, data);
           this.currentSelectionTbl!.dataSource = list;
         });
       }
@@ -346,21 +319,37 @@ export class TabPaneCurrentSelection extends BaseElement {
     }
   }
 
+  private addTabPanelContent(contentList: any[], data: FuncStruct): void{
+    contentList.push({
+      name: 'StartTime',
+      value: getTimeString(data.startTs || 0),
+    });
+    contentList.push({
+      name: 'Duration',
+      value: getTimeString(data.dur || 0),
+    });
+    contentList.push({ name: 'depth', value: data.depth });
+    contentList.push({ name: 'arg_set_id', value: data.argsetid });
+  }
+
   private tabCurrentSelectionInit(leftTitleStr: string): void {
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
+    this.setTitleAndButtonStyle();
+    if (leftTitle) {
+      leftTitle.innerText = leftTitleStr;
+    }
+  }
+
+  private setTitleAndButtonStyle(): void{
     let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
-                                                          ?.querySelector('#rightButton')
-                                                          ?.shadowRoot?.querySelector('#custom-button');
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')?.
+      shadowRoot?.querySelector('#custom-button');
     let rightStar: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#right-star');
     if (rightTitle) {
       rightTitle.style.visibility = 'hidden';
       rightButton!.style.visibility = 'hidden';
       rightStar!.style.visibility = 'hidden';
-    }
-    if (leftTitle) {
-      leftTitle.innerText = leftTitleStr;
     }
   }
 
@@ -406,16 +395,7 @@ export class TabPaneCurrentSelection extends BaseElement {
   setIrqData(data: IrqStruct): void {
     this.setTableHeight('550px');
     this.initCanvas();
-    let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
-                                                          ?.querySelector('#rightButton')
-                                                          ?.shadowRoot?.querySelector('#custom-button');
-    let rightStar: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#right-star');
-    if (rightTitle) {
-      rightTitle.style.visibility = 'hidden';
-      rightButton!.style.visibility = 'hidden';
-      rightStar!.style.visibility = 'hidden';
-    }
+    this.setTitleAndButtonStyle();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
     if (leftTitle) {
       leftTitle.innerText = 'Counter Details';
@@ -448,16 +428,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.setTableHeight('550px');
     this.initCanvas();
     let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
-    let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
-                                                          ?.querySelector('#rightButton')
-                                                          ?.shadowRoot?.querySelector('#custom-button');
-    let rightStar: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#right-star');
-    if (rightTitle) {
-      rightTitle.style.visibility = 'hidden';
-      rightButton!.style.visibility = 'hidden';
-      rightStar!.style.visibility = 'hidden';
-    }
+    this.setTitleAndButtonStyle();
     if (leftTitle) {
       leftTitle.innerText = 'Thread State';
     }
@@ -798,24 +769,23 @@ export class TabPaneCurrentSelection extends BaseElement {
   setStartupData(data: AppStartupStruct, scrollCallback: Function): void {
     this.setTableHeight('550px');
     this.initCanvas();
-    let rightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
-    let rightButton: HTMLElement | null | undefined = this?.shadowRoot
-                                                          ?.querySelector('#rightButton')
-                                                          ?.shadowRoot?.querySelector('#custom-button');
-    if (rightTitle) {
-      rightTitle.style.visibility = 'hidden';
+    let rightButton: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightButton')?.shadowRoot?.
+      querySelector('#custom-button');
+    let startUpRightTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#rightTitle');
+    if (startUpRightTitle) {
+      startUpRightTitle.style.visibility = 'hidden';
       rightButton!.style.visibility = 'hidden';
     }
-    let leftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
-    if (leftTitle) {
-      leftTitle.innerText = 'Details';
+    let startUpLeftTitle: HTMLElement | null | undefined = this?.shadowRoot?.querySelector('#leftTitle');
+    if (startUpLeftTitle) {
+      startUpLeftTitle.innerText = 'Details';
     }
     let list: any[] = [];
     list.push({ name: 'Name', value: AppStartupStruct.getStartupName(data.startName) });
     list.push({
       name: 'StartTime(Relative)',
       value: `
-      <div style="white-space: nowrap;display: flex;align-items: center">
+      <div style="display: flex;white-space: nowrap;align-items: center">
 <div style="white-space:pre-wrap">${ getTimeString(data.startTs || 0) }</div>
 <lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="start-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
 </div>`,
@@ -901,7 +871,7 @@ export class TabPaneCurrentSelection extends BaseElement {
       name: 'StartTime(Relative)',
       value: `<div style="white-space: nowrap;display: flex;align-items: center">
 <div style="white-space:pre-wrap">${ getTimeString(data.startTs || 0) }</div>
-<lit-icon style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" id="start-jump" name="select" color="#7fa1e7" size="20"></lit-icon>
+<lit-icon id="start-jump" style="cursor:pointer;transform: scaleX(-1);margin-left: 5px" name="select" color="#7fa1e7" size="20"></lit-icon>
 </div>`,
     });
     list.push({

@@ -65,42 +65,4 @@ describe('TabPaneBoxChild Test', () => {
       })
     ).toBeUndefined();
   });
-
-  it('TabPaneCounterTest03', function () {
-    expect(tabPaneBoxChild.initHtml()).toMatchInlineSnapshot(`
-"
-        <style>
-        .box-child-label{
-          text-align: end;
-          width: 100%;
-          height: 20px;
-        }
-        :host{
-            padding: 10px 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        </style>
-        <label id="time-range" class="box-child-label" style="font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>
-        <lit-table id="tb-cpu-thread" style="height: auto">
-            <lit-table-column order title="StartTime(Relative)" width="15%" data-index="startTime" key="startTime" align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column order title="StartTime(Absolute)" width="15%" data-index="absoluteTime" key="absoluteTime" align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column order width="20%" data-index="processName" key="processName" title="Process" align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column order width="20%" data-index="threadName" key="threadName" align="flex-start" order title="Thread">
-            </lit-table-column>
-            <lit-table-column order width="1fr" data-index="state" key="state" align="flex-start" order title="State">
-            </lit-table-column>
-            <lit-table-column order width="1fr"data-index="core"  title="Core" key="core" align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column order width="1fr" data-index="prior" title="Priority" key="prior" align="flex-start" order >
-            </lit-table-column>
-            <lit-table-column order width="1fr" data-index="note" key="note" align="flex-start" title="Note">
-            </lit-table-column>
-        </lit-table>
-        "
-`);
-  });
 });

@@ -38,7 +38,7 @@ export class TabPaneNMemory extends BaseElement {
   private filter: TabPaneFilter | null | undefined;
   private tblData: LitTable | null | undefined;
   private progressEL: LitProgressBar | null | undefined;
-  private loadingList: number[] = [];
+  private nmMemoryLoadingList: number[] = [];
   private loadingPage: any;
   private memorySource: Array<NativeMemory> = [];
   private native_type: Array<string> = [...this.defaultNativeTypes];
@@ -113,11 +113,11 @@ export class TabPaneNMemory extends BaseElement {
     if (this.memoryTbl!.recycleDs.length > 1_0000) {
       this.memoryTbl!.recycleDataSource = [];
     }
-    this.startWorker('native-memory-queryNativeHookEvent', args, (results: any[]) => {
+    this.startNmMemoryWorker('native-memory-queryNativeHookEvent', args, (results: any[]) => {
       this.tblData!.recycleDataSource = [];
       if (refresh) {
-        this.setLoading(true);
-        this.initFilterTypes(() => this.setLoading(false));
+        this.setNmMemoryLoading(true);
+        this.initFilterTypes(() => this.setNmMemoryLoading(false));
       }
       if (results.length > 0) {
         this.memorySource = results;
@@ -129,30 +129,30 @@ export class TabPaneNMemory extends BaseElement {
     });
   }
 
-  startWorker(type: string, args: any, handler: Function) {
-    this.setLoading(true);
+  startNmMemoryWorker(type: string, args: any, handler: Function) {
+    this.setNmMemoryLoading(true);
     procedurePool.submitWithName('logic1', type, args, undefined, (res: any) => {
-      if (res.data && res.tag) {
+      if (Array.isArray(res) || (res.tag === 'end' && res.index === 0)) {
+        handler(res.data ? res.data : res);
+        this.setNmMemoryLoading(false);
+      } else {
         this.memorySource.push(res.data);
         if (res.tag == 'end') {
           handler(this.memorySource);
-          this.setLoading(false);
+          this.setNmMemoryLoading(false);
         }
-      } else {
-        handler(res);
-        this.setLoading(false)
       }
     });
   }
 
-  setLoading(loading: boolean) {
+  setNmMemoryLoading(loading: boolean) {
     if (loading) {
-      this.loadingList.push(1);
+      this.nmMemoryLoadingList.push(1);
       this.progressEL!.loading = true;
       this.loadingPage.style.visibility = 'visible';
     } else {
-      this.loadingList.splice(0, 1);
-      if (this.loadingList.length == 0) {
+      this.nmMemoryLoadingList.splice(0, 1);
+      if (this.nmMemoryLoadingList.length == 0) {
         this.progressEL!.loading = false;
         this.loadingPage.style.visibility = 'hidden';
       }
@@ -160,21 +160,11 @@ export class TabPaneNMemory extends BaseElement {
   }
 
   fromStastics(val: SelectionParam | any) {
-    let filter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
+    let nmFilterEl = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
     if (this.currentSelection != val) {
       this.initFilterTypes(() => {
         this.currentSelection = val;
-        filter!.setSelectList(
-          null,
-          this.native_type,
-          'Allocation Lifespan',
-          'Allocation Type',
-          this.responseTypes.map((item: any) => {
-            return item.value;
-          })
-        );
-        filter!.secondSelect = typeIndexOf + '';
-        filter!.thirdSelect = this.filterResponseSelect;
+        this.filterSetSelectList(nmFilterEl!, typeIndexOf);
         this.filterNativeType = typeIndexOf + '';
         this.queryData(val);
       });
@@ -193,21 +183,25 @@ export class TabPaneNMemory extends BaseElement {
     if (this.currentSelection == val) {
       this.tblData!.recycleDataSource = [];
       this.rowSelectData = undefined;
-      filter!.setSelectList(
-        null,
-        this.native_type,
-        'Allocation Lifespan',
-        'Allocation Type',
-        this.responseTypes.map((item: any) => {
-          return item.value;
-        })
-      );
-      filter!.secondSelect = typeIndexOf + '';
-      filter!.thirdSelect = this.filterResponseSelect;
+      this.filterSetSelectList(nmFilterEl!, typeIndexOf);
       this.filterNativeType = typeIndexOf + '';
       //直接将当前数据过滤即可
       this.getDataByNativeMemoryWorker(val);
     }
+  }
+
+  private filterSetSelectList(nmFilterEl: TabPaneFilter, typeIndexOf: number) {
+    nmFilterEl!.setSelectList(
+      null,
+      this.native_type,
+      'Allocation Lifespan',
+      'Allocation Type',
+      this.responseTypes.map((item: any) => {
+        return item.value;
+      })
+    );
+    nmFilterEl!.secondSelect = typeIndexOf + '';
+    nmFilterEl!.thirdSelect = this.filterResponseSelect;
   }
 
   initFilterTypes(initCallback?: () => void) {
@@ -310,7 +304,7 @@ export class TabPaneNMemory extends BaseElement {
                   let args = new Map<string, any>();
                   args.set('startTs', this.rowSelectData.startTs);
                   args.set('actionType', 'native-memory-state-change');
-                  this.startWorker('native-memory-action', args, (results: any[]) => {});
+                  this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => {});
                   TabPaneNMSampleList.addSampleData(this.rowSelectData);
                   this.memoryTbl!.scrollToData(this.rowSelectData);
                 }
@@ -352,7 +346,7 @@ export class TabPaneNMemory extends BaseElement {
     let args = new Map<string, any>();
     args.set('eventId', nativeMemoryHook.eventId);
     args.set('actionType', 'memory-stack');
-    this.startWorker('native-memory-action', args, (results: any[]) => {
+    this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => {
       let thread = new NativeHookCallInfo();
       thread.threadId = nativeMemoryHook.threadId;
       thread.threadName = Utils.THREAD_MAP.get(thread.threadId) || 'Thread';
@@ -369,11 +363,6 @@ export class TabPaneNMemory extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
         .nm-memory-loading{
             bottom: 0;
             position: absolute;
@@ -382,6 +371,11 @@ export class TabPaneNMemory extends BaseElement {
             width:100%;
             background:transparent;
             z-index: 999999;
+        }
+        :host{
+            display: flex;
+            flex-direction: column;
+            padding: 10px 10px 0 10px;
         }
         .nm-memory-progress{
             bottom: 33px;
@@ -421,7 +415,7 @@ export class TabPaneNMemory extends BaseElement {
                             </lit-table-column>
                         </lit-table>
                     </div>
-                    <lit-slicer-track ></lit-slicer-track>
+                    <lit-slicer-track></lit-slicer-track>
                     <lit-table id="tb-native-data" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
                         <lit-table-column class="nm-memory-column" width="80px" title="" data-index="type" key="type"  align="flex-start" >
                             <template>

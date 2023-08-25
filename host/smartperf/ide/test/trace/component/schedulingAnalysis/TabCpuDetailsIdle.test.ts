@@ -15,23 +15,25 @@
 //@ts-ignore
 import { TabCpuDetailsIdle } from '../../../../dist/trace/component/schedulingAnalysis/TabCpuDetailsIdle.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('TabCpuDetailsIdle Test', () => {
-    it('TabCpuDetailsIdleTest01', () => {
-        let tabCpuDetailsIdle = new TabCpuDetailsIdle();
-        expect(tabCpuDetailsIdle.clearData()).toBeUndefined();
-    });
-    it('TabCpuDetailsIdleTest02', () => {
-        let tabCpuDetailsIdle = new TabCpuDetailsIdle();
-        expect(
-            tabCpuDetailsIdle.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-})
+  it('TabCpuDetailsIdleTest01', () => {
+    let tabCpuDetailsIdle = new TabCpuDetailsIdle();
+    expect(tabCpuDetailsIdle.clearData()).toBeUndefined();
+  });
+  it('TabCpuDetailsIdleTest02', () => {
+    let tabCpuDetailsIdle = new TabCpuDetailsIdle();
+    expect(
+      tabCpuDetailsIdle.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+});

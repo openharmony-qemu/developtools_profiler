@@ -21,13 +21,13 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
   return {};
 });
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
   return {
     snapshotDataSource: () => {},
     removeAttribute: () => {},
   };
 });
-jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -42,36 +42,35 @@ describe('TabPanePurgTotalComparisonVM Test', () => {
   let queryProcessPurgeableSelectionTab = sqlite.queryProcessPurgeableSelectionTab;
   queryProcessPurgeableSelectionTab.mockResolvedValue([
     {
-      value: 25165824,
+      value: 21365824,
       name: '24.00MB',
     },
     {
-      value: 25165824,
+      value: 221824,
       name: '24.00MB',
     },
     {
-      value: 25165824,
+      value: 2571824,
       name: '24.00MB',
     },
   ]);
   let data = [
     {
-      name: 'Snapshot1',
-      startNs: 4778214061,
-      type: 'ability',
+      name: 'Snapshot0',
+      startNs: 172161,
       value: 0,
     },
   ];
   let datalist = [
     {
       name: 'Snapshot2',
-      startNs: 9800526561,
+      startNs: 2826561,
       type: 'ability',
       value: 0,
     },
     {
       name: 'Snapshot1',
-      startNs: 4778214061,
+      startNs: 5714061,
       type: 'ability',
       value: 0,
     },

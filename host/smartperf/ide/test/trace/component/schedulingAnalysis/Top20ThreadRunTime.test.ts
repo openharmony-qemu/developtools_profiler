@@ -15,34 +15,36 @@
 //@ts-ignore
 import { Top20ThreadRunTime } from '../../../../dist/trace/component/schedulingAnalysis/Top20ThreadRunTime.js';
 // @ts-ignore
-window.ResizeObserver = window.ResizeObserver || jest.fn().mockImplementation(() => ({
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
     disconnect: jest.fn(),
     observe: jest.fn(),
     unobserve: jest.fn(),
-}));
+  }));
 
 describe('Top20ThreadRunTime Test', () => {
-    it('Top20ThreadRunTimeTest01', () => {
-        let top20ThreadRunTime = new Top20ThreadRunTime();
-        expect(top20ThreadRunTime).not.toBeUndefined();
-    });
-    it('Top20ThreadRunTimeTest02', () => {
-        let top20ThreadRunTime = new Top20ThreadRunTime();
-        expect(
-            top20ThreadRunTime.sortByColumn({
-                key: 'number',
-            })
-        ).toBeUndefined();
-    });
-    it('Top20ThreadRunTimeTest03', () => {
-        let top20ThreadRunTime = new Top20ThreadRunTime();
-        top20ThreadRunTime.queryLogicWorker = jest.fn();
-        expect(top20ThreadRunTime.queryLogicWorker('','',{})).toBeUndefined();
-    });
-    it('Top20ThreadRunTimeTest04', () => {
-        let top20ThreadRunTime = new Top20ThreadRunTime();
-        top20ThreadRunTime.queryLogicWorker = jest.fn();
-        top20ThreadRunTime.init = jest.fn();
-        expect(top20ThreadRunTime.init()).toBeUndefined();
-    });
-})
+  it('Top20ThreadRunTimeTest01', () => {
+    let top20ThreadRunTime = new Top20ThreadRunTime();
+    expect(top20ThreadRunTime).not.toBeUndefined();
+  });
+  it('Top20ThreadRunTimeTest02', () => {
+    let top20ThreadRunTime = new Top20ThreadRunTime();
+    expect(
+      top20ThreadRunTime.sortByColumn({
+        key: 'number',
+      })
+    ).toBeUndefined();
+  });
+  it('Top20ThreadRunTimeTest03', () => {
+    let top20ThreadRunTime = new Top20ThreadRunTime();
+    top20ThreadRunTime.queryLogicWorker = jest.fn();
+    expect(top20ThreadRunTime.queryLogicWorker('', '', {})).toBeUndefined();
+  });
+  it('Top20ThreadRunTimeTest04', () => {
+    let top20ThreadRunTime = new Top20ThreadRunTime();
+    top20ThreadRunTime.queryLogicWorker = jest.fn();
+    top20ThreadRunTime.init = jest.fn();
+    expect(top20ThreadRunTime.init()).toBeUndefined();
+  });
+});

@@ -74,15 +74,15 @@ describe('ProcedureWorkerMemoryAbility Test', () => {
 
   it('ProcedureWorkerMemoryAbilityTest03', function () {
     let memoryAbilityRender = new MemoryAbilityRender();
-    let req = {
+    let memoryAbilityReq = {
       lazyRefresh: true,
       type: '',
       startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      endNS: 9,
+      totalNS: 8,
       frame: {
         x: 20,
-        y: 20,
+        y: 29,
         width: 100,
         height: 100,
       },
@@ -93,7 +93,7 @@ describe('ProcedureWorkerMemoryAbility Test', () => {
       canvas: 'a',
       context: {
         font: '11px sans-serif',
-        fillStyle: '#ec407a',
+        fillStyle: '#7800a8',
         globalAlpha: 0.6,
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
@@ -101,24 +101,24 @@ describe('ProcedureWorkerMemoryAbility Test', () => {
         closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
         fillRect: jest.fn(() => true),
-        fillText: jest.fn(() => true),
+        fillText: jest.fn(() => []),
       },
-      lineColor: '',
+      lineColor: '#170202',
       isHover: '',
       hoverX: 1,
       params: '',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 0,
       id: 1,
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 23,
+      y: 21,
+      width: 130,
+      height: 140,
     };
     window.postMessage = jest.fn(() => true);
-    expect(memoryAbilityRender.render(req, [], [])).toBeUndefined();
+    expect(memoryAbilityRender.render(memoryAbilityReq, [], [])).toBeUndefined();
   });
   it('ProcedureWorkerMemoryAbilityTest04', function () {
     let memoryAbilityRender = new MemoryAbilityRender();

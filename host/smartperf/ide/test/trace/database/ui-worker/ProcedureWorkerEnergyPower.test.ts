@@ -137,89 +137,89 @@ describe('ProcedureWorkerEnergyPower Test', () => {
 
   it('ProcedureWorkerEnergyPowerTest14', function () {
     let energyPowerRender = new EnergyPowerRender();
-    let req = {
+    let energyPowerReq = {
       lazyRefresh: true,
       type: '',
       startNS: 1,
-      endNS: 1,
-      totalNS: 1,
+      endNS: 8,
+      totalNS: 7,
       frame: {
-        x: 20,
+        x: 90,
         y: 20,
-        width: 100,
+        width: 1011,
         height: 100,
       },
       useCache: false,
       range: {
         refresh: '',
       },
-      canvas: 'a',
+      canvas: 'c',
       context: {
-        font: '11px sans-serif',
+        font: '10px sans-serif',
         fillStyle: '#ec407a',
-        globalAlpha: 0.6,
+        globalAlpha: 0.8,
         canvas: {
-          clientWidth: 10,
+          clientWidth: 14,
         },
         clearRect: jest.fn(() => true),
         beginPath: jest.fn(() => true),
         stroke: jest.fn(() => true),
+        fillRect: jest.fn(() => false),
         closePath: jest.fn(() => true),
         measureText: jest.fn(() => true),
-        fillRect: jest.fn(() => true),
         fillText: jest.fn(() => true),
       },
-      lineColor: '',
+      lineColor: '#ffffff',
       isHover: '',
       hoverX: 1,
-      params: '',
+      params: '21',
       wakeupBean: undefined,
       flagMoveInfo: '',
       flagSelectedInfo: '',
-      slicesTime: 3,
+      slicesTime: 5,
       id: 1,
       x: 20,
       y: 20,
-      width: 100,
-      height: 100,
+      width: 80,
+      height: 80,
     };
     window.postMessage = jest.fn(() => true);
-    expect(energyPowerRender.render(req, [], [])).toBeUndefined();
+    expect(energyPowerRender.render(energyPowerReq, [], [])).toBeUndefined();
   });
 
   it('ProcedureWorkerEnergyPowerTest15', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 50,
+      y: 33,
+      width: 800,
+      height: 500,
     };
-    let dataList = new Array();
-    dataList.push({
+    let energyPowerDataList = new Array();
+    energyPowerDataList.push({
       startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 90,
+      length: 16,
+      frame: { x: 0, y: 9, width: 20, height: 12 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    power(dataList, [{ length: 1 }], 1, 3, 2, frame, true, '');
+    energyPowerDataList.push({ startNS: 71, dur: 32, length: 12 });
+    power(energyPowerDataList, [{ length: 1 }], 1, 3, 2, frame, true, '');
   });
 
   it('ProcedureWorkerEnergyPowerTest16', function () {
     let frame = {
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
+      x: 98,
+      y: 90,
+      width: 500,
+      height: 700,
     };
-    let dataList = new Array();
-    dataList.push({
+    let energyPowerDataList = new Array();
+    energyPowerDataList.push({
       startNS: 0,
-      dur: 10,
-      length: 1,
-      frame: { x: 0, y: 9, width: 10, height: 10 },
+      dur: 50,
+      length: 67,
+      frame: { x: 0, y: 9, width: 60, height: 60 },
     });
-    dataList.push({ startNS: 1, dur: 2, length: 1 });
-    power(dataList, [{ length: 0 }], 1, 3, 2, frame, false, '');
+    energyPowerDataList.push({ startNS: 12, dur: 82, length: 16 });
+    power(energyPowerDataList, [{ length: 0 }], 1, 3, 2, frame, false, '');
   });
 });
