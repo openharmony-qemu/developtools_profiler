@@ -92,7 +92,7 @@ private:
     void ParseThread();
     int32_t GetNextSegment();
     void FilterThread();
-    enum ErrorCode { ERROR_CODE_EXIT = -2, ERROR_CODE_NODATA = -1 };
+
     bool InitProfilerTraceFileHeader();
     ProfilerTraceFileHeader profilerTraceFileHeader_;
     uint64_t htraceCurentLength_ = 0;
@@ -119,7 +119,7 @@ private:
     std::unique_ptr<EbpfDataParser> ebpfDataParser_;
     std::atomic<bool> filterThreadStarted_{false};
     const int32_t MAX_SEG_ARRAY_SIZE = 10000;
-    std::shared_ptr<HtraceDataSegment[]> dataSegArray_;
+    std::unique_ptr<HtraceDataSegment[]> dataSegArray_;
     int32_t rawDataHead_ = 0;
     bool toExit_ = false;
     bool exited_ = false;
@@ -130,7 +130,7 @@ private:
     bool parseThreadStarted_ = false;
     const int32_t maxThread_ = 4; // 4 is the best on ubuntu 113MB/s, max 138MB/s, 6 is best on mac m1 21MB/s,
     int32_t parserThreadCount_ = 0;
-    std::mutex dataSegMux_ = {};
+    std::mutex htraceDataSegMux_ = {};
     bool supportThread_ = false;
     ClockId dataSourceTypeTraceClockid_ = TS_CLOCK_UNKNOW;
     ClockId dataSourceTypeMemClockid_ = TS_CLOCK_UNKNOW;

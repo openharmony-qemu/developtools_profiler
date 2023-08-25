@@ -56,6 +56,12 @@ private:
     static void ParseRequest(const uint8_t* requst, size_t& len, RequestST& httpReq);
     void ClearDeadClientThread();
     static std::vector<std::string_view> StringSplit(std::string_view source, std::string_view split);
+    void CloseAllThreads();
+    bool ProcessAndParseReq(size_t& recvPos,
+                            size_t& recvLen,
+                            std::vector<uint8_t>& recvBuf,
+                            RequestST& reqST,
+                            HttpSocket& client);
 
     static const int32_t COUNT_SOCKET = 1;
     HttpSocket sockets_[COUNT_SOCKET]; // ipv4 and ipv6

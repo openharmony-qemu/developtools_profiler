@@ -19,16 +19,10 @@ ohos_source_set("parser") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "bytrace_parser/bytrace_event_parser.cpp",
-    "bytrace_parser/bytrace_event_parser.h",
     "bytrace_parser/bytrace_parser.cpp",
-    "bytrace_parser/bytrace_parser.h",
-    "common_types.h",
     "event_parser_base.cpp",
-    "event_parser_base.h",
     "print_event_parser.cpp",
-    "print_event_parser.h",
     "thread_state_flag.cpp",
-    "thread_state_flag.h",
   ]
   deps = [
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_reader",
@@ -56,24 +50,13 @@ ohos_source_set("parser") {
     "${SRC}/filter",
     "${SRC}",
     ".",
+    "htrace_pbreader_parser",
+    "../proto_reader/include",
+    "${THIRD_PARTY}/bounds_checking_function/include",
     "${THIRD_PARTY}/json/single_include/nlohmann",
   ]
 
-  include_dirs += [ "htrace_pbreader_parser" ]
-  include_dirs += [ "../proto_reader/include" ]
-
-  if (enable_ts_utest && !use_wasm) {
-    cflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
-    if (is_test) {
-      cflags += [ "-D IS_UT" ]
-    }
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
 }

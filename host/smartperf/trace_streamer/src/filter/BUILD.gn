@@ -60,19 +60,8 @@ ohos_source_set("filter") {
     "task_pool_filter.h",
   ]
 
-  if (enable_ts_utest && !use_wasm) {
-    cflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
-    if (is_test) {
-      cflags += [ "-D IS_UT" ]
-    }
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
   public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_reader" ]
   deps = []
@@ -88,7 +77,10 @@ ohos_source_set("filter") {
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
     "${THIRD_PARTY}/perf_include/musl",
+    "${THIRD_PARTY}/bounds_checking_function/include",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
     "../proto_reader/include",
     ".",
+    "${THIRD_PARTY}/musl",
   ]
 }

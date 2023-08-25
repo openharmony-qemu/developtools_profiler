@@ -57,7 +57,6 @@ public:
     void CreateCols(TableDesc& tableDesc, std::vector<ColumnInfo>& cols);
     bool IsTsOrDurCol(const std::string& name);
     bool DeduplicationForColumn(const std::string& name, std::vector<ColumnInfo>& cols);
-    void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei) override{};
     void Init(int32_t argc, const char* const* argv) override;
     std::unique_ptr<TableBase::Cursor> CreateCursor() override;
 

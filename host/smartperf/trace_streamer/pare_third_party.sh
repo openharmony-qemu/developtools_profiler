@@ -117,3 +117,9 @@ if [ ! -f "hiperf/BUILD.gn" ];then
         $sed -i '/namespace HiPerf {/avoid Report::PrepareConsole(){ return;}' hiperf/src/report.cpp
     fi
 fi
+
+if [ ! -f "bounds_checking_function/BUILD.gn" ];then
+    rm -rf bounds_checking_function
+    git clone git@gitee.com:openharmony/third_party_bounds_checking_function.git bounds_checking_function
+    $cp ../prebuilts/patch_bounds_checking_function/bounds_checking_functionbuild.gn bounds_checking_function/BUILD.gn
+fi

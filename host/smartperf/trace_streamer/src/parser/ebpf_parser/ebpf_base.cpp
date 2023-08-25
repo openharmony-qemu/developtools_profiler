@@ -97,7 +97,11 @@ DataIndex EbpfBase::GetSymbolNameIndexFromSymVaddr(const ElfEventFixedHeader* el
     }
     auto mangle = reinterpret_cast<const char*>(strTabAddr) + symbolStart;
     auto demangle = GetDemangleSymbolIndex(mangle);
-    return traceDataCache_->GetDataIndex(demangle);
+    auto index = traceDataCache_->GetDataIndex(demangle);
+    if (demangle != mangle) {
+        free(demangle);
+    }
+    return index;
 }
 void EbpfBase::UpdateFilePathIndexToPidAndIpMap(DataIndex filePathIndex, uint32_t pid, uint64_t ip)
 {
@@ -328,6 +332,9 @@ void EbpfBase::OfflineSymbolization(std::set<std::tuple<uint32_t, uint64_t>>& pi
         auto mangle = symbolTable->strTable.c_str() + symbolStart;
         auto demangle = GetDemangleSymbolIndex(mangle);
         symbolAndFilePathIndex.symbolIndex = traceDataCache_->GetDataIndex(demangle);
+        if (demangle != mangle) {
+            free(demangle);
+        }
         pidAndIpToSymbolAndFilePathIndex_.Insert(pid, ip, symbolAndFilePathIndex);
     }
     filePathIndexAndStValueToSymAddr_.Clear();

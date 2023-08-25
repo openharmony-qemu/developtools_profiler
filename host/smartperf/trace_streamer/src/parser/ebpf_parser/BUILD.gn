@@ -16,20 +16,16 @@ import("../../../build/ts.gni")
 ohos_source_set("ebpf_parser_src") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
   sources = [
     "bio_latency_data_parser.cpp",
-    "bio_latency_data_parser.h",
     "ebpf_base.cpp",
-    "ebpf_base.h",
     "ebpf_data_parser.cpp",
-    "ebpf_data_parser.h",
     "ebpf_data_reader.cpp",
-    "ebpf_data_reader.h",
-    "ebpf_stdtype.h",
     "file_system_data_parser.cpp",
-    "file_system_data_parser.h",
     "paged_memory_data_parser.cpp",
-    "paged_memory_data_parser.h",
   ]
   include_dirs = [
     ".",
@@ -43,9 +39,10 @@ ohos_source_set("ebpf_parser_src") {
     "../../trace_streamer",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
+    "${THIRD_PARTY}/bounds_checking_function/include",
   ]
   public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader" ]
-  if (is_win || is_macx) {
+  if (is_win || is_macx || is_mingw) {
     include_dirs += [
       "${THIRD_PARTY}/perf_include/linux",
       "${THIRD_PARTY}/perf_include/musl",
@@ -71,7 +68,7 @@ ohos_source_set("ebpf_parser_src") {
 group("ebpf_parser") {
   deps = [
     ":ebpf_parser_src",
-    "${THIRD_PARTY}/protobuf:protobuf",
-    "${THIRD_PARTY}/protobuf:protobuf_lite",
+    "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+    "${THIRD_PARTY}/protobuf:protobuf_static",
   ]
 }

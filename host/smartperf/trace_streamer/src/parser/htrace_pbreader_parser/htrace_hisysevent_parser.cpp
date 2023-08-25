@@ -18,7 +18,6 @@
 #include "htrace_hisysevent_parser.h"
 #include "htrace_parser.h"
 #include "process_filter.h"
-#include "stat_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {
 HtraceHisyseventParser::HtraceHisyseventParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
@@ -33,47 +32,6 @@ HtraceHisyseventParser::~HtraceHisyseventParser()
             static_cast<unsigned long long>(MaxTs()));
 }
 
-int32_t HtraceHisyseventParser::JGetData(json& jMessage,
-                                         JsonData& jData,
-                                         size_t& maxArraySize,
-                                         std::vector<size_t>& noArrayIndex,
-                                         std::vector<size_t>& arrayIndex)
-{
-    streamFilters_->statFilter_->IncreaseStat(TRACE_HISYSEVENT, STAT_EVENT_RECEIVED);
-    for (auto i = jMessage.begin(); i != jMessage.end(); i++) {
-        if (i.key() == "name_") {
-            if (find(eventsAccordingAppNames.begin(), eventsAccordingAppNames.end(), i.value()) ==
-                eventsAccordingAppNames.end()) {
-                streamFilters_->statFilter_->IncreaseStat(TRACE_HISYSEVENT, STAT_EVENT_NOTMATCH);
-                TS_LOGW("event source:%s not supported for hisysevent", std::string(i.value()).c_str());
-                return -1;
-            }
-            jData.eventSource = i.value();
-            continue;
-        }
-        if (i.key() == "time_") {
-            jData.timeStamp = i.value();
-            continue;
-        }
-        if (i.key() == "tag_" && i.value() != "PowerStats") {
-            streamFilters_->statFilter_->IncreaseStat(TRACE_HISYSEVENT, STAT_EVENT_DATA_INVALID);
-            return -1;
-        }
-        if (i.key() == "APPNAME") {
-            jData.appName.assign(i.value().begin(), i.value().end());
-        }
-        if (i.value().is_array()) {
-            maxArraySize = std::max(maxArraySize, i.value().size());
-            arrayIndex.push_back(jData.key.size());
-        } else {
-            noArrayIndex.push_back(jData.key.size());
-        }
-        jData.key.push_back(i.key());
-        jData.value.push_back(i.value());
-    }
-    return 0;
-}
-
 void HtraceHisyseventParser::NoArrayDataParse(JsonData jData,
                                               std::vector<size_t> noArrayIndex,
                                               DataIndex eventSourceIndex,
@@ -84,16 +42,7 @@ void HtraceHisyseventParser::NoArrayDataParse(JsonData jData,
         auto key = jData.key[*itor];
         streamFilters_->hiSysEventMeasureFilter_->GetOrCreateFilterId(eventSourceIndex);
         DataIndex keyIndex = traceDataCache_->GetDataIndex(key);
-        if (value.is_string()) {
-            std::string strValue = value;
-            DataIndex valueIndex = traceDataCache_->GetDataIndex(strValue);
-            streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(serial, jData.timeStamp, eventSourceIndex,
-                                                                     keyIndex, 1, 0, valueIndex);
-        } else {
-            double valueIndex = value;
-            streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(serial, jData.timeStamp, eventSourceIndex,
-                                                                     keyIndex, 0, valueIndex, 0);
-        }
+        AppendStringValue(value, serial, eventSourceIndex, keyIndex, jData.timeStamp);
     }
 }
 void HtraceHisyseventParser::ArrayDataParse(JsonData jData,
@@ -121,6 +70,23 @@ void HtraceHisyseventParser::ArrayDataParse(JsonData jData,
         }
     }
 }
+void HtraceHisyseventParser::AppendStringValue(nlohmann::json& value,
+                                               uint64_t serial,
+                                               DataIndex eventSourceIndex,
+                                               DataIndex keyIndex,
+                                               uint64_t timeStamp)
+{
+    if (value.is_string()) {
+        std::string strValue = value;
+        DataIndex valueIndex = traceDataCache_->GetDataIndex(strValue);
+        streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(serial, timeStamp, eventSourceIndex, keyIndex, 1, 0,
+                                                                 valueIndex);
+    } else {
+        double valueIndex = value;
+        streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(serial, timeStamp, eventSourceIndex, keyIndex, 0,
+                                                                 valueIndex, 0);
+    }
+}
 void HtraceHisyseventParser::CommonDataParser(JsonData jData, DataIndex eventSourceIndex, uint64_t serial)
 {
     for (int32_t j = 0; j < jData.key.size(); j++) {
@@ -128,16 +94,7 @@ void HtraceHisyseventParser::CommonDataParser(JsonData jData, DataIndex eventSou
         auto value = jData.value[j];
         DataIndex keyIndex = traceDataCache_->GetDataIndex(key);
         streamFilters_->hiSysEventMeasureFilter_->GetOrCreateFilterId(eventSourceIndex);
-        if (value.is_string()) {
-            std::string strValue = value;
-            DataIndex valueIndex = traceDataCache_->GetDataIndex(strValue);
-            streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(serial, jData.timeStamp, eventSourceIndex,
-                                                                     keyIndex, 1, 0, valueIndex);
-        } else {
-            double valueIndex = value;
-            streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(serial, jData.timeStamp, eventSourceIndex,
-                                                                     keyIndex, 0, valueIndex, 0);
-        }
+        AppendStringValue(value, serial, eventSourceIndex, keyIndex, jData.timeStamp);
     }
 }
 void HtraceHisyseventParser::Finish()
@@ -179,7 +136,8 @@ void HtraceHisyseventParser::Parse(ProtoReader::HisyseventInfo_Reader* tracePack
         JsonData jData;
         std::vector<size_t> noArrayIndex = {};
         std::vector<size_t> arrayIndex = {};
-        if (JGetData(jMessage, jData, maxArraySize, noArrayIndex, arrayIndex) < 0) {
+        if (!streamFilters_->hiSysEventMeasureFilter_->JGetData(jMessage, jData, maxArraySize, noArrayIndex,
+                                                                arrayIndex)) {
             continue;
         }
         uint64_t serial = hisyseventLine.id();

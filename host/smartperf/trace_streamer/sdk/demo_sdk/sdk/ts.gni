@@ -1,0 +1,50 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+OHOS_PROTO_DIR = ""
+
+if (target_os == "linux" || target_os == "macx" || target_os == "windows") {
+  OHOS_FTRACE_PROTO_DIR = "//src/multi_platform"
+  OHOS_MEMORY_PROTO_DIR = "//src/multi_platform"
+  OHOS_HILOG_PROTO_DIR = "//src/multi_platform"
+  OHOS_NATIVE_HOOK_PROTO_DIR = "//src/multi_platform"
+  OHOS_HIDUMP_PROTO_DIR = "//src/multi_platform"
+  OHOS_SERVICE_PROTO_DIR = "//src/multi_platform"
+  OHOS_PROTO_GEN = "//third_party/protogen"
+
+  # kernel_version = "5.10.79_aarch64"
+  kernel_version = "."
+  if (target == "test") {
+    enable_ts_utest = true
+  } else {
+    enable_ts_utest = false
+  }
+  is_openharmony = false
+} else {
+  enable_ts_utest = true
+  use_wasm = false
+  kernel_version = "."
+  is_fuzz = false
+  target = "trace_streamer"
+  is_openharmony = true
+  OHOS_FTRACE_PROTO_DIR = "//developtools/profiler/protos/types/plugins/ftrace_data/${kernel_version}"
+  OHOS_MEMORY_PROTO_DIR =
+      "//developtools/profiler/protos/types/plugins/memory_data"
+  OHOS_HILOG_PROTO_DIR =
+      "//developtools/profiler/protos/types/plugins/hilog_data"
+  OHOS_NATIVE_HOOK_PROTO_DIR =
+      "//developtools/profiler/protos/types/plugins/native_hook"
+  OHOS_HIDUMP_PROTO_DIR =
+      "//developtools/profiler/protos/types/plugins/hidump_data"
+  OHOS_SERVICE_PROTO_DIR = "//developtools/profiler/protos/services"
+  OHOS_PROTO_GEN = "//out/ohos-arm-release/gen/cpp/developtools/profiler/protos"
+}

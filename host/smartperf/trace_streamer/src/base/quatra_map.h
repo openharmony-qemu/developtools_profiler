@@ -49,34 +49,10 @@ public:
             return invalidValue_;
         }
     }
-    void Erase(T1 t1)
-    {
-        auto streamIdHookidMap = internalMap_.find(t1);
-        if (streamIdHookidMap != internalMap_.end()) {
-            internalMap_.erase(streamIdHookidMap);
-        }
-    }
-    void Erase(T1 t1, T2 t2)
-    {
-        auto streamIdHookidMap = internalMap_.find(t1);
-        if (streamIdHookidMap != internalMap_.end()) {
-            (*streamIdHookidMap).second.Erase(t2);
-        }
-    }
-    void Erase(T1 t1, T2 t2, T3 t3)
-    {
-        auto streamIdHookidMap = internalMap_.find(t1);
-        if (streamIdHookidMap != internalMap_.end()) {
-            (*streamIdHookidMap).second.Erase(t2, t3);
-        }
-    }
-    void Erase(T1 t1, T2 t2, T3 t3, T4 t4)
-    {
-        auto streamIdHookidMap = internalMap_.find(t1);
-        if (streamIdHookidMap != internalMap_.end()) {
-            (*streamIdHookidMap).second.Erase(t2, t3, t4);
-        }
-    }
+    MAP_ERASE_WITH_SINGLE_PARME(T1)
+    MAP_ERASE_WITH_DOUBLE_PARME(T1, T2)
+    MAP_ERASE_WITH_TRIPLE_PARME(T1, T2, T3)
+    MAP_ERASE_WITH_QUATRA_PARME(T1, T2, T3, T4)
     void Clear()
     {
         internalMap_.clear();

@@ -22,12 +22,26 @@
 
 #include "double_map.h"
 #include "filter_base.h"
+#include "json.hpp"
 #include "trace_data_cache.h"
 #include "trace_streamer_filters.h"
 #include "triple_map.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
+
+using json = nlohmann::json;
+typedef struct {
+    std::string eventSource;
+    uint64_t timeStamp;
+    std::vector<std::string> appName;
+    std::vector<std::string> appVersions;
+    std::vector<std::string> key;
+    std::vector<json> value;
+} JsonData;
+
+enum ErrorCode { ERROR_CODE_EXIT = -2, ERROR_CODE_NODATA = -1 };
+
 class HiSysEventMeasureFilter : private FilterBase {
 public:
     HiSysEventMeasureFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter);
@@ -65,6 +79,11 @@ public:
                         int32_t accessibility,
                         int32_t recording,
                         int32_t streamAll);
+    bool JGetData(const json& jMessage,
+                  JsonData& jData,
+                  size_t& maxArraySize,
+                  std::vector<size_t>& noArrayIndex,
+                  std::vector<size_t>& arrayIndex);
     void Clear();
 
 private:
@@ -72,6 +91,41 @@ private:
     DoubleMap<DataIndex, DataIndex, DataIndex> appKey_;
     DoubleMap<DataIndex, DataIndex, DataIndex> appName_;
     std::map<DataIndex, DataIndex> eventSource_;
+    std::vector<std::string> eventsAccordingAppNames_ = {"POWER_IDE_BATTERY",
+                                                         "POWER_IDE_CPU",
+                                                         "POWER_IDE_LOCATION",
+                                                         "POWER_IDE_GPU",
+                                                         "POWER_IDE_DISPLAY",
+                                                         "POWER_IDE_CAMERA",
+                                                         "POWER_IDE_BLUETOOTH",
+                                                         "POWER_IDE_FLASHLIGHT",
+                                                         "POWER_IDE_AUDIO",
+                                                         "POWER_IDE_WIFISCAN",
+                                                         "BRIGHTNESS_NIT",
+                                                         "SIGNAL_LEVEL",
+                                                         "WIFI_EVENT_RECEIVED",
+                                                         "AUDIO_STREAM_CHANGE",
+                                                         "AUDIO_VOLUME_CHANGE",
+                                                         "WIFI_STATE",
+                                                         "BLUETOOTH_BR_SWITCH_STATE",
+                                                         "LOCATION_SWITCH_STATE",
+                                                         "ENABLE_SENSOR",
+                                                         "DISABLE_SENSOR",
+                                                         "WORK_REMOVE",
+                                                         "WORK_START",
+                                                         "WORK_STOP",
+                                                         "WORK_ADD",
+                                                         "POWER_RUNNINGLOCK",
+                                                         "GNSS_STATE",
+                                                         "ANOMALY_SCREEN_OFF_ENERGY",
+                                                         "ANOMALY_ALARM_WAKEUP",
+                                                         "ANOMALY_KERNEL_WAKELOCK",
+                                                         "ANOMALY_RUNNINGLOCK",
+                                                         "ANORMALY_APP_ENERGY",
+                                                         "ANOMALY_GNSS_ENERGY",
+                                                         "ANOMALY_CPU_HIGH_FREQUENCY",
+                                                         "ANOMALY_CPU_ENERGY",
+                                                         "ANOMALY_WAKEUP"};
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -46,7 +46,8 @@ public:
     void Clear();
 
 private:
-    void DealEvent(ProtoReader::FtraceEvent_Reader* event, ProtoReader::FtraceEvent_CommonFileds_Reader* comonFields);
+    void DealEvent(const ProtoReader::FtraceEvent_Reader& event,
+                   const ProtoReader::FtraceEvent_CommonFileds_Reader& comonFields);
     bool BinderTractionEvent(const ProtoReader::DataArea& event) const;
     bool BinderTractionReceivedEvent(const ProtoReader::DataArea& event) const;
     bool BinderTractionAllocBufEvent(const ProtoReader::DataArea& event) const;
@@ -121,8 +122,9 @@ private:
     uint64_t ftraceEndTime_ = 0;
     uint64_t ftraceOriginStartTime_ = std::numeric_limits<uint64_t>::max();
     uint64_t ftraceOriginEndTime_ = 0;
-    std::vector<std::unique_ptr<EventInfo>> eventList_ = {};
-    // std::vector<std::unique_ptr<ProtoReader::FtraceEvent_Reader>> eventList_ = {};
+    void ProtoReaderDealEvent(const ProtoReader::FtraceEvent_Reader& ftraceEvent,
+                              const std::vector<std::unique_ptr<EventInfo>>::iterator& itor);
+    std::vector<std::unique_ptr<EventInfo>> htraceEventList_ = {};
     const DataIndex signalGenerateId_ = traceDataCache_->GetDataIndex("signal_generate");
     const DataIndex signalDeliverId_ = traceDataCache_->GetDataIndex("signal_deliver");
     const DataIndex schedWakeupName_ = traceDataCache_->GetDataIndex("sched_wakeup");

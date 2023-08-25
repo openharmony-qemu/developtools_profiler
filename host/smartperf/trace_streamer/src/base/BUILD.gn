@@ -16,73 +16,32 @@ import("../../build/ts.gni")
 ohos_source_set("base") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
-  deps = [
-    ":base_parser",
-    ":base_table",
-    ":ibase",
-  ]
   public_deps = [ "sqlite_ext:sqliteext" ]
-  include_dirs = [ "../include" ]
+  include_dirs = [
+    "../include",
+    "//third_party/bounds_checking_function/include",
+  ]
   sources = [
     "clock_filter.cpp",
     "codec_cov.cpp",
     "file.cpp",
+    "filter_constraints.cpp",
+    "htrace_plugin_time_parser.cpp",
+    "index_map.cpp",
     "log.cpp",
     "parting_string.cpp",
     "string_help.cpp",
+    "ts_common.cpp",
   ]
-  if (enable_ts_utest && !use_wasm) {
-    cflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
+
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
 }
+
 ohos_source_set("string_help") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [ "string_help.cpp" ]
-}
-ohos_source_set("ibase") {
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  part_name = "${OHOS_PROFILER_PART_NAME}"
-  sources = [
-    "codec_cov.h",
-    "file.h",
-    "log.h",
-    "parting_string.h",
-    "string_to_numerical.h",
-    "ts_common.cpp",
-  ]
-  include_dirs = []
-  public_deps = []
-  deps = []
-  sources += [ "/usr/x86_64-w64-mingw32/include/windows.h" ]
-}
-ohos_source_set("base_parser") {
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  part_name = "${OHOS_PROFILER_PART_NAME}"
-  sources = [
-    "htrace_plugin_time_parser.cpp",
-    "htrace_plugin_time_parser.h",
-  ]
-  include_dirs = []
-  public_deps = []
-  deps = []
-}
-ohos_source_set("base_table") {
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  part_name = "${OHOS_PROFILER_PART_NAME}"
-  sources = [
-    "filter_constraints.cpp",
-    "index_map.cpp",
-  ]
-  include_dirs = [ "${THIRD_PARTY}/sqlite/include" ]
-  public_deps = []
-  deps = []
+  include_dirs = [ "//third_party/bounds_checking_function/include" ]
 }

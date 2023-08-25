@@ -37,5 +37,22 @@ namespace SysTuning {
 namespace TraceStreamer {
 TraceStreamerFilters::TraceStreamerFilters() = default;
 TraceStreamerFilters::~TraceStreamerFilters() = default;
+void TraceStreamerFilters::FilterClear()
+{
+    binderFilter_->Clear();
+    sliceFilter_->Clear();
+    cpuFilter_->Clear();
+    irqFilter_->Clear();
+    cpuMeasureFilter_->Clear();
+    threadMeasureFilter_->Clear();
+    threadFilter_->Clear();
+    processMeasureFilter_->Clear();
+    processFilterFilter_->Clear();
+    clockEnableFilter_->Clear();
+    clockDisableFilter_->Clear();
+    clkRateFilter_->Clear();
+    clkDisableFilter_->Clear();
+    binderFilter_->Clear();
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

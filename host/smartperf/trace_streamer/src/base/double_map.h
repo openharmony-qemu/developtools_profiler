@@ -17,6 +17,7 @@
 #define SRC_TRACE_BASE_DOUBLEMAP_H
 
 #include <map>
+#include "base_map.h"
 
 template <class T1, class T2, class T3>
 class DoubleMap {
@@ -66,23 +67,8 @@ public:
         }
         return nullptr;
     }
-    void Erase(T1 t1)
-    {
-        auto streamIdHookidMap = internalMap_.find(t1);
-        if (streamIdHookidMap != internalMap_.end()) {
-            internalMap_.erase(streamIdHookidMap);
-        }
-    }
-    void Erase(T1 t1, T2 t2)
-    {
-        auto streamIdHookidMap = internalMap_.find(t1);
-        if (streamIdHookidMap != internalMap_.end()) {
-            auto hookId = (*streamIdHookidMap).second.find(t2);
-            if (hookId != (*streamIdHookidMap).second.end()) {
-                (*streamIdHookidMap).second.erase(hookId);
-            }
-        }
-    }
+    MAP_ERASE_WITH_SINGLE_PARME(T1)
+    DOUBLE_MAP_ERASE_WITH_DOUBLE_PARME(T1, T2)
     bool Empty()
     {
         return internalMap_.size() == 0 ? true : false;

@@ -19,20 +19,14 @@ ohos_source_set("ebpf_tables") {
   part_name = "smartperf_host"
   sources = [
     "bio_latency_sample_table.cpp",
-    "bio_latency_sample_table.h",
     "ebpf_callstack_table.cpp",
-    "ebpf_callstack_table.h",
     "file_system_sample_table.cpp",
-    "file_system_sample_table.h",
   ]
   if (with_ebpf_help_table) {
     sources += [
       "ebpf_elf_symbol_table.cpp",
-      "ebpf_elf_symbol_table.h",
       "ebpf_elf_table.cpp",
-      "ebpf_elf_table.h",
       "ebpf_process_maps_table.cpp",
-      "ebpf_process_maps_table.h",
     ]
   }
   include_dirs = [
@@ -44,20 +38,10 @@ ohos_source_set("ebpf_tables") {
     "${SRC}/include",
     "${SRC}",
     "${THIRD_PARTY}/protobuf/src",
+    "${THIRD_PARTY}/bounds_checking_function/include",
   ]
 
-  if (enable_ts_utest && !use_wasm) {
-    cflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
-    if (is_test) {
-      cflags += [ "-D IS_UT" ]
-    }
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
 }

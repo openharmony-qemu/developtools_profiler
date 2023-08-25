@@ -14,6 +14,7 @@
  */
 #include "htrace_event_parser.h"
 #include <string>
+#include <cinttypes>
 #include "app_start_filter.h"
 #include "binder_filter.h"
 #include "binder.pbreader.h"
@@ -164,7 +165,7 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
                 lastOverwrite_ = msg.overwrite();
             }
             if (lastOverwrite_ != msg.overwrite()) {
-                TS_LOGW("lost events:%lu", msg.overwrite() - lastOverwrite_);
+                TS_LOGW("lost events:%" PRIu64 "", msg.overwrite() - lastOverwrite_);
                 lastOverwrite_ = msg.overwrite();
             }
             streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_OTHER, STAT_EVENT_DATA_LOST);
@@ -186,131 +187,130 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
             ftraceEndTime_ = std::max(ftraceEndTime_, eventTimeStamp_);
             traceDataCache_->UpdateTraceTime(eventTimeStamp_);
             ProtoReader::BytesView commonField;
-            eventList_.push_back(
+            htraceEventList_.push_back(
                 std::make_unique<EventInfo>(eventTimeStamp_, eventCpu_, tracePacket.seg, i->ToBytes()));
             FilterAllEventsReader();
         }
     }
 }
-void HtraceEventParser::DealEvent(ProtoReader::FtraceEvent_Reader* event,
-                                  ProtoReader::FtraceEvent_CommonFileds_Reader* comonFields)
+void HtraceEventParser::DealEvent(const ProtoReader::FtraceEvent_Reader& event,
+                                  const ProtoReader::FtraceEvent_CommonFileds_Reader& comonFields)
 {
-    if (comonFields->pid() != INVALID_INT32) {
-        streamFilters_->processFilter_->UpdateOrCreateThreadWithPidAndName(comonFields->pid(), event->tgid(),
-                                                                           event->comm().ToStdString());
+    if (comonFields.pid() != INVALID_INT32) {
+        streamFilters_->processFilter_->UpdateOrCreateThreadWithPidAndName(comonFields.pid(), event.tgid(),
+                                                                           event.comm().ToStdString());
     }
-    if (event->has_sched_switch_format()) {
+    if (event.has_sched_switch_format()) {
         InvokeFunc(TRACE_EVENT_SCHED_SWITCH,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedSwitchFormatDataAreaNumber>());
-    } else if (event->has_wakeup_format()) {
-        InvokeFunc(TRACE_EVENT_SCHED_WAKEUP, event->at<ProtoReader::FtraceEvent_Reader::kWakeupFormatDataAreaNumber>());
-    } else if (event->has_binder_alloc_lru_end_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedSwitchFormatDataAreaNumber>());
+    } else if (event.has_wakeup_format()) {
+        InvokeFunc(TRACE_EVENT_SCHED_WAKEUP, event.at<ProtoReader::FtraceEvent_Reader::kWakeupFormatDataAreaNumber>());
+    } else if (event.has_binder_alloc_lru_end_format()) {
         InvokeFunc(TRACE_EVENT_SCHED_SWITCH,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderAllocLruEndFormatDataAreaNumber>());
-    } else if (event->has_task_rename_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderAllocLruEndFormatDataAreaNumber>());
+    } else if (event.has_task_rename_format()) {
         InvokeFunc(TRACE_EVENT_TASK_RENAME,
-                   event->at<ProtoReader::FtraceEvent_Reader::kTaskRenameFormatDataAreaNumber>());
-    } else if (event->has_sched_blocked_reason_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kTaskRenameFormatDataAreaNumber>());
+    } else if (event.has_sched_blocked_reason_format()) {
         InvokeFunc(TRACE_EVENT_SCHED_BLOCKED_REASON,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedBlockedReasonFormatDataAreaNumber>());
-    } else if (event->has_task_newtask_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedBlockedReasonFormatDataAreaNumber>());
+    } else if (event.has_task_newtask_format()) {
         InvokeFunc(TRACE_EVENT_TASK_NEWTASK,
-                   event->at<ProtoReader::FtraceEvent_Reader::kTaskNewtaskFormatDataAreaNumber>());
-    } else if (event->has_sched_wakeup_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kTaskNewtaskFormatDataAreaNumber>());
+    } else if (event.has_sched_wakeup_format()) {
         InvokeFunc(TRACE_EVENT_SCHED_WAKEUP,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedWakeupFormatDataAreaNumber>());
-    } else if (event->has_sched_wakeup_new_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedWakeupFormatDataAreaNumber>());
+    } else if (event.has_sched_wakeup_new_format()) {
         InvokeFunc(TRACE_EVENT_SCHED_WAKEUP,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedWakeupNewFormatDataAreaNumber>());
-    } else if (event->has_sched_process_exit_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedWakeupNewFormatDataAreaNumber>());
+    } else if (event.has_sched_process_exit_format()) {
         InvokeFunc(TRACE_EVENT_PROCESS_EXIT,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedProcessExitFormatDataAreaNumber>());
-    } else if (event->has_sched_process_free_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedProcessExitFormatDataAreaNumber>());
+    } else if (event.has_sched_process_free_format()) {
         InvokeFunc(TRACE_EVENT_PROCESS_FREE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedProcessFreeFormatDataAreaNumber>());
-    } else if (event->has_sched_waking_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedProcessFreeFormatDataAreaNumber>());
+    } else if (event.has_sched_waking_format()) {
         InvokeFunc(TRACE_EVENT_SCHED_WAKING,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSchedWakingFormatDataAreaNumber>());
-    } else if (event->has_cpu_idle_format()) {
-        InvokeFunc(TRACE_EVENT_CPU_IDLE, event->at<ProtoReader::FtraceEvent_Reader::kCpuIdleFormatDataAreaNumber>());
-    } else if (event->has_cpu_frequency_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSchedWakingFormatDataAreaNumber>());
+    } else if (event.has_cpu_idle_format()) {
+        InvokeFunc(TRACE_EVENT_CPU_IDLE, event.at<ProtoReader::FtraceEvent_Reader::kCpuIdleFormatDataAreaNumber>());
+    } else if (event.has_cpu_frequency_format()) {
         InvokeFunc(TRACE_EVENT_CPU_FREQUENCY,
-                   event->at<ProtoReader::FtraceEvent_Reader::kCpuFrequencyFormatDataAreaNumber>());
-    } else if (event->has_cpu_frequency_limits_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kCpuFrequencyFormatDataAreaNumber>());
+    } else if (event.has_cpu_frequency_limits_format()) {
         InvokeFunc(TRACE_EVENT_CPU_FREQUENCY_LIMITS,
-                   event->at<ProtoReader::FtraceEvent_Reader::kCpuFrequencyLimitsFormatDataAreaNumber>());
-    } else if (event->has_print_format()) {
-        InvokeFunc(TRACE_EVENT_PRINT, event->at<ProtoReader::FtraceEvent_Reader::kPrintFormatDataAreaNumber>());
-    } else if (event->has_suspend_resume_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kCpuFrequencyLimitsFormatDataAreaNumber>());
+    } else if (event.has_print_format()) {
+        InvokeFunc(TRACE_EVENT_PRINT, event.at<ProtoReader::FtraceEvent_Reader::kPrintFormatDataAreaNumber>());
+    } else if (event.has_suspend_resume_format()) {
         InvokeFunc(TRACE_EVENT_SUSPEND_RESUME,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSuspendResumeFormatDataAreaNumber>());
-    } else if (event->has_workqueue_execute_start_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSuspendResumeFormatDataAreaNumber>());
+    } else if (event.has_workqueue_execute_start_format()) {
         InvokeFunc(TRACE_EVENT_WORKQUEUE_EXECUTE_START,
-                   event->at<ProtoReader::FtraceEvent_Reader::kWorkqueueExecuteStartFormatDataAreaNumber>());
-    } else if (event->has_workqueue_execute_end_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kWorkqueueExecuteStartFormatDataAreaNumber>());
+    } else if (event.has_workqueue_execute_end_format()) {
         InvokeFunc(TRACE_EVENT_WORKQUEUE_EXECUTE_END,
-                   event->at<ProtoReader::FtraceEvent_Reader::kWorkqueueExecuteEndFormatDataAreaNumber>());
-    } else if (event->has_clock_disable_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kWorkqueueExecuteEndFormatDataAreaNumber>());
+    } else if (event.has_clock_disable_format()) {
         InvokeFunc(TRACE_EVENT_CLOCK_DISABLE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kClockDisableFormatDataAreaNumber>());
-    } else if (event->has_clock_enable_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kClockDisableFormatDataAreaNumber>());
+    } else if (event.has_clock_enable_format()) {
         InvokeFunc(TRACE_EVENT_CLOCK_ENABLE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kClockEnableFormatDataAreaNumber>());
-    } else if (event->has_clock_set_rate_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kClockEnableFormatDataAreaNumber>());
+    } else if (event.has_clock_set_rate_format()) {
         InvokeFunc(TRACE_EVENT_CLOCK_SET_RATE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kClockSetRateFormatDataAreaNumber>());
-    } else if (event->has_clk_disable_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kClockSetRateFormatDataAreaNumber>());
+    } else if (event.has_clk_disable_format()) {
         InvokeFunc(TRACE_EVENT_CLK_DISABLE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kClkDisableFormatDataAreaNumber>());
-    } else if (event->has_clk_enable_format()) {
-        InvokeFunc(TRACE_EVENT_CLK_ENABLE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kClkEnableFormatDataAreaNumber>());
-    } else if (event->has_clk_set_rate_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kClkDisableFormatDataAreaNumber>());
+    } else if (event.has_clk_enable_format()) {
+        InvokeFunc(TRACE_EVENT_CLK_ENABLE, event.at<ProtoReader::FtraceEvent_Reader::kClkEnableFormatDataAreaNumber>());
+    } else if (event.has_clk_set_rate_format()) {
         InvokeFunc(TRACE_EVENT_CLK_SET_RATE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kClkSetRateFormatDataAreaNumber>());
-    } else if (event->has_sys_enter_format()) {
-        InvokeFunc(TRACE_EVENT_SYS_ENTRY, event->at<ProtoReader::FtraceEvent_Reader::kSysEnterFormatDataAreaNumber>());
-    } else if (event->has_sys_exit_format()) {
-        InvokeFunc(TRACE_EVENT_SYS_EXIT, event->at<ProtoReader::FtraceEvent_Reader::kSysExitFormatDataAreaNumber>());
-    } else if (event->has_binder_transaction_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kClkSetRateFormatDataAreaNumber>());
+    } else if (event.has_sys_enter_format()) {
+        InvokeFunc(TRACE_EVENT_SYS_ENTRY, event.at<ProtoReader::FtraceEvent_Reader::kSysEnterFormatDataAreaNumber>());
+    } else if (event.has_sys_exit_format()) {
+        InvokeFunc(TRACE_EVENT_SYS_EXIT, event.at<ProtoReader::FtraceEvent_Reader::kSysExitFormatDataAreaNumber>());
+    } else if (event.has_binder_transaction_format()) {
         InvokeFunc(TRACE_EVENT_BINDER_TRANSACTION,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderTransactionFormatDataAreaNumber>());
-    } else if (event->has_binder_transaction_received_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderTransactionFormatDataAreaNumber>());
+    } else if (event.has_binder_transaction_received_format()) {
         InvokeFunc(TRACE_EVENT_BINDER_TRANSACTION_RECEIVED,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderTransactionReceivedFormatDataAreaNumber>());
-    } else if (event->has_binder_transaction_alloc_buf_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderTransactionReceivedFormatDataAreaNumber>());
+    } else if (event.has_binder_transaction_alloc_buf_format()) {
         InvokeFunc(TRACE_EVENT_BINDER_TRANSACTION_ALLOC_BUF,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderTransactionAllocBufFormatDataAreaNumber>());
-    } else if (event->has_binder_lock_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderTransactionAllocBufFormatDataAreaNumber>());
+    } else if (event.has_binder_lock_format()) {
         InvokeFunc(TRACE_EVENT_BINDER_TRANSACTION_LOCK,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderLockFormatDataAreaNumber>());
-    } else if (event->has_binder_unlock_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderLockFormatDataAreaNumber>());
+    } else if (event.has_binder_unlock_format()) {
         InvokeFunc(TRACE_EVENT_BINDER_TRANSACTION_UNLOCK,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderUnlockFormatDataAreaNumber>());
-    } else if (event->has_binder_locked_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderUnlockFormatDataAreaNumber>());
+    } else if (event.has_binder_locked_format()) {
         InvokeFunc(TRACE_EVENT_BINDER_TRANSACTION_LOCKED,
-                   event->at<ProtoReader::FtraceEvent_Reader::kBinderLockedFormatDataAreaNumber>());
-    } else if (event->has_irq_handler_entry_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kBinderLockedFormatDataAreaNumber>());
+    } else if (event.has_irq_handler_entry_format()) {
         InvokeFunc(TRACE_EVENT_IRQ_HANDLER_ENTRY,
-                   event->at<ProtoReader::FtraceEvent_Reader::kIrqHandlerEntryFormatDataAreaNumber>());
-    } else if (event->has_irq_handler_exit_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kIrqHandlerEntryFormatDataAreaNumber>());
+    } else if (event.has_irq_handler_exit_format()) {
         InvokeFunc(TRACE_EVENT_IRQ_HANDLER_EXIT,
-                   event->at<ProtoReader::FtraceEvent_Reader::kIrqHandlerExitFormatDataAreaNumber>());
-    } else if (event->has_softirq_entry_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kIrqHandlerExitFormatDataAreaNumber>());
+    } else if (event.has_softirq_entry_format()) {
         InvokeFunc(TRACE_EVENT_SOFTIRQ_ENTRY,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSoftirqEntryFormatDataAreaNumber>());
-    } else if (event->has_softirq_exit_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSoftirqEntryFormatDataAreaNumber>());
+    } else if (event.has_softirq_exit_format()) {
         InvokeFunc(TRACE_EVENT_SOFTIRQ_EXIT,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSoftirqExitFormatDataAreaNumber>());
-    } else if (event->has_oom_score_adj_update_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSoftirqExitFormatDataAreaNumber>());
+    } else if (event.has_oom_score_adj_update_format()) {
         InvokeFunc(TRACE_EVENT_OOM_SCORE_ADJ_UPDATE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kOomScoreAdjUpdateFormatDataAreaNumber>());
-    } else if (event->has_signal_generate_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kOomScoreAdjUpdateFormatDataAreaNumber>());
+    } else if (event.has_signal_generate_format()) {
         InvokeFunc(TRACE_EVENT_SIGNAL_GENERATE,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSignalGenerateFormatDataAreaNumber>());
-    } else if (event->has_signal_deliver_format()) {
+                   event.at<ProtoReader::FtraceEvent_Reader::kSignalGenerateFormatDataAreaNumber>());
+    } else if (event.has_signal_deliver_format()) {
         InvokeFunc(TRACE_EVENT_SIGNAL_DELIVER,
-                   event->at<ProtoReader::FtraceEvent_Reader::kSignalDeliverFormatDataAreaNumber>());
+                   event.at<ProtoReader::FtraceEvent_Reader::kSignalDeliverFormatDataAreaNumber>());
     } else {
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_OTHER, STAT_EVENT_NOTSUPPORTED);
     }
@@ -787,20 +787,20 @@ void HtraceEventParser::FilterAllEventsReader()
     size_t maxBuffSize = 1000 * 1000;
     size_t maxQueue = 2;
 
-    if (eventList_.size() < maxBuffSize * maxQueue) {
+    if (htraceEventList_.size() < maxBuffSize * maxQueue) {
         return;
     }
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimeStamp_ < b->eventTimeStamp_;
     };
 #ifdef IS_WASM
-    std::sort(eventList_.begin(), eventList_.end(), cmp);
+    std::sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
 #else
-    std::stable_sort(eventList_.begin(), eventList_.end(), cmp);
+    std::stable_sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
 #endif
 
-    auto endOfList = eventList_.begin() + maxBuffSize;
-    for (auto itor = eventList_.begin(); itor != endOfList; ++itor) {
+    auto endOfList = htraceEventList_.begin() + maxBuffSize;
+    for (auto itor = htraceEventList_.begin(); itor != endOfList; ++itor) {
         EventInfo* event = itor->get();
         ProtoReader::FtraceEvent_Reader ftraceEvent(event->ftraceEventBytes_);
         eventTimeStamp_ = event->eventTimeStamp_;
@@ -813,23 +813,9 @@ void HtraceEventParser::FilterAllEventsReader()
             streamFilters_->processFilter_->GetOrCreateThreadWithPid(eventPid_, eventPid_);
         }
         comm_ = ftraceEvent.comm().ToStdString();
-
-        ProtoReader::FtraceEvent_CommonFileds_Reader comonFields(ftraceEvent.common_fields().data_,
-                                                                 ftraceEvent.common_fields().size_);
-        if (comonFields.pid() != INVALID_INT32) {
-            eventTid_ = comonFields.pid();
-            if (!tids_.count(eventTid_)) {
-                tids_.insert(eventTid_);
-            }
-            streamFilters_->processFilter_->UpdateOrCreateThread(eventTimeStamp_, eventTid_);
-        }
-        if (eventTid_ != INVALID_INT32 && eventPid_ != INVALID_INT32) {
-            streamFilters_->processFilter_->GetOrCreateThreadWithPid(eventTid_, eventPid_);
-        }
-        DealEvent(&ftraceEvent, &comonFields);
-        itor->reset();
+        ProtoReaderDealEvent(ftraceEvent, itor);
     }
-    eventList_.erase(eventList_.begin(), endOfList);
+    htraceEventList_.erase(htraceEventList_.begin(), endOfList);
 }
 void HtraceEventParser::FilterAllEvents()
 {
@@ -837,41 +823,27 @@ void HtraceEventParser::FilterAllEvents()
         return a->eventTimeStamp_ < b->eventTimeStamp_;
     };
 #ifdef IS_WASM
-    std::sort(eventList_.begin(), eventList_.end(), cmp);
+    std::sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
 #else
-    std::stable_sort(eventList_.begin(), eventList_.end(), cmp);
+    std::stable_sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
 #endif
     size_t maxBuffSize = 1000 * 1000;
 
-    while (eventList_.size()) {
-        int32_t size = std::min(maxBuffSize, eventList_.size());
-        auto endOfList = eventList_.begin() + size;
-        for (auto itor = eventList_.begin(); itor != endOfList; itor++) {
+    while (htraceEventList_.size()) {
+        int32_t size = std::min(maxBuffSize, htraceEventList_.size());
+        auto endOfList = htraceEventList_.begin() + size;
+        for (auto itor = htraceEventList_.begin(); itor != endOfList; itor++) {
             EventInfo* event = itor->get();
             ProtoReader::FtraceEvent_Reader ftraceEvent(event->ftraceEventBytes_);
             eventTimeStamp_ = event->eventTimeStamp_;
             eventCpu_ = event->eventCpu_;
             eventPid_ = ftraceEvent.tgid();
             comm_ = ftraceEvent.comm().ToStdString();
-
-            ProtoReader::FtraceEvent_CommonFileds_Reader comonFields(ftraceEvent.common_fields().data_,
-                                                                     ftraceEvent.common_fields().size_);
-            if (comonFields.pid() != INVALID_INT32) {
-                eventTid_ = comonFields.pid();
-                if (!tids_.count(eventTid_)) {
-                    tids_.insert(eventTid_);
-                }
-                streamFilters_->processFilter_->UpdateOrCreateThread(eventTimeStamp_, eventTid_);
-            }
-            if (eventTid_ != INVALID_INT32 && eventPid_ != INVALID_INT32) {
-                streamFilters_->processFilter_->GetOrCreateThreadWithPid(eventTid_, eventPid_);
-            }
-            DealEvent(&ftraceEvent, &comonFields);
-            itor->reset();
+            ProtoReaderDealEvent(ftraceEvent, itor);
         }
-        eventList_.erase(eventList_.begin(), endOfList);
+        htraceEventList_.erase(htraceEventList_.begin(), endOfList);
     }
-    eventList_.clear();
+    htraceEventList_.clear();
     streamFilters_->cpuFilter_->Finish();
     traceDataCache_->dataDict_.Finish();
     traceDataCache_->UpdataZeroThreadInfo();
@@ -879,23 +851,30 @@ void HtraceEventParser::FilterAllEvents()
         streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
     }
 }
+
+void HtraceEventParser::ProtoReaderDealEvent(const ProtoReader::FtraceEvent_Reader& ftraceEvent,
+                                             const std::vector<std::unique_ptr<EventInfo>>::iterator& itor)
+{
+    ProtoReader::FtraceEvent_CommonFileds_Reader comonFields(ftraceEvent.common_fields().data_,
+                                                             ftraceEvent.common_fields().size_);
+    if (comonFields.pid() != INVALID_INT32) {
+        eventTid_ = comonFields.pid();
+        if (!tids_.count(eventTid_)) {
+            tids_.insert(eventTid_);
+        }
+        streamFilters_->processFilter_->UpdateOrCreateThread(eventTimeStamp_, eventTid_);
+    }
+    if (eventTid_ != INVALID_INT32 && eventPid_ != INVALID_INT32) {
+        streamFilters_->processFilter_->GetOrCreateThreadWithPid(eventTid_, eventPid_);
+    }
+    DealEvent(ftraceEvent, comonFields);
+    itor->reset();
+}
+
 void HtraceEventParser::Clear()
 {
-    streamFilters_->binderFilter_->Clear();
-    streamFilters_->sliceFilter_->Clear();
-    streamFilters_->cpuFilter_->Clear();
-    streamFilters_->irqFilter_->Clear();
-    streamFilters_->cpuMeasureFilter_->Clear();
-    streamFilters_->threadMeasureFilter_->Clear();
-    streamFilters_->threadFilter_->Clear();
-    streamFilters_->processMeasureFilter_->Clear();
-    streamFilters_->processFilterFilter_->Clear();
+    const_cast<TraceStreamerFilters*>(streamFilters_)->FilterClear();
     streamFilters_->symbolsFilter_->Clear();
-    streamFilters_->clockEnableFilter_->Clear();
-    streamFilters_->clockDisableFilter_->Clear();
-    streamFilters_->clkRateFilter_->Clear();
-    streamFilters_->clkDisableFilter_->Clear();
-    streamFilters_->binderFilter_->Clear();
     streamFilters_->sysEventMemMeasureFilter_->Clear();
     streamFilters_->sysEventVMemMeasureFilter_->Clear();
     printEventParser_.Finish();

@@ -71,16 +71,19 @@ bool PerfDataParser::LoadPerfData()
     int32_t fd(base::OpenFile(tmpPerfData_, O_CREAT | O_RDWR, TS_PERMISSION_RW));
     if (!fd) {
         fprintf(stdout, "Failed to create file: %s", tmpPerfData_.c_str());
+        buffer_.reset();
         return false;
     }
     (void)ftruncate(fd, 0);
     if (bufferSize_ != (size_t)write(fd, buffer_.get(), bufferSize_)) {
         close(fd);
+        buffer_.reset();
         return false;
     }
+    close(fd);
     recordDataReader_ = PerfFileReader::Instance(tmpPerfData_);
     report_ = std::make_unique<Report>();
-    buffer_.release();
+    buffer_.reset();
     if (recordDataReader_ == nullptr) {
         return false;
     }

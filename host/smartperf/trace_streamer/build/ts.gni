@@ -22,6 +22,7 @@ if (is_independent_compile) {
   PERF_DIR = "//third_party"
   clang_x64_folder = "."
   enable_ts_utest = target == "test"
+  TS_DIR = "//."
 } else {
   PERF_DIR = "//developtools"
   with_ebpf_help_table = false
@@ -36,6 +37,7 @@ if (is_independent_compile) {
   use_wasm = false
   enable_ts_utest = false
   is_fuzz = false
+  TS_DIR = "//developtools/smartperf_host/trace_streamer"
 }
 
 script_executable = "/usr/bin/env"

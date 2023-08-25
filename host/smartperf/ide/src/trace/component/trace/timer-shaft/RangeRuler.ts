@@ -951,10 +951,10 @@ export class RangeRuler extends Graph {
           count2++;
         }
       }
+      if (count2 >= 10) {
+        return;
+      }
       if (totalX <= FIT_TOTALX_MIN) {
-        if (count2 >= 10) {
-          return;
-        }
         this.pressFrameIdW = requestAnimationFrame(animW);
         this.fillX();
         this.range.refresh = true;

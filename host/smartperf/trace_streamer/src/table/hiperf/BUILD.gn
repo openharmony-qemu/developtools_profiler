@@ -39,20 +39,10 @@ ohos_source_set("hiperf_tables") {
     "${SRC}/include",
     "${SRC}",
     "${THIRD_PARTY}/protobuf/src",
+    "${THIRD_PARTY}/bounds_checking_function/include",
   ]
 
-  if (enable_ts_utest && !use_wasm) {
-    cflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
-    if (is_test) {
-      cflags += [ "-D IS_UT" ]
-    }
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
 }

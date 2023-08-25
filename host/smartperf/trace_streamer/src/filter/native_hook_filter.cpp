@@ -16,6 +16,7 @@
 #include "native_hook_filter.h"
 #include "native_hook_config.pbreader.h"
 #include <cstddef>
+#include <cinttypes>
 namespace SysTuning {
 namespace TraceStreamer {
 NativeHookFilter::NativeHookFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
@@ -126,6 +127,9 @@ void NativeHookFilter::CompressStackAndFrames(ProtoReader::RepeatedDataAreaItera
         if (!frameHashToFrameInfoMap_.count(frameHash)) {
             // the frame compression is completed and the frame is parsed.
             auto frameInfo = ParseFrame(itor.GetDataArea());
+            if (!frameInfo) {
+                continue;
+            }
             frameHashToFrameInfoMap_.emplace(std::make_pair(frameHash, std::move(frameInfo)));
         }
         framesHash.emplace_back(frameHash);
@@ -701,7 +705,7 @@ void NativeHookFilter::GetNativeHookFrameVaddrs()
     vaddrs_.clear();
     auto size = traceDataCache_->GetNativeHookFrameData()->Size();
     // Traverse every piece of native_hook frame data
-    for (auto i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         auto symbolOffset = traceDataCache_->GetNativeHookFrameData()->SymbolOffsets()[i];
         // When the symbol offset is not 0, vaddr=offset+symbol offset
         if (symbolOffset) {
@@ -877,7 +881,7 @@ bool NativeHookFilter::GetIpsWitchNeedResymbolization(DataIndex filePathId, std:
     bool value = false;
     for (auto itor = ipToFrameInfo_.begin(); itor != ipToFrameInfo_.end(); itor++) {
         if (!itor->second) {
-            TS_LOGI("ip :%llu can not symbolization! FrameInfo is nullptr", itor->first);
+            TS_LOGI("ip :%" PRIu64 " can not symbolization! FrameInfo is nullptr", itor->first);
             continue;
         }
         if (itor->second->filePathId_ == filePathId) {
@@ -923,7 +927,7 @@ bool NativeHookFilter::NativeHookReloadElfSymbolTable(
         } else {
             filePathIdToImportSymbolTableMap_.emplace(std::make_pair(filePathIndex, elfSymbolTable));
         }
-        for (auto row = 0; row < size; row++) {
+        for (size_t row = 0; row < size; row++) {
             if (filePathIndexs[row] != filePathIndex) {
                 continue;
             }

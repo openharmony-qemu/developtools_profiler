@@ -49,6 +49,10 @@ ohos_source_set("ts_sqlite") {
     "-DSQLITE_TEMP_STORE=3",
     "-DSQLITE_OMIT_LOAD_EXTENSION",
   ]
+
+  if (is_mingw) {
+    include_dirs += [ "${THIRD_PARTY}/libbpf/include/uapi" ]
+  }
 }
 
 trace_streamer_include = [
@@ -69,18 +73,20 @@ trace_streamer_include = [
   "parser/htrace_pbreader_parser/htrace_event_parser",
   "parser/htrace_pbreader_parser/htrace_cpu_parser",
   "parser/hiperf_parser",
+  "${THIRD_PARTY}/bounds_checking_function/include",
   "${THIRD_PARTY}/sqlite/include",
   "${THIRD_PARTY}/json/single_include/nlohmann",
   "${THIRD_PARTY}/protobuf/src",
-  "${THIRD_PARTY}/hiperf/include",
-  "${THIRD_PARTY}/hiperf/include/nonlinux",
-  "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
+  "${PERF_DIR}/hiperf/include",
+  "${PERF_DIR}/hiperf/include/nonlinux",
+  "${PERF_DIR}/hiperf/include/nonlinux/linux",
   "${THIRD_PARTY}/perf_include/musl",
   "${THIRD_PARTY}/musl",
   "${THIRD_PARTY}/libunwind/include",
   "${THIRD_PARTY}/libunwind/src",
   "${THIRD_PARTY}/perf_include/libbpf",
   "${THIRD_PARTY}/googletest/googletest/include",
+  "//commonlibrary/c_utils/base/include",
 ]
 
 ohos_source_set("trace_streamer_source") {
@@ -117,23 +123,12 @@ ohos_source_set("trace_streamer_source") {
     include_dirs += [ "../prebuilts/emsdk/emsdk/emscripten/system/include" ]
   }
 
-  cflags = [ "-D target_cpu_${target_cpu}" ]
-  if (!use_wasm && !is_win && !is_macx && !is_test) {
-    cflags += [ "-D HAVE_LIBUNWIND" ]
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
-  if (enable_ts_utest && !use_wasm) {
-    cflags += [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
-    if (is_test) {
-      cflags += [ "-D IS_UT" ]
-    }
+  if (is_mingw) {
+    include_dirs += [ "${THIRD_PARTY}/libbpf/include/uapi" ]
+    cflags = [ "-includeMingW64Fix.h" ]
   }
 
   public_deps = [
@@ -160,6 +155,7 @@ ohos_source_set("trace_streamer_source") {
     "proto_reader:proto_reader",
     "table:table",
     "trace_data:trace_data",
+    "//third_party/bounds_checking_function:libsec_static",
   ]
 }
 

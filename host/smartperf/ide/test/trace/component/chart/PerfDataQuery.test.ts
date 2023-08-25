@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,11 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef SRC_TRACE_BASE_SECUREC_H
-#define SRC_TRACE_BASE_SECUREC_H
 
-#include <cstdint>
-#include <sys/types.h>
-#define EOK 0
-#include "string_help.h"
-#endif // SRC_TRACE_BASE_SECUREC_H
+//@ts-ignore
+import { perfDataQuery } from '../../../../dist/trace/component/chart/PerfDataQuery.js';
+
+jest.mock('../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {}
+});
+
+describe('perfDataQuery Test', () => {
+  it('perfDataQueryTest01 ', function () {
+    expect(perfDataQuery.initPerfFiles).not.toBeUndefined();
+  });
+});

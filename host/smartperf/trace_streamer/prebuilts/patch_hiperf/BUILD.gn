@@ -18,6 +18,7 @@ ohos_source_set("elf") {
   part_name = "smartperf_host"
   configs -= [ trace_cfg_path ]
   configs += [ "../../gn:hiperf_trace_cfg" ]
+  cflags = [ "-D is_mingw=${is_mingw}" ]
   sources = [
     "include/elf_parser.h",
     "src/elf_file.cpp",
@@ -32,6 +33,7 @@ ohos_source_set("elf") {
     "include/nonlinux/linux",
     "include/nonlinux",
     "${THIRD_PARTY}/perf_include/musl",
+    "${THIRD_PARTY}/bounds_checking_function/include",
     "${SRC}/../prebuilts/emsdk/node/16.20.0_64bit/include/node",
   ]
 }
@@ -72,6 +74,7 @@ ohos_source_set("hiperf_src") {
     "../../src/trace_streamer",
     "include/nonlinux",
     "include/nonlinux/linux",
+    "${THIRD_PARTY}/bounds_checking_function/include",
   ]
   include_dirs += [
     "${THIRD_PARTY}/perf_include/libbpf",
@@ -86,7 +89,7 @@ group("hiperf_platform_common") {
   deps = [
     ":elf",
     ":hiperf_src",
-    "${THIRD_PARTY}/protobuf:protobuf",
-    "${THIRD_PARTY}/protobuf:protobuf_lite",
+    "${THIRD_PARTY}/protobuf:protobuf_static",
+    "${THIRD_PARTY}/protobuf:protobuf_lite_static",
   ]
 }

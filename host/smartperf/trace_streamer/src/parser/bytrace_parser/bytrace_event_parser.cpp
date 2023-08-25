@@ -751,20 +751,7 @@ void BytraceEventParser::BeginFilterEvents(EventInfo* event)
 
 void BytraceEventParser::Clear()
 {
-    streamFilters_->binderFilter_->Clear();
-    streamFilters_->sliceFilter_->Clear();
-    streamFilters_->cpuFilter_->Clear();
-    streamFilters_->irqFilter_->Clear();
-    streamFilters_->cpuMeasureFilter_->Clear();
-    streamFilters_->threadMeasureFilter_->Clear();
-    streamFilters_->threadFilter_->Clear();
-    streamFilters_->processMeasureFilter_->Clear();
-    streamFilters_->processFilterFilter_->Clear();
-    streamFilters_->clockEnableFilter_->Clear();
-    streamFilters_->clockDisableFilter_->Clear();
-    streamFilters_->clkRateFilter_->Clear();
-    streamFilters_->clkDisableFilter_->Clear();
-    streamFilters_->binderFilter_->Clear();
+    const_cast<TraceStreamerFilters*>(streamFilters_)->FilterClear();
     printEventParser_.Finish();
 }
 } // namespace TraceStreamer

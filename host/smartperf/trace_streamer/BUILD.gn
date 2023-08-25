@@ -36,3 +36,13 @@ group("trace_streamer") {
     deps = [ "src:trace_streamer" ]
   }
 }
+
+if (!is_independent_compile) {
+  group("trace_streamer_all") {
+    deps = [
+      "src:trace_streamer(//build/toolchain/linux:clang_x64)",
+      "src:trace_streamer(//build/toolchain/ohos:ohos_clang_arm64)",
+      "src:trace_streamer(//build/toolchain/mingw:mingw_x86_64)",
+    ]
+  }
+}

@@ -29,15 +29,15 @@ export class SpHelp extends BaseElement {
 
   set dark(dark: boolean) {
     if (dark) {
-      this.setAttribute('dark', '' + dark);
+      this.setAttribute('dark', `${  dark}`);
     } else {
       this.removeAttribute('dark');
     }
     this.appContent!.innerHTML =
       '<object type="text/html" data=' +
-      '/application/doc/quickstart_device_record.html?' +
-      dark +
-      ' width="100%" height="100%"></object>';
+      `/application/doc/quickstart_device_record.html?${ 
+        dark 
+      } width="100%" height="100%"></object>`;
   }
 
   initElements(): void {
@@ -68,9 +68,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_device_record.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_device_record.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -83,9 +83,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_web_record.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_web_record.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -98,9 +98,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_systemtrace.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_systemtrace.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -113,9 +113,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_native_memory.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_native_memory.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -128,9 +128,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_ability_monitor.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_ability_monitor.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -143,9 +143,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_hiperf.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_hiperf.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -158,9 +158,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_sql_metrics.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_sql_metrics.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -173,9 +173,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_filesystem.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_filesystem.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -188,9 +188,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_page_fault.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_page_fault.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -203,9 +203,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_bio.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_bio.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -218,9 +218,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_smaps.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_smaps.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -233,9 +233,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_hisystemevent.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_hisystemevent.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -248,9 +248,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_sdk.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_sdk.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -263,9 +263,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_Frametimeline.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_Frametimeline.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -278,9 +278,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_schedulinganalysis.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_schedulinganalysis.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -293,9 +293,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_Js_memory.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_Js_memory.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -308,9 +308,84 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_Import_so.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_Import_so.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
+            },
+          },
+          {
+            title: 'Animation的抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'animation',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_animation.html?${
+                  that.dark
+                } width="100%" height="100%"></object>`;
+            },
+          },
+          {
+            title: 'TaskPool抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'taskpool',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_taskpool.html?${
+                  that.dark
+                } width="100%" height="100%"></object>`;
+            },
+          },
+          {
+            title: 'Cpuprofiler抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'arkts',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_arkts.html?${
+                  that.dark
+                } width="100%" height="100%"></object>`;
+            },
+          },
+          {
+            title: 'App startup的抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'app_startup',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_app_startup.html?${
+                  that.dark
+                } width="100%" height="100%"></object>`;
+            },
+          },
+          {
+            title: '系统内存抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'memory_template',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_memory_template.html?${
+                  that.dark
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -323,9 +398,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_Application_operation_skills.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_Application_operation_skills.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
         ],
@@ -345,9 +420,9 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/des_tables.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/des_tables.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -356,9 +431,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/compile_trace_streamer.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/compile_trace_streamer.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -367,9 +442,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/des_stat.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/des_stat.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -378,9 +453,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/des_support_event.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/des_support_event.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -389,9 +464,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_trace_streamer.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_trace_streamer.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -400,9 +475,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/des_binder.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/des_binder.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
           {
@@ -411,9 +486,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/des_wakup.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/des_wakup.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
         ],
@@ -429,9 +504,9 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                '/application/doc/quickstart_smartperflinux_compile_guide.html?' +
-                that.dark +
-                ' width="100%" height="100%"></object>';
+                `/application/doc/quickstart_smartperflinux_compile_guide.html?${ 
+                  that.dark 
+                } width="100%" height="100%"></object>`;
             },
           },
         ],
@@ -462,16 +537,16 @@ export class SpHelp extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        .container {
+        .sp-help-container {
+            min-height: 100%;
             display: grid;
             grid-template-columns: 1fr;
             grid-template-rows:1fr;
             background-color: var(--dark-background5,#F6F6F6);
-            min-height: 100%;
         }
         :host{
-            display: block;
             width: 100%;
+            display: block;
             height: 100%;
             background-color: var(--dark-background5,#F6F6F6);
         }
@@ -497,7 +572,7 @@ export class SpHelp extends BaseElement {
         }
 
         </style>
-        <div class="container">
+        <div class="sp-help-container">
          <div class="body">
             <lit-main-menu id="main-menu" class="menugroup" data=''></lit-main-menu>
             <div id="app-content" class="content">

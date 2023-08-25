@@ -540,33 +540,33 @@ void HtraceParser::ParseJSMemoryConfig(HtraceDataSegment& dataSeg)
 int32_t HtraceParser::GetNextSegment()
 {
     int32_t head;
-    dataSegMux_.lock();
+    htraceDataSegMux_.lock();
     head = parseHead_;
-    HtraceDataSegment& seg = dataSegArray_[head];
-    if (seg.status.load() != TS_PARSE_STATUS_SEPRATED) {
+    HtraceDataSegment& htraceDataSegmentSeg = dataSegArray_[head];
+    if (htraceDataSegmentSeg.status.load() != TS_PARSE_STATUS_SEPRATED) {
         if (toExit_) {
             parserThreadCount_--;
             TS_LOGI("exiting parser, parserThread Count:%d\n", parserThreadCount_);
             TS_LOGD("seprateHead_x:\t%d, parseHead_:\t%d, filterHead_:\t%d status:%d\n", rawDataHead_, parseHead_,
-                    filterHead_, seg.status.load());
-            dataSegMux_.unlock();
+                    filterHead_, htraceDataSegmentSeg.status.load());
+            htraceDataSegMux_.unlock();
             if (!parserThreadCount_ && !filterThreadStarted_) {
                 exited_ = true;
             }
             return ERROR_CODE_EXIT;
         }
-        if (seg.status.load() == TS_PARSE_STATUS_PARSING) {
-            dataSegMux_.unlock();
+        if (htraceDataSegmentSeg.status.load() == TS_PARSE_STATUS_PARSING) {
+            htraceDataSegMux_.unlock();
             usleep(sleepDur_);
             return ERROR_CODE_NODATA;
         }
-        dataSegMux_.unlock();
+        htraceDataSegMux_.unlock();
         usleep(sleepDur_);
         return ERROR_CODE_NODATA;
     }
     parseHead_ = (parseHead_ + 1) % MAX_SEG_ARRAY_SIZE;
-    seg.status = TS_PARSE_STATUS_PARSING;
-    dataSegMux_.unlock();
+    htraceDataSegmentSeg.status = TS_PARSE_STATUS_PARSING;
+    htraceDataSegMux_.unlock();
     return head;
 }
 bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength)
@@ -695,7 +695,7 @@ bool HtraceParser::InitProfilerTraceFileHeader()
     }
     auto ret = memcpy_s(&profilerTraceFileHeader_, sizeof(profilerTraceFileHeader_), buffer, PACKET_HEADER_LENGTH);
     if (ret == -1 || profilerTraceFileHeader_.data.magic != ProfilerTraceFileHeader::HEADER_MAGIC) {
-        TS_LOGE("Get profiler trace file header failed! ret = %d, magic = %llx", ret,
+        TS_LOGE("Get profiler trace file header failed! ret = %d, magic = %" PRIx64 "", ret,
                 profilerTraceFileHeader_.data.magic);
         return false;
     }
@@ -703,7 +703,7 @@ bool HtraceParser::InitProfilerTraceFileHeader()
         TS_LOGE("Profiler Trace data is truncated!!!");
         return false;
     }
-    TS_LOGI("magic = %llx, length = %" PRIu64 ", dataType = %x, boottime = %" PRIu64 "",
+    TS_LOGI("magic = %" PRIx64 ", length = %" PRIu64 ", dataType = %x, boottime = %" PRIu64 "",
             profilerTraceFileHeader_.data.magic, profilerTraceFileHeader_.data.length,
             profilerTraceFileHeader_.data.dataType, profilerTraceFileHeader_.data.boottime);
 #if IS_WASM

@@ -16,6 +16,7 @@
 #include "process_filter.h"
 #include "stat_filter.h"
 #include "string_to_numerical.h"
+#include <cinttypes>
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -71,8 +72,8 @@ void PagedMemoryDataParser::ParsePagedMemoryEvent()
         auto newEndTs = streamFilters_->clockFilter_->ToPrimaryTraceTime(clockId_, endTs);
         timeParser_->UpdatePluginTimeRange(clockId_, endTs, newEndTs);
         if (newStartTs > newEndTs) {
-            TS_LOGE("paged memory startTs = %llu, endTs = %llu, newStartTs = %llu, newEndTs = %llu", startTs, endTs,
-                    newStartTs, newEndTs);
+            TS_LOGE("startTs = %" PRIu64 ", endTs = %" PRIu64 ", newStartTs = %" PRIu64 ", newEndTs = %" PRIu64 "",
+                    startTs, endTs, newStartTs, newEndTs);
             streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_EBPF_PAGED_MEMORY, STAT_EVENT_DATA_INVALID);
             return;
         }

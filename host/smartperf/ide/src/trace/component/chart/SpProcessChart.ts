@@ -508,23 +508,21 @@ export class SpProcessChart {
           let isIntersect = (a: any, b: any): boolean =>
             Math.max(a.startTs + a.dur, b.startTs + b.dur) - Math.min(a.startTs, b.startTs) < a.dur + b.dur;
           let depthArray: any = [];
-          let createDepth = (currentDepth: number, index: number): void => {
-            if (
-              depthArray[currentDepth] == undefined ||
-              !isIntersect(depthArray[currentDepth], asyncFunctions[index])
-            ) {
-              asyncFunctions[index].depth = currentDepth;
-              depthArray[currentDepth] = asyncFunctions[index];
-            } else {
-              createDepth(++currentDepth, index);
-            }
-          };
           asyncFunctions.forEach((it, i) => {
             if (it.dur == -1) {
               it.dur = (TraceRow.range?.endNS || 0) - it.startTs;
               it.flag = 'Did not end';
             }
-            createDepth(0, i);
+            let currentDepth = 0;
+            let index = i;
+            while (
+              depthArray[currentDepth] !== undefined &&
+              isIntersect(depthArray[currentDepth], asyncFunctions[index])
+            ) {
+              currentDepth++;
+            }
+            asyncFunctions[index].depth = currentDepth;
+            depthArray[currentDepth] = asyncFunctions[index];
           });
           let max = Math.max(...asyncFunctions.map((it) => it.depth || 0)) + 1;
           let maxHeight = max * 20;
