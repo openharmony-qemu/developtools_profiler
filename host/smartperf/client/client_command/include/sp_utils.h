@@ -99,6 +99,7 @@ long long GetCurTime();
  *
  */
 std::string GetTopPkgName();
+std::string GetRadar();
 std::map<std::string, std::string> GetDeviceInfo();
 std::map<std::string, std::string> GetCpuInfo();
 std::map<std::string, std::string> GetGpuInfo();

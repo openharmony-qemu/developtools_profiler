@@ -183,6 +183,13 @@ std::string SPUtils::GetTopPkgName()
     return topPkg;
 }
 
+std::string SPUtils::GetRadar()
+{
+    std::string cmd = "hisysevent -r -o PERFROMANCE -n APP_START";
+    std::string curRadar = "";
+    LoadCmd(cmd, curRadar);
+    return curRadar;
+}
 static std::string GetSplitOne(std::string cmd)
 {
     std::string result;
