@@ -171,7 +171,7 @@ export class TabPaneFileSystemDescTimeSlice extends BaseElement {
         :host{
             display: flex;
             flex-direction: column;
-            padding: 10px 10px 0 10px;
+            padding: 10px 10px 1px 10px;
         }
         .fs-slice-loading{
             bottom: 0;
@@ -211,7 +211,7 @@ export class TabPaneFileSystemDescTimeSlice extends BaseElement {
                             <lit-table-column class="fs-slice-column" width="600px" title="Backtrace" data-index="backtrace" key="backtrace" align="flex-start" >
                                 <template>
                                     <div>
-                                        <span>{{backtrace[0]}}</span>
+                                        <span class="fs-desc-time-backtrace-data-span">{{backtrace[0]}}</span>
                                         <span v-if="backtrace.length > 1">⬅</span>
                                         <span v-if="backtrace.length > 1"style="color: #565656"> {{backtrace[1]}}</span>
                                     </div>
@@ -219,7 +219,7 @@ export class TabPaneFileSystemDescTimeSlice extends BaseElement {
                             </lit-table-column>
                         </lit-table>
                     </div>
-                    <lit-slicer-track ></lit-slicer-track>
+                    <lit-slicer-track class="fs-desc-time-slice"></lit-slicer-track>
                     <lit-table id="tbr-filesystem-desc-time-slice" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
                         <lit-table-column class="fs-slice-column" width="60px" title="" data-index="type" key="type"  align="flex-start" >
                             <template>

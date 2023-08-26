@@ -40,9 +40,9 @@ export class TabPaneDmaSelectAbility extends BaseElement {
   connectedCallback(): void {
     super.connectedCallback();
     new ResizeObserver(() => {
-      if (this.parentElement?.clientHeight != 0) {
+      if (this.parentElement?.clientHeight !== 0) {
         // @ts-ignore
-        this.damClickTable?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 18 + 'px';
+        this.damClickTable?.shadowRoot?.querySelector('.table').style.height = (this.parentElement?.clientHeight - 18) + 'px';
         this.parentElement!.style.overflow = 'hidden';
         this.damClickTable?.reMeauseHeight();
       }
@@ -51,10 +51,10 @@ export class TabPaneDmaSelectAbility extends BaseElement {
 
   private init(): void {
     const thTable = this.tableThead!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const dmaSelectTblNodes = thTable!.querySelectorAll('div');
     if (this.tableThead!.hasAttribute('sort')) {
       this.tableThead!.removeAttribute('sort');
-      list.forEach((item) => {
+      dmaSelectTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });
@@ -77,10 +77,10 @@ export class TabPaneDmaSelectAbility extends BaseElement {
           }
           item.sizes = Utils.getBinaryByteWithUnit(item.size);
           item.timeStamp = ns2s(item.startNs);
-          this.damClickTable!.getItemTextColor = (item: Dma): any => {
-            if (item.flag === 1) {
+          this.damClickTable!.getItemTextColor = (dmaItem: Dma): any => {
+            if (dmaItem.flag === 1) {
               return '#d4b550';
-            } else if (item.flag === 2) {
+            } else if (dmaItem.flag === 2) {
               return '#f86b6b';
             } else {
               return '#000000';

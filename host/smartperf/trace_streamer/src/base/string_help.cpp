@@ -13,103 +13,16 @@
  * limitations under the License.
  */
 #include "string_help.h"
-#include <cstdio>
-#include <memory.h>
-#define UNUSED(expr)             \
-    do {                         \
-        static_cast<void>(expr); \
-    } while (0)
 
-#if !is_mingw
-int32_t memcpy_s(void* dest, uint32_t destSize, const void* src, size_t srcSize)
-{
-    if (srcSize > destSize || src == nullptr || dest == nullptr) {
-        return -1;
-    } else {
-        if (!memcpy(dest, src, srcSize)) {
-            printf("memcpy fail\n");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-int32_t sscanf_s(const char* buffer, const char* format, ...)
-{
-    va_list ap;
-    __builtin_va_start(ap, format);
-    int32_t ret = scanf(buffer, format, ap);
-    __builtin_va_end(ap);
-    return ret;
-}
-
-int32_t strncpy_s(char* strDest, size_t destMax, const char* strSrc, size_t count)
-{
-    (void)strncpy(strDest, strSrc, destMax);
-    return destMax;
-}
-#endif
-
-void* memset_s(void* dest, size_t destSize, int32_t ch, size_t n)
-{
-    UNUSED(destSize);
-    UNUSED(ch);
-    return memset(dest, 0, n);
-}
-
-int32_t snprintf_s(char* strDest, size_t destMax, size_t count, const char* format, ...)
-{
-    UNUSED(count);
-    int32_t ret;
-    va_list ap;
-    __builtin_va_start(ap, format);
-    ret = vsnprintf(strDest, destMax, format, ap);
-    __builtin_va_end(ap);
-    return ret;
-}
-
-int32_t sprintf_s(char* strDest, size_t destMax, const char* format, ...)
-{
-    va_list ap;
-    __builtin_va_start(ap, format);
-    int32_t ret = vsnprintf(strDest, destMax, format, ap);
-    __builtin_va_end(ap);
-    return ret;
-}
-
-const char* GetDemangleSymbolIndex(const char* mangled)
+char* GetDemangleSymbolIndex(const char* mangled)
 {
     int status = 0;
     auto demangle = abi::__cxa_demangle(mangled, nullptr, nullptr, &status);
     if (status) { // status != 0 failed
-        return mangled;
+        return const_cast<char*>(mangled);
     } else {
         return demangle;
     }
-}
-
-int GetProcessorNumFromString(char* str)
-{
-    int processorNum = 0;
-    int lastNum = -1;
-    char* s = str;
-    while (*s != '\0') {
-        if (isdigit(*s)) {
-            int currentNum = strtol(s, &s, 10);
-            if (lastNum == -1) {
-                processorNum++;
-            } else {
-                processorNum += currentNum - lastNum;
-            }
-            lastNum = currentNum;
-        } else {
-            if (*s == ',') {
-                lastNum = -1;
-            }
-            s++;
-        }
-    }
-    return processorNum;
 }
 
 bool StartWith(const std::string& str, const std::string& res)

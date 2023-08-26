@@ -45,7 +45,9 @@ private:
     int32_t sockId_ = -1;
     int32_t domain_ = 0;
     using SOCKET = int32_t;
+#if !is_mingw
     const int32_t SOCKET_ERROR = -1;
+#endif
     const SOCKET INVALID_SOCKET = -1;
 };
 } // namespace TraceStreamer

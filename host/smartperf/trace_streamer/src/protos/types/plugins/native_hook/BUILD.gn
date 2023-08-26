@@ -69,8 +69,8 @@ ohos_source_set("ts_native_hook_cpp") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   deps = [ ":ts_native_hook_cpp_gen" ]
   public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":native_hook_include_config" ]
@@ -81,8 +81,8 @@ ohos_source_set("native_hook_data_reader") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   deps = [ ":ts_native_hook_cpp_gen" ]
   public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":native_hook_include_config" ]

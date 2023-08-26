@@ -129,7 +129,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
     smaps: Smaps,
     id: number,
     parentId: string,
-    dataTree: SmapsTreeObj,
+    smapsStatAllDataTree: SmapsTreeObj,
     sumSize?: number
   ): void {
     let type = smaps.typeName;
@@ -145,23 +145,23 @@ export class TabPaneSmapsStatistics extends BaseElement {
     objTree.rssStr = Utils.getBinaryByteWithUnit(smaps.rss);
     objTree.pss = smaps.pss;
     objTree.pssStr = Utils.getBinaryByteWithUnit(smaps.pss);
-    if (dataTree.children.length >= 1 && dataTree.path !== '< multiple >') {
-      dataTree.path = '< multiple >';
+    if (smapsStatAllDataTree.children.length >= 1 && smapsStatAllDataTree.path !== '< multiple >') {
+      smapsStatAllDataTree.path = '< multiple >';
     }
 
-    dataTree.size += smaps.size;
-    dataTree.count += smaps.count;
-    dataTree.rss += smaps.rss;
-    dataTree.pss += smaps.pss;
-    dataTree.sharedClean += smaps.sharedClean;
-    dataTree.sharedDirty += smaps.sharedDirty;
-    dataTree.privateClean += smaps.privateClean;
-    dataTree.privateDirty += smaps.privateDirty;
-    dataTree.swap += smaps.swap;
-    dataTree.swapPss += smaps.swapPss;
+    smapsStatAllDataTree.size += smaps.size;
+    smapsStatAllDataTree.count += smaps.count;
+    smapsStatAllDataTree.rss += smaps.rss;
+    smapsStatAllDataTree.pss += smaps.pss;
+    smapsStatAllDataTree.sharedClean += smaps.sharedClean;
+    smapsStatAllDataTree.sharedDirty += smaps.sharedDirty;
+    smapsStatAllDataTree.privateClean += smaps.privateClean;
+    smapsStatAllDataTree.privateDirty += smaps.privateDirty;
+    smapsStatAllDataTree.swap += smaps.swap;
+    smapsStatAllDataTree.swapPss += smaps.swapPss;
   }
 
-  private handleTree(smaps: Smaps, id: number, parentId: string, dataTree: SmapsTreeObj, sumSize?: number): void {
+  private handleTree(smaps: Smaps, id: number, parentId: string, smapsStatDataTree: SmapsTreeObj, sumSize?: number): void {
     let type = TYPE_STRING[smaps.type];
     let treeObj = new SmapsTreeObj(id + '', parentId, type);
     treeObj.path = SpSystemTrace.DATA_DICT.get(Number(smaps.path))?.split('/');
@@ -190,21 +190,21 @@ export class TabPaneSmapsStatistics extends BaseElement {
       treeObj.sizeProStr = treeObj.sizePro.toFixed(2) + '%';
     }
 
-    if (dataTree.children.length >= 1 && dataTree.path !== '< multiple >') {
-      dataTree.path = '< multiple >';
+    if (smapsStatDataTree.children.length >= 1 && smapsStatDataTree.path !== '< multiple >') {
+      smapsStatDataTree.path = '< multiple >';
     }
 
-    dataTree.size += smaps.size;
-    dataTree.count += smaps.count;
-    dataTree.rss += smaps.rss;
-    dataTree.pss += smaps.pss;
-    dataTree.sharedClean += smaps.sharedClean;
-    dataTree.sharedDirty += smaps.sharedDirty;
-    dataTree.privateClean += smaps.privateClean;
-    dataTree.privateDirty += smaps.privateDirty;
-    dataTree.swap += smaps.swap;
-    dataTree.swapPss += smaps.swapPss;
-    dataTree.children.push(treeObj);
+    smapsStatDataTree.size += smaps.size;
+    smapsStatDataTree.count += smaps.count;
+    smapsStatDataTree.rss += smaps.rss;
+    smapsStatDataTree.pss += smaps.pss;
+    smapsStatDataTree.sharedClean += smaps.sharedClean;
+    smapsStatDataTree.sharedDirty += smaps.sharedDirty;
+    smapsStatDataTree.privateClean += smaps.privateClean;
+    smapsStatDataTree.privateDirty += smaps.privateDirty;
+    smapsStatDataTree.swap += smaps.swap;
+    smapsStatDataTree.swapPss += smaps.swapPss;
+    smapsStatDataTree.children.push(treeObj);
   }
 
   async setSmaps(data: SelectionParam) {

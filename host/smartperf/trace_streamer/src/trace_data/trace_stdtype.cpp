@@ -142,6 +142,11 @@ void SchedSlice::Update(uint64_t index, uint64_t ts, uint64_t state)
     endStates_[index] = state;
 }
 
+void SchedSlice::UpdateEndState(uint64_t index, uint64_t state)
+{
+    endStates_[index] = state;
+}
+
 void SchedSlice::UpdateArg(uint64_t index, uint32_t argsetId)
 {
     argSets_[index] = argsetId;

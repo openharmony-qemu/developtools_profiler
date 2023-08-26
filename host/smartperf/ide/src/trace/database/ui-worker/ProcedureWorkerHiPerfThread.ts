@@ -15,11 +15,6 @@
 
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 import {
-  BaseStruct,
-  drawFlagLine,
-  drawLines,
-  drawLoading,
-  drawSelection,
   hiPerf,
   HiPerfStruct,
   PerfRender,
@@ -28,11 +23,11 @@ import {
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 
 export class HiperfThreadRender extends PerfRender {
-  renderMainThread(hiPerfThreadReq: any, row: TraceRow<HiPerfThreadStruct>) {
+  renderMainThread(hiPerfThreadReq: any, row: TraceRow<HiPerfThreadStruct>): void {
     let list = row.dataList;
     let filter = row.dataListCache;
     let groupBy10MS = hiPerfThreadReq.scale > 30_000_000;
-    if (list && row.dataList2.length == 0) {
+    if (list && row.dataList2.length === 0) {
       row.dataList2 = HiPerfThreadStruct.groupBy10MS(list, hiPerfThreadReq.intervalPerf);
     }
     hiPerf(
@@ -48,11 +43,12 @@ export class HiperfThreadRender extends PerfRender {
     hiPerfThreadReq.context.beginPath();
     hiPerfThreadReq.context.fillStyle = ColorUtils.FUNC_COLOR[0];
     hiPerfThreadReq.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-    let path = new Path2D();
+    let normalPath = new Path2D();
+    let specPath = new Path2D();
     let offset = groupBy10MS ? 0 : 3;
     let find = false;
     for (let re of filter) {
-      HiPerfThreadStruct.draw(hiPerfThreadReq.context, path, re, groupBy10MS);
+      HiPerfThreadStruct.draw(hiPerfThreadReq.context, normalPath, specPath, re, groupBy10MS);
       if (row.isHover) {
         if (re.frame && row.hoverX >= re.frame.x - offset && row.hoverX <= re.frame.x + re.frame.width + offset) {
           HiPerfThreadStruct.hoverStruct = re;
@@ -60,110 +56,19 @@ export class HiperfThreadRender extends PerfRender {
         }
       }
     }
-    if (!find && row.isHover) HiPerfThreadStruct.hoverStruct = undefined;
-    groupBy10MS ? hiPerfThreadReq.context.fill(path) : hiPerfThreadReq.context.stroke(path);
+    if (!find && row.isHover) {
+      HiPerfThreadStruct.hoverStruct = undefined;
+    }
+    if (groupBy10MS) {
+      hiPerfThreadReq.context.fill(normalPath);
+    } else {
+      hiPerfThreadReq.context.stroke(normalPath);
+      HiPerfStruct.drawSpecialPath(hiPerfThreadReq.context, specPath);
+    }
     hiPerfThreadReq.context.closePath();
   }
 
-  render(hiPerfThreadRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
-    let groupBy10MS = hiPerfThreadRequest.scale > 100_000_000;
-    if (hiPerfThreadRequest.lazyRefresh) {
-      hiPerf(
-        list,
-        dataList2,
-        filter,
-        hiPerfThreadRequest.startNS,
-        hiPerfThreadRequest.endNS,
-        hiPerfThreadRequest.frame,
-        groupBy10MS,
-        hiPerfThreadRequest.useCache || !hiPerfThreadRequest.range.refresh
-      );
-    } else {
-      if (!hiPerfThreadRequest.useCache) {
-        hiPerf(
-          list,
-          dataList2,
-          filter,
-          hiPerfThreadRequest.startNS,
-          hiPerfThreadRequest.endNS,
-          hiPerfThreadRequest.frame,
-          groupBy10MS,
-          false
-        );
-      }
-    }
-    if (hiPerfThreadRequest.canvas) {
-      hiPerfThreadRequest.context.clearRect(0, 0, hiPerfThreadRequest.frame.width, hiPerfThreadRequest.frame.height);
-      let arr = filter;
-      if (
-        arr.length > 0 &&
-        !hiPerfThreadRequest.range.refresh &&
-        !hiPerfThreadRequest.useCache &&
-        hiPerfThreadRequest.lazyRefresh
-      ) {
-        drawLoading(
-          hiPerfThreadRequest.context,
-          hiPerfThreadRequest.startNS,
-          hiPerfThreadRequest.endNS,
-          hiPerfThreadRequest.totalNS,
-          hiPerfThreadRequest.frame,
-          arr[0].startNS,
-          arr[arr.length - 1].startNS + arr[arr.length - 1].dur
-        );
-      }
-      drawLines(
-        hiPerfThreadRequest.context,
-        hiPerfThreadRequest.xs,
-        hiPerfThreadRequest.frame.height,
-        hiPerfThreadRequest.lineColor
-      );
-      hiPerfThreadRequest.context.stroke();
-      hiPerfThreadRequest.context.beginPath();
-      HiPerfThreadStruct.hoverStruct = undefined;
-      hiPerfThreadRequest.context.fillStyle = ColorUtils.FUNC_COLOR[0];
-      hiPerfThreadRequest.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-      if (hiPerfThreadRequest.isHover) {
-        let offset = groupBy10MS ? 0 : 3;
-        for (let re of filter) {
-          if (
-            re.frame &&
-            hiPerfThreadRequest.hoverX >= re.frame.x - offset &&
-            hiPerfThreadRequest.hoverX <= re.frame.x + re.frame.width + offset
-          ) {
-            HiPerfThreadStruct.hoverStruct = re;
-            break;
-          }
-        }
-      } else {
-        HiPerfThreadStruct.hoverStruct = hiPerfThreadRequest.params.hoverStruct;
-      }
-      HiPerfThreadStruct.selectStruct = hiPerfThreadRequest.params.selectStruct;
-      let path = new Path2D();
-      for (let re of filter) {
-        HiPerfThreadStruct.draw(hiPerfThreadRequest.context, path, re, groupBy10MS);
-      }
-      groupBy10MS ? hiPerfThreadRequest.context.fill(path) : hiPerfThreadRequest.context.stroke(path);
-      hiPerfThreadRequest.context.stroke();
-      hiPerfThreadRequest.context.closePath();
-      drawSelection(hiPerfThreadRequest.context, hiPerfThreadRequest.params);
-      drawFlagLine(
-        hiPerfThreadRequest.context,
-        hiPerfThreadRequest.flagMoveInfo,
-        hiPerfThreadRequest.flagSelectedInfo,
-        hiPerfThreadRequest.startNS,
-        hiPerfThreadRequest.endNS,
-        hiPerfThreadRequest.totalNS,
-        hiPerfThreadRequest.frame,
-        hiPerfThreadRequest.slicesTime
-      );
-    }
-    // @ts-ignore
-    self.postMessage({
-      id: hiPerfThreadRequest.id,
-      type: hiPerfThreadRequest.type,
-      results: hiPerfThreadRequest.canvas ? undefined : filter,
-      hover: HiPerfThreadStruct.hoverStruct,
-    });
+  render(req: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>): void {
   }
 }
 

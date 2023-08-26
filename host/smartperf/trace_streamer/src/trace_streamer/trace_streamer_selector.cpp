@@ -289,6 +289,10 @@ void TraceStreamerSelector::SetCancel(bool cancel)
 {
     traceDataCache_->SetCancel(cancel);
 }
+void TraceStreamerSelector::UpdateBinderRunnableTraceStatus(bool status)
+{
+    traceDataCache_->UpdateBinderRunnableTraceStatus(status);
+}
 void TraceStreamerSelector::UpdateAnimationTraceStatus(bool status)
 {
     traceDataCache_->UpdateAnimationTraceStatus(status);

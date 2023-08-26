@@ -48,33 +48,33 @@ export class EnergySystemRender extends Render {
     );
     req.context.beginPath();
     let find = false;
-    let a: any = {};
+    let energySystemData: any = {};
     for (let i = 0; i < systemFilter.length; i++) {
-      let re = systemFilter[i];
+      let energySysStruct = systemFilter[i];
 
-      EnergySystemStruct.draw(req.context, re);
-      if (row.isHover && re.frame && isFrameContainPoint(re.frame, row.hoverX, row.hoverY)) {
-        EnergySystemStruct.hoverEnergySystemStruct = re;
-        if (re.type == 0) {
-          if (re.count != undefined) {
-            a.workScheduler = re.count;
+      EnergySystemStruct.draw(req.context, energySysStruct);
+      if (row.isHover && energySysStruct.frame && isFrameContainPoint(energySysStruct.frame, row.hoverX, row.hoverY)) {
+        EnergySystemStruct.hoverEnergySystemStruct = energySysStruct;
+        if (energySysStruct.type == 0) {
+          if (energySysStruct.count != undefined) {
+            energySystemData.workScheduler = energySysStruct.count;
           } else {
-            a.workScheduler = '0';
+            energySystemData.workScheduler = '0';
           }
         }
-        if (re.type == 1) {
-          if (re.count != undefined) {
-            a.power = re.count + '';
+        if (energySysStruct.type == 1) {
+          if (energySysStruct.count != undefined) {
+            energySystemData.power = energySysStruct.count + '';
           } else {
-            a.power = '0';
+            energySystemData.power = '0';
           }
         }
 
-        if (re.type == 2) {
-          if (re.count != undefined) {
-            a.location = re.count + '';
+        if (energySysStruct.type == 2) {
+          if (energySysStruct.count != undefined) {
+            energySystemData.location = energySysStruct.count + '';
           } else {
-            a.location = '0';
+            energySystemData.location = '0';
           }
         }
         find = true;
@@ -82,9 +82,9 @@ export class EnergySystemRender extends Render {
     }
     if (!find && row.isHover) EnergySystemStruct.hoverEnergySystemStruct = undefined;
     if (EnergySystemStruct.hoverEnergySystemStruct) {
-      EnergySystemStruct.hoverEnergySystemStruct!.workScheduler = a.workScheduler == undefined ? '0' : a.workScheduler;
-      EnergySystemStruct.hoverEnergySystemStruct!.power = a.power == undefined ? '0' : a.power;
-      EnergySystemStruct.hoverEnergySystemStruct!.location = a.location == undefined ? '0' : a.location;
+      EnergySystemStruct.hoverEnergySystemStruct!.workScheduler = energySystemData.workScheduler == undefined ? '0' : energySystemData.workScheduler;
+      EnergySystemStruct.hoverEnergySystemStruct!.power = energySystemData.power == undefined ? '0' : energySystemData.power;
+      EnergySystemStruct.hoverEnergySystemStruct!.location = energySystemData.location == undefined ? '0' : energySystemData.location;
     }
     let spApplication = document.getElementsByTagName('sp-application')[0];
     let isDark = spApplication.hasAttribute('dark');
@@ -145,31 +145,31 @@ export class EnergySystemRender extends Render {
       EnergySystemStruct.hoverEnergySystemStruct = undefined;
       if (energySysRequest.isHover) {
         let a: any = {};
-        for (let re of filter) {
+        for (let filterElement of filter) {
           if (
-            re.frame &&
-            energySysRequest.hoverX >= re.frame.x &&
-            energySysRequest.hoverX <= re.frame.x + re.frame.width
+            filterElement.frame &&
+            energySysRequest.hoverX >= filterElement.frame.x &&
+            energySysRequest.hoverX <= filterElement.frame.x + filterElement.frame.width
           ) {
-            EnergySystemStruct.hoverEnergySystemStruct = re;
-            if (re.type == 0) {
-              if (re.count != undefined) {
-                a.workScheduler = re.count;
+            EnergySystemStruct.hoverEnergySystemStruct = filterElement;
+            if (filterElement.type == 0) {
+              if (filterElement.count != undefined) {
+                a.workScheduler = filterElement.count;
               } else {
                 a.workScheduler = '0';
               }
             }
-            if (re.type == 1) {
-              if (re.count != undefined) {
-                a.power = re.count + '';
+            if (filterElement.type == 1) {
+              if (filterElement.count != undefined) {
+                a.power = filterElement.count + '';
               } else {
                 a.power = '0';
               }
             }
 
-            if (re.type == 2) {
-              if (re.count != undefined) {
-                a.location = re.count + '';
+            if (filterElement.type == 2) {
+              if (filterElement.count != undefined) {
+                a.location = filterElement.count + '';
               } else {
                 a.location = '0';
               }

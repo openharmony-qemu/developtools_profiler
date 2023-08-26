@@ -127,44 +127,6 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
     }
     return;
 }
-int32_t BytraceParser::JGetData(json& jMessage,
-                                JsonData& jData,
-                                size_t& maxArraySize,
-                                std::vector<size_t>& noArrayIndex,
-                                std::vector<size_t>& arrayIndex)
-{
-    for (auto i = jMessage.begin(); i != jMessage.end(); i++) {
-        if (i.key() == "name_") {
-            jData.eventSource = i.value();
-            if (find(eventsAccordingAppNames.begin(), eventsAccordingAppNames.end(), jData.eventSource) ==
-                eventsAccordingAppNames.end()) {
-                TS_LOGW("event source:%s not supported for hisysevent", jData.eventSource.c_str());
-                return -1;
-            }
-            continue;
-        }
-        if (i.key() == "time_") {
-            jData.timeStamp = i.value();
-            continue;
-        }
-        if (i.key() == "tag_" && i.value() != "PowerStats") {
-            TS_LOGW("energy data without PowerStats tag_ would be invalid");
-            return -1;
-        }
-        if (i.key() == "APPNAME") {
-            jData.appName.assign(i.value().begin(), i.value().end());
-        }
-        if (i.value().is_array()) {
-            maxArraySize = std::max(maxArraySize, i.value().size());
-            arrayIndex.push_back(jData.key.size());
-        } else {
-            noArrayIndex.push_back(jData.key.size());
-        }
-        jData.key.push_back(i.key());
-        jData.value.push_back(i.value());
-    }
-    return 0;
-}
 
 inline void BytraceParser::AppendJsonDataToHiSysEventNewValue(JsonData jData,
                                                               int32_t jIndex,
@@ -236,7 +198,7 @@ void BytraceParser::ParseJsonData(const std::string& buffer)
     size_t maxArraySize = 0;
     std::vector<size_t> noArrayIndex = {};
     std::vector<size_t> arrayIndex = {};
-    if (JGetData(jMessage, jData, maxArraySize, noArrayIndex, arrayIndex) < 0) {
+    if (!streamFilters_->hiSysEventMeasureFilter_->JGetData(jMessage, jData, maxArraySize, noArrayIndex, arrayIndex)) {
         return;
     }
     DataIndex eventSourceIndex = eventParser_->traceDataCache_->GetDataIndex(jData.eventSource);

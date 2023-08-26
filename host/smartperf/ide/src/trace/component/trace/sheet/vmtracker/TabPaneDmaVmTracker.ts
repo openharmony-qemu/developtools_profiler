@@ -56,10 +56,10 @@ export class TabPaneDmaVmTracker extends BaseElement {
 
   private init(): void {
     const thTable = this.tableThead!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const dmaVmTrackerTblNodes = thTable!.querySelectorAll('div');
     if (this.tableThead!.hasAttribute('sort')) {
       this.tableThead!.removeAttribute('sort');
-      list.forEach((item) => {
+      dmaVmTrackerTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });

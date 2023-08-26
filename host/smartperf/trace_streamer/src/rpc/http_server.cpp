@@ -20,7 +20,7 @@
 #include <strings.h> // for macx
 #include <thread>
 #ifdef _WIN32
-#include <WinSock2.h>
+#include <winsock2.h>
 #else
 #include <poll.h>
 #include <sys/socket.h>
@@ -51,6 +51,16 @@ void HttpServer::RegisterRpcFunction(RpcServer* rpc)
 
     auto reset = std::bind(&RpcServer::Reset, rpc, _1, _2, _3);
     rpcFunctions_["/reset"] = reset;
+}
+
+void HttpServer::CloseAllThreads()
+{
+    for (const auto& it : clientThreads_) {
+        if (it->thread_.joinable()) {
+            it->thread_.join();
+            it->sock_.Close();
+        }
+    }
 }
 
 #ifdef _WIN32
@@ -101,13 +111,7 @@ void HttpServer::Run(int32_t port)
             }
         }
     }
-
-    for (const auto& it : clientThreads_) {
-        if (it->thread_.joinable()) {
-            it->sock_.Close();
-            it->thread_.join();
-        }
-    }
+    CloseAllThreads();
     clientThreads_.clear();
 
     WSACleanup();
@@ -146,13 +150,7 @@ void HttpServer::Run(int32_t port)
             }
         }
     }
-
-    for (const auto& it : clientThreads_) {
-        if (it->thread_.joinable()) {
-            it->sock_.Close();
-            it->thread_.join();
-        }
-    }
+    CloseAllThreads();
     clientThreads_.clear();
 
     for (int32_t i = 0; i < COUNT_SOCKET; i++) {
@@ -204,6 +202,26 @@ void HttpServer::ClearDeadClientThread()
     }
 }
 
+bool HttpServer::ProcessAndParseReq(size_t& recvPos,
+                                    size_t& recvLen,
+                                    std::vector<uint8_t>& recvBuf,
+                                    RequestST& reqST,
+                                    HttpSocket& client)
+{
+    if (!client.Recv(recvBuf.data() + recvPos, recvLen)) {
+        return false;
+    }
+    recvPos += recvLen;
+    ParseRequest(recvBuf.data(), recvPos, reqST);
+    recvLen = recvBuf.size() - recvPos;
+    if (reqST.stat == RequstParseStat::RECVING) {
+        return true;
+    }
+    ProcessRequest(client, reqST);
+    reqST.stat = RequstParseStat::INIT;
+    return true;
+}
+
 #ifdef _WIN32
 void HttpServer::ProcessClient(HttpSocket& client)
 {
@@ -238,17 +256,9 @@ void HttpServer::ProcessClient(HttpSocket& client)
             if (event.iErrorCode[FD_READ_BIT] != 0) {
                 continue;
             }
-            if (!client.Recv(recvBuf.data() + recvPos, recvLen)) {
+            if (!ProcessAndParseReq(recvPos, recvLen, recvBuf, reqST, client)) {
                 break;
             }
-            recvPos += recvLen;
-            ParseRequest(recvBuf.data(), recvPos, reqST);
-            recvLen = recvBuf.size() - recvPos;
-            if (reqST.stat == RequstParseStat::RECVING) {
-                continue;
-            }
-            ProcessRequest(client, reqST);
-            reqST.stat = RequstParseStat::INIT;
         } else if (event.lNetworkEvents & FD_CLOSE) {
             TS_LOGI("client close socket(%d)", client.GetFd());
             break;
@@ -282,18 +292,9 @@ void HttpServer::ProcessClient(HttpSocket& client)
             }
             continue;
         }
-        if (!client.Recv(recvBuf.data() + recvPos, recvLen)) {
-            TS_LOGI("client exit");
+        if (!ProcessAndParseReq(recvPos, recvLen, recvBuf, reqST, client)) {
             break;
         }
-        recvPos += recvLen;
-        ParseRequest(recvBuf.data(), recvPos, reqST);
-        recvLen = recvBuf.size() - recvPos;
-        if (reqST.stat == RequstParseStat::RECVING) {
-            continue;
-        }
-        ProcessRequest(client, reqST);
-        reqST.stat = RequstParseStat::INIT;
     }
     TS_LOGI("recive client thread exit. socket(%d)", client.GetFd());
 

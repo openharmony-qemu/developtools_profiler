@@ -16,6 +16,7 @@
 #include "hi_sysevent_measure_filter.h"
 #include "filter_filter.h"
 #include "log.h"
+#include "stat_filter.h"
 #include "system_event_measure_filter.h"
 #include "ts_common.h"
 
@@ -72,6 +73,46 @@ void HiSysEventMeasureFilter::AppendNewValue(int32_t brightnessState,
         voiceAssistant, system, alarm, notification, bluetoolthSco, enforcedAudible, streamDtmf, streamTts,
         accessibility, recording, streamAll);
     return;
+}
+bool HiSysEventMeasureFilter::JGetData(const json& jMessage,
+                                       JsonData& jData,
+                                       size_t& maxArraySize,
+                                       std::vector<size_t>& noArrayIndex,
+                                       std::vector<size_t>& arrayIndex)
+{
+    streamFilters_->statFilter_->IncreaseStat(TRACE_HISYSEVENT, STAT_EVENT_RECEIVED);
+    for (auto i = jMessage.begin(); i != jMessage.end(); i++) {
+        if (i.key() == "name_") {
+            jData.eventSource = i.value();
+            if (find(eventsAccordingAppNames_.begin(), eventsAccordingAppNames_.end(), jData.eventSource) ==
+                eventsAccordingAppNames_.end()) {
+                streamFilters_->statFilter_->IncreaseStat(TRACE_HISYSEVENT, STAT_EVENT_NOTMATCH);
+                TS_LOGW("event source:%s not supported for hisysevent", jData.eventSource.c_str());
+                return false;
+            }
+            continue;
+        }
+        if (i.key() == "time_") {
+            jData.timeStamp = i.value();
+            continue;
+        }
+        if (i.key() == "tag_" && i.value() != "PowerStats") {
+            TS_LOGW("energy data without PowerStats tag_ would be invalid");
+            return false;
+        }
+        if (i.key() == "APPNAME") {
+            jData.appName.assign(i.value().begin(), i.value().end());
+        }
+        if (i.value().is_array()) {
+            maxArraySize = std::max(maxArraySize, i.value().size());
+            arrayIndex.push_back(jData.key.size());
+        } else {
+            noArrayIndex.push_back(jData.key.size());
+        }
+        jData.key.push_back(i.key());
+        jData.value.push_back(i.value());
+    }
+    return true;
 }
 DataIndex HiSysEventMeasureFilter::GetOrCreateFilterIdInternal(DataIndex appNameId, DataIndex key)
 {

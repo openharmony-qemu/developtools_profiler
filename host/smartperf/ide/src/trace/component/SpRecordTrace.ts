@@ -484,8 +484,9 @@ export class SpRecordTrace extends BaseElement {
               } else {
                 SpRecordTrace.selectVersion = SpRecordTrace.supportVersions[0];
                 this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
+                let cmdTxt = PluginConvertUtils.BeanToCmdTxt(this.makeRequest(), false)
                 this.traceCommand!.hdcCommon = PluginConvertUtils.createHdcCmd(
-                  PluginConvertUtils.BeanToCmdTxt(this.makeRequest(), false),
+                  cmdTxt,
                   this.recordSetting!.output,
                   this.recordSetting!.maxDur
                 );
@@ -766,7 +767,7 @@ export class SpRecordTrace extends BaseElement {
           title: 'Record setting',
           icon: 'properties',
           fileChoose: false,
-          clickHandler: function (ev: InputEvent): void {
+          clickHandler: function (event: InputEvent): void {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.recordSetting!);
             that.freshMenuItemsStatus('Record setting');
@@ -1435,18 +1436,18 @@ export class SpRecordTrace extends BaseElement {
            height: 32px;
            margin-left: 14px;
            margin-right: 10px;
-           background: var(--dark-background1,#ffffff);
            border: 1px solid var(--dark-color1,#4D4D4D);
+           background: var(--dark-background1,#ffffff);
+           font-size: 14px;
            border-radius: 16px;
            opacity: 0.6;
+           -webkit-appearance: none;
            font-family: Helvetica;
-           font-size: 14px;
            color: var(--dark-color1,#000000);
-           text-align: center;
            line-height: 20px;
            font-weight: 400;
            padding: 5px 10px 5px 10px;
-           -webkit-appearance: none;
+           text-align: center;
            background: url('img/down.png') no-repeat 96% center;
         }
         .device_version {

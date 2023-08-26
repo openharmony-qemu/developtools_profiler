@@ -140,6 +140,9 @@ std::shared_ptr<FrameInfo> OfflineSymbolizationFilter::OfflineSymbolization(uint
     auto mangle = reinterpret_cast<const char*>(symbolTable->str_table().Data() + symbolStart);
     auto demangle = GetDemangleSymbolIndex(mangle);
     frameInfo->symbolIndex_ = traceDataCache_->GetDataIndex(demangle);
+    if (demangle != mangle) {
+        free(demangle);
+    }
     ipToFrameInfo_.insert(std::make_pair(ip, frameInfo));
     return frameInfo;
 }
@@ -172,7 +175,11 @@ DataIndex OfflineSymbolizationFilter::OfflineSymbolization(uint64_t symVaddr, Da
     }
     auto mangle = symbolTable->strTable.c_str() + symbolStart;
     auto demangle = GetDemangleSymbolIndex(mangle);
-    return traceDataCache_->GetDataIndex(demangle);
+    auto index = traceDataCache_->GetDataIndex(demangle);
+    if (demangle != mangle) {
+        free(demangle);
+    }
+    return index;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

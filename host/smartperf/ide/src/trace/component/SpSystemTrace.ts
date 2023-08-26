@@ -3323,10 +3323,10 @@ export class SpSystemTrace extends BaseElement {
   }
 
   scrollToProcess(rowId: string, rowParentId: string, rowType: string, smooth: boolean = true) {
-    let rootRow = this.shadowRoot!.querySelector<TraceRow<any>>(`trace-row[row-id='${rowId}'][row-type='${rowType}']`);
-    if (rootRow?.collect) {
+    let traceRow = this.shadowRoot!.querySelector<TraceRow<any>>(`trace-row[row-id='${rowId}'][row-type='${rowType}']`);
+    if (traceRow?.collect) {
       this.favoriteRowsEL!.scroll({
-        top: (rootRow?.offsetTop || 0) - this.canvasFavoritePanel!.offsetHeight + (rootRow?.offsetHeight || 0),
+        top: (traceRow?.offsetTop || 0) - this.canvasFavoritePanel!.offsetHeight + (traceRow?.offsetHeight || 0),
         left: 0,
         behavior: smooth ? 'smooth' : undefined,
       });
@@ -3335,9 +3335,9 @@ export class SpSystemTrace extends BaseElement {
       if (row && !row.expansion) {
         row.expansion = true;
       }
-      if (rootRow && rootRow.offsetTop >= 0 && rootRow.offsetHeight >= 0) {
+      if (traceRow && traceRow.offsetTop >= 0 && traceRow.offsetHeight >= 0) {
         this.rowsPaneEL!.scroll({
-          top: (rootRow?.offsetTop || 0) - this.canvasPanel!.offsetHeight + (rootRow?.offsetHeight || 0),
+          top: (traceRow?.offsetTop || 0) - this.canvasPanel!.offsetHeight + (traceRow?.offsetHeight || 0),
           left: 0,
           behavior: smooth ? 'smooth' : undefined,
         });

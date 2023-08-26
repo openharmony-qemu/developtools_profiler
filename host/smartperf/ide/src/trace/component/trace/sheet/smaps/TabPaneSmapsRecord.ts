@@ -77,10 +77,10 @@ export class TabPaneSmapsRecord extends BaseElement {
   }
   private init(): void {
     const thTable = this.tabTitle!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const smapsRecordTblNodes = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
       this.tabTitle!.removeAttribute('sort');
-      list.forEach((item) => {
+      smapsRecordTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });

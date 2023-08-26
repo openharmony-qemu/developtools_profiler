@@ -79,7 +79,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       ) +
       '  ms';
     this.vmStatisticsAnalysisProgressEL!.loading = true;
-    this.getDataByWorker(
+    this.getVmDataByWorker(
       [
         {
           funcName: 'setSearchValue',
@@ -97,15 +97,15 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
   }
   initElements(): void {
     this.vmStatisticsAnalysisRange = this.shadowRoot?.querySelector('#time-range');
-    this.vmStatisticsAnalysisPie = this.shadowRoot!.querySelector<LitChartPie>('#chart-pie');
+    this.vmStatisticsAnalysisPie = this.shadowRoot!.querySelector<LitChartPie>('#vm-chart-pie');
     this.vmStatisticsAnalysisTableProcess = this.shadowRoot!.querySelector<LitTable>('#tb-process-usage');
     this.vmStatisticsAnalysisTableType = this.shadowRoot!.querySelector<LitTable>('#tb-type-usage');
     this.vmStatisticsAnalysisTableThread = this.shadowRoot!.querySelector<LitTable>('#tb-thread-usage');
     this.vmStatisticsAnalysisTableSo = this.shadowRoot!.querySelector<LitTable>('#tb-so-usage');
     this.vmStatisticsAnalysisTableFunction = this.shadowRoot!.querySelector<LitTable>('#tb-function-usage');
-    this.back = this.shadowRoot!.querySelector<HTMLDivElement>('.go-back');
-    this.tabName = this.shadowRoot!.querySelector<HTMLDivElement>('.subheading');
-    this.vmStatisticsAnalysisProgressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
+    this.back = this.shadowRoot!.querySelector<HTMLDivElement>('.vm-go-back');
+    this.tabName = this.shadowRoot!.querySelector<HTMLDivElement>('.vm-subheading');
+    this.vmStatisticsAnalysisProgressEL = this.shadowRoot?.querySelector('.vm-progress') as LitProgressBar;
     this.goBack();
   }
   clearData(): void {
@@ -155,21 +155,14 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     this.sumDur = this.processStatisticsData.allDuration;
     this.vmStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.vmStatisticsAnalysisPidData),
+      data: this.getVmPieChartData(this.vmStatisticsAnalysisPidData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
-        return `<div>
-                                <div>ProcessName:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
-                            </div>
-                                `;
-      },
+      tip: this.getVmTip(),
       angleClick: (it): void => {
         // @ts-ignore
         if (it.tableName != 'other') {
@@ -222,6 +215,18 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       }
     });
   }
+
+  private getVmTip() {
+    return (obj: { obj: { tableName: any; durFormat: any; percent: any; }; }): string => {
+      return `<div>
+                                <div>ProcessName:${obj.obj.tableName}</div>
+                                <div>Duration:${obj.obj.durFormat}</div>
+                                <div>Percent:${obj.obj.percent}%</div> 
+                            </div>
+                                `;
+    };
+  }
+
   vmProcessLevelClickEvent(it: any): void {
     this.clearData();
     this.back!.style.visibility = 'visible';
@@ -244,14 +249,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
-        return `<div>
-                                <div>Type:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
-                            </div>
-                                `;
-      },
+      tip: this.getVmTip(),
       angleClick: (it): void => {
         this.vmTypeLevelClickEvent(it);
       },
@@ -317,21 +315,14 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     this.sumDur = this.threadStatisticsData.allDuration;
     this.vmStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.vmStatisticsAnalysisThreadData),
+      data: this.getVmPieChartData(this.vmStatisticsAnalysisThreadData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
-        return `<div>
-                                <div>ThreadName:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
-                            </div>
-                                `;
-      },
+      tip: this.getVmTip(),
       angleClick: (it): void => {
         // @ts-ignore
         if (it.tableName != 'other') {
@@ -384,6 +375,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       }
     });
   }
+
   vmThreadLevelClickEvent(it: any): void {
     this.clearData();
     this.back!.style.visibility = 'visible';
@@ -402,18 +394,18 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     this.sumDur = this.libStatisticsData.allDuration;
     this.vmStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.vmStatisticsAnalysisSoData),
+      data: this.getVmPieChartData(this.vmStatisticsAnalysisSoData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
+      tip: (vmLibraryObj): string => {
         return `<div>
-                                <div>Library:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>percent:${ obj.obj.percent }%</div> 
+                                <div>Library:${ vmLibraryObj.obj.tableName }</div>
+                                <div>Duration:${ vmLibraryObj.obj.durFormat }</div>
+                                <div>percent:${ vmLibraryObj.obj.percent }%</div> 
                             </div>
                                 `;
       },
@@ -527,21 +519,21 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       }
       vmsCurrentTable!.recycleDataSource = vmsArr;
     } else {
-      let vmsArr = [...this.currentLevelData];
+      let vmsArray = [...this.currentLevelData];
       if (column === 'tableName') {
-        vmsCurrentTable!.recycleDataSource = vmsArr.sort((a, b) => {
+        vmsCurrentTable!.recycleDataSource = vmsArray.sort((firstVMElement, secondVMElement) => {
           if (vmsSort === 1) {
-            if (a.tableName > b.tableName) {
+            if (firstVMElement.tableName > secondVMElement.tableName) {
               return 1;
-            } else if (a.tableName === b.tableName) {
+            } else if (firstVMElement.tableName === secondVMElement.tableName) {
               return 0;
             } else {
               return -1;
             }
           } else {
-            if (b.tableName > a.tableName) {
+            if (secondVMElement.tableName > firstVMElement.tableName) {
               return 1;
-            } else if (a.tableName === b.tableName) {
+            } else if (firstVMElement.tableName === secondVMElement.tableName) {
               return 0;
             } else {
               return -1;
@@ -549,28 +541,28 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
           }
         });
       } else if (column === 'durFormat' || column === 'percent') {
-        vmsCurrentTable!.recycleDataSource = vmsArr.sort((a, b) => {
+        vmsCurrentTable!.recycleDataSource = vmsArray.sort((a, b) => {
           return vmsSort === 1 ? a.duration - b.duration : b.duration - a.duration;
         });
       }
       switch (this.currentLevel) {
         case 0:
-          vmsArr.unshift(this.processStatisticsData);
+          vmsArray.unshift(this.processStatisticsData);
           break;
         case 1:
-          vmsArr.unshift(this.typeStatisticsData);
+          vmsArray.unshift(this.typeStatisticsData);
           break;
         case 2:
-          vmsArr.unshift(this.threadStatisticsData);
+          vmsArray.unshift(this.threadStatisticsData);
           break;
         case 3:
-          vmsArr.unshift(this.libStatisticsData);
+          vmsArray.unshift(this.libStatisticsData);
           break;
         case 4:
-          vmsArr.unshift(this.functionStatisticsData);
+          vmsArray.unshift(this.functionStatisticsData);
           break;
       }
-      vmsCurrentTable!.recycleDataSource = vmsArr;
+      vmsCurrentTable!.recycleDataSource = vmsArray;
     }
   }
   getVirtualMemoryProcess(result: Array<any>): void {
@@ -596,23 +588,22 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     }
     this.vmStatisticsAnalysisPidData = [];
     vmMap.forEach((value: Array<any>, key: string) => {
-      let dur = 0;
+      let vmPidDataDur = 0;
       let pName = '';
       for (let item of value) {
         pName = item.processName =
           item.processName === null || item.processName === undefined
             ? `Process(${ item.pid })`
             : `${ item.processName }(${ item.pid })`;
-        dur += item.dur;
+        vmPidDataDur += item.dur;
       }
-      const pidData = {
+      this.vmStatisticsAnalysisPidData.push({
         tableName: pName,
         pid: key,
-        percent: ((dur / allDur) * 100).toFixed(2),
-        durFormat: Utils.getProbablyTime(dur),
-        duration: dur,
-      };
-      this.vmStatisticsAnalysisPidData.push(pidData);
+        percent: ((vmPidDataDur / allDur) * 100).toFixed(2),
+        durFormat: Utils.getProbablyTime(vmPidDataDur),
+        duration: vmPidDataDur,
+      });
     });
     this.vmStatisticsAnalysisPidData.sort((a, b) => b.duration - a.duration);
     this.processStatisticsData = this.totalDurationData(allDur);
@@ -636,7 +627,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
   }
   getVirtualMemoryType(item: any): void {
     this.vmStatisticsAnalysisProgressEL!.loading = true;
-    let typeMap = new Map<number, Array<number | string>>();
+    let vmTypeMap = new Map<number, Array<number | string>>();
     let pid = item.pid;
     let allDur = 0;
     if (!this.vmStatisticsAnalysisProcessData || this.vmStatisticsAnalysisProcessData.length === 0) {
@@ -647,21 +638,21 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
         continue;
       }
       allDur += vmsItem.dur;
-      if (typeMap.has(vmsItem.type)) {
-        typeMap.get(vmsItem.type)?.push(vmsItem);
+      if (vmTypeMap.has(vmsItem.type)) {
+        vmTypeMap.get(vmsItem.type)?.push(vmsItem);
       } else {
         let itemArray = new Array<number | string>();
         itemArray.push(vmsItem);
-        typeMap.set(vmsItem.type, itemArray);
+        vmTypeMap.set(vmsItem.type, itemArray);
       }
     }
     this.vmStatisticsAnalysisTypeData = [];
-    typeMap.forEach((value: Array<any>, key: number) => {
+    vmTypeMap.forEach((value: Array<any>, key: number) => {
       let dur = 0;
-      for (let item of value) {
-        dur += item.dur;
+      for (let vmItem of value) {
+        dur += vmItem.dur;
       }
-      const typeData = {
+      const vmTypeData = {
         tableName: this.typeIdToString(key),
         pid: item.pid,
         type: key,
@@ -669,7 +660,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
         durFormat: Utils.getProbablyTime(dur),
         duration: dur,
       };
-      this.vmStatisticsAnalysisTypeData.push(typeData);
+      this.vmStatisticsAnalysisTypeData.push(vmTypeData);
     });
     this.vmStatisticsAnalysisTypeData.sort((a, b) => b.duration - a.duration);
     this.typeStatisticsData = this.totalDurationData(allDur);
@@ -701,10 +692,10 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     }
     this.vmStatisticsAnalysisThreadData = [];
     threadMap.forEach((value: Array<any>, key: string) => {
-      let dur = 0;
+      let vmThreadDur = 0;
       let tName = '';
       for (let item of value) {
-        dur += item.dur;
+        vmThreadDur += item.dur;
         tName = item.threadName =
           item.threadName === null || item.threadName === undefined ? `Thread(${ item.tid })` : `${ item.threadName }`;
       }
@@ -713,9 +704,9 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
         pid: item.pid,
         type: item.type,
         tid: key,
-        percent: ((dur / allDur) * 100).toFixed(2),
-        durFormat: Utils.getProbablyTime(dur),
-        duration: dur,
+        percent: ((vmThreadDur / allDur) * 100).toFixed(2),
+        durFormat: Utils.getProbablyTime(vmThreadDur),
+        duration: vmThreadDur,
       };
       this.vmStatisticsAnalysisThreadData.push(threadData);
     });
@@ -784,7 +775,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
 
   getVirtualMemoryFunction(item: any): void {
     this.vmStatisticsAnalysisProgressEL!.loading = true;
-    this.shadowRoot!.querySelector<HTMLDivElement>('.subheading')!.textContent = 'Statistic By Function AllDuration';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.vm-subheading')!.textContent = 'Statistic By Function AllDuration';
     let tid = item.tid;
     let pid = item.pid;
     let type = item.type;
@@ -842,24 +833,24 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     this.vmStatisticsAnalysisProgressEL!.loading = false;
     this.vmStatisticsAnalysisPie!.config = {
       appendPadding: 0,
-      data: this.getPieChartData(this.vmStatisticsAnalysisFunctionData),
+      data: this.getVmPieChartData(this.vmStatisticsAnalysisFunctionData),
       angleField: 'duration',
       colorField: 'tableName',
       radius: 1,
       label: {
         type: 'outer',
       },
-      tip: (obj): string => {
+      tip: (vmObj): string => {
         return `<div>
-                                    <div>Function:${ obj.obj.tableName }</div>
-                                    <div>Duration:${ obj.obj.durFormat }</div>
-                                    <div>percent:${ obj.obj.percent }</div>
+                                    <div>Function:${ vmObj.obj.tableName }</div>
+                                    <div>Duration:${ vmObj.obj.durFormat }</div>
+                                    <div>percent:${ vmObj.obj.percent }</div>
                                         </div>
                                                 `;
       },
-      hoverHandler: (data): void => {
-        if (data) {
-          this.vmStatisticsAnalysisTableFunction!.setCurrentHover(data);
+      hoverHandler: (vmPieData): void => {
+        if (vmPieData) {
+          this.vmStatisticsAnalysisTableFunction!.setCurrentHover(vmPieData);
         } else {
           this.vmStatisticsAnalysisTableFunction!.mouseOut();
         }
@@ -895,28 +886,26 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     });
   }
   typeIdToString(type: number): string {
-    let releaseType: string;
+    let vmReleaseType: string;
     if (type === 1) {
-      releaseType = 'File Backed In';
+      vmReleaseType = 'File Backed In';
     } else if (type === 7) {
-      releaseType = 'Copy On Writer';
+      vmReleaseType = 'Copy On Writer';
     }
     // @ts-ignore
-    return releaseType;
+    return vmReleaseType;
   }
   totalDurationData(duration: number): { durFormat: string; percent: string; tableName: string; duration: number; } {
-    let allDuration;
-    allDuration = {
+    return {
       durFormat: Utils.getProbablyTime(duration),
       percent: ((duration / duration) * 100).toFixed(2),
       tableName: '',
       duration: 0,
     };
-    return allDuration;
   }
-  getPieChartData(vmRes: any[]): unknown[] {
+  getVmPieChartData(vmRes: any[]): unknown[] {
     if (vmRes.length > 20) {
-      let pieChartArr: string[] = [];
+      let vmPieChartArr: string[] = [];
       let other: any = {
         tableName: 'other',
         duration: 0,
@@ -925,20 +914,20 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       };
       for (let i = 0 ; i < vmRes.length ; i++) {
         if (i < 19) {
-          pieChartArr.push(vmRes[i]);
+          vmPieChartArr.push(vmRes[i]);
         } else {
           other.duration += vmRes[i].duration;
           other.durFormat = Utils.getProbablyTime(other.duration);
           other.percent = ((other.duration / this.sumDur) * 100).toFixed(2);
         }
       }
-      pieChartArr.push(other);
-      return pieChartArr;
+      vmPieChartArr.push(other);
+      return vmPieChartArr;
     }
     return vmRes;
   }
 
-  getDataByWorker(args: any[], handler: Function): void {
+  getVmDataByWorker(args: any[], handler: Function): void {
     procedurePool.submitWithName(
       'logic0',
       'fileSystem-action',
@@ -958,23 +947,23 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
             display: flex;
             flex-direction: column;
         }
-        #chart-pie{
+        #vm-chart-pie{
             height: 300px;
         }
-        .table-box{
+        .vm-table-box{
             width: 60%;
             border-left: solid 1px var(--dark-border1,#e0e0e0);
             border-radius: 5px;
             padding: 10px;
         }
-        .go-back{
+        .vm-go-back{
             display:flex;
             align-items: center;
             cursor: pointer;
             margin-left: 20px;
             visibility: hidden;
         }
-        .back-box{
+        .vm-back-box{
             background-color: var(--bark-expansion,#0C65D1);
             border-radius: 5px;
             color: #fff;
@@ -985,11 +974,11 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
             justify-content: center;
             align-items: center;
         }
-        .subheading{
+        .vm-subheading{
             font-weight: bold;
             text-align: center;
         }
-        .progress{
+        .vm-progress{
             position: absolute;
             height: 1px;
             left: 0;
@@ -998,41 +987,41 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
         </style>
         <label id="time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label> 
         <div style="display: flex;flex-direction: row;"class="d-box">
-            <lit-progress-bar class="progress"></lit-progress-bar>
+            <lit-progress-bar class="vm-progress"></lit-progress-bar>
                      <div id="left_table" style="width: 40%;height:auto;">
                          <div style="display: flex;margin-bottom: 10px">
-                           <div class="go-back">
-                              <div class="back-box">
+                           <div class="vm-go-back">
+                              <div class="vm-back-box">
                                   <lit-icon name="arrowleft"></lit-icon>
                               </div>
                            </div>
                          <div class="title"></div>
                         </div>
-                         <div class="subheading"></div>                     
-                         <lit-chart-pie  id="chart-pie"></lit-chart-pie>     
+                         <div class="vm-subheading"></div>                     
+                         <lit-chart-pie  id="vm-chart-pie"></lit-chart-pie>     
                      </div>
-                     <div class="table-box" style="height:auto;overflow: auto">
+                     <div class="vm-table-box" style="height:auto;overflow: auto">
                     <lit-table id="tb-process-usage" style="max-height:565px;min-height: 350px">
                         <lit-table-column width="1fr" title="ProcessName" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-type-usage" style="max-height:565px;min-height: 350px"hideDownload>
+                    <lit-table id="tb-type-usage" class="vm-analysis" style="max-height:565px;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="Type" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-thread-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-thread-usage" class="vm-analysis" style="max-height:565px;display: none;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="ThreadName" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                     <lit-table id="tb-so-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                     <lit-table id="tb-so-usage" class="vm-analysis" style="max-height:565px;display: none;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="Library" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>
                     </lit-table>
-                    <lit-table id="tb-function-usage" style="max-height:565px;display: none;min-height: 350px"hideDownload>
+                    <lit-table id="tb-function-usage" class="vm-analysis" style="max-height:565px;display: none;min-height: 350px"hideDownload>
                         <lit-table-column width="1fr" title="Function" data-index="tableName" key="tableName" align="flex-start"order></lit-table-column>
                         <lit-table-column width="1fr" title="Duration" data-index="durFormat" key="durFormat" align="flex-start" order></lit-table-column>
                         <lit-table-column width="1fr" title="%" data-index="percent" key="percent" align="flex-start"order></lit-table-column>

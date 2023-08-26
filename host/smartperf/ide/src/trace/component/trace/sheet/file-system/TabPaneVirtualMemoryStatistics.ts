@@ -268,17 +268,17 @@ export class TabPaneVirtualMemoryStatistics extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
         .vm-stat-progress{
             bottom: 5px;
             position: absolute;
             height: 1px;
             left: 0;
             right: 0;
+        }
+        :host{
+            display: flex;
+            flex-direction: column;
+            padding: 10px 10px 0 10px;
         }
         .vm-stat-loading{
             bottom: 0;

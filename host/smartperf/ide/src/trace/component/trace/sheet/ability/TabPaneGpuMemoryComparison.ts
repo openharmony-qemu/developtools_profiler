@@ -81,23 +81,23 @@ export class TabPaneGpuMemoryComparison extends BaseElement {
     this.getComparisonData(dataArray[0].startNs);
   }
 
-  selectStamps(dataList: Array<SnapshotStruct>): void {
+  selectStamps(gpuMemoryComList: Array<SnapshotStruct>): void {
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
     let option = new LitSelectOption();
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (dataList[0].name) {
-      option.setAttribute('value', dataList[0].name);
+    if (gpuMemoryComList[0].name) {
+      option.setAttribute('value', gpuMemoryComList[0].name);
     }
-    option.setAttribute('value', dataList[0].name);
-    this.selectEl!.defaultValue = dataList[0].name || '';
-    this.selectEl!.placeholder = dataList[0].name || '';
-    this.selectEl!.dataSource = dataList;
+    option.setAttribute('value', gpuMemoryComList[0].name);
+    this.selectEl!.defaultValue = gpuMemoryComList[0].name || '';
+    this.selectEl!.placeholder = gpuMemoryComList[0].name || '';
+    this.selectEl!.dataSource = gpuMemoryComList;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((option) => {
       option.addEventListener('onSelected', async (e) => {
-        for (let f of dataList) {
+        for (let f of gpuMemoryComList) {
           if (input.value === f.name) {
             this.getComparisonData(f.startNs);
           }

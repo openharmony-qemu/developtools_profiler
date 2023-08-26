@@ -38,7 +38,7 @@ declare_args() {
 toolchain("wasm") {
   # emsdk_dir and em_config are defined in wasm.gni.
   print("use gcc_like_chain wasm")
-  if (!is_macx) {
+  if (!is_mac) {
     ar = "$emsdk_dir/emscripten/emar --em-config $em_config"
   }
   cc = "$emsdk_dir/emscripten/emcc --em-config $em_config"
@@ -91,7 +91,7 @@ toolchain("wasm") {
   tool("alink") {
     rspfile = "{{output}}.rsp"  # must be defined
     rspfile_content = "{{inputs}}"
-    if (is_macx) {
+    if (is_mac) {
       command = "rm -f {{output}} && libtool -static {{arflags}} -o {{output}} -filelist $rspfile"
     } else {
       command = "rm -rf {{output}} && $ar rcsD {{output}} @$rspfile"
@@ -162,7 +162,7 @@ toolchain("gcc_like") {
   }
   tool("alink") {
     rspfile = "{{output}}.rsp"  # this must be defined
-    if (is_macx) {
+    if (is_mac) {
       rspfile_content = "{{inputs_newline}}"
       command = "rm -f {{output}} && libtool -static {{arflags}} -filelist $rspfile -o {{output}}"
     } else {

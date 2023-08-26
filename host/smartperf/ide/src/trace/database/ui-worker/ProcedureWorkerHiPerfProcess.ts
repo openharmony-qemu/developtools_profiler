@@ -15,11 +15,6 @@
 
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 import {
-  BaseStruct,
-  drawFlagLine,
-  drawLines,
-  drawLoading,
-  drawSelection,
   hiPerf,
   HiPerfStruct,
   PerfRender,
@@ -28,11 +23,11 @@ import {
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 
 export class HiperfProcessRender extends PerfRender {
-  renderMainThread(hiPerfProcessReq: any, row: TraceRow<HiPerfProcessStruct>) {
+  renderMainThread(hiPerfProcessReq: any, row: TraceRow<HiPerfProcessStruct>): void {
     let list = row.dataList;
     let filter = row.dataListCache;
     let groupBy10MS = hiPerfProcessReq.scale > 30_000_000;
-    if (list && row.dataList2.length == 0) {
+    if (list && row.dataList2.length === 0) {
       row.dataList2 = HiPerfProcessStruct.groupBy10MS(list, hiPerfProcessReq.intervalPerf);
     }
     hiPerf(
@@ -48,11 +43,12 @@ export class HiperfProcessRender extends PerfRender {
     hiPerfProcessReq.context.beginPath();
     hiPerfProcessReq.context.fillStyle = ColorUtils.FUNC_COLOR[0];
     hiPerfProcessReq.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-    let path = new Path2D();
+    let normalPath = new Path2D();
+    let specPath = new Path2D();
     let offset = groupBy10MS ? 0 : 3;
     let find = false;
     for (let re of filter) {
-      HiPerfProcessStruct.draw(hiPerfProcessReq.context, path, re, groupBy10MS);
+      HiPerfProcessStruct.draw(hiPerfProcessReq.context, normalPath, specPath, re, groupBy10MS);
       if (row.isHover) {
         if (re.frame && row.hoverX >= re.frame.x - offset && row.hoverX <= re.frame.x + re.frame.width + offset) {
           HiPerfProcessStruct.hoverStruct = re;
@@ -60,110 +56,19 @@ export class HiperfProcessRender extends PerfRender {
         }
       }
     }
-    if (!find && row.isHover) HiPerfProcessStruct.hoverStruct = undefined;
-    groupBy10MS ? hiPerfProcessReq.context.fill(path) : hiPerfProcessReq.context.stroke(path);
+    if (!find && row.isHover) {
+      HiPerfProcessStruct.hoverStruct = undefined;
+    }
+    if (groupBy10MS) {
+      hiPerfProcessReq.context.fill(normalPath);
+    } else {
+      hiPerfProcessReq.context.stroke(normalPath);
+      HiPerfStruct.drawSpecialPath(hiPerfProcessReq.context, specPath);
+    }
     hiPerfProcessReq.context.closePath();
   }
 
-  render(hiPerfProcessRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
-    let groupBy10MS = hiPerfProcessRequest.scale > 100_000_000;
-    if (hiPerfProcessRequest.lazyRefresh) {
-      hiPerf(
-        list,
-        dataList2,
-        filter,
-        hiPerfProcessRequest.startNS,
-        hiPerfProcessRequest.endNS,
-        hiPerfProcessRequest.frame,
-        groupBy10MS,
-        hiPerfProcessRequest.useCache || !hiPerfProcessRequest.range.refresh
-      );
-    } else {
-      if (!hiPerfProcessRequest.useCache) {
-        hiPerf(
-          list,
-          dataList2,
-          filter,
-          hiPerfProcessRequest.startNS,
-          hiPerfProcessRequest.endNS,
-          hiPerfProcessRequest.frame,
-          groupBy10MS,
-          false
-        );
-      }
-    }
-    if (hiPerfProcessRequest.canvas) {
-      hiPerfProcessRequest.context.clearRect(0, 0, hiPerfProcessRequest.frame.width, hiPerfProcessRequest.frame.height);
-      let arr = filter;
-      if (
-        arr.length > 0 &&
-        !hiPerfProcessRequest.range.refresh &&
-        !hiPerfProcessRequest.useCache &&
-        hiPerfProcessRequest.lazyRefresh
-      ) {
-        drawLoading(
-          hiPerfProcessRequest.context,
-          hiPerfProcessRequest.startNS,
-          hiPerfProcessRequest.endNS,
-          hiPerfProcessRequest.totalNS,
-          hiPerfProcessRequest.frame,
-          arr[0].startNS,
-          arr[arr.length - 1].startNS + arr[arr.length - 1].dur
-        );
-      }
-      drawLines(
-        hiPerfProcessRequest.context,
-        hiPerfProcessRequest.xs,
-        hiPerfProcessRequest.frame.height,
-        hiPerfProcessRequest.lineColor
-      );
-      hiPerfProcessRequest.context.stroke();
-      hiPerfProcessRequest.context.beginPath();
-      HiPerfProcessStruct.hoverStruct = undefined;
-      hiPerfProcessRequest.context.fillStyle = ColorUtils.FUNC_COLOR[0];
-      hiPerfProcessRequest.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-      if (hiPerfProcessRequest.isHover) {
-        let offset = groupBy10MS ? 0 : 3;
-        for (let re of filter) {
-          if (
-            re.frame &&
-            hiPerfProcessRequest.hoverX >= re.frame.x - offset &&
-            hiPerfProcessRequest.hoverX <= re.frame.x + re.frame.width + offset
-          ) {
-            HiPerfProcessStruct.hoverStruct = re;
-            break;
-          }
-        }
-      } else {
-        HiPerfProcessStruct.hoverStruct = hiPerfProcessRequest.params.hoverStruct;
-      }
-      HiPerfProcessStruct.selectStruct = hiPerfProcessRequest.params.selectStruct;
-      let path = new Path2D();
-      for (let re of filter) {
-        HiPerfProcessStruct.draw(hiPerfProcessRequest.context, path, re, groupBy10MS);
-      }
-      groupBy10MS ? hiPerfProcessRequest.context.fill(path) : hiPerfProcessRequest.context.stroke(path);
-      hiPerfProcessRequest.context.closePath();
-      drawSelection(hiPerfProcessRequest.context, hiPerfProcessRequest.params);
-      drawFlagLine(
-        hiPerfProcessRequest.context,
-        hiPerfProcessRequest.flagMoveInfo,
-        hiPerfProcessRequest.flagSelectedInfo,
-        hiPerfProcessRequest.startNS,
-        hiPerfProcessRequest.endNS,
-        hiPerfProcessRequest.totalNS,
-        hiPerfProcessRequest.frame,
-        hiPerfProcessRequest.slicesTime
-      );
-    }
-    // @ts-ignore
-    self.postMessage({
-      id: hiPerfProcessRequest.id,
-      type: hiPerfProcessRequest.type,
-      results: hiPerfProcessRequest.canvas ? undefined : filter,
-      hover: HiPerfProcessStruct.hoverStruct,
-    });
-  }
+  render(hiPerfProcessRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>): void {}
 }
 
 export class HiPerfProcessStruct extends HiPerfStruct {

@@ -21,6 +21,7 @@
 #include <map>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
 
 #include "filter_base.h"
 #include "trace_data_cache.h"
@@ -55,6 +56,8 @@ public:
     void InsertWakeupEvent(uint64_t ts, uint32_t internalTid, bool isWaking = false);
     bool InsertProcessExitEvent(uint64_t ts, uint64_t cpu, uint32_t pid);
     bool InsertProcessFreeEvent(uint64_t ts, uint32_t pid);
+    void InsertRunnableBinderEvent(uint32_t transactionId, uint32_t iTid);
+    void InsertRunnableBinderRecvEvent(uint32_t transactionId, uint32_t iTid);
     void Finish() const;
     void Clear();
 
@@ -64,6 +67,7 @@ private:
     uint64_t RowOfInternalTidInStateTable(uint32_t uid) const;
     void ClearInternalTidInStateTable(uint32_t uid);
     uint64_t StateOfInternalTidInStateTable(uint32_t uid) const;
+    void TransactionClear(uint32_t iTidFrom, uint32_t transactionId);
     std::map<uint64_t, uint64_t> cpuToRowThreadState_ = {};
     typedef struct {
         uint32_t iTid;
@@ -83,6 +87,15 @@ private:
     const DataIndex caller_ = traceDataCache_->GetDataIndex("caller");
     const DataIndex delay_ = traceDataCache_->GetDataIndex("delay");
     std::map<uint64_t, uint64_t> toRunnableTid_ = {};
+
+    struct BinderTransactionInfo {
+        uint32_t iTidFrom;
+        uint32_t iTidTo;
+        uint64_t schedSliceRow;
+        uint64_t threadStateRow;
+    };
+    std::unordered_map<uint32_t, uint32_t> iTidToTransaction_;
+    std::unordered_map<uint32_t, BinderTransactionInfo> transactionIdToInfo_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

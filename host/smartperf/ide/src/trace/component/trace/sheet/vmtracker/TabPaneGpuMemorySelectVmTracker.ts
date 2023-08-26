@@ -50,10 +50,10 @@ export class TabPaneGpuMemorySelectVmTracker extends BaseElement {
 
   private init(): void {
     const thTable = this.tableThead!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const gpuMemoryVmTrackerTblNodes = thTable!.querySelectorAll('div');
     if (this.tableThead!.hasAttribute('sort')) {
       this.tableThead!.removeAttribute('sort');
-      list.forEach((item) => {
+      gpuMemoryVmTrackerTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });

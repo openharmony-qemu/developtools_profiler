@@ -64,6 +64,24 @@ void FilterConstraints::ToString(std::string& idxStr) const
     }
 }
 
+#define GET_DESC()                                                          \
+    p = pNext;                                                              \
+    errno = 0;                                                              \
+    int32_t col = static_cast<int32_t>(strtol(p, &pNext, 10));              \
+    if (errno != 0) {                                                       \
+        TS_LOGW("strtol failed!");                                          \
+        return;                                                             \
+    }                                                                       \
+    TS_ASSERT(p != pNext);                                                  \
+    p = pNext;                                                              \
+    errno = 0;                                                              \
+    unsigned char desc = static_cast<unsigned char>(strtol(p, &pNext, 10)); \
+    if (errno != 0) {                                                       \
+        TS_LOGW("strtol failed!");                                          \
+        return;                                                             \
+    }                                                                       \
+    TS_ASSERT(p != pNext);
+
 void FilterConstraints::FromString(const std::string& idxStr)
 {
     const char* p = static_cast<const char*>(idxStr.c_str());
@@ -77,24 +95,8 @@ void FilterConstraints::FromString(const std::string& idxStr)
     }
     TS_ASSERT(p != pNext);
     for (int32_t i = 0; i < constraintCount; i++) {
-        p = pNext;
-        errno = 0;
-        int32_t col = static_cast<int32_t>(strtol(p, &pNext, 10));
-        if (errno != 0) {
-            TS_LOGW("strtol failed!");
-            return;
-        }
-        TS_ASSERT(p != pNext);
-        p = pNext;
-        errno = 0;
-        unsigned char op = static_cast<unsigned char>(strtol(p, &pNext, 10));
-        if (errno != 0) {
-            TS_LOGW("strtol failed!");
-            return;
-        }
-        TS_ASSERT(p != pNext);
-
-        AddConstraint(i, col, op);
+        GET_DESC();
+        AddConstraint(i, col, desc);
     }
 
     pNext++; // jump the ' '
@@ -108,23 +110,7 @@ void FilterConstraints::FromString(const std::string& idxStr)
     }
     TS_ASSERT(p != pNext);
     for (int32_t i = 0; i < orderbyCount; i++) {
-        p = pNext;
-        errno = 0;
-        int32_t col = static_cast<int32_t>(strtol(p, &pNext, 10));
-        if (errno != 0) {
-            TS_LOGW("strtol failed!");
-            return;
-        }
-        TS_ASSERT(p != pNext);
-        p = pNext;
-        errno = 0;
-        unsigned char desc = static_cast<unsigned char>(strtol(p, &pNext, 10));
-        if (errno != 0) {
-            TS_LOGW("strtol failed!");
-            return;
-        }
-        TS_ASSERT(p != pNext);
-
+        GET_DESC();
         AddOrderBy(col, desc);
     }
 }

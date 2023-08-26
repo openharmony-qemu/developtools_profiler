@@ -667,16 +667,16 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
     // @ts-ignore
     Object.values(this.currentTreeMapData).forEach((merageData: any) => {
       if (rootMerageMap[merageData.pid] == undefined) {
-        let processMerageData = new FileMerageBean(); //新增进程的节点数据
-        processMerageData.canCharge = false;
-        processMerageData.symbolName = merageData.processName;
-        processMerageData.symbol = processMerageData.symbolName;
-        processMerageData.children.push(merageData);
-        processMerageData.initChildren.push(merageData);
-        processMerageData.dur = merageData.dur;
-        processMerageData.count = merageData.count;
-        processMerageData.total = totalCount;
-        rootMerageMap[merageData.pid] = processMerageData;
+        let fileMerageBean = new FileMerageBean(); //新增进程的节点数据
+        fileMerageBean.canCharge = false;
+        fileMerageBean.symbolName = merageData.processName;
+        fileMerageBean.symbol = fileMerageBean.symbolName;
+        fileMerageBean.children.push(merageData);
+        fileMerageBean.initChildren.push(merageData);
+        fileMerageBean.dur = merageData.dur;
+        fileMerageBean.count = merageData.count;
+        fileMerageBean.total = totalCount;
+        rootMerageMap[merageData.pid] = fileMerageBean;
       } else {
         rootMerageMap[merageData.pid].children.push(merageData);
         rootMerageMap[merageData.pid].initChildren.push(merageData);
@@ -687,19 +687,19 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
       merageData.parentNode = rootMerageMap[merageData.pid]; //子节点添加父节点的引用
     });
     let id = 0;
-    this.currentTreeList.forEach((node) => {
-      node.total = totalCount;
-      this.setMerageName(node);
-      if (node.id == '') {
-        node.id = id + '';
+    this.currentTreeList.forEach((currentNode) => {
+      currentNode.total = totalCount;
+      this.setMerageName(currentNode);
+      if (currentNode.id == '') {
+        currentNode.id = id + '';
         id++;
       }
-      if (node.parentNode) {
-        if (node.parentNode.id == '') {
-          node.parentNode.id = id + '';
+      if (currentNode.parentNode) {
+        if (currentNode.parentNode.id == '') {
+          currentNode.parentNode.id = id + '';
           id++;
         }
-        node.parentId = node.parentNode.id;
+        currentNode.parentId = currentNode.parentNode.id;
       }
     });
     // @ts-ignore
@@ -784,14 +784,14 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
   }
   resolvingAction(params: any[]) {
     if (params.length > 0) {
-      params.forEach((item) => {
-        if (item.funcName && item.funcArgs) {
-          switch (item.funcName) {
+      params.forEach((paramItem) => {
+        if (paramItem.funcName && paramItem.funcArgs) {
+          switch (paramItem.funcName) {
             case 'getCallChainsBySampleIds':
-              this.freshCurrentCallChains(this.samplesList, item.funcArgs[0]);
+              this.freshCurrentCallChains(this.samplesList, paramItem.funcArgs[0]);
               break;
             case 'getCurrentDataFromDb':
-              this.queryCallChainsSamples(item.funcArgs[0]);
+              this.queryCallChainsSamples(paramItem.funcArgs[0]);
               break;
             case 'hideSystemLibrary':
               merageBeanDataSplit.hideSystemLibrary(this.allProcess, this.splitMapData);
@@ -800,35 +800,35 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
               merageBeanDataSplit.hideNumMaxAndMin(
                 this.allProcess,
                 this.splitMapData,
-                item.funcArgs[0],
-                item.funcArgs[1]
+                paramItem.funcArgs[0],
+                paramItem.funcArgs[1]
               );
               break;
             case 'splitAllProcess':
-              merageBeanDataSplit.splitAllProcess(this.allProcess, this.splitMapData, item.funcArgs[0]);
+              merageBeanDataSplit.splitAllProcess(this.allProcess, this.splitMapData, paramItem.funcArgs[0]);
               break;
             case 'resetAllNode':
               merageBeanDataSplit.resetAllNode(this.allProcess, this.currentTreeList, this.searchValue);
               break;
             case 'resotreAllNode':
-              merageBeanDataSplit.resotreAllNode(this.splitMapData, item.funcArgs[0]);
+              merageBeanDataSplit.resotreAllNode(this.splitMapData, paramItem.funcArgs[0]);
               break;
             case 'clearSplitMapData':
-              this.clearSplitMapData(item.funcArgs[0]);
+              this.clearSplitMapData(paramItem.funcArgs[0]);
               break;
             case 'splitTree':
               merageBeanDataSplit.splitTree(
                 this.splitMapData,
                 this.allProcess,
-                item.funcArgs[0],
-                item.funcArgs[1],
-                item.funcArgs[2],
+                paramItem.funcArgs[0],
+                paramItem.funcArgs[1],
+                paramItem.funcArgs[2],
                 this.currentTreeList,
                 this.searchValue
               );
               break;
             case 'setSearchValue':
-              this.searchValue = item.funcArgs[0];
+              this.searchValue = paramItem.funcArgs[0];
               break;
           }
         }

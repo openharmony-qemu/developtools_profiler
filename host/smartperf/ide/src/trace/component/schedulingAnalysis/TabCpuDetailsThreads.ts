@@ -36,10 +36,10 @@ export class TabCpuDetailsThreads extends BaseElement {
   initElements(): void {
     this.tableNoData = this.shadowRoot!.querySelector<TableNoData>('#table-no-data');
     this.progress = this.shadowRoot!.querySelector<LitProgressBar>('#loading');
-    this.cpuDetailsThreadPie = this.shadowRoot!.querySelector<LitChartPie>('#chart-pie');
+    this.cpuDetailsThreadPie = this.shadowRoot!.querySelector<LitChartPie>('#cpu-thread-chart-pie');
     this.cpuDetailsThreadUsageTbl = this.shadowRoot!.querySelector<LitTable>('#tb-cpu-usage');
 
-    this.shadowRoot!.querySelector<HTMLDivElement>('.go-back')!.onclick = (e) => {
+    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu-thread-go-back')!.onclick = (e) => {
       if (!this.progress!.loading) {
         this.parentNode!.querySelector<HTMLDivElement>('.d-box')!.style.display = 'flex';
         this.setShow = false;
@@ -76,7 +76,7 @@ export class TabCpuDetailsThreads extends BaseElement {
   }
 
   init(cpu: number, it: any) {
-    this.shadowRoot!.querySelector<HTMLDivElement>('.subheading')!.textContent = 'Threads in Freq ' + it.value;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu-thread-subheading')!.textContent = 'Threads in Freq ' + it.value;
     this.progress!.loading = true;
     procedurePool.submitWithName(
       'logic1',
@@ -146,8 +146,8 @@ export class TabCpuDetailsThreads extends BaseElement {
   }
 
   noData(value: boolean) {
-    this.shadowRoot!.querySelector<HTMLDivElement>('.chart-box')!.style.display = value ? 'none' : 'block';
-    this.shadowRoot!.querySelector<HTMLDivElement>('.table-box')!.style.width = value ? '100%' : '60%';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu-thread-chart-box')!.style.display = value ? 'none' : 'block';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu-thread-table-box')!.style.width = value ? '100%' : '60%';
   }
 
   clearData() {
@@ -201,21 +201,21 @@ export class TabCpuDetailsThreads extends BaseElement {
             background-color: var(--dark-background,#FFFFFF);
             display: none;
         }
-        .d-box{
+        .cpu-thread-d-box{
             display: flex;
             margin: 20px;
             height: calc(100vh - 165px);
         }
-        .chart-box{
+        .cpu-thread-chart-box{
             width: 40%;
         }
-        .subheading{
+        .cpu-thread-subheading{
             font-weight: bold;
         }
         #tb-cpu-usage{
             height: 100%;
         }
-        .back-box{
+        .cpu-thread-back-box{
             background-color: var(--bark-expansion,#0C65D1);
             border-radius: 5px;
             color: #fff;
@@ -226,36 +226,36 @@ export class TabCpuDetailsThreads extends BaseElement {
             justify-content: center;
             align-items: center;
         }
-        .table-box{
+        .cpu-thread-table-box{
             width: 60%;
             max-height: calc(100vh - 165px);
             border: solid 1px var(--dark-border1,#e0e0e0);
             border-radius: 5px;
             padding: 10px;
         }
-        #chart-pie{
+        #cpu-thread-chart-pie{
             height: 360px;
         }
-        .go-back{
+        .cpu-thread-go-back{
             display:flex;
             align-items: center;
             cursor: pointer;
         }
         </style>
         <lit-progress-bar id="loading" style="height: 1px;width: 100%"></lit-progress-bar>
-        <div class="d-box">
-            <div class="chart-box">
-                <div class="go-back">
-                    <div class="back-box">
+        <div class="cpu-thread-d-box">
+            <div class="cpu-thread-chart-box">
+                <div class="cpu-thread-go-back">
+                    <div class="cpu-thread-back-box">
                         <lit-icon name="arrowleft"></lit-icon>
                     </div>
                     <!--<lit-icon name="arrowleft"></lit-icon>-->
-                    <div class="subheading">Threads in Freq</div>
+                    <div class="cpu-thread-subheading">Threads in Freq</div>
                 </div>
                 <div style="margin-top:15px;text-align: center">Statistics By Duration</div>
-                <lit-chart-pie  id="chart-pie"></lit-chart-pie>
+                <lit-chart-pie  id="cpu-thread-chart-pie"></lit-chart-pie>
             </div>
-            <div class="table-box">
+            <div class="cpu-thread-table-box">
                 <table-no-data id="table-no-data">
                     <lit-table id="tb-cpu-usage" hideDownload>
                         <lit-table-column width="100px" title="No" data-index="index" key="index" align="flex-start" order></lit-table-column>

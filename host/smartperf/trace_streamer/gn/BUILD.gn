@@ -12,7 +12,6 @@
 # limitations under the License.
 import("../build/ts.gni")
 print("target_os", target_os)
-print("target_name", target)
 group("default_deps") {
   public_configs = [ ":default_config" ]
   public_deps = []
@@ -63,7 +62,7 @@ config("default") {
   if (is_debug && is_win) {
     ldflags += [ "-fstack-protector" ]
   }
-  if (is_debug && is_linux) {
+  if (is_debug && is_linux && !use_wasm) {
     cflags += [
       "-fsanitize=address",
       "-fno-omit-frame-pointer",
@@ -73,7 +72,7 @@ config("default") {
   if (target_os == "windows") {
     cflags += [ "-D target_cpu_x86_64" ]
     libs += [ "z" ]
-  } else if (is_linux || is_macx) {
+  } else if (is_linux || is_mac) {
     cflags += [
       "-Wa,--noexecstack",
       "-fcolor-diagnostics",
@@ -85,23 +84,14 @@ config("default") {
         "-fstack-protector-strong",
         "-fstack-protector-all",
         "-D_FORTIFY_SOURCE=2 -O2",
-
-        # "-D SUPPORTTHREAD",  # if support thread
-
-        # "-D HAVE_ELF_H",
         "-D target_cpu_x64",
         "-D target_cpu_x86_64",
-
-        # "-D HAVE_LINK_H",
-        # "-D_GNU_SOURCE",
         "-DHAVE_CONFIG_H",
         "-DCC_IS_CLANG",
       ]
       libs += [ "z" ]
-
-      # with_libunwind = true
     }
-    if (!use_wasm && !is_win && !is_macx && !is_test) {
+    if (!use_wasm && !is_win && !is_mac && !is_test && !is_mingw) {
       cflags += [ "-D HAVE_LIBUNWIND" ]
     }
 
@@ -110,8 +100,6 @@ config("default") {
       cflags += [
         "-D IS_WASM",
         "-D GOOGLE_PROTOBUF_NO_RDTSC",
-
-        #  "-D HAVE_LIBUNWIND",
         "-D target_cpu_x64",
         "-D target_cpu_x86_64",
         "-DHAVE_CONFIG_H",
@@ -122,7 +110,7 @@ config("default") {
     }
     cflags += [ "-D BINDER_ASYNC" ]
     libs += [ "pthread" ]
-    if (!is_macx) {
+    if (!is_mac) {
       libs += [ "rt" ]
     }
     if (!is_win) {
@@ -139,11 +127,8 @@ config("default") {
     cflags += [ "-D is_mingw" ]
     defines = [ "WIN32_LEAN_AND_MEAN" ]
     libs += [ "wsock32" ]
-    libs += [ "Ws2_32" ]
-    cflags += [
-      "-D SECUREC_IS_DLL_LIBRARY",
-      "-D __KERNEL__",
-    ]
+    libs += [ "ws2_32" ]
+    cflags += [ "-Wno-attributes" ]
   }
   if (with_ebpf_help_table) {
     cflags += [ "-D WITH_EBPF_HELP" ]
@@ -152,7 +137,7 @@ config("default") {
 
 config("symbols") {
   cflags = [ "-O0" ]
-  if (is_linux || is_macx) {
+  if (is_linux || is_mac) {
     cflags += [ "-funwind-tables" ]
   }
 }
@@ -165,7 +150,7 @@ config("release") {
 
   cflags += [ "-O3" ]
   ldflags = [ "-fstack-protector" ]
-  if (!is_macx) {
+  if (!is_mac) {
     ldflags += [ "-Wl,-O1" ]
     if (!is_win) {
       ldflags += [
@@ -175,7 +160,7 @@ config("release") {
     }
   }
 
-  if (!is_win && !is_macx) {
+  if (!is_win && !is_mac) {
     ldflags += [
       "-fPIC",
       "-fpie",
@@ -195,10 +180,10 @@ config("executable") {
   print("use_wasm", use_wasm)
   ldflags = []
 
-  if (is_linux || (is_macx && !use_wasm)) {
+  if (is_linux || (is_mac && !use_wasm)) {
     ldflags += []
   }
-  if (!is_macx && !use_wasm && !is_win) {
+  if (!is_mac && !use_wasm && !is_win) {
     ldflags += [
       "-Wl,--disable-new-dtags",
       "-Wl,-z,noexecstack",
@@ -208,16 +193,16 @@ config("executable") {
       "-Wl,-z,relro",
     ]
   }
-  if (!is_macx && !use_wasm) {
+  if (!is_mac && !use_wasm) {
     ldflags += [ "-fpie" ]
   }
-  if (!is_macx && !use_wasm && !is_win) {
+  if (!is_mac && !use_wasm && !is_win) {
     ldflags += [ "-pie" ]
   }
-  if (!is_macx) {
+  if (!is_mac) {
     ldflags += [ "-Wl,--gc-sections" ]
   }
-  if (is_macx) {
+  if (is_mac) {
     ldflags += [
       "-fdata-sections",
       "-ffunction-sections",
@@ -226,9 +211,50 @@ config("executable") {
       ldflags += [ "-Wl,-U,__sanitizer_options_link_helper" ]
     }
   }
-  if (!is_debug && !is_macx) {
+  if (!is_debug && !is_mac) {
     ldflags += [ "-s" ]
-  } else if (!is_debug && is_macx) {
+  } else if (!is_debug && is_mac) {
     ldflags += [ "-dead_strip" ]
+  }
+}
+
+config("ts_config") {
+  ldflags = []
+  cflags = [
+    "-D target_cpu_${target_cpu}",
+    "-std=c++17",
+  ]
+  cflags += [ "-D __LITTLE_ENDIAN_BITFIELD" ]
+
+  if (is_mingw) {
+    cflags += [ "-ffunction-sections" ]
+    cflags += [ "-D is_mingw=1" ]
+    cflags += [ "-Wno-inconsistent-dllimport" ]
+    defines = [ "WIN32_LEAN_AND_MEAN" ]
+    ldflags += [
+      "-Wl,--whole-archive",
+      "-lpthread",
+      "-Wl,--no-whole-archive",
+    ]
+
+    libs = [ "wsock32" ]
+    libs += [ "ws2_32" ]
+  }
+  if (!use_wasm && !is_win && !is_mac && !is_test && !is_mingw) {
+    cflags += [ "-D HAVE_LIBUNWIND" ]
+  }
+  if (enable_ts_utest && !use_wasm) {
+    cflags += [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags += [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
   }
 }

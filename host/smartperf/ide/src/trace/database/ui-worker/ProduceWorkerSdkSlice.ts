@@ -38,7 +38,7 @@ export class SdkSliceRender extends Render {
       maxValue: number;
     },
     row: TraceRow<SdkSliceStruct>
-  ) {
+  ): void {
     let sdkList = row.dataList;
     let sdkFilter = row.dataListCache;
     SdkSliceStruct.maxSdkSlice = req.maxValue;
@@ -61,11 +61,13 @@ export class SdkSliceRender extends Render {
       }
       SdkSliceStruct.draw(req.context, re);
     }
-    if (!sdkSliceFind && row.isHover) SdkSliceStruct.hoverSdkSliceStruct = undefined;
+    if (!sdkSliceFind && row.isHover) {
+      SdkSliceStruct.hoverSdkSliceStruct = undefined;
+    }
     req.context.closePath();
   }
 
-  render(sdkSliceRequest: RequestMessage, sdkList: Array<any>, filter: Array<any>) {
+  render(sdkSliceRequest: RequestMessage, sdkList: Array<any>, filter: Array<any>): void {
     if (sdkSliceRequest.lazyRefresh) {
       this.sdkSlice(
         sdkList,
@@ -160,25 +162,25 @@ export class SdkSliceRender extends Render {
 
   sdkSlice(
     sdkList: Array<any>,
-    res: Array<any>,
+    sdkSliceFilters: Array<any>,
     startNS: number,
     endNS: number,
     totalNS: number,
     frame: any,
     use: boolean
-  ) {
-    if (use && res.length > 0) {
-      for (let index = 0; index < res.length; index++) {
-        let item = res[index];
+  ): void {
+    if (use && sdkSliceFilters.length > 0) {
+      for (let index = 0; index < sdkSliceFilters.length; index++) {
+        let item = sdkSliceFilters[index];
         if ((item.end_ts || 0) > (startNS || 0) && (item.start_ts || 0) < (endNS || 0)) {
-          SdkSliceStruct.setSdkSliceFrame(res[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
+          SdkSliceStruct.setSdkSliceFrame(sdkSliceFilters[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
         } else {
-          res[index].frame = null;
+          sdkSliceFilters[index].frame = null;
         }
       }
       return;
     }
-    res.length = 0;
+    sdkSliceFilters.length = 0;
     if (sdkList) {
       for (let index = 0; index < sdkList.length; index++) {
         let item = sdkList[index];
@@ -193,7 +195,7 @@ export class SdkSliceRender extends Render {
             (sdkList[index - 1].frame?.width || 0) == (sdkList[index].frame?.width || 0)
           ) {
           } else {
-            res.push(item);
+            sdkSliceFilters.push(item);
           }
         }
       }
@@ -246,7 +248,7 @@ export class SdkSliceStruct extends BaseStruct {
     endNS: number,
     totalNS: number,
     frame: any
-  ) {
+  ): void {
     let sdkSliceStartPointX: number, sdkSliceEndPointX: number;
 
     if ((SdkSliceNode.start_ts || 0) < startNS) {

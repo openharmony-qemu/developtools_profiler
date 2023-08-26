@@ -479,24 +479,7 @@ export class RangeRuler extends Graph {
       this.c.globalAlpha = 1;
     }
     //绘制选中区域
-    this.c.fillStyle = '#ffffff';
-    this.rangeRect.x = this.markA.frame.x < this.markB.frame.x ? this.markA.frame.x : this.markB.frame.x;
-    this.rangeRect.width = Math.abs(this.markB.frame.x - this.markA.frame.x);
-    this.c.fillRect(this.rangeRect.x, this.rangeRect.y, this.rangeRect.width, this.rangeRect.height);
-    this.c.globalAlpha = 1;
-    this.c.globalAlpha = 0.5;
-    this.c.fillStyle = '#999999';
-    this.c.fillRect(this.frame.x, this.frame.y, this.rangeRect.x, this.rangeRect.height);
-    this.c.fillRect(
-      this.rangeRect.x + this.rangeRect.width,
-      this.frame.y,
-      this.frame.width - this.rangeRect.width,
-      this.rangeRect.height
-    );
-    this.c.globalAlpha = 1;
-    this.c.closePath();
-    this.markA.draw();
-    this.markB.draw();
+    this.drawRangeSelection();
     if (this.notifyHandler) {
       this.range.startX = this.rangeRect.x;
       this.range.endX = this.rangeRect.x + this.rangeRect.width;
@@ -527,9 +510,9 @@ export class RangeRuler extends Graph {
         this.scale = this.scales[0];
       }
       let tmpNs = 0;
-      let yu = this.range.startNS % this.scale;
-      let realW = (this.scale * this.frame.width) / (this.range.endNS - this.range.startNS);
-      let startX = 0;
+      let timeLineYu = this.range.startNS % this.scale;
+      let timeLineRealW = (this.scale * this.frame.width) / (this.range.endNS - this.range.startNS);
+      let timeLineStartX = 0;
       if (this.range.xs) {
         this.range.xs.length = 0;
       } else {
@@ -540,17 +523,17 @@ export class RangeRuler extends Graph {
       } else {
         this.range.xsTxt = [];
       }
-      if (yu != 0) {
-        let firstNodeWidth = ((this.scale - yu) / this.scale) * realW;
-        startX += firstNodeWidth;
-        tmpNs += yu;
-        this.range.xs.push(startX);
+      if (timeLineYu != 0) {
+        let firstNodeWidth = ((this.scale - timeLineYu) / this.scale) * timeLineRealW;
+        timeLineStartX += firstNodeWidth;
+        tmpNs += timeLineYu;
+        this.range.xs.push(timeLineStartX);
         this.range.xsTxt.push(ns2s(tmpNs));
       }
       while (tmpNs < this.range.endNS - this.range.startNS) {
-        startX += realW;
+        timeLineStartX += timeLineRealW;
         tmpNs += this.scale;
-        this.range.xs.push(startX);
+        this.range.xs.push(timeLineStartX);
         this.range.xsTxt.push(ns2s(tmpNs));
       }
       if (!discardNotify) {
@@ -559,11 +542,32 @@ export class RangeRuler extends Graph {
     }
   }
 
+  private drawRangeSelection() {
+    this.c.fillStyle = '#ffffff';
+    this.rangeRect.x = this.markA.frame.x < this.markB.frame.x ? this.markA.frame.x : this.markB.frame.x;
+    this.rangeRect.width = Math.abs(this.markB.frame.x - this.markA.frame.x);
+    this.c.fillRect(this.rangeRect.x, this.rangeRect.y, this.rangeRect.width, this.rangeRect.height);
+    this.c.globalAlpha = 1;
+    this.c.globalAlpha = 0.5;
+    this.c.fillStyle = '#999999';
+    this.c.fillRect(this.frame.x, this.frame.y, this.rangeRect.x, this.rangeRect.height);
+    this.c.fillRect(
+      this.rangeRect.x + this.rangeRect.width,
+      this.frame.y,
+      this.frame.width - this.rangeRect.width,
+      this.rangeRect.height
+    );
+    this.c.globalAlpha = 1;
+    this.c.closePath();
+    this.markA.draw();
+    this.markB.draw();
+  }
+
   mouseDown(ev: MouseEvent) {
-    let x = ev.offsetX - (offsetLeft || 0);
-    let y = ev.offsetY - (offsetTop || 0);
+    let timeLineMouseDownX = ev.offsetX - (offsetLeft || 0);
+    let timeLineMouseDownY = ev.offsetY - (offsetTop || 0);
     this.isMouseDown = true;
-    this.mouseDownOffsetX = x;
+    this.mouseDownOffsetX = timeLineMouseDownX;
     if (this.markA.isHover) {
       this.movingMark = this.markA;
       this.mouseDownMovingMarkX = this.movingMark.frame.x || 0;
@@ -573,13 +577,13 @@ export class RangeRuler extends Graph {
     } else {
       this.movingMark = null;
     }
-    if (this.rangeRect.containsWithPadding(x, y, 5, 0)) {
+    if (this.rangeRect.containsWithPadding(timeLineMouseDownX, timeLineMouseDownY, 5, 0)) {
       this.isMovingRange = true;
       this.markAX = this.markA.frame.x;
       this.markBX = this.markB.frame.x;
     } else if (
-      this.frame.containsWithMargin(x, y, 20, 0, 0, 0) &&
-      !this.rangeRect.containsWithMargin(x, y, 0, markPadding, 0, markPadding)
+      this.frame.containsWithMargin(timeLineMouseDownX, timeLineMouseDownY, 20, 0, 0, 0) &&
+      !this.rangeRect.containsWithMargin(timeLineMouseDownX, timeLineMouseDownY, 0, markPadding, 0, markPadding)
     ) {
       this.isNewRange = true;
     }

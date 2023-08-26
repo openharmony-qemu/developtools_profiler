@@ -61,10 +61,10 @@ export class TabPaneGpuMemoryAbility extends BaseElement {
 
   private init(): void {
     const thTable = this.tableThead!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const gpuMemoryTblNodes = thTable!.querySelectorAll('div');
     if (this.tableThead!.hasAttribute('sort')) {
       this.tableThead!.removeAttribute('sort');
-      list.forEach((item) => {
+      gpuMemoryTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });
@@ -80,26 +80,26 @@ export class TabPaneGpuMemoryAbility extends BaseElement {
           this.total = new GpuMemory();
           this.total.process = '*All*';
           this.total.gpuName = '*All*';
-          data.forEach((item) => {
-            if (item.processName !== null) {
-              item.process = `${item.processName}(${item.processId})`;
+          data.forEach((gpuMemoryItem) => {
+            if (gpuMemoryItem.processName !== null) {
+              gpuMemoryItem.process = `${gpuMemoryItem.processName}(${gpuMemoryItem.processId})`;
             } else {
-              item.process = `Process(${item.processId})`;
+              gpuMemoryItem.process = `Process(${gpuMemoryItem.processId})`;
             }
 
-            this.total.avgSize += item.avgSize;
+            this.total.avgSize += gpuMemoryItem.avgSize;
             if (this.total.minSize < 0) {
-              this.total.minSize = item.minSize;
+              this.total.minSize = gpuMemoryItem.minSize;
             }
             if (this.total.maxSize < 0) {
-              this.total.maxSize = item.maxSize;
+              this.total.maxSize = gpuMemoryItem.maxSize;
             }
-            this.total.minSize = Math.min(this.total.minSize, item.minSize);
-            this.total.maxSize = Math.max(this.total.maxSize, item.maxSize);
-            item.gpuName = SpSystemTrace.DATA_DICT.get(item.gpuNameId) || '';
-            item.avgSizes = Utils.getBinaryByteWithUnit(Math.round(item.avgSize));
-            item.minSizes = Utils.getBinaryByteWithUnit(item.minSize);
-            item.maxSizes = Utils.getBinaryByteWithUnit(item.maxSize);
+            this.total.minSize = Math.min(this.total.minSize, gpuMemoryItem.minSize);
+            this.total.maxSize = Math.max(this.total.maxSize, gpuMemoryItem.maxSize);
+            gpuMemoryItem.gpuName = SpSystemTrace.DATA_DICT.get(gpuMemoryItem.gpuNameId) || '';
+            gpuMemoryItem.avgSizes = Utils.getBinaryByteWithUnit(Math.round(gpuMemoryItem.avgSize));
+            gpuMemoryItem.minSizes = Utils.getBinaryByteWithUnit(gpuMemoryItem.minSize);
+            gpuMemoryItem.maxSizes = Utils.getBinaryByteWithUnit(gpuMemoryItem.maxSize);
           });
           this.total.avgSizes = Utils.getBinaryByteWithUnit(Math.round(this.total.avgSize / data.length));
           this.total.minSizes = Utils.getBinaryByteWithUnit(this.total.minSize);

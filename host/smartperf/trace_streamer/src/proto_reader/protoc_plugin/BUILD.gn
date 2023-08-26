@@ -18,11 +18,12 @@ ohos_executable("protoreader_plugin") {
   sources = [ "proto_reader_plugin.cpp" ]
   deps = [
     "${SRC}/base:string_help",
-    "${THIRD_PARTY}/protobuf:protobuf(${host_toolchain})",
+    "${THIRD_PARTY}/protobuf:protobuf_static(${host_toolchain})",
     "${THIRD_PARTY}/protobuf:protoc_lib(${host_toolchain})",
   ]
   include_dirs = [
     "${SRC}/base",
     "${THIRD_PARTY}/protobuf/src",
+    "//third_party/bounds_checking_function/include",
   ]
 }

@@ -43,11 +43,11 @@ export class TabpanePerfProfile extends BaseElement {
   private perfProfilerDataSource: any[] = [];
   private perfProfileSortKey = 'weight';
   private perfProfileSortType = 0;
-  private currentSelectedData: any = undefined;
+  private perfSelectedData: any = undefined;
   private perfProfileFrameChart: FrameChart | null | undefined;
   private isChartShow: boolean = false;
   private systemRuleName = '/system/';
-  private numRuleName = '/max/min/';
+  private perfProfileNumRuleName = '/max/min/';
   private perfProfilerModal: DisassemblingWindow | null | undefined;
   private needShowMenu = true;
   private searchValue: string = '';
@@ -190,7 +190,7 @@ export class TabpanePerfProfile extends BaseElement {
       let data = evt.detail.data as PerfCallChainMerageData;
       this.setRightTableData(data);
       data.isSelected = true;
-      this.currentSelectedData = data;
+      this.perfSelectedData = data;
       this.perfProfilerList?.clearAllSelection(data);
       this.perfProfilerList?.setCurrentSelection(data);
       // @ts-ignore
@@ -292,27 +292,27 @@ export class TabpanePerfProfile extends BaseElement {
         });
       } else if (data.type == 'button') {
         if (data.item == 'symbol') {
-          if (this.currentSelectedData && !this.currentSelectedData.canCharge) {
+          if (this.perfSelectedData && !this.perfSelectedData.canCharge) {
             return;
           }
-          if (this.currentSelectedData != undefined) {
-            this.perfProfilerFilter!.addDataMining({ name: this.currentSelectedData.symbolName }, data.item);
+          if (this.perfSelectedData != undefined) {
+            this.perfProfilerFilter!.addDataMining({ name: this.perfSelectedData.symbolName }, data.item);
             perfProfileFuncArgs.push({
               funcName: 'splitTree',
-              funcArgs: [this.currentSelectedData.symbolName, false, true],
+              funcArgs: [this.perfSelectedData.symbolName, false, true],
             });
           } else {
             return;
           }
         } else if (data.item == 'library') {
-          if (this.currentSelectedData && !this.currentSelectedData.canCharge) {
+          if (this.perfSelectedData && !this.perfSelectedData.canCharge) {
             return;
           }
-          if (this.currentSelectedData != undefined && this.currentSelectedData.libName != '') {
-            this.perfProfilerFilter!.addDataMining({ name: this.currentSelectedData.libName }, data.item);
+          if (this.perfSelectedData != undefined && this.perfSelectedData.libName != '') {
+            this.perfProfilerFilter!.addDataMining({ name: this.perfSelectedData.libName }, data.item);
             perfProfileFuncArgs.push({
               funcName: 'splitTree',
-              funcArgs: [this.currentSelectedData.libName, false, false],
+              funcArgs: [this.perfSelectedData.libName, false, false],
             });
           } else {
             return;
@@ -344,11 +344,11 @@ export class TabpanePerfProfile extends BaseElement {
         this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
         if (this.isChartShow) this.perfProfileFrameChart?.calculateChartData();
         this.perfProfilerTbl!.move1px();
-        if (this.currentSelectedData) {
-          this.currentSelectedData.isSelected = false;
-          this.perfProfilerTbl?.clearAllSelection(this.currentSelectedData);
+        if (this.perfSelectedData) {
+          this.perfSelectedData.isSelected = false;
+          this.perfProfilerTbl?.clearAllSelection(this.perfSelectedData);
           this.perfProfilerList!.recycleDataSource = [];
-          this.currentSelectedData = undefined;
+          this.perfSelectedData = undefined;
         }
       });
     };
@@ -396,11 +396,11 @@ export class TabpanePerfProfile extends BaseElement {
       let perfProfilerConstraintsArgs: any[] = [
         {
           funcName: 'resotreAllNode',
-          funcArgs: [[this.numRuleName]],
+          funcArgs: [[this.perfProfileNumRuleName]],
         },
         {
           funcName: 'clearSplitMapData',
-          funcArgs: [this.numRuleName],
+          funcArgs: [this.perfProfileNumRuleName],
         },
       ];
       if (data.checked) {
@@ -422,7 +422,7 @@ export class TabpanePerfProfile extends BaseElement {
     this.perfProfilerFilter!.getFilterData((data: FilterData) => {
       if (this.searchValue != this.perfProfilerFilter!.filterValue) {
         this.searchValue = this.perfProfilerFilter!.filterValue;
-        let args = [
+        let perfArgs = [
           {
             funcName: 'setSearchValue',
             funcArgs: [this.searchValue],
@@ -432,7 +432,7 @@ export class TabpanePerfProfile extends BaseElement {
             funcArgs: [],
           },
         ];
-        this.getDataByWorker(args, (result: any[]) => {
+        this.getDataByWorker(perfArgs, (result: any[]) => {
           this.setPerfProfilerLeftTableData(result);
           this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
           this.switchFlameChart(data);
@@ -593,24 +593,17 @@ export class TabpanePerfProfile extends BaseElement {
   initHtml(): string {
     return `
         <style>
+        tab-pane-filter {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            border: solid rgb(216,216,216) 1px;
+            float: left;
+        }
         :host{
             display: flex;
             flex-direction: column;
             padding: 10px 10px 0 10px;
-        }
-        tab-pane-filter {
-            border: solid rgb(216,216,216) 1px;
-            float: left;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-        selector{
-            display: none;
-        }
-        .show{
-            display: flex;
-            flex: 1;
         }
         .perf-profile-progress{
             bottom: 33px;
@@ -618,6 +611,9 @@ export class TabpanePerfProfile extends BaseElement {
             height: 1px;
             left: 0;
             right: 0;
+        }
+        selector{
+            display: none;
         }
         .perf-profile-loading{
             bottom: 0;
@@ -627,6 +623,10 @@ export class TabpanePerfProfile extends BaseElement {
             width:100%;
             background:transparent;
             z-index: 999999;
+        }
+        .show{
+            display: flex;
+            flex: 1;
         }
     </style>
     <div class="perf-profile-content" style="display: flex;flex-direction: row">

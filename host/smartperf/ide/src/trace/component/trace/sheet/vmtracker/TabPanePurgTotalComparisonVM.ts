@@ -50,7 +50,7 @@ export class TabPanePurgTotalComparisonVM extends BaseElement {
     this.initSelect(data.startNs, fileArr);
     this.updateComparisonData(data.startNs, fileArr[0].startNs);
   }
-  private initSelect(fileStartNs: number, fileArr: Array<any>): void {
+  private initSelect(fileStartNs: number, purgeTotalComList: Array<any>): void {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -58,15 +58,15 @@ export class TabPanePurgTotalComparisonVM extends BaseElement {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].name) {
-      option.setAttribute('value', fileArr[0].name);
+    if (purgeTotalComList[0].name) {
+      option.setAttribute('value', purgeTotalComList[0].name);
     }
-    this.selectEl!.defaultValue = fileArr[0].name;
-    this.selectEl!.placeholder = fileArr[0].name;
-    this.selectEl!.dataSource = fileArr;
+    this.selectEl!.defaultValue = purgeTotalComList[0].name;
+    this.selectEl!.placeholder = purgeTotalComList[0].name;
+    this.selectEl!.dataSource = purgeTotalComList;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
       a.addEventListener('onSelected', (e: any) => {
-        for (let f of fileArr) {
+        for (let f of purgeTotalComList) {
           if (input.value === f.name) {
             that.updateComparisonData(fileStartNs, f.startNs);
           }

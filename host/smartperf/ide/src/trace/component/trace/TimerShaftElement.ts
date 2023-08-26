@@ -33,7 +33,7 @@ import { SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
 export function randomRgbColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';
-  for (let i = 0; i < 6; i++) {
+  for (let index = 0; index < 6; index++) {
     color += letters[Math.floor(Math.random() * 16)];
   }
   return color;

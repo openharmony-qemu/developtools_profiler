@@ -22,6 +22,9 @@
 #include "event_parser_base.h"
 #include "htrace_plugin_time_parser.h"
 #include "log.h"
+#if is_mingw
+#define unw_word_t uint64_t
+#endif
 #include "perf_events.h"
 #include "perf_file_format.h"
 #include "perf_file_reader.h"

@@ -25,24 +25,24 @@ export class JsCpuProfilerRender extends Render {
       context: CanvasRenderingContext2D;
       type: string;
     },
-    row: TraceRow<JsCpuProfilerStruct>
+    jsCpuProfilerRow: TraceRow<JsCpuProfilerStruct>
   ) {
-    let list = row.dataList;
-    let filter = row.dataListCache;
+    let list = jsCpuProfilerRow.dataList;
+    let filter = jsCpuProfilerRow.dataListCache;
     jsCpuProfiler(
       list,
       filter,
       TraceRow.range!.startNS,
       TraceRow.range!.endNS,
       TraceRow.range!.totalNS,
-      row.frame,
+      jsCpuProfilerRow.frame,
       req.useCache || !TraceRow.range!.refresh
     );
     req.context.beginPath();
     let jsCpuProfilerFind = false;
     for (let re of filter) {
       JsCpuProfilerStruct.draw(req.context, re);
-      if (row.isHover) {
+      if (jsCpuProfilerRow.isHover) {
         if (
           re.endTime - re.startTime == 0 ||
           re.endTime - re.startTime == null ||
@@ -50,23 +50,23 @@ export class JsCpuProfilerRender extends Render {
         ) {
           if (
             re.frame &&
-            row.hoverX >= re.frame.x - 5 &&
-            row.hoverX <= re.frame.x + 5 &&
-            row.hoverY >= re.frame.y &&
-            row.hoverY <= re.frame.y + re.frame.height
+            jsCpuProfilerRow.hoverX >= re.frame.x - 5 &&
+            jsCpuProfilerRow.hoverX <= re.frame.x + 5 &&
+            jsCpuProfilerRow.hoverY >= re.frame.y &&
+            jsCpuProfilerRow.hoverY <= re.frame.y + re.frame.height
           ) {
             JsCpuProfilerStruct.hoverJsCpuProfilerStruct = re;
             jsCpuProfilerFind = true;
           }
         } else {
-          if (re.frame && isFrameContainPoint(re.frame, row.hoverX, row.hoverY)) {
+          if (re.frame && isFrameContainPoint(re.frame, jsCpuProfilerRow.hoverX, jsCpuProfilerRow.hoverY)) {
             JsCpuProfilerStruct.hoverJsCpuProfilerStruct = re;
             jsCpuProfilerFind = true;
           }
         }
       }
     }
-    if (!jsCpuProfilerFind && row.isHover) JsCpuProfilerStruct.hoverJsCpuProfilerStruct = undefined;
+    if (!jsCpuProfilerFind && jsCpuProfilerRow.isHover) JsCpuProfilerStruct.hoverJsCpuProfilerStruct = undefined;
     req.context.closePath();
   }
 }

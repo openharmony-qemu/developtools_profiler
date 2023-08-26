@@ -28,19 +28,10 @@ public:
     std::unique_ptr<TableBase::Cursor> CreateCursor() override;
 
 private:
-    void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei) override {}
-
     class Cursor : public TableBase::Cursor {
     public:
         explicit Cursor(const TraceDataCache* dataCache, TableBase* table);
         ~Cursor() override;
-        int32_t Filter(const FilterConstraints& fc, sqlite3_value** argv) override
-        {
-            UNUSED(fc);
-            UNUSED(argv);
-            return 0;
-        }
-
         int32_t Column(int32_t column) const override;
 
     private:

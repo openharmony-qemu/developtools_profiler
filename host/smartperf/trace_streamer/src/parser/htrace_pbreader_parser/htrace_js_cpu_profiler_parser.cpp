@@ -48,7 +48,7 @@ void from_json(const json& j, Node& node)
     j.at("id").get_to(node.id);
     j.at("callFrame").get_to(node.callFrame);
     j.at("hitCount").get_to(node.hitCount);
-    for (int32_t i = 0; i < j["children"].size(); i++) {
+    for (size_t i = 0; i < j["children"].size(); i++) {
         int child = j["children"][i];
         nodes_.emplace(child, node.id);
         auto children = std::to_string(child);
@@ -94,7 +94,7 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
     uint32_t sample = std::numeric_limits<uint32_t>::max();
     uint64_t sampleEndTime = startTime;
     uint64_t dur = 0;
-    for (auto i = 0; i < jMessage.at("samples").size(); i++) {
+    for (size_t i = 0; i < jMessage.at("samples").size(); i++) {
         if (sample != std::numeric_limits<uint32_t>::max() && sample != jMessage.at("samples")[i]) {
             dur = (sampleEndTime * TIME_SECOND_COVER) - (startTime * TIME_SECOND_COVER);
             auto startNewTime =

@@ -257,7 +257,7 @@ export class LitTable extends HTMLElement {
             <div class="tbody">
                 <div class="tree"></div>
                 <div class="body"></div>
-        </div>
+            </div>
         </div>
         `;
   }
@@ -1738,25 +1738,25 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  setCurrentSelection(data: any) {
+  setCurrentSelection(selectionData: any) {
     if (this.isRecycleList) {
-      if (data.isSelected != undefined) {
-        this.currentTreeDivList.forEach((item) => {
-          if ((item as any).data == data) {
-            this.setSelectedRow(data.isSelected, [item]);
+      if (selectionData.isSelected != undefined) {
+        this.currentTreeDivList.forEach((itemEl) => {
+          if ((itemEl as any).data == selectionData) {
+            this.setSelectedRow(selectionData.isSelected, [itemEl]);
           }
         });
-        this.currentRecycleList.forEach((item) => {
-          if ((item as any).data == data) {
-            this.setSelectedRow(data.isSelected, [item]);
+        this.currentRecycleList.forEach((recycleItem) => {
+          if ((recycleItem as any).data == selectionData) {
+            this.setSelectedRow(selectionData.isSelected, [recycleItem]);
           }
         });
       }
     } else {
-      if (data.isSelected != undefined) {
+      if (selectionData.isSelected != undefined) {
         this.normalDs.forEach((item) => {
-          if ((item as any).data == data) {
-            this.setSelectedRow(data.isSelected, [item]);
+          if ((item as any).data == selectionData) {
+            this.setSelectedRow(selectionData.isSelected, [item]);
           }
         });
       }
@@ -1768,14 +1768,14 @@ export class LitTable extends HTMLElement {
       this.setMouseIn(false, this.currentTreeDivList);
       this.setMouseIn(false, this.currentRecycleList);
       if (data.isHover != undefined) {
-        this.currentTreeDivList.forEach((item) => {
-          if ((item as any).data == data) {
-            this.setMouseIn(data.isHover, [item]);
+        this.currentTreeDivList.forEach((hoverItem) => {
+          if ((hoverItem as any).data == data) {
+            this.setMouseIn(data.isHover, [hoverItem]);
           }
         });
-        this.currentRecycleList.forEach((item) => {
-          if ((item as any).data == data) {
-            this.setMouseIn(data.isHover, [item]);
+        this.currentRecycleList.forEach((hoverItem) => {
+          if ((hoverItem as any).data == data) {
+            this.setMouseIn(data.isHover, [hoverItem]);
           }
         });
       }
@@ -1791,18 +1791,18 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  dispatchRowClickEventIcon(rowObject: any, elements: any[]) {
+  dispatchRowClickEventIcon(rowData: any, elements: any[]) {
     this.dispatchEvent(
       new CustomEvent('icon-click', {
         detail: {
-          ...rowObject.data,
-          data: rowObject.data,
+          ...rowData.data,
+          data: rowData.data,
           callBack: (isSelected: boolean) => {
             //是否爲单选
             if (isSelected) {
-              this.clearAllSelection(rowObject.data);
+              this.clearAllSelection(rowData.data);
             }
-            this.setSelectedRow(rowObject.data.isSelected, elements);
+            this.setSelectedRow(rowData.data.isSelected, elements);
           },
         },
         composed: true,

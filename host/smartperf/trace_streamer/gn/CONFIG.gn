@@ -12,7 +12,7 @@
 # limitations under the License.
 is_win = false
 is_linux = false
-is_macx = false
+is_mac = false
 is_protoc = false
 with_ebpf_help_table = false
 is_mingw = false
@@ -32,14 +32,14 @@ declare_args() {
   is_sdkdemo_test = false
   testonly = false
   is_fuzz = false
-  is_macx = false
+  is_mac = false
   is_spb = false
   target = "trace_streamer"
 }
 if (target_os == "linux") {
   is_linux = true
 } else if (target_os == "macx") {
-  is_macx = true
+  is_mac = true
 } else if (target_os == "windows") {
   is_win = true
   is_mingw = true
@@ -107,9 +107,6 @@ set_defaults("ohos_source_set") {
   configs = default_configs
 }
 
-# set_defaults("ohos_source_hiperf") {
-#   configs = hiperf_default_configs
-# }
 set_defaults("ohos_shared_library") {
   configs = default_configs
 }

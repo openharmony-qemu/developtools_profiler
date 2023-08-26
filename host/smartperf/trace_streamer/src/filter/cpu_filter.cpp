@@ -31,10 +31,12 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
                                   uint64_t nextPior,
                                   DataIndex nextInfo)
 {
+    BinderTransactionInfo btInfo = {prevPid, nextPid, INVALID_UINT64, INVALID_UINT64};
     auto index = traceDataCache_->GetSchedSliceData()->AppendSchedSlice(ts, 0, cpu, nextPid, 0, nextPior);
     auto prevTidOnCpu = cpuToRowSched_.find(cpu);
     if (prevTidOnCpu != cpuToRowSched_.end()) {
         traceDataCache_->GetSchedSliceData()->Update(prevTidOnCpu->second.row, ts, prevState);
+        btInfo.schedSliceRow = prevTidOnCpu->second.row;
         cpuToRowSched_.at(cpu).row = index;
     } else {
         cpuToRowSched_.insert(std::make_pair(cpu, RowPos{nextPid, index}));
@@ -83,6 +85,7 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
         }
         auto threadStateRow =
             traceDataCache_->GetThreadStateData()->AppendThreadState(ts, INVALID_TIME, INVALID_CPU, prevPid, prevState);
+        btInfo.threadStateRow = threadStateRow;
         if (prevState == TASK_UNINTERRUPTIBLE || prevState == TASK_DK) {
             if (!pidToThreadSliceRow.count(prevPid)) {
                 pidToThreadSliceRow.emplace(std::make_pair(prevPid, threadStateRow));
@@ -91,6 +94,16 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
             }
         }
         (void)RemberInternalTidInStateTable(prevPid, threadStateRow, prevState);
+    }
+    if (traceDataCache_->BinderRunnableTraceEnabled() && iTidToTransaction_.find(prevPid) != iTidToTransaction_.end()) {
+        uint64_t transactionId = iTidToTransaction_.at(prevPid);
+        auto iter = transactionIdToInfo_.find(transactionId);
+        if (prevState != TASK_FOREGROUND || iter == transactionIdToInfo_.end() || iter->second.iTidFrom != prevPid ||
+            btInfo.schedSliceRow == INVALID_UINT64 || btInfo.threadStateRow == INVALID_UINT64) {
+            TransactionClear(prevState, transactionId);
+            return;
+        }
+        transactionIdToInfo_[transactionId] = btInfo;
     }
 }
 
@@ -196,6 +209,8 @@ void CpuFilter::Clear()
     cpuToRowSched_.clear();
     lastWakeUpMsg_.clear();
     internalTidToRowThreadState_.clear();
+    iTidToTransaction_.clear();
+    transactionIdToInfo_.clear();
 }
 void CpuFilter::InsertWakeupEvent(uint64_t ts, uint32_t internalTid, bool isWaking)
 {
@@ -255,6 +270,47 @@ void CpuFilter::CheckWakeupEvent(uint32_t internalTid)
         toRunnableTid_.erase(internalTid);
     }
     return;
+}
+
+void CpuFilter::InsertRunnableBinderEvent(uint32_t transactionId, uint32_t iTid)
+{
+    if (iTidToTransaction_.find(iTid) != iTidToTransaction_.end()) {
+        iTidToTransaction_.erase(iTid);
+    }
+    iTidToTransaction_.emplace(iTid, transactionId);
+    if (transactionIdToInfo_.find(transactionId) != transactionIdToInfo_.end()) {
+        transactionIdToInfo_.erase(transactionId);
+    }
+    transactionIdToInfo_.emplace(transactionId,
+                                 BinderTransactionInfo{iTid, INVALID_UINT32, INVALID_UINT64, INVALID_UINT64});
+}
+
+void CpuFilter::InsertRunnableBinderRecvEvent(uint32_t transactionId, uint32_t iTid)
+{
+    auto iter = transactionIdToInfo_.find(transactionId);
+    if (iter == transactionIdToInfo_.end()) {
+        return;
+    }
+    if (iter->second.iTidTo == iTid && iter->second.schedSliceRow != INVALID_UINT64 &&
+        iter->second.threadStateRow != INVALID_UINT64) {
+        traceDataCache_->GetSchedSliceData()->UpdateEndState(iter->second.schedSliceRow, TASK_RUNNABLE_BINDER);
+        traceDataCache_->GetThreadStateData()->UpdateState(iter->second.threadStateRow, TASK_RUNNABLE_BINDER);
+    }
+    TransactionClear(INVALID_UINT32, transactionId);
+}
+
+void CpuFilter::TransactionClear(uint32_t iTidFrom, uint32_t transactionId)
+{
+    if (iTidToTransaction_.find(iTidFrom) != iTidToTransaction_.end()) {
+        iTidToTransaction_.erase(iTidFrom);
+    }
+    auto iter = transactionIdToInfo_.find(transactionId);
+    if (iter != transactionIdToInfo_.end()) {
+        if (iTidToTransaction_.find(iter->second.iTidFrom) != iTidToTransaction_.end()) {
+            iTidToTransaction_.erase(iter->second.iTidFrom);
+        }
+        transactionIdToInfo_.erase(transactionId);
+    }
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

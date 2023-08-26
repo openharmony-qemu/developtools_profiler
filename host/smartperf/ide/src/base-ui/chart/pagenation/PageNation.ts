@@ -225,16 +225,7 @@ export class PageNation {
     });
     if (totalpage <= 9) {
       for (let i = 0; i < totalpage; i++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = i + 1;
-        if (i + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, i, current);
       }
       return;
     }
@@ -244,110 +235,61 @@ export class PageNation {
     }
     // 当前页面 大于5页 小于倒数第5页
     for (let index = 0; index < 2; index++) {
-      const cloneLi = origin.cloneNode(true);
-      // @ts-ignore
-      cloneLi.innerText = index + 1;
-      if (index + 1 === current) {
-        this.setElementStyles(cloneLi, {
-          backgroundColor: PageNation.BtnBackColor,
-          color: PageNation.BtnColor,
-        });
-      }
-      this.list.appendChild(cloneLi);
+      this.buildLi(origin, index, current);
     }
-    var span = document.createElement('span');
+    let span = document.createElement('span');
     span.innerText = '...';
     this.list.appendChild(span);
     for (let i = current - 3; i < current + 2; i++) {
-      const li = origin.cloneNode(true);
-      // @ts-ignore
-      li.innerText = i + 1;
-      if (i + 1 === current) {
-        this.setElementStyles(li, {
-          backgroundColor: PageNation.BtnBackColor,
-          color: PageNation.BtnColor,
-        });
-      }
-      this.list.appendChild(li);
+      this.buildLi(origin, i, current);
     }
-    var span = document.createElement('span');
+    span = document.createElement('span');
     span.innerText = '...';
     this.list.appendChild(span);
     for (let i = totalpage - 2; i < totalpage; i++) {
-      const li = origin.cloneNode(true);
-      // @ts-ignore
-      li.innerText = i + 1;
-      if (i + 1 === current) {
-        this.setElementStyles(li, {
-          backgroundColor: PageNation.BtnBackColor,
-          color: PageNation.BtnColor,
-        });
-      }
-      this.list.appendChild(li);
+      this.buildLi(origin, i, current);
     }
   }
 
+  private buildLi(origin: HTMLElement, i: number, current: number) {
+    const li = origin.cloneNode(true);
+    // @ts-ignore
+    li.innerText = i + 1;
+    if (i + 1 === current) {
+      this.setElementStyles(li, {
+        backgroundColor: PageNation.BtnBackColor,
+        color: PageNation.BtnColor,
+      });
+    }
+    this.list.appendChild(li);
+  }
+
   bindLeftList(current: number, totalpage: number, origin: HTMLElement): boolean {
+    let span;
     if (current < 5) {
       // 左边5个 中间 ... 右边2个
       for (let index = 0; index < 5; index++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = index + 1;
-        if (index + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, index, current);
       }
-      var span = document.createElement('span');
+      span = document.createElement('span');
       span.innerText = '...';
       this.list.appendChild(span);
       for (let index = totalpage - 2; index < totalpage; index++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = index + 1;
-        if (index + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, index, current);
       }
       return true;
     }
     if (current == 5) {
       // 左边5个 中间 ... 右边2个
       for (let i = 0; i < 7; i++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = i + 1;
-        if (i + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, i, current);
       }
-      var span = document.createElement('span');
+      span = document.createElement('span');
       span.innerText = '...';
       this.list.appendChild(span);
 
       for (let index = totalpage - 2; index < totalpage; index++) {
-        const liElement = origin.cloneNode(true);
-        // @ts-ignore
-        liElement.innerText = index + 1;
-        if (index + 1 === current) {
-          this.setElementStyles(liElement, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(liElement);
+        this.buildLi(origin, index, current);
       }
       return true;
     }
@@ -355,62 +297,26 @@ export class PageNation {
     if (current > totalpage - 4) {
       // 左边5个 中间 ... 右边2个
       for (let index = 0; index < 2; index++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = index + 1;
-        if (index + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, index, current);
       }
-      var span = document.createElement('span');
+      span = document.createElement('span');
       span.innerText = '...';
       this.list.appendChild(span);
       for (let i = totalpage - 5; i < totalpage; i++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = i + 1;
-        if (i + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, i, current);
       }
       return true;
     }
     if (current == totalpage - 4) {
       // 左边5个 中间 ... 右边2个
       for (let i = 0; i < 2; i++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = i + 1;
-        if (i + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, i, current);
       }
-      var span = document.createElement('span');
+      span = document.createElement('span');
       span.innerText = '...';
       this.list.appendChild(span);
       for (let i = totalpage - 7; i < totalpage; i++) {
-        const li = origin.cloneNode(true);
-        // @ts-ignore
-        li.innerText = i + 1;
-        if (i + 1 === current) {
-          this.setElementStyles(li, {
-            backgroundColor: PageNation.BtnBackColor,
-            color: PageNation.BtnColor,
-          });
-        }
-        this.list.appendChild(li);
+        this.buildLi(origin, i, current);
       }
       return true;
     }

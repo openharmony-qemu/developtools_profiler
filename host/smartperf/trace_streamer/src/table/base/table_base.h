@@ -67,7 +67,12 @@ public:
         virtual void FilterTS(unsigned char op, sqlite3_value* argv, const std::deque<InternalTime>& times);
 
         virtual int32_t RowId(sqlite3_int64* id);
-        virtual int32_t Filter(const FilterConstraints& fc, sqlite3_value** argv) = 0;
+        virtual int32_t Filter(const FilterConstraints& fc, sqlite3_value** argv)
+        {
+            UNUSED(fc);
+            UNUSED(argv);
+            return 0;
+        }
         virtual int32_t Column(int32_t n) const = 0;
         virtual void FilterId(unsigned char op, sqlite3_value* argv);
         virtual void FilterEnd();
@@ -104,7 +109,11 @@ protected:
     }
     int32_t BestIndex(sqlite3_index_info* idxInfo);
     // needs to correspond to Cursor::Filter()
-    virtual void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei) = 0;
+    virtual void EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei)
+    {
+        UNUSED(ei);
+        UNUSED(fc);
+    }
     virtual std::unique_ptr<Cursor> CreateCursor() = 0;
     int32_t Open(sqlite3_vtab_cursor** ppCursor);
     virtual void Init(int32_t, const char* const*)

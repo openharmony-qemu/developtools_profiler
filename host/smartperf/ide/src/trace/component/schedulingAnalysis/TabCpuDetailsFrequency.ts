@@ -44,7 +44,7 @@ export class TabCpuDetailsFrequency extends BaseElement {
     this.tableNoData = this.shadowRoot!.querySelector<TableNoData>('#table-no-data');
     this.cpuDetailsFrequencyProgress = this.shadowRoot!.querySelector<LitProgressBar>('#loading');
     this.cpuDetailsFrequencyPie = this.shadowRoot!.querySelector<LitChartPie>('#chart-pie');
-    this.cpuDetailsFrequencyUsageTbl = this.shadowRoot!.querySelector<LitTable>('#tb-cpu-usage');
+    this.cpuDetailsFrequencyUsageTbl = this.shadowRoot!.querySelector<LitTable>('#fre-tb-cpu-usage');
     this.tabCpuDetailsThreads = this.shadowRoot!.querySelector<TabCpuDetailsThreads>('#tab-cpu-details-threads');
 
     this.cpuDetailsFrequencyUsageTbl!.addEventListener('row-click', (evt: any) => {
@@ -101,20 +101,20 @@ export class TabCpuDetailsFrequency extends BaseElement {
         label: {
           type: 'outer',
         },
-        tip: (obj) => {
+        tip: (freObj) => {
           return `<div>
-                                <div>frequency:${obj.obj.value}</div> 
-                                <div>min:${obj.obj.min}</div>
-                                <div>max:${obj.obj.max}</div>
-                                <div>average:${obj.obj.avg}</div>
-                                <div>duration:${obj.obj.sumTimeStr}</div>
-                                <div>ratio:${obj.obj.ratio}%</div>
+                                <div>frequency:${freObj.obj.value}</div> 
+                                <div>min:${freObj.obj.min}</div>
+                                <div>max:${freObj.obj.max}</div>
+                                <div>average:${freObj.obj.avg}</div>
+                                <div>duration:${freObj.obj.sumTimeStr}</div>
+                                <div>ratio:${freObj.obj.ratio}%</div>
                             </div>
                                 `;
         },
-        hoverHandler: (data) => {
-          if (data) {
-            this.cpuDetailsFrequencyUsageTbl!.setCurrentHover(data);
+        hoverHandler: (cpuDetailsFreqData) => {
+          if (cpuDetailsFreqData) {
+            this.cpuDetailsFrequencyUsageTbl!.setCurrentHover(cpuDetailsFreqData);
           } else {
             this.cpuDetailsFrequencyUsageTbl!.mouseOut();
           }
@@ -143,7 +143,7 @@ export class TabCpuDetailsFrequency extends BaseElement {
   }
 
   noData(value: boolean) {
-    this.shadowRoot!.querySelector<HTMLDivElement>('.chart-box')!.style.display = value ? 'none' : 'block';
+    this.shadowRoot!.querySelector<HTMLDivElement>('.fre-chart-box')!.style.display = value ? 'none' : 'block';
     this.shadowRoot!.querySelector<HTMLDivElement>('.table-box')!.style.width = value ? '100%' : '60%';
   }
 
@@ -164,11 +164,11 @@ export class TabCpuDetailsFrequency extends BaseElement {
     }
   }
 
-  queryLoginWorker(option: string, log: string, handler: (res: any) => void) {
+  queryLoginWorker(cpuFrequencyType: string, log: string, handler: (res: any) => void) {
     let cpuDetailsFrequencyTime = new Date().getTime();
     procedurePool.submitWithName(
       'logic1',
-      option,
+      cpuFrequencyType,
       {
         endTs: SpSchedulingAnalysis.endTs,
         total: SpSchedulingAnalysis.totalDur,
@@ -236,10 +236,10 @@ export class TabCpuDetailsFrequency extends BaseElement {
             margin: 20px;
             height: calc(100vh - 165px);
         }
-        .chart-box{
+        .fre-chart-box{
             width: 40%;
         }
-        #tb-cpu-usage{
+        #fre-tb-cpu-usage{
             height: 100%;
         }
         .table-box{
@@ -255,13 +255,13 @@ export class TabCpuDetailsFrequency extends BaseElement {
         </style>
         <lit-progress-bar id="loading"></lit-progress-bar>
         <div class="d-box">
-            <div class="chart-box">
+            <div class="fre-chart-box">
                 <div style="text-align: center">Statistics By Duration</div>
                 <lit-chart-pie  id="chart-pie"></lit-chart-pie>
             </div>
             <div class="table-box">
                 <table-no-data id="table-no-data">
-                    <lit-table id="tb-cpu-usage" hideDownload>
+                    <lit-table id="fre-tb-cpu-usage" hideDownload>
                         <lit-table-column width="100px" title="No" data-index="index" key="index" align="flex-start" order></lit-table-column>
                         <lit-table-column width="150px" title="frequency" data-index="value" key="value" align="flex-start" order></lit-table-column>
                         <lit-table-column width="100px" title="min" data-index="min" key="min" align="flex-start" order></lit-table-column>

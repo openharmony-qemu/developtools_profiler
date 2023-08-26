@@ -331,25 +331,25 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     list.unshift(threadCallChain, threadStateCallChain);
   }
 
-  freshPerfCallchains(samples: PerfCountSample[], isTopDown: boolean) {
+  freshPerfCallchains(perfCountSamples: PerfCountSample[], isTopDown: boolean) {
     this.currentTreeMapData = {};
     this.currentTreeList = [];
-    let totalCount = 0;
-    samples.forEach((sample) => {
-      totalCount += sample.count;
-      if (this.callChainData[sample.sampleId] && this.callChainData[sample.sampleId].length > 0) {
-        let callChains = [...this.callChainData[sample.sampleId]];
-        this.addOtherCallchainsData(sample, callChains);
-        let topIndex = isTopDown ? 0 : callChains.length - 1;
-        if (callChains.length > 0) {
-          let root = this.currentTreeMapData[callChains[topIndex].name + sample.pid];
-          if (root == undefined) {
-            root = new PerfCallChainMerageData();
-            this.currentTreeMapData[callChains[topIndex].name + sample.pid] = root;
-            this.currentTreeList.push(root);
+    let totalSamplesCount = 0;
+    perfCountSamples.forEach((perfSample) => {
+      totalSamplesCount += perfSample.count;
+      if (this.callChainData[perfSample.sampleId] && this.callChainData[perfSample.sampleId].length > 0) {
+        let perfCallChains = [...this.callChainData[perfSample.sampleId]];
+        this.addOtherCallchainsData(perfSample, perfCallChains);
+        let topIndex = isTopDown ? 0 : perfCallChains.length - 1;
+        if (perfCallChains.length > 0) {
+          let perfRootNode = this.currentTreeMapData[perfCallChains[topIndex].name + perfSample.pid];
+          if (perfRootNode == undefined) {
+            perfRootNode = new PerfCallChainMerageData();
+            this.currentTreeMapData[perfCallChains[topIndex].name + perfSample.pid] = perfRootNode;
+            this.currentTreeList.push(perfRootNode);
           }
-          PerfCallChainMerageData.merageCallChainSample(root, callChains[topIndex], sample, false);
-          this.mergeChildrenByIndex(root, callChains, topIndex, sample, isTopDown);
+          PerfCallChainMerageData.merageCallChainSample(perfRootNode, perfCallChains[topIndex], perfSample, false);
+          this.mergeChildrenByIndex(perfRootNode, perfCallChains, topIndex, perfSample, isTopDown);
         }
       }
     });
@@ -357,40 +357,40 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     // @ts-ignore
     Object.values(this.currentTreeMapData).forEach((merageData: any) => {
       if (rootMerageMap[merageData.pid] == undefined) {
-        let processMerageData = new PerfCallChainMerageData(); //新增进程的节点数据
-        processMerageData.canCharge = false;
-        processMerageData.symbolName =
+        let perfProcessMerageData = new PerfCallChainMerageData(); //新增进程的节点数据
+        perfProcessMerageData.canCharge = false;
+        perfProcessMerageData.symbolName =
           (this.threadData[merageData.tid].processName || 'Process') + `(${merageData.pid})`;
-        processMerageData.symbol = processMerageData.symbolName;
-        processMerageData.tid = merageData.tid;
-        processMerageData.children.push(merageData);
-        processMerageData.initChildren.push(merageData);
-        processMerageData.dur = merageData.dur;
-        processMerageData.count = merageData.dur;
-        processMerageData.total = totalCount;
-        rootMerageMap[merageData.pid] = processMerageData;
+        perfProcessMerageData.symbol = perfProcessMerageData.symbolName;
+        perfProcessMerageData.tid = merageData.tid;
+        perfProcessMerageData.children.push(merageData);
+        perfProcessMerageData.initChildren.push(merageData);
+        perfProcessMerageData.dur = merageData.dur;
+        perfProcessMerageData.count = merageData.dur;
+        perfProcessMerageData.total = totalSamplesCount;
+        rootMerageMap[merageData.pid] = perfProcessMerageData;
       } else {
         rootMerageMap[merageData.pid].children.push(merageData);
         rootMerageMap[merageData.pid].initChildren.push(merageData);
         rootMerageMap[merageData.pid].dur += merageData.dur;
         rootMerageMap[merageData.pid].count += merageData.dur;
-        rootMerageMap[merageData.pid].total = totalCount;
+        rootMerageMap[merageData.pid].total = totalSamplesCount;
       }
       merageData.parentNode = rootMerageMap[merageData.pid]; //子节点添加父节点的引用
     });
     let id = 0;
-    this.currentTreeList.forEach((node) => {
-      node.total = totalCount;
-      if (node.id == '') {
-        node.id = id + '';
+    this.currentTreeList.forEach((perfTreeNode) => {
+      perfTreeNode.total = totalSamplesCount;
+      if (perfTreeNode.id == '') {
+        perfTreeNode.id = id + '';
         id++;
       }
-      if (node.parentNode) {
-        if (node.parentNode.id == '') {
-          node.parentNode.id = id + '';
+      if (perfTreeNode.parentNode) {
+        if (perfTreeNode.parentNode.id == '') {
+          perfTreeNode.parentNode.id = id + '';
           id++;
         }
-        node.parentId = node.parentNode.id;
+        perfTreeNode.parentId = perfTreeNode.parentNode.id;
       }
     });
     // @ts-ignore
@@ -938,16 +938,16 @@ export class PerfThread {
 }
 
 export class PerfCallChain {
-  tid: number = 0;
-  pid: number = 0;
-  name: string = '';
-  fileName: string = '';
-  threadState: string = '';
   startNS: number = 0;
   dur: number = 0;
   sampleId: number = 0;
   callChainId: number = 0;
   vaddrInFile: number = 0;
+  tid: number = 0;
+  pid: number = 0;
+  name: string = '';
+  fileName: string = '';
+  threadState: string = '';
   fileId: number = 0;
   symbolId: number = 0;
   path: string = '';
@@ -1132,25 +1132,25 @@ export function timeMsFormat2p(ns: number) {
   let hour1 = 3600_000;
   let minute1 = 60_000;
   let second1 = 1_000; // 1 second
-  let res = '';
+  let perfResult = '';
   if (currentNs >= hour1) {
-    res += Math.floor(currentNs / hour1).toFixed(2) + 'h';
-    return res;
+    perfResult += Math.floor(currentNs / hour1).toFixed(2) + 'h';
+    return perfResult;
   }
   if (currentNs >= minute1) {
-    res += Math.floor(currentNs / minute1).toFixed(2) + 'min';
-    return res;
+    perfResult += Math.floor(currentNs / minute1).toFixed(2) + 'min';
+    return perfResult;
   }
   if (currentNs >= second1) {
-    res += Math.floor(currentNs / second1).toFixed(2) + 's';
-    return res;
+    perfResult += Math.floor(currentNs / second1).toFixed(2) + 's';
+    return perfResult;
   }
   if (currentNs > 0) {
-    res += currentNs.toFixed(2) + 'ms';
-    return res;
+    perfResult += currentNs.toFixed(2) + 'ms';
+    return perfResult;
   }
-  if (res == '') {
-    res = '0s';
+  if (perfResult == '') {
+    perfResult = '0s';
   }
-  return res;
+  return perfResult;
 }

@@ -120,42 +120,6 @@ EbpfElfTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBase* table)
 
 EbpfElfTable::Cursor::~Cursor() {}
 
-int32_t EbpfElfTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** argv)
-{
-    // reset indexMap_
-    indexMap_ = std::make_unique<IndexMap>(0, rowCount_);
-
-    if (rowCount_ <= 0) {
-        return SQLITE_OK;
-    }
-
-    auto& cs = fc.GetConstraints();
-    for (size_t i = 0; i < cs.size(); i++) {
-        const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
-                FilterId(c.op, argv[i]);
-                break;
-            default:
-                break;
-        }
-    }
-
-    auto orderbys = fc.GetOrderBys();
-    for (auto i = orderbys.size(); i > 0;) {
-        i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
-                indexMap_->SortBy(orderbys[i].desc);
-                break;
-            default:
-                break;
-        }
-    }
-
-    return SQLITE_OK;
-}
-
 int32_t EbpfElfTable::Cursor::Column(int32_t column) const
 {
     switch (column) {

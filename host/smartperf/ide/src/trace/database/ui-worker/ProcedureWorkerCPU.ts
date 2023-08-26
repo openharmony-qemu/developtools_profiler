@@ -34,29 +34,29 @@ export class EmptyRender extends Render {
     req.context.beginPath();
     req.context.closePath();
   }
-  render(cpuReq: RequestMessage, list: Array<any>, filter: Array<any>) {
-    if (cpuReq.canvas) {
-      cpuReq.context.clearRect(0, 0, cpuReq.frame.width, cpuReq.frame.height);
-      cpuReq.context.beginPath();
-      drawLines(cpuReq.context, cpuReq.xs, cpuReq.frame.height, cpuReq.lineColor);
-      drawSelection(cpuReq.context, cpuReq.params);
-      cpuReq.context.closePath();
+  render(cpuReqMessage: RequestMessage, list: Array<any>, filter: Array<any>) {
+    if (cpuReqMessage.canvas) {
+      cpuReqMessage.context.clearRect(0, 0, cpuReqMessage.frame.width, cpuReqMessage.frame.height);
+      cpuReqMessage.context.beginPath();
+      drawLines(cpuReqMessage.context, cpuReqMessage.xs, cpuReqMessage.frame.height, cpuReqMessage.lineColor);
+      drawSelection(cpuReqMessage.context, cpuReqMessage.params);
+      cpuReqMessage.context.closePath();
       drawFlagLine(
-        cpuReq.context,
-        cpuReq.flagMoveInfo,
-        cpuReq.flagSelectedInfo,
-        cpuReq.startNS,
-        cpuReq.endNS,
-        cpuReq.totalNS,
-        cpuReq.frame,
-        cpuReq.slicesTime
+        cpuReqMessage.context,
+        cpuReqMessage.flagMoveInfo,
+        cpuReqMessage.flagSelectedInfo,
+        cpuReqMessage.startNS,
+        cpuReqMessage.endNS,
+        cpuReqMessage.totalNS,
+        cpuReqMessage.frame,
+        cpuReqMessage.slicesTime
       );
     }
     // @ts-ignore
     self.postMessage({
-      id: cpuReq.id,
-      type: cpuReq.type,
-      results: cpuReq.canvas ? undefined : filter,
+      id: cpuReqMessage.id,
+      type: cpuReqMessage.type,
+      results: cpuReqMessage.canvas ? undefined : filter,
       hover: null,
     });
   }
@@ -65,7 +65,7 @@ export class EmptyRender extends Render {
 export class CpuRender {
   renderMainThread(
     req: {
-      context: CanvasRenderingContext2D;
+      cpuRenderContext: CanvasRenderingContext2D;
       useCache: boolean;
       type: string;
       translateY: number;
@@ -84,16 +84,16 @@ export class CpuRender {
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
-    req.context.beginPath();
-    req.context.font = '11px sans-serif';
+    req.cpuRenderContext.beginPath();
+    req.cpuRenderContext.font = '11px sans-serif';
     cpuFilter.forEach((re) => {
       re.translateY = req.translateY;
-      CpuStruct.draw(req.context, re, req.translateY);
+      CpuStruct.draw(req.cpuRenderContext, re, req.translateY);
     });
-    req.context.closePath();
+    req.cpuRenderContext.closePath();
     let currentCpu = parseInt(req.type!.replace('cpu-data-', ''));
     drawWakeUp(
-      req.context,
+      req.cpuRenderContext,
       CpuStruct.wakeupBean,
       TraceRow.range!.startNS,
       TraceRow.range!.endNS,
@@ -108,7 +108,7 @@ export class CpuRender {
         return;
       }
       drawWakeUpList(
-        req.context,
+        req.cpuRenderContext,
         SpSystemTrace.wakeupList[i + 1],
         TraceRow.range!.startNS,
         TraceRow.range!.endNS,
@@ -426,8 +426,8 @@ export class WakeupBean {
   thread: string | undefined;
   tid: number | undefined;
   schedulingLatency: number | undefined;
-  schedulingDesc: string | undefined;
   ts: number | undefined;
+  schedulingDesc: string | undefined;
   itid: number | undefined;
 }
 

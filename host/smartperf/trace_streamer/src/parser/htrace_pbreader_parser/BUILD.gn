@@ -18,37 +18,21 @@ ohos_source_set("htrace_pbreader_parser_src") {
   sources = [
     "../parser_base.cpp",
     "htrace_clock_detail_parser.cpp",
-    "htrace_clock_detail_parser.h",
     "htrace_cpu_data_parser.cpp",
-    "htrace_cpu_data_parser.h",
     "htrace_cpu_parser/htrace_cpu_detail_parser.cpp",
-    "htrace_cpu_parser/htrace_cpu_detail_parser.h",
     "htrace_disk_io_parser.cpp",
-    "htrace_disk_io_parser.h",
     "htrace_event_parser/htrace_event_parser.cpp",
-    "htrace_event_parser/htrace_event_parser.h",
-    "htrace_file_header.h",
     "htrace_hidump_parser.cpp",
-    "htrace_hidump_parser.h",
     "htrace_hilog_parser.cpp",
-    "htrace_hilog_parser.h",
     "htrace_hisysevent_parser.cpp",
-    "htrace_hisysevent_parser.h",
     "htrace_js_cpu_profiler_parser.cpp",
-    "htrace_js_cpu_profiler_parser.h",
     "htrace_js_memory_parser.cpp",
-    "htrace_js_memory_parser.h",
     "htrace_mem_parser.cpp",
-    "htrace_mem_parser.h",
     "htrace_native_hook_parser.cpp",
-    "htrace_native_hook_parser.h",
     "htrace_network_parser.cpp",
-    "htrace_network_parser.h",
     "htrace_parser.cpp",
     "htrace_process_parser.cpp",
-    "htrace_process_parser.h",
     "htrace_symbols_detail_parser.cpp",
-    "htrace_symbols_detail_parser.h",
   ]
   include_dirs = [
     "../../proto_reader/include",
@@ -61,6 +45,7 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "../../trace_data",
     "../../cfg",
     "../../trace_streamer",
+    "${THIRD_PARTY}/bounds_checking_function/include",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
     "${THIRD_PARTY}/json/single_include/nlohmann",
@@ -71,10 +56,9 @@ ohos_source_set("htrace_pbreader_parser_src") {
   include_dirs += [
     "${THIRD_PARTY}/libunwind/include",
     "${THIRD_PARTY}/libunwind/src",
-    "${THIRD_PARTY}/hiperf/include",
-    "${THIRD_PARTY}/hiperf/include/nonlinux/linux",
-    "${THIRD_PARTY}/hiperf/include/nonlinux",
-    "${THIRD_PARTY}/musl",
+    "${PERF_DIR}/hiperf/include",
+    "${PERF_DIR}/hiperf/include/nonlinux/linux",
+    "${PERF_DIR}/hiperf/include/nonlinux",
     "${THIRD_PARTY}/googletest/googletest/include",
     "${THIRD_PARTY}/perf_include/musl",
     "${THIRD_PARTY}/perf_include/libbpf",
@@ -83,23 +67,23 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "${THIRD_PARTY}/perf_include/linux",
     "../hiperf_parser",
     "../hiperf_parser/include",
+    "../../../commonlibrary/c_utils/base/include",
+    "../../include/dummy/musl",
   ]
+  if (is_mingw || is_mac) {
+    include_dirs += [
+      "${THIRD_PARTY}/elfutils/libelf",
+      "${THIRD_PARTY}/libbpf/include/uapi",
+    ]
+  }
 
-  cflags = [ "-D target_cpu_${target_cpu}" ]
-  if (!use_wasm && !is_win && !is_macx && !is_test) {
-    cflags += [ "-D HAVE_LIBUNWIND" ]
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
   }
-  if (enable_ts_utest && !use_wasm) {
-    cflags += [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-    ]
-    ldflags = [
-      "-fprofile-arcs",
-      "-ftest-coverage",
-      "--coverage",
-    ]
+  if (is_mingw) {
+    cflags = [ "-includeMingW64Fix.h" ]
   }
+
   public_deps = []
   deps = [
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp_standard",
@@ -119,10 +103,19 @@ ohos_source_set("htrace_pbreader_parser_src") {
 group("htrace_pbreader_parser") {
   deps = [
     ":htrace_pbreader_parser_src",
-    "${THIRD_PARTY}/protobuf:protobuf",
-    "${THIRD_PARTY}/protobuf:protobuf_lite",
+    "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+    "${THIRD_PARTY}/protobuf:protobuf_static",
   ]
-  if (!use_wasm && !is_win && !is_macx && !is_test) {
-    deps += [ "${THIRD_PARTY}/libunwind:libunwind" ]
+
+  if (!use_wasm && !is_win && !is_mingw && !is_mac && !is_test) {
+    if (!is_independent_compile) {
+      if (target_cpu == "arm64") {
+        deps += [ "//third_party/libunwind:unwind_source_arm64_opt" ]
+      } else {
+        deps += [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
+      }
+    } else {
+      deps += [ "${THIRD_PARTY}/libunwind:libunwind" ]
+    }
   }
 }

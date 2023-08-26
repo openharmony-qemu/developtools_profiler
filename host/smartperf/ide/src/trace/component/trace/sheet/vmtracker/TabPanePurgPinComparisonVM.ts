@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
+import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { queryProcessPurgeableSelectionTab } from '../../../../database/SqlLite.js';
@@ -41,16 +41,16 @@ export class TabPanePurgPinComparisonVM extends BaseElement {
     }px`;
     this.purgeablePinSource = [];
     let fileArr: any[] = [];
-    for (let file of dataList) {
-      if (file.startNs !== data.startNs) {
-        fileArr.push(file);
+    for (let fileData of dataList) {
+      if (fileData.startNs !== data.startNs) {
+        fileArr.push(fileData);
       }
     }
     fileArr = fileArr.sort();
     this.initSelect(data.startNs, fileArr);
     this.updateComparisonData(data.startNs, fileArr[0].startNs);
   }
-  private initSelect(fileStartNs: number, fileArr: Array<any>): void {
+  private initSelect(fileStartNs: number, purgePinComVmList: Array<any>): void {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -58,15 +58,15 @@ export class TabPanePurgPinComparisonVM extends BaseElement {
     option.innerHTML = 'File Name';
     option.setAttribute('disabled', 'disabled');
     this.selectEl?.appendChild(option);
-    if (fileArr[0].name) {
-      option.setAttribute('value', fileArr[0].name);
+    if (purgePinComVmList[0].name) {
+      option.setAttribute('value', purgePinComVmList[0].name);
     }
-    this.selectEl!.defaultValue = fileArr[0].name;
-    this.selectEl!.placeholder = fileArr[0].name;
-    this.selectEl!.dataSource = fileArr;
+    this.selectEl!.defaultValue = purgePinComVmList[0].name;
+    this.selectEl!.placeholder = purgePinComVmList[0].name;
+    this.selectEl!.dataSource = purgePinComVmList;
     this.selectEl!.querySelectorAll('lit-select-option').forEach((a) => {
       a.addEventListener('onSelected', (e: any) => {
-        for (let f of fileArr) {
+        for (let f of purgePinComVmList) {
           if (input.value === f.name) {
             that.updateComparisonData(fileStartNs, f.startNs);
           }

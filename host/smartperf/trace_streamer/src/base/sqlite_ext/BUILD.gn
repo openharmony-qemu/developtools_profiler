@@ -13,17 +13,14 @@
 
 import("//build/ohos.gni")
 import("../../../build/ts.gni")
-config("sqlite_config") {
+ohos_source_set("sqliteext") {
+  sources = [ "sqlite_ext_funcs.cpp" ]
   include_dirs = [
     "${THIRD_PARTY}/sqlite/include",
+    "${THIRD_PARTY}/bounds_checking_function/include",
     "..",
   ]
-  cflags = [
-    "-Wno-writable-strings",
-    "-std=c++17",
-  ]
-}
-source_set("sqliteext") {
-  sources = [ "sqlite_ext_funcs.cpp" ]
-  public_configs = [ ":sqlite_config" ]
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
 }

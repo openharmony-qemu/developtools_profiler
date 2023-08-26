@@ -14,14 +14,14 @@
  */
 
 export class WakeupBean {
+  thread: string | undefined;
   wakeupTime: number | undefined;
   cpu: number | undefined;
   process: string | undefined;
   pid: number | undefined;
-  thread: string | undefined;
   tid: number | undefined;
-  schedulingLatency: number | undefined;
   schedulingDesc: string | undefined;
   ts: number | undefined;
   itid: number | undefined;
+  schedulingLatency: number | undefined;
 }

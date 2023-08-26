@@ -471,20 +471,20 @@ where cpu not null
         .slice(0, 20);
       target.set(
         key,
-        cpuArr.map((it) => {
+        cpuArr.map((irqBean) => {
           return {
-            cpu: it.cpu,
-            value: it.value,
-            sum: it.sum,
-            sumTimeStr: getProbablyTime(it.sum),
-            min: getProbablyTime(it.min),
-            max: getProbablyTime(it.max),
-            avg: getProbablyTime(it.avg),
-            minValue: it.min,
-            maxValue: it.max,
-            avgValue: it.avg,
-            ratio: ((it.sum / (sumMap.get(key) || 1)) * 100).toFixed(2),
-            block: it.block,
+            cpu: irqBean.cpu,
+            value: irqBean.value,
+            sum: irqBean.sum,
+            sumTimeStr: getProbablyTime(irqBean.sum),
+            min: getProbablyTime(irqBean.min),
+            max: getProbablyTime(irqBean.max),
+            avg: getProbablyTime(irqBean.avg),
+            minValue: irqBean.min,
+            maxValue: irqBean.max,
+            avgValue: irqBean.avg,
+            ratio: ((irqBean.sum / (sumMap.get(key) || 1)) * 100).toFixed(2),
+            block: irqBean.block,
           } as any;
         })
       );
@@ -630,21 +630,21 @@ where cpu not null
         .slice(0, 20);
       target.set(
         key,
-        cpuArr.map((it) => {
+        cpuArr.map((cpuAnalysisBean) => {
           return {
-            cpu: it.cpu,
-            value: it.value,
-            sum: it.sum,
-            sumTimeStr: getProbablyTime(it.sum),
-            min: getProbablyTime(it.min),
-            minValue: it.min,
-            max: getProbablyTime(it.max),
-            maxValue: it.max,
-            avgValue: it.avg,
-            avg: getProbablyTime(it.avg),
-            count: it.count,
-            ratio: ((it.sum / (sumMap.get(key) || 1)) * 100).toFixed(2),
-            block: it.block,
+            cpu: cpuAnalysisBean.cpu,
+            value: cpuAnalysisBean.value,
+            sum: cpuAnalysisBean.sum,
+            sumTimeStr: getProbablyTime(cpuAnalysisBean.sum),
+            min: getProbablyTime(cpuAnalysisBean.min),
+            minValue: cpuAnalysisBean.min,
+            max: getProbablyTime(cpuAnalysisBean.max),
+            maxValue: cpuAnalysisBean.max,
+            avgValue: cpuAnalysisBean.avg,
+            avg: getProbablyTime(cpuAnalysisBean.avg),
+            count: cpuAnalysisBean.count,
+            ratio: ((cpuAnalysisBean.sum / (sumMap.get(key) || 1)) * 100).toFixed(2),
+            block: cpuAnalysisBean.block,
           } as any;
         })
       );
@@ -654,29 +654,7 @@ where cpu not null
 
   handlerFreqThreadData(arr: FreqThread[]) {
     let cpuFreqArr: CpuMeasure[] = (this.cpuFreqMap.get(this.cpu) || []).filter((it) => it.value === this.freq);
-    let map: Map<
-      number,
-      {
-        tid: number;
-        tName: string;
-        pid: number;
-        pName: string;
-        dur: number;
-        durStr: string;
-        ratio: string;
-      }
-    > = new Map<
-      number,
-      {
-        tid: number;
-        tName: string;
-        pid: number;
-        pName: string;
-        dur: number;
-        durStr: string;
-        ratio: string;
-      }
-    >();
+    let map: Map<number, { tid: number; tName: string; pid: number; pName: string; dur: number; durStr: string; ratio: string; }> = new Map();
     let sumFreqDur = 0;
     cpuFreqArr.map((it) => {
       sumFreqDur += it.dur;

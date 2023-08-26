@@ -44,9 +44,10 @@ export class TabPaneGpuMemorySelectAbility extends BaseElement {
   connectedCallback(): void {
     super.connectedCallback();
     new ResizeObserver(() => {
-      if (this.parentElement?.clientHeight != 0) {
+      if (this.parentElement?.clientHeight !== 0) {
+        let gpuMemoryTbl = this.gpuMemoryClickTable?.shadowRoot?.querySelector('.table');
         // @ts-ignore
-        this.gpuMemoryClickTable?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 18 + 'px';
+        gpuMemoryTbl.style.height = this.parentElement.clientHeight - 18 + 'px';
         this.parentElement!.style.overflow = 'hidden';
         this.gpuMemoryClickTable?.reMeauseHeight();
       }
@@ -55,10 +56,10 @@ export class TabPaneGpuMemorySelectAbility extends BaseElement {
 
   private init(): void {
     const thTable = this.tableThead!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const gpuMemorySelectTblNode = thTable!.querySelectorAll('div');
     if (this.tableThead!.hasAttribute('sort')) {
       this.tableThead!.removeAttribute('sort');
-      list.forEach((item) => {
+      gpuMemorySelectTblNode.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });

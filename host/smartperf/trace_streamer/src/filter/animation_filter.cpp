@@ -19,7 +19,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-constexpr uint8_t GENERATE_VSYNC_EVENT_MAX = 6;
+constexpr uint8_t GENERATE_VSYNC_EVENT_MAX = 5;
 constexpr uint8_t DYNAMIC_STACK_DEPTH_MIN = 4;
 constexpr uint16_t FPS_60 = 60;
 constexpr uint16_t FPS_70 = 70;
@@ -30,60 +30,71 @@ constexpr uint16_t FPS_120 = 120;
 AnimationFilter::AnimationFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
     : FilterBase(dataCache, filter)
 {
+    dynamicFrame_ = traceDataCache_->GetDynamicFrame();
+    callStackSlice_ = traceDataCache_->GetInternalSlicesData();
+    if (dynamicFrame_ == nullptr || callStackSlice_ == nullptr) {
+        TS_LOGE("dynamicFrame_ or callStackSlice_ is nullptr.");
+    }
 }
-
 AnimationFilter::~AnimationFilter() {}
-
+bool AnimationFilter::UpdateDeviceFps(const BytraceLine& line)
+{
+    generateVsyncCnt_++;
+    if (generateFirstTime_ == INVALID_UINT64) {
+        generateFirstTime_ = line.ts;
+    }
+    if (generateVsyncCnt_ <= GENERATE_VSYNC_EVENT_MAX) {
+        return true;
+    }
+    // calculate the average frame rate
+    uint64_t generateTimePeriod = (line.ts - generateFirstTime_) / GENERATE_VSYNC_EVENT_MAX;
+    uint32_t fps = BILLION_NANOSECONDS / generateTimePeriod;
+    if (fps < FPS_70) {
+        traceDataCache_->GetDeviceInfo()->UpdateFrameRate(FPS_60);
+    } else if (fps < FPS_100) {
+        traceDataCache_->GetDeviceInfo()->UpdateFrameRate(FPS_90);
+    } else {
+        traceDataCache_->GetDeviceInfo()->UpdateFrameRate(FPS_120);
+    }
+    TS_LOGI("physical frame rate is %u", fps);
+    return true;
+}
+bool AnimationFilter::UpdateDeviceScreenSize(const TracePoint& point)
+{
+    // get width and height, eg:funcArgs=(0, 0, 1344, 2772) Alpha: 1.00
+    std::smatch matcheLine;
+    std::regex entryViewArgsPattern(R"(\(\d+,\s*\d+,\s*(\d+),\s*(\d+)\))");
+    if (!std::regex_search(point.funcArgs_, matcheLine, entryViewArgsPattern)) {
+        TS_LOGE("Not support this event: %s\n", point.name_.data());
+        return false;
+    }
+    uint8_t index = 0;
+    uint32_t width = base::StrToInt<uint32_t>(matcheLine[++index].str()).value();
+    uint32_t height = base::StrToInt<uint32_t>(matcheLine[++index].str()).value();
+    traceDataCache_->GetDeviceInfo()->UpdateWidthAndHeight(matcheLine);
+    TS_LOGI("physical width is %u, height is %u", width, height);
+    return true;
+}
 bool AnimationFilter::UpdateDeviceInfoEvent(const TracePoint& point, const BytraceLine& line)
 {
     if (traceDataCache_->GetConstDeviceInfo().PhysicalFrameRate() == INVALID_UINT32 &&
         StartWith(point.name_, generateVsyncCmd_)) {
-        if (generateFirstTime_ == INVALID_UINT64) {
-            generateFirstTime_ = line.ts;
-        }
-        generateVsyncCnt_++;
-        // calculate the average frame rate
-        if (generateVsyncCnt_ == GENERATE_VSYNC_EVENT_MAX) {
-            uint64_t generateTimePeriod = (line.ts - generateFirstTime_) / (GENERATE_VSYNC_EVENT_MAX - 1);
-            uint32_t fps = BILLION_NANOSECONDS / generateTimePeriod;
-            if (fps < FPS_70) {
-                traceDataCache_->GetDeviceInfo()->UpdateFrameRate(FPS_60);
-            } else if (fps < FPS_100) {
-                traceDataCache_->GetDeviceInfo()->UpdateFrameRate(FPS_90);
-            } else {
-                traceDataCache_->GetDeviceInfo()->UpdateFrameRate(FPS_120);
-            }
-            TS_LOGI("physical frame rate is %u", fps);
-        }
-        return true;
+        return UpdateDeviceFps(line);
     } else if (traceDataCache_->GetConstDeviceInfo().PhysicalWidth() == INVALID_UINT32 &&
                point.funcPrefixId_ == entryViewCmd_) {
-        // get width and height, eg:funcArgs=(0, 0, 1344, 2772) Alpha: 1.00
-        std::smatch matcheLine;
-        std::regex entryViewArgsPattern(R"(\(\d+,\s*\d+,\s*(\d+),\s*(\d+)\))");
-        if (!std::regex_search(point.funcArgs_, matcheLine, entryViewArgsPattern)) {
-            TS_LOGE("Not support this event: %s\n", point.name_.data());
-            return false;
-        }
-        uint8_t index = 0;
-        uint32_t width = base::StrToInt<uint32_t>(matcheLine[++index].str()).value();
-        uint32_t height = base::StrToInt<uint32_t>(matcheLine[++index].str()).value();
-        traceDataCache_->GetDeviceInfo()->UpdateWidthAndHeight(matcheLine);
-        TS_LOGI("physical width is %u, height is %u", width, height);
-        return true;
+        return UpdateDeviceScreenSize(point);
     }
     return false;
 }
 bool AnimationFilter::BeginDynamicFrameEvent(const TracePoint& point, size_t callStackRow)
 {
     // get the parent frame of data
-    CallStack* callStackSlice = traceDataCache_->GetInternalSlicesData();
-    const std::optional<uint64_t>& parentId = callStackSlice->ParentIdData()[callStackRow];
-    uint8_t depth = callStackSlice->Depths()[callStackRow];
+    const std::optional<uint64_t>& parentId = callStackSlice_->ParentIdData()[callStackRow];
+    uint8_t depth = callStackSlice_->Depths()[callStackRow];
     if (depth < DYNAMIC_STACK_DEPTH_MIN || !parentId.has_value()) {
         return false;
     }
-    const std::string& curStackName = traceDataCache_->GetDataFromDict(callStackSlice->NamesData()[callStackRow]);
+    const std::string& curStackName = traceDataCache_->GetDataFromDict(callStackSlice_->NamesData()[callStackRow]);
     if (!StartWith(curStackName, leashWindowCmd_)) {
         return false;
     }
@@ -93,7 +104,7 @@ bool AnimationFilter::BeginDynamicFrameEvent(const TracePoint& point, size_t cal
         return false;
     }
     auto nameIndex = traceDataCache_->GetDataIndex(point.funcPrefix_.substr(rsUniProcessCmd_.size(), nameSize));
-    auto dynamicFramRow = traceDataCache_->GetDynamicFrame()->AppendDynamicFrame(nameIndex);
+    auto dynamicFramRow = dynamicFrame_->AppendDynamicFrame(nameIndex);
     callStackRowMap_.emplace(callStackRow, dynamicFramRow);
     return true;
 }
@@ -113,42 +124,44 @@ bool AnimationFilter::FinishAnimationEvent(const BytraceLine& line, size_t callS
     animationCallIds_.erase(iter);
     return true;
 }
+bool AnimationFilter::UpdateDynamicEndTime(const uint64_t curFrameRow, uint64_t curStackRow)
+{
+    // update dynamicFrame endTime, filter up from the curStackRow, until reach the top
+    for (uint8_t stackCurDepth = callStackSlice_->Depths()[curStackRow]; stackCurDepth > 0; stackCurDepth--) {
+        if (!callStackSlice_->ParentIdData()[curStackRow].has_value()) {
+            return false;
+        }
+        curStackRow = callStackSlice_->ParentIdData()[curStackRow].value();
+        // use 'H:RSMainThread::DoComposition' endTime as dynamicFrame endTime
+        if (rsDoCompCmd_ == callStackSlice_->NamesData()[curStackRow]) {
+            auto endTime = callStackSlice_->TimeStampData()[curStackRow] + callStackSlice_->DursData()[curStackRow];
+            dynamicFrame_->UpdateEndTime(curFrameRow, endTime);
+            return true;
+        }
+    }
+    return false;
+}
 void AnimationFilter::UpdateDynamicFrameInfo()
 {
     std::smatch matcheLine;
     std::regex leashWindowPattern(R"((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)\s+Alpha:\s+-*(\d+\.\d+))");
-    DynamicFrame* dynamicFrame = traceDataCache_->GetDynamicFrame();
-    CallStack* callStackSlice = traceDataCache_->GetInternalSlicesData();
     uint64_t curStackRow = INVALID_UINT64;
     uint64_t curFrameRow = INVALID_UINT64;
     for (const auto& it : callStackRowMap_) {
         curStackRow = it.first;
         curFrameRow = it.second;
-        uint8_t stackDepth = callStackSlice->Depths()[curStackRow];
         // update dynamicFrame pos, eg:H:RSUniRender::Process:[leashWindow25] (0, 0, 1344, 2772) Alpha: 1.00
-        auto nameDataIndex = callStackSlice->NamesData()[curStackRow];
+        auto nameDataIndex = callStackSlice_->NamesData()[curStackRow];
         const std::string& curStackName = traceDataCache_->GetDataFromDict(nameDataIndex);
         const std::string& funcArgs = curStackName.substr(leashWindowCmd_.size());
         if (!std::regex_search(funcArgs, matcheLine, leashWindowPattern)) {
             TS_LOGE("Not support this event: %s\n", funcArgs.data());
             continue;
         }
-        dynamicFrame->UpdatePosition(
+        dynamicFrame_->UpdatePosition(
             curFrameRow, matcheLine,
             traceDataCache_->GetDataIndex((matcheLine[DYNAMICFRAME_MATCH_LAST].str()))); // alpha
-        // update dynamicFrame endTime, filter up from the curStackRow, until reach the top
-        for (uint8_t stackCurDepth = stackDepth; stackCurDepth > 0; stackCurDepth--) {
-            if (!callStackSlice->ParentIdData()[curStackRow].has_value()) {
-                break;
-            }
-            curStackRow = callStackSlice->ParentIdData()[curStackRow].value();
-            // use 'H:RSMainThread::DoComposition' endTime as dynamicFrame endTime
-            if (rsDoCompCmd_ == callStackSlice->NamesData()[curStackRow]) {
-                auto endTime = callStackSlice->TimeStampData()[curStackRow] + callStackSlice->DursData()[curStackRow];
-                dynamicFrame->UpdateEndTime(curFrameRow, endTime);
-                break;
-            }
-        }
+        UpdateDynamicEndTime(curFrameRow, curStackRow);
     }
     TS_LOGI("UpdateDynamicFrame (%zu) endTime and pos finish", callStackRowMap_.size());
     // this can only be cleared by the UpdateDynamicFrameInfo function

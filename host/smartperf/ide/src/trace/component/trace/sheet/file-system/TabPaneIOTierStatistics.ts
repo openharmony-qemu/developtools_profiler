@@ -253,17 +253,17 @@ export class TabPaneIOTierStatistics extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
         .io-tier-stat-progress{
             bottom: 5px;
             position: absolute;
             height: 1px;
             left: 0;
             right: 0;
+        }
+        :host{
+            padding: 10px 10px 0 10px;
+            display: flex;
+            flex-direction: column;
         }
         .io-tier-stat-loading{
             bottom: 0;

@@ -47,11 +47,6 @@ export class TabPanePTS extends BaseElement {
     this.ptsRange = this.shadowRoot?.querySelector('#pts-time-range');
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    resizeObserver(this.parentElement!, this.ptsTbl!);
-  }
-
   queryDataByDB(ptsVal: SelectionParam | any) {
     getStatesProcessThreadDataByRange(ptsVal.leftNs, ptsVal.rightNs).then((result) => {
       this.getDataByPTS(ptsVal.leftNs, ptsVal.rightNs, result);
@@ -67,13 +62,16 @@ export class TabPanePTS extends BaseElement {
     });
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    resizeObserver(this.parentElement!, this.ptsTbl!);
+  }
   initHtml(): string {
-    return `
-        <style>
+    return `<style>
         :host{
             display: flex;
-            flex-direction: column;
             padding: 10px 10px;
+            flex-direction: column;
         }
         </style>
         <label id="pts-time-range" style="width: 100%;height: 20px;text-align: end;font-size: 10pt;margin-bottom: 5px">Selected range:0.0 ms</label>

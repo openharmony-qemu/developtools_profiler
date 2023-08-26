@@ -514,7 +514,7 @@ export class TabpaneNMCalltree extends BaseElement {
         this.refreshAllNode(this.nmCallTreeFilter!.getFilterTreeData());
       } else if (this.searchValue != this.nmCallTreeFilter!.filterValue) {
         this.searchValue = this.nmCallTreeFilter!.filterValue;
-        let args = [
+        let nmArgs = [
           {
             funcName: 'setSearchValue',
             funcArgs: [this.searchValue],
@@ -524,7 +524,7 @@ export class TabpaneNMCalltree extends BaseElement {
             funcArgs: [],
           },
         ];
-        this.getDataByWorker(args, (result: any[]) => {
+        this.getDataByWorker(nmArgs, (result: any[]) => {
           this.setLTableData(result);
           this.nmCallTreeFrameChart!.data = this.nmCallTreeSource;
           this.switchFlameChart(nmCallTreeData);

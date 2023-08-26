@@ -105,42 +105,6 @@ where IP.pid not null;
     );
   }
 
-  getSPT() {
-    this.queryData(
-      'spt-getStatesProcessThreadData',
-      `
-    select
-      IP.name as process,
-      IP.pid as processId,
-      A.name as thread,
-      B.state as state,
-      A.tid as threadId,
-      B.dur,
-      (B.ts - TR.start_ts + B.dur) as end_ts,
-      (B.ts - TR.start_ts) as start_ts,
-      B.cpu
-    from
-      thread_state as B
-    left join
-      thread as A
-    on
-      B.itid = A.id
-    left join
-      process as IP
-    on
-      A.ipid = IP.id
-    left join
-      trace_range as TR
-    where
-      B.dur > 0
-    and
-      IP.pid not null
-    and (B.ts - TR.start_ts) >= 0;
-`,
-      {}
-    );
-  }
-
   initProcessThreadStateData() {
     let mapTp: Map<number, ThreadProcess> = new Map<number, ThreadProcess>();
     for (let tp of this.arrTp) {

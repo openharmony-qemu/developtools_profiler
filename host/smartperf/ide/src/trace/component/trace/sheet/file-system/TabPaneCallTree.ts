@@ -36,11 +36,11 @@ export class TabPaneCallTree extends BaseElement {
   private callTreeDataSource: any[] = [];
   private callTreeSortKey = 'weight';
   private callTreeSortType = 0;
-  private currentSelectedData: any = undefined;
+  private callTreeSelectedData: any = undefined;
   private frameChart: FrameChart | null | undefined;
   private isChartShow: boolean = false;
   private systmeRuleName = '/system/';
-  private numRuleName = '/max/min/';
+  private callTreeNumRuleName = '/max/min/';
   private needShowMenu = true;
   private searchValue: string = '';
   private loadingList: number[] = [];
@@ -224,7 +224,7 @@ export class TabPaneCallTree extends BaseElement {
       let data = evt.detail.data as MerageBean;
       this.setRightTableData(data);
       data.isSelected = true;
-      this.currentSelectedData = data;
+      this.callTreeSelectedData = data;
       this.callTreeTbr?.clearAllSelection(data);
       this.callTreeTbr?.setCurrentSelection(data);
       // @ts-ignore
@@ -283,27 +283,27 @@ export class TabPaneCallTree extends BaseElement {
         });
       } else if (data.type == 'button') {
         if (data.item == 'symbol') {
-          if (this.currentSelectedData && !this.currentSelectedData.canCharge) {
+          if (this.callTreeSelectedData && !this.callTreeSelectedData.canCharge) {
             return;
           }
-          if (this.currentSelectedData != undefined) {
-            this.callTreeFilter!.addDataMining({ name: this.currentSelectedData.symbolName }, data.item);
+          if (this.callTreeSelectedData != undefined) {
+            this.callTreeFilter!.addDataMining({ name: this.callTreeSelectedData.symbolName }, data.item);
             callTreeFuncArgs.push({
               funcName: 'splitTree',
-              funcArgs: [this.currentSelectedData.symbolName, false, true],
+              funcArgs: [this.callTreeSelectedData.symbolName, false, true],
             });
           } else {
             return;
           }
         } else if (data.item == 'library') {
-          if (this.currentSelectedData && !this.currentSelectedData.canCharge) {
+          if (this.callTreeSelectedData && !this.callTreeSelectedData.canCharge) {
             return;
           }
-          if (this.currentSelectedData != undefined && this.currentSelectedData.libName != '') {
-            this.callTreeFilter!.addDataMining({ name: this.currentSelectedData.libName }, data.item);
+          if (this.callTreeSelectedData != undefined && this.callTreeSelectedData.libName != '') {
+            this.callTreeFilter!.addDataMining({ name: this.callTreeSelectedData.libName }, data.item);
             callTreeFuncArgs.push({
               funcName: 'splitTree',
-              funcArgs: [this.currentSelectedData.libName, false, false],
+              funcArgs: [this.callTreeSelectedData.libName, false, false],
             });
           } else {
             return;
@@ -335,11 +335,11 @@ export class TabPaneCallTree extends BaseElement {
         this.frameChart!.data = this.callTreeDataSource;
         if (this.isChartShow) this.frameChart?.calculateChartData();
         this.callTreeTbl!.move1px();
-        if (this.currentSelectedData) {
-          this.currentSelectedData.isSelected = false;
-          this.callTreeTbl?.clearAllSelection(this.currentSelectedData);
+        if (this.callTreeSelectedData) {
+          this.callTreeSelectedData.isSelected = false;
+          this.callTreeTbl?.clearAllSelection(this.callTreeSelectedData);
           this.callTreeTbr!.recycleDataSource = [];
-          this.currentSelectedData = undefined;
+          this.callTreeSelectedData = undefined;
         }
       });
     };
@@ -387,11 +387,11 @@ export class TabPaneCallTree extends BaseElement {
       let callTreeConstraintsArgs: any[] = [
         {
           funcName: 'resotreAllNode',
-          funcArgs: [[this.numRuleName]],
+          funcArgs: [[this.callTreeNumRuleName]],
         },
         {
           funcName: 'clearSplitMapData',
-          funcArgs: [this.numRuleName],
+          funcArgs: [this.callTreeNumRuleName],
         },
       ];
       if (data.checked) {
@@ -413,7 +413,7 @@ export class TabPaneCallTree extends BaseElement {
     this.callTreeFilter!.getFilterData((callTreeFilterData: FilterData) => {
       if (this.searchValue != this.callTreeFilter!.filterValue) {
         this.searchValue = this.callTreeFilter!.filterValue;
-        let args = [
+        let callTreeArgs = [
           {
             funcName: 'setSearchValue',
             funcArgs: [this.searchValue],
@@ -423,7 +423,7 @@ export class TabPaneCallTree extends BaseElement {
             funcArgs: [],
           },
         ];
-        this.getDataByWorker(args, (result: any[]) => {
+        this.getDataByWorker(callTreeArgs, (result: any[]) => {
           this.setLTableData(result);
           this.frameChart!.data = this.callTreeDataSource;
           this.switchFlameChart(callTreeFilterData);
@@ -556,11 +556,6 @@ export class TabPaneCallTree extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
         .call-tree-filter {
             border: solid rgb(216,216,216) 1px;
             float: left;
@@ -568,19 +563,20 @@ export class TabPaneCallTree extends BaseElement {
             bottom: 0;
             width: 100%;
         }
-        selector{
-            display: none;
-        }
-        .show{
-            display: flex;
-            flex: 1;
-        }
         .call-tree-progress{
             bottom: 33px;
             position: absolute;
             height: 1px;
             left: 0;
             right: 0;
+        }
+        :host{
+            display: flex;
+            flex-direction: column;
+            padding: 10px 10px 0 10px;
+        }
+        selector{
+            display: none;
         }
         .call-tree-loading{
             bottom: 0;
@@ -590,6 +586,10 @@ export class TabPaneCallTree extends BaseElement {
             width:100%;
             background:transparent;
             z-index: 999999;
+        }
+         .show{
+            display: flex;
+            flex: 1;
         }
     </style>
     <div class="call-tree-content" style="display: flex;flex-direction: row">

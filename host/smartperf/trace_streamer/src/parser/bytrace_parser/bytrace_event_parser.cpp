@@ -611,6 +611,11 @@ bool BytraceEventParser::BinderTransaction(const ArgsMap& args, const BytraceLin
     streamFilters_->binderFilter_->SendTraction(line.ts, line.pid, transactionId.value(), destNode.value(),
                                                 destProc.value(), destThread.value(), isReply.value(), flags.value(),
                                                 codeStr.value());
+    if (traceDataCache_->BinderRunnableTraceEnabled() && transactionId.has_value() && flags.has_value() &&
+        !streamFilters_->binderFilter_->IsAsync(flags.value())) {
+        streamFilters_->cpuFilter_->InsertRunnableBinderEvent(transactionId.value(),
+                                                              streamFilters_->processFilter_->GetInternalTid(line.pid));
+    }
     return true;
 }
 bool BytraceEventParser::BinderTransactionReceived(const ArgsMap& args, const BytraceLine& line) const
@@ -623,6 +628,10 @@ bool BytraceEventParser::BinderTransactionReceived(const ArgsMap& args, const By
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_BINDER_TRANSACTION_RECEIVED, STAT_EVENT_RECEIVED);
     auto transactionId = base::StrToInt<int64_t>(args.at("transaction"));
     streamFilters_->binderFilter_->ReceiveTraction(line.ts, line.pid, transactionId.value());
+    if (traceDataCache_->BinderRunnableTraceEnabled() && transactionId.has_value()) {
+        streamFilters_->cpuFilter_->InsertRunnableBinderRecvEvent(
+            transactionId.value(), streamFilters_->processFilter_->GetInternalTid(line.pid));
+    }
     TS_LOGD("ts:%lu, pid:%u, transactionId:%lu", line.ts, line.pid, transactionId.value());
     return true;
 }
@@ -751,20 +760,7 @@ void BytraceEventParser::BeginFilterEvents(EventInfo* event)
 
 void BytraceEventParser::Clear()
 {
-    streamFilters_->binderFilter_->Clear();
-    streamFilters_->sliceFilter_->Clear();
-    streamFilters_->cpuFilter_->Clear();
-    streamFilters_->irqFilter_->Clear();
-    streamFilters_->cpuMeasureFilter_->Clear();
-    streamFilters_->threadMeasureFilter_->Clear();
-    streamFilters_->threadFilter_->Clear();
-    streamFilters_->processMeasureFilter_->Clear();
-    streamFilters_->processFilterFilter_->Clear();
-    streamFilters_->clockEnableFilter_->Clear();
-    streamFilters_->clockDisableFilter_->Clear();
-    streamFilters_->clkRateFilter_->Clear();
-    streamFilters_->clkDisableFilter_->Clear();
-    streamFilters_->binderFilter_->Clear();
+    const_cast<TraceStreamerFilters*>(streamFilters_)->FilterClear();
     printEventParser_.Finish();
 }
 } // namespace TraceStreamer

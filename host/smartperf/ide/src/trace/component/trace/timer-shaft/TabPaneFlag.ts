@@ -81,7 +81,7 @@ export class TabPaneFlag extends BaseElement {
             flex-direction: column;
             padding: 10px 10px;
         }
-        .notes-editor-panel{
+        .flag-notes-editor-panel{
         display: flex;align-items: center
         }
         .flag-text{
@@ -99,21 +99,22 @@ export class TabPaneFlag extends BaseElement {
             outline: none;
             box-shadow: 1px 1px 1px var(--bark-prompt,#bebebe);
         }
-        .notes-editor-panel button {
+        .flag-notes-editor-panel button {
+            border: none;
+            cursor: pointer;
+            outline: inherit;
+            
             background: var(--dark-border1,#262f3c);
             color: white;
             border-radius: 10px;
             font-size: 10px;
-            height: 22px;
             line-height: 18px;
+            height: 22px;
             min-width: 7em;
             margin: auto 0 auto 1rem;
-
-            border: none;
-            cursor: pointer;
-            outline: inherit;
+        }
         </style>
-        <div class="notes-editor-panel">
+        <div class="flag-notes-editor-panel">
             <div class="flag-text">Annotation at <span id="flag-time"></span></div>
             <input style="flex: 1" class="flag-input" type="text" id="text-input"/>
             <span class="flag-text">Change color: <input style="background: var(--dark-background5,#FFFFFF);" type="color" id="color-input"/></span>

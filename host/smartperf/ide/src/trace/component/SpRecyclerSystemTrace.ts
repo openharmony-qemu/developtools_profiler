@@ -295,10 +295,10 @@ export class SpRecyclerSystemTrace extends BaseElement {
     this.init({ url: url }).then(() => {
       let scrollTop = this.rowsEL?.scrollTop || 0;
       let scrollHeight = this.rowsEL?.clientHeight || 0;
-      this.rowsEL?.querySelectorAll('trace-row').forEach((it: any) => {
-        let top = it.offsetTop - (this.rowsEL?.offsetTop || 0);
-        if (top + it.clientHeight > scrollTop && top + it.clientHeight < scrollTop + scrollHeight + it.clientHeight) {
-          (it as TraceRow<any>).dataListCache.length = 0;
+      this.rowsEL?.querySelectorAll('trace-row').forEach((rowItem: any) => {
+        let top = rowItem.offsetTop - (this.rowsEL?.offsetTop || 0);
+        if (top + rowItem.clientHeight > scrollTop && top + rowItem.clientHeight < scrollTop + scrollHeight + rowItem.clientHeight) {
+          (rowItem as TraceRow<any>).dataListCache.length = 0;
         }
       });
       if (complete) {
@@ -311,10 +311,10 @@ export class SpRecyclerSystemTrace extends BaseElement {
     this.init({ buf }).then(() => {
       let scrollTop = this.rowsEL?.scrollTop || 0;
       let scrollHeight = this.rowsEL?.clientHeight || 0;
-      this.rowsEL?.querySelectorAll('trace-row').forEach((it: any) => {
-        let top = it.offsetTop - (this.rowsEL?.offsetTop || 0);
-        if (top + it.clientHeight > scrollTop && top + it.clientHeight < scrollTop + scrollHeight + it.clientHeight) {
-          (it as TraceRow<any>).dataListCache.length = 0;
+      this.rowsEL?.querySelectorAll('trace-row').forEach((item: any) => {
+        let top = item.offsetTop - (this.rowsEL?.offsetTop || 0);
+        if (top + item.clientHeight > scrollTop && top + item.clientHeight < scrollTop + scrollHeight + item.clientHeight) {
+          (item as TraceRow<any>).dataListCache.length = 0;
         }
       });
       if (complete) {
@@ -361,28 +361,28 @@ export class SpRecyclerSystemTrace extends BaseElement {
       CpuStruct.cpuCount = cpuMax + 1;
       for (let i1 = 0; i1 < CpuStruct.cpuCount; i1++) {
         const cpuId = i1;
-        let traceRow = new TraceRowObject();
-        traceRow.rowId = `${cpuId}`;
-        traceRow.rowType = TraceRow.ROW_TYPE_CPU;
-        traceRow.rowParentId = '';
-        traceRow.rowHeight = 40;
-        traceRow.frame = new Rect(0, 0, this.rowsEL.clientWidth - 248, traceRow.rowHeight);
-        traceRow.name = `Cpu ${cpuId}`;
-        traceRow.supplier = () => queryCpuData(cpuId, 0, this.timerShaftEL?.totalNS || 0);
-        traceRow.onThreadHandler = (row, ctx) => {
+        let cpuTraceRow = new TraceRowObject();
+        cpuTraceRow.rowId = `${cpuId}`;
+        cpuTraceRow.rowType = TraceRow.ROW_TYPE_CPU;
+        cpuTraceRow.rowParentId = '';
+        cpuTraceRow.rowHeight = 40;
+        cpuTraceRow.frame = new Rect(0, 0, this.rowsEL.clientWidth - 248, cpuTraceRow.rowHeight);
+        cpuTraceRow.name = `Cpu ${cpuId}`;
+        cpuTraceRow.supplier = () => queryCpuData(cpuId, 0, this.timerShaftEL?.totalNS || 0);
+        cpuTraceRow.onThreadHandler = (row, ctx) => {
           procedurePool.submitWithName(
             'cpu',
             `cpu${cpuId}`,
             {
-              list: traceRow.must ? traceRow.dataList : undefined,
+              list: cpuTraceRow.must ? cpuTraceRow.dataList : undefined,
               startNS: TraceRow.range?.startNS || 0,
               endNS: TraceRow.range?.endNS || 0,
               totalNS: TraceRow.range?.totalNS || 0,
-              frame: traceRow.frame,
+              frame: cpuTraceRow.frame,
             },
             (res: any) => {
-              traceRow.dataListCache = res;
-              traceRow.must = false;
+              cpuTraceRow.dataListCache = res;
+              cpuTraceRow.must = false;
               row.clearCanvas();
               row.c!.beginPath();
               row.drawLines();
@@ -394,7 +394,7 @@ export class SpRecyclerSystemTrace extends BaseElement {
             }
           );
         };
-        objs.push(traceRow);
+        objs.push(cpuTraceRow);
       }
     }
     return objs;
@@ -422,28 +422,28 @@ export class SpRecyclerSystemTrace extends BaseElement {
     math();
     for (let i = 0; i < freqList.length; i++) {
       const it = freqList[i];
-      let traceRow = new TraceRowObject();
-      traceRow.rowId = `${it.cpu}`;
-      traceRow.rowType = TraceRow.ROW_TYPE_CPU_FREQ;
-      traceRow.rowParentId = '';
-      traceRow.rowHeight = 40;
-      traceRow.frame = new Rect(0, 0, this.rowsEL.clientWidth - 248, traceRow.rowHeight);
-      traceRow.name = `Cpu ${it.cpu} Frequency`;
-      traceRow.supplier = () => queryCpuFreqData(it.cpu);
-      traceRow.onThreadHandler = (row, ctx) => {
+      let cpuFreqTraceRow = new TraceRowObject();
+      cpuFreqTraceRow.rowId = `${it.cpu}`;
+      cpuFreqTraceRow.rowType = TraceRow.ROW_TYPE_CPU_FREQ;
+      cpuFreqTraceRow.rowParentId = '';
+      cpuFreqTraceRow.rowHeight = 40;
+      cpuFreqTraceRow.frame = new Rect(0, 0, this.rowsEL.clientWidth - 248, cpuFreqTraceRow.rowHeight);
+      cpuFreqTraceRow.name = `Cpu ${it.cpu} Frequency`;
+      cpuFreqTraceRow.supplier = () => queryCpuFreqData(it.cpu);
+      cpuFreqTraceRow.onThreadHandler = (row, ctx) => {
         procedurePool.submitWithName(
           'freq',
           `freq${it.cpu}`,
           {
-            list: traceRow.must ? traceRow.dataList : undefined,
+            list: cpuFreqTraceRow.must ? cpuFreqTraceRow.dataList : undefined,
             startNS: TraceRow.range?.startNS || 0,
             endNS: TraceRow.range?.endNS || 0,
             totalNS: TraceRow.range?.totalNS || 0,
-            frame: traceRow.frame,
+            frame: cpuFreqTraceRow.frame,
           },
           (res: any) => {
-            traceRow.dataListCache = res;
-            traceRow.must = false;
+            cpuFreqTraceRow.dataListCache = res;
+            cpuFreqTraceRow.must = false;
             row.clearCanvas();
             row.drawLines();
             row.c!.beginPath();
@@ -464,7 +464,7 @@ export class SpRecyclerSystemTrace extends BaseElement {
           }
         );
       };
-      objs.push(traceRow);
+      objs.push(cpuFreqTraceRow);
     }
     return objs;
   };

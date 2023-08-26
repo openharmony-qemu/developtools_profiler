@@ -16,12 +16,15 @@ import("../../build/ts.gni")
 ohos_source_set("proto_reader") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
-  public_configs = [ "../../gn:default_config" ]
   public_deps = []
   include_dirs = [ "include" ]
   sources = [ "proto_reader.cpp" ]
   include_dirs += [
     "../include",
     "../base",
+    "${THIRD_PARTY}/bounds_checking_function/include",
   ]
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
 }

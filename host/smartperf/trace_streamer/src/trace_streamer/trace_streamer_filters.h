@@ -41,6 +41,7 @@ class TraceStreamerFilters {
 public:
     TraceStreamerFilters();
     ~TraceStreamerFilters();
+    void FilterClear();
     std::unique_ptr<AnimationFilter> animationFilter_;
     std::unique_ptr<ClockFilterEx> clockFilter_;
     std::unique_ptr<FilterFilter> filterFilter_;

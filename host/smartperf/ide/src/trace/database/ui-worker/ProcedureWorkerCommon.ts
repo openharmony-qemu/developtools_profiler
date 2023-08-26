@@ -120,24 +120,24 @@ class FilterConfig {
   paddingTop: number = 0;
 }
 
-export function fillCacheData(filterData: Array<any>, condition: FilterConfig): boolean {
-  if (condition.useCache && filterData.length > 0) {
+export function fillCacheData(filterList: Array<any>, condition: FilterConfig): boolean {
+  if (condition.useCache && filterList.length > 0) {
     let pns = (condition.endNS - condition.startNS) / condition.frame.width;
     let y = condition.frame.y + condition.paddingTop;
     let height = condition.frame.height - condition.paddingTop * 2;
-    for (let i = 0, len = filterData.length; i < len; i++) {
-      let it = filterData[i];
+    for (let i = 0, len = filterList.length; i < len; i++) {
+      let it = filterList[i];
       if (
         (it[condition.startKey] || 0) + (it[condition.durKey] || 0) > condition.startNS &&
         (it[condition.startKey] || 0) < condition.endNS
       ) {
-        if (!filterData[i].frame) {
-          filterData[i].frame = {};
-          filterData[i].frame.y = y;
-          filterData[i].frame.height = height;
+        if (!filterList[i].frame) {
+          filterList[i].frame = {};
+          filterList[i].frame.y = y;
+          filterList[i].frame.height = height;
         }
         setNodeFrame(
-          filterData[i],
+          filterList[i],
           pns,
           condition.startNS,
           condition.endNS,
@@ -146,7 +146,7 @@ export function fillCacheData(filterData: Array<any>, condition: FilterConfig): 
           condition.durKey
         );
       } else {
-        filterData[i].frame = null;
+        filterList[i].frame = null;
       }
     }
     return true;
@@ -174,8 +174,10 @@ export function findRange(fullData: Array<any>, condition: FilterConfig): Array<
   return slice;
 }
 
-export function dataFilterHandler(fullData: Array<any>, filterData: Array<any>, condition: FilterConfig) {
-  if (fillCacheData(filterData, condition)) return;
+export function dataFilterHandler(fullData: Array<any>, filterData: Array<any>, condition: FilterConfig): void {
+  if (fillCacheData(filterData, condition)) {
+    return;
+  }
   if (fullData) {
     filterData.length = 0;
     let pns = (condition.endNS - condition.startNS) / condition.frame.width; //每个像素多少ns
@@ -535,7 +537,7 @@ export function drawFlagLineSegment(ctx: any, hoverFlag: any, selectFlag: any, f
   }
 }
 
-export function drawSelection(context: any, params: any) {
+export function drawSelection(ctx: any, params: any) {
   if (params.isRangeSelect && params.rangeSelectObject) {
     params.rangeSelectObject!.startX = Math.floor(
       ns2x(params.rangeSelectObject!.startNS!, params.startNS, params.endNS, params.totalNS, params.frame)
@@ -543,16 +545,16 @@ export function drawSelection(context: any, params: any) {
     params.rangeSelectObject!.endX = Math.floor(
       ns2x(params.rangeSelectObject!.endNS!, params.startNS, params.endNS, params.totalNS, params.frame)
     );
-    if (context) {
-      context.globalAlpha = 0.5;
-      context.fillStyle = '#666666';
-      context.fillRect(
+    if (ctx) {
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#666666';
+      ctx.fillRect(
         params.rangeSelectObject!.startX!,
         params.frame.y,
         params.rangeSelectObject!.endX! - params.rangeSelectObject!.startX!,
         params.frame.height
       );
-      context.globalAlpha = 1;
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -593,69 +595,69 @@ export function drawSelectionRange(context: any, params: TraceRow<any>) {
 }
 
 export function drawWakeUp(
-  context: CanvasRenderingContext2D | any,
+  wakeUpContext: CanvasRenderingContext2D | any,
   wake: WakeupBean | undefined | null,
   startNS: number,
   endNS: number,
   totalNS: number,
   frame: Rect,
   selectCpuStruct: CpuStruct | undefined = undefined,
-  currentCpu: number | undefined = undefined,
+  wakeUpCurrentCpu: number | undefined = undefined,
   noVerticalLine = false
 ) {
   if (wake) {
     let x1 = Math.floor(ns2x(wake.wakeupTime || 0, startNS, endNS, totalNS, frame));
-    context.beginPath();
-    context.lineWidth = 2;
-    context.fillStyle = '#000000';
+    wakeUpContext.beginPath();
+    wakeUpContext.lineWidth = 2;
+    wakeUpContext.fillStyle = '#000000';
     if (x1 > 0 && x1 < frame.x + frame.width) {
       if (!noVerticalLine) {
-        context.moveTo(x1, frame.y);
-        context.lineTo(x1, frame.y + frame.height);
+        wakeUpContext.moveTo(x1, frame.y);
+        wakeUpContext.lineTo(x1, frame.y + frame.height);
       }
-      if (currentCpu == wake.cpu) {
+      if (wakeUpCurrentCpu == wake.cpu) {
         let centerY = Math.floor(frame.y + frame.height / 2);
-        context.moveTo(x1, centerY - 6);
-        context.lineTo(x1 + 4, centerY);
-        context.lineTo(x1, centerY + 6);
-        context.lineTo(x1 - 4, centerY);
-        context.lineTo(x1, centerY - 6);
-        context.fill();
+        wakeUpContext.moveTo(x1, centerY - 6);
+        wakeUpContext.lineTo(x1 + 4, centerY);
+        wakeUpContext.lineTo(x1, centerY + 6);
+        wakeUpContext.lineTo(x1 - 4, centerY);
+        wakeUpContext.lineTo(x1, centerY - 6);
+        wakeUpContext.fill();
       }
     }
     if (selectCpuStruct) {
       let x2 = Math.floor(ns2x(selectCpuStruct.startTime || 0, startNS, endNS, totalNS, frame));
       let y = frame.y + frame.height - 10;
-      context.moveTo(x1, y);
-      context.lineTo(x2, y);
+      wakeUpContext.moveTo(x1, y);
+      wakeUpContext.lineTo(x2, y);
 
       let s = ns2s((selectCpuStruct.startTime || 0) - (wake.wakeupTime || 0));
       let distance = x2 - x1;
       if (distance > 12) {
-        context.moveTo(x1, y);
-        context.lineTo(x1 + 6, y - 3);
-        context.moveTo(x1, y);
-        context.lineTo(x1 + 6, y + 3);
-        context.moveTo(x2, y);
-        context.lineTo(x2 - 6, y - 3);
-        context.moveTo(x2, y);
-        context.lineTo(x2 - 6, y + 3);
-        let measure = context.measureText(s);
+        wakeUpContext.moveTo(x1, y);
+        wakeUpContext.lineTo(x1 + 6, y - 3);
+        wakeUpContext.moveTo(x1, y);
+        wakeUpContext.lineTo(x1 + 6, y + 3);
+        wakeUpContext.moveTo(x2, y);
+        wakeUpContext.lineTo(x2 - 6, y - 3);
+        wakeUpContext.moveTo(x2, y);
+        wakeUpContext.lineTo(x2 - 6, y + 3);
+        let measure = wakeUpContext.measureText(s);
         let tHeight = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         let xStart = x1 + Math.floor(distance / 2 - measure.width / 2);
         if (distance > measure.width + 4) {
-          context.fillStyle = '#ffffff';
-          context.fillRect(xStart - 2, y - 4 - tHeight, measure.width + 4, tHeight + 4);
-          context.font = '10px solid';
-          context.fillStyle = '#000000';
-          context.textBaseline = 'bottom';
-          context.fillText(s, xStart, y - 2);
+          wakeUpContext.fillStyle = '#ffffff';
+          wakeUpContext.fillRect(xStart - 2, y - 4 - tHeight, measure.width + 4, tHeight + 4);
+          wakeUpContext.font = '10px solid';
+          wakeUpContext.fillStyle = '#000000';
+          wakeUpContext.textBaseline = 'bottom';
+          wakeUpContext.fillText(s, xStart, y - 2);
         }
       }
     }
-    context.strokeStyle = '#000000';
-    context.stroke();
-    context.closePath();
+    wakeUpContext.strokeStyle = '#000000';
+    wakeUpContext.stroke();
+    wakeUpContext.closePath();
   }
 }
 
@@ -694,22 +696,22 @@ export function drawLinkLines(
 }
 
 function drawBezierCurve(it: PairPoint[], maxWidth: number, context: CanvasRenderingContext2D, percentage: number) {
-  let start = it[0].x > it[1].x ? it[1] : it[0];
-  let end = it[0].x > it[1].x ? it[0] : it[1];
-  if (start && end) {
+  let bezierCurveStart = it[0].x > it[1].x ? it[1] : it[0];
+  let bezierCurveEnd = it[0].x > it[1].x ? it[0] : it[1];
+  if (bezierCurveStart && bezierCurveEnd) {
     //左移到边界，不画线
-    if (start.x <= 0) {
-      start.x = -100;
+    if (bezierCurveStart.x <= 0) {
+      bezierCurveStart.x = -100;
     }
-    if (end.x <= 0) {
-      end.x = -100;
+    if (bezierCurveEnd.x <= 0) {
+      bezierCurveEnd.x = -100;
     }
     //右移到边界，不画线
-    if (start.x >= maxWidth) {
-      start.x = maxWidth + 100;
+    if (bezierCurveStart.x >= maxWidth) {
+      bezierCurveStart.x = maxWidth + 100;
     }
-    if (end.x >= maxWidth) {
-      end.x = maxWidth + 100;
+    if (bezierCurveEnd.x >= maxWidth) {
+      bezierCurveEnd.x = maxWidth + 100;
     }
     context.beginPath();
     context.lineWidth = 2;
@@ -723,29 +725,29 @@ function drawBezierCurve(it: PairPoint[], maxWidth: number, context: CanvasRende
     let y2;
     let x3;
     let y3;
-    x0 = start.x ?? 0;
-    y0 = start.y ?? 0;
-    x3 = end.x ?? 0;
-    y3 = end.y ?? 0;
-    if (end.isRight) {
+    x0 = bezierCurveStart.x ?? 0;
+    y0 = bezierCurveStart.y ?? 0;
+    x3 = bezierCurveEnd.x ?? 0;
+    y3 = bezierCurveEnd.y ?? 0;
+    if (bezierCurveEnd.isRight) {
       x2 = x3 - 100 * percentage;
     } else {
       x2 = x3 + 100 * percentage;
     }
     y2 = y3 - 40 * percentage;
-    if (start.isRight) {
+    if (bezierCurveStart.isRight) {
       x1 = x0 - 100 * percentage;
     } else {
       x1 = x0 + 100 * percentage;
     }
     y1 = y0 + 40 * percentage;
     //向右箭头终点在x轴正向有偏移
-    if (!start.isRight) {
+    if (!bezierCurveStart.isRight) {
       x0 -= 5;
     }
     context.moveTo(x0, y0);
     //箭头向左还是向右
-    if (start.isRight) {
+    if (bezierCurveStart.isRight) {
       context.lineTo(x0 - wid, y0 + wid);
       context.moveTo(x0, y0);
       context.lineTo(x0 - wid, y0 - wid);
@@ -758,7 +760,7 @@ function drawBezierCurve(it: PairPoint[], maxWidth: number, context: CanvasRende
     context.bezierCurveTo(x1, y1, x2, y2, x3, y3);
     context.moveTo(x3, y3);
     //箭头向左还是向右
-    if (end.isRight) {
+    if (bezierCurveEnd.isRight) {
       context.lineTo(x3 - wid, y3 + wid);
       context.moveTo(x3, y3);
       context.lineTo(x3 - wid, y3 - wid);
@@ -774,21 +776,21 @@ function drawBezierCurve(it: PairPoint[], maxWidth: number, context: CanvasRende
 }
 
 function drawBrokenLine(it: PairPoint[], maxWidth: number, context: CanvasRenderingContext2D) {
-  let start = it[0].x > it[1].x ? it[1] : it[0];
-  let end = it[0].x > it[1].x ? it[0] : it[1];
-  if (start && end) {
-    if (start.x <= 0) {
-      start.x = -100;
+  let brokenLineStart = it[0].x > it[1].x ? it[1] : it[0];
+  let brokenLineEnd = it[0].x > it[1].x ? it[0] : it[1];
+  if (brokenLineStart && brokenLineEnd) {
+    if (brokenLineStart.x <= 0) {
+      brokenLineStart.x = -100;
     }
-    if (end.x <= 0) {
-      end.x = -100;
+    if (brokenLineEnd.x <= 0) {
+      brokenLineEnd.x = -100;
     }
     //右移到边界，不画线
-    if (start.x >= maxWidth) {
-      start.x = maxWidth + 100;
+    if (brokenLineStart.x >= maxWidth) {
+      brokenLineStart.x = maxWidth + 100;
     }
-    if (end.x >= maxWidth) {
-      end.x = maxWidth + 100;
+    if (brokenLineEnd.x >= maxWidth) {
+      brokenLineEnd.x = maxWidth + 100;
     }
     context.beginPath();
     context.lineWidth = 2;
@@ -800,26 +802,26 @@ function drawBrokenLine(it: PairPoint[], maxWidth: number, context: CanvasRender
     let y1;
     let x2;
     let y2;
-    x0 = start.x ?? 0;
-    y0 = start.y ?? 0;
-    y2 = end.y ?? 0;
-    x2 = end.x ?? 0;
+    x0 = brokenLineStart.x ?? 0;
+    y0 = brokenLineStart.y ?? 0;
+    y2 = brokenLineEnd.y ?? 0;
+    x2 = brokenLineEnd.x ?? 0;
     let leftEndpointX;
     let leftEndpointY;
     let rightEndpointX;
     let rightEndpointY;
 
-    if (start.y < end.y) {
-      x1 = start.x ?? 0;
-      y1 = end.y ?? 0;
+    if (brokenLineStart.y < brokenLineEnd.y) {
+      x1 = brokenLineStart.x ?? 0;
+      y1 = brokenLineEnd.y ?? 0;
       leftEndpointX = x2 - wid;
       leftEndpointY = y2 - wid;
       rightEndpointX = x2 - wid;
       rightEndpointY = y2 + wid;
     } else {
-      x2 = end.x - wid ?? 0;
-      x1 = end.x - wid ?? 0;
-      y1 = start.y ?? 0;
+      x2 = brokenLineEnd.x - wid ?? 0;
+      x1 = brokenLineEnd.x - wid ?? 0;
+      y1 = brokenLineStart.y ?? 0;
       leftEndpointX = x2 - wid;
       leftEndpointY = y2 + wid;
       rightEndpointX = x2 + wid;
@@ -1023,18 +1025,26 @@ export class HiPerfStruct extends BaseStruct {
     );
   }
 
-  static draw(ctx: CanvasRenderingContext2D, path: Path2D, data: any, groupBy10MS: boolean) {
+  static draw(ctx: CanvasRenderingContext2D, normalPath: Path2D, specPath: Path2D, data: any, groupBy10MS: boolean) {
     if (data.frame) {
       if (groupBy10MS) {
         let width = data.frame.width;
-        path.rect(data.frame.x, 40 - (data.height || 0), width, data.height || 0);
+        normalPath.rect(data.frame.x, 40 - (data.height || 0), width, data.height || 0);
       } else {
+        let path = data.callchain_id === -1 ? specPath : normalPath;
         path.moveTo(data.frame.x + 7, 20);
         HiPerfStruct.drawRoundRectPath(path, data.frame.x - 7, 20 - 7, 14, 14, 3);
         path.moveTo(data.frame.x, 27);
         path.lineTo(data.frame.x, 33);
       }
     }
+  }
+
+  static drawSpecialPath(ctx: CanvasRenderingContext2D, specPath: Path2D) {
+    ctx.strokeStyle = '#9fafc4';
+    ctx.globalAlpha = 0.5;
+    ctx.stroke(specPath);
+    ctx.globalAlpha = 1;
   }
 
   static setFrame(node: any, pns: number, startNS: number, endNS: number, frame: any) {
@@ -1053,8 +1063,8 @@ export class HiPerfStruct extends BaseStruct {
     }
   }
 
-  static groupBy10MS(array: Array<any>, intervalPerf: number, maxCpu?: number | undefined): Array<any> {
-    let obj = array
+  static groupBy10MS(groupArray: Array<any>, intervalPerf: number, maxCpu?: number | undefined): Array<any> {
+    let obj = groupArray
       .map((it) => {
         it.timestamp_group = Math.trunc(it.startNS / 1_000_000_0) * 1_000_000_0;
         return it;
@@ -1147,7 +1157,7 @@ export function mem(
 }
 
 export function drawWakeUpList(
-  context: CanvasRenderingContext2D | any,
+  wakeUpListContext: CanvasRenderingContext2D | any,
   wake: WakeupBean | undefined | null,
   startNS: number,
   endNS: number,
@@ -1161,22 +1171,22 @@ export function drawWakeUpList(
     let x1 = Math.floor(
       ns2x(wake.wakeupTime || 0, startNS, endNS, totalNS, frame)
     );
-    context.beginPath();
-    context.lineWidth = 2;
-    context.fillStyle = '#000000';
+    wakeUpListContext.beginPath();
+    wakeUpListContext.lineWidth = 2;
+    wakeUpListContext.fillStyle = '#000000';
     if (x1 > 0 && x1 < frame.x + frame.width) {
       if (!noVerticalLine) {
-        context.moveTo(x1, frame.y);
-        context.lineTo(x1, frame.y + frame.height);
+        wakeUpListContext.moveTo(x1, frame.y);
+        wakeUpListContext.lineTo(x1, frame.y + frame.height);
       }
       if (currentCpu == wake.cpu) {
         let centerY = Math.floor(frame.y + frame.height / 2);
-        context.moveTo(x1, centerY - 6);
-        context.lineTo(x1 + 4, centerY);
-        context.lineTo(x1, centerY + 6);
-        context.lineTo(x1 - 4, centerY);
-        context.lineTo(x1, centerY - 6);
-        context.fill();
+        wakeUpListContext.moveTo(x1, centerY - 6);
+        wakeUpListContext.lineTo(x1 + 4, centerY);
+        wakeUpListContext.lineTo(x1, centerY + 6);
+        wakeUpListContext.lineTo(x1 - 4, centerY);
+        wakeUpListContext.lineTo(x1, centerY - 6);
+        wakeUpListContext.fill();
       }
     }
     if (wakeup) {
@@ -1190,46 +1200,46 @@ export function drawWakeUpList(
         )
       );
       let y = frame.y + frame.height - 10;
-      context.moveTo(x1, y);
-      context.lineTo(x2, y);
-      context.moveTo(x2, y - 25);
-      context.lineTo(x2, y + 5);
+      wakeUpListContext.moveTo(x1, y);
+      wakeUpListContext.lineTo(x2, y);
+      wakeUpListContext.moveTo(x2, y - 25);
+      wakeUpListContext.lineTo(x2, y + 5);
 
       let s = ns2s(
         (wakeup.ts || 0) - (wake.wakeupTime || 0)
       );
-      let distance = x2 - x1;
-      if (distance > 12) {
-        context.moveTo(x1, y);
-        context.lineTo(x1 + 6, y - 3);
-        context.moveTo(x1, y);
-        context.lineTo(x1 + 6, y + 3);
-        context.moveTo(x2, y);
-        context.lineTo(x2 - 6, y - 3);
-        context.moveTo(x2, y);
-        context.lineTo(x2 - 6, y + 3);
-        let measure = context.measureText(s);
+      let wakeUpListDistance = x2 - x1;
+      if (wakeUpListDistance > 12) {
+        wakeUpListContext.moveTo(x1, y);
+        wakeUpListContext.lineTo(x1 + 6, y - 3);
+        wakeUpListContext.moveTo(x1, y);
+        wakeUpListContext.lineTo(x1 + 6, y + 3);
+        wakeUpListContext.moveTo(x2, y);
+        wakeUpListContext.lineTo(x2 - 6, y - 3);
+        wakeUpListContext.moveTo(x2, y);
+        wakeUpListContext.lineTo(x2 - 6, y + 3);
+        let measure = wakeUpListContext.measureText(s);
         let tHeight =
           measure.actualBoundingBoxAscent +
           measure.actualBoundingBoxDescent;
-        let xStart = x1 + Math.floor(distance / 2 - measure.width / 2);
-        if (distance > measure.width + 4) {
-          context.fillStyle = '#ffffff';
-          context.fillRect(
+        let xStart = x1 + Math.floor(wakeUpListDistance / 2 - measure.width / 2);
+        if (wakeUpListDistance > measure.width + 4) {
+          wakeUpListContext.fillStyle = '#ffffff';
+          wakeUpListContext.fillRect(
             xStart - 2,
             y - 4 - tHeight,
             measure.width + 4,
             tHeight + 4
           );
-          context.font = '10px solid';
-          context.fillStyle = '#000000';
-          context.textBaseline = 'bottom';
-          context.fillText(s, xStart, y - 2);
+          wakeUpListContext.font = '10px solid';
+          wakeUpListContext.fillStyle = '#000000';
+          wakeUpListContext.textBaseline = 'bottom';
+          wakeUpListContext.fillText(s, xStart, y - 2);
         }
       }
     }
-    context.strokeStyle = '#000000';
-    context.stroke();
-    context.closePath();
+    wakeUpListContext.strokeStyle = '#000000';
+    wakeUpListContext.stroke();
+    wakeUpListContext.closePath();
   }
 }

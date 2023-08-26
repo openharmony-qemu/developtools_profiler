@@ -75,9 +75,10 @@ export class NativeHookStatisticsTableData {
 export class NativeMemory {
   index: number = 0;
   eventId: number = 0;
+  threadId: number = 0;
+  threadName: string = '';
   eventType: string = '';
   subType: string = '';
-  addr: string = '';
   startTs: number = 0;
   endTs: number = 0;
   timestamp: string = '';
@@ -87,8 +88,7 @@ export class NativeMemory {
   library: string = '';
   isSelected: boolean = false;
   state: string = '';
-  threadId: number = 0;
-  threadName: string = '';
+  addr: string = '';
 }
 
 export class NativeHookSamplerInfo {

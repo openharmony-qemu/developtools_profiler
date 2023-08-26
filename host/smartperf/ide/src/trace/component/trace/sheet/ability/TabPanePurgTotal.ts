@@ -46,12 +46,12 @@ export class TabPanePurgTotal extends BaseElement {
         selection.leftNs,
         selection.rightNs,
         (MemoryConfig.getInstance().interval * 1000000) / 5
-      ).then((results) => {
+      ).then((purgeTotalResults) => {
         this.purgeableTotalTable!.loading = false;
-        if (results.length > 0) {
-          for (let i = 0; i < results.length; i++) {
+        if (purgeTotalResults.length > 0) {
+          for (let i = 0; i < purgeTotalResults.length; i++) {
             this.purgeableTotalSource.push(
-              this.toTabStruct(results[i].name, results[i].maxSize, results[i].minSize, results[i].avgSize)
+              this.toTabStruct(purgeTotalResults[i].name, purgeTotalResults[i].maxSize, purgeTotalResults[i].minSize, purgeTotalResults[i].avgSize)
             );
           }
           this.sortByColumn({ key: this.sortKey, sort: this.sortType });
@@ -94,10 +94,10 @@ export class TabPanePurgTotal extends BaseElement {
 
   private init() {
     const thTable = this.tabTitle!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const purgeTotalTblNode = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
       this.tabTitle!.removeAttribute('sort');
-      list.forEach((item) => {
+      purgeTotalTblNode.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });
@@ -137,7 +137,7 @@ export class TabPanePurgTotal extends BaseElement {
   private sortByColumn(detail: any): void {
     // @ts-ignore
     function compare(key, sort, type) {
-      return function (a: any, b: any) {
+      return function (purgeTotalLeftData: any, purgeTotalRightData: any) {
         // 不管哪一列的排序方式是0（默认排序），都按照avgSize列从大到小排序
         if (sort === 0) {
           sort = 2;
@@ -146,12 +146,12 @@ export class TabPanePurgTotal extends BaseElement {
         }
         if (type === 'number') {
           // @ts-ignore
-          return sort === 2 ? parseFloat(b[key]) - parseFloat(a[key]) : parseFloat(a[key]) - parseFloat(b[key]);
+          return sort === 2 ? parseFloat(purgeTotalRightData[key]) - parseFloat(purgeTotalLeftData[key]) : parseFloat(purgeTotalLeftData[key]) - parseFloat(purgeTotalRightData[key]);
         } else {
           if (sort === 2) {
-            return b[key].toString().localeCompare(a[key].toString());
+            return purgeTotalRightData[key].toString().localeCompare(purgeTotalLeftData[key].toString());
           } else {
-            return a[key].toString().localeCompare(b[key].toString());
+            return purgeTotalLeftData[key].toString().localeCompare(purgeTotalRightData[key].toString());
           }
         }
       };

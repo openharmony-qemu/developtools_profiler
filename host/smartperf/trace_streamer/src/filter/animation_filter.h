@@ -35,6 +35,9 @@ public:
     void Clear();
 
 private:
+    bool UpdateDeviceFps(const BytraceLine& line);
+    bool UpdateDeviceScreenSize(const TracePoint& point);
+    bool UpdateDynamicEndTime(const uint64_t curFrameRow, uint64_t curStackRow);
     const std::string generateVsyncCmd_ = "H:GenerateVsyncCount";
     const std::string leashWindowCmd_ = "H:RSUniRender::Process:[leashWindow";
     const std::string rsUniProcessCmd_ = "H:RSUniRender::Process:[";
@@ -46,6 +49,8 @@ private:
     std::unordered_map<uint64_t, uint64_t> animationCallIds_ = {};
     uint64_t generateFirstTime_ = INVALID_UINT64;
     uint8_t generateVsyncCnt_ = 0;
+    DynamicFrame* dynamicFrame_ = nullptr;
+    CallStack* callStackSlice_ = nullptr;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

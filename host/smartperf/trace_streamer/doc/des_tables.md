@@ -15,21 +15,27 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | ----          |----      |
 | animation | 记录动效的响应时延和完成时延|
 | app_name | 记录HiSysEvent事件的事件名与IDE部分事件的字段名为APPNAME中存放的相关信息的映射关系|
+| app_startup | 记录了应用启动相关数据|
 | args | 记录方法参数集合|
 | bio_latency_sample | 记录IO操作相关方法调用，及调用栈数据|
 | callstack | 记录调用堆栈和异步调用信息，其中depth,stack_id和parent_stack_id仅在非异步调用中有效。当cookid不为空时，为异步调用，此时callid为进程唯一号，否则为线程唯一号|
 | clk_event_filter | 记录时钟相关的信息|
 | clock_event_filter | 此结构用来维护时钟事件，cpu与唯一的ID做关联|
+| clock_snapshot | 时钟号和时间，时钟名的映射表|
 | cpu_measure_filter | cpu事件过滤器表|
 | cpu_usage | 记录CPU使用率事件|
+| datasource_clockid | 数据源和时钟号的映射表|
 | data_dict | 记录常用的字符串，将字符串和索引关联，降低程序运行的内存占用，用作辅助数据|
+| data_type | 记录数据类型和typeId的关联关系|
 | device_info | 记录设备分辨率和帧率|
 | device_state | 记录设备屏幕亮度，蓝牙，位置，wifi，音乐，媒体等信息|
-| dynamic_frame | 记录动效帧的分辨率和结束时间等|
-| data_type | 记录数据类型和typeId的关联关系|
 | diskio | 记录磁盘读写数据事件|
+| dynamic_frame | 记录动效帧的分辨率和结束时间等|
 | ebpf_callstack | 记录了采样相关信息|
-| file_system_samp | 记录了调用栈的相关信息|
+| file_system_sample | 记录了调用栈的相关信息|
+| frame_maps | 记录应用到RS的帧的映射关系|
+| frame_slice | 记录RS(RenderService)和应用的帧渲染|
+| gpu_slice | 记录RS的帧对应的gpu渲染时长|
 | hidump | 记录FPS（Frame Per Second）数据|
 | hisys_event_measure | 记录了HiSysEvent事件相关数据，目前HiSysEvent事件包括了异常事件，IDE事件，器件状态事件 |
 | instant |  记录Sched_waking, sched_wakeup事件， 用作ThreadState表的上下文使用 |
@@ -46,11 +52,14 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | js_heap_string | 记录了js内存数据中的字符串|
 | js_heap_trace_function_info | 记录了timeline模式下的调用栈的每个函数信息|
 | js_heap_trace_node | 记录了timeline模式下的调用栈信息|
-| app_startup | 记录了应用启动相关数据|
-| static_initalize | 记录了so初始化相关数据|
 | live_process | 记录了一些实时的进程中执行的一些数据|
 | log | 记录hilog打印日志数据|
+| measure | 记录所有的计量值|
 | measure_filter | 记录一个递增的filterid队列，所有其他的filter类型在获取过程中，均从此数据列表中获取下一个可用的filter_id并做记录|
+| memory_ashmem | 记录了进程所占用的ashmem相关信息|
+| memory_dma | 记录了进程占用的DMA内存相关信息|
+| memory_process_gpu | 记录进程占用GPU内存相关信息|
+| memory_window_gpu | 记录窗口占用GPU内存相关信息|
 | meta | 记录执行解析操作相关的基本信息|
 | native_hook | 记录堆内存申请与释放相关的数据|
 | native_hook_frame | 记录堆内存申请与释放相关的调用栈|
@@ -70,24 +79,24 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 | sched_slice | 此数据结构主要作为ThreadState的上下文使用，这张表是sched_switch事件的原始记录|
 | smaps | 记录进程的内存消耗的相关信息采样|
 | stat | 此结果用来统计数据解析中各类数据的数据条数，数据和合法性，数据的匹配程度（begin-end），数据的损失等，查看此结构对应的表，可对数据源有基本的了解|
+| static_initalize | 记录了so初始化相关数据|
 | symbols | 记录系统调用名称和其函数指针的对应关系，trace中用addr来映射function_name来节省存储空间|
 | syscall | 记录用户空间函数与内核空间函数相互调用记录|
 | sys_event_filter | 记录所有的filter|
 | sys_mem_measure | 记录了所有的系统内存相关的测量信息|
+| task_pool | 记录任务池相关数据，与callstack表相关联|
 | thread | 记录所有的线程信息|
 | thread_filter | 过滤线程|
 | thread_state | 记录线程状态信息|
 | trace_config | 记录trace数据源，proto的事件-plugin与其process_name|
 | trace_range | 记录ftrace数据与其他类型数据的时间交集，供前端展示数据时使用|
-| clock_snapshot | 时钟号和时间，时钟名的映射表|
-| datasource_clockid | 数据源和时钟号的映射表|
-| task_pool | 记录任务池相关数据，与callstack表相关联|
 ## 表与事件来源
 |        表名称        |   事件源     |      插件名       |          备注         |
 |         ----         |    ----      |         ----      |           ----        |
-|animation    |    -         |ftrace-plugin      |记录动效的响应时延和完成时延   |
+|animation             |    -         |ftrace-plugin      |记录动效的响应时延和完成时延   |
 |app_name              |    -         |hisysevent-plugin  |JSON数据源             |
 |args                  |    -         |ftrace-plugin      |配合callstack使用      |
+|bio_latency_sample    |    -         |    -              |IO操作相关方法调用，及调用栈数据 |
 |callstack             |    -         |ftrace-plugin      |异步或非异步的调用     |
 |cpu_measure_filter    |    -         |ftrace-plugin      |cpu跟踪器，cpu频率等   |
 |cpu_usage             |    -         |cpu-plugin         |cpu使用率              |
@@ -95,12 +104,13 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |data_type             |  通用的      |    -              |辅助表                 |
 |device_info           |    -         |ftrace-plugin      |记录设备分辨率和帧率   |
 |device_state          |  通用的      |hisysevent-plugin  |记录设备屏幕亮度，蓝牙，位置等信息   |
-|dynamic_frame    |    -         |ftrace-plugin      |记录动效帧的分辨率和结束时间等   |
+|dynamic_frame         |    -         |ftrace-plugin      |动效帧的分辨率和结束时间等   |
+|ebpf_callstack        |    -         |    -              |磁盘读写相关的数据      |
 |file_system_callstack |    -         |    -              |ebpf文件系统           |
 |file_system_sample    |    -         |    -              |ebpf文件系统           |
-|frame_maps    |    -         |ftrace-plugin              |帧渲染数据，app到RS的映射           |
-|frame_slice    |    -         |ftrace-plugin              |帧渲染数据           |
-|gpu_slice    |    -         |ftrace-plugin              |gpu渲染时长           |
+|frame_maps            |    -         |ftrace-plugin      |帧渲染数据，app到RS的映射           |
+|frame_slice           |    -         |ftrace-plugin      |帧渲染数据             |
+|gpu_slice             |    -         |ftrace-plugin      |gpu渲染时长            |
 |hidump                |    -         |hidump-plugin      |FPS数据                |
 |hisys_event_measure   |    -         |hisysevent-plugin  |JSON数据源             |
 |instant               |    -         |ftrace-plugin      |waking和wakeup事件     |
@@ -117,18 +127,23 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |js_heap_string       |    -         |arkts-plugin          | js内存数据            |
 |js_heap_trace_function_info | -     |arkts-plugin          | js内存数据            |
 |js_heap_trace_node   |    -         |arkts-plugin          | js内存数据            |
-|app_startup   |    -         |ftrace-plugin          | 应用启动数据            |
-|static_initalize   |    -         |ftrace-plugin          | so初始化数据            |
+|app_startup           |    -         |ftrace-plugin      | 应用启动数据           |
+|static_initalize      |    -         |ftrace-plugin      | so初始化数据           |
 |live_process          |    -         |process-plugin     |Monitor数据            |
 |network               |    -         |network-plugin     |Monitor数据            |
 |diskio                |    -         |diskio-plugin      |Monitor数据            |
 |log                   |    -         |hilog-plugin       |系统日志               |
 |measure               |  通用的      |    -              |系统中的计量值（数值型）|
 |measure_filter        |  通用的      |    -              |计量值的查询辅助表      |
+|memory_ashmem         |    -         |memory-plugin      |进程所占用ashmem相关信息 |
+|memory_dma            |    -         |memory-plugin      |进程占用的DMA内存相关信息 |
+|memory_process_gpu    |    -         |memory-plugin      |进程占用GPU内存相关信息 |
+|memory_window_gpu     |    -         |memory-plugin      |窗口占用GPU内存相关信息 |
 |meta                  |  通用的      |    -              |记录解析现场数据（解析时间，数据类型，解析工具等）|
 |native_hook           |    -         |nativehook/hookdaemon |malloc && mmap内存数据            |
 |native_hook_frame     |    -         |nativehook/hookdaemon |native_hook调用栈数据            |
 |native_hook_statistic |    -         |nativehook/hookdaemon |malloc && mmap统计数据 |
+|paged_memory_sample   |    -         |    -              |网络数据传输相关的信息 |
 |perf_callchain        |    -         |perf-plugin        |perf数据（非插件模式） |
 |perf_files            |    -         |    -              |perf数据（非插件模式） |
 |perf_report           |    -         |    -              |perf数据（非插件模式） |
@@ -151,8 +166,8 @@ TraceStreamer可以将trace数据源转化为易于理解和使用的数据库�
 |trace_config          |  通用的      |hisysevent-plugin  |记录trace数据源         |
 |trace_range           |  通用的      |    -              |trace数据的时长         |
 |thread_filter         |  通用的      |ftrace-plugin      |线程计量跟踪表（比较少用）|
-|clock_snapshot         |  通用的      |通用的      |时钟号和时间，时钟名的映射表|
-|datasource_clockid         |  通用的      |通用的      |数据源和时钟号的映射表|
+|clock_snapshot        |  通用的      |通用的            |时钟号和时间，时钟名的映射表|
+|datasource_clockid    |  通用的      |通用的             |数据源和时钟号的映射表|
 |task_pool             |    -         |    -             |任务池数据              |
 
 ## ___表格关系图___
@@ -472,7 +487,7 @@ js_heap_sample:记录timeline的时间轴信息
 #### 表描述
 记录了与磁盘读写相关的数据。
 #### 主要字段描述
-- callchain_id：调用栈的唯一标识。与ebpf_callstack表中Callchain_id字段关联  
+- callchain_id：调用栈的唯一标识  
 - depth：调用栈深度。取值为零时表示栈顶  
 - ip：调用栈ip
 - symbols_id：调用栈函数名称, 与data_dict中的id字段关联  
@@ -1569,7 +1584,7 @@ js_heap_sample:记录timeline的时间轴信息
 - src：该帧是被哪一帧（该表中对应的行数）触发的，有多个值时，用逗号分割  
 - dst：该帧对应的渲染帧是哪一行  
 - type: 0 说明该行数据是实际渲染帧， 1 说明该行数据是期望渲染帧  
-- flag: 空时，为不完整的数据；0 表示实际渲染帧不卡帧， 1 表示实际渲染帧卡帧， 2 表示数据不需要绘制（没有frameNum信息）
+- flag: 空时，为不完整的数据；0 表示实际渲染帧不卡帧， 1 表示实际渲染帧卡帧(expectEndTime < actualEndTime为异常)， 2 表示数据不需要绘制（没有frameNum信息），3 表示rs进程与app进程起止异常(|expRsStartTime - expUiEndTime| < 1ms 正常，否则异常。这里使用期待帧的时间差做判断，给实际帧打标签)
 - depth：预留
 - frame_no：预留
 
@@ -1751,3 +1766,130 @@ js_heap_sample:记录timeline的时间轴信息
 - trace_source：事件源
 - key：事件需要关注的信息名
 - value：事件需要关注的信息名对应的信息值
+
+### memory_ashmem表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id            |INT       |
+|ts            |INT       |
+|ipid          |INT       |
+|adj           |INT       |
+|fd            |INT       |
+|ashmem_name_id|INT       |
+|size          |INT       |
+|pss           |INT       |
+|ashmem_id     |INT       |
+|time          |INT       |
+|ref_count     |INT       |
+|purged        |INT       |
+|flag          |INT       |
+#### 表描述
+该表记录trace数据源，proto的事件-plugin与其process_name（目前只有HisysEvent事件在用）。
+#### 关键字段描述
+- ts：时间戳
+- ipid：内部进程号
+- fd：共享内存文件描述符
+- ashmem_name_id：共享内存名
+- size：共享内存大小
+- pss：PSS内存大小
+- ashmem_id：共享内存ID
+- ref_count：引用计数
+- flag：去重标记，0表示正常，1表示进程内部重复数据，2表示进程间重复数据
+
+### memory_dma表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id            |INT       |
+|ts            |INT       |
+|ipid          |INT       |
+|fd            |INT       |
+|size          |INT       |
+|ino           |INT       |
+|exp_pid       |INT       |
+|exp_task_comm_id|INT       |
+|buf_name_id   |INT       |
+|exp_name_id   |INT       |
+|flag          |INT       |
+#### 表描述
+该表记录trace数据源，proto的事件-plugin与其process_name（目前只有HisysEvent事件在用）。
+#### 关键字段描述
+- ts：时间戳
+- ipid：内部进程号
+- fd：dma内存文件描述符
+- size：dma内存大小
+- exp_pid：申请者的进程号
+- buf_name_id：dma内存名
+- exp_name_id：申请者进程名
+- flag：去重标记，0表示正常，1表示进程内部重复数据，2表示进程间重复数据
+
+### memory_process_gpu表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id            |INT       |
+|ts            |INT       |
+|gpu_name_id   |INT       |
+|all_gpu_size  |INT       |
+|addr          |TEXT      |
+|ipid          |INT       |
+|itid          |INT       |
+|used_gpu_size |INT       |
+#### 表描述
+该表记录trace数据源，proto的事件-plugin与其process_name（目前只有HisysEvent事件在用）。
+#### 关键字段描述
+- ts：时间戳
+- gpu_name_id：gpu内存名称
+- all_gpu_size：进程占用gpu总大小
+- addr：gpu内存地址
+- ipid：内部进程号
+- itid：内部线程号
+- used_gpu_size：已使用的gpu大小
+
+### memory_window_gpu表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id            |INT       |
+|ts            |INT       |
+|window_name_id|INT       |
+|window_id     |INT       |
+|module_name_id|INT       |
+|category_name_id|INT       |
+|size          |INT       |
+|count         |INT       |
+|purgeable_size|INT       |
+#### 表描述
+该表记录trace数据源，proto的事件-plugin与其process_name（目前只有HisysEvent事件在用）。
+#### 关键字段描述
+- ts：时间戳
+- window_name_id：窗口名
+- window_id：窗口id
+- module_name_id：模块名
+- category_name_id：目录名
+- size：内存大小
+- count：内存申请个数
+
+### static_initalize表
+#### 表结构
+| Columns Name | SQL TYPE |
+|----          |----      |
+|id            |INT       |
+|ipid          |INT       |
+|tid           |INT       |
+|call_id       |INT       |
+|start_time    |INT       |
+|end_time      |INT       |
+|so_name       |TEXT      |
+|depth         |INT       |
+#### 表描述
+该表记录了so初始化相关数据。
+#### 关键字段描述
+- ipid：内部进程号
+- tid：内部线程号
+- call_id：调用者的ID，对应线程表里面的itid
+- start_time：阶段开始时间
+- end_time：阶段结束时间
+- so_name：so文件名称
+- depth：泳道图的深度

@@ -48,12 +48,12 @@ export class TabPanePurgPin extends BaseElement {
         selection.rightNs,
         (MemoryConfig.getInstance().interval * 1000_000) / 5,
         true
-      ).then((results) => {
+      ).then((purgePinResults) => {
         this.purgeablePinTable!.loading = false;
-        if (results.length > 0) {
-          for (let i = 0; i < results.length; i++) {
+        if (purgePinResults.length > 0) {
+          for (let i = 0; i < purgePinResults.length; i++) {
             this.purgeablePinSource.push(
-              this.toTabStruct(results[i].name, results[i].maxSize, results[i].minSize, results[i].avgSize)
+              this.toTabStruct(purgePinResults[i].name, purgePinResults[i].maxSize, purgePinResults[i].minSize, purgePinResults[i].avgSize)
             );
           }
           this.sortByColumn({ key: this.sortKey, sort: this.sortType });
@@ -97,10 +97,10 @@ export class TabPanePurgPin extends BaseElement {
 
   private init() {
     const thTable = this.tabTitle!.querySelector('.th');
-    const list = thTable!.querySelectorAll('div');
+    const purgePinTblNodes = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
       this.tabTitle!.removeAttribute('sort');
-      list.forEach((item) => {
+      purgePinTblNodes.forEach((item) => {
         item.querySelectorAll('svg').forEach((svg) => {
           svg.style.display = 'none';
         });
@@ -110,15 +110,16 @@ export class TabPanePurgPin extends BaseElement {
     this.sortType = 2;
   }
 
-  private toTabStruct(type: string, maxSize: number, minSize: number, avgSize: number): PurgeableTabStruct {
+  private toTabStruct(type: string, maxPurgePinSize: number, minPurgePinSize: number, avgPurgePinSize: number
+  ): PurgeableTabStruct {
     const tabStruct = new PurgeableTabStruct(
       type,
-      maxSize,
-      minSize,
-      avgSize,
-      Utils.getBinaryByteWithUnit(avgSize),
-      Utils.getBinaryByteWithUnit(maxSize),
-      Utils.getBinaryByteWithUnit(minSize)
+      maxPurgePinSize,
+      minPurgePinSize,
+      avgPurgePinSize,
+      Utils.getBinaryByteWithUnit(avgPurgePinSize),
+      Utils.getBinaryByteWithUnit(maxPurgePinSize),
+      Utils.getBinaryByteWithUnit(minPurgePinSize)
     );
     return tabStruct;
   }
@@ -140,7 +141,7 @@ export class TabPanePurgPin extends BaseElement {
   private sortByColumn(detail: any): void {
     // @ts-ignore
     function compare(key, sort, type) {
-      return function (a: any, b: any) {
+      return function (purgePinLeftData: any, purgePinRightData: any) {
         // 不管哪一列的排序方式是0（默认排序），都按照avgSize列从大到小排序
         if (sort === 0) {
           sort = 2;
@@ -149,12 +150,12 @@ export class TabPanePurgPin extends BaseElement {
         }
         if (type === 'number') {
           // @ts-ignore
-          return sort === 2 ? parseFloat(b[key]) - parseFloat(a[key]) : parseFloat(a[key]) - parseFloat(b[key]);
+          return sort === 2 ? parseFloat(purgePinRightData[key]) - parseFloat(purgePinLeftData[key]) : parseFloat(purgePinLeftData[key]) - parseFloat(purgePinRightData[key]);
         } else {
           if (sort === 2) {
-            return b[key].toString().localeCompare(a[key].toString());
+            return purgePinRightData[key].toString().localeCompare(purgePinLeftData[key].toString());
           } else {
-            return a[key].toString().localeCompare(b[key].toString());
+            return purgePinLeftData[key].toString().localeCompare(purgePinRightData[key].toString());
           }
         }
       };

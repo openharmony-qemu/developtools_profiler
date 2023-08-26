@@ -35,13 +35,13 @@ export class TabPanePurgTotalSelection extends BaseElement {
 
   async queryTableData(type: string, startNs: number) {
     if (type === 'ability') {
-      await querySysPurgeableSelectionTab(startNs).then((results) => {
+      await querySysPurgeableSelectionTab(startNs).then((purgeTotalSelectResults) => {
         this.purgeableSelectionSource = [];
-        if (results.length > 0) {
+        if (purgeTotalSelectResults.length > 0) {
           this.purgeableSelectionSource.push({ name: 'TimeStamp', value: ns2s(startNs) });
-          for (let i = 0; i < results.length; i++) {
-            results[i].value = Utils.getBinaryByteWithUnit(results[i].value);
-            this.purgeableSelectionSource.push(results[i]);
+          for (let i = 0; i < purgeTotalSelectResults.length; i++) {
+            purgeTotalSelectResults[i].value = Utils.getBinaryByteWithUnit(purgeTotalSelectResults[i].value);
+            this.purgeableSelectionSource.push(purgeTotalSelectResults[i]);
           }
           this.purgeableSelectionTable!.recycleDataSource = this.purgeableSelectionSource;
         }

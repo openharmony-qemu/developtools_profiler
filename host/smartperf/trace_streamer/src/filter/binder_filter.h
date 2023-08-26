@@ -45,6 +45,7 @@ public:
     void TractionLock(int64_t ts, uint32_t pid, const std::string& tag);
     void TractionLocked(int64_t ts, uint32_t pid, const std::string& tag);
     void TractionUnlock(int64_t ts, uint32_t pid, const std::string& tag);
+    bool IsAsync(int32_t flags) const;
     void Clear();
 
 private:

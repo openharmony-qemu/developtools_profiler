@@ -26,6 +26,7 @@ OHOS_X64_OUT=$PROJECT_TOP/$2/
 LIBCXX_X64_OUT=$PROJECT_TOP/$1/ndk/libcxx/linux_x86_64
 SUBSYS_X64_OUT=$PROJECT_TOP/$2/$TAIL_DIR
 
+PROTOC_DIR=$PROJECT_TOP/$2/$TAIL_DIR
 PROTOC=$PROJECT_TOP/$2/$TAIL_DIR/protoc
 OPT_PLUGIN_PROTOREADER_PATH=$PROJECT_TOP/$2/$SUBSYS_DIR/protoreader_plugin
 OPT_PLUGIN_PROTOREADER="--plugin=protoc-gen-plugin=$PROJECT_TOP/$2/$SUBSYS_DIR/protoreader_plugin --plugin_out=wrapper_namespace=ProtoReader"
@@ -34,6 +35,13 @@ OPT_PROTOREADER_OUT=--cpp_out
 PYTHON_SHELL=$THIS_DIR/make_standard_proto.py # shell path
 TMP=$2
 PROTO_OUT_DIR="$PROJECT_TOP/${TMP%/*}/$3" # path of the new proto file
+
+echo "PROTOC_DIR = $PROTOC_DIR"
+if ls "$PROTOC_DIR"/*.dylib 1>/dev/null 2>&1; then
+  cp $PROTOC_DIR/*.dylib $PROJECT_TOP/$2/$SUBSYS_DIR/
+else
+  echo "*.dylib Not Found!"
+fi
 
 echo "1 = $1"
 echo "2 = $2"

@@ -24,8 +24,7 @@ TraceDataCacheBase::TraceDataCacheBase()
     internalThreadsData_.emplace_back(0);
     internalThreadsData_.front().internalPid_ = 0;
     GetDataIndex("");
-    auto it = statusString_.rbegin();
-    for (it++; it != statusString_.rend(); it++) {
+    for (auto it = statusString_.begin(); it != statusString_.end(); it++) {
         threadStatus2Value_[it->second] = it->first;
     }
 }

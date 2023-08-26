@@ -48,13 +48,13 @@ bool EbpfDataReader::InitEbpfData(const std::deque<uint8_t>& dequeBuffer, uint64
 bool EbpfDataReader::InitEbpfHeader()
 {
     if (bufferSize_ < EbpfDataHeader::EBPF_DATA_HEADER_SIZE) {
-        TS_LOGE("buffer size less than ebpf data header!!!, bufferSize_ = %llu ", bufferSize_);
+        TS_LOGE("buffer size less than ebpf data header!!!, bufferSize_ = %" PRIu64 " ", bufferSize_);
         return false;
     }
     ebpfDataHeader_ = reinterpret_cast<EbpfDataHeader*>(startAddr_);
 
     if (ebpfDataHeader_->header.magic != EbpfDataHeader::HEADER_MAGIC) {
-        TS_LOGE("Get EBPF file header failed! magic = %llx", ebpfDataHeader_->header.magic);
+        TS_LOGE("Get EBPF file header failed! magic = %" PRIx64 "", ebpfDataHeader_->header.magic);
         return false;
     }
     if (ebpfDataHeader_->header.headSize != EbpfDataHeader::EBPF_DATA_HEADER_SIZE) {
@@ -186,7 +186,7 @@ void EbpfDataReader::ReadKernelSymAddrMap(const KernelSymbolInfoHeader* elfAddr,
     auto strTab = reinterpret_cast<const char*>(start + sysItemSize);
     maxKernelAddr_ = elfAddr->vaddrEnd;
     minKernelAddr_ = elfAddr->vaddrStart;
-    for (auto i = 0; i < sysItemSize; i++) {
+    for (uint32_t i = 0; i < sysItemSize; i++) {
         (void)memset_s(strSymbolName_, MAX_SYMBOL_LENGTH, 0, MAX_SYMBOL_LENGTH);
         auto item = start + i;
         if (strncpy_s(strSymbolName_, MAX_SYMBOL_LENGTH, strTab + item->nameOffset, MAX_SYMBOL_LENGTH) < 0) {
@@ -322,7 +322,7 @@ bool EbpfDataReader::ReadItemEventStr(const uint8_t* buffer, uint32_t size)
         streamFilters_->processFilter_->GetOrCreateThreadWithPid(strFixedHeaderAddr->tid, strFixedHeaderAddr->pid);
     auto strAddr = const_cast<char*>(reinterpret_cast<const char*>(strFixedHeaderAddr + 1));
     if ((strFixedHeaderAddr->strLen > size - sizeof(StrEventFixedHeader)) || !strFixedHeaderAddr->strLen) {
-        TS_LOGE("invalid str event, strEventFixedHeader = %lu, strlen = %d, size = %d", sizeof(StrEventFixedHeader),
+        TS_LOGE("invalid str event, strEventFixedHeader = %zu, strlen = %d, size = %d", sizeof(StrEventFixedHeader),
                 strFixedHeaderAddr->strLen, size);
         return true;
     }

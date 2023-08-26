@@ -49,7 +49,8 @@ export class HiperfCpuRender extends PerfRender {
     req.context.beginPath();
     req.context.fillStyle = ColorUtils.FUNC_COLOR[0];
     req.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-    let path = new Path2D();
+    let normalPath = new Path2D();
+    let specPath = new Path2D();
     let find = false;
     let offset = groupBy10MS ? 0 : 3;
     for (let re of filter) {
@@ -62,123 +63,19 @@ export class HiperfCpuRender extends PerfRender {
         HiPerfCpuStruct.hoverStruct = re;
         find = true;
       }
-      HiPerfCpuStruct.draw(req.context, path, re, groupBy10MS);
+      HiPerfCpuStruct.draw(req.context, normalPath, specPath, re, groupBy10MS);
     }
     if (!find && row.isHover) HiPerfCpuStruct.hoverStruct = undefined;
     if (groupBy10MS) {
-      req.context.fill(path);
+      req.context.fill(normalPath);
     } else {
-      req.context.stroke(path);
+      req.context.stroke(normalPath);
+      HiPerfStruct.drawSpecialPath(req.context, specPath);
     }
     req.context.closePath();
   }
 
-  render(hiPerfCpuRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
-    let groupBy10MS = hiPerfCpuRequest.scale > 100_000_000;
-    if (list && dataList2.length == 0) {
-      dataList2 = HiPerfCpuStruct.groupBy10MS(list, hiPerfCpuRequest.intervalPerf, hiPerfCpuRequest.params.maxCpu);
-    }
-    if (hiPerfCpuRequest.lazyRefresh) {
-      hiPerf(
-        list,
-        dataList2,
-        filter,
-        hiPerfCpuRequest.startNS,
-        hiPerfCpuRequest.endNS,
-        hiPerfCpuRequest.frame,
-        groupBy10MS,
-        hiPerfCpuRequest.useCache || !hiPerfCpuRequest.range.refresh
-      );
-    } else {
-      if (!hiPerfCpuRequest.useCache) {
-        hiPerf(
-          list,
-          dataList2,
-          filter,
-          hiPerfCpuRequest.startNS,
-          hiPerfCpuRequest.endNS,
-          hiPerfCpuRequest.frame,
-          groupBy10MS,
-          false
-        );
-      }
-    }
-    if (hiPerfCpuRequest.canvas) {
-      hiPerfCpuRequest.context.clearRect(0, 0, hiPerfCpuRequest.frame.width, hiPerfCpuRequest.frame.height);
-      let arr = filter;
-      if (
-        arr.length > 0 &&
-        !hiPerfCpuRequest.range.refresh &&
-        !hiPerfCpuRequest.useCache &&
-        hiPerfCpuRequest.lazyRefresh
-      ) {
-        drawLoading(
-          hiPerfCpuRequest.context,
-          hiPerfCpuRequest.startNS,
-          hiPerfCpuRequest.endNS,
-          hiPerfCpuRequest.totalNS,
-          hiPerfCpuRequest.frame,
-          arr[0].startNS,
-          arr[arr.length - 1].startNS + arr[arr.length - 1].dur
-        );
-      }
-      drawLines(
-        hiPerfCpuRequest.context,
-        hiPerfCpuRequest.xs,
-        hiPerfCpuRequest.frame.height,
-        hiPerfCpuRequest.lineColor
-      );
-      hiPerfCpuRequest.context.stroke();
-      hiPerfCpuRequest.context.beginPath();
-      HiPerfCpuStruct.hoverStruct = undefined;
-      if (hiPerfCpuRequest.isHover) {
-        let offset = groupBy10MS ? 0 : 3;
-        for (let re of filter) {
-          if (
-            re.frame &&
-            hiPerfCpuRequest.hoverX >= re.frame.x - offset &&
-            hiPerfCpuRequest.hoverX <= re.frame.x + re.frame.width + offset
-          ) {
-            HiPerfCpuStruct.hoverStruct = re;
-            break;
-          }
-        }
-      } else {
-        HiPerfCpuStruct.hoverStruct = hiPerfCpuRequest.params.hoverStruct;
-      }
-      HiPerfCpuStruct.selectStruct = hiPerfCpuRequest.params.selectStruct;
-      hiPerfCpuRequest.context.fillStyle = ColorUtils.FUNC_COLOR[0];
-      hiPerfCpuRequest.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-      let path = new Path2D();
-      for (let re of filter) {
-        HiPerfCpuStruct.draw(hiPerfCpuRequest.context, path, re, groupBy10MS);
-      }
-      if (groupBy10MS) {
-        hiPerfCpuRequest.context.fill(path);
-      } else {
-        hiPerfCpuRequest.context.stroke(path);
-      }
-      drawSelection(hiPerfCpuRequest.context, hiPerfCpuRequest.params);
-      hiPerfCpuRequest.context.closePath();
-      drawFlagLine(
-        hiPerfCpuRequest.context,
-        hiPerfCpuRequest.flagMoveInfo,
-        hiPerfCpuRequest.flagSelectedInfo,
-        hiPerfCpuRequest.startNS,
-        hiPerfCpuRequest.endNS,
-        hiPerfCpuRequest.totalNS,
-        hiPerfCpuRequest.frame,
-        hiPerfCpuRequest.slicesTime
-      );
-    }
-    // @ts-ignore
-    self.postMessage({
-      id: hiPerfCpuRequest.id,
-      type: hiPerfCpuRequest.type,
-      results: hiPerfCpuRequest.canvas ? undefined : filter,
-      hover: HiPerfCpuStruct.hoverStruct,
-    });
-  }
+  render(hiPerfCpuRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {}
 }
 
 export class HiPerfCpuStruct extends HiPerfStruct {

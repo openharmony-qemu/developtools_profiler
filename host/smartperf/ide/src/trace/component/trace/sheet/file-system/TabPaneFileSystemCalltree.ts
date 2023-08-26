@@ -42,7 +42,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
   private frameChart: FrameChart | null | undefined;
   private isChartShow: boolean = false;
   private systmeRuleName = '/system/';
-  private numRuleName = '/max/min/';
+  private fsCallTreeNumRuleName = '/max/min/';
   private modal: DisassemblingWindow | null | undefined;
   private needShowMenu = true;
   private searchValue: string = '';
@@ -342,11 +342,11 @@ export class TabpaneFilesystemCalltree extends BaseElement {
       let fsCallTreeConstraintsArgs: any[] = [
         {
           funcName: 'resotreAllNode',
-          funcArgs: [[this.numRuleName]],
+          funcArgs: [[this.fsCallTreeNumRuleName]],
         },
         {
           funcName: 'clearSplitMapData',
-          funcArgs: [this.numRuleName],
+          funcArgs: [this.fsCallTreeNumRuleName],
         },
       ];
       if (data.checked) {
@@ -368,7 +368,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
     this.fsCallTreeFilter!.getFilterData((data: FilterData) => {
       if (this.searchValue != this.fsCallTreeFilter!.filterValue) {
         this.searchValue = this.fsCallTreeFilter!.filterValue;
-        let args = [
+        let fileArgs = [
           {
             funcName: 'setSearchValue',
             funcArgs: [this.searchValue],
@@ -378,7 +378,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
             funcArgs: [],
           },
         ];
-        this.getDataByWorker(args, (result: any[]) => {
+        this.getDataByWorker(fileArgs, (result: any[]) => {
           this.setLTableData(result);
           this.frameChart!.data = this.fsCallTreeDataSource;
           this.switchFlameChart(data);
@@ -545,11 +545,6 @@ export class TabpaneFilesystemCalltree extends BaseElement {
   initHtml(): string {
     return `
         <style>
-        :host{
-            display: flex;
-            flex-direction: column;
-            padding: 10px 10px 0 10px;
-        }
         .fs-call-tree-filter {
             border: solid rgb(216,216,216) 1px;
             float: left;
@@ -557,12 +552,10 @@ export class TabpaneFilesystemCalltree extends BaseElement {
             bottom: 0;
             width: 100%;
         }
-        selector{
-            display: none;
-        }
-        .show{
+        :host{
             display: flex;
-            flex: 1;
+            flex-direction: column;
+            padding: 10px 10px 0 10px;
         }
         .fs-call-tree-progress{
             bottom: 33px;
@@ -570,6 +563,9 @@ export class TabpaneFilesystemCalltree extends BaseElement {
             height: 1px;
             left: 0;
             right: 0;
+        }
+        selector{
+            display: none;
         }
         .fs-call-tree-loading{
             bottom: 0;
@@ -579,6 +575,10 @@ export class TabpaneFilesystemCalltree extends BaseElement {
             width:100%;
             background:transparent;
             z-index: 999999;
+        }
+        .show{
+            display: flex;
+            flex: 1;
         }
     </style>
     <div class="fs-call-tree-content" style="display: flex;flex-direction: row">

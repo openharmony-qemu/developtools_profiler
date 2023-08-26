@@ -106,7 +106,7 @@ export class SpCpuChart {
             traceRow.canvasSave(context);
             (renders['cpu-data'] as CpuRender).renderMainThread(
               {
-                context: context,
+                cpuRenderContext: context,
                 useCache: useCache,
                 type: `cpu-data-${i1}`,
                 translateY: traceRow.translateY,

@@ -26,7 +26,7 @@ export class TabPaneCurrent extends BaseElement {
         document.dispatchEvent(new CustomEvent('slices-change', { detail: this.slicestime }));
       }
     });
-    this.shadowRoot?.querySelector('#text-input')?.addEventListener('keyup', (event: any) => {
+    this.shadowRoot?.querySelector('#text-input-current')?.addEventListener('keyup', (event: any) => {
       event.stopPropagation();
       if (event.keyCode == '13') {
         if (this.slicestime) {
@@ -42,13 +42,13 @@ export class TabPaneCurrent extends BaseElement {
         }
       }
     });
-    this.shadowRoot?.querySelector('#text-input')?.addEventListener('blur', (event: any) => {
+    this.shadowRoot?.querySelector('#text-input-current')?.addEventListener('blur', (event: any) => {
       (window as any).flagInputFocus = false;
       window.publish(window.SmartEvent.UI.KeyboardEnable, {
         enable: true,
       });
     });
-    this.shadowRoot?.querySelector('#text-input')?.addEventListener('focus', (event: any) => {
+    this.shadowRoot?.querySelector('#text-input-current')?.addEventListener('focus', (event: any) => {
       (window as any).flagInputFocus = true;
       window.publish(window.SmartEvent.UI.KeyboardEnable, {
         enable: false,
@@ -65,7 +65,7 @@ export class TabPaneCurrent extends BaseElement {
   setCurrentSlicesTime(slicestime: SlicesTime) {
     this.slicestime = slicestime;
     this.shadowRoot!.querySelector<HTMLInputElement>('#color-input')!.value = this.slicestime.color;
-    this.shadowRoot!.querySelector<HTMLInputElement>('#text-input')!.value = this.slicestime.text;
+    this.shadowRoot!.querySelector<HTMLInputElement>('#text-input-current')!.value = this.slicestime.text;
   }
 
   initHtml(): string {
@@ -79,10 +79,10 @@ export class TabPaneCurrent extends BaseElement {
         .notes-editor-panel{
         display: flex;align-items: center
         }
-        .slices-text{
+        .current-slices-text{
         font-size: 14px;color: var(--dark-color1,#363636c7);font-weight: 300;
         }
-        .slices-input{
+        .current-slices-input{
             border-radius: 4px;
             border: 1px solid var(--dark-border,#dcdcdc);
             color: var(--dark-color1,#212121);
@@ -90,7 +90,7 @@ export class TabPaneCurrent extends BaseElement {
             padding: 3px;
             margin: 0 10px;
         }
-        .slices-input:focus{
+        .current-slices-input:focus{
             outline: none;
             box-shadow: 1px 1px 1px var(--bark-prompt,#bebebe);
         }
@@ -109,9 +109,9 @@ export class TabPaneCurrent extends BaseElement {
             outline: inherit;
         </style>
         <div class="notes-editor-panel">
-            <div class="slices-text">Annotation at <span id="slices-time"></span></div>
-            <input style="flex: 1" class="slices-input" type="text" id="text-input"/>
-            <span class="slices-text">Change color: <input style="background: var(--dark-background5,#FFFFFF);" type="color" id="color-input"/></span>
+            <div class="current-slices-text">Annotation at <span id="slices-time"></span></div>
+            <input style="flex: 1" class="current-slices-input" type="text" id="text-input-current"/>
+            <span class="current-slices-text">Change color: <input style="background: var(--dark-background5,#FFFFFF);" type="color" id="color-input"/></span>
             <button id="remove">Remove</button>
         </div>
         `;

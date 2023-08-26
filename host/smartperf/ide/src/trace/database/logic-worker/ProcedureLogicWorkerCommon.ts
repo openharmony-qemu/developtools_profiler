@@ -465,32 +465,32 @@ export function getProbablyTime(ns: number): string {
   return res;
 }
 
-export function timeMsFormat2p(ns: number): string {
-  let currentNs = ns;
-  let hour1 = 3600_000;
-  let minute1 = 60_000;
-  let second1 = 1_000; // 1 second
-  let res = '';
-  if (currentNs >= hour1) {
-    res += Math.floor(currentNs / hour1).toFixed(2) + 'h';
-    return res;
+export function timeMsFormat2p(timeNs: number): string {
+  let currentNs = timeNs;
+  let oneHour = 3600_000;
+  let oneMinute1 = 60_000;
+  let oneSecond = 1_000; // 1 second
+  let commonResult = '';
+  if (currentNs >= oneHour) {
+    commonResult += Math.floor(currentNs / oneHour).toFixed(2) + 'h';
+    return commonResult;
   }
-  if (currentNs >= minute1) {
-    res += Math.floor(currentNs / minute1).toFixed(2) + 'min';
-    return res;
+  if (currentNs >= oneMinute1) {
+    commonResult += Math.floor(currentNs / oneMinute1).toFixed(2) + 'min';
+    return commonResult;
   }
-  if (currentNs >= second1) {
-    res += Math.floor(currentNs / second1).toFixed(2) + 's';
-    return res;
+  if (currentNs >= oneSecond) {
+    commonResult += Math.floor(currentNs / oneSecond).toFixed(2) + 's';
+    return commonResult;
   }
   if (currentNs > 0) {
-    res += currentNs.toFixed(2) + 'ms';
-    return res;
+    commonResult += currentNs.toFixed(2) + 'ms';
+    return commonResult;
   }
-  if (res == '') {
-    res = '0s';
+  if (commonResult == '') {
+    commonResult = '0s';
   }
-  return res;
+  return commonResult;
 }
 
 export function formatRealDate(date: Date, fmt: string): string {

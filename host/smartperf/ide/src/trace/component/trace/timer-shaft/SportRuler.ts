@@ -150,34 +150,34 @@ export class SportRuler extends Graph {
   }
   draw(): void {
     this.rulerW = this.canvas!.offsetWidth;
-    this.c.clearRect(this.frame.x, this.frame.y, this.frame.width, this.frame.height + 1);
-    this.c.beginPath();
+    this.context2D.clearRect(this.frame.x, this.frame.y, this.frame.width, this.frame.height + 1);
+    this.context2D.beginPath();
     this.lineColor = window.getComputedStyle(this.canvas!, null).getPropertyValue('color');
-    this.c.lineWidth = 1;
-    this.c.strokeStyle = this.lineColor; //"#dadada"
-    this.c.moveTo(this.frame.x, this.frame.y);
-    this.c.lineTo(this.frame.x + this.frame.width, this.frame.y);
-    this.c.stroke();
-    this.c.closePath();
-    this.c.beginPath();
-    this.c.strokeStyle = '#999999';
-    this.c.lineWidth = 3;
-    this.c.moveTo(this.frame.x, this.frame.y);
-    this.c.lineTo(this.frame.x, this.frame.y + this.frame.height);
-    this.c.stroke();
-    this.c.closePath();
-    this.c.beginPath();
-    this.c.strokeStyle = this.lineColor; //"#999999"
-    this.c.lineWidth = 1;
-    this.c.fillStyle = '#999999';
-    this.c.font = '8px sans-serif';
+    this.context2D.lineWidth = 1;
+    this.context2D.strokeStyle = this.lineColor; //"#dadada"
+    this.context2D.moveTo(this.frame.x, this.frame.y);
+    this.context2D.lineTo(this.frame.x + this.frame.width, this.frame.y);
+    this.context2D.stroke();
+    this.context2D.closePath();
+    this.context2D.beginPath();
+    this.context2D.strokeStyle = '#999999';
+    this.context2D.lineWidth = 3;
+    this.context2D.moveTo(this.frame.x, this.frame.y);
+    this.context2D.lineTo(this.frame.x, this.frame.y + this.frame.height);
+    this.context2D.stroke();
+    this.context2D.closePath();
+    this.context2D.beginPath();
+    this.context2D.strokeStyle = this.lineColor; //"#999999"
+    this.context2D.lineWidth = 1;
+    this.context2D.fillStyle = '#999999';
+    this.context2D.font = '8px sans-serif';
     this.range.xs?.forEach((item, index) => {
-      this.c.moveTo(item, this.frame.y);
-      this.c.lineTo(item, this.frame.y + this.frame.height);
-      this.c.fillText(`${this.range.xsTxt[index]}`, item + 3, this.frame.y + 12);
+      this.context2D.moveTo(item, this.frame.y);
+      this.context2D.lineTo(item, this.frame.y + this.frame.height);
+      this.context2D.fillText(`${this.range.xsTxt[index]}`, item + 3, this.frame.y + 12);
     });
-    this.c.stroke();
-    this.c.closePath();
+    this.context2D.stroke();
+    this.context2D.closePath();
     //绘制旗子
     this.flagList.forEach((flagObj: Flag, b) => {
       if (flagObj.time >= this.range.startNS && flagObj.time <= this.range.endNS) {
@@ -191,36 +191,36 @@ export class SportRuler extends Graph {
     //If region selection is enabled, the serial number draws a line on the axis to show the length of the box selection
     if (this.isRangeSelect) {
       let range = TraceRow.rangeSelectObject;
-      this.c.beginPath();
+      this.context2D.beginPath();
       if (document.querySelector<SpApplication>('sp-application')!.dark) {
-        this.c.strokeStyle = '#FFF';
-        this.c.fillStyle = '#FFF';
+        this.context2D.strokeStyle = '#FFF';
+        this.context2D.fillStyle = '#FFF';
       } else {
-        this.c.strokeStyle = '#000';
-        this.c.fillStyle = '#000';
+        this.context2D.strokeStyle = '#000';
+        this.context2D.fillStyle = '#000';
       }
       let start_X = ns2x(range?.startNS || 0, this.range.startNS, this.range.endNS, this.range.totalNS, this.frame);
       let endX = ns2x(range?.endNS || 0, this.range.startNS, this.range.endNS, this.range.totalNS, this.frame);
       let lineWidth = endX - start_X;
       let txt = ns2s((range?.endNS || 0) - (range?.startNS || 0));
-      this.c.moveTo(start_X, this.frame.y + 22);
-      this.c.lineTo(endX, this.frame.y + 22);
-      this.c.moveTo(start_X, this.frame.y + 22 - 5);
-      this.c.lineTo(start_X, this.frame.y + 22 + 5);
-      this.c.moveTo(endX, this.frame.y + 22 - 5);
-      this.c.lineTo(endX, this.frame.y + 22 + 5);
-      let textWidth = this.c.measureText(txt).width;
+      this.context2D.moveTo(start_X, this.frame.y + 22);
+      this.context2D.lineTo(endX, this.frame.y + 22);
+      this.context2D.moveTo(start_X, this.frame.y + 22 - 5);
+      this.context2D.lineTo(start_X, this.frame.y + 22 + 5);
+      this.context2D.moveTo(endX, this.frame.y + 22 - 5);
+      this.context2D.lineTo(endX, this.frame.y + 22 + 5);
+      let textWidth = this.context2D.measureText(txt).width;
       if (lineWidth > textWidth) {
-        this.c.fillText(`${txt}`, start_X + (lineWidth - textWidth) / 2, this.frame.y + 20);
+        this.context2D.fillText(`${txt}`, start_X + (lineWidth - textWidth) / 2, this.frame.y + 20);
       } else {
         if (endX + textWidth >= this.frame.width) {
-          this.c.fillText(`${txt}`, start_X - 5 - textWidth, this.frame.y + 20);
+          this.context2D.fillText(`${txt}`, start_X - 5 - textWidth, this.frame.y + 20);
         } else {
-          this.c.fillText(`${txt}`, endX + 5, this.frame.y + 20);
+          this.context2D.fillText(`${txt}`, endX + 5, this.frame.y + 20);
         }
       }
-      this.c.stroke();
-      this.c.closePath();
+      this.context2D.stroke();
+      this.context2D.closePath();
     }
     if (this.invertedTriangleTime != null && typeof this.invertedTriangleTime != undefined) {
       this.drawInvertedTriangle(
@@ -302,15 +302,15 @@ export class SportRuler extends Graph {
   drawInvertedTriangle(time: number, color: string = '#000000') {
     if (time != null && typeof time != undefined) {
       let x = Math.round((this.rulerW * (time - this.range.startNS)) / (this.range.endNS - this.range.startNS));
-      this.c.beginPath();
-      this.c.fillStyle = color;
-      this.c.strokeStyle = color;
-      this.c.moveTo(x - 3, 141);
-      this.c.lineTo(x + 3, 141);
-      this.c.lineTo(x, 145);
-      this.c.fill();
-      this.c.closePath();
-      this.c.stroke();
+      this.context2D.beginPath();
+      this.context2D.fillStyle = color;
+      this.context2D.strokeStyle = color;
+      this.context2D.moveTo(x - 3, 141);
+      this.context2D.lineTo(x + 3, 141);
+      this.context2D.lineTo(x, 145);
+      this.context2D.fill();
+      this.context2D.closePath();
+      this.context2D.stroke();
     }
   }
 
@@ -402,89 +402,89 @@ export class SportRuler extends Graph {
       slicesTime.startX = startX;
       slicesTime.endX = endX;
 
-      this.c.beginPath();
-      this.c.strokeStyle = slicesTime.color;
-      this.c.fillStyle = slicesTime.color;
+      this.context2D.beginPath();
+      this.context2D.strokeStyle = slicesTime.color;
+      this.context2D.fillStyle = slicesTime.color;
       this.range.slicesTime.color = slicesTime.color; //紫色
 
-      this.c.moveTo(startX + TRIWIDTH, 132);
-      this.c.lineTo(startX, 142);
-      this.c.lineTo(startX, 132);
-      this.c.lineTo(startX + TRIWIDTH, 132);
+      this.context2D.moveTo(startX + TRIWIDTH, 132);
+      this.context2D.lineTo(startX, 142);
+      this.context2D.lineTo(startX, 132);
+      this.context2D.lineTo(startX + TRIWIDTH, 132);
 
-      this.c.lineTo(endX - TRIWIDTH, 132);
-      this.c.lineTo(endX, 132);
-      this.c.lineTo(endX, 142);
-      this.c.lineTo(endX - TRIWIDTH, 132);
-      this.c.closePath();
-      slicesTime.selected && this.c.fill();
-      this.c.stroke();
+      this.context2D.lineTo(endX - TRIWIDTH, 132);
+      this.context2D.lineTo(endX, 132);
+      this.context2D.lineTo(endX, 142);
+      this.context2D.lineTo(endX - TRIWIDTH, 132);
+      this.context2D.closePath();
+      slicesTime.selected && this.context2D.fill();
+      this.context2D.stroke();
 
-      this.c.beginPath();
+      this.context2D.beginPath();
       if (document.querySelector<SpApplication>('sp-application')!.dark) {
-        this.c.strokeStyle = '#FFF';
-        this.c.fillStyle = '#FFF';
+        this.context2D.strokeStyle = '#FFF';
+        this.context2D.fillStyle = '#FFF';
       } else {
-        this.c.strokeStyle = '#000';
-        this.c.fillStyle = '#000';
+        this.context2D.strokeStyle = '#000';
+        this.context2D.fillStyle = '#000';
       }
       let lineWidth = endX - startX;
       let txt = ns2s((slicesTime.endTime || 0) - (slicesTime.startTime || 0));
-      this.c.moveTo(startX, this.frame.y + 22);
-      this.c.lineTo(endX, this.frame.y + 22);
-      this.c.moveTo(startX, this.frame.y + 22 - 5);
-      this.c.lineTo(startX, this.frame.y + 22 + 5);
-      this.c.moveTo(endX, this.frame.y + 22 - 5);
-      this.c.lineTo(endX, this.frame.y + 22 + 5);
-      let txtWidth = this.c.measureText(txt).width;
-      this.c.fillStyle = '#FFF'; //为了解决文字重叠问题。在时间刻度的文字下面绘制一个小方块
-      this.c.fillRect(startX + (lineWidth - txtWidth) / 2, this.frame.y + 10, txtWidth + 2, 10);
-      this.c.fillStyle = 'black';
+      this.context2D.moveTo(startX, this.frame.y + 22);
+      this.context2D.lineTo(endX, this.frame.y + 22);
+      this.context2D.moveTo(startX, this.frame.y + 22 - 5);
+      this.context2D.lineTo(startX, this.frame.y + 22 + 5);
+      this.context2D.moveTo(endX, this.frame.y + 22 - 5);
+      this.context2D.lineTo(endX, this.frame.y + 22 + 5);
+      let txtWidth = this.context2D.measureText(txt).width;
+      this.context2D.fillStyle = '#FFF'; //为了解决文字重叠问题。在时间刻度的文字下面绘制一个小方块
+      this.context2D.fillRect(startX + (lineWidth - txtWidth) / 2, this.frame.y + 10, txtWidth + 2, 10);
+      this.context2D.fillStyle = 'black';
       if (lineWidth > txtWidth) {
-        this.c.fillText(`${txt}`, startX + (lineWidth - txtWidth) / 2, this.frame.y + 20);
+        this.context2D.fillText(`${txt}`, startX + (lineWidth - txtWidth) / 2, this.frame.y + 20);
       } else {
         if (endX + txtWidth >= this.frame.width) {
-          this.c.fillText(`${txt}`, startX - 5 - txtWidth, this.frame.y + 20);
+          this.context2D.fillText(`${txt}`, startX - 5 - txtWidth, this.frame.y + 20);
         } else {
-          this.c.fillText(`${txt}`, endX + 5, this.frame.y + 20);
+          this.context2D.fillText(`${txt}`, endX + 5, this.frame.y + 20);
         }
       }
-      this.c.stroke();
-      this.c.closePath();
+      this.context2D.stroke();
+      this.context2D.closePath();
     }
   }
 
   //绘制旗子
   drawFlag(x: number, color: string = '#999999', isFill: boolean = false, textStr: string = '', type: string = '') {
     if (x < 0) return;
-    this.c.beginPath();
-    this.c.fillStyle = color;
-    this.c.strokeStyle = color;
-    this.c.moveTo(x, 125);
+    this.context2D.beginPath();
+    this.context2D.fillStyle = color;
+    this.context2D.strokeStyle = color;
+    this.context2D.moveTo(x, 125);
     if (type == 'triangle') {
-      this.c.lineTo(x + 15, 131);
+      this.context2D.lineTo(x + 15, 131);
     } else {
-      this.c.lineTo(x + 10, 125);
-      this.c.lineTo(x + 10, 127);
-      this.c.lineTo(x + 18, 127);
-      this.c.lineTo(x + 18, 137);
-      this.c.lineTo(x + 10, 137);
-      this.c.lineTo(x + 10, 135);
+      this.context2D.lineTo(x + 10, 125);
+      this.context2D.lineTo(x + 10, 127);
+      this.context2D.lineTo(x + 18, 127);
+      this.context2D.lineTo(x + 18, 137);
+      this.context2D.lineTo(x + 10, 137);
+      this.context2D.lineTo(x + 10, 135);
     }
-    this.c.lineTo(x + 2, 135);
-    this.c.lineTo(x + 2, 142);
-    this.c.lineTo(x, 142);
-    this.c.closePath();
-    isFill && this.c.fill();
-    this.c.stroke();
+    this.context2D.lineTo(x + 2, 135);
+    this.context2D.lineTo(x + 2, 142);
+    this.context2D.lineTo(x, 142);
+    this.context2D.closePath();
+    isFill && this.context2D.fill();
+    this.context2D.stroke();
     if (textStr !== '') {
-      this.c.font = '10px Microsoft YaHei';
-      const { width } = this.c.measureText(textStr);
-      this.c.fillStyle = 'rgba(255, 255, 255, 0.8)'; //
-      this.c.fillRect(x + 21, 132, width + 4, 12);
-      this.c.fillStyle = 'black';
-      this.c.fillText(textStr, x + 23, 142);
-      this.c.stroke();
+      this.context2D.font = '10px Microsoft YaHei';
+      const { width } = this.context2D.measureText(textStr);
+      this.context2D.fillStyle = 'rgba(255, 255, 255, 0.8)'; //
+      this.context2D.fillRect(x + 21, 132, width + 4, 12);
+      this.context2D.fillStyle = 'black';
+      this.context2D.fillText(textStr, x + 23, 142);
+      this.context2D.stroke();
     }
   }
 

@@ -15,11 +15,6 @@
 
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 import {
-  BaseStruct,
-  drawFlagLine,
-  drawLines,
-  drawLoading,
-  drawSelection,
   hiPerf,
   HiPerfStruct,
   PerfRender,
@@ -28,12 +23,12 @@ import {
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 
 export class HiperfEventRender extends PerfRender {
-  renderMainThread(hiPerfEventReq: any, row: TraceRow<HiPerfEventStruct>) {
+  renderMainThread(hiPerfEventReq: any, row: TraceRow<HiPerfEventStruct>): void {
     let list = row.dataList;
     let list2 = row.dataList2;
     let filter = row.dataListCache;
     let groupBy10MS = hiPerfEventReq.scale > 30_000_000;
-    if (list && row.dataList2.length == 0) {
+    if (list && row.dataList2.length === 0) {
       row.dataList2 = HiPerfEventStruct.eventGroupBy10MS(list, hiPerfEventReq.intervalPerf, hiPerfEventReq.type);
     }
     hiPerf(
@@ -50,10 +45,11 @@ export class HiperfEventRender extends PerfRender {
     hiPerfEventReq.context.fillStyle = ColorUtils.FUNC_COLOR[0];
     hiPerfEventReq.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
     let offset = groupBy10MS ? 0 : 3;
-    let path = new Path2D();
+    let normalPath = new Path2D();
+    let specPath = new Path2D();
     let find = false;
     for (let re of filter) {
-      HiPerfEventStruct.draw(hiPerfEventReq.context, path, re, groupBy10MS);
+      HiPerfEventStruct.draw(hiPerfEventReq.context, normalPath, specPath, re, groupBy10MS);
       if (row.isHover) {
         if (re.frame && row.hoverX >= re.frame.x - offset && row.hoverX <= re.frame.x + re.frame.width + offset) {
           HiPerfEventStruct.hoverStruct = re;
@@ -61,8 +57,15 @@ export class HiperfEventRender extends PerfRender {
         }
       }
     }
-    if (!find && row.isHover) HiPerfEventStruct.hoverStruct = undefined;
-    groupBy10MS ? hiPerfEventReq.context.fill(path) : hiPerfEventReq.context.stroke(path);
+    if (!find && row.isHover) {
+      HiPerfEventStruct.hoverStruct = undefined;
+    }
+    if (groupBy10MS) {
+      hiPerfEventReq.context.fill(normalPath);
+    } else {
+      hiPerfEventReq.context.stroke(normalPath);
+      HiPerfStruct.drawSpecialPath(hiPerfEventReq.context, specPath);
+    }
     let maxEvent = HiPerfEventStruct.maxEvent!.get(hiPerfEventReq.type!) || 0;
     let textMetrics = hiPerfEventReq.context.measureText(maxEvent);
     hiPerfEventReq.context.globalAlpha = 0.8;
@@ -76,115 +79,7 @@ export class HiperfEventRender extends PerfRender {
     hiPerfEventReq.context.closePath();
   }
 
-  render(hiPerfEventRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {
-    let groupBy10MS = hiPerfEventRequest.scale > 100_000_000;
-    if (hiPerfEventRequest.lazyRefresh) {
-      hiPerf(
-        list,
-        dataList2,
-        filter,
-        hiPerfEventRequest.startNS,
-        hiPerfEventRequest.endNS,
-        hiPerfEventRequest.frame,
-        groupBy10MS,
-        hiPerfEventRequest.useCache || !hiPerfEventRequest.range.refresh
-      );
-    } else {
-      if (!hiPerfEventRequest.useCache) {
-        hiPerf(
-          list,
-          dataList2,
-          filter,
-          hiPerfEventRequest.startNS,
-          hiPerfEventRequest.endNS,
-          hiPerfEventRequest.frame,
-          groupBy10MS,
-          false
-        );
-      }
-    }
-    if (hiPerfEventRequest.canvas) {
-      hiPerfEventRequest.context.clearRect(0, 0, hiPerfEventRequest.frame.width, hiPerfEventRequest.frame.height);
-      let arr = filter;
-      if (
-        arr.length > 0 &&
-        !hiPerfEventRequest.range.refresh &&
-        !hiPerfEventRequest.useCache &&
-        hiPerfEventRequest.lazyRefresh
-      ) {
-        drawLoading(
-          hiPerfEventRequest.context,
-          hiPerfEventRequest.startNS,
-          hiPerfEventRequest.endNS,
-          hiPerfEventRequest.totalNS,
-          hiPerfEventRequest.frame,
-          arr[0].startNS,
-          arr[arr.length - 1].startNS + arr[arr.length - 1].dur
-        );
-      }
-      drawLines(
-        hiPerfEventRequest.context,
-        hiPerfEventRequest.xs,
-        hiPerfEventRequest.frame.height,
-        hiPerfEventRequest.lineColor
-      );
-      hiPerfEventRequest.context.stroke();
-      hiPerfEventRequest.context.beginPath();
-      HiPerfEventStruct.hoverStruct = undefined;
-      hiPerfEventRequest.context.fillStyle = ColorUtils.FUNC_COLOR[0];
-      hiPerfEventRequest.context.strokeStyle = ColorUtils.FUNC_COLOR[0];
-      if (hiPerfEventRequest.isHover) {
-        let offset = groupBy10MS ? 0 : 3;
-        for (let re of filter) {
-          if (
-            re.frame &&
-            hiPerfEventRequest.hoverX >= re.frame.x - offset &&
-            hiPerfEventRequest.hoverX <= re.frame.x + re.frame.width + offset
-          ) {
-            HiPerfEventStruct.hoverStruct = re;
-            break;
-          }
-        }
-      } else {
-        HiPerfEventStruct.hoverStruct = hiPerfEventRequest.params.hoverStruct;
-      }
-      HiPerfEventStruct.selectStruct = hiPerfEventRequest.params.selectStruct;
-      let path = new Path2D();
-      for (let re of filter) {
-        HiPerfEventStruct.draw(hiPerfEventRequest.context, path, re, groupBy10MS);
-      }
-      groupBy10MS ? hiPerfEventRequest.context.fill(path) : hiPerfEventRequest.context.stroke(path);
-      drawSelection(hiPerfEventRequest.context, hiPerfEventRequest.params);
-      let maxEvent = HiPerfEventStruct.maxEvent!.get(hiPerfEventRequest.type!) || 0;
-      let textMetrics = hiPerfEventRequest.context.measureText(maxEvent);
-      hiPerfEventRequest.context.globalAlpha = 0.8;
-      hiPerfEventRequest.context.fillStyle = '#f0f0f0';
-      hiPerfEventRequest.context.fillRect(0, 5, textMetrics.width + 8, 18);
-      hiPerfEventRequest.context.globalAlpha = 1;
-      hiPerfEventRequest.context.fillStyle = '#333';
-      hiPerfEventRequest.context.textBaseline = 'middle';
-      hiPerfEventRequest.context.fillText(maxEvent, 4, 5 + 9);
-      hiPerfEventRequest.context.stroke();
-      hiPerfEventRequest.context.closePath();
-      drawFlagLine(
-        hiPerfEventRequest.context,
-        hiPerfEventRequest.flagMoveInfo,
-        hiPerfEventRequest.flagSelectedInfo,
-        hiPerfEventRequest.startNS,
-        hiPerfEventRequest.endNS,
-        hiPerfEventRequest.totalNS,
-        hiPerfEventRequest.frame,
-        hiPerfEventRequest.slicesTime
-      );
-    }
-    // @ts-ignore
-    self.postMessage({
-      id: hiPerfEventRequest.id,
-      type: hiPerfEventRequest.type,
-      results: hiPerfEventRequest.canvas ? undefined : filter,
-      hover: HiPerfEventStruct.hoverStruct,
-    });
-  }
+  render(hiPerfEventRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>): void {}
 }
 
 export class HiPerfEventStruct extends HiPerfStruct {
@@ -197,9 +92,9 @@ export class HiPerfEventStruct extends HiPerfStruct {
 
   static eventGroupBy10MS(array: Array<any>, intervalPerf: number, type: string): Array<any> {
     let obj = array
-      .map((it) => {
-        it.timestamp_group = Math.trunc(it.startNS / 1_000_000_0) * 1_000_000_0;
-        return it;
+      .map((hiPerfDataItem) => {
+        hiPerfDataItem.timestamp_group = Math.trunc(hiPerfDataItem.startNS / 1_000_000_0) * 1_000_000_0;
+        return hiPerfDataItem;
       })
       .reduce((pre, current) => {
         (pre[current['timestamp_group']] = pre[current['timestamp_group']] || []).push(current);
