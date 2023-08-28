@@ -33,7 +33,7 @@ int TracePluginRegisterWriter(const WriterStruct* writer)
     std::unique_lock<std::mutex> lock(g_mutex);
     g_mainController = std::make_unique<FTRACE_NS::FlowController>();
 
-    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d %p", __func__, __LINE__, writer);
     int result = g_mainController->SetWriter(const_cast<WriterStructPtr>(writer));
     HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     return result;
@@ -42,7 +42,7 @@ int TracePluginRegisterWriter(const WriterStruct* writer)
 int TracePluginStartSession(const uint8_t configData[], const uint32_t configSize)
 {
     std::unique_lock<std::mutex> lock(g_mutex);
-    CHECK_NOTNULL(g_mainController, -1, "no FlowController created!");
+    CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
 
     HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     int retval = g_mainController->LoadConfig(configData, configSize);
@@ -54,21 +54,21 @@ int TracePluginStartSession(const uint8_t configData[], const uint32_t configSiz
     return result;
 }
 
-static int TracePluginReportBasicData()
+int TracePluginReportBasicData()
 {
     std::unique_lock<std::mutex> lock(g_mutex);
-    CHECK_NOTNULL(g_mainController, -1, "no FlowController created!");
+    CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
 
     HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
-    int result = g_mainController->ParseBasicData();
+    g_mainController->SetReportBasicData(true);
     HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
-    return result;
+    return 0;
 }
 
 int TracePluginStopSession()
 {
     std::unique_lock<std::mutex> lock(g_mutex);
-    CHECK_NOTNULL(g_mainController, -1, "no FlowController created!");
+    CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
 
     HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     int result = g_mainController->StopCapture();

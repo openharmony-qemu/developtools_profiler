@@ -57,6 +57,8 @@ format:
 print fmt: "prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d", ...
 )";
 
+using SubEventParser = SubEventParser<FtraceEvent>;
+
 class SubEventParserTest : public ::testing::Test {
 protected:
     void SetUp() override
@@ -111,6 +113,7 @@ HWTEST_F(SubEventParserTest, IsSupportId, TestSize.Level1)
     format.eventType = "sched";
     format.eventName = "sched_switch";
     EXPECT_TRUE(ftraceParser.ParseEventFormat(SCHED_SWITCH_FORMAT_DESC, format));
+
     SubEventParser::GetInstance().schedSwitchCtx = nullptr;
     EXPECT_TRUE(nullptr == SubEventParser::GetInstance().GetParseEventCtx(format.eventId));
     EXPECT_TRUE(SubEventParser::GetInstance().SetupEvent(format));
@@ -149,7 +152,7 @@ HWTEST_F(SubEventParserTest, ParseEvent, TestSize.Level1)
     EXPECT_NE(buffer, zeros);
 
     FtraceEvent event = {};
-    SubEventParser::ParseEventCtx* ctx = SubEventParser::GetInstance().GetParseEventCtx(format.eventId);
+    auto* ctx = SubEventParser::GetInstance().GetParseEventCtx(format.eventId);
     EXPECT_TRUE(ctx != nullptr);
     SubEventParser::GetInstance().ParseEvent(event, buffer.data(), buffer.size(), ctx);
 }

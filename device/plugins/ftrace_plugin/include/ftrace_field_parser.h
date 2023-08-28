@@ -33,8 +33,9 @@ public:
         return retval;
     }
 
-    template <typename T> static std::vector<T> ParseVectorIntField(const std::vector<FieldFormat>& fields,
-        size_t id, uint8_t data[], size_t size)
+    template <typename T>
+    static std::vector<T> ParseVectorIntField(const std::vector<FieldFormat>& fields,
+                                              size_t id, uint8_t data[], size_t size)
     {
         static_assert(std::is_integral<T>::value, "Integral type T required.");
         if (fields.size() <= id) {

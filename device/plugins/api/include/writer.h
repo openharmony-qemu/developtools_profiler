@@ -17,6 +17,7 @@
 #define WRITER_H
 
 #include <stddef.h>
+#include "plugin_module_api.h"
 
 class Writer {
 public:
@@ -27,6 +28,20 @@ public:
     virtual bool Clear()
     {
         return true;
+    }
+
+    virtual void UseMemory(int32_t size) {}
+
+    virtual RandomWriteCtx* StartReport()
+    {
+        return nullptr;
+    }
+    virtual void FinishReport(int32_t size) {}
+
+    virtual void ResetPos() {}
+    virtual RandomWriteCtx* GetCtx()
+    {
+        return nullptr;
     }
 };
 

@@ -28,6 +28,7 @@
 #include "diskio_plugin_result.pb.h"
 #include "logging.h"
 #include "io_stats.h"
+#include "plugin_module_api.h"
 
 enum ErrorType {
     RET_NULL_ADDR,
@@ -43,13 +44,17 @@ public:
     ~DiskioDataPlugin();
     int Start(const uint8_t* configData, uint32_t configSize);
     int Report(uint8_t* configData, uint32_t configSize);
+    int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
 
 private:
     int32_t ReadFile(std::string& fileName);
-    void SetTimestamp(CollectTimeStamp& prevTimestamp, CollectTimeStamp& timestamp);
-    void SetDiskioData(DiskioData& diskioData, const char* pFile, uint32_t fileLen);
-    void WriteDiskioData(DiskioData& diskioData);
+
+    template <typename T> void SetTimestamp(T& diskioData);
+
+    template <typename T> void SetDiskioData(T& diskioData, const char* pFile, uint32_t fileLen);
+
+    template <typename T> void WriteDiskioData(T& diskioData);
 
     // for UT
     void SetPath(std::string path)
@@ -65,7 +70,7 @@ private:
 
     int64_t prevRdSectorsKb_;
     int64_t prevWrSectorsKb_;
-    CollectTimeStamp prevTimestamp_;
+    struct timespec prevTimestamp_;
     DiskioConfig protoConfig_;
     std::shared_ptr<IoStats> ioEntry_;
 };

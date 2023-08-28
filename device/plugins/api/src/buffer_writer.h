@@ -23,6 +23,7 @@
 #include "share_memory_allocator.h"
 #include "writer.h"
 
+#include "common_types.pbencoder.h"
 
 class BufferWriter : public Writer {
 public:
@@ -36,6 +37,14 @@ public:
     long Write(const void* data, size_t size) override;
     bool Flush() override;
     bool Clear() override;
+    void UseMemory(int32_t size) override;
+    RandomWriteCtx* StartReport() override;
+    void FinishReport(int32_t size) override;
+    void ResetPos() override;
+    RandomWriteCtx* GetCtx() override
+    {
+        return writeCtx_;
+    }
 
     bool WriteMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
 
@@ -59,6 +68,8 @@ private:
     std::atomic<uint32_t> flushCount_ = 0;
     uint32_t pluginId_ = 0;
     clockid_t clockId_ = CLOCK_REALTIME;
+    RandomWriteCtx* writeCtx_;
+    std::shared_ptr<OHOS::Developtools::Profiler::ProtoEncoder::ProfilerPluginData> profilerPluginData_;
 };
 
 using BufferWriterPtr = STD_PTR(shared, BufferWriter);

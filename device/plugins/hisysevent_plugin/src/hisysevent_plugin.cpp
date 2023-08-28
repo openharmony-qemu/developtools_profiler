@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "hisysevent_plugin.h"
+#include "hisysevent_plugin_result.pbencoder.h"
 
 #include <cinttypes>
 #include <csignal>
@@ -25,6 +26,7 @@
 #include <unistd.h>
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr int PIPE_SIZE = 256 * 1024;
 constexpr int MAX_STRING_LEN = 256 * 1024;
 constexpr int MIN_STRING_LEN = 10;
@@ -101,27 +103,54 @@ void HisyseventPlugin::Run(void)
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_STRING_LEN);
 
     HILOG_INFO(LOG_CORE, "NOTE hisysevent_plugin_result.proto->HisyseventInfo:dataProto;Ready to output the result!");
-    HisyseventInfo dataProto;
 
     fcntl(fileno(fp_.get()), F_SETPIPE_SZ, PIPE_SIZE);
     int aPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
     HILOG_INFO(LOG_CORE, "{fp = %d, aPipeSize=%d, PIPE_SIZE=%d}", fileno(fp_.get()), aPipeSize, PIPE_SIZE);
 
-    while (running_) {
-        if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_STRING_LEN, fp_.get()) != nullptr) {
-            auto cptr = reinterpret_cast<char*>(buffer.get());
-            if (!ParseSyseventLineInfo(cptr, strlen(cptr), dataProto))
-                continue;
-        }
+    std::unique_ptr<HisyseventInfo> dataProto = nullptr;
+    std::unique_ptr<ProtoEncoder::HisyseventInfo> hisyseventInfo = nullptr;
+    if (resultWriter_->isProtobufSerialize) {
+        dataProto = std::make_unique<HisyseventInfo>();
+    } else {
+        hisyseventInfo = std::make_unique<ProtoEncoder::HisyseventInfo>(resultWriter_->startReport(resultWriter_));
+    }
 
-        if (dataProto.ByteSizeLong() >= BYTE_BUFFER_SIZE) {
-            WriteResult(dataProto);
-            dataProto.clear_info();
+    while (running_) {
+        char* cptr = nullptr;
+        if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_STRING_LEN, fp_.get()) != nullptr) {
+            cptr = reinterpret_cast<char*>(buffer.get());
+        }
+        if (resultWriter_->isProtobufSerialize) {
+            if (!ParseSyseventLineInfo(cptr, strlen(cptr), dataProto.get())) {
+                continue;
+            }
+
+            if (dataProto->ByteSizeLong() >= BYTE_BUFFER_SIZE) {
+                WriteResult(dataProto.get());
+                dataProto->clear_info();
+            }
+        } else {
+            if (!ParseSyseventLineInfo(cptr, strlen(cptr), hisyseventInfo.get())) {
+                continue;
+            }
+
+            if (hisyseventInfo->Size() >= BYTE_BUFFER_SIZE) {
+                FlushDataOptimize(hisyseventInfo.get());
+                hisyseventInfo.reset();
+                hisyseventInfo =
+                    std::make_unique<ProtoEncoder::HisyseventInfo>(resultWriter_->startReport(resultWriter_));
+            }
         }
     }
 
-    WriteResult(dataProto);
-    dataProto.clear_info();
+    if (resultWriter_->isProtobufSerialize) {
+        WriteResult(dataProto.get());
+        dataProto.reset();
+    } else {
+        FlushDataOptimize(hisyseventInfo.get());
+        hisyseventInfo.reset();
+    }
 
     HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
 }
@@ -156,12 +185,13 @@ inline bool HisyseventPlugin::InitHisyseventCmd()
     return true;
 }
 
-inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len, HisyseventInfo& dataProto)
+template <typename T>
+inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len, T hisyseventInfoProto)
 {
     CHECK_TRUE(data != nullptr && len >= MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
 
     if (google::protobuf::internal::IsStructurallyValidUTF8(data, strlen(data) - 1)) {
-        auto* info = dataProto.add_info();
+        auto* info = hisyseventInfoProto->add_info();
         info->set_id(id_);
         info->set_context(data, strlen(data) - 1); // - \n
         id_++;
@@ -173,13 +203,20 @@ inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len
     return true;
 }
 
-inline bool HisyseventPlugin::WriteResult(const HisyseventInfo& dataProto)
+template <typename T> inline bool HisyseventPlugin::WriteResult(const T hisyseventInfoProto)
 {
     // Cmd result resize and SerializeToArray and after save to protoBuffer_ ;Then write and flush;Then clear_info
-    protoBuffer_.resize(dataProto.ByteSizeLong());
-    dataProto.SerializeToArray(protoBuffer_.data(), protoBuffer_.size());
+    protoBuffer_.resize(hisyseventInfoProto->ByteSizeLong());
+    hisyseventInfoProto->SerializeToArray(protoBuffer_.data(), protoBuffer_.size());
     // SerializeToArray after data=%s",protoBuffer_.data()
     resultWriter_->write(resultWriter_, protoBuffer_.data(), protoBuffer_.size());
     resultWriter_->flush(resultWriter_);
     return true;
+}
+
+template <typename T> void HisyseventPlugin::FlushDataOptimize(const T hisyseventInfoProto)
+{
+    int messageLen = hisyseventInfoProto->Finish();
+    resultWriter_->finishReport(resultWriter_, messageLen);
+    resultWriter_->flush(resultWriter_);
 }

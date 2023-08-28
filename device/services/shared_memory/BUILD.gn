@@ -18,7 +18,7 @@ config("shared_memory_config") {
   include_dirs = [
     "include",
     "../../base/include",
-    "${OHOS_PROFILER_DIR}/interfaces/innerkits",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
     "//third_party/bounds_checking_function/include",
     "//commonlibrary/c_utils/base/include",
   ]

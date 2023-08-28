@@ -353,7 +353,7 @@ HWTEST_F(HilogPluginTest, TestNullptrLogLine, TestSize.Level1)
     const char* data = nullptr;
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, 0, &info);
+    plugin.ParseLogLineInfo(data, 0, info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), (uint64_t)0);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), (uint64_t)0);
     EXPECT_EQ(info.mutable_detail()->pid(), (uint32_t)0);
@@ -376,7 +376,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine1, TestSize.Level1)
     const char* data = "08-30 16:47:16.522";
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), (uint64_t)0);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), (uint64_t)0);
     EXPECT_EQ(info.mutable_detail()->pid(), (uint32_t)0);
@@ -401,7 +401,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine2, TestSize.Level1)
     uint64_t nsec = 149566200;
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), (uint32_t)0);
@@ -427,7 +427,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine3, TestSize.Level1)
     uint32_t target = 27953;
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target);
@@ -453,7 +453,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine4, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -479,7 +479,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine5, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -505,7 +505,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine6, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -531,7 +531,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine7, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -557,7 +557,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine8, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -583,7 +583,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine9, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -609,7 +609,7 @@ HWTEST_F(HilogPluginTest, TestInvalidLogLine, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -635,7 +635,7 @@ HWTEST_F(HilogPluginTest, TestParseLogLine1, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);
@@ -662,7 +662,7 @@ HWTEST_F(HilogPluginTest, TestParseLogLine2, TestSize.Level1)
     uint32_t target[] = {27953, 31750};
 
     plugin.SetConfig(config);
-    plugin.ParseLogLineInfo(data, strlen(data), &info);
+    plugin.ParseLogLineInfo(data, strlen(data), info);
     EXPECT_EQ(info.mutable_detail()->tv_sec(), sec);
     EXPECT_EQ(info.mutable_detail()->tv_nsec(), nsec);
     EXPECT_EQ(info.mutable_detail()->pid(), target[0]);

@@ -16,52 +16,85 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    i2c_read,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void i2c_read_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_msg_nr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_addr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(i2c_read,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_i2c_read_format();
-        msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_msg_nr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_addr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        i2c_read_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(i2c_read,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_i2c_read_format();
+        i2c_read_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    i2c_reply,
+template <typename T> void i2c_reply_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_msg_nr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_addr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_buf(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(i2c_reply,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_i2c_reply_format();
-        msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_msg_nr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_addr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_buf(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        i2c_reply_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(i2c_reply,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_i2c_reply_format();
+        i2c_reply_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    i2c_result,
+template <typename T> void i2c_result_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_nr_msgs(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ret(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(i2c_result,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_i2c_result_format();
-        msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_nr_msgs(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ret(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+        i2c_result_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(i2c_result,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_i2c_result_format();
+        i2c_result_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    i2c_write,
+template <typename T> void i2c_write_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_msg_nr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_addr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_buf(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(i2c_write,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_i2c_write_format();
-        msg->set_adapter_nr(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_msg_nr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_addr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_buf(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        i2c_write_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(i2c_write,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_i2c_write_format();
+        i2c_write_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

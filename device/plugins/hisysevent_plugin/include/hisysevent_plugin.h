@@ -41,9 +41,11 @@ private:
     std::string GetFullCmd();
     bool InitHisyseventCmd();
 
-    bool ParseSyseventLineInfo(const char* data, size_t len, HisyseventInfo& dataProto);
+    template <typename T> bool ParseSyseventLineInfo(const char* data, size_t len, T hisyseventInfoProto);
 
-    bool WriteResult(const HisyseventInfo& dataProto);
+    template <typename T> bool WriteResult(const T hisyseventInfoProto);
+
+    template <typename T> void FlushDataOptimize(const T hisyseventInfoProto);
 
 private:
     std::atomic<uint64_t> id_;

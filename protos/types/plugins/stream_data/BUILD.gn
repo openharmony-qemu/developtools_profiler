@@ -25,6 +25,7 @@ proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
 stream_data_codegen = []
 stream_data_codegen_standard = []
+stream_data_codegen_encoder = []
 stream_data_codegen_all = []
 foreach(proto, stream_data_sources) {
   name = get_path_info(proto, "name")
@@ -36,9 +37,14 @@ foreach(proto, stream_data_sources) {
     "$proto_out_dir/${name}_standard.pb.h",
     "$proto_out_dir/${name}_standard.pb.cc",
   ]
+  stream_data_codegen_encoder += [
+    "$proto_out_dir/$name.pbencoder.h",
+    "$proto_out_dir/$name.pbencoder.cc",
+  ]
 }
 stream_data_codegen_all += stream_data_codegen
 stream_data_codegen_all += stream_data_codegen_standard
+stream_data_codegen_all += stream_data_codegen_encoder
 
 config("stream_include_config") {
   include_dirs = [ "$proto_out_dir" ]
@@ -71,6 +77,15 @@ ohos_source_set("stream_data_cpp") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":stream_include_config" ]
   sources = stream_data_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("stream_data_encoder") {
+  deps = [ ":stream_data_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":stream_include_config" ]
+  sources = stream_data_codegen_encoder
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

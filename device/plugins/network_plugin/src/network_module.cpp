@@ -17,7 +17,6 @@
 #include <sys/types.h>
 
 #include "network_plugin.h"
-#include "plugin_module_api.h"
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -41,6 +40,12 @@ static int NetworkPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
     return g_plugin->Report(bufferData, bufferSize);
 }
 
+static int NetworkPluginReportResultOptimize(RandomWriteCtx* randomWrite)
+{
+    std::lock_guard<std::mutex> guard(g_taskMutex);
+    return g_plugin->ReportOptimize(randomWrite);
+}
+
 static int NetworkPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
@@ -57,6 +62,7 @@ static int NetworkRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = NetworkPluginSessionStart,
     .onPluginReportResult = NetworkPluginReportResult,
+    .onPluginReportResultOptimize = NetworkPluginReportResultOptimize,
     .onPluginSessionStop = NetworkPluginSessionStop,
     .onRegisterWriterStruct = NetworkRegisterWriterStruct,
 };

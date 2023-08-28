@@ -166,13 +166,27 @@ bool ProfilerService::SessionContext::StartPluginSessions()
 bool ProfilerService::SessionContext::StopPluginSessions()
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
-    // stop each plugin sessions
-    service->pluginSessionManager_->StopPluginSessions(pluginNames);
-
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         if (offlineTask.size() > 0) {
             ScheduleTaskManager::GetInstance().UnscheduleTask(offlineTask);
+            offlineTask = "";
+        } else {
+            // timeout or active called StopPluginSessions.
+            return true;
         }
+    }
+
+    // stop each plugin sessions
+    service->pluginSessionManager_->StopPluginSessions(pluginNames);
+    // stop epoll thread receiving shared memory messages
+    service->pluginService_->StopEpollThread();
+
+    // Read the remaining data of shared memory of all plugins.
+    for (auto& name : pluginNames) {
+        service->pluginService_->FlushAllData(name);
+    }
+    if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
+        // update file header.
         traceFileWriter->Finish();
     }
 
@@ -482,6 +496,9 @@ Status ProfilerService::StartSession(ServerContext* context,
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
 
+    // start epoll thread to receive shared memory messages.
+    pluginService_->StartEpollThread();
+
     // get intersection set of requestNames and pluginNames
     std::vector<std::string> updateNames;
     std::set_intersection(requestNames.begin(), requestNames.end(), ctx->pluginNames.begin(), ctx->pluginNames.end(),
@@ -575,6 +592,10 @@ Status ProfilerService::StopSession(ServerContext* context,
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
+    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
+        CHECK_POINTER_NOTNULL(ctx->traceFileWriter, "traceFileWriter invalid!");
+        ctx->traceFileWriter.get()->SetStopSplitFile(true);
+    }
     CHECK_EXPRESSION_TRUE(ctx->StopPluginSessions(), "stop plugin sessions failed!");
     HILOG_INFO(LOG_CORE, "StopSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;

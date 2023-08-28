@@ -45,6 +45,7 @@ public:
 
     int StartCapture(void);
     int StopCapture(void);
+    void SetReportBasicData(bool isReportBasicData);
     bool ParseBasicData(void);
 
 private:
@@ -62,18 +63,30 @@ private:
     long ReadEventData(int cpuid);
     bool ParseEventDataOnNomalMode(int cpuid, long dataSize);
     bool ParseEventDataOnDelayMode();
+    bool ParseEventData(int cpuid, uint8_t* page);
 
     bool AddPlatformEventsToParser(void);
     void EnableTraceEvents(void);
     void DisableTraceEvents(void);
     void DisableAllCategories(void);
 
-    bool ReportClockTimes(void);
-    bool ParseKernelSymbols(void);
-    bool ParsePerCpuStatus(int stage);
-    bool ParseFtraceEvent(int cpuid, uint8_t page[]);
+    template <typename T> bool ReportClockTimes(T& tracePluginResult);
+
+    template <typename T> bool ParseKernelSymbols(T& tracePluginResult);
+
+    template <typename T> bool ParsePerCpuStatus(T& tracePluginResult, int stage);
+
+    template <typename T, typename E>
+    bool ParseFtraceEvent(T* tracePluginResult, int cpuid, uint8_t page[], E* ftraceEvent);
 
     static std::unique_ptr<TraceOps> GetTraceOps();
+
+    // for UT
+    void SetTestInfo(int cpuNum, std::string path)
+    {
+        platformCpuNum_ = cpuNum;
+        fakePath_ = path;
+    }
 
     using EventTypeName = std::pair<std::string, std::string>;
     std::vector<EventTypeName> supportedEvents_ = {};
@@ -108,6 +121,8 @@ private:
     bool flushCacheData_ = false;
     unsigned int hitraceTime_ = 0;
     std::string traceClock_;
+    std::atomic<bool> isReportBasicData_ = false;
+    std::string fakePath_ = "";
 };
 FTRACE_NS_END
 #endif // FLOW_CONTROLLER_H

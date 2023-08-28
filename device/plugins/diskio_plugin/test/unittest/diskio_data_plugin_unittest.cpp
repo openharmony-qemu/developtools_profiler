@@ -251,16 +251,16 @@ HWTEST_F(DiskioDataPluginTest, TestSystemFile, TestSize.Level1)
 HWTEST_F(DiskioDataPluginTest, TestIOStats, TestSize.Level1)
 {
     IoStats ioStats;
-    std::unique_ptr<StatsData> statsData = std::make_unique<StatsData>();
+    StatsData statsData;
     EXPECT_TRUE(ioStats.GetIoData());
-    EXPECT_TRUE(ioStats.PutPluginStatsData(statsData.get()));
+    EXPECT_TRUE(ioStats.PutPluginStatsData(statsData));
 
     IoStats ioStatsIoReport(DiskioConfig::IO_REPORT);
     EXPECT_TRUE(ioStatsIoReport.GetIoData());
-    EXPECT_TRUE(ioStatsIoReport.PutPluginStatsData(statsData.get()));
+    EXPECT_TRUE(ioStatsIoReport.PutPluginStatsData(statsData));
 
     IoStats ioStatsIoReportEx(DiskioConfig::IO_REPORT_EX);
     EXPECT_TRUE(ioStatsIoReportEx.GetIoData());
-    EXPECT_TRUE(ioStatsIoReportEx.PutPluginStatsData(statsData.get()));
+    EXPECT_TRUE(ioStatsIoReportEx.PutPluginStatsData(statsData));
 }
 } // namespace

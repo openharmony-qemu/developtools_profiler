@@ -51,7 +51,6 @@ PluginService::PluginService()
     CHECK_NOTNULL(eventPoller_, NO_RETVAL, "create event poller FAILED!");
 
     eventPoller_->Init();
-    eventPoller_->Start();
 }
 
 PluginService::~PluginService()
@@ -59,6 +58,20 @@ PluginService::~PluginService()
     if (eventPoller_) {
         eventPoller_->Stop();
         eventPoller_->Finalize();
+    }
+}
+
+void PluginService::StartEpollThread()
+{
+    if (eventPoller_) {
+        eventPoller_->Start();
+    }
+}
+
+void PluginService::StopEpollThread()
+{
+    if (eventPoller_) {
+        eventPoller_->Stop();
     }
 }
 
@@ -112,6 +125,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     uint32_t pluginId = 0;
     PluginContextPtr pluginCtx = nullptr;
     std::string pluginName = pluginConfig.name();
+    isProtobufSerialize_ = pluginConfig.is_protobuf_serialize();
     std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
     CHECK_NOTNULL(pluginCtx, false, "get PluginContext failed!");
 
@@ -214,14 +228,6 @@ bool PluginService::StopPluginSession(const std::string& pluginName)
         // semaphore timeout
         HILOG_DEBUG(LOG_CORE, "=== StopPluginSession Waiting FAIL ===");
         return false;
-    }
-
-    if (!profilerSessionConfig_.discard_cache_data()) {
-        if (profilerSessionConfig_.session_mode() == ProfilerSessionConfig::OFFLINE) {
-            ReadShareMemoryOffline(*pluginCtx);
-        } else if (profilerSessionConfig_.session_mode() == ProfilerSessionConfig::ONLINE) {
-            ReadShareMemoryOnline(*pluginCtx);
-        }
     }
     HILOG_DEBUG(LOG_CORE, "StopPluginSession %s done!", pluginName.c_str());
     return true;
@@ -423,7 +429,7 @@ void PluginService::ReadShareMemoryOffline(PluginContext& context)
             CHECK_TRUE(retval != -1, false, "need to splite file");
             CHECK_TRUE(retval > 0, false, "write %d bytes failed!", size);
             return true;
-        });
+        }, isProtobufSerialize_);
 
         if (retval == -1) {
             HILOG_DEBUG(LOG_CORE, "need to clear share memory block and report the basic data");
@@ -460,7 +466,7 @@ void PluginService::ReadShareMemoryOnline(PluginContext& context)
             int retval = pluginData->ParseFromArray(reinterpret_cast<const char*>(data), size);
             CHECK_TRUE(retval, false, "parse %d bytes failed!", size);
             return true;
-        });
+        }, isProtobufSerialize_);
         if (!ret) {
             break;
         }
@@ -468,6 +474,41 @@ void PluginService::ReadShareMemoryOnline(PluginContext& context)
             break;
         }
     }
+}
+
+void PluginService::FlushShareMemory(PluginContext& context)
+{
+    CHECK_NOTNULL(context.shareMemoryBlock, NO_RETVAL, "smb of %s is null!", context.path.c_str());
+    CHECK_NOTNULL(traceWriter_, NO_RETVAL, "traceWriter_ is null!");
+
+    while (true) {
+        bool ret = context.shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
+            int retval = traceWriter_->Write(data, size);
+            CHECK_TRUE(retval > 0, false, "write %d bytes failed!", size);
+            return true;
+        }, isProtobufSerialize_);
+        if (!ret) { // no data to read
+            break;
+        }
+    }
+}
+
+void PluginService::FlushAllData(const std::string& pluginName)
+{
+    HILOG_INFO(LOG_CORE, "FlushAllData for %s start!", pluginName.c_str());
+    if (!profilerSessionConfig_.discard_cache_data()) {
+        uint32_t pluginId = 0;
+        PluginContextPtr pluginCtx = nullptr;
+        std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
+        CHECK_NOTNULL(pluginCtx, NO_RETVAL, "%s: get PluginContext(%s) failed!", __func__, pluginName.c_str());
+
+        if (profilerSessionConfig_.session_mode() == ProfilerSessionConfig::OFFLINE) {
+            FlushShareMemory(*pluginCtx);
+        } else if (profilerSessionConfig_.session_mode() == ProfilerSessionConfig::ONLINE) {
+            ReadShareMemoryOnline(*pluginCtx);
+        }
+    }
+    HILOG_INFO(LOG_CORE, "FlushAllData for %s done!", pluginName.c_str());
 }
 
 bool PluginService::AppendResult(NotifyResultRequest& request)

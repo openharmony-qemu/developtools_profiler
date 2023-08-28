@@ -66,9 +66,10 @@ public:
     bool StartSession(const uint8_t* buffer, uint32_t size);
     bool StopSession();
     int32_t ReportResult(uint8_t* buffer, uint32_t size);
+    PluginReportResultOptimizeCallback ReportResultOptimize();
     bool ReportBasicData();
 
-    bool RegisterWriter(const BufferWriterPtr writer);
+    bool RegisterWriter(const BufferWriterPtr writer, bool isProtobufSerialize = true);
     WriterPtr GetWriter();
 
     void SetConfigData(const std::string& data);
@@ -88,6 +89,7 @@ private:
     std::shared_ptr<WriterAdapter> writerAdapter_;
     std::chrono::steady_clock::time_point lastTime_;
     bool first_ = true;
+    bool isProtobufSerialize_ = true;
 };
 
 #endif // !PLUGIN_MODULE_H

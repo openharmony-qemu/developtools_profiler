@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <iomanip>
+#include <sstream>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -31,6 +32,7 @@
 #include "logging.h"
 #include "memory_plugin_config.pb.h"
 #include "memory_plugin_result.pb.h"
+#include "plugin_module_api.h"
 #include "smaps_stats.h"
 
 struct Proto2StrMapping {
@@ -263,14 +265,18 @@ public:
     MemoryDataPlugin();
     ~MemoryDataPlugin();
     int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* configData, uint32_t configSize);
+    int Report(uint8_t* data, uint32_t dataSize);
+    int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
     void SetPath(char* path)
     {
         testpath_ = path;
     };
-    void WriteProcesseList(MemoryData& data);
-    void WriteProcinfoByPidfds(ProcessMemoryInfo* processinfo, int32_t pid);
+
+    template <typename T> void WriteProcesseList(T& memoryData);
+
+    template <typename T> void WriteProcinfoByPidfds(T& processMemoryInfo, int32_t pid);
+
     DIR* OpenDestDir(const char* dirPath);
     int32_t GetValidPid(DIR* dirp);
     // for test change static
@@ -290,10 +296,13 @@ private:
     void InitProto2StrVector();
     std::vector<const char*> meminfoStrList_;
     std::vector<const char*> vmstatStrList_;
+
     // SmapsStats *
-    void WriteVmstat(MemoryData& data);
-    void WriteMeminfo(MemoryData& data);
-    void WriteZramData(MemoryData& data);
+    template <typename T> void WriteVmstat(T& memoryData);
+
+    template <typename T> void WriteMeminfo(T& memoryData);
+
+    template <typename T> void WriteZramData(T& memoryData);
 
     std::unordered_map<int32_t, std::vector<int>> pidFds_;
     std::vector<int32_t> seenPids_;
@@ -303,20 +312,78 @@ private:
     std::string ReadFile(const std::string& path);
     std::vector<int> OpenProcPidFiles(int32_t pid);
     int32_t ReadProcPidFile(int32_t pid, const char* pFileName);
-    void WriteProcessInfo(MemoryData& data, int32_t pid);
-    void WriteOomInfo(ProcessMemoryInfo* processinfo, int32_t pid);
-    void WriteProcess(ProcessMemoryInfo* processinfo, const char* pFile, uint32_t fileLen, int32_t pid);
-    void WriteAppsummary(ProcessMemoryInfo* processinfo, SmapsStats& smapInfo);
-    void SetProcessInfo(ProcessMemoryInfo* processinfo, int key, const char* word);
+
+    template <typename T> void WriteProcessInfo(T& memoryData, int32_t pid);
+
+    template <typename T> void WriteOomInfo(T& processMemoryInfo, int32_t pid);
+
+    template <typename T> void WriteProcess(T& processMemoryInfo, const char* pFile, uint32_t fileLen, int32_t pid);
+
+    template <typename T> void WriteAppsummary(T& processMemoryInfo, SmapsStats& smapInfo);
+
+    template <typename T> void SetProcessInfo(T& processMemoryInfo, int key, const char* word);
+
     bool StringToUll(const char* word, uint64_t& value);
 
     bool BufnCmp(const char* src, int srcLen, const char* key, int keyLen);
     bool addPidBySort(int32_t pid);
     int GetProcStatusId(const char* src, int srcLen);
 
-    bool ParseMemInfo(const char* data, ProcessMemoryInfo* memoryInfo);
-    bool GetMemInfoByMemoryService(uint32_t pid, ProcessMemoryInfo* memoryInfo);
+    template <typename T> bool ParseMemInfo(const char* data, T& processMemoryInfo)
+    {
+        bool ready = false;
+        bool done = false;
+        std::istringstream ss(data);
+        std::string line;
+
+        auto memsummary = processMemoryInfo.mutable_memsummary();
+        while (std::getline(ss, line)) {
+            std::string s(line);
+            if (s.find("App Summary") != s.npos) {
+                ready = true;
+                continue;
+            }
+
+            if (ready) {
+                if (s.find("Java Heap:") != s.npos) {
+                    memsummary->set_java_heap(ParseNumber(s));
+                    continue;
+                }
+                if (s.find("Native Heap:") != s.npos) {
+                    memsummary->set_native_heap(ParseNumber(s));
+                    continue;
+                }
+                if (s.find("Code:") != s.npos) {
+                    memsummary->set_code(ParseNumber(s));
+                    continue;
+                }
+                if (s.find("Stack:") != s.npos) {
+                    memsummary->set_stack(ParseNumber(s));
+                    continue;
+                }
+                if (s.find("Graphics:") != s.npos) {
+                    memsummary->set_graphics(ParseNumber(s));
+                    continue;
+                }
+                if (s.find("Private Other:") != s.npos) {
+                    memsummary->set_private_other(ParseNumber(s));
+                    continue;
+                }
+                if (s.find("System:") != s.npos) {
+                    memsummary->set_system(ParseNumber(s));
+                    done = true;
+                    break;
+                }
+            }
+        }
+        return done;
+    }
+
+    template <typename T> bool GetMemInfoByMemoryService(uint32_t pid, T& processMemoryInfo);
+
     int InitMemVmemFd();
+
+    template <typename T, typename S> void WriteMemoryData(T& memoryDataProto, S smapsInfo);
 };
 
 #endif

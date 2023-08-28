@@ -21,11 +21,13 @@
 
 #include "common.h"
 #include "command_poller.h"
+#include "common_types.pbencoder.h"
 #include "logging.h"
 #include "openssl/sha.h"
 #include "plugin_service_types.pb.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr int FILE_READ_CHUNK_SIZE = 4096;
 constexpr char HEX_CHARS[] = "0123456789abcdef";
 
@@ -299,7 +301,7 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
             std::string pluginName = config[idx].name();
             HILOG_DEBUG(LOG_CORE, "%s:interval = %ld", __func__, static_cast<long>(interval.count()));
             HILOG_DEBUG(LOG_CORE, "%s:pluginName = %s", __func__, pluginName.c_str());
-            auto callback = std::bind(&PluginManager::PullResult, this, id);
+            auto callback = std::bind(&PluginManager::PullResult, this, id, config[idx].is_protobuf_serialize());
             if (interval.count() == 0) {
                 HILOG_DEBUG(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
                 return false;
@@ -392,7 +394,7 @@ bool PluginManager::SubmitResult(const PluginResult& pluginResult)
     return true;
 }
 
-bool PluginManager::PullResult(uint32_t pluginId)
+bool PluginManager::PullResult(uint32_t pluginId, bool isProtobufSerialize)
 {
     uint32_t size = 0;
     std::string name = "";
@@ -405,36 +407,68 @@ bool PluginManager::PullResult(uint32_t pluginId)
     pluginModules_[pluginId]->GetBufferSizeHint(size);
     pluginModules_[pluginId]->GetPluginName(name);
     pluginModules_[pluginId]->GetPluginVersion(version);
-    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
+    
+    if (isProtobufSerialize) {
+        std::unique_ptr<uint8_t[]> buffer(new (std::nothrow) uint8_t[size]);
+        CHECK_NOTNULL(buffer, false, "%s:buffer new failed!", __func__);
 
-    int length = it->second->ReportResult(buffer.get(), size);
-    if (length < 0) {
-        return false;
+        int length = it->second->ReportResult(buffer.get(), size);
+        if (length < 0) {
+            return false;
+        }
+
+        ProfilerPluginData pluginData;
+        pluginData.set_name(name);
+        pluginData.set_version(version);
+        pluginData.set_status(0);
+        pluginData.set_data(buffer.get(), length);
+
+        struct timespec ts;
+        clockid_t clockId = pluginModules_[pluginId]->GetClockId();
+        clock_gettime(clockId, &ts);
+
+        pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId));
+        pluginData.set_tv_sec(ts.tv_sec);
+        pluginData.set_tv_nsec(ts.tv_nsec);
+
+        auto writer = std::static_pointer_cast<BufferWriter>(pluginModules_[pluginId]->GetWriter());
+        CHECK_NOTNULL(writer, false, "PullResult GetWriter nullptr");
+
+        writer->WriteMessage(pluginData, name);
+        writer->Flush();
+    } else {
+        auto writer = std::static_pointer_cast<BufferWriter>(pluginModules_[pluginId]->GetWriter());
+        CHECK_NOTNULL(writer, false, "PullResult GetWriter nullptr");
+        auto writeCtx = writer->GetCtx();
+        CHECK_NOTNULL(writeCtx, false, "PullResult GetCtx nullptr");
+        writer->ResetPos();
+        ProtoEncoder::ProfilerPluginData pluginData(writeCtx);
+        pluginData.set_name(name);
+        pluginData.set_version(version);
+        pluginData.set_status(0);
+
+        auto callbackFunc = it->second->ReportResultOptimize();
+        if (callbackFunc != nullptr) {
+            pluginData.set_data(callbackFunc);
+        }
+
+        struct timespec ts;
+        clockid_t clockId = pluginModules_[pluginId]->GetClockId();
+        clock_gettime(clockId, &ts);
+
+        pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId));
+        pluginData.set_tv_sec(ts.tv_sec);
+        pluginData.set_tv_nsec(ts.tv_nsec);
+
+        int32_t len = pluginData.Finish();
+        writer->UseMemory(len);
+        writer->Flush();
     }
-
-    ProfilerPluginData pluginData;
-    pluginData.set_name(name);
-    pluginData.set_version(version);
-    pluginData.set_status(0);
-    pluginData.set_data(buffer.get(), length);
-
-    struct timespec ts;
-    clockid_t clockId = pluginModules_[pluginId]->GetClockId();
-    clock_gettime(clockId, &ts);
-
-    pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId));
-    pluginData.set_tv_sec(ts.tv_sec);
-    pluginData.set_tv_nsec(ts.tv_nsec);
-
-    auto writer = std::static_pointer_cast<BufferWriter>(pluginModules_[pluginId]->GetWriter());
-    CHECK_NOTNULL(writer, false, "PullResult GetWriter nullptr");
-
-    writer->WriteMessage(pluginData, name);
-    writer->Flush();
     return true;
 }
 
-bool PluginManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd)
+bool PluginManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                                 bool isProtobufSerialize)
 {
     auto it = pluginIds_.find(pluginName);
     if (it == pluginIds_.end()) {
@@ -447,8 +481,8 @@ bool PluginManager::CreateWriter(std::string pluginName, uint32_t bufferSize, in
         HILOG_DEBUG(LOG_CORE, "%s:%s Use ShareMemory %d", __func__, pluginName.c_str(), bufferSize);
         std::string pluginVersion = "";
         pluginModules_[index]->GetPluginVersion(pluginVersion);
-        pluginModules_[index]->RegisterWriter(
-            std::make_shared<BufferWriter>(pluginName, pluginVersion, bufferSize, smbFd, eventFd, index));
+        pluginModules_[index]->RegisterWriter(std::make_shared<BufferWriter>
+            (pluginName, pluginVersion, bufferSize, smbFd, eventFd, index), isProtobufSerialize);
     } else {
         HILOG_ERROR(LOG_CORE, "%s:no shared memory buffer allocated!", __func__);
         return false;

@@ -31,6 +31,7 @@
 #include "logging.h"
 #include "process_plugin_config.pb.h"
 #include "process_plugin_result.pb.h"
+#include "plugin_module_api.h"
 
 enum ErrorType {
     RET_NULL_ADDR,
@@ -45,7 +46,8 @@ public:
     ProcessDataPlugin();
     ~ProcessDataPlugin();
     int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* configData, uint32_t configSize);
+    int Report(uint8_t* data, uint32_t dataSize);
+    int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
 
     int64_t GetUserHz();
@@ -57,29 +59,41 @@ public:
     };
 
 private:
-    bool WriteProcesseList(ProcessData& data);
+    template <typename T> bool WriteProcesseList(T& processData);
+
     DIR* OpenDestDir(const char* dirPath);
     int32_t GetValidPid(DIR* dirp);
     std::vector<int> OpenProcPidFiles(int32_t pid);
     int32_t ReadProcPidFile(int32_t pid, const char* pFileName);
-    void WriteProcessInfo(ProcessData& data, int32_t pid);
-    void WriteProcess(ProcessInfo* processinfo, const char* pFile, uint32_t fileLen, int32_t pid);
-    void SetProcessInfo(ProcessInfo* processinfo, int key, const char* word);
+
+    template <typename T> void WriteProcessInfo(T& processData, int32_t pid);
+
+    template <typename T> void WriteProcess(T& processinfo, const char* pFile, uint32_t fileLen, int32_t pid);
+
+    template <typename T> void SetProcessInfo(T& processinfo, int key, const char* word);
+
     bool BufnCmp(const char* src, int srcLen, const char* key, int keyLen);
     bool addPidBySort(int32_t pid);
     int GetProcStatusId(const char* src, int srcLen);
-    bool WriteCpuUsageData(int pid, CpuInfo* protoc);
-    bool ReadCpuUsage(int pid, CpuInfo* protoc, uint64_t& cpuTime);
-    uint32_t GetCpuUsageData(const std::string& line, CpuInfo* protoc, uint64_t& cpuTime);
-    bool ReadBootTime(int pid, CpuInfo* protoc, uint64_t& bootTime);
-    uint32_t GetBootData(const std::string& line, CpuInfo* protoc, uint64_t& bootTime);
-    bool WriteThreadData(int pid, CpuInfo* protoc);
+
+    template <typename T> bool WriteCpuUsageData(int pid, T& cpuInfo);
+
+    bool ReadCpuUsage(int pid, uint64_t& cpuTime);
+    uint32_t GetCpuUsageData(const std::string& line, uint64_t& cpuTime);
+    bool ReadBootTime(int pid, uint64_t& bootTime);
+    uint32_t GetBootData(const std::string& line, uint64_t& bootTime);
+
+    template <typename T> bool WriteThreadData(int pid, T& cpuInfo);
+
     bool FindFirstNum(char** p);
     bool GetValidValue(char* p, uint64_t& num);
     bool FindFirstSpace(char** p);
-    bool GetDiskioData(std::string& line, DiskioInfo* protoc);
-    bool WriteDiskioData(int pid, DiskioInfo* protoc);
-    bool WritePssData(int pid, PssInfo* protoc);
+
+    template <typename T> bool GetDiskioData(std::string& line, T& diskioInfo);
+
+    template <typename T> bool WriteDiskioData(int pid, T& processinfo);
+
+    template <typename T> bool WritePssData(int pid, T& processinfo);
 
     ProcessConfig protoConfig_;
     std::unique_ptr<uint8_t[]> buffer_;

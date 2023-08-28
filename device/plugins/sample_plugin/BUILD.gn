@@ -28,7 +28,9 @@ ohos_shared_library("sampleplugin") {
   ]
   deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/sample_data:sample_data_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/sample_data:sample_data_encoder",
     "//third_party/bounds_checking_function:libsec_static",
   ]
   if (current_toolchain != host_toolchain) {

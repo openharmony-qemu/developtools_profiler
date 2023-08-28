@@ -16,30 +16,47 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    signal_deliver,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void signal_deliver_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_sig(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_error_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_sig_handler(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_sig_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(signal_deliver,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_signal_deliver_format();
-        msg->set_sig(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_error_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_sig_handler(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_sig_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+        signal_deliver_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(signal_deliver,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_signal_deliver_format();
+        signal_deliver_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    signal_generate,
+template <typename T> void signal_generate_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_sig(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_error_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_group(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_result(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(signal_generate,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_signal_generate_format();
-        msg->set_sig(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_error_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_code(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_group(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_result(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+        signal_generate_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(signal_generate,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_signal_generate_format();
+        signal_generate_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

@@ -30,13 +30,16 @@ ohos_source_set("processplugin_source") {
   ]
   deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_data_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_data_encoder",
     "//third_party/bounds_checking_function:libsec_static",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [ "hilog:libhilog" ]
   }
+  public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
@@ -44,7 +47,6 @@ ohos_source_set("processplugin_source") {
 ohos_shared_library("processplugin") {
   output_name = "processplugin"
   deps = [ ":processplugin_source" ]
-  public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

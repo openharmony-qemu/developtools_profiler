@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <cerrno>
-#include <cinttypes>
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
@@ -27,12 +26,8 @@
 #include <unistd.h>
 
 #include "file_utils.h"
-#include "ftrace_fs_ops.h"
-#include "logging.h"
-#include "printk_formats_parser.h"
 #include "securec.h"
 #include "string_utils.h"
-#include "sub_event_parser.h"
 
 #ifdef HILOG_DEBUG
 #undef HILOG_DEBUG
@@ -44,6 +39,7 @@
     }
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr unsigned RB_MISSED_EVENTS = (1uL << 31); // Flag when events were overwritten
 constexpr unsigned RB_MISSED_STORED = (1 << 30);   // Missed count stored at end
 constexpr unsigned RB_MISSED_FLAGS = (RB_MISSED_EVENTS | RB_MISSED_STORED);
@@ -56,19 +52,6 @@ constexpr unsigned TS_EXT_SHIFT = 27;
 inline uint64_t GetTimestampIncrements(uint64_t ext)
 {
     return ext << TS_EXT_SHIFT;
-}
-
-bool ReadInc(uint8_t* start[], const uint8_t end[], void* outData, size_t outSize)
-{
-    if ((end - *start) < static_cast<ptrdiff_t>(outSize)) {
-        return false;
-    }
-    if (memcpy_s(outData, outSize, *start, outSize) != EOK) {
-        HILOG_ERROR(LOG_CORE, "read %zu bytes from memory FAILED", outSize);
-        return false;
-    }
-    *start += outSize;
-    return true;
 }
 } // namespace
 
@@ -99,7 +82,7 @@ FtraceParser::~FtraceParser()
 
 bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
 {
-    if (!SubEventParser::GetInstance().IsSupport(name)) {
+    if (!SubEventParser<FtraceEvent>::GetInstance().IsSupport(name)) {
         // no sub event parser found for event, so no need to parse format file
         return false;
     }
@@ -109,8 +92,10 @@ bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
     format.eventName = name;
     std::string desc = FtraceFsOps::GetInstance().GetEventDataFormat(type, name);
     CHECK_TRUE(ParseEventFormat(desc.data(), format), false, "parse %s/%s/format failed!", type.c_str(), name.c_str());
-    CHECK_TRUE(SubEventParser::GetInstance().SetupEvent(format), false, "setup %s/%s failed!", type.c_str(),
-               name.c_str());
+    CHECK_TRUE(SubEventParser<FtraceEvent>::GetInstance().SetupEvent(format),
+               false, "setup %s/%s failed!", type.c_str(), name.c_str());
+    CHECK_TRUE(SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().SetupEvent(format),
+               false, "setup pbzero %s/%s failed!", type.c_str(), name.c_str());
 
     return true;
 }
@@ -616,159 +601,20 @@ bool FtraceParser::ParseTimeStamp(const FtraceEventHeader& eventHeader)
     return true;
 }
 
-bool FtraceParser::ParseDataRecord(const FtraceEventHeader& eventHeader, FtraceCpuDetailMsg& cpuMsg)
+bool FtraceParser::ReadInc(uint8_t* start[], uint8_t end[], void* outData, size_t outSize)
 {
-    uint32_t evtSize = 0;
-    // refers comments of kernel function rb_event_data_length:
-    if (eventHeader.typeLen) {
-        evtSize = sizeof(eventHeader.array[0]) * eventHeader.typeLen;
-    } else {
-        CHECK_TRUE(ReadInc(&cur_, endOfData_, &evtSize, sizeof(evtSize)), false, "read event size failed!");
-        if (evtSize < sizeof(uint32_t)) {
-            return false;
-        }
-        evtSize -= sizeof(uint32_t); // array[0] is length, array[1...array[0]] is event data
+    if ((end - *start) < static_cast<ptrdiff_t>(outSize)) {
+        return false;
     }
-    HILOG_DEBUG(LOG_CORE, "ParseDataRecord: parse %u bytes of event data...", evtSize);
-
-    uint8_t* evStart = cur_;
-    uint8_t* evEnd = cur_ + evtSize;
-    uint16_t evId = 0;
-    CHECK_TRUE(ReadInc(&cur_, evEnd, &evId, sizeof(evId)), false, "read event ID failed!");
-
-    uint32_t eventId = evId;
-    SubEventParser::ParseEventCtx* parseEventCtx = SubEventParser::GetInstance().GetParseEventCtx(eventId);
-    if (parseEventCtx == nullptr) {
-        HILOG_DEBUG(LOG_CORE, "event %u not supported!", eventId);
-    } else {
-        HILOG_DEBUG(LOG_CORE, "ParseDataRecord: eventId = %u, name = %s",
-                    eventId, parseEventCtx->format.eventName.c_str());
-        auto ftraceEvent = cpuMsg.add_event();
-        ftraceEvent->set_timestamp(timestamp_);
-        ParseFtraceEvent(*ftraceEvent, evStart, evtSize, parseEventCtx);
-    }
-    cur_ = evEnd;
+    CHECK_TRUE(memcpy_s(outData, outSize, *start, outSize) == EOK, false,
+               "read %zu bytes from memory region [%p, %p) FAILED", outSize, *start, end);
+    *start += outSize;
     return true;
 }
 
-bool FtraceParser::ParsePage(FtraceCpuDetailMsg& cpuMsg, uint8_t page[], size_t size)
-{
-    cur_ = page;
-    page_ = page;
-    endOfPage_ = page + size;
-
-    ParsePageHeader();
-    HILOG_DEBUG(LOG_CORE, "ParsePage: %" PRIu64 " bytes event data in page!", pageHeader_.size);
-    cpuMsg.set_overwrite(pageHeader_.overwrite);
-
-    timestamp_ = pageHeader_.timestamp;
-    endOfData_ = pageHeader_.endpos;
-    while (cur_ < pageHeader_.endpos) {
-        FtraceEventHeader eventHeader = {};
-        CHECK_TRUE(ReadInc(&cur_, endOfData_, &eventHeader, sizeof(FtraceEventHeader)), false,
-                   "read EventHeader fail!");
-
-        timestamp_ += eventHeader.timeDelta;
-
-        bool retval = false;
-        switch (eventHeader.typeLen) {
-            case BUFFER_TYPE_PADDING:
-                retval = ParsePaddingData(eventHeader);
-                CHECK_TRUE(retval, false, "parse PADDING data failed!");
-                break;
-            case BUFFER_TYPE_TIME_EXTEND:
-                retval = ParseTimeExtend(eventHeader);
-                CHECK_TRUE(retval, false, "parse TIME_EXTEND failed!");
-                break;
-            case BUFFER_TYPE_TIME_STAMP:
-                retval = ParseTimeStamp(eventHeader);
-                CHECK_TRUE(retval, false, "parse TIME_STAMP failed!");
-                break;
-            default:
-                retval = ParseDataRecord(eventHeader, cpuMsg);
-                CHECK_TRUE(retval, false, "parse record data failed!");
-                break;
-        }
-        HILOG_DEBUG(LOG_CORE, "parsed %ld bytes of page data.", static_cast<long>(cur_ - page_));
-    }
-    return true;
-}
-
-static bool IsValidIndex(int idx)
+bool FtraceParser::IsValidIndex(int idx)
 {
     return idx != CommonFiledIndex::INVALID_IDX;
-}
-
-bool FtraceParser::ParseFtraceCommonFields(FtraceEvent& ftraceEvent,
-                                           uint8_t data[],
-                                           size_t dataSize,
-                                           const EventFormat& format)
-{
-    auto& index = format.commonIndex;
-
-    CHECK_TRUE(IsValidIndex(index.pid), false, "pid index %d invalid!", index.pid);
-    CHECK_TRUE(IsValidIndex(index.type), false, "type index %d invalid!", index.type);
-    CHECK_TRUE(IsValidIndex(index.flags), false, "flags index %d invalid!", index.flags);
-    CHECK_TRUE(IsValidIndex(index.preemt), false, "preemt index %d invalid!", index.preemt);
-
-    auto commonFields = ftraceEvent.mutable_common_fields();
-    commonFields->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.commonFields, index.pid, data, dataSize));
-    commonFields->set_type(FtraceFieldParser::ParseIntField<uint32_t>(format.commonFields, index.type, data, dataSize));
-    commonFields->set_flags(
-        FtraceFieldParser::ParseIntField<uint32_t>(format.commonFields, index.flags, data, dataSize));
-    commonFields->set_preempt_count(
-        FtraceFieldParser::ParseIntField<uint32_t>(format.commonFields, index.preemt, data, dataSize));
-    return true;
-}
-
-bool FtraceParser::ParseFtraceEvent(FtraceEvent& ftraceEvent,
-                                    uint8_t data[],
-                                    size_t dataSize,
-                                    const SubEventParser::ParseEventCtx* parseEventCtx)
-{
-    CHECK_TRUE(dataSize >= parseEventCtx->format.eventSize, false,
-               "FtraceParser::ParseFtraceEvent, dataSize not enough!");
-    CHECK_TRUE(ParseFtraceCommonFields(ftraceEvent, data, dataSize, parseEventCtx->format), false,
-               "parse common fields failed!");
-
-    int pid = ftraceEvent.common_fields().pid();
-    if (pid != 0) {
-        int tgid = 0;
-        if (auto it = tgidDict_.find(pid); it != tgidDict_.end()) {
-            tgid = it->second;
-            ftraceEvent.set_tgid(tgid);
-        } else {
-            ParseSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids());
-            if (auto itm = tgidDict_.find(pid); itm != tgidDict_.end()) {
-                tgid = itm->second;
-                ftraceEvent.set_tgid(tgid);
-            }
-        }
-
-        std::string comm;
-        if (auto it = commDict_.find(pid); it != commDict_.end()) {
-            comm = it->second;
-        } else {
-            if (tgid != 0) {
-                comm = FtraceFsOps::GetInstance().GetThreadComm(tgid, pid);
-            } else {
-                comm = FtraceFsOps::GetInstance().GetProcessComm(pid);
-            }
-            if (comm.size() > 0) {
-                comm.pop_back(); // /proc/xxx/comm end with `\n`
-                commDict_.insert(std::pair<int32_t, std::string>(pid, comm));
-            }
-        }
-        if (comm.size() > 0) {
-            ftraceEvent.set_comm(comm);
-        }
-
-        HILOG_DEBUG(LOG_CORE, "pid = %5d, tgid = %5d, comm = %16s, event = %s", pid, tgid, comm.c_str(),
-                    parseEventCtx->format.eventName.c_str());
-    }
-
-    SubEventParser::GetInstance().ParseEvent(ftraceEvent, data, dataSize, parseEventCtx);
-    return true;
 }
 
 void FtraceParser::SetDebugOn(bool value)

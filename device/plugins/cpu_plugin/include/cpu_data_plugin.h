@@ -26,6 +26,7 @@
 #include "cpu_plugin_config.pb.h"
 #include "cpu_plugin_result.pb.h"
 #include "logging.h"
+#include "plugin_module_api.h"
 
 enum ErrorType {
     RET_NULL_ADDR,
@@ -62,38 +63,56 @@ struct CpuTimeData {
     int64_t systemBootTime;
 };
 
+struct CpuLoadData {
+    double userLoad;
+    double sysLoad;
+    double totalLoad;
+};
+
 class CpuDataPlugin {
 public:
     CpuDataPlugin();
     ~CpuDataPlugin();
     int Start(const uint8_t* configData, uint32_t configSize);
     int Report(uint8_t* configData, uint32_t configSize);
+    int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
 
 private:
     int32_t ReadFile(std::string& fileName);
-    void SetTimestamp(SampleTimeStamp& timestamp);
+
+    template <typename T> void SetTimestamp(T& sampleTimeStamp);
 
     int64_t GetUserHz();
     int64_t GetCpuUsageTime(std::vector<std::string>& cpuUsageVec);
-    void WriteProcessCpuUsage(CpuUsageInfo& cpuUsageInfo, const char* pFile, uint32_t fileLen);
+
+    template <typename T> void WriteProcessCpuUsage(T& cpuUsageInfo, const char* pFile, uint32_t fileLen);
+
     bool GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuTimeData& cpuTimeData);
-    void WriteSystemCpuUsage(CpuData& cpuData, const char* pFile, uint32_t fileLen);
-    void WriteCpuUsageInfo(CpuData& data);
+
+    template <typename T> void WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuData,
+                                                   const char* pFile, uint32_t fileLen);
+
+    template <typename T, typename I> void WriteCpuUsageInfo(T& cpuData, I cpuUsageInfo);
 
     bool addTidBySort(int32_t tid);
     DIR* OpenDestDir(std::string& dirPath);
     int32_t GetValidTid(DIR* dirp);
     ThreadState GetThreadState(const char threadState);
-    void WriteThread(ThreadInfo& threadInfo, const char* pFile, uint32_t fileLen, int32_t tid);
-    void WriteSingleThreadInfo(CpuData& data, int32_t tid);
-    void WriteThreadInfo(CpuData& data);
+
+    template <typename T> void WriteThread(T& threadInfo, const char* pFile, uint32_t fileLen, int32_t tid);
+
+    template <typename T> void WriteSingleThreadInfo(T& cpuData, int32_t tid);
+
+    template <typename T> void WriteThreadInfo(T& cpuData);
 
     int32_t GetCpuFrequency(std::string fileName);
     int GetCpuCoreSize();
     int32_t GetMaxCpuFrequencyIndex();
-    void SetCpuFrequency(CpuCoreUsageInfo& cpuCore, int32_t coreNum);
-    bool WriteProcnum(CpuData& data);
+
+    template <typename T> void SetCpuFrequency(T& cpuCoreUsageInfo, int32_t coreNum);
+
+    template <typename T> bool WriteProcnum(T& cpuData);
 
     // for UT
     void SetPath(std::string path)

@@ -29,6 +29,7 @@
 #include "ftrace_namespace.h"
 #include "plugin_module_api.h"
 #include "trace_plugin_result.pb.h"
+#include "trace_plugin_result.pbencoder.h"
 
 FTRACE_NS_BEGIN
 using ResultPtr = std::unique_ptr<TracePluginResult>;
@@ -40,6 +41,7 @@ public:
     ~ResultTransporter();
 
     bool Submit(ResultPtr&& result);
+    void Report(size_t msgSize);
     void SetFlushInterval(int ms);
     void SetFlushThreshold(uint32_t nbytes);
     void Flush();

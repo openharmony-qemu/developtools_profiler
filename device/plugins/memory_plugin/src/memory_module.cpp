@@ -15,7 +15,6 @@
 
 #include <mutex>
 #include <sys/types.h>
-#include "plugin_module_api.h"
 #include "memory_data_plugin.h"
 
 namespace {
@@ -38,6 +37,12 @@ static int MemPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
     return g_plugin->Report(bufferData, bufferSize);
 }
 
+static int MemPluginReportResultOptimize(RandomWriteCtx* randomWrite)
+{
+    std::lock_guard<std::mutex> guard(g_taskMutex);
+    return g_plugin->ReportOptimize(randomWrite);
+}
+
 static int MemPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
@@ -54,6 +59,7 @@ static int MemRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = MemDataPluginSessionStart,
     .onPluginReportResult = MemPluginReportResult,
+    .onPluginReportResultOptimize = MemPluginReportResultOptimize,
     .onPluginSessionStop = MemPluginSessionStop,
     .onRegisterWriterStruct = MemRegisterWriterStruct,
 };

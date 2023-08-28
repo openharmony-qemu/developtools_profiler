@@ -25,8 +25,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "common.h"
+#include "hilog_plugin_result.pbencoder.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 std::atomic<uint64_t> g_id(1);
 const int DEC_BASE = 10;
 const int TIME_HOUR_WIDTH = 5;
@@ -231,27 +233,36 @@ void HilogPlugin::Run(void)
     HILOG_INFO(LOG_CORE, "HilogPlugin::Run start!");
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(BUF_MAX_LEN);
 
-    HilogInfo dataProto;
-
-    dataProto.set_clock(0);
+    std::unique_ptr<HilogInfo> dataProto = nullptr;
+    std::unique_ptr<ProtoEncoder::HilogInfo> hilogInfo = nullptr;
+    if (resultWriter_->isProtobufSerialize) {
+        dataProto = std::make_unique<HilogInfo>();
+    } else {
+        hilogInfo = std::make_unique<ProtoEncoder::HilogInfo>(resultWriter_->startReport(resultWriter_));
+    }
     fcntl(fileno(fp_.get()), F_SETFL, O_NONBLOCK);
     while (running_) {
-        if (fgets(reinterpret_cast<char*>(buffer.get()), BUF_MAX_LEN - 1, fp_.get()) != nullptr) {
-            auto cptr = reinterpret_cast<char*>(buffer.get());
-            if (*cptr >= '0' && *cptr <= '9') {
-                auto* info = dataProto.add_info();
-                ParseLogLineInfo(cptr, strlen(cptr), info);
-                info->set_id(g_id);
-                g_id++;
-            }
+        if (fgets(reinterpret_cast<char*>(buffer.get()), BUF_MAX_LEN - 1, fp_.get()) == nullptr) {
+            continue;
         }
 
-        if (dataProto.ByteSizeLong() >= BYTE_BUFFER_SIZE) {
-            protoBuffer_.resize(dataProto.ByteSizeLong());
-            dataProto.SerializeToArray(protoBuffer_.data(), protoBuffer_.size());
-            resultWriter_->write(resultWriter_, protoBuffer_.data(), protoBuffer_.size());
-            resultWriter_->flush(resultWriter_);
-            dataProto.clear_info();
+        auto cptr = reinterpret_cast<char*>(buffer.get());
+        if (resultWriter_->isProtobufSerialize) {
+            ParseLogLineData(cptr, strlen(cptr), dataProto.get());
+
+            if (dataProto->ByteSizeLong() >= BYTE_BUFFER_SIZE) {
+                FlushData(dataProto.get());
+                dataProto.reset();
+                dataProto = std::make_unique<HilogInfo>();
+            }
+        } else {
+            ParseLogLineData(cptr, strlen(cptr), hilogInfo.get());
+
+            if (hilogInfo->Size() >= BYTE_BUFFER_SIZE) {
+                FlushDataOptimize(hilogInfo.get());
+                hilogInfo.reset();
+                hilogInfo = std::make_unique<ProtoEncoder::HilogInfo>(resultWriter_->startReport(resultWriter_));
+            }
         }
 
         if (protoConfig_.need_record() && dataBuffer_.size() >= BYTE_BUFFER_SIZE) {
@@ -259,11 +270,15 @@ void HilogPlugin::Run(void)
             dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
         }
     }
-    protoBuffer_.resize(dataProto.ByteSizeLong());
-    dataProto.SerializeToArray(protoBuffer_.data(), protoBuffer_.size());
-    resultWriter_->write(resultWriter_, protoBuffer_.data(), protoBuffer_.size());
-    resultWriter_->flush(resultWriter_);
-    dataProto.clear_info();
+
+    if (resultWriter_->isProtobufSerialize) {
+        FlushData(dataProto.get());
+        dataProto.reset();
+    } else {
+        FlushDataOptimize(hilogInfo.get());
+        hilogInfo.reset();
+    }
+
     if (protoConfig_.need_record() && !dataBuffer_.empty()) {
         g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
         dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
@@ -271,7 +286,7 @@ void HilogPlugin::Run(void)
     HILOG_INFO(LOG_CORE, "HilogPlugin::Run done!");
 }
 
-void HilogPlugin::ParseLogLineInfo(const char* data, size_t len, HilogLine* info)
+template <typename T> void HilogPlugin::ParseLogLineInfo(const char* data, size_t len, T& hilogLineInfo)
 {
     if (data == nullptr || len < TIME_NS_WIDTH) {
         HILOG_ERROR(LOG_CORE, "HilogPlugin:%s param invalid", __func__);
@@ -282,31 +297,43 @@ void HilogPlugin::ParseLogLineInfo(const char* data, size_t len, HilogLine* info
         dataBuffer_.push_back(data[i]);
     }
 
-    SetHilogLineDetails(data, info);
+    SetHilogLineDetails(data, hilogLineInfo);
     return;
 }
 
-bool HilogPlugin::SetHilogLineDetails(const char* data, HilogLine* info)
+template <typename T> void HilogPlugin::ParseLogLineData(const char* data, size_t len, T hilogInfoProto)
+{
+    CHECK_NOTNULL(data, NO_RETVAL, "data is nullptr");
+    if (*data >= '0' && *data <= '9') {
+        auto* info = hilogInfoProto->add_info();
+        ParseLogLineInfo(data, len, *info);
+        info->set_id(g_id);
+        g_id++;
+    }
+}
+
+template <typename T> bool HilogPlugin::SetHilogLineDetails(const char* data, T& hilogLineInfo)
 {
     char* end = nullptr;
     struct timespec ts = {0};
     char* pTmp = const_cast<char*>(data);
 
     TimeStringToNS(data, &ts);
-    info->mutable_detail()->set_tv_sec(ts.tv_sec);
-    info->mutable_detail()->set_tv_nsec(ts.tv_nsec);
+    auto* detail = hilogLineInfo.mutable_detail();
+    detail->set_tv_sec(ts.tv_sec);
+    detail->set_tv_nsec(ts.tv_nsec);
     pTmp = pTmp + TIME_SEC_WIDTH;
     CHECK_TRUE(FindFirstSpace(&pTmp), false, "HilogPlugin:FindFirstSpace failed!");
     uint32_t value = static_cast<uint32_t>(strtoul(pTmp, &end, DEC_BASE));
     CHECK_TRUE(value > 0, false, "HilogPlugin:strtoull pid failed!");
-    info->mutable_detail()->set_pid(value);
+    detail->set_pid(value);
     pTmp = end;
     value = static_cast<uint32_t>(strtoul(pTmp, &end, DEC_BASE));
     CHECK_TRUE(value > 0, false, "HilogPlugin:strtoull tid failed!");
-    info->mutable_detail()->set_tid(value);
+    detail->set_tid(value);
     pTmp = end;
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin:RemoveSpaces failed!");
-    info->mutable_detail()->set_level(*pTmp);
+    detail->set_level(*pTmp);
     pTmp++;
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin:RemoveSpaces failed!");
 
@@ -330,14 +357,14 @@ bool HilogPlugin::SetHilogLineDetails(const char* data, HilogLine* info)
         pTmp++;
         index++;
     }
-    info->mutable_detail()->set_tag(std::string(end, end + index - 1));
+    detail->set_tag(std::string(end, end + index - 1));
     pTmp++;
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin: RemoveSpaces failed!");
     if (google::protobuf::internal::IsStructurallyValidUTF8(pTmp, strlen(pTmp) - 1)) {
-        info->set_context(pTmp, strlen(pTmp) - 1);  // - \n
+        hilogLineInfo.set_context(pTmp, strlen(pTmp) - 1);  // - \n
     } else {
         HILOG_ERROR(LOG_CORE, "HilogPlugin: log context include invalid UTF-8 data");
-        info->set_context("");
+        hilogLineInfo.set_context("");
     }
 
     return true;
@@ -537,4 +564,19 @@ int HilogPlugin::CustomPclose(FILE* fp)
     }
 
     return stat;
+}
+
+template <typename T> void HilogPlugin::FlushData(const T hilogLineProto)
+{
+    protoBuffer_.resize(hilogLineProto->ByteSizeLong());
+    hilogLineProto->SerializeToArray(protoBuffer_.data(), protoBuffer_.size());
+    resultWriter_->write(resultWriter_, protoBuffer_.data(), protoBuffer_.size());
+    resultWriter_->flush(resultWriter_);
+}
+
+template <typename T> void HilogPlugin::FlushDataOptimize(const T hilogLineProto)
+{
+    int messageLen = hilogLineProto->Finish();
+    resultWriter_->finishReport(resultWriter_, messageLen);
+    resultWriter_->flush(resultWriter_);
 }

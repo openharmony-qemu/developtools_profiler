@@ -414,7 +414,8 @@ HWTEST_F(MemoryDataPluginTest, TestSmapsStatsInfo, TestSize.Level1)
     SmapsStats smap(std::string(g_path + "/"));
     for (size_t i = 0; i < expectPidList.size(); i++) {
         ProcessMemoryInfo processMemoryInfo;
-        EXPECT_TRUE(smap.ParseMaps(expectPidList[i], processMemoryInfo, true, false));
+        SmapsInfo* smapsInfo = nullptr;
+        EXPECT_TRUE(smap.ParseMaps(expectPidList[i], processMemoryInfo, smapsInfo, true, false));
         EXPECT_EQ(g_pidtarget[i].java_heap, (uint64_t)(smap.GetProcessJavaHeap()));
         EXPECT_EQ(g_pidtarget[i].native_heap, (uint64_t)(smap.GetProcessNativeHeap()));
         EXPECT_EQ(g_pidtarget[i].code, (uint64_t)(smap.GetProcessCode()));
@@ -653,7 +654,7 @@ HWTEST_F(MemoryDataPluginTest, TestParseMemInfo, TestSize.Level1)
     uint64_t other = 1056;
     uint64_t system = 1092;
 
-    ASSERT_TRUE(plugin.ParseMemInfo(DUMP_FORMAT, &memoryInfo));
+    ASSERT_TRUE(plugin.ParseMemInfo(DUMP_FORMAT, memoryInfo));
     // test result
     EXPECT_EQ(memoryInfo.mutable_memsummary()->java_heap(), javaHeap);
     EXPECT_EQ(memoryInfo.mutable_memsummary()->native_heap(), nativeHeap);

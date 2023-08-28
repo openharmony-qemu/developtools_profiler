@@ -25,6 +25,7 @@ proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
 hidump_data_codegen = []
 hidump_data_codegen_standard = []
+hidump_data_codegen_encoder = []
 hidump_data_codegen_all = []
 foreach(proto, hidump_data_sources) {
   name = get_path_info(proto, "name")
@@ -36,9 +37,14 @@ foreach(proto, hidump_data_sources) {
     "$proto_out_dir/${name}_standard.pb.h",
     "$proto_out_dir/${name}_standard.pb.cc",
   ]
+  hidump_data_codegen_encoder += [
+    "$proto_out_dir/$name.pbencoder.h",
+    "$proto_out_dir/$name.pbencoder.cc",
+  ]
 }
 hidump_data_codegen_all += hidump_data_codegen
 hidump_data_codegen_all += hidump_data_codegen_standard
+hidump_data_codegen_all += hidump_data_codegen_encoder
 
 hidump_plugin_config_sources = [ "./hidump_plugin_config.proto" ]
 hidump_plugin_config_standard = []
@@ -69,7 +75,10 @@ action("hidump_data_cpp_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})",
+  ]
 }
 
 ohos_source_set("hidump_data_cpp") {
@@ -107,6 +116,15 @@ ohos_source_set("hidump_plugin_config_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":hidump_include_config" ]
   sources = hidump_plugin_config_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("hidump_data_encoder") {
+  deps = [ ":hidump_data_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":hidump_include_config" ]
+  sources = hidump_data_codegen_encoder
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
