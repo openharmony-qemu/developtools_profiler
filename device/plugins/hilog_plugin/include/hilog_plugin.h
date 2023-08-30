@@ -40,8 +40,7 @@ public:
 private:
     std::string GetPidCmd();
     std::string GetlevelCmd();
-    bool InitHilogCmd();
-    std::string ClearHilog();
+    void InitHilogCmd();
 
     bool OpenLogFile();
     int GetDateTime(char* psDateTime, uint32_t size);

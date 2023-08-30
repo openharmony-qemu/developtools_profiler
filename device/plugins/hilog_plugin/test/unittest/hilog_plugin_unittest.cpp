@@ -169,28 +169,26 @@ HWTEST_F(HilogPluginTest, TestValidFullCmd, TestSize.Level1)
     HilogConfig config;
     HilogPlugin plugin;
 
-    config.set_device_type(Type::TYPE_UNSPECIFIED);
     plugin.SetConfig(config);
-    ASSERT_FALSE(plugin.InitHilogCmd());
-    EXPECT_STREQ(plugin.GetFullCmd().c_str(), "");
+    plugin.InitHilogCmd();
+    EXPECT_STRNE(plugin.GetFullCmd().c_str(), "");
 }
 
 /**
  * @tc.name: hilog plugin
- * @tc.desc: Test HI3516
+ * @tc.desc: Test InitHilogCmd
  * @tc.type: FUNC
  */
-HWTEST_F(HilogPluginTest, TestHI3516, TestSize.Level1)
+HWTEST_F(HilogPluginTest, TestInitHilogCmd, TestSize.Level1)
 {
     HilogConfig config;
     HilogPlugin plugin;
     int32_t pid = 1;
 
-    config.set_device_type(Type::HI3516);
     config.set_pid(pid);
     config.set_log_level(Level::ERROR);
     plugin.SetConfig(config);
-    ASSERT_TRUE(plugin.InitHilogCmd());
+    plugin.InitHilogCmd();
 
     std::string target;
     target = "hilog -P " + std::to_string(pid) + " -L E --format nsec";
@@ -199,69 +197,24 @@ HWTEST_F(HilogPluginTest, TestHI3516, TestSize.Level1)
 
 /**
  * @tc.name: hilog plugin
- * @tc.desc: Test P40
+ * @tc.desc: Test InitHilogCmd with clear
  * @tc.type: FUNC
  */
-HWTEST_F(HilogPluginTest, TestP40, TestSize.Level1)
+HWTEST_F(HilogPluginTest, TestInitHilogCmdClear, TestSize.Level1)
 {
     HilogConfig config;
     HilogPlugin plugin;
     int32_t pid = 1;
 
-    config.set_device_type(Type::P40);
-    config.set_pid(pid);
-    config.set_log_level(Level::ERROR);
-    plugin.SetConfig(config);
-    ASSERT_TRUE(plugin.InitHilogCmd());
 
-    std::string target;
-    target = "hilogcat --pid=" + std::to_string(pid) + " *:E --format nsec";
-    EXPECT_STREQ(plugin.GetFullCmd().c_str(), target.c_str());
-}
-
-/**
- * @tc.name: hilog plugin
- * @tc.desc: Test HI3516 and clear
- * @tc.type: FUNC
- */
-HWTEST_F(HilogPluginTest, TestHI3516AndClear, TestSize.Level1)
-{
-    HilogConfig config;
-    HilogPlugin plugin;
-    int32_t pid = 1;
-
-    config.set_device_type(Type::HI3516);
     config.set_pid(pid);
     config.set_log_level(Level::ERROR);
     config.set_need_clear(true);
     plugin.SetConfig(config);
-    ASSERT_TRUE(plugin.InitHilogCmd());
+    plugin.InitHilogCmd();
 
     std::string target;
     target = "hilog -P " + std::to_string(pid) + " -L E --format nsec";
-    EXPECT_STREQ(plugin.GetFullCmd().c_str(), target.c_str());
-}
-
-/**
- * @tc.name: hilog plugin
- * @tc.desc: Test P40 and clear
- * @tc.type: FUNC
- */
-HWTEST_F(HilogPluginTest, TestP40AndClear, TestSize.Level1)
-{
-    HilogConfig config;
-    HilogPlugin plugin;
-    int32_t pid = 1;
-
-    config.set_device_type(Type::P40);
-    config.set_pid(pid);
-    config.set_log_level(Level::ERROR);
-    config.set_need_clear(true);
-    plugin.SetConfig(config);
-    ASSERT_TRUE(plugin.InitHilogCmd());
-
-    std::string target;
-    target = "hilogcat --pid=" + std::to_string(pid) + " *:E --format nsec";
     EXPECT_STREQ(plugin.GetFullCmd().c_str(), target.c_str());
 }
 
@@ -1041,7 +994,7 @@ HWTEST_F(HilogPluginTest, TestFramework, TestSize.Level1)
 
     // set config
     HilogConfig config;
-    config.set_device_type(Type::HI3516);
+    config.set_need_record(true);
     int size = config.ByteSizeLong();
     ASSERT_GT(size, 0);
     std::vector<uint8_t> configData(size);
@@ -1081,8 +1034,6 @@ HWTEST_F(HilogPluginTest, TestDefaultCmd, TestSize.Level1)
 
     g_testId = 1;
     g_proto.erase(g_proto.begin(), g_proto.end());
-    // set config
-    config.set_device_type(Type::HI3516);
 
     // test plugin process
     plugin.SetWriter(&writer);
@@ -1122,7 +1073,6 @@ HWTEST_F(HilogPluginTest, TestFullCmd, TestSize.Level1)
     g_testId = 1;
     g_proto.erase(g_proto.begin(), g_proto.end());
     // set config
-    config.set_device_type(Type::HI3516);
     config.set_need_record(true);
 
     // test plugin process

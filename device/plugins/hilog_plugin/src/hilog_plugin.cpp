@@ -73,8 +73,7 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HilogPlugin: ParseFromArray failed");
     if (protoConfig_.need_clear()) {
-        fullCmd_ = ClearHilog();
-        CHECK_TRUE(!fullCmd_.empty(), -1, "HilogPlugin: fullCmd_ is empty");
+        fullCmd_ = "hilog -r";
         std::vector<std::string> cmdArg;
         COMMON::SplitString(fullCmd_, " ", cmdArg);
         cmdArg.emplace(cmdArg.begin(), BIN_COMMAND);
@@ -85,8 +84,8 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
         CHECK_NOTNULL(fp, -1, "%s:clear hilog error", __func__);
         COMMON::CustomPclose(fp, pipeFds, childPid);
     }
-    CHECK_TRUE(InitHilogCmd(), -1, "HilogPlugin: Init HilogCmd failed");
 
+    InitHilogCmd();
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(fullCmd_.c_str(), "r"), CustomPclose);
     CHECK_NOTNULL(fp_.get(), -1, "HilogPlugin: open(%s) Failed, errno(%d)", fullCmd_.c_str(), errno);
     if (protoConfig_.need_record()) {
@@ -171,59 +170,20 @@ std::string HilogPlugin::GetlevelCmd()
     return levelCmd;
 }
 
-bool HilogPlugin::InitHilogCmd()
+void HilogPlugin::InitHilogCmd()
 {
-    switch (protoConfig_.device_type()) {
-        case HI3516:
-            fullCmd_ = "hilog";
-            if (GetPidCmd().length() > 0) {
-                fullCmd_ += " -P ";
-                fullCmd_ += GetPidCmd();
-            }
-            if (GetlevelCmd().length() > 0) {
-                fullCmd_ += " -L ";
-                fullCmd_ += GetlevelCmd();
-            }
-            break;
-        case P40:
-            fullCmd_ = "hilogcat";
-            if (GetPidCmd().length() > 0) {
-                fullCmd_ += " --pid=";
-                fullCmd_ += GetPidCmd();
-            }
-            if (GetlevelCmd().length() > 0) {
-                fullCmd_ += " *:";
-                fullCmd_ += GetlevelCmd();
-            }
-            break;
-        default:
-            break;
+    fullCmd_ = "hilog";
+    if (GetPidCmd().length() > 0) {
+        fullCmd_ += " -P ";
+        fullCmd_ += GetPidCmd();
+    }
+    if (GetlevelCmd().length() > 0) {
+        fullCmd_ += " -L ";
+        fullCmd_ += GetlevelCmd();
     }
 
-    if (fullCmd_.size()) {
-        fullCmd_ = fullCmd_ + std::string(" --format nsec");
-        HILOG_INFO(LOG_CORE, "HilogPlugin: hilog cmd(%s)", fullCmd_.c_str());
-        return true;
-    }
-
-    return false;
-}
-
-std::string HilogPlugin::ClearHilog()
-{
-    std::string cmd;
-    switch (protoConfig_.device_type()) {
-        case HI3516:
-            cmd = "hilog -r";
-            break;
-        case P40:
-            cmd = "hilogcat -c";
-            break;
-        default:
-            break;
-    }
-
-    return cmd;
+    fullCmd_ = fullCmd_ + std::string(" --format nsec");
+    HILOG_INFO(LOG_CORE, "HilogPlugin: hilog cmd(%s)", fullCmd_.c_str());
 }
 
 void HilogPlugin::Run(void)
