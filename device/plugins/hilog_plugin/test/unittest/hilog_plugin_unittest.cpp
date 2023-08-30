@@ -206,7 +206,6 @@ HWTEST_F(HilogPluginTest, TestInitHilogCmdClear, TestSize.Level1)
     HilogPlugin plugin;
     int32_t pid = 1;
 
-
     config.set_pid(pid);
     config.set_log_level(Level::ERROR);
     config.set_need_clear(true);
@@ -960,7 +959,7 @@ HWTEST_F(HilogPluginTest, TestStartFail, TestSize.Level1)
     g_testId = 1;
     g_proto.erase(g_proto.begin(), g_proto.end());
     // set config
-    config.set_device_type(Type::HI3516);
+    config.set_need_record(true);
 
     // test plugin process
     plugin.SetWriter(&writer);
