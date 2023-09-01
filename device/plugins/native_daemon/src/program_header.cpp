@@ -15,8 +15,6 @@
 
 #include <elf_parser.h>
 
-#include "logging.h"
-
 using namespace OHOS::Developtools::NativeDaemon::ELF;
 namespace OHOS {
 namespace Developtools {
@@ -24,7 +22,7 @@ namespace NativeDaemon {
 std::unique_ptr<ProgramHeader> ProgramHeader::MakeUnique(char * const phdrBuf, const size_t bufSize)
 {
     std::unique_ptr<ProgramHeader> phdr {new (std::nothrow) ProgramHeader()};
-    CHECK_NOTNULL(phdr, nullptr, "ProgramHeader() failed");
+    UNWIND_CHECK_NOTNULL(phdr, nullptr, "ProgramHeader() failed");
     if (!phdr->Init(phdrBuf, bufSize)) {
         HLOGE("ProgramHeader::Init(phdrBuf, bufSize) failed");
         DumpPhdrBuf(phdrBuf, bufSize);

@@ -303,6 +303,22 @@ private:
 #define HLOGS(level) HLOGMESSAGE(level, false)
 
 #define HLOGSP(level) HLOGMESSAGE(level, true)
+#define UNWIND_CHECK_NOTNULL(ptr, retval, fmt, ...)                                                                 \
+    do {                                                                                                            \
+        if (ptr == nullptr) {                                                                                       \
+            HLOGE("UNWIND_CHECK_NOTNULL(%s) in %s:%d FAILED, " fmt, #ptr, __func__, \
+                       __LINE__, ##__VA_ARGS__);                                                                    \
+            return retval;                                                                                          \
+        }                                                                                                           \
+    } while (0)
+
+#define UNWIND_CHECK_TRUE(expr, retval, fmt, ...)                                                                   \
+    do {                                                                                                            \
+        if (!(expr)) {                                                                                              \
+            HLOGE("UNWIND_CHECK_TRUE(%s) in %s:%d FAILED, " fmt, #expr, __func__, __LINE__, ##__VA_ARGS__);   \
+            return retval;                                                                                          \
+        }                                                                                                           \
+    } while (0)
 #else
 #define HLOGS(...)  std::ostringstream()
 #define HLOGSP(...) std::ostringstream()
@@ -348,6 +364,19 @@ private:
     } while (0)
 #define HLOG_ASSERT(...)                                                                           \
     do {                                                                                           \
+    } while (0)
+#define UNWIND_CHECK_NOTNULL(ptr, retval, fmt, ...)                                                                 \
+    do {                                                                                                            \
+        if (ptr == nullptr) {                                                                                       \
+            return retval;                                                                                          \
+        }                                                                                                           \
+    } while (0)
+
+#define UNWIND_CHECK_TRUE(expr, retval, fmt, ...)                                                                   \
+    do {                                                                                                            \
+        if (!(expr)) {                                                                                              \
+            return retval;                                                                                          \
+        }                                                                                                           \
     } while (0)
 
 class ScopeDebugLevel {

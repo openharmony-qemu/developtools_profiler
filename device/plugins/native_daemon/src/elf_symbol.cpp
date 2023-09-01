@@ -15,8 +15,6 @@
 
 #include <elf_parser.h>
 
-#include "logging.h"
-
 using namespace OHOS::Developtools::NativeDaemon::ELF;
 namespace OHOS {
 namespace Developtools {
@@ -24,8 +22,12 @@ namespace NativeDaemon {
 std::unique_ptr<ElfSymbol> ElfSymbol::MakeUnique(char * const symBuf, const std::size_t bufSize)
 {
     std::unique_ptr<ElfSymbol> sym {new (std::nothrow) ElfSymbol()};
-    CHECK_NOTNULL(sym, nullptr, "Error in ElfSymbol::MakeUnique(): ElfSymbol::ElfSymbol() failed");
-    CHECK_TRUE(sym->Init(symBuf, bufSize), nullptr, "ElfSymbol::Init(symBuf, bufSize) failed");
+    UNWIND_CHECK_NOTNULL(sym, nullptr, "Error in ElfSymbol::MakeUnique(): ElfSymbol::ElfSymbol() failed");
+    if (!sym->Init(symBuf, bufSize)) {
+        HLOGE("ElfSymbol::Init(symBuf, bufSize) failed");
+        DumpSymBuf(symBuf, bufSize);
+        return nullptr;
+    }
     return sym;
 }
 
@@ -77,7 +79,7 @@ std::unique_ptr<SymbolTable> SymbolTable::MakeUnique(const std::string &symNames
     if (symNamesStr.empty()) {
         HLOGE("symNamesStr is empty");
     }
-    CHECK_NOTNULL(symTable, nullptr, "Error in SymbleTable::MakeUnique(): SymbleTable::SymbolTable() failed");
+    UNWIND_CHECK_NOTNULL(symTable, nullptr, "Error in SymbleTable::MakeUnique(): SymbleTable::SymbolTable() failed");
     char *symBuf = const_cast<char *>(secBuf);
     for (uint64_t curPos = 0; curPos < secSize; curPos += entrySize) {
         symBuf = const_cast<char *>(secBuf + curPos);
@@ -107,7 +109,7 @@ std::unique_ptr<SymbolTable> SymbolTable::MakeUnique(const std::string &symNames
             break;
         }
         std::unique_ptr<ElfSymbol> sym = ElfSymbol::MakeUnique(symBuf, entrySize);
-        CHECK_NOTNULL(sym, nullptr, "Error in SymbolTable::MakeUnique(): ElfSymbol::MakeUnique() failed");
+        UNWIND_CHECK_NOTNULL(sym, nullptr, "Error in SymbolTable::MakeUnique(): ElfSymbol::MakeUnique() failed");
         symTable->symbols_.emplace_back(std::move(sym));
     }
     return symTable;
