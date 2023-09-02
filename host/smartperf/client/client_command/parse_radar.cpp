@@ -26,24 +26,33 @@
 #include "include/parse_radar.h"
 namespace OHOS {
     namespace SmartPerf {
-        double Radar::ParseRadarStar(std::string str)
+        double Radar::ParseRadarStart(std::string str)
         {
             double time = -1;
             std::string target = "\"E2E_LATENCY\":";
-            time = std::stof(extract_string(str, target));
+            time = std::stod(extract_string(str, target));
+            return time;
+        }
+        double Radar::ParseRadarStartResponse(std::string string)
+        {
+            double time = -1;
+            std::string target = "\"RESPONSE_LATENCY\":";
+            time = std::stod(extract_string(string, target));
             return time;
         }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {
             size_t pos = str.find(target);
-            if (pos == std::string::npos) {
-                return "";
+            if (pos != std::string::npos) {
+                pos += target.length();
+                size_t comma_pos = str.find(",", pos);
+                if (comma_pos != std::string::npos) {
+                    std::string result = str.substr(pos,comma_pos - pos);
+                    return result;
+                }
             }
-            size_t comma_pos = str.find(",", pos);
-            if (comma_pos == std::string::npos) {
-                return str.substr(pos);
-            }
-            return str.substr(pos, comma_pos - pos);
+            
+            return "-1";
         }
     }
 }

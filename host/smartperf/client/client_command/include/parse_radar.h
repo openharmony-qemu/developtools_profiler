@@ -20,7 +20,8 @@ namespace OHOS {
     namespace SmartPerf {
         class Radar {
             public:
-                double ParseRadarStar(std::string string);
+                double ParseRadarStart(std::string string);
+                double ParseRadarStartResponse(std::string string);
                 std::string extract_string(const std::string& str, const std::string& target);
         };
     }

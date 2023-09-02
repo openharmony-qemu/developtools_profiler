@@ -185,7 +185,7 @@ std::string SPUtils::GetTopPkgName()
 
 std::string SPUtils::GetRadar()
 {
-    std::string cmd = "hisysevent -r -o PERFROMANCE -n APP_START";
+    std::string cmd = "hisysevent -r -o PERFORMANCE -n APP_START";
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
