@@ -52,7 +52,7 @@ std::thread StartUpDelay::ThreadGetLayout()
 void StartUpDelay::InputEvent(const std::string &point)
 {
     std::string cmdResult = "";
-    int time = 3;
+    int time = 4;
     sleep(time);
     std::string cmd = "uinput -T -d " + point + " -u" + point;
     SPUtils::LoadCmd(cmd, cmdResult);

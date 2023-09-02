@@ -308,6 +308,7 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
             std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
             std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
             std::thread thGetHisysId = sd.ThreadGetHisysId();
+            sleep(1);
             std::string str = SPUtils::GetRadar();
             thGetTrace.join();
             thInputEvent.join();
