@@ -23,6 +23,10 @@ public:
     std::thread ThreadGetTrace(const std::string &sessionID, const std::string &traceName);
     void GetLayout();
     std::thread ThreadGetLayout();
+    void InputEvent(const std::string &point);
+    std::thread ThreadInputEvent(const std::string &point);
+    void GetHisysId();
+    std::thread ThreadGetHisysId();
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     std::string GetDeviceType();
