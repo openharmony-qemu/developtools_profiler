@@ -57,7 +57,8 @@ void StartUpDelay::InputEvent(const std::string &point)
     std::string cmd = "uinput -T -d " + point + " -u" + point;
     SPUtils::LoadCmd(cmd, cmdResult);
 }
-std::thread StartUpDelay::ThreadInputEvent(const std::string &point){
+std::thread StartUpDelay::ThreadInputEvent(const std::string &point)
+{
     std::thread thInputEvent(&StartUpDelay::InputEvent, this, point);
     return thInputEvent;
 }
@@ -69,14 +70,15 @@ void StartUpDelay::GetHisysId()
     SPUtils::LoadCmd("ps -ef |grep hisysevent", str);
     std::stringstream ss(str);
     std::string line = "";
-    getline(ss,line);
+    getline(ss, line);
     std::stringstream ss_line(line);
     std::string word = "";
     std::string second_str;
     int count = 0;
+    int num = 2;
     while (ss_line >> word) {
-        count ++;
-        if (count == 2) {
+        count++;
+        if (count == num) {
             second_str = word;
             break;
         }

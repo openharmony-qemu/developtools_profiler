@@ -40,6 +40,20 @@ namespace OHOS {
             time = std::stod(extract_string(string, target));
             return time;
         }
+        double Radar::ParseRadarResponse(std::string string)
+        {
+            double time = -1;
+            std::string target = "\"RESPONSE_LATENCY\":";
+            time = std::stod(extract_string(string, target));
+            return time;
+        }
+        double Radar::ParseRadarComplete(std::string string)
+        {
+            double time = -1;
+            std::string target = "\"RESPONSE_LATENCY\":";
+            time = std::stod(extract_string(string, target));
+            return time;
+        }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {
             size_t pos = str.find(target);
