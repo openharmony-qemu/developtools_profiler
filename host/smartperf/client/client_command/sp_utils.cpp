@@ -192,7 +192,7 @@ std::string SPUtils::GetRadar()
 }
 std::string SPUtils::GetRadarResponse()
 {
-    std::string cmd = "hisysevent -r -o GRAPHIC -n INTERACTION_RESPONSE_LATENY";
+    std::string cmd = "hisysevent -r -o GRAPHIC -n INTERACTION_RESPONSE_LATENCY";
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;

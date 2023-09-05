@@ -50,7 +50,7 @@ namespace OHOS {
         double Radar::ParseRadarComplete(std::string string)
         {
             double time = -1;
-            std::string target = "\"RESPONSE_LATENCY\":";
+            std::string target = "\"E2E_LATENCY\":";
             time = std::stod(extract_string(string, target));
             return time;
         }
