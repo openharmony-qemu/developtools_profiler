@@ -57,7 +57,11 @@ protected:
             g_hiprofilerProcessNum = processNum;
         }
 
+#ifdef COVERAGE_TEST
+        std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME * 5));
+#else
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME));
+#endif  // COVERAGE_TEST
     }
 
     static void TearDownTestCase()

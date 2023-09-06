@@ -26,6 +26,9 @@ config("cflags_config") {
     "-Dprivate=public",  #allow test code access private members
     "-Dprotected=public",  #allow test code access private members
   ]
+  if (use_clang_coverage) {
+    cflags += ["-DCOVERAGE_TEST"]
+  }
 }
 
 ohos_unittest("hiprofiler_plugins_ut") {
