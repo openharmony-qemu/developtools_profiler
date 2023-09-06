@@ -34,7 +34,11 @@ public:
     static void SetUpTestCase()
     {
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
-        sleep(1); // 睡眠1s确保hiprofilerd进程启动
+#ifdef COVERAGE_TEST
+        sleep(5);
+#else
+        sleep(1);  // 睡眠1s确保hiprofilerd进程启动
+#endif  // COVERAGE_TEST       
     }
     static void TearDownTestCase()
     {
