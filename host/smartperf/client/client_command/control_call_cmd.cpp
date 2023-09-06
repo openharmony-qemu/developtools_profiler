@@ -54,8 +54,8 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
         time = SmartPerf::ControlCallCmd::CompleteTime();
         stream << time;
         result = "time:" + stream.str();
-    }else if (v[typeName] == "startResponse") {
-        time = SmartPerf::ControlCallCmd::CompleteTime();
+    } else if (v[typeName] == "startResponse") {
+        time = SmartPerf::ControlCallCmd::StartResponse(v);
         stream << time;
         result = "time:" + stream.str();
     } else if (v[typeName] == "coldStartHM") {
