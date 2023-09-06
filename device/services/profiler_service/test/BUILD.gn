@@ -25,6 +25,9 @@ config("cflags_config") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
+  if (use_clang_coverage) {
+    cflags += ["-DCOVERAGE_TEST"]
+  }
 }
 
 ohos_unittest("profiler_service_ut") {
