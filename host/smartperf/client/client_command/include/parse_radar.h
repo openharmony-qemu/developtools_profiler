@@ -22,6 +22,8 @@ namespace OHOS {
             public:
                 double ParseRadarStart(std::string string);
                 double ParseRadarStartResponse(std::string string);
+                double ParseRadarResponse(std::string string);
+                double ParseRadarComplete(std::string string);
                 std::string extract_string(const std::string& str, const std::string& target);
         };
     }
