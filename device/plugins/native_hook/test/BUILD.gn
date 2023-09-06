@@ -75,7 +75,7 @@ ohos_unittest("nativehook_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
   if (use_clang_coverage) {
-    cflags += ["-DCOVERAGE_TEST"]
+    cflags += [ "-DCOVERAGE_TEST" ]
   }
 
   external_deps = [ "hilog:libhilog" ]

@@ -27,7 +27,7 @@ config("cflags_config") {
     "-Dprotected=public",  #allow test code access private members
   ]
   if (use_clang_coverage) {
-    cflags += ["-DCOVERAGE_TEST"]
+    cflags += [ "-DCOVERAGE_TEST" ]
   }
 }
 

@@ -45,7 +45,7 @@ ohos_unittest("cpudataplugin_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   if (use_clang_coverage) {
-    cflags += ["-DCOVERAGE_TEST"]
+    cflags += [ "-DCOVERAGE_TEST" ]
   }
   external_deps = [ "hilog:libhilog" ]
   configs = [ ":module_private_config" ]
