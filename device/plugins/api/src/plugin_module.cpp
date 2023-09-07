@@ -308,7 +308,7 @@ bool PluginModule::RegisterWriter(const BufferWriterPtr writer, bool isProtobufS
     isProtobufSerialize_ = isProtobufSerialize;
     writerAdapter_ = std::make_shared<WriterAdapter>(isProtobufSerialize);
     writerAdapter_->SetWriter(writer);
-    CHECK_NOTNULL(writer, false, "%s:bufferWriter is null, update WriterAdapter only!", __func__);
+    CHECK_NOTNULL(writer, true, "%s:bufferWriter is null, update WriterAdapter only!", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onRegisterWriterStruct != nullptr) {
             return structPtr_->callbacks->onRegisterWriterStruct(writerAdapter_->GetStruct());
