@@ -39,7 +39,7 @@ public:
 
 private:
     void Snapshot();
-    void FlushData();
+    void FlushData(const std::string& command = "");
     bool ClientConnectUnixWebSocket(const std::string& sockName, uint32_t timeoutLimit = 0);
     bool ClientSendWSUpgradeReq();
     bool ClientRecvWSUpgradeRsp();
@@ -51,6 +51,9 @@ private:
     bool DecodeMessage(WebSocketFrame& wsFrame);
     uint64_t NetToHostLongLong(char* buf, uint32_t len);
     bool Recv(int32_t client, char* buf, size_t totalLen, int32_t flags) const;
+    int32_t EnableTimeline();
+    int32_t EnableSnapshot();
+    int32_t EnableCpuProfiler();
 
 private:
     ArkTSConfig protoConfig_;
@@ -59,7 +62,6 @@ private:
     std::vector<char> buffer_;
     std::string snapshotCmd_;
     std::string timelineCmd_;
-    ScheduleTaskManager scheduleTaskManager_;
     int32_t client_{-1};
     enum SocketState : uint8_t {
         UNINITED,
@@ -67,6 +69,7 @@ private:
         CONNECTED,
     };
     std::atomic<SocketState> socketState_{SocketState::UNINITED};
+    uint8_t commandResult_{0};
 };
 
 #endif // ARKTS_PLUGIN_H
