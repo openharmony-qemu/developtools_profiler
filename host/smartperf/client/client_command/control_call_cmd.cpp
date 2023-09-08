@@ -28,6 +28,7 @@
 #include "include/parse_page_fps_trace.h"
 #include "include/parse_start_frame_trace.h"
 #include "include/parse_start_trace_noh.h"
+#include "include/parse_radar.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -51,6 +52,10 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
         result = "time:" + stream.str();
     } else if (v[typeName] == "completeTime") {
         time = SmartPerf::ControlCallCmd::CompleteTime();
+        stream << time;
+        result = "time:" + stream.str();
+    } else if (v[typeName] == "startResponse") {
+        time = SmartPerf::ControlCallCmd::StartResponse(v);
         stream << time;
         result = "time:" + stream.str();
     } else if (v[typeName] == "coldStartHM") {
@@ -134,14 +139,17 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
 }
 double ControlCallCmd::ResponseTime()
 {
-    OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
+    std::thread thGetHisysId = sd.ThreadGetHisysId();
+    std::string str = SPUtils::GetRadarResponse();
     thGetTrace.join();
-    time = pcrt.ParseResponseTrace(traceName);
+    thGetHisysId.join();
+    time = radar.ParseRadarResponse(str);
     return time;
 }
 double ControlCallCmd::ColdStartHM(std::vector<std::string> v)
@@ -162,11 +170,15 @@ double ControlCallCmd::CompleteTime()
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseClickCompleteTrace pcct;
     std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
+    std::thread thGetHisysId = sd.ThreadGetHisysId();
+    std::string str = SPUtils::GetRadarComplete();
     thGetTrace.join();
-    time = pcct.ParseCompleteTrace(traceName);
+    thGetHisysId.join();
+    time = radar.ParseRadarComplete(str);
     return time;
 }
 double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
@@ -195,10 +207,11 @@ double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     double fps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
     return fps;
 }
-double ControlCallCmd::ColdStart(std::vector<std::string> v)
+double ControlCallCmd::StartResponse(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
+    OHOS::SmartPerf::Radar radar;
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
@@ -211,21 +224,61 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
     std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
     std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "startResponse" + ".ftrace";
     if (sd.pointXY == "0 0") {
         return noNameType;
     } else {
-        std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
-        std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
-        std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
-        sleep(1);
-        SPUtils::LoadCmd(cmd, cmdResult);
-        sleep(1);
-        std::string pid = sd.GetPidByPkg(v[typePKG]);
+        std::thread thGetTrace = sd.ThreadGetTrace("startResponse", traceName);
+        std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
+        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::string str = SPUtils::GetRadar();
         thGetTrace.join();
+        thInputEvent.join();
+        thGetHisysId.join();
+        time = radar.ParseRadarStartResponse(str);
+        return time;
+    }
+}
+double ControlCallCmd::ColdStart(std::vector<std::string> v)
+{
+    OHOS::SmartPerf::StartUpDelay sd;
+    OHOS::SmartPerf::ParseTrace parseTrace;
+    OHOS::SmartPerf::Radar radar;
+    std::string cmdResult;
+    int type = 4;
+    int typePKG = 3;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+    sleep(1);
+    size_t position = cmdResult.find(":");
+    size_t position2 = cmdResult.find("json");
+    std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
+    std::string deviceType = sd.GetDeviceType();
+    sd.InitXY2(v[type], pathJson, v[typePKG]);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
+    if (sd.pointXY == "0 0") {
+        return noNameType;
+    } else {
         if (isOhTest) {
+            std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+            std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+            sleep(1);
+            SPUtils::LoadCmd(cmd, cmdResult);
+            sleep(1);
+            std::string pid = sd.GetPidByPkg(v[typePKG]);
+            thGetTrace.join();
             time = parseTrace.ParseTraceCold(traceName, pid);
         } else {
-            time = parseTrace.ParseTraceNoh(traceName, pid);
+            std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+            std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
+            std::thread thGetHisysId = sd.ThreadGetHisysId();
+            sleep(1);
+            std::string str = SPUtils::GetRadar();
+            thGetTrace.join();
+            thInputEvent.join();
+            thGetHisysId.join();
+            time = radar.ParseRadarStart(str);
         }
         return time;
     }
@@ -234,6 +287,7 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
+    OHOS::SmartPerf::Radar radar;
     std::string cmdResult;
     std::string deviceType = sd.GetDeviceType();
     if (isOhTest) {
@@ -260,14 +314,18 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
             SPUtils::LoadCmd(cmd, cmdResult);
             sleep(1);
             sd.ChangeToBackground();
+            sleep(1);
             std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
             std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
+            std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
+            std::thread thGetHisysId = sd.ThreadGetHisysId();
             sleep(1);
-            SPUtils::LoadCmd(cmd, cmdResult);
-            sleep(1);
-            std::string pid = sd.GetPidByPkg(v[typePKG]);
+            std::string str = SPUtils::GetRadar();
             thGetTrace.join();
-            return parseTrace.ParseTraceNoh(traceName, pid);
+            thInputEvent.join();
+            thGetHisysId.join();
+            time = radar.ParseRadarStart(str);
+            return time;
         }
     }
 }

@@ -18,6 +18,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <regex>
 #include "unistd.h"
 #include "include/startup_delay.h"
@@ -47,6 +48,47 @@ std::thread StartUpDelay::ThreadGetLayout()
 {
     std::thread thGetLayout(&StartUpDelay::GetLayout, this);
     return thGetLayout;
+}
+void StartUpDelay::InputEvent(const std::string &point)
+{
+    std::string cmdResult = "";
+    int time = 4;
+    sleep(time);
+    std::string cmd = "uinput -T -d " + point + " -u" + point;
+    SPUtils::LoadCmd(cmd, cmdResult);
+}
+std::thread StartUpDelay::ThreadInputEvent(const std::string &point)
+{
+    std::thread thInputEvent(&StartUpDelay::InputEvent, this, point);
+    return thInputEvent;
+}
+void StartUpDelay::GetHisysId()
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep hisysevent", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ss_line(line);
+    std::string word = "";
+    std::string second_str;
+    int count = 0;
+    int num = 2;
+    while (ss_line >> word) {
+        count++;
+        if (count == num) {
+            second_str = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + second_str, str);
+}
+std::thread StartUpDelay::ThreadGetHisysId()
+{
+    std::thread thGetHisysId(&StartUpDelay::GetHisysId, this);
+    return thGetHisysId;
 }
 void StartUpDelay::ChangeToBackground()
 {

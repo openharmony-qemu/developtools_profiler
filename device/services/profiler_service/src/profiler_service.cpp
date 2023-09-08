@@ -475,7 +475,7 @@ Status ProfilerService::StartSession(ServerContext* context,
                                      ::StartSessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
- 
+
     uint32_t sessionId = request->session_id();
     HILOG_INFO(LOG_CORE, "StartSession %d %u start", request->request_id(), sessionId);
 
@@ -642,7 +642,6 @@ Status ProfilerService::DestroySession(ServerContext* context,
                                             ::KeepSessionResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    
     uint32_t sessionId = request->session_id();
     HILOG_INFO(LOG_CORE, "KeepSession %d %u start", request->request_id(), sessionId);
 

@@ -27,6 +27,7 @@ public:
     double HotStart(std::vector<std::string> v);
     double CompleteTime();
     double ResponseTime();
+    double StartResponse(std::vector<std::string> v);
     static std::string SlideFPS(std::vector<std::string> v);
     static std::string SlideFps(std::vector<std::string> v);
     double PageFps();

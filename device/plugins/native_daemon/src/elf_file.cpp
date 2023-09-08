@@ -15,8 +15,6 @@
 
 #include <elf_parser.h>
 
-#include "logging.h"
-
 using namespace OHOS::Developtools::NativeDaemon::ELF;
 namespace OHOS {
 namespace Developtools {
@@ -62,25 +60,25 @@ ElfFile::~ElfFile()
 std::unique_ptr<ElfFile> ElfFile::MakeUnique(const std::string &filename)
 {
     std::unique_ptr<ElfFile> file {new (std::nothrow) ElfFile(filename)};
-    CHECK_NOTNULL(file, nullptr, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
-    CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended");
-    CHECK_TRUE(file->ParseFile(), nullptr, "parse elf file failed");
+    UNWIND_CHECK_NOTNULL(file, nullptr, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
+    UNWIND_CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended: %s", filename.c_str());
+    UNWIND_CHECK_TRUE(file->ParseFile(), nullptr, "parse elf file failed: %s", filename.c_str());
     return file;
 }
 
 bool ElfFile::ParseFile()
 {
-    CHECK_TRUE(ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
-    CHECK_TRUE(ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
-    CHECK_TRUE(ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
-    CHECK_TRUE(ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
+    UNWIND_CHECK_TRUE(ParseElfHeader(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseElfHeader() failed");
+    UNWIND_CHECK_TRUE(ParsePrgHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParsePrgHeaders() failed");
+    UNWIND_CHECK_TRUE(ParseSecNamesStr(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecNamesStr() failed");
+    UNWIND_CHECK_TRUE(ParseSecHeaders(), false, "Error in ElfFile::MakeUnique(): ElfFile::ParseSecHeaders() failed");
     return true;
 }
 
 bool ElfFile::ParseElfHeader()
 {
     size_t ret = lseek(fd_, 0, SEEK_SET);
-    CHECK_TRUE(ret == 0, false, "lseek ret %zu", ret);
+    UNWIND_CHECK_TRUE(ret == 0, false, "lseek ret %zu", ret);
     HLOG_ASSERT(ret == 0);
     unsigned char ehdrBuf[ehdr64Size] {0};
     ret = ReadFile(ehdrBuf, ehdr64Size);
@@ -100,7 +98,7 @@ bool ElfFile::ParsePrgHeaders()
     int64_t ret = lseek(fd_, phdrOffset, SEEK_SET);
     HLOG_ASSERT(ret == static_cast<int64_t>(phdrOffset));
     char *phdrsBuf = new (std::nothrow) char[phdrSize * numPhdrs];
-    CHECK_NOTNULL(phdrsBuf, false, "Error in ELF::ElfFile::ParsePrgHeaders(): new failed");
+    UNWIND_CHECK_NOTNULL(phdrsBuf, false, "Error in ELF::ElfFile::ParsePrgHeaders(): new failed");
     if (memset_s(phdrsBuf, phdrSize * numPhdrs, 0, phdrSize * numPhdrs) != EOK) {
         HLOGE("memset_s failed");
     }
@@ -136,7 +134,7 @@ bool ElfFile::ParseSecNamesStr()
     int64_t ret = lseek(fd_, shdrOffset, SEEK_SET);
     HLOG_ASSERT(ret == static_cast<int64_t>(shdrOffset));
     char *shdrBuf = new (std::nothrow) char[shdrSize];
-    CHECK_NOTNULL(shdrBuf, false, "Error in ElfFile::ParseSecNamesStr(): new failed");
+    UNWIND_CHECK_NOTNULL(shdrBuf, false, "Error in ElfFile::ParseSecNamesStr(): new failed");
     if (memset_s(shdrBuf, shdrSize, 0, shdrSize) != EOK) {
         HLOGE("memset_s failed");
     }
@@ -188,7 +186,7 @@ bool ElfFile::ParseSecHeaders()
     int64_t ret = lseek(fd_, shdrOffset, SEEK_SET);
     HLOG_ASSERT(ret == static_cast<int64_t>(shdrOffset));
     char *shdrsBuf = new (std::nothrow) char[shdrSize * numShdrs];
-    CHECK_NOTNULL(shdrsBuf, false, "Error in ELF::ElfFile::ParseSecHeaders(): new failed");
+    UNWIND_CHECK_NOTNULL(shdrsBuf, false, "Error in ELF::ElfFile::ParseSecHeaders(): new failed");
     if (memset_s(shdrsBuf, shdrSize * numShdrs, '\0', shdrSize * numShdrs) != EOK) {
         HLOGE("memset_s failed");
     }
@@ -237,7 +235,7 @@ bool ElfFile::ParseSymTable(const SectionHeader *shdr)
     uint64_t secSize = shdr->secSize_;
     uint64_t entrySize = shdr->secEntrySize_;
     char *secBuf = new (std::nothrow) char[secSize];
-    CHECK_NOTNULL(secBuf, false, "Error in EFL::ElfFile::ParseSymTable(): new failed");
+    UNWIND_CHECK_NOTNULL(secBuf, false, "Error in EFL::ElfFile::ParseSymTable(): new failed");
     ret = ReadFile(secBuf, secSize);
     HLOG_ASSERT(ret == static_cast<int64_t>(secSize));
     symTable_ = SymbolTable::MakeUnique(symNamesStr_, secBuf, secSize, entrySize);

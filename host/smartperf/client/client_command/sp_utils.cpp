@@ -183,6 +183,27 @@ std::string SPUtils::GetTopPkgName()
     return topPkg;
 }
 
+std::string SPUtils::GetRadar()
+{
+    std::string cmd = "hisysevent -r -o PERFORMANCE -n APP_START";
+    std::string curRadar = "";
+    LoadCmd(cmd, curRadar);
+    return curRadar;
+}
+std::string SPUtils::GetRadarResponse()
+{
+    std::string cmd = "hisysevent -r -o GRAPHIC -n INTERACTION_RESPONSE_LATENCY";
+    std::string curRadar = "";
+    LoadCmd(cmd, curRadar);
+    return curRadar;
+}
+std::string SPUtils::GetRadarComplete()
+{
+    std::string cmd = "hisysevent -r -o GRAPHIC -n INTERACTION_COMPLETED_LATENCY";
+    std::string curRadar = "";
+    LoadCmd(cmd, curRadar);
+    return curRadar;
+}
 static std::string GetSplitOne(std::string cmd)
 {
     std::string result;
