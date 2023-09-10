@@ -74,6 +74,7 @@ ohos_source_set("hiebpf.bpf") {
   if (use_libfuzzer) {
     remove_configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
   }
+  cflags_c = [ "-fno-lto" ]
   sources = [ "./src/hiebpf.bpf.c" ]
   configs = [
     ":common_config",
