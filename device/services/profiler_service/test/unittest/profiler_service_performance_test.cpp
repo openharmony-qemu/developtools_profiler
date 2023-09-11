@@ -127,16 +127,17 @@ protected:
     void StartDependServerStub()
     {
 #ifdef COVERAGE_TEST
+        const int coverage_sleep_time = 5; // sleep 5s
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
-        sleep(5); // UT 覆盖率版本等待5s
+        sleep(coverage_sleep_time);        // UT 覆盖率版本等待5s
         StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-        sleep(5);
+        sleep(coverage_sleep_time);
 #else
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
-        sleep(1);  // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
+        sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
         StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-        sleep(1);  // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-#endif  // COVERAGE_TEST
+        sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
+#endif
     }
 
     void StopProcessStub(int processNum)

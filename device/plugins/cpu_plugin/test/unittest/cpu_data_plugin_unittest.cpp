@@ -935,10 +935,11 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
     }
 
 #ifdef COVERAGE_TEST
-    sleep(5);
+    const int coverage_sleep_time = 5; // sleep 5s
+    sleep(coverage_sleep_time);
 #else
-    sleep(1);  // 睡眠1s，确保pid1进入睡眠状态，pid2进入while循环
-#endif  // COVERAGE_TEST
+    sleep(1); // 睡眠1s，确保pid1进入睡眠状态，pid2进入while循环
+#endif // COVERAGE_TEST
     EXPECT_TRUE(PluginCpuinfoStub(plugin1, cpuData1, static_cast<int>(pid1), false, false));
     EXPECT_TRUE(PluginCpuinfoStub(plugin2, cpuData2, static_cast<int>(pid2), false, false));
     EXPECT_LT(cpuData1.cpu_usage_info().process_cpu_time_ms(), cpuData2.cpu_usage_info().process_cpu_time_ms());

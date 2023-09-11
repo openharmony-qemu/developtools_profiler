@@ -58,10 +58,11 @@ protected:
         }
 
 #ifdef COVERAGE_TEST
-        std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME * 5));
+        const int coverage_sleep_time = DEFAULT_SLEEP_TIME * 5; // sleep 5s
+        std::this_thread::sleep_for(std::chrono::milliseconds(coverage_sleep_time));
 #else
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME));
-#endif  // COVERAGE_TEST
+#endif
     }
 
     static void TearDownTestCase()

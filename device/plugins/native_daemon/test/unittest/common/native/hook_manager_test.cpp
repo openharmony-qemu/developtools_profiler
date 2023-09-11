@@ -35,10 +35,11 @@ public:
     {
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
 #ifdef COVERAGE_TEST
-        sleep(5);
+        const int coverage_sleep_time = 5; // sleep 5s
+        sleep(coverage_sleep_time);
 #else
-        sleep(1);  // 睡眠1s确保hiprofilerd进程启动
-#endif  // COVERAGE_TEST       
+        sleep(1); // 睡眠1s确保hiprofilerd进程启动
+#endif
     }
     static void TearDownTestCase()
     {
