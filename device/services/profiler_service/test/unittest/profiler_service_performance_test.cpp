@@ -124,6 +124,21 @@ protected:
             hiprofilerPluginsPid_ = processNum;
         }
     }
+    void StartDependServerStub()
+    {
+#ifdef COVERAGE_TEST
+        const int coverageSleepTime = 5; // sleep 5s
+        StartServerStub(DEFAULT_HIPROFILERD_PATH);
+        sleep(coverageSleepTime);        // UT 覆盖率版本等待5s
+        StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+        sleep(coverageSleepTime);
+#else
+        StartServerStub(DEFAULT_HIPROFILERD_PATH);
+        sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
+        StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+        sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
+#endif
+    }
 
     void StopProcessStub(int processNum)
     {
@@ -520,12 +535,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | Med
     StartIdleProcess();
     StartRequestMemoryProcess(requestMemoryPid);
 
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(ROUND_COUNT, capResponse));
@@ -757,12 +767,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
     ASSERT_TRUE(profilerStub_ != nullptr);
     StartIdleProcess();
 
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(ROUND_COUNT, capResponse));
@@ -993,13 +998,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | MediumTest | Level1)
 {
     ASSERT_TRUE(profilerStub_ != nullptr);
-
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(ROUND_COUNT, capResponse));
@@ -1141,12 +1140,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
 {
     ASSERT_TRUE(profilerStub_ != nullptr);
 
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(ROUND_COUNT, capResponse));
@@ -1274,13 +1268,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | MediumTest | Level1)
 {
     ASSERT_TRUE(profilerStub_ != nullptr);
-
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(ROUND_COUNT, capResponse));
@@ -1417,13 +1405,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | MediumTest | Level1)
 {
     ASSERT_TRUE(profilerStub_ != nullptr);
-
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(ROUND_COUNT, capResponse));
@@ -1525,7 +1507,6 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | Med
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0070, Function | MediumTest | Level1)
 {
     ASSERT_TRUE(profilerStub_ != nullptr);
-
     uint32_t sessionId;
     GetCapabilitiesResponse capResponse1;
     EXPECT_FALSE(GetPluginCapabilities(1, capResponse1));
@@ -1534,13 +1515,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0070, Function | Med
     EXPECT_FALSE(StartPluginSession(sessionId));
     EXPECT_FALSE(StartPluginSession(sessionId));
     EXPECT_FALSE(DestroyPluginSession(sessionId));
-
-    StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程
-    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-
-    sleep(1); // 睡眠1s确保hiprofiler_plugins进程可以监控到插件
-
+    StartDependServerStub();
     Timer timer = {};
     GetCapabilitiesResponse capResponse;
     EXPECT_TRUE(GetPluginCapabilities(1, capResponse));
