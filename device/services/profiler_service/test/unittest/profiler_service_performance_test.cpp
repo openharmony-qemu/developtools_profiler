@@ -127,11 +127,11 @@ protected:
     void StartDependServerStub()
     {
 #ifdef COVERAGE_TEST
-        const int coverage_sleep_time = 5; // sleep 5s
+        const int coverageSleepTime = 5; // sleep 5s
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
-        sleep(coverage_sleep_time);        // UT 覆盖率版本等待5s
+        sleep(coverageSleepTime);        // UT 覆盖率版本等待5s
         StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-        sleep(coverage_sleep_time);
+        sleep(coverageSleepTime);
 #else
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
         sleep(1); // 睡眠1s确保hiprofilerd进程启动之后再启动hiprofiler_plugins进程

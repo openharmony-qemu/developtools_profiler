@@ -935,8 +935,8 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
     }
 
 #ifdef COVERAGE_TEST
-    const int coverage_sleep_time = 5; // sleep 5s
-    sleep(coverage_sleep_time);
+    const int coverageSleepTime = 5; // sleep 5s
+    sleep(coverageSleepTime);
 #else
     sleep(1); // 睡眠1s，确保pid1进入睡眠状态，pid2进入while循环
 #endif // COVERAGE_TEST

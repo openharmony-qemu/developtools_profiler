@@ -35,8 +35,8 @@ public:
     {
         StartServerStub(DEFAULT_HIPROFILERD_PATH);
 #ifdef COVERAGE_TEST
-        const int coverage_sleep_time = 5; // sleep 5s
-        sleep(coverage_sleep_time);
+        const int coverageSleepTime = 5; // sleep 5s
+        sleep(coverageSleepTime);
 #else
         sleep(1); // 睡眠1s确保hiprofilerd进程启动
 #endif

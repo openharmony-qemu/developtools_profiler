@@ -81,7 +81,7 @@ config("native_daemon_test_config") {
     ldflags += [ "--coverage" ]
   }
   if (use_clang_coverage) {
-    cflags += [ "-DCOVERAGE_TEST" ]
+    defines += [ "COVERAGE_TEST" ]
   }
   defines += [ "DEFAULT_LOG_LEVEL=LEVEL_VERBOSE" ]
   defines += [ "is_ohos=1" ]

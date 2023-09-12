@@ -58,8 +58,8 @@ protected:
         }
 
 #ifdef COVERAGE_TEST
-        const int coverage_sleep_time = DEFAULT_SLEEP_TIME * 5; // sleep 5s
-        std::this_thread::sleep_for(std::chrono::milliseconds(coverage_sleep_time));
+        const int coverageSleepTime = DEFAULT_SLEEP_TIME * 5; // sleep 5s
+        std::this_thread::sleep_for(std::chrono::milliseconds(coverageSleepTime));
 #else
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME));
 #endif

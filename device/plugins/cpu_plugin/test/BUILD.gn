@@ -20,6 +20,9 @@ config("module_private_config") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
   }
+  if (use_clang_coverage) {
+    defines += [ "COVERAGE_TEST" ]
+  }
 }
 
 ohos_unittest("cpudataplugin_ut") {
@@ -44,9 +47,6 @@ ohos_unittest("cpudataplugin_ut") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  if (use_clang_coverage) {
-    cflags += [ "-DCOVERAGE_TEST" ]
-  }
   external_deps = [ "hilog:libhilog" ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

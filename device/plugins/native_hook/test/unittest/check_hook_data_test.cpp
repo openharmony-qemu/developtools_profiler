@@ -373,10 +373,10 @@ public:
     void StartAndStopHook()
     {
 #ifdef COVERAGE_TEST
-        const int coverage_sleep_time = 5; // sleep 5s
-        sleep(coverage_sleep_time);
+        const int coverageSleepTime = 5; // sleep 5s
+        sleep(coverageSleepTime);
         StartDaemonProcessArgs();
-        sleep(coverage_sleep_time);
+        sleep(coverageSleepTime);
 #else
         sleep(1);
         StartDaemonProcessArgs();
