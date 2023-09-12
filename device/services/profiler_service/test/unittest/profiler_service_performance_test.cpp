@@ -221,7 +221,6 @@ protected:
         ppc->set_name("hilog-plugin");
         ppc->set_sample_interval(SAMPLE_INTERVAL);
         HilogConfig hc;
-        hc.set_device_type(Type::HI3516);
         hc.set_need_record(true);
         hc.set_need_clear(true);
         std::vector<uint8_t> configData(hc.ByteSizeLong());
