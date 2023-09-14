@@ -14,6 +14,8 @@
  */
 #include "sample_plugin.h"
 
+#include <ctime>
+
 #include "sample_plugin_result.pbencoder.h"
 #include "securec.h"
 
