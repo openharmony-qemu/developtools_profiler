@@ -57,8 +57,10 @@ int SamplePlugin::ReportOptimize(RandomWriteCtx* randomWrite)
     ProtoEncoder::SampleData dataProto(randomWrite);
 
     // 回填数据
-    int intData = rand() % MAX_INT;
-    double doubleData = rand() % MAX_DOUBLE;
+    std::srand(std::time(nullptr));
+    int intRand = std::rand();
+    int intData = intRand % MAX_INT;
+    double doubleData = intRand % MAX_DOUBLE;
     dataProto.set_time_ms(GetTimeMS());
     dataProto.set_int_data(intData);
     dataProto.set_double_data(doubleData);
@@ -72,8 +74,10 @@ int SamplePlugin::Report(uint8_t* data, uint32_t dataSize)
     SampleData dataProto;
 
     // 回填数据
-    int intData = rand() % MAX_INT;
-    double doubleData = rand() % MAX_DOUBLE;
+    std::srand(std::time(nullptr));
+    int intRand = std::rand();
+    int intData = intRand % MAX_INT;
+    double doubleData = intRand % MAX_DOUBLE;
     dataProto.set_time_ms(GetTimeMS());
     dataProto.set_int_data(intData);
     dataProto.set_double_data(doubleData);
