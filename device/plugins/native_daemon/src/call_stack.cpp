@@ -273,7 +273,7 @@ int CallStack::AccessMem([[maybe_unused]] unw_addr_space_t as, unw_word_t addr,
 
     /* Check overflow. */
     UNWIND_CHECK_TRUE(addr + sizeof(unw_word_t) >= addr, -UNW_EUNSPEC,
-               "address overfolw at 0x%" UNW_WORD_PFLAG " increase 0x%zu", addr, sizeof(unw_word_t));
+        "address overfolw at 0x%" UNW_WORD_PFLAG " increase 0x%zu", addr, sizeof(unw_word_t));
 
     if (addr < unwindInfoPtr->callStack.stackPoint_ or
         addr + sizeof(unw_word_t) >= unwindInfoPtr->callStack.stackEnd_) {
@@ -311,8 +311,8 @@ int CallStack::AccessReg([[maybe_unused]] unw_addr_space_t as, unw_regnum_t regn
     if (unwindInfoPtr->callStack.regsNum_ == 0) {
         return -UNW_EUNSPEC;
     }
-    UNWIND_CHECK_TRUE(RegisterGetValue(val, unwindInfoPtr->callStack.regs_, perfRegIndex, unwindInfoPtr->callStack.regsNum_),
-               -UNW_EUNSPEC, "can't read reg %zu", perfRegIndex);
+    UNWIND_CHECK_TRUE(RegisterGetValue(val, unwindInfoPtr->callStack.regs_, perfRegIndex,
+    unwindInfoPtr->callStack.regsNum_), -UNW_EUNSPEC, "can't read reg %zu", perfRegIndex);
     *valuePoint = (unw_word_t)val;
     HLOGV("reg %d:%s, val 0x%" UNW_WORD_PFLAG "", regnum, RegisterGetName(perfRegIndex).c_str(),
           *valuePoint);

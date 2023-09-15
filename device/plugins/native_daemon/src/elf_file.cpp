@@ -61,7 +61,8 @@ std::unique_ptr<ElfFile> ElfFile::MakeUnique(const std::string &filename)
 {
     std::unique_ptr<ElfFile> file {new (std::nothrow) ElfFile(filename)};
     UNWIND_CHECK_NOTNULL(file, nullptr, "Error in ElfFile::MakeUnique(): ElfFile::ElfFile() failed");
-    UNWIND_CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended: %s", filename.c_str());
+    UNWIND_CHECK_TRUE(file->IsOpened(), nullptr, "Error in ElfFile::MakeUnique(): elf file not opended: %s",
+    filename.c_str());
     UNWIND_CHECK_TRUE(file->ParseFile(), nullptr, "parse elf file failed: %s", filename.c_str());
     return file;
 }
