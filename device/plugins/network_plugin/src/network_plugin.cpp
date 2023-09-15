@@ -13,13 +13,16 @@
  * limitations under the License.
  */
 #include "network_plugin.h"
-#include "buffer_splitter.h"
-#include "securec.h"
 
 #include <string>
 #include <sys/stat.h>
 
+#include "buffer_splitter.h"
+#include "network_plugin_result.pbencoder.h"
+#include "securec.h"
+
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 const std::string DEFAULT_NET_PATH("/proc/net/xt_qtaguid/stats");
 } // namespace
@@ -49,9 +52,8 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return 0;
 }
 
-int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
+template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
 {
-    NetworkDatas dataProto;
     std::string file = GetRateNodePath();
     if (protoConfig_.test_file() != "") {
         file = protoConfig_.test_file();
@@ -59,23 +61,23 @@ int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
 
     struct stat s;
     lstat(file.c_str(), &s);
-    CHECK_TRUE(!S_ISDIR(s.st_mode), -1, "%s:path(%s) is directory, no data to report", __func__, file.c_str());
+    CHECK_TRUE(!S_ISDIR(s.st_mode), false, "%s:path(%s) is directory, no data to report", __func__, file.c_str());
 
     char realPath[PATH_MAX + 1] = {0};
-    CHECK_TRUE((file.length() < PATH_MAX) && (realpath(file.c_str(), realPath) != nullptr), -1,
+    CHECK_TRUE((file.length() < PATH_MAX) && (realpath(file.c_str(), realPath) != nullptr), false,
                "%s:path is invalid: %s, errno=%d", __func__, file.c_str(), errno);
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(fopen(realPath, "r"), fclose);
-    CHECK_NOTNULL(fp_, -1, "%s:NetworkPlugin, open(%s) Failed, errno(%d)", __func__, file.c_str(), errno);
+    CHECK_NOTNULL(fp_, false, "%s:NetworkPlugin, open(%s) Failed, errno(%d)", __func__, file.c_str(), errno);
 
     if (protoConfig_.pid().size() > 0) {
         for (int i = 0; i < protoConfig_.pid().size(); i++) {
-            auto* info = dataProto.add_networkinfo();
+            auto* info = networkDatasProto.add_networkinfo();
             int32_t pid = protoConfig_.pid(i);
             NetworkCell dataCell = {0};
             ReadTxRxBytes(pid, dataCell);
             // set proto
             for (auto& it : dataCell.details) {
-                NetworkDetails* data = info->add_details();
+                auto* data = info->add_details();
                 data->set_tx_bytes(it.tx);
                 data->set_rx_bytes(it.rx);
                 data->set_type(it.type);
@@ -91,9 +93,9 @@ int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
         ReadSystemTxRxBytes(systemData);
         static int randNum = 0;
         randNum++;
-        auto* systemInfo = dataProto.mutable_network_system_info();
+        auto* systemInfo = networkDatasProto.mutable_network_system_info();
         for (auto& it : systemData.details) {
-            NetworkSystemDetails* data = systemInfo->add_details();
+            auto* data = systemInfo->add_details();
             data->set_rx_bytes(it.rxBytes + randNum * RX_BYTES_INDEX);
             data->set_rx_packets(it.rxPackets + randNum * RX_PACKETS_INDEX);
             data->set_tx_bytes(it.txBytes + randNum * TX_BYTES_INDEX);
@@ -109,9 +111,9 @@ int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
     } else { // real data
         NetSystemData systemData = {};
         ReadSystemTxRxBytes(systemData);
-        auto* systemInfo = dataProto.mutable_network_system_info();
+        auto* systemInfo = networkDatasProto.mutable_network_system_info();
         for (auto& it : systemData.details) {
-            NetworkSystemDetails* data = systemInfo->add_details();
+            auto* data = systemInfo->add_details();
             data->set_rx_bytes(it.rxBytes);
             data->set_rx_packets(it.rxPackets);
             data->set_tx_bytes(it.txBytes);
@@ -125,6 +127,23 @@ int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
         systemInfo->set_tx_bytes(systemData.txBytes);
         systemInfo->set_tx_packets(systemData.txPackets);
     }
+
+    return true;
+}
+
+int NetworkPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+{
+    ProtoEncoder::NetworkDatas dataProto(randomWrite);
+    CHECK_TRUE(WriteNetWorkData(dataProto), -1, "%s:write network data failed", __func__);
+
+    int msgSize = dataProto.Finish();
+    return msgSize;
+}
+
+int NetworkPlugin::Report(uint8_t* data, uint32_t dataSize)
+{
+    NetworkDatas dataProto;
+    CHECK_TRUE(WriteNetWorkData(dataProto), -1, "%s:write network data failed", __func__);
 
     uint32_t length = dataProto.ByteSizeLong();
     if (length > dataSize) {

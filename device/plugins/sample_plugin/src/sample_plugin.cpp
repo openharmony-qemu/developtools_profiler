@@ -14,8 +14,13 @@
  */
 #include "sample_plugin.h"
 
+#include <ctime>
+
+#include "sample_plugin_result.pbencoder.h"
 #include "securec.h"
+
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr int MAX_INT = 10;
 constexpr int MAX_DOUBLE = 100;
 } // namespace
@@ -49,13 +54,32 @@ int SamplePlugin::Start(const uint8_t* configData, uint32_t configSize)
     return 0;
 }
 
+int SamplePlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+{
+    ProtoEncoder::SampleData dataProto(randomWrite);
+
+    // 回填数据
+    std::srand(std::time(nullptr));
+    int intRand = std::rand();
+    int intData = intRand % MAX_INT;
+    double doubleData = intRand % MAX_DOUBLE;
+    dataProto.set_time_ms(GetTimeMS());
+    dataProto.set_int_data(intData);
+    dataProto.set_double_data(doubleData);
+
+    int msgSize = dataProto.Finish();
+    return msgSize;
+}
+
 int SamplePlugin::Report(uint8_t* data, uint32_t dataSize)
 {
     SampleData dataProto;
 
     // 回填数据
-    int intData = rand() % MAX_INT;
-    double doubleData = rand() % MAX_DOUBLE;
+    std::srand(std::time(nullptr));
+    int intRand = std::rand();
+    int intData = intRand % MAX_INT;
+    double doubleData = intRand % MAX_DOUBLE;
     dataProto.set_time_ms(GetTimeMS());
     dataProto.set_int_data(intData);
     dataProto.set_double_data(doubleData);
@@ -64,7 +88,6 @@ int SamplePlugin::Report(uint8_t* data, uint32_t dataSize)
     CHECK_TRUE(length <= dataSize, -length, "%s:Report failed!", __func__);
     // 序列化
     if (dataProto.SerializeToArray(data, length) > 0) {
-        HILOG_DEBUG(LOG_CORE, "%s:report success! length = %d", __func__, length);
         return length;
     }
     return 0;

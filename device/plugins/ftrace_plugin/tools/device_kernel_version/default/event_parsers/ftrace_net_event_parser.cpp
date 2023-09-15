@@ -16,199 +16,280 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    napi_gro_frags_entry,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void napi_gro_frags_entry_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_frags_entry,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_napi_gro_frags_entry_format();
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        napi_gro_frags_entry_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_frags_entry,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_napi_gro_frags_entry_format();
+        napi_gro_frags_entry_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    napi_gro_receive_entry,
+template <typename T> void napi_gro_receive_entry_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_receive_entry,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_napi_gro_receive_entry_format();
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        napi_gro_receive_entry_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_receive_entry,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_napi_gro_receive_entry_format();
+        napi_gro_receive_entry_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    net_dev_queue,
+template <typename T> void net_dev_queue_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_queue,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_net_dev_queue_format();
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        net_dev_queue_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_queue,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_net_dev_queue_format();
+        net_dev_queue_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    net_dev_start_xmit,
+template <typename T> void net_dev_start_xmit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_network_offset(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_transport_offset_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_transport_offset(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_tx_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_segs(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_start_xmit,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_net_dev_start_xmit_format();
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_network_offset(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_transport_offset_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_transport_offset(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_tx_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_segs(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        net_dev_start_xmit_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_start_xmit,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_net_dev_start_xmit_format();
+        net_dev_start_xmit_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    net_dev_xmit,
+template <typename T> void net_dev_xmit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_rc(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_xmit,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_net_dev_xmit_format();
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_rc(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        net_dev_xmit_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_xmit,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_net_dev_xmit_format();
+        net_dev_xmit_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    netif_receive_skb,
+template <typename T> void netif_receive_skb_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_netif_receive_skb_format();
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        netif_receive_skb_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_netif_receive_skb_format();
+        netif_receive_skb_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    netif_receive_skb_entry,
+template <typename T> void netif_receive_skb_entry_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb_entry,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_netif_receive_skb_entry_format();
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        netif_receive_skb_entry_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb_entry,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_netif_receive_skb_entry_format();
+        netif_receive_skb_entry_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    netif_rx,
+template <typename T> void netif_rx_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_netif_rx_format();
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        netif_rx_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_netif_rx_format();
+        netif_rx_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    netif_rx_entry,
+template <typename T> void netif_rx_entry_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx_entry,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_netif_rx_entry_format();
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        netif_rx_entry_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx_entry,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_netif_rx_entry_format();
+        netif_rx_entry_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    netif_rx_ni_entry,
+template <typename T> void netif_rx_ni_entry_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx_ni_entry,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_netif_rx_ni_entry_format();
-        msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_napi_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_queue_mapping(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_skbaddr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_vlan_tagged(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_proto(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_vlan_tci(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_protocol(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_ip_summed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_l4_hash(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_data_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_truesize(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header_valid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_mac_header(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_nr_frags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_size(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_gso_type(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        netif_rx_ni_entry_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx_ni_entry,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_netif_rx_ni_entry_format();
+        netif_rx_ni_entry_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

@@ -165,4 +165,14 @@
             <option name="uninstall" value="com.ohos.distributedmusicplayer"/>
         </cleaner>
     </target>
+    <target name="ftrace_plugin_ut">
+        <preparer>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_0 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_1 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_2 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_3 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_tgid -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_comm -> /data/local/tmp/" src="res"/>
+        </preparer>
+    </target>
 </configuration>

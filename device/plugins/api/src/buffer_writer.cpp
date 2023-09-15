@@ -25,6 +25,8 @@
 #include <thread>
 #include <unistd.h>
 
+using namespace OHOS::Developtools::Profiler;
+
 BufferWriter::BufferWriter(std::string name,
                            std::string version,
                            uint32_t size,
@@ -41,6 +43,8 @@ BufferWriter::BufferWriter(std::string name,
     eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     pluginId_ = pluginId;
     lastFlushTime_ = std::chrono::steady_clock::now();
+
+    writeCtx_ = reinterpret_cast<RandomWriteCtx*>(shareMemoryBlock_->GetCtx());
 }
 
 BufferWriter::~BufferWriter()
@@ -86,6 +90,38 @@ long BufferWriter::Write(const void* data, size_t size)
     return shareMemoryBlock_->PutMessage(pluginData, pluginName_);
 }
 
+RandomWriteCtx* BufferWriter::StartReport()
+{
+    if (shareMemoryBlock_ == nullptr) {
+        return nullptr;
+    }
+
+    profilerPluginData_.reset();
+    shareMemoryBlock_->ResetPos();
+    profilerPluginData_ = std::make_shared<ProtoEncoder::ProfilerPluginData>(writeCtx_);
+    profilerPluginData_->set_name(pluginName_);
+    profilerPluginData_->set_version(pluginVersion_);
+    profilerPluginData_->set_status(0);
+    return profilerPluginData_->startAdd_data();
+}
+
+void BufferWriter::FinishReport(int32_t size)
+{
+    if (shareMemoryBlock_ == nullptr) {
+        return;
+    }
+
+    profilerPluginData_->finishAdd_data(size);
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    profilerPluginData_->set_clock_id(ProfilerPluginData::CLOCKID_REALTIME);
+    profilerPluginData_->set_tv_sec(ts.tv_sec);
+    profilerPluginData_->set_tv_nsec(ts.tv_nsec);
+    int32_t len = profilerPluginData_->Finish();
+    shareMemoryBlock_->UseMemory(len);
+    DoStats(len);
+}
+
 bool BufferWriter::WriteMessage(const google::protobuf::Message& pmsg, const std::string& pluginName)
 {
     if (shareMemoryBlock_ == nullptr) {
@@ -114,4 +150,23 @@ bool BufferWriter::Clear()
     }
     shareMemoryBlock_->ClearShareMemoryBlock();
     return true;
+}
+
+void BufferWriter::UseMemory(int32_t size)
+{
+    if (shareMemoryBlock_ == nullptr) {
+        return;
+    }
+
+    shareMemoryBlock_->UseMemory(size);
+    DoStats(size);
+}
+
+void BufferWriter::ResetPos()
+{
+    if (shareMemoryBlock_ == nullptr) {
+        return;
+    }
+
+    shareMemoryBlock_->ResetPos();
 }

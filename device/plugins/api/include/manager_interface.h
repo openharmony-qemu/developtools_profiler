@@ -37,11 +37,12 @@ public:
     virtual bool CreatePluginSession(const std::vector<ProfilerPluginConfig>& config) = 0;
     virtual bool DestroyPluginSession(const std::vector<uint32_t>& pluginIds) = 0;
     virtual bool StartPluginSession(const std::vector<uint32_t>& pluginIds,
-                                        const std::vector<ProfilerPluginConfig>& config, PluginResult& result) = 0;
+                                    const std::vector<ProfilerPluginConfig>& config, PluginResult& result) = 0;
     virtual bool StopPluginSession(const std::vector<uint32_t>& pluginIds) = 0;
     virtual bool ReportPluginBasicData(const std::vector<uint32_t>& pluginIds) = 0;
 
-    virtual bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd) = 0;
+    virtual bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                              bool isProtobufSerialize = true) = 0;
     virtual bool ResetWriter(uint32_t pluginId) = 0;
     virtual void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) = 0;
 };

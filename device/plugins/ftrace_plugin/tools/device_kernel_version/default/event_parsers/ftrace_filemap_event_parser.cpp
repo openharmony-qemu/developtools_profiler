@@ -16,48 +16,84 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    file_check_and_advance_wb_err,
+using namespace OHOS::Developtools::Profiler;
+template <typename T>
+void file_check_and_advance_wb_err_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_file(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_old(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_seq_new(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(file_check_and_advance_wb_err,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_file_check_and_advance_wb_err_format();
-        msg->set_file(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_old(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_seq_new(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        file_check_and_advance_wb_err_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(file_check_and_advance_wb_err,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_file_check_and_advance_wb_err_format();
+        file_check_and_advance_wb_err_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    filemap_set_wb_err,
+template <typename T> void filemap_set_wb_err_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_errseq(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(filemap_set_wb_err,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_filemap_set_wb_err_format();
-        msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_errseq(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+        filemap_set_wb_err_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(filemap_set_wb_err,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_filemap_set_wb_err_format();
+        filemap_set_wb_err_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    mm_filemap_add_to_page_cache,
+template <typename T>
+void mm_filemap_add_to_page_cache_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_add_to_page_cache,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_mm_filemap_add_to_page_cache_format();
-        msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+        mm_filemap_add_to_page_cache_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_add_to_page_cache,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_mm_filemap_add_to_page_cache_format();
+        mm_filemap_add_to_page_cache_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    mm_filemap_delete_from_page_cache,
+template <typename T>
+void mm_filemap_delete_from_page_cache_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_delete_from_page_cache,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_mm_filemap_delete_from_page_cache_format();
-        msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_i_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_s_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+        mm_filemap_delete_from_page_cache_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_delete_from_page_cache,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_mm_filemap_delete_from_page_cache_format();
+        mm_filemap_delete_from_page_cache_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

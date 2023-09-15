@@ -16,24 +16,41 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    gpio_direction,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void gpio_direction_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_gpio(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_in(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_err(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpio_direction,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_gpio_direction_format();
-        msg->set_gpio(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_in(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_err(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+        gpio_direction_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpio_direction,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_gpio_direction_format();
+        gpio_direction_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    gpio_value,
+template <typename T> void gpio_value_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_gpio(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    msg->set_get(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_value(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpio_value,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_gpio_value_format();
-        msg->set_gpio(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-        msg->set_get(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_value(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+        gpio_value_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpio_value,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_gpio_value_format();
+        gpio_value_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

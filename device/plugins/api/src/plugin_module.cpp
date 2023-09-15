@@ -252,7 +252,11 @@ bool PluginModule::ReportBasicData()
         if (structPtr_->callbacks->onReportBasicDataCallback != nullptr) {
             auto write = GetWriter();
             CHECK_NOTNULL(write, false, "%s:get write falied!", __func__);
-            write->Clear(); // clear share memory block
+            if (isProtobufSerialize_) {
+                // proto_encoder mode cannot clean up shared memory because data is written directly to shared memory.
+                // protobuf mode requires clear shared memory in order to prioritize reporting basic data.
+                write->Clear();
+            }
             return (structPtr_->callbacks->onReportBasicDataCallback() == 0);
         }
     }
@@ -279,15 +283,32 @@ int32_t PluginModule::ReportResult(uint8_t* buffer, uint32_t size)
     return -1;
 }
 
-bool PluginModule::RegisterWriter(const BufferWriterPtr writer)
+PluginReportResultOptimizeCallback PluginModule::ReportResultOptimize()
 {
-    writerAdapter_ = std::make_shared<WriterAdapter>();
-    writerAdapter_->SetWriter(writer);
-
-    if (writer == nullptr) {
-        HILOG_INFO(LOG_CORE, "%s:bufferWriter is null, update WriterAdapter only!", __func__);
-        return true;
+    CHECK_NOTNULL(handle_, nullptr, "%s:plugin not open", __func__);
+    if (first_) {
+        lastTime_ = std::chrono::steady_clock::now();
+        first_ = false;
+    } else {
+        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+        lastTime_ = t1;
     }
+
+    if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
+        if (structPtr_->callbacks->onPluginReportResultOptimize != nullptr) {
+            return structPtr_->callbacks->onPluginReportResultOptimize;
+        }
+    }
+
+    return nullptr;
+}
+
+bool PluginModule::RegisterWriter(const BufferWriterPtr writer, bool isProtobufSerialize)
+{
+    isProtobufSerialize_ = isProtobufSerialize;
+    writerAdapter_ = std::make_shared<WriterAdapter>(isProtobufSerialize);
+    writerAdapter_->SetWriter(writer);
+    CHECK_NOTNULL(writer, true, "%s:bufferWriter is null, update WriterAdapter only!", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onRegisterWriterStruct != nullptr) {
             return structPtr_->callbacks->onRegisterWriterStruct(writerAdapter_->GetStruct());

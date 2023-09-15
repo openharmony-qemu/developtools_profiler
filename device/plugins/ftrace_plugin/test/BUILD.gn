@@ -44,7 +44,9 @@ ohos_unittest("ftrace_plugin_ut") {
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/ftrace_plugin:ftrace_plugin_source",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gtest_main",
   ]
@@ -65,6 +67,7 @@ ohos_unittest("ftrace_plugin_ut") {
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+  resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"
 }
 
 ohos_executable("busy_test") {

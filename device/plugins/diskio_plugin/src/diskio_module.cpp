@@ -16,7 +16,6 @@
 #include <mutex>
 
 #include "diskio_data_plugin.h"
-#include "plugin_module_api.h"
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -38,6 +37,12 @@ static int DiskioPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
     return g_plugin->Report(bufferData, bufferSize);
 }
 
+static int DiskioPluginReportResultOptimize(RandomWriteCtx* randomWrite)
+{
+    std::lock_guard<std::mutex> guard(g_taskMutex);
+    return g_plugin->ReportOptimize(randomWrite);
+}
+
 static int DiskioPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
@@ -49,6 +54,7 @@ static int DiskioPluginSessionStop()
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = DiskioDataPluginSessionStart,
     .onPluginReportResult = DiskioPluginReportResult,
+    .onPluginReportResultOptimize = DiskioPluginReportResultOptimize,
     .onPluginSessionStop = DiskioPluginSessionStop,
 };
 

@@ -38,6 +38,12 @@ static int SamplePluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
     return g_plugin->Report(bufferData, bufferSize);
 }
 
+static int SamplePluginReportResultOptimize(RandomWriteCtx* randomWrite)
+{
+    std::lock_guard<std::mutex> guard(g_taskMutex);
+    return g_plugin->ReportOptimize(randomWrite);
+}
+
 static int SamplePluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
@@ -54,6 +60,7 @@ static int SampleRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = SamplePluginSessionStart,
     .onPluginReportResult = SamplePluginReportResult,
+    .onPluginReportResultOptimize = SamplePluginReportResultOptimize,
     .onPluginSessionStop = SamplePluginSessionStop,
     .onRegisterWriterStruct = SampleRegisterWriterStruct,
 };

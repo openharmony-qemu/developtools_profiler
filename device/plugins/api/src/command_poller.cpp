@@ -63,8 +63,8 @@ bool CommandPoller::OnCreateSessionCmd(const CreateSessionCmd& cmd, SocketContex
         HILOG_DEBUG(LOG_CORE, "%s:smbFd = %d, eventFd = %d", __func__, smbFd, eventFd);
         HILOG_DEBUG(LOG_CORE, "%s:eventFd flags = %X", __func__, flags);
     }
-    CHECK_TRUE(pluginManager->CreateWriter(config.name(), bufferSize, smbFd, eventFd), false,
-               "%s:createWriter failed!", __func__);
+    CHECK_TRUE(pluginManager->CreateWriter(config.name(), bufferSize, smbFd, eventFd, config.is_protobuf_serialize()),
+               false, "%s:createWriter failed!", __func__);
     CHECK_TRUE(pluginManager->CreatePluginSession(configVec), false,
                "%s:createPluginSession failed!", __func__);
     HILOG_DEBUG(LOG_CORE, "%s:ok", __func__);

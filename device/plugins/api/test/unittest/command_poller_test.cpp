@@ -92,7 +92,8 @@ public:
         return true;
     }
 
-    virtual bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd)
+    virtual bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                              bool isProtobufSerialize = true)
     {
         if (bufferSize == 0) {
             return false;

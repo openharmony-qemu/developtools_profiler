@@ -21,7 +21,6 @@
 #include <unistd.h>
 
 namespace {
-const int NUM_TWO = 2;
 const int NUM_ONEHUNDRED = 100;
 const double NUM_ZERO_POINTZEROONE = 0.01;
 #if __DEBUG__
@@ -247,47 +246,6 @@ bool IoStats::ParseIoStatsEx()
     return true;
 }
 
-bool IoStats::PutPluginStatsData(StatsData* pluginStats)
-{
-    PutCpuStatsData(pluginStats);
-    if (type_ == DiskioConfig::IO_REPORT) {
-        PutIoStatsData(pluginStats);
-    } else if (type_ == DiskioConfig::IO_REPORT_EX) {
-        ParseIoStatsEx();
-    }
-    return true;
-}
-
-uint32_t IoStats::PutCpuStatsData(StatsData* pluginStats)
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    CHECK_TRUE(!cpuDatas_.empty(), 0, "cpuDatas_ is empty");
-
-    uint32_t count = 0;
-    while (cpuDatas_.size() > 0) {
-        auto cpuData = cpuDatas_.front();
-        auto* cpuInfo = pluginStats->add_cpuinfo();
-        CalcCpuStats(cpuData, cpuInfo);
-        cpuDatas_.pop_front();
-        count++;
-    }
-    lock.unlock();
-    return count;
-}
-
-void IoStats::CalcCpuStats(const CpuDatasPtr& cpuData, CpuStats* cpuInfo)
-{
-    auto totalTime = cpuData->GetTotalTime();
-    cpuInfo->set_name(cpuData->name_);
-    cpuInfo->set_cpu_user(KeepTowDigits(cpuData->user_, totalTime));
-    cpuInfo->set_cpu_nice(KeepTowDigits(cpuData->nice_, totalTime));
-    cpuInfo->set_cpu_iowait(KeepTowDigits(cpuData->iowait_, totalTime));
-    cpuInfo->set_cpu_steal(KeepTowDigits(cpuData->steal_, totalTime));
-
-    cpuInfo->set_cpu_sys(KeepTowDigits(cpuData->system_ + cpuData->softirq_ + cpuData->hardirq_, totalTime));
-    cpuInfo->set_cpu_idle(KeepTowDigits(cpuData->idle_, totalTime));
-}
-
 double IoStats::KeepTowDigits(const uint64_t& data, uint64_t div)
 {
     double result = 0.00;
@@ -300,40 +258,6 @@ double IoStats::KeepTowDigits(const uint64_t& data, uint64_t div)
     }
     result = static_cast<double>(data) / ddiv;
     return result;
-}
-
-uint32_t IoStats::PutIoStatsData(StatsData* pluginStats)
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    CHECK_TRUE(!ioDatas_.empty(), 0, "ioDatas_ is empty");
-
-    uint32_t count = 0;
-    while (ioDatas_.size() > 0) {
-        auto ioData = ioDatas_.front();
-        auto* ioInfo = pluginStats->add_statsinfo();
-        CalcIoStats(ioData, ioInfo);
-        ioDatas_.pop_front();
-        count++;
-    }
-    lock.unlock();
-    return count;
-}
-
-void IoStats::CalcIoStats(const DiskDatasPtr& ioData, IoStatData* ioInfo)
-{
-    ioInfo->set_name(ioData->deviceName_);
-    // (成功完成读的总次数 + 写 + 丢弃) / sysTime_
-    ioInfo->set_ios_per_sec(KeepTowDigits(ioData->rSucc_ + ioData->wSucc_ + ioData->dSucc_, sysTime_));
-
-    // 读扇区的次数 / sysTime_
-    ioInfo->set_rd_per_sec(KeepTowDigits(KeepTowDigits(ioData->rSectors_, sysTime_), NUM_TWO));
-    ioInfo->set_wr_per_sec(KeepTowDigits(KeepTowDigits(ioData->wSectors_, sysTime_), NUM_TWO));
-    ioInfo->set_dc_per_sec(KeepTowDigits(KeepTowDigits(ioData->dSectors_, sysTime_), NUM_TWO));
-
-    // 读扇区的次数
-    ioInfo->set_rd_kb(KeepTowDigits(ioData->rSectors_, NUM_TWO));
-    ioInfo->set_wr_kb(KeepTowDigits(ioData->wSectors_, NUM_TWO));
-    ioInfo->set_dc_kb(KeepTowDigits(ioData->dSectors_, NUM_TWO));
 }
 
 bool IoStats::FindFirstNum(char** p)

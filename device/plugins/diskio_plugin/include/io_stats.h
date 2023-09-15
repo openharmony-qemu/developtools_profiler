@@ -31,6 +31,8 @@
 #include "diskio_plugin_result.pb.h"
 #include "logging.h"
 
+constexpr int NUM_TWO = 2;
+
 class ProcStats {
 public:
     std::string name_;
@@ -130,17 +132,93 @@ public:
     IoStats(DiskioConfig::IoReportType type = DiskioConfig::UNSPECIFIED);
     ~IoStats() {}
     bool GetIoData();
-    bool PutPluginStatsData(StatsData* pluginStats);
+
+    template <typename T> bool PutPluginStatsData(T& pluginStatsData)
+    {
+        PutCpuStatsData(pluginStatsData);
+        if (type_ == DiskioConfig::IO_REPORT) {
+            PutIoStatsData(pluginStatsData);
+        } else if (type_ == DiskioConfig::IO_REPORT_EX) {
+            ParseIoStatsEx();
+        }
+        return true;
+    }
+
 private:
     bool ParseCpuStats();
     bool GetCpuStats(std::string& line);
     bool ParseIoStats();
     bool GetIoStats(std::string& line);
-    uint32_t PutCpuStatsData(StatsData* pluginStats);
-    void CalcCpuStats(const CpuDatasPtr& cpuData, CpuStats* cpuInfo);
+
+    template <typename T> uint32_t PutCpuStatsData(T& pluginStatsData)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        while (cpuDatas_.empty()) {
+            return 0;
+        }
+
+        uint32_t count = 0;
+        while (cpuDatas_.size() > 0) {
+            auto cpuData = cpuDatas_.front();
+            auto* cpuInfo = pluginStatsData.add_cpuinfo();
+            CalcCpuStats(cpuData, *cpuInfo);
+            cpuDatas_.pop_front();
+            count++;
+        }
+        lock.unlock();
+        return count;
+    }
+
+    template <typename T> void CalcCpuStats(const CpuDatasPtr& cpuData, T& cpuStatsInfo)
+    {
+        auto totalTime = cpuData->GetTotalTime();
+        cpuStatsInfo.set_name(cpuData->name_);
+        cpuStatsInfo.set_cpu_user(KeepTowDigits(cpuData->user_, totalTime));
+        cpuStatsInfo.set_cpu_nice(KeepTowDigits(cpuData->nice_, totalTime));
+        cpuStatsInfo.set_cpu_iowait(KeepTowDigits(cpuData->iowait_, totalTime));
+        cpuStatsInfo.set_cpu_steal(KeepTowDigits(cpuData->steal_, totalTime));
+
+        cpuStatsInfo.set_cpu_sys(KeepTowDigits(cpuData->system_ + cpuData->softirq_ + cpuData->hardirq_, totalTime));
+        cpuStatsInfo.set_cpu_idle(KeepTowDigits(cpuData->idle_, totalTime));
+    }
+
     double KeepTowDigits(const uint64_t& data, uint64_t div);
-    uint32_t PutIoStatsData(StatsData* pluginStats);
-    void CalcIoStats(const DiskDatasPtr& ioData, IoStatData* ioInfo);
+
+    template <typename T> uint32_t PutIoStatsData(T& pluginStatsData)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        while (ioDatas_.empty()) {
+            return 0;
+        }
+
+        uint32_t count = 0;
+        while (ioDatas_.size() > 0) {
+            auto ioData = ioDatas_.front();
+            auto* ioInfo = pluginStatsData.add_statsinfo();
+            CalcIoStats(ioData, *ioInfo);
+            ioDatas_.pop_front();
+            count++;
+        }
+        lock.unlock();
+        return count;
+    }
+
+    template <typename T> void CalcIoStats(const DiskDatasPtr& ioData, T& ioStatDataInfo)
+    {
+        ioStatDataInfo.set_name(ioData->deviceName_);
+        // (成功完成读的总次数 + 写 + 丢弃) / sysTime_
+        ioStatDataInfo.set_ios_per_sec(KeepTowDigits(ioData->rSucc_ + ioData->wSucc_ + ioData->dSucc_, sysTime_));
+
+        // 读扇区的次数 / sysTime_
+        ioStatDataInfo.set_rd_per_sec(KeepTowDigits(KeepTowDigits(ioData->rSectors_, sysTime_), NUM_TWO));
+        ioStatDataInfo.set_wr_per_sec(KeepTowDigits(KeepTowDigits(ioData->wSectors_, sysTime_), NUM_TWO));
+        ioStatDataInfo.set_dc_per_sec(KeepTowDigits(KeepTowDigits(ioData->dSectors_, sysTime_), NUM_TWO));
+
+        // 读扇区的次数
+        ioStatDataInfo.set_rd_kb(KeepTowDigits(ioData->rSectors_, NUM_TWO));
+        ioStatDataInfo.set_wr_kb(KeepTowDigits(ioData->wSectors_, NUM_TWO));
+        ioStatDataInfo.set_dc_kb(KeepTowDigits(ioData->dSectors_, NUM_TWO));
+    }
     uint32_t OutputCpuData();
     bool OutputIoData();
     uint64_t GetSystime();

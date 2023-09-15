@@ -115,7 +115,7 @@ bool TraceFileWriter::WriteHeader()
         DeleteOldSplitFile();
     }
 
-    stream_.open(path_, std::ios_base::out | std::ios_base::binary);
+    stream_ = std::ofstream(path_, std::ios_base::out | std::ios_base::binary);
     CHECK_TRUE(stream_.is_open(), false, "open %s failed, %d!", path_.c_str(), errno);
 
     // write initial header, makes file write position move forward

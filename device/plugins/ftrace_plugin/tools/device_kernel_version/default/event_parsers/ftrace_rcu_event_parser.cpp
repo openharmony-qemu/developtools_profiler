@@ -16,12 +16,21 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    rcu_utilization,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void rcu_utilization_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_s(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rcu_utilization,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_rcu_utilization_format();
-        msg->set_s(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        rcu_utilization_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rcu_utilization,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_rcu_utilization_format();
+        rcu_utilization_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

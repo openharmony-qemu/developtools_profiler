@@ -16,29 +16,54 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    ipi_entry,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void ipi_entry_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_entry,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_ipi_entry_format();
-        msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        ipi_entry_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_entry,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_ipi_entry_format();
+        ipi_entry_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    ipi_exit,
+template <typename T> void ipi_exit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_exit,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_ipi_exit_format();
-        msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        ipi_exit_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_exit,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_ipi_exit_format();
+        ipi_exit_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    ipi_raise,
+template <typename T> void ipi_raise_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_target_cpus(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_raise,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_ipi_raise_format();
-        msg->set_target_cpus(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+        ipi_raise_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_raise,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_ipi_raise_format();
+        ipi_raise_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

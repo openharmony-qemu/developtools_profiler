@@ -30,6 +30,7 @@ ohos_unittest("shared_memory_ut") {
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
     "//third_party/googletest/googletest/include/gtest",
   ]
   configs = [ ":module_private_config" ]

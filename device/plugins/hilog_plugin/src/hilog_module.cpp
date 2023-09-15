@@ -28,13 +28,14 @@ std::mutex g_taskMutex;
 static int HilogPluginSessionStart(const uint8_t* configData, uint32_t configSize)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    CHECK_NOTNULL(g_plugin, -1, "start hilog session FAILED!");
+    CHECK_NOTNULL(g_plugin, -1, "%s: no HilogPlugin created!", __func__);
     return g_plugin->Start(configData, configSize);
 }
 
 static int HilogPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    CHECK_NOTNULL(g_plugin, -1, "%s: no HilogPlugin created!", __func__);
     g_plugin->Stop();
     g_plugin.reset();
     return 0;

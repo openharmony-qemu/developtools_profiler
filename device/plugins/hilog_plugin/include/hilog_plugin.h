@@ -44,8 +44,13 @@ private:
 
     bool OpenLogFile();
     int GetDateTime(char* psDateTime, uint32_t size);
-    void ParseLogLineInfo(const char* data, size_t len, HilogLine* info);
-    bool SetHilogLineDetails(const char* data, HilogLine* info);
+
+    template <typename T> void ParseLogLineInfo(const char* data, size_t len, T& hilogLineInfo);
+
+    template <typename T> void ParseLogLineData(const char* data, size_t len, T hilogInfoProto);
+
+    template <typename T> bool SetHilogLineDetails(const char* data, T& hilogLineInfo);
+
     bool TimeStringToNS(const char* data, struct timespec *ts);
     bool FindFirstNum(char** p);
     bool RemoveSpaces(char** p);
@@ -64,6 +69,10 @@ private:
     {
         return fullCmd_;
     }
+
+    template <typename T> void FlushData(const T hilogLineProto);
+
+    template <typename T> void FlushDataOptimize(const T hilogLineProto);
 
 private:
     HilogConfig protoConfig_;

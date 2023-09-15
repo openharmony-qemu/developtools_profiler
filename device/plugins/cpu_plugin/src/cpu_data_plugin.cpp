@@ -18,9 +18,11 @@
 #include <ctime>
 #include <vector>
 
+#include "cpu_plugin_result.pbencoder.h"
 #include "buffer_splitter.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 constexpr int SYSTEM_STAT_COUNT = 9;
 constexpr int STAT_COUNT = 17;
@@ -86,12 +88,31 @@ int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return RET_SUCC;
 }
 
+int CpuDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+{
+    ProtoEncoder::CpuData dataProto(randomWrite);
+
+    ProtoEncoder::CpuUsageInfo* cpuUsageInfo = nullptr;
+    WriteCpuUsageInfo(dataProto, cpuUsageInfo);
+
+    if (pid_ > 0) {
+        WriteThreadInfo(dataProto);
+    }
+    if (protoConfig_.report_process_info()) {
+        WriteProcnum(dataProto);
+    }
+
+    int msgSize = dataProto.Finish();
+    return msgSize;
+}
+
 int CpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 {
     CpuData dataProto;
     uint32_t length;
 
-    WriteCpuUsageInfo(dataProto);
+    CpuUsageInfo* cpuUsageInfo = nullptr;
+    WriteCpuUsageInfo(dataProto, cpuUsageInfo);
 
     if (pid_ > 0) {
         WriteThreadInfo(dataProto);
@@ -110,7 +131,7 @@ int CpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
     return 0;
 }
 
-bool CpuDataPlugin::WriteProcnum(CpuData& data)
+template <typename T> bool CpuDataPlugin::WriteProcnum(T& cpuData)
 {
     DIR* procDir = nullptr;
     procDir = OpenDestDir(path_);
@@ -127,7 +148,7 @@ bool CpuDataPlugin::WriteProcnum(CpuData& data)
         }
         i++;
     }
-    data.set_process_num(i);
+    cpuData.set_process_num(i);
     closedir(procDir);
 
     return true;
@@ -197,12 +218,12 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
     return bytesRead;
 }
 
-void CpuDataPlugin::SetTimestamp(SampleTimeStamp& timestamp)
+template <typename T> void CpuDataPlugin::SetTimestamp(T& sampleTimeStamp)
 {
     timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
-    timestamp.set_tv_sec(time.tv_sec);
-    timestamp.set_tv_nsec(time.tv_nsec);
+    sampleTimeStamp.set_tv_sec(time.tv_sec);
+    sampleTimeStamp.set_tv_nsec(time.tv_nsec);
 }
 
 int64_t CpuDataPlugin::GetUserHz()
@@ -235,7 +256,7 @@ int64_t CpuDataPlugin::GetCpuUsageTime(std::vector<std::string>& cpuUsageVec)
     return usageTime;
 }
 
-void CpuDataPlugin::WriteProcessCpuUsage(CpuUsageInfo& cpuUsageInfo, const char* pFile, uint32_t fileLen)
+template <typename T> void CpuDataPlugin::WriteProcessCpuUsage(T& cpuUsageInfo, const char* pFile, uint32_t fileLen)
 {
     BufferSplitter totalbuffer(const_cast<char*>(pFile), fileLen + 1);
     std::vector<std::string> cpuUsageVec;
@@ -323,7 +344,7 @@ int32_t CpuDataPlugin::GetMaxCpuFrequencyIndex()
     return index;
 }
 
-void CpuDataPlugin::SetCpuFrequency(CpuCoreUsageInfo& cpuCore, int32_t coreNum)
+template <typename T> void CpuDataPlugin::SetCpuFrequency(T& cpuCoreUsageInfo, int32_t coreNum)
 {
     // 第一次获取最大频率核位置，并保存各核最大最小频率到vector
     if (maxFrequencyVec_.empty() || minFrequencyVec_.empty()) {
@@ -335,11 +356,11 @@ void CpuDataPlugin::SetCpuFrequency(CpuCoreUsageInfo& cpuCore, int32_t coreNum)
     int32_t minFrequency = minFrequencyVec_[coreNum];
 
     if (coreNum == maxFreqIndex_) {
-        cpuCore.set_is_little_core(false);
+        cpuCoreUsageInfo.set_is_little_core(false);
     } else {
-        cpuCore.set_is_little_core(true);
+        cpuCoreUsageInfo.set_is_little_core(true);
     }
-    CpuCoreFrequency* frequency = cpuCore.mutable_frequency();
+    auto* frequency = cpuCoreUsageInfo.mutable_frequency();
     frequency->set_min_frequency_khz(minFrequency);
     frequency->set_max_frequency_khz(maxFrequency);
     frequency->set_cur_frequency_khz(curFrequency);
@@ -375,9 +396,9 @@ bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuT
     return true;
 }
 
-void CpuDataPlugin::WriteSystemCpuUsage(CpuData& cpuData, const char* pFile, uint32_t fileLen)
+template <typename T>
+void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadData, const char* pFile, uint32_t fileLen)
 {
-    auto* cpuUsageInfo = cpuData.mutable_cpu_usage_info();
     BufferSplitter totalbuffer(const_cast<char*>(pFile), fileLen + 1);
     std::vector<std::string> cpuUsageVec;
     size_t cpuLength = strlen("cpu");
@@ -404,30 +425,27 @@ void CpuDataPlugin::WriteSystemCpuUsage(CpuData& cpuData, const char* pFile, uin
         }
 
         if (strcmp(cpuUsageVec[0].c_str(), "cpu") == 0) {
-            cpuUsageInfo->set_prev_system_cpu_time_ms(prevCpuTimeData_.systemUsageTime);
-            cpuUsageInfo->set_prev_system_boot_time_ms(prevCpuTimeData_.systemBootTime);
-            cpuUsageInfo->set_system_cpu_time_ms(cpuTimeData.systemUsageTime);
-            cpuUsageInfo->set_system_boot_time_ms(cpuTimeData.systemBootTime);
+            cpuUsageInfo.set_prev_system_cpu_time_ms(prevCpuTimeData_.systemUsageTime);
+            cpuUsageInfo.set_prev_system_boot_time_ms(prevCpuTimeData_.systemBootTime);
+            cpuUsageInfo.set_system_cpu_time_ms(cpuTimeData.systemUsageTime);
+            cpuUsageInfo.set_system_boot_time_ms(cpuTimeData.systemBootTime);
             bool isTest = false;
             if (strncmp(path_.c_str(), "/proc/", strlen("/proc/")) != 0) {
                 isTest = true; // UT needs report load data for the first time
             }
             if ((protoConfig_.report_process_info() && prevCpuTimeData_.systemBootTime != 0) || isTest) {
-                double userLoad = static_cast<double>(cpuTimeData.userModeUsageTime -
+                cpuLoadData.userLoad = static_cast<double>(cpuTimeData.userModeUsageTime -
                     prevCpuTimeData_.userModeUsageTime) /
                     static_cast<double>(cpuTimeData.systemBootTime -
                     prevCpuTimeData_.systemBootTime) * PERCENT;
-                double sysLoad = static_cast<double>(cpuTimeData.systemModeUsageTime -
+                cpuLoadData.sysLoad = static_cast<double>(cpuTimeData.systemModeUsageTime -
                     prevCpuTimeData_.systemModeUsageTime) /
                     static_cast<double>(cpuTimeData.systemBootTime -
                     prevCpuTimeData_.systemBootTime) * PERCENT;
-                double totalLoad = static_cast<double>(cpuTimeData.systemUsageTime -
+                cpuLoadData.totalLoad = static_cast<double>(cpuTimeData.systemUsageTime -
                     prevCpuTimeData_.systemUsageTime) /
                     static_cast<double>(cpuTimeData.systemBootTime -
                     prevCpuTimeData_.systemBootTime) * PERCENT;
-                cpuData.set_user_load(userLoad);
-                cpuData.set_sys_load(sysLoad);
-                cpuData.set_total_load(totalLoad);
             }
             prevCpuTimeData_ = cpuTimeData;
             if (pid_ < 0 && protoConfig_.report_process_info()) {
@@ -441,7 +459,7 @@ void CpuDataPlugin::WriteSystemCpuUsage(CpuData& cpuData, const char* pFile, uin
                 prevCoreSystemCpuTimeMap_[coreNum] = 0;
                 prevCoreSystemBootTimeMap_[coreNum] = 0;
             }
-            CpuCoreUsageInfo* cpuCore = cpuUsageInfo->add_cores();
+            auto* cpuCore = cpuUsageInfo.add_cores();
             cpuCore->set_cpu_core(coreNum);
             cpuCore->set_prev_system_cpu_time_ms(prevCoreSystemCpuTimeMap_[coreNum]);
             cpuCore->set_prev_system_boot_time_ms(prevCoreSystemBootTimeMap_[coreNum]);
@@ -457,7 +475,7 @@ void CpuDataPlugin::WriteSystemCpuUsage(CpuData& cpuData, const char* pFile, uin
     } while (totalbuffer.NextLine());
 }
 
-void CpuDataPlugin::WriteCpuUsageInfo(CpuData& data)
+template <typename T, typename I> void CpuDataPlugin::WriteCpuUsageInfo(T& cpuData, I cpuUsageInfo)
 {
     // write process info
     if (pid_ > 0) {
@@ -470,7 +488,7 @@ void CpuDataPlugin::WriteCpuUsageInfo(CpuData& data)
             return;
         }
 
-        auto* cpuUsageInfo = data.mutable_cpu_usage_info();
+        cpuUsageInfo = cpuData.mutable_cpu_usage_info();
         WriteProcessCpuUsage(*cpuUsageInfo, (char*)buffer_, ret);
     }
 
@@ -483,10 +501,19 @@ void CpuDataPlugin::WriteCpuUsageInfo(CpuData& data)
     if ((buffer_ == nullptr) || (ret == 0)) {
         return;
     }
-    WriteSystemCpuUsage(data, (char*)buffer_, ret);
 
-    auto* timestamp = data.mutable_cpu_usage_info()->mutable_timestamp();
+    CpuLoadData cpuLoadData;
+    if (cpuUsageInfo == nullptr) {
+        cpuUsageInfo = cpuData.mutable_cpu_usage_info();
+    }
+    WriteSystemCpuUsage(*cpuUsageInfo, cpuLoadData, (char*)buffer_, ret);
+
+    auto* timestamp = cpuUsageInfo->mutable_timestamp();
     SetTimestamp(*timestamp);
+
+    cpuData.set_user_load(cpuLoadData.userLoad);
+    cpuData.set_sys_load(cpuLoadData.sysLoad);
+    cpuData.set_total_load(cpuLoadData.totalLoad);
 }
 
 bool CpuDataPlugin::addTidBySort(int32_t tid)
@@ -547,7 +574,7 @@ ThreadState CpuDataPlugin::GetThreadState(const char threadState)
     return state;
 }
 
-void CpuDataPlugin::WriteThread(ThreadInfo& threadInfo, const char* pFile, uint32_t fileLen, int32_t tid)
+template <typename T> void CpuDataPlugin::WriteThread(T& threadInfo, const char* pFile, uint32_t fileLen, int32_t tid)
 {
     BufferSplitter totalbuffer(const_cast<char*>(pFile), fileLen + 1);
     std::vector<std::string> cpuUsageVec;
@@ -596,7 +623,7 @@ void CpuDataPlugin::WriteThread(ThreadInfo& threadInfo, const char* pFile, uint3
     SetTimestamp(*timestamp);
 }
 
-void CpuDataPlugin::WriteSingleThreadInfo(CpuData& data, int32_t tid)
+template <typename T> void CpuDataPlugin::WriteSingleThreadInfo(T& cpuData, int32_t tid)
 {
     std::string fileName = path_ + std::to_string(pid_) + "/task/" + std::to_string(tid) + "/stat";
     int32_t ret = ReadFile(fileName);
@@ -606,11 +633,11 @@ void CpuDataPlugin::WriteSingleThreadInfo(CpuData& data, int32_t tid)
     if ((buffer_ == nullptr) || (ret == 0)) {
         return;
     }
-    auto* threadInfo = data.add_thread_info();
+    auto* threadInfo = cpuData.add_thread_info();
     WriteThread(*threadInfo, (char*)buffer_, ret, tid);
 }
 
-void CpuDataPlugin::WriteThreadInfo(CpuData& data)
+template <typename T> void CpuDataPlugin::WriteThreadInfo(T& cpuData)
 {
     DIR* procDir = nullptr;
     std::string path = path_ + std::to_string(pid_) + "/task";
@@ -625,7 +652,7 @@ void CpuDataPlugin::WriteThreadInfo(CpuData& data)
     }
 
     for (unsigned int i = 0; i < tidVec_.size(); i++) {
-        WriteSingleThreadInfo(data, tidVec_[i]);
+        WriteSingleThreadInfo(cpuData, tidVec_[i]);
     }
     closedir(procDir);
 }

@@ -15,10 +15,13 @@
 
 #include "writer_adapter.h"
 
-WriterAdapter::WriterAdapter()
+WriterAdapter::WriterAdapter(bool isProtobufSerialize)
 {
     writerStruct_.write = &WriterAdapter::WriteFunc;
     writerStruct_.flush = &WriterAdapter::FlushFunc;
+    writerStruct_.startReport = &WriterAdapter::StartReportFunc;
+    writerStruct_.finishReport = &WriterAdapter::FinishReportFunc;
+    writerStruct_.isProtobufSerialize = isProtobufSerialize;
 }
 
 WriterAdapter::~WriterAdapter() {}
@@ -55,4 +58,21 @@ bool WriterAdapter::FlushFunc(WriterStruct* writer)
         return writerAdaptor->writer_->Flush();
     }
     return false;
+}
+
+RandomWriteCtx* WriterAdapter::StartReportFunc(WriterStruct* writer)
+{
+    WriterAdapter* writerAdaptor = reinterpret_cast<WriterAdapter*>(writer);
+    if (writerAdaptor && writerAdaptor->writer_) {
+        return writerAdaptor->writer_->StartReport();
+    }
+    return nullptr;
+}
+
+void WriterAdapter::FinishReportFunc(WriterStruct* writer, int32_t size)
+{
+    WriterAdapter* writerAdaptor = reinterpret_cast<WriterAdapter*>(writer);
+    if (writerAdaptor && writerAdaptor->writer_) {
+        writerAdaptor->writer_->FinishReport(size);
+    }
 }

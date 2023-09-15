@@ -94,6 +94,8 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.clang-format" desc="clang format file, no license header"/>
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.clang-tidy" desc="clang tidy file, no license header"/>
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.gitignore" desc="gitignore file, no license header"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_comm" desc="test resource file, no license header"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_tgid" desc="test resource file, no license header"/>
             </filefilter>
             <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies" >
                 <filteritem type="filepath" name="device/plugins/memory_plugin/test/utresources/proc/.*" desc="test resource file, no copyright header"/>
@@ -127,6 +129,8 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.clang-format" desc="clang format file, no copyright header"/>
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.clang-tidy" desc="clang tidy file, no copyright header"/>
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.gitignore" desc="gitignore file, no copyright header"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_comm" desc="test resource file, no copyright header"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_tgid" desc="test resource file, no copyright header"/>
             </filefilter>
             <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
                 <filteritem type="filepath" name="device/plugins/arkts_plugin/test/resources/.*" desc="test binary file, the file is self-developed"/>
@@ -154,6 +158,10 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="hiebpf/test/resources/elf64.stripped" desc="the hiebpf test file, the file is self-developed"/>
                 <filteritem type="filepath" name="device/plugins/native_daemon/test/unittest/resource/testdata/syms_from_readelf_64" desc="the binary file for test, the file is self-developed"/>
                 <filteritem type="filepath" name="device/plugins/native_daemon/test/unittest/resource/testdata/syms_from_readelf_32" desc="the binary file for test, the file is self-developed"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_0" desc="the ftrace test file, the file is self-developed"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_1" desc="the ftrace test file, the file is self-developed"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_2" desc="the ftrace test file, the file is self-developed"/>
+                <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_3" desc="the ftrace test file, the file is self-developed"/>
             </filefilter>
         </filefilterlist>
     </oatconfig>

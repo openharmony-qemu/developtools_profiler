@@ -67,7 +67,8 @@ public:
     bool StopPluginSession(const std::vector<uint32_t>& pluginIds) override;
     bool ReportPluginBasicData(const std::vector<uint32_t>& pluginIds) override;
 
-    bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd) override;
+    bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                        bool isProtobufSerialize = true) override;
     bool ResetWriter(uint32_t pluginId) override;
     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
     void ResetStartupParam();

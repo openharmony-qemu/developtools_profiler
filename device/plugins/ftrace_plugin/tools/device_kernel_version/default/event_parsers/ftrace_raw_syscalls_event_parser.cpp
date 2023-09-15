@@ -16,26 +16,42 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    sys_enter,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void sys_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
+    for (size_t i = 0; i < retvalVec.size(); i++) {
+        msg->add_args(retvalVec[i]);
+    }
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_enter,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_sys_enter_format();
-        msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        std::vector<uint64_t> retvalVec =
-            FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
-        for (size_t i = 0; i < retvalVec.size(); i++) {
-            msg->add_args(retvalVec[i]);
-        }
+        sys_enter_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_enter,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_sys_enter_format();
+        sys_enter_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    sys_exit,
+template <typename T> void sys_exit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_ret(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_exit,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_sys_exit_format();
-        msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_ret(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+        sys_exit_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_exit,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_sys_exit_format();
+        sys_exit_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

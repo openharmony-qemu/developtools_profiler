@@ -16,7 +16,6 @@
 #include <mutex>
 #include <sys/types.h>
 
-#include "plugin_module_api.h"
 #include "stream_plugin.h"
 
 namespace {

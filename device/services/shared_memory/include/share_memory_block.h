@@ -23,6 +23,7 @@
 #include <functional>
 #include <string>
 #include "logging.h"
+#include "plugin_module_api.h"
 
 class ShareMemoryBlock {
 public:
@@ -38,7 +39,8 @@ public:
     EXPORT_API bool PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
 #endif
     using DataHandler = std::function<bool(const int8_t*, uint32_t)>;
-    EXPORT_API bool TakeData(const DataHandler& func);
+    EXPORT_API bool TakeData(const DataHandler& func, bool isProtobufSerialize = true);
+    bool TakeDataOptimize(const DataHandler& func);
 
     std::string GetName();
     uint32_t GetSize();
@@ -56,6 +58,20 @@ public:
         reusePloicy_ = dt;
     }
 
+    void ResetPos();
+    void UseMemory(int32_t size);
+    bool GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset);
+    bool Seek(uint32_t pos);
+
+    struct ShareMemoryBlockCtx {
+        RandomWriteCtx ctx;
+        ShareMemoryBlock* block;
+    };
+    ShareMemoryBlockCtx* GetCtx()
+    {
+        return &smbCtx_;
+    }
+
 private:
     int8_t* GetFreeMemory(uint32_t size);
     bool UseFreeMemory(int8_t* pmem, uint32_t size);
@@ -66,12 +82,12 @@ private:
 
     struct BlockHeader {
         struct alignas(sizeof(uintptr_t)) {
-            uint32_t writeOffset_;
-            uint32_t readOffset_;
+            std::atomic<uint32_t> writeOffset_;
+            std::atomic<uint32_t> readOffset_;
             uint32_t memorySize_;
             pthread_mutex_t mutex_;
-            uint32_t bytesCount_;
-            uint32_t chunkCount_;
+            std::atomic<uint32_t> bytesCount_;
+            std::atomic<uint32_t> chunkCount_;
         } info;
         int8_t data[0];
     };
@@ -87,6 +103,8 @@ private:
     void* memoryPoint_;
     uint32_t memorySize_;
     std::string memoryName_;
+    uint32_t messageWriteOffset_;
+    ShareMemoryBlockCtx smbCtx_;
 
     BlockHeader* header_;
     ReusePolicy reusePloicy_;

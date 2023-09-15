@@ -120,14 +120,14 @@ protected:
 bool CheckBuffer(uint8_t *buffer, size_t size)
 {
     ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr1);
-    uint8_t *cmpaddr = (uint8_t *)g_smbAddr1 + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_;
+    uint8_t *cmpaddr = (uint8_t *)g_smbAddr1 + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_.load();
     uint32_t cmpsize = *(uint32_t*)cmpaddr;
     cmpaddr = cmpaddr + sizeof(uint32_t);
     ProfilerPluginData pluginData;
     pluginData.ParseFromArray(cmpaddr, cmpsize);
     const char* data = pluginData.data().c_str();
 
-    header_->info.readOffset_ = header_->info.writeOffset_;
+    header_->info.readOffset_ = header_->info.writeOffset_.load();
     if (memcmp(buffer, data, size) == 0) {
         return true;
     }
@@ -138,9 +138,9 @@ bool CheckBuffer(uint8_t *buffer, size_t size)
 bool CheckMessage(uint8_t *buffer, size_t size)
 {
     ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr2);
-    uint8_t *cmpaddr = (uint8_t *)g_smbAddr2 + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_;
+    uint8_t *cmpaddr = (uint8_t *)g_smbAddr2 + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_.load();
     cmpaddr = cmpaddr + sizeof(uint32_t);
-    header_->info.readOffset_ = header_->info.writeOffset_;
+    header_->info.readOffset_ = header_->info.writeOffset_.load();
 
     if (memcmp(buffer, cmpaddr, size) == 0) {
         return true;

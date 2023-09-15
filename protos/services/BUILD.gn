@@ -58,6 +58,7 @@ action("all_type_gen") {
   deps = [
     "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc_cpp_plugin(${host_toolchain})",
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})",
   ]
 }
 
