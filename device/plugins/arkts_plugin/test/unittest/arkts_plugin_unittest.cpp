@@ -79,7 +79,7 @@ std::vector<uint8_t> SetArkTSConfig(ArkTSConfig& protoConfig, int32_t pid, ArkTS
     return configData;
 }
 
-long WriteFunc(const WriterStruct* writer, const void* data, size_t size)
+long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
     if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
@@ -87,7 +87,7 @@ long WriteFunc(const WriterStruct* writer, const void* data, size_t size)
     return 0;
 }
 
-bool FlushFunc(const WriterStruct* writer)
+bool FlushFunc(WriterStruct* writer)
 {
     if (writer == nullptr) {
         return false;
