@@ -139,17 +139,23 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
 }
 double ControlCallCmd::ResponseTime()
 {
+    OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
     OHOS::SmartPerf::Radar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysId();
-    std::string str = SPUtils::GetRadarResponse();
-    thGetTrace.join();
-    thGetHisysId.join();
-    time = radar.ParseRadarResponse(str);
+    if (isOhTest) { 
+        thGetTrace.join();
+        time = pcrt.ParseResponseTrace(traceName);
+    } else {
+        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::string str = SPUtils::GetRadarResponse();
+        thGetTrace.join();
+        thGetHisysId.join();
+        time = radar.ParseRadarResponse(str);
+    }
     return time;
 }
 double ControlCallCmd::ColdStartHM(std::vector<std::string> v)
@@ -174,11 +180,16 @@ double ControlCallCmd::CompleteTime()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysId();
-    std::string str = SPUtils::GetRadarComplete();
-    thGetTrace.join();
-    thGetHisysId.join();
-    time = radar.ParseRadarComplete(str);
+    if (isOhTest) {
+        thGetTrace.join();
+        time = pcct.ParseCompleteTrace(traceName);
+    } else {
+        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::string str = SPUtils::GetRadarComplete();
+        thGetTrace.join();
+        thGetHisysId.join();
+        time = radar.ParseRadarComplete(str);
+    }
     return time;
 }
 double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
