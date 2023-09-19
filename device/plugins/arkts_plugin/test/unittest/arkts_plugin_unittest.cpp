@@ -40,9 +40,8 @@ public:
 
         constexpr uint32_t readBufferSize = 4096;
         std::array<char, readBufferSize> buffer;
-        std::string result;
         while (fgets(buffer.data(), buffer.size(), runCmd.get()) != nullptr) {
-            result = buffer.data();
+            std::string result = buffer.data();
             if (result.find("com.ohos.dist") == std::string::npos) {
                 continue;
             }
@@ -82,7 +81,7 @@ std::vector<uint8_t> SetArkTSConfig(ArkTSConfig& protoConfig, int32_t pid, ArkTS
 
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
     return 0;
