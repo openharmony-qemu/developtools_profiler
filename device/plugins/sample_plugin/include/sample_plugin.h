@@ -33,7 +33,6 @@ public:
 
 private:
     SampleConfig protoConfig_;
-    const int CONST_NUMBER = 1024;
 };
 
 #endif // SAMPLE_PLUGIN_H
