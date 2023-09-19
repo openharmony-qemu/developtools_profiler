@@ -37,6 +37,8 @@
 #include "iservice_registry.h"
 #include "logging.h"
 #include "system_ability_definition.h"
+#include "os_account_info.h"
+#include "os_account_manager.h"
 
 using namespace OHOS;
 using namespace OHOS::AppExecFwk;
@@ -49,6 +51,7 @@ constexpr int WRITE = 1;
 const int FILE_PATH_SIZE = 512;
 const int BUFFER_SIZE = 1024;
 const int INVALID_PID = -1;
+const int32_t EC_INVALID_VALUE = -2;
 
 
 bool IsProcessRunning(int& lockFileFd)
@@ -507,5 +510,49 @@ void AdaptSandboxPath(std::string& filePath, int pid)
     if (filePath.find("/data/storage") == 0 && access(filePath.c_str(), F_OK) != 0) {
         filePath = "/proc/" + std::to_string(pid) + "/root/" + filePath;
     }
+}
+bool GetCurrentUserId(int32_t &userId)
+{
+    std::vector<int32_t> activeIds;
+    int32_t ret = AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds);
+    if (ret != 0) {
+        HILOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed ret:%d", ret);
+        return false;
+    }
+
+    if (activeIds.empty()) {
+        HILOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds activeIds empty");
+        return false;
+    }
+    userId = activeIds[0];
+    HILOG_INFO(LOG_CORE, "QueryActiveOsAccountIds userId[0]:%d", userId);
+    return true;
+}
+
+int32_t GetPackageUid(const std::string &name)
+{
+    int32_t userId = 0;
+    if (!GetCurrentUserId(userId)) {
+        HILOG_ERROR(LOG_CORE, "Failed to get current user id");
+        return EC_INVALID_VALUE;
+    }
+    auto manager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (manager == nullptr) {
+        HILOG_ERROR(LOG_CORE, "systemAbilityManager is nullptr");
+        return EC_INVALID_VALUE;
+    }
+    sptr<IRemoteObject> remoteObject = manager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (remoteObject == nullptr) {
+        HILOG_ERROR(LOG_CORE, "failed to get service id");
+        return EC_INVALID_VALUE;
+    }
+    sptr<AppExecFwk::IBundleMgr> mgr = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    if (mgr == nullptr) {
+        HILOG_ERROR(LOG_CORE, "mgr is nullptr");
+        return EC_INVALID_VALUE;
+    }
+    int32_t uid = mgr->GetUidByBundleName(name, userId);
+    HILOG_INFO(LOG_CORE, "pkgname is: %s, uid is : %d", name.c_str(), uid);
+    return uid;
 }
 } // namespace COMMON

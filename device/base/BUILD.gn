@@ -79,6 +79,7 @@ ohos_source_set("hiprofiler_base") {
     "c_utils:utils",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
+    "os_account:os_account_innerkits",
   ]
 
   if (current_toolchain != host_toolchain) {

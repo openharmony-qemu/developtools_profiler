@@ -29,6 +29,7 @@
 #include "network_plugin_config_standard.pb.h"
 #include "process_plugin_config_standard.pb.h"
 #include "trace_plugin_config_standard.pb.h"
+#include "xpower_plugin_config_standard.pb.h"
 
 namespace {
 constexpr int REMAINDER = 2;
@@ -367,6 +368,22 @@ bool ParsePluginConfig::SetSerializeArkTSConfig(const std::string& pluginName, P
 
     std::vector<uint8_t> configDataVec(arkTSConfigNolite->ByteSizeLong());
     if (arkTSConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
+        return false;
+    }
+    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    return true;
+}
+
+bool ParsePluginConfig::SetSerializeXpowerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
+{
+    std::string configData = pluginConfigMap[pluginName];
+    auto xpowerConfigNolite = std::make_unique<ForStandard::XpowerConfig>();
+    if (!parser_.ParseFromString(configData, xpowerConfigNolite.get())) {
+        return false;
+    }
+
+    std::vector<uint8_t> configDataVec(xpowerConfigNolite->ByteSizeLong());
+    if (xpowerConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
     pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
