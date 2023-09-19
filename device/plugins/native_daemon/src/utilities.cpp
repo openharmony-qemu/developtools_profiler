@@ -524,12 +524,12 @@ void *mmap(void *addr, size_t length, int prot, int flags, int fd, size_t offset
     HLOGV("fd is %d", fd);
 
     HANDLE FileMappingHandle = ::CreateFileMappingW(FileHandle, 0, PAGE_READONLY, 0, 0, 0);
-    UNWIND_CHECK_NOTNULL(FileMappingHandle, MMAP_FAILED,
-        "CreateFileMappingW %zu Failed with %ld:%s", length, GetLastError(), GetLastErrorString().c_str());
+    UNWIND_CHECK_NOTNULL(FileMappingHandle, MMAP_FAILED, "CreateFileMappingW %zu Failed with %ld:%s",
+                         length, GetLastError(), GetLastErrorString().c_str());
 
     void *mapAddr = ::MapViewOfFile(FileMappingHandle, FILE_MAP_READ, 0, 0, 0);
-    UNWIND_CHECK_NOTNULL(mapAddr, MMAP_FAILED,
-        "MapViewOfFile %zu Failed with %ld:%s", length, GetLastError(), GetLastErrorString().c_str());
+    UNWIND_CHECK_NOTNULL(mapAddr, MMAP_FAILED, "MapViewOfFile %zu Failed with %ld:%s",
+                         length, GetLastError(), GetLastErrorString().c_str());
 
     // Close all the handles except for the view. It will keep the other handles
     // alive.
