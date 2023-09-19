@@ -24,7 +24,6 @@
 #include "trace_plugin_result.pbencoder.h"
 
 FTRACE_NS_BEGIN
-using namespace OHOS::Developtools::Profiler;
 
 template <class T> // T: FtraceEvent
 class SubEventParser {
@@ -156,14 +155,15 @@ private:
 class SubEventParserOptimizeRegisterar {
 public:
     SubEventParserOptimizeRegisterar(const std::string& name,
-                                     SubEventParser<ProtoEncoder::FtraceEvent>::ParseFunction&& func)
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::ParseFunction&& func)
     {
-        SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().RegisterParseFunction(name, std::move(func));
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().RegisterParseFunction(name,
+            std::move(func));
         name_ = name;
     }
     ~SubEventParserOptimizeRegisterar()
     {
-        SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().UnregisterParseFunction(name_);
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().UnregisterParseFunction(name_);
     }
 
 private:
