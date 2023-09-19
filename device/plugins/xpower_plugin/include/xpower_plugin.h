@@ -17,26 +17,30 @@
 #define POWER_PLUGIN_H
 
 #include "logging.h"
-#include "xpower_common.h"
 #include "plugin_module_api.h"
 #include "power_message_queue.h"
+#include "xpower_common.h"
+#include "xpower_plugin_result.pb.h"
 
 using MesTypeMap = std::map<XpowerMessageType, OptimizeMessageType>;
-
 
 class XpowerPlugin {
 public:
     XpowerPlugin();
     ~XpowerPlugin();
-    int Start(const uint8_t *configData, uint32_t configSize);
-    int Report(uint8_t *configData, uint32_t configSize);
+    int Start(const uint8_t* configData, uint32_t configSize);
+    int Report(uint8_t* configData, uint32_t configSize);
     int Stop();
-    void OptimizeCallback(const std::uint32_t messageType, const uint8_t *protoData, size_t protoSize);
+    void OptimizeCallback(const std::uint32_t messageType, const uint8_t* protoData, size_t protoSize);
     void SetWriter(WriterStruct* writer);
+    bool StartPowerManager(std::uint32_t messageType, std::string& bundleName);
     void DisplayPowerMessage(std::shared_ptr<PowerOptimizeData>& result);
+    void DisplayRealBattery(OptimizeReport& dataProto);
+    void DisplayAppStatistic(OptimizeReport& dataProto);
+    void DisplayAppDetail(OptimizeReport& dataProto);
 
 private:
-    void *powerClientHandle = nullptr;
+    void* powerClientHandle = nullptr;
     XpowerConfig protoConfig;
     MesTypeMap procMesTypeMapping;
     std::shared_ptr<PowerMessageQueue> dataQueuePtr;
@@ -46,4 +50,4 @@ private:
     void* listenerHandle = nullptr;
 };
 
-#endif  // POWER_PLUGIN_H
+#endif // POWER_PLUGIN_H

@@ -17,9 +17,9 @@ import("../../base/config.gni")
 ohos_shared_library("xpowerplugin") {
   output_name = "xpowerplugin"
   sources = [
+    "src/power_message_queue.cpp",
     "src/xpower_module.cpp",
     "src/xpower_plugin.cpp",
-    "src/power_message_queue.cpp",
   ]
   include_dirs = [
     "include",
@@ -30,8 +30,8 @@ ohos_shared_library("xpowerplugin") {
   deps = [
     "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
     "../../base:hiprofiler_base",
+    "//third_party/bounds_checking_function:libsec_static",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
@@ -39,6 +39,35 @@ ohos_shared_library("xpowerplugin") {
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = true
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_executable("xpowertool") {
+  output_name = "xpowertool"
+  include_dirs = [
+    "//third_party/bounds_checking_function/include",
+    "//third_party/protobuf/src",
+  ]
+  sources = [
+    "src/xpower_main.cpp",
+  ]
+  deps = [
+    "${OHOS_PROFILER_DIR}/protos/services:proto_services_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_cpp",
+    "//third_party/bounds_checking_function:libsec_static",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
+  ]
+  cflags = [
+    "-Wno-error=inline-asm",
+    "-O3",
+  ]
+  ldflags = [ "-rdynamic" ]
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps = [ "hilog:libhilog" ]
+  }
+  install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

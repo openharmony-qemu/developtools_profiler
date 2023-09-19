@@ -13,19 +13,24 @@
  * limitations under the License.
  */
 #include "xpower_plugin.h"
-#include "securec.h"
-#include "xpower_plugin_result.pb.h"
-#include "common.h"
+
+#include <dlfcn.h>
+#include <inttypes.h>
+#include <unistd.h>
+
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <unistd.h>
-#include <dlfcn.h>
+
+#include "common.h"
+#include "securec.h"
+#include "xpower_format.h"
 
 namespace {
 constexpr size_t MAX_QUEUE_SIZE = 2000;
 uint32_t g_waitDuration = 100;
-}  // namespace
+constexpr int MIN_USER_ID = 10000;
+} // namespace
 XpowerPlugin::XpowerPlugin()
 {
     procMesTypeMapping.insert({XpowerMessageType::REAL_BATTERY, OptimizeMessageType::MESSAGE_REAL_BATTERY});
@@ -35,8 +40,7 @@ XpowerPlugin::XpowerPlugin()
     procMesTypeMapping.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
 }
 
-XpowerPlugin::~XpowerPlugin()
-{}
+XpowerPlugin::~XpowerPlugin() {}
 
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 {
@@ -57,9 +61,9 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         HILOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
         return -1;
     }
-    //check bundleName 
+    // check bundleName
     int32_t uid = COMMON::GetPackageUid(bundleName);
-    if (uid < 10000) {
+    if (uid < MIN_USER_ID) {
         HILOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
         return -1;
     }
@@ -71,31 +75,40 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
     }
     HILOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
     // 加载对应so 库文件
+    if (!StartPowerManager(messageType, bundleName)) {
+        HILOG_ERROR(LOG_CORE, "start power manager failed!");
+        return -1;
+    }
+    HILOG_INFO(LOG_CORE, "finish register the callback function:%s", __func__);
+    return 0;
+}
+
+bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bundleName)
+{
     if (powerClientHandle == nullptr) {
         powerClientHandle = dlopen("/system/lib64/libxpower_manager_client.z.so", RTLD_LAZY);
     }
     if (powerClientHandle == nullptr) {
         HILOG_ERROR(LOG_CORE, "%s :fail to open libxpower_manager_client.z.so", __func__);
-        return -1;
+        return false;
     }
     // 注册回调
     StartOptimizeMode startOptimizeMode = (StartOptimizeMode)dlsym(powerClientHandle, "StartOptimizeC");
     if (startOptimizeMode == nullptr) {
         HILOG_ERROR(LOG_CORE, "Failed to dlsy startOptimizeMode");
-        return -1;
+        return false;
     }
     config.messageType = messageType;
     config.packageName = bundleName;
-    config.callback = std::bind(
-        &XpowerPlugin::OptimizeCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    config.callback = std::bind(&XpowerPlugin::OptimizeCallback, this, std::placeholders::_1, std::placeholders::_2,
+                                std::placeholders::_3);
     listenerHandle = startOptimizeMode(config);
     if (listenerHandle == nullptr) {
         HILOG_ERROR(LOG_CORE, "Failed to startOptimizeMode");
-        return -1;
+        return false;
     }
     dataQueuePtr = std::make_shared<PowerMessageQueue>(MAX_QUEUE_SIZE);
-    HILOG_INFO(LOG_CORE, "finish register the callback function:%s", __func__);
-    return 0;
+    return true;
 }
 
 void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8_t *protoData, size_t protoSize)
@@ -109,7 +122,7 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
     rawData->baseData = std::make_unique<uint8_t[]>(protoSize);
     if (memcpy_s(rawData->baseData.get(), protoSize, protoData, protoSize) != EOK) {
         HILOG_ERROR(LOG_CORE, "memcpy_s raw powerdata failed!");
-        return ;
+        return;
     }
     rawData->length = protoSize;
     rawData->messageType = messageType;
@@ -120,96 +133,92 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
     }
 }
 
-void XpowerPlugin::DisplayPowerMessage(std::shared_ptr<PowerOptimizeData>& result)
+void XpowerPlugin::DisplayRealBattery(OptimizeReport &dataProto)
+{
+    PrintHilog(
+        "power report: real_battery:capacity ={0},charge={1},current={2},gas_gauge={3},"
+        "level={4},screen={5}",
+        dataProto.real_battery().capacity(), dataProto.real_battery().charge(), dataProto.real_battery().current(),
+        dataProto.real_battery().gas_gauge(), dataProto.real_battery().level(), dataProto.real_battery().screen());
+}
+
+void XpowerPlugin::DisplayAppStatistic(OptimizeReport &dataProto)
+{
+    PrintHilog("power report: app_statistic:audio enegy={0},time={1}", dataProto.app_statistic().audio().energy(),
+               dataProto.app_statistic().audio().time());
+
+    PrintHilog("power report: app_statistic:bluetooth enegy={0},time={1}",
+               dataProto.app_statistic().bluetooth().energy(), dataProto.app_statistic().bluetooth().time());
+
+    PrintHilog("power report: app_statistic:camera enegy={0},time={1}", dataProto.app_statistic().camera().energy(),
+               dataProto.app_statistic().camera().time());
+
+    PrintHilog("power report: app_statistic:cpu enegy={0},time={1}", dataProto.app_statistic().cpu().energy(),
+               dataProto.app_statistic().cpu().time());
+
+    PrintHilog("power report: app_statistic:display enegy={0},time={1}", dataProto.app_statistic().display().energy(),
+               dataProto.app_statistic().display().time());
+    PrintHilog("power report: app_statistic:flashlight enegy={0},time={1}",
+               dataProto.app_statistic().flashlight().energy(), dataProto.app_statistic().flashlight().time());
+    PrintHilog("power report: app_statistic:gpu enegy={0},time={1}", dataProto.app_statistic().gpu().energy(),
+               dataProto.app_statistic().gpu().time());
+
+    PrintHilog("power report: app_statistic:location enegy={0},time={1}", dataProto.app_statistic().location().energy(),
+               dataProto.app_statistic().location().time());
+    PrintHilog("power report: app_statistic:wifiscan enegy={0},time={1}", dataProto.app_statistic().wifiscan().energy(),
+               dataProto.app_statistic().wifiscan().time());
+}
+
+void XpowerPlugin::DisplayAppDetail(OptimizeReport &dataProto)
+{
+    PrintHilog("power report: app_detail:cpu thread_count={0}", dataProto.app_detail().cpu().thread_count());
+    std::string loadStr;
+    for (int i = 0; i < dataProto.app_detail().cpu().thread_load().size(); i++) {
+        loadStr += std::to_string(static_cast<long long>(dataProto.app_detail().cpu().thread_load(i))) + ":";
+    }
+    loadStr.pop_back();
+    PrintHilog("power report: app_detail:cpu tread_load={0}", loadStr);
+    std::string threadName;
+    for (int i = 0; i < dataProto.app_detail().cpu().thread_name().size(); i++) {
+        threadName += dataProto.app_detail().cpu().thread_name(i) + ":";
+    }
+    threadName.pop_back();
+    PrintHilog("power report: app_detail:cpu thread_name={0}", threadName);
+    PrintHilog("power report: app_detail:gpu frequency_count={0}", dataProto.app_detail().gpu().frequency_count());
+    std::string freqStr;
+    for (int i = 0; i < dataProto.app_detail().gpu().frequency().size(); i++) {
+        freqStr += std::to_string(dataProto.app_detail().gpu().frequency(i)) + ":";
+    }
+    freqStr.pop_back();
+    PrintHilog("power report: app_detail:gpu frequency={0}", freqStr);
+    std::string idleStr;
+    for (int i = 0; i < dataProto.app_detail().gpu().idle_time().size(); i++) {
+        idleStr += std::to_string(dataProto.app_detail().gpu().idle_time(i)) + ":";
+    }
+    idleStr.pop_back();
+    PrintHilog("power report: app_detail:gpu idle_time={0}", idleStr);
+    std::string runStr;
+    for (int i = 0; i < dataProto.app_detail().gpu().run_time().size(); i++) {
+        runStr += std::to_string(dataProto.app_detail().gpu().run_time(i)) + ":";
+    }
+    runStr.pop_back();
+    PrintHilog("power report: app_detail:gpu run_time={0}", runStr);
+}
+
+void XpowerPlugin::DisplayPowerMessage(std::shared_ptr<PowerOptimizeData> &result)
 {
     OptimizeReport dataProto;
     dataProto.ParseFromArray(result->baseData.get(), result->length);
-    HILOG_INFO(LOG_CORE,
-        "power report :recive optimize start_time = %ld, end_time=%ld",
-        dataProto.start_time(),
-        dataProto.end_time());
-    HILOG_INFO(LOG_CORE, "power report :bundle_name is %s", dataProto.bundle_name().c_str());
+    PrintHilog("power report :recive optimize start_time ={0},end_time={1},bundle_name={2}", dataProto.start_time(),
+               dataProto.end_time(), dataProto.bundle_name());
     if ((result->messageType & OptimizeMessageType::MESSAGE_REAL_BATTERY) != 0) {
-        HILOG_INFO(LOG_CORE,
-            "power report: real_battery:capacity = %ld,charge=%ld,current=%ld,gas_gauge=%ld,level=%ld,screen=%ld",
-            dataProto.real_battery().capacity(),
-            dataProto.real_battery().charge(),
-            dataProto.real_battery().current(),
-            dataProto.real_battery().gas_gauge(),
-            dataProto.real_battery().level(),
-            dataProto.real_battery().screen());
+        DisplayRealBattery(dataProto);
     }
     if ((result->messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0) {
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:auto enegy=%ld,time=%ld",
-            dataProto.app_statistic().audio().energy(),
-            dataProto.app_statistic().audio().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:bluetooth enegy=%ld,time=%ld",
-            dataProto.app_statistic().bluetooth().energy(),
-            dataProto.app_statistic().bluetooth().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:camera enegy=%ld,time=%ld",
-            dataProto.app_statistic().camera().energy(),
-            dataProto.app_statistic().camera().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:cpu enegy=%ld,time=%ld",
-            dataProto.app_statistic().cpu().energy(),
-            dataProto.app_statistic().cpu().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:cpu display=%ld,time=%ld",
-            dataProto.app_statistic().display().energy(),
-            dataProto.app_statistic().display().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:cpu flashlight=%ld,time=%ld",
-            dataProto.app_statistic().flashlight().energy(),
-            dataProto.app_statistic().flashlight().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:cpu gpu=%ld,time=%ld",
-            dataProto.app_statistic().gpu().energy(),
-            dataProto.app_statistic().gpu().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:cpu location=%ld,time=%ld",
-            dataProto.app_statistic().location().energy(),
-            dataProto.app_statistic().location().time());
-        HILOG_INFO(LOG_CORE,
-            "power report: app_statistic:cpu wifiscan=%ld,time=%ld",
-            dataProto.app_statistic().wifiscan().energy(),
-            dataProto.app_statistic().wifiscan().time());
+        DisplayAppStatistic(dataProto);
     }
     if ((result->messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0) {
-        HILOG_INFO(LOG_CORE, "power report: app_detail:cpu thread_count=%d", dataProto.app_detail().cpu().thread_count());
-        std::string loadStr;
-        for (int i = 0; i < dataProto.app_detail().cpu().thread_load().size(); i++) {
-            loadStr += std::to_string(static_cast<long long>(dataProto.app_detail().cpu().thread_load(i))) + ":";
-        }
-        loadStr.pop_back();
-        HILOG_INFO(LOG_CORE, "power report: app_detail:cpu tread_load=%s", loadStr.c_str());
-        std::string threadName;
-        for (int i = 0; i < dataProto.app_detail().cpu().thread_name().size(); i++) {
-            threadName += dataProto.app_detail().cpu().thread_name(i) + ":";
-        }
-        threadName.pop_back();
-        HILOG_INFO(LOG_CORE, "power report: app_detail:cpu thread_name=%s", threadName.c_str());
-        HILOG_INFO(LOG_CORE, "power report: app_detail:gpu frequency_count=%ld", dataProto.app_detail().gpu().frequency_count());
-        std::string freqStr;
-        for (int i = 0; i < dataProto.app_detail().gpu().frequency().size(); i++) {
-            freqStr += std::to_string(dataProto.app_detail().gpu().frequency(i)) + ":";
-        }
-        freqStr.pop_back();
-        HILOG_INFO(LOG_CORE, "power report: app_detail:gpu frequency=%s", freqStr.c_str());
-        std::string idleStr;
-        for (int i = 0; i < dataProto.app_detail().gpu().idle_time().size(); i++) {
-            idleStr += std::to_string(dataProto.app_detail().gpu().idle_time(i)) + ":";
-        }
-        idleStr.pop_back();
-        HILOG_INFO(LOG_CORE, "power report: app_detail:gpu idle_time=%s", idleStr.c_str());
-        std::string runStr;
-        for (int i = 0; i < dataProto.app_detail().gpu().run_time().size(); i++) {
-            runStr += std::to_string(dataProto.app_detail().gpu().run_time(i)) + ":";
-        }
-        runStr.pop_back();
-        HILOG_INFO(LOG_CORE, "power report: app_detail:gpu run_time=%s", runStr.c_str());
+        DisplayAppDetail(dataProto);
     }
 }
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
@@ -235,7 +244,7 @@ int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
     return result->length;
 }
 
-void XpowerPlugin::SetWriter(WriterStruct* writer)
+void XpowerPlugin::SetWriter(WriterStruct *writer)
 {
     resultWriter = writer;
 }
@@ -255,5 +264,6 @@ int XpowerPlugin::Stop()
     if (powerClientHandle != nullptr) {
         dlclose(powerClientHandle);
     }
+    dataQueuePtr->ShutDown();
     return 0;
 }

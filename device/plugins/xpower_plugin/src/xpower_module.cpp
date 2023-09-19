@@ -20,7 +20,6 @@
 #include "plugin_module_api.h"
 #include "xpower_plugin.h"
 
-
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
 std::unique_ptr<XpowerPlugin> g_plugin = nullptr;

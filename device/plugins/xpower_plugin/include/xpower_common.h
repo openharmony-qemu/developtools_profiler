@@ -19,7 +19,9 @@
 #include <functional>
 #include <map>
 #include <string>
+
 #include "xpower_plugin_config.pb.h"
+
 
 struct OptimizeConfig {
     std::uint32_t messageType;
@@ -37,11 +39,11 @@ enum OptimizeMessageType : uint32_t {
     MESSAGE_OPTIMIZE_MAX = (MESSAGE_ABNORMAL_EVENTS << 1) - 1,
 };
 struct PowerOptimizeData {
-        std::unique_ptr<uint8_t[]> baseData; // save the powere message data
-        size_t length;
-        std::uint32_t messageType;
+    std::unique_ptr<uint8_t[]> baseData; // save the powere message data
+    size_t length;
+    std::uint32_t messageType;
 };
-using StartOptimizeMode = void* (*)(struct OptimizeConfig &);
-using StopOptimizeMode = bool (*)(void*);
+using StartOptimizeMode = void *(*)(struct OptimizeConfig &);
+using StopOptimizeMode = bool (*)(void *);
 
 #endif

@@ -19,17 +19,20 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
-#include "xpower_common.h"
+
 #include "logging.h"
+#include "xpower_common.h"
+
 
 class PowerMessageQueue {
 public:
     explicit PowerMessageQueue(size_t maxSize);
     ~PowerMessageQueue();
     bool WaitAndPop(std::shared_ptr<PowerOptimizeData> &value, const std::chrono::microseconds rel_time);
-    bool WaitAndPopBatch(std::vector<std::shared_ptr<PowerOptimizeData>> &array, const std::chrono::microseconds realTime, size_t batchCount);
+    bool WaitAndPopBatch(std::vector<std::shared_ptr<PowerOptimizeData>> &array,
+                         const std::chrono::microseconds realTime, size_t batchCount);
     void PushBack(std::shared_ptr<PowerOptimizeData> &item);
-    void shutDown();
+    void ShutDown();
     int Size();
     bool Empty();
     bool IsShutDown();
@@ -42,4 +45,4 @@ private:
     bool shutDown_ = false;
     size_t maxSize_;
 };
-#endif  // POWER_MESSAGE_QUEUE_H
+#endif // POWER_MESSAGE_QUEUE_H

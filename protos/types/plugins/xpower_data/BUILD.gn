@@ -110,4 +110,3 @@ ohos_source_set("xpower_plugin_config_cpp_standard") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
-

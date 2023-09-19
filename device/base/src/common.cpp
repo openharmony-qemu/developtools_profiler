@@ -511,7 +511,8 @@ void AdaptSandboxPath(std::string& filePath, int pid)
         filePath = "/proc/" + std::to_string(pid) + "/root" + filePath;
     }
 }
-bool GetCurrentUserId(int32_t &userId)
+
+bool GetCurrentUserId(int32_t& userId)
 {
     std::vector<int32_t> activeIds;
     int32_t ret = AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds);
@@ -529,7 +530,7 @@ bool GetCurrentUserId(int32_t &userId)
     return true;
 }
 
-int32_t GetPackageUid(const std::string &name)
+int32_t GetPackageUid(const std::string& name)
 {
     int32_t userId = 0;
     if (!GetCurrentUserId(userId)) {

@@ -13,24 +13,26 @@
  * limitations under the License.
  */
 #include "power_message_queue.h"
-#include "securec.h"
-#include <unistd.h>
+
 #include <dlfcn.h>
+#include <unistd.h>
+
+#include "securec.h"
+
 
 PowerMessageQueue::PowerMessageQueue(size_t maxSize)
 {
     maxSize_ = maxSize;
 }
 
-PowerMessageQueue::~PowerMessageQueue()
-{}
+PowerMessageQueue::~PowerMessageQueue() {}
 
 bool PowerMessageQueue::IsShutDown()
 {
     return this->shutDown_;
 }
 
-void PowerMessageQueue::shutDown()
+void PowerMessageQueue::ShutDown()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     dataQueue_.clear();
@@ -57,8 +59,8 @@ bool PowerMessageQueue::WaitAndPop(std::shared_ptr<PowerOptimizeData> &value, co
     return true;
 }
 
-bool PowerMessageQueue::WaitAndPopBatch(
-    std::vector<std::shared_ptr<PowerOptimizeData>> &array, const std::chrono::microseconds realTime, size_t batchCount)
+bool PowerMessageQueue::WaitAndPopBatch(std::vector<std::shared_ptr<PowerOptimizeData>> &array,
+                                        const std::chrono::microseconds realTime, size_t batchCount)
 {
     std::unique_lock<std::mutex> lock(mutex_);
     if (IsShutDown()) {
@@ -88,8 +90,8 @@ void PowerMessageQueue::PushBack(std::shared_ptr<PowerOptimizeData> &item)
         fullCon_.wait(mlock);
     }
     dataQueue_.push_back(item);
-    mlock.unlock();          // unlock before notificiation to minimize mutex con
-    emptyCon_.notify_one();  // notify one waiting thread
+    mlock.unlock();         // unlock before notificiation to minimize mutex con
+    emptyCon_.notify_one(); // notify one waiting thread
 }
 
 int PowerMessageQueue::Size()
