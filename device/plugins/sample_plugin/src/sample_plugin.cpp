@@ -23,6 +23,7 @@ namespace {
 using namespace OHOS::Developtools::Profiler;
 constexpr int MAX_INT = 10;
 constexpr int MAX_DOUBLE = 100;
+constexpr int CONST_NUMBER = 1024;
 } // namespace
 
 SamplePlugin::SamplePlugin() {}
