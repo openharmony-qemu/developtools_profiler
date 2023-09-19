@@ -30,7 +30,9 @@ std::mutex g_taskMutex;
 static int XpowerPluginSessionStart(const uint8_t* configData, uint32_t configSize)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    g_plugin = std::make_unique<XpowerPlugin>();
+    if (g_plugin == nullptr) {
+        return -1;
+    }
     return g_plugin->Start(configData, configSize);
 }
 
@@ -47,12 +49,14 @@ static int XpowerPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
     g_plugin->Stop();
-    g_plugin = nullptr;
     return 0;
 }
 
-static int XpowerRegisterWriterStruct(const WriterStruct* writer)
+static int XpowerRegisterWriterStruct(WriterStruct* writer)
 {
+    std::lock_guard<std::mutex> guard(g_taskMutex);
+    g_plugin = std::make_unique<XpowerPlugin>();
+    g_plugin->SetWriter(writer);
     return 0;
 }
 
@@ -60,7 +64,7 @@ static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = XpowerPluginSessionStart,
     .onPluginReportResult = XpowerPluginReportResult,
     .onPluginSessionStop = XpowerPluginSessionStop,
-    .onRegisterWriterStruct = XpowerRegisterWriterStruct,
+    .onRegisterWriterStruct = (RegisterWriterStructCallback)XpowerRegisterWriterStruct,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

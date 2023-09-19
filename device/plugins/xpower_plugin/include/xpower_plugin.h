@@ -17,20 +17,33 @@
 #define POWER_PLUGIN_H
 
 #include "logging.h"
-#include "sample_plugin_config.pb.h"
-#include "sample_plugin_result.pb.h"
+#include "xpower_common.h"
+#include "plugin_module_api.h"
+#include "power_message_queue.h"
+
+using MesTypeMap = std::map<XpowerMessageType, OptimizeMessageType>;
+
 
 class XpowerPlugin {
 public:
     XpowerPlugin();
     ~XpowerPlugin();
-    int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* configData, uint32_t configSize);
+    int Start(const uint8_t *configData, uint32_t configSize);
+    int Report(uint8_t *configData, uint32_t configSize);
     int Stop();
-    uint64_t GetTimeMS();
+    void OptimizeCallback(const std::uint32_t messageType, const uint8_t *protoData, size_t protoSize);
+    void SetWriter(WriterStruct* writer);
+    void DisplayPowerMessage(std::shared_ptr<PowerOptimizeData>& result);
 
 private:
-    SampleConfig protoConfig_;
+    void *powerClientHandle = nullptr;
+    XpowerConfig protoConfig;
+    MesTypeMap procMesTypeMapping;
+    std::shared_ptr<PowerMessageQueue> dataQueuePtr;
+    WriterStruct* resultWriter{nullptr};
+    // xpower callback config
+    OptimizeConfig config;
+    void* listenerHandle = nullptr;
 };
 
-#endif // POWER_PLUGIN_H
+#endif  // POWER_PLUGIN_H
