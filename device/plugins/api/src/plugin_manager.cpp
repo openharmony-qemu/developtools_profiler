@@ -409,7 +409,7 @@ bool PluginManager::PullResult(uint32_t pluginId, bool isProtobufSerialize)
     pluginModules_[pluginId]->GetPluginVersion(version);
     
     if (isProtobufSerialize) {
-        std::unique_ptr<uint8_t[]> buffer(new (std::nothrow) uint8_t[size]);
+        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
         CHECK_NOTNULL(buffer, false, "%s:buffer new failed!", __func__);
 
         int length = it->second->ReportResult(buffer.get(), size);
