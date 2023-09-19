@@ -16,7 +16,6 @@
 #include <sys/types.h>
 
 #include "hisysevent_plugin.h"
-#include "plugin_module_api.h"
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -27,13 +26,14 @@ std::mutex g_taskMutex;
 static int HisyseventSessionStart(const uint8_t* configData, uint32_t configSize)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    CHECK_NOTNULL(g_plugin, -1, "start Hisysevent session FAILED!");
+    CHECK_NOTNULL(g_plugin, -1, "%s: no HisyseventPlugin created!", __func__);
     return g_plugin->Start(configData, configSize);
 }
 
 static int HisyseventSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    CHECK_NOTNULL(g_plugin, -1, "%s: no HisyseventPlugin created!", __func__);
     g_plugin->Stop();
     g_plugin.reset();
     return 0;

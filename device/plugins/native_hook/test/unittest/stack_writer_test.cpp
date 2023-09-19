@@ -90,7 +90,7 @@ bool CheckBuffer(uint8_t* buffer, size_t size)
     uint8_t* cmpaddr = (uint8_t*)g_smbAddr + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_;
     cmpaddr = cmpaddr + sizeof(uint32_t);
 
-    header_->info.readOffset_ = header_->info.writeOffset_;
+    header_->info.readOffset_ = header_->info.writeOffset_.load();
     if (memcmp(buffer, cmpaddr, size) == 0) {
         return true;
     }

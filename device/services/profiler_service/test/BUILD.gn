@@ -57,7 +57,9 @@ ohos_unittest("profiler_service_ut") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
   ]
   configs = [ ":cflags_config" ]
-
+  if (use_clang_coverage) {
+    defines = [ "COVERAGE_TEST" ]
+  }
   external_deps = [ "hilog:libhilog" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }

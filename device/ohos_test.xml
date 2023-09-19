@@ -155,4 +155,24 @@
             <option name="push" value="../hiebpf/test/resources/elf64.stripped -> /data/test/resources/testdata/" src="res"/>
         </preparer>
     </target>
+    <target name="arktsplugin_ut">
+        <preparer>
+            <option name="push" value="plugins/arkts_plugin/test/resources/entry-default-signed.hap -> /data/local/tmp/" src="res"/>
+            <option name="shell" value="bm install -r -p /data/local/tmp/entry-default-signed.hap"/>
+            <option name="shell" value="aa start -a MainAbility -b com.ohos.distributedmusicplayer"/>
+        </preparer>
+        <cleaner>
+            <option name="uninstall" value="com.ohos.distributedmusicplayer"/>
+        </cleaner>
+    </target>
+    <target name="ftrace_plugin_ut">
+        <preparer>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_0 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_1 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_2 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_raw_3 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_tgid -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_comm -> /data/local/tmp/" src="res"/>
+        </preparer>
+    </target>
 </configuration>

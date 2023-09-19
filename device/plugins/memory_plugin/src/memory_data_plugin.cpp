@@ -14,13 +14,13 @@
  */
 #include "memory_data_plugin.h"
 
-#include <sstream>
-
 #include "buffer_splitter.h"
+#include "memory_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "smaps_stats.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 const char* CMD_FORMAT = "memory service meminfo --local ";
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 constexpr int BUF_MAX_LEN = 2048;
@@ -176,7 +176,7 @@ int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return RET_SUCC;
 }
 
-void MemoryDataPlugin::WriteMeminfo(MemoryData& data)
+template <typename T> void MemoryDataPlugin::WriteMeminfo(T& memoryData)
 {
     int readsize = ReadFile(meminfoFd_);
     if (readsize == RET_FAIL) {
@@ -199,7 +199,7 @@ void MemoryDataPlugin::WriteMeminfo(MemoryData& data)
             continue;
         }
         auto value = static_cast<uint64_t>(strtoll(totalbuffer.CurWord(), nullptr, DEC_BASE));
-        auto* meminfo = data.add_meminfo();
+        auto* meminfo = memoryData.add_meminfo();
 
         meminfo->set_key(static_cast<SysMeminfoType>(counter_id));
         meminfo->set_value(value);
@@ -208,7 +208,7 @@ void MemoryDataPlugin::WriteMeminfo(MemoryData& data)
     return;
 }
 
-void MemoryDataPlugin::WriteZramData(MemoryData& data)
+template <typename T> void MemoryDataPlugin::WriteZramData(T& memoryData)
 {
     uint64_t zramSum = 0;
     for (int i = 0; i < MAX_ZRAM_DEVICES; i++) {
@@ -232,10 +232,10 @@ void MemoryDataPlugin::WriteZramData(MemoryData& data)
         }
     }
 
-    data.set_zram(zramSum / ZRAM_KB);
+    memoryData.set_zram(zramSum / ZRAM_KB);
 }
 
-void MemoryDataPlugin::WriteVmstat(MemoryData& data)
+template <typename T> void MemoryDataPlugin::WriteVmstat(T& memoryData)
 {
     int readsize = ReadFile(vmstatFd_);
     if (readsize == RET_FAIL) {
@@ -258,7 +258,7 @@ void MemoryDataPlugin::WriteVmstat(MemoryData& data)
         valuestr[totalbuffer.CurLineSize() - (valuestr - totalbuffer.CurLine())] = '\0';
 
         auto value = static_cast<uint64_t>(strtoll(valuestr, nullptr, DEC_BASE));
-        auto* vmeminfo = data.add_vmeminfo();
+        auto* vmeminfo = memoryData.add_vmeminfo();
 
         vmeminfo->set_key(static_cast<SysVMeminfoType>(counter_id));
         vmeminfo->set_value(value);
@@ -267,15 +267,16 @@ void MemoryDataPlugin::WriteVmstat(MemoryData& data)
     return;
 }
 
-void MemoryDataPlugin::WriteAppsummary(ProcessMemoryInfo* processinfo, SmapsStats& smapInfo)
+template <typename T> void MemoryDataPlugin::WriteAppsummary(T& processMemoryInfo, SmapsStats& smapInfo)
 {
-    processinfo->mutable_memsummary()->set_java_heap(smapInfo.GetProcessJavaHeap());
-    processinfo->mutable_memsummary()->set_native_heap(smapInfo.GetProcessNativeHeap());
-    processinfo->mutable_memsummary()->set_code(smapInfo.GetProcessCode());
-    processinfo->mutable_memsummary()->set_stack(smapInfo.GetProcessStack());
-    processinfo->mutable_memsummary()->set_graphics(smapInfo.GetProcessGraphics());
-    processinfo->mutable_memsummary()->set_private_other(smapInfo.GetProcessPrivateOther());
-    processinfo->mutable_memsummary()->set_system(smapInfo.GetProcessSystem());
+    auto* memsummary = processMemoryInfo.mutable_memsummary();
+    memsummary->set_java_heap(smapInfo.GetProcessJavaHeap());
+    memsummary->set_native_heap(smapInfo.GetProcessNativeHeap());
+    memsummary->set_code(smapInfo.GetProcessCode());
+    memsummary->set_stack(smapInfo.GetProcessStack());
+    memsummary->set_graphics(smapInfo.GetProcessGraphics());
+    memsummary->set_private_other(smapInfo.GetProcessPrivateOther());
+    memsummary->set_system(smapInfo.GetProcessSystem());
 }
 
 int MemoryDataPlugin::ParseNumber(std::string line)
@@ -283,56 +284,7 @@ int MemoryDataPlugin::ParseNumber(std::string line)
     return atoi(line.substr(line.find_first_of("01234567890")).c_str());
 }
 
-bool MemoryDataPlugin::ParseMemInfo(const char* data, ProcessMemoryInfo* memoryInfo)
-{
-    bool ready = false;
-    bool done = false;
-    std::istringstream ss(data);
-    std::string line;
-
-    while (std::getline(ss, line)) {
-        std::string s(line);
-        if (s.find("App Summary") != s.npos) {
-            ready = true;
-            continue;
-        }
-
-        if (ready) {
-            if (s.find("Java Heap:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_java_heap(ParseNumber(s));
-                continue;
-            }
-            if (s.find("Native Heap:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_native_heap(ParseNumber(s));
-                continue;
-            }
-            if (s.find("Code:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_code(ParseNumber(s));
-                continue;
-            }
-            if (s.find("Stack:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_stack(ParseNumber(s));
-                continue;
-            }
-            if (s.find("Graphics:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_graphics(ParseNumber(s));
-                continue;
-            }
-            if (s.find("Private Other:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_private_other(ParseNumber(s));
-                continue;
-            }
-            if (s.find("System:") != s.npos) {
-                memoryInfo->mutable_memsummary()->set_system(ParseNumber(s));
-                done = true;
-                break;
-            }
-        }
-    }
-    return done;
-}
-
-bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t pid, ProcessMemoryInfo* memoryInfo)
+template <typename T> bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t pid, T& processMemoryInfo)
 {
     std::string fullCmd = CMD_FORMAT + std::to_string(pid);
 
@@ -346,45 +298,60 @@ bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t pid, ProcessMemoryInfo
     }
     buffer.get()[BUF_MAX_LEN - 1] = '\0';
 
-    return ParseMemInfo(reinterpret_cast<char*>(buffer.get()), memoryInfo);
+    return ParseMemInfo(reinterpret_cast<char*>(buffer.get()), processMemoryInfo);
 }
 
-int MemoryDataPlugin::Report(uint8_t* data, uint32_t dataSize)
+template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memoryDataProto, S smapsInfo)
 {
-    MemoryData dataProto;
-    uint32_t length;
-
     if (protoConfig_.report_process_tree()) {
-        WriteProcesseList(dataProto);
+        WriteProcesseList(memoryDataProto);
     }
 
     if (protoConfig_.report_sysmem_mem_info()) {
-        WriteMeminfo(dataProto);
-        WriteZramData(dataProto);
+        WriteMeminfo(memoryDataProto);
+        WriteZramData(memoryDataProto);
     }
 
     if (protoConfig_.report_sysmem_vmem_info()) {
-        WriteVmstat(dataProto);
+        WriteVmstat(memoryDataProto);
     }
 
     for (int i = 0; i < protoConfig_.pid().size(); i++) {
         int32_t pid = protoConfig_.pid(i);
-        auto* processinfo = dataProto.add_processesinfo();
+        auto* processinfo = memoryDataProto.add_processesinfo();
         if (protoConfig_.report_process_mem_info()) {
-            WriteProcinfoByPidfds(processinfo, pid);
+            WriteProcinfoByPidfds(*processinfo, pid);
         }
 
         bool isReportApp = protoConfig_.report_app_mem_info() && !protoConfig_.report_app_mem_by_memory_service();
         bool isReportSmaps = protoConfig_.report_smaps_mem_info();
         if (i == 0 && (isReportApp || isReportSmaps)) {
             SmapsStats smapInfo;
-            smapInfo.ParseMaps(pid, *processinfo, isReportApp, isReportSmaps);
+            smapInfo.ParseMaps(pid, *processinfo, smapsInfo, isReportApp, isReportSmaps);
             if (isReportApp) {
-                WriteAppsummary(processinfo, smapInfo);
+                WriteAppsummary(*processinfo, smapInfo);
             }
         }
     }
-    length = dataProto.ByteSizeLong();
+}
+
+int MemoryDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+{
+    ProtoEncoder::MemoryData dataProto(randomWrite);
+    ProtoEncoder::SmapsInfo* smapsInfo = nullptr;
+    WriteMemoryData(dataProto, smapsInfo);
+
+    int msgSize = dataProto.Finish();
+    return msgSize;
+}
+
+int MemoryDataPlugin::Report(uint8_t* data, uint32_t dataSize)
+{
+    MemoryData dataProto;
+    SmapsInfo* smapsInfo = nullptr;
+    WriteMemoryData(dataProto, smapsInfo);
+
+    uint32_t length = dataProto.ByteSizeLong();
     if (length > dataSize) {
         return -length;
     }
@@ -416,20 +383,18 @@ int MemoryDataPlugin::Stop()
     return 0;
 }
 
-void MemoryDataPlugin::WriteProcinfoByPidfds(ProcessMemoryInfo* processinfo, int32_t pid)
+template <typename T> void MemoryDataPlugin::WriteProcinfoByPidfds(T& processMemoryInfo, int32_t pid)
 {
     char* end = nullptr;
     int32_t readSize;
 
     readSize = ReadFile(pidFds_[pid][FILE_STATUS]);
     if (readSize != RET_FAIL) {
-        WriteProcess(processinfo, (char*)buffer_.get(), readSize, pid);
+        WriteProcess(processMemoryInfo, (char*)buffer_.get(), readSize, pid);
     }
 
     if (ReadFile(pidFds_[pid][FILE_OOM]) != RET_FAIL) {
-        processinfo->set_oom_score_adj(static_cast<int64_t>(strtol((char*)buffer_.get(), &end, DEC_BASE)));
-    } else {
-        processinfo->set_oom_score_adj(0);
+        processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol((char*)buffer_.get(), &end, DEC_BASE)));
     }
     return;
 }
@@ -638,7 +603,7 @@ bool MemoryDataPlugin::StringToUll(const char* word, uint64_t& value)
     return true;
 }
 
-void MemoryDataPlugin::SetProcessInfo(ProcessMemoryInfo* processinfo, int key, const char* word)
+template <typename T> void MemoryDataPlugin::SetProcessInfo(T& processMemoryInfo, int key, const char* word)
 {
     uint64_t value;
 
@@ -649,31 +614,31 @@ void MemoryDataPlugin::SetProcessInfo(ProcessMemoryInfo* processinfo, int key, c
 
     switch (key) {
         case PRO_TGID:
-            processinfo->set_pid(static_cast<int32_t>(value));
+            processMemoryInfo.set_pid(static_cast<int32_t>(value));
             break;
         case PRO_VMSIZE:
-            processinfo->set_vm_size_kb(value);
+            processMemoryInfo.set_vm_size_kb(value);
             break;
         case PRO_VMRSS:
-            processinfo->set_vm_rss_kb(value);
+            processMemoryInfo.set_vm_rss_kb(value);
             break;
         case PRO_RSSANON:
-            processinfo->set_rss_anon_kb(value);
+            processMemoryInfo.set_rss_anon_kb(value);
             break;
         case PRO_RSSFILE:
-            processinfo->set_rss_file_kb(value);
+            processMemoryInfo.set_rss_file_kb(value);
             break;
         case PRO_RSSSHMEM:
-            processinfo->set_rss_shmem_kb(value);
+            processMemoryInfo.set_rss_shmem_kb(value);
             break;
         case PRO_VMSWAP:
-            processinfo->set_vm_swap_kb(value);
+            processMemoryInfo.set_vm_swap_kb(value);
             break;
         case PRO_VMLCK:
-            processinfo->set_vm_locked_kb(value);
+            processMemoryInfo.set_vm_locked_kb(value);
             break;
         case PRO_VMHWM:
-            processinfo->set_vm_hwm_kb(value);
+            processMemoryInfo.set_vm_hwm_kb(value);
             break;
         default:
             break;
@@ -681,7 +646,8 @@ void MemoryDataPlugin::SetProcessInfo(ProcessMemoryInfo* processinfo, int key, c
     return;
 }
 
-void MemoryDataPlugin::WriteProcess(ProcessMemoryInfo* processinfo, const char* pFile, uint32_t fileLen, int32_t pid)
+template <typename T>
+void MemoryDataPlugin::WriteProcess(T& processMemoryInfo, const char* pFile, uint32_t fileLen, int32_t pid)
 {
     BufferSplitter totalbuffer(const_cast<const char*>(pFile), fileLen + 1);
 
@@ -697,34 +663,33 @@ void MemoryDataPlugin::WriteProcess(ProcessMemoryInfo* processinfo, const char* 
             continue;
         }
         if (key == PRO_NAME) {
-            processinfo->set_name(totalbuffer.CurWord(), totalbuffer.CurWordSize());
+            processMemoryInfo.set_name(totalbuffer.CurWord(), totalbuffer.CurWordSize());
         }
-        SetProcessInfo(processinfo, key, totalbuffer.CurWord());
+        SetProcessInfo(processMemoryInfo, key, totalbuffer.CurWord());
     } while (totalbuffer.NextLine());
     // update process name
     int32_t ret = ReadProcPidFile(pid, "cmdline");
     if (ret > 0) {
-        processinfo->set_name(reinterpret_cast<char*>(buffer_.get()), strlen(reinterpret_cast<char*>(buffer_.get())));
+        processMemoryInfo.set_name(reinterpret_cast<char*>(buffer_.get()),
+                                   strlen(reinterpret_cast<char*>(buffer_.get())));
     }
 }
 
-void MemoryDataPlugin::WriteOomInfo(ProcessMemoryInfo* processinfo, int32_t pid)
+template <typename T> void MemoryDataPlugin::WriteOomInfo(T& processMemoryInfo, int32_t pid)
 {
     char* end = nullptr;
 
     if (ReadProcPidFile(pid, "oom_score_adj") == RET_FAIL) {
-        processinfo->set_oom_score_adj(0);
         return;
     }
     if (buffer_.get() == nullptr) {
-        processinfo->set_oom_score_adj(0);
         HILOG_ERROR(LOG_CORE, "%s:invalid params, read buffer_ is NULL", __func__);
         return;
     }
-    processinfo->set_oom_score_adj(static_cast<int64_t>(strtol((char*)buffer_.get(), &end, DEC_BASE)));
+    processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol((char*)buffer_.get(), &end, DEC_BASE)));
 }
 
-void MemoryDataPlugin::WriteProcessInfo(MemoryData& data, int32_t pid)
+template <typename T> void MemoryDataPlugin::WriteProcessInfo(T& memoryData, int32_t pid)
 {
     int32_t ret = ReadProcPidFile(pid, "status");
     if (ret == RET_FAIL) {
@@ -733,12 +698,12 @@ void MemoryDataPlugin::WriteProcessInfo(MemoryData& data, int32_t pid)
     if ((buffer_.get() == nullptr) || (ret == 0)) {
         return;
     }
-    auto* processinfo = data.add_processesinfo();
-    WriteProcess(processinfo, (char*)buffer_.get(), ret, pid);
-    WriteOomInfo(processinfo, pid);
+    auto* processinfo = memoryData.add_processesinfo();
+    WriteProcess(*processinfo, (char*)buffer_.get(), ret, pid);
+    WriteOomInfo(*processinfo, pid);
 }
 
-void MemoryDataPlugin::WriteProcesseList(MemoryData& data)
+template <typename T> void MemoryDataPlugin::WriteProcesseList(T& memoryData)
 {
     DIR* procDir = nullptr;
 
@@ -753,7 +718,7 @@ void MemoryDataPlugin::WriteProcesseList(MemoryData& data)
     }
 
     for (unsigned int i = 0; i < seenPids_.size(); i++) {
-        WriteProcessInfo(data, seenPids_[i]);
+        WriteProcessInfo(memoryData, seenPids_[i]);
     }
     closedir(procDir);
 }

@@ -35,6 +35,7 @@
 #include "logging.h"
 #include "network_plugin_config.pb.h"
 #include "network_plugin_result.pb.h"
+#include "plugin_module_api.h"
 
 struct NetDetails {
     uint64_t tx;
@@ -82,7 +83,8 @@ public:
     NetworkPlugin();
     ~NetworkPlugin() {};
     int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* configData, uint32_t configSize);
+    int Report(uint8_t* data, uint32_t dataSize);
+    int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
 protected:
     std::string GetRateNodePath();
@@ -100,6 +102,8 @@ protected:
     {
         return fileForTest_;
     }
+
+    template <typename T> bool WriteNetWorkData(T& networkDatasProto);
 
 private:
     NetworkConfig protoConfig_;

@@ -25,7 +25,8 @@
 #include "securec.h"
 
 namespace {
-const int HEAD_OFFSET_LEN = 4;
+const int PIECE_HEAD_LEN = 4;
+constexpr uint32_t INVALID_LENGTH = (uint32_t)-1;
 constexpr uint32_t TIMEOUT_SEC = 1;
 const int WAIT_RELEASE_TIMEOUT_US = 10;
 #ifndef PAGE_SIZE
@@ -77,6 +78,19 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
 
     memoryName_ = name;
     header_ = reinterpret_cast<BlockHeader*>(ptr);
+
+    // Reserve 4 bytes to fill the message length.
+    messageWriteOffset_ = PIECE_HEAD_LEN;
+    // Functions required to bind the BaseMessage class.
+    smbCtx_.block = this;
+    smbCtx_.ctx.getMemory = [](RandomWriteCtx* ctx, uint32_t size, uint8_t** memory, uint32_t* offset) -> bool {
+        ShareMemoryBlockCtx* smbCtx = reinterpret_cast<ShareMemoryBlockCtx*>(ctx);
+        return smbCtx->block->GetMemory(size, memory, offset);
+    };
+    smbCtx_.ctx.seek = [](RandomWriteCtx* ctx, uint32_t offset) -> bool {
+        ShareMemoryBlockCtx* smbCtx = reinterpret_cast<ShareMemoryBlockCtx*>(ctx);
+        return smbCtx->block->Seek(offset);
+    };
     return true;
 }
 
@@ -169,21 +183,21 @@ bool ShareMemoryBlock::ReleaseBlock()
 int8_t* ShareMemoryBlock::GetCurrentFreeMemory(uint32_t size)
 {
     CHECK_NOTNULL(header_, nullptr, "header not ready!");
-    uint32_t realSize = size + sizeof(uint32_t) + HEAD_OFFSET_LEN;
+    uint32_t realSize = size + PIECE_HEAD_LEN + PIECE_HEAD_LEN;
 
-    uint32_t wp = header_->info.writeOffset_;
+    uint32_t wp = header_->info.writeOffset_.load();
     if (wp + realSize > header_->info.memorySize_) {  // 后面部分放不下，从头开始放
-        if (header_->info.readOffset_ == 0) {
+        if (header_->info.readOffset_.load() == 0) {
             return nullptr;
         }
-        *((uint32_t*)(&header_->data[wp])) = 0xffffffff;
+        *((uint32_t*)(&header_->data[wp])) = INVALID_LENGTH;
         wp = 0;
     }
-    if (wp < header_->info.readOffset_ && header_->info.readOffset_ < wp + realSize) {  //
+    if (wp < header_->info.readOffset_.load() && header_->info.readOffset_.load() < wp + realSize) {  //
         return nullptr;
     }
 
-    return &header_->data[wp + sizeof(uint32_t)];
+    return &header_->data[wp + PIECE_HEAD_LEN];
 }
 
 int8_t* ShareMemoryBlock::GetFreeMemory(uint32_t size)
@@ -206,10 +220,10 @@ int8_t* ShareMemoryBlock::GetFreeMemory(uint32_t size)
 
 bool ShareMemoryBlock::UseFreeMemory(int8_t* pmem, uint32_t size)
 {
-    uint32_t wp = pmem - sizeof(uint32_t) - header_->data;
+    uint32_t wp = pmem - PIECE_HEAD_LEN - header_->data;
     *((int*)(&header_->data[wp])) = size;
 
-    header_->info.writeOffset_ = wp + sizeof(uint32_t) + size;
+    header_->info.writeOffset_ = wp + PIECE_HEAD_LEN + size;
     return true;
 }
 
@@ -324,8 +338,12 @@ bool ShareMemoryBlock::PutMessage(const google::protobuf::Message& pmsg, const s
 }
 #endif
 
-bool ShareMemoryBlock::TakeData(const DataHandler& func)
+bool ShareMemoryBlock::TakeData(const DataHandler& func, bool isProtobufSerialize)
 {
+    if (!isProtobufSerialize) {
+        return TakeDataOptimize(func);
+    }
+
     CHECK_NOTNULL(header_, false, "header not ready!");
     CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
 
@@ -343,11 +361,11 @@ bool ShareMemoryBlock::TakeData(const DataHandler& func)
 
 uint32_t ShareMemoryBlock::GetDataSize()
 {
-    if (header_->info.readOffset_ == header_->info.writeOffset_) {
+    if (header_->info.readOffset_.load() == header_->info.writeOffset_.load()) {
         return 0;
     }
-    uint32_t ret = *((uint32_t*)(&header_->data[header_->info.readOffset_]));
-    if (ret == 0xffffffff) {
+    uint32_t ret = *((uint32_t*)(&header_->data[header_->info.readOffset_.load()]));
+    if (ret == INVALID_LENGTH) {
         ret = *((uint32_t*)(&header_->data[0]));
     }
     return ret;
@@ -355,23 +373,23 @@ uint32_t ShareMemoryBlock::GetDataSize()
 
 const int8_t* ShareMemoryBlock::GetDataPoint()
 {
-    if (*((uint32_t*)(&header_->data[header_->info.readOffset_])) == 0xffffffff) {
-        return &header_->data[HEAD_OFFSET_LEN];
+    if (*((uint32_t*)(&header_->data[header_->info.readOffset_.load()])) == INVALID_LENGTH) {
+        return &header_->data[PIECE_HEAD_LEN];
     }
-    return &header_->data[header_->info.readOffset_ + HEAD_OFFSET_LEN];
+    return &header_->data[header_->info.readOffset_ .load()+ PIECE_HEAD_LEN];
 }
 
 bool ShareMemoryBlock::Next()
 {
-    if (header_->info.readOffset_ == header_->info.writeOffset_) {
+    if (header_->info.readOffset_.load() == header_->info.writeOffset_.load()) {
         return false;
     }
-    uint32_t size = *((uint32_t*)(&header_->data[header_->info.readOffset_]));
-    if (size == 0xffffffff) {
+    uint32_t size = *((uint32_t*)(&header_->data[header_->info.readOffset_.load()]));
+    if (size == INVALID_LENGTH) {
         size = *((uint32_t*)(&header_->data[0]));
-        header_->info.readOffset_ = size + sizeof(uint32_t);
+        header_->info.readOffset_ = size + PIECE_HEAD_LEN;
     } else {
-        header_->info.readOffset_ += size + sizeof(uint32_t);
+        header_->info.readOffset_ += size + PIECE_HEAD_LEN;
     }
     return true;
 }
@@ -433,4 +451,103 @@ void ShareMemoryBlock::ClearShareMemoryBlock()
     header_->info.writeOffset_ = 0;
     header_->info.bytesCount_ = 0;
     header_->info.chunkCount_ = 0;
+}
+
+void ShareMemoryBlock::UseMemory(int32_t size)
+{
+    CHECK_TRUE(header_ != nullptr, NO_RETVAL, "header not ready!");
+    CHECK_TRUE(size > 0, NO_RETVAL, "size(%d) is invalid", size);
+
+    uint32_t wp = header_->info.writeOffset_.load(std::memory_order_relaxed);
+    *((int*)(&header_->data[wp])) = size;
+    header_->info.writeOffset_.store(wp + PIECE_HEAD_LEN + size, std::memory_order_release);
+}
+
+bool ShareMemoryBlock::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset)
+{
+    CHECK_NOTNULL(header_, false, "header not ready!");
+
+    // The actual size is to store data with a size of offset and a size of data and a four byte tail tag.
+    uint32_t realSize = messageWriteOffset_ + size + PIECE_HEAD_LEN;
+    uint32_t wp = header_->info.writeOffset_.load(std::memory_order_relaxed);
+    uint32_t rp = header_->info.readOffset_.load(std::memory_order_acquire);
+    if (rp <= wp) {
+        if (wp + realSize <= header_->info.memorySize_) {
+            // enough tail space to store data.
+            *memory = reinterpret_cast<uint8_t *>(&header_->data[wp + messageWriteOffset_]);
+            *offset = messageWriteOffset_;
+            return true;
+        } else if (realSize <= rp) {
+            // there is data in the tail, and it is need to copy the data in the tail to the header for saving.
+            auto ret = memcpy_s(&header_->data[0], messageWriteOffset_, &header_->data[wp], messageWriteOffset_);
+            CHECK_TRUE(ret == EOK, false, "memcpy_s messageWriteOffset_(%d) data failed", messageWriteOffset_);
+            // set trailing data end tag.
+            *((uint32_t*)(&header_->data[wp])) = INVALID_LENGTH;
+            // set writeOffset_ to zero.
+            header_->info.writeOffset_.store(0, std::memory_order_release);
+            *memory = reinterpret_cast<uint8_t *>(&header_->data[messageWriteOffset_]);
+            *offset = messageWriteOffset_;
+            return true;
+        }
+    } else if (rp > wp) {
+        if (wp + realSize <= rp) {
+            // rp is after wp and there is enough space to store data.
+            *memory = reinterpret_cast<uint8_t *>(&header_->data[wp + messageWriteOffset_]);
+            *offset = messageWriteOffset_;
+            return true;
+        }
+    }
+
+    HILOG_ERROR(LOG_CORE, "Write not enough space, realSize=%u, rp=%u, wp=%u", realSize, rp, wp);
+    return false;
+}
+
+bool ShareMemoryBlock::TakeDataOptimize(const DataHandler& func)
+{
+    CHECK_NOTNULL(header_, false, "header not ready!");
+    CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
+
+    uint32_t wp = header_->info.writeOffset_.load(std::memory_order_acquire);
+    uint32_t rp = header_->info.readOffset_.load(std::memory_order_relaxed);
+    int8_t* ptr = nullptr;
+    uint32_t size = 0;
+    if (rp < wp) {
+        // |---rp<---data--->wp---|
+        size = *((uint32_t*)(&header_->data[rp]));
+        ptr = &header_->data[rp + PIECE_HEAD_LEN];
+    } else if (wp < rp) {
+        // |<---data2--->wp---rp<---data1--->|
+        size = *((uint32_t*)(&header_->data[rp]));
+        // Size is the end tag of the tail and needs to be retrieved from the header.
+        if (size == INVALID_LENGTH) {
+            if (wp == 0) {
+                // no data to read.
+                return false;
+            }
+            rp = 0;
+            size = *((uint32_t*)(&header_->data[rp]));
+        }
+        ptr = &header_->data[rp + PIECE_HEAD_LEN];
+    } else {
+        // wp == rp
+        return false;
+    }
+    CHECK_NOTNULL(ptr, false, "ptr is nullptr");
+
+    // Start writing file.
+    CHECK_TRUE(func(ptr, size), false, "call func FAILED!");
+
+    header_->info.readOffset_.store(rp + size + PIECE_HEAD_LEN, std::memory_order_release);
+    return true;
+}
+
+bool ShareMemoryBlock::Seek(uint32_t pos)
+{
+    messageWriteOffset_ = pos;
+    return true;
+}
+
+void ShareMemoryBlock::ResetPos()
+{
+    messageWriteOffset_ = PIECE_HEAD_LEN;
 }

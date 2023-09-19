@@ -423,7 +423,8 @@ bool HookManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds)
     return true;
 }
 
-bool HookManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd)
+bool HookManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                               bool isProtobufSerialize)
 {
     HILOG_DEBUG(LOG_CORE, "agentIndex_ %d", agentIndex_);
     RegisterWriter(std::make_shared<BufferWriter>(pluginName, VERSION, bufferSize, smbFd, eventFd, agentIndex_));

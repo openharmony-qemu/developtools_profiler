@@ -173,8 +173,9 @@ HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level1)
 
     FtraceCpuDetailMsg cpuDetailMsg = {};
     FtraceParser parser;
+    FtraceEvent* event = nullptr;
     parser.Init();
-    EXPECT_TRUE(parser.ParsePage(cpuDetailMsg, buffer.data(), buffer.size()));
+    EXPECT_TRUE(parser.ParsePage(cpuDetailMsg, buffer.data(), buffer.size(), event));
     EXPECT_EQ(close(fd), 0);
 }
 } // namespace

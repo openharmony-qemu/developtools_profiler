@@ -112,4 +112,14 @@ bool ResultTransporter::Submit(ResultPtr&& packet)
     lock.unlock();
     return true;
 }
+
+void ResultTransporter::Report(size_t msgSize)
+{
+    bytesCount_ += msgSize;
+    bytesPending_ += msgSize;
+
+    if (IsFlushTime() || bytesPending_ >= flushThreshold_) {
+        Flush();
+    }
+}
 FTRACE_NS_END

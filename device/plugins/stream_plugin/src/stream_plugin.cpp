@@ -13,11 +13,15 @@
  * limitations under the License.
  */
 #include "stream_plugin.h"
-#include "securec.h"
 
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "securec.h"
+#include "stream_plugin_result.pbencoder.h"
+
+using namespace OHOS::Developtools::Profiler;
 
 StreamPlugin::StreamPlugin() {}
 
@@ -56,22 +60,32 @@ int StreamPlugin::SetWriter(WriterStruct* writer)
 void StreamPlugin::Loop(void)
 {
     HILOG_INFO(LOG_CORE, "%s:transporter thread %d start !!!!!", __func__, gettid());
+    CHECK_NOTNULL(resultWriter_, NO_RETVAL, "%s: resultWriter_ nullptr", __func__);
+
     uint32_t index = 0;
     while (running_) {
-        StreamData dataProto;
-        dataProto.set_intdata(index);
-        dataProto.set_stringdata(std::to_string(index));
-        buffer_.resize(dataProto.ByteSizeLong());
-        dataProto.SerializeToArray(buffer_.data(), buffer_.size());
-
-        if (index < 50) { // 50: count of loop
-            if (resultWriter_->write != nullptr) {
+        if (resultWriter_->isProtobufSerialize) {
+            StreamData dataProto;
+            dataProto.set_intdata(index);
+            dataProto.set_stringdata(std::to_string(index));
+            buffer_.resize(dataProto.ByteSizeLong());
+            dataProto.SerializeToArray(buffer_.data(), buffer_.size());
+            if (index < 50) { // 50: count of loop
                 resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
                 resultWriter_->flush(resultWriter_);
             }
+        } else {
+            ProtoEncoder::StreamData dataProto(resultWriter_->startReport(resultWriter_));
+            dataProto.set_intdata(index);
+            dataProto.set_stringdata(std::to_string(index));
+            int messageLen = dataProto.Finish();
+            resultWriter_->finishReport(resultWriter_, messageLen);
+            if (index < 50) { // 50: count of loop
+                resultWriter_->flush(resultWriter_);
+            }
         }
+
         index++;
     }
-    resultWriter_->flush(resultWriter_);
     HILOG_INFO(LOG_CORE, "%s:transporter thread %d exit !!!!!", __func__, gettid());
 }

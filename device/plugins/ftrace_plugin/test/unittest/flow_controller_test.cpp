@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <unistd.h>
 
+#include "file_utils.h"
 #include "flow_controller.h"
 #include "ftrace_module.h"
 
@@ -34,6 +35,11 @@ constexpr uint32_t BUFFER_SIZE_MAX_KB = 64 * 1024 + 1;
 constexpr uint32_t FLUSH_INTERVAL_MS = 1000;
 constexpr uint32_t FLUSH_THRESHOLD_KB = 1024;
 constexpr uint32_t TRACE_PERIOD_MS = 500;
+constexpr uint32_t TEST_CPU_NUM = 4;
+constexpr uint32_t TRACE_TIME = 3;
+constexpr uint32_t BUFFER_SIZE = 2 * 1024 * 1024;
+RandomWriteCtx g_writeCtx = {};
+std::unique_ptr<uint8_t[]> g_buffer = nullptr;
 #if defined(__LP64__)
 const std::string DEFAULT_TEST_PATH("/system/lib64/");
 #else
@@ -62,6 +68,33 @@ bool FlushFunc(WriterStructPtr writer)
         return false;
     }
     return true;
+}
+
+RandomWriteCtx* StartReportFunc(WriterStructPtr writer)
+{
+    if (writer == nullptr) {
+        return nullptr;
+    }
+
+    g_writeCtx.getMemory = [](RandomWriteCtx* ctx, uint32_t size, uint8_t** memory, uint32_t* offset) -> bool {
+        if (size > BUFFER_SIZE) {
+            return false;
+        }
+
+        *memory = g_buffer.get();
+        *offset = 0;
+        return true;
+    };
+    g_writeCtx.seek = [](RandomWriteCtx* ctx, uint32_t offset) -> bool {
+        return true;
+    };
+
+    return &g_writeCtx;
+}
+
+void FinishReportFunc(WriterStructPtr writer, int32_t size)
+{
+    return;
 }
 
 /*
@@ -265,5 +298,64 @@ HWTEST_F(FlowControllerTest, TestFramework, TestSize.Level1)
     EXPECT_EQ(plugin->callbacks->onRegisterWriterStruct(&writer), 0);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStart(configData.data(), configData.size()), 0);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), 0);
+}
+
+/*
+ * @tc.name: frace_module
+ * @tc.desc: test ftrace plugin based on resource files.
+ * @tc.type: FUNC
+ */
+HWTEST_F(FlowControllerTest, TestFrameworkWithFile, TestSize.Level1)
+{
+    // set writer
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    OHOS::Profiler::Plugins::FlowController controller;
+    ASSERT_EQ(controller.SetWriter(static_cast<WriterStructPtr>(&writer)), 0);
+    controller.SetTestInfo(TEST_CPU_NUM, "/data/local/tmp/");
+
+    // set config
+    TracePluginConfig config;
+    config.add_ftrace_events("sched/sched_switch");
+    config.set_buffer_size_kb(BUFFER_SIZE);
+    config.set_trace_period_ms(TRACE_PERIOD_MS);
+    std::vector<uint8_t> configData(config.ByteSizeLong());
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ASSERT_GT(ret, 0);
+    EXPECT_EQ(controller.LoadConfig(configData.data(), configData.size()), 0);
+
+    EXPECT_EQ(controller.StartCapture(), 0);
+    sleep(TRACE_TIME);
+    EXPECT_EQ(controller.StopCapture(), 0);
+}
+
+/*
+ * @tc.name: frace_module
+ * @tc.desc: test ftrace plugin encoder based on resource files.
+ * @tc.type: FUNC
+ */
+HWTEST_F(FlowControllerTest, TestFrameworkEncoder, TestSize.Level1)
+{
+    g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
+    ASSERT_NE(g_buffer.get(), nullptr);
+
+    // set writer
+    WriterStruct writer = {WriteFunc, FlushFunc, StartReportFunc, FinishReportFunc, false};
+    OHOS::Profiler::Plugins::FlowController controller;
+    ASSERT_EQ(controller.SetWriter(static_cast<WriterStructPtr>(&writer)), 0);
+    controller.SetTestInfo(TEST_CPU_NUM, "/data/local/tmp/");
+
+    // set config
+    TracePluginConfig config;
+    config.add_ftrace_events("sched/sched_switch");
+    config.set_buffer_size_kb(BUFFER_SIZE);
+    config.set_trace_period_ms(TRACE_PERIOD_MS);
+    std::vector<uint8_t> configData(config.ByteSizeLong());
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ASSERT_GT(ret, 0);
+    EXPECT_EQ(controller.LoadConfig(configData.data(), configData.size()), 0);
+
+    EXPECT_EQ(controller.StartCapture(), 0);
+    sleep(TRACE_TIME);
+    EXPECT_EQ(controller.StopCapture(), 0);
 }
 } // namespace

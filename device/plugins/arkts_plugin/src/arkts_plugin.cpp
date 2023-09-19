@@ -17,6 +17,7 @@
 
 #include <arpa/inet.h>
 #include <cstdlib>
+#include <regex>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -34,9 +35,19 @@ const std::string TIMELINE_HEAD =
 const std::string TIMELINE_TAIL = "}}";
 const std::string TIMELINE_STOP =
     R"({"id":2,"method":"HeapProfiler.stopTrackingHeapObjects","params":{"reportProgress":true}})";
-const std::string START_CMD_RETURN = R"({"id":1,"result":{}})";
-const std::string STOP_CMD_RETURN = R"({"id":2,"result":{}})";
+const std::string CPU_PROFILER_INTERVAL_HEAD =
+    R"({"id":3,"method":"Profiler.setSamplingInterval","params":{"interval":)";
+const std::string CPU_PROFILER_INTERVAL_TAIL = R"(}})";
+const std::string CPU_PROFILER_START = R"({"id":3,"method":"Profiler.start","params":{}})";
+const std::string CPU_PROFILER_STOP = R"({"id":3,"method":"Profiler.stop","params":{}})";
+constexpr uint8_t TIMELINE_START_SUCCESS = 0x1;
+constexpr uint8_t CPU_PROFILER_START_SUCCESS = 0x2;
+const std::string RESPONSE_FLAG_HEAD = R"({"id":)";
+const std::string RESPONSE_FLAG_TAIL = R"(,"result":{}})";
+const std::string REGEX_PATTERN = R"("id":(\d+))";
+const std::string ARKTS_SCHEDULE = R"(ArkTS_Snapshot)";
 enum class HeapType : int32_t {
+    INVALID = -1,
     SNAPSHOT,
     TIMELINE,
 };
@@ -59,6 +70,7 @@ constexpr int32_t SOCKET_SUCCESS = 0;
 constexpr int32_t SOCKET_HEADER_LEN = 2;
 constexpr int32_t PAYLOAD_LEN = 2;
 constexpr int32_t EXTEND_PAYLOAD_LEN = 8;
+constexpr uint32_t CPU_PROFILER_INTERVAL_DEFAULT = 1000;
 } // namespace
 
 int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -85,41 +97,107 @@ int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
         return -1;
     }
 
-    if (static_cast<int32_t>(protoConfig_.type()) == static_cast<int32_t>(HeapType::SNAPSHOT)) {
-        snapshotCmd_ = SNAPSHOT_HEAD + (protoConfig_.capture_numeric_value() ? "true" : "false") + SNAPSHOT_TAIL;
+    if (protoConfig_.enable_cpu_profiler()) {
+        if (EnableCpuProfiler() != 0) {
+            HILOG_ERROR(LOG_CORE, "arkts plugin cpu profiler start failed");
+            return -1;
+        }
+    }
 
-        auto interval = ScheduleTaskManager::ms(protoConfig_.interval() * MAX_MATCH_CNT);
-        if (interval.count() == 0) {
-            HILOG_ERROR(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
+    switch (static_cast<int32_t>(protoConfig_.type())) {
+        case static_cast<int32_t>(HeapType::SNAPSHOT): {
+            return EnableSnapshot();
+        }
+        case static_cast<int32_t>(HeapType::TIMELINE): {
+            return EnableTimeline();
+        }
+        case static_cast<int32_t>(HeapType::INVALID): {
+            HILOG_INFO(LOG_CORE, "arkts plugin memory type is INVALID");
+            return 0;
+        }
+        default: {
+            HILOG_ERROR(LOG_CORE, "arkts plugin start type error");
             return -1;
         }
-        auto callback = std::bind(&ArkTSPlugin::Snapshot, this);
-        if (!scheduleTaskManager_.ScheduleTask("snapshot", callback, interval)) {
-            HILOG_ERROR(LOG_CORE, "%s:scheduleTask failed!", __func__);
-            return -1;
-        }
-    } else if (static_cast<int32_t>(protoConfig_.type()) == static_cast<int32_t>(HeapType::TIMELINE)) {
-        timelineCmd_ = TIMELINE_HEAD + (protoConfig_.track_allocations() ? "true" : "false") + TIMELINE_TAIL;
-        if (!ClientSendReq(timelineCmd_.c_str())) {
-            return -1;
-        }
-        FlushData();
-    } else {
+    }
+}
+
+int32_t ArkTSPlugin::EnableTimeline()
+{
+    std::string timelineCmd = TIMELINE_HEAD + (protoConfig_.track_allocations() ? "true" : "false") + TIMELINE_TAIL;
+    if (!ClientSendReq(timelineCmd)) {
+        return -1;
+    }
+    FlushData(timelineCmd);
+    commandResult_ |= TIMELINE_START_SUCCESS;
+    return 0;
+}
+
+int32_t ArkTSPlugin::EnableSnapshot()
+{
+    snapshotCmd_ = SNAPSHOT_HEAD + (protoConfig_.capture_numeric_value() ? "true" : "false") + SNAPSHOT_TAIL;
+    auto interval = ScheduleTaskManager::ms(protoConfig_.interval() * MAX_MATCH_CNT);
+    if (interval.count() == 0) {
+        HILOG_ERROR(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
+        return -1;
+    }
+    auto callback = std::bind(&ArkTSPlugin::Snapshot, this);
+    if (!ScheduleTaskManager::GetInstance().ScheduleTask(
+            ARKTS_SCHEDULE, callback, interval, ScheduleTaskManager::ms(0))) {
+        HILOG_ERROR(LOG_CORE, "%s:scheduleTask failed!", __func__);
         return -1;
     }
     return 0;
 }
 
+int32_t ArkTSPlugin::EnableCpuProfiler()
+{
+    std::string interval = CPU_PROFILER_INTERVAL_HEAD
+        + (protoConfig_.cpu_profiler_interval() == 0 ?
+        std::to_string(CPU_PROFILER_INTERVAL_DEFAULT) : std::to_string(protoConfig_.cpu_profiler_interval()))
+        + CPU_PROFILER_INTERVAL_TAIL;
+    if (!ClientSendReq(interval)) {
+        return -1;
+    }
+    FlushData(interval);
+
+    if (!ClientSendReq(CPU_PROFILER_START)) {
+        return -1;
+    }
+    FlushData(CPU_PROFILER_START);
+    commandResult_ |= CPU_PROFILER_START_SUCCESS;
+    return 0;
+}
+
 int32_t ArkTSPlugin::Stop()
 {
-    if (static_cast<int32_t>(protoConfig_.type()) == static_cast<int32_t>(HeapType::TIMELINE)) {
-        if (!ClientSendReq(TIMELINE_STOP.c_str())) {
-            Close();
-            return -1;
+    switch (static_cast<int32_t>(protoConfig_.type())) {
+        case static_cast<int32_t>(HeapType::SNAPSHOT): {
+            ScheduleTaskManager::GetInstance().UnscheduleTask(ARKTS_SCHEDULE);
+            break;
         }
-        FlushData();
-    } else if (static_cast<int32_t>(protoConfig_.type()) == static_cast<int32_t>(HeapType::SNAPSHOT)) {
-        scheduleTaskManager_.Shutdown();
+        case static_cast<int32_t>(HeapType::TIMELINE): {
+            if (commandResult_ & TIMELINE_START_SUCCESS) {
+                if (!ClientSendReq(TIMELINE_STOP)) {
+                    break;
+                }
+                FlushData(TIMELINE_STOP);
+            }
+            break;
+        }
+        case static_cast<int32_t>(HeapType::INVALID): {
+            break;
+        }
+        default: {
+            HILOG_ERROR(LOG_CORE, "arkts plugin stop type error");
+            break;
+        }
+    }
+
+    if (protoConfig_.enable_cpu_profiler() && (commandResult_ & CPU_PROFILER_START_SUCCESS)) {
+        if (ClientSendReq(CPU_PROFILER_STOP)) {
+            FlushData();
+        }
     }
     Close();
     return 0;
@@ -133,14 +211,23 @@ void ArkTSPlugin::SetWriter(WriterStruct* writer)
 void ArkTSPlugin::Snapshot()
 {
     CHECK_NOTNULL(resultWriter_, NO_RETVAL, "%s: resultWriter_ nullptr", __func__);
-    if (!ClientSendReq(snapshotCmd_.c_str())) {
+    if (!ClientSendReq(snapshotCmd_)) {
         return;
     }
-    FlushData();
+    FlushData(snapshotCmd_);
 }
 
-void ArkTSPlugin::FlushData()
+void ArkTSPlugin::FlushData(const std::string& command)
 {
+    std::string endFlag;
+    if (!command.empty()) {
+        std::regex pattern(REGEX_PATTERN);
+        std::smatch match;
+        if (std::regex_search(command, match, pattern)) {
+            endFlag = RESPONSE_FLAG_HEAD + match[1].str() + RESPONSE_FLAG_TAIL;
+        }
+    }
+
     while (true) {
         std::string recv = Decode();
         if (recv.empty()) {
@@ -153,8 +240,11 @@ void ArkTSPlugin::FlushData()
         data.SerializeToArray(buffer_.data(), buffer_.size());
         resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
         resultWriter_->flush(resultWriter_);
-        if (recv == START_CMD_RETURN || recv == STOP_CMD_RETURN) {
-            break;
+        if (endFlag.empty()) {
+            return;
+        }
+        if (recv == endFlag) {
+            return;
         }
     }
 }

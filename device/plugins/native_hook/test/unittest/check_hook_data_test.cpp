@@ -372,9 +372,16 @@ public:
 
     void StartAndStopHook()
     {
+#ifdef COVERAGE_TEST
+        const int coverageSleepTime = 5; // sleep 5s
+        sleep(coverageSleepTime);
+        StartDaemonProcessArgs();
+        sleep(coverageSleepTime);
+#else
         sleep(1);
         StartDaemonProcessArgs();
         sleep(1);
+#endif
         std::string cmd = "kill -36 " + std::to_string(hookPid_);
         system(cmd.c_str());
 

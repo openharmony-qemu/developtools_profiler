@@ -16,26 +16,43 @@
 
 FTRACE_NS_BEGIN
 namespace {
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    task_newtask,
+using namespace OHOS::Developtools::Profiler;
+template <typename T> void task_newtask_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_clone_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    msg->set_oom_score_adj(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(task_newtask,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_task_newtask_format();
-        msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_clone_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-        msg->set_oom_score_adj(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+        task_newtask_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(task_newtask,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_task_newtask_format();
+        task_newtask_func(msg, data, size, format);
     });
 
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(
-    task_rename,
+template <typename T> void task_rename_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+{
+    int i = 0;
+    msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    msg->set_oldcomm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_newcomm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_oom_score_adj(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(task_rename,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        int i = 0;
         auto msg = ftraceEvent.mutable_task_rename_format();
-        msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-        msg->set_oldcomm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_newcomm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-        msg->set_oom_score_adj(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+        task_rename_func(msg, data, size, format);
+    });
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(task_rename,
+    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
+        auto msg = ftraceEvent.mutable_task_rename_format();
+        task_rename_func(msg, data, size, format);
     });
 } // namespace
 FTRACE_NS_END

@@ -103,6 +103,9 @@ public:
 
     std::pair<uint32_t, PluginContextPtr> GetPluginContext(const std::string& pluginName);
     void SetTraceWriter(const TraceFileWriterPtr& traceWriter);
+    void FlushAllData(const std::string& pluginName);
+    void StartEpollThread();
+    void StopEpollThread();
 
 private:
     bool StartService(const std::string& unixSocketName);
@@ -110,6 +113,7 @@ private:
     SemaphorePtr GetSemaphore(uint32_t) const;
     void ReadShareMemoryOffline(PluginContext&);
     void ReadShareMemoryOnline(PluginContext&);
+    void FlushShareMemory(PluginContext&);
     PluginContextPtr GetPluginContextById(uint32_t id);
 
     bool RemovePluginSessionCtx(const std::string& pluginName);
@@ -128,6 +132,7 @@ private:
     ProfilerSessionConfig profilerSessionConfig_;
     TraceFileWriterPtr traceWriter_ = nullptr;
     uint32_t dataFlushSize_ = 0;
+    bool isProtobufSerialize_ = true;
 };
 
 #endif // PLUGIN_SERVICE_H

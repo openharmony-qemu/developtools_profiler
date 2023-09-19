@@ -52,7 +52,7 @@ public:
     bool StartTakeResults();
     bool StopTakeResults();
     bool FlushRecordStatistics();
-    void SetSerializeMode(bool protobufSerialize);
+    void SetSerializeMode(bool isProtobufSerialize);
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
     void SaveThreadName(uint32_t tid, const std::string& tname);

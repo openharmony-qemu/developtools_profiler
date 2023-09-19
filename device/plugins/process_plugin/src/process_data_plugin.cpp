@@ -20,9 +20,11 @@
 #include <sstream>
 
 #include "buffer_splitter.h"
+#include "process_plugin_result.pbencoder.h"
 #include "securec.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 constexpr int DEC_BASE = 10;
 constexpr int STAT_COUNT = 13;
@@ -56,6 +58,17 @@ int ProcessDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
+}
+
+int ProcessDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+{
+    ProtoEncoder::ProcessData dataProto(randomWrite);
+    if (protoConfig_.report_process_tree()) {
+        WriteProcesseList(dataProto);
+    }
+
+    int msgSize = dataProto.Finish();
+    return msgSize;
 }
 
 int ProcessDataPlugin::Report(uint8_t* data, uint32_t dataSize)
@@ -178,7 +191,8 @@ bool ProcessDataPlugin::addPidBySort(int32_t pid)
     return true;
 }
 
-void ProcessDataPlugin::WriteProcess(ProcessInfo* processinfo, const char* pFile, uint32_t fileLen, int32_t pid)
+template <typename T>
+void ProcessDataPlugin::WriteProcess(T& processinfo, const char* pFile, uint32_t fileLen, int32_t pid)
 {
     BufferSplitter totalbuffer(const_cast<const char*>(pFile), fileLen + 1);
 
@@ -193,7 +207,7 @@ void ProcessDataPlugin::WriteProcess(ProcessInfo* processinfo, const char* pFile
             if (!totalbuffer.CurWord()) {
                 return;
             }
-            processinfo->set_name(totalbuffer.CurWord(), totalbuffer.CurWordSize());
+            processinfo.set_name(totalbuffer.CurWord(), totalbuffer.CurWordSize());
         } else if (BufnCmp(totalbuffer.CurWord(), totalbuffer.CurWordSize(), "Pid", strlen("Pid"))) {
             totalbuffer.NextWord('\n');
             if (!totalbuffer.CurWord()) {
@@ -204,7 +218,7 @@ void ProcessDataPlugin::WriteProcess(ProcessInfo* processinfo, const char* pFile
             if (value < 0) {
                 HILOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
             }
-            processinfo->set_pid(value);
+            processinfo.set_pid(value);
         } else if (BufnCmp(totalbuffer.CurWord(), totalbuffer.CurWordSize(), "PPid", strlen("PPid"))) {
             totalbuffer.NextWord('\n');
             if (!totalbuffer.CurWord()) {
@@ -215,7 +229,7 @@ void ProcessDataPlugin::WriteProcess(ProcessInfo* processinfo, const char* pFile
             if (value < 0) {
                 HILOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
             }
-            processinfo->set_ppid(value);
+            processinfo.set_ppid(value);
         } else if (BufnCmp(totalbuffer.CurWord(), totalbuffer.CurWordSize(), "Uid", strlen("Uid"))) {
             totalbuffer.NextWord('\n');
             if (!totalbuffer.CurWord()) {
@@ -228,7 +242,7 @@ void ProcessDataPlugin::WriteProcess(ProcessInfo* processinfo, const char* pFile
             if (value < 0) {
                 HILOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
             }
-            processinfo->set_uid(value);
+            processinfo.set_uid(value);
             break;
         } else {
             totalbuffer.NextWord('\n');
@@ -240,11 +254,11 @@ void ProcessDataPlugin::WriteProcess(ProcessInfo* processinfo, const char* pFile
     // update process name
     int32_t ret = ReadProcPidFile(pid, "cmdline");
     if (ret > 0) {
-        processinfo->set_name(reinterpret_cast<char*>(buffer_.get()), strlen(reinterpret_cast<char*>(buffer_.get())));
+        processinfo.set_name(reinterpret_cast<char*>(buffer_.get()), strlen(reinterpret_cast<char*>(buffer_.get())));
     }
 }
 
-void ProcessDataPlugin::WriteProcessInfo(ProcessData& data, int32_t pid)
+template <typename T> void ProcessDataPlugin::WriteProcessInfo(T& processData, int32_t pid)
 {
     int32_t ret = ReadProcPidFile(pid, "status");
     if (ret == RET_FAIL) {
@@ -253,26 +267,24 @@ void ProcessDataPlugin::WriteProcessInfo(ProcessData& data, int32_t pid)
     if ((buffer_.get() == nullptr) || (ret == 0)) {
         return;
     }
-    auto* processinfo = data.add_processesinfo();
-    WriteProcess(processinfo, (char*)buffer_.get(), ret, pid);
+    auto* processinfo = processData.add_processesinfo();
+    WriteProcess(*processinfo, (char*)buffer_.get(), ret, pid);
     if (protoConfig_.report_cpu()) {
-        auto cpuProto = processinfo->mutable_cpuinfo();
+        auto* cpuInfo = processinfo->mutable_cpuinfo();
         std::vector<uint64_t> cpuUsageVec;
         std::vector<uint64_t> bootTime;
-        WriteCpuUsageData(pid, cpuProto);
-        WriteThreadData(pid, cpuProto);
+        WriteCpuUsageData(pid, *cpuInfo);
+        WriteThreadData(pid, *cpuInfo);
     }
     if (protoConfig_.report_diskio()) {
-        auto diskProto = processinfo->mutable_diskinfo();
-        WriteDiskioData(pid, diskProto);
+        WriteDiskioData(pid, *processinfo);
     }
     if (protoConfig_.report_pss()) {
-        auto pssProto = processinfo->mutable_pssinfo();
-        WritePssData(pid, pssProto);
+        WritePssData(pid, *processinfo);
     }
 }
 
-bool ProcessDataPlugin::WriteProcesseList(ProcessData& data)
+template <typename T> bool ProcessDataPlugin::WriteProcesseList(T& processData)
 {
     DIR* procDir = nullptr;
 
@@ -292,14 +304,14 @@ bool ProcessDataPlugin::WriteProcesseList(ProcessData& data)
     }
 
     for (unsigned int i = 0; i < pids_.size(); i++) {
-        WriteProcessInfo(data, pids_[i]);
+        WriteProcessInfo(processData, pids_[i]);
     }
 
     closedir(procDir);
     return true;
 }
 
-bool ProcessDataPlugin::WriteThreadData(int pid, CpuInfo* protoc)
+template <typename T> bool ProcessDataPlugin::WriteThreadData(int pid, T& cpuInfo)
 {
     DIR* procDir = nullptr;
     std::string path = path_ + std::to_string(pid) + "/task";
@@ -317,7 +329,7 @@ bool ProcessDataPlugin::WriteThreadData(int pid, CpuInfo* protoc)
         }
         i++;
     }
-    protoc->set_thread_sum(i);
+    cpuInfo.set_thread_sum(i);
     closedir(procDir);
     return true;
 }
@@ -339,15 +351,15 @@ int64_t ProcessDataPlugin::GetUserHz()
     return hz;
 }
 
-bool ProcessDataPlugin::WriteCpuUsageData(int pid, CpuInfo* protoc)
+template <typename T> bool ProcessDataPlugin::WriteCpuUsageData(int pid, T& cpuInfo)
 {
     uint64_t prevCpuTime = 0;
     uint64_t cpuTime = 0;
     uint64_t prevBootTime = 0;
     uint64_t bootTime = 0;
     double usage = 0.0;
-    ReadCpuUsage(pid, protoc, cpuTime);
-    ReadBootTime(pid, protoc, bootTime);
+    ReadCpuUsage(pid, cpuTime);
+    ReadBootTime(pid, bootTime);
     if (cpuTime_.find(pid) != cpuTime_.end()) {
         prevCpuTime = cpuTime_[pid];
     }
@@ -355,7 +367,6 @@ bool ProcessDataPlugin::WriteCpuUsageData(int pid, CpuInfo* protoc)
         prevBootTime = bootTime_[pid];
     }
     if (bootTime - prevBootTime == 0 || bootTime == 0) {
-        protoc->set_cpu_usage(0);
         return false;
     }
     if (prevCpuTime == 0) {
@@ -364,14 +375,16 @@ bool ProcessDataPlugin::WriteCpuUsageData(int pid, CpuInfo* protoc)
         usage = static_cast<double>(cpuTime - prevCpuTime) / (bootTime - prevBootTime);
     }
 
-    protoc->set_cpu_usage(usage * PERCENT);
-    protoc->set_cpu_time_ms(cpuTime);
+    if (usage > 0) {
+        cpuInfo.set_cpu_usage(usage * PERCENT);
+    }
+    cpuInfo.set_cpu_time_ms(cpuTime);
     cpuTime_[pid] = cpuTime;
     bootTime_[pid] = bootTime;
     return true;
 }
 
-bool ProcessDataPlugin::ReadBootTime(int pid, CpuInfo* protoc, uint64_t& bootTime)
+bool ProcessDataPlugin::ReadBootTime(int pid, uint64_t& bootTime)
 {
     std::string path = path_ + "stat";
     std::ifstream input(path, std::ios::in);
@@ -386,7 +399,7 @@ bool ProcessDataPlugin::ReadBootTime(int pid, CpuInfo* protoc, uint64_t& bootTim
         auto pos = line.find("cpu ");
         if (pos != std::string::npos) {
             line += '\n';
-            GetBootData(line, protoc, bootTime);
+            GetBootData(line, bootTime);
         }
     } while (0);
     input.close();
@@ -394,7 +407,7 @@ bool ProcessDataPlugin::ReadBootTime(int pid, CpuInfo* protoc, uint64_t& bootTim
     return true;
 }
 
-uint32_t ProcessDataPlugin::GetBootData(const std::string& line, CpuInfo* protoc, uint64_t& bootTime)
+uint32_t ProcessDataPlugin::GetBootData(const std::string& line, uint64_t& bootTime)
 {
     uint64_t num;
     uint32_t count = 0;
@@ -419,7 +432,7 @@ uint32_t ProcessDataPlugin::GetBootData(const std::string& line, CpuInfo* protoc
     return count;
 }
 
-bool ProcessDataPlugin::ReadCpuUsage(int pid, CpuInfo* protoc, uint64_t& cpuTime)
+bool ProcessDataPlugin::ReadCpuUsage(int pid, uint64_t& cpuTime)
 {
     std::string path = path_ + std::to_string(pid) + "/stat";
     std::ifstream input(path, std::ios::in);
@@ -431,14 +444,14 @@ bool ProcessDataPlugin::ReadCpuUsage(int pid, CpuInfo* protoc, uint64_t& cpuTime
         std::string line;
         getline(input, line);
         line += '\n';
-        GetCpuUsageData(line, protoc, cpuTime);
+        GetCpuUsageData(line, cpuTime);
     } while (0);
     input.close();
 
     return true;
 }
 
-uint32_t ProcessDataPlugin::GetCpuUsageData(const std::string& line, CpuInfo* protoc, uint64_t& cpuTime)
+uint32_t ProcessDataPlugin::GetCpuUsageData(const std::string& line, uint64_t& cpuTime)
 {
     uint64_t num;
     uint32_t count = 0;
@@ -469,13 +482,15 @@ uint32_t ProcessDataPlugin::GetCpuUsageData(const std::string& line, CpuInfo* pr
     return count;
 }
 
-bool ProcessDataPlugin::WriteDiskioData(int pid, DiskioInfo* protoc)
+template <typename T> bool ProcessDataPlugin::WriteDiskioData(int pid, T& processinfo)
 {
     std::string path = path_ + std::to_string(pid) + "/io";
     std::ifstream input(path, std::ios::in);
     if (input.fail()) {
         return false;
     }
+
+    auto* diskInfo = processinfo.mutable_diskinfo();
     do {
         if (!input.good()) {
             return false;
@@ -483,14 +498,14 @@ bool ProcessDataPlugin::WriteDiskioData(int pid, DiskioInfo* protoc)
         std::string line;
         getline(input, line);
         line += '\n';
-        GetDiskioData(line, protoc);
+        GetDiskioData(line, *diskInfo);
     } while (!input.eof());
     input.close();
 
     return true;
 }
 
-bool ProcessDataPlugin::GetDiskioData(std::string& line, DiskioInfo* protoc)
+template <typename T> bool ProcessDataPlugin::GetDiskioData(std::string& line, T& diskioInfo)
 {
     char* pTmp = const_cast<char*>(line.c_str());
     CHECK_NOTNULL(pTmp, false, "param invalid!");
@@ -498,25 +513,25 @@ bool ProcessDataPlugin::GetDiskioData(std::string& line, DiskioInfo* protoc)
     uint64_t num;
     if (!std::strncmp(pTmp, "rchar:", strlen("rchar:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get rchar failed", __func__);
-        protoc->set_rchar(num);
+        diskioInfo.set_rchar(num);
     } else if (!std::strncmp(pTmp, "wchar:", strlen("wchar:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get wchar failed", __func__);
-        protoc->set_wchar(num);
+        diskioInfo.set_wchar(num);
     } else if (!std::strncmp(pTmp, "syscr:", strlen("syscr:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get syscr failed", __func__);
-        protoc->set_syscr(num);
+        diskioInfo.set_syscr(num);
     } else if (!std::strncmp(pTmp, "syscw:", strlen("syscw:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get syscw failed", __func__);
-        protoc->set_syscw(num);
+        diskioInfo.set_syscw(num);
     } else if (!std::strncmp(pTmp, "read_bytes:", strlen("read_bytes:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get read_bytes failed", __func__);
-        protoc->set_rbytes(num);
+        diskioInfo.set_rbytes(num);
     } else if (!std::strncmp(pTmp, "write_bytes:", strlen("write_bytes:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get write_bytes failed", __func__);
-        protoc->set_wbytes(num);
+        diskioInfo.set_wbytes(num);
     } else if (!std::strncmp(pTmp, "cancelled_write_bytes:", strlen("cancelled_write_bytes:"))) {
         CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: get cancelled_write_bytes failed", __func__);
-        protoc->set_cancelled_wbytes(num);
+        diskioInfo.set_cancelled_wbytes(num);
     }
 
     return true;
@@ -556,7 +571,7 @@ bool ProcessDataPlugin::GetValidValue(char* p, uint64_t& num)
 }
 
 // read /proc/pid/smaps_rollup
-bool ProcessDataPlugin::WritePssData(int pid, PssInfo* protoc)
+template <typename T> bool ProcessDataPlugin::WritePssData(int pid, T& processInfo)
 {
     std::string path = path_ + std::to_string(pid) + "/smaps_rollup";
     std::ifstream input(path, std::ios::in);
@@ -564,10 +579,7 @@ bool ProcessDataPlugin::WritePssData(int pid, PssInfo* protoc)
     // Not capturing ENOENT (file does not exist) errors, it is common for node smaps_rollup files to be unreadable.
     CHECK_TRUE(!input.fail(), false, "%s open %s failed, errno = %d", __func__, path.c_str(), errno);
 
-    // set ifstream to O_NONBLOCK mode
-    CHECK_NOTNULL(input.rdbuf(), false, "%s:input rdbuf is nullptr", __func__);
-    input.rdbuf()->pubsetbuf(nullptr, 0);
-
+    auto* pssInfo = processInfo.mutable_pssinfo();
     do {
         if (!input.good()) {
             return false;
@@ -580,7 +592,7 @@ bool ProcessDataPlugin::WritePssData(int pid, PssInfo* protoc)
             char* pTmp = const_cast<char*>(line.c_str());
             uint64_t num;
             CHECK_TRUE(GetValidValue(pTmp, num), false, "%s: FindFirstNum failed", __func__);
-            protoc->set_pss_info(num);
+            pssInfo->set_pss_info(num);
             return true;
         }
     } while (!input.eof());

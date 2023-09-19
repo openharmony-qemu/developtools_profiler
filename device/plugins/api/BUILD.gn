@@ -48,7 +48,8 @@ ohos_source_set("plugins_sources") {
     "src/writer_adapter.cpp",
   ]
   public_deps = [
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "../../base:hiprofiler_base",

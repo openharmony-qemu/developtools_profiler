@@ -25,7 +25,6 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH("/data/local/tmp/utresources/");
-const int PERCENT = 100;
 
 class SmapsStatsTest : public ::testing::Test {
 public:
@@ -907,7 +906,8 @@ HWTEST_F(SmapsStatsTest, TestFrameworkForPath, TestSize.Level1)
 
     // test result
     ProcessMemoryInfo processMemoryInfo;
-    ASSERT_TRUE(plugin.ParseMaps(pid, processMemoryInfo, true, true));
+    SmapsInfo* smapsInfo = nullptr;
+    ASSERT_TRUE(plugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, true));
     EXPECT_EQ(java_heap, (uint64_t)(plugin.GetProcessJavaHeap()));
     EXPECT_EQ(native_heap, (uint64_t)(plugin.GetProcessNativeHeap()));
     EXPECT_EQ(code, (uint64_t)(plugin.GetProcessCode()));
@@ -980,7 +980,8 @@ HWTEST_F(SmapsStatsTest, TestCheckFramework, TestSize.Level1)
     ASSERT_EQ(access(DEFAULT_TEST_PATH.c_str(), F_OK), 0);
     SmapsStats targetPlugin(DEFAULT_TEST_PATH + std::string("proc/"));
     ProcessMemoryInfo processMemoryInfo;
-    ASSERT_TRUE(targetPlugin.ParseMaps(pid, processMemoryInfo, true, false));
+    SmapsInfo* smapsInfo = nullptr;
+    ASSERT_TRUE(targetPlugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, false));
 
     // test result
     EXPECT_EQ(testPlugin.GetProcessJavaHeap(), targetPlugin.GetProcessJavaHeap());

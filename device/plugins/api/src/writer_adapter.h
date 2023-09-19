@@ -24,7 +24,7 @@
 using WriterPtr = STD_PTR(shared, Writer);
 class WriterAdapter {
 public:
-    WriterAdapter();
+    explicit WriterAdapter(bool isProtobufSerialize = true);
     ~WriterAdapter();
     const WriterStruct* GetStruct();
     void SetWriter(const WriterPtr& writer);
@@ -33,6 +33,8 @@ public:
 private:
     static long WriteFunc(WriterStruct* writer, const void* data, size_t size);
     static bool FlushFunc(WriterStruct* writer);
+    static RandomWriteCtx* StartReportFunc(WriterStruct* writer);
+    static void FinishReportFunc(WriterStruct* writer, int32_t size);
 
 private:
     WriterStruct writerStruct_;

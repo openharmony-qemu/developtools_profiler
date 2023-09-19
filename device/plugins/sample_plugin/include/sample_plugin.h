@@ -19,13 +19,15 @@
 #include "logging.h"
 #include "sample_plugin_config.pb.h"
 #include "sample_plugin_result.pb.h"
+#include "plugin_module_api.h"
 
 class SamplePlugin {
 public:
     SamplePlugin();
     ~SamplePlugin();
     int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* configData, uint32_t configSize);
+    int Report(uint8_t* data, uint32_t dataSize);
+    int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
     uint64_t GetTimeMS();
 

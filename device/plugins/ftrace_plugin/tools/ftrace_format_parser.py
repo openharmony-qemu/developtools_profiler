@@ -153,6 +153,8 @@ class FtraceEventField(object):
         if self.is_array_type():
             return ProtoType(ProtoType.ARRAY)
         elif self.is_uintptr_type():
+            if (self.field.startswith("ino_t ") and self.size == 4):
+                return ProtoType(ProtoType.INTEGER, 4, False)
             return ProtoType(ProtoType.INTEGER, 8, False)
         elif 0 < self.size <= 4:
             if self.size in [1, 2, 4]:

@@ -30,6 +30,8 @@
 #include "logging.h"
 #include "memory_plugin_result.pb.h"
 
+constexpr int PERCENT = 100;
+
 struct MemUsageInfo {
     uint64_t vss;
     uint64_t rss;
@@ -269,9 +271,22 @@ public:
     SmapsStats(const std::string path) : testpath_(path){};
     ~SmapsStats() {}
 
+    template <typename T, typename S>
+    bool ParseMaps(int pid, T& processMemoryInfo, S smapsInfo, bool isReportApp, bool isReportSmaps)
+    {
+        std::string smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps");
+        if (testpath_.size() > 0) {
+            smaps_path = testpath_ + std::to_string(pid) + std::string("/smaps");
+        }
+        ReadVmemareasFile(smaps_path, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+        if (isReportApp) {
+            ReviseStatsData();
+        }
+        return true;
+    }
+
     using MatchFunc = std::function<bool(const std::string& name, const char* str)>;
 
-    bool ParseMaps(int pid, ProcessMemoryInfo& processinfo, bool isReportApp, bool isReportSmaps);
     int GetProcessJavaHeap();
     int GetProcessNativeHeap();
     int GetProcessCode();
@@ -291,8 +306,73 @@ private:
     int GetTotalSwappedOutPss();
     void ReviseStatsData();
 
-    bool ReadVmemareasFile(const std::string& path, ProcessMemoryInfo& processinfo, bool isReportApp,
-                           bool isReportSmaps);
+    template <typename T, typename S>
+    bool ReadVmemareasFile(const std::string& path, T& processMemoryInfo, S smapsInfo,
+                           bool isReportApp, bool isReportSmaps)
+    {
+        bool findMapHead = false;
+        MapPiecesInfo mappic = {0};
+        MemUsageInfo memusage = {0};
+        SmapsHeadInfo smapsHeadInfo = {};
+        uint64_t prevEnd = 0;
+        int prevHeap = 0;
+        std::ifstream input(path, std::ios::in);
+        CHECK_TRUE(!input.fail(), false, "%s:open %s failed, errno = %d", __func__, path.c_str(), errno);
+        do {
+            if (!input.good()) {
+                return false;
+            }
+            std::string line;
+            getline(input, line);
+            line += '\n';
+            if (!findMapHead) {
+                // 00400000-00409000 r-xp 00000000 fc:00 426998  /usr/lib/gvfs/gvfsd-http
+                ParseMapHead(line, mappic, smapsHeadInfo);
+                findMapHead = true;
+                if (isReportSmaps) {
+                    smapsInfo = processMemoryInfo.add_smapinfo();
+                    smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
+                    smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
+                    smapsInfo->set_permission(smapsHeadInfo.permission);
+                    smapsInfo->set_path(smapsHeadInfo.path);
+                    smapsInfo->set_category(ParseCategory(smapsHeadInfo));
+                }
+                continue;
+            }
+            if (findMapHead && GetMemUsageField(line, memusage)) {
+                if (!lastline_) {
+                    continue;
+                }
+                if (isReportSmaps) {
+                    if (smapsInfo == nullptr) {
+                        smapsInfo = processMemoryInfo.add_smapinfo();
+                    }
+                    smapsInfo->set_size(memusage.vss);
+                    smapsInfo->set_rss(memusage.rss);
+                    smapsInfo->set_pss(memusage.pss);
+                    smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
+                    smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
+                    smapsInfo->set_reside(static_cast<double>(memusage.rss) / memusage.vss * PERCENT);
+                    smapsInfo->set_private_clean(memusage.privateClean);
+                    smapsInfo->set_private_dirty(memusage.privateDirty);
+                    smapsInfo->set_shared_clean(memusage.sharedClean);
+                    smapsInfo->set_shared_dirty(memusage.sharedDirty);
+                    smapsInfo->set_swap(memusage.swap);
+                    smapsInfo->set_swap_pss(memusage.swapPss);
+                }
+            }
+
+            if (isReportApp) {
+                CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
+            }
+            findMapHead = false;
+            lastline_ = false;
+        } while (!input.eof());
+        input.close();
+
+        return true;
+    }
+
     bool ParseMapHead(std::string& line, MapPiecesInfo& head, SmapsHeadInfo& smapsHeadInfo);
     bool SetMapAddrInfo(std::string& line, MapPiecesInfo& head);
     bool GetMemUsageField(std::string& line, MemUsageInfo& memusage);

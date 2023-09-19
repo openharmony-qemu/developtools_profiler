@@ -18,8 +18,10 @@
 #include <ctime>
 
 #include "buffer_splitter.h"
+#include "diskio_plugin_result.pbencoder.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 } // namespace
 
@@ -31,8 +33,8 @@ DiskioDataPlugin::DiskioDataPlugin()
     err_ = -1;
     prevRdSectorsKb_ = 0;
     prevWrSectorsKb_ = 0;
-    prevTimestamp_.set_tv_sec(0);
-    prevTimestamp_.set_tv_nsec(0);
+    prevTimestamp_.tv_sec = 0;
+    prevTimestamp_.tv_nsec = 0;
 }
 
 DiskioDataPlugin::~DiskioDataPlugin()
@@ -59,6 +61,21 @@ int DiskioDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return RET_SUCC;
 }
 
+int DiskioDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+{
+    ProtoEncoder::DiskioData dataProto(randomWrite);
+    WriteDiskioData(dataProto);
+
+    if (protoConfig_.report_io_stats() && ioEntry_ != nullptr) {
+        ioEntry_->GetIoData();
+        auto* statsData = dataProto.mutable_statsdata();
+        ioEntry_->PutPluginStatsData(*statsData);
+    }
+
+    size_t msgSize = dataProto.Finish();
+    return (int)msgSize;
+}
+
 int DiskioDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 {
     DiskioData dataProto;
@@ -68,7 +85,8 @@ int DiskioDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 
     if (protoConfig_.report_io_stats() && ioEntry_ != nullptr) {
         ioEntry_->GetIoData();
-        ioEntry_->PutPluginStatsData(dataProto.mutable_statsdata());
+        auto* statsData = dataProto.mutable_statsdata();
+        ioEntry_->PutPluginStatsData(*statsData);
     }
 
     length = dataProto.ByteSizeLong();
@@ -126,19 +144,23 @@ int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
     return bytesRead;
 }
 
-void DiskioDataPlugin::SetTimestamp(CollectTimeStamp& prevTimestamp, CollectTimeStamp& timestamp)
+template <typename T> void DiskioDataPlugin::SetTimestamp(T& diskioData)
 {
+    auto* prevTimestamp = diskioData.mutable_prev_timestamp();
+    prevTimestamp->set_tv_sec(prevTimestamp_.tv_sec);
+    prevTimestamp->set_tv_nsec(prevTimestamp_.tv_nsec);
+
     timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
-    timestamp.set_tv_sec(time.tv_sec);
-    timestamp.set_tv_nsec(time.tv_nsec);
-    prevTimestamp.set_tv_sec(prevTimestamp_.tv_sec());
-    prevTimestamp.set_tv_nsec(prevTimestamp_.tv_nsec());
-    prevTimestamp_.set_tv_sec(time.tv_sec);
-    prevTimestamp_.set_tv_nsec(time.tv_nsec);
+    auto* timestamp = diskioData.mutable_timestamp();
+    timestamp->set_tv_sec(time.tv_sec);
+    timestamp->set_tv_nsec(time.tv_nsec);
+
+    prevTimestamp_.tv_sec = time.tv_sec;
+    prevTimestamp_.tv_nsec = time.tv_nsec;
 }
 
-void DiskioDataPlugin::SetDiskioData(DiskioData& diskioData, const char* pFile, uint32_t fileLen)
+template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const char* pFile, uint32_t fileLen)
 {
     BufferSplitter totalbuffer(const_cast<char*>(pFile), fileLen + 1);
     int64_t rd_sectors_kb = 0;
@@ -172,12 +194,10 @@ void DiskioDataPlugin::SetDiskioData(DiskioData& diskioData, const char* pFile, 
     diskioData.set_wr_sectors_kb(wr_sectors_kb); // 当前系统调出到磁盘的总KB数wr2
     prevRdSectorsKb_ = rd_sectors_kb;
     prevWrSectorsKb_ = wr_sectors_kb;
-    auto* prevTimestamp = diskioData.mutable_prev_timestamp();
-    auto* timestamp = diskioData.mutable_timestamp();
-    SetTimestamp(*prevTimestamp, *timestamp); // 设置前一次时间戳和当前时间戳，以便计算两次获取数据的时间间隔t
+    SetTimestamp(diskioData); // 设置前一次时间戳和当前时间戳，以便计算两次获取数据的时间间隔t
 }
 
-void DiskioDataPlugin::WriteDiskioData(DiskioData& data)
+template <typename T> void DiskioDataPlugin::WriteDiskioData(T& diskioData)
 {
     int32_t ret = ReadFile(path_);
     if (ret == RET_FAIL) {
@@ -187,5 +207,5 @@ void DiskioDataPlugin::WriteDiskioData(DiskioData& data)
         return;
     }
 
-    SetDiskioData(data, (char*)buffer_, ret);
+    SetDiskioData(diskioData, (char*)buffer_, ret);
 }

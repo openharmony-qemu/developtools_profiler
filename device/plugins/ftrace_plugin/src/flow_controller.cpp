@@ -31,6 +31,7 @@
 #include "logging.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 #ifndef PAGE_SIZE
     constexpr uint32_t PAGE_SIZE = 4096;
 #endif
@@ -117,7 +118,14 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
 bool FlowController::CreateRawDataReaders()
 {
     for (int i = 0; i < platformCpuNum_; i++) {
-        auto reader = std::make_unique<FtraceDataReader>(FtraceFsOps::GetInstance().GetRawTracePath(i));
+        auto rawPath = FtraceFsOps::GetInstance().GetRawTracePath(i);
+        if (fakePath_ != "") {
+            rawPath = fakePath_ + "test_raw_" + std::to_string(i);
+            CHECK_NOTNULL(ftraceParser_, false, "create FtraceParser FAILED!");
+            ftraceParser_->ParseSavedCmdlines(FileUtils::ReadFile(fakePath_ + "test_comm"));
+            ftraceParser_->ParseSavedTgid(FileUtils::ReadFile(fakePath_ + "test_tgid"));
+        }
+        auto reader = std::make_unique<FtraceDataReader>(rawPath);
         CHECK_NOTNULL(reader, false, "create reader %d FAILED!", i);
         ftraceReaders_.emplace_back(std::move(reader));
     }
@@ -163,19 +171,61 @@ bool FlowController::CreateRawDataCaches()
 
 bool FlowController::ParseBasicData()
 {
+    CHECK_NOTNULL(resultWriter_, false, "%s: resultWriter_ nullptr", __func__);
     // get clock times
     if (getClockTimes_) {
-        CHECK_TRUE(ReportClockTimes(), -1, "report clock times FAILED!");
+        if (resultWriter_->isProtobufSerialize) {
+            auto traceResult = std::make_unique<TracePluginResult>();
+            CHECK_TRUE(ReportClockTimes(traceResult), -1, "parse clock times FAILED!");
+            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report clock times FAILED!");
+        } else {
+            auto ctx = resultWriter_->startReport(resultWriter_);
+            CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
+            auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
+            if (!ReportClockTimes(traceResult)) {
+                HILOG_ERROR(LOG_CORE, "report clock times FAILED!");
+            }
+            size_t msgSize = traceResult->Finish();
+            resultWriter_->finishReport(resultWriter_, msgSize);
+            tansporter_->Report(msgSize);
+        }
     }
 
     // parse kernel symbols
     if (parseKsyms_) {
-        CHECK_TRUE(ParseKernelSymbols(), -1, "parse kernel symbols FAILED!");
+        if (resultWriter_->isProtobufSerialize) {
+            auto traceResult = std::make_unique<TracePluginResult>();
+            CHECK_TRUE(ParseKernelSymbols(traceResult), -1, "parse kernel symbols FAILED!");
+            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report kernel symbols FAILED!");
+        } else {
+            auto ctx = resultWriter_->startReport(resultWriter_);
+            CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
+            auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
+            if (!ParseKernelSymbols(traceResult)) {
+                HILOG_ERROR(LOG_CORE, "parse kernel symbols FAILED!");
+            }
+            size_t msgSize = traceResult->Finish();
+            resultWriter_->finishReport(resultWriter_, msgSize);
+            tansporter_->Report(msgSize);
+        }
     }
 
     // parse per cpu stats
-    CHECK_TRUE(ParsePerCpuStatus(TRACE_START), -1, "parse TRACE_START stats failed!");
-
+    if (resultWriter_->isProtobufSerialize) {
+        auto traceResult = std::make_unique<TracePluginResult>();
+        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_START), -1, "parse TRACE_START stats failed!");
+        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report TRACE_START stats failed!");
+    } else {
+        auto ctx = resultWriter_->startReport(resultWriter_);
+        CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
+        auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
+        if (!ParsePerCpuStatus(traceResult, TRACE_START)) {
+            HILOG_ERROR(LOG_CORE, "parse TRACE_START stats failed!");
+        }
+        size_t msgSize = traceResult->Finish();
+        resultWriter_->finishReport(resultWriter_, msgSize);
+        tansporter_->Report(msgSize);
+    }
     return 0;
 }
 
@@ -186,6 +236,7 @@ int FlowController::StartCapture(void)
     CHECK_NOTNULL(ksymsParser_, -1, "create KernelSymbolsParser FAILED!");
     CHECK_NOTNULL(tansporter_, -1, "crated ResultTransporter FAILED!");
     CHECK_NOTNULL(traceOps_, -1, "create TraceOps FAILED!");
+    CHECK_NOTNULL(resultWriter_, -1, "%s: resultWriter_ nullptr", __func__);
 
     CHECK_TRUE(ParseBasicData() == 0, -1, "parse basic data failed!");
 
@@ -268,6 +319,11 @@ void FlowController::CaptureWorkOnNomalMode()
             }
             CHECK_TRUE(ParseEventDataOnNomalMode(i, rawDataBytes[i]), NO_RETVAL, "ParseEventData failed!");
         }
+
+        if (isReportBasicData_.load()) {
+            ParseBasicData();
+            isReportBasicData_ = false;
+        }
     }
 
     tansporter_->Flush();
@@ -326,16 +382,49 @@ long FlowController::ReadEventData(int cpuid)
         used += nbytes;
         rest -= nbytes;
     }
+
+    if (used == bufferSize) {
+        HILOG_INFO(LOG_CORE,
+            "used(%ld) equals bufferSize(%ld), please expand buffer_size_kb, otherwise the kernel may lose data\n",
+            used, bufferSize);
+    }
     return used;
+}
+
+bool FlowController::ParseEventData(int cpuid, uint8_t* page)
+{
+    if (resultWriter_->isProtobufSerialize) {
+        auto traceResult = std::make_unique<TracePluginResult>();
+        FtraceEvent* event = nullptr; // Used to distinguish between SubEventParser instance types.
+        CHECK_TRUE(ParseFtraceEvent(traceResult.get(), cpuid, page, event), false,
+            "parse raw event for cpu-%d failed!", cpuid);
+        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report raw event for cpu-%d failed!", cpuid);
+    } else {
+        auto ctx = resultWriter_->startReport(resultWriter_);
+        CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
+        static ProtoEncoder::MessagePool msgPool;
+        static ProtoEncoder::TracePluginResult traceResult;
+        msgPool.Reset();
+        traceResult.Reset(ctx, &msgPool);
+        ProtoEncoder::FtraceEvent* event = nullptr; // Used to distinguish between SubEventParser instance types.
+        if (!ParseFtraceEvent(&traceResult, cpuid, page, event)) {
+            HILOG_ERROR(LOG_CORE, "parse raw event for cpu-%d failed!", cpuid);
+        }
+        size_t msgSize = traceResult.Finish();
+        resultWriter_->finishReport(resultWriter_, msgSize);
+        tansporter_->Report(msgSize);
+    }
+    return true;
 }
 
 bool FlowController::ParseEventDataOnNomalMode(int cpuid, long dataSize)
 {
+    CHECK_NOTNULL(resultWriter_, false, "%s: resultWriter_ nullptr", __func__);
     auto buffer = ftraceBuffers_[cpuid].get();
     auto endPtr = buffer + dataSize;
 
     for (auto page = buffer; page < endPtr; page += PAGE_SIZE) {
-        CHECK_TRUE(ParseFtraceEvent(cpuid, page), false, "parse raw event for cpu-%d failed!", cpuid);
+        CHECK_TRUE(ParseEventData(cpuid, page), false, "ParseEventData for cpu-%d failed!", cpuid);
     }
     return true;
 }
@@ -351,7 +440,7 @@ bool FlowController::ParseEventDataOnDelayMode()
         for (long i = 0; i < dataBytes; i += PAGE_SIZE) {
             uint8_t page[PAGE_SIZE] = {0};
             fread(page, sizeof(uint8_t), PAGE_SIZE, rawDataFile_.get());
-            CHECK_TRUE(ParseFtraceEvent(cpuId, page), false, "ParseFtraceEvent failed!");
+            CHECK_TRUE(ParseEventData(cpuId, page), false, "ParseEventData for cpu-%d failed!", cpuId);
         }
     }
     return true;
@@ -378,7 +467,21 @@ int FlowController::StopCapture(void)
     }
 
     // parse per cpu stats
-    CHECK_TRUE(ParsePerCpuStatus(TRACE_END), -1, "parse TRACE_END stats failed!");
+    if (resultWriter_->isProtobufSerialize) {
+        auto traceResult = std::make_unique<TracePluginResult>();
+        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_END), -1, "parse TRACE_END stats FAILED!");
+        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report TRACE_END stats FAILED!");
+    } else {
+        auto ctx = resultWriter_->startReport(resultWriter_);
+        CHECK_NOTNULL(ctx, -1, "%s: get RandomWriteCtx FAILED!", __func__);
+        auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
+        if (!ParsePerCpuStatus(traceResult, TRACE_END)) {
+            HILOG_ERROR(LOG_CORE, "parse TRACE_END stats FAILED!");
+        }
+        size_t msgSize = traceResult->Finish();
+        resultWriter_->finishReport(resultWriter_, msgSize);
+        tansporter_->Report(msgSize);
+    }
 
     // disable userspace trace triggers
     // because trace cmd will read trace buffer,
@@ -395,12 +498,11 @@ int FlowController::StopCapture(void)
     return 0;
 }
 
-bool FlowController::ParsePerCpuStatus(int stage)
+template <typename T> bool FlowController::ParsePerCpuStatus(T& tracePluginResult, int stage)
 {
-    auto tracePacket = std::make_unique<TracePluginResult>();
-    CHECK_NOTNULL(tracePacket, false, "create TracePluginResult FAILED!");
+    CHECK_NOTNULL(tracePluginResult, false, "create TracePluginResult FAILED!");
 
-    auto cpuStatsMsg = tracePacket->add_ftrace_cpu_stats();
+    auto cpuStatsMsg = tracePluginResult->add_ftrace_cpu_stats();
     if (stage == TRACE_START) {
         cpuStatsMsg->set_status(FtraceCpuStatsMsg_Status_TRACE_START);
     } else {
@@ -429,13 +531,12 @@ bool FlowController::ParsePerCpuStatus(int stage)
         perCpuMsg->set_read_events(stats.readEvents);
     }
 
-    return tansporter_->Submit(std::move(tracePacket));
+    return true;
 }
 
-bool FlowController::ReportClockTimes()
+template <typename T> bool FlowController::ReportClockTimes(T& tracePluginResult)
 {
-    auto traceResult = std::make_unique<TracePluginResult>();
-    CHECK_NOTNULL(traceResult, false, "create TracePluginResult FAILED!");
+    CHECK_NOTNULL(tracePluginResult, false, "create TracePluginResult FAILED!");
 
     std::map<clockid_t, ClockDetailMsg::ClockId> clocksMap = {
         {CLOCK_REALTIME, ClockDetailMsg::REALTIME},
@@ -448,7 +549,7 @@ bool FlowController::ReportClockTimes()
     for (auto& entry : clocksMap) {
         struct timespec ts = {};
         clock_gettime(entry.first, &ts);
-        auto clockMsg = traceResult->add_clocks_detail();
+        auto clockMsg = tracePluginResult->add_clocks_detail();
         CHECK_NOTNULL(clockMsg, false, "add clock_detail failed for %d!", entry.first);
         clockMsg->set_id(entry.second);
         auto timeMsg = clockMsg->mutable_time();
@@ -461,34 +562,32 @@ bool FlowController::ReportClockTimes()
         resolutionMsg->set_tv_sec(tsResolution.tv_sec);
         resolutionMsg->set_tv_nsec(tsResolution.tv_nsec);
     }
-    return tansporter_->Submit(std::move(traceResult));
+    return true;
 }
 
-bool FlowController::ParseKernelSymbols()
+template <typename T> bool FlowController::ParseKernelSymbols(T& tracePluginResult)
 {
-    auto traceResult = std::make_unique<TracePluginResult>();
-    CHECK_NOTNULL(traceResult, false, "create TracePluginResult FAILED!");
+    CHECK_NOTNULL(tracePluginResult, false, "create TracePluginResult FAILED!");
 
-    ksymsParser_->Accept([&traceResult](const KernelSymbol& symbol) {
-        auto symbolDetail = traceResult->add_symbols_detail();
+    ksymsParser_->Accept([&tracePluginResult](const KernelSymbol& symbol) {
+        auto symbolDetail = tracePluginResult->add_symbols_detail();
         symbolDetail->set_symbol_addr(symbol.addr);
         symbolDetail->set_symbol_name(symbol.name);
     });
     HILOG_INFO(LOG_CORE, "parse kernel symbol message done!");
-    return tansporter_->Submit(std::move(traceResult));
+    return true;
 }
 
-bool FlowController::ParseFtraceEvent(int cpuid, uint8_t page[])
+template <typename T, typename E>
+bool FlowController::ParseFtraceEvent(T* tracePluginResult, int cpuid, uint8_t page[], E* ftraceEvent)
 {
-    auto tracePacket = std::make_unique<TracePluginResult>();
-    CHECK_NOTNULL(tracePacket, false, "create TracePluginResult FAILED!");
+    CHECK_NOTNULL(tracePluginResult, false, "create TracePluginResult FAILED!");
 
-    auto cpudetail = tracePacket->add_ftrace_cpu_detail();
+    auto cpudetail = tracePluginResult->add_ftrace_cpu_detail();
     cpudetail->set_cpu(static_cast<uint32_t>(cpuid));
 
-    CHECK_TRUE(ftraceParser_->ParsePage(*cpudetail, page, PAGE_SIZE), false, "parse page failed!");
-
-    return tansporter_->Submit(std::move(tracePacket));
+    CHECK_TRUE(ftraceParser_->ParsePage(*cpudetail, page, PAGE_SIZE, ftraceEvent), false, "parse page failed!");
+    return true;
 }
 
 bool FlowController::AddPlatformEventsToParser(void)
@@ -628,5 +727,10 @@ void FlowController::DisableAllCategories(void)
         std::string name = event.second;
         FtraceFsOps::GetInstance().DisableCategories(type);
     }
+}
+
+void FlowController::SetReportBasicData(bool isReportBasicData)
+{
+    isReportBasicData_ = isReportBasicData;
 }
 FTRACE_NS_END

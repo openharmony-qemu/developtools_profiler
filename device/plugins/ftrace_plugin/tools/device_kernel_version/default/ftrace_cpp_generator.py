@@ -67,13 +67,13 @@ class Common:
         "# limitations under the License.\n".format(this_file)
     )
 
-    parse_function_args = "({}, {}, {}, {})".format(
-        "FtraceEvent& ftraceEvent",
+    parse_function_args = "{}, {}, {})".format(
         "uint8_t data[]",
         "size_t size",
         "const EventFormat& format",
     )
     parse_register_macro = "REGISTER_FTRACE_EVENT_PARSE_FUNCTION"
+    parse_register_encoder_macro = "REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION"
 
     check_function_args = "(const ForStandard::FtraceEvent& event) -> bool"
     format_function_args = "(const ForStandard::FtraceEvent& event) -> std::string"
@@ -131,6 +131,7 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
                 f.write("\n")
                 f.write("FTRACE_NS_BEGIN\n")
                 f.write("namespace {\n")
+                f.write("using namespace OHOS::Developtools::Profiler;\n")
                 self.generate_parse_functions(category, f)
                 f.write("} // namespace\n")
                 f.write("FTRACE_NS_END\n")
@@ -154,16 +155,29 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             count += 1
             if count > 1:
                 f.write("\n")
+            f.write("template <typename T>\n")
+            f.write("void {}_func(T& msg, {}\n".format(event.name, Common.parse_function_args))
+            f.write("{\n    int i = 0;\n")
+            for i in range(len(event.remain_fields)):
+                self.generate_parse_field_lines(event, f, i)
+            f.write("}\n")
             f.write("{}({},\n".format(Common.parse_register_macro, event.name))
-            f.write("[] {} {{\n".format(Common.parse_function_args))
-            f.write("    int i = 0;\n")
+            f.write("[] (FtraceEvent& ftraceEvent, {} {{\n".format(Common.parse_function_args))
             f.write(
                 "    auto msg = ftraceEvent.mutable_{}_format();\n".format(
                     str.lower(event.name)
                 )
             )
-            for i in range(len(event.remain_fields)):
-                self.generate_parse_field_lines(event, f, i)
+            f.write("    {}_func(msg, data, size, format);\n".format(event.name))
+            f.write("});\n")
+            f.write("{}({},\n".format(Common.parse_register_encoder_macro, event.name))
+            f.write("[] (ProtoEncoder::FtraceEvent& ftraceEvent, {} {{\n".format(Common.parse_function_args))
+            f.write(
+                "    auto msg = ftraceEvent.mutable_{}_format();\n".format(
+                    str.lower(event.name)
+                )
+            )
+            f.write("    {}_func(msg, data, size, format);\n".format(event.name))
             f.write("});\n")
 
     @staticmethod

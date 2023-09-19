@@ -52,12 +52,13 @@ public:
 
     // call the 'PluginModule::ReportResult' and 'PluginManager::SubmitResult' according to 'pluginId'
     // creat PluginResult for  current plug-in inside
-    bool PullResult(uint32_t pluginId);
+    bool PullResult(uint32_t pluginId, bool isProtobufSerialize = true);
     bool StopAllPluginSession();
 
     // for test
     virtual bool SubmitResult(const PluginResult& pluginResult);
-    bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd);
+    bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                      bool isProtobufSerialize = true);
     bool ResetWriter(uint32_t pluginId);
     void SetCommandPoller(const CommandPollerPtr& p);
     bool RegisterPlugin(const PluginModulePtr& plugin, const std::string& pluginPath,

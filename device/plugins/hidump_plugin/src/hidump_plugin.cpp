@@ -23,9 +23,12 @@
 #include <csignal>
 #include <sstream>
 #include <sys/wait.h>
+
+#include "hidump_plugin_result.pbencoder.h"
 #include "securec.h"
 
 namespace {
+using namespace OHOS::Developtools::Profiler;
 const int REDIRECT_STDOUT = 1;
 const int REDIRECT_STDERR = 2;
 const int SLEEP_TIME = 50;
@@ -110,7 +113,7 @@ int HidumpPlugin::SetWriter(WriterStruct* writer)
 void HidumpPlugin::Loop(void)
 {
     HILOG_INFO(LOG_CORE, "HidumpPlugin: Loop start");
-    HidumpInfo dataProto;
+    CHECK_NOTNULL(resultWriter_, NO_RETVAL, "%s: resultWriter_ nullptr", __func__);
 
     fcntl(fileno(fp_.get()), F_SETFL, O_NONBLOCK);
     while (running_) {
@@ -120,27 +123,33 @@ void HidumpPlugin::Loop(void)
             std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
             continue;
         }
-        if (!ParseHidumpInfo(dataProto, buf)) {
-            continue;
-        }
-        if (dataProto.ByteSizeLong() > 0) {
-            buffer_.resize(dataProto.ByteSizeLong());
-            dataProto.SerializeToArray(buffer_.data(), buffer_.size());
-            resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
+        if (resultWriter_->isProtobufSerialize) {
+            HidumpInfo dataProto;
+            if (!ParseHidumpInfo(dataProto, buf)) {
+                continue;
+            }
+            if (dataProto.ByteSizeLong() > 0) {
+                buffer_.resize(dataProto.ByteSizeLong());
+                dataProto.SerializeToArray(buffer_.data(), buffer_.size());
+                resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
+                resultWriter_->flush(resultWriter_);
+            }
+        } else {
+            ProtoEncoder::HidumpInfo hidumpInfo(resultWriter_->startReport(resultWriter_));
+            if (!ParseHidumpInfo(hidumpInfo, buf)) {
+                HILOG_ERROR(LOG_CORE, "parse hidump info failed!");
+            }
+            int messageLen = hidumpInfo.Finish();
+            resultWriter_->finishReport(resultWriter_, messageLen);
             resultWriter_->flush(resultWriter_);
-            dataProto.clear_fps_event();
         }
     }
-    buffer_.resize(dataProto.ByteSizeLong());
-    dataProto.SerializeToArray(buffer_.data(), buffer_.size());
-    resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
-    resultWriter_->flush(resultWriter_);
-    dataProto.clear_fps_event();
 
     HILOG_INFO(LOG_CORE, "HidumpPlugin: Loop exit");
 }
 
-bool HidumpPlugin::ParseHidumpInfo(HidumpInfo& dataProto, char *buf)
+template <typename T>
+bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf)
 {
     // format: fps:123|1501960484673
     if (strncmp(buf, "fps:", strlen("fps:")) != 0) {
@@ -162,11 +171,12 @@ bool HidumpPlugin::ParseHidumpInfo(HidumpInfo& dataProto, char *buf)
     uint64_t time_ms;
     strvalue >> time_ms;
 
-    auto* eve = dataProto.add_fps_event();
+    auto* eve = hidumpInfoProto.add_fps_event();
     eve->set_fps(fps);
     eve->set_id(::FpsData::REALTIME);
-    eve->mutable_time()->set_tv_sec(time_ms / MS_PER_S);
-    eve->mutable_time()->set_tv_nsec((time_ms % MS_PER_S) * US_PER_S);
+    auto* time = eve->mutable_time();
+    time->set_tv_sec(time_ms / MS_PER_S);
+    time->set_tv_nsec((time_ms % MS_PER_S) * US_PER_S);
 
     return true;
 }

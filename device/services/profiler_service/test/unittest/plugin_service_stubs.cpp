@@ -307,3 +307,22 @@ void PluginService::SetTraceWriter(const TraceFileWriterPtr& traceWriter)
 {
     traceWriter_ = traceWriter;
 }
+
+void PluginService::StartEpollThread()
+{
+    if (eventPoller_) {
+        eventPoller_->Start();
+    }
+}
+
+void PluginService::StopEpollThread()
+{
+    if (eventPoller_) {
+        eventPoller_->Stop();
+    }
+}
+
+void PluginService::FlushAllData(const std::string& pluginName)
+{
+    HILOG_INFO(LOG_CORE, "FlushAllData for %s", pluginName.c_str());
+}

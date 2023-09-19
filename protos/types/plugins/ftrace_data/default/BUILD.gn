@@ -27,6 +27,7 @@ proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 ftrace_data_proto = all_proto
 ftrace_data_codegen = []
 ftrace_data_codegen_standard = []
+ftrace_data_codegen_encoder = []
 foreach(proto, ftrace_data_proto) {
   dir = get_path_info(proto, "dir")
   name = get_path_info(proto, "name")
@@ -38,10 +39,15 @@ foreach(proto, ftrace_data_proto) {
     "$proto_out_dir/$dir/${name}_standard.pb.h",
     "$proto_out_dir/$dir/${name}_standard.pb.cc",
   ]
+  ftrace_data_codegen_encoder += [
+    "$proto_out_dir/$dir/${name}.pbencoder.h",
+    "$proto_out_dir/$dir/${name}.pbencoder.cc",
+  ]
 }
 
 all_proto_codegen = ftrace_data_codegen
 all_proto_codegen += ftrace_data_codegen_standard
+all_proto_codegen += ftrace_data_codegen_encoder
 
 ftrace_plugin_config_proto = [ "trace_plugin_config.proto" ]
 ftrace_plugin_config_codegen_standard = []
@@ -67,7 +73,10 @@ action("all_proto_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})",
+  ]
 }
 
 config("public_configs") {
@@ -109,6 +118,15 @@ ohos_source_set("ftrace_plugin_config_cpp_standard") {
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":public_configs" ]
   sources = ftrace_plugin_config_codegen_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("ftrace_data_encoder") {
+  deps = [ ":all_proto_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":public_configs" ]
+  sources = ftrace_data_codegen_encoder
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

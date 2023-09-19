@@ -49,6 +49,9 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "unittest/plugin_watcher_test.cpp",
     "unittest/writer_adapter_test.cpp",
   ]
+  if (use_clang_coverage) {
+    defines = [ "COVERAGE_TEST" ]
+  }
   configs = [ ":cflags_config" ]
   external_deps = [ "hilog:libhilog" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
