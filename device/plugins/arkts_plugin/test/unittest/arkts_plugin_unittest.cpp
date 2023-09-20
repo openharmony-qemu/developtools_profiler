@@ -42,7 +42,7 @@ public:
         std::array<char, readBufferSize> buffer;
         while (fgets(buffer.data(), buffer.size(), runCmd.get()) != nullptr) {
             std::string result = buffer.data();
-            if (result.find("com.ohos.dist") == std::string::npos) {
+            if (result.find("cn.openharmony") == std::string::npos) {
                 continue;
             }
             std::regex pattern(R"(\b(\d+)/)");
