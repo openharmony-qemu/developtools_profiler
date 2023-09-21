@@ -53,18 +53,7 @@ public:
         spSocket.Init(type);
         if (type == ProtoType::TCP) {
             std::cout << "Socket TCP Init called!" << std::endl;
-            while (1) {
-                int procFd = spSocket.Accept();
-                std::cout << "Socket TCP procFd: " << procFd << std::endl;
-                while (procFd > 0) {
-                    int reFd = spSocket.Recv();
-                    if (reFd < 0) break;
-                    std::string recvStr = spSocket.RecvBuf();
-                    std::cout << "Socket TCP Recv: " << recvStr << std::endl;
-                    // 解析消息 分发处理
-                    DealMsg(recvStr, spSocket);
-                }
-            }
+            TypeTcp(spSocket);
         }
         if (type == ProtoType::UDP) {
             while (1) {
@@ -74,6 +63,21 @@ public:
         }
         std::cout << "Socket Process finished!" << std::endl;
         spSocket.Close();
+    }
+    void TypeTcp(SpServerSocket spSocket) const
+    {
+        while (1) {
+            int procFd = spSocket.Accept();
+            std::cout << "Socket TCP procFd: " << procFd << std::endl;
+            while (procFd > 0) {
+                int reFd = spSocket.Recv();
+                if (reFd < 0) break;
+                std::string recvStr = spSocket.RecvBuf();
+                std::cout << "Socket TCP Recv: " << recvStr << std::endl;
+                // 解析消息 分发处理
+                DealMsg(recvStr, spSocket);
+            }
+        }
     }
     // TCP
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
