@@ -49,14 +49,12 @@ ohos_executable("xpowertool") {
     "//third_party/bounds_checking_function/include",
     "//third_party/protobuf/src",
   ]
-  sources = [
-    "src/xpower_main.cpp",
-  ]
+  sources = [ "test/xpower_main.cpp" ]
   deps = [
-    "${OHOS_PROFILER_DIR}/protos/services:proto_services_cpp",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
+    "${OHOS_PROFILER_DIR}/protos/services:proto_services_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
+    "//third_party/bounds_checking_function:libsec_static",
   ]
   cflags = [
     "-Wno-error=inline-asm",

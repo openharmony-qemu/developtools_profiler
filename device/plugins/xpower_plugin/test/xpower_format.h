@@ -25,9 +25,6 @@
 #include <string>
 #include <vector>
 
-#include "logging.h"
-
-
 class ArgBase {
 public:
     ArgBase() {}
@@ -42,47 +39,49 @@ public:
     virtual ~Arg() {}
     virtual void Format(std::ostringstream& ss, const std::string& fmt)
     {
-        ss << m_arg;
+        if (fmt.empty()) {
+            ss << m_arg;
+        }
+        else {
+            ss << std::setfill(fmt[0]) << m_arg;
+        }
     }
 
 private:
     T m_arg;
 };
 
-class ArgArray : public std::vector<ArgBase*> {
+class ArgArray : public std::vector<std::shared_ptr<ArgBase>> {
 public:
     ArgArray() {}
     ~ArgArray()
     {
-        std::for_each(begin(), end(), [](ArgBase* p) { delete p; });
+        clear();
     }
 };
 
 static void FormatItem(std::ostringstream& ss, const std::string& item, const ArgArray& args)
 {
-    int index = 0;
+    std::size_t index = 0;
     int alignment = 0;
     std::string fmt;
-
+    const int baseHex = 10; //10 : convert to dec
     char* endptr = nullptr;
-    index = strtol(&item[0], &endptr, 10);
+    index = strtol(&item[0], &endptr, baseHex);
     if (index < 0 || index >= args.size()) {
         return;
     }
-
     if (*endptr == ',') {
-        alignment = strtol(endptr + 1, &endptr, 10);
+        alignment = strtol(endptr + 1, &endptr, baseHex);
         if (alignment > 0) {
             ss << std::right << std::setw(alignment);
         } else if (alignment < 0) {
             ss << std::left << std::setw(-alignment);
         }
     }
-
     if (*endptr == ':') {
         fmt = endptr + 1;
     }
-
     args[index]->Format(ss, fmt);
 
     return;
@@ -107,7 +106,6 @@ std::string Format(const std::string& format, Args&&... args)
     if (sizeof...(args) == 0) {
         return format;
     }
-
     ArgArray argArray;
     Transfer(argArray, args...);
     size_t start = 0;
@@ -119,15 +117,13 @@ std::string Format(const std::string& format, Args&&... args)
             ss << format.substr(start);
             break;
         }
-
         ss << format.substr(start, pos - start);
         if (format[pos + 1] == '{') {
             ss << '{';
-            start = pos + 2;
+            start = pos + 2; // 2: skip 2 characters
             continue;
         }
-
-        start = pos + 1;
+        start = pos + 1; // 1: skip 1 character
         pos = format.find('}', start);
         if (pos == std::string::npos) {
             ss << format.substr(start - 1);
@@ -135,16 +131,16 @@ std::string Format(const std::string& format, Args&&... args)
         }
 
         FormatItem(ss, format.substr(start, pos - start), argArray);
-        start = pos + 1;
+        start = pos + 1; // 1: skip 1 character
     }
 
     return ss.str();
 }
 
 template <typename... Args>
-void PrintHilog(const std::string& format, Args&&... args)
+void PrintOutput(const std::string& format, Args&&... args)
 {
-    HILOG_INFO(LOG_CORE, "%s", Format(format, args...).c_str());
+    std::cout << Format(format, args...) << std::endl;
 }
 
 #endif

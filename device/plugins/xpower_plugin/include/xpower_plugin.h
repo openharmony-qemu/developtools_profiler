@@ -34,11 +34,6 @@ public:
     void OptimizeCallback(const std::uint32_t messageType, const uint8_t* protoData, size_t protoSize);
     void SetWriter(WriterStruct* writer);
     bool StartPowerManager(std::uint32_t messageType, std::string& bundleName);
-    void DisplayPowerMessage(std::shared_ptr<PowerOptimizeData>& result);
-    void DisplayRealBattery(OptimizeReport& dataProto);
-    void DisplayAppStatistic(OptimizeReport& dataProto);
-    void DisplayAppDetail(OptimizeReport& dataProto);
-
 private:
     void* powerClientHandle = nullptr;
     XpowerConfig protoConfig;

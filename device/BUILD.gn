@@ -70,6 +70,7 @@ group("unittest") {
     "plugins/memory_plugin/test:unittest",
     "plugins/network_plugin/test:unittest",
     "plugins/process_plugin/test:unittest",
+    "plugins/xpower_plugin/test:unittest",
     "services/ipc/test:unittest",
     "services/plugin_service/test:unittest",
     "services/profiler_service/test:unittest",

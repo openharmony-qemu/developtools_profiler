@@ -127,6 +127,8 @@ bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName,
         ret = SetSerializeHisyseventConfig(pluginName, pluginConfig);
     } else if (pluginName == "arkts-plugin") {
         ret = SetSerializeArkTSConfig(pluginName, pluginConfig);
+    } else if (pluginName == "xpower-plugin") {
+        ret = SetSerializeXpowerConfig(pluginName, pluginConfig);
     } else {
         printf("unsupport plugin: %s\n", pluginName.c_str());
     }

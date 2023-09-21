@@ -15,7 +15,6 @@
 #include "xpower_plugin.h"
 
 #include <dlfcn.h>
-#include <inttypes.h>
 #include <unistd.h>
 
 #include <iomanip>
@@ -24,7 +23,6 @@
 
 #include "common.h"
 #include "securec.h"
-#include "xpower_format.h"
 
 namespace {
 constexpr size_t MAX_QUEUE_SIZE = 2000;
@@ -113,7 +111,7 @@ bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bun
 
 void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8_t *protoData, size_t protoSize)
 {
-    if (protoData == nullptr) {
+    if (protoData == nullptr || protoSize <= 0) {
         HILOG_ERROR(LOG_CORE, "the power message is invalid !");
         return;
     }
@@ -133,94 +131,6 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
     }
 }
 
-void XpowerPlugin::DisplayRealBattery(OptimizeReport &dataProto)
-{
-    PrintHilog(
-        "power report: real_battery:capacity ={0},charge={1},current={2},gas_gauge={3},"
-        "level={4},screen={5}",
-        dataProto.real_battery().capacity(), dataProto.real_battery().charge(), dataProto.real_battery().current(),
-        dataProto.real_battery().gas_gauge(), dataProto.real_battery().level(), dataProto.real_battery().screen());
-}
-
-void XpowerPlugin::DisplayAppStatistic(OptimizeReport &dataProto)
-{
-    PrintHilog("power report: app_statistic:audio enegy={0},time={1}", dataProto.app_statistic().audio().energy(),
-               dataProto.app_statistic().audio().time());
-
-    PrintHilog("power report: app_statistic:bluetooth enegy={0},time={1}",
-               dataProto.app_statistic().bluetooth().energy(), dataProto.app_statistic().bluetooth().time());
-
-    PrintHilog("power report: app_statistic:camera enegy={0},time={1}", dataProto.app_statistic().camera().energy(),
-               dataProto.app_statistic().camera().time());
-
-    PrintHilog("power report: app_statistic:cpu enegy={0},time={1}", dataProto.app_statistic().cpu().energy(),
-               dataProto.app_statistic().cpu().time());
-
-    PrintHilog("power report: app_statistic:display enegy={0},time={1}", dataProto.app_statistic().display().energy(),
-               dataProto.app_statistic().display().time());
-    PrintHilog("power report: app_statistic:flashlight enegy={0},time={1}",
-               dataProto.app_statistic().flashlight().energy(), dataProto.app_statistic().flashlight().time());
-    PrintHilog("power report: app_statistic:gpu enegy={0},time={1}", dataProto.app_statistic().gpu().energy(),
-               dataProto.app_statistic().gpu().time());
-
-    PrintHilog("power report: app_statistic:location enegy={0},time={1}", dataProto.app_statistic().location().energy(),
-               dataProto.app_statistic().location().time());
-    PrintHilog("power report: app_statistic:wifiscan enegy={0},time={1}", dataProto.app_statistic().wifiscan().energy(),
-               dataProto.app_statistic().wifiscan().time());
-}
-
-void XpowerPlugin::DisplayAppDetail(OptimizeReport &dataProto)
-{
-    PrintHilog("power report: app_detail:cpu thread_count={0}", dataProto.app_detail().cpu().thread_count());
-    std::string loadStr;
-    for (int i = 0; i < dataProto.app_detail().cpu().thread_load().size(); i++) {
-        loadStr += std::to_string(static_cast<long long>(dataProto.app_detail().cpu().thread_load(i))) + ":";
-    }
-    loadStr.pop_back();
-    PrintHilog("power report: app_detail:cpu tread_load={0}", loadStr);
-    std::string threadName;
-    for (int i = 0; i < dataProto.app_detail().cpu().thread_name().size(); i++) {
-        threadName += dataProto.app_detail().cpu().thread_name(i) + ":";
-    }
-    threadName.pop_back();
-    PrintHilog("power report: app_detail:cpu thread_name={0}", threadName);
-    PrintHilog("power report: app_detail:gpu frequency_count={0}", dataProto.app_detail().gpu().frequency_count());
-    std::string freqStr;
-    for (int i = 0; i < dataProto.app_detail().gpu().frequency().size(); i++) {
-        freqStr += std::to_string(dataProto.app_detail().gpu().frequency(i)) + ":";
-    }
-    freqStr.pop_back();
-    PrintHilog("power report: app_detail:gpu frequency={0}", freqStr);
-    std::string idleStr;
-    for (int i = 0; i < dataProto.app_detail().gpu().idle_time().size(); i++) {
-        idleStr += std::to_string(dataProto.app_detail().gpu().idle_time(i)) + ":";
-    }
-    idleStr.pop_back();
-    PrintHilog("power report: app_detail:gpu idle_time={0}", idleStr);
-    std::string runStr;
-    for (int i = 0; i < dataProto.app_detail().gpu().run_time().size(); i++) {
-        runStr += std::to_string(dataProto.app_detail().gpu().run_time(i)) + ":";
-    }
-    runStr.pop_back();
-    PrintHilog("power report: app_detail:gpu run_time={0}", runStr);
-}
-
-void XpowerPlugin::DisplayPowerMessage(std::shared_ptr<PowerOptimizeData> &result)
-{
-    OptimizeReport dataProto;
-    dataProto.ParseFromArray(result->baseData.get(), result->length);
-    PrintHilog("power report :recive optimize start_time ={0},end_time={1},bundle_name={2}", dataProto.start_time(),
-               dataProto.end_time(), dataProto.bundle_name());
-    if ((result->messageType & OptimizeMessageType::MESSAGE_REAL_BATTERY) != 0) {
-        DisplayRealBattery(dataProto);
-    }
-    if ((result->messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0) {
-        DisplayAppStatistic(dataProto);
-    }
-    if ((result->messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0) {
-        DisplayAppDetail(dataProto);
-    }
-}
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
 {
     HILOG_INFO(LOG_CORE, "power: report the data to caller");
@@ -239,7 +149,6 @@ int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
     if (result->length > dataSize) {
         return -result->length;
     }
-    DisplayPowerMessage(result);
     CHECK_TRUE(memcpy_s(data, dataSize, result->baseData.get(), result->length) == EOK, 0, "memcpy_s raw data failed!");
     return result->length;
 }
