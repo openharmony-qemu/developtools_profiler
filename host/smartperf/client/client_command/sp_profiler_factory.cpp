@@ -54,15 +54,9 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
         case MessageType::GET_POWER:
             profiler = &Power::GetInstance();
             break;
-        case MessageType::CATCH_TRACE_START:
-            ByTrace::GetInstance().ThreadGetTrace();
-            break;
-        case MessageType::CATCH_TRACE_FINISH: {
-            ByTrace::GetInstance().ThreadEndTrace();
-            std::string curTime = std::to_string(SPUtils::GetCurTime());
-            ByTrace::GetInstance().ThreadFinishTrace(curTime);
+        case MessageType::CATCH_TRACE_CONFIG:
+            FPS::GetInstance().SetTraceCatch();
             break; 
-        } 
         case MessageType::GET_CAPTURE:
             FPS::GetInstance().SetCaptureOn();
             break; 
@@ -81,6 +75,40 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
+}
+void SpProfilerFactory::SetByTraceCmd(std::string cmd)
+{
+    ByTrace &bTrace = ByTrace::GetInstance();
+    bTrace.SetTraceCmd(cmd);
+}
+void SpProfilerFactory::SetByTrace(std::string message)
+{
+    std::vector<std::string> values;
+    std::string delimiter = "||";
+    std::string delim = "=";
+    SPUtils::StrSplit(message, delimiter, values);
+    int mSum = 0;
+    int mInterval = 0;
+    long long mThreshold = 0;
+    int lowFps = 0;
+    for (std::string vItem:values) {
+        std::vector<std::string> vItems;
+        SPUtils::StrSplit(vItem, delim, vItems);
+        if (vItems[0] == "traceSum") {
+            mSum = std::stoi(vItems[1]);
+        }
+        if (vItems[0] == "fpsJitterTime") {
+            mThreshold = std::stoi(vItems[1]);
+        }
+        if (vItems[0] == "catchInterval") {
+            mInterval = std::stoi(vItems[1]);
+        }
+        if (vItems[0] == "lowFps") {
+            lowFps = std::stoi(vItems[1]);
+        }
+    }
+    ByTrace &bTrace = ByTrace::GetInstance();
+    bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps);
 }
 void SpProfilerFactory::SetProfilerPid(std::string pid)
 {

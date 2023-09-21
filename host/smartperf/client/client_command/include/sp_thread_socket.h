@@ -57,7 +57,8 @@ public:
                 int procFd = spSocket.Accept();
                 std::cout << "Socket TCP procFd: " << procFd << std::endl;
                 while (procFd > 0) {
-                    spSocket.Recv();
+                    int reFd = spSocket.Recv();
+                    if (reFd < 0) break;
                     std::string recvStr = spSocket.RecvBuf();
                     std::cout << "Socket TCP Recv: " << recvStr << std::endl;
                     // 解析消息 分发处理
@@ -107,6 +108,11 @@ public:
                 }
             }
             vec.push_back(recvStr.substr(j, size - j));
+            const int type = 2;
+            if (vec[type] == "findAppPage") {
+                std::string cmdResult;
+                SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+            }
             OHOS::SmartPerf::ControlCallCmd controlCallCmd;
             std::string result = controlCallCmd.GetResult(vec.size(), vec);
             spSocket.Send(result);
@@ -131,6 +137,10 @@ public:
                     spSocket.Sendto(curPkgName);
                 } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
                     SpProfilerFactory::SetProfilerPid(SplitMsg(recvBuf));
+                } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG)) {
+                    SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+                } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CMD)) {
+                    SpProfilerFactory::SetByTraceCmd(SplitMsg(recvBuf));
                 } else if (profiler == nullptr) {
                     std::string returnStr = iterator->second;
                     spSocket.Sendto(returnStr);
