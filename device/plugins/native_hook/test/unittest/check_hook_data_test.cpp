@@ -34,7 +34,6 @@ constexpr int DEFAULT_MALLOC_SIZE = 10;
 constexpr int DEFAULT_CALLOC_SIZE = 100;
 constexpr int DEFAULT_REALLOC_SIZE = 1000;
 constexpr int DATA_SIZE = 50;
-constexpr int WAIT_KILL_SIGNL = 4;
 constexpr int SLEEP_TIME = 5;
 constexpr int WAIT_FLUSH = 2;
 
@@ -301,12 +300,11 @@ public:
     {
         int processNum = fork();
         if (processNum == 0) {
-            sleep(WAIT_KILL_SIGNL);
             auto ret = malloc(DEFAULT_MALLOC_SIZE);
             free(ret);
             while (1) {
                 ApplyForCalloc(depth);
-                usleep(5000); // sleep 5000 us
+                usleep(500); // sleep 500 us
             }
         } else {
             hookPid_ = processNum;
@@ -388,11 +386,15 @@ public:
         sleep(SLEEP_TIME); // 等待生成文本
         std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
         system(cmdEnd.c_str());
+#ifdef COVERAGE_TEST
+        const int waitFlushTime = 5; // sleep 5s
+        sleep(waitFlushTime);
+#else
         sleep(WAIT_FLUSH);
+#endif
         StopProcess(hookPid_);
         StopProcess(daemonPid_);
     }
-
     int daemonPid_ = -1;
     int hookPid_ = -1;
     int modeIndex_ = 0;
