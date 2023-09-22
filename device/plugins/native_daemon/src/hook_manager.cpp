@@ -18,6 +18,7 @@
 #include <limits>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <malloc.h>
 
 #include "command_poller.h"
 #include "common.h"
@@ -351,6 +352,11 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                                      const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
 {
+    struct mallinfo mi = mallinfo();
+    HILOG_INFO(LOG_CORE, "mallinfo total allocated(uordblks) space before hook: %zu", mi.uordblks);
+    HILOG_INFO(LOG_CORE, "mallinfo total active(hblkhd) space before hook: %zu", mi.hblkhd);
+    HILOG_INFO(LOG_CORE, "mallinfo total free(fordblks) space before hook: %zu", mi.fordblks);
+
     UNUSED_PARAMETER(config);
     CHECK_TRUE(stackPreprocess_ != nullptr, false, "start StackPreprocess FAIL");
     stackPreprocess_->StartTakeResults();
@@ -391,8 +397,14 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     CHECK_TRUE(stackPreprocess_ != nullptr, false, "stop StackPreprocess FAIL");
     HILOG_INFO(LOG_CORE, "start StopTakeResults");
     stackPreprocess_->StopTakeResults();
-
+    
     HILOG_INFO(LOG_CORE, "StopTakeResults success");
+
+    struct mallinfo mi = mallinfo();
+    HILOG_INFO(LOG_CORE, "mallinfo total allocated(uordblks) space after hook: %zu", mi.uordblks);
+    HILOG_INFO(LOG_CORE, "mallinfo total active(hblkhd) space after hook: %zu", mi.hblkhd);
+    HILOG_INFO(LOG_CORE, "mallinfo total free(fordblks) space after hook: %zu", mi.fordblks);
+
     if (hookConfig_.statistics_interval() > 0) {
         stackPreprocess_->FlushRecordStatistics();
     }
