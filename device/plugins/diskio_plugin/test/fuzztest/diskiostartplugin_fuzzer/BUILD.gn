@@ -14,11 +14,10 @@
 #####################hydra-fuzz###################
 import("//build/test.gni")
 import("../../../../../base/config.gni")
-module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 
 ##############################fuzztest##########################################
 ohos_fuzztest("DiskioStartPluginFuzzTest") {
-  module_out_path = module_output_path
+  module_out_path = hiprofiler_fuzz_output_path
   fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/diskio_plugin/test/fuzztest/diskiostartplugin_fuzzer"
   cflags = [
     "-g",
