@@ -32,8 +32,8 @@ enum class MessageType {
     GET_TEMPERATURE,
     GET_POWER,
     GET_CAPTURE,
-    CATCH_TRACE_START,
-    CATCH_TRACE_FINISH,
+    CATCH_TRACE_CONFIG,
+    CATCH_TRACE_CMD,
     SET_DUBAI_DB
 };
 
@@ -51,8 +51,8 @@ const std::unordered_map<MessageType, std::string> messageMap = {
     { MessageType::GET_TEMPERATURE, std::string("get_temperature") },
     { MessageType::GET_POWER, std::string("get_power") },
     { MessageType::GET_CAPTURE, std::string("get_capture") },
-    { MessageType::CATCH_TRACE_START, std::string("catch_trace_start") },
-    { MessageType::CATCH_TRACE_FINISH, std::string("catch_trace_end") },
+    { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
+    { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
 };
 

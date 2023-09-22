@@ -64,7 +64,7 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
         result = "time:" + stream.str();
     } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
-    }  else if (v[typeName] == "pagefps") {
+    } else if (v[typeName] == "pagefps") {
         double fps = SmartPerf::ControlCallCmd::PageFps();
         stream << fps;
         result = "FPS:" + stream.str() + "fps";
@@ -78,7 +78,7 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
         SPUtils::LoadCmd("GP_daemon_fps 10", result);
     }
     if (time == noNameType) {
-        std::cout << "Startup error, unknown application or application not responding"<< std::endl;
+        std::cout << "Startup error, unknown application or application not responding" << std::endl;
     } else {
         std::cout << result << std::endl;
     }
@@ -146,7 +146,7 @@ double ControlCallCmd::ResponseTime()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
-    if (isOhTest) { 
+    if (isOhTest) {
         thGetTrace.join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
