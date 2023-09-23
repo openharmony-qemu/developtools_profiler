@@ -170,9 +170,6 @@ bool ProfilerService::SessionContext::StopPluginSessions()
         if (offlineTask.size() > 0) {
             ScheduleTaskManager::GetInstance().UnscheduleTask(offlineTask);
             offlineTask = "";
-        } else {
-            // timeout or active called StopPluginSessions.
-            return true;
         }
     }
 
