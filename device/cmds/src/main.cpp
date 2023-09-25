@@ -265,7 +265,7 @@ bool CheckDestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, 
     return true;
 }
 
-void StartThread(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t& id, std::atomic<bool>& sendHeart)
+void StartKeepAliveThread(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t& id, std::atomic<bool>& sendHeart)
 {
     while (sendHeart.load()) {
         KeepSessionRequest keepRequest;
@@ -282,7 +282,7 @@ void StartThread(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t
     }
 }
 
-void StopThread(std::thread& keepSessionThread, std::atomic<bool>& sendHeart)
+void StopKeepAliveThread(std::thread& keepSessionThread, std::atomic<bool>& sendHeart)
 {
     sendHeart = false;
     g_keepSessionCv.notify_one();
@@ -314,11 +314,11 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
 
     // start keepSessionThread, in order to ensure the sessionId is valid.
     std::atomic<bool> sendHeart = true;
-    std::thread keepSessionThread(StartThread, std::ref(profilerStub), std::ref(sessionId), std::ref(sendHeart));
+    std::thread keepSessionThread(StartKeepAliveThread, std::ref(profilerStub), std::ref(sessionId), std::ref(sendHeart));
     if (g_exitProcessFlag) {
         // session has been created and keepSessionThread has been started.
         // need to stop keepSessionThread and destroy the session.
-        StopThread(keepSessionThread, sendHeart);
+        StopKeepAliveThread(keepSessionThread, sendHeart);
         return CheckDestroySession(profilerStub, sessionId);
     }
 
@@ -339,7 +339,7 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         ret = true;
     }
 
-    StopThread(keepSessionThread, sendHeart);
+    StopKeepAliveThread(keepSessionThread, sendHeart);
     return ret;
 }
 
