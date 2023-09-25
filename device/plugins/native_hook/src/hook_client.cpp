@@ -23,6 +23,7 @@
 #include <sys/prctl.h>
 #include <unordered_map>
 #include <unordered_set>
+#include <malloc.h>
 #include "common.h"
 #include "hook_common.h"
 #include "hook_socket_client.h"
@@ -59,6 +60,7 @@ constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
 constexpr int FD_PATH_LENGTH = 64;
 static bool g_isPidChanged = false;
+static struct mallinfo2 mallinfo = mallinfo2();
 const MallocDispatchType* GetDispatch()
 {
     return g_dispatch.load(std::memory_order_relaxed);
@@ -176,7 +178,17 @@ static bool IsPidChanged(void);
 bool ohos_malloc_hook_on_start(void)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
-    COMMON::PrintMallinfoLog("before hook(byte) => ");
+    mallinfo = mallinfo2();
+    std::string mallinfoLog = "before hook(byte) => ";
+    mallinfoLog += "arena = " + std::to_string(mallinfo.arena) + ", ordblks = " + std::to_string(mallinfo.ordblks);
+    mallinfoLog += ", smblks = " + std::to_string(mallinfo.smblks) + ", hblks = " + std::to_string(mallinfo.hblks);
+    mallinfoLog += ", hblkhd = " + std::to_string(mallinfo.hblkhd) + ", usmblks = " + std::to_string(mallinfo.usmblks);
+    mallinfoLog +=
+        ", fsmblks = " + std::to_string(mallinfo.fsmblks) + ", uordblks = " + std::to_string(mallinfo.uordblks);
+    mallinfoLog +=
+        ", fordblks = " + std::to_string(mallinfo.fordblks) + ", keepcost = " + std::to_string(mallinfo.keepcost);
+    HILOG_INFO(LOG_CORE, "%s", mallinfoLog.c_str());
+
     g_hookPid = GetRealPid();
     g_mallocTimes = 0;
     if (g_hookClient != nullptr) {
@@ -219,6 +231,15 @@ void* ohos_release_on_end(void*)
     pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
     HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
+    std::string mallinfoLog = "restored data before hook(byte) => ";
+    mallinfoLog += "arena = " + std::to_string(mallinfo.arena) + ", ordblks = " + std::to_string(mallinfo.ordblks);
+    mallinfoLog += ", smblks = " + std::to_string(mallinfo.smblks) + ", hblks = " + std::to_string(mallinfo.hblks);
+    mallinfoLog += ", hblkhd = " + std::to_string(mallinfo.hblkhd) + ", usmblks = " + std::to_string(mallinfo.usmblks);
+    mallinfoLog +=
+        ", fsmblks = " + std::to_string(mallinfo.fsmblks) + ", uordblks = " + std::to_string(mallinfo.uordblks);
+    mallinfoLog +=
+        ", fordblks = " + std::to_string(mallinfo.fordblks) + ", keepcost = " + std::to_string(mallinfo.keepcost);
+    HILOG_INFO(LOG_CORE, "%s", mallinfoLog.c_str());
     COMMON::PrintMallinfoLog("after hook(byte) => ");
     return nullptr;
 }

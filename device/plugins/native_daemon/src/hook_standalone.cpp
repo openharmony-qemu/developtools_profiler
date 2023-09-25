@@ -18,7 +18,6 @@
 #include <functional>
 #include <linux/types.h>
 #include <sys/mman.h>
-#include <malloc.h>
 
 #include "common.h"
 #include "epoll_event_poller.h"
@@ -61,11 +60,6 @@ static void SignalHandl(int signo)
 {
     HILOG_ERROR(LOG_CORE, "recv signal %d", signo);
     g_stackpreprocess->StopTakeResults();
-
-    struct mallinfo mi = mallinfo();
-    HILOG_INFO(LOG_CORE, "mallinfo total allocated(uordblks) space after hook: %zu", mi.uordblks);
-    HILOG_INFO(LOG_CORE, "mallinfo total active(hblkhd) space after hook: %zu", mi.hblkhd);
-    HILOG_INFO(LOG_CORE, "mallinfo total free(fordblks) space after hook: %zu", mi.fordblks);
     
     if (g_statisticsinterval > 0) {
         g_stackpreprocess->FlushRecordStatistics();
@@ -170,11 +164,6 @@ bool StartHook(HookData& hookData)
                                                           pluginDataClockId, isHookStandaloneSerialize);
     CHECK_TRUE(g_stackpreprocess != nullptr, false, "Create StackPreprocess FAIL");
     g_hookManager->SetHookConfig(nativeConfig);
-
-    struct mallinfo mi = mallinfo();
-    HILOG_INFO(LOG_CORE, "mallinfo total allocated(uordblks) space before hook: %zu", mi.uordblks);
-    HILOG_INFO(LOG_CORE, "mallinfo total active(hblkhd) space before hook: %zu", mi.hblkhd);
-    HILOG_INFO(LOG_CORE, "mallinfo total free(fordblks) space before hook: %zu", mi.fordblks);
 
     g_stackpreprocess->StartTakeResults();
     signal(SIGINT, SignalHandl);
