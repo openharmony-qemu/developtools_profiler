@@ -266,7 +266,8 @@ bool CheckDestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, 
 }
 
 void StartKeepAliveThread(std::unique_ptr<IProfilerService::Stub> &profilerStub,
-                          uint32_t &id, std::atomic<bool> &sendHeart) {
+                          uint32_t &id, std::atomic<bool> &sendHeart) 
+{
     while (sendHeart.load()) {
         KeepSessionRequest keepRequest;
         keepRequest.set_request_id(0);
