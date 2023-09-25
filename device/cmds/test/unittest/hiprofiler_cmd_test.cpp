@@ -426,7 +426,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
 }
 
 /**
- * @tc.name: native hook
+ * @tc.name: hiprofiler_cmd
  * @tc.desc: Test hiprofiler_cmd with -s -l -k.
  * @tc.type: FUNC
  */
@@ -443,7 +443,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
 }
 
 /**
- * @tc.name: native hook
+ * @tc.name: hiprofiler_cmd
  * @tc.desc: Test hiprofiler_cmd with -l -k.
  * @tc.type: FUNC
  */
@@ -458,7 +458,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
 }
 
 /**
- * @tc.name: native hook
+ * @tc.name: hiprofiler_cmd
  * @tc.desc: Test hiprofiler_cmd with -k.
  * @tc.type: FUNC
  */
@@ -500,5 +500,57 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
     system(cmd.c_str());
     StopProcessStub(hiprofilerPluginsPid_);
     StopProcessStub(hiprofilerdPid_);
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with ctrl+c.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level1)
+{
+    std::string content = "";
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    sleep(1);
+
+    pid_t pid = fork();
+    EXPECT_GE(pid, 0);
+    if (pid == 0) {
+        content = "";
+        const int time = 20;
+        std::string outFile = DEFAULT_PATH + "trace.htrace";
+        cmd = CreateCommand(outFile, time);
+        EXPECT_TRUE(RunCommand(cmd, content));
+        EXPECT_TRUE(content.find("hiprofiler_cmd receive signal(2)!", 0) != std::string::npos);
+        EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
+
+        // 删除生成的trace文件
+        cmd = "rm " + outFile;
+        system(cmd.c_str());
+        _exit(0);
+    } else if (pid > 0) {
+        sleep(10);
+        content = "";
+        cmd = "pidof hiprofiler_cmd";
+        EXPECT_TRUE(RunCommand(cmd, content));
+        ASSERT_STRNE(content.c_str(), "");
+
+        cmd = "kill -2 " + content;
+        content = "";
+        EXPECT_TRUE(RunCommand(cmd, content));
+        EXPECT_STREQ(content.c_str(), "");
+
+        // 等待子进程结束
+        waitpid(pid, nullptr, 0);
+    }
+
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " -k";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    sleep(1);
+    content = "";
+    cmd = "pidof " + DEFAULT_HIPROFILERD_NAME;
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_STREQ(content.c_str(), "");
 }
 }

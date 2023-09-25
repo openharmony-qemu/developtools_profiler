@@ -232,6 +232,7 @@ bool TraceFileWriter::Finish()
     stream_.write(reinterpret_cast<CharPtr>(&header_), sizeof(header_));
     CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
     CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
+    HILOG_INFO(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_, writeCount_);
     return true;
 }
 
