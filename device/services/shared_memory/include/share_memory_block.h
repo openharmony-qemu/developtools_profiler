@@ -65,7 +65,7 @@ public:
 
     struct ShareMemoryBlockCtx {
         RandomWriteCtx ctx;
-        ShareMemoryBlock* block;
+        ShareMemoryBlock* block = nullptr;
     };
     ShareMemoryBlockCtx* GetCtx()
     {
@@ -103,7 +103,7 @@ private:
     void* memoryPoint_;
     uint32_t memorySize_;
     std::string memoryName_;
-    uint32_t messageWriteOffset_;
+    uint32_t messageWriteOffset_ = 0;
     ShareMemoryBlockCtx smbCtx_;
 
     BlockHeader* header_;
