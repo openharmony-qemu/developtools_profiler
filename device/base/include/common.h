@@ -15,17 +15,19 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <malloc.h>
 #include <string>
 #include <vector>
 #include <sys/types.h>
 #include <unistd.h>
+
 
 namespace COMMON {
 bool IsProcessRunning(int& lockFileFd); // add file lock, only one process can run
 bool IsProcessExist(const std::string& processName, int& pid); // Check if the process exists and get PID
 int StartProcess(const std::string& processBin, std::vector<char*>& argv);
 int KillProcess(int pid);
-void PrintMallinfoLog(const std::string& mallInfoPrefix);
+void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi);
 inline int CustomFdClose(int& fd);
 inline int CustomFdFclose(FILE** fp);
 FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
