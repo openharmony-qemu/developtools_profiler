@@ -907,14 +907,14 @@ unsigned StackPreprocess::LgFloor(unsigned long x)
 
 uint64_t StackPreprocess::PowCeil(uint64_t x)
 {
-    x--;
+    ++x;
     x |= x >> 1;
     x |= x >> 2;
     x |= x >> 4;
     x |= x >> 8;
     x |= x >> 16;
     x |= x >> 32;
-    x++;
+    ++x;
     return x;
 }
 
@@ -924,29 +924,29 @@ size_t StackPreprocess::ComputeAlign(size_t size)
         return 0;
     }
     if (size <= (size_t(1) << SC_LG_TINY_MAXCLASS)) {
-        szind_t lg_tmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
-        szind_t lg_ceil = LgFloor(PowCeil(size));
+        unsigned lg_tmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
+        unsigned lg_ceil = LgFloor(PowCeil(size));
         return (lg_ceil < lg_tmin ? 0 : lg_ceil - lg_tmin);
     }
-    szind_t x = LgFloor((size << 1) - 1);
-    szind_t shift = (x < SC_LG_NGROUP + LG_QUANTUM) ? 0 : x - (SC_LG_NGROUP + LG_QUANTUM);
-    szind_t grp = shift << SC_LG_NGROUP;
-    szind_t lg_delta = (x < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : x - SC_LG_NGROUP - 1;
+    unsigned x = LgFloor((size << 1) - 1);
+    unsigned shift = (x < SC_LG_NGROUP + LG_QUANTUM) ? 0 : x - (SC_LG_NGROUP + LG_QUANTUM);
+    unsigned grp = shift << SC_LG_NGROUP;
+    unsigned lg_delta = (x < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : x - SC_LG_NGROUP - 1;
     size_t delta_inverse_mask = size_t(-1) << lg_delta;
-    szind_t mod = ((((size - 1) & delta_inverse_mask) >> lg_delta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
-    szind_t index = SC_NTINY + grp + mod;
+    unsigned mod = ((((size - 1) & delta_inverse_mask) >> lg_delta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
+    unsigned index = SC_NTINY + grp + mod;
     
     if (index < NTBINS) {
-        return (size_t(1) << LG_TINY_MAXCLASS - NTBINS + 1 + index));
+        return (size_t(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
     }
     size_t reduced_index = index - NTBINS;
-    size_t grp = reduced_index >> LG_SIZE_CLASS_GROUP;
-    size_t mod = reduced_index & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
-    size_t grp_size_mask = ~((!!grp) - 1);
-    size_t grp_size = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grp) & grp_size_mask;
-    size_t shift = (grp == 0) ? 1 : grp;
-    size_t lg_delta = shift + (LG_QUANTUM - 1);
-    size_t mod_size = (mod + 1) << lg_delta;
+    size_t grpval = reduced_index >> LG_SIZE_CLASS_GROUP;
+    size_t modval = reduced_index & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
+    size_t grp_size_mask = ~((!!grpval) - 1);
+    size_t grp_size = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grpval) & grp_size_mask;
+    size_t shiftval = (grpval == 0) ? 1 : grpval;
+    size_t lg_deltaval = shiftval + (LG_QUANTUM - 1);
+    size_t mod_size = (modval + 1) << lg_deltaval;
     size_t usize = grp_size + mod_size;
     return usize;
 }
