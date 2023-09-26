@@ -103,6 +103,9 @@ private:
         BatchNativeHookData& batchNativeHookData);
     bool SetFreeStatisticsData(uint64_t addr);
     void SetAllocStatisticsData(const RawStackPtr& rawStack, size_t stackId, bool isExists = false);
+    unsigned LgFloor(unsigned long x);
+    uint64_t PowCeil(uint64_t x);
+    size_t ComputeAlign(size_t size);
 private:
     std::shared_ptr<BufferWriter> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;

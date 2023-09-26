@@ -25,9 +25,18 @@
 #include "native_hook_result_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
 #include "google/protobuf/text_format.h"
+
 static std::atomic<uint64_t> timeCost = 0;
 static std::atomic<uint64_t> unwindTimes = 0;
 
+constexpr static uint32_t SC_LG_TINY_MIN = 3;
+constexpr static uint32_t LG_QUANTUM = 4;
+constexpr static uint32_t SC_NTINY = LG_QUANTUM - SC_LG_TINY_MIN;
+constexpr static uint32_t SC_LG_TINY_MAXCLASS = (LG_QUANTUM > SC_LG_TINY_MIN ? LG_QUANTUM - 1 : -1);
+constexpr static uint32_t SC_LG_NGROUP = 2;
+constexpr static uint32_t LG_SIZE_CLASS_GROUP = 2;
+constexpr static uint32_t NTBINS = 1;
+constexpr static uint32_t LG_TINY_MAXCLASS = 3;
 constexpr static uint32_t MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 constexpr static uint32_t MAX_MATCH_CNT = 1000;
 constexpr static uint32_t MAX_MATCH_INTERVAL = 2000;
@@ -469,7 +478,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
 
     if (rawStack->stackConext->type == MALLOC_MSG) {
         AllocEvent* allocEvent = hookData->mutable_alloc_event();
-        allocEvent->set_size(static_cast<uint64_t>(rawStack->stackConext->mallocSize));
+        allocEvent->set_size(static_cast<uint64_t>(ComputeAlign(rawStack->stackConext->mallocSize)));
         allocEvent->set_thread_name_id(rawStack->stackConext->tid);
         SetEventFrame(rawStack, callFrames, batchNativeHookData, allocEvent, stackMapId);
     } else if (rawStack->stackConext->type == FREE_MSG) {
@@ -874,4 +883,70 @@ void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
 bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 {
     return memTagMap_.Find(tagId, tagName);
+}
+
+unsigned StackPreprocess::LgFloor(unsigned long x)
+{
+    do {
+        x |= (x >> 1);
+        x |= (x >> 2);
+        x |= (x >> 4);
+        x |= (x >> 8);
+        x |= (x >> 16);
+        if (sizeof(x) > 4) {
+            int constant_32 = sizeof(x) * 4;
+            x |= (x >> constant_32);
+        }
+        x++;
+        if (x == 0) {
+            return 8 * sizeof(x) - 1;
+        }
+        return __builtin_ffsl(x) - 2;
+    } while(0);
+}
+
+uint64_t StackPreprocess::PowCeil(uint64_t x)
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    x++;
+    return x;
+}
+
+size_t StackPreprocess::ComputeAlign(size_t size)
+{
+    if (size == 0) {
+        return 0;
+    }
+    if (size <= (size_t(1) << SC_LG_TINY_MAXCLASS)) {
+        szind_t lg_tmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
+        szind_t lg_ceil = LgFloor(PowCeil(size));
+        return (lg_ceil < lg_tmin ? 0 : lg_ceil - lg_tmin);
+    }
+    szind_t x = LgFloor((size << 1) - 1);
+    szind_t shift = (x < SC_LG_NGROUP + LG_QUANTUM) ? 0 : x - (SC_LG_NGROUP + LG_QUANTUM);
+    szind_t grp = shift << SC_LG_NGROUP;
+    szind_t lg_delta = (x < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : x - SC_LG_NGROUP - 1;
+    size_t delta_inverse_mask = size_t(-1) << lg_delta;
+    szind_t mod = ((((size - 1) & delta_inverse_mask) >> lg_delta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
+    szind_t index = SC_NTINY + grp + mod;
+    
+    if (index < NTBINS) {
+        return (size_t(1) << LG_TINY_MAXCLASS - NTBINS + 1 + index));
+    }
+    size_t reduced_index = index - NTBINS;
+    size_t grp = reduced_index >> LG_SIZE_CLASS_GROUP;
+    size_t mod = reduced_index & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
+    size_t grp_size_mask = ~((!!grp) - 1);
+    size_t grp_size = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grp) & grp_size_mask;
+    size_t shift = (grp == 0) ? 1 : grp;
+    size_t lg_delta = shift + (LG_QUANTUM - 1);
+    size_t mod_size = (mod + 1) << lg_delta;
+    size_t usize = grp_size + mod_size;
+    return usize;
 }
