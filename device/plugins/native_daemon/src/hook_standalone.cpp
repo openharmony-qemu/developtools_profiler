@@ -164,7 +164,6 @@ bool StartHook(HookData& hookData)
                                                           pluginDataClockId, isHookStandaloneSerialize);
     CHECK_TRUE(g_stackpreprocess != nullptr, false, "Create StackPreprocess FAIL");
     g_hookManager->SetHookConfig(nativeConfig);
-
     g_stackpreprocess->StartTakeResults();
     signal(SIGINT, SignalHandl);
     return true;

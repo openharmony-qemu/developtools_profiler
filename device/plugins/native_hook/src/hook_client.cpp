@@ -60,7 +60,7 @@ constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
 constexpr int FD_PATH_LENGTH = 64;
 static bool g_isPidChanged = false;
-static struct mallinfo2 g_mallStart = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static struct mallinfo2 g_miStart = {0};
 const MallocDispatchType* GetDispatch()
 {
     return g_dispatch.load(std::memory_order_relaxed);
@@ -178,8 +178,8 @@ static bool IsPidChanged(void);
 bool ohos_malloc_hook_on_start(void)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
-    g_mallStart = mallinfo2();
-    COMMON::PrintMallinfoLog("before hook(byte) => ", g_mallStart);
+    g_miStart = mallinfo2();
+    COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_hookPid = GetRealPid();
     g_mallocTimes = 0;
     if (g_hookClient != nullptr) {
@@ -222,9 +222,9 @@ void* ohos_release_on_end(void*)
     pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
     HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
-    COMMON::PrintMallinfoLog("restored data before hook(byte) => ", g_mallStart);
-    struct mallinfo2 mi_final = mallinfo2();
-    COMMON::PrintMallinfoLog("after hook(byte) => ", mi_final);
+    COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
+    struct mallinfo2 miFinal = mallinfo2();
+    COMMON::PrintMallinfoLog("after hook(byte) => ", miFinal);
     return nullptr;
 }
 
