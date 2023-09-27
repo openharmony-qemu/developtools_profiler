@@ -50,7 +50,8 @@
         "libunwind",
         "openssl",
         "protobuf",
-        "zlib"
+        "zlib",
+        "cJSON"
       ]
     },
     "build": {

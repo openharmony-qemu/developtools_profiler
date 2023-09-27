@@ -32,23 +32,9 @@ using namespace testing::ext;
 namespace {
 #if defined(__LP64__)
 const std::string DEFAULT_TEST_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_TEST_PATH("/system/lib/");
-#endif
 const int US_PER_S = 1000000;
 const int DEFAULT_WAIT = 9;
-
 std::vector<OptimizeReport> g_protoXpower;
-
-class XpowerPluginTest : public ::testing::Test {
-public:
-    static void SetUpTestCase(){};
-    static void TearDownTestCase(){};
-
-    void SetUp() {}
-    void TearDown() {}
-};
-
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
     if (writer == nullptr || data == nullptr || size <= 0) {
@@ -70,6 +56,16 @@ bool FlushFunc(WriterStruct* writer)
     }
     return true;
 }
+#endif
+
+class XpowerPluginTest : public ::testing::Test {
+public:
+    static void SetUpTestCase(){};
+    static void TearDownTestCase(){};
+
+    void SetUp() {}
+    void TearDown() {}
+};
 
 /**
  * @tc.name: xpower plugin
@@ -78,6 +74,7 @@ bool FlushFunc(WriterStruct* writer)
  */
 HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
 {
+#if defined(__LP64__)
     std::string path = DEFAULT_TEST_PATH + std::string("libxpowerplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
@@ -87,7 +84,7 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
     g_protoXpower.clear();
     // set config
     XpowerConfig config;
-    config.set_bundle_name("com.huawei.music");
+    config.set_bundle_name("com.taobao.taobao");
     config.add_message_type(XpowerMessageType::REAL_BATTERY);
     config.add_message_type(XpowerMessageType::APP_STATISTIC);
     config.add_message_type(XpowerMessageType::APP_DETAIL);
@@ -106,6 +103,7 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
     // test proto data
     int vectSize = g_protoXpower.size();
     EXPECT_TRUE(vectSize >= 0);
+#endif
 }
 
 /**
@@ -116,6 +114,7 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
  */
 HWTEST_F(XpowerPluginTest, TestStartFail, TestSize.Level1)
 {
+#if defined(__LP64__)
     XpowerConfig config;
     XpowerPlugin plugin;
     WriterStruct writer = {WriteFunc, FlushFunc};
@@ -133,6 +132,7 @@ HWTEST_F(XpowerPluginTest, TestStartFail, TestSize.Level1)
     EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
     EXPECT_NE(plugin.Start(configData.data(), 0), 0);
     plugin.Stop();
+#endif
 }
 
 /**

@@ -43,18 +43,24 @@ ohos_shared_library("xpowerplugin") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
-ohos_executable("xpowertool") {
-  output_name = "xpowertool"
+ohos_executable("xpowerdecoder") {
+  output_name = "xpowerdecoder"
   include_dirs = [
     "//third_party/bounds_checking_function/include",
     "//third_party/protobuf/src",
+    "//third_party/cJSON",
+    "./include",
   ]
-  sources = [ "test/xpower_main.cpp" ]
+  sources = [
+    "test/xpower_decoder.cpp",
+    "test/xpower_main.cpp",
+  ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "${OHOS_PROFILER_DIR}/protos/services:proto_services_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
+    "//third_party/cJSON:cjson_static",
   ]
   cflags = [
     "-Wno-error=inline-asm",
