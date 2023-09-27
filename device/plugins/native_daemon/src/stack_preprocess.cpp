@@ -887,22 +887,20 @@ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 
 unsigned StackPreprocess::LgFloor(unsigned long x)
 {
-    do {
-        x |= (x >> 1);
-        x |= (x >> 2);
-        x |= (x >> 4);
-        x |= (x >> 8);
-        x |= (x >> 16);
-        if (sizeof(x) > 4) {
-            int constant_32 = sizeof(x) * 4;
-            x |= (x >> constant_32);
-        }
-        x++;
-        if (x == 0) {
-            return 8 * sizeof(x) - 1;
-        }
-        return __builtin_ffsl(x) - 2;
-    } while(0);
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+    if (sizeof(x) > 4) {
+        int constant_32 = sizeof(x) * 4;
+        x |= (x >> constant_32);
+    }
+    x++;
+    if (x == 0) {
+        return 8 * sizeof(x) - 1;
+    }
+    return __builtin_ffsl(x) - 2;
 }
 
 uint64_t StackPreprocess::PowCeil(uint64_t x)
