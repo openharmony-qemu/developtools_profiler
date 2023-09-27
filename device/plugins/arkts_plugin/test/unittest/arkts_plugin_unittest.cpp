@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,8 @@
 #include "plugin_module_api.h"
 
 using namespace testing::ext;
+
+namespace {
 class ArkTSPluginTest : public ::testing::Test {
 public:
     ArkTSPluginTest()
@@ -63,8 +65,10 @@ public:
     int32_t pid_{0};
 };
 
-std::vector<uint8_t> SetArkTSConfig(ArkTSConfig& protoConfig, int32_t pid, ArkTSConfig::HeapType type, uint32_t interval, bool capture_numeric_value,
-    bool track_allocations, bool enable_cpu_profiler, uint32_t cpu_profiler_interval = 1000)
+std::vector<uint8_t> SetArkTSConfig(
+    ArkTSConfig &protoConfig, int32_t pid, ArkTSConfig::HeapType type,
+    uint32_t interval, bool capture_numeric_value, bool track_allocations,
+    bool enable_cpu_profiler, uint32_t cpu_profiler_interval = 1000)
 {
     protoConfig.set_pid(pid);
     protoConfig.set_type(type);
@@ -174,3 +178,4 @@ HWTEST_F(ArkTSPluginTest, TestCpuProfiler, TestSize.Level1)
     sleep(5);
     EXPECT_EQ(arkTSPlugin.Stop(), 0);
 }
+} // namespace
