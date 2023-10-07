@@ -478,7 +478,11 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
 
     if (rawStack->stackConext->type == MALLOC_MSG) {
         AllocEvent* allocEvent = hookData->mutable_alloc_event();
+        #ifdef USE_JEMALLOC
         allocEvent->set_size(static_cast<uint64_t>(ComputeAlign(rawStack->stackConext->mallocSize)));
+        #else
+        allocEvent->set_size(static_cast<uint64_t>(rawStack->stackConext->mallocSize));
+        #endif
         allocEvent->set_thread_name_id(rawStack->stackConext->tid);
         SetEventFrame(rawStack, callFrames, batchNativeHookData, allocEvent, stackMapId);
     } else if (rawStack->stackConext->type == FREE_MSG) {
