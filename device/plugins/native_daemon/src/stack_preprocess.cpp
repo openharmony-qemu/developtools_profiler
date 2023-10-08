@@ -889,35 +889,35 @@ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
     return memTagMap_.Find(tagId, tagName);
 }
 
-unsigned StackPreprocess::LgFloor(unsigned long x)
+unsigned StackPreprocess::LgFloor(unsigned long val)
 {
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-    if (sizeof(x) > 4) {
-        int constant_32 = sizeof(x) * 4;
-        x |= (x >> constant_32);
+    val |= (val >> 1);
+    val |= (val >> 2);
+    val |= (val >> 4);
+    val |= (val >> 8);
+    val |= (val >> 16);
+    if (sizeof(val) > 4) {
+        int constant_32 = sizeof(val) * 4;
+        val |= (val >> constant_32);
     }
-    x++;
-    if (x == 0) {
-        return 8 * sizeof(x) - 1;
+    val++;
+    if (val == 0) {
+        return 8 * sizeof(val) - 1;
     }
-    return __builtin_ffsl(x) - 2;
+    return __builtin_ffsl(val) - 2;
 }
 
-uint64_t StackPreprocess::PowCeil(uint64_t x)
+uint64_t StackPreprocess::PowCeil(uint64_t val)
 {
-    ++x;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x |= x >> 32;
-    ++x;
-    return x;
+    ++val;
+    val |= val >> 1;
+    val |= val >> 2;
+    val |= val >> 4;
+    val |= val >> 8;
+    val |= val >> 16;
+    val |= val >> 32;
+    ++val;
+    return val;
 }
 
 size_t StackPreprocess::ComputeAlign(size_t size)
@@ -930,10 +930,10 @@ size_t StackPreprocess::ComputeAlign(size_t size)
         unsigned lg_ceil = LgFloor(PowCeil(size));
         return (lg_ceil < lg_tmin ? 0 : lg_ceil - lg_tmin);
     }
-    unsigned x = LgFloor((size << 1) - 1);
-    unsigned shift = (x < SC_LG_NGROUP + LG_QUANTUM) ? 0 : x - (SC_LG_NGROUP + LG_QUANTUM);
+    unsigned floor = LgFloor((size << 1) - 1);
+    unsigned shift = (floor < SC_LG_NGROUP + LG_QUANTUM) ? 0 : floor - (SC_LG_NGROUP + LG_QUANTUM);
     unsigned grp = shift << SC_LG_NGROUP;
-    unsigned lg_delta = (x < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : x - SC_LG_NGROUP - 1;
+    unsigned lg_delta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
     size_t delta_inverse_mask = size_t(-1) << lg_delta;
     unsigned mod = ((((size - 1) & delta_inverse_mask) >> lg_delta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
     unsigned index = SC_NTINY + grp + mod;
