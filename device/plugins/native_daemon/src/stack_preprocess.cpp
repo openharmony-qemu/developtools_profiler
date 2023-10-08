@@ -897,8 +897,8 @@ unsigned StackPreprocess::LgFloor(unsigned long val)
     val |= (val >> 8);
     val |= (val >> 16);
     if (sizeof(val) > 4) {
-        int constant_32 = sizeof(val) * 4;
-        val |= (val >> constant_32);
+        int constant = sizeof(val) * 4;
+        val |= (val >> constant);
     }
     val++;
     if (val == 0) {
