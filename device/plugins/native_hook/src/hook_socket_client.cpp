@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <malloc.h>
 #include "hook_socket_client.h"
 
 #include "common.h"
@@ -75,8 +75,8 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     eventFd_ = context.ReceiveFileDiscriptor();
     stackWriter_ = std::make_shared<StackWriter>("hooknativesmb", config_->shareMemroySize,
         smbFd_, eventFd_, config_->isBlocked);
-
-    COMMON::PrintMallinfoLog("stackWriter init(byte) => ");
+    struct mallinfo2 mi = mallinfo2();
+    COMMON::PrintMallinfoLog("stackWriter init(byte) => ", mi);
     return true;
 }
 
