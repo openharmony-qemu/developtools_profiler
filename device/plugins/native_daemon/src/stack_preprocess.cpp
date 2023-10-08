@@ -926,29 +926,29 @@ size_t StackPreprocess::ComputeAlign(size_t size)
         return 0;
     }
     if (size <= (size_t(1) << SC_LG_TINY_MAXCLASS)) {
-        unsigned lg_tmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
-        unsigned lg_ceil = LgFloor(PowCeil(size));
-        return (lg_ceil < lg_tmin ? 0 : lg_ceil - lg_tmin);
+        unsigned lgTmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
+        unsigned lgCeil = LgFloor(PowCeil(size));
+        return (lgCeil < lgTmin ? 0 : lgCeil - lgTmin);
     }
     unsigned floor = LgFloor((size << 1) - 1);
     unsigned shift = (floor < SC_LG_NGROUP + LG_QUANTUM) ? 0 : floor - (SC_LG_NGROUP + LG_QUANTUM);
     unsigned grp = shift << SC_LG_NGROUP;
-    unsigned lg_delta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
-    size_t delta_inverse_mask = size_t(-1) << lg_delta;
-    unsigned mod = ((((size - 1) & delta_inverse_mask) >> lg_delta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
+    unsigned lgDelta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
+    size_t deltaInverseMask = size_t(-1) << lgDelta;
+    unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
     unsigned index = SC_NTINY + grp + mod;
     
     if (index < NTBINS) {
         return (size_t(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
     }
-    size_t reduced_index = index - NTBINS;
-    size_t grpval = reduced_index >> LG_SIZE_CLASS_GROUP;
-    size_t modval = reduced_index & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
-    size_t grp_size_mask = ~((!!grpval) - 1);
-    size_t grp_size = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grpval) & grp_size_mask;
-    size_t shiftval = (grpval == 0) ? 1 : grpval;
-    size_t lg_deltaval = shiftval + (LG_QUANTUM - 1);
-    size_t mod_size = (modval + 1) << lg_deltaval;
-    size_t usize = grp_size + mod_size;
+    size_t reducedIndex = index - NTBINS;
+    size_t grpVal = reducedIndex >> LG_SIZE_CLASS_GROUP;
+    size_t modVal = reducedIndex & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
+    size_t grpSizeMask = ~((!!grpVal) - 1);
+    size_t grpSize = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grpVal) & grpSizeMask;
+    size_t shiftVal = (grpVal == 0) ? 1 : grpVal;
+    size_t lgDeltaVal = shiftVal + (LG_QUANTUM - 1);
+    size_t modSize = (modVal + 1) << lgDeltaVal;
+    size_t usize = grpSize + modSize;
     return usize;
 }
