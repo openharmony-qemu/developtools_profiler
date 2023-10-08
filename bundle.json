@@ -44,14 +44,14 @@
       ],
       "third_party": [
         "bounds_checking_function",
+        "cJSON",
         "googletest",
         "grpc",
         "libbpf",
         "libunwind",
         "openssl",
         "protobuf",
-        "zlib",
-        "cJSON"
+        "zlib"
       ]
     },
     "build": {

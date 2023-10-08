@@ -15,6 +15,8 @@
 
 #include <arpa/inet.h>
 #include <cinttypes>
+#include <condition_variable>
+#include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -53,6 +55,9 @@ uint32_t g_sampleDuration = 0;
 int g_hiprofilerdPid = -1;
 int g_hiprofilerPluginsPid = -1;
 int g_nativeDaemonPid = -1;
+std::condition_variable g_sessionCv;
+std::condition_variable g_keepSessionCv;
+bool g_exitProcessFlag = false;
 
 std::string GetLoopbackAddress()
 {
@@ -241,6 +246,7 @@ bool CheckStopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uin
         return false;
     }
 
+    printf("StopSession done!\n");
     return true;
 }
 
@@ -255,7 +261,35 @@ bool CheckDestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, 
         return false;
     }
 
+    printf("DestroySession done!\n");
     return true;
+}
+
+void StartKeepAliveThread(std::unique_ptr<IProfilerService::Stub> &profilerStub,
+                          uint32_t &id, std::atomic<bool> &sendHeart) 
+{
+    while (sendHeart.load()) {
+        KeepSessionRequest keepRequest;
+        keepRequest.set_request_id(0);
+        keepRequest.set_session_id(id);
+        keepRequest.set_keep_alive_time(KEEP_SESSION_TIMEOUT_MS);
+        grpc::ClientContext keepContext;
+        KeepSessionResponse keepResponse;
+        profilerStub->KeepSession(&keepContext, keepRequest, &keepResponse);
+
+        std::mutex keepSessionMutex;
+        std::unique_lock<std::mutex> lck(keepSessionMutex);
+        g_keepSessionCv.wait_for(lck, std::chrono::seconds(KEEP_SESSION_SLEEP_SECOND));
+    }
+}
+
+void StopKeepAliveThread(std::thread& keepSessionThread, std::atomic<bool>& sendHeart)
+{
+    sendHeart = false;
+    g_keepSessionCv.notify_one();
+    if (keepSessionThread.joinable()) {
+        keepSessionThread.join();
+    }
 }
 
 bool DoCapture(const std::string& config, const std::string& keepSecond, const std::string& outputFile)
@@ -263,7 +297,10 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
     auto profilerStub = GetProfilerServiceStub();
     if (profilerStub == nullptr) {
         printf("Get profiler service stub failed!\n");
-        return 0;
+        return false;
+    }
+    if (g_exitProcessFlag) {
+        return false;
     }
 
     uint32_t sessionId = CreateSession(profilerStub, config, keepSecond, outputFile);
@@ -271,46 +308,41 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         printf("Create session returns Id 0\n");
         return false;
     }
+    if (g_exitProcessFlag) {
+        // session has been created, need to destroy the session.
+        return CheckDestroySession(profilerStub, sessionId);
+    }
 
-    // 开启心跳线程确保会话正常，睡眠3s下发一次5s超时心跳
-    bool sendHeart = true;
-    std::thread keepSessionThread([&]() {
-        while (sendHeart) {
-            KeepSessionRequest keepRequest;
-            keepRequest.set_request_id(0);
-            keepRequest.set_session_id(sessionId);
-            keepRequest.set_keep_alive_time(KEEP_SESSION_TIMEOUT_MS);
-            grpc::ClientContext keepContext;
-            KeepSessionResponse keepResponse;
-            profilerStub->KeepSession(&keepContext, keepRequest, &keepResponse);
-            std::this_thread::sleep_for(std::chrono::seconds(KEEP_SESSION_SLEEP_SECOND));
-        }
-    });
+    // start keepSessionThread, in order to ensure the sessionId is valid.
+    std::atomic<bool> sendHeart = true;
+    std::thread keepSessionThread(StartKeepAliveThread, std::ref(profilerStub),
+                                  std::ref(sessionId), std::ref(sendHeart));
+    if (g_exitProcessFlag) {
+        // session has been created and keepSessionThread has been started.
+        // need to stop keepSessionThread and destroy the session.
+        StopKeepAliveThread(keepSessionThread, sendHeart);
+        return CheckDestroySession(profilerStub, sessionId);
+    }
 
     if (!CheckStartSession(profilerStub, sessionId)) {
         return false;
     }
 
-    printf("tracing %u ms....\n", g_sampleDuration);
-    std::this_thread::sleep_for(std::chrono::milliseconds(g_sampleDuration));
-
-    if (!CheckStopSession(profilerStub, sessionId)) {
-        sendHeart = false;
-        keepSessionThread.join();
-        return false;
+    if (!g_exitProcessFlag) {
+        // waiting for the collection time to end or signal wakeup.
+        printf("tracing %u ms....\n", g_sampleDuration);
+        std::mutex sessionMutex;
+        std::unique_lock<std::mutex> lck(sessionMutex);
+        g_sessionCv.wait_for(lck, std::chrono::milliseconds(g_sampleDuration));
     }
-    printf("StopSession done!\n");
 
-    if (!CheckDestroySession(profilerStub, sessionId)) {
-        sendHeart = false;
-        keepSessionThread.join();
-        return false;
+    bool ret = false;
+    if (CheckStopSession(profilerStub, sessionId) && CheckDestroySession(profilerStub, sessionId)) {
+        ret = true;
     }
-    printf("DestroySession done!\n");
 
-    sendHeart = false;
-    keepSessionThread.join();
-    return true;
+    StopKeepAliveThread(keepSessionThread, sendHeart);
+    return ret;
 }
 
 struct DataContext {
@@ -459,10 +491,21 @@ bool ParseConfig(const std::string& configFile, std::string& config)
     }
     return true;
 }
+
+void SignalHandler(int signal)
+{
+    printf("hiprofiler_cmd receive signal(%d)!\n", signal);
+    if (signal == SIGINT) {
+        g_exitProcessFlag = true;
+        g_sessionCv.notify_one();
+    }
+}
 } // namespace
 
 int main(int argc, char* argv[])
 {
+    signal(SIGINT, SignalHandler);
+
     std::string config = "";
     while (true) {
         struct option long_options[] = {
@@ -511,6 +554,9 @@ int main(int argc, char* argv[])
         cmdLine.PrintHelp();
         exit(0);
     }
+
+    // need to delete old file.
+    remove(data.outputFile.c_str());
 
     if (config.empty() && !data.configFile.empty()) {
         if (!ParseConfig(data.configFile, config)) {

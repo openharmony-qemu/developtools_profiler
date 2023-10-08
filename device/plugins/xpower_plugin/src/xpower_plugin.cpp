@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,16 +26,16 @@
 
 namespace {
 constexpr size_t MAX_QUEUE_SIZE = 2000;
-uint32_t g_waitDuration = 100;
+constexpr uint32_t WAIT_DURATION = 100;
 constexpr int MIN_USER_ID = 10000;
 } // namespace
 XpowerPlugin::XpowerPlugin()
 {
-    procMesTypeMapping.insert({XpowerMessageType::REAL_BATTERY, OptimizeMessageType::MESSAGE_REAL_BATTERY});
-    procMesTypeMapping.insert({XpowerMessageType::APP_STATISTIC, OptimizeMessageType::MESSAGE_APP_STATISTIC});
-    procMesTypeMapping.insert({XpowerMessageType::APP_DETAIL, OptimizeMessageType::MESSAGE_APP_DETAIL});
-    procMesTypeMapping.insert({XpowerMessageType::COMPONENT_TOP, OptimizeMessageType::MESSAGE_COMPONENT_TOP});
-    procMesTypeMapping.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
+    procMesTypeMapping_.insert({XpowerMessageType::REAL_BATTERY, OptimizeMessageType::MESSAGE_REAL_BATTERY});
+    procMesTypeMapping_.insert({XpowerMessageType::APP_STATISTIC, OptimizeMessageType::MESSAGE_APP_STATISTIC});
+    procMesTypeMapping_.insert({XpowerMessageType::APP_DETAIL, OptimizeMessageType::MESSAGE_APP_DETAIL});
+    procMesTypeMapping_.insert({XpowerMessageType::COMPONENT_TOP, OptimizeMessageType::MESSAGE_COMPONENT_TOP});
+    procMesTypeMapping_.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
 }
 
 XpowerPlugin::~XpowerPlugin() {}
@@ -45,9 +45,9 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
     HILOG_INFO(LOG_CORE, "%s:config data -->configSize=%d", __func__, configSize);
     CHECK_TRUE(configData != nullptr, -1, "XpowerPlugin error: param invalid!!!");
     // 反序列化
-    CHECK_TRUE(protoConfig.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
+    CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
     uint32_t messageType = static_cast<uint32_t>(OptimizeMessageType::MESSAGE_OPTIMIZE_STOP);
-    std::string bundleName = protoConfig.bundle_name();
+    std::string bundleName = protoConfig_.bundle_name();
     if (bundleName.empty()) {
         HILOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
         return -1;
@@ -65,9 +65,9 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         HILOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
         return -1;
     }
-    if (protoConfig.message_type().size() > 0) {
-        for (int i = 0; i < protoConfig.message_type().size(); i++) {
-            uint32_t mesType = procMesTypeMapping[static_cast<XpowerMessageType>(protoConfig.message_type(i))];
+    if (protoConfig_.message_type().size() > 0) {
+        for (int i = 0; i < protoConfig_.message_type().size(); i++) {
+            uint32_t mesType = procMesTypeMapping_[static_cast<XpowerMessageType>(protoConfig_.message_type(i))];
             messageType |= mesType;
         }
     }
@@ -83,29 +83,29 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 
 bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bundleName)
 {
-    if (powerClientHandle == nullptr) {
-        powerClientHandle = dlopen("/system/lib64/libxpower_manager_client.z.so", RTLD_LAZY);
+    if (powerClientHandle_ == nullptr) {
+        powerClientHandle_ = dlopen("/system/lib64/libxpower_manager_client.z.so", RTLD_LAZY);
     }
-    if (powerClientHandle == nullptr) {
+    if (powerClientHandle_ == nullptr) {
         HILOG_ERROR(LOG_CORE, "%s :fail to open libxpower_manager_client.z.so", __func__);
         return false;
     }
     // 注册回调
-    StartOptimizeMode startOptimizeMode = (StartOptimizeMode)dlsym(powerClientHandle, "StartOptimizeC");
+    StartOptimizeMode startOptimizeMode = (StartOptimizeMode)dlsym(powerClientHandle_, "StartOptimizeC");
     if (startOptimizeMode == nullptr) {
         HILOG_ERROR(LOG_CORE, "Failed to dlsy startOptimizeMode");
         return false;
     }
-    config.messageType = messageType;
-    config.packageName = bundleName;
-    config.callback = std::bind(&XpowerPlugin::OptimizeCallback, this, std::placeholders::_1, std::placeholders::_2,
+    config_.messageType = messageType;
+    config_.packageName = bundleName;
+    config_.callback = std::bind(&XpowerPlugin::OptimizeCallback, this, std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3);
-    listenerHandle = startOptimizeMode(config);
-    if (listenerHandle == nullptr) {
+    listenerHandle_ = startOptimizeMode(config_);
+    if (listenerHandle_ == nullptr) {
         HILOG_ERROR(LOG_CORE, "Failed to startOptimizeMode");
         return false;
     }
-    dataQueuePtr = std::make_shared<PowerMessageQueue>(MAX_QUEUE_SIZE);
+    dataQueuePtr_ = std::make_shared<PowerMessageQueue>(MAX_QUEUE_SIZE);
     return true;
 }
 
@@ -124,21 +124,21 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
     }
     rawData->length = protoSize;
     rawData->messageType = messageType;
-    dataQueuePtr->PushBack(rawData);
-    if (resultWriter != nullptr) {
-        resultWriter->write(resultWriter, protoData, protoSize);
-        resultWriter->flush(resultWriter);
+    dataQueuePtr_->PushBack(rawData);
+    if (resultWriter_ != nullptr) {
+        resultWriter_->write(resultWriter_, protoData, protoSize);
+        resultWriter_->flush(resultWriter_);
     }
 }
 
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
 {
     HILOG_INFO(LOG_CORE, "power: report the data to caller");
-    if (dataQueuePtr->Empty()) {
+    if (dataQueuePtr_->Empty()) {
         return 0;
     }
     std::shared_ptr<PowerOptimizeData> result = nullptr;
-    if (!dataQueuePtr->WaitAndPop(result, std::chrono::milliseconds(g_waitDuration))) {
+    if (!dataQueuePtr_->WaitAndPop(result, std::chrono::milliseconds(WAIT_DURATION))) {
         HILOG_ERROR(LOG_CORE, "fetch data error!");
         return 0;
     }
@@ -155,24 +155,24 @@ int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
 
 void XpowerPlugin::SetWriter(WriterStruct *writer)
 {
-    resultWriter = writer;
+    resultWriter_ = writer;
 }
 
 int XpowerPlugin::Stop()
 {
     HILOG_INFO(LOG_CORE, "%s:begin to stop xpower plugin", __func__);
-    StopOptimizeMode stopOptimizeMode = (StopOptimizeMode)dlsym(powerClientHandle, "StopOptimizeC");
+    StopOptimizeMode stopOptimizeMode = (StopOptimizeMode)dlsym(powerClientHandle_, "StopOptimizeC");
     if (stopOptimizeMode == nullptr) {
         HILOG_ERROR(LOG_CORE, "Faile to dlsym StopOptimizeC");
         return -1;
     }
-    if (listenerHandle != nullptr) {
-        stopOptimizeMode(listenerHandle);
+    if (listenerHandle_ != nullptr) {
+        stopOptimizeMode(listenerHandle_);
         HILOG_INFO(LOG_CORE, "stop xpower plugin callback");
     }
-    if (powerClientHandle != nullptr) {
-        dlclose(powerClientHandle);
+    if (powerClientHandle_ != nullptr) {
+        dlclose(powerClientHandle_);
     }
-    dataQueuePtr->ShutDown();
+    dataQueuePtr_->ShutDown();
     return 0;
 }

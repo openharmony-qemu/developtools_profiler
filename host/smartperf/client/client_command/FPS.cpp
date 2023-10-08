@@ -38,7 +38,7 @@ std::map<std::string, std::string> FPS::ItemData()
     }
     result["fpsJitters"] = jitterStr;
     if (isCatchTrace > 0) {
-        ByTrace::GetInstance().CheckFpsJitters(fpsInfo.jitters);
+        ByTrace::GetInstance().CheckFpsJitters(fpsInfo.jitters, fpsInfo.fps);
     }
     if (isCapture > 0) {
         Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());

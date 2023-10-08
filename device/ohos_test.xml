@@ -159,10 +159,10 @@
         <preparer>
             <option name="push" value="plugins/arkts_plugin/test/resources/entry-default-signed.hap -> /data/local/tmp/" src="res"/>
             <option name="shell" value="bm install -r -p /data/local/tmp/entry-default-signed.hap"/>
-            <option name="shell" value="aa start -a MainAbility -b com.ohos.distributedmusicplayer"/>
+            <option name="shell" value="aa start -a EntryAbility -b cn.openharmony.rebound_project"/>
         </preparer>
         <cleaner>
-            <option name="uninstall" value="com.ohos.distributedmusicplayer"/>
+            <option name="uninstall" value="cn.openharmony.rebound_project"/>
         </cleaner>
     </target>
     <target name="ftrace_plugin_ut">
@@ -174,5 +174,13 @@
             <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_tgid -> /data/local/tmp/" src="res"/>
             <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_comm -> /data/local/tmp/" src="res"/>
         </preparer>
+    </target>
+    <target name="xpowerplugin_ut">
+        <preparer>
+            <option name="shell" value="aa start -a EntryAbility -b com.taobao.taobao"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="aa force-stop com.taobao.taobao"/>
+        </cleaner>
     </target>
 </configuration>

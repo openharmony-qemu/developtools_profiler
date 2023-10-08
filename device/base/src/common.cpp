@@ -21,9 +21,6 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
-#ifdef HOOK_ENABLE
-#include <malloc.h>
-#endif
 #include <sstream>
 #include <sys/file.h>
 #include <sys/types.h>
@@ -51,7 +48,7 @@ constexpr int WRITE = 1;
 const int FILE_PATH_SIZE = 512;
 const int BUFFER_SIZE = 1024;
 const int INVALID_PID = -1;
-const int32_t EC_INVALID_VALUE = -2;
+constexpr int32_t EC_INVALID_VALUE = -2;
 
 
 bool IsProcessRunning(int& lockFileFd)
@@ -191,18 +188,17 @@ int KillProcess(int pid)
     return stat;
 }
 
-void PrintMallinfoLog(const std::string& mallInfoPrefix)
+void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi)
 {
 #ifdef HOOK_ENABLE
-    struct mallinfo2 mallinfo = mallinfo2();
     std::string mallinfoLog = mallInfoPrefix;
-    mallinfoLog += "arena = " + std::to_string(mallinfo.arena) + ", ordblks = " + std::to_string(mallinfo.ordblks);
-    mallinfoLog += ", smblks = " + std::to_string(mallinfo.smblks) + ", hblks = " + std::to_string(mallinfo.hblks);
-    mallinfoLog += ", hblkhd = " + std::to_string(mallinfo.hblkhd) + ", usmblks = " + std::to_string(mallinfo.usmblks);
+    mallinfoLog += "arena = " + std::to_string(mi.arena) + ", ordblks = " + std::to_string(mi.ordblks);
+    mallinfoLog += ", smblks = " + std::to_string(mi.smblks) + ", hblks = " + std::to_string(mi.hblks);
+    mallinfoLog += ", hblkhd = " + std::to_string(mi.hblkhd) + ", usmblks = " + std::to_string(mi.usmblks);
     mallinfoLog +=
-        ", fsmblks = " + std::to_string(mallinfo.fsmblks) + ", uordblks = " + std::to_string(mallinfo.uordblks);
+        ", fsmblks = " + std::to_string(mi.fsmblks) + ", uordblks = " + std::to_string(mi.uordblks);
     mallinfoLog +=
-        ", fordblks = " + std::to_string(mallinfo.fordblks) + ", keepcost = " + std::to_string(mallinfo.keepcost);
+        ", fordblks = " + std::to_string(mi.fordblks) + ", keepcost = " + std::to_string(mi.keepcost);
     HILOG_INFO(LOG_CORE, "%s", mallinfoLog.c_str());
 #endif  // HOOK_ENABLE
 }

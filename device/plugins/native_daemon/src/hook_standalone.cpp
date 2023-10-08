@@ -60,6 +60,7 @@ static void SignalHandl(int signo)
 {
     HILOG_ERROR(LOG_CORE, "recv signal %d", signo);
     g_stackpreprocess->StopTakeResults();
+    
     if (g_statisticsinterval > 0) {
         g_stackpreprocess->FlushRecordStatistics();
     }

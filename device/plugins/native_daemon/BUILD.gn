@@ -27,6 +27,9 @@ config("hook_config") {
     "NATIVEDAEMON_USE_CALLSTACK",
   ]
   defines += [ "target_cpu_${target_cpu}" ]
+  if (use_jemalloc) {
+    defines += [ "USE_JEMALLOC" ]
+  }
 }
 
 ohos_prebuilt_etc("hiprofiler_daemon.cfg") {

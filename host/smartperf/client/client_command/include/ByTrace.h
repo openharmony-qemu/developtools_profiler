@@ -25,15 +25,13 @@ public:
         return instance;
     }
     // trace配置
-    void SetTraceConfig(int mSum, int mInterval, long long mThreshold) const;
+    void SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps) const;
     // 开始抓trace线程
     void ThreadGetTrace() const;
-    // 结束trace线程
-    void ThreadEndTrace() const;
-    // 结束抓trace线程
-    void ThreadFinishTrace(const std::string &pathName) const;
+    // trace命令配置
+    void SetTraceCmd(std::string traceCmd) const;
     // 校验fps-jitters
-    TraceStatus CheckFpsJitters(std::vector<long long> jitters);
+    TraceStatus CheckFpsJitters(std::vector<long long> jitters, int cfps);
     // 触发trace
     void TriggerCatch(long long curTime) const;
 
@@ -48,14 +46,16 @@ private:
     mutable int curNum = 0;
     // 抓trace间隔(两次抓取的间隔时间 默认60*1000 ms)
     mutable int interval = 60000;
-    // 抓trace耗时(start 到 finish的预留时间 默认10*1000 ms)
-    mutable int cost = 10000;
     // 抓trace触发条件:默认 某一帧的某个jitter>100 ms触发
     mutable long long threshold = 100;
     // 上一次触发时间
     mutable long long lastTriggerTime = -1;
     // 当前是否触发
     mutable long long curTriggerFlag = -1;
+    //traceCmd
+    mutable std::string traceCmd = "";
+    //低帧触发
+    mutable int lowfps = -1;
 };
 }
 }

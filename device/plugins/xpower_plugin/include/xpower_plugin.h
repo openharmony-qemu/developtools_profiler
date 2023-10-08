@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,14 +35,14 @@ public:
     void SetWriter(WriterStruct* writer);
     bool StartPowerManager(std::uint32_t messageType, std::string& bundleName);
 private:
-    void* powerClientHandle = nullptr;
-    XpowerConfig protoConfig;
-    MesTypeMap procMesTypeMapping;
-    std::shared_ptr<PowerMessageQueue> dataQueuePtr;
-    WriterStruct* resultWriter{nullptr};
+    void* powerClientHandle_ = nullptr;
+    XpowerConfig protoConfig_;
+    MesTypeMap procMesTypeMapping_;
+    std::shared_ptr<PowerMessageQueue> dataQueuePtr_;
+    WriterStruct* resultWriter_{nullptr};
     // xpower callback config
-    OptimizeConfig config;
-    void* listenerHandle = nullptr;
+    OptimizeConfig config_;
+    void* listenerHandle_ = nullptr;
 };
 
 #endif // POWER_PLUGIN_H

@@ -14,11 +14,10 @@
 #####################hydra-fuzz###################
 import("//build/test.gni")
 import("../../../../../base/config.gni")
-module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/services"
 
 ##############################fuzztest##########################################
 ohos_fuzztest("ProfilerKeepSessionFuzzTest") {
-  module_out_path = module_output_path
+  module_out_path = hiprofiler_fuzz_output_path
   fuzz_config_file = "${OHOS_PROFILER_DIR}/device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer"
   include_dirs = [
     "../../../include",

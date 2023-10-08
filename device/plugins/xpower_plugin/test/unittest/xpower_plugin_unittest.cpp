@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -120,6 +120,7 @@ HWTEST_F(XpowerPluginTest, TestStartFail, TestSize.Level1)
     WriterStruct writer = {WriteFunc, FlushFunc};
     // set config
     config.set_bundle_name("");
+    config.add_message_type(XpowerMessageType::REAL_BATTERY);
     // test plugin process
     plugin.SetWriter(&writer);
     // serialize
@@ -131,7 +132,6 @@ HWTEST_F(XpowerPluginTest, TestStartFail, TestSize.Level1)
     EXPECT_NE(plugin.Start(configData.data(), configData.size()), 0);
     EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
     EXPECT_NE(plugin.Start(configData.data(), 0), 0);
-    plugin.Stop();
 #endif
 }
 
