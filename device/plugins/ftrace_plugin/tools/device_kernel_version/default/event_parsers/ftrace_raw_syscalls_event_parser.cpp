@@ -19,9 +19,10 @@ namespace {
 using namespace OHOS::Developtools::Profiler;
 template <typename T> void sys_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
 {
-    int i = 0;
-    msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
+    int index = 0;
+    msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, index++, data, size));
+    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, index++,
+                                                                                       data, size);
     for (size_t i = 0; i < retvalVec.size(); i++) {
         msg->add_args(retvalVec[i]);
     }

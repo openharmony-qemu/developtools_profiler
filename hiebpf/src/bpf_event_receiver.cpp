@@ -75,7 +75,7 @@ void BPFEventReceiver::DoWork()
 void BPFEventReceiver::ReceiveFSTraceEvent()
 {
     struct fstrace_cmplt_event_t cmplt_event {};
-    size_t dataSize = buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    size_t dataSize = buf_->Get(static_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     if (dataSize != sizeof(cmplt_event)) {
         HHLOGE(true, "imcomplete fstrace event data receiveed");
         return;
@@ -103,7 +103,7 @@ void BPFEventReceiver::ReceiveFSTraceEvent()
 void BPFEventReceiver::ReceivePFTraceEvent()
 {
     struct pftrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(static_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     WriteEventMaps(cmplt_event.tgid);
     auto file = file_.lock();
     if (file == nullptr) {
@@ -127,7 +127,7 @@ void BPFEventReceiver::ReceivePFTraceEvent()
 void BPFEventReceiver::ReceiveBIOTraceEvent()
 {
     struct biotrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(static_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     auto file = file_.lock();
     if (file == nullptr) {
         HHLOGE(true, "failed to receive biotrace event: hiebpf data file closed");
@@ -150,7 +150,7 @@ void BPFEventReceiver::ReceiveBIOTraceEvent()
 void BPFEventReceiver::ReceiveSTRTraceEvent()
 {
     struct strtrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(static_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     if (cmplt_event.len == 0) {
         return;
     }
@@ -176,7 +176,7 @@ void BPFEventReceiver::ReceiveSTRTraceEvent()
 void BPFEventReceiver::ReceiveDlopenTraceEvent()
 {
     struct dlopen_trace_start_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(static_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     mapsInfo_.RemovePid(cmplt_event.tgid);
 }
 
@@ -275,7 +275,7 @@ void BPFEventReceiver::ReverseStr(char* left, char* right)
 void BPFEventReceiver::DiscardEvent()
 {
     struct strtrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(static_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     HHLOGE(true, "unkown tracer type = %u, event data will be discarded", cmplt_event.tracer);
 }
 

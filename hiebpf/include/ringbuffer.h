@@ -63,7 +63,7 @@ public:
     int Peek(T *var)
     {
         const std::size_t len {sizeof(T)};
-        char *dest = (char*) var;
+        char *dest = static_cast<char*>(var);
         if (dest == nullptr) {
             return -1;
         }

@@ -153,7 +153,7 @@ private:
     template <typename T> uint32_t PutCpuStatsData(T& pluginStatsData)
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        while (cpuDatas_.empty()) {
+        if (cpuDatas_.empty()) {
             return 0;
         }
 
@@ -187,7 +187,7 @@ private:
     template <typename T> uint32_t PutIoStatsData(T& pluginStatsData)
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        while (ioDatas_.empty()) {
+        if (ioDatas_.empty()) {
             return 0;
         }
 
