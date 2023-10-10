@@ -242,18 +242,14 @@ Status ProfilerService::CreateSession(ServerContext* context,
     HILOG_INFO(LOG_CORE, "CreateSession %d start", request->request_id());
     const int nConfigs = request->plugin_configs_size();
     CHECK_EXPRESSION_TRUE(nConfigs > 0, "no plugin configs!");
+
+    // check buffer configs
+    std::shared_ptr<ProfilerSessionConfig> sessionConfig = std::make_shared<ProfilerSessionConfig>(request->session_config());
+    const int nBuffers = sessionConfig->buffers_size();
+    CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
     // copy plugin configs from request
     std::vector<ProfilerPluginConfig> pluginConfigs;
     pluginConfigs.reserve(nConfigs);
-    std::vector<std::string> pluginNames;
-    std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
-                   [](ProfilerPluginConfig& config) { return config.name(); });
-    std::sort(pluginNames.begin(), pluginNames.end());
-    // check buffer configs
-    std::shared_ptr<ProfilerSessionConfig> sessionConfig = std::make_shared<ProfilerSessionConfig>(request->session_config());
-    pluginService_->SetProfilerSessionConfig(sessionConfig, pluginNames);
-    const int nBuffers = sessionConfig->buffers_size();
-    CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
 
     for (int i = 0; i < nConfigs; i++) {
         if (request->plugin_configs(i).name() == "nativehook" && getuid() != 0) {
@@ -285,6 +281,12 @@ Status ProfilerService::CreateSession(ServerContext* context,
         bufferConfigs.assign(sessionConfig->buffers().begin(), sessionConfig->buffers().end());
     }
     HILOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
+    std::vector<std::string> pluginNames;
+    std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
+                   [](ProfilerPluginConfig& config) { return config.name(); });
+    std::sort(pluginNames.begin(), pluginNames.end());
+    //set session configs
+    pluginService_->SetProfilerSessionConfig(sessionConfig, pluginNames);
 
     // create TraceFileWriter for offline mode
     TraceFileWriterPtr traceWriter;
