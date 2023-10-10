@@ -207,5 +207,5 @@ template <typename T> void DiskioDataPlugin::WriteDiskioData(T& diskioData)
         return;
     }
 
-    SetDiskioData(diskioData, static_cast<char*>(buffer_), ret);
+    SetDiskioData(diskioData, reinterpret_cast<char*>(buffer_), ret);
 }

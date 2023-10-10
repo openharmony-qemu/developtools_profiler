@@ -59,6 +59,9 @@ std::condition_variable g_sessionCv;
 std::condition_variable g_keepSessionCv;
 bool g_exitProcessFlag = false;
 
+std::mutex keepSessionMutex;
+std::mutex sessionMutex;
+
 std::string GetLoopbackAddress()
 {
     char addressBuffer[ADDR_BUFFER_SIZE] = "";
@@ -277,7 +280,6 @@ void StartKeepAliveThread(std::unique_ptr<IProfilerService::Stub> &profilerStub,
         KeepSessionResponse keepResponse;
         profilerStub->KeepSession(&keepContext, keepRequest, &keepResponse);
 
-        std::mutex keepSessionMutex;
         std::unique_lock<std::mutex> lck(keepSessionMutex);
         g_keepSessionCv.wait_for(lck, std::chrono::seconds(KEEP_SESSION_SLEEP_SECOND));
     }
@@ -331,7 +333,6 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
     if (!g_exitProcessFlag) {
         // waiting for the collection time to end or signal wakeup.
         printf("tracing %u ms....\n", g_sampleDuration);
-        std::mutex sessionMutex;
         std::unique_lock<std::mutex> lck(sessionMutex);
         g_sessionCv.wait_for(lck, std::chrono::milliseconds(g_sampleDuration));
     }

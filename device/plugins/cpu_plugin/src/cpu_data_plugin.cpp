@@ -489,7 +489,7 @@ template <typename T, typename I> void CpuDataPlugin::WriteCpuUsageInfo(T& cpuDa
         }
 
         cpuUsageInfo = cpuData.mutable_cpu_usage_info();
-        WriteProcessCpuUsage(*cpuUsageInfo, static_cast<char*>(buffer_), ret);
+        WriteProcessCpuUsage(*cpuUsageInfo, reinterpret_cast<char*>(buffer_), ret);
     }
 
     // write system info
@@ -506,7 +506,7 @@ template <typename T, typename I> void CpuDataPlugin::WriteCpuUsageInfo(T& cpuDa
     if (cpuUsageInfo == nullptr) {
         cpuUsageInfo = cpuData.mutable_cpu_usage_info();
     }
-    WriteSystemCpuUsage(*cpuUsageInfo, cpuLoadData, static_cast<char*>(buffer_), ret);
+    WriteSystemCpuUsage(*cpuUsageInfo, cpuLoadData, reinterpret_cast<char*>(buffer_), ret);
 
     auto* timestamp = cpuUsageInfo->mutable_timestamp();
     SetTimestamp(*timestamp);
@@ -634,7 +634,7 @@ template <typename T> void CpuDataPlugin::WriteSingleThreadInfo(T& cpuData, int3
         return;
     }
     auto* threadInfo = cpuData.add_thread_info();
-    WriteThread(*threadInfo, static_cast<char*>(buffer_), ret, tid);
+    WriteThread(*threadInfo, reinterpret_cast<char*>(buffer_), ret, tid);
 }
 
 template <typename T> void CpuDataPlugin::WriteThreadInfo(T& cpuData)

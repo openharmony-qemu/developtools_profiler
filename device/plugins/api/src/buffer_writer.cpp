@@ -93,7 +93,7 @@ long BufferWriter::Write(const void* data, size_t size)
 
 RandomWriteCtx* BufferWriter::StartReport()
 {
-    if (shareMemoryBlock_ == nullptr) {
+    if (shareMemoryBlock_ == nullptr || writeCtx_ == nullptr) {
         return nullptr;
     }
 
