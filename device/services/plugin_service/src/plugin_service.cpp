@@ -158,6 +158,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     
     auto configIter = profilerSessionConfigs_.find(pluginName);
     if (configIter == profilerSessionConfigs_.end()) {
+        HILOG_ERROR(LOG_CORE, "profiler session config not set fot plugin name: %s", pluginName.c_str());
         return false;
     }
     if (configIter->second->session_mode() == ProfilerSessionConfig::OFFLINE) {
@@ -250,7 +251,9 @@ bool PluginService::DestroyPluginSession(const std::string& pluginName)
     auto cmd = pluginCommandBuilder_->BuildDestroySessionCmd(pluginId);
     CHECK_TRUE(cmd != nullptr, false, "DestroyPluginSession BuildDestroySessionCmd FAIL %s", pluginName.c_str());
     
-    profilerSessionConfigs_.erase(profilerSessionConfigs_.find(pluginName));
+    if (profilerSessionConfigs_.find(pluginName) != profilerSessionConfigs_.end()){
+        profilerSessionConfigs_.erase(profilerSessionConfigs_.find(pluginName));
+    }
     if (pluginCtx->shareMemoryBlock) {
         ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(pluginName);
         pluginCtx->shareMemoryBlock = nullptr;
@@ -507,20 +510,20 @@ void PluginService::FlushAllData(const std::string& pluginName)
     auto configIter = profilerSessionConfigs_.find(pluginName);
     if (configIter == profilerSessionConfigs_.end()) {
         HILOG_ERROR(LOG_CORE, "profiler session config not set fot plugin name: %s", pluginName.c_str());
-    } else {
-        if (!configIter->second->discard_cache_data()) {
-            uint32_t pluginId = 0;
-            PluginContextPtr pluginCtx = nullptr;
-            std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
-            CHECK_NOTNULL(pluginCtx, NO_RETVAL, "%s: get PluginContext(%s) failed!", __func__, pluginName.c_str());
-            if (configIter->second->session_mode() == ProfilerSessionConfig::OFFLINE) {
-                FlushShareMemory(*pluginCtx);
-            } else if (configIter->second->session_mode() == ProfilerSessionConfig::ONLINE) {
-                ReadShareMemoryOnline(*pluginCtx);
-            }
-        }
-        HILOG_INFO(LOG_CORE, "FlushAllData for %s done!", pluginName.c_str());
+        return;
     }
+    if (!configIter->second->discard_cache_data()) {
+        uint32_t pluginId = 0;
+        PluginContextPtr pluginCtx = nullptr;
+        std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
+        CHECK_NOTNULL(pluginCtx, NO_RETVAL, "%s: get PluginContext(%s) failed!", __func__, pluginName.c_str());
+        if (configIter->second->session_mode() == ProfilerSessionConfig::OFFLINE) {
+            FlushShareMemory(*pluginCtx);
+        } else if (configIter->second->session_mode() == ProfilerSessionConfig::ONLINE) {
+            ReadShareMemoryOnline(*pluginCtx);
+        }
+    }
+    HILOG_INFO(LOG_CORE, "FlushAllData for %s done!", pluginName.c_str());
 }
 
 bool PluginService::AppendResult(NotifyResultRequest& request)
