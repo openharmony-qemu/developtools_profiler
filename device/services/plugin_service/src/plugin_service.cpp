@@ -81,7 +81,7 @@ void PluginService::SetPluginSessionManager(const PluginSessionManagerPtr& plugi
 }
 
 void PluginService::SetProfilerSessionConfig(const std::shared_ptr<ProfilerSessionConfig> profilerSessionConfig,
-                                             const std::vector<std::string> pluginNames)
+                                             const std::vector<std::string>& pluginNames)
 {
     for (const std::string& name : pluginNames) {
         profilerSessionConfigs_[name] = profilerSessionConfig;

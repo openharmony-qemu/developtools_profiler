@@ -100,7 +100,7 @@ public:
 
     void SetPluginSessionManager(const PluginSessionManagerPtr& pluginSessionManager);
     void SetProfilerSessionConfig(const std::shared_ptr<ProfilerSessionConfig> profilerSessionConfig,
-                                                 const std::vector<std::string> pluginNames);
+                                                 const std::vector<std::string>& pluginNames);
 
     std::pair<uint32_t, PluginContextPtr> GetPluginContext(const std::string& pluginName);
     void SetTraceWriter(const TraceFileWriterPtr& traceWriter);
