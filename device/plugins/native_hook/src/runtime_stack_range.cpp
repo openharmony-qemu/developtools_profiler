@@ -172,8 +172,8 @@ static void GetRuntimeSigalAltStackRange(char** start, char** end)
 
     if (sigaltstack(nullptr, &altStack) != -1) {
         if ((altStack.ss_flags & SS_ONSTACK) != 0) {
-            *start = static_cast<char*>(altStack.ss_sp);
-            *end = static_cast<char*>(altStack.ss_sp) + altStack.ss_size;
+            *start = reinterpret_cast<char*>(altStack.ss_sp);
+            *end = reinterpret_cast<char*>(altStack.ss_sp) + altStack.ss_size;
         }
     }
 }
