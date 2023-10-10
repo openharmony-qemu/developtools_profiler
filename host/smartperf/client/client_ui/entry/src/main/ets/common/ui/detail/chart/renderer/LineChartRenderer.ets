@@ -141,6 +141,9 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
 
       let xLinePaint: LinePaint = new LinePaint();
       xLinePaint.setStartPoint([0,positionY]);
+      if(!yAxis || yAxis == null || yAxis == undefined){
+        yAxis = this.pathViewModel?.yleftAxis || this.yleftAxis;
+      }
       xLinePaint.setEndPoint([this.pathViewModel.rect.right - this.pathViewModel.minOffset - Utils.calcTextWidth(textPaint,yAxis.getLongestLabel()),positionY]);
       xLinePaint.setColor(Color.Red);
       xLinePaint.setStrokeWidth(0.5);
