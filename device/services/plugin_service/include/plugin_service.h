@@ -99,7 +99,8 @@ public:
     uint32_t GetPluginIdByName(std::string name);
 
     void SetPluginSessionManager(const PluginSessionManagerPtr& pluginSessionManager);
-    void SetProfilerSessionConfig(const ProfilerSessionConfig& profilerSessionConfig);
+    void SetProfilerSessionConfig(const std::shared_ptr<ProfilerSessionConfig> profilerSessionConfig,
+                                  const std::vector<std::string>& pluginNames);
 
     std::pair<uint32_t, PluginContextPtr> GetPluginContext(const std::string& pluginName);
     void SetTraceWriter(const TraceFileWriterPtr& traceWriter);
@@ -129,7 +130,7 @@ private:
     std::shared_ptr<PluginCommandBuilder> pluginCommandBuilder_;
     std::unique_ptr<EpollEventPoller> eventPoller_;
     PluginSessionManagerPtr pluginSessionManager_;
-    ProfilerSessionConfig profilerSessionConfig_;
+    std::map<std::string, std::shared_ptr<ProfilerSessionConfig>> profilerSessionConfigs_;
     TraceFileWriterPtr traceWriter_ = nullptr;
     uint32_t dataFlushSize_ = 0;
     bool isProtobufSerialize_ = true;

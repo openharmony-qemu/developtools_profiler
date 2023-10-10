@@ -145,7 +145,8 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     pluginService_->AddPluginInfo(plugin);
     ProfilerSessionConfig psc;
     psc.set_session_mode(ProfilerSessionConfig::OFFLINE);
-    pluginService_->SetProfilerSessionConfig(psc);
+    std::vector<string> names = {"abc2.so"};
+    pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
     TraceFileWriterPtr traceWriter = std::make_shared<TraceFileWriter>("/data/local/tmp/tracewrite.trace");
     pluginService_->SetTraceWriter(traceWriter);
     EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
@@ -1066,7 +1067,8 @@ HWTEST_F(UnitTestPluginService, PluginService_CreatePluginSession_Online, TestSi
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
     ProfilerSessionConfig psc;
     psc.set_session_mode(ProfilerSessionConfig::ONLINE);
-    pluginService_->SetProfilerSessionConfig(psc);
+    std::vector<string> names = {"abconline.so"};
+    pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
     EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     uint32_t pluginId = pluginService_->GetPluginIdByName("abconline.so");
     PluginContextPtr pluginCtx = pluginService_->GetPluginContextById(pluginId);

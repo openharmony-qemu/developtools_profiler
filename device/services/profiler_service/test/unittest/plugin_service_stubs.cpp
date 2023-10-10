@@ -123,9 +123,12 @@ void PluginService::SetPluginSessionManager(const PluginSessionManagerPtr& plugi
     pluginSessionManager_ = pluginSessionManager;
 }
 
-void PluginService::SetProfilerSessionConfig(const ProfilerSessionConfig& profilerSessionConfig)
+void PluginService::SetProfilerSessionConfig(const std::shared_ptr<ProfilerSessionConfig> profilerSessionConfig,
+                                             const std::vector<std::string>& pluginNames)
 {
-    profilerSessionConfig_ = profilerSessionConfig;
+    for (const std::string& name : pluginNames) {
+        profilerSessionConfigs_[name] = profilerSessionConfig;
+    }
 }
 
 bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,

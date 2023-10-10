@@ -244,9 +244,9 @@ Status ProfilerService::CreateSession(ServerContext* context,
     CHECK_EXPRESSION_TRUE(nConfigs > 0, "no plugin configs!");
 
     // check buffer configs
-    ProfilerSessionConfig sessionConfig = request->session_config();
-    pluginService_->SetProfilerSessionConfig(sessionConfig);
-    const int nBuffers = sessionConfig.buffers_size();
+    std::shared_ptr<ProfilerSessionConfig> sessionConfig =
+    std::make_shared<ProfilerSessionConfig>(request->session_config());
+    const int nBuffers = sessionConfig->buffers_size();
     CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
     // copy plugin configs from request
     std::vector<ProfilerPluginConfig> pluginConfigs;
@@ -276,25 +276,27 @@ Status ProfilerService::CreateSession(ServerContext* context,
     std::vector<BufferConfig> bufferConfigs;
     if (nBuffers == 1) {
         // if only one buffer config provided, all plugin use the same buffer config
-        bufferConfigs.resize(pluginConfigs.size(), sessionConfig.buffers(0));
+        bufferConfigs.resize(pluginConfigs.size(), sessionConfig->buffers(0));
     } else if (nBuffers > 0) {
         // if more than one buffer config provided, the number of buffer configs must equals number of plugin configs
-        bufferConfigs.assign(sessionConfig.buffers().begin(), sessionConfig.buffers().end());
+        bufferConfigs.assign(sessionConfig->buffers().begin(), sessionConfig->buffers().end());
     }
     HILOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
     std::vector<std::string> pluginNames;
     std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
                    [](ProfilerPluginConfig& config) { return config.name(); });
     std::sort(pluginNames.begin(), pluginNames.end());
+    //set session configs
+    pluginService_->SetProfilerSessionConfig(sessionConfig, pluginNames);
 
     // create TraceFileWriter for offline mode
     TraceFileWriterPtr traceWriter;
     std::shared_ptr<ProfilerDataRepeater> dataRepeater = nullptr;
-    if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
-        auto resultFile = sessionConfig.result_file();
+    if (sessionConfig->session_mode() == ProfilerSessionConfig::OFFLINE) {
+        auto resultFile = sessionConfig->result_file();
         CHECK_EXPRESSION_TRUE(resultFile.size() > 0, "result_file empty!");
-        traceWriter = std::make_shared<TraceFileWriter>(resultFile, sessionConfig.split_file(),
-            sessionConfig.split_file_max_size_mb(), sessionConfig.split_file_max_num());
+        traceWriter = std::make_shared<TraceFileWriter>(resultFile, sessionConfig->split_file(),
+            sessionConfig->split_file_max_size_mb(), sessionConfig->split_file_max_num());
         CHECK_POINTER_NOTNULL(traceWriter, "alloc TraceFileWriter failed!");
         pluginService_->SetTraceWriter(traceWriter);
         for (std::vector<ProfilerPluginConfig>::size_type i = 0; i < pluginConfigs.size(); i++) {
@@ -325,7 +327,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     if (traceWriter != nullptr) {
         ctx->traceFileWriter = traceWriter;
     }
-    ctx->sessionConfig = sessionConfig;
+    ctx->sessionConfig = *sessionConfig;
     ctx->pluginNames = std::move(pluginNames);
     ctx->pluginConfigs = std::move(pluginConfigs);
     ctx->bufferConfigs = std::move(bufferConfigs);
@@ -341,7 +343,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     CHECK_EXPRESSION_TRUE(AddSessionContext(sessionId, ctx), "sessionId conflict!");
 
     // create session expire schedule task
-    auto keepAliveTime = sessionConfig.keep_alive_time();
+    auto keepAliveTime = sessionConfig->keep_alive_time();
     if (keepAliveTime) {
         CHECK_EXPRESSION_TRUE(IsValidKeepAliveTime(keepAliveTime), "keep_alive_time invalid!");
         // create schedule task for session timeout feature
