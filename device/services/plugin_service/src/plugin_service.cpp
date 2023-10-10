@@ -251,7 +251,7 @@ bool PluginService::DestroyPluginSession(const std::string& pluginName)
     auto cmd = pluginCommandBuilder_->BuildDestroySessionCmd(pluginId);
     CHECK_TRUE(cmd != nullptr, false, "DestroyPluginSession BuildDestroySessionCmd FAIL %s", pluginName.c_str());
     
-    if (profilerSessionConfigs_.find(pluginName) != profilerSessionConfigs_.end()){
+    if (profilerSessionConfigs_.find(pluginName) != profilerSessionConfigs_.end()) {
         profilerSessionConfigs_.erase(profilerSessionConfigs_.find(pluginName));
     }
     if (pluginCtx->shareMemoryBlock) {
