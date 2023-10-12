@@ -75,7 +75,7 @@ void BPFEventReceiver::DoWork()
 void BPFEventReceiver::ReceiveFSTraceEvent()
 {
     struct fstrace_cmplt_event_t cmplt_event {};
-    size_t dataSize = buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    size_t dataSize = buf_->Get(reinterpret_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     if (dataSize != sizeof(cmplt_event)) {
         HHLOGE(true, "imcomplete fstrace event data receiveed");
         return;
@@ -103,7 +103,7 @@ void BPFEventReceiver::ReceiveFSTraceEvent()
 void BPFEventReceiver::ReceivePFTraceEvent()
 {
     struct pftrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(reinterpret_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     WriteEventMaps(cmplt_event.tgid);
     auto file = file_.lock();
     if (file == nullptr) {
@@ -127,7 +127,7 @@ void BPFEventReceiver::ReceivePFTraceEvent()
 void BPFEventReceiver::ReceiveBIOTraceEvent()
 {
     struct biotrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(reinterpret_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     auto file = file_.lock();
     if (file == nullptr) {
         HHLOGE(true, "failed to receive biotrace event: hiebpf data file closed");
@@ -150,7 +150,7 @@ void BPFEventReceiver::ReceiveBIOTraceEvent()
 void BPFEventReceiver::ReceiveSTRTraceEvent()
 {
     struct strtrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(reinterpret_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     if (cmplt_event.len == 0) {
         return;
     }
@@ -176,7 +176,7 @@ void BPFEventReceiver::ReceiveSTRTraceEvent()
 void BPFEventReceiver::ReceiveDlopenTraceEvent()
 {
     struct dlopen_trace_start_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(reinterpret_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     mapsInfo_.RemovePid(cmplt_event.tgid);
 }
 
@@ -204,7 +204,7 @@ void BPFEventReceiver::WriteEventMaps(uint32_t pid)
         mapItem->offset = item.offset_;
         mapItem->pid = item.pid_;
         mapItem->fileNameLen = item.fileName_.size() + 1;
-        char* tmp = static_cast<char*>(dest);
+        char* tmp = reinterpret_cast<char*>(dest);
         char* fileName = tmp + sizeof(FixedMapTLVItem);
         (void)strncpy_s(fileName, mapItem->fileNameLen, item.fileName_.c_str(), item.fileName_.size());
         file->Submit(dest);
@@ -238,7 +238,7 @@ void BPFEventReceiver::WriteSymbolInfo(const std::string &fileName)
         sym->symTabLen = symbolInfo.symTable_.size();
         sym->fileNameLen = symbolInfo.fileName_.size() + 1;
         sym->symEntLen = symbolInfo.symEntSize_;
-        char* tmp = static_cast<char*>(dest);
+        char* tmp = reinterpret_cast<char*>(dest);
         size_t pos = 0;
         pos += sizeof(FixedSymbolTLVItem);
         if (memcpy_s(tmp + pos, size - pos, symbolInfo.strTable_.data(), sym->strTabLen) != EOK) {
@@ -275,7 +275,7 @@ void BPFEventReceiver::ReverseStr(char* left, char* right)
 void BPFEventReceiver::DiscardEvent()
 {
     struct strtrace_cmplt_event_t cmplt_event {};
-    buf_->Get((char*)&cmplt_event, sizeof(cmplt_event));
+    buf_->Get(reinterpret_cast<char*>(&cmplt_event), sizeof(cmplt_event));
     HHLOGE(true, "unkown tracer type = %u, event data will be discarded", cmplt_event.tracer);
 }
 
@@ -400,7 +400,7 @@ int BPFEventReceiver::EncodeSTRTraceEvent(
     item->srcType_ = cmplt_event->start_event.type;
     item->strLen_ = cmplt_event->len;
     if (item->strLen_ and item->strLen_ <= MAX_FILENAME_LEN) {
-        char *filename = static_cast<char*>(tlvItem);
+        char *filename = reinterpret_cast<char*>(tlvItem);
         filename += sizeof(struct FixedSTRTraceTLVItem);
         CHECK_TRUE(strncpy_s(filename, MAX_FILENAME_LEN, cmplt_event->filename, item->strLen_) == EOK, -1,
                    "failed to copy cmplt_event file name");

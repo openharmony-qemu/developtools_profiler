@@ -489,7 +489,7 @@ bool ShareMemoryBlock::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offs
             *offset = messageWriteOffset_;
             return true;
         }
-    } else if (rp > wp) {
+    } else {
         if (wp + realSize <= rp) {
             // rp is after wp and there is enough space to store data.
             *memory = reinterpret_cast<uint8_t *>(&header_->data[wp + messageWriteOffset_]);

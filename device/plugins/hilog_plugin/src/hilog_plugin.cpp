@@ -310,7 +310,10 @@ template <typename T> bool HilogPlugin::SetHilogLineDetails(const char* data, T&
         end = pTmp;
     }
     int index = 1;
-    while (end != nullptr && *pTmp != ':') { // 结束符 ':'
+    if (end == nullptr) {
+        return false;
+    }
+    while (*pTmp != ':') { // 结束符 ':'
         if (*pTmp == '\0' || *pTmp == '\n') {
             return false;
         }

@@ -43,8 +43,9 @@ BufferWriter::BufferWriter(std::string name,
     eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     pluginId_ = pluginId;
     lastFlushTime_ = std::chrono::steady_clock::now();
-
-    writeCtx_ = reinterpret_cast<RandomWriteCtx*>(shareMemoryBlock_->GetCtx());
+    if (shareMemoryBlock_ != nullptr) {
+        writeCtx_ = reinterpret_cast<RandomWriteCtx*>(shareMemoryBlock_->GetCtx());
+    }
 }
 
 BufferWriter::~BufferWriter()
@@ -92,7 +93,7 @@ long BufferWriter::Write(const void* data, size_t size)
 
 RandomWriteCtx* BufferWriter::StartReport()
 {
-    if (shareMemoryBlock_ == nullptr) {
+    if (shareMemoryBlock_ == nullptr || writeCtx_ == nullptr) {
         return nullptr;
     }
 

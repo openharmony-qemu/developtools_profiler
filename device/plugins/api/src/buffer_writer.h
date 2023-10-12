@@ -68,7 +68,7 @@ private:
     std::atomic<uint32_t> flushCount_ = 0;
     uint32_t pluginId_ = 0;
     clockid_t clockId_ = CLOCK_REALTIME;
-    RandomWriteCtx* writeCtx_;
+    RandomWriteCtx* writeCtx_ = nullptr;
     std::shared_ptr<OHOS::Developtools::Profiler::ProtoEncoder::ProfilerPluginData> profilerPluginData_;
 };
 

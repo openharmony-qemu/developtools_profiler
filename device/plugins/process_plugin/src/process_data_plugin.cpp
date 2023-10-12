@@ -268,7 +268,7 @@ template <typename T> void ProcessDataPlugin::WriteProcessInfo(T& processData, i
         return;
     }
     auto* processinfo = processData.add_processesinfo();
-    WriteProcess(*processinfo, (char*)buffer_.get(), ret, pid);
+    WriteProcess(*processinfo, reinterpret_cast<char*>(buffer_.get()), ret, pid);
     if (protoConfig_.report_cpu()) {
         auto* cpuInfo = processinfo->mutable_cpuinfo();
         std::vector<uint64_t> cpuUsageVec;

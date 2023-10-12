@@ -132,9 +132,10 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(function,
 
 template <typename T> void kernel_stack_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
 {
-    int i = 0;
-    msg->set_size(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
+    int index = 0;
+    msg->set_size(FtraceFieldParser::ParseIntField<int32_t>(format.fields, index++, data, size));
+    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, index++,
+                                                                                       data, size);
     for (size_t i = 0; i < retvalVec.size(); i++) {
         msg->add_caller(retvalVec[i]);
     }
@@ -210,9 +211,10 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(print,
 
 template <typename T> void user_stack_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
 {
-    int i = 0;
-    msg->set_tgid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
+    int index = 0;
+    msg->set_tgid(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, index++, data, size));
+    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, index++,
+                                                                                       data, size);
     for (size_t i = 0; i < retvalVec.size(); i++) {
         msg->add_caller(retvalVec[i]);
     }

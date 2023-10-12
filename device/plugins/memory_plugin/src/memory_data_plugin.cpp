@@ -390,11 +390,12 @@ template <typename T> void MemoryDataPlugin::WriteProcinfoByPidfds(T& processMem
 
     readSize = ReadFile(pidFds_[pid][FILE_STATUS]);
     if (readSize != RET_FAIL) {
-        WriteProcess(processMemoryInfo, (char*)buffer_.get(), readSize, pid);
+        WriteProcess(processMemoryInfo, reinterpret_cast<char*>(buffer_.get()), readSize, pid);
     }
 
     if (ReadFile(pidFds_[pid][FILE_OOM]) != RET_FAIL) {
-        processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol((char*)buffer_.get(), &end, DEC_BASE)));
+        processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol(reinterpret_cast<char*>(buffer_.get()),
+                                                                        &end, DEC_BASE)));
     }
     return;
 }
@@ -686,7 +687,8 @@ template <typename T> void MemoryDataPlugin::WriteOomInfo(T& processMemoryInfo, 
         HILOG_ERROR(LOG_CORE, "%s:invalid params, read buffer_ is NULL", __func__);
         return;
     }
-    processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol((char*)buffer_.get(), &end, DEC_BASE)));
+    processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol(reinterpret_cast<char*>(buffer_.get()),
+                                                                    &end, DEC_BASE)));
 }
 
 template <typename T> void MemoryDataPlugin::WriteProcessInfo(T& memoryData, int32_t pid)
@@ -699,7 +701,7 @@ template <typename T> void MemoryDataPlugin::WriteProcessInfo(T& memoryData, int
         return;
     }
     auto* processinfo = memoryData.add_processesinfo();
-    WriteProcess(*processinfo, (char*)buffer_.get(), ret, pid);
+    WriteProcess(*processinfo, reinterpret_cast<char*>(buffer_.get()), ret, pid);
     WriteOomInfo(*processinfo, pid);
 }
 
