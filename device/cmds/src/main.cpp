@@ -447,6 +447,22 @@ bool StartDependentProcess()
     return true;
 }
 
+bool CheckProcessExit(const std::string& processName, int& pid)
+{
+    int nCount = 5; // 5: try 5 times
+    bool isExit = true;
+    constexpr int waitExitMills = 1000;
+    while (isExit && nCount > 0) {
+        if (COMMON::IsProcessExist(processName, pid)) {
+            nCount--;
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitExitMills));
+        } else {
+            break;
+        }
+    }
+    return nCount > 0;
+}
+
 void KillDependentProcess()
 {
     if (getuid() == 0) {
@@ -460,10 +476,24 @@ void KillDependentProcess()
         if (g_hiprofilerdPid == -1) {
             COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid);
         }
-
         COMMON::KillProcess(g_nativeDaemonPid);
+        if (CheckProcessExit(NATIVE_DAEMON_NAME, g_nativeDaemonPid)) {
+            printf("process native_daemon exits successfully\n");
+        } else {
+            printf("process native_daemon exits failed\n");
+        }
         COMMON::KillProcess(g_hiprofilerPluginsPid);
+        if (CheckProcessExit(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid)) {
+            printf("process hiprofiler_plugins exits successfully\n");
+        } else {
+            printf("process hiprofiler_plugins exits failed\n");
+        }
         COMMON::KillProcess(g_hiprofilerdPid);
+        if (CheckProcessExit(HIPROFILERD_NAME, g_hiprofilerdPid)) {
+            printf("process hiprofilerd exits successfully\n");
+        } else {
+            printf("process hiprofilerd exits failed\n");
+        }
     } else {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
