@@ -607,7 +607,7 @@ bool FtraceParser::ReadInc(uint8_t* start[], uint8_t end[], void* outData, size_
         return false;
     }
     CHECK_TRUE(memcpy_s(outData, outSize, *start, outSize) == EOK, false,
-               "read %zu bytes from memory region [%p, %p) FAILED", outSize, *start, end);
+               "read %zu bytes from memory region FAILED", outSize);
     *start += outSize;
     return true;
 }

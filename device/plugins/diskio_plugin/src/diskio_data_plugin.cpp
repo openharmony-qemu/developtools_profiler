@@ -72,8 +72,8 @@ int DiskioDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
         ioEntry_->PutPluginStatsData(*statsData);
     }
 
-    size_t msgSize = dataProto.Finish();
-    return (int)msgSize;
+    int32_t msgSize = dataProto.Finish();
+    return static_cast<int>(msgSize);
 }
 
 int DiskioDataPlugin::Report(uint8_t* data, uint32_t dataSize)

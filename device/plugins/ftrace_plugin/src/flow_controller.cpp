@@ -185,7 +185,7 @@ bool FlowController::ParseBasicData()
             if (!ReportClockTimes(traceResult)) {
                 HILOG_ERROR(LOG_CORE, "report clock times FAILED!");
             }
-            size_t msgSize = traceResult->Finish();
+            int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
             tansporter_->Report(msgSize);
         }
@@ -204,7 +204,7 @@ bool FlowController::ParseBasicData()
             if (!ParseKernelSymbols(traceResult)) {
                 HILOG_ERROR(LOG_CORE, "parse kernel symbols FAILED!");
             }
-            size_t msgSize = traceResult->Finish();
+            int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
             tansporter_->Report(msgSize);
         }
@@ -222,7 +222,7 @@ bool FlowController::ParseBasicData()
         if (!ParsePerCpuStatus(traceResult, TRACE_START)) {
             HILOG_ERROR(LOG_CORE, "parse TRACE_START stats failed!");
         }
-        size_t msgSize = traceResult->Finish();
+        int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(msgSize);
     }
@@ -410,7 +410,7 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
         if (!ParseFtraceEvent(&traceResult, cpuid, page, event)) {
             HILOG_ERROR(LOG_CORE, "parse raw event for cpu-%d failed!", cpuid);
         }
-        size_t msgSize = traceResult.Finish();
+        int32_t msgSize = traceResult.Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(msgSize);
     }
@@ -478,7 +478,7 @@ int FlowController::StopCapture(void)
         if (!ParsePerCpuStatus(traceResult, TRACE_END)) {
             HILOG_ERROR(LOG_CORE, "parse TRACE_END stats FAILED!");
         }
-        size_t msgSize = traceResult->Finish();
+        int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(msgSize);
     }

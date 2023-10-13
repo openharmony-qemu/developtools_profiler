@@ -312,12 +312,11 @@ int CallStack::AccessReg([[maybe_unused]] unw_addr_space_t as, unw_regnum_t regn
     if (unwindInfoPtr->callStack.regsNum_ == 0) {
         return -UNW_EUNSPEC;
     }
-    UNWIND_CHECK_TRUE(RegisterGetValue(val, unwindInfoPtr->callStack.regs_, perfRegIndex,
-                                       unwindInfoPtr->callStack.regsNum_), -UNW_EUNSPEC,
-                     "can't read reg %zu", perfRegIndex);
+    UNWIND_CHECK_TRUE(
+        RegisterGetValue(val, unwindInfoPtr->callStack.regs_, perfRegIndex, unwindInfoPtr->callStack.regsNum_),
+        -UNW_EUNSPEC, "can't read reg %zu", perfRegIndex);
     *valuePoint = (unw_word_t)val;
-    HLOGV("reg %d:%s, val 0x%" UNW_WORD_PFLAG "", regnum, RegisterGetName(perfRegIndex).c_str(),
-          *valuePoint);
+    HLOGV("reg %d:%s, val 0x%" UNW_WORD_PFLAG "", regnum, RegisterGetName(perfRegIndex).c_str(), *valuePoint);
     return UNW_ESUCCESS;
 }
 

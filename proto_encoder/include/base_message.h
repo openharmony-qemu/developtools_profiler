@@ -137,7 +137,7 @@ public:
         }
 
         writeCtx_->seek(writeCtx_, fieldOffset + tagSize + SIZE_FIXED32);
-        size_ += tagSize + SIZE_FIXED32;
+        size_ += static_cast<int32_t>(tagSize + SIZE_FIXED32);
     }
 
     // ID Name Used For
@@ -170,7 +170,7 @@ public:
         }
 
         writeCtx_->seek(writeCtx_, fieldOffset + tagSize + SIZE_FIXED64);
-        size_ += tagSize + SIZE_FIXED64;
+        size_ += static_cast<int32_t>(tagSize + SIZE_FIXED64);
     }
 
     // ID Name   Used For(unsigned and 'intN' varint)
@@ -197,7 +197,7 @@ public:
         uint32_t fieldSize = EncodeVarint(fieldMemory, (fieldId << FIELDID_SHIFT) | ProtoMessageType::VARINT);
         fieldSize += EncodeVarint(fieldMemory + fieldSize, v);
         writeCtx_->seek(writeCtx_, fieldOffset + fieldSize);
-        size_ += fieldSize;
+        size_ += static_cast<int32_t>(fieldSize);
     }
 
     // ID Name   Used For('sintN' varint, ZigZag encode)
@@ -224,7 +224,7 @@ public:
         uint32_t fieldSize = EncodeVarint(fieldMemory, (fieldId << FIELDID_SHIFT) | ProtoMessageType::VARINT);
         fieldSize += EncodeZigZagVarint(fieldMemory + fieldSize, v);
         writeCtx_->seek(writeCtx_, fieldOffset + fieldSize);
-        size_ += fieldSize;
+        size_ += static_cast<int32_t>(fieldSize);
     }
 
     // ID Name Used For
@@ -271,7 +271,7 @@ public:
 
         uint32_t tagSize = EncodeVarint(fieldMemory, (fieldId << FIELDID_SHIFT) | ProtoMessageType::LEN);
         backfillOffset_ += tagSize;
-        size_ += tagSize;
+        size_ += static_cast<int32_t>(tagSize);
         // reserve length space
         writeCtx_->seek(writeCtx_, backfillOffset_ + SIZE_RESERVED_LEN);
         if (!AllocateSubMessage()) {
@@ -322,7 +322,7 @@ public:
         }
         // varint(Length)
         EncodeVarintPadding(fieldMemory + tagSize, dataSize, lenSize);
-        size_ += tagSize + lenSize + dataSize;
+        size_ += static_cast<int32_t>(tagSize + lenSize + dataSize);
         // seek to tail
         writeCtx_->seek(writeCtx_, fieldOffset + tagSize + lenSize + dataSize);
     }
@@ -361,7 +361,7 @@ public:
             return;
         }
 
-        size_ += tagSize + dataSize;
+        size_ += static_cast<int32_t>(tagSize + dataSize);
         // seek to tail
         writeCtx_->seek(writeCtx_, fieldOffset + tagSize + dataSize);
     }

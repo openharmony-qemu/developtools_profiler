@@ -64,8 +64,8 @@ void BufferWriter::Report() const
 void BufferWriter::DoStats(long bytes)
 {
     ++writeCount_;
-    bytesCount_ += bytes;
-    bytesPending_ += bytes;
+    bytesCount_ += static_cast<uint64_t>(bytes);
+    bytesPending_ += static_cast<uint64_t>(bytes);
 }
 
 long BufferWriter::Write(const void* data, size_t size)
