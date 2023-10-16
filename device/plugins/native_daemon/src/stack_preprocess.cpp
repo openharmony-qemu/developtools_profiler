@@ -45,6 +45,12 @@ constexpr static uint32_t FUNCTION_MAP_LOG_PRINT = 100;
 constexpr static uint32_t FILE_MAP_LOG_PRINT = 10;
 constexpr static uint32_t MAX_BATCH_CNT = 5;
 constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
+constexpr static uint32_t RIGHT_MOVE_1 = 1;
+constexpr static uint32_t RIGHT_MOVE_2 = 2;
+constexpr static uint32_t RIGHT_MOVE_4 = 4;
+constexpr static uint32_t RIGHT_MOVE_8 = 8;
+constexpr static uint32_t RIGHT_MOVE_16 = 16;
+constexpr static uint32_t RIGHT_MOVE_32 = 32;
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -891,31 +897,31 @@ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 
 unsigned StackPreprocess::LgFloor(unsigned long val)
 {
-    val |= (val >> 1);
-    val |= (val >> 2);
-    val |= (val >> 4);
-    val |= (val >> 8);
-    val |= (val >> 16);
+    val |= (val >> RIGHT_MOVE_1);
+    val |= (val >> RIGHT_MOVE_2);
+    val |= (val >> RIGHT_MOVE_4);
+    val |= (val >> RIGHT_MOVE_8);
+    val |= (val >> RIGHT_MOVE_16);
     if (sizeof(val) > 4) {
         int constant = sizeof(val) * 4;
         val |= (val >> constant);
     }
     val++;
     if (val == 0) {
-        return 8 * sizeof(val) - 1;
+        return 8 * sizeof(val) - 1; // 8: 8byte
     }
-    return __builtin_ffsl(val) - 2;
+    return __builtin_ffsl(val) - 2; // 2:
 }
 
 uint64_t StackPreprocess::PowCeil(uint64_t val)
 {
     ++val;
-    val |= val >> 1;
-    val |= val >> 2;
-    val |= val >> 4;
-    val |= val >> 8;
-    val |= val >> 16;
-    val |= val >> 32;
+    val |= val >> RIGHT_MOVE_1;
+    val |= val >> RIGHT_MOVE_2;
+    val |= val >> RIGHT_MOVE_4;
+    val |= val >> RIGHT_MOVE_8;
+    val |= val >> RIGHT_MOVE_16;
+    val |= val >> RIGHT_MOVE_32;
     ++val;
     return val;
 }

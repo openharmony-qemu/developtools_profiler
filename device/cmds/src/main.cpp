@@ -269,7 +269,7 @@ bool CheckDestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, 
 }
 
 void StartKeepAliveThread(std::unique_ptr<IProfilerService::Stub> &profilerStub,
-                          uint32_t &id, std::atomic<bool> &sendHeart) 
+                          uint32_t &id, std::atomic<bool> &sendHeart)
 {
     while (sendHeart.load()) {
         KeepSessionRequest keepRequest;
@@ -525,7 +525,6 @@ bool ParseConfig(const std::string& configFile, std::string& config)
 
 void SignalHandler(int signal)
 {
-    printf("hiprofiler_cmd receive signal(%d)!\n", signal);
     if (signal == SIGINT) {
         g_exitProcessFlag = true;
         g_sessionCv.notify_one();

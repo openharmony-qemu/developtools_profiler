@@ -33,7 +33,6 @@ int TracePluginRegisterWriter(const WriterStruct* writer)
     std::unique_lock<std::mutex> lock(g_mutex);
     g_mainController = std::make_unique<FTRACE_NS::FlowController>();
 
-    HILOG_INFO(LOG_CORE, "%s: %d %p", __func__, __LINE__, writer);
     int result = g_mainController->SetWriter(const_cast<WriterStructPtr>(writer));
     HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     return result;
