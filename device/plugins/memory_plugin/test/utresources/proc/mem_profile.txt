@@ -1,0 +1,220 @@
+render_service:
+Channel: Unnamed (Total memory: 630784)
+ 13:                    4 / 16384
+ 17:                    5 / 614400
+
+Channel: Default Heap (Total memory: 13281584)
+ 13:                 1308 / 5467464
+ 14:                   78 / 654456
+ 15:                    1 / 20976
+ 19:                    8 / 2393280
+ 20:                    8 / 4745408
+
+Channel: Framepool (Total memory: 0)
+ (empty)
+
+Channel: Frame Internal (Total memory: 0)
+ (empty)
+
+Channel: GPU Program (Total memory: 368640)
+ 13:                   51 / 208896
+ 14:                    8 / 69632
+ 15:                    2 / 53248
+ 16:                    1 / 36864
+
+Channel: EGL Color Plane (Total memory: 0)
+ (empty)
+
+Channel: GLES Vertex Array Object (Total memory: 0)
+ (empty)
+
+Channel: Image Descriptor (Total memory: 3360)
+  6:                   89 / 2848
+  7:                    2 / 128
+  8:                    2 / 384
+
+Channel: Texture (Total memory: 80546816)
+ 10:                    1 / 512
+ 11:                    1 / 1024
+ 12:                    1 / 2048
+ 13:                    2 / 8192
+ 14:                    1 / 8192
+ 15:                    7 / 151040
+ 16:                    5 / 210944
+ 17:                    8 / 617472
+ 18:                   33 / 5048320
+ 19:                   16 / 4243456
+ 20:                    2 / 1065984
+ 21:                    5 / 6610944
+ 22:                    4 / 11452416
+ 23:                    2 / 12251136
+ 24:                    3 / 38875136
+
+Channel: Buffer (Total memory: 273814)
+  8:                    4 / 750
+  9:                    3 / 808
+ 11:                    1 / 1920
+ 15:                    4 / 122880
+ 16:                    3 / 147456
+
+Channel: CRC Buffer (Total memory: 538960)
+  9:                    1 / 288
+ 10:                    2 / 1152
+ 11:                   14 / 23152
+ 13:                    1 / 7072
+ 14:                    1 / 11536
+ 15:                    4 / 80528
+ 16:                    3 / 123424
+ 17:                    3 / 291808
+
+Channel: CPOM Host Memory (Total memory: 4404512)
+ 13:                  926 / 3828864
+ 14:                   70 / 575648
+
+Channel: CPOM Render State (Total memory: 0)
+ (empty)
+
+Channel: CPOM Compute Shader (Total memory: 0)
+ (empty)
+
+Channel: CPOM Static Data (Total memory: 0)
+ (empty)
+
+Channel: CFRAME Host Memory (Total memory: 0)
+ (empty)
+
+Channel: CFRAME Sample Position (Total memory: 0)
+ (empty)
+
+Channel: CFRAME Discardable FBD (Total memory: 0)
+ (empty)
+
+Channel: CFRAME Tessellation/Geometry (Total memory: 0)
+ (empty)
+
+Channel: COBJ Host Memory (Total memory: 782360)
+ 13:                   45 / 184344
+ 14:                    9 / 73728
+ 16:                    2 / 65536
+ 17:                    7 / 458752
+
+Channel: CMAR Host Memory (Total memory: 52932608)
+ 13:                    3 / 12288
+ 16:                    1 / 32768
+ 17:                  807 / 52887552
+
+Channel: CMAR Profiling/Dumping (Total memory: 0)
+ (empty)
+
+Channel: CBLEND Host Memory (Total memory: 0)
+ (empty)
+
+Channel: GLES Host Memory (Total memory: 12828704)
+ 13:                   23 / 94208
+ 14:                  652 / 5345312
+ 15:                    5 / 81920
+ 16:                    5 / 163840
+ 17:                    7 / 458752
+ 18:                   21 / 2752512
+ 19:                   15 / 3932160
+
+Channel: GLES Query/XFB/Unroll (Total memory: 0)
+ (empty)
+
+Channel: GLES Multiview (Total memory: 0)
+ (empty)
+
+Channel: CDEPS Host Memory (Total memory: 720896)
+ 17:                   11 / 720896
+
+Channel: CMEM Sub-allocators (Total memory: 30341768)
+ 13:                 3869 / 15850064
+ 14:                 1768 / 14491704
+
+Channel: CMEM Hoard (Total memory: 2897728)
+  7:                18545 / 1186896
+  8:                11191 / 1701032
+  9:                   25 / 9800
+
+Channel: CMEM Registry (Total memory: 0)
+ (empty)
+
+Channel: CL Command Payloads (Total memory: 0)
+ (empty)
+
+Channel: CL Workgroup/Thread (Total memory: 0)
+ (empty)
+
+Channel: CL Host Memory (Total memory: 0)
+ (empty)
+
+Channel: CL Shared Virtual Memory (Total memory: 0)
+ (empty)
+
+Channel: CINSTR Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Device Memory CPU Uncached (Total memory: 0)
+ (empty)
+
+Channel: GFX Device Memory CPU Cached (Total memory: 0)
+ (empty)
+
+Channel: GFX Device Memory Transient (Total memory: 0)
+ (empty)
+
+Channel: GFX Device Memory Protected (Total memory: 0)
+ (empty)
+
+Channel: GFX Device External Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Device External Swapchain Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Device Internal Memory (Total memory: 3678208)
+ 13:                  333 / 1363968
+ 14:                    3 / 24576
+ 17:                    1 / 122880
+ 19:                    1 / 262144
+ 21:                    1 / 1904640
+
+Channel: GFX Device Internal Host Memory (Total memory: 22879792)
+ 13:                  749 / 3079048
+ 14:                   21 / 174104
+ 16:                  142 / 7678224
+ 17:                  100 / 6553600
+ 18:                   24 / 5394816
+
+Channel: GFX Device Internal Protected Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Descriptor Pool Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Command Allocator Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Command Allocator Host Memory (Total memory: 0)
+ (empty)
+
+Channel: GFX Command Allocator Protected Memory (Total memory: 0)
+ (empty)
+
+Channel: Vulkan Bound Buffer Memory (Total memory: 0)
+ (empty)
+
+Channel: Vulkan Bound Image Memory (Total memory: 0)
+ (empty)
+
+Channel: CMAR Signal Memory (Total memory: 8192)
+ 14:                    1 / 8192
+
+Channel: CMAR Flush Chain Memory (Total memory: 0)
+ (empty)
+
+Channel: CMAR Metadata List Memory (Total memory: 8192)
+ 14:                    1 / 8192
+
+Total allocated memory: 227126918
+

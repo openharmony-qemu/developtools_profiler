@@ -33,6 +33,11 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
     "//third_party/bounds_checking_function:libsec_static",
   ]
 
+  external_deps = [
+    "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
+    "graphic_2d:librender_service_client",
+  ]
+
   include_dirs = [
     "../../../include",
     "../../../../api/include",

@@ -25,6 +25,12 @@
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/cmdline -> /data/local/tmp/utresources/proc/" src="res"/>
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/meminfo -> /data/local/tmp/utresources/proc/" src="res"/>
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/vmstat -> /data/local/tmp/utresources/proc/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/purgeable_ashmem_trigger -> /data/local/tmp/utresources/proc/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/gpu_memory -> /data/local/tmp/utresources/proc/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/process_dmabuf_info -> /data/local/tmp/utresources/proc/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/dumpMem.txt -> /data/local/tmp/utresources/proc/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/window_manager_service.txt -> /data/local/tmp/utresources/proc/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/mem_profile.txt -> /data/local/tmp/utresources/proc/" src="res"/>
             <option name="push" value="developtools/hiprofiler/memorytest -> /data/local/tmp/" src="out"/>
         </preparer>
     </target>

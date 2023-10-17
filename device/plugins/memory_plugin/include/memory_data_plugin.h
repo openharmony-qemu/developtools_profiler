@@ -28,7 +28,9 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <utility>
+#include <v1_0/imemory_tracker_interface.h>
 
+#include "buffer_splitter.h"
 #include "logging.h"
 #include "memory_plugin_config.pb.h"
 #include "memory_plugin_result.pb.h"
@@ -54,6 +56,9 @@ constexpr Proto2StrMapping meminfoMapping[] = {
     {SysMeminfoType::PMEM_INACTIVE_ANON, "Inactive(anon)"},
     {SysMeminfoType::PMEM_ACTIVE_FILE, "Active(file)"},
     {SysMeminfoType::PMEM_INACTIVE_FILE, "Inactive(file)"},
+    {SysMeminfoType::PMEM_ACTIVE_PURG, "Active(purg)"},
+    {SysMeminfoType::PMEM_INACTIVE_PURG, "Inactive(purg)"},
+    {SysMeminfoType::PMEM_PINED_PURG, "Pined(purg)"},
     {SysMeminfoType::PMEM_UNEVICTABLE, "Unevictable"},
     {SysMeminfoType::PMEM_MLOCKED, "Mlocked"},
     {SysMeminfoType::PMEM_SWAP_TOTAL, "SwapTotal"},
@@ -226,13 +231,15 @@ enum StatusType {
     PRO_VMSWAP,
     PRO_VMLCK,
     PRO_VMHWM,
+    PRO_PURGSUM,
+    PRO_PURGPIN,
 };
 
 constexpr ProcStatusMapping procStatusMapping[] = {
     {StatusType::PRO_TGID, "Tgid"},         {StatusType::PRO_NAME, "Name"},       {StatusType::PRO_VMSIZE, "VmSize"},
     {StatusType::PRO_VMRSS, "VmRSS"},       {StatusType::PRO_RSSANON, "RssAnon"}, {StatusType::PRO_RSSFILE, "RssFile"},
     {StatusType::PRO_RSSSHMEM, "RssShmem"}, {StatusType::PRO_VMSWAP, "VmSwap"},   {StatusType::PRO_VMLCK, "VmLck"},
-    {StatusType::PRO_VMHWM, "VmHWM"},
+    {StatusType::PRO_VMHWM, "VmHWM"},       {StatusType::PRO_PURGSUM, "PurgSum"},     {StatusType::PRO_PURGPIN, "PurgPin"},
 };
 
 enum ErrorType {
@@ -260,6 +267,66 @@ constexpr ProcfdMapping procfdMapping[] = {
     {FileType::FILE_SMAPS, "smaps"},
 };
 
+enum AshmemType {
+    ASHMEM_PROCESS_NAME = 1,
+    ASHMEM_PID,
+    ASHMEM_ADJ,
+    ASHMEM_FD,
+    ASHMEM_NAME,
+    ASHMEM_SIZE,
+    ASHMEM_ID,
+    ASHMEM_TIME,
+    ASHMEM_REF_COUNT,
+    ASHMEM_PURGED,
+};
+
+enum DmaType {
+    DMA_NAME = 1,
+    DMA_PID,
+    DMA_FD,
+    DMA_SIZE,
+    DMA_INO,
+    DMA_EXP_PID,
+    DMA_EXP_TASK_COMM,
+    DMA_BUF_NAME,
+    DMA_EXP_NAME,
+};
+
+enum GpuMemoryType {
+    GPU_NAME = 1,
+    GPU_SIZE,
+};
+
+enum GpuCtxType {
+    GPU_ADDR = 1,
+    GPU_TID,
+    GPU_PID,
+    GPU_USED_SIZE,
+};
+
+enum RSImageDumpType {
+    RS_SIZE = 1,
+    RS_TYPE,
+    RS_PID,
+    RS_SURFACENAME = 5,
+};
+
+enum WinMgrSvcType {
+    WINDOW_NAME = 1,
+    WINDOW_PID = 3,
+};
+
+struct GraphicsMemory {
+    uint64_t gl;
+    uint64_t graph;
+};
+
+const std::vector<std::pair<OHOS::HDI::Memorytracker::V1_0::MemoryTrackerType, std::string>> MEMORY_TRACKER_TYPES = {
+    {OHOS::HDI::Memorytracker::V1_0::MEMORY_TRACKER_TYPE_GL, "GL"},
+    {OHOS::HDI::Memorytracker::V1_0::MEMORY_TRACKER_TYPE_GRAPH, "Graph"},
+    {OHOS::HDI::Memorytracker::V1_0::MEMORY_TRACKER_TYPE_OTHER, "Other"}
+};
+
 class MemoryDataPlugin {
 public:
     MemoryDataPlugin();
@@ -271,6 +338,12 @@ public:
     void SetPath(char* path)
     {
         testpath_ = path;
+    };
+
+    // for UT
+    void SetProtoConfig(MemoryConfig protoConfig)
+    {
+        protoConfig_ = protoConfig;
     };
 
     template <typename T> void WriteProcesseList(T& memoryData);
@@ -384,6 +457,27 @@ private:
     int InitMemVmemFd();
 
     template <typename T, typename S> void WriteMemoryData(T& memoryDataProto, S smapsInfo);
+
+    std::string RunCommand(const std::string& cmd);
+    int GetIndentNum(const std::string& line);
+    uint64_t SizeToBytes(const std::string& sizeStr, const std::string& type);
+    bool isRenderService(int pid);
+    bool GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graphicsMemory);
+
+    template <typename T> void WriteAshmemInfo(T& dataProto);
+    template <typename T> void WriteDmaInfo(T& dataProto);
+    template <typename T> void WriteGpuMemInfo(T& dataProto);
+    template <typename T> void WriteGpuDumpInfo(T& dataProto);
+    template <typename T> void WriteDumpProcessInfo(T& dataProto);
+    template <typename T> void WriteManagerServiceInfo(T& dataProto);
+    template <typename T> void WriteProfileMemInfo(T& dataProto);
+
+    template <typename T> void SetAshmemInfo(T& ashmemInfo, int key, const char* word);
+    template <typename T> void SetDmaInfo(T& dmaInfo, int key, const char* word);
+    template <typename T> void SetGpuProcessInfo(T& gpuProcessInfo, int key, const char* word);
+    template <typename T> bool SetGpuDumpInfo(T& gpuDumpInfo, BufferSplitter& totalBuffer);
+    template <typename T> void SetRSImageDumpInfo(T& rsDumpInfo, int key, const char* word);
+    template <typename T> void SetManagerServiceInfo(T& windowInfo, int key, const char* word);
 };
 
 #endif

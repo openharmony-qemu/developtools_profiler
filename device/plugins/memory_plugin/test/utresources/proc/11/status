@@ -14,6 +14,8 @@ NStgid:	11
 NSpid:	11
 NSpgid:	0
 NSsid:	0
+PurgSum:         103 kB
+PurgPin:           0 kB
 Threads:	1
 SigQ:	0/62967
 SigPnd:	0000000000000000

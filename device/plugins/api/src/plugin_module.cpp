@@ -42,7 +42,7 @@ bool PluginModule::Load()
                "%s:so filename invalid, errno=%d", __func__, errno);
 
     std::string rpath = realPath; // for SC warning
-    handle_ = dlopen(rpath.c_str(), RTLD_NOW);
+    handle_ = dlopen(rpath.c_str(), RTLD_NODELETE);
     if (handle_ == nullptr) {
         HILOG_DEBUG(LOG_CORE, "%s:dlopen err:%s.", __func__, dlerror());
         return false;

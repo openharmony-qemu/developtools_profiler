@@ -302,6 +302,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
         for (std::vector<ProfilerPluginConfig>::size_type i = 0; i < pluginConfigs.size(); i++) {
             ProfilerPluginData pluginData;
             pluginData.set_name(pluginConfigs[i].name() + "_config");
+            pluginData.set_sample_interval(request->plugin_configs(i).sample_interval());
             pluginData.set_data(pluginConfigs[i].config_data());
             std::vector<char> msgData(pluginData.ByteSizeLong());
             if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {

@@ -29,6 +29,8 @@ VmExe:	    1344 kB
 VmLib:	   10048 kB
 VmPTE:	     212 kB
 VmSwap:	     164 kB
+PurgSum:       10232 kB
+PurgPin:         400 kB
 HugetlbPages:	       0 kB
 CoreDumping:	0
 THP_enabled:	1

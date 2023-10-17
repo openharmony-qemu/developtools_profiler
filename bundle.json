@@ -39,7 +39,9 @@
         "init",
         "napi",
         "safwk",
-        "samgr"
+        "samgr",
+        "drivers_interface_memorytracker",
+        "graphic_2d"
       ],
       "third_party": [
         "bounds_checking_function",

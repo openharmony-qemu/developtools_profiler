@@ -33,6 +33,8 @@ const std::string DEFAULT_SO_PATH("/system/lib/");
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/memorytest");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 const int US_PER_S = 1000000;
+constexpr uint32_t PAGE_SIZE = 4 * 1024;
+constexpr int LINE_SIZE = 1000;
 
 std::string g_path;
 
@@ -56,22 +58,278 @@ struct TestElement {
     uint64_t stack;
     uint64_t graphics;
     uint64_t private_other;
+    uint64_t purg_sum_kb;
+    uint64_t purg_pin_kb;
 };
 
 TestElement g_pidtarget[] = {
-    {1, "systemd", 226208, 9388, 2984, 6404, 0, 0, 0, 9616, -1, 3036, 4256, 288, 748, 0, 1388},
-    {2, "kthreadd", 0, 0, 0, 0, 0, 0, 0, 0, -100, 3036, 4260, 336, 760, 0, 4204},
-    {11, "rcu_sched", 0, 0, 0, 0, 0, 0, 0, 0, 0, 3036, 4272, 400, 772, 0, 7160},
+    {1, "systemd", 226208, 9388, 2984, 6404, 0, 0, 0, 9616, -1, 3036, 4256, 288, 748, 0, 1388, 10232, 400},
+    {2, "kthreadd", 0, 0, 0, 0, 0, 0, 0, 0, -100, 3036, 4260, 336, 760, 0, 4204, 0, 0},
+    {11, "rcu_sched", 0, 0, 0, 0, 0, 0, 0, 0, 0, 3036, 4272, 400, 772, 0, 7160, 103, 0},
 };
 
 unsigned long g_meminfo[] = {
-    16168696, 1168452, 12363564, 2726188, 7370484, 29260,    8450388,  4807668,
-    2535372,  658832,  4148836,  132,     0,       63999996, 62211580, 0
+    16168696, 1168452, 12363564, 2726188, 7370484, 29260, 8450388, 4807668,
+    2535372,  658832, 4148836, 10, 5678, 116790, 132, 0, 63999996, 62211580, 0
 };
 
 unsigned long g_vmeminfo[] = {
     112823, 0,      587,    1848,   101,   9074,  8426,   18314,
     0,     2416,  2348,  9073,   1876,  26863, 1,      0
+};
+
+struct AshMemInfo {
+    std::string name;
+    int32_t pid;
+    int32_t adj;
+    int32_t fd;
+    std::string ashmem_name;
+    uint64_t size;
+    int32_t id;
+    uint64_t time;
+    uint64_t ref_count;
+    uint64_t purged;
+};
+
+AshMemInfo g_ashMemInfo[] = {
+    {"com.ohos.settin", 1474, 1, 46, "dev/ashmem/SharedBlock:/data/storage/el2/database/entry/rdb/settingsdata.db", 2097152, 1, 1282999603, 1, 1},
+    {"com.ohos.launch", 1515, 1, 54, "dev/ashmem/hooknativesmb", 67108864, 10, 1282945782, 1, 0},
+    {"hiprofilerd", 6746, 1, 27, "dev/ashmem/memory-plugin", 67108864, 12, 1287845167, 0, 0},
+    {"hiprofiler_plug", 6756, 1, 7, "dev/ashmem/memory-plugin", 67108864, 15, 1358999004, 0, 0},
+};
+
+struct ProcessGpuInfo {
+    std::string addr;
+    int32_t pid;
+    int32_t tid;
+    uint64_t used_gpu_size;
+};
+
+struct GpuMemInfo {
+    std::string gpu_name;
+    uint64_t all_gpu_size;
+    ProcessGpuInfo gpuInfo[3];
+};
+
+GpuMemInfo g_gpuMemInfo = {
+    "mali0",
+    30217,
+    {
+        {"kctx-0xffffffc0108f5000", 1149, 1226, 30212},
+        {"kctx-0xffffffc0108f6000", 1049, 1216, 1},
+        {"kctx-0xffffffc0108f7000", 1206, 1206, 4}
+    }
+};
+
+struct DmaMemInfo {
+    std::string name;
+    int32_t pid;
+    int32_t fd;
+    uint64_t size;
+    int32_t ino;
+    int32_t exp_pid;
+    std::string exp_task_comm;
+    std::string buf_name;
+    std::string exp_name;
+};
+
+DmaMemInfo g_dmaMemInfo[] = {
+    {"ispserver", 433, 18, 12288, 3041, 433, "ispserver", "NULL", "videobuf2_vmalloc"},
+    {"ispserver", 433, 19, 12288, 3042, 433, "ispserver", "ispserver1", "videobuf2_vmalloc"},
+    {"ispserver", 433, 20, 12288, 3043, 433, "ispserver", "ispserver4", "videobuf2_vmalloc"},
+    {"ispserver", 433, 21, 12288, 3044, 433, "ispserver", "NULL", "videobuf2_vmalloc"},
+    {"render_service", 624, 9, 3686400, 28914, 624, "render_service", "NULL", "rockchipdrm"},
+    {"render_service", 624, 30, 3686400, 30144, 539, "disp_gralloc_ho", "1", "rockchipdrm"},
+    {"render_service", 624, 32, 3686400, 31026, 539, "disp_gralloc_ho", "5", "rockchipdrm"},
+    {"render_service", 624, 34, 3686400, 29650, 539, "disp_gralloc_ho", "disp_gralloc_ho78", "rockchipdrm"},
+    {"render_service", 624, 37, 3686400, 32896, 539, "disp_gralloc_ho", "0", "rockchipdrm"},
+    {"render_service", 624, 38, 3686400, 30860, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"render_service", 624, 39, 3686400, 30860, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"render_service", 624, 58, 3686400, 30145, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"render_service", 624, 59, 208896, 32895, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"render_service", 624, 66, 3686400, 32896, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"com.ohos.system", 1298, 56, 3686400, 32896, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"com.ohos.system", 1298, 60, 3686400, 32899, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+    {"com.ohos.system", 1298, 62, 3686400, 32901, 539, "disp_gralloc_ho", "NULL", "rockchipdrm"},
+};
+
+struct GpuSubTestInfo {
+    std::string category_name;
+    std::string size;
+    std::string type;
+    int32_t entry_num;
+};
+
+struct GpuDetailTestInfo {
+    std::string module_name;
+    GpuSubTestInfo gpu_sub_info[4];
+};
+
+struct GpuDumpTestInfo {
+    std::string window_name;
+    uint64_t id;
+    GpuDetailTestInfo gpu_detail_info[5];
+    std::string gpu_purgeable_size;
+    std::string type;
+};
+
+GpuDumpTestInfo g_gpudumpAllInfo = {
+    "",
+    0,
+    {
+        {
+            "skia/gr_text_blob_cache",
+            {
+                {"Other", "3.33", "KB", 1}
+            }
+        },
+        {
+            "SW Path Mask",
+            {
+                {"Texture", "352.34", "KB", 12}
+            }
+        },
+        {
+            "Other",
+            {
+                {"Buffer Object", "914.00", "bytes", 4},
+                {"StencilAttachment", "4.50", "MB", 2}
+            }
+        },
+        {
+            "Image",
+            {
+                {"Texture", "7.98", "MB", 1}
+            }
+        },
+        {
+            "Scratch",
+            {
+                {"Texture", "1.00", "MB", 1},
+                {"Buffer Object", "78.00", "KB", 2},
+                {"RenderTarget", "29.42", "MB", 3},
+                {"StencilAttachment", "14.21", "MB", 1}
+            }
+        }
+    },
+    "23.69",
+    "MB",
+};
+
+GpuDumpTestInfo g_gpudumpInfo1 = {
+    "SysUI_Volume",
+    10007273799686,
+    {
+        {
+            "SW Path Mask",
+            {
+                {"Texture", "352.34", "KB", 12}
+            }
+        },
+        {
+            "skia/gr_text_blob_cache",
+            {
+                {"Other", "3.33", "KB", 1}
+            }
+        }
+    },
+    "0.00",
+    "bytes",
+};
+
+GpuDumpTestInfo g_gpudumpInfo2 = {
+    "capture",
+    0,
+    {
+        {
+            "skia/gr_text_blob_cache",
+            {
+                {"Other", "3.33", "KB", 1}
+            }
+        }
+    },
+    "0.00",
+    "bytes",
+};
+
+struct RSImageDumpInfo {
+    uint64_t size; // bytes
+    std::string type;
+    int32_t pid;
+    std::string name;
+};
+
+RSImageDumpInfo g_rSImageDumpInfo[] = {
+    {12441600, "pixelmap", 2230, "SCBScreenLock12"}, {331776, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {82944, "pixelmap", 2230, "NONE"}, {200704, "pixelmap", 2230, "NONE"},
+    {1106000, "pixelmap", 2230, "SCBNegativeScreen3"}, {147456, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {173056, "pixelmap", 25177, "music0"},
+    {3349548, "skimage", 2230, "NONE"}, {186624, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {518400, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {19600, "pixelmap", 3485, "ArkTSCardNode"}, {147456, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {254016, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {589824, "pixelmap", 3485, "ArkTSCardNode"},
+    {147456, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {1788696, "skimage", 2230, "SCBNegativeScreen3"}, {147456, "pixelmap", 2230, "NONE"},
+    {929600, "pixelmap", 3485, "ArkTSCardNode"}, {12441600, "pixelmap", 2230, "SCBWallpaper1"},
+    {331776, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {160000, "pixelmap", 0, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {65536, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {331776, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {262144, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {147456, "pixelmap", 2230, "NONE"}, {3538944, "pixelmap", 25111, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"},
+    {331776, "pixelmap", 2230, "NONE"}, {147456, "pixelmap", 2230, "NONE"}
+};
+
+struct WinMgrSvcInfo {
+    std::string name;
+    int32_t pid;
+};
+
+WinMgrSvcInfo g_winMgrSvcInfo[] = {
+    {"SCBWallpaper1", 2230}, {"SCBDesktop2", 2230}, {"SCBStatusBar7", 2230}, {"SCBGestureBack10", 2230},
+    {"SCBScreenLock12", 2230}, {"SCBNegativeScreen3", 2230}, {"SCBGlobalSearch4", 2230}, {"BlurComponent5", 2230},
+    {"SCBBannerNotificatio", 2230}, {"SCBDropdownPanel8", 2230}, {"SCBVolumePanel9", 2230},
+    {"SCBSysDialogDefault1", 2230}, {"SCBSysDialogUpper13", 2230}, {"imeWindow", 3109}, {"hmscore0", 24704},
+    {"himovie0", 24901}, {"music0", 25177}
+};
+
+struct ProfileInfo {
+    std::string channel;
+    uint64_t size;
+};
+
+ProfileInfo g_profileInfo[] = {
+    {"Unnamed", 630784}, {"Default Heap", 13281584}, {"Framepool", 0}, {"Frame Internal", 0}, {"GPU Program", 368640},
+    {"EGL Color Plane", 0}, {"GLES Vertex Array Object", 0}, {"Image Descriptor", 3360}, {"Texture", 80546816},
+    {"Buffer", 273814}, {"CRC Buffer", 538960}, {"CPOM Host Memory", 4404512}, {"CPOM Render State", 0},
+    {"CPOM Compute Shader", 0}, {"CPOM Static Data", 0}, {"CFRAME Host Memory", 0}, {"CFRAME Sample Position", 0},
+    {"CFRAME Discardable FBD", 0}, {"CFRAME Tessellation/Geometry", 0}, {"COBJ Host Memory", 782360},
+    {"CMAR Host Memory", 52932608}, {"CMAR Profiling/Dumping", 0}, {"CBLEND Host Memory", 0},
+    {"GLES Host Memory", 12828704}, {"GLES Query/XFB/Unroll", 0}, {"GLES Multiview", 0}, {"CDEPS Host Memory", 720896},
+    {"CMEM Sub-allocators", 30341768}, {"CMEM Hoard", 2897728}, {"CMEM Registry", 0}, {"CL Command Payloads", 0},
+    {"CL Workgroup/Thread", 0}, {"CL Host Memory", 0}, {"CL Shared Virtual Memory", 0}, {"CINSTR Memory", 0},
+    {"GFX Device Memory CPU Uncached", 0}, {"GFX Device Memory CPU Cached", 0}, {"GFX Device Memory Transient", 0},
+    {"GFX Device Memory Protected", 0}, {"GFX Device External Memory", 0}, {"GFX Device External Swapchain Memory", 0},
+    {"GFX Device Internal Memory", 3678208}, {"GFX Device Internal Host Memory", 22879792},
+    {"GFX Device Internal Protected Memory", 0}, {"GFX Descriptor Pool Memory", 0}, {"GFX Command Allocator Memory", 0},
+    {"GFX Command Allocator Host Memory", 0}, {"GFX Command Allocator Protected Memory", 0},
+    {"Vulkan Bound Buffer Memory", 0}, {"Vulkan Bound Image Memory", 0}, {"CMAR Signal Memory", 8192},
+    {"CMAR Flush Chain Memory", 0}, {"CMAR Metadata List Memory", 8192}
 };
 
 std::string GetFullPath(std::string path);
@@ -101,6 +359,28 @@ string Getexepath()
         }
     }
     return buf;
+}
+
+int GetPid(const std::string processName)
+{
+    int pid = -1;
+    std::string findpid = "pidof " + processName;
+    HILOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
+
+    char line[LINE_SIZE];
+    do {
+        if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
+            HILOG_INFO(LOG_CORE, "not find processName : %s", processName.c_str());
+            return pid;
+        } else if (strlen(line) > 0 && isdigit(static_cast<unsigned char>(line[0]))) {
+            pid = atoi(line);
+            HILOG_INFO(LOG_CORE, "find processName : %s, pid: %d", processName.c_str(), pid);
+            break;
+        }
+    } while (1);
+
+    return pid;
 }
 
 void SetPluginProcessConfig(std::vector<int> processList, MemoryConfig& protoConfig)
@@ -139,6 +419,9 @@ void SetPluginSysMemConfig(MemoryConfig &protoConfig)
     protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_SWAP_TOTAL);
     protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_SWAP_FREE);
     protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_DIRTY);
+    protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_ACTIVE_PURG);
+    protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_INACTIVE_PURG);
+    protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_PINED_PURG);
 
     protoConfig.set_report_sysmem_vmem_info(true);
 
@@ -257,7 +540,7 @@ HWTEST_F(MemoryDataPluginTest, Testpluginformeminfo, TestSize.Level1)
     SetPluginSysMemConfig(protoConfig);
     EXPECT_TRUE(PluginStub(memoryPlugin, protoConfig, memoryData));
 
-    EXPECT_EQ(16, memoryData.meminfo().size());
+    EXPECT_EQ(19, memoryData.meminfo().size());
     int index = memoryData.meminfo_size();
     for (int i = 0; i < index; ++i) {
         EXPECT_EQ(g_meminfo[i], memoryData.meminfo(i).value());
@@ -303,6 +586,8 @@ HWTEST_F(MemoryDataPluginTest, Testpluginforlist, TestSize.Level1)
         EXPECT_EQ(g_pidtarget[i].rss_shmem_kb, it.rss_shmem_kb());
         EXPECT_EQ(g_pidtarget[i].vm_locked_kb, it.vm_locked_kb());
         EXPECT_EQ(g_pidtarget[i].vm_hwm_kb, it.vm_hwm_kb());
+        EXPECT_EQ(g_pidtarget[i].purg_sum_kb, it.purg_sum_kb());
+        EXPECT_EQ(g_pidtarget[i].purg_pin_kb, it.purg_pin_kb());
 
         EXPECT_EQ(g_pidtarget[i].oom_score_adj, it.oom_score_adj());
 
@@ -344,6 +629,8 @@ HWTEST_F(MemoryDataPluginTest, Testpluginforsinglepid, TestSize.Level1)
     EXPECT_EQ(singlepid.rss_shmem_kb, it.rss_shmem_kb());
     EXPECT_EQ(singlepid.vm_locked_kb, it.vm_locked_kb());
     EXPECT_EQ(singlepid.vm_hwm_kb, it.vm_hwm_kb());
+    EXPECT_EQ(singlepid.purg_sum_kb, it.purg_sum_kb());
+    EXPECT_EQ(singlepid.purg_pin_kb, it.purg_pin_kb());
 
     EXPECT_EQ(singlepid.oom_score_adj, it.oom_score_adj());
 
@@ -391,6 +678,8 @@ HWTEST_F(MemoryDataPluginTest, Testpluginforpids, TestSize.Level1)
         EXPECT_EQ(g_pidtarget[i].rss_shmem_kb, it.rss_shmem_kb());
         EXPECT_EQ(g_pidtarget[i].vm_locked_kb, it.vm_locked_kb());
         EXPECT_EQ(g_pidtarget[i].vm_hwm_kb, it.vm_hwm_kb());
+        EXPECT_EQ(g_pidtarget[i].purg_sum_kb, it.purg_sum_kb());
+        EXPECT_EQ(g_pidtarget[i].purg_pin_kb, it.purg_pin_kb());
 
         EXPECT_EQ(g_pidtarget[i].oom_score_adj, it.oom_score_adj());
 
@@ -719,5 +1008,309 @@ HWTEST_F(MemoryDataPluginTest, TestPid, TestSize.Level1)
         kill(pid2, SIGKILL);
     }
     plugin.Stop();
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteAshmemInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteAshmemInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    plugin.WriteAshmemInfo(memoryData);
+
+    const int size = 4;
+    ASSERT_EQ(memoryData.ashmeminfo().size(), size);
+    for (int i = 0; i < size; i++) {
+        auto ashmemInfo = memoryData.ashmeminfo(i);
+        EXPECT_STREQ(ashmemInfo.name().c_str(), g_ashMemInfo[i].name.c_str());
+        EXPECT_EQ(ashmemInfo.pid(), g_ashMemInfo[i].pid);
+        EXPECT_EQ(ashmemInfo.adj(), g_ashMemInfo[i].adj);
+        EXPECT_EQ(ashmemInfo.fd(), g_ashMemInfo[i].fd);
+        EXPECT_STREQ(ashmemInfo.ashmem_name().c_str(), g_ashMemInfo[i].ashmem_name.c_str());
+        EXPECT_EQ(ashmemInfo.size(), g_ashMemInfo[i].size);
+        EXPECT_EQ(ashmemInfo.id(), g_ashMemInfo[i].id);
+        EXPECT_EQ(ashmemInfo.time(), g_ashMemInfo[i].time);
+        EXPECT_EQ(ashmemInfo.ref_count(), g_ashMemInfo[i].ref_count);
+        EXPECT_EQ(ashmemInfo.purged(), g_ashMemInfo[i].purged);
+    }
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteDmaInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteDmaInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    plugin.WriteDmaInfo(memoryData);
+
+    const int size = 17;
+    ASSERT_EQ(memoryData.dmainfo().size(), size);
+    for (int i = 0; i < size; i++) {
+        auto dmaInfo = memoryData.dmainfo(i);
+        EXPECT_STREQ(dmaInfo.name().c_str(), g_dmaMemInfo[i].name.c_str());
+        EXPECT_EQ(dmaInfo.pid(), g_dmaMemInfo[i].pid);
+        EXPECT_EQ(dmaInfo.fd(), g_dmaMemInfo[i].fd);
+        EXPECT_EQ(dmaInfo.size(), g_dmaMemInfo[i].size);
+        EXPECT_EQ(dmaInfo.ino(), g_dmaMemInfo[i].ino);
+        EXPECT_EQ(dmaInfo.exp_pid(), g_dmaMemInfo[i].exp_pid);
+        EXPECT_STREQ(dmaInfo.exp_task_comm().c_str(), g_dmaMemInfo[i].exp_task_comm.c_str());
+        EXPECT_STREQ(dmaInfo.buf_name().c_str(), g_dmaMemInfo[i].buf_name.c_str());
+        EXPECT_STREQ(dmaInfo.exp_name().c_str(), g_dmaMemInfo[i].exp_name.c_str());
+    }
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteGpuMemInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteGpuMemInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    plugin.WriteGpuMemInfo(memoryData);
+    ASSERT_EQ(memoryData.gpumemoryinfo().size(), 1);
+
+    auto gpuMemoryInfo = memoryData.gpumemoryinfo(0);
+    EXPECT_STREQ(gpuMemoryInfo.gpu_name().c_str(), g_gpuMemInfo.gpu_name.c_str());
+    EXPECT_EQ(gpuMemoryInfo.all_gpu_size(), g_gpuMemInfo.all_gpu_size * PAGE_SIZE);
+
+    const int size = 3;
+    ASSERT_EQ(gpuMemoryInfo.gpu_process_info().size(), size);
+    for (int i = 0; i < size; i++) {
+        auto gpuProcessInfo = gpuMemoryInfo.gpu_process_info(i);
+        EXPECT_STREQ(gpuProcessInfo.addr().c_str(), g_gpuMemInfo.gpuInfo[i].addr.c_str());
+        EXPECT_EQ(gpuProcessInfo.pid(), g_gpuMemInfo.gpuInfo[i].pid);
+        EXPECT_EQ(gpuProcessInfo.tid(), g_gpuMemInfo.gpuInfo[i].tid);
+        EXPECT_EQ(gpuProcessInfo.used_gpu_size(), g_gpuMemInfo.gpuInfo[i].used_gpu_size * PAGE_SIZE);
+    }
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteGpuDumpInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    plugin.WriteGpuDumpInfo(memoryData);
+
+    const int size = 23;
+    ASSERT_EQ(memoryData.gpudumpinfo().size(), size);
+
+    auto gpuDumpAllInfo = memoryData.gpudumpinfo(0);
+    EXPECT_STREQ(gpuDumpAllInfo.window_name().c_str(), g_gpudumpAllInfo.window_name.c_str());
+    EXPECT_EQ(gpuDumpAllInfo.id(), g_gpudumpAllInfo.id);
+    const int detailAllSize = 5;
+    ASSERT_EQ(gpuDumpAllInfo.gpu_detail_info().size(), detailAllSize);
+    for (int i = 0; i < detailAllSize; i++) {
+        auto detailInfo = gpuDumpAllInfo.gpu_detail_info(i);
+        auto detailInfoTest = g_gpudumpAllInfo.gpu_detail_info[i];
+        EXPECT_STREQ(detailInfo.module_name().c_str(), detailInfoTest.module_name.c_str());
+        if (i == 0 || i == 1 || i == 3) {
+            ASSERT_EQ(detailInfo.gpu_sub_info().size(), 1);
+            auto subInfo = detailInfo.gpu_sub_info(0);
+            auto subInfoTest = detailInfoTest.gpu_sub_info[0];
+            EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
+            EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
+            EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
+        } else if (i == 2) {
+            const int subSize = 2;
+            ASSERT_EQ(detailInfo.gpu_sub_info().size(), subSize);
+            for (int j = 0; j < subSize; j++) {
+                auto subInfo = detailInfo.gpu_sub_info(j);
+                auto subInfoTest = detailInfoTest.gpu_sub_info[j];
+                EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
+                EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
+                EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
+            }
+        } else if (i == 4) {
+            const int subSize = 4;
+            ASSERT_EQ(detailInfo.gpu_sub_info().size(), subSize);
+            for (int j = 0; j < subSize; j++) {
+                auto subInfo = detailInfo.gpu_sub_info(j);
+                auto subInfoTest = detailInfoTest.gpu_sub_info[j];
+                EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
+                EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
+                EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
+            }
+        }
+    }
+    EXPECT_EQ(gpuDumpAllInfo.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpAllInfo.gpu_purgeable_size, g_gpudumpAllInfo.type));
+
+    auto gpuDumpInfo1 = memoryData.gpudumpinfo(1);
+    EXPECT_STREQ(gpuDumpInfo1.window_name().c_str(), g_gpudumpInfo1.window_name.c_str());
+    EXPECT_EQ(gpuDumpInfo1.id(), g_gpudumpInfo1.id);
+    const int detailSize = 2;
+    ASSERT_EQ(gpuDumpInfo1.gpu_detail_info().size(), detailSize);
+    for (int i = 0; i < detailSize; i++) {
+        auto detailInfo = gpuDumpInfo1.gpu_detail_info(i);
+        auto detailInfoTest = g_gpudumpInfo1.gpu_detail_info[i];
+        EXPECT_STREQ(detailInfo.module_name().c_str(), detailInfoTest.module_name.c_str());
+        ASSERT_EQ(detailInfo.gpu_sub_info().size(), 1);
+        auto subInfo = detailInfo.gpu_sub_info(0);
+        auto subInfoTest = detailInfoTest.gpu_sub_info[0];
+        EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
+        EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
+        EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
+    }
+    EXPECT_EQ(gpuDumpInfo1.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo1.gpu_purgeable_size, g_gpudumpInfo1.type));
+
+    const int rSDumpSize = 66;
+    ASSERT_EQ(memoryData.rsdumpinfo().size(), rSDumpSize);
+    for (int i = 0; i < rSDumpSize; i++) {
+        auto rsDumpInfo = memoryData.rsdumpinfo(i);
+        EXPECT_EQ(rsDumpInfo.size(), g_rSImageDumpInfo[i].size);
+        EXPECT_STREQ(rsDumpInfo.type().c_str(), g_rSImageDumpInfo[i].type.c_str());
+        EXPECT_EQ(rsDumpInfo.pid(), g_rSImageDumpInfo[i].pid);
+        EXPECT_STREQ(rsDumpInfo.surface_name().c_str(), g_rSImageDumpInfo[i].name.c_str());
+    }
+
+    auto gpuDumpInfo2 = memoryData.gpudumpinfo(size - 1);
+    EXPECT_STREQ(gpuDumpInfo2.window_name().c_str(), g_gpudumpInfo2.window_name.c_str());
+    EXPECT_EQ(gpuDumpInfo2.id(), g_gpudumpInfo2.id);
+    ASSERT_EQ(gpuDumpInfo2.gpu_detail_info().size(), 1);
+    auto detailInfo = gpuDumpInfo2.gpu_detail_info(0);
+    auto detailInfoTest = g_gpudumpInfo2.gpu_detail_info[0];
+    EXPECT_STREQ(detailInfo.module_name().c_str(), detailInfoTest.module_name.c_str());
+    ASSERT_EQ(detailInfo.gpu_sub_info().size(), 1);
+    auto subInfo = detailInfo.gpu_sub_info(0);
+    auto subInfoTest = detailInfoTest.gpu_sub_info[0];
+    EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
+    EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
+    EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
+    EXPECT_EQ(gpuDumpInfo2.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo2.gpu_purgeable_size, g_gpudumpInfo2.type));
+
+    const uint64_t gpuLimitSize = 301989888;
+    const uint64_t usedSize = 45064738;
+    EXPECT_EQ(memoryData.gpu_limit_size(), gpuLimitSize);
+    EXPECT_EQ(memoryData.gpu_used_size(), usedSize);
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteDumpProcessInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteDumpProcessInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    MemoryConfig protoConfig;
+    protoConfig.add_pid(1);
+    protoConfig.set_report_process_mem_info(true);
+    protoConfig.set_report_gpu_dump_info(true);
+    EXPECT_TRUE(PluginStub(plugin, protoConfig, memoryData));
+    plugin.Stop();
+    const int size = 2;
+    ASSERT_EQ(memoryData.processesinfo().size(), size);
+    EXPECT_EQ(memoryData.processesinfo(1).pid(), 1);
+    EXPECT_GE(memoryData.processesinfo(1).gl_pss_kb(), 0);
+    EXPECT_GE(memoryData.processesinfo(1).graph_pss_kb(), 0);
+
+    int pid = GetPid("render_service");
+    if (pid > 0) {
+        protoConfig.add_pid(pid);
+        EXPECT_TRUE(PluginStub(plugin, protoConfig, memoryData));
+        plugin.Stop();
+        const int size = 4;
+        ASSERT_EQ(memoryData.processesinfo().size(), size);
+        EXPECT_EQ(memoryData.processesinfo(size - 1).pid(), pid);
+        EXPECT_GE(memoryData.processesinfo(size - 1).gl_pss_kb(), 0);
+        EXPECT_GE(memoryData.processesinfo(size - 1).graph_pss_kb(), 0);
+    }
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteManagerServiceInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteManagerServiceInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    MemoryConfig protoConfig;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    plugin.WriteManagerServiceInfo(memoryData);
+
+    const int winMgrSvcSize = 17;
+    ASSERT_EQ(memoryData.windowinfo().size(), winMgrSvcSize);
+    for (int i = 0; i < winMgrSvcSize; i++) {
+        auto windowInfo = memoryData.windowinfo(i);
+        EXPECT_STREQ(windowInfo.window_name().c_str(), g_winMgrSvcInfo[i].name.c_str());
+        EXPECT_EQ(windowInfo.pid(), g_winMgrSvcInfo[i].pid);
+    }
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test WriteProfileMemInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestWriteProfileMemInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    MemoryConfig protoConfig;
+    protoConfig.add_pid(1);
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    plugin.SetProtoConfig(protoConfig);
+    plugin.WriteProfileMemInfo(memoryData);
+
+    const int profileMemSize = 53;
+    ASSERT_EQ(memoryData.profilememinfo().size(), profileMemSize);
+    for (int i = 0; i < profileMemSize; i++) {
+        auto profileMemInfo = memoryData.profilememinfo(i);
+        EXPECT_STREQ(profileMemInfo.channel().c_str(), g_profileInfo[i].channel.c_str());
+        EXPECT_EQ(profileMemInfo.total_memory_size(), g_profileInfo[i].size);
+    }
+}
+
+/**
+ * @tc.name: mem plugin
+ * @tc.desc: test GpuData
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryDataPluginTest, TestGpuData, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    MemoryConfig protoConfig;
+    protoConfig.add_pid(1);
+    protoConfig.set_report_process_mem_info(true);
+    protoConfig.set_report_purgeable_ashmem_info(true);
+    protoConfig.set_report_dma_mem_info(true);
+    protoConfig.set_report_gpu_mem_info(true);
+    protoConfig.set_report_gpu_dump_info(true);
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    EXPECT_TRUE(PluginStub(plugin, protoConfig, memoryData));
+    plugin.Stop();
+
+    const int processesSize = 2;
+    const int ashmemSize = 4;
+    const int dmaSize = 17;
+    const int dumpSize = 23;
+    const uint64_t gpuLimitSize = 301989888;
+    const uint64_t usedSize = 45064738;
+    EXPECT_EQ(memoryData.processesinfo().size(), processesSize);
+    EXPECT_EQ(memoryData.ashmeminfo().size(), ashmemSize);
+    EXPECT_EQ(memoryData.dmainfo().size(), dmaSize);
+    EXPECT_EQ(memoryData.gpumemoryinfo().size(), 1);
+    EXPECT_EQ(memoryData.gpudumpinfo().size(), dumpSize);
+    EXPECT_EQ(memoryData.gpu_limit_size(), gpuLimitSize);
+    EXPECT_EQ(memoryData.gpu_used_size(), usedSize);
 }
 } // namespace

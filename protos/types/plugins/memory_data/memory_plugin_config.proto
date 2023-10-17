@@ -41,4 +41,14 @@ message MemoryConfig {
     repeated int32 pid = 9;
     // set true to report smaps meminfo from /proc/${pid}/smaps
     bool report_smaps_mem_info = 10;
+    // set true to report ashmem meminfo from /proc/purgeable_ashmem_trigger.
+    bool report_purgeable_ashmem_info = 11;
+    // set true to report DMA meminfo from /proc/process_dmabuf_info.
+    bool report_dma_mem_info = 12;
+    // set true to report gpu meminfo from /proc/gpu_memory.
+    bool report_gpu_mem_info = 13;
+    // set true to report gpu info from hidumper.
+    bool report_gpu_dump_info = 14;
+    // set true to report fake data(purgeable_ashmem_trigger gpu_memory hidumper).
+    bool report_fake_data = 15;
 }
