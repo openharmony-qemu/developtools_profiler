@@ -74,7 +74,6 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
-    "//base/startup/init/services/include/param",
     "//third_party/bounds_checking_function/include",
     "//third_party/googletest/googletest/include",
   ]
