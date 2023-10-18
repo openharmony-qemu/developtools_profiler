@@ -126,7 +126,7 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(chmodCmd.c_str(), "r"), pclose);
     } else {
         sock = GetControlSocket(addrname.c_str());
-        CHECK_TRUE(sock != -1, false, "StartServer FAIL GetControlSocket retrun : %d", sock);
+        CHECK_TRUE(sock != -1, false, "StartServer FAIL GetControlSocket return : %d", sock);
     }
 
     CHECK_TRUE(listen(sock, UNIX_SOCKET_LISTEN_COUNT) != -1, close(sock) != 0 && unlink(addrname.c_str()) == 0,
