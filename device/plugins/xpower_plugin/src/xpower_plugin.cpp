@@ -115,6 +115,15 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
         HILOG_ERROR(LOG_CORE, "the power message is invalid !");
         return;
     }
+    // write protoData to file
+    if (resultWriter_ != nullptr) {
+        resultWriter_->write(resultWriter_, protoData, protoSize);
+        resultWriter_->flush(resultWriter_);
+    }
+    if (dataQueuePtr_->Size() >= MAX_QUEUE_SIZE) {
+        HILOG_ERROR(LOG_CORE, "The buffer queue is full,discard message");
+        return;
+    }
     // 拷贝
     auto rawData = std::make_shared<PowerOptimizeData>();
     rawData->baseData = std::make_unique<uint8_t[]>(protoSize);
@@ -125,10 +134,6 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
     rawData->length = protoSize;
     rawData->messageType = messageType;
     dataQueuePtr_->PushBack(rawData);
-    if (resultWriter_ != nullptr) {
-        resultWriter_->write(resultWriter_, protoData, protoSize);
-        resultWriter_->flush(resultWriter_);
-    }
 }
 
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
