@@ -175,4 +175,12 @@
             <option name="push" value="plugins/ftrace_plugin/test/unittest/resource/test_comm -> /data/local/tmp/" src="res"/>
         </preparer>
     </target>
+    <target name="xpowerplugin_ut">
+        <preparer>
+            <option name="shell" value="aa start -a EntryAbility -b com.taobao.taobao"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="aa force-stop com.taobao.taobao"/>
+        </cleaner>
+    </target>
 </configuration>

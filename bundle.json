@@ -39,10 +39,12 @@
         "init",
         "napi",
         "safwk",
-        "samgr"
+        "samgr",
+        "os_account"
       ],
       "third_party": [
         "bounds_checking_function",
+        "cJSON",
         "googletest",
         "grpc",
         "libbpf",

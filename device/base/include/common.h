@@ -43,5 +43,7 @@ std::string GetErrorMsg();
 std::string GetTimeStr();
 clockid_t GetClockId(const std::string& clockIdStr);
 void AdaptSandboxPath(std::string& filePath, int pid);
+int32_t GetPackageUid(const std::string &name);
+bool GetCurrentUserId(int32_t &userId);
 } // COMMON
 #endif // COMMON_H
