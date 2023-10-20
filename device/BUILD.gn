@@ -36,6 +36,7 @@ group("hiprofiler_targets") {
       "plugins/process_plugin:processplugin",
       "plugins/sample_plugin:sampleplugin",
       "plugins/stream_plugin:streamplugin",
+      "plugins/xpower_plugin:xpowerplugin",
       "services/profiler_service:hiprofilerd",
       "services/shared_memory:shared_memory",
     ]
@@ -69,6 +70,7 @@ group("unittest") {
     "plugins/memory_plugin/test:unittest",
     "plugins/network_plugin/test:unittest",
     "plugins/process_plugin/test:unittest",
+    "plugins/xpower_plugin/test:unittest",
     "services/ipc/test:unittest",
     "services/plugin_service/test:unittest",
     "services/profiler_service/test:unittest",

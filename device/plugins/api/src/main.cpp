@@ -53,6 +53,7 @@ std::vector<std::string> presetPluginVec = {
     "libnetworkplugin.z.so",
     "libprocessplugin.z.so",
     "libarktsplugin.z.so",
+    "libxpowerplugin.z.so",
 };
 
 volatile sig_atomic_t g_isRunning = true;

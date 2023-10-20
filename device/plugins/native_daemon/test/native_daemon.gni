@@ -12,7 +12,6 @@
 # limitations under the License.
 #OHOS_PROFILER_DIR="//developtools/profiler"
 native_daemon_path = "//developtools/profiler/device/plugins/native_daemon"
-
 declare_args() {
   native_daemon_target_host = false
   native_daemon_target_static = false
