@@ -130,9 +130,9 @@ public:
             const Descriptor* nestmessage = message->nested_type(i);
             GenerateNestClass(nestmessage);
             printer_->Print(
-            "class @name@ : public BaseMessage {\n"
-            " public:\n",
-            "name", nestmessage->name());
+                "class @name@ : public BaseMessage {\n"
+                " public:\n",
+                "name", nestmessage->name());
             printer_->Indent();
             printer_->Print("@name@() = default;\n", "name", nestmessage->name());
             printer_->Print("explicit @name@(RandomWriteCtx* writeCtx, MessagePool* messagePool = nullptr) : BaseMessage(writeCtx, messagePool) {}\n", "name", nestmessage->name());

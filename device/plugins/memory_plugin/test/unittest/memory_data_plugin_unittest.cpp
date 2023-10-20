@@ -92,7 +92,8 @@ struct AshMemInfo {
 };
 
 AshMemInfo g_ashMemInfo[] = {
-    {"com.ohos.settin", 1474, 1, 46, "dev/ashmem/SharedBlock:/data/storage/el2/database/entry/rdb/settingsdata.db", 2097152, 1, 1282999603, 1, 1},
+    {"com.ohos.settin", 1474, 1, 46, "dev/ashmem/SharedBlock:/data/storage/el2/database/entry/rdb/settingsdata.db",
+     2097152, 1, 1282999603, 1, 1},
     {"com.ohos.launch", 1515, 1, 54, "dev/ashmem/hooknativesmb", 67108864, 10, 1282945782, 1, 0},
     {"hiprofilerd", 6746, 1, 27, "dev/ashmem/memory-plugin", 67108864, 12, 1287845167, 0, 0},
     {"hiprofiler_plug", 6756, 1, 7, "dev/ashmem/memory-plugin", 67108864, 15, 1358999004, 0, 0},
@@ -1148,7 +1149,8 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
             }
         }
     }
-    EXPECT_EQ(gpuDumpAllInfo.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpAllInfo.gpu_purgeable_size, g_gpudumpAllInfo.type));
+    EXPECT_EQ(gpuDumpAllInfo.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpAllInfo.gpu_purgeable_size,
+                                                                      g_gpudumpAllInfo.type));
 
     auto gpuDumpInfo1 = memoryData.gpudumpinfo(1);
     EXPECT_STREQ(gpuDumpInfo1.window_name().c_str(), g_gpudumpInfo1.window_name.c_str());
@@ -1166,7 +1168,8 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
         EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
         EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
     }
-    EXPECT_EQ(gpuDumpInfo1.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo1.gpu_purgeable_size, g_gpudumpInfo1.type));
+    EXPECT_EQ(gpuDumpInfo1.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo1.gpu_purgeable_size,
+                                                                    g_gpudumpInfo1.type));
 
     const int rSDumpSize = 66;
     ASSERT_EQ(memoryData.rsdumpinfo().size(), rSDumpSize);
@@ -1191,7 +1194,8 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
     EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
     EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
     EXPECT_EQ(subInfo.entry_num(), subInfoTest.entry_num);
-    EXPECT_EQ(gpuDumpInfo2.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo2.gpu_purgeable_size, g_gpudumpInfo2.type));
+    EXPECT_EQ(gpuDumpInfo2.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo2.gpu_purgeable_size,
+                                                                    g_gpudumpInfo2.type));
 
     const uint64_t gpuLimitSize = 301989888;
     const uint64_t usedSize = 45064738;

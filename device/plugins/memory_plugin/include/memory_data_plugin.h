@@ -239,7 +239,8 @@ constexpr ProcStatusMapping procStatusMapping[] = {
     {StatusType::PRO_TGID, "Tgid"},         {StatusType::PRO_NAME, "Name"},       {StatusType::PRO_VMSIZE, "VmSize"},
     {StatusType::PRO_VMRSS, "VmRSS"},       {StatusType::PRO_RSSANON, "RssAnon"}, {StatusType::PRO_RSSFILE, "RssFile"},
     {StatusType::PRO_RSSSHMEM, "RssShmem"}, {StatusType::PRO_VMSWAP, "VmSwap"},   {StatusType::PRO_VMLCK, "VmLck"},
-    {StatusType::PRO_VMHWM, "VmHWM"},       {StatusType::PRO_PURGSUM, "PurgSum"},     {StatusType::PRO_PURGPIN, "PurgPin"},
+    {StatusType::PRO_VMHWM, "VmHWM"},       {StatusType::PRO_PURGSUM, "PurgSum"},
+    {StatusType::PRO_PURGPIN, "PurgPin"},
 };
 
 enum ErrorType {
