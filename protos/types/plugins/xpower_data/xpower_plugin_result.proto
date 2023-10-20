@@ -1,0 +1,142 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+option java_package = "ohos.devtools.datasources.transport.grpc.service";
+option optimize_for = LITE_RUNTIME;
+
+message OptimizeReport {
+  int64 start_time = 1;                 //统计起始时间
+  int64 end_time = 2;                   //统计结束时间
+  string bundle_name = 3;               //调优应用包名（AppStatistic和AppDetail必传，其他非必传）
+  uint32 message_type = 4;              //调优消息类型值累加（建议用于二进制位运算，判断是否包含某消息类型）
+  RealBattery real_battery = 5;         //电源信息统计，对应messageType为1（对应原hisysevent中的POWER_IDE_BATTERY上报）
+  AppStatistic app_statistic = 6;       //指定应用的各器件统计信息，对应messageType为2
+  AppDetail app_detail = 7;             //指定应用的各器件调优信息，对应messageType为4
+  ComponentTop component_top = 8;       //整机各器件的top应用信息，对应messageType为8（对应原hisysevent中的POWER_IDE_*上报）
+  AbnormalEvents abnormal_events = 9;   //指定应用的异常事件检测，对应messageType为16（3min/次的异常检测，暂未实现，预留）
+}
+
+message RealBattery {
+  int64 capacity = 1;   //电池容量
+  int64 charge = 2;     //充电状态
+  int64 current = 3;    //电池电流
+  int64 gas_gauge = 4;  //电池电量
+  int64 level = 5;      //电池百分比
+  int64 screen = 6;     //屏幕状态
+}
+
+message AppStatistic {
+  AppStatisticCommon audio = 1;       //指定应用的audio统计信息
+  AppStatisticCommon bluetooth = 2;   //指定应用的bluetooth统计信息
+  AppStatisticCommon camera = 3;      //指定应用的camera统计信息
+  AppStatisticCommon cpu = 4;         //指定应用的cpu统计信息
+  AppStatisticCommon display = 5;     //指定应用的display统计信息
+  AppStatisticCommon flashlight = 6;  //指定应用的flashlight统计信息
+  AppStatisticCommon gpu = 7;         //指定应用的gpu统计信息
+  AppStatisticCommon location = 8;    //指定应用的location统计信息
+  AppStatisticCommon wifiscan = 9;    //指定应用的wifiscan统计信息
+}
+
+message AppStatisticCommon {
+  int64 energy = 1;   //器件统计功耗
+  int64 time = 2;     //器件使用时长
+}
+
+message AppDetail {
+  AppDetailCPU cpu = 1;   //指定应用的cpu调优信息
+  AppDetailGPU gpu = 2;   //指定应用的gpu调优信息
+}
+
+message AppDetailCPU {
+  int32 thread_count = 1;           //指定应用的线程数
+  repeated int64 thread_load = 2;   //各线程负载
+  repeated string thread_name = 3;  //各线程名
+  repeated int64 thread_time = 4;   //各线程执行时长
+  repeated int64 thread_energy = 5; //各线程统计功耗
+}
+
+message AppDetailGPU {
+  int64 frequency_count = 1;    //GPU运行的频率数
+  repeated int64 frequency = 2; //GPU运行的频率
+  repeated int64 idle_time = 3; //对应频率的idea时长
+  repeated int64 run_time = 4;  //对应频率的运行时长
+}
+
+message ComponentTop {
+  ComponentTopCommon audio = 1;       //整机audio的top应用信息
+  ComponentTopCommon bluetooth = 2;   //整机bluetooth的top应用信息
+  ComponentTopCamera camera = 3;      //整机camera的top应用信息
+  ComponentTopCpu cpu = 4;            //整机cpu的top应用信息
+  ComponentTopDisplay display = 5;    //整机display的top应用信息
+  ComponentTopCommon flashlight = 6;  //整机flashlight的top应用信息
+  ComponentTopDisplay gpu = 7;        //整机gpu的top应用信息
+  ComponentTopCommon location = 8;    //整机location的top应用信息
+  ComponentTopCommon wifiscan = 9;    //整机wifiscan的top应用信息
+}
+
+message ComponentTopCommon {
+  int32 count = 1;                        //应用个数
+  repeated string appname = 2;            //应用包名
+  repeated int64 background_duration = 3; //后台使用时长
+  repeated int64 background_energy = 4;   //后台使用功耗值
+  repeated int64 foreground_duration = 5; //前台使用时长
+  repeated int64 foreground_energy = 6;   //前台使用功耗值
+  repeated int64 screen_off_duration = 7; //灭屏使用时长
+  repeated int64 screen_off_energy = 8;   //灭屏使用功耗值
+  repeated int64 screen_on_duration = 9;  //亮屏使用时长
+  repeated int64 screen_on_energy = 10;   //亮屏使用功耗值
+}
+
+message ComponentTopCamera {
+  int32 count = 1;                        //应用个数
+  repeated string appname = 2;            //应用包名
+  repeated int64 camera_id = 3;           //Camera类型，0：后置，1：前置
+  repeated int64 background_duration = 4; //后台使用时长
+  repeated int64 background_energy = 5;   //后台使用功耗值
+  repeated int64 foreground_duration = 6; //前台使用时长
+  repeated int64 foreground_energy = 7;   //前台使用功耗值
+  repeated int64 screen_off_duration = 8; //灭屏使用时长
+  repeated int64 screen_off_energy = 9;   //灭屏使用功耗值
+  repeated int64 screen_on_duration = 10; //亮屏使用时长
+  repeated int64 screen_on_energy = 11;   //亮屏使用功耗值
+}
+
+message ComponentTopCpu {
+  int32 count = 1;                        //应用个数
+  repeated string appname = 2;            //应用包名
+  repeated int64 uid = 3;                 //应用UID
+  repeated int64 background_duration = 4; //后台使用时长
+  repeated int64 background_energy = 5;   //后台使用功耗值
+  repeated int64 foreground_duration = 6; //前台使用时长
+  repeated int64 foreground_energy = 7;   //前台使用功耗值
+  repeated int64 screen_off_duration = 8; //灭屏使用时长
+  repeated int64 screen_off_energy = 9;   //灭屏使用功耗值
+  repeated int64 screen_on_duration = 10; //亮屏使用时长
+  repeated int64 screen_on_energy = 11;   //亮屏使用功耗值
+  repeated int64 load = 12;               //cpu占用率
+}
+
+message ComponentTopDisplay {
+  int32 count = 1;              //应用个数
+  repeated string appname = 2;  //应用包名
+  repeated int64 time = 3;      //应用使用时长
+  repeated int64 energy = 4;    //应用功耗值
+}
+
+
+message AbnormalEvents {
+  //to do
+}
