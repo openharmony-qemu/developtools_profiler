@@ -23,7 +23,7 @@
 #include "paged_mem_pool.h"
 #include "plugin_module_api.h"
 #include "result_transporter.h"
-#include "trace_ops.h"
+#include "trace_collector.h"
 #include "trace_plugin_config.pb.h"
 
 #include <atomic>
@@ -79,7 +79,7 @@ private:
     template <typename T, typename E>
     bool ParseFtraceEvent(T* tracePluginResult, int cpuid, uint8_t page[], E* ftraceEvent);
 
-    static std::unique_ptr<TraceOps> GetTraceOps();
+    std::string ReloadTraceArgs();
 
     // for UT
     void SetTestInfo(int cpuNum, std::string path)
@@ -96,7 +96,7 @@ private:
     std::unique_ptr<KernelSymbolsParser> ksymsParser_ = nullptr;
     std::unique_ptr<FtraceParser> ftraceParser_ = nullptr;
     std::unique_ptr<ResultTransporter> tansporter_ = nullptr;
-    std::unique_ptr<TraceOps> traceOps_ = nullptr;
+    std::shared_ptr<OHOS::HiviewDFX::UCollectClient::TraceCollector> traceCollector_ = nullptr;
     std::shared_ptr<FILE> rawDataFile_ = nullptr;
     std::vector<std::unique_ptr<FtraceDataReader>> ftraceReaders_ = {};
     std::vector<std::shared_ptr<uint8_t>> ftraceBuffers_;
