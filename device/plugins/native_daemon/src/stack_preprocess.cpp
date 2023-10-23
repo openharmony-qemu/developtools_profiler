@@ -902,15 +902,15 @@ unsigned StackPreprocess::LgFloor(unsigned long val)
     val |= (val >> RIGHT_MOVE_4);
     val |= (val >> RIGHT_MOVE_8);
     val |= (val >> RIGHT_MOVE_16);
-    if (sizeof(val) > 4) {
-        int constant = sizeof(val) * 4;
+    if (sizeof(val) > 4) {              // 4: sizeThreshold
+        int constant = sizeof(val) * 4; // 4: sizeThreshold
         val |= (val >> constant);
     }
     val++;
     if (val == 0) {
         return 8 * sizeof(val) - 1; // 8: 8byte
     }
-    return __builtin_ffsl(val) - 2; // 2:
+    return __builtin_ffsl(val) - 2; // 2: adjustment
 }
 
 uint64_t StackPreprocess::PowCeil(uint64_t val)
