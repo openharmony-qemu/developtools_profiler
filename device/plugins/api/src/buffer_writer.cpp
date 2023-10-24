@@ -115,7 +115,7 @@ void BufferWriter::FinishReport(int32_t size)
     profilerPluginData_->finishAdd_data(size);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    profilerPluginData_->set_clock_id(ProfilerPluginData::CLOCKID_REALTIME);
+    profilerPluginData_->set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId_));
     profilerPluginData_->set_tv_sec(ts.tv_sec);
     profilerPluginData_->set_tv_nsec(ts.tv_nsec);
     int32_t len = profilerPluginData_->Finish();
