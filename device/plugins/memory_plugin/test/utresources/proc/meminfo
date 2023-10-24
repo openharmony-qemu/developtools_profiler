@@ -10,6 +10,9 @@ Active(anon):    2535372 kB
 Inactive(anon):   658832 kB
 Active(file):    5915016 kB
 Inactive(file):  4148836 kB
+Active(purg):         10 kB
+Inactive(purg):     5678 kB
+Pined(purg):      116790 kB
 Unevictable:         132 kB
 Mlocked:               0 kB
 SwapTotal:      63999996 kB

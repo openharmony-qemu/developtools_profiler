@@ -124,6 +124,25 @@ public:
         }
     }
 
+    void GenerateNestClass(const Descriptor* message)
+    {
+        for (int i = 0; i < message->nested_type_count(); ++i) {
+            const Descriptor* nestmessage = message->nested_type(i);
+            GenerateNestClass(nestmessage);
+            printer_->Print(
+                "class @name@ : public BaseMessage {\n"
+                " public:\n",
+                "name", nestmessage->name());
+            printer_->Indent();
+            printer_->Print("@name@() = default;\n", "name", nestmessage->name());
+            printer_->Print("explicit @name@(RandomWriteCtx* writeCtx, MessagePool* messagePool = nullptr) : BaseMessage(writeCtx, messagePool) {}\n", "name", nestmessage->name());
+            GenerateFieldsID(nestmessage);
+            GenerateFunction(nestmessage);
+            printer_->Outdent();
+            printer_->Print("};\n\n");
+        }
+    }
+
     void GenerateClass()
     {
         // forward declaration
@@ -134,22 +153,7 @@ public:
 
         for (int i = 0; i < fileContent_->message_type_count(); ++i) {
             const Descriptor* message = fileContent_->message_type(i);
-            for (int j = 0; j < message->nested_type_count(); ++j) {
-                const Descriptor* nestmessage = message->nested_type(j);
-                printer_->Print(
-                    "class @name@ : public BaseMessage {\n"
-                    " public:\n",
-                    "name", nestmessage->name());
-                printer_->Indent();
-                printer_->Print("@name@() = default;\n", "name", nestmessage->name());
-                printer_->Print(
-                    "explicit @name@(RandomWriteCtx* writeCtx, MessagePool* messagePool = nullptr) : BaseMessage(writeCtx, messagePool) {}\n",
-                    "name", nestmessage->name());
-                GenerateFieldsID(nestmessage);
-                GenerateFunction(nestmessage);
-                printer_->Outdent();
-                printer_->Print("};\n\n");
-            }
+            GenerateNestClass(message);
 
             printer_->Print(
                 "class @name@ : public BaseMessage {\n"

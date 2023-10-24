@@ -1,0 +1,111 @@
+
+-------------------------------[ability]-------------------------------
+
+
+----------------------------------WindowManagerService---------------------------------
+-------------------------------------ScreenGroup 0-------------------------------------
+WindowName           DisplayId Pid     WinId Type Mode Flag ZOrd Orientation [ x    y    w    h    ]
+SCBWallpaper1        0         2230    3     2000 1    0    0    0           [ 0    0    1344 2772 ]
+SCBDesktop2          0         2230    4     2001 1    0    1    0           [ 0    0    1344 2772 ]
+SCBStatusBar7        0         2230    9     2108 1    0    15   0           [ 0    0    1344 137  ]
+SCBGestureBack10     0         2230    12    2111 1    0    18   0           [ 0    0    1344 2772 ]
+SCBScreenLock12      0         2230    14    2110 1    0    20   0           [ 0    0    1344 2772 ]
+---------------------------------------------------------------------------------------
+SCBNegativeScreen3   0         2230    5     2109 1    0    -1   0           [ -13400    1344 2772 ]
+SCBGlobalSearch4     0         2230    6     2109 1    0    -1   0           [ 0    0    1344 2772 ]
+BlurComponent5       0         2230    7     2109 1    0    -1   0           [ 0    0    1344 2772 ]
+SCBBannerNotificatio 0         2230    8     2106 1    0    -1   0           [ 0    0    1344 2772 ]
+SCBDropdownPanel8    0         2230    10    2109 1    0    -1   0           [ 0    0    1344 2772 ]
+SCBVolumePanel9      0         2230    11    2111 1    0    -1   0           [ 0    0    1344 2772 ]
+SCBSysDialogDefault1 0         2230    13    2104 1    0    -1   0           [ 0    0    1344 2772 ]
+SCBSysDialogUpper13  0         2230    15    2104 1    0    -1   0           [ 0    0    1344 2772 ]
+imeWindow            0         3109    16    2105 0    0    -1   0           [ 0    1656 1344 1115 ]
+hmscore0             0         24704   19    1    1    0    -1   0           [ 0    0    1344 2772 ]
+himovie0             0         24901   20    1    1    0    -1   0           [ 0    0    1344 2772 ]
+music0               0         25177   24    1    1    0    -1   0           [ 0    0    1344 2772 ]
+Focus window: 14
+Total window num: 24
+
+Current mission lists:
+ MissionList Type #NORMAL
+    Mission ID #17  mission name #[#com.huawei.hmos.hwupgradeguide::GuideHomeAbility]    lockedState #0
+      app name [com.huawei.hmos.hwupgradeguide]
+      main name [GuideHomeAbility]
+      bundle name [com.huawei.hmos.hwupgradeguide]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #18  mission name #[#com.huawei.hmos.settings:phone_settings:com.huawei.hmos.settings.MainAbility]    lockedState #0
+      app name [com.huawei.hmos.settings]
+      main name [com.huawei.hmos.settings.MainAbility]
+      bundle name [com.huawei.hmos.settings]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #19  mission name #[#com.huawei.hms.hmscore:hmscore_account:AccountBasicAbility]    lockedState #0
+      app name [com.huawei.hms.hmscore]
+      main name [AccountBasicAbility]
+      bundle name [com.huawei.hms.hmscore]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #20  mission name #[#com.huawei.hmsapp.himovie:entry:MainAbility]    lockedState #0
+      app name [com.huawei.hmsapp.himovie]
+      main name [MainAbility]
+      bundle name [com.huawei.hmsapp.himovie]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #21  mission name #[#com.huawei.hmos.calendar:phone:MainAbility]    lockedState #0
+      app name [com.huawei.hmos.calendar]
+      main name [MainAbility]
+      bundle name [com.huawei.hmos.calendar]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #23  mission name #[#com.huawei.hmos.photos:phone_photos:com.huawei.hmos.photos.MainAbility]    lockedState #0
+      app name [com.huawei.hmos.photos]
+      main name [com.huawei.hmos.photos.MainAbility]
+      bundle name [com.huawei.hmos.photos]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #24  mission name #[#com.huawei.hmsapp.music:phone:MainAbility]    lockedState #0
+      app name [com.huawei.hmsapp.music]
+      main name [MainAbility]
+      bundle name [com.huawei.hmsapp.music]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #25  mission name #[#com.taobao.taobao:entry:EntryAbility]    lockedState #0
+      app name [com.taobao.taobao]
+      main name [EntryAbility]
+      bundle name [com.taobao.taobao]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #26  mission name #[#com.tencent.mm:entry:EntryAbility]    lockedState #0
+      app name [com.tencent.mm]
+      main name [EntryAbility]
+      bundle name [com.tencent.mm]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+    Mission ID #28  mission name #[#com.taobao.taobao:entry:EntryAbility]    lockedState #0
+      app name [com.taobao.taobao]
+      main name [EntryAbility]
+      bundle name [com.taobao.taobao]
+      ability type [PAGE]
+      state #BACKGROUND
+      app state #BACKGROUND
+      callee connections:
+

@@ -1,0 +1,283 @@
+-------------------------------[ability]-------------------------------
+
+
+----------------------------------RenderService---------------------------------
+dumpMem:
+
+----------
+RenderService caches:
+RSImageCache:
+      Size	            Type	     Pid	                 Wid	                             SurfaceName	                              Frame              NodeId:
+  12441600	        pixelmap	    2230	       9577777070120	                         SCBScreenLock12	           (-104, -214, 1553, 3201)       9577777074507
+    331776	        pixelmap	    2230	       9577777074110	                                    NONE	                       (0, 0, 0, 0)       9577777074110
+    331776	        pixelmap	    2230	       9577777070982	                                    NONE	             (1006, 2481, 272, 272)       9577777070982
+    331776	        pixelmap	    2230	       9577777071749	                                    NONE	              (1723, 903, 273, 273)       9577777071749
+    331776	        pixelmap	    2230	       9577777071708	                                    NONE	              (692, 1530, 273, 272)       9577777071708
+    147456	        pixelmap	    2230	       9577777073903	                                    NONE	              (292, 1280, 133, 136)       9577777073903
+     82944	        pixelmap	    2230	       9577777074040	                                    NONE	              (2263, 502, 133, 136)       9577777074040
+    200704	        pixelmap	    2230	       9577777074035	                                    NONE	              (2414, 351, 133, 136)       9577777074035
+   1106000	        pixelmap	    2230	       9577777070104	                      SCBNegativeScreen3	          (-1259, 3983, 1176, 1051)       9577777070196
+    147456	        pixelmap	    2230	       9577777074018	                                    NONE	              (2427, 667, 107, 109)       9577777074018
+    147456	        pixelmap	    2230	       9577777073994	                                    NONE	              (2112, 653, 133, 136)       9577777073994
+    147456	        pixelmap	    2230	       9577777073909	                                    NONE	              (469, 1307, 107, 108)       9577777073909
+    147456	        pixelmap	    2230	       9577777073981	                                    NONE	              (2112, 502, 133, 136)       9577777073981
+    173056	        pixelmap	   25177	     108134391611393	                                  music0	              (593, 1045, 259, 259)     108134391611399
+   3349548	         skimage	    2230	       9577777071657	                                    NONE	              (111, 322, 1122, 495)       9577777071657
+    186624	        pixelmap	    2230	       9577777072364	                                    NONE	              (424, 1888, 182, 182)       9577777072364
+    147456	        pixelmap	    2230	       9577777074006	                                    NONE	              (2414, 653, 107, 109)       9577777074006
+    518400	        pixelmap	    2230	       9577777074030	                                    NONE	              (2112, 351, 133, 136)       9577777074030
+    331776	        pixelmap	    2230	       9577777073275	                                    NONE	                       (0, 0, 0, 0)       9577777073275
+    331776	        pixelmap	    2230	       9577777071748	                                    NONE	              (1723, 903, 273, 273)       9577777071748
+    331776	        pixelmap	    2230	       9577777071757	                                    NONE	             (1006, 1530, 272, 272)       9577777071757
+    331776	        pixelmap	    2230	       9577777074307	                                    NONE	                       (0, 0, 0, 0)       9577777074307
+     19600	        pixelmap	    3485	      14967961026567	                           ArkTSCardNode	               (-500, 2135, 70, 71)      14967961026583
+    147456	        pixelmap	    2230	       9577777073861	                                    NONE	               (141, 978, 133, 136)       9577777073861
+    331776	        pixelmap	    2230	       9577777071700	                                    NONE	               (692, 903, 273, 273)       9577777071700
+    331776	        pixelmap	    2230	       9577777071692	                                    NONE	              (2350, 903, 272, 273)       9577777071692
+    254016	        pixelmap	    2230	       9577777072241	                                    NONE	              (111, 1888, 182, 182)       9577777072241
+    331776	        pixelmap	    2230	       9577777073274	                                    NONE	                       (0, 0, 0, 0)       9577777073274
+    147456	        pixelmap	    2230	       9577777073897	                                    NONE	              (141, 1280, 133, 136)       9577777073897
+    147456	        pixelmap	    2230	       9577777074024	                                    NONE	              (2440, 680, 107, 109)       9577777074024
+    331776	        pixelmap	    2230	       9577777071716	                                    NONE	              (1410, 903, 272, 273)       9577777071716
+    331776	        pixelmap	    2230	       9577777074308	                                    NONE	                       (0, 0, 0, 0)       9577777074308
+    331776	        pixelmap	    2230	       9577777071709	                                    NONE	              (692, 1530, 273, 272)       9577777071709
+    331776	        pixelmap	    2230	       9577777071701	                                    NONE	               (692, 903, 273, 273)       9577777071701
+    147456	        pixelmap	    2230	       9577777071322	                                    NONE	              (1051, 948, 182, 182)       9577777071322
+    589824	        pixelmap	    3485	      14967961026567	                           ArkTSCardNode	             (-542, 2093, 546, 547)      14967961026572
+    147456	        pixelmap	    2230	       9577777073974	                                    NONE	              (2263, 351, 133, 136)       9577777073974
+    331776	        pixelmap	    2230	       9577777071676	                                    NONE	              (379, 1530, 273, 272)       9577777071676
+   1788696	         skimage	    2230	       9577777070104	                      SCBNegativeScreen3	            (-1259, 2093, 546, 547)       9577777071044
+    147456	        pixelmap	    2230	       9577777071335	                                    NONE	              (738, 1262, 182, 182)       9577777071335
+    929600	        pixelmap	    3485	      14967961026589	                           ArkTSCardNode	           (-1172, 2723, 1176, 547)      14967961026593
+  12441600	        pixelmap	    2230	       9577777070086	                           SCBWallpaper1	             (-33, -69, 1411, 2911)       9577777070089
+    331776	        pixelmap	    2230	       9577777070981	                                    NONE	             (1006, 2481, 272, 272)       9577777070981
+    147456	        pixelmap	    2230	       9577777073891	                                    NONE	              (443, 1129, 133, 136)       9577777073891
+    147456	        pixelmap	    2230	       9577777071308	                                    NONE	             (1051, 1262, 182, 182)       9577777071308
+    147456	        pixelmap	    2230	       9577777070946	                                    NONE	              (738, 2526, 182, 182)       9577777070946
+    160000	        pixelmap	       0	                   0	                                    NONE	                       (0, 0, 0, 0)                   0
+    147456	        pixelmap	    2230	       9577777070931	                                    NONE	              (424, 2526, 182, 182)       9577777070931
+    331776	        pixelmap	    2230	       9577777071717	                                    NONE	              (1410, 903, 272, 273)       9577777071717
+     65536	        pixelmap	    2230	       9577777070773	                                    NONE	                       (0, 0, 0, 0)       9577777070773
+    147456	        pixelmap	    2230	       9577777073988	                                    NONE	              (2414, 502, 133, 136)       9577777073988
+    331776	        pixelmap	    2230	       9577777071725	                                    NONE	             (1723, 1216, 273, 273)       9577777071725
+    331776	        pixelmap	    2230	       9577777074111	                                    NONE	                       (0, 0, 0, 0)       9577777074111
+    331776	        pixelmap	    2230	       9577777071693	                                    NONE	              (2350, 903, 272, 273)       9577777071693
+    147456	        pixelmap	    2230	       9577777074000	                                    NONE	              (2263, 653, 133, 136)       9577777074000
+    147456	        pixelmap	    2230	       9577777073867	                                    NONE	               (292, 978, 133, 136)       9577777073867
+    331776	        pixelmap	    2230	       9577777071756	                                    NONE	             (1006, 1530, 272, 272)       9577777071756
+    262144	        pixelmap	    2230	       9577777071554	                                    NONE	              (2082, 948, 182, 182)       9577777071554
+    147456	        pixelmap	    2230	       9577777074012	                                    NONE	              (2414, 653, 107, 109)       9577777074012
+    147456	        pixelmap	    2230	       9577777073873	                                    NONE	               (443, 978, 133, 136)       9577777073873
+    147456	        pixelmap	    2230	       9577777070916	                                    NONE	              (111, 2526, 182, 182)       9577777070916
+   3538944	        pixelmap	   25111	     107850923769890	                                    NONE	                       (0, 0, 0, 0)     107850923769890
+    331776	        pixelmap	    2230	       9577777071677	                                    NONE	              (379, 1530, 273, 272)       9577777071677
+    147456	        pixelmap	    2230	       9577777073879	                                    NONE	              (141, 1129, 133, 136)       9577777073879
+    331776	        pixelmap	    2230	       9577777071724	                                    NONE	             (1723, 1216, 273, 273)       9577777071724
+    147456	        pixelmap	    2230	       9577777073885	                                    NONE	              (292, 1129, 133, 136)       9577777073885
+  pixelmap:Size = 43428 KB (64 entries)
+  skimage:Size = 5017 KB (2 entries)
+Total Size = 48445 KB (66 entries)
+
+RSRenderNode:
+Total Node Size = 3838 KB (2277 entries)
+
+----------
+Skia CPU caches:
+Font Cache (CPU):
+  Size: 0.00 kB
+  Glyph Count: 2
+CPU Cachesxx:
+  skia/sk_glyph_cache:
+    Other: 5.40 KB (1 entry)
+Total CPU memory usage:
+    5533 bytes, 5.40 KB (0.00 bytes is purgeable)
+
+cpu cache limit = 33554432 ( fontcache = 2097152 ):
+
+---------------
+Skia GPU Caches:
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+  SW Path Mask:
+    Texture: 352.34 KB (12 entries)
+  Other:
+    Buffer Object: 914.00 bytes (4 entries)
+    StencilAttachment: 4.50 MB (2 entries)
+  Image:
+    Texture: 7.98 MB (1 entry)
+  Scratch:
+    Texture: 1.00 MB (1 entry)
+    Buffer Object: 78.00 KB (2 entries)
+    RenderTarget: 29.42 MB (3 entries)
+    StencilAttachment: 14.21 MB (1 entry)
+Total GPU memory usage:
+    59970416 bytes, 57.19 MB (23.69 MB is purgeable)
+
+---------------
+Skia GPU Caches:SysUI_Volume 10007273799686
+  SW Path Mask:
+    Texture: 352.34 KB (12 entries)
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:SysUI_StatusBar 10007273799685
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:RecentView 12120397709323
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:PrivacyIndicator 10007273799684
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:EntryView 12120397709322
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:SysUI_Dropdown 10007273799683
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:ScreenLockWindow 10007273799681
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+  Image:
+    Texture: 7.98 MB (1 entry)
+Total GPU memory usage:
+    8367072 bytes, 7.98 MB (7.98 MB is purgeable)
+
+---------------
+Skia GPU Caches:com.huawei.hmsapp.intelligententryMainWindowExtAbility0 12605729013761
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:imeWindow 12236361826305
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:hwstartupguide0 11768210391041
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+  Scratch:
+    Texture: 1.00 MB (1 entry)
+    Buffer Object: 78.00 KB (2 entries)
+Total GPU memory usage:
+    1131856 bytes, 1.08 MB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:wallpaper 11836929867779
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:WallpaperView 11836929867777
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:SysUI_Notification_Banner 10007273799697
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:GestureBackView 12120397709313
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:savelayer_draw_node
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:restorelayer_draw_node
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:savelayer_color_filter
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:cold_start
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:acquire_surface
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+  Scratch:
+    RenderTarget: 14.21 MB (1 entry)
+    StencilAttachment: 14.21 MB (1 entry)
+Total GPU memory usage:
+    29807952 bytes, 28.43 MB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:filter
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+---------------
+Skia GPU Caches:render_frame
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+  Other:
+    Buffer Object: 914.00 bytes (4 entries)
+    StencilAttachment: 4.50 MB (2 entries)
+Total GPU memory usage:
+    4722914 bytes, 4.50 MB (512.89 KB is purgeable)
+
+---------------
+Skia GPU Caches:capture
+  skia/gr_text_blob_cache:
+    Other: 3.33 KB (1 entry)
+Total GPU memory usage:
+    3408 bytes, 3.33 KB (0.00 bytes is purgeable)
+
+gpu limit = 301989888 ( used = 45064738 ):

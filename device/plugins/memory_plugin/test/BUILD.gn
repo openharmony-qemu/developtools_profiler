@@ -27,7 +27,6 @@ ohos_unittest("memdataplugin_ut") {
   sources = [
     "unittest/buffer_splitter_unittest.cpp",
     "unittest/memory_data_plugin_unittest.cpp",
-    "unittest/smaps_stats_unittest.cpp",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin_source",
@@ -48,7 +47,12 @@ ohos_unittest("memdataplugin_ut") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "c_utils:utils",
+    "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
+    "graphic_2d:librender_service_client",
+    "hilog:libhilog",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -76,7 +80,12 @@ ohos_unittest("smaps_stats_ut") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "c_utils:utils",
+    "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
+    "graphic_2d:librender_service_client",
+    "hilog:libhilog",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"

@@ -1,0 +1,22 @@
+Dma-buf objects usage of processes:
+Process          pid              fd               size_bytes       ino              exp_pid          exp_task_comm    buf_name               exp_name
+ispserver        433              18               12288            3041             433              ispserver        NULL                   videobuf2_vmalloc
+ispserver        433              19               12288            3042             433              ispserver        ispserver1             videobuf2_vmalloc
+ispserver        433              20               12288            3043             433              ispserver        ispserver4             videobuf2_vmalloc
+ispserver        433              21               12288            3044             433              ispserver        NULL                   videobuf2_vmalloc
+Total dmabuf size of ispserver: 49152 bytes
+render_service   624              9                3686400          28914            624              render_service   NULL                   rockchipdrm
+render_service   624              30               3686400          30144            539              disp_gralloc_ho  1                      rockchipdrm
+render_service   624              32               3686400          31026            539              disp_gralloc_ho  5                      rockchipdrm
+render_service   624              34               3686400          29650            539              disp_gralloc_ho  disp_gralloc_ho78      rockchipdrm
+render_service   624              37               3686400          32896            539              disp_gralloc_ho  0                      rockchipdrm
+render_service   624              38               3686400          30860            539              disp_gralloc_ho  NULL                   rockchipdrm
+render_service   624              39               3686400          30860            539              disp_gralloc_ho  NULL                   rockchipdrm
+render_service   624              58               3686400          30145            539              disp_gralloc_ho  NULL                   rockchipdrm
+render_service   624              59               208896           32895            539              disp_gralloc_ho  NULL                   rockchipdrm
+render_service   624              66               3686400          32896            539              disp_gralloc_ho  NULL                   rockchipdrm
+Total dmabuf size of render_service: 41803776 bytes
+com.ohos.system  1298             56               3686400          32896            539              disp_gralloc_ho  NULL                   rockchipdrm
+com.ohos.system  1298             60               3686400          32899            539              disp_gralloc_ho  NULL                   rockchipdrm
+com.ohos.system  1298             62               3686400          32901            539              disp_gralloc_ho  NULL                   rockchipdrm
+Total dmabuf size of com.ohos.system: 11059200 bytes

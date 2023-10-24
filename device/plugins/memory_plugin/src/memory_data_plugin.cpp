@@ -14,19 +14,43 @@
  */
 #include "memory_data_plugin.h"
 
-#include "buffer_splitter.h"
+#include <cmath>
+#include <sstream>
+
 #include "memory_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "smaps_stats.h"
+#include "transaction/rs_interfaces.h"
 
 namespace {
+using namespace OHOS::Rosen;
+using namespace OHOS::HDI::Memorytracker::V1_0;
 using namespace OHOS::Developtools::Profiler;
+
 const char* CMD_FORMAT = "memory service meminfo --local ";
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 constexpr int BUF_MAX_LEN = 2048;
 constexpr int MAX_ZRAM_DEVICES = 256;
 constexpr int ZRAM_KB = 1024;
 constexpr size_t DEFAULT_READ_SIZE = 4096;
+const std::string FAKE_DATA_PATH = "/data/local/tmp";
+constexpr int DATA_START_LINES = 3;
+constexpr size_t PAGE_SIZE = 4096;
+constexpr size_t KB_TO_BYTES = 1024;
+constexpr size_t MB_TO_BYTES = 1024 * 1024;
+constexpr int INDENT_CATEGORY_NUM = 2;
+constexpr int INDENT_SUB_TYPE_NUM = 4;
+const std::string TOTAL_DMA_STR = "Total dma"; // flag for total of DMA memory size
+const std::string RS_IMAGE_CACHE_START_STR = "RSImageCache:"; // flag for start RSImageCache data
+const std::string RS_IMAGE_CACHE_END_STR = "  pixelmap:"; // flag for end RSImageCache data
+const std::string TOTAL_CPU_STR = "Total CPU memory usage"; // flag for total of CPU memory size
+const std::string SKIA_GPU_STR = "Skia GPU Caches"; // flag for GPU
+const std::string GPU_LIMIT_STR = "gpu limit"; // flag for gpu limit size
+const std::string RENDER_SERVICE_NAME = "render_service";
+const std::string MGR_SVC_START_STR = "----------------------------------WindowManagerService------------";
+const std::string MGR_SVC_END_STR = "Focus window";
+const std::string MGR_SVC_INTERVAL_STR = "----------------------------------------------------------";
+const std::string MEM_PROFILE_STR = "Channel:";
 } // namespace
 
 MemoryDataPlugin::MemoryDataPlugin()
@@ -333,6 +357,25 @@ template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memo
             }
         }
     }
+
+    if (protoConfig_.report_purgeable_ashmem_info()) {
+        WriteAshmemInfo(memoryDataProto);
+    }
+
+    if (protoConfig_.report_dma_mem_info()) {
+        WriteDmaInfo(memoryDataProto);
+    }
+
+    if (protoConfig_.report_gpu_mem_info()) {
+        WriteGpuMemInfo(memoryDataProto);
+    }
+
+    if (protoConfig_.report_gpu_dump_info()) {
+        WriteGpuDumpInfo(memoryDataProto);
+        WriteDumpProcessInfo(memoryDataProto);
+        WriteManagerServiceInfo(memoryDataProto);
+        WriteProfileMemInfo(memoryDataProto);
+    }
 }
 
 int MemoryDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
@@ -608,7 +651,7 @@ template <typename T> void MemoryDataPlugin::SetProcessInfo(T& processMemoryInfo
 {
     uint64_t value;
 
-    if ((key >= PRO_TGID && key <= PRO_VMHWM && key != PRO_NAME) && !StringToUll(word, value)) {
+    if ((key >= PRO_TGID && key <= PRO_PURGPIN && key != PRO_NAME) && !StringToUll(word, value)) {
         HILOG_ERROR(LOG_CORE, "MemoryDataPlugin:%s, strtoull failed, key(%d), word(%s)", __func__, key, word);
         return;
     }
@@ -640,6 +683,12 @@ template <typename T> void MemoryDataPlugin::SetProcessInfo(T& processMemoryInfo
             break;
         case PRO_VMHWM:
             processMemoryInfo.set_vm_hwm_kb(value);
+            break;
+        case PRO_PURGSUM:
+            processMemoryInfo.set_purg_sum_kb(value);
+            break;
+        case PRO_PURGPIN:
+            processMemoryInfo.set_purg_pin_kb(value);
             break;
         default:
             break;
@@ -723,4 +772,631 @@ template <typename T> void MemoryDataPlugin::WriteProcesseList(T& memoryData)
         WriteProcessInfo(memoryData, seenPids_[i]);
     }
     closedir(procDir);
+}
+
+template <typename T> void MemoryDataPlugin::SetAshmemInfo(T& ashmemInfo, int key, const char* word)
+{
+    int32_t value = 0;
+    uint64_t size = 0;
+    switch (key) {
+        case ASHMEM_PROCESS_NAME:
+            ashmemInfo.set_name(word);
+            break;
+        case ASHMEM_PID:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
+            ashmemInfo.set_pid(value);
+            break;
+        case ASHMEM_ADJ:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull adj failed", __func__);
+            ashmemInfo.set_adj(value);
+            break;
+        case ASHMEM_FD:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull fd failed", __func__);
+            ashmemInfo.set_fd(value);
+            break;
+        case ASHMEM_NAME:
+            ashmemInfo.set_ashmem_name(word);
+            break;
+        case ASHMEM_SIZE:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull size failed", __func__);
+            ashmemInfo.set_size(size);
+            break;
+        case ASHMEM_ID:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull id failed", __func__);
+            ashmemInfo.set_id(value);
+            break;
+        case ASHMEM_TIME:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull time failed", __func__);
+            ashmemInfo.set_time(size);
+            break;
+        case ASHMEM_REF_COUNT:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull ref_count failed", __func__);
+            ashmemInfo.set_ref_count(size);
+            break;
+        case ASHMEM_PURGED:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull purged failed", __func__);
+            ashmemInfo.set_purged(size);
+            break;
+        default:
+            break;
+    }
+}
+
+template <typename T> void MemoryDataPlugin::WriteAshmemInfo(T& dataProto)
+{
+    std::string path = protoConfig_.report_fake_data() ? FAKE_DATA_PATH : std::string(testpath_);
+    std::string file = path + "/purgeable_ashmem_trigger";
+    std::ifstream input(file, std::ios::in);
+    if (input.fail()) {
+        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+        return;
+    }
+
+    int lines = 0;
+    do {
+        if (!input.good()) {
+            return;
+        }
+
+        std::string line;
+        getline(input, line);
+        line += '\n';
+        if (++lines <= DATA_START_LINES) {
+            // The first three lines are not data.
+            continue;
+        }
+
+        BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+        if (!totalBuffer.NextWord(',')) {
+            break;
+        }
+        auto* ashmemInfo = dataProto.add_ashmeminfo();
+        for (int i = ASHMEM_PROCESS_NAME; i <= ASHMEM_PURGED; i++) {
+            std::string curWord = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+            SetAshmemInfo(*ashmemInfo, i, curWord.c_str());
+            char delimiter = (i == ASHMEM_REF_COUNT) ? '\n' : ',';
+            if (!totalBuffer.NextWord(delimiter)) {
+                break;
+            }
+        }
+    } while (!input.eof());
+    input.close();
+}
+
+template <typename T> void MemoryDataPlugin::SetDmaInfo(T& dmaInfo, int key, const char* word)
+{
+    int32_t value = 0;
+    uint64_t size = 0;
+    switch (key) {
+        case DMA_NAME:
+            dmaInfo.set_name(word);
+            break;
+        case DMA_PID:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
+            dmaInfo.set_pid(value);
+            break;
+        case DMA_FD:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull fd failed", __func__);
+            dmaInfo.set_fd(value);
+            break;
+        case DMA_SIZE:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull size failed", __func__);
+            dmaInfo.set_size(size);
+            break;
+        case DMA_INO:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull magic failed", __func__);
+            dmaInfo.set_ino(value);
+            break;
+        case DMA_EXP_PID:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull exp_pid failed", __func__);
+            dmaInfo.set_exp_pid(value);
+            break;
+        case DMA_EXP_TASK_COMM:
+            dmaInfo.set_exp_task_comm(word);
+            break;
+        case DMA_BUF_NAME:
+            dmaInfo.set_buf_name(word);
+            break;
+        case DMA_EXP_NAME:
+            if (*(word + strlen(word) - 1) == '\r') {
+                dmaInfo.set_exp_name(std::string(word, strlen(word) - 1));
+            } else {
+                dmaInfo.set_exp_name(word);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+template <typename T> void MemoryDataPlugin::WriteDmaInfo(T& dataProto)
+{
+    std::string file = std::string(testpath_) + "/process_dmabuf_info";
+    std::ifstream input(file, std::ios::in);
+    if (input.fail()) {
+        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+        return;
+    }
+
+    int lines = 0;
+    do {
+        if (!input.good()) {
+            return;
+        }
+
+        std::string line;
+        getline(input, line);
+        line += '\n';
+        if (++lines < DATA_START_LINES
+            || strncmp(line.c_str(), TOTAL_DMA_STR.c_str(), TOTAL_DMA_STR.size()) == 0) {
+            continue; // not data.
+        }
+
+        BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+        if (!totalBuffer.NextWord(' ')) {
+            break;
+        }
+        auto* dmaInfo = dataProto.add_dmainfo();
+        for (int i = DMA_NAME; i <= DMA_EXP_NAME; i++) {
+            std::string curWord = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+            SetDmaInfo(*dmaInfo, i, curWord.c_str());
+            char delimiter = (i == DMA_BUF_NAME) ? '\n' : ' ';
+            if (!totalBuffer.NextWord(delimiter)) {
+                break;
+            }
+        }
+    } while (!input.eof());
+    input.close();
+}
+
+template <typename T> void MemoryDataPlugin::SetGpuProcessInfo(T& gpuProcessInfo, int key, const char* word)
+{
+    int32_t value = 0;
+    uint64_t size = 0;
+    switch (key) {
+        case GPU_ADDR:
+            gpuProcessInfo.set_addr(word);
+            break;
+        case GPU_TID:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull tid failed", __func__);
+            gpuProcessInfo.set_tid(value);
+            break;
+        case GPU_PID:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
+            gpuProcessInfo.set_pid(value);
+            break;
+        case GPU_USED_SIZE:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull used_gpu_size failed", __func__);
+            gpuProcessInfo.set_used_gpu_size(size * PAGE_SIZE);
+            break;
+        default:
+            break;
+    }
+}
+
+template <typename T> void MemoryDataPlugin::WriteGpuMemInfo(T& dataProto)
+{
+    std::string path = protoConfig_.report_fake_data() ? FAKE_DATA_PATH : std::string(testpath_);
+    std::string file = path + "/gpu_memory";
+    std::ifstream input(file, std::ios::in);
+    if (input.fail()) {
+        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+        return;
+    }
+
+    std::string line;
+    getline(input, line);
+    line += '\n';
+
+    BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+    auto* gpuMemoryInfo = dataProto.add_gpumemoryinfo();
+    if (totalBuffer.NextWord(' ')) {
+        gpuMemoryInfo->set_gpu_name(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize()));
+    }
+    if (totalBuffer.NextWord('\n')) {
+        gpuMemoryInfo->set_all_gpu_size((strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE) * PAGE_SIZE));
+    }
+
+    do {
+        if (!input.good()) {
+            return;
+        }
+
+        getline(input, line);
+        line += '\n';
+
+        BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+        if (!totalBuffer.NextWord(' ')) {
+            break;
+        }
+        auto* gpuProcessInfo = gpuMemoryInfo->add_gpu_process_info();
+        for (int i = GPU_ADDR; i <= GPU_USED_SIZE; i++) {
+            std::string curWord = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+            SetGpuProcessInfo(*gpuProcessInfo, i, curWord.c_str());
+            if (!totalBuffer.NextWord(' ')) {
+                break;
+            }
+        }
+    } while (!input.eof());
+    input.close();
+}
+
+std::string MemoryDataPlugin::RunCommand(const std::string& cmd)
+{
+    std::string ret = "";
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+    if (!pipe) {
+        HILOG_ERROR(LOG_CORE, "%s:popen(%s) error", __func__, cmd.c_str());
+        return ret;
+    }
+
+    std::array<char, READ_BUFFER_SIZE> buffer;
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        ret += buffer.data();
+    }
+    return ret;
+}
+
+int MemoryDataPlugin::GetIndentNum(const std::string& line)
+{
+    int indentNum = 0;
+    while (isspace(line[indentNum])) {
+        indentNum++;
+    }
+    return indentNum;
+}
+
+uint64_t MemoryDataPlugin::SizeToBytes(const std::string& sizeStr, const std::string& type)
+{
+    auto size = std::atof(sizeStr.c_str());
+    uint64_t byteSize = round(size);
+    if (type == "KB") {
+        byteSize = round(size * KB_TO_BYTES);
+    } else if (type == "MB") {
+        byteSize = round(size * MB_TO_BYTES);
+    }
+    return byteSize;
+}
+
+template <typename T> bool MemoryDataPlugin::SetGpuDumpInfo(T& gpuDumpInfo, BufferSplitter& totalBuffer)
+{
+    int ret = totalBuffer.NextLine();
+    CHECK_TRUE(ret, false, "totalBuffer is end!");
+    std::string line = std::string(totalBuffer.CurLine());
+    int indentNum = GetIndentNum(line);
+    while (indentNum > 0) {
+        if (indentNum == INDENT_CATEGORY_NUM && totalBuffer.NextWord(':')) {
+            auto* gpuDetailInfo = gpuDumpInfo.add_gpu_detail_info();
+            gpuDetailInfo->set_module_name(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize()));
+            ret = totalBuffer.NextLine();
+            CHECK_TRUE(ret, false, "totalBuffer is end!");
+            line = std::string(totalBuffer.CurLine());
+            indentNum = GetIndentNum(line);
+            while (indentNum == INDENT_SUB_TYPE_NUM && totalBuffer.NextWord(':')) {
+                auto* gpuSubInfo = gpuDetailInfo->add_gpu_sub_info();
+                gpuSubInfo->set_category_name(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize()));
+                std::string size = "";
+                if (totalBuffer.NextWord(' ')) {
+                    size = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+                }
+                if (totalBuffer.NextWord(' ')) {
+                    std::string type = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+                    gpuSubInfo->set_size(SizeToBytes(size, type));
+                }
+                if (totalBuffer.NextWord(' ')) {
+                    gpuSubInfo->set_entry_num(strtoull(totalBuffer.CurWord() + 1, nullptr, DEC_BASE));
+                }
+                ret = totalBuffer.NextLine();
+                CHECK_TRUE(ret, false, "totalBuffer is end!");
+                line = std::string(totalBuffer.CurLine());
+                indentNum = GetIndentNum(line);
+            }
+        }
+    }
+
+    ret = totalBuffer.NextLine();
+    CHECK_TRUE(ret, false, "totalBuffer is end!");
+    std::string size = "";
+    if (totalBuffer.NextWord('(') && totalBuffer.NextWord(' ')) {
+        size = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+    }
+    if (totalBuffer.NextWord(' ')) {
+        std::string type = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+        gpuDumpInfo.set_gpu_purgeable_size(SizeToBytes(size, type));
+    }
+    return true;
+}
+
+template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, int key, const char* word)
+{
+    int32_t pid = 0;
+    uint64_t size = 0;
+    switch (key) {
+        case RS_SIZE:
+            size = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull size failed", __func__);
+            rsDumpInfo.set_size(size);
+            break;
+        case RS_TYPE:
+            if (*(word + strlen(word) - 1) == '\t') {
+                rsDumpInfo.set_type(std::string(word, strlen(word) - 1));
+            } else {
+                rsDumpInfo.set_type(word);
+            }
+            break;
+        case RS_PID:
+            pid = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(pid >= 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
+            rsDumpInfo.set_pid(pid);
+            break;
+        case RS_SURFACENAME:
+            if (*(word + strlen(word) - 1) == '\t') {
+                rsDumpInfo.set_surface_name(std::string(word, strlen(word) - 1));
+            } else {
+                rsDumpInfo.set_surface_name(word);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+template <typename T> void MemoryDataPlugin::WriteGpuDumpInfo(T& dataProto)
+{
+    std::string content = "";
+    if (!protoConfig_.report_fake_data()) {
+        if (strcmp(testpath_, "/proc") == 0) {
+            content = RunCommand("hidumper -s 10 '-a dumpMem'");
+        } else {
+            // for UT
+            content = ReadFile(std::string(testpath_) + "/dumpMem.txt");
+        }
+    } else {
+        content = ReadFile(FAKE_DATA_PATH + "/dumpMem.txt");
+    }
+    CHECK_TRUE(content != "", NO_RETVAL, "hidumper no data!");
+
+    BufferSplitter totalBuffer((const char*)content.c_str(), content.size() + 1);
+    do {
+        std::string line = totalBuffer.CurLine();
+        if (strncmp(line.c_str(), RS_IMAGE_CACHE_START_STR.c_str(), RS_IMAGE_CACHE_START_STR.size()) == 0) {
+            totalBuffer.NextLine(); // data starts from the next line
+            while (totalBuffer.NextLine()) {
+                line = totalBuffer.CurLine();
+                if (strncmp(line.c_str(), RS_IMAGE_CACHE_END_STR.c_str(), RS_IMAGE_CACHE_END_STR.size()) == 0) {
+                    break;
+                }
+                auto* rsDumpInfo = dataProto.add_rsdumpinfo();
+                for (int i = RS_SIZE; i <= RS_SURFACENAME; i++) {
+                    if (!totalBuffer.NextWord(' ')) {
+                        break;
+                    }
+                    std::string curWord = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+                    SetRSImageDumpInfo(*rsDumpInfo, i, curWord.c_str());
+                }
+            }
+        } else if (strncmp(line.c_str(), TOTAL_CPU_STR.c_str(), TOTAL_CPU_STR.size()) == 0) {
+            totalBuffer.NextLine(); // data starts from the next line
+            if (!totalBuffer.NextWord(' ')) {
+                break;
+            }
+            auto* cpuDumpInfo = dataProto.add_cpudumpinfo();
+            cpuDumpInfo->set_total_cpu_memory_size(strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE));
+        } else if (strncmp(line.c_str(), SKIA_GPU_STR.c_str(), SKIA_GPU_STR.size()) == 0) {
+            auto* gpuDumpInfo = dataProto.add_gpudumpinfo();
+            if (totalBuffer.NextWord(':') && (totalBuffer.NextWord(' ') || totalBuffer.NextWord('\n'))) {
+                std::string name = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+                gpuDumpInfo->set_window_name(name.substr(0, name.find("\r")));
+            }
+            if (totalBuffer.NextWord('\n')) {
+                gpuDumpInfo->set_id(strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE));
+            }
+            SetGpuDumpInfo(*gpuDumpInfo, totalBuffer);
+        } else if (strncmp(line.c_str(), GPU_LIMIT_STR.c_str(), GPU_LIMIT_STR.size()) == 0) {
+            if (totalBuffer.NextWord('=') && totalBuffer.NextWord(' ')) {
+                dataProto.set_gpu_limit_size(strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE));
+            }
+            if (totalBuffer.NextWord('=') && totalBuffer.NextWord(' ')) {
+                dataProto.set_gpu_used_size(strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE));
+            }
+            break;
+        }
+    } while (totalBuffer.NextLine());
+}
+
+bool MemoryDataPlugin::isRenderService(int pid)
+{
+    if (ReadProcPidFile(pid, "cmdline") > 0) {
+        std::string processName(reinterpret_cast<char*>(buffer_.get()), strlen(reinterpret_cast<char*>(buffer_.get())));
+        int index = processName.size() - RENDER_SERVICE_NAME.size();
+        if (index >= 0 && processName.substr(index) == RENDER_SERVICE_NAME) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool MemoryDataPlugin::GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graphicsMemory)
+{
+    // refers hidumper
+    // https://gitee.com/openharmony/hiviewdfx_hidumper/blob/master/frameworks/native/src/executor/memory/memory_info.cpp#L203
+    bool ret = false;
+    sptr<IMemoryTrackerInterface> memtrack = IMemoryTrackerInterface::Get(true);
+    if (memtrack == nullptr) {
+        HILOG_ERROR(LOG_CORE, "%s: get IMemoryTrackerInterface failed", __func__);
+        return ret;
+    }
+
+    for (const auto &memTrackerType : MEMORY_TRACKER_TYPES) {
+        std::vector<MemoryRecord> records;
+        if (memtrack->GetDevMem(pid, memTrackerType.first, records) == HDF_SUCCESS) {
+            uint64_t value = 0;
+            for (const auto &record : records) {
+                if ((static_cast<uint32_t>(record.flags) & FLAG_UNMAPPED) == FLAG_UNMAPPED) {
+                    value = static_cast<uint64_t>(record.size / KB_TO_BYTES);
+                    break;
+                }
+            }
+            if (memTrackerType.first == MEMORY_TRACKER_TYPE_GL) {
+                graphicsMemory.gl = value;
+                ret = true;
+            } else if (memTrackerType.first == MEMORY_TRACKER_TYPE_GRAPH) {
+                graphicsMemory.graph = value;
+                ret = true;
+            }
+        }
+    }
+    return ret;
+}
+
+template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
+{
+    for (int i = 0; i < protoConfig_.pid().size(); i++) {
+        int32_t pid = protoConfig_.pid(i);
+        auto* processesInfo = dataProto.add_processesinfo();
+        processesInfo->set_pid(pid);
+
+        // refers hidumper
+        // https://gitee.com/openharmony/hiviewdfx_hidumper/blob/master/frameworks/native/src/executor/memory/memory_info.cpp#L260
+        GraphicsMemory graphicsMemory;
+        if (isRenderService(pid)) {
+            std::vector<MemoryGraphic> memGraphicVec = RSInterfaces::GetInstance().GetMemoryGraphics();
+            auto sumPidsMemGL = 0;
+            for (auto it = memGraphicVec.begin(); it != memGraphicVec.end(); it++) {
+                sumPidsMemGL += it->GetGpuMemorySize();
+            }
+            sumPidsMemGL = static_cast<uint64_t>(sumPidsMemGL / KB_TO_BYTES);
+
+            if (GetRenderServiceGlSize(pid, graphicsMemory)) {
+                graphicsMemory.gl -= sumPidsMemGL;
+                processesInfo->set_gl_pss_kb(graphicsMemory.gl);
+                processesInfo->set_graph_pss_kb(graphicsMemory.graph);
+            }
+        } else {
+            auto& rsClient = RSInterfaces::GetInstance();
+            std::unique_ptr<MemoryGraphic> memGraphic = std::make_unique<MemoryGraphic>(rsClient.GetMemoryGraphic(pid));
+            graphicsMemory.gl = memGraphic->GetGpuMemorySize() / KB_TO_BYTES;
+            graphicsMemory.graph = memGraphic->GetCpuMemorySize() / KB_TO_BYTES;
+            processesInfo->set_gl_pss_kb(graphicsMemory.gl);
+            processesInfo->set_graph_pss_kb(graphicsMemory.graph);
+        }
+    }
+}
+
+template <typename T> void MemoryDataPlugin::SetManagerServiceInfo(T& windowinfo, int key, const char* word)
+{
+    int32_t pid = 0;
+    switch (key) {
+        case WINDOW_NAME:
+            windowinfo.set_window_name(word);
+            break;
+        case WINDOW_PID:
+            pid = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(pid >= 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
+            windowinfo.set_pid(pid);
+            break;
+        default:
+            break;
+    }
+}
+
+template <typename T> void MemoryDataPlugin::WriteManagerServiceInfo(T& dataProto)
+{
+    std::string content = "";
+    if (strcmp(testpath_, "/proc") == 0) {
+        content = RunCommand("hidumper -s WindowManagerService -a '-a'");
+    } else {
+        // for UT
+        content = ReadFile(std::string(testpath_) + "/window_manager_service.txt");
+    }
+    CHECK_TRUE(content != "", NO_RETVAL, "hidumper WindowManagerService no data!");
+
+    BufferSplitter totalBuffer((const char*)content.c_str(), content.size() + 1);
+    do {
+        std::string line = totalBuffer.CurLine();
+        if (strncmp(line.c_str(), MGR_SVC_START_STR.c_str(), MGR_SVC_START_STR.size()) == 0) {
+            totalBuffer.NextLine();
+            totalBuffer.NextLine(); // data starts from the next line
+            while (totalBuffer.NextLine()) {
+                line = totalBuffer.CurLine();
+                if (strncmp(line.c_str(), MGR_SVC_INTERVAL_STR.c_str(), MGR_SVC_INTERVAL_STR.size()) == 0) {
+                    continue;
+                }
+
+                if (strncmp(line.c_str(), MGR_SVC_END_STR.c_str(), MGR_SVC_END_STR.size()) == 0) {
+                    return;
+                }
+
+                auto* windowinfo = dataProto.add_windowinfo();
+                for (int i = WINDOW_NAME; i <= WINDOW_PID; i++) {
+                    if (!totalBuffer.NextWord(' ')) {
+                        break;
+                    }
+                    std::string curWord = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+                    SetManagerServiceInfo(*windowinfo, i, curWord.c_str());
+                }
+            }
+        }
+    } while (totalBuffer.NextLine());
+}
+
+template <typename T> void MemoryDataPlugin::WriteProfileMemInfo(T& dataProto)
+{
+    for (int i = 0; i < protoConfig_.pid().size(); i++) {
+        std::string file = "";
+        if (!protoConfig_.report_fake_data()) {
+            if (strcmp(testpath_, "/proc") == 0) {
+                file = "/sys/kernel/debug/mali0/ctx/" + std::to_string(protoConfig_.pid(i)) + "_0/mem_profile";
+            } else {
+                // for UT
+                file = std::string(testpath_) + "/mem_profile.txt";
+            }
+        } else {
+            file = FAKE_DATA_PATH + "/mem_profile.txt";
+        }
+
+        std::ifstream input(file, std::ios::in);
+        if (input.fail()) {
+            HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+            return;
+        }
+
+        do {
+            if (!input.good()) {
+                return;
+            }
+
+            std::string line;
+            getline(input, line);
+            line += '\n';
+
+            if (strncmp(line.c_str(), MEM_PROFILE_STR.c_str(), MEM_PROFILE_STR.size()) == 0) {
+                auto* profileMemInfo = dataProto.add_profilememinfo();
+                BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+                if (totalBuffer.NextWord(':') && totalBuffer.NextWord('(')) {
+                    profileMemInfo->set_channel(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize() - 1));
+                }
+                if (totalBuffer.NextWord(':') && totalBuffer.NextWord(')')) {
+                    profileMemInfo->set_total_memory_size(strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE));
+                }
+            }
+        } while (!input.eof());
+        input.close();
+    }
 }
