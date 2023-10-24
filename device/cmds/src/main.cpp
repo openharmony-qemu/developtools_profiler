@@ -450,9 +450,8 @@ bool StartDependentProcess()
 bool CheckProcessExit(const std::string& processName, int& pid)
 {
     int nCount = 5; // 5: try 5 times
-    bool isExit = true;
     constexpr int waitExitMills = 1000;
-    while (isExit && nCount > 0) {
+    while (nCount > 0) {
         if (COMMON::IsProcessExist(processName, pid)) {
             nCount--;
             std::this_thread::sleep_for(std::chrono::milliseconds(waitExitMills));
