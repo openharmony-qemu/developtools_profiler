@@ -24,7 +24,6 @@
 #include <unistd.h>
 #include <regex>
 
-#include "hitrace_ops.h"
 #include "file_utils.h"
 #include "ftrace_field_parser.h"
 #include "ftrace_fs_ops.h"
@@ -53,21 +52,6 @@ using namespace OHOS::Developtools::Profiler;
 } // namespace
 
 FTRACE_NS_BEGIN
-std::unique_ptr<TraceOps> FlowController::GetTraceOps()
-{
-    std::vector<std::unique_ptr<TraceOps>> traceOps;
-    traceOps.emplace_back(std::make_unique<HitraceOps>());
-
-    for (size_t i = 0; i < traceOps.size(); i++) {
-        auto& ops = traceOps[i];
-        CHECK_TRUE(ops != nullptr, nullptr, "traceOps[%zu] is null!", i);
-        if (ops->IsSupported()) {
-            return std::move(ops);
-        }
-    }
-    return nullptr;
-}
-
 FlowController::FlowController()
 {
     ftraceParser_ = std::make_unique<FtraceParser>();
@@ -94,9 +78,6 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
     CHECK_TRUE(nprocs > 0, -1, "get processor number failed!");
     platformCpuNum_ = nprocs;
 
-    auto traceOps = GetTraceOps();
-    CHECK_NOTNULL(traceOps, -1, "get trace ops failed!");
-
     // init FtraceParser
     CHECK_NOTNULL(ftraceParser_, 0, "FtraceParser create FAILED!");
     CHECK_TRUE(ftraceParser_->Init(), -1, "ftrace parser init failed!");
@@ -111,7 +92,7 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
 
     resultWriter_ = writer;
     tansporter_ = std::move(transmiter);
-    traceOps_ = std::move(traceOps);
+    traceCollector_ = OHOS::HiviewDFX::UCollectClient::TraceCollector::Create();
     return 0;
 }
 
@@ -229,13 +210,35 @@ bool FlowController::ParseBasicData()
     return 0;
 }
 
+std::string FlowController::ReloadTraceArgs()
+{
+    std::string args;
+    for (size_t i = 0; i < traceCategories_.size(); i++) {
+        if (i == 0) {
+            args += ("tags:" + traceCategories_[i]);
+        } else {
+            args += ("," + traceCategories_[i]);
+        }
+    }
+
+    if (traceClock_.size() > 0) {
+        args += (" clockType:" + traceClock_);
+    }
+
+    if (bufferSizeKb_ > 0) {
+        args += (" bufferSize:" + std::to_string(bufferSizeKb_));
+    }
+    HILOG_INFO(LOG_CORE, "trace args: %s", args.c_str());
+    return args;
+}
+
 int FlowController::StartCapture(void)
 {
     CHECK_TRUE(ftraceSupported_, -1, "current kernel not support ftrace!");
     CHECK_NOTNULL(ftraceParser_, -1, "create FtraceParser FAILED!");
     CHECK_NOTNULL(ksymsParser_, -1, "create KernelSymbolsParser FAILED!");
-    CHECK_NOTNULL(tansporter_, -1, "crated ResultTransporter FAILED!");
-    CHECK_NOTNULL(traceOps_, -1, "create TraceOps FAILED!");
+    CHECK_NOTNULL(tansporter_, -1, "create ResultTransporter FAILED!");
+    CHECK_NOTNULL(traceCollector_, -1, "create TraceCollector FAILED!");
     CHECK_NOTNULL(resultWriter_, -1, "%s: resultWriter_ nullptr", __func__);
 
     CHECK_TRUE(ParseBasicData() == 0, -1, "parse basic data failed!");
@@ -270,15 +273,12 @@ int FlowController::StartCapture(void)
         return -1;
     }
 
-    // set trace_clock
-    traceOps_->SetTraceClock(traceClock_);
-    // enable ftrace event switches
-    if (traceCategories_.size() > 0) {
-        traceOps_->EnableCategories(traceCategories_, hitraceTime_);
+    // set trace_clock and enable all tag categories with hiview::TraceCollector
+    auto openRet = traceCollector_->OpenRecording(ReloadTraceArgs());
+    if (openRet.retCode != OHOS::HiviewDFX::UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "Enable tag categories failed, trace error code is %d!", openRet.retCode);
+        return -1;
     }
-
-    // hitrace will reset trace buffer size, so reset user config after hitrace
-    FtraceFsOps::GetInstance().SetBufferSizeKb(bufferSizeKb_);
     EnableTraceEvents();
     return 0;
 }
@@ -450,7 +450,6 @@ int FlowController::StopCapture(void)
 {
     CHECK_TRUE(ftraceSupported_, -1, "current kernel not support ftrace!");
     CHECK_NOTNULL(tansporter_, -1, "crate ResultTransporter FAILED!");
-    CHECK_NOTNULL(traceOps_, -1, "create TraceOps FAILED!");
 
     CHECK_TRUE(requestEvents_.size() != 0 || traceApps_.size() != 0 || traceCategories_.size() != 0, -1,
                "StopCapture: ftrace event is not set, return false");
@@ -487,7 +486,7 @@ int FlowController::StopCapture(void)
     // because trace cmd will read trace buffer,
     // so we to this action after polling thread exit.
     if (traceCategories_.size() > 0) {
-        traceOps_->DisableCategories();
+        traceCollector_->Recover();
     }
     tansporter_->Flush();
 

@@ -63,7 +63,10 @@ ohos_unittest("ftrace_plugin_ut") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "hilog:libhilog",
+    "hiview:libucollection_client",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
