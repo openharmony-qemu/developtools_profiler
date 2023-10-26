@@ -54,8 +54,8 @@ static int DiskioPluginSessionStop()
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = DiskioDataPluginSessionStart,
     .onPluginReportResult = DiskioPluginReportResult,
-    .onPluginReportResultOptimize = DiskioPluginReportResultOptimize,
     .onPluginSessionStop = DiskioPluginSessionStop,
+    .onPluginReportResultOptimize = DiskioPluginReportResultOptimize,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

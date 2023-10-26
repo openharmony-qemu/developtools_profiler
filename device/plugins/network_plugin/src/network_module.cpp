@@ -62,9 +62,9 @@ static int NetworkRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = NetworkPluginSessionStart,
     .onPluginReportResult = NetworkPluginReportResult,
-    .onPluginReportResultOptimize = NetworkPluginReportResultOptimize,
     .onPluginSessionStop = NetworkPluginSessionStop,
     .onRegisterWriterStruct = NetworkRegisterWriterStruct,
+    .onPluginReportResultOptimize = NetworkPluginReportResultOptimize,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

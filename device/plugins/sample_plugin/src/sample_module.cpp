@@ -60,9 +60,9 @@ static int SampleRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = SamplePluginSessionStart,
     .onPluginReportResult = SamplePluginReportResult,
-    .onPluginReportResultOptimize = SamplePluginReportResultOptimize,
     .onPluginSessionStop = SamplePluginSessionStop,
     .onRegisterWriterStruct = SampleRegisterWriterStruct,
+    .onPluginReportResultOptimize = SamplePluginReportResultOptimize,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

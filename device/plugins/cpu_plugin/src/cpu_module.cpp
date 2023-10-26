@@ -54,8 +54,8 @@ static int CpuPluginSessionStop()
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = CpuDataPluginSessionStart,
     .onPluginReportResult = CpuPluginReportResult,
-    .onPluginReportResultOptimize = CpuPluginReportResultOptimize,
     .onPluginSessionStop = CpuPluginSessionStop,
+    .onPluginReportResultOptimize = CpuPluginReportResultOptimize,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

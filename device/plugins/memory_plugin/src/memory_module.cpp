@@ -59,9 +59,9 @@ static int MemRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = MemDataPluginSessionStart,
     .onPluginReportResult = MemPluginReportResult,
-    .onPluginReportResultOptimize = MemPluginReportResultOptimize,
     .onPluginSessionStop = MemPluginSessionStop,
     .onRegisterWriterStruct = MemRegisterWriterStruct,
+    .onPluginReportResultOptimize = MemPluginReportResultOptimize,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {
