@@ -40,11 +40,15 @@
         "napi",
         "safwk",
         "samgr",
+        "drivers_interface_memorytracker",
+        "graphic_2d",
+        "os_account",
         "window_manager",
         "image_framework"
       ],
       "third_party": [
         "bounds_checking_function",
+        "cJSON",
         "googletest",
         "grpc",
         "libbpf",
@@ -53,7 +57,7 @@
         "protobuf",
         "zlib",
         "libpng"
-      ]
+      ],
     },
     "build": {
       "sub_component": [
