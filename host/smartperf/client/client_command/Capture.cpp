@@ -15,22 +15,78 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include "include/sp_utils.h"
 #include "include/Capture.h"
+#include "dispaly_manager.h"
+#include "wm_common.h"
+#include "png.h"
 namespace OHOS {
 namespace SmartPerf {
 void Capture::ThreadGetCatch(const std::string &curTime) const
 {
-    std::string result;
-    std::string cmdCapture = "snapshot_display -f /data/local/tmp/capture/" + curTime +".png";
-    SPUtils::LoadCmd(cmdCapture, result);
-    std::cout << "Screen Capture Thread >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    auto savePath = "data/local/tmp/capture/screenCap_" + curTime + ".png";
+    std::stringstream errorRecv;
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    if (!TakeScreenCap(savePath)) {
+        std::cout << "Screen Capture Failed：---"<< errorRecv.str() << std::endl;
+    } else {
+        std::cout << "Screen Capture save to---"<< savePath << std::endl;
+    }
+    (void) closed(fd);
 }
 void Capture::TriggerGetCatch(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
     std::thread tStart(&Capture::ThreadGetCatch, this, curTimeStr);
     tStart.detach();
+}
+bool Capture::TakeScreenCap(const std::string &savePath) const
+{
+    // get PixelMap from DisplayManager API
+    Rosen::DisplayManager &displayMgr = Rosen::DisplayManager::GetInstance();
+    std::shared_ptr<Media::PixelMap> pixelMap = displayMgr.GetScreenshot(displayMgr.GetDefaultDisplayId());
+    static constexpr int bitmapDepth = 8;
+    if (pixelMap == nullptr) {
+        DEBUG_LOG("Failed to get display pixelMap");
+        return false;
+    }
+    auto width = static_cast<uint32_t>(pixelMap->GetWidth());
+    auto height = static_cast<uint32_t>(pixelMap->GetHeight());
+    auto data = pixelMap->GetPixels();
+    auto stride = static_cast<uint32_t>(pixelMap->GetRowBytes());
+    png_structp pngStruct = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if (pngStruct == nullptr) {
+        DEBUG_LOG("error: png_create_write_struct nullptr!");
+        return false;
+    }
+    png_infop pngInfo = png_create_info_struct(pngStruct);
+    if (pngInfo == nullptr) {
+        DEBUG_LOG("error: png_create_info_struct error nullptr!");
+        png_destroy_write_struct(&pngStruct, nullptr);
+        return false;
+    }
+    FILE *fp = fopen(savePath.c_str(), "wb");
+    if (fp == nullptr) {
+        ERROR_LOG("error: open file error!");
+        png_destroy_write_struct(&pngStruct, &pngInfo);
+        return false;
+    }
+    png_init_io(pngStruct, fp);
+    png_set_IHDR(pngStruct, pngInfo, width, height, bitmapDepth, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+    png_set_packing(pngStruct);          // set packing info
+    png_write_info(pngStruct, pngInfo);  // write to header
+    for (uint32_t i = 0; i < height; i++) {
+        png_write_row(pngStruct, data + (i * stride));
+    }
+    png_write_end(pngStruct, pngInfo);
+    // free
+    png_destroy_write_struct(&pngStruct, &pngInfo);
+    (void)fclose(fp);
+    return true;
 }
 }
 }

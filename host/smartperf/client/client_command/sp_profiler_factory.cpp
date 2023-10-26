@@ -24,6 +24,7 @@
 #include "include/sp_utils.h"
 #include "include/sp_profiler_factory.h"
 #include "include/Dubai.h"
+#include "include/Capture.h"
 namespace OHOS {
 namespace SmartPerf {
 SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
@@ -58,7 +59,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             FPS::GetInstance().SetTraceCatch();
             break; 
         case MessageType::GET_CAPTURE:
-            FPS::GetInstance().SetCaptureOn();
+            Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
             break; 
         case MessageType::SET_DUBAI_DB: {
             Dubai::DumpDubaiBegin();
@@ -146,7 +147,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             FPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_SNAPSHOT:
-            FPS::GetInstance().SetCaptureOn();
+            Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
             break; 
         case CommandType::CT_HW:
             break;            
