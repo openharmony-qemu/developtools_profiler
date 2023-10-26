@@ -50,7 +50,7 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     std::shared_ptr<Media::PixelMap> pixelMap = displayMgr.GetScreenshot(displayMgr.GetDefaultDisplayId());
     static constexpr int bitmapDepth = 8;
     if (pixelMap == nullptr) {
-        DEBUG_LOG("Failed to get display pixelMap");
+        std::cout << "Failed to get display pixelMap" << std::endl;
         return false;
     }
     auto width = static_cast<uint32_t>(pixelMap->GetWidth());
@@ -59,18 +59,18 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     auto stride = static_cast<uint32_t>(pixelMap->GetRowBytes());
     png_structp pngStruct = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if (pngStruct == nullptr) {
-        DEBUG_LOG("error: png_create_write_struct nullptr!");
+        std::cout << "error: png_create_write_struct nullptr!" << std::endl;
         return false;
     }
     png_infop pngInfo = png_create_info_struct(pngStruct);
     if (pngInfo == nullptr) {
-        DEBUG_LOG("error: png_create_info_struct error nullptr!");
+        std::cout << "error: png_create_info_struct error nullptr!" << std::endl;
         png_destroy_write_struct(&pngStruct, nullptr);
         return false;
     }
     FILE *fp = fopen(savePath.c_str(), "wb");
     if (fp == nullptr) {
-        ERROR_LOG("error: open file error!");
+        std::cout << "error: open file error!" << std::endl;
         png_destroy_write_struct(&pngStruct, &pngInfo);
         return false;
     }
