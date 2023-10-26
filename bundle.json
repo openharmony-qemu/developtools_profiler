@@ -57,7 +57,7 @@
         "protobuf",
         "zlib",
         "libpng"
-      ],
+      ]
     },
     "build": {
       "sub_component": [
