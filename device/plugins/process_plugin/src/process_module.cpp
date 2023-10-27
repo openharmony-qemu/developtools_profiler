@@ -62,9 +62,9 @@ static int ProcessRegisterWriterStruct(const WriterStruct* writer)
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = ProcessDataPluginSessionStart,
     .onPluginReportResult = ProcessPluginReportResult,
-    .onPluginReportResultOptimize = ProcessPluginReportResultOptimize,
     .onPluginSessionStop = ProcessPluginSessionStop,
     .onRegisterWriterStruct = ProcessRegisterWriterStruct,
+    .onPluginReportResultOptimize = ProcessPluginReportResultOptimize,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {
