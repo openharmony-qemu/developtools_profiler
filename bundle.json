@@ -42,7 +42,9 @@
         "samgr",
         "drivers_interface_memorytracker",
         "graphic_2d",
-        "os_account"
+        "os_account",
+        "window_manager",
+        "image_framework"
       ],
       "third_party": [
         "bounds_checking_function",
@@ -53,7 +55,8 @@
         "libunwind",
         "openssl",
         "protobuf",
-        "zlib"
+        "zlib",
+        "libpng"
       ]
     },
     "build": {

@@ -63,9 +63,14 @@ ohos_executable("SP_daemon") {
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]
-
+  deps = [ "//third_party/libpng:libpng" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "c_utils:utils",
+    "image_framework:image_native",
+    "window_manager:libdm",
+    "window_manager:libwm",
+  ]
 }
 ## Build so }}}

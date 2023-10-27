@@ -27,6 +27,7 @@ public:
     void ThreadGetCatch(const std::string &curTime) const;
     // 触发线程
     void TriggerGetCatch(long long curTime) const;
+    bool TakeScreenCap(const std::string &savePath) const;
 private:
     Capture() {};
     Capture(const Capture &);
