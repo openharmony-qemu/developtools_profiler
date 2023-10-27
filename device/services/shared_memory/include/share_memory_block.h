@@ -105,7 +105,7 @@ private:
     std::string memoryName_;
     uint32_t messageWriteOffset_ = 0;
     ShareMemoryBlockCtx smbCtx_ = {
-        .ctx = {0},
+        .ctx = {nullptr, nullptr},
         .block = nullptr,
     };
 
