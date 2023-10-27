@@ -104,7 +104,10 @@ private:
     uint32_t memorySize_;
     std::string memoryName_;
     uint32_t messageWriteOffset_ = 0;
-    ShareMemoryBlockCtx smbCtx_;
+    ShareMemoryBlockCtx smbCtx_ = {
+        .ctx = {nullptr, nullptr},
+        .block = nullptr,
+    };
 
     BlockHeader* header_;
     ReusePolicy reusePloicy_;

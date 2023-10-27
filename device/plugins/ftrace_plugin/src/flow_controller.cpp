@@ -168,7 +168,7 @@ bool FlowController::ParseBasicData()
             }
             int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
-            tansporter_->Report(msgSize);
+            tansporter_->Report(static_cast<size_t>(msgSize));
         }
     }
 
@@ -187,7 +187,7 @@ bool FlowController::ParseBasicData()
             }
             int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
-            tansporter_->Report(msgSize);
+            tansporter_->Report(static_cast<size_t>(msgSize));
         }
     }
 
@@ -205,7 +205,7 @@ bool FlowController::ParseBasicData()
         }
         int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
-        tansporter_->Report(msgSize);
+        tansporter_->Report(static_cast<size_t>(msgSize));
     }
     return 0;
 }
@@ -412,7 +412,7 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
         }
         int32_t msgSize = traceResult.Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
-        tansporter_->Report(msgSize);
+        tansporter_->Report(static_cast<size_t>(msgSize));
     }
     return true;
 }
@@ -479,7 +479,7 @@ int FlowController::StopCapture(void)
         }
         int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
-        tansporter_->Report(msgSize);
+        tansporter_->Report(static_cast<size_t>(msgSize));
     }
 
     // disable userspace trace triggers
