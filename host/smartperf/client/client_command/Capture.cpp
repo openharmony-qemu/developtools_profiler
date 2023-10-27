@@ -25,6 +25,8 @@
 #include "png.h"
 namespace OHOS {
 namespace SmartPerf {
+using namespace OHOS::Media;
+using namespace OHOS::Rosen;
 void Capture::ThreadGetCatch(const std::string &curTime) const
 {
     auto savePath = "data/local/tmp/capture/screenCap_" + curTime + ".png";
@@ -35,7 +37,7 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
     } else {
         std::cout << "Screen Capture save to---"<< savePath << std::endl;
     }
-    (void) closed(fd);
+    (void) close(fd);
 }
 void Capture::TriggerGetCatch(long long curTime) const
 {
