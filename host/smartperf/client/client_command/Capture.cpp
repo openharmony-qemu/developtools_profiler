@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include "include/sp_utils.h"
 #include "include/Capture.h"
-#include "dispaly_manager.h"
+#include "display_manager.h"
 #include "wm_common.h"
 #include "png.h"
 namespace OHOS {
