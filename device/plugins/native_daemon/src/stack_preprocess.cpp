@@ -226,12 +226,17 @@ void StackPreprocess::TakeResults()
             }
             callFrames_.clear();
             if (hookConfig_.fp_unwind()) {
+#if defined(__aarch64__)
+                uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+                uintptr_t pacMask = 0;
+#endif
                 uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
                 for (uint8_t idx = 0; idx < rawData->fpDepth ; ++idx) {
                     if (fpIp[idx] == 0) {
                         break;
                     }
-                    callFrames_.emplace_back(fpIp[idx]);
+                    callFrames_.emplace_back(fpIp[idx] & (~pacMask));
                 }
             } else {
 #if defined(__arm__)
