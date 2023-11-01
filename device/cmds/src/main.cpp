@@ -29,6 +29,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <future>
 
 #include "common.h"
 #include "command_line.h"
@@ -526,7 +527,7 @@ void SignalHandler(int signal)
 {
     if (signal == SIGINT) {
         g_exitProcessFlag = true;
-        g_sessionCv.notify_one();
+        std::async(&std::condition_variable::notify_one, &g_sessionCv);
     }
 }
 } // namespace
