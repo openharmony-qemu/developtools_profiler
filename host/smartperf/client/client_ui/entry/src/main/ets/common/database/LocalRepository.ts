@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import dataRdb from '@ohos.data.rdb'
+import relationalStore from '@ohos.data.relationalStore'
 import database from './DatabaseUtils'
 import BundleManager from '../utils/BundleMangerUtils';
 import { dateFormat } from '../utils/TimeUtils'
@@ -26,63 +26,65 @@ const TAG = "LocalRepository"
 
 
 export function initDb(): void {
-  dataRdb.getRdbStore(globalThis.abilityContext, {
-        name: dbName
-  }, dbVersion)
-        .then(rdbStore => {
-            rdbStore.executeSql(sql_t_general_info, null).catch(err => {
-                SPLogger.DEBUG(TAG, "--> createTable t_genneral_info err:" + err)
-            })
-            SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_genneral_info:" + sql_t_general_info)
-            return rdbStore
-        })
-
-    getReportListDb().then(res => {
-        globalThis.reportList = res
-        let bundleNameArr = []
-        for (let reportItemKey in globalThis.reportList) {
-            bundleNameArr.push(globalThis.reportList[reportItemKey].packageName)
-        }
-
-        BundleManager.getIconByBundleName(bundleNameArr).then(map => {
-            globalThis.iconMap = map
-        })
-
-        let resReport: Array<ReportItem> = res
-
-        globalThis.sumTest = resReport.length
-        globalThis.sumTestTime = 0
-
-        let sumTestAppMap = new Map
-        for (let resReportKey in resReport) {
-            sumTestAppMap.set(resReport[resReportKey].appName, "")
-            globalThis.sumTestTime += Number(resReport[resReportKey].testDuration).valueOf()
-        }
-        globalThis.sumTestApp = sumTestAppMap.size
-    }).catch(err => {
-        SPLogger.DEBUG(TAG, "getReportListDb ERR:" + err);
+  const STORE_CONFIG:relationalStore.StoreConfig = {
+    name: dbName,
+    securityLevel: relationalStore.SecurityLevel.S1
+}
+relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
+    .then(rdbStore => {
+      rdbStore.executeSql(sql_t_general_info, null).catch(err => {
+        SPLogger.DEBUG(TAG, "--> createTable t_genneral_info err:" + err)
+      })
+      SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_genneral_info:" + sql_t_general_info)
+      return rdbStore
     })
+
+  getReportListDb().then(res => {
+    globalThis.reportList = res
+    let bundleNameArr = []
+    for (let reportItemKey in globalThis.reportList) {
+      bundleNameArr.push(globalThis.reportList[reportItemKey].packageName)
+    }
+
+    BundleManager.getIconByBundleName(bundleNameArr).then(map => {
+      globalThis.iconMap = map
+    })
+
+    let resReport: Array<ReportItem> = res
+
+    globalThis.sumTest = resReport.length
+    globalThis.sumTestTime = 0
+
+    let sumTestAppMap = new Map
+    for (let resReportKey in resReport) {
+      sumTestAppMap.set(resReport[resReportKey].appName, "")
+      globalThis.sumTestTime += Number(resReport[resReportKey].testDuration).valueOf()
+    }
+    globalThis.sumTestApp = sumTestAppMap.size
+  }).catch(err => {
+    SPLogger.DEBUG(TAG, "getReportListDb ERR:" + err);
+  })
 }
 
 
 export async function getReportListDb(): Promise<Array<ReportItem>> {
-    var result = Array<ReportItem>()
-    await database.queryGeneralData().then(generals => {
-        for (var i = 0; i < generals.length; i++) {
-            var curGeneralInfo = generals[i]
-            result.push(
-                new ReportItem(
-                curGeneralInfo.taskId.toString(),
-                    AppFileRealDir + curGeneralInfo.sessionId.toString(),
-                    curGeneralInfo.packageName,
-                    "",
-                    curGeneralInfo.taskName,
-                    curGeneralInfo.appName,
-                dateFormat(curGeneralInfo.startTime),
-                curGeneralInfo.testDuration.toString(),
-                    false
-                ))
-        }
-    })
-    return result
+  var result = Array<ReportItem>()
+  await database.queryGeneralData().then(generals => {
+    for (var i = 0; i < generals.length; i++) {
+      var curGeneralInfo = generals[i]
+      result.push(
+        new ReportItem(
+          curGeneralInfo.taskId.toString(),
+          AppFileRealDir + curGeneralInfo.sessionId.toString(),
+          curGeneralInfo.packageName,
+          "",
+          curGeneralInfo.taskName,
+          curGeneralInfo.appName,
+          dateFormat(curGeneralInfo.startTime),
+          curGeneralInfo.testDuration.toString(),
+          false
+        ))
+    }
+  })
+  return result
 }
