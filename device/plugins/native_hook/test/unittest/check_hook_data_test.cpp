@@ -34,7 +34,7 @@ constexpr int DEFAULT_MALLOC_SIZE = 10;
 constexpr int DEFAULT_CALLOC_SIZE = 100;
 constexpr int DEFAULT_REALLOC_SIZE = 1000;
 constexpr int DATA_SIZE = 50;
-constexpr int SLEEP_TIME = 5;
+constexpr int SLEEP_TIME = 10;
 constexpr int WAIT_FLUSH = 2;
 
 const std::string DEFAULT_NATIVE_DAEMON_PATH("/system/bin/native_daemon");
@@ -300,9 +300,9 @@ public:
     {
         int processNum = fork();
         if (processNum == 0) {
-            auto ret = malloc(DEFAULT_MALLOC_SIZE);
-            free(ret);
             while (1) {
+                auto ret = malloc(DEFAULT_MALLOC_SIZE);
+                free(ret);
                 ApplyForCalloc(depth);
                 usleep(500); // sleep 500 us
             }
