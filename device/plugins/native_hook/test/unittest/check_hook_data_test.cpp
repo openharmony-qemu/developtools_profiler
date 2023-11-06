@@ -300,8 +300,10 @@ public:
     {
         int processNum = fork();
         if (processNum == 0) {
-            sleep(3);
-            sleep(2);
+            int firstSleep = 3; // avoid malloc before sending kill -36 signal
+            int secondSleep = 2;
+            sleep(firstSleep);
+            sleep(secondSleep);
             auto ret = malloc(DEFAULT_MALLOC_SIZE);
             free(ret);
             while (1) {
