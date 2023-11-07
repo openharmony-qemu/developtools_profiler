@@ -32,6 +32,15 @@
 
 namespace OHOS {
 namespace SmartPerf {
+void ControlCallCmd::GetResultData(int argc, std::vector<std::string> v)
+{
+    if (v[ohType] == "ohtest") {
+        isOhTest = true;
+    }
+    if (v[typeName] == "screen") {
+        SPUtils::GetScreen();
+    }
+}
 std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
 {
     std::ostringstream stream;
