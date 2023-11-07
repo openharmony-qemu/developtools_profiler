@@ -33,6 +33,7 @@ public:
     double PageFps();
     double StartFrameFps(std::vector<std::string> v);
     std::string GetResult(int argc, std::vector<std::string> v);
+    void GetResultData(int argc, std::vector<std::string> v);
 private:
     bool isOhTest = false;
     std::string result = "";

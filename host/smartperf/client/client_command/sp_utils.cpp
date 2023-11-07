@@ -190,16 +190,27 @@ std::string SPUtils::GetRadar()
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
+std::string SPUtils::GetScreen()
+{
+    std::string cmd = "hidumper -s 10 -a screen";
+    std::string screenStr = "";
+    LoadCmd(cmd, screenStr);
+    uint64_t left = screenStr.find("activeMode");
+    uint64_t right = screenStr.find("capability");
+    std::string screen = screenStr.substr(left, right - left);
+    std::cout << screen << std::endl;
+    return screenStr;
+}
 std::string SPUtils::GetRadarResponse()
 {
-    std::string cmd = "hisysevent -r -o GRAPHIC -n INTERACTION_RESPONSE_LATENCY";
+    std::string cmd = "hisysevent -r -n INTERACTION_RESPONSE_LATENCY";
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
 std::string SPUtils::GetRadarComplete()
 {
-    std::string cmd = "hisysevent -r -o GRAPHIC -n INTERACTION_COMPLETED_LATENCY";
+    std::string cmd = "hisysevent -r -n INTERACTION_COMPLETED_LATENCY";
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
