@@ -154,11 +154,12 @@ double ControlCallCmd::ResponseTime()
     OHOS::SmartPerf::Radar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
     if (isOhTest) {
+        std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
         thGetTrace.join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
+        std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
         std::thread thGetHisysId = sd.ThreadGetHisysId();
         std::string str = SPUtils::GetRadarResponse();
         thGetTrace.join();
@@ -188,11 +189,12 @@ double ControlCallCmd::CompleteTime()
     OHOS::SmartPerf::Radar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
     if (isOhTest) {
+        std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
         thGetTrace.join();
         time = pcct.ParseCompleteTrace(traceName);
     } else {
+        std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
         std::thread thGetHisysId = sd.ThreadGetHisysId();
         std::string str = SPUtils::GetRadarComplete();
         thGetTrace.join();
