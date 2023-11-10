@@ -19,7 +19,6 @@ import { FormatCommand } from './FormatCommand.js';
 import { HdcCommand } from './HdcCommand.js';
 import { Utils } from '../common/Utils.js';
 import { AsyncQueue } from './AsyncQueue.js';
-import { toHex16 } from '../common/BaseConversion.js';
 import { PayloadHead } from '../message/PayloadHead.js';
 import { Serialize } from '../common/Serialize.js';
 
@@ -30,14 +29,11 @@ export class HdcStream {
   private hdcClient: HdcClient;
   public fileSize: number = -1;
 
+
   constructor(hdcClient: HdcClient, isStopCmd: boolean) {
     this.hdcClient = hdcClient;
     this.channelId = Utils.getLocalId();
-    if (isStopCmd) {
-      this.hdcClient.bindStopStream(this.channelId, this);
-    } else {
-      this.hdcClient.bindStream(this.channelId, this);
-    }
+    this.hdcClient.bindStream(this.channelId, this);
   }
 
   public async DoCommand(cmd: string): Promise<boolean> {
@@ -49,6 +45,7 @@ export class HdcStream {
     }
     return this.DoCommandRemote(formatCommand);
   }
+
 
   public async DoCommandRemote(command: FormatCommand): Promise<boolean> {
     switch (command.cmdFlag) {
@@ -64,7 +61,7 @@ export class HdcStream {
         let data = textEncoder.encode(command.parameters);
         let sendResult = await this.sendToDaemon(command, data, data.length);
         if (sendResult) {
-          if (HdcCommand.CMD_SHELL_INIT == command.cmdFlag) {
+          if (HdcCommand.CMD_SHELL_INIT === command.cmdFlag) {
             this.interactiveShellMode = true;
           }
         }
@@ -77,7 +74,7 @@ export class HdcStream {
       case HdcCommand.CMD_FILE_FINISH:
       case HdcCommand.CMD_KERNEL_CHANNEL_CLOSE: {
         let dataView = new DataView(new ArrayBuffer(1));
-        if (command.parameters == '0') {
+        if (command.parameters === '0') {
           dataView.setUint8(0, 0);
         } else {
           dataView.setUint8(0, 1);
@@ -89,11 +86,10 @@ export class HdcStream {
     return false;
   }
 
-  async FileRecvCommand(command: FormatCommand) {
-    let sizeSend = command.parameters.length;
+  async FileRecvCommand(command: FormatCommand): Promise<void> {
     let cmdFlag: string = '';
     let sizeCmdFlag: number = 0;
-    if (HdcCommand.CMD_FILE_INIT == command.cmdFlag) {
+    if (HdcCommand.CMD_FILE_INIT === command.cmdFlag) {
       cmdFlag = 'send ';
       sizeCmdFlag = 5; // 5: cmdFlag send size
     }
@@ -107,14 +103,13 @@ export class HdcStream {
       let fileRecvPlayHeadArray = fileRecvDataMessage.body!.buffer.slice(0, PayloadHead.getPayloadHeadLength());
       let fileRecvResultPayloadHead: PayloadHead = PayloadHead.parsePlayHead(new DataView(fileRecvPlayHeadArray));
       let fileRecvHeadSize = fileRecvResultPayloadHead.headSize;
-      let fileRecvDataSize = fileRecvResultPayloadHead.dataSize;
       let resPlayProtectBuffer = fileRecvDataMessage.body!.buffer.slice(11, 11 + fileRecvHeadSize);
-      let payloadProtect = Serialize.parsePayloadProtect(resPlayProtectBuffer);
+      Serialize.parsePayloadProtect(resPlayProtectBuffer);
       await this.handleCommandFileCheck();
     }
   }
 
-  private async handleCommandFileCheck() {
+  private async handleCommandFileCheck(): Promise<void> {
     let fileCheckDataMessage = await this.getMessage();
     let fileCheckPlayHeadArray = fileCheckDataMessage.body!.buffer.slice(0, PayloadHead.getPayloadHeadLength());
     let fileCheckResultPayloadHead: PayloadHead = PayloadHead.parsePlayHead(new DataView(fileCheckPlayHeadArray));
@@ -125,7 +120,7 @@ export class HdcStream {
       PayloadHead.getPayloadHeadLength() + fileCheckHeadSize
     );
     let fileCheckPayloadProtect = Serialize.parsePayloadProtect(fileCheckResPlayProtectBuffer);
-    if (fileCheckPayloadProtect.commandFlag == HdcCommand.CMD_FILE_CHECK) {
+    if (fileCheckPayloadProtect.commandFlag === HdcCommand.CMD_FILE_CHECK) {
       if (fileCheckDataSize > 0) {
         let fileCheckTransferConfigBuffer = fileCheckDataMessage.body!.buffer.slice(
           PayloadHead.getPayloadHeadLength() + fileCheckHeadSize,
@@ -149,7 +144,7 @@ export class HdcStream {
     );
   }
 
-  putMessageInQueue(dataMessage: DataMessage) {
+  putMessageInQueue(dataMessage: DataMessage): void {
     this.dataMessages.enqueue(dataMessage);
   }
 
@@ -157,11 +152,7 @@ export class HdcStream {
     return this.dataMessages.dequeue();
   }
 
-  closeStream() {
+  closeStream(): void {
     this.hdcClient.unbindStream(this.channelId);
-  }
-
-  closeStopStream() {
-    this.hdcClient.unbindStopStream(this.channelId);
   }
 }

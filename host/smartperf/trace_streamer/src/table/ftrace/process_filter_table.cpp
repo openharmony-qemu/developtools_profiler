@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, NAME, INTERNAL_PID };
+enum class Index : int32_t { ID = 0, TYPE, NAME, INTERNAL_PID };
 ProcessFilterTable::ProcessFilterTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -44,20 +44,20 @@ ProcessFilterTable::Cursor::~Cursor() {}
 
 int32_t ProcessFilterTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(processFilterObj_.IdsData()[CurrentRow()]));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, "process_filter", STR_DEFAULT_LEN, nullptr);
             break;
-        case NAME: {
+        case Index::NAME: {
             DataIndex stringIdentity = static_cast<DataIndex>(processFilterObj_.NamesData()[CurrentRow()]);
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(stringIdentity).c_str(), STR_DEFAULT_LEN,
                                 nullptr);
             break;
         }
-        case INTERNAL_PID:
+        case Index::INTERNAL_PID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(processFilterObj_.UpidsData()[CurrentRow()]));
             break;
         default:

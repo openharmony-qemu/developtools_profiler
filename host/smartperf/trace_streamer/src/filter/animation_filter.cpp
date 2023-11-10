@@ -145,8 +145,8 @@ void AnimationFilter::UpdateDynamicFrameInfo()
 {
     std::smatch matcheLine;
     std::regex leashWindowPattern(R"((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)\s+Alpha:\s+-*(\d+\.\d+))");
-    uint64_t curStackRow = INVALID_UINT64;
-    uint64_t curFrameRow = INVALID_UINT64;
+    uint64_t curStackRow;
+    uint64_t curFrameRow;
     for (const auto& it : callStackRowMap_) {
         curStackRow = it.first;
         curFrameRow = it.second;

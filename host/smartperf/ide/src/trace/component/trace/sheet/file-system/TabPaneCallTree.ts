@@ -65,6 +65,7 @@ export class TabPaneCallTree extends BaseElement {
     this.callTreeFilter!.filterValue = '';
     this.callTreeProgressEL!.loading = true;
     this.loadingPage.style.visibility = 'visible';
+    const initWidth = this.clientWidth;
     this.getDataByWorker(
       [
         {
@@ -80,11 +81,9 @@ export class TabPaneCallTree extends BaseElement {
         this.setLTableData(results);
         this.callTreeTbr!.recycleDataSource = [];
         this.frameChart!.mode = this.flameChartMode;
+        this.frameChart?.updateCanvas(true, initWidth);
         this.frameChart!.data = this.callTreeDataSource;
-        this.frameChart?.updateCanvas(true, this.clientWidth);
-        this.frameChart?.calculateChartData();
         this.switchFlameChart();
-        this.callTreeFilter.icon = 'block';
       }
     );
   }
@@ -222,6 +221,11 @@ export class TabPaneCallTree extends BaseElement {
     this.callTreeTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
       let data = evt.detail.data as MerageBean;
+      document.dispatchEvent(
+        new CustomEvent('number_calibration', {
+          detail: { time: data.tsArray, durations: data.durArray},
+        })
+      );
       this.setRightTableData(data);
       data.isSelected = true;
       this.callTreeSelectedData = data;
@@ -443,18 +447,17 @@ export class TabPaneCallTree extends BaseElement {
     });
   }
 
-  switchFlameChart(data?: any) {
+  switchFlameChart(data?: any): void {
     let callTreePageTab = this.shadowRoot?.querySelector('#show_table');
     let callTreePageChart = this.shadowRoot?.querySelector('#show_chart');
-    if (!data || data.icon == 'block') {
+    if (!data || data.icon === 'block') {
       callTreePageChart?.setAttribute('class', 'show');
       callTreePageTab?.setAttribute('class', '');
       this.isChartShow = true;
       this.callTreeFilter!.disabledMining = true;
       showButtonMenu(this.callTreeFilter, this.needShowMenu);
-      this.frameChart!.data = this.callTreeDataSource;
       this.frameChart?.calculateChartData();
-    } else if (data.icon == 'tree') {
+    } else if (data.icon === 'tree') {
       callTreePageChart?.setAttribute('class', '');
       callTreePageTab?.setAttribute('class', 'show');
       showButtonMenu(this.callTreeFilter, true);
@@ -598,7 +601,7 @@ export class TabPaneCallTree extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="tb-calltree" style="height: auto" tree>
-                <lit-table-column class="call-tree-column" width="70%" title="Call Stack" data-index="symbolName" key="symbolName"  align="flex-start" ></lit-table-column>
+                <lit-table-column class="call-tree-column" width="70%" title="Call Stack" data-index="symbolName" key="symbolName"  align="flex-start"retract></lit-table-column>
                 <lit-table-column class="call-tree-column" width="1fr" title="Local" data-index="self" key="self"  align="flex-start"  order></lit-table-column>
                 <lit-table-column class="call-tree-column" width="1fr" title="Weight" data-index="weight" key="weight"  align="flex-start"  order></lit-table-column>
                 <lit-table-column class="call-tree-column" width="1fr" title="%" data-index="weightPercent" key="weightPercent"  align="flex-start"  order></lit-table-column>

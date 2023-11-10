@@ -18,7 +18,6 @@ import './LitMainMenuItem.js';
 import './LitMainMenuGroup.js';
 import { LitMainMenuGroup } from './LitMainMenuGroup.js';
 import { LitMainMenuItem } from './LitMainMenuItem.js';
-let backgroundColor = sessionStorage.getItem('backgroundColor');
 
 @element('lit-main-menu')
 export class LitMainMenu extends BaseElement {
@@ -37,6 +36,11 @@ export class LitMainMenu extends BaseElement {
     this._menus = value;
     this.shadowRoot?.querySelectorAll('lit-main-menu-group').forEach((a) => a.remove());
     let menuBody = this.shadowRoot?.querySelector('.menu-body');
+    if (this.getAttribute('main_menu') === '1' && window.localStorage.getItem('Theme') == 'dark') {
+      this.style.backgroundColor = '#262f3c';
+    } else {
+      this.style.backgroundColor = '#fff';
+    }
     value?.forEach((it) => {
       let group = new LitMainMenuGroup();
       group.setAttribute('title', it.title || '');
@@ -46,11 +50,22 @@ export class LitMainMenu extends BaseElement {
       } else {
         group.removeAttribute('collapsed');
       }
+      let groupName = group!.shadowRoot!.querySelector('.group-name') as LitMainMenuGroup;
+      let groupDescribe = group!.shadowRoot!.querySelector('.group-describe') as LitMainMenuGroup;
       menuBody?.appendChild(group);
       it.children?.forEach((item: any) => {
         let th = new LitMainMenuItem();
         th.setAttribute('icon', item.icon || '');
         th.setAttribute('title', item.title || '');
+        if (this.getAttribute('main_menu') === '1' && window.localStorage.getItem('Theme') === 'dark') {
+          groupName.style.color = 'white';
+          groupDescribe.style.color = 'white';
+          th!.style.color = 'white';
+        } else {
+          groupName.style.color = 'black';
+          groupDescribe.style.color = 'black';
+          th!.style.color = 'black';
+        }
         if (item.fileChoose) {
           th.setAttribute('file', '');
           th.addEventListener('file-change', (e) => {
@@ -94,7 +109,7 @@ export class LitMainMenu extends BaseElement {
             height: 100vh;
             display: flex;
             flex-direction: column;
-            background-color: ${backgroundColor};
+            background-color: #fff;
         }
         .menu-body ::-webkit-scrollbar-thumb
         {
@@ -138,10 +153,10 @@ export class LitMainMenu extends BaseElement {
             color: #94979d;
             font-size: 0.6rem;
         }
-        .color{
+        .color, .customColor{
             cursor: pointer;
             font-size: 0.6rem;
-            padding: 20px;
+            padding: 20px 0px 20px 20px;
         }
         *{
             box-sizing: border-box;
@@ -164,9 +179,9 @@ export class LitMainMenu extends BaseElement {
             <div class="menu-body" style="overflow: auto;overflow-x:hidden;height: 100%">
                 <slot id="st" ></slot>
                 </div>
-        <div class="bottom">        
-             <div class="color" style="">
-                <lit-icon name="bg-colors" size="20" color="gray"></lit-icon>
+        <div class="bottom">
+             <div class="customColor">
+                <lit-icon name="bg-colors" size="20" color="grey"></lit-icon>
              </div>
              <div class="version" style="">
              </div>

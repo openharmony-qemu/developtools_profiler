@@ -56,18 +56,18 @@ export class SpProbesConfig extends BaseElement {
   get memoryConfig() {
     let values = [];
     let selectedMemory = this._memoryConfig?.querySelectorAll<SpCheckDesBox>(
-      `check-des-box[checked]`
+      'check-des-box[checked]'
     ) as NodeListOf<SpCheckDesBox>;
     for (const litCheckBoxElement of selectedMemory) {
       values.push(litCheckBoxElement.value);
     }
-    log('memoryConfig size is :' + values.length);
+    log(`memoryConfig size is :${values.length}`);
     return values;
   }
 
   get recordAbility() {
     let selectedMemory = this._abilityConfig?.querySelectorAll<SpCheckDesBox>(
-      `check-des-box[checked]`
+      'check-des-box[checked]'
     ) as NodeListOf<SpCheckDesBox>;
     return selectedMemory.length > 0;
   }
@@ -76,12 +76,12 @@ export class SpProbesConfig extends BaseElement {
     let values = [];
     if (this.hitrace && this.hitrace.checked) {
       let parent = this.shadowRoot?.querySelector('.user-events') as Element;
-      const siblingNode = parent?.querySelectorAll<LitCheckBox>(`lit-check-box[name=userEvents][checked]`);
+      const siblingNode = parent?.querySelectorAll<LitCheckBox>('lit-check-box[name=userEvents][checked]');
       for (const litCheckBoxElement of siblingNode) {
         values.push(litCheckBoxElement.value);
       }
     }
-    log('traceEvents size is :' + values.length);
+    log(`traceEvents size is :${values.length}`);
     return values;
   }
 
@@ -254,7 +254,7 @@ export class SpProbesConfig extends BaseElement {
         }
         if (detail!.checked === false && this.hitrace?.checked === true) {
           let hasChecked = false;
-          const nodes = parent?.querySelectorAll<LitCheckBox>(`lit-check-box[name=userEvents]`);
+          const nodes = parent?.querySelectorAll<LitCheckBox>('lit-check-box[name=userEvents]');
           nodes.forEach((vv) => {
             if (vv.checked) {
               hasChecked = true;
@@ -513,7 +513,7 @@ export class SpProbesConfig extends BaseElement {
   //当 custom element首次被插入文档DOM时，被调用。
   public connectedCallback() {
     let parent = this.shadowRoot?.querySelector('.user-events') as Element;
-    const siblingNode = parent?.querySelectorAll<LitCheckBox>(`lit-check-box[name=userEvents]`);
+    const siblingNode = parent?.querySelectorAll<LitCheckBox>('lit-check-box[name=userEvents]');
     this.hitrace!.addEventListener('onchange', (ev: CustomEventInit<LitCheckBoxChangeEvent>) => {
       let detail = ev.detail;
       siblingNode.forEach((node) => {

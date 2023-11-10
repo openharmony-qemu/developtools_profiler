@@ -164,7 +164,12 @@ export class SpArkTsChart implements ParseListener {
         this.heapTimelineRow!.rowId = `heaptimeline` + file.id;
         this.heapTimelineRow!.supplier = (): Promise<any> => new Promise<any>((resolve) => resolve(samples));
         this.heapTimelineRow!.onThreadHandler = (useCache): void => {
-          let context = this.heapTimelineRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+          let context: CanvasRenderingContext2D;
+          if(this.heapTimelineRow?.currentContext){
+            context = this.heapTimelineRow!.currentContext;
+          }else{
+            context = this.heapTimelineRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+          }
           this.heapTimelineRow!.canvasSave(context);
           (renders['heap-timeline'] as HeapTimelineRender).renderMainThread(
             {
@@ -181,7 +186,12 @@ export class SpArkTsChart implements ParseListener {
         this.heapSnapshotRow!.supplier = (): Promise<Array<any>> =>
           new Promise<Array<any>>((resolve) => resolve(heapFile));
         this.heapSnapshotRow!.onThreadHandler = (useCache): void => {
-          let context = this.heapSnapshotRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+          let context: CanvasRenderingContext2D;
+          if(this.heapSnapshotRow?.currentContext){
+            context = this.heapSnapshotRow!.currentContext;
+          }else{
+            context = this.heapSnapshotRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+          }
           this.heapSnapshotRow!.canvasSave(context);
           (renders['heap-snapshot'] as HeapSnapshotRender).renderMainThread(
             {
@@ -246,7 +256,12 @@ export class SpArkTsChart implements ParseListener {
       );
     };
     this.jsCpuProfilerRow.onThreadHandler = (useCache): void => {
-      let context = this.jsCpuProfilerRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(this.jsCpuProfilerRow?.currentContext){
+        context = this.jsCpuProfilerRow!.currentContext;
+      }else{
+        context = this.jsCpuProfilerRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       this.jsCpuProfilerRow!.canvasSave(context);
       (renders['js-cpu-profiler'] as JsCpuProfilerRender).renderMainThread(
         {

@@ -21,7 +21,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, NAME, CPU };
+enum class Index : int32_t { ID = 0, TYPE, NAME, CPU };
 CpuMeasureFilterTable::CpuMeasureFilterTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -60,8 +60,8 @@ void CpuMeasureFilterTable::EstimateFilterCost(FilterConstraints& fc, EstimatedI
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -80,8 +80,8 @@ void CpuMeasureFilterTable::FilterByConstraint(FilterConstraints& fc, double& fi
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 auto oldRowCount = rowCount;
                 if (CanFilterSorted(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
@@ -141,11 +141,11 @@ int32_t CpuMeasureFilterTable::Cursor::Filter(const FilterConstraints& fc, sqlit
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterSorted(c.col, c.op, argv[i]);
                 break;
-            case CPU:
+            case Index::CPU:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])), cpuMeasureObj_.CpuData());
                 break;
             default:
@@ -156,8 +156,8 @@ int32_t CpuMeasureFilterTable::Cursor::Filter(const FilterConstraints& fc, sqlit
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -170,20 +170,20 @@ int32_t CpuMeasureFilterTable::Cursor::Filter(const FilterConstraints& fc, sqlit
 
 int32_t CpuMeasureFilterTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(cpuMeasureObj_.IdsData()[CurrentRow()]));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, "cpu_measure_filter", STR_DEFAULT_LEN, nullptr);
             break;
-        case NAME: {
+        case Index::NAME: {
             const std::string& str =
                 dataCache_->GetDataFromDict(static_cast<size_t>(cpuMeasureObj_.NameData()[CurrentRow()]));
             sqlite3_result_text(context_, str.c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         }
-        case CPU:
+        case Index::CPU:
             sqlite3_result_int64(context_, static_cast<int32_t>(cpuMeasureObj_.CpuData()[CurrentRow()]));
             break;
         default:
@@ -202,8 +202,8 @@ void CpuMeasureFilterTable::Cursor::FilterSorted(int32_t col, unsigned char op, 
         return;
     }
 
-    switch (col) {
-        case ID: {
+    switch (static_cast<Index>(col)) {
+        case Index::ID: {
             auto v = static_cast<uint64_t>(sqlite3_value_int64(argv));
             auto getValue = [](const uint32_t& row) { return row; };
             switch (op) {

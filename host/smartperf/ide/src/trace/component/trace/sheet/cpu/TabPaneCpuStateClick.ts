@@ -24,7 +24,7 @@ export class TabPaneCpuStateClick extends BaseElement {
 
   set data(cpuStateClickValue: any) {
     if (cpuStateClickValue) {
-      this.cpuStateClickTbl!.dataSource = [
+      this.cpuStateClickTbl!.recycleDataSource = [
         {
           startNS: Utils.getTimeString(cpuStateClickValue.startTs),
           absoluteTime: (cpuStateClickValue.startTs + (window as any).recordStartNS) / 1000000000,

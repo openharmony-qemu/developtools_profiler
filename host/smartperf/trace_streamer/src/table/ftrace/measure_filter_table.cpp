@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, NAME, INTERNAL_TID };
+enum class Index : int32_t { ID = 0, TYPE, NAME, INTERNAL_TID };
 MeasureFilterTable::MeasureFilterTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -43,22 +43,22 @@ MeasureFilterTable::Cursor::~Cursor() {}
 
 int32_t MeasureFilterTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(
                 context_,
                 static_cast<sqlite3_int64>(dataCache_->GetConstThreadMeasureFilterData().FilterIdData()[CurrentRow()]));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, "thread_measure_filter", STR_DEFAULT_LEN, nullptr);
             break;
-        case NAME: {
+        case Index::NAME: {
             const std::string& str = dataCache_->GetDataFromDict(
                 dataCache_->GetConstThreadMeasureFilterData().NameIndexData()[CurrentRow()]);
             sqlite3_result_text(context_, str.c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         }
-        case INTERNAL_TID:
+        case Index::INTERNAL_TID:
             sqlite3_result_int64(
                 context_,
                 static_cast<int32_t>(dataCache_->GetConstThreadMeasureFilterData().InternalTidData()[CurrentRow()]));

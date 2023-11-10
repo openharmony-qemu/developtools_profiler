@@ -67,9 +67,6 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
 {
     json jMessage = json::parse(result);
     int nodeCount = jMessage.at("nodes").size();
-    for (int i = nodeCount - 1; i > 0; i--) {
-        jsonns::Node node = jMessage.at("nodes")[i];
-    }
     for (int i = 0; i < nodeCount; i++) {
         jsonns::Node node = jMessage.at("nodes")[i];
         auto id = node.id;

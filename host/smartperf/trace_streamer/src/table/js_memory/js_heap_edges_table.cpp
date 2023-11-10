@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, EDGE_INDEX, TYPE, NAME_OR_INDEX, TO_NODE, FROM_NODE_ID, TO_NODE_ID };
+enum class Index : int32_t { FILE_ID = 0, EDGE_INDEX, TYPE, NAME_OR_INDEX, TO_NODE, FROM_NODE_ID, TO_NODE_ID };
 JsHeapEdgesTable::JsHeapEdgesTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -47,26 +47,26 @@ JsHeapEdgesTable::Cursor::~Cursor() {}
 
 int32_t JsHeapEdgesTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.FileIds()[CurrentRow()]));
             break;
-        case EDGE_INDEX:
+        case Index::EDGE_INDEX:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.EdgeIndexs()[CurrentRow()]));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.Types()[CurrentRow()]));
             break;
-        case NAME_OR_INDEX:
+        case Index::NAME_OR_INDEX:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.NameOrIndexs()[CurrentRow()]));
             break;
-        case TO_NODE:
+        case Index::TO_NODE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.ToNodes()[CurrentRow()]));
             break;
-        case FROM_NODE_ID:
+        case Index::FROM_NODE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.FromNodeIds()[CurrentRow()]));
             break;
-        case TO_NODE_ID:
+        case Index::TO_NODE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapEdges_.ToNodeIds()[CurrentRow()]));
             break;
         default:

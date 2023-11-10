@@ -20,7 +20,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, TS, DUR, CPU, INTERNAL_TID, TID, PID, STATE, ARGSETID };
+enum class Index : int32_t { ID = 0, TYPE, TS, DUR, CPU, INTERNAL_TID, TID, PID, STATE, ARGSETID };
 ThreadStateTable::ThreadStateTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -65,9 +65,9 @@ void ThreadStateTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexI
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
-            case TS:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
+            case Index::TS:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -86,8 +86,8 @@ void ThreadStateTable::FilterByConstraint(FilterConstraints& fc, double& filterC
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -96,7 +96,7 @@ void ThreadStateTable::FilterByConstraint(FilterConstraints& fc, double& filterC
                 }
                 break;
             }
-            case TS: {
+            case Index::TS: {
                 auto oldRowCount = rowCount;
                 if (CanFilterSorted(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
@@ -157,40 +157,40 @@ int32_t ThreadStateTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_va
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 indexMapBack->FilterId(c.op, argv[i]);
                 break;
-            case TS:
+            case Index::TS:
                 indexMapBack->FilterTS(c.op, argv[i], threadStateObj_.TimeStamsData());
                 break;
-            case INTERNAL_TID:
+            case Index::INTERNAL_TID:
                 indexMapBack->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])),
                                        threadStateObj_.ItidsData());
                 break;
-            case TID:
+            case Index::TID:
                 indexMapBack->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])),
                                        threadStateObj_.TidsData());
                 break;
-            case PID:
+            case Index::PID:
                 indexMapBack->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])),
                                        threadStateObj_.PidsData());
                 break;
-            case DUR:
+            case Index::DUR:
                 indexMapBack->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                        threadStateObj_.DursData());
                 break;
-            case CPU:
+            case Index::CPU:
                 indexMapBack->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])),
                                        threadStateObj_.CpusData());
                 break;
-            case STATE:
+            case Index::STATE:
                 indexMapBack->MixRange(c.op,
                                        static_cast<DataIndex>(dataCache_->GetThreadStateValue(
                                            std::string(reinterpret_cast<const char*>(sqlite3_value_text(argv[i]))))),
                                        threadStateObj_.StatesData());
                 break;
-            case ARGSETID:
+            case Index::ARGSETID:
                 indexMapBack->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])),
                                        threadStateObj_.ArgSetsData());
                 break;
@@ -205,9 +205,9 @@ int32_t ThreadStateTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_va
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
-            case TS:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
+            case Index::TS:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -220,39 +220,39 @@ int32_t ThreadStateTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_va
 
 int32_t ThreadStateTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(CurrentRow()));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, "thread_state", STR_DEFAULT_LEN, nullptr);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.TimeStamsData()[CurrentRow()]));
             break;
-        case DUR:
+        case Index::DUR:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.DursData()[CurrentRow()]));
             break;
-        case CPU:
+        case Index::CPU:
             if (threadStateObj_.CpusData()[CurrentRow()] != INVALID_CPU) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.CpusData()[CurrentRow()]));
             }
             break;
-        case INTERNAL_TID:
+        case Index::INTERNAL_TID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.ItidsData()[CurrentRow()]));
             break;
-        case TID:
+        case Index::TID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.TidsData()[CurrentRow()]));
             break;
-        case PID:
+        case Index::PID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.PidsData()[CurrentRow()]));
             break;
-        case STATE: {
+        case Index::STATE: {
             const std::string& str = dataCache_->GetConstSchedStateData(threadStateObj_.StatesData()[CurrentRow()]);
             sqlite3_result_text(context_, str.c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         }
-        case ARGSETID:
+        case Index::ARGSETID:
             if (threadStateObj_.ArgSetsData()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(threadStateObj_.ArgSetsData()[CurrentRow()]));
             }

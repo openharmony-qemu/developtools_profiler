@@ -102,7 +102,12 @@ export class SpCpuChart {
             );
           };
           traceRow.onThreadHandler = (useCache: boolean, buf: ArrayBuffer | undefined | null) => {
-            let context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+            let context:CanvasRenderingContext2D;
+            if(traceRow.currentContext){
+              context = traceRow.currentContext;
+            } else{
+              context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+            }
             traceRow.canvasSave(context);
             (renders['cpu-data'] as CpuRender).renderMainThread(
               {

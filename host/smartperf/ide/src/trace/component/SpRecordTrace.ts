@@ -22,6 +22,7 @@ import { SpRecordSetting } from './setting/SpRecordSetting.js';
 import { LitMainMenu, MenuGroup, MenuItem } from '../../base-ui/menu/LitMainMenu.js';
 import { SpProbesConfig } from './setting/SpProbesConfig.js';
 import { SpTraceCommand } from './setting/SpTraceCommand.js';
+import { FlagsConfig } from './SpFlags.js';
 
 import {
   CpuConfig,
@@ -66,6 +67,8 @@ import { SpHisysEvent } from './setting/SpHisysEvent.js';
 import { SpRecordTemplate } from './setting/SpRecordTemplate.js';
 import { SpStatisticsHttpUtil } from '../../statistics/util/SpStatisticsHttpUtil.js';
 import { SpArkTs } from './setting/SpArkTs.js';
+import { SpWebHdcShell } from './setting/SpWebHdcShell.js';
+import { SpHilogRecord } from './setting/SpHilogRecord.js';
 
 @element('sp-record-trace')
 export class SpRecordTrace extends BaseElement {
@@ -74,8 +77,9 @@ export class SpRecordTrace extends BaseElement {
   // 1GB
   public static MaxFileSize: number = 1024 * 1024 * 1024;
   public static isVscode = false;
-  public static stopRecord = false;
-  static supportVersions = ['3.2', '4.0'];
+  public static cancelRecord = false;
+  static supportVersions = ['3.2', '4.0+'];
+  private nowChildItem: HTMLElement | undefined;
 
   set record_template(re: boolean) {
     if (re) {
@@ -369,8 +373,8 @@ export class SpRecordTrace extends BaseElement {
   public deviceSelect: HTMLSelectElement | undefined;
   public deviceVersion: HTMLSelectElement | undefined;
   private recordButtonText: HTMLSpanElement | undefined;
-
   private recordButton: LitButton | undefined;
+  private cancelButton: LitButton | undefined;
   private sp: SpApplication | undefined;
   private progressEL: LitProgressBar | undefined;
   private litSearch: LitSearch | undefined;
@@ -388,11 +392,13 @@ export class SpRecordTrace extends BaseElement {
   private spHisysEvent: SpHisysEvent | undefined;
   private spRecordTemplate: SpRecordTemplate | undefined;
   private spArkTs: SpArkTs | undefined;
+  private spHilog: SpHilogRecord | undefined;
 
+  private spWebShell: SpWebHdcShell | undefined;
   private menuGroup: LitMainMenuGroup | undefined | null;
   private appContent: HTMLElement | undefined | null;
   private record = 'Record';
-  private stop = 'StopCmd';
+  private stop = 'StopRecord';
 
   compareArray(devs: Array<string>): boolean {
     let clearFlag: boolean = false;
@@ -400,7 +406,7 @@ export class SpRecordTrace extends BaseElement {
       clearFlag = true;
     } else {
       let optionArray = new Array();
-      for (let i = 0 ; i < this.deviceSelect!.options.length ; i++) {
+      for (let i = 0; i < this.deviceSelect!.options.length; i++) {
         optionArray.push(this.deviceSelect!.options[i].value);
       }
       devs.forEach((value) => {
@@ -427,7 +433,7 @@ export class SpRecordTrace extends BaseElement {
             this.recordButton!.hidden = true;
             this.disconnectButton!.hidden = true;
           }
-          for (let i = 0 ; i < devs.length ; i++) {
+          for (let i = 0; i < devs.length; i++) {
             let dev = devs[i];
             let option = document.createElement('option');
             option.className = 'select';
@@ -450,7 +456,7 @@ export class SpRecordTrace extends BaseElement {
           this.recordButton!.hidden = true;
           this.disconnectButton!.hidden = true;
         }
-        for (let len = 0 ; len < devs.length ; len++) {
+        for (let len = 0; len < devs.length; len++) {
           let dev = devs[len];
           let option = document.createElement('option');
           option.className = 'select';
@@ -467,24 +473,23 @@ export class SpRecordTrace extends BaseElement {
             HdcDeviceManager.connect(option.value).then((result) => {
               if (result) {
                 HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_VERSION, false).then((version) => {
-                  let deviceVersionItem = SpRecordTrace.supportVersions.filter((item) => version.indexOf(item) != -1);
-                  if (deviceVersionItem.length > 0) {
-                    SpRecordTrace.selectVersion = deviceVersionItem[0];
-                    this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
-                  } else {
-                    SpRecordTrace.selectVersion = SpRecordTrace.supportVersions[0];
-                    this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
-                  }
+                  SpRecordTrace.selectVersion = this.getDeviceVersion(version);
+                  this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
+                  this.nativeMemoryHideBySelectVersion();
                   this.traceCommand!.hdcCommon = PluginConvertUtils.createHdcCmd(
                     PluginConvertUtils.BeanToCmdTxt(this.makeRequest(), false),
                     this.recordSetting!.output,
                     this.recordSetting!.maxDur
                   );
+                  if (this.nowChildItem === this.spWebShell) {
+                    window.publish(window.SmartEvent.UI.DeviceConnect, option.value);
+                  }
                 });
               } else {
                 SpRecordTrace.selectVersion = SpRecordTrace.supportVersions[0];
                 this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
-                let cmdTxt = PluginConvertUtils.BeanToCmdTxt(this.makeRequest(), false)
+                this.nativeMemoryHideBySelectVersion();
+                let cmdTxt = PluginConvertUtils.BeanToCmdTxt(this.makeRequest(), false);
                 this.traceCommand!.hdcCommon = PluginConvertUtils.createHdcCmd(
                   cmdTxt,
                   this.recordSetting!.output,
@@ -498,6 +503,14 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
+  getDeviceVersion(version: string): string {
+    if (version.indexOf('3.2') != -1) {
+      return '3.2';
+    } else if (version.indexOf('4.') != -1) {
+      return '4.0+';
+    }
+    return '3.2';
+  }
   freshMenuDisable(disable: boolean): void {
     let mainMenu = this.sp!.shadowRoot?.querySelector('#main-menu') as LitMainMenu;
     mainMenu.menus?.forEach((men) => {
@@ -509,22 +522,52 @@ export class SpRecordTrace extends BaseElement {
     mainMenu.menus = mainMenu.menus;
   }
 
+  refreshHint() {
+    let flags = FlagsConfig.getAllFlagConfig();
+    let showHint = false;
+    for (let i = 0; i < flags.length; i++) {
+      let flag = flags[i];
+      if (this.selectedTemplate.has(flag.title)) {
+        let selectedOption = flag.switchOptions.filter((option) => {
+          return option.selected;
+        });
+        if (selectedOption[0].option === 'Disabled') {
+          showHint = true;
+          break;
+        }
+      }
+    }
+    this.showHint = showHint;
+  }
+
+  get showHint(): boolean {
+    return this.hasAttribute('show_hint');
+  }
+
+  private hintTimeOut: number = -1;
+
   set showHint(bool: boolean) {
     if (bool) {
       if (this.hasAttribute('show_hint')) {
         this.removeAttribute('show_hint');
-        setTimeout(() => {
+        this.hintTimeOut = window.setTimeout(() => {
           this.setAttribute('show_hint', '');
         }, 200);
       } else {
         this.setAttribute('show_hint', '');
       }
     } else {
+      if (this.hintTimeOut !== -1) {
+        window.clearTimeout(this.hintTimeOut);
+        this.hintTimeOut = -1;
+      }
       this.removeAttribute('show_hint');
     }
   }
 
   private refreshDeviceTimer: number | undefined;
+  private hintEl: HTMLSpanElement | undefined;
+  private selectedTemplate: Map<string, number> = new Map();
 
   initElements(): void {
     let parentElement = this.parentNode as HTMLElement;
@@ -539,7 +582,11 @@ export class SpRecordTrace extends BaseElement {
     this.spVmTracker = new SpVmTracker();
     this.spHisysEvent = new SpHisysEvent();
     this.spArkTs = new SpArkTs();
+    this.spHilog = new SpHilogRecord();
     this.spRecordTemplate = new SpRecordTemplate(this);
+    this.spWebShell = new SpWebHdcShell();
+    this.hintEl = this.shadowRoot?.querySelector('#hint') as HTMLSpanElement;
+
     this.addButton = this.shadowRoot?.querySelector<LitButton>('.add');
     this.addButton!.addEventListener('click', () => {
       if (this.vs) {
@@ -585,6 +632,9 @@ export class SpRecordTrace extends BaseElement {
                 this.recordSetting!.output,
                 this.recordSetting!.maxDur
               );
+              if (this.nowChildItem === this.spWebShell) {
+                window.publish(window.SmartEvent.UI.DeviceConnect, value);
+              }
             });
           } else {
             SpRecordTrace.selectVersion = SpRecordTrace.supportVersions[0];
@@ -601,6 +651,7 @@ export class SpRecordTrace extends BaseElement {
     this.deviceVersion.onchange = (): void => {
       let versionItem = this.deviceVersion!.options[this.deviceVersion!.selectedIndex];
       SpRecordTrace.selectVersion = versionItem.getAttribute('device-version');
+      this.nativeMemoryHideBySelectVersion();
       this.traceCommand!.hdcCommon = PluginConvertUtils.createHdcCmd(
         PluginConvertUtils.BeanToCmdTxt(this.makeRequest(), false),
         this.recordSetting!.output,
@@ -635,6 +686,9 @@ export class SpRecordTrace extends BaseElement {
         let value = selectOption.value;
         HdcDeviceManager.disConnect(value).then((re) => {
           this.deviceSelect!.removeChild(selectOption);
+          if (this.nowChildItem === this.spWebShell) {
+            window.publish(window.SmartEvent.UI.DeviceDisConnect, value);
+          }
           if (this.deviceSelect!.selectedIndex != -1) {
             let item = this.deviceSelect!.options[this.deviceSelect!.selectedIndex];
             SpRecordTrace.serialNumber = item.value;
@@ -650,6 +704,7 @@ export class SpRecordTrace extends BaseElement {
 
     this.recordButton = this.shadowRoot?.querySelector('.record') as LitButton;
     this.recordButtonText = this.shadowRoot?.querySelector('.record_text') as HTMLSpanElement;
+    this.cancelButton = this.shadowRoot?.querySelector('.cancel') as LitButton;
     this.sp = document.querySelector('sp-application') as SpApplication;
     this.progressEL = this.sp.shadowRoot?.querySelector('.progress') as LitProgressBar;
     this.litSearch = this.sp.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
@@ -667,6 +722,9 @@ export class SpRecordTrace extends BaseElement {
         this.stopRecordListener();
       }
     });
+    this.cancelButton!.addEventListener('click', () => {
+      this.cancelRecordListener();
+    });
     this.spRecordPerf!.addEventListener('addProbe', () => {
       this.showHint = false;
     });
@@ -676,8 +734,33 @@ export class SpRecordTrace extends BaseElement {
     this.probesConfig!.addEventListener('addProbe', () => {
       this.showHint = false;
     });
-    this.spRecordTemplate!.addEventListener('addProbe', () => {
-      this.showHint = false;
+    this.spRecordTemplate!.addEventListener('addProbe', (ev: CustomEventInit<{ elementId: string }>) => {
+      if (
+        FlagsConfig.DEFAULT_CONFIG.find((flagItem) => {
+          return flagItem.title === ev.detail!.elementId;
+        })
+      ) {
+        this.selectedTemplate.set(ev.detail!.elementId, 1);
+        let flagConfig = FlagsConfig.getFlagsConfig(ev.detail!.elementId);
+        if (flagConfig![ev.detail!.elementId] !== 'Enabled') {
+          this.hintEl!.textContent = 'Please open the corresponding Flags tag when parsing';
+          if (!this.showHint) {
+            this.showHint = true;
+          }
+        }
+      }
+    });
+    this.spRecordTemplate!.addEventListener('delProbe', (ev: CustomEventInit<{ elementId: string }>) => {
+      if (
+        FlagsConfig.DEFAULT_CONFIG.find((flagItem) => {
+          return flagItem.title === ev.detail!.elementId;
+        })
+      ) {
+        this.selectedTemplate['delete'](ev.detail!.elementId);
+        if (this.selectedTemplate.size === 0) {
+          this.showHint = false;
+        }
+      }
     });
     this.menuGroup = this.shadowRoot?.querySelector('#menu-group') as LitMainMenuGroup;
     this.appContent = this.shadowRoot?.querySelector('#app-content') as HTMLElement;
@@ -689,13 +772,23 @@ export class SpRecordTrace extends BaseElement {
     this.initMenuItems();
   }
 
-  private selectedDevice(deviceVersion: string): void {
-    let deviceVersionItem = SpRecordTrace.supportVersions.filter((item) => deviceVersion.indexOf(item) != -1);
-    if (deviceVersionItem.length > 0) {
-      SpRecordTrace.selectVersion = deviceVersionItem[0];
-    } else {
-      SpRecordTrace.selectVersion = SpRecordTrace.supportVersions[0];
+  private nativeMemoryHideBySelectVersion() {
+    let divConfigs = this.spAllocations?.shadowRoot?.querySelectorAll<HTMLDivElement>('.version-controller');
+    if (divConfigs) {
+      if (SpRecordTrace.selectVersion != '3.2') {
+        for (let divConfig of divConfigs) {
+          divConfig!.style.zIndex = '1';
+        }
+      } else {
+        for (let divConfig of divConfigs) {
+          divConfig!.style.zIndex = '-1';
+        }
+      }
     }
+  }
+
+  private selectedDevice(deviceVersion: string): void {
+    SpRecordTrace.selectVersion = this.getDeviceVersion(deviceVersion);
     this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
   }
 
@@ -703,7 +796,7 @@ export class SpRecordTrace extends BaseElement {
     SpRecordTrace.supportVersions.forEach((supportVersion) => {
       let option = document.createElement('option');
       option.className = 'select';
-      option.textContent = `OpenHarmony-${ supportVersion }`;
+      option.textContent = `OpenHarmony-${supportVersion}`;
       option.setAttribute('device-version', supportVersion);
       this.deviceVersion!.append(option);
     });
@@ -711,7 +804,7 @@ export class SpRecordTrace extends BaseElement {
 
   private setDeviceVersionSelect(selected: string): void {
     let children = this.deviceVersion!.children;
-    for (let i = 0 ; i < children.length ; i++) {
+    for (let i = 0; i < children.length; i++) {
       let child = children[i] as HTMLOptionElement;
       if (child.getAttribute('device-version') === selected) {
         child.selected = true;
@@ -721,9 +814,32 @@ export class SpRecordTrace extends BaseElement {
   }
 
   stopRecordListener(): void {
-    this.recordButtonText!.textContent = 'Record';
+    this.recordButtonText!.textContent = this.record;
+    this.recordButtonDisable(true);
+    this.cancelButtonShow(false);
     if (this.vs) {
       let cmd = Cmd.formatString(CmdConstant.CMS_HDC_STOP, [SpRecordTrace.serialNumber]);
+      Cmd.execHdcCmd(cmd, (res: string) => {});
+    } else {
+      let selectedOption = this.deviceSelect!.options[this.deviceSelect!.selectedIndex] as HTMLOptionElement;
+      HdcDeviceManager.connect(selectedOption.value).then((result) => {
+        if (result) {
+          try {
+            HdcDeviceManager.shellResultAsString(CmdConstant.CMS_STOP, true).then((result) => {});
+          } catch (exception) {
+            this.recordButtonDisable(false);
+            log(exception);
+          }
+        }
+      });
+    }
+  }
+
+  cancelRecordListener(): void {
+    this.recordButtonText!.textContent = this.record;
+    this.cancelButtonShow(false);
+    if (this.vs) {
+      let cmd = Cmd.formatString(CmdConstant.CMS_HDC_CANCEL, [SpRecordTrace.serialNumber]);
       Cmd.execHdcCmd(cmd, (res: string) => {
         this.freshMenuDisable(false);
         this.freshConfigMenuDisable(false);
@@ -749,13 +865,21 @@ export class SpRecordTrace extends BaseElement {
             this.addButton!.style.pointerEvents = 'auto';
             this.deviceSelect!.style.pointerEvents = 'auto';
             this.deviceVersion!.style.pointerEvents = 'auto';
-            SpRecordTrace.stopRecord = true;
-            HdcDeviceManager.stopHiprofiler(CmdConstant.CMS_STOP, true).then((result) => {});
+            SpRecordTrace.cancelRecord = true;
+            HdcDeviceManager.stopHiprofiler(CmdConstant.CMS_CANCEL).then((result) => {});
           } catch (exception) {
             log(exception);
           }
         }
       });
+    }
+  }
+
+  private cancelButtonShow(show: boolean) {
+    if (show) {
+      this.cancelButton!.style.visibility = 'visible';
+    } else {
+      this.cancelButton!.style.visibility = 'hidden';
     }
   }
 
@@ -827,6 +951,20 @@ export class SpRecordTrace extends BaseElement {
           },
         },
         {
+          title: 'Hdc Shell',
+          icon: 'file-config',
+          fileChoose: false,
+          clickHandler: function (ev: InputEvent) {
+            that.appContent!.innerHTML = '';
+            that.appContent!.append(that.spWebShell!);
+            setTimeout(() => {
+              that.spWebShell!.hdcShellFocus();
+            }, 100);
+            that.nowChildItem = that.spWebShell!;
+            that.freshMenuItemsStatus('Hdc Shell');
+          },
+        },
+        {
           title: 'Probes config',
           icon: 'realIntentionBulb',
           fileChoose: false,
@@ -841,6 +979,12 @@ export class SpRecordTrace extends BaseElement {
           icon: 'externaltools',
           fileChoose: false,
           clickHandler: function (ev: InputEvent): void {
+            let divConfigs = that.spAllocations?.shadowRoot?.querySelectorAll<HTMLDivElement>('.version-controller');
+            if ((!SpRecordTrace.selectVersion || SpRecordTrace.selectVersion === '3.2') && divConfigs) {
+              for (let divConfig of divConfigs) {
+                divConfig!.style.zIndex = '-1';
+              }
+            }
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spAllocations!);
             that.freshMenuItemsStatus('Native Memory');
@@ -897,6 +1041,16 @@ export class SpRecordTrace extends BaseElement {
           },
         },
         {
+          title: 'Hilog',
+          icon: 'realIntentionBulb',
+          fileChoose: false,
+          clickHandler: function (ev: InputEvent): void {
+            that.appContent!.innerHTML = '';
+            that.appContent!.append(that.spHilog!);
+            that.freshMenuItemsStatus('Hilog');
+          },
+        },
+        {
           title: 'SDK Config',
           icon: 'file-config',
           fileChoose: false,
@@ -927,6 +1081,7 @@ export class SpRecordTrace extends BaseElement {
       this.menuGroup!.appendChild(th);
     });
   }
+
   // @ts-ignore
   usbConnectionListener(event: USBConnectionEvent): void {
     if (event.isTrusted) {
@@ -943,6 +1098,9 @@ export class SpRecordTrace extends BaseElement {
       option.textContent = usbDevice!.serialNumber ? usbDevice!.serialNumber.replace(/"/g, '') : 'hdc Device';
       this.deviceSelect!.appendChild(option);
       SpRecordTrace.serialNumber = option.value;
+      if (this.nowChildItem === this.spWebShell) {
+        window.publish(window.SmartEvent.UI.DeviceConnect, option.value);
+      }
     }
   }
 
@@ -950,13 +1108,16 @@ export class SpRecordTrace extends BaseElement {
   usbDisConnectionListener(event: USBConnectionEvent): void {
     // @ts-ignore
     let disConnectDevice: USBDevice = event.device;
-    for (let index = 0 ; index < this.deviceSelect!.children.length ; index++) {
+    for (let index = 0; index < this.deviceSelect!.children.length; index++) {
       let option = this.deviceSelect!.children[index] as HTMLOptionElement;
       if (option.value == disConnectDevice.serialNumber) {
         let optValue = option.value;
         HdcDeviceManager.disConnect(optValue).then(() => {});
         this.deviceSelect!.removeChild(option);
         if (SpRecordTrace.serialNumber == optValue) {
+          if (this.nowChildItem === this.spWebShell) {
+            window.publish(window.SmartEvent.UI.DeviceDisConnect, optValue);
+          }
           let options = this.deviceSelect!.options;
           if (options.length > 0) {
             let selectedOpt = options[this.deviceSelect!.selectedIndex];
@@ -972,9 +1133,10 @@ export class SpRecordTrace extends BaseElement {
   }
 
   recordButtonListener(): void {
-    SpRecordTrace.stopRecord = false;
+    SpRecordTrace.cancelRecord = false;
     let request = this.makeRequest();
     if (request.pluginConfigs.length == 0) {
+      this.hintEl!.textContent = "It looks like you didn't add any probes. Please add at least one";
       this.showHint = true;
       return;
     } else {
@@ -1021,9 +1183,10 @@ export class SpRecordTrace extends BaseElement {
           this.sp!.search = true;
           this.progressEL!.loading = true;
           this.litSearch!.clear();
-          this.litSearch!.setPercent('tracing  ' + this.recordSetting!.maxDur * 1000 + 'ms', -1);
+          this.litSearch!.setPercent(`tracing  ${this.recordSetting!.maxDur * 1000}ms`, -1);
           this.initRecordUIState();
           this.recordButtonText!.textContent = this.stop;
+          this.cancelButtonShow(true);
           Cmd.execHdcTraceCmd(traceCommandStr, SpRecordTrace.serialNumber, (traceResult: string) => {
             if (traceResult.indexOf('DestroySession done') != -1) {
               this.litSearch!.setPercent('tracing htrace down', -1);
@@ -1039,13 +1202,14 @@ export class SpRecordTrace extends BaseElement {
                 let children = main.menus as Array<MenuGroup>;
                 let child = children[0].children as Array<MenuItem>;
                 let fileHandler = child[0].fileHandler;
-                if (fileHandler && !SpRecordTrace.stopRecord) {
+                if (fileHandler && !SpRecordTrace.cancelRecord) {
                   this.recordButtonText!.textContent = this.record;
+                  this.cancelButtonShow(false);
                   this.freshMenuDisable(false);
                   this.freshConfigMenuDisable(false);
                   fileHandler({ detail: file });
                 } else {
-                  SpRecordTrace.stopRecord = false;
+                  SpRecordTrace.cancelRecord = false;
                 }
               });
             } else {
@@ -1061,7 +1225,7 @@ export class SpRecordTrace extends BaseElement {
       });
     } else {
       HdcDeviceManager.connect(selectedOption.value).then((result) => {
-        log('result is ' + result);
+        log(`result is ${result}`);
         if (result) {
           this.appContent!.innerHTML = '';
           this.appContent!.append(this.traceCommand!);
@@ -1073,12 +1237,12 @@ export class SpRecordTrace extends BaseElement {
           );
           this.freshMenuItemsStatus('Trace command');
           try {
-            HdcDeviceManager.stopHiprofiler(CmdConstant.CMS_STOP, true).then(() => {
+            HdcDeviceManager.stopHiprofiler(CmdConstant.CMS_CANCEL).then(() => {
               HdcDeviceManager.shellResultAsString(CmdConstant.CMD_MOUNT, true).then(() => {
                 this.sp!.search = true;
                 this.progressEL!.loading = true;
                 this.litSearch!.clear();
-                this.litSearch!.setPercent('tracing  ' + this.recordSetting!.maxDur * 1000 + 'ms', -1);
+                this.litSearch!.setPercent(`tracing  ${this.recordSetting!.maxDur * 1000}ms`, -1);
                 this.buttonDisable(true);
                 this.freshMenuDisable(true);
                 this.freshConfigMenuDisable(true);
@@ -1091,6 +1255,7 @@ export class SpRecordTrace extends BaseElement {
                         CmdConstant.CMD_TRACE_FILE_SIZE + this.recordSetting!.output,
                         false
                       ).then((traceFileSize) => {
+                        this.litSearch!.setPercent(`traceFileSize is ${traceFileSize}`,-1);
                         if (traceFileSize.indexOf('No such') != -1) {
                           this.litSearch!.setPercent('No such file or directory', -2);
                           this.buttonDisable(false);
@@ -1110,20 +1275,22 @@ export class SpRecordTrace extends BaseElement {
                               let children = main.menus as Array<MenuGroup>;
                               let child = children[0].children as Array<MenuItem>;
                               let fileHandler = child[0].fileHandler;
-                              if (fileHandler && !SpRecordTrace.stopRecord) {
+                              if (fileHandler && !SpRecordTrace.cancelRecord) {
                                 this.freshConfigMenuDisable(false);
                                 this.freshMenuDisable(false);
                                 this.buttonDisable(false);
+                                this.recordButtonDisable(false);
                                 fileHandler({
                                   detail: file,
                                 });
                               } else {
-                                SpRecordTrace.stopRecord = false;
+                                SpRecordTrace.cancelRecord = false;
                               }
                             });
                           });
                         } else {
                           this.recordButtonText!.textContent = this.record;
+                          this.recordButtonDisable(false);
                           this.litSearch!.setPercent('htrace file is too big', -2);
                           this.buttonDisable(false);
                           this.freshConfigMenuDisable(false);
@@ -1131,17 +1298,20 @@ export class SpRecordTrace extends BaseElement {
                         }
                       });
                     } else if (re == 2) {
+                      this.recordButtonDisable(false);
                       this.litSearch!.setPercent('stop tracing htrace ', -1);
                       this.freshConfigMenuDisable(false);
                       this.freshMenuDisable(false);
                       this.buttonDisable(false);
                     } else if (re == -1) {
+                      this.recordButtonDisable(false);
                       this.litSearch!.setPercent('The device is abnormal', -2);
                       this.progressEL!.loading = false;
                       this.freshConfigMenuDisable(false);
                       this.freshMenuDisable(false);
                       this.buttonDisable(false);
                     } else {
+                      this.recordButtonDisable(false);
                       this.litSearch!.setPercent('tracing htrace failed, please check your config ', -2);
                       this.freshConfigMenuDisable(false);
                       this.freshMenuDisable(false);
@@ -1176,6 +1346,8 @@ export class SpRecordTrace extends BaseElement {
       return 1;
     } else if (traceResult.indexOf('Signal') != -1) {
       return 2;
+    } else if (traceResult.indexOf('signal(2)') != -1) {
+      return 0;
     } else if (traceResult.indexOf('The device is abnormal') != -1) {
       return -1;
     } else {
@@ -1228,7 +1400,8 @@ export class SpRecordTrace extends BaseElement {
           )
         );
       }
-      if (this.spAllocations!.appProcess != '') {
+
+      if (this.spAllocations!.appProcess !== '' && this.spAllocations!.startSamp) {
         request.pluginConfigs.push(this.createNativePluginConfig(reportingFrequency));
       }
       if (this.spRecordPerf!.startSamp) {
@@ -1246,6 +1419,9 @@ export class SpRecordTrace extends BaseElement {
       if (this.spArkTs!.process != '' && this.spArkTs!.startSamp) {
         request.pluginConfigs.push(this.createArkTsConfig());
       }
+      if (this.spHilog!.recordHilog) {
+        request.pluginConfigs.push(this.createHilogConfig(reportingFrequency));
+      }
     }
     return request;
   };
@@ -1258,9 +1434,7 @@ export class SpRecordTrace extends BaseElement {
     let sessionConfig: ProfilerSessionConfig = {
       buffers: [bufferConfig],
       sessionMode: ProfilerSessionConfigMode.OFFLINE,
-      resultFile: this.recordSetting!.output,
       resultMaxSize: 0,
-      sampleDuration: this.recordSetting!.maxDur * 1000,
       keepAliveTime: 0,
     };
     let request: CreateSessionRequest = {
@@ -1289,7 +1463,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: 1000,
       configData: netWorkConfig,
     };
-    SpRecordTrace.appendSerialize(netWorkPlugin);
     return netWorkPlugin;
   }
 
@@ -1302,7 +1475,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: 1000,
       configData: diskIoConfig,
     };
-    SpRecordTrace.appendSerialize(diskIoPlugin);
     return diskIoPlugin;
   }
 
@@ -1316,7 +1488,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: 1000,
       configData: cpuConfig,
     };
-    SpRecordTrace.appendSerialize(cpuPlugin);
     return cpuPlugin;
   }
 
@@ -1332,7 +1503,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: 1000,
       configData: processConfig,
     };
-    SpRecordTrace.appendSerialize(processPlugin);
     return processPlugin;
   }
 
@@ -1517,7 +1687,9 @@ export class SpRecordTrace extends BaseElement {
                 left:100%;
             }
         }
-        
+        .cancel {
+          visibility: hidden;
+        }
         </style>
         <div class="container">
          <div class="header">
@@ -1532,8 +1704,10 @@ export class SpRecordTrace extends BaseElement {
               <div class="header-right">
               <lit-button class="disconnect" style="margin-right: 30px" height="32px" width="96px" font_size="14px" justify_content="center" color="#FFFFFF"
               border_radius="16px" back='#0A59F7' opacity="0.6" border="0 solid">Disconnect</lit-button>
-              <lit-button class="record" height="32px" width="96px" font_size="14px" justify_content="center" color="#FFFFFF"
+              <lit-button class="record" style="margin-right: 30px" height="32px" width="96px" font_size="14px" justify_content="center" color="#FFFFFF"
               border_radius="16px" back='#0A59F7' opacity="0.6" border="0 solid"><span class="record_text">Record</span></lit-button>
+              <lit-button class="cancel" height="32px" width="96px" font_size="14px" justify_content="center" color="#FFFFFF"
+              border_radius="16px" back='#0A59F7' opacity="0.6" border="0 solid"><span class="record_text">Cancel</span></lit-button>
               </div>
              </div>
               <div class="span-col-2" >
@@ -1550,10 +1724,8 @@ export class SpRecordTrace extends BaseElement {
         `;
   }
 
-  private createHilogConfig(probesConfig: SpProbesConfig, reportingFrequency: number): ProfilerPluginConfig<HilogConfig> {
+  private createHilogConfig(reportingFrequency: number): ProfilerPluginConfig<HilogConfig> {
     let hilogConfig: HilogConfig = {
-      deviceType: Type.HI3516,
-      logLevel: levelFromJSON(probesConfig.hilogConfig[0]),
       needClear: true,
     };
     let hilogConfigProfilerPluginConfig: ProfilerPluginConfig<HilogConfig> = {
@@ -1561,7 +1733,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: reportingFrequency * 1000,
       configData: hilogConfig,
     };
-    SpRecordTrace.appendSerialize(hilogConfigProfilerPluginConfig);
     return hilogConfigProfilerPluginConfig;
   }
 
@@ -1572,65 +1743,65 @@ export class SpRecordTrace extends BaseElement {
   private createHiperConfig(reportingFrequency: number): ProfilerPluginConfig<HiperfPluginConfig> {
     let perfConfig = this.spRecordPerf!.getPerfConfig();
     let recordArgs = '';
-    recordArgs = recordArgs + '-f ' + perfConfig?.frequency;
+    recordArgs = `${recordArgs}-f ${perfConfig?.frequency}`;
     if (perfConfig?.process && !perfConfig?.process.includes('ALL') && perfConfig?.process.length > 0) {
       let process = perfConfig.process;
       if (process.indexOf(',') != -1) {
         let processIdOrName = process.split(',');
         if (this.isNumber(processIdOrName[0])) {
-          recordArgs = recordArgs + ' -p ' + perfConfig?.process;
+          recordArgs = `${recordArgs} -p ${perfConfig?.process}`;
         } else {
-          recordArgs = recordArgs + ' --app ' + perfConfig?.process;
+          recordArgs = `${recordArgs} --app ${perfConfig?.process}`;
         }
       } else {
         if (this.isNumber(process)) {
-          recordArgs = recordArgs + ' -p ' + perfConfig?.process;
+          recordArgs = `${recordArgs} -p ${perfConfig?.process}`;
         } else {
-          recordArgs = recordArgs + ' --app ' + perfConfig?.process;
+          recordArgs = `${recordArgs} --app ${perfConfig?.process}`;
         }
       }
     } else {
-      recordArgs = recordArgs + ' -a ';
+      recordArgs = `${recordArgs} -a `;
     }
     if (perfConfig?.cpu && !perfConfig?.cpu.includes('ALL') && perfConfig?.cpu.length > 0) {
-      recordArgs = recordArgs + ' -c ' + perfConfig?.cpu;
+      recordArgs = `${recordArgs} -c ${perfConfig?.cpu}`;
     }
     if (perfConfig?.cpuPercent != 0) {
-      recordArgs = recordArgs + ' --cpu-limit ' + perfConfig?.cpuPercent;
+      recordArgs = `${recordArgs} --cpu-limit ${perfConfig?.cpuPercent}`;
     }
     if (perfConfig?.eventList && !perfConfig?.eventList.includes('NONE') && perfConfig?.eventList.length > 0) {
-      recordArgs = recordArgs + ' -e ' + perfConfig?.eventList;
+      recordArgs = `${recordArgs} -e ${perfConfig?.eventList}`;
       if (perfConfig?.isOffCpu) {
-        recordArgs = recordArgs + ',sched:sched_waking';
+        recordArgs = `${recordArgs},sched:sched_waking`;
       }
     } else {
-      recordArgs = recordArgs + ' -e hw-cpu-cycles';
+      recordArgs = `${recordArgs} -e hw-cpu-cycles`;
       if (perfConfig?.isOffCpu) {
-        recordArgs = recordArgs + ',sched:sched_waking';
+        recordArgs = `${recordArgs},sched:sched_waking`;
       }
     }
     if (perfConfig?.callStack != 'none') {
-      recordArgs = recordArgs + ' --call-stack ' + perfConfig?.callStack;
+      recordArgs = `${recordArgs} --call-stack ${perfConfig?.callStack}`;
     }
 
     if (perfConfig?.branch != 'none') {
-      recordArgs = recordArgs + ' -j ' + perfConfig?.branch;
+      recordArgs = `${recordArgs} -j ${perfConfig?.branch}`;
     }
 
     if (perfConfig?.clockType) {
-      recordArgs = recordArgs + ' --clockid ' + perfConfig?.clockType;
+      recordArgs = `${recordArgs} --clockid ${perfConfig?.clockType}`;
     }
 
     if (perfConfig?.isOffCpu) {
-      recordArgs = recordArgs + ' --offcpu';
+      recordArgs = `${recordArgs} --offcpu`;
     }
 
     if (perfConfig?.noInherit) {
-      recordArgs = recordArgs + ' --no-inherit';
+      recordArgs = `${recordArgs} --no-inherit`;
     }
 
     if (perfConfig?.mmap) {
-      recordArgs = recordArgs + ' -m ' + perfConfig.mmap;
+      recordArgs = `${recordArgs} -m ${perfConfig.mmap}`;
     }
     info('record config Args is: ', recordArgs);
     let hiPerf: HiperfPluginConfig = {
@@ -1660,13 +1831,13 @@ export class SpRecordTrace extends BaseElement {
       recordEvent.push('bio');
     }
     if (recordEvent.length > 0) {
-      recordArgs += ' --events ' + recordEvent.toString();
+      recordArgs += ` --events ${recordEvent.toString()}`;
     }
-    recordArgs += ' --duration ' + this.recordSetting?.maxDur;
+    recordArgs += ` --duration ${this.recordSetting?.maxDur}`;
     if (systemConfig?.process && !systemConfig?.process.includes('ALL') && systemConfig?.process.length > 0) {
-      recordArgs = recordArgs + ' --pids ' + systemConfig?.process;
+      recordArgs = `${recordArgs} --pids ${systemConfig?.process}`;
     }
-    recordArgs += ' --max_stack_depth ' + systemConfig?.unWindLevel;
+    recordArgs += ` --max_stack_depth ${systemConfig?.unWindLevel}`;
     let systemPluginConfig: FileSystemConfig = {
       cmdLine: recordArgs,
       outfileName: '/data/local/tmp/ebpf.data',
@@ -1685,7 +1856,7 @@ export class SpRecordTrace extends BaseElement {
     let pid = 0;
     let processName = '';
     let processId = '';
-    if (this.spAllocations!.startup_mode && Number(SpRecordTrace.selectVersion) >= 4.0) {
+    if (this.spAllocations!.startup_mode && SpRecordTrace.selectVersion !== '3.2') {
       processName = appProcess;
     } else {
       if (appProcess.indexOf('(') != -1) {
@@ -1711,7 +1882,7 @@ export class SpRecordTrace extends BaseElement {
       fpUnwind: this.spAllocations!.fp_unwind,
       blocked: true,
     };
-    if (Number(SpRecordTrace.selectVersion) >= 4.0) {
+    if (SpRecordTrace.selectVersion !== undefined && SpRecordTrace.selectVersion !== '3.2') {
       nativeConfig.callframeCompress = true;
       nativeConfig.recordAccurately = this.spAllocations!.record_accurately;
       nativeConfig.offlineSymbolization = this.spAllocations!.offline_symbolization;
@@ -1751,7 +1922,7 @@ export class SpRecordTrace extends BaseElement {
       memoryconfig.reportSysmemVmemInfo = true;
       memoryconfig.reportProcessMemInfo = true;
     }
-    if (hasSmaps || hasMonitorMemory){
+    if (hasSmaps || hasMonitorMemory) {
       memoryconfig.reportPurgeableAshmemInfo = true;
       memoryconfig.reportDmaMemInfo = true;
       memoryconfig.reportGpuMemInfo = true;
@@ -1793,7 +1964,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: reportingFrequency * 1000,
       configData: memoryconfig,
     };
-    SpRecordTrace.appendSerialize(profilerPluginConfig);
     return profilerPluginConfig;
   }
 
@@ -1837,7 +2007,6 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: 1000,
       configData: fpsConfig,
     };
-    SpRecordTrace.appendSerialize(fpsPlugin);
     return fpsPlugin;
   }
 
@@ -1850,7 +2019,6 @@ export class SpRecordTrace extends BaseElement {
       pluginName: 'hisysevent-plugin',
       configData: hiSystemEventConfig,
     };
-    SpRecordTrace.appendSerialize(hiSystemEventPlugin);
     return hiSystemEventPlugin;
   }
 
@@ -1868,7 +2036,6 @@ export class SpRecordTrace extends BaseElement {
       rawDataPrefix: '',
       traceDurationMs: 0,
       debugOn: false,
-      hitraceTime: this.recordSetting!.maxDur,
     };
     if (this.probesConfig!.traceEvents.length > 0) {
       tracePluginConfig.hitraceCategories = this.probesConfig!.traceEvents;
@@ -1878,13 +2045,7 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: 1000,
       configData: tracePluginConfig,
     };
-    SpRecordTrace.appendSerialize(htraceProfilerPluginConfig);
     return htraceProfilerPluginConfig;
-  }
-
-  static appendSerialize(profilerPluginConfig: ProfilerPluginConfig<{}>): void {
-    if (Number(SpRecordTrace.selectVersion) >= 4.0) {
-    }
   }
 
   private createSdkConfig(): ProfilerPluginConfig<{}> {
@@ -1894,19 +2055,20 @@ export class SpRecordTrace extends BaseElement {
       sampleInterval: this.spSdkConfig!.getSampleInterval(),
       configData: gpuConfig,
     };
-    SpRecordTrace.appendSerialize(gpuPluginConfig);
     return gpuPluginConfig;
   }
 
   freshConfigMenuDisable(disable: boolean): void {
     let querySelectors = this.shadowRoot?.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
     querySelectors!.forEach((item) => {
-      if (disable) {
-        item.style.pointerEvents = 'none';
-      } else {
-        item.style.pointerEvents = 'auto';
+      if (item.title !== 'Hdc Shell') {
+        if (disable) {
+          item.style.pointerEvents = 'none';
+        } else {
+          item.style.pointerEvents = 'auto';
+        }
+        item.disabled = disable;
       }
-      item.disabled = disable;
     });
   }
 
@@ -1918,15 +2080,24 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
+  recordButtonDisable(disable: boolean): void {
+    if (disable) {
+      this.recordButton!.style.pointerEvents = 'none';
+    } else {
+      this.recordButton!.style.pointerEvents = 'auto';
+    }
+  }
   buttonDisable(disable: boolean): void {
     if (disable) {
       this.disconnectButton!.style.pointerEvents = 'none';
       this.recordButtonText!.textContent = this.stop;
+      this.cancelButtonShow(true);
       this.addButton!.style.pointerEvents = 'none';
       this.deviceSelect!.style.pointerEvents = 'none';
       this.deviceVersion!.style.pointerEvents = 'none';
     } else {
       this.recordButtonText!.textContent = this.record;
+      this.cancelButtonShow(false);
       this.disconnectButton!.style.pointerEvents = 'auto';
       this.addButton!.style.pointerEvents = 'auto';
       this.deviceSelect!.style.pointerEvents = 'auto';
@@ -1944,7 +2115,7 @@ export class SpRecordTrace extends BaseElement {
 
   synchronizeDeviceList(): void {
     this.deviceSelect!.innerHTML = '';
-    if (SpRecordTrace.serialNumber != '') {
+    if (SpRecordTrace.serialNumber !== '') {
       let option = document.createElement('option');
       option.className = 'select';
       option.selected = true;
@@ -1953,7 +2124,7 @@ export class SpRecordTrace extends BaseElement {
       this.deviceSelect!.appendChild(option);
       this.recordButton!.hidden = false;
       this.disconnectButton!.hidden = false;
-      if (SpRecordTrace.selectVersion && SpRecordTrace.selectVersion != '') {
+      if (SpRecordTrace.selectVersion && SpRecordTrace.selectVersion !== '') {
         this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
       }
     }

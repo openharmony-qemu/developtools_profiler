@@ -52,6 +52,15 @@ struct DataSegment {
     BytraceLine bufLine;
     std::atomic<ParseStatus> status{TS_PARSE_STATUS_INIT};
 };
+struct HilogLine {
+    uint64_t lineSeq;
+    uint64_t timeStamp;
+    uint32_t pid;
+    uint32_t tid;
+    std::string level;
+    std::string tag;
+    std::string context;
+};
 struct HtraceDataSegment {
     std::shared_ptr<std::string> seg;
     uint64_t timeStamp;

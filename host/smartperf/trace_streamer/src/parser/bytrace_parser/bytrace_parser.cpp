@@ -26,9 +26,11 @@
 #include "system_event_measure_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {
-BytraceParser::BytraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters)
-    : ParserBase(filters),
+BytraceParser::BytraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters, TraceFileType fileType)
+    : fileType_(fileType),
+      ParserBase(filters),
       eventParser_(std::make_unique<BytraceEventParser>(dataCache, filters)),
+      hilogParser_(std::make_unique<BytraceHilogParser>(dataCache, filters)),
 #ifdef SUPPORTTHREAD
       dataSegArray_(std::make_unique<DataSegment[]>(MAX_SEG_ARRAY_SIZE)),
       supportThread_(true)
@@ -50,6 +52,7 @@ void BytraceParser::WaitForParserEnd()
     }
     eventParser_->FilterAllEvents();
     eventParser_->Clear();
+    hilogParser_->FilterAllHilogData();
     dataSegArray_.reset();
 }
 void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
@@ -106,7 +109,9 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
             goto NEXT_LINE;
         }
 
-        if (isBytrace_) {
+        if (fileType_ == TRACE_FILETYPE_HILOG) {
+            hilogParser_->ParseHilogDataItem(bufferLine, seq_);
+        } else if (isBytrace_) {
             if (!traceBegan_) {
                 traceBegan_ = true;
             }
@@ -117,6 +122,7 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
 
     NEXT_LINE:
         packagesBegin = packagesLine + 1;
+        seq_++;
         continue;
     }
 

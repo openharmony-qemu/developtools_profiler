@@ -20,6 +20,12 @@ import { getTabPaneCounterSampleData } from '../../../../database/SqlLite.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { Utils } from '../../base/Utils.js';
 import { resizeObserver } from '../SheetUtils.js';
+import { SpSystemTrace } from '../../../SpSystemTrace.js';
+import { dataFilterHandler, drawLines } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
+import { TraceRow } from '../../base/TraceRow.js';
+import { CpuFreqStruct } from '../../../../database/ui-worker/ProcedureWorkerFreq.js';
+import { CpuState } from '../../../../database/logic-worker/ProcedureLogicWorkerCpuState.js';
+import { CpuStateStruct } from '../../../../database/ui-worker/ProcedureWorkerCpuState.js';
 
 @element('tabpane-counter-sample')
 export class TabPaneCounterSample extends BaseElement {
@@ -33,6 +39,8 @@ export class TabPaneCounterSample extends BaseElement {
   private counterSampleSource: any[] = [];
   private counterSortKey: string = 'counter';
   private counterSortType: number = 0;
+  private systemTrace: SpSystemTrace | undefined | null;
+  private _rangeRow: Array<TraceRow<any>> | undefined | null;
 
   set data(counterSampleValue: SelectionParam | any) {
     if (counterSampleValue == this.selectionParam) {
@@ -47,10 +55,17 @@ export class TabPaneCounterSample extends BaseElement {
     this.queryDataByDB(counterSampleValue);
   }
 
+  set rangeTraceRow(rangeRow: Array<TraceRow<any>> | undefined) {
+    this._rangeRow = rangeRow;
+  }
+
   initElements(): void {
     this.sampleProgressEL = this.shadowRoot!.querySelector<LitProgressBar>('.progressCounter');
     this.counterLoadingPage = this.shadowRoot!.querySelector('.loadingCounter');
     this.counterSampleTbl = this.shadowRoot!.querySelector<LitTable>('#tb-counter-sample');
+    this.systemTrace = document
+      .querySelector('body > sp-application')!
+      .shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.counterSampleTbl!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.counterSortKey = evt.detail.key;
@@ -58,6 +73,52 @@ export class TabPaneCounterSample extends BaseElement {
       this.counterSortType = evt.detail.sort;
       // @ts-ignore
       this.sortTable(evt.detail.key, evt.detail.sort);
+    });
+
+    this.counterSampleTbl!.addEventListener('row-click', (evt) => {
+      // @ts-ignore
+      let data = evt.detail.data;
+      let path = new Path2D();
+      if (this._rangeRow && this._rangeRow!.length > 0) {
+        let rangeTraceRow = this._rangeRow!.filter(function (item) {
+          return item.name.includes('State');
+        });
+        let cpuStateFilter = [];
+        for (let row of rangeTraceRow!) {
+          let context = row.collect ? this.systemTrace!.canvasFavoritePanelCtx! : this.systemTrace!.canvasPanelCtx!;
+          cpuStateFilter.push(...row.dataListCache);
+          row.canvasSave(context);
+          context.clearRect(row.frame.x, row.frame.y, row.frame.width, row.frame.height);
+          drawLines(context!, TraceRow.range?.xs || [], row.frame.height, this.systemTrace!.timerShaftEL!.lineColor());
+          if (row.name.includes('State') && parseInt(row.name.replace(/[^\d]/g, ' ')) === data.cpu) {
+            CpuFreqStruct.hoverCpuFreqStruct = undefined;
+            for (let i = 0; i < cpuStateFilter!.length; i++) {
+              if (
+                cpuStateFilter[i].value === data.value &&
+                cpuStateFilter[i].cpu === data.cpu &&
+                Math.max(TraceRow.rangeSelectObject?.startNS!, cpuStateFilter[i].startTs!) <
+                  Math.min(TraceRow.rangeSelectObject?.endNS!, cpuStateFilter[i].startTs! + cpuStateFilter[i].dur!)
+              ) {
+                CpuStateStruct.hoverStateStruct = cpuStateFilter[i];
+              }
+              if (cpuStateFilter[i].cpu === data.cpu) {
+                CpuStateStruct.draw(context, path, cpuStateFilter[i]);
+              }
+            }
+          } else {
+            for (let i = 0; i < cpuStateFilter!.length; i++) {
+              if (
+                row.name.includes('State') &&
+                cpuStateFilter[i].cpu !== data.cpu &&
+                cpuStateFilter[i].cpu === parseInt(row.name.replace(/[^\d]/g, ' '))
+              ) {
+                CpuStateStruct.draw(context, path, cpuStateFilter[i]);
+              }
+            }
+          }
+          row.canvasRestore(context);
+        }
+      }
     });
   }
 

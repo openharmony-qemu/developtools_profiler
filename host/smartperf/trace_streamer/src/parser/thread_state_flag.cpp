@@ -50,6 +50,10 @@ void ThreadStateFlag::ProcessSate(const std::string& stateStr)
             break;
         }
     }
+
+    if (state_ == WAKEKILL) {
+        state_ = RUNNABLE;
+    }
 }
 
 ThreadStateFlag::ThreadStateFlag(const std::string& stateStr)

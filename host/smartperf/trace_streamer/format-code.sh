@@ -34,14 +34,12 @@ FORMAT_DIR_LIST=(
 )
 echo "formatting code ..."
 for d in ${FORMAT_DIR_LIST[@]}; do
-    echo $d
     for f in $(find $d -type f -not -name '*sql.c' -regex '.*\.\(cpp\|hpp\|c\|h\)'); do
         dos2unix $f
         chmod -x $f
         clang-format --verbose -i $f
     done
     for f in $(find $d -type f -not -name '*sql.c' -regex '.*\.\(gn\|gni\)'); do
-        echo $f
         ./prebuilts/$target_os/gn format $f
     done
 done

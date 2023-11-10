@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-import { CpuStruct, WakeupBean } from './ProcedureWorkerCPU.js';
-import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import { TimerShaftElement } from '../../component/trace/TimerShaftElement';
+import {CpuStruct, WakeupBean} from './ProcedureWorkerCPU.js';
+import {TraceRow} from '../../component/trace/base/TraceRow.js';
+import {TimerShaftElement} from '../../component/trace/TimerShaftElement';
+import {Flag} from '../../component/trace/timer-shaft/Flag.js';
 
 export abstract class Render {
   abstract renderMainThread(req: any, row: TraceRow<any>): void;
@@ -75,17 +76,31 @@ export function ns2s(ns: number): string {
   let microsecond = 1_000; // 1 microsecond
   let res;
   if (ns >= second1) {
-    res = (ns / 1000 / 1000 / 1000).toFixed(1) + ' s';
+    res = `${(ns / 1000 / 1000 / 1000).toFixed(1)} s`;
   } else if (ns >= millisecond) {
-    res = (ns / 1000 / 1000).toFixed(1) + ' ms';
+    res = `${(ns / 1000 / 1000).toFixed(1)} ms`;
   } else if (ns >= microsecond) {
-    res = (ns / 1000).toFixed(1) + ' μs';
+    res = `${(ns / 1000).toFixed(1)} μs`;
   } else if (ns > 0) {
-    res = ns.toFixed(1) + ' ns';
+    res = `${ns.toFixed(1)} ns`;
   } else {
-    res = ns.toFixed(1) + ' s';
+    res = `${ns.toFixed(1)} s`;
   }
   return res;
+}
+
+export function ns2Timestamp(ns: number): string {
+  let hour = Math.floor(ns / 3600000000000);
+  let minute = Math.floor((ns % 3600000000000) / 60000000000);
+  let second = Math.floor((ns % 60000000000) / 1000000000);
+  let millisecond = Math.floor((ns % 1000000000) / 1000000);
+  let microsecond = Math.floor((ns % 1000000) / 1000);
+  let nanosecond = ns % 1000;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second
+    .toString()
+    .padStart(2, '0')}:${millisecond.toString().padStart(3, '0')}:${microsecond
+    .toString()
+    .padStart(3, '0')}:${nanosecond.toString().padStart(3, '0')}`;
 }
 
 export function isFrameContainPoint(frame: Rect, x: number, y: number): boolean {
@@ -154,6 +169,65 @@ export function fillCacheData(filterList: Array<any>, condition: FilterConfig): 
   return false;
 }
 
+export function fillCacheDataIdx(filterData: Array<any>, slice: number[], condition: FilterConfig): boolean {
+    if (condition.useCache && filterData.length > 0) {
+        let pns = (condition.endNS - condition.startNS) / condition.frame.width;
+        let y = condition.frame.y + condition.paddingTop;
+        let height = condition.frame.height - condition.paddingTop * 2;
+        for (let i = slice[0]; i <= slice[1]; i++) {
+            let it = filterData[i];
+            if (!it) continue;
+            if (
+                (it[condition.startKey] || 0) + (it[condition.durKey] || 0) > condition.startNS &&
+                (it[condition.startKey] || 0) < condition.endNS
+            ) {
+                if (!filterData[i].frame) {
+                    filterData[i].frame = {};
+                    filterData[i].frame.y = y;
+                    filterData[i].frame.height = height;
+                }
+                setNodeFrame(
+                    filterData[i],
+                    pns,
+                    condition.startNS,
+                    condition.endNS,
+                    condition.frame,
+                    condition.startKey,
+                    condition.durKey
+                );
+            } else {
+                filterData[i].frame = null;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+export function bsearch(haystack: ArrayLike<any>, needle: any): number {
+    return searchImpl(haystack, needle, 0, haystack.length);
+}
+
+function searchImpl(stack: ArrayLike<any>, cfg: FilterConfig, i: number, j: number): number {
+    if (i === j) return -1;
+    if (i + 1 === j) {
+        return (cfg.endNS >= stack[i][cfg.startKey]) ? i : -1;
+    }
+    const middle = Math.floor((j - i) / 2) + i;
+    const middleValue = stack[middle][cfg.startKey];
+    if (cfg.endNS < middleValue) {
+        return searchImpl(stack, cfg, i, middle);
+    } else {
+        return searchImpl(stack, cfg, middle, j);
+    }
+}
+
+export function findRangeIdx(fullData: Array<any>, condition: FilterConfig): number[] {
+    let a = fullData.findIndex(it => it[condition.startKey] + it[condition.durKey] >= condition.startNS);
+    let b = bsearch(fullData, condition);
+    return [a, b + 1];
+}
+
 export function findRange(fullData: Array<any>, condition: FilterConfig): Array<any> {
   let left = 0,
     right = 0;
@@ -170,8 +244,7 @@ export function findRange(fullData: Array<any>, condition: FilterConfig): Array<
       break;
     }
   }
-  let slice = fullData.slice(left, right + 1);
-  return slice;
+  return fullData.slice(left, right + 1);
 }
 
 export function dataFilterHandler(fullData: Array<any>, filterData: Array<any>, condition: FilterConfig): void {
@@ -309,11 +382,7 @@ export class Rect {
     let minY = r1.y <= rect.y ? r1.y : rect.y;
     let maxX = r1.x + r1.width >= rect.x + rect.width ? r1.x + r1.width : rect.x + rect.width;
     let maxY = r1.y + r1.height >= rect.y + rect.height ? r1.y + r1.height : rect.y + rect.height;
-    if (maxX - minX <= rect.width + r1.width && maxY - minY <= r1.height + rect.height) {
-      return true;
-    } else {
-      return false;
-    }
+    return maxX - minX <= rect.width + r1.width && maxY - minY <= r1.height + rect.height;
   }
 
   static contains(rect: Rect, x: number, y: number): boolean {
@@ -348,11 +417,7 @@ export class Rect {
     let minY = this.y <= rect.y ? this.y : rect.y;
     let maxX = this.x + this.width >= rect.x + rect.width ? this.x + this.width : rect.x + rect.width;
     let maxY = this.y + this.height >= rect.y + rect.height ? this.y + this.height : rect.y + rect.height;
-    if (maxX - minX <= rect.width + this.width && maxY - minY <= this.height + rect.height) {
-      return true;
-    } else {
-      return false;
-    }
+    return maxX - minX <= rect.width + this.width && maxY - minY <= this.height + rect.height;
   }
 
   contains(x: number, y: number): boolean {
@@ -534,6 +599,51 @@ export function drawFlagLineSegment(ctx: any, hoverFlag: any, selectFlag: any, f
         ctx.closePath();
       }
     });
+  }
+}
+
+export function drawLogsLineSegment(
+  ctx: CanvasRenderingContext2D | undefined | null,
+  systemLogFlag: Flag | undefined | null,
+  frame: {
+    x: number;
+    y: number;
+    width: number | undefined;
+    height: number | undefined;
+  },
+  timerShaftEl: TimerShaftElement
+): void {
+  timerShaftEl.sportRuler?.draw();
+  if (systemLogFlag) {
+    if (ctx) {
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = systemLogFlag?.color || '#dadada';
+      ctx.moveTo(Math.floor(systemLogFlag.x), 0);
+      ctx.lineTo(Math.floor(systemLogFlag.x), frame.height || 0);
+      ctx.stroke();
+      ctx.closePath();
+    }
+    if (timerShaftEl.ctx) {
+      let timeText = `| ${ns2Timestamp(systemLogFlag.time)}`;
+      let textPointX = systemLogFlag.x;
+      let textMetrics = timerShaftEl.ctx.measureText(timeText);
+      if (timerShaftEl.ctx.canvas.width - systemLogFlag.x <= textMetrics.width) {
+        textPointX = systemLogFlag.x - textMetrics.width;
+        timeText = `${ns2Timestamp(systemLogFlag.time)} |`;
+      }
+      let locationY = 120;
+      timerShaftEl.ctx.beginPath();
+      timerShaftEl.ctx.lineWidth = 0;
+      timerShaftEl.ctx.fillStyle = '#FFFFFF';
+      let textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+      timerShaftEl.ctx.fillRect(textPointX, locationY - textHeight, textMetrics.width, textHeight);
+      timerShaftEl.ctx.lineWidth = 2;
+      timerShaftEl.ctx.fillStyle = systemLogFlag?.color || '#dadada';
+      timerShaftEl.ctx.fillText(timeText, textPointX, locationY);
+      timerShaftEl.ctx.stroke();
+      timerShaftEl.ctx.closePath();
+    }
   }
 }
 
@@ -1007,9 +1117,9 @@ export class HiPerfStruct extends BaseStruct {
     cxt.arc(x + width - radius, y + height - radius, radius, 0, Math.PI / 2);
     cxt.lineTo(x + radius, y + height);
     cxt.arc(x + radius, y + height - radius, radius, Math.PI / 2, Math.PI);
-    cxt.lineTo(x + 0, y + radius);
+    cxt.lineTo(x, y + radius);
     cxt.arc(x + radius, y + radius, radius, Math.PI, (Math.PI * 3) / 2);
-    cxt.lineTo(x + width - radius, y + 0);
+    cxt.lineTo(x + width - radius, y);
     cxt.arc(x + width - radius, y + radius, radius, (Math.PI * 3) / 2, Math.PI * 2);
     cxt.lineTo(x + width, y + height - radius);
     cxt.moveTo(x + width / 3, y + height / 5);

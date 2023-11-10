@@ -32,15 +32,8 @@ export class TabPaneBoxChild extends BaseElement {
     this.boxChildTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
     this.boxChildRange!.textContent =
       'Selected range: ' + parseFloat(((boxChildValue.rightNs - boxChildValue.leftNs) / 1000000.0).toFixed(5)) + ' ms';
-    if (
-      boxChildValue.state != null &&
-      boxChildValue.state != undefined &&
-      boxChildValue.processId &&
-      boxChildValue.threadId
-    ) {
-      this.boxChildTbl!.recycleDataSource = [];
-      this.getDataByDB(boxChildValue);
-    }
+    this.boxChildTbl!.recycleDataSource = [];
+    this.getDataByDB(boxChildValue);
   }
 
   initElements(): void {
@@ -59,7 +52,7 @@ export class TabPaneBoxChild extends BaseElement {
 
   getDataByDB(val: BoxJumpParam) {
     this.boxChildTbl!.loading = true;
-    getTabBoxChildData(val.leftNs, val.rightNs, val.state, val.processId, val.threadId).then((result) => {
+    getTabBoxChildData(val.leftNs, val.rightNs, val.cpus, val.state, val.processId, val.threadId).then((result) => {
       this.boxChildTbl!.loading = false;
       if (result.length != null && result.length > 0) {
         result.map((e) => {

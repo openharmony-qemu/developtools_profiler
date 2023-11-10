@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     TIME_STAMP,
     START_ADDRESS,
@@ -79,62 +79,62 @@ SmapsTable::Cursor::~Cursor() {}
 
 int32_t SmapsTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, smapsObj_.IdsData()[CurrentRow()]);
             break;
-        case TIME_STAMP:
+        case Index::TIME_STAMP:
             sqlite3_result_int64(context_, smapsObj_.TimeStamps()[CurrentRow()]);
             break;
-        case START_ADDRESS:
+        case Index::START_ADDRESS:
             sqlite3_result_text(context_, smapsObj_.StartAddrs()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case END_ADDRESS:
+        case Index::END_ADDRESS:
             sqlite3_result_text(context_, smapsObj_.EndAddrs()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case DIRTY:
+        case Index::DIRTY:
             sqlite3_result_int64(context_, smapsObj_.Dirtys()[CurrentRow()]);
             break;
-        case SWAPPER:
+        case Index::SWAPPER:
             sqlite3_result_int64(context_, smapsObj_.Swappers()[CurrentRow()]);
             break;
-        case RSS:
+        case Index::RSS:
             sqlite3_result_int64(context_, smapsObj_.Rss()[CurrentRow()]);
             break;
-        case PSS:
+        case Index::PSS:
             sqlite3_result_int64(context_, smapsObj_.Pss()[CurrentRow()]);
             break;
-        case SIZE:
+        case Index::SIZE:
             sqlite3_result_int64(context_, smapsObj_.Sizes()[CurrentRow()]);
             break;
-        case RESIDE:
+        case Index::RESIDE:
             sqlite3_result_double(context_, smapsObj_.Resides()[CurrentRow()]);
             break;
-        case PROTECTION:
+        case Index::PROTECTION:
             sqlite3_result_int64(context_, smapsObj_.ProtectionIds()[CurrentRow()]);
             break;
-        case PATH:
+        case Index::PATH:
             sqlite3_result_int64(context_, smapsObj_.PathIds()[CurrentRow()]);
             break;
-        case SHARED_CLEAN:
+        case Index::SHARED_CLEAN:
             sqlite3_result_int64(context_, smapsObj_.SharedClean()[CurrentRow()]);
             break;
-        case SHARED_DIRTY:
+        case Index::SHARED_DIRTY:
             sqlite3_result_int64(context_, smapsObj_.SharedDirty()[CurrentRow()]);
             break;
-        case PRIVATE_CLEAN:
+        case Index::PRIVATE_CLEAN:
             sqlite3_result_int64(context_, smapsObj_.PrivateClean()[CurrentRow()]);
             break;
-        case PRIVATE_DIRTY:
+        case Index::PRIVATE_DIRTY:
             sqlite3_result_int64(context_, smapsObj_.PrivateDirty()[CurrentRow()]);
             break;
-        case SWAP:
+        case Index::SWAP:
             sqlite3_result_int64(context_, smapsObj_.Swap()[CurrentRow()]);
             break;
-        case SWAP_PSS:
+        case Index::SWAP_PSS:
             sqlite3_result_int64(context_, smapsObj_.SwapPss()[CurrentRow()]);
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, smapsObj_.Type()[CurrentRow()]);
             break;
         default:

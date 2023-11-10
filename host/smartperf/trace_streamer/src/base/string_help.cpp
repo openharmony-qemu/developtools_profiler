@@ -61,3 +61,16 @@ std::vector<std::string> SplitStringToVec(const std::string& str, const std::str
 
     return result;
 }
+
+std::string FormatString(const char* p)
+{
+    std::string str = "\"";
+    for (const char* c = p; *c != 0; c++) {
+        if (*c == '\\' || *c == '\"') {
+            str += "\\";
+        }
+        str += *c;
+    }
+    str += "\"";
+    return str;
+}

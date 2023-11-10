@@ -45,6 +45,7 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "../../trace_data",
     "../../cfg",
     "../../trace_streamer",
+    "../../metrics",
     "${THIRD_PARTY}/bounds_checking_function/include",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
@@ -67,8 +68,8 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "${THIRD_PARTY}/perf_include/linux",
     "../hiperf_parser",
     "../hiperf_parser/include",
-    "../../../commonlibrary/c_utils/base/include",
-    "../../include/dummy/musl",
+    "${COMMON_LIBRARY}/c_utils/base/include",
+    "${THIRD_PARTY}/sqlite",
   ]
   if (is_mingw || is_mac) {
     include_dirs += [
@@ -79,6 +80,20 @@ ohos_source_set("htrace_pbreader_parser_src") {
 
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
   }
   if (is_mingw) {
     cflags = [ "-includeMingW64Fix.h" ]

@@ -186,6 +186,23 @@ int32_t RpcServer::WasmSqlQuery(const uint8_t* data, size_t len, uint8_t* out, i
     int32_t ret = ts_->SearchDatabase(sql, out, outLen);
     return ret;
 }
+bool RpcServer::SqlMetricsQueryWithCallback(const uint8_t* data, size_t len, ResultCallBack callback) const
+{
+    ts_->SetCancel(false);
+    std::string metricsName(reinterpret_cast<const char*>(data), len);
+    std::string result = ts_->SearchDatabase(ts_->MetricsSqlQuery(metricsName));
+    if (result == "") {
+        return false;
+    }
+    Metrics metricsOperator;
+    metricsOperator.ParserJson(metricsName, result);
+    for (auto item : metricsOperator.GetMetricsMap()) {
+        if (item.second == metricsName) {
+            metricsOperator.PrintMetricsResult(item.first, callback);
+            return true;
+        }
+    }
+}
 int32_t RpcServer::WasmSqlQueryWithCallback(const uint8_t* data, size_t len, ResultCallBack callback) const
 {
     ts_->SetCancel(false);

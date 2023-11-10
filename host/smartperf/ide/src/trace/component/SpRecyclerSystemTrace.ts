@@ -19,7 +19,6 @@ import './trace/TimerShaftElement.js';
 import './trace/base/TraceRow.js';
 import './trace/base/TraceRowRecyclerView.js';
 import {
-  getAsyncEvents,
   getCpuUtilizationRate,
   getFps,
   getFunDataByTid,
@@ -332,7 +331,6 @@ export class SpRecyclerSystemTrace extends BaseElement {
     param.url && (await threadPool.initServer(param.url));
     this.processThreads = await queryProcessThreads();
     this.processMem = await queryProcessMem();
-    this.processAsyncEvent = await getAsyncEvents();
     await this.initTotalTime();
     let cpuObjs = await this.initCpu();
     await this.initCpuRate();

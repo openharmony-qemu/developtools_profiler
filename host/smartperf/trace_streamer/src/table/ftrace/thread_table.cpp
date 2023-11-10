@@ -17,7 +17,18 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, ITID, TYPE, TID, NAME, START_TS, END_TS, INTERNAL_PID, IS_MAIN_THREAD, SWITCH_COUNT };
+enum class Index : int32_t {
+    ID = 0,
+    ITID,
+    TYPE,
+    TID,
+    NAME,
+    START_TS,
+    END_TS,
+    INTERNAL_PID,
+    IS_MAIN_THREAD,
+    SWITCH_COUNT
+};
 ThreadTable::ThreadTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -62,9 +73,9 @@ void ThreadTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& 
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ITID:
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ITID:
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -83,9 +94,9 @@ void ThreadTable::FilterByConstraint(FilterConstraints& fc, double& filterCost, 
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ITID:
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ITID:
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -335,14 +346,14 @@ void ThreadTable::Cursor::FilterSwitchCount(unsigned char op, uint64_t value)
 }
 void ThreadTable::Cursor::FilterIndex(int32_t col, unsigned char op, sqlite3_value* argv)
 {
-    switch (col) {
-        case INTERNAL_PID:
+    switch (static_cast<Index>(col)) {
+        case Index::INTERNAL_PID:
             FilterIpid(op, static_cast<uint64_t>(sqlite3_value_int64(argv)));
             break;
-        case TID:
+        case Index::TID:
             FilterTid(op, static_cast<uint64_t>(sqlite3_value_int64(argv)));
             break;
-        case SWITCH_COUNT:
+        case Index::SWITCH_COUNT:
             FilterSwitchCount(op, static_cast<uint64_t>(sqlite3_value_int64(argv)));
             break;
         default:
@@ -363,14 +374,14 @@ int32_t ThreadTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value**
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
-            case ITID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
+            case Index::ITID:
                 FilterId(c.op, argv[i]);
                 break;
-            case TID:
-            case INTERNAL_PID:
-            case SWITCH_COUNT:
+            case Index::TID:
+            case Index::INTERNAL_PID:
+            case Index::SWITCH_COUNT:
                 FilterIndex(c.col, c.op, argv[i]);
                 break;
             default:
@@ -384,9 +395,9 @@ int32_t ThreadTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value**
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
-            case ITID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
+            case Index::ITID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -400,46 +411,46 @@ int32_t ThreadTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value**
 int32_t ThreadTable::Cursor::Column(int32_t col) const
 {
     const auto& thread = dataCache_->GetConstThreadData(CurrentRow());
-    switch (col) {
-        case ID:
-        case ITID: {
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
+        case Index::ITID: {
             sqlite3_result_int64(context_, CurrentRow());
             break;
         }
-        case TYPE: {
+        case Index::TYPE: {
             sqlite3_result_text(context_, "thread", strlen("thread"), nullptr);
             break;
         }
-        case TID: {
+        case Index::TID: {
             sqlite3_result_int64(context_, static_cast<int32_t>(thread.tid_));
             break;
         }
-        case NAME: {
+        case Index::NAME: {
             const auto& name = dataCache_->GetDataFromDict(thread.nameIndex_);
             if (name.size()) {
                 sqlite3_result_text(context_, name.c_str(), static_cast<int32_t>(name.length()), nullptr);
             }
             break;
         }
-        case START_TS: {
+        case Index::START_TS: {
             if (thread.startT_) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(thread.startT_));
             }
             break;
         }
-        case END_TS: {
+        case Index::END_TS: {
             if (thread.endT_) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(thread.endT_));
             }
             break;
         }
-        case INTERNAL_PID: {
+        case Index::INTERNAL_PID: {
             if (thread.internalPid_ != INVALID_UINT32) {
                 sqlite3_result_int(context_, static_cast<int32_t>(thread.internalPid_));
             }
             break;
         }
-        case IS_MAIN_THREAD: {
+        case Index::IS_MAIN_THREAD: {
             // When it is not clear which process the thread belongs to, is_main_thread should be set to null
             if (thread.internalPid_ == INVALID_UINT32) {
                 break;
@@ -448,7 +459,7 @@ int32_t ThreadTable::Cursor::Column(int32_t col) const
             sqlite3_result_int(context_, thread.tid_ == process.pid_);
             break;
         }
-        case SWITCH_COUNT: {
+        case Index::SWITCH_COUNT: {
             // When it is not clear which process the thread belongs to, is_main_thread should be set to null
             sqlite3_result_int(context_, thread.switchCount_);
             break;
@@ -474,7 +485,7 @@ int32_t ThreadTable::Update(int32_t argc, sqlite3_value** argv, sqlite3_int64* p
     constexpr int32_t colOffset = 2;
     for (auto i = colOffset; i < argc; i++) {
         auto col = i - colOffset;
-        if (col != INTERNAL_PID) {
+        if (static_cast<Index>(col) != Index::INTERNAL_PID) {
             continue;
         }
         auto ipid = static_cast<uint32_t>(sqlite3_value_int(argv[i]));

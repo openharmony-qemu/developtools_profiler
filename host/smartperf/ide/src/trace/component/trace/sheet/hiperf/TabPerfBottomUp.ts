@@ -37,6 +37,7 @@ export class TabpanePerfBottomUp extends BaseElement {
   private bottomUpFilter: TabPaneFilter | undefined | null;
   private progressEL: LitProgressBar | null | undefined;
   private searchValue: string = '';
+  private currentSelection: SelectionParam | undefined;
   public initElements(): void {
     this.bottomUpTable = this.shadowRoot?.querySelector('#callTreeTable') as LitTable;
     this.stackTable = this.shadowRoot?.querySelector('#stackTable') as LitTable;
@@ -79,6 +80,10 @@ export class TabpanePerfBottomUp extends BaseElement {
 
   set data(data: SelectionParam) {
     if (data instanceof SelectionParam) {
+      if (data == this.currentSelection) {
+        return;
+      }
+      this.currentSelection = data;
       this.sortKey = '';
       this.sortType = 0;
       this.bottomUpFilter!.filterValue = '';
@@ -97,10 +102,10 @@ export class TabpanePerfBottomUp extends BaseElement {
     let totalTime = results.reduce((sum, struct) => sum + struct.selfTime, 0);
     const setTabData = (array: Array<PerfBottomUpStruct>): void => {
       array.forEach((data) => {
-        data.totalTimePercent = `${ ((data.totalTime / totalTime) * percentageDenominator).toFixed(percentFraction) }%`;
-        data.selfTimePercent = `${ ((data.selfTime / totalTime) * percentageDenominator).toFixed(percentFraction) }%`;
-        data.selfTimeStr = `${ data.selfTime.toFixed(timeFractionDigits) }ms`;
-        data.totalTimeStr = `${ data.totalTime.toFixed(timeFractionDigits) }ms`;
+        data.totalTimePercent = `${((data.totalTime / totalTime) * percentageDenominator).toFixed(percentFraction)}%`;
+        data.selfTimePercent = `${((data.selfTime / totalTime) * percentageDenominator).toFixed(percentFraction)}%`;
+        data.selfTimeStr = `${data.selfTime.toFixed(timeFractionDigits)}ms`;
+        data.totalTimeStr = `${data.totalTime.toFixed(timeFractionDigits)}ms`;
         setTabData(data.children);
       });
     };
@@ -130,6 +135,11 @@ export class TabpanePerfBottomUp extends BaseElement {
 
     //@ts-ignore
     const bottomUpData = evt.detail.data as PerfBottomUpStruct;
+    document.dispatchEvent(
+      new CustomEvent('number_calibration', {
+        detail: { time: bottomUpData.tsArray},
+      })
+    );
     callStack!.push(bottomUpData);
     if (bottomUpData.parentNode && bottomUpData.parentNode!.symbolName !== 'root') {
       callStack.push(bottomUpData.parentNode!);
@@ -184,7 +194,6 @@ export class TabpanePerfBottomUp extends BaseElement {
     });
   }
 
-
   public connectedCallback(): void {
     const tableOffsetHeight = 32;
     const spanHeight = 22;
@@ -221,9 +230,9 @@ export class TabpanePerfBottomUp extends BaseElement {
         if (this.sortType === defaultSortType) {
           return defaultSort(callTreeLeftData, callTreeRightData);
         } else if (this.sortType === 1) {
-          return `${ callTreeLeftData.symbolName }`.localeCompare(`${ callTreeRightData.symbolName }`);
+          return `${callTreeLeftData.symbolName}`.localeCompare(`${callTreeRightData.symbolName}`);
         } else {
-          return `${ callTreeRightData.symbolName }`.localeCompare(`${ callTreeLeftData.symbolName }`);
+          return `${callTreeRightData.symbolName}`.localeCompare(`${callTreeLeftData.symbolName}`);
         }
       } else {
         if (this.sortType === defaultSortType) {
@@ -266,14 +275,14 @@ export class TabpanePerfBottomUp extends BaseElement {
   }
   public initHtml(): string {
     return `
-    ${ this.initHtmlStyle() }
+    ${this.initHtmlStyle()}
     <div class="perf-bottom-up-content">
     <selector id='show_table' class="show-bottom-up">
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="callTreeTable" style="height: 100%" tree>
                 <lit-table-column width="60%" title="Symbol" data-index="symbolName" key="symbolName"  
-                align="flex-start" order></lit-table-column>
+                align="flex-start" order retract></lit-table-column>
                 <lit-table-column width="1fr" title="Local" data-index="selfTimeStr" key="selfTimeStr" 
                 align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="%" data-index="selfTimePercent" key="selfTimePercent"  

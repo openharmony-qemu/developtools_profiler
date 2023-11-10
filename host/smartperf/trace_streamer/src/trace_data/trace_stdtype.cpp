@@ -483,12 +483,58 @@ const std::deque<uint64_t>& LogInfo::OriginTimeStamData() const
 {
     return originTs_;
 }
-void NativeHook::UpdateCallChainId(size_t row, uint32_t callChainId)
+void NativeHookSampleBase::AppendNativeHookSampleBase(uint32_t callChainId,
+                                                      uint32_t ipid,
+                                                      uint32_t itid,
+                                                      uint64_t timeStamp)
 {
-    if (row < Size()) {
-        callChainIds_[row] = callChainId;
-    } else {
-        TS_LOGE("Native hook update callChainId failed!!!");
+    ids_.emplace_back(Size());
+    callChainIds_.emplace_back(callChainId);
+    ipids_.emplace_back(ipid);
+    internalTids_.emplace_back(itid);
+    timeStamps_.emplace_back(timeStamp);
+    lastCallerPathIndexs_.emplace_back(INVALID_DATAINDEX);
+    lastSymbolIndexs_.emplace_back(INVALID_DATAINDEX);
+}
+void NativeHookSampleBase::AppendNativeHookSampleBase(uint32_t callChainId, uint32_t ipid, uint64_t timeStamp)
+{
+    ids_.emplace_back(Size());
+    callChainIds_.emplace_back(callChainId);
+    ipids_.emplace_back(ipid);
+    timeStamps_.emplace_back(timeStamp);
+    lastCallerPathIndexs_.emplace_back(INVALID_DATAINDEX);
+    lastSymbolIndexs_.emplace_back(INVALID_DATAINDEX);
+}
+const std::deque<uint32_t>& NativeHookSampleBase::CallChainIds() const
+{
+    return callChainIds_;
+}
+const std::deque<uint32_t>& NativeHookSampleBase::Ipids() const
+{
+    return ipids_;
+}
+const std::deque<uint64_t>& NativeHookSampleBase::LastCallerPathIndexs() const
+{
+    return lastCallerPathIndexs_;
+}
+const std::deque<uint64_t>& NativeHookSampleBase::LastSymbolIndexs() const
+{
+    return lastSymbolIndexs_;
+}
+void NativeHookSampleBase::UpdateLastCallerPathAndSymbolIndexs(
+    std::unordered_map<uint32_t, std::tuple<DataIndex, DataIndex>>& callIdToLasLibId)
+{
+    if (callIdToLasLibId.empty()) {
+        return;
+    }
+    for (auto i = 0; i < Size(); ++i) {
+        auto symbolIt = callIdToLasLibId.find(callChainIds_[i]);
+        if (symbolIt != callIdToLasLibId.end()) {
+            std::tie(lastCallerPathIndexs_[i], lastSymbolIndexs_[i]) = symbolIt->second;
+        } else {
+            lastCallerPathIndexs_[i] = INVALID_DATAINDEX;
+            lastSymbolIndexs_[i] = INVALID_DATAINDEX;
+        }
     }
 }
 size_t NativeHook::AppendNewNativeHookData(uint32_t callChainId,
@@ -502,12 +548,9 @@ size_t NativeHook::AppendNewNativeHookData(uint32_t callChainId,
                                            uint64_t addr,
                                            int64_t memSize)
 {
-    callChainIds_.emplace_back(callChainId);
-    ipids_.emplace_back(ipid);
-    itids_.emplace_back(itid);
+    AppendNativeHookSampleBase(callChainId, ipid, itid, timeStamp);
     eventTypes_.emplace_back(eventType);
     subTypes_.emplace_back(subType);
-    timeStamps_.emplace_back(timeStamp);
     endTimeStamps_.emplace_back(endTimeStamp);
     durations_.emplace_back(duration);
     addrs_.emplace_back(addr);
@@ -526,8 +569,15 @@ size_t NativeHook::AppendNewNativeHookData(uint32_t callChainId,
         allMemSizes_.emplace_back(countMmapSizes_);
     }
     currentSizeDurs_.emplace_back(0);
-    lastCallerPathIndexs_.emplace_back(INVALID_UINT64);
     return Size() - 1;
+}
+void NativeHook::UpdateCallChainId(size_t row, uint32_t callChainId)
+{
+    if (row < Size()) {
+        callChainIds_[row] = callChainId;
+    } else {
+        TS_LOGE("Native hook update callChainId failed!!!");
+    }
 }
 void NativeHook::UpdateEndTimeStampAndDuration(size_t row, uint64_t endTimeStamp)
 {
@@ -545,32 +595,6 @@ void NativeHook::UpdateMemMapSubType(uint64_t row, uint64_t tagId)
     } else {
         TS_LOGE("subTypes_ row is invalid!");
     }
-}
-void NativeHook::UpdateLastCallerPathIndexs(std::unordered_map<uint32_t, uint64_t>& callIdToLasLibId)
-{
-    if (callIdToLasLibId.empty()) {
-        return;
-    }
-    for (auto i = 0; i < Size(); ++i) {
-        auto symbolIt = callIdToLasLibId.find(callChainIds_[i]);
-        if (symbolIt != callIdToLasLibId.end()) {
-            lastCallerPathIndexs_[i] = symbolIt->second;
-        } else {
-            lastCallerPathIndexs_[i] = INVALID_UINT64;
-        }
-    }
-}
-const std::deque<uint32_t>& NativeHook::CallChainIds() const
-{
-    return callChainIds_;
-}
-const std::deque<uint32_t>& NativeHook::Ipids() const
-{
-    return ipids_;
-}
-const std::deque<uint32_t>& NativeHook::Itids() const
-{
-    return itids_;
 }
 const std::deque<std::string>& NativeHook::EventTypes() const
 {
@@ -603,10 +627,6 @@ const std::deque<int64_t>& NativeHook::AllMemSizes() const
 const std::deque<uint64_t>& NativeHook::CurrentSizeDurs() const
 {
     return currentSizeDurs_;
-}
-const std::deque<uint64_t>& NativeHook::LastCallerPathIndexs() const
-{
-    return lastCallerPathIndexs_;
 }
 size_t NativeHookFrame::AppendNewNativeHookFrame(uint32_t callChainId,
                                                  uint64_t depth,
@@ -749,10 +769,7 @@ size_t NativeHookStatistic::AppendNewNativeHookStatistic(uint32_t ipid,
                                                          uint64_t applySize,
                                                          uint64_t releaseSize)
 {
-    ids_.emplace_back(Size());
-    ipids_.emplace_back(ipid);
-    timeStamps_.emplace_back(timeStamp);
-    callChainIds_.emplace_back(callChainId);
+    AppendNativeHookSampleBase(callChainId, ipid, timeStamp);
     memoryTypes_.emplace_back(memoryType);
     applyCounts_.emplace_back(applyCount);
     memSubTypes_.emplace_back(subMemType);
@@ -761,14 +778,7 @@ size_t NativeHookStatistic::AppendNewNativeHookStatistic(uint32_t ipid,
     releaseSizes_.emplace_back(releaseSize);
     return Size() - 1;
 }
-const std::deque<uint32_t>& NativeHookStatistic::Ipids() const
-{
-    return ipids_;
-}
-const std::deque<uint32_t>& NativeHookStatistic::CallChainIds() const
-{
-    return callChainIds_;
-}
+
 const std::deque<uint32_t>& NativeHookStatistic::MemoryTypes() const
 {
     return memoryTypes_;
@@ -804,28 +814,34 @@ const std::deque<uint32_t>& Hidump::Fpss() const
     return fpss_;
 }
 
-size_t PerfCallChain::AppendNewPerfCallChain(uint64_t sampleId,
-                                             uint32_t callChainId,
+size_t PerfCallChain::AppendNewPerfCallChain(uint32_t callChainId,
+                                             uint32_t depth,
+                                             uint64_t ip,
                                              uint64_t vaddrInFile,
                                              uint64_t fileId,
                                              uint64_t symbolId)
 {
     ids_.emplace_back(Size());
-    sampleIds_.emplace_back(sampleId);
     callChainIds_.emplace_back(callChainId);
+    depths_.emplace_back(depth);
+    ips_.emplace_back(ip);
     vaddrInFiles_.emplace_back(vaddrInFile);
     fileIds_.emplace_back(fileId);
     symbolIds_.emplace_back(symbolId);
     names_.emplace_back("");
     return Size() - 1;
 }
-const std::deque<uint64_t>& PerfCallChain::SampleIds() const
-{
-    return sampleIds_;
-}
 const std::deque<uint32_t>& PerfCallChain::CallChainIds() const
 {
     return callChainIds_;
+}
+const std::deque<uint32_t>& PerfCallChain::Depths() const
+{
+    return depths_;
+}
+const std::deque<uint64_t>& PerfCallChain::Ips() const
+{
+    return ips_;
 }
 const std::deque<uint64_t>& PerfCallChain::VaddrInFiles() const
 {
@@ -851,8 +867,9 @@ void PerfCallChain::SetName(uint64_t index, const std::string& name)
 void PerfCallChain::Clear()
 {
     CacheBase::Clear();
-    sampleIds_.clear();
     callChainIds_.clear();
+    depths_.clear();
+    ips_.clear();
     vaddrInFiles_.clear();
     fileIds_.clear();
     symbolIds_.clear();

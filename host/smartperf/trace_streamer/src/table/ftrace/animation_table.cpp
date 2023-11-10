@@ -19,7 +19,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, INPUT_TIME, START_POINT, END_POINT };
+enum class Index : int32_t { ID = 0, INPUT_TIME, START_POINT, END_POINT };
 AnimationTable::AnimationTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -46,23 +46,23 @@ AnimationTable::Cursor::~Cursor() {}
 
 int32_t AnimationTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(animationObj_.IdsData()[CurrentRow()]));
             break;
-        case INPUT_TIME: {
+        case Index::INPUT_TIME: {
             if (animationObj_.InputTimes()[CurrentRow()] != INVALID_TIME) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(animationObj_.InputTimes()[CurrentRow()]));
             }
             break;
         }
-        case START_POINT: {
+        case Index::START_POINT: {
             if (animationObj_.StartPoints()[CurrentRow()] != INVALID_TIME) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(animationObj_.StartPoints()[CurrentRow()]));
             }
             break;
         }
-        case END_POINT:
+        case Index::END_POINT:
             if (animationObj_.EndPoints()[CurrentRow()] != INVALID_TIME) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(animationObj_.EndPoints()[CurrentRow()]));
             }

@@ -13,10 +13,7 @@
 # limitations under the License.
 set -e
 ext=""
-clang_dir="clang_x64"
 target_dir="linux"
-subsys_name="developtools"
-part_name="smartperf_host"
 is_debug="$1"
 target="$2"
 target_os="$3"
@@ -75,14 +72,12 @@ fi
 echo "target_dir:" $target_dir
 echo "target:" $target
 
+out_dir=out/$target_dir$ext
 if [ "$is_clean" == "true"  ];then
-    prebuilts/$gn_path/$gn gen out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name --clean
-    prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name -t clean
+    prebuilts/$gn_path/$gn gen $out_dir --clean
+    prebuilts/$gn_path/$ninja -C $out_dir -t clean
 else
-    prebuilts/$gn_path/$gn gen out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name --args='is_debug='"$is_debug"' target="'"$target"'" target_os="'"$target_os"'" is_independent_compile=true'
+    prebuilts/$gn_path/$gn gen $out_dir --args='is_debug='"$is_debug"' target="'"$target"'" target_os="'"$target_os"'" is_independent_compile=true'
     echo "begin to build ..."
-    prebuilts/$gn_path/$ninja -C out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name
-    if [ "$target" != "protoc" ] && [ "$target" != "spb" ];then
-        cp -r out/"$target_dir""$ext"/$clang_dir/$subsys_name/$part_name/* out/"$target_dir""$ext"/
-    fi
+    prebuilts/$gn_path/$ninja -C $out_dir
 fi

@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     CALLCHAIN_ID,
     DEPTH,
@@ -65,8 +65,8 @@ void EbpfCallStackTable::EstimateFilterCost(FilterConstraints& fc, EstimatedInde
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -85,8 +85,8 @@ void EbpfCallStackTable::FilterByConstraint(FilterConstraints& fc, double& filte
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -127,8 +127,8 @@ int32_t EbpfCallStackTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
             default:
@@ -139,8 +139,8 @@ int32_t EbpfCallStackTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -153,17 +153,17 @@ int32_t EbpfCallStackTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_
 
 int32_t EbpfCallStackTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(ebpfCallStackObj_.IdsData()[CurrentRow()]));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfCallStackObj_.CallChainIds()[CurrentRow()]));
             break;
-        case DEPTH:
+        case Index::DEPTH:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfCallStackObj_.Depths()[CurrentRow()]));
             break;
-        case IP: {
+        case Index::IP: {
             if (ebpfCallStackObj_.Ips()[CurrentRow()] != INVALID_UINT64) {
                 auto returnValueIndex = ebpfCallStackObj_.Ips()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(returnValueIndex).c_str(), STR_DEFAULT_LEN,
@@ -171,13 +171,13 @@ int32_t EbpfCallStackTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case SYMBOLS_ID: {
+        case Index::SYMBOLS_ID: {
             if (ebpfCallStackObj_.SymbolIds()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfCallStackObj_.SymbolIds()[CurrentRow()]));
             }
             break;
         }
-        case FILE_PATH_ID: {
+        case Index::FILE_PATH_ID: {
             if (ebpfCallStackObj_.FilePathIds()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfCallStackObj_.FilePathIds()[CurrentRow()]));
             }

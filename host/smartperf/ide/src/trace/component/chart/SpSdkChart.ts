@@ -245,7 +245,12 @@ export class SpSdkChart {
     let maxList = await queryCounterMax(sqlMap.maxSql, result.counter_id, componentId);
     let maxCounter = maxList[0].max_value;
     traceRow.onThreadHandler = (useCache) => {
-      let context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(traceRow.currentContext){
+        context = traceRow.currentContext;
+      } else{
+        context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       traceRow.canvasSave(context);
       (renders[TraceRow.ROW_TYPE_SDK_COUNTER] as SdkCounterRender).renderMainThread(
         {
@@ -363,7 +368,12 @@ export class SpSdkChart {
       );
     };
     traceRow.onThreadHandler = (useCache: boolean) => {
-      let context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(traceRow.currentContext){
+        context = traceRow.currentContext;
+      } else{
+        context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       traceRow.canvasSave(context);
       (renders[TraceRow.ROW_TYPE_SDK_SLICE] as SdkSliceRender).renderMainThread(
         {

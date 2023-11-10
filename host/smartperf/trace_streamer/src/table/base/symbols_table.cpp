@@ -18,7 +18,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, STR, ADDR };
+enum class Index : int32_t { ID = 0, STR, ADDR };
 SymbolsTable::SymbolsTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -56,8 +56,8 @@ void SymbolsTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo&
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -76,8 +76,8 @@ void SymbolsTable::FilterByConstraint(FilterConstraints& fc, double& filterCost,
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -117,8 +117,8 @@ int32_t SymbolsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
             default:
@@ -129,8 +129,8 @@ int32_t SymbolsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -144,17 +144,17 @@ int32_t SymbolsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
 int32_t SymbolsTable::Cursor::Column(int32_t col) const
 {
     DataIndex index = static_cast<DataIndex>(CurrentRow());
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(CurrentRow()));
             break;
-        case STR:
+        case Index::STR:
             sqlite3_result_text(
                 context_,
                 dataCache_->GetDataFromDict(dataCache_->GetConstSymbolsData().GetConstFuncNames()[index]).c_str(),
                 STR_DEFAULT_LEN, nullptr);
             break;
-        case ADDR:
+        case Index::ADDR:
             sqlite3_result_int64(context_,
                                  static_cast<sqlite3_int64>(dataCache_->GetConstSymbolsData().GetConstAddrs()[index]));
             break;

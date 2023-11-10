@@ -28,7 +28,7 @@ PerfDataParser::PerfDataParser(TraceDataCache* dataCache, const TraceStreamerFil
       runingStateIndex_(traceDataCache_->dataDict_.GetStringIndex("Running")),
       suspendStatIndex_(traceDataCache_->dataDict_.GetStringIndex("Suspend")),
       unkonwnStateIndex_(traceDataCache_->dataDict_.GetStringIndex("-")),
-      frameToCallChainId_(INVALID_UINT32)
+      pidAndStackHashToCallChainId_(INVALID_UINT32)
 {
     SymbolsFile::onRecording_ = false;
 }
@@ -91,7 +91,7 @@ bool PerfDataParser::LoadPerfData()
 }
 bool PerfDataParser::Reload()
 {
-    frameToCallChainId_.Clear();
+    pidAndStackHashToCallChainId_.Clear();
     fileDataDictIdToFileId_.clear();
     tidToPid_.clear();
     streamFilters_->perfDataFilter_->BeforeReload();
@@ -209,6 +209,9 @@ void PerfDataParser::UpdateSymbolAndFilesData()
             streamFilters_->statFilter_->IncreaseStat(TRACE_PERF, STAT_EVENT_RECEIVED);
             streamFilters_->perfDataFilter_->AppendPerfFiles(fileId, serial++, symbolIndex, filePathIndex);
         }
+        if (symbolsFile->GetSymbols().size() == 0) {
+            streamFilters_->perfDataFilter_->AppendPerfFiles(fileId, INVALID_UINT32, INVALID_DATAINDEX, filePathIndex);
+        }
         fileDataDictIdToFileId_.insert(std::make_pair(filePathIndex, fileId));
         ++fileId;
     }
@@ -249,54 +252,28 @@ bool PerfDataParser::RecordCallBack(std::unique_ptr<PerfEventRecord> record)
 
 uint32_t PerfDataParser::UpdatePerfCallChainData(const std::unique_ptr<PerfRecordSample>& sample)
 {
+    std::string stackStr = "";
+    for (auto& callFrame : sample->callFrames_) {
+        stackStr += "+" + base::number(callFrame.ip_, base::INTEGER_RADIX_TYPE_HEX);
+    }
+    auto stackHash = hashFun_(stackStr);
+    auto pid = sample->data_.pid;
+    auto callChainId = pidAndStackHashToCallChainId_.Find(pid, stackHash);
+    if (callChainId != INVALID_UINT32) {
+        return callChainId;
+    }
+    callChainId = ++callChainId_;
+    pidAndStackHashToCallChainId_.Insert(pid, stackHash, callChainId);
     uint64_t depth = 0;
-    bool callStackNotExist = false;
-    uint32_t callChainId = INVALID_UINT32;
-    std::vector<std::unique_ptr<CallStackTemp>> callStackTemp = {};
-    // Filter callstack unuse data
     for (auto frame = sample->callFrames_.rbegin(); frame != sample->callFrames_.rend(); ++frame) {
-        auto symbolId = frame->symbolIndex_;
-        if (symbolId == -1 && frame->vaddrInFile_ == 0) {
-            continue;
-        }
+        uint64_t fileId = INVALID_UINT64;
         auto fileDataIndex = traceDataCache_->dataDict_.GetStringIndex(frame->filePath_);
-        auto itor = fileDataDictIdToFileId_.find(fileDataIndex);
-        if (itor == fileDataDictIdToFileId_.end()) {
-            continue;
+        if (fileDataDictIdToFileId_.count(fileDataIndex) != 0) {
+            fileId = fileDataDictIdToFileId_.at(fileDataIndex);
         }
-        auto fileId = itor->second;
-        callStackTemp.emplace_back(std::make_unique<CallStackTemp>(depth, frame->vaddrInFile_, fileId, symbolId));
-        depth++;
+        streamFilters_->perfDataFilter_->AppendPerfCallChain(callChainId, depth++, frame->ip_, frame->vaddrInFile_,
+                                                             fileId, frame->symbolIndex_);
     }
-    // Determine whether to write callstack data to cache
-    auto size = callStackTemp.size();
-    for (auto itor = callStackTemp.begin(); itor != callStackTemp.end(); itor++) {
-        auto callstack = itor->get();
-        auto ret = frameToCallChainId_.Find(callstack->fileId_, callstack->symbolId_, callstack->depth_, size);
-        if (ret != INVALID_UINT32) { // find it
-            if (callChainId == INVALID_UINT32) {
-                callChainId = ret;
-            } else if (callChainId != ret) {
-                callStackNotExist = true;
-                break;
-            }
-        } else { // not find it
-            callStackNotExist = true;
-            break;
-        }
-    }
-    // write callstack data to cache
-    if (callStackNotExist) {
-        callChainId = ++callChainId_;
-        for (auto itor = callStackTemp.begin(); itor != callStackTemp.end(); itor++) {
-            auto callstack = itor->get();
-            frameToCallChainId_.Insert(callstack->fileId_, callstack->symbolId_, callstack->depth_,
-                                       callStackTemp.size(), callChainId);
-            streamFilters_->perfDataFilter_->AppendPerfCallChain(
-                callChainId, callstack->depth_, callstack->vaddrInFile_, callstack->fileId_, callstack->symbolId_);
-        }
-    }
-    callStackTemp.clear();
     return callChainId;
 }
 
@@ -333,7 +310,7 @@ void PerfDataParser::Finish()
     } else {
         TS_LOGI("perfData time is not updated, maybe this trace file has other data");
     }
-    frameToCallChainId_.Clear();
+    pidAndStackHashToCallChainId_.Clear();
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

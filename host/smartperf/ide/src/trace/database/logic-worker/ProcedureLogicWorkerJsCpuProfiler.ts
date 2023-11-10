@@ -95,13 +95,13 @@ export class ProcedureLogicWorkerJsCpuProfiler extends LogicHandler {
     const samplesIds = this.findSamplesIds(chartData, [], []);
     for (const id of samplesIds) {
       const sample = this.samples[id];
-      if (!sample) {
+      if (!sample || sample.type === undefined) {
         continue;
       }
       let sampleTotalTime = sample.dur;
       if (leftNs && rightNs) {
         // 不在框选范围内的不做处理
-        if (sample.startTime > rightNs || sample.endTime < leftNs){
+        if (sample.startTime > rightNs || sample.endTime < leftNs) {
           continue;
         }
         // 在框选范围内的被只框选到一部分的根据框选范围调整时间
@@ -207,7 +207,9 @@ export class ProcedureLogicWorkerJsCpuProfiler extends LogicHandler {
               sample.type = SampleType.RUNTIME;
               break;
             default:
-              sample.type = SampleType.OTHER;
+              if (stackTopSymbol.name !== '(program)') {
+                sample.type = SampleType.OTHER;
+              }
               break;
           }
         }

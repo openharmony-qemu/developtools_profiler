@@ -76,7 +76,6 @@ import { TabPaneStartup } from '../sheet/process/TabPaneStartup.js';
 import { TabPaneStaticInit } from '../sheet/process/TabPaneStaticInit.js';
 import { TabPaneTaskFrames } from '../sheet/task/TabPaneTaskFrames.js';
 import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
-import { TabPaneFrameAnimation } from '../sheet/frame/TabPaneFrameAnimation.js';
 import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
 import { TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
 import { TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
@@ -113,13 +112,11 @@ import { TabPaneGpuMemoryVmTrackerComparison } from '../sheet/vmtracker/TabPaneG
 import { TabPaneVmTrackerShmComparison } from '../sheet/vmtracker/TabPaneVmTrackerShmComparison.js';
 import { TabPaneSmapsComparison } from '../sheet/smaps/TabPaneSmapsComparison.js';
 import { TabPaneGpuClickSelectComparison } from '../sheet/gpu/TabPaneGpuClickSelectComparison.js';
+import { TabPaneHiLogs } from '../sheet/hilog/TabPaneHiLogs.js';
+import { TabPaneHiLogSummary } from '../sheet/hilog/TabPaneHiLogSummary.js';
+import { TabPaneSchedPriority } from '../sheet/cpu/TabPaneSchedPriority.js';
 
 export let tabConfig: any = {
-  'tabpane-current': {
-    title: 'Current Selection',
-    type: TabPaneCurrent,
-    require: (param: SelectionParam) => param.isCurrentPane,
-  }, //current selection
   'current-selection': {
     title: 'Current Selection',
     type: TabPaneCurrentSelection,
@@ -210,10 +207,6 @@ export let tabConfig: any = {
     title: 'FPS',
     type: TabPaneFps,
     require: (param: SelectionParam) => param.hasFps,
-  },
-  'box-flag': {
-    title: 'Current Selection',
-    type: TabPaneFlag,
   },
   'box-cpu-child': {
     title: '',
@@ -460,11 +453,6 @@ export let tabConfig: any = {
     type: TabPaneFrameDynamic,
     require: (param: SelectionParam) => param.frameDynamic.length > 0,
   },
-  'box-frame-animation': {
-    title: 'Frame Animation',
-    type: TabPaneFrameAnimation,
-    require: (param: SelectionParam) => param.frameAnimation.length > 0,
-  },
   'box-frames-spacing': {
     title: 'Frame spacing',
     type: TabFrameSpacing,
@@ -598,4 +586,28 @@ export let tabConfig: any = {
     title: 'Gpu Dump Comparison',
     type: TabPaneGpuClickSelectComparison,
   },
+  'box-hilogs': {
+    title: 'Hilogs',
+    type: TabPaneHiLogs,
+    require: (param: SelectionParam) => param.hiLogs.length > 0,
+  },
+  'box-hilogs-summary': {
+    title: 'Summary',
+    type: TabPaneHiLogSummary,
+    require: (param: SelectionParam) => param.hiLogSummary.length > 0,
+  },
+  'box-sched-priority': {
+    title: 'Sched Priority',
+    type: TabPaneSchedPriority,
+    require: (param: SelectionParam) => param.cpus.length > 0,
+  },
+  'box-flag': {
+    title: 'Flags Selection',
+    type: TabPaneFlag,
+  },
+  'tabpane-current': {
+    title: 'M Selection',
+    type: TabPaneCurrent,
+    require: (param: SelectionParam) => param.isCurrentPane,
+  }, //current selection
 };

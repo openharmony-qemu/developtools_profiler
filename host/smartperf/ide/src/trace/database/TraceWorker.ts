@@ -114,7 +114,6 @@ let merged = () => {
 let translateJsonString = (str: string): string => {
   return str //   .padding
     .replace(/[\t|\r|\n]/g, '')
-    .replace(/\\/g, '\\\\');
 };
 
 let convertJSON = () => {
@@ -125,14 +124,19 @@ let convertJSON = () => {
     if (!str) {
     } else {
       let parse;
-      let tansStr = translateJsonString(str);
+      let tansStr:string;
       try {
-        parse = JSON.parse(translateJsonString(str));
-      } catch {
-        tansStr = tansStr.replace(/[^\x20-\x7E]/g, '?'); //匹配乱码字 符，将其转换为？
+        tansStr = str.replace(/[\t|\r|\n]/g, '');
         parse = JSON.parse(tansStr);
+      } catch {
+        try {
+          tansStr = tansStr!.replace(/[^\x20-\x7E]/g, '?'); //匹配乱码字 符，将其转换为？
+          parse = JSON.parse(tansStr);
+        } catch {
+          tansStr = tansStr!.replace(/\\/g, '\\\\');
+          parse = JSON.parse(tansStr);
+        }
       }
-
       let columns = parse.columns;
       let values = parse.values;
       for (let i = 0 ; i < values.length ; i++) {
@@ -338,6 +342,15 @@ self.onmessage = async (e: MessageEvent) => {
       action: e.data.action,
       results: jsonArray,
     });
+  } else if (e.data.action.startsWith('exec-metric')) {
+    queryMetric(e.data.sql);
+    let metricResult = dec.decode(arr);
+    // @ts-ignore
+    self.postMessage({
+      id: e.data.id,
+      action: e.data.action,
+      results: metricResult,
+    });
   } else if (e.data.action == 'init-port') {
     let port = e.ports[0];
     port.onmessage = (me) => {
@@ -492,4 +505,11 @@ function querySdk(name: string, sql: string, sdkParams: any, action: string) {
     wasmModel.HEAPU8.set(sqlUintArray, wasm.bufferAddr);
     wasmModel._TraceStreamerSqlQueryEx(sqlUintArray.length);
   }
+}
+
+function queryMetric(name: string): void {
+  start = new Date().getTime();
+  let metricArray = enc.encode(name);
+  Module.HEAPU8.set(metricArray, reqBufferAddr);
+  Module._TraceStreamerSqlMetricsQuery(metricArray.length);
 }

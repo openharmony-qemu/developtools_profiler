@@ -100,7 +100,12 @@ export class SpVirtualMemChart {
       );
     };
     virtualMemoryRow.onThreadHandler = (useCache) => {
-      let context = virtualMemoryRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(virtualMemoryRow.currentContext){
+        context = virtualMemoryRow.currentContext;
+      } else{
+        context  = virtualMemoryRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       virtualMemoryRow.canvasSave(context);
       (renders['virtual-memory-cell'] as VirtualMemoryRender).renderMainThread(
         {

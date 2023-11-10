@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     CALLCHAIN_ID,
     TYPE,
@@ -79,8 +79,8 @@ void BioLatencySampleTable::EstimateFilterCost(FilterConstraints& fc, EstimatedI
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -99,8 +99,8 @@ void BioLatencySampleTable::FilterByConstraint(FilterConstraints& fc, double& fi
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -141,8 +141,8 @@ int32_t BioLatencySampleTable::Cursor::Filter(const FilterConstraints& fc, sqlit
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
             default:
@@ -153,8 +153,8 @@ int32_t BioLatencySampleTable::Cursor::Filter(const FilterConstraints& fc, sqlit
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -167,63 +167,63 @@ int32_t BioLatencySampleTable::Cursor::Filter(const FilterConstraints& fc, sqlit
 
 int32_t BioLatencySampleTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(bioLatencySampleObj_.IdsData()[CurrentRow()]));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             if (bioLatencySampleObj_.CallChainIds()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.CallChainIds()[CurrentRow()]));
             } else {
                 sqlite3_result_int64(context_, static_cast<int64_t>(INVALID_CALL_CHAIN_ID));
             }
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.Types()[CurrentRow()]));
             break;
-        case IPID: {
+        case Index::IPID: {
             if (bioLatencySampleObj_.Ipids()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.Ipids()[CurrentRow()]));
             }
             break;
         }
-        case ITID: {
+        case Index::ITID: {
             if (bioLatencySampleObj_.Itids()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.Itids()[CurrentRow()]));
             }
             break;
         }
-        case START_TS: {
+        case Index::START_TS: {
             if (bioLatencySampleObj_.StartTs()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.StartTs()[CurrentRow()]));
             }
             break;
         }
-        case END_TS: {
+        case Index::END_TS: {
             if (bioLatencySampleObj_.EndTs()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.EndTs()[CurrentRow()]));
             }
             break;
         }
-        case LATENCY_DUR: {
+        case Index::LATENCY_DUR: {
             if (bioLatencySampleObj_.LatencyDurs()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.LatencyDurs()[CurrentRow()]));
             }
             break;
         }
-        case TIER: {
+        case Index::TIER: {
             if (bioLatencySampleObj_.Tiers()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.Tiers()[CurrentRow()]));
             }
             break;
         }
-        case SIZE: {
+        case Index::SIZE: {
             if (bioLatencySampleObj_.Sizes()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.Sizes()[CurrentRow()]));
             }
             break;
         }
-        case BLOCK_NUMBER: {
+        case Index::BLOCK_NUMBER: {
             if (bioLatencySampleObj_.BlockNumbers()[CurrentRow()] != INVALID_UINT64) {
                 auto returnValueIndex0 = bioLatencySampleObj_.BlockNumbers()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(returnValueIndex0).c_str(), STR_DEFAULT_LEN,
@@ -231,13 +231,13 @@ int32_t BioLatencySampleTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case PATH: {
+        case Index::PATH: {
             if (bioLatencySampleObj_.FilePathIds()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.FilePathIds()[CurrentRow()]));
             }
             break;
         }
-        case DUR_PER_4K: {
+        case Index::DUR_PER_4K: {
             if (bioLatencySampleObj_.DurPer4k()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(bioLatencySampleObj_.DurPer4k()[CurrentRow()]));
             }

@@ -77,6 +77,17 @@ export class LitAllocationSelect extends BaseElement {
     this.setAttribute('list-height', value);
   }
 
+  attributeChangedCallback(name: any, oldValue: any, newValue: any) {
+    switch (name) {
+      case 'value':
+        this.selectAllocationInputEl!.value = newValue;
+        break;
+      case 'placeholder':
+        this.selectAllocationInputEl!.placeholder = newValue;
+        break;
+    }
+  }
+
   initElements(): void {
     this.selectAllocationInputContent = this.shadowRoot!.querySelector('.multipleSelect') as HTMLDivElement;
     this.addEventListener('click', () => {
@@ -200,7 +211,7 @@ export class LitAllocationSelect extends BaseElement {
   initData() {
     this.selectAllocationInputEl = this.shadowRoot!.querySelector('input');
     this.selectAllocationOptions = this.shadowRoot!.querySelector('.body') as HTMLDivElement;
-    this.selectAllocationInputEl?.addEventListener('keyup', () => {
+    this.selectAllocationInputEl?.addEventListener('input', () => {
       let filter = [...this.shadowRoot!.querySelectorAll<HTMLDivElement>('.option')].filter((a: HTMLDivElement) => {
         if (a.textContent!.indexOf(this.selectAllocationInputEl!.value) <= -1) {
           a.style.display = 'none';

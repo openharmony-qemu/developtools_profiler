@@ -44,8 +44,8 @@ public:
                      std::function<bool(TableRowId)> firstCheck,
                      std::function<bool(TableRowId)> scondCheck)
     {
-        bool changed = false;
         if (remove) {
+            bool changed = false;
             for (const auto& val : rowIndex_) {
                 if (!firstCheck(val)) {
                     changed = true;

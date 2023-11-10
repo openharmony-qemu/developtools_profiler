@@ -99,7 +99,7 @@ self.onmessage = async (e: any) => {
       self.postMessage({ id: e.data.id, init: true });
     });
   } else if (e.data.action === 'close') {
-  } else if (e.data.action === 'exec' || e.data.action === 'exec-buf') {
+  } else if (e.data.action === 'exec' || e.data.action === 'exec-buf' || e.data.action === 'exec-metric') {
     try {
       let action = e.data.action; //: "exec"
       let sql = e.data.sql;

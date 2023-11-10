@@ -461,19 +461,19 @@ std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRan
     // that startItor->second()->start <= startAddr && startItor->second()->end > startAddr.
     auto startItor = startAddrToMapsInfoMap_.upper_bound(startAddr);
     if (startAddrToMapsInfoMap_.begin() != startItor) {
-        startItor--;
+        --startItor;
         // Follow the rules of front closing and rear opening, [start, end)
-        if (startAddr >= startItor->second->end()) {
-            startItor++;
+        if (startItor != startAddrToMapsInfoMap_.end() && startAddr >= startItor->second->end()) {
+            ++startItor;
         }
     }
     // Forward query for the last item with filePathId == startItor ->filePathId()
     if (startItor != startAddrToMapsInfoMap_.end()) {
         auto startFilePathId = startItor->second->file_path_id();
         while (startAddrToMapsInfoMap_.begin() != startItor) {
-            startItor--;
+            --startItor;
             if (startFilePathId != startItor->second->file_path_id()) {
-                startItor++;
+                ++startItor;
                 break;
             }
         }
@@ -836,11 +836,18 @@ void NativeHookFilter::FinishParseNativeHookData()
     }
 
     // update last lib id
-    GetCallIdToLastLibId();
-    if (callIdToLastCallerPathIndex_.size()) {
-        traceDataCache_->GetNativeHookData()->UpdateLastCallerPathIndexs(callIdToLastCallerPathIndex_);
-    }
+    UpdateLastCallerPathAndSymbolIndexs();
     UpdateThreadNameWithNativeHookData();
+}
+void NativeHookFilter::UpdateLastCallerPathAndSymbolIndexs()
+{
+    GetCallIdToLastLibId();
+    if (isStatisticMode_) {
+        traceDataCache_->GetNativeHookStatisticsData()->UpdateLastCallerPathAndSymbolIndexs(
+            callIdToLastCallerPathIndex_);
+    } else {
+        traceDataCache_->GetNativeHookData()->UpdateLastCallerPathAndSymbolIndexs(callIdToLastCallerPathIndex_);
+    }
 }
 void NativeHookFilter::GetCallIdToLastLibId()
 {
@@ -859,8 +866,9 @@ void NativeHookFilter::GetCallIdToLastLibId()
             foundLast = false;
         }
         auto filePathIndex = traceDataCache_->GetNativeHookFrameData()->FilePaths()[i];
+        auto symbolIndex = traceDataCache_->GetNativeHookFrameData()->SymbolNames()[i];
         if (!traceDataCache_->GetNativeHookFrameData()->Depths()[i]) {
-            callIdToLastCallerPathIndex_.insert(std::make_pair(callChainId, filePathIndex));
+            callIdToLastCallerPathIndex_.insert({callChainId, std::make_tuple(filePathIndex, symbolIndex)});
             foundLast = true;
             continue;
         }
@@ -870,7 +878,7 @@ void NativeHookFilter::GetCallIdToLastLibId()
             auto filePath = traceDataCache_->dataDict_.GetDataFromDict(filePathIndex);
             auto ret = filePath.find("libc++_shared.so");
             if (ret == filePath.npos) {
-                callIdToLastCallerPathIndex_.insert(std::make_pair(callChainId, filePathIndex));
+                callIdToLastCallerPathIndex_.insert({callChainId, std::make_tuple(filePathIndex, symbolIndex)});
                 foundLast = true;
             }
         }

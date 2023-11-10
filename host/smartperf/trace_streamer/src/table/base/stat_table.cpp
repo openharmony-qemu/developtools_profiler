@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { EVENT_NAME = 0, STAT_EVENT_TYPE = 1, COUNT = 2, SEVERITY = 3, SOURCE = 4 };
+enum class Index : int32_t { EVENT_NAME = 0, STAT_EVENT_TYPE = 1, COUNT = 2, SEVERITY = 3, SOURCE = 4 };
 StatTable::StatTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("event_name", "TEXT"));
@@ -48,25 +48,25 @@ int32_t StatTable::Cursor::Column(int32_t column) const
     const StatAndInfo stat = dataCache_->GetConstStatAndInfo();
     SupportedTraceEventType eventType = static_cast<SupportedTraceEventType>(CurrentRow() / STAT_EVENT_MAX);
     StatType statType = static_cast<StatType>(CurrentRow() % STAT_EVENT_MAX);
-    switch (column) {
-        case EVENT_NAME:
+    switch (static_cast<Index>(column)) {
+        case Index::EVENT_NAME:
             sqlite3_result_text(context_, dataCache_->GetConstStatAndInfo().GetEvent(eventType).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case STAT_EVENT_TYPE:
+        case Index::STAT_EVENT_TYPE:
             sqlite3_result_text(context_, dataCache_->GetConstStatAndInfo().GetStat(statType).c_str(), STR_DEFAULT_LEN,
                                 nullptr);
             break;
-        case COUNT:
+        case Index::COUNT:
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(dataCache_->GetConstStatAndInfo().GetValue(eventType, statType)));
             break;
-        case SEVERITY:
+        case Index::SEVERITY:
             sqlite3_result_text(context_,
                                 dataCache_->GetConstStatAndInfo().GetSeverityDesc(eventType, statType).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case SOURCE:
+        case Index::SOURCE:
             sqlite3_result_text(context_, "trace", STR_DEFAULT_LEN, nullptr);
             break;
         default:

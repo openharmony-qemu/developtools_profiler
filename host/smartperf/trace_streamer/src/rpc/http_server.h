@@ -56,7 +56,8 @@ private:
     static void ParseRequest(const uint8_t* requst, size_t& len, RequestST& httpReq);
     void ClearDeadClientThread();
     static std::vector<std::string_view> StringSplit(std::string_view source, std::string_view split);
-    void CloseAllThreads();
+    bool CheckStatAndCmd(HttpSocket& client, RequestST& request);
+    void CloseAllThreads() const;
     bool ProcessAndParseReq(size_t& recvPos,
                             size_t& recvLen,
                             std::vector<uint8_t>& recvBuf,

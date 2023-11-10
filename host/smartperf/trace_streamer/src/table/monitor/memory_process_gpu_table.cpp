@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     TS,
     GPU_NAME_ID,
@@ -57,30 +57,30 @@ MemoryProcessGpuTable::Cursor::~Cursor() {}
 
 int32_t MemoryProcessGpuTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.IdsData()[CurrentRow()]);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.TimeStampData()[CurrentRow()]);
             break;
-        case GPU_NAME_ID:
+        case Index::GPU_NAME_ID:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.GpuNameIds()[CurrentRow()]);
             break;
-        case ALL_GPU_SIZE:
+        case Index::ALL_GPU_SIZE:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.AllGpuSizes()[CurrentRow()]);
             break;
-        case ADDR:
+        case Index::ADDR:
             sqlite3_result_text(context_, GpuProcessMemDataObj_.Addrs()[CurrentRow()].c_str(), STR_DEFAULT_LEN,
                                 nullptr);
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.Ipids()[CurrentRow()]);
             break;
-        case ITID:
+        case Index::ITID:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.Itids()[CurrentRow()]);
             break;
-        case USED_GPU_SIZE:
+        case Index::USED_GPU_SIZE:
             sqlite3_result_int64(context_, GpuProcessMemDataObj_.UsedGpuSizes()[CurrentRow()]);
             break;
         default:

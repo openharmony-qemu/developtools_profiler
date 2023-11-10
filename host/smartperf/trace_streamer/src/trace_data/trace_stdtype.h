@@ -740,8 +740,32 @@ private:
     std::deque<DataIndex> contexts_ = {};
     std::deque<uint64_t> originTs_ = {};
 };
+class NativeHookSampleBase : public CacheBase {
+public:
+    void AppendNativeHookSampleBase(uint32_t callChainId, uint32_t ipid, uint32_t itid, uint64_t timeStamp);
+    void AppendNativeHookSampleBase(uint32_t callChainId, uint32_t ipid, uint64_t timeStamp);
+    const std::deque<uint32_t>& CallChainIds() const;
+    const std::deque<uint32_t>& Ipids() const;
+    const std::deque<uint64_t>& LastCallerPathIndexs() const;
+    const std::deque<uint64_t>& LastSymbolIndexs() const;
+    void UpdateLastCallerPathAndSymbolIndexs(
+        std::unordered_map<uint32_t, std::tuple<DataIndex, DataIndex>>& callIdToLasLibId);
+    void Clear() override
+    {
+        CacheBase::Clear();
+        callChainIds_.clear();
+        ipids_.clear();
+        lastCallerPathIndexs_.clear();
+        lastSymbolIndexs_.clear();
+    }
 
-class NativeHook : public CacheBase {
+public:
+    std::deque<uint32_t> callChainIds_ = {};
+    std::deque<uint32_t> ipids_ = {};
+    std::deque<DataIndex> lastCallerPathIndexs_ = {};
+    std::deque<DataIndex> lastSymbolIndexs_ = {};
+};
+class NativeHook : public NativeHookSampleBase {
 public:
     size_t AppendNewNativeHookData(uint32_t callChainId,
                                    uint32_t ipid,
@@ -757,10 +781,6 @@ public:
     void UpdateEndTimeStampAndDuration(size_t row, uint64_t endTimeStamp);
     void UpdateCurrentSizeDur(size_t row, uint64_t timeStamp);
     void UpdateMemMapSubType(uint64_t row, uint64_t tagId);
-    void UpdateLastCallerPathIndexs(std::unordered_map<uint32_t, uint64_t>& callIdToLasLibId);
-    const std::deque<uint32_t>& CallChainIds() const;
-    const std::deque<uint32_t>& Ipids() const;
-    const std::deque<uint32_t>& Itids() const;
     const std::deque<std::string>& EventTypes() const;
     const std::deque<DataIndex>& SubTypes() const;
     const std::deque<uint64_t>& EndTimeStamps() const;
@@ -769,13 +789,9 @@ public:
     const std::deque<int64_t>& MemSizes() const;
     const std::deque<int64_t>& AllMemSizes() const;
     const std::deque<uint64_t>& CurrentSizeDurs() const;
-    const std::deque<uint64_t>& LastCallerPathIndexs() const;
     void Clear() override
     {
-        CacheBase::Clear();
-        callChainIds_.clear();
-        ipids_.clear();
-        itids_.clear();
+        NativeHookSampleBase::Clear();
         eventTypes_.clear();
         subTypes_.clear();
         endTimeStamps_.clear();
@@ -784,13 +800,9 @@ public:
         memSizes_.clear();
         allMemSizes_.clear();
         currentSizeDurs_.clear();
-        lastCallerPathIndexs_.clear();
     }
 
 private:
-    std::deque<uint32_t> callChainIds_ = {};
-    std::deque<uint32_t> ipids_ = {};
-    std::deque<uint32_t> itids_ = {};
     std::deque<std::string> eventTypes_ = {};
     std::deque<DataIndex> subTypes_ = {};
     std::deque<uint64_t> endTimeStamps_ = {};
@@ -799,7 +811,6 @@ private:
     std::deque<int64_t> memSizes_ = {};
     std::deque<int64_t> allMemSizes_ = {};
     std::deque<uint64_t> currentSizeDurs_ = {};
-    std::deque<uint64_t> lastCallerPathIndexs_ = {};
     int64_t countHeapSizes_ = 0;
     int64_t countMmapSizes_ = 0;
     const std::string ALLOC_EVET = "AllocEvent";
@@ -876,7 +887,7 @@ private:
     std::map<uint32_t, uint64_t> symbolIdToSymbolName_ = {};
 };
 
-class NativeHookStatistic : public CacheBase {
+class NativeHookStatistic : public NativeHookSampleBase {
 public:
     size_t AppendNewNativeHookStatistic(uint32_t ipid,
                                         uint64_t timeStamp,
@@ -887,9 +898,6 @@ public:
                                         uint64_t releaseCount,
                                         uint64_t applySize,
                                         uint64_t releaseSize);
-
-    const std::deque<uint32_t>& Ipids() const;
-    const std::deque<uint32_t>& CallChainIds() const;
     const std::deque<uint32_t>& MemoryTypes() const;
     const std::deque<DataIndex>& MemorySubTypes() const;
     const std::deque<uint64_t>& ApplyCounts() const;
@@ -898,11 +906,7 @@ public:
     const std::deque<uint64_t>& ReleaseSizes() const;
     void Clear() override
     {
-        CacheBase::Clear();
-        ids_.clear();
-        ipids_.clear();
-        callChainIds_.clear();
-        timeStamps_.clear();
+        NativeHookSampleBase::Clear();
         memoryTypes_.clear();
         applyCounts_.clear();
         releaseCounts_.clear();
@@ -911,8 +915,6 @@ public:
     }
 
 private:
-    std::deque<uint32_t> ipids_ = {};
-    std::deque<uint32_t> callChainIds_ = {};
     std::deque<uint32_t> memoryTypes_ = {};
     std::deque<DataIndex> memSubTypes_ = {};
     std::deque<uint64_t> applyCounts_ = {};
@@ -932,13 +934,15 @@ private:
 
 class PerfCallChain : public CacheBase {
 public:
-    size_t AppendNewPerfCallChain(uint64_t sampleId,
-                                  uint32_t callChainId,
+    size_t AppendNewPerfCallChain(uint32_t callChainId,
+                                  uint32_t depth,
+                                  uint64_t ip,
                                   uint64_t vaddrInFile,
                                   uint64_t fileId,
                                   uint64_t symbolId);
-    const std::deque<uint64_t>& SampleIds() const;
     const std::deque<uint32_t>& CallChainIds() const;
+    const std::deque<uint32_t>& Depths() const;
+    const std::deque<uint64_t>& Ips() const;
     const std::deque<uint64_t>& VaddrInFiles() const;
     const std::deque<uint64_t>& FileIds() const;
     const std::deque<uint64_t>& SymbolIds() const;
@@ -947,8 +951,9 @@ public:
     void Clear() override;
 
 private:
-    std::deque<uint64_t> sampleIds_ = {};
     std::deque<uint32_t> callChainIds_ = {};
+    std::deque<uint32_t> depths_ = {};
+    std::deque<uint64_t> ips_ = {};
     std::deque<uint64_t> vaddrInFiles_ = {};
     std::deque<uint64_t> fileIds_ = {};
     std::deque<uint64_t> symbolIds_ = {};

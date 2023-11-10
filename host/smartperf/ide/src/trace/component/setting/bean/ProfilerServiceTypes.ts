@@ -27,12 +27,9 @@ export enum ProfilerSessionConfigBufferConfigPolicy {
 export interface ProfilerSessionConfig {
   buffers: ProfilerSessionConfigBufferConfig[];
   sessionMode: ProfilerSessionConfigMode;
-  /** for OFFLINE mode, result file path */
-  resultFile: string;
+
   /** for OFFLINE mode, result file max size in KB */
   resultMaxSize: number;
-  /** for OFFLINE mode, sample duration in ms */
-  sampleDuration: number;
   /** if set to non-zero value, session will auto-destroyed after CreateSession in ms */
   keepAliveTime: number;
 }
@@ -70,7 +67,6 @@ export interface TracePluginConfig {
   traceDurationMs: number;
   /** enable debug options */
   debugOn: boolean;
-  hitraceTime: number;
 }
 
 export interface CreateSessionRequest {
@@ -815,8 +811,6 @@ export enum Type {
 }
 
 export interface HilogConfig {
-  deviceType: Type;
-  logLevel: Level;
   needClear: boolean;
 }
 
@@ -897,8 +891,7 @@ export interface DiskioConfig {
   reportIoStats: string;
 }
 
-export interface NetworkConfig {
-}
+export interface NetworkConfig {}
 
 export interface HiperfPluginConfig {
   isRoot: boolean;

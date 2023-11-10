@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, KEY, DATATYPE, VALUE, ARGSETID };
+enum class Index : int32_t { ID = 0, KEY, DATATYPE, VALUE, ARGSETID };
 ArgsTable::ArgsTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -57,8 +57,8 @@ void ArgsTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -77,8 +77,8 @@ void ArgsTable::FilterByConstraint(FilterConstraints& fc, double& filterCost, si
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -119,8 +119,8 @@ int32_t ArgsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** a
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
             default:
@@ -131,8 +131,8 @@ int32_t ArgsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** a
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -145,20 +145,20 @@ int32_t ArgsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** a
 
 int32_t ArgsTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, CurrentRow()); // IdsData() will be optimized
             break;
-        case KEY:
+        case Index::KEY:
             sqlite3_result_int64(context_, static_cast<int64_t>(argSet_.NamesData()[CurrentRow()]));
             break;
-        case DATATYPE:
+        case Index::DATATYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(argSet_.DataTypes()[CurrentRow()]));
             break;
-        case VALUE:
+        case Index::VALUE:
             sqlite3_result_int64(context_, static_cast<int64_t>(argSet_.ValuesData()[CurrentRow()]));
             break;
-        case ARGSETID:
+        case Index::ARGSETID:
             sqlite3_result_int64(context_, static_cast<int64_t>(argSet_.ArgsData()[CurrentRow()]));
             break;
         default:

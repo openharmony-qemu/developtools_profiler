@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { PHYSICAL_WIDTH = 0, PHYSICAL_HEIGHT, PHYSICAL_FRAME_RATE };
+enum class Index : int32_t { PHYSICAL_WIDTH = 0, PHYSICAL_HEIGHT, PHYSICAL_FRAME_RATE };
 DeviceInfoTable::DeviceInfoTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("physical_width", "INTEGER"));
@@ -42,18 +42,18 @@ DeviceInfoTable::Cursor::~Cursor() {}
 
 int32_t DeviceInfoTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case PHYSICAL_WIDTH:
+    switch (static_cast<Index>(column)) {
+        case Index::PHYSICAL_WIDTH:
             if (deviceInfoObj_.PhysicalWidth() != INVALID_UINT32) {
                 sqlite3_result_int(context_, static_cast<int32_t>(deviceInfoObj_.PhysicalWidth()));
             }
             break;
-        case PHYSICAL_HEIGHT:
+        case Index::PHYSICAL_HEIGHT:
             if (deviceInfoObj_.PhysicalHeight() != INVALID_UINT32) {
                 sqlite3_result_int(context_, static_cast<int32_t>(deviceInfoObj_.PhysicalHeight()));
             }
             break;
-        case PHYSICAL_FRAME_RATE:
+        case Index::PHYSICAL_FRAME_RATE:
             if (deviceInfoObj_.PhysicalFrameRate() != INVALID_UINT32) {
                 sqlite3_result_int(context_, static_cast<int32_t>(deviceInfoObj_.PhysicalFrameRate()));
             }

@@ -54,7 +54,7 @@ kernel_version = "."
 OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc.sh", "abspath")
 
 if (target_os == "windows") {
-  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc_w.sh", "abspath")
+  OHOS_TRACE_STREAMER_DIR_PROTOC = get_path_info("./protoc_w.py", "abspath")
 }
 
 OHOS_PROFILER_3RDPARTY_GRPC_DIR = "${THIRD_PARTY}/grpc"

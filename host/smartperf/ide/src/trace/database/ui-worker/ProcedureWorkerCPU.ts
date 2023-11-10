@@ -424,6 +424,7 @@ export class WakeupBean {
   process: string | undefined;
   pid: number | undefined;
   thread: string | undefined;
+  dur: number | null | undefined;
   tid: number | undefined;
   schedulingLatency: number | undefined;
   ts: number | undefined;

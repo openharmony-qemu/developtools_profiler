@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, IPID, TID, CALL_ID, START_TIME, END_TIME, SO_NAME, DEPTH };
+enum class Index : int32_t { ID = 0, IPID, TID, CALL_ID, START_TIME, END_TIME, SO_NAME, DEPTH };
 SoStaticInitalizationTable::SoStaticInitalizationTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -48,31 +48,31 @@ SoStaticInitalizationTable::Cursor::~Cursor() {}
 
 int32_t SoStaticInitalizationTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, static_cast<int64_t>(staticInitalizationObj_.Pids()[CurrentRow()]));
             break;
-        case TID:
+        case Index::TID:
             sqlite3_result_int64(context_, static_cast<int64_t>(staticInitalizationObj_.Tids()[CurrentRow()]));
             break;
-        case CALL_ID:
+        case Index::CALL_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(staticInitalizationObj_.CallIds()[CurrentRow()]));
             break;
-        case START_TIME:
+        case Index::START_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(staticInitalizationObj_.StartTimes()[CurrentRow()]));
             break;
-        case END_TIME:
+        case Index::END_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(staticInitalizationObj_.EndTimes()[CurrentRow()]));
             break;
-        case SO_NAME:
+        case Index::SO_NAME:
             sqlite3_result_text(context_,
                                 dataCache_->GetDataFromDict(staticInitalizationObj_.SoNames()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case DEPTH:
+        case Index::DEPTH:
             sqlite3_result_int64(context_, static_cast<int64_t>(staticInitalizationObj_.Depths()[CurrentRow()]));
             break;
         default:

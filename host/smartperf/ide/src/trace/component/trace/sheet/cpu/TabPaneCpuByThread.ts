@@ -51,6 +51,7 @@ export class TabPaneCpuByThread extends BaseElement {
     }
     this.currentSelectionParam = cpuByThreadValue;
     this.cpuByThreadTbl!.innerHTML = this.getTableColumns(cpuByThreadValue.cpus);
+    this.cpuByThreadTbl!.injectColumns();
     this.range!.textContent =
       'Selected range: ' +
       parseFloat(((cpuByThreadValue.rightNs - cpuByThreadValue.leftNs) / 1000000.0).toFixed(5)) +

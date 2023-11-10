@@ -51,7 +51,7 @@ export class TabPaneNMStatstics extends BaseElement {
     });
     this.initResponseTypeList(nativeStatisticsParam);
     // @ts-ignore
-    this.nativeStatisticsTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 + 'px';
+    this.nativeStatisticsTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 25 + 'px';
     // @ts-ignore
     this.nativeStatisticsTbl?.recycleDataSource = [];
     this.nativeStatisticsTbl!.loading = true;
@@ -240,7 +240,7 @@ export class TabPaneNMStatstics extends BaseElement {
 
   connectedCallback() {
     super.connectedCallback();
-    resizeObserver(this.parentElement!, this.nativeStatisticsTbl!, 20);
+    resizeObserver(this.parentElement!, this.nativeStatisticsTbl!, 25);
   }
 
   sortByColumn(nmStatColumn: string, nmStatSort: number) {

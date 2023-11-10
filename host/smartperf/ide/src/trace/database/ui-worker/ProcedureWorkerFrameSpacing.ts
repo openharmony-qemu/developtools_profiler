@@ -183,6 +183,8 @@ export class FrameSpacingRender extends Render {
         frameSpacing.preFrameWidth = 0;
         frameSpacing.preFrameHeight = 0;
         frameSpacing.preTs = 0;
+        frameSpacing.preX = 0;
+        frameSpacing.preY = 0;
       }
     });
   }
@@ -227,6 +229,8 @@ export class FrameSpacingStruct extends BaseStruct {
   preFrameHeight: number | undefined;
   x: number | undefined;
   y: number | undefined;
+  preX: number | undefined;
+  preY: number | undefined;
   nameId: string | undefined;
 
   static setFrameSpacingFrame(

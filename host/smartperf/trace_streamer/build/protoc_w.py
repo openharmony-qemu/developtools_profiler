@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/bin/bash
 # Copyright (C) 2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,11 +18,11 @@ import sys
 import platform
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_TOP = os.path.realpath(os.path.join(THIS_DIR, "../../.."))
-TAIL_DIR = "developtools/profiler"
+PROJECT_TOP = os.path.realpath(os.path.join(THIS_DIR, ".."))
+TAIL_DIR = "."
 
-if "developtools" in sys.argv[2]:
-    TAIL_DIR = "."
+if "developtools" in sys.argv[3]:
+    TAIL_DIR = "developtools/profiler"
     PROJECT_TOP = os.path.realpath(os.path.join(THIS_DIR, ".."))
 
 OHOS_X64_OUT = os.path.join(PROJECT_TOP, sys.argv[2])
@@ -78,4 +77,5 @@ if not sys.argv[4].startswith("--plugin"):
       cmd=[PROTOC, OPT_PLUGIN_PROTOREADER, f"{PLUGINOUT}:{sys.argv[5]}", *PARAMS_ALL.split()]
       print("执行参数：--------------- ", cmd, " --------------------------")
       subprocess.run(cmd)
+    #   subprocess.run(cmd, env={"LD_LIBRARY_PATH": f"{LIBCXX_X64_OUT}:{SUBSYS_X64_OUT}"})
 subprocess.run([PROTOC, *PARAMS_ALL.split()])

@@ -25,6 +25,7 @@
 #if is_mingw
 #define unw_word_t uint64_t
 #endif
+#include "numerical_to_string.h"
 #include "perf_events.h"
 #include "perf_file_format.h"
 #include "perf_file_reader.h"
@@ -57,23 +58,8 @@ private:
     void UpdatePerfSampleData(uint32_t callChainId, std::unique_ptr<PerfRecordSample>& sample);
     uint32_t UpdatePerfCallChainData(const std::unique_ptr<PerfRecordSample>& sample);
 
-    class CallStackTemp {
-    public:
-        CallStackTemp() {}
-        CallStackTemp(uint32_t depth, uint64_t vaddr, uint64_t fileId, uint32_t symbolId)
-            : depth_(depth), vaddrInFile_(vaddr), fileId_(fileId), symbolId_(symbolId)
-        {
-        }
-        ~CallStackTemp() {}
-        uint32_t depth_ = 0;
-        uint64_t vaddrInFile_ = 0;
-        uint64_t fileId_ = 0;
-        uint32_t symbolId_ = 0;
-    };
     uint32_t callChainId_ = 0;
     std::unique_ptr<PerfFileReader> recordDataReader_ = nullptr;
-    const std::string cpuOffEventName_ = "sched:sched_switch";
-    const std::string wakingEventName_ = "sched:sched_waking";
     std::unique_ptr<uint8_t[]> buffer_ = {};
     size_t bufferSize_ = 0;
     bool cpuOffMode_ = false;
@@ -98,8 +84,11 @@ private:
                                                              {PERF_CLOCK_MONOTONIC_RAW, TS_MONOTONIC_RAW},
                                                              {PERF_CLOCK_BOOTTIME, TS_CLOCK_BOOTTIME}};
     std::map<uint64_t, uint64_t> fileDataDictIdToFileId_ = {};
-    QuatraMap<uint64_t, uint64_t, uint64_t, uint64_t, uint32_t> frameToCallChainId_;
+    std::hash<std::string_view> hashFun_;
+    DoubleMap<uint32_t, uint64_t, uint32_t> pidAndStackHashToCallChainId_;
     const std::string tmpPerfData_ = "ts_tmp.perf.data";
+    const std::string cpuOffEventName_ = "sched:sched_switch";
+    const std::string wakingEventName_ = "sched:sched_waking";
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

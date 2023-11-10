@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     CALLCHAIN_ID,
     TIMESTAMP,
@@ -71,8 +71,8 @@ void PerfSampleTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexIn
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -91,8 +91,8 @@ void PerfSampleTable::FilterByConstraint(FilterConstraints& fc, double& filterCo
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -133,22 +133,22 @@ int32_t PerfSampleTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_val
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case CALLCHAIN_ID:
+            case Index::CALLCHAIN_ID:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int64(argv[i])),
                                     perfSampleObj_.SampleIds());
                 break;
-            case THREAD_ID:
+            case Index::THREAD_ID:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int64(argv[i])), perfSampleObj_.Tids());
                 break;
-            case EVENT_TYPE_ID:
+            case Index::EVENT_TYPE_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                     perfSampleObj_.EventTypeIds());
                 break;
-            case CPU_ID:
+            case Index::CPU_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])), perfSampleObj_.CpuIds());
                 break;
             default:
@@ -158,8 +158,8 @@ int32_t PerfSampleTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_val
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -172,36 +172,36 @@ int32_t PerfSampleTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_val
 
 int32_t PerfSampleTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(perfSampleObj_.IdsData()[CurrentRow()]));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             if (perfSampleObj_.SampleIds()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.SampleIds()[CurrentRow()]));
             } else {
                 sqlite3_result_int64(context_, static_cast<int64_t>(INVALID_CALL_CHAIN_ID));
             }
             break;
-        case TIMESTAMP:
+        case Index::TIMESTAMP:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.TimeStampData()[CurrentRow()]));
             break;
-        case THREAD_ID:
+        case Index::THREAD_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.Tids()[CurrentRow()]));
             break;
-        case EVENT_COUNT:
+        case Index::EVENT_COUNT:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.EventCounts()[CurrentRow()]));
             break;
-        case EVENT_TYPE_ID:
+        case Index::EVENT_TYPE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.EventTypeIds()[CurrentRow()]));
             break;
-        case TIMESTAMP_TRACE:
+        case Index::TIMESTAMP_TRACE:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.TimestampTraces()[CurrentRow()]));
             break;
-        case CPU_ID:
+        case Index::CPU_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfSampleObj_.CpuIds()[CurrentRow()]));
             break;
-        case THREAD_STATE:
+        case Index::THREAD_STATE:
             if (perfSampleObj_.ThreadStates()[CurrentRow()] != INVALID_UINT64) {
                 auto threadStateIndex = static_cast<size_t>(perfSampleObj_.ThreadStates()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(threadStateIndex).c_str(), STR_DEFAULT_LEN,

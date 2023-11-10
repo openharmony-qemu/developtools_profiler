@@ -23,16 +23,14 @@ import { SpSystemTrace } from '../../SpSystemTrace.js';
 export class RangeSelect {
   private rowsEL: HTMLDivElement | undefined | null;
   private rowsPaneEL: HTMLDivElement | undefined | null;
-  private favoriteRowsEL: HTMLDivElement | undefined | null;
+  // private favoriteRowsEL: HTMLDivElement | undefined | null;
   isMouseDown: boolean = false;
   public rangeTraceRow: Array<TraceRow<any>> | undefined;
   public selectHandler: ((ds: Array<TraceRow<any>>, refreshCheckBox: boolean) => void) | undefined;
-  private startX: number = 0;
-  private endX: number = 0;
-  private startY: number = 0;
-  private endY: number = 0;
-  private startY2: number = 0;
-  private endY2: number = 0;
+  private startPageX:number=0;
+  private startPageY:number = 0;
+  private endPageX:number = 0;
+  private endPageY:number = 0;
   private timerShaftEL: TimerShaftElement | null | undefined;
   private timerShaftDragEL: HTMLDivElement | null | undefined;
   private isHover: boolean = false;
@@ -41,17 +39,17 @@ export class RangeSelect {
     startMark: 0,
     endMark: 0,
   };
-  private readonly spacerEL: HTMLDivElement;
+  // private readonly spacerEL: HTMLDivElement;
   private trace: SpSystemTrace | null | undefined;
   drag = false;
   constructor(trace: SpSystemTrace | null | undefined) {
     this.trace = trace;
     this.timerShaftEL = trace?.timerShaftEL;
     this.timerShaftDragEL = this.timerShaftEL?.shadowRoot?.querySelector('.total > div:nth-child(1)');
-    this.spacerEL = trace?.spacerEL!;
+    // this.spacerEL = trace?.spacerEL!;
     this.rowsEL = trace?.rowsEL;
     this.rowsPaneEL = trace?.rowsPaneEL;
-    this.favoriteRowsEL = trace?.favoriteRowsEL;
+    // this.favoriteRowsEL = trace?.favoriteRowsEL;
   }
 
   isInRowsEl(ev: MouseEvent): boolean {
@@ -59,41 +57,25 @@ export class RangeSelect {
   }
 
   isInSpacerEL(ev: MouseEvent): boolean {
-    return this.spacerEL.containPoint(ev, { left: 248 });
+    return this.trace!.favoriteChartListEL!.containPoint(ev, { left: 248 });
   }
 
   mouseDown(eventDown: MouseEvent) {
+    this.startPageX = eventDown.pageX;
+    this.startPageY = eventDown.pageY;
     if (this.isHover) {
       this.isMouseDown = true;
       return;
     }
-    if (this.isInRowsEl(eventDown)) {
       this.rangeTraceRow = [];
       this.isMouseDown = true;
       TraceRow.rangeSelectObject = undefined;
-      this.startX = eventDown.pageX - this.rowsEL!.getBoundingClientRect().left - 248;
-      if (this.isInSpacerEL(eventDown)) {
-        this.startY = 0;
-        this.startY2 = eventDown.pageY - this.spacerEL.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-      } else {
-        this.startY =
-          eventDown.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
-        this.startY2 = eventDown.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-      }
-    }
   }
 
   mouseUp(mouseEventUp: MouseEvent) {
+    this.endPageX = mouseEventUp.pageX;
+    this.endPageY = mouseEventUp.pageY;
     if (this.drag) {
-      this.endX = mouseEventUp.pageX - this.rowsEL!.getBoundingClientRect().left - 248;
-      if (this.isInSpacerEL(mouseEventUp)) {
-        this.endY = 0;
-        this.endY2 = mouseEventUp.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-      } else {
-        this.endY =
-          mouseEventUp.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
-        this.endY2 = mouseEventUp.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-      }
       if (this.selectHandler) {
         this.selectHandler(this.rangeTraceRow || [], !this.isHover);
       }
@@ -102,7 +84,7 @@ export class RangeSelect {
   }
 
   isDrag(): boolean {
-    return this.startX != this.endX;
+    return this.startPageX != this.endPageX;
   }
 
   isTouchMark(ev: MouseEvent): boolean {
@@ -120,16 +102,9 @@ export class RangeSelect {
   }
 
   mouseOut(mouseEventOut: MouseEvent) {
+    this.endPageX = mouseEventOut.pageX;
+    this.endPageY = mouseEventOut.pageY;
     if (this.drag) {
-      this.endX = this.rowsEL!.getBoundingClientRect().right - this.rowsEL!.getBoundingClientRect().left - 248;
-      if (this.isInSpacerEL(mouseEventOut)) {
-        this.endY = 0;
-        this.endY2 = mouseEventOut.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-      } else {
-        this.endY =
-          mouseEventOut.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
-        this.endY2 = mouseEventOut.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-      }
       if (this.selectHandler && this.isMouseDown) {
         this.selectHandler(this.rangeTraceRow || [], !this.isHover);
       }
@@ -139,6 +114,8 @@ export class RangeSelect {
   }
 
   mouseMove(rows: Array<TraceRow<any>>, ev: MouseEvent) {
+    this.endPageX = ev.pageX;
+    this.endPageY = ev.pageY;
     if (this.isTouchMark(ev) && TraceRow.rangeSelectObject) {
       info('isTouchMark');
       let x1 =
@@ -208,50 +185,21 @@ export class RangeSelect {
       this.timerShaftEL!.sportRuler!.draw();
       return;
     }
-    this.endX = ev.pageX - this.rowsEL!.getBoundingClientRect().left - 248;
-    if (this.isInSpacerEL(ev)) {
-      this.endY = 0;
-      this.endY2 = ev.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-    } else {
-      this.endY = ev.pageY - this.rowsEL!.getBoundingClientRect().top + this.spacerEL.getBoundingClientRect().height;
-      this.endY2 = ev.pageY - this.spacerEL!.getBoundingClientRect().top - this.rowsPaneEL!.scrollTop;
-    }
-    let scrollTop = this.rowsPaneEL?.scrollTop || 0;
-    let xMin = this.startX < this.endX ? this.startX : this.endX;
-    let xMax = this.startX > this.endX ? this.startX : this.endX;
-    let yMin = this.startY < this.endY ? this.startY : this.endY;
-    let yMax = this.startY > this.endY ? this.startY : this.endY;
     let rangeSelect: RangeSelectStruct | undefined;
-    let spacerRect = this.favoriteRowsEL!.getBoundingClientRect();
-    let rowsRect = this.rowsPaneEL!.getBoundingClientRect();
     this.rangeTraceRow = rows.filter((it) => {
-      let rt: Rect;
-      let bound: DOMRect | any;
-      let itRect: Rect;
-      if (it.collect) {
-        bound = it.getBoundingClientRect();
-        itRect = Rect.getIntersect(bound, spacerRect);
-        rt = new Rect(xMin, Math.min(this.startY2, this.endY2), xMax - xMin, Math.abs(this.startY2 - this.endY2));
-      } else {
-        bound = it.getBoundingClientRect();
-        if (spacerRect.height > 0 && bound.y + bound.height < spacerRect.y + spacerRect.height) {
-          it.rangeSelect = false;
-          return false;
-        }
-        itRect = Rect.getIntersect(
-          bound,
-          new Rect(rowsRect.x, rowsRect.y + spacerRect.height, rowsRect.width, rowsRect.height - spacerRect.height)
-        );
-        rt = new Rect(xMin, yMin - scrollTop, xMax - xMin, yMax - yMin);
-      }
-      itRect.x -= 248;
-      itRect.y -= 195;
-      if (Rect.intersect(itRect, rt)) {
+      if (Rect.intersect(it.getBoundingClientRect(), {
+        x:Math.min(this.startPageX,this.endPageX),
+        y: Math.min(this.startPageY, this.endPageY),
+        width: Math.abs(this.startPageX - this.endPageX),
+        height: Math.abs(this.startPageY - this.endPageY),
+      } as Rect)) {
         if (!rangeSelect) {
           it.setTipLeft(0, null);
           rangeSelect = new RangeSelectStruct();
-          let startX = Math.floor(rt.x <= 0 ? 0 : rt.x);
-          let endX = Math.floor(rt.x + rt.width > it.frame.width ? it.frame.width : rt.x + rt.width);
+          let startX = Math.min(this.startPageX,this.endPageX)-it.describeEl!.getBoundingClientRect().right;
+          let endX = Math.max(this.startPageX,this.endPageX)-it.describeEl!.getBoundingClientRect().right;
+          if(startX<=0) startX = 0;
+          if(endX>it.frame.width) endX = it.frame.width;
           rangeSelect.startX = startX;
           rangeSelect.endX = endX;
           rangeSelect.startNS = RangeSelect.SetNS(it, startX);

@@ -187,7 +187,12 @@ export class SpAbilityMonitorChart {
       this.trace?.displayTip(traceRow, CpuAbilityMonitorStruct.hoverCpuAbilityStruct, `<span>${monitorCpuTip}</span>`);
     };
     traceRow.onThreadHandler = (useCache) => {
-      let context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(traceRow.currentContext){
+        context = traceRow.currentContext;
+      } else{
+        context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       traceRow.canvasSave(context);
       (renders['monitorCpu'] as CpuAbilityRender).renderMainThread(
         {
@@ -223,7 +228,12 @@ export class SpAbilityMonitorChart {
       );
     };
     userTraceRow.onThreadHandler = (useCache) => {
-      let context = userTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(userTraceRow.currentContext){
+        context = userTraceRow.currentContext;
+      } else{
+        context  = userTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       userTraceRow.canvasSave(context);
       (renders['monitorCpu'] as CpuAbilityRender).renderMainThread(
         {
@@ -259,7 +269,12 @@ export class SpAbilityMonitorChart {
       );
     };
     sysTraceRow.onThreadHandler = (useCache) => {
-      let context = sysTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(sysTraceRow.currentContext){
+        context = sysTraceRow.currentContext;
+      } else{
+        context  = sysTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       sysTraceRow.canvasSave(context);
       (renders['monitorCpu'] as CpuAbilityRender).renderMainThread(
         {
@@ -306,7 +321,12 @@ export class SpAbilityMonitorChart {
       );
     };
     memoryUsedTraceRow.onThreadHandler = (useCache) => {
-      let context = memoryUsedTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(memoryUsedTraceRow.currentContext){
+        context = memoryUsedTraceRow.currentContext;
+      } else{
+        context  = memoryUsedTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       memoryUsedTraceRow.canvasSave(context);
       (renders['monitorMemory'] as MemoryAbilityRender).renderMainThread(
         {
@@ -345,7 +365,12 @@ export class SpAbilityMonitorChart {
       );
     };
     cachedFilesTraceRow.onThreadHandler = (useCache) => {
-      let context = cachedFilesTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(cachedFilesTraceRow.currentContext){
+        context = cachedFilesTraceRow.currentContext;
+      } else{
+        context  = cachedFilesTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       cachedFilesTraceRow.canvasSave(context);
       (renders['monitorMemory'] as MemoryAbilityRender).renderMainThread(
         {
@@ -384,7 +409,12 @@ export class SpAbilityMonitorChart {
       );
     };
     compressedTraceRow.onThreadHandler = (useCache) => {
-      let context = compressedTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(compressedTraceRow.currentContext){
+        context = compressedTraceRow.currentContext;
+      } else{
+        context  = compressedTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       compressedTraceRow.canvasSave(context);
       (renders['monitorMemory'] as MemoryAbilityRender).renderMainThread(
         {
@@ -429,7 +459,12 @@ export class SpAbilityMonitorChart {
       );
     };
     bytesReadTraceRow.onThreadHandler = (useCache) => {
-      let context = bytesReadTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(bytesReadTraceRow.currentContext){
+        context = bytesReadTraceRow.currentContext;
+      } else{
+        context  = bytesReadTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       bytesReadTraceRow.canvasSave(context);
       (renders['monitorDiskIo'] as DiskIoAbilityRender).renderMainThread(
         {
@@ -466,7 +501,12 @@ export class SpAbilityMonitorChart {
       );
     };
     bytesWrittenTraceRow.onThreadHandler = (useCache) => {
-      let context = bytesWrittenTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(bytesWrittenTraceRow.currentContext){
+        context = bytesWrittenTraceRow.currentContext;
+      } else{
+        context  = bytesWrittenTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       bytesWrittenTraceRow.canvasSave(context);
       (renders['monitorDiskIo'] as DiskIoAbilityRender).renderMainThread(
         {
@@ -503,7 +543,12 @@ export class SpAbilityMonitorChart {
       );
     };
     readOpsTraceRow.onThreadHandler = (useCache) => {
-      let context = readOpsTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(readOpsTraceRow.currentContext){
+        context = readOpsTraceRow.currentContext;
+      } else{
+        context  = readOpsTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       readOpsTraceRow.canvasSave(context);
       (renders['monitorDiskIo'] as DiskIoAbilityRender).renderMainThread(
         {
@@ -540,7 +585,12 @@ export class SpAbilityMonitorChart {
       );
     };
     writtenOpsTraceRow.onThreadHandler = (useCache) => {
-      let context = writtenOpsTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(writtenOpsTraceRow.currentContext){
+        context = writtenOpsTraceRow.currentContext;
+      } else{
+        context  = writtenOpsTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       writtenOpsTraceRow.canvasSave(context);
       (renders['monitorDiskIo'] as DiskIoAbilityRender).renderMainThread(
         {
@@ -585,7 +635,12 @@ export class SpAbilityMonitorChart {
       );
     };
     bytesInTraceRow.onThreadHandler = (useCache) => {
-      let context = bytesInTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(bytesInTraceRow.currentContext){
+        context = bytesInTraceRow.currentContext;
+      } else{
+        context  = bytesInTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       bytesInTraceRow.canvasSave(context);
       (renders['monitorNetwork'] as NetworkAbilityRender).renderMainThread(
         {
@@ -622,7 +677,12 @@ export class SpAbilityMonitorChart {
       );
     };
     bytesOutTraceRow.onThreadHandler = (useCache) => {
-      let context = bytesOutTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(bytesOutTraceRow.currentContext){
+        context = bytesOutTraceRow.currentContext;
+      } else{
+        context  = bytesOutTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       bytesOutTraceRow.canvasSave(context);
       (renders['monitorNetwork'] as NetworkAbilityRender).renderMainThread(
         {
@@ -659,7 +719,12 @@ export class SpAbilityMonitorChart {
       );
     };
     packetInTraceRow.onThreadHandler = (useCache) => {
-      let context = packetInTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(packetInTraceRow.currentContext){
+        context = packetInTraceRow.currentContext;
+      } else{
+        context  = packetInTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       packetInTraceRow.canvasSave(context);
       (renders['monitorNetwork'] as NetworkAbilityRender).renderMainThread(
         {
@@ -698,7 +763,12 @@ export class SpAbilityMonitorChart {
       }
     };
     packetOutTraceRow.onThreadHandler = (useCache) => {
-      let context = packetOutTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(packetOutTraceRow.currentContext){
+        context = packetOutTraceRow.currentContext;
+      } else{
+        context  = packetOutTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       packetOutTraceRow.canvasSave(context);
       (renders['monitorNetwork'] as NetworkAbilityRender).renderMainThread(
         {

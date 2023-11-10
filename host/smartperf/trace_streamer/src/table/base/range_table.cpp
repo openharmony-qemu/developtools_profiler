@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { START_TS = 0, END_TS };
+enum class Index : int32_t { START_TS = 0, END_TS };
 RangeTable::RangeTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("start_ts", "INTEGER"));
@@ -40,11 +40,11 @@ RangeTable::Cursor::~Cursor() {}
 
 int32_t RangeTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case START_TS:
+    switch (static_cast<Index>(column)) {
+        case Index::START_TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(dataCache_->TraceStartTime()));
             break;
-        case END_TS:
+        case Index::END_TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(dataCache_->TraceEndTime()));
             break;
         default:

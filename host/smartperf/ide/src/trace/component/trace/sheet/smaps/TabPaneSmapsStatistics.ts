@@ -46,7 +46,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
   }
 
   set data(valSmapsStatistics: SelectionParam) {
-    if (!this.tblSmapsStatistics) {
+    if (!this.tblSmapsStatistics || valSmapsStatistics == this.currentSelection) {
       return;
     }
     this.parentElement!.style.overflow = 'unset';
@@ -161,7 +161,13 @@ export class TabPaneSmapsStatistics extends BaseElement {
     smapsStatAllDataTree.swapPss += smaps.swapPss;
   }
 
-  private handleTree(smaps: Smaps, id: number, parentId: string, smapsStatDataTree: SmapsTreeObj, sumSize?: number): void {
+  private handleTree(
+    smaps: Smaps,
+    id: number,
+    parentId: string,
+    smapsStatDataTree: SmapsTreeObj,
+    sumSize?: number
+  ): void {
     let type = TYPE_STRING[smaps.type];
     let treeObj = new SmapsTreeObj(id + '', parentId, type);
     treeObj.path = SpSystemTrace.DATA_DICT.get(Number(smaps.path))?.split('/');
@@ -420,7 +426,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
         </style>
         <div style="overflow: auto;" class="d-box">
             <lit-table id="tb-smaps-statistics" class="smaps-statistics-table" style="height: auto;" tree>
-                <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order>
+                <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order retract>
                 </lit-table-column>
                 <lit-table-column width="150px" title="Path" data-index="path" key="path" align="flex-start">
                 </lit-table-column>

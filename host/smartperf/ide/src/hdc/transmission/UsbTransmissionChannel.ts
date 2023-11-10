@@ -14,9 +14,8 @@
  */
 
 import { TransmissionInterface } from './TransmissionInterface.js';
-import { error, info, log } from '../../log/Log.js';
+import { info } from '../../log/Log.js';
 import { HDC_DEVICE_FILTER } from '../common/ConstantType.js';
-import { HdcDeviceManager } from '../HdcDeviceManager.js';
 
 export interface matchingUsbDevice {
   configurationValue: number;
@@ -50,7 +49,7 @@ export class UsbTransmissionChannel implements TransmissionInterface {
    *
    * @param writeData writeData
    */
-  async writeData(writeData: ArrayBuffer) {
+  async writeData(writeData: ArrayBuffer): Promise<void> {
     await this._device?.transferOut(this.endpointOut, writeData);
   }
 
@@ -72,8 +71,11 @@ export class UsbTransmissionChannel implements TransmissionInterface {
    * Close the device connection
    */
   async close(): Promise<void> {
-    await this._device?.releaseInterface(this.interfaceNumber);
-    await this._device?.close();
+    try {
+      await this._device?.releaseInterface(this.interfaceNumber);
+      await this._device?.close();
+    } catch (e) {
+    }
     this._device = null;
   }
 

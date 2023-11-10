@@ -201,6 +201,13 @@ EMSCRIPTEN_KEEPALIVE int32_t TraceStreamerSqlQueryEx(int32_t sqlLen)
 {
     return g_wasmTraceStreamer.WasmSqlQueryWithCallback(g_reqBuf, sqlLen, &ResultCallback);
 }
+EMSCRIPTEN_KEEPALIVE int32_t TraceStreamerSqlMetricsQuery(int32_t sqlLen)
+{
+    if (g_wasmTraceStreamer.SqlMetricsQueryWithCallback(g_reqBuf, sqlLen, &ResultCallback)) {
+        return 0;
+    }
+    return -1;
+}
 EMSCRIPTEN_KEEPALIVE int32_t TraceStreamerCancel()
 {
     g_wasmTraceStreamer.CancelSqlQuery();

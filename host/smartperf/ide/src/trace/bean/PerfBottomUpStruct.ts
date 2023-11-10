@@ -26,9 +26,8 @@ export class PerfBottomUpStruct {
   frameChildren?: Array<PerfBottomUpStruct>;
   isSearch: boolean = false;
   isSelected: boolean = false;
-  constructor(
-    symbolName: string,
-  ) {
+  tsArray: Array<number> = [];
+  constructor(symbolName: string) {
     this.symbolName = symbolName;
     this.children = [];
   }

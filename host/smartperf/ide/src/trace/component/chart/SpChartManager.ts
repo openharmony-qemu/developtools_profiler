@@ -19,7 +19,8 @@ import { SpCpuChart } from './SpCpuChart.js';
 import { SpFreqChart } from './SpFreqChart.js';
 import { SpFpsChart } from './SpFpsChart.js';
 import {
-  getCpuUtilizationRate, queryAppStartupProcessIds,
+  getCpuUtilizationRate,
+  queryAppStartupProcessIds,
   queryDataDICT,
   queryMemoryConfig,
   queryTaskPoolCallStack,
@@ -46,6 +47,7 @@ import { Utils } from '../trace/base/Utils.js';
 import { SpArkTsChart } from './SpArkTsChart.js';
 import { MemoryConfig } from '../../bean/MemoryConfig.js';
 import { FlagsConfig } from '../SpFlags.js';
+import { SpLogChart } from './SpLogChart.js';
 
 export class SpChartManager {
   static APP_STARTUP_PID_ARR: Array<number> = [];
@@ -67,6 +69,7 @@ export class SpChartManager {
   private irqChart: SpIrqChart;
   frameTimeChart: SpFrameTimeChart;
   public arkTsChart: SpArkTsChart;
+  private logChart: SpLogChart;
 
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
@@ -86,6 +89,7 @@ export class SpChartManager {
     this.irqChart = new SpIrqChart(trace);
     this.frameTimeChart = new SpFrameTimeChart(trace);
     this.arkTsChart = new SpArkTsChart(trace);
+    this.logChart = new SpLogChart(trace);
   }
 
   async init(progress: Function) {
@@ -123,6 +127,7 @@ export class SpChartManager {
     info('Cpu Rate Data initialized');
     progress('cpu freq', 80);
     await this.freq.init();
+    await this.logChart.init();
     progress('Clock init', 82);
     await this.clockChart.init();
     progress('Irq init', 84);

@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, FILE_ID, SERIAL_ID, SYMBOL, PATH };
+enum class Index : int32_t { ID = 0, FILE_ID, SERIAL_ID, SYMBOL, PATH };
 PerfFilesTable::PerfFilesTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -57,8 +57,8 @@ void PerfFilesTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInf
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -77,8 +77,8 @@ void PerfFilesTable::FilterByConstraint(FilterConstraints& fc, double& filterCos
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -119,11 +119,11 @@ int32_t PerfFilesTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_valu
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case FILE_ID:
+            case Index::FILE_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])), perfFilesObj_.FileIds());
                 break;
             default:
@@ -134,8 +134,8 @@ int32_t PerfFilesTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_valu
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -148,24 +148,24 @@ int32_t PerfFilesTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_valu
 
 int32_t PerfFilesTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(perfFilesObj_.IdsData()[CurrentRow()]));
             break;
-        case FILE_ID:
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfFilesObj_.FileIds()[CurrentRow()]));
             break;
-        case SERIAL_ID:
+        case Index::SERIAL_ID:
             sqlite3_result_int(context_, static_cast<int32_t>(perfFilesObj_.Serials()[CurrentRow()]));
             break;
-        case SYMBOL:
+        case Index::SYMBOL:
             if (perfFilesObj_.Symbols()[CurrentRow()] != INVALID_UINT64) {
                 auto symbolIndex = static_cast<size_t>(perfFilesObj_.Symbols()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(symbolIndex).c_str(), STR_DEFAULT_LEN,
                                     nullptr);
             }
             break;
-        case PATH:
+        case Index::PATH:
             if (perfFilesObj_.FilePaths()[CurrentRow()] != INVALID_UINT64) {
                 auto pathIndex = static_cast<size_t>(perfFilesObj_.FilePaths()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(pathIndex).c_str(), STR_DEFAULT_LEN, nullptr);

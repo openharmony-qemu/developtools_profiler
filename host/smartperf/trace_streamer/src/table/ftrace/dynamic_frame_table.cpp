@@ -19,7 +19,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, X, Y, WIDTH, HEIGHT, ALPHA, NAME, END_TIME };
+enum class Index : int32_t { ID = 0, X, Y, WIDTH, HEIGHT, ALPHA, NAME, END_TIME };
 DynamicFrameTable::DynamicFrameTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -49,27 +49,27 @@ DynamicFrameTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBase* ta
 DynamicFrameTable::Cursor::~Cursor() {}
 int32_t DynamicFrameTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(dynamicFrameObj_.IdsData()[CurrentRow()]));
             break;
-        case X: {
+        case Index::X: {
             sqlite3_result_int(context_, static_cast<int32_t>(dynamicFrameObj_.Xs()[CurrentRow()]));
             break;
         }
-        case Y: {
+        case Index::Y: {
             sqlite3_result_int(context_, static_cast<int32_t>(dynamicFrameObj_.Ys()[CurrentRow()]));
             break;
         }
-        case WIDTH: {
+        case Index::WIDTH: {
             sqlite3_result_int(context_, static_cast<int32_t>(dynamicFrameObj_.Widths()[CurrentRow()]));
             break;
         }
-        case HEIGHT: {
+        case Index::HEIGHT: {
             sqlite3_result_int(context_, static_cast<int32_t>(dynamicFrameObj_.Heights()[CurrentRow()]));
             break;
         }
-        case ALPHA: {
+        case Index::ALPHA: {
             if (dynamicFrameObj_.Alphas()[CurrentRow()] != INVALID_UINT64) {
                 const std::string& str =
                     dataCache_->GetDataFromDict(static_cast<size_t>(dynamicFrameObj_.Alphas()[CurrentRow()]));
@@ -77,7 +77,7 @@ int32_t DynamicFrameTable::Cursor::Column(int32_t col) const
             }
             break;
         }
-        case NAME: {
+        case Index::NAME: {
             if (dynamicFrameObj_.Names()[CurrentRow()] != INVALID_UINT64) {
                 const std::string& str =
                     dataCache_->GetDataFromDict(static_cast<size_t>(dynamicFrameObj_.Names()[CurrentRow()]));
@@ -85,7 +85,7 @@ int32_t DynamicFrameTable::Cursor::Column(int32_t col) const
             }
             break;
         }
-        case END_TIME:
+        case Index::END_TIME:
             if (dynamicFrameObj_.EndTimes()[CurrentRow()] != INVALID_TIME) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(dynamicFrameObj_.EndTimes()[CurrentRow()]));
             }

@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-// @ts-ignore
-import exp from 'constants';
-
 export class SearchFuncBean {
   depth: number | undefined; // 0
   dur: number | undefined; // 570000

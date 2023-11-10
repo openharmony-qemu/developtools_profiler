@@ -28,7 +28,7 @@ constexpr int32_t NEXT_NUMBER = 1;
 constexpr int32_t TSANDDUR_COLUMN = 2;
 constexpr int32_t PARTITIONED_COUNT = 3;
 
-enum Index { TS, DUR, PARTITION };
+enum class Index : int32_t { TS, DUR, PARTITION };
 
 SpanJoin::SpanJoin(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
@@ -255,7 +255,7 @@ bool SpanJoin::CaclSpan::IsQueryNext()
 
 bool SpanJoin::CaclSpan::SearchNextslice()
 {
-    while (partitionState_ != TS_REAL) {
+    while (partitionState_ != PartitionState::TS_REAL) {
         bool status = GetNextState();
         if (!status) {
             return false;
@@ -327,7 +327,7 @@ std::string SpanJoin::CaclSpan::GetMergeColumns(std::vector<std::string>& column
 
 int64_t SpanJoin::CaclSpan::GetPatitonForMiss()
 {
-    return partitionState_ == TS_MISSING ? missPartitionEnd_ - NEXT_NUMBER : partition_;
+    return partitionState_ == PartitionState::TS_MISSING ? missPartitionEnd_ - NEXT_NUMBER : partition_;
 }
 
 std::unique_ptr<TableBase::Cursor> SpanJoin::CreateCursor()
@@ -401,18 +401,18 @@ SpanJoin::CaclSpan* SpanJoin::Cursor::FindQueryResult()
 
 int32_t SpanJoin::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case TS: {
+    switch (static_cast<Index>(column)) {
+        case Index::TS: {
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(std::max(tableFirst_.ts_, tableSecond_.ts_)));
             break;
         }
-        case DUR: {
+        case Index::DUR: {
             sqlite3_result_int64(context_,
                                  static_cast<sqlite3_int64>(std::min(tableFirst_.endTs_, tableSecond_.endTs_) -
                                                             std::max(tableFirst_.ts_, tableSecond_.ts_)));
             break;
         }
-        case PARTITION: {
+        case Index::PARTITION: {
             auto partResult = tableFirst_.partitionState_ == PartitionState::TS_REAL ? tableFirst_.partition_
                                                                                      : tableSecond_.partition_;
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(partResult));

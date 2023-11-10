@@ -28,7 +28,7 @@ import { LitTabpane } from '../../../base-ui/tabs/lit-tabpane.js';
 import { TabPaneCurrent } from './sheet/TabPaneCurrent.js';
 import { SelectionParam } from '../../bean/BoxSelection.js';
 import { SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
-
+import './timer-shaft/CollapseButton.js'
 //随机生成十六位进制颜色
 export function randomRgbColor() {
   const letters = '0123456789ABCDEF';
@@ -123,7 +123,7 @@ export class TimerShaftElement extends BaseElement {
   canvasHeight: number = 0;
   _cpuUsage: Array<{ cpu: number; ro: number; rate: number }> = [];
   protected timeRuler: TimeRuler | undefined;
-  protected rangeRuler: RangeRuler | undefined;
+  protected _rangeRuler: RangeRuler | undefined;
   protected _sportRuler: SportRuler | undefined;
   private root: HTMLDivElement | undefined | null;
   private _totalNS: number = 10_000_000_000;
@@ -138,11 +138,15 @@ export class TimerShaftElement extends BaseElement {
     return this._sportRuler;
   }
 
+  get rangeRuler(): RangeRuler | undefined {
+    return this._rangeRuler;
+  }
+
   set cpuUsage(value: Array<{ cpu: number; ro: number; rate: number }>) {
     info('set cpuUsage values :', value);
     this._cpuUsage = value;
-    if (this.rangeRuler) {
-      this.rangeRuler.cpuUsage = this._cpuUsage;
+    if (this._rangeRuler) {
+      this._rangeRuler.cpuUsage = this._cpuUsage;
     }
   }
 
@@ -154,7 +158,7 @@ export class TimerShaftElement extends BaseElement {
     info('set totalNS values :', value);
     this._totalNS = value;
     if (this.timeRuler) this.timeRuler.totalNS = value;
-    if (this.rangeRuler) this.rangeRuler.range.totalNS = value;
+    if (this._rangeRuler) this._rangeRuler.range.totalNS = value;
     if (this.timeTotalEL) this.timeTotalEL.textContent = `${ns2s(value)}`;
     requestAnimationFrame(() => this.render());
   }
@@ -176,7 +180,7 @@ export class TimerShaftElement extends BaseElement {
   }
 
   isScaling(): boolean {
-    return this.rangeRuler?.isPress || false;
+    return this._rangeRuler?.isPress || false;
   }
 
   reset(): void {
@@ -184,17 +188,17 @@ export class TimerShaftElement extends BaseElement {
     this.totalNS = 10_000_000_000;
     this.startNS = 0;
     this.endNS = 10_000_000_000;
-    if (this.rangeRuler) {
-      this.rangeRuler.drawMark = false;
-      this.rangeRuler.range.totalNS = this.totalNS;
-      this.rangeRuler.markAObj.frame.x = 0;
-      this.rangeRuler.markBObj.frame.x = this.rangeRuler.frame.width;
-      this.rangeRuler.cpuUsage = [];
+    if (this._rangeRuler) {
+      this._rangeRuler.drawMark = false;
+      this._rangeRuler.range.totalNS = this.totalNS;
+      this._rangeRuler.markAObj.frame.x = 0;
+      this._rangeRuler.markBObj.frame.x = this._rangeRuler.frame.width;
+      this._rangeRuler.cpuUsage = [];
       this.sportRuler!.flagList.length = 0;
       this.sportRuler!.slicesTimeList.length = 0;
       this.selectionList.length = 0;
       this.selectionMap.clear();
-      this.rangeRuler.rangeRect = new Rect(0, 25, this.canvas?.clientWidth || 0, 75);
+      this._rangeRuler.rangeRect = new Rect(0, 25, this.canvas?.clientWidth || 0, 75);
       this.sportRuler!.isRangeSelect = false;
       this.setSlicesMark();
     }
@@ -214,7 +218,7 @@ export class TimerShaftElement extends BaseElement {
   }
 
   getRangeRuler() {
-    return this.rangeRuler;
+    return this._rangeRuler;
   }
 
   connectedCallback() {
@@ -228,8 +232,8 @@ export class TimerShaftElement extends BaseElement {
       }
     }
     if (this.timeTotalEL) this.timeTotalEL.textContent = ns2s(this._totalNS);
-    if (this.timeOffsetEL && this.rangeRuler)
-      this.timeOffsetEL.textContent = ns2UnitS(this._startNS, this.rangeRuler.getScale());
+    if (this.timeOffsetEL && this._rangeRuler)
+      this.timeOffsetEL.textContent = ns2UnitS(this._startNS, this._rangeRuler.getScale());
     const width = this.canvas?.clientWidth || 0;
     const height = this.canvas?.clientHeight || 0;
     if (!this.timeRuler) {
@@ -250,8 +254,8 @@ export class TimerShaftElement extends BaseElement {
         }
       );
     }
-    if (!this.rangeRuler) {
-      this.rangeRuler = new RangeRuler(
+    if (!this._rangeRuler) {
+      this._rangeRuler = new RangeRuler(
         this,
         new Rect(0, 25, width, 75),
         {
@@ -274,8 +278,8 @@ export class TimerShaftElement extends BaseElement {
           if (this._sportRuler) {
             this._sportRuler.range = a;
           }
-          if (this.timeOffsetEL && this.rangeRuler) {
-            this.timeOffsetEL.textContent = ns2UnitS(a.startNS, this.rangeRuler.getScale());
+          if (this.timeOffsetEL && this._rangeRuler) {
+            this.timeOffsetEL.textContent = ns2UnitS(a.startNS, this._rangeRuler.getScale());
           }
           if (this.loadComplete) {
             this.rangeChangeHandler?.(a);
@@ -283,18 +287,18 @@ export class TimerShaftElement extends BaseElement {
         }
       );
     }
-    this.rangeRuler.frame.width = width;
+    this._rangeRuler.frame.width = width;
     this._sportRuler.frame.width = width;
     this.timeRuler.frame.width = width;
   }
 
   setRangeNS(startNS: number, endNS: number) {
     info('set startNS values :' + startNS + 'endNS values : ' + endNS);
-    this.rangeRuler?.setRangeNS(startNS, endNS);
+    this._rangeRuler?.setRangeNS(startNS, endNS);
   }
 
   getRange(): TimeRange | undefined {
-    return this.rangeRuler?.getRange();
+    return this._rangeRuler?.getRange();
   }
 
   updateWidth(width: number) {
@@ -309,31 +313,33 @@ export class TimerShaftElement extends BaseElement {
     this.canvas!.style.height = oldHeight + 'px';
     this.ctx?.scale(this.dpr, this.dpr);
     this.ctx?.translate(0, 0);
-    this.rangeRuler!.frame.width = oldWidth;
+    this._rangeRuler!.frame.width = oldWidth;
     this._sportRuler!.frame.width = oldWidth;
     this.timeRuler!.frame.width = oldWidth;
-    this.rangeRuler?.fillX();
+    this._rangeRuler?.fillX();
     this.render();
   }
 
   documentOnMouseDown = (ev: MouseEvent) => {
     if ((window as any).isSheetMove) return;
-    this.rangeRuler?.mouseDown(ev);
+    this._rangeRuler?.mouseDown(ev);
   };
 
   documentOnMouseUp = (ev: MouseEvent) => {
     if ((window as any).isSheetMove) return;
-    this.rangeRuler?.mouseUp(ev);
+    this._rangeRuler?.mouseUp(ev);
     this.sportRuler?.mouseUp(ev);
   };
 
-  documentOnMouseMove = (ev: MouseEvent) => {
-    let x = ev.offsetX - (this.canvas?.offsetLeft || 0);  // 鼠标的x轴坐标
+  documentOnMouseMove = (ev: MouseEvent, trace: SpSystemTrace) => {
+    trace.style.cursor = 'default';
+    let x = ev.offsetX - (this.canvas?.offsetLeft || 0); // 鼠标的x轴坐标
     let y = ev.offsetY; // 鼠标的y轴坐标
     let findSlicestime = this.sportRuler?.findSlicesTime(x, y); // 查找帽子
-    if (!findSlicestime) { // 如果在该位置没有找到一个“帽子”，则可以显示一个旗子。
+    if (!findSlicestime) {
+      // 如果在该位置没有找到一个“帽子”，则可以显示一个旗子。
       this.sportRuler?.showHoverFlag();
-      this.rangeRuler?.mouseMove(ev);
+      this._rangeRuler?.mouseMove(ev, trace);
       if (this.sportRuler?.edgeDetection(ev)) {
         this.sportRuler?.mouseMove(ev);
       } else {
@@ -341,26 +347,26 @@ export class TimerShaftElement extends BaseElement {
       }
     } else {
       this.sportRuler?.clearHoverFlag();
-      this.sportRuler?.modifyFlagList(null);//重新绘制旗子，清除hover flag
+      this.sportRuler?.modifyFlagList(null); //重新绘制旗子，清除hover flag
     }
   };
 
   documentOnMouseOut = (ev: MouseEvent) => {
-    this.rangeRuler?.mouseOut(ev);
+    this._rangeRuler?.mouseOut(ev);
     this.sportRuler?.mouseOut(ev);
   };
 
   documentOnKeyPress = (ev: KeyboardEvent, currentSlicesTime?: CurrentSlicesTime) => {
     if ((window as any).isSheetMove) return;
     if ((window as any).flagInputFocus) return;
-    this.rangeRuler?.keyPress(ev, currentSlicesTime);
+    this._rangeRuler?.keyPress(ev, currentSlicesTime);
     this.sportRuler?.clearHoverFlag();
   };
 
   documentOnKeyUp = (ev: KeyboardEvent) => {
     if ((window as any).isSheetMove) return;
     if ((window as any).flagInputFocus) return;
-    this.rangeRuler?.keyUp(ev);
+    this._rangeRuler?.keyUp(ev);
   };
 
   disconnectedCallback() {}
@@ -377,7 +383,7 @@ export class TimerShaftElement extends BaseElement {
       this.ctx.fillStyle = 'transparent';
       this.ctx?.fillRect(0, 0, this.canvas?.width || 0, this.canvas?.height || 0);
       this.timeRuler?.draw();
-      this.rangeRuler?.draw();
+      this._rangeRuler?.draw();
       this._sportRuler?.draw();
     } else {
       procedurePool.submitWithName(
@@ -414,15 +420,15 @@ export class TimerShaftElement extends BaseElement {
     this._sportRuler?.modifySicesTimeList(slicestime);
   }
   cancelPressFrame() {
-    this.rangeRuler?.cancelPressFrame();
+    this._rangeRuler?.cancelPressFrame();
   }
 
   cancelUpFrame() {
-    this.rangeRuler?.cancelUpFrame();
+    this._rangeRuler?.cancelUpFrame();
   }
 
   stopWASD(ev: any) {
-    this.rangeRuler?.keyUp(ev);
+    this._rangeRuler?.keyUp(ev);
   }
 
   drawTriangle(time: number, type: string) {
@@ -453,7 +459,6 @@ export class TimerShaftElement extends BaseElement {
     }
     return sliceTime;
   }
-
 
   displayCollect(showCollect: boolean) {
     if (showCollect) {
@@ -532,6 +537,7 @@ export class TimerShaftElement extends BaseElement {
                     <div class="time-collect">
                         <lit-icon class="time-collect-arrow" name="caret-down" size="17"></lit-icon>
                     </div>
+                    <collapse-button>123</collapse-button>
                 </div>
             </div>
             <canvas class="panel"></canvas>

@@ -31,17 +31,17 @@ public:
     TraceDataCache* operator=(const TraceDataCache* dataCache) = delete;
     ~TraceDataCache() override;
 
-    bool AnimationTraceEnabled();
+    bool AnimationTraceEnabled() const;
     void UpdateAnimationTraceStatus(bool status);
-    bool TaskPoolTraceEnabled();
+    bool TaskPoolTraceEnabled() const;
     void UpdateTaskPoolTraceStatus(bool status);
-    bool AppStartTraceEnabled();
+    bool AppStartTraceEnabled() const;
     void UpdateAppStartTraceStatus(bool status);
-    bool BinderRunnableTraceEnabled();
+    bool BinderRunnableTraceEnabled() const;
     void UpdateBinderRunnableTraceStatus(bool status);
 
 private:
-    void InitDB() override;
+    void InitDB();
     bool dbInited_ = false;
     bool animationTraceEnabled_ = false;
     bool taskPoolTraceEnabled_ = false;

@@ -297,7 +297,7 @@ void TraceDataCache::InitDB()
 #endif
     dbInited_ = true;
 }
-bool TraceDataCache::AnimationTraceEnabled()
+bool TraceDataCache::AnimationTraceEnabled() const
 {
     return animationTraceEnabled_;
 }
@@ -305,7 +305,7 @@ void TraceDataCache::UpdateAnimationTraceStatus(bool status)
 {
     animationTraceEnabled_ = status;
 }
-bool TraceDataCache::TaskPoolTraceEnabled()
+bool TraceDataCache::TaskPoolTraceEnabled() const
 {
     return taskPoolTraceEnabled_;
 }
@@ -313,7 +313,7 @@ void TraceDataCache::UpdateTaskPoolTraceStatus(bool status)
 {
     taskPoolTraceEnabled_ = status;
 }
-bool TraceDataCache::AppStartTraceEnabled()
+bool TraceDataCache::AppStartTraceEnabled() const
 {
     return appStartTraceEnabled_;
 }
@@ -321,7 +321,7 @@ void TraceDataCache::UpdateAppStartTraceStatus(bool status)
 {
     appStartTraceEnabled_ = status;
 }
-bool TraceDataCache::BinderRunnableTraceEnabled()
+bool TraceDataCache::BinderRunnableTraceEnabled() const
 {
     return binderRunnableTraceEnabled_;
 }

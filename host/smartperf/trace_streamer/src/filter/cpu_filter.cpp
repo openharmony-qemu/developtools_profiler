@@ -73,27 +73,39 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
     }
 
     if (prevPid) {
+        bool isChangeCpu = false;
         auto lastRow = RowOfInternalTidInStateTable(prevPid);
         if (lastRow != INVALID_UINT64) {
-            CheckWakeupEvent(prevPid);
-            traceDataCache_->GetThreadStateData()->UpdateDuration(static_cast<TableRowId>(lastRow), ts);
-            streamFilters_->processFilter_->AddCpuStateCount(prevPid);
-            auto thread = traceDataCache_->GetThreadData(prevPid);
-            if (thread && !thread->switchCount_) {
-                thread->switchCount_ = 1;
+            auto lastCpu = traceDataCache_->GetConstThreadStateData().CpusData()[lastRow];
+            auto lastState = traceDataCache_->GetConstThreadStateData().StatesData()[lastRow];
+            auto lastStartTs = traceDataCache_->GetConstThreadStateData().TimeStamsData()[lastRow];
+            if ((cpu != lastCpu) && (lastState == TASK_RUNNING) && (ts == lastStartTs)) {
+                isChangeCpu = true;
+            }
+            if (!isChangeCpu) {
+                CheckWakeupEvent(prevPid);
+                traceDataCache_->GetThreadStateData()->UpdateDuration(static_cast<TableRowId>(lastRow), ts);
+                streamFilters_->processFilter_->AddCpuStateCount(prevPid);
+                auto thread = traceDataCache_->GetThreadData(prevPid);
+                if (thread && !thread->switchCount_) {
+                    thread->switchCount_ = 1;
+                }
             }
         }
-        auto threadStateRow =
-            traceDataCache_->GetThreadStateData()->AppendThreadState(ts, INVALID_TIME, INVALID_CPU, prevPid, prevState);
-        btInfo.threadStateRow = threadStateRow;
-        if (prevState == TASK_UNINTERRUPTIBLE || prevState == TASK_DK) {
-            if (!pidToThreadSliceRow.count(prevPid)) {
-                pidToThreadSliceRow.emplace(std::make_pair(prevPid, threadStateRow));
-            } else {
-                pidToThreadSliceRow.at(prevPid) = threadStateRow;
+
+        if (!isChangeCpu) {
+            auto threadStateRow = traceDataCache_->GetThreadStateData()->AppendThreadState(
+                ts, INVALID_TIME, INVALID_CPU, prevPid, prevState);
+            btInfo.threadStateRow = threadStateRow;
+            if (prevState == TASK_UNINTERRUPTIBLE || prevState == TASK_DK) {
+                if (!pidToThreadSliceRow.count(prevPid)) {
+                    pidToThreadSliceRow.emplace(std::make_pair(prevPid, threadStateRow));
+                } else {
+                    pidToThreadSliceRow.at(prevPid) = threadStateRow;
+                }
             }
+            (void)RemberInternalTidInStateTable(prevPid, threadStateRow, prevState);
         }
-        (void)RemberInternalTidInStateTable(prevPid, threadStateRow, prevState);
     }
     if (traceDataCache_->BinderRunnableTraceEnabled() && iTidToTransaction_.find(prevPid) != iTidToTransaction_.end()) {
         uint64_t transactionId = iTidToTransaction_.at(prevPid);

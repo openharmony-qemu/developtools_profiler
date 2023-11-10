@@ -39,6 +39,10 @@ export class TabPanePurgTotalSelection extends BaseElement {
         this.purgeableSelectionSource = [];
         if (purgeTotalSelectResults.length > 0) {
           this.purgeableSelectionSource.push({ name: 'TimeStamp', value: ns2s(startNs) });
+          this.purgeableSelectionSource.push({
+            name: 'TimeStamp(Absolute)',
+            value: (startNs + (window as any).recordStartNS) / 1000000000,
+          });
           for (let i = 0; i < purgeTotalSelectResults.length; i++) {
             purgeTotalSelectResults[i].value = Utils.getBinaryByteWithUnit(purgeTotalSelectResults[i].value);
             this.purgeableSelectionSource.push(purgeTotalSelectResults[i]);
@@ -50,7 +54,11 @@ export class TabPanePurgTotalSelection extends BaseElement {
       await queryProcessPurgeableSelectionTab(startNs, MemoryConfig.getInstance().iPid).then((results) => {
         this.purgeableSelectionSource = [];
         if (results.length > 0) {
-          this.purgeableSelectionSource.push({ name: 'TimeStamp', value: ns2s(startNs) });
+          this.purgeableSelectionSource.push({ name: 'TimeStamp(Relative)', value: ns2s(startNs) });
+          this.purgeableSelectionSource.push({
+            name: 'TimeStamp(Absolute)',
+            value: (startNs + (window as any).recordStartNS) / 1000000000,
+          });
           for (let i = 0; i < results.length; i++) {
             results[i].value = Utils.getBinaryByteWithUnit(results[i].value);
             this.purgeableSelectionSource.push(results[i]);

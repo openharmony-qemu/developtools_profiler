@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, CALLCHAIN_ID, TYPE, IPID, START_TS, END_TS, DUR, SIZE, ADDR, ITID };
+enum class Index : int32_t { ID = 0, CALLCHAIN_ID, TYPE, IPID, START_TS, END_TS, DUR, SIZE, ADDR, ITID };
 PagedMemorySampleTable::PagedMemorySampleTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -49,11 +49,11 @@ PagedMemorySampleTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBas
 PagedMemorySampleTable::Cursor::~Cursor() {}
 int32_t PagedMemorySampleTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(PagedMemorySampleDataObj_.IdsData()[CurrentRow()]));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             if (PagedMemorySampleDataObj_.CallChainIds()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(PagedMemorySampleDataObj_.CallChainIds()[CurrentRow()]));
@@ -61,31 +61,31 @@ int32_t PagedMemorySampleTable::Cursor::Column(int32_t column) const
                 sqlite3_result_int64(context_, static_cast<int64_t>(INVALID_CALL_CHAIN_ID));
             }
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.Types()[CurrentRow()]));
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.Ipids()[CurrentRow()]));
             break;
-        case ITID:
+        case Index::ITID:
             sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.Itids()[CurrentRow()]));
             break;
-        case START_TS:
+        case Index::START_TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.StartTs()[CurrentRow()]));
             break;
-        case END_TS:
+        case Index::END_TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.EndTs()[CurrentRow()]));
             break;
-        case DUR:
+        case Index::DUR:
             sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.Durs()[CurrentRow()]));
             break;
-        case SIZE: {
+        case Index::SIZE: {
             if (PagedMemorySampleDataObj_.Sizes()[CurrentRow()] != MAX_SIZE_T) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(PagedMemorySampleDataObj_.Sizes()[CurrentRow()]));
             }
             break;
         }
-        case ADDR: {
+        case Index::ADDR: {
             if (PagedMemorySampleDataObj_.Addr()[CurrentRow()] != INVALID_UINT64) {
                 auto firstArgIndex = PagedMemorySampleDataObj_.Addr()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(firstArgIndex).c_str(), STR_DEFAULT_LEN,

@@ -37,8 +37,8 @@ export class TabPaneGpuMemoryVmTrackerComparison extends BaseElement {
 
   initElements(): void {
     this.gpuMemoryClickTable = this.shadowRoot?.querySelector<LitTable>('#gpuMemoryClickTable');
-    this.selectEl = this.comparisonSelect?.shadowRoot?.querySelector<LitSelect>('lit-select');
     this.comparisonSelect = this.shadowRoot?.querySelector('#filter') as TabPaneJsMemoryFilter;
+    this.selectEl = this.comparisonSelect?.shadowRoot?.querySelector<LitSelect>('lit-select');
     this.gpuMemoryClickTable!.addEventListener('column-click', (e) => {
       // @ts-ignore
       this.sortGpuMemoryByColumn(e.detail.key, e.detail.sort);

@@ -57,6 +57,8 @@ export class TabFrameSpacing extends BaseElement {
     let startNS = window.recordStartNS;
     tableList.push(this.getSplitSpacingData(structValue, startNS, 'W'));
     tableList.push(this.getSplitSpacingData(structValue, startNS, 'H'));
+    tableList.push(this.getSplitSpacingData(structValue, startNS, 'X'));
+    tableList.push(this.getSplitSpacingData(structValue, startNS, 'Y'));
   }
 
   getSplitSpacingData(structValue: FrameSpacingStruct, startNS: number, propertyStr: string): FrameSpacingTableStruct{
@@ -65,9 +67,28 @@ export class TabFrameSpacing extends BaseElement {
     frameSpacing.index = structValue.id;
     frameSpacing.timestamp = Utils.getTimeString(Number(structValue.currentTs));
     frameSpacing.property = propertyStr;
-    frameSpacing.value2 = propertyStr === 'W' ? structValue.currentFrameWidth! : structValue.currentFrameHeight!;
-    frameSpacing.value1 = propertyStr === 'W' ? structValue.preFrameWidth! : structValue.preFrameHeight!;
-    frameSpacing.screen = propertyStr === 'W' ? FrameSpacingStruct.physicalWidth : FrameSpacingStruct.physicalHeight;
+    switch (propertyStr) {
+      case 'W':
+        frameSpacing.value2 = structValue.currentFrameWidth;
+        frameSpacing.value1 = structValue.preFrameWidth;
+        frameSpacing.screen = FrameSpacingStruct.physicalWidth;
+        break;
+      case 'H':
+        frameSpacing.value2 = structValue.currentFrameHeight;
+        frameSpacing.value1 = structValue.preFrameHeight;
+        frameSpacing.screen = FrameSpacingStruct.physicalHeight;
+        break;
+      case 'X':
+        frameSpacing.value2 = structValue.x;
+        frameSpacing.value1 = structValue.preX;
+        frameSpacing.screen = 0;
+        break;
+      case 'Y':
+        frameSpacing.value2 = structValue.y;
+        frameSpacing.value1 = structValue.preY;
+        frameSpacing.screen = 0;
+        break;
+    }
     frameSpacing.currentTs = ((structValue.currentTs + startNS) / secondToNanosecond).toString();
     frameSpacing.preTs = (((structValue.preTs || 0) + startNS) / secondToNanosecond).toString();
     if (structValue.preTs === 0) {

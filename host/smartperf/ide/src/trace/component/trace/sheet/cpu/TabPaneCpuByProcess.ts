@@ -39,7 +39,7 @@ export class TabPaneCpuByProcess extends BaseElement {
       ' ms';
     // @ts-ignore
     this.cpuByProcessTbl!.shadowRoot!.querySelector('.table')?.style?.height =
-      this.parentElement!.clientHeight - 45 + 'px';
+      this.parentElement!.clientHeight - 50 + 'px';
     this.cpuByProcessTbl!.recycleDataSource = [];
     this.cpuByProcessTbl!.loading = true;
     getTabCpuByProcess(cpuByProcessValue.cpus, cpuByProcessValue.leftNs, cpuByProcessValue.rightNs).then((result) => {

@@ -41,8 +41,7 @@ export class TabPaneJsCpuStatistics extends BaseElement {
 
     this.getDataByWorker(data, (results: Map<SampleType, number>) => {
       this.progress!.loading = false;
-
-      this.statisticsSource = this.setStatisticsData(results);
+      this.statisticsSource = results.size > 0 ? this.setStatisticsData(results) : [];
       this.queryPieChartDataByType(this.statisticsSource || []);
     });
   }
@@ -126,11 +125,14 @@ export class TabPaneJsCpuStatistics extends BaseElement {
       this.statisticsPie?.showHover();
       this.statisticsPie?.hideTip();
     });
-    this.sortByColumn({ key: this.sortKey, sort: this.sortType });
-    let total = this.totalData(this.statisticsSource);
-    this.statisticsSource.unshift(total);
-    this.statisticsTable!.recycleDataSource = this.statisticsSource;
-    this.statisticsSource.shift();
+
+    if (this.statisticsSource.length > 0) {
+      this.sortByColumn({ key: this.sortKey, sort: this.sortType });
+      let total = this.totalData(this.statisticsSource);
+      this.statisticsSource.unshift(total);
+      this.statisticsTable!.recycleDataSource = this.statisticsSource;
+      this.statisticsSource.shift();
+    }
     this.statisticsTable?.reMeauseHeight();
   }
 
@@ -170,7 +172,7 @@ export class TabPaneJsCpuStatistics extends BaseElement {
       type,
       time,
       ns2s(time),
-      ((time / percentage) * 100).toFixed(1)
+      ((time / percentage || 0) * 100).toFixed(1)
     );
     return statisticsStruct;
   }
@@ -202,11 +204,12 @@ export class TabPaneJsCpuStatistics extends BaseElement {
     } else if (detail.key === 'type') {
       this.statisticsSource.sort(compare(detail.key, detail.sort, 'string'));
     }
-
-    let total = this.totalData(this.statisticsSource);
-    this.statisticsSource.unshift(total);
-    this.statisticsTable!.recycleDataSource = this.statisticsSource;
-    this.statisticsSource.shift();
+    if (this.statisticsSource.length > 0) {
+      let total = this.totalData(this.statisticsSource);
+      this.statisticsSource.unshift(total);
+      this.statisticsTable!.recycleDataSource = this.statisticsSource;
+      this.statisticsSource.shift();
+    }
   }
 
   public connectedCallback(): void {

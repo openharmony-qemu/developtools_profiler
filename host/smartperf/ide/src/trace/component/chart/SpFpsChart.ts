@@ -52,7 +52,12 @@ export class SpFpsChart {
     };
 
     fpsRow.onThreadHandler = (useCache) => {
-      let context = fpsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(fpsRow.currentContext){
+        context = fpsRow.currentContext;
+      } else{
+        context  = fpsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       fpsRow.canvasSave(context);
       (renders['fps'] as FpsRender).renderMainThread(
         {

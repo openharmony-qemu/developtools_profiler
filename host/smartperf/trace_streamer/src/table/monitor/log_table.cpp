@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { SEQ = 0, TS, PID, TID, LEVEL, TAG, CONTEXT, ORIGINTS };
+enum class Index : int32_t { SEQ = 0, TS, PID, TID, LEVEL, TAG, CONTEXT, ORIGINTS };
 LogTable::LogTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("seq", "INTEGER"));
@@ -48,21 +48,21 @@ LogTable::Cursor::~Cursor() {}
 
 int32_t LogTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case SEQ:
+    switch (static_cast<Index>(column)) {
+        case Index::SEQ:
             sqlite3_result_int64(context_, static_cast<int64_t>(logInfoObj_.HilogLineSeqs()[CurrentRow()]));
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(logInfoObj_.TimeStampData()[CurrentRow()]));
             break;
-        case PID: {
+        case Index::PID: {
             sqlite3_result_int64(context_, static_cast<int64_t>(logInfoObj_.Pids()[CurrentRow()]));
             break;
         }
-        case TID:
+        case Index::TID:
             sqlite3_result_int64(context_, static_cast<int64_t>(logInfoObj_.Tids()[CurrentRow()]));
             break;
-        case LEVEL: {
+        case Index::LEVEL: {
             if (logInfoObj_.Levels()[CurrentRow()] != INVALID_UINT64) {
                 auto levelDataIndex = static_cast<size_t>(logInfoObj_.Levels()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(levelDataIndex).c_str(), STR_DEFAULT_LEN,
@@ -70,7 +70,7 @@ int32_t LogTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case TAG: {
+        case Index::TAG: {
             if (logInfoObj_.Tags()[CurrentRow()] != INVALID_UINT64) {
                 auto tagDataIndex = static_cast<size_t>(logInfoObj_.Tags()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(tagDataIndex).c_str(), STR_DEFAULT_LEN,
@@ -78,7 +78,7 @@ int32_t LogTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case CONTEXT: {
+        case Index::CONTEXT: {
             if (logInfoObj_.Contexts()[CurrentRow()] != INVALID_UINT64) {
                 auto contextDataIndex = static_cast<size_t>(logInfoObj_.Contexts()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(contextDataIndex).c_str(), STR_DEFAULT_LEN,
@@ -86,7 +86,7 @@ int32_t LogTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case ORIGINTS: {
+        case Index::ORIGINTS: {
             sqlite3_result_int64(context_, static_cast<int64_t>(logInfoObj_.OriginTimeStamData()[CurrentRow()]));
             break;
         }

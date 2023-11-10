@@ -25,7 +25,7 @@ export class TabPaneFreqLimit extends BaseElement {
 
   set data(freqLimit: any) {
     if (freqLimit) {
-      this.freqLimitTbl!.dataSource = [
+      this.freqLimitTbl!.recycleDataSource = [
         {
           startNs: Utils.getTimeString(freqLimit.startNs >= 0 ? freqLimit.startNs : 0),
           absoluteTime: (freqLimit.startNs + (window as any).recordStartNS) / 1000000000,

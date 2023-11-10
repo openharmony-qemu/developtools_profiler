@@ -17,7 +17,17 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, NODE_INDEX, TYPE, NAME, NODE_ID, SELF_SIZE, EDGE_COUNT, TRACE_NODE_ID, DETACHEDNESS };
+enum class Index : int32_t {
+    FILE_ID = 0,
+    NODE_INDEX,
+    TYPE,
+    NAME,
+    NODE_ID,
+    SELF_SIZE,
+    EDGE_COUNT,
+    TRACE_NODE_ID,
+    DETACHEDNESS
+};
 JsHeapNodesTable::JsHeapNodesTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -49,32 +59,32 @@ JsHeapNodesTable::Cursor::~Cursor() {}
 
 int32_t JsHeapNodesTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.FileIds()[CurrentRow()]));
             break;
-        case NODE_INDEX:
+        case Index::NODE_INDEX:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.NodeIndexs()[CurrentRow()]));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.Types()[CurrentRow()]));
             break;
-        case NAME:
+        case Index::NAME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.Names()[CurrentRow()]));
             break;
-        case NODE_ID:
+        case Index::NODE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.NodeIds()[CurrentRow()]));
             break;
-        case SELF_SIZE:
+        case Index::SELF_SIZE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.SelfSizes()[CurrentRow()]));
             break;
-        case EDGE_COUNT:
+        case Index::EDGE_COUNT:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.EdgeCounts()[CurrentRow()]));
             break;
-        case TRACE_NODE_ID:
+        case Index::TRACE_NODE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.TraceNodeIds()[CurrentRow()]));
             break;
-        case DETACHEDNESS:
+        case Index::DETACHEDNESS:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapNodes_.DetachedNess()[CurrentRow()]));
             break;
         default:

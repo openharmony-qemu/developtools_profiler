@@ -14,7 +14,7 @@
  */
 
 import { BaseElement } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { LitTable, TableMode } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { JsCpuProfilerChartFrame, JsCpuProfilerTabStruct } from '../../../../bean/JsStruct.js';
 import { procedurePool } from '../../../../database/Procedure.js';
@@ -35,8 +35,10 @@ export class TabPaneJsCpuCallTree extends BaseElement {
   private profilerFilter: TabPaneFilter | undefined | null;
   private searchValue: string = '';
   private totalNs: number = 0;
+  private currentSelection: SelectionParam | undefined;
   private getDataByWorker(args: Array<JsCpuProfilerChartFrame>, handler: Function): void {
     const key = this.currentType === this.TYPE_TOP_DOWN ? 'jsCpuProfiler-call-tree' : 'jsCpuProfiler-bottom-up';
+    this.callTreeTable!.mode = TableMode.Retract;
     procedurePool.submitWithName('logic1', key, args, undefined, (results: Array<JsCpuProfilerTabStruct>) => {
       handler(results);
     });
@@ -44,8 +46,11 @@ export class TabPaneJsCpuCallTree extends BaseElement {
 
   set data(data: SelectionParam | Array<JsCpuProfilerChartFrame>) {
     if (data instanceof SelectionParam) {
+      if (data == this.currentSelection) {
+        return;
+      }
+      this.currentSelection = data;
       let chartData = [];
-
       chartData = data.jsCpuProfilerData;
       this.totalNs = chartData.reduce((acc, struct) => acc + struct.totalTime, 0);
       if (data.rightNs && data.leftNs) {
@@ -284,7 +289,7 @@ export class TabPaneJsCpuCallTree extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="callTreeTable" style="height: 100%" tree>
-                <lit-table-column width="60%" title="Symbol" data-index="" key="symbolName"  align="flex-start" order></lit-table-column>
+                <lit-table-column width="60%" title="Symbol" data-index="" key="symbolName"  align="flex-start" order retract></lit-table-column>
                 <lit-table-column width="1fr" title="SelfTime" data-index="selfTimeStr" key="selfTimeStr" align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="%" data-index="selfTimePercent" key="selfTimePercent"  align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="TotalTime" data-index="totalTimeStr" key="totalTimeStr"  align="flex-start"  order></lit-table-column>

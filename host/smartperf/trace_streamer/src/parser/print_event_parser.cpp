@@ -27,7 +27,7 @@ PrintEventParser::PrintEventParser(TraceDataCache* dataCache, const TraceStreame
     eventToFrameFunctionMap_ = {
         {recvievVsync_, bind(&PrintEventParser::ReciveVsync, this, std::placeholders::_1, std::placeholders::_2,
                              std::placeholders::_3)},
-        {rsOnVsyncEvent_, bind(&PrintEventParser::RSReciveOnVsync, this, std::placeholders::_1, std::placeholders::_2,
+        {rsOnDoCompositionEvent_, bind(&PrintEventParser::RSReciveOnDoComposition, this, std::placeholders::_1, std::placeholders::_2,
                                std::placeholders::_3)},
         {marshRwTransactionData_, bind(&PrintEventParser::OnRwTransaction, this, std::placeholders::_1,
                                        std::placeholders::_2, std::placeholders::_3)},
@@ -101,7 +101,7 @@ void PrintEventParser::ParseBeginEvent(const std::string& comm,
             isDiscontinued = streamFilters_->taskPoolFilter_->TaskPoolEvent(point.name_, index);
         }
         if (traceDataCache_->AnimationTraceEnabled() && !isDiscontinued) {
-            isDiscontinued = HandleAnimationBeginEvent(point, index, line);
+            (void)HandleAnimationBeginEvent(point, index, line);
         }
     } else {
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_DATA_LOST);
@@ -277,7 +277,6 @@ bool PrintEventParser::ReciveVsync(size_t callStackRow, std::string& args, const
 {
     streamFilters_->statFilter_->IncreaseStat(TRACE_VSYNC, STAT_EVENT_RECEIVED);
     // args is like "dataCount:24bytes now:211306766162 expectedEnd:211323423844 vsyncId:3179"
-    TS_LOGD("ts:%lu tid:%d, %s callStackRow:%lu", line.ts, line.pid, args.c_str(), callStackRow);
     std::sregex_iterator it(args.begin(), args.end(), recvVsyncPattern_);
     std::sregex_iterator end;
     uint64_t now = INVALID_UINT64;
@@ -310,18 +309,16 @@ bool PrintEventParser::ReciveVsync(size_t callStackRow, std::string& args, const
     vsyncSliceIds_.push_back(callStackRow);
     return true;
 }
-bool PrintEventParser::RSReciveOnVsync(size_t callStackRow, std::string& args, const BytraceLine& line)
+bool PrintEventParser::RSReciveOnDoComposition(size_t callStackRow, std::string& args, const BytraceLine& line)
 {
-    streamFilters_->statFilter_->IncreaseStat(TRACE_ONVSYNC, STAT_EVENT_RECEIVED);
-    TS_LOGD("ts:%lu tid:%d, %s callStackRow:%lu", line.ts, line.pid, args.c_str(), callStackRow);
+    streamFilters_->statFilter_->IncreaseStat(TRACE_ON_DO_COMPOSITION, STAT_EVENT_RECEIVED);
     auto iTid = streamFilters_->processFilter_->GetInternalTid(line.pid);
-    (void)streamFilters_->frameFilter_->MarkRSOnvsyncEvent(line.ts, iTid);
+    (void)streamFilters_->frameFilter_->MarkRSOnDoCompositionEvent(line.ts, iTid);
     return true;
 }
 bool PrintEventParser::OnRwTransaction(size_t callStackRow, std::string& args, const BytraceLine& line)
 {
     // H:MarshRSTransactionData cmdCount:20 transactionFlag:[3799,8] isUni:1
-    TS_LOGD("ts:%lu tid:%d, %s callStackRow:%lu", line.ts, line.pid, args.c_str(), callStackRow);
     std::smatch match;
     if (std::regex_search(args, match, transFlagPattern_)) {
         std::string flag2 = match.str(2);
@@ -333,7 +330,6 @@ bool PrintEventParser::OnRwTransaction(size_t callStackRow, std::string& args, c
 }
 bool PrintEventParser::OnMainThreadProcessCmd(size_t callStackRow, std::string& args, const BytraceLine& line)
 {
-    TS_LOGD("ts:%lu tid:%d, %s callStackRow:%lu", line.ts, line.pid, args.c_str(), callStackRow);
     std::sregex_iterator it(args.begin(), args.end(), mainProcessCmdPattern);
     std::sregex_iterator end;
     std::vector<FrameFilter::FrameMap> frames;
@@ -351,7 +347,6 @@ bool PrintEventParser::OnMainThreadProcessCmd(size_t callStackRow, std::string& 
 bool PrintEventParser::OnFrameQueueStart(uint64_t ts, size_t callStackRow, uint64_t pid)
 {
     streamFilters_->statFilter_->IncreaseStat(TRACE_FRAMEQUEUE, STAT_EVENT_RECEIVED);
-    TS_LOGD("ts:%llu tid:%llu, callStackRow:%zu", ts, pid, callStackRow);
     auto iTid = streamFilters_->processFilter_->GetInternalTid(pid);
     if (streamFilters_->frameFilter_->StartFrameQueue(ts, iTid)) {
         frameCallIds_.push_back(callStackRow);

@@ -26,7 +26,7 @@ export class LitSlider extends BaseElement {
   private defaultTimeText: string | undefined | null;
 
   static get observedAttributes() {
-    return ['percent', 'disabled-X', 'custom-slider', 'custom-line', 'custom-button'];
+    return ['percent', 'disabled-X', 'custom-slider', 'custom-line', 'custom-button', 'disabled'];
   }
 
   get sliderStyle(): LitSliderStyle {
@@ -42,6 +42,18 @@ export class LitSlider extends BaseElement {
         lineColor: 'var(--dark-color3,#46B1E3)',
         buttonColor: '#999999',
       };
+    }
+  }
+
+  get disabled() {
+    return this.getAttribute('disabled') !== null;
+  }
+
+  set disabled(value) {
+    if (value === null || value === false) {
+      this.removeAttribute('disabled');
+    } else {
+      this.setAttribute('disabled', '');
     }
   }
 
@@ -238,6 +250,9 @@ export class LitSlider extends BaseElement {
             z-index:10
         }
         
+        :host([disabled]) #slider{ 
+            opacity:0.6; 
+        }
         </style>
         <slot id="slot"></slot>
         <div id='slider-con' dir="right">

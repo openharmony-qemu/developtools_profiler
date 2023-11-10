@@ -215,7 +215,7 @@ export class TabPaneFileStatistics extends BaseElement {
         }
         </style>
         <lit-table id="tb-file-statistics" style="height: auto" tree>
-            <lit-table-column class="fs-stat-column" width="20%" title="Syscall/Process" data-index="title" key="title" align="flex-start">
+            <lit-table-column class="fs-stat-column" width="20%" title="Syscall/Process" data-index="title" key="title" align="flex-start"retract>
             </lit-table-column>
             <lit-table-column class="fs-stat-column" width="1fr" title="Count" data-index="count" key="count" align="flex-start" order>
             </lit-table-column>

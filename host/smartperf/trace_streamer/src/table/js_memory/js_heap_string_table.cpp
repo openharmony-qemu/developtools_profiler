@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, FILE_INDEX, STRING };
+enum class Index : int32_t { FILE_ID = 0, FILE_INDEX, STRING };
 JsHeapStringTable::JsHeapStringTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -43,14 +43,14 @@ JsHeapStringTable::Cursor::~Cursor() {}
 
 int32_t JsHeapStringTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapString_.FileIds()[CurrentRow()]));
             break;
-        case FILE_INDEX:
+        case Index::FILE_INDEX:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapString_.FileIndexs()[CurrentRow()]));
             break;
-        case STRING:
+        case Index::STRING:
             sqlite3_result_text(context_, jsHeapString_.Strings()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         default:

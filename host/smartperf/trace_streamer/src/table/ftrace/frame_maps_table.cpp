@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, SRC_ROW, DST_ROW };
+enum class Index : int32_t { ID = 0, SRC_ROW, DST_ROW };
 FrameMapsTable::FrameMapsTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -55,8 +55,8 @@ void FrameMapsTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInf
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -75,8 +75,8 @@ void FrameMapsTable::FilterByConstraint(FilterConstraints& fc, double& filterCos
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -117,15 +117,15 @@ int32_t FrameMapsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_valu
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case SRC_ROW:
+            case Index::SRC_ROW:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                     frameMapsObj_.SrcIndexs());
                 break;
-            case DST_ROW:
+            case Index::DST_ROW:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int(argv[i])), frameMapsObj_.DstIndexs());
                 break;
             default:
@@ -136,8 +136,8 @@ int32_t FrameMapsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_valu
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -150,14 +150,14 @@ int32_t FrameMapsTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_valu
 
 int32_t FrameMapsTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case SRC_ROW:
+        case Index::SRC_ROW:
             sqlite3_result_int64(context_, static_cast<int64_t>(frameMapsObj_.SrcIndexs()[CurrentRow()]));
             break;
-        case DST_ROW:
+        case Index::DST_ROW:
             sqlite3_result_int64(context_, static_cast<int64_t>(frameMapsObj_.DstIndexs()[CurrentRow()]));
             break;
         default:

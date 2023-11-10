@@ -18,7 +18,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     BRIGHTNESS,
     BT_STATE,
@@ -84,68 +84,68 @@ DeviceStateTable::Cursor::~Cursor() {}
 
 int32_t DeviceStateTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, dataCache_->GetConstDeviceStateData().IdsData()[CurrentRow()]);
             break;
-        case BRIGHTNESS:
+        case Index::BRIGHTNESS:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Brightness()[CurrentRow()]);
             break;
-        case BT_STATE:
+        case Index::BT_STATE:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().BtState()[CurrentRow()]);
             break;
-        case LOCATION:
+        case Index::LOCATION:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Location()[CurrentRow()]);
             break;
-        case WIFI:
+        case Index::WIFI:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Wifi()[CurrentRow()]);
             break;
-        case STREAM_DEFAULT:
+        case Index::STREAM_DEFAULT:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().StreamDefault()[CurrentRow()]);
             break;
-        case VOICE_CALL:
+        case Index::VOICE_CALL:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().VoiceCall()[CurrentRow()]);
             break;
-        case MUSIC:
+        case Index::MUSIC:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Music()[CurrentRow()]);
             break;
-        case STREAM_RING:
+        case Index::STREAM_RING:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().StreamRing()[CurrentRow()]);
             break;
-        case MEDIA:
+        case Index::MEDIA:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Media()[CurrentRow()]);
             break;
-        case VOICE_ASSISTANT:
+        case Index::VOICE_ASSISTANT:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().VoiceAssistant()[CurrentRow()]);
             break;
-        case SYSTEM:
+        case Index::SYSTEM:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().System()[CurrentRow()]);
             break;
-        case ALARM:
+        case Index::ALARM:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Alarm()[CurrentRow()]);
             break;
-        case NOTIFICATION:
+        case Index::NOTIFICATION:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Notification()[CurrentRow()]);
             break;
-        case BT_SCO:
+        case Index::BT_SCO:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().BtSco()[CurrentRow()]);
             break;
-        case ENFORCED_AUDIBLE:
+        case Index::ENFORCED_AUDIBLE:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().EnforcedAudible()[CurrentRow()]);
             break;
-        case STREAM_DTMF:
+        case Index::STREAM_DTMF:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().StreamDtmf()[CurrentRow()]);
             break;
-        case STREAM_TTS:
+        case Index::STREAM_TTS:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().StreamTts()[CurrentRow()]);
             break;
-        case ACCESSIBILITY:
+        case Index::ACCESSIBILITY:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Accessibility()[CurrentRow()]);
             break;
-        case RECORDING:
+        case Index::RECORDING:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().Recording()[CurrentRow()]);
             break;
-        case STREAM_ALL:
+        case Index::STREAM_ALL:
             sqlite3_result_int(context_, dataCache_->GetConstDeviceStateData().StreamAll()[CurrentRow()]);
             break;
         default:

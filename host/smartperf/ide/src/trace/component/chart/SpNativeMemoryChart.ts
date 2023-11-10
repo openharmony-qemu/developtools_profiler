@@ -65,6 +65,7 @@ export class SpNativeMemoryChart {
     nativeRow.style.height = '40px';
     nativeRow.rowParentId = '';
     nativeRow.folder = true;
+    nativeRow.addTemplateTypes('NativeMemory');
     nativeRow.name = `Native Memory` + process;
     nativeRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     nativeRow.selectChangeHandler = this.trace.selectChangeHandler;
@@ -83,7 +84,7 @@ export class SpNativeMemoryChart {
     ]
     nativeRow.onRowSettingChangeHandler = (value) => {
       nativeRow.childrenList.forEach((row) => (row.drawType = parseInt(value[0])));
-      this.trace.favoriteRowsEL?.querySelectorAll<TraceRow<any>>(`trace-row[row-type='heap']`).forEach((it) => {
+      this.trace.getCollectRows(`trace-row[row-type='heap']`).forEach((it) => {
         it.drawType = parseInt(value[0]);
       });
       this.trace.refreshCanvas(false);
@@ -144,7 +145,12 @@ export class SpNativeMemoryChart {
           : this.getNativeMemoryStatisticByChartType(i - 1);
       };
       allHeapRow.onThreadHandler = (useCache) => {
-        let context = allHeapRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        let context:CanvasRenderingContext2D;
+        if(allHeapRow.currentContext){
+          context = allHeapRow.currentContext;
+        } else{
+          context  = allHeapRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        }
         allHeapRow.canvasSave(context);
         (renders['heap'] as HeapRender).renderMainThread(
           {

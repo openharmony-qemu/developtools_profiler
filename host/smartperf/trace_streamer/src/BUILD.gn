@@ -62,6 +62,7 @@ trace_streamer_include = [
   "filter",
   "table",
   "trace_data",
+  "metrics",
   "include",
   "rpc",
   "./",
@@ -86,8 +87,7 @@ trace_streamer_include = [
   "${THIRD_PARTY}/perf_include/libbpf",
   "${THIRD_PARTY}/googletest/googletest/include",
   "${COMMON_LIBRARY}/c_utils/base/include",
-  "//prebuilts/clang/ohos/darwin-arm64/llvm/include/c++/v1",
-  "include/dummy/musl",
+  "${THIRD_PARTY}/sqlite",
 ]
 
 ohos_source_set("trace_streamer_source") {
@@ -124,6 +124,20 @@ ohos_source_set("trace_streamer_source") {
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
   }
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
+  }
   if (is_mingw || is_mac) {
     include_dirs += [
       "${THIRD_PARTY}/libbpf/include/uapi",
@@ -153,6 +167,7 @@ ohos_source_set("trace_streamer_source") {
     ":ts_sqlite",
     "base:base",
     "filter:filter",
+    "metrics:metrics_parser",
     "parser:parser",
     "parser/hiperf_parser:hiperf_parser",
     "proto_reader:proto_reader",

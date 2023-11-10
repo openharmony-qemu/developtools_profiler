@@ -108,7 +108,7 @@ enum SupportedTraceEventType {
     TRACE_HISYSEVENT,
     TRACE_SMAPS,
     TRACE_VSYNC,
-    TRACE_ONVSYNC,
+    TRACE_ON_DO_COMPOSITION,
     TRACE_FRAMEQUEUE,
     TRACE_ASHMEM,
     TRACE_DMAMEM,
@@ -282,7 +282,7 @@ private:
     const std::string TRACE_ACTION_HISYS_EVENT = "trace_hisys_event";
     const std::string TRACE_ACTION_SMAPS = "trace_smaps";
     const std::string TRACE_ACTION_VSYNC = "trace_vsync";
-    const std::string TRACE_ACTION_ONVSYNC = "trace_on_vsync";
+    const std::string TRACE_ACTION_ON_DO_COMPOSITION = "trace_on_do_composition";
     const std::string TRACE_ACTION_FRAMEQUEUE = "trace_frame_queue";
     const std::string TRACE_ACTION_ASHMEM = "trace_ash_mem";
     const std::string TRACE_ACTION_DMAMEM = "trace_dma_mem";

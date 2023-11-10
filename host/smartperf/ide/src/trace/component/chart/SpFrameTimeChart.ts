@@ -81,8 +81,12 @@ export class SpFrameTimeChart {
     frameTimeLineRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     frameTimeLineRow.selectChangeHandler = this.trace.selectChangeHandler;
     frameTimeLineRow.onThreadHandler = (useCache: boolean): void => {
-      let context: CanvasRenderingContext2D = frameTimeLineRow!.collect ? this.trace.canvasFavoritePanelCtx! :
-        this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(frameTimeLineRow.currentContext){
+        context = frameTimeLineRow.currentContext;
+      } else{
+        context  = frameTimeLineRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       frameTimeLineRow!.canvasSave(context);
       (renders.jank as JankRender).renderMainThread({
         context: context, useCache: useCache, type: 'expected_frame_timeline_slice'
@@ -119,8 +123,12 @@ export class SpFrameTimeChart {
     expectedTimeLineRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     expectedTimeLineRow.selectChangeHandler = this.trace.selectChangeHandler;
     expectedTimeLineRow.onThreadHandler = (useCache: boolean): void => {
-      let context: CanvasRenderingContext2D = expectedTimeLineRow!.collect ? this.trace.canvasFavoritePanelCtx! :
-        this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(expectedTimeLineRow.currentContext){
+        context = expectedTimeLineRow.currentContext;
+      } else{
+        context  = expectedTimeLineRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       expectedTimeLineRow!.canvasSave(context);
       (renders.jank as JankRender).renderMainThread({
         context: context, useCache: useCache, type: 'expected_frame_timeline_slice'
@@ -155,8 +163,12 @@ export class SpFrameTimeChart {
     actualTimeLineRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     actualTimeLineRow.selectChangeHandler = this.trace.selectChangeHandler;
     actualTimeLineRow.onThreadHandler = (useCache: boolean): void => {
-      let context: CanvasRenderingContext2D = actualTimeLineRow!.collect ? this.trace.canvasFavoritePanelCtx! :
-        this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D;
+      if(actualTimeLineRow.currentContext){
+        context = actualTimeLineRow.currentContext;
+      } else{
+        context  = actualTimeLineRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       actualTimeLineRow!.canvasSave(context);
       (renders.jank as JankRender).renderMainThread({
         context: context, useCache: useCache, type: 'expected_frame_timeline_slice'
@@ -454,11 +466,15 @@ export class SpFrameTimeChart {
         frameData[index].preTs = frameData[index - unitIndex].currentTs;
         frameData[index].preFrameWidth = frameData[index - unitIndex].currentFrameWidth;
         frameData[index].preFrameHeight = frameData[index - unitIndex].currentFrameHeight;
+        frameData[index].preX = frameData[index - unitIndex].x;
+        frameData[index].preY = frameData[index - unitIndex].y;
       } else {
         frameData[index].frameSpacingResult = 0;
         frameData[index].preTs = 0;
         frameData[index].preFrameWidth = 0;
         frameData[index].preFrameHeight = 0;
+        frameData[index].preX = 0;
+        frameData[index].preY = 0;
       }
     }
   }

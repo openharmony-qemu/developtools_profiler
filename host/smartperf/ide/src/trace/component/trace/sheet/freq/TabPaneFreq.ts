@@ -25,7 +25,7 @@ export class TabPaneFreq extends BaseElement {
 
   set data(freqData: any) {
     if (freqData) {
-      this.freqTbl!.dataSource = [
+      this.freqTbl!.recycleDataSource = [
         {
           startNS: Utils.getTimeString(freqData.startNS >= 0 ? freqData.startNS : 0),
           absoluteTime: (freqData.startNS + (window as any).recordStartNS) / 1000000000,

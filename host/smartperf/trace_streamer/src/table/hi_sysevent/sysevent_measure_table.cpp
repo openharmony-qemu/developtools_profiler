@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, SERIAL, TS, NAME_ID, KEY_ID, TYPE, INT_VALUE, STRING_VALUE };
+enum class Index : int32_t { ID = 0, SERIAL, TS, NAME_ID, KEY_ID, TYPE, INT_VALUE, STRING_VALUE };
 SysEventMeasureTable::SysEventMeasureTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -48,29 +48,29 @@ SysEventMeasureTable::Cursor::~Cursor() {}
 
 int32_t SysEventMeasureTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, dataCache_->GetConstSyseventMeasureData().IdsData()[CurrentRow()]);
             break;
-        case SERIAL:
+        case Index::SERIAL:
             sqlite3_result_int64(context_, dataCache_->GetConstSyseventMeasureData().Serial()[CurrentRow()]);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, dataCache_->GetConstSyseventMeasureData().Ts()[CurrentRow()]);
             break;
-        case NAME_ID:
+        case Index::NAME_ID:
             sqlite3_result_int(context_, dataCache_->GetConstSyseventMeasureData().NameFilterId()[CurrentRow()]);
             break;
-        case KEY_ID:
+        case Index::KEY_ID:
             sqlite3_result_int(context_, dataCache_->GetConstSyseventMeasureData().AppKeyFilterId()[CurrentRow()]);
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int(context_, dataCache_->GetConstSyseventMeasureData().Type()[CurrentRow()]);
             break;
-        case INT_VALUE:
+        case Index::INT_VALUE:
             sqlite3_result_double(context_, dataCache_->GetConstSyseventMeasureData().NumValue()[CurrentRow()]);
             break;
-        case STRING_VALUE:
+        case Index::STRING_VALUE:
             sqlite3_result_text(context_,
                                 dataCache_->GetDataFromDict(sysEventMeasure_.StringValue()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);

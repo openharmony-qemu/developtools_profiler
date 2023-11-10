@@ -114,6 +114,7 @@ private:
     void UpdateFilePathIdAndStValueToSymAddrMap(T* firstSymbolAddr, const int size, uint32_t filePathId);
     uint64_t GetMemMapSubTypeWithAddr(uint64_t addr);
     void UpdateAnonMmapDataDbIndex(uint64_t addr, uint32_t size, uint64_t row);
+    void UpdateLastCallerPathAndSymbolIndexs();
 
 private:
     std::multimap<uint64_t, std::unique_ptr<NativeHookMetaData>> tsToMainEventsMap_ = {};
@@ -125,7 +126,7 @@ private:
     std::unordered_map<uint64_t, std::vector<uint64_t>> stackHashValueToFramesHashMap_ = {};
     std::unordered_map<uint64_t, std::unique_ptr<NativeHookFrameInfo>> frameHashToFrameInfoMap_ = {};
     std::unordered_map<uint32_t, uint64_t> threadNameIdToThreadNameIndex_ = {};
-    std::unordered_map<uint32_t, uint64_t> callIdToLastCallerPathIndex_ = {};
+    std::unordered_map<uint32_t, std::tuple<uint64_t, uint64_t>> callIdToLastCallerPathIndex_ = {};
     std::unordered_map<uint64_t, std::string> functionNameIndexToVaddr_ = {};
     std::unordered_map<uint32_t, uint64_t> symbolIdToSymbolIndex_ = {};
     std::unordered_map<uint64_t, uint32_t> stackHashValueToCallChainIdMap_ = {};

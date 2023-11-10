@@ -29,15 +29,13 @@ export class SpHelp extends BaseElement {
 
   set dark(dark: boolean) {
     if (dark) {
-      this.setAttribute('dark', `${  dark}`);
+      this.setAttribute('dark', `${dark}`);
     } else {
       this.removeAttribute('dark');
     }
     this.appContent!.innerHTML =
       '<object type="text/html" data=' +
-      `/application/doc/quickstart_device_record.html?${ 
-        dark 
-      } width="100%" height="100%"></object>`;
+      `/application/doc/quickstart_device_record.html?${dark} width="100%" height="100%"></object>`;
   }
 
   initElements(): void {
@@ -47,11 +45,11 @@ export class SpHelp extends BaseElement {
     this.appContent = this.shadowRoot?.querySelector('#app-content') as HTMLElement;
     let mainMenu = this.shadowRoot?.querySelector('#main-menu') as LitMainMenu;
     let header = mainMenu.shadowRoot?.querySelector('.header') as HTMLDivElement;
-    let color = mainMenu.shadowRoot?.querySelector('.color') as HTMLDivElement;
+    let color = mainMenu.shadowRoot?.querySelector('.customColor') as HTMLDivElement;
     let version = mainMenu.shadowRoot?.querySelector('.version') as HTMLDivElement;
+    color.style.display = 'none';
     header.style.display = 'none';
     version.style.display = 'none';
-    color.style.display = 'none';
     mainMenu.menus = [
       {
         collapsed: false,
@@ -68,9 +66,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_device_record.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_device_record.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -83,9 +79,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_web_record.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_web_record.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -98,9 +92,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_systemtrace.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_systemtrace.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -113,9 +105,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_native_memory.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_native_memory.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -128,9 +118,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_ability_monitor.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_ability_monitor.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -143,9 +131,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_hiperf.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_hiperf.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -158,9 +144,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_sql_metrics.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_sql_metrics.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -173,9 +157,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_filesystem.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_filesystem.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -188,9 +170,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_page_fault.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_page_fault.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -203,9 +183,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_bio.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_bio.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -218,9 +196,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_smaps.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_smaps.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -233,9 +209,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_hisystemevent.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_hisystemevent.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -248,9 +222,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_sdk.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_sdk.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -263,9 +235,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_Frametimeline.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_Frametimeline.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -278,9 +248,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_schedulinganalysis.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_schedulinganalysis.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -293,9 +261,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_Js_memory.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_Js_memory.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -308,9 +274,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_Import_so.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_Import_so.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -323,9 +287,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_animation.html?${
-                  that.dark
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_animation.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -338,9 +300,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_taskpool.html?${
-                  that.dark
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_taskpool.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -353,9 +313,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_arkts.html?${
-                  that.dark
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_arkts.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -368,9 +326,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_app_startup.html?${
-                  that.dark
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_app_startup.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -383,9 +339,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_memory_template.html?${
-                  that.dark
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_memory_template.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -398,9 +352,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_Application_operation_skills.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_Application_operation_skills.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
         ],
@@ -420,9 +372,7 @@ export class SpHelp extends BaseElement {
               });
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/des_tables.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/des_tables.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -431,9 +381,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/compile_trace_streamer.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/compile_trace_streamer.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -442,9 +390,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/des_stat.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/des_stat.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -453,9 +399,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/des_support_event.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/des_support_event.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -464,9 +408,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_trace_streamer.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_trace_streamer.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -475,9 +417,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/des_binder.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/des_binder.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -486,9 +426,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/des_wakup.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/des_wakup.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
         ],
@@ -504,9 +442,7 @@ export class SpHelp extends BaseElement {
             clickHandler: function (item: MenuItem) {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
-                `/application/doc/quickstart_smartperflinux_compile_guide.html?${ 
-                  that.dark 
-                } width="100%" height="100%"></object>`;
+                `/application/doc/quickstart_smartperflinux_compile_guide.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
         ],

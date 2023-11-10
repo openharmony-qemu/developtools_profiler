@@ -45,7 +45,7 @@ export class Utils {
     Utils.statusMap.set('R+', 'Runnable (Preempted)');
     Utils.statusMap.set('R-B', 'Runnable (Binder)');
     Utils.statusMap.set('I', 'Task Dead');
-    Utils.statusMap.set('T', 'Traced');
+    Utils.statusMap.set('T', 'Stopped');
     Utils.statusMap.set('t', 'Traced');
     Utils.statusMap.set('X', 'Exit (Dead)');
     Utils.statusMap.set('Z', 'Exit (Zombie)');
@@ -76,6 +76,22 @@ export class Utils {
         return '';
       }
       return 'Unknown State';
+    }
+  }
+
+  public static transferPTSTitle(value: any) {
+    if (value.startsWith('S-')) {
+      return Utils.getEndState(value.replace('S-',''));
+    } else if (value.startsWith('P-')) {
+      let pid = value.replace('P-','');
+      let process = Utils.PROCESS_MAP.get(parseInt(pid)) || 'Process';
+      return `${process} [${pid}]`;
+    } else if (value.startsWith('T-')) {
+      let tid = value.replace('T-','');
+      let thread = Utils.THREAD_MAP.get(parseInt(tid)) || 'Thread';
+      return `${thread} [${tid}]`;
+    } else {
+      return '';
     }
   }
 

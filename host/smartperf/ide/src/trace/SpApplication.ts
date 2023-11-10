@@ -51,6 +51,8 @@ import { ColorUtils } from './component/trace/base/ColorUtils.js';
 import { SpStatisticsHttpUtil } from '../statistics/util/SpStatisticsHttpUtil.js';
 import { FlagsConfig, SpFlags } from './component/SpFlags.js';
 import './component/SpFlags.js';
+import './component/trace/base/CustomThemeColor.js';
+import { CustomThemeColor, Theme } from './component/trace/base/CustomThemeColor.js';
 
 @element('sp-application')
 export class SpApplication extends BaseElement {
@@ -238,7 +240,6 @@ export class SpApplication extends BaseElement {
         :host(:not([search])) .search-container  {
            display: none;
         }
-
         :host(:not([search])) .search-container .search  {
             background-color: var(--dark-background5,#F6F6F6);
         }
@@ -330,11 +331,10 @@ export class SpApplication extends BaseElement {
             font-size: 20px;
             color: var(--dark-color1,#47A7E0);
          }
-         .chart-filter {
+         .chart-filter .custom-color {
             visibility: hidden;
             z-index: -1;
         }
-        
         :host([chart_filter]) .chart-filter {
             display: grid;
             grid-template-rows: min-content min-content min-content max-content auto;
@@ -345,6 +345,18 @@ export class SpApplication extends BaseElement {
             width: 40%;
             right: 0;
             z-index: 1001;
+            top: 0;
+        }
+        :host([custom-color]) .custom-color {
+            display: grid;
+            grid-template-rows: min-content min-content min-content max-content auto;
+            overflow-y: auto;
+            height: 100%;
+            visibility: visible;
+            position: absolute;
+            width: 50%;
+            right: 0;
+            z-index: 1002;
             top: 0;
         }
         .filter-config {
@@ -391,6 +403,7 @@ export class SpApplication extends BaseElement {
                 <sp-flags style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 104" id="sp-flags">
                 </sp-flags>
                 <trace-row-config class="chart-filter"></trace-row-config>
+                <custom-theme-color class="custom-color"></custom-theme-color>
             </div>
         </div>
         `;
@@ -423,7 +436,12 @@ export class SpApplication extends BaseElement {
     let search = this.shadowRoot?.querySelector('.search-container') as HTMLElement;
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
     let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
+    let customColor = this.shadowRoot?.querySelector('.custom-color') as CustomThemeColor;
+    mainMenu!.setAttribute('main_menu', '1');
     chartFilter!.setAttribute('mode', '');
+    chartFilter!.setAttribute('hidden', '');
+    customColor!.setAttribute('mode', '');
+    customColor!.setAttribute('hidden', '');
     let childNodes = [
       spSystemTrace,
       spRecordTrace,
@@ -436,56 +454,20 @@ export class SpApplication extends BaseElement {
       spRecordTemplate,
       spFlags,
     ];
-    let sideColor = mainMenu.shadowRoot?.querySelector('.color') as HTMLDivElement;
-    //修改侧边导航栏配色
-    sideColor!.onclick = (e) => {
-      let backgroundColor = sessionStorage.getItem('backgroundColor');
-      let menu: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('#main-menu');
-      let menuGroup = mainMenu.shadowRoot?.querySelectorAll<LitMainMenuGroup>('lit-main-menu-group');
-      let menuItem = menu!.shadowRoot?.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
-      if (backgroundColor == 'white' || !backgroundColor) {
-        menu!.style.backgroundColor = '#262f3c';
-        menu!.style.transition = '1s';
-        menuGroup!.forEach((item) => {
-          let groupName = item!.shadowRoot!.querySelector('.group-name') as LitMainMenuGroup;
-          let groupDescribe = item!.shadowRoot!.querySelector('.group-describe') as LitMainMenuGroup;
-          groupName.style.color = 'white';
-          groupDescribe.style.color = 'white';
-        });
-        menuItem!.forEach((item) => {
-          item.style.color = 'white';
-        });
-        ColorUtils.MD_PALETTE = ColorUtils.FUNC_COLOR_A;
-        ColorUtils.FUNC_COLOR = ColorUtils.FUNC_COLOR_A;
-      } else {
-        menu!.style.backgroundColor = 'white';
-        menu!.style.transition = '1s';
-        menuGroup!.forEach((item) => {
-          let groupName = item!.shadowRoot!.querySelector('.group-name') as LitMainMenuGroup;
-          let groupDescribe = item!.shadowRoot!.querySelector('.group-describe') as LitMainMenuGroup;
-          groupName.style.color = 'black';
-          groupDescribe.style.color = '#92959b';
-        });
-        menuItem!.forEach((item) => {
-          item.style.color = 'var(--dark-color,rgba(0,0,0,0.6))';
-        });
-        ColorUtils.MD_PALETTE = ColorUtils.FUNC_COLOR_B;
-        ColorUtils.FUNC_COLOR = ColorUtils.FUNC_COLOR_B;
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "visible") {
+        if (window.localStorage.getItem('Theme') == 'dark') {
+          that.changeTheme(Theme.DARK);
+        } else {
+          that.changeTheme(Theme.LIGHT);
+        }
       }
-
-      sessionStorage.setItem('backgroundColor', menu!.style.backgroundColor);
-      if (this.colorTransiton) {
-        clearTimeout(this.colorTransiton);
-      }
-      this.colorTransiton = setTimeout(() => {
-        menu!.style.transition = '0s';
-      }, 1000);
-    };
-
+    });
     window.subscribe(window.SmartEvent.UI.MenuTrace, () => showContent(spSystemTrace!));
     window.subscribe(window.SmartEvent.UI.Error, (err) => {
       litSearch.setPercent(err, -1);
       progressEL.loading = false;
+      that.freshMenuDisable(false);
     });
     window.subscribe(window.SmartEvent.UI.Loading, (loading) => {
       litSearch.setPercent(loading ? 'Import So File' : '', loading ? -1 : 101);
@@ -521,6 +503,8 @@ export class SpApplication extends BaseElement {
           }
         });
       } else {
+        let indexEL = litSearch.shadowRoot!.querySelector<HTMLSpanElement>('#index');
+        indexEL!.textContent = '0';
         litSearch.list = [];
         spSystemTrace?.visibleRows.forEach((it) => {
           it.highlight = false;
@@ -543,13 +527,29 @@ export class SpApplication extends BaseElement {
     filterConfig.addEventListener('click', (ev) => {
       if (this!.hasAttribute('chart_filter')) {
         this!.removeAttribute('chart_filter');
+        chartFilter!.setAttribute('hidden', '');
       } else {
         this!.setAttribute('chart_filter', '');
+        chartFilter!.removeAttribute('hidden');
       }
     });
     configClose!.addEventListener('click', (ev) => {
       if (this.hasAttribute('chart_filter')) {
         this!.removeAttribute('chart_filter');
+      }
+    });
+
+    let customColorShow = this.shadowRoot
+      ?.querySelector('lit-main-menu')!
+      .shadowRoot!.querySelector('.customColor') as HTMLDivElement;
+    customColorShow.addEventListener('click', (ev) => {
+      if (this!.hasAttribute('custom-color')) {
+        this!.removeAttribute('custom-color');
+        customColor!.setAttribute('hidden', '');
+        customColor.cancelOperate();
+      } else {
+        this!.setAttribute('custom-color', '');
+        customColor!.removeAttribute('hidden');
       }
     });
 
@@ -597,6 +597,8 @@ export class SpApplication extends BaseElement {
         });
         filterConfig.style.visibility = 'visible';
       } else {
+        that.removeAttribute('custom-color');
+        customColor.cancelOperate();
         menu!.style.pointerEvents = 'none';
         sidebarButton!.style.pointerEvents = 'none';
         that.search = litSearch.isLoading;
@@ -945,6 +947,7 @@ export class SpApplication extends BaseElement {
     };
 
     function openTraceFile(ev: any, isClickHandle?: boolean) {
+      that.removeAttribute('custom-color');
       openFileInit();
       if (that.vs && isClickHandle) {
         Cmd.openFileDialog().then((res: string) => {
@@ -1086,6 +1089,7 @@ export class SpApplication extends BaseElement {
                 spRecordTemplate!.vs = true;
                 spRecordTemplate!.startRefreshDeviceList();
               }
+              spRecordTemplate!.refreshHint();
               spRecordTemplate!.synchronizeDeviceList();
               showContent(spRecordTemplate!);
             },
@@ -1245,6 +1249,82 @@ export class SpApplication extends BaseElement {
     }
   }
 
+  /**
+   * 修改颜色或者主题，重新绘制侧边栏和泳道图
+   * @param theme 当前主题（深色和浅色）
+   * @param colorsArray 预览的情况下传入
+   */
+  changeTheme(theme: Theme, colorsArray?: Array<string>) {
+    let systemTrace = this.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
+    let menu: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('#main-menu');
+    let menuGroup = menu!.shadowRoot?.querySelectorAll<LitMainMenuGroup>('lit-main-menu-group');
+    let menuItem = menu!.shadowRoot?.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
+    let customColor = this.shadowRoot?.querySelector('.custom-color') as CustomThemeColor;
+    if (!colorsArray) {
+      customColor.setRadioChecked(theme);
+    }
+    if (theme === Theme.DARK) {
+      menu!.style.backgroundColor = '#262f3c';
+      menu!.style.transition = '1s';
+      menuGroup!.forEach((item) => {
+        let groupName = item!.shadowRoot!.querySelector('.group-name') as LitMainMenuGroup;
+        let groupDescribe = item!.shadowRoot!.querySelector('.group-describe') as LitMainMenuGroup;
+        groupName.style.color = 'white';
+        groupDescribe.style.color = 'white';
+      });
+      menuItem!.forEach((item) => {
+        item.style.color = 'white';
+      });
+      if (
+        !colorsArray &&
+        window.localStorage.getItem('DarkThemeColors') &&
+        ColorUtils.FUNC_COLOR_B !== JSON.parse(window.localStorage.getItem('DarkThemeColors')!)
+      ) {
+        ColorUtils.MD_PALETTE = JSON.parse(window.localStorage.getItem('DarkThemeColors')!);
+        ColorUtils.FUNC_COLOR = JSON.parse(window.localStorage.getItem('DarkThemeColors')!);
+      } else if (colorsArray) {
+        ColorUtils.MD_PALETTE = colorsArray;
+        ColorUtils.FUNC_COLOR = colorsArray;
+      } else {
+        ColorUtils.MD_PALETTE = ColorUtils.FUNC_COLOR_B;
+        ColorUtils.FUNC_COLOR = ColorUtils.FUNC_COLOR_B;
+      }
+    } else {
+      menu!.style.backgroundColor = 'white';
+      menu!.style.transition = '1s';
+      menuGroup!.forEach((item) => {
+        let groupName = item!.shadowRoot!.querySelector('.group-name') as LitMainMenuGroup;
+        let groupDescribe = item!.shadowRoot!.querySelector('.group-describe') as LitMainMenuGroup;
+        groupName.style.color = 'black';
+        groupDescribe.style.color = '#92959b';
+      });
+      menuItem!.forEach((item) => {
+        item.style.color = 'black';
+      });
+      if (
+        !colorsArray &&
+        window.localStorage.getItem('LightThemeColors') &&
+        ColorUtils.FUNC_COLOR_A !== JSON.parse(window.localStorage.getItem('LightThemeColors')!)
+      ) {
+        ColorUtils.MD_PALETTE = JSON.parse(window.localStorage.getItem('LightThemeColors')!);
+        ColorUtils.FUNC_COLOR = JSON.parse(window.localStorage.getItem('LightThemeColors')!);
+      } else if (colorsArray) {
+        ColorUtils.MD_PALETTE = colorsArray;
+        ColorUtils.FUNC_COLOR = colorsArray;
+      } else {
+        ColorUtils.MD_PALETTE = ColorUtils.FUNC_COLOR_A;
+        ColorUtils.FUNC_COLOR = ColorUtils.FUNC_COLOR_A;
+      }
+    }
+    systemTrace!.timerShaftEL!.rangeRuler!.draw();
+    if (this.colorTransiton) {
+      clearTimeout(this.colorTransiton);
+    }
+    this.colorTransiton = setTimeout(() => {
+      menu!.style.transition = '0s';
+    }, 1000);
+  }
+
   private downloadOnLineFile(url: string, download: boolean, openFileHandler: (path: string) => void) {
     if (download) {
       let api = `${window.location.origin}/download-file`;
@@ -1274,7 +1354,8 @@ export class SpApplication extends BaseElement {
   private getUrlParams(url: string) {
     const _url = url || window.location.href;
     const _urlParams = _url.match(/([?&])(.+?=[^&]+)/gim);
-    return _urlParams ? _urlParams.reduce((a: any, b) => {
+    return _urlParams
+      ? _urlParams.reduce((a: any, b) => {
           const value = b.slice(1).split('=');
           a[`${value[0]}`] = decodeURIComponent(value[1]);
           return a;

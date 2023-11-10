@@ -28,6 +28,7 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
   private smapsCompariosnTable: LitTable | null | undefined;
   private filterEl: TabPaneJsMemoryFilter | undefined | null;
   private selectEl: LitSelect | undefined | null;
+  private selectionParam: SelectionParam | undefined;
 
   public initElements(): void {
     this.smapsCompariosnTable = this.shadowRoot?.querySelector<LitTable>('#tb-smaps-comparison');
@@ -40,6 +41,10 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     });
   }
   public setData(data: SelectionParam | any, dataList: any): void {
+    if (data == this.selectionParam) {
+      return;
+    }
+    this.selectionParam = data;
     //@ts-ignore
     this.smapsCompariosnTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
       this.parentElement!.clientHeight - 45
@@ -174,7 +179,7 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     </style>
     <div style="overflow: auto;" class="d-box">
         <lit-table id="tb-smaps-comparison" class="smaps-comparison-table" style="height: auto;" tree>
-            <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order>
+            <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order retract>
             </lit-table-column>
             <lit-table-column width="150px" title="Path" data-index="path" key="path" align="flex-start" >
             </lit-table-column>

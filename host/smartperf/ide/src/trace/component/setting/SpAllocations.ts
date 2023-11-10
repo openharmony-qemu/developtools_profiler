@@ -33,13 +33,27 @@ export class SpAllocations extends BaseElement {
   private shareMemory: HTMLInputElement | null | undefined;
   private shareMemoryUnit: HTMLSelectElement | null | undefined;
   private filterMemory: HTMLInputElement | null | undefined;
+  private intervalResultInput: HTMLInputElement | null | undefined;
   private filterMemoryUnit: HTMLSelectElement | null | undefined;
   private fpUnWind: LitSwitch | null | undefined;
+  private statisticsSlider: LitSlider | null | undefined;
 
   private recordAccurately: LitSwitch | null | undefined;
   private offlineSymbol: LitSwitch | null | undefined;
   private startupMode: LitSwitch | null | undefined;
   private recordStatisticsResult: HTMLDivElement | null | undefined;
+
+  set startSamp(allocationStart: boolean) {
+    if (allocationStart) {
+      this.setAttribute('startSamp', '');
+    } else {
+      this.removeAttribute('startSamp');
+    }
+  }
+
+  get startSamp(): boolean {
+    return this.hasAttribute('startSamp');
+  }
 
   get appProcess(): string {
     return this.processId!.value || '';
@@ -118,20 +132,24 @@ export class SpAllocations extends BaseElement {
 
   initElements(): void {
     this.processId = this.shadowRoot?.getElementById('pid') as LitAllocationSelect;
-    let input = this.processId.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
+    let process = this.processId.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     let sp = document.querySelector('sp-application') as SpApplication;
     let litSearch = sp?.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     let allocationProcessData: Array<string> = [];
-    input.addEventListener('mousedown', (ev) => {
-      if (SpRecordTrace.serialNumber == '') {
+    process.addEventListener('mousedown', (ev) => {
+      if (SpRecordTrace.serialNumber === '') {
         this.processId!.processData = [];
       }
     });
-    input.addEventListener('valuable', (ev) => {
+    process.addEventListener('valuable', (ev) => {
       this.dispatchEvent(new CustomEvent('addProbe', {}));
     });
-    input.addEventListener('inputClick', () => {
+    process.addEventListener('inputClick', () => {
       allocationProcessData = [];
+      if (this.startup_mode) {
+        this.processId!.processData = [];
+        return;
+      }
       if (SpRecordTrace.serialNumber != '') {
         Cmd.getProcess().then((processList) => {
           this.processId!.processData = processList;
@@ -149,12 +167,12 @@ export class SpAllocations extends BaseElement {
     this.offlineSymbol = this.shadowRoot?.getElementById('use_offline_symbolization') as LitSwitch;
     this.startupMode = this.shadowRoot?.getElementById('use_startup_mode') as LitSwitch;
     let stepValue = [0, 1, 10, 30, 60, 300, 600, 1800, 3600];
-    let statisticsSlider = this.shadowRoot?.querySelector<LitSlider>('#interval-slider') as LitSlider;
+    this.statisticsSlider = this.shadowRoot?.querySelector<LitSlider>('#interval-slider') as LitSlider;
 
     this.recordStatisticsResult = this.shadowRoot?.querySelector<HTMLDivElement>(
       '.record-statistics-result'
     ) as HTMLDivElement;
-    statisticsSlider.sliderStyle = {
+    this.statisticsSlider.sliderStyle = {
       minRange: 0,
       maxRange: 3600,
       defaultValue: '3600',
@@ -163,11 +181,11 @@ export class SpAllocations extends BaseElement {
       lineColor: 'var(--dark-color3,#46B1E3)',
       buttonColor: '#999999',
     };
-    let parentElement = statisticsSlider!.parentNode as Element;
-    let intervalResultInput = this.shadowRoot?.querySelector('.interval-result') as HTMLInputElement;
-    intervalResultInput.value = statisticsSlider.sliderStyle.defaultValue;
-    statisticsSlider.addEventListener('input', (evt) => {
-      statisticsSlider!.sliderStyle = {
+    let parentElement = this.statisticsSlider!.parentNode as Element;
+    this.intervalResultInput = this.shadowRoot?.querySelector('.interval-result') as HTMLInputElement;
+    this.intervalResultInput.value = this.statisticsSlider.sliderStyle.defaultValue;
+    this.statisticsSlider.addEventListener('input', (evt) => {
+      this.statisticsSlider!.sliderStyle = {
         minRange: 0,
         maxRange: 3600,
         defaultValue: this.recordStatisticsResult!.getAttribute('percent') + '',
@@ -176,70 +194,137 @@ export class SpAllocations extends BaseElement {
         lineColor: 'var(--dark-color3,#46B1E3)',
         buttonColor: '#999999',
       };
-      intervalResultInput.style.color = 'var(--dark-color1,#000000)';
+      this.intervalResultInput!.style.color = 'var(--dark-color1,#000000)';
       if (this.recordStatisticsResult!.hasAttribute('percent')) {
         let step = Number(this.recordStatisticsResult!.getAttribute('percent')) / 450;
         this.recordStatisticsResult!.setAttribute('percentValue', stepValue[step] + '');
-        intervalResultInput.value = stepValue[step] + '';
+        this.intervalResultInput!.value = stepValue[step] + '';
       }
     });
     parentElement.setAttribute('percent', '3600');
-    intervalResultInput.style.color = 'var(--dark-color1,#000000)';
-    intervalResultInput.addEventListener('input', (ev) => {
+    this.intervalResultInput.style.color = 'var(--dark-color1,#000000)';
+    this.intervalResultInput.addEventListener('input', (ev) => {
       if (this.recordStatisticsResult!.hasAttribute('percent')) {
         this.recordStatisticsResult!.removeAttribute('percent');
       }
-      intervalResultInput.style.color = 'var(--dark-color1,#000000)';
-      intervalResultInput.parentElement!.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
-      intervalResultInput.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
-      if (intervalResultInput.value.trim() == '') {
-        intervalResultInput.style.color = 'red';
+      this.intervalResultInput!.style.color = 'var(--dark-color1,#000000)';
+      this.intervalResultInput!.parentElement!.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
+      this.intervalResultInput!.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
+      if (this.intervalResultInput!.value.trim() === '') {
+        this.intervalResultInput!.style.color = 'red';
         parentElement.setAttribute('percent', '3600');
         return;
       }
-      let memorySize = Number(intervalResultInput.value);
-      if (memorySize < statisticsSlider!.sliderStyle.minRange || memorySize > statisticsSlider!.sliderStyle.maxRange) {
-        intervalResultInput.style.color = 'red';
+      let memorySize = Number(this.intervalResultInput!.value);
+      if (
+        memorySize < this.statisticsSlider!.sliderStyle.minRange ||
+        memorySize > this.statisticsSlider!.sliderStyle.maxRange
+      ) {
+        this.intervalResultInput!.style.color = 'red';
         parentElement.setAttribute('percent', '3600');
       } else {
-        statisticsSlider!.percent = intervalResultInput.value;
-        let htmlInputElement = statisticsSlider!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
-        htmlInputElement.value = intervalResultInput.value;
-        statisticsSlider!.sliderStyle = {
+        this.statisticsSlider!.percent = this.intervalResultInput!.value;
+        let htmlInputElement = this.statisticsSlider!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
+        htmlInputElement.value = this.intervalResultInput!.value;
+        this.statisticsSlider!.sliderStyle = {
           minRange: 0,
           maxRange: 3600,
-          defaultValue: intervalResultInput.value,
+          defaultValue: this.intervalResultInput!.value,
           resultUnit: 'S',
           stepSize: 1,
           lineColor: 'var(--dark-color3,#46B1E3)',
           buttonColor: '#999999',
         };
-        parentElement.setAttribute('percent', intervalResultInput.value);
-        parentElement.setAttribute('percentValue', intervalResultInput.value);
+        parentElement.setAttribute('percent', this.intervalResultInput!.value);
+        parentElement.setAttribute('percentValue', this.intervalResultInput!.value);
       }
     });
 
-    intervalResultInput.addEventListener('focusout', (ev) => {
-      if (intervalResultInput.value.trim() == '') {
+    this.intervalResultInput.addEventListener('focusout', (ev) => {
+      if (this.intervalResultInput!.value.trim() === '') {
         parentElement.setAttribute('percent', '3600');
-        intervalResultInput.value = '3600';
-        intervalResultInput.style.color = 'var(--dark-color,#6a6f77)';
-        parentElement.setAttribute('percent', intervalResultInput.value);
-        parentElement.setAttribute('percentValue', intervalResultInput.value);
-        statisticsSlider!.percent = intervalResultInput.value;
-        let htmlInputElement = statisticsSlider!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
-        htmlInputElement.value = intervalResultInput.value;
+        this.intervalResultInput!.value = '3600';
+        this.intervalResultInput!.style.color = 'var(--dark-color,#6a6f77)';
+        parentElement.setAttribute('percent', this.intervalResultInput!.value);
+        parentElement.setAttribute('percentValue', this.intervalResultInput!.value);
+        this.statisticsSlider!.percent = this.intervalResultInput!.value;
+        let htmlInputElement = this.statisticsSlider!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
+        htmlInputElement.value = this.intervalResultInput!.value;
       }
     });
-    statisticsSlider.shadowRoot?.querySelector<HTMLElement>('#slider')!.addEventListener('mouseup', (ev) => {
+    this.statisticsSlider.shadowRoot?.querySelector<HTMLElement>('#slider')!.addEventListener('mouseup', (ev) => {
       setTimeout(() => {
         let percentValue = this.recordStatisticsResult!.getAttribute('percent');
         let index = Number(percentValue) / 450;
         index = index < 1 ? 0 : index;
-        intervalResultInput.value = stepValue[index] + '';
+        this.intervalResultInput!.value = stepValue[index] + '';
         this.recordStatisticsResult!.setAttribute('percentValue', stepValue[index] + '');
       });
     });
+    this.startupMode.addEventListener('change', (evt) => {
+      if (this.startup_mode) {
+        this.processId!.value = '';
+        this.processId!.placeholder = 'please input process';
+      } else {
+        this.processId!.value = '';
+        this.processId!.placeholder = 'please select process';
+      }
+    });
+
+    let litSwitch = this.shadowRoot?.querySelector('lit-switch') as LitSwitch;
+    litSwitch.addEventListener('change', (event: any) => {
+      let detail = event.detail;
+      if (detail.checked) {
+        this.unDisable();
+      } else {
+        this.disable();
+      }
+    });
+    this.disable();
+  }
+
+  private unDisable() {
+    this.startSamp = true;
+    if (this.fpUnWind) {
+      this.fpUnWind.disabled = false;
+    }
+    if (this.recordAccurately) {
+      this.recordAccurately.disabled = false;
+    }
+    if (this.offlineSymbol) {
+      this.offlineSymbol.disabled = false;
+    }
+    if (this.startupMode) {
+      this.startupMode.disabled = false;
+    }
+    this.processId!.removeAttribute('disabled');
+    let inputBoxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.inputBoxes');
+    inputBoxes!.forEach((item) =>{
+      item.disabled = false;
+    })
+    this.statisticsSlider!.disabled = false;
+  }
+
+  private disable() {
+    this.startSamp = false;
+    if (this.fpUnWind) {
+      this.fpUnWind.disabled = true;
+    }
+    if (this.recordAccurately) {
+      this.recordAccurately.disabled = true;
+    }
+    if (this.startupMode) {
+      this.startupMode.disabled = true;
+    }
+    if (this.offlineSymbol) {
+      this.offlineSymbol.disabled = true;
+    }
+    this.processId!.setAttribute('disabled','');
+    let inputBoxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.inputBoxes');
+    inputBoxes!.forEach((item) =>{
+      item.disabled = true;
+    })
+    this.statisticsSlider!.disabled = true;
   }
 
   initHtml(): string {
@@ -321,7 +406,7 @@ export class SpAllocations extends BaseElement {
         }
         .allocation-inputstyle{
             background: var(--dark-background5,#FFFFFF);
-            border: 1px solid var(--dark-background5,#999999);
+            border: 1px solid var(--dark-background5,#ccc);
             font-family: Helvetica;
             font-size: 14px;
             color: var(--dark-color1,#212121);
@@ -329,9 +414,20 @@ export class SpAllocations extends BaseElement {
             line-height: 16px;
             font-weight: 400;
         }
-        .allocation-inputstyle::-webkit-input-placeholder {
-           background: var(--dark-background5,#FFFFFF);
+
+        input::-webkit-input-placeholder{
+          background: var(--dark-background5,#FFFFFF);
         }
+        
+        :host([startSamp]) .allocation-inputstyle {
+            background: var(--dark-background5,#FFFFFF);
+        }
+        
+        :host(:not([startSamp])) .allocation-inputstyle {
+            color: #b7b7b7;
+            background: var(--dark-background1,#f5f5f5);
+        }
+        
         #one_mb{
             background-color:var(--dark-background5, #FFFFFF)
         }
@@ -408,10 +504,28 @@ export class SpAllocations extends BaseElement {
             color:var(--dark-color,#6a6f77);
         }
         
+        .allocation-title {
+          opacity: 0.9;
+          font-family: Helvetica-Bold;
+          margin-right: 10px;
+          font-size: 18px;
+          text-align: center;
+          line-height: 40px;
+          font-weight: 700;
+        }
+        
+        lit-switch {
+          height: 38px;
+          margin-top: 10px;
+          display:inline;
+          float: right;
+        }
+        
         </style>
         <div class="root">
-          <div class = "title">
-            <span class="allocation-font-style">Native Memory</span>
+          <div class = "title" style="width: 92%;margin-top: 5vh;">
+            <span class="allocation-title">Start Native Memory Record</span>
+            <lit-switch></lit-switch>
           </div>
           <div class="allocation-application">
              <span class="allocation-inner-font-style">ProcessId or ProcessName</span>
@@ -422,13 +536,13 @@ export class SpAllocations extends BaseElement {
           <div class="allocation-application">
             <span class="allocation-inner-font-style" >Max unwind level</span>
             <span class="value-range">Max Unwind Level Rang is 0 - 512, default 10</span>
-            <input id= "unwind"  class="allocation-inputstyle" type="text" placeholder="Enter the Max Unwind Level" oninput="if(this.value > 512) this.value = '512'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="10">
+            <input id= "unwind"  class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Max Unwind Level" oninput="if(this.value > 512) this.value = '512'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="10">
           </div>
           <div class="allocation-application">
             <span class="allocation-inner-font-style">Shared Memory Size (One page equals 4 KB)</span>
             <span class="value-range">Shared Memory Size Range is 0 - 131072 page, default 16384 page</span>
             <div>
-              <input id = "shareMemory" class="allocation-inputstyle" type="text" placeholder="Enter the Shared Memory Size" oninput="if(this.value > 131072) this.value = '131072'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="16384">
+              <input id = "shareMemory" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Shared Memory Size" oninput="if(this.value > 131072) this.value = '131072'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="16384">
               <span>Page</span>
             </div>
           </div>
@@ -436,7 +550,7 @@ export class SpAllocations extends BaseElement {
             <span class="allocation-inner-font-style" >Filter Memory Size </span>
             <span class="value-range">Filter size Range is 0 - 65535 byte, default 4096 byte</span> 
             <div>
-                <input id = "filterSized" class="allocation-inputstyle" type="text" placeholder="Enter the Filter Memory Size" oninput="if(this.value > 65535) this.value = '65535'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="4096">
+                <input id = "filterSized" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Filter Memory Size" oninput="if(this.value > 65535) this.value = '65535'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="4096">
                  <span>Byte</span>
             </div>
           </div>
@@ -444,19 +558,19 @@ export class SpAllocations extends BaseElement {
               <span class="allocation-inner-font-style" id="fp-unwind">Use Fp Unwind</span>               
               <lit-switch class="lts" id="use_fp_unwind" title="fp unwind" checked="true"></lit-switch>
           </div>
-          <div class="allocation-switchstyle">
+          <div class="allocation-switchstyle version-controller">
               <span class="allocation-inner-font-style" id="record_accurately ">Use Record Accurately (Available on recent OpenHarmony 4.0)</span> 
               <lit-switch   class="lts" id="use_record_accurately" title="record_accurately" checked="true"></lit-switch>
           </div>
-          <div class="allocation-switchstyle">
+          <div class="allocation-switchstyle version-controller">
               <span class="allocation-inner-font-style" id="offline_symbolization">Use Offline Symbolization (Available on recent OpenHarmony 4.0)</span> 
               <lit-switch class="lts" id="use_offline_symbolization" title="offline_symbolization" checked="true"></lit-switch>
           </div>
-           <div class="allocation-switchstyle">
+           <div class="allocation-switchstyle version-controller">
               <span class="allocation-inner-font-style" id="startup_mode">Use Startup Mode (Available on recent OpenHarmony 4.0)</span> 
               <lit-switch class="lts" id="use_startup_mode" title="startup_mode"></lit-switch>
           </div>   
-          <div class="allocation-switchstyle record-statistics-result" style="grid-row: 6; grid-column: 1 / 3;height: min-content;display: grid;grid-template-rows: 1fr;grid-template-columns: 1fr min-content;">
+          <div class="allocation-switchstyle record-statistics-result version-controller" style="grid-row: 6; grid-column: 1 / 3;height: min-content;display: grid;grid-template-rows: 1fr;grid-template-columns: 1fr min-content;">
             <div class="record-title">
                 <span class="record-mode">Use Record Statistics (Available on recent OpenHarmony 4.0)</span> 
                 <span class="allocation-record-prompt"> Time between following interval (0 = disabled) </span>
@@ -464,7 +578,7 @@ export class SpAllocations extends BaseElement {
             <lit-slider id="interval-slider" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
             </lit-slider>
             <div class='resultSize'>
-                <input class="interval-result" type="text" value='0' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                <input class="interval-result inputBoxes" type="text" value='0' onkeyup="this.value=this.value.replace(/\\D/g,'')">
                 <span style="text-align: center; margin: 8px"> S </span>
             </div>
           </div>

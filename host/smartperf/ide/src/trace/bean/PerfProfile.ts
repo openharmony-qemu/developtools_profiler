@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { ChartStruct } from '../../trace/bean/FrameChartStruct.js';
+import { ChartStruct } from "../bean/FrameChartStruct.js";
 
 export class PerfFile {
   path: string = '';
@@ -78,7 +78,6 @@ export class PerfCallChainMerageData extends ChartStruct {
   tid: number = 0;
   pid: number = 0;
   currentTreeParentNode: PerfCallChainMerageData | undefined = undefined;
-  symbolName: string = '';
   libName: string = '';
   symbol: string = '';
   path: string = '';

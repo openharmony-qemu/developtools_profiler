@@ -45,8 +45,13 @@ export class TabPaneNMSampleList extends BaseElement {
   static selectionParam: SelectionParam | undefined = undefined;
   static sampleTypes: Array<NativeHookSampleQueryInfo> = [];
   static sampleTypesList: any[] = [];
+  private currentSelection: SelectionParam | undefined;
 
   set data(sampleParam: SelectionParam | any) {
+    if (sampleParam == this.currentSelection) {
+      return;
+    }
+    this.currentSelection = sampleParam;
     TabPaneNMSampleList.serSelection(sampleParam);
     this.filterAllList();
   }
@@ -371,7 +376,7 @@ export class TabPaneNMSampleList extends BaseElement {
         <lit-slicer style="width:100%">
         <div class="nm-sample-content" style="width: 65%">
             <lit-table id="tb-native-sample" class="nm-sample-tbl" tree>
-                <lit-table-column class="nm-sample-column" width="25%" title="Snapshot" data-index="snapshot" key="snapshot"  align="flex-start" >
+                <lit-table-column class="nm-sample-column" width="25%" title="Snapshot" data-index="snapshot" key="snapshot"  align="flex-start"retract>
                 </lit-table-column>
                 <lit-table-column class="nm-sample-column" width="1fr" title="Timestamp" data-index="timestamp" key="timestamp"  align="flex-start"  >
                 </lit-table-column>

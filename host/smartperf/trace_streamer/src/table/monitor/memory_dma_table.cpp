@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     TS,
     IPID,
@@ -63,38 +63,38 @@ MemoryDmaTable::Cursor::~Cursor() {}
 
 int32_t MemoryDmaTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, DmaMemDataObj_.IdsData()[CurrentRow()]);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, DmaMemDataObj_.TimeStampData()[CurrentRow()]);
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, DmaMemDataObj_.Ipids()[CurrentRow()]);
             break;
-        case FD:
+        case Index::FD:
             sqlite3_result_int(context_, DmaMemDataObj_.Fds()[CurrentRow()]);
             break;
-        case SIZE:
+        case Index::SIZE:
             sqlite3_result_int64(context_, DmaMemDataObj_.Sizes()[CurrentRow()]);
             break;
-        case INO:
+        case Index::INO:
             sqlite3_result_int(context_, DmaMemDataObj_.Inos()[CurrentRow()]);
             break;
-        case EXP_PID:
+        case Index::EXP_PID:
             sqlite3_result_int(context_, DmaMemDataObj_.ExpPids()[CurrentRow()]);
             break;
-        case EXP_TASK_COMM:
+        case Index::EXP_TASK_COMM:
             sqlite3_result_int64(context_, DmaMemDataObj_.ExpTaskCommIds()[CurrentRow()]);
             break;
-        case BUF_NAME_ID:
+        case Index::BUF_NAME_ID:
             sqlite3_result_int64(context_, DmaMemDataObj_.BufNameIds()[CurrentRow()]);
             break;
-        case EXP_NAME_ID:
+        case Index::EXP_NAME_ID:
             sqlite3_result_int64(context_, DmaMemDataObj_.ExpNameIds()[CurrentRow()]);
             break;
-        case FLAG:
+        case Index::FLAG:
             sqlite3_result_int(context_, DmaMemDataObj_.Flags()[CurrentRow()]);
             break;
         default:

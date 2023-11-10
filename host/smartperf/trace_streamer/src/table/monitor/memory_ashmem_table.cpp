@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     TS,
     IPID,
@@ -67,44 +67,44 @@ MemoryAshMemTable::Cursor::~Cursor() {}
 
 int32_t MemoryAshMemTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, AshMemDataObj_.IdsData()[CurrentRow()]);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, AshMemDataObj_.TimeStampData()[CurrentRow()]);
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, AshMemDataObj_.Ipids()[CurrentRow()]);
             break;
-        case ADJ:
+        case Index::ADJ:
             sqlite3_result_int(context_, AshMemDataObj_.Adjs()[CurrentRow()]);
             break;
-        case FD:
+        case Index::FD:
             sqlite3_result_int(context_, AshMemDataObj_.Fds()[CurrentRow()]);
             break;
-        case ASHMEM_NAME_ID:
+        case Index::ASHMEM_NAME_ID:
             sqlite3_result_int(context_, AshMemDataObj_.AshmemNameIds()[CurrentRow()]);
             break;
-        case SIZE:
+        case Index::SIZE:
             sqlite3_result_int64(context_, AshMemDataObj_.Sizes()[CurrentRow()]);
             break;
-        case PSS:
+        case Index::PSS:
             sqlite3_result_int64(context_, AshMemDataObj_.Psss()[CurrentRow()]);
             break;
-        case ASHMEM_ID:
+        case Index::ASHMEM_ID:
             sqlite3_result_int64(context_, AshMemDataObj_.AshmemIds()[CurrentRow()]);
             break;
-        case TIME:
+        case Index::TIME:
             sqlite3_result_int64(context_, AshMemDataObj_.Times()[CurrentRow()]);
             break;
-        case REF_COUNT:
+        case Index::REF_COUNT:
             sqlite3_result_int64(context_, AshMemDataObj_.RefCounts()[CurrentRow()]);
             break;
-        case PURGED:
+        case Index::PURGED:
             sqlite3_result_int64(context_, AshMemDataObj_.Purgeds()[CurrentRow()]);
             break;
-        case FLAG:
+        case Index::FLAG:
             sqlite3_result_int(context_, AshMemDataObj_.Flags()[CurrentRow()]);
             break;
         default:

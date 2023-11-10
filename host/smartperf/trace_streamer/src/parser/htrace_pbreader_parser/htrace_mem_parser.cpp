@@ -228,10 +228,9 @@ uint32_t HtraceMemParser::ParseSmapsBlockType(ProtoReader::SmapsInfo_Reader& sma
             "[anon:System property context nodes]",
             "[anon:arc4random data]",
         };
-        for (auto iter : unknown_anon_mem_info) {
-            if (path == iter) {
-                return SMAPS_MEM_TYPE_UNKNOWN_ANON;
-            }
+        if (std::find(unknown_anon_mem_info.begin(), unknown_anon_mem_info.end(), path) !=
+            unknown_anon_mem_info.end()) {
+            return SMAPS_MEM_TYPE_UNKNOWN_ANON;
         }
         return SMAPS_MEM_TYPE_NATIVE_HEAP;
     }
@@ -1191,7 +1190,7 @@ void HtraceMemParser::DmaMemDeduplicate() const
 
         for (const auto& item : inoMap) {
             auto maxPidType = processTypeMap[item.first];
-            auto& pidMap = item.second;
+            const auto& pidMap = item.second;
             for (const auto& pidItem : pidMap) {
                 if (pidItem.second.second < maxPidType) {
                     dmaMemData->SetFlag(pidItem.second.first, MEM_DEDUPLICATE_FLAG_DUP_DIFF_PROCESS);

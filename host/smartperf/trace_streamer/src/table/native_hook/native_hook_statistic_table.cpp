@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     CALLCHAIN_ID,
     IPID,
@@ -27,7 +27,9 @@ enum Index {
     APPLY_COUNT,
     RELEASE_COUNT,
     APPLY_SIZE,
-    RELEASE_SIZE
+    RELEASE_SIZE,
+    LAST_LIB_ID,
+    LAST_SYMBOL_ID
 };
 NativeHookStatisticTable::NativeHookStatisticTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
@@ -41,6 +43,8 @@ NativeHookStatisticTable::NativeHookStatisticTable(const TraceDataCache* dataCac
     tableColumn_.push_back(TableBase::ColumnInfo("release_count", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("apply_size", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("release_size", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("last_lib_id", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("last_symbol_id", "INTEGER"));
     tablePriKey_.push_back("id");
 }
 
@@ -73,8 +77,8 @@ void NativeHookStatisticTable::EstimateFilterCost(FilterConstraints& fc, Estimat
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -93,8 +97,8 @@ void NativeHookStatisticTable::FilterByConstraint(FilterConstraints& fc, double&
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -135,11 +139,11 @@ int32_t NativeHookStatisticTable::Cursor::Filter(const FilterConstraints& fc, sq
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case CALLCHAIN_ID:
+            case Index::CALLCHAIN_ID:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int64(argv[i])),
                                     nativeHookStatisticInfoObj_.CallChainIds());
                 break;
@@ -151,8 +155,8 @@ int32_t NativeHookStatisticTable::Cursor::Filter(const FilterConstraints& fc, sq
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -165,11 +169,11 @@ int32_t NativeHookStatisticTable::Cursor::Filter(const FilterConstraints& fc, sq
 
 int32_t NativeHookStatisticTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             if (nativeHookStatisticInfoObj_.CallChainIds()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(nativeHookStatisticInfoObj_.CallChainIds()[CurrentRow()]));
@@ -177,43 +181,57 @@ int32_t NativeHookStatisticTable::Cursor::Column(int32_t column) const
                 sqlite3_result_int64(context_, static_cast<int64_t>(INVALID_CALL_CHAIN_ID));
             }
             break;
-        case IPID:
+        case Index::IPID:
             if (nativeHookStatisticInfoObj_.Ipids()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(nativeHookStatisticInfoObj_.Ipids()[CurrentRow()]));
             }
             break;
-        case TS:
+        case Index::TS:
             if (nativeHookStatisticInfoObj_.TimeStampData()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(nativeHookStatisticInfoObj_.TimeStampData()[CurrentRow()]));
             }
             break;
-        case MEMORY_TYPE:
+        case Index::MEMORY_TYPE:
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(nativeHookStatisticInfoObj_.MemoryTypes()[CurrentRow()]));
             break;
-        case MEMORY_SUB_TYPE:
+        case Index::MEMORY_SUB_TYPE:
             if (nativeHookStatisticInfoObj_.MemorySubTypes()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(nativeHookStatisticInfoObj_.MemorySubTypes()[CurrentRow()]));
             }
             break;
-        case APPLY_COUNT:
+        case Index::APPLY_COUNT:
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(nativeHookStatisticInfoObj_.ApplyCounts()[CurrentRow()]));
             break;
-        case RELEASE_COUNT:
+        case Index::RELEASE_COUNT:
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(nativeHookStatisticInfoObj_.ReleaseCounts()[CurrentRow()]));
             break;
-        case APPLY_SIZE: {
+        case Index::APPLY_SIZE: {
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(nativeHookStatisticInfoObj_.ApplySizes()[CurrentRow()]));
             break;
         }
-        case RELEASE_SIZE: {
+        case Index::RELEASE_SIZE: {
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(nativeHookStatisticInfoObj_.ReleaseSizes()[CurrentRow()]));
+            break;
+        }
+        case Index::LAST_LIB_ID: {
+            if (nativeHookStatisticInfoObj_.LastCallerPathIndexs()[CurrentRow()] != INVALID_DATAINDEX) {
+                sqlite3_result_int64(
+                    context_, static_cast<int64_t>(nativeHookStatisticInfoObj_.LastCallerPathIndexs()[CurrentRow()]));
+            }
+            break;
+        }
+        case Index::LAST_SYMBOL_ID: {
+            if (nativeHookStatisticInfoObj_.LastSymbolIndexs()[CurrentRow()] != INVALID_DATAINDEX) {
+                sqlite3_result_int64(
+                    context_, static_cast<int64_t>(nativeHookStatisticInfoObj_.LastSymbolIndexs()[CurrentRow()]));
+            }
             break;
         }
         default:

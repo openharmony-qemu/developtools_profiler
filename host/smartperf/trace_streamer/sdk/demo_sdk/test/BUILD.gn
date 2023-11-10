@@ -1,0 +1,88 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/test.gni")
+import("../ts.gni")
+
+if (target == "sdkdemotest") {
+  ohos_unittest("trace_streamer_sdk_ut") {
+    sources = [ "unittest/sdk_api_test.cpp" ]
+    deps = [
+      "${THIRD_PARTY}/googletest:gtest",
+      "${THIRD_PARTY}/googletest:gtest_main",
+      "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+      "${THIRD_PARTY}/protobuf:protobuf_static",
+      "${THIRD_PARTY}/sqlite:sqlite",
+      "../:trace_streamer_sdk",
+    ]
+    include_dirs = [
+      "../base",
+      "../sdk",
+      "..",
+      "../trace_streamer",
+      "../filter",
+      "../table",
+      "../trace_data",
+      "../include",
+      "../plugin",
+      "../rpc",
+      "./",
+      "../parser",
+      "../cfg",
+      "${PREBUILTS}/emsdk/emsdk/emscripten/system/include",
+      "${THIRD_PARTY}/sqlite/include",
+      "${OHOS_PROTO_GEN}",
+      "${OHOS_PROTO_GEN}/types/plugins/mock_data",
+      "${THIRD_PARTY}/googletest/googletest/include/gtest",
+      "${THIRD_PARTY}/protobuf/src",
+      "${THIRD_PARTY}/json/single_include/nlohmann",
+    ]
+    cflags = [
+      "-Wno-inconsistent-missing-override",
+      "-Dprivate=public",  #allow test code access private members
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "-Wno-unused-command-line-argument",
+      "-Wno-format",
+      "-Wno-unused-const-variable",
+      "-Wno-unused-variable",
+      "-Wno-used-but-marked-unused",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    cflags += [
+      # clang coverage options:
+      "--coverage",
+      "-mllvm",
+      "-limited-coverage-experimental=true",
+      "-fno-use-cxa-atexit",
+      "-DIS_UT",
+    ]
+    if (is_mac) {
+      lib_dirs = [ "/usr/local/opt/llvm/lib" ]
+    }
+    libs = [ "LLVMCore" ]
+  }
+}
+
+# this is the dest for ohos.build
+if (target == "sdkdemotest") {
+  group("sdkunittest") {
+    testonly = true
+    deps = [ ":trace_streamer_sdk_ut" ]
+  }
+}

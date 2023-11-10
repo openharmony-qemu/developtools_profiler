@@ -1,0 +1,155 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../../build/ohos.gni")
+import("../../build/ts.gni")
+if (use_wasm) {
+  import("../../gn/wasm.gni")
+}
+if (use_wasm) {
+  ohos_source_set("trace_streamer_sdk_builtin") {
+    subsystem_name = "trace_streamer"
+    part_name = "trace_streamer_sdk_builtin"
+    sources = []
+    include_dirs = []
+    deps = []
+  }
+}
+ohos_source_set("lib") {
+  subsystem_name = "trace_streamer"
+  part_name = "lib"
+  sources = [
+    "main.cpp",
+    "version.cpp",
+  ]
+  deps = [
+    ":trace_streamer_sdk",
+    "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+    "${THIRD_PARTY}/protobuf:protobuf_static",
+  ]
+  include_dirs = [
+    "${SRC}/base",
+    "..",
+    "trace_streamer",
+    "table",
+    "trace_data",
+    "include",
+    "plugin",
+    "rpc",
+    "./",
+    "cfg",
+    "${THIRD_PARTY}/sqlite/include",
+    "${THIRD_PARTY}/protobuf/src",
+  ]
+  public_deps = [ "protos/types/plugins/mock_data:mock_data_cpp" ]
+}
+ohos_source_set("trace_streamer_sdk") {
+  subsystem_name = "trace_streamer"
+  part_name = "trace_streamer_sdk"
+  sources = [
+    "rpc/http_socket.cpp",
+    "rpc/rpc_server.cpp",
+    "rpc/rpc_server.h",
+    "sdk/sdk_data_parser.cpp",
+    "sdk/sdk_data_parser.h",
+    "sdk/ts_sdk_api.cpp",
+    "sdk/ts_sdk_api.h",
+    "table/gpu_counter_object_table.cpp",
+    "table/gpu_counter_object_table.h",
+    "table/gpu_counter_table.cpp",
+    "table/gpu_counter_table.h",
+    "table/meta_table.cpp",
+    "table/meta_table.h",
+    "table/slice_object_table.cpp",
+    "table/slice_object_table.h",
+    "table/slice_table.cpp",
+    "table/slice_table.h",
+    "table/table_base.cpp",
+    "trace_data/trace_data_cache.cpp",
+    "trace_data/trace_data_cache.h",
+    "trace_data/trace_data_cache_base.cpp",
+    "trace_data/trace_data_cache_base.h",
+    "trace_data/trace_data_cache_reader.cpp",
+    "trace_data/trace_data_cache_reader.h",
+    "trace_data/trace_data_cache_writer.cpp",
+    "trace_data/trace_data_cache_writer.h",
+    "trace_data/trace_data_db.cpp",
+    "trace_data/trace_data_db.h",
+    "trace_data/trace_stdtype.cpp",
+    "trace_data/trace_stdtype.h",
+    "trace_streamer/trace_streamer_selector.cpp",
+    "trace_streamer/trace_streamer_selector.h",
+  ]
+  include_dirs = [
+    "${SRC}/base",
+    "..",
+    "trace_streamer",
+    "filter",
+    "table",
+    "trace_data",
+    "include",
+    "plugin",
+    "rpc",
+    "sdk",
+    "./",
+    "cfg",
+    "${THIRD_PARTY}/sqlite/include",
+    "${THIRD_PARTY}/protobuf/src",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
+  ]
+  if (!use_wasm) {
+    include_dirs += [
+      "${THIRD_PARTY}/libunwind/include",
+      "${THIRD_PARTY}/libunwind/src",
+    ]
+  }
+  deps = [
+    "${SRC}/base:base",
+    "${THIRD_PARTY}/bounds_checking_function:libsec_static",
+    "${THIRD_PARTY}/sqlite:sqlite",
+    "plugin:sdk_plugin",
+  ]
+  public_deps = [ "protos/types/plugins/mock_data:mock_data_cpp" ]
+
+  if (use_wasm || enable_ts_utest) {
+    sources += [
+      "sdk/wasm_func.cpp",
+      "sdk/wasm_func.h",
+    ]
+  }
+  cflags = [ "-std=c++17" ]
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "-std=c++17",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+  }
+}
+if (use_wasm) {
+  wasm_lib("trace_streamer_sdk_builtin_wasm") {
+    name = "trace_streamer_sdk_builtin"
+    deps = [ ":lib" ]
+  }
+} else {
+  if (!is_test && !is_fuzz) {
+    executable("trace_streamer111") {
+      deps = [ ":lib" ]
+    }
+  }
+}

@@ -181,7 +181,7 @@ void TraceStreamerConfig::InitEventNameMap()
                      {TRACE_GPU_PROCESS_MEM, TRACE_ACTION_GPU_PROCESS_MEM},
                      {TRACE_GPU_WINDOW_MEM, TRACE_ACTION_GPU_WINDOW_MEM},
                      {TRACE_VSYNC, TRACE_ACTION_VSYNC},
-                     {TRACE_ONVSYNC, TRACE_ACTION_ONVSYNC},
+                     {TRACE_ON_DO_COMPOSITION, TRACE_ACTION_ON_DO_COMPOSITION},
                      {TRACE_FRAMEQUEUE, TRACE_ACTION_FRAMEQUEUE},
                      {TRACE_EVENT_EBPF, TRACE_ACTION_EBPF},
                      {TRACE_EVENT_EBPF_FILE_SYSTEM, TRACE_ACTION_EBPF_FILE_SYSTEM},
@@ -1237,7 +1237,7 @@ void TraceStreamerConfig::InitSecurityMap()
             },
         },
         {
-            TRACE_ONVSYNC,
+            TRACE_ON_DO_COMPOSITION,
             {
                 {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
                 {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},

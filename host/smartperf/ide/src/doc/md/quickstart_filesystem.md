@@ -58,7 +58,7 @@ FileSystem Events的Tab页如图：
 +     Second Argument：系统调用的第二个参数。
 +     Third Argument：系统调用的第三个参数。
 +     Fourth Argument：系统调用的第四个参数。
-+     Return：系统调用的返回值。
++     Retrun：系统调用的返回值。
 +     Error：错误码。
 +     Backtrace：调用栈顶部函数，并显示调用栈深度。
 File Descriptor History的Tab页如图：

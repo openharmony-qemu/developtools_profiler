@@ -400,6 +400,9 @@ bool HtraceEventParser::SchedSwitchEvent(const ProtoReader::DataArea& event)
     std::string prevCommStr = msg.prev_comm().ToStdString();
     std::string nextCommStr = msg.next_comm().ToStdString();
     auto prevState = msg.prev_state();
+    if (prevState == TASK_WAKEKILL) {
+        prevState = TASK_RUNNABLE;
+    }
 
     auto nextInternalTid =
         streamFilters_->processFilter_->UpdateOrCreateThreadWithName(eventTimeStamp_, nextPidValue, nextCommStr);

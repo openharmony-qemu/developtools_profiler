@@ -101,7 +101,12 @@ export class SpClockChart {
         );
       };
       traceRow.onThreadHandler = (useCache) => {
-        let context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        let context:CanvasRenderingContext2D;
+        if(traceRow.currentContext){
+          context = traceRow.currentContext;
+        } else{
+          context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        }
         traceRow.canvasSave(context);
         (renders['clock'] as ClockRender).renderMainThread(
           {

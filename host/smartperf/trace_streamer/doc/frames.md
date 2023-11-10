@@ -12,9 +12,9 @@ H:MarshRSTransactionData内会包含线程号和应用的帧标号。  例如：
 ## 渲染帧
 渲染帧会有下面一些调用栈：  
 H:ReceiveVsync  
-H:RSMainThread::OnVsync  
+H:RSMainThread::DoComposition
 H:RSMainThread::ProcessCommandUni  
-H:ReceiveVsync包含H:RSMainThread::OnVsync , H:RSMainThread::OnVsync包含H:RSMainThread::ProcessCommandUni.  
+H:ReceiveVsync包含H:RSMainThread::DoComposition, H:RSMainThread::DoComposition包含H:RSMainThread::ProcessCommandUni.  
 特别地：当渲染帧不包含H:RSMainThread::ProcessCommandUni时，为无效的渲染帧。  
 H:RSMainThread::ProcessCommandUni内包含被渲染帧所属的线程号和帧编号。例如： H:RSMainThread::ProcessCommandUni [32402,146]   
 ## 应用帧和渲染帧关联

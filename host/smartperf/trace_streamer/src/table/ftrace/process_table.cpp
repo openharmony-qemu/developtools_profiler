@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     IPID,
     TYPE,
@@ -76,9 +76,9 @@ void ProcessTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo&
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case IPID:
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::IPID:
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -97,9 +97,9 @@ void ProcessTable::FilterByConstraint(FilterConstraints& fc, double& filterCost,
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case IPID:
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::IPID:
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -128,7 +128,7 @@ int32_t ProcessTable::Update(int32_t argc, sqlite3_value** argv, sqlite3_int64* 
     constexpr int32_t colOffset = 2;
     for (auto i = colOffset; i < argc; i++) {
         auto col = i - colOffset;
-        if (col != NAME) {
+        if (static_cast<Index>(col) != Index::NAME) {
             continue;
         }
         const char* name = reinterpret_cast<const char*>(sqlite3_value_text(argv[i]));
@@ -166,12 +166,12 @@ int32_t ProcessTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
-            case IPID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
+            case Index::IPID:
                 FilterId(c.op, argv[i]);
                 break;
-            case PID:
+            case Index::PID:
                 FilterIndex(c.col, c.op, argv[i]);
                 break;
             default:
@@ -182,9 +182,9 @@ int32_t ProcessTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
-            case IPID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
+            case Index::IPID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -198,39 +198,39 @@ int32_t ProcessTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
 int32_t ProcessTable::Cursor::Column(int32_t col) const
 {
     const auto& process = dataCache_->GetConstProcessData(CurrentRow());
-    switch (col) {
-        case ID:
-        case IPID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
+        case Index::IPID:
             sqlite3_result_int64(context_, CurrentRow());
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, "process", STR_DEFAULT_LEN, nullptr);
             break;
-        case PID:
+        case Index::PID:
             sqlite3_result_int64(context_, process.pid_);
             break;
-        case NAME:
+        case Index::NAME:
             if (process.cmdLine_.size()) {
                 sqlite3_result_text(context_, process.cmdLine_.c_str(), static_cast<int32_t>(process.cmdLine_.length()),
                                     nullptr);
             }
             break;
-        case START_TS:
+        case Index::START_TS:
             if (process.startT_) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(process.startT_));
             }
             break;
-        case SWITCH_COUNT:
-        case SWTICH_COUNT:
+        case Index::SWITCH_COUNT:
+        case Index::SWTICH_COUNT:
             sqlite3_result_int64(context_, process.switchCount_);
             break;
-        case THREAD_COUNT:
+        case Index::THREAD_COUNT:
             sqlite3_result_int64(context_, process.threadCount_);
             break;
-        case SLICE_COUNT:
+        case Index::SLICE_COUNT:
             sqlite3_result_int64(context_, process.sliceSize_);
             break;
-        case MEM_COUNT:
+        case Index::MEM_COUNT:
             sqlite3_result_int64(context_, process.memSize_);
             break;
         default:
@@ -294,8 +294,8 @@ void ProcessTable::Cursor::FilterPid(unsigned char op, uint64_t value)
 }
 void ProcessTable::Cursor::FilterIndex(int32_t col, unsigned char op, sqlite3_value* argv)
 {
-    switch (col) {
-        case PID:
+    switch (static_cast<Index>(col)) {
+        case Index::PID:
             /* code */
             FilterPid(op, static_cast<uint64_t>(sqlite3_value_int64(argv)));
             break;

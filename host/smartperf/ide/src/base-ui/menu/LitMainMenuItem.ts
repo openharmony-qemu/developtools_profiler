@@ -14,7 +14,6 @@
  */
 
 import { BaseElement, element } from '../BaseElement.js';
-let textColor = '';
 
 @element('lit-main-menu-item')
 export class LitMainMenuItem extends BaseElement {
@@ -66,14 +65,6 @@ export class LitMainMenuItem extends BaseElement {
     this.titleEl = this.shadowRoot?.querySelector('.name');
     this.iconEl = this.shadowRoot?.querySelector('.icon');
     this.fileEL = this.shadowRoot?.querySelector('.file');
-    let backgroundColor = sessionStorage.getItem('backgroundColor');
-    if (backgroundColor == 'rgb(38, 47, 60)') {
-      textColor = 'white';
-      this.style.color = 'white';
-    } else {
-      textColor = 'black';
-      this.style.color = 'black';
-    }
   }
 
   isFile(): boolean {
@@ -116,7 +107,7 @@ export class LitMainMenuItem extends BaseElement {
                 display: flex;
                 font-family: Helvetica;
                 font-size: 14px;
-                color: ${textColor};
+                color: #000;
                 text-align: left;
                 line-height: 20px;
                 font-weight: 400

@@ -36,6 +36,7 @@ public:
 
     // only for wasm, no callback
     int32_t WasmSqlQuery(const uint8_t* data, size_t len, uint8_t* out, int32_t outLen);
+    bool SqlMetricsQueryWithCallback(const uint8_t* data, size_t len, ResultCallBack callback) const;
     int32_t WasmSqlQueryWithCallback(const uint8_t* data, size_t len, ResultCallBack callback) const;
     int32_t UpdateTraceTime(const uint8_t* data, int32_t len);
     int32_t TraceStreamer_Init_ThirdParty_Config(const uint8_t* data, int32_t len);

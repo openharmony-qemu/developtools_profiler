@@ -107,6 +107,12 @@
             <rect id="rectangle" fill="#000000" transform="translate(12.001725, 12.001590) rotate(-315.000000) translate(-12.001725, -12.001590) " x="11.4017247" y="4.50158952" width="1.2" height="15" rx="0.6"></rect>
         </g>
     </symbol>
+    <symbol id="icon-close-light" viewBox="0 0 24 24">
+        <g id="close" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+            <rect id="rectangle" stroke="currentColor" transform="translate(12.002785, 12.003027) rotate(-315.000000) translate(-12.002785, -12.003027) " x="4.50278502" y="11.4030272" width="15" height="1.2" rx="0.6"></rect>
+            <rect id="rectangle" stroke="currentColor" transform="translate(12.001725, 12.001590) rotate(-315.000000) translate(-12.001725, -12.001590) " x="11.4017247" y="4.50158952" width="1.2" height="15" rx="0.6"></rect>
+        </g>
+    </symbol>
     <symbol id="icon-close-circle-fill" viewBox="0 0 16 16">
         <g id="close" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="1">
         <g id="closeHovered" transform="translate(2.000000, 2.000000)" fill="#bfbfbf">
@@ -317,5 +323,21 @@
             </g>
         </g>
     </g>
+    </symbol>
+    <symbol id="icon-run-sql" viewBox="0 0 24 24">
+        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+            <g transform="translate(-1343.000000, -542.000000)">
+                <g transform="translate(228.000000, 88.000000)">
+                    <g id="table-copy" transform="translate(20.000000, 438.000000)">
+                        <g id="play" transform="translate(1095.000000, 16.000000)">
+                            <rect fill="#000000" opacity="0.600880941" x="0" y="0" width="16" height="16" rx="8"></rect>
+                            <g id="arrowDown" transform="translate(6.500669, 3.501909)" fill="#FFFFFF">
+                                <polygon transform="translate(2.500000, 4.500000) rotate(-270.000000) translate(-2.500000, -4.500000) " points="2.5 2 7 7 -2 7"></polygon>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
     </symbol>
 </svg>

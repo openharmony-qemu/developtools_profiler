@@ -88,6 +88,7 @@ export class VmTrackerChart {
     let VmTrackerRow = TraceRow.skeleton();
     VmTrackerRow.rowId = 'VmTrackerRow';
     VmTrackerRow.rowType = TraceRow.ROW_TYPE_VM_TRACKER;
+    VmTrackerRow.addTemplateTypes('ProcessMemory');
     VmTrackerRow.rowParentId = '';
     VmTrackerRow.style.height = '40px';
     VmTrackerRow.index = 0;
@@ -416,7 +417,12 @@ export class VmTrackerChart {
       this.showTip(vmTrackerTraceRow);
     };
     vmTrackerTraceRow.onThreadHandler = (useCache): void => {
-      let context = vmTrackerTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context:CanvasRenderingContext2D
+      if(vmTrackerTraceRow.currentContext){
+        context = vmTrackerTraceRow.currentContext;
+      }else{
+        context = vmTrackerTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       vmTrackerTraceRow.canvasSave(context);
       (renders.snapshot as SnapshotRender).renderMainThread(
         {

@@ -14,7 +14,6 @@
  */
 
 import { BaseElement, element } from '../BaseElement.js';
-let textColor = '';
 
 @element('lit-main-menu-group')
 export class LitMainMenuGroup extends BaseElement {
@@ -65,16 +64,6 @@ export class LitMainMenuGroup extends BaseElement {
       }
       this.collapsed = !this.collapsed;
     });
-    let backgroundColor = sessionStorage.getItem('backgroundColor');
-    if (backgroundColor == 'rgb(38, 47, 60)') {
-      textColor = 'white';
-      this.groupNameEl!.style.color = 'white';
-      this.groupDescEl!.style.color = 'white';
-    } else {
-      textColor = 'black';
-      this.groupNameEl!.style.color = 'black';
-      this.groupDescEl!.style.color = 'black';
-    }
   }
 
   initHtml(): string {
@@ -121,18 +110,17 @@ export class LitMainMenuGroup extends BaseElement {
         .group-name{
             font-size: 14px;
             font-family: Helvetica;
-            color: ${textColor};
+            color: #000;
             padding: 20px 24px 0px 24px;
             line-height: 16px;
             font-weight: 400;
             text-align: left;
         }
         .group-describe{
-            color: ${textColor};
+            color: #000;
             font-size: 0.6rem;
             padding: 4px 24px 20px 24px;
         }
-       
         </style>
        <div id="group">
          <div class="group-name"></div>

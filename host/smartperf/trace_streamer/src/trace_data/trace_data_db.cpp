@@ -22,6 +22,7 @@
 #include <functional>
 #include <string_view>
 #include <unistd.h>
+#include <regex>
 
 #include "codec_cov.h"
 #include "file.h"
@@ -264,12 +265,15 @@ std::vector<std::string> TraceDataDB::SearchData()
     }
     return values;
 }
-int32_t TraceDataDB::SearchDatabase(const std::string& sql, bool print)
+int32_t TraceDataDB::SearchDatabase(std::string& sql, bool print)
 {
     Prepare();
     int32_t rowCount = 0;
     sqlite3_stmt* stmt = nullptr;
     int32_t ret = sqlite3_prepare_v2(db_, sql.c_str(), static_cast<int32_t>(sql.size()), &stmt, nullptr);
+    if (sql.back() != '\n') {
+        sql += "\r\n";
+    }
     printf("Executing sql: %s", sql.c_str());
     if (ret != SQLITE_OK) {
         TS_LOGE("sqlite3_prepare_v2(%s) failed: %d:%s", sql.c_str(), ret, sqlite3_errmsg(db_));
@@ -320,6 +324,48 @@ int32_t TraceDataDB::OperateDatabase(const std::string& sql)
     }
     return ret;
 }
+
+std::string TraceDataDB::SearchDatabase(const std::string& sql)
+{
+    Prepare();
+    sqlite3_stmt* stmt = nullptr;
+    int32_t ret = sqlite3_prepare_v2(db_, sql.c_str(), static_cast<int32_t>(sql.size()), &stmt, nullptr);
+    if (ret != SQLITE_OK) {
+        TS_LOGE("sqlite3_prepare_v2(%s) failed: %d:%s", sql.c_str(), ret, sqlite3_errmsg(db_));
+        return "";
+    }
+
+    std::string res = "ok\r\n";
+    int32_t colCount = sqlite3_column_count(stmt);
+    if (colCount == 0) {
+        return "";
+    }
+    res += "{\"columns\":[";
+    for (int32_t i = 0; i < colCount; i++) {
+        res += "\"";
+        res += sqlite3_column_name(stmt, i);
+        res += "\",";
+    }
+    res.pop_back();
+    res += "],\"values\":[";
+    bool hasRow = false;
+    constexpr int32_t defaultLenRowString = 1024;
+    std::string row;
+    row.reserve(defaultLenRowString);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        hasRow = true;
+        GetRowString(stmt, colCount, row);
+        res += row + ",";
+    }
+    if (hasRow) {
+        res.pop_back();
+    }
+    res += "]}\r\n";
+
+    sqlite3_finalize(stmt);
+    return res;
+}
+
 int32_t TraceDataDB::SearchDatabase(const std::string& sql, ResultCallBack resultCallBack)
 {
     Prepare();
@@ -457,9 +503,7 @@ void TraceDataDB::GetRowString(sqlite3_stmt* stmt, int32_t colCount, std::string
         int32_t type = sqlite3_column_type(stmt, i);
         switch (type) {
             case SQLITE_TEXT:
-                rowStr += "\"";
-                rowStr += p;
-                rowStr += "\"";
+                rowStr += FormatString(p);
                 break;
             default:
                 rowStr += p;

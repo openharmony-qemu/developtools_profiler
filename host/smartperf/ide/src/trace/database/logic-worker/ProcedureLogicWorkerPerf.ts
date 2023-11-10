@@ -18,6 +18,7 @@ import { PerfBottomUpStruct } from '../../bean/PerfBottomUpStruct.js';
 
 const systemRuleName = '/system/';
 const numRuleName = '/max/min/';
+const maxDepth = 128;
 
 export class ProcedureLogicWorkerPerf extends LogicHandler {
   filesData: any = {};
@@ -201,8 +202,11 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
                  p.thread_id    as tid,
                  p.count,
                  p.process_id   as pid,
-                 p.event_count  as eventCount
-          from (select callchain_id, s.thread_id, thread_state, process_id, count(callchain_id) as count,event_count
+                 p.event_count  as eventCount,
+                 p.ts as ts
+          from (select callchain_id, s.thread_id, thread_state, process_id, 
+                count(callchain_id) as count,event_count,
+                group_concat(s.timestamp_trace - t.start_ts,',') as ts
                 from perf_sample s, trace_range t
                     left join perf_thread thread
                 on s.thread_id = thread.thread_id
@@ -309,8 +313,12 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
   }
 
   addPerfGroupData(callChain: PerfCallChain) {
-    this.callChainData[callChain.sampleId] = this.callChainData[callChain.sampleId] || [];
-    this.callChainData[callChain.sampleId].push(callChain);
+    const currentCallChain = this.callChainData[callChain.sampleId] || [];
+    this.callChainData[callChain.sampleId] = currentCallChain;
+    if (currentCallChain.length > maxDepth) {
+      currentCallChain.splice(0, 1);
+    }
+    currentCallChain.push(callChain);
   }
 
   getPerfCallChainsBySampleIds(sampleIds: string[], isTopDown: boolean) {
@@ -348,6 +356,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
             this.currentTreeMapData[perfCallChains[topIndex].name + perfSample.pid] = perfRootNode;
             this.currentTreeList.push(perfRootNode);
           }
+
           PerfCallChainMerageData.merageCallChainSample(perfRootNode, perfCallChains[topIndex], perfSample, false);
           this.mergeChildrenByIndex(perfRootNode, perfCallChains, topIndex, perfSample, isTopDown);
         }
@@ -368,6 +377,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         perfProcessMerageData.dur = merageData.dur;
         perfProcessMerageData.count = merageData.dur;
         perfProcessMerageData.total = totalSamplesCount;
+        perfProcessMerageData.tsArray = [...merageData.tsArray];
         rootMerageMap[merageData.pid] = perfProcessMerageData;
       } else {
         rootMerageMap[merageData.pid].children.push(merageData);
@@ -375,6 +385,9 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         rootMerageMap[merageData.pid].dur += merageData.dur;
         rootMerageMap[merageData.pid].count += merageData.dur;
         rootMerageMap[merageData.pid].total = totalSamplesCount;
+        for (const ts of merageData.tsArray) {
+          rootMerageMap[merageData.pid].tsArray.push(ts);
+        }
       }
       merageData.parentNode = rootMerageMap[merageData.pid]; //子节点添加父节点的引用
     });
@@ -406,7 +419,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
   ) {
     isTopDown ? index++ : index--;
     let isEnd = isTopDown ? callChainDataList.length == index + 1 : index == 0;
-    let node;
+    let node: PerfCallChainMerageData;
     if (
       currentNode.initChildren.filter((child: PerfCallChainMerageData) => {
         if (child.symbolName == callChainDataList[index]?.name) {
@@ -424,7 +437,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
       this.currentTreeList.push(node);
       node.parentNode = currentNode;
     }
-    if (node && !isEnd) this.mergeChildrenByIndex(node, callChainDataList, index, sample, isTopDown);
+    if (node! && !isEnd) this.mergeChildrenByIndex(node, callChainDataList, index, sample, isTopDown);
   }
 
   groupNewTreeNoId(sampleIds: string[], isTopDown: boolean): any[] {
@@ -552,8 +565,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
   //symbol lib prune
   recursionPruneTree(sample: PerfCallChainMerageData, symbolName: string, isSymbol: boolean) {
     if ((isSymbol && sample.symbolName == symbolName) || (!isSymbol && sample.libName == symbolName)) {
-      sample.currentTreeParentNode &&
-        sample.currentTreeParentNode.children.splice(sample.currentTreeParentNode.children.indexOf(sample), 1);
+      sample.parent && sample.parent.children.splice(sample.parent.children.indexOf(sample), 1);
     } else {
       sample.children.forEach((child) => {
         this.recursionPruneTree(child, symbolName, isSymbol);
@@ -663,11 +675,11 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     sampleArray.forEach((sample) => {
       if ((sample.symbol && sample.symbol.toLocaleLowerCase().includes(search)) || parentSearch) {
         sample.searchShow = true;
-        let parentNode = sample.currentTreeParentNode;
+        let parentNode = sample.parent;
         sample.isSearch = sample.symbol != undefined && sample.symbol.toLocaleLowerCase().includes(search);
         while (parentNode != undefined && !parentNode.searchShow) {
           parentNode.searchShow = true;
-          parentNode = parentNode.currentTreeParentNode;
+          parentNode = parentNode.parent;
         }
       } else {
         sample.searchShow = false;
@@ -799,6 +811,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
           (child) => child.symbolName === item.name + '(' + item.fileName + ')'
         );
         if (existingNode) {
+          existingNode.tsArray.push(...sample.ts.split(',').map(Number));
           currentNode = existingNode;
           existingNode.totalTime += perfTime * sample.count;
           existingNode.calculateSelfTime();
@@ -806,6 +819,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         } else {
           let newNode = new PerfBottomUpStruct(item.name + '(' + item.fileName + ')');
           newNode.totalTime = perfTime * sample.count;
+          newNode.tsArray = sample.ts.split(',').map(Number);
           currentNode.addChildren(newNode);
           newNode.calculateSelfTime();
           newNode.notifyParentUpdateSelfTime();
@@ -831,6 +845,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         const clonePerfBottomUpStruct = new PerfBottomUpStruct(perfBottomUpStruct.symbolName);
         clonePerfBottomUpStruct.selfTime = perfBottomUpStruct.selfTime;
         clonePerfBottomUpStruct.totalTime = perfBottomUpStruct.totalTime;
+        clonePerfBottomUpStruct.tsArray = [...perfBottomUpStruct.tsArray];
         reverseTreeArray.push(clonePerfBottomUpStruct);
         this.copyParentNode(clonePerfBottomUpStruct, perfBottomUpStruct);
       }
@@ -864,6 +879,9 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         bottomUpStruct = sameSymbolMap.get(symbolKey)!;
         bottomUpStruct.totalTime += perfBottomUpStruct.totalTime;
         bottomUpStruct.selfTime += perfBottomUpStruct.selfTime;
+        for (const ts of perfBottomUpStruct.tsArray) {
+          bottomUpStruct.tsArray.push(ts);
+        }
       } else {
         bottomUpStruct = perfBottomUpStruct;
         sameSymbolMap.set(symbolKey, bottomUpStruct);
@@ -895,6 +913,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
       const copyParent = new PerfBottomUpStruct(bottomUpStruct.parentNode.symbolName);
       copyParent.selfTime = perfBottomUpStruct.selfTime;
       copyParent.totalTime = perfBottomUpStruct.totalTime;
+      copyParent.tsArray = [...perfBottomUpStruct.tsArray];
       perfBottomUpStruct.addChildren(copyParent);
       this.copyParentNode(copyParent, bottomUpStruct.parentNode);
     }
@@ -988,7 +1007,7 @@ export class PerfCallChainMerageData extends ChartStruct {
   #total = 0;
   id: string = '';
   parentId: string = '';
-  currentTreeParentNode: PerfCallChainMerageData | undefined = undefined;
+  parent: PerfCallChainMerageData | undefined = undefined;
   symbolName: string = '';
   symbol: string = '';
   libName: string = '';
@@ -1010,7 +1029,7 @@ export class PerfCallChainMerageData extends ChartStruct {
   searchShow: boolean = true;
   isSearch: boolean = false;
   set parentNode(data: PerfCallChainMerageData | undefined) {
-    this.currentTreeParentNode = data;
+    this.parent = data;
     this.#parentNode = data;
   }
 
@@ -1077,6 +1096,7 @@ export class PerfCallChainMerageData extends ChartStruct {
     }
     currentNode.dur += sample.count;
     currentNode.count += sample.count;
+    currentNode.tsArray.push(...sample.ts.split(',').map(Number));
   }
 }
 
@@ -1087,6 +1107,7 @@ export class PerfCountSample {
   threadState: string = '';
   pid: number = 0;
   eventCount: number = 0;
+  ts: string = '';
 }
 
 export class PerfStack {
