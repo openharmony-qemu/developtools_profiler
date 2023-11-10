@@ -96,6 +96,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_GPU_MEMORY_VMTRACKER = 'gpu-memory-vmTracker';
   static ROW_TYPE_VMTRACKER_SHM = 'VmTracker-shm';
   static ROW_TYPE_CLOCK_GROUP = 'clock-group';
+  static ROW_TYPE_COLLECT_GROUP = 'collect-group';
   static ROW_TYPE_CLOCK = 'clock';
   static ROW_TYPE_IRQ_GROUP = 'irq-group';
   static ROW_TYPE_IRQ = 'irq';
@@ -142,6 +143,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   offscreen: Array<OffscreenCanvas | undefined> = [];
   canvasWidth = 0;
   canvasHeight = 0;
+  private _collectGroup: string | undefined;
   public _frame: Rect | undefined;
   public isLoading: boolean = false;
   public readonly args: any;
@@ -213,6 +215,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       'sleeping',
       'check-type',
       'collect-type',
+      'collect-group',
       'disabled-check',
       'row-discard',
       'func-expand',
@@ -250,6 +253,15 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       this.removeAttribute('row-discard');
       this.style.display = 'block';
     }
+  }
+
+  get collectGroup() {
+    return this._collectGroup;
+  }
+
+  set collectGroup(value: string | undefined) {
+    this._collectGroup = value;
+    this.setAttribute('collect-group', value || '');
   }
 
   set rowSetting(value: string) {
@@ -445,6 +457,11 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.childrenList.push(child);
     child.rowHidden = false;
     this.fragment.appendChild(child);
+  }
+
+  removeChildTraceRow(row: TraceRow<any>) {
+    this.childrenList.splice(this.childrenList.indexOf(row),1);
+    this.fragment.removeChild(row);
   }
 
   addChildTraceRowAfter(child: TraceRow<any>, targetRow: TraceRow<any>) {
@@ -1242,9 +1259,13 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         :host(:not([collect-type])) {
             /*position:static;*/
         }
-        :host([collect-type]) .collect{
+        :host([collect-type][collect-group='1']) .collect{
             display: block;
             color: #5291FF;
+        }
+        :host([collect-type][collect-group='2']) .collect{
+            display: block;
+            color: #f56940;
         }
         :host(:not([collect-type])) .collect{
             display: none;

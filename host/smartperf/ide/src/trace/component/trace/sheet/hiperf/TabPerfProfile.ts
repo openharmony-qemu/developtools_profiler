@@ -31,7 +31,6 @@ import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { showButtonMenu } from '../SheetUtils.js';
-import { SpHiPerf } from '../../../chart/SpHiPerf.js';
 
 @element('tabpane-perf-profile')
 export class TabpanePerfProfile extends BaseElement {
@@ -91,6 +90,7 @@ export class TabpanePerfProfile extends BaseElement {
         this.perfProfileFrameChart?.updateCanvas(true, initWidth);
         this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
         this.switchFlameChart();
+        this.perfProfilerFilter.icon = 'block';
       }
     );
   }

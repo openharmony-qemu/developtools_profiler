@@ -21,11 +21,7 @@ import { SlicesTime, SportRuler } from './timer-shaft/SportRuler.js';
 import { procedurePool } from '../../database/Procedure.js';
 import { Flag } from './timer-shaft/Flag.js';
 import { info } from '../../../log/Log.js';
-import { tabConfig } from './base/TraceSheetConfig.js';
 import { TraceSheet } from './base/TraceSheet.js';
-import { LitTabs } from '../../../base-ui/tabs/lit-tabs.js';
-import { LitTabpane } from '../../../base-ui/tabs/lit-tabpane.js';
-import { TabPaneCurrent } from './sheet/TabPaneCurrent.js';
 import { SelectionParam } from '../../bean/BoxSelection.js';
 import { SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
 import './timer-shaft/CollapseButton.js'
@@ -104,6 +100,8 @@ export class TimerShaftElement extends BaseElement {
   public totalEL: HTMLDivElement | null | undefined;
   public timeTotalEL: HTMLSpanElement | null | undefined;
   public timeOffsetEL: HTMLSpanElement | null | undefined;
+  public collectGroup: HTMLDivElement | null | undefined;
+  public collect1: HTMLInputElement | null | undefined;
   public loadComplete: boolean = false;
   public collecBtn: HTMLElement | null | undefined;
   rangeChangeHandler: ((timeRange: TimeRange) => void) | undefined = undefined;
@@ -210,9 +208,18 @@ export class TimerShaftElement extends BaseElement {
     this.root = this.shadowRoot?.querySelector('.root');
     this.canvas = this.shadowRoot?.querySelector('.panel');
     this.totalEL = this.shadowRoot?.querySelector('.total');
+    this.collect1 = this.shadowRoot?.querySelector('#collect1');
     this.timeTotalEL = this.shadowRoot?.querySelector('.time-total');
     this.timeOffsetEL = this.shadowRoot?.querySelector('.time-offset');
     this.collecBtn = this.shadowRoot?.querySelector('.time-collect');
+    this.collectGroup = this.shadowRoot?.querySelector('.collect_group');
+    this.collectGroup?.addEventListener('click', (e) => {
+      // @ts-ignore
+      if (e.target && e.target.tagName === 'INPUT') {
+        // @ts-ignore
+        window.publish(window.SmartEvent.UI.CollectGroupChange, e.target.value);
+      }
+    });
     procedurePool.timelineChange = (a: any) => this.rangeChangeHandler?.(a);
     window.subscribe(window.SmartEvent.UI.TimeRange, (b) => this.setRangeNS(b.startNS, b.endNS));
   }
@@ -506,10 +513,16 @@ export class TimerShaftElement extends BaseElement {
         }
         .time-div{
             box-sizing: border-box;
-            width: 100%;border-top: 1px solid var(--dark-background,#dadada);height: 100%;display: flex;justify-content: space-between;background-color: var(--dark-background1,white);color: var(--dark-color1,#212121);font-size: 0.7rem;
+            width: 100%;
+            border-top: 1px solid var(--dark-background,#dadada);
+            height: 100%;display: flex;justify-content: space-between;
+            background-color: var(--dark-background1,white);
+            color: var(--dark-color1,#212121);
+            font-size: 0.7rem;
             border-right: 1px solid var(--dark-background,#999);
             padding: 2px 6px;
-            display: flex;justify-content: space-between;
+            display: flex;
+            justify-content: space-between;
             user-select: none;
             position: relative;
         }
@@ -526,6 +539,17 @@ export class TimerShaftElement extends BaseElement {
         .time-collect[close] > .time-collect-arrow{
             transform: rotateZ(-180deg);
         }
+        .collect_group{
+            position:absolute;
+            right:25px;
+            bottom:5px;
+            display: flex;
+            flex-direction: row;
+        }
+        .collect_div{
+            display: flex;
+            align-items: center;
+        }
 
         </style>
         <div class="root">
@@ -537,7 +561,17 @@ export class TimerShaftElement extends BaseElement {
                     <div class="time-collect">
                         <lit-icon class="time-collect-arrow" name="caret-down" size="17"></lit-icon>
                     </div>
-                    <collapse-button>123</collapse-button>
+                    <div class="collect_group">
+                        <div class="collect_div">
+                            <input id="collect1" type="radio" style="cursor: pointer" checked name="collect_group" value="1"/>
+                            <label>collect 1</label>
+                        </div>
+                        <div class="collect_div">
+                            <input type="radio" style="cursor: pointer" name="collect_group" value="2"/>
+                            <label>collect 2</label>
+                        </div>
+                    </div>
+                    <collapse-button expand>123</collapse-button>
                 </div>
             </div>
             <canvas class="panel"></canvas>

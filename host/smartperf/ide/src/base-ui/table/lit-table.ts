@@ -89,12 +89,13 @@ export class LitTable extends HTMLElement {
         }
         .td{
             box-sizing: border-box;
-            padding: 4.5px;
+            padding: 3px;
             display: flex;
             justify-content: flex-start;
             align-items: center;
             width: 100%;
             height: auto;
+            line-height: 21px;
             cursor: pointer;
         }
         .td label{

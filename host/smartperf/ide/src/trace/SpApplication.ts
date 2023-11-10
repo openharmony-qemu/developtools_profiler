@@ -29,7 +29,7 @@ import { LitProgressBar } from '../base-ui/progress-bar/LitProgressBar.js';
 import { SpRecordTrace } from './component/SpRecordTrace.js';
 import { SpWelcomePage } from './component/SpWelcomePage.js';
 import { LitSearch } from './component/trace/search/Search.js';
-import { DbPool, threadPool } from './database/SqlLite.js';
+import { DbPool, queryExistFtrace, threadPool } from './database/SqlLite.js';
 import './component/trace/search/Search.js';
 import './component/SpWelcomePage.js';
 import './component/SpSystemTrace.js';
@@ -53,6 +53,7 @@ import { FlagsConfig, SpFlags } from './component/SpFlags.js';
 import './component/SpFlags.js';
 import './component/trace/base/CustomThemeColor.js';
 import { CustomThemeColor, Theme } from './component/trace/base/CustomThemeColor.js';
+import { convertPool } from './database/Convert.js';
 
 @element('sp-application')
 export class SpApplication extends BaseElement {
@@ -72,6 +73,7 @@ export class SpApplication extends BaseElement {
     187: true,
     189: true,
   };
+  private traceFileName: string | undefined;
   colorTransiton: any;
 
   static get observedAttributes() {
@@ -379,6 +381,7 @@ export class SpApplication extends BaseElement {
                     <lit-search id="lit-search"></lit-search>
                     <lit-search id="lit-record-search"></lit-search>
                 </div>
+                <img class="cut-trace-file" title="Cut Trace File" src="img/menu-cut.png" style="display: block;text-align: right;position: absolute;right: 3.2em;cursor: pointer;top: 20px">
                 <img class="filter-config" title="Display Template" src="img/config_filter.png" style="display: block;text-align: right;position: absolute;right: 1.2em;cursor: pointer;top: 20px">
                 <lit-progress-bar class="progress"></lit-progress-bar>
             </div>
@@ -398,6 +401,8 @@ export class SpApplication extends BaseElement {
                 </sp-query-sql>
                 <sp-info-and-stats style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0;left:0;right:0;bottom:0;position:absolute;z-index: 99" id="sp-info-and-stats">
                 </sp-info-and-stats>
+                <sp-convert-trace style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0;left:0;right:0;bottom:0;position:absolute;z-index: 99" id="sp-convert-trace">
+                </sp-convert-trace>
                 <sp-help style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 103" id="sp-help">
                 </sp-help>
                 <sp-flags style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 104" id="sp-flags">
@@ -436,6 +441,10 @@ export class SpApplication extends BaseElement {
     let search = this.shadowRoot?.querySelector('.search-container') as HTMLElement;
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
     let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
+    let cutTraceFile = this.shadowRoot?.querySelector('.cut-trace-file') as HTMLImageElement;
+    cutTraceFile.addEventListener('click', () => {
+      this.croppingFile(progressEL, litSearch);
+    });
     let customColor = this.shadowRoot?.querySelector('.custom-color') as CustomThemeColor;
     mainMenu!.setAttribute('main_menu', '1');
     chartFilter!.setAttribute('mode', '');
@@ -454,8 +463,8 @@ export class SpApplication extends BaseElement {
       spRecordTemplate,
       spFlags,
     ];
-    document.addEventListener("visibilitychange", function() {
-      if (document.visibilityState === "visible") {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
         if (window.localStorage.getItem('Theme') == 'dark') {
           that.changeTheme(Theme.DARK);
         } else {
@@ -744,6 +753,91 @@ export class SpApplication extends BaseElement {
       return menus;
     }
 
+    function restoreDownLoadIcons(time: number) {
+      let timer = setInterval(function () {
+        let querySelectorAll = mainMenu.shadowRoot?.querySelectorAll<LitMainMenuGroup>('lit-main-menu-group');
+        querySelectorAll!.forEach((menuGroup) => {
+          let attribute = menuGroup.getAttribute('title');
+          if (attribute === 'Convert trace') {
+            let querySelectors = menuGroup.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
+            querySelectors.forEach((item) => {
+              if (item.getAttribute('title') === 'Convert to .systrace') {
+                item!.setAttribute('icon', 'download');
+                let querySelector = item!.shadowRoot?.querySelector('.icon') as LitIcon;
+                querySelector.removeAttribute('spin');
+                clearInterval(timer);
+              }
+            });
+          }
+        });
+      }, time);
+    }
+
+    function postConvert(fileName: string) {
+      let uint8Array = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
+      let enc = new TextDecoder();
+      let headerStr = enc.decode(uint8Array);
+      let newFileName = fileName.substring(0, fileName.lastIndexOf('.')) + '.txt';
+      let aElement = document.createElement('a');
+      if (headerStr.indexOf('OHOSPROF') == 0) {
+        convertPool.submitWithName('getConvertData', (status: boolean, msg: string, results: Blob) => {
+          aElement.href = URL.createObjectURL(results);
+          aElement.download = newFileName;
+          aElement.click();
+          window.URL.revokeObjectURL(aElement.href);
+          let time = 2000;
+          let size = results.size / (1024 * 1024);
+          if (size > 100 && size < 1200) {
+            time = Number(Number(size / 100).toFixed(2)) * 1800;
+          } else if (size >= 1200) {
+            time = Number(Number(size / 100).toFixed(2)) * 2500;
+          }
+          restoreDownLoadIcons(time);
+        });
+      } else {
+        let time = 1000;
+        let size = DbPool.sharedBuffer!.byteLength / (1024 * 1024);
+        if (size > 100) {
+          time = Number(Number(size / 100).toFixed(2)) * 1000;
+        }
+        aElement.href = URL.createObjectURL(new Blob([DbPool.sharedBuffer!]));
+        aElement.download = newFileName;
+        aElement.click();
+        window.URL.revokeObjectURL(aElement.href);
+        restoreDownLoadIcons(time);
+      }
+    }
+
+    function pushConvertTrace(fileName: string): Array<any> {
+      let menus = [];
+      menus.push({
+        title: 'Convert to .systrace',
+        icon: 'download',
+        clickHandler: function () {
+          convertPool.init('convert').then((item) => {
+            let querySelectorAll = mainMenu.shadowRoot?.querySelectorAll<LitMainMenuGroup>('lit-main-menu-group');
+            querySelectorAll!.forEach((menuGroup) => {
+              let attribute = menuGroup.getAttribute('title');
+              if (attribute === 'Convert trace') {
+                let querySelectors = menuGroup.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
+                querySelectors.forEach((item) => {
+                  if (item.getAttribute('title') === 'Convert to .systrace') {
+                    item!.setAttribute('icon', 'convert-loading');
+                    item!.classList.add('pending');
+                    item!.style.fontKerning = '';
+                    let querySelector = item!.shadowRoot?.querySelector('.icon') as LitIcon;
+                    querySelector.setAttribute('spin', '');
+                  }
+                });
+              }
+            });
+            postConvert(fileName);
+          });
+        },
+      });
+      return menus;
+    }
+
     function setProgress(command: string) {
       if (command == 'database ready' && SpApplication.loadingProgress < 50) {
         SpApplication.progressStep = 6;
@@ -856,14 +950,26 @@ export class SpApplication extends BaseElement {
           }
           SpApplication.loadingProgress = 0;
           SpApplication.progressStep = 3;
+          let data = this.result as ArrayBuffer;
           spSystemTrace!.loadDatabaseArrayBuffer(
-            this.result as ArrayBuffer,
+            data,
             wasmUrl,
             (command: string, percent: number) => {
               setProgress(command);
             },
-            (res) => {
-              mainMenu.menus!.splice(2, 1, {
+            async (res) => {
+              let existFtrace = await queryExistFtrace();
+              let index = 2;
+              if (existFtrace.length > 0) {
+                mainMenu.menus!.splice(2, 1, {
+                  collapsed: false,
+                  title: 'Convert trace',
+                  describe: 'Convert to other formats',
+                  children: pushConvertTrace(fileName),
+                });
+                index = 3;
+              }
+              mainMenu.menus!.splice(index, 1, {
                 collapsed: false,
                 title: 'Support',
                 describe: 'Support',
@@ -940,7 +1046,10 @@ export class SpApplication extends BaseElement {
       window.clearTraceRowComplete();
       that.freshMenuDisable(true);
       SpSchedulingAnalysis.resetCpu();
-      if (mainMenu.menus!.length > 2) {
+      if (mainMenu.menus!.length > 3) {
+        mainMenu.menus!.splice(1, 2);
+        mainMenu.menus = mainMenu.menus!;
+      } else if (mainMenu.menus!.length > 2) {
         mainMenu.menus!.splice(1, 1);
         mainMenu.menus = mainMenu.menus!;
       }
@@ -1001,6 +1110,7 @@ export class SpApplication extends BaseElement {
         that.search = true;
         progressEL.loading = true;
         let fileName = (ev as any).name;
+        that.traceFileName = fileName;
         let fileSize = ((ev as any).size / 1048576).toFixed(1);
         postLog(fileName, fileSize);
         let showFileName =
@@ -1229,19 +1339,33 @@ export class SpApplication extends BaseElement {
       setProgress(downloadLineFile ? 'download trace file' : 'open trace file');
       this.downloadOnLineFile(urlParams.trace, downloadLineFile, (localPath) => {
         let path = urlParams.trace as string;
-        let fileName = path.split('/').reverse()[0];
-        let showFileName =
+        let fileName: string = '';
+        let showFileName: string = '';
+        if (urlParams.local) {
+          openMenu(true);
+          fileName = urlParams.traceName as string;
+        } else {
+          fileName = path.split('/').reverse()[0];
+        }
+        that.traceFileName = fileName;
+        showFileName =
           fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
         TraceRow.rangeSelectObject = undefined;
         let localUrl = downloadLineFile ? `${window.location.origin}${localPath}` : urlParams.trace;
         fetch(localUrl).then((res) => {
           res.arrayBuffer().then((arrayBuf) => {
+            if (urlParams.local) {
+              URL.revokeObjectURL(localUrl);
+            }
             let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
             postLog(fileName, fileSize);
             document.title = `${showFileName} (${fileSize}M)`;
             info('Parse trace using wasm mode ');
             handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
           });
+        }).catch((e) => {
+          const firstQuestionMarkIndex = window.location.href.indexOf('?');
+          location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
         });
       });
     } else {
@@ -1361,6 +1485,47 @@ export class SpApplication extends BaseElement {
           return a;
         }, {})
       : {};
+  }
+
+  private croppingFile(progressEL: LitProgressBar, litSearch: LitSearch) {
+    let cutLeftNs = TraceRow.rangeSelectObject?.startNS || 0;
+    let cutRightNs = TraceRow.rangeSelectObject?.endNS || 0;
+    if (cutRightNs === cutLeftNs) {
+      return;
+    }
+    let recordStartNS = (window as any).recordStartNS;
+    let offset = Math.floor((cutRightNs - cutLeftNs) * 0.1);
+    let cutLeftTs = recordStartNS + cutLeftNs - offset;
+    if (cutLeftNs - offset < 0) {
+      cutLeftTs = recordStartNS;
+    }
+    let recordEndNS = (window as any).recordEndNS;
+    let cutRightTs = recordStartNS + cutRightNs + offset;
+    if (cutRightTs > recordEndNS) {
+      cutRightTs = recordEndNS;
+    }
+    progressEL.loading = true;
+    threadPool.cutFile(cutLeftTs, cutRightTs, (status: boolean, msg: string, cutBuffer?: ArrayBuffer) => {
+      progressEL.loading = false;
+      if (status) {
+        let traceFileName = this.traceFileName as string;
+        let cutIndex = traceFileName.indexOf('_cut_');
+        let fileType = traceFileName.substring(traceFileName.lastIndexOf('.'));
+        let traceName = document.title.replace(/\s*\([^)]*\)/g, '').trim();
+        if (cutIndex != -1) {
+          traceName = traceName.substring(0, cutIndex);
+        } else {
+          traceName = traceName;
+        }
+        let blobUrl = URL.createObjectURL(new Blob([cutBuffer!]));
+        window.open(`index.html?link=true&local=true&traceName=${traceName}_cut_${cutLeftTs}${fileType}&trace=${encodeURIComponent(blobUrl)}`);
+      } else {
+        litSearch.setPercent(msg, -1);
+        window.setTimeout(() => {
+          litSearch.setPercent(msg, 101);
+        }, 1000);
+      }
+    });
   }
 
   private downloadDB(mainMenu: LitMainMenu, fileDbName: string) {

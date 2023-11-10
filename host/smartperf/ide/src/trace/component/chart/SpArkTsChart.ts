@@ -62,6 +62,7 @@ export class SpArkTsChart implements ParseListener {
       this.folderRow.rowParentId = '';
       this.folderRow.folder = true;
       this.folderRow.name = `Ark Ts ` + this.process;
+      this.folderRow.addTemplateTypes('ArkTs');
       this.folderRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
       this.folderRow.selectChangeHandler = this.trace.selectChangeHandler;
       this.folderRow.supplier = (): Promise<Array<unknown>> => new Promise<Array<unknown>>((resolve) => resolve([]));
@@ -83,6 +84,7 @@ export class SpArkTsChart implements ParseListener {
       };
       this.trace.rowsEL?.appendChild(this.folderRow);
       if (this.folderRow && jsConfig[0].type !== -1 && jsMemory.length > 0) {
+        this.folderRow.addTemplateTypes('Memory');
         if (jsConfig[0].type === TYPE_SNAPSHOT) {
           // snapshot
           await this.initSnapshotChart();

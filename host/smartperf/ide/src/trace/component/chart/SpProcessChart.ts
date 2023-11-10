@@ -451,16 +451,18 @@ export class SpProcessChart {
                 linkNodeItem[1].rowEL.translateY = linkNodeItem[1].rowEL.offsetTop - this.trace.rowsPaneEL!.scrollTop;
               }
               linkNodeItem[1].y = linkNodeItem[1].rowEL!.translateY! + linkNodeItem[1].offsetY;
-              if (linkNodeItem[0].rowEL.rowId == e.detail.rowId) {
-                linkNodeItem[0].x = ns2xByTimeShaft(linkNodeItem[0].ns, this.trace.timerShaftEL!);
-                linkNodeItem[0].y = actualRow!.translateY! + linkNodeItem[0].offsetY * 2;
-                linkNodeItem[0].offsetY = linkNodeItem[0].offsetY * 2;
-                linkNodeItem[0].rowEL = actualRow!;
-              } else if (linkNodeItem[1].rowEL.rowId == e.detail.rowId) {
-                linkNodeItem[1].x = ns2xByTimeShaft(linkNodeItem[1].ns, this.trace.timerShaftEL!);
-                linkNodeItem[1].y = actualRow!.translateY! + linkNodeItem[1].offsetY * 2;
-                linkNodeItem[1].offsetY = linkNodeItem[1].offsetY * 2;
-                linkNodeItem[1].rowEL = actualRow!;
+              if (actualRow) {
+                if (linkNodeItem[0].rowEL.rowId == e.detail.rowId) {
+                  linkNodeItem[0].x = ns2xByTimeShaft(linkNodeItem[0].ns, this.trace.timerShaftEL!);
+                  linkNodeItem[0].y = actualRow!.translateY! + linkNodeItem[0].offsetY * 2;
+                  linkNodeItem[0].offsetY = linkNodeItem[0].offsetY * 2;
+                  linkNodeItem[0].rowEL = actualRow!;
+                } else if (linkNodeItem[1].rowEL.rowId == e.detail.rowId) {
+                  linkNodeItem[1].x = ns2xByTimeShaft(linkNodeItem[1].ns, this.trace.timerShaftEL!);
+                  linkNodeItem[1].y = actualRow!.translateY! + linkNodeItem[1].offsetY * 2;
+                  linkNodeItem[1].offsetY = linkNodeItem[1].offsetY * 2;
+                  linkNodeItem[1].rowEL = actualRow!;
+                }
               }
             });
           }, 300);

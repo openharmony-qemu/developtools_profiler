@@ -143,6 +143,29 @@ class DbThread extends Worker {
     this.postMessage(msg);
   }
 
+  cutFileByRange(leftTs: number, rightTs: number, handler: (status: boolean, msg: string, splitBuffer?: ArrayBuffer) => void) {
+    this.busy = true;
+    let id = this.uuid();
+    this.taskMap[id] = (res: any) => {
+      DbPool.sharedBuffer = res.buffer;
+      if (res.cutStatus) {
+        handler(res.cutStatus, res.msg, res.cutBuffer);
+      } else {
+        handler(res.cutStatus, res.msg);
+      }
+    };
+    this.postMessage(
+      {
+        id: id,
+        action: 'cut-file',
+        leftTs: leftTs,
+        rightTs: rightTs,
+        buffer: DbPool.sharedBuffer!
+      },
+      [DbPool.sharedBuffer!]
+    );
+  }
+
   dbOpen = async (
     parseConfig: string,
     sdkWasmConfig?: string
@@ -238,6 +261,11 @@ export class DbPool {
                 fun(event.data.results);
               }
               Reflect.deleteProperty(thread!.taskMap, event.data.id);
+            } else if (Reflect.has(event.data, 'cutStatus')) {
+              let fun = thread!.taskMap[event.data.id];
+              if (fun) {
+                fun(event.data);
+              }
             } else if (Reflect.has(event.data, 'ready')) {
               this.progress!('database opened', this.num + event.data.index);
               this.progressTimer(this.num + event.data.index, this.progress!);
@@ -336,6 +364,18 @@ export class DbPool {
   //new method replace submit() method
   submitTask(action: string, args: any, handler: Function) {
     this.dataWorker?.queryFunc(action, args, handler);
+  }
+
+  cutFile(leftTs: number, rightTs: number, handler: (status: boolean, msg: string, splitBuffer?: ArrayBuffer) => void) {
+    let noBusyThreads = this.works.filter((it) => !it.busy);
+    let thread: DbThread;
+    if (noBusyThreads.length > 0) {
+      thread = noBusyThreads[0];
+      thread.cutFileByRange(leftTs, rightTs, handler);
+    } else {
+      thread = this.works[Math.floor(Math.random() * this.works.length)];
+      thread.cutFileByRange(leftTs, rightTs, handler);
+    }
   }
 
   progressTimer(num: number, progress: Function) {
@@ -4465,19 +4505,23 @@ export const queryTaskPoolTotalNum = (itid: number) =>
 export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> =>
   query(
     'queryFrameAnimationData',
-    `SELECT
-           a.id AS animationId,
-           (CASE
-               WHEN a.input_time not null THEN (a.input_time - R.start_ts)
-               ELSE (a.start_point- R.start_ts)
-               END) AS ts,
-           (a.start_point - R.start_ts) AS dynamicStartTs,
-           (a.end_point - R.start_ts) AS dynamicEndTs
-        FROM 
-            animation AS a,
-            trace_range AS R
-        ORDER BY 
-            ts;`
+    `SELECT a.id AS animationId,
+                'Response delay' as status,
+                (CASE WHEN a.input_time NOT NULL 
+                    THEN ( a.input_time - R.start_ts ) 
+                    ELSE ( a.start_point - R.start_ts ) END
+                ) AS startTs,
+                (a.start_point - R.start_ts) AS endTs
+         FROM animation AS a,
+              trace_range AS R
+         UNION
+         SELECT a.id AS animationId,
+                'Completion delay' as status,
+                (a.start_point - R.start_ts) AS startTs,
+                (a.end_point - R.start_ts)   AS endTs
+         FROM animation AS a,
+              trace_range AS R
+         ORDER BY startTs;`
   );
 
 export const queryFrameDynamicData = (): Promise<Array<FrameDynamicStruct>> =>
@@ -5354,3 +5398,11 @@ export const queryLogData = (oneDayTime: number): Promise<Array<LogStruct>> =>
 
 export const queryMetric = (metricName: string): Promise<Array<string>> =>
   query('queryMetric', metricName, '', 'exec-metric');
+
+export const queryExistFtrace = (): Promise<Array<number>> =>
+    query(
+        'queryExistFtrace',
+        `select 1 from thread_state
+         UNION
+         select 1 from args;`
+    );

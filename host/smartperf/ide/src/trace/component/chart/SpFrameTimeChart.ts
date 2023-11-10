@@ -273,20 +273,57 @@ export class SpFrameTimeChart {
     let animationRanges: AnimationRanges[] = [];
     if (frameAnimationData.length > 0) {
       frameAnimationData.forEach(data => {
-        let range = {
-          start: data.dynamicStartTs, end: data.dynamicEndTs
-        };
-        animationRanges.push(range);
+        if (data.status === 'Completion delay') {
+          animationRanges.push({
+            start: data.startTs, end: data.endTs
+          });
+        }
+        data.dur = data.endTs - data.startTs;
       });
+      let unitIndex: number = 1;
+      let isIntersect = (a: FrameAnimationStruct, b: FrameAnimationStruct): boolean => Math.max(a.startTs! + a.dur!, b.startTs! + b.dur!) -
+        Math.min(a.startTs!, b.startTs!) < a.dur! + b.dur!;
+      let depths = [];
+      for (let i: number = 0; i < frameAnimationData.length; i++) {
+        if (!frameAnimationData[i].dur || frameAnimationData[i].dur < 0) {
+          continue;
+        }
+        if (depths.length === 0) {
+          frameAnimationData[i].depth = 0;
+          depths[0] = frameAnimationData[i];
+        } else {
+          let index: number = 0;
+          let isContinue: boolean = true;
+          while (isContinue) {
+            if (isIntersect(depths[index], frameAnimationData[i])) {
+              if (depths[index + unitIndex] === undefined || !depths[index + unitIndex]) {
+                frameAnimationData[i].depth = index + unitIndex;
+                depths[index + unitIndex] = frameAnimationData[i];
+                isContinue = false;
+              }
+            } else {
+              frameAnimationData[i].depth = index;
+              depths[index] = frameAnimationData[i];
+              isContinue = false;
+            }
+            index++;
+          }
+        }
+      }
     }
     let frameAnimationRow = TraceRow.skeleton<FrameAnimationStruct>();
+    let unitIndex: number = 1;
+    let unitHeight: number = 20;
+    let max: number = Math.max(...frameAnimationData.map((it) => it.depth || 0)) + unitIndex;
+    let maxHeight: number = max * unitHeight;
     frameAnimationRow.rowId = 'Animation';
     frameAnimationRow.rowType = TraceRow.ROW_TYPE_FRAME_ANIMATION;
     frameAnimationRow.rowHidden = !processRow.expansion;
     frameAnimationRow.rowParentId = processRow.rowId;
     frameAnimationRow.style.width = '100%';
-    frameAnimationRow.style.height = '40px';
     frameAnimationRow.name = 'Animation';
+    frameAnimationRow.style.height = `${maxHeight}px`;
+    frameAnimationRow.setAttribute('height', `${maxHeight}`);
     frameAnimationRow.addTemplateTypes('Animation Effect');
     frameAnimationRow.setAttribute('children', '');
     frameAnimationRow.supplier = (): Promise<FrameAnimationStruct[]> => new Promise((resolve) => {

@@ -86,6 +86,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
         this.frameChart?.updateCanvas(true, initWidth);
         this.frameChart!.data = this.fsCallTreeDataSource;
         this.switchFlameChart();
+        this.fsCallTreeFilter.icon = 'block';
       }
     );
   }

@@ -75,24 +75,11 @@ export class FrameAnimationRender extends Render {
     if (frameAnimationList) {
       for (let index: number = 0; index < frameAnimationList.length; index++) {
         let currentFrameAnimation: FrameAnimationStruct = frameAnimationList[index];
-        let currentResponseFrame: FrameAnimationStruct = JSON.parse(JSON.stringify(currentFrameAnimation));
-        currentResponseFrame.status = 'Response delay';
-        currentResponseFrame.dur = currentFrameAnimation.dynamicStartTs - currentFrameAnimation.ts;
-        if ((currentResponseFrame.ts || 0) + (currentResponseFrame.dur || 0) > startNS &&
-          (currentResponseFrame.ts || 0) < endNS) {
-          FrameAnimationStruct.setFrameAnimation(currentResponseFrame, padding, startNS,
+        if ((currentFrameAnimation.startTs || 0) + (currentFrameAnimation.dur || 0) > startNS &&
+          (currentFrameAnimation.startTs || 0) < endNS) {
+          FrameAnimationStruct.setFrameAnimation(currentFrameAnimation, padding, startNS,
             endNS || 0, totalNS || 0, frame);
-          frameAnimationFilter.push(currentResponseFrame);
-        }
-        let currentCompletionFrame: FrameAnimationStruct = JSON.parse(JSON.stringify(currentFrameAnimation));
-        currentCompletionFrame.status = 'Completion delay';
-        currentCompletionFrame.ts = currentFrameAnimation.dynamicStartTs;
-        currentCompletionFrame.dur = currentFrameAnimation.dynamicEndTs - currentFrameAnimation.dynamicStartTs;
-        if ((currentCompletionFrame.ts || 0) + (currentCompletionFrame.dur || 0) > startNS &&
-          (currentCompletionFrame.ts || 0) < endNS) {
-          FrameAnimationStruct.setFrameAnimation(currentCompletionFrame, padding, startNS,
-            endNS || 0, totalNS || 0, frame);
-          frameAnimationFilter.push(currentCompletionFrame);
+          frameAnimationFilter.push(currentFrameAnimation);
         }
       }
     }
@@ -102,13 +89,13 @@ export class FrameAnimationRender extends Render {
 export class FrameAnimationStruct extends BaseStruct {
   static hoverFrameAnimationStruct: FrameAnimationStruct | undefined;
   static selectFrameAnimationStruct: FrameAnimationStruct | undefined;
-  ts: number = 0;
   dur: number = 0;
   status: string = '';
   animationId: number | undefined;
-  dynamicStartTs: number = 0;
-  dynamicEndTs: number = 0;
   fps: number | undefined;
+  depth: number = 0;
+  startTs: number = 0;
+  endTs: number = 0;
 
   static setFrameAnimation(
     animationNode: FrameAnimationStruct,
@@ -120,15 +107,15 @@ export class FrameAnimationStruct extends BaseStruct {
   ): void {
     let stateStartPointX: number;
     let stateEndPointX: number;
-    if ((animationNode.ts || 0) < startNS) {
+    if ((animationNode.startTs || 0) < startNS) {
       stateStartPointX = 0;
     } else {
-      stateStartPointX = ns2x(animationNode.ts || 0, startNS, endNS, totalNS, frame);
+      stateStartPointX = ns2x(animationNode.startTs || 0, startNS, endNS, totalNS, frame);
     }
-    if ((animationNode.ts || 0) + (animationNode.dur || 0) > endNS) {
+    if ((animationNode.startTs || 0) + (animationNode.dur || 0) > endNS) {
       stateEndPointX = frame.width;
     } else {
-      stateEndPointX = ns2x((animationNode.ts || 0) + (animationNode.dur || 0), startNS, endNS, totalNS, frame);
+      stateEndPointX = ns2x((animationNode.startTs || 0) + (animationNode.dur || 0), startNS, endNS, totalNS, frame);
     }
     let frameWidth: number = stateEndPointX - stateStartPointX <= unitIndex ? unitIndex :
       stateEndPointX - stateStartPointX;
@@ -136,9 +123,9 @@ export class FrameAnimationStruct extends BaseStruct {
       animationNode.frame = new Rect(0, 0, 0, 0);
     }
     animationNode.frame.x = Math.floor(stateStartPointX);
-    animationNode.frame.y = frame.y + padding;
+    animationNode.frame.y = frame.y + animationNode.depth * 20 + padding;
     animationNode.frame.width = Math.ceil(frameWidth);
-    animationNode.frame.height = Math.floor(frame.height - padding * multiple);
+    animationNode.frame.height = 20 - multiple * padding;
   }
 
   static draw(
@@ -155,7 +142,7 @@ export class FrameAnimationStruct extends BaseStruct {
       ctx.lineWidth = 1;
       ctx.lineJoin = 'round';
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[6];
-      ctx.fillRect(frameAnimationNode.frame.x, frameAnimationNode.frame.y + (multiple * padding),
+      ctx.fillRect(frameAnimationNode.frame.x, frameAnimationNode.frame.y,
         frameAnimationNode.frame.width, frameAnimationNode.frame.height);
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[3];
       ctx.textBaseline = 'middle';
@@ -167,12 +154,12 @@ export class FrameAnimationStruct extends BaseStruct {
         frameAnimationNode === FrameAnimationStruct.selectFrameAnimationStruct) {
         ctx.globalAlpha = 0.8;
         ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[3];
-        ctx.strokeRect(frameAnimationNode.frame.x + padding, frameAnimationNode.frame.y + (multiple * padding),
-          frameAnimationNode.frame.width - padding, frameAnimationNode.frame.height - (multiple * padding));
+        ctx.strokeRect(frameAnimationNode.frame.x + padding, frameAnimationNode.frame.y,
+          frameAnimationNode.frame.width - padding, frameAnimationNode.frame.height);
       } else {
         ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[2];
-        ctx.strokeRect(frameAnimationNode.frame.x + padding, frameAnimationNode.frame.y + (multiple * padding),
-          frameAnimationNode.frame.width - padding, frameAnimationNode.frame.height - (multiple * padding));
+        ctx.strokeRect(frameAnimationNode.frame.x + padding, frameAnimationNode.frame.y,
+          frameAnimationNode.frame.width - padding, frameAnimationNode.frame.height);
       }
     }
   }

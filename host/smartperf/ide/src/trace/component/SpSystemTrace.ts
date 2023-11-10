@@ -151,7 +151,6 @@ export class SpSystemTrace extends BaseElement {
   rowsPaneEL: HTMLDivElement | undefined | null;
   spacerEL: HTMLDivElement | undefined | null;
   visibleRows: Array<TraceRow<any>> = [];
-  folders: NodeListOf<TraceRow<any>> | undefined;
   collectRows: Array<TraceRow<any>> = [];
   currentRow: TraceRow<any> | undefined | null;
   keyboardEnable = true;
@@ -190,6 +189,9 @@ export class SpSystemTrace extends BaseElement {
   private tabCpuFreq: TabPaneFrequencySample | undefined | null;
   private tabCpuState: TabPaneCounterSample | undefined | null;
   private collapseAll: boolean = false;
+  private currentCollectGroup: string = '1';
+  private _list: Array<SlicesTime> = [];
+  private expandRowList: Array<TraceRow<any>> = [];
   private _slicesList: Array<SlicesTime> = [];
   private _flagList: Array<any> = [];
 
@@ -303,7 +305,7 @@ export class SpSystemTrace extends BaseElement {
         if (this.rowsEL!.contains(cpuFavoriteRow)) {
           this.rowsEL!.replaceChild(replaceRow, cpuFavoriteRow);
         }
-        this.favoriteChartListEL!.insertRow(cpuFavoriteRow);
+        this.favoriteChartListEL!.insertRow(cpuFavoriteRow, this.currentCollectGroup, true);
         this.currentClickRow = null;
         cpuFavoriteRow.setAttribute('draggable', 'true');
         cpuFavoriteRow.addEventListener('dragstart', () => {
@@ -459,9 +461,9 @@ export class SpSystemTrace extends BaseElement {
             parent!.replaceTraceRow(replaceRow, currentRow);
           }
         }
-        this.favoriteChartListEL?.insertRow(currentRow);
+        this.favoriteChartListEL?.insertRow(currentRow, this.currentCollectGroup, event.detail.type !== 'auto-collect');
       } else {
-        this.favoriteChartListEL?.deleteRow(currentRow);
+        this.favoriteChartListEL?.deleteRow(currentRow, event.detail.type !== 'auto-collect');
         if (event.detail.type !== 'auto-collect') {
           let rowIndex = this.collectRows.indexOf(currentRow);
           if (rowIndex !== -1) {
@@ -1128,8 +1130,8 @@ export class SpSystemTrace extends BaseElement {
           selection.jsCpuProfilerData = jsCpuProfilerData;
         } else if (it.rowType == TraceRow.ROW_TYPE_FRAME_ANIMATION) {
           let isIntersect = (animationStruct: FrameAnimationStruct, selectStruct: RangeSelectStruct) =>
-            Math.max(animationStruct.ts! + animationStruct.dur!, selectStruct!.endNS || 0) -
-              Math.min(animationStruct.ts!, selectStruct!.startNS || 0) <
+            Math.max(animationStruct.startTs! + animationStruct.dur!, selectStruct!.endNS || 0) -
+              Math.min(animationStruct.startTs!, selectStruct!.startNS || 0) <
             animationStruct.dur! + (selectStruct!.endNS || 0) - (selectStruct!.startNS || 0);
           let frameAnimationList = it.dataList.filter((frameAnimationBean: FrameAnimationStruct) => {
             return isIntersect(frameAnimationBean, TraceRow.rangeSelectObject!);
@@ -1314,13 +1316,13 @@ export class SpSystemTrace extends BaseElement {
       }
     });
     window.subscribe(window.SmartEvent.UI.CollapseAllLane, (collapse: boolean) => {
+      if (!collapse) {
+        // 一键折叠之前，记录当前打开的泳道图
+        this.expandRowList = Array.from(this.rowsEL!.querySelectorAll<TraceRow<any>>(`trace-row[folder][expansion]`)) || [];
+      }
       this.collapseAll = true;
       this.setAttribute('disable', '');
-      this.folders?.forEach((it) => {
-        if (!it.hasAttribute('row-hidden')) {
-          it.expansion = collapse;
-        }
-      });
+      this.expandRowList!.forEach((it) => it.expansion = collapse);
       this.collapseAll = false;
       this.removeAttribute('disable');
       this.refreshCanvas(true);
@@ -1332,6 +1334,9 @@ export class SpSystemTrace extends BaseElement {
       } else {
         this.setAttribute('disable', '');
       }
+    });
+    window.subscribe(window.SmartEvent.UI.CollectGroupChange, (group: string) => {
+      this.currentCollectGroup = group;
     });
   }
   // 清除上一次点击调用栈产生的三角旗子
@@ -1904,8 +1909,8 @@ export class SpSystemTrace extends BaseElement {
       );
     } else if (FrameAnimationStruct.selectFrameAnimationStruct) {
       this.timerShaftEL?.setSlicesMark(
-        FrameAnimationStruct.selectFrameAnimationStruct.ts || 0,
-        (FrameAnimationStruct.selectFrameAnimationStruct.ts || 0) +
+        FrameAnimationStruct.selectFrameAnimationStruct.startTs || 0,
+        (FrameAnimationStruct.selectFrameAnimationStruct.startTs || 0) +
           (FrameAnimationStruct.selectFrameAnimationStruct.dur || 0)
       );
     } else if (JsCpuProfilerStruct.selectJsCpuProfilerStruct) {
@@ -1957,7 +1962,85 @@ export class SpSystemTrace extends BaseElement {
         );
       }
     }
+
+    if (ev.ctrlKey) {
+      if (keyPress === '[' && this._slicesList.length > 1) {
+        this.MarkJump(this._slicesList, 'slice', 'previous');
+      } else if (keyPress === ',' && this._flagList.length > 1) {
+        this.MarkJump(this._flagList, 'flag', 'previous');
+      } else if (keyPress === ']' && this._slicesList.length > 1) {
+        this.MarkJump(this._slicesList, 'slice', 'next');
+      } else if (keyPress === '.' && this._flagList.length > 1) {
+        this.MarkJump(this._flagList, 'flag', 'next');
+      } else {
+        return;
+      }
+    }
   };
+
+  /**
+   * 根据传入的参数实现卡尺和旗子的快捷跳转
+   * @param list 要跳转的数组
+   * @param type 标记类型（卡尺和旗子）
+   * @param direction 跳转方向（前一个/后一个）
+   */
+  MarkJump(list: Array<any>, type: string, direction: string) {
+    this.traceSheetEL = this.shadowRoot?.querySelector('.trace-sheet');
+    let find = list.find((it) => it.selected);
+    if (!find) {
+      // 如果当前没有选中的，就选中第一个
+      list.forEach((it) => (it.selected = false));
+      list[0].selected = true;
+    } else {
+      for (let i = 0; i < list.length; i++) {
+        // 将当前数组中选中的那条数据改为未选中
+        if (list[i].selected) {
+          list[i].selected = false;
+          if (direction === 'previous') {
+            if (i === 0) {
+              // 如果当前选中的是第一个，就循环到最后一个上
+              list[list.length - 1].selected = true;
+              break;
+            } else {
+              // 选中当前的上一个
+              list[i - 1].selected = true;
+              break;
+            }
+          } else if (direction === 'next') {
+            if (i === list.length - 1) {
+              // 如果当前选中的是最后一个，就循环到第一个上
+              list[0].selected = true;
+              break;
+            } else {
+              // 选中当前的下一个
+              list[i + 1].selected = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (type === 'flag') {
+      let currentPane = this.traceSheetEL?.displayTab<TabPaneFlag>('box-flag');
+      list.forEach((flag, index) => {
+        this.timerShaftEL!.sportRuler!.drawTriangle(flag.time, flag.type);
+        if (flag.selected) {
+          // 修改当前选中的旗子对应的表格中某行的背景
+          currentPane!.setTableSelection(index + 1);
+        }
+      });
+    } else if (type === 'slice') {
+      this.refreshCanvas(true);
+      let currentPane = this.traceSheetEL?.displayTab<TabPaneCurrent>('tabpane-current');
+      list.forEach((slice, index) => {
+        if (slice.selected) {
+          // 修改当前选中的卡尺对应的表格中某行的背景
+          currentPane!.setTableSelection(index + 1);
+        }
+      });
+    }
+  }
 
   isMouseInSheet = (ev: MouseEvent) => {
     this.isMousePointInSheet =
@@ -4085,7 +4168,6 @@ export class SpSystemTrace extends BaseElement {
     progress('completed', 100);
     info('All TraceRow Data initialized');
     this.loadTraceCompleted = true;
-    this.folders = this.rowsEL!.querySelectorAll<TraceRow<any>>('trace-row[folder]');
     this.rowsEL!.querySelectorAll<TraceRow<any>>('trace-row').forEach((it) => {
       if (rowId !== '' && (it.rowId?.includes(rowId) || it.name.includes(rowId))) {
         it.addTemplateTypes('Ark Ts');
@@ -4179,6 +4261,13 @@ export class SpSystemTrace extends BaseElement {
             child.removeEventListener('expansion-change', this.extracted(child));
           }
           this.intersectionObserver?.unobserve(child);
+        });
+        this.linkNodes.map((value) => {
+          if ('task' === value[0].business && value[0].rowEL.parentRowEl?.rowId === it.rowId) {
+            value[0].hidden = true;
+            value[1].hidden = true;
+            this.clickEmptyArea();
+          }
         });
       }
       if (!this.collapseAll) {

@@ -84,6 +84,7 @@ export class TabPaneCallTree extends BaseElement {
         this.frameChart?.updateCanvas(true, initWidth);
         this.frameChart!.data = this.callTreeDataSource;
         this.switchFlameChart();
+        this.callTreeFilter.icon = 'block';
       }
     );
   }

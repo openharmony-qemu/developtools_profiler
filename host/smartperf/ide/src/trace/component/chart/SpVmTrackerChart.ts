@@ -89,6 +89,7 @@ export class VmTrackerChart {
     VmTrackerRow.rowId = 'VmTrackerRow';
     VmTrackerRow.rowType = TraceRow.ROW_TYPE_VM_TRACKER;
     VmTrackerRow.addTemplateTypes('ProcessMemory');
+    VmTrackerRow.addTemplateTypes('Memory')
     VmTrackerRow.rowParentId = '';
     VmTrackerRow.style.height = '40px';
     VmTrackerRow.index = 0;

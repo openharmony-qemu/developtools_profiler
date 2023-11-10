@@ -117,6 +117,7 @@ export class TabpaneNMCalltree extends BaseElement {
         this.nmCallTreeFrameChart?.updateCanvas(true, initWidth);
         this.nmCallTreeFrameChart!.data = this.nmCallTreeSource;
         this.switchFlameChart();
+        this.nmCallTreeFilter.icon = 'block';
       }
     );
   }

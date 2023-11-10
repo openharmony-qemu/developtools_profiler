@@ -37,14 +37,12 @@ export class TabPaneCurrent extends BaseElement {
       // 点击表格某一行后，背景变色
       // @ts-ignore
       let data = evt.detail.data;
-      data.isSelected = true;
-      this.panelTable?.clearAllSelection(data);
-      this.panelTable?.setCurrentSelection(data);
-
+      this.systemTrace!.slicesList = this.slicestimeList || [];
       //   页面上对应的slice变为实心
-      this.slicestimeList.forEach((slicesTime) => {
+      this.slicestimeList.forEach((slicesTime, index) => {
         if (data.startTime === slicesTime.startTime && data.endTime === slicesTime.endTime) {
           slicesTime.selected = true;
+          this.setTableSelection(index + 1);
         } else {
           slicesTime.selected = false;
         }
@@ -94,7 +92,6 @@ export class TabPaneCurrent extends BaseElement {
     this.slicestimeList.sort(function (a, b) {
       return a.startTime - b.startTime;
     });
-
     for (let slice of this.slicestimeList) {
       let btn = document.createElement('button');
       btn.className = 'remove';
@@ -120,15 +117,14 @@ export class TabPaneCurrent extends BaseElement {
     this.tableDataSource.unshift(sliceData);
 
     // 当前点击了哪个卡尺，就将对应的表格中的那行的背景变色
-    for (let data of this.tableDataSource) {
+    this.tableDataSource.forEach((data, index) => {
       if (data.startTime === this.slicestime?.startTime && data.endTime === this.slicestime?.endTime) {
-        data.isSelected = true;
-        this.panelTable?.clearAllSelection(data);
-        this.panelTable?.setCurrentSelection(data);
+        this.setTableSelection(index);
       }
-    }
+    });
     this.panelTable!.recycleDataSource = this.tableDataSource;
     this.eventHandler();
+    this.systemTrace!.slicesList = this.slicestimeList || [];
   }
 
   /**
@@ -145,6 +141,7 @@ export class TabPaneCurrent extends BaseElement {
           this.tableDataSource[i].startTime === this.slicestimeList[i - 1].startTime &&
           this.tableDataSource[i].endTime === this.slicestimeList[i - 1].endTime
         ) {
+          this.systemTrace!.slicesList = this.slicestimeList || [];
           this.slicestimeList[i - 1].color = event?.target.value;
           document.dispatchEvent(new CustomEvent('slices-change', { detail: this.slicestimeList[i - 1] }));
           //   卡尺颜色改变时，重绘泳道图
@@ -170,6 +167,16 @@ export class TabPaneCurrent extends BaseElement {
     }
   }
 
+  /**
+   * 修改表格指定行数的背景颜色
+   * @param line 要改变的表格行数
+   */
+  public setTableSelection(line: any): void {
+    this.tableDataSource[line].isSelected = true;
+    this.panelTable?.clearAllSelection(this.tableDataSource[line]);
+    this.panelTable?.setCurrentSelection(this.tableDataSource[line]);
+  }
+
   initHtml(): string {
     return `
         <style>
@@ -186,13 +193,13 @@ export class TabPaneCurrent extends BaseElement {
             </lit-table-column>
             <lit-table-column width="1fr" data-index="color" key="color" align="flex-start" title="Color">
                 <template>
-                    <div style='width:50px; height: 18px; position: relative;overflow: hidden;'>
+                    <div style='width:50px; height: 21px; position: relative;overflow: hidden;'>
                         <input type="color" id="color-input" style='
                             background: var(--dark-background5,#FFFFFF);
                             padding: 0px;
                             border: none;
                             width: 60px;
-                            height: 28px;
+                            height: 31px;
                             position: absolute;
                             top: -5px;
                             left: -5px;'/>
@@ -206,8 +213,8 @@ export class TabPaneCurrent extends BaseElement {
                         color: white;
                         border-radius: 10px;
                         font-size: 10px;
-                        height: 18px;
-                        line-height: 18px;
+                        height: 21px;
+                        line-height: 21px;
                         min-width: 7em;
                         border: none;
                         cursor: pointer;

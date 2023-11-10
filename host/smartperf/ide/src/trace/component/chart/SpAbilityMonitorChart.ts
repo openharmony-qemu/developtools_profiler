@@ -805,6 +805,7 @@ export class SpAbilityMonitorChart {
       totalTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
       totalTraceRow.setAttribute('children', '');
       totalTraceRow.name = `Purgeable Total`;
+      totalTraceRow.addTemplateTypes('Memory');
       totalTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeableTotalData));
       totalTraceRow.focusHandler = (ev) => {
         this.trace?.displayTip(
@@ -895,6 +896,7 @@ export class SpAbilityMonitorChart {
     dmaTraceRow.style.width = `100%`;
     dmaTraceRow.setAttribute('children', '');
     dmaTraceRow.name = 'DMA';
+    dmaTraceRow.addTemplateTypes('Memory');
     dmaTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(dmaAbilityData));
     //文字悬浮提示
     dmaTraceRow.focusHandler = (ev) => {
@@ -944,6 +946,7 @@ export class SpAbilityMonitorChart {
     gpuMemoryTraceRow.style.width = `100%`;
     gpuMemoryTraceRow.setAttribute('children', '');
     gpuMemoryTraceRow.name = 'Skia Gpu Memory';
+    gpuMemoryTraceRow.addTemplateTypes('Memory');
     gpuMemoryTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(gpuMemoryAbilityData));
     //文字悬浮提示
     gpuMemoryTraceRow.focusHandler = (ev) => {

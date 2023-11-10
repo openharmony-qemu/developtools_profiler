@@ -54,6 +54,7 @@ declare global {
         Error: string; // load error
         CheckALL: string; // Check all child chart
         CollapseAllLane:string //collapse/uncollapse all lane row
+        CollectGroupChange:string //collapse/uncollapse all lane row
         WakeupList: string; //show wakeup list table
         DeviceConnect: string;
         DeviceDisConnect: string;
@@ -108,6 +109,7 @@ window.SmartEvent = {
     Error: 'SmartEvent-UI-Error',
     CheckALL: 'SmartEvent-UI-CheckALL',
     CollapseAllLane: 'SmartEvent-UI-Collapse-All-Lane',
+    CollectGroupChange: 'SmartEvent-UI-Collect-group-change',
     WakeupList: 'SmartEvent-UI-WakeupList',
     DeviceConnect: 'SmartEvent-DEVICE_CONNECT',
     DeviceDisConnect: 'SmartEvent-DEVICE_DISCONNECT',

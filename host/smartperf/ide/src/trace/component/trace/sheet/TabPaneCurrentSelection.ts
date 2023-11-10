@@ -961,14 +961,15 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.setTableHeight('550px');
     this.tabCurrentSelectionInit('Animation Details');
     let list = [];
-    let dataTs: number = data.ts < 0 ? 0 : data.ts;
+    let dataTs: number = data.startTs < 0 ? 0 : data.startTs;
     list.push({ name: 'Name', value: data.animationId });
-    list.push({ name: 'StartTime(Relative)', value: `${Utils.getTimeString(dataTs)}` });
+    list.push({ name: 'Start time(Relative)', value: `${Utils.getTimeString(dataTs)}` });
     list.push({
-      name: 'StartTime(Absolute)',
+      name: 'Start time(Absolute)',
       value: ((dataTs || 0) + (window as any).recordStartNS) / 1000000000,
     });
-    list.push({ name: 'End time', value: `${Utils.getTimeString(dataTs + (data.dur || 0))}` });
+    list.push({ name: 'End time(Relative)', value: `${Utils.getTimeString(dataTs + (data.dur || 0))}` });
+    list.push({ name: 'End time(Absolute)', value: ((dataTs + (data.dur || 0)) + (window as any).recordStartNS) / 1000000000});
     list.push({ name: 'Duration', value: `${Utils.getTimeString(data.dur || 0)}` });
     if (data.status === 'Completion delay') {
       let result = await queryAnimationFrameFps(dataTs, dataTs + data.dur);

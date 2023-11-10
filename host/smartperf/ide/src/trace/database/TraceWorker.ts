@@ -402,6 +402,8 @@ self.onmessage = async (e: MessageEvent) => {
       }
       uploadSoFile(soFileList[uploadFileIndex]).then();
     }
+  } else if (e.data.action === 'cut-file') {
+    cutFileByRange(e);
   }
 };
 
@@ -457,6 +459,98 @@ const uploadSoCallBack = (heapPtr: number, size: number, isFinish: number): void
     }
   }
 };
+
+let splitReqBufferAddr = -1;
+
+enum FileTypeEnum {
+  data,
+  json
+}
+
+function cutFileBufferByOffSet(out: Uint8Array, uint8Array: Uint8Array) {
+  let jsonStr: string = dec.decode(out);
+  let jsonObj = JSON.parse(jsonStr);
+  let valueArray: Array<{ offset: number, size: number }> = jsonObj.value;
+  const sum = valueArray.reduce((total, obj) => total + obj.size, 0);
+  let cutBuffer = new Uint8Array(sum);
+  let offset = 0;
+  valueArray.forEach((item, index) => {
+    const dataSlice = uint8Array.subarray(item.offset, item.offset + item.size);
+    cutBuffer.set(dataSlice, offset);
+    offset += item.size;
+  });
+  return cutBuffer;
+}
+
+function cutFileByRange(e: MessageEvent) {
+  let cutLeftTs = e.data.leftTs;
+  let cutRightTs = e.data.rightTs;
+  let uint8Array = new Uint8Array(e.data.buffer);
+  let resultBuffer: Array<any> = [];
+  let cutFileCallBack = (heapPtr: number, size: number, fileType: number, isEnd:number) => {
+    let out: Uint8Array = Module.HEAPU8.slice(heapPtr, heapPtr + size);
+    if (FileTypeEnum.data === fileType) {
+      resultBuffer.push(out);
+    } else if (FileTypeEnum.json === fileType) {
+      let cutBuffer = cutFileBufferByOffSet(out, uint8Array);
+      resultBuffer.push(cutBuffer);
+    }
+    if (isEnd) {
+      const cutResultFileLength = resultBuffer.reduce((total, obj) => total + obj.length, 0);
+      let cutBuffer = new Uint8Array(cutResultFileLength);
+      let offset = 0;
+      resultBuffer.forEach((item) => {
+        cutBuffer.set(item, offset);
+        offset += item.length;
+      });
+      resultBuffer.length = 0;
+      self.postMessage(
+        {
+          id: e.data.id,
+          action: e.data.action,
+          cutStatus: true,
+          msg: 'split success',
+          buffer: e.data.buffer,
+          cutBuffer: cutBuffer.buffer
+        },
+        // @ts-ignore
+        [e.data.buffer, cutBuffer.buffer]
+      );
+    }
+  };
+  splitReqBufferAddr = Module._InitializeSplitFile(Module.addFunction(cutFileCallBack, 'viiii'), REQ_BUF_SIZE);
+  let cutTimeRange = `${cutLeftTs};${cutRightTs};`;
+  let cutTimeRangeBuffer = enc.encode(cutTimeRange);
+  Module.HEAPU8.set(cutTimeRangeBuffer, splitReqBufferAddr);
+  Module._TraceStreamerSplitFileEx(cutTimeRangeBuffer.length);
+  let cutFileSize = 0;
+  let receiveFileResult = -1;
+  while (cutFileSize < uint8Array.length) {
+    const sliceLen = Math.min(uint8Array.length - cutFileSize, REQ_BUF_SIZE);
+    const dataSlice = uint8Array.subarray(cutFileSize, cutFileSize + sliceLen);
+    Module.HEAPU8.set(dataSlice, splitReqBufferAddr);
+    cutFileSize += sliceLen;
+    try {
+      if (cutFileSize >= uint8Array.length) {
+        receiveFileResult = Module._TraceStreamerReciveFileEx(sliceLen, 1);
+      } else {
+        receiveFileResult = Module._TraceStreamerReciveFileEx(sliceLen, 0);
+      }
+    } catch (error) {
+      self.postMessage(
+        {
+          id: e.data.id,
+          action: e.data.action,
+          cutStatus: false,
+          msg: 'split failed',
+          buffer: e.data.buffer,
+        },
+        // @ts-ignore
+        [e.data.buffer]
+      );
+    }
+  }
+}
 
 function createView(sql: string) {
   let array = enc.encode(sql);

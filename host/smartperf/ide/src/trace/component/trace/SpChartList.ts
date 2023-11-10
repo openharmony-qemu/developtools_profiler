@@ -30,6 +30,7 @@ import { Flag } from './timer-shaft/Flag.js';
 import { TimerShaftElement } from './TimerShaftElement.js';
 import { CpuStruct } from '../../database/ui-worker/ProcedureWorkerCPU.js';
 import { WakeupBean } from '../../bean/WakeupBean.js';
+import { LitIcon } from '../../../base-ui/icon/LitIcon.js';
 
 const maxScale = 0.8; //收藏最大高度为界面最大高度的80%
 const topHeight = 150; // 顶部cpu使用率部分高度固定为150px
@@ -37,8 +38,17 @@ const minHeight = 20; //泳道最低高度为20
 
 @element('sp-chart-list')
 export class SpChartList extends BaseElement {
+  private collectEl1: HTMLDivElement | null | undefined;
+  private collectEl2: HTMLDivElement | null | undefined;
+  private groupTitle1: HTMLDivElement | null | undefined;
+  private groupTitle2: HTMLDivElement | null | undefined;
+  private icon1: LitIcon | null | undefined;
+  private icon2: LitIcon | null | undefined;
+  private removeCollectIcon1: LitIcon | null | undefined;
+  private removeCollectIcon2: LitIcon | null | undefined;
   private rootEl: HTMLDivElement | null | undefined;
-  private fragment: DocumentFragment = document.createDocumentFragment();
+  private fragmentGroup1: DocumentFragment = document.createDocumentFragment();
+  private fragmentGroup2: DocumentFragment = document.createDocumentFragment();
   private canvas: HTMLCanvasElement | null | undefined; //绘制收藏泳道图
   private canvasCtx: CanvasRenderingContext2D | undefined | null;
   private canResize: boolean = false;
@@ -46,27 +56,80 @@ export class SpChartList extends BaseElement {
   private startPageY = 0;
   private startClientHeight: number = 0;
   private scrollTimer: any;
+  private collect1Expand: boolean = true;
+  private collect2Expand: boolean = true;
+  private collectRowList1: Array<TraceRow<any>> = [];
+  private collectRowList2: Array<TraceRow<any>> = [];
   private maxHeight = 0;
   private manualHeight = 0;
 
   initElements(): void {
+    this.collectEl1 = this.shadowRoot?.querySelector<HTMLDivElement>('#collect-group-1');
+    this.collectEl2 = this.shadowRoot?.querySelector<HTMLDivElement>('#collect-group-2');
+    this.groupTitle1 = this.shadowRoot?.querySelector<HTMLDivElement>('#group-1-title');
+    this.groupTitle2 = this.shadowRoot?.querySelector<HTMLDivElement>('#group-2-title');
+    this.icon1 = this.shadowRoot?.querySelector<LitIcon>('#group_1_expand');
+    this.icon2 = this.shadowRoot?.querySelector<LitIcon>('#group_2_expand');
+    this.removeCollectIcon1 = this.shadowRoot?.querySelector<LitIcon>('#group_1_collect');
+    this.removeCollectIcon2 = this.shadowRoot?.querySelector<LitIcon>('#group_2_collect');
     this.rootEl = this.shadowRoot?.querySelector<HTMLDivElement>('.root');
     this.canvas = this.shadowRoot?.querySelector<HTMLCanvasElement>('.panel-canvas');
     this.canvasCtx = this.canvas?.getContext('2d');
-
-    //折叠或者显示或者隐藏触发
     window.subscribe(window.SmartEvent.UI.RowHeightChange, (data) => {
       this.resizeHeight();
       this.scrollTop = 0;
       this.refreshFavoriteCanvas();
     });
+    this.icon1?.addEventListener('click', () => {
+      this.collect1Expand = !this.collect1Expand;
+      if (this.collect1Expand) {
+        this.icon1!.style.transform = 'rotateZ(0deg)';
+        this.collectEl1?.appendChild(this.fragmentGroup1);
+        this.resizeHeight();
+      } else {
+        this.icon1!.style.transform = 'rotateZ(-90deg)';
+        this.collectRowList1.forEach((row) => this.fragmentGroup1.appendChild(row));
+        this.resizeHeight()
+      }
+    });
+    this.icon2?.addEventListener('click', () => {
+      this.collect2Expand = !this.collect2Expand;
+      if (this.collect2Expand) {
+        this.icon2!.style.transform = 'rotateZ(0deg)';
+        this.collectEl2?.appendChild(this.fragmentGroup2);
+        this.resizeHeight();
+      } else {
+        this.icon2!.style.transform = 'rotateZ(-90deg)';
+        this.collectRowList2.forEach((row) => this.fragmentGroup2.appendChild(row));
+        this.resizeHeight();
+      }
+    });
+    this.removeCollectIcon1?.addEventListener('click', () => {
+      for (let i = 0; i < this.collectRowList1.length; i++) {
+        this.collectRowList1[i].collectEL?.click();
+        i--;
+      }
+    });
+    this.removeCollectIcon2?.addEventListener('click', () => {
+      for (let i = 0; i < this.collectRowList2.length; i++) {
+        this.collectRowList2[i].collectEL?.click();
+        i--;
+      }
+    });
   }
 
   private resizeHeight(): void {
     this.maxHeight = 0;
-    this.rootEl!.childNodes.forEach((item) => (this.maxHeight += (item as any).clientHeight));
-    this.maxHeight = Math.min(this.getMaxLimitHeight(), this.maxHeight);
+    this.collectEl1!.childNodes.forEach((item) => (this.maxHeight += (item as any).clientHeight));
+    this.collectEl2!.childNodes.forEach((item) => (this.maxHeight += (item as any).clientHeight));
+    if (this.groupTitle1) {
+      this.maxHeight += this.groupTitle1.clientHeight;
+    }
+    if (this.groupTitle2) {
+      this.maxHeight += this.groupTitle2.clientHeight;
+    }
 
+    this.maxHeight = Math.min(this.getMaxLimitHeight(), this.maxHeight);
     if (this.manualHeight > 0) {
       this.style.height = `${Math.min(this.maxHeight, this.manualHeight)}px`;
     } else {
@@ -87,18 +150,37 @@ export class SpChartList extends BaseElement {
   }
 
   insertRowBefore(node: Node, child: Node) {
-    this.rootEl!.insertBefore(node, child);
+    if (child === null || (child as TraceRow<any>).collectGroup === (node as TraceRow<any>).collectGroup) {
+      if ((node as TraceRow<any>).collectGroup === '1') {
+        this.collectEl1!.insertBefore(node, child);
+        this.collectRowList1 = Array.from(this.collectEl1!.children) as TraceRow<any>[];
+      } else {
+        this.collectEl2!.insertBefore(node, child);
+        this.collectRowList2 = Array.from(this.collectEl2!.children) as TraceRow<any>[];
+      }
+    }
   }
 
   reset() {
     this.maxHeight = 0;
     this.style.height = 'auto';
-    this.manualHeight = 0;
     this.clearRect();
-    this.fragment.childNodes.forEach((node) => this.fragment.removeChild(node));
-    this.rootEl!.querySelectorAll<TraceRow<any>>(`trace-row`).forEach((row) => {
+    this.collect1Expand = true;
+    this.collect2Expand = true;
+    this.icon1!.style.transform = 'rotateZ(0deg)';
+    this.icon2!.style.transform = 'rotateZ(0deg)';
+    this.collectRowList1 = [];
+    this.collectRowList2 = [];
+    this.updateGroupDisplay();
+    this.fragmentGroup1.childNodes.forEach((node) => this.fragmentGroup1.removeChild(node));
+    this.fragmentGroup2.childNodes.forEach((node) => this.fragmentGroup2.removeChild(node));
+    this.collectEl1!.querySelectorAll<TraceRow<any>>(`trace-row`).forEach((row) => {
       row.clearMemory();
-      this.rootEl!.removeChild(row);
+      this.collectEl1!.removeChild(row);
+    });
+    this.collectEl2!.querySelectorAll<TraceRow<any>>(`trace-row`).forEach((row) => {
+      row.clearMemory();
+      this.collectEl2!.removeChild(row);
     });
   }
 
@@ -193,27 +275,76 @@ export class SpChartList extends BaseElement {
     this.refreshFavoriteCanvas();
   };
 
-  insertRow(row: TraceRow<any>) {
+  insertRow(row: TraceRow<any>, group: string, updateGroup: boolean) {
     this.style.display = 'flex';
-    this.fragment.appendChild(row);
-    this.rootEl?.appendChild(this.fragment);
+    let collectGroup = !updateGroup && row.collectGroup ? row.collectGroup : group;
+    if (collectGroup === '1') {
+      if (!this.collect1Expand) {
+        this.collect1Expand = true;
+        this.icon1!.style.transform = 'rotateZ(0deg)';
+      }
+      if (this.collectRowList1.indexOf(row) === -1) {
+        this.collectRowList1.push(row);
+      }
+      if (!this.fragmentGroup1.contains(row)) {
+        this.fragmentGroup1.appendChild(row);
+      }
+      this.collectEl1?.appendChild(this.fragmentGroup1);
+    } else {
+      if (!this.collect2Expand) {
+        this.collect2Expand = true;
+        this.icon2!.style.transform = 'rotateZ(0deg)';
+      }
+      if (this.collectRowList2.indexOf(row) === -1) {
+        this.collectRowList2.push(row);
+      }
+      if (!this.fragmentGroup2.contains(row)) {
+        this.fragmentGroup2.appendChild(row);
+      }
+      this.collectEl2!.appendChild(this.fragmentGroup2);
+    }
+    if (updateGroup) {
+      row.collectGroup = group;
+    }
+    this.updateGroupDisplay();
     this.resizeHeight();
     this.scrollTo({ top: this.scrollHeight });
     this.refreshFavoriteCanvas();
     row.currentContext = this.canvasCtx;
   }
 
-  deleteRow(row: TraceRow<any>) {
-    this.fragment.appendChild(row);
+  deleteRow(row: TraceRow<any>, clearCollectGroup: boolean) {
+    if (row.collectGroup === '1') {
+      this.collectRowList1.splice(this.collectRowList1.indexOf(row), 1);
+      if (!this.fragmentGroup1.contains(row)) {
+        this.fragmentGroup1.appendChild(row);
+      }
+      this.fragmentGroup1.removeChild(row);
+    } else {
+      this.collectRowList2.splice(this.collectRowList2.indexOf(row), 1);
+      if (!this.fragmentGroup2.contains(row)) {
+        this.fragmentGroup2.appendChild(row);
+      }
+      this.fragmentGroup2.removeChild(row);
+    }
+    if (clearCollectGroup) {
+      row.collectGroup = undefined;
+    }
+    this.updateGroupDisplay();
     this.resizeHeight();
     this.scrollTop = 0;
     this.refreshFavoriteCanvas();
     row.currentContext = undefined;
-    if (this.rootEl?.children.length === 0) {
+    if (this.collectRowList1.length === 0 && this.collectRowList2.length === 0) {
       this.style.height = 'auto';
       this.style.display = 'none';
       this.manualHeight = 0;
     }
+  }
+
+  updateGroupDisplay() {
+    this.groupTitle1!.style.display = this.collectRowList1.length === 0 ? 'none' : 'flex';
+    this.groupTitle2!.style.display = this.collectRowList2.length === 0 ? 'none' : 'flex';
   }
 
   clearRect() {
@@ -307,8 +438,6 @@ export class SpChartList extends BaseElement {
     scroll-behavior: smooth;
 }
 .root{
-    /*display: flex;*/
-    /*flex-direction: column;*/
     width: 100%;
     box-sizing: border-box;
 }
@@ -317,17 +446,31 @@ export class SpChartList extends BaseElement {
     top: 0;
     right: 0px;
     bottom: 0px;
-    /*width: 100%;*/
-    /*left: 496px;*/
-    /*height: calc(100vh - 195px);*/
-    /*height: 100%;*/
     box-sizing: border-box;
-    /*background: #ff0000;*/
-    /*border: 2px solid #000000;*/
+}
+.icon:hover {
+ color:#ecb93f;
+}
+.icon {
+    margin-right: 10px;
+    cursor: pointer;
 }
 </style>
 <canvas id="canvas-panel" class="panel-canvas" ondragstart="return false"></canvas>
-<div class="root"></div>
+<div class="root">
+    <div id="group-1-title" style="background-color: #efefef;padding: 10px;align-items: center">
+        <lit-icon id="group_1_expand" class="icon" name="caret-down" size="19"></lit-icon>
+        <span style="width: 184px;font-size: 10px;color: #898989">Collect 1</span>
+        <lit-icon id="group_1_collect" name="star-fill" style="color: #5291FF;cursor: pointer" size="19"></lit-icon>
+    </div>
+    <div id="collect-group-1"></div>
+    <div id="group-2-title" style="background-color: #efefef;padding: 10px;align-items: center">
+        <lit-icon id="group_2_expand" class="icon" name="caret-down" size="19"></lit-icon>
+        <span style="width: 184px;font-size: 10px;color: #898989">Collect 2</span>
+        <lit-icon id="group_2_collect" name="star-fill" style="color: #f56940;cursor: pointer" size="19"></lit-icon>
+    </div>
+    <div id="collect-group-2"></div>
+</div>
 `;
   }
 }
