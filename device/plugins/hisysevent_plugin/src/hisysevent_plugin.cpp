@@ -58,7 +58,8 @@ int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1,
                "NOTE HisyseventPlugin: ParseFromArray failed");
 
-    HILOG_DEBUG(LOG_CORE, "NOTE configData ParseFromArray sucessed,sourse data:%s", protoConfig_.msg().c_str());
+    HILOG_DEBUG(LOG_CORE, "config sourse data:%s domain:%s event:%s", protoConfig_.msg().c_str(),
+        protoConfig_.subscribe_domain().c_str(), protoConfig_.subscribe_event().c_str());
 
     CHECK_TRUE(InitHisyseventCmd(), -1, "HisyseventPlugin: Init HisyseventCmd failed");
 
@@ -181,6 +182,14 @@ inline bool HisyseventPlugin::InitHisyseventCmd()
     fullCmd_.emplace_back("hisysevent"); // exe file name
     fullCmd_.emplace_back("-rd");
 
+    if (!protoConfig_.subscribe_domain().empty()) {
+        fullCmd_.emplace_back("-o");
+        fullCmd_.emplace_back(protoConfig_.subscribe_domain());
+    }
+    if (!protoConfig_.subscribe_event().empty()) {
+        fullCmd_.emplace_back("-n");
+        fullCmd_.emplace_back(protoConfig_.subscribe_event());
+    }
     HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
     return true;
 }

@@ -17,4 +17,6 @@ option optimize_for = LITE_RUNTIME;
 // TODO Save the fetch data
 message HisyseventConfig {
     string msg = 1;
+    string subscribe_domain = 2;
+    string subscribe_event = 3;
 }
