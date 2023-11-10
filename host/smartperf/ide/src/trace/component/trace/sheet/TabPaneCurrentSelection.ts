@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../base-ui/table/lit-table.js';
+import { type LitTable } from '../../../../base-ui/table/lit-table.js';
 import '../../../../base-ui/table/lit-table-column.js';
 
 import {
@@ -29,10 +29,9 @@ import {
   queryThreadStateArgs,
   queryThreadWakeUp,
   queryThreadWakeUpFrom,
-  queryAnimationFrameFps,
   queryWakeupListPriority,
 } from '../../../database/SqlLite.js';
-import { WakeupBean } from '../../../bean/WakeupBean.js';
+import { type WakeupBean } from '../../../bean/WakeupBean.js';
 import { SpApplication } from '../../../SpApplication.js';
 import { TraceRow } from '../base/TraceRow.js';
 import { CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
@@ -48,8 +47,8 @@ import { Utils } from '../base/Utils.js';
 import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
-import { SelectionParam } from '../../../bean/BoxSelection.js';
-import { FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import { type SelectionParam } from '../../../bean/BoxSelection.js';
+import { type FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -154,8 +153,6 @@ export class TabPaneCurrentSelection extends BaseElement {
 </div>`,
       });
     }
-
-    list.push({ name: 'CmdLine', value: `${data.processCmdLine}` });
     list.push({
       name: 'StartTime(Relative)',
       value: getTimeString(data.startTime || 0),
@@ -406,7 +403,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     if (leftTitle) {
       leftTitle.innerText = 'Counter Details';
     }
-    let list: any[] = [];
+    let list: object[] = [];
     list.push({
       name: 'StartTime(Relative)',
       value: getTimeString(data.startTime || 0),
@@ -432,7 +429,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     if (leftTitle) {
       leftTitle.innerText = 'Counter Details';
     }
-    let list: any[] = [];
+    let list: object[] = [];
     list.push({
       name: 'StartTime(Relative)',
       value: getTimeString(data.startNS || 0),
@@ -969,14 +966,21 @@ export class TabPaneCurrentSelection extends BaseElement {
       value: ((dataTs || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'End time(Relative)', value: `${Utils.getTimeString(dataTs + (data.dur || 0))}` });
-    list.push({ name: 'End time(Absolute)', value: ((dataTs + (data.dur || 0)) + (window as any).recordStartNS) / 1000000000});
+    list.push({
+      name: 'End time(Absolute)',
+      value: (dataTs + (data.dur || 0) + (window as any).recordStartNS) / 1000000000,
+    });
     list.push({ name: 'Duration', value: `${Utils.getTimeString(data.dur || 0)}` });
     if (data.status === 'Completion delay') {
-      let result = await queryAnimationFrameFps(dataTs, dataTs + data.dur);
-      if (result.length > 0) {
-        let fixedNumber: number = 2;
-        let fpsValue: number = result[0].fps / (data.dur / 1000_000_000);
-        list.push({ name: 'FPS', value: `${fpsValue.toFixed(fixedNumber) || 0}` });
+      let frameFpsMessage = data.frameInfo?.split(':');
+      if (frameFpsMessage) {
+        if (frameFpsMessage[1] !== '0') {
+          list.push({ name: 'FPS', value: `${frameFpsMessage[1]}` });
+        } else {
+          let fixedNumber: number = 2;
+          let fpsValue: number = Number(frameFpsMessage[0]) / (data.dur / 1000_000_000);
+          list.push({ name: 'FPS', value: `${fpsValue.toFixed(fixedNumber) || 0}` });
+        }
       }
     }
     this.currentSelectionTbl!.dataSource = list;
@@ -1220,7 +1224,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.currentSelectionTbl = this.shadowRoot?.querySelector<LitTable>('#selectionTbl');
     this.wakeupListTbl = this.shadowRoot?.querySelector<LitTable>('#wakeupListTbl');
     this.scrollView = this.shadowRoot?.querySelector<HTMLDivElement>('#scroll_view');
-    this.currentSelectionTbl?.addEventListener('column-click', (ev: any) => {});
+    this.currentSelectionTbl?.addEventListener('column-click', (ev: any) => { });
     window.subscribe(window.SmartEvent.UI.WakeupList, (data: Array<WakeupBean>) => this.showWakeupListTableData(data));
   }
 
@@ -1230,6 +1234,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     let itids: number[] = [];
     let ts: number[] = [];
     let maxPriority = 0;
+    let maxPriorityDuration = 0;
     let maxDuration = 0;
     data.forEach((it) => {
       cpus.push(it.cpu!);
@@ -1260,8 +1265,17 @@ export class TabPaneCurrentSelection extends BaseElement {
         maxPriority = Math.max(maxPriority, this.selectWakeupBean.priority);
       }
       resource.forEach((it) => {
-        it.isSelected = it.priority === maxPriority || it.dur === maxDuration;
+        if (it.priority === maxPriority) {
+          maxPriorityDuration = Math.max(it.dur || 0, maxPriorityDuration);
+        }
       });
+      this.wakeupListTbl!.getItemTextColor = (data: any) => {
+        if ((data.priority === maxPriority && data.dur === maxPriorityDuration) || data.dur === maxDuration) {
+          return '#f44336';
+        } else {
+          return '#262626';
+        }
+      };
       this.wakeupListTbl!.recycleDataSource = resource;
     });
   }
@@ -1328,6 +1342,7 @@ export class TabPaneCurrentSelection extends BaseElement {
             .table-right{
                 width: 50%;
                 display: flex;
+                height: 650px;
                 flex-direction: column;
             }
         </style>
@@ -1346,7 +1361,7 @@ export class TabPaneCurrentSelection extends BaseElement {
                 </div>
             </div>
             <div class="scroll-area">
-                <lit-table id="selectionTbl" class="table-left" no-head hideDownload>
+                <lit-table id="selectionTbl" class="table-left" no-head hideDownload noRecycle>
                         <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px">
                             <template><div>{{name}}</div></template>
                         </lit-table-column>
@@ -1356,16 +1371,16 @@ export class TabPaneCurrentSelection extends BaseElement {
                 </lit-table>
                 <div class="table-right">
                     <canvas id="rightDraw" style="width: 100%;height: 200px;"></canvas>
-                    <lit-table id="wakeupListTbl" style="flex: 1;display: none" hideDownload>
+                    <lit-table id="wakeupListTbl" style="height: 300px;display: none;overflow: auto" hideDownload>
                         <lit-table-column title="Process" data-index="process" key="process" align="flex-start"  width="180px">
                         </lit-table-column>
                         <lit-table-column title="Thread" data-index="thread" key="thread" align="flex-start"  width="180px">
                         </lit-table-column>
                         <lit-table-column title="CPU" data-index="cpu" key="cpu" align="flex-start"  width="60px">
                         </lit-table-column>
-                        <lit-table-column title="Duration(ns)" data-index="dur" key="dur" align="flex-start"  width="180px">
+                        <lit-table-column title="Duration(ns)" data-index="dur" key="dur" align="flex-start"  width="120px">
                         </lit-table-column>
-                        <lit-table-column title="Priority" data-index="priority" key="priority" align="flex-start"  width="180px">
+                        <lit-table-column title="Priority" data-index="priority" key="priority" align="flex-start"  width="80px">
                         </lit-table-column>
                     </lit-table>
                 </div>

@@ -665,17 +665,17 @@ export class LitTabs extends HTMLElement {
           let span = a.querySelector('span') as HTMLSpanElement;
           let title = span.innerText;
           let rowType = document
-              .querySelector<HTMLElement>('sp-application')!
-              .shadowRoot?.querySelector<HTMLElement>('sp-system-trace')!
-              .getAttribute('clickRow');
+            .querySelector<HTMLElement>('sp-application')!
+            .shadowRoot?.querySelector<HTMLElement>('sp-system-trace')!
+            .getAttribute('clickRow');
           if (title === 'Counters' || title === 'Thread States') {
             title += `(${rowType})`;
           }
           if (title === 'Analysis') {
             let rowId = document
-                .querySelector<HTMLElement>('sp-application')!
-                .shadowRoot?.querySelector<HTMLElement>('sp-system-trace')!
-                .getAttribute('rowId');
+              .querySelector<HTMLElement>('sp-application')!
+              .shadowRoot?.querySelector<HTMLElement>('sp-system-trace')!
+              .getAttribute('rowId');
             if (rowId!.indexOf('DiskIOLatency') > -1) {
               title += '(disk-io)';
             } else if (rowId!.indexOf('VirtualMemory') > -1) {

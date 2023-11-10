@@ -15,6 +15,8 @@
 #ifndef NATIVE_HOOK_FILTER_H
 #define NATIVE_HOOK_FILTER_H
 #include <set>
+#include "common_types.pb.h"
+#include "native_hook_result.pb.h"
 #include "numerical_to_string.h"
 #include "offline_symbolization_filter.h"
 #include "stat_filter.h"
@@ -55,7 +57,10 @@ public:
     uint64_t offset_;
     uint64_t symbolOffset_;
 };
-
+struct CommHookData {
+    size_t size = 0;
+    std::unique_ptr<BatchNativeHookData> datas = nullptr;
+};
 class NativeHookFilter : public OfflineSymbolizationFilter {
 public:
     NativeHookFilter(TraceDataCache*, const TraceStreamerFilters*);
@@ -73,8 +78,12 @@ public:
     void AppendThreadNameMap(uint32_t id, uint64_t threadNameIndex);
     void ParseMapsEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData);
     void ParseSymbolTableEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData);
+    void ParseTagEvent(const ProtoReader::BytesView& bytesView);
     void FinishParseNativeHookData();
     bool NativeHookReloadElfSymbolTable(std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables);
+    CommHookData& GetCommHookData();
+    ProfilerPluginData* GetHookPluginData();
+    void SerializeHookCommDataToString();
     bool SupportImportSymbolTable()
     {
         return traceDataCache_->GetNativeHookFrameData()->Size();
@@ -89,7 +98,6 @@ private:
     void ParseFreeEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView);
     void ParseMmapEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView);
     void ParseMunmapEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView);
-    void ParseTagEvent(const ProtoReader::BytesView& bytesView);
     void MaybeUpdateCurrentSizeDur(uint64_t row, uint64_t timeStamp, bool isMalloc);
     void UpdateThreadNameWithNativeHookData() const;
     void GetCallIdToLastLibId();
@@ -153,6 +161,8 @@ private:
     const size_t MAX_CACHE_SIZE = 200000;
     uint32_t ipid_ = INVALID_UINT32;
     uint32_t callChainId_ = 0;
+    CommHookData commHookData_;
+    std::unique_ptr<ProfilerPluginData> hookPluginData_ = nullptr;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

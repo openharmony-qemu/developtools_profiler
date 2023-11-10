@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 import { element } from '../../../../../base-ui/BaseElement.js';
-import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
+import { type LitSelect } from '../../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabSmapsStatisticData } from '../../../../database/SqlLite.js';
 import { resizeObserverFromMemory } from '../SheetUtils.js';
-import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
+import { type TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 import { TabPaneSmapsStatistics } from './TabPaneSmapsStatistics.js';
-import { SmapsType } from '../../../../bean/SmapsStruct.js';
+import { type SmapsType } from '../../../../bean/SmapsStruct.js';
 
 @element('tabpane-smaps-comparison')
 export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
@@ -46,9 +46,8 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     }
     this.selectionParam = data;
     //@ts-ignore
-    this.smapsCompariosnTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
-      this.parentElement!.clientHeight - 45
-    }px`;
+    this.smapsCompariosnTable?.shadowRoot?.querySelector('.table')?.style?.height = `${this.parentElement!.clientHeight - 45
+      }px`;
     this.smapsCompariosnTable!.loading = true;
     this.init(this.tabTitle!);
     let fileArr: any[] = [];

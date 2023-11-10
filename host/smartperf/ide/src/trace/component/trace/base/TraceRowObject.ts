@@ -33,13 +33,31 @@ export class TraceRowObject<T extends BaseStruct> {
   public color: string | undefined;
   public frame: Rect | undefined;
   public supplier: (() => Promise<Array<T>>) | undefined | null;
-  public onThreadHandler: | ((
+  public onThreadHandler:
+    | ((
         row: TraceRow<T>,
-        ctx: | ImageBitmapRenderingContext | CanvasRenderingContext2D | WebGLRenderingContext |
-          WebGL2RenderingContext | null | undefined ) => void) | undefined | null;
-  public onDrawHandler: | ((
-        ctx: | ImageBitmapRenderingContext | CanvasRenderingContext2D | WebGLRenderingContext |
-          WebGL2RenderingContext | null | undefined) => void) | undefined | null;
+        ctx:
+          | ImageBitmapRenderingContext
+          | CanvasRenderingContext2D
+          | WebGLRenderingContext
+          | WebGL2RenderingContext
+          | null
+          | undefined
+      ) => void)
+    | undefined
+    | null;
+  public onDrawHandler:
+    | ((
+        ctx:
+          | ImageBitmapRenderingContext
+          | CanvasRenderingContext2D
+          | WebGLRenderingContext
+          | WebGL2RenderingContext
+          | null
+          | undefined
+      ) => void)
+    | undefined
+    | null;
   public top: number = 0;
   public rowIndex: number = 0;
   public preObject: TraceRowObject<T> | undefined | null;

@@ -379,5 +379,17 @@ const GpuWindowMemData& TraceDataCacheReader::GetConstGpuWindowMemData() const
 {
     return gpuWindowMemData_;
 }
+const CpuDumpInfo& TraceDataCacheReader::GetConstCpuDumpInfo() const
+{
+    return cpuDumpInfo_;
+}
+const ProfileMemInfo& TraceDataCacheReader::GetConstProfileMemInfo() const
+{
+    return profileMemInfo_;
+}
+const RSImageDumpInfo& TraceDataCacheReader::GetConstRSImageDumpInfo() const
+{
+    return rsImageDumpInfo_;
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

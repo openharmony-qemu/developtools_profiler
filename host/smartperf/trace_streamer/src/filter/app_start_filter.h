@@ -81,6 +81,8 @@ private:
     bool CaclRsDataByPid(appMap& mAPPStartupData);
     void AppendData(const appMap& mAPPStartupData);
     void UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex);
+    bool ProcAbilityLaunchData(const std::string& nameString, uint64_t raw);
+    void ProcForegroundData(uint64_t raw);
     appMap mAPPStartupData_;
     std::unordered_map<uint32_t, appMap> mAPPStartupDataWithPid_;
 };

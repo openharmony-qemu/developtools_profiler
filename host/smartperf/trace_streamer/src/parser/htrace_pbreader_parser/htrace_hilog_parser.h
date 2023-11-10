@@ -31,7 +31,7 @@ class HtraceHiLogParser : public EventParserBase, public HtracePluginTimeParser 
 public:
     HtraceHiLogParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceHiLogParser();
-    void Parse(ProtoReader::BytesView tracePacket);
+    void Parse(ProtoReader::BytesView tracePacket, bool& haveSplitSeg);
     std::map<uint32_t, std::string> logLevelString_ = {{TS_DEBUG, "D"},
                                                        {TS_ERROR, "E"},
                                                        {TS_INFO, "I"},

@@ -98,10 +98,10 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
                 ts, INVALID_TIME, INVALID_CPU, prevPid, prevState);
             btInfo.threadStateRow = threadStateRow;
             if (prevState == TASK_UNINTERRUPTIBLE || prevState == TASK_DK) {
-                if (!pidToThreadSliceRow.count(prevPid)) {
-                    pidToThreadSliceRow.emplace(std::make_pair(prevPid, threadStateRow));
+                if (!pidToThreadSliceRow_.count(prevPid)) {
+                    pidToThreadSliceRow_.emplace(std::make_pair(prevPid, threadStateRow));
                 } else {
-                    pidToThreadSliceRow.at(prevPid) = threadStateRow;
+                    pidToThreadSliceRow_.at(prevPid) = threadStateRow;
                 }
             }
             (void)RemberInternalTidInStateTable(prevPid, threadStateRow, prevState);
@@ -110,7 +110,7 @@ void CpuFilter::InsertSwitchEvent(uint64_t ts,
     if (traceDataCache_->BinderRunnableTraceEnabled() && iTidToTransaction_.find(prevPid) != iTidToTransaction_.end()) {
         uint64_t transactionId = iTidToTransaction_.at(prevPid);
         auto iter = transactionIdToInfo_.find(transactionId);
-        if (prevState != TASK_FOREGROUND || iter == transactionIdToInfo_.end() || iter->second.iTidFrom != prevPid ||
+        if (prevState != TASK_NEW || iter == transactionIdToInfo_.end() || iter->second.iTidFrom != prevPid ||
             btInfo.schedSliceRow == INVALID_UINT64 || btInfo.threadStateRow == INVALID_UINT64) {
             TransactionClear(prevState, transactionId);
             return;
@@ -126,7 +126,7 @@ bool CpuFilter::InsertBlockedReasonEvent(uint64_t ts,
                                          DataIndex caller,
                                          uint32_t delay)
 {
-    if (pidToThreadSliceRow.count(iTid)) {
+    if (pidToThreadSliceRow_.count(iTid)) {
         // ArgSet
         ArgsSet args;
         args.AppendArg(ioWait_, BASE_DATA_TYPE_INT, iowait);
@@ -135,7 +135,7 @@ bool CpuFilter::InsertBlockedReasonEvent(uint64_t ts,
             args.AppendArg(delay_, BASE_DATA_TYPE_INT, delay);
         }
         auto argSetId = streamFilters_->argsFilter_->NewArgs(args);
-        auto row = pidToThreadSliceRow.at(iTid);
+        auto row = pidToThreadSliceRow_.at(iTid);
         traceDataCache_->GetThreadStateData()->SetArgSetId(row, argSetId);
         if (iowait) {
             auto state = traceDataCache_->GetThreadStateData()->StatesData()[row];
@@ -152,7 +152,7 @@ bool CpuFilter::InsertBlockedReasonEvent(uint64_t ts,
                 traceDataCache_->GetThreadStateData()->UpdateState(row, TASK_DK_NIO);
             }
         }
-        pidToThreadSliceRow.erase(iTid);
+        pidToThreadSliceRow_.erase(iTid);
     }
     return true;
 }
@@ -211,8 +211,8 @@ void CpuFilter::Finish() const
     auto slice = traceDataCache_->GetConstSchedSliceData();
     size = slice.Size();
     for (auto i = 0; i < size; i++) {
-        traceDataCache_->GetSchedSliceData()->AppendInternalPid(
-            traceDataCache_->GetThreadData(slice.InternalTidsData()[i])->internalPid_);
+        traceDataCache_->GetSchedSliceData()->ReviseInternalPid(
+            i, traceDataCache_->GetThreadData(slice.InternalTidsData()[i])->internalPid_);
     }
 }
 void CpuFilter::Clear()
@@ -241,24 +241,24 @@ uint64_t CpuFilter::RemberInternalTidInStateTable(uint32_t uid, uint64_t row, ui
 }
 uint64_t CpuFilter::RowOfInternalTidInStateTable(uint32_t uid) const
 {
-    auto row = internalTidToRowThreadState_.find(uid);
-    if (row != internalTidToRowThreadState_.end()) {
-        return (*row).second.row_;
+    auto itor = internalTidToRowThreadState_.find(uid);
+    if (itor != internalTidToRowThreadState_.end()) {
+        return (*itor).second.row_;
     }
     return INVALID_UINT64;
 }
 void CpuFilter::ClearInternalTidInStateTable(uint32_t uid)
 {
-    auto row = internalTidToRowThreadState_.find(uid);
-    if (row != internalTidToRowThreadState_.end()) {
-        internalTidToRowThreadState_.erase(row);
+    auto itor = internalTidToRowThreadState_.find(uid);
+    if (itor != internalTidToRowThreadState_.end()) {
+        internalTidToRowThreadState_.erase(itor);
     }
 }
 uint64_t CpuFilter::StateOfInternalTidInStateTable(uint32_t uid) const
 {
-    auto row = internalTidToRowThreadState_.find(uid);
-    if (row != internalTidToRowThreadState_.end()) {
-        return (*row).second.state_;
+    auto itor = internalTidToRowThreadState_.find(uid);
+    if (itor != internalTidToRowThreadState_.end()) {
+        return (*itor).second.state_;
     }
     return TASK_INVALID;
 }

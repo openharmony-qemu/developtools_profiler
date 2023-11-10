@@ -49,14 +49,12 @@ export class Utils {
     Utils.statusMap.set('t', 'Traced');
     Utils.statusMap.set('X', 'Exit (Dead)');
     Utils.statusMap.set('Z', 'Exit (Zombie)');
-    Utils.statusMap.set('K', 'Wake Kill');
-    Utils.statusMap.set('W', 'Waking');
     Utils.statusMap.set('P', 'Parked');
     Utils.statusMap.set('N', 'No Load');
   }
 
   public static getInstance(): Utils {
-    if (Utils.instance == null) {
+    if (Utils.instance === null) {
       Utils.instance = new Utils();
     }
     return Utils.instance;
@@ -72,7 +70,7 @@ export class Utils {
     if (Utils.getInstance().getStatusMap().has(state)) {
       return Utils.getInstance().getStatusMap().get(state) || 'Unknown State';
     } else {
-      if ('' == state || state == null) {
+      if ('' === state || state === null) {
         return '';
       }
       return 'Unknown State';
@@ -81,13 +79,13 @@ export class Utils {
 
   public static transferPTSTitle(value: any) {
     if (value.startsWith('S-')) {
-      return Utils.getEndState(value.replace('S-',''));
+      return Utils.getEndState(value.replace('S-', ''));
     } else if (value.startsWith('P-')) {
-      let pid = value.replace('P-','');
+      let pid = value.replace('P-', '');
       let process = Utils.PROCESS_MAP.get(parseInt(pid)) || 'Process';
       return `${process} [${pid}]`;
     } else if (value.startsWith('T-')) {
-      let tid = value.replace('T-','');
+      let tid = value.replace('T-', '');
       let thread = Utils.THREAD_MAP.get(parseInt(tid)) || 'Thread';
       return `${thread} [${tid}]`;
     } else {
@@ -96,19 +94,19 @@ export class Utils {
   }
 
   public static getStateColor(state: string): string {
-    if (state == 'D-NIO' || state == 'DK-NIO') {
+    if (state === 'D-NIO' || state === 'DK-NIO') {
       return '#795548';
-    } else if (state == 'D-IO' || state == 'DK-IO' || state == 'D' || state == 'DK') {
+    } else if (state === 'D-IO' || state === 'DK-IO' || state === 'D' || state === 'DK') {
       return '#f19b38';
-    } else if (state == 'R' || state == 'R+') {
+    } else if (state === 'R' || state === 'R+') {
       return '#a0b84d';
-    } else if (state == 'R-B') {
+    } else if (state === 'R-B') {
       return '#87CEFA';
-    } else if (state == 'I') {
+    } else if (state === 'I') {
       return '#673ab7';
-    } else if (state == 'Running') {
+    } else if (state === 'Running') {
       return '#467b3b';
-    } else if (state == 'S') {
+    } else if (state === 'S') {
       return '#e0e0e0';
     } else {
       return '#ff6e40';
@@ -146,7 +144,7 @@ export class Utils {
     if (currentTime > 0) {
       res += currentTime + 'ns ';
     }
-    if (res == '') {
+    if (res === '') {
       res = ns + '';
     }
     return res;
@@ -172,7 +170,7 @@ export class Utils {
       res += (currentNs / probablyMicrosecond1).toFixed(2) + 'μs ';
     } else if (currentNs > 0) {
       res += currentNs + 'ns ';
-    } else if (res == '') {
+    } else if (res === '') {
       res = timeNs + '';
     }
     return res;
@@ -209,7 +207,7 @@ export class Utils {
     if (currentNs > 0) {
       res += currentNs + '';
     }
-    if (res == '') {
+    if (res === '') {
       res = ns + '';
     }
     return res;
@@ -277,7 +275,7 @@ export class Utils {
       result += currentNs.toFixed(2) + 'ms';
       return result;
     }
-    if (result == '') {
+    if (result === '') {
       result = '0s';
     }
     return result;
@@ -291,7 +289,7 @@ export class Utils {
   }
 
   public static getBinaryKBWithUnit(kbytes: number): string {
-    if (kbytes == 0) {
+    if (kbytes === 0) {
       return '0KB';
     }
     let currentBytes = kbytes;
@@ -309,7 +307,7 @@ export class Utils {
   }
 
   public static getBinaryByteWithUnit(bytes: number): string {
-    if (bytes == 0) {
+    if (bytes === 0) {
       return '0Bytes';
     }
     let currentBytes = bytes;
@@ -370,7 +368,7 @@ export class Utils {
     if (currentNs > 0) {
       res += this.getCompletionTime(currentNs, 3);
     }
-    if (res == '') {
+    if (res === '') {
       res = ns + '';
     }
     return res;
@@ -390,23 +388,23 @@ export class Utils {
       res += Math.floor(currentNs / millisecond1) + ' ms ';
       return res;
     }
-    if (res == '') {
+    if (res === '') {
       res = ns + '';
     }
     return res;
   }
 
   private static getCompletionTime(time: number, maxLength: number): string {
-    if (maxLength == 2) {
-      if (time.toString().length == 2) {
+    if (maxLength === 2) {
+      if (time.toString().length === 2) {
         return '' + time;
       } else {
         return '0' + time;
       }
-    } else if (maxLength == 3) {
-      if (time.toString().length == 3) {
+    } else if (maxLength === 3) {
+      if (time.toString().length === 3) {
         return time.toString();
-      } else if (time.toString().length == 2) {
+      } else if (time.toString().length === 2) {
         return '0' + time;
       } else {
         return '00' + time;

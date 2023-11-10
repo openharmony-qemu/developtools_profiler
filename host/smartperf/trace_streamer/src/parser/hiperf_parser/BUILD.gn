@@ -44,6 +44,7 @@ ohos_source_set("hiperf_parser_src") {
     "../../trace_data",
     "..",
     "../../trace_streamer",
+    "../../proto_reader/include",
     "${THIRD_PARTY}/bounds_checking_function/include",
     "${PERF_DIR}/hiperf/include/nonlinux/linux",
     "${PERF_DIR}/hiperf/include/nonlinux",

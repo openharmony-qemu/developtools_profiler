@@ -17,6 +17,7 @@ import { BaseElement, element } from '../../../../base-ui/BaseElement.js';
 import { ColorUtils } from './ColorUtils.js';
 import { LitRadioBox } from '../../../../base-ui/radiobox/LitRadioBox.js';
 import { SpApplication } from '../../../SpApplication.js';
+import { SpSystemTrace } from '../../SpSystemTrace.js';
 
 @element('custom-theme-color')
 export class CustomThemeColor extends BaseElement {
@@ -25,6 +26,7 @@ export class CustomThemeColor extends BaseElement {
   private colorsArray: Array<string> = [];
   private colorsEl: HTMLDivElement | undefined | null;
   private theme: Theme = Theme.LIGHT;
+  private systemTrace: SpSystemTrace | undefined | null;
 
   static get observedAttributes(): string[] {
     return ['mode'];
@@ -93,6 +95,7 @@ export class CustomThemeColor extends BaseElement {
     this.radios = this.shadowRoot?.querySelectorAll('.litRadio');
     this.colorsEl = this.shadowRoot?.querySelector('.colors') as HTMLDivElement;
     this.application = document.querySelector('body > sp-application') as SpApplication;
+    this.systemTrace = this.application.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     let close = this.shadowRoot?.querySelector('.page-close');
     if (this.radios) {
       for (let i = 0; i < this.radios.length; i++) {
@@ -153,6 +156,12 @@ export class CustomThemeColor extends BaseElement {
 
     confirmBtn?.addEventListener('click', () => {
       this.confirmOPerate();
+    });
+    // 鼠标移入该页面，cpu泳道图恢复鼠标移出状态（鼠标移入cpu泳道图有数据的矩形上，和该矩形的tid或者pid不同的矩形会变灰，移出矩形，所有矩形恢复颜色）
+    this.addEventListener('mousemove', (event) => {
+      this.systemTrace!.tipEL!.style.display = 'none';
+      this.systemTrace!.hoverStructNull();
+      this.systemTrace!.refreshCanvas(true);
     });
   }
 

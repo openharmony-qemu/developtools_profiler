@@ -56,6 +56,14 @@ public:
     {
         isBytrace_ = enable;
     }
+    const auto& GetTraceDataBytrace()
+    {
+        return traceDataBytrace_;
+    }
+    void ClearByTraceData()
+    {
+        traceDataBytrace_.clear();
+    }
 
     void WaitForParserEnd();
 
@@ -103,6 +111,7 @@ private:
 private:
     using ArgsMap = std::unordered_map<std::string, std::string>;
     bool isParsingOver_ = false;
+    TraceDataCache* traceDataCache_;
     std::unique_ptr<BytraceEventParser> eventParser_;
     std::unique_ptr<BytraceHilogParser> hilogParser_;
     const std::regex bytraceMatcher_ = std::regex(R"(-(\d+)\s+\(?\s*(\d+|-+)?\)?\s?\[(\d+)\]\s*)"
@@ -131,6 +140,7 @@ private:
     bool isFirstLine = true;
     bool isHtmlTrace_ = false;
     bool isHtmlTraceContent_ = false;
+    std::string traceDataBytrace_ = "";
     TraceFileType fileType_ = TRACE_FILETYPE_BY_TRACE;
     int64_t seq_ = 1;
 };

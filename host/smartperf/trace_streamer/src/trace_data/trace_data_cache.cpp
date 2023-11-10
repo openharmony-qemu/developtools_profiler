@@ -62,6 +62,13 @@
 #include "log_table.h"
 #include "measure_filter_table.h"
 #include "measure_table.h"
+#include "memory_ashmem_table.h"
+#include "memory_dma_table.h"
+#include "memory_process_gpu_table.h"
+#include "memory_window_gpu_table.h"
+#include "memory_cpu_table.h"
+#include "memory_profile_table.h"
+#include "memory_rs_image_table.h"
 #include "meta_table.h"
 #include "native_hook_frame_table.h"
 #include "native_hook_statistic_table.h"
@@ -95,10 +102,6 @@
 #include "thread_state_table.h"
 #include "thread_table.h"
 #include "trace_config_table.h"
-#include "memory_ashmem_table.h"
-#include "memory_dma_table.h"
-#include "memory_process_gpu_table.h"
-#include "memory_window_gpu_table.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
@@ -199,6 +202,9 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<MemoryDmaTable>(*db_, this, "memory_dma");
     TableBase::TableDeclare<MemoryProcessGpuTable>(*db_, this, "memory_process_gpu");
     TableBase::TableDeclare<MemoryWindowGpuTable>(*db_, this, "memory_window_gpu");
+    TableBase::TableDeclare<MemoryCpuTable>(*db_, this, "memory_cpu");
+    TableBase::TableDeclare<MemoryProfileTable>(*db_, this, "memory_profile");
+    TableBase::TableDeclare<MemoryRSImageTable>(*db_, this, "memory_rs_image");
 
     TableBase::TableDeclare<PerfReportTable>(*db_, this, "perf_report");
     TableBase::TableDeclare<PerfSampleTable>(*db_, this, "perf_sample");
@@ -280,6 +286,9 @@ void TraceDataCache::InitDB()
     TableBase::TableDeclare<MemoryDmaTable>(*db_, this, "_memory_dma");
     TableBase::TableDeclare<MemoryProcessGpuTable>(*db_, this, "_memory_process_gpu");
     TableBase::TableDeclare<MemoryWindowGpuTable>(*db_, this, "_memory_window_gpu");
+    TableBase::TableDeclare<MemoryCpuTable>(*db_, this, "_memory_cpu");
+    TableBase::TableDeclare<MemoryProfileTable>(*db_, this, "_memory_profile");
+    TableBase::TableDeclare<MemoryRSImageTable>(*db_, this, "_memory_rs_image");
 #if WITH_EBPF_HELP
     TableBase::TableDeclare<EbpfProcessMapsTable>(*db_, this, "_ebpf_process_maps");
     TableBase::TableDeclare<EbpfElfTable>(*db_, this, "_ebpf_elf");
@@ -328,6 +337,30 @@ bool TraceDataCache::BinderRunnableTraceEnabled() const
 void TraceDataCache::UpdateBinderRunnableTraceStatus(bool status)
 {
     binderRunnableTraceEnabled_ = status;
+}
+uint64_t TraceDataCache::SplitFileMaxTime()
+{
+    return splitFileMaxTs_;
+}
+uint64_t TraceDataCache::SplitFileMinTime()
+{
+    return splitFileMinTs_;
+}
+void TraceDataCache::SetSplitFileMaxTime(uint64_t maxTs)
+{
+    splitFileMaxTs_ = maxTs;
+}
+void TraceDataCache::SetSplitFileMinTime(uint64_t minTs)
+{
+    splitFileMinTs_ = minTs;
+}
+std::deque<std::unique_ptr<std::string>>& TraceDataCache::HookCommProtos()
+{
+    return hookCommProtos_;
+}
+void TraceDataCache::ClearHookCommProtos()
+{
+    hookCommProtos_.clear();
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -69,10 +69,12 @@ trace_streamer_include = [
   "parser",
   "cfg",
   "proto_reader/include",
+  "parser/bytrace_parser",
   "parser/ebpf_parser",
   "parser/htrace_pbreader_parser",
   "parser/htrace_pbreader_parser/htrace_event_parser",
   "parser/htrace_pbreader_parser/htrace_cpu_parser",
+  "parser/rawtrace_parser",
   "parser/hiperf_parser",
   "${THIRD_PARTY}/bounds_checking_function/include",
   "${THIRD_PARTY}/sqlite/include",
@@ -88,6 +90,8 @@ trace_streamer_include = [
   "${THIRD_PARTY}/googletest/googletest/include",
   "${COMMON_LIBRARY}/c_utils/base/include",
   "${THIRD_PARTY}/sqlite",
+  "${THIRD_PARTY}/protogen/types/plugins/js_memory",
+  "${PERF_DIR}/profiler/device/plugins/ftrace_plugin/include",
 ]
 
 ohos_source_set("trace_streamer_source") {
@@ -149,11 +153,13 @@ ohos_source_set("trace_streamer_source") {
   }
 
   public_deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp",
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp_standard",
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:cpu_data_reader",
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_reader",
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:hilog_data_reader",
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:ts_js_memory_data_cpp",
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader",
   ]
   if (!use_wasm && !is_test && !is_fuzz) {

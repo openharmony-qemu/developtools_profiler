@@ -307,10 +307,12 @@ export class TabPaneNMSampleList extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        TabPaneNMSampleList.sampleTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
+        TabPaneNMSampleList.sampleTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 31 + 'px';
         TabPaneNMSampleList.sampleTbl?.reMeauseHeight();
         // @ts-ignore
-        TabPaneNMSampleList.tblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 + 'px';
+        TabPaneNMSampleList.tblData?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 + 'px';
         TabPaneNMSampleList.tblData?.reMeauseHeight();
       }
     }).observe(this.parentElement!);

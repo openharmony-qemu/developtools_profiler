@@ -30,10 +30,10 @@ enum Stat : uint32_t {
     TRACED = 8, // the process is being debug
     EXITDEAD = 16,
     EXITZOMBIE = 32,
-    TASKDEAD = 64,
-    WAKEKILL = 128,
-    WAKING = 256,
-    PARKED = 512,
+    PARKED = 64,
+    TASKDEAD = 128,
+    WAKEKILL = 256,
+    WAKING = 512,
     NOLOAD = 1024,
     TASKNEW = 2048,
     VALID = 0X8000,
@@ -47,7 +47,7 @@ public:
     {
         return state_ & ~VALID;
     }
-    bool IsValid() const
+    bool IsInvalid() const
     {
         return invalid_;
     }
@@ -71,11 +71,8 @@ private:
         {'t', TRACED},
         {'X', EXITDEAD},
         {'Z', EXITZOMBIE},
-        {'x', TASKDEAD},
-        {'I', TASKDEAD},
-        {'K', WAKEKILL},
         {'P', PARKED},
-        {'N', NOLOAD},
+        {'I', TASKDEAD},
         {'|', VALID},
     };
     bool invalid_ = false;

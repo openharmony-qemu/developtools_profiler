@@ -79,7 +79,8 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEntryTest, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     eventParser.Clear();
@@ -122,7 +123,8 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEntryTestNotMatch, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     ts1 = 110;
@@ -146,7 +148,7 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEntryTestNotMatch, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView2(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg2.protoData = cpuDetailBytesView2;
-    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId);
+    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 2);
 
@@ -195,7 +197,8 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerExitTestEmpty, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 0);
     auto eventCount =
@@ -241,7 +244,8 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEnterAndExitTest, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     uint32_t ret = 1; // 1 for handled, else for unhandled
@@ -267,7 +271,7 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEnterAndExitTest, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView2(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg2.protoData = cpuDetailBytesView2;
-    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId);
+    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId, hasSplit);
     eventParser.FilterAllEvents();
 
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
@@ -312,7 +316,8 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEnterAndExitTestTwice, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     uint32_t ret = 1; // 1 for handled, else for unhandled
@@ -340,7 +345,7 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEnterAndExitTestTwice, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView2(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg2.protoData = cpuDetailBytesView2;
-    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId);
+    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_EVENT_IRQ_HANDLER_EXIT,
@@ -369,7 +374,7 @@ HWTEST_F(HtraceIrqEventTest, IrqHandlerEnterAndExitTestTwice, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView3(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg3.protoData = cpuDetailBytesView3;
-    eventParser.ParseDataItem(dataSeg3, dataSeg3.clockId);
+    eventParser.ParseDataItem(dataSeg3, dataSeg3.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().ArgSetIdsData()[0] == 0);
@@ -412,7 +417,8 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqEntryTest, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     eventParser.Clear();
@@ -454,7 +460,8 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqEntryNotMatch, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     ts1 = 150;
@@ -478,7 +485,7 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqEntryNotMatch, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView2(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg2.protoData = cpuDetailBytesView2;
-    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId);
+    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 2);
     EXPECT_TRUE(
@@ -522,7 +529,8 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqExitEmptyTest, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 0);
     EXPECT_TRUE(
@@ -566,7 +574,8 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqTest, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
 
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
@@ -591,7 +600,7 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqTest, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView2(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg2.protoData = cpuDetailBytesView2;
-    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId);
+    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     eventParser.Clear();
@@ -633,7 +642,8 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqTestNotMatch, TestSize.Level1)
     dataSeg.protoData = cpuDetailBytesView;
 
     HtraceEventParser eventParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
-    eventParser.ParseDataItem(dataSeg, dataSeg.clockId);
+    bool hasSplit = false;
+    eventParser.ParseDataItem(dataSeg, dataSeg.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     eventParser.Clear();
@@ -659,7 +669,7 @@ HWTEST_F(HtraceIrqEventTest, SoftIrqTestNotMatch, TestSize.Level1)
     ProtoReader::BytesView cpuDetailBytesView2(reinterpret_cast<const uint8_t*>(cpuDetailStrMsg.data()),
                                                cpuDetailStrMsg.size());
     dataSeg2.protoData = cpuDetailBytesView2;
-    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId);
+    eventParser.ParseDataItem(dataSeg2, dataSeg2.clockId, hasSplit);
     eventParser.FilterAllEvents();
     EXPECT_TRUE(stream_.traceDataCache_->GetConstIrqData().Size() == 1);
     EXPECT_TRUE(

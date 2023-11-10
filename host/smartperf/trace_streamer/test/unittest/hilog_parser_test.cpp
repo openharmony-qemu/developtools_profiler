@@ -56,7 +56,8 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithoutHilogLine, TestSize.Level1)
     std::string hilogData = "";
     hilogInfo->SerializeToString(&hilogData);
     ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
-    htraceHiLogParser.Parse(hilogInfoData);
+    bool issplit = false;
+    htraceHiLogParser.Parse(hilogInfoData, issplit);
     auto size = stream_.traceDataCache_->GetConstHilogData().Size();
     EXPECT_FALSE(size);
 }
@@ -96,7 +97,8 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithOneHilogLine, TestSize.Level1)
     std::string hilogData = "";
     hilogInfo->SerializeToString(&hilogData);
     ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
-    htraceHiLogParser.Parse(hilogInfoData);
+    bool issplit = false;
+    htraceHiLogParser.Parse(hilogInfoData, issplit);
 
     auto seq = stream_.traceDataCache_->GetConstHilogData().HilogLineSeqs()[0];
     EXPECT_EQ(seq, LOG_ID);
@@ -187,7 +189,8 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithMultipleHilogLine, TestSize.Level1)
     std::string hilogData = "";
     hilogInfo->SerializeToString(&hilogData);
     ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
-    htraceHiLogParser.Parse(hilogInfoData);
+    bool issplit = false;
+    htraceHiLogParser.Parse(hilogInfoData, issplit);
 
     auto seqFirst = stream_.traceDataCache_->GetConstHilogData().HilogLineSeqs()[0];
     auto seqSecond = stream_.traceDataCache_->GetConstHilogData().HilogLineSeqs()[1];
@@ -278,7 +281,8 @@ HWTEST_F(HilogParserTest, ParseHilogInfoWithErrLevelHilogLine, TestSize.Level1)
     std::string hilogData = "";
     hilogInfo->SerializeToString(&hilogData);
     ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
-    htraceHiLogParser.Parse(hilogInfoData);
+    bool issplit = false;
+    htraceHiLogParser.Parse(hilogInfoData, issplit);
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_HILOG, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
@@ -321,7 +325,8 @@ HWTEST_F(HilogParserTest, ParseHilogInfoLostHilogLine, TestSize.Level1)
     std::string hilogData = "";
     hilogInfo->SerializeToString(&hilogData);
     ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
-    htraceHiLogParser.Parse(hilogInfoData);
+    bool issplit = false;
+    htraceHiLogParser.Parse(hilogInfoData, issplit);
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_HILOG, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
@@ -368,7 +373,8 @@ HWTEST_F(HilogParserTest, ParseHilogInfoHasDuplicateHilogLine, TestSize.Level1)
     std::string hilogData = "";
     hilogInfo->SerializeToString(&hilogData);
     ProtoReader::BytesView hilogInfoData(reinterpret_cast<const uint8_t*>(hilogData.data()), hilogData.size());
-    htraceHiLogParser.Parse(hilogInfoData);
+    bool issplit = false;
+    htraceHiLogParser.Parse(hilogInfoData, issplit);
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_HILOG, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(2 == eventCount);
@@ -395,7 +401,7 @@ HWTEST_F(HilogParserTest, ParseTxtHilogInfo, TestSize.Level1)
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(readSize);
     memcpy_s(buf.get(), readSize, data, sizeof(data));
 
-    EXPECT_TRUE(ta->ParseTraceDataSegment(std::move(buf), sizeof(data)));
+    EXPECT_TRUE(ta->ParseTraceDataSegment(std::move(buf), sizeof(data), 0, 1));
     ta->WaitForParserEnd();
 
     EXPECT_TRUE(ta->traceDataCache_->GetConstHilogData().HilogLineSeqs().size() == 1);
@@ -427,7 +433,7 @@ HWTEST_F(HilogParserTest, ParseTxtHilogInfoWithTimeFormat, TestSize.Level1)
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(readSize);
     memcpy_s(buf.get(), readSize, data, sizeof(data));
 
-    EXPECT_TRUE(ta->ParseTraceDataSegment(std::move(buf), sizeof(data)));
+    EXPECT_TRUE(ta->ParseTraceDataSegment(std::move(buf), sizeof(data), 0, 1));
     ta->WaitForParserEnd();
 
     EXPECT_TRUE(ta->traceDataCache_->GetConstHilogData().HilogLineSeqs().size() == 5);

@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { GpuMemory } from '../../../../bean/AbilityMonitor.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type GpuMemory } from '../../../../bean/AbilityMonitor.js';
 import { getTabGpuMemoryAbilityClickData } from '../../../../database/SqlLite.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { Utils } from '../../base/Utils.js';

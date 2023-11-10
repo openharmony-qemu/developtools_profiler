@@ -33,7 +33,8 @@ public:
     HtraceNativeHookParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceNativeHookParser();
     void ParseConfigInfo(HtraceDataSegment& dataSeg);
-    void Parse(HtraceDataSegment& dataSeg);
+    void Parse(HtraceDataSegment& dataSeg, bool& haveSplitSeg);
+    void FinishSplitNativeHook();
     void FinishParseNativeHookData();
     void Finish();
     bool NativeHookReloadElfSymbolTable(std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables)
@@ -52,10 +53,13 @@ private:
     void ParseThreadEvent(const ProtoReader::BytesView& bytesView);
     void ParseFrameMap(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData);
     void ParseStackMap(const ProtoReader::BytesView& bytesView);
+    void SplitHookData(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData, bool& haveSplitSeg);
 
 private:
     std::vector<std::shared_ptr<const std::string>> segs_ = {};
     std::unique_ptr<NativeHookFilter> nativeHookFilter_;
+    uint64_t hookBootTime_ = 0;
+    bool isCommData_ = false;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -170,12 +170,13 @@ export class SpWebHdcShell extends BaseElement {
         index++;
         if (index === 1) {
           if (depth > 1) {
-            selectedText += line.slice(
-              this.getCurrentLineBackSize(line, startX - x, true)) + (endX < x + w ? '\n' : '');
+            selectedText +=
+              line.slice(this.getCurrentLineBackSize(line, startX - x, true)) + (endX < x + w ? '\n' : '');
           } else {
             selectedText += `${line.slice(
               this.getCurrentLineBackSize(line, startX - x, true),
-              this.getCurrentLineBackSize(line, endX - x, false))}\n`;
+              this.getCurrentLineBackSize(line, endX - x, false)
+            )}\n`;
           }
         } else if (index === depth) {
           selectedText += `${line.slice(0, this.getCurrentLineBackSize(line, endX - x, false))}\n`;
@@ -229,16 +230,18 @@ export class SpWebHdcShell extends BaseElement {
         }
       }
     }
-    this.points = {startX: startPointX, startY: startPointY, endX: endPointX, endY: endPointY};
+    this.points = { startX: startPointX, startY: startPointY, endX: endPointX, endY: endPointY };
   }
 
-  getCurrentLineBackSize(currentLine: string, maxBackSize: number, isStart: boolean): number{
+  getCurrentLineBackSize(currentLine: string, maxBackSize: number, isStart: boolean): number {
     let fillText = '';
     let strings = currentLine.split('');
     for (let index = 0; index < strings.length; index++) {
       let text = strings[index];
-      if (this.shellCanvasCtx!.measureText(fillText).width < maxBackSize &&
-        this.shellCanvasCtx!.measureText(fillText + text).width >= maxBackSize) {
+      if (
+        this.shellCanvasCtx!.measureText(fillText).width < maxBackSize &&
+        this.shellCanvasCtx!.measureText(fillText + text).width >= maxBackSize
+      ) {
         if (!isStart) {
           fillText += text;
         }
@@ -281,7 +284,7 @@ export class SpWebHdcShell extends BaseElement {
         }
       }
     }
-    this.points = {startX: startPointX, startY: startPointY, endX: endPointX, endY: endPointY};
+    this.points = { startX: startPointX, startY: startPointY, endX: endPointX, endY: endPointY };
   }
 
   private singleLineToMultiLine(shellStr: string, foundationWidth: number, maxWidth: number): string[] {
@@ -341,8 +344,8 @@ export class SpWebHdcShell extends BaseElement {
           textY = SpWebHdcShell.TOP_OFFSET + index * 16;
           this.shellCanvasCtx!.fillText(shellStr, SpWebHdcShell.LEFT_OFFSET, textY);
         }
-        shellStrLength = this.shellCanvasCtx!.measureText(
-          this.cursorRow.slice(0, this.cursorIndex)).width + SpWebHdcShell.LEFT_OFFSET;
+        shellStrLength =
+          this.shellCanvasCtx!.measureText(this.cursorRow.slice(0, this.cursorIndex)).width + SpWebHdcShell.LEFT_OFFSET;
         if (scroller) {
           if (textY > this.shellDiv!.clientHeight) {
             this.shellDiv!.scrollTop = textY - this.shellDiv!.clientHeight + 3;
@@ -364,8 +367,7 @@ export class SpWebHdcShell extends BaseElement {
           }
         }, 500);
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   public initHtml(): string {
@@ -474,10 +476,14 @@ export class SpWebHdcShell extends BaseElement {
           this.realTimeResult = '';
         } else if (this.isStartWidthArrayBuffer(arrayA, this.startRealTimeFlag)) {
           let lastIndex = this.getLastRestorationIndex(arrayA, this.endRealTimeFlag);
-          this.realTimeResult = this.removeTextAndColorSequenceStr(this.textDecoder.decode(arrayA.slice(lastIndex, arrayA.length)));
+          this.realTimeResult = this.removeTextAndColorSequenceStr(
+            this.textDecoder.decode(arrayA.slice(lastIndex, arrayA.length))
+          );
           this.startRealTime = true;
         } else if (this.isStartWidthArrayBuffer(arrayA, this.clearRealTimeFlag)) {
-          this.realTimeResult = this.removeTextAndColorSequenceStr(this.textDecoder.decode(arrayA.slice(6, arrayA.length)));
+          this.realTimeResult = this.removeTextAndColorSequenceStr(
+            this.textDecoder.decode(arrayA.slice(6, arrayA.length))
+          );
           this.startRealTime = true;
         } else {
           if (this.isStartWidthArrayBuffer(arrayA, this.ctrlCFlag)) {

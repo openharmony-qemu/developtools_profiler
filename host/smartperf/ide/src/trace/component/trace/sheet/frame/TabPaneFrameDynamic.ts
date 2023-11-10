@@ -14,11 +14,11 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { resizeObserver } from '../SheetUtils.js';
-import { FrameDynamicStruct } from '../../../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
-import { FrameAnimationSelect } from '../../../../bean/FrameComponentBean.js';
+import { type FrameDynamicStruct } from '../../../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import { type FrameAnimationSelect } from '../../../../bean/FrameComponentBean.js';
 import { Utils } from '../../base/Utils.js';
 
 @element('tabpane-frame-dynamic')
@@ -30,8 +30,9 @@ export class TabPaneFrameDynamic extends BaseElement {
   set data(frameDynamicParam: SelectionParam) {
     let secondToMillisecond: number = 1000_000.0;
     let fixedNumber: number = 5;
-    this.range!.textContent = `Selected range:  ${parseFloat(((frameDynamicParam.rightNs -
-      frameDynamicParam.leftNs) / secondToMillisecond).toFixed(fixedNumber))} ms`;
+    this.range!.textContent = `Selected range:  ${parseFloat(
+      ((frameDynamicParam.rightNs - frameDynamicParam.leftNs) / secondToMillisecond).toFixed(fixedNumber)
+    )} ms`;
     this.buildDynamicTable(frameDynamicParam.frameDynamic);
   }
 
@@ -42,11 +43,11 @@ export class TabPaneFrameDynamic extends BaseElement {
       this.range!.style.visibility = 'visible';
     }
     let result: FrameAnimationSelect[] = [];
-    dynamicDataList.forEach(dynamic => {
+    dynamicDataList.forEach((dynamic) => {
       result.push({
         id: dynamic.id,
         value: dynamic.typeValue,
-        timestamp: Utils.getTimeString(dynamic.ts)
+        timestamp: Utils.getTimeString(dynamic.ts),
       });
     });
     this.frameDynamicSource = result;
@@ -97,10 +98,7 @@ export class TabPaneFrameDynamic extends BaseElement {
         `;
   }
 
-  private sortByColumn(framesDetail: {
-    sort: number,
-    key: string,
-  }): void {
+  private sortByColumn(framesDetail: { sort: number; key: string }): void {
     let compare = function (property: string, sort: number, type: string) {
       return function (frameDynamicLeft: FrameAnimationSelect, frameDynamicRight: FrameAnimationSelect): number {
         let firstSortNumber: number = -1;
@@ -111,8 +109,9 @@ export class TabPaneFrameDynamic extends BaseElement {
         // @ts-ignore
         let leftData = frameDynamicLeft[property];
         if (type === 'number') {
-          return sort === thirdSortNumber ? parseFloat(rightData) - parseFloat(leftData) :
-            parseFloat(leftData) - parseFloat(rightData);
+          return sort === thirdSortNumber
+            ? parseFloat(rightData) - parseFloat(leftData)
+            : parseFloat(leftData) - parseFloat(rightData);
         } else {
           if (rightData > leftData) {
             return sort === thirdSortNumber ? SecondSortNumber : firstSortNumber;

@@ -63,9 +63,8 @@ HtraceJsCpuProfilerParser::HtraceJsCpuProfilerParser(TraceDataCache* dataCache, 
 {
 }
 
-void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
+void HtraceJsCpuProfilerParser::ParseNodeData(const json& jMessage)
 {
-    json jMessage = json::parse(result);
     int nodeCount = jMessage.at("nodes").size();
     for (int i = 0; i < nodeCount; i++) {
         jsonns::Node node = jMessage.at("nodes")[i];
@@ -87,11 +86,36 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
         (void)traceDataCache_->GetJsCpuProfilerNodeData()->AppendNewData(
             id, functionNameKey, scriptId, urlKey, lineNumber, columnNumber, hitCount, children, parentId);
     }
-    uint64_t startTime = jMessage.at("startTime");
-    uint32_t sample = std::numeric_limits<uint32_t>::max();
-    uint64_t sampleEndTime = startTime;
+}
+uint32_t HtraceJsCpuProfilerParser::ParseSampleData(const json& jMessage,
+                                                    uint64_t& sampleEndTime,
+                                                    uint64_t& startTime,
+                                                    uint64_t startTimeSnap,
+                                                    uint64_t endTimeSnap)
+{
     uint64_t dur = 0;
+    uint64_t splitStartTime = startTime * TIME_SECOND_COVER;
+    uint32_t sample = std::numeric_limits<uint32_t>::max();
+    json filteredSamples = nlohmann::json::array();
+    json filteredTimeDeltas = nlohmann::json::array();
+    filteredTimeDeltas.push_back(jMessage.at("timeDeltas")[0]);
+    startTimeSnap = streamFilters_->clockFilter_->Convert(TS_CLOCK_BOOTTIME, startTimeSnap, TS_MONOTONIC);
+    endTimeSnap = streamFilters_->clockFilter_->Convert(TS_CLOCK_BOOTTIME, endTimeSnap, TS_MONOTONIC);
     for (size_t i = 0; i < jMessage.at("samples").size(); i++) {
+        if (traceDataCache_->isSplitFile_ && i < jMessage.at("timeDeltas").size()) {
+            uint64_t splitTimeDeltas = jMessage.at("timeDeltas")[i];
+            splitTimeDeltas = splitTimeDeltas * TIME_SECOND_COVER;
+            uint64_t timeSnap = splitStartTime + splitTimeDeltas;
+            if (timeSnap >= startTimeSnap && timeSnap <= endTimeSnap) {
+                filteredSamples.push_back(jMessage.at("samples")[i]);
+                filteredTimeDeltas.push_back(jMessage.at("timeDeltas")[i]);
+                if (startTime_ == INVALID_UINT64) {
+                    startTime_ = splitStartTime;
+                }
+            }
+            splitStartTime = timeSnap;
+            continue;
+        }
         if (sample != std::numeric_limits<uint32_t>::max() && sample != jMessage.at("samples")[i]) {
             dur = (sampleEndTime * TIME_SECOND_COVER) - (startTime * TIME_SECOND_COVER);
             auto startNewTime =
@@ -100,7 +124,10 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
             auto endNewTime =
                 streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, sampleEndTime * TIME_SECOND_COVER);
             UpdatePluginTimeRange(TS_MONOTONIC, endNewTime, endNewTime);
-            (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startNewTime, endNewTime, dur);
+            if (!traceDataCache_->isSplitFile_) {
+                (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startNewTime, endNewTime,
+                                                                                   dur);
+            }
             sample = jMessage.at("samples")[i];
             startTime = sampleEndTime;
         } else if (sample == std::numeric_limits<uint32_t>::max()) {
@@ -111,12 +138,37 @@ void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result)
             sampleEndTime += timeDeltas;
         }
     }
-    dur = (sampleEndTime * TIME_SECOND_COVER) - (startTime * TIME_SECOND_COVER);
+    updatedJson_["samples"] = filteredSamples;
+    updatedJson_["timeDeltas"] = filteredTimeDeltas;
+    updatedJson_["startTime"] = startTime_ / TIME_SECOND_COVER;
+    startTime_ = INVALID_UINT64;
+    return sample;
+}
+void HtraceJsCpuProfilerParser::ParseJsCpuProfiler(std::string result, uint64_t startTimeSnap, uint64_t endTimeSnap)
+{
+    if (result.empty()) {
+        return;
+    }
+    json jMessage = json::parse(result);
+    if (traceDataCache_->isSplitFile_) {
+        for (auto item : jMessage.items()) {
+            if (item.key() != "samples" && item.key() != "timeDeltas") {
+                updatedJson_[item.key()] = item.value();
+            }
+        }
+    }
+    ParseNodeData(jMessage);
+    uint64_t startTime = jMessage.at("startTime");
+    uint64_t sampleEndTime = startTime;
+    uint32_t sample = ParseSampleData(jMessage, sampleEndTime, startTime, startTimeSnap, endTimeSnap);
+    uint64_t dur = (sampleEndTime * TIME_SECOND_COVER) - (startTime * TIME_SECOND_COVER);
     auto startNewTime = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, startTime * TIME_SECOND_COVER);
     UpdatePluginTimeRange(TS_MONOTONIC, startNewTime, startNewTime);
     auto endNewTime = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_MONOTONIC, sampleEndTime * TIME_SECOND_COVER);
     UpdatePluginTimeRange(TS_MONOTONIC, endNewTime, endNewTime);
-    (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startNewTime, endNewTime, dur);
+    if (!traceDataCache_->isSplitFile_) {
+        (void)traceDataCache_->GetJsCpuProfilerSampleData()->AppendNewData(sample, startNewTime, endNewTime, dur);
+    }
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

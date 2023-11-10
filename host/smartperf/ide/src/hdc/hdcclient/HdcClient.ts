@@ -50,7 +50,7 @@ export class HdcClient implements DataListener {
   async connectDevice(): Promise<boolean> {
     debug('start Connect Device');
     this.sessionId = Utils.getSessionId();
-    log(`sessionId is ${ this.sessionId }`);
+    log(`sessionId is ${this.sessionId}`);
     // @ts-ignore
     let handShake: SessionHandShake = new SessionHandShake(
       HANDSHAKE_MESSAGE,
@@ -77,9 +77,7 @@ export class HdcClient implements DataListener {
         this.handShakeSuccess(handBody);
         return true;
       } else {
-        log(
-          `session is not eq handShake?.sessionId is : ${ handShake?.sessionId } now session is ${ this.sessionId }`
-        );
+        log(`session is not eq handShake?.sessionId is : ${handShake?.sessionId} now session is ${this.sessionId}`);
         return false;
       }
     } else {

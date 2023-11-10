@@ -299,9 +299,9 @@ export class SpAllocations extends BaseElement {
     }
     this.processId!.removeAttribute('disabled');
     let inputBoxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.inputBoxes');
-    inputBoxes!.forEach((item) =>{
+    inputBoxes!.forEach((item) => {
       item.disabled = false;
-    })
+    });
     this.statisticsSlider!.disabled = false;
   }
 
@@ -319,11 +319,11 @@ export class SpAllocations extends BaseElement {
     if (this.offlineSymbol) {
       this.offlineSymbol.disabled = true;
     }
-    this.processId!.setAttribute('disabled','');
+    this.processId!.setAttribute('disabled', '');
     let inputBoxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.inputBoxes');
-    inputBoxes!.forEach((item) =>{
+    inputBoxes!.forEach((item) => {
       item.disabled = true;
-    })
+    });
     this.statisticsSlider!.disabled = true;
   }
 

@@ -121,7 +121,7 @@ BytraceEventParser::BytraceEventParser(TraceDataCache* dataCache, const TraceStr
 bool BytraceEventParser::SchedSwitchEvent(const ArgsMap& args, const BytraceLine& line) const
 {
     if (args.empty() || args.size() < MIN_SCHED_SWITCH_ARGS_COUNT) {
-        TS_LOGD("Failed to parse sched_switch event, no args or args size < 6");
+        TS_LOGW("Failed to parse sched_switch event, no args or args size < 6, argsStr=%s.", line.argsStr.data());
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_SWITCH, STAT_EVENT_DATA_INVALID);
         return false;
     }
@@ -145,7 +145,7 @@ bool BytraceEventParser::SchedSwitchEvent(const ArgsMap& args, const BytraceLine
     auto prevStateStr = args.at("prev_state");
     auto threadState = ThreadStateFlag(prevStateStr.c_str());
     uint64_t prevState = threadState.State();
-    if (!threadState.IsValid()) {
+    if (threadState.IsInvalid()) {
         streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_SCHED_SWITCH, STAT_EVENT_DATA_INVALID);
     }
     uint32_t nextInternalTid = 0;
@@ -734,6 +734,7 @@ void BytraceEventParser::FilterAllEvents()
     if (traceDataCache_->AppStartTraceEnabled()) {
         streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
     }
+    traceDataCache_->GetThreadStateData()->SortAllRowByTs();
 }
 
 void BytraceEventParser::BeginFilterEvents(EventInfo* event)

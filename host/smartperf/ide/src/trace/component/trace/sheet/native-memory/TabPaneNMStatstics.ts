@@ -51,7 +51,8 @@ export class TabPaneNMStatstics extends BaseElement {
     });
     this.initResponseTypeList(nativeStatisticsParam);
     // @ts-ignore
-    this.nativeStatisticsTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 25 + 'px';
+    this.nativeStatisticsTbl?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 25 + 'px';
     // @ts-ignore
     this.nativeStatisticsTbl?.recycleDataSource = [];
     this.nativeStatisticsTbl!.loading = true;

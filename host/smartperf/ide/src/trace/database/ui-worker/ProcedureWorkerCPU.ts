@@ -114,13 +114,11 @@ export class CpuRender {
         TraceRow.range!.endNS,
         TraceRow.range!.totalNS,
         row.frame,
-        req.type == `cpu-data-${SpSystemTrace.wakeupList[i]?.cpu || 0}`
-          ? SpSystemTrace.wakeupList[i]
-          : undefined,
+        req.type == `cpu-data-${SpSystemTrace.wakeupList[i]?.cpu || 0}` ? SpSystemTrace.wakeupList[i] : undefined,
         currentCpu,
         true
       );
-    };
+    }
   }
 
   render(cpuReq: RequestMessage, list: Array<any>, filter: Array<any>, translateY: number) {

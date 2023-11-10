@@ -26,7 +26,8 @@ enum class Index : int32_t {
     CATEGORY_NAME_ID,
     SIZE,
     COUNT,
-    PURGEABLE_SIZE
+    PURGEABLE_SIZE,
+    IPID
 };
 MemoryWindowGpuTable::MemoryWindowGpuTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
@@ -39,6 +40,7 @@ MemoryWindowGpuTable::MemoryWindowGpuTable(const TraceDataCache* dataCache) : Ta
     tableColumn_.push_back(TableBase::ColumnInfo("size", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("count", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("purgeable_size", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("ipid", "INTEGER"));
     tablePriKey_.push_back("id");
 }
 
@@ -86,6 +88,11 @@ int32_t MemoryWindowGpuTable::Cursor::Column(int32_t column) const
             break;
         case Index::PURGEABLE_SIZE:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.PurgeableSizes()[CurrentRow()]);
+            break;
+        case Index::IPID:
+            if (GpuWindowMemDataObj_.Ipids()[CurrentRow()] != INVALID_IPID) {
+                sqlite3_result_int64(context_, GpuWindowMemDataObj_.Ipids()[CurrentRow()]);
+            }
             break;
         default:
             TS_LOGF("Unregistered column : %d", column);

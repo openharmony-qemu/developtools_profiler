@@ -176,7 +176,8 @@ export class TabPanePerfSample extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.perfSampleTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 40 + 'px';
+        this.perfSampleTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 40 + 'px';
         // @ts-ignore
         this.tblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 25 + 'px';
         this.perfSampleTbl?.reMeauseHeight();

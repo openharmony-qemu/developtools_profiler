@@ -32,6 +32,6 @@ export class MemoryConfig {
     this.iPid = iPid;
     this.processName = processName;
     this.interval = interval;
-    this.snapshotDur = (interval * 1000 * 1000) / 5
+    this.snapshotDur = (interval * 1000 * 1000) / 5;
   }
 }

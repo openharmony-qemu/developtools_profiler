@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>scissors</title>
+    <g id="scissors" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle id="Oval" stroke="#666666" cx="5" cy="12" r="1.5"></circle>
+        <circle id="Oval-Copy" stroke="#666666" cx="11" cy="12" r="1.5"></circle>
+        <path d="M8,12 C7.44771525,12 7,11.5522847 7,11 L7,3 C7,2.44771525 7.44771525,2 8,2"
+            id="Path" stroke="#666666" fill="#666666"
+            transform="translate(7.500000, 7.000000) rotate(-45.000000) translate(-7.500000, -7.000000) "></path>
+        <path d="M9,12 C8.44771525,12 8,11.5522847 8,11 L8,3 C8,2.44771525 8.44771525,2 9,2"
+            id="Path-Copy" stroke="#666666" fill="#666666"
+            transform="translate(8.500000, 7.000000) scale(-1, 1) rotate(-45.000000) translate(-8.500000, -7.000000) "></path>
+    </g>
+</svg>

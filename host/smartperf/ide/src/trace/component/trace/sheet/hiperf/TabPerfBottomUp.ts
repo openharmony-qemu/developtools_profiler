@@ -14,17 +14,17 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import '../TabPaneFilter.js';
-import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
+import { type FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import '../../../chart/FrameChart.js';
 import '../../../DisassemblingWindow.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
 import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
-import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
-import { PerfBottomUpStruct } from '../../../../bean/PerfBottomUpStruct.js';
+import { type LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { type PerfBottomUpStruct } from '../../../../bean/PerfBottomUpStruct.js';
 
 @element('tabpane-perf-bottom-up')
 export class TabpanePerfBottomUp extends BaseElement {
@@ -137,7 +137,7 @@ export class TabpanePerfBottomUp extends BaseElement {
     const bottomUpData = evt.detail.data as PerfBottomUpStruct;
     document.dispatchEvent(
       new CustomEvent('number_calibration', {
-        detail: { time: bottomUpData.tsArray},
+        detail: { time: bottomUpData.tsArray },
       })
     );
     callStack!.push(bottomUpData);
@@ -200,14 +200,12 @@ export class TabpanePerfBottomUp extends BaseElement {
     super.connectedCallback();
     new ResizeObserver(() => {
       // @ts-ignore
-      this.bottomUpTable?.shadowRoot.querySelector('.table').style.height = `${
-        this.parentElement!.clientHeight - tableOffsetHeight
-      }px`;
+      this.bottomUpTable?.shadowRoot.querySelector('.table').style.height = `${this.parentElement!.clientHeight - tableOffsetHeight
+        }px`;
       this.bottomUpTable?.reMeauseHeight();
       // @ts-ignore
-      this.stackTable?.shadowRoot.querySelector('.table').style.height = `${
-        this.parentElement!.clientHeight - tableOffsetHeight - spanHeight
-      }px`;
+      this.stackTable?.shadowRoot.querySelector('.table').style.height = `${this.parentElement!.clientHeight - tableOffsetHeight - spanHeight
+        }px`;
       this.stackTable?.reMeauseHeight();
     }).observe(this.parentElement!);
   }

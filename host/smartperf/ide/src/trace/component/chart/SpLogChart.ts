@@ -54,11 +54,11 @@ export class SpLogChart {
         resolve(dataArray);
       });
     logsRow.onThreadHandler = (useCache) => {
-      let context:CanvasRenderingContext2D;
-      if(logsRow.currentContext){
+      let context: CanvasRenderingContext2D;
+      if (logsRow.currentContext) {
         context = logsRow.currentContext;
-      } else{
-        context  = logsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      } else {
+        context = logsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       }
       logsRow.canvasSave(context);
       (renders.logs as LogRender).renderMainThread(

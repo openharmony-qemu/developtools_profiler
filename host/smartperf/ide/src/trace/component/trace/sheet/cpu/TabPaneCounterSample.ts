@@ -64,8 +64,8 @@ export class TabPaneCounterSample extends BaseElement {
     this.counterLoadingPage = this.shadowRoot!.querySelector('.loadingCounter');
     this.counterSampleTbl = this.shadowRoot!.querySelector<LitTable>('#tb-counter-sample');
     this.systemTrace = document
-      .querySelector('body > sp-application')!
-      .shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
+      .querySelector('body > sp-application')?.
+      shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.counterSampleTbl!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.counterSortKey = evt.detail.key;

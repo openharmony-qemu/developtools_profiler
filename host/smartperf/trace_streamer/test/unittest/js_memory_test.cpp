@@ -93,28 +93,29 @@ HWTEST_F(JsMemoryTest, snapshotParserNodesByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto size = stream_.traceDataCache_->GetConstJsHeapFilesData().Size();
@@ -184,28 +185,29 @@ HWTEST_F(JsMemoryTest, snapshotParserEdgesByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto edgeType = stream_.traceDataCache_->GetConstJsHeapEdgesData().Types()[0];
@@ -267,28 +269,29 @@ HWTEST_F(JsMemoryTest, timelineParserNodesByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto size = stream_.traceDataCache_->GetConstJsHeapFilesData().Size();
@@ -357,28 +360,29 @@ HWTEST_F(JsMemoryTest, timelineParserEdgesByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto edgeType = stream_.traceDataCache_->GetConstJsHeapEdgesData().Types()[0];
@@ -443,28 +447,29 @@ HWTEST_F(JsMemoryTest, timelineParserSamplesByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto timeStampUs = stream_.traceDataCache_->GetConstJsHeapSampleData().TimeStampUs()[0];
@@ -530,28 +535,29 @@ HWTEST_F(JsMemoryTest, timelineParserStringsByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto string = stream_.traceDataCache_->GetConstJsHeapStringData().Strings()[0];
@@ -610,28 +616,29 @@ HWTEST_F(JsMemoryTest, timelineParserTraceFuncInfoByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto functionId = stream_.traceDataCache_->GetConstJsHeapTraceFuncInfoData().FunctionIds()[0];
@@ -695,28 +702,29 @@ HWTEST_F(JsMemoryTest, timelineParserTraceTreeByJsmemory, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket2(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket2, 11000);
+    htraceJSMemoryParser.Parse(tracePacket2, 11000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult3;
     jsHeapResult3.set_result(result3);
     std::string strResult3 = "";
     jsHeapResult3.SerializeToString(&strResult3);
     ProtoReader::BytesView tracePacket3(reinterpret_cast<const uint8_t*>(strResult3.data()), strResult3.size());
-    htraceJSMemoryParser.Parse(tracePacket3, 12000);
+    htraceJSMemoryParser.Parse(tracePacket3, 12000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult4;
     jsHeapResult4.set_result(result4);
     std::string strResult4 = "";
     jsHeapResult4.SerializeToString(&strResult4);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult4.data()), strResult4.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto functionInfoIndex = stream_.traceDataCache_->GetConstJsHeapTraceNodeData().FunctionInfoIndexs()[0];

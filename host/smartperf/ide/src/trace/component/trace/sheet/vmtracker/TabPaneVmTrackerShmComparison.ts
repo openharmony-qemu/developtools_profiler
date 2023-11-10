@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { queryVmTrackerShmSelectionData } from '../../../../database/SqlLite.js';
-import { SnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { type SnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerSnapshot.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { Utils } from '../../base/Utils.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
-import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
+import { type LitSelect } from '../../../../../base-ui/select/LitSelect.js';
+import { type TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 import { resizeObserverFromMemory } from '../SheetUtils.js';
 
 @element('tabpane-vmtracker-shm-comparison')
@@ -67,7 +67,7 @@ export class TabPaneVmTrackerShmComparison extends BaseElement {
     that.updateComparisonData(data.startNs, fileArr[0].startNs);
   }
 
-  async updateComparisonData(baseFileTs: number, targetFileTs: number) {
+  async updateComparisonData(baseFileTs: number, targetFileTs: number): Promise<void> {
     await queryVmTrackerShmSelectionData(baseFileTs, this.memoryConfig.iPid).then((result) => {
       this.baseFileData = result;
     });
@@ -96,7 +96,7 @@ export class TabPaneVmTrackerShmComparison extends BaseElement {
     return sizeObj;
   }
 
-  initSelect(fileId: number, fileArr: Array<SnapshotStruct>) {
+  initSelect(fileId: number, fileArr: Array<SnapshotStruct>): void {
     let that = this;
     let input = this.selectEl!.shadowRoot?.querySelector('input') as HTMLInputElement;
     this.selectEl!.innerHTML = '';
@@ -114,7 +114,7 @@ export class TabPaneVmTrackerShmComparison extends BaseElement {
       a.addEventListener('onSelected', (e) => {
         this.comparisonTableEl!.scrollTop = 0;
         for (let f of fileArr) {
-          if (input.value == f.name) {
+          if (input.value === f.name) {
             that.updateComparisonData(fileId, f.startNs);
           }
         }

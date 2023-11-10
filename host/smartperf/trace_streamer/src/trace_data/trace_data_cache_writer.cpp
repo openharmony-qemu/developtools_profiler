@@ -54,6 +54,9 @@ Thread* TraceDataCacheWriter::GetThreadData(InternalTid internalTid)
 
 void TraceDataCacheWriter::UpdateTraceTime(uint64_t timeStamp)
 {
+    if (isSplitFile_) {
+        return;
+    }
     if (timeStamp) {
         traceStartTime_ = std::min(traceStartTime_, timeStamp);
         traceEndTime_ = std::max(traceEndTime_, timeStamp);
@@ -62,24 +65,23 @@ void TraceDataCacheWriter::UpdateTraceTime(uint64_t timeStamp)
 
 void TraceDataCacheWriter::MixTraceTime(uint64_t timestampMin, uint64_t timestampMax)
 {
-    if (timestampMin == std::numeric_limits<uint64_t>::max() || timestampMax == 0 || timestampMin == timestampMax) {
+    if (isSplitFile_) {
         return;
     }
-    if ((timestampMax < traceStartTime_ || timestampMin > traceEndTime_) &&
-        (traceStartTime_ != std::numeric_limits<uint64_t>::max() && traceEndTime_ != 0)) {
-        return;
+    if (timestampMin == timestampMax) {
+        ++timestampMax;
+        --timestampMin;
     }
-    if ((timestampMin == timestampMax - 1) && traceStartTime_ != std::numeric_limits<uint64_t>::max() &&
-        traceEndTime_) {
+    if (timestampMin == std::numeric_limits<uint64_t>::max() || timestampMax == 0) {
         return;
     }
     if (traceStartTime_ != std::numeric_limits<uint64_t>::max()) {
-        traceStartTime_ = std::max(traceStartTime_, timestampMin);
+        traceStartTime_ = std::min(traceStartTime_, timestampMin);
     } else {
         traceStartTime_ = timestampMin;
     }
     if (traceEndTime_) {
-        traceEndTime_ = std::min(traceEndTime_, timestampMax);
+        traceEndTime_ = std::max(traceEndTime_, timestampMax);
     } else {
         traceEndTime_ = timestampMax;
     }
@@ -422,7 +424,18 @@ GpuWindowMemData* TraceDataCacheWriter::GetGpuWindowMemData()
 {
     return &gpuWindowMemData_;
 }
-
+CpuDumpInfo* TraceDataCacheWriter::GetCpuDumpInfo()
+{
+    return &cpuDumpInfo_;
+}
+ProfileMemInfo* TraceDataCacheWriter::GetProfileMemInfo()
+{
+    return &profileMemInfo_;
+}
+RSImageDumpInfo* TraceDataCacheWriter::GetRSImageDumpInfo()
+{
+    return &rsImageDumpInfo_;
+}
 void TraceDataCacheWriter::Clear()
 {
     rawData_.Clear();

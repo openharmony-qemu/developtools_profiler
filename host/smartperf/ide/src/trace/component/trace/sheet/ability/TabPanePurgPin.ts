@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { queryProcessPurgeableTab, querySysPurgeableTab } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
@@ -33,9 +33,8 @@ export class TabPanePurgPin extends BaseElement {
 
   set data(selection: SelectionParam) {
     //@ts-ignore
-    this.purgeablePinTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
-      this.parentElement!.clientHeight - 45
-    }px`;
+    this.purgeablePinTable?.shadowRoot?.querySelector('.table')?.style?.height = `${this.parentElement!.clientHeight - 45
+      }px`;
     this.init();
     this.purgPinTimeRange!.textContent =
       'Selected range: ' + ((selection.rightNs - selection.leftNs) / 1000000.0).toFixed(5) + ' ms';
@@ -53,7 +52,12 @@ export class TabPanePurgPin extends BaseElement {
         if (purgePinResults.length > 0) {
           for (let i = 0; i < purgePinResults.length; i++) {
             this.purgeablePinSource.push(
-              this.toTabStruct(purgePinResults[i].name, purgePinResults[i].maxSize, purgePinResults[i].minSize, purgePinResults[i].avgSize)
+              this.toTabStruct(
+                purgePinResults[i].name,
+                purgePinResults[i].maxSize,
+                purgePinResults[i].minSize,
+                purgePinResults[i].avgSize
+              )
             );
           }
           this.sortByColumn({ key: this.sortKey, sort: this.sortType });
@@ -95,7 +99,7 @@ export class TabPanePurgPin extends BaseElement {
     }
   }
 
-  private init() {
+  private init(): void {
     const thTable = this.tabTitle!.querySelector('.th');
     const purgePinTblNodes = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
@@ -110,7 +114,11 @@ export class TabPanePurgPin extends BaseElement {
     this.sortType = 2;
   }
 
-  private toTabStruct(type: string, maxPurgePinSize: number, minPurgePinSize: number, avgPurgePinSize: number
+  private toTabStruct(
+    type: string,
+    maxPurgePinSize: number,
+    minPurgePinSize: number,
+    avgPurgePinSize: number
   ): PurgeableTabStruct {
     const tabStruct = new PurgeableTabStruct(
       type,
@@ -150,7 +158,9 @@ export class TabPanePurgPin extends BaseElement {
         }
         if (type === 'number') {
           // @ts-ignore
-          return sort === 2 ? parseFloat(purgePinRightData[key]) - parseFloat(purgePinLeftData[key]) : parseFloat(purgePinLeftData[key]) - parseFloat(purgePinRightData[key]);
+          return sort === 2
+            ? parseFloat(purgePinRightData[key]) - parseFloat(purgePinLeftData[key])
+            : parseFloat(purgePinLeftData[key]) - parseFloat(purgePinRightData[key]);
         } else {
           if (sort === 2) {
             return purgePinRightData[key].toString().localeCompare(purgePinLeftData[key].toString());

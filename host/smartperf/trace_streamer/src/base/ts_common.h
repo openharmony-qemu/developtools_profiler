@@ -21,7 +21,9 @@
 #include <map>
 #include <string>
 using ClockId = uint32_t;
+const std::string INVALID_STRING = "INVALID_STRING";
 const uint64_t INVALID_ITID = std::numeric_limits<uint32_t>::max();
+const uint64_t INVALID_IPID = std::numeric_limits<uint32_t>::max();
 const uint64_t INVALID_UINT64 = std::numeric_limits<uint64_t>::max();
 const uint64_t MAX_UINT32 = std::numeric_limits<uint32_t>::max();
 const uint64_t MAX_UINT64 = std::numeric_limits<uint64_t>::max();
@@ -118,6 +120,7 @@ enum RefType {
 enum TraceFileType {
     TRACE_FILETYPE_BY_TRACE,
     TRACE_FILETYPE_H_TRACE,
+    TRACE_FILETYPE_RAW_TRACE,
     TRACE_FILETYPE_SYSEVENT,
     TRACE_FILETYPE_PERF,
     TRACE_FILETYPE_HILOG,
@@ -133,36 +136,41 @@ enum EndState {
     // (D) Indicates that the process is in deep sleep, waiting for resources, and does not respond to signals.
     // Typical scenario: process acquisition semaphore blocking.
     TASK_UNINTERRUPTIBLE = 2,
+    // (D-IO)
     TASK_UNINTERRUPTIBLE_IO = 21,
+    // (D-NIO)
     TASK_UNINTERRUPTIBLE_NIO = 22,
     // (Running) Indicates that the thread is running
     TASK_RUNNING = 3,
-    // (I) Thread in interrupt state
-    TASK_INTERRUPTED = 4,
-    // (T) Task being traced
+    // (T) Thread in interrupt state
+    TASK_STOPPED = 4,
+    // (t) Task being traced
     TASK_TRACED = 8,
     // (X) Exit status, the process is about to be destroyed.
     TASK_EXIT_DEAD = 16,
     // (Z) Zombie state
     TASK_ZOMBIE = 32,
-    // (I) clone thread
-    TASK_CLONE = 64,
-    // (K) Process killed
-    TASK_KILLED = 128,
+    // (P)
+    TASK_PARKED = 64,
+    // (I) Process killed
+    TASK_DEAD = 128,
     // (DK)
     TASK_DK = 130,
+    // (DK-IO)
     TASK_DK_IO = 131,
+    // (DK-NIO)
     TASK_DK_NIO = 132,
-    // the process is being debug now
+    // (tK)the process is being debug now
     TASK_TRACED_KILL = 136,
-    // (W) The process is in a deep sleep state and will be killed directly after waking up
+    // (R+) The process is in a deep sleep state and will be killed directly after waking up
     TASK_WAKEKILL = 256,
-    TASK_PARKED = 512,
+    // TASK_WAKING  = 512 (R) waking dont use for Runable state
+    // TASK_NOLOAD = 1024
     // (R+) Process groups in the foreground
-    TASK_FOREGROUND = 2048,
+    TASK_NEW = 2048,
     TASK_RUNNABLE_BINDER = 2049,
     TASK_MAX = 4096,
-    TASK_INVALID = 9999
+    TASK_INVALID = 0x8000
 };
 enum TSLogLevel {
     TS_DEBUG = 68,   // Debug
@@ -206,6 +214,10 @@ namespace TraceStreamer {
 struct ArgsData {
     BaseDataType type;
     int64_t value;
+};
+struct TraceTimeSnap {
+    uint64_t startTime;
+    uint64_t endTime;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

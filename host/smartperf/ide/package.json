@@ -20,7 +20,8 @@
       "!<rootDir>/dist/trace/database/worker.sql-wasm-debug.js",
       "!<rootDir>/dist/trace/database/trace_streamer_builtin.js",
       "!<rootDir>/dist/trace/database/trace_streamer_sdk_builtin.js",
-      "!<rootDir>/dist/trace/database/trace_streamer_dubai_builtin.js"
+      "!<rootDir>/dist/trace/database/trace_streamer_dubai_builtin.js",
+      "!<rootDir>/dist/trace/database/trace_converter_builtin.js"
     ],
     "globals": {
       "useWb": true

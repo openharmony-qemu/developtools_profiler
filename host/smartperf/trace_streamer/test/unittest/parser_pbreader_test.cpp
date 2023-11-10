@@ -63,7 +63,7 @@ HWTEST_F(ParserPbreaderTest, HtracePbreaderParserTest, TestSize.Level1)
                 TS_LOGD("Reading trace file over (errno: %d, %s)", errno, strerror(errno));
                 break;
             }
-            if (!ta->ParseTraceDataSegment(std::move(buf), rsize)) {
+            if (!ta->ParseTraceDataSegment(std::move(buf), rsize, 0, 1)) {
                 break;
             };
         }
@@ -105,7 +105,7 @@ HWTEST_F(ParserPbreaderTest, BytraceParserTest, TestSize.Level1)
                 TS_LOGD("Reading trace file failed (errno: %d, %s)", errno, strerror(errno));
                 break;
             }
-            if (!ta->ParseTraceDataSegment(std::move(buf), rsize)) {
+            if (!ta->ParseTraceDataSegment(std::move(buf), rsize, 0, 1)) {
                 break;
             };
         }
@@ -148,7 +148,7 @@ HWTEST_F(ParserPbreaderTest, HtraceAndPerfParserTest, TestSize.Level1)
                 TS_LOGD("Reading trace file over (errno: %d, %s)", errno, strerror(errno));
                 break;
             }
-            if (!ta->ParseTraceDataSegment(std::move(buf), rsize)) {
+            if (!ta->ParseTraceDataSegment(std::move(buf), rsize, 0, 1)) {
                 break;
             };
         }
@@ -191,7 +191,7 @@ HWTEST_F(ParserPbreaderTest, HtraceAndEbpfParserTest, TestSize.Level1)
                 TS_LOGD("Reading trace file over (errno: %d, %s)", errno, strerror(errno));
                 break;
             }
-            if (!ta->ParseTraceDataSegment(std::move(buf), rsize)) {
+            if (!ta->ParseTraceDataSegment(std::move(buf), rsize, 0, 1)) {
                 break;
             };
         }

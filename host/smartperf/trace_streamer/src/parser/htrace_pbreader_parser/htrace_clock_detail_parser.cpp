@@ -36,6 +36,9 @@ HtraceClockDetailParser::HtraceClockDetailParser(TraceDataCache* dataCache, cons
 HtraceClockDetailParser::~HtraceClockDetailParser() = default;
 void HtraceClockDetailParser::Parse(const ProtoReader::BytesView& tracePacket) const
 {
+    if (traceDataCache_->isSplitFile_) {
+        return;
+    }
     if (streamFilters_->clockFilter_->HasInitSnapShot()) {
         TS_LOGW("already has clock snapshot!!!");
         return;

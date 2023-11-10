@@ -15,7 +15,7 @@
 
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { BaseStruct, computeUnitWidth, isSurroundingPoint, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
-import { AnimationRanges } from '../../bean/FrameComponentBean.js';
+import { type AnimationRanges } from '../../bean/FrameComponentBean.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 
 export class FrameSpacingRender extends Render {
@@ -24,8 +24,8 @@ export class FrameSpacingRender extends Render {
       useCache: boolean;
       context: CanvasRenderingContext2D;
       type: string;
-      frameRate: number
-      animationRanges: AnimationRanges[]
+      frameRate: number;
+      animationRanges: AnimationRanges[];
     },
     row: TraceRow<FrameSpacingStruct>
   ): void {
@@ -44,29 +44,47 @@ export class FrameSpacingRender extends Render {
     this.render(req, frameSpacingFilter, row);
   }
 
-  private render(req: { useCache: boolean; context: CanvasRenderingContext2D; type: string; frameRate: number;
-  animationRanges: AnimationRanges[] }, frameSpacingFilter: Array<FrameSpacingStruct>,
-  row: TraceRow<FrameSpacingStruct>) : void {
+  private render(
+    req: {
+      useCache: boolean;
+      context: CanvasRenderingContext2D;
+      type: string;
+      frameRate: number;
+      animationRanges: AnimationRanges[];
+    },
+    frameSpacingFilter: Array<FrameSpacingStruct>,
+    row: TraceRow<FrameSpacingStruct>
+  ): void {
     if (req.animationRanges.length > 0 && req.animationRanges[0] && frameSpacingFilter.length > 0) {
       let preFrameSpacing: FrameSpacingStruct = frameSpacingFilter[0];
       // @ts-ignore
       let smallTickStandard = smallTick[req.frameRate];
-      let [minValue, maxValue] = this.maxMinData(smallTickStandard.firstLine,
-        smallTickStandard.thirdLine, frameSpacingFilter);
+      let [minValue, maxValue] = this.maxMinData(
+        smallTickStandard.firstLine,
+        smallTickStandard.thirdLine,
+        frameSpacingFilter
+      );
       let isDraw = false;
       let selectUnitWidth: number = 0;
       for (let index: number = 0; index < frameSpacingFilter.length; index++) {
         let currentStruct = frameSpacingFilter[index];
-        selectUnitWidth = computeUnitWidth(preFrameSpacing.currentTs, currentStruct.currentTs,
-          row.frame.width, selectUnitWidth);
+        selectUnitWidth = computeUnitWidth(
+          preFrameSpacing.currentTs,
+          currentStruct.currentTs,
+          row.frame.width,
+          selectUnitWidth
+        );
         FrameSpacingStruct.refreshHoverStruct(preFrameSpacing, currentStruct, row, minValue, maxValue);
         if (currentStruct.groupId === 0) {
           if (currentStruct.currentTs > TraceRow.range!.startNS && currentStruct.currentTs < TraceRow.range!.endNS) {
             isDraw = true;
             this.drawPoint(req.context, currentStruct, row, minValue, maxValue);
           }
-        } else if (currentStruct.groupId !== invalidGroupId && index > 0 &&
-          currentStruct.groupId === preFrameSpacing!.groupId) {
+        } else if (
+          currentStruct.groupId !== invalidGroupId &&
+          index > 0 &&
+          currentStruct.groupId === preFrameSpacing!.groupId
+        ) {
           isDraw = true;
           FrameSpacingStruct.draw(req.context, preFrameSpacing, currentStruct, row, minValue, maxValue);
         }
@@ -76,8 +94,9 @@ export class FrameSpacingRender extends Render {
       if (isDraw) {
         this.drawDashedLines(Object.values(smallTickStandard), req, row, minValue, maxValue);
       }
-      let findStructList = frameSpacingFilter.filter(filter =>
-        row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple));
+      let findStructList = frameSpacingFilter.filter(
+        (filter) => row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple)
+      );
       let find = false;
       if (findStructList.length > 0) {
         find = true;
@@ -93,11 +112,20 @@ export class FrameSpacingRender extends Render {
     }
   }
 
-  private drawPoint(ctx: CanvasRenderingContext2D, currentStruct: FrameSpacingStruct,
-    row: TraceRow<FrameSpacingStruct>, minValue: number, maxValue: number): void {
-    let currentPointY = row.frame.height - Math.floor((currentStruct.frameSpacingResult! -
-        minValue) * (row.frame.height - padding * multiple) /
-      (maxValue - minValue)) - padding;
+  private drawPoint(
+    ctx: CanvasRenderingContext2D,
+    currentStruct: FrameSpacingStruct,
+    row: TraceRow<FrameSpacingStruct>,
+    minValue: number,
+    maxValue: number
+  ): void {
+    let currentPointY =
+      row.frame.height -
+      Math.floor(
+        ((currentStruct.frameSpacingResult! - minValue) * (row.frame.height - padding * multiple)) /
+          (maxValue - minValue)
+      ) -
+      padding;
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.globalAlpha = 1;
@@ -155,8 +183,12 @@ export class FrameSpacingRender extends Render {
               break;
             }
           }
-          if (item.currentTs < startNS && index + unitIndex < frameSpacingList.length &&
-            frameSpacingList[index + unitIndex].currentTs >= startNS && item.groupId !== invalidGroupId) {
+          if (
+            item.currentTs < startNS &&
+            index + unitIndex < frameSpacingList.length &&
+            frameSpacingList[index + unitIndex].currentTs >= startNS &&
+            item.groupId !== invalidGroupId
+          ) {
             this.refreshFrame(frameSpacingFilter, item, startNS, endNS, totalNS, frame, groupIdList);
           }
           if (item.currentTs >= startNS && item.currentTs <= endNS && item.groupId !== invalidGroupId) {
@@ -173,10 +205,10 @@ export class FrameSpacingRender extends Render {
   }
 
   private grouping(groupIdList: number[], frameSpacingFilter: Array<FrameSpacingStruct>): void {
-    let simpleGroup = groupIdList.filter(groupId => {
+    let simpleGroup = groupIdList.filter((groupId) => {
       return groupId !== invalidGroupId && groupIdList.indexOf(groupId) === groupIdList.lastIndexOf(groupId);
     });
-    frameSpacingFilter.forEach(frameSpacing => {
+    frameSpacingFilter.forEach((frameSpacing) => {
       if (simpleGroup.indexOf(frameSpacing.groupId!) > invalidGroupId) {
         frameSpacing.groupId = 0;
         frameSpacing.frameSpacingResult = 0;
@@ -189,20 +221,33 @@ export class FrameSpacingRender extends Render {
     });
   }
 
-  private refreshFrame(frameSpacingFilter: Array<FrameSpacingStruct>, item: FrameSpacingStruct,
-    startNS: number, endNS: number, totalNS: number, frame: Rect, groupIdList: number[]): void {
+  private refreshFrame(
+    frameSpacingFilter: Array<FrameSpacingStruct>,
+    item: FrameSpacingStruct,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    frame: Rect,
+    groupIdList: number[]
+  ): void {
     frameSpacingFilter.push(item);
     FrameSpacingStruct.setFrameSpacingFrame(item, startNS, endNS, totalNS, frame);
     groupIdList.push(item.groupId!);
   }
 
   private maxMinData(tickStandardMin: number, tickStandardMax: number, filter: FrameSpacingStruct[]): [number, number] {
-    let min = Math.min.apply(Math, filter.map(filterData => {
-      return filterData.frameSpacingResult!;
-    }));
-    let max = Math.max.apply(Math, filter.map(filterData => {
-      return filterData.frameSpacingResult!;
-    }));
+    let min = Math.min.apply(
+      Math,
+      filter.map((filterData) => {
+        return filterData.frameSpacingResult!;
+      })
+    );
+    let max = Math.max.apply(
+      Math,
+      filter.map((filterData) => {
+        return filterData.frameSpacingResult!;
+      })
+    );
     if (max < tickStandardMax) {
       max = tickStandardMax + padding;
     }
@@ -247,22 +292,33 @@ export class FrameSpacingStruct extends BaseStruct {
     frameSpacingNode.frame.x = Math.floor(pointX);
   }
 
-  static isSelect(currSpacingStruct: FrameSpacingStruct) : boolean | 0 | undefined {
-    return TraceRow.rangeSelectObject &&
+  static isSelect(currSpacingStruct: FrameSpacingStruct): boolean | 0 | undefined {
+    return (
+      TraceRow.rangeSelectObject &&
       TraceRow.rangeSelectObject.startNS &&
       TraceRow.rangeSelectObject.endNS &&
       currSpacingStruct.currentTs >= TraceRow.rangeSelectObject.startNS &&
-      currSpacingStruct.currentTs <= TraceRow.rangeSelectObject.endNS;
+      currSpacingStruct.currentTs <= TraceRow.rangeSelectObject.endNS
+    );
   }
 
-  static refreshHoverStruct(preFrameSpacing: FrameSpacingStruct, frameSpacing: FrameSpacingStruct,
-    row: TraceRow<FrameSpacingStruct>, minValue: number, maxValue: number): void {
+  static refreshHoverStruct(
+    preFrameSpacing: FrameSpacingStruct,
+    frameSpacing: FrameSpacingStruct,
+    row: TraceRow<FrameSpacingStruct>,
+    minValue: number,
+    maxValue: number
+  ): void {
     if (frameSpacing.frame) {
-      frameSpacing.frame.y = row.frame.height - Math.floor((frameSpacing.frameSpacingResult! -
-        minValue) * (row.frame.height - padding * multiple) /
-        (maxValue - minValue)) - padding;
+      frameSpacing.frame.y =
+        row.frame.height -
+        Math.floor(
+          ((frameSpacing.frameSpacingResult! - minValue) * (row.frame.height - padding * multiple)) /
+            (maxValue - minValue)
+        ) -
+        padding;
     }
-  };
+  }
 
   static draw(
     ctx: CanvasRenderingContext2D,
@@ -277,13 +333,20 @@ export class FrameSpacingStruct extends BaseStruct {
     }
   }
 
-  static drawSelect(currentStruct: FrameSpacingStruct, ctx: CanvasRenderingContext2D,
-    rowFrame: TraceRow<FrameSpacingStruct>): void {
-    if (currentStruct.frame &&
+  static drawSelect(
+    currentStruct: FrameSpacingStruct,
+    ctx: CanvasRenderingContext2D,
+    rowFrame: TraceRow<FrameSpacingStruct>
+  ): void {
+    if (
+      currentStruct.frame &&
       currentStruct.currentTs > TraceRow.range!.startNS &&
-      currentStruct.currentTs < TraceRow.range!.endNS) {
-      if ((currentStruct === FrameSpacingStruct.hoverFrameSpacingStruct && rowFrame.isHover) ||
-        currentStruct === FrameSpacingStruct.selectFrameSpacingStruct) {
+      currentStruct.currentTs < TraceRow.range!.endNS
+    ) {
+      if (
+        (currentStruct === FrameSpacingStruct.hoverFrameSpacingStruct && rowFrame.isHover) ||
+        currentStruct === FrameSpacingStruct.selectFrameSpacingStruct
+      ) {
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(currentStruct.frame.x, currentStruct.frame.y, selectRadius, 0, multiple * Math.PI);
@@ -318,8 +381,10 @@ export class FrameSpacingStruct extends BaseStruct {
     minValue: number,
     maxValue: number
   ): void {
-    let pointY = rowFrame.height - Math.floor((dashedLines[index] - minValue) *
-      (rowFrame.height - padding * multiple) / (maxValue - minValue)) - padding;
+    let pointY =
+      rowFrame.height -
+      Math.floor(((dashedLines[index] - minValue) * (rowFrame.height - padding * multiple)) / (maxValue - minValue)) -
+      padding;
     let lineDash = 10;
     let textPadding = 4;
     ctx.beginPath();
@@ -351,12 +416,20 @@ export class FrameSpacingStruct extends BaseStruct {
     maxValue: number
   ): void {
     ctx.beginPath();
-    let prePointY = rowFrame.frame.height - Math.floor((preFrameSpacing.frameSpacingResult! -
-        minValue) * (rowFrame.frame.height - padding * multiple) /
-      (maxValue - minValue)) - padding;
-    let currentPointY = rowFrame.frame.height - Math.floor((currentStruct.frameSpacingResult! -
-        minValue) * (rowFrame.frame.height - padding * multiple) /
-      (maxValue - minValue)) - padding;
+    let prePointY =
+      rowFrame.frame.height -
+      Math.floor(
+        ((preFrameSpacing.frameSpacingResult! - minValue) * (rowFrame.frame.height - padding * multiple)) /
+          (maxValue - minValue)
+      ) -
+      padding;
+    let currentPointY =
+      rowFrame.frame.height -
+      Math.floor(
+        ((currentStruct.frameSpacingResult! - minValue) * (rowFrame.frame.height - padding * multiple)) /
+          (maxValue - minValue)
+      ) -
+      padding;
     if (preFrameSpacing.frame && currentStruct.frame) {
       ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[2];
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[2];
@@ -381,16 +454,16 @@ const smallTick = {
   60: {
     firstLine: 11.4,
     secondLine: 13,
-    thirdLine: 14.6
+    thirdLine: 14.6,
   },
   90: {
     firstLine: 13.7,
     secondLine: 19.4,
-    thirdLine: 25
+    thirdLine: 25,
   },
   120: {
     firstLine: 13.7,
     secondLine: 19.4,
-    thirdLine: 25
-  }
+    thirdLine: 25,
+  },
 };

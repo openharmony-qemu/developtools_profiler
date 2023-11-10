@@ -27,10 +27,10 @@ export class RangeSelect {
   isMouseDown: boolean = false;
   public rangeTraceRow: Array<TraceRow<any>> | undefined;
   public selectHandler: ((ds: Array<TraceRow<any>>, refreshCheckBox: boolean) => void) | undefined;
-  private startPageX:number=0;
-  private startPageY:number = 0;
-  private endPageX:number = 0;
-  private endPageY:number = 0;
+  private startPageX: number = 0;
+  private startPageY: number = 0;
+  private endPageX: number = 0;
+  private endPageY: number = 0;
   private timerShaftEL: TimerShaftElement | null | undefined;
   private timerShaftDragEL: HTMLDivElement | null | undefined;
   private isHover: boolean = false;
@@ -67,9 +67,9 @@ export class RangeSelect {
       this.isMouseDown = true;
       return;
     }
-      this.rangeTraceRow = [];
-      this.isMouseDown = true;
-      TraceRow.rangeSelectObject = undefined;
+    this.rangeTraceRow = [];
+    this.isMouseDown = true;
+    TraceRow.rangeSelectObject = undefined;
   }
 
   mouseUp(mouseEventUp: MouseEvent) {
@@ -187,19 +187,21 @@ export class RangeSelect {
     }
     let rangeSelect: RangeSelectStruct | undefined;
     this.rangeTraceRow = rows.filter((it) => {
-      if (Rect.intersect(it.getBoundingClientRect(), {
-        x:Math.min(this.startPageX,this.endPageX),
-        y: Math.min(this.startPageY, this.endPageY),
-        width: Math.abs(this.startPageX - this.endPageX),
-        height: Math.abs(this.startPageY - this.endPageY),
-      } as Rect)) {
+      if (
+        Rect.intersect(it.getBoundingClientRect(), {
+          x: Math.min(this.startPageX, this.endPageX),
+          y: Math.min(this.startPageY, this.endPageY),
+          width: Math.abs(this.startPageX - this.endPageX),
+          height: Math.abs(this.startPageY - this.endPageY),
+        } as Rect)
+      ) {
         if (!rangeSelect) {
           it.setTipLeft(0, null);
           rangeSelect = new RangeSelectStruct();
-          let startX = Math.min(this.startPageX,this.endPageX)-it.describeEl!.getBoundingClientRect().right;
-          let endX = Math.max(this.startPageX,this.endPageX)-it.describeEl!.getBoundingClientRect().right;
-          if(startX<=0) startX = 0;
-          if(endX>it.frame.width) endX = it.frame.width;
+          let startX = Math.min(this.startPageX, this.endPageX) - it.describeEl!.getBoundingClientRect().right;
+          let endX = Math.max(this.startPageX, this.endPageX) - it.describeEl!.getBoundingClientRect().right;
+          if (startX <= 0) startX = 0;
+          if (endX > it.frame.width) endX = it.frame.width;
           rangeSelect.startX = startX;
           rangeSelect.endX = endX;
           rangeSelect.startNS = RangeSelect.SetNS(it, startX);

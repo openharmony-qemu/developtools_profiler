@@ -590,18 +590,18 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
 
   queryIOSamples(selectionParam: any) {
     let sql = '';
-    const types : number[] = [];
+    const types: number[] = [];
     if (selectionParam.diskIOReadIds.length > 0) {
-      types.push(...[1,3]);
+      types.push(...[1, 3]);
     }
     if (selectionParam.diskIOWriteIds.length > 0) {
-      types.push(...[2,4])
+      types.push(...[2, 4]);
     }
     if (selectionParam.diskIOipids.length > 0) {
-      types.push(...[5,6])
+      types.push(...[5, 6]);
       sql += `and (s.ipid in (${selectionParam.diskIOipids.join(',')}) and s.type in (${types.join(',')})) `;
     }
-    
+
     this.queryData(
       this.currentEventId,
       'fileSystem-queryIoSamples',
@@ -680,7 +680,7 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
         fileMerageBean.count = merageData.count;
         fileMerageBean.total = totalCount;
         fileMerageBean.tsArray = [...merageData.tsArray];
-        fileMerageBean.durArray = [...merageData.durArray]
+        fileMerageBean.durArray = [...merageData.durArray];
         rootMerageMap[merageData.pid] = fileMerageBean;
       } else {
         rootMerageMap[merageData.pid].children.push(merageData);
@@ -723,9 +723,9 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
     let map: any = {};
     if (this.currentDataType == 'fileSystem') {
       map = FILE_TYPE_MAP;
-    } else if (this.currentDataType == 'io') {
+    } else if (this.currentDataType === 'io') {
       map = DISKIO_TYPE_MAP;
-    } else if (this.currentDataType == 'virtualMemory') {
+    } else if (this.currentDataType === 'virtualMemory') {
       map = VM_TYPE_MAP;
     }
     // @ts-ignore

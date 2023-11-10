@@ -17,7 +17,7 @@ export class WakeupBean {
   thread: string | undefined;
   wakeupTime: number | undefined;
   cpu: number | undefined;
-  dur: number| null | undefined;
+  dur: number | null | undefined;
   process: string | undefined;
   pid: number | undefined;
   tid: number | undefined;

@@ -34,10 +34,13 @@ import { LitIcon } from '../../../base-ui/icon/LitIcon.js';
 
 const maxScale = 0.8; //收藏最大高度为界面最大高度的80%
 const topHeight = 150; // 顶部cpu使用率部分高度固定为150px
-const minHeight = 20; //泳道最低高度为20
+const minHeight = 40; //泳道最低高度为40
+const mouseMoveRange = 5;
 
 @element('sp-chart-list')
 export class SpChartList extends BaseElement {
+  private static COLLECT_G1 = '1';
+  private static COLLECT_G2 = '2';
   private collectEl1: HTMLDivElement | null | undefined;
   private collectEl2: HTMLDivElement | null | undefined;
   private groupTitle1: HTMLDivElement | null | undefined;
@@ -89,7 +92,7 @@ export class SpChartList extends BaseElement {
       } else {
         this.icon1!.style.transform = 'rotateZ(-90deg)';
         this.collectRowList1.forEach((row) => this.fragmentGroup1.appendChild(row));
-        this.resizeHeight()
+        this.resizeHeight();
       }
     });
     this.icon2?.addEventListener('click', () => {
@@ -141,17 +144,41 @@ export class SpChartList extends BaseElement {
     return (this.parentElement!.clientHeight - topHeight) * maxScale;
   }
 
-  getCollectRows(condition: string) {
-    return this.rootEl?.querySelectorAll<TraceRow<any>>(condition) || [];
+  getCollectRows(condition: string): Array<TraceRow<any>> | [] {
+    const result = this.rootEl?.querySelectorAll<TraceRow<any>>(condition);
+    if (result) {
+      return Array.from(result);
+    } else {
+      return [];
+    }
   }
 
-  getCollectRow(condition: string) {
+  getCollectRow(condition: string): TraceRow<any> | null {
     return this.rootEl!.querySelector<TraceRow<any>>(condition);
   }
 
-  insertRowBefore(node: Node, child: Node) {
+  getAllCollectRows(): Array<TraceRow<any>> {
+    return [...this.collectRowList1, ...this.collectRowList2];
+  }
+
+  getAllSelectCollectRows(): Array<TraceRow<any>> {
+    const rows: Array<TraceRow<any>> = [];
+    for (const row of this.collectRowList1) {
+      if (row.checkType === '2') {
+        rows.push(row);
+      }
+    }
+    for (const row of this.collectRowList2) {
+      if (row.checkType === '2') {
+        rows.push(row);
+      }
+    }
+    return rows;
+  }
+
+  insertRowBefore(node: Node, child: Node): void {
     if (child === null || (child as TraceRow<any>).collectGroup === (node as TraceRow<any>).collectGroup) {
-      if ((node as TraceRow<any>).collectGroup === '1') {
+      if ((node as TraceRow<any>).collectGroup === SpChartList.COLLECT_G1) {
         this.collectEl1!.insertBefore(node, child);
         this.collectRowList1 = Array.from(this.collectEl1!.children) as TraceRow<any>[];
       } else {
@@ -161,7 +188,7 @@ export class SpChartList extends BaseElement {
     }
   }
 
-  reset() {
+  reset(): void {
     this.maxHeight = 0;
     this.style.height = 'auto';
     this.clearRect();
@@ -184,15 +211,15 @@ export class SpChartList extends BaseElement {
     });
   }
 
-  context() {
+  context(): CanvasRenderingContext2D | undefined | null {
     return this.canvasCtx;
   }
 
-  getCanvas() {
+  getCanvas(): HTMLCanvasElement | null | undefined {
     return this.canvas;
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('mousedown', this.onMouseDown);
     window.addEventListener('mouseup', this.onMouseUp);
@@ -200,7 +227,7 @@ export class SpChartList extends BaseElement {
     this.addEventListener('scroll', this.onScroll, { passive: true });
   }
 
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener('mousedown', this.onMouseDown);
     window.removeEventListener('mouseup', this.onMouseUp);
@@ -208,7 +235,7 @@ export class SpChartList extends BaseElement {
     this.removeEventListener('scroll', this.onScroll);
   }
 
-  onScroll = (ev: Event) => {
+  onScroll = (ev: Event): void => {
     this.canvas!.style.transform = `translateY(${this.scrollTop}px)`;
     if (this.scrollTimer) {
       clearTimeout(this.scrollTimer);
@@ -220,14 +247,14 @@ export class SpChartList extends BaseElement {
     window.publish(window.SmartEvent.UI.RefreshCanvas, {});
   };
 
-  onMouseDown = (ev: MouseEvent) => {
+  onMouseDown = (ev: MouseEvent): void => {
     this.isPress = true;
     this.startPageY = ev.pageY;
     this.startClientHeight = this.clientHeight;
     if (this.containPoint(ev)) {
       if (
-        this.getBoundingClientRect().bottom > ev.pageY &&
-        this.getBoundingClientRect().bottom < ev.pageY + minHeight
+        this.getBoundingClientRect().bottom > ev.pageY - mouseMoveRange &&
+        this.getBoundingClientRect().bottom < ev.pageY + mouseMoveRange
       ) {
         this.style.cursor = 'row-resize';
         this.canResize = true;
@@ -238,11 +265,11 @@ export class SpChartList extends BaseElement {
     }
   };
 
-  onMouseMove = (ev: MouseEvent) => {
+  onMouseMove = (ev: MouseEvent): void => {
     if (this.containPoint(ev)) {
       if (
-        this.getBoundingClientRect().bottom > ev.pageY &&
-        this.getBoundingClientRect().bottom < ev.pageY + minHeight
+        this.getBoundingClientRect().bottom > ev.pageY - mouseMoveRange &&
+        this.getBoundingClientRect().bottom < ev.pageY + mouseMoveRange
       ) {
         this.style.cursor = 'row-resize';
       } else {
@@ -258,7 +285,21 @@ export class SpChartList extends BaseElement {
       // 拖动超过所有泳道最大高度 或小于一个泳道的高度，不支持拖动
       let newHeight = this.startClientHeight + ev.pageY - this.startPageY;
       if (newHeight > this.maxHeight || newHeight > this.getMaxLimitHeight() || newHeight < minHeight) {
-        this.canResize = false;
+        // 超出最大最小高度时触发mouseup事件
+        const mouseUpEvent = new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          button: 0,
+          buttons: 0,
+          clientX: ev.clientX, // 鼠标在窗口中的水平坐标
+          clientY: ev.clientY, // 鼠标在窗口中的垂直坐标
+        });
+
+        // 获取需要触发事件的元素
+        const element = document.getElementById('myElement');
+        // 触发 mouseup 事件
+        element?.dispatchEvent(mouseUpEvent);
         ev.stopPropagation();
         return;
       }
@@ -268,17 +309,23 @@ export class SpChartList extends BaseElement {
     }
   };
 
-  onMouseUp = (ev: MouseEvent) => {
+  onMouseUp = (ev: MouseEvent): void => {
     this.isPress = false;
     this.canResize = false;
     (window as any).rowResize = false;
     this.refreshFavoriteCanvas();
   };
 
-  insertRow(row: TraceRow<any>, group: string, updateGroup: boolean) {
+  insertRow(row: TraceRow<any>, group: string, updateGroup: boolean): void {
     this.style.display = 'flex';
     let collectGroup = !updateGroup && row.collectGroup ? row.collectGroup : group;
-    if (collectGroup === '1') {
+    if (row.collectGroup !== SpChartList.COLLECT_G1 && row.collectGroup !== SpChartList.COLLECT_G2) {
+      row.collectGroup = group;
+    }
+    if (updateGroup) {
+      row.collectGroup = group;
+    }
+    if (collectGroup === SpChartList.COLLECT_G1) {
       if (!this.collect1Expand) {
         this.collect1Expand = true;
         this.icon1!.style.transform = 'rotateZ(0deg)';
@@ -303,9 +350,6 @@ export class SpChartList extends BaseElement {
       }
       this.collectEl2!.appendChild(this.fragmentGroup2);
     }
-    if (updateGroup) {
-      row.collectGroup = group;
-    }
     this.updateGroupDisplay();
     this.resizeHeight();
     this.scrollTo({ top: this.scrollHeight });
@@ -313,8 +357,8 @@ export class SpChartList extends BaseElement {
     row.currentContext = this.canvasCtx;
   }
 
-  deleteRow(row: TraceRow<any>, clearCollectGroup: boolean) {
-    if (row.collectGroup === '1') {
+  deleteRow(row: TraceRow<any>, clearCollectGroup: boolean): void {
+    if (row.collectGroup === SpChartList.COLLECT_G1) {
       this.collectRowList1.splice(this.collectRowList1.indexOf(row), 1);
       if (!this.fragmentGroup1.contains(row)) {
         this.fragmentGroup1.appendChild(row);
@@ -342,20 +386,24 @@ export class SpChartList extends BaseElement {
     }
   }
 
-  updateGroupDisplay() {
+  updateGroupDisplay(): void {
     this.groupTitle1!.style.display = this.collectRowList1.length === 0 ? 'none' : 'flex';
     this.groupTitle2!.style.display = this.collectRowList2.length === 0 ? 'none' : 'flex';
   }
 
-  clearRect() {
+  clearRect(): void {
     this.canvasCtx?.clearRect(0, 0, this.canvas?.clientWidth ?? 0, this.canvas?.clientHeight ?? 0);
   }
 
-  drawLines(xs: number[] | undefined, color: string) {
+  drawLines(xs: number[] | undefined, color: string): void {
     drawLines(this.canvasCtx!, xs ?? [], this.clientHeight, color);
   }
 
-  drawFlagLineSegment(hoverFlag: Flag | undefined | null, selectFlag: Flag | undefined | null, tse: TimerShaftElement) {
+  drawFlagLineSegment(
+    hoverFlag: Flag | undefined | null,
+    selectFlag: Flag | undefined | null,
+    tse: TimerShaftElement
+  ): void {
     drawFlagLineSegment(
       this.canvasCtx,
       hoverFlag,
@@ -370,7 +418,7 @@ export class SpChartList extends BaseElement {
     );
   }
 
-  drawWakeUp() {
+  drawWakeUp(): void {
     drawWakeUp(
       this.canvasCtx,
       CpuStruct.wakeupBean,
@@ -386,7 +434,7 @@ export class SpChartList extends BaseElement {
     );
   }
 
-  drawWakeUpList(bean: WakeupBean) {
+  drawWakeUpList(bean: WakeupBean): void {
     drawWakeUpList(this.canvasCtx, bean, TraceRow.range!.startNS, TraceRow.range!.endNS, TraceRow.range!.totalNS, {
       x: 0,
       y: 0,
@@ -394,7 +442,8 @@ export class SpChartList extends BaseElement {
       height: this.canvas!.clientHeight!,
     } as Rect);
   }
-  drawLogsLineSegment(bean: Flag | null | undefined, timeShaft: TimerShaftElement) {
+
+  drawLogsLineSegment(bean: Flag | null | undefined, timeShaft: TimerShaftElement): void {
     drawLogsLineSegment(
       this.canvasCtx,
       bean,
@@ -408,11 +457,11 @@ export class SpChartList extends BaseElement {
     );
   }
 
-  drawLinkLines(nodes: PairPoint[][], tse: TimerShaftElement, isFavorite: boolean) {
-    drawLinkLines(this.canvasCtx!, nodes, tse, isFavorite);
+  drawLinkLines(nodes: PairPoint[][], tse: TimerShaftElement, isFavorite: boolean, favoriteHeight: number): void {
+    drawLinkLines(this.canvasCtx!, nodes, tse, isFavorite, favoriteHeight);
   }
 
-  refreshFavoriteCanvas() {
+  refreshFavoriteCanvas(): void {
     this.canvas!.style.width = `${this.clientWidth - 248}px`;
     this.canvas!.style.left = `248px`;
     this.canvas!.width = this.canvas?.clientWidth! * dpr();
@@ -460,13 +509,13 @@ export class SpChartList extends BaseElement {
 <div class="root">
     <div id="group-1-title" style="background-color: #efefef;padding: 10px;align-items: center">
         <lit-icon id="group_1_expand" class="icon" name="caret-down" size="19"></lit-icon>
-        <span style="width: 184px;font-size: 10px;color: #898989">Collect 1</span>
+        <span style="width: 184px;font-size: 10px;color: #898989">G1</span>
         <lit-icon id="group_1_collect" name="star-fill" style="color: #5291FF;cursor: pointer" size="19"></lit-icon>
     </div>
     <div id="collect-group-1"></div>
     <div id="group-2-title" style="background-color: #efefef;padding: 10px;align-items: center">
         <lit-icon id="group_2_expand" class="icon" name="caret-down" size="19"></lit-icon>
-        <span style="width: 184px;font-size: 10px;color: #898989">Collect 2</span>
+        <span style="width: 184px;font-size: 10px;color: #898989">G2</span>
         <lit-icon id="group_2_collect" name="star-fill" style="color: #f56940;cursor: pointer" size="19"></lit-icon>
     </div>
     <div id="collect-group-2"></div>

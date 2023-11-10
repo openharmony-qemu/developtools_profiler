@@ -60,6 +60,21 @@ extern bool g_cleanMode;
     } while (0)
 
 #endif
+
+#define TS_CHECK_TRUE_RET(expression, retval, ...) \
+    do {                                           \
+        if (!(expression)) {                       \
+            return retval;                         \
+        }                                          \
+    } while (0)
+
+#define TS_CHECK_TRUE(expression, retval, formate, ...)                                \
+    do {                                                                               \
+        if (!(expression)) {                                                           \
+            TS_LOGW("TS_CHECK_TRUE(%s) FAILED, " formate, #expression, ##__VA_ARGS__); \
+            return retval;                                                             \
+        }                                                                              \
+    } while (0)
 // } // namespace base
 // } // namespace SysTuning
 

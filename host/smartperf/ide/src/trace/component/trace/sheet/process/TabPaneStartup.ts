@@ -71,7 +71,7 @@ export class TabPaneStartup extends BaseElement {
               }
             } else {
               map.set(item.pid!, {
-                name: item.process || `Process ${ item.pid }`,
+                name: item.process || `Process ${item.pid}`,
                 dur: item.dur || 0,
                 durStr: '',
                 ratio: `100%`,
@@ -90,7 +90,7 @@ export class TabPaneStartup extends BaseElement {
               if (it.dur === 0) {
                 child.ratio = '0%';
               } else {
-                child.ratio = ((child.dur * 100) / (it.dur)).toFixed(2) + '%';
+                child.ratio = ((child.dur * 100) / it.dur).toFixed(2) + '%';
               }
             });
           });

@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { Dma } from '../../../../bean/AbilityMonitor.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type Dma } from '../../../../bean/AbilityMonitor.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { getTabDmaVMTrackerClickData } from '../../../../database/SqlLite.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
@@ -40,9 +40,10 @@ export class TabPaneDmaSelectVmTracker extends BaseElement {
   connectedCallback(): void {
     super.connectedCallback();
     new ResizeObserver(() => {
-      if (this.parentElement?.clientHeight != 0) {
+      if (this.parentElement?.clientHeight !== 0) {
         // @ts-ignore
-        this.damClickTable?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 18 + 'px';
+        this.damClickTable?.shadowRoot?.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 18 + 'px';
         this.parentElement!.style.overflow = 'hidden';
         this.damClickTable?.reMeauseHeight();
       }

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { ChartStruct } from "../bean/FrameChartStruct.js";
+import { ChartStruct } from '../bean/FrameChartStruct.js';
 
 export class PerfFile {
   path: string = '';

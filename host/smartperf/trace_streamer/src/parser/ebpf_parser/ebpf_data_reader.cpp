@@ -14,9 +14,9 @@
  */
 
 #include "ebpf_data_reader.h"
+#include <cinttypes>
 #include "file_system_data_parser.h"
 #include "string_help.h"
-#include <cinttypes>
 
 namespace SysTuning {
 namespace TraceStreamer {

@@ -24,6 +24,7 @@ ohos_source_set("ebpf_parser_src") {
     "ebpf_base.cpp",
     "ebpf_data_parser.cpp",
     "ebpf_data_reader.cpp",
+    "ebpf_splitter.cpp",
     "file_system_data_parser.cpp",
     "paged_memory_data_parser.cpp",
   ]
@@ -37,6 +38,7 @@ ohos_source_set("ebpf_parser_src") {
     "../../filter",
     "../../cfg",
     "../../trace_streamer",
+    "../../proto_reader/include",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/sqlite/include",
     "${THIRD_PARTY}/bounds_checking_function/include",

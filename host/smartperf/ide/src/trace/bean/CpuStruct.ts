@@ -40,11 +40,18 @@ export class CpuStruct extends BaseStruct {
     if (cpuBeanStruct.frame) {
       let cpuBeanStructWidth = cpuBeanStruct.frame.width || 0;
       if (cpuBeanStruct.processId === CpuStruct.hoverCpuStruct?.processId || !CpuStruct.hoverCpuStruct) {
-        cpuBeanStructCanvasCtx.fillStyle = ColorUtils.colorForTid((cpuBeanStruct.processId || 0) > 0 ? cpuBeanStruct.processId || 0 : cpuBeanStruct.tid || 0);
+        cpuBeanStructCanvasCtx.fillStyle = ColorUtils.colorForTid(
+          (cpuBeanStruct.processId || 0) > 0 ? cpuBeanStruct.processId || 0 : cpuBeanStruct.tid || 0
+        );
       } else {
         cpuBeanStructCanvasCtx.fillStyle = '#e0e0e0';
       }
-      cpuBeanStructCanvasCtx.fillRect(cpuBeanStruct.frame.x, cpuBeanStruct.frame.y, cpuBeanStructWidth, cpuBeanStruct.frame.height);
+      cpuBeanStructCanvasCtx.fillRect(
+        cpuBeanStruct.frame.x,
+        cpuBeanStruct.frame.y,
+        cpuBeanStructWidth,
+        cpuBeanStruct.frame.height
+      );
       if (cpuBeanStructWidth > textPadding * 2) {
         let cpuBeanProcess = `${cpuBeanStruct.processName || 'Process'} [${cpuBeanStruct.processId}]`;
         let cpuBeanThread = `${cpuBeanStruct.name || 'Thread'} [${cpuBeanStruct.tid}]`;
@@ -55,30 +62,49 @@ export class CpuStruct extends BaseStruct {
         cpuBeanStructCanvasCtx.fillStyle = '#ffffff';
         let y = cpuBeanStruct.frame.height / 2 + cpuBeanStruct.frame.y;
         if (cpuBeanProcessMeasure.width < cpuBeanStructWidth - textPadding * 2) {
-          let x1 = Math.floor(cpuBeanStructWidth / 2 - cpuBeanProcessMeasure.width / 2 + cpuBeanStruct.frame.x + textPadding);
+          let x1 = Math.floor(
+            cpuBeanStructWidth / 2 - cpuBeanProcessMeasure.width / 2 + cpuBeanStruct.frame.x + textPadding
+          );
           cpuBeanStructCanvasCtx.textBaseline = 'bottom';
           cpuBeanStructCanvasCtx.fillText(cpuBeanProcess, x1, y, cpuBeanStructWidth - textPadding * 2);
         } else if (cpuBeanStructWidth - textPadding * 2 > cpuBeanProcessCharWidth * 4) {
           let chatNum = (cpuBeanStructWidth - textPadding * 2) / cpuBeanProcessCharWidth;
           let x1 = cpuBeanStruct.frame.x + textPadding;
           cpuBeanStructCanvasCtx.textBaseline = 'bottom';
-          cpuBeanStructCanvasCtx.fillText(cpuBeanProcess.substring(0, chatNum - 4) + '...', x1, y, cpuBeanStructWidth - textPadding * 2);
+          cpuBeanStructCanvasCtx.fillText(
+            cpuBeanProcess.substring(0, chatNum - 4) + '...',
+            x1,
+            y,
+            cpuBeanStructWidth - textPadding * 2
+          );
         }
         if (cpuBeanThreadMeasure.width < cpuBeanStructWidth - textPadding * 2) {
           cpuBeanStructCanvasCtx.textBaseline = 'top';
-          let x2 = Math.floor(cpuBeanStructWidth / 2 - cpuBeanThreadMeasure.width / 2 + cpuBeanStruct.frame.x + textPadding);
+          let x2 = Math.floor(
+            cpuBeanStructWidth / 2 - cpuBeanThreadMeasure.width / 2 + cpuBeanStruct.frame.x + textPadding
+          );
           cpuBeanStructCanvasCtx.fillText(cpuBeanThread, x2, y + 2, cpuBeanStructWidth - textPadding * 2);
         } else if (cpuBeanStructWidth - textPadding * 2 > cpuBeanThreadCharWidth * 4) {
           let chatNum = (cpuBeanStructWidth - textPadding * 2) / cpuBeanThreadCharWidth;
           let x1 = cpuBeanStruct.frame.x + textPadding;
           cpuBeanStructCanvasCtx.textBaseline = 'top';
-          cpuBeanStructCanvasCtx.fillText(cpuBeanThread.substring(0, chatNum - 4) + '...', x1, y + 2, cpuBeanStructWidth - textPadding * 2);
+          cpuBeanStructCanvasCtx.fillText(
+            cpuBeanThread.substring(0, chatNum - 4) + '...',
+            x1,
+            y + 2,
+            cpuBeanStructWidth - textPadding * 2
+          );
         }
       }
       if (CpuStruct.selectCpuStruct && CpuStruct.equals(CpuStruct.selectCpuStruct, cpuBeanStruct)) {
         cpuBeanStructCanvasCtx.strokeStyle = '#232c5d';
         cpuBeanStructCanvasCtx.lineWidth = 2;
-        cpuBeanStructCanvasCtx.strokeRect(cpuBeanStruct.frame.x, cpuBeanStruct.frame.y, cpuBeanStructWidth - 2, cpuBeanStruct.frame.height);
+        cpuBeanStructCanvasCtx.strokeRect(
+          cpuBeanStruct.frame.x,
+          cpuBeanStruct.frame.y,
+          cpuBeanStructWidth - 2,
+          cpuBeanStruct.frame.height
+        );
       }
     }
   }

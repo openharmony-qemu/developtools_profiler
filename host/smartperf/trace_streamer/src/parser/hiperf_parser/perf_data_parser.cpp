@@ -32,13 +32,343 @@ PerfDataParser::PerfDataParser(TraceDataCache* dataCache, const TraceStreamerFil
 {
     SymbolsFile::onRecording_ = false;
 }
-void PerfDataParser::InitPerfDataAndLoad(const std::deque<uint8_t> dequeBuffer, uint64_t size)
+uint64_t PerfDataParser::InitPerfDataAndLoad(const std::deque<uint8_t> dequeBuffer,
+                                             uint64_t size,
+                                             uint64_t offset,
+                                             bool isSplitFile,
+                                             bool isFinish)
 {
+    if (isSplitFile) {
+        return SplitPerfData(dequeBuffer, size, offset, isFinish);
+    }
+
     bufferSize_ = size;
     buffer_ = std::make_unique<uint8_t[]>(size);
     std::copy(dequeBuffer.begin(), dequeBuffer.begin() + size, buffer_.get());
     LoadPerfData();
+    buffer_.reset();
+    return size;
 }
+
+uint64_t PerfDataParser::SplitPerfData(const std::deque<uint8_t>& dequeBuffer,
+                                       uint64_t size,
+                                       uint64_t offset,
+                                       bool isFinish)
+{
+    if (processedLength_ == 0) {
+        perfDataOffset_ = offset;
+        perfSplitError_ = false;
+    }
+
+    if (perfSplitError_) {
+        return size;
+    }
+
+    using PerfSplitFunc = bool (PerfDataParser::*)(const std::deque<uint8_t>&, uint64_t, uint64_t&, bool&);
+    std::vector<PerfSplitFunc> splitFunc = {&PerfDataParser::SplitPerfStarting,
+                                            &PerfDataParser::SplitPerfParsingHead,
+                                            &PerfDataParser::SplitPerfWaitForAttr,
+                                            &PerfDataParser::SplitPerfParsingAttr,
+                                            &PerfDataParser::SplitPerfWaitForData,
+                                            &PerfDataParser::SplitPerfParsingData,
+                                            &PerfDataParser::SplitPerfParsingFeatureSection,
+                                            &PerfDataParser::SplitPerfWaitForFinish};
+
+    if (static_cast<size_t>(splitState_) >= splitFunc.size()) {
+        TS_LOGE("Invalid split state %d", splitState_);
+        perfSplitError_ = true;
+        SplitDataWithdraw();
+        return size;
+    }
+
+    uint64_t processedLen = 0;
+    bool ret = true;
+    bool invalid = false;
+    while (ret) {
+        if (isFinish && splitState_ == SplitPerfState::WAIT_FOR_FINISH) {
+            uint64_t currentDataOffset = perfDataOffset_ + processedLength_ + processedLen;
+            HtraceSplitResult offsetData = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
+                                            .json = {.offset = currentDataOffset, .size = size - processedLen}};
+            splitResult_.emplace_back(offsetData);
+            processedLength_ += size;
+            return size;
+        }
+
+        ret = (this->*splitFunc[static_cast<int32_t>(splitState_)])(dequeBuffer, size, processedLen, invalid);
+        if (invalid) {
+            perfSplitError_ = true;
+            SplitDataWithdraw();
+            return size;
+        }
+    }
+
+    if (isFinish) {
+        TS_LOGE("split not finish but data end");
+        perfSplitError_ = true;
+        SplitDataWithdraw();
+        return size;
+    }
+
+    processedLength_ += processedLen;
+    return processedLen;
+}
+
+bool PerfDataParser::SplitPerfStarting(const std::deque<uint8_t>& dequeBuffer,
+                                       uint64_t size,
+                                       uint64_t& processedLen,
+                                       bool& invalid)
+{
+    if (hasProfilerHead_) {
+        HtraceSplitResult htraceHead = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
+                                        .buffer = {.address = reinterpret_cast<uint8_t*>(&profilerHeader_),
+                                                   .size = sizeof(ProfilerTraceFileHeader)}};
+        splitResult_.emplace_back(htraceHead);
+    }
+
+    splitState_ = SplitPerfState::PARSING_HEAD;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfParsingHead(const std::deque<uint8_t>& dequeBuffer,
+                                          uint64_t size,
+                                          uint64_t& processedLen,
+                                          bool& invalid)
+{
+    processedLen = 0;
+    if (size < sizeof(perf_file_header)) {
+        return false;
+    }
+
+    uint64_t lengthRemain = size;
+    std::copy_n(dequeBuffer.begin(), sizeof(perf_file_header), reinterpret_cast<char*>(&perfHeader_));
+
+    if (memcmp(perfHeader_.magic, PERF_MAGIC, sizeof(perfHeader_.magic))) {
+        TS_LOGE("invalid magic id");
+        invalid = true;
+        return false;
+    }
+
+    const int FETURE_MAX = 256;
+    const int SIZE_FETURE_COUNT = 8;
+    featureCount_ = 0;
+    for (auto i = 0; i < FETURE_MAX / SIZE_FETURE_COUNT; i++) {
+        std::bitset<SIZE_FETURE_COUNT> features(perfHeader_.features[i]);
+        for (auto j = 0; j < SIZE_FETURE_COUNT; j++) {
+            if (features.test(j)) {
+                featureCount_++;
+            }
+        }
+    }
+
+    HtraceSplitResult perfHead = {
+        .type = (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
+        .buffer = {.address = reinterpret_cast<uint8_t*>(&perfHeader_), .size = sizeof(perf_file_header)}};
+    splitResult_.emplace_back(perfHead);
+
+    lengthRemain -= sizeof(perf_file_header);
+    processedLen += sizeof(perf_file_header);
+    splitState_ = SplitPerfState::WAIT_FOR_ATTR;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfWaitForAttr(const std::deque<uint8_t>& dequeBuffer,
+                                          uint64_t size,
+                                          uint64_t& processedLen,
+                                          bool& invalid)
+{
+    if (processedLength_ + processedLen > perfHeader_.attrs.offset) {
+        TS_LOGE("offset of attr is wrong %" PRIu64 "", perfHeader_.attrs.offset);
+        invalid = true;
+        return false;
+    }
+
+    if (processedLength_ + size < perfHeader_.attrs.offset) {
+        processedLen = size;
+        return false;
+    }
+
+    processedLen += perfHeader_.attrs.offset - (processedLength_ + processedLen);
+    splitState_ = SplitPerfState::PARSING_ATTR;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfParsingAttr(const std::deque<uint8_t>& dequeBuffer,
+                                          uint64_t size,
+                                          uint64_t& processedLen,
+                                          bool& invalid)
+{
+    int attrCount = perfHeader_.attrs.size / perfHeader_.attrSize;
+    if (attrCount == 0) {
+        TS_LOGE("no attr in file");
+        invalid = true;
+        return false;
+    }
+
+    uint64_t LengthRemain = size - processedLen;
+    if (LengthRemain < perfHeader_.attrs.size) {
+        return false;
+    }
+
+    auto buffer = std::make_unique<uint8_t[]>(perfHeader_.attrs.size);
+    std::copy_n(dequeBuffer.begin() + processedLen, perfHeader_.attrs.size, buffer.get());
+    std::vector<perf_file_attr> vecAttr;
+    for (int i = 0; i < attrCount; ++i) {
+        perf_file_attr* attr = reinterpret_cast<perf_file_attr*>(buffer.get() + perfHeader_.attrSize * i);
+        vecAttr.push_back(*attr);
+    }
+
+    sampleType_ = vecAttr[0].attr.sample_type;
+    if (!(sampleType_ & PERF_SAMPLE_TIME)) {
+        TS_LOGE("no time in sample data, not support split, sampleType_ = %" PRIx64 "", sampleType_);
+        invalid = true;
+        return false;
+    }
+    sampleTimeOffset_ = (((sampleType_ & PERF_SAMPLE_IDENTIFIER) != 0) + ((sampleType_ & PERF_SAMPLE_IP) != 0) +
+                         ((sampleType_ & PERF_SAMPLE_TID) != 0)) *
+                        sizeof(uint64_t);
+
+    processedLen += perfHeader_.attrs.size;
+    splitState_ = SplitPerfState::WAIT_FOR_DATA;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfWaitForData(const std::deque<uint8_t>& dequeBuffer,
+                                          uint64_t size,
+                                          uint64_t& processedLen,
+                                          bool& invalid)
+{
+    if (processedLength_ + processedLen > perfHeader_.data.offset) {
+        TS_LOGE("offset of data is wrong %" PRIu64 "", perfHeader_.data.offset);
+        invalid = true;
+        return false;
+    }
+
+    if (processedLength_ + size < perfHeader_.data.offset) {
+        processedLen = size;
+        return false;
+    }
+
+    HtraceSplitResult offsetData = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
+                                    .json = {.offset = perfDataOffset_ + sizeof(perf_file_header),
+                                             .size = perfHeader_.data.offset - sizeof(perf_file_header)}};
+    splitResult_.emplace_back(offsetData);
+
+    processedLen += perfHeader_.data.offset - (processedLength_ + processedLen);
+    splitState_ = SplitPerfState::PARSING_DATA;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfParsingData(const std::deque<uint8_t>& dequeBuffer,
+                                          uint64_t size,
+                                          uint64_t& processedLen,
+                                          bool& invalid)
+{
+    uint64_t totalDataRemain = perfHeader_.data.offset + perfHeader_.data.size - processedLength_ - processedLen;
+    if (totalDataRemain < sizeof(perf_event_header)) {
+        processedLen += totalDataRemain;
+        splitDataSize_ += totalDataRemain;
+        splitState_ = SplitPerfState::PARSING_FEATURE_SECTION;
+        return true;
+    }
+
+    uint64_t LengthRemain = size - processedLen;
+    if (LengthRemain < sizeof(perf_event_header)) {
+        return false;
+    }
+
+    perf_event_header dataHeader;
+    std::copy_n(dequeBuffer.begin() + processedLen, sizeof(perf_event_header), reinterpret_cast<char*>(&dataHeader));
+    if (dataHeader.size < sizeof(perf_event_header)) {
+        TS_LOGE("invalid data size %u", dataHeader.size);
+        invalid = true;
+        return false;
+    }
+    if (LengthRemain < dataHeader.size) {
+        return false;
+    }
+    if (totalDataRemain < sizeof(perf_event_header)) {
+        processedLen += totalDataRemain;
+        splitDataSize_ += totalDataRemain;
+        splitState_ = SplitPerfState::PARSING_FEATURE_SECTION;
+        return true;
+    }
+
+    bool needRecord = true;
+    if (splitDataEnd_) {
+        needRecord = false;
+    } else if (dataHeader.type == PERF_RECORD_SAMPLE) {
+        auto buffer = std::make_unique<uint8_t[]>(dataHeader.size);
+        std::copy_n(dequeBuffer.begin() + processedLen + sizeof(perf_event_header),
+                    dataHeader.size - sizeof(perf_event_header), buffer.get());
+        uint64_t time = *(reinterpret_cast<uint64_t*>(buffer.get() + sampleTimeOffset_));
+        if (time < traceDataCache_->SplitFileMinTime()) {
+            needRecord = false;
+        } else if (time > traceDataCache_->SplitFileMaxTime()) {
+            splitDataEnd_ = true;
+            needRecord = false;
+        }
+    }
+
+    if (needRecord) {
+        uint64_t currentDataOffset = perfDataOffset_ + processedLength_ + processedLen;
+        auto it = splitResult_.rbegin();
+        if (it != splitResult_.rend() && (it->json.offset + it->json.size == currentDataOffset)) {
+            it->json.size += dataHeader.size;
+        } else {
+            HtraceSplitResult offsetData = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
+                                            .json = {.offset = currentDataOffset, .size = dataHeader.size}};
+            splitResult_.emplace_back(offsetData);
+        }
+        splitDataSize_ += dataHeader.size;
+    }
+
+    processedLen += dataHeader.size;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfParsingFeatureSection(const std::deque<uint8_t>& dequeBuffer,
+                                                    uint64_t size,
+                                                    uint64_t& processedLen,
+                                                    bool& invalid)
+{
+    featureSectioSize_ = featureCount_ * sizeof(perf_file_section);
+    if (featureSectioSize_ == 0) {
+        TS_LOGI("no feature section in file");
+        splitState_ = SplitPerfState::WAIT_FOR_FINISH;
+        return false;
+    }
+
+    uint64_t LengthRemain = size - processedLen;
+    if (LengthRemain < featureSectioSize_) {
+        return false;
+    }
+
+    featureSection_ = std::make_unique<uint8_t[]>(featureSectioSize_);
+    std::copy_n(dequeBuffer.begin() + processedLen, featureSectioSize_, featureSection_.get());
+    uint64_t splitDropSize = perfHeader_.data.size - splitDataSize_;
+    for (auto i = 0; i < featureCount_; ++i) {
+        perf_file_section* featureSections = reinterpret_cast<perf_file_section*>(featureSection_.get());
+        featureSections[i].offset -= splitDropSize;
+    }
+    HtraceSplitResult featureBuff = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
+                                     .buffer = {.address = featureSection_.get(), .size = featureSectioSize_}};
+    splitResult_.emplace_back(featureBuff);
+
+    processedLen += featureSectioSize_;
+    perfHeader_.data.size = splitDataSize_;
+    profilerHeader_.data.length -= splitDropSize;
+    splitState_ = SplitPerfState::WAIT_FOR_FINISH;
+    return true;
+}
+
+bool PerfDataParser::SplitPerfWaitForFinish(const std::deque<uint8_t>& dequeBuffer,
+                                            uint64_t size,
+                                            uint64_t& processedLen,
+                                            bool& invalid)
+{
+    return false;
+}
+
 PerfDataParser::~PerfDataParser()
 {
     (void)remove(tmpPerfData_.c_str());
@@ -71,22 +401,19 @@ bool PerfDataParser::LoadPerfData()
     int32_t fd(base::OpenFile(tmpPerfData_, O_CREAT | O_RDWR, TS_PERMISSION_RW));
     if (!fd) {
         fprintf(stdout, "Failed to create file: %s", tmpPerfData_.c_str());
-        buffer_.reset();
         return false;
     }
     (void)ftruncate(fd, 0);
     if (bufferSize_ != (size_t)write(fd, buffer_.get(), bufferSize_)) {
         close(fd);
-        buffer_.reset();
         return false;
     }
     close(fd);
     recordDataReader_ = PerfFileReader::Instance(tmpPerfData_);
-    report_ = std::make_unique<Report>();
-    buffer_.reset();
     if (recordDataReader_ == nullptr) {
         return false;
     }
+    report_ = std::make_unique<Report>();
     return Reload();
 }
 bool PerfDataParser::Reload()
@@ -112,6 +439,7 @@ bool PerfDataParser::Reload()
 
     TS_LOGD("process record");
     UpdateClockType();
+    ProcessUniStackTableData();
     recordDataReader_->ReadDataSection(std::bind(&PerfDataParser::RecordCallBack, this, std::placeholders::_1));
     TS_LOGD("process record completed");
     TS_LOGI("load perf data done");
@@ -187,6 +515,17 @@ void PerfDataParser::UpdateCmdlineInfo() const
     perfReportData->AppendNewPerfReport(cmdlineIndex_, cmdlineValueIndex);
 }
 
+void PerfDataParser::ProcessUniStackTableData()
+{
+    auto featureSection = recordDataReader_->GetFeatureSection(FEATURE::HIPERF_FILES_UNISTACK_TABLE);
+    if (featureSection != nullptr) {
+        PerfFileSectionUniStackTable* sectioniStackTable =
+            static_cast<PerfFileSectionUniStackTable*>(const_cast<PerfFileSection*>(featureSection));
+        report_->virtualRuntime_.ImportUniqueStackNodes(sectioniStackTable->uniStackTableInfos_);
+        report_->virtualRuntime_.SetDedupStack();
+        stackCompressedMode_ = true;
+    }
+}
 void PerfDataParser::UpdateSymbolAndFilesData()
 {
     // we need unwind it (for function name match) even not give us path
@@ -232,7 +571,12 @@ bool PerfDataParser::RecordCallBack(std::unique_ptr<PerfEventRecord> record)
 
     if (record->GetType() == PERF_RECORD_SAMPLE) {
         std::unique_ptr<PerfRecordSample> sample(static_cast<PerfRecordSample*>(record.release()));
-        auto callChainId = UpdatePerfCallChainData(sample);
+        uint32_t callChainId = INVALID_UINT32;
+        if (stackCompressedMode_) {
+            callChainId = UpdateCallChainCompressed(sample);
+        } else {
+            callChainId = UpdateCallChainUnCompressed(sample);
+        }
         UpdatePerfSampleData(callChainId, sample);
     } else if (record->GetType() == PERF_RECORD_COMM) {
         auto recordComm = static_cast<PerfRecordComm*>(record.get());
@@ -250,7 +594,30 @@ bool PerfDataParser::RecordCallBack(std::unique_ptr<PerfEventRecord> record)
     return true;
 }
 
-uint32_t PerfDataParser::UpdatePerfCallChainData(const std::unique_ptr<PerfRecordSample>& sample)
+uint32_t PerfDataParser::UpdateCallChainCompressed(const std::unique_ptr<PerfRecordSample>& sample)
+{
+    auto callChainId = static_cast<uint32_t>(sample->StackId_.section.id);
+    if (callChainId == 0) {
+        callChainId = --compressFailedCallChainId_;
+    }
+    if (savedCompressedCallChainId_.count(callChainId) != 0) {
+        return callChainId;
+    }
+    savedCompressedCallChainId_.insert(callChainId);
+    uint32_t depth = 0;
+    for (auto itor = sample->callFrames_.rbegin(); itor != sample->callFrames_.rend(); ++itor) {
+        auto fileDataIndex = traceDataCache_->dataDict_.GetStringIndex(itor->filePath_);
+        auto fileId = INVALID_UINT64;
+        if (fileDataDictIdToFileId_.count(fileDataIndex) != 0) {
+            fileId = fileDataDictIdToFileId_.at(fileDataIndex);
+        }
+        streamFilters_->perfDataFilter_->AppendPerfCallChain(callChainId, depth++, itor->ip_, itor->vaddrInFile_,
+                                                             fileId, itor->symbolIndex_);
+    }
+
+    return callChainId;
+}
+uint32_t PerfDataParser::UpdateCallChainUnCompressed(const std::unique_ptr<PerfRecordSample>& sample)
 {
     std::string stackStr = "";
     for (auto& callFrame : sample->callFrames_) {
@@ -303,7 +670,9 @@ void PerfDataParser::UpdatePerfSampleData(uint32_t callChainId, std::unique_ptr<
 
 void PerfDataParser::Finish()
 {
-    streamFilters_->perfDataFilter_->Finish();
+    if (!traceDataCache_->isSplitFile_) {
+        streamFilters_->perfDataFilter_->Finish();
+    }
     // Update trace_range when there is only perf data in the trace file
     if (traceDataCache_->traceStartTime_ == INVALID_UINT64 || traceDataCache_->traceEndTime_ == 0) {
         traceDataCache_->MixTraceTime(GetPluginStartTime(), GetPluginEndTime());

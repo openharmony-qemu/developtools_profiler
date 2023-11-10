@@ -87,14 +87,15 @@ HWTEST_F(JsCpuProfilerTest, cpuProfilerParserNodesbyArkTs, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto size = stream_.traceDataCache_->GetConstJsCpuProfilerNodeData().Size();
@@ -164,14 +165,15 @@ HWTEST_F(JsCpuProfilerTest, cpuProfilerParserSamplesbyArkTs, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto sampleFunctionId1 = stream_.traceDataCache_->GetConstJsCpuProfilerSampleData().FunctionIds()[0];
@@ -248,14 +250,15 @@ HWTEST_F(JsCpuProfilerTest, cpuProfilerParserNoProfilebyArkTs, TestSize.Level1)
     std::string strResult1 = "";
     jsHeapResult1.SerializeToString(&strResult1);
     ProtoReader::BytesView tracePacket1(reinterpret_cast<const uint8_t*>(strResult1.data()), strResult1.size());
-    htraceJSMemoryParser.Parse(tracePacket1, 10000);
+    ProfilerPluginDataHeader profilerPluginData;
+    htraceJSMemoryParser.Parse(tracePacket1, 10000, 0, 0, profilerPluginData);
 
     ArkTSResult jsHeapResult2;
     jsHeapResult2.set_result(result2);
     std::string strResult2 = "";
     jsHeapResult2.SerializeToString(&strResult2);
     ProtoReader::BytesView tracePacket4(reinterpret_cast<const uint8_t*>(strResult2.data()), strResult2.size());
-    htraceJSMemoryParser.Parse(tracePacket4, 13000);
+    htraceJSMemoryParser.Parse(tracePacket4, 13000, 0, 0, profilerPluginData);
     htraceJSMemoryParser.Finish();
 
     auto size = stream_.traceDataCache_->GetConstJsCpuProfilerNodeData().Size();

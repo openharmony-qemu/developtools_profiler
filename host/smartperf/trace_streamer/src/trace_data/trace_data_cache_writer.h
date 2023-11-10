@@ -117,6 +117,9 @@ public:
     DmaMemData* GetDmaMemData();
     GpuProcessMemData* GetGpuProcessMemData();
     GpuWindowMemData* GetGpuWindowMemData();
+    CpuDumpInfo* GetCpuDumpInfo();
+    ProfileMemInfo* GetProfileMemInfo();
+    RSImageDumpInfo* GetRSImageDumpInfo();
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

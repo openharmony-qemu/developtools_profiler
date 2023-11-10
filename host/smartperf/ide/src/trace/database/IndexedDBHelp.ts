@@ -30,30 +30,30 @@ export class IndexedDBHelp {
       idbOpenDBRequest.onupgradeneeded = () => {
         const database: IDBDatabase = idbOpenDBRequest.result;
         this.db = database;
-        storeOptions?.forEach(option => {
-          let optionName = option.name
+        storeOptions?.forEach((option) => {
+          let optionName = option.name;
           if (database.objectStoreNames.contains(optionName) === false) {
             if (option.objectStoreParameters) {
               let objectStore = database.createObjectStore(optionName, option.objectStoreParameters);
-              option.dataItems?.forEach(dataItem => {
+              option.dataItems?.forEach((dataItem) => {
                 if (dataItem.indexParameters) {
-                  objectStore.createIndex(dataItem.name, dataItem.name, dataItem.indexParameters)
+                  objectStore.createIndex(dataItem.name, dataItem.keypath, dataItem.indexParameters);
                 } else {
-                  objectStore.createIndex(dataItem.name, dataItem.name)
+                  objectStore.createIndex(dataItem.name, dataItem.keypath);
                 }
-              })
+              });
             } else {
               let objectStore = database.createObjectStore(optionName);
-              option.dataItems?.forEach(dataItem => {
+              option.dataItems?.forEach((dataItem) => {
                 if (dataItem.indexParameters) {
-                  objectStore.createIndex(dataItem.name, dataItem.name, dataItem.indexParameters)
+                  objectStore.createIndex(dataItem.name, dataItem.name, dataItem.indexParameters);
                 } else {
-                  objectStore.createIndex(dataItem.name, dataItem.name)
+                  objectStore.createIndex(dataItem.name, dataItem.name);
                 }
-              })
+              });
             }
           }
-        })
+        });
         resolve(database);
       };
       idbOpenDBRequest.onsuccess = (event) => {
@@ -79,17 +79,23 @@ export class IndexedDBHelp {
     return transaction.objectStore(storeName);
   }
 
-  public get(storeName: string, query: IDBValidKey | IDBKeyRange) {
+  public get(storeName: string, query: IDBValidKey | IDBKeyRange, queryIndex?: string) {
     return new Promise((resolve, reject) => {
       this.getObjectStore(storeName).then((objectStore: IDBObjectStore) => {
-        const request: IDBRequest<any> = objectStore.get(query);
+        let request: IDBRequest<any>;
+        if (queryIndex) {
+          const index = objectStore.index(queryIndex);
+          request = index.getAll(query);
+        } else {
+          request = objectStore.getAll(query);
+        }
         request.onsuccess = function (event) {
           // @ts-ignore
           resolve(event.target.result);
         };
         request.onerror = (event) => {
           reject(event);
-        }
+        };
       });
     });
   }
@@ -104,7 +110,7 @@ export class IndexedDBHelp {
         };
         request.onerror = (event) => {
           reject(event);
-        }
+        };
       });
     });
   }
@@ -112,14 +118,14 @@ export class IndexedDBHelp {
   public delete(storeName: string, query: IDBValidKey | IDBKeyRange) {
     return new Promise((resolve, reject) => {
       this.getObjectStore(storeName).then((objectStore: IDBObjectStore) => {
-        const request = objectStore.delete(query);
+        const request = objectStore['delete'](query);
         request.onsuccess = function (event) {
           // @ts-ignore
           resolve(event.target.result);
         };
         request.onerror = (event) => {
           reject(event);
-        }
+        };
       });
     });
   }
@@ -134,14 +140,14 @@ export class IndexedDBHelp {
         };
         request.onerror = (event) => {
           reject(event);
-        }
+        };
       });
     });
   }
 }
 
 export class StoreOptions {
-  name: string = "";
+  name: string = '';
   objectStoreParameters?: IDBObjectStoreParameters;
-  dataItems?: Array<{ name: string, indexParameters?: IDBIndexParameters }>;
+  dataItems?: Array<{ name: string; keypath: string[] | string; indexParameters?: IDBIndexParameters }>;
 }

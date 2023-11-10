@@ -25,5 +25,6 @@ std::vector<std::string> SplitStringToVec(const std::string& str, const std::str
 bool StartWith(const std::string& str, const std::string& res);
 bool EndWith(const std::string& str, const std::string& res);
 std::string FormatString(const char* p);
+std::string Strip(const std::string& str);
 
 #endif // SRC_TRACE_BASE_STRINGHELP_H

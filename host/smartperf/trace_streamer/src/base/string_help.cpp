@@ -74,3 +74,19 @@ std::string FormatString(const char* p)
     str += "\"";
     return str;
 }
+
+std::string Strip(const std::string& str)
+{
+    std::string blanks = " \f\v\t\r\n";
+
+    auto first = str.find_first_not_of(blanks);
+    if (first == std::string::npos) {
+        return "";
+    }
+
+    auto last = str.find_last_not_of(blanks);
+    if (last == std::string::npos) {
+        return "";
+    }
+    return str.substr(first, last - first + 1);
+}

@@ -18,6 +18,8 @@
 #include "stat_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {
+constexpr static uint32_t MAX_PROTO_BUFFER_SIZE = 4 * 1024 * 1024;
+
 HtraceNativeHookParser::HtraceNativeHookParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx)
     : EventParserBase(dataCache, ctx), nativeHookFilter_(std::make_unique<NativeHookFilter>(dataCache, ctx))
 {
@@ -33,6 +35,13 @@ HtraceNativeHookParser::~HtraceNativeHookParser()
 
 void HtraceNativeHookParser::ParseStackMap(const ProtoReader::BytesView& bytesView)
 {
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = nativeHookFilter_->GetCommHookData().datas->add_events();
+        StackMap* stackMap = hookData->mutable_stack_map();
+        stackMap->ParseFromArray(bytesView.Data(), bytesView.Size());
+        nativeHookFilter_->GetCommHookData().size += bytesView.Size();
+        return;
+    }
     ProtoReader::StackMap_Reader stackMapReader(bytesView);
     auto stackId = stackMapReader.id();
     bool parseError = false;
@@ -66,12 +75,27 @@ void HtraceNativeHookParser::ParseStackMap(const ProtoReader::BytesView& bytesVi
 void HtraceNativeHookParser::ParseFrameMap(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData)
 {
     segs_.emplace_back(nativeHookMetaData->seg_);
-    ProtoReader::FrameMap_Reader frameMapReader(nativeHookMetaData->reader_->frame_map());
+    const ProtoReader::BytesView& frameMapByteView = nativeHookMetaData->reader_->frame_map();
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = nativeHookFilter_->GetCommHookData().datas->add_events();
+        FrameMap* frameMap = hookData->mutable_frame_map();
+        frameMap->ParseFromArray(frameMapByteView.Data(), frameMapByteView.Size());
+        nativeHookFilter_->GetCommHookData().size += frameMapByteView.Size();
+        return;
+    }
+    ProtoReader::FrameMap_Reader frameMapReader(frameMapByteView);
     // when callstack is compressed, Frame message only has ip data area.
     nativeHookFilter_->AppendFrameMaps(frameMapReader.id(), frameMapReader.frame());
 }
 void HtraceNativeHookParser::ParseFileEvent(const ProtoReader::BytesView& bytesView)
 {
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = nativeHookFilter_->GetCommHookData().datas->add_events();
+        FilePathMap* filePathMap = hookData->mutable_file_path();
+        filePathMap->ParseFromArray(bytesView.Data(), bytesView.Size());
+        nativeHookFilter_->GetCommHookData().size += bytesView.Size();
+        return;
+    }
     ProtoReader::FilePathMap_Reader filePathMapReader(bytesView);
     auto id = filePathMapReader.id();
     auto nameIndex = traceDataCache_->dataDict_.GetStringIndex(filePathMapReader.name().ToStdString());
@@ -79,6 +103,13 @@ void HtraceNativeHookParser::ParseFileEvent(const ProtoReader::BytesView& bytesV
 }
 void HtraceNativeHookParser::ParseSymbolEvent(const ProtoReader::BytesView& bytesView)
 {
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = nativeHookFilter_->GetCommHookData().datas->add_events();
+        SymbolMap* symbolMap = hookData->mutable_symbol_name();
+        symbolMap->ParseFromArray(bytesView.Data(), bytesView.Size());
+        nativeHookFilter_->GetCommHookData().size += bytesView.Size();
+        return;
+    }
     ProtoReader::SymbolMap_Reader symbolMapReader(bytesView);
     auto id = symbolMapReader.id();
     auto nameIndex = traceDataCache_->dataDict_.GetStringIndex(symbolMapReader.name().ToStdString());
@@ -86,6 +117,13 @@ void HtraceNativeHookParser::ParseSymbolEvent(const ProtoReader::BytesView& byte
 }
 void HtraceNativeHookParser::ParseThreadEvent(const ProtoReader::BytesView& bytesView)
 {
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = nativeHookFilter_->GetCommHookData().datas->add_events();
+        ThreadNameMap* threadNameMap = hookData->mutable_thread_name_map();
+        threadNameMap->ParseFromArray(bytesView.Data(), bytesView.Size());
+        nativeHookFilter_->GetCommHookData().size += bytesView.Size();
+        return;
+    }
     ProtoReader::ThreadNameMap_Reader threadNameMapReader(bytesView);
     auto id = threadNameMapReader.id();
     auto nameIndex = traceDataCache_->dataDict_.GetStringIndex(threadNameMapReader.name().ToStdString());
@@ -109,36 +147,63 @@ void HtraceNativeHookParser::ParseNativeHookAuxiliaryEvent(std::unique_ptr<Nativ
         nativeHookFilter_->ParseMapsEvent(nativeHookMetaData);
     } else if (reader->has_symbol_tab()) {
         nativeHookFilter_->ParseSymbolTableEvent(nativeHookMetaData);
+    } else if (reader->has_tag_event()) {
+        nativeHookFilter_->ParseTagEvent(reader->tag_event());
     } else {
         TS_LOGE("unsupported native_hook data!");
     }
 }
+void HtraceNativeHookParser::SplitHookData(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData, bool& haveSplitSeg)
+{
+    if (isCommData_ && hookBootTime_ <= traceDataCache_->SplitFileMinTime()) {
+        ParseNativeHookAuxiliaryEvent(nativeHookMetaData);
+    } else if (hookBootTime_ >= traceDataCache_->SplitFileMinTime() &&
+               hookBootTime_ <= traceDataCache_->SplitFileMaxTime()) {
+        haveSplitSeg = true;
+    }
+}
 // In order to improve the accuracy of data, it is necessary to sort the original data.
 // Data sorting will be reduced by 5% to 10% Speed of parsing data.
-void HtraceNativeHookParser::Parse(HtraceDataSegment& dataSeg)
+void HtraceNativeHookParser::Parse(HtraceDataSegment& dataSeg, bool& haveSplitSeg)
 {
     auto batchNativeHookDataReader = ProtoReader::BatchNativeHookData_Reader(dataSeg.protoData);
     for (auto itor = batchNativeHookDataReader.events(); itor; itor++) {
         auto nativeHookDataReader = std::make_unique<ProtoReader::NativeHookData_Reader>(itor->ToBytes());
-        auto timeStamp = nativeHookDataReader->tv_nsec() + nativeHookDataReader->tv_sec() * SEC_TO_NS;
-        if (nativeHookDataReader->has_alloc_event() || nativeHookDataReader->has_free_event() ||
-            nativeHookDataReader->has_mmap_event() || nativeHookDataReader->has_munmap_event() ||
-            nativeHookDataReader->has_statistics_event() || nativeHookDataReader->has_tag_event()) {
-            uint64_t newTimeStamp = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, timeStamp);
-            UpdatePluginTimeRange(TS_CLOCK_REALTIME, timeStamp, newTimeStamp);
-            auto nativeHookMetaData =
-                std::make_unique<NativeHookMetaData>(dataSeg.seg, std::move(nativeHookDataReader));
-            nativeHookFilter_->MaybeParseNativeHookMainEvent(newTimeStamp, std::move(nativeHookMetaData));
+        auto nativeHookMetaData = std::make_unique<NativeHookMetaData>(dataSeg.seg, std::move(nativeHookDataReader));
+        isCommData_ =
+            !(nativeHookMetaData->reader_->has_alloc_event() || nativeHookMetaData->reader_->has_free_event() ||
+              nativeHookMetaData->reader_->has_mmap_event() || nativeHookMetaData->reader_->has_munmap_event() ||
+              nativeHookMetaData->reader_->has_statistics_event());
+        hookBootTime_ = 0;
+        if (nativeHookMetaData->reader_->has_tv_sec() || nativeHookMetaData->reader_->has_tv_nsec()) {
+            auto timeStamp = nativeHookMetaData->reader_->tv_nsec() + nativeHookMetaData->reader_->tv_sec() * SEC_TO_NS;
+            hookBootTime_ = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, timeStamp);
+            UpdatePluginTimeRange(TS_CLOCK_REALTIME, timeStamp, hookBootTime_);
+        }
+        if (haveSplitSeg) {
+            return;
+        } else if (traceDataCache_->isSplitFile_) {
+            SplitHookData(nativeHookMetaData, haveSplitSeg);
+            continue;
+        }
+        if (!isCommData_ || nativeHookMetaData->reader_->has_tag_event()) {
+            nativeHookFilter_->MaybeParseNativeHookMainEvent(hookBootTime_, std::move(nativeHookMetaData));
         } else {
-            auto nativeHookMetaData =
-                std::make_unique<NativeHookMetaData>(dataSeg.seg, std::move(nativeHookDataReader));
             ParseNativeHookAuxiliaryEvent(nativeHookMetaData);
         }
     }
+    if (!traceDataCache_->isSplitFile_ || nativeHookFilter_->GetCommHookData().size < MAX_PROTO_BUFFER_SIZE) {
+        return;
+    }
+    nativeHookFilter_->SerializeHookCommDataToString();
 }
 void HtraceNativeHookParser::ParseConfigInfo(HtraceDataSegment& dataSeg)
 {
     nativeHookFilter_->ParseConfigInfo(dataSeg.protoData);
+}
+void HtraceNativeHookParser::FinishSplitNativeHook()
+{
+    nativeHookFilter_->SerializeHookCommDataToString();
 }
 void HtraceNativeHookParser::FinishParseNativeHookData()
 {

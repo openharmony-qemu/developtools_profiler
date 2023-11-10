@@ -83,14 +83,16 @@ export class SelectionParam {
   frameSpacing: Array<FrameSpacingStruct> = [];
   jsCpuProfilerData: Array<JsCpuProfilerChartFrame> = [];
   gpu: {
-    gl: boolean,
-    gpuTotal: boolean,
-    gpuWindow: boolean
+    gl: boolean;
+    graph: boolean;
+    gpuTotal: boolean;
+    gpuWindow: boolean;
   } = {
     gl: false,
+    graph: false,
     gpuWindow: false,
-    gpuTotal: false
-  }
+    gpuTotal: false,
+  };
   purgeableTotalAbility: Array<any> = [];
   purgeableTotalVM: Array<any> = [];
   purgeablePinAbility: Array<any> = [];

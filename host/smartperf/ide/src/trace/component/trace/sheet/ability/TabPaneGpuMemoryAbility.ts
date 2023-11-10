@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { GpuMemory } from '../../../../bean/AbilityMonitor.js';
 import { resizeObserver } from '../SheetUtils.js';
 import { getTabGpuMemoryAbilityData } from '../../../../database/SqlLite.js';

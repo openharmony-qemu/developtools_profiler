@@ -15,14 +15,7 @@
 
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import {
-  BaseStruct,
-  isFrameContainPoint,
-  ns2x,
-  Render,
-  RequestMessage,
-  drawString,
-} from './ProcedureWorkerCommon.js';
+import { BaseStruct, isFrameContainPoint, ns2x, Render, RequestMessage, drawString } from './ProcedureWorkerCommon.js';
 
 export class SoRender extends Render {
   renderMainThread(
@@ -85,7 +78,7 @@ export function soDataFilter(
   use: boolean
 ): void {
   if (use && soFilter.length > 0) {
-    for (let i = 0, len = soFilter.length ; i < len ; i++) {
+    for (let i = 0, len = soFilter.length; i < len; i++) {
       if ((soFilter[i].startTs || 0) + (soFilter[i].dur || 0) >= startNS && (soFilter[i].startTs || 0) <= endNS) {
         SoStruct.setSoFrame(soFilter[i], 0, startNS, endNS, totalNS, frame);
       } else {
@@ -104,7 +97,7 @@ export function soDataFilter(
       })
       .reduce((pre: any, current, index, arr) => {
         if (current.frame) {
-          (pre[`${ current.frame.x }-${ current.depth }`] = pre[`${ current.frame.x }-${ current.depth }`] || []).push(current);
+          (pre[`${current.frame.x}-${current.depth}`] = pre[`${current.frame.x}-${current.depth}`] || []).push(current);
         }
         return pre;
       }, {});
@@ -136,10 +129,7 @@ export class SoStruct extends BaseStruct {
     } else {
       x1 = 0;
     }
-    if (
-      (soNode.startTs || 0) + (soNode.dur || 0) > startNS &&
-      (soNode.startTs || 0) + (soNode.dur || 0) < endNS
-    ) {
+    if ((soNode.startTs || 0) + (soNode.dur || 0) > startNS && (soNode.startTs || 0) + (soNode.dur || 0) < endNS) {
       x2 = ns2x((soNode.startTs || 0) + (soNode.dur || 0), startNS, endNS, totalNS, frame);
     } else {
       x2 = frame.width;
@@ -158,7 +148,6 @@ export class SoStruct extends BaseStruct {
     if (data.frame) {
       if (data.dur === undefined || data.dur === null) {
       } else {
-
         ctx.globalAlpha = 1;
         ctx.fillStyle = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.soName || '', 0, ColorUtils.FUNC_COLOR.length)];
         let textColor = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.soName || '', 0, ColorUtils.FUNC_COLOR.length)];
@@ -172,7 +161,7 @@ export class SoStruct extends BaseStruct {
           ctx.lineWidth = 1;
           ctx.strokeRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
           ctx.fillStyle = ColorUtils.funcTextColor(textColor);
-          drawString(ctx, `${ data.soName || '' }`, 5, data.frame, data);
+          drawString(ctx, `${data.soName || ''}`, 5, data.frame, data);
         }
         if (data === SoStruct.selectSoStruct) {
           ctx.strokeStyle = '#000';
@@ -182,7 +171,6 @@ export class SoStruct extends BaseStruct {
       }
     }
   }
-
 }
 
 const padding = 1;

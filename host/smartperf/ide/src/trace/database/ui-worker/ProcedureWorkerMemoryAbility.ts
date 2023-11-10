@@ -55,7 +55,9 @@ export class MemoryAbilityRender extends Render {
     let find = false;
     for (let re of memoryAbilityFilter) {
       MemoryAbilityMonitorStruct.draw(req.context, re, req.maxMemoryByte, memoryAbilityRow.isHover);
-      if (memoryAbilityRow.isHover && re.frame &&
+      if (
+        memoryAbilityRow.isHover &&
+        re.frame &&
         isFrameContainPoint(re.frame, memoryAbilityRow.hoverX, memoryAbilityRow.hoverY)
       ) {
         MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct = re;
@@ -264,7 +266,9 @@ export class MemoryAbilityMonitorStruct extends BaseStruct {
       if (memoryAbilityData.startNS === MemoryAbilityMonitorStruct.hoverMemoryAbilityStruct?.startNS && isHover) {
         memoryAbilityContext2D.lineWidth = 1;
         memoryAbilityContext2D.globalAlpha = 0.6;
-        let drawHeight: number = Math.floor(((memoryAbilityData.value || 0) * (memoryAbilityData.frame.height || 0) * 1.0) / maxMemoryByte);
+        let drawHeight: number = Math.floor(
+          ((memoryAbilityData.value || 0) * (memoryAbilityData.frame.height || 0) * 1.0) / maxMemoryByte
+        );
         memoryAbilityContext2D.fillRect(
           memoryAbilityData.frame.x,
           memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4,
@@ -284,14 +288,22 @@ export class MemoryAbilityMonitorStruct extends BaseStruct {
         memoryAbilityContext2D.globalAlpha = 1.0;
         memoryAbilityContext2D.stroke();
         memoryAbilityContext2D.beginPath();
-        memoryAbilityContext2D.moveTo(memoryAbilityData.frame.x + 3, memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4);
+        memoryAbilityContext2D.moveTo(
+          memoryAbilityData.frame.x + 3,
+          memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4
+        );
         memoryAbilityContext2D.lineWidth = 3;
-        memoryAbilityContext2D.lineTo(memoryAbilityData.frame.x + width, memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4);
+        memoryAbilityContext2D.lineTo(
+          memoryAbilityData.frame.x + width,
+          memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4
+        );
         memoryAbilityContext2D.stroke();
       } else {
         memoryAbilityContext2D.globalAlpha = 0.6;
         memoryAbilityContext2D.lineWidth = 1;
-        let drawHeight: number = Math.floor(((memoryAbilityData.value || 0) * (memoryAbilityData.frame.height || 0)) / maxMemoryByte);
+        let drawHeight: number = Math.floor(
+          ((memoryAbilityData.value || 0) * (memoryAbilityData.frame.height || 0)) / maxMemoryByte
+        );
         memoryAbilityContext2D.fillRect(
           memoryAbilityData.frame.x,
           memoryAbilityData.frame.y + memoryAbilityData.frame.height - drawHeight + 4,

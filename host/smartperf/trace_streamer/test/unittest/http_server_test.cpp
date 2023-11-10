@@ -98,7 +98,7 @@ int32_t HttpClient(const char* buf)
         TS_LOGE("set recv time out error");
         return -1;
     }
-    while (1) {
+    while (true) {
         ret = recv(sockfd, g_clientRecvBuf + index, MAX_TESET_BUF_SIZE, 0);
         if (ret < 0) {
             TS_LOGE("Recv timeout");

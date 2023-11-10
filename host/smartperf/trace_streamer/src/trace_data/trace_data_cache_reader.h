@@ -118,6 +118,9 @@ public:
     const DmaMemData& GetConstDmaMemData() const;
     const GpuProcessMemData& GetConstGpuProcessMemData() const;
     const GpuWindowMemData& GetConstGpuWindowMemData() const;
+    const CpuDumpInfo& GetConstCpuDumpInfo() const;
+    const ProfileMemInfo& GetConstProfileMemInfo() const;
+    const RSImageDumpInfo& GetConstRSImageDumpInfo() const;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

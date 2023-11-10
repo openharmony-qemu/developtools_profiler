@@ -29,7 +29,7 @@ import { LitProgressBar } from '../base-ui/progress-bar/LitProgressBar.js';
 import { SpRecordTrace } from './component/SpRecordTrace.js';
 import { SpWelcomePage } from './component/SpWelcomePage.js';
 import { LitSearch } from './component/trace/search/Search.js';
-import { DbPool, queryExistFtrace, threadPool } from './database/SqlLite.js';
+import { DbPool, queryExistFtrace, queryTraceType, threadPool } from './database/SqlLite.js';
 import './component/trace/search/Search.js';
 import './component/SpWelcomePage.js';
 import './component/SpSystemTrace.js';
@@ -54,11 +54,37 @@ import './component/SpFlags.js';
 import './component/trace/base/CustomThemeColor.js';
 import { CustomThemeColor, Theme } from './component/trace/base/CustomThemeColor.js';
 import { convertPool } from './database/Convert.js';
+import { LongTraceDBUtils } from './database/LongTraceDBUtils.js';
 
 @element('sp-application')
 export class SpApplication extends BaseElement {
   private static loadingProgress: number = 0;
   private static progressStep: number = 2;
+  longTraceHeadMessageList: Array<{
+    pageNum: number;
+    data: ArrayBuffer;
+  }> = [];
+
+  longTraceDataList: Array<{
+    fileType: string;
+    index: number;
+    pageNum: number;
+    startOffsetSize: number;
+    endOffsetSize: number;
+  }> = [];
+
+  longTraceTypeMessageMap:
+    | Map<
+        number,
+        Array<{
+          fileType: string;
+          startIndex: number;
+          endIndex: number;
+          size: number;
+        }>
+      >
+    | undefined
+    | null;
   static skinChange: Function | null | undefined = null;
   static skinChange2: Function | null | undefined = null;
   skinChangeArray: Array<Function> = [];
@@ -75,6 +101,10 @@ export class SpApplication extends BaseElement {
   };
   private traceFileName: string | undefined;
   colorTransiton: any;
+  static isLongTrace: boolean = false;
+  fileTypeList: string[] = ['ebpf', 'arkts', 'hiperf'];
+  private pageTimStamp: number = 0;
+  private currentPageNum: number = 1;
 
   static get observedAttributes() {
     return ['server', 'sqlite', 'wasm', 'dark', 'vs', 'query-sql', 'subsection'];
@@ -263,7 +293,7 @@ export class SpApplication extends BaseElement {
             align-items: center;
             border: 1px solid var(--dark-border,#c5c5c5);
         }
-        .search input{
+        lit-search input{
             outline: none;
             border: 0px;
             background-color: transparent;
@@ -283,7 +313,7 @@ export class SpApplication extends BaseElement {
           color: #b5b7ba;
           font-size: 1em;
         }
-        .search input::placeholder {
+        lit-search input::placeholder {
           color: #b5b7ba;
           font-size: 1em;
         }
@@ -333,7 +363,7 @@ export class SpApplication extends BaseElement {
             font-size: 20px;
             color: var(--dark-color1,#47A7E0);
          }
-         .chart-filter .custom-color {
+         .chart-filter {
             visibility: hidden;
             z-index: -1;
         }
@@ -368,6 +398,107 @@ export class SpApplication extends BaseElement {
         .filter-config:hover {
             opacity: 0.7;
         }
+        .page-button[prohibit] {
+          cursor: none;
+        }
+        .page-button {
+            background: #D8D8D8;
+            border-radius: 12px;
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #preview-button:hover {
+          cursor: pointer;
+          background: #0A59F7;
+          color: #FFFFFF;
+          opacity: 1;
+        }
+        #next-button:hover {
+          cursor: pointer;
+          background: #0A59F7;
+          color: #FFFFFF;
+          opacity: 1;
+        }
+        .pagination:hover {
+          cursor: pointer;
+          background: #0A59F7;
+          color: #FFFFFF;
+          opacity: 1;
+        }
+        .confirm-button:hover {
+          cursor: pointer;
+          background: #0A59F7;
+          color: #FFFFFF;
+          opacity: 1;
+        }
+        .pagination {
+            background: #D8D8D8;
+            color: #000000;
+            border-radius: 12px;
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Helvetica;
+            font-size: 12px;
+            text-align: center;
+            line-height: 20px;
+            font-weight: 400;
+            opacity: 0.6;
+        }
+        .pagination[selected] {
+            background: #0A59F7;
+            color: #FFFFFF;
+            opacity: 1;
+        }
+        .page-jump-font {
+            opacity: 0.6;
+            font-family: Helvetica;
+            font-size: 12px;
+            color: #000000;
+            text-align: center;
+            line-height: 20px;
+            font-weight: 400;
+        }
+        .page-input {
+            background: #D8D8D8;
+            border-radius: 10px;
+            width: 40px;
+            height: 24px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            margin-right: 8px;
+            border: none;
+        }
+        .confirm-button {
+            font-family: Helvetica;
+            font-size: 12px;
+            color: #0A59F7;
+            text-align: center;
+            font-weight: 400;
+            border: 1px solid #0A59F7;
+            border-radius: 10px;
+            width: 64px;
+            height: 24px;
+            line-height: 24px;
+        }
+        .long_trace_page {
+            justify-content: flex-end;
+            width: -webkit-fill-available;
+            margin-right: 80px;
+            align-items: center;
+            display: none;
+        }
+        .page-number-list {
+            display: flex;
+        }
         </style>
         <div class="root">
             <lit-main-menu id="main-menu" class="menu" data=''></lit-main-menu>
@@ -380,8 +511,20 @@ export class SpApplication extends BaseElement {
                     </div>
                     <lit-search id="lit-search"></lit-search>
                     <lit-search id="lit-record-search"></lit-search>
+                    <div class="long_trace_page" style="display: none;">
+                      <div class="page-button" id="preview-button">
+                         <img title="preview" src="img/preview.png"/>
+                         </div>
+                      <div class="page-number-list"></div>
+                      <div class="page-button" id="next-button" style="margin-right: 8px;">
+                         <img title="next" src="img/next.png"/>
+                      </div>
+                      <div class="page-jump-font" style="margin-right: 8px;">To</div>
+                      <input class="page-input" />
+                      <div class="confirm-button">Confirm</div>
+                    </div>
                 </div>
-                <img class="cut-trace-file" title="Cut Trace File" src="img/menu-cut.png" style="display: block;text-align: right;position: absolute;right: 3.2em;cursor: pointer;top: 20px">
+                <img class="cut-trace-file" title="Cut Trace File" src="img/menu-cut.svg" style="display: block;text-align: right;position: absolute;right: 3.2em;cursor: pointer;top: 20px">
                 <img class="filter-config" title="Display Template" src="img/config_filter.png" style="display: block;text-align: right;position: absolute;right: 1.2em;cursor: pointer;top: 20px">
                 <lit-progress-bar class="progress"></lit-progress-bar>
             </div>
@@ -417,6 +560,7 @@ export class SpApplication extends BaseElement {
   initElements() {
     SpStatisticsHttpUtil.initStatisticsServerConfig();
     SpStatisticsHttpUtil.addUserVisitAction('visit');
+    LongTraceDBUtils.getInstance().createDBAndTable().then();
     let that = this;
     this.querySql = true;
     this.rootEL = this.shadowRoot!.querySelector<HTMLDivElement>('.root');
@@ -442,6 +586,7 @@ export class SpApplication extends BaseElement {
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
     let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
     let cutTraceFile = this.shadowRoot?.querySelector('.cut-trace-file') as HTMLImageElement;
+    let longTracePage = that.shadowRoot!.querySelector('.long_trace_page') as HTMLDivElement;
     cutTraceFile.addEventListener('click', () => {
       this.croppingFile(progressEL, litSearch);
     });
@@ -753,58 +898,58 @@ export class SpApplication extends BaseElement {
       return menus;
     }
 
-    function restoreDownLoadIcons(time: number) {
-      let timer = setInterval(function () {
-        let querySelectorAll = mainMenu.shadowRoot?.querySelectorAll<LitMainMenuGroup>('lit-main-menu-group');
-        querySelectorAll!.forEach((menuGroup) => {
-          let attribute = menuGroup.getAttribute('title');
-          if (attribute === 'Convert trace') {
-            let querySelectors = menuGroup.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
-            querySelectors.forEach((item) => {
-              if (item.getAttribute('title') === 'Convert to .systrace') {
-                item!.setAttribute('icon', 'download');
-                let querySelector = item!.shadowRoot?.querySelector('.icon') as LitIcon;
-                querySelector.removeAttribute('spin');
-                clearInterval(timer);
-              }
-            });
-          }
-        });
-      }, time);
+    function restoreDownLoadIcons() {
+      let querySelectorAll = mainMenu.shadowRoot?.querySelectorAll<LitMainMenuGroup>('lit-main-menu-group');
+      querySelectorAll!.forEach((menuGroup) => {
+        let attribute = menuGroup.getAttribute('title');
+        if (attribute === 'Convert trace') {
+          let querySelectors = menuGroup.querySelectorAll<LitMainMenuItem>('lit-main-menu-item');
+          querySelectors.forEach((item) => {
+            if (item.getAttribute('title') === 'Convert to .systrace') {
+              item!.setAttribute('icon', 'download');
+              let querySelector = item!.shadowRoot?.querySelector('.icon') as LitIcon;
+              querySelector.removeAttribute('spin');
+            }
+          });
+        }
+      });
     }
 
     function postConvert(fileName: string) {
-      let uint8Array = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
+      let htraceData = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
       let enc = new TextDecoder();
-      let headerStr = enc.decode(uint8Array);
-      let newFileName = fileName.substring(0, fileName.lastIndexOf('.')) + '.txt';
+      let headerStr = enc.decode(htraceData);
+      let newFileName = fileName.substring(0, fileName.lastIndexOf('.')) + '.systrace';
       let aElement = document.createElement('a');
-      if (headerStr.indexOf('OHOSPROF') == 0) {
+      let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+      if (headerStr.indexOf('OHOSPROF') === 0 || rowTraceStr.indexOf('49df') === 0) {
         convertPool.submitWithName('getConvertData', (status: boolean, msg: string, results: Blob) => {
           aElement.href = URL.createObjectURL(results);
           aElement.download = newFileName;
+          let timeoutId = 0;
+          aElement.addEventListener('click', (ev) => {
+            clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => {
+              restoreDownLoadIcons();
+            }, 2000);
+          });
           aElement.click();
           window.URL.revokeObjectURL(aElement.href);
-          let time = 2000;
-          let size = results.size / (1024 * 1024);
-          if (size > 100 && size < 1200) {
-            time = Number(Number(size / 100).toFixed(2)) * 1800;
-          } else if (size >= 1200) {
-            time = Number(Number(size / 100).toFixed(2)) * 2500;
-          }
-          restoreDownLoadIcons(time);
         });
       } else {
-        let time = 1000;
-        let size = DbPool.sharedBuffer!.byteLength / (1024 * 1024);
-        if (size > 100) {
-          time = Number(Number(size / 100).toFixed(2)) * 1000;
-        }
         aElement.href = URL.createObjectURL(new Blob([DbPool.sharedBuffer!]));
         aElement.download = newFileName;
+        let txtTimeoutId = 0;
+        aElement.addEventListener('click', (ev) => {
+          clearTimeout(txtTimeoutId);
+          txtTimeoutId = window.setTimeout(() => {
+            restoreDownLoadIcons();
+          }, 2000);
+        });
         aElement.click();
         window.URL.revokeObjectURL(aElement.href);
-        restoreDownLoadIcons(time);
       }
     }
 
@@ -936,6 +1081,328 @@ export class SpApplication extends BaseElement {
       });
     }
 
+    function sendCutFileMessage(timStamp: number) {
+      that.pageTimStamp = timStamp;
+      threadPool.init('wasm').then(() => {
+        let headUintArray = new Uint8Array(that.longTraceHeadMessageList.length * 1024);
+        let headOffset = 0;
+        that.longTraceHeadMessageList = that.longTraceHeadMessageList.sort(
+          (leftMessage, rightMessage) => leftMessage.pageNum - rightMessage.pageNum
+        );
+        for (let index = 0; index < that.longTraceHeadMessageList.length; index++) {
+          let currentUintArray = new Uint8Array(that.longTraceHeadMessageList[index].data);
+          headUintArray.set(currentUintArray, headOffset);
+          headOffset += currentUintArray.length;
+        }
+        threadPool.submit(
+          'ts-cut-file',
+          '',
+          {
+            headArray: headUintArray,
+            timeStamp: timStamp,
+            splitFileInfo: that.longTraceTypeMessageMap?.get(0),
+            splitDataList: that.longTraceDataList,
+          },
+          (res: Array<any>) => {
+            litSearch.setPercent('Cut in file ',  100);
+            if (that.longTraceHeadMessageList.length > 0) {
+              getTraceFileByPage(that.currentPageNum);
+              litSearch.style.marginLeft = '80px';
+              let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
+              that.drawPageNumber(longTracePage, pageListDiv, that.longTraceHeadMessageList.length);
+              let previewButton: HTMLDivElement | null | undefined =
+                that.shadowRoot?.querySelector<HTMLDivElement>('#preview-button');
+              let nextButton: HTMLDivElement | null | undefined =
+                that.shadowRoot?.querySelector<HTMLDivElement>('#next-button');
+              let pageInput = that.shadowRoot?.querySelector<HTMLInputElement>('.page-input');
+              if (previewButton) {
+                previewButton.style.pointerEvents = 'none';
+                previewButton.style.opacity = '0.7';
+                previewButton.addEventListener('click', () => {
+                  if (progressEL.loading) {
+                    return;
+                  }
+                  if (that.currentPageNum > 1) {
+                    that.currentPageNum--;
+                    if (that.currentPageNum === 1) {
+                      previewButton!.style.pointerEvents = 'none';
+                      nextButton!.style.pointerEvents = 'auto';
+                      previewButton!.style.opacity = '0.7';
+                    } else {
+                      previewButton!.style.pointerEvents = 'auto';
+                      nextButton!.style.pointerEvents = 'none';
+                      previewButton!.style.opacity = '1';
+                    }
+                    let previewElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                      `.page-number[title='${that.currentPageNum}']`
+                    );
+                    if (previewElement!.textContent === '...') {
+                      return;
+                    }
+                    let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                    querySelector?.removeAttribute('selected');
+                    previewElement!.setAttribute('selected', '');
+                    pageInput!.value = that.currentPageNum + '';
+                    progressEL.loading = true;
+                    getTraceFileByPage(that.currentPageNum);
+                  }
+                });
+              }
+              if (nextButton && that.longTraceHeadMessageList.length === 1) {
+                nextButton.style.pointerEvents = 'none';
+                nextButton.style.opacity = '0.7';
+              }
+              nextButton!.addEventListener('click', () => {
+                if (progressEL.loading) {
+                  return;
+                }
+                if (that.currentPageNum < that.longTraceHeadMessageList.length) {
+                  that.currentPageNum++;
+                  if (that.currentPageNum === that.longTraceHeadMessageList.length) {
+                    nextButton!.style.pointerEvents = 'none';
+                    previewButton!.style.pointerEvents = 'auto';
+                    nextButton!.style.opacity = '0.7';
+                  } else {
+                    previewButton!.style.pointerEvents = 'auto';
+                    nextButton!.style.pointerEvents = 'auto';
+                    nextButton!.style.opacity = '1';
+                  }
+                  let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                    `.page-number[title='${that.currentPageNum}']`
+                  );
+                  if (nextElement!.textContent === '...') {
+                    return;
+                  }
+                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                  querySelector?.removeAttribute('selected');
+                  nextElement!.setAttribute('selected', '');
+                  progressEL.loading = true;
+                  getTraceFileByPage(that.currentPageNum);
+                }
+              });
+              pageListDiv.querySelectorAll('div').forEach((divEL) => {
+                divEL.addEventListener('click', () => {
+                  if (progressEL.loading || divEL.textContent === '...') {
+                    return;
+                  }
+                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                  querySelector?.removeAttribute('selected');
+                  divEL.setAttribute('selected', '');
+                  let selectPageNum = Number(divEL.textContent);
+                  if (selectPageNum !== that.currentPageNum) {
+                    that.currentPageNum = selectPageNum;
+                    if (that.currentPageNum === that.longTraceHeadMessageList.length) {
+                      nextButton!.style.pointerEvents = 'none';
+                      nextButton!.style.opacity = '0.7';
+                    } else {
+                      nextButton!.style.pointerEvents = 'auto';
+                      nextButton!.style.opacity = '1';
+                    }
+                    if (that.currentPageNum === 1) {
+                      previewButton!.style.pointerEvents = 'none';
+                      previewButton!.style.opacity = '0.7';
+                    } else {
+                      previewButton!.style.pointerEvents = 'auto';
+                      previewButton!.style.opacity = '1';
+                    }
+                    progressEL.loading = true;
+                    getTraceFileByPage(that.currentPageNum);
+                  }
+                });
+              });
+              pageInput!.addEventListener('input', () => {
+                let value = pageInput!.value;
+                value = value.replace(/\D/g, '');
+                if (value) {
+                  value = Math.min(that.longTraceHeadMessageList.length, parseInt(value)).toString();
+                }
+                pageInput!.value = value;
+              });
+              let pageConfirmEl = that.shadowRoot?.querySelector<HTMLDivElement>('.confirm-button');
+              pageConfirmEl!.addEventListener('click', () => {
+                if (progressEL.loading) {
+                  return;
+                }
+                let pageIndex = Number(pageInput!.value);
+                if (pageIndex > 0 && pageIndex < that.longTraceHeadMessageList.length) {
+                  that.currentPageNum = pageIndex;
+                  if (that.currentPageNum === that.longTraceHeadMessageList.length) {
+                    nextButton!.style.pointerEvents = 'none';
+                    nextButton!.style.opacity = '0.7';
+                  } else {
+                    nextButton!.style.pointerEvents = 'auto';
+                    nextButton!.style.opacity = '1';
+                  }
+                  if (that.currentPageNum === 1) {
+                    previewButton!.style.pointerEvents = 'none';
+                    previewButton!.style.opacity = '0.7';
+                  } else {
+                    previewButton!.style.pointerEvents = 'auto';
+                    previewButton!.style.opacity = '1';
+                  }
+                  let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                    `.page-number[title='${that.currentPageNum}']`
+                  );
+                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                  querySelector?.removeAttribute('selected');
+                  nextElement!.setAttribute('selected', '');
+                  progressEL.loading = true;
+                  getTraceFileByPage(that.currentPageNum);
+                }
+              });
+            }
+          },
+          'long_trace'
+        );
+      });
+    }
+
+    function getTraceFileByPage(pageNumber: number): void {
+      openFileInit();
+      litSearch.clear();
+      showContent(spSystemTrace!);
+      that.search = true;
+      progressEL.loading = true;
+      if (!that.wasm) {
+        progressEL.loading = false;
+        return;
+      }
+      if (that.pageTimStamp === 0) {
+        return;
+      }
+      let indexedDbPageNum = pageNumber - 1;
+      let maxTraceFileLength = 400 * 1024 * 1024;
+      let traceRange = IDBKeyRange.bound(
+        [that.pageTimStamp, 'trace', indexedDbPageNum],
+        [that.pageTimStamp, 'trace', indexedDbPageNum],
+        false,
+        false
+      );
+      LongTraceDBUtils.getInstance()
+        .indexedDBHelp.get(LongTraceDBUtils.getInstance().tableName, traceRange, 'QueryFileByPage')
+        .then((result) => {
+          let traceData = indexedDataToBufferData(result);
+          let traceLength = traceData.byteLength;
+          let ebpfRange = IDBKeyRange.bound(
+            [that.pageTimStamp, 'ebpf_new', indexedDbPageNum],
+            [that.pageTimStamp, 'ebpf_new', indexedDbPageNum],
+            false,
+            false
+          );
+          let arkTsRange = IDBKeyRange.bound(
+            [that.pageTimStamp, 'arkts_new', indexedDbPageNum],
+            [that.pageTimStamp, 'arkts_new', indexedDbPageNum],
+            false,
+            false
+          );
+          let hiperfRange = IDBKeyRange.bound(
+            [that.pageTimStamp, 'hiperf_new', indexedDbPageNum],
+            [that.pageTimStamp, 'hiperf_new', indexedDbPageNum],
+            false,
+            false
+          );
+          Promise.all([
+            LongTraceDBUtils.getInstance().indexedDBHelp.get(
+              LongTraceDBUtils.getInstance().tableName,
+              ebpfRange,
+              'QueryFileByPage'
+            ),
+            LongTraceDBUtils.getInstance().indexedDBHelp.get(
+              LongTraceDBUtils.getInstance().tableName,
+              arkTsRange,
+              'QueryFileByPage'
+            ),
+            LongTraceDBUtils.getInstance().indexedDBHelp.get(
+              LongTraceDBUtils.getInstance().tableName,
+              hiperfRange,
+              'QueryFileByPage'
+            ),
+          ]).then((otherResult) => {
+            let ebpfData = indexedDataToBufferData(otherResult[0]);
+            let arkTsData = indexedDataToBufferData(otherResult[1]);
+            let hiperfData = indexedDataToBufferData(otherResult[2]);
+            let traceArray = new Uint8Array(traceData);
+            let ebpfArray = new Uint8Array(ebpfData);
+            let arkTsArray = new Uint8Array(arkTsData);
+            let hiPerfArray = new Uint8Array(hiperfData);
+            let allOtherData = [ebpfData, arkTsData, hiperfData];
+            let otherDataLength = traceLength + ebpfData.byteLength + arkTsData.byteLength + hiperfData.byteLength;
+            let fileName = `hiprofiler_long_trace_${indexedDbPageNum}.htrace`;
+            if (otherDataLength > maxTraceFileLength) {
+              if (traceLength > maxTraceFileLength) {
+                litSearch.isLoading = false;
+                litSearch.setPercent('hitrace file too big!',  -1);
+                progressEL.loading = false;
+              } else {
+                let freeDataLength = maxTraceFileLength - traceLength;
+                let freeDataIndex = findFreeSizeAlgorithm(
+                  [ebpfData.byteLength, arkTsData.byteLength, hiperfData.byteLength],
+                  freeDataLength
+                );
+                let finalData = [traceData];
+                freeDataIndex.forEach((dataIndex) => {
+                  finalData.push(allOtherData[dataIndex]);
+                });
+                let fileBlob = new Blob(finalData);
+                const file = new File([fileBlob], fileName);
+                let fileSize = (file.size / 1048576).toFixed(1);
+                handleWasmMode(file, file.name, `${fileSize}M`, fileName);
+              }
+            } else {
+              let fileBlob = new Blob([traceArray, ebpfArray, arkTsArray, hiPerfArray]);
+              const file = new File([fileBlob], fileName);
+              let fileSize = (file.size / 1048576).toFixed(1);
+              handleWasmMode(file, file.name, `${fileSize}M`, file.name);
+            }
+            that.traceFileName = fileName;
+          });
+        });
+    }
+
+    function indexedDataToBufferData(sourceData: any): ArrayBuffer {
+      let uintArrayLength = 0;
+      let uintDataList = sourceData.map((item: any) => {
+        let currentBufData = new Uint8Array(item.buf);
+        uintArrayLength += currentBufData.length;
+        return currentBufData;
+      });
+      let resultArrayBuffer = new ArrayBuffer(uintArrayLength);
+      let resultUintArray = new Uint8Array(resultArrayBuffer);
+      let offset = 0;
+      uintDataList.forEach((currentArray: Uint8Array) => {
+        resultUintArray.set(currentArray, offset);
+        offset += currentArray.length;
+      });
+      return resultArrayBuffer;
+    }
+
+    function findFreeSizeAlgorithm(numbers: Array<number>, freeSize: number): Array<number> {
+      let closestSize = 0;
+      let currentSize = 0;
+      let finalIndex: Array<number> = [];
+      let currentSelectIndex: Array<number> = [];
+
+      function reBackFind(index: number): void {
+        if (index === numbers.length) {
+          const sumDifference = Math.abs(currentSize - freeSize);
+          if (currentSize <= freeSize && sumDifference < Math.abs(closestSize - freeSize)) {
+            closestSize = currentSize;
+            finalIndex = [...currentSelectIndex];
+          }
+          return;
+        }
+        currentSize += numbers[index];
+        currentSelectIndex.push(index);
+        reBackFind(index + 1);
+        currentSize -= numbers[index];
+        currentSelectIndex.pop();
+        reBackFind(index + 1);
+      }
+
+      reBackFind(0);
+      return finalIndex;
+    }
+
     function handleWasmMode(ev: any, showFileName: string, fileSize: string, fileName: string) {
       litSearch.setPercent('', 1);
       threadPool.init('wasm').then((res) => {
@@ -1055,8 +1522,167 @@ export class SpApplication extends BaseElement {
       }
     };
 
+    function openLongTraceFile(ev: any, isRecordTrace: boolean = false) {
+      openFileInit();
+      litSearch.clear();
+      showContent(spSystemTrace!);
+      that.search = true;
+      progressEL.loading = true;
+      if (!that.wasm) {
+        progressEL.loading = false;
+        return;
+      }
+      if (longTracePage) {
+        longTracePage.style.display = 'none';
+        litSearch.style.marginLeft = '0px';
+        let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
+        pageListDiv.innerHTML = '';
+      }
+      that.currentPageNum = 1;
+      if (isRecordTrace) {
+        let detail = (ev as any).detail;
+        sendCutFileMessage(detail.timeStamp);
+      } else {
+        that.longTraceHeadMessageList = [];
+        that.longTraceTypeMessageMap = undefined;
+        that.longTraceDataList = [];
+        let detail = (ev as any).detail;
+        let timStamp = new Date().getTime();
+        let traceTypePage: Array<number> = [];
+        let allFileSize = 0;
+        let readSize = 0;
+        for (let index = 0; index < detail.length; index++) {
+          let file = detail[index];
+          let fileName = file.name as string;
+          allFileSize += file.size;
+          if (that.fileTypeList.some(fileType => fileName.toLowerCase().includes(fileType))) {
+            continue;
+          }
+          let firstLastIndexOf = fileName.lastIndexOf('.');
+          let firstText = fileName.slice(0, firstLastIndexOf);
+          let resultLastIndexOf = firstText.lastIndexOf('_');
+          traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1)
+        }
+        traceTypePage.sort((leftNum: number, rightNum: number) => leftNum - rightNum);
+        const readFiles = async (files: FileList, traceTypePage: Array<number>) => {
+          const promises = Array.from(files).map((file) => {
+            let types = that.fileTypeList.filter((type) => file.name.toLowerCase().includes(type.toLowerCase()));
+            return readFile(file, types, traceTypePage);
+          });
+          return Promise.all(promises);
+        };
+        const readFile = async (file: any, types: Array<string>, traceTypePage: Array<number>) => {
+          return new Promise((resolve, reject) => {
+            let fileName = file.name;
+            let fr = new FileReader();
+            let message = {
+              fileType: '',
+              startIndex: 0,
+              endIndex: 0,
+              size: 0,
+            };
+            info('Parse long trace using wasm mode ');
+            let maxSize = 48 * 1024 * 1024;
+            let fileType = 'trace';
+            let pageNumber = 0;
+            if (types.length > 0) {
+              fileType = types[0];
+            } else {
+              let firstLastIndexOf = fileName.lastIndexOf('.');
+              let firstText = fileName.slice(0, firstLastIndexOf);
+              let resultLastIndexOf = firstText.lastIndexOf('_');
+              let searchNumber = Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1;
+              pageNumber = traceTypePage.lastIndexOf(searchNumber);
+            }
+            let chunk = maxSize;
+            let offset = 0;
+            let sliceLen = 0;
+            let index = 1;
+            fr.onload = function () {
+              let data = fr.result as ArrayBuffer;
+              LongTraceDBUtils.getInstance()
+                .indexedDBHelp.add(LongTraceDBUtils.getInstance().tableName, {
+                  buf: data,
+                  id: `${fileType}_${timStamp}_${pageNumber}_${index}`,
+                  fileType: fileType,
+                  pageNum: pageNumber,
+                  startOffset: offset,
+                  endOffset: offset + sliceLen,
+                  index: index,
+                  timStamp: timStamp,
+                })
+                .then(() => {
+                  if (index === 1 && types.length === 0) {
+                    that.longTraceHeadMessageList.push({
+                      pageNum: pageNumber,
+                      data: data.slice(offset, 1024),
+                    });
+                  }
+                  that.longTraceDataList.push({
+                    index: index,
+                    fileType: fileType,
+                    pageNum: pageNumber,
+                    startOffsetSize: offset,
+                    endOffsetSize: offset + sliceLen,
+                  });
+                  offset += sliceLen;
+                  if (offset < file.size) {
+                    index++;
+                  }
+                  continue_reading();
+                });
+            };
+
+            function continue_reading() {
+              if (offset >= file.size) {
+                message.endIndex = index;
+                message.size = file.size;
+                if (that.longTraceTypeMessageMap) {
+                  if (that.longTraceTypeMessageMap?.has(pageNumber)) {
+                    let oldTypeList = that.longTraceTypeMessageMap?.get(pageNumber);
+                    oldTypeList?.push(message);
+                    that.longTraceTypeMessageMap?.set(pageNumber, oldTypeList!);
+                  } else {
+                    that.longTraceTypeMessageMap?.set(pageNumber, [message]);
+                  }
+                } else {
+                  that.longTraceTypeMessageMap = new Map();
+                  that.longTraceTypeMessageMap.set(pageNumber, [message]);
+                }
+                resolve(true);
+                return;
+              }
+              if (index === 1) {
+                message.fileType = fileType;
+                message.startIndex = index;
+              }
+              sliceLen = Math.min(file.size - offset, chunk);
+              let slice = file.slice(offset, offset + sliceLen);
+              readSize += slice.size;
+              let percentValue = (readSize * 100 / allFileSize).toFixed(2);
+              litSearch.setPercent('Read in file: ',  Number(percentValue));
+              fr.readAsArrayBuffer(slice);
+            }
+            continue_reading();
+            fr.onerror = function () {
+              reject(false);
+            };
+          });
+        };
+        litSearch.setPercent('Read in file: ',  1);
+        readFiles(detail, traceTypePage).then(() => {
+          litSearch.setPercent('Cut in file: ',  1);
+          sendCutFileMessage(timStamp);
+        });
+      }
+    }
+
     function openTraceFile(ev: any, isClickHandle?: boolean) {
       that.removeAttribute('custom-color');
+      longTracePage.style.display = 'none';
+      litSearch.style.marginLeft = '0px';
+      let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
+      pageListDiv.innerHTML = '';
       openFileInit();
       if (that.vs && isClickHandle) {
         Cmd.openFileDialog().then((res: string) => {
@@ -1180,6 +1806,17 @@ export class SpApplication extends BaseElement {
             },
           },
           {
+            title: 'Open long trace file',
+            icon: 'folder',
+            fileChoose: !that.vs,
+            fileHandler: function (ev: InputEvent) {
+              openLongTraceFile(ev);
+            },
+            clickHandler: function (hand: any) {
+              openLongTraceFile(hand, true);
+            },
+          },
+          {
             title: 'Record new trace',
             icon: 'copyhovered',
             clickHandler: function (item: MenuItem) {
@@ -1188,6 +1825,8 @@ export class SpApplication extends BaseElement {
                 spRecordTrace!.startRefreshDeviceList();
               }
               spRecordTrace!.synchronizeDeviceList();
+              spRecordTemplate!.record_template = false;
+              spRecordTrace!.refreshConfig(true);
               showContent(spRecordTrace!);
             },
           },
@@ -1200,6 +1839,8 @@ export class SpApplication extends BaseElement {
                 spRecordTemplate!.startRefreshDeviceList();
               }
               spRecordTemplate!.refreshHint();
+              spRecordTemplate!.record_template = true;
+              spRecordTemplate!.refreshConfig(false);
               spRecordTemplate!.synchronizeDeviceList();
               showContent(spRecordTemplate!);
             },
@@ -1348,28 +1989,64 @@ export class SpApplication extends BaseElement {
           fileName = path.split('/').reverse()[0];
         }
         that.traceFileName = fileName;
-        showFileName =
-          fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
+        showFileName = fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
         TraceRow.rangeSelectObject = undefined;
         let localUrl = downloadLineFile ? `${window.location.origin}${localPath}` : urlParams.trace;
-        fetch(localUrl).then((res) => {
-          res.arrayBuffer().then((arrayBuf) => {
-            if (urlParams.local) {
-              URL.revokeObjectURL(localUrl);
-            }
-            let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
-            postLog(fileName, fileSize);
-            document.title = `${showFileName} (${fileSize}M)`;
-            info('Parse trace using wasm mode ');
-            handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
+        fetch(localUrl)
+          .then((res) => {
+            res.arrayBuffer().then((arrayBuf) => {
+              if (urlParams.local) {
+                URL.revokeObjectURL(localUrl);
+              }
+              let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
+              postLog(fileName, fileSize);
+              document.title = `${showFileName} (${fileSize}M)`;
+              info('Parse trace using wasm mode ');
+              handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
+            });
+          })
+          .catch((e) => {
+            const firstQuestionMarkIndex = window.location.href.indexOf('?');
+            location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
           });
-        }).catch((e) => {
-          const firstQuestionMarkIndex = window.location.href.indexOf('?');
-          location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
-        });
       });
     } else {
       openMenu(true);
+    }
+  }
+
+  private drawPageNumber(longTracePage: HTMLDivElement, pageListDiv: HTMLDivElement, maxPageNumber: number): void {
+    longTracePage.style.display = 'flex';
+    if (maxPageNumber > 6) {
+      for (let index = 1; index <= 6; index++) {
+        let element = document.createElement('div');
+        element.className = 'page-number pagination';
+        element.textContent = index.toString();
+        element.title = index.toString();
+        if (index === 1) {
+          element.setAttribute('selected', '');
+        }
+        if (index === 5) {
+          element.textContent = '...';
+          element.title = '...'
+        }
+        if (index === 6) {
+          element.textContent = `${maxPageNumber}`;
+          element.title = `${maxPageNumber}`;
+        }
+        pageListDiv.appendChild(element);
+      }
+    } else {
+      for (let index = 1; index <= maxPageNumber; index++) {
+        let element = document.createElement('div');
+        element.className = 'page-number pagination';
+        element.textContent = index.toString();
+        element.title = index.toString();
+        if (index === 1) {
+          element.setAttribute('selected', '');
+        }
+        pageListDiv.appendChild(element);
+      }
     }
   }
 
@@ -1504,6 +2181,13 @@ export class SpApplication extends BaseElement {
     if (cutRightTs > recordEndNS) {
       cutRightTs = recordEndNS;
     }
+    let minCutDur = 1_000_000;
+    if (cutRightTs - cutLeftTs < minCutDur) {
+      let unitTs = (cutRightTs - cutLeftTs) / 2;
+      let midTs = cutLeftTs + unitTs;
+      cutLeftTs = midTs - minCutDur / 2;
+      cutRightTs = midTs + minCutDur / 2;
+    }
     progressEL.loading = true;
     threadPool.cutFile(cutLeftTs, cutRightTs, (status: boolean, msg: string, cutBuffer?: ArrayBuffer) => {
       progressEL.loading = false;
@@ -1518,7 +2202,11 @@ export class SpApplication extends BaseElement {
           traceName = traceName;
         }
         let blobUrl = URL.createObjectURL(new Blob([cutBuffer!]));
-        window.open(`index.html?link=true&local=true&traceName=${traceName}_cut_${cutLeftTs}${fileType}&trace=${encodeURIComponent(blobUrl)}`);
+        window.open(
+          `index.html?link=true&local=true&traceName=${traceName}_cut_${cutLeftTs}${fileType}&trace=${encodeURIComponent(
+            blobUrl
+          )}`
+        );
       } else {
         litSearch.setPercent(msg, -1);
         window.setTimeout(() => {
@@ -1661,6 +2349,8 @@ export class SpApplication extends BaseElement {
     let mainMenu = this.shadowRoot?.querySelector('#main-menu') as LitMainMenu;
     // @ts-ignore
     mainMenu.menus[0].children[0].disabled = disable;
+    // @ts-ignore
+    mainMenu.menus[0].children[1].disabled = disable;
     if (mainMenu.menus!.length > 2) {
       // @ts-ignore
       mainMenu.menus[1].children.map((it) => (it.disabled = disable));

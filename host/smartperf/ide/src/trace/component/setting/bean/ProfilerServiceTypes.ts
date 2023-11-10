@@ -27,7 +27,9 @@ export enum ProfilerSessionConfigBufferConfigPolicy {
 export interface ProfilerSessionConfig {
   buffers: ProfilerSessionConfigBufferConfig[];
   sessionMode: ProfilerSessionConfigMode;
-
+  splitFile?: boolean;
+  splitFileMaxSizeMb?: number;
+  splitFileMaxNum?: number;
   /** for OFFLINE mode, result file max size in KB */
   resultMaxSize: number;
   /** if set to non-zero value, session will auto-destroyed after CreateSession in ms */
@@ -82,9 +84,10 @@ export interface ProfilerPluginConfig<T> {
   protobuf_serialize?: boolean;
 }
 
-export interface FileSystemConfig {
+export interface HiebpfConfig {
   cmdLine: string;
   outfileName: string;
+  splitOutfileName?: string;
 }
 
 export interface MemoryConfig {
@@ -897,6 +900,7 @@ export interface HiperfPluginConfig {
   isRoot: boolean;
   outfileName: string;
   recordArgs: string;
+  splitOutfileName?: string;
 }
 
 export interface HiSystemEventConfig {
@@ -912,4 +916,5 @@ export interface ArkTSConfig {
   track_allocations: boolean;
   enable_cpu_profiler: boolean;
   cpu_profiler_interval: number;
+  splitOutfileName?: string;
 }

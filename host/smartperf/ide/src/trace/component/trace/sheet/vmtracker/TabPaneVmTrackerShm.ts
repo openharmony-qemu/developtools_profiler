@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection';
 import { queryVmTrackerShmSizeData } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
@@ -34,9 +34,9 @@ export class TabPaneVmTrackerShm extends BaseElement {
       this.init();
       this.clear();
       this.range!.textContent =
-          'Selected range: ' +
-          parseFloat(((valVmTrackerShm.rightNs - valVmTrackerShm.leftNs) / 1000000.0).toFixed(5)) +
-          '  ms';
+        'Selected range: ' +
+        parseFloat(((valVmTrackerShm.rightNs - valVmTrackerShm.leftNs) / 1000000.0).toFixed(5)) +
+        '  ms';
       this.queryDataByDB(valVmTrackerShm);
     }
   }

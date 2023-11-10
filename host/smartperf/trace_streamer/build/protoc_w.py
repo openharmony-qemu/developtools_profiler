@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Copyright (C) 2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,12 +71,10 @@ PARAMS_STANDARD = f" --proto_path {PROTO_OUT_DIR} "
 PARAMS_STANDARD += " ".join([f"{PROTO_OUT_DIR}/{os.path.basename(param)}" for param in PARAMS_REPLACE])
 PARAMS_ALL = f"{PARAMS_SRC} {PARAMS_STANDARD}"
 
-print("执行参数：--------------- --------------------------")
 if not sys.argv[4].startswith("--plugin"):
-    print("执行参数：--------------- -------------------2-------")
     if os.path.isfile(OPT_PLUGIN_PROTOREADER_PATH):
-      cmd=[PROTOC, OPT_PLUGIN_PROTOREADER, f"{PLUGINOUT}:{sys.argv[5]}", *PARAMS_ALL.split()]
-      print("执行参数：--------------- ", cmd, " --------------------------")
-      subprocess.run(cmd)
-    #   subprocess.run(cmd, env={"LD_LIBRARY_PATH": f"{LIBCXX_X64_OUT}:{SUBSYS_X64_OUT}"})
+        cmd=[PROTOC, OPT_PLUGIN_PROTOREADER, f"{PLUGINOUT}:{sys.argv[5]}", *PARAMS_ALL.split()]
+        print("执行参数：--------------- ", cmd, " --------------------------")
+        subprocess.run(cmd)
+    # subprocess.run(cmd, env={"LD_LIBRARY_PATH": f"{LIBCXX_X64_OUT}:{SUBSYS_X64_OUT}"})
 subprocess.run([PROTOC, *PARAMS_ALL.split()])

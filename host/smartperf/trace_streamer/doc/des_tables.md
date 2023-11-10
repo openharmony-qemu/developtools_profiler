@@ -1512,22 +1512,22 @@ js_heap_sample:记录timeline的时间轴信息
 'R', Runnable状态  
 "S", interruptible sleep  
 "D", uninterruptible sleep  
-"D-IO", uninterruptible io
-"D-NIO", uninterruptible nio
-"Runing", Runing状态
-"I", interrupted
-"T", Traced 
+"D-IO", uninterruptible io  
+"D-NIO", uninterruptible nio  
+"Runing", Runing状态  
+"T", Task stoped.  
+"t"  Traced.  
 "X", ExitedDead  
 "Z", Zombie 
-"I", CloneThread   
-"I", TaskKilled  
+"P", Parked
+"I", Task_Dead 
 "DK",  
 "DK-IO",   
 "DK-NIO",  
-"TK", TracedKill
-"R", WakeKill
-"P", Parked
-"R+", ForeGround
+"TK", TracedKill  
+"R+", WakeKill  
+"R+", TaskNew  
+"R-B", Task runnable binder.  
 ```
 
 ### clock_snapshot表

@@ -78,5 +78,17 @@ void EbpfDataParser::Finish()
         TS_LOGI("EBPF data time is not updated, maybe this trace file has other data");
     }
 }
+void EbpfDataParser::SetEbpfDataOffset(uint64_t offset)
+{
+    ebpfSplitter.SetEbpfDataOffset(offset);
+}
+void EbpfDataParser::SetSpliteTimeRange(uint64_t splitFileMinTs, uint64_t splitFileMaxTs)
+{
+    ebpfSplitter.SetSpliteTimeRange(splitFileMinTs, splitFileMaxTs);
+}
+bool EbpfDataParser::AddAndSplitEbpfData(const std::deque<uint8_t>& dequeBuffer)
+{
+    return ebpfSplitter.AddAndSplitEbpfData(dequeBuffer);
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

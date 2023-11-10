@@ -494,7 +494,7 @@ export function timeMsFormat2p(timeNs: number): string {
     commonResult += currentNs.toFixed(2) + 'ms';
     return commonResult;
   }
-  if (commonResult == '') {
+  if (commonResult === '') {
     commonResult = '0s';
   }
   return commonResult;

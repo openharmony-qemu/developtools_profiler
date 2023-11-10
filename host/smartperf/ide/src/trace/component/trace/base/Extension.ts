@@ -53,8 +53,8 @@ declare global {
         Loading: string; // Upload so file
         Error: string; // load error
         CheckALL: string; // Check all child chart
-        CollapseAllLane:string //collapse/uncollapse all lane row
-        CollectGroupChange:string //collapse/uncollapse all lane row
+        CollapseAllLane: string; //collapse/uncollapse all lane row
+        CollectGroupChange: string; //collapse/uncollapse all lane row
         WakeupList: string; //show wakeup list table
         DeviceConnect: string;
         DeviceDisConnect: string;

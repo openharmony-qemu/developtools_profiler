@@ -20,12 +20,16 @@
 namespace SysTuning {
 namespace TraceStreamer {
 NativeHookFilter::NativeHookFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
-    : OfflineSymbolizationFilter(dataCache, filter), anonMmapData_(nullptr)
+    : OfflineSymbolizationFilter(dataCache, filter),
+      anonMmapData_(nullptr),
+      hookPluginData_(std::make_unique<ProfilerPluginData>())
 {
     invalidLibPathIndexs_.insert(traceDataCache_->dataDict_.GetStringIndex("/system/lib/libc++.so"));
     invalidLibPathIndexs_.insert(traceDataCache_->dataDict_.GetStringIndex("/system/lib64/libc++.so"));
     invalidLibPathIndexs_.insert(traceDataCache_->dataDict_.GetStringIndex("/system/lib/ld-musl-aarch64.so.1"));
     invalidLibPathIndexs_.insert(traceDataCache_->dataDict_.GetStringIndex("/system/lib/ld-musl-arm.so.1"));
+    hookPluginData_->set_name("nativehook");
+    commHookData_.datas = std::make_unique<BatchNativeHookData>();
 }
 
 void NativeHookFilter::ParseConfigInfo(ProtoReader::BytesView& protoData)
@@ -376,6 +380,13 @@ void NativeHookFilter::ParseTagEvent(const ProtoReader::BytesView& bytesView)
     ProtoReader::MemTagEvent_Reader memTagEventReader(bytesView);
     auto addr = memTagEventReader.addr();
     auto size = memTagEventReader.size();
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = commHookData_.datas->add_events();
+        MemTagEvent* memTagEvent = hookData->mutable_tag_event();
+        memTagEvent->ParseFromArray(bytesView.Data(), bytesView.Size());
+        commHookData_.size += bytesView.Size();
+        return;
+    }
     auto tagIndex = traceDataCache_->dataDict_.GetStringIndex(memTagEventReader.tag().ToStdString());
     NativeHook* nativeHookPtr = traceDataCache_->GetNativeHookData();
     std::shared_ptr<std::set<uint64_t>> indexSetPtr = anonMmapData_.Find(addr, size); // get anonMmapData dbIndex
@@ -566,7 +577,16 @@ inline void NativeHookFilter::ReparseStacksWithAddrRange(uint64_t start, uint64_
 void NativeHookFilter::ParseMapsEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData)
 {
     segs_.emplace_back(nativeHookMetaData->seg_);
-    auto reader = std::make_shared<ProtoReader::MapsInfo_Reader>(nativeHookMetaData->reader_->maps_info());
+    const ProtoReader::BytesView& mapsInfoByteView = nativeHookMetaData->reader_->maps_info();
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = commHookData_.datas->add_events();
+        MapsInfo* mapsInfo = hookData->mutable_maps_info();
+        mapsInfo->ParseFromArray(mapsInfoByteView.Data(), mapsInfoByteView.Size());
+        commHookData_.size += mapsInfoByteView.Size();
+        return;
+    }
+    auto reader = std::make_shared<ProtoReader::MapsInfo_Reader>(mapsInfoByteView);
+
     // The temporary variable startAddr here is to solve the problem of parsing errors under the window platform
     auto startAddr = reader->start();
     auto endAddr = reader->end();
@@ -621,8 +641,15 @@ void NativeHookFilter::UpdateSymbolTablePtrAndStValueToSymAddrMap(
 void NativeHookFilter::ParseSymbolTableEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData)
 {
     segs_.emplace_back(nativeHookMetaData->seg_);
-
-    auto reader = std::make_shared<ProtoReader::SymbolTable_Reader>(nativeHookMetaData->reader_->symbol_tab());
+    const ProtoReader::BytesView& symbolTableByteView = nativeHookMetaData->reader_->symbol_tab();
+    if (traceDataCache_->isSplitFile_) {
+        auto hookData = commHookData_.datas->add_events();
+        SymbolTable* symbolTable = hookData->mutable_symbol_tab();
+        symbolTable->ParseFromArray(symbolTableByteView.Data(), symbolTableByteView.Size());
+        commHookData_.size += symbolTableByteView.Size();
+        return;
+    }
+    auto reader = std::make_shared<ProtoReader::SymbolTable_Reader>(symbolTableByteView);
     auto filePathId = reader->file_path_id();
     if (filePathIdToSymbolTableMap_.count(filePathId)) { // SymbolTable already exists.
         /* First parse the updated call stacks, then parse the main events, and finally update Maps or SymbolTable
@@ -949,6 +976,30 @@ bool NativeHookFilter::NativeHookReloadElfSymbolTable(
     filePathIdAndStValueToSymAddr_.Clear();
     filePathIdToImportSymbolTableMap_.clear();
     return true;
+}
+CommHookData& NativeHookFilter::GetCommHookData()
+{
+    return commHookData_;
+}
+ProfilerPluginData* NativeHookFilter::GetHookPluginData()
+{
+    return hookPluginData_.get();
+}
+void NativeHookFilter::SerializeHookCommDataToString()
+{
+    if (commHookData_.size == 0) {
+        return;
+    }
+    std::string hookBuffer;
+    commHookData_.datas->SerializeToString(&hookBuffer);
+    hookPluginData_->set_data(hookBuffer);
+    std::unique_ptr<std::string> pluginBuffer = std::make_unique<std::string>();
+    hookPluginData_->SerializeToString(pluginBuffer.get());
+    traceDataCache_->HookCommProtos().push_back(std::move(pluginBuffer));
+    hookPluginData_->Clear();
+    commHookData_.datas->Clear();
+    commHookData_.size = 0;
+    hookPluginData_->set_name("nativehook");
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

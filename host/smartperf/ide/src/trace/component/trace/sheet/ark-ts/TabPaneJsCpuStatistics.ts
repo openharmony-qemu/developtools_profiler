@@ -14,13 +14,13 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
-import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
+import { type LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { JsCpuProfilerChartFrame, JsCpuProfilerStatisticsStruct } from '../../../../bean/JsStruct.js';
+import { type JsCpuProfilerChartFrame, JsCpuProfilerStatisticsStruct } from '../../../../bean/JsStruct.js';
 import { procedurePool } from '../../../../database/Procedure.js';
-import { SampleType } from '../../../../database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
+import { type SampleType } from '../../../../database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { resizeObserver } from '../SheetUtils.js';
 
@@ -46,7 +46,7 @@ export class TabPaneJsCpuStatistics extends BaseElement {
     });
   }
 
-  private init() {
+  private init(): void {
     const thTable = this.tabTitle!.querySelector('.th');
     const jsCpuStatTblNodes = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
@@ -95,13 +95,13 @@ export class TabPaneJsCpuStatistics extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
                     <div>type: ${obj.obj.type}</div>
                     <div>total: ${ns2s(obj.obj.time)} (${obj.obj.percentage}%)</div>
                 </div> `;
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.statisticsTable!.setCurrentHover(data);
         } else {
@@ -136,7 +136,7 @@ export class TabPaneJsCpuStatistics extends BaseElement {
     this.statisticsTable?.reMeauseHeight();
   }
 
-  private totalData(source: Array<JsCpuProfilerStatisticsStruct>) {
+  private totalData(source: Array<JsCpuProfilerStatisticsStruct>): JsCpuProfilerStatisticsStruct {
     // 计算总的time作为表格的第一行显示
     let totalTime = 0;
     for (let item of source) {

@@ -24,7 +24,7 @@ import {
 } from '../../../../database/SqlLite.js';
 import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
 import { resizeObserver } from '../SheetUtils.js';
-import { LitSlicerTrack } from '../../../../../base-ui/slicer/lit-slicer.js';
+import { type LitSlicerTrack } from '../../../../../base-ui/slicer/lit-slicer.js';
 
 @element('tabpane-system-details')
 export class TabPaneSystemDetails extends BaseElement {

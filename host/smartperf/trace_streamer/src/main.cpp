@@ -114,7 +114,7 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
             return false;
         }
         g_loadSize += rsize;
-        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize))) {
+        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize), false, false)) {
             return false;
         };
         printf("\rLoadingFile:\t%.2f MB\r", static_cast<double>(g_loadSize) / 1E6);
@@ -311,7 +311,7 @@ int main(int argc, char** argv)
         metaData->SetParserToolVersion(g_traceStreamerVersion.c_str());
         metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion.c_str());
         metaData->SetTraceDataSize(g_loadSize);
-        while (1) {
+        while (true) {
             auto values = ts.SearchData();
             std::string symbolsPath = "default";
             if (!values.empty()) {

@@ -15,20 +15,19 @@
 
 import { LitTableColumn } from './lit-table-column.js';
 import { LitProgressBar } from './../progress-bar/LitProgressBar.js';
-import { BaseElement, element} from '../BaseElement.js';
+import { BaseElement, element } from '../BaseElement.js';
 import '../utils/Template.js';
 import { TableRowObject } from './TableRowObject.js';
 import { JSONToCSV } from '../utils/CSVFormater.js';
 
 @element('lit-page-table')
 export class LitPageTable extends BaseElement {
-
   meauseRowElement: HTMLDivElement | undefined;
   currentRecycleList: HTMLDivElement[] = [];
   currentTreeDivList: HTMLDivElement[] = [];
   public rememberScrollTop = false;
   public getItemTextColor?: (data: any) => string;
-  public itemTextHandleMap: Map<string,(value: any) => string> = new Map<string, (value: any) => string>();
+  public itemTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
   private ds: Array<any> = [];
   public recycleDs: Array<any> = [];
   private gridTemplateColumns: Array<string> = [];
@@ -53,7 +52,16 @@ export class LitPageTable extends BaseElement {
   private _loading: boolean = false;
 
   static get observedAttributes() {
-    return ['scroll-y', 'selectable', 'no-head', 'grid-line', 'defaultOrderColumn', 'hideDownload', 'loading', 'pagination'];
+    return [
+      'scroll-y',
+      'selectable',
+      'no-head',
+      'grid-line',
+      'defaultOrderColumn',
+      'hideDownload',
+      'loading',
+      'pagination',
+    ];
   }
 
   set loading(value: boolean) {
@@ -143,14 +151,14 @@ export class LitPageTable extends BaseElement {
         this.currentPage = Math.max(this.currentPage - 1, 0);
         this.showCurrentPageData();
       }
-    }
+    };
     this.nextDiv!.onclick = () => {
       if (this.currentPage < this.ds.length - 1) {
         this.currentPage = Math.min(this.currentPage + 1, this.ds.length - 1);
         this.showCurrentPageData();
       }
-    }
-    this.jumpDiv!.onclick= () => {
+    };
+    this.jumpDiv!.onclick = () => {
       let value = this.targetPageInput!.value;
       let reg = /^[0-9]*$/;
       if (value.length > 0 && reg.test(value)) {
@@ -169,7 +177,7 @@ export class LitPageTable extends BaseElement {
       } else {
         this.targetPageInput!.value = '';
       }
-    }
+    };
   }
 
   toTop() {
@@ -734,19 +742,20 @@ export class LitPageTable extends BaseElement {
   private columnMinWidth: number = 50;
   private beforeResizeWidth1: number = 0;
   private beforeResizeWidth2: number = 0;
-  resizeEventHandler(header: HTMLDivElement, element: HTMLDivElement, index: number){
+  resizeEventHandler(header: HTMLDivElement, element: HTMLDivElement, index: number) {
     header.addEventListener('mousemove', (event) => {
       if (this.isResize) {
         let width = event.clientX - this.resizeDownX;
         header.style.cursor = 'col-resize';
-        let preWidth = this.beforeResizeWidth1, nowWidth = this.beforeResizeWidth2;
+        let preWidth = this.beforeResizeWidth1,
+          nowWidth = this.beforeResizeWidth2;
         if (width < 0) {
           preWidth = Math.max(this.beforeResizeWidth1 + width, this.columnMinWidth);
-          nowWidth = (this.beforeResizeWidth1 - preWidth) + this.beforeResizeWidth2;
+          nowWidth = this.beforeResizeWidth1 - preWidth + this.beforeResizeWidth2;
         }
         if (width > 0) {
           nowWidth = Math.max(this.beforeResizeWidth2 - width, this.columnMinWidth);
-          preWidth = (this.beforeResizeWidth2 - nowWidth) + this.beforeResizeWidth1;
+          preWidth = this.beforeResizeWidth2 - nowWidth + this.beforeResizeWidth1;
         }
         this.gridTemplateColumns[this.resizeColumnIndex - 1] = `${preWidth}px`;
         this.gridTemplateColumns[this.resizeColumnIndex] = `${nowWidth}px`;
@@ -778,17 +787,17 @@ export class LitPageTable extends BaseElement {
       this.resizeColumnIndex = -1;
       header.style.cursor = 'pointer';
     });
-    element.addEventListener('mousedown', (event)=>{
+    element.addEventListener('mousedown', (event) => {
       this.isResize = true;
       this.resizeColumnIndex = index;
       this.resizeDownX = event.clientX;
-      let pre = (header.childNodes.item(this.resizeColumnIndex - 1) as HTMLDivElement);
-      let now = (header.childNodes.item(this.resizeColumnIndex) as HTMLDivElement);
+      let pre = header.childNodes.item(this.resizeColumnIndex - 1) as HTMLDivElement;
+      let now = header.childNodes.item(this.resizeColumnIndex) as HTMLDivElement;
       this.beforeResizeWidth1 = pre.clientWidth;
       this.beforeResizeWidth2 = now.clientWidth;
       event.stopPropagation();
     });
-    element.addEventListener('click',(event) => {
+    element.addEventListener('click', (event) => {
       event.stopPropagation();
     });
   }
@@ -839,7 +848,7 @@ export class LitPageTable extends BaseElement {
   meauseTreeElementHeight(rowData: any, depth: number) {
     return 27;
   }
-  
+
   meauseAllRowHeight(list: any[]): TableRowObject[] {
     this.tbodyElement!.innerHTML = '';
     this.meauseRowElement = undefined;
@@ -867,7 +876,7 @@ export class LitPageTable extends BaseElement {
       }
       totalHeight += height;
       visibleObjects.push(tableRowObject);
-    }
+    };
     let realIndex = 0;
     list.forEach((item, index) => {
       if (Array.isArray(item)) {
@@ -1034,7 +1043,7 @@ export class LitPageTable extends BaseElement {
         }
         td.style.paddingLeft = rowData.depth * 15 + 'px';
         if (!rowData.data.children || rowData.data.children.length === 0) {
-          td.style.paddingLeft = (15 * rowData.depth + 16) + 'px';
+          td.style.paddingLeft = 15 * rowData.depth + 16 + 'px';
         }
         (td as any).data = rowData.data;
         td.classList.add('tree-first-body');

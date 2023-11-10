@@ -77,7 +77,11 @@ ohos_source_set("filter") {
       cflags += [ "-D IS_UT" ]
     }
   }
-  public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_reader" ]
+  public_deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:native_hook_data_reader",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:ts_native_hook_cpp",
+  ]
   deps = []
   include_dirs = [
     "${SRC}/base",

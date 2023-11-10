@@ -56,7 +56,7 @@ void ParseTraceFile(TraceStreamerSelector& ts)
             break;
         }
 
-        if (!ts.ParseTraceDataSegment(std::move(buf), rsize)) {
+        if (!ts.ParseTraceDataSegment(std::move(buf), rsize, 0, 1)) {
             break;
         }
     }

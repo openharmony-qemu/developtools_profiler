@@ -233,6 +233,7 @@ export class SpProbesConfig extends BaseElement {
       { value: 'usb', isSelect: false },
       { value: 'ufs', isSelect: false },
       { value: 'useriam', isSelect: false },
+      { value: 'virse', isSelect: false },
       { value: 'window', isSelect: true },
       { value: 'workq', isSelect: true },
       { value: 'zaudio', isSelect: true },

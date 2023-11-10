@@ -22,9 +22,9 @@ export function resizeObserver(
   tblOffsetHeight: number = 50,
   loadingPage?: HTMLElement,
   loadingPageOffsetHeight: number = 24
-) {
+): void {
   new ResizeObserver((entries) => {
-    if (parentEl.clientHeight != 0) {
+    if (parentEl.clientHeight !== 0) {
       // @ts-ignore
       tableEl?.shadowRoot.querySelector('.table').style.height = parentEl.clientHeight - tblOffsetHeight + 'px';
       tableEl?.reMeauseHeight();
@@ -40,10 +40,10 @@ export function resizeObserverFromMemory(
   tableEl: LitTable,
   filterEl: HTMLElement,
   tblOffsetHeight: number = 45
-) {
+): void {
   new ResizeObserver((entries) => {
     let filterHeight = 0;
-    if (parentElement.clientHeight != 0) {
+    if (parentElement.clientHeight !== 0) {
       // @ts-ignore
       tableEl?.shadowRoot.querySelector('.table').style.height = parentElement.clientHeight - tblOffsetHeight + 'px';
       tableEl?.reMeauseHeight();
@@ -59,7 +59,7 @@ export function resizeObserverFromMemory(
   }).observe(parentElement);
 }
 
-export function showButtonMenu(filter: any, isShow: boolean) {
+export function showButtonMenu(filter: any, isShow: boolean): void {
   if (isShow) {
     filter.setAttribute('tree', '');
     filter.setAttribute('input', '');

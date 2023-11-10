@@ -133,6 +133,7 @@ public:
     void UpdateDuration(TableRowId index, InternalTime ts, TableRowId idState);
     void UpdateTidAndPid(TableRowId index, InternalTid tid, InternalTid pid);
     TableRowId UpdateDuration(TableRowId index, InternalTime ts, InternalCpu cpu, TableRowId idState);
+    void SortAllRowByTs();
     void Clear()
     {
         timeStamps_.clear();
@@ -227,9 +228,11 @@ public:
     {
         return internalPids_;
     }
-    void AppendInternalPid(InternalPid ipid)
+    void ReviseInternalPid(uint32_t row, InternalPid ipid)
     {
-        internalPids_.emplace_back(ipid);
+        if (row < internalPids_.size()) {
+            internalPids_[row] = ipid;
+        }
     }
     void Clear() override
     {
@@ -1725,12 +1728,12 @@ public:
                        double reside,
                        DataIndex protectionId,
                        DataIndex pathId,
-                       uint64_t shared_clean,
-                       uint64_t shared_dirty,
-                       uint64_t private_clean,
-                       uint64_t private_dirty,
+                       uint64_t sharedClean,
+                       uint64_t sharedDirty,
+                       uint64_t privateClean,
+                       uint64_t privateDirty,
                        uint64_t swap,
-                       uint64_t swap_pss,
+                       uint64_t swapPss,
                        uint32_t type);
     const std::deque<uint64_t>& Id() const;
     const std::deque<uint64_t>& TimeStamps() const;
@@ -2516,13 +2519,15 @@ private:
 };
 class Animation {
 public:
-    TableRowId AppendAnimation(InternalTime startPoint);
+    TableRowId AppendAnimation(InternalTime inputTime, InternalTime startPoint);
     void UpdateStartPoint(TableRowId index, InternalTime startPoint);
     void UpdateEndPoint(TableRowId index, InternalTime endPoint);
+    void UpdateFrameInfo(TableRowId index, InternalTime frameInfo);
     size_t Size() const;
     const std::deque<InternalTime>& InputTimes() const;
     const std::deque<InternalTime>& StartPoints() const;
     const std::deque<InternalTime>& EndPoints() const;
+    const std::deque<DataIndex>& FrameInfos() const;
     const std::deque<uint64_t>& IdsData() const;
     void Clear();
 
@@ -2530,6 +2535,7 @@ private:
     std::deque<InternalTime> inputTimes_ = {};
     std::deque<InternalTime> startPoints_ = {};
     std::deque<InternalTime> endPoins_ = {};
+    std::deque<DataIndex> frameInfos_ = {};
     std::deque<uint64_t> ids_ = {};
 };
 class DeviceInfo {
@@ -2616,7 +2622,7 @@ public:
         purgeds_.clear();
         flags_.clear();
     }
-    void SetFlag(uint64_t rowId, uint32_t Flag);
+    void SetFlag(uint64_t rowId, uint32_t flag);
 
 private:
     std::deque<InternalPid> ipids_ = {};
@@ -2667,7 +2673,7 @@ public:
         expNameIds_.clear();
         flags_.clear();
     }
-    void SetFlag(uint64_t rowId, uint32_t Flag);
+    void SetFlag(uint64_t rowId, uint32_t flag);
 
 private:
     std::deque<InternalPid> ipids_ = {};
@@ -2728,6 +2734,7 @@ public:
                        uint64_t size,
                        uint32_t count,
                        uint64_t purgeableSize);
+    void RevicesIpid(const std::map<DataIndex, InternalPid>& windowIdToIpidMap);
     const std::deque<DataIndex>& WindowNameIds() const;
     const std::deque<uint64_t>& WindowIds() const;
     const std::deque<DataIndex>& ModuleNameIds() const;
@@ -2735,6 +2742,7 @@ public:
     const std::deque<uint64_t>& Sizes() const;
     const std::deque<uint32_t>& Counts() const;
     const std::deque<uint64_t>& PurgeableSizes() const;
+    const std::deque<InternalPid>& Ipids() const;
     void Clear() override
     {
         CacheBase::Clear();
@@ -2745,6 +2753,7 @@ public:
         sizes_.clear();
         counts_.clear();
         purgeableSizes_.clear();
+        ipids_.clear();
     }
 
 private:
@@ -2755,9 +2764,60 @@ private:
     std::deque<uint64_t> sizes_ = {};
     std::deque<uint32_t> counts_ = {};
     std::deque<uint64_t> purgeableSizes_ = {};
+    std::deque<InternalPid> ipids_ = {};
     uint32_t rowCount_ = 0;
 };
+class CpuDumpInfo : public CacheBase {
+public:
+    void AppendNewData(uint64_t timestamp, uint64_t size);
+    const std::deque<uint64_t>& TotalSizes() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        totalSizes_.clear();
+    }
 
+private:
+    std::deque<uint64_t> totalSizes_ = {};
+};
+class ProfileMemInfo : public CacheBase {
+public:
+    void AppendNewData(uint64_t timestamp, DataIndex channelIndex, uint64_t size);
+    const std::deque<uint64_t>& ChannelIndexs() const;
+    const std::deque<uint64_t>& TotalSizes() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        channelIndexs_.clear();
+        totalSizes_.clear();
+    }
+
+private:
+    std::deque<DataIndex> channelIndexs_ = {};
+    std::deque<uint64_t> totalSizes_ = {};
+};
+class RSImageDumpInfo : public CacheBase {
+public:
+    void AppendNewData(uint64_t timestamp, uint64_t memSize, DataIndex typeIndex, InternalPid ipid, DataIndex name);
+    const std::deque<uint64_t>& MemSizes() const;
+    const std::deque<DataIndex>& TypeIndexs() const;
+    const std::deque<InternalPid>& Ipids() const;
+    const std::deque<DataIndex>& SurfaceNameIndexs() const;
+    void Clear() override
+    {
+        CacheBase::Clear();
+        memSizes_.clear();
+        typeIndexs_.clear();
+        ipids_.clear();
+        surfaceNameIndexs_.clear();
+    }
+
+private:
+    std::deque<uint64_t> memSizes_ = {};
+    std::deque<DataIndex> typeIndexs_ = {};
+    std::deque<InternalPid> ipids_ = {};
+    std::deque<DataIndex> surfaceNameIndexs_ = {};
+};
 } // namespace TraceStdtype
 } // namespace SysTuning
 

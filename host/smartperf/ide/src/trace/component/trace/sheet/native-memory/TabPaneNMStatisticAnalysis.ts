@@ -12,15 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {BaseElement, element} from '../../../../../base-ui/BaseElement.js';
-import {LitTable} from '../../../../../base-ui/table/lit-table.js';
-import {SelectionParam} from '../../../../bean/BoxSelection.js';
-import {LitChartPie} from '../../../../../base-ui/chart/pie/LitChartPie.js';
+import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
+import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
 import '../../../../../base-ui/chart/pie/LitChartPie.js';
-import {LitProgressBar} from '../../../../../base-ui/progress-bar/LitProgressBar.js';
-import {Utils} from '../../base/Utils.js';
-import {SpSystemTrace} from '../../../SpSystemTrace.js';
-import {procedurePool} from '../../../../database/Procedure.js';
+import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { Utils } from '../../base/Utils.js';
+import { SpSystemTrace } from '../../../SpSystemTrace.js';
+import { procedurePool } from '../../../../database/Procedure.js';
 
 const TYPE_ALLOC_STRING = 'AllocEvent';
 const TYPE_MAP_STRING = 'MmapEvent';
@@ -128,7 +128,8 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
     // @ts-ignore
     this.soUsageTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 30 + 'px';
     // @ts-ignore
-    this.functionUsageTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 30 + 'px';
+    this.functionUsageTbl?.shadowRoot?.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 30 + 'px';
     this.clearData();
     this.currentSelection = statisticAnalysisParam;
     this.tableType!.style.display = 'grid';
@@ -520,73 +521,87 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
       let sortColumnArr = [...this.currentLevelData];
       switch (column) {
         case 'tableName':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            if (sort === 1) {
-              if (statisticAnalysisLeftData.tableName > statisticAnalysisRightData.tableName) {
-                return 1;
-              } else if (statisticAnalysisLeftData.tableName === statisticAnalysisRightData.tableName) {
-                return 0;
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              if (sort === 1) {
+                if (statisticAnalysisLeftData.tableName > statisticAnalysisRightData.tableName) {
+                  return 1;
+                } else if (statisticAnalysisLeftData.tableName === statisticAnalysisRightData.tableName) {
+                  return 0;
+                } else {
+                  return -1;
+                }
               } else {
-                return -1;
-              }
-            } else {
-              if (statisticAnalysisRightData.tableName > statisticAnalysisLeftData.tableName) {
-                return 1;
-              } else if (statisticAnalysisLeftData.tableName === statisticAnalysisRightData.tableName) {
-                return 0;
-              } else {
-                return -1;
+                if (statisticAnalysisRightData.tableName > statisticAnalysisLeftData.tableName) {
+                  return 1;
+                } else if (statisticAnalysisLeftData.tableName === statisticAnalysisRightData.tableName) {
+                  return 0;
+                } else {
+                  return -1;
+                }
               }
             }
-          });
+          );
           break;
         case 'existSizeFormat':
         case 'existSizePercent':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            return sort === 1
-              ? statisticAnalysisLeftData.existSize - statisticAnalysisRightData.existSize
-              : statisticAnalysisRightData.existSize - statisticAnalysisLeftData.existSize;
-          });
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              return sort === 1
+                ? statisticAnalysisLeftData.existSize - statisticAnalysisRightData.existSize
+                : statisticAnalysisRightData.existSize - statisticAnalysisLeftData.existSize;
+            }
+          );
           break;
         case 'existCount':
         case 'existCountPercent':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            return sort === 1
-              ? statisticAnalysisLeftData.existCount - statisticAnalysisRightData.existCount
-              : statisticAnalysisRightData.existCount - statisticAnalysisLeftData.existCount;
-          });
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              return sort === 1
+                ? statisticAnalysisLeftData.existCount - statisticAnalysisRightData.existCount
+                : statisticAnalysisRightData.existCount - statisticAnalysisLeftData.existCount;
+            }
+          );
           break;
         case 'releaseSizeFormat':
         case 'releaseSizePercent':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            return sort === 1
-              ? statisticAnalysisLeftData.releaseSize - statisticAnalysisRightData.releaseSize
-              : statisticAnalysisRightData.releaseSize - statisticAnalysisLeftData.releaseSize;
-          });
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              return sort === 1
+                ? statisticAnalysisLeftData.releaseSize - statisticAnalysisRightData.releaseSize
+                : statisticAnalysisRightData.releaseSize - statisticAnalysisLeftData.releaseSize;
+            }
+          );
           break;
         case 'releaseCount':
         case 'releaseCountPercent':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            return sort === 1
-              ? statisticAnalysisLeftData.releaseCount - statisticAnalysisRightData.releaseCount
-              : statisticAnalysisRightData.releaseCount - statisticAnalysisLeftData.releaseCount;
-          });
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              return sort === 1
+                ? statisticAnalysisLeftData.releaseCount - statisticAnalysisRightData.releaseCount
+                : statisticAnalysisRightData.releaseCount - statisticAnalysisLeftData.releaseCount;
+            }
+          );
           break;
         case 'applySizeFormat':
         case 'applySizePercent':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            return sort === 1
-              ? statisticAnalysisLeftData.applySize - statisticAnalysisRightData.applySize
-              : statisticAnalysisRightData.applySize - statisticAnalysisLeftData.applySize;
-          });
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              return sort === 1
+                ? statisticAnalysisLeftData.applySize - statisticAnalysisRightData.applySize
+                : statisticAnalysisRightData.applySize - statisticAnalysisLeftData.applySize;
+            }
+          );
           break;
         case 'applyCount':
         case 'applyCountPercent':
-          nmCurrentTable!.recycleDataSource = sortColumnArr.sort((statisticAnalysisLeftData, statisticAnalysisRightData) => {
-            return sort === 1
-              ? statisticAnalysisLeftData.applyCount - statisticAnalysisRightData.applyCount
-              : statisticAnalysisRightData.applyCount - statisticAnalysisLeftData.applyCount;
-          });
+          nmCurrentTable!.recycleDataSource = sortColumnArr.sort(
+            (statisticAnalysisLeftData, statisticAnalysisRightData) => {
+              return sort === 1
+                ? statisticAnalysisLeftData.applyCount - statisticAnalysisRightData.applyCount
+                : statisticAnalysisRightData.applyCount - statisticAnalysisLeftData.applyCount;
+            }
+          );
           break;
       }
       switch (this.currentLevel) {
@@ -623,12 +638,12 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
       for (let type of val.nativeMemory) {
         if (type === 'All Heap & Anonymous VM') {
           typeFilter = [];
-          typeFilter.push(...['\'AllocEvent\'', '\'FreeEvent\'', '\'MmapEvent\'', '\'MunmapEvent\'']);
+          typeFilter.push(...["'AllocEvent'", "'FreeEvent'", "'MmapEvent'", "'MunmapEvent'"]);
           break;
         } else if (type === 'All Heap') {
-          typeFilter.push(...['\'AllocEvent\'', '\'FreeEvent\'']);
+          typeFilter.push(...["'AllocEvent'", "'FreeEvent'"]);
         } else {
-          typeFilter.push(...['\'MmapEvent\'', '\'MunmapEvent\'']);
+          typeFilter.push(...["'MmapEvent'", "'MunmapEvent'"]);
         }
       }
       this.getDataFromWorker(val, typeFilter);
@@ -979,8 +994,11 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
     }
 
     for (let applySample of typeMap.get(tyeId)!) {
-      if (tyeId === TYPE_ALLOC || (applySample.subType && applySample.subType === typeName) ||
-        (!applySample.subType && typeName === TYPE_MAP_STRING)) {
+      if (
+        tyeId === TYPE_ALLOC ||
+        (applySample.subType && applySample.subType === typeName) ||
+        (!applySample.subType && typeName === TYPE_MAP_STRING)
+      ) {
         applySize += applySample.size;
         applyCount += applySample.count;
         if (this.isStatistic) {

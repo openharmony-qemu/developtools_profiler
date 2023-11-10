@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitSelect } from '../../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { queryProcessPurgeableSelectionTab } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
 import { CompareStruct, compare, resizeObserverFromMemory } from '../SheetUtils.js';
-import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
+import { type TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 @element('tabpane-purgeable-pin-comparison-vm')
 export class TabPanePurgPinComparisonVM extends BaseElement {
   private purgeablePinTable: LitTable | null | undefined;
@@ -36,9 +36,8 @@ export class TabPanePurgPinComparisonVM extends BaseElement {
   }
   public totalData(data: SelectionParam | any, dataList: any): void {
     //@ts-ignore
-    this.purgeablePinTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
-      this.parentElement!.clientHeight - 45
-    }px`;
+    this.purgeablePinTable?.shadowRoot?.querySelector('.table')?.style?.height = `${this.parentElement!.clientHeight - 45
+      }px`;
     this.purgeablePinSource = [];
     let fileArr: any[] = [];
     for (let fileData of dataList) {

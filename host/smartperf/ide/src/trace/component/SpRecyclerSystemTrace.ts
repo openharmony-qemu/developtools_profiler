@@ -296,7 +296,10 @@ export class SpRecyclerSystemTrace extends BaseElement {
       let scrollHeight = this.rowsEL?.clientHeight || 0;
       this.rowsEL?.querySelectorAll('trace-row').forEach((rowItem: any) => {
         let top = rowItem.offsetTop - (this.rowsEL?.offsetTop || 0);
-        if (top + rowItem.clientHeight > scrollTop && top + rowItem.clientHeight < scrollTop + scrollHeight + rowItem.clientHeight) {
+        if (
+          top + rowItem.clientHeight > scrollTop &&
+          top + rowItem.clientHeight < scrollTop + scrollHeight + rowItem.clientHeight
+        ) {
           (rowItem as TraceRow<any>).dataListCache.length = 0;
         }
       });
@@ -312,7 +315,10 @@ export class SpRecyclerSystemTrace extends BaseElement {
       let scrollHeight = this.rowsEL?.clientHeight || 0;
       this.rowsEL?.querySelectorAll('trace-row').forEach((item: any) => {
         let top = item.offsetTop - (this.rowsEL?.offsetTop || 0);
-        if (top + item.clientHeight > scrollTop && top + item.clientHeight < scrollTop + scrollHeight + item.clientHeight) {
+        if (
+          top + item.clientHeight > scrollTop &&
+          top + item.clientHeight < scrollTop + scrollHeight + item.clientHeight
+        ) {
           (item as TraceRow<any>).dataListCache.length = 0;
         }
       });

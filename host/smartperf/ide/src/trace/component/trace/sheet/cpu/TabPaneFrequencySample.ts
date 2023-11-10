@@ -68,8 +68,8 @@ export class TabPaneFrequencySample extends BaseElement {
     this.frequencyLoadingPage = this.shadowRoot!.querySelector('.loadingFre');
     this.frequencySampleTbl = this.shadowRoot!.querySelector<LitTable>('#tb-states');
     this.systemTrace = document
-      .querySelector('body > sp-application')!
-      .shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
+      .querySelector('body > sp-application')?.
+      shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.frequencySampleTbl!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.frequencySampleSortKey = evt.detail.key;

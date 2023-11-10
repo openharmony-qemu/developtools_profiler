@@ -391,7 +391,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOutNativeHookData, TestSi
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     auto size = stream_.traceDataCache_->GetConstHilogData().Size();
     EXPECT_FALSE(size);
 }
@@ -437,8 +438,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMalloc, TestSize.Level
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -547,8 +548,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMalloc, TestSize.
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -652,8 +653,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneFree, TestSize.Level1)
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     auto size = stream_.traceDataCache_->GetConstNativeHookData().Size();
@@ -740,8 +741,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleFree, TestSize.Le
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -815,8 +816,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOnePairsMallocAndFree, Te
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse Malloc event results
@@ -922,8 +923,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithNotMatchMallocAndFree, Te
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse Malloc event results
@@ -1018,8 +1019,8 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventMatched, TestSize.Level
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse first Malloc event results
@@ -1122,7 +1123,8 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventPartialMatched, TestSiz
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse first Malloc event results
@@ -1197,7 +1199,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMmap, TestSize.Level1)
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1270,7 +1273,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMunmap, TestSize.Level
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     auto size = stream_.traceDataCache_->GetConstNativeHookData().Size();
@@ -1348,7 +1352,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMmap, TestSize.Le
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1456,7 +1461,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMunmap, TestSize.
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     auto size = stream_.traceDataCache_->GetConstNativeHookData().Size();
@@ -1532,7 +1538,8 @@ HWTEST_F(NativeHookParserTest, ParseOnePairsMmapAndMunmapEvent, TestSize.Level1)
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1639,7 +1646,8 @@ HWTEST_F(NativeHookParserTest, ParseNotMatchMmapAndMunmapEvent, TestSize.Level1)
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1746,7 +1754,8 @@ HWTEST_F(NativeHookParserTest, ParseTwoPairsMatchedMmapAndMunmapEvent, TestSize.
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1852,7 +1861,8 @@ HWTEST_F(NativeHookParserTest, ParsePartialMatchedMmapAndMunmapEvent, TestSize.L
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results
@@ -1992,7 +2002,8 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithAllTypesEvents, TestSize.
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
     dataSeg.protoData = hookBytesView;
-    htraceNativeHookParser.Parse(dataSeg);
+    bool hasSplit = false;
+    htraceNativeHookParser.Parse(dataSeg, hasSplit);
     htraceNativeHookParser.FinishParseNativeHookData();
 
     // Verification parse NativeHook results

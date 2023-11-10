@@ -285,11 +285,11 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     });
   }
   private getFileTypeTip() {
-    return (obj: { obj: { tableName: any; durFormat: any; percent: any; }; }): string => {
+    return (obj: { obj: { tableName: any; durFormat: any; percent: any } }): string => {
       return `<div>
-                    <div>Type:${ obj.obj.tableName }</div>
-                    <div>Duration:${ obj.obj.durFormat }</div>
-                    <div>Percent:${ obj.obj.percent }%</div> 
+                    <div>Type:${obj.obj.tableName}</div>
+                    <div>Duration:${obj.obj.durFormat}</div>
+                    <div>Percent:${obj.obj.percent}%</div> 
                 </div>
                 `;
     };
@@ -374,11 +374,11 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     });
   }
   private getFsTip() {
-    return (obj: { obj: { tableName: any; durFormat: any; percent: any; }; }): string => {
+    return (obj: { obj: { tableName: any; durFormat: any; percent: any } }): string => {
       return `<div>
-                                <div>ThreadName:${ obj.obj.tableName }</div>
-                                <div>Duration:${ obj.obj.durFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
+                                <div>ThreadName:${obj.obj.tableName}</div>
+                                <div>Duration:${obj.obj.durFormat}</div>
+                                <div>Percent:${obj.obj.percent}%</div> 
                             </div>
                                 `;
     };
@@ -411,9 +411,9 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       },
       tip: (fileSysObj): string => {
         return `<div>
-                                <div>Library:${ fileSysObj.obj.tableName }</div>
-                                <div>Duration:${ fileSysObj.obj.durFormat }</div>
-                                <div>Percent:${ fileSysObj.obj.percent }%</div> 
+                                <div>Library:${fileSysObj.obj.tableName}</div>
+                                <div>Duration:${fileSysObj.obj.durFormat}</div>
+                                <div>Percent:${fileSysObj.obj.percent}%</div> 
                             </div>
                                 `;
       },
@@ -606,8 +606,9 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       let pName = '';
       for (let fileSysStatPidItem of value) {
         pName = fileSysStatPidItem.processName =
-          fileSysStatPidItem.processName === null || fileSysStatPidItem.processName === undefined ?
-            `Process(${ fileSysStatPidItem.pid })` : `${ fileSysStatPidItem.processName }(${ fileSysStatPidItem.pid })`;
+          fileSysStatPidItem.processName === null || fileSysStatPidItem.processName === undefined
+            ? `Process(${fileSysStatPidItem.pid})`
+            : `${fileSysStatPidItem.processName}(${fileSysStatPidItem.pid})`;
         analysisPidDataDur += fileSysStatPidItem.dur;
       }
       this.fileStatisticsAnalysisPidData.push({
@@ -712,7 +713,9 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       for (let fileSysStatThreadItem of value) {
         dur += fileSysStatThreadItem.dur;
         tName = fileSysStatThreadItem.threadName =
-          fileSysStatThreadItem.threadName === null || fileSysStatThreadItem.threadName === undefined ? `Thread(${ fileSysStatThreadItem.tid })` : `${ fileSysStatThreadItem.threadName }`;
+          fileSysStatThreadItem.threadName === null || fileSysStatThreadItem.threadName === undefined
+            ? `Thread(${fileSysStatThreadItem.tid})`
+            : `${fileSysStatThreadItem.threadName}`;
       }
       const threadData = {
         tableName: tName,
@@ -858,9 +861,9 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
       },
       tip: (fsaObj): string => {
         return `<div>
-                                    <div>Function:${ fsaObj.obj.tableName }</div>
-                                    <div>Duration:${ fsaObj.obj.durFormat }</div>
-                                    <div>percent:${ fsaObj.obj.percent }</div>
+                                    <div>Function:${fsaObj.obj.tableName}</div>
+                                    <div>Duration:${fsaObj.obj.durFormat}</div>
+                                    <div>percent:${fsaObj.obj.percent}</div>
                                         </div>
                                                 `;
       },
@@ -915,7 +918,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
     // @ts-ignore
     return fsReleaseType;
   }
-  totalDurationData(durationTS: number): { durFormat: string; percent: string; tableName: string; duration: number; } {
+  totalDurationData(durationTS: number): { durFormat: string; percent: string; tableName: string; duration: number } {
     return {
       durFormat: Utils.getProbablyTime(durationTS),
       percent: ((durationTS / durationTS) * 100).toFixed(2),
@@ -932,7 +935,7 @@ export class TabPaneFilesystemStatisticsAnalysis extends BaseElement {
         percent: 0,
         durFormat: 0,
       };
-      for (let pieDataIndex = 0 ; pieDataIndex < fsPieChartData.length ; pieDataIndex++) {
+      for (let pieDataIndex = 0; pieDataIndex < fsPieChartData.length; pieDataIndex++) {
         if (pieDataIndex < 19) {
           fsPieChartArr.push(fsPieChartData[pieDataIndex]);
         } else {

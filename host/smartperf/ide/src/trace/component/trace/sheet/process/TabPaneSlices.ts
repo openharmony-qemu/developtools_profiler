@@ -121,20 +121,21 @@ export class TabPaneSlices extends BaseElement {
           return;
         }
         // search 到的内容与框选泳道的内容取并集
-        let rangeSelectList :Array<unknown> = []; // 框选范围的数据
+        let rangeSelectList: Array<unknown> = []; // 框选范围的数据
         for (const searchItem of search.list) {
           for (const traceRow of sliceRowList) {
             if (
               Math.max(TraceRow.rangeSelectObject?.startNS!, searchItem.startTime) <
-              Math.min(TraceRow.rangeSelectObject?.endNS!, searchItem.startTime + searchItem.dur) &&
+                Math.min(TraceRow.rangeSelectObject?.endNS!, searchItem.startTime + searchItem.dur) &&
               !rangeSelectList.includes(searchItem)
             ) {
               // 异步调用栈
               if (traceRow.asyncFuncName) {
-                if(`${searchItem.pid}` === `${traceRow.asyncFuncNamePID}`){
+                if (`${searchItem.pid}` === `${traceRow.asyncFuncNamePID}`) {
                   rangeSelectList.push(searchItem);
                 }
-              } else { // 线程调用栈
+              } else {
+                // 线程调用栈
                 if (`${searchItem.tid}` === traceRow.rowId) {
                   rangeSelectList.push(searchItem);
                 }

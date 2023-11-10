@@ -55,7 +55,9 @@ export class DiskIoAbilityRender extends Render {
     let find = false;
     for (let re of diskIoFilter) {
       DiskAbilityMonitorStruct.draw(req.context, re, req.maxDiskRate, diskIoAbilityRow.isHover);
-      if (diskIoAbilityRow.isHover && re.frame &&
+      if (
+        diskIoAbilityRow.isHover &&
+        re.frame &&
         isFrameContainPoint(re.frame, diskIoAbilityRow.hoverX, diskIoAbilityRow.hoverY)
       ) {
         DiskAbilityMonitorStruct.hoverDiskAbilityStruct = re;
@@ -255,7 +257,9 @@ export class DiskAbilityMonitorStruct extends BaseStruct {
       if (diskIoAbilityData.startNS === DiskAbilityMonitorStruct.hoverDiskAbilityStruct?.startNS && isHover) {
         diskIoAbilityContext.lineWidth = 1;
         diskIoAbilityContext.globalAlpha = 0.6;
-        let drawHeight: number = Math.floor(((diskIoAbilityData.value || 0) * (diskIoAbilityData.frame.height || 0) * 1.0) / maxDiskRate);
+        let drawHeight: number = Math.floor(
+          ((diskIoAbilityData.value || 0) * (diskIoAbilityData.frame.height || 0) * 1.0) / maxDiskRate
+        );
         diskIoAbilityContext.fillRect(
           diskIoAbilityData.frame.x,
           diskIoAbilityData.frame.y + diskIoAbilityData.frame.height - drawHeight + 4,
@@ -275,14 +279,22 @@ export class DiskAbilityMonitorStruct extends BaseStruct {
         diskIoAbilityContext.globalAlpha = 1.0;
         diskIoAbilityContext.stroke();
         diskIoAbilityContext.beginPath();
-        diskIoAbilityContext.moveTo(diskIoAbilityData.frame.x + 3, diskIoAbilityData.frame.y + diskIoAbilityData.frame.height - drawHeight + 4);
+        diskIoAbilityContext.moveTo(
+          diskIoAbilityData.frame.x + 3,
+          diskIoAbilityData.frame.y + diskIoAbilityData.frame.height - drawHeight + 4
+        );
         diskIoAbilityContext.lineWidth = 3;
-        diskIoAbilityContext.lineTo(diskIoAbilityData.frame.x + width, diskIoAbilityData.frame.y + diskIoAbilityData.frame.height - drawHeight + 4);
+        diskIoAbilityContext.lineTo(
+          diskIoAbilityData.frame.x + width,
+          diskIoAbilityData.frame.y + diskIoAbilityData.frame.height - drawHeight + 4
+        );
         diskIoAbilityContext.stroke();
       } else {
         diskIoAbilityContext.globalAlpha = 0.6;
         diskIoAbilityContext.lineWidth = 1;
-        let drawHeight: number = Math.floor(((diskIoAbilityData.value || 0) * (diskIoAbilityData.frame.height || 0)) / maxDiskRate);
+        let drawHeight: number = Math.floor(
+          ((diskIoAbilityData.value || 0) * (diskIoAbilityData.frame.height || 0)) / maxDiskRate
+        );
         diskIoAbilityContext.fillRect(
           diskIoAbilityData.frame.x,
           diskIoAbilityData.frame.y + diskIoAbilityData.frame.height - drawHeight + 4,

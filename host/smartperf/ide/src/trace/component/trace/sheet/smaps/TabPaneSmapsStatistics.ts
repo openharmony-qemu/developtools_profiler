@@ -21,7 +21,7 @@ import {
   getTabSmapsStatisticMaxSize,
   getTabSmapsStatisticSelectData,
 } from '../../../../database/SqlLite.js';
-import { Smaps, SmapsTreeObj, SmapsType, TYPE_STRING } from '../../../../bean/SmapsStruct.js';
+import { type Smaps, SmapsTreeObj, SmapsType, TYPE_STRING } from '../../../../bean/SmapsStruct.js';
 import { Utils } from '../../base/Utils.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
@@ -74,7 +74,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
       }
     }).observe(this.parentElement!);
   }
-  async queryDataByDB(smapsVal: SelectionParam) {
+  async queryDataByDB(smapsVal: SelectionParam): Promise<void> {
     getTabSmapsMaxSize(smapsVal.leftNs, smapsVal.rightNs, (MemoryConfig.getInstance().interval * 1000_000) / 5).then(
       (maxRes) => {
         this.sumSize = maxRes[0].max_value;
@@ -90,7 +90,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
     });
   }
 
-  private calculatePercentage(divisor: number, dividend: number) {
+  private calculatePercentage(divisor: number, dividend: number): number {
     if (dividend === 0) {
       return 0;
     } else {
@@ -213,7 +213,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
     smapsStatDataTree.children.push(treeObj);
   }
 
-  async setSmaps(data: SelectionParam) {
+  async setSmaps(data: SelectionParam): Promise<void> {
     getTabSmapsStatisticMaxSize(data.leftNs).then((maxRes) => {
       this.sumSize = maxRes[0].max_value;
     });
@@ -323,7 +323,9 @@ export class TabPaneSmapsStatistics extends BaseElement {
       // @ts-ignore
       this.totalTree.sort((previous, next) => next.size - previous.size);
       this.totalTree.unshift(this.allTree);
-      table!.recycleDataSource = this.totalTree;
+      // 深拷贝数组，不然在给表格赋值之后删除了all那行，表格的数据this.value也会少了all行
+      let copyTotalTree = Array.from(this.totalTree);
+      table!.recycleDataSource = copyTotalTree;
       this.totalTree.shift();
       table?.reMeauseHeight();
     } else {
@@ -332,7 +334,7 @@ export class TabPaneSmapsStatistics extends BaseElement {
     }
   }
 
-  public sortByColumn(column: string, sort: number, table: LitTable) {
+  public sortByColumn(column: string, sort: number, table: LitTable): void {
     this.sortArray = [...this.totalTree];
     switch (sort) {
       case 0:
@@ -411,7 +413,8 @@ export class TabPaneSmapsStatistics extends BaseElement {
         break;
     }
     this.sortArray.unshift(this.allTree!);
-    table!.recycleDataSource = this.sortArray;
+    let copySortArray = Array.from(this.sortArray);
+    table!.recycleDataSource = copySortArray;
     this.sortArray.shift();
   }
 

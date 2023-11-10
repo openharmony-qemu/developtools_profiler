@@ -533,9 +533,7 @@ export class LitModal extends BaseElement {
   disconnectedCallback() {}
 
   //当 custom element被移动到新的文档时，被调用。
-  adoptedCallback() {
-
-  }
+  adoptedCallback() {}
 
   //当 custom element增加、删除、修改自身属性时，被调用。
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {

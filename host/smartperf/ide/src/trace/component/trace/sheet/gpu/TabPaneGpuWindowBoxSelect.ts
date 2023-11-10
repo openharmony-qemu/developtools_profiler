@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { queryGpuDataByRange } from '../../../../database/SqlLite.js';
 import { log } from '../../../../../log/Log.js';
 import { getProbablyTime } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
@@ -56,7 +56,11 @@ export class TabPaneGpuWindowBoxSelect extends BaseElement {
     this.range!.textContent =
       'Selected range: ' + ((gpuBoxParam.rightNs - gpuBoxParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
     this.gpuBoxTbl!.loading = true;
-    queryGpuDataByRange(gpuBoxParam.leftNs, gpuBoxParam.rightNs, MemoryConfig.getInstance().snapshotDur).then((result) => {
+    queryGpuDataByRange(
+      gpuBoxParam.leftNs,
+      gpuBoxParam.rightNs,
+      MemoryConfig.getInstance().snapshotDur
+    ).then((result) => {
       this.gpuBoxTbl!.loading = false;
       if (result != null && result.length > 0) {
         log('getTabStartups result size : ' + result.length);

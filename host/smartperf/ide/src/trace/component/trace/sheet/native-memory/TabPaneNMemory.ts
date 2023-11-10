@@ -14,16 +14,16 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { LitPageTable } from '../../../../../base-ui/table/LitPageTable.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitPageTable } from '../../../../../base-ui/table/LitPageTable.js';
 import '../../../../../base-ui/table/LitPageTable.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { NativeMemory, NativeHookCallInfo } from '../../../../bean/NativeHook.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type NativeMemory, NativeHookCallInfo } from '../../../../bean/NativeHook.js';
 import '../TabPaneFilter.js';
 import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { TabPaneNMSampleList } from './TabPaneNMSampleList.js';
-import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { type LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import {
   formatRealDateMs,
@@ -57,14 +57,14 @@ export class TabPaneNMemory extends BaseElement {
   private eventTypes: string[] = [];
 
   set data(memoryParam: SelectionParam | any) {
-    if (memoryParam == this.currentSelection) {
+    if (memoryParam === this.currentSelection) {
       return;
     }
     this.currentSelection = memoryParam;
     this.queryData(memoryParam);
   }
 
-  queryData(memoryParam: SelectionParam | any) {
+  queryData(memoryParam: SelectionParam | any): void {
     this.eventTypes = [];
     if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[0]) != -1) {
       this.eventTypes.push("'AllocEvent'");
@@ -90,7 +90,7 @@ export class TabPaneNMemory extends BaseElement {
     this.getDataByNativeMemoryWorker(memoryParam, true);
   }
 
-  getDataByNativeMemoryWorker(val: SelectionParam | any, refresh = false) {
+  getDataByNativeMemoryWorker(val: SelectionParam | any, refresh = false): void {
     let args = new Map<string, any>();
     args.set('filterAllocType', this.filterAllocationType);
     args.set('filterEventType', this.filterNativeType);
@@ -131,7 +131,7 @@ export class TabPaneNMemory extends BaseElement {
     });
   }
 
-  startNmMemoryWorker(type: string, args: any, handler: Function) {
+  startNmMemoryWorker(type: string, args: any, handler: Function): void {
     this.setNmMemoryLoading(true);
     procedurePool.submitWithName('logic1', type, args, undefined, (res: any) => {
       if (Array.isArray(res) || (res.tag === 'end' && res.index === 0)) {
@@ -139,7 +139,7 @@ export class TabPaneNMemory extends BaseElement {
         this.setNmMemoryLoading(false);
       } else {
         this.memorySource.push(res.data);
-        if (res.tag == 'end') {
+        if (res.tag === 'end') {
           handler(this.memorySource);
           this.setNmMemoryLoading(false);
         }
@@ -147,21 +147,21 @@ export class TabPaneNMemory extends BaseElement {
     });
   }
 
-  setNmMemoryLoading(loading: boolean) {
+  setNmMemoryLoading(loading: boolean): void {
     if (loading) {
       this.nmMemoryLoadingList.push(1);
       this.progressEL!.loading = true;
       this.loadingPage.style.visibility = 'visible';
     } else {
       this.nmMemoryLoadingList.splice(0, 1);
-      if (this.nmMemoryLoadingList.length == 0) {
+      if (this.nmMemoryLoadingList.length === 0) {
         this.progressEL!.loading = false;
         this.loadingPage.style.visibility = 'hidden';
       }
     }
   }
 
-  fromStastics(val: SelectionParam | any) {
+  fromStastics(val: SelectionParam | any): void {
     let nmFilterEl = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
     if (this.currentSelection != val) {
       this.initFilterTypes(() => {
@@ -172,17 +172,17 @@ export class TabPaneNMemory extends BaseElement {
       });
     }
     let typeIndexOf = this.native_type.indexOf(val.statisticsSelectData.memoryTap);
-    if (this.statsticsSelection.indexOf(val.statisticsSelectData) == -1 && typeIndexOf == -1) {
+    if (this.statsticsSelection.indexOf(val.statisticsSelectData) === -1 && typeIndexOf === -1) {
       this.statsticsSelection.push(val.statisticsSelectData);
       this.native_type.push(val.statisticsSelectData.memoryTap);
       typeIndexOf = this.native_type.length - 1;
     } else {
-      let index = this.statsticsSelection.findIndex((mt) => mt.memoryTap == val.statisticsSelectData.memoryTap);
+      let index = this.statsticsSelection.findIndex((mt) => mt.memoryTap === val.statisticsSelectData.memoryTap);
       if (index != -1) {
         this.statsticsSelection[index] = val.statisticsSelectData;
       }
     }
-    if (this.currentSelection == val) {
+    if (this.currentSelection === val) {
       this.tblData!.recycleDataSource = [];
       this.rowSelectData = undefined;
       this.filterSetSelectList(nmFilterEl!, typeIndexOf);
@@ -192,7 +192,7 @@ export class TabPaneNMemory extends BaseElement {
     }
   }
 
-  private filterSetSelectList(nmFilterEl: TabPaneFilter, typeIndexOf: number) {
+  private filterSetSelectList(nmFilterEl: TabPaneFilter, typeIndexOf: number): void {
     nmFilterEl!.setSelectList(
       null,
       this.native_type,
@@ -231,7 +231,7 @@ export class TabPaneNMemory extends BaseElement {
     });
   }
 
-  resetFilter() {
+  resetFilter(): void {
     this.filter!.firstSelect = '0';
     this.filter!.secondSelect = '0';
     this.filter!.thirdSelect = '0';
@@ -254,7 +254,7 @@ export class TabPaneNMemory extends BaseElement {
       this.setRightTableData(data);
       document.dispatchEvent(
         new CustomEvent('triangle-flag', {
-          detail: { time: [data.startTs], type: 'triangle'},
+          detail: { time: [data.startTs], type: 'triangle' },
         })
       );
     });
@@ -290,11 +290,11 @@ export class TabPaneNMemory extends BaseElement {
                 let minTs = 0;
                 let minItem: any = undefined;
                 let filterTemp = this.memorySource.filter((tempItem) => {
-                  if (minTs == 0 || (tempItem.startTs - t != 0 && Math.abs(tempItem.startTs - t) < minTs)) {
+                  if (minTs === 0 || (tempItem.startTs - t != 0 && Math.abs(tempItem.startTs - t) < minTs)) {
                     minTs = Math.abs(tempItem.startTs - t);
                     minItem = tempItem;
                   }
-                  return tempItem.startTs == t;
+                  return tempItem.startTs === t;
                 });
                 if (filterTemp.length > 0) {
                   filterTemp[0].isSelected = true;
@@ -309,7 +309,7 @@ export class TabPaneNMemory extends BaseElement {
                   let args = new Map<string, any>();
                   args.set('startTs', this.rowSelectData.startTs);
                   args.set('actionType', 'native-memory-state-change');
-                  this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => {});
+                  this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => { });
                   TabPaneNMSampleList.addSampleData(this.rowSelectData);
                   this.memoryTbl!.scrollToData(this.rowSelectData);
                 }
@@ -324,7 +324,7 @@ export class TabPaneNMemory extends BaseElement {
         let thirdIndex = parseInt(data.thirdSelect || '0');
         if (this.responseTypes.length > thirdIndex) {
           this.filterResponseType =
-            this.responseTypes[thirdIndex].key == undefined ? -1 : this.responseTypes[thirdIndex].key;
+            this.responseTypes[thirdIndex].key === undefined ? -1 : this.responseTypes[thirdIndex].key;
         }
         this.getDataByNativeMemoryWorker(this.currentSelection);
       }
@@ -337,10 +337,12 @@ export class TabPaneNMemory extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.memoryTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
+        this.memoryTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 31 + 'px';
         this.memoryTbl?.reMeauseHeight();
         // @ts-ignore
-        this.tblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
+        this.tblData?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 31 + 'px';
         this.tblData?.reMeauseHeight();
         this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

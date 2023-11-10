@@ -26,7 +26,6 @@ import {
 } from '../../database/SqlLite.js';
 import { info } from '../../../log/Log.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
-import { procedurePool } from '../../database/Procedure.js';
 import { ColorUtils } from '../trace/base/ColorUtils.js';
 import { CpuFreqLimitRender, CpuFreqLimitsStruct } from '../../database/ui-worker/ProcedureWorkerCpuFreqLimits.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
@@ -77,12 +76,15 @@ export class SpFreqChart {
           `<span>${ColorUtils.formatNumberComma(CpuFreqStruct.hoverCpuFreqStruct?.value!)} kHz</span>`
         );
       };
+      traceRow.findHoverStruct = () => {
+        CpuFreqStruct.hoverCpuFreqStruct = traceRow.getHoverStruct();
+      };
       traceRow.onThreadHandler = (useCache) => {
-        let context:CanvasRenderingContext2D;
-        if(traceRow.currentContext){
+        let context: CanvasRenderingContext2D;
+        if (traceRow.currentContext) {
           context = traceRow.currentContext;
-        } else{
-          context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        } else {
+          context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         traceRow.canvasSave(context);
         (renders['freq'] as FreqRender).renderMainThread(
@@ -123,12 +125,15 @@ export class SpFreqChart {
           `<span>State: ${CpuStateStruct.hoverStateStruct?.value}</span>`
         );
       };
+      cpuStateRow.findHoverStruct = () => {
+        CpuStateStruct.hoverStateStruct = cpuStateRow.getHoverStruct();
+      };
       cpuStateRow.onThreadHandler = (useCache: boolean) => {
-        let context:CanvasRenderingContext2D;
-        if(cpuStateRow.currentContext){
+        let context: CanvasRenderingContext2D;
+        if (cpuStateRow.currentContext) {
           context = cpuStateRow.currentContext;
-        } else{
-          context  = cpuStateRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        } else {
+          context = cpuStateRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         cpuStateRow.canvasSave(context);
         (renders['cpu-state'] as CpuStateRender).renderMainThread(
@@ -173,12 +178,15 @@ export class SpFreqChart {
           )} kHz</span>`
         );
       };
+      cpuFreqLimitRow.findHoverStruct = () => {
+        CpuFreqLimitsStruct.hoverCpuFreqLimitsStruct = cpuFreqLimitRow.getHoverStruct();
+      };
       cpuFreqLimitRow.onThreadHandler = (useCache: boolean) => {
-        let context:CanvasRenderingContext2D;
-        if(cpuFreqLimitRow.currentContext){
+        let context: CanvasRenderingContext2D;
+        if (cpuFreqLimitRow.currentContext) {
           context = cpuFreqLimitRow.currentContext;
-        } else{
-          context  = cpuFreqLimitRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        } else {
+          context = cpuFreqLimitRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         cpuFreqLimitRow.canvasSave(context);
         (renders['cpu-limit-freq'] as CpuFreqLimitRender).renderMainThread(

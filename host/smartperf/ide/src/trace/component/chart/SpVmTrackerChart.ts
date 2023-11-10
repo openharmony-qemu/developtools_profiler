@@ -21,21 +21,23 @@ import {
   querySmapsExits,
   queryVmTrackerShmData,
   queryPurgeableProcessData,
-  queryGpuGLData,
   queryGpuTotalData,
   queryGpuTotalType,
   queryGpuWindowData,
   queryGpuWindowType,
+  queryGpuData,
+  queryGpuResourceData,
 } from '../../database/SqlLite.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
-import { BaseStruct } from '../../bean/BaseStruct.js';
+import { type BaseStruct } from '../../bean/BaseStruct.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
 import { Utils } from '../trace/base/Utils.js';
-import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
+import { type EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
 import { info } from '../../../log/Log.js';
-import { SnapshotRender, SnapshotStruct } from '../../database/ui-worker/ProcedureWorkerSnapshot.js';
-import { TreeItemData } from '../../../base-ui/tree/LitTree.js';
+import { type SnapshotRender, SnapshotStruct } from '../../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { type TreeItemData } from '../../../base-ui/tree/LitTree.js';
 import { MemoryConfig } from '../../bean/MemoryConfig.js';
+import { TabPaneSmapsRecord } from '../trace/sheet/smaps/TabPaneSmapsRecord.js';
 
 export class VmTrackerChart {
   private trace: SpSystemTrace;
@@ -46,11 +48,24 @@ export class VmTrackerChart {
   static gpuTotalModule: number | null = null; //ns
   static gpuWindow: number | null = null; //ns
   static gpuWindowModule: number | null = null; //ns
+  private smapsRecordTab: TabPaneSmapsRecord | undefined | null;
+  private scratchId = -1;
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
   }
 
   async init(): Promise<void> {
+    this.smapsRecordTab = this.trace
+      .shadowRoot!.querySelector('div > trace-sheet')!
+      .shadowRoot!.querySelector<TabPaneSmapsRecord>('#box-smaps-record > tabpane-smaps-record');
+    if (this.scratchId == -1) {
+      for (let [key, value] of SpSystemTrace.DATA_DICT) {
+        if (value === 'Scratch') {
+          this.scratchId = key;
+          break;
+        }
+      }
+    }
     const result = await querySmapsExits();
     if (result.length <= 0) {
       return;
@@ -65,7 +80,14 @@ export class VmTrackerChart {
     await this.initPurgeableVM();
     await this.initDmaRow();
     const gpuMemoryData = await queryGpuMemoryData(this.memoryConfig.iPid);
-    const glArr = await queryGpuGLData(MemoryConfig.getInstance().iPid).then((res) => {
+    const gpuResource = await queryGpuResourceData(this.scratchId);
+    const graphArr = await queryGpuData(MemoryConfig.getInstance().iPid, "'mem.graph_pss'").then((res) => {
+      res.forEach((graph, index) => {
+        (graph as any).name = `SnapShot ${index}`;
+      });
+      return res as SnapshotStruct[];
+    });
+    const glArr = await queryGpuData(MemoryConfig.getInstance().iPid, "'mem.gl_pss'").then((res) => {
       res.forEach((gl, index) => {
         (gl as any).name = `SnapShot ${index}`;
       });
@@ -76,6 +98,13 @@ export class VmTrackerChart {
       if (gpuMemoryData.length > 0) {
         await this.initGpuMemoryRow(gpuMemoryData);
       }
+      if (gpuResource.length > 0) {
+        await this.initGpuResourceRow(gpuResource);
+      } else {
+        this.smapsRecordTab!.GLESHostCache = [];
+      }
+
+      await this.addGpuGraphRow(graphArr);
       await this.addGpuGLRow(glArr);
       if (glArr.length > 0) {
         await this.addGpuTotalRow();
@@ -89,7 +118,7 @@ export class VmTrackerChart {
     VmTrackerRow.rowId = 'VmTrackerRow';
     VmTrackerRow.rowType = TraceRow.ROW_TYPE_VM_TRACKER;
     VmTrackerRow.addTemplateTypes('ProcessMemory');
-    VmTrackerRow.addTemplateTypes('Memory')
+    VmTrackerRow.addTemplateTypes('Memory');
     VmTrackerRow.rowParentId = '';
     VmTrackerRow.style.height = '40px';
     VmTrackerRow.index = 0;
@@ -100,20 +129,26 @@ export class VmTrackerChart {
     VmTrackerRow.supplier = (): Promise<Array<SnapshotStruct>> =>
       new Promise<Array<SnapshotStruct>>((resolve) => resolve([]));
     VmTrackerRow.onThreadHandler = (useCache): void => {
-      VmTrackerRow.canvasSave(this.trace.canvasPanelCtx!);
+      let context: CanvasRenderingContext2D;
+      if (VmTrackerRow.currentContext) {
+        context = VmTrackerRow.currentContext;
+      } else {
+        context = VmTrackerRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
+      VmTrackerRow.canvasSave(context);
       if (VmTrackerRow.expansion) {
-        this.trace.canvasPanelCtx?.clearRect(0, 0, VmTrackerRow.frame.width, VmTrackerRow.frame.height);
+        context?.clearRect(0, 0, VmTrackerRow.frame.width, VmTrackerRow.frame.height);
       } else {
         (renders.empty as EmptyRender).renderMainThread(
           {
-            context: this.trace.canvasPanelCtx,
+            context: context,
             useCache: useCache,
             type: '',
           },
           VmTrackerRow
         );
       }
-      VmTrackerRow.canvasRestore(this.trace.canvasPanelCtx!);
+      VmTrackerRow.canvasRestore(context);
     };
     this.rowFolder = VmTrackerRow;
     this.trace.rowsEL?.appendChild(VmTrackerRow);
@@ -135,20 +170,26 @@ export class VmTrackerChart {
     sMapsRow.supplier = (): Promise<Array<SnapshotStruct>> =>
       new Promise<Array<SnapshotStruct>>((resolve) => resolve([]));
     sMapsRow.onThreadHandler = (useCache): void => {
-      sMapsRow.canvasSave(this.trace.canvasPanelCtx!);
+      let context: CanvasRenderingContext2D;
+      if (sMapsRow.currentContext) {
+        context = sMapsRow.currentContext;
+      } else {
+        context = sMapsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
+      sMapsRow.canvasSave(context);
       if (sMapsRow.expansion) {
-        this.trace.canvasPanelCtx?.clearRect(0, 0, sMapsRow.frame.width, sMapsRow.frame.height);
+        context?.clearRect(0, 0, sMapsRow.frame.width, sMapsRow.frame.height);
       } else {
         (renders.empty as EmptyRender).renderMainThread(
           {
-            context: this.trace.canvasPanelCtx,
+            context: context,
             useCache: useCache,
             type: '',
           },
           sMapsRow
         );
       }
-      sMapsRow.canvasRestore(this.trace.canvasPanelCtx!);
+      sMapsRow.canvasRestore(context);
     };
     this.sMapsFolder = sMapsRow;
     this.rowFolder?.addChildTraceRow(sMapsRow);
@@ -169,20 +210,26 @@ export class VmTrackerChart {
     gpuTraceRow.supplier = (): Promise<Array<SnapshotStruct>> =>
       new Promise<Array<SnapshotStruct>>((resolve) => resolve([]));
     gpuTraceRow.onThreadHandler = (useCache): void => {
-      gpuTraceRow.canvasSave(this.trace.canvasPanelCtx!);
+      let context: CanvasRenderingContext2D;
+      if (gpuTraceRow.currentContext) {
+        context = gpuTraceRow.currentContext;
+      } else {
+        context = gpuTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
+      gpuTraceRow.canvasSave(context);
       if (gpuTraceRow.expansion) {
-        this.trace.canvasPanelCtx?.clearRect(0, 0, gpuTraceRow.frame.width, gpuTraceRow.frame.height);
+        context?.clearRect(0, 0, gpuTraceRow.frame.width, gpuTraceRow.frame.height);
       } else {
         (renders.empty as EmptyRender).renderMainThread(
           {
-            context: this.trace.canvasPanelCtx,
+            context: context,
             useCache: useCache,
             type: '',
           },
           gpuTraceRow
         );
       }
-      gpuTraceRow.canvasRestore(this.trace.canvasPanelCtx!);
+      gpuTraceRow.canvasRestore(context);
     };
     this.gpuFolder = gpuTraceRow;
     this.rowFolder.addChildTraceRow(gpuTraceRow);
@@ -294,18 +341,47 @@ export class VmTrackerChart {
     this.gpuFolder.addChildTraceRow(gpuMemoryTraceRow);
   };
 
+  private initGpuResourceRow = async (gpuResourceData: Array<SnapshotStruct>): Promise<void> => {
+    for (let i = 0; i < gpuResourceData.length; i++) {
+      gpuResourceData[i].name = `Snapshot${i}`;
+    }
+    // 将泳道图数据传递给Smaps Record Tab页
+    this.smapsRecordTab!.GLESHostCache = gpuResourceData;
+    let gpuMemoryTraceRow = this.initTraceRow(
+      'Gpu Resource',
+      TraceRow.ROW_TYPE_GPU_RESOURCE_VMTRACKER,
+      this.gpuFolder.rowId!
+    );
+    gpuMemoryTraceRow.rowHidden = !this.gpuFolder.expansion;
+    gpuMemoryTraceRow.folderTextLeft = 40;
+    gpuMemoryTraceRow.supplier = (): Promise<Array<SnapshotStruct>> =>
+      new Promise<Array<SnapshotStruct>>((resolve) => resolve(gpuResourceData));
+    this.gpuFolder.addChildTraceRow(gpuMemoryTraceRow);
+  };
+
+  private async addGpuGraphRow(graphArr: Array<SnapshotStruct>): Promise<void> {
+    let graphRow = this.initTraceRow('Graph', TraceRow.ROW_TYPE_SYS_MEMORY_GPU_GRAPH, this.gpuFolder.rowId!);
+    graphRow.addTemplateTypes('sys-memory');
+    graphRow.folderTextLeft = 40;
+    graphRow.supplier = () => new Promise((resolve) => resolve(graphArr));
+    this.gpuFolder.addChildTraceRow(graphRow);
+  }
+
   private async addGpuGLRow(glArr: Array<SnapshotStruct>): Promise<void> {
     if (glArr.length > 0) {
       let glRow = this.initTraceRow('GL', TraceRow.ROW_TYPE_SYS_MEMORY_GPU_GL, this.gpuFolder.rowId!);
       glRow.addTemplateTypes('sys-memory');
       glRow.folderTextLeft = 40;
-      glRow.supplier = () => new Promise((resolve) => resolve(glArr));
+      glRow.supplier = (): Promise<SnapshotStruct[]> => new Promise((resolve) => resolve(glArr));
       this.gpuFolder.addChildTraceRow(glRow);
     }
   }
 
   private async addGpuTotalRow(): Promise<void> {
     let types = await queryGpuTotalType();
+    if (!types || types.length == 0) {
+      return;
+    }
     let gpuTotalRow = this.initTraceRow(
       'Skia Gpu Dump Total',
       TraceRow.ROW_TYPE_SYS_MEMORY_GPU_TOTAL,
@@ -320,14 +396,21 @@ export class VmTrackerChart {
         title: 'Total',
         checked: true,
       },
-      ...types.map((it) => {
-        return {
-          key: `${it.id}`,
-          title: it.data,
-        };
-      }),
+      ...types.map(
+        (
+          it
+        ): {
+          key: string;
+          title: string;
+        } => {
+          return {
+            key: `${it.id}`,
+            title: it.data,
+          };
+        }
+      ),
     ];
-    gpuTotalRow.onRowSettingChangeHandler = (setting) => {
+    gpuTotalRow.onRowSettingChangeHandler = (setting): void => {
       if (setting && setting.length > 0) {
         gpuTotalRow.dataListCache = [];
         gpuTotalRow.dataList = [];
@@ -349,6 +432,9 @@ export class VmTrackerChart {
 
   private async addGpuWindowRow(): Promise<void> {
     let types = await queryGpuWindowType();
+    if (!types || types.length === 0) {
+      return;
+    }
     let settings: TreeItemData[] = types
       .filter((it) => it.pid === null)
       .map((it) => {
@@ -392,7 +478,10 @@ export class VmTrackerChart {
       }
     };
     gpuWindowRow.supplier = () => {
-      return queryGpuWindowData(VmTrackerChart.gpuWindow!, VmTrackerChart.gpuWindowModule).then((res) => {
+      return queryGpuWindowData(
+        VmTrackerChart.gpuWindow!,
+        VmTrackerChart.gpuWindowModule
+      ).then((res) => {
         res.forEach((window, index) => {
           (window as any).name = `SnapShot ${index}`;
         });
@@ -417,11 +506,14 @@ export class VmTrackerChart {
     vmTrackerTraceRow.focusHandler = (): void => {
       this.showTip(vmTrackerTraceRow);
     };
+    vmTrackerTraceRow.findHoverStruct = () => {
+      SnapshotStruct.hoverSnapshotStruct = vmTrackerTraceRow.getHoverStruct();
+    };
     vmTrackerTraceRow.onThreadHandler = (useCache): void => {
-      let context:CanvasRenderingContext2D
-      if(vmTrackerTraceRow.currentContext){
+      let context: CanvasRenderingContext2D;
+      if (vmTrackerTraceRow.currentContext) {
         context = vmTrackerTraceRow.currentContext;
-      }else{
+      } else {
         context = vmTrackerTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       }
       vmTrackerTraceRow.canvasSave(context);

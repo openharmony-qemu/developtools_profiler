@@ -236,7 +236,7 @@ export class RangeRuler extends Graph {
         this.range.xs = [];
       }
       this.range.scale = this.scale;
-      if (rangeYu != 0) {
+      if (rangeYu !== 0) {
         let first_NodeWidth = ((this.scale - rangeYu) / this.scale) * rangeRealW;
         rangeStartX += first_NodeWidth;
         tempNs += rangeYu;
@@ -255,7 +255,7 @@ export class RangeRuler extends Graph {
     }
   }
 
-  private drawSelectionRange() {
+  private drawSelectionRange(): void {
     this.context2D.fillStyle = window.getComputedStyle(this.canvas!, null).getPropertyValue('background-color');
     this.rangeRect.x = this.markAObj.frame.x < this.markBObj.frame.x ? this.markAObj.frame.x : this.markBObj.frame.x;
     this.rangeRect.width = Math.abs(this.markBObj.frame.x - this.markAObj.frame.x);
@@ -417,7 +417,7 @@ export class RangeRuler extends Graph {
   }
 
   setCacheInterval() {
-    if (Math.trunc(this.currentDuration / this.cacheInterval.interval) != this.cacheInterval.value) {
+    if (Math.trunc(this.currentDuration / this.cacheInterval.interval) !== this.cacheInterval.value) {
       this.cacheInterval.flag = true;
       this.cacheInterval.value = Math.trunc(this.currentDuration / this.cacheInterval.interval);
     } else {
@@ -465,19 +465,19 @@ export class RangeRuler extends Graph {
     return this.range;
   }
 
-  cancelPressFrame() {
-    if (this.pressFrameIdA != -1) cancelAnimationFrame(this.pressFrameIdA);
-    if (this.pressFrameIdD != -1) cancelAnimationFrame(this.pressFrameIdD);
-    if (this.pressFrameIdW != -1) cancelAnimationFrame(this.pressFrameIdW);
-    if (this.pressFrameIdS != -1) cancelAnimationFrame(this.pressFrameIdS);
-    if (this.pressFrameIdF != -1) cancelAnimationFrame(this.pressFrameIdF);
+  cancelPressFrame(): void {
+    if (this.pressFrameIdA !== -1) cancelAnimationFrame(this.pressFrameIdA);
+    if (this.pressFrameIdD !== -1) cancelAnimationFrame(this.pressFrameIdD);
+    if (this.pressFrameIdW !== -1) cancelAnimationFrame(this.pressFrameIdW);
+    if (this.pressFrameIdS !== -1) cancelAnimationFrame(this.pressFrameIdS);
+    if (this.pressFrameIdF !== -1) cancelAnimationFrame(this.pressFrameIdF);
   }
 
-  cancelUpFrame() {
-    if (this.upFrameIdA != -1) cancelAnimationFrame(this.upFrameIdA);
-    if (this.upFrameIdD != -1) cancelAnimationFrame(this.upFrameIdD);
-    if (this.upFrameIdW != -1) cancelAnimationFrame(this.upFrameIdW);
-    if (this.upFrameIdS != -1) cancelAnimationFrame(this.upFrameIdS);
+  cancelUpFrame(): void {
+    if (this.upFrameIdA !== -1) cancelAnimationFrame(this.upFrameIdA);
+    if (this.upFrameIdD !== -1) cancelAnimationFrame(this.upFrameIdD);
+    if (this.upFrameIdW !== -1) cancelAnimationFrame(this.upFrameIdW);
+    if (this.upFrameIdS !== -1) cancelAnimationFrame(this.upFrameIdS);
   }
 
   cancelTimeOut: any = undefined;
@@ -489,7 +489,7 @@ export class RangeRuler extends Graph {
     if (
       this.animaStartTime == undefined ||
       (this.pressedKeys.length > 0 &&
-        this.pressedKeys[this.pressedKeys.length - 1] != keyboardEvent.key.toLocaleLowerCase())
+        this.pressedKeys[this.pressedKeys.length - 1] !== keyboardEvent.key.toLocaleLowerCase())
     ) {
       let dat = new Date();
       dat.setTime(dat.getTime() - 400);
@@ -499,7 +499,7 @@ export class RangeRuler extends Graph {
     this.setCacheInterval();
     this.range.refresh = this.cacheInterval.flag;
     if (this.pressedKeys.length > 0) {
-      if (this.pressedKeys[this.pressedKeys.length - 1] != keyboardEvent.key.toLocaleLowerCase()) {
+      if (this.pressedKeys[this.pressedKeys.length - 1] !== keyboardEvent.key.toLocaleLowerCase()) {
         this.cancelPressFrame();
         this.cancelUpFrame();
         this.pressedKeys.push(keyboardEvent.key.toLocaleLowerCase());
@@ -526,7 +526,7 @@ export class RangeRuler extends Graph {
     }, 1000);
   }
 
-  keyPressF() {
+  keyPressF(): void {
     const DIS = 100;
     let clientWidth = this.canvas?.clientWidth || 0;
     let midX = Math.round(clientWidth / 2);
@@ -551,7 +551,7 @@ export class RangeRuler extends Graph {
     sliceMidX = Math.round(startX + totalX / 2);
     let count1 = 0;
     let count2 = 0;
-    let animF = () => {
+    let animF = (): void => {
       let sliceMidXMap = new Map();
       startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
       endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
@@ -845,7 +845,7 @@ export class RangeRuler extends Graph {
     this.upFrameIdW = requestAnimationFrame(animW);
   }
 
-  keyUpS() {
+  keyUpS(): void {
     let startTime = new Date().getTime();
     let animS = () => {
       if (this.range.startNS <= 0 && this.range.endNS >= this.range.totalNS) {
@@ -872,7 +872,7 @@ export class RangeRuler extends Graph {
     this.upFrameIdS = requestAnimationFrame(animS);
   }
 
-  keyUpA() {
+  keyUpA(): void {
     let startTime = new Date().getTime();
     let animA = () => {
       if (this.range.startNS <= 0) {
@@ -900,7 +900,7 @@ export class RangeRuler extends Graph {
     this.upFrameIdA = requestAnimationFrame(animA);
   }
 
-  keyUpD() {
+  keyUpD(): void {
     let startTime = new Date().getTime();
     let animD = () => {
       if (this.range.endNS >= this.range.totalNS) {
@@ -927,8 +927,8 @@ export class RangeRuler extends Graph {
     this.upFrameIdD = requestAnimationFrame(animD);
   }
 
-  translate(distance: number) {
-    const rangeDur = (this.range.endNS - this.range.startNS)
+  translate(distance: number): void {
+    const rangeDur = this.range.endNS - this.range.startNS;
     const time = (distance / this.canvas!.width) * rangeDur;
     if (
       this.range.startNS < 0 ||
@@ -947,7 +947,7 @@ export class RangeRuler extends Graph {
     this.range.refresh = false;
   }
 
-  zoomFit(startTime: number, endTime: number) {
+  zoomFit(startTime: number, endTime: number): void {
     let startX = (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
     let endX = (this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS);
     let totalX = endX - startX;

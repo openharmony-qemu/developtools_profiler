@@ -15,7 +15,7 @@
 
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { BaseStruct, computeUnitWidth, isSurroundingPoint, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
-import { AnimationRanges } from '../../bean/FrameComponentBean.js';
+import { type AnimationRanges } from '../../bean/FrameComponentBean.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 
 export class FrameDynamicRender extends Render {
@@ -68,8 +68,9 @@ export class FrameDynamicRender extends Render {
     selectUnitWidth: number
   ): boolean {
     let find: boolean = false;
-    let findStructList = frameDynamicFilter.filter(filter =>
-      row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple));
+    let findStructList = frameDynamicFilter.filter(
+      (filter) => row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple)
+    );
     if (findStructList.length > 0) {
       find = true;
       let hoverIndex: number = 0;
@@ -111,34 +112,56 @@ export class FrameDynamicRender extends Render {
               break;
             }
           }
-          if (currentDynamic.ts < startNS && (dataIndex + unitIndex) < frameDynamicList.length &&
-            frameDynamicList[dataIndex + unitIndex].ts >= startNS && currentDynamic.groupId !== invalidGroupId) {
-            this.refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS,
-              endNS, totalNS, groupIdList);
+          if (
+            currentDynamic.ts < startNS &&
+            dataIndex + unitIndex < frameDynamicList.length &&
+            frameDynamicList[dataIndex + unitIndex].ts >= startNS &&
+            currentDynamic.groupId !== invalidGroupId
+          ) {
+            this.refreshFilterDynamicFrame(
+              frameDynamicFilter,
+              currentDynamic,
+              row.frame,
+              startNS,
+              endNS,
+              totalNS,
+              groupIdList
+            );
           }
           if (currentDynamic.ts >= startNS && currentDynamic.ts <= endNS && currentDynamic.groupId !== invalidGroupId) {
-            this.refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS,
-              endNS, totalNS, groupIdList);
+            this.refreshFilterDynamicFrame(
+              frameDynamicFilter,
+              currentDynamic,
+              row.frame,
+              startNS,
+              endNS,
+              totalNS,
+              groupIdList
+            );
           }
           if (currentDynamic.ts >= endNS && currentDynamic.groupId !== invalidGroupId) {
-            this.refreshFilterDynamicFrame(frameDynamicFilter, currentDynamic, row.frame, startNS,
-              endNS, totalNS, groupIdList);
+            this.refreshFilterDynamicFrame(
+              frameDynamicFilter,
+              currentDynamic,
+              row.frame,
+              startNS,
+              endNS,
+              totalNS,
+              groupIdList
+            );
             break;
           }
         }
       }
       this.setSimpleGroupId(groupIdList, frameDynamicFilter);
     }
-  };
+  }
 
-  private setSimpleGroupId(
-    groupIdList: number[],
-    frameDynamicFilter: FrameDynamicStruct[]
-  ): void {
-    let simpleGroup = groupIdList.filter(groupId => {
+  private setSimpleGroupId(groupIdList: number[], frameDynamicFilter: FrameDynamicStruct[]): void {
+    let simpleGroup = groupIdList.filter((groupId) => {
       return groupId !== invalidGroupId && groupIdList.indexOf(groupId) === groupIdList.lastIndexOf(groupId);
     });
-    frameDynamicFilter.forEach(dynamic => {
+    frameDynamicFilter.forEach((dynamic) => {
       if (simpleGroup.indexOf(dynamic.groupId!) > invalidGroupId) {
         dynamic.groupId = 0;
       }
@@ -160,7 +183,7 @@ export class FrameDynamicRender extends Render {
         FrameDynamicStruct.setFrameDynamic(frameDynamicNode, startNS, endNS, totalNS, frame);
       }
     }
-  };
+  }
 
   private drawSinglePoint(
     ctx: CanvasRenderingContext2D,
@@ -173,8 +196,10 @@ export class FrameDynamicRender extends Render {
     let smallArcRadius: number = 2;
     // @ts-ignore
     currDynamic.typeValue = currDynamic[modelType];
-    currDynamic.frame!.y = row.frame.height - padding -
-      ((row.frame.height - padding * multiple) * ((currDynamic.typeValue || 0) - minValue) / (maxValue - minValue));
+    currDynamic.frame!.y =
+      row.frame.height -
+      padding -
+      ((row.frame.height - padding * multiple) * ((currDynamic.typeValue || 0) - minValue)) / (maxValue - minValue);
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.globalAlpha = 1;
@@ -199,7 +224,7 @@ export class FrameDynamicRender extends Render {
       let pointY = (row.frame.height - padding * multiple) * ((currDynamicValue - minValue) / (maxValue - minValue));
       curDynamic.frame.y = row.frame.height - padding - pointY;
     }
-  };
+  }
 
   private drawDynamicPointYStr(
     ctx: CanvasRenderingContext2D,
@@ -218,7 +243,7 @@ export class FrameDynamicRender extends Render {
       let pointYInterval = totalValue / (yScaleNumber - unitIndex);
       for (let index = 0; index < yScaleNumber; index++) {
         let pointYValue = minValue + pointYInterval * index;
-        let pointYHeight = (frame.height - padding * multiple) * (pointYValue - minValue) / totalValue;
+        let pointYHeight = ((frame.height - padding * multiple) * (pointYValue - minValue)) / totalValue;
         let pointY = frame.height - multiple * padding - pointYHeight;
         if (pointYValue !== 0) {
           if (maxValue - minValue <= minUnitValue) {
@@ -229,20 +254,23 @@ export class FrameDynamicRender extends Render {
         }
       }
     }
-  };
+  }
 
-  private getMinAndMaxData(
-    frameDynamicFilter: FrameDynamicStruct[],
-    modelType: string
-  ): [number, number] {
-    let min: number = Math.min.apply(Math, frameDynamicFilter.map(filterData => {
-      // @ts-ignore
-      return filterData[modelType];
-    }));
-    let max: number = Math.max.apply(Math, frameDynamicFilter.map(filterData => {
-      // @ts-ignore
-      return filterData[modelType];
-    }));
+  private getMinAndMaxData(frameDynamicFilter: FrameDynamicStruct[], modelType: string): [number, number] {
+    let min: number = Math.min.apply(
+      Math,
+      frameDynamicFilter.map((filterData) => {
+        // @ts-ignore
+        return filterData[modelType];
+      })
+    );
+    let max: number = Math.max.apply(
+      Math,
+      frameDynamicFilter.map((filterData) => {
+        // @ts-ignore
+        return filterData[modelType];
+      })
+    );
 
     let yScaleMinValue: number = 1;
     let yScaleMinSpacing: number = 10;
@@ -259,7 +287,7 @@ export class FrameDynamicRender extends Render {
       }
     }
     return [min, max];
-  };
+  }
 
   private refreshFilterDynamicFrame(
     frameDynamicFilter: FrameDynamicStruct[],
@@ -273,7 +301,7 @@ export class FrameDynamicRender extends Render {
     groupIdList.push(currentFrameDynamic.groupId!);
     frameDynamicFilter.push(currentFrameDynamic);
     FrameDynamicStruct.setFrameDynamic(currentFrameDynamic, startNS, endNS, totalNS, frame);
-  };
+  }
 }
 
 export class FrameDynamicStruct extends BaseStruct {
@@ -339,8 +367,10 @@ export class FrameDynamicStruct extends BaseStruct {
     currDynamicStruct: FrameDynamicStruct,
     row: TraceRow<FrameDynamicStruct>
   ): void {
-    if ((currDynamicStruct === FrameDynamicStruct.hoverFrameDynamicStruct && row.isHover) ||
-      currDynamicStruct === FrameDynamicStruct.selectFrameDynamicStruct) {
+    if (
+      (currDynamicStruct === FrameDynamicStruct.hoverFrameDynamicStruct && row.isHover) ||
+      currDynamicStruct === FrameDynamicStruct.selectFrameDynamicStruct
+    ) {
       FrameDynamicStruct.drawSelectOrHoverArc(ctx, currDynamicStruct);
     }
     if (row.getAttribute('check-type') === '2' && FrameDynamicStruct.isSelect(currDynamicStruct)) {
@@ -348,13 +378,12 @@ export class FrameDynamicStruct extends BaseStruct {
     }
   }
 
-  static drawSelectOrHoverArc(
-    ctx: CanvasRenderingContext2D,
-    currDynamicStruct: FrameDynamicStruct
-  ): void {
-    if (currDynamicStruct.frame &&
+  static drawSelectOrHoverArc(ctx: CanvasRenderingContext2D, currDynamicStruct: FrameDynamicStruct): void {
+    if (
+      currDynamicStruct.frame &&
       currDynamicStruct.ts > TraceRow.range!.startNS &&
-      currDynamicStruct.ts < TraceRow.range!.endNS) {
+      currDynamicStruct.ts < TraceRow.range!.endNS
+    ) {
       let bigArcRadius: number = 3;
       ctx.beginPath();
       ctx.lineWidth = 3;
@@ -368,11 +397,13 @@ export class FrameDynamicStruct extends BaseStruct {
   }
 
   static isSelect(currDynamicStruct: FrameDynamicStruct): boolean | 0 | undefined {
-    return TraceRow.rangeSelectObject &&
+    return (
+      TraceRow.rangeSelectObject &&
       TraceRow.rangeSelectObject.startNS &&
       TraceRow.rangeSelectObject.endNS &&
       currDynamicStruct.ts >= TraceRow.rangeSelectObject.startNS &&
-      currDynamicStruct.ts <= TraceRow.rangeSelectObject.endNS;
+      currDynamicStruct.ts <= TraceRow.rangeSelectObject.endNS
+    );
   }
 }
 

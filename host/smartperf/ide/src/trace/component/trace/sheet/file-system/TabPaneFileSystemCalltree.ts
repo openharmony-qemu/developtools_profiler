@@ -175,7 +175,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
       let data = evt.detail.data as FileMerageBean;
       document.dispatchEvent(
         new CustomEvent('number_calibration', {
-          detail: { time: data.tsArray,durations: data.durArray },
+          detail: { time: data.tsArray, durations: data.durArray },
         })
       );
       this.setRightTableData(data);
@@ -425,10 +425,12 @@ export class TabpaneFilesystemCalltree extends BaseElement {
           this.frameChart?.calculateChartData();
         }
         // @ts-ignore
-        this.fsCallTreeTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 35 + 'px';
+        this.fsCallTreeTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 35 + 'px';
         this.fsCallTreeTbl?.reMeauseHeight();
         // @ts-ignore
-        this.fsCallTreeTbr?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 45 - 21 + 'px';
+        this.fsCallTreeTbr?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 45 - 21 + 'px';
         this.fsCallTreeTbr?.reMeauseHeight();
         this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

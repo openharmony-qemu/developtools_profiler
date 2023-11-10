@@ -29,6 +29,7 @@ namespace TraceStreamer {
 BytraceParser::BytraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters, TraceFileType fileType)
     : fileType_(fileType),
       ParserBase(filters),
+      traceDataCache_(dataCache),
       eventParser_(std::make_unique<BytraceEventParser>(dataCache, filters)),
       hilogParser_(std::make_unique<BytraceHilogParser>(dataCache, filters)),
 #ifdef SUPPORTTHREAD
@@ -62,7 +63,7 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
     }
     packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
     auto packagesBegin = packagesBuffer_.begin();
-    while (1) {
+    while (true) {
         auto packagesLine = std::find(packagesBegin, packagesBuffer_.end(), '\n');
         if (packagesLine == packagesBuffer_.end()) {
             break;
@@ -116,6 +117,9 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
                 traceBegan_ = true;
             }
             ParseTraceDataItem(bufferLine);
+            if (traceDataCache_->isSplitFile_) {
+                goto NEXT_LINE;
+            }
         } else {
             ParseJsonData(bufferLine);
         }
@@ -324,7 +328,7 @@ void BytraceParser::GetDataSegAttr(DataSegment& seg, const std::smatch& matcheLi
 }
 void BytraceParser::ParseThread()
 {
-    while (1) {
+    while (true) {
         int32_t head = GetNextSegment();
         if (head < 0) {
             if (head == ERROR_CODE_NODATA) {
@@ -353,6 +357,14 @@ void BytraceParser::ParserData(DataSegment& seg)
         parsedTraceValidLines_++;
     }
     GetDataSegAttr(seg, matcheLine);
+    if (traceDataCache_->isSplitFile_) {
+        if (seg.bufLine.ts >= traceDataCache_->SplitFileMinTime() &&
+            seg.bufLine.ts <= traceDataCache_->SplitFileMaxTime()) {
+            traceDataBytrace_ += seg.seg + "\r\n";
+        }
+        return;
+    }
+
     if (!supportThread_) {
         FilterData(seg);
         return;
@@ -365,7 +377,7 @@ void BytraceParser::ParserData(DataSegment& seg)
 }
 void BytraceParser::FilterThread()
 {
-    while (1) {
+    while (true) {
         DataSegment& seg = dataSegArray_[filterHead_];
         if (!FilterData(seg)) {
             return;

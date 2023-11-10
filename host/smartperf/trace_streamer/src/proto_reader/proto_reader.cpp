@@ -16,7 +16,6 @@
 #include "proto_reader.h"
 #include <cinttypes>
 #include "optimize.h"
-#include <cinttypes>
 
 namespace SysTuning {
 namespace ProtoReader {

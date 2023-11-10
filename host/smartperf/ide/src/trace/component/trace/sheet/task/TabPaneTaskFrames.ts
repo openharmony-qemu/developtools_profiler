@@ -25,7 +25,7 @@ import {
 } from '../../../../database/SqlLite.js';
 import { BaseStruct } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
-import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { type LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 
 const ALLOCATION_TASK = 'H:Task Allocation:';
 const PERFORM_TASK = 'H:Task Perform:';
@@ -56,7 +56,7 @@ export class TabPaneTaskFrames extends BaseElement {
       }
       //框选
       this.range!.textContent = `Selected range: 
-      ${ parseFloat(((framesParam.rightNs - framesParam.leftNs) / 1000000.0).toFixed(5)) } ms`;
+      ${parseFloat(((framesParam.rightNs - framesParam.leftNs) / 1000000.0).toFixed(5))} ms`;
       this.progressEL!.loading = true;
       this.queryDataByDB(framesParam, false);
     }
@@ -92,7 +92,7 @@ export class TabPaneTaskFrames extends BaseElement {
         }
       });
       allocationTime = executeStartTime - allocationStartTime;
-      returnTime = returnEndTime == 0 ? 0 : returnEndTime - (executeStartTime + executeTime);
+      returnTime = returnEndTime === 0 ? 0 : returnEndTime - (executeStartTime + executeTime);
       if (TabPaneTaskFrames.IsShowConcurrency) {
         let tableList: TaskTabStruct[] = [];
         this.buildConcurrencyTable(executeStruct!, tableList, framesParam, isClick);
@@ -102,12 +102,16 @@ export class TabPaneTaskFrames extends BaseElement {
     }
   }
 
-  private buildConcurrencyTable(executeStruct: FuncStruct,
-                                tableList: TaskTabStruct[], framesParam: SelectionParam, isClick: boolean): void {
+  private buildConcurrencyTable(
+    executeStruct: FuncStruct,
+    tableList: TaskTabStruct[],
+    framesParam: SelectionParam,
+    isClick: boolean
+  ): void {
     this.countConcurrency(executeStruct, tableList, framesParam, isClick).then((result) => {
       let concurrencyColumn: TaskTabStruct = new TaskTabStruct();
       concurrencyColumn.executeId = TABLE_CURRENCY;
-      concurrencyColumn.taskPriority = `${ result }`;
+      concurrencyColumn.taskPriority = `${result}`;
       tableList.push(concurrencyColumn);
       let filterList = [];
       let map = new Map();
@@ -123,8 +127,13 @@ export class TabPaneTaskFrames extends BaseElement {
       this.progressEL!.loading = false;
     });
   }
-  private buildNoConcurrencyTable(executeId: string, priorityId: number, sTime: number,
-                                  eTime: number, rTime: number): void {
+  private buildNoConcurrencyTable(
+    executeId: string,
+    priorityId: number,
+    sTime: number,
+    eTime: number,
+    rTime: number
+  ): void {
     let task: TaskTabStruct = new TaskTabStruct();
     task.executeId = executeId;
     task.taskPriority = Priority[priorityId];
@@ -152,7 +161,7 @@ export class TabPaneTaskFrames extends BaseElement {
       let tempTableList: TaskTabStruct[] = [];
       let tempExecuteTaskList: FuncStruct[] = [];
       let tempExecuteTaskIds: number[] = [];
-      for (let index = 0 ; index < groupsValue.length ; index++) {
+      for (let index = 0; index < groupsValue.length; index++) {
         let data = groupsValue[index];
         let executeId = TabPaneTaskFrames.getExecuteId(data.funName!);
         if (data.funName!.indexOf(PERFORM_TASK) >= 0) {
@@ -162,13 +171,13 @@ export class TabPaneTaskFrames extends BaseElement {
       }
       let uniqueArr = [...new Set(tempExecuteTaskIds)];
       let taskList = await queryTaskListByExecuteTaskIds(uniqueArr, key);
-      for (let index = 0 ; index < taskList.length ; index++) {
+      for (let index = 0; index < taskList.length; index++) {
         this.pushTaskToList(taskList[index], tempTableList);
       }
       let filterArray = await this.handleConcurrency(tempExecuteTaskList, tempTableList, framesParam, isClick);
       this.taskFramesGroupSource.push(filterArray);
     }
-    this.taskFramesGroupSource.forEach(framesSource => {
+    this.taskFramesGroupSource.forEach((framesSource) => {
       tableList.push(...framesSource);
     });
     this.taskFramesSource = tableList;
@@ -230,10 +239,7 @@ export class TabPaneTaskFrames extends BaseElement {
         `;
   }
 
-  sortByColumn(framesDetail: {
-    sort: number,
-    key: string,
-  }): void {
+  sortByColumn(framesDetail: { sort: number; key: string }): void {
     // @ts-ignore
     let compare = function (property, sort, type) {
       return function (taskFramesLeftData: TaskTabStruct, taskFramesRightData: TaskTabStruct): number {
@@ -262,7 +268,7 @@ export class TabPaneTaskFrames extends BaseElement {
       };
     };
     let tableList: TaskTabStruct[] = [];
-    this.taskFramesGroupSource.forEach(framesGroup => {
+    this.taskFramesGroupSource.forEach((framesGroup) => {
       if (framesDetail.key === 'taskPriority') {
         framesGroup.sort(compare(framesDetail.key, framesDetail.sort, 'string'));
       } else {
@@ -325,8 +331,8 @@ export class TabPaneTaskFrames extends BaseElement {
     ]);
     let tasks: Array<TaskTabStruct> = res[1];
     let maxConcurrency = 0;
-    let timePointArray: { time: number, isStart: boolean }[] = [];
-    for (let i = 0 ; i < tasks.length ; i++) {
+    let timePointArray: { time: number; isStart: boolean }[] = [];
+    for (let i = 0; i < tasks.length; i++) {
       timePointArray.push({ time: tasks[i].startTs!, isStart: true });
       timePointArray.push({ time: tasks[i].startTs! + tasks[i].dur!, isStart: false });
     }
@@ -368,7 +374,7 @@ export class TabPaneTaskFrames extends BaseElement {
       maxNumConcurrency = countConcurrencyPromise;
       let concurrencyColumn: TaskTabStruct = new TaskTabStruct();
       concurrencyColumn.executeId = TABLE_CURRENCY;
-      concurrencyColumn.taskPriority = `${ maxNumConcurrency }`;
+      concurrencyColumn.taskPriority = `${maxNumConcurrency}`;
       tableList.push(concurrencyColumn);
       //去重
       let filterList = [];

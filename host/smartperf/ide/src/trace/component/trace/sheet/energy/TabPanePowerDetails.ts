@@ -298,9 +298,13 @@ export class TabPanePowerDetails extends BaseElement {
         if (type === 'number') {
           return sort === 2
             ? // @ts-ignore
-              parseFloat(bPowerDetails[property] == '-' ? 0 : bPowerDetails[property]) - parseFloat(aPowerDetails[property] == '-' ? 0 : aPowerDetails[property])
+              parseFloat(bPowerDetails[property] == '-' ? 0 : bPowerDetails[property]) -
+                // @ts-ignore
+                parseFloat(aPowerDetails[property] == '-' ? 0 : aPowerDetails[property])
             : // @ts-ignore
-              parseFloat(aPowerDetails[property] == '-' ? 0 : aPowerDetails[property]) - parseFloat(bPowerDetails[property] == '-' ? 0 : bPowerDetails[property]);
+              parseFloat(aPowerDetails[property] == '-' ? 0 : aPowerDetails[property]) -
+                // @ts-ignore
+                parseFloat(bPowerDetails[property] == '-' ? 0 : bPowerDetails[property]);
         } else {
           // @ts-ignore
           if (bPowerDetails[property] > aPowerDetails[property]) {

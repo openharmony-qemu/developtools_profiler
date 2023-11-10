@@ -61,7 +61,9 @@ export class HeapTimelineRender {
         }
       }
     }
-    if (!heapTimelineFind && row.isHover) HeapTimelineStruct.hoverHeapTimelineStruct = undefined;
+    if (!heapTimelineFind && row.isHover) {
+      HeapTimelineStruct.hoverHeapTimelineStruct = undefined;
+    }
   }
 }
 export function HeapTimeline(

@@ -111,7 +111,9 @@ void Metrics::InitMemoryTaskNameStrategy(const std::string& result)
         } else {
             taskProcessItem.processName = jMessage.at("values")[i].at(2);
         }
-        taskProcessItem.threadName = SplitStringToVec(jMessage.at("values")[i].at(3), ",");
+        if (!jMessage.at("values")[i].at(3).is_null()) {
+            taskProcessItem.threadName = SplitStringToVec(jMessage.at("values")[i].at(3), ",");
+        }
         taskNameStrategy_.emplace_back(taskProcessItem);
     }
     return;

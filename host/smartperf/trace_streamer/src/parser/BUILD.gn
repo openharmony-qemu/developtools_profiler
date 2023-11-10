@@ -39,6 +39,7 @@ ohos_source_set("parser") {
     "ebpf_parser:ebpf_parser",
   ]
   deps += [ "htrace_pbreader_parser:htrace_pbreader_parser" ]
+  deps += [ "rawtrace_parser:rawtrace_parser" ]
 
   include_dirs = [
     "${THIRD_PARTY}/protobuf/src",
@@ -52,6 +53,7 @@ ohos_source_set("parser") {
     "${SRC}",
     ".",
     "htrace_pbreader_parser",
+    "rawtrace_parser",
     "../proto_reader/include",
     "${THIRD_PARTY}/bounds_checking_function/include",
     "${THIRD_PARTY}/json/single_include/nlohmann",
