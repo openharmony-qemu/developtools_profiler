@@ -53,7 +53,6 @@ ohos_unittest("nativehook_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
 
   include_dirs = [

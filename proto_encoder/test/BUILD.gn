@@ -78,7 +78,6 @@ ohos_unittest("proto_encoder_ut") {
   deps = [
     ":proto_example_source",
     "../:proto_encoder_source",
-    "//third_party/googletest:gtest_main",
   ]
   include_dirs = [
     "../include",

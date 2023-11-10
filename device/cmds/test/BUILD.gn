@@ -50,7 +50,6 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_plugin_config_cpp_standard",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
     "//third_party/openssl:libcrypto_shared",
   ]
   include_dirs = [

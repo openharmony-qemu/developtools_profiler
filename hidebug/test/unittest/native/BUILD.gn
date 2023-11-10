@@ -21,7 +21,6 @@ ohos_unittest("hidebug_test") {
 
   deps = [
     "//developtools/profiler/hidebug/interfaces/native/innerkits:libhidebug",
-    "//third_party/googletest:gtest_main",
   ]
 
   include_dirs = [

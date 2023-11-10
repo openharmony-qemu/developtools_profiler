@@ -15,7 +15,6 @@
 #ifndef HIPERF_CALLSTACK_TEST_H
 #define HIPERF_CALLSTACK_TEST_H
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <link.h>

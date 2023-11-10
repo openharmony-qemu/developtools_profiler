@@ -29,7 +29,6 @@ ohos_unittest("hidumpplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/hidump_plugin:hidumpplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
   include_dirs = [
     "../include",

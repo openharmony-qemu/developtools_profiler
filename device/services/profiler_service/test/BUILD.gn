@@ -50,7 +50,6 @@ ohos_unittest("profiler_service_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_data_cpp",
     "../:profiler_service",
     "../../../base:hiprofiler_base",
-    "//third_party/googletest:gtest",
   ]
   include_dirs = [
     "//third_party/googletest/googletest/include/gtest",

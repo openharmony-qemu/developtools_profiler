@@ -14,8 +14,6 @@
  */
 
 #include "symbols_file_test.h"
-
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <hilog/log.h>
 #include <random>

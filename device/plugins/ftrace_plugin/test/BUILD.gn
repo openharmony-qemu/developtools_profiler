@@ -48,7 +48,6 @@ ohos_unittest("ftrace_plugin_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
   include_dirs = [
     "../include",
