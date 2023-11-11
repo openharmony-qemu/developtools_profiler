@@ -39,6 +39,8 @@ void ControlCallCmd::GetResultData(int argc, std::vector<std::string> v)
     }
     if (v[typeName] == "screen") {
         SPUtils::GetScreen();
+    } else if (v[typeName] == "frameLoss") {
+        SmartPerf::ControlCallCmd::GetFrame();
     }
 }
 std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
@@ -93,6 +95,20 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
     }
     return result;
 }
+void ControlCallCmd::GetFrame()
+{
+    OHOS::SmartPerf::StartUpDelay sd;
+    std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_frame.ftrace", cmdResult);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "frame" + ".ftrace";
+    std::thread thGetTrace = sd.ThreadGetTrace("frame", traceName);
+    std::thread thGetHisysId = sd.ThreadGetHisysId();
+    std::string str = SPUtils::GetRadarFrame();
+    thGetTrace.join();
+    thGetHisysId.join();
+    radar.ParseRadarFrame(str);
+}
 double ControlCallCmd::PageFps()
 {
     OHOS::SmartPerf::StartUpDelay sd;
@@ -140,6 +156,7 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
     SPUtils::LoadCmd(cmd, cmdResult);
     sleep(1);
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+    sleep(1);
     cmd = "uinput -T -m 650 1500 650 500 30";
     SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();

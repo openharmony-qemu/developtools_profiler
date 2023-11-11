@@ -201,6 +201,13 @@ std::string SPUtils::GetScreen()
     std::cout << screen << std::endl;
     return screenStr;
 }
+std::string SPUtils::GetRadarFrame()
+{
+    std::string cmd = "hisysevent -r -o PERFORMANCE -n INTERACTION_JANK";
+    std::string curRadar = "";
+    LoadCmd(cmd, curRadar);
+    return curRadar;
+}
 std::string SPUtils::GetRadarResponse()
 {
     std::string cmd = "hisysevent -r -n INTERACTION_RESPONSE_LATENCY";

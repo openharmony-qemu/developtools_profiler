@@ -102,6 +102,7 @@ std::string GetTopPkgName();
 std::string GetRadar();
 std::string GetRadarResponse();
 std::string GetRadarComplete();
+std::string GetRadarFrame();
 std::map<std::string, std::string> GetDeviceInfo();
 std::map<std::string, std::string> GetCpuInfo();
 std::map<std::string, std::string> GetGpuInfo();
