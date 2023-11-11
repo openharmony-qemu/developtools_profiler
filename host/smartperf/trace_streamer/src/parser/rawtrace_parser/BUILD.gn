@@ -39,12 +39,12 @@ ohos_source_set("rawtrace_parser_src") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
+    "cpu_detail_parser.cpp",
     "ftrace_event_processor.cpp",
     "ftrace_field_processor.cpp",
     "ftrace_processor.cpp",
     "kernel_symbols_processor.cpp",
     "printk_formats_processor.cpp",
-    "cpu_detail_parser.cpp",
     "rawtrace_parser.cpp",
   ]
 
