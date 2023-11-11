@@ -77,7 +77,7 @@ namespace OHOS {
             std::string averageRenderFrametime = extract_string(string, "\"AVERAGE_RENDER_FRAMETIME\":");
             std::cout << "AVERAGE_RENDER_FRAMETIME:" << averageRenderFrametime << "ms" << std::endl;
             std::string maxRenderSeqMissedFrames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
-            std::cout << "MAX_RENDER_SEQ_MISSED_FRAMES:" << maxRenderSeqMissedFrames << "ms" << std::endl;
+            std::cout << "MAX_RENDER_SEQ_MISSED_FRAMES:" << maxRenderSeqMissedFrames << std::endl;
         }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {
