@@ -58,10 +58,14 @@ private:
     void SetupTransporterFlushParams(uint32_t intervalMs, uint32_t thresholdKb);
     void GenerateRawDataFileNames(const std::string& prefix);
     void SetupTraceReadPeriod(uint32_t periodMs);
+    void CaptureWorkOnNomalModeInner();
+    void HmCaptureWorkOnNomalModeInner();
     void CaptureWorkOnNomalMode();
     void CaptureWorkOnDelayMode();
     long ReadEventData(int cpuid);
+    long HmReadEventData();
     bool ParseEventDataOnNomalMode(int cpuid, long dataSize);
+    bool HmParseEventDataOnNomalMode(long dataSize);
     bool ParseEventDataOnDelayMode();
     bool ParseEventData(int cpuid, uint8_t* page);
 

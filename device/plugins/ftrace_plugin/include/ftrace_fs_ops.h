@@ -30,6 +30,10 @@ public:
     static FtraceFsOps& GetInstance();
 
     static std::string GetFtraceRoot();
+    std::string GetHmTraceDir();
+    int WriteTraceFile(const std::string& path, const std::string& content);
+    int WriteTraceFile(const std::string& path, const std::string& content, int flags);
+    std::string ReadTraceFile(const std::string& path) const;
 
     MOCKABLE std::string GetKernelSymbols() const;
     MOCKABLE std::string GetPrintkFormats() const;
@@ -43,8 +47,10 @@ public:
     MOCKABLE std::string GetSavedTgids() const;
     MOCKABLE std::string GetPerCpuStats(int cpu) const;
     MOCKABLE std::string GetRawTracePath(int cpu) const;
+    std::string GetHmRawTracePath() const;
     MOCKABLE std::string GetPageHeaderFormat() const;
     MOCKABLE std::string GetEventDataFormat(const std::string& type, const std::string& name) const;
+    std::string HmGetEventDataFormat(const std::string& type, const std::string& name) const;
     MOCKABLE std::vector<std::pair<std::string, std::string>> GetPlatformEvents();
 
     // for ftrace control nodes
@@ -75,6 +81,7 @@ private:
 
 private:
     std::string ftraceRoot_;
+    std::string hmTraceDir_;
 };
 FTRACE_NS_END
 
