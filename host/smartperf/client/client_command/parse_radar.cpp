@@ -54,6 +54,31 @@ namespace OHOS {
             time = std::stod(extract_string(string, target));
             return time;
         }
+        void Radar::ParseRadarFrame(std::string string)
+        {
+            std::string budle_name = extract_string(string, "\"BUNDLE_NAME\":");
+            std::cout << "BUNDLE_NAME:" << budle_name << std::endl;
+            std::string scene_id = extract_string(string, "\"SCENE_ID\":");
+            std::cout << "SCENE_ID:" << scene_id << std::endl;
+            std::string total_app_frames = extract_string(string, "\"TOTAL_APP_FRAMES\":");
+            std::cout << "TOTAL_APP_FRAMES:" << total_app_frames << std::endl;
+            std::string total_app_missed_frames = extract_string(string, "\"TOTAL_APP_MISSED_FRAMES\":");
+            std::cout << "TOTAL_APP_MISSED_FRAMES:" << total_app_missed_frames << std::endl;
+            std::string max_app_framsestime = extract_string(string, "\"MAX_APP_FRAMETIME\":");
+            std::cout << "MAX_APP_FRAMETIME:" << max_app_framsestime << "ms" << std::endl;
+            std::string max_app_seq_missed_frames = extract_string(string, "\"MAX_APP_SEQ_MISSED_FRAMES\":");
+            std::cout << "MAX_APP_SEQ_MISSED_FRAMES:" << max_app_seq_missed_frames << std::endl;
+            std::string total_render_frames = extract_string(string, "\"TOTAL_RENDER_FRAMES\":");
+            std::cout << "TOTAL_RENDER_FRAMES:" << total_render_frames << std::endl;
+            std::string total_render_missed_frames = extract_string(string, "\"TOTAL_RENDER_MISSED_FRAMES\":");
+            std::cout << "TOTAL_RENDER_MISSED_FRAMES:" << total_render_missed_frames << std::endl;
+            std::string max_render_frametime = extract_string(string, "\"MAX_RENDER_FRAMETIME\":");
+            std::cout << "MAX_RENDER_FRAMETIME:" << max_render_frametime << "ms" << std::endl;
+            std::string average_render_frametime = extract_string(string, "\"AVERAGE_RENDER_FRAMETIME\":");
+            std::cout << "AVERAGE_RENDER_FRAMETIME:" << average_render_frametime << "ms" << std::endl;
+            std::string max_render_seq_missed_frames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
+            std::cout << "MAX_RENDER_SEQ_MISSED_FRAMES:" << max_render_seq_missed_frames << "ms" << std::endl;
+        }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {
             size_t pos = str.find(target);
