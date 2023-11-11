@@ -56,28 +56,28 @@ namespace OHOS {
         }
         void Radar::ParseRadarFrame(std::string string)
         {
-            std::string budle_name = extract_string(string, "\"BUNDLE_NAME\":");
-            std::cout << "BUNDLE_NAME:" << budle_name << std::endl;
-            std::string scene_id = extract_string(string, "\"SCENE_ID\":");
-            std::cout << "SCENE_ID:" << scene_id << std::endl;
-            std::string total_app_frames = extract_string(string, "\"TOTAL_APP_FRAMES\":");
-            std::cout << "TOTAL_APP_FRAMES:" << total_app_frames << std::endl;
-            std::string total_app_missed_frames = extract_string(string, "\"TOTAL_APP_MISSED_FRAMES\":");
-            std::cout << "TOTAL_APP_MISSED_FRAMES:" << total_app_missed_frames << std::endl;
-            std::string max_app_framsestime = extract_string(string, "\"MAX_APP_FRAMETIME\":");
-            std::cout << "MAX_APP_FRAMETIME:" << max_app_framsestime << "ms" << std::endl;
-            std::string max_app_seq_missed_frames = extract_string(string, "\"MAX_APP_SEQ_MISSED_FRAMES\":");
-            std::cout << "MAX_APP_SEQ_MISSED_FRAMES:" << max_app_seq_missed_frames << std::endl;
-            std::string total_render_frames = extract_string(string, "\"TOTAL_RENDER_FRAMES\":");
-            std::cout << "TOTAL_RENDER_FRAMES:" << total_render_frames << std::endl;
-            std::string total_render_missed_frames = extract_string(string, "\"TOTAL_RENDER_MISSED_FRAMES\":");
-            std::cout << "TOTAL_RENDER_MISSED_FRAMES:" << total_render_missed_frames << std::endl;
-            std::string max_render_frametime = extract_string(string, "\"MAX_RENDER_FRAMETIME\":");
-            std::cout << "MAX_RENDER_FRAMETIME:" << max_render_frametime << "ms" << std::endl;
-            std::string average_render_frametime = extract_string(string, "\"AVERAGE_RENDER_FRAMETIME\":");
-            std::cout << "AVERAGE_RENDER_FRAMETIME:" << average_render_frametime << "ms" << std::endl;
-            std::string max_render_seq_missed_frames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
-            std::cout << "MAX_RENDER_SEQ_MISSED_FRAMES:" << max_render_seq_missed_frames << "ms" << std::endl;
+            std::string budleName = extract_string(string, "\"BUNDLE_NAME\":");
+            std::cout << "BUNDLE_NAME:" << budleName << std::endl;
+            std::string sceneId = extract_string(string, "\"SCENE_ID\":");
+            std::cout << "SCENE_ID:" << sceneId << std::endl;
+            std::string totalAppFrames = extract_string(string, "\"TOTAL_APP_FRAMES\":");
+            std::cout << "TOTAL_APP_FRAMES:" << totalAppFrames << std::endl;
+            std::string totalAppMissedFrames = extract_string(string, "\"TOTAL_APP_MISSED_FRAMES\":");
+            std::cout << "TOTAL_APP_MISSED_FRAMES:" << totalAppMissedFrames << std::endl;
+            std::string maxAppFramsestime = extract_string(string, "\"MAX_APP_FRAMETIME\":");
+            std::cout << "MAX_APP_FRAMETIME:" << maxAppFramsestime << "ms" << std::endl;
+            std::string maxAppSeqMissedFrames = extract_string(string, "\"MAX_APP_SEQ_MISSED_FRAMES\":");
+            std::cout << "MAX_APP_SEQ_MISSED_FRAMES:" << maxAppSeqMissedFrames << std::endl;
+            std::string totalRenderFrames = extract_string(string, "\"TOTAL_RENDER_FRAMES\":");
+            std::cout << "TOTAL_RENDER_FRAMES:" << totalRenderFrames << std::endl;
+            std::string totalRenderMissedFrames = extract_string(string, "\"TOTAL_RENDER_MISSED_FRAMES\":");
+            std::cout << "TOTAL_RENDER_MISSED_FRAMES:" << totalRenderMissedFrames << std::endl;
+            std::string maxRenderFrametime = extract_string(string, "\"MAX_RENDER_FRAMETIME\":");
+            std::cout << "MAX_RENDER_FRAMETIME:" << maxRenderFrametime << "ms" << std::endl;
+            std::string averageRenderFrametime = extract_string(string, "\"AVERAGE_RENDER_FRAMETIME\":");
+            std::cout << "AVERAGE_RENDER_FRAMETIME:" << averageRenderFrametime << "ms" << std::endl;
+            std::string maxRenderSeqMissedFrames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
+            std::cout << "MAX_RENDER_SEQ_MISSED_FRAMES:" << maxRenderSeqMissedFrames << "ms" << std::endl;
         }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {
