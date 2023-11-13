@@ -41,10 +41,7 @@ ohos_unittest("hiebpf_ut") {
     "unittest/maps_info_test.cpp",
     "unittest/ringbuffer_test.cpp",
   ]
-  deps = [
-    "${OHOS_PROFILER_DIR}/hiebpf:hiebpf_source_common",
-    "//third_party/googletest:gtest_main",
-  ]
+  deps = [ "${OHOS_PROFILER_DIR}/hiebpf:hiebpf_source_common" ]
   include_dirs = [
     "unittest/include",
     "${OHOS_PROFILER_DIR}/hiebpf/include",

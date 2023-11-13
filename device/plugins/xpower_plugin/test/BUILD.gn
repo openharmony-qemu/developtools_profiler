@@ -40,7 +40,6 @@ ohos_unittest("xpowerplugin_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
     "../../../base:hiprofiler_base",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
 
   include_dirs = [

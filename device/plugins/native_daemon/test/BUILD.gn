@@ -61,8 +61,6 @@ common_deps = [
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
   "../../../base:hiprofiler_base",
   "//third_party/bounds_checking_function:libsec_static",
-  "//third_party/googletest:gmock_main",
-  "//third_party/googletest:gtest_main",
   "//third_party/libunwind:unwind_source_${target_cpu}",
   "//third_party/zlib:libz",
 ]

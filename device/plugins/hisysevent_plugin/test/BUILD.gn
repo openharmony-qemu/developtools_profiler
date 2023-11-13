@@ -29,7 +29,6 @@ ohos_unittest("hisyseventplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/hisysevent_plugin:hisyseventplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
   include_dirs = [
     "../include",

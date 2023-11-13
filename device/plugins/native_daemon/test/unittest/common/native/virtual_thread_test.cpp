@@ -14,8 +14,6 @@
  */
 
 #include "virtual_thread_test.h"
-
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <link.h>
 #include <random>

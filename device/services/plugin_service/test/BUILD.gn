@@ -28,11 +28,7 @@ ohos_unittest("plugin_service_ut") {
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
   ]
-  deps = [
-    "../../../base:hiprofiler_base",
-    "//third_party/googletest:gtest",
-    "//third_party/googletest:gtest_main",
-  ]
+  deps = [ "../../../base:hiprofiler_base" ]
   include_dirs = [
     "../src",
     "//third_party/googletest/googletest/include/gtest",

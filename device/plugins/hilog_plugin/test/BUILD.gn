@@ -29,7 +29,6 @@ ohos_unittest("hilogplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/hilog_plugin:hilogplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hilog_data:hilog_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
   include_dirs = [
     "../include",
