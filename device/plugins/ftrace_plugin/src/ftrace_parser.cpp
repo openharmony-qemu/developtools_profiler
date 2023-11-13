@@ -91,12 +91,38 @@ bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
     format.eventType = type;
     format.eventName = name;
     std::string desc = FtraceFsOps::GetInstance().GetEventDataFormat(type, name);
-    CHECK_TRUE(ParseEventFormat(desc.data(), format), false, "parse %s/%s/format failed!", type.c_str(), name.c_str());
-    CHECK_TRUE(SubEventParser<FtraceEvent>::GetInstance().SetupEvent(format),
-               false, "setup %s/%s failed!", type.c_str(), name.c_str());
-    CHECK_TRUE(SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().SetupEvent(format),
-               false, "setup pbzero %s/%s failed!", type.c_str(), name.c_str());
+    if (desc != "") {
+        CHECK_TRUE(ParseEventFormat(desc.data(), format), false, "parse %s/%s/format failed!",
+            type.c_str(), name.c_str());
+        CHECK_TRUE(SubEventParser<FtraceEvent>::GetInstance().SetupEvent(format),
+            false, "setup %s/%s failed!", type.c_str(), name.c_str());
+        CHECK_TRUE(SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().SetupEvent(format),
+            false, "setup pbzero %s/%s failed!", type.c_str(), name.c_str());
+    }
 
+    /* hongmeng trace event may exist both in ldk and hongmeng */
+    EventFormat hmformat;
+    hmformat.eventType = type;
+    hmformat.eventName = name;
+    desc = FtraceFsOps::GetInstance().HmGetEventDataFormat(type, name);
+    if (desc != "") {
+        if (name == "sched_blocked_reason") {
+            hmformat.eventName = "hm_sched_blocked_reason";
+        }
+        CHECK_TRUE(ParseEventFormat(desc.data(), hmformat), false, " parse hm %s/%s/format failed!",
+            type.c_str(), name.c_str());
+
+        for (auto &fmt: hmformat.commonFields) {
+            fmt.offset += offsetof(struct HmTraceHeader, commonType);
+        }
+        for (auto &fmt: hmformat.fields) {
+            fmt.offset += offsetof(struct HmTraceHeader, commonType);
+        }
+        hmformat.eventSize += offsetof(struct HmTraceHeader, commonType);
+
+        CHECK_TRUE(SubEventParser<FtraceEvent>::GetInstance().SetupEvent(hmformat),
+            false, "setup hm %s/%s failed!", type.c_str(), name.c_str());
+    }
     return true;
 }
 

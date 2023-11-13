@@ -98,6 +98,13 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
 
 bool FlowController::CreateRawDataReaders()
 {
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+        auto reader = std::make_unique<FtraceDataReader>(FtraceFsOps::GetInstance().GetHmRawTracePath());
+        CHECK_NOTNULL(reader, false, "create hm raw trace reader FAILED!");
+        ftraceReaders_.emplace_back(std::move(reader));
+        return true;
+    }
+
     for (int i = 0; i < platformCpuNum_; i++) {
         auto rawPath = FtraceFsOps::GetInstance().GetRawTracePath(i);
         if (fakePath_ != "") {
@@ -124,14 +131,23 @@ bool FlowController::CreatePagedMemoryPool()
     if (pagesPerBlock > MAX_BLOCK_SIZE_PAGES) {
         pagesPerBlock = MAX_BLOCK_SIZE_PAGES;
     }
-    memPool_ = std::make_unique<PagedMemPool>(pagesPerBlock, platformCpuNum_);
+
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+        memPool_ = std::make_unique<PagedMemPool>(bufferSizePages, 1);
+    } else {
+        memPool_ = std::make_unique<PagedMemPool>(pagesPerBlock, platformCpuNum_);
+    }
     CHECK_NOTNULL(memPool_, false, "create PagedMemPool FAILED!");
     return true;
 }
 
 bool FlowController::CreateRawDataBuffers()
 {
-    for (int i = 0; i < platformCpuNum_; i++) {
+    int num = platformCpuNum_;
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+        num = 1;
+    }
+    for (int i = 0; i < num; i++) {
         using u8ptr = std::unique_ptr<uint8_t>::pointer;
         auto buffer = std::shared_ptr<uint8_t>(reinterpret_cast<u8ptr>(memPool_->Allocate()),
             [&](u8ptr block) { this->memPool_->Recycle(block); });
@@ -283,7 +299,7 @@ int FlowController::StartCapture(void)
     return 0;
 }
 
-void FlowController::CaptureWorkOnNomalMode()
+void FlowController::CaptureWorkOnNomalModeInner()
 {
     pthread_setname_np(pthread_self(), "TraceReader");
     HILOG_INFO(LOG_CORE, "FlowController::CaptureWorkOnNomalMode start!");
@@ -330,6 +346,63 @@ void FlowController::CaptureWorkOnNomalMode()
     HILOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnNomalMode done!");
 }
 
+long FlowController::HmReadEventData()
+{
+    auto buffer = ftraceBuffers_[0].get();
+    auto reader = ftraceReaders_[0].get();
+    auto bufferSize = static_cast<long>(memPool_->GetBlockSize());
+
+    long nbytes = 0;
+    long used = 0;
+    long rest = bufferSize;
+    while ((nbytes = reader->Read(&buffer[used], rest)) > 0 && used < bufferSize) {
+        used += nbytes;
+        rest -= nbytes;
+    }
+    return used;
+}
+
+void FlowController::HmCaptureWorkOnNomalModeInner()
+{
+    pthread_setname_np(pthread_self(), "HmTraceReader");
+    HILOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode start!");
+    auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
+    long rawDataBytes = 0;
+
+    while (keepRunning_) {
+        std::this_thread::sleep_for(tracePeriod);
+        if (flushCacheData_ && !keepRunning_) {
+            HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+            return;
+        }
+
+        rawDataBytes = HmReadEventData();
+
+        if (flushCacheData_ && !keepRunning_) {
+            HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+            return;
+        }
+        if (rawDataBytes == 0) {
+            HILOG_INFO(LOG_CORE, "Get hm raw data is 0 bytes.");
+            continue;
+        }
+
+        CHECK_TRUE(HmParseEventDataOnNomalMode(rawDataBytes), NO_RETVAL, "HmParseEventData failed!");
+    }
+
+    tansporter_->Flush();
+    HILOG_DEBUG(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode done!");
+}
+
+void FlowController::CaptureWorkOnNomalMode()
+{
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+        HmCaptureWorkOnNomalModeInner();
+    } else {
+        CaptureWorkOnNomalModeInner();
+    }
+}
+
 void FlowController::CaptureWorkOnDelayMode()
 {
     pthread_setname_np(pthread_self(), "TraceReader");
@@ -366,6 +439,51 @@ void FlowController::CaptureWorkOnDelayMode()
     CHECK_TRUE(ParseEventDataOnDelayMode(), NO_RETVAL, "ParseEventData failed!");
     tansporter_->Flush();
     HILOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnDelayMode done!");
+}
+
+bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
+{
+    auto buffer = ftraceBuffers_[0].get();
+    auto curPtr = buffer;
+    auto endPtr = buffer + dataSize;
+    auto tracePacket = std::make_unique<TracePluginResult>();
+    std::vector<FtraceCpuDetailMsg *> cpuDetail(platformCpuNum_);
+
+    for (int i = 0; i < platformCpuNum_; i++) {
+        cpuDetail[i] = tracePacket->add_ftrace_cpu_detail();
+        cpuDetail[i]->set_cpu(static_cast<uint32_t>(i));
+        cpuDetail[i]->set_overwrite(0);
+    }
+
+    unsigned short cpuId;
+    struct HmTraceHeader *header;
+    unsigned int evtSize;
+    FtraceEvent *ftraceEvent;
+
+    while (curPtr < endPtr) {
+        cpuId = *(unsigned short *)curPtr;
+        curPtr += sizeof(unsigned short);
+        header = (struct HmTraceHeader *)curPtr;
+        evtSize = header->size;
+
+        auto parseEventCtx =
+            SubEventParser<FtraceEvent>::GetInstance().GetParseEventCtx(header->commonType);
+        if (parseEventCtx == NULL) {
+            curPtr += evtSize;
+            continue;
+        }
+
+        ftraceEvent = cpuDetail[cpuId]->add_event();
+        ftraceEvent->set_timestamp(header->timestamp);
+        ftraceEvent->set_tgid(header->tgid);
+        ftraceEvent->set_comm(header->tcbName);
+
+        CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, curPtr, evtSize,
+            parseEventCtx), false, "hm parse event failed!");
+            curPtr += evtSize;
+    }
+
+    return tansporter_->Submit(std::move(tracePacket));
 }
 
 long FlowController::ReadEventData(int cpuid)
@@ -698,7 +816,11 @@ void FlowController::EnableTraceEvents(void)
     for (auto& event : supportedEvents_) {
         std::string type = event.first;
         std::string name = event.second;
-        if (userEventSet.count(type + "/" + name)) { // user config format
+        std::string fmt_type = type;
+        if (type == "power_kernel") {
+            fmt_type = "power";
+        }
+        if (userEventSet.count(fmt_type + "/" + name)) { // user config format
             if (FtraceFsOps::GetInstance().EnableEvent(type, name)) {
                 FtraceFsOps::GetInstance().AppendSetEvent(type, name);
                 enabledEvents_.push_back(event);

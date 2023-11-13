@@ -64,17 +64,16 @@ public:
         }
 
         it->second.format = format;
+        idToParseCtx_[format.eventId] = it->second;
+
         if (format.eventName == "sched_switch") {
             schedSwitchCtx = &it->second;
             schedSwitchEventID = format.eventId;
         } else if (format.eventName == "sched_waking") {
             schedWakingCtx = &it->second;
             schedWakingEventID = format.eventId;
-        } else if (format.eventName == "sched_wakup") {
-            schedWakupCtx = &it->second;
-            schedWakupEventID = format.eventId;
         } else {
-            idToFunctions_[format.eventId] = &it->second;
+            idToFunctions_[format.eventId] = &idToParseCtx_[format.eventId];
         }
         return true;
     }
@@ -84,8 +83,6 @@ public:
         if (eventId == schedSwitchEventID) {
             return schedSwitchCtx;
         } else if (eventId == schedWakingEventID) {
-            return schedWakingCtx;
-        } else if (eventId == schedWakupEventID) {
             return schedWakingCtx;
         }
 
@@ -125,14 +122,13 @@ protected:
 private:
     DISALLOW_COPY_AND_MOVE(SubEventParser);
     std::unordered_map<std::string, ParseEventCtx> nameToFunctions_;
+    std::unordered_map<uint32_t, ParseEventCtx> idToParseCtx_;
     std::unordered_map<uint32_t, ParseEventCtx*> idToFunctions_;
 
     uint32_t schedSwitchEventID = (uint32_t)-1;
     uint32_t schedWakingEventID = (uint32_t)-1;
-    uint32_t schedWakupEventID = (uint32_t)-1;
     ParseEventCtx* schedSwitchCtx = nullptr;
     ParseEventCtx* schedWakingCtx = nullptr;
-    ParseEventCtx* schedWakupCtx = nullptr;
 };
 
 class SubEventParserRegisterar {

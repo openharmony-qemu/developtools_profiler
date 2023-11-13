@@ -42,6 +42,18 @@ struct FtraceEventHeader {
     uint32_t array[0];
 };
 
+#define HMCAP_THREAD_NAME_SIZE 16
+struct HmTraceHeader {
+    unsigned int size;
+    int tgid;
+    char tcbName[HMCAP_THREAD_NAME_SIZE];
+    unsigned long long timestamp;
+    unsigned short commonType;
+    unsigned char commonFlags;
+    unsigned char commonPreemptCount;
+    int commonPid;
+};
+
 // /sys/kernel/debug/tracing/events/header_page
 // kernel source ring_buffer.c struct buffer_data_page
 struct PageHeader {

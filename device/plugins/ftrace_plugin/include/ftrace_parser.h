@@ -86,6 +86,19 @@ public:
 
     void SetDebugOn(bool value);
 
+    template <typename T, typename P> bool HmParseFtraceEvent(T& ftraceEvent, uint8_t data[],
+            size_t dataSize, P& parseEventCtx)
+    {
+        CHECK_TRUE(dataSize >= parseEventCtx->format.eventSize, false,
+                   "FtraceParser::ParseFtraceEvent, dataSize not enough!");
+        int pid = 0;
+        CHECK_TRUE(ParseFtraceCommonFields(ftraceEvent, data, dataSize, parseEventCtx->format, pid),
+                   false, "parse common fields failed!");
+
+        SubEventParser<T>::GetInstance().ParseEvent(ftraceEvent, data, dataSize, parseEventCtx);
+        return true;
+    }
+
 private:
     int GetHeaderPageCommitSize(void);
     bool ParseHeaderPageFormat(const std::string& formatDesc);

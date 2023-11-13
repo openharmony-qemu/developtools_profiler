@@ -30,7 +30,7 @@ FtraceFsOps& FtraceFsOps::GetInstance()
     return instance;
 }
 
-FtraceFsOps::FtraceFsOps() : ftraceRoot_(GetFtraceRoot())
+FtraceFsOps::FtraceFsOps() : ftraceRoot_(GetFtraceRoot()), hmTraceDir_(GetHmTraceDir())
 {
     HILOG_INFO(LOG_CORE, "FtraceFsOps create!");
 }
@@ -54,9 +54,53 @@ std::string FtraceFsOps::GetFtraceRoot()
     return "";
 }
 
+std::string FtraceFsOps::GetHmTraceDir()
+{
+    if (access((ftraceRoot_ + "/hongmeng").c_str(), F_OK) == 0) {
+        return "/hongmeng";
+    } else {
+        return "";
+    }
+}
+
+int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content)
+{
+    bool ret = false;
+    if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), W_OK) == 0) {
+        ret |= FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content) > 0;
+    }
+    if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
+        ret |= FileUtils::WriteFile(ftraceRoot_ + path, content) > 0;
+    }
+
+    return (int)ret;
+}
+
+int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content, int flags)
+{
+    bool ret = false;
+    if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), W_OK) == 0) {
+        ret |= FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content, flags) > 0;
+    }
+    if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
+        ret |= FileUtils::WriteFile(ftraceRoot_ + path, content, flags) > 0;
+    }
+
+    return (int)ret;
+}
+
+std::string FtraceFsOps::ReadTraceFile(const std::string& path) const
+{
+    if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), R_OK) == 0) {
+        return FileUtils::ReadFile(ftraceRoot_ + hmTraceDir_ + path);
+    } else {
+        return FileUtils::ReadFile(ftraceRoot_ + path);
+    }
+}
+
 std::string FtraceFsOps::GetPrintkFormats() const
 {
-    return FileUtils::ReadFile(ftraceRoot_ + "/printk_formats");
+    return ReadTraceFile("/printk_formats");
 }
 
 std::string GetKptrRestrict()
@@ -89,18 +133,18 @@ std::string FtraceFsOps::GetKernelSymbols() const
 
 bool FtraceFsOps::SetSavedCmdLinesSize(uint32_t size)
 {
-    std::string path = ftraceRoot_ + "/saved_cmdlines_size";
-    return FileUtils::WriteFile(path, std::to_string(static_cast<int>(size))) > 0;
+    std::string path = "/saved_cmdlines_size";
+    return WriteTraceFile(path, std::to_string(static_cast<int>(size))) > 0;
 }
 
 std::string FtraceFsOps::GetSavedCmdLines() const
 {
-    return FileUtils::ReadFile(ftraceRoot_ + "/saved_cmdlines");
+    return ReadTraceFile("/saved_cmdlines");
 }
 
 std::string FtraceFsOps::GetSavedTgids() const
 {
-    return FileUtils::ReadFile(ftraceRoot_ + "/saved_tgids");
+    return ReadTraceFile("/saved_tgids");
 }
 
 std::string FtraceFsOps::GetProcessComm(int pid)
@@ -123,7 +167,7 @@ std::string FtraceFsOps::GetThreadComm(int pid, int tid)
 
 std::string FtraceFsOps::GetPerCpuStats(int cpu) const
 {
-    return FileUtils::ReadFile(ftraceRoot_ + "/per_cpu/cpu" + std::to_string(cpu) + "/stats");
+    return ReadTraceFile("/per_cpu/cpu" + std::to_string(cpu) + "/stats");
 }
 
 std::string FtraceFsOps::GetRawTracePath(int cpu) const
@@ -131,55 +175,85 @@ std::string FtraceFsOps::GetRawTracePath(int cpu) const
     return ftraceRoot_ + "/per_cpu/cpu" + std::to_string(cpu) + "/trace_pipe_raw";
 }
 
+std::string FtraceFsOps::GetHmRawTracePath() const
+{
+    return ftraceRoot_ + hmTraceDir_ + "/trace_pipe_raw";
+}
+
 std::string FtraceFsOps::GetPageHeaderFormat() const
 {
-    return FileUtils::ReadFile(ftraceRoot_ + "/events/header_page");
+    return ReadTraceFile("/events/header_page");
 }
 
 std::string FtraceFsOps::GetEventDataFormat(const std::string& type, const std::string& name) const
 {
-    return FileUtils::ReadFile(ftraceRoot_ + "/events/" + type + "/" + name + "/format");
+    if (access((ftraceRoot_ + "/events/" + type + "/" + name + "/format").c_str(), R_OK) == 0) {
+        return FileUtils::ReadFile(ftraceRoot_ + "/events/" + type + "/" + name + "/format");
+    } else {
+        return "";
+    }
+}
+
+std::string FtraceFsOps::HmGetEventDataFormat(const std::string& type, const std::string& name) const
+{
+    if (access((ftraceRoot_ + "/hongmeng/events/" + type + "/" + name + "/format").c_str(), R_OK) == 0) {
+        return FileUtils::ReadFile(ftraceRoot_ + "/hongmeng/events/" + type + "/" + name + "/format");
+    } else {
+        return "";
+    }
 }
 
 bool FtraceFsOps::ClearTraceBuffer()
 {
     char realPath[PATH_MAX + 1] = {0};
 
-    std::string path = ftraceRoot_ + "/trace";
+    std::string path;
+    if (access((ftraceRoot_ + hmTraceDir_ + "/trace").c_str(), F_OK) == 0) {
+        path = ftraceRoot_ + hmTraceDir_ + "/trace";
+    } else {
+        path = ftraceRoot_ + "/trace";
+    }
+
     CHECK_TRUE((path.length() < PATH_MAX) && (realpath(path.c_str(), realPath) != nullptr), false,
                "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
-    int fd = open(realPath, O_TRUNC);
+    int fd = open(realPath, O_TRUNC | O_RDWR);
     CHECK_TRUE(fd >= 0, false, "open %s failed!", realPath);
     return close(fd) == 0;
 }
 
 bool FtraceFsOps::SetRecordCmdOption(bool enable)
 {
-    std::string path = ftraceRoot_ + "/options/record-cmd";
-    return FileUtils::WriteFile(path, std::to_string(static_cast<int>(enable))) > 0;
+    std::string path = "/options/record-cmd";
+    return WriteTraceFile(path, std::to_string(static_cast<int>(enable))) > 0;
 }
 
 bool FtraceFsOps::SetRecordTgidOption(bool enable)
 {
-    std::string path = ftraceRoot_ + "/options/record-tgid";
-    return FileUtils::WriteFile(path, std::to_string(static_cast<int>(enable))) > 0;
+    std::string path = "/options/record-tgid";
+    return WriteTraceFile(path, std::to_string(static_cast<int>(enable))) > 0;
 }
 
 bool FtraceFsOps::SetBufferSizeKb(int sizeKb)
 {
-    std::string path = ftraceRoot_ + "/buffer_size_kb";
-    return FileUtils::WriteFile(path, std::to_string(sizeKb)) > 0;
+    std::string path = "/buffer_size_kb";
+    return WriteTraceFile(path, std::to_string(sizeKb)) > 0;
 }
 
 bool FtraceFsOps::SetTraceClock(const std::string& clock)
 {
-    std::string path = ftraceRoot_ + "/trace_clock";
-    return FileUtils::WriteFile(path, clock) > 0;
+    std::string path = "/trace_clock";
+    return WriteTraceFile(path, clock) > 0;
 }
 
 std::string FtraceFsOps::GetTraceClock()
 {
-    std::string path = ftraceRoot_ + "/trace_clock";
+    std::string path;
+    if (access((ftraceRoot_ + hmTraceDir_ + "/trace_clock").c_str(), F_OK) == 0) {
+        path = ftraceRoot_ + hmTraceDir_ + "/trace_clock";
+    } else {
+        path = ftraceRoot_ + "/trace_clock";
+    }
+
     std::string value = FileUtils::ReadFile(path);
     auto pos = value.find('[');
     CHECK_TRUE(pos != std::string::npos, "", "find [ in %s failed!", path.c_str());
@@ -190,10 +264,9 @@ std::string FtraceFsOps::GetTraceClock()
     return value.substr(pos, rpos - pos);
 }
 
-std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents()
+static void AddPlatformEvents(std::set<std::pair<std::string, std::string>> &eventSet,
+    const std::string &eventsPath)
 {
-    std::set<std::pair<std::string, std::string>> eventSet;
-    std::string eventsPath = ftraceRoot_ + "/events";
     for (auto& type : FileUtils::ListDir(eventsPath)) {
         struct stat st = {};
         std::string typePath = eventsPath + "/" + type;
@@ -209,48 +282,57 @@ std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents(
             eventSet.insert(std::make_pair(type, name));
         }
     }
+}
+
+std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents()
+{
+    std::set<std::pair<std::string, std::string>> eventSet;
+    if (hmTraceDir_ != "") {
+        AddPlatformEvents(eventSet, ftraceRoot_ + hmTraceDir_ + "/events");
+    }
+    AddPlatformEvents(eventSet, ftraceRoot_ + "/events");
     HILOG_INFO(LOG_CORE, "get platform event formats done, types: %zu!", eventSet.size());
     return {eventSet.begin(), eventSet.end()};
 }
 
 bool FtraceFsOps::AppendSetEvent(const std::string& type, const std::string& name)
 {
-    std::string path = ftraceRoot_ + "/set_event";
-    return FileUtils::WriteFile(path, type + ":" + name + "\n", O_WRONLY | O_APPEND) > 0;
+    std::string path = "/set_event";
+    return WriteTraceFile(path, type + ":" + name + "\n", O_WRONLY | O_APPEND) > 0;
 }
 
 bool FtraceFsOps::ClearSetEvent()
 {
-    return FileUtils::WriteFile(ftraceRoot_ + "/set_event", "\n", O_WRONLY | O_TRUNC) > 0;
+    return WriteTraceFile("/set_event", "\n", O_WRONLY | O_TRUNC) > 0;
 }
 
 bool FtraceFsOps::EnableEvent(const std::string& type, const std::string& name)
 {
-    std::string enablePath = ftraceRoot_ + "/events/" + type + "/" + name + "/enable";
-    return FileUtils::WriteFile(enablePath, "1") > 0;
+    std::string enablePath = "/events/" + type + "/" + name + "/enable";
+    return WriteTraceFile(enablePath, "1") > 0;
 }
 
 bool FtraceFsOps::DisableEvent(const std::string& type, const std::string& name)
 {
-    std::string enablePath = ftraceRoot_ + "/events/" + type + "/" + name + "/enable";
-    return FileUtils::WriteFile(enablePath, "0") > 0;
+    std::string enablePath = "/events/" + type + "/" + name + "/enable";
+    return WriteTraceFile(enablePath, "0") > 0;
 }
 
 bool FtraceFsOps::DisableCategories(const std::string& categories)
 {
-    std::string enablePath = ftraceRoot_ + "/events/" + categories + "/enable";
-    return FileUtils::WriteFile(enablePath, "0") > 0;
+    std::string enablePath = "/events/" + categories + "/enable";
+    return WriteTraceFile(enablePath, "0") > 0;
 }
 
 bool FtraceFsOps::EnableTracing()
 {
-    std::string tracingOn = ftraceRoot_ + "/tracing_on";
-    return FileUtils::WriteFile(tracingOn, "1") > 0;
+    std::string tracingOn = "/tracing_on";
+    return WriteTraceFile(tracingOn, "1") > 0;
 }
 
 bool FtraceFsOps::DisableTracing()
 {
-    std::string tracingOn = ftraceRoot_ + "/tracing_on";
-    return FileUtils::WriteFile(tracingOn, "0") > 0;
+    std::string tracingOn = "/tracing_on";
+    return WriteTraceFile(tracingOn, "0") > 0;
 }
 FTRACE_NS_END
