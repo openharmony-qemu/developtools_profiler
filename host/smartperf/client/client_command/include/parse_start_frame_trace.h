@@ -28,7 +28,8 @@ namespace OHOS {
                 std::vector<std::string> Split(std::string str, std::string patten);
             private:
                 std::ifstream infile;
-                std::string line = "";
+                int twelve = 12;
+                int four = 4;
                 std::string startLine = "";
                 std::string fullScreenLine = "";
                 int frameNum = 0;
