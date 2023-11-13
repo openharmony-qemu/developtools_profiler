@@ -198,8 +198,7 @@ std::string SPUtils::GetScreen()
     uint64_t left = screenStr.find("activeMode");
     uint64_t right = screenStr.find("capability");
     std::string screen = screenStr.substr(left, right - left);
-    std::cout << screen << std::endl;
-    return screenStr;
+    return screen;
 }
 std::string SPUtils::GetRadarFrame()
 {

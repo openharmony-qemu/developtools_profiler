@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iomanip>
 #include "include/parse_start_frame_trace.h"
+#include "include/sp_utils.h"
 
 namespace OHOS {
     namespace SmartPerf {
@@ -40,6 +41,12 @@ namespace OHOS {
         double StartFrameTraceNoh::CalculateTime()
         {
             std::string line;
+            std::string screenStr = SPUtils::GetScreen();
+            int pos = screenStr.find("x");
+            int twelve = 12;
+            int four = 4;
+            std::string width = screenStr.substr(twelve, pos - twelve);
+            std::string height = screenStr.substr(pos + 1, four);
             while (getline(infile, line)) {
                 if (line.find("H:touchEventDispatch") != std::string::npos) {
                     startLine = line;
@@ -49,7 +56,7 @@ namespace OHOS {
                     std::string numsStr = CutString(tmpStr, "(", ")", 1);
                     std::vector<std::string> nums = Split(numsStr, ",");
                     std::string alpha = Split(tmpStr, "Alpha:")[1];
-                    bool full = stof(nums[0]) == 0 && stof(nums[1]) == 0 && stof(nums[2]) == 1344 && stof(nums[3]) == 2772 ? true : false;
+                    bool full = stof(nums[0]) == 0 && stof(nums[1]) == 0 && stof(nums[2]) == stof(width) && stof(nums[3]) == stof(height) ? true : false;
                     if (full && stof(alpha) == 1) {
                         fullScreenLine = line;
                         break;
