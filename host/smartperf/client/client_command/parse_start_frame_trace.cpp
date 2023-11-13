@@ -40,10 +40,9 @@ namespace OHOS {
         }
         double StartFrameTraceNoh::CalculateTime()
         {
+            std::string line;
             std::string screenStr = SPUtils::GetScreen();
             int pos = screenStr.find("x");
-            int twelve = 12;
-            int four = 4;
             std::string width = screenStr.substr(twelve, pos - twelve);
             std::string height = screenStr.substr(pos + 1, four);
             while (getline(infile, line)) {
