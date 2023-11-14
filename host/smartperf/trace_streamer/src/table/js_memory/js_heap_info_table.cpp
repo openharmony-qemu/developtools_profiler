@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, KEY, TYPE, INT_VALUE, STR_VALUE };
+enum class Index : int32_t { FILE_ID = 0, KEY, TYPE, INT_VALUE, STR_VALUE };
 JsHeapInfoTable::JsHeapInfoTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -45,22 +45,22 @@ JsHeapInfoTable::Cursor::~Cursor() {}
 
 int32_t JsHeapInfoTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(
                 context_,
                 static_cast<int64_t>(jsHeapInfo_.FileIds()[CurrentRow()])); // IdsData() will be optimized
             break;
-        case KEY:
+        case Index::KEY:
             sqlite3_result_text(context_, jsHeapInfo_.Keys()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapInfo_.Types()[CurrentRow()]));
             break;
-        case INT_VALUE:
+        case Index::INT_VALUE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapInfo_.IntValues()[CurrentRow()]));
             break;
-        case STR_VALUE:
+        case Index::STR_VALUE:
             sqlite3_result_text(context_, jsHeapInfo_.StrValues()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         default:

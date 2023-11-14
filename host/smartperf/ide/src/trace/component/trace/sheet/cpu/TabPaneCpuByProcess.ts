@@ -39,7 +39,7 @@ export class TabPaneCpuByProcess extends BaseElement {
       ' ms';
     // @ts-ignore
     this.cpuByProcessTbl!.shadowRoot!.querySelector('.table')?.style?.height =
-      this.parentElement!.clientHeight - 45 + 'px';
+      this.parentElement!.clientHeight - 50 + 'px';
     this.cpuByProcessTbl!.recycleDataSource = [];
     this.cpuByProcessTbl!.loading = true;
     getTabCpuByProcess(cpuByProcessValue.cpus, cpuByProcessValue.leftNs, cpuByProcessValue.rightNs).then((result) => {
@@ -123,8 +123,11 @@ export class TabPaneCpuByProcess extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(cpuByProcessRightData[property]) - parseFloat(cpuByProcessLeftData[property]) : parseFloat(cpuByProcessLeftData[property]) - parseFloat(cpuByProcessRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(cpuByProcessRightData[property]) - parseFloat(cpuByProcessLeftData[property])
+            : // @ts-ignore
+              parseFloat(cpuByProcessLeftData[property]) - parseFloat(cpuByProcessRightData[property]);
         } else {
           // @ts-ignore
           if (cpuByProcessRightData[property] > cpuByProcessLeftData[property]) {

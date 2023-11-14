@@ -16,7 +16,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     ELF_ID,
     ST_NAME,
@@ -62,8 +62,8 @@ void EbpfElfSymbolTable::EstimateFilterCost(FilterConstraints& fc, EstimatedInde
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -82,8 +82,8 @@ void EbpfElfSymbolTable::FilterByConstraint(FilterConstraints& fc, double& filte
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -114,20 +114,20 @@ EbpfElfSymbolTable::Cursor::~Cursor() {}
 
 int32_t EbpfElfSymbolTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfSymbolObj_.IdsData()[CurrentRow()]));
             break;
-        case ELF_ID:
+        case Index::ELF_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfSymbolObj_.ElfIds()[CurrentRow()]));
             break;
-        case ST_NAME:
+        case Index::ST_NAME:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfSymbolObj_.StNames()[CurrentRow()]));
             break;
-        case ST_VALUE:
+        case Index::ST_VALUE:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfSymbolObj_.StValues()[CurrentRow()]));
             break;
-        case ST_SIZE:
+        case Index::ST_SIZE:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfSymbolObj_.StSizes()[CurrentRow()]));
             break;
         default:

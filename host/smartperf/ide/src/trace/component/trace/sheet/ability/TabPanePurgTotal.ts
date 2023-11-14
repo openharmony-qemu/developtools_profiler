@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { querySysPurgeableTab, queryProcessPurgeableTab } from '../../../../database/SqlLite.js';
 import { Utils } from '../../base/Utils.js';
@@ -31,9 +31,8 @@ export class TabPanePurgTotal extends BaseElement {
   private sortType = 2;
   set data(selection: SelectionParam) {
     //@ts-ignore
-    this.purgeableTotalTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
-      this.parentElement!.clientHeight - 45
-    }px`;
+    this.purgeableTotalTable?.shadowRoot?.querySelector('.table')?.style?.height = `${this.parentElement!.clientHeight - 45
+      }px`;
     this.init();
     this.purgTotalTimeRange!.textContent =
       'Selected range: ' + ((selection.rightNs - selection.leftNs) / 1000000.0).toFixed(5) + ' ms';
@@ -51,7 +50,12 @@ export class TabPanePurgTotal extends BaseElement {
         if (purgeTotalResults.length > 0) {
           for (let i = 0; i < purgeTotalResults.length; i++) {
             this.purgeableTotalSource.push(
-              this.toTabStruct(purgeTotalResults[i].name, purgeTotalResults[i].maxSize, purgeTotalResults[i].minSize, purgeTotalResults[i].avgSize)
+              this.toTabStruct(
+                purgeTotalResults[i].name,
+                purgeTotalResults[i].maxSize,
+                purgeTotalResults[i].minSize,
+                purgeTotalResults[i].avgSize
+              )
             );
           }
           this.sortByColumn({ key: this.sortKey, sort: this.sortType });
@@ -92,7 +96,7 @@ export class TabPanePurgTotal extends BaseElement {
     }
   }
 
-  private init() {
+  private init(): void {
     const thTable = this.tabTitle!.querySelector('.th');
     const purgeTotalTblNode = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
@@ -146,7 +150,9 @@ export class TabPanePurgTotal extends BaseElement {
         }
         if (type === 'number') {
           // @ts-ignore
-          return sort === 2 ? parseFloat(purgeTotalRightData[key]) - parseFloat(purgeTotalLeftData[key]) : parseFloat(purgeTotalLeftData[key]) - parseFloat(purgeTotalRightData[key]);
+          return sort === 2
+            ? parseFloat(purgeTotalRightData[key]) - parseFloat(purgeTotalLeftData[key])
+            : parseFloat(purgeTotalLeftData[key]) - parseFloat(purgeTotalRightData[key]);
         } else {
           if (sort === 2) {
             return purgeTotalRightData[key].toString().localeCompare(purgeTotalLeftData[key].toString());

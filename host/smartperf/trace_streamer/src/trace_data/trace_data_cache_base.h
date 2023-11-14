@@ -17,6 +17,7 @@
 #define TRACE_DATA_CACHE_BASE_H
 
 #include <array>
+#include <atomic>
 #include <deque>
 #include <map>
 #include <stdexcept>
@@ -68,25 +69,25 @@ public:
                                                      {TASK_UNINTERRUPTIBLE_IO, "D-IO"},
                                                      {TASK_UNINTERRUPTIBLE_NIO, "D-NIO"},
                                                      {TASK_RUNNING, "Running"},
-                                                     {TASK_INTERRUPTED, "T"},
+                                                     {TASK_STOPPED, "T"},
                                                      {TASK_TRACED, "t"},
                                                      {TASK_EXIT_DEAD, "X"},
                                                      {TASK_ZOMBIE, "Z"},
-                                                     {TASK_CLONE, "I"},
-                                                     {TASK_KILLED, "I"},
+                                                     {TASK_PARKED, "P"},
+                                                     {TASK_DEAD, "I"},
                                                      {TASK_DK, "DK"},
                                                      {TASK_DK_IO, "DK-IO"},
                                                      {TASK_DK_NIO, "DK-NIO"},
                                                      {TASK_TRACED_KILL, "TK"},
-                                                     {TASK_WAKEKILL, "K"},
-                                                     {TASK_PARKED, "P"},
-                                                     {TASK_FOREGROUND, "R+"},
+                                                     {TASK_WAKEKILL, "R+"},
+                                                     {TASK_NEW, "R+"},
                                                      {TASK_RUNNABLE_BINDER, "R-B"},
                                                      {TASK_MAX, "S"},
                                                      {TASK_INVALID, "U"}};
     std::map<std::string, uint64_t> threadStatus2Value_ = {};
     uint64_t traceStartTime_ = std::numeric_limits<uint64_t>::max();
     uint64_t traceEndTime_ = 0;
+    std::atomic<bool> isSplitFile_{false};
 
     Raw rawData_;
     ThreadStateData threadStateData_;
@@ -176,6 +177,9 @@ public:
     DmaMemData dmaMemData_;
     GpuProcessMemData gpuProcessMemData_;
     GpuWindowMemData gpuWindowMemData_;
+    CpuDumpInfo cpuDumpInfo_;
+    ProfileMemInfo profileMemInfo_;
+    RSImageDumpInfo rsImageDumpInfo_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

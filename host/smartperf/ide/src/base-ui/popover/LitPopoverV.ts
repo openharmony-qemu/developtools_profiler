@@ -34,11 +34,11 @@ export class LitPopover extends BaseElement {
   }
 
   set placement(value) {
-    this.setAttribute('placement',value || 'bottomLeft');
+    this.setAttribute('placement', value || 'bottomLeft');
   }
 
   get placement() {
-    return this.getAttribute('placement')
+    return this.getAttribute('placement');
   }
 
   get trigger() {

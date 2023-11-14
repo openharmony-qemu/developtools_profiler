@@ -14,6 +14,7 @@
  */
 
 #include "proto_reader.h"
+#include <cinttypes>
 #include "optimize.h"
 
 namespace SysTuning {
@@ -91,7 +92,7 @@ bool ProtoReaderBase::ParseLengthDelimitedValue(ParseDataAreaResult& result,
     result.dataArea.SetDataAreaSize(length);
     result.next = cursor + length;
     if (length > kMaxMessageLength) {
-        TS_LOGD("Skip this data, because it is too large. length: %d", length);
+        TS_LOGD("Skip this data, because it is too large. length: %" PRIu64 "", length);
         result.status = SKIP;
         return true;
     }

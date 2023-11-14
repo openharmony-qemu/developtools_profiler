@@ -76,14 +76,8 @@ template("ohos_shared_library") {
   }
 }
 template("ohos_static_library") {
-  if (defined(invoker.subsystem_name)) {
-    subsystem_name = invoker.subsystem_name
-    print("subsystem_name", subsystem_name)
-  }
-  if (defined(invoker.part_name)) {
-    part_name = invoker.part_name
-    print("part_name", part_name)
-  }
+  subsystem_name = invoker.subsystem_name
+  part_name = invoker.part_name
   static_library(target_name) {
     sources = invoker.sources
     if (defined(invoker.configs)) {
@@ -108,15 +102,15 @@ template("ohos_static_library") {
   }
 }
 template("ohos_executable") {
-  if (defined(invoker.subsystem_name)) {
-    subsystem_name = invoker.subsystem_name
-    print("subsystem_name", subsystem_name)
-  }
-  if (defined(invoker.part_name)) {
-    part_name = invoker.part_name
-    print("part_name", part_name)
-  }
   executable(target_name) {
+    if (defined(invoker.subsystem_name)) {
+      subsystem_name = invoker.subsystem_name
+      print("subsystem_name", subsystem_name)
+    }
+    if (defined(invoker.part_name)) {
+      part_name = invoker.part_name
+      print("part_name", part_name)
+    }
     if (defined(invoker.include_dirs)) {
       include_dirs = invoker.include_dirs
     }

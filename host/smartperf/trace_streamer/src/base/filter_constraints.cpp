@@ -64,23 +64,25 @@ void FilterConstraints::ToString(std::string& idxStr) const
     }
 }
 
-#define GET_DESC()                                                          \
-    p = pNext;                                                              \
-    errno = 0;                                                              \
-    int32_t col = static_cast<int32_t>(strtol(p, &pNext, 10));              \
-    if (errno != 0) {                                                       \
-        TS_LOGW("strtol failed!");                                          \
-        return;                                                             \
-    }                                                                       \
-    TS_ASSERT(p != pNext);                                                  \
-    p = pNext;                                                              \
-    errno = 0;                                                              \
-    unsigned char desc = static_cast<unsigned char>(strtol(p, &pNext, 10)); \
-    if (errno != 0) {                                                       \
-        TS_LOGW("strtol failed!");                                          \
-        return;                                                             \
-    }                                                                       \
+void FilterConstraints::GetColAndOp(const char** p, char** pNext, int32_t& col, unsigned char& op)
+{
+    *p = *pNext;
+    errno = 0;
+    col = static_cast<int32_t>(strtol(*p, pNext, 10));
+    if (errno != 0) {
+        TS_LOGW("strtol failed!");
+        return;
+    }
+    TS_ASSERT(*p != *pNext);
+    *p = *pNext;
+    errno = 0;
+    op = static_cast<unsigned char>(strtol(*p, pNext, 10));
+    if (errno != 0) {
+        TS_LOGW("strtol failed!");
+        return;
+    }
     TS_ASSERT(p != pNext);
+}
 
 void FilterConstraints::FromString(const std::string& idxStr)
 {
@@ -94,9 +96,11 @@ void FilterConstraints::FromString(const std::string& idxStr)
         return;
     }
     TS_ASSERT(p != pNext);
+    unsigned char op = 0;
+    int32_t col = 0;
     for (int32_t i = 0; i < constraintCount; i++) {
-        GET_DESC();
-        AddConstraint(i, col, desc);
+        GetColAndOp(&p, &pNext, col, op);
+        AddConstraint(i, col, op);
     }
 
     pNext++; // jump the ' '
@@ -110,8 +114,8 @@ void FilterConstraints::FromString(const std::string& idxStr)
     }
     TS_ASSERT(p != pNext);
     for (int32_t i = 0; i < orderbyCount; i++) {
-        GET_DESC();
-        AddOrderBy(col, desc);
+        GetColAndOp(&p, &pNext, col, op);
+        AddOrderBy(col, op);
     }
 }
 } // namespace TraceStreamer

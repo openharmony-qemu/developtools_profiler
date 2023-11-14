@@ -13,10 +13,7 @@
  * limitations under the License.
  */
 
-import {
-  BaseStruct,
-  dataFilterHandler, drawString,
-} from './ProcedureWorkerCommon.js';
+import { BaseStruct, dataFilterHandler, drawString } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 
@@ -47,7 +44,9 @@ export class AppStartupRender {
     for (let re of filter) {
       AppStartupStruct.draw(req.appStartupContext, re);
       if (appStartUpRow.isHover) {
-        if (re.frame && appStartUpRow.hoverX >= re.frame.x - offset &&
+        if (
+          re.frame &&
+          appStartUpRow.hoverX >= re.frame.x - offset &&
           appStartUpRow.hoverX <= re.frame.x + re.frame.width + offset
         ) {
           AppStartupStruct.hoverStartupStruct = re;
@@ -72,7 +71,7 @@ export class AppStartupStruct extends BaseStruct {
     'UI Ability Launching',
     'UI Ability OnForeground',
     'First Frame - APP Phase',
-    'First Frame - Render Phase'
+    'First Frame - Render Phase',
   ];
   dur: number | undefined;
   value: string | undefined;
@@ -94,21 +93,17 @@ export class AppStartupStruct extends BaseStruct {
         ctx.textBaseline = 'middle';
         ctx.lineWidth = 1;
         if (data.stepName === undefined) {
-          data.stepName = `${ AppStartupStruct.getStartupName(data.startName) } (${ (data.dur! / 1000000).toFixed(2) }ms)`;
+          data.stepName = `${AppStartupStruct.getStartupName(data.startName)} (${(data.dur! / 1000000).toFixed(2)}ms)`;
         }
-        let textColor = ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.stepName || '', 0, ColorUtils.FUNC_COLOR.length)];
+        let textColor =
+          ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.stepName || '', 0, ColorUtils.FUNC_COLOR.length)];
         ctx.fillStyle = ColorUtils.funcTextColor(textColor);
         drawString(ctx, data.stepName, 2, data.frame, data);
       }
       if (data === AppStartupStruct.selectStartupStruct) {
         ctx.strokeStyle = '#232c5d';
         ctx.lineWidth = 2;
-        ctx.strokeRect(
-          data.frame.x,
-          data.frame.y,
-          data.frame.width,
-          data.frame.height
-        );
+        ctx.strokeRect(data.frame.x, data.frame.y, data.frame.width, data.frame.height);
       }
     }
   }
@@ -120,5 +115,4 @@ export class AppStartupStruct extends BaseStruct {
       return AppStartupStruct.StartUpStep[step];
     }
   }
-
 }

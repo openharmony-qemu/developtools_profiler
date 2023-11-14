@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { NativeMemoryExpression } from '../../bean/NativeHook.js';
 import {
   convertJSON,
   DataCache,
@@ -45,7 +46,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
   isStatistic: boolean = false;
   boxRangeNativeHook: Array<NativeMemory> = [];
   clearBoxSelectionData: boolean = false;
-  nativeMemoryArgs?: Map<string, any>
+  nativeMemoryArgs?: Map<string, any>;
   private dataCache = DataCache.getInstance();
 
   handle(data: any): void {
@@ -153,7 +154,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
                 this.clearBoxSelectionData = this.boxRangeNativeHook.length > 100_0000;
               }
               this.supplementNativeHoodData();
-              postMessage(data.id, data.action, this.resolvingActionNativeMemory(this.nativeMemoryArgs!), 100_0000);
+              postMessage(data.id, data.action, this.resolvingActionNativeMemory(this.nativeMemoryArgs!), 50_0000);
               if (this.clearBoxSelectionData) {
                 this.boxRangeNativeHook = [];
               }
@@ -166,7 +167,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
               this.queryNativeHookEvent(leftNs, rightNs, types);
             } else {
               this.nativeMemoryArgs = data.params;
-              postMessage(data.id, data.action, this.resolvingActionNativeMemory(this.nativeMemoryArgs!), 100_0000);
+              postMessage(data.id, data.action, this.resolvingActionNativeMemory(this.nativeMemoryArgs!), 50_0000);
               if (this.clearBoxSelectionData) {
                 this.boxRangeNativeHook = [];
               }
@@ -254,7 +255,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
     );
   }
 
-  queryNativeHookStatistic(type: number) {
+  queryNativeHookStatistic(type: number): void {
     let condition: string;
     if (type === 0) {
       condition = 'and type = 0';
@@ -276,13 +277,16 @@ where ts between start_ts and end_ts ${condition};
     this.queryData(this.currentEventId, 'native-memory-queryNativeHookStatistic', sql, {});
   }
 
-  queryNativeHookEvent(leftNs: number, rightNs: number, types: Array<string>) {
-    let condition = types.length === 1 ? `and A.event_type = ${types[0]}` : `and (A.event_type = 'AllocEvent' or A.event_type = 'MmapEvent')`;
+  queryNativeHookEvent(leftNs: number, rightNs: number, types: Array<string>): void {
+    let condition =
+      types.length === 1
+        ? `and A.event_type = ${types[0]}`
+        : `and (A.event_type = 'AllocEvent' or A.event_type = 'MmapEvent')`;
     let libId = this.nativeMemoryArgs?.get('filterResponseType');
     let allocType = this.nativeMemoryArgs?.get('filterAllocType');
     let eventType = this.nativeMemoryArgs?.get('filterEventType');
     if (libId !== undefined && libId !== -1) {
-      condition = `${condition} and last_lib_id = ${libId}`;// filter lib
+      condition = `${condition} and last_lib_id = ${libId}`; // filter lib
     }
     if (eventType === '1') {
       condition = `${condition} and event_type = 'AllocEvent'`;
@@ -306,7 +310,8 @@ where ts between start_ts and end_ts ${condition};
       (A.end_ts - B.start_ts) as endTs,
       tid as threadId,
       sub_type_id as subTypeId,
-      ifnull(last_lib_id,0) as lastLibId
+      ifnull(last_lib_id,0) as lastLibId,
+      ifnull(last_symbol_id,0) as lastSymbolId
     from
       native_hook A,
       trace_range B
@@ -320,9 +325,9 @@ where ts between start_ts and end_ts ${condition};
     this.queryData(this.currentEventId, 'native-memory-queryNativeHookEvent', sql, {});
   }
 
-  supplementNativeHoodData() {
+  supplementNativeHoodData(): void {
     let len = this.boxRangeNativeHook.length;
-    for(let i = 0, j = len -1; i <= j; i++, j--){
+    for (let i = 0, j = len - 1; i <= j; i++, j--) {
       this.fillNativeHook(this.boxRangeNativeHook[i], i);
       if (i !== j) {
         this.fillNativeHook(this.boxRangeNativeHook[j], j);
@@ -349,10 +354,7 @@ where ts between start_ts and end_ts ${condition};
     }
     if (frame !== null && frame !== undefined) {
       memory.symbol = this.groupCutFilePath(frame.symbolId, this.dataCache.dataDict.get(frame.symbolId) || '');
-      memory.library = this.groupCutFilePath(
-        frame.fileId,
-        this.dataCache.dataDict.get(frame.fileId) || 'Unknown Path'
-      );
+      memory.library = this.groupCutFilePath(frame.fileId, this.dataCache.dataDict.get(frame.fileId) || 'Unknown Path');
     } else {
       memory.symbol = '-';
       memory.library = '-';
@@ -622,16 +624,14 @@ where ts between start_ts and end_ts ${condition};
     let sortType = paramMap.get('sortType');
     let statisticsSelection = paramMap.get('statisticsSelection');
     let filter = this.boxRangeNativeHook;
-    if ((filterAllocType !== undefined && filterAllocType !== 0) ||
+    if (
+      (filterAllocType !== undefined && filterAllocType !== 0) ||
       (filterEventType !== undefined && filterEventType !== 0) ||
       (filterResponseType !== undefined && filterResponseType !== -1)
     ) {
       filter = this.boxRangeNativeHook.filter((item) => {
         let filterAllocation = true;
-        let freed = item.endTs > leftNs &&
-          item.endTs <= rightNs &&
-          item.endTs !== 0 &&
-          item.endTs !== null;
+        let freed = item.endTs > leftNs && item.endTs <= rightNs && item.endTs !== 0 && item.endTs !== null;
         if (filterAllocType === '1') {
           filterAllocation = !freed;
         } else if (filterAllocType == '2') {
@@ -649,17 +649,17 @@ where ts between start_ts and end_ts ${condition};
     }
   }
 
-  sortByNativeMemoryColumn(nmMemoryColumn: string, nmMemorySort: number, list: Array<NativeMemory>) {
+  sortByNativeMemoryColumn(nmMemoryColumn: string, nmMemorySort: number, list: Array<NativeMemory>): NativeMemory[] {
     if (nmMemorySort === 0) {
       return list;
     } else {
       return list.sort((memoryLeftData: any, memoryRightData: any) => {
         if (nmMemoryColumn === 'index' || nmMemoryColumn === 'startTs' || nmMemoryColumn === 'heapSize') {
-          return nmMemorySort == 1
+          return nmMemorySort === 1
             ? memoryLeftData[nmMemoryColumn] - memoryRightData[nmMemoryColumn]
             : memoryRightData[nmMemoryColumn] - memoryLeftData[nmMemoryColumn];
         } else {
-          if (nmMemorySort == 1) {
+          if (nmMemorySort === 1) {
             if (memoryLeftData[nmMemoryColumn] > memoryRightData[nmMemoryColumn]) {
               return 1;
             } else if (memoryLeftData[nmMemoryColumn] === memoryRightData[nmMemoryColumn]) {
@@ -670,7 +670,7 @@ where ts between start_ts and end_ts ${condition};
           } else {
             if (memoryRightData[nmMemoryColumn] > memoryLeftData[nmMemoryColumn]) {
               return 1;
-            } else if (memoryLeftData[nmMemoryColumn] == memoryRightData[nmMemoryColumn]) {
+            } else if (memoryLeftData[nmMemoryColumn] === memoryRightData[nmMemoryColumn]) {
               return 0;
             } else {
               return -1;
@@ -702,6 +702,8 @@ where ts between start_ts and end_ts ${condition};
     stack.threadName = hook.threadName;
     stack.heapSizeStr = `${getByteWithUnit(stack.size)}`;
     stack.heapPercent = `${((stack.size / this.selectTotalSize) * 100).toFixed(1)}%`;
+    stack.countArray.push(...(hook.countArray || hook.count));
+    stack.tsArray.push(...(hook.tsArray || hook.startTs));
     if (stack.children.length > 0) {
       stack.children.map((child) => {
         this.traverseSampleTree(child as NativeHookCallInfo, hook);
@@ -717,6 +719,8 @@ where ts between start_ts and end_ts ${condition};
     stack.threadName = hook.threadName;
     stack.heapSizeStr = `${getByteWithUnit(stack!.size)}`;
     stack.heapPercent = `${((stack!.size / this.selectTotalSize) * 100).toFixed(1)}%`;
+    stack.countArray.push(...(hook.countArray || hook.count));
+    stack.tsArray.push(...(hook.tsArray || hook.startTs));
     if (stack.children.length > 0) {
       stack.children.map((child) => {
         this.traverseTree(child as NativeHookCallInfo, hook);
@@ -784,6 +788,7 @@ where ts between start_ts and end_ts ${condition};
                 (A.end_ts - B.start_ts) as endTs,
                 tid,
                 ifnull(last_lib_id,0) as lastLibId,
+                ifnull(last_symbol_id,0) as lastSymbolId,
                 t.name as threadName,
                 A.addr,
                 A.sub_type_id as subTypeId
@@ -822,7 +827,9 @@ where ts between start_ts and end_ts ${condition};
                 release_size as freeSize,
                 apply_count as count,
                 release_count as freeCount,
-                (max(A.ts) - B.start_ts) as startTs
+                (max(A.ts) - B.start_ts) as startTs,
+                ifnull(last_lib_id,0) as lastLibId,
+                ifnull(last_symbol_id,0) as lastSymbolId
             from
                 native_hook_statistic A,
                 trace_range B
@@ -836,11 +843,11 @@ where ts between start_ts and end_ts ${condition};
     );
   }
 
-  combineStatisticAndCallChain(samples: NativeHookStatistics[]) {
+  combineStatisticAndCallChain(samples: NativeHookStatistics[]): Array<AnalysisSample> {
     samples.sort((a, b) => a.id - b.id);
-    const analysisSampleList = new Array<AnalysisSample>();
-    const applyAllocSamples = new Array<AnalysisSample>();
-    const applyMmapSamples = new Array<AnalysisSample>();
+    const analysisSampleList: Array<AnalysisSample> = [];
+    const applyAllocSamples: Array<AnalysisSample> = [];
+    const applyMmapSamples: Array<AnalysisSample> = [];
 
     for (const sample of samples) {
       const count = this.isStatistic ? sample.count : 1;
@@ -890,7 +897,12 @@ where ts between start_ts and end_ts ${condition};
 
       const callChains = this.dataCache.nmHeapFrameMap.get(sample.eventId) || [];
       if (!callChains || callChains.length === 0) {
-        return;
+        analysisSample.libId = -1;
+        analysisSample.libName = 'Unknown';
+        analysisSample.symbolId = -1;
+        analysisSample.symbolName = 'Unknown';
+        analysisSampleList.push(analysisSample);
+        continue;
       }
       let index = callChains.length - 1;
       let lastFilterCallChain: HeapTreeDataBean | undefined | null;
@@ -959,13 +971,21 @@ where ts between start_ts and end_ts ${condition};
       if (callChains.length > 0) {
         let root =
           this.currentTreeMapData[
-            nativeHookSample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
+            nativeHookSample.tid +
+              '-' +
+              (callChains[topIndex].symbolId || '') +
+              '-' +
+              (callChains[topIndex].fileId || '')
           ];
         if (root == undefined) {
           root = new NativeHookCallInfo();
           root.threadName = nativeHookSample.threadName;
           this.currentTreeMapData[
-            nativeHookSample.tid + '-' + (callChains[topIndex].symbolId || '') + '-' + (callChains[topIndex].fileId || '')
+            nativeHookSample.tid +
+              '-' +
+              (callChains[topIndex].symbolId || '') +
+              '-' +
+              (callChains[topIndex].fileId || '')
           ] = root;
           this.currentTreeList.push(root);
         }
@@ -991,6 +1011,8 @@ where ts between start_ts and end_ts ${condition};
         threadMerageData.heapSize = merageData.heapSize;
         threadMerageData.totalCount = totalCount;
         threadMerageData.totalSize = totalSize;
+        threadMerageData.tsArray = [...merageData.tsArray];
+        threadMerageData.countArray = [...merageData.countArray];
         rootMerageMap[merageData.tid] = threadMerageData;
       } else {
         rootMerageMap[merageData.tid].children.push(merageData);
@@ -999,6 +1021,12 @@ where ts between start_ts and end_ts ${condition};
         rootMerageMap[merageData.tid].heapSize += merageData.heapSize;
         rootMerageMap[merageData.tid].totalCount = totalCount;
         rootMerageMap[merageData.tid].totalSize = totalSize;
+        for (const count of merageData.countArray) {
+          rootMerageMap[merageData.tid].countArray.push(count);
+        }
+        for (const ts of merageData.tsArray) {
+          rootMerageMap[merageData.tid].tsArray.push(ts);
+        }
       }
       merageData.parentNode = rootMerageMap[merageData.tid]; //子节点添加父节点的引用
     });
@@ -1027,11 +1055,12 @@ where ts between start_ts and end_ts ${condition};
     let filterAllocType = paramMap.get('filterAllocType');
     let filterEventType = paramMap.get('filterEventType');
     let filterResponseType = paramMap.get('filterResponseType');
+    let libTree = paramMap?.get('filterExpression');
     let leftNs = paramMap.get('leftNs');
     let rightNs = paramMap.get('rightNs');
     let nativeHookType = paramMap.get('nativeHookType');
     let statisticsSelection = paramMap.get('statisticsSelection');
-    if (filterAllocType == '0' && filterEventType == '0' && filterResponseType == -1) {
+    if (!libTree && filterAllocType == '0' && filterEventType == '0' && filterResponseType == -1) {
       this.currentSamples = this.queryAllCallchainsSamples;
       return;
     }
@@ -1058,7 +1087,14 @@ where ts between start_ts and end_ts ${condition};
           filterAllocation = item.heapSize === item.freeSize;
         }
       }
-      let filterLastLib = filterResponseType == -1 ? true : filterResponseType == item.lastLibId;
+      let filterLastLib = false;
+      if (libTree) {
+        filterLastLib = this.filterExpressionSample(item, libTree);
+        this.searchValue = '';
+      } else {
+        filterLastLib = filterResponseType == -1 ? true : filterResponseType == item.lastLibId;
+      }
+
       let filterNative = this.getTypeFromIndex(parseInt(filterEventType), item, statisticsSelection);
       return filterAllocation && filterNative && filterLastLib;
     });
@@ -1072,16 +1108,70 @@ where ts between start_ts and end_ts ${condition};
         }
         if (currentNode.count === 0) {
           currentNode.count++;
+          currentNode.countArray.push(1);
+          currentNode.tsArray.push(sample.startTs);
         }
       } else {
         currentNode.count++;
         currentNode.heapSize += sample.heapSize;
+        currentNode.countArray.push(1);
+        currentNode.tsArray.push(sample.startTs);
       }
       groupMap[sample.tid + '-' + sample.eventId] = currentNode;
     });
     // @ts-ignore
     this.currentSamples = Object.values(groupMap);
   }
+
+  private filterExpressionSample(sample: NativeHookStatistics, expressStruct: NativeMemoryExpression): boolean {
+    const itemLibName = this.dataCache.dataDict.get(sample.lastLibId);
+    const itemSymbolName = this.dataCache.dataDict.get(sample.lastSymbolId);
+    if (!itemLibName || !itemSymbolName) {
+      return false;
+    }
+
+    function isMatch(libTree: Map<string, string[]>, match: boolean) {
+      for (const [lib, symbols] of libTree) {
+        // lib不包含则跳过
+        if (!itemLibName!.toLowerCase().includes(lib.toLowerCase()) && lib !== '*') {
+          continue;
+        }
+        // * 表示全量
+        if (symbols.includes('*')) {
+          match = true;
+          break;
+        }
+
+        for (const symbol of symbols) {
+          // 匹配到了就返回
+          if (itemSymbolName!.toLowerCase().includes(symbol.toLowerCase())) {
+            match = true;
+            break;
+          }
+        }
+        // 如果匹配到了，跳出循环
+        if (match) {
+          break;
+        }
+        //全部没有匹配到
+        match = false;
+      }
+      return match;
+    }
+
+    let includeMatch = expressStruct.includeLib.size === 0; // true表达这条数据需要显示
+    includeMatch = isMatch(expressStruct.includeLib, includeMatch);
+
+    if (expressStruct.abandonLib.size === 0) {
+      return includeMatch;
+    }
+
+    let abandonMatch = false; // false表示这条数据需要显示
+    abandonMatch = isMatch(expressStruct.abandonLib, abandonMatch);
+
+    return includeMatch && !abandonMatch;
+  }
+
   createThreadSample(sample: NativeHookStatistics) {
     return this.dataCache.nmHeapFrameMap.get(sample.eventId) || [];
   }
@@ -1094,7 +1184,7 @@ where ts between start_ts and end_ts ${condition};
   ) {
     isTopDown ? index++ : index--;
     let isEnd = isTopDown ? callChainDataList.length == index + 1 : index == 0;
-    let node;
+    let node: NativeHookCallInfo;
     if (
       currentNode.initChildren.filter((child: any) => {
         if (child.symbolId == callChainDataList[index]?.symbolId && child.fileId == callChainDataList[index]?.fileId) {
@@ -1112,7 +1202,7 @@ where ts between start_ts and end_ts ${condition};
       this.currentTreeList.push(node);
       node.parentNode = currentNode;
     }
-    if (node && !isEnd) this.merageChildrenByIndex(node, callChainDataList, index, sample, isTopDown);
+    if (node! && !isEnd) this.merageChildrenByIndex(node, callChainDataList, index, sample, isTopDown);
   }
   setMerageName(currentNode: NativeHookCallInfo) {
     currentNode.symbol =
@@ -1224,7 +1314,10 @@ export class NativeHookStatistics {
   tid: number = 0;
   threadName: string = '';
   lastLibId: number = 0;
+  lastSymbolId: number = 0;
   isSelected: boolean = false;
+  tsArray: Array<number> = [];
+  countArray: Array<number> = [];
 }
 export class NativeHookCallInfo extends MerageBean {
   #totalCount: number = 0;
@@ -1277,6 +1370,17 @@ export class NativeHookCallInfo extends MerageBean {
       currentNode.tid = sample.tid;
     }
     currentNode.count += sample.count || 1;
+    if (sample.countArray && sample.countArray.length > 0) {
+      currentNode.countArray.push(...sample.countArray);
+    } else {
+      currentNode.countArray.push(sample.count);
+    }
+
+    if (sample.tsArray && sample.tsArray.length > 0) {
+      currentNode.tsArray.push(...sample.tsArray);
+    } else {
+      currentNode.tsArray.push(sample.startTs);
+    }
     currentNode.heapSize += sample.heapSize;
   }
 }
@@ -1293,6 +1397,7 @@ export class NativeMemory {
   symbol: string = '';
   library: string = '';
   lastLibId: number = 0;
+  lastSymbolId: number = 0;
   isSelected: boolean = false;
   threadId: number = 0;
 }

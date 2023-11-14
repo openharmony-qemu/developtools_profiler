@@ -38,26 +38,52 @@ export class ProcessMemStruct extends BaseStruct {
         processMemBeanStructCanvasCtx.lineWidth = 1;
         processMemBeanStructCanvasCtx.globalAlpha = 0.6;
         let drawHeight: number = Math.floor(
-          ((processMemBeanStructData.value || 0) * (processMemBeanStructData.frame.height || 0) * 1.0) / (processMemBeanStructData.maxValue || 0)
+          ((processMemBeanStructData.value || 0) * (processMemBeanStructData.frame.height || 0) * 1.0) /
+            (processMemBeanStructData.maxValue || 0)
         );
-        processMemBeanStructCanvasCtx.fillRect(processMemBeanStructData.frame.x, processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight, width, drawHeight);
+        processMemBeanStructCanvasCtx.fillRect(
+          processMemBeanStructData.frame.x,
+          processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight,
+          width,
+          drawHeight
+        );
         processMemBeanStructCanvasCtx.beginPath();
-        processMemBeanStructCanvasCtx.arc(processMemBeanStructData.frame.x, processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight, 3, 0, 2 * Math.PI, true);
+        processMemBeanStructCanvasCtx.arc(
+          processMemBeanStructData.frame.x,
+          processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         processMemBeanStructCanvasCtx.fill();
         processMemBeanStructCanvasCtx.globalAlpha = 1.0;
         processMemBeanStructCanvasCtx.stroke();
         processMemBeanStructCanvasCtx.beginPath();
-        processMemBeanStructCanvasCtx.moveTo(processMemBeanStructData.frame.x + 3, processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight);
+        processMemBeanStructCanvasCtx.moveTo(
+          processMemBeanStructData.frame.x + 3,
+          processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight
+        );
         processMemBeanStructCanvasCtx.lineWidth = 3;
-        processMemBeanStructCanvasCtx.lineTo(processMemBeanStructData.frame.x + width, processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight);
+        processMemBeanStructCanvasCtx.lineTo(
+          processMemBeanStructData.frame.x + width,
+          processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight
+        );
         processMemBeanStructCanvasCtx.stroke();
       } else {
         processMemBeanStructCanvasCtx.fillStyle = ColorUtils.colorForTid(processMemBeanStructData.maxValue || 0);
         processMemBeanStructCanvasCtx.strokeStyle = ColorUtils.colorForTid(processMemBeanStructData.maxValue || 0);
         processMemBeanStructCanvasCtx.globalAlpha = 0.6;
         processMemBeanStructCanvasCtx.lineWidth = 1;
-        let drawHeight: number = ((processMemBeanStructData.value || 0) * (processMemBeanStructData.frame.height || 0) * 1.0) / (processMemBeanStructData.maxValue || 1);
-        processMemBeanStructCanvasCtx.fillRect(processMemBeanStructData.frame.x, processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight, width, drawHeight);
+        let drawHeight: number =
+          ((processMemBeanStructData.value || 0) * (processMemBeanStructData.frame.height || 0) * 1.0) /
+          (processMemBeanStructData.maxValue || 1);
+        processMemBeanStructCanvasCtx.fillRect(
+          processMemBeanStructData.frame.x,
+          processMemBeanStructData.frame.y + processMemBeanStructData.frame.height - drawHeight,
+          width,
+          drawHeight
+        );
       }
     }
     processMemBeanStructCanvasCtx.globalAlpha = 1.0;

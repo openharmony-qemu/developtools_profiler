@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     TS = 0,
     DUR,
     TX,
@@ -63,53 +63,53 @@ NetworkTable::Cursor::~Cursor() {}
 
 int32_t NetworkTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case TS: {
+    switch (static_cast<Index>(column)) {
+        case Index::TS: {
             sqlite3_result_int64(context_, static_cast<int64_t>(networkDataObj_.TimeStampData()[CurrentRow()]));
             break;
         }
-        case TX: {
+        case Index::TX: {
             sqlite3_result_int64(context_, static_cast<int64_t>(networkDataObj_.TxDatas()[CurrentRow()]));
             break;
         }
-        case RX: {
+        case Index::RX: {
             sqlite3_result_int64(context_, static_cast<int64_t>(networkDataObj_.RxDatas()[CurrentRow()]));
             break;
         }
-        case DUR: {
+        case Index::DUR: {
             sqlite3_result_int64(context_, static_cast<int64_t>(networkDataObj_.Durs()[CurrentRow()]));
             break;
         }
-        case TX_SPEED: {
+        case Index::TX_SPEED: {
             sqlite3_result_double(context_, static_cast<double>(networkDataObj_.TxSpeed()[CurrentRow()]));
             break;
         }
-        case RX_SPEED: {
+        case Index::RX_SPEED: {
             sqlite3_result_double(context_,
                                   static_cast<double>(dataCache_->GetConstNetworkData().RxSpeed()[CurrentRow()]));
             break;
         }
-        case PACKET_IN: {
+        case Index::PACKET_IN: {
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(dataCache_->GetConstNetworkData().PacketIn()[CurrentRow()]));
             break;
         }
-        case PACKET_IN_SEC: {
+        case Index::PACKET_IN_SEC: {
             sqlite3_result_double(context_,
                                   static_cast<double>(dataCache_->GetConstNetworkData().PacketInSec()[CurrentRow()]));
             break;
         }
-        case PACKET_OUT: {
+        case Index::PACKET_OUT: {
             sqlite3_result_int64(context_,
                                  static_cast<double>(dataCache_->GetConstNetworkData().PacketOut()[CurrentRow()]));
             break;
         }
-        case PACKET_OUT_SEC: {
+        case Index::PACKET_OUT_SEC: {
             sqlite3_result_double(context_,
                                   static_cast<double>(dataCache_->GetConstNetworkData().PacketOutSec()[CurrentRow()]));
             break;
         }
-        case NET_TYPE: {
+        case Index::NET_TYPE: {
             sqlite3_result_text(context_, dataCache_->GetConstNetworkData().NetTypes()[CurrentRow()].c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;

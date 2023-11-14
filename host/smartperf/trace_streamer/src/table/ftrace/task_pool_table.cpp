@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     ALLOCATION_TASK_ROW,
     EXECUTE_TASK_ROW,
@@ -65,72 +65,72 @@ TaskPoolTable::Cursor::~Cursor() {}
 
 int32_t TaskPoolTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(CurrentRow()));
             break;
-        case ALLOCATION_TASK_ROW:
+        case Index::ALLOCATION_TASK_ROW:
             if (taskPoolObj_.AllocationTaskRows()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(
                     context_,
                     static_cast<sqlite3_int64>(dataCache_->GetConstTaskPoolData().AllocationTaskRows()[CurrentRow()]));
             }
             break;
-        case EXECUTE_TASK_ROW:
+        case Index::EXECUTE_TASK_ROW:
             if (taskPoolObj_.ExecuteTaskRows()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ExecuteTaskRows()[CurrentRow()]));
             }
             break;
-        case RETURN_TASK_ROW:
+        case Index::RETURN_TASK_ROW:
             if (taskPoolObj_.ReturnTaskRows()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ReturnTaskRows()[CurrentRow()]));
             }
             break;
-        case ALLOCATION_ITID:
+        case Index::ALLOCATION_ITID:
             if (taskPoolObj_.AllocationItids()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().AllocationItids()[CurrentRow()]));
             }
             break;
-        case EXECUTE_ITID:
+        case Index::EXECUTE_ITID:
             if (taskPoolObj_.ExecuteItids()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ExecuteItids()[CurrentRow()]));
             }
             break;
-        case RETURN_ITID:
+        case Index::RETURN_ITID:
             if (taskPoolObj_.ReturnItids()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ReturnItids()[CurrentRow()]));
             }
             break;
-        case EXECUTE_ID:
+        case Index::EXECUTE_ID:
             if (taskPoolObj_.ExecuteIds()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ExecuteIds()[CurrentRow()]));
             }
             break;
-        case PRIORITY:
+        case Index::PRIORITY:
             if (taskPoolObj_.Prioritys()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(
                     context_, static_cast<sqlite3_int64>(dataCache_->GetConstTaskPoolData().Prioritys()[CurrentRow()]));
             }
             break;
-        case EXECUTE_STATE:
+        case Index::EXECUTE_STATE:
             if (taskPoolObj_.ExecuteStates()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ExecuteStates()[CurrentRow()]));
             }
             break;
-        case RETURN_STATE:
+        case Index::RETURN_STATE:
             if (taskPoolObj_.ReturnStates()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().ReturnStates()[CurrentRow()]));
             }
             break;
-        case TIMEOUT_ROW:
+        case Index::TIMEOUT_ROW:
             if (taskPoolObj_.TimeoutRows()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                    dataCache_->GetConstTaskPoolData().TimeoutRows()[CurrentRow()]));

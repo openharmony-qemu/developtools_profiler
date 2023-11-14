@@ -43,15 +43,15 @@ if { [ "$1" == "dubaisdk" ] || [ "$1" == "sdkdemo" ] || [ "$1" == "wasm" ] || [ 
     if [[ $PARAMS == *"debug"* ]]; then
         TARGET_DIR=$1"_debug"
     fi
-    if [ ! -f "out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoc" ] && [ "$1" != "protoc" ];then
+    if [ ! -f "out/$TARGET_DIR/protoc" ] && [ "$1" != "protoc" ];then
         ./build.sh protoc
-        mkdir -p out/$TARGET_DIR/clang_x64/developtools/smartperf_host
-        cp out/$target_os/clang_x64/developtools/smartperf_host/protoc out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoc
+        mkdir -p out/$TARGET_DIR
+        cp out/$target_os/protoc out/$TARGET_DIR/protoc
     fi
-    if [ ! -f "out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoreader_plugin" ] && [ "$1" != "spb" ] && [ -f "out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoc" ];then
+    if [ ! -f "out/$TARGET_DIR/protoreader_plugin" ] && [ "$1" != "spb" ] && [ -f "out/$TARGET_DIR/protoc" ];then
         ./build.sh spb
-        mkdir -p out/$TARGET_DIR/clang_x64/developtools/smartperf_host
-        cp out/$target_os/clang_x64/developtools/smartperf_host/protoreader_plugin out/$TARGET_DIR/clang_x64/developtools/smartperf_host/protoreader_plugin
+        mkdir -p out/$TARGET_DIR
+        cp out/$target_os/protoreader_plugin out/$TARGET_DIR/protoreader_plugin
     fi
 fi
 if [ $target_os == "windows" ];then

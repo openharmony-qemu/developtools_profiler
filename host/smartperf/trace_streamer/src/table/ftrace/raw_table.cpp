@@ -16,7 +16,7 @@
 #include "raw_table.h"
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, TS, NAME, CPU, INTERNAL_TID };
+enum class Index : int32_t { ID = 0, TYPE, TS, NAME, CPU, INTERNAL_TID };
 enum RawType { RAW_CPU_IDLE = 1, RAW_SCHED_WAKEUP = 2, RAW_SCHED_WAKING = 3 };
 uint32_t GetNameIndex(const std::string& name)
 {
@@ -70,8 +70,8 @@ void RawTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei)
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -90,8 +90,8 @@ void RawTable::FilterByConstraint(FilterConstraints& fc, double& filterCost, siz
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -131,19 +131,19 @@ int32_t RawTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case NAME:
+            case Index::NAME:
                 indexMap_->MixRange(
                     c.op, GetNameIndex(std::string(reinterpret_cast<const char*>(sqlite3_value_text(argv[i])))),
                     rawObj_.NameData());
                 break;
-            case TS:
+            case Index::TS:
                 FilterTS(c.op, argv[i], rawObj_.TimeStampData());
                 break;
-            case INTERNAL_TID:
+            case Index::INTERNAL_TID:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])),
                                     rawObj_.InternalTidsData());
                 break;
@@ -155,8 +155,8 @@ int32_t RawTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -169,17 +169,17 @@ int32_t RawTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
 
 int32_t RawTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, "raw", STR_DEFAULT_LEN, nullptr);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(rawObj_.TimeStampData()[CurrentRow()]));
             break;
-        case NAME: {
+        case Index::NAME: {
             if (rawObj_.NameData()[CurrentRow()] == RAW_CPU_IDLE) {
                 sqlite3_result_text(context_, "cpu_idle", STR_DEFAULT_LEN, nullptr);
             } else if (rawObj_.NameData()[CurrentRow()] == RAW_SCHED_WAKEUP) {
@@ -189,10 +189,10 @@ int32_t RawTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case CPU:
+        case Index::CPU:
             sqlite3_result_int64(context_, static_cast<int32_t>(rawObj_.CpuData()[CurrentRow()]));
             break;
-        case INTERNAL_TID:
+        case Index::INTERNAL_TID:
             sqlite3_result_int64(context_, static_cast<int32_t>(rawObj_.InternalTidData()[CurrentRow()]));
             break;
         default:

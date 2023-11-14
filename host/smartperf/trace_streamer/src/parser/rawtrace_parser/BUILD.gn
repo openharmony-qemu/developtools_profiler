@@ -1,0 +1,72 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/ohos.gni")
+import("../../../build/ts.gni")
+
+config("rawtrace_parser_comm") {
+  include_dirs = [
+    "${SRC}",
+    "${SRC}/base",
+    "${SRC}/cfg",
+    "${SRC}/parser",
+    "${SRC}/trace_streamer",
+    "${SRC}/proto_reader/include",
+    "${SRC}/trace_data",
+    "${SRC}/filter",
+    "${SRC}/metrics",
+    "${THIRD_PARTY}/sqlite/include",
+    "${THIRD_PARTY}/bounds_checking_function/include",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
+    "${PERF_DIR}/hiperf/include",
+    "${PERF_DIR}/hiperf/include/nonlinux/linux",
+    "${PERF_DIR}/hiperf/include/nonlinux",
+    "${PERF_DIR}/profiler/device/plugins/ftrace_plugin/include",
+    "${COMMON_LIBRARY}/c_utils/base/include",
+  ]
+}
+
+ohos_source_set("rawtrace_parser_src") {
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  sources = [
+    "cpu_detail_parser.cpp",
+    "ftrace_event_processor.cpp",
+    "ftrace_field_processor.cpp",
+    "ftrace_processor.cpp",
+    "kernel_symbols_processor.cpp",
+    "printk_formats_processor.cpp",
+    "rawtrace_parser.cpp",
+  ]
+
+  public_configs = [ ":rawtrace_parser_comm" ]
+
+  if (!is_independent_compile) {
+    configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
+  if (is_mingw) {
+    cflags = [ "-includeMingW64Fix.h" ]
+  }
+
+  public_deps = []
+  deps = [
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp_standard",
+    "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ts_ftrace_data_cpp",
+  ]
+}
+group("rawtrace_parser") {
+  deps = [
+    ":rawtrace_parser_src",
+    "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+    "${THIRD_PARTY}/protobuf:protobuf_static",
+  ]
+}

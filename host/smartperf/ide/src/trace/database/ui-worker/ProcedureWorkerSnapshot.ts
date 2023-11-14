@@ -32,7 +32,14 @@ export class SnapshotRender extends Render {
     for (let item of list) {
       maxValue = Math.max(maxValue, item.value || 0);
     }
-    snapshot(list, filter, maxValue, TraceRow.range?.startNS ?? 0, (TraceRow.range?.endNS ?? 0) - (TraceRow.range?.startNS! ?? 0), row.frame);
+    snapshot(
+      list,
+      filter,
+      maxValue,
+      TraceRow.range?.startNS ?? 0,
+      (TraceRow.range?.endNS ?? 0) - (TraceRow.range?.startNS! ?? 0),
+      row.frame
+    );
     req.context!.beginPath();
     let find = false;
     for (let re of filter) {
@@ -72,6 +79,8 @@ export class SnapshotStruct extends BaseStruct {
   endNs: number = 0;
   dur: number = 0;
   name: string = '';
+  aSize: number = 0;
+  categoryNameId: number = 0;
   textWidth: number = 0;
   value: number = 0;
   type: string = '';

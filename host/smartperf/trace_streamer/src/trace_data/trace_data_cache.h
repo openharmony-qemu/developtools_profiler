@@ -31,22 +31,31 @@ public:
     TraceDataCache* operator=(const TraceDataCache* dataCache) = delete;
     ~TraceDataCache() override;
 
-    bool AnimationTraceEnabled();
+    bool AnimationTraceEnabled() const;
     void UpdateAnimationTraceStatus(bool status);
-    bool TaskPoolTraceEnabled();
+    bool TaskPoolTraceEnabled() const;
     void UpdateTaskPoolTraceStatus(bool status);
-    bool AppStartTraceEnabled();
+    bool AppStartTraceEnabled() const;
     void UpdateAppStartTraceStatus(bool status);
-    bool BinderRunnableTraceEnabled();
+    bool BinderRunnableTraceEnabled() const;
     void UpdateBinderRunnableTraceStatus(bool status);
+    uint64_t SplitFileMaxTime();
+    uint64_t SplitFileMinTime();
+    void SetSplitFileMaxTime(uint64_t maxTs);
+    void SetSplitFileMinTime(uint64_t minTs);
+    std::deque<std::unique_ptr<std::string>>& HookCommProtos();
+    void ClearHookCommProtos();
 
 private:
-    void InitDB() override;
+    void InitDB();
     bool dbInited_ = false;
     bool animationTraceEnabled_ = false;
     bool taskPoolTraceEnabled_ = false;
     bool appStartTraceEnabled_ = false;
     bool binderRunnableTraceEnabled_ = false;
+    uint64_t splitFileMinTs_ = INVALID_UINT64;
+    uint64_t splitFileMaxTs_ = INVALID_UINT64;
+    std::deque<std::unique_ptr<std::string>> hookCommProtos_;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

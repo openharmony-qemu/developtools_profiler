@@ -577,7 +577,7 @@ class FileSystemCallTreeHandler {
     this.queryData(
       this.currentEventId,
       'fileSystem-queryFileSamples',
-      `select s.callchain_id as callChainId,h.tid,h.name as threadName,s.dur,s.type,p.pid,p.name as processName from file_system_sample s,trace_range t 
+      `select s.start_ts - t.start_ts as ts, s.callchain_id as callChainId,h.tid,h.name as threadName,s.dur,s.type,p.pid,p.name as processName from file_system_sample s,trace_range t 
 left join process p on p.id = s.ipid  
 left join thread h on h.id = s.itid 
 where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} and callchain_id != -1;`,
@@ -590,19 +590,22 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
 
   queryIOSamples(selectionParam: any) {
     let sql = '';
-    if (selectionParam.diskIOipids.length > 0) {
-      sql += `and (s.ipid in (${selectionParam.diskIOipids.join(',')}) and s.type in (5,6)) `;
-    }
+    const types: number[] = [];
     if (selectionParam.diskIOReadIds.length > 0) {
-      sql += `or (s.ipid in (${selectionParam.diskIOReadIds.join(',')}) and s.type in (1,3)) `;
+      types.push(...[1, 3]);
     }
     if (selectionParam.diskIOWriteIds.length > 0) {
-      sql += `or (s.ipid in (${selectionParam.diskIOWriteIds.join(',')}) and s.type in (2,4)) `;
+      types.push(...[2, 4]);
     }
+    if (selectionParam.diskIOipids.length > 0) {
+      types.push(...[5, 6]);
+      sql += `and (s.ipid in (${selectionParam.diskIOipids.join(',')}) and s.type in (${types.join(',')})) `;
+    }
+
     this.queryData(
       this.currentEventId,
       'fileSystem-queryIoSamples',
-      `select s.callchain_id as callChainId,h.tid,h.name as threadName,s.latency_dur as dur,s.type,p.pid,p.name as processName from bio_latency_sample s,trace_range t
+      `select s.start_ts - t.start_ts as ts, s.callchain_id as callChainId,h.tid,h.name as threadName,s.latency_dur as dur,s.type,p.pid,p.name as processName from bio_latency_sample s,trace_range t
 left join process p on p.id = s.ipid
 left join thread h on h.id = s.itid
 where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} and callchain_id != -1;`,
@@ -625,7 +628,7 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
     this.queryData(
       this.currentEventId,
       'fileSystem-queryVirtualMemorySamples',
-      `select s.callchain_id as callChainId,h.tid,h.name as threadName,s.dur,s.type,p.pid,p.name as processName from paged_memory_sample s,trace_range t 
+      `select s.start_ts - t.start_ts as ts, s.callchain_id as callChainId,h.tid,h.name as threadName,s.dur,s.type,p.pid,p.name as processName from paged_memory_sample s,trace_range t 
 left join process p on p.id = s.ipid  
 left join thread h on h.id = s.itid 
 where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} and callchain_id != -1;`,
@@ -676,6 +679,8 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
         fileMerageBean.dur = merageData.dur;
         fileMerageBean.count = merageData.count;
         fileMerageBean.total = totalCount;
+        fileMerageBean.tsArray = [...merageData.tsArray];
+        fileMerageBean.durArray = [...merageData.durArray];
         rootMerageMap[merageData.pid] = fileMerageBean;
       } else {
         rootMerageMap[merageData.pid].children.push(merageData);
@@ -683,6 +688,12 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
         rootMerageMap[merageData.pid].dur += merageData.dur;
         rootMerageMap[merageData.pid].count += merageData.count;
         rootMerageMap[merageData.pid].total = totalCount;
+        for (const ts of merageData.tsArray) {
+          rootMerageMap[merageData.pid].tsArray.push(ts);
+        }
+        for (const dur of merageData.durArray) {
+          rootMerageMap[merageData.pid].durArray.push(dur);
+        }
       }
       merageData.parentNode = rootMerageMap[merageData.pid]; //子节点添加父节点的引用
     });
@@ -712,9 +723,9 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
     let map: any = {};
     if (this.currentDataType == 'fileSystem') {
       map = FILE_TYPE_MAP;
-    } else if (this.currentDataType == 'io') {
+    } else if (this.currentDataType === 'io') {
       map = DISKIO_TYPE_MAP;
-    } else if (this.currentDataType == 'virtualMemory') {
+    } else if (this.currentDataType === 'virtualMemory') {
       map = VM_TYPE_MAP;
     }
     // @ts-ignore
@@ -739,7 +750,7 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
   ) {
     isTopDown ? index++ : index--;
     let isEnd = isTopDown ? callChainDataList.length == index + 1 : index == 0;
-    let node;
+    let node: FileMerageBean;
     if (
       currentNode.initChildren.filter((child: any) => {
         if (
@@ -762,7 +773,7 @@ where s.end_ts between $startTime + t.start_ts and $endTime + t.start_ts ${sql} 
       this.currentTreeList.push(node);
       node.parentNode = currentNode;
     }
-    if (node && !isEnd) this.merageChildrenByIndex(node, callChainDataList, index, sample, isTopDown);
+    if (node! && !isEnd) this.merageChildrenByIndex(node, callChainDataList, index, sample, isTopDown);
   }
 
   setMerageName(currentNode: FileMerageBean) {
@@ -865,6 +876,7 @@ class FileSample {
   tid: number = 0;
   threadName: string = '';
   processName: string = '';
+  ts: number = 0;
 }
 
 class FileAnalysisSample extends FileSample {
@@ -911,6 +923,8 @@ export class FileMerageBean extends MerageBean {
     }
     currentNode.dur += sample.dur;
     currentNode.count++;
+    currentNode.tsArray.push(sample.ts);
+    currentNode.durArray.push(sample.dur);
   }
 }
 

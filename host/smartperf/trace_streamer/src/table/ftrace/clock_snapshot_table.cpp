@@ -18,7 +18,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, CLOCK_ID, TS, CLOCK_NAME };
+enum class Index : int32_t { ID = 0, CLOCK_ID, TS, CLOCK_NAME };
 ClockSnapShotTable::ClockSnapShotTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -46,17 +46,17 @@ ClockSnapShotTable::Cursor::~Cursor() {}
 
 int32_t ClockSnapShotTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, CurrentRow());
             break;
-        case CLOCK_ID:
+        case Index::CLOCK_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(snapShotData_.ClockIds()[CurrentRow()]));
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(snapShotData_.Ts()[CurrentRow()]));
             break;
-        case CLOCK_NAME:
+        case Index::CLOCK_NAME:
             sqlite3_result_text(context_, snapShotData_.Names()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         default:

@@ -40,7 +40,7 @@ class HtraceEventParser : private EventParserBase {
 public:
     HtraceEventParser(TraceDataCache* dataCache, const TraceStreamerFilters* filter);
     ~HtraceEventParser();
-    void ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClocks clock);
+    void ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClocks clock, bool& haveSplitSeg);
     void FilterAllEventsReader();
     void FilterAllEvents();
     void Clear();

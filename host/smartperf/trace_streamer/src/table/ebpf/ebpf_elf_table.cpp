@@ -16,7 +16,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     ELF_ID,
     TEXT_VADDR,
@@ -70,8 +70,8 @@ void EbpfElfTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo&
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -90,8 +90,8 @@ void EbpfElfTable::FilterByConstraint(FilterConstraints& fc, double& filterCost,
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -122,41 +122,41 @@ EbpfElfTable::Cursor::~Cursor() {}
 
 int32_t EbpfElfTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(ebpfElfObj_.IdsData()[CurrentRow()]));
             break;
-        case ELF_ID:
+        case Index::ELF_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.ElfIds()[CurrentRow()]));
             break;
-        case TEXT_VADDR:
+        case Index::TEXT_VADDR:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.TextVaddrs()[CurrentRow()]));
             break;
-        case TEXT_OFFSET:
+        case Index::TEXT_OFFSET:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.TextOffsets()[CurrentRow()]));
             break;
-        case STR_TAB_LEN:
+        case Index::STR_TAB_LEN:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.StrTabLens()[CurrentRow()]));
             break;
-        case SYM_TAB_LEN: {
+        case Index::SYM_TAB_LEN: {
             if (ebpfElfObj_.SymTabLens()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.SymTabLens()[CurrentRow()]));
             }
             break;
         }
-        case FILE_NAME_LEN: {
+        case Index::FILE_NAME_LEN: {
             if (ebpfElfObj_.FileNameLens()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.FileNameLens()[CurrentRow()]));
             }
             break;
         }
-        case SYM_ENT_LEN: {
+        case Index::SYM_ENT_LEN: {
             if (ebpfElfObj_.SymEntLens()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.SymEntLens()[CurrentRow()]));
             }
             break;
         }
-        case FILE_PATH_ID: {
+        case Index::FILE_PATH_ID: {
             if (ebpfElfObj_.FileNameIndexs()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfElfObj_.FileNameIndexs()[CurrentRow()]));
             }

@@ -38,8 +38,8 @@ struct TableColumnInfo {
     int32_t colIdx;
 };
 
-enum PartitionState {
-    TS_REAL,
+enum class PartitionState : int32_t {
+    TS_REAL = 0,
     TS_PARTITION,
     TS_MISSING,
     TS_EOF,

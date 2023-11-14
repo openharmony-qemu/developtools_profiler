@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -28,6 +29,7 @@
 #include "filter/slice_filter.h"
 #include "http_server.h"
 #include "log.h"
+#include "metrics.h"
 #include "parser/bytrace_parser/bytrace_event_parser.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parting_string.h"
@@ -77,6 +79,9 @@ void ShowHelpInfo(const char* argv)
         " -h    start HTTP server.\n"
         " -s    separate arkts-plugin data, and save it in current dir with default filename.\n"
         " -p    Specify the port of HTTP server, default is 9001.\n"
+        " -q    select sql from file.\n"
+        " -m    Perform operations that query metrics through linux,supports querying multiple metrics items.For "
+        "example:-m x,y,z.\n"
         " -i    show information.\n"
         " -v    show version.",
         argv, argv);
@@ -89,46 +94,6 @@ void PrintInformation()
 void PrintVersion()
 {
     fprintf(stderr, "version %s\n", g_traceStreamerVersion.c_str());
-}
-
-void LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sqlStrings)
-{
-    auto fd = fopen(sqlOperator.c_str(), "r");
-    if (!fd) {
-        TS_LOGE("open file failed!");
-        return;
-    }
-    char buffer[G_CHUNK_SIZE];
-    while (!feof(fd)) {
-        std::string sqlString;
-        while (fgets(buffer, sizeof(buffer), fd)) {
-            std::string line = buffer;
-            if (line == "\n" || line == "\r\n") {
-                break;
-            }
-            sqlString.append(buffer);
-
-            if (EndWith(line, ";") || EndWith(line, ";\r\n")) {
-                break;
-            }
-        }
-
-        if (sqlString.empty()) {
-            continue;
-        }
-        sqlStrings.push_back(sqlString);
-    }
-    fclose(fd);
-    fd = nullptr;
-}
-
-void ReadSqlFileAndPrintResult(TraceStreamerSelector& ts, const std::string& sqlOperator)
-{
-    std::vector<std::string> sqlStrings;
-    LoadQueryFile(sqlOperator, sqlStrings);
-    for (const auto& str : sqlStrings) {
-        ts.SearchDatabase(str, true);
-    }
 }
 
 bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
@@ -149,7 +114,7 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
             return false;
         }
         g_loadSize += rsize;
-        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize))) {
+        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize), false, false)) {
             return false;
         };
         printf("\rLoadingFile:\t%.2f MB\r", static_cast<double>(g_loadSize) / 1E6);
@@ -226,6 +191,7 @@ int ExportDatabase(TraceStreamerSelector& ts, const std::string& sqliteFilePath)
 struct TraceExportOption {
     std::string traceFilePath;
     std::string sqliteFilePath;
+    std::string metricsIndex;
     std::string sqlOperatorFilePath;
     bool interactiveState = false;
     bool exportMetaTable = true;
@@ -239,12 +205,14 @@ int CheckFinal(char** argv, TraceExportOption& traceExportOption, HttpOption& ht
 {
     if ((traceExportOption.traceFilePath.empty() ||
          (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
-        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.sqlOperatorFilePath.empty()) {
+        !httpOption.enable && !traceExportOption.separateFile && traceExportOption.metricsIndex.empty() &&
+        traceExportOption.sqlOperatorFilePath.empty()) {
         ShowHelpInfo(argv[0]);
         return 1;
     }
     return 0;
 }
+
 int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
 {
     for (int i = 1; i < argc; i++) {
@@ -274,6 +242,14 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
             continue;
         } else if (!strcmp(argv[i], "-nm") || !strcmp(argv[i], "--nometa")) {
             traceExportOption.exportMetaTable = false;
+            continue;
+        } else if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--run-metrics")) {
+            i++;
+            if (i == argc) {
+                ShowHelpInfo(argv[0]);
+                return 1;
+            }
+            traceExportOption.metricsIndex = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--v") || !strcmp(argv[i], "-version") ||
                    !strcmp(argv[i], "--version")) {
@@ -321,7 +297,9 @@ int main(int argc, char** argv)
     TraceStreamerSelector ts;
     ts.EnableMetaTable(tsOption.exportMetaTable);
     ts.EnableFileSave(tsOption.separateFile);
-    if (OpenAndParserFile(ts, tsOption.traceFilePath)) {
+    std::regex traceInvalidStr("\\\\");
+    auto strEscape = std::regex_replace(tsOption.traceFilePath, traceInvalidStr, "\\\\\\\\");
+    if (OpenAndParserFile(ts, strEscape)) {
         if (!tsOption.sqliteFilePath.empty()) {
             ExportStatusToLog(tsOption.sqliteFilePath, GetAnalysisResult());
         }
@@ -333,7 +311,7 @@ int main(int argc, char** argv)
         metaData->SetParserToolVersion(g_traceStreamerVersion.c_str());
         metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion.c_str());
         metaData->SetTraceDataSize(g_loadSize);
-        while (1) {
+        while (true) {
             auto values = ts.SearchData();
             std::string symbolsPath = "default";
             if (!values.empty()) {
@@ -352,8 +330,16 @@ int main(int argc, char** argv)
             ExportStatusToLog(tsOption.sqliteFilePath, GetAnalysisResult());
         }
     }
+    if (!tsOption.metricsIndex.empty()) {
+        MetaData* metaData = ts.GetMetaData();
+        metaData->SetOutputFileName("command line mode");
+        metaData->SetParserToolVersion(g_traceStreamerVersion.c_str());
+        metaData->SetParserToolPublishDateTime(g_traceStreamerPublishVersion.c_str());
+        metaData->SetTraceDataSize(g_loadSize);
+        ts.ParserAndPrintMetrics(tsOption.metricsIndex);
+    }
     if (!tsOption.sqlOperatorFilePath.empty()) {
-        ReadSqlFileAndPrintResult(ts, tsOption.sqlOperatorFilePath);
+        ts.ReadSqlFileAndPrintResult(tsOption.sqlOperatorFilePath);
     }
     return 0;
 }

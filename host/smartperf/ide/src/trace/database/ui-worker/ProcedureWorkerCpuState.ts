@@ -52,12 +52,6 @@ export class CpuStateRender extends PerfRender {
       paddingTop: 5,
       useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
     });
-    let chartColor = ColorUtils.colorForTid(req.cpu);
-    req.cpuStateContext.beginPath();
-    req.cpuStateContext.font = '11px sans-serif';
-    req.cpuStateContext.fillStyle = chartColor;
-    req.cpuStateContext.strokeStyle = chartColor;
-    req.cpuStateContext.globalAlpha = 0.6;
     let path = new Path2D();
     let find = false;
     let offset = 3;
@@ -66,7 +60,9 @@ export class CpuStateRender extends PerfRender {
       re.height = heights[(re as any).value];
       CpuStateStruct.draw(req.cpuStateContext, path, re);
       if (cpuStateRow.isHover) {
-        if (re.frame && cpuStateRow.hoverX >= re.frame.x - offset &&
+        if (
+          re.frame &&
+          cpuStateRow.hoverX >= re.frame.x - offset &&
           cpuStateRow.hoverX <= re.frame.x + re.frame.width + offset
         ) {
           CpuStateStruct.hoverStateStruct = re;
@@ -247,6 +243,11 @@ export class CpuStateStruct extends BaseStruct {
 
   static draw(ctx: CanvasRenderingContext2D, path: Path2D, data: CpuStateStruct) {
     if (data.frame) {
+      let chartColor = ColorUtils.colorForTid(data.cpu!);
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = chartColor;
+      ctx.strokeStyle = chartColor;
+      ctx.globalAlpha = 0.6;
       if (data === CpuStateStruct.hoverStateStruct || data === CpuStateStruct.selectStateStruct) {
         path.rect(data.frame.x, 35 - (data.height || 0), data.frame.width, data.height || 0);
         ctx.lineWidth = 1;
@@ -264,7 +265,7 @@ export class CpuStateStruct extends BaseStruct {
         ctx.fillRect(data.frame.x, 35 - (data.height || 0), data.frame.width, data.height || 0);
       } else {
         ctx.globalAlpha = 0.6;
-        path.rect(data.frame.x, 35 - (data.height || 0), data.frame.width, data.height || 0);
+        ctx.fillRect(data.frame.x, 35 - (data.height || 0), data.frame.width, data.height || 0);
       }
     }
   }

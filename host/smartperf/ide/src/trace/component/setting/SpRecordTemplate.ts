@@ -76,7 +76,8 @@ export class SpRecordTemplate extends BaseElement {
     'zimage',
     'zmedia',
   ];
-  static HIPERF_DEFAULT_RECORD_ARGS = '-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking' +
+  static HIPERF_DEFAULT_RECORD_ARGS =
+    '-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking' +
     ' --call-stack dwarf --clockid monotonic --offcpu -m 256';
   private frameTimeline: LitSwitch | undefined | null;
   private schedulingAnalysis: LitSwitch | undefined | null;
@@ -90,15 +91,23 @@ export class SpRecordTemplate extends BaseElement {
     this.appStartup = this.shadowRoot?.querySelector<LitSwitch>('#app_startup');
     this.taskPoolEl = this.shadowRoot?.querySelector<LitSwitch>('#task_pool');
     this.dynamicEffectEl = this.shadowRoot?.querySelector<LitSwitch>('#dynamic_effect');
-    this.addProbeListener(this.frameTimeline!, this.schedulingAnalysis!, this.appStartup!, this.taskPoolEl!, this.dynamicEffectEl!);
+    this.addProbeListener(
+      this.frameTimeline!,
+      this.schedulingAnalysis!,
+      this.appStartup!,
+      this.taskPoolEl!,
+      this.dynamicEffectEl!
+    );
   }
 
   addProbeListener(...elements: HTMLElement[]) {
-    elements.forEach(element => {
+    elements.forEach((element) => {
       element.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
         let detail = event.detail;
         if (detail!.checked) {
-          this.dispatchEvent(new CustomEvent('addProbe', {}));
+          this.dispatchEvent(new CustomEvent('addProbe', { detail: { elementId: element.getAttribute('name') } }));
+        } else {
+          this.dispatchEvent(new CustomEvent('delProbe', { detail: { elementId: element.getAttribute('name') } }));
         }
       });
     });
@@ -120,7 +129,7 @@ export class SpRecordTemplate extends BaseElement {
         config.push(this.createHiperfDefaultConfig());
       }
       SpRecordTemplate.FRAME_TIMELINE_EVENTS.forEach((ev) => {
-        if (traceEventSet.indexOf(ev) == -1) {
+        if (traceEventSet.indexOf(ev) === -1) {
           traceEventSet.push(ev);
         }
       });
@@ -151,20 +160,18 @@ export class SpRecordTemplate extends BaseElement {
         parseKsyms: true,
         rawDataPrefix: '',
         traceDurationMs: 0,
-        hitraceTime: this.args.recordSetting!.maxDur,
       };
       let htraceProfilerPluginConfig: ProfilerPluginConfig<TracePluginConfig> = {
         pluginName: 'ftrace-plugin',
         sampleInterval: 1000,
         configData: tracePluginConfig,
       };
-      SpRecordTrace.appendSerialize(htraceProfilerPluginConfig);
       config.push(htraceProfilerPluginConfig);
     }
     return config;
   }
 
-  private createHiperfDefaultConfig() {
+  private createHiperfDefaultConfig(): ProfilerPluginConfig<HiperfPluginConfig> {
     let hiPerf: HiperfPluginConfig = {
       isRoot: false,
       outfileName: '/data/local/tmp/perf.data',
@@ -177,6 +184,7 @@ export class SpRecordTemplate extends BaseElement {
     };
     return htraceProfilerPluginConfig;
   }
+
   initHtml(): string {
     return `
         <style>
@@ -221,32 +229,32 @@ export class SpRecordTemplate extends BaseElement {
         <div class="root">
             <div class="template-config-div">
                <div>
-                 <span class="template-title">Frame timeline</span>
-                 <lit-switch class="config_switch" id="frame_timeline"></lit-switch>
+                 <span class="template-title">FrameTimeline</span>
+                 <lit-switch class="config_switch" id="frame_timeline" name="FrameTimeline"></lit-switch>
                </div>
             </div>
              <div class="template-config-div">
                <div>
-                 <span class="template-title">Scheduling analysis</span>
-                 <lit-switch class="config_switch" id="scheduling_analysis"></lit-switch>
+                 <span class="template-title">SchedulingAnalysis</span>
+                 <lit-switch class="config_switch" id="scheduling_analysis" name="SchedulingAnalysis"></lit-switch>
                </div>
             </div>
             <div class="template-config-div">
                <div>
-                 <span class="template-title">App startup</span>
-                 <lit-switch class="config_switch" id="app_startup"></lit-switch>
+                 <span class="template-title">AppStartup</span>
+                 <lit-switch class="config_switch" id="app_startup" name="AppStartup"></lit-switch>
                </div>
             </div>
             <div class="template-config-div">
                <div>
-                 <span class="template-title">Task pool</span>
-                 <lit-switch class="config_switch" id="task_pool"></lit-switch>
+                 <span class="template-title">TaskPool</span>
+                 <lit-switch class="config_switch" id="task_pool" name="TaskPool"></lit-switch>
                </div>
             </div>
             <div class="template-config-div">
                <div>
-                 <span class="template-title">Animation effect</span>
-                 <lit-switch class="config_switch" id="dynamic_effect"></lit-switch>
+                 <span class="template-title">AnimationAnalysis</span>
+                 <lit-switch class="config_switch" id="dynamic_effect" name="AnimationAnalysis"></lit-switch>
                </div>
             </div> 
         </div>

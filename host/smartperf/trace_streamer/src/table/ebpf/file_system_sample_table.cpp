@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     CALLCHAIN_ID,
     TYPE,
@@ -87,8 +87,8 @@ void FileSystemSampleTable::EstimateFilterCost(FilterConstraints& fc, EstimatedI
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -107,8 +107,8 @@ void FileSystemSampleTable::FilterByConstraint(FilterConstraints& fc, double& fi
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -149,11 +149,11 @@ int32_t FileSystemSampleTable::Cursor::Filter(const FilterConstraints& fc, sqlit
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case TYPE:
+            case Index::TYPE:
                 indexMap_->MixRange(c.op, static_cast<uint16_t>(sqlite3_value_int(argv[i])),
                                     fileSystemSampleTableObj_.Types());
                 break;
@@ -165,8 +165,8 @@ int32_t FileSystemSampleTable::Cursor::Filter(const FilterConstraints& fc, sqlit
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -178,11 +178,11 @@ int32_t FileSystemSampleTable::Cursor::Filter(const FilterConstraints& fc, sqlit
 
 int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(fileSystemSampleTableObj_.IdsData()[CurrentRow()]));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             if (fileSystemSampleTableObj_.CallChainIds()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(fileSystemSampleTableObj_.CallChainIds()[CurrentRow()]));
@@ -190,25 +190,25 @@ int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
                 sqlite3_result_int64(context_, static_cast<int64_t>(INVALID_CALL_CHAIN_ID));
             }
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.Types()[CurrentRow()]));
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.Ipids()[CurrentRow()]));
             break;
-        case ITID:
+        case Index::ITID:
             sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.Itids()[CurrentRow()]));
             break;
-        case START_TS:
+        case Index::START_TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.StartTs()[CurrentRow()]));
             break;
-        case END_TS:
+        case Index::END_TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.EndTs()[CurrentRow()]));
             break;
-        case DUR:
+        case Index::DUR:
             sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.Durs()[CurrentRow()]));
             break;
-        case RETURN_VALUE: {
+        case Index::RETURN_VALUE: {
             if (fileSystemSampleTableObj_.ReturnValues()[CurrentRow()] != INVALID_UINT64) {
                 auto returnValueIndex = fileSystemSampleTableObj_.ReturnValues()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(returnValueIndex).c_str(), STR_DEFAULT_LEN,
@@ -216,7 +216,7 @@ int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case ERROR_VALUE: {
+        case Index::ERROR_VALUE: {
             if (fileSystemSampleTableObj_.ErrorCodes()[CurrentRow()] != INVALID_UINT64) {
                 auto errorValueIndex = fileSystemSampleTableObj_.ErrorCodes()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(errorValueIndex).c_str(), STR_DEFAULT_LEN,
@@ -224,25 +224,25 @@ int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case FD: {
+        case Index::FD: {
             if (fileSystemSampleTableObj_.Fds()[CurrentRow()] != INVALID_INT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.Fds()[CurrentRow()]));
             }
             break;
         }
-        case FILE_ID: {
+        case Index::FILE_ID: {
             if (fileSystemSampleTableObj_.FileIds()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.FileIds()[CurrentRow()]));
             }
             break;
         }
-        case SIZE: {
+        case Index::SIZE: {
             if (fileSystemSampleTableObj_.Sizes()[CurrentRow()] != MAX_SIZE_T) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(fileSystemSampleTableObj_.Sizes()[CurrentRow()]));
             }
             break;
         }
-        case FIRST_ARGUMENT: {
+        case Index::FIRST_ARGUMENT: {
             if (fileSystemSampleTableObj_.FirstArguments()[CurrentRow()] != INVALID_UINT64) {
                 auto firstArgIndex = fileSystemSampleTableObj_.FirstArguments()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(firstArgIndex).c_str(), STR_DEFAULT_LEN,
@@ -250,7 +250,7 @@ int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case SECOND_ARGUMENT: {
+        case Index::SECOND_ARGUMENT: {
             if (fileSystemSampleTableObj_.SecondArguments()[CurrentRow()] != INVALID_UINT64) {
                 auto secondArgIndex = fileSystemSampleTableObj_.SecondArguments()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(secondArgIndex).c_str(), STR_DEFAULT_LEN,
@@ -258,7 +258,7 @@ int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case THIRD_ARGUMENT: {
+        case Index::THIRD_ARGUMENT: {
             if (fileSystemSampleTableObj_.ThirdArguments()[CurrentRow()] != INVALID_UINT64) {
                 auto thirdArgIndex = fileSystemSampleTableObj_.ThirdArguments()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(thirdArgIndex).c_str(), STR_DEFAULT_LEN,
@@ -266,7 +266,7 @@ int32_t FileSystemSampleTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case FOURTH_ARGUMENT: {
+        case Index::FOURTH_ARGUMENT: {
             if (fileSystemSampleTableObj_.FourthArguments()[CurrentRow()] != INVALID_UINT64) {
                 auto fourthArgIndex = fileSystemSampleTableObj_.FourthArguments()[CurrentRow()];
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(fourthArgIndex).c_str(), STR_DEFAULT_LEN,

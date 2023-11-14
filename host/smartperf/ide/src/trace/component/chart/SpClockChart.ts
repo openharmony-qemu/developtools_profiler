@@ -100,8 +100,16 @@ export class SpClockChart {
           `<span>${ColorUtils.formatNumberComma(ClockStruct.hoverClockStruct?.value!)}</span>`
         );
       };
+      traceRow.findHoverStruct = () => {
+        ClockStruct.hoverClockStruct = traceRow.getHoverStruct();
+      };
       traceRow.onThreadHandler = (useCache) => {
-        let context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        let context: CanvasRenderingContext2D;
+        if (traceRow.currentContext) {
+          context = traceRow.currentContext;
+        } else {
+          context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        }
         traceRow.canvasSave(context);
         (renders['clock'] as ClockRender).renderMainThread(
           {

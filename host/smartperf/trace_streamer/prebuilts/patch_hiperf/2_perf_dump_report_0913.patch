@@ -1,0 +1,814 @@
+diff --git a/BUILD.gn b/BUILD.gn
+index f6a020e..682ed10 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -123,6 +123,7 @@ sources_platform_common = [
+   "./src/report_json_file.cpp",
+   "./src/register.cpp",
+   "./src/callstack.cpp",
++  "./src/unique_stack_table.cpp",
+ ]
+ 
+ if (hiperf_debug) {
+@@ -140,7 +141,6 @@ sources_platform_linux = [
+   "./src/subcommand_stat.cpp",
+   "./src/subcommand_record.cpp",
+   "./src/subcommand_list.cpp",
+-  "./src/unique_stack_table.cpp",
+ ]
+ 
+ common_deps = [
+diff --git a/include/perf_event_record.h b/include/perf_event_record.h
+index 5630375..1eab0c1 100644
+--- a/include/perf_event_record.h
++++ b/include/perf_event_record.h
+@@ -238,14 +238,15 @@ public:
+     // used for data_.ips replace (ReplaceWithCallStack)
+     std::vector<u64> ips_;
+     std::vector<CallFrame> callFrames_;
+-    StackId StackId_;
+-    bool removeStack_;
++    StackId StackId_ {0};
++    bool removeStack_ {false};
++    inline static bool dumpRemoveStack_ {false};
+     // referenced input(p) in PerfRecordSample, require caller keep input(p) together
+     PerfRecordSample(uint8_t *p, const perf_event_attr &attr);
+     bool GetBinary(std::vector<uint8_t> &buf) const override;
+     void DumpData(int indent = 0) const override;
+     void DumpLog(const std::string &prefix) const override;
+-
++    void RecoverCallStack();
+     // originalSize is use for expand callstack
+     void ReplaceWithCallStack(size_t originalSize = 0);
+     pid_t GetPid() const override;
+diff --git a/include/perf_file_format.h b/include/perf_file_format.h
+index 96b269d..8ca1df9 100644
+--- a/include/perf_file_format.h
++++ b/include/perf_file_format.h
+@@ -111,6 +111,7 @@ static const std::vector<std::string> extFeatureNames = {
+     "hiperf_workloader_cmd",
+     "hiperf_record_time",
+     "hiperf_cpu_off",
++    "hiperf_stack_table",
+ };
+ static const std::vector<std::string> featureNames = {
+     "unknown_feature", "tracing_data", "build_id",     "hostname",     "osrelease",
+@@ -218,9 +219,11 @@ private:
+ 
+ class PerfFileSectionUniStackTable : public PerfFileSection {
+ public:
++    std::vector<UniStackTableInfo> uniStackTableInfos_;
+     PerfFileSectionUniStackTable(FEATURE id,
+         const ProcessStackMap *table)
+         : PerfFileSection(id), processStackTable_(table) {}
++    PerfFileSectionUniStackTable(FEATURE id, const char *buf, size_t size);
+ private:
+     const ProcessStackMap *processStackTable_;
+     size_t GetSize();
+diff --git a/include/subcommand_dump.h b/include/subcommand_dump.h
+index 5a0cbd0..d9d135d 100644
+--- a/include/subcommand_dump.h
++++ b/include/subcommand_dump.h
+@@ -110,6 +110,7 @@ private:
+     void DumpDataPortion(int indent = 0);
+     void DumpCallChain(int indent, std::unique_ptr<PerfRecordSample> &sample);
+     void DumpFeaturePortion(int indent = 0);
++    void DumpUniqueStackTableNode(int indent, const PerfFileSectionUniStackTable &uniStackTable);
+     void ExprotUserData(std::unique_ptr<PerfEventRecord> &record);
+     void ExprotUserStack(const PerfRecordSample &recordSample);
+     void PrintHeaderInfo(const int &indent);
+diff --git a/include/subcommand_report.h b/include/subcommand_report.h
+index bf97bc6..2596783 100644
+--- a/include/subcommand_report.h
++++ b/include/subcommand_report.h
+@@ -125,6 +125,7 @@ private:
+     void LoadEventDesc();
+     void ProcessSymbolsData();
+     void LoadPerfDataCompleted();
++    void ProcessUniStackTableData();
+ 
+     bool OutputReport();
+     bool OutputStd();
+diff --git a/include/unique_stack_table.h b/include/unique_stack_table.h
+index babae1d..57a71cf 100644
+--- a/include/unique_stack_table.h
++++ b/include/unique_stack_table.h
+@@ -48,6 +48,18 @@ union Node {
+     } section;
+ };
+ 
++struct UniStackNode {
++    uint32_t index;
++    Node node;
++};
++
++struct UniStackTableInfo {
++    uint32_t pid;
++    uint32_t tableSize;
++    uint32_t numNodes;
++    std::vector<UniStackNode> nodes;
++};
++
+ union StackId {
+     uint64_t value;
+     struct {
+@@ -67,10 +79,6 @@ public:
+         Init(INITIAL_TABLE_SIZE);
+     }
+ 
+-    UniqueStackTable() : pid(getpid())
+-    {
+-        Init(INITIAL_TABLE_SIZE);
+-    }
+ 
+     UniqueStackTable(pid_t pid, uint32_t size) : pid(pid)
+     {
+@@ -84,10 +92,12 @@ public:
+         table = nullptr;
+     }
+ 
+-    bool PutIpInSlot(uint64_t thisIp, uint64_t &prevIdx);
+-    bool PutIpsInTable(StackId *stackId, u64 *ips, u64 nr);
+-    bool GetIpsByStackId(StackId stackId, u64 *ips);
++    uint64_t PutIpInSlot(uint64_t thisIp, uint64_t prevIdx);
++    uint64_t PutIpsInTable(StackId *stackId, u64 *ips, u64 nr);
++    bool GetIpsByStackId(StackId stackId, std::vector<u64>& ips);
++    bool ImportNode(uint32_t index, Node node);
+     size_t GetWriteSize();
++    Node* GetFrame(uint64_t stackId);
+     uint32_t GetPid()
+     {
+         return pid;
+diff --git a/include/virtual_runtime.h b/include/virtual_runtime.h
+index f8f62dc..23ee260 100644
+--- a/include/virtual_runtime.h
++++ b/include/virtual_runtime.h
+@@ -99,6 +99,8 @@ public:
+         dedupStack_ = true;
+     }
+ 
++    void ImportUniqueStackNodes(const std::vector<UniStackTableInfo>&);
++
+     const Symbol GetSymbol(uint64_t ip, pid_t pid, pid_t tid,
+                            const perf_callchain_context &context = PERF_CONTEXT_MAX);
+ 
+@@ -141,6 +143,8 @@ private:
+     // not pid , just memmap
+     std::vector<MemMapItem> kernelSpaceMemMaps_;
+     ProcessStackMap processStackMap_;
++    // just dump
++    std::map<pid_t, UniqueStackTable> dumpStackMap_;
+     RecordCallBack recordCallBack_;
+     CollectSymbolCallBack collectSymbolCallBack_;
+     std::vector<std::unique_ptr<SymbolsFile>> symbolsFiles_;
+@@ -178,7 +182,7 @@ private:
+ #endif
+     void SymbolicCallFrame(PerfRecordSample &recordSample, uint64_t ip,
+                            perf_callchain_context context);
+-
++    bool RecoverCallStack(PerfRecordSample &recordSample);
+     std::vector<std::string> symbolsPaths_;
+ 
+     FRIEND_TEST(VirtualRuntimeTest, SetRecordMode);
+diff --git a/src/perf_event_record.cpp b/src/perf_event_record.cpp
+index 5904afe..d491e98 100644
+--- a/src/perf_event_record.cpp
++++ b/src/perf_event_record.cpp
+@@ -167,6 +167,11 @@ void PerfRecordSample::DumpLog(const std::string &prefix) const
+           data_.reg_nr, data_.dyn_size, data_.time);
+ }
+ 
++void PerfRecordSample::RecoverCallStack()
++{
++    data_.ips = ips_.data();
++}
++
+ void PerfRecordSample::ReplaceWithCallStack(size_t originalSize)
+ {
+     // first we check if we have some user unwind stack need to merge ?
+@@ -285,6 +290,9 @@ PerfRecordSample::PerfRecordSample(uint8_t *p, const perf_event_attr &attr)
+         p += data_.stack_size;
+         PopFromBinary(true, p, data_.dyn_size);
+     }
++    if (data_.nr == 0 && dumpRemoveStack_) {
++        PopFromBinary(true, p, StackId_.value);
++    }
+ }
+ 
+ bool PerfRecordSample::GetBinary(std::vector<uint8_t> &buf) const
+@@ -364,10 +372,14 @@ void PerfRecordSample::DumpData(int indent) const
+     if (sampleType_ & PERF_SAMPLE_PERIOD) {
+         PrintIndent(indent, "period %" PRIu64 "\n", static_cast<uint64_t>(data_.period));
+     }
++    if (StackId_.section.id > 0 ) {
++        PrintIndent(indent, "stackid %" PRIu64 "\n", static_cast<uint64_t>(StackId_.section.id));
++    }
+     if (sampleType_ & PERF_SAMPLE_CALLCHAIN) {
+         bool userContext = false;
+-        PrintIndent(indent, "callchain nr=%lld\n", data_.nr);
+-        for (uint64_t i = 0; i < data_.nr; ++i) {
++        u64 nr = data_.nr ? data_.nr : ips_.size();
++        PrintIndent(indent, "callchain nr=%lld\n", nr);
++        for (uint64_t i = 0; i < nr; ++i) {
+             std::string_view supplement = "";
+             if ((sampleType_ & PERF_SAMPLE_STACK_USER) == 0 || data_.ips[i] != PERF_CONTEXT_USER) {
+                 PrintIndent(indent + 1, "0x%llx%s\n", data_.ips[i], supplement.data());
+diff --git a/src/perf_file_format.cpp b/src/perf_file_format.cpp
+index e57dab5..f5e359d 100644
+--- a/src/perf_file_format.cpp
++++ b/src/perf_file_format.cpp
+@@ -312,6 +312,33 @@ bool PerfFileSectionSymbolsFiles::GetBinary(char *buf, size_t size)
+     return true;
+ }
+ 
++PerfFileSectionUniStackTable::PerfFileSectionUniStackTable(FEATURE id, const char *buf, size_t size)
++    : PerfFileSection(id)
++{
++    uint32_t processTableCount;
++    Init(buf, size);
++    if (!Read(processTableCount)) {
++        HLOGV("processTableCount read failed\n");
++        return;
++    } else {
++        HLOGV("processTableCount %" PRIu32 "\n", processTableCount);
++    }
++    for (uint32_t i = 0; i < processTableCount; ++i) {
++        UniStackTableInfo& stackTable = uniStackTableInfos_.emplace_back();
++        Read(stackTable.pid);
++        HLOGV("pid %" PRIu32 " ", stackTable.pid);
++        Read(stackTable.tableSize);
++        HLOGV("tableSize %" PRIu32 " ", stackTable.tableSize);
++        Read(stackTable.numNodes);
++        HLOGV("numNodes %" PRIu32 " ", stackTable.numNodes);
++        for (size_t i = 0; i < stackTable.numNodes; i++) {
++            UniStackNode& node = stackTable.nodes.emplace_back();
++            Read(node.index);
++            Read(node.node.value);
++        }
++    }
++}
++
+ bool PerfFileSectionUniStackTable::GetBinary(char *buf, size_t size)
+ {
+     HLOG_ASSERT(size >= GetSize());
+diff --git a/src/perf_file_reader.cpp b/src/perf_file_reader.cpp
+index a4673cc..21879e4 100644
+--- a/src/perf_file_reader.cpp
++++ b/src/perf_file_reader.cpp
+@@ -432,6 +432,10 @@ bool PerfFileReader::ReadFeatureSection()
+         } else if (feature == FEATURE::EVENT_DESC) {
+             perfFileSections_.emplace_back(
+                 std::make_unique<PerfFileSectionEventDesc>(feature, (char *)&buf[0], buf.size()));
++        } else if (feature == FEATURE::HIPERF_FILES_UNISTACK_TABLE) {
++            perfFileSections_.emplace_back(
++                std::make_unique<PerfFileSectionUniStackTable>(feature, (char *)&buf[0], buf.size()));
++            PerfRecordSample::dumpRemoveStack_ = true;
+         } else {
+             HLOGW("still not imp how to process with feature %d", feature);
+         }
+diff --git a/src/subcommand_dump.cpp b/src/subcommand_dump.cpp
+index aecc5d2..59a8536 100644
+--- a/src/subcommand_dump.cpp
++++ b/src/subcommand_dump.cpp
+@@ -269,6 +269,11 @@ void SubCommandDump::DumpPrintFileHeader(int indent)
+             const PerfFileSectionSymbolsFiles *sectionSymbolsFiles =
+                 static_cast<const PerfFileSectionSymbolsFiles *>(featureSection.get());
+             vr_.UpdateFromPerfData(sectionSymbolsFiles->symbolFileStructs_);
++        } else if (featureSection.get()->featureId_ == FEATURE::HIPERF_FILES_UNISTACK_TABLE) {
++            const PerfFileSectionUniStackTable *sectionUniStackTable  =
++                static_cast<const PerfFileSectionUniStackTable *>(featureSection.get());
++            vr_.ImportUniqueStackNodes(sectionUniStackTable->uniStackTableInfos_);
++            vr_.SetDedupStack();
+         }
+     }
+ }
+@@ -538,12 +543,39 @@ void SubCommandDump::DumpFeaturePortion(int indent)
+                 PrintIndent(LEVEL2, "get SymbolFiles failed\n");
+             }
+             continue;
++        } else if (featureSection.get()->featureId_ == FEATURE::HIPERF_FILES_UNISTACK_TABLE) {
++            const PerfFileSectionUniStackTable *sectioniStackTable =
++                static_cast<PerfFileSectionUniStackTable *>(const_cast<PerfFileSection *>(featureSection.get()));
++            if (sectioniStackTable != nullptr) { 
++                DumpUniqueStackTableNode(LEVEL1, *sectioniStackTable);
++            } else {
++                PrintIndent(LEVEL2, "get StackTable failed\n");
++            }
++            continue;
+         } else {
+             PrintIndent(LEVEL2, "not support dump this feature(%d).\n", featureSection.get()->featureId_);
+         }
+     }
+ }
+ 
++void SubCommandDump:: DumpUniqueStackTableNode(int indent, const PerfFileSectionUniStackTable &uniStackTable)
++{
++    int tableid = 0;
++    PrintIndent(LEVEL1, "TableNums: %zu\n\n", uniStackTable.uniStackTableInfos_.size());
++    for (const auto& uniStackTableInfo : uniStackTable.uniStackTableInfos_) {
++        PrintIndent(LEVEL2, "tableid: %d\n", tableid);
++        PrintIndent(LEVEL2, "pid: %" PRIu32 "\n", uniStackTableInfo.pid);
++        PrintIndent(LEVEL2, "tableSize: %" PRIu32 "\n", uniStackTableInfo.tableSize);
++        PrintIndent(LEVEL2, "numNodes:  %" PRIu32 "\n", uniStackTableInfo.numNodes);
++        PrintIndent(LEVEL2, "%-7s %-7s %-8s\n", "no", "index" , "node");
++        for (size_t i = 0; i < uniStackTableInfo.nodes.size(); i++) {
++            UniStackNode node = uniStackTableInfo.nodes[i];
++            PrintIndent(LEVEL2, "%-7zu %-7" PRIu32 " 0x%-8" PRIx64 "\n", i, node.index, node.node.value);
++        }
++        tableid++;
++    }
++}
++
+ bool SubCommandDump::RegisterSubCommandDump()
+ {
+     return SubCommand::RegisterSubCommand("dump", std::make_unique<SubCommandDump>());
+diff --git a/src/subcommand_report.cpp b/src/subcommand_report.cpp
+index 7f52196..d942c94 100644
+--- a/src/subcommand_report.cpp
++++ b/src/subcommand_report.cpp
+@@ -304,6 +304,17 @@ void SubCommandReport::ProcessSymbolsData()
+     }
+ }
+ 
++void SubCommandReport::ProcessUniStackTableData()
++{
++    auto featureSection = recordFileReader_->GetFeatureSection(FEATURE::HIPERF_FILES_UNISTACK_TABLE);
++    if (featureSection != nullptr) {
++        PerfFileSectionUniStackTable *sectioniStackTable =
++            static_cast<PerfFileSectionUniStackTable *>(const_cast<PerfFileSection *>(featureSection));
++        GetReport().virtualRuntime_.ImportUniqueStackNodes(sectioniStackTable->uniStackTableInfos_);
++        GetReport().virtualRuntime_.SetDedupStack();
++    }
++}
++
+ void SubCommandReport::UpdateReportInfo()
+ {
+     // get some meta info for protobuf
+@@ -463,7 +474,7 @@ bool SubCommandReport::LoadPerfData()
+ 
+     ProcessFeaturesData();
+     ProcessSymbolsData();
+-
++    ProcessUniStackTableData();
+     HLOGD("process record");
+     recordFileReader_->ReadDataSection(
+         std::bind(&SubCommandReport::RecordCallBack, this, std::placeholders::_1));
+diff --git a/src/unique_stack_table.cpp b/src/unique_stack_table.cpp
+index 1ea5a7a..f285452 100644
+--- a/src/unique_stack_table.cpp
++++ b/src/unique_stack_table.cpp
+@@ -27,6 +27,10 @@ bool UniqueStackTable::Init(uint32_t size)
+     slots = numNodes - untouchableNode - 1;
+     hashMultiplier = ((numNodes - untouchableNode) / (maxCollide * 2 + 1));
+     table = (Node*)malloc(tableSize);
++    if (memset_s(table, tableSize, 0, tableSize) != EOK) {
++        HLOGE("memset_s() failed");
++        return false;
++    }
+     return table != nullptr;
+ }
+ 
+@@ -68,65 +72,63 @@ bool UniqueStackTable::EnsureCapacity()
+     }
+ }
+ 
+-bool UniqueStackTable::PutIpInSlot(uint64_t thisIp, uint64_t &prevIdx)
++uint64_t UniqueStackTable::PutIpInSlot(uint64_t thisIp, uint64_t prevIdx)
+ {
+-    Node *node = nullptr;
+     // hash
+-    uint64_t curIpIdx = untouchableNode + (((prevIdx << 4) ^ (thisIp >> 2)) % slots);
++    uint64_t curIpIdx = untouchableNode + (((prevIdx << 4) ^ (thisIp >> 2)) % slots) +1;
+     uint8_t collisions = maxCollide;
++    Node node;
++    node.section.ip = thisIp;
++    node.section.prevIdx = prevIdx;
+     while (collisions--) {
+-        node = table + curIpIdx;
+-        // slot empty, put in
+-        if (node->value == 0 && node->section.prevIdx == 0) {
+-            node->section.ip = thisIp;
+-            node->section.prevIdx = prevIdx;
+-            node->section.inKernel = !!(thisIp & IP_IN_KERNEL);
++        Node* tableNode = (Node*)table + curIpIdx;
++        // empty case
++        if (tableNode->value == 0) {
++            node.section.inKernel = !!(thisIp & IP_IN_KERNEL);
++            tableNode->value = node.value;
+             usedIndexes_.emplace_back(uint32_t(curIpIdx));
+-            prevIdx = curIpIdx;
+-            return true;
++            return curIpIdx;
+         }
+ 
+-        // slot not empty
+-        u64 nodeIp = node->section.inKernel ?
+-            (node->section.ip | KERNEL_PREFIX) : node->section.ip;
+-        // same node have same ip and same parent
+-        if (nodeIp == thisIp && node->section.prevIdx == prevIdx) {
+-            prevIdx = curIpIdx;
+-            return true;
++        // already inerted
++        if (tableNode->value == node.value) {
++            return curIpIdx;
+         }
+ 
+         // slot not empty, not same node, collide
+         curIpIdx += collisions * hashMultiplier + 1;
+-        if (curIpIdx >= numNodes) {
++        if (curIpIdx > numNodes) {
+             curIpIdx -= numNodes - untouchableNode;
+         }
+     }
+-    if (collisions < 0) {
+-        return false;
+-    }
+-    return true;
++    return 0;
+ }
+ 
+-bool UniqueStackTable::PutIpsInTable(StackId *stackId, u64 *ips, u64 nr)
++uint64_t UniqueStackTable::PutIpsInTable(StackId *stackId, u64 *ips, u64 nr)
+ {
+     if (!EnsureCapacity()) {
+-        return false;
++        return 0;
+     }
+-    u64 thisIp;
+-    uint64_t prevIdx {HEAD_NODE_INDEX};
+-    // reduce head node place
+-    uint8_t collisions= 0;
+-    u64 left = 0;
+-    uint8_t notUsedIpNum = 0;
+-    for (; left < nr; ++left) {
+-        thisIp = ips[left];
+-        if(!PutIpInSlot(thisIp, prevIdx)) {
+-            return false;
++    int64_t reverseIndex = static_cast<int64_t>(nr);
++    uint64_t prev = 0;
++    while (--reverseIndex >= 0) {
++        uint64_t pc = ips[reverseIndex];
++        if (pc == 0) {
++            continue;
++        }
++        prev = PutIpInSlot(pc, prev);
++        if (prev == 0) {
++            //printf("Insert fail \n");
++            break;
+         }
+     }
+-    stackId->section.id = prevIdx;
+-    stackId->section.nr = nr;
+-    return true;
++    stackId->section.id = prev;
++    if (prev && reverseIndex < 0) {
++        stackId->section.nr = nr;
++    } else {
++        stackId->value = 0;
++    }
++    return prev;
+ }
+ 
+ size_t UniqueStackTable::GetWriteSize()
+@@ -141,39 +143,49 @@ size_t UniqueStackTable::GetWriteSize()
+     return size;
+ }
+ 
++Node* UniqueStackTable::GetFrame(uint64_t stackId)
++{
++    if (stackId >= numNodes)
++    {
++        return nullptr;
++    }
++
++    return (Node *)&table[stackId];
++}
++
+ /**
+  * u64 ips[stackId.section.nr];
+  * stackId contains, tailIdx and nr of this ips chain.
+ */
+-bool UniqueStackTable::GetIpsByStackId(StackId stackId, u64 *ips)
++bool UniqueStackTable::GetIpsByStackId(StackId stackId, std::vector<u64>& ips)
+ {
+     uint64_t nr = stackId.section.nr;
+     uint64_t tailIdx = stackId.section.id;
+-    uint32_t foundFrames = 0;
+-    uint64_t prevIdx;
++    uint64_t prevIdx = 0;
+     // correct tailIdx
+-    if (tailIdx < numNodes) {
+-        Node *node = table + tailIdx;
+-        prevIdx = node->section.prevIdx;
+-        // nr for guarantee no endless loop.
+-        while (foundFrames < nr) {
+-            if (prevIdx == HEAD_NODE_INDEX) {
+-                HLOGD("earlier reach head, error");
+-                return false;
+-            }
+-            if (node->value == 0) {
+-                HLOGD("empty slot, error.");
+-                return false;
+-            }
+-            ips[foundFrames++] =
+-                node->section.inKernel ? (node->section.ip | KERNEL_PREFIX) : node->section.ip;
+-            // jump to prev
+-            node = table + prevIdx;
+-            prevIdx = node->section.prevIdx;
++    Node *node = GetFrame(tailIdx);
++    if (node == nullptr) {
++        // should never happend
++        printf("Failed to find frame\n");
++        return false;
++    }
++    while (node != nullptr && nr--) {
++        ips.push_back(
++            node->section.inKernel ? (node->section.ip | KERNEL_PREFIX) : node->section.ip);
++        if (node->section.prevIdx == HEAD_NODE_INDEX) {
++            break;
+         }
+-    } else {
++        node = GetFrame(node->section.prevIdx);
++    }
++    return true;
++}
++
++bool UniqueStackTable::ImportNode(uint32_t index, Node node)
++{
++    if (index >= tableSize) {
+         return false;
+     }
++    table[index].value = node.value;
+     return true;
+ }
+ 
+diff --git a/src/virtual_runtime.cpp b/src/virtual_runtime.cpp
+index 29d87f0..09551d6 100644
+--- a/src/virtual_runtime.cpp
++++ b/src/virtual_runtime.cpp
+@@ -289,7 +289,7 @@ void VirtualRuntime::DedupFromRecord(PerfRecordSample *recordSample)
+         return;
+     }
+     recordSample->StackId_.value = stackId.value;
+-    recordSample->header.size -= (sizeof(u64) * nr + sizeof(stackId));
++    recordSample->header.size -= (sizeof(u64) * nr - sizeof(stackId));
+     recordSample->data_.nr = 0;
+     recordSample->data_.ips = nullptr;
+     recordSample->removeStack_ = true;
+@@ -380,6 +380,19 @@ void VirtualRuntime::SymbolicCallFrame(PerfRecordSample &recordSample, uint64_t
+           recordSample.callFrames_.back().ToSymbolString().c_str());
+ }
+ 
++bool VirtualRuntime::RecoverCallStack(PerfRecordSample &recordSample)
++{
++    auto StackTable = dumpStackMap_.find(recordSample.data_.pid);
++    if (StackTable == dumpStackMap_.end()) {
++        HLOGV("not found %" PRIu32 " pid", recordSample.data_.pid);
++        return false;
++    }
++    recordSample.ips_.clear();
++    StackTable->second.GetIpsByStackId(recordSample.StackId_, recordSample.ips_);
++    recordSample.RecoverCallStack();
++    return true;
++}
++
+ void VirtualRuntime::SymbolicRecord(PerfRecordSample &recordSample)
+ {
+ #ifdef HIPERF_DEBUG_TIME
+@@ -388,10 +401,11 @@ void VirtualRuntime::SymbolicRecord(PerfRecordSample &recordSample)
+     // Symbolic the Call Stack
+     recordSample.callFrames_.clear();
+     perf_callchain_context context = PERF_CONTEXT_MAX;
+-    if (recordSample.data_.nr == 0) {
++    if (recordSample.data_.nr == 0 && !dedupStack_) {
+         SymbolicCallFrame(recordSample, recordSample.data_.ip, PERF_CONTEXT_MAX);
+     }
+-    for (u64 i = 0; i < recordSample.data_.nr; i++) {
++    u64 nr = recordSample.data_.nr ? recordSample.data_.nr : recordSample.ips_.size();
++    for (u64 i = 0; i < nr; i++) {
+         uint64_t ip = recordSample.data_.ips[i];
+         if (ip >= PERF_CONTEXT_MAX) {
+             std::string contextName = UpdatePerfContext(ip, context);
+@@ -446,6 +460,9 @@ void VirtualRuntime::UnwindFromRecord(PerfRecordSample &recordSample)
+     }
+     // we will not do this in record mode
+     if (recordCallBack_ == nullptr) {
++        if (dedupStack_ && recordSample.StackId_.section.id > 0 && recordSample.data_.nr == 0) {
++            RecoverCallStack(recordSample);
++        }
+         // find the symbols , reabuild frame info
+         SymbolicRecord(recordSample);
+     }
+@@ -741,6 +758,18 @@ void VirtualRuntime::UpdateFromPerfData(const std::vector<SymbolFileStruct> &sym
+     }
+ }
+ 
++void VirtualRuntime::ImportUniqueStackNodes(const std::vector<UniStackTableInfo>& uniStackTableInfos)
++{
++    for (const UniStackTableInfo& item : uniStackTableInfos) {
++        auto [stackTable , ok] = dumpStackMap_.emplace(std::piecewise_construct,
++                                            std::forward_as_tuple(item.pid),
++                                            std::forward_as_tuple(item.tableSize));
++        for (const UniStackNode& node : item.nodes) {
++            stackTable->second.ImportNode(node.index, node.node);
++        }
++    }
++}
++
+ /*
+    ARM functions
+        The table below lists the symbols exported by the vDSO.
+diff --git a/test/unittest/common/native/subcommand_dump_test.cpp b/test/unittest/common/native/subcommand_dump_test.cpp
+index 4f42746..3b4a8b7 100644
+--- a/test/unittest/common/native/subcommand_dump_test.cpp
++++ b/test/unittest/common/native/subcommand_dump_test.cpp
+@@ -203,6 +203,59 @@ HWTEST_F(SubCommandDumpTest, DumpElfProtoConflict, TestSize.Level1)
+     TestDumpCommand("--elf elffile --proto ptotofile ", false);
+ }
+ #endif
++
++HWTEST_F(SubCommandDumpTest, DumpCompressDwarf, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    std::string cmdString = "dump -i /data/test/resource/testdata/dwarf.compress.data";
++    EXPECT_EQ(Command::DispatchCommand(cmdString), true);
++    std::string stringOut = stdoutRecord.Stop();
++
++    EXPECT_EQ(stringOut.find("hiperf_stack_table") != std::string::npos, true);
++    EXPECT_EQ(stringOut.find("stackid") != std::string::npos, true);
++    EXPECT_EQ(stringOut.find("TableNums") != std::string::npos, true);
++}
++
++HWTEST_F(SubCommandDumpTest, DumpCompressFp, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    std::string cmdString = "dump -i /data/test/resource/testdata/fp.compress.data";
++    EXPECT_EQ(Command::DispatchCommand(cmdString), true);
++    std::string stringOut = stdoutRecord.Stop();
++
++    EXPECT_EQ(stringOut.find("hiperf_stack_table") != std::string::npos, true);
++    EXPECT_EQ(stringOut.find("stackid") != std::string::npos, true);
++    EXPECT_EQ(stringOut.find("TableNums") != std::string::npos, true);
++}
++
++HWTEST_F(SubCommandDumpTest, DumpUncompressDwarf, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    std::string cmdString = "dump -i /data/test/resource/testdata/dwarf.uncompress.data";
++    EXPECT_EQ(Command::DispatchCommand(cmdString), true);
++    std::string stringOut = stdoutRecord.Stop();
++
++    EXPECT_EQ(stringOut.find("hiperf_stack_table") != std::string::npos, false);
++    EXPECT_EQ(stringOut.find("stackid") != std::string::npos, false);
++    EXPECT_EQ(stringOut.find("TableNums") != std::string::npos, false);
++
++}
++
++HWTEST_F(SubCommandDumpTest, DumpUncompressFp, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    std::string cmdString = "dump -i /data/test/resource/testdata/fp.uncompress.data";
++    EXPECT_EQ(Command::DispatchCommand(cmdString), true);
++    std::string stringOut = stdoutRecord.Stop();
++
++    EXPECT_EQ(stringOut.find("hiperf_stack_table") != std::string::npos, false);
++    EXPECT_EQ(stringOut.find("stackid") != std::string::npos, false);
++    EXPECT_EQ(stringOut.find("TableNums") != std::string::npos, false);
++}
+ } // namespace HiPerf
+ } // namespace Developtools
+ } // namespace OHOS
+diff --git a/test/unittest/common/native/subcommand_report_test.cpp b/test/unittest/common/native/subcommand_report_test.cpp
+index 46f8b22..caf8fad 100644
+--- a/test/unittest/common/native/subcommand_report_test.cpp
++++ b/test/unittest/common/native/subcommand_report_test.cpp
+@@ -1112,6 +1112,94 @@ HWTEST_F(SubCommandReportTest, TestVerifyDisplayOption, TestSize.Level1)
+     args = {"report -i " + RESOURCE_PATH + "report_test.data --pids "};
+     EXPECT_EQ(mSubCommandReport.VerifyDisplayOption(), true);
+ }
++
++/**
++ * @tc.name: TestDwarfCompress
++ * @tc.desc:
++ * @tc.type: FUNC
++ */
++HWTEST_F(SubCommandReportTest, TestDwarfCompress, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    EXPECT_EQ(
++        Command::DispatchCommand("report -s -i " + RESOURCE_PATH + "dwarf.compress.data"),
++        true);
++    std::string stringOut = stdoutRecord.Stop();
++    if (HasFailure()) {
++        printf("output:\n%s", stringOut.c_str());
++    }
++    const std::string expectStr = "--dedup_stack";
++    EXPECT_EQ(FindExpectStr(stringOut, expectStr), true);
++    const std::string expectPercentageStr = "|- 45.81% __schedule";
++    EXPECT_EQ(FindExpectStr(stringOut, expectPercentageStr), true);
++}
++
++/**
++ * @tc.name: TestFpCompress
++ * @tc.desc:
++ * @tc.type: FUNC
++ */
++HWTEST_F(SubCommandReportTest, TestFpCompress, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    EXPECT_EQ(
++        Command::DispatchCommand("report -s -i " + RESOURCE_PATH + "fp.compress.data"),
++        true);
++    std::string stringOut = stdoutRecord.Stop();
++    if (HasFailure()) {
++        printf("output:\n%s", stringOut.c_str());
++    }
++    const std::string expectStr = "--dedup_stack";
++    EXPECT_EQ(FindExpectStr(stringOut, expectStr), true);
++    const std::string expectPercentageStr = "|- 91.88% __schedule";
++    EXPECT_EQ(FindExpectStr(stringOut, expectPercentageStr), true);
++}
++
++/**
++ * @tc.name: TestDwarfUnCompress
++ * @tc.desc:
++ * @tc.type: FUNC
++ */
++HWTEST_F(SubCommandReportTest, TestDwarfUnCompress, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    EXPECT_EQ(
++        Command::DispatchCommand("report -s -i " + RESOURCE_PATH + "dwarf.uncompress.data"),
++        true);
++    std::string stringOut = stdoutRecord.Stop();
++    if (HasFailure()) {
++        printf("output:\n%s", stringOut.c_str());
++    }
++    const std::string expectStr = "--dedup_stack";
++    EXPECT_EQ(FindExpectStr(stringOut, expectStr), false);
++    const std::string expectPercentageStr = "|-  7.63% __schedule";
++    EXPECT_EQ(FindExpectStr(stringOut, expectPercentageStr), true);
++}
++
++/**
++ * @tc.name: TestFpUnCompress
++ * @tc.desc:
++ * @tc.type: FUNC
++ */
++HWTEST_F(SubCommandReportTest, TestFpUnCompress, TestSize.Level1)
++{
++    StdoutRecord stdoutRecord;
++    stdoutRecord.Start();
++    EXPECT_EQ(
++        Command::DispatchCommand("report -s -i " + RESOURCE_PATH + "fp.uncompress.data"),
++        true);
++    std::string stringOut = stdoutRecord.Stop();
++    if (HasFailure()) {
++        printf("output:\n%s", stringOut.c_str());
++    }
++    const std::string expectStr = "--dedup_stack";
++    EXPECT_EQ(FindExpectStr(stringOut, expectStr), false);
++    const std::string expectPercentageStr = "|- 53.27% __kmalloc_reserve";
++    EXPECT_EQ(FindExpectStr(stringOut, expectPercentageStr), true);
++}
+ } // namespace HiPerf
+ } // namespace Developtools
+ } // namespace OHOS
+diff --git a/test/unittest/resource/ohos_test.xml b/test/unittest/resource/ohos_test.xml
+index 2b2a583..e3354ca 100644
+--- a/test/unittest/resource/ohos_test.xml
++++ b/test/unittest/resource/ohos_test.xml
+@@ -91,6 +91,10 @@
+             <option name="push" value="testdata/report_test_tids1.txt -> /data/test/resource/testdata/" src="res"/>
+             <option name="push" value="testdata/report_test_dsos.txt -> /data/test/resource/testdata/" src="res"/>
+             <option name="push" value="testdata/report_test_funcs.txt -> /data/test/resource/testdata/" src="res"/>
++            <option name="push" value="testdata/dwarf.compress.data -> /data/test/resource/testdata/" src="res"/>
++            <option name="push" value="testdata/dwarf.uncompress.data -> /data/test/resource/testdata/" src="res"/>
++            <option name="push" value="testdata/fp.compress.data -> /data/test/resource/testdata/" src="res"/>
++            <option name="push" value="testdata/fp.uncompress.data -> /data/test/resource/testdata/" src="res"/>
+         </preparer>
+     </target>
+ </configuration>
+diff --git a/test/unittest/resource/testdata/dwarf.compress.data b/test/unittest/resource/testdata/dwarf.compress.data
+new file mode 100644
+index 0000000..be613e4
+Binary files /dev/null and b/test/unittest/resource/testdata/dwarf.compress.data differ
+diff --git a/test/unittest/resource/testdata/dwarf.uncompress.data b/test/unittest/resource/testdata/dwarf.uncompress.data
+new file mode 100644
+index 0000000..b6d3075
+Binary files /dev/null and b/test/unittest/resource/testdata/dwarf.uncompress.data differ
+diff --git a/test/unittest/resource/testdata/fp.compress.data b/test/unittest/resource/testdata/fp.compress.data
+new file mode 100644
+index 0000000..126f8e9
+Binary files /dev/null and b/test/unittest/resource/testdata/fp.compress.data differ
+diff --git a/test/unittest/resource/testdata/fp.uncompress.data b/test/unittest/resource/testdata/fp.uncompress.data
+new file mode 100644
+index 0000000..4103b50
+Binary files /dev/null and b/test/unittest/resource/testdata/fp.uncompress.data differ

@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { TS = 0, DUR, TOTAL_LOAD, USER_LOAD, SYSTEM_LOAD, THREADS };
+enum class Index : int32_t { TS = 0, DUR, TOTAL_LOAD, USER_LOAD, SYSTEM_LOAD, THREADS };
 CpuUsageInfoTable::CpuUsageInfoTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("ts", "INTEGER"));
@@ -46,28 +46,28 @@ CpuUsageInfoTable::Cursor::~Cursor() {}
 
 int32_t CpuUsageInfoTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case TS: {
+    switch (static_cast<Index>(column)) {
+        case Index::TS: {
             sqlite3_result_int64(context_, static_cast<int64_t>(cpuUsageInfoObj_.TimeStampData()[CurrentRow()]));
             break;
         }
-        case DUR: {
+        case Index::DUR: {
             sqlite3_result_int64(context_, static_cast<int64_t>(cpuUsageInfoObj_.Durs()[CurrentRow()]));
             break;
         }
-        case TOTAL_LOAD: {
+        case Index::TOTAL_LOAD: {
             sqlite3_result_int64(context_, static_cast<int64_t>(cpuUsageInfoObj_.TotalLoad()[CurrentRow()]));
             break;
         }
-        case USER_LOAD: {
+        case Index::USER_LOAD: {
             sqlite3_result_double(context_, cpuUsageInfoObj_.UserLoad()[CurrentRow()]);
             break;
         }
-        case SYSTEM_LOAD: {
+        case Index::SYSTEM_LOAD: {
             sqlite3_result_double(context_, cpuUsageInfoObj_.SystemLoad()[CurrentRow()]);
             break;
         }
-        case THREADS: {
+        case Index::THREADS: {
             sqlite3_result_int(context_, static_cast<int32_t>(cpuUsageInfoObj_.Threads()[CurrentRow()]));
             break;
         }

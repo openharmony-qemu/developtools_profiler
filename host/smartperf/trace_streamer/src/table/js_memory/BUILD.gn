@@ -15,8 +15,8 @@ import("//build/ohos.gni")
 
 import("../../../build/ts.gni")
 ohos_source_set("js_memory_tables") {
-  subsystem_name = "developtools"
-  part_name = "smartperf_host"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "appname_table.cpp",
     "appname_table.h",
@@ -59,5 +59,19 @@ ohos_source_set("js_memory_tables") {
 
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
   }
 }

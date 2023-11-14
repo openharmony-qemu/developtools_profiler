@@ -52,40 +52,19 @@ void FrameFilter::BeginVsyncEvent(uint64_t ts,
     }
 }
 
-bool FrameFilter::MarkRSOnvsyncEvent(uint64_t ts, uint32_t itid)
+bool FrameFilter::MarkRSOnDoCompositionEvent(uint64_t ts, uint32_t itid)
 {
     auto frame = vsyncRenderSlice_.find(itid);
     if (frame == vsyncRenderSlice_.end()) {
-        TS_LOGW("BeginOnvsyncEvent find for itid:%u failed, ts:%" PRIu64 "", itid, ts);
+        TS_LOGW("BeginOnDoCompositionEvent find for itid:%u failed, ts:%" PRIu64 "", itid, ts);
         return false;
     }
     if (!frame->second.size()) {
-        TS_LOGW("BeginOnvsyncEvent find for itid:%u failed", itid);
+        TS_LOGW("BeginOnDoCompositionEvent find for itid:%u failed", itid);
         return false;
     }
     auto lastFrameSlice = frame->second.back();
     lastFrameSlice->isRsMainThread_ = true;
-    return true;
-}
-bool FrameFilter::EndOnVsyncEvent(uint64_t ts, uint32_t itid)
-{
-    auto frame = vsyncRenderSlice_.find(itid);
-    if (frame == vsyncRenderSlice_.end()) {
-        TS_LOGW("BeginOnvsyncEvent find for itid:%u failed", itid);
-        return false;
-    }
-    if (!frame->second.size()) {
-        TS_LOGW("BeginOnvsyncEvent find for itid:%u failed", itid);
-        return false;
-    }
-    auto lastFrameSlice = frame->second.back();
-    if (!lastFrameSlice->isRsMainThread_ && ISINVALIDU32(lastFrameSlice->frameNum_)) {
-        // if app's frame num not received
-        traceDataCache_->GetFrameSliceData()->Erase(lastFrameSlice->frameSliceRow_);
-        traceDataCache_->GetFrameSliceData()->Erase(lastFrameSlice->frameExpectedSliceRow_);
-        frame->second.pop_back();
-        return false;
-    }
     return true;
 }
 // for app

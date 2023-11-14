@@ -33,8 +33,7 @@ public:
                          uint64_t expectEnd,
                          uint32_t vsyncId,
                          uint32_t callStackSliceId);
-    bool MarkRSOnvsyncEvent(uint64_t ts, uint32_t itid);
-    bool EndOnVsyncEvent(uint64_t ts, uint32_t itid);
+    bool MarkRSOnDoCompositionEvent(uint64_t ts, uint32_t itid);
     bool BeginRSTransactionData(uint64_t ts, uint32_t itid, uint32_t franeNum);
     typedef struct {
         uint32_t sourceItid;

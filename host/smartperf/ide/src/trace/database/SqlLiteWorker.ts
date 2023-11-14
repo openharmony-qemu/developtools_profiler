@@ -37,25 +37,25 @@ function initIndexedDB() {
 function readConnection(store: IDBObjectStore) {
   return new Promise((resolve, reject) => {
     let readRequest = store.get(1);
-    readRequest.onsuccess = function (event) {
+    readRequest.onsuccess = function (event): void {
       // @ts-ignore
       resolve(event.target.result);
     };
-    readRequest.onerror = function (event) {
+    readRequest.onerror = function (event): void {
       // @ts-ignore
       reject(event.target.result);
     };
   });
 }
 
-function deleteConnection(store: IDBObjectStore, id: number) {
+function deleteConnection(store: IDBObjectStore, id: number): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let deleteRequest = store.delete(id);
-    deleteRequest.onsuccess = function (event) {
+    deleteRequest.onsuccess = function (event): void {
       // @ts-ignore
       resolve(event.target.result);
     };
-    deleteRequest.onerror = function (event) {
+    deleteRequest.onerror = function (event): void {
       // @ts-ignore
       reject(event.target.result);
     };
@@ -99,7 +99,7 @@ self.onmessage = async (e: any) => {
       self.postMessage({ id: e.data.id, init: true });
     });
   } else if (e.data.action === 'close') {
-  } else if (e.data.action === 'exec' || e.data.action === 'exec-buf') {
+  } else if (e.data.action === 'exec' || e.data.action === 'exec-buf' || e.data.action === 'exec-metric') {
     try {
       let action = e.data.action; //: "exec"
       let sql = e.data.sql;

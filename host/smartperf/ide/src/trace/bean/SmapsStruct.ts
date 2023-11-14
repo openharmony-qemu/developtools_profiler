@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,17 +23,17 @@ export class Smaps {
   path: string = '';
   size: number = 0;
   sizeStr: string = '';
-  count:number = 0;
+  count: number = 0;
   rss: number = 0;
   rssStr: string = '';
   pss: number = 0;
   pssStr: string = '';
-  sharedClean : number = 0;
-  sharedDirty:number = 0;
-  privateClean:number = 0;
-  privateDirty:number = 0;
-  swap:number = 0;
-  swapPss:number = 0;
+  sharedClean: number = 0;
+  sharedDirty: number = 0;
+  privateClean: number = 0;
+  privateDirty: number = 0;
+  swap: number = 0;
+  swapPss: number = 0;
   resideStr: string = '';
 }
 export class SmapsTreeObj {
@@ -49,28 +48,28 @@ export class SmapsTreeObj {
   path: any = '';
   size: number = 0;
   sizeStr: string = '';
-  sizePro:number = 0;
-  sizeProStr :string = '';
-  count :number = 0 ;
+  sizePro: number = 0;
+  sizeProStr: string = '';
+  count: number = 0;
   rss: number = 0;
   rssStr: string = '';
   pss: number = 0;
   pssStr: string = '';
-  sharedClean : number = 0;
-  sharedCleanStr:string = '';
-  sharedDirty:number = 0;
-  sharedDirtyStr:string = '';
-  privateClean:number = 0;
-  privateCleanStr:string = '';
-  privateDirty:number = 0;
-  privateDirtyStr:string = '';
-  swap:number = 0;
-  swapStr:string = '';
-  swapPss:number = 0;
-  swapPssStr:string = '';
+  sharedClean: number = 0;
+  sharedCleanStr: string = '';
+  sharedDirty: number = 0;
+  sharedDirtyStr: string = '';
+  privateClean: number = 0;
+  privateCleanStr: string = '';
+  privateDirty: number = 0;
+  privateDirtyStr: string = '';
+  swap: number = 0;
+  swapStr: string = '';
+  swapPss: number = 0;
+  swapPssStr: string = '';
   children: Array<SmapsTreeObj> = [];
 }
-export enum SmapsType{
+export enum SmapsType {
   TYPE_CODE_SYS,
   TYPE_CODE_APP,
   TYPE_DATA_SYS,
@@ -82,6 +81,19 @@ export enum SmapsType{
   TYPE_NATIVE_HEAP,
   TYPE_ASHMEM,
   TYPE_OTHER_SYS,
-  TYPE_OTHER_APP
+  TYPE_OTHER_APP,
 }
-export const TYPE_STRING = ['CODE_SYS','CODE_APP','DATA_SYS','DATA_APP','UNKNOWN_ANON','STACK','JS_HEAP','JAVA_VM','NATIVE_HEAP','ASHMEM','OTHER_SYS','OTHER_APP']
+export const TYPE_STRING = [
+  'CODE_SYS',
+  'CODE_APP',
+  'DATA_SYS',
+  'DATA_APP',
+  'UNKNOWN_ANON',
+  'STACK',
+  'JS_HEAP',
+  'JAVA_VM',
+  'NATIVE_HEAP',
+  'ASHMEM',
+  'OTHER_SYS',
+  'OTHER_APP',
+];

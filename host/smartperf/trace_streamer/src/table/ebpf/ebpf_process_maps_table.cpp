@@ -16,7 +16,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     START_ADDR,
     END_ADDR,
@@ -66,8 +66,8 @@ void EbpfProcessMapsTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIn
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -86,8 +86,8 @@ void EbpfProcessMapsTable::FilterByConstraint(FilterConstraints& fc, double& fil
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -118,32 +118,32 @@ EbpfProcessMapsTable::Cursor::~Cursor() {}
 
 int32_t EbpfProcessMapsTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(ebpfProcessMapsObj_.IdsData()[CurrentRow()]));
             break;
-        case START_ADDR:
+        case Index::START_ADDR:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfProcessMapsObj_.Starts()[CurrentRow()]));
             break;
-        case END_ADDR:
+        case Index::END_ADDR:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfProcessMapsObj_.Ends()[CurrentRow()]));
             break;
-        case OFFSETS:
+        case Index::OFFSETS:
             sqlite3_result_int64(context_, static_cast<int64_t>(ebpfProcessMapsObj_.Offsets()[CurrentRow()]));
             break;
-        case PID: {
+        case Index::PID: {
             if (ebpfProcessMapsObj_.Pids()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfProcessMapsObj_.Pids()[CurrentRow()]));
             }
             break;
         }
-        case FILE_NAME_LEN: {
+        case Index::FILE_NAME_LEN: {
             if (ebpfProcessMapsObj_.FileNameLens()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(ebpfProcessMapsObj_.FileNameLens()[CurrentRow()]));
             }
             break;
         }
-        case FILE_PATH_ID: {
+        case Index::FILE_PATH_ID: {
             if (ebpfProcessMapsObj_.FileNameIndexs()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(ebpfProcessMapsObj_.FileNameIndexs()[CurrentRow()]));

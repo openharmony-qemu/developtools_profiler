@@ -65,6 +65,8 @@ export class SpNativeMemoryChart {
     nativeRow.style.height = '40px';
     nativeRow.rowParentId = '';
     nativeRow.folder = true;
+    nativeRow.addTemplateTypes('NativeMemory');
+    nativeRow.addTemplateTypes('Memory');
     nativeRow.name = `Native Memory` + process;
     nativeRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
     nativeRow.selectChangeHandler = this.trace.selectChangeHandler;
@@ -78,16 +80,16 @@ export class SpNativeMemoryChart {
       },
       {
         key: '1',
-        title: 'Native Memory Density'
-      }
-    ]
+        title: 'Native Memory Density',
+      },
+    ];
     nativeRow.onRowSettingChangeHandler = (value) => {
       nativeRow.childrenList.forEach((row) => (row.drawType = parseInt(value[0])));
-      this.trace.favoriteRowsEL?.querySelectorAll<TraceRow<any>>(`trace-row[row-type='heap']`).forEach((it) => {
+      this.trace.getCollectRows(`trace-row[row-type='heap']`).forEach((it) => {
         it.drawType = parseInt(value[0]);
       });
       this.trace.refreshCanvas(false);
-    }
+    };
     nativeRow.supplier = () => new Promise<Array<any>>((resolve) => resolve([]));
     nativeRow.onThreadHandler = (useCache) => {
       nativeRow.canvasSave(this.trace.canvasPanelCtx!);
@@ -138,13 +140,21 @@ export class SpNativeMemoryChart {
         }
         this.trace?.displayTip(allHeapRow, HeapStruct.hoverHeapStruct, tip);
       };
+      allHeapRow.findHoverStruct = () => {
+        HeapStruct.hoverHeapStruct = allHeapRow.getHoverStruct();
+      };
       allHeapRow.supplier = () => {
         return nativeMemoryType === 'native_hook'
           ? this.getNativeMemoryDataByChartType(i, allHeapRow.drawType)
           : this.getNativeMemoryStatisticByChartType(i - 1);
       };
       allHeapRow.onThreadHandler = (useCache) => {
-        let context = allHeapRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        let context: CanvasRenderingContext2D;
+        if (allHeapRow.currentContext) {
+          context = allHeapRow.currentContext;
+        } else {
+          context = allHeapRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        }
         allHeapRow.canvasSave(context);
         (renders['heap'] as HeapRender).renderMainThread(
           {

@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     FUNCTION_ID = 0,
     FUNCTION_NAME,
     SCRIPT_ID,
@@ -56,37 +56,36 @@ JsCpuProfilerNodeTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBas
 }
 
 JsCpuProfilerNodeTable::Cursor::~Cursor() {}
-
 int32_t JsCpuProfilerNodeTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FUNCTION_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FUNCTION_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.FunctionIds()[CurrentRow()]));
             break;
-        case FUNCTION_NAME:
+        case Index::FUNCTION_NAME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.FunctionNames()[CurrentRow()]));
             break;
-        case SCRIPT_ID:
+        case Index::SCRIPT_ID:
             sqlite3_result_text(context_, jsCpuProfilerNodes_.ScriptIds()[CurrentRow()].c_str(), STR_DEFAULT_LEN,
                                 nullptr);
             break;
-        case URL:
+        case Index::URL:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.Urls()[CurrentRow()]));
             break;
-        case LINE_NUMBER:
+        case Index::LINE_NUMBER:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.LineNumbers()[CurrentRow()]));
             break;
-        case COLUMN_NUMBER:
+        case Index::COLUMN_NUMBER:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.ColumnNumbers()[CurrentRow()]));
             break;
-        case HIT_COUNT:
+        case Index::HIT_COUNT:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.HitCounts()[CurrentRow()]));
             break;
-        case CHILDREN:
+        case Index::CHILDREN:
             sqlite3_result_text(context_, jsCpuProfilerNodes_.Children()[CurrentRow()].c_str(), STR_DEFAULT_LEN,
                                 nullptr);
             break;
-        case PARENT_ID:
+        case Index::PARENT_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerNodes_.Parents()[CurrentRow()]));
             break;
         default:

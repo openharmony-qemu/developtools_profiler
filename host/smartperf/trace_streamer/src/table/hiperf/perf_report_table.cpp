@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     REPORT_TYPE,
     REPORT_VALUE,
@@ -47,17 +47,17 @@ PerfReportTable::Cursor::~Cursor() {}
 
 int32_t PerfReportTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(perfReportObj_.IdsData()[CurrentRow()]));
             break;
-        case REPORT_TYPE:
+        case Index::REPORT_TYPE:
             if (perfReportObj_.Types()[CurrentRow()] != INVALID_UINT64) {
                 auto typeIndex = static_cast<size_t>(perfReportObj_.Types()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(typeIndex).c_str(), STR_DEFAULT_LEN, nullptr);
             }
             break;
-        case REPORT_VALUE:
+        case Index::REPORT_VALUE:
             if (perfReportObj_.Values()[CurrentRow()] != INVALID_UINT64) {
                 auto typeValueIndex = static_cast<size_t>(perfReportObj_.Values()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(typeValueIndex).c_str(), STR_DEFAULT_LEN,

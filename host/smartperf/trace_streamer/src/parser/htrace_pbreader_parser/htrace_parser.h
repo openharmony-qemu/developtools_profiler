@@ -54,7 +54,7 @@ namespace TraceStreamer {
 using namespace SysTuning::base;
 using namespace OHOS::Developtools::HiPerf::ELF;
 using namespace OHOS::Developtools::HiPerf;
-class HtraceParser : public ParserBase {
+class HtraceParser : public ParserBase, public HtracePluginTimeParser {
 public:
     HtraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters);
     ~HtraceParser();
@@ -67,14 +67,59 @@ public:
                     std::shared_ptr<ElfSymbolTable> symbols,
                     const std::string& filename);
     bool ParserFileSO(std::string& directory, std::vector<std::string>& relativeFilePaths);
-    void TraceDataSegmentEnd();
-    void StoreTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size);
+    void TraceDataSegmentEnd(bool isSplitFile);
+    void StoreTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, int32_t isFinish);
+    const auto& GetTraceDataHtrace()
+    {
+        return mTraceDataHtrace_;
+    }
+    auto GetProfilerHeader()
+    {
+        return profilerTraceFileHeader_;
+    }
+    auto ClearNativehookData()
+    {
+        htraceNativeHookParser_->FinishSplitNativeHook();
+    }
+    auto GetDataSourceType()
+    {
+        return dataSourceType_;
+    }
+    auto GetJsMemoryData()
+    {
+        return jsMemoryParser_.get();
+    }
+    auto GetArkTsConfigData()
+    {
+        return arkTsConfigData_;
+    }
+    auto ClearTraceDataHtrace()
+    {
+        perfDataParser_->ClearPerfSplitResult();
+        ebpfDataParser_->ClearEbpfSplitResult();
+        processedDataLen_ = 0;
+        perfProcessedLen_ = 0;
+        splitFileOffset_ = 0;
+        hasGotHeader_ = false;
+        hasInitEbpfPublicData_ = false;
+        parsedEbpfOver_ = false;
+        return mTraceDataHtrace_.clear();
+    }
+    const auto& GetPerfSplitResult()
+    {
+        return perfDataParser_->GetPerfSplitResult();
+    }
+    const auto& GetEbpfDataParser()
+    {
+        return ebpfDataParser_;
+    }
 
 private:
     bool ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength);
+    bool ParseHiperfData(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength);
     void ParseTraceDataItem(const std::string& buffer) override;
-    void FilterData(HtraceDataSegment& seg);
-    void ParserData(HtraceDataSegment& dataSeg);
+    void FilterData(HtraceDataSegment& seg, bool isSplitFile);
+    void ParserData(HtraceDataSegment& dataSeg, bool isSplitFile);
 
 private:
     void ParseMemory(ProtoReader::ProfilerPluginData_Reader* pluginDataZero, HtraceDataSegment& dataSeg);
@@ -92,10 +137,15 @@ private:
     void ParseThread();
     int32_t GetNextSegment();
     void FilterThread();
+    bool CalcEbpfCutOffset(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength);
 
     bool InitProfilerTraceFileHeader();
     ProfilerTraceFileHeader profilerTraceFileHeader_;
+    uint32_t profilerDataType_ = ProfilerTraceFileHeader::UNKNOW_TYPE;
+    uint64_t profilerDataLength_ = 0;
+    ProfilerPluginDataHeader profilerPluginData_;
     uint64_t htraceCurentLength_ = 0;
+    char standalonePluginName_[ProfilerTraceFileHeader::PLUGIN_MODULE_NAME_MAX + 1] = "";
     bool hasGotSegLength_ = false;
     bool hasGotHeader_ = false;
     uint32_t nextLength_ = 0;
@@ -144,6 +194,17 @@ private:
     ClockId dataSourceTypeHisyseventClockid_ = TS_CLOCK_UNKNOW;
     ClockId dataSourceTypeJSMemoryClockid_ = TS_CLOCK_UNKNOW;
     std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables_;
+    std::map<int32_t, int32_t> mTraceDataHtrace_ = {};
+    std::string traceDataHtrace_ = "";
+    uint64_t splitFileOffset_ = 0;
+    uint64_t processedDataLen_ = 0;
+    uint64_t perfProcessedLen_ = 0;
+    uint64_t parsedFileOffset_ = 0;
+    bool hasInitEbpfPublicData_ = false;
+    bool parsedEbpfOver_ = false;
+    uint32_t dataSourceType_ = INVALID_UINT32;
+    std::string arkTsConfigData_ = "";
+    std::string lenBuffer_ = "";
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

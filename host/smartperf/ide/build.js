@@ -27,6 +27,15 @@ const sdkWams = [
   'trace_streamer_sdk_builtin.wasm',
   'trace_streamer_dubai_builtin.js',
   'trace_streamer_dubai_builtin.wasm',
+  'trace_converter_builtin.js',
+  'trace_converter_builtin.wasm',
+];
+
+const necessaryWams = [
+  'trace_streamer_builtin.js',
+  'trace_streamer_builtin.wasm',
+  'trace_converter_builtin.js',
+  'trace_converter_builtin.wasm',
 ];
 
 const staticPath = ['/src/img', '/server/cert', '/src/doc', '/src/figures'];
@@ -155,16 +164,13 @@ function main() {
     let dest = path.normalize(path.join(__dirname, outDir, '/bin'));
     copyDirectory(traceStreamer, dest);
     // to mv traceStream Wasm and js
-    cpFile(
-      traceStreamer + '/trace_streamer_builtin.js',
-      rootPath + outDir + '/trace/database/trace_streamer_builtin.js'
-    );
-    cpFile(
-      traceStreamer + '/trace_streamer_builtin.wasm',
-      rootPath + outDir + '/trace/database/trace_streamer_builtin.wasm'
-    );
     if (sdkWams.length > 0) {
       sdkWams.forEach((fileName) => {
+        cpFile(traceStreamer + '/' + fileName, rootPath + outDir + '/trace/database/' + fileName);
+      });
+    }
+    if (necessaryWams.length > 0) {
+      necessaryWams.forEach((fileName) => {
         cpFile(traceStreamer + '/' + fileName, rootPath + outDir + '/trace/database/' + fileName);
       });
     }

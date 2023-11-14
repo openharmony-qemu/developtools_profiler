@@ -23,6 +23,7 @@ import { Cmd } from '../../../command/Cmd.js';
 import { LitRadioBox } from '../../../base-ui/radiobox/LitRadioBox.js';
 import { SpCheckDesBox } from './SpCheckDesBox.js';
 import LitSwitch from '../../../base-ui/switch/lit-switch.js';
+import { SpApplication } from '../../SpApplication.js';
 
 @element('sp-ark-ts')
 export class SpArkTs extends BaseElement {
@@ -257,6 +258,16 @@ export class SpArkTs extends BaseElement {
     });
   }
 
+  connectedCallback(): void {
+    let traceMode = this.shadowRoot!.querySelector('#traceMode') as HTMLDivElement;
+    let isLongTrace = SpApplication.isLongTrace;
+    if (isLongTrace) {
+      traceMode!.style.display = 'block';
+    } else {
+      traceMode!.style.display = 'none';
+    }
+  }
+
   initHtml(): string {
     return `
         <style>
@@ -363,6 +374,9 @@ export class SpArkTs extends BaseElement {
         }
         </style>
         <div class="root">
+            <div class="title" id="traceMode" style="text-align:left;">
+                <span style='color: red'>Long trace mode! If current data Trace is too large, it may not open!</span>
+            </div>
             <div class="config-div">
                 <div>
                   <span class="title">Start Ark Ts Record</span>

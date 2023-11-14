@@ -19,6 +19,7 @@ ohos_source_set("parser") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
     "bytrace_parser/bytrace_event_parser.cpp",
+    "bytrace_parser/bytrace_hilog_parser.cpp",
     "bytrace_parser/bytrace_parser.cpp",
     "event_parser_base.cpp",
     "print_event_parser.cpp",
@@ -38,6 +39,7 @@ ohos_source_set("parser") {
     "ebpf_parser:ebpf_parser",
   ]
   deps += [ "htrace_pbreader_parser:htrace_pbreader_parser" ]
+  deps += [ "rawtrace_parser:rawtrace_parser" ]
 
   include_dirs = [
     "${THIRD_PARTY}/protobuf/src",
@@ -51,6 +53,7 @@ ohos_source_set("parser") {
     "${SRC}",
     ".",
     "htrace_pbreader_parser",
+    "rawtrace_parser",
     "../proto_reader/include",
     "${THIRD_PARTY}/bounds_checking_function/include",
     "${THIRD_PARTY}/json/single_include/nlohmann",
@@ -58,5 +61,19 @@ ohos_source_set("parser") {
 
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
   }
 }

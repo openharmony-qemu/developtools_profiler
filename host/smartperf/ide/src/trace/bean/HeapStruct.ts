@@ -35,23 +35,50 @@ export class HeapStruct extends BaseStruct {
       if (heapBeanData.startTime === HeapStruct.hoverHeapStruct?.startTime) {
         heapBeanStructCanvasCtx.lineWidth = 1;
         heapBeanStructCanvasCtx.globalAlpha = 0.6;
-        let drawHeight: number = Math.ceil(((heapBeanData.heapsize || 0) * (heapBeanData.frame.height || 0)) / heapBeanData.maxHeapSize);
-        heapBeanStructCanvasCtx.fillRect(heapBeanData.frame.x, heapBeanData.frame.y + heapBeanData.frame.height - drawHeight, width, drawHeight);
+        let drawHeight: number = Math.ceil(
+          ((heapBeanData.heapsize || 0) * (heapBeanData.frame.height || 0)) / heapBeanData.maxHeapSize
+        );
+        heapBeanStructCanvasCtx.fillRect(
+          heapBeanData.frame.x,
+          heapBeanData.frame.y + heapBeanData.frame.height - drawHeight,
+          width,
+          drawHeight
+        );
         heapBeanStructCanvasCtx.beginPath();
-        heapBeanStructCanvasCtx.arc(heapBeanData.frame.x, heapBeanData.frame.y + heapBeanData.frame.height - drawHeight, 3, 0, 2 * Math.PI, true);
+        heapBeanStructCanvasCtx.arc(
+          heapBeanData.frame.x,
+          heapBeanData.frame.y + heapBeanData.frame.height - drawHeight,
+          3,
+          0,
+          2 * Math.PI,
+          true
+        );
         heapBeanStructCanvasCtx.fill();
         heapBeanStructCanvasCtx.globalAlpha = 1.0;
         heapBeanStructCanvasCtx.stroke();
         heapBeanStructCanvasCtx.beginPath();
-        heapBeanStructCanvasCtx.moveTo(heapBeanData.frame.x + 3, heapBeanData.frame.y + heapBeanData.frame.height - drawHeight);
+        heapBeanStructCanvasCtx.moveTo(
+          heapBeanData.frame.x + 3,
+          heapBeanData.frame.y + heapBeanData.frame.height - drawHeight
+        );
         heapBeanStructCanvasCtx.lineWidth = 3;
-        heapBeanStructCanvasCtx.lineTo(heapBeanData.frame.x + width, heapBeanData.frame.y + heapBeanData.frame.height - drawHeight);
+        heapBeanStructCanvasCtx.lineTo(
+          heapBeanData.frame.x + width,
+          heapBeanData.frame.y + heapBeanData.frame.height - drawHeight
+        );
         heapBeanStructCanvasCtx.stroke();
       } else {
         heapBeanStructCanvasCtx.globalAlpha = 0.6;
         heapBeanStructCanvasCtx.lineWidth = 1;
-        let drawHeight: number = Math.ceil(((heapBeanData.heapsize || 0) * (heapBeanData.frame.height || 0)) / heapBeanData.maxHeapSize);
-        heapBeanStructCanvasCtx.fillRect(heapBeanData.frame.x, heapBeanData.frame.y + heapBeanData.frame.height - drawHeight, width, drawHeight);
+        let drawHeight: number = Math.ceil(
+          ((heapBeanData.heapsize || 0) * (heapBeanData.frame.height || 0)) / heapBeanData.maxHeapSize
+        );
+        heapBeanStructCanvasCtx.fillRect(
+          heapBeanData.frame.x,
+          heapBeanData.frame.y + heapBeanData.frame.height - drawHeight,
+          width,
+          drawHeight
+        );
       }
     }
     heapBeanStructCanvasCtx.globalAlpha = 1.0;

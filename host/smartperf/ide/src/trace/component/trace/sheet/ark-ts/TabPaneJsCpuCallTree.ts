@@ -14,8 +14,8 @@
  */
 
 import { element } from '../../../../../base-ui/BaseElement.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { JsCpuProfilerChartFrame } from '../../../../bean/JsStruct.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type JsCpuProfilerChartFrame } from '../../../../bean/JsStruct.js';
 import { TabPaneJsCpuCallTree } from './TabPaneJsCpu.js';
 
 @element('tabpane-js-cpu-top-down')

@@ -33,17 +33,17 @@ public:
 
 public:
     size_t AppendPerfFiles(uint64_t fileId, uint32_t serial, DataIndex symbols, DataIndex filePath);
-    size_t AppendPerfCallChain(uint64_t sampleId,
-                               uint32_t callChainId,
-                               uint64_t vaddrInFile,
-                               uint64_t fileId,
-                               uint64_t symbolId);
+    void AppendPerfCallChain(uint32_t callChainId,
+                             uint32_t depth,
+                             uint64_t ip,
+                             uint64_t vaddrInFile,
+                             uint64_t fileId,
+                             uint64_t symbolId);
     void Finish();
     void BeforeReload();
 
 private:
     DoubleMap<uint64_t, uint32_t, uint64_t> fileIdToRowInFileTable_;
-    DoubleMap<uint64_t, uint64_t, uint64_t> fileIdToRowInChainTable_;
     std::set<uint64_t> fileIds_;
     std::map<uint64_t, uint64_t> fileIdToRow_{};
 };

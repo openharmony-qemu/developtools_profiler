@@ -15,8 +15,8 @@
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { FrameSpacingStruct } from '../../../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { resizeObserver } from '../SheetUtils.js';
 import { Utils } from '../../base/Utils.js';
 
@@ -29,8 +29,9 @@ export class TabFrameSpacing extends BaseElement {
   set data(frameSpacingParam: SelectionParam) {
     let secondToMillisecond: number = 1000_000.0;
     let fixedNumber: number = 5;
-    this.range!.textContent = `Selected range: ${parseFloat(((frameSpacingParam.rightNs - frameSpacingParam.leftNs) /
-      secondToMillisecond).toFixed(fixedNumber))} ms`;
+    this.range!.textContent = `Selected range: ${parseFloat(
+      ((frameSpacingParam.rightNs - frameSpacingParam.leftNs) / secondToMillisecond).toFixed(fixedNumber)
+    )} ms`;
     let tableList: FrameSpacingTableStruct[] = [];
     for (let index = 0; index < frameSpacingParam.frameSpacing.length; index++) {
       this.constructTable(frameSpacingParam.frameSpacing[index], tableList);
@@ -57,17 +58,38 @@ export class TabFrameSpacing extends BaseElement {
     let startNS = window.recordStartNS;
     tableList.push(this.getSplitSpacingData(structValue, startNS, 'W'));
     tableList.push(this.getSplitSpacingData(structValue, startNS, 'H'));
+    tableList.push(this.getSplitSpacingData(structValue, startNS, 'X'));
+    tableList.push(this.getSplitSpacingData(structValue, startNS, 'Y'));
   }
 
-  getSplitSpacingData(structValue: FrameSpacingStruct, startNS: number, propertyStr: string): FrameSpacingTableStruct{
+  getSplitSpacingData(structValue: FrameSpacingStruct, startNS: number, propertyStr: string): FrameSpacingTableStruct {
     let frameSpacing: FrameSpacingTableStruct = new FrameSpacingTableStruct();
     let secondToNanosecond: number = 1000_000_000;
     frameSpacing.index = structValue.id;
     frameSpacing.timestamp = Utils.getTimeString(Number(structValue.currentTs));
     frameSpacing.property = propertyStr;
-    frameSpacing.value2 = propertyStr === 'W' ? structValue.currentFrameWidth! : structValue.currentFrameHeight!;
-    frameSpacing.value1 = propertyStr === 'W' ? structValue.preFrameWidth! : structValue.preFrameHeight!;
-    frameSpacing.screen = propertyStr === 'W' ? FrameSpacingStruct.physicalWidth : FrameSpacingStruct.physicalHeight;
+    switch (propertyStr) {
+      case 'W':
+        frameSpacing.value2 = structValue.currentFrameWidth;
+        frameSpacing.value1 = structValue.preFrameWidth;
+        frameSpacing.screen = FrameSpacingStruct.physicalWidth;
+        break;
+      case 'H':
+        frameSpacing.value2 = structValue.currentFrameHeight;
+        frameSpacing.value1 = structValue.preFrameHeight;
+        frameSpacing.screen = FrameSpacingStruct.physicalHeight;
+        break;
+      case 'X':
+        frameSpacing.value2 = structValue.x;
+        frameSpacing.value1 = structValue.preX;
+        frameSpacing.screen = 0;
+        break;
+      case 'Y':
+        frameSpacing.value2 = structValue.y;
+        frameSpacing.value1 = structValue.preY;
+        frameSpacing.screen = 0;
+        break;
+    }
     frameSpacing.currentTs = ((structValue.currentTs + startNS) / secondToNanosecond).toString();
     frameSpacing.preTs = (((structValue.preTs || 0) + startNS) / secondToNanosecond).toString();
     if (structValue.preTs === 0) {
@@ -86,10 +108,7 @@ export class TabFrameSpacing extends BaseElement {
     });
   }
 
-  sortByColumn(framesDetail: {
-    sort: number,
-    key: string,
-  }): void {
+  sortByColumn(framesDetail: { sort: number; key: string }): void {
     let compare = function (property: string, sort: number, type: string) {
       return function (
         frameSpacingLeftData: FrameSpacingTableStruct,
@@ -103,8 +122,9 @@ export class TabFrameSpacing extends BaseElement {
         // @ts-ignore
         let leftSpacingData = frameSpacingLeftData[property];
         if (type === 'number') {
-          return sort === thirdSortNumber ? parseFloat(rightSpacingData) - parseFloat(leftSpacingData) :
-            parseFloat(leftSpacingData) - parseFloat(rightSpacingData);
+          return sort === thirdSortNumber
+            ? parseFloat(rightSpacingData) - parseFloat(leftSpacingData)
+            : parseFloat(leftSpacingData) - parseFloat(rightSpacingData);
         } else {
           if (rightSpacingData > leftSpacingData) {
             return sort === thirdSortNumber ? SecondSortNumber : firstSortNumber;

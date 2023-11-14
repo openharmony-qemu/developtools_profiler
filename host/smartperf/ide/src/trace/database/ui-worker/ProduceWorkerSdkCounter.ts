@@ -207,8 +207,8 @@ export class SdkCounterRender extends Render {
           CounterStruct.setCounterFrame(sdkCounterList[index], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
           if (
             index > 0 &&
-            (sdkCounterList[index - 1].frame?.x || 0) == (sdkCounterList[index].frame?.x || 0) &&
-            (sdkCounterList[index - 1].frame?.width || 0) == (sdkCounterList[index].frame?.width || 0)
+            (sdkCounterList[index - 1].frame?.x || 0) === (sdkCounterList[index].frame?.x || 0) &&
+            (sdkCounterList[index - 1].frame?.width || 0) === (sdkCounterList[index].frame?.width || 0)
           ) {
           } else {
             sdkCounterFilters.push(item);

@@ -129,6 +129,7 @@ export class SpHiSysEventChart {
     this.energyTraceRow.rowType = TraceRow.ROW_TYPE_ENERGY;
     this.energyTraceRow.rowParentId = '';
     this.energyTraceRow.folder = true;
+    this.energyTraceRow.addTemplateTypes('HiSysEvent');
     this.energyTraceRow.name = 'Energy';
     this.energyTraceRow.style.height = '40px';
     this.energyTraceRow.favoriteChangeHandler = this.trace.favoriteChangeHandler;
@@ -186,8 +187,16 @@ export class SpHiSysEventChart {
         `<span>AnomalyName:${EnergyAnomalyStruct.hoverEnergyAnomalyStruct?.eventName || ''}</span>`
       );
     };
+    anomalyTraceRow.findHoverStruct = () => {
+      EnergyAnomalyStruct.hoverEnergyAnomalyStruct = anomalyTraceRow.getHoverStruct();
+    };
     anomalyTraceRow.onThreadHandler = (useCache) => {
-      let context = anomalyTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D;
+      if (anomalyTraceRow.currentContext) {
+        context = anomalyTraceRow.currentContext;
+      } else {
+        context = anomalyTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       anomalyTraceRow.canvasSave(context);
       (renders['energyAnomaly'] as EnergyAnomalyRender).renderMainThread(
         {
@@ -242,8 +251,16 @@ export class SpHiSysEventChart {
                             </div>`
       );
     };
+    systemTraceRow.findHoverStruct = () => {
+      EnergySystemStruct.hoverEnergySystemStruct = systemTraceRow.getHoverStruct();
+    };
     systemTraceRow.onThreadHandler = (useCache) => {
-      let context = systemTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D;
+      if (systemTraceRow.currentContext) {
+        context = systemTraceRow.currentContext;
+      } else {
+        context = systemTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       systemTraceRow.canvasSave(context);
       (renders['energySystem'] as EnergySystemRender).renderMainThread(
         {
@@ -413,6 +430,9 @@ export class SpHiSysEventChart {
       queryPowerData().then((items) => {
         return this.getPowerData(items);
       });
+    powerTraceRow.findHoverStruct = () => {
+      EnergyPowerStruct.hoverEnergyPowerStruct = powerTraceRow.getHoverStruct();
+    };
     powerTraceRow.focusHandler = () => {
       this.trace?.displayTip(
         powerTraceRow,
@@ -449,7 +469,12 @@ export class SpHiSysEventChart {
       );
     };
     powerTraceRow.onThreadHandler = (useCache) => {
-      let context = powerTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D;
+      if (powerTraceRow.currentContext) {
+        context = powerTraceRow.currentContext;
+      } else {
+        context = powerTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       powerTraceRow.canvasSave(context);
       (renders['energyPower'] as EnergyPowerRender).renderMainThread(
         {
@@ -591,6 +616,9 @@ export class SpHiSysEventChart {
           let stateInitValue = initValueList[index] == 'nocolumn' ? [] : result[0];
           return stateInitValue.concat(result[1]);
         });
+      stateTraceRow.findHoverStruct = () => {
+        EnergyStateStruct.hoverEnergyStateStruct = stateTraceRow.getHoverStruct();
+      };
       stateTraceRow.focusHandler = () => {
         let tip = '';
         if (EnergyStateStruct.hoverEnergyStateStruct?.type!.toLocaleLowerCase().includes('state')) {
@@ -608,7 +636,12 @@ export class SpHiSysEventChart {
         this.trace?.displayTip(stateTraceRow, EnergyStateStruct.hoverEnergyStateStruct, tip);
       };
       stateTraceRow.onThreadHandler = (useCache) => {
-        let context = stateTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        let context: CanvasRenderingContext2D;
+        if (stateTraceRow.currentContext) {
+          context = stateTraceRow.currentContext;
+        } else {
+          context = stateTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        }
         stateTraceRow.canvasSave(context);
         (renders['energyState'] as EnergyStateRender).renderMainThread(
           {

@@ -291,7 +291,7 @@ export class TabPaneVirtualMemoryStatistics extends BaseElement {
         }
         </style>
         <lit-table id="tb-vm-statistics" style="height: auto" tree>
-            <lit-table-column class="vm-memory-stat-column" width="20%" title="Operation/Process/Thread" data-index="title" key="title" align="flex-start">
+            <lit-table-column class="vm-memory-stat-column" width="20%" title="Operation/Process/Thread" data-index="title" key="title" align="flex-start"retract>
             </lit-table-column>
             <lit-table-column class="vm-memory-stat-column" width="1fr" title="Count" data-index="count" key="count" align="flex-start" order>
             </lit-table-column>

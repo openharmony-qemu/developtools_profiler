@@ -19,11 +19,11 @@ import sys
 import platform
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_TOP = os.path.realpath(os.path.join(THIS_DIR, "../../.."))
-TAIL_DIR = "developtools/profiler"
+PROJECT_TOP = os.path.realpath(os.path.join(THIS_DIR, ".."))
+TAIL_DIR = "."
 
-if "developtools" in sys.argv[2]:
-    TAIL_DIR = "."
+if "developtools" in sys.argv[3]:
+    TAIL_DIR = "developtools/profiler"
     PROJECT_TOP = os.path.realpath(os.path.join(THIS_DIR, ".."))
 
 OHOS_X64_OUT = os.path.join(PROJECT_TOP, sys.argv[2])
@@ -71,11 +71,10 @@ PARAMS_STANDARD = f" --proto_path {PROTO_OUT_DIR} "
 PARAMS_STANDARD += " ".join([f"{PROTO_OUT_DIR}/{os.path.basename(param)}" for param in PARAMS_REPLACE])
 PARAMS_ALL = f"{PARAMS_SRC} {PARAMS_STANDARD}"
 
-print("执行参数：--------------- --------------------------")
 if not sys.argv[4].startswith("--plugin"):
-    print("执行参数：--------------- -------------------2-------")
     if os.path.isfile(OPT_PLUGIN_PROTOREADER_PATH):
-      cmd=[PROTOC, OPT_PLUGIN_PROTOREADER, f"{PLUGINOUT}:{sys.argv[5]}", *PARAMS_ALL.split()]
-      print("执行参数：--------------- ", cmd, " --------------------------")
-      subprocess.run(cmd)
+        cmd=[PROTOC, OPT_PLUGIN_PROTOREADER, f"{PLUGINOUT}:{sys.argv[5]}", *PARAMS_ALL.split()]
+        print("执行参数：--------------- ", cmd, " --------------------------")
+        subprocess.run(cmd)
+    # subprocess.run(cmd, env={"LD_LIBRARY_PATH": f"{LIBCXX_X64_OUT}:{SUBSYS_X64_OUT}"})
 subprocess.run([PROTOC, *PARAMS_ALL.split()])

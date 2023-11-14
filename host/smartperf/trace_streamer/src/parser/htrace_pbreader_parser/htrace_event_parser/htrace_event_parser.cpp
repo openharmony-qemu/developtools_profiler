@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 #include "htrace_event_parser.h"
-#include <string>
 #include <cinttypes>
+#include <string>
 #include "app_start_filter.h"
 #include "binder_filter.h"
 #include "binder.pbreader.h"
@@ -141,7 +141,7 @@ HtraceEventParser::~HtraceEventParser()
             static_cast<unsigned long long>(ftraceOriginEndTime_));
 }
 
-void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClocks clock)
+void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClocks clock, bool& haveSplitSeg)
 {
     if (clock != clock_) {
         clock_ = clock;
@@ -152,11 +152,8 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
     if (!tracePluginResult.has_ftrace_cpu_detail()) {
         return;
     }
-
     for (auto it = tracePluginResult.ftrace_cpu_detail(); it; ++it) {
         ProtoReader::FtraceCpuDetailMsg_Reader msg(it->ToBytes());
-        eventCpu_ = msg.cpu();
-        auto events = msg.event();
         if (!msg.has_event()) {
             return;
         }
@@ -173,8 +170,8 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
         // parser cpu event
         auto kTimestampDataAreaNumber = ProtoReader::FtraceEvent_Reader::kTimestampDataAreaNumber;
         auto tsTag = CreateTagVarInt(kTimestampDataAreaNumber);
-        for (auto i = events; i; i++) {
-            ProtoReader::BytesView event(i->ToBytes());
+        for (auto eventItor = msg.event(); eventItor; eventItor++) {
+            ProtoReader::BytesView event(eventItor->ToBytes());
             uint64_t timeStamp = 0;
             if (event.size_ > MIN_DATA_AREA && event.data_[0] == tsTag) {
                 (void)ProtoReader::VarIntDecode(event.data_ + DATA_AREA_START, event.data_ + DATA_AREA_END, &timeStamp);
@@ -186,9 +183,16 @@ void HtraceEventParser::ParseDataItem(HtraceDataSegment& tracePacket, BuiltinClo
             ftraceStartTime_ = std::min(ftraceStartTime_, eventTimeStamp_);
             ftraceEndTime_ = std::max(ftraceEndTime_, eventTimeStamp_);
             traceDataCache_->UpdateTraceTime(eventTimeStamp_);
+            if (traceDataCache_->isSplitFile_) {
+                if (eventTimeStamp_ >= traceDataCache_->SplitFileMinTime() &&
+                    eventTimeStamp_ <= traceDataCache_->SplitFileMaxTime()) {
+                    haveSplitSeg = true;
+                    return;
+                }
+                continue;
+            }
             ProtoReader::BytesView commonField;
-            htraceEventList_.push_back(
-                std::make_unique<EventInfo>(eventTimeStamp_, eventCpu_, tracePacket.seg, i->ToBytes()));
+            htraceEventList_.push_back(std::make_unique<EventInfo>(eventTimeStamp_, msg.cpu(), tracePacket.seg, event));
             FilterAllEventsReader();
         }
     }
@@ -522,7 +526,7 @@ bool HtraceEventParser::SchedWakingEvent(const ProtoReader::DataArea& event) con
     auto instants = traceDataCache_->GetInstantsData();
     auto internalTid = streamFilters_->processFilter_->UpdateOrCreateThread(eventTimeStamp_, wakePidValue);
     auto wakeupFromPid = streamFilters_->processFilter_->UpdateOrCreateThread(eventTimeStamp_, eventTid_);
-    streamFilters_->cpuFilter_->InsertWakeupEvent(eventTimeStamp_, internalTid);
+    streamFilters_->cpuFilter_->InsertWakeupEvent(eventTimeStamp_, internalTid, true);
     instants->AppendInstantEventData(eventTimeStamp_, schedWakingName_, internalTid, wakeupFromPid);
     uint32_t targetCpu = msg.target_cpu();
     traceDataCache_->GetRawData()->AppendRawData(0, eventTimeStamp_, RAW_SCHED_WAKING, targetCpu, wakeupFromPid);
@@ -858,6 +862,7 @@ void HtraceEventParser::FilterAllEvents()
     if (traceDataCache_->AppStartTraceEnabled()) {
         streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
     }
+    traceDataCache_->GetThreadStateData()->SortAllRowByTs();
 }
 
 void HtraceEventParser::ProtoReaderDealEvent(const ProtoReader::FtraceEvent_Reader& ftraceEvent,

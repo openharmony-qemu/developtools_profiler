@@ -14,7 +14,6 @@
  */
 
 import { BaseElement, element } from '../BaseElement.js';
-let textColor = '';
 
 @element('lit-main-menu-item')
 export class LitMainMenuItem extends BaseElement {
@@ -66,14 +65,6 @@ export class LitMainMenuItem extends BaseElement {
     this.titleEl = this.shadowRoot?.querySelector('.name');
     this.iconEl = this.shadowRoot?.querySelector('.icon');
     this.fileEL = this.shadowRoot?.querySelector('.file');
-    let backgroundColor = sessionStorage.getItem('backgroundColor');
-    if (backgroundColor == 'rgb(38, 47, 60)') {
-      textColor = 'white';
-      this.style.color = 'white';
-    } else {
-      textColor = 'black';
-      this.style.color = 'black';
-    }
   }
 
   isFile(): boolean {
@@ -88,24 +79,38 @@ export class LitMainMenuItem extends BaseElement {
   connectedCallback() {
     if (this.hasAttribute('file')) {
       if (this.fileEL) {
-        this.fileEL.addEventListener('change', () => {
+        this.fileEL!.addEventListener('change', (event) => {
           let files = this.fileEL!.files;
           if (files && files.length > 0) {
-            this.dispatchEvent(
-              new CustomEvent('file-change', {
-                // @ts-ignore
-                target: this,
-                detail: files[0],
-              })
-            );
+            if (this.titleEl!.textContent!.includes('long trace')) {
+              this.dispatchEvent(
+                new CustomEvent('file-change', {
+                  // @ts-ignore
+                  target: this,
+                  // @ts-ignore
+                  detail: event.target!.files,
+                })
+              );
+            } else {
+              this.dispatchEvent(
+                new CustomEvent('file-change', {
+                  // @ts-ignore
+                  target: this,
+                  detail: files[0],
+                })
+              );
+            }
             if (this.fileEL) this.fileEL.value = '';
+            if (this.fileEL) {
+              this.fileEL.value = '';
+            }
           }
         });
       }
+      this.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     }
-    this.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
   }
 
   initHtml(): string {
@@ -116,7 +121,7 @@ export class LitMainMenuItem extends BaseElement {
                 display: flex;
                 font-family: Helvetica;
                 font-size: 14px;
-                color: ${textColor};
+                color: #000;
                 text-align: left;
                 line-height: 20px;
                 font-weight: 400
@@ -186,7 +191,20 @@ export class LitMainMenuItem extends BaseElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     switch (name) {
       case 'title':
-        if (this.titleEl) this.titleEl.textContent = newValue;
+        if (this.titleEl) {
+          this.titleEl.textContent = newValue;
+          if (newValue.includes('long trace')) {
+            this.fileEL!.setAttribute('multiple', '');
+            this.fileEL!.setAttribute('webkitdirectory', '');
+            this.fileEL!.setAttribute('directory', '');
+          } else {
+            if (this.fileEL!.hasAttribute('multiple')) {
+              this.fileEL!.removeAttribute('multiple');
+              this.fileEL!.removeAttribute('webkitdirectory');
+              this.fileEL!.removeAttribute('directory');
+            }
+          }
+        }
         break;
       case 'icon':
         if (this.iconEl) this.iconEl.setAttribute('name', newValue);

@@ -20,17 +20,28 @@ import '../../../base-ui/slider/LitSlider.js';
 import { LitSlider } from '../../../base-ui/slider/LitSlider.js';
 import '../../../base-ui/popover/LitPopover.js';
 import { info } from '../../../log/Log.js';
+import { SpApplication } from '../../SpApplication.js';
 
 @element('record-setting')
 export class SpRecordSetting extends BaseElement {
   private memoryBufferSlider: LitSlider | undefined;
   private maxDurationSliders: LitSlider | undefined;
   private radioBox: LitRadioBox | undefined;
+  private longTraceRadio: LitRadioBox | undefined;
   private bufferNumber: HTMLElement | undefined;
   private durationNumber: HTMLElement | undefined;
   private outputPath: HTMLInputElement | undefined;
   private lastMemoryValue: string | undefined;
   private lastDurationValue: string | undefined;
+  isRecordTemplate: boolean = false;
+
+  get longTraceSingleFileMaxSize(): number {
+    let maxFileSizeEl = this.shadowRoot?.querySelector<HTMLInputElement>('.max_size_result');
+    if (maxFileSizeEl) {
+      return Number(maxFileSizeEl.value);
+    }
+    return 200;
+  }
 
   get recordMod(): boolean {
     if (this.radioBox) {
@@ -39,11 +50,25 @@ export class SpRecordSetting extends BaseElement {
     return false;
   }
 
-  get output(): string {
-    if (this.outputPath && this.outputPath.value != '') {
-      return '/data/local/tmp/' + this.outputPath.value;
+  get longOutPath(): string {
+    if (this.outputPath && this.outputPath.value !== '' && this.outputPath.value !== 'long_trace/') {
+      return `/data/local/tmp/${this.outputPath.value}/`;
     }
-    return '/data/local/tmp/hiprofiler_data.htrace';
+    return '/data/local/tmp/long_trace/';
+  }
+
+  get output(): string {
+    if (SpApplication.isLongTrace && !this.isRecordTemplate) {
+      if (this.outputPath && this.outputPath.value !== 'long_trace/' && this.outputPath.value !== '') {
+        return `/data/local/tmp/${this.outputPath.value}/hiprofiler_data.htrace`;
+      }
+      return '/data/local/tmp/long_trace/hiprofiler_data.htrace';
+    } else {
+      if (this.outputPath && this.outputPath.value !== '') {
+        return `/data/local/tmp/${this.outputPath.value}`;
+      }
+      return '/data/local/tmp/hiprofiler_data.htrace';
+    }
   }
 
   get bufferSize(): number {
@@ -66,19 +91,19 @@ export class SpRecordSetting extends BaseElement {
     let bufferInput = this.shadowRoot?.querySelector('.memory_buffer_result') as HTMLInputElement;
     let parentElement = this.memoryBufferSlider!.parentNode as Element;
     if (bufferInput.style.color != 'var(--dark-color1,#000000)' && this.lastMemoryValue) {
-      bufferInput.value = this.lastMemoryValue + '';
-      this.memoryBufferSlider!.percent = this.lastMemoryValue + '';
+      bufferInput.value = `${this.lastMemoryValue}`;
+      this.memoryBufferSlider!.percent = `${this.lastMemoryValue}`;
       this.memoryBufferSlider!.sliderStyle = {
         minRange: 4,
         maxRange: 512,
-        defaultValue: this.lastMemoryValue + '',
+        defaultValue: `${this.lastMemoryValue}`,
         resultUnit: 'MB',
         stepSize: 2,
         lineColor: 'var(--dark-color3,#46B1E3)',
         buttonColor: '#999999',
       };
-      parentElement.setAttribute('percent', this.lastMemoryValue + '');
-      this.lastMemoryValue = this.lastMemoryValue + '';
+      parentElement.setAttribute('percent', `${this.lastMemoryValue}`);
+      this.lastMemoryValue = `${this.lastMemoryValue}`;
       bufferInput.style.color = 'var(--dark-color1,#000000)';
     }
 
@@ -116,11 +141,80 @@ export class SpRecordSetting extends BaseElement {
         button.style.backgroundColor = '#E4E3E9';
       });
     });
-
     this.radioBox = this.shadowRoot?.querySelector('#litradio') as LitRadioBox;
-    this.outputPath = this.shadowRoot?.querySelector<HTMLInputElement>('#trace_path') as HTMLInputElement;
-
+    this.addLongTraceConfig();
     this.initLitSlider();
+  }
+
+  private addLongTraceConfig() {
+    this.longTraceRadio = this.shadowRoot?.querySelector('#longTraceRadio') as LitRadioBox;
+    this.outputPath = this.shadowRoot?.querySelector<HTMLInputElement>('#trace_path') as HTMLInputElement;
+    let rootEl = this.shadowRoot?.querySelector('.root') as HTMLDivElement;
+    let longTraceMaxSlide = document.createElement('div');
+    longTraceMaxSlide.innerHTML = `<div class="max-single-file-size">
+        <div class="record-title">
+            <span class="record-mode" >Single file max size</span>
+            <span class="record-prompt"> (single file size after cutting is 200MB - 400MB) </span>
+        </div>
+        <lit-slider id="max-size" defaultColor="var(--dark-color4,#86C5E3)" open dir="right">
+        </lit-slider>
+        <div class='resultValue'>
+            <input class="max_size_result" type="text" value = '200' >
+            <span style="text-align: center; margin: 8px 8px 8px 0"> MB </span>
+        </div>
+      </div>`;
+
+    let maxSingleFileEl = longTraceMaxSlide.querySelector<HTMLDivElement>('.max-single-file-size');
+    let maxSizeSliders = longTraceMaxSlide.querySelector('#max-size') as LitSlider;
+    let maxSizeInput = longTraceMaxSlide.querySelector('.max_size_result') as HTMLInputElement;
+    let maxSizeParentElement = maxSizeSliders.parentNode as Element;
+    maxSizeSliders.sliderStyle = {
+      minRange: 200,
+      maxRange: 400,
+      defaultValue: '200',
+      resultUnit: 'MB',
+      stepSize: 2,
+      lineColor: 'var(--dark-color3,#46B1E3)',
+      buttonColor: '#999999',
+    };
+    maxSizeSliders.addEventListener('input', () => {
+      if (maxSingleFileEl?.hasAttribute('percent')) {
+        maxSizeInput.value = `${maxSingleFileEl?.getAttribute('percent')}`;
+      } else {
+        maxSizeInput.value = maxSizeSliders.sliderStyle.defaultValue;
+      }
+    });
+    maxSizeInput.value = maxSizeSliders.sliderStyle.defaultValue;
+    maxSizeParentElement.setAttribute('percent', '50');
+    maxSizeInput.style.color = 'var(--dark-color1,#000000)';
+    maxSizeInput.addEventListener('input', (ev) => {
+      maxSizeSliders!.percent = maxSizeInput.value;
+      let htmlInputElement = maxSizeSliders!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
+      htmlInputElement.value = maxSizeInput.value;
+      maxSizeSliders!.sliderStyle = {
+        minRange: 200,
+        maxRange: 400,
+        defaultValue: maxSizeInput.value,
+        resultUnit: 'MB',
+        stepSize: 2,
+        lineColor: 'var(--dark-color3,#46B1E3)',
+        buttonColor: '#999999',
+      };
+      maxSizeParentElement.setAttribute('percent', maxSizeInput.value);
+    });
+
+    this.radioBox!.addEventListener('click', () => {
+      SpApplication.isLongTrace = false;
+      if (rootEl.lastChild === longTraceMaxSlide) {
+        rootEl.removeChild(longTraceMaxSlide);
+      }
+      this.outputPath!.value = 'hiprofiler_data.htrace';
+    });
+    this.longTraceRadio.addEventListener('click', () => {
+      SpApplication.isLongTrace = true;
+      rootEl.appendChild(longTraceMaxSlide);
+      this.outputPath!.value = 'long_trace/';
+    });
   }
 
   initLitSlider() {
@@ -221,7 +315,7 @@ export class SpRecordSetting extends BaseElement {
         durationParentElement.setAttribute('percent', '30');
         return;
       }
-      let regExpMatch = durationInput.value.trim().match(`^\\d{1,2}\\:\\d{1,2}\\:\\d{1,2}$`);
+      let regExpMatch = durationInput.value.trim().match('^\\d{1,2}\\:\\d{1,2}\\:\\d{1,2}$');
       if (regExpMatch) {
         let durationList = regExpMatchArray.split(':');
         let resultDuration = Number(durationList[0]) * 3600 + Number(durationList[1]) * 60 + Number(durationList[2]);
@@ -239,11 +333,11 @@ export class SpRecordSetting extends BaseElement {
           durationInput.parentElement!.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
           durationInput.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
           let htmlInputElement = this.maxDurationSliders!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
-          htmlInputElement.value = resultDuration + '';
+          htmlInputElement.value = `${resultDuration}`;
           this.maxDurationSliders!.sliderStyle = {
             minRange: 10,
             maxRange: 3600,
-            defaultValue: Number(durationList[0]) + ':' + Number(durationList[1]) + ':' + Number(durationList[2]),
+            defaultValue: `${Number(durationList[0])}:${Number(durationList[1])}:${Number(durationList[2])}`,
             resultUnit: 'h:m:s',
             stepSize: 1,
             lineColor: 'var(--dark-color4,#61CFBE)',
@@ -289,6 +383,12 @@ export class SpRecordSetting extends BaseElement {
             width: 100%;
             height: 100%;
         }
+        #longTraceRadio{
+            display: none;
+        }
+        :host([trace_config]) #longTraceRadio{
+            display: block;
+        }
         .record-mode{
             font-family: Helvetica-Bold;
             font-size: 16px;
@@ -331,7 +431,7 @@ export class SpRecordSetting extends BaseElement {
             grid-template-columns: 1fr min-content;
         }
 
-        .max-duration{
+        .max-duration, .max-single-file-size{
             height: min-content;
             display: grid;
             grid-template-rows: 1fr 1fr;
@@ -346,6 +446,7 @@ export class SpRecordSetting extends BaseElement {
             text-align: left;
             line-height: 16px;
             font-weight: 400;
+            margin-right: 20px;
         }
 
         button{
@@ -369,7 +470,7 @@ export class SpRecordSetting extends BaseElement {
             vertical-align: middle;
         }
 
-        .max_duration_result, .memory_buffer_result{
+        .max_duration_result, .memory_buffer_result, .max_size_result{
             background-color: var(--dark-background5,#F2F2F2);
             color:var(--dark-color,#6a6f77);
             border: none;
@@ -396,7 +497,7 @@ export class SpRecordSetting extends BaseElement {
             border:1px solid var(--dark-border,#c8cccf);
         }
 
-        #memory-buffer, #max-duration {
+        #memory-buffer, #max-duration, #max-size {
             margin: 0 8px;
             grid-column: span 2;
         }
@@ -419,7 +520,10 @@ export class SpRecordSetting extends BaseElement {
         <div class="root">
           <div class="record">
             <span class="record-mode">Record mode</span>
-            <lit-radio name="Stop when full" dis="round" id="litradio" checked>Stop when full</lit-radio>
+            <div style="display: flex;">
+               <lit-radio name="radio" dis="round" id="litradio" checked>Normal Mode</lit-radio>
+               <lit-radio name="radio" dis="round" id="longTraceRadio">Long Trace Mode</lit-radio>
+            </div>
           </div>
           <div class="output">
             <span class="record-mode">output file path</span>

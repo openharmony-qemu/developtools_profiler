@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TRACE_SOURCE, KEY, VALUE };
+enum class Index : int32_t { ID = 0, TRACE_SOURCE, KEY, VALUE };
 TraceConfigTable::TraceConfigTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -44,19 +44,19 @@ TraceConfigTable::Cursor::~Cursor() {}
 
 int32_t TraceConfigTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(CurrentRow()));
             break;
-        case TRACE_SOURCE:
+        case Index::TRACE_SOURCE:
             sqlite3_result_text(context_, dataCache_->GetConstTraceConfigData().TraceSource()[CurrentRow()].c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case KEY:
+        case Index::KEY:
             sqlite3_result_text(context_, dataCache_->GetConstTraceConfigData().Key()[CurrentRow()].c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case VALUE:
+        case Index::VALUE:
             sqlite3_result_text(context_, dataCache_->GetConstTraceConfigData().Value()[CurrentRow()].c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;

@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { GpuMemory } from '../../../../bean/AbilityMonitor.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type GpuMemory } from '../../../../bean/AbilityMonitor.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { getTabGpuMemoryVMTrackerClickData } from '../../../../database/SqlLite.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
@@ -39,9 +39,10 @@ export class TabPaneGpuMemorySelectVmTracker extends BaseElement {
   connectedCallback(): void {
     super.connectedCallback();
     new ResizeObserver(() => {
-      if (this.parentElement?.clientHeight != 0) {
+      if (this.parentElement?.clientHeight !== 0) {
         // @ts-ignore
-        this.gpuMemoryClickTable?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 18 + 'px';
+        this.gpuMemoryClickTable?.shadowRoot?.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 18 + 'px';
         this.parentElement!.style.overflow = 'hidden';
         this.gpuMemoryClickTable?.reMeauseHeight();
       }

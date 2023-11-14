@@ -123,14 +123,14 @@ export class FuncStruct extends BaseFuncStruct {
 
   static setFuncFrame(funcNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any) {
     let x1: number, x2: number;
-    if ((funcNode.startTs || 0) > startNS && (funcNode.startTs || 0) < endNS) {
+    if ((funcNode.startTs || 0) > startNS && (funcNode.startTs || 0) <= endNS) {
       x1 = ns2x(funcNode.startTs || 0, startNS, endNS, totalNS, frame);
     } else {
       x1 = 0;
     }
     if (
       (funcNode.startTs || 0) + (funcNode.dur || 0) > startNS &&
-      (funcNode.startTs || 0) + (funcNode.dur || 0) < endNS
+      (funcNode.startTs || 0) + (funcNode.dur || 0) <= endNS
     ) {
       x2 = ns2x((funcNode.startTs || 0) + (funcNode.dur || 0), startNS, endNS, totalNS, frame);
     } else {
@@ -196,7 +196,7 @@ export class FuncStruct extends BaseFuncStruct {
     y: number,
     radius: number,
     data: FuncStruct
-  ) {
+  ): void {
     ctx.strokeStyle = '#FFC880';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -213,7 +213,7 @@ export class FuncStruct extends BaseFuncStruct {
     y: number,
     radius: number,
     data: FuncStruct
-  ) {
+  ): void {
     canvas.strokeStyle = '#FFC880';
     canvas.lineWidth = 1;
     canvas.beginPath();

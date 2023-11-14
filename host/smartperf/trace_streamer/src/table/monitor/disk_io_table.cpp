@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     TS = 0,
     DUR,
     RD,
@@ -61,44 +61,44 @@ DiskIOTable::Cursor::~Cursor() {}
 
 int32_t DiskIOTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case TS: {
+    switch (static_cast<Index>(column)) {
+        case Index::TS: {
             sqlite3_result_int64(context_, static_cast<int64_t>(diskIODataObj_.TimeStampData()[CurrentRow()]));
             break;
         }
-        case DUR: {
+        case Index::DUR: {
             sqlite3_result_int64(context_, static_cast<int64_t>(diskIODataObj_.Durs()[CurrentRow()]));
             break;
         }
-        case RD: {
+        case Index::RD: {
             sqlite3_result_int64(context_, static_cast<int64_t>(diskIODataObj_.RdDatas()[CurrentRow()]));
             break;
         }
-        case WR: {
+        case Index::WR: {
             sqlite3_result_int64(context_, static_cast<int64_t>(diskIODataObj_.WrDatas()[CurrentRow()]));
             break;
         }
-        case RD_SPEED: {
+        case Index::RD_SPEED: {
             sqlite3_result_double(context_, static_cast<double>(diskIODataObj_.RdSpeedDatas()[CurrentRow()]));
             break;
         }
-        case WR_SPEED: {
+        case Index::WR_SPEED: {
             sqlite3_result_double(context_, static_cast<double>(diskIODataObj_.WrSpeedDatas()[CurrentRow()]));
             break;
         }
-        case RD_COUNT: {
+        case Index::RD_COUNT: {
             sqlite3_result_int64(context_, static_cast<int64_t>(diskIODataObj_.RdCountDatas()[CurrentRow()]));
             break;
         }
-        case WR_COUNT: {
+        case Index::WR_COUNT: {
             sqlite3_result_int64(context_, static_cast<int64_t>(diskIODataObj_.WrCountDatas()[CurrentRow()]));
             break;
         }
-        case RD_COUNT_SPEED: {
+        case Index::RD_COUNT_SPEED: {
             sqlite3_result_double(context_, static_cast<double>(diskIODataObj_.RdCountPerSecDatas()[CurrentRow()]));
             break;
         }
-        case WR_COUNT_SPEED: {
+        case Index::WR_COUNT_SPEED: {
             sqlite3_result_double(context_, static_cast<double>(diskIODataObj_.WrCountPerSecDatas()[CurrentRow()]));
             break;
         }

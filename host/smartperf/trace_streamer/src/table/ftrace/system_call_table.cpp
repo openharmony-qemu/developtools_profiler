@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { SYSCALL_NUM = 0, TYPE, IPID, TS, RET };
+enum class Index : int32_t { SYSCALL_NUM = 0, TYPE, IPID, TS, RET };
 SystemCallTable::SystemCallTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("syscall_num", "INTEGER"));
@@ -45,21 +45,21 @@ SystemCallTable::Cursor::~Cursor() {}
 
 int32_t SystemCallTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case SYSCALL_NUM:
+    switch (static_cast<Index>(column)) {
+        case Index::SYSCALL_NUM:
             sqlite3_result_int64(context_, dataCache_->GetConstSysCallData().SysCallsData()[CurrentRow()]);
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(sysCallObj_.TypesData()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, dataCache_->GetConstSysCallData().IpidsData()[CurrentRow()]);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, dataCache_->GetConstSysCallData().TimeStampData()[CurrentRow()]);
             break;
-        case RET:
+        case Index::RET:
             sqlite3_result_int64(context_, dataCache_->GetConstSysCallData().RetsData()[CurrentRow()]);
             break;
         default:

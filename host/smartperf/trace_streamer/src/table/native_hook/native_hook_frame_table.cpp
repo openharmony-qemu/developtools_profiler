@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, CALLCHAIN_ID, DEPTH, IP, SYMBOL_ID, FILE_ID, OFFSET, SYMBOL_OFFSET, VADDR };
+enum class Index : int32_t { ID = 0, CALLCHAIN_ID, DEPTH, IP, SYMBOL_ID, FILE_ID, OFFSET, SYMBOL_OFFSET, VADDR };
 NativeHookFrameTable::NativeHookFrameTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -61,8 +61,8 @@ void NativeHookFrameTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIn
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -81,8 +81,8 @@ void NativeHookFrameTable::FilterByConstraint(FilterConstraints& fc, double& fil
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -123,19 +123,19 @@ int32_t NativeHookFrameTable::Cursor::Filter(const FilterConstraints& fc, sqlite
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case CALLCHAIN_ID:
+            case Index::CALLCHAIN_ID:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int64(argv[i])),
                                     nativeHookFrameInfoObj_.CallChainIds());
                 break;
-            case SYMBOL_ID:
+            case Index::SYMBOL_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                     nativeHookFrameInfoObj_.SymbolNames());
                 break;
-            case FILE_ID:
+            case Index::FILE_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                     nativeHookFrameInfoObj_.FilePaths());
                 break;
@@ -147,8 +147,8 @@ int32_t NativeHookFrameTable::Cursor::Filter(const FilterConstraints& fc, sqlite
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -161,11 +161,11 @@ int32_t NativeHookFrameTable::Cursor::Filter(const FilterConstraints& fc, sqlite
 
 int32_t NativeHookFrameTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case CALLCHAIN_ID:
+        case Index::CALLCHAIN_ID:
             if (nativeHookFrameInfoObj_.CallChainIds()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(nativeHookFrameInfoObj_.CallChainIds()[CurrentRow()]));
@@ -173,35 +173,35 @@ int32_t NativeHookFrameTable::Cursor::Column(int32_t column) const
                 sqlite3_result_int64(context_, static_cast<int64_t>(INVALID_CALL_CHAIN_ID));
             }
             break;
-        case DEPTH:
+        case Index::DEPTH:
             sqlite3_result_int64(context_, static_cast<int64_t>(nativeHookFrameInfoObj_.Depths()[CurrentRow()]));
             break;
-        case IP:
+        case Index::IP:
             if (nativeHookFrameInfoObj_.Ips()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(nativeHookFrameInfoObj_.Ips()[CurrentRow()]));
             }
             break;
-        case SYMBOL_ID:
+        case Index::SYMBOL_ID:
             if (nativeHookFrameInfoObj_.SymbolNames()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_,
                                      static_cast<int64_t>(nativeHookFrameInfoObj_.SymbolNames()[CurrentRow()]));
             }
             break;
-        case FILE_ID: {
+        case Index::FILE_ID: {
             if (nativeHookFrameInfoObj_.FilePaths()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(nativeHookFrameInfoObj_.FilePaths()[CurrentRow()]));
             }
             break;
         }
-        case OFFSET: {
+        case Index::OFFSET: {
             sqlite3_result_int64(context_, static_cast<int64_t>(nativeHookFrameInfoObj_.Offsets()[CurrentRow()]));
             break;
         }
-        case SYMBOL_OFFSET: {
+        case Index::SYMBOL_OFFSET: {
             sqlite3_result_int64(context_, static_cast<int64_t>(nativeHookFrameInfoObj_.SymbolOffsets()[CurrentRow()]));
             break;
         }
-        case VADDR: {
+        case Index::VADDR: {
             if (!nativeHookFrameInfoObj_.Vaddrs()[CurrentRow()].empty()) {
                 sqlite3_result_text(context_, nativeHookFrameInfoObj_.Vaddrs()[CurrentRow()].c_str(), STR_DEFAULT_LEN,
                                     nullptr);

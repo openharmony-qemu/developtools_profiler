@@ -51,6 +51,7 @@ export class TabPaneCpuByThread extends BaseElement {
     }
     this.currentSelectionParam = cpuByThreadValue;
     this.cpuByThreadTbl!.innerHTML = this.getTableColumns(cpuByThreadValue.cpus);
+    this.cpuByThreadTbl!.injectColumns();
     this.range!.textContent =
       'Selected range: ' +
       parseFloat(((cpuByThreadValue.rightNs - cpuByThreadValue.leftNs) / 1000000.0).toFixed(5)) +
@@ -185,8 +186,11 @@ export class TabPaneCpuByThread extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(cpuByThreadRightData[property]) - parseFloat(cpuByThreadLeftData[property]) : parseFloat(cpuByThreadLeftData[property]) - parseFloat(cpuByThreadRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(cpuByThreadRightData[property]) - parseFloat(cpuByThreadLeftData[property])
+            : // @ts-ignore
+              parseFloat(cpuByThreadLeftData[property]) - parseFloat(cpuByThreadRightData[property]);
         } else {
           // @ts-ignore
           if (cpuByThreadRightData[property] > cpuByThreadLeftData[property]) {

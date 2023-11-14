@@ -17,6 +17,7 @@
 #define TRACE_STREAMER_SELECTOR_H
 #include <functional>
 #include <memory>
+#include "metrics.h"
 #include "trace_data/trace_data_cache.h"
 #include "trace_streamer_filters.h"
 
@@ -24,11 +25,12 @@ namespace SysTuning {
 namespace TraceStreamer {
 class BytraceParser;
 class HtraceParser;
+class RawTraceParser;
 class TraceStreamerSelector {
 public:
     TraceStreamerSelector();
     ~TraceStreamerSelector();
-    bool ParseTraceDataSegment(std::unique_ptr<uint8_t[]> data, size_t size);
+    bool ParseTraceDataSegment(std::unique_ptr<uint8_t[]> data, size_t size, bool isSplitFile, int32_t isFinish);
     void EnableMetaTable(bool enabled);
     void EnableFileSave(bool enabled);
     static void SetCleanMode(bool cleanMode);
@@ -38,13 +40,16 @@ public:
     int32_t OperateDatabase(const std::string& sql);
     int32_t SearchDatabase(const std::string& sql, TraceDataDB::ResultCallBack resultCallBack);
     int32_t SearchDatabase(const std::string& sql, uint8_t* out, int32_t outLen);
-    int32_t SearchDatabase(const std::string& sql, bool printf);
+    int32_t SearchDatabase(std::string& sql, bool printf);
+    std::string SearchDatabase(const std::string& sql);
     int32_t UpdateTraceRangeTime(uint8_t* data, int32_t len);
     void WaitForParserEnd();
     void Clear();
     MetaData* GetMetaData();
     void SetDataType(TraceFileType type);
     void SetCancel(bool cancel);
+    bool ParserAndPrintMetrics(const std::string& metrics);
+    bool ReadSqlFileAndPrintResult(const std::string& sqlOperator);
     TraceFileType DataType() const
     {
         return fileType_;
@@ -53,15 +58,37 @@ public:
     void UpdateTaskPoolTraceStatus(bool status);
     void UpdateAppStartTraceStatus(bool status);
     void UpdateBinderRunnableTraceStatus(bool status);
+    void InitMetricsMap(std::map<std::string, std::string>& metricsMap);
+    const std::string MetricsSqlQuery(const std::string& metrics);
+    auto GetBytraceData()
+    {
+        return bytraceParser_.get();
+    }
+    auto GetHtraceData()
+    {
+        return htraceParser_.get();
+    }
+    auto GetFileType()
+    {
+        return fileType_;
+    }
+    auto GetTraceDataCache()
+    {
+        return traceDataCache_.get();
+    }
+    uint64_t minTs_ = INVALID_UINT64;
+    uint64_t maxTs_ = INVALID_UINT64;
 
 private:
     void InitFilter();
     void Remove_Folders(const char* dir);
+    bool LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sqlStrings);
     TraceFileType fileType_;
     std::unique_ptr<TraceStreamerFilters> streamFilters_ = {};
     std::unique_ptr<TraceDataCache> traceDataCache_ = {};
     std::unique_ptr<BytraceParser> bytraceParser_;
     std::unique_ptr<HtraceParser> htraceParser_;
+    std::unique_ptr<RawTraceParser> rawTraceParser_;
     bool enableFileSeparate_ = false;
 };
 } // namespace TraceStreamer

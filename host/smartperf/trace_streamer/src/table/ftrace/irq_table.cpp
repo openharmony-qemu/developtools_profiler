@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     ID = 0,
     TS,
     DUR,
@@ -85,8 +85,8 @@ void IrqTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo& ei)
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -105,8 +105,8 @@ void IrqTable::FilterByConstraint(FilterConstraints& fc, double& filterCost, siz
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -147,8 +147,8 @@ int32_t IrqTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
             default:
@@ -159,8 +159,8 @@ int32_t IrqTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -173,20 +173,20 @@ int32_t IrqTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
 
 int32_t IrqTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, CurrentRow());
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.TimeStampData()[CurrentRow()]));
             break;
-        case DUR:
+        case Index::DUR:
             sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.DursData()[CurrentRow()]));
             break;
-        case CALL_ID:
+        case Index::CALL_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.CallIds()[CurrentRow()]));
             break;
-        case CAT: {
+        case Index::CAT: {
             if (slicesObj_.CatsData()[CurrentRow()] != INVALID_UINT64) {
                 auto catsDataIndex = static_cast<size_t>(slicesObj_.CatsData()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(catsDataIndex).c_str(), STR_DEFAULT_LEN,
@@ -194,7 +194,7 @@ int32_t IrqTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case NAME: {
+        case Index::NAME: {
             if (slicesObj_.NamesData()[CurrentRow()] != INVALID_UINT64) {
                 auto nameDataIndex = static_cast<size_t>(slicesObj_.NamesData()[CurrentRow()]);
                 sqlite3_result_text(context_, dataCache_->GetDataFromDict(nameDataIndex).c_str(), STR_DEFAULT_LEN,
@@ -202,38 +202,38 @@ int32_t IrqTable::Cursor::Column(int32_t column) const
             }
             break;
         }
-        case DEPTH:
+        case Index::DEPTH:
             sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.Depths()[CurrentRow()]));
             break;
-        case COOKIE_ID:
+        case Index::COOKIE_ID:
             if (slicesObj_.Cookies()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.Cookies()[CurrentRow()]));
             }
             break;
-        case PARENT_ID: {
+        case Index::PARENT_ID: {
             if (slicesObj_.ParentIdData()[CurrentRow()].has_value()) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.ParentIdData()[CurrentRow()].value()));
             }
             break;
         }
-        case ARGSET:
+        case Index::ARGSET:
             if (slicesObj_.ArgSetIdsData()[CurrentRow()] != INVALID_UINT32) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(slicesObj_.ArgSetIdsData()[CurrentRow()]));
             }
             break;
-        case CHAIN_ID:
+        case Index::CHAIN_ID:
             sqlite3_result_text(context_, slicesObj_.ChainIds()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case SPAN_ID:
+        case Index::SPAN_ID:
             sqlite3_result_text(context_, slicesObj_.SpanIds()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case PARENT_SPAN_ID:
+        case Index::PARENT_SPAN_ID:
             sqlite3_result_text(context_, slicesObj_.ParentSpanIds()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case FLAG:
+        case Index::FLAG:
             sqlite3_result_text(context_, slicesObj_.Flags()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case ARGS:
+        case Index::ARGS:
             sqlite3_result_text(context_, slicesObj_.ArgsData()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         default:

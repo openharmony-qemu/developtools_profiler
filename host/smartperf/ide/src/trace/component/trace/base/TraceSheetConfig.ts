@@ -59,7 +59,7 @@ import { TabPaneIOCallTree, TabPaneVMCallTree } from '../sheet/file-system/TabPa
 import { TabPaneIoCompletionTimes } from '../sheet/file-system/TabPaneIoCompletionTimes.js';
 import { TabPaneVirtualMemoryEvents } from '../sheet/file-system/TabPaneVMEvents.js';
 import { TabPaneSmapsStatistics } from '../sheet/smaps/TabPaneSmapsStatistics.js';
-import { TabPaneSmapsRecord } from '../sheet/smaps/TabPaneSmapsRecord.js';
+import { TabPaneSmapsSample } from '../sheet/smaps/TabPaneSmapsSample.js';
 import { TabPaneFreqLimit } from '../sheet/freq/TabPaneFreqLimit.js';
 import { TabPaneCpuFreqLimits } from '../sheet/freq/TabPaneCpuFreqLimits.js';
 import { TabpaneNMCalltree } from '../sheet/native-memory/TabPaneNMCallTree.js';
@@ -76,7 +76,6 @@ import { TabPaneStartup } from '../sheet/process/TabPaneStartup.js';
 import { TabPaneStaticInit } from '../sheet/process/TabPaneStaticInit.js';
 import { TabPaneTaskFrames } from '../sheet/task/TabPaneTaskFrames.js';
 import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
-import { TabPaneFrameAnimation } from '../sheet/frame/TabPaneFrameAnimation.js';
 import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
 import { TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
 import { TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
@@ -112,14 +111,15 @@ import { TabPaneDmaVmTrackerComparison } from '../sheet/vmtracker/TabPaneDmaVmTr
 import { TabPaneGpuMemoryVmTrackerComparison } from '../sheet/vmtracker/TabPaneGpuMemoryVmTrackerComparison.js';
 import { TabPaneVmTrackerShmComparison } from '../sheet/vmtracker/TabPaneVmTrackerShmComparison.js';
 import { TabPaneSmapsComparison } from '../sheet/smaps/TabPaneSmapsComparison.js';
+import { TabPaneSmapsRecord } from '../sheet/smaps/TabPaneSmapsRecord.js';
 import { TabPaneGpuClickSelectComparison } from '../sheet/gpu/TabPaneGpuClickSelectComparison.js';
+import { TabPaneHiLogs } from '../sheet/hilog/TabPaneHiLogs.js';
+import { TabPaneHiLogSummary } from '../sheet/hilog/TabPaneHiLogSummary.js';
+import { TabPaneSchedPriority } from '../sheet/cpu/TabPaneSchedPriority.js';
+import { TabPaneGpuResourceVmTracker } from '../sheet/vmtracker/TabPaneGpuResourceVmTracker.js';
+import { TabPaneGpuGraph } from '../sheet/gpu/TabPaneGraph.js';
 
 export let tabConfig: any = {
-  'tabpane-current': {
-    title: 'Current Selection',
-    type: TabPaneCurrent,
-    require: (param: SelectionParam) => param.isCurrentPane,
-  }, //current selection
   'current-selection': {
     title: 'Current Selection',
     type: TabPaneCurrentSelection,
@@ -210,10 +210,6 @@ export let tabConfig: any = {
     title: 'FPS',
     type: TabPaneFps,
     require: (param: SelectionParam) => param.hasFps,
-  },
-  'box-flag': {
-    title: 'Current Selection',
-    type: TabPaneFlag,
   },
   'box-cpu-child': {
     title: '',
@@ -418,14 +414,18 @@ export let tabConfig: any = {
     type: TabPaneSmapsStatistics,
     require: (param: SelectionParam) => param.smapsType.length > 0,
   },
-  'box-smaps-record': {
+  'box-smaps-sample': {
     title: 'Smaps sample',
-    type: TabPaneSmapsRecord,
+    type: TabPaneSmapsSample,
     require: (param: SelectionParam) => param.smapsType.length > 0,
   },
   'box-smaps-comparison': {
     title: 'Smaps Comparison',
     type: TabPaneSmapsComparison,
+  },
+  'box-smaps-record': {
+    title: 'Smaps Record',
+    type: TabPaneSmapsRecord,
   },
   'box-vmtracker-shm': {
     title: 'SHM',
@@ -460,11 +460,6 @@ export let tabConfig: any = {
     type: TabPaneFrameDynamic,
     require: (param: SelectionParam) => param.frameDynamic.length > 0,
   },
-  'box-frame-animation': {
-    title: 'Frame Animation',
-    type: TabPaneFrameAnimation,
-    require: (param: SelectionParam) => param.frameAnimation.length > 0,
-  },
   'box-frames-spacing': {
     title: 'Frame spacing',
     type: TabFrameSpacing,
@@ -493,6 +488,11 @@ export let tabConfig: any = {
     title: 'GL',
     type: TabPaneGpuGL,
     require: (param: SelectionParam) => param.gpu.gl,
+  },
+  'gpu-graph-box-select': {
+    title: 'Graph',
+    type: TabPaneGpuGraph,
+    require: (param: SelectionParam) => param.gpu.graph,
   },
   'gpu-total-box-select': {
     title: 'Gpu Total',
@@ -562,6 +562,10 @@ export let tabConfig: any = {
     type: TabPaneGpuMemoryVmTracker,
     require: (param: SelectionParam) => param.gpuMemoryTrackerData.length > 0,
   },
+  'box-smaps-gpu-resource': {
+    title: 'Gpu Resource',
+    type: TabPaneGpuResourceVmTracker,
+  },
   'box-dma-selection-vmTracker': {
     title: 'DMA Selection',
     type: TabPaneDmaSelectVmTracker,
@@ -598,4 +602,28 @@ export let tabConfig: any = {
     title: 'Gpu Dump Comparison',
     type: TabPaneGpuClickSelectComparison,
   },
+  'box-hilogs': {
+    title: 'Hilogs',
+    type: TabPaneHiLogs,
+    require: (param: SelectionParam) => param.hiLogs.length > 0,
+  },
+  'box-hilogs-summary': {
+    title: 'Summary',
+    type: TabPaneHiLogSummary,
+    require: (param: SelectionParam) => param.hiLogSummary.length > 0,
+  },
+  'box-sched-priority': {
+    title: 'Sched Priority',
+    type: TabPaneSchedPriority,
+    require: (param: SelectionParam) => param.cpus.length > 0,
+  },
+  'box-flag': {
+    title: 'Flags Selection',
+    type: TabPaneFlag,
+  },
+  'tabpane-current': {
+    title: 'M Selection',
+    type: TabPaneCurrent,
+    require: (param: SelectionParam) => param.isCurrentPane,
+  }, //current selection
 };

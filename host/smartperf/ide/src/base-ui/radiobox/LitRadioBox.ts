@@ -85,7 +85,7 @@ export class LitRadioBox extends BaseElement {
             position:absolute;
             clip:rect(0,0,0,0);
         }
-        :host([dis=round]) :host(:focus-within) .selected label:hover .selected{ 
+        :host([dis=round]) :host(:focus-within) .selected label:hover .selected{
             z-index:1;
             border-color:#a671ef;
         }
@@ -119,6 +119,9 @@ export class LitRadioBox extends BaseElement {
             background:#a671ef;
             transform: scale(0);
         }
+        :host([dis=round]) .blue::before{
+            background: #0a59f7;
+        }
        :host([dis=round]) #radio:focus-visible+label .selected::after{
             transform:scale(2.5);
         }
@@ -128,7 +131,10 @@ export class LitRadioBox extends BaseElement {
         :host([dis=round]) #radio:checked+label .selected{
             border-color:#a671ef;
         }
-        :host([dis=check]):host{ 
+        :host([dis=round]) #radio:checked+label .blue{
+            border-color: #0a59f7;
+        }
+        :host([dis=check]):host{
            opacity: 0.9;
            font-family: Helvetica,serif;
            font-size: 14px;

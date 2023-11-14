@@ -17,12 +17,13 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, CALLCHAIN_ID, DEPTH, VADDR_IN_FILE, FILE_ID, SYMBOL_ID, NAME };
+enum class Index : int32_t { ID = 0, CALLCHAIN_ID, DEPTH, IP, VADDR_IN_FILE, FILE_ID, SYMBOL_ID, NAME };
 PerfCallChainTable::PerfCallChainTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("callchain_id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("depth", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("ip", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("vaddr_in_file", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("symbol_id", "INTEGER"));
@@ -59,8 +60,8 @@ void PerfCallChainTable::EstimateFilterCost(FilterConstraints& fc, EstimatedInde
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -79,8 +80,8 @@ void PerfCallChainTable::FilterByConstraint(FilterConstraints& fc, double& filte
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 if (CanFilterId(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
                     filterCost += 1; // id can position by 1 step
@@ -121,19 +122,19 @@ int32_t PerfCallChainTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterId(c.op, argv[i]);
                 break;
-            case CALLCHAIN_ID:
-                indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
-                                    perfCallChainObj_.SampleIds());
+            case Index::CALLCHAIN_ID:
+                indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int64(argv[i])),
+                                    perfCallChainObj_.CallChainIds());
                 break;
-            case FILE_ID:
+            case Index::FILE_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                     perfCallChainObj_.FileIds());
                 break;
-            case SYMBOL_ID:
+            case Index::SYMBOL_ID:
                 indexMap_->MixRange(c.op, static_cast<uint64_t>(sqlite3_value_int64(argv[i])),
                                     perfCallChainObj_.SymbolIds());
                 break;
@@ -145,8 +146,8 @@ int32_t PerfCallChainTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -159,26 +160,29 @@ int32_t PerfCallChainTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_
 
 int32_t PerfCallChainTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.IdsData()[CurrentRow()]));
             break;
-        case CALLCHAIN_ID:
-            sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.SampleIds()[CurrentRow()]));
-            break;
-        case DEPTH:
+        case Index::CALLCHAIN_ID:
             sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.CallChainIds()[CurrentRow()]));
             break;
-        case VADDR_IN_FILE:
+        case Index::DEPTH:
+            sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.Depths()[CurrentRow()]));
+            break;
+        case Index::IP:
+            sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.Ips()[CurrentRow()]));
+            break;
+        case Index::VADDR_IN_FILE:
             sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.VaddrInFiles()[CurrentRow()]));
             break;
-        case FILE_ID:
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.FileIds()[CurrentRow()]));
             break;
-        case SYMBOL_ID:
+        case Index::SYMBOL_ID:
             sqlite3_result_int64(context_, static_cast<uint64_t>(perfCallChainObj_.SymbolIds()[CurrentRow()]));
             break;
-        case NAME:
+        case Index::NAME:
             sqlite3_result_text(context_, perfCallChainObj_.Names()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         default:

@@ -103,7 +103,7 @@ export class TabPanePerfSample extends BaseElement {
     queryPerfSampleCallChain(sample.sampleId).then((result) => {
       for (let stack of result) {
         let files = (perfDataQuery.filesData[stack.fileId] ?? []) as Array<PerfFile>;
-        stack.path = files[stack.symbolId].path;
+        stack.path = files[stack.symbolId]?.path || '';
         stack.type = stack.path.endsWith('.so.1') || stack.path.endsWith('.dll') || stack.path.endsWith('.so') ? 0 : 1;
       }
       this.tblData!.dataSource = result;
@@ -176,7 +176,8 @@ export class TabPanePerfSample extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.perfSampleTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 40 + 'px';
+        this.perfSampleTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 40 + 'px';
         // @ts-ignore
         this.tblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 25 + 'px';
         this.perfSampleTbl?.reMeauseHeight();

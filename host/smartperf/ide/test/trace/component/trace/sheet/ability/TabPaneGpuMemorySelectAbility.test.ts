@@ -1,0 +1,71 @@
+/*
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// @ts-ignore
+import { TabPaneGpuMemorySelectAbility } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneGpuMemorySelectAbility.js';
+const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
+    return {};
+});
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+    return {};
+});
+// @ts-ignore
+window.ResizeObserver = window.ResizeObserver ||
+    jest.fn().mockImplementation(() => ({
+        disconnect: jest.fn(),
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+    }));
+
+describe('TabPaneGpuMemorySelectAbility Test', () => {
+    let tabPaneGpuMemorySelectAbility = new TabPaneGpuMemorySelectAbility();
+    let getTabGpuSelectionData = sqlite.getTabGpuMemoryAbilityClickData;
+    let gpuSelectionData = [
+        {
+            startNs: 0,
+            size: 1000,
+            processId:2,
+            processName:'dd',
+            gpuName:'bb',
+        }
+    ];
+    let val = [
+        {
+            startNs: 0,
+            rightNs: 1000,
+        }
+    ];
+    getTabGpuSelectionData.mockResolvedValue(gpuSelectionData);
+    it('TabPaneGpuMemorySelectAbility01', function () {
+        expect(tabPaneGpuMemorySelectAbility.sortGpuMemoryByColumn('',0)).toBeUndefined();
+    });
+    it('TabPaneGpuMemorySelectAbility02', function () {
+        expect(tabPaneGpuMemorySelectAbility.sortGpuMemoryByColumn('process',1)).toBeUndefined();
+    });
+    it('TabPaneGpuMemorySelectAbility03', function () {
+        expect(tabPaneGpuMemorySelectAbility.sortGpuMemoryByColumn('startNs',1)).toBeUndefined();
+    });
+    it('TabPaneGpuMemorySelectAbility04', function () {
+        expect(tabPaneGpuMemorySelectAbility.sortGpuMemoryByColumn('gpuName',1)).toBeUndefined();
+    });
+    it('TabPaneGpuMemorySelectAbility05', function () {
+        expect(tabPaneGpuMemorySelectAbility.sortGpuMemoryByColumn('size',1)).toBeUndefined();
+    });
+    it('TabPaneGpuMemorySelectAbility06', function () {
+        tabPaneGpuMemorySelectAbility.init = jest.fn(()=>true)
+        expect(tabPaneGpuMemorySelectAbility.queryGpuMemoryClickDataByDB(val)).toBeUndefined();
+    });
+})

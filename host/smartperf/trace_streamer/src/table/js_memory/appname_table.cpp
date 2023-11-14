@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, FLAG, APP_NAME, APP_KEY };
+enum class Index : int32_t { ID = 0, FLAG, APP_NAME, APP_KEY };
 AppnameTable::AppnameTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -44,17 +44,17 @@ AppnameTable::Cursor::~Cursor() {}
 
 int32_t AppnameTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, dataCache_->GetConstAppNamesData().IdsData()[CurrentRow()]);
             break;
-        case FLAG:
+        case Index::FLAG:
             sqlite3_result_int(context_, dataCache_->GetConstAppNamesData().Falgs()[CurrentRow()]);
             break;
-        case APP_NAME:
+        case Index::APP_NAME:
             sqlite3_result_int64(context_, dataCache_->GetConstAppNamesData().EventSourceId()[CurrentRow()]);
             break;
-        case APP_KEY:
+        case Index::APP_KEY:
             sqlite3_result_int64(context_, dataCache_->GetConstAppNamesData().AppName()[CurrentRow()]);
             break;
         default:

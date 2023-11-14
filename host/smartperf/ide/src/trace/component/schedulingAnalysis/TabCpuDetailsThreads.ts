@@ -76,7 +76,8 @@ export class TabCpuDetailsThreads extends BaseElement {
   }
 
   init(cpu: number, it: any) {
-    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu-thread-subheading')!.textContent = 'Threads in Freq ' + it.value;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.cpu-thread-subheading')!.textContent =
+      'Threads in Freq ' + it.value;
     this.progress!.loading = true;
     procedurePool.submitWithName(
       'logic1',

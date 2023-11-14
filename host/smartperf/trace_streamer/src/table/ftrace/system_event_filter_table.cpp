@@ -19,7 +19,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, NAME };
+enum class Index : int32_t { ID = 0, TYPE, NAME };
 SystemEventFilterTable::SystemEventFilterTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -57,8 +57,8 @@ void SystemEventFilterTable::EstimateFilterCost(FilterConstraints& fc, Estimated
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -77,8 +77,8 @@ void SystemEventFilterTable::FilterByConstraint(FilterConstraints& fc, double& f
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case ID: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID: {
                 auto oldRowCount = rowCount;
                 if (CanFilterSorted(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
@@ -138,8 +138,8 @@ int32_t SystemEventFilterTable::Cursor::Filter(const FilterConstraints& fc, sqli
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case ID:
+        switch (static_cast<Index>(c.col)) {
+            case Index::ID:
                 FilterSorted(c.col, c.op, argv[i]);
                 break;
             default:
@@ -150,8 +150,8 @@ int32_t SystemEventFilterTable::Cursor::Filter(const FilterConstraints& fc, sqli
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case ID:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -164,15 +164,15 @@ int32_t SystemEventFilterTable::Cursor::Filter(const FilterConstraints& fc, sqli
 
 int32_t SystemEventFilterTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, sysEventObj_.IdsData()[CurrentRow()]);
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(sysEventObj_.TypesData()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
-        case NAME:
+        case Index::NAME:
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(sysEventObj_.NamesData()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
@@ -192,8 +192,8 @@ void SystemEventFilterTable::Cursor::FilterSorted(int32_t col, unsigned char op,
         return;
     }
 
-    switch (col) {
-        case ID: {
+    switch (static_cast<Index>(col)) {
+        case Index::ID: {
             auto v = static_cast<uint64_t>(sqlite3_value_int64(argv));
             auto getValue = [](const uint32_t& row) { return row; };
             switch (op) {

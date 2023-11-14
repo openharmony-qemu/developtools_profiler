@@ -32,8 +32,6 @@ export class TabPaneCpuUsage extends BaseElement {
       return;
     }
     this.currentSelectionParam = cpuUsageValue;
-    // @ts-ignore
-    this.cpuUsageTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
     this.range!.textContent =
       'Selected range: ' + parseFloat(((cpuUsageValue.rightNs - cpuUsageValue.leftNs) / 1000000.0).toFixed(5)) + ' ms';
     this.cpuUsageTbl!.loading = true;

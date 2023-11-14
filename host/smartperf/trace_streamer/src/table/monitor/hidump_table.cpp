@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TS, FPS };
+enum class Index : int32_t { ID = 0, TS, FPS };
 HidumpTable::HidumpTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -42,14 +42,14 @@ HidumpTable::Cursor::~Cursor() {}
 
 int32_t HidumpTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(hidumpObj_.TimeStampData()[CurrentRow()]));
             break;
-        case FPS: {
+        case Index::FPS: {
             sqlite3_result_int64(context_, static_cast<int64_t>(hidumpObj_.Fpss()[CurrentRow()]));
             break;
         }

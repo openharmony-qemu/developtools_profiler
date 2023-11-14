@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, CALL_ID, IPID, TID, START_TIME, END_TIME, START_NAME, PACKED_NAME };
+enum class Index : int32_t { ID = 0, CALL_ID, IPID, TID, START_TIME, END_TIME, START_NAME, PACKED_NAME };
 AppStartupTable::AppStartupTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -48,29 +48,29 @@ AppStartupTable::Cursor::~Cursor() {}
 
 int32_t AppStartupTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(CurrentRow()));
             break;
-        case IPID:
+        case Index::IPID:
             sqlite3_result_int64(context_, static_cast<int64_t>(appStartupObj_.Pids()[CurrentRow()]));
             break;
-        case TID:
+        case Index::TID:
             sqlite3_result_int64(context_, static_cast<int64_t>(appStartupObj_.Tids()[CurrentRow()]));
             break;
-        case CALL_ID:
+        case Index::CALL_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(appStartupObj_.CallIds()[CurrentRow()]));
             break;
-        case START_TIME:
+        case Index::START_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(appStartupObj_.StartTimes()[CurrentRow()]));
             break;
-        case END_TIME:
+        case Index::END_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(appStartupObj_.EndTimes()[CurrentRow()]));
             break;
-        case START_NAME:
+        case Index::START_NAME:
             sqlite3_result_int64(context_, static_cast<int64_t>(appStartupObj_.StartNames()[CurrentRow()]));
             break;
-        case PACKED_NAME:
+        case Index::PACKED_NAME:
             sqlite3_result_text(context_,
                                 dataCache_->GetDataFromDict(appStartupObj_.PackedNames()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);

@@ -55,23 +55,23 @@ export class EnergySystemRender extends Render {
       EnergySystemStruct.draw(req.context, energySysStruct);
       if (row.isHover && energySysStruct.frame && isFrameContainPoint(energySysStruct.frame, row.hoverX, row.hoverY)) {
         EnergySystemStruct.hoverEnergySystemStruct = energySysStruct;
-        if (energySysStruct.type == 0) {
-          if (energySysStruct.count != undefined) {
+        if (energySysStruct.type === 0) {
+          if (energySysStruct.count !== undefined) {
             energySystemData.workScheduler = energySysStruct.count;
           } else {
             energySystemData.workScheduler = '0';
           }
         }
-        if (energySysStruct.type == 1) {
-          if (energySysStruct.count != undefined) {
+        if (energySysStruct.type === 1) {
+          if (energySysStruct.count !== undefined) {
             energySystemData.power = energySysStruct.count + '';
           } else {
             energySystemData.power = '0';
           }
         }
 
-        if (energySysStruct.type == 2) {
-          if (energySysStruct.count != undefined) {
+        if (energySysStruct.type === 2) {
+          if (energySysStruct.count !== undefined) {
             energySystemData.location = energySysStruct.count + '';
           } else {
             energySystemData.location = '0';
@@ -82,9 +82,12 @@ export class EnergySystemRender extends Render {
     }
     if (!find && row.isHover) EnergySystemStruct.hoverEnergySystemStruct = undefined;
     if (EnergySystemStruct.hoverEnergySystemStruct) {
-      EnergySystemStruct.hoverEnergySystemStruct!.workScheduler = energySystemData.workScheduler == undefined ? '0' : energySystemData.workScheduler;
-      EnergySystemStruct.hoverEnergySystemStruct!.power = energySystemData.power == undefined ? '0' : energySystemData.power;
-      EnergySystemStruct.hoverEnergySystemStruct!.location = energySystemData.location == undefined ? '0' : energySystemData.location;
+      EnergySystemStruct.hoverEnergySystemStruct!.workScheduler =
+        energySystemData.workScheduler === undefined ? '0' : energySystemData.workScheduler;
+      EnergySystemStruct.hoverEnergySystemStruct!.power =
+        energySystemData.power === undefined ? '0' : energySystemData.power;
+      EnergySystemStruct.hoverEnergySystemStruct!.location =
+        energySystemData.location === undefined ? '0' : energySystemData.location;
     }
     let spApplication = document.getElementsByTagName('sp-application')[0];
     let isDark = spApplication.hasAttribute('dark');
@@ -152,23 +155,23 @@ export class EnergySystemRender extends Render {
             energySysRequest.hoverX <= filterElement.frame.x + filterElement.frame.width
           ) {
             EnergySystemStruct.hoverEnergySystemStruct = filterElement;
-            if (filterElement.type == 0) {
-              if (filterElement.count != undefined) {
+            if (filterElement.type === 0) {
+              if (filterElement.count !== undefined) {
                 a.workScheduler = filterElement.count;
               } else {
                 a.workScheduler = '0';
               }
             }
-            if (filterElement.type == 1) {
-              if (filterElement.count != undefined) {
+            if (filterElement.type === 1) {
+              if (filterElement.count !== undefined) {
                 a.power = filterElement.count + '';
               } else {
                 a.power = '0';
               }
             }
 
-            if (filterElement.type == 2) {
-              if (filterElement.count != undefined) {
+            if (filterElement.type === 2) {
+              if (filterElement.count !== undefined) {
                 a.location = filterElement.count + '';
               } else {
                 a.location = '0';

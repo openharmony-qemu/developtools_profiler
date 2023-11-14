@@ -160,3 +160,8 @@ export class NativeEvent {
   heapSize: number = 0;
   eventType: string = '';
 }
+
+export class NativeMemoryExpression {
+  includeLib: Map<string, string[]> = new Map<string, string[]>();
+  abandonLib: Map<string, string[]> = new Map<string, string[]>();
+}

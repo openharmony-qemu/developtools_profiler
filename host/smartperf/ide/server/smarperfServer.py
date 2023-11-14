@@ -234,6 +234,7 @@ def get_content_type(file_extension):
         return 'image/svg+xml'
     return 'text/plain'
 
+
 def gen_ssl(cert_file, key_file):
     serial_number = 123456789
     organization = "www.smartperf.com"
@@ -246,6 +247,7 @@ def gen_ssl(cert_file, key_file):
                     "/O={}/OU={}/CN={}".format(organization, organizational_unit, common_name)])
     subprocess.run(["openssl", "x509", "-req", "-days", str(validity_days), "-in", csr_file, "-signkey",
                     key_file, "-out", cert_file, "-set_serial", str(serial_number)])
+
 
 class SpServer:
     def __init__(self, server_address, cert_file_path, keyfile_path):

@@ -27,21 +27,28 @@ cd ${PRJ_ROOT_DIR}
 FORMAT_DIR_LIST=(
     "${PRJ_ROOT_DIR}/build"
     "${PRJ_ROOT_DIR}/gn"
-    "${PRJ_ROOT_DIR}/prebuilts"
     "${PRJ_ROOT_DIR}/sdk"
     "${PRJ_ROOT_DIR}/src"
     "${PRJ_ROOT_DIR}/test"
+    "${PRJ_ROOT_DIR}/prebuilts/fuzz"
+    "${PRJ_ROOT_DIR}/prebuilts/linux"
+    "${PRJ_ROOT_DIR}/prebuilts/macx"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_bounds_checking_function"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_googletest"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_hiperf"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_libunwind"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_perf_event"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_protobuf"
+    "${PRJ_ROOT_DIR}/prebuilts/patch_sqlite"
 )
 echo "formatting code ..."
 for d in ${FORMAT_DIR_LIST[@]}; do
-    echo $d
     for f in $(find $d -type f -not -name '*sql.c' -regex '.*\.\(cpp\|hpp\|c\|h\)'); do
         dos2unix $f
         chmod -x $f
         clang-format --verbose -i $f
     done
     for f in $(find $d -type f -not -name '*sql.c' -regex '.*\.\(gn\|gni\)'); do
-        echo $f
         ./prebuilts/$target_os/gn format $f
     done
 done

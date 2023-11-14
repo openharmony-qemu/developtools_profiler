@@ -14,11 +14,11 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { resizeObserver } from '../SheetUtils.js';
 import { getTabDmaVmTrackerData } from '../../../../database/SqlLite.js';
-import { Dma } from '../../../../bean/AbilityMonitor.js';
+import { type Dma } from '../../../../bean/AbilityMonitor.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { Utils } from '../../base/Utils.js';
 

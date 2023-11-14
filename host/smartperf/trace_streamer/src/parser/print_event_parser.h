@@ -15,6 +15,7 @@
 #ifndef SRC_PRINT_EVENT_PARSER_H
 #define SRC_PRINT_EVENT_PARSER_H
 #include <regex>
+#include <set>
 #include <string_view>
 #include "common_types.h"
 #include "event_parser_base.h"
@@ -67,7 +68,7 @@ private:
     static size_t GetNameLength(std::string_view pointStr, size_t nameIndex);
     size_t GetValueLength(std::string_view pointStr, size_t valueIndex) const;
     bool ReciveVsync(size_t callStackRow, std::string& args, const BytraceLine& line);
-    bool RSReciveOnVsync(size_t callStackRow, std::string& args, const BytraceLine& line);
+    bool RSReciveOnDoComposition(size_t callStackRow, std::string& args, const BytraceLine& line);
     bool OnRwTransaction(size_t callStackRow, std::string& args, const BytraceLine& line);
     bool OnMainThreadProcessCmd(size_t callStackRow, std::string& args, const BytraceLine& line);
     bool OnFrameQueueStart(uint64_t ts, size_t callStackRow, uint64_t pid);
@@ -78,12 +79,11 @@ private:
     const uint32_t maxPointLength_;
     TraceStreamerConfig config_{};
     const DataIndex recvievVsync_ = traceDataCache_->GetDataIndex("H:ReceiveVsync");
-    const DataIndex rsOnVsyncEvent_ = traceDataCache_->GetDataIndex("H:RSMainThread::OnVsync");
+    const DataIndex rsOnDoCompositionEvent_ = traceDataCache_->GetDataIndex("H:RSMainThread::DoComposition");
     const std::string onFrameQueeuStartEvent_ = "H:M: Frame queued";
-    const std::string onLauncherVsyncEvent_ = "launcher";
+    const std::string onAnimationProcEvent_ = "render_service";
     const DataIndex marshRwTransactionData_ = traceDataCache_->GetDataIndex("H:MarshRSTransactionData");
     const DataIndex rsMainThreadProcessCmd_ = traceDataCache_->GetDataIndex("H:RSMainThread::ProcessCommandUni");
-    const DataIndex onAnimationStartEvent_ = traceDataCache_->GetDataIndex("H:L:TracestartAppAnimation");
     const std::regex recvVsyncPattern_ = std::regex("(\\w+):(\\w+)");
     const std::regex transFlagPattern_ = std::regex("transactionFlag:\\[(\\d+),(\\d+)\\]");
     const std::regex mainProcessCmdPattern = std::regex("\\[(\\d+),(\\d+)\\]");

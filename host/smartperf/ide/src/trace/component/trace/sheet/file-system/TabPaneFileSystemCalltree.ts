@@ -67,6 +67,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
     this.fsCallTreeFilter!.filterValue = '';
     this.fsCallTreeProgressEL!.loading = true;
     this.loadingPage.style.visibility = 'visible';
+    const initWidth = this.clientWidth;
     this.getDataByWorker(
       [
         {
@@ -82,10 +83,10 @@ export class TabpaneFilesystemCalltree extends BaseElement {
         this.setLTableData(fsCallTreeResults);
         this.fsCallTreeTbr!.recycleDataSource = [];
         this.frameChart!.mode = ChartMode.Duration;
+        this.frameChart?.updateCanvas(true, initWidth);
         this.frameChart!.data = this.fsCallTreeDataSource;
-        this.frameChart?.updateCanvas(true, this.clientWidth);
-        this.frameChart?.calculateChartData();
         this.switchFlameChart();
+        this.fsCallTreeFilter.icon = 'block';
       }
     );
   }
@@ -172,6 +173,11 @@ export class TabpaneFilesystemCalltree extends BaseElement {
     this.fsCallTreeTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
       let data = evt.detail.data as FileMerageBean;
+      document.dispatchEvent(
+        new CustomEvent('number_calibration', {
+          detail: { time: data.tsArray, durations: data.durArray },
+        })
+      );
       this.setRightTableData(data);
       data.isSelected = true;
       this.fsCallTreeCurrentSelectedData = data;
@@ -419,10 +425,12 @@ export class TabpaneFilesystemCalltree extends BaseElement {
           this.frameChart?.calculateChartData();
         }
         // @ts-ignore
-        this.fsCallTreeTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 35 + 'px';
+        this.fsCallTreeTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 35 + 'px';
         this.fsCallTreeTbl?.reMeauseHeight();
         // @ts-ignore
-        this.fsCallTreeTbr?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 45 - 21 + 'px';
+        this.fsCallTreeTbr?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 45 - 21 + 'px';
         this.fsCallTreeTbr?.reMeauseHeight();
         this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }
@@ -441,7 +449,6 @@ export class TabpaneFilesystemCalltree extends BaseElement {
       this.isChartShow = true;
       this.fsCallTreeFilter!.disabledMining = true;
       showButtonMenu(this.fsCallTreeFilter, this.needShowMenu);
-      this.frameChart!.data = this.fsCallTreeDataSource;
       this.frameChart?.calculateChartData();
     } else if (data.icon == 'tree') {
       fsCallTreePageChart?.setAttribute('class', '');
@@ -588,7 +595,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
         <div id="left_table" style="width: 65%">
             <tab-native-data-modal id="modal"></tab-native-data-modal>
             <lit-table id="tb-filesystem-calltree" style="height: auto" tree>
-                <lit-table-column class="fs-call-tree-column" width="70%" title="Call Stack" data-index="symbolName" key="symbolName"  align="flex-start" ></lit-table-column>
+                <lit-table-column class="fs-call-tree-column" width="70%" title="Call Stack" data-index="symbolName" key="symbolName"  align="flex-start"retract></lit-table-column>
                 <lit-table-column class="fs-call-tree-column" width="1fr" title="Local" data-index="self" key="self"  align="flex-start"  order></lit-table-column>
                 <lit-table-column class="fs-call-tree-column" width="1fr" title="Weight" data-index="weight" key="weight"  align="flex-start"  order></lit-table-column>
                 <lit-table-column class="fs-call-tree-column" width="1fr" title="%" data-index="weightPercent" key="weightPercent"  align="flex-start"  order></lit-table-column>

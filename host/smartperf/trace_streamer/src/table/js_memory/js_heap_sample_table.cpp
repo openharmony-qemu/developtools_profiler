@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, TIMESTAMP_US, LAST_ASSIGNED_ID };
+enum class Index : int32_t { FILE_ID = 0, TIMESTAMP_US, LAST_ASSIGNED_ID };
 JsHeapSampleTable::JsHeapSampleTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -43,14 +43,14 @@ JsHeapSampleTable::Cursor::~Cursor() {}
 
 int32_t JsHeapSampleTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapSample_.FileIds()[CurrentRow()]));
             break;
-        case TIMESTAMP_US:
+        case Index::TIMESTAMP_US:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapSample_.TimeStampUs()[CurrentRow()]));
             break;
-        case LAST_ASSIGNED_ID:
+        case Index::LAST_ASSIGNED_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapSample_.LastAssignedIds()[CurrentRow()]));
             break;
         default:

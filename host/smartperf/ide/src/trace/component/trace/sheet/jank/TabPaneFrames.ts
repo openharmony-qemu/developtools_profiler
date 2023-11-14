@@ -73,7 +73,11 @@ export class TabPaneFrames extends BaseElement {
     this.framesTbl!.recycleDataSource = tablelist;
   }
 
-  private frameTimelineJankDataHandle(structValue: JanksStruct, appJank: JankFramesStruct, noJank: JankFramesStruct): void {
+  private frameTimelineJankDataHandle(
+    structValue: JanksStruct,
+    appJank: JankFramesStruct,
+    noJank: JankFramesStruct
+  ): void {
     if (structValue.dur === null || structValue.dur === undefined) {
       structValue.dur = 0;
     }
@@ -224,8 +228,11 @@ export class TabPaneFrames extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(framesRightData[property]) - parseFloat(framesLeftData[property]) : parseFloat(framesLeftData[property]) - parseFloat(framesRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(framesRightData[property]) - parseFloat(framesLeftData[property])
+            : // @ts-ignore
+              parseFloat(framesLeftData[property]) - parseFloat(framesRightData[property]);
         } else {
           // @ts-ignore
           if (framesRightData[property] > framesLeftData[property]) {

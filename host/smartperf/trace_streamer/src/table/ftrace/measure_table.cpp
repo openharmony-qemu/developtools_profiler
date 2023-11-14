@@ -18,7 +18,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { TYPE = 0, TS, DUR, VALUE, FILTER_ID };
+enum class Index : int32_t { TYPE = 0, TS, DUR, VALUE, FILTER_ID };
 MeasureTable::MeasureTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("type", "TEXT"));
@@ -83,8 +83,8 @@ void MeasureTable::EstimateFilterCost(FilterConstraints& fc, EstimatedIndexInfo&
     ei.isOrdered = true;
     auto orderbys = fc.GetOrderBys();
     for (auto i = 0; i < orderbys.size(); i++) {
-        switch (orderbys[i].iColumn) {
-            case TS:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::TS:
                 break;
             default: // other columns can be sorted by SQLite
                 ei.isOrdered = false;
@@ -103,8 +103,8 @@ void MeasureTable::FilterByConstraint(FilterConstraints& fc, double& filterCost,
             break;
         }
         const auto& c = fcConstraints[i];
-        switch (c.col) {
-            case TS: {
+        switch (static_cast<Index>(c.col)) {
+            case Index::TS: {
                 auto oldRowCount = rowCount;
                 if (CanFilterSorted(c.op, rowCount)) {
                     fc.UpdateConstraint(i, true);
@@ -150,11 +150,11 @@ int32_t MeasureTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
     auto& cs = fc.GetConstraints();
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
-        switch (c.col) {
-            case TS:
+        switch (static_cast<Index>(c.col)) {
+            case Index::TS:
                 FilterTS(c.op, argv[i], measureObj.TimeStampData());
                 break;
-            case FILTER_ID:
+            case Index::FILTER_ID:
                 indexMap_->MixRange(c.op, static_cast<uint32_t>(sqlite3_value_int(argv[i])), measureObj.FilterIdData());
                 break;
             default:
@@ -165,11 +165,11 @@ int32_t MeasureTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
     auto orderbys = fc.GetOrderBys();
     for (auto i = orderbys.size(); i > 0;) {
         i--;
-        switch (orderbys[i].iColumn) {
-            case TS:
+        switch (static_cast<Index>(orderbys[i].iColumn)) {
+            case Index::TS:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
-            case FILTER_ID:
+            case Index::FILTER_ID:
                 indexMap_->SortBy(orderbys[i].desc);
                 break;
             default:
@@ -182,22 +182,22 @@ int32_t MeasureTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value*
 
 int32_t MeasureTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case TYPE:
+    switch (static_cast<Index>(column)) {
+        case Index::TYPE:
             sqlite3_result_text(context_, "measure", STR_DEFAULT_LEN, nullptr);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, static_cast<int64_t>(measureObj.TimeStampData()[CurrentRow()]));
             break;
-        case DUR:
+        case Index::DUR:
             if (measureObj.DursData()[CurrentRow()] != INVALID_UINT64) {
                 sqlite3_result_int64(context_, static_cast<int64_t>(measureObj.DursData()[CurrentRow()]));
             }
             break;
-        case VALUE:
+        case Index::VALUE:
             sqlite3_result_int64(context_, static_cast<int64_t>(measureObj.ValuesData()[CurrentRow()]));
             break;
-        case FILTER_ID:
+        case Index::FILTER_ID:
             sqlite3_result_int64(context_, static_cast<int32_t>(measureObj.FilterIdData()[CurrentRow()]));
             break;
         default:

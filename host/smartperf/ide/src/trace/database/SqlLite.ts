@@ -18,7 +18,7 @@ import './sql-wasm.js';
 import { Counter, Fps, SelectionData } from '../bean/BoxSelection.js';
 import { WakeupBean } from '../bean/WakeupBean.js';
 import { BinderArgBean } from '../bean/BinderArgBean.js';
-import { SPT, SPTChild } from '../bean/StateProcessThread.js';
+import { SPTChild } from '../bean/StateProcessThread.js';
 import { CpuUsage, Freq } from '../bean/CpuUsage.js';
 
 import {
@@ -84,12 +84,13 @@ import { AppStartupStruct } from './ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from './ui-worker/ProcedureWorkerSoInit.js';
 import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerCommon.js';
 import { TaskTabStruct } from '../component/trace/sheet/task/TabPaneTaskFrames.js';
-import { DeviceStruct } from '../bean/FrameComponentBean.js';
-import { FrameSpacingStruct } from './ui-worker/ProcedureWorkerFrameSpacing.js';
-import { FrameDynamicStruct } from './ui-worker/ProcedureWorkerFrameDynamic.js';
-import { FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnimation.js';
-import { SnapshotStruct } from './ui-worker/ProcedureWorkerSnapshot.js';
-import { MemoryConfig } from '../bean/MemoryConfig.js';
+import { type DeviceStruct } from '../bean/FrameComponentBean.js';
+import { type FrameSpacingStruct } from './ui-worker/ProcedureWorkerFrameSpacing.js';
+import { type FrameDynamicStruct } from './ui-worker/ProcedureWorkerFrameDynamic.js';
+import { type FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnimation.js';
+import { type SnapshotStruct } from './ui-worker/ProcedureWorkerSnapshot.js';
+import { type MemoryConfig } from '../bean/MemoryConfig.js';
+import { LogStruct } from './ui-worker/ProcedureWorkerLog.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
@@ -140,6 +141,33 @@ class DbThread extends Worker {
       params: args,
     };
     this.postMessage(msg);
+  }
+
+  cutFileByRange(
+    leftTs: number,
+    rightTs: number,
+    handler: (status: boolean, msg: string, splitBuffer?: ArrayBuffer) => void
+  ) {
+    this.busy = true;
+    let id = this.uuid();
+    this.taskMap[id] = (res: any) => {
+      DbPool.sharedBuffer = res.buffer;
+      if (res.cutStatus) {
+        handler(res.cutStatus, res.msg, res.cutBuffer);
+      } else {
+        handler(res.cutStatus, res.msg);
+      }
+    };
+    this.postMessage(
+      {
+        id: id,
+        action: 'cut-file',
+        leftTs: leftTs,
+        rightTs: rightTs,
+        buffer: DbPool.sharedBuffer!,
+      },
+      [DbPool.sharedBuffer!]
+    );
   }
 
   dbOpen = async (
@@ -237,6 +265,11 @@ export class DbPool {
                 fun(event.data.results);
               }
               Reflect.deleteProperty(thread!.taskMap, event.data.id);
+            } else if (Reflect.has(event.data, 'cutStatus')) {
+              let fun = thread!.taskMap[event.data.id];
+              if (fun) {
+                fun(event.data);
+              }
             } else if (Reflect.has(event.data, 'ready')) {
               this.progress!('database opened', this.num + event.data.index);
               this.progressTimer(this.num + event.data.index, this.progress!);
@@ -274,7 +307,7 @@ export class DbPool {
     }
   };
 
-  initServer = async (url: string, progress: Function) => {
+  initServer = async (url: string, progress: Function): Promise<{ status: boolean; msg: string }> => {
     this.progress = progress;
     progress('database loaded', 15);
     DbPool.sharedBuffer = await fetch(url).then((res) => res.arrayBuffer());
@@ -335,6 +368,18 @@ export class DbPool {
   //new method replace submit() method
   submitTask(action: string, args: any, handler: Function) {
     this.dataWorker?.queryFunc(action, args, handler);
+  }
+
+  cutFile(leftTs: number, rightTs: number, handler: (status: boolean, msg: string, splitBuffer?: ArrayBuffer) => void) {
+    let noBusyThreads = this.works.filter((it) => !it.busy);
+    let thread: DbThread;
+    if (noBusyThreads.length > 0) {
+      thread = noBusyThreads[0];
+      thread.cutFileByRange(leftTs, rightTs, handler);
+    } else {
+      thread = this.works[Math.floor(Math.random() * this.works.length)];
+      thread.cutFileByRange(leftTs, rightTs, handler);
+    }
   }
 
   progressTimer(num: number, progress: Function) {
@@ -451,24 +496,6 @@ export const queryTotalTime = (): Promise<Array<{ total: number; recordStartNS: 
       trace_range;`
   );
 
-export const getAsyncEvents = (): Promise<Array<any>> =>
-  query(
-    'getAsyncEvents',
-    `
-    select
-      *,
-      p.pid as pid,
-      c.ts - t.start_ts as "startTime"
-    from
-      callstack c,trace_range t
-    left join
-      process p
-    on
-      c.callid = p.id
-    where
-      cookie is not null;`
-  );
-
 export const getCpuUtilizationRate = (
   startNS: number,
   endNS: number
@@ -568,44 +595,21 @@ where c.ts not null and c.cookie is null group by tid,ipid`,
     {}
   );
 
-export const getStatesProcessThreadDataByRange = (leftNs: number, rightNs: number): Promise<Array<SPT>> =>
-  query<SPT>(
-    'getStatesProcessThreadDataByRange',
-    `
-    select
-      IP.name as process,
-      IP.pid as processId,
-      A.name as thread,
-      B.state as state,
-      A.tid as threadId,
-      B.dur,
-      (B.ts - TR.start_ts + B.dur) as end_ts,
-      (B.ts - TR.start_ts) as start_ts,
-      B.cpu
-    from
-      thread_state as B 
-    left join thread as A on B.itid = A.id
-    left join process as IP on A.ipid = IP.id
-    left join trace_range as TR
-    where B.dur > 0
-    and IP.pid not null
-    and (B.ts - TR.start_ts) >= $leftNs 
-    and (B.ts - TR.start_ts + B.dur) <= $rightNs
-`,
-    { $leftNs: leftNs, $rightNs: rightNs }
-  );
-
 export const getTabBoxChildData = (
   leftNs: number,
   rightNs: number,
+  cpus: number[],
   state: string | undefined,
   processId: number | undefined,
   threadId: number | undefined
-): Promise<Array<SPTChild>> =>
-  query<SPTChild>(
-    'getTabBoxChildData',
-    `
-    select
+): Promise<Array<SPTChild>> => {
+  let condition = `
+      ${state != undefined && state != '' ? `and B.state = '${state}'` : ''}
+      ${processId != undefined && processId != -1 ? `and IP.pid = ${processId}` : ''}
+      ${threadId != undefined && threadId != -1 ? `and A.tid = ${threadId}` : ''}
+      ${cpus.length > 0 ? `and (B.cpu is null or B.cpu in (${cpus.join(',')}))` : ''}
+  `;
+  let sql = `select
       IP.name as process,
       IP.pid as processId,
       A.name as thread,
@@ -620,11 +624,11 @@ export const getTabBoxChildData = (
     left join
       thread as A
     on
-      B.itid = A.id
+      B.itid = A.itid
     left join
       process AS IP
     on
-      A.ipid = IP.id
+      A.ipid = IP.ipid
     left join
       trace_range AS TR
     left join
@@ -638,19 +642,11 @@ export const getTabBoxChildData = (
     and
       IP.pid not null
     and
-      not ((B.ts - TR.start_ts + B.dur < $leftNS) or (B.ts - TR.start_ts > $rightNS))
-      ${state != undefined && state != '' ? 'and B.state = $state' : ''}
-      ${processId != undefined && processId != -1 ? 'and IP.pid = $processID' : ''}
-      ${threadId != undefined && threadId != -1 ? 'and A.tid = $threadID' : ''}
-    `,
-    {
-      $leftNS: leftNs,
-      $rightNS: rightNs,
-      $state: state,
-      $processID: processId,
-      $threadID: threadId,
-    }
-  );
+      not ((B.ts - TR.start_ts + B.dur < ${leftNs}) or (B.ts - TR.start_ts > ${rightNs})) ${condition};
+  `;
+  console.log(sql);
+  return query('getTabBoxChildData', sql, {});
+};
 
 export const getTabCpuUsage = (cpus: Array<number>, leftNs: number, rightNs: number): Promise<Array<CpuUsage>> =>
   query<CpuUsage>(
@@ -1252,13 +1248,17 @@ export const queryThreads = (): Promise<Array<any>> =>
 
 export const queryDataDICT = (): Promise<Array<any>> => query('queryDataDICT', `select * from data_dict;`);
 
-export const queryAppStartupProcessIds = (): Promise<Array<{ pid: number }>> => query('queryAppStartupProcessIds', `
+export const queryAppStartupProcessIds = (): Promise<Array<{ pid: number }>> =>
+  query(
+    'queryAppStartupProcessIds',
+    `
   SELECT pid FROM process 
   WHERE ipid IN (
     SELECT ipid FROM app_startup 
     UNION
     SELECT t.ipid FROM app_startup a LEFT JOIN thread t ON a.call_id = t.itid 
-);`);
+);`
+  );
 export const queryProcessContentCount = (): Promise<Array<any>> =>
   query(`queryProcessContentCount`, `select pid,switch_count,thread_count,slice_count,mem_count from process;`);
 export const queryProcessThreadsByTable = (): Promise<Array<ThreadStruct>> =>
@@ -1391,6 +1391,9 @@ select pid id,name,'p' type from process;`,
 
 export const queryThreadStateArgs = (argset: number): Promise<Array<BinderArgBean>> =>
   query('queryThreadStateArgs', ` select args_view.* from args_view where argset = ${argset}`, {});
+
+export const queryThreadStateArgsByName = (key: string): Promise<Array<{ argset: number; strValue: string }>> =>
+  query('queryThreadStateArgsByName', ` select strValue, argset from args_view where keyName = $key`, { $key: key });
 
 export const queryWakeUpThread_Desc = (): Promise<Array<any>> =>
   query(
@@ -2076,9 +2079,9 @@ export const queryTraceMetaData = (): Promise<
 export const querySystemCalls = (): Promise<
   Array<{
     frequency: string;
-    minDur: string;
-    maxDur: string;
-    avgDur: string;
+    minDur: number;
+    maxDur: number;
+    avgDur: number;
     funName: string;
   }>
 > =>
@@ -2705,7 +2708,7 @@ export const queryPerfSampleCallChain = (sampleId: number): Promise<Array<PerfSt
     symbol_id as symbolId,
     vaddr_in_file as vaddrInFile,
     name as symbol
-from perf_callchain where callchain_id = $sampleId and symbol_id != -1 and vaddr_in_file != 0;
+from perf_callchain where callchain_id = $sampleId;
     `,
     { $sampleId: sampleId }
   );
@@ -2773,6 +2776,18 @@ from thread t left join process p on t.ipid = p.ipid
 left join callstack c on t.itid = c.callid
 where itid = $itid and c.ts = $ts;`,
     { $itid: itid, $ts: ts }
+  );
+
+export const queryWakeupListPriority = (itid: number[], ts: number[], cpus: number[]): Promise<Array<any>> =>
+  query(
+    'queryWakeupListPriority',
+    `
+    select itid, priority, (ts - start_ts) as ts, dur, cpu
+    from sched_slice,trace_range where cpu in (${cpus.join(',')})
+    and itid in (${itid.join(',')})
+    and ts - start_ts in (${ts.join(',')})
+    `,
+    {}
   );
 
 export const queryBinderByArgsId = (id: number, startTime: number, isNext: boolean): Promise<Array<any>> => {
@@ -3561,10 +3576,10 @@ export const queryGpuTotalType = (): Promise<Array<{ id: number; data: string }>
   query(
     'queryGpuTotalType',
     `
-  select distinct module_name_id id,data
+    select distinct module_name_id id,data
     from memory_window_gpu A, trace_range TR left join data_dict B on A.module_name_id = B.id
     where window_name_id = 0
-    and A.ts < TR.end_ts;
+    and A.ts < TR.end_ts
   `
   );
 
@@ -3591,11 +3606,14 @@ export const queryGpuDataByTs = (
        category_name_id as categoryId,
        size
        from memory_window_gpu, trace_range
-       where ts - start_ts = ${ts} ${condition};`;
+       where ts - start_ts = ${ts} ${condition}
+        `;
   return query('queryGpuDataByTs', sql);
 };
 
-export const queryGpuTotalData = (moduleId: number | null): Promise<Array<{ startNs: number; value: number }>> => {
+export const queryGpuTotalData = (
+  moduleId: number | null
+): Promise<Array<{ startNs: number; value: number }>> => {
   let moduleCondition = moduleId === null ? '' : `and module_name_id = ${moduleId}`;
   let sql = `
   select (ts - start_ts) startNs, sum(size) value
@@ -3607,45 +3625,47 @@ export const queryGpuTotalData = (moduleId: number | null): Promise<Array<{ star
   return query('queryGpuTotalData', sql);
 };
 
-export const queryGpuGLData = (ipid: number): Promise<Array<{ startNs: number; value: number }>> => {
+// GL 或 Graph 泳道图
+export const queryGpuData = (ipid: number, name: string): Promise<Array<{ startNs: number; value: number }>> => {
   let sql = `
-  select (ts - start_ts) startNs,sum(value) value
-from process_measure, trace_range
-where filter_id = (
-    select id
-    from process_measure_filter
-    where name = 'mem.gl_pss' and ipid = ${ipid}
-    )
-and ts between start_ts and end_ts
-group by ts;
-  `;
-  return query('queryGpuGLData', sql);
+    select (ts - start_ts) startNs,sum(value) value
+  from process_measure, trace_range
+  where filter_id = (
+      select id
+      from process_measure_filter
+      where name = ${name} and ipid = ${ipid}
+      )
+  and ts between start_ts and end_ts
+  group by ts;
+    `;
+  return query('queryGpuData', sql);
 };
-
-export const queryGpuGLDataByRange = (
+// GL 或 Graph 框选Tab页
+export const queryGpuDataTab = (
   ipid: number,
   leftNs: number,
   rightNs: number,
-  interval: number
+  interval: number,
+  name: string
 ): Promise<Array<{ startTs: number; size: number }>> => {
   let sql = `
-  select (ts - start_ts) startTs,sum(value) size
-from process_measure, trace_range
-where filter_id = (
-    select id
-    from process_measure_filter
-    where name = 'mem.gl_pss' and ipid = ${ipid}
-    )
-and not ((startTs + ${interval} < ${leftNs}) or (startTs > ${rightNs}))
-group by ts;
-  `;
+    select (ts - start_ts) startTs,sum(value) size
+  from process_measure, trace_range
+  where filter_id = (
+      select id
+      from process_measure_filter
+      where name = ${name} and ipid = ${ipid}
+      )
+  and not ((startTs + ${interval} < ${leftNs}) or (startTs > ${rightNs}))
+  group by ts;
+    `;
   return query('queryGpuGLDataByRange', sql);
 };
 
 export const queryGpuDataByRange = (
   leftNs: number,
   rightNs: number,
-  interval: number
+  interval: number,
 ): Promise<
   Array<{
     startTs: number;
@@ -3674,7 +3694,7 @@ export const queryGpuDataByRange = (
 
 export const queryGpuWindowData = (
   windowId: number,
-  moduleId: number | null
+  moduleId: number | null,
 ): Promise<Array<{ startNs: number; value: number }>> => {
   let moduleCondition = moduleId === null ? '' : `and module_name_id = ${moduleId}`;
   let sql = `
@@ -4369,7 +4389,11 @@ export const queryHiPerfProcessCount = (
   );
 };
 
-export const queryConcurrencyTask = (itid: number, selectStartTime: number, selectEndTime: number) =>
+export const queryConcurrencyTask = (
+  itid: number,
+  selectStartTime: number,
+  selectEndTime: number
+): Promise<TaskTabStruct[]> =>
   query<TaskTabStruct>(
     'queryConcurrencyTask',
     `SELECT thread.tid,
@@ -4498,22 +4522,31 @@ export const queryTaskPoolTotalNum = (itid: number) =>
 export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> =>
   query(
     'queryFrameAnimationData',
-    `SELECT
-           a.id AS animationId,
-           (CASE
-               WHEN a.input_time not null THEN (a.input_time - R.start_ts)
-               ELSE (a.start_point- R.start_ts)
-               END) AS ts,
-           (a.start_point - R.start_ts) AS dynamicStartTs,
-           (a.end_point - R.start_ts) AS dynamicEndTs
-        FROM 
-            animation AS a,
-            trace_range AS R
-        ORDER BY 
-            ts;`
+    `SELECT a.id AS animationId,
+           'Response delay' as status,
+           (CASE WHEN a.input_time NOT NULL 
+               THEN ( a.input_time - R.start_ts ) 
+               ELSE ( a.start_point - R.start_ts ) END
+           ) AS startTs,
+           (a.start_point - R.start_ts) AS endTs,
+           0 AS frameInfo
+         FROM 
+             animation AS a, 
+             trace_range AS R
+         UNION
+         SELECT a.id AS animationId,
+           'Completion delay' as status,
+           (a.start_point - R.start_ts) AS startTs,
+           (a.end_point - R.start_ts) AS endTs,
+           a.frame_info AS frameInfo
+         FROM 
+             animation AS a, 
+             trace_range AS R
+         ORDER BY 
+             startTs;`
   );
 
-export const queryFrameDynamicData = (): Promise<Array<FrameDynamicStruct>> =>
+export const queryFrameDynamicData = (): Promise<FrameDynamicStruct[]> =>
   query(
     'queryFrameDynamicData',
     `SELECT
@@ -4548,27 +4581,6 @@ export const queryFrameApp = (): Promise<
             d.end_time >= R.start_ts
             AND
             d.end_time <= R.end_ts;`
-  );
-
-export const queryAnimationFrameFps = (
-  startTime: number,
-  endTime: number
-): Promise<
-  Array<{
-    fps: number;
-  }>
-> =>
-  query(
-    'queryAnimationFrameFps',
-    `SELECT
-            count(*) as fps
-        FROM
-            dynamic_frame AS d,
-            trace_range AS R
-        WHERE 
-            d.end_time >= (${startTime} + R.start_ts)
-        AND
-            d.end_time <= (${endTime} + R.start_ts)`
   );
 
 export const queryFrameSpacing = (): Promise<Array<FrameSpacingStruct>> =>
@@ -4663,9 +4675,9 @@ export const queryVmTrackerShmSelectionData = (startNs: number, ipid: number): P
              where startNS = ${startNs} and ipid = ${ipid};`,
     {}
   );
-export const getTabSmapsRecordData = (rightNs: number): Promise<Array<Smaps>> =>
+export const getTabSmapsSampleData = (rightNs: number): Promise<Array<Smaps>> =>
   query<Smaps>(
-    'getTabSmapsRecordData',
+    'getTabSmapsSampleData',
     `
       SELECT
      (A.timestamp - t.start_ts) AS startNs,
@@ -4682,6 +4694,27 @@ export const getTabSmapsRecordData = (rightNs: number): Promise<Array<Smaps>> =>
      WHERE (startNs) = $rightNs`,
     { $rightNs: rightNs },
     'exec'
+  );
+
+// VM Tracker Smaps Record Tab页
+export const querySmapsRecordTabData = (
+  startNs: number,
+  ipid: number,
+  pixelmapId: number,
+  typeId:number
+): Promise<Array<{ name: string; size: number }>> =>
+  query(
+    'querySmapsRecordTabData',
+    `select  'RenderServiceCpu' as name, IFNULL(sum(mem_size), 0) as size from memory_rs_image, trace_range tr
+    where ipid = ${ipid} and (ts - tr.start_ts) = ${startNs} and type_id = ${pixelmapId}
+    union all
+    select 'SkiaCpu' as name, total_size as size from memory_cpu,trace_range
+    where (ts - start_ts) = ${startNs}
+    union all
+    select 'GLESHostCache' as name, 0
+    union all
+    select 'VirtaulSize' as name, sum(virtaul_size) * 1024 as size from smaps, trace_range
+    where type = ${typeId} and (timeStamp - start_ts) = ${startNs}`
   );
 
 export const getTabSmapsStatisticMaxSize = (rightNs: number): Promise<Array<any>> =>
@@ -4769,6 +4802,41 @@ export const queryGpuMemoryData = (processId: number): Promise<Array<SnapshotStr
     AND A.ts < B.end_ts
     GROUP by A.ts;`,
     { $pid: processId }
+  );
+
+//  VM Tracker Gpu Resourcet泳道图
+export const queryGpuResourceData = (categoryNameId: number): Promise<Array<SnapshotStruct>> =>
+  query(
+    'queryGpuResourceData',
+    `SELECT
+    subquery1.startNs,
+    IFNULL(subquery1.totalSize, 0) as aSize, 
+    IFNULL(subquery2.size, 0) as bSize,
+    (IFNULL(subquery1.totalSize, 0) - IFNULL(subquery2.size, 0)) AS value
+  FROM
+    (SELECT (ts - start_ts) AS startNs,SUM(total_size) AS totalSize
+     FROM memory_profile, trace_range
+     WHERE ts between start_ts and end_ts
+     GROUP BY ts) AS subquery1
+   LEFT JOIN
+    (SELECT (ts - start_ts) AS startNs, SUM(size) AS size
+     FROM memory_window_gpu, trace_range
+     WHERE ts between start_ts and end_ts
+    AND category_name_id = ${categoryNameId}
+     GROUP BY ts) AS subquery2
+  ON subquery1.startNs = subquery2.startNs`,
+  );
+
+//  VM Tracker Gpu Resource Tab页
+export const queryGpuResourceTabData = (
+  startNs: number
+): Promise<Array<{ startNs: number; channelId: number; totalSize: number }>> =>
+  query(
+    'queryGpuResourceTabData',
+    `SELECT (ts - start_ts) as startNs, channel_id as channelId, sum(total_size) as totalSize 
+    FROM memory_profile, trace_range
+    WHERE (ts - start_ts) = ${startNs}
+    GROUP by ts, channelId`
   );
 
 // Ability Monitor Purgeable泳道图
@@ -5312,4 +5380,100 @@ export const getTabGpuMemoryVmTrackerComparisonData = (
     $pid = S.ipid
                 `,
     { $startNs: startNs, $pid: processId }
+  );
+
+export const getSystemLogsData = (): Promise<
+  Array<{
+    id: number;
+    ts: number;
+    processName: string;
+    tid: number;
+    level: string;
+    tag: string;
+    message: string;
+    des: number;
+  }>
+> =>
+  query(
+    'getSystemLogsData',
+    `SELECT
+            ROW_NUMBER() OVER (ORDER BY l.ts) AS processName,
+            l.seq AS id,
+            (l.ts - TR.start_ts) AS ts,
+            l.pid AS indexs,
+            l.tid,
+            l.level,
+            l.tag,
+            l.context AS message,
+            l.origints AS des
+         FROM trace_range AS TR,
+              log AS l
+         ORDER BY ts`
+  );
+
+export const queryLogData = (oneDayTime: number): Promise<Array<LogStruct>> =>
+  query(
+    'queryLogData',
+    `SELECT l.seq     AS id,
+            CASE
+              WHEN l.ts < ${oneDayTime} THEN
+                0
+              ELSE (l.ts - TR.start_ts)
+              END     AS startTs,
+            l.level   AS level,
+            CASE
+              WHEN l.level = 'D' THEN
+                0
+              WHEN l.level = 'I' THEN
+                1
+              WHEN l.level = 'W' THEN
+                2
+              WHEN l.level = 'E' THEN
+                3
+              WHEN l.level = 'F' THEN
+                4
+              END     AS depth,
+            l.tag     AS tag,
+            l.context AS context,
+            (strftime( '%m-%d %H:%M:%S', l.origints / 1000000000, 'unixepoch', 'localtime' ) || '.' || printf('%03d', (l.origints / 1000000) % 1000)) AS originTime,
+            l.pid,
+            l.tid,
+            CASE
+            WHEN p.name IS NULL THEN
+            'Process ' || l.pid ELSE p.name
+            END
+            AS processName,
+            1 AS dur 
+            FROM
+            trace_range AS TR,
+            log AS l
+            LEFT JOIN process p ON p.pid = l.pid 
+            ORDER BY
+            l.ts;`,
+    { $oneDayTime: oneDayTime }
+  );
+
+export const queryMetric = (metricName: string): Promise<Array<string>> =>
+  query('queryMetric', metricName, '', 'exec-metric');
+
+export const queryExistFtrace = (): Promise<Array<number>> =>
+  query(
+    'queryExistFtrace',
+    `select 1 from thread_state
+         UNION
+         select 1 from args;`
+  );
+
+export const queryTraceType = (): Promise<
+  Array<{
+    value: string;
+  }>
+> =>
+  query(
+    'queryTraceType',
+    `SELECT m.value
+            FROM 
+                meta AS m
+            WHERE 
+                m.name = 'source_type';`
   );

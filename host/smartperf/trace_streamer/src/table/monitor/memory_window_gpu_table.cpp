@@ -17,7 +17,18 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TS, WINDOW_NAME_ID, WINDOW_ID, MODULE_NAME_ID, CATEGORY_NAME_ID, SIZE, COUNT, PURGEABLE_SIZE };
+enum class Index : int32_t {
+    ID = 0,
+    TS,
+    WINDOW_NAME_ID,
+    WINDOW_ID,
+    MODULE_NAME_ID,
+    CATEGORY_NAME_ID,
+    SIZE,
+    COUNT,
+    PURGEABLE_SIZE,
+    IPID
+};
 MemoryWindowGpuTable::MemoryWindowGpuTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -29,6 +40,7 @@ MemoryWindowGpuTable::MemoryWindowGpuTable(const TraceDataCache* dataCache) : Ta
     tableColumn_.push_back(TableBase::ColumnInfo("size", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("count", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("purgeable_size", "INTEGER"));
+    tableColumn_.push_back(TableBase::ColumnInfo("ipid", "INTEGER"));
     tablePriKey_.push_back("id");
 }
 
@@ -49,33 +61,38 @@ MemoryWindowGpuTable::Cursor::~Cursor() {}
 
 int32_t MemoryWindowGpuTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case ID:
+    switch (static_cast<Index>(column)) {
+        case Index::ID:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.IdsData()[CurrentRow()]);
             break;
-        case TS:
+        case Index::TS:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.TimeStampData()[CurrentRow()]);
             break;
-        case WINDOW_NAME_ID:
+        case Index::WINDOW_NAME_ID:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.WindowNameIds()[CurrentRow()]);
             break;
-        case WINDOW_ID:
+        case Index::WINDOW_ID:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.WindowIds()[CurrentRow()]);
             break;
-        case MODULE_NAME_ID:
+        case Index::MODULE_NAME_ID:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.ModuleNameIds()[CurrentRow()]);
             break;
-        case CATEGORY_NAME_ID:
+        case Index::CATEGORY_NAME_ID:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.CategoryNameIds()[CurrentRow()]);
             break;
-        case SIZE:
+        case Index::SIZE:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.Sizes()[CurrentRow()]);
             break;
-        case COUNT:
+        case Index::COUNT:
             sqlite3_result_int(context_, GpuWindowMemDataObj_.Counts()[CurrentRow()]);
             break;
-        case PURGEABLE_SIZE:
+        case Index::PURGEABLE_SIZE:
             sqlite3_result_int64(context_, GpuWindowMemDataObj_.PurgeableSizes()[CurrentRow()]);
+            break;
+        case Index::IPID:
+            if (GpuWindowMemDataObj_.Ipids()[CurrentRow()] != INVALID_IPID) {
+                sqlite3_result_int64(context_, GpuWindowMemDataObj_.Ipids()[CurrentRow()]);
+            }
             break;
         default:
             TS_LOGF("Unregistered column : %d", column);

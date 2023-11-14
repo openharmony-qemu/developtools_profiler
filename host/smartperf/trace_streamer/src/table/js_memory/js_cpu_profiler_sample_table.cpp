@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, FUNCTION_ID, START_TIME, END_TIME, DUR };
+enum class Index : int32_t { ID = 0, FUNCTION_ID, START_TIME, END_TIME, DUR };
 JsCpuProfilerSampleTable::JsCpuProfilerSampleTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -45,20 +45,20 @@ JsCpuProfilerSampleTable::Cursor::~Cursor() {}
 
 int32_t JsCpuProfilerSampleTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerSample_.IdsData()[CurrentRow()]));
             break;
-        case FUNCTION_ID:
+        case Index::FUNCTION_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerSample_.FunctionIds()[CurrentRow()]));
             break;
-        case START_TIME:
+        case Index::START_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerSample_.StartTimes()[CurrentRow()]));
             break;
-        case END_TIME:
+        case Index::END_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerSample_.EndTimes()[CurrentRow()]));
             break;
-        case DUR:
+        case Index::DUR:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsCpuProfilerSample_.Durs()[CurrentRow()]));
             break;
         default:

@@ -26,9 +26,12 @@
 #include "system_event_measure_filter.h"
 namespace SysTuning {
 namespace TraceStreamer {
-BytraceParser::BytraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters)
-    : ParserBase(filters),
+BytraceParser::BytraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters, TraceFileType fileType)
+    : fileType_(fileType),
+      ParserBase(filters),
+      traceDataCache_(dataCache),
       eventParser_(std::make_unique<BytraceEventParser>(dataCache, filters)),
+      hilogParser_(std::make_unique<BytraceHilogParser>(dataCache, filters)),
 #ifdef SUPPORTTHREAD
       dataSegArray_(std::make_unique<DataSegment[]>(MAX_SEG_ARRAY_SIZE)),
       supportThread_(true)
@@ -50,6 +53,7 @@ void BytraceParser::WaitForParserEnd()
     }
     eventParser_->FilterAllEvents();
     eventParser_->Clear();
+    hilogParser_->FilterAllHilogData();
     dataSegArray_.reset();
 }
 void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
@@ -59,7 +63,7 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
     }
     packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
     auto packagesBegin = packagesBuffer_.begin();
-    while (1) {
+    while (true) {
         auto packagesLine = std::find(packagesBegin, packagesBuffer_.end(), '\n');
         if (packagesLine == packagesBuffer_.end()) {
             break;
@@ -106,17 +110,23 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
             goto NEXT_LINE;
         }
 
-        if (isBytrace_) {
+        if (fileType_ == TRACE_FILETYPE_HILOG) {
+            hilogParser_->ParseHilogDataItem(bufferLine, seq_);
+        } else if (isBytrace_) {
             if (!traceBegan_) {
                 traceBegan_ = true;
             }
             ParseTraceDataItem(bufferLine);
+            if (traceDataCache_->isSplitFile_) {
+                goto NEXT_LINE;
+            }
         } else {
             ParseJsonData(bufferLine);
         }
 
     NEXT_LINE:
         packagesBegin = packagesLine + 1;
+        seq_++;
         continue;
     }
 
@@ -318,7 +328,7 @@ void BytraceParser::GetDataSegAttr(DataSegment& seg, const std::smatch& matcheLi
 }
 void BytraceParser::ParseThread()
 {
-    while (1) {
+    while (true) {
         int32_t head = GetNextSegment();
         if (head < 0) {
             if (head == ERROR_CODE_NODATA) {
@@ -347,6 +357,14 @@ void BytraceParser::ParserData(DataSegment& seg)
         parsedTraceValidLines_++;
     }
     GetDataSegAttr(seg, matcheLine);
+    if (traceDataCache_->isSplitFile_) {
+        if (seg.bufLine.ts >= traceDataCache_->SplitFileMinTime() &&
+            seg.bufLine.ts <= traceDataCache_->SplitFileMaxTime()) {
+            traceDataBytrace_ += seg.seg + "\r\n";
+        }
+        return;
+    }
+
     if (!supportThread_) {
         FilterData(seg);
         return;
@@ -359,7 +377,7 @@ void BytraceParser::ParserData(DataSegment& seg)
 }
 void BytraceParser::FilterThread()
 {
-    while (1) {
+    while (true) {
         DataSegment& seg = dataSegArray_[filterHead_];
         if (!FilterData(seg)) {
             return;

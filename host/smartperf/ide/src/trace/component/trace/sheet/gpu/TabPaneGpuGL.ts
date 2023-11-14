@@ -16,11 +16,10 @@
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { queryGpuGLDataByRange } from '../../../../database/SqlLite.js';
+import { queryGpuDataTab } from '../../../../database/SqlLite.js';
 import { log } from '../../../../../log/Log.js';
 import { getProbablyTime } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
 import { resizeObserver } from '../SheetUtils.js';
-import { VmTrackerChart } from '../../../chart/SpVmTrackerChart.js';
 import { Utils } from '../../base/Utils.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 
@@ -47,14 +46,15 @@ export class TabPaneGpuGL extends BaseElement {
     this.glTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
     this.range!.textContent = 'Selected range: ' + ((glParam.rightNs - glParam.leftNs) / 1000000.0).toFixed(5) + ' ms';
     this.glTbl!.loading = true;
-    queryGpuGLDataByRange(
+    queryGpuDataTab(
       MemoryConfig.getInstance().iPid,
       glParam.leftNs,
       glParam.rightNs,
-      MemoryConfig.getInstance().snapshotDur
+      MemoryConfig.getInstance().snapshotDur,
+      "'mem.gl_pss'"
     ).then((result) => {
       this.glTbl!.loading = false;
-      log('queryGpuGLDataByRange result size : ' + result.length);
+      log('queryGpuDataTab result size : ' + result.length);
       if (result.length > 0) {
         result.forEach((it: GL) => {
           it.startTsStr = getProbablyTime(it.startTs);

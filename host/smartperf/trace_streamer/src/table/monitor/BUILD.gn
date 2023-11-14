@@ -24,8 +24,11 @@ ohos_source_set("monitor_tables") {
     "live_process_table.cpp",
     "log_table.cpp",
     "memory_ashmem_table.cpp",
+    "memory_cpu_table.cpp",
     "memory_dma_table.cpp",
     "memory_process_gpu_table.cpp",
+    "memory_profile_table.cpp",
+    "memory_rs_image_table.cpp",
     "memory_window_gpu_table.cpp",
     "network_table.cpp",
     "paged_memory_sample_table.cpp",
@@ -45,5 +48,19 @@ ohos_source_set("monitor_tables") {
 
   if (!is_independent_compile) {
     configs = [ "${TS_DIR}/gn:ts_config" ]
+  }
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
   }
 }

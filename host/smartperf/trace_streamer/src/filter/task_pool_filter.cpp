@@ -19,7 +19,6 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-
 TaskPoolFilter::TaskPoolFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
     : FilterBase(dataCache, filter), IpidExecuteMap_(INVALID_INT32)
 {

@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { JsCpuProfilerChartFrame, JsCpuProfilerTabStruct, JsCpuProfilerUIStruct } from '../../bean/JsStruct.js';
-import { DataCache, JsProfilerSymbol, LogicHandler, convertJSON } from './ProcedureLogicWorkerCommon.js';
+import { JsCpuProfilerChartFrame, JsCpuProfilerTabStruct, type JsCpuProfilerUIStruct } from '../../bean/JsStruct.js';
+import { DataCache, type JsProfilerSymbol, LogicHandler, convertJSON } from './ProcedureLogicWorkerCommon.js';
 
 const ROOT_ID = 1;
 const LAMBDA_FUNCTION_NAME = '(anonymous)';
@@ -95,13 +95,13 @@ export class ProcedureLogicWorkerJsCpuProfiler extends LogicHandler {
     const samplesIds = this.findSamplesIds(chartData, [], []);
     for (const id of samplesIds) {
       const sample = this.samples[id];
-      if (!sample) {
+      if (!sample || sample.type === undefined) {
         continue;
       }
       let sampleTotalTime = sample.dur;
       if (leftNs && rightNs) {
         // 不在框选范围内的不做处理
-        if (sample.startTime > rightNs || sample.endTime < leftNs){
+        if (sample.startTime > rightNs || sample.endTime < leftNs) {
           continue;
         }
         // 在框选范围内的被只框选到一部分的根据框选范围调整时间
@@ -127,7 +127,7 @@ export class ProcedureLogicWorkerJsCpuProfiler extends LogicHandler {
     chartData: Array<JsCpuProfilerChartFrame>,
     lastLayerData: Array<JsCpuProfilerChartFrame>,
     samplesIds: Array<number>
-  ) {
+  ): number[] {
     for (const data of chartData) {
       if (data.isSelect && data.selfTime > 0 && !lastLayerData.includes(data)) {
         lastLayerData.push(data);
@@ -207,7 +207,9 @@ export class ProcedureLogicWorkerJsCpuProfiler extends LogicHandler {
               sample.type = SampleType.RUNTIME;
               break;
             default:
-              sample.type = SampleType.OTHER;
+              if (stackTopSymbol.name !== '(program)') {
+                sample.type = SampleType.OTHER;
+              }
               break;
           }
         }
@@ -327,7 +329,7 @@ export class ProcedureLogicWorkerJsCpuProfiler extends LogicHandler {
   private reverseChartFrameTree(
     chartTreeArray: Array<JsCpuProfilerChartFrame>,
     reverseTreeArray: Array<JsCpuProfilerChartFrame>
-  ) {
+  ): void {
     const that = this;
     function recursionTree(chartFrame: JsCpuProfilerChartFrame) {
       // isSelect为框选/点选范围内的函数，其他都不需要处理

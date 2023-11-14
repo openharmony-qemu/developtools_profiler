@@ -53,7 +53,7 @@ void HttpServer::RegisterRpcFunction(RpcServer* rpc)
     rpcFunctions_["/reset"] = reset;
 }
 
-void HttpServer::CloseAllThreads()
+void HttpServer::CloseAllThreads() const
 {
     for (const auto& it : clientThreads_) {
         if (it->thread_.joinable()) {
@@ -303,16 +303,16 @@ void HttpServer::ProcessClient(HttpSocket& client)
 }
 #endif
 
-void HttpServer::ProcessRequest(HttpSocket& client, RequestST& request)
+bool HttpServer::CheckStatAndCmd(HttpSocket& client, RequestST& request)
 {
     if (request.stat == RequstParseStat::RECVING) {
         TS_LOGE("http request data missing, client %d\n", client.GetFd());
         HttpResponse(client, "408 Request Time-out\r\n");
-        return;
+        return false;
     } else if (request.stat != RequstParseStat::OK) {
         TS_LOGE("bad http request, client %d\n", client.GetFd());
         HttpResponse(client, "400 Bad Request\r\n");
-        return;
+        return false;
     }
     if (request.method == "OPTIONS") {
         HttpResponse(client,
@@ -320,10 +320,18 @@ void HttpServer::ProcessRequest(HttpSocket& client, RequestST& request)
                      "Access-Control-Allow-Methods: POST, GET, OPTIONS\r\n"
                      "Access-Control-Allow-Headers: *\r\n"
                      "Access-Control-Max-Age: 86400\r\n");
-        return;
+        return false;
     } else if (request.method != "POST" && request.method != "GET") {
         TS_LOGE("method(%s) not allowed, client %d", request.method.c_str(), client.GetFd());
         HttpResponse(client, "405 Method Not Allowed\r\n");
+        return false;
+    }
+    return true;
+}
+
+void HttpServer::ProcessRequest(HttpSocket& client, RequestST& request)
+{
+    if (!CheckStatAndCmd(client, request)) {
         return;
     }
     auto it = rpcFunctions_.find(request.uri);

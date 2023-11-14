@@ -17,6 +17,7 @@
 #define ANIMATION_FILTER_H
 
 #include <unordered_map>
+#include <unordered_set>
 #include "common_types.h"
 #include "filter_base.h"
 #include "trace_streamer_filters.h"
@@ -29,24 +30,37 @@ public:
     ~AnimationFilter() override;
     bool UpdateDeviceInfoEvent(const TracePoint& point, const BytraceLine& line);
     bool BeginDynamicFrameEvent(const TracePoint& point, size_t callStackRow);
-    void StartAnimationEvent(const BytraceLine& line, size_t callStackRow);
+    bool EndDynamicFrameEvent(uint64_t ts, size_t callStackRow);
+    bool StartAnimationEvent(const BytraceLine& line, const TracePoint& point, size_t callStackRow);
     bool FinishAnimationEvent(const BytraceLine& line, size_t callStackRow);
     void UpdateDynamicFrameInfo();
+    void UpdateFrameInfo();
     void Clear();
 
 private:
     bool UpdateDeviceFps(const BytraceLine& line);
     bool UpdateDeviceScreenSize(const TracePoint& point);
     bool UpdateDynamicEndTime(const uint64_t curFrameRow, uint64_t curStackRow);
-    const std::string generateVsyncCmd_ = "H:GenerateVsyncCount";
-    const std::string leashWindowCmd_ = "H:RSUniRender::Process:[leashWindow";
-    const std::string rsUniProcessCmd_ = "H:RSUniRender::Process:[";
-    const DataIndex rsDoCompCmd_ = traceDataCache_->GetDataIndex("H:RSMainThread::DoComposition");
-    const DataIndex entryViewCmd_ = traceDataCache_->GetDataIndex("H:RSUniRender::Process:[EntryView]");
+    // for calculate the frame rate
+    const std::string frameRateCmd_ = "H:GenerateVsyncCount";
+    // if the realFrameRate present, no calculation is required
+    const std::string realFrameRateCmd_ = "H:RSJankStats::RecordAnimationDynamicFrameRate";
+    const std::string frameBeginCmd_ = "H:RSUniRender::Process:[WindowScene_";
+    const std::string frameCountCmd_ = "H:Repaint";
+    const std::string frameBeginPrefix_ = "H:RSUniRender::Process:[";
+    const std::string screenSizeCmd_ = "H:RSUniRender::Process:[SCBDesktop";
+    const DataIndex frameEndTimeCmd_ = traceDataCache_->GetDataIndex("H:RSMainThread::DoComposition");
+    const DataIndex animationAppListCmd_ = traceDataCache_->GetDataIndex("H:APP_LIST_FLING");
+    std::unordered_set<DataIndex> onAnimationStartEvents_ = {};
     // for update dynamicFrameInfo at the end, first is callStackRow, second is dynamicFramRow
     std::map<uint64_t, uint64_t> callStackRowMap_ = {};
     // for update animationInfo, first is callStackRow, second is animationRow
     std::unordered_map<uint64_t, uint64_t> animationCallIds_ = {};
+    // for count number of frames
+    std::unordered_set<uint64_t> frameCountRows_ = {};
+    std::deque<uint64_t> frameCountEndTimes_ = {};
+    // for realFrameRate, first is realFrameRateFlag, second is animationRow
+    std::unordered_map<DataIndex, uint64_t> realFrameRateFlagsDict_ = {};
     uint64_t generateFirstTime_ = INVALID_UINT64;
     uint8_t generateVsyncCnt_ = 0;
     DynamicFrame* dynamicFrame_ = nullptr;

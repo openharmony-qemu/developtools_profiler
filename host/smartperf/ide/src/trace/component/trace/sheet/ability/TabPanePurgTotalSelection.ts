@@ -14,8 +14,8 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { queryProcessPurgeableSelectionTab, querySysPurgeableSelectionTab } from '../../../../database/SqlLite.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
@@ -33,12 +33,16 @@ export class TabPanePurgTotalSelection extends BaseElement {
     }
   }
 
-  async queryTableData(type: string, startNs: number) {
+  async queryTableData(type: string, startNs: number): Promise<void> {
     if (type === 'ability') {
       await querySysPurgeableSelectionTab(startNs).then((purgeTotalSelectResults) => {
         this.purgeableSelectionSource = [];
         if (purgeTotalSelectResults.length > 0) {
           this.purgeableSelectionSource.push({ name: 'TimeStamp', value: ns2s(startNs) });
+          this.purgeableSelectionSource.push({
+            name: 'TimeStamp(Absolute)',
+            value: (startNs + (window as any).recordStartNS) / 1000000000,
+          });
           for (let i = 0; i < purgeTotalSelectResults.length; i++) {
             purgeTotalSelectResults[i].value = Utils.getBinaryByteWithUnit(purgeTotalSelectResults[i].value);
             this.purgeableSelectionSource.push(purgeTotalSelectResults[i]);
@@ -50,7 +54,11 @@ export class TabPanePurgTotalSelection extends BaseElement {
       await queryProcessPurgeableSelectionTab(startNs, MemoryConfig.getInstance().iPid).then((results) => {
         this.purgeableSelectionSource = [];
         if (results.length > 0) {
-          this.purgeableSelectionSource.push({ name: 'TimeStamp', value: ns2s(startNs) });
+          this.purgeableSelectionSource.push({ name: 'TimeStamp(Relative)', value: ns2s(startNs) });
+          this.purgeableSelectionSource.push({
+            name: 'TimeStamp(Absolute)',
+            value: (startNs + (window as any).recordStartNS) / 1000000000,
+          });
           for (let i = 0; i < results.length; i++) {
             results[i].value = Utils.getBinaryByteWithUnit(results[i].value);
             this.purgeableSelectionSource.push(results[i]);

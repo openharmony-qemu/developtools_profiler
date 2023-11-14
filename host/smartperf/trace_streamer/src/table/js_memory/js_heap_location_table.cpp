@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, OBJECT_INDEX, SCRIPT_ID, LINE, COLUMN };
+enum class Index : int32_t { FILE_ID = 0, OBJECT_INDEX, SCRIPT_ID, LINE, COLUMN };
 JsHeapLocationTable::JsHeapLocationTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -45,20 +45,20 @@ JsHeapLocationTable::Cursor::~Cursor() {}
 
 int32_t JsHeapLocationTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapLocation_.FileIds()[CurrentRow()]));
             break;
-        case OBJECT_INDEX:
+        case Index::OBJECT_INDEX:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapLocation_.ObjectIndexs()[CurrentRow()]));
             break;
-        case SCRIPT_ID:
+        case Index::SCRIPT_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapLocation_.ScriptIds()[CurrentRow()]));
             break;
-        case LINE:
+        case Index::LINE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapLocation_.Lines()[CurrentRow()]));
             break;
-        case COLUMN:
+        case Index::COLUMN:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapLocation_.Columns()[CurrentRow()]));
             break;
         default:

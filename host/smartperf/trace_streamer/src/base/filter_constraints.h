@@ -55,6 +55,9 @@ public:
     void FromString(const std::string& idxStr);
 
 private:
+    void GetColAndOp(const char** p, char** pNext, int32_t& col, unsigned char& op);
+
+private:
     std::vector<Constraint> constraints_;
     std::vector<OrderBy> orderBys_;
     const std::size_t idxStrSize_ = 512;

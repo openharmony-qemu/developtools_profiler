@@ -17,7 +17,15 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { PID = 0, TYPE, INTERVAL, CAPTURE_NUMERIC_VALUE, TRACK_ALLOCATION, CPU_PROFILER, CPU_PROFILER_INTERVAL };
+enum class Index : int32_t {
+    PID = 0,
+    TYPE,
+    INTERVAL,
+    CAPTURE_NUMERIC_VALUE,
+    TRACK_ALLOCATION,
+    CPU_PROFILER,
+    CPU_PROFILER_INTERVAL
+};
 JsConfigTable::JsConfigTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("pid", "INTEGER"));
@@ -47,26 +55,26 @@ JsConfigTable::Cursor::~Cursor() {}
 
 int32_t JsConfigTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case PID:
+    switch (static_cast<Index>(col)) {
+        case Index::PID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.Pids()[CurrentRow()]));
             break;
-        case TYPE:
+        case Index::TYPE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.Types()[CurrentRow()]));
             break;
-        case INTERVAL:
+        case Index::INTERVAL:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.Intervals()[CurrentRow()]));
             break;
-        case CAPTURE_NUMERIC_VALUE:
+        case Index::CAPTURE_NUMERIC_VALUE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.CaptureNumericValue()[CurrentRow()]));
             break;
-        case TRACK_ALLOCATION:
+        case Index::TRACK_ALLOCATION:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.TrackAllocations()[CurrentRow()]));
             break;
-        case CPU_PROFILER:
+        case Index::CPU_PROFILER:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.CpuProfiler()[CurrentRow()]));
             break;
-        case CPU_PROFILER_INTERVAL:
+        case Index::CPU_PROFILER_INTERVAL:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsConfig_.CpuProfilerInterval()[CurrentRow()]));
             break;
         default:

@@ -43,6 +43,7 @@ declare global {
       UI: {
         MenuTrace: string; //selected menu trace
         RefreshCanvas: string; //selected menu trace
+        RowHeightChange: string; //function row height change
         SliceMark: string; //Set the tag scope
         TimeRange: string; //Set the timeline range
         TraceRowComplete: string; //Triggered after the row component has finished loading data
@@ -52,6 +53,11 @@ declare global {
         Loading: string; // Upload so file
         Error: string; // load error
         CheckALL: string; // Check all child chart
+        CollapseAllLane: string; //collapse/uncollapse all lane row
+        CollectGroupChange: string; //collapse/uncollapse all lane row
+        WakeupList: string; //show wakeup list table
+        DeviceConnect: string;
+        DeviceDisConnect: string;
       };
     };
 
@@ -92,6 +98,7 @@ window.SmartEvent = {
   UI: {
     MenuTrace: 'SmartEvent-UI-MenuTrace',
     RefreshCanvas: 'SmartEvent-UI-RefreshCanvas',
+    RowHeightChange: 'SmartEvent-UI-RowHeightChange',
     SliceMark: 'SmartEvent-UI-SliceMark',
     TimeRange: 'SmartEvent-UI-TimeRange',
     TraceRowComplete: 'SmartEvent-UI-TraceRowComplete',
@@ -101,6 +108,11 @@ window.SmartEvent = {
     Loading: 'SmartEvent-UI-Loading',
     Error: 'SmartEvent-UI-Error',
     CheckALL: 'SmartEvent-UI-CheckALL',
+    CollapseAllLane: 'SmartEvent-UI-Collapse-All-Lane',
+    CollectGroupChange: 'SmartEvent-UI-Collect-group-change',
+    WakeupList: 'SmartEvent-UI-WakeupList',
+    DeviceConnect: 'SmartEvent-DEVICE_CONNECT',
+    DeviceDisConnect: 'SmartEvent-DEVICE_DISCONNECT',
   },
 };
 Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);
@@ -109,3 +121,7 @@ Window.prototype.publish = (ev, data) => EventCenter.publish(ev, data);
 Window.prototype.subscribeOnce = (ev, data) => EventCenter.subscribeOnce(ev, data);
 Window.prototype.clearTraceRowComplete = () => EventCenter.clearTraceRowComplete();
 export {};
+
+export function dpr() {
+  return window.devicePixelRatio || 1;
+}

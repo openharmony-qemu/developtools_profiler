@@ -14,13 +14,13 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
-import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitChartPie } from '../../../../../base-ui/chart/pie/LitChartPie.js';
+import { type LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { JsCpuProfilerChartFrame, JsCpuProfilerStatisticsStruct } from '../../../../bean/JsStruct.js';
+import { type JsCpuProfilerChartFrame, JsCpuProfilerStatisticsStruct } from '../../../../bean/JsStruct.js';
 import { procedurePool } from '../../../../database/Procedure.js';
-import { SampleType } from '../../../../database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
+import { type SampleType } from '../../../../database/logic-worker/ProcedureLogicWorkerJsCpuProfiler.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { resizeObserver } from '../SheetUtils.js';
 
@@ -41,13 +41,12 @@ export class TabPaneJsCpuStatistics extends BaseElement {
 
     this.getDataByWorker(data, (results: Map<SampleType, number>) => {
       this.progress!.loading = false;
-
-      this.statisticsSource = this.setStatisticsData(results);
+      this.statisticsSource = results.size > 0 ? this.setStatisticsData(results) : [];
       this.queryPieChartDataByType(this.statisticsSource || []);
     });
   }
 
-  private init() {
+  private init(): void {
     const thTable = this.tabTitle!.querySelector('.th');
     const jsCpuStatTblNodes = thTable!.querySelectorAll('div');
     if (this.tabTitle!.hasAttribute('sort')) {
@@ -96,13 +95,13 @@ export class TabPaneJsCpuStatistics extends BaseElement {
       label: {
         type: 'outer',
       },
-      tip: (obj) => {
+      tip: (obj): string => {
         return `<div>
                     <div>type: ${obj.obj.type}</div>
                     <div>total: ${ns2s(obj.obj.time)} (${obj.obj.percentage}%)</div>
                 </div> `;
       },
-      hoverHandler: (data) => {
+      hoverHandler: (data): void => {
         if (data) {
           this.statisticsTable!.setCurrentHover(data);
         } else {
@@ -126,15 +125,18 @@ export class TabPaneJsCpuStatistics extends BaseElement {
       this.statisticsPie?.showHover();
       this.statisticsPie?.hideTip();
     });
-    this.sortByColumn({ key: this.sortKey, sort: this.sortType });
-    let total = this.totalData(this.statisticsSource);
-    this.statisticsSource.unshift(total);
-    this.statisticsTable!.recycleDataSource = this.statisticsSource;
-    this.statisticsSource.shift();
+
+    if (this.statisticsSource.length > 0) {
+      this.sortByColumn({ key: this.sortKey, sort: this.sortType });
+      let total = this.totalData(this.statisticsSource);
+      this.statisticsSource.unshift(total);
+      this.statisticsTable!.recycleDataSource = this.statisticsSource;
+      this.statisticsSource.shift();
+    }
     this.statisticsTable?.reMeauseHeight();
   }
 
-  private totalData(source: Array<JsCpuProfilerStatisticsStruct>) {
+  private totalData(source: Array<JsCpuProfilerStatisticsStruct>): JsCpuProfilerStatisticsStruct {
     // 计算总的time作为表格的第一行显示
     let totalTime = 0;
     for (let item of source) {
@@ -170,7 +172,7 @@ export class TabPaneJsCpuStatistics extends BaseElement {
       type,
       time,
       ns2s(time),
-      ((time / percentage) * 100).toFixed(1)
+      ((time / percentage || 0) * 100).toFixed(1)
     );
     return statisticsStruct;
   }
@@ -202,11 +204,12 @@ export class TabPaneJsCpuStatistics extends BaseElement {
     } else if (detail.key === 'type') {
       this.statisticsSource.sort(compare(detail.key, detail.sort, 'string'));
     }
-
-    let total = this.totalData(this.statisticsSource);
-    this.statisticsSource.unshift(total);
-    this.statisticsTable!.recycleDataSource = this.statisticsSource;
-    this.statisticsSource.shift();
+    if (this.statisticsSource.length > 0) {
+      let total = this.totalData(this.statisticsSource);
+      this.statisticsSource.unshift(total);
+      this.statisticsTable!.recycleDataSource = this.statisticsSource;
+      this.statisticsSource.shift();
+    }
   }
 
   public connectedCallback(): void {

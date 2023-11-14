@@ -14,14 +14,15 @@
 
 set -e
 THIS_DIR=$(dirname ${BASH_SOURCE[0]})
-PROJECT_TOP=$(realpath $THIS_DIR/../../../..)
-TAIL_DIR="thirdparty/protobuf"
-SUBSYS_DIR="developtools/smartperf_host"
-if [[ "$2" == *"developtools"* ]]; then
-  TAIL_DIR="."
-  SUBSYS_DIR="."
-  PROJECT_TOP=$(realpath $THIS_DIR/..)
+PROJECT_TOP=$(realpath $THIS_DIR/..)
+TAIL_DIR="."
+SUBSYS_DIR="."
+if [[ "$3" == *"developtools"* ]]; then
+  TAIL_DIR="thirdparty/protobuf"
+  SUBSYS_DIR="developtools/smartperf_host"
+  PROJECT_TOP=$(realpath $THIS_DIR/../../../..)
 fi
+
 OHOS_X64_OUT=$PROJECT_TOP/$2/
 LIBCXX_X64_OUT=$PROJECT_TOP/$1/ndk/libcxx/linux_x86_64
 SUBSYS_X64_OUT=$PROJECT_TOP/$2/$TAIL_DIR

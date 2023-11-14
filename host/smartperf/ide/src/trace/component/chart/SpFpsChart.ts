@@ -50,9 +50,16 @@ export class SpFpsChart {
       }
       this.trace?.displayTip(fpsRow, FpsStruct.hoverFpsStruct, tip);
     };
-
+    fpsRow.findHoverStruct = () => {
+      FpsStruct.hoverFpsStruct = fpsRow.getHoverStruct();
+    };
     fpsRow.onThreadHandler = (useCache) => {
-      let context = fpsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      let context: CanvasRenderingContext2D;
+      if (fpsRow.currentContext) {
+        context = fpsRow.currentContext;
+      } else {
+        context = fpsRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      }
       fpsRow.canvasSave(context);
       (renders['fps'] as FpsRender).renderMainThread(
         {

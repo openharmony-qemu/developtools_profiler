@@ -33,6 +33,7 @@
 #include "task_pool_filter.h"
 #include "parser/bytrace_parser/bytrace_parser.h"
 #include "parser/htrace_pbreader_parser/htrace_parser.h"
+#include "parser/rawtrace_parser/rawtrace_parser.h"
 #include "perf_data_filter.h"
 #include "process_filter.h"
 #include "slice_filter.h"
@@ -41,6 +42,10 @@
 #include "symbols_filter.h"
 #include "system_event_measure_filter.h"
 
+namespace {
+const uint32_t CHUNK_SIZE = 1024 * 1024;
+constexpr uint16_t RAW_TRACE_MAGIC_NUMBER = 57161;
+} // namespace
 using namespace SysTuning::base;
 namespace SysTuning {
 namespace TraceStreamer {
@@ -63,6 +68,12 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     if (start.find("# sysevent") != std::string::npos) {
         return TRACE_FILETYPE_SYSEVENT;
     }
+    uint16_t magicNumber = INVALID_UINT16;
+    int ret = memcpy_s(&magicNumber, sizeof(uint16_t), data, sizeof(uint16_t));
+    TS_CHECK_TRUE(ret == EOK, TRACE_FILETYPE_UN_KNOW, "Memcpy FAILED!Error code is %d, data size is %zu.", ret, size);
+    if (magicNumber == RAW_TRACE_MAGIC_NUMBER) {
+        return TRACE_FILETYPE_RAW_TRACE;
+    }
     std::string lowerStart(start);
     transform(start.begin(), start.end(), lowerStart.begin(), ::tolower);
     if ((lowerStart.compare(0, std::string("<!doctype html>").length(), "<!doctype html>") == 0) ||
@@ -78,9 +89,6 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     if (start.compare(0, std::string("PERFILE2").length(), "PERFILE2") == 0) {
         return TRACE_FILETYPE_PERF;
     }
-    if (start.compare(0, std::string("\x1f\x8b").length(), "\x1f\x8b") == 0) {
-        return TRACE_FILETYPE_PERF;
-    }
     const std::regex bytraceMatcher = std::regex(R"(-(\d+)\s+\(?\s*(\d+|-+)?\)?\s?\[(\d+)\]\s*)"
                                                  R"([a-zA-Z0-9.]{0,5}\s+(\d+\.\d+):\s+(\S+):)");
     std::smatch matcheLine;
@@ -88,12 +96,18 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     if (std::regex_search(bytraceMode, matcheLine, bytraceMatcher)) {
         return TRACE_FILETYPE_BY_TRACE;
     }
+
+    const std::regex hilogMatcher = std::regex(R"( *(\w+ )?([\-\d: ]+\.\d+) +(\d+) +(\d+) +([FEWID]) +(.+?): +(.+))");
+    if (std::regex_search(bytraceMode, matcheLine, hilogMatcher)) {
+        return TRACE_FILETYPE_HILOG;
+    }
+
     return TRACE_FILETYPE_UN_KNOW;
 }
 } // namespace
 
 TraceStreamerSelector::TraceStreamerSelector()
-    : fileType_(TRACE_FILETYPE_UN_KNOW), bytraceParser_(nullptr), htraceParser_(nullptr)
+    : fileType_(TRACE_FILETYPE_UN_KNOW), bytraceParser_(nullptr), htraceParser_(nullptr), rawTraceParser_(nullptr)
 {
     InitFilter();
 }
@@ -157,15 +171,19 @@ void TraceStreamerSelector::WaitForParserEnd()
     if (fileType_ == TRACE_FILETYPE_H_TRACE) {
         htraceParser_->WaitForParserEnd();
     }
-    if (fileType_ == TRACE_FILETYPE_BY_TRACE) {
+    if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_HILOG) {
         bytraceParser_->WaitForParserEnd();
     }
     if (fileType_ == TRACE_FILETYPE_PERF) {
-        htraceParser_->TraceDataSegmentEnd();
+        htraceParser_->TraceDataSegmentEnd(false);
         htraceParser_->WaitForParserEnd();
+    }
+    if (fileType_ == TRACE_FILETYPE_RAW_TRACE) {
+        rawTraceParser_->WaitForParserEnd();
     }
     traceDataCache_->UpdateTraceRange();
     if (traceDataCache_->AnimationTraceEnabled()) {
+        streamFilters_->animationFilter_->UpdateFrameInfo();
         streamFilters_->animationFilter_->UpdateDynamicFrameInfo();
     }
 }
@@ -182,9 +200,14 @@ void TraceStreamerSelector::SetDataType(TraceFileType type)
         htraceParser_ = std::make_unique<HtraceParser>(traceDataCache_.get(), streamFilters_.get());
     } else if (fileType_ == TRACE_FILETYPE_BY_TRACE) {
         bytraceParser_ = std::make_unique<BytraceParser>(traceDataCache_.get(), streamFilters_.get());
+    } else if (fileType_ == TRACE_FILETYPE_RAW_TRACE) {
+        rawTraceParser_ = std::make_unique<RawTraceParser>(traceDataCache_.get(), streamFilters_.get());
     }
 }
-bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> data, size_t size)
+bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> data,
+                                                  size_t size,
+                                                  bool isSplitFile,
+                                                  int32_t isFinish)
 {
     if (size == 0) {
         return true;
@@ -194,9 +217,12 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
         if (fileType_ == TRACE_FILETYPE_H_TRACE || fileType_ == TRACE_FILETYPE_PERF) {
             htraceParser_ = std::make_unique<HtraceParser>(traceDataCache_.get(), streamFilters_.get());
             htraceParser_->EnableFileSeparate(enableFileSeparate_);
-        } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT) {
-            bytraceParser_ = std::make_unique<BytraceParser>(traceDataCache_.get(), streamFilters_.get());
+        } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT ||
+                   fileType_ == TRACE_FILETYPE_HILOG) {
+            bytraceParser_ = std::make_unique<BytraceParser>(traceDataCache_.get(), streamFilters_.get(), fileType_);
             bytraceParser_->EnableBytrace(fileType_ == TRACE_FILETYPE_BY_TRACE);
+        } else if (fileType_ == TRACE_FILETYPE_RAW_TRACE) {
+            rawTraceParser_ = std::make_unique<RawTraceParser>(traceDataCache_.get(), streamFilters_.get());
         }
         if (fileType_ == TRACE_FILETYPE_UN_KNOW) {
             SetAnalysisResult(TRACE_PARSER_FILE_TYPE_ERROR);
@@ -207,12 +233,19 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
             return false;
         }
     }
+    traceDataCache_->SetSplitFileMinTime(minTs_);
+    traceDataCache_->SetSplitFileMaxTime(maxTs_);
+    traceDataCache_->isSplitFile_ = isSplitFile;
     if (fileType_ == TRACE_FILETYPE_H_TRACE) {
         htraceParser_->ParseTraceDataSegment(std::move(data), size);
-    } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT) {
+    } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT ||
+               fileType_ == TRACE_FILETYPE_HILOG) {
         bytraceParser_->ParseTraceDataSegment(std::move(data), size);
+        return true;
     } else if (fileType_ == TRACE_FILETYPE_PERF) {
-        htraceParser_->StoreTraceDataSegment(std::move(data), size);
+        htraceParser_->StoreTraceDataSegment(std::move(data), size, isFinish);
+    } else if (fileType_ == TRACE_FILETYPE_RAW_TRACE) {
+        rawTraceParser_->ParseTraceDataSegment(std::move(data), size);
     }
     SetAnalysisResult(TRACE_PARSER_NORMAL);
     return true;
@@ -270,9 +303,34 @@ int32_t TraceStreamerSelector::SearchDatabase(const std::string& sql, uint8_t* o
 {
     return traceDataCache_->SearchDatabase(sql, out, outLen);
 }
-int32_t TraceStreamerSelector::SearchDatabase(const std::string& sql, bool printf)
+int32_t TraceStreamerSelector::SearchDatabase(std::string& sql, bool printf)
 {
     return traceDataCache_->SearchDatabase(sql, printf);
+}
+std::string TraceStreamerSelector::SearchDatabase(const std::string& sql)
+{
+    return traceDataCache_->SearchDatabase(sql);
+}
+void TraceStreamerSelector::InitMetricsMap(std::map<std::string, std::string>& metricsMap)
+{
+    metricsMap.emplace(TRACE_MEM_UNAGG, memUnaggQuery);
+    metricsMap.emplace(TRACE_MEM, memQuery);
+    metricsMap.emplace(TRACE_MEM_TOP_TEN, memTopQuery);
+    metricsMap.emplace(TRACE_METADATA, metaDataQuery);
+    metricsMap.emplace(SYS_CALLS, sysCallQuery);
+    metricsMap.emplace(TRACE_STATS, traceStateQuery);
+    metricsMap.emplace(TRACE_TASK_NAMES, traceTaskName);
+}
+const std::string TraceStreamerSelector::MetricsSqlQuery(const std::string& metrics)
+{
+    std::map<std::string, std::string> metricsMap;
+    InitMetricsMap(metricsMap);
+    auto itor = metricsMap.find(metrics);
+    if (itor == metricsMap.end()) {
+        TS_LOGE("metrics name error!!!");
+        return "";
+    }
+    return itor->second;
 }
 int32_t TraceStreamerSelector::UpdateTraceRangeTime(uint8_t* data, int32_t len)
 {
@@ -304,6 +362,67 @@ void TraceStreamerSelector::UpdateTaskPoolTraceStatus(bool status)
 void TraceStreamerSelector::UpdateAppStartTraceStatus(bool status)
 {
     traceDataCache_->UpdateAppStartTraceStatus(status);
+}
+bool TraceStreamerSelector::LoadQueryFile(const std::string& sqlOperator, std::vector<std::string>& sqlStrings)
+{
+    auto fd = fopen(sqlOperator.c_str(), "r");
+    if (!fd) {
+        TS_LOGE("open file failed!");
+        return false;
+    }
+    char buffer[CHUNK_SIZE];
+    while (!feof(fd)) {
+        std::string sqlString;
+        while (fgets(buffer, sizeof(buffer), fd)) {
+            std::string line = buffer;
+            if (line == "\n" || line == "\r\n") {
+                break;
+            }
+            sqlString.append(buffer);
+
+            if (EndWith(line, ";") || EndWith(line, ";\r\n")) {
+                break;
+            }
+        }
+
+        if (sqlString.empty()) {
+            continue;
+        }
+        sqlStrings.push_back(sqlString);
+    }
+    fclose(fd);
+    fd = nullptr;
+    return true;
+}
+bool TraceStreamerSelector::ReadSqlFileAndPrintResult(const std::string& sqlOperator)
+{
+    std::vector<std::string> sqlStrings;
+    if (!LoadQueryFile(sqlOperator, sqlStrings)) {
+        return false;
+    }
+    for (auto& str : sqlStrings) {
+        SearchDatabase(str, true);
+    }
+    return true;
+}
+bool TraceStreamerSelector::ParserAndPrintMetrics(const std::string& metrics)
+{
+    auto metricsName = SplitStringToVec(metrics, ",");
+    for (const auto& itemName : metricsName) {
+        std::string result = SearchDatabase(MetricsSqlQuery(itemName));
+        if (result == "") {
+            return false;
+        }
+        Metrics metricsOperator;
+        metricsOperator.ParserJson(itemName, result);
+        for (auto item : metricsOperator.GetMetricsMap()) {
+            if (item.second == itemName) {
+                metricsOperator.PrintMetricsResult(item.first, nullptr);
+                continue;
+            }
+        }
+    }
+    return true;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

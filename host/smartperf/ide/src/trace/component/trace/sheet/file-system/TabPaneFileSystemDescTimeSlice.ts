@@ -39,9 +39,11 @@ export class TabPaneFileSystemDescTimeSlice extends BaseElement {
     }
     this.currentSelection = fsDescTimeSliceSelection;
     // @ts-ignore
-    this.fsDescTimeSliceTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.fsDescTimeSliceTbl?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 20 - 31 + 'px';
     // @ts-ignore
-    this.fsDescTimeSliceTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.fsDescTimeSliceTblData?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 20 - 31 + 'px';
     this.fsDescTimeSliceTbl!.recycleDataSource = [];
     this.fsDescTimeSliceTblData!.recycleDataSource = [];
     if (fsDescTimeSliceSelection) {
@@ -115,10 +117,12 @@ export class TabPaneFileSystemDescTimeSlice extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.fsDescTimeSliceTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
+        this.fsDescTimeSliceTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 31 + 'px';
         this.fsDescTimeSliceTbl?.reMeauseHeight();
         // @ts-ignore
-        this.fsDescTimeSliceTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
+        this.fsDescTimeSliceTblData?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 31 + 'px';
         this.fsDescTimeSliceTblData?.reMeauseHeight();
         this.fsDescTimeSliceLoadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

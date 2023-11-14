@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, FILE_NAME, START_TIME, END_TIME, SELF_SIZE_COUNT };
+enum class Index : int32_t { ID = 0, FILE_NAME, START_TIME, END_TIME, SELF_SIZE_COUNT };
 JsHeapFilesTable::JsHeapFilesTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -45,20 +45,20 @@ JsHeapFilesTable::Cursor::~Cursor() {}
 
 int32_t JsHeapFilesTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapFiles_.IDs()[CurrentRow()]));
             break;
-        case FILE_NAME:
+        case Index::FILE_NAME:
             sqlite3_result_text(context_, jsHeapFiles_.FilePaths()[CurrentRow()].c_str(), STR_DEFAULT_LEN, nullptr);
             break;
-        case START_TIME:
+        case Index::START_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapFiles_.StartTimes()[CurrentRow()]));
             break;
-        case END_TIME:
+        case Index::END_TIME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapFiles_.EndTimes()[CurrentRow()]));
             break;
-        case SELF_SIZE_COUNT:
+        case Index::SELF_SIZE_COUNT:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapFiles_.SelfSizeCount()[CurrentRow()]));
             break;
         default:

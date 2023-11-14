@@ -19,7 +19,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { ID = 0, TYPE, NAME, CPU };
+enum class Index : int32_t { ID = 0, TYPE, NAME, CPU };
 ClkEventFilterTable::ClkEventFilterTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -45,22 +45,22 @@ ClkEventFilterTable::Cursor::~Cursor() {}
 
 int32_t ClkEventFilterTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case ID:
+    switch (static_cast<Index>(col)) {
+        case Index::ID:
             sqlite3_result_int64(
                 context_, static_cast<sqlite3_int64>(dataCache_->GetConstClkEventFilterData().IdsData()[CurrentRow()]));
             break;
-        case TYPE: {
+        case Index::TYPE: {
             size_t typeId = static_cast<size_t>(dataCache_->GetConstClkEventFilterData().RatesData()[CurrentRow()]);
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(typeId).c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         }
-        case NAME: {
+        case Index::NAME: {
             size_t strId = static_cast<size_t>(dataCache_->GetConstClkEventFilterData().NamesData()[CurrentRow()]);
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(strId).c_str(), STR_DEFAULT_LEN, nullptr);
             break;
         }
-        case CPU:
+        case Index::CPU:
             sqlite3_result_int64(context_, static_cast<sqlite3_int64>(
                                                dataCache_->GetConstClkEventFilterData().CpusData()[CurrentRow()]));
             break;

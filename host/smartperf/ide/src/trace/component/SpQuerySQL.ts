@@ -23,6 +23,8 @@ import { LitProgressBar } from '../../base-ui/progress-bar/LitProgressBar.js';
 import { PageNation } from '../../base-ui/chart/pagenation/PageNation.js';
 import { PaginationBox } from '../../base-ui/chart/pagenation/PaginationBox.js';
 import { SpStatisticsHttpUtil } from '../../statistics/util/SpStatisticsHttpUtil.js';
+import { getAllSql } from './trace/base/CommonSql.js';
+import { LitIcon } from '../../base-ui/icon/LitIcon.js';
 
 @element('sp-query-sql')
 export class SpQuerySQL extends BaseElement {
@@ -38,15 +40,18 @@ export class SpQuerySQL extends BaseElement {
   private querySqlErrorText: string = '';
   private progressLoad: LitProgressBar | undefined;
   private pagination: PaginationBox | undefined;
+  private sqlListDiv: HTMLDivElement | undefined;
 
   initElements(): void {
     this.progressLoad = this.shadowRoot?.querySelector('.load-query-sql') as LitProgressBar;
     this.selector = this.shadowRoot?.querySelector('.sql-select') as HTMLTextAreaElement;
-    this.queryTableEl = new LitTable();
+    this.queryTableEl = this.shadowRoot?.querySelector('lit-table') as LitTable;
+    this.queryTableEl.setAttribute('data-query-scene', '');
     this.querySize = this.shadowRoot?.querySelector('.query_size') as HTMLElement;
     this.response = this.shadowRoot?.querySelector('#dataResult') as HTMLDivElement;
     this.pagination = this.shadowRoot?.querySelector('.pagination-box') as PaginationBox;
     this.notSupportList?.push('insert', 'delete', 'update', 'drop', 'alter', 'truncate', 'create');
+    this.sqlListDiv = this.shadowRoot?.querySelector('#sqlList') as HTMLDivElement;
     let htmlDivElement = this.queryTableEl.shadowRoot?.querySelector('.table') as HTMLDivElement;
     htmlDivElement.style.overflowX = 'scroll';
     window.addEventListener('resize', () => {
@@ -62,12 +67,28 @@ export class SpQuerySQL extends BaseElement {
       this.queryTableEl!.dataSource = [];
       this.response!.innerHTML = '';
     });
-    new ResizeObserver(() => {
-      if (this.parentElement?.clientHeight !== 0) {
-        this.queryTableEl!.style.height = '100%';
-        this.queryTableEl!.reMeauseHeight();
+    this.initCommonList();
+  }
+
+  private initCommonList(): void {
+    let commonSqlList = getAllSql();
+    if (commonSqlList.length > 0) {
+      for (let i = 0; i < commonSqlList.length; i++) {
+        let commonSqlDiv = document.createElement('div');
+        commonSqlDiv.className = 'sql-item';
+        let sql = document.createElement('div');
+        sql.className = 'sql';
+        sql.textContent = commonSqlList[i].sql;
+        let runButton = document.createElement('lit-icon');
+        runButton.className = 'runButton';
+        runButton.title = commonSqlList[i].title;
+        runButton.setAttribute('size', '20');
+        runButton.setAttribute('name', 'run-sql');
+        commonSqlDiv.appendChild(sql);
+        commonSqlDiv.appendChild(runButton);
+        this.sqlListDiv?.append(commonSqlDiv);
       }
-    }).observe(this.parentElement!);
+    }
   }
 
   private freshTableHeadResizeStyle(): void {
@@ -128,21 +149,9 @@ export class SpQuerySQL extends BaseElement {
       this.keyList = [];
       this.response!.innerHTML = '';
       this.queryTableEl!.innerHTML = '';
+      this.pagination!.style.display = 'none';
       if (this.isSupportSql) {
-        this.progressLoad!.loading = true;
-        queryCustomizeSelect(this.selector!.value).then((resultList): void => {
-          if (resultList && resultList.length > 0) {
-            this.statDataArray = resultList;
-            this.keyList = Object.keys(resultList[0]);
-            this.querySize!.textContent = `Query result - ${this.statDataArray.length} counts.`;
-            this.initDataElement();
-            this.response!.appendChild(this.queryTableEl!);
-            this.setPageNationTableEl();
-          } else {
-            this.querySize!.textContent = `Query result - ${this.statDataArray.length} counts.`;
-            this.progressLoad!.loading = false;
-          }
-        });
+        this.executeSql(this.selector!.value);
       } else {
         this.querySize!.textContent = this.querySqlErrorText;
         this.queryTableEl!.dataSource = [];
@@ -152,6 +161,29 @@ export class SpQuerySQL extends BaseElement {
     }
   };
 
+  private executeSql(sql: string): void {
+    this.progressLoad!.loading = true;
+    queryCustomizeSelect(sql).then((resultList): void => {
+      if (resultList && resultList.length > 0) {
+        this.statDataArray = resultList;
+        this.keyList = Object.keys(resultList[0]);
+        this.querySize!.textContent = `Query result - ${this.statDataArray.length} counts.`;
+        this.initDataElement();
+        this.response!.appendChild(this.queryTableEl!);
+        this.setPageNationTableEl();
+        setTimeout(() => {
+          if (this.parentElement?.clientHeight !== 0) {
+            this.queryTableEl!.style.height = '100%';
+            this.queryTableEl!.reMeauseHeight();
+          }
+        }, 300);
+      } else {
+        this.querySize!.textContent = `Query result - ${this.statDataArray.length} counts.`;
+        this.progressLoad!.loading = false;
+      }
+    });
+  }
+
   private setPageNationTableEl(): void {
     let that = this;
     let timeOutTs: number = 200;
@@ -159,6 +191,7 @@ export class SpQuerySQL extends BaseElement {
     setTimeout(() => {
       let total = this.statDataArray.length;
       if (total > maxPageSize) {
+        that.pagination!.style.display = 'block';
         that.pagination!.style.opacity = '1';
         new PageNation(this.pagination, {
           current: 1,
@@ -195,7 +228,8 @@ export class SpQuerySQL extends BaseElement {
       return false;
     } else {
       let queryNormalLength = 15;
-      if (this.selector!.value.length < queryNormalLength ||
+      if (
+        this.selector!.value.length < queryNormalLength ||
         !this.selector?.value.toLowerCase().trim().startsWith('select')
       ) {
         this.querySqlErrorText = `Query result - (Error):  
@@ -237,7 +271,24 @@ export class SpQuerySQL extends BaseElement {
     this.selector!.addEventListener('input', this.inputSqlListener);
     this.selector!.addEventListener('change', this.inputSqlListener);
     this.selector!.addEventListener('keydown', this.deleteSqlListener);
+    this.shadowRoot
+      ?.querySelectorAll<LitIcon>('.runButton')
+      .forEach((it) => it.addEventListener('click', this.runSqlListener));
   }
+
+  runSqlListener = (e: Event): void => {
+    this.scrollTo(0, 0);
+    this.statDataArray = [];
+    this.keyList = [];
+    this.response!.innerHTML = '';
+    this.queryTableEl!.innerHTML = '';
+    this.pagination!.style.display = 'none';
+    let previousSibling = (e.target as HTMLDivElement).previousElementSibling;
+    if (previousSibling && previousSibling instanceof HTMLDivElement) {
+      const content = previousSibling.textContent;
+      this.executeSql(content!);
+    }
+  };
 
   private deleteSqlListener = (event: KeyboardEvent): void => {
     if (event.key === 'Backspace') {
@@ -339,7 +390,6 @@ export class SpQuerySQL extends BaseElement {
         }
         .response{
           flex-grow: 1;
-          margin-bottom: 1%;
           display: flex;
           flex-direction: column;
           min-height: inherit;
@@ -351,6 +401,10 @@ export class SpQuerySQL extends BaseElement {
           overflow-x: visible;
           margin-bottom: 1%;
           border-radius: 16px;
+          background-color: #F6F6F6;
+          padding: 0px 0px 0px 30px;
+          min-height: inherit;
+          max-height: 70vh;
         }
         p{
           display: table-cell;
@@ -407,25 +461,65 @@ export class SpQuerySQL extends BaseElement {
         .pagination-box {
           opacity: 0;
         }
+        .sql-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 10px 0px;
+          font-size: 14px;
+        }
+        .sql {
+          width: 90%;
+        }
+        .query-sql {
+          background-color: var(--dark-background3,#FFFFFF);
+          padding: 1% 2%;
+          margin: 0% 2.5% 0 2.5%;
+          border-bottom-left-radius: 16px;
+          border-bottom-right-radius: 16px;
+          width: 90%;
+        }
+        .query-result {
+          background-color: var(--dark-background3,#FFFFFF);
+          padding: 1% 2%;
+          margin: 2% 2.5% 0 2.5%;
+          border-top-left-radius: 16px;
+          border-top-right-radius: 16px;
+          width: 90%;
+        }
+        #sqlList {
+          background-color:#F6F6F6;
+          padding: 10px;
+          border-radius: 16px;
+        }
+        lit-icon {
+          text-overflow: ellipsis;
+        }
+        .runButton:hover {
+           cursor: pointer;
+        }
         </style>
         <div class="query">
             <div class="query-message request">
-                <p class="query_select" style="color: #999999">Enter query and press cmd/ctrl + Enter</p>
+                <p class="query_select" style="color: #999999">Enter query and press command/ctrl + Enter</p>
                 <textarea class="sql-select"></textarea>
                 <lit-progress-bar class="load-query-sql"></lit-progress-bar>
             </div>
-            <div class="query-message response">
-                   <div style="display: flex;justify-content: space-between">
-                       <p class="query_size" style="color: #999999">Query result - 0 counts</p>
-                       <div style="display: flex; align-items: center">
-                           <button id="copy-button" class="button-option">Copy as.tsv</button>
-                           <button id="close-button" class="button-option">Close</button>
-                        </div>
-                    </div>
-                   <div id="dataResult"></div>
-                   <pagination-box class="pagination-box"></pagination-box>
-            </div>
-        </div>
+              <div class="response query-result">
+                 <div style="display: flex;justify-content: space-between">
+                     <p class="query_size" style="color: #999999">Query result - 0 counts</p>
+                     <div style="display: flex; align-items: center">
+                         <button id="copy-button" class="button-option">Copy as.tsv</button>
+                         <button id="close-button" class="button-option">Close</button>
+                      </div>
+                  </div>
+                 <div id="dataResult">
+                    <lit-table></lit-table>
+                  </div>
+                 <pagination-box class="pagination-box"></pagination-box>
+              </div>
+              <div class="query-sql">
+                <div id="sqlList"></div>
+              </div>
         `;
   }
 }

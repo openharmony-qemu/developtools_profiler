@@ -43,7 +43,7 @@ TraceStreamerConfig::TraceStreamerConfig()
         {MEM_VM_SWAP, MEM_INFO_SWAP_DESC},      {MEM_VM_LOCKED, MEM_INFO_VIRT_DESC},
         {MEM_VM_HWM, MEM_INFO_HWM_DESC},        {MEM_OOM_SCORE_ADJ, MEM_INFO_SCORE_ADJ_DESC},
         {MEM_PURG_SUM, MEM_INFO_PURG_SUM_DESC}, {MEM_PURG_PIN, MEM_INFO_PURG_PIN_DESC},
-        {MEM_GL_PSS, MEM_INFO_GL_PSS_DESC},
+        {MEM_GL_PSS, MEM_INFO_GL_PSS_DESC},     {MEM_GRAPH_PSS, MEM_INFO_GRAPH_PSS_DESC},
     };
 
     InitSysMemMap();
@@ -180,8 +180,9 @@ void TraceStreamerConfig::InitEventNameMap()
                      {TRACE_DMAMEM, TRACE_ACTION_DMAMEM},
                      {TRACE_GPU_PROCESS_MEM, TRACE_ACTION_GPU_PROCESS_MEM},
                      {TRACE_GPU_WINDOW_MEM, TRACE_ACTION_GPU_WINDOW_MEM},
+                     {TRACE_WINDOW_MANAGER_SERVICE, TRACE_ACTION_WINDOW_MANAGER_SERVICE},
                      {TRACE_VSYNC, TRACE_ACTION_VSYNC},
-                     {TRACE_ONVSYNC, TRACE_ACTION_ONVSYNC},
+                     {TRACE_ON_DO_COMPOSITION, TRACE_ACTION_ON_DO_COMPOSITION},
                      {TRACE_FRAMEQUEUE, TRACE_ACTION_FRAMEQUEUE},
                      {TRACE_EVENT_EBPF, TRACE_ACTION_EBPF},
                      {TRACE_EVENT_EBPF_FILE_SYSTEM, TRACE_ACTION_EBPF_FILE_SYSTEM},
@@ -1227,6 +1228,16 @@ void TraceStreamerConfig::InitSecurityMap()
             },
         },
         {
+            TRACE_WINDOW_MANAGER_SERVICE,
+            {
+                {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},
+                {STAT_EVENT_NOTMATCH, STAT_SEVERITY_LEVEL_INFO},
+                {STAT_EVENT_NOTSUPPORTED, STAT_SEVERITY_LEVEL_WARN},
+                {STAT_EVENT_DATA_INVALID, STAT_SEVERITY_LEVEL_ERROR},
+            },
+        },
+        {
             TRACE_VSYNC,
             {
                 {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
@@ -1237,7 +1248,7 @@ void TraceStreamerConfig::InitSecurityMap()
             },
         },
         {
-            TRACE_ONVSYNC,
+            TRACE_ON_DO_COMPOSITION,
             {
                 {STAT_EVENT_RECEIVED, STAT_SEVERITY_LEVEL_INFO},
                 {STAT_EVENT_DATA_LOST, STAT_SEVERITY_LEVEL_ERROR},

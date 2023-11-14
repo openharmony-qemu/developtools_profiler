@@ -35,18 +35,18 @@ message SmapsInfo {
     string end_addr = 2;
     string permission = 3;
     string path = 4;
-    uint64 size = 5;
-    uint64 rss = 6;
-    uint64 pss = 7;
+    uint64 size = 5; // kb
+    uint64 rss = 6; // kb
+    uint64 pss = 7; // kb
     double reside = 8;
-    uint64 dirty = 9;
-    uint64 swapper = 10;
-    uint64 private_clean = 11;
-    uint64 private_dirty = 12;
-    uint64 shared_clean = 13;
-    uint64 shared_dirty = 14;
-    uint64 swap = 15;
-    uint64 swap_pss = 16;
+    uint64 dirty = 9; // kb
+    uint64 swapper = 10; // kb
+    uint64 private_clean = 11; // kb
+    uint64 private_dirty = 12; // kb
+    uint64 shared_clean = 13; // kb
+    uint64 shared_dirty = 14; // kb
+    uint64 swap = 15; // kb
+    uint64 swap_pss = 16; // kb
     string category = 17;
 };
 
@@ -80,6 +80,7 @@ message ProcessMemoryInfo {
     uint64 purg_pin_kb = 15;
     // data from hidumper
     uint64 gl_pss_kb = 16;
+    uint64 graph_pss_kb = 17;
 }
 
 message AshmemInfo {
@@ -108,7 +109,6 @@ message DmaInfo {
     string buf_name = 8;
     string exp_name = 9;
 }
-
 message GpuProcessInfo {
     string addr = 1;
     int32 pid = 2;
@@ -139,6 +139,31 @@ message GpuDumpInfo {
     uint64 gpu_purgeable_size = 4; // bytes
 }
 
+message RSImageDumpInfo {
+    // data from hidumper
+    uint64 size = 1; // bytes
+    string type = 2;
+    int32 pid = 3;
+    string surface_name = 4;
+}
+
+message CpuDumpInfo {
+    // data from hidumper
+    uint64 total_cpu_memory_size = 1; // bytes
+}
+
+message WindowManagerServiceInfo {
+    // data from hidumper
+    string window_name = 1;
+    int32 pid = 2;
+}
+
+message ProfileMemInfo {
+    // /sys/kernel/debug/mali0/ctx/$(pidof xxx)_0/mem_profile
+    string channel = 1;
+    uint64 total_memory_size = 2; // bytes
+}
+
 message MemoryData {
     repeated ProcessMemoryInfo processesinfo = 1;
     repeated SysMeminfo meminfo = 2;
@@ -150,4 +175,8 @@ message MemoryData {
     repeated GpuDumpInfo gpudumpinfo = 8;
     uint64 gpu_limit_size = 9; // bytes
     uint64 gpu_used_size = 10; // bytes
+    repeated RSImageDumpInfo rsdumpinfo = 11;
+    repeated CpuDumpInfo cpudumpinfo = 12;
+    repeated WindowManagerServiceInfo windowinfo = 13;
+    repeated ProfileMemInfo profilememinfo = 14;
 }

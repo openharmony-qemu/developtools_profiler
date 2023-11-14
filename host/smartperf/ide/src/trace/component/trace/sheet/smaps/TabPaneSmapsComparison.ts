@@ -13,21 +13,22 @@
  * limitations under the License.
  */
 import { element } from '../../../../../base-ui/BaseElement.js';
-import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
+import { type LitSelect } from '../../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { SelectionParam } from '../../../../bean/BoxSelection.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabSmapsStatisticData } from '../../../../database/SqlLite.js';
 import { resizeObserverFromMemory } from '../SheetUtils.js';
-import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
+import { type TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 import { TabPaneSmapsStatistics } from './TabPaneSmapsStatistics.js';
-import { SmapsType } from '../../../../bean/SmapsStruct.js';
+import { type SmapsType } from '../../../../bean/SmapsStruct.js';
 
 @element('tabpane-smaps-comparison')
 export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
   private smapsCompariosnTable: LitTable | null | undefined;
   private filterEl: TabPaneJsMemoryFilter | undefined | null;
   private selectEl: LitSelect | undefined | null;
+  private selectionParam: SelectionParam | undefined;
 
   public initElements(): void {
     this.smapsCompariosnTable = this.shadowRoot?.querySelector<LitTable>('#tb-smaps-comparison');
@@ -40,10 +41,13 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     });
   }
   public setData(data: SelectionParam | any, dataList: any): void {
+    if (data == this.selectionParam) {
+      return;
+    }
+    this.selectionParam = data;
     //@ts-ignore
-    this.smapsCompariosnTable?.shadowRoot?.querySelector('.table')?.style?.height = `${
-      this.parentElement!.clientHeight - 45
-    }px`;
+    this.smapsCompariosnTable?.shadowRoot?.querySelector('.table')?.style?.height = `${this.parentElement!.clientHeight - 45
+      }px`;
     this.smapsCompariosnTable!.loading = true;
     this.init(this.tabTitle!);
     let fileArr: any[] = [];
@@ -174,7 +178,7 @@ export class TabPaneSmapsComparison extends TabPaneSmapsStatistics {
     </style>
     <div style="overflow: auto;" class="d-box">
         <lit-table id="tb-smaps-comparison" class="smaps-comparison-table" style="height: auto;" tree>
-            <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order>
+            <lit-table-column width="250px" title="Type" data-index="typeName" key="typeName" align="flex-start" order retract>
             </lit-table-column>
             <lit-table-column width="150px" title="Path" data-index="path" key="path" align="flex-start" >
             </lit-table-column>

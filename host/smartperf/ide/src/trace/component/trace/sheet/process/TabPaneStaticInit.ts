@@ -70,7 +70,7 @@ export class TabPaneStaticInit extends BaseElement {
               }
             } else {
               map.set(item.pid!, {
-                name: item.process || `Process ${ item.pid }`,
+                name: item.process || `Process ${item.pid}`,
                 dur: item.dur || 0,
                 durStr: '',
                 ratio: `100%`,
@@ -137,7 +137,8 @@ export class TabPaneStaticInit extends BaseElement {
   }
 
   sortByColumn(soDetail: any): void {
-    let compare = (soA: SoTreeItem, soB: SoTreeItem): number => (soDetail.sort === 1 ? soA.dur - soB.dur : soB.dur - soA.dur);
+    let compare = (soA: SoTreeItem, soB: SoTreeItem): number =>
+      soDetail.sort === 1 ? soA.dur - soB.dur : soB.dur - soA.dur;
     this.staticinitSource.forEach((it) => it.children?.sort(compare));
     this.staticinitSource.sort(compare);
     this.staticinitTbl!.recycleDataSource = this.staticinitSource;

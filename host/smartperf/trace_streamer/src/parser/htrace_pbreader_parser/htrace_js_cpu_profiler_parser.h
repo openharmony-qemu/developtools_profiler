@@ -31,7 +31,23 @@ class HtraceJsCpuProfilerParser : public EventParserBase, public HtracePluginTim
 public:
     HtraceJsCpuProfilerParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceJsCpuProfilerParser(){};
-    void ParseJsCpuProfiler(std::string result);
+    void ParseJsCpuProfiler(std::string result, uint64_t startTimeSnap, uint64_t endTimeSnap);
+    auto GetUpdateJson()
+    {
+        return updatedJson_;
+    }
+
+private:
+    void ParseNodeData(const json& jMessage);
+    uint32_t ParseSampleData(const json& jMessage,
+                             uint64_t& sampleEndTime,
+                             uint64_t& startTime,
+                             uint64_t startTimeSnap,
+                             uint64_t endTimeSnap);
+
+private:
+    json updatedJson_;
+    uint64_t startTime_ = INVALID_UINT64;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

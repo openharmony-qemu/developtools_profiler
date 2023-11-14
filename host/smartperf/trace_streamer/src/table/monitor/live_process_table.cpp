@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index {
+enum class Index : int32_t {
     TS = 0,
     DUR,
     CPU_TIME,
@@ -67,60 +67,60 @@ LiveProcessTable::Cursor::~Cursor() {}
 
 int32_t LiveProcessTable::Cursor::Column(int32_t column) const
 {
-    switch (column) {
-        case TS: {
+    switch (static_cast<Index>(column)) {
+        case Index::TS: {
             sqlite3_result_int64(context_,
                                  static_cast<int64_t>(liveProcessDetailDataObj_.TimeStampData()[CurrentRow()]));
             break;
         }
-        case DUR: {
+        case Index::DUR: {
             sqlite3_result_int64(context_, static_cast<int64_t>(liveProcessDetailDataObj_.Durs()[CurrentRow()]));
             break;
         }
-        case CPU_TIME: {
+        case Index::CPU_TIME: {
             sqlite3_result_int64(context_, static_cast<int64_t>(liveProcessDetailDataObj_.CpuTimes()[CurrentRow()]));
             break;
         }
-        case PROCESS_ID: {
+        case Index::PROCESS_ID: {
             sqlite3_result_int(context_, static_cast<int32_t>(liveProcessDetailDataObj_.ProcessID()[CurrentRow()]));
             break;
         }
-        case PROCESS_NAME: {
+        case Index::PROCESS_NAME: {
             sqlite3_result_text(context_, liveProcessDetailDataObj_.ProcessName()[CurrentRow()].c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
         }
-        case PARENT_PROCESS_ID: {
+        case Index::PARENT_PROCESS_ID: {
             sqlite3_result_int(context_,
                                static_cast<int32_t>(liveProcessDetailDataObj_.ParentProcessID()[CurrentRow()]));
             break;
         }
-        case UID: {
+        case Index::UID: {
             sqlite3_result_int(context_, static_cast<int32_t>(liveProcessDetailDataObj_.Uid()[CurrentRow()]));
             break;
         }
-        case USER_NAME: {
+        case Index::USER_NAME: {
             sqlite3_result_text(context_, liveProcessDetailDataObj_.UserName()[CurrentRow()].c_str(), STR_DEFAULT_LEN,
                                 nullptr);
             break;
         }
-        case CPU_USAGE: {
+        case Index::CPU_USAGE: {
             sqlite3_result_double(context_, liveProcessDetailDataObj_.CpuUsage()[CurrentRow()]);
             break;
         }
-        case PSS_INFO: {
+        case Index::PSS_INFO: {
             sqlite3_result_int(context_, static_cast<int32_t>(liveProcessDetailDataObj_.PssInfo()[CurrentRow()]));
             break;
         }
-        case THREAD_SUM: {
+        case Index::THREAD_SUM: {
             sqlite3_result_int(context_, static_cast<int32_t>(liveProcessDetailDataObj_.Threads()[CurrentRow()]));
             break;
         }
-        case DISK_WRITES: {
+        case Index::DISK_WRITES: {
             sqlite3_result_int(context_, static_cast<int32_t>(liveProcessDetailDataObj_.DiskWrites()[CurrentRow()]));
             break;
         }
-        case DISK_READS: {
+        case Index::DISK_READS: {
             sqlite3_result_int(context_, static_cast<int32_t>(liveProcessDetailDataObj_.DiskReads()[CurrentRow()]));
             break;
         }

@@ -31,7 +31,7 @@ HtraceHiLogParser::~HtraceHiLogParser()
     TS_LOGI("hilog ts MIN:%llu, MAX:%llu", static_cast<unsigned long long>(GetPluginStartTime()),
             static_cast<unsigned long long>(GetPluginEndTime()));
 }
-void HtraceHiLogParser::Parse(ProtoReader::BytesView tracePacket)
+void HtraceHiLogParser::Parse(ProtoReader::BytesView tracePacket, bool& haveSplitSeg)
 {
     ProtoReader::HilogInfo_Reader hilogInfo(tracePacket.data_, tracePacket.size_);
     if (!hilogInfo.has_info()) {
@@ -59,6 +59,14 @@ void HtraceHiLogParser::Parse(ProtoReader::BytesView tracePacket)
         auto timeStamp = logDetails.tv_nsec() + logDetails.tv_sec() * SEC_TO_NS;
         auto newTimeStamp = streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, timeStamp);
         UpdatePluginTimeRange(TS_CLOCK_REALTIME, timeStamp, newTimeStamp);
+        if (traceDataCache_->isSplitFile_) {
+            if (newTimeStamp >= traceDataCache_->SplitFileMinTime() &&
+                newTimeStamp <= traceDataCache_->SplitFileMaxTime()) {
+                haveSplitSeg = true;
+                return;
+            }
+            continue;
+        }
         DataIndex levelData = traceDataCache_->dataDict_.GetStringIndex(iter->second.c_str());
         DataIndex logTag = traceDataCache_->dataDict_.GetStringIndex(logDetails.tag().ToStdString());
         traceDataCache_->GetHilogData()->AppendNewLogInfo(curLineSeq, newTimeStamp, logDetails.pid(), logDetails.tid(),

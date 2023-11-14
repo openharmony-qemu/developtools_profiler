@@ -30,6 +30,9 @@ HtraceSymbolsDetailParser::HtraceSymbolsDetailParser(TraceDataCache* dataCache, 
 HtraceSymbolsDetailParser::~HtraceSymbolsDetailParser() = default;
 void HtraceSymbolsDetailParser::Parse(ProtoReader::BytesView tracePacket)
 {
+    if (traceDataCache_->isSplitFile_) {
+        return;
+    }
     ProtoReader::TracePluginResult_Reader reader((const uint8_t*)(tracePacket.data_), tracePacket.size_);
     if (!reader.has_symbols_detail()) {
         return;

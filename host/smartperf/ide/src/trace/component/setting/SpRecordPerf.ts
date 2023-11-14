@@ -650,6 +650,16 @@ export class SpRecordPerf extends BaseElement {
     ];
   }
 
+  connectedCallback(): void {
+    let traceMode = this.shadowRoot!.querySelector('#traceMode') as HTMLDivElement;
+    let isLongTrace = SpApplication.isLongTrace;
+    if (isLongTrace) {
+      traceMode!.style.display = 'block';
+    } else {
+      traceMode!.style.display = 'none';
+    }
+  }
+
   initHtml(): string {
     return `
         <style>
@@ -794,9 +804,12 @@ export class SpRecordPerf extends BaseElement {
         }
         </style>
         <div class="root">
-            <div class="configList record-perf-config">
-            </div>
-            <button id ="addOptions">Advance Options</button>
+            <div class="record-perf-title" id="traceMode" style="text-align:left;">
+            <span style='color: red'>Long trace mode! If current data Trace is too large, it may not open!</span>
+          </div>
+          <div class="configList record-perf-config">
+          </div>
+          <button id ="addOptions">Advance Options</button>
         </div>
         `;
   }

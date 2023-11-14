@@ -1,0 +1,879 @@
+diff --git a/BUILD.gn b/BUILD.gn
+index 7f6d1a5..f6a020e 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -140,6 +140,7 @@ sources_platform_linux = [
+   "./src/subcommand_stat.cpp",
+   "./src/subcommand_record.cpp",
+   "./src/subcommand_list.cpp",
++  "./src/unique_stack_table.cpp",
+ ]
+ 
+ common_deps = [
+diff --git a/include/perf_event_record.h b/include/perf_event_record.h
+index ef53eee..5630375 100644
+--- a/include/perf_event_record.h
++++ b/include/perf_event_record.h
+@@ -32,6 +32,7 @@
+ #include "mem_map_item.h"
+ #include "perf_record_format.h"
+ #include "utilities.h"
++#include "unique_stack_table.h"
+ 
+ namespace OHOS {
+ namespace Developtools {
+@@ -237,7 +238,8 @@ public:
+     // used for data_.ips replace (ReplaceWithCallStack)
+     std::vector<u64> ips_;
+     std::vector<CallFrame> callFrames_;
+-
++    StackId StackId_;
++    bool removeStack_;
+     // referenced input(p) in PerfRecordSample, require caller keep input(p) together
+     PerfRecordSample(uint8_t *p, const perf_event_attr &attr);
+     bool GetBinary(std::vector<uint8_t> &buf) const override;
+diff --git a/include/perf_file_format.h b/include/perf_file_format.h
+index 4d76db8..96b269d 100644
+--- a/include/perf_file_format.h
++++ b/include/perf_file_format.h
+@@ -59,8 +59,8 @@ enum class FEATURE {
+     HIPERF_WORKLOAD_CMD,
+     HIPERF_RECORD_TIME,
+     HIPERF_CPU_OFF,
+-    HIPERF_LAST_FEATURE = HIPERF_CPU_OFF,
+-
++    HIPERF_FILES_UNISTACK_TABLE,
++    HIPERF_LAST_FEATURE = HIPERF_FILES_UNISTACK_TABLE,
+     FEATURE_MAX_BITS = 256,
+ };
+ 
+@@ -216,6 +216,17 @@ private:
+     const size_t MAX_SYMBOLS_NUMBER = 10000;
+ };
+ 
++class PerfFileSectionUniStackTable : public PerfFileSection {
++public:
++    PerfFileSectionUniStackTable(FEATURE id,
++        const ProcessStackMap *table)
++        : PerfFileSection(id), processStackTable_(table) {}
++private:
++    const ProcessStackMap *processStackTable_;
++    size_t GetSize();
++    bool GetBinary(char *buf, size_t size);
++};
++
+ // NRCPUS: A structure defining the number of CPUs.
+ class PerfFileSectionNrCpus : public PerfFileSection {
+     uint32_t nrCpusAvailable_; /* CPUs not yet onlined */
+diff --git a/include/perf_file_writer.h b/include/perf_file_writer.h
+index 1bb32b9..66a19c6 100644
+--- a/include/perf_file_writer.h
++++ b/include/perf_file_writer.h
+@@ -52,6 +52,7 @@ public:
+     bool AddU64Feature(FEATURE feature, uint64_t v);
+     bool AddBoolFeature(FEATURE feature);
+     bool AddSymbolsFeature(const std::vector<std::unique_ptr<SymbolsFile>> &);
++    bool AddUniStackTableFeature(const ProcessStackMap *table);
+     // close file
+     bool Close();
+ 
+diff --git a/include/subcommand_record.h b/include/subcommand_record.h
+index 835950c..126f217 100644
+--- a/include/subcommand_record.h
++++ b/include/subcommand_record.h
+@@ -166,6 +166,8 @@ public:
+         "           pause: pause sampling\n"
+         "           resume: resume sampling\n"
+         "           stop: stop sampling\n"
++        "   --dedup_stack\n"
++        "         Remove duplicated stacks in perf record, conflicts with -a, only restrain using with -p\n"
+         )
+     // clang-format on
+     {
+@@ -241,6 +243,7 @@ private:
+     std::string controlCmd_ = {};
+     bool isFifoServer_ = false;
+     bool isFifoClient_ = false;
++    bool dedupStack_ = false;
+     bool ProcessControl();
+     bool CreateFifoServer();
+     bool SendFifoAndWaitReply(const std::string &cmd, const std::chrono::milliseconds &timeOut);
+@@ -281,7 +284,7 @@ private:
+ #endif
+ 
+     bool CollectionSymbol(std::unique_ptr<PerfEventRecord> record);
+-
++    void CollectSymbol(PerfRecordSample *sample);
+     bool SetPerfLimit(const std::string& file, int value, std::function<bool (int, int)> const& cmd,
+         const std::string& param);
+     bool SetPerfCpuMaxPercent();
+@@ -299,8 +302,8 @@ private:
+ 
+     VirtualRuntime virtualRuntime_;
+ #if USE_COLLECT_SYMBOLIC
+-    std::unordered_set<uint64_t> kernelSymbolsHits_;
+-    std::unordered_map<pid_t, std::unordered_set<uint64_t>> userSymbolsHits_;
++    kSymbolsHits kernelSymbolsHits_;
++    uSymbolsHits userSymbolsHits_;
+     void SymbolicHits();
+ #endif
+ 
+diff --git a/include/unique_stack_table.h b/include/unique_stack_table.h
+new file mode 100644
+index 0000000..babae1d
+--- /dev/null
++++ b/include/unique_stack_table.h
+@@ -0,0 +1,135 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef HIEPRF_UNIQUE_STACK_TABLE_H
++#define HIEPRF_UNIQUE_STACK_TABLE_H
++#include "utilities.h"
++#include <cinttypes>
++#include <linux/perf_event.h>
++#include <string>
++namespace OHOS {
++namespace Developtools {
++namespace HiPerf {
++
++#define ADDR_BIT_LENGTH        40
++#define IDX_BIT_LENGTH         20
++#define KERNEL_FLAG_BIT_LENGTH 4
++#define COLLISION_GROWTH_RATE  3
++#define EXPAND_FACTOR          2
++#define NR_BIT_LENGTH          44
++// 1000 4kpage 4M RAM
++constexpr uint32_t INITIAL_TABLE_SIZE = 4 * 1024 * 1024;
++constexpr uint32_t MAX_TABLE_SIZE = 16 * 1024 * 1024;
++constexpr uint64_t IP_IN_KERNEL = 1ull << 63;
++constexpr uint64_t HEAD_NODE_INDEX = 0;
++// FFFFFF0000000000
++constexpr uint64_t KERNEL_PREFIX = 0xFFFFFFull << 40;
++
++// align
++#pragma pack(push, 4)
++
++union Node {
++    uint64_t value;
++    struct {
++        uint64_t ip : ADDR_BIT_LENGTH;
++        uint64_t prevIdx : IDX_BIT_LENGTH;
++        uint64_t inKernel : KERNEL_FLAG_BIT_LENGTH;
++    } section;
++};
++
++union StackId {
++    uint64_t value;
++    struct {
++        uint64_t id : IDX_BIT_LENGTH;
++        uint64_t nr : NR_BIT_LENGTH;
++    } section;
++};
++
++#pragma pack(pop)
++static_assert(sizeof(Node) == 8, "Node size must be 8 byte");
++
++class UniqueStackTable {
++public:
++    bool Init(uint32_t size);
++    UniqueStackTable(pid_t pid) : pid(pid)
++    {
++        Init(INITIAL_TABLE_SIZE);
++    }
++
++    UniqueStackTable() : pid(getpid())
++    {
++        Init(INITIAL_TABLE_SIZE);
++    }
++
++    UniqueStackTable(pid_t pid, uint32_t size) : pid(pid)
++    {
++        Init(size);
++    }
++    // static instance can not be free.
++    ~UniqueStackTable() {
++        if (table != nullptr) {
++            free(table);
++        }
++        table = nullptr;
++    }
++
++    bool PutIpInSlot(uint64_t thisIp, uint64_t &prevIdx);
++    bool PutIpsInTable(StackId *stackId, u64 *ips, u64 nr);
++    bool GetIpsByStackId(StackId stackId, u64 *ips);
++    size_t GetWriteSize();
++    uint32_t GetPid()
++    {
++        return pid;
++    }
++
++    uint32_t GetTabelSize()
++    {
++        return tableSize;
++    }
++
++    uint32_t GetUntouchableNode()
++    {
++        return untouchableNode;
++    }
++
++    std::vector<uint32_t>& GetUsedIndexes()
++    {
++        return usedIndexes_;
++    }
++
++    Node* GetHeadNode()
++    {
++        return table;
++    }
++private:
++    u32 pid;
++    uint32_t tableSize;
++    uint32_t maxSize = MAX_TABLE_SIZE;
++    uint32_t numNodes;
++    Node *table = nullptr;
++    uint32_t untouchableNode = 0;
++    uint8_t maxCollide = 22;
++    double loadFactor = 0.66;
++    std::vector<uint32_t> usedIndexes_;
++    uint64_t slots;
++    uint64_t hashMultiplier;
++    bool EnsureCapacity();
++    bool Resize();
++};
++
++using ProcessStackMap = std::map<pid_t, std::shared_ptr<UniqueStackTable>>;
++} // namespace HiPerf
++} // namespace Developtools
++} // namespace OHOS
++#endif // HIEPRF_UNIQUE_STACK_TABLE_H
+\ No newline at end of file
+diff --git a/include/virtual_runtime.h b/include/virtual_runtime.h
+index c42c9e3..f8f62dc 100644
+--- a/include/virtual_runtime.h
++++ b/include/virtual_runtime.h
+@@ -21,7 +21,6 @@
+ #include "perf_event_record.h"
+ #include "symbols_file.h"
+ #include "virtual_thread.h"
+-
+ namespace OHOS {
+ namespace Developtools {
+ namespace HiPerf {
+@@ -37,7 +36,8 @@ DSO)
+ Then find the corresponding symbol in the corresponding elf symbol file according to the offset
+ recorded in the corresponding mmap.
+ */
+-
++using kSymbolsHits = std::unordered_set<uint64_t>;
++using uSymbolsHits = std::unordered_map<pid_t, std::unordered_set<uint64_t>>;
+ class VirtualRuntime {
+ public:
+     VirtualRuntime(bool onDevice = true);
+@@ -47,8 +47,10 @@ public:
+     // case 1. some mmap will be create when it read mmaps for each new process (from record sample)
+ 
+     using RecordCallBack = std::function<bool(std::unique_ptr<PerfEventRecord>)>;
+-    void SetRecordMode(RecordCallBack recordCallBack);
++    using CollectSymbolCallBack = std::function<void(PerfRecordSample*)>;
+ 
++    void SetRecordMode(RecordCallBack recordCallBack);
++    void SetCollectSymbolCallBack(CollectSymbolCallBack collectSymboolCallBack);
+     // this both used in report and record follow
+     // it process the record, and rebuild the trhread maps
+     // It internally determines whether to go to the Record process (which will generate virtual
+@@ -76,6 +78,11 @@ public:
+         return symbolsFiles_;
+     }
+ 
++    const ProcessStackMap* GetUniStackTable()
++    {
++        return &processStackMap_;
++    }
++
+     void SetCallStackExpend(size_t mergeLevel = 0)
+     {
+         callstackMergeLevel_ = mergeLevel;
+@@ -87,6 +94,11 @@ public:
+         disableUnwind_ = disableUnwind;
+     }
+ 
++    void SetDedupStack()
++    {
++        dedupStack_ = true;
++    }
++
+     const Symbol GetSymbol(uint64_t ip, pid_t pid, pid_t tid,
+                            const perf_callchain_context &context = PERF_CONTEXT_MAX);
+ 
+@@ -101,7 +113,8 @@ public:
+     void UpdateFromPerfData(const std::vector<SymbolFileStruct> &);
+     void UnwindFromRecord(PerfRecordSample &recordSample);
+     std::string ReadThreadName(pid_t tid, bool isThread);
+-
++    void CollectDedupSymbol(kSymbolsHits &kernelSymbolsHits,
++                            uSymbolsHits &userSymbolsHits);
+     // debug time
+ #ifdef HIPERF_DEBUG_TIME
+     std::chrono::microseconds updateSymbolsTimes_ = std::chrono::microseconds::zero();
+@@ -120,13 +133,16 @@ public:
+ 
+ private:
+     bool disableUnwind_ = true;
++    bool dedupStack_ = false;
+     size_t callstackMergeLevel_ = 1;
+     CallStack callstack_;
+     // pid map with user space thread
+     std::map<pid_t, VirtualThread> userSpaceThreadMap_;
+     // not pid , just memmap
+     std::vector<MemMapItem> kernelSpaceMemMaps_;
++    ProcessStackMap processStackMap_;
+     RecordCallBack recordCallBack_;
++    CollectSymbolCallBack collectSymbolCallBack_;
+     std::vector<std::unique_ptr<SymbolsFile>> symbolsFiles_;
+     enum SymbolCacheLimit : std::size_t {
+         KERNEL_SYMBOL_CACHE_LIMIT = 4000,
+@@ -144,7 +160,7 @@ private:
+     void UpdateFromRecord(PerfRecordMmap &recordMmap);
+     void UpdateFromRecord(PerfRecordMmap2 &recordMmap2);
+     void UpdateFromRecord(PerfRecordComm &recordComm);
+-
++    void DedupFromRecord(PerfRecordSample *recordSample);
+     // threads
+     VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
+     VirtualThread &CreateThread(pid_t pid, pid_t tid);
+diff --git a/interfaces/innerkits/native/include/hiperf_client.h b/interfaces/innerkits/native/include/hiperf_client.h
+index 84ad586..e7f2d25 100644
+--- a/interfaces/innerkits/native/include/hiperf_client.h
++++ b/interfaces/innerkits/native/include/hiperf_client.h
+@@ -69,6 +69,7 @@ static const std::string ArgAppPackage = "--app";
+ static const std::string ArgClockId = "--clockid";
+ static const std::string ArgVecBranchSampleTypes = "-j";
+ static const std::string ArgMmapPages = "-m";
++static const std::string ArgDedupStack = "--dedup_stack";
+ 
+ static const int DEFAULT_DURATION_TIME = 10;
+ static const int DEFAULT_FREQUENCY_TIME = 100;
+diff --git a/src/perf_event_record.cpp b/src/perf_event_record.cpp
+index fa8883d..43f3edf 100644
+--- a/src/perf_event_record.cpp
++++ b/src/perf_event_record.cpp
+@@ -305,7 +305,7 @@ bool PerfRecordSample::GetBinary(std::vector<uint8_t> &buf) const
+     PushToBinary2(sampleType_ & PERF_SAMPLE_CPU, p, data_.cpu, data_.res);
+     PushToBinary(sampleType_ & PERF_SAMPLE_PERIOD, p, data_.period);
+     PushToBinary(sampleType_ & PERF_SAMPLE_CALLCHAIN, p, data_.nr);
+-    if (data_.nr > 0) {
++    if (data_.nr > 0 && !removeStack_) {
+         std::copy(data_.ips, data_.ips + data_.nr, reinterpret_cast<u64 *>(p));
+         p += data_.nr * sizeof(u64);
+     }
+@@ -330,7 +330,7 @@ bool PerfRecordSample::GetBinary(std::vector<uint8_t> &buf) const
+         p += data_.stack_size * sizeof(u8);
+         PushToBinary(true, p, data_.dyn_size);
+     }
+-
++    PushToBinary(removeStack_, p, StackId_.value);
+     return true;
+ }
+ 
+diff --git a/src/perf_file_format.cpp b/src/perf_file_format.cpp
+index 967a38e..e57dab5 100644
+--- a/src/perf_file_format.cpp
++++ b/src/perf_file_format.cpp
+@@ -221,6 +221,17 @@ size_t PerfFileSectionSymbolsFiles::GetSize()
+     return size;
+ }
+ 
++size_t PerfFileSectionUniStackTable::GetSize()
++{
++    size_t size = 0;
++    // section header info size
++    size += sizeof(uint32_t); // how many tables/process
++    for (auto it = processStackTable_->begin(); it != processStackTable_->end(); ++it) {
++        size += it->second->GetWriteSize();
++    }
++    return size;
++}
++
+ PerfFileSectionSymbolsFiles::PerfFileSectionSymbolsFiles(FEATURE id, const char *buf, size_t size)
+     : PerfFileSection(id)
+ {
+@@ -301,6 +312,28 @@ bool PerfFileSectionSymbolsFiles::GetBinary(char *buf, size_t size)
+     return true;
+ }
+ 
++bool PerfFileSectionUniStackTable::GetBinary(char *buf, size_t size)
++{
++    HLOG_ASSERT(size >= GetSize());
++    Init(buf, size);
++    Write(uint32_t(processStackTable_->size()));
++    for (auto it = processStackTable_->begin(); it != processStackTable_->end(); ++it) {
++        const auto &table = it->second;
++        Write(table->GetPid());
++        Write(table->GetTabelSize());
++        const auto &idxs = table->GetUsedIndexes();
++        Write(uint32_t(idxs.size()));
++        Node *head = table->GetHeadNode();
++        Node *node = nullptr;
++        for (const auto idx : idxs) {
++            node = head + idx;
++            Write(idx);
++            Write(node->value);
++        }
++    }
++    return true;
++}
++
+ PerfFileSectionNrCpus::PerfFileSectionNrCpus(FEATURE id, const char *buf, size_t size)
+     : PerfFileSection(id)
+ {
+diff --git a/src/perf_file_writer.cpp b/src/perf_file_writer.cpp
+index addd72b..f6a3d77 100644
+--- a/src/perf_file_writer.cpp
++++ b/src/perf_file_writer.cpp
+@@ -451,6 +451,15 @@ bool PerfFileWriter::AddU64Feature(FEATURE feature, uint64_t v)
+     return true;
+ }
+ 
++bool PerfFileWriter::AddUniStackTableFeature(const ProcessStackMap *table)
++{
++    const FEATURE feature = FEATURE::HIPERF_FILES_UNISTACK_TABLE;
++    featureSections_.emplace_back(
++        std::make_unique<PerfFileSectionUniStackTable>(feature, table));
++    header_.features[(int)feature / BITS_IN_BYTE] |= 1 << ((int)feature % BITS_IN_BYTE);
++    return true;
++}
++
+ bool PerfFileWriter::AddSymbolsFeature(
+     const std::vector<std::unique_ptr<SymbolsFile>> &symbolsFiles)
+ {
+diff --git a/src/subcommand_record.cpp b/src/subcommand_record.cpp
+index 75bd95e..ec429d7 100644
+--- a/src/subcommand_record.cpp
++++ b/src/subcommand_record.cpp
+@@ -266,7 +266,13 @@ bool SubCommandRecord::GetOptions(std::vector<std::string> &args)
+     if (!Option::GetOptionValue(args, "--control", controlCmd_)) {
+         return false;
+     }
+-
++    if (!Option::GetOptionValue(args, "--dedup_stack", dedupStack_)) {
++        return false;
++    }
++    if (targetSystemWide_ && dedupStack_) {
++        printf("-a option is conflict with --dedup_stack.\n");
++        return false;
++    }
+     if (!Option::GetOptionTrackedCommand(args, trackedCommand_)) {
+         return false;
+     }
+@@ -805,6 +811,12 @@ bool SubCommandRecord::PrepareVirtualRuntime()
+     // prepare from kernel and ko
+     virtualRuntime_.UpdateKernelSpaceMaps();
+     virtualRuntime_.UpdateKernelModulesSpaceMaps();
++    if (dedupStack_) {
++        virtualRuntime_.SetDedupStack();
++        auto collectSymbol =
++            std::bind(&SubCommandRecord::CollectSymbol, this, std::placeholders::_1);
++        virtualRuntime_.SetCollectSymbolCallBack(collectSymbol);
++    }
+     return true;
+ }
+ 
+@@ -1472,37 +1484,42 @@ bool SubCommandRecord::CollectionSymbol(std::unique_ptr<PerfEventRecord> record)
+     if (record->GetType() == PERF_RECORD_SAMPLE) {
+         PerfRecordSample *sample = static_cast<PerfRecordSample *>(record.get());
+ #if USE_COLLECT_SYMBOLIC
+-        perf_callchain_context context = record->inKernel() ? PERF_CONTEXT_KERNEL
+-                                                            : PERF_CONTEXT_USER;
+-        // if no nr use ip
+-        if (sample->data_.nr == 0) {
+-            if (context == PERF_CONTEXT_KERNEL) {
+-                kernelSymbolsHits_.insert(sample->data_.ip);
+-            } else {
+-                userSymbolsHits_[sample->data_.pid].insert(sample->data_.ip);
+-            }
++        CollectSymbol(sample);
++#else
++        virtualRuntime_.SymbolicRecord(*sample);
++#endif
++    }
++    return true;
++}
++
++void SubCommandRecord::CollectSymbol(PerfRecordSample *sample)
++{
++    perf_callchain_context context = sample->inKernel() ? PERF_CONTEXT_KERNEL
++                                                        : PERF_CONTEXT_USER;
++    // if no nr use ip
++    if (sample->data_.nr == 0) {
++        if (context == PERF_CONTEXT_KERNEL) {
++            kernelSymbolsHits_.insert(sample->data_.ip);
+         } else {
+-            for (u64 i = 0; i < sample->data_.nr; i++) {
+-                if (sample->data_.ips[i] >= PERF_CONTEXT_MAX) {
+-                    if (sample->data_.ips[i] == PERF_CONTEXT_KERNEL) {
+-                        context = PERF_CONTEXT_KERNEL;
+-                    } else {
+-                        context = PERF_CONTEXT_USER;
+-                    }
++            userSymbolsHits_[sample->data_.pid].insert(sample->data_.ip);
++        }
++    } else {
++        for (u64 i = 0; i < sample->data_.nr; i++) {
++            if (sample->data_.ips[i] >= PERF_CONTEXT_MAX) {
++                if (sample->data_.ips[i] == PERF_CONTEXT_KERNEL) {
++                    context = PERF_CONTEXT_KERNEL;
++                } else {
++                    context = PERF_CONTEXT_USER;
++                }
++            } else {
++                if (context == PERF_CONTEXT_KERNEL) {
++                    kernelSymbolsHits_.insert(sample->data_.ips[i]);
+                 } else {
+-                    if (context == PERF_CONTEXT_KERNEL) {
+-                        kernelSymbolsHits_.insert(sample->data_.ips[i]);
+-                    } else {
+-                        userSymbolsHits_[sample->data_.pid].insert(sample->data_.ips[i]);
+-                    }
++                    userSymbolsHits_[sample->data_.pid].insert(sample->data_.ips[i]);
+                 }
+             }
+         }
+-#else
+-        virtualRuntime_.SymbolicRecord(*sample);
+-#endif
+     }
+-    return true;
+ }
+ 
+ // finish writing data file, then close file
+@@ -1519,8 +1536,12 @@ bool SubCommandRecord::FinishWriteRecordFile()
+         virtualRuntime_.UpdateKernelModulesSymbols();
+ #endif
+         HLOGD("Load user symbols");
+-        fileWriter_->ReadDataSection(
+-            std::bind(&SubCommandRecord::CollectionSymbol, this, std::placeholders::_1));
++        if (dedupStack_) {
++            virtualRuntime_.CollectDedupSymbol(kernelSymbolsHits_, userSymbolsHits_);
++        } else {
++            fileWriter_->ReadDataSection(
++                std::bind(&SubCommandRecord::CollectionSymbol, this, std::placeholders::_1));
++        }
+ #if USE_COLLECT_SYMBOLIC
+         SymbolicHits();
+ #endif
+@@ -1536,7 +1557,10 @@ bool SubCommandRecord::FinishWriteRecordFile()
+ #endif
+     }
+ #endif
+-
++    if (dedupStack_ &&
++        !fileWriter_->AddUniStackTableFeature(virtualRuntime_.GetUniStackTable())) {
++        return false;
++    }
+     if (!fileWriter_->Close()) {
+         HLOGE("Fail to close record file %s", outputFilename_.c_str());
+         return false;
+diff --git a/src/unique_stack_table.cpp b/src/unique_stack_table.cpp
+new file mode 100644
+index 0000000..1ea5a7a
+--- /dev/null
++++ b/src/unique_stack_table.cpp
+@@ -0,0 +1,183 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#include "unique_stack_table.h"
++namespace OHOS {
++namespace Developtools {
++namespace HiPerf {
++
++bool UniqueStackTable::Init(uint32_t size)
++{
++    if (size < INITIAL_TABLE_SIZE || size > MAX_TABLE_SIZE) {
++        return false;
++    }
++    tableSize = size;
++    numNodes = ((tableSize / sizeof(Node)) >> 1) << 1; // make it even.
++    slots = numNodes - untouchableNode - 1;
++    hashMultiplier = ((numNodes - untouchableNode) / (maxCollide * 2 + 1));
++    table = (Node*)malloc(tableSize);
++    return table != nullptr;
++}
++
++bool UniqueStackTable::Resize()
++{
++    Node *oldTable = table;
++    uint32_t oldSize = tableSize;
++    uint32_t oldNumNodes = numNodes;
++    tableSize <<= EXPAND_FACTOR;
++    Node *newTable = (Node*)malloc(tableSize);
++    table = newTable;
++    maxCollide += COLLISION_GROWTH_RATE;
++    // ignore unused space, because can't ruin the hash distance
++    if (memmove(newTable, oldTable, oldSize) != 0) {
++        HLOGD("resize failed");
++        return false;
++    }
++    untouchableNode = oldNumNodes;
++    slots = numNodes - untouchableNode - 1;
++    hashMultiplier = ((numNodes - untouchableNode) / (maxCollide * 2 + 1));
++    if (oldTable != nullptr) {
++        free(oldTable);
++        oldTable = nullptr;
++    }
++    return true;
++}
++
++bool UniqueStackTable::EnsureCapacity()
++{
++    bool slotSufficient = loadFactor * (double)numNodes > (double)usedIndexes_.size();
++    if (slotSufficient) {
++        return true;
++    } else {
++        if (tableSize == maxSize) {
++            return false;
++        } else {
++            return Resize();
++        }
++    }
++}
++
++bool UniqueStackTable::PutIpInSlot(uint64_t thisIp, uint64_t &prevIdx)
++{
++    Node *node = nullptr;
++    // hash
++    uint64_t curIpIdx = untouchableNode + (((prevIdx << 4) ^ (thisIp >> 2)) % slots);
++    uint8_t collisions = maxCollide;
++    while (collisions--) {
++        node = table + curIpIdx;
++        // slot empty, put in
++        if (node->value == 0 && node->section.prevIdx == 0) {
++            node->section.ip = thisIp;
++            node->section.prevIdx = prevIdx;
++            node->section.inKernel = !!(thisIp & IP_IN_KERNEL);
++            usedIndexes_.emplace_back(uint32_t(curIpIdx));
++            prevIdx = curIpIdx;
++            return true;
++        }
++
++        // slot not empty
++        u64 nodeIp = node->section.inKernel ?
++            (node->section.ip | KERNEL_PREFIX) : node->section.ip;
++        // same node have same ip and same parent
++        if (nodeIp == thisIp && node->section.prevIdx == prevIdx) {
++            prevIdx = curIpIdx;
++            return true;
++        }
++
++        // slot not empty, not same node, collide
++        curIpIdx += collisions * hashMultiplier + 1;
++        if (curIpIdx >= numNodes) {
++            curIpIdx -= numNodes - untouchableNode;
++        }
++    }
++    if (collisions < 0) {
++        return false;
++    }
++    return true;
++}
++
++bool UniqueStackTable::PutIpsInTable(StackId *stackId, u64 *ips, u64 nr)
++{
++    if (!EnsureCapacity()) {
++        return false;
++    }
++    u64 thisIp;
++    uint64_t prevIdx {HEAD_NODE_INDEX};
++    // reduce head node place
++    uint8_t collisions= 0;
++    u64 left = 0;
++    uint8_t notUsedIpNum = 0;
++    for (; left < nr; ++left) {
++        thisIp = ips[left];
++        if(!PutIpInSlot(thisIp, prevIdx)) {
++            return false;
++        }
++    }
++    stackId->section.id = prevIdx;
++    stackId->section.nr = nr;
++    return true;
++}
++
++size_t UniqueStackTable::GetWriteSize()
++{
++    size_t size = 0;
++    size += sizeof(pid);
++    size += sizeof(tableSize);
++    uint32_t usedNodes = usedIndexes_.size();
++    size += sizeof(usedNodes);
++    size += usedNodes * sizeof(uint32_t); // key index
++    size += usedNodes * sizeof(uint64_t); // node value
++    return size;
++}
++
++/**
++ * u64 ips[stackId.section.nr];
++ * stackId contains, tailIdx and nr of this ips chain.
++*/
++bool UniqueStackTable::GetIpsByStackId(StackId stackId, u64 *ips)
++{
++    uint64_t nr = stackId.section.nr;
++    uint64_t tailIdx = stackId.section.id;
++    uint32_t foundFrames = 0;
++    uint64_t prevIdx;
++    // correct tailIdx
++    if (tailIdx < numNodes) {
++        Node *node = table + tailIdx;
++        prevIdx = node->section.prevIdx;
++        // nr for guarantee no endless loop.
++        while (foundFrames < nr) {
++            if (prevIdx == HEAD_NODE_INDEX) {
++                HLOGD("earlier reach head, error");
++                return false;
++            }
++            if (node->value == 0) {
++                HLOGD("empty slot, error.");
++                return false;
++            }
++            ips[foundFrames++] =
++                node->section.inKernel ? (node->section.ip | KERNEL_PREFIX) : node->section.ip;
++            // jump to prev
++            node = table + prevIdx;
++            prevIdx = node->section.prevIdx;
++        }
++    } else {
++        return false;
++    }
++    return true;
++}
++
++
++} // namespace HiPerf
++} // namespace Developtools
++} // namespace OHOS
+\ No newline at end of file
+diff --git a/src/virtual_runtime.cpp b/src/virtual_runtime.cpp
+index e14b056..29d87f0 100644
+--- a/src/virtual_runtime.cpp
++++ b/src/virtual_runtime.cpp
+@@ -268,6 +268,63 @@ void VirtualRuntime::UpdatekernelMap(uint64_t begin, uint64_t end, uint64_t offs
+     }
+ }
+ 
++void VirtualRuntime::DedupFromRecord(PerfRecordSample *recordSample)
++{
++    u32 pid = recordSample->data_.pid;
++    u64 nr = recordSample->data_.nr;
++    u64 *ips = recordSample->data_.ips;
++    StackId stackId;
++    stackId.value = 0;
++    auto entry = processStackMap_.find(pid);
++    std::shared_ptr<UniqueStackTable> table = nullptr;
++    if (entry != processStackMap_.end()) {
++        table = entry->second;
++    } else {
++        table = std::make_shared<UniqueStackTable>(pid);
++        processStackMap_[pid] = table;
++    }
++    if (!table->PutIpsInTable(&stackId, ips, nr) ||
++        stackId.value == 0) {
++        collectSymbolCallBack_(recordSample);
++        return;
++    }
++    recordSample->StackId_.value = stackId.value;
++    recordSample->header.size -= (sizeof(u64) * nr + sizeof(stackId));
++    recordSample->data_.nr = 0;
++    recordSample->data_.ips = nullptr;
++    recordSample->removeStack_ = true;
++}
++
++void VirtualRuntime::CollectDedupSymbol(kSymbolsHits &kernelSymbolsHits,
++                                        uSymbolsHits &userSymbolsHits)
++{
++    Node *node = nullptr;
++    Node *head = nullptr;
++    u32 pid;
++    for (const auto &tableEntry : processStackMap_) {
++        const auto &table = tableEntry.second;
++        pid = table->GetPid();
++        head = table->GetHeadNode();
++        const auto &idxes = table->GetUsedIndexes();
++        for (const auto idx : idxes) {
++            node = head + idx;
++            if (node->value != 0) {
++                if (node->section.inKernel) {
++                    uint64_t ip = node->section.ip | KERNEL_PREFIX;
++                    if (ip == PERF_CONTEXT_KERNEL || ip == PERF_CONTEXT_USER) {
++                        continue;
++                    }
++                    kernelSymbolsHits.insert(ip);
++                } else {
++                    userSymbolsHits[pid].insert(node->section.ip);
++                }
++            } else {
++                HLOGD("node value error 0x%x", idx);
++            }
++        }
++    }
++}
++
+ void VirtualRuntime::UpdateFromRecord(PerfEventRecord &record)
+ {
+ #ifdef HIPERF_DEBUG_TIME
+@@ -383,7 +440,10 @@ void VirtualRuntime::UnwindFromRecord(PerfRecordSample &recordSample)
+ #ifdef HIPERF_DEBUG_TIME
+     unwindFromRecordTimes_ += duration_cast<microseconds>(steady_clock::now() - startTime);
+ #endif
+-
++    // we will not do this in non record mode.
++    if (dedupStack_ && recordCallBack_) {
++        DedupFromRecord(&recordSample);
++    }
+     // we will not do this in record mode
+     if (recordCallBack_ == nullptr) {
+         // find the symbols , reabuild frame info
+@@ -459,6 +519,11 @@ void VirtualRuntime::SetRecordMode(RecordCallBack recordCallBack)
+     recordCallBack_ = recordCallBack;
+ }
+ 
++void VirtualRuntime::SetCollectSymbolCallBack(CollectSymbolCallBack collectSymbolCallBack)
++{
++    collectSymbolCallBack_ = collectSymbolCallBack;
++}
++
+ void VirtualRuntime::UpdateSymbols(std::string fileName)
+ {
+     HLOGD("try to find symbols for file: %s", fileName.c_str());
+@@ -586,7 +651,7 @@ const Symbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &thr
+ bool VirtualRuntime::GetSymbolCache(uint64_t ip, Symbol &symbol,
+                                     const perf_callchain_context &context)
+ {
+-    if (context != PERF_CONTEXT_USER and kernelSymbolCache_.count(ip)) {
++    if (context != PERF_CONTEXT_USER and kernelSymbolCache_.count(symbol.fileVaddr_)) {
+         if (kernelSymbolCache_.find(symbol.fileVaddr_) == kernelSymbolCache_.end()) {
+             return false;
+         }

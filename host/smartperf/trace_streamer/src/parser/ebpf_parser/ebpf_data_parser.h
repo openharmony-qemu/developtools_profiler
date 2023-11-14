@@ -16,6 +16,7 @@
 #define EBPF_DATA_PARSER_H
 #include "bio_latency_data_parser.h"
 #include "ebpf_data_reader.h"
+#include "ebpf_splitter.h"
 #include "ebpf_stdtype.h"
 #include "file_system_data_parser.h"
 #include "paged_memory_data_parser.h"
@@ -34,12 +35,31 @@ public:
     {
         return ebpfDataReader_ ? true : false;
     }
+    void RecordEbpfProfilerHeader(uint8_t* buffer, uint32_t len)
+    {
+        ebpfSplitter.RecordEbpfProfilerHeader(buffer, len);
+    }
+    void SetEbpfDataOffset(uint64_t offset);
+    void SetSpliteTimeRange(uint64_t splitFileMinTs, uint64_t splitFileMaxTs);
+    bool AddAndSplitEbpfData(const std::deque<uint8_t>& dequeBuffer);
+    const auto& GetEbpfSplitResult()
+    {
+        return ebpfSplitter.GetEbpfSplitResult();
+    }
+    void ClearEbpfSplitResult()
+    {
+        ebpfDataReader_ = nullptr;
+        ebpfSplitter.ClearEbpfSplitResult();
+        ebpfAllEventStartTime_ = std::numeric_limits<uint64_t>::max();
+        ebpfAllEventEndTime_ = 0;
+    }
 
 private:
     bool Init(const std::deque<uint8_t> dequeBuffer, uint64_t size);
     std::unique_ptr<EbpfDataReader> ebpfDataReader_;
     uint64_t ebpfAllEventStartTime_ = std::numeric_limits<uint64_t>::max();
     uint64_t ebpfAllEventEndTime_ = 0;
+    EbpfSplitter ebpfSplitter;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

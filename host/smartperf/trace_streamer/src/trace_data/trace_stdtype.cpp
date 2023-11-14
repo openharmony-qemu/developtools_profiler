@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include <map>
 #include "string_to_numerical.h"
 namespace SysTuning {
 namespace TraceStdtype {
@@ -51,18 +52,49 @@ void ThreadStateData::SetDuration(TableRowId index, InternalTime dur)
 {
     durations_[index] = dur;
 }
+
+void ThreadStateData::SortAllRowByTs()
+{
+    std::deque<InternalTime> timeStampsTemp;
+    timeStampsTemp = std::move(timeStamps_);
+    std::multimap<uint64_t, uint32_t> timeStampsToIdMap = {};
+    for (auto id = 0; id < timeStampsTemp.size(); ++id) {
+        timeStampsToIdMap.insert({timeStampsTemp[id], id});
+    }
+    std::deque<InternalTime> durationsTemp;
+    std::deque<InternalTid> itidsTemp;
+    std::deque<InternalTid> tidsTemp;
+    std::deque<InternalPid> pidsTemp;
+    std::deque<DataIndex> statesTemp;
+    std::deque<InternalCpu> cpusTemp;
+    std::deque<uint32_t> argSetIdsTemp;
+    durationsTemp = std::move(durations_);
+    itidsTemp = std::move(itids_);
+    tidsTemp = std::move(tids_);
+    pidsTemp = std::move(pids_);
+    statesTemp = std::move(states_);
+    cpusTemp = std::move(cpus_);
+    argSetIdsTemp = std::move(argSetIds_);
+    for (auto itor = timeStampsToIdMap.begin(); itor != timeStampsToIdMap.end(); itor++) {
+        timeStamps_.emplace_back(timeStampsTemp[itor->second]);
+        durations_.emplace_back(durationsTemp[itor->second]);
+        itids_.emplace_back(itidsTemp[itor->second]);
+        tids_.emplace_back(tidsTemp[itor->second]);
+        pids_.emplace_back(pidsTemp[itor->second]);
+        states_.emplace_back(statesTemp[itor->second]);
+        cpus_.emplace_back(cpusTemp[itor->second]);
+        argSetIds_.emplace_back(argSetIdsTemp[itor->second]);
+    }
+}
 void DataDict::Finish()
 {
     std::string::size_type pos(0);
     for (auto i = 0; i < dataDict_.size(); i++) {
-        if (dataDict_[i].empty()) {
-            continue;
-        }
         while ((pos = dataDict_[i].find("\"")) != std::string::npos) {
             dataDict_[i].replace(pos, 1, "\'");
         }
-        while ((dataDict_[i].back() >= SPASCII_START && dataDict_[i].back() <= SPASCII_END) ||
-               dataDict_[i].back() == '\r') {
+        while (!dataDict_[i].empty() && ((dataDict_[i].back() >= SPASCII_START && dataDict_[i].back() <= SPASCII_END) ||
+                                         dataDict_[i].back() == '\r')) {
             dataDict_[i].pop_back();
         }
     }
@@ -127,6 +159,7 @@ size_t SchedSlice::AppendSchedSlice(uint64_t ts,
     endStates_.emplace_back(endState);
     priority_.emplace_back(priority);
     argSets_.emplace_back(INVALID_UINT32);
+    internalPids_.emplace_back(INVALID_UINT32);
     return Size() - 1;
 }
 
@@ -483,12 +516,58 @@ const std::deque<uint64_t>& LogInfo::OriginTimeStamData() const
 {
     return originTs_;
 }
-void NativeHook::UpdateCallChainId(size_t row, uint32_t callChainId)
+void NativeHookSampleBase::AppendNativeHookSampleBase(uint32_t callChainId,
+                                                      uint32_t ipid,
+                                                      uint32_t itid,
+                                                      uint64_t timeStamp)
 {
-    if (row < Size()) {
-        callChainIds_[row] = callChainId;
-    } else {
-        TS_LOGE("Native hook update callChainId failed!!!");
+    ids_.emplace_back(Size());
+    callChainIds_.emplace_back(callChainId);
+    ipids_.emplace_back(ipid);
+    internalTids_.emplace_back(itid);
+    timeStamps_.emplace_back(timeStamp);
+    lastCallerPathIndexs_.emplace_back(INVALID_DATAINDEX);
+    lastSymbolIndexs_.emplace_back(INVALID_DATAINDEX);
+}
+void NativeHookSampleBase::AppendNativeHookSampleBase(uint32_t callChainId, uint32_t ipid, uint64_t timeStamp)
+{
+    ids_.emplace_back(Size());
+    callChainIds_.emplace_back(callChainId);
+    ipids_.emplace_back(ipid);
+    timeStamps_.emplace_back(timeStamp);
+    lastCallerPathIndexs_.emplace_back(INVALID_DATAINDEX);
+    lastSymbolIndexs_.emplace_back(INVALID_DATAINDEX);
+}
+const std::deque<uint32_t>& NativeHookSampleBase::CallChainIds() const
+{
+    return callChainIds_;
+}
+const std::deque<uint32_t>& NativeHookSampleBase::Ipids() const
+{
+    return ipids_;
+}
+const std::deque<uint64_t>& NativeHookSampleBase::LastCallerPathIndexs() const
+{
+    return lastCallerPathIndexs_;
+}
+const std::deque<uint64_t>& NativeHookSampleBase::LastSymbolIndexs() const
+{
+    return lastSymbolIndexs_;
+}
+void NativeHookSampleBase::UpdateLastCallerPathAndSymbolIndexs(
+    std::unordered_map<uint32_t, std::tuple<DataIndex, DataIndex>>& callIdToLasLibId)
+{
+    if (callIdToLasLibId.empty()) {
+        return;
+    }
+    for (auto i = 0; i < Size(); ++i) {
+        auto symbolIt = callIdToLasLibId.find(callChainIds_[i]);
+        if (symbolIt != callIdToLasLibId.end()) {
+            std::tie(lastCallerPathIndexs_[i], lastSymbolIndexs_[i]) = symbolIt->second;
+        } else {
+            lastCallerPathIndexs_[i] = INVALID_DATAINDEX;
+            lastSymbolIndexs_[i] = INVALID_DATAINDEX;
+        }
     }
 }
 size_t NativeHook::AppendNewNativeHookData(uint32_t callChainId,
@@ -502,12 +581,9 @@ size_t NativeHook::AppendNewNativeHookData(uint32_t callChainId,
                                            uint64_t addr,
                                            int64_t memSize)
 {
-    callChainIds_.emplace_back(callChainId);
-    ipids_.emplace_back(ipid);
-    itids_.emplace_back(itid);
+    AppendNativeHookSampleBase(callChainId, ipid, itid, timeStamp);
     eventTypes_.emplace_back(eventType);
     subTypes_.emplace_back(subType);
-    timeStamps_.emplace_back(timeStamp);
     endTimeStamps_.emplace_back(endTimeStamp);
     durations_.emplace_back(duration);
     addrs_.emplace_back(addr);
@@ -526,8 +602,15 @@ size_t NativeHook::AppendNewNativeHookData(uint32_t callChainId,
         allMemSizes_.emplace_back(countMmapSizes_);
     }
     currentSizeDurs_.emplace_back(0);
-    lastCallerPathIndexs_.emplace_back(INVALID_UINT64);
     return Size() - 1;
+}
+void NativeHook::UpdateCallChainId(size_t row, uint32_t callChainId)
+{
+    if (row < Size()) {
+        callChainIds_[row] = callChainId;
+    } else {
+        TS_LOGE("Native hook update callChainId failed!!!");
+    }
 }
 void NativeHook::UpdateEndTimeStampAndDuration(size_t row, uint64_t endTimeStamp)
 {
@@ -545,32 +628,6 @@ void NativeHook::UpdateMemMapSubType(uint64_t row, uint64_t tagId)
     } else {
         TS_LOGE("subTypes_ row is invalid!");
     }
-}
-void NativeHook::UpdateLastCallerPathIndexs(std::unordered_map<uint32_t, uint64_t>& callIdToLasLibId)
-{
-    if (callIdToLasLibId.empty()) {
-        return;
-    }
-    for (auto i = 0; i < Size(); ++i) {
-        auto symbolIt = callIdToLasLibId.find(callChainIds_[i]);
-        if (symbolIt != callIdToLasLibId.end()) {
-            lastCallerPathIndexs_[i] = symbolIt->second;
-        } else {
-            lastCallerPathIndexs_[i] = INVALID_UINT64;
-        }
-    }
-}
-const std::deque<uint32_t>& NativeHook::CallChainIds() const
-{
-    return callChainIds_;
-}
-const std::deque<uint32_t>& NativeHook::Ipids() const
-{
-    return ipids_;
-}
-const std::deque<uint32_t>& NativeHook::Itids() const
-{
-    return itids_;
 }
 const std::deque<std::string>& NativeHook::EventTypes() const
 {
@@ -603,10 +660,6 @@ const std::deque<int64_t>& NativeHook::AllMemSizes() const
 const std::deque<uint64_t>& NativeHook::CurrentSizeDurs() const
 {
     return currentSizeDurs_;
-}
-const std::deque<uint64_t>& NativeHook::LastCallerPathIndexs() const
-{
-    return lastCallerPathIndexs_;
 }
 size_t NativeHookFrame::AppendNewNativeHookFrame(uint32_t callChainId,
                                                  uint64_t depth,
@@ -749,10 +802,7 @@ size_t NativeHookStatistic::AppendNewNativeHookStatistic(uint32_t ipid,
                                                          uint64_t applySize,
                                                          uint64_t releaseSize)
 {
-    ids_.emplace_back(Size());
-    ipids_.emplace_back(ipid);
-    timeStamps_.emplace_back(timeStamp);
-    callChainIds_.emplace_back(callChainId);
+    AppendNativeHookSampleBase(callChainId, ipid, timeStamp);
     memoryTypes_.emplace_back(memoryType);
     applyCounts_.emplace_back(applyCount);
     memSubTypes_.emplace_back(subMemType);
@@ -761,14 +811,7 @@ size_t NativeHookStatistic::AppendNewNativeHookStatistic(uint32_t ipid,
     releaseSizes_.emplace_back(releaseSize);
     return Size() - 1;
 }
-const std::deque<uint32_t>& NativeHookStatistic::Ipids() const
-{
-    return ipids_;
-}
-const std::deque<uint32_t>& NativeHookStatistic::CallChainIds() const
-{
-    return callChainIds_;
-}
+
 const std::deque<uint32_t>& NativeHookStatistic::MemoryTypes() const
 {
     return memoryTypes_;
@@ -804,28 +847,34 @@ const std::deque<uint32_t>& Hidump::Fpss() const
     return fpss_;
 }
 
-size_t PerfCallChain::AppendNewPerfCallChain(uint64_t sampleId,
-                                             uint32_t callChainId,
+size_t PerfCallChain::AppendNewPerfCallChain(uint32_t callChainId,
+                                             uint32_t depth,
+                                             uint64_t ip,
                                              uint64_t vaddrInFile,
                                              uint64_t fileId,
                                              uint64_t symbolId)
 {
     ids_.emplace_back(Size());
-    sampleIds_.emplace_back(sampleId);
     callChainIds_.emplace_back(callChainId);
+    depths_.emplace_back(depth);
+    ips_.emplace_back(ip);
     vaddrInFiles_.emplace_back(vaddrInFile);
     fileIds_.emplace_back(fileId);
     symbolIds_.emplace_back(symbolId);
     names_.emplace_back("");
     return Size() - 1;
 }
-const std::deque<uint64_t>& PerfCallChain::SampleIds() const
-{
-    return sampleIds_;
-}
 const std::deque<uint32_t>& PerfCallChain::CallChainIds() const
 {
     return callChainIds_;
+}
+const std::deque<uint32_t>& PerfCallChain::Depths() const
+{
+    return depths_;
+}
+const std::deque<uint64_t>& PerfCallChain::Ips() const
+{
+    return ips_;
 }
 const std::deque<uint64_t>& PerfCallChain::VaddrInFiles() const
 {
@@ -851,8 +900,9 @@ void PerfCallChain::SetName(uint64_t index, const std::string& name)
 void PerfCallChain::Clear()
 {
     CacheBase::Clear();
-    sampleIds_.clear();
     callChainIds_.clear();
+    depths_.clear();
+    ips_.clear();
     vaddrInFiles_.clear();
     fileIds_.clear();
     symbolIds_.clear();
@@ -1981,12 +2031,12 @@ void SmapsData::AppendNewData(uint64_t timeStamp,
                               double reside,
                               DataIndex protectionId,
                               DataIndex pathId,
-                              uint64_t shared_clean,
-                              uint64_t shared_dirty,
-                              uint64_t private_clean,
-                              uint64_t private_dirty,
+                              uint64_t sharedClean,
+                              uint64_t sharedDirty,
+                              uint64_t privateClean,
+                              uint64_t privateDirty,
                               uint64_t swap,
-                              uint64_t swap_pss,
+                              uint64_t swapPss,
                               uint32_t type)
 {
     timeStamps_.emplace_back(timeStamp);
@@ -2001,12 +2051,12 @@ void SmapsData::AppendNewData(uint64_t timeStamp,
     resides_.emplace_back(reside);
     protectionIds_.emplace_back(protectionId);
     pathIds_.emplace_back(pathId);
-    sharedClean_.emplace_back(shared_clean);
-    sharedDirty_.emplace_back(shared_dirty);
-    privateClean_.emplace_back(private_clean);
-    privateDirty_.emplace_back(private_dirty);
+    sharedClean_.emplace_back(sharedClean);
+    sharedDirty_.emplace_back(sharedDirty);
+    privateClean_.emplace_back(privateClean);
+    privateDirty_.emplace_back(privateDirty);
     swap_.emplace_back(swap);
-    swapPss_.emplace_back(swap_pss);
+    swapPss_.emplace_back(swapPss);
     type_.emplace_back(type);
     ids_.push_back(rowCount_);
     rowCount_++;
@@ -3078,11 +3128,12 @@ void TaskPoolInfo::AppendTimeoutRow(uint32_t index, uint32_t timeoutRow)
         timeoutRows_[index] = timeoutRow;
     }
 }
-TableRowId Animation::AppendAnimation(InternalTime startPoint)
+TableRowId Animation::AppendAnimation(InternalTime inputTime, InternalTime startPoint)
 {
-    inputTimes_.emplace_back(INVALID_TIME);
+    inputTimes_.emplace_back(inputTime);
     startPoints_.emplace_back(startPoint);
     endPoins_.emplace_back(INVALID_TIME);
+    frameInfos_.emplace_back(INVALID_UINT64);
     ids_.emplace_back(Size());
     return ids_.size() - 1;
 }
@@ -3096,6 +3147,12 @@ void Animation::UpdateEndPoint(TableRowId index, InternalTime endPoint)
 {
     if (index <= Size()) {
         endPoins_[index] = endPoint;
+    }
+}
+void Animation::UpdateFrameInfo(TableRowId index, InternalTime frameInfo)
+{
+    if (index <= Size()) {
+        frameInfos_[index] = frameInfo;
     }
 }
 size_t Animation::Size() const
@@ -3114,6 +3171,10 @@ const std::deque<InternalTime>& Animation::EndPoints() const
 {
     return endPoins_;
 }
+const std::deque<DataIndex>& Animation::FrameInfos() const
+{
+    return frameInfos_;
+}
 const std::deque<uint64_t>& Animation::IdsData() const
 {
     return ids_;
@@ -3123,6 +3184,7 @@ void Animation::Clear()
     inputTimes_.clear();
     startPoints_.clear();
     endPoins_.clear();
+    frameInfos_.clear();
     ids_.clear();
 }
 uint32_t DeviceInfo::PhysicalWidth() const
@@ -3266,9 +3328,9 @@ void AshMemData::AppendNewData(InternalPid ipid,
     ids_.push_back(rowCount_);
     rowCount_++;
 }
-void AshMemData::SetFlag(uint64_t rowId, uint32_t Flag)
+void AshMemData::SetFlag(uint64_t rowId, uint32_t flag)
 {
-    flags_[rowId] = Flag;
+    flags_[rowId] = flag;
 }
 const std::deque<InternalPid>& AshMemData::Ipids() const
 {
@@ -3339,9 +3401,9 @@ void DmaMemData::AppendNewData(InternalPid ipid,
     ids_.push_back(rowCount_);
     rowCount_++;
 }
-void DmaMemData::SetFlag(uint64_t rowId, uint32_t Flag)
+void DmaMemData::SetFlag(uint64_t rowId, uint32_t flag)
 {
-    flags_[rowId] = Flag;
+    flags_[rowId] = flag;
 }
 const std::deque<InternalPid>& DmaMemData::Ipids() const
 {
@@ -3440,6 +3502,7 @@ void GpuWindowMemData::AppendNewData(uint64_t ts,
     sizes_.emplace_back(size);
     counts_.emplace_back(count);
     purgeableSizes_.emplace_back(purgeableSize);
+    ipids_.emplace_back(INVALID_IPID);
     ids_.push_back(rowCount_);
     rowCount_++;
 }
@@ -3471,6 +3534,73 @@ const std::deque<uint64_t>& GpuWindowMemData::PurgeableSizes() const
 {
     return purgeableSizes_;
 }
+const std::deque<InternalPid>& GpuWindowMemData::Ipids() const
+{
+    return ipids_;
+}
+void GpuWindowMemData::RevicesIpid(const std::map<DataIndex, InternalPid>& windowIdToIpidMap)
+{
+    for (auto i = 0; i < Size(); i++) {
+        if (windowIdToIpidMap.count(windowNameIds_[i])) {
+            ipids_[i] = windowIdToIpidMap.at(windowNameIds_[i]);
+        }
+    }
+}
 
+void CpuDumpInfo::AppendNewData(uint64_t timestamp, uint64_t size)
+{
+    timeStamps_.emplace_back(timestamp);
+    totalSizes_.emplace_back(size);
+    ids_.emplace_back(Size());
+}
+const std::deque<uint64_t>& CpuDumpInfo::TotalSizes() const
+{
+    return totalSizes_;
+}
+
+void ProfileMemInfo::AppendNewData(uint64_t timestamp, DataIndex channelIndex, uint64_t size)
+{
+    timeStamps_.emplace_back(timestamp);
+    totalSizes_.emplace_back(size);
+    channelIndexs_.emplace_back(channelIndex);
+    ids_.emplace_back(Size());
+}
+const std::deque<uint64_t>& ProfileMemInfo::ChannelIndexs() const
+{
+    return channelIndexs_;
+}
+const std::deque<uint64_t>& ProfileMemInfo::TotalSizes() const
+{
+    return totalSizes_;
+}
+void RSImageDumpInfo::AppendNewData(uint64_t timestamp,
+                                    uint64_t memSize,
+                                    DataIndex typeIndex,
+                                    InternalPid ipid,
+                                    DataIndex name)
+{
+    timeStamps_.emplace_back(timestamp);
+    memSizes_.emplace_back(memSize);
+    typeIndexs_.emplace_back(typeIndex);
+    ipids_.emplace_back(ipid);
+    surfaceNameIndexs_.emplace_back(name);
+    ids_.emplace_back(Size());
+}
+const std::deque<uint64_t>& RSImageDumpInfo::MemSizes() const
+{
+    return memSizes_;
+}
+const std::deque<DataIndex>& RSImageDumpInfo::TypeIndexs() const
+{
+    return typeIndexs_;
+}
+const std::deque<InternalPid>& RSImageDumpInfo::Ipids() const
+{
+    return ipids_;
+}
+const std::deque<DataIndex>& RSImageDumpInfo::SurfaceNameIndexs() const
+{
+    return surfaceNameIndexs_;
+}
 } // namespace TraceStdtype
 } // namespace SysTuning

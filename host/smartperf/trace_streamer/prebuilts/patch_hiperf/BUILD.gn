@@ -62,6 +62,7 @@ ohos_source_set("hiperf_src") {
     "./src/report.cpp",
     "./src/subcommand.cpp",
     "./src/symbols_file.cpp",
+    "./src/unique_stack_table.cpp",
     "./src/virtual_runtime.cpp",
     "./src/virtual_thread.cpp",
     "include/symbols_file.h",

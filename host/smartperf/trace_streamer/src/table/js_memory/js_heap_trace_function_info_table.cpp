@@ -17,7 +17,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum Index { FILE_ID = 0, FUNCTION_INDEX, FUNCTION_ID, NAME, SCRIPT_NAME, SCRIPT_ID, LINE, COLUMN };
+enum class Index : int32_t { FILE_ID = 0, FUNCTION_INDEX, FUNCTION_ID, NAME, SCRIPT_NAME, SCRIPT_ID, LINE, COLUMN };
 JsHeapTraceFunctionInfoTable::JsHeapTraceFunctionInfoTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("file_id", "INTEGER"));
@@ -48,29 +48,29 @@ JsHeapTraceFunctionInfoTable::Cursor::~Cursor() {}
 
 int32_t JsHeapTraceFunctionInfoTable::Cursor::Column(int32_t col) const
 {
-    switch (col) {
-        case FILE_ID:
+    switch (static_cast<Index>(col)) {
+        case Index::FILE_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.FileIds()[CurrentRow()]));
             break;
-        case FUNCTION_INDEX:
+        case Index::FUNCTION_INDEX:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.FunctionIndexs()[CurrentRow()]));
             break;
-        case FUNCTION_ID:
+        case Index::FUNCTION_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.FunctionIds()[CurrentRow()]));
             break;
-        case NAME:
+        case Index::NAME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.Names()[CurrentRow()]));
             break;
-        case SCRIPT_NAME:
+        case Index::SCRIPT_NAME:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.ScriptNames()[CurrentRow()]));
             break;
-        case SCRIPT_ID:
+        case Index::SCRIPT_ID:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.ScriptIds()[CurrentRow()]));
             break;
-        case LINE:
+        case Index::LINE:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.Lines()[CurrentRow()]));
             break;
-        case COLUMN:
+        case Index::COLUMN:
             sqlite3_result_int64(context_, static_cast<int64_t>(jsHeapTraceFuncInfo_.Columns()[CurrentRow()]));
             break;
         default:

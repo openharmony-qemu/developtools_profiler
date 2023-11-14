@@ -58,14 +58,18 @@ export class SpInfoAndStats extends BaseElement {
         }
       }).observe(this.parentElement!);
       info('infoData(metric) size is: ', this.infoData.length);
-      let metaDataStyle: HTMLDivElement | undefined | null = this.metaTableEl!.shadowRoot?.
-        querySelector('div.body') as HTMLDivElement;
-      let metaDataHeadStyle: HTMLDivElement | undefined | null = this.metaTableEl!.shadowRoot?.
-        querySelector('div.thead') as HTMLDivElement;
-      let statsStyle: HTMLDivElement | undefined | null = this.infoTableEl!.shadowRoot?.
-        querySelector('div.body') as HTMLDivElement;
-      let statsHeadStyle: HTMLDivElement | undefined | null = this.infoTableEl!.shadowRoot?.
-        querySelector('div.thead') as HTMLDivElement;
+      let metaDataStyle: HTMLDivElement | undefined | null = this.metaTableEl!.shadowRoot?.querySelector(
+        'div.body'
+      ) as HTMLDivElement;
+      let metaDataHeadStyle: HTMLDivElement | undefined | null = this.metaTableEl!.shadowRoot?.querySelector(
+        'div.thead'
+      ) as HTMLDivElement;
+      let statsStyle: HTMLDivElement | undefined | null = this.infoTableEl!.shadowRoot?.querySelector(
+        'div.body'
+      ) as HTMLDivElement;
+      let statsHeadStyle: HTMLDivElement | undefined | null = this.infoTableEl!.shadowRoot?.querySelector(
+        'div.thead'
+      ) as HTMLDivElement;
       let timeOutTs = 20;
       setTimeout(() => {
         this.initDataTableStyle(metaDataStyle!);
