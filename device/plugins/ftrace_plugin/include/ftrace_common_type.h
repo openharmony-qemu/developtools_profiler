@@ -47,12 +47,24 @@ struct HmTraceHeader {
     unsigned int size;
     int tgid;
     char tcbName[HMCAP_THREAD_NAME_SIZE];
-    unsigned long long timestamp;
     unsigned short commonType;
     unsigned char commonFlags;
     unsigned char commonPreemptCount;
     int commonPid;
 };
+
+struct RmqConsumerData {
+    uint64_t timeStamp;
+    uint64_t length;
+    uint8_t coreId;
+    uint8_t data[];
+};
+
+struct RmqEntry {
+    uint32_t timeStampOffset;
+    uint16_t size;
+    uint8_t data[];
+} __attribute__((packed));
 
 // /sys/kernel/debug/tracing/events/header_page
 // kernel source ring_buffer.c struct buffer_data_page
