@@ -21,7 +21,6 @@ module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 sources_base = [
   "unittest/common/native/callstack_test.cpp",
   "unittest/common/native/debug_logger_test.cpp",
-  "unittest/common/native/elf_parser_test.cpp",
   "unittest/common/native/hashlist_test.cpp",
   "unittest/common/native/hook_manager_test.cpp",
   "unittest/common/native/hook_service_test.cpp",
@@ -36,14 +35,9 @@ sources_base = [
   "../src/call_stack.cpp",
   "../src/debug_logger.cpp",
   "../src/dwarf_encoding.cpp",
-  "../src/elf_file.cpp",
-  "../src/elf_header.cpp",
-  "../src/elf_symbol.cpp",
   "../src/get_thread_id.cpp",
   "../src/hook_service.cpp",
-  "../src/program_header.cpp",
   "../src/register.cpp",
-  "../src/section_header.cpp",
   "../src/stack_data_repeater.cpp",
   "../src/stack_preprocess.cpp",
   "../src/symbols_file.cpp",
@@ -61,7 +55,6 @@ common_deps = [
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
   "../../../base:hiprofiler_base",
   "//third_party/bounds_checking_function:libsec_static",
-  "//third_party/libunwind:unwind_source_${target_cpu}",
   "//third_party/zlib:libz",
 ]
 
@@ -82,9 +75,8 @@ config("native_daemon_test_config") {
     defines += [ "COVERAGE_TEST" ]
   }
   defines += [ "DEFAULT_LOG_LEVEL=LEVEL_VERBOSE" ]
-  defines += [ "is_ohos=1" ]
   defines += [
-    "HAVE_LIBUNWIND=1",
+    "HAVE_LIBUNWINDER=1",
     "HIPERF_DEBUG",
     "HIPERF_DEBUG_PRINTF",
     "CONFIG_NO_HILOG",
@@ -119,7 +111,10 @@ ohos_unittest("native_daemon_ut") {
   if (is_linux) {
     static_link = false
   }
-  external_deps = [ "init:libbegetutil" ]
+  external_deps = [
+    "faultloggerd:libunwinder_static",
+    "init:libbegetutil",
+  ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]

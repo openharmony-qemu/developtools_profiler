@@ -17,7 +17,8 @@ build_tests = false
 enable_debuginfo = false
 enable_coverage = false
 hiprofiler_fuzz_output_path = "hiprofiler/hiprofiler"
-
+hiprofiler_use_libunwinder = true
+hiprofiler_use_libunwind = false
 if (getenv("BUILD_UT") == "true") {
   build_tests = true
   enable_debuginfo = true

@@ -19,9 +19,9 @@ config("cflags_config") {
 }
 
 config("hook_config") {
-  defines = [ "is_ohos=1" ]
-  defines += [
-    "HAVE_LIBUNWIND=1",
+  defines = [
+    "HAVE_LIBUNWIND=0",
+    "HAVE_LIBUNWINDER=1",
     "HIPERF_DEBUG",
     "CONFIG_NO_HILOG",
     "NATIVEDAEMON_USE_CALLSTACK",
@@ -41,23 +41,22 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
 
 ohos_executable("native_daemon") {
   output_name = "native_daemon"
+  configs = [ ":cflags_config" ]
+  public_configs = [
+    ":hook_config",
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
+  ]
   sources = [
     "../api/src/buffer_writer.cpp",
     "../api/src/command_poller.cpp",
-    "src/call_stack.cpp",
     "src/debug_logger.cpp",
     "src/dwarf_encoding.cpp",
-    "src/elf_file.cpp",
-    "src/elf_header.cpp",
-    "src/elf_symbol.cpp",
     "src/get_thread_id.cpp",
     "src/hook_manager.cpp",
     "src/hook_service.cpp",
     "src/hook_standalone.cpp",
     "src/main.cpp",
-    "src/program_header.cpp",
     "src/register.cpp",
-    "src/section_header.cpp",
     "src/stack_data_repeater.cpp",
     "src/stack_preprocess.cpp",
     "src/symbols_file.cpp",
@@ -65,6 +64,11 @@ ohos_executable("native_daemon") {
     "src/virtual_runtime.cpp",
     "src/virtual_thread.cpp",
   ]
+
+  if (is_ohos) {
+    sources += [ "./src/call_stack.cpp" ]
+  }
+
   include_dirs = [
     "./include",
     "./src",
@@ -87,15 +91,15 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "../../base:hiprofiler_base",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/libunwind:unwind_source_${target_cpu}",
     "//third_party/zlib:libz",
   ]
-  configs = [ ":cflags_config" ]
-  public_configs = [
-    ":hook_config",
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
-  ]
+  if (hiprofiler_use_libunwind) {
+    deps += [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
+  }
   external_deps = [ "init:libbegetutil" ]
+  if (hiprofiler_use_libunwinder) {
+    external_deps += [ "faultloggerd:libunwinder_static" ]
+  }
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]

@@ -15,9 +15,9 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 config("hook_config") {
-  defines = [ "is_ohos=1" ]
-  defines += [
-    "HAVE_LIBUNWIND=1",
+  defines = [
+    "HAVE_LIBUNWIND=0",
+    "HAVE_LIBUNWINDER=1",
     "HIPERF_DEBUG",
     "CONFIG_NO_HILOG",
   ]
@@ -63,9 +63,13 @@ ohos_source_set("native_hook_source") {
     "//third_party/bounds_checking_function:libsec_static",
     "//third_party/zlib:libz",
   ]
+  if (hiprofiler_use_libunwind) {
+    public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
+  }
   external_deps = [ "init:libbegetutil" ]
-
-  public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
+  if (hiprofiler_use_libunwinder) {
+    external_deps += [ "faultloggerd:libunwinder_static" ]
+  }
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

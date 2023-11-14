@@ -124,7 +124,7 @@
     </target>
     <target name="nativehook_ut">
         <preparer>
-            <option name="push" value="developtools/profiler/libnativetest_so.z.so -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/libnativetest_so.z.so -> /data/local/tmp/" src="out"/>
         </preparer>
     </target>
     <target name="processplugin_ut">

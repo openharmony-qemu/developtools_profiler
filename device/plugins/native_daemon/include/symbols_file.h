@@ -20,6 +20,8 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include "dfx_elf.h"
+#include "dfx_symbol.h"
 #include <gtest/gtest.h>
 #include "perf_file_format.h"
 #include "utilities.h"
@@ -29,6 +31,8 @@
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+using namespace OHOS::HiviewDFX;
+
 constexpr const char KERNEL_MMAP_NAME[] = "[kernel.kallsyms]";
 constexpr const char KERNEL_MODULES_EXT_NAME[] = ".ko";
 constexpr const char KERNEL_ELF_NAME[] = "vmlinux";
@@ -59,162 +63,6 @@ class FileSymbol {
     }
 };
 
-struct Symbol {
-    std::string_view name_ = "";
-    std::string_view demangle_ = ""; // demangle string
-    std::string_view module_ = "";   // maybe empty
-    std::string_view comm_ = "";     // we need a comm name like comm@0x1234
-    std::string_view symbolName_ = "";
-    mutable std::string_view unknow_ = "";
-    uint64_t funcVaddr_ = 0;
-    uint64_t fileVaddr_ = 0;
-    uint64_t taskVaddr_ = 0;
-    uint64_t offset_ = 0;
-    uint64_t len_ = 0;
-    uint32_t filePathId_ = 0; // for memMpaItem filePathId_
-    uint32_t symbolNameId_ = 0; // for symbolName_ id
-    int32_t index_ = -1;
-    uint32_t symbolId_ = 0; // for frame map id
-    mutable bool matched_ = false; // if some callstack match this
-    // elf use this
-    Symbol(uint64_t vaddr, uint64_t len, const std::string &name, const std::string &demangle,
-           const std::string module)
-        : name_(memHolder.HoldStringView(name)),
-          demangle_(memHolder.HoldStringView(demangle)),
-          module_(memHolder.HoldStringView(module)),
-          funcVaddr_(vaddr),
-          fileVaddr_(vaddr),
-          offset_(fileVaddr_ - funcVaddr_),
-          len_(len) {}
-    Symbol(uint64_t vaddr, uint64_t len, const std::string &name, const std::string &module)
-        : Symbol(vaddr, len, name, name, module) {};
-
-    // kernel use this
-    Symbol(uint64_t vaddr, const std::string &name, const std::string &module)
-        : Symbol(vaddr, 0, name, name, module) {}
-
-    // Symbolic use this
-    Symbol(uint64_t taskVaddr = 0, const std::string &comm = "")
-        : comm_(comm), taskVaddr_(taskVaddr) {}
-
-    static bool SameVaddr(const Symbol &a, const Symbol &b)
-    {
-        return (a.funcVaddr_ == b.funcVaddr_);
-    }
-    bool Same(const Symbol &b) const
-    {
-        return (funcVaddr_ == b.funcVaddr_ and demangle_ == b.demangle_);
-    }
-    bool operator==(const Symbol &b) const
-    {
-        return Same(b);
-    }
-
-    bool operator!=(const Symbol &b) const
-    {
-        return !Same(b);
-    }
-
-    bool isValid() const
-    {
-        return !module_.empty();
-    }
-
-    void SetMatchFlag() const
-    {
-        matched_ = true;
-    }
-
-    bool HasMatched() const
-    {
-        return matched_;
-    }
-
-    void setIpVAddress(uint64_t vaddr)
-    {
-        fileVaddr_ = vaddr;
-        offset_ = fileVaddr_ - funcVaddr_;
-    }
-
-    std::string_view Name() const
-    {
-        if (!demangle_.empty()) {
-            return demangle_;
-        }
-        if (!name_.empty()) {
-            return name_;
-        }
-        if (unknow_.empty()) {
-            std::stringstream sstream;
-            if (!module_.empty()) {
-                sstream << module_ << "+0x" << std::hex << fileVaddr_;
-            } else {
-                sstream << comm_ << "@0x" << std::hex << taskVaddr_;
-            }
-            unknow_ = memHolder.HoldStringView(sstream.str());
-        }
-        return unknow_;
-    }
-
-    std::string ToString() const
-    {
-        std::stringstream sstream;
-        if (fileVaddr_ != 0) {
-            sstream << "0x" << std::hex << fileVaddr_;
-        } else {
-            sstream << "0x" << std::hex << taskVaddr_;
-        }
-        sstream << " " << Name();
-        return sstream.str();
-    };
-
-    std::string ToDebugString() const
-    {
-        std::stringstream sstream;
-        sstream << "0x" << std::setfill('0') << std::setw(sizeof(funcVaddr_) * BYTE_PRINT_WIDTH)
-                << std::hex << funcVaddr_;
-        sstream << "|";
-        sstream << std::setfill('0') << std::setw(sizeof(len_)) << len_;
-        sstream << "|";
-        sstream << demangle_ << "|";
-        sstream << name_ << "|";
-        sstream << (matched_ ? "matched" : "");
-
-        return sstream.str();
-    };
-
-    bool Contain(uint64_t addr) const
-    {
-        if (len_ == 0) {
-            return funcVaddr_ <= addr;
-        } else {
-            return (funcVaddr_ <= addr) and ((funcVaddr_ + len_) > addr);
-        }
-    }
-
-    // The range [first, last) must be partitioned with respect to the expression !(value < element)
-    // or !comp(value, element)
-    static bool ValueLessThen(uint64_t vaddr, const Symbol &a)
-    {
-        return vaddr < a.funcVaddr_;
-    }
-
-    static bool ValueLessEqual(uint64_t vaddr, const Symbol &a)
-    {
-        return vaddr <= a.funcVaddr_;
-    }
-
-    static bool CompareLessThen(const Symbol &a, const Symbol &b)
-    {
-        return a.funcVaddr_ < b.funcVaddr_; // we should use vaddr to sort
-    }
-
-    static bool CompareByPointer(const Symbol *a, const Symbol *b)
-    {
-        return a->funcVaddr_ < b->funcVaddr_; // we should use vaddr to sort
-    }
-};
-
 enum SymbolsFileType {
     SYMBOL_KERNEL_FILE,
     SYMBOL_KERNEL_MODULE_FILE,
@@ -241,6 +89,11 @@ public:
     SymbolsFile(SymbolsFileType symbolType, const std::string path)
         : symbolFileType_(symbolType), filePath_(path) {};
     virtual ~SymbolsFile();
+
+    virtual std::shared_ptr<DfxElf> GetElfFile()
+    {
+        return nullptr;
+    }
 
     // create the symbols file object
     static std::unique_ptr<SymbolsFile> CreateSymbolsFile(
@@ -273,22 +126,12 @@ public:
     const std::string GetBuildId() const;
 
     // get the symbols vector
-    const std::vector<Symbol> &GetSymbols();
-    const std::vector<Symbol *> &GetMatchedSymbols();
+    const std::vector<DfxSymbol> &GetSymbols();
+    const std::vector<DfxSymbol *> &GetMatchedSymbols();
 
     // get vaddr(in symbol) from ip(real addr , after mmap reloc)
     virtual uint64_t GetVaddrInSymbols(uint64_t ip, uint64_t mapStart, uint64_t mapOffset) const;
-
-    // get symbols from vaddr
-    const Symbol GetSymbolWithVaddr(uint64_t vaddr);
-
-    // read the .text section and .eh_frame section (RO) memory from elf mmap
-    // unwind use this to check the DWARF and so on
-    virtual size_t ReadRoMemory(uint64_t, uint8_t * const, size_t) const
-    {
-        HLOGV("virtual dummy function called");
-        return 0; // default not support
-    }
+    const DfxSymbol GetSymbolWithVaddr(uint64_t vaddr);
 
     // get the section info , like .ARM.exidx
     virtual bool GetSectionInfo([[maybe_unused]] const std::string &name,
@@ -303,7 +146,7 @@ public:
     // get hdr info for unwind , need provide the fde table location and entry count
     virtual bool GetHDRSectionInfo([[maybe_unused]] uint64_t &ehFrameHdrElfOffset,
                                    [[maybe_unused]] uint64_t &fdeTableElfOffset,
-                                   [[maybe_unused]] uint64_t &fdeTableSize) const
+                                   [[maybe_unused]] uint64_t &fdeTableSize)
     {
         HLOGV("virtual dummy function called");
         return false;
@@ -334,8 +177,8 @@ protected:
     bool UpdateBuildIdIfMatch(std::string buildId);
     std::string buildId_;
     std::vector<std::string> symbolsFileSearchPaths_;
-    std::vector<Symbol> symbols_ {};
-    std::vector<Symbol *> matchedSymbols_ {};
+    std::vector<DfxSymbol> symbols_ {};
+    std::vector<DfxSymbol *> matchedSymbols_ {};
     std::vector<FileSymbol> fileSymbols_ {};
 
     void AdjustSymbols();

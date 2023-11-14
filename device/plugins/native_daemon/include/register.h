@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,10 +21,13 @@
 #include <string>
 
 #include "utilities.h"
+#include "unwind_define.h"
 
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+using namespace OHOS::HiviewDFX;
+
 // these define copy from kernel uapi
 enum perf_event_x86_regs {
     PERF_REG_X86_AX,
@@ -112,14 +115,6 @@ enum perf_event_arm_regs {
     PERF_REG_ARM_MAX,
 };
 
-enum ArchType {
-    X86_32,
-    X86_64,
-    ARM,
-    ARM64,
-    UNSUPPORT,
-};
-
 // order is IP , SP for ut
 static const std::map<size_t, const std::string> PERF_REG_NAME_MAP = {
 #if defined(target_cpu_x86_64)
@@ -146,11 +141,11 @@ static const std::map<uint64_t, const std::string> PERF_CONTEXT_NAME = {
 };
 
 #if defined(target_cpu_x86_64)
-constexpr ArchType buildArchType = ArchType::X86_64;
+constexpr ArchType buildArchType = ArchType::ARCH_X86_64;
 #elif defined(target_cpu_arm64)
-constexpr ArchType buildArchType = ArchType::ARM64;
+constexpr ArchType buildArchType = ArchType::ARCH_ARM64;
 #elif defined(target_cpu_arm)
-constexpr ArchType buildArchType = ArchType::ARM;
+constexpr ArchType buildArchType = ArchType::ARCH_ARM;
 #else
 #error NOT SUPPORT ARCH
 #endif
@@ -169,13 +164,13 @@ size_t RegisterGetSP(ArchType arch);
 inline const std::string GetArchName(ArchType arch)
 {
     switch (arch) {
-        case ArchType::X86_32:
+        case ArchType::ARCH_X86:
             return "X86_32";
-        case ArchType::X86_64:
+        case ArchType::ARCH_X86_64:
             return "X86_64";
-        case ArchType::ARM:
+        case ArchType::ARCH_ARM:
             return "ARM";
-        case ArchType::ARM64:
+        case ArchType::ARCH_ARM64:
             return "ARM64";
         default:
             return "Unsupport";
@@ -187,13 +182,13 @@ size_t RegisterGetIP(ArchType arch);
 inline size_t RegisterGetCount()
 {
     switch (buildArchType) {
-        case ArchType::X86_32:
+        case ArchType::ARCH_X86:
             return PERF_REG_X86_32_MAX;
-        case ArchType::X86_64:
+        case ArchType::ARCH_X86_64:
             return PERF_REG_X86_64_MAX;
-        case ArchType::ARM:
+        case ArchType::ARCH_ARM:
             return PERF_REG_ARM_MAX;
-        case ArchType::ARM64:
+        case ArchType::ARCH_ARM64:
             return PERF_REG_ARM64_MAX;
         default: {
             HLOGM("Registers in an unknown CPU.");

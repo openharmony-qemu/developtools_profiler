@@ -31,17 +31,17 @@
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
-static ArchType deviceArchType = ArchType::UNSUPPORT;
+static ArchType deviceArchType = ArchType::ARCH_UNKNOWN;
 
 size_t RegisterGetSP(ArchType arch)
 {
     switch (arch) {
-        case ArchType::X86_32:
-        case ArchType::X86_64:
+        case ArchType::ARCH_X86:
+        case ArchType::ARCH_X86_64:
             return PERF_REG_X86_SP;
-        case ArchType::ARM:
+        case ArchType::ARCH_ARM:
             return PERF_REG_ARM_SP;
-        case ArchType::ARM64:
+        case ArchType::ARCH_ARM64:
             return PERF_REG_ARM64_SP;
         default:
             return std::numeric_limits<size_t>::max();
@@ -51,12 +51,12 @@ size_t RegisterGetSP(ArchType arch)
 size_t RegisterGetIP(ArchType arch)
 {
     switch (arch) {
-        case ArchType::X86_32:
-        case ArchType::X86_64:
+        case ArchType::ARCH_X86:
+        case ArchType::ARCH_X86_64:
             return PERF_REG_X86_IP;
-        case ArchType::ARM:
+        case ArchType::ARCH_ARM:
             return PERF_REG_ARM_PC;
-        case ArchType::ARM64:
+        case ArchType::ARCH_ARM64:
             return PERF_REG_ARM64_PC;
         default:
             return std::numeric_limits<size_t>::max();
@@ -68,18 +68,18 @@ uint64_t GetSupportedRegMask(ArchType arch)
 {
     uint64_t result = 0;
     switch (arch) {
-        case ArchType::X86_32:
+        case ArchType::ARCH_X86:
             result = ((1ULL << PERF_REG_X86_32_MAX) - 1);
             break;
-        case ArchType::X86_64:
+        case ArchType::ARCH_X86_64:
             result = ((1ULL << PERF_REG_X86_64_MAX) - 1);
             result &= ~((1ULL << PERF_REG_X86_DS) | (1ULL << PERF_REG_X86_ES) |
                         (1ULL << PERF_REG_X86_FS) | (1ULL << PERF_REG_X86_GS));
             break;
-        case ArchType::ARM:
+        case ArchType::ARCH_ARM:
             result = ((1ULL << PERF_REG_ARM_MAX) - 1);
             break;
-        case ArchType::ARM64:
+        case ArchType::ARCH_ARM64:
             result = ((1ULL << PERF_REG_ARM64_MAX) - 1);
             break;
         default:
@@ -183,31 +183,31 @@ ArchType GetArchTypeFromUname(const std::string &machine)
     if (StringStartsWith(machine, "arm")) {
         if (machine == "armv8l") {
             // 32 bit elf run in 64 bit cpu
-            return ArchType::ARM64;
+            return ArchType::ARCH_ARM64;
         }
-        return ArchType::ARM;
+        return ArchType::ARCH_ARM;
     } else if (machine == "aarch64") {
-        return ArchType::ARM64;
+        return ArchType::ARCH_ARM64;
     } else if (machine == "x86_64") {
-        return ArchType::X86_64;
+        return ArchType::ARCH_X86_64;
     } else if (machine == "x86" || machine == "i686") {
-        return ArchType::X86_32;
+        return ArchType::ARCH_X86;
     } else {
         HLOGE("unsupport machine %s", machine.c_str());
-        return ArchType::UNSUPPORT;
+        return ArchType::ARCH_UNKNOWN;
     }
 }
 
 ArchType GetArchTypeFromABI(bool abi32)
 {
-    if (deviceArchType == ArchType::UNSUPPORT) {
+    if (deviceArchType == ArchType::ARCH_UNKNOWN) {
         deviceArchType = GetDeviceArch();
     }
     if (abi32) {
-        if (deviceArchType == ArchType::ARM64) {
-            return ArchType::ARM;
-        } else if (deviceArchType == ArchType::X86_64) {
-            return ArchType::X86_32;
+        if (deviceArchType == ArchType::ARCH_ARM64) {
+            return ArchType::ARCH_ARM;
+        } else if (deviceArchType == ArchType::ARCH_X86_64) {
+            return ArchType::ARCH_X86;
         }
     }
     return deviceArchType;
@@ -225,7 +225,7 @@ ArchType GetDeviceArch()
 #if is_mingw
     return deviceArchType;
 #else
-    if (deviceArchType != ArchType::UNSUPPORT) {
+    if (deviceArchType != ArchType::ARCH_UNKNOWN) {
         return deviceArchType;
     } else {
         utsname systemName;
@@ -236,7 +236,7 @@ ArchType GetDeviceArch()
             deviceArchType = GetArchTypeFromUname(systemName.machine);
             HLOGD("machine arch is %s : %s", systemName.machine,
                   GetArchName(deviceArchType).c_str());
-            if (deviceArchType == ArchType::UNSUPPORT) {
+            if (deviceArchType == ArchType::ARCH_UNKNOWN) {
                 deviceArchType = buildArchType;
             }
         }
@@ -247,7 +247,7 @@ ArchType GetDeviceArch()
 
 void UpdateRegForABI(ArchType arch, u64 *regs)
 {
-    if (deviceArchType == ArchType::ARM64 and arch == ArchType::ARM) {
+    if (deviceArchType == ArchType::ARCH_ARM64 and arch == ArchType::ARCH_ARM) {
         // arm in arm64
         regs[PERF_REG_ARM_PC] = regs[PERF_REG_ARM64_PC];
     }

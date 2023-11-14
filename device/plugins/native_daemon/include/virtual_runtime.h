@@ -19,7 +19,10 @@
 #include <pthread.h>
 #include <functional>
 #include <map>
+#if defined(is_ohos) && is_ohos
 #include "call_stack.h"
+#endif
+#include "hashlistpp.h"
 #include "perf_event_record.h"
 #include "symbols_file.h"
 #include "virtual_thread.h"
@@ -61,7 +64,7 @@ public:
         return symbolsFiles_;
     }
 
-    const Symbol GetSymbol(CallFrame& callFrame, pid_t pid, pid_t tid,
+    const DfxSymbol GetSymbol(CallFrame& callFrame, pid_t pid, pid_t tid,
                            const perf_callchain_context &context = PERF_CONTEXT_MAX);
 
     VirtualThread &GetThread(pid_t pid, pid_t tid);
@@ -79,7 +82,7 @@ public:
                      size_t maxStackLevel);
     bool GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first);
     void ClearMaps();
-    void FillMapsCache(std::string& currentFileName, MemMapItem& memMapItem);
+    void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
     void HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags, uint64_t offset, const std::string& filePath);
     void RemoveMaps(uint64_t addr);
     std::vector<uint64_t>& GetOfflineMaps()
@@ -92,12 +95,12 @@ public:
         offlineMapAddr_.clear();
     }
 
-    std::map<uint64_t, MemMaps>& GetMapsCache()
+    std::map<uint64_t, std::shared_ptr<MemMaps>>& GetMapsCache()
     {
         return mapsCache_;
     }
 
-    std::pair<MemMaps*, uint32_t> FindMap(uint64_t addr);
+    std::pair<std::shared_ptr<MemMaps>, uint32_t> FindMap(uint64_t addr);
     uint64_t soBegin_ {0};
     // debug time
 #ifdef HIPERF_DEBUG_TIME
@@ -112,9 +115,9 @@ public:
     bool IsSymbolExist(const std::string& fileName);
     void DelSymbolFile(const std::string& fileName);
     void UpdateMaps(pid_t pid, pid_t tid);
-    std::vector<MemMapItem>& GetProcessMaps()
+    std::vector<std::shared_ptr<DfxMap>>& GetProcessMaps()
     {
-        return processMemMaps_;
+        return processMaps_;
     }
 
 public:
@@ -151,43 +154,45 @@ private:
             return seed;
         }
     };
+#if defined(is_ohos) && is_ohos
     CallStack callstack_;
+#endif
     // pid map with user space thread
     pthread_mutex_t threadMapsLock_;
     std::map<pid_t, VirtualThread> userSpaceThreadMap_;
-    // not pid , just memmap
-    std::vector<MemMapItem> kernelSpaceMemMaps_;
+    // not pid , just map
+    std::vector<DfxMap> kernelSpaceMaps_;
     pthread_mutex_t processSymbolsFileLock_;
-    std::unordered_set<uint32_t> fileSet_; // for memMpaItem filePathId_
+    std::unordered_set<uint32_t> fileSet_; // for mapItem filePathId_
     std::unordered_map<std::string, uint32_t> functionMap_;
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles_;
-    std::unordered_map<SymbolCacheKey, Symbol, HashPair> userSymbolCache_;
-    bool GetSymbolCache(uint64_t ip, Symbol &symbol, const VirtualThread &thread);
-    void UpdateSymbolCache(uint64_t ip, Symbol &symbol, HashList<uint64_t, Symbol> &cache);
+    std::unordered_map<SymbolCacheKey, DfxSymbol, HashPair> userSymbolCache_;
+    bool GetSymbolCache(uint64_t ip, DfxSymbol &symbol, const VirtualThread &thread);
+    void UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol, HashList<uint64_t, DfxSymbol> &cache);
 
     // find synbols function name
-    void MakeCallFrame(Symbol &symbol, CallFrame &callFrame);
+    void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
 
     // threads
     VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
     std::string ReadThreadName(pid_t tid);
     VirtualThread &CreateThread(pid_t pid, pid_t tid);
 
-    const Symbol GetKernelSymbol(uint64_t ip, const std::vector<MemMapItem> &memMaps,
+    const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<DfxMap> &Maps,
                                  const VirtualThread &thread);
-    const Symbol GetUserSymbol(uint64_t ip, const VirtualThread &thread);
-    void FillSymbolNameId(CallFrame& callFrame, Symbol& symbol);
-    void FillFileSet(CallFrame& callFrame, const Symbol& symbol);
+    const DfxSymbol GetUserSymbol(uint64_t ip, const VirtualThread &thread);
+    void FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol);
+    void FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol);
 
     std::vector<std::string> symbolsPaths_;
 
     friend class VirtualRuntimeTest;
     friend class VirtualThread;
-    std::vector<MemMapItem> processMemMaps_;
+    std::vector<std::shared_ptr<DfxMap>> processMaps_;
     std::unordered_set<uint64_t> failedIPs_;
     const NativeHookConfig hookConfig_;
     uint32_t memMapFilePathId_ = 0;
-    std::map<uint64_t, MemMaps> mapsCache_; // key is memMap soBegin, value is MemMaps
+    std::map<uint64_t, std::shared_ptr<MemMaps>> mapsCache_; // key is memMap soBegin, value is MemMaps
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
 };
 } // namespace NativeDaemon
