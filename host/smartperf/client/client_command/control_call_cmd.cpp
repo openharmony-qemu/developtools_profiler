@@ -38,7 +38,8 @@ void ControlCallCmd::GetResultData(int argc, std::vector<std::string> v)
         isOhTest = true;
     }
     if (v[typeName] == "screen") {
-        SPUtils::GetScreen();
+        std::string screen = SPUtils::GetScreen();
+        std::cout << screen << std::endl;
     } else if (v[typeName] == "frameLoss") {
         SmartPerf::ControlCallCmd::GetFrame();
     }
