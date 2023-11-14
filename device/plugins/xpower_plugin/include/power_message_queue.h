@@ -33,7 +33,7 @@ public:
                          const std::chrono::microseconds realTime, size_t batchCount);
     void PushBack(std::shared_ptr<PowerOptimizeData> &item);
     void ShutDown();
-    int Size();
+    size_t Size();
     bool Empty();
     bool IsShutDown();
 

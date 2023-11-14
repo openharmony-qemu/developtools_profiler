@@ -41,7 +41,7 @@ private:
     std::shared_ptr<PowerMessageQueue> dataQueuePtr_;
     WriterStruct* resultWriter_{nullptr};
     // xpower callback config
-    OptimizeConfig config_;
+    OptimizeConfig config_{};
     void* listenerHandle_ = nullptr;
 };
 

@@ -50,12 +50,14 @@ int GetStringArg(const char* name, std::string& val, const char* defaultVal)
     return val.size();
 }
 
-} // namespace
-
 void Usage()
 {
     printf("usage: xpowerdecoder [-f filepath] \n");
 }
+
+} // namespace
+
+
 int main(int argc, char* argv[])
 {
     std::string filePath;
