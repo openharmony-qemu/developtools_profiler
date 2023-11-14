@@ -49,6 +49,7 @@ using namespace OHOS::Developtools::Profiler;
     constexpr uint32_t SAVED_CMDLINE_SIZE_SMALL = 1024; // save cmdline sizes for cpu num less than 8
     constexpr uint32_t SAVED_CMDLINE_SIZE_LARGE = 4096; // save cmdline sizes for cpu num no less than 8
     constexpr int OCTA_CORE_CPU = 8; // 8 core
+    constexpr unsigned int RMQ_ENTRY_ALIGN_MASK = (1U << 2) - 1;
 } // namespace
 
 FTRACE_NS_BEGIN
@@ -441,49 +442,65 @@ void FlowController::CaptureWorkOnDelayMode()
     HILOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnDelayMode done!");
 }
 
-bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
+static inline int RmqEntryTotalSize(unsigned int size)
 {
-    auto buffer = ftraceBuffers_[0].get();
-    auto curPtr = buffer;
-    auto endPtr = buffer + dataSize;
-    auto tracePacket = std::make_unique<TracePluginResult>();
-    std::vector<FtraceCpuDetailMsg *> cpuDetail(platformCpuNum_);
+    return sizeof(struct RmqEntry) + ((size + RMQ_ENTRY_ALIGN_MASK) & (~RMQ_ENTRY_ALIGN_MASK));
+}
 
-    for (int i = 0; i < platformCpuNum_; i++) {
-        cpuDetail[i] = tracePacket->add_ftrace_cpu_detail();
-        cpuDetail[i]->set_cpu(static_cast<uint32_t>(i));
-        cpuDetail[i]->set_overwrite(0);
-    }
-
-    unsigned short cpuId;
+bool FlowController::HmParseEventData(uint8_t* &data)
+{
+    struct RmqConsumerData *rmqData = (struct RmqConsumerData *)data;
+    uint64_t timeStampBase = rmqData->timeStamp;
+    auto traceResult = std::make_unique<TracePluginResult>();
+    auto cpuDetailMsg = traceResult->add_ftrace_cpu_detail();
+    struct RmqEntry *event;
     struct HmTraceHeader *header;
     unsigned int evtSize;
-    FtraceEvent *ftraceEvent;
 
+    cpuDetailMsg->set_cpu(rmqData->coreId);
+    cpuDetailMsg->set_overwrite(0);
+
+    auto curPtr = rmqData->data;
+    auto endPtr = rmqData->data + rmqData->length;
     while (curPtr < endPtr) {
-        cpuId = *(unsigned short *)curPtr;
-        curPtr += sizeof(unsigned short);
-        header = (struct HmTraceHeader *)curPtr;
-        evtSize = header->size;
+        event = (struct RmqEntry *)curPtr;
+        evtSize = event->size;
+        if (evtSize == 0U) {
+            break;
+        }
 
+        header = (struct HmTraceHeader *)event->data;
         auto parseEventCtx =
             SubEventParser<FtraceEvent>::GetInstance().GetParseEventCtx(header->commonType);
         if (parseEventCtx == NULL) {
-            curPtr += evtSize;
+            curPtr += RmqEntryTotalSize(evtSize);
             continue;
         }
 
-        ftraceEvent = cpuDetail[cpuId]->add_event();
-        ftraceEvent->set_timestamp(header->timestamp);
+        auto ftraceEvent = cpuDetailMsg->add_event();
+        ftraceEvent->set_timestamp(event->timeStampOffset + timeStampBase);
         ftraceEvent->set_tgid(header->tgid);
         ftraceEvent->set_comm(header->tcbName);
-
-        CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, curPtr, evtSize,
-            parseEventCtx), false, "hm parse event failed!");
-            curPtr += evtSize;
+        CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, (uint8_t *)header,
+            evtSize, parseEventCtx), false, "hm parse event failed!");
+        curPtr += RmqEntryTotalSize(evtSize);
     }
 
-    return tansporter_->Submit(std::move(tracePacket));
+    data += PAGE_SIZE;
+    return tansporter_->Submit(std::move(traceResult));
+}
+
+bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
+{
+    CHECK_NOTNULL(resultWriter_, false, "%s: resultWriter_ nullptr", __func__);
+    auto buffer = ftraceBuffers_[0].get();
+    auto endPtr = buffer + dataSize;
+
+    for (auto data = buffer; data < endPtr;) {
+        CHECK_TRUE(HmParseEventData(data), false, "hm ParseEventData failed!");
+    }
+
+    return true;
 }
 
 long FlowController::ReadEventData(int cpuid)
@@ -816,11 +833,11 @@ void FlowController::EnableTraceEvents(void)
     for (auto& event : supportedEvents_) {
         std::string type = event.first;
         std::string name = event.second;
-        std::string fmt_type = type;
+        std::string fmtType = type;
         if (type == "power_kernel") {
-            fmt_type = "power";
+            fmtType = "power";
         }
-        if (userEventSet.count(fmt_type + "/" + name)) { // user config format
+        if (userEventSet.count(fmtType + "/" + name)) { // user config format
             if (FtraceFsOps::GetInstance().EnableEvent(type, name)) {
                 FtraceFsOps::GetInstance().AppendSetEvent(type, name);
                 enabledEvents_.push_back(event);
