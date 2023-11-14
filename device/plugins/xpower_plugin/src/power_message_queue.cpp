@@ -94,10 +94,10 @@ void PowerMessageQueue::PushBack(std::shared_ptr<PowerOptimizeData> &item)
     emptyCon_.notify_one(); // notify one waiting thread
 }
 
-int PowerMessageQueue::Size()
+size_t PowerMessageQueue::Size()
 {
     std::unique_lock<std::mutex> mlock(mutex_);
-    int size = dataQueue_.size();
+    size_t size = dataQueue_.size();
     mlock.unlock();
     return size;
 }

@@ -99,7 +99,7 @@ bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bun
     config_.messageType = messageType;
     config_.packageName = bundleName;
     config_.callback = std::bind(&XpowerPlugin::OptimizeCallback, this, std::placeholders::_1, std::placeholders::_2,
-                                std::placeholders::_3);
+                                 std::placeholders::_3);
     listenerHandle_ = startOptimizeMode(config_);
     if (listenerHandle_ == nullptr) {
         HILOG_ERROR(LOG_CORE, "Failed to startOptimizeMode");
