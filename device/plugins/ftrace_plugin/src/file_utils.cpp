@@ -37,6 +37,9 @@ std::string FileUtils::ReadFile(int fd)
             content.resize(content.size() + DEFAULT_READ_SIZE);
         }
         ssize_t nBytes = TEMP_FAILURE_RETRY(read(fd, &content[count], content.size() - count));
+        if (nBytes == -1 && errno == EAGAIN) {
+            continue;
+        }
         if (nBytes <= 0) {
             break;
         }
