@@ -25,7 +25,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "common.h"
-#include "hilog_common.h"
 #include "hilog_plugin_result.pbencoder.h"
 
 namespace {
