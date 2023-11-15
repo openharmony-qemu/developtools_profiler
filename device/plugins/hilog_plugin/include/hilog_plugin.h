@@ -56,8 +56,6 @@ private:
     bool RemoveSpaces(char** p);
     bool FindFirstSpace(char** p);
 
-    static FILE* CustomPopen(const char* command, const char* type);
-    static int CustomPclose(FILE* fp);
     bool StringToL(const char* word, long& value);
     // for ut
     void SetConfig(HilogConfig& config)
@@ -65,13 +63,8 @@ private:
         protoConfig_ = config;
         return;
     }
-    std::string GetFullCmd()
-    {
-        return fullCmd_;
-    }
 
     template <typename T> void FlushData(const T hilogLineProto);
-
     template <typename T> void FlushDataOptimize(const T hilogLineProto);
 
 private:
@@ -79,15 +72,14 @@ private:
     std::vector<char> protoBuffer_;
     std::vector<char> dataBuffer_;
     WriterStruct* resultWriter_ = nullptr;
-
     std::mutex mutex_;
     std::thread workThread_;
     std::atomic<bool> running_ = true;
-
-    std::string fullCmd_;
-
-    std::unique_ptr<FILE, int (*)(FILE*)> fp_;
+    std::vector<std::string> fullCmd_;
+    std::unique_ptr<FILE, std::function<int (FILE*)>> fp_;
     std::unique_ptr<FileCache> fileCache_ = nullptr;
+    int pipeFds_[2] = {-1, -1};
+    volatile pid_t childPid_ = -1;
 };
 
 #endif // !HILOG_PLUGIN_H
