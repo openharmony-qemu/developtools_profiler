@@ -446,9 +446,9 @@ bool BytraceEventParser::SetRateEvent(const ArgsMap& args, const BytraceLine& li
     }
     auto name = std::string_view(args.at("name"));
     auto state = base::StrToInt<int64_t>(args.at("state"));
-    auto cpu = base::StrToInt<uint64_t>(args.at("cpu_id"));
+    uint64_t cpu = 0;
     DataIndex nameIndex = traceDataCache_->GetDataIndex(name);
-    streamFilters_->clockRateFilter_->AppendNewMeasureData(cpu.value(), nameIndex, line.ts, state.value());
+    streamFilters_->clockRateFilter_->AppendNewMeasureData(cpu, nameIndex, line.ts, state.value());
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CLOCK_SET_RATE, STAT_EVENT_RECEIVED);
     return true;
 }

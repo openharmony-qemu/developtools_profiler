@@ -448,7 +448,14 @@ export class SpRecordPerf extends BaseElement {
       }
     });
 
+
     this.frequencySetInput = this.shadowRoot?.querySelector<HTMLInputElement>("input[title='Frequency']");
+    this.frequencySetInput!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
     this.offCPUSwitch = this.shadowRoot?.querySelector<LitSwitch>("lit-switch[title='Off CPU']");
     this.callSelect = this.shadowRoot?.querySelector<LitSelect>("lit-select[title='Call Stack']");
     this.addOptionButton!.addEventListener('click', (event) => {

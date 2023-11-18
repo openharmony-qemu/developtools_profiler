@@ -123,7 +123,6 @@ if (is_test) {
       "${PERF_DIR}/hiperf/include/nonlinux",
       "${THIRD_PARTY}/protobuf/src/google/protobuf",
       "${THIRD_PARTY}/json/single_include/nlohmann",
-      "${THIRD_PARTY}/perf_include/musl",
       "${THIRD_PARTY}/perf_include/libbpf",
       "${THIRD_PARTY}/perf_include/include",
       "${THIRD_PARTY}/perf_include",

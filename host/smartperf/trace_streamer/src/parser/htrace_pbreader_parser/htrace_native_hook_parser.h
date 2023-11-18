@@ -37,13 +37,9 @@ public:
     void FinishSplitNativeHook();
     void FinishParseNativeHookData();
     void Finish();
-    bool NativeHookReloadElfSymbolTable(std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables)
+    bool NativeHookReloadElfSymbolTable(const std::vector<std::unique_ptr<SymbolsFile>>& symbolsFile)
     {
-        return nativeHookFilter_->NativeHookReloadElfSymbolTable(elfSymbolTables);
-    }
-    bool SupportImportSymbolTable()
-    {
-        return nativeHookFilter_->SupportImportSymbolTable();
+        return nativeHookFilter_->NativeHookReloadElfSymbolTable(symbolsFile);
     }
 
 private:

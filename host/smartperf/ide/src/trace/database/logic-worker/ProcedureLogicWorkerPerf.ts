@@ -36,6 +36,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
   currentEventId: string = '';
   isAnalysis: boolean = false;
   isPerfBottomUp: boolean = false;
+  eventTypeId?: string = '';
 
   private dataCache = DataCache.getInstance();
 
@@ -181,12 +182,11 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     );
   }
 
-  getCurrentDataFromDb(selectionParam: any):void {
+  getCurrentDataFromDb(selectionParam: any): void {
     const cpus = selectionParam.perfAll ? [] : selectionParam.perfCpus;
     const processes = selectionParam.perfAll ? [] : selectionParam.perfProcess;
     const threads = selectionParam.perfAll ? [] : selectionParam.perfThread;
     let filterSql = '';
-    let eventTypeFilter = '';
     if (cpus.length != 0 || processes.length != 0 || threads.length != 0) {
       const cpuFilter = cpus.length > 0 ? `or s.cpu_id in (${cpus.join(',')}) ` : '';
       const processFilter = processes.length > 0 ? `or thread.process_id in (${processes.join(',')}) ` : '';
@@ -194,8 +194,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
       let arg = `${cpuFilter}${processFilter}${threadFilter}`.substring(3);
       filterSql = ` and (${arg})`;
     }
-    const eventTypeId = selectionParam.eventTypeId;
-    eventTypeFilter = eventTypeId ? ` and s.event_type_id = ${eventTypeId}` : '';
+    const eventTypeFilter = this.eventTypeId ? ` and s.event_type_id = ${this.eventTypeId}` : '';
     filterSql += eventTypeFilter;
     this.queryData(
       this.currentEventId,
@@ -239,6 +238,7 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     this.dataSource = [];
     this.allProcess = [];
     this.dataCache.clearPerf();
+    this.eventTypeId = undefined;
   }
 
   initPerfCallChainBottomUp(callChains: PerfCallChain[]) {
@@ -755,6 +755,9 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
               break;
             case 'setSearchValue':
               this.searchValue = item.funcArgs[0];
+              break;
+            case 'setEventTypeId':
+              this.eventTypeId = item.funcArgs[0];
               break;
             case 'setCombineCallChain':
               this.isAnalysis = true;

@@ -128,7 +128,9 @@ int32_t RawTable::Cursor::Filter(const FilterConstraints& fc, sqlite3_value** ar
         return SQLITE_OK;
     }
 
-    auto& cs = fc.GetConstraints();
+    auto cs = fc.GetConstraints();
+    std::set<uint32_t> sId = {static_cast<uint32_t>(Index::TS)};
+    SwapIndexFront(cs, sId);
     for (size_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         switch (static_cast<Index>(c.col)) {

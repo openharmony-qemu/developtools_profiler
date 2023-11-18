@@ -836,6 +836,9 @@ export function levelFromJSON(object: any): Level {
     case 4:
     case 'Warn':
       return Level.LOG_WARN;
+    case 5:
+    case 'Fatal':
+      return Level.LOG_FATAL;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -849,6 +852,7 @@ export enum Level {
   LOG_INFO = 'INFO',
   LOG_DEBUG = 'DEBUG',
   LOG_WARN = 'WARN',
+  LOG_FATAL = 'FATAL',
   UNRECOGNIZED = -1,
 }
 

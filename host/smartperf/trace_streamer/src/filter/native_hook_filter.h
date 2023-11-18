@@ -21,7 +21,8 @@
 #include "offline_symbolization_filter.h"
 #include "stat_filter.h"
 #include "string_help.h"
-
+#include "symbols_file.h"
+using namespace OHOS::Developtools::HiPerf;
 namespace SysTuning {
 namespace TraceStreamer {
 class NativeHookFrameInfo {
@@ -80,14 +81,10 @@ public:
     void ParseSymbolTableEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData);
     void ParseTagEvent(const ProtoReader::BytesView& bytesView);
     void FinishParseNativeHookData();
-    bool NativeHookReloadElfSymbolTable(std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables);
+    bool NativeHookReloadElfSymbolTable(const std::vector<std::unique_ptr<SymbolsFile>>& symbolsFiles);
     CommHookData& GetCommHookData();
     ProfilerPluginData* GetHookPluginData();
     void SerializeHookCommDataToString();
-    bool SupportImportSymbolTable()
-    {
-        return traceDataCache_->GetNativeHookFrameData()->Size();
-    }
 
 private:
     void FilterNativeHookMainEvent(size_t num);
@@ -159,7 +156,6 @@ private:
     bool isStringCompressedMode_ = false;
     bool isStatisticMode_ = false;
     const size_t MAX_CACHE_SIZE = 200000;
-    uint32_t ipid_ = INVALID_UINT32;
     uint32_t callChainId_ = 0;
     CommHookData commHookData_;
     std::unique_ptr<ProfilerPluginData> hookPluginData_ = nullptr;

@@ -43,6 +43,8 @@ export class SpAllocations extends BaseElement {
   private startupMode: LitSwitch | null | undefined;
   private recordStatisticsResult: HTMLDivElement | null | undefined;
 
+  private filterSize: HTMLInputElement | null | undefined;
+
   set startSamp(allocationStart: boolean) {
     if (allocationStart) {
       this.setAttribute('startSamp', '');
@@ -130,7 +132,34 @@ export class SpAllocations extends BaseElement {
     return false;
   }
 
+  connectedCallback() {
+    this.unwindEL?.addEventListener('keydown', this.handleInputChange);
+    this.shareMemory?.addEventListener('keydown', this.handleInputChange);
+    this.shareMemoryUnit?.addEventListener('keydown', this.handleInputChange);
+    this.filterMemory?.addEventListener('keydown', this.handleInputChange);
+  }
+
+  disconnectedCallback() {
+    this.unwindEL?.removeEventListener('keydown', this.handleInputChange);
+    this.shareMemory?.removeEventListener('keydown', this.handleInputChange);
+    this.shareMemoryUnit?.removeEventListener('keydown', this.handleInputChange);
+    this.filterMemory?.removeEventListener('keydown', this.handleInputChange);
+  }
+
+  handleInputChange = (ev: KeyboardEvent) => {
+    // @ts-ignore
+    if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+      ev.preventDefault();
+    }
+  };
+
   initElements(): void {
+    this.filterSize = this.shadowRoot?.querySelector('#filterSized');
+    this.filterSize!.addEventListener('keydown', (ev: any) => {
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    });
     this.processId = this.shadowRoot?.getElementById('pid') as LitAllocationSelect;
     let process = this.processId.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
     let sp = document.querySelector('sp-application') as SpApplication;
@@ -169,6 +198,16 @@ export class SpAllocations extends BaseElement {
     let stepValue = [0, 1, 10, 30, 60, 300, 600, 1800, 3600];
     this.statisticsSlider = this.shadowRoot?.querySelector<LitSlider>('#interval-slider') as LitSlider;
 
+    this.unwindEL.addEventListener('keydown', (ev: any) => {
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    });
+    this.shareMemory.addEventListener('keydown', (ev: any) => {
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    });
     this.recordStatisticsResult = this.shadowRoot?.querySelector<HTMLDivElement>(
       '.record-statistics-result'
     ) as HTMLDivElement;
@@ -183,6 +222,11 @@ export class SpAllocations extends BaseElement {
     };
     let parentElement = this.statisticsSlider!.parentNode as Element;
     this.intervalResultInput = this.shadowRoot?.querySelector('.interval-result') as HTMLInputElement;
+    this.intervalResultInput!.addEventListener('keydown', (ev: any) => {
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    });
     this.intervalResultInput.value = '10';
     this.statisticsSlider.addEventListener('input', (evt) => {
       this.statisticsSlider!.sliderStyle = {
@@ -232,8 +276,9 @@ export class SpAllocations extends BaseElement {
             defaultSize = stepIndex * stepSize;
             break;
           } else if (inputValue < currentValue && stepIndex !== 0) {
-            defaultSize = (inputValue - stepValue[stepIndex - 1]) /
-              (currentValue - stepValue[stepIndex - 1]) * stepSize + (stepSize * (stepIndex - 1));
+            defaultSize =
+              ((inputValue - stepValue[stepIndex - 1]) / (currentValue - stepValue[stepIndex - 1])) * stepSize +
+              stepSize * (stepIndex - 1);
             break;
           }
         }
@@ -550,13 +595,13 @@ export class SpAllocations extends BaseElement {
           <div class="allocation-application">
             <span class="allocation-inner-font-style" >Max unwind level</span>
             <span class="value-range">Max Unwind Level Rang is 0 - 512, default 10</span>
-            <input id= "unwind"  class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Max Unwind Level" oninput="if(this.value > 512) this.value = '512'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="10">
+            <input id= "unwind"  class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Max Unwind Level" oninput="if(this.value > 512){this.value = '512'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }"  onkeyup="this.value=this.value.replace(/\\D/g,'')" value="10">
           </div>
           <div class="allocation-application">
             <span class="allocation-inner-font-style">Shared Memory Size (One page equals 4 KB)</span>
             <span class="value-range">Shared Memory Size Range is 0 - 131072 page, default 16384 page</span>
             <div>
-              <input id = "shareMemory" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Shared Memory Size" oninput="if(this.value > 131072) this.value = '131072'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="16384">
+              <input id = "shareMemory" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Shared Memory Size" oninput="if(this.value > 131072){this.value = '131072'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="16384">
               <span>Page</span>
             </div>
           </div>
@@ -564,7 +609,7 @@ export class SpAllocations extends BaseElement {
             <span class="allocation-inner-font-style" >Filter Memory Size </span>
             <span class="value-range">Filter size Range is 0 - 65535 byte, default 0 byte</span> 
             <div>
-                <input id = "filterSized" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Filter Memory Size" oninput="if(this.value > 65535) this.value = '65535'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="0">
+                 <input id = "filterSized" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Filter Memory Size" oninput="if(this.value > 65535){this.value = '65535'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="0">
                  <span>Byte</span>
             </div>
           </div>
@@ -592,7 +637,7 @@ export class SpAllocations extends BaseElement {
             <lit-slider id="interval-slider" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
             </lit-slider>
             <div class='resultSize'>
-                <input class="interval-result inputBoxes" type="text" value='0' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                <input class="interval-result inputBoxes" type="text" value='0' onkeyup="this.value=this.value.replace(/\\D/g,'')"  oninput="if(this.value > 3600){this.value = '3600'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" >
                 <span style="text-align: center; margin: 8px"> S </span>
             </div>
           </div>

@@ -47,7 +47,7 @@ AnimationFilter::AnimationFilter(TraceDataCache* dataCache, const TraceStreamerF
         traceDataCache_->GetDataIndex("H:LAUNCHER_APP_BACK_TO_HOME"),
         traceDataCache_->GetDataIndex("H:APP_TRANSITION_TO_OTHER_APP"),
         traceDataCache_->GetDataIndex("H:APP_TRANSITION_FROM_OTHER_APP"),
-        animationAppListCmd_};
+        traceDataCache_->GetDataIndex("H:APP_LIST_FLING")};
 }
 AnimationFilter::~AnimationFilter() {}
 bool AnimationFilter::UpdateDeviceFps(const BytraceLine& line)
@@ -159,9 +159,7 @@ bool AnimationFilter::StartAnimationEvent(const BytraceLine& line, const TracePo
     auto startPoint = line.ts;
     auto animationRow = traceDataCache_->GetAnimation()->AppendAnimation(inputTime, startPoint, nameIndex);
     animationCallIds_.emplace(callStackRow, animationRow);
-    if (curAnimationIndex == animationAppListCmd_) {
-        realFrameRateFlagsDict_[traceDataCache_->GetDataIndex(point.name_)] = animationRow;
-    }
+    realFrameRateFlagsDict_[traceDataCache_->GetDataIndex(point.name_)] = animationRow;
     return true;
 }
 bool AnimationFilter::FinishAnimationEvent(const BytraceLine& line, size_t callStackRow)

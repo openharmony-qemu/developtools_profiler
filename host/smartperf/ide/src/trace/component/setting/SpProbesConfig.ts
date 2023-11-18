@@ -35,6 +35,8 @@ export class SpProbesConfig extends BaseElement {
   private ftraceBufferSizeResult: HTMLDivElement | null | undefined;
   private ftraceSlider: LitSlider | null | undefined;
 
+  private ftraceBuffSizeResultInput: HTMLInputElement | null | undefined;
+
   set startSamp(allocationStart: boolean) {
     if (allocationStart) {
       this.setAttribute('startSamp', '');
@@ -110,6 +112,12 @@ export class SpProbesConfig extends BaseElement {
   }
 
   initElements(): void {
+    this.ftraceBuffSizeResultInput = this.shadowRoot?.querySelector('.ftrace-buff-size-result') as HTMLInputElement;
+    this.ftraceBuffSizeResultInput!.addEventListener('keydown', (ev: any) => {
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    });
     this.traceConfigList = [
       {
         value: 'Scheduling details',
@@ -312,6 +320,12 @@ export class SpProbesConfig extends BaseElement {
     };
     let ftraceBufferSizeSliderParent = ftraceBufferSizeSlider!.parentNode as Element;
     let ftraceBuffSizeResultInput = this.shadowRoot?.querySelector('.ftrace-buff-size-result') as HTMLInputElement;
+    ftraceBuffSizeResultInput!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
     ftraceBuffSizeResultInput.value = ftraceBufferSizeSlider.sliderStyle.defaultValue;
     ftraceBufferSizeSlider.addEventListener('input', (evt) => {
       ftraceBuffSizeResultInput.parentElement!.classList.remove('border-red');
@@ -368,45 +382,50 @@ export class SpProbesConfig extends BaseElement {
 
   private unDisable() {
     this.startSamp = true;
-    let checkDesBoxDis=this.shadowRoot?.querySelectorAll<SpCheckDesBox>('check-des-box')
-    let litCheckBoxDis=this.shadowRoot?.querySelectorAll<LitCheckBox>('lit-check-box')
+    let checkDesBoxDis = this.shadowRoot?.querySelectorAll<SpCheckDesBox>('check-des-box');
+    let litCheckBoxDis = this.shadowRoot?.querySelectorAll<LitCheckBox>('lit-check-box');
 
-    let defaultSelected:any=[]
-    defaultSelected=defaultSelected.concat(this.traceConfigList,this.memoryConfigList,this.abilityConfigList,this.hitraceConfigList)
+    let defaultSelected: any = [];
+    defaultSelected = defaultSelected.concat(
+      this.traceConfigList,
+      this.memoryConfigList,
+      this.abilityConfigList,
+      this.hitraceConfigList
+    );
 
-    this.shadowRoot?.querySelector<SpCheckDesBox>("[value='Hitrace categories']")?.setAttribute('checked','true')
-    this.ftraceSlider!.removeAttribute('disabled')
-    
-    checkDesBoxDis?.forEach((item:any)=>{
-       item.removeAttribute('disabled')
-    })
+    this.shadowRoot?.querySelector<SpCheckDesBox>("[value='Hitrace categories']")?.setAttribute('checked', 'true');
+    this.ftraceSlider!.removeAttribute('disabled');
 
-    litCheckBoxDis?.forEach((item:any)=>{
-      item.removeAttribute('disabled')
-   })
+    checkDesBoxDis?.forEach((item: any) => {
+      item.removeAttribute('disabled');
+    });
 
-   defaultSelected.filter((item:any)=>{
-      if(item.isSelect) this.shadowRoot?.querySelector<SpCheckDesBox>(`[value='${item.value}']`)?.setAttribute('checked','true')
-   })
+    litCheckBoxDis?.forEach((item: any) => {
+      item.removeAttribute('disabled');
+    });
+
+    defaultSelected.filter((item: any) => {
+      if (item.isSelect)
+        this.shadowRoot?.querySelector<SpCheckDesBox>(`[value='${item.value}']`)?.setAttribute('checked', 'true');
+    });
   }
 
   private disable() {
     this.startSamp = false;
-    let checkDesBoxDis=this.shadowRoot?.querySelectorAll<SpCheckDesBox>('check-des-box')
-    let litCheckBoxDis=this.shadowRoot?.querySelectorAll<LitCheckBox>('lit-check-box')
+    let checkDesBoxDis = this.shadowRoot?.querySelectorAll<SpCheckDesBox>('check-des-box');
+    let litCheckBoxDis = this.shadowRoot?.querySelectorAll<LitCheckBox>('lit-check-box');
 
-    this.ftraceSlider!.setAttribute('disabled','')
-    
-    checkDesBoxDis?.forEach((item:any)=>{
-      item.setAttribute('disabled','')
-       item.checked=false
-    })
+    this.ftraceSlider!.setAttribute('disabled', '');
 
-    litCheckBoxDis?.forEach((item:any)=>{
-      item.setAttribute('disabled','')
-      item.checked=false
-   })
+    checkDesBoxDis?.forEach((item: any) => {
+      item.setAttribute('disabled', '');
+      item.checked = false;
+    });
 
+    litCheckBoxDis?.forEach((item: any) => {
+      item.setAttribute('disabled', '');
+      item.checked = false;
+    });
   }
 
   initHtml(): string {
@@ -567,8 +586,8 @@ export class SpProbesConfig extends BaseElement {
                        <div id="ftrace-buff-size-div">
                           <lit-slider id="ftrace-buff-size-slider" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
                           </lit-slider>
-                          <div class='ftrace-buff-size-result-div'>
-                              <input class="ftrace-buff-size-result" type="text" value='20480' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                          <div class='ftrace-buff-size-result-div' >
+                              <input class="ftrace-buff-size-result" type="text" value='20480' oninput="if(this.value > 307200){this.value = '307200'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" onkeyup="this.value=this.value.replace(/\\D/g,'')">
                               <span style="text-align: center; margin: 8px"> KB </span>
                            </div>
                        </div>

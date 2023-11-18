@@ -158,6 +158,18 @@ export class LitSelectV extends BaseElement {
     this.selectVBody = this.shadowRoot!.querySelector('.body') as HTMLDivElement;
     this.selectVOptions = this.shadowRoot!.querySelector('.body-opt') as HTMLDivElement;
     this.selectVIconEl = this.shadowRoot!.querySelector('.icon');
+    this.selectVInputEl!.onkeydown = (ev: KeyboardEvent) => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
+    this.selectVSearchInputEl!.onkeydown = (ev: KeyboardEvent) => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
     this.onclick = (ev: any) => {
       if (this.focused === false) {
         this.focused = true;

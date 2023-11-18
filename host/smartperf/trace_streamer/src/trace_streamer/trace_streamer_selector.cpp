@@ -246,7 +246,7 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
     } else if (fileType_ == TRACE_FILETYPE_PERF) {
         htraceParser_->StoreTraceDataSegment(std::move(data), size, isFinish);
     } else if (fileType_ == TRACE_FILETYPE_RAW_TRACE) {
-        rawTraceParser_->ParseTraceDataSegment(std::move(data), size);
+        rawTraceParser_->ParseTraceDataSegment(std::move(data), size, isFinish);
     }
     SetAnalysisResult(TRACE_PARSER_NORMAL);
     return true;
@@ -274,9 +274,6 @@ int32_t TraceStreamerSelector::ExportDatabase(const std::string& outputName, Tra
 
 bool TraceStreamerSelector::ReloadSymbolFiles(std::string& directory, std::vector<std::string>& symbolsPaths)
 {
-    if (fileType_ != TRACE_FILETYPE_H_TRACE) {
-        return false;
-    }
     TS_LOGE("directory is %s", directory.c_str());
     for (auto file : symbolsPaths) {
         TS_LOGE("files is %s", file.c_str());

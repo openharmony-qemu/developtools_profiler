@@ -122,6 +122,9 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
       this.eventTypeData.shift(this.typeStatisticsData);
       return;
     }
+    if (statisticAnalysisParam.nativeMemoryStatistic.length > 0) {
+      Utils.getInstance().initResponseTypeList(statisticAnalysisParam);
+    }
     // @ts-ignore
     this.tableType?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 30 + 'px';
     // @ts-ignore

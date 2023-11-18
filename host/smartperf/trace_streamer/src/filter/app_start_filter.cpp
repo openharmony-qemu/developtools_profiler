@@ -139,7 +139,8 @@ bool APPStartupFilter::UpdateAPPStartupData(uint32_t row, const std::string& nam
     }
     if (!startUIAbilityBySCBItems_.empty()) {
         auto lastStartUIAbilityBySCBItem = std::move(startUIAbilityBySCBItems_.back());
-        mAPPStartupData_[dataIndex].insert(std::make_pair(START_UI_ABILITY_BY_SCB, std::move(lastStartUIAbilityBySCBItem)));
+        mAPPStartupData_[dataIndex].insert(
+            std::make_pair(START_UI_ABILITY_BY_SCB, std::move(lastStartUIAbilityBySCBItem)));
         startUIAbilityBySCBItems_.clear();
     }
     if (!loadAbilityItems_.empty()) {
@@ -164,11 +165,14 @@ void APPStartupFilter::ParserAppStartup()
         auto callId = sliceData.CallIds()[i];
         auto startTime = sliceData.TimeStampData()[i];
         if (StartWith(nameString, procTouchCmd_)) {
-            procTouchItems_.emplace_back(std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
+            procTouchItems_.emplace_back(
+                std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
         } else if (StartWith(nameString, startUIAbilityBySCBCmd_)) {
-            startUIAbilityBySCBItems_.emplace_back(std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
+            startUIAbilityBySCBItems_.emplace_back(
+                std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
         } else if (StartWith(nameString, loadAbilityCmd_)) {
-            loadAbilityItems_.emplace_back(std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
+            loadAbilityItems_.emplace_back(
+                std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
         } else if (StartWith(nameString, appLaunchCmd_)) {
             UpdateAPPStartupData(i, nameString, APPLICATION_LAUNCHING);
         } else if (StartWith(nameString, uiLaunchCmd_)) {

@@ -951,6 +951,7 @@ public:
     const std::deque<uint64_t>& SymbolIds() const;
     const std::deque<std::string>& Names() const;
     void SetName(uint64_t index, const std::string& name);
+    void UpdateSymbolId(size_t index, DataIndex symbolId);
     void Clear() override;
 
 private:

@@ -52,7 +52,7 @@ HWTEST_F(RpcServerTest, CorrectTraceData, TestSize.Level1)
     std::string SQLQUERY("select * from measure;");
 
     RpcServer rpcServer;
-    auto ret = rpcServer.ParseData((const uint8_t*)PARSERDATA.c_str(), PARSERDATA.length(), res);
+    auto ret = rpcServer.ParseData((const uint8_t*)PARSERDATA.c_str(), PARSERDATA.length(), res, 0);
     EXPECT_TRUE(res);
     EXPECT_TRUE(ret);
     ret = rpcServer.ParseDataOver((const uint8_t*)PARSERDATA.c_str(), PARSERDATA.length(), res);
@@ -75,7 +75,7 @@ HWTEST_F(RpcServerTest, WrongTraceData, TestSize.Level1)
     std::string SQLQUERY("select * from measure_e;");
 
     RpcServer rpcServer;
-    auto ret = rpcServer.ParseData((const uint8_t*)PARSERDATA.c_str(), PARSERDATA.length(), res);
+    auto ret = rpcServer.ParseData((const uint8_t*)PARSERDATA.c_str(), PARSERDATA.length(), res, 0);
     EXPECT_TRUE(res);
     EXPECT_TRUE(ret);
     ret = rpcServer.ParseDataOver((const uint8_t*)PARSERDATA.c_str(), PARSERDATA.length(), res);

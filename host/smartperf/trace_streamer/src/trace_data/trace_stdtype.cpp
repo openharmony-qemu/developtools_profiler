@@ -908,6 +908,12 @@ void PerfCallChain::Clear()
     symbolIds_.clear();
     names_.clear();
 }
+void PerfCallChain::UpdateSymbolId(size_t index, DataIndex symbolId)
+{
+    if (index < Size()) {
+        symbolIds_[index] = symbolId;
+    }
+}
 size_t PerfFiles::AppendNewPerfFiles(uint64_t fileIds, uint32_t serial, DataIndex symbols, DataIndex filePath)
 {
     ids_.emplace_back(Size());

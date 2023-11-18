@@ -60,7 +60,7 @@ EMSCRIPTEN_KEEPALIVE uint8_t* TraceStreamer_Set_ThirdParty_DataDealer(SendDataCa
 * @ dataLen: 需要解析的数据源长度
 * return: 成功返回0，失败返回-1
 */
-EMSCRIPTEN_KEEPALIVE int TraceStreamerParseDataEx(int dataLen)
+EMSCRIPTEN_KEEPALIVE int TraceStreamerParseDataEx(int dataLen, bool isFinish)
 
 /* TraceStreamer停止解析数据，由JS调用
  * 

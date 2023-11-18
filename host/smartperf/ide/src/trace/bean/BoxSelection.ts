@@ -107,7 +107,6 @@ export class SelectionParam {
   dmaVmTrackerData: Array<any> = [];
   gpuMemoryTrackerData: Array<any> = [];
   hiLogs: Array<LogStruct> = [];
-  hiLogSummary: Array<LogStruct> = [];
 }
 
 export class BoxJumpParam {

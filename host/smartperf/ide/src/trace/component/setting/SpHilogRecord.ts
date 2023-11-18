@@ -84,7 +84,7 @@ export class SpHilogRecord extends BaseElement {
   }
 
   getHiLogLevel(): string[] {
-    return ['ALL-Level', 'Debug', 'Info', 'Warn', 'Error'];
+    return ['ALL-Level', 'Debug', 'Info', 'Warn', 'Error', 'Fatal'];
   }
 
   initHtml(): string {

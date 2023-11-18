@@ -33,8 +33,16 @@ export class TabPaneJsCpuStatistics extends BaseElement {
   private sortKey = 'timeStr';
   private sortType = 2;
   private statisticsPie: LitChartPie | null | undefined;
+  private currentSelection: SelectionParam | undefined;
 
   set data(data: SelectionParam | Array<JsCpuProfilerChartFrame>) {
+    if (data instanceof SelectionParam) {
+      if (data === this.currentSelection) {
+        return;
+      }
+      this.currentSelection = data;
+    }
+
     this.init();
     this.clearData();
     this.progress!.loading = true;

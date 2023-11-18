@@ -241,4 +241,4 @@ export class PluginConvertUtils {
   }
 }
 
-const LevelConfigEnumList = ['LEVEL_UNSPECIFIED', 'DEBUG', 'INFO', 'WARN', 'ERROR']
+const LevelConfigEnumList = ['LEVEL_UNSPECIFIED', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']

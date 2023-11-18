@@ -36,7 +36,7 @@ import { type IrqStruct } from '../../../database/ui-worker/ProcedureWorkerIrq.j
 import { type JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
 import { type HeapStruct } from '../../../database/ui-worker/ProcedureWorkerHeap.js';
 import { type LitTable } from '../../../../base-ui/table/lit-table.js';
-import { queryNativeHookResponseTypes, threadPool } from '../../../database/SqlLite.js';
+import { threadPool } from '../../../database/SqlLite.js';
 import { type HeapSnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
 import { type TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
 import { type TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
@@ -49,9 +49,7 @@ import { type FrameDynamicStruct } from '../../../database/ui-worker/ProcedureWo
 import { type TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
 import { type FrameSpacingStruct } from '../../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
 import { type TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
-import { procedurePool } from '../../../database/Procedure.js';
 import { type JsCpuProfilerChartFrame } from '../../../bean/JsStruct.js';
-import { TabPaneJsCpuTopDown } from '../sheet/ark-ts/TabPaneJsCpuCallTree.js';
 import { type TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
 import { type TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
 import { type TabPaneGpuClickSelect } from '../sheet/gpu/TabPaneGpuClickSelect.js';
@@ -618,17 +616,7 @@ export class TraceSheet extends BaseElement {
     if (tblHiLogPanel) {
       let tblHiLog = tblHiLogPanel.querySelector<TabPaneHiLogs>('tab-hi-log');
       if (tblHiLog) {
-        tblHiLog.parentElement!.style.overflow = 'hidden';
         tblHiLog.initTabSheetEl(this);
-      }
-    }
-    let tblSummaryPanel = this.shadowRoot?.querySelector<LitTabpane>("lit-tabpane[id='box-hilogs-summary']");
-    if (tblSummaryPanel) {
-      let tblSummary = tblSummaryPanel.querySelector<TabPaneHiLogSummary>('tab-hi-log-summary');
-      if (tblSummary) {
-        tblSummary.parentElement!.style.overflow = 'hidden';
-        tblSummary.style.overflow = 'hidden';
-        tblSummary.initTabSheetEl(tblSummary.parentElement!);
       }
     }
   };
@@ -685,31 +673,13 @@ export class TraceSheet extends BaseElement {
       let param: SelectionParam = new SelectionParam();
       Object.assign(param, this.selection);
       if (param.nativeMemory.length > 0 || param.nativeMemoryStatistic.length > 0) {
-        this.initFilterLibList(param);
+        Utils.getInstance().initResponseTypeList(param);
       }
       this.rangeSelect(param, true);
       return true;
     } else {
       return false;
     }
-  }
-
-  initFilterLibList(param: SelectionParam | any) {
-    let nmTypes: Array<string> = [];
-    if (param.nativeMemory.indexOf('All Heap & Anonymous VM') !== -1) {
-      nmTypes.push("'AllocEvent'");
-      nmTypes.push("'MmapEvent'");
-    } else {
-      if (param.nativeMemory.indexOf('All Heap') !== -1) {
-        nmTypes.push("'AllocEvent'");
-      }
-      if (param.nativeMemory.indexOf('All Anonymous VM') !== -1) {
-        nmTypes.push("'MmapEvent'");
-      }
-    }
-    queryNativeHookResponseTypes(param.leftNs, param.rightNs, nmTypes).then((res) => {
-      procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => {});
-    });
   }
 
   showUploadSoBt(selection: SelectionParam | null | undefined): void {

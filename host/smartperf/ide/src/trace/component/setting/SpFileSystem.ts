@@ -205,6 +205,12 @@ export class SpFileSystem extends BaseElement {
 
   connectedCallback(): void {
     let traceMode = this.shadowRoot!.querySelector('#traceMode') as HTMLDivElement;
+    this.maximum!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
     let isLongTrace = SpApplication.isLongTrace;
     if (isLongTrace) {
       traceMode!.style.display = 'block';

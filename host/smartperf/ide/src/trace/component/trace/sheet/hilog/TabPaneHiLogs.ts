@@ -71,7 +71,7 @@ export class TabPaneHiLogs extends BaseElement {
     this.hiLogsTbl!.itemTextHandleMap.set('startTs', (startTs) => {
       return ns2Timestamp(startTs);
     });
-    this.hiLogsTbl!.addEventListener('row-hover', (e)=>{
+    this.hiLogsTbl!.addEventListener('row-hover', (e): void=>{
       // @ts-ignore
       let data = e.detail.data;
       if (data) {
@@ -85,22 +85,36 @@ export class TabPaneHiLogs extends BaseElement {
         this.traceSheetEl!.systemLogFlag = new Flag(Math.floor(pointX), 0, 0, 0, data.startTs!, '#999999', true, '');
         this.spSystemTrace?.refreshCanvas(false);
       }
-    })
+    });
     let tbl = this.hiLogsTbl?.shadowRoot?.querySelector<HTMLDivElement>('.table');
     tbl!.addEventListener('scroll', ()=>{
       this.tableTitleTimeHandle?.();
-    })
+    });
+    this.tagFilterDiv!.onclick = (ev): void => {
+      // @ts-ignore
+      let parentNode = ev.target.parentNode;
+      if (parentNode && this.tagFilterDiv!.contains(parentNode)) {
+        this.tagFilterDiv!.removeChild(parentNode);
+        this.allowTag['delete'](parentNode.textContent.trim().toLowerCase());
+      }
+      this.tableTimeHandle?.();
+    };
+    this.searchFilterInput!.oninput = (): void => {
+      this.tableTimeHandle?.();
+    };
+    this.processFilter!.oninput = (): void => {
+      this.tableTimeHandle?.();
+    };
+    this.levelFilterInput!.onchange = (): void => {
+      this.tableTimeHandle?.();
+    };
   }
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.tagFilterInput?.addEventListener('input', this.tagFilterInputEvent);
-    this.tagFilterInput?.addEventListener('keydown', this.tagFilterKeyEvent);
-    this.tagFilterDiv?.addEventListener('click', this.tagFilterDivClickEvent);
-    this.searchFilterInput?.addEventListener('input', this.searchFilterInputEvent);
-    this.processFilter?.addEventListener('input', this.processFilterEvent);
-    this.levelFilterInput?.addEventListener('change', this.levelFilterInputEvent);
-    new ResizeObserver(() => {
+    this.tagFilterInput?.addEventListener('keyup', this.tagFilterKeyEvent);
+    new ResizeObserver((): void => {
+      this.parentElement!.style.overflow = 'hidden';
       // @ts-ignore
       this.hiLogsTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 45 + 'px';
       this.tableTimeHandle?.();
@@ -110,12 +124,7 @@ export class TabPaneHiLogs extends BaseElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.tagFilterInput?.removeEventListener('input', this.tagFilterInputEvent);
-    this.tagFilterInput?.removeEventListener('keydown', this.tagFilterKeyEvent);
-    this.tagFilterDiv?.removeEventListener('click', this.tagFilterDivClickEvent);
-    this.searchFilterInput?.removeEventListener('input', this.searchFilterInputEvent);
-    this.processFilter?.removeEventListener('input', this.processFilterEvent);
-    this.levelFilterInput?.removeEventListener('change', this.levelFilterInputEvent);
+    this.tagFilterInput?.removeEventListener('keyup', this.tagFilterKeyEvent);
   }
 
   initHtml(): string {
@@ -170,13 +179,12 @@ export class TabPaneHiLogs extends BaseElement {
             let rowCount = frontTotalRowSize.toString().split('.');
             height += trEl.clientHeight - (Number(rowCount[1]) / 100 * trEl.clientHeight);
           }
-          firstRowHeight = trEl.clientHeight;
         }
         let allTdEl = trEl.querySelectorAll<HTMLElement>('.td');
         allTdEl[0].style.color = '#3D88C7';
         allTdEl[0].style.textDecoration = 'underline';
         allTdEl[0].style.textDecorationColor = '#3D88C7';
-        trEl.addEventListener('mouseout', () => {
+        trEl.addEventListener('mouseout', (): void => {
           this.traceSheetEl!.systemLogFlag = undefined;
           this.spSystemTrace?.refreshCanvas(false);
         })
@@ -215,24 +223,11 @@ export class TabPaneHiLogs extends BaseElement {
     this.traceSheetEl = traceSheet;
     this.levelFilterInput!.selectedIndex = 0;
     this.tagFilterInput!.value = '';
-    this.tagFilterInput!.placeholder = 'Filter by tag...';
     this.tagFilterDiv!.innerHTML = '';
     this.allowTag.clear();
     this.processFilter!.value = '';
-    this.processFilter!.placeholder = 'Search process name...';
     this.searchFilterInput!.value = '';
-    this.searchFilterInput!.placeholder = 'Search message...';
   }
-
-  tagFilterInputEvent = (): void => {
-    if (this.tagFilterInput) {
-      if (this.tagFilterInput.value === '') {
-        this.tagFilterInput.placeholder = 'Filter by tag...';
-      } else {
-        this.tagFilterInput.placeholder = '';
-      }
-    }
-  };
 
   tagFilterKeyEvent = (e: KeyboardEvent): void => {
     let inputValue = this.tagFilterInput!.value.trim();
@@ -262,42 +257,6 @@ export class TabPaneHiLogs extends BaseElement {
         this.allowTag['delete'](childNode.textContent!.trim().toLowerCase());
       }
     }
-    this.tableTimeHandle?.();
-  };
-
-  tagFilterDivClickEvent = (ev: Event): void => {
-    // @ts-ignore
-    let parentNode = ev.target.parentNode;
-    if (parentNode && this.tagFilterDiv!.contains(parentNode)) {
-      this.tagFilterDiv!.removeChild(parentNode);
-      this.allowTag['delete'](parentNode.textContent.trim().toLowerCase());
-    }
-    this.tableTimeHandle?.();
-  };
-
-  searchFilterInputEvent = (): void => {
-    if (this.searchFilterInput) {
-      if (this.searchFilterInput.value === '') {
-        this.searchFilterInput.placeholder = 'Search message...';
-      } else {
-        this.searchFilterInput.placeholder = '';
-      }
-    }
-    this.tableTimeHandle?.();
-  };
-
-  processFilterEvent = (): void => {
-    if (this.processFilter) {
-      if (this.processFilter.value === '') {
-        this.processFilter.placeholder = 'Search process name...';
-      } else {
-        this.processFilter.placeholder = '';
-      }
-    }
-    this.tableTimeHandle?.();
-  };
-
-  levelFilterInputEvent = (): void => {
     this.tableTimeHandle?.();
   };
 

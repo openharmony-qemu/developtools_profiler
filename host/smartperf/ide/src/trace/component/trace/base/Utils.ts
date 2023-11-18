@@ -13,6 +13,10 @@
  * limitations under the License.
  */
 
+import { SelectionParam } from '../../../bean/BoxSelection.js';
+import { procedurePool } from '../../../database/Procedure.js';
+import { queryNativeHookResponseTypes } from '../../../database/SqlLite.js';
+
 export class Utils {
   private static statusMap: Map<string, string> = new Map<string, string>();
   private static instance: Utils | null = null;
@@ -450,5 +454,36 @@ export class Utils {
 
   public static getTimeIsCross(startTime: number, endTime: number, startTime1: number, endTime1: number) {
     return Math.max(startTime, startTime1) <= Math.min(endTime, endTime1);
+  }
+
+  initResponseTypeList(val: SelectionParam | any) {
+    const isStatistic = val.nativeMemoryStatistic.length > 0;
+    const selection = isStatistic ? val.nativeMemoryStatistic : val.nativeMemory;
+    let types: Array<string | number> = [];
+    if (selection.indexOf('All Heap & Anonymous VM') != -1) {
+      if (isStatistic) {
+        types.push(0, 1);
+      } else {
+        types.push("'AllocEvent'", "'MmapEvent'");
+      }
+    } else {
+      if (selection.indexOf('All Heap') != -1) {
+        if (isStatistic) {
+          types.push(0);
+        } else {
+          types.push("'AllocEvent'");
+        }
+      }
+      if (selection.indexOf('All Anonymous VM') != -1) {
+        if (isStatistic) {
+          types.push(1);
+        } else {
+          types.push("'MmapEvent'");
+        }
+      }
+    }
+    queryNativeHookResponseTypes(val.leftNs, val.rightNs, types, isStatistic).then((res) => {
+      procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => {});
+    });
   }
 }

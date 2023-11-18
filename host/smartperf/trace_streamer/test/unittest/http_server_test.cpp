@@ -122,7 +122,7 @@ HWTEST_F(HttpServerTest, HttpCorrectRequest, TestSize.Level1)
     pthread_t pthreadId = 0;
     int32_t ret = 0;
 
-    ret = rpcServer.ParseData((const uint8_t*)g_parserData.c_str(), g_parserData.length(), ResultCallbackFunc);
+    ret = rpcServer.ParseData((const uint8_t*)g_parserData.c_str(), g_parserData.length(), ResultCallbackFunc, 0);
     ret = rpcServer.ParseDataOver(nullptr, 0, ResultCallbackFunc);
     ret = rpcServer.SqlQuery((const uint8_t*)g_sqlQuery.c_str(), g_sqlQuery.length(), ResultCallbackFunc);
 

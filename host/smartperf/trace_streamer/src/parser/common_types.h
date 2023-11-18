@@ -146,7 +146,7 @@ struct RawTraceFileHeader {
     uint8_t fileType;
     uint16_t versionNumber;
     uint32_t reserved;
-};
+} __attribute__((aligned(4)));
 
 enum RawTraceContentType : uint8_t {
     CONTENT_TYPE_DEFAULT = 0,

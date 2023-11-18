@@ -1691,23 +1691,28 @@ export const queryAllHookData = (rightNs: number): Promise<Array<NativeHookSampl
 export const queryNativeHookResponseTypes = (
   leftNs: number,
   rightNs: number,
-  types: Array<string>
-): Promise<Array<any>> =>
-  query(
+  types: Array<string | number>,
+  isStatistic: boolean
+): Promise<Array<any>> => {
+  const table = isStatistic ? 'native_hook_statistic' : 'native_hook';
+  const tsKey = isStatistic ? 'ts' : 'start_ts';
+  const type = isStatistic ? 'type' : 'event_type';
+  return query(
     'queryNativeHookResponseTypes',
     `
-        select 
-          distinct last_lib_id as lastLibId,
-          data_dict.data as value 
-        from 
-          native_hook A ,trace_range B
-          left join data_dict on A.last_lib_id = data_dict.id 
-        where
-        A.start_ts - B.start_ts
-        between ${leftNs} and ${rightNs} and A.event_type in (${types.join(',')});
-    `,
+          select 
+            distinct last_lib_id as lastLibId,
+            data_dict.data as value 
+          from 
+            ${table} A ,trace_range B
+            left join data_dict on A.last_lib_id = data_dict.id 
+          where
+          A.${tsKey} - B.start_ts
+          between ${leftNs} and ${rightNs} and A.${type} in (${types.join(',')});
+      `,
     { $leftNs: leftNs, $rightNs: rightNs, $types: types }
   );
+};
 /**
  * HiPerf
  */
@@ -2750,7 +2755,7 @@ export const querySceneSearchFunc = (search: string, processList: Array<string>)
    select c.cookie,c.id,c.name as funName,c.ts - r.start_ts as startTime,c.dur,c.depth,t.tid,t.name as threadName
    ,p.pid ,'func' as type from callstack c left join thread t on c.callid = t.id left join process p on t.ipid = p.id
    left join trace_range r
-   where c.name like '%${search}%' and startTime > 0 and p.pid in (${processList.join(',')});
+   where c.name like '%${search}%' ESCAPE '\\' and startTime > 0 and p.pid in (${processList.join(',')});
     `,
     { $search: search }
   );
@@ -5494,3 +5499,93 @@ export const queryTraceType = (): Promise<
 
 export const queryTransferList = (): Promise<Array<{ id: number; cmdStr: string }>> =>
   query('queryTransferList', `select id, report_value as cmdStr from perf_report where report_type = 'config_name'`);
+
+  export const getTabRunningPercent = (tIds: Array<number>, leftNS: number, rightNS: number): Promise<Array<any>> =>
+  query<SelectionData>(
+    'getTabRunningPercent',
+    `
+      select
+        B.pid,B.tid,B.state,B.cpu,B.dur,B.ts
+      from
+        thread_state AS B
+      left join 
+        trace_range AS TR
+      where
+        B.tid in (${tIds.join(',')})
+      and
+        B.state='Running'
+      and
+        not ((B.ts - TR.start_ts + ifnull(B.dur,0) < ${leftNS}) or (B.ts - TR.start_ts > ${rightNS}))
+      order by ts
+  `,
+    { $leftNS: leftNS, $rightNS: rightNS }
+  );
+
+export const querySearchFuncData = (funcName: string, tIds: Array<number>, leftNS: number, rightNS: number): Promise<Array<SearchFuncBean>> =>
+  query(
+    'querySearchFuncData',
+    `
+      select 
+        c.cookie,
+        c.id,
+        c.name as funName,
+        c.ts - r.start_ts as startTime,
+        c.dur,
+        c.depth,
+        t.tid,
+        t.name as threadName,
+        p.pid,
+        'func' as type 
+      from 
+        callstack c 
+      left join 
+        thread t 
+      on 
+        c.callid = t.id 
+      left join 
+        process p 
+      on 
+        t.ipid = p.id
+      left join 
+        trace_range r
+      where 
+        c.name = '${funcName}' 
+      and 
+        t.tid = ${tIds} 
+      and
+        not ((startTime < ${leftNS}) or (startTime > ${rightNS}));
+  `,
+    { $search: funcName }
+  );
+
+export const queryCpuFreqUsageData = (Ids: Array<number>): Promise<Array<any>> =>
+  query(
+    'queryCpuFreqUsageData',
+    `select
+      value,
+      ifnull(dur,tb.end_ts - c.ts) dur,
+      ts-tb.start_ts as startNS,
+      filter_id
+    from
+      measure c,
+      trace_range tb
+    where
+      c.filter_id in (${Ids.join(',')})
+  `
+  );
+
+export const queryCpuFreqFilterId = (): Promise<Array<any>> =>
+  query(
+    'queryCpuFreqFilterId',
+    `
+      select
+        id,
+        cpu
+      from
+        cpu_measure_filter 
+      where
+        name='cpufreq'
+      or
+        name='cpu_frequency'
+    `
+  );

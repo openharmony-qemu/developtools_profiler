@@ -38,7 +38,7 @@ export class TabpanePerfProfile extends BaseElement {
   private perfProfilerList: LitTable | null | undefined;
   private perfProfileProgressEL: LitProgressBar | null | undefined;
   private perfProfilerRightSource: Array<PerfCallChainMerageData> = [];
-  private perfProfilerFilter: TabPaneFilter| null| undefined;
+  private perfProfilerFilter: TabPaneFilter | null | undefined;
   private perfProfilerDataSource: any[] = [];
   private perfProfileSortKey = 'weight';
   private perfProfileSortType = 0;
@@ -72,42 +72,51 @@ export class TabpanePerfProfile extends BaseElement {
     this.perfProfilerFilter!.refreshTreeTransfer();
     this.perfProfileProgressEL!.loading = true;
     this.perfProfileLoadingPage.style.visibility = 'visible';
+    this.getDataByWorkAndUpDateCanvas(perfProfilerSelection);
+  }
+
+  getDataByWorkAndUpDateCanvas(perfProfilerSelection: SelectionParam):void {
     const initWidth = this.clientWidth;
     this.initGetData(perfProfilerSelection, initWidth);
-    
     this.perfProfilerFilter!.getCallTransferData((data: any) => {
-      perfProfilerSelection.eventTypeId = data.value !== 'count' ? data.value : undefined;
-      this.initGetData(perfProfilerSelection, initWidth, data);
+      const eventTypeId = data.value !== 'count' ? data.value : undefined;
+      this.initGetData(perfProfilerSelection, initWidth, eventTypeId);
     });
   }
 
-  initGetData(perfProfilerSelection: SelectionParam | any, initWidth: number, data?: any): void {
-    this.getDataByWorker(
-      [
-        {
-          funcName: 'setSearchValue',
-          funcArgs: [''],
-        },
-        {
-          funcName: 'getCurrentDataFromDb',
-          funcArgs: [perfProfilerSelection],
-        },
-      ],
-      (results: any[]) => {
-        this.setPerfProfilerLeftTableData(results);
-        this.perfProfilerList!.recycleDataSource = [];
-        if (data && data.value !== 'count') {
-          this.perfProfileFrameChart!.mode = ChartMode.EventCount;
-        } else {
-          this.perfProfileFrameChart!.mode = ChartMode.Count;
-        }
-
-        this.perfProfileFrameChart?.updateCanvas(true, initWidth);
-        this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
-        this.switchFlameChart();
-        this.perfProfilerFilter!.icon = 'block';
+  initGetData(perfProfilerSelection: SelectionParam | any, initWidth: number, eventTypeId?: string): void {
+    let perfProfileArgs: any[] = [];
+    if (eventTypeId) {
+      perfProfileArgs.push({
+        funcName: 'setEventTypeId',
+        funcArgs: [eventTypeId !== 'count' ? eventTypeId : undefined],
+      });
+    }
+    perfProfileArgs.push(
+      {
+        funcName: 'setSearchValue',
+        funcArgs: [''],
+      },
+      {
+        funcName: 'getCurrentDataFromDb',
+        funcArgs: [perfProfilerSelection],
       }
     );
+
+    this.getDataByWorker(perfProfileArgs, (results: any[]) => {
+      this.setPerfProfilerLeftTableData(results);
+      this.perfProfilerList!.recycleDataSource = [];
+      if (eventTypeId && eventTypeId !== 'count') {
+        this.perfProfileFrameChart!.mode = ChartMode.EventCount;
+      } else {
+        this.perfProfileFrameChart!.mode = ChartMode.Count;
+      }
+
+      this.perfProfileFrameChart?.updateCanvas(true, initWidth);
+      this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
+      this.switchFlameChart();
+      this.perfProfilerFilter!.icon = 'block';
+    });
   }
 
   getParentTree(

@@ -216,7 +216,14 @@ export class LitAllocationSelect extends BaseElement {
         `;
   }
 
-  connectedCallback() {}
+  connectedCallback() {
+    this.selectAllocationInputEl!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
+  }
 
   initData() {
     this.selectAllocationInputEl = this.shadowRoot!.querySelector('input');

@@ -120,6 +120,10 @@ bool FtraceProcessor::HandleHeaderPageFormat(const std::string& formatInfo)
 int FtraceProcessor::HeaderPageCommitSize(void)
 {
     // return the size value (8B on 64bit device, 4B on 32bit device) of commit field read from events/header_page
+    if (pageHeaderFormat_.commit.size == 0) {
+        TS_LOGW("haven't header_page infos, set defalut size is 8B");
+        pageHeaderFormat_.commit.size = 8;
+    }
     return pageHeaderFormat_.commit.size;
 }
 
@@ -475,9 +479,7 @@ bool FtraceProcessor::HandleTgids(const std::string& tgids)
         state = true;
     }
 
-    if (tgidDict_.size() == 0) {
-        TS_LOGW("tgidDict_ is zero!");
-    }
+    TS_LOGI("tgidDict_.size = %zu", tgidDict_.size());
     return state;
 }
 
@@ -499,9 +501,7 @@ bool FtraceProcessor::HandleCmdlines(const std::string& cmdlines)
         }
     }
 
-    if (taskNameDict_.size() == 0) {
-        TS_LOGW("taskNameDict_ is zero!");
-    }
+    TS_LOGI("taskNameDict_.size = %zu", taskNameDict_.size());
     return state;
 }
 

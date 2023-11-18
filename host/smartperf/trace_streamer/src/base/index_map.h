@@ -78,44 +78,36 @@ public:
         rowIndexBak_.clear();
         switch (op) {
             case SQLITE_INDEX_CONSTRAINT_EQ:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] != value; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] == value; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] != value; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] == value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_NE:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] == value; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] != value; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] == value; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] != value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_ISNULL:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] != invalidValue; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] == invalidValue; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] != invalidValue; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] == invalidValue; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_ISNOTNULL:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] == invalidValue; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] != invalidValue; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] == invalidValue; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] != invalidValue; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_GT:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] <= value; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] > value; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] <= value; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] > value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_GE:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] < value; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] >= invalidValue; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] < value; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] >= invalidValue; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_LE:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] > value; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] < invalidValue; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] > value; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] < invalidValue; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_LT:
-                ProcessData(
-                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] >= value; },
-                    [&](TableRowId id) -> bool { return dataQueue[id] < invalidValue; });
+                ProcessData(dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] >= value; },
+                            [&](TableRowId id) -> bool { return dataQueue[id] < invalidValue; });
                 break;
             default:
                 break;

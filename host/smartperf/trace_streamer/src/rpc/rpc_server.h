@@ -28,7 +28,7 @@ public:
     using SendDataCallBack = std::function<void(const char*, int32_t, int32_t)>;
     using SplitFileCallBack = std::function<void(const std::string /* result */, int32_t, int32_t)>;
     // In order to bind HTTP, maintain a unified interface, even if some parameters are useless
-    bool ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack);
+    bool ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack, bool isFinish);
     bool ParseSplitFileData(const uint8_t* data,
                             size_t len,
                             int32_t isFinish,

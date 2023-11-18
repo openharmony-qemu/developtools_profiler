@@ -52,5 +52,4 @@ if not sys.argv[4].startswith("--plugin"):
         cmd=[PROTOC, OPT_PLUGIN_PROTOREADER, f"{PLUGINOUT}:{sys.argv[5]}", *PARAMS_ALL.split()]
         print("执行参数：--------------- ", cmd, " --------------------------")
         subprocess.run(cmd)
-    # subprocess.run(cmd, env={"LD_LIBRARY_PATH": f"{LIBCXX_X64_OUT}:{SUBSYS_X64_OUT}"})
 subprocess.run([PROTOC, *PARAMS_ALL.split()])

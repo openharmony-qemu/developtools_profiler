@@ -446,6 +446,20 @@ export class TabPaneFilter extends BaseElement {
 
     divElement!.forEach((divEl, idx) => {
       divEl.addEventListener('click', () => {
+        let filterData = this.getFilterTreeData();
+        if (filterData.callTree[0] === true || filterData.callTree[1] === true) {
+          let row = this.shadowRoot!.querySelectorAll<LitCheckBox>('.tree-check lit-check-box');
+          row[0].checked = false;
+          row[1].checked = false;
+        }
+        if (filterData.callTreeConstraints.checked === true) {
+          let check = this.shadowRoot!.querySelector<LitCheckBox>('#constraints-check');
+          let inputs = this.shadowRoot!.querySelectorAll<HTMLInputElement>('.constraints-input');
+          check!.checked = false;
+          inputs[0].value = '0';
+          inputs[1].value = '∞';
+        }
+        this.filterInputEL!.value = ''
         this.transferChecked = radioList![idx].value;
         radioList![idx].checked = true;
         if (this.getCallTransfer) {

@@ -17,38 +17,30 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabPaneFrequencySampleData, getTabPaneCounterSampleData } from '../../../../database/SqlLite.js';
-import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
-import { Utils } from '../../base/Utils.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
 import { resizeObserver } from '../SheetUtils.js';
 import { CpuFreqStruct } from '../../../../database/ui-worker/ProcedureWorkerFreq.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
 import { TraceRow } from '../../base/TraceRow.js';
 import {
-  dataFilterHandler,
   drawLines,
-  isFrameContainPoint,
 } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
-import { RangeSelect } from '../../base/RangeSelect.js';
 
 @element('tabpane-frequency-sample')
 export class TabPaneFrequencySample extends BaseElement {
   private frequencySampleTbl: LitTable | null | undefined;
-  private range: HTMLLabelElement | null | undefined;
-  private loadDataInCache: boolean = true;
   private selectionParam: SelectionParam | null | undefined;
   private frequencyLoadingPage: any;
-  private frequencyLoadingList: number[] = [];
   private frequencySampleSource: any[] = [];
   private frequencySampleSortKey: string = 'counter';
   private frequencySampleSortType: number = 0;
   private systemTrace: SpSystemTrace | undefined | null;
   private _rangeRow: Array<TraceRow<any>> | undefined | null;
-  private frequencySampleClickKey: string = 'busyTimeStr';
   private frequencySampleClickType: boolean = false;
   private busyTimeLoadingHide: boolean = false;
   private freqBusyDataList: Array<any> = [];
   private worker: Worker | undefined;
+  private freqResult: Array<any> = [];
 
   set data(frequencySampleValue: SelectionParam | any) {
     if (frequencySampleValue == this.selectionParam) {
@@ -69,8 +61,8 @@ export class TabPaneFrequencySample extends BaseElement {
     this.frequencyLoadingPage = this.shadowRoot!.querySelector('.loadingFre');
     this.frequencySampleTbl = this.shadowRoot!.querySelector<LitTable>('#tb-states');
     this.systemTrace = document
-      .querySelector('body > sp-application')?.
-      shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
+      .querySelector('body > sp-application')
+      ?.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.frequencySampleTbl!.addEventListener('column-click', (evt) => {
       // @ts-ignore
       this.frequencySampleSortKey = evt.detail.key;
@@ -100,7 +92,7 @@ export class TabPaneFrequencySample extends BaseElement {
                 freqFilter[i].value === data.value &&
                 freqFilter[i].cpu === data.cpu &&
                 Math.max(TraceRow.rangeSelectObject?.startNS!, freqFilter[i].startNS!) <
-                Math.min(TraceRow.rangeSelectObject?.endNS!, freqFilter[i].startNS! + freqFilter[i].dur!)
+                  Math.min(TraceRow.rangeSelectObject?.endNS!, freqFilter[i].startNS! + freqFilter[i].dur!)
               ) {
                 CpuFreqStruct.hoverCpuFreqStruct = freqFilter[i];
               }
@@ -135,10 +127,10 @@ export class TabPaneFrequencySample extends BaseElement {
     this.frequencySampleTbl!.addEventListener('button-click', (evt) => {
       //@ts-ignore
       this.frequencySampleClickKey = evt.detail.key;
-      this.frequencySampleClickType = !this.frequencySampleClickType
+      this.frequencySampleClickType = !this.frequencySampleClickType;
       //@ts-ignore
-      this.handleClick(evt.detail.key, this.frequencySampleClickType)
-    })
+      this.handleClick(evt.detail.key, this.frequencySampleClickType);
+    });
   }
 
   connectedCallback() {
@@ -158,7 +150,8 @@ export class TabPaneFrequencySample extends BaseElement {
       frqSampleParam.leftNs + frqSampleParam.recordStartNs,
       frqSampleParam.rightNs + frqSampleParam.recordStartNs,
       frqSampleParam.cpuFreqFilterIds
-    )
+    );
+    this.freqResult = result;
     frqSampleParam.cpuFreqFilterIds.forEach((a: number) => {
       this.getInitTime(
         result.filter((f) => f.filterId == a),
@@ -182,9 +175,11 @@ export class TabPaneFrequencySample extends BaseElement {
       });
     } else {
       frqSampleParam.cpuFreqFilterNames.forEach((item: string) => {
-        let cpuStateIds = frqSampleParam.cpuStateRowsId.filter((it: any) => it.cpu == item.replace(/[^\d]/g, ' ').trim());
+        let cpuStateIds = frqSampleParam.cpuStateRowsId.filter(
+          (it: any) => it.cpu == item.replace(/[^\d]/g, ' ').trim()
+        );
         stateFiliterIds.push(cpuStateIds[0].filterId);
-        cpuFiliterOrder.push(cpuStateIds[0].cpu)
+        cpuFiliterOrder.push(cpuStateIds[0].cpu);
       });
       let res = await getTabPaneCounterSampleData(
         frqSampleParam.leftNs + frqSampleParam.recordStartNs,
@@ -198,7 +193,7 @@ export class TabPaneFrequencySample extends BaseElement {
         result,
         sampleMap,
         res,
-        cpuFiliterOrder
+        cpuFiliterOrder,
       };
       this.worker!.postMessage(msg);
       this.worker!.onmessage = (event: MessageEvent) => {
@@ -210,7 +205,7 @@ export class TabPaneFrequencySample extends BaseElement {
         //当busyTimebutton的状态为true但busyTime的计算未完成时
         if (this.frequencySampleClickType) {
           this.handleClick(this.frequencySampleSortKey, this.frequencySampleClickType);
-        };
+        }
         this.worker!.terminate();
       };
     }
@@ -243,7 +238,7 @@ export class TabPaneFrequencySample extends BaseElement {
           counter: 'Cpu ' + item.cpu,
           valueStr: ColorUtils.formatNumberComma(item.value),
           busyTimeStr: '-',
-          busyTime: 0
+          busyTime: 0,
         });
       }
     });
@@ -252,6 +247,9 @@ export class TabPaneFrequencySample extends BaseElement {
   //点击按钮控制busyTime显示与否
   handleClick(key: string, type: boolean) {
     let res = new Array();
+    if (this.freqResult.length == 0) {
+      return;
+    }
     //当busyTime的值计算完毕后进入if判断
     if (this.busyTimeLoadingHide) {
       this.busyTimeLoadingHide = false;
@@ -262,8 +260,8 @@ export class TabPaneFrequencySample extends BaseElement {
     if (this.freqBusyDataList.length > 0) {
       this.frequencySampleTbl!.recycleDataSource.forEach((value) => {
         value.busyTimeStr = type ? value.busyTime : '-';
-        res.push(value)
-      })
+        res.push(value);
+      });
       this.frequencySampleTbl!.recycleDataSource = res;
     }
   }

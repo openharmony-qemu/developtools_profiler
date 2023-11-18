@@ -1390,17 +1390,20 @@ export class SpApplication extends BaseElement {
             },
             async (res) => {
               let existFtrace = await queryExistFtrace();
-              let traceHeadData = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
-              let enc = new TextDecoder();
-              let headerStr = enc.decode(traceHeadData);
-              let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
+              let isAllowTrace = true;
+              if (DbPool.sharedBuffer) {
+                let traceHeadData = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
+                let enc = new TextDecoder();
+                let headerStr = enc.decode(traceHeadData);
+                let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
                 .map((byte) => byte.toString(16).padStart(2, '0'))
                 .join('');
+                if (headerStr.indexOf('OHOSPROF') !== 0 && rowTraceStr.indexOf('49df') !== 0) {
+                  isAllowTrace = false;
+                }
+              }
               let index = 2;
-              if (
-                existFtrace.length > 0 &&
-                (headerStr.indexOf('OHOSPROF') === 0 || rowTraceStr.indexOf('49df') === 0)
-              ) {
+              if (existFtrace.length > 0 && isAllowTrace) {
                 mainMenu.menus!.splice(2, 1, {
                   collapsed: false,
                   title: 'Convert trace',

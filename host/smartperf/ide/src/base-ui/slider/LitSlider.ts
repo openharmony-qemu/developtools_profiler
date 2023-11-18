@@ -268,8 +268,16 @@ export class LitSlider extends BaseElement {
     // Add a slider for input event listeners
     this.litSlider?.addEventListener('input', this.inputChangeEvent);
     this.litSlider?.addEventListener('change', this.inputChangeEvent);
+    this.litSlider?.addEventListener('keydown', this.inputKeyDownEvent);
     this.litSliderStyle = this.sliderStyle;
   }
+
+  // @ts-ignore
+  inputKeyDownEvent = (ev) => {
+    if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+      ev.preventDefault();
+    }
+  };
 
   inputChangeEvent = (event: any) => {
     if (this.litSlider) {
@@ -293,6 +301,7 @@ export class LitSlider extends BaseElement {
   disconnectedCallback() {
     this.litSlider?.removeEventListener('input', this.inputChangeEvent);
     this.litSlider?.removeEventListener('change', this.inputChangeEvent);
+    this.litSlider?.removeEventListener('change', this.inputKeyDownEvent);
   }
 
   adoptedCallback() {}

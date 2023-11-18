@@ -35,13 +35,16 @@ private:
     bool ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin);
     void ParseTraceDataItem(const std::string& buffer) override;
     bool ParseCpuRawData(uint32_t cpuId, const std::string& buffer);
+    bool ParseLastCommData(uint8_t type, const std::string& buffer);
     bool InitRawTraceFileHeader(std::deque<uint8_t>::iterator& packagesCurIter);
     bool InitEventFormats(const std::string& buffer);
+    bool UpdateCpuCoreMax(uint32_t cpuId);
 
 private:
     TraceDataCache* traceDataCache_;
     bool hasGotHeader_ = false;
-    uint8_t cpuRawMax_ = 0;
+    uint8_t restCommDataCnt_ = 0;
+    uint32_t cpuCoreMax_ = 0;
     std::unique_ptr<FtraceProcessor> ftraceProcessor_ = nullptr;
     std::unique_ptr<KernelSymbolsProcessor> ksymsProcessor_ = nullptr;
     std::unique_ptr<FtraceCpuDetailMsg> cpuDetail_ = nullptr;

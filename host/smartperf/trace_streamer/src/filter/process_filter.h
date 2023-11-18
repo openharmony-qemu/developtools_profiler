@@ -36,7 +36,7 @@ public:
     uint32_t UpdateOrCreateThread(uint64_t timeStamp, uint32_t tid);
     InternalPid GetInternalPid(uint32_t pid) const;
     InternalPid GetOrCreateInternalPid(uint64_t timeStamp, uint32_t pid);
-    bool isThreadNameEmpty(uint32_t tid) const;
+    bool IsThreadNameEmpty(uint32_t tid) const;
     InternalTid GetInternalTid(uint32_t tid) const;
     std::vector<InternalTid>& GetInternalTids(uint32_t tid);
     uint32_t UpdateOrCreateThreadWithNameIndex(uint64_t timeStamp, uint32_t tid, DataIndex threadNameIndex);

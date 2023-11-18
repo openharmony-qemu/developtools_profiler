@@ -23,6 +23,7 @@ import { JSONToCSV } from '../utils/CSVFormater.js';
 import { NodeType } from '../../js-heap/model/DatabaseStruct.js';
 import { ConstructorType } from '../../js-heap/model/UiStruct.js';
 import { LitIcon } from '../icon/LitIcon.js';
+import { JsCpuProfilerStatisticsStruct } from '../../trace/bean/JsStruct.js';
 const iconWidth = 20;
 const iconPadding = 5;
 @element('lit-table')
@@ -247,6 +248,7 @@ export class LitTable extends HTMLElement {
           transition: opacity 0.2s;
           outline: none;
           position: relative;
+          overflow: hidden;
         }
         .button-icon:active {
           background: var(--dark-background1,#f5f5f5)
@@ -808,13 +810,13 @@ export class LitTable extends HTMLElement {
                   this.dispatchEvent(
                     new CustomEvent('button-click', {
                       detail: {
-                        key: key
+                        key: key,
                       },
-                      composed: true
+                      composed: true,
                     })
                   );
-                  event.stopPropagation()
-                })
+                  event.stopPropagation();
+                });
               }
               h.style.justifyContent = a.getAttribute('align');
               this.gridTemplateColumns.push(a.getAttribute('width') || '1fr');
@@ -1316,7 +1318,13 @@ export class LitTable extends HTMLElement {
         td.style.whiteSpace = 'nowrap';
         let text = this.formatName(dataIndex, rowData.data[dataIndex]);
         if (text.indexOf('&lt;') === -1) {
-          td.title = text;
+          if (dataIndex === 'selfTimeStr' && rowData.data.chartFrameChildren) {
+            td.title = rowData.data.selfTime + 'ns';
+          } else if (dataIndex === 'totalTimeStr' && rowData.data.chartFrameChildren) {
+            td.title = rowData.data.totalTime + 'ns';
+          } else {
+            td.title = text;
+          }
         }
         td.dataIndex = dataIndex;
         td.style.justifyContent = column.getAttribute('align') || 'flex-start';
@@ -1547,7 +1555,11 @@ export class LitTable extends HTMLElement {
       td.style.justifyContent = column.getAttribute('align') || 'flex-start';
       let text = this.formatName(dataIndex, rowData.data[dataIndex]);
       if (text.indexOf('&lt;') === -1) {
-        td.title = text;
+        if (dataIndex === 'totalTimeStr' && rowData.data.chartFrameChildren) {
+          td.title = rowData.data.totalTime + 'ns';
+        } else {
+          td.title = text;
+        }
       }
       //   如果表格中有模板的情况，将模板中的数据放进td中，没有模板，直接将文本放进td
       //  但是对于Current Selection tab页来说，表格前两列是时间，第三列是input标签，第四列是button标签
@@ -1812,7 +1824,15 @@ export class LitTable extends HTMLElement {
           (child as HTMLElement).title = text;
         } else {
           (child as HTMLElement).innerHTML = text;
-          (child as HTMLElement).title = text;
+          if (dataIndex === 'selfTimeStr' && rowObject.data.chartFrameChildren) {
+            (child as HTMLElement).title = rowObject.data.selfTime + 'ns';
+          } else if (dataIndex === 'totalTimeStr' && rowObject.data.chartFrameChildren) {
+            (child as HTMLElement).title = rowObject.data.totalTime + 'ns';
+          } else if (dataIndex === 'timeStr' && rowObject.data instanceof JsCpuProfilerStatisticsStruct) {
+            (child as HTMLElement).title = rowObject.data.time + 'ns';
+          } else {
+            (child as HTMLElement).title = text;
+          }
         }
       }
     });

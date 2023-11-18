@@ -24,7 +24,6 @@
 #include "common_types.h"
 #include "common_types.pbreader.h"
 #include "ebpf_data_parser.h"
-#include "elf_parser.h"
 #include "file.h"
 #include "htrace_clock_detail_parser.h"
 #include "htrace_cpu_detail_parser.h"
@@ -45,6 +44,7 @@
 #include "perf_data_parser.h"
 #include "proto_reader_help.h"
 #include "string_help.h"
+#include "symbols_file.h"
 #include "trace_data/trace_data_cache.h"
 #include "trace_streamer_filters.h"
 #include "ts_common.h"
@@ -52,7 +52,6 @@
 namespace SysTuning {
 namespace TraceStreamer {
 using namespace SysTuning::base;
-using namespace OHOS::Developtools::HiPerf::ELF;
 using namespace OHOS::Developtools::HiPerf;
 class HtraceParser : public ParserBase, public HtracePluginTimeParser {
 public:
@@ -62,11 +61,7 @@ public:
     bool ReparseSymbolFilesAndResymbolization(std::string& symbolsPath, std::vector<std::string>& symbolsPaths);
     void WaitForParserEnd();
     void EnableFileSeparate(bool enabled);
-
-    void GetSymbols(std::unique_ptr<ElfFile> elfPtr,
-                    std::shared_ptr<ElfSymbolTable> symbols,
-                    const std::string& filename);
-    bool ParserFileSO(std::string& directory, std::vector<std::string>& relativeFilePaths);
+    void ParserFileSO(std::string& directory, std::vector<std::string>& relativeFilePaths);
     void TraceDataSegmentEnd(bool isSplitFile);
     void StoreTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, int32_t isFinish);
     const auto& GetTraceDataHtrace()
@@ -193,7 +188,7 @@ private:
     ClockId dataSourceTypeProcessClockid_ = TS_CLOCK_UNKNOW;
     ClockId dataSourceTypeHisyseventClockid_ = TS_CLOCK_UNKNOW;
     ClockId dataSourceTypeJSMemoryClockid_ = TS_CLOCK_UNKNOW;
-    std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables_;
+    std::vector<std::unique_ptr<SymbolsFile>> symbolsFiles_;
     std::map<int32_t, int32_t> mTraceDataHtrace_ = {};
     std::string traceDataHtrace_ = "";
     uint64_t splitFileOffset_ = 0;

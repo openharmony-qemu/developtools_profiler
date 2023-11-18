@@ -24,7 +24,6 @@ import { LitIcon } from '../../../../../base-ui/icon/LitIcon.js';
 export class TabPaneHiLogSummary extends BaseElement {
   private logSummaryTable: HTMLDivElement | undefined | null;
   private summaryDownLoadTbl: LitTable | undefined | null;
-  private parentTabEl: HTMLElement | undefined | null;
   private systemLogSource: LogStruct[] = [];
   private logTreeNodes: LogTreeNode[] = [];
   private expansionDiv: HTMLDivElement | undefined | null;
@@ -46,7 +45,7 @@ export class TabPaneHiLogSummary extends BaseElement {
     this.expansionDownIcon!.name = 'down';
     this.logSummaryTable!.innerHTML = '';
     this.summaryDownLoadTbl!.recycleDataSource = [];
-    this.systemLogSource = systemLogDetailParam.hiLogSummary;
+    this.systemLogSource = systemLogDetailParam.hiLogs;
     if (this.systemLogSource?.length !== 0 && systemLogDetailParam) {
       this.refreshRowNodeTable();
     }
@@ -59,14 +58,20 @@ export class TabPaneHiLogSummary extends BaseElement {
     this.expansionUpIcon = this.shadowRoot?.querySelector<LitIcon>('.expansion-up-icon');
     this.expansionDownIcon = this.shadowRoot?.querySelector<LitIcon>('.expansion-down-icon');
     let summaryTreeLevel: string[] = ['Level', '/Process', '/Tag', '/Message'];
-    this.shadowRoot?.querySelectorAll<HTMLLabelElement>('.head-label').forEach((summaryTreeHead) => {
-      summaryTreeHead.addEventListener('click', () => {
+    this.shadowRoot?.querySelectorAll<HTMLLabelElement>('.head-label').forEach((summaryTreeHead): void => {
+      summaryTreeHead.addEventListener('click', (): void => {
         this.selectTreeDepth = summaryTreeLevel.indexOf(summaryTreeHead.textContent!);
         this.expandedNodeList.clear();
         this.refreshSelectDepth(this.logTreeNodes);
         this.refreshRowNodeTable(true);
       });
     });
+    this.logSummaryTable!.onscroll = (): void=>{
+      let logTreeTableEl = this.shadowRoot?.querySelector<HTMLDivElement>('.log-tree-table');
+      if (logTreeTableEl) {
+        logTreeTableEl.scrollTop = this.logSummaryTable?.scrollTop || 0;
+      }
+    };
   }
 
   initHtml(): string {
@@ -76,36 +81,57 @@ export class TabPaneHiLogSummary extends BaseElement {
           display: flex;
           flex-direction: column;
         }
-        .tree-row-tr, .tab-summary-head {
-          display: flex;
+        .tab-summary-head {
+          display: grid;
+          grid-template-columns: 79% 15%;
           height: 30px;
           line-height: 30px;
           align-items: center;
           background-color: white;
         }
+        .tree-row-tr {
+          display: flex;
+          height: 30px;
+          line-height: 30px;
+          align-items: center;
+          background-color: white;
+          width: 100%;
+        }
         .tree-row-tr:hover {
           background-color: #DEEDFF;
         }
-        td, .head-label, .head-count {
+        .tree-row-tr:nth-last-child(1):hover {
+          background-color: white;
+        }
+        .head-label, .head-count {
           white-space: nowrap;
           overflow: hidden;
         }
         .head-label, .head-count {
           font-weight: bold;
         }
-        .count-column-td, .head-count {
-          margin-left: auto;
-          margin-right: 40%;
-        }
         .row-name-td {
           white-space: nowrap;
-          overflow-x: scroll;
           overflow-y: hidden;
           display: inline-block;
           margin-right: 15px;
+          height: 30px;
+        }
+        tr {
+          height: 30px;
         }
         .row-name-td::-webkit-scrollbar {
           display: none;
+        }
+        .log-tree-table {
+          display: grid;
+          overflow: hidden;
+          grid-template-rows: repeat(auto-fit, 30px);
+          position: sticky;
+          top: 0;
+        }
+        .log-tree-table:hover{
+          overflow-x: auto;
         }
         </style>
         <div class="tab-summary-head">
@@ -121,7 +147,7 @@ export class TabPaneHiLogSummary extends BaseElement {
           </div>
           <label class="head-count">Count</label> 
         </div>
-        <div id="tab-summary" style="overflow: auto"></div>
+        <div id="tab-summary" style="overflow: auto;display: grid; grid-template-columns: 80% 15%;"></div>
         <lit-table id="tb-hilog-summary" style="display: none" tree>
           <lit-table-column title="Level/Process/Tag/Message" data-index="logName" key="logName"></lit-table-column>
           <lit-table-column title="Count" data-index="count" key="count"></lit-table-column>
@@ -129,20 +155,21 @@ export class TabPaneHiLogSummary extends BaseElement {
         `;
   }
 
-  connectedCallback() {
+  connectedCallback(): void {
     super.connectedCallback();
-    new ResizeObserver(() => {
+    new ResizeObserver((): void => {
+      this.parentElement!.style.overflow = 'hidden';
       this.refreshRowNodeTable();
     }).observe(this.parentElement!);
     this.expansionDiv?.addEventListener('click', this.expansionClickEvent);
   }
 
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     super.disconnectedCallback();
     this.expansionDiv?.removeEventListener('click', this.expansionClickEvent);
   }
 
-  expansionClickEvent = () => {
+  expansionClickEvent = (): void => {
     this.expandedNodeList.clear();
     if (this.expansionUpIcon?.name === 'down') {
       this.selectTreeDepth = 0;
@@ -157,8 +184,8 @@ export class TabPaneHiLogSummary extends BaseElement {
     this.refreshRowNodeTable(true);
   };
 
-  private refreshSelectDepth(logTreeNodes: LogTreeNode[]) {
-    logTreeNodes.forEach((item) => {
+  private refreshSelectDepth(logTreeNodes: LogTreeNode[]): void {
+    logTreeNodes.forEach((item): void => {
       if (item.depth < this.selectTreeDepth) {
         this.expandedNodeList.add(item.id);
         if (item.children.length > 0) {
@@ -168,25 +195,24 @@ export class TabPaneHiLogSummary extends BaseElement {
     });
   }
 
-  initTabSheetEl(parentTabEl: HTMLElement) {
-    this.parentTabEl = parentTabEl;
-  }
-
-  private createRowNodeTableEL(rowNodeList: LogTreeNode[], rowColor: string = ''): DocumentFragment {
+  private createRowNodeTableEL(rowNodeList: LogTreeNode[], tableTreeEl: HTMLDivElement, tableCountEl: HTMLDivElement, rowColor: string = ''): void {
     let unitPadding: number = 20;
     let leftPadding: number = 5;
-    let tableFragmentEl: DocumentFragment = document.createDocumentFragment();
-    rowNodeList.forEach((rowNode) => {
-      let tableRowEl: HTMLElement = document.createElement('tr');
-      tableRowEl.className = 'tree-row-tr';
+    rowNodeList.forEach((rowNode): void => {
+      let tableTreeRowEl: HTMLElement = document.createElement('tr');
+      tableTreeRowEl.className = 'tree-row-tr';
+      tableTreeRowEl.title = rowNode.logName + '';
       let leftSpacingEl: HTMLElement = document.createElement('td');
       leftSpacingEl.style.paddingLeft = `${rowNode.depth * unitPadding + leftPadding}px`;
-      tableRowEl.appendChild(leftSpacingEl);
-      this.addToggleIconEl(rowNode, tableRowEl);
+      tableTreeRowEl.appendChild(leftSpacingEl);
+      this.addToggleIconEl(rowNode, tableTreeRowEl);
       let rowNodeTextEL: HTMLElement = document.createElement('td');
-      rowNodeTextEL.textContent = rowNode.logName!;
+      rowNodeTextEL.textContent = rowNode.logName + '';
       rowNodeTextEL.className = 'row-name-td';
-      tableRowEl.appendChild(rowNodeTextEL);
+      tableTreeRowEl.appendChild(rowNodeTextEL);
+      tableTreeEl.appendChild(tableTreeRowEl);
+      let tableCountRowEl: HTMLElement = document.createElement('tr');
+      tableCountRowEl.title = rowNode.count.toString();
       let countEL: HTMLElement = document.createElement('td');
       countEL.textContent = rowNode.count.toString();
       countEL.className = 'count-column-td';
@@ -197,14 +223,12 @@ export class TabPaneHiLogSummary extends BaseElement {
         rowNodeTextEL.style.color = rowColor;
         countEL.style.color = rowColor;
       }
-      tableRowEl.appendChild(countEL);
-      tableFragmentEl.appendChild(tableRowEl);
+      tableCountRowEl.appendChild(countEL);
+      tableCountEl.appendChild(tableCountRowEl);
       if (rowNode.children && this.expandedNodeList.has(rowNode.id)) {
-        let documentFragment = this.createRowNodeTableEL(rowNode.children, countEL.style.color);
-        tableFragmentEl.appendChild(documentFragment);
+        this.createRowNodeTableEL(rowNode.children, tableTreeEl, tableCountEl, countEL.style.color);
       }
     });
-    return tableFragmentEl;
   }
 
   private addToggleIconEl(rowNode: LogTreeNode, tableRowEl: HTMLElement): void {
@@ -216,7 +240,7 @@ export class TabPaneHiLogSummary extends BaseElement {
       // @ts-ignore
       expandIcon.name = this.expandedNodeList.has(rowNode.id) ? 'minus-square' : 'plus-square';
       toggleIconEl.classList.add('expand-icon');
-      toggleIconEl.addEventListener('click', () => {
+      toggleIconEl.addEventListener('click', (): void => {
         let scrollTop = this.logSummaryTable?.scrollTop ?? 0;
         this.changeNode(rowNode.id);
         this.logSummaryTable!.scrollTop = scrollTop;
@@ -236,8 +260,8 @@ export class TabPaneHiLogSummary extends BaseElement {
 
   private refreshRowNodeTable(useCacheRefresh: boolean = false): void {
     this.logSummaryTable!.innerHTML = '';
-    if (this.logSummaryTable && this.parentTabEl) {
-      this.logSummaryTable.style.height = `${this.parentTabEl!.clientHeight - 30}px`;
+    if (this.logSummaryTable && this.parentElement) {
+      this.logSummaryTable.style.height = `${this.parentElement!.clientHeight - 30}px`;
     }
     if (!useCacheRefresh) {
       this.logTreeNodes = this.buildTreeTblNodes(this.systemLogSource);
@@ -247,8 +271,23 @@ export class TabPaneHiLogSummary extends BaseElement {
         this.summaryDownLoadTbl!.recycleDataSource = [];
       }
     }
-    let fragment = this.createRowNodeTableEL(this.logTreeNodes);
-    this.logSummaryTable!.appendChild(fragment);
+    let tableFragmentEl: DocumentFragment = document.createDocumentFragment();
+    let tableTreeEl: HTMLDivElement = document.createElement('div');
+    tableTreeEl.className = 'log-tree-table';
+    let tableCountEl: HTMLDivElement = document.createElement('div');
+    if (this.parentElement) {
+      tableTreeEl.style.height = `${this.parentElement!.clientHeight - 40}px`;
+    }
+    this.createRowNodeTableEL(this.logTreeNodes, tableTreeEl, tableCountEl, '');
+    let emptyTr = document.createElement('tr');
+    emptyTr.className = 'tree-row-tr';
+    tableTreeEl?.appendChild(emptyTr);
+    let emptyCountTr = document.createElement('tr');
+    emptyCountTr.className = 'tree-row-tr';
+    tableCountEl?.appendChild(emptyCountTr);
+    tableFragmentEl.appendChild(tableTreeEl);
+    tableFragmentEl.appendChild(tableCountEl);
+    this.logSummaryTable!.appendChild(tableFragmentEl);
   }
 
   private buildTreeTblNodes(logTreeNodes: LogStruct[]): LogTreeNode[] {

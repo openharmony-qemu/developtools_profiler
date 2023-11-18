@@ -424,6 +424,10 @@ export class LitPageTable extends BaseElement {
         :host([hideDownload]) .export{
             display: none;
         }
+        .td::-webkit-scrollbar {
+          width: 0;
+          background-color: transparent;
+        }
         </style>
         <lit-progress-bar id="export_progress_bar" class="progress"></lit-progress-bar>
         <slot id="slot" style="display: none"></slot>
@@ -1274,7 +1278,7 @@ export class LitPageTable extends BaseElement {
       let td: any;
       td = document.createElement('div');
       td.classList.add('td');
-      td.style.overflow = 'hidden';
+      td.style.overflow = 'scroll hidden';
       td.style.textOverflow = 'ellipsis';
       td.style.whiteSpace = 'nowrap';
       td.dataIndex = dataIndex;

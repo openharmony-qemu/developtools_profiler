@@ -97,14 +97,12 @@ private:
     void UpdateEventConfigInfo();
     void UpdateCmdlineInfo() const;
     void LoadEventDesc();
-    void ProcessUniStackTableData();
     void UpdateReportWorkloadInfo() const;
     void UpdateSymbolAndFilesData();
     void UpdateClockType();
     bool RecordCallBack(std::unique_ptr<PerfEventRecord> record);
     void UpdatePerfSampleData(uint32_t callChainId, std::unique_ptr<PerfRecordSample>& sample);
     uint32_t UpdateCallChainUnCompressed(const std::unique_ptr<PerfRecordSample>& sample);
-    uint32_t UpdateCallChainCompressed(const std::unique_ptr<PerfRecordSample>& sample);
     bool PerfSplitCallBack(std::unique_ptr<PerfEventRecord> record);
     uint64_t SplitPerfData(const std::deque<uint8_t>& dequeBuffer, uint64_t size, uint64_t offset, bool isFinish);
     bool SplitPerfStarting(const std::deque<uint8_t>& dequeBuffer,

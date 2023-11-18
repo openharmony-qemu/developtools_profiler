@@ -139,7 +139,7 @@ void EbpfSplitter::SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer)
                 if (bioFixedHeader.endTime <= splitFileMaxTs_ && bioFixedHeader.startTime >= splitFileMinTs_) {
                     HtraceSplitResult bioDataOffset = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
                                                        .originSeg = {.offset = offsetOfEbpfDataInFile_ + splittedLen_,
-                                                                .size = dataTitle.length + EBPF_TITLE_SIZE}};
+                                                                     .size = dataTitle.length + EBPF_TITLE_SIZE}};
                     ebpfSplitResult_.emplace_back(bioDataOffset);
                     usefulDataLen_ += segLen;
                 }

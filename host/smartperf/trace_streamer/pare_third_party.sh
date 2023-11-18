@@ -86,20 +86,48 @@ if [ ! -f "perf_include/musl/elf.h" ];then
    mv elf.h perf_include/musl/elf.h
 fi
 
+if [ ! -d "perf_include/hiviewdfx/hilog" ];then
+   rm -rf hiviewdfx_hilog perf_include/hiviewdfx/hilog
+   mkdir -p perf_include/hiviewdfx/hilog
+   git clone --depth=1 https://gitee.com/openharmony/hiviewdfx_hilog.git
+   mv hiviewdfx_hilog/interfaces/native/innerkits/include/ perf_include/hiviewdfx/hilog
+   rm -rf hiviewdfx_hilog
+fi
+
+if [ ! -d "perf_include/hiviewdfx/faultloggerd" ];then
+   rm -rf hiviewdfx_faultloggerd perf_include/hiviewdfx/faultloggerd
+   mkdir -p perf_include/hiviewdfx/faultloggerd/interfaces/innerkits
+   git clone --depth=1 git@gitee.com:openharmony/hiviewdfx_faultloggerd.git
+   mv hiviewdfx_faultloggerd/common/ perf_include/hiviewdfx/faultloggerd
+   mv hiviewdfx_faultloggerd/interfaces/common/ perf_include/hiviewdfx/faultloggerd/interfaces
+   mv hiviewdfx_faultloggerd/interfaces/nonlinux/ perf_include/hiviewdfx/faultloggerd/interfaces
+   mv hiviewdfx_faultloggerd/interfaces/innerkits/unwinder/ perf_include/hiviewdfx/faultloggerd/interfaces/innerkits
+   find  perf_include/hiviewdfx/faultloggerd -type f -name "*.gn" -delete
+    $cp ../prebuilts/patch_hiperf/hiviewdfx_BUILD.gn ../third_party/perf_include/hiviewdfx/BUILD.gn
+   rm -rf hiviewdfx_faultloggerd
+   rm -rf perf_include/hiviewdfx/common/build
+   rm -rf perf_include/hiviewdfx/common/cutil
+   rm perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_regs_x86_64.cpp
+    $sed -i '/HiLogPrint/s/^/\/\/ /' perf_include/hiviewdfx/faultloggerd/common/dfxlog/dfx_log.cpp
+    $sed -i '/TRAP_BRANCH/s/^/\/\/ /' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_signal.cpp
+    $sed -i '/TRAP_HWBKPT/s/^/\/\/ /' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_signal.cpp
+    $sed -i '/is_ohos/s/is_ohos/true/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_mmap.cpp
+    $sed -i '/is_ohos/s/is_ohos/true/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/include/dfx_regs.h
+    $sed -i '/#include <vector>/a #include "debug_logger.h"' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/include/unwinder.h
+    $sed -i '/VerifyFilePath/s/const std::vector<const std::string>/std::vector\<std::string\>/g' perf_include/hiviewdfx/faultloggerd/common/dfxutil/dfx_util.h
+    $sed -i '/VerifyFilePath/s/const std::vector<const std::string>/std::vector\<std::string\>/g' perf_include/hiviewdfx/faultloggerd/common/dfxutil/dfx_util.cpp
+    $sed -i '/getpid() == gettid()/s/getpid() == gettid()/false/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/unwinder.cpp
+    $sed -i '/!realpath(path, realPath)/s/!realpath(path, realPath)/false/g' perf_include/hiviewdfx/faultloggerd/common/dfxutil/dfx_util.cpp
+    $sed -i '/#include "dfx_util.h"/a #include "utilities.h"' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_mmap.cpp
+fi
 if [ ! -f "hiperf/BUILD.gn" ];then
     rm -rf hiperf developtools_hiperf
     git clone --depth=1 git@gitee.com:openharmony/developtools_hiperf.git
     if [ -d "developtools_hiperf" ];then
         mv developtools_hiperf hiperf
-        $patch -p1 -d ./hiperf < ../prebuilts/patch_hiperf/1_pengjingtong.diff
-        $patch -p1 -d ./hiperf < ../prebuilts/patch_hiperf/2_perf_dump_report_0913.patch
         $cp ../prebuilts/patch_hiperf/BUILD.gn ../third_party/hiperf/BUILD.gn
         $cp ../prebuilts/patch_hiperf/file_ex.h hiperf/include/nonlinux/linux
         $cp ../prebuilts/patch_hiperf/unique_fd.h hiperf/include/nonlinux/linux
-        #include <../musl/include/elf.h>
-        # 替换为
-        #include <elf.h>
-        $sed -i "s/..\/musl\/include\/elf.h/elf.h/g" hiperf/include/elf_parser.h
         $sed -i "/FRIEND_TEST/s/^\(.*\)$/\/\/\1/g" hiperf/include/virtual_thread.h
         $sed -i "s/HIPERF_DEBUG/ALWAYSTRUE/g" hiperf/include/virtual_thread.h
         $sed -i "/#include \"report_json_file.h\"/s/^\(.*\)$/\/\/\1/g" hiperf/include/report.h
@@ -107,16 +135,23 @@ if [ ! -f "hiperf/BUILD.gn" ];then
         $sed -i "/#include <gtest\/gtest_prod.h>/s/^\(.*\)$/\/\/\1/g" hiperf/include/utilities.h
         $sed -i "/FRIEND_TEST/s/^\(.*\)$/\/\/\1/g" hiperf/include/virtual_thread.h
         $sed -i "/FRIEND_TEST/s/^\(.*\)$/\/\/\1/g" hiperf/include/callstack.h
+        $sed -i '/unwinder.h/s/^/\/\/ /' hiperf/include/callstack.h
         $sed -i "/FRIEND_TEST/s/^\(.*\)$/\/\/\1/g" hiperf/include/symbols_file.h
         $sed -i "/FRIEND_TEST/s/^\(.*\)$/\/\/\1/g" hiperf/include/virtual_runtime.h
-        # elf_parser.h
         $sed -i "/FRIEND_TEST/s/^\(.*\)$/\/\/\1/g" hiperf/include/report.h
-        # virtual_thread.h
-        # HIPERF_DEBUG 替换为 ALWAYSTRUE
+
         $sed -i "s/HIPERF_DEBUG/ALWAYSTRUE/g" hiperf/include/virtual_thread.h
         $sed -i "/using __s8 = char;/a #define unw_word_t uint64_t" hiperf/include/nonlinux/linux/types.h
         $sed -i '/^void Report::PrepareConsole(/,/^}/ s/^.*$/\/\/&/; /^void Report::PrepareConsole(/,/return;/ s/^[[:blank:]]*/    /' hiperf/src/report.cpp
         $sed -i '/namespace HiPerf {/avoid Report::PrepareConsole(){ return;}' hiperf/src/report.cpp
+        $sed -i '/HITRACE_METER_NAME/s/^/\/\/ /' hiperf/src/callstack.cpp
+        $sed -i '/hitrace_meter.h/s/^/\/\/ /' hiperf/src/callstack.cpp
+        $sed -i '/dlfcn.h/s/^/\/\/ /' hiperf/src/callstack.cpp
+        $sed -i '/dfx_ark.h/s/^/\/\/ /' hiperf/src/callstack.cpp
+        $sed -i '/dfx_regs.h/s/^/\/\/ /' hiperf/src/callstack.cpp
+        $sed -i '/return DoUnwind2/s/^/\/\/ /' hiperf/src/callstack.cpp
+        $sed -i '/#if defined(is_ohos) && is_ohos/s/defined(is_ohos) && is_ohos/true/g' hiperf/src/virtual_runtime.cpp
+        $sed -i '/#if defined(is_ohos) && is_ohos/s/defined(is_ohos) && is_ohos/true/g' hiperf/include/virtual_runtime.h
     fi
 fi
 

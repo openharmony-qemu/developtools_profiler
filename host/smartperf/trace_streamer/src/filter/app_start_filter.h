@@ -55,6 +55,7 @@ public:
     APPStartupFilter& operator=(const APPStartupFilter&) = delete;
     ~APPStartupFilter() override;
     void FilterAllAPPStartupData();
+
 private:
     using appMap = std::unordered_map<DataIndex, std::map<uint32_t, std::unique_ptr<APPStartupData>>>;
     void ParserSoInitalization();
@@ -69,6 +70,7 @@ private:
     bool UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex);
     bool ProcAbilityLaunchData(const std::string& nameString, uint64_t raw);
     void ProcForegroundData(uint64_t raw);
+
 private:
     std::deque<std::unique_ptr<APPStartupData>> procTouchItems_;
     std::deque<std::unique_ptr<APPStartupData>> startUIAbilityBySCBItems_;
@@ -76,7 +78,8 @@ private:
     appMap mAPPStartupData_;
     std::unordered_map<uint32_t, appMap> mAPPStartupDataWithPid_;
     const std::string procTouchCmd_ = "H:client dispatch touchId:";
-    const std::string startUIAbilityBySCBCmd_ = "H:OHOS::ErrCode OHOS::AAFwk::AbilityManagerClient::StartUIAbilityBySCB";
+    const std::string startUIAbilityBySCBCmd_ =
+        "H:OHOS::ErrCode OHOS::AAFwk::AbilityManagerClient::StartUIAbilityBySCB";
     const std::string loadAbilityCmd_ = "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::LoadAbility";
     const std::string appLaunchCmd_ =
         "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::AttachApplication(const pid_t, const "
@@ -84,7 +87,8 @@ private:
     const std::string uiLaunchCmd_ =
         "H:void OHOS::AppExecFwk::MainThread::HandleLaunchAbility(const std::shared_ptr<AbilityLocalRecord> &)##";
     const std::string uiOnForegroundCmd_ =
-        "H:void OHOS::AbilityRuntime::FAAbilityThread::HandleAbilityTransaction(const OHOS::AbilityRuntime::Want &, const "
+        "H:void OHOS::AbilityRuntime::FAAbilityThread::HandleAbilityTransaction(const OHOS::AbilityRuntime::Want &, "
+        "const "
         "OHOS::AbilityRuntime::LifeCycleStateInfo &, sptr<AppExecFwk::SessionInfo>)##";
     const std::string dlopenCmd_ = "dlopen:";
 };

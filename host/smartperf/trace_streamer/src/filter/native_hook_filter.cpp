@@ -157,22 +157,13 @@ void NativeHookFilter::CompressStackAndFrames(ProtoReader::RepeatedDataAreaItera
 void NativeHookFilter::ParseStatisticEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView)
 {
     ProtoReader::RecordStatisticsEvent_Reader reader(bytesView);
-    if (ipid_ == INVALID_UINT32) {
-        ipid_ = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, reader.pid());
-    }
+    auto ipid = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, reader.pid());
     uint32_t callChainId = INVALID_UINT32;
-    // When the stack id is zero, there is no matching call stack
-    if (isOfflineSymbolizationMode_ && reader.callstack_id()) {
+    if (reader.callstack_id() && stackIdToCallChainIdMap_.count(reader.callstack_id())) {
         // The same call stack may have different symbolic results due to changes in the symbol table
-        if (stackIdToCallChainIdMap_.count(reader.callstack_id())) {
-            callChainId = stackIdToCallChainIdMap_.at(reader.callstack_id());
-        } else {
-            TS_LOGE("invalid callChainId, can not find stack id : %u in stackIdToCallChainIdMap_!",
-                    reader.callstack_id());
-        }
-    } else if (reader.callstack_id()) { // when isStatisticMode_ is true, isCallStackCompressedMode_ must be true.
-        // when isOfflineSymblolizationMode_ is false, the stack id is unique
-        callChainId = reader.callstack_id();
+        callChainId = stackIdToCallChainIdMap_.at(reader.callstack_id());
+    } else {
+        TS_LOGE("invalid callChainId", reader.callstack_id());
     }
 
     DataIndex memSubType = INVALID_UINT64;
@@ -180,7 +171,7 @@ void NativeHookFilter::ParseStatisticEvent(uint64_t timeStamp, const ProtoReader
         memSubType = traceDataCache_->GetDataIndex(reader.tag_name().ToStdString());
     }
     traceDataCache_->GetNativeHookStatisticsData()->AppendNewNativeHookStatistic(
-        ipid_, timeStamp, callChainId, reader.type(), memSubType, reader.apply_count(), reader.release_count(),
+        ipid, timeStamp, callChainId, reader.type(), memSubType, reader.apply_count(), reader.release_count(),
         reader.apply_size(), reader.release_size());
 }
 void NativeHookFilter::ParseAllocEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView)
@@ -203,14 +194,13 @@ void NativeHookFilter::ParseAllocEvent(uint64_t timeStamp, const ProtoReader::By
 
     auto itid =
         streamFilters_->processFilter_->GetOrCreateThreadWithPid(allocEventReader.tid(), allocEventReader.pid());
-    if (ipid_ == INVALID_UINT32) {
-        ipid_ = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, allocEventReader.pid());
-    }
+
     if (allocEventReader.has_thread_name_id()) {
         UpdateMap(itidToThreadNameId_, itid, allocEventReader.thread_name_id());
     }
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     auto row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
-        callChainId, ipid_, itid, "AllocEvent", INVALID_UINT64, timeStamp, 0, 0, allocEventReader.addr(),
+        callChainId, ipid, itid, "AllocEvent", INVALID_UINT64, timeStamp, 0, 0, allocEventReader.addr(),
         allocEventReader.size());
     addrToAllocEventRow_.insert(std::make_pair(allocEventReader.addr(), static_cast<uint64_t>(row)));
     if (allocEventReader.size() != 0) {
@@ -240,9 +230,6 @@ void NativeHookFilter::ParseFreeEvent(uint64_t timeStamp, const ProtoReader::Byt
         callChainId = freeEventReader.stack_id();
     }
     auto itid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(freeEventReader.tid(), freeEventReader.pid());
-    if (ipid_ == INVALID_UINT32) {
-        ipid_ = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, freeEventReader.pid());
-    }
     if (freeEventReader.thread_name_id() != 0) {
         UpdateMap(itidToThreadNameId_, itid, freeEventReader.thread_name_id());
     }
@@ -261,9 +248,9 @@ void NativeHookFilter::ParseFreeEvent(uint64_t timeStamp, const ProtoReader::Byt
         streamFilters_->statFilter_->IncreaseStat(TRACE_NATIVE_HOOK_FREE, STAT_EVENT_DATA_INVALID);
         return;
     }
-
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
-        callChainId, ipid_, itid, "FreeEvent", INVALID_UINT64, timeStamp, 0, 0, freeEventReader.addr(), freeHeapSize);
+        callChainId, ipid, itid, "FreeEvent", INVALID_UINT64, timeStamp, 0, 0, freeEventReader.addr(), freeHeapSize);
     if (freeHeapSize != 0) {
         MaybeUpdateCurrentSizeDur(row, timeStamp, true);
     }
@@ -291,9 +278,6 @@ void NativeHookFilter::ParseMmapEvent(uint64_t timeStamp, const ProtoReader::Byt
         callChainId = mMapEventReader.stack_id();
     }
     auto itid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(mMapEventReader.tid(), mMapEventReader.pid());
-    if (ipid_ == INVALID_UINT32) {
-        ipid_ = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, mMapEventReader.pid());
-    }
     // Update the mapping of tid to thread name id.
     if (mMapEventReader.thread_name_id() != 0) {
         UpdateMap(itidToThreadNameId_, itid, mMapEventReader.thread_name_id());
@@ -307,8 +291,9 @@ void NativeHookFilter::ParseMmapEvent(uint64_t timeStamp, const ProtoReader::Byt
         // Establish a mapping of addr and size to the mmap tag index.
         addrToMmapTag_[mMapAddr] = subType; // update addr to MemMapSubType
     }
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     auto row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
-        callChainId, ipid_, itid, "MmapEvent", subType, timeStamp, 0, 0, mMapAddr, mMapSize);
+        callChainId, ipid, itid, "MmapEvent", subType, timeStamp, 0, 0, mMapAddr, mMapSize);
     if (subType == INVALID_UINT64) {
         UpdateAnonMmapDataDbIndex(mMapAddr, mMapSize, static_cast<uint64_t>(row));
     }
@@ -342,9 +327,6 @@ void NativeHookFilter::ParseMunmapEvent(uint64_t timeStamp, const ProtoReader::B
     }
     auto itid =
         streamFilters_->processFilter_->GetOrCreateThreadWithPid(mUnmapEventReader.tid(), mUnmapEventReader.pid());
-    if (ipid_ == INVALID_UINT32) {
-        ipid_ = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, mUnmapEventReader.pid());
-    }
     if (mUnmapEventReader.thread_name_id() != 0) {
         UpdateMap(itidToThreadNameId_, itid, mUnmapEventReader.thread_name_id());
     }
@@ -364,8 +346,9 @@ void NativeHookFilter::ParseMunmapEvent(uint64_t timeStamp, const ProtoReader::B
         return;
     }
     auto subType = GetMemMapSubTypeWithAddr(mUnmapAddr);
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
-        callChainId, ipid_, itid, "MunmapEvent", subType, timeStamp, 0, 0, mUnmapAddr, mUnmapEventReader.size());
+        callChainId, ipid, itid, "MunmapEvent", subType, timeStamp, 0, 0, mUnmapAddr, mUnmapEventReader.size());
     addrToMmapTag_.erase(mUnmapAddr); // earse MemMapSubType with addr
     if (mUnmapEventReader.size() != 0) {
         MaybeUpdateCurrentSizeDur(row, timeStamp, false);
@@ -938,43 +921,26 @@ void NativeHookFilter::UpdateFilePathIdAndStValueToSymAddrMap(T* firstSymbolAddr
         }
     }
 }
-
-bool NativeHookFilter::NativeHookReloadElfSymbolTable(
-    std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables)
+bool NativeHookFilter::NativeHookReloadElfSymbolTable(const std::vector<std::unique_ptr<SymbolsFile>>& symbolsFiles)
 {
     auto nativeHookFrame = traceDataCache_->GetNativeHookFrameData();
     auto size = nativeHookFrame->Size();
     auto filePathIndexs = nativeHookFrame->FilePaths();
     auto vaddrs = nativeHookFrame->Vaddrs();
-    for (auto elfSymbolTable : *elfSymbolTables) {
-        auto filePathIndex = elfSymbolTable->filePathIndex;
-        auto symEntrySize = elfSymbolTable->symEntSize;
-        auto totalSize = elfSymbolTable->symTable.size() / symEntrySize;
-        if (symEntrySize == ELF32_SYM) {
-            UpdateFilePathIdAndStValueToSymAddrMap(reinterpret_cast<const Elf32_Sym*>(elfSymbolTable->symTable.data()),
-                                                   totalSize, filePathIndex);
-        } else {
-            UpdateFilePathIdAndStValueToSymAddrMap(reinterpret_cast<const Elf64_Sym*>(elfSymbolTable->symTable.data()),
-                                                   totalSize, filePathIndex);
-        }
-        if (filePathIdToImportSymbolTableMap_.count(filePathIndex)) {
-            filePathIdToImportSymbolTableMap_.at(filePathIndex) = elfSymbolTable;
-        } else {
-            filePathIdToImportSymbolTableMap_.emplace(std::make_pair(filePathIndex, elfSymbolTable));
-        }
+    for (const auto& symbolsFile : symbolsFiles) {
+        auto filePathIndex = traceDataCache_->GetDataIndex(symbolsFile->filePath_);
         for (size_t row = 0; row < size; row++) {
             if (filePathIndexs[row] != filePathIndex) {
                 continue;
             }
             auto symVaddr = base::StrToInt<uint32_t>(vaddrs[row], base::INTEGER_RADIX_TYPE_HEX).value();
-            auto symbolIndex = OfflineSymbolization(symVaddr, filePathIndex);
-            if (symbolIndex != INVALID_UINT64) {
+            auto dfxSymbol = symbolsFile->GetSymbolWithVaddr(symVaddr);
+            if (dfxSymbol.IsValid()) {
+                auto symbolIndex = traceDataCache_->GetDataIndex(dfxSymbol.GetName());
                 nativeHookFrame->UpdateSymbolId(row, symbolIndex);
             }
         }
     }
-    filePathIdAndStValueToSymAddr_.Clear();
-    filePathIdToImportSymbolTableMap_.clear();
     return true;
 }
 CommHookData& NativeHookFilter::GetCommHookData()

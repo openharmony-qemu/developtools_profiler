@@ -36,7 +36,7 @@ namespace SysTuning {
 namespace TraceStreamer {
 extern "C" {
 int32_t TraceStreamerParseData(const uint8_t* data, int32_t dataLen);
-int32_t TraceStreamerParseDataEx(int32_t dataLen);
+int32_t TraceStreamerParseDataEx(int32_t dataLen, bool isFinish);
 int32_t TraceStreamerParseDataOver();
 int32_t TraceStreamerSqlOperate(const uint8_t* sql, int32_t sqlLen);
 int32_t TraceStreamerSqlOperateEx(int32_t sqlLen);

@@ -49,6 +49,7 @@ using namespace SysTuning::base;
 constexpr size_t G_CHUNK_SIZE = 1024 * 1024;
 constexpr int G_MIN_PARAM_NUM = 2;
 constexpr size_t G_FILE_PERMISSION = 664;
+constexpr uint8_t RAW_TRACE_PARSE_MAX = 2;
 // set version info in meta.cpp please
 void ExportStatusToLog(const std::string& dbPath, TraceParserStatus status)
 {
@@ -103,7 +104,15 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
             .count();
     auto isFinish = false;
     g_loadSize = 0;
+    auto curParseCnt = 1;
     while (true) {
+        // for rawtrace next parse.the first parse is for last comm data;
+        if (isFinish && ta.GetFileType() == TRACE_FILETYPE_RAW_TRACE && curParseCnt < RAW_TRACE_PARSE_MAX) {
+            ++curParseCnt;
+            isFinish = false;
+            g_loadSize = 0;
+            TS_CHECK_TRUE(lseek(fd, 0, SEEK_SET) != -1, false, "lseek error:%s", strerror(errno));
+        }
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(G_CHUNK_SIZE);
         auto rsize = Read(fd, buf.get(), G_CHUNK_SIZE);
         if (rsize == 0) {
@@ -131,7 +140,8 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
     (void)fprintf(stdout, "ParserSpeed:\t%.2f MB/s\n", (g_loadSize / (endTime - startTime) / 1E3));
     return true;
 }
-bool SetFileSize(const std::string& traceFilePath) {
+bool SetFileSize(const std::string& traceFilePath)
+{
     if (traceFilePath.empty()) {
         g_fileSize = 0;
         return false;

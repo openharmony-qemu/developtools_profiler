@@ -373,9 +373,7 @@ export class CpuStruct extends BaseStruct {
         }
       }
       if (data.nofinish && width > 4) {
-        ctx.fillStyle = ColorUtils.funcTextColor(
-          ColorUtils.colorForTid((data.processId || 0) > 0 ? data.processId || 0 : data.tid || 0)
-        );
+        ctx.fillStyle = '#fff';
         let ruptureWidth = 4;
         let ruptureNode = 8;
         ctx.moveTo(data.frame.x + data.frame.width - 1, data.frame.y);

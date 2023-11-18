@@ -15,7 +15,11 @@
 
 #ifndef EBPF_DATA_READER_H
 #define EBPF_DATA_READER_H
+#if is_mingw
+#include "dfx_nonlinux_define.h"
+#else
 #include <elf.h>
+#endif
 #include <string>
 #include "ebpf_stdtype.h"
 #include "event_parser_base.h"

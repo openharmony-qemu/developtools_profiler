@@ -17,7 +17,6 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import {
-  queryNativeHookResponseTypes,
   queryNativeHookStatistics,
   queryNativeHookStatisticsMalloc,
   queryNativeHookStatisticsSubType,
@@ -51,7 +50,9 @@ export class TabPaneNMStatstics extends BaseElement {
     SpNativeMemoryChart.EVENT_HEAP.map((heap) => {
       this.allMax += heap.sumHeapSize;
     });
-    this.initResponseTypeList(nativeStatisticsParam);
+    if (nativeStatisticsParam.nativeMemory.length > 0) {
+      Utils.getInstance().initResponseTypeList(nativeStatisticsParam);
+    }
     // @ts-ignore
     this.nativeStatisticsTbl?.shadowRoot.querySelector('.table').style.height =
       this.parentElement!.clientHeight - 25 + 'px';
@@ -135,24 +136,6 @@ export class TabPaneNMStatstics extends BaseElement {
         data.existingValue = [data.existing, data.totalBytes, this.allMax];
         arr.push(data);
       }
-    });
-  }
-
-  initResponseTypeList(val: SelectionParam | any) {
-    let types: Array<string> = [];
-    if (val.nativeMemory.indexOf('All Heap & Anonymous VM') != -1) {
-      types.push("'AllocEvent'");
-      types.push("'MmapEvent'");
-    } else {
-      if (val.nativeMemory.indexOf('All Heap') != -1) {
-        types.push("'AllocEvent'");
-      }
-      if (val.nativeMemory.indexOf('All Anonymous VM') != -1) {
-        types.push("'MmapEvent'");
-      }
-    }
-    queryNativeHookResponseTypes(val.leftNs, val.rightNs, types).then((res) => {
-      procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => {});
     });
   }
 

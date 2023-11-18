@@ -15,7 +15,11 @@
 
 #ifndef OFFLINE_SYMBOLIZATION_FILTER_H
 #define OFFLINE_SYMBOLIZATION_FILTER_H
+#if is_mingw
+#include "dfx_nonlinux_define.h"
+#else
 #include <elf.h>
+#endif
 #include <unordered_map>
 #include "native_hook_result.pbreader.h"
 #include "process_filter.h"

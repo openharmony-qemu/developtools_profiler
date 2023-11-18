@@ -22,7 +22,7 @@ namespace SysTuning {
 namespace TraceCfg {
 // all supported events should be defined here
 #define CPU_IDEL_INVALID_KEY 4294967295
-#define CPU_IDEL_INVALID_VALUE 4
+#define CPU_IDEL_INVALID_VALUE 10
 enum SupportedTraceEventType {
     TRACE_EVENT_START = 0,
     TRACE_EVENT_BINDER_TRANSACTION = TRACE_EVENT_START,

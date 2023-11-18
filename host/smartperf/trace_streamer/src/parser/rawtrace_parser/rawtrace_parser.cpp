@@ -32,27 +32,12 @@ RawTraceParser::RawTraceParser(TraceDataCache* dataCache, const TraceStreamerFil
 }
 RawTraceParser::~RawTraceParser() {}
 void RawTraceParser::ParseTraceDataItem(const std::string& buffer) {}
-bool RawTraceParser::ParseCpuRawData(uint32_t cpuId, const std::string& buffer)
+void RawTraceParser::WaitForParserEnd()
 {
-    TS_CHECK_TRUE(buffer.size() > 0, false, "buffer.size() is zero!");
-    auto startPtr = reinterpret_cast<const uint8_t*>(buffer.c_str());
-    auto endPtr = startPtr + buffer.size();
-    cpuDetail_->set_cpu(cpuId);
-    for (uint8_t* page = const_cast<uint8_t*>(startPtr); page < endPtr; page += FTRACE_PAGE_SIZE) {
-        TS_CHECK_TRUE(ftraceProcessor_->HandlePage(*cpuDetail_.get(), *cpuDetailParser_.get(), page), false,
-                      "handle page failed!");
-    }
-    cpuDetailParser_->FilterAllEvents(*cpuDetail_.get());
-    return true;
-}
-void RawTraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish)
-{
-    packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
-    auto packagesCurIter = packagesBuffer_.begin();
-    if (ParseDataRecursively(packagesCurIter)) {
-        packagesCurIter = packagesBuffer_.erase(packagesBuffer_.begin(), packagesCurIter);
-    }
-    return;
+    cpuDetailParser_->FilterAllEvents(*cpuDetail_.get(), true);
+    restCommDataCnt_ = 0;
+    hasGotHeader_ = false;
+    TS_LOGI("Parser raw trace end!");
 }
 bool RawTraceParser::InitRawTraceFileHeader(std::deque<uint8_t>::iterator& packagesCurIter)
 {
@@ -61,10 +46,7 @@ bool RawTraceParser::InitRawTraceFileHeader(std::deque<uint8_t>::iterator& packa
     RawTraceFileHeader header;
     auto ret = memcpy_s(&header, sizeof(RawTraceFileHeader), &(*packagesBuffer_.begin()), sizeof(RawTraceFileHeader));
     TS_CHECK_TRUE(ret == EOK, false, "Memcpy FAILED!Error code is %d, data size is %zu.", ret, packagesBuffer_.size());
-    uint8_t cpuNum = (header.reserved >> 1) & 0x0F;
-    uint8_t isArch32 = (header.reserved & 0x01);
-    cpuRawMax_ = cpuNum + CONTENT_TYPE_CPU_RAW;
-    TS_LOGI("magicNumber=%d, isArch32=%u, cpuNum=%u", header.magicNumber, isArch32, cpuNum);
+    TS_LOGI("magicNumber=%d", header.magicNumber);
 
     packagesCurIter += sizeof(RawTraceFileHeader);
     packagesCurIter = packagesBuffer_.erase(packagesBuffer_.begin(), packagesCurIter);
@@ -85,26 +67,75 @@ bool RawTraceParser::InitEventFormats(const std::string& buffer)
     }
     return true;
 }
-void RawTraceParser::WaitForParserEnd()
+bool RawTraceParser::UpdateCpuCoreMax(uint32_t cpuId)
 {
-    cpuDetailParser_->FilterAllEvents(*cpuDetail_.get(), true);
-    TS_LOGI("FilterAllEvents end!");
+    if (cpuId >= cpuCoreMax_) {
+        cpuCoreMax_++;
+        TS_LOGD("cpuId=%u, cpuCoreMax_=%u", cpuId, cpuCoreMax_);
+        return false;
+    }
+    return true;
+}
+bool RawTraceParser::ParseCpuRawData(uint32_t cpuId, const std::string& buffer)
+{
+    UpdateCpuCoreMax(cpuId);
+    TS_CHECK_TRUE(buffer.size() > 0, true, "cur cpu(%u) raw data is null!", cpuId);
+    auto startPtr = reinterpret_cast<const uint8_t*>(buffer.c_str());
+    auto endPtr = startPtr + buffer.size();
+    cpuDetail_->set_cpu(cpuId);
+    for (uint8_t* page = const_cast<uint8_t*>(startPtr); page < endPtr; page += FTRACE_PAGE_SIZE) {
+        TS_CHECK_TRUE(ftraceProcessor_->HandlePage(*cpuDetail_.get(), *cpuDetailParser_.get(), page), false,
+                      "handle page failed!");
+    }
+    cpuDetailParser_->FilterAllEvents(*cpuDetail_.get());
+    return true;
+}
+bool RawTraceParser::ParseLastCommData(uint8_t type, const std::string& buffer)
+{
+    TS_CHECK_TRUE_RET(restCommDataCnt_ != INVALID_UINT8, false);
+    switch (type) {
+        case CONTENT_TYPE_CMDLINES:
+            TS_CHECK_TRUE(ftraceProcessor_->HandleCmdlines(buffer), false, "parse cmdlines failed");
+            ++restCommDataCnt_;
+            return true;
+        case CONTENT_TYPE_TGIDS:
+            TS_CHECK_TRUE(ftraceProcessor_->HandleTgids(buffer), false, "parse tgid failed");
+            ++restCommDataCnt_;
+            return true;
+        default:
+            break;
+    }
+#ifdef IS_WASM
+    return false;
+#else
+    return true;
+#endif
+}
+void RawTraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish)
+{
+    packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
+    auto packagesCurIter = packagesBuffer_.begin();
+    if (ParseDataRecursively(packagesCurIter)) {
+        packagesCurIter = packagesBuffer_.erase(packagesBuffer_.begin(), packagesCurIter);
+    }
+    if (isFinish) {
+        restCommDataCnt_ = INVALID_UINT8;
+        hasGotHeader_ = false;
+        packagesBuffer_.clear();
+    }
+    return;
 }
 bool RawTraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesCurIter)
 {
-    uint32_t type = INVALID_UINT8;
-    uint32_t len = INVALID_UINT32;
+    uint32_t type = 0;
+    uint32_t len = 0;
     if (!hasGotHeader_) {
         TS_CHECK_TRUE(InitRawTraceFileHeader(packagesCurIter), false, "get rawtrace file header failed");
     }
     while (true) {
-        auto ret = memcpy_s(&type, sizeof(type), &(*packagesCurIter), sizeof(type));
-        TS_CHECK_TRUE(ret == EOK, false, "Memcpy FAILED!Error code is %d, data size is %zu.", ret,
-                      packagesBuffer_.size());
+        std::copy(packagesCurIter, packagesCurIter + sizeof(type), reinterpret_cast<uint8_t*>(&type));
         packagesCurIter += sizeof(type);
-        ret = memcpy_s(&len, sizeof(len), &(*packagesCurIter), sizeof(len));
-        TS_CHECK_TRUE(ret == EOK, false, "Memcpy FAILED!Error code is %d, data size is %zu.", ret,
-                      packagesBuffer_.size());
+        std::copy(packagesCurIter, packagesCurIter + sizeof(len), reinterpret_cast<uint8_t*>(&len));
         packagesCurIter += sizeof(len);
         uint32_t restDataLen = std::distance(packagesCurIter, packagesBuffer_.end());
         TS_CHECK_TRUE_RET(len <= restDataLen && packagesBuffer_.size() > 0, false);
@@ -112,13 +143,12 @@ bool RawTraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& package
         packagesCurIter += len;
         packagesCurIter = packagesBuffer_.erase(packagesBuffer_.begin(), packagesCurIter);
         uint8_t curType = static_cast<uint8_t>(type);
-        if (curType >= CONTENT_TYPE_CPU_RAW && curType <= cpuRawMax_) {
+        if (ParseLastCommData(curType, bufferLine)) {
+            continue;
+        }
+        if (curType >= CONTENT_TYPE_CPU_RAW && curType < CONTENT_TYPE_HEADER_PAGE) {
             auto cpuId = curType - CONTENT_TYPE_CPU_RAW;
             TS_CHECK_TRUE(ParseCpuRawData(cpuId, bufferLine), false, "cpu raw parse failed");
-        } else if (curType == CONTENT_TYPE_CMDLINES) {
-            TS_CHECK_TRUE(ftraceProcessor_->HandleCmdlines(bufferLine), false, "parse cmdlines failed");
-        } else if (curType == CONTENT_TYPE_TGIDS) {
-            TS_CHECK_TRUE(ftraceProcessor_->HandleTgids(bufferLine), false, "parse tgid failed");
         } else if (curType == CONTENT_TYPE_EVENTS_FORMAT) {
             TS_CHECK_TRUE(InitEventFormats(bufferLine), false, "init event format failed");
         } else if (curType == CONTENT_TYPE_HEADER_PAGE) {
@@ -129,8 +159,7 @@ bool RawTraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& package
         } else if (curType == CONTENT_TYPE_KALLSYMS) {
             TS_CHECK_TRUE(ksymsProcessor_->HandleKallSyms(bufferLine), false, "init printk_formats failed");
         } else {
-            TS_LOGW("Raw Trace Type(%d) Unknown.", curType);
-            return false;
+            TS_LOGW("Raw Trace Type(%d) Unknown or has been parsed.", curType);
         }
     }
     return true;
