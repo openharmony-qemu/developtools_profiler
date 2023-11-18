@@ -74,7 +74,8 @@ export class UsbTransmissionChannel implements TransmissionInterface {
     try {
       await this._device?.releaseInterface(this.interfaceNumber);
       await this._device?.close();
-    } catch (e) {}
+    } catch (e) {
+    }
     this._device = null;
   }
 

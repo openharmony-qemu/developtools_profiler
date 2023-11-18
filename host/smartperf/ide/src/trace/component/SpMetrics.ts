@@ -15,7 +15,9 @@
 
 import { BaseElement, element } from '../../base-ui/BaseElement.js';
 
-import { queryMetric } from '../database/SqlLite.js';
+import {
+  queryMetric,
+} from '../database/SqlLite.js';
 
 import '../../base-ui/table/lit-table.js';
 import { LitProgressBar } from '../../base-ui/progress-bar/LitProgressBar.js';
@@ -50,7 +52,7 @@ export class SpMetrics extends BaseElement {
     let index = this.selectMetricEl!.selectedIndex;
     let optionEl = this.selectMetricEl?.querySelectorAll<HTMLOptionElement>('option')[index];
     if (optionEl && optionEl.value !== '') {
-      queryMetric(optionEl.value).then((result) => {
+      queryMetric(optionEl.value).then((result)=>{
         this.metricProgressLoad!.loading = false;
         this.responseJson!.textContent = result.toString();
       });

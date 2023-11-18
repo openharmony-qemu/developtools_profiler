@@ -14,9 +14,9 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
-import { type SelectionParam } from '../../../../bean/BoxSelection.js';
+import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { queryProcessPurgeableSelectionTab, querySysPurgeableSelectionTab } from '../../../../database/SqlLite.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { Utils } from '../../base/Utils.js';
@@ -33,7 +33,7 @@ export class TabPanePurgPinSelection extends BaseElement {
     }
   }
 
-  async queryTableData(type: string, startNs: number): Promise<void> {
+  async queryTableData(type: string, startNs: number) {
     if (type === 'ability') {
       await querySysPurgeableSelectionTab(startNs, true).then((purgePinSelectResults) => {
         this.purgeableSelectionSource = [];
@@ -84,7 +84,7 @@ export class TabPanePurgPinSelection extends BaseElement {
         }
         </style>
         <lit-table id="selectionTbl" no-head>
-            <lit-table-column title="name" data-index="name" key="name" align="flex-start" width="180px">
+            <lit-table-column title="name" data-index="name" key="name" align="flex-start"  width="180px">
                 <template><div>{{name}}</div></template>
             </lit-table-column>
             <lit-table-column title="value" data-index="value" key="value" align="flex-start" >

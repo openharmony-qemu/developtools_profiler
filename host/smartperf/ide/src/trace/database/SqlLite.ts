@@ -84,12 +84,12 @@ import { AppStartupStruct } from './ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from './ui-worker/ProcedureWorkerSoInit.js';
 import { HeapTreeDataBean } from './logic-worker/ProcedureLogicWorkerCommon.js';
 import { TaskTabStruct } from '../component/trace/sheet/task/TabPaneTaskFrames.js';
-import { type DeviceStruct } from '../bean/FrameComponentBean.js';
-import { type FrameSpacingStruct } from './ui-worker/ProcedureWorkerFrameSpacing.js';
-import { type FrameDynamicStruct } from './ui-worker/ProcedureWorkerFrameDynamic.js';
-import { type FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnimation.js';
-import { type SnapshotStruct } from './ui-worker/ProcedureWorkerSnapshot.js';
-import { type MemoryConfig } from '../bean/MemoryConfig.js';
+import { DeviceStruct } from '../bean/FrameComponentBean.js';
+import { FrameSpacingStruct } from './ui-worker/ProcedureWorkerFrameSpacing.js';
+import { FrameDynamicStruct } from './ui-worker/ProcedureWorkerFrameDynamic.js';
+import { FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnimation.js';
+import { SnapshotStruct } from './ui-worker/ProcedureWorkerSnapshot.js';
+import { MemoryConfig } from '../bean/MemoryConfig.js';
 import { LogStruct } from './ui-worker/ProcedureWorkerLog.js';
 
 class DataWorkerThread extends Worker {
@@ -143,11 +143,7 @@ class DbThread extends Worker {
     this.postMessage(msg);
   }
 
-  cutFileByRange(
-    leftTs: number,
-    rightTs: number,
-    handler: (status: boolean, msg: string, splitBuffer?: ArrayBuffer) => void
-  ) {
+  cutFileByRange(leftTs: number, rightTs: number, handler: (status: boolean, msg: string, splitBuffer?: ArrayBuffer) => void) {
     this.busy = true;
     let id = this.uuid();
     this.taskMap[id] = (res: any) => {
@@ -164,7 +160,7 @@ class DbThread extends Worker {
         action: 'cut-file',
         leftTs: leftTs,
         rightTs: rightTs,
-        buffer: DbPool.sharedBuffer!,
+        buffer: DbPool.sharedBuffer!
       },
       [DbPool.sharedBuffer!]
     );
@@ -307,7 +303,7 @@ export class DbPool {
     }
   };
 
-  initServer = async (url: string, progress: Function): Promise<{ status: boolean; msg: string }> => {
+  initServer = async (url: string, progress: Function) => {
     this.progress = progress;
     progress('database loaded', 15);
     DbPool.sharedBuffer = await fetch(url).then((res) => res.arrayBuffer());
@@ -1248,17 +1244,13 @@ export const queryThreads = (): Promise<Array<any>> =>
 
 export const queryDataDICT = (): Promise<Array<any>> => query('queryDataDICT', `select * from data_dict;`);
 
-export const queryAppStartupProcessIds = (): Promise<Array<{ pid: number }>> =>
-  query(
-    'queryAppStartupProcessIds',
-    `
+export const queryAppStartupProcessIds = (): Promise<Array<{ pid: number }>> => query('queryAppStartupProcessIds', `
   SELECT pid FROM process 
   WHERE ipid IN (
     SELECT ipid FROM app_startup 
     UNION
     SELECT t.ipid FROM app_startup a LEFT JOIN thread t ON a.call_id = t.itid 
-);`
-  );
+);`);
 export const queryProcessContentCount = (): Promise<Array<any>> =>
   query(`queryProcessContentCount`, `select pid,switch_count,thread_count,slice_count,mem_count from process;`);
 export const queryProcessThreadsByTable = (): Promise<Array<ThreadStruct>> =>
@@ -1392,8 +1384,8 @@ select pid id,name,'p' type from process;`,
 export const queryThreadStateArgs = (argset: number): Promise<Array<BinderArgBean>> =>
   query('queryThreadStateArgs', ` select args_view.* from args_view where argset = ${argset}`, {});
 
-export const queryThreadStateArgsByName = (key: string): Promise<Array<{ argset: number; strValue: string }>> =>
-  query('queryThreadStateArgsByName', ` select strValue, argset from args_view where keyName = $key`, { $key: key });
+export const queryThreadStateArgsByName = (key: string): Promise<Array<{argset: number, strValue: string}>> =>
+query('queryThreadStateArgsByName', ` select strValue, argset from args_view where keyName = $key`, {$key: key});
 
 export const queryWakeUpThread_Desc = (): Promise<Array<any>> =>
   query(
@@ -2787,7 +2779,7 @@ export const queryWakeupListPriority = (itid: number[], ts: number[], cpus: numb
     and itid in (${itid.join(',')})
     and ts - start_ts in (${ts.join(',')})
     `,
-    {}
+    { }
   );
 
 export const queryBinderByArgsId = (id: number, startTime: number, isNext: boolean): Promise<Array<any>> => {
@@ -3576,10 +3568,10 @@ export const queryGpuTotalType = (): Promise<Array<{ id: number; data: string }>
   query(
     'queryGpuTotalType',
     `
-    select distinct module_name_id id,data
+  select distinct module_name_id id,data
     from memory_window_gpu A, trace_range TR left join data_dict B on A.module_name_id = B.id
     where window_name_id = 0
-    and A.ts < TR.end_ts
+    and A.ts < TR.end_ts;
   `
   );
 
@@ -3606,14 +3598,11 @@ export const queryGpuDataByTs = (
        category_name_id as categoryId,
        size
        from memory_window_gpu, trace_range
-       where ts - start_ts = ${ts} ${condition}
-        `;
+       where ts - start_ts = ${ts} ${condition};`;
   return query('queryGpuDataByTs', sql);
 };
 
-export const queryGpuTotalData = (
-  moduleId: number | null
-): Promise<Array<{ startNs: number; value: number }>> => {
+export const queryGpuTotalData = (moduleId: number | null): Promise<Array<{ startNs: number; value: number }>> => {
   let moduleCondition = moduleId === null ? '' : `and module_name_id = ${moduleId}`;
   let sql = `
   select (ts - start_ts) startNs, sum(size) value
@@ -3625,47 +3614,45 @@ export const queryGpuTotalData = (
   return query('queryGpuTotalData', sql);
 };
 
-// GL 或 Graph 泳道图
-export const queryGpuData = (ipid: number, name: string): Promise<Array<{ startNs: number; value: number }>> => {
+export const queryGpuGLData = (ipid: number): Promise<Array<{ startNs: number; value: number }>> => {
   let sql = `
-    select (ts - start_ts) startNs,sum(value) value
-  from process_measure, trace_range
-  where filter_id = (
-      select id
-      from process_measure_filter
-      where name = ${name} and ipid = ${ipid}
-      )
-  and ts between start_ts and end_ts
-  group by ts;
-    `;
-  return query('queryGpuData', sql);
+  select (ts - start_ts) startNs,sum(value) value
+from process_measure, trace_range
+where filter_id = (
+    select id
+    from process_measure_filter
+    where name = 'mem.gl_pss' and ipid = ${ipid}
+    )
+and ts between start_ts and end_ts
+group by ts;
+  `;
+  return query('queryGpuGLData', sql);
 };
-// GL 或 Graph 框选Tab页
-export const queryGpuDataTab = (
+
+export const queryGpuGLDataByRange = (
   ipid: number,
   leftNs: number,
   rightNs: number,
-  interval: number,
-  name: string
+  interval: number
 ): Promise<Array<{ startTs: number; size: number }>> => {
   let sql = `
-    select (ts - start_ts) startTs,sum(value) size
-  from process_measure, trace_range
-  where filter_id = (
-      select id
-      from process_measure_filter
-      where name = ${name} and ipid = ${ipid}
-      )
-  and not ((startTs + ${interval} < ${leftNs}) or (startTs > ${rightNs}))
-  group by ts;
-    `;
+  select (ts - start_ts) startTs,sum(value) size
+from process_measure, trace_range
+where filter_id = (
+    select id
+    from process_measure_filter
+    where name = 'mem.gl_pss' and ipid = ${ipid}
+    )
+and not ((startTs + ${interval} < ${leftNs}) or (startTs > ${rightNs}))
+group by ts;
+  `;
   return query('queryGpuGLDataByRange', sql);
 };
 
 export const queryGpuDataByRange = (
   leftNs: number,
   rightNs: number,
-  interval: number,
+  interval: number
 ): Promise<
   Array<{
     startTs: number;
@@ -3694,7 +3681,7 @@ export const queryGpuDataByRange = (
 
 export const queryGpuWindowData = (
   windowId: number,
-  moduleId: number | null,
+  moduleId: number | null
 ): Promise<Array<{ startNs: number; value: number }>> => {
   let moduleCondition = moduleId === null ? '' : `and module_name_id = ${moduleId}`;
   let sql = `
@@ -4389,11 +4376,7 @@ export const queryHiPerfProcessCount = (
   );
 };
 
-export const queryConcurrencyTask = (
-  itid: number,
-  selectStartTime: number,
-  selectEndTime: number
-): Promise<TaskTabStruct[]> =>
+export const queryConcurrencyTask = (itid: number, selectStartTime: number, selectEndTime: number) =>
   query<TaskTabStruct>(
     'queryConcurrencyTask',
     `SELECT thread.tid,
@@ -4546,7 +4529,7 @@ export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> 
              startTs;`
   );
 
-export const queryFrameDynamicData = (): Promise<FrameDynamicStruct[]> =>
+export const queryFrameDynamicData = (): Promise<Array<FrameDynamicStruct>> =>
   query(
     'queryFrameDynamicData',
     `SELECT
@@ -4675,9 +4658,9 @@ export const queryVmTrackerShmSelectionData = (startNs: number, ipid: number): P
              where startNS = ${startNs} and ipid = ${ipid};`,
     {}
   );
-export const getTabSmapsSampleData = (rightNs: number): Promise<Array<Smaps>> =>
+export const getTabSmapsRecordData = (rightNs: number): Promise<Array<Smaps>> =>
   query<Smaps>(
-    'getTabSmapsSampleData',
+    'getTabSmapsRecordData',
     `
       SELECT
      (A.timestamp - t.start_ts) AS startNs,
@@ -4694,27 +4677,6 @@ export const getTabSmapsSampleData = (rightNs: number): Promise<Array<Smaps>> =>
      WHERE (startNs) = $rightNs`,
     { $rightNs: rightNs },
     'exec'
-  );
-
-// VM Tracker Smaps Record Tab页
-export const querySmapsRecordTabData = (
-  startNs: number,
-  ipid: number,
-  pixelmapId: number,
-  typeId:number
-): Promise<Array<{ name: string; size: number }>> =>
-  query(
-    'querySmapsRecordTabData',
-    `select  'RenderServiceCpu' as name, IFNULL(sum(mem_size), 0) as size from memory_rs_image, trace_range tr
-    where ipid = ${ipid} and (ts - tr.start_ts) = ${startNs} and type_id = ${pixelmapId}
-    union all
-    select 'SkiaCpu' as name, total_size as size from memory_cpu,trace_range
-    where (ts - start_ts) = ${startNs}
-    union all
-    select 'GLESHostCache' as name, 0
-    union all
-    select 'VirtaulSize' as name, sum(virtaul_size) * 1024 as size from smaps, trace_range
-    where type = ${typeId} and (timeStamp - start_ts) = ${startNs}`
   );
 
 export const getTabSmapsStatisticMaxSize = (rightNs: number): Promise<Array<any>> =>
@@ -4802,41 +4764,6 @@ export const queryGpuMemoryData = (processId: number): Promise<Array<SnapshotStr
     AND A.ts < B.end_ts
     GROUP by A.ts;`,
     { $pid: processId }
-  );
-
-//  VM Tracker Gpu Resourcet泳道图
-export const queryGpuResourceData = (categoryNameId: number): Promise<Array<SnapshotStruct>> =>
-  query(
-    'queryGpuResourceData',
-    `SELECT
-    subquery1.startNs,
-    IFNULL(subquery1.totalSize, 0) as aSize, 
-    IFNULL(subquery2.size, 0) as bSize,
-    (IFNULL(subquery1.totalSize, 0) - IFNULL(subquery2.size, 0)) AS value
-  FROM
-    (SELECT (ts - start_ts) AS startNs,SUM(total_size) AS totalSize
-     FROM memory_profile, trace_range
-     WHERE ts between start_ts and end_ts
-     GROUP BY ts) AS subquery1
-   LEFT JOIN
-    (SELECT (ts - start_ts) AS startNs, SUM(size) AS size
-     FROM memory_window_gpu, trace_range
-     WHERE ts between start_ts and end_ts
-    AND category_name_id = ${categoryNameId}
-     GROUP BY ts) AS subquery2
-  ON subquery1.startNs = subquery2.startNs`,
-  );
-
-//  VM Tracker Gpu Resource Tab页
-export const queryGpuResourceTabData = (
-  startNs: number
-): Promise<Array<{ startNs: number; channelId: number; totalSize: number }>> =>
-  query(
-    'queryGpuResourceTabData',
-    `SELECT (ts - start_ts) as startNs, channel_id as channelId, sum(total_size) as totalSize 
-    FROM memory_profile, trace_range
-    WHERE (ts - start_ts) = ${startNs}
-    GROUP by ts, channelId`
   );
 
 // Ability Monitor Purgeable泳道图
@@ -5450,25 +5377,23 @@ export const queryLogData = (oneDayTime: number): Promise<Array<LogStruct>> =>
             LEFT JOIN process p ON p.pid = l.pid 
             ORDER BY
             l.ts;`,
-    { $oneDayTime: oneDayTime }
+    {$oneDayTime: oneDayTime}
   );
 
 export const queryMetric = (metricName: string): Promise<Array<string>> =>
   query('queryMetric', metricName, '', 'exec-metric');
 
 export const queryExistFtrace = (): Promise<Array<number>> =>
-  query(
-    'queryExistFtrace',
-    `select 1 from thread_state
+    query(
+        'queryExistFtrace',
+        `select 1 from thread_state
          UNION
          select 1 from args;`
-  );
+    );
 
-export const queryTraceType = (): Promise<
-  Array<{
-    value: string;
-  }>
-> =>
+export const queryTraceType = (): Promise<Array<{
+  value: string
+}>> =>
   query(
     'queryTraceType',
     `SELECT m.value

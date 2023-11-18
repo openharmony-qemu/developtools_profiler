@@ -173,11 +173,8 @@ export class TabPaneCounter extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          return sort === 2
-            ? // @ts-ignore
-              parseFloat(counterRightData[property]) - parseFloat(counterLeftData[property])
-            : // @ts-ignore
-              parseFloat(counterLeftData[property]) - parseFloat(counterRightData[property]);
+          // @ts-ignore
+          return sort === 2 ? parseFloat(counterRightData[property]) - parseFloat(counterLeftData[property]) : parseFloat(counterLeftData[property]) - parseFloat(counterRightData[property]);
         } else {
           // @ts-ignore
           if (counterRightData[property] > counterLeftData[property]) {

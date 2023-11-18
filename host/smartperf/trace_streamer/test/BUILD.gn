@@ -1,0 +1,178 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../build/ohos.gni")
+import("../build/test.gni")
+import("../build/ts.gni")
+import("test_ts.gni")
+
+if (is_test) {
+  ohos_unittest("trace_streamer_ut") {
+    sources = [
+      "unittest/animation_filter_test.cpp",
+      "unittest/app_start_filter_test.cpp",
+      "unittest/binder_filter_test.cpp",
+      "unittest/bio_parser_test.cpp",
+      "unittest/bytrace_parser_test.cpp",
+      "unittest/clock_filter_test.cpp",
+      "unittest/cpu_filter_test.cpp",
+      "unittest/ebpf_file_system_test.cpp",
+      "unittest/ebpf_parser_test.cpp",
+      "unittest/event_parser_test.cpp",
+      "unittest/filter_filter_test.cpp",
+      "unittest/frame_filter_test.cpp",
+      "unittest/hidump_parser_test.cpp",
+      "unittest/hilog_parser_test.cpp",
+      "unittest/hisys_event_parser_test.cpp",
+      "unittest/htrace_binder_event_test.cpp",
+      "unittest/htrace_cpu_data_parser_test.cpp",
+      "unittest/htrace_cpu_detail_parser_test.cpp",
+      "unittest/htrace_diskio_parser_test.cpp",
+      "unittest/htrace_event_parser_test.cpp",
+      "unittest/htrace_irq_event_test.cpp",
+      "unittest/htrace_mem_parser_test.cpp",
+      "unittest/htrace_network_parser_test.cpp",
+      "unittest/htrace_process_parser_test.cpp",
+      "unittest/htrace_sys_mem_parser_test.cpp",
+      "unittest/htrace_sys_vmem_parser_test.cpp",
+      "unittest/http_server_test.cpp",
+      "unittest/irq_filter_test.cpp",
+      "unittest/js_cpu_profiler_test.cpp",
+      "unittest/js_memory_test.cpp",
+      "unittest/measure_filter_test.cpp",
+      "unittest/native_hook_parser_test.cpp",
+      "unittest/paged_memory_parser_test.cpp",
+      "unittest/parser_pbreader_test.cpp",
+      "unittest/process_filter_test.cpp",
+      "unittest/proto_reader_test.cpp",
+      "unittest/query_file_test.cpp",
+      "unittest/query_metrics_test.cpp",
+      "unittest/rawtrace_parser_test.cpp",
+      "unittest/rpc_server_test.cpp",
+      "unittest/slice_filter_test.cpp",
+      "unittest/smaps_parser_test.cpp",
+      "unittest/span_join_test.cpp",
+      "unittest/table_test.cpp",
+      "unittest/task_pool_filter_test.cpp",
+      "unittest/wasm_func_test.cpp",
+    ]
+
+    deps = [
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/cpu_data:ts_cpu_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/diskio_data:ts_diskio_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ts_ftrace_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hidump_data:ts_hidump_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hilog_data:ts_hilog_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/hisysevent_data:ts_hisysevent_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/js_memory:ts_js_memory_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:ts_memory_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/native_hook:ts_native_hook_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/network_data:ts_network_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/process_data:ts_process_data_cpp",
+      "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/test_data:test_data_cpp",
+      "${SRC}/parser/rawtrace_parser:rawtrace_parser_src",
+      "${THIRD_PARTY}/googletest:gtest",
+      "${THIRD_PARTY}/googletest:gtest_main",
+      "${THIRD_PARTY}/protobuf:protobuf_lite_static",
+      "${THIRD_PARTY}/protobuf:protobuf_static",
+      "../src:trace_streamer_source",
+      "../src/parser/htrace_pbreader_parser:htrace_pbreader_parser",
+      "../src/proto_reader:proto_reader",
+    ]
+    include_dirs = [
+      "../src",
+      "../src/trace_data",
+      "../src/table",
+      "../src/table/base",
+      "../src/filter",
+      "../src/metrics",
+      "../src/base",
+      "../src/rpc",
+      "../src/metrics",
+      "../src/include",
+      "../src/trace_streamer",
+      "../src/parser/bytrace_parser",
+      "../src/parser",
+      "../src/cfg",
+      "../src/metrics",
+      "../src/parser/ebpf_parser",
+      "../src/proto_reader",
+      "../src/proto_reader/include",
+      "../prebuilts/emsdk/emsdk/emscripten/system/include",
+      "..",
+      "${THIRD_PARTY}/googletest/googletest/include/gtest",
+      "${THIRD_PARTY}/protobuf/src",
+      "${PERF_DIR}/hiperf/include",
+      "${PERF_DIR}/hiperf/include/nonlinux/linux",
+      "${THIRD_PARTY}/protobuf/src/google/protobuf",
+      "${THIRD_PARTY}/json/single_include/nlohmann",
+      "${THIRD_PARTY}/perf_include/musl",
+      "${THIRD_PARTY}/sqlite/include",
+      "${THIRD_PARTY}/bounds_checking_function/include",
+      "${THIRD_PARTY}/json/single_include/nlohmann",
+      "../src/parser/htrace_pbreader_parser",
+      "../src/parser/htrace_pbreader_parser/htrace_event_parser",
+      "../src/parser/htrace_pbreader_parser/htrace_cpu_parser",
+      "../src/proto_reader",
+      "../src/proto_reader/include",
+      "${SRC}/metrics",
+    ]
+
+    cflags = [
+      "-Wno-inconsistent-missing-override",
+      "-Dprivate=public",  #allow test code access private members
+      "-Dprotected=public",  #allow test code access protect members
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "-Wno-unused-command-line-argument",
+      "-Wno-format",
+      "-Wno-unused-const-variable",
+      "-Wno-unused-variable",
+      "-Wno-used-but-marked-unused",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    cflags += [
+      # clang coverage options:
+      "--coverage",
+      "-mllvm",
+      "-limited-coverage-experimental=true",
+      "-fno-use-cxa-atexit",
+      "-DIS_UT",
+    ]
+    if (is_mac) {
+      lib_dirs = [ "/usr/local/opt/llvm/lib" ]
+    }
+    libs = [ "LLVMCore" ]
+  }
+}
+
+# this is the dest for ohos.build
+if (is_test) {
+  group("unittest") {
+    testonly = true
+    deps = [ ":trace_streamer_ut" ]
+  }
+} else if (target == "fuzz") {
+  group("fuzztest") {
+    testonly = true
+    deps = [
+      "test_fuzzer/bytrace_fuzzer:fuzztest",
+      "test_fuzzer/htrace_fuzzer:fuzztest",
+      "test_fuzzer/selector_fuzzer:fuzztest",
+    ]
+  }
+}

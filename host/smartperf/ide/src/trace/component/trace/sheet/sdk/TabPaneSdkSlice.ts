@@ -269,11 +269,8 @@ export class TabPaneSdkSlice extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          return sliceSort === 2
-            ? // @ts-ignore
-              parseFloat(bSdkSlice[property]) - parseFloat(aSdkSlice[property])
-            : // @ts-ignore
-              parseFloat(aSdkSlice[property]) - parseFloat(bSdkSlice[property]);
+          // @ts-ignore
+          return sliceSort === 2 ? parseFloat(bSdkSlice[property]) - parseFloat(aSdkSlice[property]) : parseFloat(aSdkSlice[property]) - parseFloat(bSdkSlice[property]);
         }
         // @ts-ignore
         if (bSdkSlice[property] > aSdkSlice[property]) {

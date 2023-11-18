@@ -20,12 +20,14 @@ import '../../../../../base-ui/slicer/lit-slicer.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import {
+  DISKIO_TYPE_MAP,
   FileSysEvent,
   IoCompletionTimes,
+  VirtualMemoryEvent,
   VM_TYPE_MAP,
 } from '../../../../database/logic-worker/ProcedureLogicWorkerFileSystem.js';
 import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
-import { getTabIoCompletionTimesType } from '../../../../database/SqlLite.js';
+import { getTabIoCompletionTimesType, getTabVirtualMemoryType } from '../../../../database/SqlLite.js';
 
 @element('tabpane-io-completiontimes')
 export class TabPaneIoCompletionTimes extends BaseElement {
@@ -37,6 +39,8 @@ export class TabPaneIoCompletionTimes extends BaseElement {
   private ioCompletionTimesProgressEL: LitProgressBar | null | undefined;
   private ioCompletionTimesLoadingList: number[] = [];
   private ioCompletionTimesLoadingPage: any;
+  private ioCompletionTimesSortKey: string = 'startTs';
+  private ioCompletionTimesSortType: number = 0;
   private currentSelection: SelectionParam | undefined | null;
   private ioCompletionTimesSource: Array<IoCompletionTimes> = [];
   private ioCompletionTimesQueryDataSource: Array<IoCompletionTimes> = [];
@@ -51,11 +55,9 @@ export class TabPaneIoCompletionTimes extends BaseElement {
       this.queryData(ioCompletionTimesSelection!);
     });
     // @ts-ignore
-    this.ioCompletionTimesTbl?.shadowRoot.querySelector('.table').style.height =
-      this.parentElement!.clientHeight - 20 - 31 + 'px';
+    this.ioCompletionTimesTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
     // @ts-ignore
-    this.ioCompletionTimesTblData?.shadowRoot.querySelector('.table').style.height =
-      this.parentElement!.clientHeight - 20 - 31 + 'px';
+    this.ioCompletionTimesTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
     this.ioCompletionTimesTbl!.recycleDataSource = [];
     this.ioCompletionTimesTblData!.recycleDataSource = [];
   }
@@ -64,12 +66,10 @@ export class TabPaneIoCompletionTimes extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.ioCompletionTimesTbl?.shadowRoot.querySelector('.table').style.height =
-          this.parentElement!.clientHeight - 10 - 33 + 'px';
+        this.ioCompletionTimesTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 33 + 'px';
         this.ioCompletionTimesTbl?.reMeauseHeight();
         // @ts-ignore
-        this.ioCompletionTimesTblData?.shadowRoot.querySelector('.table').style.height =
-          this.parentElement!.clientHeight - 10 - 33 + 'px';
+        this.ioCompletionTimesTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 33 + 'px';
         this.ioCompletionTimesTblData?.reMeauseHeight();
         this.ioCompletionTimesLoadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

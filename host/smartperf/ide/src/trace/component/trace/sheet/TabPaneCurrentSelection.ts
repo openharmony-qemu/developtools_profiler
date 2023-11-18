@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../../base-ui/BaseElement.js';
-import { type LitTable } from '../../../../base-ui/table/lit-table.js';
+import { LitTable } from '../../../../base-ui/table/lit-table.js';
 import '../../../../base-ui/table/lit-table-column.js';
 
 import {
@@ -31,7 +31,7 @@ import {
   queryThreadWakeUpFrom,
   queryWakeupListPriority,
 } from '../../../database/SqlLite.js';
-import { type WakeupBean } from '../../../bean/WakeupBean.js';
+import { WakeupBean } from '../../../bean/WakeupBean.js';
 import { SpApplication } from '../../../SpApplication.js';
 import { TraceRow } from '../base/TraceRow.js';
 import { CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
@@ -47,8 +47,8 @@ import { Utils } from '../base/Utils.js';
 import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
 import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
-import { type SelectionParam } from '../../../bean/BoxSelection.js';
-import { type FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import { SelectionParam } from '../../../bean/BoxSelection.js';
+import { FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
 
 const INPUT_WORD =
   'This is the interval from when the task became eligible to run \n(e.g.because of notifying a wait queue it was a suspended on) to\n when it started running.';
@@ -153,6 +153,8 @@ export class TabPaneCurrentSelection extends BaseElement {
 </div>`,
       });
     }
+
+    list.push({ name: 'CmdLine', value: `${data.processCmdLine}` });
     list.push({
       name: 'StartTime(Relative)',
       value: getTimeString(data.startTime || 0),
@@ -403,7 +405,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     if (leftTitle) {
       leftTitle.innerText = 'Counter Details';
     }
-    let list: object[] = [];
+    let list: any[] = [];
     list.push({
       name: 'StartTime(Relative)',
       value: getTimeString(data.startTime || 0),
@@ -429,7 +431,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     if (leftTitle) {
       leftTitle.innerText = 'Counter Details';
     }
-    let list: object[] = [];
+    let list: any[] = [];
     list.push({
       name: 'StartTime(Relative)',
       value: getTimeString(data.startNS || 0),
@@ -966,10 +968,7 @@ export class TabPaneCurrentSelection extends BaseElement {
       value: ((dataTs || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'End time(Relative)', value: `${Utils.getTimeString(dataTs + (data.dur || 0))}` });
-    list.push({
-      name: 'End time(Absolute)',
-      value: (dataTs + (data.dur || 0) + (window as any).recordStartNS) / 1000000000,
-    });
+    list.push({ name: 'End time(Absolute)', value: ((dataTs + (data.dur || 0)) + (window as any).recordStartNS) / 1000000000});
     list.push({ name: 'Duration', value: `${Utils.getTimeString(data.dur || 0)}` });
     if (data.status === 'Completion delay') {
       let frameFpsMessage = data.frameInfo?.split(':');
@@ -1224,7 +1223,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.currentSelectionTbl = this.shadowRoot?.querySelector<LitTable>('#selectionTbl');
     this.wakeupListTbl = this.shadowRoot?.querySelector<LitTable>('#wakeupListTbl');
     this.scrollView = this.shadowRoot?.querySelector<HTMLDivElement>('#scroll_view');
-    this.currentSelectionTbl?.addEventListener('column-click', (ev: any) => { });
+    this.currentSelectionTbl?.addEventListener('column-click', (ev: any) => {});
     window.subscribe(window.SmartEvent.UI.WakeupList, (data: Array<WakeupBean>) => this.showWakeupListTableData(data));
   }
 
@@ -1264,18 +1263,18 @@ export class TabPaneCurrentSelection extends BaseElement {
         maxDuration = Math.max(maxDuration, this.selectWakeupBean.dur);
         maxPriority = Math.max(maxPriority, this.selectWakeupBean.priority);
       }
-      resource.forEach((it) => {
+      resource.forEach(it => {
         if (it.priority === maxPriority) {
           maxPriorityDuration = Math.max(it.dur || 0, maxPriorityDuration);
         }
       });
-      this.wakeupListTbl!.getItemTextColor = (data: any) => {
+      this.wakeupListTbl!.getItemTextColor = ((data: any) => {
         if ((data.priority === maxPriority && data.dur === maxPriorityDuration) || data.dur === maxDuration) {
           return '#f44336';
         } else {
           return '#262626';
         }
-      };
+      });
       this.wakeupListTbl!.recycleDataSource = resource;
     });
   }

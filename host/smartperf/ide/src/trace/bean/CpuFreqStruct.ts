@@ -37,7 +37,8 @@ export class CpuFreqStruct extends BaseStruct {
         freqBeanStructCanvasCtx.lineWidth = 1;
         freqBeanStructCanvasCtx.globalAlpha = 0.6;
         let freqBeanStructDrawHeight: number = Math.floor(
-          ((freqBeanStruct.value || 0) * (freqBeanStruct.frame.height || 0) * 1.0) / CpuFreqStruct.maxFreq
+          ((freqBeanStruct.value || 0) * (freqBeanStruct.frame.height || 0) * 1.0) /
+          CpuFreqStruct.maxFreq
         );
         freqBeanStructCanvasCtx.fillRect(
           freqBeanStruct.frame.x,
@@ -72,7 +73,8 @@ export class CpuFreqStruct extends BaseStruct {
         freqBeanStructCanvasCtx.globalAlpha = 0.6;
         freqBeanStructCanvasCtx.lineWidth = 1;
         let drawHeight: number = Math.floor(
-          ((freqBeanStruct.value || 0) * (freqBeanStruct.frame.height || 0)) / CpuFreqStruct.maxFreq
+          ((freqBeanStruct.value || 0) * (freqBeanStruct.frame.height || 0)) /
+          CpuFreqStruct.maxFreq
         );
         freqBeanStructCanvasCtx.fillRect(
           freqBeanStruct.frame.x,
@@ -85,6 +87,7 @@ export class CpuFreqStruct extends BaseStruct {
     freqBeanStructCanvasCtx.globalAlpha = 1.0;
     freqBeanStructCanvasCtx.lineWidth = 1;
   }
+
 }
 
 const textPadding = 2;

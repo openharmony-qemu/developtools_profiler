@@ -233,13 +233,13 @@ export class SpProbesConfig extends BaseElement {
       { value: 'usb', isSelect: false },
       { value: 'ufs', isSelect: false },
       { value: 'useriam', isSelect: false },
-      { value: 'virse', isSelect: false },
       { value: 'window', isSelect: true },
       { value: 'workq', isSelect: true },
       { value: 'zaudio', isSelect: true },
       { value: 'zcamera', isSelect: true },
       { value: 'zimage', isSelect: true },
       { value: 'zmedia', isSelect: true },
+      { value: 'virse', isSelect: false }
     ];
     this.hitrace = this.shadowRoot?.getElementById('hitrace') as SpCheckDesBox;
     let parent = this.shadowRoot?.querySelector('.user-events') as Element;

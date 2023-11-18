@@ -48,11 +48,9 @@ export class TabPaneFileSystemDescHistory extends BaseElement {
     }
     this.currentSelection = fsDescHistorySelection;
     // @ts-ignore
-    this.fsDescHistoryTbl?.shadowRoot.querySelector('.table').style.height =
-      this.parentElement!.clientHeight - 20 - 31 + 'px';
+    this.fsDescHistoryTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
     // @ts-ignore
-    this.fsDescHistoryTblData?.shadowRoot.querySelector('.table').style.height =
-      this.parentElement!.clientHeight - 20 - 31 + 'px';
+    this.fsDescHistoryTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
     this.fsDescHistoryTbl!.recycleDataSource = [];
     this.fsDescHistoryTblData!.recycleDataSource = [];
     if (fsDescHistorySelection) {
@@ -185,12 +183,10 @@ export class TabPaneFileSystemDescHistory extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.fsDescHistoryTbl?.shadowRoot.querySelector('.table').style.height =
-          this.parentElement!.clientHeight - 10 - 31 + 'px';
+        this.fsDescHistoryTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
         this.fsDescHistoryTbl?.reMeauseHeight();
         // @ts-ignore
-        this.fsDescHistoryTblData?.shadowRoot.querySelector('.table').style.height =
-          this.parentElement!.clientHeight - 10 - 31 + 'px';
+        this.fsDescHistoryTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 31 + 'px';
         this.fsDescHistoryTblData?.reMeauseHeight();
         this.fsDescHistoryLoadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

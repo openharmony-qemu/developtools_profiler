@@ -1,0 +1,50 @@
+# Copyright (C) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../build/ts.gni")
+OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR = "${THIRD_PARTY}/protobuf"
+proto_dir = "${THIRD_PARTY}/protogen"
+mock_dir = "$proto_dir/types/plugins/mock_data"
+config("ts_proto_include_config") {
+  include_dirs = []
+}
+source_set("ts_proto_data_cpp") {
+  public_deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
+  ]
+  cflags = [
+    "-ftrapv",
+    "-D_FORTIFY_SOURCE=2 -O2",
+    "-Wno-zero-length-array",
+    "-std=c++17",
+  ]
+
+  if (!is_win) {
+    print("xxx")
+    cflags += [
+      "-fPIE",
+      "-fPIC",
+    ]
+  }
+  if (!use_wasm) {
+    cflags += [
+      "-fstack-protector-strong",  #
+      "-fstack-protector-all",
+    ]
+  }
+
+  public_configs = [ ":ts_proto_include_config" ]
+  sources = [ "${mock_dir}/mock_plugin_result.pb.cc" ]
+}

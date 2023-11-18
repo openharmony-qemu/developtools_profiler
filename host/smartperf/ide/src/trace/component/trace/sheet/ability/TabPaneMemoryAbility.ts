@@ -31,8 +31,7 @@ export class TabPaneMemoryAbility extends BaseElement {
 
   set data(memoryAbilityValue: SelectionParam | any) {
     // @ts-ignore
-    this.memoryAbilityTbl?.shadowRoot?.querySelector('.table').style.height =
-      this.parentElement!.clientHeight - 45 + 'px';
+    this.memoryAbilityTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
     this.queryDataByDB(memoryAbilityValue);
   }
 
@@ -234,11 +233,8 @@ export class TabPaneMemoryAbility extends BaseElement {
     function compare(property, sort, type) {
       return function (memoryAbilityLeftData: SystemMemorySummary, memoryAbilityRightData: SystemMemorySummary) {
         if (type === 'number') {
-          return sort === 2
-            ? // @ts-ignore
-              parseFloat(memoryAbilityRightData[property]) - parseFloat(memoryAbilityLeftData[property])
-            : // @ts-ignore
-              parseFloat(memoryAbilityLeftData[property]) - parseFloat(memoryAbilityRightData[property]);
+          // @ts-ignore
+          return sort === 2 ? parseFloat(memoryAbilityRightData[property]) - parseFloat(memoryAbilityLeftData[property]) : parseFloat(memoryAbilityLeftData[property]) - parseFloat(memoryAbilityRightData[property]);
         } else if (type === 'durationStr') {
           return sort === 2
             ? memoryAbilityRightData.durationNumber - memoryAbilityLeftData.durationNumber

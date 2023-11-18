@@ -29,6 +29,7 @@ export class HdcStream {
   private hdcClient: HdcClient;
   public fileSize: number = -1;
 
+
   constructor(hdcClient: HdcClient, isStopCmd: boolean) {
     this.hdcClient = hdcClient;
     this.channelId = Utils.getLocalId();
@@ -44,6 +45,7 @@ export class HdcStream {
     }
     return this.DoCommandRemote(formatCommand);
   }
+
 
   public async DoCommandRemote(command: FormatCommand): Promise<boolean> {
     switch (command.cmdFlag) {

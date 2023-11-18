@@ -29,7 +29,7 @@ import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { HiPerfThreadStruct } from './ProcedureWorkerHiPerfThread.js';
 
 export class HiperfCpuRender extends PerfRender {
-  renderMainThread(req: any, row: TraceRow<HiPerfCpuStruct>): void {
+  renderMainThread(req: any, row: TraceRow<HiPerfCpuStruct>) {
     let list = row.dataList;
     let filter = row.dataListCache;
     let groupBy10MS = req.scale > 30_000_000;
@@ -75,7 +75,7 @@ export class HiperfCpuRender extends PerfRender {
     req.context.closePath();
   }
 
-  render(hiPerfCpuRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>): void {}
+  render(hiPerfCpuRequest: RequestMessage, list: Array<any>, filter: Array<any>, dataList2: Array<any>) {}
 }
 
 export class HiPerfCpuStruct extends HiPerfStruct {

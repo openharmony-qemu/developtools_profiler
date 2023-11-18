@@ -139,11 +139,8 @@ export class TabPaneClockCounter extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          return sort === 2
-            ? // @ts-ignore
-              parseFloat(clockCounterRightData[property]) - parseFloat(clockCounterLeftData[property])
-            : // @ts-ignore
-              parseFloat(clockCounterLeftData[property]) - parseFloat(clockCounterRightData[property]);
+          // @ts-ignore
+          return sort === 2 ? parseFloat(clockCounterRightData[property]) - parseFloat(clockCounterLeftData[property]) : parseFloat(clockCounterLeftData[property]) - parseFloat(clockCounterRightData[property]);
         } else {
           // @ts-ignore
           if (clockCounterRightData[property] > clockCounterLeftData[property]) {

@@ -29,7 +29,7 @@ import { info } from '../../../../log/Log.js';
 import { ColorUtils } from './ColorUtils.js';
 import { drawSelectionRange, isFrameContainPoint } from '../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { TraceRowConfig } from './TraceRowConfig.js';
-import { type TreeItemData, LitTree } from '../../../../base-ui/tree/LitTree.js';
+import { TreeItemData, LitTree } from '../../../../base-ui/tree/LitTree.js';
 
 export class RangeSelectStruct {
   startX: number | undefined;
@@ -88,14 +88,12 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_STATE_ENERGY = 'state-energy';
   static ROW_TYPE_SYS_MEMORY_GPU = 'sys-memory-gpu';
   static ROW_TYPE_SYS_MEMORY_GPU_GL = 'sys-memory-gpu-gl';
-  static ROW_TYPE_SYS_MEMORY_GPU_GRAPH = 'sys-memory-gpu-graph';
   static ROW_TYPE_SYS_MEMORY_GPU_TOTAL = 'sys-memory-gpu-total';
   static ROW_TYPE_SYS_MEMORY_GPU_WINDOW = 'sys-memory-gpu-window';
   static ROW_TYPE_VM_TRACKER_SMAPS = 'smaps';
   static ROW_TYPE_VM_TRACKER = 'VmTracker';
   static ROW_TYPE_DMA_VMTRACKER = 'dma-vmTracker';
   static ROW_TYPE_GPU_MEMORY_VMTRACKER = 'gpu-memory-vmTracker';
-  static ROW_TYPE_GPU_RESOURCE_VMTRACKER = 'sys-memory-gpu-resource';
   static ROW_TYPE_VMTRACKER_SHM = 'VmTracker-shm';
   static ROW_TYPE_CLOCK_GROUP = 'clock-group';
   static ROW_TYPE_COLLECT_GROUP = 'collect-group';
@@ -258,7 +256,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     }
   }
 
-  get collectGroup(): string | undefined {
+  get collectGroup() {
     return this._collectGroup;
   }
 
@@ -271,7 +269,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.setAttribute('row-setting', value);
   }
 
-  get rowSetting(): string {
+  get rowSetting() {
     return this.getAttribute('row-setting') || 'disable';
   }
 
@@ -279,7 +277,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.rowSettingPop!.placement = value;
   }
 
-  get rowSettingPopoverDirection(): string {
+  get rowSettingPopoverDirection() {
     return this.rowSettingPop?.placement || 'bottomLeft';
   }
 
@@ -288,11 +286,11 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.rowSettingTree!.treeData = value || [];
   }
 
-  get rowSettingList(): TreeItemData[] | null | undefined {
+  get rowSettingList() {
     return this._rowSettingList;
   }
 
-  get collect(): boolean {
+  get collect() {
     return this.hasAttribute('collect-type');
   }
 
@@ -407,26 +405,26 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     );
   }
 
-  childRowToFragment(expansion: boolean): void {
-    for (const childrenRow of this.childrenList) {
+  childRowToFragment (expansion: boolean) : void {
+    for (const childrenRow of this.childrenList){
       if (!childrenRow.collect) {
         this.fragment.append(childrenRow);
       }
       if (!expansion) {
-        if (childrenRow.childrenList && childrenRow.folder && childrenRow.expansion) {
-          childrenRow.expansion = false;
+        if (childrenRow.childrenList && childrenRow.expansion) {
+          this.childRowToFragment(expansion);
         }
       }
     }
   }
 
-  updateChildRowStatus(): void {
+  updateChildRowStatus() : void {
     this.fragment = document.createDocumentFragment();
     this.childRowToFragment(true);
     this.insertAfter(this.fragment, this);
   }
 
-  clearMemory(): void {
+  clearMemory() {
     this.dataList2 = [];
     this.dataList = [];
     this.dataListCache = [];
@@ -443,14 +441,14 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     }
   }
 
-  addTemplateTypes(...type: string[]): void {
+  addTemplateTypes(...type: string[]) {
     this.templateType.push(...type);
     if (this.hasParentRowEl) {
       this.toParentAddTemplateType(this);
     }
   }
 
-  toParentAddTemplateType = (currentRowEl: TraceRow<any>): void => {
+  toParentAddTemplateType = (currentRowEl: TraceRow<any>) => {
     let parentRow = currentRowEl.parentRowEl;
     if (parentRow !== undefined) {
       parentRow.templateType.push(...currentRowEl.templateType);
@@ -460,11 +458,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     }
   };
 
-  getHoverStruct(strict: boolean = true, offset: boolean = false): T | undefined {
+  getHoverStruct() {
     if (this.isHover) {
-      return this.dataListCache.find(
-        (re) => re.frame && isFrameContainPoint(re.frame, this.hoverX, this.hoverY, strict, offset)
-      );
+      return this.dataListCache.find((re) => re.frame && isFrameContainPoint(re.frame, this.hoverX, this.hoverY));
     }
   }
 
@@ -522,7 +518,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   insertAfter(newEl: DocumentFragment, targetEl: HTMLElement) {
     let parentEl = targetEl.parentNode;
     if (parentEl) {
-      if (parentEl!.lastChild === targetEl) {
+      if (parentEl!.lastChild == targetEl) {
         parentEl!.appendChild(newEl);
       } else {
         parentEl!.insertBefore(newEl, targetEl.nextSibling);
@@ -556,7 +552,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   }
 
   set checkType(value: string) {
-    if (!value || value.length === 0) {
+    if (!value || value.length == 0) {
       this.removeAttribute('check-type');
       return;
     }
@@ -690,12 +686,11 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
         });
       }
     };
-    this.rowSettingTree!.onChange = (e: any): void => {
+    this.rowSettingTree!.onChange = (e: any) => {
       // @ts-ignore
       this.rowSettingPop!.visible = false;
       this.onRowSettingChangeHandler?.(this.rowSettingTree!.getCheckdKeys(), this.rowSettingTree!.getCheckdNodes());
     };
-    this.checkType = '-1';
   }
 
   initCanvas(list: Array<HTMLCanvasElement>): void {
@@ -705,15 +700,15 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       .shadowRoot!.querySelector('div > timer-shaft-element');
     let timerShaftCanvas = timerShaftEL!.shadowRoot!.querySelector<HTMLCanvasElement>('canvas');
     let tempHeight: number = 0;
-    if (this.rowType === TraceRow.ROW_TYPE_FUNC) {
+    if (this.rowType == TraceRow.ROW_TYPE_FUNC) {
       tempHeight = 20;
-    } else if (this.rowType === TraceRow.ROW_TYPE_THREAD) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_THREAD) {
       tempHeight = 30;
-    } else if (this.rowType === TraceRow.ROW_TYPE_SYSTEM_ENERGY) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_SYSTEM_ENERGY) {
       tempHeight = 80;
-    } else if (this.rowType === TraceRow.ROW_TYPE_POWER_ENERGY) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_POWER_ENERGY) {
       tempHeight = 200;
-    } else if (this.rowType === TraceRow.ROW_TYPE_ANOMALY_ENERGY) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_ANOMALY_ENERGY) {
       tempHeight = 55;
     } else {
       tempHeight = 40;
@@ -735,15 +730,15 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   updateWidth(width: number) {
     this.dpr = window.devicePixelRatio || 1;
     let tempHeight: number = 0;
-    if (this.rowType === TraceRow.ROW_TYPE_FUNC) {
+    if (this.rowType == TraceRow.ROW_TYPE_FUNC) {
       tempHeight = 20;
-    } else if (this.rowType === TraceRow.ROW_TYPE_THREAD) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_THREAD) {
       tempHeight = 30;
-    } else if (this.rowType === TraceRow.ROW_TYPE_SYSTEM_ENERGY) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_SYSTEM_ENERGY) {
       tempHeight = 90;
-    } else if (this.rowType === TraceRow.ROW_TYPE_POWER_ENERGY) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_POWER_ENERGY) {
       tempHeight = 200;
-    } else if (this.rowType === TraceRow.ROW_TYPE_ANOMALY_ENERGY) {
+    } else if (this.rowType == TraceRow.ROW_TYPE_ANOMALY_ENERGY) {
       tempHeight = 55;
     } else {
       tempHeight = 40;
@@ -820,7 +815,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       }
       collectList.splice(endDragNode, 0, ...collectList.splice(startDragNode, 1));
       collectList.forEach((it, i) => {
-        if (i === 0) {
+        if (i == 0) {
           it.style.top = `${spacer.offsetTop + 48}px`;
         } else {
           it.style.top = `${collectList[i - 1].offsetTop + collectList[i - 1].offsetHeight}px`;
@@ -882,7 +877,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   }
 
   setTipLeft(x: number, struct: any) {
-    if (struct === null && this.tipEL) {
+    if (struct == null && this.tipEL) {
       this.tipEL.style.display = 'none';
       return;
     }

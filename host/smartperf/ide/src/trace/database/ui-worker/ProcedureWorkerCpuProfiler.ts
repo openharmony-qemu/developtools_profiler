@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-import { BaseStruct, type Rect, Render, drawString, isFrameContainPoint, ns2x } from './ProcedureWorkerCommon.js';
+import { BaseStruct, Rect, Render, drawString, isFrameContainPoint, ns2x } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
-import { type JsCpuProfilerChartFrame } from '../../bean/JsStruct.js';
+import { JsCpuProfilerChartFrame } from '../../bean/JsStruct.js';
 
 export class JsCpuProfilerRender extends Render {
   renderMainThread(
@@ -26,7 +26,7 @@ export class JsCpuProfilerRender extends Render {
       type: string;
     },
     jsCpuProfilerRow: TraceRow<JsCpuProfilerStruct>
-  ): void {
+  ) {
     let list = jsCpuProfilerRow.dataList;
     let filter = jsCpuProfilerRow.dataListCache;
     jsCpuProfiler(
@@ -44,9 +44,9 @@ export class JsCpuProfilerRender extends Render {
       JsCpuProfilerStruct.draw(req.context, re);
       if (jsCpuProfilerRow.isHover) {
         if (
-          re.endTime - re.startTime === 0 ||
+          re.endTime - re.startTime == 0 ||
           re.endTime - re.startTime == null ||
-          re.endTime - re.startTime === undefined
+          re.endTime - re.startTime == undefined
         ) {
           if (
             re.frame &&
@@ -66,9 +66,7 @@ export class JsCpuProfilerRender extends Render {
         }
       }
     }
-    if (!jsCpuProfilerFind && jsCpuProfilerRow.isHover) {
-      JsCpuProfilerStruct.hoverJsCpuProfilerStruct = undefined;
-    }
+    if (!jsCpuProfilerFind && jsCpuProfilerRow.isHover) JsCpuProfilerStruct.hoverJsCpuProfilerStruct = undefined;
     req.context.closePath();
   }
 }
@@ -80,7 +78,7 @@ export function jsCpuProfiler(
   totalNS: number,
   frame: Rect,
   use: boolean
-): void {
+) {
   if (use && filter.length > 0) {
     for (let i = 0, len = filter.length; i < len; i++) {
       if ((filter[i].startTime || 0) + (filter[i].totalTime || 0) >= startNS && (filter[i].startTime || 0) <= endNS) {
@@ -127,13 +125,7 @@ export class JsCpuProfilerStruct extends BaseStruct {
   children!: Array<JsCpuProfilerChartFrame>;
   isSelect: boolean = false;
 
-  static setJsCpuProfilerFrame(
-    jsCpuProfilerNode: any,
-    startNS: number,
-    endNS: number,
-    totalNS: number,
-    frame: Rect
-  ): void {
+  static setJsCpuProfilerFrame(jsCpuProfilerNode: any, startNS: number, endNS: number, totalNS: number, frame: Rect) {
     let x1: number, x2: number;
     if ((jsCpuProfilerNode.startTime || 0) > startNS && (jsCpuProfilerNode.startTime || 0) < endNS) {
       x1 = ns2x(jsCpuProfilerNode.startTime || 0, startNS, endNS, totalNS, frame);
@@ -164,9 +156,9 @@ export class JsCpuProfilerStruct extends BaseStruct {
     jsCpuProfilerNode.frame.height = 20;
   }
 
-  static draw(jsCpuProfilerCtx: CanvasRenderingContext2D, data: JsCpuProfilerStruct): void {
+  static draw(jsCpuProfilerCtx: CanvasRenderingContext2D, data: JsCpuProfilerStruct) {
     if (data.frame) {
-      if (data.endTime - data.startTime === undefined || data.endTime - data.startTime === null) {
+      if (data.endTime - data.startTime == undefined || data.endTime - data.startTime == null) {
       } else {
         jsCpuProfilerCtx.globalAlpha = 1;
         if (data.name === '(program)') {
@@ -178,7 +170,7 @@ export class JsCpuProfilerStruct extends BaseStruct {
             ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.name || '', 0, ColorUtils.FUNC_COLOR.length)];
         }
         let miniHeight = 20;
-        if (JsCpuProfilerStruct.hoverJsCpuProfilerStruct && data === JsCpuProfilerStruct.hoverJsCpuProfilerStruct) {
+        if (JsCpuProfilerStruct.hoverJsCpuProfilerStruct && data == JsCpuProfilerStruct.hoverJsCpuProfilerStruct) {
           jsCpuProfilerCtx.globalAlpha = 0.7;
         }
         jsCpuProfilerCtx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);

@@ -123,11 +123,8 @@ export class TabPaneCpuByProcess extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          return sort === 2
-            ? // @ts-ignore
-              parseFloat(cpuByProcessRightData[property]) - parseFloat(cpuByProcessLeftData[property])
-            : // @ts-ignore
-              parseFloat(cpuByProcessLeftData[property]) - parseFloat(cpuByProcessRightData[property]);
+          // @ts-ignore
+          return sort === 2 ? parseFloat(cpuByProcessRightData[property]) - parseFloat(cpuByProcessLeftData[property]) : parseFloat(cpuByProcessLeftData[property]) - parseFloat(cpuByProcessRightData[property]);
         } else {
           // @ts-ignore
           if (cpuByProcessRightData[property] > cpuByProcessLeftData[property]) {

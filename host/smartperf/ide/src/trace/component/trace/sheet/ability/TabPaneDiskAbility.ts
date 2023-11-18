@@ -153,11 +153,8 @@ export class TabPaneDiskAbility extends BaseElement {
     function compare(property, sort, type) {
       return function (diskAbilityLeftData: SystemDiskIOSummary, diskAbilityRightData: SystemDiskIOSummary) {
         if (type === 'number') {
-          return sort === 2
-            ? // @ts-ignore
-              parseFloat(diskAbilityRightData[property]) - parseFloat(diskAbilityLeftData[property])
-            : // @ts-ignore
-              parseFloat(diskAbilityLeftData[property]) - parseFloat(diskAbilityRightData[property]);
+          // @ts-ignore
+          return sort === 2 ? parseFloat(diskAbilityRightData[property]) - parseFloat(diskAbilityLeftData[property]) : parseFloat(diskAbilityLeftData[property]) - parseFloat(diskAbilityRightData[property]);
         } else if (type === 'durationStr') {
           return sort === 2
             ? diskAbilityRightData.duration - diskAbilityLeftData.duration

@@ -80,11 +80,11 @@ export class SpFreqChart {
         CpuFreqStruct.hoverCpuFreqStruct = traceRow.getHoverStruct();
       };
       traceRow.onThreadHandler = (useCache) => {
-        let context: CanvasRenderingContext2D;
-        if (traceRow.currentContext) {
+        let context:CanvasRenderingContext2D;
+        if(traceRow.currentContext){
           context = traceRow.currentContext;
-        } else {
-          context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        } else{
+          context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         traceRow.canvasSave(context);
         (renders['freq'] as FreqRender).renderMainThread(
@@ -129,11 +129,11 @@ export class SpFreqChart {
         CpuStateStruct.hoverStateStruct = cpuStateRow.getHoverStruct();
       };
       cpuStateRow.onThreadHandler = (useCache: boolean) => {
-        let context: CanvasRenderingContext2D;
-        if (cpuStateRow.currentContext) {
+        let context:CanvasRenderingContext2D;
+        if(cpuStateRow.currentContext){
           context = cpuStateRow.currentContext;
-        } else {
-          context = cpuStateRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        } else{
+          context  = cpuStateRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         cpuStateRow.canvasSave(context);
         (renders['cpu-state'] as CpuStateRender).renderMainThread(
@@ -182,11 +182,11 @@ export class SpFreqChart {
         CpuFreqLimitsStruct.hoverCpuFreqLimitsStruct = cpuFreqLimitRow.getHoverStruct();
       };
       cpuFreqLimitRow.onThreadHandler = (useCache: boolean) => {
-        let context: CanvasRenderingContext2D;
-        if (cpuFreqLimitRow.currentContext) {
+        let context:CanvasRenderingContext2D;
+        if(cpuFreqLimitRow.currentContext){
           context = cpuFreqLimitRow.currentContext;
-        } else {
-          context = cpuFreqLimitRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+        } else{
+          context  = cpuFreqLimitRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         cpuFreqLimitRow.canvasSave(context);
         (renders['cpu-limit-freq'] as CpuFreqLimitRender).renderMainThread(

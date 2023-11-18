@@ -41,8 +41,8 @@ import {
 import { info } from '../../../log/Log.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
 import { Utils } from '../trace/base/Utils.js';
-import { type EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
-import { type ProcessStruct } from '../../database/ui-worker/ProcedureWorkerProcess.js';
+import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
+import { ProcessStruct } from '../../database/ui-worker/ProcedureWorkerProcess.js';
 import { CpuAbilityMonitorStruct, CpuAbilityRender } from '../../database/ui-worker/ProcedureWorkerCpuAbility.js';
 import {
   MemoryAbilityMonitorStruct,
@@ -57,7 +57,7 @@ import {
   NetworkAbilityRender,
 } from '../../database/ui-worker/ProcedureWorkerNetworkAbility.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
-import { type SnapshotRender, SnapshotStruct } from '../../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { SnapshotRender, SnapshotStruct } from '../../database/ui-worker/ProcedureWorkerSnapshot.js';
 
 export class SpAbilityMonitorChart {
   private trace: SpSystemTrace;
@@ -835,7 +835,7 @@ export class SpAbilityMonitorChart {
     info('The time to load the Ability Network is: ', durTime);
   };
 
-  private initPurgeableAbility = async (processRow: TraceRow<ProcessStruct>): Promise<void> => {
+  private initPurgeableAbility = async (processRow: TraceRow<ProcessStruct>) => {
     let time = new Date().getTime();
     let purgeableTotalData = await queryPurgeableSysData();
     if (purgeableTotalData.length > 0) {
@@ -854,8 +854,8 @@ export class SpAbilityMonitorChart {
       totalTraceRow.setAttribute('children', '');
       totalTraceRow.name = `Purgeable Total`;
       totalTraceRow.addTemplateTypes('Memory');
-      totalTraceRow.supplier = () => new Promise<Array<any>>((resolve): void => resolve(purgeableTotalData));
-      totalTraceRow.focusHandler = (ev): void => {
+      totalTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeableTotalData));
+      totalTraceRow.focusHandler = (ev) => {
         this.trace?.displayTip(
           totalTraceRow,
           SnapshotStruct.hoverSnapshotStruct,
@@ -863,10 +863,10 @@ export class SpAbilityMonitorChart {
 			   <span>Value: ${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
         );
       };
-      totalTraceRow.findHoverStruct = (): void => {
+      totalTraceRow.findHoverStruct = () => {
         SnapshotStruct.hoverSnapshotStruct = totalTraceRow.getHoverStruct();
       };
-      totalTraceRow.onThreadHandler = (useCache): void => {
+      totalTraceRow.onThreadHandler = (useCache) => {
         let context: CanvasRenderingContext2D;
         if (totalTraceRow.currentContext) {
           context = totalTraceRow.currentContext;
@@ -874,7 +874,7 @@ export class SpAbilityMonitorChart {
           context = totalTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         totalTraceRow.canvasSave(context);
-        (renders.snapshot as SnapshotRender).renderMainThread(
+        (renders['snapshot'] as SnapshotRender).renderMainThread(
           {
             context: context,
             useCache: useCache,
@@ -902,8 +902,8 @@ export class SpAbilityMonitorChart {
       pinTraceRow.selectChangeHandler = this.trace.selectChangeHandler;
       pinTraceRow.setAttribute('children', '');
       pinTraceRow.name = `Purgeable Pin`;
-      pinTraceRow.supplier = () => new Promise<Array<any>>((resolve): void => resolve(purgeablePinData));
-      pinTraceRow.focusHandler = (ev): void => {
+      pinTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(purgeablePinData));
+      pinTraceRow.focusHandler = (ev) => {
         this.trace?.displayTip(
           pinTraceRow,
           SnapshotStruct.hoverSnapshotStruct,
@@ -914,7 +914,7 @@ export class SpAbilityMonitorChart {
       pinTraceRow.findHoverStruct = () => {
         SnapshotStruct.hoverSnapshotStruct = pinTraceRow.getHoverStruct();
       };
-      pinTraceRow.onThreadHandler = (useCache): void => {
+      pinTraceRow.onThreadHandler = (useCache) => {
         let context: CanvasRenderingContext2D;
         if (pinTraceRow.currentContext) {
           context = pinTraceRow.currentContext;
@@ -922,7 +922,7 @@ export class SpAbilityMonitorChart {
           context = pinTraceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
         }
         pinTraceRow.canvasSave(context);
-        (renders.snapshot as SnapshotRender).renderMainThread(
+        (renders['snapshot'] as SnapshotRender).renderMainThread(
           {
             context: context,
             useCache: useCache,
@@ -943,7 +943,7 @@ export class SpAbilityMonitorChart {
    * DMA
    * @param processRow
    */
-  private initDmaAbility = async (processRow: TraceRow<ProcessStruct>): Promise<void> => {
+  private initDmaAbility = async (processRow: TraceRow<ProcessStruct>) => {
     let dmaAbilityData = await queryDmaAbilityData();
     for (let i = 0; i < dmaAbilityData.length; i++) {
       dmaAbilityData[i].name = 'snapshot' + i;
@@ -961,9 +961,9 @@ export class SpAbilityMonitorChart {
     dmaTraceRow.setAttribute('children', '');
     dmaTraceRow.name = 'DMA';
     dmaTraceRow.addTemplateTypes('Memory');
-    dmaTraceRow.supplier = (): Promise<any[]> => new Promise<Array<any>>((resolve): void => resolve(dmaAbilityData));
+    dmaTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(dmaAbilityData));
     //文字悬浮提示
-    dmaTraceRow.focusHandler = (ev): void => {
+    dmaTraceRow.focusHandler = (ev) => {
       this.trace?.displayTip(
         dmaTraceRow,
         SnapshotStruct.hoverSnapshotStruct,
@@ -971,10 +971,10 @@ export class SpAbilityMonitorChart {
          <span>${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
       );
     };
-    dmaTraceRow.findHoverStruct = (): void => {
+    dmaTraceRow.findHoverStruct = () => {
       SnapshotStruct.hoverSnapshotStruct = dmaTraceRow.getHoverStruct();
     };
-    dmaTraceRow.onThreadHandler = (useCache): void => {
+    dmaTraceRow.onThreadHandler = (useCache) => {
       let context: CanvasRenderingContext2D;
       if (dmaTraceRow.currentContext) {
         context = dmaTraceRow.currentContext;
@@ -1001,7 +1001,7 @@ export class SpAbilityMonitorChart {
    * Skia Gpu Memory
    * @param processRow
    */
-  private initGpuMemoryAbility = async (processRow: TraceRow<ProcessStruct>): Promise<void> => {
+  private initGpuMemoryAbility = async (processRow: TraceRow<ProcessStruct>) => {
     let gpuMemoryAbilityData = await queryGpuMemoryAbilityData();
     for (let i = 0; i < gpuMemoryAbilityData.length; i++) {
       gpuMemoryAbilityData[i].name = 'snapshot' + i;
@@ -1019,10 +1019,9 @@ export class SpAbilityMonitorChart {
     gpuMemoryTraceRow.setAttribute('children', '');
     gpuMemoryTraceRow.name = 'Skia Gpu Memory';
     gpuMemoryTraceRow.addTemplateTypes('Memory');
-    gpuMemoryTraceRow.supplier = (): Promise<any[]> =>
-      new Promise<Array<any>>((resolve): void => resolve(gpuMemoryAbilityData));
+    gpuMemoryTraceRow.supplier = () => new Promise<Array<any>>((resolve) => resolve(gpuMemoryAbilityData));
     //文字悬浮提示
-    gpuMemoryTraceRow.focusHandler = (ev): void => {
+    gpuMemoryTraceRow.focusHandler = (ev) => {
       this.trace?.displayTip(
         gpuMemoryTraceRow,
         SnapshotStruct.hoverSnapshotStruct,
@@ -1030,7 +1029,7 @@ export class SpAbilityMonitorChart {
         <span>${Utils.getBinaryByteWithUnit(SnapshotStruct.hoverSnapshotStruct?.value || 0)}</span>`
       );
     };
-    gpuMemoryTraceRow.findHoverStruct = (): void => {
+    gpuMemoryTraceRow.findHoverStruct = () => {
       SnapshotStruct.hoverSnapshotStruct = gpuMemoryTraceRow.getHoverStruct();
     };
     gpuMemoryTraceRow.onThreadHandler = (useCache) => {

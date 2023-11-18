@@ -37,25 +37,25 @@ function initIndexedDB() {
 function readConnection(store: IDBObjectStore) {
   return new Promise((resolve, reject) => {
     let readRequest = store.get(1);
-    readRequest.onsuccess = function (event): void {
+    readRequest.onsuccess = function (event) {
       // @ts-ignore
       resolve(event.target.result);
     };
-    readRequest.onerror = function (event): void {
+    readRequest.onerror = function (event) {
       // @ts-ignore
       reject(event.target.result);
     };
   });
 }
 
-function deleteConnection(store: IDBObjectStore, id: number): Promise<unknown> {
+function deleteConnection(store: IDBObjectStore, id: number) {
   return new Promise((resolve, reject) => {
     let deleteRequest = store.delete(id);
-    deleteRequest.onsuccess = function (event): void {
+    deleteRequest.onsuccess = function (event) {
       // @ts-ignore
       resolve(event.target.result);
     };
-    deleteRequest.onerror = function (event): void {
+    deleteRequest.onerror = function (event) {
       // @ts-ignore
       reject(event.target.result);
     };
