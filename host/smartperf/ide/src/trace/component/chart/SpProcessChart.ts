@@ -128,6 +128,7 @@ export class SpProcessChart {
         funcRow.asyncFuncName = asyncFuncGroups[0].funName;
         funcRow.asyncFuncNamePID = key;
         funcRow.rowType = TraceRow.ROW_TYPE_FUNC;
+        funcRow.enableCollapseChart(); //允许折叠泳道图
         funcRow.rowParentId = `${row.rowId}`;
         funcRow.rowHidden = !row.expansion;
         funcRow.style.width = '100%';
@@ -539,6 +540,7 @@ export class SpProcessChart {
           funcRow.asyncFuncName = asyncFunctions[0].funName;
           funcRow.asyncFuncNamePID = it.pid;
           funcRow.rowType = TraceRow.ROW_TYPE_FUNC;
+          funcRow.enableCollapseChart(); //允许折叠泳道图
           funcRow.rowParentId = `${it.pid}`;
           funcRow.rowHidden = !processRow.expansion;
           funcRow.style.width = '100%';
@@ -701,6 +703,7 @@ export class SpProcessChart {
           let funcRow = TraceRow.skeleton<FuncStruct>();
           funcRow.rowId = `${thread.tid}`;
           funcRow.rowType = TraceRow.ROW_TYPE_FUNC;
+          funcRow.enableCollapseChart(); //允许折叠泳道图
           funcRow.rowParentId = `${it.pid}`;
           funcRow.rowHidden = !processRow.expansion;
           funcRow.checkType = threadRow.checkType;

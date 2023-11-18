@@ -1196,6 +1196,7 @@ export class HiPerfStruct extends BaseStruct {
   endNS: number | undefined;
   dur: number | undefined;
   height: number | undefined;
+  eventCount: number | undefined;
 
   static drawRoundRectPath(cxt: Path2D, x: number, y: number, width: number, height: number, radius: number) {
     cxt.arc(x + width - radius, y + height - radius, radius, 0, Math.PI / 2);
@@ -1257,28 +1258,52 @@ export class HiPerfStruct extends BaseStruct {
     }
   }
 
-  static groupBy10MS(groupArray: Array<any>, intervalPerf: number, maxCpu?: number | undefined): Array<any> {
+  static groupBy10MS(
+    groupArray: Array<any>,
+    intervalPerf: number,
+    maxCpu?: number | undefined,
+    usage?: boolean,
+    event?: number
+  ): Array<any> {
+    let maxEventCount = 0;
     let obj = groupArray
       .map((it) => {
         it.timestamp_group = Math.trunc(it.startNS / 1_000_000_0) * 1_000_000_0;
         return it;
       })
       .reduce((pre, current) => {
-        (pre[current['timestamp_group']] = pre[current['timestamp_group']] || []).push(current);
+        if (usage || current.event_type_id === event || event === -1) {
+          if (pre[current['timestamp_group']]) {
+            pre[current['timestamp_group']].sampleCount += 1;
+            pre[current['timestamp_group']].eventCount += current.event_count;
+          } else {
+            pre[current['timestamp_group']] = {
+              sampleCount: 1,
+              eventCount: current.event_count,
+            };
+          }
+          maxEventCount = Math.max(pre[current['timestamp_group']].eventCount, maxEventCount);
+        }
+
         return pre;
       }, {});
     let arr = [];
     for (let aKey in obj) {
       let ns = parseInt(aKey);
       let height: number = 0;
-      if (maxCpu != undefined) {
-        height = Math.floor((obj[aKey].length / (10 / intervalPerf) / maxCpu) * 40);
+      if (usage) {
+        if (maxCpu != undefined) {
+          height = Math.floor((obj[aKey].sampleCount / (10 / intervalPerf) / maxCpu) * 40);
+        } else {
+          height = Math.floor((obj[aKey].sampleCount / (10 / intervalPerf)) * 40);
+        }
       } else {
-        height = Math.floor((obj[aKey].length / (10 / intervalPerf)) * 40);
+        height = Math.floor((obj[aKey].eventCount / maxEventCount) * 40);
       }
       arr.push({
         startNS: ns,
         dur: 1_000_000_0,
+        eventCount: obj[aKey].eventCount,
         height: height,
       });
     }

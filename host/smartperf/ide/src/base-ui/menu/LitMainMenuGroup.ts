@@ -23,7 +23,19 @@ export class LitMainMenuGroup extends BaseElement {
   private group: HTMLElement | null | undefined;
 
   static get observedAttributes() {
-    return ['title', 'describe', 'collapsed', 'nocollapse', 'radius'];
+    return ['title', 'describe', 'collapsed', 'nocollapse', 'radius', 'second'];
+  }
+
+  get second() {
+    return this.hasAttribute('second');
+  }
+
+  set second(value: boolean) {
+    if (value) {
+      this.setAttribute('second', '');
+    } else {
+      this.removeAttribute('second');
+    }
   }
 
   get collapsed(): boolean {
@@ -80,8 +92,14 @@ export class LitMainMenuGroup extends BaseElement {
             user-select: none;
             transition: background-color .3s;
         }
-        :host(:not([collapsed])) ::slotted(lit-main-menu-item){
+        :host(:not([collapsed])),:host(:not([second])) ::slotted(lit-main-menu-item){
             display: flex;
+        }
+        host(:not([collapsed])) :host([second]) ::slotted(lit-main-menu-group){
+          display:flex;
+        }
+        :host([second]) .group-name{
+          padding-left:40px;
         }
         :host(:not([collapsed])) .group-describe{
             height: 0;
@@ -106,6 +124,9 @@ export class LitMainMenuGroup extends BaseElement {
         }
         :host([collapsed]) ::slotted(lit-main-menu-item){
             display: none;
+        }
+        :host([collapsed]) ::slotted(lit-main-menu-group){
+          display:none;
         }
         .group-name{
             font-size: 14px;

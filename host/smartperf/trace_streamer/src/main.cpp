@@ -75,8 +75,9 @@ void ShowHelpInfo(const char* argv)
         "Usage: %s FILE -e sqlite_out.pb\n"
         " or    %s FILE -c\n"
         "Options:\n"
-        " -e    transfer a bytrace file into a SQLiteBased DB. with -nm to except meta table\n"
+        " -e    transfer a trace file into a SQLiteBased DB. with -nm to except meta table\n"
         " -c    command line mode.\n"
+        " -d    dump perf readable text.\n"
         " -h    start HTTP server.\n"
         " -s    separate arkts-plugin data, and save it in current dir with default filename.\n"
         " -p    Specify the port of HTTP server, default is 9001.\n"
@@ -218,6 +219,7 @@ int ExportDatabase(TraceStreamerSelector& ts, const std::string& sqliteFilePath)
 struct TraceExportOption {
     std::string traceFilePath;
     std::string sqliteFilePath;
+    std::string perfReadableTextFilePath;
     std::string metricsIndex;
     std::string sqlOperatorFilePath;
     bool interactiveState = false;
@@ -233,33 +235,38 @@ int CheckFinal(char** argv, TraceExportOption& traceExportOption, HttpOption& ht
     if ((traceExportOption.traceFilePath.empty() ||
          (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
         !httpOption.enable && !traceExportOption.separateFile && traceExportOption.metricsIndex.empty() &&
-        traceExportOption.sqlOperatorFilePath.empty()) {
+        traceExportOption.sqlOperatorFilePath.empty() && traceExportOption.perfReadableTextFilePath.empty()) {
         ShowHelpInfo(argv[0]);
         return 1;
     }
     return 0;
 }
 
+bool CheckArgc(int argc, char** argv, int curArgNum)
+{
+    if (curArgNum == argc) {
+        ShowHelpInfo(argv[0]);
+        return false;
+    }
+    return true;
+}
+
 int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
 {
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-e")) {
-            i++;
-            if (i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             traceExportOption.sqliteFilePath = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--command")) {
             traceExportOption.interactiveState = true;
             continue;
+        } else if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--command")) {
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
+            traceExportOption.perfReadableTextFilePath = std::string(argv[i]);
+            continue;
         } else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--query-file")) {
-            i++;
-            if (i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             traceExportOption.sqlOperatorFilePath = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-i") || !strcmp(argv[i], "--info")) {
@@ -271,11 +278,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
             traceExportOption.exportMetaTable = false;
             continue;
         } else if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--run-metrics")) {
-            i++;
-            if (i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             traceExportOption.metricsIndex = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--v") || !strcmp(argv[i], "-version") ||
@@ -286,10 +289,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
             httpOption.enable = true;
             continue;
         } else if (!strcmp(argv[i], "-p")) {
-            if (++i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             httpOption.port = std::stoi(argv[i]);
             continue;
         }
@@ -331,6 +331,9 @@ int main(int argc, char** argv)
             ExportStatusToLog(tsOption.sqliteFilePath, GetAnalysisResult());
         }
         return 1;
+    }
+    if (!tsOption.perfReadableTextFilePath.empty()) {
+        ts.ExportPerfReadableText(tsOption.perfReadableTextFilePath);
     }
     if (tsOption.interactiveState) {
         MetaData* metaData = ts.GetMetaData();

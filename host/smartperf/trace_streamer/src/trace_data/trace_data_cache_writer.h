@@ -84,10 +84,11 @@ public:
     EbpfElf* GetEbpfElf();
     EbpfElfSymbol* GetEbpfElfSymbol();
 #endif
-    AppNames* GetAppNamesData();
-    SysEventMeasureData* GetSyseventMeasureData();
-    DeviceStateData* GetDeviceStateData();
-    TraceConfigData* GetTraceConfigData();
+    HiSysEventSubkeys* GetHiSysEventSubkeysData();
+    HiSysEventMeasureData* GetHiSysEventMeasureData();
+    HiSysEventDeviceStateData* GetHiSysEventDeviceStateData();
+    TraceConfig* GetTraceConfigData();
+    HiSysEventAllEventData* GetHiSysEventAllEventData();
     SmapsData* GetSmapsData();
     BioLatencySampleData* GetBioLatencySampleData();
     ClockSnapshotData* GetClockSnapshotData();

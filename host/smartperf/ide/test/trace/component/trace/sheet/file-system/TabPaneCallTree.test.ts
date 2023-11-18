@@ -187,6 +187,7 @@ describe('TabPaneCallTree Test', () => {
       thirdSelect: '',
       type: 'inputValue',
     };
+    calltree.callTreeTbl.reMeauseHeight = jest.fn(()=>true)
     expect(calltree.switchFlameChart(switchData)).toBeUndefined();
   });
   it('TabPaneCallTreeTest06', function () {

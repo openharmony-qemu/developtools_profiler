@@ -21,6 +21,7 @@ export class ChartStruct {
   size: number = 0;
   count: number = 0;
   eventCount: number = 0;
+  eventPercent: string = '';
   dur: number = 0;
   parent: ChartStruct | undefined;
   children: Array<ChartStruct> = [];
@@ -28,6 +29,8 @@ export class ChartStruct {
   tsArray: Array<number> = []; // 每个绘制的函数由哪些时间点的样本组成
   countArray: Array<number> = []; // native hook统计模式下一个时间点有多次分配
   durArray: Array<number> = [];
+  isThread: boolean = false;
+  isProcess: boolean = false;
 }
 
 export class Msg {
@@ -35,6 +38,29 @@ export class Msg {
   index: number = 0;
   isSending: boolean = false;
   data: Array<any> = [];
+}
+
+export class HiPerfSymbol {
+  id: number = 0;
+  startTime: number = 0;
+  eventCount: number = 0;
+  endTime: number = 0;
+  totalTime: number = 0;
+  fileId: number = 0;
+  symbolId: number = 0;
+  cpu_id: number = 0;
+  depth: number = 0;
+  children?: Array<HiPerfSymbol>;
+  callchain_id: number = 0;
+  thread_id: number = 0;
+  name: string = '';
+
+  public clone(): HiPerfSymbol {
+    const cloneSymbol = new HiPerfSymbol();
+    cloneSymbol.children = new Array<HiPerfSymbol>();
+    cloneSymbol.depth = this.depth;
+    return cloneSymbol;
+  }
 }
 
 export class MerageBean extends ChartStruct {
@@ -584,6 +610,7 @@ export class FileCallChain {
   symbolsId: number = 0;
   pathId: number = 0;
   ip: string = '';
+  isThread: boolean = false;
 }
 
 export class DataCache {
@@ -596,6 +623,9 @@ export class DataCache {
   public perfCallChainMap: Map<number, PerfCall> = new Map<number, PerfCall>();
   public jsCallChain: Array<JsProfilerSymbol> | undefined;
   public jsSymbolMap = new Map<number, JsProfilerSymbol>();
+  public perfCallFireMap = new Map<string, HiPerfSymbol>();
+  public perfCallChain: Array<HiPerfSymbol> | undefined;
+  public perfSymbolMap = new Map<string, HiPerfSymbol>();
 
   public static getInstance(): DataCache {
     if (!this.instance) {
@@ -632,5 +662,19 @@ export class DataCache {
 
   public clearPerf(): void {
     this.perfCallChainMap.clear();
+    this.perfCallFireMap.clear();
+    this.perfCallChain = [];
+    this.perfSymbolMap.clear();
+  }
+}
+
+export class InitAnalysis {
+  public static instance: InitAnalysis | undefined;
+  public isInitAnalysis: boolean = true;
+  public static getInstance(): InitAnalysis {
+    if (!this.instance) {
+      this.instance = new InitAnalysis();
+    }
+    return this.instance;
   }
 }

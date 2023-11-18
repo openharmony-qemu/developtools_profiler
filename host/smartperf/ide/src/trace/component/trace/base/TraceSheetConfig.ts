@@ -633,12 +633,12 @@ export let tabConfig: any = {
   'tabpane-frequsage': {
     title: 'Freq Usage',
     type: TabPaneFreqUsage,
-    require: (param: SelectionParam) => param.threadIds.length > 0 && param.threadIds.length < 2,
+    require: (param: SelectionParam) => param.threadIds.length > 0,
   },
   'tabpane-freqdatacut': {
     title: 'Freq DataCut',
     type: TabPaneFreqDataCut,
-    require: (param: SelectionParam) => param.threadIds.length > 0 && param.threadIds.length < 2,
+    require: (param: SelectionParam) => param.threadIds.length > 0,
   },
   'tab-hisysevents': {
     title: 'HiSysevents',

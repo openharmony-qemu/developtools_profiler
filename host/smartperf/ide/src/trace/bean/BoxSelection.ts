@@ -41,6 +41,7 @@ export class SelectionParam {
   isCurrentPane: boolean = false;
   startup: boolean = false;
   staticInit: boolean = false;
+  isRowClick: boolean = false;
 
   cpus: Array<number> = [];
   cpuStateRowsId: Array<object> = [];
@@ -59,11 +60,14 @@ export class SelectionParam {
   funAsync: Array<{ name: string; pid: number }> = [];
   nativeMemory: Array<String> = [];
   nativeMemoryStatistic: Array<String> = [];
+  nativeMemoryAllProcess: Array<{pid: number,ipid: number}> = [];
+  nativeMemoryCurrentIPid: number = -1;
   cpuAbilityIds: Array<string> = [];
   memoryAbilityIds: Array<string> = [];
   diskAbilityIds: Array<string> = [];
   networkAbilityIds: Array<string> = [];
   perfSampleIds: Array<number> = [];
+  perfEventTypeId?: number;
   perfCpus: Array<number> = [];
   perfProcess: Array<number> = [];
   perfThread: Array<number> = [];

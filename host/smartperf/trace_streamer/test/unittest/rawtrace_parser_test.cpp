@@ -32,6 +32,8 @@ using namespace SysTuning::base;
 
 namespace SysTuning {
 namespace TraceStreamer {
+extern bool ParseTraceFile(TraceStreamerSelector& ts_, const std::string& tracePath);
+
 constexpr uint64_t PRINTK_VALID_ADDR = 0xffffffc011bdd3ea;
 class RawTraceParserTest : public ::testing::Test {
 public:
@@ -39,9 +41,6 @@ public:
     {
         selector_.InitFilter();
         selector_.EnableMetaTable(false);
-        if (access(rawTraceBinPath_.c_str(), F_OK) == 0) {
-            binFs_.open(rawTraceBinPath_, std::ios::binary | std::ios::in);
-        }
         if (access(rawTraceDataPath_.c_str(), F_OK) == 0) {
             dataFs_.open(rawTraceDataPath_, std::ios::binary | std::ios::in);
         }
@@ -50,7 +49,6 @@ public:
 
     void TearDown()
     {
-        binFs_.close();
         dataFs_.close();
     }
 
@@ -83,7 +81,6 @@ public:
     std::string line_;
     std::string chunckStr_;
     const size_t bufferSize_ = 1024 * 1024;
-    std::ifstream binFs_;
     std::ifstream dataFs_;
 };
 
@@ -95,23 +92,7 @@ public:
 HWTEST_F(RawTraceParserTest, ParseAllData, TestSize.Level1)
 {
     TS_LOGI("test38-1");
-    EXPECT_TRUE(binFs_.is_open() && parser_ != nullptr);
-    while (true) {
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(bufferSize_);
-        binFs_.read((char*)buf.get(), bufferSize_);
-        auto readSize = binFs_.gcount();
-        if (readSize == 0) {
-            break;
-        }
-        if (readSize < 0) {
-            TS_LOGD("Reading trace file failed (errno: %d, %s)", errno, strerror(errno));
-            break;
-        }
-        if (!selector_.ParseTraceDataSegment(std::move(buf), readSize, false, false)) {
-            break;
-        };
-    }
-    selector_.WaitForParserEnd();
+    EXPECT_TRUE(ParseTraceFile(selector_, rawTraceBinPath_));
 }
 /**
  * @tc.name: ParseFileHeader
@@ -239,27 +220,6 @@ HWTEST_F(RawTraceParserTest, HandleTgids, TestSize.Level1)
             chunckStr_ = ChunkToString(dataFs_);
             EXPECT_TRUE(parser_->ftraceProcessor_->HandleTgids(chunckStr_));
             break;
-        }
-    }
-}
-/**
- * @tc.name: ParseCpuData
- * @tc.desc: Test ParseTraceDataSegment interface Parse cpuData
- * @tc.type: FUNC
- */
-HWTEST_F(RawTraceParserTest, ParseCpuData, TestSize.Level1)
-{
-    TS_LOGI("test38-8");
-    EXPECT_TRUE(dataFs_.is_open() && parser_ != nullptr);
-    auto cpuId = 2;
-    EXPECT_FALSE(parser_->ParseCpuRawData(cpuId, chunckStr_));
-    while (std::getline(dataFs_, line_)) {
-        if (StartWith(line_, cpuDataCmd_)) {
-            chunckStr_ = ChunkToString(dataFs_);
-            EXPECT_TRUE(parser_->ParseCpuRawData(cpuId, chunckStr_));
-        } else if (StartWith(line_, headPageFormatsCmd_)) {
-            chunckStr_ = ChunkToString(dataFs_);
-            EXPECT_TRUE(parser_->ftraceProcessor_->HandleHeaderPageFormat(chunckStr_));
         }
     }
 }

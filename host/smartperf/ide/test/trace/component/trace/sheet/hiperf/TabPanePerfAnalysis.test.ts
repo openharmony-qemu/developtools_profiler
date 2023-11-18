@@ -18,6 +18,10 @@ import { TabPanePerfAnalysis } from '../../../../../../dist/trace/component/trac
 import crypto from 'crypto';
 //@ts-ignore
 import { queryHiPerfProcessCount } from '../../../../../../dist/trace/database/SqlLite.js';
+//@ts-ignore
+import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
+
+import '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 
 // @ts-ignore
 window.ResizeObserver =
@@ -51,6 +55,12 @@ jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', 
 
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
+});
+
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {
+    initSort: ()=>{}
+  };
 });
 
 describe('TabPanePerfAnalysis Test', () => {
@@ -210,8 +220,10 @@ describe('TabPanePerfAnalysis Test', () => {
     let tabPanePerfAnalysis = new TabPanePerfAnalysis();
     expect(tabPanePerfAnalysis.totalCountData(1)).toStrictEqual({
       allCount: 1,
-      count: 0,
-      countFormat: '1.00ms',
+      count: 1,
+      allEventCount: undefined,
+      eventCount: undefined,
+      eventPercent: "100.00",
       percent: '100.00',
       pid: '',
     });
@@ -575,11 +587,10 @@ describe('TabPanePerfAnalysis Test', () => {
     document.body.innerHTML = `
         <tabpane-perf-analysis id="slc"></tabpane-perf-analysis>`;
     let tabPanePerfAnalysis = document.getElementById('slc') as TabPanePerfAnalysis;
-    let it = [
+    let it =
       {
-        tabName: '',
-      },
-    ];
+        tableName: '',
+      };
     tabPanePerfAnalysis.perfAnalysisPie = jest.fn(() => true);
     tabPanePerfAnalysis.perfAnalysisPie.hideTip = jest.fn(() => true);
     expect(tabPanePerfAnalysis.perfSoLevelClickEvent(it, [])).toBeUndefined();

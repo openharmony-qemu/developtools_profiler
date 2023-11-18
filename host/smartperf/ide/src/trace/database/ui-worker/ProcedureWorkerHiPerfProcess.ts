@@ -23,10 +23,15 @@ export class HiperfProcessRender extends PerfRender {
     let filter = row.dataListCache;
     let groupBy10MS = hiPerfProcessReq.scale > 30_000_000;
     if (list && row.dataList2.length === 0) {
-      row.dataList2 = HiPerfProcessStruct.groupBy10MS(list, hiPerfProcessReq.intervalPerf);
+      let drawType = row.drawType;
+      let usage = row.drawType === -2;
+      let event = drawType;
+      row.dataList2 = HiPerfProcessStruct.groupBy10MS(list, hiPerfProcessReq.intervalPerf, undefined, usage, event);
     }
     hiPerf(
-      list,
+      groupBy10MS || row.drawType === -2 || row.drawType === -1
+        ? list
+        : list.filter((it) => it.event_type_id === row.drawType),
       row.dataList2,
       filter,
       TraceRow.range?.startNS ?? 0,

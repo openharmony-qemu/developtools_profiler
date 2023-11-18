@@ -29,7 +29,7 @@ export class SpHisysEvent extends BaseElement {
   private sysEventSwitch: LitSwitch | undefined | null;
   private domainInputEl: HTMLInputElement | undefined | null;
   private nameInputEl: HTMLInputElement | undefined | null;
-  private eventConfig: unknown = {};
+  private eventConfig: any = {};
 
   set startSamp(start: boolean) {
     if (start) {

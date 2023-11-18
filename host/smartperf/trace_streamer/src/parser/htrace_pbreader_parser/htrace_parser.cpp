@@ -79,6 +79,7 @@ bool HtraceParser::ReparseSymbolFilesAndResymbolization(std::string& symbolsPath
     std::vector<std::string> dir;
     dir.emplace_back(symbolsPath);
     auto parseStatus = false;
+    parseStatus = perfDataParser_->PerfReloadSymbolFiles(dir);
     ParserFileSO(symbolsPath, symbolsPaths);
     if (traceDataCache_->GetNativeHookFrameData()->Size() > 0) {
         htraceNativeHookParser_->NativeHookReloadElfSymbolTable(symbolsFiles_);

@@ -88,8 +88,8 @@ int32_t HttpClient(const char* buf)
         return -1;
     }
 
-    if (!memset_s(g_clientRecvBuf, strlen(g_clientRecvBuf), 0, strlen(g_clientRecvBuf))) {
-        TS_LOGE("memset_s error");
+    if (memset_s(g_clientRecvBuf, strlen(g_clientRecvBuf), 0, strlen(g_clientRecvBuf)) != 0) {
+        TS_LOGE("memset_s error:%s", strerror(errno));
         return -1;
     }
     int32_t index = 0;

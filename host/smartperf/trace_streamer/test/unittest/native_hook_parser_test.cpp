@@ -18,6 +18,7 @@
 #include <hwext/gtest-tag.h>
 #include <memory>
 
+#include "file.h"
 #include "htrace_native_hook_parser.h"
 #include "native_hook_result.pb.h"
 #include "native_hook_result.pbreader.h"
@@ -30,6 +31,7 @@ using namespace SysTuning::TraceStreamer;
 
 namespace SysTuning {
 namespace TraceStreamer {
+extern bool ParseTraceFile(TraceStreamerSelector& ts_, const std::string& tracePath);
 const uint64_t TV_SEC_01 = 1632675525;
 const uint64_t TV_SEC_02 = 1632675526;
 const uint64_t TV_SEC_03 = 1632675527;
@@ -383,10 +385,10 @@ private:
 HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOutNativeHookData, TestSize.Level1)
 {
     TS_LOGI("test24-1");
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -421,10 +423,10 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMalloc, TestSize.Level
     frame->set_symbol_offset(SYMBOL_OFFSET_01);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookData = batchNativeHookData->add_events();
+    auto nativeHookData = batchNativeHookData.add_events();
     nativeHookData->set_tv_sec(TV_SEC_01);
     nativeHookData->set_tv_nsec(TV_NSEC_01);
     nativeHookData->set_allocated_alloc_event(allocEvent);
@@ -433,7 +435,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMalloc, TestSize.Level
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -526,15 +528,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMalloc, TestSize.
     secondAllocSecondFrame->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add first NativeHookData
-    auto firstNativeHookData = batchNativeHookData->add_events();
+    auto firstNativeHookData = batchNativeHookData.add_events();
     firstNativeHookData->set_tv_sec(TV_SEC_01);
     firstNativeHookData->set_tv_nsec(TV_NSEC_01);
     firstNativeHookData->set_allocated_alloc_event(firstAllocEvent);
     // add second NativeHookData
-    auto secondNativeHookData = batchNativeHookData->add_events();
+    auto secondNativeHookData = batchNativeHookData.add_events();
     secondNativeHookData->set_tv_sec(TV_SEC_02);
     secondNativeHookData->set_tv_nsec(TV_NSEC_02);
     secondNativeHookData->set_allocated_alloc_event(secondAllocEvent);
@@ -543,7 +545,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMalloc, TestSize.
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -636,10 +638,10 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneFree, TestSize.Level1)
     frame->set_symbol_offset(SYMBOL_OFFSET_01);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookData = batchNativeHookData->add_events();
+    auto nativeHookData = batchNativeHookData.add_events();
     nativeHookData->set_tv_sec(TV_SEC_01);
     nativeHookData->set_tv_nsec(TV_NSEC_01);
     nativeHookData->set_allocated_free_event(freeEvent);
@@ -648,7 +650,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneFree, TestSize.Level1)
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -719,15 +721,15 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleFree, TestSize.Le
     secondFreeSecondFrame->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add first NativeHookData
-    auto firstNativeHookData = batchNativeHookData->add_events();
+    auto firstNativeHookData = batchNativeHookData.add_events();
     firstNativeHookData->set_tv_sec(TV_SEC_01);
     firstNativeHookData->set_tv_nsec(TV_NSEC_01);
     firstNativeHookData->set_allocated_free_event(firstFreeEvent);
     // add second NativeHookData
-    auto secondNativeHookData = batchNativeHookData->add_events();
+    auto secondNativeHookData = batchNativeHookData.add_events();
     secondNativeHookData->set_tv_sec(TV_SEC_02);
     secondNativeHookData->set_tv_nsec(TV_NSEC_02);
     secondNativeHookData->set_allocated_free_event(secondFreeEvent);
@@ -736,7 +738,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleFree, TestSize.Le
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -795,14 +797,14 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOnePairsMallocAndFree, Te
     freeframe->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookMallocData = batchNativeHookData->add_events();
+    auto nativeHookMallocData = batchNativeHookData.add_events();
     nativeHookMallocData->set_tv_sec(TV_SEC_01);
     nativeHookMallocData->set_tv_nsec(TV_NSEC_01);
     nativeHookMallocData->set_allocated_alloc_event(allocEvent);
-    auto nativeHookFreeData = batchNativeHookData->add_events();
+    auto nativeHookFreeData = batchNativeHookData.add_events();
     nativeHookFreeData->set_tv_sec(TV_SEC_02);
     nativeHookFreeData->set_tv_nsec(TV_NSEC_02);
     nativeHookFreeData->set_allocated_free_event(freeEvent);
@@ -811,7 +813,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOnePairsMallocAndFree, Te
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -902,14 +904,14 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithNotMatchMallocAndFree, Te
     freeframe->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookMallocData = batchNativeHookData->add_events();
+    auto nativeHookMallocData = batchNativeHookData.add_events();
     nativeHookMallocData->set_tv_sec(TV_SEC_01);
     nativeHookMallocData->set_tv_nsec(TV_NSEC_01);
     nativeHookMallocData->set_allocated_alloc_event(allocEvent);
-    auto nativeHookFreeData = batchNativeHookData->add_events();
+    auto nativeHookFreeData = batchNativeHookData.add_events();
     nativeHookFreeData->set_tv_sec(TV_SEC_02);
     nativeHookFreeData->set_tv_nsec(TV_NSEC_02);
     nativeHookFreeData->set_allocated_free_event(freeEvent);
@@ -918,7 +920,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithNotMatchMallocAndFree, Te
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -990,22 +992,22 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventMatched, TestSize.Level
     secondFreeEvent->set_addr(MEM_ADDR_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto firstMallocData = batchNativeHookData->add_events();
+    auto firstMallocData = batchNativeHookData.add_events();
     firstMallocData->set_tv_sec(TV_SEC_01);
     firstMallocData->set_tv_nsec(TV_NSEC_01);
     firstMallocData->set_allocated_alloc_event(firstAllocEvent);
-    auto firstFreeData = batchNativeHookData->add_events();
+    auto firstFreeData = batchNativeHookData.add_events();
     firstFreeData->set_tv_sec(TV_SEC_02);
     firstFreeData->set_tv_nsec(TV_NSEC_02);
     firstFreeData->set_allocated_free_event(firstFreeEvent);
-    auto secondMallocData = batchNativeHookData->add_events();
+    auto secondMallocData = batchNativeHookData.add_events();
     secondMallocData->set_tv_sec(TV_SEC_03);
     secondMallocData->set_tv_nsec(TV_NSEC_03);
     secondMallocData->set_allocated_alloc_event(secondAllocEvent);
-    auto secondFreeData = batchNativeHookData->add_events();
+    auto secondFreeData = batchNativeHookData.add_events();
     secondFreeData->set_tv_sec(TV_SEC_04);
     secondFreeData->set_tv_nsec(TV_NSEC_04);
     secondFreeData->set_allocated_free_event(secondFreeEvent);
@@ -1014,7 +1016,7 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventMatched, TestSize.Level
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
 
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1095,22 +1097,22 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventPartialMatched, TestSiz
     secondFreeEvent->set_addr(MEM_ADDR_03);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto firstMallocData = batchNativeHookData->add_events();
+    auto firstMallocData = batchNativeHookData.add_events();
     firstMallocData->set_tv_sec(TV_SEC_01);
     firstMallocData->set_tv_nsec(TV_NSEC_01);
     firstMallocData->set_allocated_alloc_event(firstAllocEvent);
-    auto firstFreeData = batchNativeHookData->add_events();
+    auto firstFreeData = batchNativeHookData.add_events();
     firstFreeData->set_tv_sec(TV_SEC_02);
     firstFreeData->set_tv_nsec(TV_NSEC_02);
     firstFreeData->set_allocated_free_event(firstFreeEvent);
-    auto secondMallocData = batchNativeHookData->add_events();
+    auto secondMallocData = batchNativeHookData.add_events();
     secondMallocData->set_tv_sec(TV_SEC_03);
     secondMallocData->set_tv_nsec(TV_NSEC_03);
     secondMallocData->set_allocated_alloc_event(secondAllocEvent);
-    auto secondFreeData = batchNativeHookData->add_events();
+    auto secondFreeData = batchNativeHookData.add_events();
     secondFreeData->set_tv_sec(TV_SEC_04);
     secondFreeData->set_tv_nsec(TV_NSEC_04);
     secondFreeData->set_allocated_free_event(secondFreeEvent);
@@ -1118,7 +1120,7 @@ HWTEST_F(NativeHookParserTest, ParseTwoMallocAndFreeEventPartialMatched, TestSiz
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1183,10 +1185,10 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMmap, TestSize.Level1)
     frame->set_symbol_offset(SYMBOL_OFFSET_01);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookData = batchNativeHookData->add_events();
+    auto nativeHookData = batchNativeHookData.add_events();
     nativeHookData->set_tv_sec(TV_SEC_01);
     nativeHookData->set_tv_nsec(TV_NSEC_01);
     nativeHookData->set_allocated_mmap_event(mmapEvent);
@@ -1194,7 +1196,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMmap, TestSize.Level1)
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1257,10 +1259,10 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMunmap, TestSize.Level
     frame->set_symbol_offset(SYMBOL_OFFSET_01);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookData = batchNativeHookData->add_events();
+    auto nativeHookData = batchNativeHookData.add_events();
     nativeHookData->set_tv_sec(TV_SEC_01);
     nativeHookData->set_tv_nsec(TV_NSEC_01);
     nativeHookData->set_allocated_munmap_event(munmapEvent);
@@ -1268,7 +1270,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithOneMunmap, TestSize.Level
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1332,14 +1334,14 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMmap, TestSize.Le
     secondFrame->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto firstNativeHookData = batchNativeHookData->add_events();
+    auto firstNativeHookData = batchNativeHookData.add_events();
     firstNativeHookData->set_tv_sec(TV_SEC_01);
     firstNativeHookData->set_tv_nsec(TV_NSEC_01);
     firstNativeHookData->set_allocated_mmap_event(firstMmapEvent);
-    auto secondNativeHookData = batchNativeHookData->add_events();
+    auto secondNativeHookData = batchNativeHookData.add_events();
     secondNativeHookData->set_tv_sec(TV_SEC_02);
     secondNativeHookData->set_tv_nsec(TV_NSEC_02);
     secondNativeHookData->set_allocated_mmap_event(secondMmapEvent);
@@ -1347,7 +1349,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMmap, TestSize.Le
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1441,14 +1443,14 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMunmap, TestSize.
     secondFrame->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto firstNativeHookData = batchNativeHookData->add_events();
+    auto firstNativeHookData = batchNativeHookData.add_events();
     firstNativeHookData->set_tv_sec(TV_SEC_01);
     firstNativeHookData->set_tv_nsec(TV_NSEC_01);
     firstNativeHookData->set_allocated_munmap_event(firstMunmapEvent);
-    auto secondNativeHookData = batchNativeHookData->add_events();
+    auto secondNativeHookData = batchNativeHookData.add_events();
     secondNativeHookData->set_tv_sec(TV_SEC_02);
     secondNativeHookData->set_tv_nsec(TV_NSEC_02);
     secondNativeHookData->set_allocated_munmap_event(secondMunmapEvent);
@@ -1456,7 +1458,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithMultipleMunmap, TestSize.
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1518,14 +1520,14 @@ HWTEST_F(NativeHookParserTest, ParseOnePairsMmapAndMunmapEvent, TestSize.Level1)
     munmapEvent->set_size(MEM_SIZE_01);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookMmapData = batchNativeHookData->add_events();
+    auto nativeHookMmapData = batchNativeHookData.add_events();
     nativeHookMmapData->set_tv_sec(TV_SEC_01);
     nativeHookMmapData->set_tv_nsec(TV_NSEC_01);
     nativeHookMmapData->set_allocated_mmap_event(mmapEvent);
-    auto nativeHookMunmapData = batchNativeHookData->add_events();
+    auto nativeHookMunmapData = batchNativeHookData.add_events();
     nativeHookMunmapData->set_tv_sec(TV_SEC_02);
     nativeHookMunmapData->set_tv_nsec(TV_NSEC_02);
     nativeHookMunmapData->set_allocated_munmap_event(munmapEvent);
@@ -1533,7 +1535,7 @@ HWTEST_F(NativeHookParserTest, ParseOnePairsMmapAndMunmapEvent, TestSize.Level1)
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1626,14 +1628,14 @@ HWTEST_F(NativeHookParserTest, ParseNotMatchMmapAndMunmapEvent, TestSize.Level1)
     munmapEvent->set_size(MEM_SIZE_01);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookMmapData = batchNativeHookData->add_events();
+    auto nativeHookMmapData = batchNativeHookData.add_events();
     nativeHookMmapData->set_tv_sec(TV_SEC_01);
     nativeHookMmapData->set_tv_nsec(TV_NSEC_01);
     nativeHookMmapData->set_allocated_mmap_event(mmapEvent);
-    auto nativeHookMunmapData = batchNativeHookData->add_events();
+    auto nativeHookMunmapData = batchNativeHookData.add_events();
     nativeHookMunmapData->set_tv_sec(TV_SEC_02);
     nativeHookMunmapData->set_tv_nsec(TV_NSEC_02);
     nativeHookMunmapData->set_allocated_munmap_event(munmapEvent);
@@ -1641,7 +1643,7 @@ HWTEST_F(NativeHookParserTest, ParseNotMatchMmapAndMunmapEvent, TestSize.Level1)
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1726,22 +1728,22 @@ HWTEST_F(NativeHookParserTest, ParseTwoPairsMatchedMmapAndMunmapEvent, TestSize.
     secondMunmapEvent->set_size(MEM_SIZE_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto firstNativeHookMmapData = batchNativeHookData->add_events();
+    auto firstNativeHookMmapData = batchNativeHookData.add_events();
     firstNativeHookMmapData->set_tv_sec(TV_SEC_01);
     firstNativeHookMmapData->set_tv_nsec(TV_NSEC_01);
     firstNativeHookMmapData->set_allocated_mmap_event(firstMmapEvent);
-    auto firstNativeHookMunmapData = batchNativeHookData->add_events();
+    auto firstNativeHookMunmapData = batchNativeHookData.add_events();
     firstNativeHookMunmapData->set_tv_sec(TV_SEC_02);
     firstNativeHookMunmapData->set_tv_nsec(TV_NSEC_02);
     firstNativeHookMunmapData->set_allocated_munmap_event(firstMunmapEvent);
-    auto secondNativeHookMmapData = batchNativeHookData->add_events();
+    auto secondNativeHookMmapData = batchNativeHookData.add_events();
     secondNativeHookMmapData->set_tv_sec(TV_SEC_03);
     secondNativeHookMmapData->set_tv_nsec(TV_NSEC_03);
     secondNativeHookMmapData->set_allocated_mmap_event(secondMmapEvent);
-    auto secondNativeHookMunmapData = batchNativeHookData->add_events();
+    auto secondNativeHookMunmapData = batchNativeHookData.add_events();
     secondNativeHookMunmapData->set_tv_sec(TV_SEC_04);
     secondNativeHookMunmapData->set_tv_nsec(TV_NSEC_04);
     secondNativeHookMunmapData->set_allocated_munmap_event(secondMunmapEvent);
@@ -1749,7 +1751,7 @@ HWTEST_F(NativeHookParserTest, ParseTwoPairsMatchedMmapAndMunmapEvent, TestSize.
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1833,22 +1835,22 @@ HWTEST_F(NativeHookParserTest, ParsePartialMatchedMmapAndMunmapEvent, TestSize.L
     secondMunmapEvent->set_size(MEM_SIZE_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto firstNativeHookMmapData = batchNativeHookData->add_events();
+    auto firstNativeHookMmapData = batchNativeHookData.add_events();
     firstNativeHookMmapData->set_tv_sec(TV_SEC_01);
     firstNativeHookMmapData->set_tv_nsec(TV_NSEC_01);
     firstNativeHookMmapData->set_allocated_mmap_event(firstMmapEvent);
-    auto firstNativeHookMunmapData = batchNativeHookData->add_events();
+    auto firstNativeHookMunmapData = batchNativeHookData.add_events();
     firstNativeHookMunmapData->set_tv_sec(TV_SEC_02);
     firstNativeHookMunmapData->set_tv_nsec(TV_NSEC_02);
     firstNativeHookMunmapData->set_allocated_munmap_event(firstMunmapEvent);
-    auto secondNativeHookMmapData = batchNativeHookData->add_events();
+    auto secondNativeHookMmapData = batchNativeHookData.add_events();
     secondNativeHookMmapData->set_tv_sec(TV_SEC_03);
     secondNativeHookMmapData->set_tv_nsec(TV_NSEC_03);
     secondNativeHookMmapData->set_allocated_mmap_event(secondMmapEvent);
-    auto secondNativeHookMunmapData = batchNativeHookData->add_events();
+    auto secondNativeHookMunmapData = batchNativeHookData.add_events();
     secondNativeHookMunmapData->set_tv_sec(TV_SEC_04);
     secondNativeHookMunmapData->set_tv_nsec(TV_NSEC_04);
     secondNativeHookMunmapData->set_allocated_munmap_event(secondMunmapEvent);
@@ -1856,7 +1858,7 @@ HWTEST_F(NativeHookParserTest, ParsePartialMatchedMmapAndMunmapEvent, TestSize.L
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -1974,22 +1976,22 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithAllTypesEvents, TestSize.
     freeframe->set_symbol_offset(SYMBOL_OFFSET_02);
 
     // construct BatchNativeHookData
-    BatchNativeHookData* batchNativeHookData = new BatchNativeHookData();
+    BatchNativeHookData batchNativeHookData;
 
     // add NativeHookData
-    auto nativeHookMmapData = batchNativeHookData->add_events();
+    auto nativeHookMmapData = batchNativeHookData.add_events();
     nativeHookMmapData->set_tv_sec(TV_SEC_01);
     nativeHookMmapData->set_tv_nsec(TV_NSEC_01);
     nativeHookMmapData->set_allocated_mmap_event(mmapEvent);
-    auto nativeHookMunmapData = batchNativeHookData->add_events();
+    auto nativeHookMunmapData = batchNativeHookData.add_events();
     nativeHookMunmapData->set_tv_sec(TV_SEC_02);
     nativeHookMunmapData->set_tv_nsec(TV_NSEC_02);
     nativeHookMunmapData->set_allocated_munmap_event(munmapEvent);
-    auto nativeHookAllocData = batchNativeHookData->add_events();
+    auto nativeHookAllocData = batchNativeHookData.add_events();
     nativeHookAllocData->set_tv_sec(TV_SEC_03);
     nativeHookAllocData->set_tv_nsec(TV_NSEC_03);
     nativeHookAllocData->set_allocated_alloc_event(allocEvent);
-    auto nativeHookFreeData = batchNativeHookData->add_events();
+    auto nativeHookFreeData = batchNativeHookData.add_events();
     nativeHookFreeData->set_tv_sec(TV_SEC_04);
     nativeHookFreeData->set_tv_nsec(TV_NSEC_04);
     nativeHookFreeData->set_allocated_free_event(freeEvent);
@@ -1997,7 +1999,7 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithAllTypesEvents, TestSize.
     // start parse
     HtraceNativeHookParser htraceNativeHookParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     std::string hookStrMsg = "";
-    batchNativeHookData->SerializeToString(&hookStrMsg);
+    batchNativeHookData.SerializeToString(&hookStrMsg);
     HtraceDataSegment dataSeg;
     dataSeg.seg = std::make_shared<std::string>(hookStrMsg);
     ProtoReader::BytesView hookBytesView(reinterpret_cast<const uint8_t*>(hookStrMsg.data()), hookStrMsg.size());
@@ -2046,6 +2048,28 @@ HWTEST_F(NativeHookParserTest, ParseBatchNativeHookWithAllTypesEvents, TestSize.
     EXPECT_TRUE(1 == eventCount);
     eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_NATIVE_HOOK_FREE, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
+}
+/**
+ * @tc.name: ParseOfflineSymAndStatisticalData
+ * @tc.desc: Parse Offline Sym And Statistical Data
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookParserTest, ParseOfflineSymAndStatisticalData, TestSize.Level1)
+{
+    std::string path("../../test/resource/offline_symbolization_statistical_data.htrace");
+    TS_LOGI("test24-19");
+    EXPECT_TRUE(ParseTraceFile(stream_, path));
+}
+/**
+ * @tc.name: ParseCallStackCompressionData
+ * @tc.desc: Parse CallStack Compression Data
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookParserTest, ParseCallStackCompressionData, TestSize.Level1)
+{
+    std::string path("../../test/resource/callstack_compression.htrace");
+    TS_LOGI("test24-20");
+    EXPECT_TRUE(ParseTraceFile(stream_, path));
 }
 } // namespace TraceStreamer
 } // namespace SysTuning

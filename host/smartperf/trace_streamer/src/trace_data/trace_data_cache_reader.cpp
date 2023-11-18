@@ -297,21 +297,25 @@ const EbpfElfSymbol& TraceDataCacheReader::GetConstEbpfElfSymbol() const
     return ebpfElfSymbol_;
 }
 #endif
-const AppNames& TraceDataCacheReader::GetConstAppNamesData() const
+const HiSysEventSubkeys& TraceDataCacheReader::GetConstHiSysEventSubkeysData() const
 {
-    return appNames_;
+    return sysEventNameIds_;
 }
-const SysEventMeasureData& TraceDataCacheReader::GetConstSyseventMeasureData() const
+const HiSysEventMeasureData& TraceDataCacheReader::GetConstHiSyseventMeasureData() const
 {
     return sysEventMeasureData_;
 }
-const TraceConfigData& TraceDataCacheReader::GetConstTraceConfigData() const
+const TraceConfig& TraceDataCacheReader::GetConstTraceConfigData() const
 {
     return traceConfigData_;
 }
-const DeviceStateData& TraceDataCacheReader::GetConstDeviceStateData() const
+const HiSysEventDeviceStateData& TraceDataCacheReader::GetConstHiSysEventDeviceStateData() const
 {
     return deviceStateData_;
+}
+const HiSysEventAllEventData& TraceDataCacheReader::GetConstHiSysEventAllEventData() const
+{
+    return hiSysEventAllEventData_;
 }
 const SmapsData& TraceDataCacheReader::GetConstSmapsData() const
 {

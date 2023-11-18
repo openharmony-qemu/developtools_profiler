@@ -16,6 +16,7 @@
 #ifndef INCLUDE_BASE_STRING_TO_NUMERICAL_H_
 #define INCLUDE_BASE_STRING_TO_NUMERICAL_H_
 
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -44,6 +45,14 @@ inline std::string number(uint64_t value, int32_t base = INTEGER_RADIX_TYPE_DEC)
     } else if (base == INTEGER_RADIX_TYPE_HEX) {
         ss << std::hex << value;
     }
+    return ss.str();
+}
+
+inline std::string ConvertTimestampToSecStr(uint64_t timestamp, uint8_t precision)
+{
+    double seconds = static_cast<double>(timestamp) / 1e9;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision) << seconds;
     return ss.str();
 }
 

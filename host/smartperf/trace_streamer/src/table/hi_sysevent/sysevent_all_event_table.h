@@ -13,18 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef APPNAME_TABLE_H
-#define APPNAME_TABLE_H
+#ifndef SYSEVENT_ALL_EVENT_TABLE_H
+#define SYSEVENT_ALL_EVENT_TABLE_H
 
 #include "table_base.h"
 #include "trace_data_cache.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
-class AppnameTable : public TableBase {
+class SysEventAllEventTable : public TableBase {
 public:
-    explicit AppnameTable(const TraceDataCache*);
-    ~AppnameTable() override;
+    explicit SysEventAllEventTable(const TraceDataCache*);
+    ~SysEventAllEventTable() override;
     std::unique_ptr<TableBase::Cursor> CreateCursor() override;
 
 private:
@@ -35,9 +35,9 @@ private:
         int32_t Column(int32_t column) const override;
 
     private:
-        const AppNames& appName_;
+        const HiSysEventAllEventData& hiSysEventAllEventObj_;
     };
 };
 } // namespace TraceStreamer
 } // namespace SysTuning
-#endif // APPNAME_TABLE_H
+#endif // SYSEVENT_ALL_EVENT_TABLE_H

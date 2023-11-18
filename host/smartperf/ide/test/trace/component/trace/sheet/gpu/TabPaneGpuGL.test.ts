@@ -34,7 +34,7 @@ window.ResizeObserver =
 describe('TabPaneGpuGL Test', () => {
   document.body.innerHTML = `<div><tabpane-gpu-gl id="tree"></tabpane-gpu-gl></div>`;
   let tabPaneGpuGL = document.querySelector<TabPaneGpuGL>('#tree');
-  let queryGpuGLDataByRange = sqlite.queryGpuGLDataByRange;
+  let queryGpuGLDataByRange = sqlite.queryGpuDataTab;
   queryGpuGLDataByRange.mockResolvedValue([
     {
       startTs: 23,

@@ -1160,7 +1160,7 @@ public:
 
 public:
     std::deque<std::string> dataDict_;
-    std::unordered_map<uint64_t, DataIndex> dataDictInnerMap_;
+    std::unordered_map<std::string_view, DataIndex> dataDictInnerMap_;
 
 private:
     std::hash<std::string_view> hashFun;
@@ -1547,26 +1547,23 @@ private:
     std::deque<uint64_t> stSizes_ = {};
 };
 #endif
-class AppNames : public CacheBase {
+class HiSysEventSubkeys : public CacheBase {
 public:
-    uint32_t AppendAppName(uint8_t flags, DataIndex eventSource, DataIndex appName);
-    const std::deque<uint8_t>& Falgs() const;
-    const std::deque<DataIndex>& EventSourceId() const;
-    const std::deque<DataIndex>& AppName() const;
+    uint32_t AppendSysEventSubkey(DataIndex eventSource, DataIndex appName);
+    const std::deque<DataIndex>& SysEventNameId() const;
+    const std::deque<DataIndex>& SysEventSubkeyId() const;
     void Clear() override
     {
         CacheBase::Clear();
-        flags_.clear();
-        appNames_.clear();
-        keyNames_.clear();
+        sysEventNameIds_.clear();
+        subkeyNameIds_.clear();
     }
 
 private:
-    std::deque<uint8_t> flags_ = {};
-    std::deque<DataIndex> appNames_ = {};
-    std::deque<DataIndex> keyNames_ = {};
+    std::deque<DataIndex> sysEventNameIds_ = {};
+    std::deque<DataIndex> subkeyNameIds_ = {};
 };
-class SysEventMeasureData : public CacheBase {
+class HiSysEventMeasureData : public CacheBase {
 public:
     void AppendData(uint64_t serial,
                     uint64_t ts,
@@ -1604,7 +1601,7 @@ private:
     std::deque<DataIndex> stringValues_ = {};
     uint32_t rowCount_ = 0;
 };
-class DeviceStateData : public CacheBase {
+class HiSysEventDeviceStateData : public CacheBase {
 public:
     void AppendNewData(int32_t brightness,
                        int32_t btState,
@@ -1695,7 +1692,7 @@ private:
     std::deque<int32_t> streamAlls_ = {};
     uint32_t rowCounts_ = 0;
 };
-class TraceConfigData : public CacheBase {
+class TraceConfig : public CacheBase {
 public:
     void AppendNewData(std::string traceSource, std::string key, std::string value);
     const std::deque<std::string>& TraceSource() const;
@@ -1714,6 +1711,51 @@ private:
     std::deque<std::string> key_ = {};
     std::deque<std::string> value_ = {};
     uint32_t rowCounts_ = 0;
+};
+class HiSysEventAllEventData : public CacheBase {
+public:
+    uint32_t AppendHiSysEventData(DataIndex domainId,
+                                  DataIndex eventNameId,
+                                  uint64_t timeStamp,
+                                  uint32_t type,
+                                  const std::string& timeZone,
+                                  uint32_t pid,
+                                  uint32_t tid,
+                                  uint32_t uid,
+                                  const std::string& level,
+                                  const std::string& tag,
+                                  const std::string& eventId,
+                                  uint64_t seq,
+                                  const std::string& info,
+                                  const std::string& content);
+    const std::deque<DataIndex>& DomainIds() const;
+    const std::deque<DataIndex>& EventNameIds() const;
+    const std::deque<uint32_t>& Types() const;
+    const std::deque<std::string>& TimeZones() const;
+    const std::deque<uint32_t>& Pids() const;
+    const std::deque<uint32_t>& Tids() const;
+    const std::deque<uint32_t>& Uids() const;
+    const std::deque<std::string>& Levels() const;
+    const std::deque<std::string>& Tags() const;
+    const std::deque<std::string>& EventIds() const;
+    const std::deque<uint64_t>& Seqs() const;
+    const std::deque<std::string>& Infos() const;
+    const std::deque<std::string>& Contents() const;
+
+private:
+    std::deque<DataIndex> domainIds_ = {};
+    std::deque<DataIndex> eventNameIds_ = {};
+    std::deque<uint32_t> types_ = {};
+    std::deque<std::string> timeZones_ = {};
+    std::deque<uint32_t> pids_ = {};
+    std::deque<uint32_t> tids_ = {};
+    std::deque<uint32_t> uids_ = {};
+    std::deque<std::string> levels_ = {};
+    std::deque<std::string> tags_ = {};
+    std::deque<std::string> eventIds_ = {};
+    std::deque<uint64_t> seqs_ = {};
+    std::deque<std::string> infos_ = {};
+    std::deque<std::string> contents_ = {};
 };
 class SmapsData : public CacheBase {
 public:

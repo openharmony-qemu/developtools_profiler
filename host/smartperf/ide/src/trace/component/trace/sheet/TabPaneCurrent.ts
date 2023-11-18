@@ -22,24 +22,24 @@ import { SlicesTime, StType } from '../timer-shaft/SportRuler.js';
 
 @element('tabpane-current')
 export class TabPaneCurrent extends BaseElement {
-  private slicestimeList: Array<SlicesTime> = [];
-  private slicestime: SlicesTime | null = null;
+  private slicesTimeList: Array<SlicesTime> = [];
+  private slicesTime: SlicesTime | null = null;
   private systemTrace: SpSystemTrace | undefined | null;
   private tableDataSource: Array<MarkStruct | any> = [];
   private panelTable: LitTable | undefined | null;
 
   initElements(): void {
     this.systemTrace = document
-      .querySelector('body > sp-application')?.
-      shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
+      .querySelector('body > sp-application')
+      ?.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.panelTable = this.shadowRoot!.querySelector<LitTable>('.notes-editor-panel');
     this.panelTable!.addEventListener('row-click', (evt: any) => {
       // 点击表格某一行后，背景变色
       // @ts-ignore
       let data = evt.detail.data;
-      this.systemTrace!.slicesList = this.slicestimeList || [];
+      this.systemTrace!.slicesList = this.slicesTimeList || [];
       //   页面上对应的slice变为实心
-      this.slicestimeList.forEach((slicesTime, index) => {
+      this.slicesTimeList.forEach((slicesTime, index) => {
         if (data.startTime === slicesTime.startTime && data.endTime === slicesTime.endTime) {
           slicesTime.selected = true;
           this.setTableSelection(index + 1);
@@ -51,48 +51,50 @@ export class TabPaneCurrent extends BaseElement {
       // 如果点击RemoveAll，隐藏所有卡尺，清空数组，隐藏tab页
       if (data.operate.innerHTML === 'RemoveAll') {
         this.systemTrace!.slicesList = [];
-        for (let slice of this.slicestimeList) {
-          slice.hidden = true;
-          document.dispatchEvent(new CustomEvent('slices-change', { detail: slice }));
+		let slicesTimeList = [...this.slicesTimeList];
+        for (let i = 0; i < slicesTimeList.length; i++) {
+			slicesTimeList[i].hidden = true;
+          document.dispatchEvent(new CustomEvent('slices-change', { detail: slicesTimeList[i] }));
         }
-        this.slicestimeList = [];
+        this.slicesTimeList = [];
       }
     });
   }
 
-  public setCurrentSlicesTime(slicestime: SlicesTime): void {
-    this.slicestime = slicestime;
+  public setCurrentSlicesTime(slicesTime: SlicesTime): void {
+    this.slicesTimeList = this.systemTrace?.timerShaftEL!.sportRuler?.slicesTimeList || [];
+    this.slicesTime = slicesTime;
     // 判断当前传入的卡尺是否已经存在
-    let findSlicesTime = this.slicestimeList.find(
-      (it) => it.startTime === slicestime.startTime && it.endTime === slicestime.endTime
+    let findSlicesTime = this.slicesTimeList.find(
+      (it) => it.startTime === slicesTime.startTime && it.endTime === slicesTime.endTime
     );
     // m键生成的临时卡尺只能同时出现最后一个，所以将永久卡尺过滤出来，并加上最后一个临时卡尺
-    if (this.slicestime.type === StType.TEMP) {
-      this.slicestimeList = this.slicestimeList.filter(
+    if (this.slicesTime.type === StType.TEMP) {
+      this.slicesTimeList = this.slicesTimeList.filter(
         (item: SlicesTime) =>
           item.type === StType.PERM ||
           (item.type === StType.TEMP &&
-            item.startTime === this.slicestime!.startTime &&
-            item.endTime === this.slicestime!.endTime)
+            item.startTime === this.slicesTime!.startTime &&
+            item.endTime === this.slicesTime!.endTime)
       );
     }
-    // 如果this.slicestimeList为空，或者没有在同一位置绘制过，就将当前的框选的范围画上线
-    if (!findSlicesTime || this.slicestimeList.length === 0) {
-      this.slicestimeList!.push(this.slicestime);
+    // 如果this.slicesTimeList为空，或者没有在同一位置绘制过，就将当前的框选的范围画上线
+    if (!findSlicesTime || this.slicesTimeList.length === 0) {
+      this.slicesTimeList!.push(this.slicesTime);
     }
     this.setTableData();
   }
 
   /**
-   * 根据this.slicestimeList设置表格数据
+   * 根据this.slicesTimeList设置表格数据
    */
   private setTableData(): void {
     this.tableDataSource = [];
     // 按照开始时间进行排序，保证泳道图上的卡尺（shift+m键）和表格的顺序一致
-    this.slicestimeList.sort(function (a, b) {
+    this.slicesTimeList.sort(function (a, b) {
       return a.startTime - b.startTime;
     });
-    for (let slice of this.slicestimeList) {
+    for (let slice of this.slicesTimeList) {
       let btn = document.createElement('button');
       btn.className = 'remove';
       let color = document.createElement('input');
@@ -118,13 +120,13 @@ export class TabPaneCurrent extends BaseElement {
 
     // 当前点击了哪个卡尺，就将对应的表格中的那行的背景变色
     this.tableDataSource.forEach((data, index) => {
-      if (data.startTime === this.slicestime?.startTime && data.endTime === this.slicestime?.endTime) {
+      if (data.startTime === this.slicesTime?.startTime && data.endTime === this.slicesTime?.endTime) {
         this.setTableSelection(index);
       }
     });
     this.panelTable!.recycleDataSource = this.tableDataSource;
     this.eventHandler();
-    this.systemTrace!.slicesList = this.slicestimeList || [];
+    this.systemTrace!.slicesList = this.slicesTimeList || [];
   }
 
   /**
@@ -132,18 +134,18 @@ export class TabPaneCurrent extends BaseElement {
    */
   private eventHandler(): void {
     let tr = this.panelTable!.shadowRoot!.querySelectorAll('.tr') as NodeListOf<HTMLDivElement>;
-    //   第一个tr是移除全部，所以跳过，从第二个tr开始，和this.slicestimeList数组的第一个对应……，所以i从1开始，在this.slicestimeList数组中取值时用i-1
+    //   第一个tr是移除全部，所以跳过，从第二个tr开始，和this.slicesTimeList数组的第一个对应……，所以i从1开始，在this.slicesTimeList数组中取值时用i-1
     for (let i = 1; i < tr.length; i++) {
-      tr[i].querySelector('input')!.value = this.slicestimeList[i - 1].color;
+      tr[i].querySelector('input')!.value = this.slicesTimeList[i - 1].color;
       //  点击色块修改颜色
       tr[i].querySelector('input')?.addEventListener('change', (event: any) => {
         if (
-          this.tableDataSource[i].startTime === this.slicestimeList[i - 1].startTime &&
-          this.tableDataSource[i].endTime === this.slicestimeList[i - 1].endTime
+          this.tableDataSource[i].startTime === this.slicesTimeList[i - 1].startTime &&
+          this.tableDataSource[i].endTime === this.slicesTimeList[i - 1].endTime
         ) {
-          this.systemTrace!.slicesList = this.slicestimeList || [];
-          this.slicestimeList[i - 1].color = event?.target.value;
-          document.dispatchEvent(new CustomEvent('slices-change', { detail: this.slicestimeList[i - 1] }));
+          this.systemTrace!.slicesList = this.slicesTimeList || [];
+          this.slicesTimeList[i - 1].color = event?.target.value;
+          document.dispatchEvent(new CustomEvent('slices-change', { detail: this.slicesTimeList[i - 1] }));
           //   卡尺颜色改变时，重绘泳道图
           this.systemTrace?.refreshCanvas(true);
         }
@@ -152,13 +154,12 @@ export class TabPaneCurrent extends BaseElement {
       // 点击remove按钮移除
       tr[i]!.querySelector('.remove')?.addEventListener('click', (event: any) => {
         if (
-          this.tableDataSource[i].startTime === this.slicestimeList[i - 1].startTime &&
-          this.tableDataSource[i].endTime === this.slicestimeList[i - 1].endTime
+          this.tableDataSource[i].startTime === this.slicesTimeList[i - 1].startTime &&
+          this.tableDataSource[i].endTime === this.slicesTimeList[i - 1].endTime
         ) {
-          this.slicestimeList[i - 1].hidden = true;
-          this.systemTrace!.slicesList = this.slicestimeList || [];
-          document.dispatchEvent(new CustomEvent('slices-change', { detail: this.slicestimeList[i - 1] }));
-          this.slicestimeList.splice(this.slicestimeList.indexOf(this.slicestimeList[i - 1]), 1);
+          this.slicesTimeList[i - 1].hidden = true;
+          this.systemTrace!.slicesList = this.slicesTimeList || [];
+          document.dispatchEvent(new CustomEvent('slices-change', { detail: this.slicesTimeList[i - 1] }));
           //   移除时更新表格内容
           this.setTableData();
         }

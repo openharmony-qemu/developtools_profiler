@@ -29,6 +29,7 @@ if (is_test) {
       "unittest/ebpf_file_system_test.cpp",
       "unittest/ebpf_parser_test.cpp",
       "unittest/event_parser_test.cpp",
+      "unittest/export_test.cpp",  # Don't comment, for common method
       "unittest/filter_filter_test.cpp",
       "unittest/frame_filter_test.cpp",
       "unittest/ftrace_field_processor_test.cpp",
@@ -137,6 +138,17 @@ if (is_test) {
       "../src/proto_reader/include",
       "${SRC}/metrics",
       "${SRC}/parser/rawtrace_parser",
+    ]
+
+    include_dirs += [
+      "${THIRD_PARTY}/perf_include/hiviewdfx/hilog/include",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/cutil",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/dfxlog",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/dfxutil",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/hilog/include",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/common",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/nonlinux",
+      "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/include",
     ]
 
     cflags = [

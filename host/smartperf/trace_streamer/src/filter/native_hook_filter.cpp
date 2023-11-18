@@ -22,7 +22,10 @@ namespace TraceStreamer {
 NativeHookFilter::NativeHookFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
     : OfflineSymbolizationFilter(dataCache, filter),
       anonMmapData_(nullptr),
-      hookPluginData_(std::make_unique<ProfilerPluginData>())
+      hookPluginData_(std::make_unique<ProfilerPluginData>()),
+      ipidToSymIdToSymIndex_(INVALID_UINT64),
+      ipidToFilePathIdToFileIndex_(INVALID_UINT64),
+      ipidToFrameIdToFrameBytes_(nullptr)
 {
     invalidLibPathIndexs_.insert(traceDataCache_->dataDict_.GetStringIndex("/system/lib/libc++.so"));
     invalidLibPathIndexs_.insert(traceDataCache_->dataDict_.GetStringIndex("/system/lib64/libc++.so"));
@@ -35,12 +38,15 @@ NativeHookFilter::NativeHookFilter(TraceDataCache* dataCache, const TraceStreame
 void NativeHookFilter::ParseConfigInfo(ProtoReader::BytesView& protoData)
 {
     auto configReader = ProtoReader::NativeHookConfig_Reader(protoData);
+    if (configReader.has_expand_pids() || (configReader.has_process_name() && configReader.has_pid())) {
+        isSingleProcData_ = false;
+    }
     if (configReader.has_statistics_interval()) {
         isStatisticMode_ = true;
         isCallStackCompressedMode_ = true;
         isStringCompressedMode_ = true;
     }
-    if (configReader.has_offline_symbolization()) {
+    if (configReader.has_response_library_mode() || configReader.has_offline_symbolization()) {
         isOfflineSymbolizationMode_ = true;
         isCallStackCompressedMode_ = true;
         isStringCompressedMode_ = true;
@@ -57,32 +63,57 @@ void NativeHookFilter::ParseConfigInfo(ProtoReader::BytesView& protoData)
     }
     return;
 }
-void NativeHookFilter::AppendStackMaps(uint32_t stackid, std::vector<uint64_t>& frames)
+void NativeHookFilter::AppendStackMaps(uint32_t ipid, uint32_t stackid, std::vector<uint64_t>& frames)
 {
+    uint64_t ipidWithStackIdIndex = 0;
+    if (isSingleProcData_) {
+        frames.emplace_back(SINGLE_PROC_IPID);
+        ipidWithStackIdIndex = stackid;
+    } else {
+        frames.emplace_back(ipid);
+        ipidWithStackIdIndex = traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(stackid));
+    }
     auto framesSharedPtr = std::make_shared<std::vector<uint64_t>>(frames);
-    stackIdToFramesMap_.emplace(std::make_pair(stackid, framesSharedPtr));
+    stackIdToFramesMap_.emplace(std::make_pair(ipidWithStackIdIndex, framesSharedPtr));
     // allStackIdToFramesMap_ save all offline symbolic call stack
     if (isOfflineSymbolizationMode_) {
-        allStackIdToFramesMap_.emplace(std::make_pair(stackid, framesSharedPtr));
+        allStackIdToFramesMap_.emplace(std::make_pair(ipidWithStackIdIndex, framesSharedPtr));
     }
 }
-void NativeHookFilter::AppendFrameMaps(uint32_t id, const ProtoReader::BytesView& bytesView)
+void NativeHookFilter::AppendFrameMaps(uint32_t ipid, uint32_t frameMapId, const ProtoReader::BytesView& bytesView)
 {
     auto frames = std::make_shared<const ProtoReader::BytesView>(bytesView);
-    frameIdToFrameBytes_.emplace(std::make_pair(id, frames));
+    if (isSingleProcData_) {
+        ipidToFrameIdToFrameBytes_.Insert(SINGLE_PROC_IPID, frameMapId, frames);
+    } else {
+        ipidToFrameIdToFrameBytes_.Insert(ipid, frameMapId, frames);
+    }
 }
-void NativeHookFilter::AppendFilePathMaps(uint32_t id, uint64_t fileIndex)
+void NativeHookFilter::AppendFilePathMaps(uint32_t ipid, uint32_t filePathId, uint64_t fileIndex)
 {
-    filePathIdToFileIndex_.emplace(id, fileIndex);
-    fileIndexToFilePathId_.emplace(fileIndex, id);
+    if (isSingleProcData_) {
+        ipidToFilePathIdToFileIndex_.Insert(SINGLE_PROC_IPID, filePathId, fileIndex);
+    } else {
+        ipidToFilePathIdToFileIndex_.Insert(ipid, filePathId, fileIndex);
+    }
 }
-void NativeHookFilter::AppendSymbolMap(uint32_t id, uint64_t symbolIndex)
+void NativeHookFilter::AppendSymbolMap(uint32_t ipid, uint32_t symId, uint64_t symbolIndex)
 {
-    symbolIdToSymbolIndex_.emplace(id, symbolIndex);
+    if (isSingleProcData_) {
+        ipidToSymIdToSymIndex_.Insert(SINGLE_PROC_IPID, symId, symbolIndex);
+    } else {
+        ipidToSymIdToSymIndex_.Insert(ipid, symId, symbolIndex);
+    }
 }
-void NativeHookFilter::AppendThreadNameMap(uint32_t id, uint64_t threadNameIndex)
+void NativeHookFilter::AppendThreadNameMap(uint32_t ipid, uint32_t nameId, uint64_t threadNameIndex)
 {
-    threadNameIdToThreadNameIndex_.emplace(id, threadNameIndex);
+    uint64_t ipidWithThreadNameIdIndex = 0;
+    if (isSingleProcData_) {
+        ipidWithThreadNameIdIndex = nameId;
+    } else {
+        ipidWithThreadNameIdIndex = traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(nameId));
+    }
+    threadNameIdToThreadNameIndex_.emplace(ipidWithThreadNameIdIndex, threadNameIndex);
 }
 
 template <class T1, class T2>
@@ -95,23 +126,20 @@ void NativeHookFilter::UpdateMap(std::unordered_map<T1, T2>& sourceMap, T1 key, 
         sourceMap.insert(std::make_pair(key, value));
     }
 }
-std::unique_ptr<NativeHookFrameInfo> NativeHookFilter::ParseFrame(const ProtoReader::DataArea& frame)
+std::unique_ptr<NativeHookFrameInfo> NativeHookFilter::ParseFrame(uint64_t row, const ProtoReader::DataArea& frame)
 {
     ProtoReader::Frame_Reader reader(frame.Data(), frame.Size());
     uint64_t symbolIndex = INVALID_UINT64;
     uint64_t filePathIndex = INVALID_UINT64;
+    auto curCacheIpid = traceDataCache_->GetNativeHookData()->Ipids()[row];
+    if (isSingleProcData_) {
+        curCacheIpid = SINGLE_PROC_IPID;
+    }
     if (isStringCompressedMode_) {
-        if (!symbolIdToSymbolIndex_.count(reader.symbol_name_id())) {
-            TS_LOGE("Native hook ParseFrame find symbol id failed!!!");
-            return nullptr;
-        }
-        symbolIndex = symbolIdToSymbolIndex_.at(reader.symbol_name_id());
-
-        if (!filePathIdToFileIndex_.count(reader.file_path_id())) {
-            TS_LOGE("Native hook ParseFrame find file path id failed!!!");
-            return nullptr;
-        }
-        filePathIndex = filePathIdToFileIndex_.at(reader.file_path_id());
+        symbolIndex = ipidToSymIdToSymIndex_.Find(curCacheIpid, reader.symbol_name_id());
+        TS_CHECK_TRUE(symbolIndex != INVALID_UINT64, nullptr, "Native hook ParseFrame find symbol id failed!!!");
+        filePathIndex = ipidToFilePathIdToFileIndex_.Find(curCacheIpid, reader.file_path_id());
+        TS_CHECK_TRUE(filePathIndex != INVALID_UINT64, nullptr, "Native hook ParseFrame find file path id failed!!!");
     } else {
         symbolIndex = traceDataCache_->dataDict_.GetStringIndex(reader.symbol_name().ToStdString());
         filePathIndex = traceDataCache_->dataDict_.GetStringIndex(reader.file_path().ToStdString());
@@ -121,7 +149,8 @@ std::unique_ptr<NativeHookFrameInfo> NativeHookFilter::ParseFrame(const ProtoRea
     return frameInfo;
 }
 
-void NativeHookFilter::CompressStackAndFrames(ProtoReader::RepeatedDataAreaIterator<ProtoReader::BytesView> frames)
+void NativeHookFilter::CompressStackAndFrames(uint64_t row,
+                                              ProtoReader::RepeatedDataAreaIterator<ProtoReader::BytesView> frames)
 {
     std::vector<uint64_t> framesHash;
     std::string framesHashStr = "";
@@ -130,7 +159,7 @@ void NativeHookFilter::CompressStackAndFrames(ProtoReader::RepeatedDataAreaItera
         auto frameHash = hashFun_(frameStr);
         if (!frameHashToFrameInfoMap_.count(frameHash)) {
             // the frame compression is completed and the frame is parsed.
-            auto frameInfo = ParseFrame(itor.GetDataArea());
+            auto frameInfo = ParseFrame(row, itor.GetDataArea());
             if (!frameInfo) {
                 continue;
             }
@@ -151,19 +180,32 @@ void NativeHookFilter::CompressStackAndFrames(ProtoReader::RepeatedDataAreaItera
         callChainId = stackHashValueToCallChainIdMap_[stackHashValue];
     }
     // When compressing the call stack, update the callChainId of the nativeHook table
-    auto row = traceDataCache_->GetNativeHookData()->Size() - 1;
     traceDataCache_->GetNativeHookData()->UpdateCallChainId(row, callChainId);
 }
 void NativeHookFilter::ParseStatisticEvent(uint64_t timeStamp, const ProtoReader::BytesView& bytesView)
 {
     ProtoReader::RecordStatisticsEvent_Reader reader(bytesView);
-    auto ipid = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, reader.pid());
     uint32_t callChainId = INVALID_UINT32;
-    if (reader.callstack_id() && stackIdToCallChainIdMap_.count(reader.callstack_id())) {
-        // The same call stack may have different symbolic results due to changes in the symbol table
-        callChainId = stackIdToCallChainIdMap_.at(reader.callstack_id());
+    uint64_t ipidWithCallChainIdIndex = INVALID_UINT64;
+    auto ipid = streamFilters_->processFilter_->GetOrCreateInternalPid(timeStamp, reader.pid());
+    if (isSingleProcData_) {
+        ipidWithCallChainIdIndex = reader.callstack_id();
     } else {
-        TS_LOGE("invalid callChainId", reader.callstack_id());
+        ipidWithCallChainIdIndex =
+            traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(reader.callstack_id()));
+    }
+    // When the stack id is zero, there is no matching call stack
+    if (isOfflineSymbolizationMode_ && reader.callstack_id()) {
+        // The same call stack may have different symbolic results due to changes in the symbol table
+        if (stackIdToCallChainIdMap_.count(ipidWithCallChainIdIndex)) {
+            callChainId = stackIdToCallChainIdMap_.at(ipidWithCallChainIdIndex);
+        } else {
+            TS_LOGE("invalid callChainId, can not find stack id : %u in stackIdToCallChainIdMap_!",
+                    reader.callstack_id());
+        }
+    } else if (reader.callstack_id()) { // when isStatisticMode_ is true, isCallStackCompressedMode_ must be true.
+        // when isOfflineSymblolizationMode_ is false, the stack id is unique
+        callChainId = ipidWithCallChainIdIndex;
     }
 
     DataIndex memSubType = INVALID_UINT64;
@@ -178,27 +220,37 @@ void NativeHookFilter::ParseAllocEvent(uint64_t timeStamp, const ProtoReader::By
 {
     ProtoReader::AllocEvent_Reader allocEventReader(bytesView);
     uint32_t callChainId = INVALID_UINT32;
+    auto itid =
+        streamFilters_->processFilter_->GetOrCreateThreadWithPid(allocEventReader.tid(), allocEventReader.pid());
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
+    uint64_t ipidWithStackIdIndex = INVALID_UINT64;
+    uint64_t ipidWithThreadNameIdIndex = INVALID_UINT64;
+    if (isSingleProcData_) {
+        ipidWithThreadNameIdIndex = allocEventReader.thread_name_id();
+        ipidWithStackIdIndex = allocEventReader.stack_id();
+    } else {
+        ipidWithThreadNameIdIndex = traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" +
+                                                                  std::to_string(allocEventReader.thread_name_id()));
+        ipidWithStackIdIndex =
+            traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(allocEventReader.stack_id()));
+    }
     // When the stack id is zero, there is no matching call stack
     if (isOfflineSymbolizationMode_ && allocEventReader.stack_id()) {
         // The same call stack may have different symbolic results due to changes in the symbol table
-        if (stackIdToCallChainIdMap_.count(allocEventReader.stack_id())) {
-            callChainId = stackIdToCallChainIdMap_.at(allocEventReader.stack_id());
+        if (stackIdToCallChainIdMap_.count(ipidWithStackIdIndex)) {
+            callChainId = stackIdToCallChainIdMap_.at(ipidWithStackIdIndex);
         } else {
-            TS_LOGE("invalid callChainId, can not find stack id : %u in stackIdToCallChainIdMap_!",
-                    allocEventReader.stack_id());
+            TS_LOGE("invalid callChainId, can not find pid with stack id : %" PRIu64 " in stackIdToCallChainIdMap_!",
+                    ipidWithStackIdIndex);
         }
     } else if (isCallStackCompressedMode_ && allocEventReader.stack_id()) {
         // when isOfflineSymblolizationMode_ is false && isCallStackCompressedMode is true, the stack id is unique
-        callChainId = allocEventReader.stack_id();
+        callChainId = ipidWithStackIdIndex;
     }
-
-    auto itid =
-        streamFilters_->processFilter_->GetOrCreateThreadWithPid(allocEventReader.tid(), allocEventReader.pid());
 
     if (allocEventReader.has_thread_name_id()) {
-        UpdateMap(itidToThreadNameId_, itid, allocEventReader.thread_name_id());
+        UpdateMap(itidToThreadNameId_, itid, ipidWithThreadNameIdIndex);
     }
-    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     auto row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
         callChainId, ipid, itid, "AllocEvent", INVALID_UINT64, timeStamp, 0, 0, allocEventReader.addr(),
         allocEventReader.size());
@@ -208,7 +260,7 @@ void NativeHookFilter::ParseAllocEvent(uint64_t timeStamp, const ProtoReader::By
     }
     // Uncompressed call stack
     if (allocEventReader.has_frame_info()) {
-        CompressStackAndFrames(allocEventReader.frame_info());
+        CompressStackAndFrames(row, allocEventReader.frame_info());
     }
 }
 
@@ -216,22 +268,34 @@ void NativeHookFilter::ParseFreeEvent(uint64_t timeStamp, const ProtoReader::Byt
 {
     ProtoReader::FreeEvent_Reader freeEventReader(bytesView);
     uint32_t callChainId = INVALID_UINT32;
+    auto itid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(freeEventReader.tid(), freeEventReader.pid());
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
+    uint64_t ipidWithStackIdIndex = INVALID_UINT64;
+    uint64_t ipidWithThreadNameIdIndex = INVALID_UINT64;
+    if (isSingleProcData_) {
+        ipidWithStackIdIndex = freeEventReader.stack_id();
+        ipidWithThreadNameIdIndex = freeEventReader.thread_name_id();
+    } else {
+        ipidWithThreadNameIdIndex = traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" +
+                                                                  std::to_string(freeEventReader.thread_name_id()));
+        ipidWithStackIdIndex =
+            traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(freeEventReader.stack_id()));
+    }
     // When the stack id is zero, there is no matching call stack
     if (isOfflineSymbolizationMode_ && freeEventReader.stack_id()) {
         // The same call stack may have different symbolic results due to changes in the symbol table
-        if (stackIdToCallChainIdMap_.count(freeEventReader.stack_id())) {
-            callChainId = stackIdToCallChainIdMap_.at(freeEventReader.stack_id());
+        if (stackIdToCallChainIdMap_.count(ipidWithStackIdIndex)) {
+            callChainId = stackIdToCallChainIdMap_.at(ipidWithStackIdIndex);
         } else {
-            TS_LOGE("invalid callChainId, can not find stack id : %u in stackIdToCallChainIdMap_!",
-                    freeEventReader.stack_id());
+            TS_LOGE("invalid callChainId, can not find pid with stack id : %" PRIu64 " in stackIdToCallChainIdMap_!",
+                    ipidWithStackIdIndex);
         }
     } else if (isCallStackCompressedMode_ && freeEventReader.stack_id()) {
         // when isOfflineSymblolizationMode_ is false && isCallStackCompressedMode is true, the stack id is unique
-        callChainId = freeEventReader.stack_id();
+        callChainId = ipidWithStackIdIndex;
     }
-    auto itid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(freeEventReader.tid(), freeEventReader.pid());
     if (freeEventReader.thread_name_id() != 0) {
-        UpdateMap(itidToThreadNameId_, itid, freeEventReader.thread_name_id());
+        UpdateMap(itidToThreadNameId_, itid, ipidWithThreadNameIdIndex);
     }
     int64_t freeHeapSize = 0;
     // Find a matching malloc event, and if the matching fails, do not write to the database
@@ -248,7 +312,6 @@ void NativeHookFilter::ParseFreeEvent(uint64_t timeStamp, const ProtoReader::Byt
         streamFilters_->statFilter_->IncreaseStat(TRACE_NATIVE_HOOK_FREE, STAT_EVENT_DATA_INVALID);
         return;
     }
-    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
         callChainId, ipid, itid, "FreeEvent", INVALID_UINT64, timeStamp, 0, 0, freeEventReader.addr(), freeHeapSize);
     if (freeHeapSize != 0) {
@@ -256,7 +319,7 @@ void NativeHookFilter::ParseFreeEvent(uint64_t timeStamp, const ProtoReader::Byt
     }
     // Uncompressed call stack
     if (freeEventReader.has_frame_info()) {
-        CompressStackAndFrames(freeEventReader.frame_info());
+        CompressStackAndFrames(row, freeEventReader.frame_info());
     }
 }
 
@@ -264,23 +327,35 @@ void NativeHookFilter::ParseMmapEvent(uint64_t timeStamp, const ProtoReader::Byt
 {
     ProtoReader::MmapEvent_Reader mMapEventReader(bytesView);
     uint32_t callChainId = INVALID_UINT32;
+    auto itid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(mMapEventReader.tid(), mMapEventReader.pid());
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
+    uint64_t ipidWithStackIdIndex = INVALID_UINT64;
+    uint64_t ipidWithThreadNameIdIndex = INVALID_UINT64;
+    if (isSingleProcData_) {
+        ipidWithStackIdIndex = mMapEventReader.stack_id();
+        ipidWithThreadNameIdIndex = mMapEventReader.thread_name_id();
+    } else {
+        ipidWithThreadNameIdIndex = traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" +
+                                                                  std::to_string(mMapEventReader.thread_name_id()));
+        ipidWithStackIdIndex =
+            traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(mMapEventReader.stack_id()));
+    }
     // When the stack id is zero, there is no matching call stack
     if (isOfflineSymbolizationMode_ && mMapEventReader.stack_id()) {
         // The same call stack may have different symbolic results due to changes in the symbol table
-        if (stackIdToCallChainIdMap_.count(mMapEventReader.stack_id())) {
-            callChainId = stackIdToCallChainIdMap_.at(mMapEventReader.stack_id());
+        if (stackIdToCallChainIdMap_.count(ipidWithStackIdIndex)) {
+            callChainId = stackIdToCallChainIdMap_.at(ipidWithStackIdIndex);
         } else {
-            TS_LOGE("invalid callChainId, can not find stack id : %u in stackIdToCallChainIdMap_!",
-                    mMapEventReader.stack_id());
+            TS_LOGE("invalid callChainId, can not find pid with stack id : %" PRIu64 " in stackIdToCallChainIdMap_!",
+                    ipidWithStackIdIndex);
         }
     } else if (isCallStackCompressedMode_ && mMapEventReader.stack_id()) {
         // when isOfflineSymblolizationMode_ is false && isCallStackCompressedMode is true, the stack id is unique
-        callChainId = mMapEventReader.stack_id();
+        callChainId = ipidWithStackIdIndex;
     }
-    auto itid = streamFilters_->processFilter_->GetOrCreateThreadWithPid(mMapEventReader.tid(), mMapEventReader.pid());
     // Update the mapping of tid to thread name id.
     if (mMapEventReader.thread_name_id() != 0) {
-        UpdateMap(itidToThreadNameId_, itid, mMapEventReader.thread_name_id());
+        UpdateMap(itidToThreadNameId_, itid, ipidWithThreadNameIdIndex);
     }
     // Gets the index of the mmap event's label in the data dictionary
     DataIndex subType = INVALID_UINT64;
@@ -291,7 +366,6 @@ void NativeHookFilter::ParseMmapEvent(uint64_t timeStamp, const ProtoReader::Byt
         // Establish a mapping of addr and size to the mmap tag index.
         addrToMmapTag_[mMapAddr] = subType; // update addr to MemMapSubType
     }
-    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     auto row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
         callChainId, ipid, itid, "MmapEvent", subType, timeStamp, 0, 0, mMapAddr, mMapSize);
     if (subType == INVALID_UINT64) {
@@ -304,7 +378,7 @@ void NativeHookFilter::ParseMmapEvent(uint64_t timeStamp, const ProtoReader::Byt
     }
     // Uncompressed call stack
     if (mMapEventReader.has_frame_info()) {
-        CompressStackAndFrames(mMapEventReader.frame_info());
+        CompressStackAndFrames(row, mMapEventReader.frame_info());
     }
 }
 
@@ -312,23 +386,35 @@ void NativeHookFilter::ParseMunmapEvent(uint64_t timeStamp, const ProtoReader::B
 {
     ProtoReader::MunmapEvent_Reader mUnmapEventReader(bytesView);
     uint32_t callChainId = INVALID_UINT32;
+    auto itid =
+        streamFilters_->processFilter_->GetOrCreateThreadWithPid(mUnmapEventReader.tid(), mUnmapEventReader.pid());
+    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
+    uint64_t ipidWithStackIdIndex = INVALID_UINT64;
+    uint64_t ipidWithThreadNameIdIndex = INVALID_UINT64;
+    if (isSingleProcData_) {
+        ipidWithStackIdIndex = mUnmapEventReader.stack_id();
+        ipidWithThreadNameIdIndex = mUnmapEventReader.thread_name_id();
+    } else {
+        ipidWithThreadNameIdIndex = traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" +
+                                                                  std::to_string(mUnmapEventReader.thread_name_id()));
+        ipidWithStackIdIndex =
+            traceDataCache_->GetDataIndex(std::to_string(ipid) + "_" + std::to_string(mUnmapEventReader.stack_id()));
+    }
     // When the stack id is zero, there is no matching call stack
     if (isOfflineSymbolizationMode_ && mUnmapEventReader.stack_id()) {
         // The same call stack may have different symbolic results due to changes in the symbol table
-        if (stackIdToCallChainIdMap_.count(mUnmapEventReader.stack_id())) {
+        if (stackIdToCallChainIdMap_.count(ipidWithStackIdIndex)) {
             callChainId = stackIdToCallChainIdMap_.at(mUnmapEventReader.stack_id());
         } else {
-            TS_LOGE("invalid callChainId, can not find stack id : %u in stackIdToCallChainIdMap_!",
-                    mUnmapEventReader.stack_id());
+            TS_LOGE("invalid callChainId, can not find pid with stack id : %" PRIu64 " in stackIdToCallChainIdMap_!",
+                    ipidWithStackIdIndex);
         }
     } else if (isCallStackCompressedMode_ && mUnmapEventReader.stack_id()) {
         // when isOfflineSymblolizationMode_ is false && isCallStackCompressedMode is true, the stack id is unique
-        callChainId = mUnmapEventReader.stack_id();
+        callChainId = ipidWithStackIdIndex;
     }
-    auto itid =
-        streamFilters_->processFilter_->GetOrCreateThreadWithPid(mUnmapEventReader.tid(), mUnmapEventReader.pid());
     if (mUnmapEventReader.thread_name_id() != 0) {
-        UpdateMap(itidToThreadNameId_, itid, mUnmapEventReader.thread_name_id());
+        UpdateMap(itidToThreadNameId_, itid, ipidWithThreadNameIdIndex);
     }
     // Query for MMAP events that match the current data. If there are no matching MMAP events, the current data is not
     // written to the database.
@@ -346,7 +432,6 @@ void NativeHookFilter::ParseMunmapEvent(uint64_t timeStamp, const ProtoReader::B
         return;
     }
     auto subType = GetMemMapSubTypeWithAddr(mUnmapAddr);
-    auto ipid = traceDataCache_->GetConstThreadData(itid).internalPid_;
     row = traceDataCache_->GetNativeHookData()->AppendNewNativeHookData(
         callChainId, ipid, itid, "MunmapEvent", subType, timeStamp, 0, 0, mUnmapAddr, mUnmapEventReader.size());
     addrToMmapTag_.erase(mUnmapAddr); // earse MemMapSubType with addr
@@ -355,7 +440,7 @@ void NativeHookFilter::ParseMunmapEvent(uint64_t timeStamp, const ProtoReader::B
     }
     // Uncompressed call stack
     if (mUnmapEventReader.has_frame_info()) {
-        CompressStackAndFrames(mUnmapEventReader.frame_info());
+        CompressStackAndFrames(row, mUnmapEventReader.frame_info());
     }
 }
 void NativeHookFilter::ParseTagEvent(const ProtoReader::BytesView& bytesView)
@@ -444,27 +529,30 @@ void NativeHookFilter::MaybeParseNativeHookMainEvent(uint64_t timeStamp,
 }
 
 // Returns the address range of memMaps that conflict with start Addr and endAddr, as [start, end).
-std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRange(uint64_t startAddr, uint64_t endAddr)
+std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRange(uint32_t ipid,
+                                                                                   uint64_t startAddr,
+                                                                                   uint64_t endAddr)
 {
     uint64_t start = INVALID_UINT64;
     uint64_t end = INVALID_UINT64;
-    if (startAddr >= endAddr) {
+    auto startAddrToMapsInfoMapPtr = ipidToStartAddrToMapsInfoMap_.Find(ipid);
+    if (startAddr >= endAddr || startAddrToMapsInfoMapPtr == nullptr) {
         return std::make_tuple(start, end);
     }
-    // Find first item in startAddrToMapsInfoMap_,
+    // Find first item in startAddrToMapsInfoMapPtr,
     // that startItor->second()->start <= startAddr && startItor->second()->end > startAddr.
-    auto startItor = startAddrToMapsInfoMap_.upper_bound(startAddr);
-    if (startAddrToMapsInfoMap_.begin() != startItor) {
+    auto startItor = startAddrToMapsInfoMapPtr->upper_bound(startAddr);
+    if (startAddrToMapsInfoMapPtr->begin() != startItor) {
         --startItor;
         // Follow the rules of front closing and rear opening, [start, end)
-        if (startItor != startAddrToMapsInfoMap_.end() && startAddr >= startItor->second->end()) {
+        if (startItor != startAddrToMapsInfoMapPtr->end() && startAddr >= startItor->second->end()) {
             ++startItor;
         }
     }
     // Forward query for the last item with filePathId == startItor ->filePathId()
-    if (startItor != startAddrToMapsInfoMap_.end()) {
+    if (startItor != startAddrToMapsInfoMapPtr->end()) {
         auto startFilePathId = startItor->second->file_path_id();
-        while (startAddrToMapsInfoMap_.begin() != startItor) {
+        while (startAddrToMapsInfoMapPtr->begin() != startItor) {
             --startItor;
             if (startFilePathId != startItor->second->file_path_id()) {
                 ++startItor;
@@ -474,12 +562,12 @@ std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRan
         start = startItor->first;
     }
 
-    // Find first item in startAddrToMapsInfoMap_, that endItor->second()->start > endAddr
-    auto endItor = startAddrToMapsInfoMap_.upper_bound(endAddr);
-    if (endItor == startAddrToMapsInfoMap_.end()) {
+    // Find first item in startAddrToMapsInfoMapPtr, that endItor->second()->start > endAddr
+    auto endItor = startAddrToMapsInfoMapPtr->upper_bound(endAddr);
+    if (endItor == startAddrToMapsInfoMapPtr->end()) {
         return std::make_tuple(start, end);
     }
-    if (endItor == startAddrToMapsInfoMap_.begin()) {
+    if (endItor == startAddrToMapsInfoMapPtr->begin()) {
         start = INVALID_UINT64;
         return std::make_tuple(start, end);
     }
@@ -487,7 +575,7 @@ std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRan
     --endItor;
     auto endFilePathId = endItor->second->file_path_id();
     ++endItor;
-    while (endItor != startAddrToMapsInfoMap_.end()) {
+    while (endItor != startAddrToMapsInfoMapPtr->end()) {
         if (endFilePathId != endItor->second->file_path_id()) {
             end = endItor->second->start();
             break;
@@ -498,20 +586,20 @@ std::tuple<uint64_t, uint64_t> NativeHookFilter::GetNeedUpdateProcessMapsAddrRan
 }
 
 inline void NativeHookFilter::FillOfflineSymbolizationFrames(
-    std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>>::iterator mapItor)
+    std::map<uint64_t, std::shared_ptr<std::vector<uint64_t>>>::iterator mapItor)
 {
+    auto curCacheIpid = mapItor->second->back();
     stackIdToCallChainIdMap_.insert(std::make_pair(mapItor->first, ++callChainId_));
     auto framesInfo = OfflineSymbolization(mapItor->second);
     uint64_t depth = 0;
-    uint64_t filePathIndex;
+    uint64_t filePathIndex = INVALID_UINT64;
+    if (isSingleProcData_) {
+        curCacheIpid = SINGLE_PROC_IPID;
+    }
     for (auto itor = framesInfo->rbegin(); itor != framesInfo->rend(); itor++) {
         // Note that the filePathId here is provided for the end side. Not a true TS internal index dictionary.
         auto frameInfo = itor->get();
-        if (filePathIdToFileIndex_.count(frameInfo->filePathId_)) {
-            filePathIndex = filePathIdToFileIndex_.at(frameInfo->filePathId_);
-        } else {
-            filePathIndex = INVALID_UINT64;
-        }
+        filePathIndex = ipidToFilePathIdToFileIndex_.Find(curCacheIpid, frameInfo->filePathId_);
         std::string vaddr = base::Uint64ToHexText(frameInfo->symVaddr_);
 
         traceDataCache_->GetNativeHookFrameData()->AppendNewNativeHookFrame(
@@ -575,8 +663,12 @@ void NativeHookFilter::ParseMapsEvent(std::unique_ptr<NativeHookMetaData>& nativ
     auto endAddr = reader->end();
     uint64_t start = INVALID_UINT64;
     uint64_t end = INVALID_UINT64;
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(reader->pid(), "");
+    if (isSingleProcData_) {
+        ipid = SINGLE_PROC_IPID;
+    }
     // Get [start, end) of ips addr range which need to update
-    std::tie(start, end) = GetNeedUpdateProcessMapsAddrRange(startAddr, endAddr);
+    std::tie(start, end) = GetNeedUpdateProcessMapsAddrRange(ipid, startAddr, endAddr);
     if (start != INVALID_UINT64 && start != end) { // Conflicting
         /* First parse the updated call stacks, then parse the main events, and finally update Maps or SymbolTable
         Note that when tsToMainEventsMap_.size() > MAX_CACHE_SIZE and main events need to be resolved, this logic
@@ -589,22 +681,25 @@ void NativeHookFilter::ParseMapsEvent(std::unique_ptr<NativeHookMetaData>& nativ
         }
 
         // Delete IP symbolization results within the conflict range.
-        auto ipToFrameInfoItor = ipToFrameInfo_.lower_bound(start);
-        while (ipToFrameInfoItor != ipToFrameInfo_.end() && ipToFrameInfoItor->first < end) {
-            auto key = ipToFrameInfoItor->first;
-            ipToFrameInfoItor++;
-            ipToFrameInfo_.erase(key);
+        auto ipToFrameInfoPtr = const_cast<IpToFrameInfoType*>(ipidToIpToFrameInfo_.Find(ipid));
+        if (ipToFrameInfoPtr != nullptr) {
+            auto ipToFrameInfoItor = ipToFrameInfoPtr->lower_bound(start);
+            while (ipToFrameInfoItor != ipToFrameInfoPtr->end() && ipToFrameInfoItor->first < end) {
+                ipToFrameInfoItor = ipToFrameInfoPtr->erase(ipToFrameInfoItor);
+            }
         }
         // Delete MapsInfo within the conflict range
-        auto startAddrToMapsInfoItor = startAddrToMapsInfoMap_.lower_bound(start);
-        while (startAddrToMapsInfoItor != startAddrToMapsInfoMap_.end() && startAddrToMapsInfoItor->first < end) {
-            auto key = startAddrToMapsInfoItor->first;
-            startAddrToMapsInfoItor++;
-            startAddrToMapsInfoMap_.erase(key);
+        auto startAddrToMapsInfoMapPtr = const_cast<StartAddrToMapsInfoType*>(ipidToStartAddrToMapsInfoMap_.Find(ipid));
+        if (startAddrToMapsInfoMapPtr != nullptr) {
+            auto itor = startAddrToMapsInfoMapPtr->lower_bound(start);
+            while (itor != startAddrToMapsInfoMapPtr->end() && itor->first < end) {
+                itor = startAddrToMapsInfoMapPtr->erase(itor);
+            }
         }
         ReparseStacksWithAddrRange(start, end);
     }
-    startAddrToMapsInfoMap_.insert(std::make_pair(startAddr, std::move(reader)));
+    ipidToStartAddrToMapsInfoMap_.Insert(ipid, startAddr, std::move(reader));
+    // startAddrToMapsInfoMap_.insert(std::make_pair(startAddr, std::move(reader)));
 }
 template <class T>
 void NativeHookFilter::UpdateSymbolTablePtrAndStValueToSymAddrMap(
@@ -633,8 +728,13 @@ void NativeHookFilter::ParseSymbolTableEvent(std::unique_ptr<NativeHookMetaData>
         return;
     }
     auto reader = std::make_shared<ProtoReader::SymbolTable_Reader>(symbolTableByteView);
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(reader->pid(), "");
+    if (isSingleProcData_) {
+        ipid = SINGLE_PROC_IPID;
+    }
     auto filePathId = reader->file_path_id();
-    if (filePathIdToSymbolTableMap_.count(filePathId)) { // SymbolTable already exists.
+    auto symbolTablePtr = ipidTofilePathIdToSymbolTableMap_.Find(ipid, filePathId);
+    if (symbolTablePtr != nullptr) { // SymbolTable already exists.
         /* First parse the updated call stacks, then parse the main events, and finally update Maps or SymbolTable
         Note that when tsToMainEventsMap_.size() > MAX_CACHE_SIZE and main events need to be resolved, this logic
         should also be followed. */
@@ -645,26 +745,33 @@ void NativeHookFilter::ParseSymbolTableEvent(std::unique_ptr<NativeHookMetaData>
             FilterNativeHookMainEvent(tsToMainEventsMap_.size());
         }
         // Delete symbolic results with the same filePathId
-        for (auto itor = ipToFrameInfo_.begin(); itor != ipToFrameInfo_.end(); itor++) {
-            if (itor->second->filePathId_ == filePathId) {
-                ipToFrameInfo_.erase(itor->first);
+        auto ipToFrameInfoPtr = const_cast<IpToFrameInfoType*>(ipidToIpToFrameInfo_.Find(ipid));
+        if (ipToFrameInfoPtr != nullptr) {
+            for (auto itor = ipToFrameInfoPtr->begin(); itor != ipToFrameInfoPtr->end();) {
+                if (itor->second->filePathId_ == filePathId) {
+                    itor = ipToFrameInfoPtr->erase(itor);
+                    continue;
+                }
+                itor++;
             }
         }
         uint64_t start = INVALID_UINT32;
         uint64_t end = 0;
-        for (auto itor = startAddrToMapsInfoMap_.begin(); itor != startAddrToMapsInfoMap_.end(); itor++) {
-            if (itor->second->file_path_id() == filePathId) {
-                start = std::min(itor->first, start);
-                end = std::max(itor->second->end(), end);
-            } else if (start != INVALID_UINT32) {
-                break;
+        auto startAddrToMapsInfoMapPtr = ipidToStartAddrToMapsInfoMap_.Find(ipid);
+        if (startAddrToMapsInfoMapPtr != nullptr) {
+            for (auto itor = startAddrToMapsInfoMapPtr->begin(); itor != startAddrToMapsInfoMapPtr->end(); itor++) {
+                if (itor->second->file_path_id() == filePathId) {
+                    start = std::min(itor->first, start);
+                    end = std::max(itor->second->end(), end);
+                } else if (start != INVALID_UINT32) {
+                    break;
+                }
             }
         }
         ReparseStacksWithAddrRange(start, end);
-
-        filePathIdToSymbolTableMap_.at(filePathId) = reader;
+        symbolTablePtr = reader;
     } else {
-        filePathIdToSymbolTableMap_.insert(std::make_pair(filePathId, reader));
+        ipidTofilePathIdToSymbolTableMap_.Insert(ipid, filePathId, reader);
     }
 
     auto symEntrySize = reader->sym_entry_size();
@@ -749,27 +856,31 @@ void NativeHookFilter::ParseFramesInCallStackCompressedMode()
          stackIdToFramesItor++) {
         auto frameIds = stackIdToFramesItor->second;
         uint64_t depth = 0;
-        for (auto frameIdsItor = frameIds->crbegin(); frameIdsItor != frameIds->crend(); frameIdsItor++) {
-            if (!frameIdToFrameBytes_.count(*frameIdsItor)) {
+        auto curCacheIpid = frameIds->back();
+        if (isSingleProcData_) {
+            curCacheIpid = SINGLE_PROC_IPID;
+        }
+        for (auto frameIdsItor = frameIds->crbegin() + 1; frameIdsItor != frameIds->crend(); frameIdsItor++) {
+            auto frameBytesPtr = ipidToFrameIdToFrameBytes_.Find(curCacheIpid, *frameIdsItor);
+            if (frameBytesPtr == nullptr) {
                 TS_LOGE("Can not find Frame by frame_map_id!!!");
                 continue;
             }
-            ProtoReader::Frame_Reader reader(*(frameIdToFrameBytes_.at(*frameIdsItor)));
-
+            ProtoReader::Frame_Reader reader(*frameBytesPtr);
             if (!reader.has_file_path_id() or !reader.has_symbol_name_id()) {
                 TS_LOGE("Data exception, frames should has fil_path_id and symbol_name_id");
                 continue;
             }
-            if (!filePathIdToFileIndex_.count(reader.file_path_id())) {
-                TS_LOGE("Data exception, can not find fil_path_id!!!");
+            auto filePathIndex = ipidToFilePathIdToFileIndex_.Find(curCacheIpid, reader.file_path_id());
+            if (filePathIndex == INVALID_UINT64) {
+                TS_LOGE("Data exception, can not find fil_path_id(%u)!!!", reader.file_path_id());
                 continue;
             }
-            auto& filePathIndex = filePathIdToFileIndex_.at(reader.file_path_id());
-            if (!symbolIdToSymbolIndex_.count(reader.symbol_name_id())) {
+            auto symbolIndex = ipidToSymIdToSymIndex_.Find(curCacheIpid, reader.symbol_name_id());
+            if (symbolIndex == INVALID_UINT64) {
                 TS_LOGE("Data exception, can not find symbol_name_id!!!");
                 continue;
             }
-            auto& symbolIndex = symbolIdToSymbolIndex_.at(reader.symbol_name_id());
             traceDataCache_->GetNativeHookFrameData()->AppendNewNativeHookFrame(
                 stackIdToFramesItor->first, depth, reader.ip(), reader.sp(), symbolIndex, filePathIndex,
                 reader.offset(), reader.symbol_offset());
@@ -894,10 +1005,11 @@ void NativeHookFilter::GetCallIdToLastLibId()
         }
     }
 }
-bool NativeHookFilter::GetIpsWitchNeedResymbolization(DataIndex filePathId, std::set<uint64_t>& ips)
+bool NativeHookFilter::GetIpsWitchNeedResymbolization(uint64_t ipid, DataIndex filePathId, std::set<uint64_t>& ips)
 {
     bool value = false;
-    for (auto itor = ipToFrameInfo_.begin(); itor != ipToFrameInfo_.end(); itor++) {
+    auto ipToFrameInfoPtr = ipidToIpToFrameInfo_.Find(ipid);
+    for (auto itor = ipToFrameInfoPtr->begin(); itor != ipToFrameInfoPtr->end(); itor++) {
         if (!itor->second) {
             TS_LOGI("ip :%" PRIu64 " can not symbolization! FrameInfo is nullptr", itor->first);
             continue;

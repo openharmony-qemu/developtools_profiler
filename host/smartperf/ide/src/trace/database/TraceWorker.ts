@@ -29,6 +29,9 @@ let headUnitArray: Uint8Array | undefined;
 let thirdWasmMap = new Map();
 let thirdJsonResult = new Map();
 
+let CONTENT_TYPE_CMDLINES = 2;
+let CONTENT_TYPE_TGIDS = 3;
+
 let arkTsData: Array<Uint8Array> = [];
 let arkTsDataSize: number = 0;
 
@@ -278,18 +281,69 @@ self.onmessage = async (e: MessageEvent) => {
     }
     let wrSize = 0;
     let r2 = -1;
-    while (wrSize < uint8Array.length) {
-      const sliceLen = Math.min(uint8Array.length - wrSize, REQ_BUF_SIZE);
-      const dataSlice = uint8Array.subarray(wrSize, wrSize + sliceLen);
-      Module.HEAPU8.set(dataSlice, reqBufferAddr);
-      wrSize += sliceLen;
-      if (wrSize >= uint8Array.length) {
-        r2 = Module._TraceStreamerParseDataEx(sliceLen, 1);
-      } else {
-        r2 = Module._TraceStreamerParseDataEx(sliceLen, 0);
+    let rowTraceStr = Array.from(new Uint32Array(e.data.buffer.slice(0, 4)));
+    if (rowTraceStr[0] === 57161) {
+      let commonDataOffsetList: Array<{
+        startOffset: number
+        endOffset: number
+      }> = [];
+      let offset = 12;
+      let tlvTypeLength = 4;
+      let headArray = uint8Array.slice(0, offset);
+      let commonTotalLength = 0;
+      while (offset < uint8Array.length) {
+        let commonDataOffset  = {
+          startOffset: offset,
+          endOffset: offset
+        };
+        let dataTypeData = e.data.buffer.slice(offset, offset + tlvTypeLength);
+        offset += tlvTypeLength;
+        let dataType = Array.from(new Uint32Array(dataTypeData));
+        let currentLData = e.data.buffer.slice(offset, offset + tlvTypeLength);
+        offset += tlvTypeLength;
+        let currentVLength = Array.from(new Uint32Array(currentLData));
+        offset += currentVLength[0];
+        commonDataOffset.endOffset = offset;
+        if (dataType[0] === CONTENT_TYPE_CMDLINES || dataType[0] === CONTENT_TYPE_TGIDS) {
+          commonTotalLength += commonDataOffset.endOffset - commonDataOffset.startOffset;
+          commonDataOffsetList.push(commonDataOffset);
+        }
       }
-      if (r2 == -1) {
-        break;
+      let frontData = new Uint8Array(headArray.byteLength + commonTotalLength);
+      // HeadArray
+      frontData.set(headArray, 0);
+      let lengthOffset = headArray.byteLength;
+      // common Data
+      commonDataOffsetList.forEach(item => {
+        let commonData = uint8Array.slice(item.startOffset, item.endOffset);
+        frontData.set(commonData, lengthOffset);
+        lengthOffset += commonData.byteLength;
+      });
+      let freeData = uint8Array.slice(12);
+      let final = new Uint8Array(frontData.length + freeData.length);
+      final.set(frontData);
+      final.set(freeData, frontData.length);
+      wrSize = 0;
+      while (wrSize < final.length) {
+        const sliceLen = Math.min(final.length - wrSize, REQ_BUF_SIZE);
+        const dataSlice = final.subarray(wrSize, wrSize + sliceLen);
+        Module.HEAPU8.set(dataSlice, reqBufferAddr);
+        wrSize += sliceLen;
+        r2 = Module._TraceStreamerParseDataEx(sliceLen);
+        if (r2 == -1) {
+          break;
+        }
+      }
+    } else {
+      while (wrSize < uint8Array.length) {
+        const sliceLen = Math.min(uint8Array.length - wrSize, REQ_BUF_SIZE);
+        const dataSlice = uint8Array.subarray(wrSize, wrSize + sliceLen);
+        Module.HEAPU8.set(dataSlice, reqBufferAddr);
+        wrSize += sliceLen;
+        r2 = Module._TraceStreamerParseDataEx(sliceLen);
+        if (r2 == -1) {
+          break;
+        }
       }
     }
     Module._TraceStreamerParseDataOver();

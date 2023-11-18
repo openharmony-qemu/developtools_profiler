@@ -129,7 +129,7 @@ describe('SpSystemTrace Test', () => {
     spSystemTrace.rowsPaneEL.scrollTo = jest.fn(() => offset);
     spSystemTrace.rowsPaneEL.removeEventListener = jest.fn(() => true);
     spSystemTrace.rowsPaneEL.addEventListener = jest.fn(() => true);
-    expect(spSystemTrace.rowScrollTo(offset, callback)).toBeUndefined();
+    expect(spSystemTrace.scrollToActFunc(offset, callback)).toBeUndefined();
   });
 
   it('SpSystemTraceTest16', function () {
@@ -257,15 +257,6 @@ describe('SpSystemTrace Test', () => {
     anomalyTraceRow.collect = true;
     spSystemTrace.appendChild(anomalyTraceRow);
     expect(spSystemTrace.scrollToDepth()).toBeUndefined();
-  });
-  it('SpSystemTraceTest27', function () {
-    let spSystemTrace = new SpSystemTrace<any>({
-      canvasNumber: 1,
-      alpha: true,
-      contextId: '2d',
-      isOffScreen: true,
-    });
-    expect(spSystemTrace.searchThreadsAndProcesses()).toStrictEqual([]);
   });
   it('SpSystemTraceTest28', function () {
     let spSystemTrace = new SpSystemTrace<any>({

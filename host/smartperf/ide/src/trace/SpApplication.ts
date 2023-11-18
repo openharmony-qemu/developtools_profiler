@@ -55,6 +55,8 @@ import './component/trace/base/CustomThemeColor.js';
 import { CustomThemeColor, Theme } from './component/trace/base/CustomThemeColor.js';
 import { convertPool } from './database/Convert.js';
 import { LongTraceDBUtils } from './database/LongTraceDBUtils.js';
+import { type SpKeyboard } from './component/SpKeyboard.js';
+import './component/SpKeyboard.js';
 
 @element('sp-application')
 export class SpApplication extends BaseElement {
@@ -501,8 +503,10 @@ export class SpApplication extends BaseElement {
             display: flex;
         }
         </style>
-        <div class="root">
+        <div class="root" style="position: relative;">
             <lit-main-menu id="main-menu" class="menu" data=''></lit-main-menu>
+            <sp-keyboard style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 8888" id="sp-keyboard">
+            </sp-keyboard>
             <div class="search-container">
                 <div class="search" style="position: relative;">
                     <div class="sidebar-button" style="width: 0">
@@ -571,19 +575,18 @@ export class SpApplication extends BaseElement {
     let spInfoAndStats = this.shadowRoot!.querySelector<SpInfoAndStats>('#sp-info-and-stats') as SpInfoAndStats; // new SpInfoAndStats();
     let spSystemTrace = this.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.spHelp = this.shadowRoot!.querySelector<SpHelp>('#sp-help');
+    let SpKeyboard = this.shadowRoot!.querySelector<SpKeyboard>('#sp-keyboard') as SpKeyboard;
     let spFlags = this.shadowRoot!.querySelector<SpFlags>('#sp-flags') as SpFlags;
     let spRecordTrace = this.shadowRoot!.querySelector<SpRecordTrace>('#sp-record-trace');
     let spRecordTemplate = this.shadowRoot!.querySelector<SpRecordTrace>('#sp-record-template');
     let spSchedulingAnalysis = this.shadowRoot!.querySelector<SpSchedulingAnalysis>(
       '#sp-scheduling-analysis'
     ) as SpSchedulingAnalysis;
-    let appContent = this.shadowRoot?.querySelector('#app-content') as HTMLDivElement;
     let mainMenu = this.shadowRoot?.querySelector('#main-menu') as LitMainMenu;
     let menu = mainMenu.shadowRoot?.querySelector('.menu-button') as HTMLDivElement;
     let progressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
     let litSearch = this.shadowRoot?.querySelector('#lit-search') as LitSearch;
     let litRecordSearch = this.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
-    let search = this.shadowRoot?.querySelector('.search-container') as HTMLElement;
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
     let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
     let cutTraceFile = this.shadowRoot?.querySelector('.cut-trace-file') as HTMLImageElement;
@@ -608,6 +611,7 @@ export class SpApplication extends BaseElement {
       this.spHelp,
       spRecordTemplate,
       spFlags,
+      SpKeyboard,
     ];
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') {
@@ -763,6 +767,7 @@ export class SpApplication extends BaseElement {
         filterConfig.style.visibility = 'visible';
       } else {
         that.removeAttribute('custom-color');
+        customColor!.setAttribute('hidden', '');
         customColor.cancelOperate();
         menu!.style.pointerEvents = 'none';
         sidebarButton!.style.pointerEvents = 'none';
@@ -785,9 +790,6 @@ export class SpApplication extends BaseElement {
           that!.removeAttribute('custom-color');
           customColor!.setAttribute('hidden', '');
           customColor.cancelOperate();
-        } else {
-          that!.setAttribute('custom-color', '');
-          customColor!.removeAttribute('hidden');
         }
         if (node === showNode) {
           showNode.style.visibility = 'visible';
@@ -1061,6 +1063,7 @@ export class SpApplication extends BaseElement {
                   mainMenu.menus!.splice(1, mainMenu.menus!.length > 2 ? 1 : 0, {
                     collapsed: false,
                     title: 'Current Trace',
+                    second: false,
                     describe: 'Actions on the current trace',
                     children: getTraceOptionMenus(showFileName, fileSize, fileName, true, dbName),
                   });
@@ -1396,8 +1399,8 @@ export class SpApplication extends BaseElement {
                 let enc = new TextDecoder();
                 let headerStr = enc.decode(traceHeadData);
                 let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
-                .map((byte) => byte.toString(16).padStart(2, '0'))
-                .join('');
+                  .map((byte) => byte.toString(16).padStart(2, '0'))
+                  .join('');
                 if (headerStr.indexOf('OHOSPROF') !== 0 && rowTraceStr.indexOf('49df') !== 0) {
                   isAllowTrace = false;
                 }
@@ -1407,6 +1410,7 @@ export class SpApplication extends BaseElement {
                 mainMenu.menus!.splice(2, 1, {
                   collapsed: false,
                   title: 'Convert trace',
+                  second: false,
                   describe: 'Convert to other formats',
                   children: pushConvertTrace(fileName),
                 });
@@ -1415,6 +1419,7 @@ export class SpApplication extends BaseElement {
               mainMenu.menus!.splice(index, 1, {
                 collapsed: false,
                 title: 'Support',
+                second: false,
                 describe: 'Support',
                 children: [
                   {
@@ -1442,6 +1447,18 @@ export class SpApplication extends BaseElement {
                       showContent(spFlags);
                     },
                   },
+                  {
+                    title: 'Keyboard shortcuts',
+                    icon: 'menu',
+                    clickHandler: function (item: MenuItem) {
+                      SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                        event: 'Keyboard shortcuts',
+                        action: 'Keyboard shortcuts',
+                      });
+                      that.search = false;
+                      showContent(SpKeyboard);
+                    },
+                  },
                 ],
               });
               if (res.status) {
@@ -1449,6 +1466,7 @@ export class SpApplication extends BaseElement {
                 mainMenu.menus!.splice(1, mainMenu.menus!.length > 2 ? 1 : 0, {
                   collapsed: false,
                   title: 'Current Trace',
+                  second: false,
                   describe: 'Actions on the current trace',
                   children: getTraceOptionMenus(showFileName, fileSize, fileName, false),
                 });
@@ -1655,6 +1673,7 @@ export class SpApplication extends BaseElement {
 
     function openTraceFile(ev: any, isClickHandle?: boolean) {
       that.removeAttribute('custom-color');
+      customColor!.setAttribute('hidden', '');
       longTracePage.style.display = 'none';
       litSearch.style.marginLeft = '0px';
       let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
@@ -1743,6 +1762,7 @@ export class SpApplication extends BaseElement {
                   mainMenu.menus!.splice(1, mainMenu.menus!.length > 2 ? 1 : 0, {
                     collapsed: false,
                     title: 'Current Trace',
+                    second: false,
                     describe: 'Actions on the current trace',
                     children: getTraceOptionMenus(showFileName, fileSize, fileName, false),
                   });
@@ -1768,6 +1788,7 @@ export class SpApplication extends BaseElement {
       {
         collapsed: false,
         title: 'Navigation',
+        second: false,
         describe: 'Open or record a new trace',
         children: [
           {
@@ -1826,6 +1847,7 @@ export class SpApplication extends BaseElement {
       {
         collapsed: false,
         title: 'Support',
+        second: false,
         describe: 'Support',
         children: [
           {
@@ -1850,6 +1872,18 @@ export class SpApplication extends BaseElement {
               SpStatisticsHttpUtil.addOrdinaryVisitAction({
                 event: 'flags',
                 action: 'flags',
+              });
+            },
+          },
+          {
+            title: 'Keyboard shortcuts',
+            icon: 'smart-help',
+            clickHandler: function (item: MenuItem) {
+              that.search = false;
+              showContent(SpKeyboard);
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'Keyboard shortcuts',
+                action: 'Keyboard shortcuts',
               });
             },
           },

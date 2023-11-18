@@ -144,7 +144,7 @@ export class SpRecordTemplate extends BaseElement {
     }
     if (this.taskPoolEl!.checked) {
       useFtracePlugin = true;
-      traceEventSet.push('commonlibrary');
+      hitraceCategories.push('commonlibrary');
     }
     if (useFtracePlugin) {
       let tracePluginConfig: TracePluginConfig = {

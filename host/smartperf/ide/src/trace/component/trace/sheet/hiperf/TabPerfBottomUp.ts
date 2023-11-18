@@ -19,7 +19,6 @@ import '../TabPaneFilter.js';
 import { type FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import '../../../chart/FrameChart.js';
-import '../../../DisassemblingWindow.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
 import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
@@ -98,15 +97,20 @@ export class TabpanePerfBottomUp extends BaseElement {
   private setBottomUpTableData(results: Array<PerfBottomUpStruct>): void {
     const percentageDenominator = 100;
     const percentFraction = 1;
-    const timeFractionDigits = 2;
     this.stackTable!.recycleDataSource = [];
-    let totalTime = results.reduce((sum, struct) => sum + struct.selfTime, 0);
+    let sum = results.reduce((sum, struct) => {
+      sum.totalCount += struct.selfTime;
+      sum.totalEvent += struct.eventCount;
+      return sum;
+    }, {
+      totalCount: 0,
+      totalEvent: 0
+    });
     const setTabData = (array: Array<PerfBottomUpStruct>): void => {
       array.forEach((data) => {
-        data.totalTimePercent = `${((data.totalTime / totalTime) * percentageDenominator).toFixed(percentFraction)}%`;
-        data.selfTimePercent = `${((data.selfTime / totalTime) * percentageDenominator).toFixed(percentFraction)}%`;
-        data.selfTimeStr = `${data.selfTime.toFixed(timeFractionDigits)}ms`;
-        data.totalTimeStr = `${data.totalTime.toFixed(timeFractionDigits)}ms`;
+        data.totalTimePercent = `${((data.totalTime / sum.totalCount) * percentageDenominator).toFixed(percentFraction)}%`;
+        data.selfTimePercent = `${((data.selfTime / sum.totalCount) * percentageDenominator).toFixed(percentFraction)}%`;
+        data.eventPercent = `${((data.eventCount / sum.totalEvent) * percentageDenominator).toFixed(percentFraction)}%`;
         setTabData(data.children);
       });
     };
@@ -203,7 +207,7 @@ export class TabpanePerfBottomUp extends BaseElement {
       return callTreeRightData.totalTime - callTreeLeftData.totalTime;
     }
     const CallTreeSortArr = arr.sort((callTreeLeftData, callTreeRightData) => {
-      if (this.sortKey === 'selfTimeStr' || this.sortKey === 'selfTimePercent') {
+      if (this.sortKey === 'selfTime' || this.sortKey === 'selfTimePercent') {
         if (this.sortType === defaultSortType) {
           return defaultSort(callTreeLeftData, callTreeRightData);
         } else if (this.sortType === 1) {
@@ -266,16 +270,18 @@ export class TabpanePerfBottomUp extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="callTreeTable" style="height: 100%" tree>
-                <lit-table-column width="60%" title="Symbol" data-index="symbolName" key="symbolName"  
+                <lit-table-column width="50%" title="Symbol" data-index="symbolName" key="symbolName"  
                 align="flex-start" order retract></lit-table-column>
-                <lit-table-column width="1fr" title="Local" data-index="selfTimeStr" key="selfTimeStr" 
+                <lit-table-column width="1fr" title="Local" data-index="selfTime" key="selfTime" 
                 align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="%" data-index="selfTimePercent" key="selfTimePercent"  
                 align="flex-start"  order></lit-table-column>
-                <lit-table-column width="1fr" title="Weight" data-index="totalTimeStr" key="totalTimeStr"  
+                <lit-table-column width="1fr" title="Sample Count" data-index="totalTime" key="totalTime"  
                 align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="%" data-index="totalTimePercent" key="totalTimePercent" 
                  align="flex-start"  order></lit-table-column>
+                <lit-table-column width="1fr" title="Event Count" data-index="eventCount" key="eventCount"  align="flex-start"  order></lit-table-column>
+                <lit-table-column width="1fr" title="%" data-index="eventPercent" key="eventPercent"  align="flex-start"  order></lit-table-column>
             </lit-table>
         </div>
         <lit-slicer-track ></lit-slicer-track>
@@ -285,7 +291,7 @@ export class TabpanePerfBottomUp extends BaseElement {
               <lit-table id="stackTable" style="height: auto;">
                   <lit-table-column width="50%" title="Symbol" data-index="symbolName" key="symbolName" 
                    align="flex-start"></lit-table-column>
-                  <lit-table-column width="1fr" title="Weight" data-index="totalTimeStr" key="totalTimeStr" 
+                  <lit-table-column width="1fr" title="Sample Count" data-index="totalTime" key="totalTime" 
                    align="flex-start" ></lit-table-column>
                   <lit-table-column width="1fr" title="%" data-index="totalTimePercent" key="totalTimePercent"
                     align="flex-start"></lit-table-column>

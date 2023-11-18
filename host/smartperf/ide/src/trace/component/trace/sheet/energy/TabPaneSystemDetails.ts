@@ -22,7 +22,7 @@ import {
   querySysLockDetailsData,
   querySystemWorkData,
 } from '../../../../database/SqlLite.js';
-import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
+import { SpHiSysEnergyChart } from '../../../chart/SpHiSysEnergyChart.js';
 import { resizeObserver } from '../SheetUtils.js';
 import { type LitSlicerTrack } from '../../../../../base-ui/slicer/lit-slicer.js';
 
@@ -185,7 +185,7 @@ export class TabPaneSystemDetails extends BaseElement {
     let watchIndex: Array<string> = [];
     for (let index = 0; index < values.length; index++) {
       let filterData: any = values[index];
-      if (filterData.name == SpHiSysEventChart.app_name) {
+      if (filterData.name == SpHiSysEnergyChart.app_name) {
         if (filterData.eventName.indexOf('WORK_ADD') > -1) {
           watchIndex.push(filterData.workId);
           let number = watchIndex.indexOf(filterData.workId);

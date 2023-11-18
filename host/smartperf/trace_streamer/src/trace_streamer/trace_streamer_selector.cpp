@@ -51,6 +51,23 @@ using namespace SysTuning::base;
 namespace SysTuning {
 namespace TraceStreamer {
 namespace {
+bool IsHisysEventData(const std::string& bytraceMode)
+{
+    auto firstLine = std::find(bytraceMode.begin(), bytraceMode.end(), '}');
+    if (firstLine == bytraceMode.end()) {
+        return false;
+    }
+    std::string line(bytraceMode.begin(), ++firstLine);
+    json jMessage;
+    if (!jMessage.accept(line)) {
+        return false;
+    }
+    std::string startStr = R"({"domain_":)";
+    if (!StartWith(line, startStr)) {
+        return false;
+    }
+    return true;
+}
 TraceFileType GuessFileType(const uint8_t* data, size_t size)
 {
     if (size == 0) {
@@ -62,12 +79,6 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     }
     if (start.find("# TRACE") != std::string::npos) {
         return TRACE_FILETYPE_BY_TRACE;
-    }
-    if (start.find("# SYSEVENT") != std::string::npos) {
-        return TRACE_FILETYPE_SYSEVENT;
-    }
-    if (start.find("# sysevent") != std::string::npos) {
-        return TRACE_FILETYPE_SYSEVENT;
     }
     uint16_t magicNumber = INVALID_UINT16;
     int ret = memcpy_s(&magicNumber, sizeof(uint16_t), data, sizeof(uint16_t));
@@ -102,7 +113,10 @@ TraceFileType GuessFileType(const uint8_t* data, size_t size)
     if (std::regex_search(bytraceMode, matcheLine, hilogMatcher)) {
         return TRACE_FILETYPE_HILOG;
     }
-
+    // Identify hisysevent data
+    if (IsHisysEventData(bytraceMode)) {
+        return TRACE_FILETYPE_HI_SYSEVENT;
+    }
     return TRACE_FILETYPE_UN_KNOW;
 }
 } // namespace
@@ -172,7 +186,8 @@ void TraceStreamerSelector::WaitForParserEnd()
     if (fileType_ == TRACE_FILETYPE_H_TRACE) {
         htraceParser_->WaitForParserEnd();
     }
-    if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_HILOG) {
+    if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_HILOG ||
+        fileType_ == TRACE_FILETYPE_HI_SYSEVENT) {
         bytraceParser_->WaitForParserEnd();
     }
     if (fileType_ == TRACE_FILETYPE_PERF) {
@@ -218,7 +233,7 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
         if (fileType_ == TRACE_FILETYPE_H_TRACE || fileType_ == TRACE_FILETYPE_PERF) {
             htraceParser_ = std::make_unique<HtraceParser>(traceDataCache_.get(), streamFilters_.get());
             htraceParser_->EnableFileSeparate(enableFileSeparate_);
-        } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT ||
+        } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_HI_SYSEVENT ||
                    fileType_ == TRACE_FILETYPE_HILOG) {
             bytraceParser_ = std::make_unique<BytraceParser>(traceDataCache_.get(), streamFilters_.get(), fileType_);
             bytraceParser_->EnableBytrace(fileType_ == TRACE_FILETYPE_BY_TRACE);
@@ -239,7 +254,7 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
     traceDataCache_->isSplitFile_ = isSplitFile;
     if (fileType_ == TRACE_FILETYPE_H_TRACE) {
         htraceParser_->ParseTraceDataSegment(std::move(data), size);
-    } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT ||
+    } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_HI_SYSEVENT ||
                fileType_ == TRACE_FILETYPE_HILOG) {
         bytraceParser_->ParseTraceDataSegment(std::move(data), size, isFinish);
         return true;
@@ -270,6 +285,13 @@ int32_t TraceStreamerSelector::ExportDatabase(const std::string& outputName, Tra
 {
     traceDataCache_->UpdateTraceRange();
     return traceDataCache_->ExportDatabase(outputName, resultCallBack);
+}
+
+int32_t TraceStreamerSelector::ExportPerfReadableText(const std::string& outputName,
+                                                      TraceDataDB::ResultCallBack resultCallBack)
+{
+    traceDataCache_->UpdateTraceRange();
+    return traceDataCache_->ExportPerfReadableText(outputName, resultCallBack);
 }
 
 bool TraceStreamerSelector::ReloadSymbolFiles(std::string& directory, std::vector<std::string>& symbolsPaths)

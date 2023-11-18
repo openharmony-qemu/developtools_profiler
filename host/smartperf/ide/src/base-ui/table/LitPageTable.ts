@@ -28,6 +28,7 @@ export class LitPageTable extends BaseElement {
   public rememberScrollTop = false;
   public getItemTextColor?: (data: any) => string;
   public itemTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
+  public exportTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
   private ds: Array<any> = [];
   public recycleDs: Array<any> = [];
   private gridTemplateColumns: Array<string> = [];
@@ -475,7 +476,8 @@ export class LitPageTable extends BaseElement {
       columns: this.columns as any[],
       tables: this.ds,
       fileName: date.getTime() + '',
-      columnFormatter: this.itemTextHandleMap
+      columnFormatter: this.itemTextHandleMap,
+      exportFormatter: this.exportTextHandleMap
     }).then((res) => {
       this.exportLoading = false;
       this.exportProgress!.loading = false;
@@ -1461,9 +1463,9 @@ export class LitPageTable extends BaseElement {
     this.reMeauseHeight();
   }
 
-  clearAllSelection(rowObjectData: any) {
+  clearAllSelection(rowObjectData: any = undefined) {
     this.recycleDs.forEach((item) => {
-      if (item.data != rowObjectData && item.data.isSelected) {
+      if (rowObjectData || (item.data != rowObjectData && item.data.isSelected)) {
         item.data.isSelected = false;
       }
     });

@@ -13,49 +13,45 @@
  * limitations under the License.
  */
 
-#include "appname_table.h"
+#include "sysevent_subkey_table.h"
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum class Index : int32_t { ID = 0, FLAG, APP_NAME, APP_KEY };
-AppnameTable::AppnameTable(const TraceDataCache* dataCache) : TableBase(dataCache)
+enum class Index : int32_t { ID = 0, APP_NAME, APP_KEY };
+SysEventSubkeyTable::SysEventSubkeyTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
-    tableColumn_.push_back(TableBase::ColumnInfo("flag", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("app_name", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("app_key", "INTEGER"));
     tablePriKey_.push_back("id");
 }
 
-AppnameTable::~AppnameTable() {}
+SysEventSubkeyTable::~SysEventSubkeyTable() {}
 
-std::unique_ptr<TableBase::Cursor> AppnameTable::CreateCursor()
+std::unique_ptr<TableBase::Cursor> SysEventSubkeyTable::CreateCursor()
 {
     return std::make_unique<Cursor>(dataCache_, this);
 }
 
-AppnameTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBase* table)
-    : TableBase::Cursor(dataCache, table, static_cast<uint32_t>(dataCache->GetConstAppNamesData().Size())),
-      appName_(dataCache->GetConstAppNamesData())
+SysEventSubkeyTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBase* table)
+    : TableBase::Cursor(dataCache, table, static_cast<uint32_t>(dataCache->GetConstHiSysEventSubkeysData().Size())),
+      sysEventSubkeys_(dataCache->GetConstHiSysEventSubkeysData())
 {
 }
 
-AppnameTable::Cursor::~Cursor() {}
+SysEventSubkeyTable::Cursor::~Cursor() {}
 
-int32_t AppnameTable::Cursor::Column(int32_t column) const
+int32_t SysEventSubkeyTable::Cursor::Column(int32_t column) const
 {
     switch (static_cast<Index>(column)) {
         case Index::ID:
-            sqlite3_result_int64(context_, dataCache_->GetConstAppNamesData().IdsData()[CurrentRow()]);
-            break;
-        case Index::FLAG:
-            sqlite3_result_int(context_, dataCache_->GetConstAppNamesData().Falgs()[CurrentRow()]);
+            sqlite3_result_int64(context_, sysEventSubkeys_.IdsData()[CurrentRow()]);
             break;
         case Index::APP_NAME:
-            sqlite3_result_int64(context_, dataCache_->GetConstAppNamesData().EventSourceId()[CurrentRow()]);
+            sqlite3_result_int64(context_, sysEventSubkeys_.SysEventNameId()[CurrentRow()]);
             break;
         case Index::APP_KEY:
-            sqlite3_result_int64(context_, dataCache_->GetConstAppNamesData().AppName()[CurrentRow()]);
+            sqlite3_result_int64(context_, sysEventSubkeys_.SysEventSubkeyId()[CurrentRow()]);
             break;
         default:
             TS_LOGF("Unregistered column : %d", column);

@@ -66,5 +66,6 @@ ohos_source_set("trace_data") {
     ".",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/bounds_checking_function/include",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
   ]
 }

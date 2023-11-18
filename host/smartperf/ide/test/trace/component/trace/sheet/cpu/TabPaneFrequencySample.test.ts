@@ -100,6 +100,8 @@ describe('TabPaneFrequencySample Test', () => {
     maxDuration: 63332,
     stdDuration: '',
     cpuFreqFilterIds: [1, 2, 9, 3],
+    cpuStateRowsId:[],
+    cpuFreqFilterNames:[],
   };
 
   it('TabPaneCounterSampleTest01', function () {

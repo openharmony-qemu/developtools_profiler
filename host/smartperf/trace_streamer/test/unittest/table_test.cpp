@@ -49,7 +49,7 @@ HWTEST_F(TableTest, AppnameTableTest, TestSize.Level1)
     uint8_t flags = 0;
     DataIndex eventSource = stream_.traceDataCache_->GetDataIndex("eventSource");
     DataIndex appName = stream_.traceDataCache_->GetDataIndex("app1");
-    stream_.traceDataCache_->GetAppNamesData()->AppendAppName(flags, eventSource, appName);
+    stream_.traceDataCache_->GetHiSysEventSubkeysData()->AppendSysEventSubkey(flags, eventSource, appName);
     auto row = stream_.traceDataCache_->SearchDatabase(sqlSelect, false);
     EXPECT_EQ(row, 1);
 }
@@ -536,8 +536,8 @@ HWTEST_F(TableTest, HisysEventMeasureTableTest, TestSize.Level1)
     double numericValue = 0;
     DataIndex stringValue = stream_.traceDataCache_->GetDataIndex("stringValue");
 
-    stream_.traceDataCache_->GetSyseventMeasureData()->AppendData(ts, nameId, keyId, type, numericValue, stringValue,
-                                                                  serial);
+    stream_.traceDataCache_->GetHiSysEventMeasureData()->AppendData(ts, nameId, keyId, type, numericValue, stringValue,
+                                                                    serial);
     auto row = stream_.traceDataCache_->SearchDatabase(sqlSelect, false);
     EXPECT_EQ(row, 1);
 }

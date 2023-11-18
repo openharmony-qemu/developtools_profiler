@@ -44,7 +44,8 @@ export class FuncRender extends Render {
       TraceRow.range!.endNS,
       TraceRow.range!.totalNS,
       row.frame,
-      req.useCache || !TraceRow.range!.refresh
+      req.useCache || !TraceRow.range!.refresh,
+      row.funcExpand
     );
     req.context.beginPath();
     let funcFind = false;
@@ -84,7 +85,8 @@ export function func(
   endNS: number,
   totalNS: number,
   frame: any,
-  use: boolean
+  use: boolean,
+  expand: boolean,
 ) {
   if (use && funcFilter.length > 0) {
     for (let i = 0, len = funcFilter.length; i < len; i++) {
@@ -99,7 +101,7 @@ export function func(
   funcFilter.length = 0;
   if (funcList) {
     let groups = funcList
-      .filter((it) => (it.startTs ?? 0) + (it.dur ?? 0) >= startNS && (it.startTs ?? 0) <= endNS)
+      .filter((it) => (it.startTs ?? 0) + (it.dur ?? 0) >= startNS && (it.startTs ?? 0) <= endNS && ((!expand && it.depth === 0) || expand))
       .map((it) => {
         FuncStruct.setFuncFrame(it, 0, startNS, endNS, totalNS, frame);
         return it;

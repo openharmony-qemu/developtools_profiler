@@ -456,7 +456,7 @@ export class Utils {
     return Math.max(startTime, startTime1) <= Math.min(endTime, endTime1);
   }
 
-  initResponseTypeList(val: SelectionParam | any) {
+  initResponseTypeList(val: SelectionParam): void {
     const isStatistic = val.nativeMemoryStatistic.length > 0;
     const selection = isStatistic ? val.nativeMemoryStatistic : val.nativeMemory;
     let types: Array<string | number> = [];
@@ -485,5 +485,9 @@ export class Utils {
     queryNativeHookResponseTypes(val.leftNs, val.rightNs, types, isStatistic).then((res) => {
       procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => {});
     });
+  }
+
+  setCurrentSelectIPid(ipid: number): void{
+    procedurePool.submitWithName('logic1', 'native-memory-set-current_ipid', ipid, undefined, () => {});
   }
 }

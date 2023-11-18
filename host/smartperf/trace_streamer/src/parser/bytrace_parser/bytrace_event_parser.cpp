@@ -692,11 +692,7 @@ void BytraceEventParser::FilterAllEventsTemp()
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimestamp < b->eventTimestamp;
     };
-#ifdef IS_WASM
-    std::sort(eventList_.begin(), eventList_.end(), cmp);
-#else
     std::stable_sort(eventList_.begin(), eventList_.end(), cmp);
-#endif
     auto endOfList = eventList_.begin() + maxBuffSize;
     for (auto itor = eventList_.begin(); itor != endOfList; itor++) {
         EventInfo* event = itor->get();
@@ -711,11 +707,7 @@ void BytraceEventParser::FilterAllEvents()
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimestamp < b->eventTimestamp;
     };
-#ifdef IS_WASM
-    std::sort(eventList_.begin(), eventList_.end(), cmp);
-#else
     std::stable_sort(eventList_.begin(), eventList_.end(), cmp);
-#endif
     size_t maxBuffSize = 1000 * 1000;
     while (eventList_.size()) {
         int32_t size = std::min(maxBuffSize, eventList_.size());

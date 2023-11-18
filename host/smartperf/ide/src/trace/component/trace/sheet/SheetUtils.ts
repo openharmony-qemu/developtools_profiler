@@ -168,3 +168,21 @@ export class ParseExpression {
     }
   }
 }
+
+export function initSort(table: LitTable, sortKey: string, sortType: number, filterValue?: string): void {
+  sortKey = '';
+  sortType = 0;
+  if (filterValue) {
+    filterValue = '';
+  }
+  const theadTable = table!.shadowRoot?.querySelector('.thead');
+  const thTable = theadTable?.querySelector('.th');
+  const list = thTable!.querySelectorAll('div');
+  if (theadTable!.hasAttribute('sort')) {
+    list.forEach((item) => {
+      item.querySelectorAll('svg').forEach((svg): void => {
+        svg.style.display = 'none';
+      });
+    });
+  }
+}

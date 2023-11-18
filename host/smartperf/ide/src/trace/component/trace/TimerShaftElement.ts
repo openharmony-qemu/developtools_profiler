@@ -27,12 +27,18 @@ import { type SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
 import './timer-shaft/CollapseButton.js';
 //随机生成十六位进制颜色
 export function randomRgbColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let index = 0; index < 6; index++) {
-    color += letters[Math.floor(Math.random() * 16)];
+  let r = Math.floor(Math.random() * 255);
+  let g = Math.floor(Math.random() * 255);
+  let b = Math.floor(Math.random() * 255);
+  if (r * 0.299 + g * 0.587 + b * 0.114 < 192) {
+    let r16 = r.toString(16).length === 1 && r.toString(16) <= 'f' ? 0 + r.toString(16) : r.toString(16);
+    let g16 = g.toString(16).length === 1 && g.toString(16) <= 'f' ? 0 + g.toString(16) : g.toString(16);
+    let b16 = b.toString(16).length === 1 && b.toString(16) <= 'f' ? 0 + b.toString(16) : b.toString(16);
+    let color = '#' + r16 + g16 + b16;
+    return color;
+  } else {
+    randomRgbColor();
   }
-  return color;
 }
 
 export function ns2s(ns: number): string {
@@ -376,7 +382,7 @@ export class TimerShaftElement extends BaseElement {
     this._rangeRuler?.keyUp(ev);
   };
 
-  disconnectedCallback(): void { }
+  disconnectedCallback(): void {}
 
   firstRender = true;
 

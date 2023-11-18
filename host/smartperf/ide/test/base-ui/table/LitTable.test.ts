@@ -304,7 +304,7 @@ describe('LitTable Test', () => {
   });
 
   it('LitTableTest25', () => {
-    expect(litTable.dispatchRowClickEvent({ data: { isSelected: '' } })).toBeUndefined();
+    expect(litTable.dispatchRowClickEvent({ data: { isSelected: '' } }, [], {button: ''})).toBeUndefined();
   });
 
   it('LitTableTest26', () => {

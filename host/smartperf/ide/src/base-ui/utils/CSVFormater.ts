@@ -52,7 +52,14 @@ export class JSONToCSV {
       // 如果存在自定义key值
       if (columns.key.length) {
         columns.key.map(function (m: any, idx: number) {
-          let strItem = obj.formatter && obj.formatter.has(m) ? (obj.formatter.get(m)?.(n[m]) || n[m]) : n[m];
+          let strItem : any = '';
+          if (obj.exportFormatter && obj.exportFormatter.has(m)) {
+            strItem = (obj.exportFormatter.get(m)?.(n) || n[m])
+          } else if (obj.formatter && obj.formatter.has(m)) {
+            strItem = (obj.formatter.get(m)?.(n[m]) || n[m])
+          } else {
+            strItem = n[m];
+          }
           if (typeof strItem == 'undefined') {
             strItem = '';
           } else if (typeof strItem == 'object') {
@@ -178,7 +185,7 @@ export class JSONToCSV {
       let dataIndex = column.getAttribute('data-index');
       let columnName = column.getAttribute('title');
       if (columnName == '') {
-        columnName = dataIndex;
+        columnName = dataIndex == 'busyTimeStr' ? 'GetBusyTime(ms)' : dataIndex;
       }
       if (columnName !== '  ') {
         titleList.push(columnName);
@@ -195,8 +202,9 @@ export class JSONToCSV {
     columns: any[];
     tables: any[];
     fileName: string;
-    columnFormatter: Map<string, (value: any) => string> }
-  ): Promise<string> {
+    columnFormatter: Map<string, (value: any) => string>;
+    exportFormatter: Map<string, (value: any) => string>;
+  }): Promise<string> {
     return new Promise((resolve) => {
       let data: any = this.columnsData(dataSource.columns);
       let columns = {
@@ -220,7 +228,8 @@ export class JSONToCSV {
             data: resultArr,
             fileName: dataSource.fileName,
             columns: columns,
-            formatter: dataSource.columnFormatter
+            formatter: dataSource.columnFormatter,
+            exportFormatter: dataSource.exportFormatter
           });
         }
       }

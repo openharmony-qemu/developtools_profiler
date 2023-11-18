@@ -20,6 +20,7 @@ ohos_source_set("parser") {
   sources = [
     "bytrace_parser/bytrace_event_parser.cpp",
     "bytrace_parser/bytrace_hilog_parser.cpp",
+    "bytrace_parser/bytrace_hisysevent_parser.cpp",
     "bytrace_parser/bytrace_parser.cpp",
     "event_parser_base.cpp",
     "print_event_parser.cpp",

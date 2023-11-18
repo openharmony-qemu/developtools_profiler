@@ -54,6 +54,7 @@ export class SpHelp extends BaseElement {
       {
         collapsed: false,
         title: 'QuickStart',
+        second: false,
         describe: '',
         children: [
           {
@@ -386,6 +387,7 @@ export class SpHelp extends BaseElement {
       {
         collapsed: false,
         title: 'TraceStreamer',
+        second: false,
         describe: '',
         children: [
           {
@@ -460,6 +462,7 @@ export class SpHelp extends BaseElement {
       {
         collapsed: false,
         title: 'SmartPerf',
+        second: false,
         describe: '',
         children: [
           {

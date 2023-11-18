@@ -17,6 +17,7 @@
 #include <hwext/gtest-tag.h>
 
 #include "app_start_filter.h"
+#include "parser/bytrace_parser/bytrace_parser.h"
 #include "slice_filter.h"
 #include "trace_streamer_selector.h"
 
@@ -37,42 +38,58 @@ public:
 };
 
 /**
- * @tc.name: ProcessCreateTest
- * @tc.desc: Process Create TEST
+ * @tc.name: ProcessAllTest
+ * @tc.desc: Process All TEST, for ProcessTouchEvent、StartUIAbilityBySCB、LoadAbility etc.
  * @tc.type: FUNC
  */
-HWTEST_F(AppStartFilterTest, ProcessCreateTest, TestSize.Level1)
+HWTEST_F(AppStartFilterTest, ProcessAllTest, TestSize.Level1)
 {
     TS_LOGI("test40-1");
-
-    const std::string parent_str =
-        "H:virtual int OHOS::AAFwk::AbilityManagerService::StartAbility("
-        "const OHOS::AAFwk::Want &, const sptr<OHOS::IRemoteObject> &, int32_t, int)";
-    const std::string process_create_str =
-        "H:int OHOS::AAFwk::MissionListManager::StartAbilityLocked("
-        "const std::shared_ptr<AbilityRecord> &, const std::shared_ptr<AbilityRecord> &, "
-        "const OHOS::AAFwk::AbilityRequest &)##com.ohos.smartperf##MainAbility";
-    uint64_t ts1 = 168758662957000;
-    uint64_t ts2 = 168758663011000;
-    uint64_t ts3 = 168758663057000;
-    uint64_t ts4 = 168758663111000;
-    uint32_t pid1 = 1655;
-    uint32_t threadGroupId1 = 1127;
-    DataIndex cat = stream_.traceDataCache_->GetDataIndex("Catalog");
-    DataIndex parent_splitStrIndex = stream_.traceDataCache_->GetDataIndex(parent_str.c_str());
-    DataIndex splitStrIndex = stream_.traceDataCache_->GetDataIndex(process_create_str.c_str());
-
-    stream_.streamFilters_->sliceFilter_->BeginSlice("comm", ts1, pid1, threadGroupId1, cat, parent_splitStrIndex);
-    stream_.streamFilters_->sliceFilter_->BeginSlice("comm", ts2, pid1, threadGroupId1, cat, splitStrIndex);
-    stream_.streamFilters_->sliceFilter_->EndSlice(ts3, pid1, threadGroupId1);
-    stream_.streamFilters_->sliceFilter_->EndSlice(ts4, pid1, threadGroupId1);
-
+    std::vector<std::string> processTouchEventVec = {
+        "ohos.sceneboard-2037  ( 2037) [002] .... 233.207960: print: B|2037|H:client dispatch touchId:850",
+        "ohos.sceneboard-2037  ( 2037) [004] .... 233.225036: print: B|2037|H:client dispatch touchId:851",
+        "ohos.sceneboard-2037  ( 2037) [004] .... 233.225153: print: B|2037|H:client dispatch touchId:852",
+        "ohos.sceneboard-2037  ( 2037) [004] .... 233.225203: print: B|2037|H:client dispatch touchId:853",
+    };
+    std::vector<std::string> startUIAbilityBySCBVec = {
+        "SceneSessionMan-2396  ( 2037) [005] .... 233.273283: print: B|2037|H:OHOS::ErrCode "
+        "OHOS::AAFwk::AbilityManagerClient::StartUIAbilityBySCB(sptr<OHOS::AAFwk::SessionInfo>) ",
+    };
+    std::vector<std::string> loadAbilityVec = {
+        "ffrtwk/CPU-2-17-4540  ( 1093) [006] .... 233.279339: print: B|1093|H:virtual void "
+        "OHOS::AppExecFwk::AppMgrServiceInner::LoadAbility(const sptr<OHOS::IRemoteObject> &, const "
+        "sptr<OHOS::IRemoteObject> &, const std::shared_ptr<AbilityInfo> &, const std::shared_ptr<ApplicationInfo> &, "
+        "const std::shared_ptr<AAFwk::Want> &)"};
+    std::string appLaunchStr(
+        "ffrtwk/CPU-2-16-4537  ( 1093) [007] .... 233.300562: print: B|1093|H:virtual void "
+        "OHOS::AppExecFwk::AppMgrServiceInner::AttachApplication(const pid_t, const "
+        "sptr<OHOS::AppExecFwk::IAppScheduler> &)##com.taobao.taobao");
+    std::string uiLaunchStr(
+        "m.taobao.taobao-4794  ( 4794) [007] .... 233.309669: print: B|4794|H:void "
+        "OHOS::AppExecFwk::MainThread::HandleLaunchAbility(const std::shared_ptr<AbilityLocalRecord> "
+        "&)##com.taobao.taobao");
+    std::string uiOnForegroundStr(
+        "m.taobao.taobao-4794  ( 4794) [007] .... 233.330670: print: B|4794|H:void "
+        "OHOS::AbilityRuntime::FAAbilityThread::HandleAbilityTransaction(const OHOS::AbilityRuntime::Want &, const "
+        "OHOS::AbilityRuntime::LifeCycleStateInfo &, sptr<AppExecFwk::SessionInfo>)##EntryAbility");
+    BytraceParser bytraceParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
+    for (auto&& str : processTouchEventVec) {
+        bytraceParser.ParseTraceDataItem(str);
+    }
+    for (auto&& str : startUIAbilityBySCBVec) {
+        bytraceParser.ParseTraceDataItem(str);
+    }
+    for (auto&& str : loadAbilityVec) {
+        bytraceParser.ParseTraceDataItem(str);
+    }
+    bytraceParser.ParseTraceDataItem(appLaunchStr);
+    bytraceParser.ParseTraceDataItem(uiLaunchStr);
+    bytraceParser.ParseTraceDataItem(uiOnForegroundStr);
+    bytraceParser.WaitForParserEnd();
     stream_.streamFilters_->appStartupFilter_->FilterAllAPPStartupData();
-
-    auto dataIndex = stream_.traceDataCache_->GetDataIndex("com.ohos.smartperf");
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.size() == 1);
-    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.find(dataIndex) !=
-                stream_.streamFilters_->appStartupFilter_->mAPPStartupData_.end());
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->procTouchItems_.size() == 0);
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->startUIAbilityBySCBItems_.size() == 0);
+    EXPECT_TRUE(stream_.streamFilters_->appStartupFilter_->loadAbilityItems_.size() == 0);
 }
 
 /**

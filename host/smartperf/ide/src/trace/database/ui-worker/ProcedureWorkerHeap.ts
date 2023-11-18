@@ -52,12 +52,17 @@ export class HeapRender {
       row.frame,
       req.useCache || (TraceRow.range?.refresh ?? false)
     );
+    // 多条数据,最后一条数据在结束点也需要绘制
     if (heapFilter.length >= 2 && heapFilter[heapFilter.length - 1].dur === 0) {
       if (heapFilter[heapFilter.length - 2].frame && heapFilter[heapFilter.length - 1].frame) {
         heapFilter[heapFilter.length - 2].frame!.width = heapFilter[heapFilter.length - 2].frame!.width - 1;
         heapFilter[heapFilter.length - 1].frame!.width = 1;
         heapFilter[heapFilter.length - 1].frame!.x -= 1;
       }
+    }
+    // 只有一条数据并且数据在结束点
+    if (heapFilter.length === 1 && row.frame.width === heapFilter[0].frame?.x){
+      heapFilter[0].frame!.x -= 1;
     }
     req.context.beginPath();
     let find = false;

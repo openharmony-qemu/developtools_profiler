@@ -68,7 +68,7 @@ bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack result
         size_t parseSize = std::min(len, blockSize);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(parseSize);
         std::copy(data, data + parseSize, buf.get());
-        if (!ts_->ParseTraceDataSegment(std::move(buf), parseSize, false, isFinish)) {
+        if (!ts_->ParseTraceDataSegment(std::move(buf), parseSize, false, isFinish && (len <= blockSize))) {
             if (resultCallBack) {
                 resultCallBack("formaterror\r\n", SEND_FINISH);
             }

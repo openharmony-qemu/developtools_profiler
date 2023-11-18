@@ -52,6 +52,7 @@ export class TraceRowConfig extends BaseElement {
       'AnimationEffect',
       'AppStartup',
       'HiSysEvent',
+      'EnergyEvent',
       'Memory',
       'ProcessMemory',
       'ArkTs',

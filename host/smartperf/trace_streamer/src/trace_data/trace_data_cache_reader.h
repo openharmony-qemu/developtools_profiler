@@ -78,7 +78,7 @@ public:
     const DiskIOData& GetConstDiskIOData() const;
     const LiveProcessDetailData& GetConstLiveProcessData() const;
     const FileSystemSample& GetConstFileSystemSample() const;
-    const DeviceStateData& GetConstDeviceStateData() const;
+    const HiSysEventDeviceStateData& GetConstHiSysEventDeviceStateData() const;
     const EbpfCallStackData& GetConstEbpfCallStackData() const;
     const PagedMemorySampleData& GetConstPagedMemorySampleData() const;
 #ifdef WITH_EBPF_HELP
@@ -86,9 +86,10 @@ public:
     const EbpfElf& GetConstEbpfElf() const;
     const EbpfElfSymbol& GetConstEbpfElfSymbol() const;
 #endif
-    const AppNames& GetConstAppNamesData() const;
-    const SysEventMeasureData& GetConstSyseventMeasureData() const;
-    const TraceConfigData& GetConstTraceConfigData() const;
+    const HiSysEventSubkeys& GetConstHiSysEventSubkeysData() const;
+    const HiSysEventMeasureData& GetConstHiSyseventMeasureData() const;
+    const TraceConfig& GetConstTraceConfigData() const;
+    const HiSysEventAllEventData& GetConstHiSysEventAllEventData() const;
     const SmapsData& GetConstSmapsData() const;
     const BioLatencySampleData& GetConstBioLatencySampleData() const;
     const ClockSnapshotData& GetConstClockSnapshotData() const;

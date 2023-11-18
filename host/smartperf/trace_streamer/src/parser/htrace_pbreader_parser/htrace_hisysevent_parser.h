@@ -29,7 +29,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-class HtraceHisyseventParser : public EventParserBase, public HtracePluginTimeParser {
+class HtraceHisyseventParser : public EventParserBase {
 public:
     HtraceHisyseventParser(TraceDataCache* dataCache, const TraceStreamerFilters* ctx);
     ~HtraceHisyseventParser();
@@ -38,24 +38,7 @@ public:
     void Parse(ProtoReader::HisyseventConfig_Reader* tracePacket, uint64_t ts);
 
 private:
-    void NoArrayDataParse(JsonData jData,
-                          std::vector<size_t> noArrayIndex,
-                          DataIndex eventSourceIndex,
-                          uint64_t serial);
-    void ArrayDataParse(JsonData jData,
-                        std::vector<size_t> arrayIndex,
-                        DataIndex eventSourceIndex,
-                        size_t maxArraySize,
-                        uint64_t serial);
-    void CommonDataParser(JsonData jData, DataIndex eventSourceIndex, uint64_t serial);
-    void AppendStringValue(nlohmann::json& value,
-                           uint64_t serial,
-                           DataIndex eventSourceIndex,
-                           DataIndex keyIndex,
-                           uint64_t timeStamp);
     const uint64_t MSEC_TO_NS = 1000 * 1000;
-    std::vector<uint64_t> hisyseventTS_;
-    bool isDeviceState = true;
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

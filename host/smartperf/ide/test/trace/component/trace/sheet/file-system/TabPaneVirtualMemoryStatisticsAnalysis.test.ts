@@ -32,7 +32,11 @@ window.ResizeObserver =
 Object.defineProperty(global.self, 'crypto', {
   value: { getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length) },
 });
-
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {
+    initSort: ()=>{}
+  };
+});
 describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
   document.body.innerHTML = `<tabpane-virtual-memory-statistics-analysis id="statistics-analysis"></tabpane-virtual-memory-statistics-analysis>`;
   let tabPane = document.querySelector<TabPaneVirtualMemoryStatisticsAnalysis>('#statistics-analysis');
@@ -250,35 +254,27 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis12', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+        tableName: '',
+      };
     expect(tabPane.vmProcessLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis13', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+        tableName: '',
+      };
     expect(tabPane.vmTypeLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis14', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+        tableName: '',
+      };
     expect(tabPane.vmThreadLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis15', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+        tableName: '',
+      };
     expect(tabPane.vmSoLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis16', function () {
@@ -293,7 +289,7 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     tabPane.processStatisticsData = jest.fn(() => true);
     tabPane.processStatisticsData.allDuration = jest.fn(() => true);
     tabPane.vmStatisticsAnalysisPidData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.vmBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis17', function () {
@@ -308,7 +304,7 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     tabPane.typeStatisticsData = jest.fn(() => true);
     tabPane.typeStatisticsData.allDuration = jest.fn(() => true);
     tabPane.vmStatisticsAnalysisTypeData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.vmBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis18', function () {
@@ -323,7 +319,7 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     tabPane.threadStatisticsData = jest.fn(() => true);
     tabPane.threadStatisticsData.allDuration = jest.fn(() => true);
     tabPane.vmStatisticsAnalysisThreadData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.vmBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
   it('tabPaneVirtualMemoryStatisticsAnalysis19', function () {
@@ -338,7 +334,7 @@ describe('TabPaneVirtualMemoryStatisticsAnalysis Test', () => {
     tabPane.libStatisticsData = jest.fn(() => true);
     tabPane.libStatisticsData.allDuration = jest.fn(() => true);
     tabPane.vmStatisticsAnalysisSoData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.vmBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
 });

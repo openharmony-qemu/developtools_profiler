@@ -62,19 +62,19 @@ HWTEST_F(HtraceHisysEventParserTest, ParseNoArray, TestSize.Level1)
     std::stringstream ss;
     ss << jsMessage;
     ss >> jMessage;
-    HtraceHisyseventParser HisysEvent(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
+    HtraceHisyseventParser hisysEvent(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     (void)stream_.streamFilters_->hiSysEventMeasureFilter_->JGetData(jMessage, jData, maxArraySize, noArrayIndex,
                                                                      arrayIndex);
-    EXPECT_TRUE(jData.eventSource == "POWER_IDE_BATTERY");
-    EXPECT_EQ(jData.timeStamp, 22611696002);
+    EXPECT_TRUE(jData.eventName == "POWER_IDE_BATTERY");
+    EXPECT_EQ(jData.timeStamp, 22611696002000000);
     EXPECT_EQ(maxArraySize, 0);
     EXPECT_EQ(noArrayIndex.size(), 17);
     EXPECT_EQ(arrayIndex.size(), 0);
-    DataIndex eventSourceIndex = stream_.traceDataCache_->GetDataIndex(jData.eventSource);
-    HisysEvent.CommonDataParser(jData, eventSourceIndex, serial);
-    auto size = stream_.traceDataCache_->GetConstSyseventMeasureData().Size();
+    DataIndex eventSourceIndex = stream_.traceDataCache_->GetDataIndex(jData.eventName);
+    (void)stream_.streamFilters_->hiSysEventMeasureFilter_->CommonDataParser(jData, eventSourceIndex, serial);
+    auto size = stream_.traceDataCache_->GetConstHiSyseventMeasureData().Size();
     EXPECT_EQ(size, 17);
-    auto anticipate = stream_.traceDataCache_->GetConstSyseventMeasureData().Serial()[0];
+    auto anticipate = stream_.traceDataCache_->GetConstHiSyseventMeasureData().Serial()[0];
     EXPECT_EQ(anticipate, serial);
     EXPECT_TRUE(base::num0 == "15");
     EXPECT_TRUE(base::num1 == "f");
@@ -104,20 +104,22 @@ HWTEST_F(HtraceHisysEventParserTest, ParseHaveArrayData, TestSize.Level1)
     std::stringstream ss;
     ss << jsMessage;
     ss >> jMessage;
-    HtraceHisyseventParser HisysEvent(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
+    HtraceHisyseventParser hisysEvent(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     (void)stream_.streamFilters_->hiSysEventMeasureFilter_->JGetData(jMessage, jData, maxArraySize, noArrayIndex,
                                                                      arrayIndex);
-    EXPECT_TRUE(jData.eventSource == "POWER_IDE_WIFISCAN");
-    EXPECT_EQ(jData.timeStamp, 16611696002);
+    EXPECT_TRUE(jData.eventName == "POWER_IDE_WIFISCAN");
+    EXPECT_EQ(jData.timeStamp, 16611696002000000);
     EXPECT_EQ(maxArraySize, 3);
     EXPECT_EQ(noArrayIndex.size(), 12);
     EXPECT_EQ(arrayIndex.size(), 9);
-    DataIndex eventSourceIndex = stream_.traceDataCache_->GetDataIndex(jData.eventSource);
-    HisysEvent.NoArrayDataParse(jData, noArrayIndex, eventSourceIndex, serial);
-    HisysEvent.ArrayDataParse(jData, arrayIndex, eventSourceIndex, maxArraySize, serial);
-    auto size = stream_.traceDataCache_->GetConstSyseventMeasureData().Size();
+    DataIndex eventSourceIndex = stream_.traceDataCache_->GetDataIndex(jData.eventName);
+    (void)stream_.streamFilters_->hiSysEventMeasureFilter_->NoArrayDataParse(jData, noArrayIndex, eventSourceIndex,
+                                                                             serial);
+    (void)stream_.streamFilters_->hiSysEventMeasureFilter_->ArrayDataParse(jData, arrayIndex, eventSourceIndex,
+                                                                           maxArraySize, serial);
+    auto size = stream_.traceDataCache_->GetConstHiSyseventMeasureData().Size();
     EXPECT_EQ(size, (9 * 3 + 12));
-    auto anticipate = stream_.traceDataCache_->GetConstSyseventMeasureData().Serial()[0];
+    auto anticipate = stream_.traceDataCache_->GetConstHiSyseventMeasureData().Serial()[0];
     EXPECT_EQ(anticipate, serial);
 }
 /**
@@ -154,33 +156,35 @@ HWTEST_F(HtraceHisysEventParserTest, MixedDataAnalysis, TestSize.Level1)
         std::stringstream ss;
         ss << *i;
         ss >> jMessage;
-        HtraceHisyseventParser HisysEvent(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
+        HtraceHisyseventParser hisysEvent(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
         (void)stream_.streamFilters_->hiSysEventMeasureFilter_->JGetData(jMessage, jData, maxArraySize, noArrayIndex,
                                                                          arrayIndex);
-        if (jData.eventSource == "POWER_IDE_WIFISCAN") {
-            EXPECT_TRUE(jData.eventSource == "POWER_IDE_WIFISCAN");
-            EXPECT_EQ(jData.timeStamp, 16611696002);
+        if (jData.eventName == "POWER_IDE_WIFISCAN") {
+            EXPECT_TRUE(jData.eventName == "POWER_IDE_WIFISCAN");
+            EXPECT_EQ(jData.timeStamp, 16611696002000000);
             EXPECT_EQ(maxArraySize, 3);
             EXPECT_EQ(noArrayIndex.size(), 12);
             EXPECT_EQ(arrayIndex.size(), 9);
         } else {
-            EXPECT_TRUE(jData.eventSource == "POWER_IDE_BATTERY");
-            EXPECT_EQ(jData.timeStamp, 22611696002);
+            EXPECT_TRUE(jData.eventName == "POWER_IDE_BATTERY");
+            EXPECT_EQ(jData.timeStamp, 22611696002000000);
             EXPECT_EQ(maxArraySize, 0);
             EXPECT_EQ(noArrayIndex.size(), 17);
             EXPECT_EQ(arrayIndex.size(), 0);
         }
-        DataIndex eventSourceIndex = stream_.traceDataCache_->GetDataIndex(jData.eventSource);
+        DataIndex eventSourceIndex = stream_.traceDataCache_->GetDataIndex(jData.eventName);
         if (maxArraySize) {
-            HisysEvent.NoArrayDataParse(jData, noArrayIndex, eventSourceIndex, serial);
-            HisysEvent.ArrayDataParse(jData, arrayIndex, eventSourceIndex, maxArraySize, serial);
+            (void)stream_.streamFilters_->hiSysEventMeasureFilter_->NoArrayDataParse(jData, noArrayIndex,
+                                                                                     eventSourceIndex, serial);
+            (void)stream_.streamFilters_->hiSysEventMeasureFilter_->ArrayDataParse(jData, arrayIndex, eventSourceIndex,
+                                                                                   maxArraySize, serial);
         } else {
-            HisysEvent.CommonDataParser(jData, eventSourceIndex, serial);
+            (void)stream_.streamFilters_->hiSysEventMeasureFilter_->CommonDataParser(jData, eventSourceIndex, serial);
         }
     }
-    auto size = stream_.traceDataCache_->GetConstSyseventMeasureData().Size();
+    auto size = stream_.traceDataCache_->GetConstHiSyseventMeasureData().Size();
     EXPECT_EQ(size, 17 + (9 * 3 + 12));
-    auto anticipate = stream_.traceDataCache_->GetConstSyseventMeasureData().Serial()[0];
+    auto anticipate = stream_.traceDataCache_->GetConstHiSyseventMeasureData().Serial()[0];
     EXPECT_EQ(anticipate, serial);
 }
 } // namespace TraceStreamer

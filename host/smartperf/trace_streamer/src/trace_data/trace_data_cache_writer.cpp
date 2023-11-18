@@ -290,21 +290,25 @@ EbpfElfSymbol* TraceDataCacheWriter::GetEbpfElfSymbol()
     return &ebpfElfSymbol_;
 }
 #endif
-AppNames* TraceDataCacheWriter::GetAppNamesData()
+HiSysEventSubkeys* TraceDataCacheWriter::GetHiSysEventSubkeysData()
 {
-    return &appNames_;
+    return &sysEventNameIds_;
 }
-SysEventMeasureData* TraceDataCacheWriter::GetSyseventMeasureData()
+HiSysEventMeasureData* TraceDataCacheWriter::GetHiSysEventMeasureData()
 {
     return &sysEventMeasureData_;
 }
-DeviceStateData* TraceDataCacheWriter::GetDeviceStateData()
+HiSysEventDeviceStateData* TraceDataCacheWriter::GetHiSysEventDeviceStateData()
 {
     return &deviceStateData_;
 }
-TraceConfigData* TraceDataCacheWriter::GetTraceConfigData()
+TraceConfig* TraceDataCacheWriter::GetTraceConfigData()
 {
     return &traceConfigData_;
+}
+HiSysEventAllEventData* TraceDataCacheWriter::GetHiSysEventAllEventData()
+{
+    return &hiSysEventAllEventData_;
 }
 SmapsData* TraceDataCacheWriter::GetSmapsData()
 {
@@ -507,7 +511,7 @@ void TraceDataCacheWriter::Clear()
     ebpfElf_.Clear();
     ebpfElfSymbol_.Clear();
 #endif
-    appNames_.Clear();
+    sysEventNameIds_.Clear();
     sysEventMeasureData_.Clear();
     deviceStateData_.Clear();
     smapsData_.Clear();

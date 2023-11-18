@@ -14,20 +14,26 @@
  */
 
 #include "offline_symbolization_filter.h"
+#include <inttypes.h>
+
 namespace SysTuning {
 namespace TraceStreamer {
 OfflineSymbolizationFilter::OfflineSymbolizationFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
     : FilterBase(dataCache, filter),
       filePathIdAndStValueToSymAddr_(nullptr),
-      symbolTablePtrAndStValueToSymAddr_(nullptr)
+      symbolTablePtrAndStValueToSymAddr_(nullptr),
+      ipidToStartAddrToMapsInfoMap_(nullptr),
+      ipidToIpToFrameInfo_(nullptr),
+      ipidTofilePathIdToSymbolTableMap_(nullptr)
 {
 }
 std::shared_ptr<std::vector<std::shared_ptr<FrameInfo>>> OfflineSymbolizationFilter::OfflineSymbolization(
     const std::shared_ptr<std::vector<uint64_t>> ips)
 {
+    auto ipid = ips->back();
     auto result = std::make_shared<std::vector<std::shared_ptr<FrameInfo>>>();
-    for (auto itor = ips->begin(); itor != ips->end(); itor++) {
-        auto frameInfo = OfflineSymbolization(*itor);
+    for (auto itor = ips->begin(); (itor + 1) != ips->end(); itor++) {
+        auto frameInfo = OfflineSymbolizationByIp(ipid, *itor);
         // If the IP in the middle of the call stack cannot be symbolized, the remaining IP is discarded
         if (!frameInfo) {
             break;
@@ -55,11 +61,15 @@ void OfflineSymbolizationFilter::GetSymbolStartMaybeUpdateFrameInfo(T* elfSym,
 bool OfflineSymbolizationFilter::FillFrameInfo(const std::shared_ptr<FrameInfo>& frameInfo,
                                                uint64_t ip,
                                                uint64_t& vmStart,
-                                               uint64_t& vmOffset)
+                                               uint64_t& vmOffset,
+                                               uint64_t ipid)
 {
     frameInfo->ip_ = ip;
-    auto endItor = startAddrToMapsInfoMap_.upper_bound(ip);
-    auto length = std::distance(startAddrToMapsInfoMap_.begin(), endItor);
+    auto startAddrToMapsInfoItor = ipidToStartAddrToMapsInfoMap_.Find(ipid);
+    TS_CHECK_TRUE(startAddrToMapsInfoItor != nullptr, false,
+                  "ipidToStartAddrToMapsInfoMap_ can't find the ipid(%" PRIu64 ")", ipid);
+    auto endItor = startAddrToMapsInfoItor->upper_bound(ip);
+    int64_t length = std::distance(startAddrToMapsInfoItor->begin(), endItor);
     if (length > 0) {
         endItor--;
         // Follow the rules of front closing and rear opening, [start, end)
@@ -71,33 +81,37 @@ bool OfflineSymbolizationFilter::FillFrameInfo(const std::shared_ptr<FrameInfo>&
     }
     if (frameInfo->filePathId_ == INVALID_UINT32) {
         // find matching MapsInfo failed!!!
-        TS_LOGD("find matching Maps Info failed, ip = %lu", ip);
+        TS_LOGI("find matching Maps Info failed, ip = %" PRIu64 ", length=%" PRId64 "", ip, length);
         return false;
     }
     return true;
 }
 
-std::shared_ptr<FrameInfo> OfflineSymbolizationFilter::OfflineSymbolization(uint64_t ip)
+std::shared_ptr<FrameInfo> OfflineSymbolizationFilter::OfflineSymbolizationByIp(uint64_t ipid, uint64_t ip)
 {
-    if (ipToFrameInfo_.count(ip)) {
-        return ipToFrameInfo_.at(ip);
+    if (isSingleProcData_) {
+        ipid = SINGLE_PROC_IPID;
+    }
+    auto frameInfoPtr = ipidToIpToFrameInfo_.Find(ipid, ip);
+    if (frameInfoPtr != nullptr) {
+        return frameInfoPtr;
     }
     uint64_t vmStart = INVALID_UINT64;
     uint64_t vmOffset = INVALID_UINT64;
     // start symbolization
     std::shared_ptr<FrameInfo> frameInfo = std::make_shared<FrameInfo>();
-    if (!FillFrameInfo(frameInfo, ip, vmStart, vmOffset)) {
+    if (!FillFrameInfo(frameInfo, ip, vmStart, vmOffset, ipid)) {
         return nullptr;
     }
     // find SymbolTable by filePathId
-    auto itor = filePathIdToSymbolTableMap_.find(frameInfo->filePathId_);
-    if (itor == filePathIdToSymbolTableMap_.end()) {
+    auto symbolTable = ipidTofilePathIdToSymbolTableMap_.Find(ipid, frameInfo->filePathId_);
+    if (symbolTable == nullptr) {
         // find matching SymbolTable failed, but filePathId is availiable
-        ipToFrameInfo_.insert(std::make_pair(ip, frameInfo));
-        TS_LOGD("find matching filePathId failed, ip = %lu, filePathId = %u", ip, frameInfo->filePathId_);
+        ipidToIpToFrameInfo_.Insert(ipid, ip, frameInfo);
+        TS_LOGD("find matching filePathId failed, ipid = %" PRIu64 ", ip = %lu, filePathId = %u", ipid, ip,
+                frameInfo->filePathId_);
         return frameInfo;
     }
-    auto symbolTable = itor->second;
     // calculate symVaddr = ip - vmStart + vmOffset + phdrVaddr - phdrOffset
     uint64_t symVaddr =
         ip - vmStart + vmOffset + symbolTable->text_exec_vaddr() - symbolTable->text_exec_vaddr_file_offset();
@@ -108,7 +122,7 @@ std::shared_ptr<FrameInfo> OfflineSymbolizationFilter::OfflineSymbolization(uint
     auto startValueToSymAddrMap = symbolTablePtrAndStValueToSymAddr_.Find(symbolTable);
     if (!startValueToSymAddrMap) {
         // find matching SymbolTable failed, but symVaddr is availiable
-        ipToFrameInfo_.insert(std::make_pair(ip, frameInfo));
+        ipidToIpToFrameInfo_.Insert(ipid, ip, frameInfo);
         // find symbolTable failed!!!
         TS_LOGD("find symbolTalbe failed!!!");
         return frameInfo;
@@ -132,8 +146,8 @@ std::shared_ptr<FrameInfo> OfflineSymbolizationFilter::OfflineSymbolization(uint
         // find symbolStart failed, but some data is availiable.
         frameInfo->offset_ = ip;
         frameInfo->symbolOffset_ = 0;
-        ipToFrameInfo_.insert(std::make_pair(ip, frameInfo));
-        TS_LOGD("symbolStart is %lu invaliable!!!", symbolStart);
+        ipidToIpToFrameInfo_.Insert(ipid, ip, frameInfo);
+        TS_LOGD("symbolStart is %u invaliable!!!", symbolStart);
         return frameInfo;
     }
 
@@ -143,10 +157,10 @@ std::shared_ptr<FrameInfo> OfflineSymbolizationFilter::OfflineSymbolization(uint
     if (demangle != mangle) {
         free(demangle);
     }
-    ipToFrameInfo_.insert(std::make_pair(ip, frameInfo));
+    ipidToIpToFrameInfo_.Insert(ipid, ip, frameInfo);
     return frameInfo;
 }
-DataIndex OfflineSymbolizationFilter::OfflineSymbolization(uint64_t symVaddr, DataIndex filePathIndex)
+DataIndex OfflineSymbolizationFilter::OfflineSymbolizationByVaddr(uint64_t symVaddr, DataIndex filePathIndex)
 {
     auto& symbolTable = filePathIdToImportSymbolTableMap_.at(filePathIndex);
     // pase sym_table to Elf32_Sym or Elf64_Sym array decided by sym_entry_size.

@@ -35,7 +35,7 @@ private:
         int32_t Column(int32_t column) const override;
 
     private:
-        const SysEventMeasureData& sysEventMeasure_;
+        const HiSysEventMeasureData& sysEventMeasure_;
     };
 };
 } // namespace TraceStreamer

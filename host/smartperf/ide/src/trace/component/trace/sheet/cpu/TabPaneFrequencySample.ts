@@ -322,7 +322,7 @@ export class TabPaneFrequencySample extends BaseElement {
             </lit-table-column>
             <lit-table-column class="freq-sample-column" width="1fr" title="Value(kHz)" data-index="valueStr" key="valueStr" align="flex-start" order>
             </lit-table-column>
-            <lit-table-column class="freq-sample-column" width="1fr" data-index="busyTimeStr" key="busyTimeStr" align="flex-start" order button>
+            <lit-table-column class="freq-sample-column" width="1fr" title="" data-index="busyTimeStr" key="busyTimeStr" align="flex-start" order button>
             </lit-table-column>
         </lit-table>
         `;

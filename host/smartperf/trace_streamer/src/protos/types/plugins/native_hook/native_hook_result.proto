@@ -71,32 +71,38 @@ message StackMap {
     uint32 id = 1;
     repeated uint64 frame_map_id = 2; // online symbolization use frame_map_id
     repeated uint64 ip = 3; // offline symbolization use ip
+    int32 pid = 4;
 }
 
 message FrameMap {
     uint32 id = 1;
     Frame frame = 2;
+    int32 pid = 3;
 }
 
 message MemTagEvent {
     uint64 addr = 1;
     uint32 size = 2;
     string tag = 3;
+    int32 pid = 4;
 }
 
 message FilePathMap {
     uint32 id = 1;
     string name = 2;
+    int32 pid = 3;
 }
 
 message SymbolMap {
     uint32 id = 1;
     string name = 2;
+    int32 pid = 3;
 }
 
 message ThreadNameMap {
     uint32 id = 1;
     string name = 2;
+    int32 pid = 3;
 }
 
 message MapsInfo {
@@ -114,8 +120,8 @@ message SymbolTable {
     uint32 sym_entry_size = 4;
     bytes sym_table = 5;
     bytes str_table = 6;
+    int32 pid = 7;
 }
-
 
 message RecordStatisticsEvent {
     uint32 pid = 1;

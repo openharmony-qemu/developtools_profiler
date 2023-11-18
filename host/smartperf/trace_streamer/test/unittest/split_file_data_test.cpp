@@ -204,7 +204,7 @@ HWTEST_F(SplitFileDataTest, SplitFileDataByEbpfTest, TestSize.Level1)
         uint64_t dataSize = 0;
         for (auto it = splitResult.begin(); it != splitResult.end(); ++it) {
             if (it->type == (int32_t)SplitDataDataType::SPLIT_FILE_JSON) {
-                dataSize += it->json.size;
+                dataSize += it->originSeg.size;
             }
         }
         std::unique_ptr<uint8_t[]> combinedBuf(new uint8_t[dataSize + PROFILE_HEADER + headDataSize]);
@@ -217,9 +217,9 @@ HWTEST_F(SplitFileDataTest, SplitFileDataByEbpfTest, TestSize.Level1)
         }
         for (auto it = splitResult.begin(); it != splitResult.end(); ++it) {
             if (it->type == (int32_t)SplitDataDataType::SPLIT_FILE_JSON) {
-                inputFile.seekg(it->json.offset);
-                inputFile.read(reinterpret_cast<char*>(combinedBuf.get()) + currentOffset, it->json.size);
-                currentOffset += it->json.size;
+                inputFile.seekg(it->originSeg.offset);
+                inputFile.read(reinterpret_cast<char*>(combinedBuf.get()) + currentOffset, it->originSeg.size);
+                currentOffset += it->originSeg.size;
             }
             if (!inputFile) {
                 std::cerr << "Error reading from file." << std::endl;
@@ -324,7 +324,7 @@ HWTEST_F(SplitFileDataTest, SplitFileDataByPerfTest, TestSize.Level1)
         uint64_t dataSize = 0;
         for (auto it = splitResult.begin(); it != splitResult.end(); ++it) {
             if (it->type == (int32_t)SplitDataDataType::SPLIT_FILE_JSON) {
-                dataSize += it->json.size;
+                dataSize += it->originSeg.size;
             }
         }
         std::unique_ptr<uint8_t[]> combinedBuf(new uint8_t[dataSize + PROFILE_HEADER + headDataSize]);
@@ -337,9 +337,9 @@ HWTEST_F(SplitFileDataTest, SplitFileDataByPerfTest, TestSize.Level1)
         }
         for (auto it = splitResult.begin(); it != splitResult.end(); ++it) {
             if (it->type == (int32_t)SplitDataDataType::SPLIT_FILE_JSON) {
-                inputFile.seekg(it->json.offset);
-                inputFile.read(reinterpret_cast<char*>(combinedBuf.get()) + currentOffset, it->json.size);
-                currentOffset += it->json.size;
+                inputFile.seekg(it->originSeg.offset);
+                inputFile.read(reinterpret_cast<char*>(combinedBuf.get()) + currentOffset, it->originSeg.size);
+                currentOffset += it->originSeg.size;
             }
             if (!inputFile) {
                 std::cerr << "Error reading from file." << std::endl;

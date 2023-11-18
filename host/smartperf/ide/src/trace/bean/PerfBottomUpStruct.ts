@@ -22,6 +22,8 @@ export class PerfBottomUpStruct {
   totalTime: number = 0;
   totalTimeStr?: string;
   totalTimePercent: string = '';
+  eventCount: number = 0;
+  eventPercent: string = '';
   children: Array<PerfBottomUpStruct>;
   frameChildren?: Array<PerfBottomUpStruct>;
   isSearch: boolean = false;

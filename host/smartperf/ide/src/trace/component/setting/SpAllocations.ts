@@ -15,20 +15,17 @@
 
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import { log } from '../../../log/Log.js';
-import { HdcDeviceManager } from '../../../hdc/HdcDeviceManager.js';
-import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
-import '../../../base-ui/select/LitAllocationSelect.js';
 import { SpApplication } from '../../SpApplication.js';
 import { LitSearch } from '../trace/search/Search.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
 import { Cmd } from '../../../command/Cmd.js';
-import { CmdConstant } from '../../../command/CmdConstant.js';
 import LitSwitch from '../../../base-ui/switch/lit-switch.js';
-import { LitSlider } from '../../../base-ui/slider/LitSlider';
+import { LitSlider } from '../../../base-ui/slider/LitSlider.js';
+import { LitSelectV } from '../../../base-ui/select/LitSelectV.js';
 
 @element('sp-allocations')
 export class SpAllocations extends BaseElement {
-  private processId: LitAllocationSelect | null | undefined;
+  private processId: LitSelectV | null | undefined;
   private unwindEL: HTMLInputElement | null | undefined;
   private shareMemory: HTMLInputElement | null | undefined;
   private shareMemoryUnit: HTMLSelectElement | null | undefined;
@@ -41,7 +38,9 @@ export class SpAllocations extends BaseElement {
   private recordAccurately: LitSwitch | null | undefined;
   private offlineSymbol: LitSwitch | null | undefined;
   private startupMode: LitSwitch | null | undefined;
+  private responseLibMode: LitSwitch | null | undefined;
   private recordStatisticsResult: HTMLDivElement | null | undefined;
+  private sampleInterval: HTMLInputElement | null | undefined;
 
   private filterSize: HTMLInputElement | null | undefined;
 
@@ -121,7 +120,15 @@ export class SpAllocations extends BaseElement {
     if (this.recordStatisticsResult?.hasAttribute('percentValue')) {
       return Number(this.recordStatisticsResult?.getAttribute('percentValue'));
     }
-    return 3600;
+    return 10;
+  }
+
+  get response_lib_mode(): boolean {
+    let value = this.responseLibMode?.checked;
+    if (value != undefined) {
+      return value;
+    }
+    return false;
   }
 
   get startup_mode(): boolean {
@@ -130,6 +137,31 @@ export class SpAllocations extends BaseElement {
       return value;
     }
     return false;
+  }
+
+  set startup_mode(value: boolean) {
+    if (this.startupMode) {
+      this.startupMode.checked = value;
+    }
+  }
+
+  get expandPids(): number[] {
+    let allPidList: number[] = [];
+    if (this.processId?.value.length > 0) {
+      let result = this.processId?.value.match(/\((.+?)\)/g);
+      if (result) {
+        for (let index = 0; index < result.length; index++) {
+          let item = result[index];
+          let currentPid = item!.replace('(', '').replace(')', '');
+          allPidList.push(Number(currentPid));
+        }
+      }
+    }
+    return allPidList;
+  }
+
+  get sample_interval(): number {
+    return Number(this.sampleInterval!.value);
   }
 
   connectedCallback() {
@@ -160,30 +192,27 @@ export class SpAllocations extends BaseElement {
         ev.preventDefault();
       }
     });
-    this.processId = this.shadowRoot?.getElementById('pid') as LitAllocationSelect;
-    let process = this.processId.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
-    let sp = document.querySelector('sp-application') as SpApplication;
-    let litSearch = sp?.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
-    let allocationProcessData: Array<string> = [];
-    process.addEventListener('mousedown', (ev) => {
-      if (SpRecordTrace.serialNumber === '') {
-        this.processId!.processData = [];
-      }
-    });
-    process.addEventListener('valuable', (ev) => {
-      this.dispatchEvent(new CustomEvent('addProbe', {}));
-    });
-    process.addEventListener('inputClick', () => {
-      allocationProcessData = [];
-      if (this.startup_mode) {
-        this.processId!.processData = [];
+    this.processId = this.shadowRoot?.getElementById('pid') as LitSelectV;
+    let process = this.processId.shadowRoot?.querySelector('input') as HTMLInputElement;
+    process!.addEventListener('mousedown', (ev) => {
+      if (this.startSamp) {
+        process.readOnly = false;
+        Cmd.getProcess().then((processList) => {
+          this.processId?.dataSource(processList, '');
+          if (processList.length > 0 && !this.startup_mode) {
+            this.processId?.dataSource(processList, 'ALL-Process');
+          } else {
+            this.processId?.dataSource([], '');
+          }
+        });
+      } else {
+        process.readOnly = true;
         return;
       }
-      if (SpRecordTrace.serialNumber != '') {
-        Cmd.getProcess().then((processList) => {
-          this.processId!.processData = processList;
-          this.processId!.initData();
-        });
+      if (this.startSamp && (SpRecordTrace.serialNumber === '' || this.startup_mode)) {
+        this.processId?.dataSource([], '');
+      } else {
+
       }
     });
     this.unwindEL = this.shadowRoot?.getElementById('unwind') as HTMLInputElement;
@@ -195,6 +224,8 @@ export class SpAllocations extends BaseElement {
     this.recordAccurately = this.shadowRoot?.getElementById('use_record_accurately') as LitSwitch;
     this.offlineSymbol = this.shadowRoot?.getElementById('use_offline_symbolization') as LitSwitch;
     this.startupMode = this.shadowRoot?.getElementById('use_startup_mode') as LitSwitch;
+    this.responseLibMode = this.shadowRoot?.getElementById('response_lib_mode') as LitSwitch;
+    this.sampleInterval = this.shadowRoot?.getElementById('sample-interval-input') as HTMLInputElement;
     let stepValue = [0, 1, 10, 30, 60, 300, 600, 1800, 3600];
     this.statisticsSlider = this.shadowRoot?.querySelector<LitSlider>('#interval-slider') as LitSlider;
 
@@ -321,12 +352,11 @@ export class SpAllocations extends BaseElement {
       });
     });
     this.startupMode.addEventListener('change', (evt) => {
+      process.value = '';
       if (this.startup_mode) {
-        this.processId!.value = '';
-        this.processId!.placeholder = 'please input process';
+        process!.placeholder = 'please input process';
       } else {
-        this.processId!.value = '';
-        this.processId!.placeholder = 'please select process';
+        process!.placeholder = 'please select process';
       }
     });
 
@@ -356,6 +386,12 @@ export class SpAllocations extends BaseElement {
     if (this.startupMode) {
       this.startupMode.disabled = false;
     }
+    if (this.responseLibMode) {
+      this.responseLibMode.disabled = false;
+    }
+    if (this.sampleInterval) {
+      this.sampleInterval.disabled = false;
+    }
     this.processId!.removeAttribute('disabled');
     let inputBoxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.inputBoxes');
     inputBoxes!.forEach((item) => {
@@ -378,6 +414,12 @@ export class SpAllocations extends BaseElement {
     if (this.offlineSymbol) {
       this.offlineSymbol.disabled = true;
     }
+    if (this.responseLibMode) {
+      this.responseLibMode.disabled = true;
+    }
+    if (this.sampleInterval) {
+      this.sampleInterval.disabled = true;
+    }
     this.processId!.setAttribute('disabled', '');
     let inputBoxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.inputBoxes');
     inputBoxes!.forEach((item) => {
@@ -397,6 +439,7 @@ export class SpAllocations extends BaseElement {
         }
         .title {
             grid-column: span 2 / auto;
+            margin-top: 5vh;
         }
         .allocation-font-style{
             font-family: Helvetica-Bold;
@@ -406,13 +449,14 @@ export class SpAllocations extends BaseElement {
             font-weight: 700;
         }
         .root {
-            padding-top: 45px;
+            padding-top: 30px;
             margin-left: 40px;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: min-content 1fr min-content;
             width: 90%;
             border-radius: 0px 16px 16px 0px;
+            margin-bottom: 30px;
         }
         .allocation-inner-font-style {
             font-family: Helvetica,serif;
@@ -582,15 +626,15 @@ export class SpAllocations extends BaseElement {
         
         </style>
         <div class="root">
-          <div class = "title" style="width: 92%;margin-top: 5vh;">
+          <div class = "title" style="width: 92%;">
             <span class="allocation-title">Start Native Memory Record</span>
             <lit-switch id="switch-disabled"></lit-switch>
           </div>
           <div class="allocation-application">
              <span class="allocation-inner-font-style">ProcessId or ProcessName</span>
              <span class="value-range">Record process</span>
-             <lit-allocation-select show-search class="processSelect" rounded default-value="" id="pid" placement="bottom" title="process" placeholder="please select process">
-             </lit-allocation-select>
+             <lit-select-v class="processSelect" rounded mode="multiple" default-value="" id="pid" placement="bottom" title="process" placeholder="please select process">
+             </lit-select-v>
           </div>
           <div class="allocation-application">
             <span class="allocation-inner-font-style" >Max unwind level</span>
@@ -617,6 +661,11 @@ export class SpAllocations extends BaseElement {
               <span class="allocation-inner-font-style" id="fp-unwind">Use Fp Unwind</span>               
               <lit-switch class="lts" id="use_fp_unwind" title="fp unwind" checked="true"></lit-switch>
           </div>
+          <div class="allocation-switchstyle version-controller" style="flex-wrap: wrap;grid-gap: 15px;">
+            <span class="allocation-inner-font-style" >Sample Interval (Available on recent OpenHarmony 4.0)</span>
+            <span class="value-range">Max Sample Interval Rang is 1 - 65535, default 256</span>
+            <input id= "sample-interval-input"  class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the sample interval" oninput="if(this.value > 65535){this.value = '65535'} if(this.value < 1 && this.value.toString().startsWith('0')){ this.value = '1'}"  onkeyup="this.value=this.value.replace(/\\D/g,'')" value="256">
+          </div>
           <div class="allocation-switchstyle version-controller">
               <span class="allocation-inner-font-style" id="record_accurately ">Use Record Accurately (Available on recent OpenHarmony 4.0)</span> 
               <lit-switch   class="lts" id="use_record_accurately" title="record_accurately" checked="true"></lit-switch>
@@ -629,7 +678,11 @@ export class SpAllocations extends BaseElement {
               <span class="allocation-inner-font-style" id="startup_mode">Use Startup Mode (Available on recent OpenHarmony 4.0)</span> 
               <lit-switch class="lts" id="use_startup_mode" title="startup_mode"></lit-switch>
           </div>   
-          <div class="allocation-switchstyle record-statistics-result version-controller" style="grid-row: 6; grid-column: 1 / 3;height: min-content;display: grid;grid-template-rows: 1fr;grid-template-columns: 1fr min-content;">
+          <div class="allocation-switchstyle version-controller">
+              <span class="allocation-inner-font-style" id="response_lib_mode_span">Use Response Lib Mode (Available on recent OpenHarmony 4.0)</span> 
+              <lit-switch class="lts" id="response_lib_mode" title="response_lib_mode"></lit-switch>
+          </div>
+          <div class="allocation-switchstyle record-statistics-result version-controller" style="grid-row: 8; grid-column: 1 / 3;height: min-content;display: grid;grid-template-rows: 1fr;grid-template-columns: 1fr min-content;">
             <div class="record-title">
                 <span class="record-mode">Use Record Statistics (Available on recent OpenHarmony 4.0)</span> 
                 <span class="allocation-record-prompt"> Time between following interval (0 = disabled) </span>

@@ -94,6 +94,7 @@ describe('SpRecordTrace Test', () => {
     spRecordTrace.spAllocations.appProcess.indexOf = jest.fn(() => '');
     spRecordTrace.spAllocations.appProcess.lastIndexOf = jest.fn(() => 1);
     spRecordTrace.spAllocations.appProcess.slice = jest.fn(() => 1);
+    spRecordTrace.spAllocations.expandPids = jest.fn(() => []);
     expect(spRecordTrace.createNativePluginConfig(1)).toEqual({
       configData: {
         blocked: true,
@@ -101,7 +102,6 @@ describe('SpRecordTrace Test', () => {
         filterSize: undefined,
         fpUnwind: undefined,
         maxStackDepth: undefined,
-        pid: 1,
         processName: '',
         saveFile: false,
         smbPages: undefined,

@@ -158,10 +158,17 @@ export class LitSelectV extends BaseElement {
     this.selectVBody = this.shadowRoot!.querySelector('.body') as HTMLDivElement;
     this.selectVOptions = this.shadowRoot!.querySelector('.body-opt') as HTMLDivElement;
     this.selectVIconEl = this.shadowRoot!.querySelector('.icon');
-    this.selectVInputEl!.onkeydown = (ev: KeyboardEvent) => {
+    this.selectVInputEl!.oninput = (ev: InputEvent) => {
       // @ts-ignore
-      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+      if (this.selectVInputEl!.value === '00') {
+        this.selectVInputEl!.value = '0';
         ev.preventDefault();
+      }
+      if (this.selectVInputEl!.value === '') {
+        this.shadowRoot?.querySelectorAll('lit-select-option').forEach((it) => {
+          it.removeAttribute('selected');
+          this.showItems = [];
+        });
       }
     };
     this.selectVSearchInputEl!.onkeydown = (ev: KeyboardEvent) => {

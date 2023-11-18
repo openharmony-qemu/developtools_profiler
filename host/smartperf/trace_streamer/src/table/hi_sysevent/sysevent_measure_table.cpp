@@ -39,8 +39,8 @@ std::unique_ptr<TableBase::Cursor> SysEventMeasureTable::CreateCursor()
 }
 
 SysEventMeasureTable::Cursor::Cursor(const TraceDataCache* dataCache, TableBase* table)
-    : TableBase::Cursor(dataCache, table, static_cast<uint32_t>(dataCache->GetConstSyseventMeasureData().Size())),
-      sysEventMeasure_(dataCache->GetConstSyseventMeasureData())
+    : TableBase::Cursor(dataCache, table, static_cast<uint32_t>(dataCache->GetConstHiSyseventMeasureData().Size())),
+      sysEventMeasure_(dataCache->GetConstHiSyseventMeasureData())
 {
 }
 
@@ -50,25 +50,25 @@ int32_t SysEventMeasureTable::Cursor::Column(int32_t column) const
 {
     switch (static_cast<Index>(column)) {
         case Index::ID:
-            sqlite3_result_int64(context_, dataCache_->GetConstSyseventMeasureData().IdsData()[CurrentRow()]);
+            sqlite3_result_int64(context_, dataCache_->GetConstHiSyseventMeasureData().IdsData()[CurrentRow()]);
             break;
         case Index::SERIAL:
-            sqlite3_result_int64(context_, dataCache_->GetConstSyseventMeasureData().Serial()[CurrentRow()]);
+            sqlite3_result_int64(context_, dataCache_->GetConstHiSyseventMeasureData().Serial()[CurrentRow()]);
             break;
         case Index::TS:
-            sqlite3_result_int64(context_, dataCache_->GetConstSyseventMeasureData().Ts()[CurrentRow()]);
+            sqlite3_result_int64(context_, dataCache_->GetConstHiSyseventMeasureData().Ts()[CurrentRow()]);
             break;
         case Index::NAME_ID:
-            sqlite3_result_int(context_, dataCache_->GetConstSyseventMeasureData().NameFilterId()[CurrentRow()]);
+            sqlite3_result_int(context_, dataCache_->GetConstHiSyseventMeasureData().NameFilterId()[CurrentRow()]);
             break;
         case Index::KEY_ID:
-            sqlite3_result_int(context_, dataCache_->GetConstSyseventMeasureData().AppKeyFilterId()[CurrentRow()]);
+            sqlite3_result_int(context_, dataCache_->GetConstHiSyseventMeasureData().AppKeyFilterId()[CurrentRow()]);
             break;
         case Index::TYPE:
-            sqlite3_result_int(context_, dataCache_->GetConstSyseventMeasureData().Type()[CurrentRow()]);
+            sqlite3_result_int(context_, dataCache_->GetConstHiSyseventMeasureData().Type()[CurrentRow()]);
             break;
         case Index::INT_VALUE:
-            sqlite3_result_double(context_, dataCache_->GetConstSyseventMeasureData().NumValue()[CurrentRow()]);
+            sqlite3_result_double(context_, dataCache_->GetConstHiSyseventMeasureData().NumValue()[CurrentRow()]);
             break;
         case Index::STRING_VALUE:
             sqlite3_result_text(context_,

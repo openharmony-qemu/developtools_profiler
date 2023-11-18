@@ -19,8 +19,6 @@ import { TabPaneNMCallTree } from '../../../../../../dist/trace/component/trace/
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
 // @ts-ignore
 import { FrameChart } from '../../../../../../dist/trace/component/chart/FrameChart.js';
-// @ts-ignore
-import { DisassemblingWindow } from '../../../../../../dist/trace/component/DisassemblingWindow.js';
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
@@ -42,7 +40,6 @@ describe('TabPaneNMCallTree Test', () => {
   let dom = new FrameChart();
   dom.setAttribute('id', 'framechart');
   tabPaneNMCallTree.frameChart = dom;
-  tabPaneNMCallTree.modal = new DisassemblingWindow();
   tabPaneNMCallTree.filter = new TabPaneFilter();
 
   it('TabPaneNMCallTreeTest01', function () {

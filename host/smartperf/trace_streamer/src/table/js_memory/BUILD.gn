@@ -18,8 +18,6 @@ ohos_source_set("js_memory_tables") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   sources = [
-    "appname_table.cpp",
-    "appname_table.h",
     "js_config_table.cpp",
     "js_config_table.h",
     "js_cpu_profiler_node_table.cpp",

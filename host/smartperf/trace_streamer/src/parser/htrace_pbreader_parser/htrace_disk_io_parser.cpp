@@ -55,11 +55,7 @@ void HtraceDiskIOParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts)
 void HtraceDiskIOParser::Finish()
 {
     auto cmp = [](const TsDiskIOData& a, const TsDiskIOData& b) { return a.ts < b.ts; };
-#ifdef IS_WASM
-    std::sort(diskIOData_.begin(), diskIOData_.end(), cmp);
-#else
     std::stable_sort(diskIOData_.begin(), diskIOData_.end(), cmp);
-#endif
     bool first = true;
     uint64_t lastTs = 0;
     for (auto itor = diskIOData_.begin(); itor != diskIOData_.end(); itor++) {

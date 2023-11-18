@@ -61,3 +61,6 @@ export function intersectData(row: TraceRow<any>): any[] {
   });
   return intersectData;
 }
+export function isExistPidInArray(arr: Array<{pid: number,ipid:number}>,pid:number): boolean{
+  return arr.some((item) => item.pid === pid);
+}

@@ -22,6 +22,7 @@
 
 #include "double_map.h"
 #include "filter_base.h"
+#include "htrace_plugin_time_parser.h"
 #include "json.hpp"
 #include "trace_data_cache.h"
 #include "trace_streamer_filters.h"
@@ -32,25 +33,21 @@ namespace TraceStreamer {
 
 using json = nlohmann::json;
 typedef struct {
-    std::string eventSource;
+    std::string eventName;
     uint64_t timeStamp;
     std::vector<std::string> appName;
-    std::vector<std::string> appVersions;
     std::vector<std::string> key;
     std::vector<json> value;
 } JsonData;
 
 enum ErrorCode { ERROR_CODE_EXIT = -2, ERROR_CODE_NODATA = -1 };
 
-class HiSysEventMeasureFilter : private FilterBase {
+class HiSysEventMeasureFilter : private FilterBase, public HtracePluginTimeParser {
 public:
     HiSysEventMeasureFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter);
     HiSysEventMeasureFilter(const HiSysEventMeasureFilter&) = delete;
     HiSysEventMeasureFilter& operator=(const HiSysEventMeasureFilter&) = delete;
     ~HiSysEventMeasureFilter() override;
-    DataIndex GetOrCreateFilterId(DataIndex eventSource);
-    DataIndex GetOrCreateFilterId(DataIndex eventSource, DataIndex appName);
-    std::tuple<DataIndex, DataIndex> GetOrCreateFilterId(DataIndex eventSource, DataIndex appName, DataIndex key);
     DataIndex AppendNewValue(uint64_t serial,
                              uint64_t timeStamp,
                              DataIndex appNameId,
@@ -79,14 +76,32 @@ public:
                         int32_t accessibility,
                         int32_t recording,
                         int32_t streamAll);
+    void SaveAllHiSysEvent(json jMessage);
+    void Clear();
+    void FilterAllHiSysEvent(const json& jMessage, uint64_t serial);
+
+private:
     bool JGetData(const json& jMessage,
                   JsonData& jData,
                   size_t& maxArraySize,
                   std::vector<size_t>& noArrayIndex,
                   std::vector<size_t>& arrayIndex);
-    void Clear();
-
-private:
+    void NoArrayDataParse(JsonData jData,
+                          std::vector<size_t> noArrayIndex,
+                          DataIndex eventSourceIndex,
+                          uint64_t hiSysEventLineId);
+    void ArrayDataParse(JsonData jData,
+                        std::vector<size_t> arrayIndex,
+                        DataIndex eventSourceIndex,
+                        size_t maxArraySize,
+                        uint64_t hiSysEventLineId);
+    void CommonDataParser(JsonData jData, DataIndex eventSourceIndex, uint64_t hiSysEventLineId);
+    void AppendStringValue(nlohmann::json& value,
+                           uint64_t hiSysEventLineId,
+                           DataIndex eventSourceIndex,
+                           DataIndex keyIndex,
+                           uint64_t timeStamp);
+    const uint64_t MSEC_TO_NS = 1000 * 1000;
     DataIndex GetOrCreateFilterIdInternal(DataIndex appNameId, DataIndex key);
     DoubleMap<DataIndex, DataIndex, DataIndex> appKey_;
     DoubleMap<DataIndex, DataIndex, DataIndex> appName_;

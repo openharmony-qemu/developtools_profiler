@@ -382,7 +382,10 @@ bool PerfDataParser::SplitPerfWaitForFinish(const std::deque<uint8_t>& dequeBuff
 
 PerfDataParser::~PerfDataParser()
 {
-    (void)remove(tmpPerfData_.c_str());
+    recordDataReader_.reset();
+    if (remove(tmpPerfData_.c_str()) == -1) {
+        TS_LOGE("remove %s err:%s\n", tmpPerfData_.c_str(), strerror(errno));
+    }
     TS_LOGI("perf data ts MIN:%llu, MAX:%llu", static_cast<unsigned long long>(GetPluginStartTime()),
             static_cast<unsigned long long>(GetPluginEndTime()));
 }

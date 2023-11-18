@@ -23,7 +23,7 @@
 
 #include "bytrace_event_parser.h"
 #include "bytrace_hilog_parser.h"
-#include "hi_sysevent_measure_filter.h"
+#include "bytrace_hisysevent_parser.h"
 #include "log.h"
 #include "parser_base.h"
 #include "string_to_numerical.h"
@@ -103,21 +103,12 @@ private:
     bool FilterData(DataSegment& seg);
 
 private:
-    void AppendJsonDataToHiSysEventNewValue(JsonData jData, int32_t jIndex, DataIndex eventSourceIndex);
-    void NoArrayDataParse(JsonData jData, std::vector<size_t> noArrayIndex, DataIndex eventSourceIndex);
-    void ArrayDataParse(JsonData jData,
-                        std::vector<size_t> arrayIndex,
-                        DataIndex eventSourceIndex,
-                        size_t maxArraySize);
-    void CommonDataParser(JsonData jData, DataIndex eventSourceIndex);
-    void ParseJsonData(const std::string& buffer);
-
-private:
     using ArgsMap = std::unordered_map<std::string, std::string>;
     bool isParsingOver_ = false;
     TraceDataCache* traceDataCache_;
     std::unique_ptr<BytraceEventParser> eventParser_;
     std::unique_ptr<BytraceHilogParser> hilogParser_;
+    std::unique_ptr<BytraceHiSysEventParser> hiSysEventParser_;
     const std::regex bytraceMatcher_ = std::regex(R"(-(\d+)\s+\(?\s*(\d+|-+)?\)?\s?\[(\d+)\]\s*)"
                                                   R"([a-zA-Z0-9.]{0,5}\s+(\d+\.\d+):\s+(\S+):)");
 

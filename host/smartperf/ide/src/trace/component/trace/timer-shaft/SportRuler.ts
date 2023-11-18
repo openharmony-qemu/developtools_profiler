@@ -21,7 +21,6 @@ import { ns2s, ns2x, randomRgbColor, TimerShaftElement } from '../TimerShaftElem
 import { TraceRow } from '../base/TraceRow.js';
 import { SpApplication } from '../../../SpApplication.js';
 import { Utils } from '../base/Utils.js';
-import { SpSystemTrace } from '../../SpSystemTrace.js';
 
 export enum StType {
   TEMP, //临时的
@@ -443,7 +442,7 @@ export class SportRuler extends Graph {
           (this.rulerW * (startTime - this.range.startNS)) / (this.range.endNS - this.range.startNS)
         );
         let endX = Math.round((this.rulerW * (endTime - this.range.startNS)) / (this.range.endNS - this.range.startNS));
-        let color = randomRgbColor();
+        let color = randomRgbColor() || '#ff0000';
         this.slicesTime.color = color;
         newSlicestime = new SlicesTime(
           this.slicesTime.startTime || 0,

@@ -689,6 +689,9 @@ export enum SysMeminfoType {
   MEMINFO_CMA_TOTAL = 'PMEM_CMA_TOTAL',
   MEMINFO_CMA_FREE = 'PMEM_CMA_FREE',
   MEMINFO_KERNEL_RECLAIMABLE = 'PMEM_KERNEL_RECLAIMABLE',
+  PMEM_ACTIVE_PURG = 'PMEM_ACTIVE_PURG',
+  PMEM_INACTIVE_PURG = 'PMEM_INACTIVE_PURG',
+  PMEM_PINED_PURG = 'PMEM_PINED_PURG',
   UNRECOGNIZED = 'UNRECOGNIZED',
 }
 
@@ -799,6 +802,15 @@ export function sysMeminfoTypeFromJSON(object: any): SysMeminfoType {
     case 34:
     case 'MEMINFO_KERNEL_RECLAIMABLE':
       return SysMeminfoType.MEMINFO_KERNEL_RECLAIMABLE;
+    case 35:
+    case 'PMEM_ACTIVE_PURG':
+      return SysMeminfoType.PMEM_ACTIVE_PURG;
+    case 36:
+    case 'PMEM_INACTIVE_PURG':
+      return SysMeminfoType.PMEM_INACTIVE_PURG;
+    case 37:
+    case 'PMEM_PINED_PURG':
+      return SysMeminfoType.PMEM_PINED_PURG;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -857,7 +869,7 @@ export enum Level {
 }
 
 export interface NativeHookConfig {
-  pid: number;
+  pid?: number;
   saveFile: boolean;
   fileName: string;
   filterSize: number;
@@ -872,6 +884,9 @@ export interface NativeHookConfig {
   callframeCompress?: boolean;
   startupMode?: boolean;
   statisticsInterval?: number;
+  sampleInterval?: number;
+  expandPids?: number[];
+  responseLibraryMode?: boolean;
 }
 
 export interface FpsConfig {

@@ -134,4 +134,6 @@ Snapshot List的Tab页，主要显示了各时刻内存的增长的差值。
 ### Native Memory数据统计功能
 选择Use Record Statistics和statistics interval配置项抓取的数据，只会显示Call Info的Tab页，Call Info相关功能同上。
 ![GitHub Logo](../../figures/NativeMemory/statiscsCallInfo.jpg)
-
+### Native Memory多进程数据显示
+前端可以支持多进程数据的展示，通过在tab页切换不同进程，可以显示不同进程的hook数据。
+![GitHub Logo](../../figures/NativeMemory/hook_moreprocess.jpg)

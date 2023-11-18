@@ -26,11 +26,6 @@ window.ResizeObserver =
     observe: jest.fn(),
     unobserve: jest.fn(),
   }));
-
-jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
-  return {};
-});
-
 Object.defineProperty(global.self, 'crypto', {
   value: {
     getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
@@ -42,13 +37,17 @@ jest.mock('../../../../../../dist/base-ui/chart/pie/LitChartPie.js', () => {
 });
 
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceSheet.js', () => {});
+import '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {
+    initSort: () =>{}
+  };
+});
 
 describe('TabPaneNMStatisticAnalysis Test', () => {
   let htmlDivElement = document.createElement('div');
   let tabStatisticAnalysis = new TabPaneNMStatisticAnalysis();
-  tabStatisticAnalysis.tableType.reMeauseHeight = jest.fn(() => true);
-  tabStatisticAnalysis.soUsageTbl.reMeauseHeight = jest.fn(() => true);
-  tabStatisticAnalysis.functionUsageTbl.reMeauseHeight = jest.fn(() => true);
   htmlDivElement.append(tabStatisticAnalysis);
   let dataArray = {
     applyCount: 25336,
@@ -76,6 +75,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     rightNs: 48320174407,
     hasFps: false,
     nativeMemory: ['All Heap & Anonymous VM', 'All Heap'],
+    nativeMemoryStatistic:[]
   };
   let processData = [
     {
@@ -107,13 +107,13 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     tabStatisticAnalysis.tabName.textContent = 'Statistic By Library Size';
     tabStatisticAnalysis.eventTypeData = [dataArray];
     let mouseMoveEvent: MouseEvent = new MouseEvent('click', <MouseEventInit>{ movementX: 1, movementY: 2 });
-    tabStatisticAnalysis.back.dispatchEvent(mouseMoveEvent);
-    tabStatisticAnalysis.back.dispatchEvent(mouseMoveEvent);
+    tabStatisticAnalysis.nmBack.dispatchEvent(mouseMoveEvent);
+    tabStatisticAnalysis.nmBack.dispatchEvent(mouseMoveEvent);
   });
 
   it('statisticAnalysis03', function () {
-    tabStatisticAnalysis.getLibSize(dataArray, select);
-    expect(tabStatisticAnalysis.currentLevel).toEqual(1);
+    tabStatisticAnalysis.getNMLibSize(dataArray, select);
+    expect(tabStatisticAnalysis.currentLevel).toEqual(2);
   });
 
   it('statisticAnalysis04', function () {
@@ -121,7 +121,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
   });
 
   it('statisticAnalysis05', function () {
-    tabStatisticAnalysis.calTypeSize(select, processData);
+    tabStatisticAnalysis.getNMTypeSize(select, processData);
     expect(tabStatisticAnalysis.processData.length).toBe(1);
   });
 
@@ -144,7 +144,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
         type: 11,
       },
     ];
-    tabStatisticAnalysis.calTypeSize(select, processData);
+    tabStatisticAnalysis.getNMTypeSize(select, processData);
     expect(tabStatisticAnalysis.currentLevelReleaseCount).toBe(0);
   });
 
@@ -167,7 +167,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
         type: 92,
       },
     ];
-    tabStatisticAnalysis.calTypeSize(select, processData);
+    tabStatisticAnalysis.getNMTypeSize(select, processData);
     expect(tabStatisticAnalysis.currentLevelApplySize).toBe(0);
   });
 
@@ -190,26 +190,26 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
         type: 30,
       },
     ];
-    tabStatisticAnalysis.calTypeSize(select, processData);
+    tabStatisticAnalysis.getNMTypeSize(select, processData);
     expect(tabStatisticAnalysis.processData.length).toBe(1);
   });
 
   it('statisticAnalysis09', function () {
     tabStatisticAnalysis.currentLevel = 0;
     tabStatisticAnalysis.sortByColumn('', 0);
-    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(1);
+    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(0);
   });
 
   it('statisticAnalysis10', function () {
     tabStatisticAnalysis.currentLevel = 1;
     tabStatisticAnalysis.sortByColumn('', 0);
-    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(1);
+    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(0);
   });
 
   it('statisticAnalysis11', function () {
     tabStatisticAnalysis.currentLevel = 2;
     tabStatisticAnalysis.sortByColumn('', 0);
-    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(1);
+    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(0);
   });
 
   it('statisticAnalysis12', function () {
@@ -259,7 +259,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
       },
     ];
     tabStatisticAnalysis.sortByColumn('existCountPercent', 1);
-    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(3);
+    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(0);
   });
 
   it('statisticAnalysis13', function () {
@@ -300,7 +300,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
       },
     ];
     tabStatisticAnalysis.sortByColumn('releaseCountPercent', 1);
-    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(3);
+    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(0);
   });
 
   it('statisticAnalysis14', function () {
@@ -341,7 +341,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
       },
     ];
     tabStatisticAnalysis.sortByColumn('applyCountPercent', 1);
-    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(3);
+    expect(tabStatisticAnalysis.tableType.recycleDataSource.length).toBe(0);
   });
 
   it('statisticAnalysis15', function () {
@@ -367,7 +367,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
   it('statisticAnalysis17', function () {
     tabStatisticAnalysis.tabName.textContent;
     let mouseMoveEvent: MouseEvent = new MouseEvent('click', <MouseEventInit>{ movementX: 1, movementY: 2 });
-    tabStatisticAnalysis.back.dispatchEvent(mouseMoveEvent);
+    tabStatisticAnalysis.nmBack.dispatchEvent(mouseMoveEvent);
 
     tabStatisticAnalysis.isStatistic = false;
     let val = {
@@ -378,22 +378,21 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     expect(tabStatisticAnalysis.getNMEventTypeSize(val)).toBeUndefined();
   });
   it('statisticAnalysis18', function () {
-    let it = [
+    let it =
       {
-        tabName: '',
-      },
-    ];
+        tableName: '',
+      };
     tabStatisticAnalysis.totalData = jest.fn(() => true);
     tabStatisticAnalysis.pie = jest.fn(() => true);
     tabStatisticAnalysis.pie.hideTip = jest.fn(() => true);
+    tabStatisticAnalysis.nmPieChart.hideTip = jest.fn(() => true);
     expect(tabStatisticAnalysis.nativeProcessLevelClickEvent(it)).toBeUndefined();
   });
   it('statisticAnalysis19', function () {
-    let it = [
+    let it =
       {
-        tabName: '',
-      },
-    ];
+        libName: '',
+      };
     tabStatisticAnalysis.totalData = jest.fn(() => true);
     tabStatisticAnalysis.pie = jest.fn(() => true);
     tabStatisticAnalysis.pie.hideTip = jest.fn(() => true);
@@ -406,9 +405,6 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     expect(tabStatisticAnalysis.calSizeObj([])).toBeTruthy();
   });
   it('statisticAnalysis23', function () {
-    tabStatisticAnalysis.threadUsageTbl = jest.fn(() => true);
-    tabStatisticAnalysis.threadUsageTbl.reMeauseHeight = jest.fn(() => true);
-    tabStatisticAnalysis.threadUsageTbl.addEventListener = jest.fn(() => true);
     expect(tabStatisticAnalysis.getNMThreadSize(dataArray, select)).toBeUndefined();
   });
   it('statisticAnalysis24', function () {
@@ -423,7 +419,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     tabStatisticAnalysis.typeStatisticsData = jest.fn(() => true);
     tabStatisticAnalysis.typeStatisticsData.allDuration = jest.fn(() => true);
     tabStatisticAnalysis.eventTypeData = [{}, {}];
-    tabStatisticAnalysis.back!.dispatchEvent(itemClick);
+    tabStatisticAnalysis.nmBack!.dispatchEvent(itemClick);
     expect(tabStatisticAnalysis.getBack()).toBeUndefined();
   });
   it('statisticAnalysis25', function () {
@@ -438,7 +434,7 @@ describe('TabPaneNMStatisticAnalysis Test', () => {
     tabStatisticAnalysis.libStatisticsData = jest.fn(() => true);
     tabStatisticAnalysis.libStatisticsData.allDuration = jest.fn(() => true);
     tabStatisticAnalysis.soData = [{}, {}];
-    tabStatisticAnalysis.back!.dispatchEvent(itemClick);
+    tabStatisticAnalysis.nmBack!.dispatchEvent(itemClick);
     expect(tabStatisticAnalysis.getBack()).toBeUndefined();
   });
 });

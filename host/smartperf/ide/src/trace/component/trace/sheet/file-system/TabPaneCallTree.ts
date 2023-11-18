@@ -23,7 +23,13 @@ import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { MerageBean } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
 import { showButtonMenu } from '../SheetUtils.js';
-import { findSearchNode } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
+import { CallTreeLevelStruct } from '../../../../bean/EbpfStruct.js';
+import '../../../../../base-ui/headline/lit-headline.js';
+import { LitHeadLine } from '../../../../../base-ui/headline/lit-headline.js';
+
+const InvertOptionIndex: number = 0;
+const hideEventOptionIndex: number = 2;
+const hideThreadOptionIndex: number = 3;
 
 @element('tabpane-calltree')
 export class TabPaneCallTree extends BaseElement {
@@ -35,39 +41,92 @@ export class TabPaneCallTree extends BaseElement {
   private callTreeRightSource: Array<MerageBean> = [];
   private callTreeFilter: any;
   private callTreeDataSource: any[] = [];
-  private callTreeSortKey = 'weight';
-  private callTreeSortType = 0;
+  private callTreeSortKey: string = 'weight';
+  private callTreeSortType: number = 0;
   private callTreeSelectedData: any = undefined;
   private frameChart: FrameChart | null | undefined;
   private isChartShow: boolean = false;
-  private systmeRuleName = '/system/';
-  private callTreeNumRuleName = '/max/min/';
-  private needShowMenu = true;
+  private systmeRuleName: string = '/system/';
+  private callTreeNumRuleName: string = '/max/min/';
+  private needShowMenu: boolean = true;
   private searchValue: string = '';
   private loadingList: number[] = [];
   private loadingPage: any;
   private currentSelection: SelectionParam | undefined;
   private flameChartMode: ChartMode = ChartMode.Duration;
   private currentCallTreeDataSource: Array<MerageBean> = [];
+  private currentRowClickData: any;
+  private initWidth: number = 0;
+  private _pieTitle: string = '';
+  private _cWidth: number = 0;
+  private _currentCallTreeLevel: number = 0;
+  private _rowClickData: any = undefined;
+  private callTreeLevel: CallTreeLevelStruct | undefined | null;
+  private headLine: LitHeadLine | null | undefined;
+
+  set pieTitle(value: string) {
+    this._pieTitle = value;
+    if (this._pieTitle.length > 0) {
+      this.headLine!.isShow = true;
+      this.headLine!.titleTxt = this._pieTitle;
+      this.headLine!.closeCallback = () => {
+        this.restore();
+      };
+    }
+  }
+
+  set cWidth(value: number) {
+    this._cWidth = value;
+  }
+
+  set currentCallTreeLevel(value: number) {
+    this._currentCallTreeLevel = value;
+  }
+
+  set rowClickData(value: any) {
+    this._rowClickData = value;
+  }
 
   set data(callTreeSelection: SelectionParam | any) {
-    if (callTreeSelection === this.currentSelection) {
+    if (callTreeSelection !== this.currentSelection && this._rowClickData === this.currentRowClickData) {
+      this._rowClickData = undefined;
+    }
+    if (callTreeSelection === this.currentSelection && !this.currentSelection?.isRowClick) {
       return;
     }
     this.searchValue = '';
     this.initModeAndAction();
     this.currentSelection = callTreeSelection;
+    this.currentRowClickData = this._rowClickData;
     this.callTreeTbl!.style.visibility = 'visible';
     if (this.parentElement!.clientHeight > this.callTreeFilter!.clientHeight) {
       this.callTreeFilter!.style.display = 'flex';
     } else {
       this.callTreeFilter!.style.display = 'none';
     }
+    procedurePool.submitWithName('logic0', 'fileSystem-reset', [], undefined, () => {});
     this.callTreeFilter!.initializeFilterTree(true, true, true);
     this.callTreeFilter!.filterValue = '';
     this.callTreeProgressEL!.loading = true;
     this.loadingPage.style.visibility = 'visible';
-    const initWidth = this.clientWidth;
+    this.getDataByWorkAndUpDateCanvas(callTreeSelection);
+  }
+
+  getDataByWorkAndUpDateCanvas(callTreeSelection: SelectionParam): void {
+    if (this.clientWidth === 0) {
+      this.initWidth = this._cWidth;
+    } else {
+      this.initWidth = this.clientWidth;
+    }
+    if (this._rowClickData && this.currentRowClickData !== undefined && this.currentSelection?.isRowClick) {
+      this.getCallTreeDataByPieLevel();
+    } else {
+      this.headLine!.isShow = false;
+      this.getCallTreeData(callTreeSelection, this.initWidth);
+    }
+  }
+
+  private getCallTreeData(callTreeSelection: SelectionParam | any, initWidth: number): void {
     this.getDataByWorker(
       [
         {
@@ -92,7 +151,61 @@ export class TabPaneCallTree extends BaseElement {
     );
   }
 
-  initModeAndAction() {
+  /**
+   * 根据Analysis Tab饼图跳转过来的层级绘制对应的CallTree Tab火焰图和表格
+   */
+  private getCallTreeDataByPieLevel(): void {
+    this.callTreeLevel = new CallTreeLevelStruct();
+    this.callTreeLevel = {
+      processId: this._rowClickData.pid,
+      threadId: this._rowClickData.tid,
+      typeId: this._rowClickData.type,
+      libId: this._rowClickData.libId,
+      symbolId: this._rowClickData.symbolId,
+    };
+    let args = [];
+    args.push({
+      funcName: 'getCurrentDataFromDb',
+      funcArgs: [this.currentSelection, this.callTreeLevel],
+    });
+
+    if (this._rowClickData && this._rowClickData.libId !== undefined && this._currentCallTreeLevel === 3) {
+      this.callTreeLevel.libName = this._rowClickData.tableName;
+      args.push({
+        funcName: 'showLibLevelData',
+        funcArgs: [this.callTreeLevel.libId, this.callTreeLevel.libName],
+      });
+    } else if (this._rowClickData && this._rowClickData.symbolId !== undefined && this._currentCallTreeLevel === 4) {
+      this.callTreeLevel.symbolName = this._rowClickData.tableName;
+      args.push({
+        funcName: 'showFunLevelData',
+        funcArgs: [this.callTreeLevel.symbolId, this.callTreeLevel.symbolName],
+      });
+    }
+
+    this.getDataByWorker(args, (results: any[]) => {
+      this.callTreeProgressEL!.loading = false;
+      this.loadingPage.style.visibility = 'hidden';
+      this.setLTableData(results);
+      this.callTreeTbr!.recycleDataSource = [];
+      this.frameChart!.mode = this.flameChartMode;
+      this.frameChart?.updateCanvas(true, this.initWidth);
+      this.frameChart!.data = this.callTreeDataSource;
+      this.currentCallTreeDataSource = this.callTreeDataSource;
+      this.switchFlameChart();
+      this.callTreeFilter.icon = 'block';
+    });
+  }
+
+  private restore(): void {
+    this.searchValue = '';
+    this.callTreeFilter!.filterValue = '';
+    this.headLine!.isShow = false;
+    this._rowClickData = undefined;
+    this.getCallTreeData(this.currentSelection, this.initWidth);
+  }
+
+  initModeAndAction(): void {
     if (this.procedureAction === '' && this.hasAttribute('action')) {
       this.procedureAction = this.getAttribute('action') || '';
     }
@@ -145,14 +258,14 @@ export class TabPaneCallTree extends BaseElement {
     return false;
   }
 
-  setRightTableData(bean: MerageBean) {
+  setRightTableData(bean: MerageBean): void {
     let parents: Array<MerageBean> = [];
     let children: Array<MerageBean> = [];
     this.getParentTree(this.callTreeDataSource, bean, parents);
-    let maxId = bean.id;
-    let maxDur = 0;
+    let maxId: string = bean.id;
+    let maxDur: number = 0;
 
-    function findMaxStack(bean: MerageBean) {
+    function findMaxStack(bean: MerageBean): void {
       if (bean.children.length === 0) {
         if (bean.dur > maxDur) {
           maxDur = bean.dur;
@@ -177,8 +290,8 @@ export class TabPaneCallTree extends BaseElement {
     this.callTreeTbr!.dataSource = len === 0 ? [] : callTreeArr;
   }
 
-  connectedCallback() {
-    this.parentElement!.onscroll = () => {
+  connectedCallback(): void {
+    this.parentElement!.onscroll = (): void => {
       this.frameChart!.tabPaneScrollTop = this.parentElement!.scrollTop;
     };
     this.frameChart!.addChartClickListener((needShowMenu: boolean) => {
@@ -187,7 +300,7 @@ export class TabPaneCallTree extends BaseElement {
       this.needShowMenu = needShowMenu;
     });
     let filterHeight = 0;
-    new ResizeObserver((entries) => {
+    new ResizeObserver((entries: ResizeObserverEntry[]): void => {
       let callTreeTabFilter = this.shadowRoot!.querySelector('#filter') as HTMLElement;
       if (callTreeTabFilter.clientHeight > 0) filterHeight = callTreeTabFilter.clientHeight;
       if (this.parentElement!.clientHeight > filterHeight) {
@@ -198,7 +311,7 @@ export class TabPaneCallTree extends BaseElement {
       if (this.callTreeTbl!.style.visibility === 'hidden') {
         callTreeTabFilter.style.display = 'none';
       }
-      if (this.parentElement?.clientHeight != 0) {
+      if (this.parentElement?.clientHeight !== 0) {
         if (this.isChartShow) {
           this.frameChart?.updateCanvas(false, entries[0].contentRect.width);
           this.frameChart?.calculateChartData();
@@ -217,6 +330,7 @@ export class TabPaneCallTree extends BaseElement {
   }
 
   initElements(): void {
+    this.headLine = this.shadowRoot?.querySelector<LitHeadLine>('.titleBox');
     this.callTreeTbl = this.shadowRoot?.querySelector<LitTable>('#tb-calltree');
     this.callTreeProgressEL = this.shadowRoot?.querySelector('.call-tree-progress') as LitProgressBar;
     this.frameChart = this.shadowRoot?.querySelector<FrameChart>('#framechart');
@@ -224,6 +338,9 @@ export class TabPaneCallTree extends BaseElement {
     this.callTreeTbl!.rememberScrollTop = true;
     this.callTreeFilter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
     this.callTreeFilter!.disabledTransfer(true);
+    this.addEventListener('contextmenu', (event) => {
+      event.preventDefault(); // 阻止默认的上下文菜单弹框
+    });
     this.callTreeTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
       let data = evt.detail.data as MerageBean;
@@ -244,7 +361,7 @@ export class TabPaneCallTree extends BaseElement {
       }
     });
     this.callTreeTbr = this.shadowRoot?.querySelector<LitTable>('#tb-list');
-    this.callTreeTbr!.addEventListener('row-click', (evt: any) => {
+    this.callTreeTbr!.addEventListener('row-click', (evt: any): void => {
       // @ts-ignore
       let data = evt.detail.data as MerageBean;
       this.callTreeTbl?.clearAllSelection(data);
@@ -256,7 +373,7 @@ export class TabPaneCallTree extends BaseElement {
         (evt.detail as any).callBack(true);
       }
     });
-    let filterFunc = (data: any) => {
+    let filterFunc = (data: any): void => {
       let callTreeFuncArgs: any[] = [];
       if (data.type === 'check') {
         if (data.item.checked) {
@@ -296,7 +413,7 @@ export class TabPaneCallTree extends BaseElement {
           if (this.callTreeSelectedData && !this.callTreeSelectedData.canCharge) {
             return;
           }
-          if (this.callTreeSelectedData != undefined) {
+          if (this.callTreeSelectedData !== undefined) {
             this.callTreeFilter!.addDataMining({ name: this.callTreeSelectedData.symbolName }, data.item);
             callTreeFuncArgs.push({
               funcName: 'splitTree',
@@ -309,7 +426,7 @@ export class TabPaneCallTree extends BaseElement {
           if (this.callTreeSelectedData && !this.callTreeSelectedData.canCharge) {
             return;
           }
-          if (this.callTreeSelectedData != undefined && this.callTreeSelectedData.libName != '') {
+          if (this.callTreeSelectedData !== undefined && this.callTreeSelectedData.libName !== '') {
             this.callTreeFilter!.addDataMining({ name: this.callTreeSelectedData.libName }, data.item);
             callTreeFuncArgs.push({
               funcName: 'splitTree',
@@ -319,7 +436,7 @@ export class TabPaneCallTree extends BaseElement {
             return;
           }
         } else if (data.item === 'restore') {
-          if (data.remove != undefined && data.remove.length > 0) {
+          if (data.remove !== undefined && data.remove.length > 0) {
             let list = data.remove.map((item: any) => {
               return item.name;
             });
@@ -356,7 +473,7 @@ export class TabPaneCallTree extends BaseElement {
     this.callTreeFilter!.getDataLibrary(filterFunc);
     this.callTreeFilter!.getDataMining(filterFunc);
     this.callTreeFilter!.getCallTreeData((data: any) => {
-      if (data.value === 0) {
+      if ([InvertOptionIndex, hideThreadOptionIndex, hideEventOptionIndex].includes(data.value)) {
         this.refreshAllNode({
           ...this.callTreeFilter!.getFilterTreeData(),
           callTree: data.checks,
@@ -366,7 +483,7 @@ export class TabPaneCallTree extends BaseElement {
         if (data.checks[1]) {
           callTreeArgs.push({
             funcName: 'hideSystemLibrary',
-            funcArgs: [],
+            funcArgs: [true],
           });
           callTreeArgs.push({
             funcName: 'resetAllNode',
@@ -421,7 +538,7 @@ export class TabPaneCallTree extends BaseElement {
       });
     });
     this.callTreeFilter!.getFilterData((callTreeFilterData: FilterData) => {
-      if (this.searchValue != this.callTreeFilter!.filterValue) {
+      if (this.searchValue !== this.callTreeFilter!.filterValue) {
         this.searchValue = this.callTreeFilter!.filterValue;
         let callTreeArgs = [
           {
@@ -433,7 +550,7 @@ export class TabPaneCallTree extends BaseElement {
             funcArgs: [],
           },
         ];
-        this.getDataByWorker(callTreeArgs, (result: any[]) => {
+        this.getDataByWorker(callTreeArgs, (result: any[]): void => {
           this.callTreeTbl!.isSearch = true;
           this.callTreeTbl!.setStatus(result, true);
           this.setLTableData(result);
@@ -444,7 +561,7 @@ export class TabPaneCallTree extends BaseElement {
         this.switchFlameChart(callTreeFilterData);
       }
     });
-    this.callTreeTbl!.addEventListener('column-click', (evt) => {
+    this.callTreeTbl!.addEventListener('column-click', (evt: Event): void => {
       // @ts-ignore
       this.callTreeSortKey = evt.detail.key;
       // @ts-ignore
@@ -476,11 +593,21 @@ export class TabPaneCallTree extends BaseElement {
     }
   }
 
-  refreshAllNode(filterData: any) {
+  refreshAllNode(filterData: any): void {
     let callTreeArgs: any[] = [];
     let isTopDown: boolean = !filterData.callTree[0];
     let isHideSystemLibrary = filterData.callTree[1];
+    let isHideEvent: boolean = filterData.callTree[2];
+    let isHideThread: boolean = filterData.callTree[3];
     let list = filterData.dataMining.concat(filterData.dataLibrary);
+    callTreeArgs.push({
+      funcName: 'hideThread',
+      funcArgs: [isHideThread],
+    });
+    callTreeArgs.push({
+      funcName: 'hideEvent',
+      funcArgs: [isHideEvent],
+    });
     callTreeArgs.push({
       funcName: 'getCallChainsBySampleIds',
       funcArgs: [isTopDown, this.queryFuncName],
@@ -489,7 +616,7 @@ export class TabPaneCallTree extends BaseElement {
     if (isHideSystemLibrary) {
       callTreeArgs.push({
         funcName: 'hideSystemLibrary',
-        funcArgs: [],
+        funcArgs: [true],
       });
     }
     if (filterData.callTreeConstraints.checked) {
@@ -506,20 +633,31 @@ export class TabPaneCallTree extends BaseElement {
       funcName: 'resetAllNode',
       funcArgs: [],
     });
-    this.getDataByWorker(callTreeArgs, (result: any[]) => {
+    if (this._rowClickData && this._rowClickData.libId !== undefined && this._currentCallTreeLevel === 3) {
+      callTreeArgs.push({
+        funcName: 'showLibLevelData',
+        funcArgs: [this.callTreeLevel!.libId, this.callTreeLevel!.libName],
+      });
+    } else if (this._rowClickData && this._rowClickData.symbolId !== undefined && this._currentCallTreeLevel === 4) {
+      callTreeArgs.push({
+        funcName: 'showFunLevelData',
+        funcArgs: [this.callTreeLevel!.symbolId, this.callTreeLevel!.symbolName],
+      });
+    }
+    this.getDataByWorker(callTreeArgs, (result: any[]): void => {
       this.setLTableData(result);
       this.frameChart!.data = this.callTreeDataSource;
       if (this.isChartShow) this.frameChart?.calculateChartData();
     });
   }
 
-  setLTableData(resultData: any[]) {
+  setLTableData(resultData: any[]): void {
     this.callTreeDataSource = this.sortCallFnTree(resultData);
     this.callTreeTbl!.recycleDataSource = this.callTreeDataSource;
   }
 
   sortCallFnTree(arr: Array<any>): Array<any> {
-    let sortArr = arr.sort((compareFnA, compareFnB) => {
+    let sortArr = arr.sort((compareFnA: any, compareFnB: any): number => {
       if (this.callTreeSortKey === 'self') {
         if (this.callTreeSortType === 0) {
           return compareFnB.dur - compareFnA.dur;
@@ -538,13 +676,13 @@ export class TabPaneCallTree extends BaseElement {
         }
       }
     });
-    sortArr.map((call) => {
+    sortArr.map((call: any): void => {
       call.children = this.sortCallFnTree(call.children);
     });
     return sortArr;
   }
 
-  getDataByWorker(args: any[], handler: Function) {
+  getDataByWorker(args: any[], handler: Function): void {
     this.loadingList.push(1);
     this.loadingPage.style.visibility = 'visible';
     this.callTreeProgressEL!.loading = true;
@@ -553,7 +691,7 @@ export class TabPaneCallTree extends BaseElement {
       this.procedureAction,
       { args, callType: this.queryFuncName },
       undefined,
-      (callTreeResults: any) => {
+      (callTreeResults: any): void => {
         handler(callTreeResults);
         this.loadingList.splice(0, 1);
         if (this.loadingList.length === 0) {
@@ -603,8 +741,8 @@ export class TabPaneCallTree extends BaseElement {
             flex: 1;
         }
     </style>
-    <div class="call-tree-content" style="display: flex;flex-direction: row">
-    
+    <div class="call-tree-content" style="display: flex;flex-direction: column">
+    <lit-headline class="titleBox"></lit-headline>
     <selector id='show_table' class="show">
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
@@ -614,7 +752,6 @@ export class TabPaneCallTree extends BaseElement {
                 <lit-table-column class="call-tree-column" width="1fr" title="Weight" data-index="weight" key="weight"  align="flex-start"  order></lit-table-column>
                 <lit-table-column class="call-tree-column" width="1fr" title="%" data-index="weightPercent" key="weightPercent"  align="flex-start"  order></lit-table-column>
             </lit-table>
-            
         </div>
         <lit-slicer-track ></lit-slicer-track>
         <lit-table id="tb-list" no-head style="height: auto;border-left: 1px solid var(--dark-border1,#e2e2e2)" hideDownload>
@@ -631,11 +768,11 @@ export class TabPaneCallTree extends BaseElement {
         </div>
         </lit-slicer>
      </selector>
-     <tab-pane-filter id="filter" class="call-tree-filter" input inputLeftText icon tree></tab-pane-filter>
+     <tab-pane-filter id="filter" class="call-tree-filter" input inputLeftText icon tree fileSystem></tab-pane-filter>
      <lit-progress-bar class="progress call-tree-progress"></lit-progress-bar>
     <selector id='show_chart' class="call-tree-selector" >
         <tab-framechart id='framechart' style='width: 100%;height: auto'> </tab-framechart>
-    </selector>  
+    </selector>
     <div class="loading call-tree-loading"></div>
     </div>`;
   }

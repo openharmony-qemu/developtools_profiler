@@ -290,7 +290,7 @@ export class TabPaneHiSysEventSummary extends BaseElement {
 
   private buildTreeTblNodes(eventTreeNodes: HiSysEventStruct[]): HiSysEventTreeNode[] {
     let id = 0;
-    let root: HiSysEventTreeNode = { id: id, depth: 0, children: [], summaryName: 'All', count: 0 };
+    let root: HiSysEventTreeNode = { id: id, depth: 0, children: [], summaryName: '', count: 0 };
     eventTreeNodes.forEach((item) => {
       id++;
       let levelNode = root.children.find((node) => node.summaryName === item.level);

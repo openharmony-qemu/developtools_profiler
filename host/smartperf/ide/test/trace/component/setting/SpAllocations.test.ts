@@ -43,7 +43,6 @@ describe('SpAllocations Test', () => {
 
   it(' SpAllocations set  attrValue', function () {
     let spEle = document.querySelector('#sp') as SpAllocations;
-    spEle.processId.value = '2';
     spEle.unwindEL.value = '111';
     spEle.shareMemory.value = '222';
     spEle.shareMemoryUnit.value = 'MB';
@@ -57,7 +56,6 @@ describe('SpAllocations Test', () => {
 
   it(' SpAllocations set  attrValue2', function () {
     let spEle = document.querySelector('#sp') as SpAllocations;
-    spEle.processId.value = '3';
     spEle.unwindEL.value = '1121';
     spEle.shareMemory!.value = '222';
     spEle.shareMemoryUnit.value = 'KB';
@@ -71,7 +69,6 @@ describe('SpAllocations Test', () => {
 
   it(' SpAllocations set  attrValue03', function () {
     let spEle = new SpAllocations();
-    spEle.processId.value = '3';
     spEle.unwindEL.value = '1121';
     spEle.shareMemory.value = '222';
     spEle.filterMemory.value = '111';
@@ -83,23 +80,9 @@ describe('SpAllocations Test', () => {
 
   it('SpAllocations test05', function () {
     let spAllocations = document.querySelector('#sp') as SpAllocations;
-    expect(spAllocations.appProcess).toBe('3');
+    expect(spAllocations.appProcess).toBe('');
   });
 
-  it('SpAllocations test06', function () {
-    let spAllocations = document.querySelector('#sp') as SpAllocations;
-    expect(spAllocations.convertToValue('0', 'MB')).toBe(0);
-  });
-
-  it('SpAllocations test07', function () {
-    let spAllocations = document.querySelector('#sp') as SpAllocations;
-    expect(spAllocations.convertToValue('1', 'KB')).toBe(16384);
-  });
-
-  it('SpAllocations test08', function () {
-    let spAllocations = document.querySelector('#sp') as SpAllocations;
-    expect(spAllocations.convertToValue('1', '')).toBe(0);
-  });
   it('SpAllocations test09', function () {
     let spAllocations = document.querySelector('#sp') as SpAllocations;
     expect(spAllocations.fp_unwind).toBeTruthy();

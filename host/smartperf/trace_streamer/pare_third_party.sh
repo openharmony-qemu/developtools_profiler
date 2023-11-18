@@ -119,6 +119,7 @@ if [ ! -d "perf_include/hiviewdfx/faultloggerd" ];then
     $sed -i '/getpid() == gettid()/s/getpid() == gettid()/false/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/unwinder.cpp
     $sed -i '/!realpath(path, realPath)/s/!realpath(path, realPath)/false/g' perf_include/hiviewdfx/faultloggerd/common/dfxutil/dfx_util.cpp
     $sed -i '/#include "dfx_util.h"/a #include "utilities.h"' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_mmap.cpp
+    $sed -i '/#include <string>/a #include "utilities.h"' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/include/dfx_mmap.h
     $sed -i '/#ifndef is_ohos_lite/s/#ifndef is_ohos_lite/#if false/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_elf.cpp
 fi
 if [ ! -f "hiperf/BUILD.gn" ];then
@@ -153,6 +154,7 @@ if [ ! -f "hiperf/BUILD.gn" ];then
         $sed -i '/return DoUnwind2/s/^/\/\/ /' hiperf/src/callstack.cpp
         $sed -i '/#if defined(is_ohos) && is_ohos/s/defined(is_ohos) && is_ohos/true/g' hiperf/src/virtual_runtime.cpp
         $sed -i '/#if defined(is_ohos) && is_ohos/s/defined(is_ohos) && is_ohos/true/g' hiperf/include/virtual_runtime.h
+        $sed -i '/symbolsTable, elfFile_, elfPath/s/symbolsTable, elfFile_, elfPath/symbolsTable, elfFile_, filePath_/g' hiperf/src/symbols_file.cpp
     fi
 fi
 

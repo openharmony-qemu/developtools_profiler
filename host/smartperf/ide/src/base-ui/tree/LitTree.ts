@@ -23,6 +23,7 @@ export interface TreeItemData {
   icon?: string; //节点的自定义图标  设置show-icon才会生效
   selected?: boolean; //控制是否选择该节点
   checked?: boolean;
+  disable?: boolean; //控制是否显示checkbox
   children?: Array<TreeItemData> | null | undefined;
 }
 

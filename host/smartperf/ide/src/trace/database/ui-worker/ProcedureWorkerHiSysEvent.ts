@@ -14,7 +14,7 @@
  */
 
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import { BaseStruct, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
+import { BaseStruct, dataFilterHandler, ns2x, Rect, Render } from './ProcedureWorkerCommon.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 
 export class HiSysEventRender extends Render {
@@ -28,15 +28,35 @@ export class HiSysEventRender extends Render {
   ): void {
     let hiSysEventList = row.dataList;
     let hiSysEventFilter = row.dataListCache;
-    hiSysEvent(
-      hiSysEventList,
-      hiSysEventFilter,
-      TraceRow.range!.startNS,
-      TraceRow.range!.endNS,
-      TraceRow.range!.totalNS,
-      row,
-      req.useCache || !TraceRow.range!.refresh
-    );
+    let minorFilter: HiSysEventStruct[] = [];
+    let criticalFilter: HiSysEventStruct[] = [];
+    let minorList = hiSysEventList.filter((struct) => {
+      return struct.depth === 0;
+    });
+    let criticalList = hiSysEventList.filter((struct) => {
+      return struct.depth === 1;
+    });
+    dataFilterHandler(minorList, minorFilter, {
+      startKey: 'ts',
+      durKey: 'dur',
+      startNS: TraceRow.range?.startNS ?? 0,
+      endNS: TraceRow.range?.endNS ?? 0,
+      totalNS: TraceRow.range?.totalNS ?? 0,
+      frame: row.frame,
+      paddingTop: padding * 2,
+      useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
+    });
+    dataFilterHandler(criticalList, criticalFilter, {
+      startKey: 'ts',
+      durKey: 'dur',
+      startNS: TraceRow.range?.startNS ?? 0,
+      endNS: TraceRow.range?.endNS ?? 0,
+      totalNS: TraceRow.range?.totalNS ?? 0,
+      frame: row.frame,
+      paddingTop: rectHeight + padding * 2,
+      useCache: req.useCache || !(TraceRow.range?.refresh ?? false),
+    });
+    hiSysEventFilter = minorFilter.concat(criticalFilter);
     req.context.beginPath();
     let find = false;
     for (let re of hiSysEventFilter) {
@@ -75,15 +95,7 @@ export function hiSysEvent(
       let item = hiSysEventList[index];
       if ((item.ts || 0) + (item.dur || 0) >= startNS && (item.ts || 0) <= endNS) {
         HiSysEventStruct.setSysEventFrame(item, startNS, endNS, totalNS, row.frame);
-        if (
-          index > 0 &&
-          (hiSysEventList[index - 1].frame?.x || 0) === (item.frame?.x || 0) &&
-          (hiSysEventList[index - 1].frame?.width || 0) === (item.frame?.width || 0) &&
-          (hiSysEventList[index - 1].depth === item.depth)
-        ) {
-        } else {
-          hiSysEventFilter.push(item);
-        }
+        hiSysEventFilter.push(item);
       }
     }
   }

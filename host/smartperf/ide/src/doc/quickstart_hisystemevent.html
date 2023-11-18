@@ -790,380 +790,418 @@
     </style>
   </head>
   <body for="html-export" id="body">
-    <div class="smartperf smartperf-preview">
-      <h1 class="mume-header fontColor">HiSystemEvent的抓取和展示说明</h1>
+  <div class="smartperf smartperf-preview">
+    <h1 class="mume-header fontColor">HiSystemEvent的抓取和展示说明</h1>
 
-      <p class="fontColor">
-        HiSystemEvent应用功耗模块主要是展示应用的各个子类别功耗占比信息、应用的资源申请使用记录信息、应用功耗异常事件信息、功耗关联系统状态信息。
-      </p>
-      <h2 class="mume-header fontColor">HiSystemEvent的抓取</h2>
+    <p class="fontColor">
+      HiSystemEvent应用功耗模块主要是展示应用的各个子类别功耗占比信息、应用的资源申请使用记录信息、应用功耗异常事件信息、功耗关联系统状态信息。
+    </p>
+    <h2 class="mume-header fontColor">HiSystemEvent的抓取</h2>
 
-      <h3 class="mume-header fontColor">HiSystemEvent抓取配置参数</h3>
+    <h3 class="mume-header fontColor">HiSystemEvent抓取配置参数</h3>
 
-      <p class="fontColor">
-        打开Start Hisystem Event Tracker Record开关抓取HiSystemEvent数据。<br />
-        <img src="../figures/HiSystemEvent/hisyseventsetting.jpg" alt="GitHub Logo" /><br />
-        再点击Record setting，在output file path输入文件名hiprofiler_data_hisystemevent.htrace，拖动滚动条设置buffer
-        size大小是64M，抓取时长是50s。<br />
-        <img src="../figures/HiSystemEvent/hisystemeventrecord.jpg" alt="GitHub Logo" /><br />
-        点击Trace command，就会根据上面的配置生成抓取命令，点击复制按钮，会将命令行复制。<br />
-        <img src="../figures/HiSystemEvent/hisystemcommand.jpg" alt="GitHub Logo" /><br />
-        输入hdc_std shell，进入设备，执行上述生成的命令。<br />
-        <img src="../figures/HiSystemEvent/hisystemeventemexcute.jpg" alt="GitHub Logo" /><br />
-        执行完成后，进入指定目录查看，在/data/local/tmp下就会生成trace文件。<br />
-        <img src="../figures/HiSystemEvent/hisystemeventfile.jpg" alt="GitHub Logo" />
-      </p>
-      <h3 class="mume-header fontColor">HiSystemEvent展示说明</h3>
+    <p class="fontColor">
+      打开Start Hisystem Event Tracker Record开关抓取HiSystemEvent数据。<br />
+      <img src="../figures/HiSystemEvent/hisyseventsetting.jpg" alt="GitHub Logo" /><br />
+      再点击Record setting，在output file path输入文件名hiprofiler_data_hisystemevent.htrace，拖动滚动条设置buffer
+      size大小是64M，抓取时长是50s。<br />
+      <img src="../figures/HiSystemEvent/hisystemeventrecord.jpg" alt="GitHub Logo" /><br />
+      点击Trace command，就会根据上面的配置生成抓取命令，点击复制按钮，会将命令行复制。<br />
+      <img src="../figures/HiSystemEvent/hisystemcommand.jpg" alt="GitHub Logo" /><br />
+      输入hdc_std shell，进入设备，执行上述生成的命令。<br />
+      <img src="../figures/HiSystemEvent/hisystemeventemexcute.jpg" alt="GitHub Logo" /><br />
+      执行完成后，进入指定目录查看，在/data/local/tmp下就会生成trace文件。<br />
+      <img src="../figures/HiSystemEvent/hisystemeventfile.jpg" alt="GitHub Logo" />
+    </p>
+    <h3 class="mume-header fontColor">HiSystemEvent展示说明</h3>
 
-      <h3 class="mume-header fontColor">HiSystemEvent泳道图展示</h3>
+    <h3 class="mume-header fontColor">HiSystemEvent的Energy泳道图展示</h3>
 
-      <p class="fontColor">
-        将抓取的trace文件导入smartperf界面查看。<br />
-        <img src="../figures/HiSystemEvent/hisystemeventsummary.jpg" alt="GitHub Logo" /><br />
-        泳道图说明：
-      </p>
-      <ul class="fontColor">
-        <li>
+    <p class="fontColor">
+      将抓取的trace文件导入smartperf界面查看。<br />
+      <img src="../figures/HiSystemEvent/hisystemeventsummary.jpg" alt="GitHub Logo" /><br />
+      泳道图说明：
+    </p>
+    <ul class="fontColor">
+      <li>
           <pre class="smartperf-text fontColor light">
 Anomaly Event泳道： 显示系统异常和应用异常的ToolTip。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 System Event泳道： 以条状图显示，红色代表后台任务(WORKSCHEDULER)，黄色代表应用锁(POWER)，蓝色代表GPS定位(LOCATION)。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Power泳道：应用各个子类的功耗柱状图、折现图以及应用各个子类绘制的图例，鼠标的悬浮可以显示出各个子类功耗的具体值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Brightness Nit泳道：鼠标悬浮可以显示屏幕亮度值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Wifi Event Received泳道：鼠标悬浮可以显示WiFi信号强度值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Audio Stream Change泳道：鼠标悬浮可以显示Audio状态(AUDIO_STREAM_CHANGE事件)。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Audio Volume Change泳道：鼠标悬浮可以显示Audio状态(AUDIO_VOLUME_CHANGE事件)。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Wifi State泳道：鼠标悬浮可以显示wifi开关状态(enable：开，disable：关)。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Bluetooth Br Switch State泳道：鼠标悬浮可以显示蓝牙开关状态(enable：开， disable：关)。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Location Switch State泳道：鼠标悬浮可以显示GPS开关状态(enable：开，disable：关)。
-</pre
-          >
-        </li>
-      </ul>
-      <h3 class="mume-header fontColor">HiSystemEvent泳道图的框选功能</h3>
+</pre>
+      </li>
+    </ul>
+    <h3 class="mume-header fontColor">HiSystemEvent的Energy泳道图的框选功能</h3>
 
-      <p class="fontColor">
-        可以对Energy各泳道图进行框选，框选后在最下方的弹出层中会展示框选数据的统计表格。<br />
-        System Details的Tab页如图：<br />
-        <img src="../figures/HiSystemEvent/hisystemdetails.jpg" alt="GitHub Logo" />
-      </p>
-      <ul class="fontColor">
-        <li>
-          <pre class="smartperf-text fontColor light">
+    <p class="fontColor">
+      可以对Energy各泳道图进行框选，框选后在最下方的弹出层中会展示框选数据的统计表格。<br />
+      System Details的Tab页如图：<br />
+      <img src="../figures/HiSystemEvent/hisystemdetails.jpg" alt="GitHub Logo" />
+    </p>
+    <ul class="fontColor">
+      <li>
+          <pr class="smartperf-text fontColor light">
 Event Name： 事件名称，事件包括后台任务，应用锁，GPS定位。
-</pre
-          >
-        </li>
-        <li>
+</pr>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Time： 时间戳信息。
-</pre
-          >
-        </li>
-      </ul>
-      <p class="fontColor">
-        点击事件名会显示该事件的详细信息的Tab页。<br />
-        <img src="../figures/HiSystemEvent/systemselectdetals.jpg" alt="GitHub Logo" />
-      </p>
-      <ul class="fontColor">
-        <li>
+</pre>
+      </li>
+    </ul>
+    <p class="fontColor">
+      点击事件名会显示该事件的详细信息的Tab页。<br />
+      <img src="../figures/HiSystemEvent/systemselectdetals.jpg" alt="GitHub Logo" />
+    </p>
+    <ul class="fontColor">
+      <li>
           <pre class="smartperf-text fontColor light">
 EVENT_NAME：事件名称。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 PID：应用PID。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 UID：应用UID。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 TYPE：类型。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 STATE：状态值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 LOG_LEVEL：日志级别。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 NAME：NAME信息。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 MESSAGE：MESSAGE信息。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 TAG：锁名。
-</pre
-          >
-        </li>
-      </ul>
-      <p class="fontColor">
-        Power Battery的Tab页如图：<br />
-        <img src="../figures/HiSystemEvent/hisyseventPowerBattery.jpg" alt="GitHub Logo" />
-      </p>
-      <ul class="fontColor">
-        <li>
+</pre>
+      </li>
+    </ul>
+    <p class="fontColor">
+      Power Battery的Tab页如图：<br />
+      <img src="../figures/HiSystemEvent/hisyseventPowerBattery.jpg" alt="GitHub Logo" />
+    </p>
+    <ul class="fontColor">
+      <li>
           <pre class="smartperf-text fontColor light">
 Gas Gauge： 电池电量。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Charge：充电状态。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen：屏幕状态。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Level：电池百分比。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Current：电池电流。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Capacity：电池容量。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 APP Name：应用包名。
-</pre
-          >
-        </li>
-      </ul>
-      <p class="fontColor">
-        Power Details的Tab页如图：<br />
-        <img src="../figures/HiSystemEvent/hisyseventPowerdetails.jpg" alt="GitHub Logo" />
-      </p>
-      <ul class="fontColor">
-        <li>
+</pre>
+      </li>
+    </ul>
+    <p class="fontColor">
+      Power Details的Tab页如图：<br />
+      <img src="../figures/HiSystemEvent/hisyseventPowerdetails.jpg" alt="GitHub Logo" />
+    </p>
+    <ul class="fontColor">
+      <li>
           <pre class="smartperf-text fontColor light">
 UID： 应用UID。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Charge：充电状态。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Foreground Duration(ms)：前台使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Foreground Energy(mAs)：前台使用功耗值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Background Duration(ms)：后台使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Background Energy(mAs)：后台使用功耗值。
 </pre
-          >
-        </li>
-        <li>
+>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen On Duration(ms)：亮屏使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen On Energy(mAs)：亮屏使用功耗值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen Off Duration(ms)：灭屏使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen Off Energy(mAs)：灭屏使用功耗值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Foreground Count：应用前台扫描次数。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Background Count：应用后台扫描次数。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen On Count：应用亮屏扫描次数。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen Off Count：应用灭屏扫描次数。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Background Time(ms)：灭屏使用功耗值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen On Time(ms)：应用亮屏使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Screen Off Time(ms)：应用灭屏使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Energy(mAs)：功耗值。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Load(%)：占用率。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Usage(ms)：应用使用时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Duration(ms)：持续时长。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Camera Id：Camera类型，0：后置，1：前置。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Count：应用个数。
-</pre
-          >
-        </li>
-        <li>
+</pre>
+      </li>
+      <li>
           <pre class="smartperf-text fontColor light">
 Energy Percent(%)：功耗占比。
+</pre>
+      </li>
+    </ul>
+    <h3 class="mume-header fontColor">HiSystemEvent的Hisysevent泳道图展示</h3>
+
+    <p class="fontColor"><img src="../figures/HiSystemEvent/hisystemeventrow.jpg" alt="GitHub Logo" /></p>
+    <h3 class="mume-header fontColor">HiSystemEvent的Hisysevent泳道图框选功能</h3>
+
+    <p class="fontColor">
+      框选Hisysevent的泳道图，展示Hisysevents的tab页,有Filter by Domain，Filter by eventname，Filter by
+      contents输入框。All下拉框可以选择level级别<br />
+      <img src="../figures/HiSystemEvent/hisyseventtab.jpg" alt="GitHub Logo" />
+    </p>
+    <ul class="fontColor">
+      <li>
+          <pre class="smartperf-text fontColor light">
+id： id值。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+domain：domain值。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+eventname：事件名。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+type：事件类型。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+time：时间戳信息。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+pid：进程id。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+tid：线程id。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+uid：uid。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+info：info信息。
 </pre
-          >
-        </li>
-      </ul>
-    </div>
+>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+level：事件级别。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+seq：序列号。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+contents：抓取内容。
+</pre>
+      </li>
+    </ul>
+    <p class="fontColor">
+      框选Hisysevent的泳道图，展示Statistics的tab页。<br />
+      <img src="../figures/HiSystemEvent/hisyseventStatistics.jpg" alt="GitHub Logo" />
+    </p>
+    <ul class="fontColor">
+      <li>
+          <pre class="smartperf-text fontColor light">
+Level/Domain/EventName：根据级别，Domain，事件名显示。
+</pre>
+      </li>
+      <li>
+          <pre class="smartperf-text fontColor light">
+Count： 各级别事件个数。
+</pre>
+      </li>
+    </ul>
+  </div>
 
     <script>
       window.onload = () => {

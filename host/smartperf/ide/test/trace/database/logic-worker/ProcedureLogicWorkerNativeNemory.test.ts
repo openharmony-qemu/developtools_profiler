@@ -379,7 +379,9 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
       id: 1,
       params: [
         {
-          list: '',
+          list: [{
+            value: 'name/value'
+          }],
         },
       ],
       action: '',
@@ -395,6 +397,7 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
       params: [
         {
           list: '',
+          value:''
         },
       ],
       action: '',
@@ -409,7 +412,11 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
       id: 1,
       params: [
         {
-          list: '',
+          list: [
+            {
+              value: 'name/value'
+            }
+          ],
         },
       ],
       action: 'a',

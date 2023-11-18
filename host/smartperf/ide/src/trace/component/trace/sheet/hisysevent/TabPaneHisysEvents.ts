@@ -60,15 +60,17 @@ export class TabPaneHisysEvents extends BaseElement {
     if (this.hiSysEventTable) {
       this.hiSysEventTable.recycleDataSource = [];
     }
+    if (this.detailsTbl) {
+      this.detailsTbl!.recycleDataSource = [];
+    }
     this.initTabSheetEl();
+    this.currentSelection = systemEventParam;
+    this.hiSysEventTable!.recycleDataSource = systemEventParam.hiSysEvents;
+    this.hisysEventSource = systemEventParam.hiSysEvents;
     queryRealTime().then((result) => {
       if (result && result.length > 0) {
         this.realTime = Math.floor(result[0].ts / millisecond);
       }
-      this.currentSelection = systemEventParam;
-      this.hiSysEventTable!.recycleDataSource = systemEventParam.hiSysEvents;
-      this.hisysEventSource = systemEventParam.hiSysEvents;
-      this.detailsTbl!.recycleDataSource = [];
     });
   }
 
@@ -85,18 +87,32 @@ export class TabPaneHisysEvents extends BaseElement {
     this.levelFilter = this.shadowRoot?.querySelector<HTMLSelectElement>('#level-filter');
     this.spSystemTrace = document.querySelector('body > sp-application')
       ?.shadowRoot?.querySelector<SpSystemTrace>('#sp-system-trace');
-    this.traceSheetEl = this.spSystemTrace!.shadowRoot?.querySelector('.trace-sheet');
+    this.traceSheetEl = this.spSystemTrace?.shadowRoot?.querySelector('.trace-sheet');
     this.contentFilterInput = this.shadowRoot?.querySelector<HTMLInputElement>('#contents-filter');
     this.changeInput = this.shadowRoot?.querySelector<HTMLInputElement>('#contents-change');
     this.detailsTbl = this.shadowRoot?.querySelector<LitTable>('#tb-hisysevent-data');
     this.slicerTrack = this.shadowRoot?.querySelector<LitSlicerTrack>('lit-slicer-track');
     this.detailbox = this.shadowRoot?.querySelector<HTMLDivElement>('.detail-content');
     this.tableElement = this.hiSysEventTable?.shadowRoot?.querySelector('.table') as HTMLDivElement;
-    this.hiSysEventTable!.addEventListener('row-click', (e) => {
+    this.hiSysEventTable!.addEventListener('row-click', (event) => {
       this.changeInput!.value = '';
       // @ts-ignore
-      this.convertData(e.detail.data);
+      const data = event.detail.data;
+      this.convertData(data);
+      this.hiSysEventTable?.clearAllSelection();
+      data.isSelected = true;
+      this.hiSysEventTable?.setCurrentSelection(data);
       this.updateDetail(this.baseTime);
+    });
+    this.boxDetails!.addEventListener('click', ev => {
+      if (ev.target !== this.hiSysEventTable) {
+        this.hiSysEventTable?.clearAllSelection();
+        this.detailsTbl!.dataSource = [];
+        this.boxDetails!.style.width = '100%';
+        this.detailbox!.style.display = 'none';
+        this.slicerTrack!.style.visibility = 'hidden';
+        this.detailsTbl!.style.paddingLeft = '0px';
+      }
     });
     this.hiSysEventTable!.addEventListener('row-hover', (e) => {
       // @ts-ignore
@@ -109,7 +125,7 @@ export class TabPaneHisysEvents extends BaseElement {
       // @ts-ignore
       this.sortByColumn(evt.detail);
     });
-    this.tableElement.addEventListener('mouseout', () => {
+    this.tableElement?.addEventListener('mouseout', () => {
       this.traceSheetEl!.systemLogFlag = undefined;
       this.spSystemTrace?.refreshCanvas(false);
     });
@@ -237,6 +253,7 @@ export class TabPaneHisysEvents extends BaseElement {
         }
         #tb-hisysevent-data {
           height: auto;
+          width: auto;
           border-left: 1px solid var(--dark-border1,#e2e2e2);
           display:flex;
         }
@@ -253,7 +270,7 @@ export class TabPaneHisysEvents extends BaseElement {
                    <div style="display: flex;">
                     <div id="eventNameTagFilter" style='display: flex;width: auto; height: 100%;flex-wrap: wrap;'>
                     </div>
-                    <input type="text" id="event-name-filter" class="filter-input" placeholder="Filter by eventName…">
+                    <input type="text" id="event-name-filter" class="filter-input" placeholder="Filter by eventname…">
                   </div>
                    <div class="level-content">
                        <select id="level-filter">
@@ -270,7 +287,7 @@ export class TabPaneHisysEvents extends BaseElement {
            </lit-table-column>
            <lit-table-column title="domain" width="1.5fr" data-index="domain" key="domain"  align="flex-start" >
            </lit-table-column>
-           <lit-table-column title="eventName" width="3fr" data-index="eventName" key="eventName" align="flex-start" >
+           <lit-table-column title="eventname" width="3fr" data-index="eventName" key="eventName" align="flex-start" >
            </lit-table-column>
            <lit-table-column title="type" width="0.5fr" data-index="eventType" key="eventType"  align="flex-start" >
            </lit-table-column>
@@ -320,11 +337,7 @@ export class TabPaneHisysEvents extends BaseElement {
     new ResizeObserver(() => {
       this.tableElement!.style.height = `${this.parentElement!.clientHeight - 20 - 35}px`;
       this.hiSysEventTable?.reMeauseHeight();
-      // @ts-ignore
-      this.detailsTbl?.shadowRoot?.querySelector('.table').style.height =
-        `${this.parentElement!.clientHeight - 20 - 35}px`;
-      // @ts-ignore
-      this.detailsTbl?.shadowRoot?.querySelector('.table').style = 'hidden';
+      this.detailsTbl!.style.height = `${this.parentElement!.clientHeight - 30}px`;
       this.parentElement!.style.overflow = 'hidden';
       this.detailsTbl?.reMeauseHeight();
       this.updateData();
@@ -466,41 +479,32 @@ export class TabPaneHisysEvents extends BaseElement {
       });
     });
     this.detailsTbl!.recycleDataSource = detailList;
-    console.log(this.detailsTbl!.recycleDataSource)
-    const tr = this.detailsTbl!.shadowRoot?.querySelector<HTMLDivElement>('.tr:nth-of-type(1)');
-    if (tr) {
-      tr.style.fontWeight = 'bolder';
-    }
   }
 
   convertData = (data: HiSysEventStruct): void => {
     this.baseTime = '';
     this.currentDetailList = [{
       key: 'key',
-      value: 'value'}];
+      value: 'value'
+    }];
     const content = JSON.parse(data.contents ?? '{}');
     if (content && typeof content === 'object') {
-      let isFirstTime = false;
-      let inputTimeTs = '';
+      let isFirstTime = true;
       let keyList = Object.keys(content);
       keyList.forEach(key => {
         const value: string = content[key];
         let contentValue = value;
         if (key.endsWith('_TIME')) {
-          if (this.realTime === 0) {
-            contentValue = ((Number(value) - this.realTime) > 0) ? String(Number(value) - this.realTime) : value;
-          }
           if (!isNaN(Number(value))) {
-            let diffTime = (Number(value) - this.realTime) * millisecond;
-            // @ts-ignore
-            contentValue = String(diffTime - (window.recordStartNS || 0));
-            if (!isFirstTime) {
+            contentValue = ((Number(value) - this.realTime) * millisecond).toString();
+            if (isFirstTime) {
               this.baseTime = contentValue;
-              isFirstTime = true;
+              isFirstTime = false;
             }
           }
           if (key === 'INPUT_TIME') {
-            inputTimeTs = contentValue;
+            this.baseTime = contentValue;
+            isFirstTime = false;
           }
         }
         this.currentDetailList.push({
@@ -508,9 +512,6 @@ export class TabPaneHisysEvents extends BaseElement {
           value: contentValue
         });
       });
-      if (keyList.indexOf('INPUT_TIME') >= 0) {
-        this.baseTime = inputTimeTs;
-      }
     }
     this.changeInput!.value = `${this.baseTime}`;
     this.detailsTbl!.recycleDataSource = this.currentDetailList;
@@ -566,4 +567,5 @@ export class TabPaneHisysEvents extends BaseElement {
     this.spSystemTrace?.refreshCanvas(false);
   }
 }
-const  millisecond = 1000_000;
+
+const millisecond = 1000_000;

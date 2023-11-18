@@ -19,7 +19,7 @@ import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabPowerDetailsData } from '../../../../database/SqlLite.js';
 import { log } from '../../../../../log/Log.js';
 import { PowerDetailsEnergy } from '../../../../bean/EnergyStruct.js';
-import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
+import { SpHiSysEnergyChart } from '../../../chart/SpHiSysEnergyChart.js';
 import { resizeObserver } from '../SheetUtils.js';
 
 @element('tabpane-power-details')
@@ -140,8 +140,8 @@ export class TabPanePowerDetails extends BaseElement {
       items.forEach((item) => {
         let powerDatum: any = powerData[item.eventName];
         if (item.appKey.toLocaleLowerCase() === 'appname') {
-          powerDatum['appName'] = SpHiSysEventChart.app_name;
-          currentAppIndex = item.eventValue.split(',').indexOf(SpHiSysEventChart.app_name!);
+          powerDatum['appName'] = SpHiSysEnergyChart.app_name;
+          currentAppIndex = item.eventValue.split(',').indexOf(SpHiSysEnergyChart.app_name!);
           tsMax = 0;
         } else if (currentAppIndex > -1) {
           if (set.has(item.appKey)) {

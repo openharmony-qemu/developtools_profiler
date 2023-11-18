@@ -33,7 +33,11 @@ Object.defineProperty(global.self, 'crypto', {
     getRandomValues: (arr: string | any[]) => crypto.randomBytes(arr.length),
   },
 });
-
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {
+    initSort: ()=>{}
+  };
+});
 describe('TabPaneIOTierStatisticsAnalysis Test', () => {
   document.body.innerHTML = `<tabpane-tb-vm-statistics id="statistics-analysis"></tabpane-tb-vm-statistics>`;
   let tabPane = document.querySelector<TabPaneIOTierStatisticsAnalysis>('#statistics-analysis');
@@ -266,35 +270,27 @@ describe('TabPaneIOTierStatisticsAnalysis Test', () => {
     expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
   });
   it('tabPaneIOTierStatisticsAnalysis14', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+        tableName: '',
+      };
     expect(tabPane.ioTierProcessLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneIOTierStatisticsAnalysis15', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+      tableName: '',
+    };
     expect(tabPane.ioTierTypeLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneIOTierStatisticsAnalysis16', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+      tableName: '',
+    };
     expect(tabPane.ioTierThreadLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneIOTierStatisticsAnalysis17', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+      tableName: '',
+    };
     expect(tabPane.ioTierSoLevelClickEvent(it)).toBeUndefined();
   });
   it('tabPaneIOTierStatisticsAnalysis18', function () {
@@ -339,6 +335,7 @@ describe('TabPaneIOTierStatisticsAnalysis Test', () => {
     tabPane.threadStatisticsData = jest.fn(() => true);
     tabPane.threadStatisticsData.allDuration = jest.fn(() => true);
     tabPane.threadData = [{}, {}];
+    tabPane.data = param;
     tabPane.iOTierStatisticsAnalysisBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });

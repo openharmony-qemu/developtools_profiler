@@ -190,7 +190,7 @@ EMSCRIPTEN_KEEPALIVE int32_t TraceStreamer_Init_ThirdParty_Config(int32_t dataLe
 // return 0 while ok, -1 while failed
 EMSCRIPTEN_KEEPALIVE int32_t TraceStreamerParseData(const uint8_t* data, int32_t dataLen)
 {
-    if (g_wasmTraceStreamer.ParseData(data, dataLen, nullptr, 0)) {
+    if (g_wasmTraceStreamer.ParseData(data, dataLen, nullptr, false)) {
         return 0;
     }
     return -1;

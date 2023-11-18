@@ -14,7 +14,7 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
+import { SpHiSysEnergyChart } from '../../../chart/SpHiSysEnergyChart.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 
 import { queryAnomalyDetailedData } from '../../../../database/SqlLite.js';
@@ -40,8 +40,8 @@ export class TabPaneEnergyAnomaly extends BaseElement {
           if (values[TabPaneEnergyAnomaly.VALUE_INDEX]) {
             let apps = values[TabPaneEnergyAnomaly.VALUE_INDEX].split(',');
             for (let appIndex = 0; appIndex < apps.length; appIndex++) {
-              if (apps.indexOf(SpHiSysEventChart.app_name) !== -1) {
-                findAppNameIndex = apps.indexOf(SpHiSysEventChart.app_name);
+              if (apps.indexOf(SpHiSysEnergyChart.app_name) !== -1) {
+                findAppNameIndex = apps.indexOf(SpHiSysEnergyChart.app_name);
                 filterAppMap.set(values[0] + values[1], findAppNameIndex);
                 break;
               }

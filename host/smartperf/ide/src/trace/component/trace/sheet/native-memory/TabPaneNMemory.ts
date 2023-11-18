@@ -43,7 +43,7 @@ export class TabPaneNMemory extends BaseElement {
   private nmMemoryLoadingList: number[] = [];
   private loadingPage: any;
   private memorySource: Array<any> = [];
-  private native_type: Array<string> = [...this.defaultNativeTypes];
+  private nativeType: Array<string> = [...this.defaultNativeTypes];
   private statsticsSelection: Array<any> = [];
   private filterAllocationType: string = '0';
   private filterNativeType: string = '0';
@@ -66,22 +66,22 @@ export class TabPaneNMemory extends BaseElement {
 
   queryData(memoryParam: SelectionParam | any): void {
     this.eventTypes = [];
-    if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[0]) != -1) {
+    if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[0]) !== -1) {
       this.eventTypes.push("'AllocEvent'");
       this.eventTypes.push("'MmapEvent'");
     } else {
-      if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[1]) != -1) {
+      if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[1]) !== -1) {
         this.eventTypes.push("'AllocEvent'");
       }
-      if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[2]) != -1) {
+      if (memoryParam.nativeMemory.indexOf(this.defaultNativeTypes[2]) !== -1) {
         this.eventTypes.push("'MmapEvent'");
       }
     }
     TabPaneNMSampleList.serSelection(memoryParam);
     // @ts-ignore
-    this.memoryTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.memoryTbl?.shadowRoot?.querySelector('.table').style.height = `${this.parentElement.clientHeight - 20 - 31}px`;
     // @ts-ignore
-    this.tblData?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.tblData?.shadowRoot?.querySelector('.table').style.height = `${this.parentElement.clientHeight - 20 - 31}px`;
     // @ts-ignore
     this.tblData?.recycleDataSource = [];
     // @ts-ignore
@@ -167,18 +167,18 @@ export class TabPaneNMemory extends BaseElement {
       this.initFilterTypes(() => {
         this.currentSelection = val;
         this.filterSetSelectList(nmFilterEl!, typeIndexOf);
-        this.filterNativeType = typeIndexOf + '';
+        this.filterNativeType = `${typeIndexOf}`;
         this.queryData(val);
       });
     }
-    let typeIndexOf = this.native_type.indexOf(val.statisticsSelectData.memoryTap);
+    let typeIndexOf = this.nativeType.indexOf(val.statisticsSelectData.memoryTap);
     if (this.statsticsSelection.indexOf(val.statisticsSelectData) === -1 && typeIndexOf === -1) {
       this.statsticsSelection.push(val.statisticsSelectData);
-      this.native_type.push(val.statisticsSelectData.memoryTap);
-      typeIndexOf = this.native_type.length - 1;
+      this.nativeType.push(val.statisticsSelectData.memoryTap);
+      typeIndexOf = this.nativeType.length - 1;
     } else {
       let index = this.statsticsSelection.findIndex((mt) => mt.memoryTap === val.statisticsSelectData.memoryTap);
-      if (index != -1) {
+      if (index !== -1) {
         this.statsticsSelection[index] = val.statisticsSelectData;
       }
     }
@@ -186,7 +186,7 @@ export class TabPaneNMemory extends BaseElement {
       this.tblData!.recycleDataSource = [];
       this.rowSelectData = undefined;
       this.filterSetSelectList(nmFilterEl!, typeIndexOf);
-      this.filterNativeType = typeIndexOf + '';
+      this.filterNativeType = `${typeIndexOf}`;
       //直接将当前数据过滤即可
       this.getDataByNativeMemoryWorker(val);
     }
@@ -195,24 +195,24 @@ export class TabPaneNMemory extends BaseElement {
   private filterSetSelectList(nmFilterEl: TabPaneFilter, typeIndexOf: number): void {
     nmFilterEl!.setSelectList(
       null,
-      this.native_type,
+      this.nativeType,
       'Allocation Lifespan',
       'Allocation Type',
       this.responseTypes.map((item: any) => {
         return item.value;
       })
     );
-    nmFilterEl!.secondSelect = typeIndexOf + '';
+    nmFilterEl!.secondSelect = `${typeIndexOf}`;
     nmFilterEl!.thirdSelect = this.filterResponseSelect;
   }
 
-  initFilterTypes(initCallback?: () => void) {
-    this.native_type = [...this.defaultNativeTypes];
+  initFilterTypes(initCallback?: () => void): void {
+    this.nativeType = [...this.defaultNativeTypes];
     this.statsticsSelection = [];
     procedurePool.submitWithName('logic1', 'native-memory-get-responseType', {}, undefined, (res: any) => {
       this.filter!.setSelectList(
         null,
-        this.native_type,
+        this.nativeType,
         'Allocation Lifespan',
         'Allocation Type',
         res.map((item: any) => {
@@ -279,6 +279,10 @@ export class TabPaneNMemory extends BaseElement {
     this.memoryTbl!.itemTextHandleMap.set('heapSize', (heapSize) => {
       return getByteWithUnit(heapSize);
     });
+    this.memoryTbl!.exportTextHandleMap.set('heapSize', (value) => {
+      return `${value['heapSize']}`;
+    });
+
     this.shadowRoot?.querySelector<TabPaneFilter>('#filter')!.getFilterData((data: FilterData) => {
       if (data.mark) {
         document.dispatchEvent(
@@ -292,7 +296,10 @@ export class TabPaneNMemory extends BaseElement {
                   let minTs = 0;
                   let minItem: any = undefined;
                   let filterTemp = this.memorySource.filter((tempItem) => {
-                    if (minTs === 0 || (tempItem.startTs - checkTs != 0 && Math.abs(tempItem.startTs - checkTs) < minTs)) {
+                    if (
+                      minTs === 0 ||
+                      (tempItem.startTs - checkTs != 0 && Math.abs(tempItem.startTs - checkTs) < minTs)
+                    ) {
                       minTs = Math.abs(tempItem.startTs - checkTs);
                       minItem = tempItem;
                     }
@@ -311,8 +318,8 @@ export class TabPaneNMemory extends BaseElement {
                     let args = new Map<string, any>();
                     args.set('startTs', this.rowSelectData.startTs);
                     args.set('actionType', 'native-memory-state-change');
-                    this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => { });
-                    TabPaneNMSampleList.addSampleData(this.rowSelectData);
+                    this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => {});
+                    TabPaneNMSampleList.addSampleData(this.rowSelectData,this.currentSelection!.nativeMemoryCurrentIPid);
                     this.memoryTbl!.scrollToData(this.rowSelectData);
                   }
                 }
@@ -338,21 +345,23 @@ export class TabPaneNMemory extends BaseElement {
   connectedCallback() {
     super.connectedCallback();
     new ResizeObserver((entries) => {
-      if (this.parentElement?.clientHeight != 0) {
+      if (this.parentElement?.clientHeight !== 0) {
         // @ts-ignore
-        this.memoryTbl?.shadowRoot.querySelector('.table').style.height =
-          this.parentElement!.clientHeight - 10 - 31 + 'px';
+        this.memoryTbl?.shadowRoot.querySelector('.table').style.height = `${
+          this.parentElement!.clientHeight - 10 - 31
+        }px`;
         this.memoryTbl?.reMeauseHeight();
         // @ts-ignore
-        this.tblData?.shadowRoot.querySelector('.table').style.height =
-          this.parentElement!.clientHeight - 10 - 31 + 'px';
+        this.tblData?.shadowRoot.querySelector('.table').style.height = `${
+          this.parentElement!.clientHeight - 10 - 31
+        }px`;
         this.tblData?.reMeauseHeight();
-        this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
+        this.loadingPage.style.height = `${this.parentElement!.clientHeight - 24}px`;
       }
     }).observe(this.parentElement!);
   }
 
-  setRightTableData(nativeMemoryHook: NativeMemory) {
+  setRightTableData(nativeMemoryHook: NativeMemory): void {
     let args = new Map<string, any>();
     args.set('eventId', nativeMemoryHook.eventId);
     args.set('actionType', 'memory-stack');
