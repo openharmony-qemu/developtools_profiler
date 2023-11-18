@@ -30,8 +30,8 @@ export class TabPaneCurrent extends BaseElement {
 
   initElements(): void {
     this.systemTrace = document
-      .querySelector('body > sp-application')!
-      .shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
+      .querySelector('body > sp-application')?.
+      shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.panelTable = this.shadowRoot!.querySelector<LitTable>('.notes-editor-panel');
     this.panelTable!.addEventListener('row-click', (evt: any) => {
       // 点击表格某一行后，背景变色

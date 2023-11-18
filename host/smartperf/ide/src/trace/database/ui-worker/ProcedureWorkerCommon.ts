@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-import {CpuStruct, WakeupBean} from './ProcedureWorkerCPU.js';
-import {TraceRow} from '../../component/trace/base/TraceRow.js';
-import {TimerShaftElement} from '../../component/trace/TimerShaftElement';
-import {Flag} from '../../component/trace/timer-shaft/Flag.js';
+import { CpuStruct, WakeupBean } from './ProcedureWorkerCPU.js';
+import { TraceRow } from '../../component/trace/base/TraceRow.js';
+import { TimerShaftElement } from '../../component/trace/TimerShaftElement';
+import { Flag } from '../../component/trace/timer-shaft/Flag.js';
 
 export abstract class Render {
   abstract renderMainThread(req: any, row: TraceRow<any>): void;
@@ -103,11 +103,26 @@ export function ns2Timestamp(ns: number): string {
     .padStart(3, '0')}:${nanosecond.toString().padStart(3, '0')}`;
 }
 
-export function isFrameContainPoint(frame: Rect, x: number, y: number): boolean {
-  return x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height;
+const offsetX = 5;
+
+export function isFrameContainPoint(frame: Rect, x: number, y: number, strict: boolean = true, offset: boolean = false): boolean {
+  if (strict) {
+    if (offset) {
+      return x >= frame.x - offsetX && x <= frame.x + frame.width + offsetX && y >= frame.y && y <= frame.y + frame.height;
+    } else {
+      return x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height;
+    }
+  } else {
+    if (offset) {
+      return x >= frame.x - offsetX && x <= frame.x + frame.width + offsetX;
+    } else {
+      return x >= frame.x && x <= frame.x + frame.width;
+    }
+  }
 }
+
 export const isSurroundingPoint = function (pointX: number, currentRect: Rect, unitPointXRange: number): boolean {
-  return (pointX >= currentRect?.x - unitPointXRange) && pointX <= currentRect?.x + unitPointXRange;
+  return pointX >= currentRect?.x - unitPointXRange && pointX <= currentRect?.x + unitPointXRange;
 };
 
 export const computeUnitWidth = function (
@@ -170,62 +185,62 @@ export function fillCacheData(filterList: Array<any>, condition: FilterConfig): 
 }
 
 export function fillCacheDataIdx(filterData: Array<any>, slice: number[], condition: FilterConfig): boolean {
-    if (condition.useCache && filterData.length > 0) {
-        let pns = (condition.endNS - condition.startNS) / condition.frame.width;
-        let y = condition.frame.y + condition.paddingTop;
-        let height = condition.frame.height - condition.paddingTop * 2;
-        for (let i = slice[0]; i <= slice[1]; i++) {
-            let it = filterData[i];
-            if (!it) continue;
-            if (
-                (it[condition.startKey] || 0) + (it[condition.durKey] || 0) > condition.startNS &&
-                (it[condition.startKey] || 0) < condition.endNS
-            ) {
-                if (!filterData[i].frame) {
-                    filterData[i].frame = {};
-                    filterData[i].frame.y = y;
-                    filterData[i].frame.height = height;
-                }
-                setNodeFrame(
-                    filterData[i],
-                    pns,
-                    condition.startNS,
-                    condition.endNS,
-                    condition.frame,
-                    condition.startKey,
-                    condition.durKey
-                );
-            } else {
-                filterData[i].frame = null;
-            }
+  if (condition.useCache && filterData.length > 0) {
+    let pns = (condition.endNS - condition.startNS) / condition.frame.width;
+    let y = condition.frame.y + condition.paddingTop;
+    let height = condition.frame.height - condition.paddingTop * 2;
+    for (let i = slice[0]; i <= slice[1]; i++) {
+      let it = filterData[i];
+      if (!it) continue;
+      if (
+        (it[condition.startKey] || 0) + (it[condition.durKey] || 0) > condition.startNS &&
+        (it[condition.startKey] || 0) < condition.endNS
+      ) {
+        if (!filterData[i].frame) {
+          filterData[i].frame = {};
+          filterData[i].frame.y = y;
+          filterData[i].frame.height = height;
         }
-        return true;
+        setNodeFrame(
+          filterData[i],
+          pns,
+          condition.startNS,
+          condition.endNS,
+          condition.frame,
+          condition.startKey,
+          condition.durKey
+        );
+      } else {
+        filterData[i].frame = null;
+      }
     }
-    return false;
+    return true;
+  }
+  return false;
 }
 
 export function bsearch(haystack: ArrayLike<any>, needle: any): number {
-    return searchImpl(haystack, needle, 0, haystack.length);
+  return searchImpl(haystack, needle, 0, haystack.length);
 }
 
 function searchImpl(stack: ArrayLike<any>, cfg: FilterConfig, i: number, j: number): number {
-    if (i === j) return -1;
-    if (i + 1 === j) {
-        return (cfg.endNS >= stack[i][cfg.startKey]) ? i : -1;
-    }
-    const middle = Math.floor((j - i) / 2) + i;
-    const middleValue = stack[middle][cfg.startKey];
-    if (cfg.endNS < middleValue) {
-        return searchImpl(stack, cfg, i, middle);
-    } else {
-        return searchImpl(stack, cfg, middle, j);
-    }
+  if (i === j) return -1;
+  if (i + 1 === j) {
+    return cfg.endNS >= stack[i][cfg.startKey] ? i : -1;
+  }
+  const middle = Math.floor((j - i) / 2) + i;
+  const middleValue = stack[middle][cfg.startKey];
+  if (cfg.endNS < middleValue) {
+    return searchImpl(stack, cfg, i, middle);
+  } else {
+    return searchImpl(stack, cfg, middle, j);
+  }
 }
 
 export function findRangeIdx(fullData: Array<any>, condition: FilterConfig): number[] {
-    let a = fullData.findIndex(it => it[condition.startKey] + it[condition.durKey] >= condition.startNS);
-    let b = bsearch(fullData, condition);
-    return [a, b + 1];
+  let a = fullData.findIndex((it) => it[condition.startKey] + it[condition.durKey] >= condition.startNS);
+  let b = bsearch(fullData, condition);
+  return [a, b + 1];
 }
 
 export function findRange(fullData: Array<any>, condition: FilterConfig): Array<any> {
@@ -556,7 +571,13 @@ export function drawFlagLine(
   }
 }
 
-export function drawFlagLineSegment(ctx: any, hoverFlag: any, selectFlag: any, frame: any, tse: TimerShaftElement) {
+export function drawFlagLineSegment(
+  ctx: any,
+  hoverFlag: any,
+  selectFlag: any,
+  frame: any,
+  tse: TimerShaftElement
+): void {
   if (ctx) {
     if (hoverFlag) {
       ctx.beginPath();
@@ -588,8 +609,20 @@ export function drawFlagLineSegment(ctx: any, hoverFlag: any, selectFlag: any, f
         ctx.beginPath();
         ctx.lineWidth = 1;
         ctx.strokeStyle = slicesTime.color || '#dadada';
-        let x1 = ns2x(slicesTime.startTime, TraceRow.range!.startNS, TraceRow.range!.endNS, TraceRow.range!.totalNS, frame);
-        let x2 = ns2x(slicesTime.endTime, TraceRow.range!.startNS, TraceRow.range!.endNS, TraceRow.range!.totalNS, frame);
+        let x1 = ns2x(
+          slicesTime.startTime,
+          TraceRow.range!.startNS,
+          TraceRow.range!.endNS,
+          TraceRow.range!.totalNS,
+          frame
+        );
+        let x2 = ns2x(
+          slicesTime.endTime,
+          TraceRow.range!.startNS,
+          TraceRow.range!.endNS,
+          TraceRow.range!.totalNS,
+          frame
+        );
         // 划线逻辑
         ctx.moveTo(Math.floor(x1), 0);
         ctx.lineTo(Math.floor(x1), frame.height); //左边的线
@@ -785,8 +818,24 @@ export function drawLinkLines(
   let maxWidth = tm.getBoundingClientRect().width - 268;
   for (let i = 0; i < nodes.length; i++) {
     let it = nodes[i];
-    let newFirstNode = new PairPoint(it[0].rowEL, it[0].x, it[0].y, it[0].ns, it[0].offsetY, it[0].isRight, it[0].business);
-    let newSecondNode = new PairPoint(it[1].rowEL, it[0].x, it[1].y, it[1].ns, it[1].offsetY, it[1].isRight, it[1].business);
+    let newFirstNode = new PairPoint(
+      it[0].rowEL,
+      it[0].x,
+      it[0].y,
+      it[0].ns,
+      it[0].offsetY,
+      it[0].isRight,
+      it[0].business
+    );
+    let newSecondNode = new PairPoint(
+      it[1].rowEL,
+      it[0].x,
+      it[1].y,
+      it[1].ns,
+      it[1].offsetY,
+      it[1].isRight,
+      it[1].business
+    );
     if (it[0].hidden) {
       continue;
     }
@@ -912,7 +961,7 @@ function drawBezierCurve(it: PairPoint[], maxWidth: number, context: CanvasRende
   }
 }
 
-function drawBrokenLine(it: PairPoint[], maxWidth: number, context: CanvasRenderingContext2D) {
+function drawBrokenLine(it: PairPoint[], maxWidth: number, context: CanvasRenderingContext2D): void {
   let brokenLineStart = it[0].x > it[1].x ? it[1] : it[0];
   let brokenLineEnd = it[0].x > it[1].x ? it[0] : it[1];
   if (brokenLineStart && brokenLineEnd) {
@@ -1070,7 +1119,7 @@ export function hiPerf(
   frame: any,
   groupBy10MS: boolean,
   use: boolean
-) {
+): void {
   if (use && res.length > 0) {
     let pns = (endNS - startNS) / frame.width;
     let y = frame.y;
@@ -1302,12 +1351,10 @@ export function drawWakeUpList(
   frame: Rect,
   wakeup: WakeupBean | undefined = undefined,
   currentCpu: number | undefined | null = undefined,
-  noVerticalLine = false,
+  noVerticalLine = false
 ) {
   if (wake) {
-    let x1 = Math.floor(
-      ns2x(wake.wakeupTime || 0, startNS, endNS, totalNS, frame)
-    );
+    let x1 = Math.floor(ns2x(wake.wakeupTime || 0, startNS, endNS, totalNS, frame));
     wakeUpListContext.beginPath();
     wakeUpListContext.lineWidth = 2;
     wakeUpListContext.fillStyle = '#000000';
@@ -1327,24 +1374,14 @@ export function drawWakeUpList(
       }
     }
     if (wakeup) {
-      let x2 = Math.floor(
-        ns2x(
-          wakeup.ts || 0,
-          startNS,
-          endNS,
-          totalNS,
-          frame
-        )
-      );
+      let x2 = Math.floor(ns2x(wakeup.ts || 0, startNS, endNS, totalNS, frame));
       let y = frame.y + frame.height - 10;
       wakeUpListContext.moveTo(x1, y);
       wakeUpListContext.lineTo(x2, y);
       wakeUpListContext.moveTo(x2, y - 25);
       wakeUpListContext.lineTo(x2, y + 5);
 
-      let s = ns2s(
-        (wakeup.ts || 0) - (wake.wakeupTime || 0)
-      );
+      let s = ns2s((wakeup.ts || 0) - (wake.wakeupTime || 0));
       let wakeUpListDistance = x2 - x1;
       if (wakeUpListDistance > 12) {
         wakeUpListContext.moveTo(x1, y);
@@ -1356,18 +1393,11 @@ export function drawWakeUpList(
         wakeUpListContext.moveTo(x2, y);
         wakeUpListContext.lineTo(x2 - 6, y + 3);
         let measure = wakeUpListContext.measureText(s);
-        let tHeight =
-          measure.actualBoundingBoxAscent +
-          measure.actualBoundingBoxDescent;
+        let tHeight = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         let xStart = x1 + Math.floor(wakeUpListDistance / 2 - measure.width / 2);
         if (wakeUpListDistance > measure.width + 4) {
           wakeUpListContext.fillStyle = '#ffffff';
-          wakeUpListContext.fillRect(
-            xStart - 2,
-            y - 4 - tHeight,
-            measure.width + 4,
-            tHeight + 4
-          );
+          wakeUpListContext.fillRect(xStart - 2, y - 4 - tHeight, measure.width + 4, tHeight + 4);
           wakeUpListContext.font = '10px solid';
           wakeUpListContext.fillStyle = '#000000';
           wakeUpListContext.textBaseline = 'bottom';

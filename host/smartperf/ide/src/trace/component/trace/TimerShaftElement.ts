@@ -23,8 +23,8 @@ import { Flag } from './timer-shaft/Flag.js';
 import { info } from '../../../log/Log.js';
 import { TraceSheet } from './base/TraceSheet.js';
 import { SelectionParam } from '../../bean/BoxSelection.js';
-import { SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
-import './timer-shaft/CollapseButton.js'
+import { type SpSystemTrace, CurrentSlicesTime } from '../SpSystemTrace.js';
+import './timer-shaft/CollapseButton.js';
 //随机生成十六位进制颜色
 export function randomRgbColor() {
   const letters = '0123456789ABCDEF';
@@ -76,7 +76,7 @@ export function ns2UnitS(ns: number, scale: number): string {
   return result;
 }
 
-export function ns2x(ns: number, startNS: number, endNS: number, duration: number, rect: Rect) {
+export function ns2x(ns: number, startNS: number, endNS: number, duration: number, rect: Rect): number {
   if (endNS == 0) {
     endNS = duration;
   }
@@ -228,7 +228,7 @@ export class TimerShaftElement extends BaseElement {
     return this._rangeRuler;
   }
 
-  connectedCallback() {
+  connectedCallback(): RangeRuler | undefined {
     if (this.canvas) {
       if (this.isOffScreen) {
         // @ts-ignore
@@ -299,7 +299,7 @@ export class TimerShaftElement extends BaseElement {
     this.timeRuler.frame.width = width;
   }
 
-  setRangeNS(startNS: number, endNS: number) {
+  setRangeNS(startNS: number, endNS: number): void {
     info('set startNS values :' + startNS + 'endNS values : ' + endNS);
     this._rangeRuler?.setRangeNS(startNS, endNS);
   }
@@ -308,7 +308,7 @@ export class TimerShaftElement extends BaseElement {
     return this._rangeRuler?.getRange();
   }
 
-  updateWidth(width: number) {
+  updateWidth(width: number): void {
     this.dpr = window.devicePixelRatio || 1;
     this.canvas!.width = width - (this.totalEL?.clientWidth || 0);
     this.canvas!.height = this.shadowRoot!.host.clientHeight || 0;
@@ -327,18 +327,18 @@ export class TimerShaftElement extends BaseElement {
     this.render();
   }
 
-  documentOnMouseDown = (ev: MouseEvent) => {
+  documentOnMouseDown = (ev: MouseEvent): void => {
     if ((window as any).isSheetMove) return;
     this._rangeRuler?.mouseDown(ev);
   };
 
-  documentOnMouseUp = (ev: MouseEvent) => {
+  documentOnMouseUp = (ev: MouseEvent): void => {
     if ((window as any).isSheetMove) return;
     this._rangeRuler?.mouseUp(ev);
     this.sportRuler?.mouseUp(ev);
   };
 
-  documentOnMouseMove = (ev: MouseEvent, trace: SpSystemTrace) => {
+  documentOnMouseMove = (ev: MouseEvent, trace: SpSystemTrace): void => {
     trace.style.cursor = 'default';
     let x = ev.offsetX - (this.canvas?.offsetLeft || 0); // 鼠标的x轴坐标
     let y = ev.offsetY; // 鼠标的y轴坐标
@@ -358,33 +358,33 @@ export class TimerShaftElement extends BaseElement {
     }
   };
 
-  documentOnMouseOut = (ev: MouseEvent) => {
+  documentOnMouseOut = (ev: MouseEvent): void => {
     this._rangeRuler?.mouseOut(ev);
     this.sportRuler?.mouseOut(ev);
   };
 
-  documentOnKeyPress = (ev: KeyboardEvent, currentSlicesTime?: CurrentSlicesTime) => {
+  documentOnKeyPress = (ev: KeyboardEvent, currentSlicesTime?: CurrentSlicesTime): void => {
     if ((window as any).isSheetMove) return;
     if ((window as any).flagInputFocus) return;
     this._rangeRuler?.keyPress(ev, currentSlicesTime);
     this.sportRuler?.clearHoverFlag();
   };
 
-  documentOnKeyUp = (ev: KeyboardEvent) => {
+  documentOnKeyUp = (ev: KeyboardEvent): void => {
     if ((window as any).isSheetMove) return;
     if ((window as any).flagInputFocus) return;
     this._rangeRuler?.keyUp(ev);
   };
 
-  disconnectedCallback() {}
+  disconnectedCallback(): void { }
 
   firstRender = true;
 
-  lineColor() {
+  lineColor(): string {
     return window.getComputedStyle(this.canvas!, null).getPropertyValue('color');
   }
 
-  render() {
+  render(): void {
     this.dpr = window.devicePixelRatio || 1;
     if (this.ctx) {
       this.ctx.fillStyle = 'transparent';
@@ -419,30 +419,30 @@ export class TimerShaftElement extends BaseElement {
     }
   }
 
-  modifyFlagList(flag: Flag | null | undefined) {
+  modifyFlagList(flag: Flag | null | undefined): void {
     this._sportRuler?.modifyFlagList(flag);
   }
 
-  modifySlicesList(slicestime: SlicesTime | null | undefined) {
+  modifySlicesList(slicestime: SlicesTime | null | undefined): void {
     this._sportRuler?.modifySicesTimeList(slicestime);
   }
-  cancelPressFrame() {
+  cancelPressFrame(): void {
     this._rangeRuler?.cancelPressFrame();
   }
 
-  cancelUpFrame() {
+  cancelUpFrame(): void {
     this._rangeRuler?.cancelUpFrame();
   }
 
-  stopWASD(ev: any) {
+  stopWASD(ev: any): void {
     this._rangeRuler?.keyUp(ev);
   }
 
-  drawTriangle(time: number, type: string) {
+  drawTriangle(time: number, type: string): number | undefined {
     return this._sportRuler?.drawTriangle(time, type);
   }
 
-  removeTriangle(type: string) {
+  removeTriangle(type: string): void {
     this._sportRuler?.removeTriangle(type);
   }
 
@@ -467,7 +467,7 @@ export class TimerShaftElement extends BaseElement {
     return sliceTime;
   }
 
-  displayCollect(showCollect: boolean) {
+  displayCollect(showCollect: boolean): void {
     if (showCollect) {
       this.collecBtn!.style.display = 'flex';
     } else {

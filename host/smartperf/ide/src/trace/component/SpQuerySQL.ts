@@ -46,7 +46,7 @@ export class SpQuerySQL extends BaseElement {
     this.progressLoad = this.shadowRoot?.querySelector('.load-query-sql') as LitProgressBar;
     this.selector = this.shadowRoot?.querySelector('.sql-select') as HTMLTextAreaElement;
     this.queryTableEl = this.shadowRoot?.querySelector('lit-table') as LitTable;
-    this.queryTableEl.setAttribute('data-query-scene','');
+    this.queryTableEl.setAttribute('data-query-scene', '');
     this.querySize = this.shadowRoot?.querySelector('.query_size') as HTMLElement;
     this.response = this.shadowRoot?.querySelector('#dataResult') as HTMLDivElement;
     this.pagination = this.shadowRoot?.querySelector('.pagination-box') as PaginationBox;
@@ -70,10 +70,10 @@ export class SpQuerySQL extends BaseElement {
     this.initCommonList();
   }
 
-  private initCommonList() : void {
+  private initCommonList(): void {
     let commonSqlList = getAllSql();
     if (commonSqlList.length > 0) {
-      for (let i = 0;i < commonSqlList.length; i ++) {
+      for (let i = 0; i < commonSqlList.length; i++) {
         let commonSqlDiv = document.createElement('div');
         commonSqlDiv.className = 'sql-item';
         let sql = document.createElement('div');
@@ -169,15 +169,14 @@ export class SpQuerySQL extends BaseElement {
         this.keyList = Object.keys(resultList[0]);
         this.querySize!.textContent = `Query result - ${this.statDataArray.length} counts.`;
         this.initDataElement();
-          this.response!.appendChild(this.queryTableEl!);
-          this.setPageNationTableEl();
-          setTimeout(() => {
-            if (this.parentElement?.clientHeight !== 0) {
+        this.response!.appendChild(this.queryTableEl!);
+        this.setPageNationTableEl();
+        setTimeout(() => {
+          if (this.parentElement?.clientHeight !== 0) {
             this.queryTableEl!.style.height = '100%';
             this.queryTableEl!.reMeauseHeight();
-            }
-          }, 300);
-
+          }
+        }, 300);
       } else {
         this.querySize!.textContent = `Query result - ${this.statDataArray.length} counts.`;
         this.progressLoad!.loading = false;
@@ -229,7 +228,8 @@ export class SpQuerySQL extends BaseElement {
       return false;
     } else {
       let queryNormalLength = 15;
-      if (this.selector!.value.length < queryNormalLength ||
+      if (
+        this.selector!.value.length < queryNormalLength ||
         !this.selector?.value.toLowerCase().trim().startsWith('select')
       ) {
         this.querySqlErrorText = `Query result - (Error):  
@@ -271,10 +271,9 @@ export class SpQuerySQL extends BaseElement {
     this.selector!.addEventListener('input', this.inputSqlListener);
     this.selector!.addEventListener('change', this.inputSqlListener);
     this.selector!.addEventListener('keydown', this.deleteSqlListener);
-    this.shadowRoot?.querySelectorAll<LitIcon>('.runButton').
-      forEach((it) => (
-        it.addEventListener('click', this.runSqlListener)
-      ));
+    this.shadowRoot
+      ?.querySelectorAll<LitIcon>('.runButton')
+      .forEach((it) => it.addEventListener('click', this.runSqlListener));
   }
 
   runSqlListener = (e: Event): void => {

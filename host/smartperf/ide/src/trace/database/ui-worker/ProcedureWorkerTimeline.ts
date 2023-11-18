@@ -523,7 +523,7 @@ export class RangeRuler extends Graph {
       } else {
         this.range.xsTxt = [];
       }
-      if (timeLineYu != 0) {
+      if (timeLineYu !== 0) {
         let firstNodeWidth = ((this.scale - timeLineYu) / this.scale) * timeLineRealW;
         timeLineStartX += firstNodeWidth;
         tmpNs += timeLineYu;
@@ -542,7 +542,7 @@ export class RangeRuler extends Graph {
     }
   }
 
-  private drawRangeSelection() {
+  private drawRangeSelection(): void {
     this.c.fillStyle = '#ffffff';
     this.rangeRect.x = this.markA.frame.x < this.markB.frame.x ? this.markA.frame.x : this.markB.frame.x;
     this.rangeRect.width = Math.abs(this.markB.frame.x - this.markA.frame.x);

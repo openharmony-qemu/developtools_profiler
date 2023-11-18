@@ -101,7 +101,9 @@ export class LitMainMenuItem extends BaseElement {
               );
             }
             if (this.fileEL) this.fileEL.value = '';
-            if (this.fileEL) {this.fileEL.value = ''}
+            if (this.fileEL) {
+              this.fileEL.value = '';
+            }
           }
         });
       }

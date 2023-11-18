@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 import { BaseElement, element } from '../../base-ui/BaseElement.js';
 
 @element('sp-flags')
@@ -186,7 +185,7 @@ export class SpFlags extends BaseElement {
         deviceWidthLabelEl.className = 'device_label';
         deviceWidthLabelEl.textContent = 'PhysicalWidth :';
         let deviceWidthEl = document.createElement('input');
-        deviceWidthEl.value = <string> config.addInfo!.physicalWidth;
+        deviceWidthEl.value = <string>config.addInfo!.physicalWidth;
         deviceWidthEl.addEventListener('keyup', () => {
           deviceWidthEl.value = deviceWidthEl.value.replace(/\D/g, '');
         });
@@ -201,7 +200,7 @@ export class SpFlags extends BaseElement {
         deviceHeightLabelEl.className = 'device_label';
         let deviceHeightEl = document.createElement('input');
         deviceHeightEl.className = 'device_input';
-        deviceHeightEl.value = <string> config.addInfo!.physicalHeight;
+        deviceHeightEl.value = <string>config.addInfo!.physicalHeight;
         deviceHeightEl.addEventListener('keyup', () => {
           deviceHeightEl.value = deviceHeightEl.value.replace(/\D/g, '');
         });
@@ -237,7 +236,7 @@ export class FlagsConfig {
       title: 'AnimationAnalysis',
       switchOptions: [{ option: 'Enabled' }, { option: 'Disabled', selected: true }],
       describeContent: 'Analyze Animation effect templates',
-      addInfo: { physicalWidth: 0, physicalHeight: 0 }
+      addInfo: { physicalWidth: 0, physicalHeight: 0 },
     },
     {
       title: 'AppStartup',
@@ -305,16 +304,14 @@ export class FlagsConfig {
 
   static getSpTraceStreamParseConfig(): string {
     let parseConfig = {};
-    FlagsConfig.getAllFlagConfig().forEach(
-      configItem => {
-        let selectedOption = configItem.switchOptions.filter((option) => {
-          return option.selected;
-        });
-        // @ts-ignore
-        parseConfig[configItem.title] = selectedOption[0].option === 'Enabled' ? 1 : 0;
-      }
-    );
-    return JSON.stringify({ 'config': parseConfig });
+    FlagsConfig.getAllFlagConfig().forEach((configItem) => {
+      let selectedOption = configItem.switchOptions.filter((option) => {
+        return option.selected;
+      });
+      // @ts-ignore
+      parseConfig[configItem.title] = selectedOption[0].option === 'Enabled' ? 1 : 0;
+    });
+    return JSON.stringify({ config: parseConfig });
   }
 
   static getFlagsConfig(flagName: string): Params | undefined {

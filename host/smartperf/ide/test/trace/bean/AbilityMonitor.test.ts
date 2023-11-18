@@ -23,6 +23,10 @@ import {
   Dma
 } from '../../../dist/trace/bean/AbilityMonitor.js';
 
+jest.mock('../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
+
 describe('AbilityMonitor Test', () => {
   let systemCpuSummary = new SystemCpuSummary();
   let systemDiskIOSummary = new SystemDiskIOSummary();

@@ -255,7 +255,7 @@ export class ProcedureLogicWorkerNativeMemory extends LogicHandler {
     );
   }
 
-  queryNativeHookStatistic(type: number) {
+  queryNativeHookStatistic(type: number): void {
     let condition: string;
     if (type === 0) {
       condition = 'and type = 0';
@@ -277,7 +277,7 @@ where ts between start_ts and end_ts ${condition};
     this.queryData(this.currentEventId, 'native-memory-queryNativeHookStatistic', sql, {});
   }
 
-  queryNativeHookEvent(leftNs: number, rightNs: number, types: Array<string>) {
+  queryNativeHookEvent(leftNs: number, rightNs: number, types: Array<string>): void {
     let condition =
       types.length === 1
         ? `and A.event_type = ${types[0]}`
@@ -325,7 +325,7 @@ where ts between start_ts and end_ts ${condition};
     this.queryData(this.currentEventId, 'native-memory-queryNativeHookEvent', sql, {});
   }
 
-  supplementNativeHoodData() {
+  supplementNativeHoodData(): void {
     let len = this.boxRangeNativeHook.length;
     for (let i = 0, j = len - 1; i <= j; i++, j--) {
       this.fillNativeHook(this.boxRangeNativeHook[i], i);
@@ -649,17 +649,17 @@ where ts between start_ts and end_ts ${condition};
     }
   }
 
-  sortByNativeMemoryColumn(nmMemoryColumn: string, nmMemorySort: number, list: Array<NativeMemory>) {
+  sortByNativeMemoryColumn(nmMemoryColumn: string, nmMemorySort: number, list: Array<NativeMemory>): NativeMemory[] {
     if (nmMemorySort === 0) {
       return list;
     } else {
       return list.sort((memoryLeftData: any, memoryRightData: any) => {
         if (nmMemoryColumn === 'index' || nmMemoryColumn === 'startTs' || nmMemoryColumn === 'heapSize') {
-          return nmMemorySort == 1
+          return nmMemorySort === 1
             ? memoryLeftData[nmMemoryColumn] - memoryRightData[nmMemoryColumn]
             : memoryRightData[nmMemoryColumn] - memoryLeftData[nmMemoryColumn];
         } else {
-          if (nmMemorySort == 1) {
+          if (nmMemorySort === 1) {
             if (memoryLeftData[nmMemoryColumn] > memoryRightData[nmMemoryColumn]) {
               return 1;
             } else if (memoryLeftData[nmMemoryColumn] === memoryRightData[nmMemoryColumn]) {
@@ -670,7 +670,7 @@ where ts between start_ts and end_ts ${condition};
           } else {
             if (memoryRightData[nmMemoryColumn] > memoryLeftData[nmMemoryColumn]) {
               return 1;
-            } else if (memoryLeftData[nmMemoryColumn] == memoryRightData[nmMemoryColumn]) {
+            } else if (memoryLeftData[nmMemoryColumn] === memoryRightData[nmMemoryColumn]) {
               return 0;
             } else {
               return -1;

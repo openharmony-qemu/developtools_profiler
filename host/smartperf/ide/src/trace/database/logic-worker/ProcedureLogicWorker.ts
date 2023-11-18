@@ -34,7 +34,7 @@ let logicWorker: any = {
 
 function match(req: any) {
   if (req.type === 'clear') {
-    Reflect.ownKeys(logicWorker).forEach(key => logicWorker[key].clearAll());
+    Reflect.ownKeys(logicWorker).forEach((key) => logicWorker[key].clearAll());
     DataCache.getInstance().clearAll();
     return;
   }

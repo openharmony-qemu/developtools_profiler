@@ -19,11 +19,7 @@ import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
-import {
-  FileSysEvent,
-  VirtualMemoryEvent,
-  VM_TYPE_MAP,
-} from '../../../../database/logic-worker/ProcedureLogicWorkerFileSystem.js';
+import { VirtualMemoryEvent, VM_TYPE_MAP } from '../../../../database/logic-worker/ProcedureLogicWorkerFileSystem.js';
 import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { getTabVirtualMemoryType } from '../../../../database/SqlLite.js';
 
@@ -39,8 +35,6 @@ export class TabPaneVirtualMemoryEvents extends BaseElement {
   private loadingPage: any;
   private vmEventSource: Array<VirtualMemoryEvent> = [];
   private queryVmEventDataSource: Array<VirtualMemoryEvent> = [];
-  private vmEventSortKey: string = 'startTs';
-  private vmEventSortType: number = 0;
   private currentSelection: SelectionParam | undefined | null;
   private statsticsSelection: Array<any> = [];
 
@@ -55,7 +49,8 @@ export class TabPaneVirtualMemoryEvents extends BaseElement {
     // @ts-ignore
     this.vmEventTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
     // @ts-ignore
-    this.vmEventTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.vmEventTblData?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 20 - 31 + 'px';
     this.vmEventTbl!.recycleDataSource = [];
     this.vmEventTblData!.recycleDataSource = [];
   }
@@ -64,10 +59,12 @@ export class TabPaneVirtualMemoryEvents extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.vmEventTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 33 + 'px';
+        this.vmEventTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 33 + 'px';
         this.vmEventTbl?.reMeauseHeight();
         // @ts-ignore
-        this.vmEventTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 33 + 'px';
+        this.vmEventTblData?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 33 + 'px';
         this.vmEventTblData?.reMeauseHeight();
         this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

@@ -14,71 +14,72 @@
  */
 
 import { BaseElement, element } from '../../../../base-ui/BaseElement.js';
-import { LitTabs } from '../../../../base-ui/tabs/lit-tabs.js';
+import { type LitTabs } from '../../../../base-ui/tabs/lit-tabs.js';
 import { LitTabpane } from '../../../../base-ui/tabs/lit-tabpane.js';
 import { BoxJumpParam, SelectionParam } from '../../../bean/BoxSelection.js';
-import { TabPaneCurrentSelection } from '../sheet/TabPaneCurrentSelection.js';
-import { TabPaneFlag } from '../timer-shaft/TabPaneFlag.js';
-import { Flag } from '../timer-shaft/Flag.js';
-import { WakeupBean } from '../../../bean/WakeupBean.js';
-import { LitIcon } from '../../../../base-ui/icon/LitIcon.js';
+import { type TabPaneCurrentSelection } from '../sheet/TabPaneCurrentSelection.js';
+import { type TabPaneFlag } from '../timer-shaft/TabPaneFlag.js';
+import { type Flag } from '../timer-shaft/Flag.js';
+import { type WakeupBean } from '../../../bean/WakeupBean.js';
+import { type LitIcon } from '../../../../base-ui/icon/LitIcon.js';
 import { tabConfig } from './TraceSheetConfig.js';
-import { TabPaneBoxChild } from '../sheet/cpu/TabPaneBoxChild.js';
-import { CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
+import { type TabPaneBoxChild } from '../sheet/cpu/TabPaneBoxChild.js';
+import { type CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
 import { CpuFreqStruct } from '../../../database/ui-worker/ProcedureWorkerFreq.js';
 import { CpuFreqLimitsStruct } from '../../../database/ui-worker/ProcedureWorkerCpuFreqLimits.js';
-import { ThreadStruct } from '../../../database/ui-worker/ProcedureWorkerThread.js';
-import { FuncStruct } from '../../../database/ui-worker/ProcedureWorkerFunc.js';
-import { ProcessMemStruct } from '../../../database/ui-worker/ProcedureWorkerMem.js';
+import { type ThreadStruct } from '../../../database/ui-worker/ProcedureWorkerThread.js';
+import { type FuncStruct } from '../../../database/ui-worker/ProcedureWorkerFunc.js';
+import { type ProcessMemStruct } from '../../../database/ui-worker/ProcedureWorkerMem.js';
 import { CpuStateStruct } from '../../../database/ui-worker/ProcedureWorkerCpuState.js';
-import { ClockStruct } from '../../../database/ui-worker/ProcedureWorkerClock.js';
-import { IrqStruct } from '../../../database/ui-worker/ProcedureWorkerIrq.js';
-import { JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
-import { HeapStruct } from '../../../database/ui-worker/ProcedureWorkerHeap.js';
-import { LitTable } from '../../../../base-ui/table/lit-table.js';
+import { type ClockStruct } from '../../../database/ui-worker/ProcedureWorkerClock.js';
+import { type IrqStruct } from '../../../database/ui-worker/ProcedureWorkerIrq.js';
+import { type JankStruct } from '../../../database/ui-worker/ProcedureWorkerJank.js';
+import { type HeapStruct } from '../../../database/ui-worker/ProcedureWorkerHeap.js';
+import { type LitTable } from '../../../../base-ui/table/lit-table.js';
 import { queryNativeHookResponseTypes, threadPool } from '../../../database/SqlLite.js';
-import { HeapSnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
-import { TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
-import { TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
-import { SlicesTime } from '../timer-shaft/SportRuler.js';
-import { AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
-import { SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
-import { FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
-import { TraceRow } from './TraceRow.js';
-import { FrameDynamicStruct } from '../../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
-import { TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
-import { FrameSpacingStruct } from '../../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
-import { TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
+import { type HeapSnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
+import { type TabPaneNMStatisticAnalysis } from '../sheet/native-memory/TabPaneNMStatisticAnalysis.js';
+import { type TabPaneCurrent } from '../sheet/TabPaneCurrent.js';
+import { type SlicesTime } from '../timer-shaft/SportRuler.js';
+import { type AppStartupStruct } from '../../../database/ui-worker/ProcedureWorkerAppStartup.js';
+import { type SoStruct } from '../../../database/ui-worker/ProcedureWorkerSoInit.js';
+import { type FrameAnimationStruct } from '../../../database/ui-worker/ProcedureWorkerFrameAnimation.js';
+import { type TraceRow } from './TraceRow.js';
+import { type FrameDynamicStruct } from '../../../database/ui-worker/ProcedureWorkerFrameDynamic.js';
+import { type TabPaneFrameDynamic } from '../sheet/frame/TabPaneFrameDynamic.js';
+import { type FrameSpacingStruct } from '../../../database/ui-worker/ProcedureWorkerFrameSpacing.js';
+import { type TabFrameSpacing } from '../sheet/frame/TabFrameSpacing.js';
 import { procedurePool } from '../../../database/Procedure.js';
-import { JsCpuProfilerChartFrame } from '../../../bean/JsStruct.js';
+import { type JsCpuProfilerChartFrame } from '../../../bean/JsStruct.js';
 import { TabPaneJsCpuTopDown } from '../sheet/ark-ts/TabPaneJsCpuCallTree.js';
-import { TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
-import { TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
-import { TabPaneGpuClickSelect } from '../sheet/gpu/TabPaneGpuClickSelect.js';
-import { TabPanePurgTotalSelection } from '../sheet/ability/TabPanePurgTotalSelection.js';
-import { TabPanePurgPinSelection } from '../sheet/ability/TabPanePurgPinSelection.js';
-import { TabPaneVmTrackerShmSelection } from '../sheet/vmtracker/TabPaneVmTrackerShmSelection.js';
-import { TabPaneSmapsStatistics } from '../sheet/smaps/TabPaneSmapsStatistics.js';
-import { TabPaneSmapsComparison } from '../sheet/smaps/TabPaneSmapsComparison.js';
-import { SnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerSnapshot.js';
-import { TabPaneDmaSelectAbility } from '../sheet/ability/TabPaneDmaSelectAbility.js';
-import { TabPaneGpuMemorySelectAbility } from '../sheet/ability/TabPaneGpuMemorySelectAbility.js';
-import { TabPaneDmaSelectVmTracker } from '../sheet/vmtracker/TabPaneDmaSelectVmTracker.js';
-import { TabPanePurgTotalComparisonAbility } from '../sheet/ability/TabPanePurgTotalComparisonAbility.js';
-import { TabPanePurgPinComparisonAbility } from '../sheet/ability/TabPanePurgPinComparisonAbility.js';
-import { TabPanePurgTotalComparisonVM } from '../sheet/vmtracker/TabPanePurgTotalComparisonVM.js';
-import { TabPanePurgPinComparisonVM } from '../sheet/vmtracker/TabPanePurgPinComparisonVM.js';
-import { TabPaneDmaAbilityComparison } from '../sheet/ability/TabPaneDmaAbilityComparison.js';
-import { TabPaneGpuMemoryComparison } from '../sheet/ability/TabPaneGpuMemoryComparison.js';
-import { TabPaneDmaVmTrackerComparison } from '../sheet/vmtracker/TabPaneDmaVmTrackerComparison.js';
-import { TabPaneGpuMemorySelectVmTracker } from '../sheet/vmtracker/TabPaneGpuMemorySelectVmTracker.js';
-import { TabPaneGpuMemoryVmTrackerComparison } from '../sheet/vmtracker/TabPaneGpuMemoryVmTrackerComparison.js';
-import { TabPaneVmTrackerShmComparison } from '../sheet/vmtracker/TabPaneVmTrackerShmComparison.js';
-import { TabPaneJsCpuStatistics } from '../sheet/ark-ts/TabPaneJsCpuStatistics.js';
-import { TabPaneGpuClickSelectComparison } from '../sheet/gpu/TabPaneGpuClickSelectComparison.js';
+import { type TabPaneComparison } from '../sheet/ark-ts/TabPaneComparison.js';
+import { type TabPaneSummary } from '../sheet/ark-ts/TabPaneSummary.js';
+import { type TabPaneGpuClickSelect } from '../sheet/gpu/TabPaneGpuClickSelect.js';
+import { type TabPanePurgTotalSelection } from '../sheet/ability/TabPanePurgTotalSelection.js';
+import { type TabPanePurgPinSelection } from '../sheet/ability/TabPanePurgPinSelection.js';
+import { type TabPaneVmTrackerShmSelection } from '../sheet/vmtracker/TabPaneVmTrackerShmSelection.js';
+import { type TabPaneSmapsStatistics } from '../sheet/smaps/TabPaneSmapsStatistics.js';
+import { type TabPaneSmapsComparison } from '../sheet/smaps/TabPaneSmapsComparison.js';
+import { type SnapshotStruct } from '../../../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { type TabPaneDmaSelectAbility } from '../sheet/ability/TabPaneDmaSelectAbility.js';
+import { type TabPaneGpuMemorySelectAbility } from '../sheet/ability/TabPaneGpuMemorySelectAbility.js';
+import { type TabPaneDmaSelectVmTracker } from '../sheet/vmtracker/TabPaneDmaSelectVmTracker.js';
+import { type TabPanePurgTotalComparisonAbility } from '../sheet/ability/TabPanePurgTotalComparisonAbility.js';
+import { type TabPanePurgPinComparisonAbility } from '../sheet/ability/TabPanePurgPinComparisonAbility.js';
+import { type TabPanePurgTotalComparisonVM } from '../sheet/vmtracker/TabPanePurgTotalComparisonVM.js';
+import { type TabPanePurgPinComparisonVM } from '../sheet/vmtracker/TabPanePurgPinComparisonVM.js';
+import { type TabPaneDmaAbilityComparison } from '../sheet/ability/TabPaneDmaAbilityComparison.js';
+import { type TabPaneGpuMemoryComparison } from '../sheet/ability/TabPaneGpuMemoryComparison.js';
+import { type TabPaneDmaVmTrackerComparison } from '../sheet/vmtracker/TabPaneDmaVmTrackerComparison.js';
+import { type TabPaneGpuMemorySelectVmTracker } from '../sheet/vmtracker/TabPaneGpuMemorySelectVmTracker.js';
+import { type TabPaneGpuMemoryVmTrackerComparison } from '../sheet/vmtracker/TabPaneGpuMemoryVmTrackerComparison.js';
+import { type TabPaneVmTrackerShmComparison } from '../sheet/vmtracker/TabPaneVmTrackerShmComparison.js';
+import { type TabPaneJsCpuStatistics } from '../sheet/ark-ts/TabPaneJsCpuStatistics.js';
+import { type TabPaneGpuClickSelectComparison } from '../sheet/gpu/TabPaneGpuClickSelectComparison.js';
 import { Utils } from './Utils.js';
 import { TabPaneHiLogs } from '../sheet/hilog/TabPaneHiLogs.js';
 import { TabPaneHiLogSummary } from '../sheet/hilog/TabPaneHiLogSummary.js';
+import { TabPaneGpuResourceVmTracker } from '../sheet/vmtracker/TabPaneGpuResourceVmTracker.js';
 
 @element('trace-sheet')
 export class TraceSheet extends BaseElement {
@@ -141,7 +142,7 @@ export class TraceSheet extends BaseElement {
     this.importDiv = this.shadowRoot?.querySelector('#import_div');
     this.buildTabs(this.litTabs);
     let minBtn = this.shadowRoot?.querySelector('#min-btn');
-    minBtn?.addEventListener('click', () => {});
+    minBtn?.addEventListener('click', () => { });
     this.litTabs!.onTabClick = (e: any): void => this.loadTabPaneData(e.detail.key);
     this.litTabs!.addEventListener('close-handler', () => {
       Reflect.ownKeys(tabConfig)
@@ -222,7 +223,7 @@ export class TraceSheet extends BaseElement {
           } else if (
             navRoot!.offsetHeight <= moveY &&
             search!.offsetHeight + timerShaft!.offsetHeight + borderTop + spacer!.offsetHeight <=
-              window.innerHeight - moveY
+            window.innerHeight - moveY
           ) {
             tabs!.style.height = moveY + 'px';
             node!.style.height = moveY - navRoot!.offsetHeight + 'px';
@@ -258,8 +259,8 @@ export class TraceSheet extends BaseElement {
         setTimeout(() => {
           (window as any).isSheetMove = false;
         }, 100);
-        litTabpane!.forEach((node: HTMLDivElement) => {
-          if (node!.style.height !== '0px' && tabs!.style.height != '') {
+        litTabpane!.forEach((node: HTMLDivElement): void => {
+          if (node!.style.height !== '0px' && tabs!.style.height !== '') {
             initialHeight.node = node!.style.height;
             initialHeight.tabs = tabs!.style.height;
           }
@@ -277,7 +278,7 @@ export class TraceSheet extends BaseElement {
       tabs!.style.height = window.innerHeight - search!.offsetHeight - timerShaft!.offsetHeight - borderTop + 'px';
       let litTabpane: NodeListOf<HTMLDivElement> | undefined | null =
         this.shadowRoot?.querySelectorAll('#tabs > lit-tabpane');
-      litTabpane!.forEach((node: HTMLDivElement) => {
+      litTabpane!.forEach((node: HTMLDivElement): void => {
         node!.style.height =
           window.innerHeight -
           search!.offsetHeight -
@@ -304,7 +305,7 @@ export class TraceSheet extends BaseElement {
         litTabpane!.forEach((node: HTMLDivElement) => (node!.style.height = initialHeight.node));
       }
     };
-    importFileBt!.addEventListener('change', (event) => {
+    importFileBt!.addEventListener('change', (event): void => {
       let files = importFileBt?.files;
       if (files) {
         let fileList: Array<File> = [];
@@ -429,7 +430,7 @@ export class TraceSheet extends BaseElement {
     this.showUploadSoBt(val);
   };
 
-  displayGpuSelectedData = (type: string, startTs: number, dataList: Array<SnapshotStruct>) => {
+  displayGpuSelectedData = (type: string, startTs: number, dataList: Array<SnapshotStruct>): void => {
     this.displayTab<TabPaneGpuClickSelectComparison>('gpu-click-select-comparison').getGpuClickDataByDB(
       type,
       startTs,
@@ -450,23 +451,27 @@ export class TraceSheet extends BaseElement {
     data: JankStruct,
     callback: ((data: Array<any>) => void) | undefined = undefined,
     scrollCallback: ((e: JankStruct) => void) | undefined
-  ) => this.displayTab<TabPaneCurrentSelection>('current-selection').setJankData(data, callback, scrollCallback);
-  displayShmData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+  ): void => this.displayTab<TabPaneCurrentSelection>('current-selection').setJankData(data, callback, scrollCallback);
+  displayShmData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>): void => {
     this.displayTab<TabPaneVmTrackerShmComparison>('box-vmtracker-shm-comparison').setShmData(data, dataList);
     this.displayTab<TabPaneVmTrackerShmSelection>(
       'box-vmtracker-shm-selection',
       'box-vmtracker-shm-comparison'
     ).setShmData(data, dataList);
   };
-  displaySmapsData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+  displaySmapsData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>): void => {
     let val = new SelectionParam();
     val.smapsType = [];
     val.leftNs = data.startNs;
     this.selection = val;
     val.smapsType = [];
     this.displayTab<TabPaneSmapsComparison>('box-smaps-comparison').setData(val, dataList);
-    this.displayTab<TabPaneSmapsStatistics>('box-smaps-statistics', 'box-smaps-record', 'box-smaps-comparison').data =
-      val;
+    this.displayTab<TabPaneSmapsStatistics>(
+      'box-smaps-statistics',
+      'box-smaps-sample',
+      'box-smaps-comparison',
+      'box-smaps-record'
+    ).data = val;
   };
   displaySnapshotData = (
     data: HeapSnapshotStruct,
@@ -516,7 +521,7 @@ export class TraceSheet extends BaseElement {
       'box-js-Profiler-top-down'
     ).data = data;
   };
-  displayPurgTotalAbilityData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+  displayPurgTotalAbilityData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>): void => {
     data.type = 'ability';
     this.displayTab<TabPanePurgTotalComparisonAbility>('box-purgeable-total-comparison-ability').totalData(
       data,
@@ -527,7 +532,7 @@ export class TraceSheet extends BaseElement {
       'box-purgeable-total-comparison-ability'
     ).data = data;
   };
-  displayPurgPinAbilityData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+  displayPurgPinAbilityData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>): void => {
     data.type = 'ability';
     this.displayTab<TabPanePurgPinComparisonAbility>('box-purgeable-pin-comparison-ability').totalData(data, dataList);
     this.displayTab<TabPanePurgPinSelection>(
@@ -535,7 +540,7 @@ export class TraceSheet extends BaseElement {
       'box-purgeable-pin-comparison-ability'
     ).data = data;
   };
-  displayPurgTotalVMData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+  displayPurgTotalVMData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>): void => {
     data.type = 'VM';
     this.displayTab<TabPanePurgTotalComparisonVM>('box-purgeable-total-comparison-vm').totalData(data, dataList);
     this.displayTab<TabPanePurgTotalSelection>(
@@ -543,13 +548,13 @@ export class TraceSheet extends BaseElement {
       'box-purgeable-total-comparison-vm'
     ).data = data;
   };
-  displayPurgPinVMData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>) => {
+  displayPurgPinVMData = (data: SnapshotStruct, dataList: Array<SnapshotStruct>): void => {
     data.type = 'VM';
     this.displayTab<TabPanePurgPinComparisonVM>('box-purgeable-pin-comparison-vm').totalData(data, dataList);
     this.displayTab<TabPanePurgPinSelection>('box-purgeable-pin-selection', 'box-purgeable-pin-comparison-vm').data =
       data;
   };
-  displayDmaAbility = (data: number, dataList: Array<SnapshotStruct>) => {
+  displayDmaAbility = (data: number, dataList: Array<SnapshotStruct>): void => {
     if (dataList.length > 0) {
       this.displayTab<TabPaneDmaAbilityComparison>('box-dma-ability-comparison').comparisonDataByDB(data, dataList);
       this.displayTab<TabPaneDmaSelectAbility>(
@@ -560,7 +565,7 @@ export class TraceSheet extends BaseElement {
       this.displayTab<TabPaneDmaSelectAbility>('box-dma-selection-ability').queryDmaClickDataByDB(data);
     }
   };
-  displayDmaVmTracker = (data: number, dataList: Array<SnapshotStruct>) => {
+  displayDmaVmTracker = (data: number, dataList: Array<SnapshotStruct>): void => {
     if (dataList.length > 0) {
       this.displayTab<TabPaneDmaVmTrackerComparison>('box-vmTracker-comparison').comparisonDataByDB(data, dataList);
       this.displayTab<TabPaneDmaSelectVmTracker>(
@@ -571,7 +576,7 @@ export class TraceSheet extends BaseElement {
       this.displayTab<TabPaneDmaSelectVmTracker>('box-dma-selection-vmTracker').queryDmaVmTrackerClickDataByDB(data);
     }
   };
-  displayGpuMemoryAbility = (data: number, dataList: Array<SnapshotStruct>) => {
+  displayGpuMemoryAbility = (data: number, dataList: Array<SnapshotStruct>): void => {
     if (dataList.length > 0) {
       this.displayTab<TabPaneGpuMemoryComparison>('box-gpu-memory-comparison').comparisonDataByDB(data, dataList);
       this.displayTab<TabPaneGpuMemorySelectAbility>(
@@ -582,7 +587,7 @@ export class TraceSheet extends BaseElement {
       this.displayTab<TabPaneGpuMemorySelectAbility>('box-gpu-memory-selection-ability').data = data;
     }
   };
-  displayGpuMemoryVmTracker = (data: number, dataList: Array<SnapshotStruct>) => {
+  displayGpuMemoryVmTracker = (data: number, dataList: Array<SnapshotStruct>): void => {
     if (dataList.length > 0) {
       this.displayTab<TabPaneGpuMemoryVmTrackerComparison>('box-gpu-memory-vmTracker-comparison').comparisonDataByDB(
         data,
@@ -598,9 +603,12 @@ export class TraceSheet extends BaseElement {
       ).queryGpuMemoryVmTrackerClickDataByDB(data);
     }
   };
+  displayGpuResourceVmTracker = (data: number) => {
+    this.displayTab<TabPaneGpuResourceVmTracker>('box-smaps-gpu-resource').data = data;
+  };
 
   displaySystemLogsData = (): void => {
-    let tblHiLogPanel = this.shadowRoot?.querySelector<LitTabpane>('lit-tabpane[id=\'box-hilogs\']');
+    let tblHiLogPanel = this.shadowRoot?.querySelector<LitTabpane>("lit-tabpane[id='box-hilogs']");
     if (tblHiLogPanel) {
       let tblHiLog = tblHiLogPanel.querySelector<TabPaneHiLogs>('tab-hi-log');
       if (tblHiLog) {
@@ -608,7 +616,7 @@ export class TraceSheet extends BaseElement {
         tblHiLog.initTabSheetEl(tblHiLog.parentElement!, this);
       }
     }
-    let tblSummaryPanel = this.shadowRoot?.querySelector<LitTabpane>('lit-tabpane[id=\'box-hilogs-summary\']');
+    let tblSummaryPanel = this.shadowRoot?.querySelector<LitTabpane>("lit-tabpane[id='box-hilogs-summary']");
     if (tblSummaryPanel) {
       let tblSummary = tblSummaryPanel.querySelector<TabPaneHiLogSummary>('tab-hi-log-summary');
       if (tblSummary) {
@@ -682,19 +690,19 @@ export class TraceSheet extends BaseElement {
 
   initFilterLibList(param: SelectionParam | any) {
     let nmTypes: Array<string> = [];
-    if (param.nativeMemory.indexOf('All Heap & Anonymous VM') != -1) {
+    if (param.nativeMemory.indexOf('All Heap & Anonymous VM') !== -1) {
       nmTypes.push("'AllocEvent'");
       nmTypes.push("'MmapEvent'");
     } else {
-      if (param.nativeMemory.indexOf('All Heap') != -1) {
+      if (param.nativeMemory.indexOf('All Heap') !== -1) {
         nmTypes.push("'AllocEvent'");
       }
-      if (param.nativeMemory.indexOf('All Anonymous VM') != -1) {
+      if (param.nativeMemory.indexOf('All Anonymous VM') !== -1) {
         nmTypes.push("'MmapEvent'");
       }
     }
     queryNativeHookResponseTypes(param.leftNs, param.rightNs, nmTypes).then((res) => {
-      procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => {});
+      procedurePool.submitWithName('logic1', 'native-memory-init-responseType', res, undefined, () => { });
     });
   }
 
@@ -729,7 +737,7 @@ export class TraceSheet extends BaseElement {
   rowClickHandler(e: any): void {
     this.currentPaneID = e.target.parentElement.id;
     this.shadowRoot!.querySelectorAll<LitTabpane>(`lit-tabpane`).forEach((it) =>
-      it.id != this.currentPaneID ? (it.hidden = true) : (it.hidden = false)
+      it.id !== this.currentPaneID ? (it.hidden = true) : (it.hidden = false)
     );
     let pane = this.getPaneByID('box-cpu-child');
     pane.closeable = true;

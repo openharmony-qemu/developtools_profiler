@@ -38,16 +38,19 @@ export class ChartStruct extends BaseStruct {
 
   size: number = 0; // 实际size
   count: number = 0; // 实际count
+  eventCount: number = 0;
   dur: number = 0; // 实际dur
   //搜索后会根据搜索匹配的函数的值赋值给parent
   searchSize: number = 0; //
   searchCount: number = 0;
   searchDur: number = 0;
+  searchEventCount: number = 0;
   //点击绘制的size在搜索的基础上，赋值给parent
   drawSize: number = 0;
   drawCount: number = 0;
   drawDur: number = 0;
 
+  drawEventCount: number = 0;
   parent: ChartStruct | undefined;
   children: Array<ChartStruct> = [];
   percent: number = 0; // 0 - 1 该node所占整体的百分比
@@ -64,6 +67,7 @@ export enum ChartMode {
   Byte, // Native Memory
   Count, // Perf
   Duration, // eBpf
+  EventCount,//cycles
 }
 
 export function setFuncFrame(node: ChartStruct, canvasFrame: Rect, total: number, mode: ChartMode): void {
@@ -91,6 +95,9 @@ export function setFuncFrame(node: ChartStruct, canvasFrame: Rect, total: number
           break;
         case ChartMode.Duration:
           node.frame!.width = Math.floor(((node.drawDur || node.dur) / total) * canvasFrame.width);
+          break;
+        case ChartMode.EventCount:
+          node.frame!.width = Math.floor(((node.drawEventCount || node.eventCount) / total) * canvasFrame.width);
           break;
         default:
           warn('not match ChartMode');

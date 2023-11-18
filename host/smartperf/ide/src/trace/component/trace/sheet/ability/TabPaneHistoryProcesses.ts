@@ -31,7 +31,8 @@ export class TabPaneHistoryProcesses extends BaseElement {
 
   set data(historyProcessValue: SelectionParam | any) {
     // @ts-ignore
-    this.historyProcessTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
+    this.historyProcessTbl?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 45 + 'px';
     this.queryDataByDB(historyProcessValue);
   }
 
@@ -164,8 +165,11 @@ export class TabPaneHistoryProcesses extends BaseElement {
     function compare(property, sort, type) {
       return function (historyProcessLeftData: ProcessHistory, historyProcessRightData: ProcessHistory) {
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(historyProcessRightData[property]) - parseFloat(historyProcessLeftData[property]) : parseFloat(historyProcessLeftData[property]) - parseFloat(historyProcessRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(historyProcessRightData[property]) - parseFloat(historyProcessLeftData[property])
+            : // @ts-ignore
+              parseFloat(historyProcessLeftData[property]) - parseFloat(historyProcessRightData[property]);
         } else if (type === 'cpuTime') {
           return sort === 2
             ? historyProcessRightData.cpuTimeNumber - historyProcessLeftData.cpuTimeNumber

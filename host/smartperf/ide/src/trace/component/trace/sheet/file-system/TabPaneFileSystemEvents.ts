@@ -49,9 +49,11 @@ export class TabPaneFileSystemEvents extends BaseElement {
     }
     this.currentSelection = fsSysEventSelection;
     // @ts-ignore
-    this.fsSysEventTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.fsSysEventTbl?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 20 - 31 + 'px';
     // @ts-ignore
-    this.fsSysEventTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 31 + 'px';
+    this.fsSysEventTblData?.shadowRoot.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 20 - 31 + 'px';
     this.filterEventType = '0';
     this.filterProcess = '0';
     this.queryData(fsSysEventSelection);
@@ -216,10 +218,12 @@ export class TabPaneFileSystemEvents extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement?.clientHeight != 0) {
         // @ts-ignore
-        this.fsSysEventTbl?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 33 + 'px';
+        this.fsSysEventTbl?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 33 + 'px';
         this.fsSysEventTbl?.reMeauseHeight();
         // @ts-ignore
-        this.fsSysEventTblData?.shadowRoot.querySelector('.table').style.height = this.parentElement.clientHeight - 10 - 33 + 'px';
+        this.fsSysEventTblData?.shadowRoot.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 10 - 33 + 'px';
         this.fsSysEventTblData?.reMeauseHeight();
         this.loadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }

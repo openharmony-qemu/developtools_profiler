@@ -343,6 +343,19 @@ export class SpHelp extends BaseElement {
             },
           },
           {
+            title: 'Hilog抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'hilog',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_hilog.html?${that.dark} width="100%" height="100%"></object>`;
+            },
+          },
+          {
             title: '应用操作技巧',
             icon: '',
             clickHandler: function (item: MenuItem) {

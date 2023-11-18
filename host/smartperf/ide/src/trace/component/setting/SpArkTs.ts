@@ -375,7 +375,7 @@ export class SpArkTs extends BaseElement {
         </style>
         <div class="root">
             <div class="title" id="traceMode" style="text-align:left;">
-                <span style='color: red'>This is record long trace!</span>
+                <span style='color: red'>Long trace mode! If current data Trace is too large, it may not open!</span>
             </div>
             <div class="config-div">
                 <div>

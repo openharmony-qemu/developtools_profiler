@@ -21,6 +21,10 @@ jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', 
   return {};
 });
 
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
+
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||

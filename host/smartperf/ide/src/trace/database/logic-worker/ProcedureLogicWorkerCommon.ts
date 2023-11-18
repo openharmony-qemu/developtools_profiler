@@ -20,6 +20,7 @@ export class ChartStruct {
   addr: string = '';
   size: number = 0;
   count: number = 0;
+  eventCount: number = 0;
   dur: number = 0;
   parent: ChartStruct | undefined;
   children: Array<ChartStruct> = [];
@@ -494,7 +495,7 @@ export function timeMsFormat2p(timeNs: number): string {
     commonResult += currentNs.toFixed(2) + 'ms';
     return commonResult;
   }
-  if (commonResult == '') {
+  if (commonResult === '') {
     commonResult = '0s';
   }
   return commonResult;

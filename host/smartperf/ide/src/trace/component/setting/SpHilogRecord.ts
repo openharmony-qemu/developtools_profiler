@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {BaseElement, element} from '../../../base-ui/BaseElement.js';
+import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import LitSwitch from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitAllocationSelect.js';
 

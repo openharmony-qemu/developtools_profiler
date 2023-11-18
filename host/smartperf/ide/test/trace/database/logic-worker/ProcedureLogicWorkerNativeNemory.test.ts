@@ -156,8 +156,10 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
       heapSizeStr: '',
       heapPercent: '56%',
       tsArray: [],
+      countArray: []
     };
-    expect(procedureLogicWorkerNativeMemory.traverseTree(stack, 1)).toBeUndefined();
+    expect(procedureLogicWorkerNativeMemory.
+      traverseTree(stack, {countArray: [],startTs: 23, tsArray: [],count: 0})).toBeUndefined();
   });
 
   it('ProcedureLogicWorkerNativeNemoryTest16', function () {
@@ -172,8 +174,9 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
       heapSizeStr: '',
       heapPercent: '12%',
       tsArray: [],
+      countArray: []
     };
-    expect(procedureLogicWorkerNativeMemory.traverseSampleTree(stack, 1)).toBeUndefined();
+    expect(procedureLogicWorkerNativeMemory.traverseSampleTree(stack, {countArray: [],startTs: 23, tsArray: [],count: 0})).toBeUndefined();
   });
 
   it('procedureLogicWorkerFileSystemTest18', function () {
@@ -810,6 +813,8 @@ describe('ProcedureLogicWorkerNativeNemory Test', () => {
   it('procedureLogicWorkerFileSystemTest87', function () {
     let currentNode = {
       symbol: '',
+      countArray: [],
+      tsArray: []
     };
     expect(NativeHookCallInfo.merageCallChainSample(currentNode, [], []));
   });

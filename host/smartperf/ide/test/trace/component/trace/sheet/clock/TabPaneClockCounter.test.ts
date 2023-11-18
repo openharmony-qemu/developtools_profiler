@@ -15,6 +15,9 @@
 
 // @ts-ignore
 import { TabPaneClockCounter } from '../../../../../../dist/trace/component/trace/sheet/clock/TabPaneClockCounter.js';
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {};
+});
 
 window.ResizeObserver =
   window.ResizeObserver ||

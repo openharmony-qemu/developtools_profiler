@@ -23,6 +23,8 @@ import { LitMainMenu, MenuGroup, MenuItem } from '../../base-ui/menu/LitMainMenu
 import { SpProbesConfig } from './setting/SpProbesConfig.js';
 import { SpTraceCommand } from './setting/SpTraceCommand.js';
 import { FlagsConfig } from './SpFlags.js';
+import LitSwitch from '../../base-ui/switch/lit-switch.js';
+import { LitSlider } from '../../base-ui/slider/LitSlider';
 
 import {
   CpuConfig,
@@ -405,6 +407,8 @@ export class SpRecordTrace extends BaseElement {
   private record = 'Record';
   private stop = 'StopRecord';
 
+  private ftraceSlider: LitSlider | undefined | null;
+
   compareArray(devs: Array<string>): boolean {
     let clearFlag: boolean = false;
     if (devs.length != this.deviceSelect!.options.length) {
@@ -589,7 +593,9 @@ export class SpRecordTrace extends BaseElement {
 
   initElements(): void {
     let parentElement = this.parentNode as HTMLElement;
-    parentElement.style.overflow = 'hidden';
+    if (parentElement) {
+      parentElement.style.overflow = 'hidden';
+    }
     this.recordSetting = new SpRecordSetting();
     this.probesConfig = new SpProbesConfig();
     this.traceCommand = new SpTraceCommand();
@@ -681,14 +687,6 @@ export class SpRecordTrace extends BaseElement {
     if (navigator.usb) {
       // @ts-ignore
       navigator.usb.addEventListener(
-        'connect',
-        // @ts-ignore
-        (ev: USBConnectionEvent) => {
-          this.usbConnectionListener(ev);
-        }
-      );
-      // @ts-ignore
-      navigator.usb.addEventListener(
         'disconnect',
         // @ts-ignore
         (ev: USBConnectionEvent) => {
@@ -724,8 +722,8 @@ export class SpRecordTrace extends BaseElement {
     this.recordButtonText = this.shadowRoot?.querySelector('.record_text') as HTMLSpanElement;
     this.cancelButton = this.shadowRoot?.querySelector('.cancel') as LitButton;
     this.sp = document.querySelector('sp-application') as SpApplication;
-    this.progressEL = this.sp.shadowRoot?.querySelector('.progress') as LitProgressBar;
-    this.litSearch = this.sp.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
+    this.progressEL = this.sp?.shadowRoot?.querySelector('.progress') as LitProgressBar;
+    this.litSearch = this.sp?.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
     if (this.deviceSelect!.options && this.deviceSelect!.options.length > 0) {
       this.disconnectButton!.hidden = false;
       this.recordButton!.hidden = false;
@@ -997,6 +995,33 @@ export class SpRecordTrace extends BaseElement {
           icon: 'externaltools',
           fileChoose: false,
           clickHandler: function (ev: InputEvent): void {
+            let startNativeSwitch=that.spAllocations?.shadowRoot?.getElementById('startNativeMemoryRecord')as LitSwitch;
+            let recordModeSwitch=that.probesConfig?.shadowRoot?.querySelector('lit-switch')as LitSwitch;
+            let checkDesBoxDis=that.probesConfig?.shadowRoot?.querySelectorAll('check-des-box')
+            let litCheckBoxDis=that.probesConfig?.shadowRoot?.querySelectorAll('lit-check-box')
+
+            that.ftraceSlider=that.probesConfig?.shadowRoot?.querySelector<LitSlider>('#ftrace-buff-size-slider')
+            startNativeSwitch.addEventListener('change',(event:any)=>{
+              let detail = event.detail;
+              if (detail!.checked) {
+                recordModeSwitch.removeAttribute('checked')
+
+                checkDesBoxDis?.forEach((item:any)=>{
+                  item.setAttribute('disabled','')
+                  item.checked=false
+                })
+    
+                litCheckBoxDis?.forEach((item:any)=>{
+                  item.setAttribute('disabled','')
+                  item.checked=false
+                })
+    
+                that.ftraceSlider!.setAttribute('disabled','')
+              } 
+            })
+
+
+
             let divConfigs = that.spAllocations?.shadowRoot?.querySelectorAll<HTMLDivElement>('.version-controller');
             if ((!SpRecordTrace.selectVersion || SpRecordTrace.selectVersion === '3.2') && divConfigs) {
               for (let divConfig of divConfigs) {
@@ -1269,11 +1294,11 @@ export class SpRecordTrace extends BaseElement {
                   HdcDeviceManager.shellResultAsString(
                     CmdConstant.CMD_CLEAR_LONG_FOLD + this.recordSetting!.longOutPath,
                     false
-                  ).then(()=>{
+                  ).then(() => {
                     HdcDeviceManager.shellResultAsString(
                       CmdConstant.CMD_MKDIR_LONG_FOLD + this.recordSetting!.longOutPath,
                       false
-                    ).then(()=>{
+                    ).then(() => {
                       this.recordLongTraceCmd(traceCommandStr);
                     });
                   });
@@ -1296,17 +1321,14 @@ export class SpRecordTrace extends BaseElement {
     }
   }
 
-  private recordTraceCmd(traceCommandStr: string): void{
-    HdcDeviceManager.shellResultAsString(CmdConstant.CMD_SHELL + traceCommandStr, false).then(
-      (traceResult) => {
-        let re = this.isSuccess(traceResult);
-        if (re == 0) {
-          this.litSearch!.setPercent('tracing htrace down', -1);
-          HdcDeviceManager.shellResultAsString(
-            CmdConstant.CMD_TRACE_FILE_SIZE + this.recordSetting!.output,
-            false
-          ).then((traceFileSize) => {
-            this.litSearch!.setPercent(`traceFileSize is ${traceFileSize}`,-1);
+  private recordTraceCmd(traceCommandStr: string): void {
+    HdcDeviceManager.shellResultAsString(CmdConstant.CMD_SHELL + traceCommandStr, false).then((traceResult) => {
+      let re = this.isSuccess(traceResult);
+      if (re == 0) {
+        this.litSearch!.setPercent('tracing htrace down', -1);
+        HdcDeviceManager.shellResultAsString(CmdConstant.CMD_TRACE_FILE_SIZE + this.recordSetting!.output, false).then(
+          (traceFileSize) => {
+            this.litSearch!.setPercent(`traceFileSize is ${traceFileSize}`, -1);
             if (traceFileSize.indexOf('No such') != -1) {
               this.litSearch!.setPercent('No such file or directory', -2);
               this.buttonDisable(false);
@@ -1318,9 +1340,7 @@ export class SpRecordTrace extends BaseElement {
               }).then((pullRes) => {
                 this.litSearch!.setPercent('downloading Hitrace file ', 101);
                 pullRes.arrayBuffer().then((buffer) => {
-                  let fileName = this.recordSetting!.output.substring(
-                    this.recordSetting!.output.lastIndexOf('/') + 1
-                  );
+                  let fileName = this.recordSetting!.output.substring(this.recordSetting!.output.lastIndexOf('/') + 1);
                   let file = new File([buffer], fileName);
                   let main = this!.parentNode!.parentNode!.querySelector('lit-main-menu') as LitMainMenu;
                   let children = main.menus as Array<MenuGroup>;
@@ -1347,90 +1367,112 @@ export class SpRecordTrace extends BaseElement {
               this.freshConfigMenuDisable(false);
               this.freshMenuDisable(false);
             }
-          });
-        } else if (re == 2) {
-          this.recordButtonDisable(false);
-          this.litSearch!.setPercent('stop tracing htrace ', -1);
-          this.freshConfigMenuDisable(false);
-          this.freshMenuDisable(false);
-          this.buttonDisable(false);
-        } else if (re == -1) {
-          this.recordButtonDisable(false);
-          this.litSearch!.setPercent('The device is abnormal', -2);
-          this.progressEL!.loading = false;
-          this.freshConfigMenuDisable(false);
-          this.freshMenuDisable(false);
-          this.buttonDisable(false);
-        } else {
-          this.recordButtonDisable(false);
-          this.litSearch!.setPercent('tracing htrace failed, please check your config ', -2);
-          this.freshConfigMenuDisable(false);
-          this.freshMenuDisable(false);
-          this.buttonDisable(false);
-        }
+          }
+        );
+      } else if (re == 2) {
+        this.recordButtonDisable(false);
+        this.litSearch!.setPercent('stop tracing htrace ', -1);
+        this.freshConfigMenuDisable(false);
+        this.freshMenuDisable(false);
+        this.buttonDisable(false);
+      } else if (re == -1) {
+        this.recordButtonDisable(false);
+        this.litSearch!.setPercent('The device is abnormal', -2);
+        this.progressEL!.loading = false;
+        this.freshConfigMenuDisable(false);
+        this.freshMenuDisable(false);
+        this.buttonDisable(false);
+      } else {
+        this.recordButtonDisable(false);
+        this.litSearch!.setPercent('tracing htrace failed, please check your config ', -2);
+        this.freshConfigMenuDisable(false);
+        this.freshMenuDisable(false);
+        this.buttonDisable(false);
       }
-    );
+    });
   }
 
-  private recordLongTraceCmd(traceCommandStr: string): void{
-    HdcDeviceManager.shellResultAsString(CmdConstant.CMD_SHELL + traceCommandStr, false).then(
-      (traceResult) => {
-        let re = this.isSuccess(traceResult);
-        if (re === 0) {
-          this.litSearch!.setPercent('tracing htrace down', -1);
-          HdcDeviceManager.shellResultAsString(
-            CmdConstant.CMD_TRACE_FILE_SIZE + this.recordSetting!.longOutPath,
-            false
-          ).then((traceFileSize) => {
-            this.litSearch!.setPercent(`traceFileSize is ${traceFileSize}`,-1);
-            if (traceFileSize.indexOf('No such') != -1) {
-              this.litSearch!.setPercent('No such file or directory', -2);
-              this.buttonDisable(false);
-              this.freshConfigMenuDisable(false);
-              this.freshMenuDisable(false);
-            } else {
-              this.recordLongTrace();
-            }
-          });
-        } else if (re === 2) {
-          this.recordButtonDisable(false);
-          this.litSearch!.setPercent('stop tracing htrace ', -1);
-          this.freshConfigMenuDisable(false);
-          this.freshMenuDisable(false);
-          this.buttonDisable(false);
-        } else if (re === -1) {
-          this.recordButtonDisable(false);
-          this.litSearch!.setPercent('The device is abnormal', -2);
-          this.progressEL!.loading = false;
-          this.freshConfigMenuDisable(false);
-          this.freshMenuDisable(false);
-          this.buttonDisable(false);
-        } else {
-          this.recordButtonDisable(false);
-          this.litSearch!.setPercent('tracing htrace failed, please check your config ', -2);
-          this.freshConfigMenuDisable(false);
-          this.freshMenuDisable(false);
-          this.buttonDisable(false);
-        }
+  private recordLongTraceCmd(traceCommandStr: string): void {
+    HdcDeviceManager.shellResultAsString(CmdConstant.CMD_SHELL + traceCommandStr, false).then((traceResult) => {
+      let re = this.isSuccess(traceResult);
+      if (re === 0) {
+        this.litSearch!.setPercent('tracing htrace down', -1);
+        HdcDeviceManager.shellResultAsString(
+          CmdConstant.CMD_TRACE_FILE_SIZE + this.recordSetting!.longOutPath,
+          false
+        ).then((traceFileSize) => {
+          this.litSearch!.setPercent(`traceFileSize is ${traceFileSize}`, -1);
+          if (traceFileSize.indexOf('No such') != -1) {
+            this.litSearch!.setPercent('No such file or directory', -2);
+            this.buttonDisable(false);
+            this.freshConfigMenuDisable(false);
+            this.freshMenuDisable(false);
+          } else {
+            this.recordLongTrace();
+          }
+        });
+      } else if (re === 2) {
+        this.recordButtonDisable(false);
+        this.litSearch!.setPercent('stop tracing htrace ', -1);
+        this.freshConfigMenuDisable(false);
+        this.freshMenuDisable(false);
+        this.buttonDisable(false);
+      } else if (re === -1) {
+        this.recordButtonDisable(false);
+        this.litSearch!.setPercent('The device is abnormal', -2);
+        this.progressEL!.loading = false;
+        this.freshConfigMenuDisable(false);
+        this.freshMenuDisable(false);
+        this.buttonDisable(false);
+      } else {
+        this.recordButtonDisable(false);
+        this.litSearch!.setPercent('tracing htrace failed, please check your config ', -2);
+        this.freshConfigMenuDisable(false);
+        this.freshMenuDisable(false);
+        this.buttonDisable(false);
       }
-    );
+    });
   }
 
   private loadLongTraceFile(timStamp: number) {
-    return new Promise(async (resolve)=>{
+    return new Promise(async (resolve) => {
       let maxSize = 48 * 1024 * 1024;
+      let traceTypePage: Array<number> = [];
+      for (let fileIndex = 0; fileIndex < this.longTraceList.length; fileIndex++) {
+        let traceFileName = this.longTraceList[fileIndex];
+        if (this.sp!.fileTypeList.some(fileType => traceFileName.toLowerCase().includes(fileType))) {
+          continue;
+        }
+        let firstLastIndexOf = traceFileName.lastIndexOf('.');
+        let firstText = traceFileName.slice(0, firstLastIndexOf);
+        let resultLastIndexOf = firstText.lastIndexOf('_');
+        traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1)
+      }
+      traceTypePage.sort((leftNum: number, rightNum: number) => leftNum - rightNum);
       for (let fileIndex = 0; fileIndex < this.longTraceList.length; fileIndex++) {
         if (this.longTraceList[fileIndex] !== '') {
-          let types = this.sp!.fileTypeList.filter(type => this.longTraceList[fileIndex].toLowerCase().includes(type.toLowerCase()));
+          let types = this.sp!.fileTypeList.filter((type) =>
+            this.longTraceList[fileIndex].toLowerCase().includes(type.toLowerCase())
+          );
           let pageNumber = 0;
           let fileType = types[0];
           if (types.length === 0) {
             fileType = 'trace';
-            pageNumber = Number(this.longTraceList[fileIndex].substring(this.longTraceList[fileIndex].lastIndexOf('_') + 1, this.longTraceList[fileIndex].lastIndexOf('.'))) - 1;
+            let searchNumber =
+              Number(
+                this.longTraceList[fileIndex].substring(
+                  this.longTraceList[fileIndex].lastIndexOf('_') + 1,
+                  this.longTraceList[fileIndex].lastIndexOf('.')
+                )
+              ) - 1;
+            pageNumber = traceTypePage.lastIndexOf(searchNumber);
           }
-          let pullRes = await HdcDeviceManager.fileRecv(this.recordSetting!.longOutPath + this.longTraceList[fileIndex], (perNumber: number) => {
-            this.litSearch!.setPercent(`downloading ${fileType} file `, perNumber);
-          });
+          let pullRes = await HdcDeviceManager.fileRecv(
+            this.recordSetting!.longOutPath + this.longTraceList[fileIndex],
+            (perNumber: number) => {
+              this.litSearch!.setPercent(`downloading ${fileType} file `, perNumber);
+            }
+          );
           this.litSearch!.setPercent(`downloading ${fileType} file `, 101);
           let buffer = await pullRes.arrayBuffer();
           let chunks = Math.ceil(buffer.byteLength / maxSize);
@@ -1454,7 +1496,7 @@ export class SpRecordTrace extends BaseElement {
             if (chunkIndex === 0 && fileType === 'trace') {
               this.sp!.longTraceHeadMessageList.push({
                 pageNum: pageNumber,
-                data: buffer.slice(offset, 1024)
+                data: buffer.slice(offset, 1024),
               });
             }
             this.sp!.longTraceDataList.push({
@@ -1462,17 +1504,17 @@ export class SpRecordTrace extends BaseElement {
               fileType: fileType,
               pageNum: pageNumber,
               startOffsetSize: offset,
-              endOffsetSize: offset + sliceLen
+              endOffsetSize: offset + sliceLen,
             });
             await LongTraceDBUtils.getInstance().indexedDBHelp.add(LongTraceDBUtils.getInstance().tableName, {
-              'buf': chunk,
-              'id': `${fileType}_${timStamp}_${pageNumber}_${chunkIndex}`,
-              'fileType': fileType,
-              'pageNum': pageNumber,
-              'startOffset': offset,
-              'endOffset': offset + sliceLen,
-              'index': chunkIndex,
-              'timStamp': timStamp
+              buf: chunk,
+              id: `${fileType}_${timStamp}_${pageNumber}_${chunkIndex}`,
+              fileType: fileType,
+              pageNum: pageNumber,
+              startOffset: offset,
+              endOffset: offset + sliceLen,
+              index: chunkIndex,
+              timStamp: timStamp,
             });
             offset += sliceLen;
             if (offset >= buffer.byteLength) {
@@ -1498,42 +1540,44 @@ export class SpRecordTrace extends BaseElement {
     });
   }
 
-  private recordLongTrace(): void{
+  private recordLongTrace(): void {
     let querySelector = this.sp!.shadowRoot?.querySelector('.long_trace_page') as HTMLDivElement;
     if (querySelector) {
       querySelector.style.display = 'none';
     }
-    HdcDeviceManager.shellResultAsString(
-      CmdConstant.CMD_GET_LONG_FILES + this.recordSetting!.longOutPath,
-      false
-    ).then((result)=>{
-      this.longTraceList = result.split('\n').filter(fileName => Boolean(fileName));
-      if (this.longTraceList.length > 0) {
-        this.sp!.longTraceHeadMessageList = [];
-        this.sp!.longTraceDataList = [];
-        this.sp!.longTraceTypeMessageMap = undefined;
-        let timStamp = new Date().getTime();
-        this.loadLongTraceFile(timStamp).then(()=>{
-          let main = this!.parentNode!.parentNode!.querySelector('lit-main-menu') as LitMainMenu;
-          let children = main.menus as Array<MenuGroup>;
-          let child = children[0].children as Array<MenuItem>;
-          let fileHandler = child[1].clickHandler;
-          if (fileHandler && !SpRecordTrace.cancelRecord) {
-            this.freshConfigMenuDisable(false);
-            this.freshMenuDisable(false);
-            this.buttonDisable(false);
-            this.recordButtonDisable(false);
-            fileHandler({
-              detail: {
-                timeStamp: timStamp
-              },
-            }, true);
-          } else {
-            SpRecordTrace.cancelRecord = false;
-          }
-        });
+    HdcDeviceManager.shellResultAsString(CmdConstant.CMD_GET_LONG_FILES + this.recordSetting!.longOutPath, false).then(
+      (result) => {
+        this.longTraceList = result.split('\n').filter((fileName) => Boolean(fileName));
+        if (this.longTraceList.length > 0) {
+          this.sp!.longTraceHeadMessageList = [];
+          this.sp!.longTraceDataList = [];
+          this.sp!.longTraceTypeMessageMap = undefined;
+          let timStamp = new Date().getTime();
+          this.loadLongTraceFile(timStamp).then(() => {
+            let main = this!.parentNode!.parentNode!.querySelector('lit-main-menu') as LitMainMenu;
+            let children = main.menus as Array<MenuGroup>;
+            let child = children[0].children as Array<MenuItem>;
+            let fileHandler = child[1].clickHandler;
+            if (fileHandler && !SpRecordTrace.cancelRecord) {
+              this.freshConfigMenuDisable(false);
+              this.freshMenuDisable(false);
+              this.buttonDisable(false);
+              this.recordButtonDisable(false);
+              fileHandler(
+                {
+                  detail: {
+                    timeStamp: timStamp,
+                  },
+                },
+                true
+              );
+            } else {
+              SpRecordTrace.cancelRecord = false;
+            }
+          });
+        }
       }
-    });
+    );
   }
 
   private initRecordUIState(): void {
@@ -1567,6 +1611,7 @@ export class SpRecordTrace extends BaseElement {
       if (SpApplication.isLongTrace && request.sessionConfig) {
         request.sessionConfig.splitFile = true;
         request.sessionConfig!.splitFileMaxSizeMb = this.recordSetting!.longTraceSingleFileMaxSize;
+        request.sessionConfig!.splitFileMaxNum = 20;
       }
       let hasMonitorMemory = false;
       let hasSamps = false;
@@ -2014,7 +2059,7 @@ export class SpRecordTrace extends BaseElement {
       recordArgs: recordArgs,
     };
     if (SpApplication.isLongTrace) {
-      hiPerf.splitOutfileName = `${this.recordSetting!.longOutPath  }hiprofiler_data_hiperf.htrace`;
+      hiPerf.splitOutfileName = `${this.recordSetting!.longOutPath}hiprofiler_data_hiperf.htrace`;
     }
     let hiPerfPluginConfig: ProfilerPluginConfig<HiperfPluginConfig> = {
       pluginName: 'hiperf-plugin',
@@ -2200,7 +2245,7 @@ export class SpRecordTrace extends BaseElement {
       cpu_profiler_interval: this.spArkTs!.intervalCpuValue,
     };
     if (SpApplication.isLongTrace) {
-      arkTSConfig.splitOutfileName = `${this.recordSetting?.longOutPath  }hiprofiler_data_arkts.htrace`;
+      arkTSConfig.splitOutfileName = `${this.recordSetting?.longOutPath}hiprofiler_data_arkts.htrace`;
     }
     let arkTSPluginConfig: ProfilerPluginConfig<ArkTSConfig> = {
       pluginName: 'arkts-plugin',

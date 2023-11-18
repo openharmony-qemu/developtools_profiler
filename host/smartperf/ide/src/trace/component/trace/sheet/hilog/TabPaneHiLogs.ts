@@ -69,8 +69,9 @@ export class TabPaneHiLogs extends BaseElement {
     this.tagFilterInput = this.shadowRoot?.querySelector<HTMLInputElement>('#tag-filter');
     this.searchFilterInput = this.shadowRoot?.querySelector<HTMLInputElement>('#search-filter');
     this.processFilter = this.shadowRoot?.querySelector<HTMLInputElement>('#process-filter');
-    this.spSystemTrace = document.querySelector('body > sp-application')?.
-      shadowRoot?.querySelector<SpSystemTrace>('#sp-system-trace');
+    this.spSystemTrace = document
+      .querySelector('body > sp-application')
+      ?.shadowRoot?.querySelector<SpSystemTrace>('#sp-system-trace');
     this.tableTimeHandle = this.delayedRefresh(this.refreshTable);
     this.tagFilterDiv = this.shadowRoot!.querySelector<HTMLDivElement>('#tagFilter');
     this.hiLogDownLoadTbl = this.shadowRoot!.querySelector<LitTable>('#tb-hilogs');
@@ -125,6 +126,7 @@ export class TabPaneHiLogs extends BaseElement {
               <input type="text" id="search-filter" class="filter-input" placeholder="Search logs...">
             </div>
           </div>
+          <div id="logs-head-content" style="display: flex"></div>
           <div class="tbl-logs">
               <div id="logs-data-content"></div>
             </div>
@@ -268,7 +270,7 @@ export class TabPaneHiLogs extends BaseElement {
       this.containerClientHeight = this.parentTabEl.clientHeight;
     }
     if (this.systemLogSource.length > 0 && this.logTable) {
-      let tableHeight = this.containerClientHeight - (this.logTitle?.clientHeight || 0) - tableRowHeight;
+      let tableHeight = this.containerClientHeight - (this.logTitle?.clientHeight || 0) - tableRowHeight - 12;
       this.scrollContainer!.style.height = `${tableHeight}px`;
       if (this.filterData.length === 0) {
         this.logTable.style.height = this.scrollContainer!.style.height;
@@ -290,7 +292,6 @@ export class TabPaneHiLogs extends BaseElement {
         this.logTableTitle!.textContent = `Hilogs [${this.startDataIndex || 0}, 
         ${maxLength}] / ${this.filterData.length || 0}`;
         let tableFragment = document.createDocumentFragment();
-        this.buildTableHead(tableFragment);
         this.createVirtualDOM(tableFragment);
         this.logTable.append(tableFragment);
       }
@@ -303,17 +304,22 @@ export class TabPaneHiLogs extends BaseElement {
     search = search.replace(/\s/g, '');
     let processSearch = this.processFilter?.value.toLowerCase() || '';
     processSearch = processSearch.replace(/\s/g, '');
-    return (data.startTs || 0) >= TraceRow.range!.startNS && (data.startTs || 0) <= TraceRow.range!.endNS &&
+    return (
+      (data.startTs || 0) >= TraceRow.range!.startNS &&
+      (data.startTs || 0) <= TraceRow.range!.endNS &&
       (level === 0 || this.optionLevel.indexOf(data.level!) >= level) &&
       (this.allowTag.size === 0 || this.allowTag.has(data.tag!.toLowerCase())) &&
       (search === '' || data.context!.toLowerCase().replace(/\s/g, '').indexOf(search) >= 0) &&
-      (processSearch === '' || (data.processName !== null &&
-        data.processName!.toLowerCase().replace(/\s/g, '').indexOf(processSearch) >= 0));
+      (processSearch === '' ||
+        (data.processName !== null && data.processName!.toLowerCase().replace(/\s/g, '').indexOf(processSearch) >= 0))
+    );
   }
 
   private refreshTable(): void {
     this.traceSheetEl!.systemLogFlag = undefined;
     this.spSystemTrace?.refreshCanvas(false);
+    let headEl = this.shadowRoot?.querySelector<HTMLDivElement>('#logs-head-content')
+    this.buildTableHead(headEl!);
     this.updateFilterData();
     this.updateVisibleData();
   }
@@ -330,7 +336,7 @@ export class TabPaneHiLogs extends BaseElement {
 
   private createVirtualDOM(tableFragment: DocumentFragment): void {
     if (this.visibleData) {
-      this.visibleData.forEach((row) => {
+      this.visibleData.forEach((row, index) => {
         let trEL = document.createElement('tr');
         let time = document.createElement('td');
         let timeStampEl = document.createElement('td');
@@ -342,13 +348,24 @@ export class TabPaneHiLogs extends BaseElement {
         if (colorIndex >= 0) {
           trEL.style.color = ColorUtils.getHilogColor(row.level!);
         }
+        if (index === 0) {
+          let height =
+            (this.scrollContainer!.scrollTop <= tableRowHeight ? 0 : this.scrollContainer!.scrollTop) + tableRowHeight;
+          trEL.style.height = `${height}px`;
+        }
         time.textContent = `${row.originTime}`;
+        time.title = `${row.originTime}`;
         timeStampEl.classList.add('time-td');
         timeStampEl.textContent = `${ns2Timestamp(row.startTs!)}`;
+        timeStampEl.title = `${ns2Timestamp(row.startTs!)}`;
         levelEl.textContent = `${row.level}`;
+        levelEl.title = `${row.level}`;
         tagEl.textContent = `${row.tag}`;
+        tagEl.title = `${row.tag}`;
         processNameEl.textContent = `${row.processName}`;
+        processNameEl.title = `${row.processName}`;
         messageEl.textContent = `${row.context}`;
+        messageEl.title = `${row.context}`;
         trEL.addEventListener('mouseover', () => {
           let pointX: number = ns2x(
             row.startTs || 0,
@@ -375,17 +392,21 @@ export class TabPaneHiLogs extends BaseElement {
     }
   }
 
-  private buildTableHead(tableFragment: DocumentFragment): void {
+  private buildTableHead(tableFragment: HTMLDivElement): void {
+    tableFragment.innerHTML = '';
     let trEL = document.createElement('tr');
+    trEL.style.display = 'grid';
+    trEL.style.width = '100%';
+    trEL.style.marginTop = '8px';
     this.tableColumnHead.forEach((columnText) => {
       let columnEl = document.createElement('div');
       columnEl.textContent = columnText;
-      columnEl.className = 'head-column';
+      columnEl.style.whiteSpace = 'nowrap';
+      columnEl.style.overflow = 'hidden';
+      columnEl.style.textOverflow = 'ellipsis';
+      columnEl.style.fontWeight = 'bold';
       trEL.appendChild(columnEl);
     });
-    let height =
-      (this.scrollContainer!.scrollTop <= tableRowHeight ? 0 : this.scrollContainer!.scrollTop) + tableRowHeight;
-    trEL.style.height = `${height}px`;
     tableFragment.appendChild(trEL);
   }
 
@@ -473,7 +494,6 @@ export class TabPaneHiLogs extends BaseElement {
           display: block;
           height: auto;
           overflow-y: scroll;
-          margin-top: 14px;
         }
         tr {
           display: grid;

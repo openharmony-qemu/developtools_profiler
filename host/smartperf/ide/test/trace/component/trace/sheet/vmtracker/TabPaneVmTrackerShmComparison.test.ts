@@ -30,6 +30,9 @@ jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 jest.mock('../../../../../../dist/trace/database/ui-worker/ProcedureWorkerCommon.js', () => {
   return {
     ns2s: () => {},

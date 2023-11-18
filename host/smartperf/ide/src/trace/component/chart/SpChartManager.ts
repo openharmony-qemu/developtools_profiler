@@ -99,7 +99,7 @@ export class SpChartManager {
     let dict = await queryDataDICT();
     if (FlagsConfig.getFlagsConfigEnableStatus('AppStartup')) {
       let appStartUpPids = await queryAppStartupProcessIds();
-      appStartUpPids.forEach(it => SpChartManager.APP_STARTUP_PID_ARR.push(it.pid));
+      appStartUpPids.forEach((it) => SpChartManager.APP_STARTUP_PID_ARR.push(it.pid));
     }
     await this.initTraceConfig();
     dict.map((d) => SpSystemTrace.DATA_DICT.set(d['id'], d['data']));

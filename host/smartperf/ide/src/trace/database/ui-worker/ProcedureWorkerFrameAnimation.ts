@@ -42,8 +42,11 @@ export class FrameAnimationRender extends Render {
     for (let index: number = 0; index < frameAnimationFilter.length; index++) {
       let currentAnimationStruct: FrameAnimationStruct = frameAnimationFilter[index];
       FrameAnimationStruct.draw(req.context, index, currentAnimationStruct, row);
-      if (row.isHover && currentAnimationStruct.frame &&
-        isFrameContainPoint(currentAnimationStruct.frame, row.hoverX, row.hoverY)) {
+      if (
+        row.isHover &&
+        currentAnimationStruct.frame &&
+        isFrameContainPoint(currentAnimationStruct.frame, row.hoverX, row.hoverY)
+      ) {
         FrameAnimationStruct.hoverFrameAnimationStruct = currentAnimationStruct;
         find = true;
       }
@@ -75,15 +78,23 @@ export class FrameAnimationRender extends Render {
     if (frameAnimationList) {
       for (let index: number = 0; index < frameAnimationList.length; index++) {
         let currentFrameAnimation: FrameAnimationStruct = frameAnimationList[index];
-        if ((currentFrameAnimation.startTs || 0) + (currentFrameAnimation.dur || 0) > startNS &&
-          (currentFrameAnimation.startTs || 0) < endNS) {
-          FrameAnimationStruct.setFrameAnimation(currentFrameAnimation, padding, startNS,
-            endNS || 0, totalNS || 0, frame);
+        if (
+          (currentFrameAnimation.startTs || 0) + (currentFrameAnimation.dur || 0) > startNS &&
+          (currentFrameAnimation.startTs || 0) < endNS
+        ) {
+          FrameAnimationStruct.setFrameAnimation(
+            currentFrameAnimation,
+            padding,
+            startNS,
+            endNS || 0,
+            totalNS || 0,
+            frame
+          );
           frameAnimationFilter.push(currentFrameAnimation);
         }
       }
     }
-  };
+  }
 }
 
 export class FrameAnimationStruct extends BaseStruct {
@@ -118,8 +129,8 @@ export class FrameAnimationStruct extends BaseStruct {
     } else {
       stateEndPointX = ns2x((animationNode.startTs || 0) + (animationNode.dur || 0), startNS, endNS, totalNS, frame);
     }
-    let frameWidth: number = stateEndPointX - stateStartPointX <= unitIndex ? unitIndex :
-      stateEndPointX - stateStartPointX;
+    let frameWidth: number =
+      stateEndPointX - stateStartPointX <= unitIndex ? unitIndex : stateEndPointX - stateStartPointX;
     if (!animationNode.frame) {
       animationNode.frame = new Rect(0, 0, 0, 0);
     }
@@ -143,24 +154,43 @@ export class FrameAnimationStruct extends BaseStruct {
       ctx.lineWidth = 1;
       ctx.lineJoin = 'round';
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[6];
-      ctx.fillRect(frameAnimationNode.frame.x, frameAnimationNode.frame.y,
-        frameAnimationNode.frame.width, frameAnimationNode.frame.height);
+      ctx.fillRect(
+        frameAnimationNode.frame.x,
+        frameAnimationNode.frame.y,
+        frameAnimationNode.frame.width,
+        frameAnimationNode.frame.height
+      );
       ctx.fillStyle = ColorUtils.ANIMATION_COLOR[3];
       ctx.textBaseline = 'middle';
       ctx.font = '8px sans-serif';
-      drawString(ctx, `${frameAnimationNode.status} (${(frameAnimationNode.dur / nsToMillisecond).
-        toFixed(tsFixed)} ms)`, textPadding, frameAnimationNode.frame, frameAnimationNode);
+      drawString(
+        ctx,
+        `${frameAnimationNode.status} (${(frameAnimationNode.dur / nsToMillisecond).toFixed(tsFixed)} ms)`,
+        textPadding,
+        frameAnimationNode.frame,
+        frameAnimationNode
+      );
       ctx.lineWidth = 2;
-      if ((frameAnimationNode === FrameAnimationStruct.hoverFrameAnimationStruct && isHover) ||
-        frameAnimationNode === FrameAnimationStruct.selectFrameAnimationStruct) {
+      if (
+        (frameAnimationNode === FrameAnimationStruct.hoverFrameAnimationStruct && isHover) ||
+        frameAnimationNode === FrameAnimationStruct.selectFrameAnimationStruct
+      ) {
         ctx.globalAlpha = 0.8;
         ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[3];
-        ctx.strokeRect(frameAnimationNode.frame.x + padding, frameAnimationNode.frame.y,
-          frameAnimationNode.frame.width - padding, frameAnimationNode.frame.height);
+        ctx.strokeRect(
+          frameAnimationNode.frame.x + padding,
+          frameAnimationNode.frame.y,
+          frameAnimationNode.frame.width - padding,
+          frameAnimationNode.frame.height
+        );
       } else {
         ctx.strokeStyle = ColorUtils.ANIMATION_COLOR[2];
-        ctx.strokeRect(frameAnimationNode.frame.x + padding, frameAnimationNode.frame.y,
-          frameAnimationNode.frame.width - padding, frameAnimationNode.frame.height);
+        ctx.strokeRect(
+          frameAnimationNode.frame.x + padding,
+          frameAnimationNode.frame.y,
+          frameAnimationNode.frame.width - padding,
+          frameAnimationNode.frame.height
+        );
       }
     }
   }

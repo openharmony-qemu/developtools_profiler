@@ -40,7 +40,8 @@ export class TabPaneFileStatistics extends BaseElement {
     this.fileStatisticsLoadingPage.style.visibility = 'visible';
     this.selectionParam = fileStatisticsSelection;
     // @ts-ignore
-    this.fileStatisticsTbl!.shadowRoot!.querySelector('.table').style.height = this.parentElement!.clientHeight - 25 + 'px';
+    this.fileStatisticsTbl!.shadowRoot!.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 25 + 'px';
     this.queryDataByDB(fileStatisticsSelection);
   }
 
@@ -55,7 +56,8 @@ export class TabPaneFileStatistics extends BaseElement {
       this.fileStatisticsSortType = evt.detail.sort;
 
       let newSource = JSON.parse(JSON.stringify(this.fileStatisticsSource));
-      if (this.fileStatisticsSortType != 0 && newSource.length > 0) this.sortTable(newSource[0], this.fileStatisticsSortKey);
+      if (this.fileStatisticsSortType != 0 && newSource.length > 0)
+        this.sortTable(newSource[0], this.fileStatisticsSortKey);
       this.fileStatisticsTbl!.recycleDataSource = newSource;
     });
   }
@@ -65,7 +67,8 @@ export class TabPaneFileStatistics extends BaseElement {
     new ResizeObserver((entries) => {
       if (this.parentElement!.clientHeight != 0) {
         // @ts-ignore
-        this.fileStatisticsTbl!.shadowRoot!.querySelector('.table').style.height = this.parentElement!.clientHeight - 25 + 'px';
+        this.fileStatisticsTbl!.shadowRoot!.querySelector('.table').style.height =
+          this.parentElement!.clientHeight - 25 + 'px';
         this.fileStatisticsTbl!.reMeauseHeight();
         this.fileStatisticsLoadingPage.style.height = this.parentElement!.clientHeight - 24 + 'px';
       }
@@ -122,8 +125,10 @@ export class TabPaneFileStatistics extends BaseElement {
           fileStatisticsObj.logicalWrites += item.logicalWrites;
           fileStatisticsObj.otherFile += item.otherFile;
           fileStatisticsObj.allDuration += item.allDuration;
-          fileStatisticsObj.minDuration = fileStatisticsObj.minDuration <= item.minDuration ? fileStatisticsObj.minDuration : item.minDuration;
-          fileStatisticsObj.maxDuration = fileStatisticsObj.maxDuration >= item.maxDuration ? fileStatisticsObj.maxDuration : item.maxDuration;
+          fileStatisticsObj.minDuration =
+            fileStatisticsObj.minDuration <= item.minDuration ? fileStatisticsObj.minDuration : item.minDuration;
+          fileStatisticsObj.maxDuration =
+            fileStatisticsObj.maxDuration >= item.maxDuration ? fileStatisticsObj.maxDuration : item.maxDuration;
           fileStatisticsObj.children.push(this.getInitData(item));
         } else {
           fileStatisticsFatherMap.set(item.type, {
@@ -141,14 +146,18 @@ export class TabPaneFileStatistics extends BaseElement {
         if (idx == 0) {
           fileStatisticsAllNode.minDuration = item.minDuration;
         } else {
-          fileStatisticsAllNode.minDuration = fileStatisticsAllNode.minDuration <= item.minDuration ? fileStatisticsAllNode.minDuration : item.minDuration;
+          fileStatisticsAllNode.minDuration =
+            fileStatisticsAllNode.minDuration <= item.minDuration
+              ? fileStatisticsAllNode.minDuration
+              : item.minDuration;
         }
         fileStatisticsAllNode.count += item.count;
         fileStatisticsAllNode.logicalReads += item.logicalReads;
         fileStatisticsAllNode.logicalWrites += item.logicalWrites;
         fileStatisticsAllNode.otherFile += item.otherFile;
         fileStatisticsAllNode.allDuration += item.allDuration;
-        fileStatisticsAllNode.maxDuration = fileStatisticsAllNode.maxDuration >= item.maxDuration ? fileStatisticsAllNode.maxDuration : item.maxDuration;
+        fileStatisticsAllNode.maxDuration =
+          fileStatisticsAllNode.maxDuration >= item.maxDuration ? fileStatisticsAllNode.maxDuration : item.maxDuration;
       });
       fileStatisticsFatherMap.forEach((item) => {
         item.avgDuration = item.allDuration / item.count;
@@ -165,7 +174,8 @@ export class TabPaneFileStatistics extends BaseElement {
       fileStatisticsAllNode.title = 'All';
       this.fileStatisticsSource = result.length > 0 ? [fileStatisticsAllNode] : [];
       let newSource = JSON.parse(JSON.stringify(this.fileStatisticsSource));
-      if (this.fileStatisticsSortType != 0 && result.length > 0) this.sortTable(newSource[0], this.fileStatisticsSortKey);
+      if (this.fileStatisticsSortType != 0 && result.length > 0)
+        this.sortTable(newSource[0], this.fileStatisticsSortKey);
       this.fileStatisticsTbl!.recycleDataSource = newSource;
     });
   }

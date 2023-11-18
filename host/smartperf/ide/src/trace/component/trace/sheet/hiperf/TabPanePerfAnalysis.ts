@@ -140,9 +140,9 @@ export class TabPanePerfAnalysis extends BaseElement {
       },
       tip: (perfObj): string => {
         return `<div>
-                                <div>Process:${ perfObj.obj.tableName }</div>
-                                <div>Weight:${ perfObj.obj.countFormat }</div>
-                                <div>Percent:${ perfObj.obj.percent }%</div> 
+                                <div>Process:${perfObj.obj.tableName}</div>
+                                <div>Weight:${perfObj.obj.countFormat}</div>
+                                <div>Percent:${perfObj.obj.percent}%</div> 
                             </div>
                                `;
       },
@@ -234,9 +234,9 @@ export class TabPanePerfAnalysis extends BaseElement {
       },
       tip: (obj): string => {
         return `<div>
-                                <div>Thread:${ obj.obj.tableName }</div>
-                                <div>Weight:${ obj.obj.countFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
+                                <div>Thread:${obj.obj.tableName}</div>
+                                <div>Weight:${obj.obj.countFormat}</div>
+                                <div>Percent:${obj.obj.percent}%</div> 
                             </div>
                                 `;
       },
@@ -320,9 +320,9 @@ export class TabPanePerfAnalysis extends BaseElement {
       },
       tip: (obj): string => {
         return `<div>
-                                <div>Library:${ obj.obj.tableName }</div>
-                                <div>Weight:${ obj.obj.countFormat }</div>
-                                <div>Percent:${ obj.obj.percent }%</div> 
+                                <div>Library:${obj.obj.tableName}</div>
+                                <div>Weight:${obj.obj.countFormat}</div>
+                                <div>Percent:${obj.obj.percent}%</div> 
                             </div>
                                 `;
       },
@@ -727,7 +727,7 @@ export class TabPanePerfAnalysis extends BaseElement {
   }
 
   private getTip() {
-    return (obj: { obj: { tableName: any; countFormat: any; percent: any; }; }): string => {
+    return (obj: { obj: { tableName: any; countFormat: any; percent: any } }): string => {
       return `<div>
                     <div>Function:${obj.obj.tableName}</div>
                     <div>Weight:${obj.obj.countFormat}</div>
@@ -736,7 +736,13 @@ export class TabPanePerfAnalysis extends BaseElement {
     };
   }
 
-  totalCountData(count: number): { countFormat: string; percent: string; count: number; allCount: number; pid: string; } {
+  totalCountData(count: number): {
+    countFormat: string;
+    percent: string;
+    count: number;
+    allCount: number;
+    pid: string;
+  } {
     let allCount;
     allCount = {
       countFormat: Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1)),
@@ -757,7 +763,7 @@ export class TabPanePerfAnalysis extends BaseElement {
         percent: 0,
         countFormat: 0,
       };
-      for (let i = 0 ; i < res.length ; i++) {
+      for (let i = 0; i < res.length; i++) {
         if (i < 19) {
           pieChartArr.push(res[i]);
         } else {

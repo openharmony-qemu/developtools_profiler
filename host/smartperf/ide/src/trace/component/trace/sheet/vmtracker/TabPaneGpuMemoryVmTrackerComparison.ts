@@ -14,18 +14,18 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
+import { type LitSelect } from '../../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { GpuMemoryComparison } from '../../../../bean/AbilityMonitor.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { getTabGpuMemoryVmTrackerComparisonData } from '../../../../database/SqlLite.js';
-import { SnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { type SnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerSnapshot.js';
 import { SpSystemTrace } from '../../../SpSystemTrace.js';
 import { Utils } from '../../base/Utils.js';
 import { compare, resizeObserverFromMemory } from '../SheetUtils.js';
 import '../TabPaneJsMemoryFilter.js';
-import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
+import { type TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 
 @element('tabpane-gpu-memory-vmtracker-comparison')
 export class TabPaneGpuMemoryVmTrackerComparison extends BaseElement {
@@ -108,7 +108,7 @@ export class TabPaneGpuMemoryVmTrackerComparison extends BaseElement {
     });
   }
 
-  async getComparisonData(targetStartNs: number) {
+  async getComparisonData(targetStartNs: number): Promise<void> {
     let comparisonData: GpuMemoryComparison[] = [];
     let comparison: GpuMemoryComparison[] = [];
     let data = await this.queryDataByDB(targetStartNs);
@@ -141,22 +141,18 @@ export class TabPaneGpuMemoryVmTrackerComparison extends BaseElement {
             );
             break;
           case 'gpuName':
-            this.gpuMemoryClickTable!.recycleDataSource = array.sort(
-              (gpuMCompVmLeftData, gpuMCompVmRightData) => {
-                return sort === 1
-                  ? `${gpuMCompVmLeftData.gpuName}`.localeCompare(`${gpuMCompVmRightData.gpuName}`)
-                  : `${gpuMCompVmRightData.gpuName}`.localeCompare(`${gpuMCompVmLeftData.gpuName}`);
-              }
-            );
+            this.gpuMemoryClickTable!.recycleDataSource = array.sort((gpuMCompVmLeftData, gpuMCompVmRightData) => {
+              return sort === 1
+                ? `${gpuMCompVmLeftData.gpuName}`.localeCompare(`${gpuMCompVmRightData.gpuName}`)
+                : `${gpuMCompVmRightData.gpuName}`.localeCompare(`${gpuMCompVmLeftData.gpuName}`);
+            });
             break;
           case 'sizeDelta':
-            this.gpuMemoryClickTable!.recycleDataSource = array.sort(
-              (gpuMCompVmLeftData, gpuMCompVmRightData) => {
-                return sort === 1
-                  ? gpuMCompVmLeftData.value - gpuMCompVmRightData.value
-                  : gpuMCompVmRightData.value - gpuMCompVmLeftData.value;
-              }
-            );
+            this.gpuMemoryClickTable!.recycleDataSource = array.sort((gpuMCompVmLeftData, gpuMCompVmRightData) => {
+              return sort === 1
+                ? gpuMCompVmLeftData.value - gpuMCompVmRightData.value
+                : gpuMCompVmRightData.value - gpuMCompVmLeftData.value;
+            });
             break;
         }
         break;

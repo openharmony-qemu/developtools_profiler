@@ -16,14 +16,7 @@
 import { JanksStruct } from '../../bean/JanksStruct.js';
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
-import {
-  BaseStruct,
-  isFrameContainPoint,
-  ns2x,
-  Render,
-  RequestMessage,
-  drawString,
-} from './ProcedureWorkerCommon.js';
+import { BaseStruct, isFrameContainPoint, ns2x, Render, RequestMessage, drawString } from './ProcedureWorkerCommon.js';
 
 export class JankRender extends Render {
   renderMainThread(
@@ -87,7 +80,7 @@ export function jank(
   use: boolean
 ): void {
   if (use && jankFilter.length > 0) {
-    for (let i = 0, len = jankFilter.length ; i < len ; i++) {
+    for (let i = 0, len = jankFilter.length; i < len; i++) {
       if ((jankFilter[i].ts || 0) + (jankFilter[i].dur || 0) >= startNS && (jankFilter[i].ts || 0) <= endNS) {
         JankStruct.setJankFrame(jankFilter[i], 0, startNS, endNS, totalNS, frame);
       } else {
@@ -105,7 +98,7 @@ export function jank(
         return it;
       })
       .reduce((pre, current, index, arr) => {
-        (pre[`${ current.frame.x }-${ current.depth }`] = pre[`${ current.frame.x }-${ current.depth }`] || []).push(current);
+        (pre[`${current.frame.x}-${current.depth}`] = pre[`${current.frame.x}-${current.depth}`] || []).push(current);
         return pre;
       }, {});
     Reflect.ownKeys(groups).map((kv) => {
@@ -120,7 +113,14 @@ export class JankStruct extends JanksStruct {
   static selectJankStruct: JankStruct | undefined;
   static selectJankStructList: Array<JankStruct> = new Array<JankStruct>();
 
-  static setJankFrame(jankNode: any, padding: number, startNS: number, endNS: number, totalNS: number, frame: any): void {
+  static setJankFrame(
+    jankNode: any,
+    padding: number,
+    startNS: number,
+    endNS: number,
+    totalNS: number,
+    frame: any
+  ): void {
     let x1: number, x2: number;
     if ((jankNode.ts || 0) > startNS && (jankNode.ts || 0) < endNS) {
       x1 = ns2x(jankNode.ts || 0, startNS, endNS, totalNS, frame);
@@ -170,7 +170,7 @@ export class JankStruct extends JanksStruct {
         }
         if (data.frame.width > 10) {
           ctx.fillStyle = '#fff';
-          drawString(ctx, `${ data.name || '' }`, 5, data.frame, data);
+          drawString(ctx, `${data.name || ''}`, 5, data.frame, data);
         }
         if (JankStruct.isSelected(data)) {
           ctx.strokeStyle = '#000';

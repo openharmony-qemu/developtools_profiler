@@ -219,8 +219,11 @@ export class TabPaneSdkCounter extends BaseElement {
           return 0;
         }
         if (type === 'number') {
-          // @ts-ignore
-          return countreSort === 2 ? parseFloat(bSdkCounter[property]) - parseFloat(aSdkCounter[property]) : parseFloat(aSdkCounter[property]) - parseFloat(bSdkCounter[property]);
+          return countreSort === 2
+            ? // @ts-ignore
+              parseFloat(bSdkCounter[property]) - parseFloat(aSdkCounter[property])
+            : // @ts-ignore
+              parseFloat(aSdkCounter[property]) - parseFloat(bSdkCounter[property]);
         }
         // @ts-ignore
         if (bSdkCounter[property] > aSdkCounter[property]) {

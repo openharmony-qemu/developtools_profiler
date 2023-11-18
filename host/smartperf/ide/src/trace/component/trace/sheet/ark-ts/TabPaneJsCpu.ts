@@ -14,12 +14,12 @@
  */
 
 import { BaseElement } from '../../../../../base-ui/BaseElement.js';
-import { LitTable, TableMode } from '../../../../../base-ui/table/lit-table.js';
+import { type LitTable, TableMode } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
-import { JsCpuProfilerChartFrame, JsCpuProfilerTabStruct } from '../../../../bean/JsStruct.js';
+import { type JsCpuProfilerChartFrame, JsCpuProfilerTabStruct } from '../../../../bean/JsStruct.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
-import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
+import { type FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import '../TabPaneFilter.js';
 
 export class TabPaneJsCpuCallTree extends BaseElement {
@@ -46,7 +46,7 @@ export class TabPaneJsCpuCallTree extends BaseElement {
 
   set data(data: SelectionParam | Array<JsCpuProfilerChartFrame>) {
     if (data instanceof SelectionParam) {
-      if (data == this.currentSelection) {
+      if (data === this.currentSelection) {
         return;
       }
       this.currentSelection = data;
@@ -58,17 +58,17 @@ export class TabPaneJsCpuCallTree extends BaseElement {
       }
 
       this.init();
-      this.getDataByWorker(chartData, (results: Array<JsCpuProfilerTabStruct>) => {
+      this.getDataByWorker(chartData, (results: Array<JsCpuProfilerTabStruct>): void => {
         this.setCallTreeTableData(results);
       });
     }
   }
 
-  protected setCurrentType(type: number) {
+  protected setCurrentType(type: number): void {
     this.currentType = type;
   }
 
-  private init() {
+  private init(): void {
     this.sortKey = '';
     this.sortType = 0;
     this.profilerFilter!.filterValue = '';
@@ -77,14 +77,14 @@ export class TabPaneJsCpuCallTree extends BaseElement {
     if (this.treeTable!.hasAttribute('sort')) {
       this.treeTable!.removeAttribute('sort');
       list.forEach((item) => {
-        item.querySelectorAll('svg').forEach((svg) => {
+        item.querySelectorAll('svg').forEach((svg): void => {
           svg.style.display = 'none';
         });
       });
     }
   }
 
-  private setCallTreeTableData(results: Array<JsCpuProfilerTabStruct>) {
+  private setCallTreeTableData(results: Array<JsCpuProfilerTabStruct>): void {
     this.clearTab();
     const callTreeMap = new Map<number, JsCpuProfilerTabStruct>();
     const setTabData = (data: Array<JsCpuProfilerTabStruct>) => {
@@ -118,21 +118,21 @@ export class TabPaneJsCpuCallTree extends BaseElement {
     this.stackTable = this.shadowRoot?.querySelector('#stackTable') as LitTable;
     this.treeTable = this.callTreeTable!.shadowRoot?.querySelector('.thead') as HTMLDivElement;
     this.profilerFilter = this.shadowRoot?.querySelector('#filter') as TabPaneFilter;
-    this.callTreeTable!.addEventListener('row-click', (evt) => {
+    this.callTreeTable!.addEventListener('row-click', (evt): void => {
       const heaviestStack = new Array<JsCpuProfilerTabStruct>();
 
-      const getHeaviestChildren = (children: Array<JsCpuProfilerTabStruct>) => {
+      const getHeaviestChildren = (children: Array<JsCpuProfilerTabStruct>): void => {
         if (children.length === 0) {
           return;
         }
-        const heaviestChild = children.reduce((max, struct) =>
+        const heaviestChild = children.reduce((max, struct): JsCpuProfilerTabStruct =>
           Math.max(max.totalTime, struct.totalTime) === max.totalTime ? max : struct
         );
         heaviestStack?.push(heaviestChild);
         getHeaviestChildren(heaviestChild.children);
       };
 
-      const getParent = (list: JsCpuProfilerTabStruct) => {
+      const getParent = (list: JsCpuProfilerTabStruct): void => {
         if (list.parent) {
           heaviestStack.push(list.parent!);
           getParent(list.parent!);
@@ -178,15 +178,15 @@ export class TabPaneJsCpuCallTree extends BaseElement {
       this.sortType = evt.detail.sort;
       this.setCallTreeTableData(this.callTreeSource);
     });
-    this.profilerFilter!.getFilterData((data: FilterData) => {
-      if (this.searchValue != this.profilerFilter!.filterValue) {
+    this.profilerFilter!.getFilterData((data: FilterData): void => {
+      if (this.searchValue !== this.profilerFilter!.filterValue) {
         this.searchValue = this.profilerFilter!.filterValue;
         this.findSearchNode(this.callTreeSource, this.searchValue);
         this.setCallTreeTableData(this.callTreeSource);
       }
     });
   }
-  private findSearchNode(sampleArray: JsCpuProfilerTabStruct[], search: string) {
+  private findSearchNode(sampleArray: JsCpuProfilerTabStruct[], search: string): void {
     search = search.toLocaleLowerCase();
     sampleArray.forEach((sample) => {
       if (sample.symbolName && sample.symbolName.toLocaleLowerCase().includes(search)) {
@@ -227,25 +227,25 @@ export class TabPaneJsCpuCallTree extends BaseElement {
     }
     const CallTreeSortArr = arr.sort((callTreeLeftData, callTreeRightData) => {
       if (this.sortKey === 'selfTimeStr' || this.sortKey === 'selfTimePercent') {
-        if (this.sortType == 0) {
+        if (this.sortType === 0) {
           return defaultSort(callTreeLeftData, callTreeRightData);
-        } else if (this.sortType == 1) {
+        } else if (this.sortType === 1) {
           return callTreeLeftData.selfTime - callTreeRightData.selfTime;
         } else {
           return callTreeRightData.selfTime - callTreeLeftData.selfTime;
         }
       } else if (this.sortKey === 'symbolName') {
-        if (this.sortType == 0) {
+        if (this.sortType === 0) {
           return defaultSort(callTreeLeftData, callTreeRightData);
-        } else if (this.sortType == 1) {
+        } else if (this.sortType === 1) {
           return (callTreeLeftData.symbolName + '').localeCompare(callTreeRightData.symbolName + '');
         } else {
           return (callTreeRightData.symbolName + '').localeCompare(callTreeLeftData.symbolName + '');
         }
       } else {
-        if (this.sortType == 0) {
+        if (this.sortType === 0) {
           return defaultSort(callTreeLeftData, callTreeRightData);
-        } else if (this.sortType == 1) {
+        } else if (this.sortType === 1) {
           return callTreeLeftData.totalTime - callTreeRightData.totalTime;
         } else {
           return callTreeRightData.totalTime - callTreeLeftData.totalTime;

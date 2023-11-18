@@ -23,6 +23,9 @@ import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 
 window.ResizeObserver =
   window.ResizeObserver ||

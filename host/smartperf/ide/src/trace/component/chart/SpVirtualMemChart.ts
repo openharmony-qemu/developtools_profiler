@@ -103,11 +103,11 @@ export class SpVirtualMemChart {
       VirtualMemoryStruct.hoverStruct = virtualMemoryRow.getHoverStruct();
     };
     virtualMemoryRow.onThreadHandler = (useCache) => {
-      let context:CanvasRenderingContext2D;
-      if(virtualMemoryRow.currentContext){
+      let context: CanvasRenderingContext2D;
+      if (virtualMemoryRow.currentContext) {
         context = virtualMemoryRow.currentContext;
-      } else{
-        context  = virtualMemoryRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      } else {
+        context = virtualMemoryRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       }
       virtualMemoryRow.canvasSave(context);
       (renders['virtual-memory-cell'] as VirtualMemoryRender).renderMainThread(

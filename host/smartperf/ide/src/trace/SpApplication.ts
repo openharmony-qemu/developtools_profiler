@@ -61,24 +61,30 @@ export class SpApplication extends BaseElement {
   private static loadingProgress: number = 0;
   private static progressStep: number = 2;
   longTraceHeadMessageList: Array<{
-    pageNum: number
-    data: ArrayBuffer
+    pageNum: number;
+    data: ArrayBuffer;
   }> = [];
 
   longTraceDataList: Array<{
-    fileType: string
-    index: number
-    pageNum: number
-    startOffsetSize: number
-    endOffsetSize: number
+    fileType: string;
+    index: number;
+    pageNum: number;
+    startOffsetSize: number;
+    endOffsetSize: number;
   }> = [];
 
-  longTraceTypeMessageMap: Map<number, Array<{
-    fileType: string
-    startIndex: number
-    endIndex: number
-    size: number
-  }>> | undefined | null;
+  longTraceTypeMessageMap:
+    | Map<
+        number,
+        Array<{
+          fileType: string;
+          startIndex: number;
+          endIndex: number;
+          size: number;
+        }>
+      >
+    | undefined
+    | null;
   static skinChange: Function | null | undefined = null;
   static skinChange2: Function | null | undefined = null;
   skinChangeArray: Array<Function> = [];
@@ -915,15 +921,17 @@ export class SpApplication extends BaseElement {
       let headerStr = enc.decode(htraceData);
       let newFileName = fileName.substring(0, fileName.lastIndexOf('.')) + '.systrace';
       let aElement = document.createElement('a');
-      let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2))).map(byte => byte.toString(16).padStart(2, '0')).join('');
+      let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
       if (headerStr.indexOf('OHOSPROF') === 0 || rowTraceStr.indexOf('49df') === 0) {
         convertPool.submitWithName('getConvertData', (status: boolean, msg: string, results: Blob) => {
           aElement.href = URL.createObjectURL(results);
           aElement.download = newFileName;
           let timeoutId = 0;
-          aElement.addEventListener('click', ev => {
+          aElement.addEventListener('click', (ev) => {
             clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(()=>{
+            timeoutId = window.setTimeout(() => {
               restoreDownLoadIcons();
             }, 2000);
           });
@@ -934,9 +942,9 @@ export class SpApplication extends BaseElement {
         aElement.href = URL.createObjectURL(new Blob([DbPool.sharedBuffer!]));
         aElement.download = newFileName;
         let txtTimeoutId = 0;
-        aElement.addEventListener('click', ev => {
+        aElement.addEventListener('click', (ev) => {
           clearTimeout(txtTimeoutId);
-          txtTimeoutId = window.setTimeout(()=>{
+          txtTimeoutId = window.setTimeout(() => {
             restoreDownLoadIcons();
           }, 2000);
         });
@@ -1078,90 +1086,148 @@ export class SpApplication extends BaseElement {
       threadPool.init('wasm').then(() => {
         let headUintArray = new Uint8Array(that.longTraceHeadMessageList.length * 1024);
         let headOffset = 0;
-        that.longTraceHeadMessageList = that.longTraceHeadMessageList.sort((leftMessage, rightMessage)=> leftMessage.pageNum - rightMessage.pageNum);
+        that.longTraceHeadMessageList = that.longTraceHeadMessageList.sort(
+          (leftMessage, rightMessage) => leftMessage.pageNum - rightMessage.pageNum
+        );
         for (let index = 0; index < that.longTraceHeadMessageList.length; index++) {
           let currentUintArray = new Uint8Array(that.longTraceHeadMessageList[index].data);
           headUintArray.set(currentUintArray, headOffset);
           headOffset += currentUintArray.length;
         }
-        threadPool.submit('ts-cut-file', '', {
-          headArray: headUintArray,
-          timeStamp: timStamp,
-          splitFileInfo: that.longTraceTypeMessageMap?.get(0),
-          splitDataList: that.longTraceDataList
-        }, (res: Array<any>) => {
-          if (that.longTraceHeadMessageList.length > 0) {
-            getTraceFileByPage(that.currentPageNum);
-            litSearch.style.marginLeft = '80px';
-            let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
-            that.drawPageNumber(longTracePage, pageListDiv, that.longTraceHeadMessageList.length);
-            let previewButton: HTMLDivElement | null | undefined = that.shadowRoot?.querySelector<HTMLDivElement>('#preview-button');
-            let nextButton: HTMLDivElement | null | undefined = that.shadowRoot?.querySelector<HTMLDivElement>('#next-button');
-            if (previewButton) {
-              previewButton.style.pointerEvents = 'none';
-              previewButton.style.opacity = '0.7';
-              previewButton.addEventListener('click', () => {
-                if (!progressEL.loading) {
+        threadPool.submit(
+          'ts-cut-file',
+          '',
+          {
+            headArray: headUintArray,
+            timeStamp: timStamp,
+            splitFileInfo: that.longTraceTypeMessageMap?.get(0),
+            splitDataList: that.longTraceDataList,
+          },
+          (res: Array<any>) => {
+            litSearch.setPercent('Cut in file ',  100);
+            if (that.longTraceHeadMessageList.length > 0) {
+              getTraceFileByPage(that.currentPageNum);
+              litSearch.style.marginLeft = '80px';
+              let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
+              that.drawPageNumber(longTracePage, pageListDiv, that.longTraceHeadMessageList.length);
+              let previewButton: HTMLDivElement | null | undefined =
+                that.shadowRoot?.querySelector<HTMLDivElement>('#preview-button');
+              let nextButton: HTMLDivElement | null | undefined =
+                that.shadowRoot?.querySelector<HTMLDivElement>('#next-button');
+              let pageInput = that.shadowRoot?.querySelector<HTMLInputElement>('.page-input');
+              if (previewButton) {
+                previewButton.style.pointerEvents = 'none';
+                previewButton.style.opacity = '0.7';
+                previewButton.addEventListener('click', () => {
+                  if (progressEL.loading) {
+                    return;
+                  }
+                  if (that.currentPageNum > 1) {
+                    that.currentPageNum--;
+                    if (that.currentPageNum === 1) {
+                      previewButton!.style.pointerEvents = 'none';
+                      nextButton!.style.pointerEvents = 'auto';
+                      previewButton!.style.opacity = '0.7';
+                    } else {
+                      previewButton!.style.pointerEvents = 'auto';
+                      nextButton!.style.pointerEvents = 'none';
+                      previewButton!.style.opacity = '1';
+                    }
+                    let previewElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                      `.page-number[title='${that.currentPageNum}']`
+                    );
+                    if (!previewElement || previewElement.textContent === '...') {
+                      return;
+                    }
+                    let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                    querySelector?.removeAttribute('selected');
+                    previewElement!.setAttribute('selected', '');
+                    pageInput!.value = that.currentPageNum + '';
+                    progressEL.loading = true;
+                    getTraceFileByPage(that.currentPageNum);
+                  }
+                });
+              }
+              if (nextButton && that.longTraceHeadMessageList.length === 1) {
+                nextButton.style.pointerEvents = 'none';
+                nextButton.style.opacity = '0.7';
+              }
+              nextButton!.addEventListener('click', () => {
+                if (progressEL.loading) {
                   return;
                 }
-                if (that.currentPageNum > 1) {
-                  that.currentPageNum--;
-                  if (that.currentPageNum === 1) {
-                    previewButton!.style.pointerEvents = 'none';
-                    nextButton!.style.pointerEvents = 'auto';
-                    previewButton!.style.opacity = '0.7';
+                if (that.currentPageNum < that.longTraceHeadMessageList.length) {
+                  that.currentPageNum++;
+                  if (that.currentPageNum === that.longTraceHeadMessageList.length) {
+                    nextButton!.style.pointerEvents = 'none';
+                    previewButton!.style.pointerEvents = 'auto';
+                    nextButton!.style.opacity = '0.7';
                   } else {
                     previewButton!.style.pointerEvents = 'auto';
-                    nextButton!.style.pointerEvents = 'none';
-                    previewButton!.style.opacity = '1';
+                    nextButton!.style.pointerEvents = 'auto';
+                    nextButton!.style.opacity = '1';
                   }
-                  let previewElement = that.shadowRoot?.querySelector<HTMLDivElement>(`.page-number[title='${that.currentPageNum}']`);
+                  let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                    `.page-number[title='${that.currentPageNum}']`
+                  );
+                  if (!nextElement || nextElement.textContent === '...') {
+                    return;
+                  }
                   let querySelector = pageListDiv.querySelector('.page-number[selected]');
                   querySelector?.removeAttribute('selected');
-                  previewElement!.setAttribute('selected', '');
+                  nextElement?.setAttribute('selected', '');
+                  pageInput!.value = that.currentPageNum + '';
                   progressEL.loading = true;
                   getTraceFileByPage(that.currentPageNum);
                 }
               });
-            }
-            if (nextButton && that.longTraceHeadMessageList.length === 1) {
-              nextButton.style.pointerEvents = 'none';
-              nextButton.style.opacity = '0.7';
-            }
-            nextButton!.addEventListener('click', () => {
-              if (!progressEL.loading) {
-                return;
-              }
-              if (that.currentPageNum < that.longTraceHeadMessageList.length) {
-                that.currentPageNum++;
-                if (that.currentPageNum === that.longTraceHeadMessageList.length) {
-                  nextButton!.style.pointerEvents = 'none';
-                  previewButton!.style.pointerEvents = 'auto';
-                  nextButton!.style.opacity = '0.7';
-                } else {
-                  previewButton!.style.pointerEvents = 'auto';
-                  nextButton!.style.pointerEvents = 'auto';
-                  nextButton!.style.opacity = '1';
+              pageListDiv.querySelectorAll('div').forEach((divEL) => {
+                divEL.addEventListener('click', () => {
+                  if (progressEL.loading || divEL.textContent === '...') {
+                    return;
+                  }
+                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                  querySelector?.removeAttribute('selected');
+                  divEL.setAttribute('selected', '');
+                  let selectPageNum = Number(divEL.textContent);
+                  if (selectPageNum !== that.currentPageNum) {
+                    that.currentPageNum = selectPageNum;
+                    if (that.currentPageNum === that.longTraceHeadMessageList.length) {
+                      nextButton!.style.pointerEvents = 'none';
+                      nextButton!.style.opacity = '0.7';
+                    } else {
+                      nextButton!.style.pointerEvents = 'auto';
+                      nextButton!.style.opacity = '1';
+                    }
+                    if (that.currentPageNum === 1) {
+                      previewButton!.style.pointerEvents = 'none';
+                      previewButton!.style.opacity = '0.7';
+                    } else {
+                      previewButton!.style.pointerEvents = 'auto';
+                      previewButton!.style.opacity = '1';
+                    }
+                    pageInput!.value = that.currentPageNum + '';
+                    progressEL.loading = true;
+                    getTraceFileByPage(that.currentPageNum);
+                  }
+                });
+              });
+              pageInput!.addEventListener('input', () => {
+                let value = pageInput!.value;
+                value = value.replace(/\D/g, '');
+                if (value) {
+                  value = Math.min(that.longTraceHeadMessageList.length, parseInt(value)).toString();
                 }
-                let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(`.page-number[title='${that.currentPageNum}']`);
-                let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                querySelector?.removeAttribute('selected');
-                nextElement!.setAttribute('selected', '');
-                progressEL.loading = true;
-                getTraceFileByPage(that.currentPageNum);
-              }
-            });
-            pageListDiv.querySelectorAll('div').forEach(divEL => {
-              divEL.addEventListener('click', () => {
-                if (!progressEL.loading) {
+                pageInput!.value = value;
+              });
+              let pageConfirmEl = that.shadowRoot?.querySelector<HTMLDivElement>('.confirm-button');
+              pageConfirmEl!.addEventListener('click', () => {
+                if (progressEL.loading) {
                   return;
                 }
-                let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                querySelector?.removeAttribute('selected');
-                divEL.setAttribute('selected', '');
-                let selectPageNum = Number(divEL.textContent);
-                if (selectPageNum !== that.currentPageNum) {
-                  that.currentPageNum = selectPageNum;
+                let pageIndex = Number(pageInput!.value);
+                if (pageIndex > 0 && pageIndex <= that.longTraceHeadMessageList.length) {
+                  that.currentPageNum = pageIndex;
                   if (that.currentPageNum === that.longTraceHeadMessageList.length) {
                     nextButton!.style.pointerEvents = 'none';
                     nextButton!.style.opacity = '0.7';
@@ -1176,52 +1242,25 @@ export class SpApplication extends BaseElement {
                     previewButton!.style.pointerEvents = 'auto';
                     previewButton!.style.opacity = '1';
                   }
+                  let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                    `.page-number[title='${that.currentPageNum}']`
+                  );
+                  if (!nextElement) {
+                    nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
+                      `.page-number[title='...']`
+                    );
+                  }
+                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
+                  querySelector?.removeAttribute('selected');
+                  nextElement?.setAttribute('selected', '');
                   progressEL.loading = true;
                   getTraceFileByPage(that.currentPageNum);
                 }
               });
-            });
-            let pageInput = that.shadowRoot?.querySelector<HTMLInputElement>('.page-input');
-            pageInput!.addEventListener('input', () => {
-              let value = pageInput!.value;
-              value = value.replace(/\D/g, '');
-              if (value) {
-                value = Math.min(that.longTraceHeadMessageList.length, parseInt(value)).toString();
-              }
-              pageInput!.value = value;
-            });
-            let pageConfirmEl = that.shadowRoot?.querySelector<HTMLDivElement>('.confirm-button');
-            pageConfirmEl!.addEventListener('click', () => {
-              if (!progressEL.loading) {
-                return;
-              }
-              let pageIndex = Number(pageInput!.value);
-              if (pageIndex > 0 && pageIndex < that.longTraceHeadMessageList.length) {
-                that.currentPageNum = pageIndex;
-                if (that.currentPageNum === that.longTraceHeadMessageList.length) {
-                  nextButton!.style.pointerEvents = 'none';
-                  nextButton!.style.opacity = '0.7';
-                } else {
-                  nextButton!.style.pointerEvents = 'auto';
-                  nextButton!.style.opacity = '1';
-                }
-                if (that.currentPageNum === 1) {
-                  previewButton!.style.pointerEvents = 'none';
-                  previewButton!.style.opacity = '0.7';
-                } else {
-                  previewButton!.style.pointerEvents = 'auto';
-                  previewButton!.style.opacity = '1';
-                }
-                let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(`.page-number[title='${that.currentPageNum}']`);
-                let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                querySelector?.removeAttribute('selected');
-                nextElement!.setAttribute('selected', '');
-                progressEL.loading = true;
-                getTraceFileByPage(that.currentPageNum);
-              }
-            });
-          }
-        }, 'long_trace');
+            }
+          },
+          'long_trace'
+        );
       });
     }
 
@@ -1240,52 +1279,91 @@ export class SpApplication extends BaseElement {
       }
       let indexedDbPageNum = pageNumber - 1;
       let maxTraceFileLength = 400 * 1024 * 1024;
-      let traceRange = IDBKeyRange.bound([that.pageTimStamp, 'trace', indexedDbPageNum], [that.pageTimStamp, 'trace', indexedDbPageNum], false, false);
-      LongTraceDBUtils.getInstance().indexedDBHelp.get(LongTraceDBUtils.getInstance().tableName, traceRange, 'QueryFileByPage').then(result => {
-        let traceData = indexedDataToBufferData(result);
-        let traceLength = traceData.byteLength;
-        let ebpfRange = IDBKeyRange.bound([that.pageTimStamp, 'ebpf_new', indexedDbPageNum], [that.pageTimStamp, 'ebpf_new', indexedDbPageNum], false, false);
-        let arkTsRange = IDBKeyRange.bound([that.pageTimStamp, 'arkts_new', indexedDbPageNum], [that.pageTimStamp, 'arkts_new', indexedDbPageNum], false, false);
-        let hiperfRange = IDBKeyRange.bound([that.pageTimStamp, 'hiperf_new', indexedDbPageNum], [that.pageTimStamp, 'hiperf_new', indexedDbPageNum], false, false);
-        Promise.all([
-          LongTraceDBUtils.getInstance().indexedDBHelp.get(LongTraceDBUtils.getInstance().tableName, ebpfRange, 'QueryFileByPage'),
-          LongTraceDBUtils.getInstance().indexedDBHelp.get(LongTraceDBUtils.getInstance().tableName, arkTsRange, 'QueryFileByPage'),
-          LongTraceDBUtils.getInstance().indexedDBHelp.get(LongTraceDBUtils.getInstance().tableName, hiperfRange, 'QueryFileByPage')
-        ]).then(otherResult => {
-          let ebpfData = indexedDataToBufferData(otherResult[0]);
-          let arkTsData = indexedDataToBufferData(otherResult[1]);
-          let hiperfData = indexedDataToBufferData(otherResult[2]);
-          let traceArray = new Uint8Array(traceData);
-          let ebpfArray = new Uint8Array(ebpfData);
-          let arkTsArray = new Uint8Array(arkTsData);
-          let hiPerfArray = new Uint8Array(hiperfData);
-          let allOtherData = [ebpfData, arkTsData, hiperfData];
-          let otherDataLength = traceLength + ebpfData.byteLength + arkTsData.byteLength + hiperfData.byteLength;
-          let fileName = `hiprofiler_long_trace_${indexedDbPageNum}.htrace`;
-          if (otherDataLength > maxTraceFileLength) {
-            if (traceLength > maxTraceFileLength) {
-              console.log('trace File too big');
+      let traceRange = IDBKeyRange.bound(
+        [that.pageTimStamp, 'trace', indexedDbPageNum],
+        [that.pageTimStamp, 'trace', indexedDbPageNum],
+        false,
+        false
+      );
+      LongTraceDBUtils.getInstance()
+        .indexedDBHelp.get(LongTraceDBUtils.getInstance().tableName, traceRange, 'QueryFileByPage')
+        .then((result) => {
+          let traceData = indexedDataToBufferData(result);
+          let traceLength = traceData.byteLength;
+          let ebpfRange = IDBKeyRange.bound(
+            [that.pageTimStamp, 'ebpf_new', indexedDbPageNum],
+            [that.pageTimStamp, 'ebpf_new', indexedDbPageNum],
+            false,
+            false
+          );
+          let arkTsRange = IDBKeyRange.bound(
+            [that.pageTimStamp, 'arkts_new', indexedDbPageNum],
+            [that.pageTimStamp, 'arkts_new', indexedDbPageNum],
+            false,
+            false
+          );
+          let hiperfRange = IDBKeyRange.bound(
+            [that.pageTimStamp, 'hiperf_new', indexedDbPageNum],
+            [that.pageTimStamp, 'hiperf_new', indexedDbPageNum],
+            false,
+            false
+          );
+          Promise.all([
+            LongTraceDBUtils.getInstance().indexedDBHelp.get(
+              LongTraceDBUtils.getInstance().tableName,
+              ebpfRange,
+              'QueryFileByPage'
+            ),
+            LongTraceDBUtils.getInstance().indexedDBHelp.get(
+              LongTraceDBUtils.getInstance().tableName,
+              arkTsRange,
+              'QueryFileByPage'
+            ),
+            LongTraceDBUtils.getInstance().indexedDBHelp.get(
+              LongTraceDBUtils.getInstance().tableName,
+              hiperfRange,
+              'QueryFileByPage'
+            ),
+          ]).then((otherResult) => {
+            let ebpfData = indexedDataToBufferData(otherResult[0]);
+            let arkTsData = indexedDataToBufferData(otherResult[1]);
+            let hiperfData = indexedDataToBufferData(otherResult[2]);
+            let traceArray = new Uint8Array(traceData);
+            let ebpfArray = new Uint8Array(ebpfData);
+            let arkTsArray = new Uint8Array(arkTsData);
+            let hiPerfArray = new Uint8Array(hiperfData);
+            let allOtherData = [ebpfData, arkTsData, hiperfData];
+            let otherDataLength = traceLength + ebpfData.byteLength + arkTsData.byteLength + hiperfData.byteLength;
+            let fileName = `hiprofiler_long_trace_${indexedDbPageNum}.htrace`;
+            if (otherDataLength > maxTraceFileLength) {
+              if (traceLength > maxTraceFileLength) {
+                litSearch.isLoading = false;
+                litSearch.setPercent('hitrace file too big!',  -1);
+                progressEL.loading = false;
+              } else {
+                let freeDataLength = maxTraceFileLength - traceLength;
+                let freeDataIndex = findFreeSizeAlgorithm(
+                  [ebpfData.byteLength, arkTsData.byteLength, hiperfData.byteLength],
+                  freeDataLength
+                );
+                let finalData = [traceData];
+                freeDataIndex.forEach((dataIndex) => {
+                  finalData.push(allOtherData[dataIndex]);
+                });
+                let fileBlob = new Blob(finalData);
+                const file = new File([fileBlob], fileName);
+                let fileSize = (file.size / 1048576).toFixed(1);
+                handleWasmMode(file, file.name, `${fileSize}M`, fileName);
+              }
             } else {
-              let freeDataLength = maxTraceFileLength - traceLength;
-              let freeDataIndex = findFreeSizeAlgorithm([ebpfData.byteLength, arkTsData.byteLength, hiperfData.byteLength], freeDataLength);
-              let finalData = [traceData];
-              freeDataIndex.forEach(dataIndex => {
-                finalData.push(allOtherData[dataIndex]);
-              });
-              let fileBlob = new Blob(finalData);
+              let fileBlob = new Blob([traceArray, ebpfArray, arkTsArray, hiPerfArray]);
               const file = new File([fileBlob], fileName);
               let fileSize = (file.size / 1048576).toFixed(1);
-              handleWasmMode(file, file.name, `${fileSize}M`, fileName);
+              handleWasmMode(file, file.name, `${fileSize}M`, file.name);
             }
-          } else {
-            let fileBlob = new Blob([traceArray, ebpfArray, arkTsArray, hiPerfArray]);
-            const file = new File([fileBlob], fileName);
-            let fileSize = (file.size / 1048576).toFixed(1);
-            handleWasmMode(file, file.name, `${fileSize}M`, file.name);
-          }
-          that.traceFileName = fileName;
+            that.traceFileName = fileName;
+          });
         });
-      });
     }
 
     function indexedDataToBufferData(sourceData: any): ArrayBuffer {
@@ -1477,14 +1555,30 @@ export class SpApplication extends BaseElement {
         that.longTraceDataList = [];
         let detail = (ev as any).detail;
         let timStamp = new Date().getTime();
-        const readFiles = async (files: FileList) => {
+        let traceTypePage: Array<number> = [];
+        let allFileSize = 0;
+        let readSize = 0;
+        for (let index = 0; index < detail.length; index++) {
+          let file = detail[index];
+          let fileName = file.name as string;
+          allFileSize += file.size;
+          if (that.fileTypeList.some(fileType => fileName.toLowerCase().includes(fileType))) {
+            continue;
+          }
+          let firstLastIndexOf = fileName.lastIndexOf('.');
+          let firstText = fileName.slice(0, firstLastIndexOf);
+          let resultLastIndexOf = firstText.lastIndexOf('_');
+          traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1)
+        }
+        traceTypePage.sort((leftNum: number, rightNum: number) => leftNum - rightNum);
+        const readFiles = async (files: FileList, traceTypePage: Array<number>) => {
           const promises = Array.from(files).map((file) => {
-            let types = that.fileTypeList.filter(type => file.name.toLowerCase().includes(type.toLowerCase()));
-            return readFile(file, types);
+            let types = that.fileTypeList.filter((type) => file.name.toLowerCase().includes(type.toLowerCase()));
+            return readFile(file, types, traceTypePage);
           });
           return Promise.all(promises);
         };
-        const readFile = async (file: any, types: Array<string>) => {
+        const readFile = async (file: any, types: Array<string>, traceTypePage: Array<number>) => {
           return new Promise((resolve, reject) => {
             let fileName = file.name;
             let fr = new FileReader();
@@ -1495,7 +1589,6 @@ export class SpApplication extends BaseElement {
               size: 0,
             };
             info('Parse long trace using wasm mode ');
-            litSearch.setPercent('', 1);
             let maxSize = 48 * 1024 * 1024;
             let fileType = 'trace';
             let pageNumber = 0;
@@ -1505,7 +1598,8 @@ export class SpApplication extends BaseElement {
               let firstLastIndexOf = fileName.lastIndexOf('.');
               let firstText = fileName.slice(0, firstLastIndexOf);
               let resultLastIndexOf = firstText.lastIndexOf('_');
-              pageNumber = Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1;
+              let searchNumber = Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1;
+              pageNumber = traceTypePage.lastIndexOf(searchNumber);
             }
             let chunk = maxSize;
             let offset = 0;
@@ -1513,21 +1607,22 @@ export class SpApplication extends BaseElement {
             let index = 1;
             fr.onload = function () {
               let data = fr.result as ArrayBuffer;
-              litSearch.setPercent('downloading file ', 10);
-              LongTraceDBUtils.getInstance().indexedDBHelp.add(LongTraceDBUtils.getInstance().tableName, {
-                'buf': data,
-                'id': `${fileType}_${timStamp}_${pageNumber}_${index}`,
-                'fileType': fileType,
-                'pageNum': pageNumber,
-                'startOffset': offset,
-                'endOffset': offset + sliceLen,
-                'index': index,
-                'timStamp': timStamp
-              }).then(() => {
+              LongTraceDBUtils.getInstance()
+                .indexedDBHelp.add(LongTraceDBUtils.getInstance().tableName, {
+                  buf: data,
+                  id: `${fileType}_${timStamp}_${pageNumber}_${index}`,
+                  fileType: fileType,
+                  pageNum: pageNumber,
+                  startOffset: offset,
+                  endOffset: offset + sliceLen,
+                  index: index,
+                  timStamp: timStamp,
+                })
+                .then(() => {
                   if (index === 1 && types.length === 0) {
                     that.longTraceHeadMessageList.push({
                       pageNum: pageNumber,
-                      data: data.slice(offset, 1024)
+                      data: data.slice(offset, 1024),
                     });
                   }
                   that.longTraceDataList.push({
@@ -1535,15 +1630,14 @@ export class SpApplication extends BaseElement {
                     fileType: fileType,
                     pageNum: pageNumber,
                     startOffsetSize: offset,
-                    endOffsetSize: offset + sliceLen
+                    endOffsetSize: offset + sliceLen,
                   });
                   offset += sliceLen;
                   if (offset < file.size) {
                     index++;
                   }
                   continue_reading();
-                }
-              );
+                });
             };
 
             function continue_reading() {
@@ -1571,16 +1665,20 @@ export class SpApplication extends BaseElement {
               }
               sliceLen = Math.min(file.size - offset, chunk);
               let slice = file.slice(offset, offset + sliceLen);
+              readSize += slice.size;
+              let percentValue = (readSize * 100 / allFileSize).toFixed(2);
+              litSearch.setPercent('Read in file: ',  Number(percentValue));
               fr.readAsArrayBuffer(slice);
             }
-
             continue_reading();
             fr.onerror = function () {
               reject(false);
             };
           });
         };
-        readFiles(detail).then(() => {
+        litSearch.setPercent('Read in file: ',  1);
+        readFiles(detail, traceTypePage).then(() => {
+          litSearch.setPercent('Cut in file: ',  1);
           sendCutFileMessage(timStamp);
         });
       }
@@ -1886,6 +1984,11 @@ export class SpApplication extends BaseElement {
       that.search = true;
       progressEL.loading = true;
       let downloadLineFile = false;
+      if (urlParams.local) {
+        downloadLineFile = false;
+     } else {
+        downloadLineFile = true;
+     }
       setProgress(downloadLineFile ? 'download trace file' : 'open trace file');
       this.downloadOnLineFile(urlParams.trace, downloadLineFile, (localPath) => {
         let path = urlParams.trace as string;
@@ -1898,25 +2001,28 @@ export class SpApplication extends BaseElement {
           fileName = path.split('/').reverse()[0];
         }
         that.traceFileName = fileName;
-        showFileName =
-          fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
+        showFileName = fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
         TraceRow.rangeSelectObject = undefined;
         let localUrl = downloadLineFile ? `${window.location.origin}${localPath}` : urlParams.trace;
-        fetch(localUrl).then((res) => {
-          res.arrayBuffer().then((arrayBuf) => {
-            if (urlParams.local) {
-              URL.revokeObjectURL(localUrl);
+        fetch(localUrl)
+          .then((res) => {
+            res.arrayBuffer().then((arrayBuf) => {
+              if (urlParams.local) {
+                URL.revokeObjectURL(localUrl);
+              }
+              let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
+              postLog(fileName, fileSize);
+              document.title = `${showFileName} (${fileSize}M)`;
+              info('Parse trace using wasm mode ');
+              handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
+            });
+          })
+          .catch((e) => {
+            if (!downloadLineFile) {
+              const firstQuestionMarkIndex = window.location.href.indexOf('?');
+              location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
             }
-            let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
-            postLog(fileName, fileSize);
-            document.title = `${showFileName} (${fileSize}M)`;
-            info('Parse trace using wasm mode ');
-            handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
           });
-        }).catch((e) => {
-          const firstQuestionMarkIndex = window.location.href.indexOf('?');
-          location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
-        });
       });
     } else {
       openMenu(true);
@@ -1936,9 +2042,11 @@ export class SpApplication extends BaseElement {
         }
         if (index === 5) {
           element.textContent = '...';
+          element.title = '...'
         }
         if (index === 6) {
           element.textContent = `${maxPageNumber}`;
+          element.title = `${maxPageNumber}`;
         }
         pageListDiv.appendChild(element);
       }
@@ -2087,6 +2195,13 @@ export class SpApplication extends BaseElement {
     if (cutRightTs > recordEndNS) {
       cutRightTs = recordEndNS;
     }
+    let minCutDur = 1_000_000;
+    if (cutRightTs - cutLeftTs < minCutDur) {
+      let unitTs = (cutRightTs - cutLeftTs) / 2;
+      let midTs = cutLeftTs + unitTs;
+      cutLeftTs = midTs - minCutDur / 2;
+      cutRightTs = midTs + minCutDur / 2;
+    }
     progressEL.loading = true;
     threadPool.cutFile(cutLeftTs, cutRightTs, (status: boolean, msg: string, cutBuffer?: ArrayBuffer) => {
       progressEL.loading = false;
@@ -2101,7 +2216,11 @@ export class SpApplication extends BaseElement {
           traceName = traceName;
         }
         let blobUrl = URL.createObjectURL(new Blob([cutBuffer!]));
-        window.open(`index.html?link=true&local=true&traceName=${traceName}_cut_${cutLeftTs}${fileType}&trace=${encodeURIComponent(blobUrl)}`);
+        window.open(
+          `index.html?link=true&local=true&traceName=${traceName}_cut_${cutLeftTs}${fileType}&trace=${encodeURIComponent(
+            blobUrl
+          )}`
+        );
       } else {
         litSearch.setPercent(msg, -1);
         window.setTimeout(() => {

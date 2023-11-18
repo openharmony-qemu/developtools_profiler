@@ -14,12 +14,7 @@
  */
 
 import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
-import {
-  hiPerf,
-  HiPerfStruct,
-  PerfRender,
-  RequestMessage,
-} from './ProcedureWorkerCommon.js';
+import { hiPerf, HiPerfStruct, PerfRender, RequestMessage } from './ProcedureWorkerCommon.js';
 import { TraceRow } from '../../component/trace/base/TraceRow.js';
 
 export class HiperfEventRender extends PerfRender {

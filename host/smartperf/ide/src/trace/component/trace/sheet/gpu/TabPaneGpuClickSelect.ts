@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { resizeObserver } from '../SheetUtils.js';
 import { queryGpuDataByTs } from '../../../../database/SqlLite.js';
 import { VmTrackerChart } from '../../../chart/SpVmTrackerChart.js';
@@ -32,9 +32,17 @@ export class TabPaneGpuClickSelect extends BaseElement {
   private gpuTbl: LitTable | null | undefined;
   private gpuSource: Array<GpuTreeItem> = [];
   gpuClickData(gpu: { type: string; startTs: number }) {
-    let label = this.gpuTbl!.shadowRoot!.querySelector('.thead')?.firstChild?.firstChild?.firstChild;
-    if (label) {
-      (label as HTMLLabelElement).innerHTML = gpu.type === 'total' ? 'Module / Category' : 'Window / Module / Category';
+    let td = this.gpuTbl!.shadowRoot!.querySelector('.thead')?.firstChild?.firstChild as HTMLDivElement;
+    let title = gpu.type === 'total' ? 'Module / Category' : 'Window / Module / Category';
+    let titleArr = title.split('/');
+    if (td) {
+      td.innerHTML = '';
+      for (let i = 0; i < titleArr.length; i++) {
+        let label = document.createElement('label');
+        label.style.cursor = 'pointer';
+        i == 0 ? (label.innerHTML = titleArr[i]) : (label.innerHTML = '/' + titleArr[i]);
+        td.appendChild(label);
+      }
     }
     //@ts-ignore
     this.gpuTbl?.shadowRoot?.querySelector('.table')?.style?.height = this.parentElement!.clientHeight - 45 + 'px';
@@ -129,7 +137,7 @@ export class TabPaneGpuClickSelect extends BaseElement {
         }
         </style>
         <lit-table id="tb-gpu" style="height: auto" tree>
-                <lit-table-column width="50%" title="Window / Module / Category" data-index="name" key="name" align="flex-start">
+                <lit-table-column width="50%" title="" data-index="name" key="name" align="flex-start">
                 </lit-table-column>
                 <lit-table-column width="1fr" title="Size" data-index="sizeStr" key="sizeStr"  align="flex-start" order >
                 </lit-table-column>
@@ -146,7 +154,7 @@ export class TabPaneGpuClickSelect extends BaseElement {
         return gpuB.size - gpuA.size;
       }
     };
-    let deepCompare = (arr: GpuTreeItem[]) => {
+    let deepCompare = (arr: GpuTreeItem[]): void => {
       arr.forEach((it) => {
         if (it.children) {
           deepCompare(it.children);

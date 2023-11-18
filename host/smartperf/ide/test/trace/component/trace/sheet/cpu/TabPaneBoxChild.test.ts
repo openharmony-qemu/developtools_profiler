@@ -18,6 +18,9 @@
 import { TabPaneBoxChild } from '../../../../../../dist/trace/component/trace/sheet/cpu/TabPaneBoxChild.js';
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 
 window.ResizeObserver =
   window.ResizeObserver ||

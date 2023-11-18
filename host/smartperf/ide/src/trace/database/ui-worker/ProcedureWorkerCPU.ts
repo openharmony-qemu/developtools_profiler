@@ -114,13 +114,11 @@ export class CpuRender {
         TraceRow.range!.endNS,
         TraceRow.range!.totalNS,
         row.frame,
-        req.type == `cpu-data-${SpSystemTrace.wakeupList[i]?.cpu || 0}`
-          ? SpSystemTrace.wakeupList[i]
-          : undefined,
+        req.type == `cpu-data-${SpSystemTrace.wakeupList[i]?.cpu || 0}` ? SpSystemTrace.wakeupList[i] : undefined,
         currentCpu,
         true
       );
-    };
+    }
   }
 
   render(cpuReq: RequestMessage, list: Array<any>, filter: Array<any>, translateY: number) {
@@ -301,6 +299,11 @@ export class CpuStruct extends BaseStruct {
   type: string | undefined;
   v: boolean = false;
   nofinish: boolean = false;
+  ts:number | undefined;
+  itid: number | undefined;
+  process: string | undefined;
+  pid: number | undefined;
+  thread: string | undefined;
   static draw(ctx: CanvasRenderingContext2D, data: CpuStruct, translateY: number) {
     if (data.frame) {
       let width = data.frame.width || 0;

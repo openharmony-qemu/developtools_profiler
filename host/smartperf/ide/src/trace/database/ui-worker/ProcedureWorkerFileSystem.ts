@@ -39,8 +39,9 @@ export class FileSystemRender extends PerfRender {
     let groupBy10MS = (TraceRow.range?.scale || 50) > 40_000_000;
     let isDiskIO: boolean = req.type.includes('disk-io');
     if (list && fileSystemRow.dataList2.length === 0) {
-      fileSystemRow.dataList2 = isDiskIO ?
-        FileSysChartStruct.groupBy10MSWithMaxLatency(list) : FileSysChartStruct.groupBy10MSWithCount(list);
+      fileSystemRow.dataList2 = isDiskIO
+        ? FileSysChartStruct.groupBy10MSWithMaxLatency(list)
+        : FileSysChartStruct.groupBy10MSWithCount(list);
     }
     fileSysChart(
       list,
@@ -59,7 +60,10 @@ export class FileSystemRender extends PerfRender {
     let find = false;
     let hoverRect: FileSysChartStruct | undefined = undefined;
     for (let re of filter) {
-      if (fileSystemRow.isHover && re.frame && fileSystemRow.hoverX >= re.frame.x &&
+      if (
+        fileSystemRow.isHover &&
+        re.frame &&
+        fileSystemRow.hoverX >= re.frame.x &&
         fileSystemRow.hoverX <= re.frame.x + re.frame.width
       ) {
         if (hoverRect == undefined || re.size! > hoverRect.size!) {

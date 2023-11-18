@@ -417,10 +417,13 @@ describe('ProcedureLogicWorkerPerf Test', () => {
     let perfCallChainMerageData = new PerfCallChainMerageData();
     expect(perfCallChainMerageData.constructor()).toEqual({
       addr: '',
+      parent: undefined,
       canCharge: true,
       children: [],
       count: 0,
-      currentTreeParentNode: undefined,
+      countArray: [],
+      durArray: [],
+      tsArray: [],
       depth: 0,
       dur: 0,
       id: '',
@@ -754,16 +757,18 @@ describe('ProcedureLogicWorkerPerf Test', () => {
     window.postMessage = jest.fn(() => true);
     let perfBottomUpStruct = {
       addChildren: jest.fn(() => true),
+      tsArray: []
     };
-    expect(procedureLogicWorkerPerf.copyParentNode(perfBottomUpStruct, { parentNode: 1 })).toBeUndefined();
+    expect(procedureLogicWorkerPerf.copyParentNode(perfBottomUpStruct, { parentNode: 1 ,tsArray: []})).toBeUndefined();
   });
   it('ProcedureLogicWorkerPerfTest75', function () {
     let procedureLogicWorkerPerf = new ProcedureLogicWorkerPerf();
     window.postMessage = jest.fn(() => true);
     let perfBottomUpStruct = {
       addChildren: jest.fn(() => true),
+      tsArray: []
     };
-    expect(procedureLogicWorkerPerf.copyParentNode(perfBottomUpStruct, { parentNode: 1 })).toBeUndefined();
+    expect(procedureLogicWorkerPerf.copyParentNode(perfBottomUpStruct, { parentNode: 1, tsArray: []})).toBeUndefined();
   });
   it('PerfCallChainTest76', function () {
     expect(PerfCallChain.setNextNode([], []));
@@ -788,12 +793,15 @@ describe('ProcedureLogicWorkerPerf Test', () => {
   it('PerfCallChainTest80', function () {
     let currentNode = {
       symbolName: '',
+      tsArray: []
     };
     let callChain = {
       vaddrInFile: {
         toString: jest.fn(() => true),
       },
     };
-    expect(PerfCallChainMerageData.merageCallChainSample(currentNode, callChain, [], true));
+    expect(PerfCallChainMerageData.merageCallChainSample(currentNode, callChain, {
+      ts: ''
+    }, true));
   });
 });

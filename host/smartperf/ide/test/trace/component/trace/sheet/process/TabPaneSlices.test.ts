@@ -27,6 +27,10 @@ window.ResizeObserver =
     unobserve: jest.fn(),
   }));
 
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
+
 describe('TabPaneSlices Test', () => {
   let tabPaneSlices = new TabPaneSlices();
   sqlit.getTabSlicesAsyncFunc.mockResolvedValue([]);

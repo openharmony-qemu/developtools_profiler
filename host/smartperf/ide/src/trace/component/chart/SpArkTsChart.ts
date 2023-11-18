@@ -16,16 +16,16 @@ import { SpSystemTrace } from '../SpSystemTrace.js';
 import { TraceRow } from '../trace/base/TraceRow.js';
 import { info } from '../../../log/Log.js';
 import { renders } from '../../database/ui-worker/ProcedureWorker.js';
-import { EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
-import { HeapTimelineRender, HeapTimelineStruct } from '../../database/ui-worker/ProcedureWorkerHeapTimeline.js';
-import { HeapDataInterface, ParseListener } from '../../../js-heap/HeapDataInterface.js';
+import { type EmptyRender } from '../../database/ui-worker/ProcedureWorkerCPU.js';
+import { type HeapTimelineRender, HeapTimelineStruct } from '../../database/ui-worker/ProcedureWorkerHeapTimeline.js';
+import { HeapDataInterface, type ParseListener } from '../../../js-heap/HeapDataInterface.js';
 import { LoadDatabase } from '../../../js-heap/LoadDatabase.js';
-import { FileInfo } from '../../../js-heap/model/UiStruct.js';
-import { HeapSnapshotRender, HeapSnapshotStruct } from '../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
+import { type FileInfo } from '../../../js-heap/model/UiStruct.js';
+import { type HeapSnapshotRender, HeapSnapshotStruct } from '../../database/ui-worker/ProcedureWorkerHeapSnapshot.js';
 import { procedurePool } from '../../database/Procedure.js';
 import { Utils } from '../trace/base/Utils.js';
-import { JsCpuProfilerChartFrame } from '../../bean/JsStruct.js';
-import { JsCpuProfilerRender, JsCpuProfilerStruct } from '../../database/ui-worker/ProcedureWorkerCpuProfiler.js';
+import { type JsCpuProfilerChartFrame } from '../../bean/JsStruct.js';
+import { type JsCpuProfilerRender, JsCpuProfilerStruct } from '../../database/ui-worker/ProcedureWorkerCpuProfiler.js';
 import { ns2s } from '../../database/ui-worker/ProcedureWorkerCommon.js';
 import { queryJsCpuProfilerConfig, queryJsCpuProfilerData, queryJsMemoryData } from '../../database/SqlLite.js';
 const TYPE_SNAPSHOT = 0;
@@ -71,7 +71,7 @@ export class SpArkTsChart implements ParseListener {
         if (this.folderRow!.expansion) {
           this.trace.canvasPanelCtx?.clearRect(0, 0, this.folderRow!.frame.width, this.folderRow!.frame.height);
         } else {
-          (renders['empty'] as EmptyRender).renderMainThread(
+          (renders.empty as EmptyRender).renderMainThread(
             {
               context: this.trace.canvasPanelCtx,
               useCache: useCache,
@@ -173,9 +173,9 @@ export class SpArkTsChart implements ParseListener {
         this.heapTimelineRow!.supplier = (): Promise<any> => new Promise<any>((resolve) => resolve(samples));
         this.heapTimelineRow!.onThreadHandler = (useCache): void => {
           let context: CanvasRenderingContext2D;
-          if(this.heapTimelineRow?.currentContext){
+          if (this.heapTimelineRow?.currentContext) {
             context = this.heapTimelineRow!.currentContext;
-          }else{
+          } else {
             context = this.heapTimelineRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           }
           this.heapTimelineRow!.canvasSave(context);
@@ -195,9 +195,9 @@ export class SpArkTsChart implements ParseListener {
           new Promise<Array<any>>((resolve) => resolve(heapFile));
         this.heapSnapshotRow!.onThreadHandler = (useCache): void => {
           let context: CanvasRenderingContext2D;
-          if(this.heapSnapshotRow?.currentContext){
+          if (this.heapSnapshotRow?.currentContext) {
             context = this.heapSnapshotRow!.currentContext;
-          }else{
+          } else {
             context = this.heapSnapshotRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
           }
           this.heapSnapshotRow!.canvasSave(context);
@@ -215,7 +215,7 @@ export class SpArkTsChart implements ParseListener {
     }
   }
 
-  private async initJsCpuProfilerChartData(): Promise<void> {
+  private async initJsCpuProfilerChartData() {
     procedurePool.submitWithName(
       'logic1',
       'jsCpuProfiler-init',
@@ -267,10 +267,10 @@ export class SpArkTsChart implements ParseListener {
       JsCpuProfilerStruct.hoverJsCpuProfilerStruct = this.jsCpuProfilerRow!.getHoverStruct();
     };
     this.jsCpuProfilerRow.onThreadHandler = (useCache): void => {
-      let context:CanvasRenderingContext2D;
-      if(this.jsCpuProfilerRow?.currentContext){
+      let context: CanvasRenderingContext2D;
+      if (this.jsCpuProfilerRow?.currentContext) {
         context = this.jsCpuProfilerRow!.currentContext;
-      }else{
+      } else {
         context = this.jsCpuProfilerRow!.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       }
       this.jsCpuProfilerRow!.canvasSave(context);

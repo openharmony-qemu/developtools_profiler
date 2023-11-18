@@ -38,10 +38,10 @@ export class HdcDeviceManager {
     ArrowUp: [27, 91, 65],
     ArrowDown: [27, 91, 66],
     ArrowLeft: [27, 91, 68],
-    ArrowRight: [27, 91, 67]
+    ArrowRight: [27, 91, 67],
   };
   static ctrlKey = {
-    c: [3]
+    c: [3],
   };
   private static clientList: Map<string, HdcClient> = new Map();
   private static currentHdcClient: HdcClient;
@@ -95,7 +95,7 @@ export class HdcDeviceManager {
           this.currentHdcClient = hdcClient;
           this.clientList.set(serialNumber, hdcClient);
         }
-        log(`device Usb connected : ${ connected }`);
+        log(`device Usb connected : ${connected}`);
         return connected;
       } else {
         log('device Usb connected failed: ');
@@ -127,7 +127,6 @@ export class HdcDeviceManager {
       return true;
     }
   }
-
 
   /**
    * Execute shell on the currently connected device and return the result as a string
@@ -183,8 +182,9 @@ export class HdcDeviceManager {
     return Promise.reject('not select device');
   }
 
-  public static startShell(resultCallBack: (res: DataMessage) => void):
-    ((keyboardEvent: KeyboardEvent | string) => void | undefined) | undefined {
+  public static startShell(
+    resultCallBack: (res: DataMessage) => void
+  ): ((keyboardEvent: KeyboardEvent | string) => void | undefined) | undefined {
     if (this.currentHdcClient) {
       const hdcShellStream = new HdcStream(this.currentHdcClient, false);
       this.shellInit(hdcShellStream, resultCallBack);
@@ -240,7 +240,7 @@ export class HdcDeviceManager {
     }
     const lines = command.split('\r\n');
     let processedCommand = '';
-    lines.forEach(line => {
+    lines.forEach((line) => {
       if (line.endsWith('\\')) {
         line = line.slice(0, -1);
         processedCommand += line;
@@ -260,7 +260,7 @@ export class HdcDeviceManager {
   public static async shellResultAsBlob(cmd: string, isSkipResult: boolean): Promise<Blob> {
     if (this.currentHdcClient) {
       const hdcStream = new HdcStream(this.currentHdcClient, false);
-      log(`cmd is ${ cmd }`);
+      log(`cmd is ${cmd}`);
       await hdcStream.DoCommand(cmd);
       let finalBuffer;
       while (true) {
@@ -297,10 +297,10 @@ export class HdcDeviceManager {
     let finalBuffer;
     if (this.currentHdcClient) {
       const hdcStream = new HdcStream(this.currentHdcClient, false);
-      await hdcStream.DoCommand(`${ HdcDeviceManager.FILE_RECV_PREFIX_STRING + filename } ./`);
+      await hdcStream.DoCommand(`${HdcDeviceManager.FILE_RECV_PREFIX_STRING + filename} ./`);
       if (!finalBuffer && hdcStream.fileSize > 0) {
         finalBuffer = new Uint8Array(hdcStream.fileSize);
-        log(`Uint8Array size is ${ finalBuffer.byteLength }`);
+        log(`Uint8Array size is ${finalBuffer.byteLength}`);
       }
       let offset = 0;
       while (true) {

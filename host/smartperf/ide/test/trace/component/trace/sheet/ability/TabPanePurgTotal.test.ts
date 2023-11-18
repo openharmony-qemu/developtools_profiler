@@ -17,6 +17,9 @@ import { TabPanePurgTotal } from '../../../../../../dist/trace/component/trace/s
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||

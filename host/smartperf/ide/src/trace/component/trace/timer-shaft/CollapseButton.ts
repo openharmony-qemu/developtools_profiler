@@ -39,9 +39,9 @@ export default class CollapseButton extends BaseElement {
 
   initElements(): void {
     this.onclick = (e) => {
-      this.expand = !this.expand
+      this.expand = !this.expand;
       window.publish(window.SmartEvent.UI.CollapseAllLane, this.expand);
-    }
+    };
   }
 
   initHtml(): string {
@@ -72,5 +72,4 @@ div:hover{
     <lit-icon name="down" size="12"></lit-icon>
 </div>`;
   }
-
 }

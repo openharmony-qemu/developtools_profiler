@@ -196,7 +196,7 @@ export class FuncStruct extends BaseFuncStruct {
     y: number,
     radius: number,
     data: FuncStruct
-  ) {
+  ): void {
     ctx.strokeStyle = '#FFC880';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -213,7 +213,7 @@ export class FuncStruct extends BaseFuncStruct {
     y: number,
     radius: number,
     data: FuncStruct
-  ) {
+  ): void {
     canvas.strokeStyle = '#FFC880';
     canvas.lineWidth = 1;
     canvas.beginPath();

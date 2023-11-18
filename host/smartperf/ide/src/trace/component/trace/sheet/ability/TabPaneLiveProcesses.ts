@@ -164,8 +164,11 @@ export class TabPaneLiveProcesses extends BaseElement {
     function compare(property, sort, type) {
       return function (liveProcessLeftData: LiveProcess, liveProcessRightData: LiveProcess) {
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(liveProcessRightData[property]) - parseFloat(liveProcessLeftData[property]) : parseFloat(liveProcessLeftData[property]) - parseFloat(liveProcessRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(liveProcessRightData[property]) - parseFloat(liveProcessLeftData[property])
+            : // @ts-ignore
+              parseFloat(liveProcessLeftData[property]) - parseFloat(liveProcessRightData[property]);
         } else if (type === 'cpuTime') {
           return sort === 2
             ? liveProcessRightData.cpuTimeNumber - liveProcessLeftData.cpuTimeNumber

@@ -299,9 +299,8 @@ export class SpFileSystem extends BaseElement {
         }
         </style>
         <div class="root">
-          <span class="long_trace_title" style="display: none">This Is Record long Trace File</span>
           <div class="file-system-title" id="traceMode" style="text-align:left;">
-            <span style='color: red'>This is record long trace!</span>
+            <span style='color: red'>Long trace mode! If current data Trace is too large, it may not open!</span>
           </div>
           <div class="file-system-config-div">
             <div>

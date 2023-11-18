@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {IndexedDBHelp} from './IndexedDBHelp.js';
+import { IndexedDBHelp } from './IndexedDBHelp.js';
 
 export class LongTraceDBUtils {
   public static instance: LongTraceDBUtils | undefined;
@@ -33,11 +33,12 @@ export class LongTraceDBUtils {
     return this.indexedDBHelp.open(this.dbName, this.dbVersion, [
       {
         name: this.tableName,
-        objectStoreParameters: {keyPath: 'id'},
-        dataItems: [{name: 'QueryCompleteFile', keypath: ['timStamp','fileType', 'pageNum', 'index']},
-          {name: 'QueryFileByPage', keypath: ['timStamp','fileType', 'pageNum']}]
-      }
+        objectStoreParameters: { keyPath: 'id' },
+        dataItems: [
+          { name: 'QueryCompleteFile', keypath: ['timStamp', 'fileType', 'pageNum', 'index'] },
+          { name: 'QueryFileByPage', keypath: ['timStamp', 'fileType', 'pageNum'] },
+        ],
+      },
     ]);
   }
 }
-

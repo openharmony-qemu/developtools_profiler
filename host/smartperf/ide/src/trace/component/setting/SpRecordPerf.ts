@@ -805,7 +805,7 @@ export class SpRecordPerf extends BaseElement {
         </style>
         <div class="root">
             <div class="record-perf-title" id="traceMode" style="text-align:left;">
-            <span style='color: red'>This is record long trace!</span>
+            <span style='color: red'>Long trace mode! If current data Trace is too large, it may not open!</span>
           </div>
           <div class="configList record-perf-config">
           </div>

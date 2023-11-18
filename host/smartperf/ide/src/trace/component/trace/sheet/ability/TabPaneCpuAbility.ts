@@ -138,8 +138,11 @@ export class TabPaneCpuAbility extends BaseElement {
     function compare(property, sort, type) {
       return function (cpuAbilityLeftData: SystemCpuSummary, cpuAbilityRightData: SystemCpuSummary) {
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(cpuAbilityRightData[property]) - parseFloat(cpuAbilityLeftData[property]) : parseFloat(cpuAbilityLeftData[property]) - parseFloat(cpuAbilityRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(cpuAbilityRightData[property]) - parseFloat(cpuAbilityLeftData[property])
+            : // @ts-ignore
+              parseFloat(cpuAbilityLeftData[property]) - parseFloat(cpuAbilityRightData[property]);
         } else if (type === 'durationStr') {
           return sort === 2
             ? cpuAbilityRightData.duration - cpuAbilityLeftData.duration

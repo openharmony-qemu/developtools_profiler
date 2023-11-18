@@ -438,7 +438,10 @@ export class LitPopover extends BaseElement {
       const path = ev.composedPath && ev.composedPath();
       if (
         // @ts-ignore
-        this.popContent && !path.includes(this.popContent) && !path.includes(this.children[0]) && !path.includes(this.popContent)
+        this.popContent &&
+        !path.includes(this.popContent) &&
+        !path.includes(this.children[0]) &&
+        !path.includes(this.popContent)
       ) {
         this.popContent!.open = false;
       }

@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-import {ColorUtils} from '../../component/trace/base/ColorUtils.js';
-import {HiPerfStruct, PerfRender, RequestMessage,} from './ProcedureWorkerCommon.js';
+import { ColorUtils } from '../../component/trace/base/ColorUtils.js';
+import { HiPerfStruct, PerfRender, type RequestMessage } from './ProcedureWorkerCommon.js';
 
-import {TraceRow} from '../../component/trace/base/TraceRow.js';
+import { TraceRow } from '../../component/trace/base/TraceRow.js';
 
 export class HiperfReportRender extends PerfRender {
   renderMainThread(hiPerfReportReq: any, row: TraceRow<HiPerfReportStruct>): void {
@@ -124,10 +124,11 @@ export function HiPerfReport(
           if (groupBy10MS) {
             hiPerfFilters.push(current);
           } else {
-            if (hiPerfFilters.length == 0) {
+            if (hiPerfFilters.length === 0) {
               hiPerfFilters.push(current);
             }
-            if (hiPerfFilters[hiPerfFilters.length - 1] &&
+            if (
+              hiPerfFilters[hiPerfFilters.length - 1] &&
               Math.abs(current.frame.x - hiPerfFilters[hiPerfFilters.length - 1].frame.x) > 4
             ) {
               hiPerfFilters.push(current);

@@ -27,6 +27,9 @@ jest.mock('../../../../../../dist/base-ui/select/LitSelect.js', () => {
   return {};
 });
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||

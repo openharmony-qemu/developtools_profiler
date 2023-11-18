@@ -17,9 +17,24 @@
 import { RangeSelect } from '../../../../../dist/trace/component/trace/base/RangeSelect.js';
 // @ts-ignore
 import { TraceRow } from '../../../../../dist/trace/component/trace/base/TraceRow.js';
+// @ts-ignore
+import { SpSystemTrace } from '../../../../../dist/trace/component/SpSystemTrace.js';
 jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
+
+const intersectionObserverMock = () => ({
+  observe: () => null,
+});
+window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
+
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 
 describe('RangeSelect Test', () => {
   beforeAll(() => {});
@@ -47,7 +62,7 @@ describe('RangeSelect Test', () => {
     expect(rangeSelect.isInRowsEl(mouseEvent)).toBeFalsy();
   });
   it('Utils Test09', () => {
-    let rangeSelect = new RangeSelect();
+    let rangeSelect = new RangeSelect(new SpSystemTrace());
     rangeSelect.rowsEL = document.createElement('div');
     let mouseEvent = new MouseEvent('mousedown', {
       button: 0,
@@ -128,7 +143,7 @@ describe('RangeSelect Test', () => {
   });
 
   it('Utils Test08', () => {
-    let rangeSelect = new RangeSelect();
+    let rangeSelect = new RangeSelect(new SpSystemTrace());
     rangeSelect.isInRowsEl = jest.fn(() => true);
     rangeSelect.isDrag = jest.fn(() => true);
     rangeSelect.isMouseDown = true;
@@ -177,7 +192,7 @@ describe('RangeSelect Test', () => {
     let rowElement = document.createElement('div');
     rangeSelect.rowsPaneEL = rowElement;
     rangeSelect.favoriteRowsEL = rowElement;
-    let traceRowElement = document.createElement('trace-row') as TraceRow;
+    let traceRowElement = new TraceRow()
     expect(rangeSelect.mouseMove([traceRowElement], mouseEvent)).toBeUndefined();
   });
 
@@ -260,7 +275,7 @@ describe('RangeSelect Test', () => {
     expect(rangeSelect.mouseOut(mouseEvent)).toBeUndefined();
   });
   it('Utils Test12', () => {
-    let rangeSelect = new RangeSelect();
+    let rangeSelect = new RangeSelect(new SpSystemTrace());
     rangeSelect.isInRowsEl = jest.fn(() => true);
     rangeSelect.isDrag = jest.fn(() => true);
     rangeSelect.isMouseDown = false;
@@ -289,7 +304,7 @@ describe('RangeSelect Test', () => {
     let rowElement = document.createElement('div');
     rangeSelect.rowsPaneEL = rowElement;
     rangeSelect.favoriteRowsEL = rowElement;
-    let traceRowElement = document.createElement('trace-row') as TraceRow;
+    let traceRowElement = new TraceRow();
     rangeSelect.ns2x = jest.fn(() => 1);
     rangeSelect.mouseX = jest.fn(() => 10);
     rangeSelect.markA = jest.fn(() => 8);

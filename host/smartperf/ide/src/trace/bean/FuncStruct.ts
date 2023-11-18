@@ -38,17 +38,33 @@ export class FuncStruct extends BaseStruct {
 
   static draw(funcBeanStructCanvasCtx: CanvasRenderingContext2D, funcBeanStruct: FuncStruct) {
     if (funcBeanStruct.frame) {
-      if (funcBeanStruct.dur == undefined || funcBeanStruct.dur == null || funcBeanStruct.dur == 0 || FuncStruct.isBinder(funcBeanStruct)) {
+      if (
+        funcBeanStruct.dur == undefined ||
+        funcBeanStruct.dur == null ||
+        funcBeanStruct.dur == 0 ||
+        FuncStruct.isBinder(funcBeanStruct)
+      ) {
       } else {
-        funcBeanStructCanvasCtx.fillStyle = ColorUtils.FUNC_COLOR[funcBeanStruct.depth || 0 % ColorUtils.FUNC_COLOR.length];
+        funcBeanStructCanvasCtx.fillStyle =
+          ColorUtils.FUNC_COLOR[funcBeanStruct.depth || 0 % ColorUtils.FUNC_COLOR.length];
         let miniHeight = 20;
-        funcBeanStructCanvasCtx.fillRect(funcBeanStruct.frame.x, funcBeanStruct.frame.y, funcBeanStruct.frame.width, miniHeight - padding * 2);
+        funcBeanStructCanvasCtx.fillRect(
+          funcBeanStruct.frame.x,
+          funcBeanStruct.frame.y,
+          funcBeanStruct.frame.width,
+          miniHeight - padding * 2
+        );
         funcBeanStructCanvasCtx.fillStyle = '#fff';
         drawString(funcBeanStructCanvasCtx, funcBeanStruct.funName || '', 5, funcBeanStruct.frame, funcBeanStruct);
         if (FuncStruct.isSelected(funcBeanStruct)) {
           funcBeanStructCanvasCtx.strokeStyle = '#000';
           funcBeanStructCanvasCtx.lineWidth = 1;
-          funcBeanStructCanvasCtx.strokeRect(funcBeanStruct.frame.x, funcBeanStruct.frame.y, funcBeanStruct.frame.width, miniHeight - padding * 2);
+          funcBeanStructCanvasCtx.strokeRect(
+            funcBeanStruct.frame.x,
+            funcBeanStruct.frame.y,
+            funcBeanStruct.frame.width,
+            miniHeight - padding * 2
+          );
         }
       }
     }

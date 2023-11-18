@@ -33,7 +33,8 @@ export class TabPaneNetworkAbility extends BaseElement {
 
   set data(networkAbilityValue: SelectionParam | any) {
     // @ts-ignore
-    this.networkAbilityTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 45 + 'px';
+    this.networkAbilityTbl?.shadowRoot?.querySelector('.table').style.height =
+      this.parentElement!.clientHeight - 45 + 'px';
     this.queryDataByDB(networkAbilityValue);
   }
 
@@ -144,8 +145,11 @@ export class TabPaneNetworkAbility extends BaseElement {
     function compare(property, sort, type) {
       return function (networkAbilityLeftData: SystemNetworkSummary, networkAbilityRightData: SystemNetworkSummary) {
         if (type === 'number') {
-          // @ts-ignore
-          return sort === 2 ? parseFloat(networkAbilityRightData[property]) - parseFloat(networkAbilityLeftData[property]) : parseFloat(networkAbilityLeftData[property]) - parseFloat(networkAbilityRightData[property]);
+          return sort === 2
+            ? // @ts-ignore
+              parseFloat(networkAbilityRightData[property]) - parseFloat(networkAbilityLeftData[property])
+            : // @ts-ignore
+              parseFloat(networkAbilityLeftData[property]) - parseFloat(networkAbilityRightData[property]);
         } else if (type === 'durationStr') {
           return sort === 2
             ? networkAbilityRightData.duration - networkAbilityLeftData.duration

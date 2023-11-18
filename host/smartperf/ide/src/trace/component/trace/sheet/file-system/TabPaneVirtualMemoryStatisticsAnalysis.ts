@@ -217,7 +217,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
   }
 
   private getVmTip() {
-    return (obj: { obj: { tableName: any; durFormat: any; percent: any; }; }): string => {
+    return (obj: { obj: { tableName: any; durFormat: any; percent: any } }): string => {
       return `<div>
                                 <div>ProcessName:${obj.obj.tableName}</div>
                                 <div>Duration:${obj.obj.durFormat}</div>
@@ -403,9 +403,9 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       },
       tip: (vmLibraryObj): string => {
         return `<div>
-                                <div>Library:${ vmLibraryObj.obj.tableName }</div>
-                                <div>Duration:${ vmLibraryObj.obj.durFormat }</div>
-                                <div>percent:${ vmLibraryObj.obj.percent }%</div> 
+                                <div>Library:${vmLibraryObj.obj.tableName}</div>
+                                <div>Duration:${vmLibraryObj.obj.durFormat}</div>
+                                <div>percent:${vmLibraryObj.obj.percent}%</div> 
                             </div>
                                 `;
       },
@@ -593,8 +593,8 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         pName = item.processName =
           item.processName === null || item.processName === undefined
-            ? `Process(${ item.pid })`
-            : `${ item.processName }(${ item.pid })`;
+            ? `Process(${item.pid})`
+            : `${item.processName}(${item.pid})`;
         vmPidDataDur += item.dur;
       }
       this.vmStatisticsAnalysisPidData.push({
@@ -697,7 +697,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       for (let item of value) {
         vmThreadDur += item.dur;
         tName = item.threadName =
-          item.threadName === null || item.threadName === undefined ? `Thread(${ item.tid })` : `${ item.threadName }`;
+          item.threadName === null || item.threadName === undefined ? `Thread(${item.tid})` : `${item.threadName}`;
       }
       const threadData = {
         tableName: tName,
@@ -842,9 +842,9 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
       },
       tip: (vmObj): string => {
         return `<div>
-                                    <div>Function:${ vmObj.obj.tableName }</div>
-                                    <div>Duration:${ vmObj.obj.durFormat }</div>
-                                    <div>percent:${ vmObj.obj.percent }</div>
+                                    <div>Function:${vmObj.obj.tableName}</div>
+                                    <div>Duration:${vmObj.obj.durFormat}</div>
+                                    <div>percent:${vmObj.obj.percent}</div>
                                         </div>
                                                 `;
       },
@@ -895,7 +895,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
     // @ts-ignore
     return vmReleaseType;
   }
-  totalDurationData(duration: number): { durFormat: string; percent: string; tableName: string; duration: number; } {
+  totalDurationData(duration: number): { durFormat: string; percent: string; tableName: string; duration: number } {
     return {
       durFormat: Utils.getProbablyTime(duration),
       percent: ((duration / duration) * 100).toFixed(2),
@@ -912,7 +912,7 @@ export class TabPaneVirtualMemoryStatisticsAnalysis extends BaseElement {
         percent: 0,
         durFormat: 0,
       };
-      for (let i = 0 ; i < vmRes.length ; i++) {
+      for (let i = 0; i < vmRes.length; i++) {
         if (i < 19) {
           vmPieChartArr.push(vmRes[i]);
         } else {

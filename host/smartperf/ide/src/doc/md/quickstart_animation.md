@@ -7,9 +7,9 @@
 ### Animation展示说明
 将抓取的Animation文件导入到smartperf工具中，查看图形子系统和应用动效卡顿类问题。
 ### Animation泳道图展示
-Animation的响应时延泳道图显示,泳道图的Slice会显示响应时延，如下图中的Completion delay(683.035938ms)。
+Animation的响应时延和完成时延泳道图显示，泳道图的Slice会显示响应时延和完成时延，如下图中的Response delay(79.379165ms),Completion delay(2606.938539ms)。
 ![GitHub Logo](../../figures/animation/anrsdelayrow.jpg)。
-Animation的动效曲线和帧间距的总泳道图，如图点击leashWindow40旁边的小齿轮可以切换leashWindow。
+Animation的动效曲线和帧间距的总泳道图，如图点击WindowScene_mm37旁边的小齿轮可以切换WindowScene。
 ![GitHub Logo](../../figures/animation/anrsallrow.jpg)。
 Animation的动效曲线泳道图展示，如下：
 ![GitHub Logo](../../figures/animation/anieffectcurv.jpg)
@@ -33,11 +33,11 @@ Animation的帧间距泳道图展示，如下:
 +     Index： 属性索引。
 +     Value：属性值。
 ### 帧间距泳道图点选功能
-点选帧间距泳道图，Frame spacing的Tab页会显示这一个点的帧间距计算数据，一个点要计算两个属性的的帧间距，所以需要显示两个属性的。
+点选帧间距泳道图，Frame spacing的Tab页会显示这一个点的帧间距计算数据，一个点要计算四个属性的的帧间距，所以需要显示四个属性的。
 ![GitHub Logo](../../figures/animation/anispacingselect.jpg)
 +     Timestamp： 时间戳信息。
 +     Index： 属性索引。
-+     property：动效宽度或高度属性。
++     property：动效宽度，高度，X，Y的属性。
 +     Value2： 当前帧的属性值。
 +     Value1： 前一帧的属性值。
 +     Screen：存储设备的物理宽度/高度。
@@ -49,7 +49,7 @@ Animation的帧间距泳道图展示，如下:
 ![GitHub Logo](../../figures/animation/anispacingdrag.jpg)
 +     Timestamp： 时间戳信息。
 +     Index： 属性索引。
-+     property：动效宽度或高度属性。
++     property：动效宽度，高度，X，Y的属性。
 +     Value2： 当前帧的属性值。
 +     Value1： 前一帧的属性值。
 +     Screen：存储设备的物理宽度/高度。

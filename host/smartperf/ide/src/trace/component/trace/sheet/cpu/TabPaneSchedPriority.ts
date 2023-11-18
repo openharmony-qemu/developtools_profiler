@@ -54,14 +54,14 @@ export class TabPaneSchedPriority extends BaseElement {
   private async queryDataByDB(sptParam: SelectionParam | any): Promise<void> {
     this.priorityTbl!.loading = true;
     const resultData: Array<Priority> = [];
-    if (this.strValueMap.size === 0){
+    if (this.strValueMap.size === 0) {
       await queryThreadStateArgsByName('next_info').then((value) => {
         for (const item of value) {
           this.strValueMap.set(item.argset, item.strValue);
         }
       });
     }
-   
+
     const filterList = ['0', '0x0']; //next_info第2字段不为0 || next_info第3字段不为0
 
     // 通过priority与next_info结合判断优先级等级

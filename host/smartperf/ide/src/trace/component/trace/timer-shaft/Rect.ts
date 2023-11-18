@@ -54,7 +54,7 @@ export class Rect {
     );
   }
 
-  static intersect(rectA: Rect|DOMRect, rectB: Rect|DOMRect): boolean {
+  static intersect(rectA: Rect | DOMRect, rectB: Rect | DOMRect): boolean {
     let maxX = Math.max(rectA.x + rectA.width, rectB.x + rectB.width);
     let maxY = Math.max(rectA.y + rectA.height, rectB.y + rectB.height);
     let minX = Math.min(rectA.x, rectB.x);

@@ -26,6 +26,9 @@ window.ResizeObserver =
 
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 describe('TabPaneThreadStates Test', () => {
   let tabPaneThreadStates = new TabPaneThreadStates();
 

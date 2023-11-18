@@ -326,6 +326,8 @@ describe('ProcedureLogicWorkerFileSystem Test', () => {
       selfDur: 1,
       self: 1,
       count: 1,
+      tsArray: [],
+      durArray: []
     };
     let callChain = {
       ip: '',

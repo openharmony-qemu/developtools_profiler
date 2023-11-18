@@ -248,11 +248,11 @@ export class SpSdkChart {
     let maxList = await queryCounterMax(sqlMap.maxSql, result.counter_id, componentId);
     let maxCounter = maxList[0].max_value;
     traceRow.onThreadHandler = (useCache) => {
-      let context:CanvasRenderingContext2D;
-      if(traceRow.currentContext){
+      let context: CanvasRenderingContext2D;
+      if (traceRow.currentContext) {
         context = traceRow.currentContext;
-      } else{
-        context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      } else {
+        context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       }
       traceRow.canvasSave(context);
       (renders[TraceRow.ROW_TYPE_SDK_COUNTER] as SdkCounterRender).renderMainThread(
@@ -374,11 +374,11 @@ export class SpSdkChart {
       SdkSliceStruct.hoverSdkSliceStruct = traceRow.getHoverStruct();
     };
     traceRow.onThreadHandler = (useCache: boolean) => {
-      let context:CanvasRenderingContext2D;
-      if(traceRow.currentContext){
+      let context: CanvasRenderingContext2D;
+      if (traceRow.currentContext) {
         context = traceRow.currentContext;
-      } else{
-        context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+      } else {
+        context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
       }
       traceRow.canvasSave(context);
       (renders[TraceRow.ROW_TYPE_SDK_SLICE] as SdkSliceRender).renderMainThread(

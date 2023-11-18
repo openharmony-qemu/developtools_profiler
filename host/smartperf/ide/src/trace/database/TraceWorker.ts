@@ -116,7 +116,7 @@ let merged = () => {
 
 let translateJsonString = (str: string): string => {
   return str //   .padding
-    .replace(/[\t|\r|\n]/g, '')
+    .replace(/[\t|\r|\n]/g, '');
 };
 
 let convertJSON = () => {
@@ -127,9 +127,9 @@ let convertJSON = () => {
     if (!str) {
     } else {
       let parse;
-      let tansStr:string;
+      let tansStr: string;
       try {
-        tansStr = str.replace(/[\t|\r|\n]/g, '');
+        tansStr = str.replace(/[\t\r\n]/g, '');
         parse = JSON.parse(tansStr);
       } catch {
         try {
@@ -142,9 +142,9 @@ let convertJSON = () => {
       }
       let columns = parse.columns;
       let values = parse.values;
-      for (let i = 0 ; i < values.length ; i++) {
+      for (let i = 0; i < values.length; i++) {
         let obj: any = {};
-        for (let j = 0 ; j < columns.length ; j++) {
+        for (let j = 0; j < columns.length; j++) {
           obj[columns[j]] = values[i][j];
         }
         jsonArray.push(obj);
@@ -414,24 +414,27 @@ self.onmessage = async (e: MessageEvent) => {
     let timStamp = e.data.params.timeStamp;
     let allIndexDataList = e.data.params.splitDataList;
     let splitFileInfos = e.data.params.splitFileInfo as Array<{
-      fileType: string,
-      startIndex: number,
-      endIndex: number,
-      size: number
+      fileType: string;
+      startIndex: number;
+      endIndex: number;
+      size: number;
     }>;
     let maxSize = 48 * 1024 * 1024;
     let maxPageNum = headArray.length / 1024;
     let currentPageNum = 0;
     let splitReqBufferAddr: number;
     if (splitFileInfos) {
-      let splitFileInfo = splitFileInfos.filter(splitFileInfo => splitFileInfo.fileType !== 'trace');
+      let splitFileInfo = splitFileInfos.filter((splitFileInfo) => splitFileInfo.fileType !== 'trace');
       if (splitFileInfo && splitFileInfo.length > 0) {
         let traceFileType: string = '';
         let db = await openDB();
-        let newCutFilePageInfo: Map<string, {
-          traceFileType: string,
-          dataArray: [{ data: Uint8Array | Array<{ offset: number, size: number }>, dataTypes: string }]
-        }> = new Map();
+        let newCutFilePageInfo: Map<
+          string,
+          {
+            traceFileType: string;
+            dataArray: [{ data: Uint8Array | Array<{ offset: number; size: number }>; dataTypes: string }];
+          }
+        > = new Map();
         let cutFileCallBack = (heapPtr: number, size: number, dataType: number, isEnd: number) => {
           let key = `${traceFileType}_${currentPageNum}`;
           let out: Uint8Array = Module.HEAPU8.slice(heapPtr, heapPtr + size);
@@ -442,11 +445,11 @@ self.onmessage = async (e: MessageEvent) => {
             } else {
               if (newCutFilePageInfo.has(key)) {
                 let newVar = newCutFilePageInfo.get(key);
-                newVar?.dataArray.push({data: out, dataTypes: 'data'});
+                newVar?.dataArray.push({ data: out, dataTypes: 'data' });
               } else {
                 newCutFilePageInfo.set(key, {
                   traceFileType: traceFileType,
-                  dataArray: [{data: out, dataTypes: 'data'}]
+                  dataArray: [{ data: out, dataTypes: 'data' }],
                 });
               }
             }
@@ -455,8 +458,8 @@ self.onmessage = async (e: MessageEvent) => {
             if (cutFilePageInfo) {
               let jsonStr: string = dec.decode(out);
               let jsonObj = JSON.parse(jsonStr);
-              let valueArray: Array<{ offset: number, size: number }> = jsonObj.value;
-              cutFilePageInfo.dataArray.push({data: valueArray, dataTypes: 'json'});
+              let valueArray: Array<{ offset: number; size: number }> = jsonObj.value;
+              cutFilePageInfo.dataArray.push({ data: valueArray, dataTypes: 'json' });
             }
           }
         };
@@ -468,9 +471,22 @@ self.onmessage = async (e: MessageEvent) => {
           traceFileType = fileInfo.fileType;
           for (let pageNum = 0; pageNum < maxPageNum; pageNum++) {
             currentPageNum = pageNum;
-            await splitFileAndSave(timStamp, fileInfo.fileType, fileInfo.startIndex, fileInfo.endIndex, fileInfo.size, db, pageNum, maxSize, splitReqBufferAddr);
+            await splitFileAndSave(
+              timStamp,
+              fileInfo.fileType,
+              fileInfo.startIndex,
+              fileInfo.endIndex,
+              fileInfo.size,
+              db,
+              pageNum,
+              maxSize,
+              splitReqBufferAddr
+            );
             await initWASM();
-            splitReqBufferAddr = Module._InitializeSplitFile(Module.addFunction(cutFileCallBack, 'viiii'), REQ_BUF_SIZE);
+            splitReqBufferAddr = Module._InitializeSplitFile(
+              Module.addFunction(cutFileCallBack, 'viiii'),
+              REQ_BUF_SIZE
+            );
             Module.HEAPU8.set(headArray, splitReqBufferAddr);
             Module._TraceStreamerGetLongTraceTimeSnapEx(headArray.length);
           }
@@ -493,14 +509,14 @@ self.onmessage = async (e: MessageEvent) => {
                 let freeSaveData = receiveDataArray.slice(0, freeSize);
                 currentChunk.set(freeSaveData, currentChunkOffset);
                 await addDataToIndexeddb(db, {
-                  'buf': currentChunk,
-                  'id': `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-                  'fileType': `${fileType}_new`,
-                  'pageNum': pageNum,
-                  'startOffset': saveStartOffset,
-                  'endOffset': saveStartOffset + maxSize,
-                  'index': saveIndex,
-                  'timStamp': timStamp
+                  buf: currentChunk,
+                  id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+                  fileType: `${fileType}_new`,
+                  pageNum: pageNum,
+                  startOffset: saveStartOffset,
+                  endOffset: saveStartOffset + maxSize,
+                  index: saveIndex,
+                  timStamp: timStamp,
                 });
                 saveStartOffset += maxSize;
                 saveIndex++;
@@ -515,56 +531,77 @@ self.onmessage = async (e: MessageEvent) => {
               }
             } else {
               if (receiveData.data.length > 0) {
-                let needCutMessage = receiveData.data as Array<{ offset: number, size: number }>;
+                let needCutMessage = receiveData.data as Array<{ offset: number; size: number }>;
                 let startOffset = needCutMessage[0].offset;
-                let endOffset = needCutMessage[needCutMessage.length - 1].offset + needCutMessage[needCutMessage.length - 1].size;
-                let searchDataInfo = allIndexDataList.filter((value: {
-                  fileType: string
-                  index: number
-                  pageNum: number
-                  startOffsetSize: number
-                  endOffsetSize: number
-                }) => {
-                  return value.fileType === fileType && value.startOffsetSize <= endOffset && value.endOffsetSize >= startOffset;
-                }).sort((valueA: { startOffsetSize: number; }, valueB: { startOffsetSize: number; }) => {
-                  return valueA.startOffsetSize - valueB.startOffsetSize;
-                });
+                let endOffset =
+                  needCutMessage[needCutMessage.length - 1].offset + needCutMessage[needCutMessage.length - 1].size;
+                let searchDataInfo = allIndexDataList
+                  .filter(
+                    (value: {
+                      fileType: string;
+                      index: number;
+                      pageNum: number;
+                      startOffsetSize: number;
+                      endOffsetSize: number;
+                    }) => {
+                      return (
+                        value.fileType === fileType &&
+                        value.startOffsetSize <= endOffset &&
+                        value.endOffsetSize >= startOffset
+                      );
+                    }
+                  )
+                  .sort((valueA: { startOffsetSize: number }, valueB: { startOffsetSize: number }) => {
+                    return valueA.startOffsetSize - valueB.startOffsetSize;
+                  });
                 let startIndex = searchDataInfo[0].index;
                 let endIndex = searchDataInfo[searchDataInfo.length - 1].index;
                 let startQueryIndex = startIndex;
                 let endQueryIndex = startIndex + 10;
                 do {
                   endQueryIndex = Math.min(endQueryIndex, endIndex);
-                  let searchCutFilter = searchDataInfo.filter((value: {
-                    fileType: string
-                    index: number
-                    pageNum: number
-                    startOffsetSize: number
-                    endOffsetSize: number
-                  }) => {
-                    if (endQueryIndex === startQueryIndex) {
-                      return value.index >= startQueryIndex;
+                  let searchCutFilter = searchDataInfo.filter(
+                    (value: {
+                      fileType: string;
+                      index: number;
+                      pageNum: number;
+                      startOffsetSize: number;
+                      endOffsetSize: number;
+                    }) => {
+                      if (endQueryIndex === startQueryIndex) {
+                        return value.index >= startQueryIndex;
+                      }
+                      return value.index >= startQueryIndex && value.index <= endQueryIndex;
                     }
-                    return value.index >= startQueryIndex && value.index <= endQueryIndex;
-                  });
-                  let minStartOffsetSize = Math.min(...searchCutFilter.map((item: {
-                    startOffsetSize: number;
-                  }) => item.startOffsetSize));
-                  let maxEndOffsetSize = Math.max(...searchCutFilter.map((item: { endOffsetSize: number; }) => item.endOffsetSize));
-                  let cutUseOffsetObjs = needCutMessage.filter(offseObj => {
+                  );
+                  let minStartOffsetSize = Math.min(
+                    ...searchCutFilter.map((item: { startOffsetSize: number }) => item.startOffsetSize)
+                  );
+                  let maxEndOffsetSize = Math.max(
+                    ...searchCutFilter.map((item: { endOffsetSize: number }) => item.endOffsetSize)
+                  );
+                  let cutUseOffsetObjs = needCutMessage.filter((offseObj) => {
                     return offseObj.offset > minStartOffsetSize && offseObj.offset < maxEndOffsetSize;
                   });
                   let transaction = db.transaction(STORE_NAME, 'readonly');
                   let store = transaction.objectStore(STORE_NAME);
                   let index = store.index('QueryCompleteFile');
-                  let range = IDBKeyRange.bound([timStamp, fileType, 0, startQueryIndex], [timStamp, fileType, 0, endQueryIndex], false, false);
+                  let range = IDBKeyRange.bound(
+                    [timStamp, fileType, 0, startQueryIndex],
+                    [timStamp, fileType, 0, endQueryIndex],
+                    false,
+                    false
+                  );
                   const getRequest = index.openCursor(range);
                   let queryAllData = await queryDataFromIndexeddb(getRequest);
                   let mergeData = indexedDataToBufferData(queryAllData);
                   for (let cutOffsetObjIndex = 0; cutOffsetObjIndex < cutUseOffsetObjs.length; cutOffsetObjIndex++) {
                     let cutUseOffsetObj = cutUseOffsetObjs[cutOffsetObjIndex];
                     let endOffset = cutUseOffsetObj.offset + cutUseOffsetObj.size;
-                    let sliceData = mergeData.slice(cutUseOffsetObj.offset - minStartOffsetSize, endOffset - minStartOffsetSize);
+                    let sliceData = mergeData.slice(
+                      cutUseOffsetObj.offset - minStartOffsetSize,
+                      endOffset - minStartOffsetSize
+                    );
                     let sliceDataLength = sliceData.length;
                     if (currentChunkOffset + sliceDataLength >= maxSize) {
                       let handleCurrentData = new Uint8Array(currentChunkOffset + sliceDataLength);
@@ -583,14 +620,14 @@ self.onmessage = async (e: MessageEvent) => {
                           currentChunkOffset += saveArray.length;
                         } else {
                           await addDataToIndexeddb(db, {
-                            'buf': saveArray,
-                            'id': `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-                            'fileType': `${fileType}_new`,
-                            'pageNum': pageNum,
-                            'startOffset': saveStartOffset,
-                            'endOffset': saveStartOffset + maxSize,
-                            'index': saveIndex,
-                            'timStamp': timStamp
+                            buf: saveArray,
+                            id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+                            fileType: `${fileType}_new`,
+                            pageNum: pageNum,
+                            startOffset: saveStartOffset,
+                            endOffset: saveStartOffset + maxSize,
+                            index: saveIndex,
+                            timStamp: timStamp,
                           });
                           saveStartOffset += maxSize;
                           saveIndex++;
@@ -610,14 +647,14 @@ self.onmessage = async (e: MessageEvent) => {
           if (currentChunkOffset !== 0) {
             let freeArray = currentChunk.slice(0, currentChunkOffset);
             await addDataToIndexeddb(db, {
-              'buf': freeArray,
-              'id': `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-              'fileType': `${fileType}_new`,
-              'pageNum': pageNum,
-              'startOffset': saveStartOffset,
-              'endOffset': saveStartOffset + maxSize,
-              'index': saveIndex,
-              'timStamp': timStamp
+              buf: freeArray,
+              id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+              fileType: `${fileType}_new`,
+              pageNum: pageNum,
+              startOffset: saveStartOffset,
+              endOffset: saveStartOffset + maxSize,
+              index: saveIndex,
+              timStamp: timStamp,
             });
             saveStartOffset += maxSize;
             saveIndex++;
@@ -650,7 +687,17 @@ function indexedDataToBufferData(sourceData: any): Uint8Array {
   return resultUintArray;
 }
 
-async function splitFileAndSave(timStamp: number, fileType: string, startIndex: number, endIndex: number, fileSize: number, db: IDBDatabase, pageNum: number, maxSize: number, splitReqBufferAddr?: any) {
+async function splitFileAndSave(
+  timStamp: number,
+  fileType: string,
+  startIndex: number,
+  endIndex: number,
+  fileSize: number,
+  db: IDBDatabase,
+  pageNum: number,
+  maxSize: number,
+  splitReqBufferAddr?: any
+) {
   let queryStartIndex = startIndex;
   let queryEndIndex = startIndex;
   let saveIndex = 0;
@@ -693,14 +740,14 @@ async function splitFileAndSave(timStamp: number, fileType: string, startIndex: 
               let freeSaveData = currentArkTsData.slice(0, freeSize);
               currentChunk.set(freeSaveData, currentChunkOffset);
               await addDataToIndexeddb(db, {
-                'buf': currentChunk,
-                'id': `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-                'fileType': `${fileType}_new`,
-                'pageNum': pageNum,
-                'startOffset': saveStartOffset,
-                'endOffset': saveStartOffset + maxSize,
-                'index': saveIndex,
-                'timStamp': timStamp
+                buf: currentChunk,
+                id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+                fileType: `${fileType}_new`,
+                pageNum: pageNum,
+                startOffset: saveStartOffset,
+                endOffset: saveStartOffset + maxSize,
+                index: saveIndex,
+                timStamp: timStamp,
               });
               saveStartOffset += maxSize;
               saveIndex++;
@@ -717,14 +764,14 @@ async function splitFileAndSave(timStamp: number, fileType: string, startIndex: 
                   currentChunkOffset += saveArray.length;
                 } else {
                   await addDataToIndexeddb(db, {
-                    'buf': saveArray,
-                    'id': `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-                    'fileType': `${fileType}_new`,
-                    'pageNum': pageNum,
-                    'startOffset': saveStartOffset,
-                    'endOffset': saveStartOffset + maxSize,
-                    'index': saveIndex,
-                    'timStamp': timStamp
+                    buf: saveArray,
+                    id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+                    fileType: `${fileType}_new`,
+                    pageNum: pageNum,
+                    startOffset: saveStartOffset,
+                    endOffset: saveStartOffset + maxSize,
+                    index: saveIndex,
+                    timStamp: timStamp,
                   });
                   saveStartOffset += maxSize;
                   saveIndex++;
@@ -739,19 +786,19 @@ async function splitFileAndSave(timStamp: number, fileType: string, startIndex: 
       }
     }
   } while (queryEndIndex < endIndex);
-  if (fileType === 'arkts' && currentChunkOffset > 0 ) {
+  if (fileType === 'arkts' && currentChunkOffset > 0) {
     let remnantArray = new Uint8Array(currentChunkOffset);
     let remnantChunk = currentChunk.slice(0, currentChunkOffset);
     remnantArray.set(remnantChunk, 0);
     await addDataToIndexeddb(db, {
-      'buf': remnantArray,
-      'id': `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-      'fileType': `${fileType}_new`,
-      'pageNum': pageNum,
-      'startOffset': saveStartOffset,
-      'endOffset': saveStartOffset + maxSize,
-      'index': saveIndex,
-      'timStamp': timStamp
+      buf: remnantArray,
+      id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+      fileType: `${fileType}_new`,
+      pageNum: pageNum,
+      startOffset: saveStartOffset,
+      endOffset: saveStartOffset + maxSize,
+      index: saveIndex,
+      timStamp: timStamp,
     });
     arkTsDataSize = 0;
     arkTsData.length = 0;
@@ -760,7 +807,7 @@ async function splitFileAndSave(timStamp: number, fileType: string, startIndex: 
 
 enum DataTypeEnum {
   data,
-  json
+  json,
 }
 
 let uploadSoActionId: string = '';
@@ -820,13 +867,13 @@ let splitReqBufferAddr = -1;
 
 enum FileTypeEnum {
   data,
-  json
+  json,
 }
 
 function cutFileBufferByOffSet(out: Uint8Array, uint8Array: Uint8Array) {
   let jsonStr: string = dec.decode(out);
   let jsonObj = JSON.parse(jsonStr);
-  let valueArray: Array<{ offset: number, size: number }> = jsonObj.value;
+  let valueArray: Array<{ offset: number; size: number }> = jsonObj.value;
   const sum = valueArray.reduce((total, obj) => total + obj.size, 0);
   let cutBuffer = new Uint8Array(sum);
   let offset = 0;
@@ -843,7 +890,7 @@ function cutFileByRange(e: MessageEvent) {
   let cutRightTs = e.data.rightTs;
   let uint8Array = new Uint8Array(e.data.buffer);
   let resultBuffer: Array<any> = [];
-  let cutFileCallBack = (heapPtr: number, size: number, fileType: number, isEnd:number) => {
+  let cutFileCallBack = (heapPtr: number, size: number, fileType: number, isEnd: number) => {
     let out: Uint8Array = Module.HEAPU8.slice(heapPtr, heapPtr + size);
     if (FileTypeEnum.data === fileType) {
       resultBuffer.push(out);
@@ -867,7 +914,7 @@ function cutFileByRange(e: MessageEvent) {
           cutStatus: true,
           msg: 'split success',
           buffer: e.data.buffer,
-          cutBuffer: cutBuffer.buffer
+          cutBuffer: cutBuffer.buffer,
         },
         // @ts-ignore
         [e.data.buffer, cutBuffer.buffer]
@@ -920,11 +967,11 @@ function queryJSON(name: string, sql: string, params: any) {
   return convertJSON();
 }
 
-function query(name: string, sql: string, params: any) {
+function query(name: string, sql: string, params: any): void {
   if (params) {
     Reflect.ownKeys(params).forEach((key: any) => {
       if (typeof params[key] === 'string') {
-        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${ params[key] }'`);
+        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${params[key]}'`);
       } else {
         sql = sql.replace(new RegExp(`\\${key}`, 'g'), params[key]);
       }
@@ -940,7 +987,7 @@ function querySdk(name: string, sql: string, sdkParams: any, action: string) {
   if (sdkParams) {
     Reflect.ownKeys(sdkParams).forEach((key: any) => {
       if (typeof sdkParams[key] === 'string') {
-        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${ sdkParams[key] }'`);
+        sql = sql.replace(new RegExp(`\\${key}`, 'g'), `'${sdkParams[key]}'`);
       } else {
         sql = sql.replace(new RegExp(`\\${key}`, 'g'), sdkParams[key]);
       }

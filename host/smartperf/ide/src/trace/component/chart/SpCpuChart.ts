@@ -105,11 +105,11 @@ export class SpCpuChart {
             CpuStruct.hoverCpuStruct = traceRow.getHoverStruct();
           };
           traceRow.onThreadHandler = (useCache: boolean, buf: ArrayBuffer | undefined | null) => {
-            let context:CanvasRenderingContext2D;
-            if(traceRow.currentContext){
+            let context: CanvasRenderingContext2D;
+            if (traceRow.currentContext) {
               context = traceRow.currentContext;
-            } else{
-              context  = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
+            } else {
+              context = traceRow.collect ? this.trace.canvasFavoritePanelCtx! : this.trace.canvasPanelCtx!;
             }
             traceRow.canvasSave(context);
             (renders['cpu-data'] as CpuRender).renderMainThread(

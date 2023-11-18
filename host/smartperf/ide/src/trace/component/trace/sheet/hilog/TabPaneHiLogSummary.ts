@@ -31,7 +31,7 @@ export class TabPaneHiLogSummary extends BaseElement {
   private expansionUpIcon: LitIcon | undefined | null;
   private expansionDownIcon: LitIcon | undefined | null;
   private expandedNodeList: Set<number> = new Set();
-  private logLevel: string[] = ['Debug', 'Info', 'Warn', 'Error','Fatal'];
+  private logLevel: string[] = ['Debug', 'Info', 'Warn', 'Error', 'Fatal'];
   private selectTreeDepth: number = 0;
   private currentSelection: SelectionParam | undefined;
 
@@ -61,9 +61,9 @@ export class TabPaneHiLogSummary extends BaseElement {
     this.expansionDiv = this.shadowRoot?.querySelector<HTMLDivElement>('.expansion-div');
     this.expansionUpIcon = this.shadowRoot?.querySelector<LitIcon>('.expansion-up-icon');
     this.expansionDownIcon = this.shadowRoot?.querySelector<LitIcon>('.expansion-down-icon');
-    let summaryTreeLevel: string[] = ['Level', '/Process', '/Tag', '/Message']
-    this.shadowRoot?.querySelectorAll<HTMLLabelElement>('.head-label').forEach(summaryTreeHead => {
-      summaryTreeHead.addEventListener('click', ()=>{
+    let summaryTreeLevel: string[] = ['Level', '/Process', '/Tag', '/Message'];
+    this.shadowRoot?.querySelectorAll<HTMLLabelElement>('.head-label').forEach((summaryTreeHead) => {
+      summaryTreeHead.addEventListener('click', () => {
         this.selectTreeDepth = summaryTreeLevel.indexOf(summaryTreeHead.textContent!);
         this.expandedNodeList.clear();
         this.refreshSelectDepth(this.logTreeNodes);
@@ -158,17 +158,17 @@ export class TabPaneHiLogSummary extends BaseElement {
     }
     this.refreshSelectDepth(this.logTreeNodes);
     this.refreshRowNodeTable(true);
-  }
+  };
 
-  private refreshSelectDepth(logTreeNodes: LogTreeNode[]){
-    logTreeNodes.forEach(item => {
+  private refreshSelectDepth(logTreeNodes: LogTreeNode[]) {
+    logTreeNodes.forEach((item) => {
       if (item.depth < this.selectTreeDepth) {
         this.expandedNodeList.add(item.id);
         if (item.children.length > 0) {
           this.refreshSelectDepth(item.children);
         }
       }
-    })
+    });
   }
 
   initTabSheetEl(parentTabEl: HTMLElement) {

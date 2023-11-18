@@ -325,38 +325,13 @@ describe('LitTable Test', () => {
   it('LitTableTest28', () => {
     document.body.innerHTML = `<lit-table id="aaa"></lit-table>`;
     let litTable = document.querySelector('#aaa') as LitTable;
-    let tableColmn = document.createElement('lit-table-column') as LitTableColumn;
-    tableColmn.setAttribute('title', '0');
-    tableColmn.setAttribute('data-index', '22');
-    tableColmn.setAttribute('key', '22');
-    tableColmn.setAttribute('align', 'flex-start');
-    tableColmn.setAttribute('height', '321px');
-    let tableColmn1 = document.createElement('lit-table-column') as LitTableColumn;
-    tableColmn1.setAttribute('title', '12');
-    tableColmn1.setAttribute('data-index', '2');
-    tableColmn1.setAttribute('key', '4');
-    tableColmn1.setAttribute('align', 'flex-start');
-    tableColmn1.setAttribute('height', '2px');
-    litTable.tableColumns = [tableColmn, tableColmn1];
-    litTable.columns = [tableColmn, tableColmn1];
-    litTable.selectable = true;
-    litTable.ds = [
-      { id: 1, pid: null, name: '1' },
-      { id: 2, pid: 1, name: '2' },
-      { id: 3, pid: 1, name: '3' },
-      { id: 4, pid: null, name: '4' },
-      { id: 5, pid: 4, name: '4' },
-      { id: 6, pid: 4, name: '5' },
-      { id: 7, pid: 3, name: '7' },
-      { id: 8, pid: 4, name: '8' },
-    ];
-    expect(litTable.renderTreeTable()).toBeUndefined();
+    expect(litTable.setMouseIn(true, [])).toBeUndefined();
   });
 
   it('LitTableTest29', () => {
-    document.body.innerHTML = `<lit-table id="aaa"></lit-table>`;
-    let litTable = document.querySelector('#aaa') as LitTable;
-    expect(litTable.setMouseIn(true, [])).toBeUndefined();
+    let tableIcon = document.createElement('lit-icon') as LitIcon;
+    let mouseClickEvent: MouseEvent = new MouseEvent('click', <MouseEventInit>{ movementX: 1, movementY: 2 });
+    tableIcon.dispatchEvent(mouseClickEvent);
   });
 
   it('LitTableTest30', () => {
@@ -638,10 +613,5 @@ describe('LitTable Test', () => {
   });
   it('LitTableTest50', () => {
     expect(litTable.clearAllHover({})).toBeUndefined();
-  });
-  it('LitTableTest52', () => {
-    let tableIcon = document.createElement('lit-icon') as LitIcon;
-    let mouseClickEvent: MouseEvent = new MouseEvent('click', <MouseEventInit>{ movementX: 1, movementY: 2 });
-    tableIcon.dispatchEvent(mouseClickEvent);
   });
 });

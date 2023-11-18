@@ -76,7 +76,8 @@ export class SpRecordTemplate extends BaseElement {
     'zimage',
     'zmedia',
   ];
-  static HIPERF_DEFAULT_RECORD_ARGS = '-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking' +
+  static HIPERF_DEFAULT_RECORD_ARGS =
+    '-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking' +
     ' --call-stack dwarf --clockid monotonic --offcpu -m 256';
   private frameTimeline: LitSwitch | undefined | null;
   private schedulingAnalysis: LitSwitch | undefined | null;
@@ -90,18 +91,23 @@ export class SpRecordTemplate extends BaseElement {
     this.appStartup = this.shadowRoot?.querySelector<LitSwitch>('#app_startup');
     this.taskPoolEl = this.shadowRoot?.querySelector<LitSwitch>('#task_pool');
     this.dynamicEffectEl = this.shadowRoot?.querySelector<LitSwitch>('#dynamic_effect');
-    this.addProbeListener(this.frameTimeline!, this.schedulingAnalysis!, this.appStartup!, this.taskPoolEl!, this.dynamicEffectEl!);
+    this.addProbeListener(
+      this.frameTimeline!,
+      this.schedulingAnalysis!,
+      this.appStartup!,
+      this.taskPoolEl!,
+      this.dynamicEffectEl!
+    );
   }
 
   addProbeListener(...elements: HTMLElement[]) {
-    elements.forEach(element => {
+    elements.forEach((element) => {
       element.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
         let detail = event.detail;
         if (detail!.checked) {
-          this.dispatchEvent(new CustomEvent('addProbe',
-            { detail: { 'elementId': element.getAttribute('name') } }));        } else {
-          this.dispatchEvent(new CustomEvent('delProbe',
-            {detail: {'elementId': element.getAttribute('name')}}));
+          this.dispatchEvent(new CustomEvent('addProbe', { detail: { elementId: element.getAttribute('name') } }));
+        } else {
+          this.dispatchEvent(new CustomEvent('delProbe', { detail: { elementId: element.getAttribute('name') } }));
         }
       });
     });

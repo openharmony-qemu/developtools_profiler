@@ -558,9 +558,9 @@ where cpu not null
               block: '',
               ts: 0,
               dur: ca.ts,
-            })
+            });
           }
-          cpuArr.push(ca)
+          cpuArr.push(ca);
           map.set(ca.cpu, cpuArr);
         }
       }
@@ -654,7 +654,10 @@ where cpu not null
 
   handlerFreqThreadData(arr: FreqThread[]) {
     let cpuFreqArr: CpuMeasure[] = (this.cpuFreqMap.get(this.cpu) || []).filter((it) => it.value === this.freq);
-    let map: Map<number, { tid: number; tName: string; pid: number; pName: string; dur: number; durStr: string; ratio: string; }> = new Map();
+    let map: Map<
+      number,
+      { tid: number; tName: string; pid: number; pName: string; dur: number; durStr: string; ratio: string }
+    > = new Map();
     let sumFreqDur = 0;
     cpuFreqArr.map((it) => {
       sumFreqDur += it.dur;

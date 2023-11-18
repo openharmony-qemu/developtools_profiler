@@ -55,11 +55,13 @@ self.onmessage = async (e: MessageEvent) => {
     let headerStr = enc.decode(uint8Array);
     let currentPosition = 1024;
     let dataHeader = convertModule._malloc(1100);
-    if (headerStr.indexOf('OHOSPROF') == 0) { // htrace
+    if (headerStr.indexOf('OHOSPROF') == 0) {
+      // htrace
       let uint8Array = new Uint8Array(fileData.slice(0, 1024));
       convertModule.HEAPU8.set(uint8Array, dataHeader);
       convertModule._SendFileHeader(dataHeader, 1024, traceInsPtr);
-    } else { // raw trace
+    } else {
+      // raw trace
       let uint8Array = new Uint8Array(fileData.slice(0, 12));
       convertModule.HEAPU8.set(uint8Array, dataHeader);
       convertModule._SendRawFileHeader(dataHeader, 12, traceInsPtr);

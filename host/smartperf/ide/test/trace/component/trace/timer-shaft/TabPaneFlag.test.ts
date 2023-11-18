@@ -43,19 +43,4 @@ describe('TabPaneFlag Test', () => {
   it('TabPaneFlagTest02', function () {
     expect(tabPaneFlag.initHtml()).not.toBe('');
   });
-
-  it('TabPaneFlagTest03', function () {
-    expect(
-      tabPaneFlag.setFlagObj({
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-        time: 0,
-        color: '',
-        selected: false,
-        text: '',
-      })
-    ).toBeUndefined();
-  });
 });

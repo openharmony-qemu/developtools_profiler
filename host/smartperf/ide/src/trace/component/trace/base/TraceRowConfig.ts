@@ -21,7 +21,7 @@ import { SpSystemTrace } from '../../SpSystemTrace.js';
 import { LitSearch } from '../search/Search.js';
 import { TraceSheet } from './TraceSheet.js';
 import { CpuStruct } from '../../../database/ui-worker/ProcedureWorkerCPU.js';
-import { BaseStruct } from '../../../bean/BaseStruct.js';
+import { type BaseStruct } from '../../../bean/BaseStruct.js';
 
 @element('trace-row-config')
 export class TraceRowConfig extends BaseElement {
@@ -64,9 +64,10 @@ export class TraceRowConfig extends BaseElement {
     this.chartTable!.innerHTML = '';
     this.inputElement!.value = '';
     this.spSystemTrace = this.parentElement!.querySelector<SpSystemTrace>('sp-system-trace');
-    this.traceRowList = this.spSystemTrace!.shadowRoot?.querySelector('div[class=rows-pane]')!.querySelectorAll<
-      TraceRow<BaseStruct>
-    >("trace-row[row-parent-id='']");
+    this.traceRowList =
+      this.spSystemTrace!.shadowRoot?.querySelector('div[class=rows-pane]')!.querySelectorAll<TraceRow<BaseStruct>>(
+        "trace-row[row-parent-id='']"
+      );
     let allowSceneList: Array<string> = [];
     TraceRowConfig.allTraceRowList.push(...this.traceRowList!);
     this.traceRowList!.forEach((traceRow: TraceRow<BaseStruct>) => {
@@ -309,7 +310,7 @@ export class TraceRowConfig extends BaseElement {
     this.spSystemTrace!.selectFlag = undefined;
   }
 
-  initElements(): void {}
+  initElements(): void { }
 
   connectedCallback(): void {
     this.sceneTable = this.shadowRoot!.querySelector<HTMLDivElement>('#scene-select');

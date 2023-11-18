@@ -51,7 +51,12 @@ export class ThreadStruct extends BaseStruct {
       if ('S' == threadBeanStructData.state) {
         threadBeanCanvasCtx.fillStyle = ThreadStruct.sColor;
         threadBeanCanvasCtx.globalAlpha = 0.2; // transparency
-        threadBeanCanvasCtx.fillRect(threadBeanStructData.frame.x, threadBeanStructData.frame.y + padding, threadBeanStructData.frame.width, threadBeanStructData.frame.height - padding * 2);
+        threadBeanCanvasCtx.fillRect(
+          threadBeanStructData.frame.x,
+          threadBeanStructData.frame.y + padding,
+          threadBeanStructData.frame.width,
+          threadBeanStructData.frame.height - padding * 2
+        );
         threadBeanCanvasCtx.globalAlpha = 1; // transparency
       } else if ('R' == threadBeanStructData.state) {
         threadBeanCanvasCtx.fillStyle = ThreadStruct.rColor;
@@ -73,17 +78,33 @@ export class ThreadStruct extends BaseStruct {
       ) {
         threadBeanCanvasCtx.strokeStyle = '#232c5d';
         threadBeanCanvasCtx.lineWidth = 2;
-        threadBeanCanvasCtx.strokeRect(threadBeanStructData.frame.x, threadBeanStructData.frame.y + padding, threadBeanStructData.frame.width - 2, threadBeanStructData.frame.height - padding * 2);
+        threadBeanCanvasCtx.strokeRect(
+          threadBeanStructData.frame.x,
+          threadBeanStructData.frame.y + padding,
+          threadBeanStructData.frame.width - 2,
+          threadBeanStructData.frame.height - padding * 2
+        );
       }
     }
   }
 
   private static drawRectAndString(threadBeanCanvasCtx: CanvasRenderingContext2D, threadBeanStructData: ThreadStruct) {
     // @ts-ignore
-    threadBeanCanvasCtx.fillRect(threadBeanStructData.frame.x, threadBeanStructData.frame.y + padding, threadBeanStructData.frame.width, threadBeanStructData.frame.height - padding * 2);
+    threadBeanCanvasCtx.fillRect(
+      threadBeanStructData.frame!.x,
+      threadBeanStructData.frame!.y + padding,
+      threadBeanStructData.frame!.width,
+      threadBeanStructData.frame!.height - padding * 2
+    );
     threadBeanCanvasCtx.fillStyle = '#fff';
     // @ts-ignore
-    drawString(threadBeanCanvasCtx, ThreadStruct.getEndState(threadBeanStructData.state || ''), 2, threadBeanStructData.frame, threadBeanStructData);
+    drawString(
+      threadBeanCanvasCtx,
+      ThreadStruct.getEndState(threadBeanStructData.state || ''),
+      2,
+      threadBeanStructData.frame!,
+      threadBeanStructData
+    );
   }
 
   static getEndState(state: string): string {
@@ -99,12 +120,14 @@ export class ThreadStruct extends BaseStruct {
   }
 
   static equals(d1: ThreadStruct, d2: ThreadStruct): boolean {
-    return d1 &&
+    return (
+      d1 &&
       d2 &&
       d1.cpu == d2.cpu &&
       d1.tid == d2.tid &&
       d1.state == d2.state &&
       d1.startTime == d2.startTime &&
-      d1.dur == d2.dur;
+      d1.dur == d2.dur
+    );
   }
 }

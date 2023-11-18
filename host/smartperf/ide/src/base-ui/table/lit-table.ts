@@ -998,7 +998,7 @@ export class LitTable extends HTMLElement {
     return visibleObjects;
   }
 
-  newTableRowObject(item: any, totalHeight: number, depth: number, parentNode?: TableRowObject) {
+  newTableRowObject(item: any, totalHeight: number, depth: number, parentNode?: TableRowObject): TableRowObject {
     let tableRowObject = new TableRowObject();
     tableRowObject.depth = depth;
     tableRowObject.data = item;
@@ -1480,9 +1480,9 @@ export class LitTable extends HTMLElement {
       if (text.indexOf('&lt;') === -1) {
         td.title = text;
       }
-        //   如果表格中有模板的情况，将模板中的数据放进td中，没有模板，直接将文本放进td
-        //  但是对于Current Selection tab页来说，表格前两列是时间，第三列是input标签，第四列是button标签
-        //  而第一行的数据只有第四列一个button，和模板中的数据并不一样，所以要特别处理一下
+      //   如果表格中有模板的情况，将模板中的数据放进td中，没有模板，直接将文本放进td
+      //  但是对于Current Selection tab页来说，表格前两列是时间，第三列是input标签，第四列是button标签
+      //  而第一行的数据只有第四列一个button，和模板中的数据并不一样，所以要特别处理一下
       if (column.template) {
         if (dataIndex === 'color' && rowData.data.colorEl === undefined) {
           td.innerHTML = '';
@@ -1894,24 +1894,24 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  setCurrentSelection(selectionData: any) {
+  setCurrentSelection(selectionData: any): void {
     if (this.isRecycleList) {
-      if (selectionData.isSelected != undefined) {
+      if (selectionData.isSelected !== undefined) {
         this.currentTreeDivList.forEach((itemEl) => {
-          if ((itemEl as any).data == selectionData) {
+          if ((itemEl as any).data === selectionData) {
             this.setSelectedRow(selectionData.isSelected, [itemEl]);
           }
         });
         this.currentRecycleList.forEach((recycleItem) => {
-          if ((recycleItem as any).data == selectionData) {
+          if ((recycleItem as any).data === selectionData) {
             this.setSelectedRow(selectionData.isSelected, [recycleItem]);
           }
         });
       }
     } else {
-      if (selectionData.isSelected != undefined) {
+      if (selectionData.isSelected !== undefined) {
         this.normalDs.forEach((item) => {
-          if ((item as any).data == selectionData) {
+          if ((item as any).data === selectionData) {
             this.setSelectedRow(selectionData.isSelected, [item]);
           }
         });
@@ -1919,27 +1919,27 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  setCurrentHover(data: any) {
+  setCurrentHover(data: any): void {
     if (this.isRecycleList) {
       this.setMouseIn(false, this.currentTreeDivList);
       this.setMouseIn(false, this.currentRecycleList);
-      if (data.isHover != undefined) {
+      if (data.isHover !== undefined) {
         this.currentTreeDivList.forEach((hoverItem) => {
-          if ((hoverItem as any).data == data) {
+          if ((hoverItem as any).data === data) {
             this.setMouseIn(data.isHover, [hoverItem]);
           }
         });
         this.currentRecycleList.forEach((hoverItem) => {
-          if ((hoverItem as any).data == data) {
+          if ((hoverItem as any).data === data) {
             this.setMouseIn(data.isHover, [hoverItem]);
           }
         });
       }
     } else {
       this.setMouseIn(false, this.normalDs);
-      if (data.isHover != undefined) {
-        this.normalDs.forEach((item) => {
-          if ((item as any).data == data) {
+      if (data.isHover !== undefined) {
+        this.normalDs.forEach((item): void => {
+          if ((item as any).data === data) {
             this.setMouseIn(data.isHover, [item]);
           }
         });
@@ -1947,13 +1947,13 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  dispatchRowClickEventIcon(rowData: any, elements: any[]) {
+  dispatchRowClickEventIcon(rowData: any, elements: any[]): void {
     this.dispatchEvent(
       new CustomEvent('icon-click', {
         detail: {
           ...rowData.data,
           data: rowData.data,
-          callBack: (isSelected: boolean) => {
+          callBack: (isSelected: boolean): void => {
             //是否爲单选
             if (isSelected) {
               this.clearAllSelection(rowData.data);
@@ -1966,13 +1966,13 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  dispatchRowClickEvent(rowObject: any, elements: any[]) {
+  dispatchRowClickEvent(rowObject: any, elements: any[]): void {
     this.dispatchEvent(
       new CustomEvent('row-click', {
         detail: {
           ...rowObject.data,
           data: rowObject.data,
-          callBack: (isSelected: boolean) => {
+          callBack: (isSelected: boolean): void => {
             //是否爲单选
             if (isSelected) {
               this.clearAllSelection(rowObject.data);
@@ -1985,12 +1985,12 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  dispatchRowHoverEvent(rowObject: any, elements: any[]) {
+  dispatchRowHoverEvent(rowObject: any, elements: any[]): void {
     this.dispatchEvent(
       new CustomEvent('row-hover', {
         detail: {
           data: rowObject.data,
-          callBack: () => {
+          callBack: (): void => {
             this.clearAllHover(rowObject.data);
             this.setMouseIn(rowObject.data.isHover, elements);
           },
@@ -2000,7 +2000,7 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  formatName(key: string, name: any) {
+  formatName(key: string, name: any): any {
     let content = name;
     if (this.itemTextHandleMap.has(key)) {
       content = this.itemTextHandleMap.get(key)?.(name) || '';
@@ -2011,7 +2011,7 @@ export class LitTable extends HTMLElement {
     return '';
   }
 
-  setHighLight(isSearch: boolean, element: any) {
+  setHighLight(isSearch: boolean, element: any): void {
     if (isSearch) {
       element.setAttribute('high-light', '');
     } else {
@@ -2019,7 +2019,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  createTextColor(rowData: any, divElement: any) {
+  createTextColor(rowData: any, divElement: any): void {
     let nodeText = document.createElement('text');
     nodeText.classList.add('functionName');
     nodeText.textContent = rowData.data.name;

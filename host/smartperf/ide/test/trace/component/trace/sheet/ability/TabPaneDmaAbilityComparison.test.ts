@@ -25,6 +25,11 @@ jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
         snapshotDataSource: () => {},
     };
 });
+
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+    return {};
+});
+
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
 window.ResizeObserver =

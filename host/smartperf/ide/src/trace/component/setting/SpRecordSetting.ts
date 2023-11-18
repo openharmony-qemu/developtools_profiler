@@ -35,7 +35,7 @@ export class SpRecordSetting extends BaseElement {
   private lastDurationValue: string | undefined;
   isRecordTemplate: boolean = false;
 
-  get longTraceSingleFileMaxSize(): number{
+  get longTraceSingleFileMaxSize(): number {
     let maxFileSizeEl = this.shadowRoot?.querySelector<HTMLInputElement>('.max_size_result');
     if (maxFileSizeEl) {
       return Number(maxFileSizeEl.value);
@@ -52,7 +52,7 @@ export class SpRecordSetting extends BaseElement {
 
   get longOutPath(): string {
     if (this.outputPath && this.outputPath.value !== '' && this.outputPath.value !== 'long_trace/') {
-      return `/data/local/tmp/${  this.outputPath.value}/`;
+      return `/data/local/tmp/${this.outputPath.value}/`;
     }
     return '/data/local/tmp/long_trace/';
   }
@@ -60,17 +60,16 @@ export class SpRecordSetting extends BaseElement {
   get output(): string {
     if (SpApplication.isLongTrace && !this.isRecordTemplate) {
       if (this.outputPath && this.outputPath.value !== 'long_trace/' && this.outputPath.value !== '') {
-        return `/data/local/tmp/${  this.outputPath.value}/hiprofiler_data.htrace`;
+        return `/data/local/tmp/${this.outputPath.value}/hiprofiler_data.htrace`;
       }
       return '/data/local/tmp/long_trace/hiprofiler_data.htrace';
     } else {
       if (this.outputPath && this.outputPath.value !== '') {
-        return `/data/local/tmp/${  this.outputPath.value}`;
+        return `/data/local/tmp/${this.outputPath.value}`;
       }
       return '/data/local/tmp/hiprofiler_data.htrace';
     }
   }
-
 
   get bufferSize(): number {
     if (this.bufferNumber?.hasAttribute('percent')) {
@@ -92,19 +91,19 @@ export class SpRecordSetting extends BaseElement {
     let bufferInput = this.shadowRoot?.querySelector('.memory_buffer_result') as HTMLInputElement;
     let parentElement = this.memoryBufferSlider!.parentNode as Element;
     if (bufferInput.style.color != 'var(--dark-color1,#000000)' && this.lastMemoryValue) {
-      bufferInput.value = `${this.lastMemoryValue  }`;
-      this.memoryBufferSlider!.percent = `${this.lastMemoryValue  }`;
+      bufferInput.value = `${this.lastMemoryValue}`;
+      this.memoryBufferSlider!.percent = `${this.lastMemoryValue}`;
       this.memoryBufferSlider!.sliderStyle = {
         minRange: 4,
         maxRange: 512,
-        defaultValue: `${this.lastMemoryValue  }`,
+        defaultValue: `${this.lastMemoryValue}`,
         resultUnit: 'MB',
         stepSize: 2,
         lineColor: 'var(--dark-color3,#46B1E3)',
         buttonColor: '#999999',
       };
-      parentElement.setAttribute('percent', `${this.lastMemoryValue  }`);
-      this.lastMemoryValue = `${this.lastMemoryValue  }`;
+      parentElement.setAttribute('percent', `${this.lastMemoryValue}`);
+      this.lastMemoryValue = `${this.lastMemoryValue}`;
       bufferInput.style.color = 'var(--dark-color1,#000000)';
     }
 
@@ -178,9 +177,9 @@ export class SpRecordSetting extends BaseElement {
       lineColor: 'var(--dark-color3,#46B1E3)',
       buttonColor: '#999999',
     };
-    maxSizeSliders.addEventListener('input', ()=>{
+    maxSizeSliders.addEventListener('input', () => {
       if (maxSingleFileEl?.hasAttribute('percent')) {
-        maxSizeInput.value = `${maxSingleFileEl?.getAttribute('percent')  }`;
+        maxSizeInput.value = `${maxSingleFileEl?.getAttribute('percent')}`;
       } else {
         maxSizeInput.value = maxSizeSliders.sliderStyle.defaultValue;
       }
@@ -204,14 +203,14 @@ export class SpRecordSetting extends BaseElement {
       maxSizeParentElement.setAttribute('percent', maxSizeInput.value);
     });
 
-    this.radioBox!.addEventListener('click', ()=>{
+    this.radioBox!.addEventListener('click', () => {
       SpApplication.isLongTrace = false;
       if (rootEl.lastChild === longTraceMaxSlide) {
         rootEl.removeChild(longTraceMaxSlide);
       }
       this.outputPath!.value = 'hiprofiler_data.htrace';
     });
-    this.longTraceRadio.addEventListener('click', ()=>{
+    this.longTraceRadio.addEventListener('click', () => {
       SpApplication.isLongTrace = true;
       rootEl.appendChild(longTraceMaxSlide);
       this.outputPath!.value = 'long_trace/';
@@ -334,11 +333,11 @@ export class SpRecordSetting extends BaseElement {
           durationInput.parentElement!.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
           durationInput.style.backgroundColor = 'var(--dark-background5,#F2F2F2)';
           let htmlInputElement = this.maxDurationSliders!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
-          htmlInputElement.value = `${resultDuration  }`;
+          htmlInputElement.value = `${resultDuration}`;
           this.maxDurationSliders!.sliderStyle = {
             minRange: 10,
             maxRange: 3600,
-            defaultValue: `${Number(durationList[0])  }:${  Number(durationList[1])  }:${  Number(durationList[2])}`,
+            defaultValue: `${Number(durationList[0])}:${Number(durationList[1])}:${Number(durationList[2])}`,
             resultUnit: 'h:m:s',
             stepSize: 1,
             lineColor: 'var(--dark-color4,#61CFBE)',

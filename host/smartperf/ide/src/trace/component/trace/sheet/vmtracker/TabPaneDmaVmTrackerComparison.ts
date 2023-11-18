@@ -14,17 +14,17 @@
  */
 
 import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
-import { LitSelect } from '../../../../../base-ui/select/LitSelect.js';
+import { type LitSelect } from '../../../../../base-ui/select/LitSelect.js';
 import { LitSelectOption } from '../../../../../base-ui/select/LitSelectOption.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
-import { DmaComparison } from '../../../../bean/AbilityMonitor.js';
+import { type LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { type DmaComparison } from '../../../../bean/AbilityMonitor.js';
 import { MemoryConfig } from '../../../../bean/MemoryConfig.js';
 import { getTabDmaVmTrackerComparisonData } from '../../../../database/SqlLite.js';
-import { SnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerSnapshot.js';
+import { type SnapshotStruct } from '../../../../database/ui-worker/ProcedureWorkerSnapshot.js';
 import { Utils } from '../../base/Utils.js';
 import { resizeObserverFromMemory } from '../SheetUtils.js';
 import '../TabPaneJsMemoryFilter.js';
-import { TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
+import { type TabPaneJsMemoryFilter } from '../TabPaneJsMemoryFilter.js';
 
 @element('tabpane-dma-vmtracker-comparison')
 export class TabPaneDmaVmTrackerComparison extends BaseElement {
@@ -96,7 +96,7 @@ export class TabPaneDmaVmTrackerComparison extends BaseElement {
     });
   }
 
-  async getComparisonData(targetStartNs: number) {
+  async getComparisonData(targetStartNs: number): Promise<void> {
     let comparison: Array<DmaComparison> = [];
     comparison = await this.queryDataByDB(targetStartNs);
     comparison[0].value = this.selfData[0].value - comparison[0].value;
