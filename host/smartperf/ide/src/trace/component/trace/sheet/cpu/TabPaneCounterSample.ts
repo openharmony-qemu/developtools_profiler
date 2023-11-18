@@ -185,7 +185,6 @@ export class TabPaneCounterSample extends BaseElement {
         sampleMap.set(item.filterId + '-' + item.value, {
           ...item,
           counter: 'Cpu ' + item.cpu,
-          count:initCounterResultList.filter(ele => ele.value === item.value).length
         });
       }
     });
@@ -259,8 +258,6 @@ export class TabPaneCounterSample extends BaseElement {
             <lit-table-column class="counter-sample-column" width="1fr" order data-index="timeStr" key="timeStr" align="flex-start" title="Time(ms)" >
             </lit-table-column>
             <lit-table-column class="counter-sample-column" width="1fr" order data-index="value" key="value" align="flex-start" title="Value" >
-            </lit-table-column>
-            <lit-table-column class="counter-sample-column" width="1fr" order data-index="count" key="count" align="flex-start" title="Count" >
             </lit-table-column>
         </lit-table>
         <lit-progress-bar class="progressCounter"></lit-progress-bar>

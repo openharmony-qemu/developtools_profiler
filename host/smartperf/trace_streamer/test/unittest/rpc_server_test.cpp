@@ -99,7 +99,9 @@ HWTEST_F(RpcServerTest, ParserConfig, TestSize.Level1)
     uint32_t pid = 16502;
     std::string event("B|16502|H:Task Allocation: taskId : 1, executeId : 9, priority : 9, executeState : 1");
     BytraceLine line;
-    std::string json("{\"config\": {\"TaskPool\": 1,\"AnimationAnalysis\": 0,\"AppStartup\": 0}}");
+    // if the configuration changes, the current variable also needs to change
+    std::string json(
+        "{\"config\": {\"TaskPool\": 1,\"AnimationAnalysis\": 0,\"AppStartup\": 0, \"BinderRunnable\": 0}}");
 
     RpcServer rpcServer;
     auto ret = rpcServer.ParserConfig(json);

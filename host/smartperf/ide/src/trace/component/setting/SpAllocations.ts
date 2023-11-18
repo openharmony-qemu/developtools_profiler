@@ -80,7 +80,7 @@ export class SpAllocations extends BaseElement {
     if (value != '') {
       return Number(value);
     }
-    return 0;
+    return 4096;
   }
 
   get fp_unwind(): boolean {
@@ -175,7 +175,7 @@ export class SpAllocations extends BaseElement {
     this.statisticsSlider.sliderStyle = {
       minRange: 0,
       maxRange: 3600,
-      defaultValue: '900',
+      defaultValue: '3600',
       resultUnit: 'S',
       stepSize: 450,
       lineColor: 'var(--dark-color3,#46B1E3)',
@@ -183,7 +183,7 @@ export class SpAllocations extends BaseElement {
     };
     let parentElement = this.statisticsSlider!.parentNode as Element;
     this.intervalResultInput = this.shadowRoot?.querySelector('.interval-result') as HTMLInputElement;
-    this.intervalResultInput.value = '10';
+    this.intervalResultInput.value = this.statisticsSlider.sliderStyle.defaultValue;
     this.statisticsSlider.addEventListener('input', (evt) => {
       this.statisticsSlider!.sliderStyle = {
         minRange: 0,
@@ -223,18 +223,32 @@ export class SpAllocations extends BaseElement {
         this.intervalResultInput!.style.color = 'red';
         parentElement.setAttribute('percent', '3600');
       } else {
-        this.statisticsSlider!.percent = this.intervalResultInput!.value;
+        let defaultSize = 0;
+        let stepSize = 450;
+        let inputValue = Number(this.intervalResultInput!.value);
+        for (let stepIndex = 0; stepIndex < stepValue.length; stepIndex++) {
+          let currentValue = stepValue[stepIndex];
+          if (inputValue === currentValue) {
+            defaultSize = stepIndex * stepSize;
+            break;
+          } else if (inputValue < currentValue && stepIndex !== 0) {
+            defaultSize = (inputValue - stepValue[stepIndex - 1]) /
+              (currentValue - stepValue[stepIndex - 1]) * stepSize + (stepSize * (stepIndex - 1));
+            break;
+          }
+        }
+        this.statisticsSlider!.percent = defaultSize + '';
         let htmlInputElement = this.statisticsSlider!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
-        htmlInputElement.value = this.intervalResultInput!.value;
         this.statisticsSlider!.sliderStyle = {
           minRange: 0,
           maxRange: 3600,
-          defaultValue: this.intervalResultInput!.value,
+          defaultValue: defaultSize + '',
           resultUnit: 'S',
           stepSize: 1,
           lineColor: 'var(--dark-color3,#46B1E3)',
           buttonColor: '#999999',
         };
+        htmlInputElement.value = defaultSize + '';
         parentElement.setAttribute('percent', this.intervalResultInput!.value);
         parentElement.setAttribute('percentValue', this.intervalResultInput!.value);
       }
@@ -271,7 +285,7 @@ export class SpAllocations extends BaseElement {
       }
     });
 
-    let litSwitch = this.shadowRoot?.querySelector('lit-switch') as LitSwitch;
+    let litSwitch = this.shadowRoot?.querySelector('#switch-disabled') as LitSwitch;
     litSwitch.addEventListener('change', (event: any) => {
       let detail = event.detail;
       if (detail.checked) {
@@ -525,7 +539,7 @@ export class SpAllocations extends BaseElement {
         <div class="root">
           <div class = "title" style="width: 92%;margin-top: 5vh;">
             <span class="allocation-title">Start Native Memory Record</span>
-            <lit-switch id="startNativeMemoryRecord"></lit-switch>
+            <lit-switch id="switch-disabled"></lit-switch>
           </div>
           <div class="allocation-application">
              <span class="allocation-inner-font-style">ProcessId or ProcessName</span>
@@ -548,9 +562,9 @@ export class SpAllocations extends BaseElement {
           </div>
           <div class="allocation-application">
             <span class="allocation-inner-font-style" >Filter Memory Size </span>
-            <span class="value-range">Filter size Range is 0 - 65535 byte, default 0 byte</span> 
+            <span class="value-range">Filter size Range is 0 - 65535 byte, default 4096 byte</span> 
             <div>
-                <input id = "filterSized" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Filter Memory Size" oninput="if(this.value > 65535) this.value = '65535'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="0">
+                <input id = "filterSized" class="allocation-inputstyle inputBoxes" type="text" placeholder="Enter the Filter Memory Size" oninput="if(this.value > 65535) this.value = '65535'" onkeyup="this.value=this.value.replace(/\\D/g,'')" value="4096">
                  <span>Byte</span>
             </div>
           </div>
@@ -586,4 +600,22 @@ export class SpAllocations extends BaseElement {
         `;
   }
 
+  private convertToValue(input: string, unit: string): number {
+    let value: number;
+    switch (unit) {
+      case 'MB':
+        value = Number(input) * 1024 * 1024;
+        break;
+      case 'KB':
+        value = Number(input) * 1024;
+        break;
+      default:
+        value = 0;
+    }
+    let number = value / 4096;
+    if (number > 0 && number < 1) {
+      return 16384;
+    }
+    return parseInt(String(number));
+  }
 }

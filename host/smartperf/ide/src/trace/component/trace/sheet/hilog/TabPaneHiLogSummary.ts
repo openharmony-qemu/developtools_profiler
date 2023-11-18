@@ -175,23 +175,6 @@ export class TabPaneHiLogSummary extends BaseElement {
     this.parentTabEl = parentTabEl;
   }
 
-  private getLevelName(level: string): string {
-    switch (level) {
-      case 'D':
-        return 'Debug';
-      case 'I':
-        return 'Info';
-      case 'W':
-        return 'Warn';
-      case 'E':
-        return 'Error';
-      case 'F':
-        return 'Fatal';
-      default:
-        return 'Other';
-    }
-  }
-
   private createRowNodeTableEL(rowNodeList: LogTreeNode[], rowColor: string = ''): DocumentFragment {
     let unitPadding: number = 20;
     let leftPadding: number = 5;
@@ -276,7 +259,7 @@ export class TabPaneHiLogSummary extends BaseElement {
     let root: LogTreeNode = { id: id, depth: 0, children: [], logName: 'All', count: 0 };
     logTreeNodes.forEach((item) => {
       id++;
-      let levelName = this.getLevelName(item.level!);
+      let levelName = item.level!;
       let levelNode = root.children.find((node) => node.logName === levelName);
       if (!levelNode) {
         id++;

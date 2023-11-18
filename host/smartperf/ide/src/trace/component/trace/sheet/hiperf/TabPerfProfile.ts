@@ -31,6 +31,7 @@ import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { showButtonMenu } from '../SheetUtils.js';
+import { findSearchNode } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 
 @element('tabpane-perf-profile')
 export class TabpanePerfProfile extends BaseElement {
@@ -53,6 +54,7 @@ export class TabpanePerfProfile extends BaseElement {
   private perfProfileLoadingList: number[] = [];
   private perfProfileLoadingPage: any;
   private currentSelection: SelectionParam | undefined;
+  private currentPerfProfilerDataSource: Array<PerfCallChainMerageData> = [];
 
   set data(perfProfilerSelection: SelectionParam | any) {
     if (perfProfilerSelection === this.currentSelection) {
@@ -67,10 +69,8 @@ export class TabpanePerfProfile extends BaseElement {
     } else {
       this.perfProfilerFilter!.style.display = 'none';
     }
-    this.perfProfilerFilter!.disabledTransfer(false, 'perf');
     this.perfProfilerFilter!.initializeFilterTree(true, true, true);
     this.perfProfilerFilter!.filterValue = '';
-    this.perfProfilerFilter!.refreshTreeTransfer();
     this.perfProfileProgressEL!.loading = true;
     this.perfProfileLoadingPage.style.visibility = 'visible';
     const initWidth = this.clientWidth;
@@ -91,39 +91,11 @@ export class TabpanePerfProfile extends BaseElement {
         this.perfProfileFrameChart!.mode = ChartMode.Count;
         this.perfProfileFrameChart?.updateCanvas(true, initWidth);
         this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
+        this.currentPerfProfilerDataSource = this.perfProfilerDataSource;
         this.switchFlameChart();
         this.perfProfilerFilter.icon = 'block';
       }
     );
-
-    this.perfProfilerFilter!.getCallTransferData((data: any) => {
-      perfProfilerSelection.eventTypeId = data.value !== 'count' ? data.value : undefined;
-      this.getDataByWorker(
-        [
-          {
-            funcName: 'setSearchValue',
-            funcArgs: [''],
-          },
-          {
-            funcName: 'getCurrentDataFromDb',
-            funcArgs: [perfProfilerSelection],
-          },
-        ],
-        (results: any[]) => {
-          this.setPerfProfilerLeftTableData(results);
-          this.perfProfilerList!.recycleDataSource = [];
-          if(data.value !== 'count') {
-            this.perfProfileFrameChart!.mode = ChartMode.EventCount;
-          }else{
-            this.perfProfileFrameChart!.mode = ChartMode.Count;
-          }
-          
-          this.perfProfileFrameChart?.updateCanvas(true, initWidth);
-          this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
-          this.switchFlameChart();
-          this.perfProfilerFilter.icon = 'block';
-        })
-    })
   }
 
   getParentTree(
@@ -468,6 +440,8 @@ export class TabpanePerfProfile extends BaseElement {
           },
         ];
         this.getDataByWorker(perfArgs, (result: any[]) => {
+          this.perfProfilerTbl!.isSearch = true;
+          this.perfProfilerTbl!.setStatus(result, true);
           this.setPerfProfilerLeftTableData(result);
           this.perfProfileFrameChart!.data = this.perfProfilerDataSource;
           this.switchFlameChart(data);

@@ -814,6 +814,8 @@ export enum Type {
 }
 
 export interface HilogConfig {
+  pid: number;
+  logLevel: Level;
   needClear: boolean;
 }
 
@@ -821,7 +823,7 @@ export function levelFromJSON(object: any): Level {
   switch (object) {
     case 0:
     case 'LEVEL_UNSPECIFIED':
-      return Level.LOG_UNSPECIFIED;
+      return Level.LEVEL_UNSPECIFIED;
     case 1:
     case 'Error':
       return Level.LOG_ERROR;
@@ -832,7 +834,7 @@ export function levelFromJSON(object: any): Level {
     case 'Debug':
       return Level.LOG_DEBUG;
     case 4:
-    case 'Warns':
+    case 'Warn':
       return Level.LOG_WARN;
     case -1:
     case 'UNRECOGNIZED':
@@ -842,11 +844,11 @@ export function levelFromJSON(object: any): Level {
 }
 
 export enum Level {
-  LOG_UNSPECIFIED = 'LOG_UNSPECIFIED',
-  LOG_ERROR = 'LOG_ERROR',
-  LOG_INFO = 'LOG_INFO',
-  LOG_DEBUG = 'LOG_DEBUG',
-  LOG_WARN = 'LOG_WARN',
+  LEVEL_UNSPECIFIED = 'LEVEL_UNSPECIFIED',
+  LOG_ERROR = 'ERROR',
+  LOG_INFO = 'INFO',
+  LOG_DEBUG = 'DEBUG',
+  LOG_WARN = 'WARN',
   UNRECOGNIZED = -1,
 }
 

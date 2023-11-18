@@ -3128,12 +3128,13 @@ void TaskPoolInfo::AppendTimeoutRow(uint32_t index, uint32_t timeoutRow)
         timeoutRows_[index] = timeoutRow;
     }
 }
-TableRowId Animation::AppendAnimation(InternalTime inputTime, InternalTime startPoint)
+TableRowId Animation::AppendAnimation(InternalTime inputTime, InternalTime startPoint, DataIndex nameIndex)
 {
     inputTimes_.emplace_back(inputTime);
     startPoints_.emplace_back(startPoint);
     endPoins_.emplace_back(INVALID_TIME);
     frameInfos_.emplace_back(INVALID_UINT64);
+    names_.emplace_back(nameIndex);
     ids_.emplace_back(Size());
     return ids_.size() - 1;
 }
@@ -3174,6 +3175,10 @@ const std::deque<InternalTime>& Animation::EndPoints() const
 const std::deque<DataIndex>& Animation::FrameInfos() const
 {
     return frameInfos_;
+}
+const std::deque<DataIndex>& Animation::Names() const
+{
+    return names_;
 }
 const std::deque<uint64_t>& Animation::IdsData() const
 {

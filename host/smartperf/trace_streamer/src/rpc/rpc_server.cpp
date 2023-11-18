@@ -22,6 +22,7 @@
 #include <filesystem>
 #endif
 #include "common_types.h"
+#include "bytrace_hilog_parser.h"
 #include "bytrace_parser.h"
 #include "htrace_parser.h"
 #include "json.hpp"
@@ -165,6 +166,12 @@ bool RpcServer::ParseSplitFileData(const uint8_t* data,
         splitFileCallBack(ts_->GetBytraceData()->GetTraceDataBytrace(), (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
                           isFinish);
         ts_->GetBytraceData()->ClearByTraceData();
+        return true;
+    }
+    if (isSplitFile && ts_->GetFileType() == TRACE_FILETYPE_HILOG) {
+        splitFileCallBack(ts_->GetBytraceData()->GetHiLogParser()->GetTraceDataHiLog(), (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
+                          isFinish);
+        ts_->GetBytraceData()->GetHiLogParser()->ClearHiLogData();
         return true;
     }
     if (isSplitFile && isFinish && ts_->GetFileType() == TRACE_FILETYPE_H_TRACE) {

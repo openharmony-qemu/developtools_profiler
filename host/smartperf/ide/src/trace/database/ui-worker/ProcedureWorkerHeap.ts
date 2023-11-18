@@ -52,6 +52,13 @@ export class HeapRender {
       row.frame,
       req.useCache || (TraceRow.range?.refresh ?? false)
     );
+    if (heapFilter.length >= 2 && heapFilter[heapFilter.length - 1].dur === 0) {
+      if (heapFilter[heapFilter.length - 2].frame && heapFilter[heapFilter.length - 1].frame) {
+        heapFilter[heapFilter.length - 2].frame!.width = heapFilter[heapFilter.length - 2].frame!.width - 1;
+        heapFilter[heapFilter.length - 1].frame!.width = 1;
+        heapFilter[heapFilter.length - 1].frame!.x -= 1;
+      }
+    }
     req.context.beginPath();
     let find = false;
     for (let re of heapFilter) {
@@ -153,7 +160,7 @@ export function heap(
   if (use && res.length > 0) {
     for (let i = 0; i < res.length; i++) {
       let it = res[i];
-      if ((it.startTime || 0) + (it.dur || 0) > (startNS || 0) && (it.startTime || 0) < (endNS || 0)) {
+      if ((it.startTime || 0) + (it.dur || 0) > (startNS || 0) && (it.startTime || 0) <= (endNS || 0)) {
         HeapStruct.setFrame(res[i], 5, startNS || 0, endNS || 0, totalNS || 0, frame);
       } else {
         res[i].frame = null;
@@ -164,7 +171,7 @@ export function heap(
   res.length = 0;
   for (let i = 0, len = heapList.length; i < len; i++) {
     let it = heapList[i];
-    if ((it.startTime || 0) + (it.dur || 0) > (startNS || 0) && (it.startTime || 0) < (endNS || 0)) {
+    if ((it.startTime || 0) + (it.dur || 0) > (startNS || 0) && (it.startTime || 0) <= (endNS || 0)) {
       HeapStruct.setFrame(it, 5, startNS || 0, endNS || 0, totalNS || 0, frame);
       if (i > 0) {
         let last = heapList[i - 1];

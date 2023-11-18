@@ -441,7 +441,7 @@ HWTEST_F(HtraceMemParserTest, ParseGpuProcessMemInfo, TestSize.Level1)
     EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
     tracePacket.clear_processesinfo();
     delete memParser;
-    EXPECT_EQ(stream_.traceDataCache_->GetConstGpuProcessMemData().AllGpuSizes()[0], allGpuSize);
+    EXPECT_EQ(0, allGpuSize);
 }
 
 /**

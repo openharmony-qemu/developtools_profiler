@@ -128,8 +128,8 @@ func main() {
         mime.AddExtensionType(".js", "application/javascript")
         log.Println(mime.TypeByExtension(".js"))
         mux.HandleFunc("/logger", consoleHandler)
-        mux.Handle("/upload/", http.StripPrefix("/upload/", http.FileServer(http.Dir(filepath.FromSlash(exPath+"/upload")))))
-        mux.HandleFunc("/download-file", downloadHandler)
+        mux.Handle("/application/upload/", http.StripPrefix("/upload/", http.FileServer(http.Dir(filepath.FromSlash(exPath+"/upload")))))
+        mux.HandleFunc("/application//download-file", downloadHandler)
         mux.HandleFunc("/application/serverInfo", serverInfo)
         fs := http.FileServer(http.Dir(exPath + "/"))
         mux.Handle("/application/", http.StripPrefix("/application/", cors(fs, version)))
@@ -357,6 +357,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
                 return
             }
             fmt.Println(url, written)
+            pth = "/application" + pth
             resp(&w)(true, 0, "success", map[string]interface{}{
                 "url":  pth,
                 "size": written,

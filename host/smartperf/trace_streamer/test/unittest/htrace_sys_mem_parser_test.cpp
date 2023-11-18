@@ -46,7 +46,7 @@ public:
 
 public:
     SysTuning::TraceStreamer::TraceStreamerSelector stream_ = {};
-    const std::string dbPath_ = "../../../data/resource/out.db";
+    const std::string dbPath_ = "../../test/resource/out.db";
 };
 
 /**
@@ -89,7 +89,7 @@ HWTEST_F(HtraceSysMemParserTest, ParseSysMemParseInputEmpty, TestSize.Level1)
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SYS_MEMORY, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
-    EXPECT_EQ(2, stream_.traceDataCache_->GetConstSysMeasureFilterData().Size());
+    EXPECT_EQ(4, stream_.traceDataCache_->GetConstSysMeasureFilterData().Size());
     EXPECT_EQ(stream_.traceDataCache_->GetConstSysMemMeasureData().ValuesData()[0], static_cast<int64_t>(value));
 }
 
@@ -142,7 +142,7 @@ HWTEST_F(HtraceSysMemParserTest, ParseSysMemParseNormal, TestSize.Level1)
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SYS_MEMORY, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
-    EXPECT_EQ(3, stream_.traceDataCache_->GetConstSysMemMeasureData().Size());
+    EXPECT_EQ(5, stream_.traceDataCache_->GetConstSysMemMeasureData().Size());
     EXPECT_TRUE(stream_.traceDataCache_->GetConstSysMemMeasureData().ValuesData()[0] == static_cast<int64_t>(value));
     EXPECT_TRUE(stream_.traceDataCache_->GetConstSysMemMeasureData().ValuesData()[1] == static_cast<int64_t>(value2));
 }
@@ -198,7 +198,7 @@ HWTEST_F(HtraceSysMemParserTest, ParseSysMemParseAbnomal, TestSize.Level1)
     EXPECT_TRUE(1 == eventCount);
     eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SYS_MEMORY, STAT_EVENT_DATA_INVALID);
     EXPECT_TRUE(1 == eventCount);
-    EXPECT_EQ(2, stream_.traceDataCache_->GetConstSysMemMeasureData().Size());
+    EXPECT_EQ(4, stream_.traceDataCache_->GetConstSysMemMeasureData().Size());
     EXPECT_TRUE(stream_.traceDataCache_->GetConstSysMemMeasureData().ValuesData()[0] == static_cast<int64_t>(value));
 }
 
@@ -261,7 +261,7 @@ HWTEST_F(HtraceSysMemParserTest, ParseSysMemParseMutiNomal, TestSize.Level1)
     EXPECT_TRUE(1 == eventCount);
     eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SYS_MEMORY, STAT_EVENT_DATA_INVALID);
     EXPECT_TRUE(2 == eventCount);
-    EXPECT_EQ(2, stream_.traceDataCache_->GetConstSysMemMeasureData().Size());
+    EXPECT_EQ(4, stream_.traceDataCache_->GetConstSysMemMeasureData().Size());
     EXPECT_TRUE(stream_.traceDataCache_->GetConstSysMemMeasureData().ValuesData()[0] == static_cast<int64_t>(value));
 }
 

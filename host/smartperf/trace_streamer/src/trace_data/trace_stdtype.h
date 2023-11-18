@@ -2519,7 +2519,7 @@ private:
 };
 class Animation {
 public:
-    TableRowId AppendAnimation(InternalTime inputTime, InternalTime startPoint);
+    TableRowId AppendAnimation(InternalTime inputTime, InternalTime startPoint, DataIndex nameIndex);
     void UpdateStartPoint(TableRowId index, InternalTime startPoint);
     void UpdateEndPoint(TableRowId index, InternalTime endPoint);
     void UpdateFrameInfo(TableRowId index, InternalTime frameInfo);
@@ -2528,6 +2528,7 @@ public:
     const std::deque<InternalTime>& StartPoints() const;
     const std::deque<InternalTime>& EndPoints() const;
     const std::deque<DataIndex>& FrameInfos() const;
+    const std::deque<DataIndex>& Names() const;
     const std::deque<uint64_t>& IdsData() const;
     void Clear();
 
@@ -2536,6 +2537,7 @@ private:
     std::deque<InternalTime> startPoints_ = {};
     std::deque<InternalTime> endPoins_ = {};
     std::deque<DataIndex> frameInfos_ = {};
+    std::deque<DataIndex> names_ = {};
     std::deque<uint64_t> ids_ = {};
 };
 class DeviceInfo {

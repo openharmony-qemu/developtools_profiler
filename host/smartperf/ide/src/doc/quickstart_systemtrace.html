@@ -3,9 +3,9 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>quickstart_systemtrace</title>
-
+  
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  
     <style>
       code[class*='smartperf-'],
       pre[class*='smartperf-'] {
@@ -23,7 +23,7 @@
         -ms-hyphens: none;
         hyphens: none;
       }
-
+  
       /* Code blocks */
       pre[class*='smartperf-'] {
         padding: 0.9em;
@@ -31,7 +31,7 @@
         border-radius: 2px;
         background: #f5f5f4;
       }
-
+  
       /* Inline code */
       :not(pre) > code[class*='smartperf-'] {
         white-space: normal;
@@ -39,23 +39,23 @@
         padding: 1px 0.2em;
         border-radius: 1px 0.3em;
       }
-
+  
       .tk.comment,
       .tk.blockquote {
         color: #8c918c;
       }
-
+  
       .tk.cdata {
         color: #183898;
       }
-
+  
       .tk.doctype,
       .tk.punctuation,
       .tk.variable,
       .tk.macro.property {
         color: #424242;
       }
-
+  
       .tk.operator,
       .tk.important,
       .tk.keyword,
@@ -63,14 +63,14 @@
       .tk.builtin {
         color: #b71d65;
       }
-
+  
       .tk.string,
       .tk.url,
       .tk.regex,
       .tk.attr-value {
         color: #16338d;
       }
-
+  
       .tk.property,
       .tk.number,
       .tk.boolean,
@@ -82,13 +82,13 @@
       .tk.code {
         color: #037aa2;
       }
-
+  
       .tk.tag,
       .tk.selector,
       .tk.prolog {
         color: #69ad62;
       }
-
+  
       .tk.function,
       .tk.namespace,
       .tk.pseudo-element,
@@ -100,97 +100,96 @@
       .tk.attr-name {
         color: #775d9d;
       }
-
+  
       .tk.entity {
         cursor: help;
       }
-
+  
       .tk.title,
       .tk.title .tk.punctuation {
         font-weight: bold;
         color: #1a3773;
       }
-
+  
       .tk.list {
         color: #f56940;
       }
-
+  
       .tk.inserted {
         background-color: #eaffea;
         color: #509b2f;
       }
-
+  
       .tk.deleted {
         background-color: #fae1e1;
         color: #ad2d06;
       }
-
+  
       .tk.bold {
         font-weight: bolder;
       }
-
+  
       .tk.italic {
         font-style: normal;
       }
-
+  
       /* JSON */
       .smartperf-json .tk.property {
         color: #19358c;
       }
-
+  
       .smartperf-markup .tk.tag .tk.punctuation {
         color: #2c2b2b;
       }
-
+  
       /* CSS */
       code.smartperf-css,
       .smartperf-css .tk.function {
         color: #047ca4;
       }
-
+  
       /* YAML */
       .smartperf-yaml .tk.atrule {
         color: #609b5a;
       }
-
+  
       code.smartperf-yaml {
         color: #153491;
       }
-
+  
       /* Ruby */
       .smartperf-ruby .tk.function {
         color: #3f3e3e;
       }
-
+  
       /* Markdown */
       .smartperf-markdown .tk.url {
         color: #6e5298;
       }
-
+  
       /* Makefile */
       .smartperf-makefile .tk.symbol {
         color: #6c5393;
       }
-
+  
       .smartperf-makefile .tk.variable {
         color: #183488;
       }
-
+  
       .smartperf-makefile .tk.builtin {
         color: #027ba4;
       }
-
+  
       /* Bash */
       .smartperf-bash .tk.keyword {
         color: #027fa9;
       }
-
+  
       /* highlight */
       pre[dl] {
         position: relative;
         padding: 1em 1px 1px 0.9em;
       }
-
       pre[dl] .line-highlight-wrapper {
         position: absolute;
         top: 1px;
@@ -199,7 +198,7 @@
         display: block;
         width: 99%;
       }
-
+  
       pre[dl] .line-highlight {
         position: absolute;
         left: 1px;
@@ -212,7 +211,7 @@
         line-height: inherit;
         white-space: pre;
       }
-
+  
       pre[dl] .line-highlight:before,
       pre[dl] .line-highlight[data-end]:after {
         content: attr(data-start);
@@ -229,13 +228,12 @@
         border-radius: 10000px;
         box-shadow: 1px 2px #fdf6f6;
       }
-
+  
       pre[dl] .line-highlight[data-end]:after {
         content: attr(data-end);
         top: auto;
         bottom: 0.5em;
       }
-
       html body {
         line-height: 1.6;
         font-size: 16px;
@@ -246,11 +244,11 @@
         font-family: Helvetica;
         box-sizing: border-box;
       }
-
+  
       html body > :first-child {
         margin-top: 0px;
       }
-
+  
       html body h1,
       html body h2,
       html body h3,
@@ -262,39 +260,39 @@
         color: #000000;
         line-height: 1.2;
       }
-
+  
       html body h1 {
         font-weight: 300;
         font-size: 2.25em;
         padding-bottom: 0.3em;
       }
-
+  
       html body h2 {
         font-weight: 410;
         font-size: 1.74em;
         padding-bottom: 0.2em;
       }
-
+  
       html body h3 {
         font-size: 1.6em;
         font-weight: 501;
       }
-
+  
       html body h4 {
         font-size: 1.26em;
         font-weight: 601;
       }
-
+  
       html body h5 {
         font-size: 1.2em;
         font-weight: 601;
       }
-
+  
       html body h6 {
         font-size: 0.9em;
         font-weight: 601;
       }
-
+  
       html body h1,
       html body h2,
       html body h3,
@@ -302,64 +300,64 @@
       html body h5 {
         font-weight: 601;
       }
-
+  
       html body h5 {
         font-size: 0.9em;
       }
-
+  
       html body h6 {
         color: #5c5c5c;
       }
-
+  
       html body strong {
         color: #090909;
       }
-
+  
       html body del {
         color: #525252;
       }
-
+  
       html body a:not([href]) {
         color: inherit;
         text-decoration: none;
       }
-
+  
       html body a {
         color: #0192da;
         text-decoration: none;
       }
-
+  
       html body a:hover {
         color: #029dea;
         text-decoration: none;
       }
-
+  
       html body img {
         max-width: 99%;
       }
-
+  
       html body > p {
         margin-top: 1px;
         margin-bottom: 15px;
         word-wrap: break-word;
       }
-
+  
       html body > ul,
       html body > ol {
         margin-bottom: 15px;
       }
-
+  
       html body ul,
       html body ol {
         padding-left: 1.9em;
       }
-
+  
       html body ul.no-list,
       html body ol.no-list {
         padding: 0px;
         list-style-type: none;
       }
-
+  
       html body ul ul,
       html body ul ol,
       html body ol ol,
@@ -367,29 +365,29 @@
         margin-top: 1px;
         margin-bottom: 1px;
       }
-
+  
       html body li {
         margin-bottom: 1px;
       }
-
+  
       html body li.task-list-item {
         list-style: none;
       }
-
+  
       html body li > p {
         margin-top: 1px;
         margin-bottom: 1px;
       }
-
+  
       html body .task-list-item-checkbox {
         margin: 0 0.3em 0.24em -1.7em;
         vertical-align: middle;
       }
-
+  
       html body .task-list-item-checkbox:hover {
         cursor: pointer;
       }
-
+  
       html body blockquote {
         padding: 0.1px 15px 0 0.1px;
         font-size: inherit;
@@ -398,44 +396,44 @@
         border-left: 3px solid #cbc9c9;
         background-color: #e8e6e6;
       }
-
+  
       html body blockquote > :first-child {
         margin-top: 0.2px;
       }
-
+  
       html body blockquote > :last-child {
         margin-bottom: 0.1px;
       }
-
+  
       html body hr {
         height: 5px;
         background-color: #cbcaca;
         margin: 32px 0 0.1px 0;
         border: 0 none;
       }
-
+  
       html body table {
         overflow: auto;
         border-collapse: collapse;
         margin: 15px 0.1px 20px 0.1px;
         border-spacing: 0;
       }
-
+  
       html body table th {
         font-weight: bold;
         color: #000000;
       }
-
+  
       html body table td,
       html body table th {
         border: 1px solid #d6d6d6;
         padding: 2px 14px;
       }
-
+  
       html body dl {
         padding: 0px;
       }
-
+  
       html body dl dt {
         padding: 0px;
         margin-top: 15px;
@@ -443,12 +441,12 @@
         font-style: italic;
         font-weight: bold;
       }
-
+  
       html body dl dd {
         padding: 0px 17px;
         margin-bottom: 17px;
       }
-
+  
       html body code {
         font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
         font-size: 0.86em !important;
@@ -457,13 +455,13 @@
         border-radius: 4px;
         padding: 0.3em 0px;
       }
-
+  
       html body code::before,
       html body code::after {
         letter-spacing: -0.1em;
         content: '\00a0';
       }
-
+  
       html body pre > code {
         padding: 1px;
         margin: 0px;
@@ -473,11 +471,11 @@
         background: transparent;
         border: 0px;
       }
-
+  
       html body .highlight {
         margin-bottom: 17px;
       }
-
+  
       html body .highlight pre,
       html body pre {
         padding: 0.9em;
@@ -487,12 +485,12 @@
         border: #d6d6d6;
         border-radius: 4px;
       }
-
+  
       html body .highlight pre {
         margin-bottom: 0px;
         word-break: normal;
       }
-
+  
       html body pre code,
       html body pre tt {
         display: inline;
@@ -505,14 +503,14 @@
         background-color: transparent;
         border: 1px;
       }
-
+  
       html body pre code:before,
       html body pre tt:before,
       html body pre code:after,
       html body pre tt:after {
         content: normal;
       }
-
+  
       html body p,
       html body blockquote,
       html body ul,
@@ -522,7 +520,7 @@
         margin-top: 1px;
         margin-bottom: 17px;
       }
-
+  
       html body kbd {
         color: #000000;
         border: 3px solid #d6d6d6;
@@ -531,12 +529,12 @@
         background-color: #f0f0f0;
         border-radius: 2px;
       }
-
+  
       @media print {
         html body {
           background-color: #ffffff;
         }
-
+  
         html body h1,
         html body h2,
         html body h3,
@@ -546,53 +544,52 @@
           color: #000000;
           page-break-after: avoid;
         }
-
+  
         html body blockquote {
           color: #5c5c53;
         }
-
+  
         html body pre {
           page-break-inside: avoid;
         }
-
+  
         html body table {
           display: table;
         }
-
+  
         html body img {
           display: block;
           max-width: 99%;
           max-height: 99%;
         }
-
+  
         html body pre,
         html body code {
           word-wrap: break-word;
           white-space: pre;
         }
       }
-
       .smartperf-preview {
         width: 99%;
         height: 99%;
         box-sizing: border-box;
       }
-
+  
       .smartperf-preview .pagebreak,
       .smartperf-preview .newpage {
         page-break-before: always;
       }
-
+  
       .smartperf-preview pre.line-numbers {
         position: relative;
         padding-left: 3.7em;
         counter-reset: linenumber;
       }
-
+  
       .smartperf-preview pre.line-numbers > code {
         position: relative;
       }
-
+  
       .smartperf-preview pre.line-numbers .line-numbers-rows {
         position: absolute;
         pointer-events: none;
@@ -607,13 +604,13 @@
         -ms-user-select: none;
         user-select: none;
       }
-
+  
       .smartperf-preview pre.line-numbers .line-numbers-rows > span {
         pointer-events: none;
         display: block;
         counter-increment: linenumber;
       }
-
+  
       .smartperf-preview pre.line-numbers .line-numbers-rows > span:before {
         content: counter(linenumber);
         color: #999;
@@ -621,39 +618,39 @@
         padding-right: 0.79em;
         text-align: right;
       }
-
+  
       .smartperf-preview .mathjax-exps .MathJax_Display {
         text-align: center !important;
       }
-
+  
       .smartperf-preview:not([for='preview']) .code-chunk .btn-group {
         display: none;
       }
-
+  
       .smartperf-preview:not([for='preview']) .code-chunk .status {
         display: none;
       }
-
+  
       .smartperf-preview:not([for='preview']) .code-chunk .output-div {
         margin-bottom: 16px;
       }
-
+  
       .scrollbar-style::-webkit-scrollbar {
         width: 8px;
       }
-
+  
       .scrollbar-style::-webkit-scrollbar-track {
         border-radius: 9px;
         background-color: transparent;
       }
-
+  
       .scrollbar-style::-webkit-scrollbar-thumb {
         border-radius: 6px;
         background-color: rgba(150, 150, 150, 1);
         border: 4px solid rgba(150, 150, 150, 1);
         background-clip: content-box;
       }
-
+  
       html body[for='html-export']:not([dpm]) {
         position: relative;
         width: 99%;
@@ -664,37 +661,37 @@
         padding: 1px;
         overflow: auto;
       }
-
+  
       html body[for='html-export']:not([dpm]) .smartperf-preview {
         position: relative;
         top: 1px;
       }
-
+  
       @media screen and (min-width: 914px) {
         html body[for='html-export']:not([dpm]) .smartperf-preview {
           padding: 2em calc(50% - 458px + 2em);
         }
       }
-
+  
       @media screen and (max-width: 914px) {
         html body[for='html-export']:not([dpm]) .smartperf-preview {
           padding: 1.9em;
         }
       }
-
+  
       @media screen and (max-width: 450px) {
         html body[for='html-export']:not([dpm]) .smartperf-preview {
           font-size: 15px !important;
           padding: 1.1em;
         }
       }
-
+  
       @media print {
         html body[for='html-export']:not([dpm]) #sidebar-toc-btn {
           display: none;
         }
       }
-
+  
       html body[for='html-export']:not([dpm]) #sidebar-toc-btn {
         position: fixed;
         bottom: 9px;
@@ -707,11 +704,11 @@
         text-align: center;
         opacity: 0.5;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] #sidebar-toc-btn {
         opacity: 1;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc {
         position: fixed;
         top: 1px;
@@ -725,40 +722,40 @@
         overflow: auto;
         background-color: inherit;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar {
         width: 9px;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar-track {
         border-radius: 11px;
         background-color: transparent;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar-thumb {
         border-radius: 6px;
         background-color: rgba(150, 150, 150, 0.66);
         border: 3px solid rgba(150, 150, 150, 0.66);
         background-clip: content-box;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc a {
         text-decoration: none;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc ul {
         padding: 1px 1.7em;
         margin-top: 0.9em;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc li {
         margin-bottom: 0.8em;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc ul {
         list-style-type: none;
       }
-
+  
       html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
         left: 301px;
         width: calc(100% - 300px);
@@ -766,24 +763,24 @@
         margin: 1px;
         box-sizing: border-box;
       }
-
+  
       @media screen and (max-width: 1274px) {
         html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
           padding: 1.9em;
         }
       }
-
+  
       @media screen and (max-width: 450px) {
         html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
           width: 99%;
         }
       }
-
+  
       html body[for='html-export']:not([dpm]):not([hsst]) .smartperf-preview {
         left: 50%;
         transform: translateX(-50%);
       }
-
+  
       html body[for='html-export']:not([dpm]):not([hsst]) .md-sidebar-toc {
         display: none;
       }
@@ -792,10 +789,10 @@
   <body for="html-export" id="body">
     <div class="smartperf smartperf-preview">
       <h1 class="mume-header fontColor">web端加载trace说明</h1>
-
+    
       <p class="fontColor">从web端查看trace文件，进行性能检测的分析。</p>
       <h2 class="mume-header fontColor">文件加载入口</h2>
-
+    
       <p class="fontColor">
         将抓取的trace导入查看。<br />
         <img src="../figures/Web/opentrace.jpg" alt="GitHub Logo" />
@@ -803,10 +800,12 @@
       <p class="fontColor">说明：</p>
       <ul class="fontColor">
         <li>Open trace file：导入离线trace文件入口。</li>
+        <li>Open long trace file：导入大文件入口。</li>
         <li>Record new trace：抓取新的trace文件入口。</li>
+        <li>Record template：抓取指定模块的trace入口。</li>
       </ul>
       <h2 class="mume-header fontColor">导入trace文件后显示页面</h2>
-
+    
       <p class="fontColor">
         <img src="../figures/Web/trace.jpg" alt="GitHub Logo" /><br />
         说明：
@@ -817,12 +816,12 @@
         </li>
       </ul>
       <h2 class="mume-header fontColor">trace功能介绍</h2>
-
+    
       <p class="fontColor">
         trace模块从上往下主要展示时间轴、cpu使用率、cpu使用情况、进程间通讯数据的方法调用情况、进程、线程和方法调用情况。
       </p>
       <h3 class="mume-header fontColor">时间轴和cpu使用率</h3>
-
+    
       <p class="fontColor">
         <img src="../figures/Web/time.jpg" alt="GitHub Logo" /><br />
         最上方带刻度的为时间轴，主要展示当前抓取数据的总时长和时间刻度的分布情况，如上图所示，左下角展示总时长。<br />
@@ -831,16 +830,16 @@
         在白色背景时间轴区域内可以点击后拖拽鼠标，可以对从鼠标按下到拖拽完成鼠标松开的区域内的数据进行筛选，高亮显示的部分为当前所选区域，如上图所示。
       </p>
       <h3 class="mume-header fontColor">cpu使用情况</h3>
-
+    
       <p class="fontColor"><img src="../figures/Web/cpu.jpg" alt="GitHub Logo" /></p>
       <p class="fontColor">
         如上图所示，当前抓取数据有4个cpu工作，前四组数据对应的是当前调用cpu的线程和对应的进程情况，以颜色作为区分。后四组数据则为cpu的使用频率信息。鼠标移动到相应的线程上还会将当前选中的进程信息全部置为高亮，其他的进程会置灰，如下图所示。<br />
         <img src="../figures/Web/gray.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">cpu使用情况的框选功能</h4>
-
+    
       <p class="fontColor">
-        可以对cpu的数据进行框选，框选后在最下方的弹出层中会展示框选数据的统计表格,总共有七个tab页。<br />
+        可以对cpu的数据进行框选，框选后在最下方的弹出层中会展示框选数据的统计表格,总共有六个tab页。<br />
         CPU by
         thread的Tab页，主要显示了在框选时间区间内的进程名、进程号、线程名、线程号、总运行时长、平均运行时长和调度次数信息。<br />
         <img src="../figures/Web/cpubythread.jpg" alt="GitHub Logo" /><br />
@@ -848,36 +847,41 @@
         <img src="../figures/Web/cpubyprocess.jpg" alt="GitHub Logo" /><br />
         CPU Usage的Tab页，主要显示了在框选时间区间内，该频率时间占比前三的信息。<br />
         <img src="../figures/Web/cpusage.jpg" alt="GitHub Logo" /><br />
-        States
-        List的Tab页，按状态&gt;进程&gt;线程的维度去统计，需要呈现该状态的线程名、该状态次数、该状态下时长、最大最小时长、平均时长、最大时长。<br />
-        <img src="../figures/Web/StatesList.jpg" alt="GitHub Logo" /><br />
-        Switches List的Tab页，按照进程&gt;线程&gt;状态，统计对应状态下的次数。<br />
-        <img src="../figures/Web/Switchlist.jpg" alt="GitHub Logo" /><br />
+        Thread
+        Switches的Tab页，按照状态&gt;进程&gt;线程，统计对应状态下的次数，持续时长，最小时长，平均时长，最大时长信息。<br />
+        <img src="../figures/Web/threadswitches.jpg" alt="GitHub Logo" /><br />
         Thread
         States的Tab页，按进程&gt;线程&gt;状态的维度去统计，需要呈现该状态的线程名、进入该状态次数、该状态下时长、最小时长、平均时长、最大时长。<br />
         <img src="../figures/Web/threadstates.jpg" alt="GitHub Logo" /><br />
-        Thread Switches的Tab页，按照状态&gt;进程&gt;线程，统计对应状态下的次数。<br />
-        <img src="../figures/Web/threadswitches.jpg" alt="GitHub Logo" /><br />
-        States List、Switches List、Thread States、Thread
-        Switches的4个Tab页，点击移动到某一行，鼠标会变成一个小手的标志，点击一下，就会进入辅助信息界面，会将选中行的辅助信息展示出来，包括开始时间、进程、线程、线程状态、对应的CPU、优先级等信息如下图。<br />
+        Sched
+        Priority的Tab页，按优先级显示调度，显示框选范围内所有Running以及Running之前的Runnable线程的最小，最大，平均耗时。<br />
+        <img src="../figures/Web/schedpritab.jpg" alt="GitHub Logo" /><br />
+        Thread States、Thread
+        Switches的2个Tab页，点击移动到某一行，鼠标会变成一个小手的标志，并且会高亮，点击一下，就会进入辅助信息界面，会将选中行的辅助信息展示出来，包括开始时间、进程、线程、线程状态、对应的CPU、优先级等信息如下图。<br />
         <img src="../figures/Web/details.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">cpu使用情况的单选功能</h4>
-
+    
       <p class="fontColor">
-        单选CPU使用情况数据会在选中的色块外层加上深色边框，能够突出当前选中色块，弹出层中会展示当前CPU上的进程名，线程名，开始时间和运行时长，线程运行状态等信息。<br />
+        单选CPU使用情况数据会在选中的色块外层加上深色边框，能够突出当前选中色块，弹出层中会展示当前CPU上的进程名，线程名，开始时间的相对时间，开始时间的绝对时间，运行时长，线程结束状态信息。<br />
         <img src="../figures/Web/cpuclick.jpg" alt="GitHub Logo" />
       </p>
+      <h3 class="mume-header fontColor">线程唤醒关系树</h3>
+    
+      <p class="fontColor">
+        线程唤醒关系树功能是点击GetWakeupList会以链式结构和表格分别在泳道图和tab上展示线程的唤醒关系树信息,点击GetWakeupList按钮旁边的星号按钮可以对唤醒树对应的泳道图一键收藏，对优先级最低且运行时长最长或者运行时长最长的线程会以红色字体高亮显示。<br />
+        <img src="../figures/Web/threadtree.jpg" alt="GitHub Logo" />
+      </p>
       <h3 class="mume-header fontColor">进程、线程和方法数据</h3>
-
+    
       <p class="fontColor">
         下图是进程数据，左边部分展示进程名称和id，右边显示线程切换关系，线程的调用方法，进程间内存信息等。<br />
         <img src="../figures/Web/process.jpg" alt="GitHub Logo" /><br />
-        点击进程名前面向下箭头可以展开对应的线程进行查看，展开后的线程如下图，如果存在堆内存占用情况，就会显示在第一行，如果出现两个名字和id一样的线程，则第一个为线程的使用情况，第二为线程内的方法栈调用情况。<br />
+        点击进程名前面箭头可以展开对应的线程进行查看，展开后的线程如下图，如果存在堆内存占用情况，会显示出对应泳道图，如果出现两个名字和id一样的线程，则第一个为线程的使用情况，第二个为线程内的方法栈调用情况。<br />
         <img src="../figures/Web/threadinfo.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">进程、线程和方法数据的框选功能</h4>
-
+    
       <p class="fontColor">
         可以对线程的数据进行框选，框选后在最下方的弹出层中会展示框选数据的统计表格，包含线程运行状态，线程调用栈的统计情况。当框选的数据中同时存在线程运行状态和线程调用栈数据，下方的弹出层中就会出现多个tab选项，可以进行切换。
       </p>
@@ -890,64 +894,70 @@
         <img src="../figures/Web/callstackselect.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">进程、线程和方法数据的单选功能</h4>
-
+    
       <p class="fontColor">
-        单选线程的state数据时，会展示当前选中线程的状态数据，开始时间和持续时长，线程状态，所在进程名称。<br />
+        单选线程的state数据时，会展示当前选中线程的状态数据，开始时间(相对和绝对时间)和持续时长，线程状态，所在进程名称，选中状态的前一个状态，选中状态的后一个状态。<br />
         <img src="../figures/Web/threadclick.jpg" alt="GitHub Logo" /><br />
-        单选调用栈数据，单击方法会在选中的方法外层加上黑色边框，能够突出当前选中的方法，弹出层中会展示当前方法的名称、开始时间和运行时长信息。<br />
+        单选调用栈数据，单击方法会在选中的方法外层加上黑色边框，能够突出当前选中的方法，弹出层中会展示当前方法的名称、开始时间(相对和绝对时间)和运行时长信息，调用栈深度。<br />
         <img src="../figures/Web/callstackclick.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">线程的跳转功能</h4>
-
+    
       <p class="fontColor">
         点击画红框处的带箭头的标志，会从CPU的线程概览视图跳转到线程的详情视图，同时从线程的详情视图也能跳转到CPU的线程概览视图。<br />
         <img src="../figures/Web/jumpthread.jpg" alt="GitHub Logo" />
       </p>
       <h3 class="mume-header fontColor">trace的其他功能</h3>
-
+    
       <h4 class="mume-header fontColor">小旗标志的功能</h4>
-
+    
       <p class="fontColor">
         将选中数据的时间点通过小旗的方式在时间轴上展示，直观的展示选中数据的时间。<br />
-        <img src="../figures/Web/flag.jpg" alt="GitHub Logo" /><br />
-        在下方输入空输入文字:我是trace,可以给小旗打备注。<br />
-        <img src="../figures/Web/flaginput.jpg" alt="GitHub Logo" />
-      </p>
-      <h4 class="mume-header fontColor">收藏置顶功能</h4>
-
-      <p class="fontColor">
-        鼠标移动到某个页签，会出现星形的标志，点击该星形，可以将该行收藏置顶。<br />
-        <img src="../figures/Web/stars.jpg" alt="GitHub Logo" />
+        <img src="../figures/Web/flag.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">勾选功能</h4>
-
+    
       <p class="fontColor">
         框选某一区域，该区域左边会出现CheckBox的复选框，选中的区域的复选框会出现打勾的状态，可以取消勾选，也可以重新勾选。<br />
         <img src="../figures/Web/checkbox.jpg" alt="GitHub Logo" />
       </p>
       <h4 class="mume-header fontColor">搜索功能</h4>
-
+    
       <p class="fontColor">
         在搜索框中，可以输入线程，线程号等搜索自己想要的信息，搜索完成会高亮显示。<br />
         <img src="../figures/Web/search.jpg" alt="GitHub Logo" /><br />
         在搜索框中输入调用栈的方法名，会跳转到对应的调用栈。<br />
         <img src="../figures/Web/searchcallstack.jpg" alt="GitHub Logo" />
       </p>
-      <h4 class="mume-header fontColor">M键测量功能</h4>
-
+      <h3 class="mume-header fontColor">Tab页信息和泳道图可跳转(点击和框选场景,框选类似搜索)</h3>
+    
       <p class="fontColor">
-        放大trace中的色块，选中色块，键盘按下M，会出现像尺子一样的形状。<br />
+        泳道图高亮场景：框选Cpu Frequency 或者Cpu State泳道图后，弹出Cpu Frequency或Cpu State
+        Tab页，在点击Tab页表格的行时，框选范围泳道图的当前行的Value值一样的部分上方会出现一条以圆点开头颜色比趋势图颜色同色但稍深的粗线条，如下图:<br />
+        <img src="../figures/Web/Tabskill.jpg" alt="GitHub Logo" /><br />
+        搜索场景：框选函数调用栈的泳道图，弹出Slices
+        Tab页，点击表格行，会跳转到框选范围内的第一条调用栈的位置，点击下图Slices Tab页的Background concurrent copying
+        GC调用栈。<br />
+        <img src="../figures/Web/Tabskillcalltack.jpg" alt="GitHub Logo" /><br />
+        会在搜索栏显示出该调用栈的搜索结果，并且会跳转到框选范围内第一条Background concurrent copying
+        GC调用栈的位置。<br />
+        <img src="../figures/Web/Tabcallstackskip.jpg" alt="GitHub Logo" />
+      </p>
+      <h4 class="mume-header fontColor">M键测量功能</h4>
+    
+      <p class="fontColor">
+        放大trace中的色块，选中色块，键盘按下M，会出现像标尺一样的形状。<br />
         <img src="../figures/Web/M.jpg" alt="GitHub Logo" />
       </p>
     </div>
-
+  
     <script>
       window.onload = () => {
         let isDark = window.location.search;
-        if (isDark.indexOf('?') != -1) {
+        if (isDark.indexOf('?') !== -1) {
           isDark = isDark.substr(1, isDark.length - 1);
         }
-        if (isDark == 'true') {
+        if (isDark === 'true') {
           document.getElementById('body').setAttribute('style', 'background-color:#272C34;');
           let header = document.getElementsByClassName('fontColor');
           for (let i = 0; i < header.length; i++) {

@@ -356,6 +356,19 @@ export class SpHelp extends BaseElement {
             },
           },
           {
+            title: 'Trace解析能力增强',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'trace_parsing',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_parsing_ability.html?${that.dark} width="100%" height="100%"></object>`;
+            },
+          },
+          {
             title: '应用操作技巧',
             icon: '',
             clickHandler: function (item: MenuItem) {

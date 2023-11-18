@@ -186,17 +186,13 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
     let processes = selectionParam.perfAll ? [] : selectionParam.perfProcess;
     let threads = selectionParam.perfAll ? [] : selectionParam.perfThread;
     let sql = '';
-    let arg4 = '';
     if (cpus.length != 0 || processes.length != 0 || threads.length != 0) {
       let arg1 = cpus.length > 0 ? `or s.cpu_id in (${cpus.join(',')}) ` : '';
       let arg2 = processes.length > 0 ? `or thread.process_id in (${processes.join(',')}) ` : '';
       let arg3 = threads.length > 0 ? `or s.thread_id in (${threads.join(',')})` : '';
-      let eventTypeId = selectionParam.eventTypeId;
-      arg4 = eventTypeId ? `and s.event_type_id = ${eventTypeId}` : '';
       let arg = `${arg1}${arg2}${arg3}`.substring(3);
-      sql = ` ${arg4} and (${arg}) `;
+      sql = ` and (${arg})`;
     }
-    
     this.queryData(
       this.currentEventId,
       'perf-queryCallchainsGroupSample',
@@ -207,9 +203,8 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
                  p.count,
                  p.process_id   as pid,
                  p.event_count  as eventCount,
-                 p.ts as ts,
-                 p.event_type_id as eventTypeId
-          from (select callchain_id, s.thread_id, s.event_type_id, thread_state, process_id, 
+                 p.ts as ts
+          from (select callchain_id, s.thread_id, thread_state, process_id, 
                 count(callchain_id) as count,event_count,
                 group_concat(s.timestamp_trace - t.start_ts,',') as ts
                 from perf_sample s, trace_range t
@@ -381,7 +376,6 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         perfProcessMerageData.initChildren.push(merageData);
         perfProcessMerageData.dur = merageData.dur;
         perfProcessMerageData.count = merageData.dur;
-        perfProcessMerageData.eventCount = merageData.eventCount;
         perfProcessMerageData.total = totalSamplesCount;
         perfProcessMerageData.tsArray = [...merageData.tsArray];
         rootMerageMap[merageData.pid] = perfProcessMerageData;
@@ -390,7 +384,6 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         rootMerageMap[merageData.pid].initChildren.push(merageData);
         rootMerageMap[merageData.pid].dur += merageData.dur;
         rootMerageMap[merageData.pid].count += merageData.dur;
-        rootMerageMap[merageData.pid].eventCount += merageData.eventCount;
         rootMerageMap[merageData.pid].total = totalSamplesCount;
         for (const ts of merageData.tsArray) {
           rootMerageMap[merageData.pid].tsArray.push(ts);
@@ -478,7 +471,6 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         processMerageData.initChildren.push(merageData);
         processMerageData.dur = merageData.dur;
         processMerageData.count = merageData.dur;
-        processMerageData.eventCount = merageData.dur;
         processMerageData.total = sampleIds.length;
         rootMerageMap[merageData.pid] = processMerageData;
       } else {
@@ -486,7 +478,6 @@ export class ProcedureLogicWorkerPerf extends LogicHandler {
         rootMerageMap[merageData.pid].initChildren.push(merageData);
         rootMerageMap[merageData.pid].dur += merageData.dur;
         rootMerageMap[merageData.pid].count += merageData.dur;
-        rootMerageMap[merageData.pid].eventCount += merageData.dur;
         rootMerageMap[merageData.pid].total = sampleIds.length;
       }
       merageData.parentNode = rootMerageMap[merageData.pid]; //子节点添加父节点的引用
@@ -980,7 +971,6 @@ export class PerfCallChain {
   symbolId: number = 0;
   path: string = '';
   count: number = 0;
-  eventCount: number = 0;
   parentId: string = ''; //合并之后区分的id
   id: string = '';
   topDownMerageId: string = ''; //top down合并使用的id
@@ -1009,7 +999,6 @@ export class PerfCallChain {
     currentNode.sampleId = callChain.sampleId;
     currentNode.dur = callChain.dur;
     currentNode.count = callChain.count;
-    currentNode.eventCount = callChain.eventCount;
   }
 }
 
@@ -1079,7 +1068,6 @@ export class PerfCallChainMerageData extends ChartStruct {
     }
     currentNode.dur += callChain.count;
     currentNode.count += callChain.count;
-    currentNode.eventCount += callChain.eventCount;
   }
 
   static merageCallChainSample(
@@ -1108,7 +1096,6 @@ export class PerfCallChainMerageData extends ChartStruct {
     }
     currentNode.dur += sample.count;
     currentNode.count += sample.count;
-    currentNode.eventCount += sample.eventCount;
     currentNode.tsArray.push(...sample.ts.split(',').map(Number));
   }
 }

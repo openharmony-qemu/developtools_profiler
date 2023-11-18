@@ -95,6 +95,10 @@ void BytraceHilogParser::ParseHilogDataItem(const std::string& buffer, const uin
 
     std::string timeStr = matcheLine[HILOG_MATCH_SEQ_TIME].str();
     HilogTimeStrToTimestamp(timeStr, bufLine->timeStamp);
+    if (traceDataCache_->isSplitFile_ && traceDataCache_->SplitFileMinTime() <= bufLine->timeStamp &&
+        traceDataCache_->SplitFileMaxTime() >= bufLine->timeStamp) {
+        traceDataHiLog_ += buffer + "\r\n";
+    }
 
     std::string pidStr = matcheLine[HILOG_MATCH_SEQ_PID].str();
     std::optional<uint32_t> optionalPid = base::StrToInt<uint32_t>(pidStr);

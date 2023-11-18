@@ -83,7 +83,7 @@ export class PluginConvertUtils {
               if (value == '') {
                 break;
               }
-              if (value.startsWith('LOG_') || value.startsWith('IO_REPORT')) {
+              if (LevelConfigEnumList.indexOf(value) >= 0 || value.startsWith('IO_REPORT')) {
                 prefixText =
                   prefixText +
                   ' '.repeat(spacesNumber).repeat(indentation + 1) +
@@ -240,3 +240,5 @@ export class PluginConvertUtils {
     );
   }
 }
+
+const LevelConfigEnumList = ['LEVEL_UNSPECIFIED', 'DEBUG', 'INFO', 'WARN', 'ERROR']

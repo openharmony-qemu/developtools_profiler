@@ -64,6 +64,10 @@ public:
     {
         traceDataBytrace_.clear();
     }
+    auto GetHiLogParser()
+    {
+        return hilogParser_.get();
+    }
 
     void WaitForParserEnd();
 

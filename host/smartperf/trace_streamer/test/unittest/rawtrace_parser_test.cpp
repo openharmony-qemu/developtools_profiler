@@ -21,7 +21,7 @@
 #include <string>
 
 #include "file.h"
-#include "parser/rawtrace_parser/rawtrace_parser.h"
+#include "rawtrace_parser.h"
 #include "parser/common_types.h"
 #include "string_help.h"
 #include "trace_streamer_selector.h"
@@ -32,6 +32,7 @@ using namespace SysTuning::base;
 
 namespace SysTuning {
 namespace TraceStreamer {
+constexpr uint64_t PRINTK_VALID_ADDR = 0xffffffc011bdd3ea;
 class RawTraceParserTest : public ::testing::Test {
 public:
     void SetUp()
@@ -173,6 +174,8 @@ HWTEST_F(RawTraceParserTest, HandlePrintkFormats, TestSize.Level1)
             break;
         }
     }
+    std::string sym = PrintkFormatsProcessor::GetInstance().GetSymbol(PRINTK_VALID_ADDR);
+    EXPECT_TRUE(sym != "NULL");
     PrintkFormatsProcessor::GetInstance().Clear();
     std::string errPrintkFormats = R"(ffffffc010001578 T __entry_text_start
     1409 HitraceDumpTest

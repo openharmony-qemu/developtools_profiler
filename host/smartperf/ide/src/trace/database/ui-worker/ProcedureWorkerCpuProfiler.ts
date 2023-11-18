@@ -184,7 +184,9 @@ export class JsCpuProfilerStruct extends BaseStruct {
         jsCpuProfilerCtx.fillRect(data.frame.x, data.frame.y, data.frame.width, miniHeight - padding * 2);
         if (data.frame.width > 8) {
           jsCpuProfilerCtx.lineWidth = 1;
-          jsCpuProfilerCtx.fillStyle = '#fff';
+          jsCpuProfilerCtx.fillStyle = ColorUtils.funcTextColor(
+            ColorUtils.FUNC_COLOR[ColorUtils.hashFunc(data.name || '', 0, ColorUtils.FUNC_COLOR.length)]
+          );
           jsCpuProfilerCtx.textBaseline = 'middle';
           drawString(jsCpuProfilerCtx, `${data.name || ''}`, 4, data.frame, data);
         }

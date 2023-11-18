@@ -36,7 +36,7 @@ public:
     void SetEbpfDataOffset(uint64_t offset);
     void SetProfilerHeader(const ProfilerTraceFileHeader& header);
     void SetSpliteTimeRange(uint64_t splitFileMinTs, uint64_t splitFileMaxTs);
-    bool AddAndSplitEbpfData(const std::deque<uint8_t>& dequeBuffer);
+    bool AddAndSplitEbpfData(std::deque<uint8_t>& dequeBuffer);
     void RecordEbpfProfilerHeader(uint8_t* buffer, uint32_t len)
     {
         (void)memcpy_s(&profilerHeader_, sizeof(profilerHeader_), buffer, len);
@@ -56,8 +56,8 @@ public:
     }
 
 private:
-    bool SplitEbpfHeader();
-    void SplitEbpfBodyData();
+    bool SplitEbpfHeader(std::deque<uint8_t>& dequeBuffer);
+    void SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer);
     uint64_t splittedLen_ = 0;
     uint64_t usefulDataLen_ = 0;
     std::deque<uint8_t> ebpfBuffer_;

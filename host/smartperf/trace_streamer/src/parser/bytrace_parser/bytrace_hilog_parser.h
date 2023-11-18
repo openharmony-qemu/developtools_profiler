@@ -31,6 +31,14 @@ public:
     ~BytraceHilogParser();
     void ParseHilogDataItem(const std::string& buffer, const uint64_t lineSeq);
     void FilterAllHilogData();
+    auto GetTraceDataHiLog()
+    {
+        return traceDataHiLog_;
+    }
+    void ClearHiLogData()
+    {
+        traceDataHiLog_.clear();
+    }
 
 private:
     bool HilogTimeStrToTimestamp(std::string& timeStr, uint64_t& timeStamp) const;
@@ -47,7 +55,7 @@ private:
         HILOG_MATCH_SEQ_TAG = 6,
         HILOG_MATCH_SEQ_CONTENT = 7,
     };
-
+    std::string traceDataHiLog_ = "";
     std::vector<std::unique_ptr<HilogLine>> hilogList_ = {};
 };
 } // namespace TraceStreamer

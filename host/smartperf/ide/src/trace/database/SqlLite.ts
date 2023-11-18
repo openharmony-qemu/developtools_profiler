@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-// import './sql-wasm.js';
+import './sql-wasm.js';
 
 import { Counter, Fps, SelectionData } from '../bean/BoxSelection.js';
 import { WakeupBean } from '../bean/WakeupBean.js';
@@ -1594,13 +1594,15 @@ export const queryNativeHookStatisticsSubType = (leftNs: number, rightNs: number
 export const queryNativeHookSubType = (leftNs: number, rightNs: number): Promise<Array<any>> =>
   query(
     'queryNativeHookSubType',
-    `select distinct sub_type_id as subTypeId, DD.data as subType
+    `select distinct(
+  case when sub_type_id is null  then -1 else sub_type_id end
+) as subTypeId,
+(case when sub_type_id is null then 'Other MmapEvent' else DD.data end) as subType
       from
         native_hook NH,
         trace_range TR
       left join data_dict DD on NH.sub_type_id = DD.id
-      where
-        NH.sub_type_id not null and
+where event_type = 'MmapEvent' and
         (NH.start_ts - TR.start_ts) between ${leftNs} and ${rightNs}
         `,
     { $leftNs: leftNs, $rightNs: rightNs }
@@ -4529,7 +4531,8 @@ export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> 
                ELSE ( a.start_point - R.start_ts ) END
            ) AS startTs,
            (a.start_point - R.start_ts) AS endTs,
-           0 AS frameInfo
+           0 AS frameInfo,
+           a.name AS name
          FROM 
              animation AS a, 
              trace_range AS R
@@ -4541,7 +4544,8 @@ export const queryFrameAnimationData = (): Promise<Array<FrameAnimationStruct>> 
                ELSE ( a.start_point - R.start_ts ) END
            ) AS startTs,
            (a.end_point - R.start_ts) AS endTs,
-           a.frame_info AS frameInfo
+           a.frame_info AS frameInfo,
+           a.name AS name
          FROM 
              animation AS a, 
              trace_range AS R
@@ -5423,7 +5427,18 @@ export const queryLogData = (oneDayTime: number): Promise<Array<LogStruct>> =>
                 0
               ELSE (l.ts - TR.start_ts)
               END     AS startTs,
-            l.level   AS level,
+            CASE
+              WHEN l.level = 'D' THEN
+                  'Debug'
+              WHEN l.level = 'I' THEN
+                  'Info'
+              WHEN l.level = 'W' THEN
+                  'Warn'
+              WHEN l.level = 'E' THEN
+                  'Error'
+              WHEN l.level = 'F' THEN
+                  'Fatal'
+              END AS level,
             CASE
               WHEN l.level = 'D' THEN
                 0
@@ -5480,10 +5495,3 @@ export const queryTraceType = (): Promise<
             WHERE 
                 m.name = 'source_type';`
   );
-
-  export const queryTransferList = (): Promise<Array<{ id: number; cmdStr: string}>> => 
-  query(
-    'queryTransferList',
-    `select id, report_value as cmdStr from perf_report where report_type = 'config_name'`
-  );
-

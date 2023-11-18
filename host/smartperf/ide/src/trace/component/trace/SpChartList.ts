@@ -88,12 +88,11 @@ export class SpChartList extends BaseElement {
       if (this.collect1Expand) {
         this.icon1!.style.transform = 'rotateZ(0deg)';
         this.collectEl1?.appendChild(this.fragmentGroup1);
-        this.resizeHeight();
       } else {
         this.icon1!.style.transform = 'rotateZ(-90deg)';
         this.collectRowList1.forEach((row) => this.fragmentGroup1.appendChild(row));
-        this.resizeHeight();
       }
+      this.resizeHeight();
     });
     this.icon2?.addEventListener('click', () => {
       this.collect2Expand = !this.collect2Expand;
@@ -101,10 +100,12 @@ export class SpChartList extends BaseElement {
         this.icon2!.style.transform = 'rotateZ(0deg)';
         this.collectEl2?.appendChild(this.fragmentGroup2);
         this.resizeHeight();
+        this.scrollTop = this.scrollHeight;
       } else {
         this.icon2!.style.transform = 'rotateZ(-90deg)';
         this.collectRowList2.forEach((row) => this.fragmentGroup2.appendChild(row));
         this.resizeHeight();
+        this.scrollTop = 0;
       }
     });
     this.removeCollectIcon1?.addEventListener('click', () => {
@@ -190,25 +191,25 @@ export class SpChartList extends BaseElement {
 
   reset(): void {
     this.maxHeight = 0;
-    this.style.height = 'auto';
     this.clearRect();
     this.collect1Expand = true;
     this.collect2Expand = true;
     this.icon1!.style.transform = 'rotateZ(0deg)';
     this.icon2!.style.transform = 'rotateZ(0deg)';
+    this.collectRowList1.forEach(row => {
+      row.clearMemory();
+    });
+    this.collectRowList2.forEach(row => {
+      row.clearMemory();
+    });
     this.collectRowList1 = [];
     this.collectRowList2 = [];
+    this.fragmentGroup1 = document.createDocumentFragment();
+    this.fragmentGroup2 = document.createDocumentFragment();
+    this.collectEl1!.innerHTML = ''
+    this.collectEl2!.innerHTML = ''
     this.updateGroupDisplay();
-    this.fragmentGroup1.childNodes.forEach((node) => this.fragmentGroup1.removeChild(node));
-    this.fragmentGroup2.childNodes.forEach((node) => this.fragmentGroup2.removeChild(node));
-    this.collectEl1!.querySelectorAll<TraceRow<any>>(`trace-row`).forEach((row) => {
-      row.clearMemory();
-      this.collectEl1!.removeChild(row);
-    });
-    this.collectEl2!.querySelectorAll<TraceRow<any>>(`trace-row`).forEach((row) => {
-      row.clearMemory();
-      this.collectEl2!.removeChild(row);
-    });
+    this.style.height = 'auto';
   }
 
   context(): CanvasRenderingContext2D | undefined | null {

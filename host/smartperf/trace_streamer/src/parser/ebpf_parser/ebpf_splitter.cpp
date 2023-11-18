@@ -32,10 +32,10 @@ void EbpfSplitter::SetSpliteTimeRange(uint64_t splitFileMinTs, uint64_t splitFil
     splitFileMaxTs_ = splitFileMaxTs;
     TS_LOGE("splitFileMinTs_ = %llu, splitFileMaxTs_ = %llu", splitFileMinTs_, splitFileMaxTs_);
 }
-bool EbpfSplitter::SplitEbpfHeader()
+bool EbpfSplitter::SplitEbpfHeader(std::deque<uint8_t>& dequeBuffer)
 {
     splitEbpfHeader_ = std::make_unique<EbpfDataHeader>();
-    std::copy_n(ebpfBuffer_.begin(), EbpfDataHeader::EBPF_DATA_HEADER_SIZE,
+    std::copy_n(dequeBuffer.begin(), EbpfDataHeader::EBPF_DATA_HEADER_SIZE,
                 reinterpret_cast<char*>(splitEbpfHeader_.get()));
     if (splitEbpfHeader_->header.magic != EbpfDataHeader::HEADER_MAGIC) {
         TS_LOGE("Get EBPF file header failed! magic = %" PRIx64 "", splitEbpfHeader_->header.magic);
@@ -49,21 +49,20 @@ bool EbpfSplitter::SplitEbpfHeader()
             splitEbpfHeader_->header.magic, splitEbpfHeader_->header.headSize, splitEbpfHeader_->header.clock,
             splitEbpfHeader_->cmdline);
     splittedLen_ += EbpfDataHeader::EBPF_DATA_HEADER_SIZE;
-    TS_LOGE("splittedLen_ = %llu", splittedLen_);
-    ebpfBuffer_.erase(ebpfBuffer_.begin(), ebpfBuffer_.begin() + EbpfDataHeader::EBPF_DATA_HEADER_SIZE);
+    dequeBuffer.erase(dequeBuffer.begin(), dequeBuffer.begin() + EbpfDataHeader::EBPF_DATA_HEADER_SIZE);
     return true;
 }
 
-bool EbpfSplitter::AddAndSplitEbpfData(const std::deque<uint8_t>& dequeBuffer)
+bool EbpfSplitter::AddAndSplitEbpfData(std::deque<uint8_t>& dequeBuffer)
 {
-    ebpfBuffer_.insert(ebpfBuffer_.end(), dequeBuffer.begin(), dequeBuffer.end());
+
     if (!splitEbpfHeader_) {
         HtraceSplitResult ebpfHtraceHead = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
                                             .buffer = {.address = reinterpret_cast<uint8_t*>(&profilerHeader_),
                                                        .size = sizeof(ProfilerTraceFileHeader)}};
         ebpfSplitResult_.emplace_back(ebpfHtraceHead);
-        if (ebpfBuffer_.size() >= EbpfDataHeader::EBPF_DATA_HEADER_SIZE) {
-            auto ret = SplitEbpfHeader();
+        if (dequeBuffer.size() >= EbpfDataHeader::EBPF_DATA_HEADER_SIZE) {
+            auto ret = SplitEbpfHeader(dequeBuffer);
             HtraceSplitResult ebpfHead = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_DATA,
                                           .buffer = {.address = reinterpret_cast<uint8_t*>(splitEbpfHeader_.get()),
                                                      .size = EbpfDataHeader::EBPF_DATA_HEADER_SIZE}};
@@ -74,19 +73,23 @@ bool EbpfSplitter::AddAndSplitEbpfData(const std::deque<uint8_t>& dequeBuffer)
         }
     }
 
-    SplitEbpfBodyData();
-    if (profilerHeader_.data.length - sizeof(ProfilerTraceFileHeader) - splittedLen_ < EBPF_TITLE_SIZE) {
+    SplitEbpfBodyData(dequeBuffer);
+    uint64_t unUsedLength = profilerHeader_.data.length - sizeof(ProfilerTraceFileHeader) - splittedLen_;
+    if (unUsedLength < EBPF_TITLE_SIZE) {
         profilerHeader_.data.length = usefulDataLen_ + sizeof(ProfilerTraceFileHeader) + sizeof(EbpfDataHeader);
+
+        dequeBuffer.erase(dequeBuffer.begin(), dequeBuffer.begin() + unUsedLength);
+        return true;
     }
     return false;
 }
-void EbpfSplitter::SplitEbpfBodyData()
+void EbpfSplitter::SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer)
 {
     while (profilerHeader_.data.length - sizeof(ProfilerTraceFileHeader) - splittedLen_ > EBPF_TITLE_SIZE &&
-           ebpfBuffer_.size() > EBPF_TITLE_SIZE) {
+           dequeBuffer.size() > EBPF_TITLE_SIZE) {
         EbpfTypeAndLength dataTitle;
-        std::copy_n(ebpfBuffer_.begin(), EBPF_TITLE_SIZE, reinterpret_cast<char*>(&dataTitle));
-        if (dataTitle.length + EBPF_TITLE_SIZE > ebpfBuffer_.size()) {
+        std::copy_n(dequeBuffer.begin(), EBPF_TITLE_SIZE, reinterpret_cast<char*>(&dataTitle));
+        if (dataTitle.length + EBPF_TITLE_SIZE > dequeBuffer.size()) {
             return;
         }
         auto segLen = EBPF_TITLE_SIZE + dataTitle.length;
@@ -104,7 +107,7 @@ void EbpfSplitter::SplitEbpfBodyData()
             }
             case ITEM_EVENT_FS: {
                 FsFixedHeader fsFixedHeader;
-                std::copy_n(ebpfBuffer_.begin() + EBPF_TITLE_SIZE, sizeof(FsFixedHeader),
+                std::copy_n(dequeBuffer.begin() + EBPF_TITLE_SIZE, sizeof(FsFixedHeader),
                             reinterpret_cast<char*>(&fsFixedHeader));
                 if (fsFixedHeader.endTime <= splitFileMaxTs_ && fsFixedHeader.startTime >= splitFileMinTs_) {
                     HtraceSplitResult fsDataOffset = {
@@ -117,7 +120,7 @@ void EbpfSplitter::SplitEbpfBodyData()
             }
             case ITEM_EVENT_VM: {
                 PagedMemoryFixedHeader pagedMemoryFixedHeader;
-                std::copy_n(ebpfBuffer_.begin() + EBPF_TITLE_SIZE, sizeof(pagedMemoryFixedHeader),
+                std::copy_n(dequeBuffer.begin() + EBPF_TITLE_SIZE, sizeof(pagedMemoryFixedHeader),
                             reinterpret_cast<char*>(&pagedMemoryFixedHeader));
                 if (pagedMemoryFixedHeader.endTime <= splitFileMaxTs_ &&
                     pagedMemoryFixedHeader.startTime >= splitFileMinTs_) {
@@ -131,7 +134,7 @@ void EbpfSplitter::SplitEbpfBodyData()
             }
             case ITEM_EVENT_BIO: {
                 BIOFixedHeader bioFixedHeader;
-                std::copy_n(ebpfBuffer_.begin() + EBPF_TITLE_SIZE, sizeof(bioFixedHeader),
+                std::copy_n(dequeBuffer.begin() + EBPF_TITLE_SIZE, sizeof(bioFixedHeader),
                             reinterpret_cast<char*>(&bioFixedHeader));
                 if (bioFixedHeader.endTime <= splitFileMaxTs_ && bioFixedHeader.startTime >= splitFileMinTs_) {
                     HtraceSplitResult bioDataOffset = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
@@ -145,7 +148,7 @@ void EbpfSplitter::SplitEbpfBodyData()
             default:
                 TS_LOGI("Do not support EBPF type: %d, length: %d", dataTitle.type, dataTitle.length);
         }
-        ebpfBuffer_.erase(ebpfBuffer_.begin(), ebpfBuffer_.begin() + segLen);
+        dequeBuffer.erase(dequeBuffer.begin(), dequeBuffer.begin() + segLen);
         splittedLen_ += segLen;
     }
 }

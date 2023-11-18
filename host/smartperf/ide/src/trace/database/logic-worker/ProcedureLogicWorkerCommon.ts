@@ -20,7 +20,6 @@ export class ChartStruct {
   addr: string = '';
   size: number = 0;
   count: number = 0;
-  eventCount: number = 0;
   dur: number = 0;
   parent: ChartStruct | undefined;
   children: Array<ChartStruct> = [];

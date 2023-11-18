@@ -31,6 +31,7 @@ RawTraceParser::RawTraceParser(TraceDataCache* dataCache, const TraceStreamerFil
 {
 }
 RawTraceParser::~RawTraceParser() {}
+void RawTraceParser::ParseTraceDataItem(const std::string& buffer) {}
 bool RawTraceParser::ParseCpuRawData(uint32_t cpuId, const std::string& buffer)
 {
     TS_CHECK_TRUE(buffer.size() > 0, false, "buffer.size() is zero!");

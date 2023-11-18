@@ -51,51 +51,53 @@ export class TabPaneSmapsRecord extends BaseElement {
   }
 
   private async setSmapsRecordTableData(startNs: number): Promise<void> {
-    await querySmapsRecordTabData(startNs, MemoryConfig.getInstance().iPid,this.pixelmapId, this.typeId).then((results) => {
-      if (results.length > 0) {
-        let totalSize = 0;
-        let RSGSize = 0;
-        let virtaulSize = 0;
-        let currentData = this._GLESHostCache.filter((item: SnapshotStruct) => item.startNs === startNs) || [];
-        if (currentData.length === 1) {
-          // GLESHostCache === currentData[0].aSize，改值Gpu Resource泳道图中已经获取过，所以在这个sql里只是设置为0，占位置，不用多查一遍
-          RSGSize = currentData[0].aSize || 0;
-        }
-        for (let res of results) {
-          if (res.name === 'VirtaulSize') {
-            virtaulSize = res.size;
-          } else {
-            // RSGSize = RenderServiceCpu + SkiaCpu + GLESHostCache
-            RSGSize += res.size;
+    await querySmapsRecordTabData(startNs, MemoryConfig.getInstance().iPid, this.pixelmapId, this.typeId).then(
+      (results) => {
+        if (results.length > 0) {
+          let totalSize = 0;
+          let RSGSize = 0;
+          let virtaulSize = 0;
+          let currentData = this._GLESHostCache.filter((item: SnapshotStruct) => item.startNs === startNs) || [];
+          if (currentData.length === 1) {
+            // GLESHostCache === currentData[0].aSize，改值Gpu Resource泳道图中已经获取过，所以在这个sql里只是设置为0，占位置，不用多查一遍
+            RSGSize = currentData[0].aSize || 0;
           }
-          switch (res.name) {
-            case 'RenderServiceCpu':
-              this.smapsRecordDataSource.push({ name: 'RenderServiceCpu', size: getByteWithUnit(res.size) });
-              break;
-            case 'SkiaCpu':
-              this.smapsRecordDataSource.push({ name: 'SkiaCpu', size: getByteWithUnit(res.size) });
-              break;
-            case 'GLESHostCache':
-              let size = currentData.length > 0 ? currentData[0].aSize : 0;
-              this.smapsRecordDataSource.push({ name: 'GLESHostCache', size: getByteWithUnit(size) });
-              break;
-            default:
-              break;
+          for (let res of results) {
+            if (res.name === 'VirtaulSize') {
+              virtaulSize = res.size;
+            } else {
+              // RSGSize = RenderServiceCpu + SkiaCpu + GLESHostCache
+              RSGSize += res.size;
+            }
+            switch (res.name) {
+              case 'RenderServiceCpu':
+                this.smapsRecordDataSource.push({ name: 'RenderServiceCpu', size: getByteWithUnit(res.size) });
+                break;
+              case 'SkiaCpu':
+                this.smapsRecordDataSource.push({ name: 'SkiaCpu', size: getByteWithUnit(res.size) });
+                break;
+              case 'GLESHostCache':
+                let size = currentData.length > 0 ? currentData[0].aSize : 0;
+                this.smapsRecordDataSource.push({ name: 'GLESHostCache', size: getByteWithUnit(size) });
+                break;
+              default:
+                break;
+            }
           }
+          //   ProcessCacheSize = virtaul_size - RenderServiceCpu - SkiaCpu - GLESHostCache
+          const ProcessCacheSize = virtaulSize - RSGSize;
+          // totalSize = RenderServiceCpu + SkiaCpu + GLESHostCache + ProcessCacheSize
+          totalSize = RSGSize + ProcessCacheSize;
+          this.smapsRecordDataSource.push({ name: 'ProcessCache', size: getByteWithUnit(ProcessCacheSize) });
+          this.smapsRecordDataSource.unshift(
+            { name: 'TimeStamp', size: ns2s(startNs) },
+            { name: 'TimeStamp(Absolute)', size: (startNs + (window as any).recordStartNS) / 1000000000 },
+            { name: 'Total', size: getByteWithUnit(totalSize) }
+          );
         }
-        //   ProcessCacheSize = virtaul_size - RenderServiceCpu - SkiaCpu - GLESHostCache
-        const ProcessCacheSize = virtaulSize - RSGSize;
-        // totalSize = RenderServiceCpu + SkiaCpu + GLESHostCache + ProcessCacheSize
-        totalSize = RSGSize + ProcessCacheSize;
-        this.smapsRecordDataSource.push({ name: 'ProcessCache', size: getByteWithUnit(ProcessCacheSize) });
-        this.smapsRecordDataSource.unshift(
-          { name: 'TimeStamp', size: ns2s(startNs) },
-          { name: 'TimeStamp(Absolute)', size: (startNs + (window as any).recordStartNS) / 1000000000 },
-          { name: 'Total', size: getByteWithUnit(totalSize) }
-        );
+        this.smapsRecordTable!.recycleDataSource = this.smapsRecordDataSource;
       }
-      this.smapsRecordTable!.recycleDataSource = this.smapsRecordDataSource;
-    });
+    );
   }
 
   public initElements(): void {
@@ -105,16 +107,26 @@ export class TabPaneSmapsRecord extends BaseElement {
   connectedCallback() {
     super.connectedCallback();
     resizeObserver(this.parentElement!, this.smapsRecordTable!);
+    new ResizeObserver(() => {
+      if (this.parentElement?.clientHeight !== 0) {
+        this.smapsRecordTable!.shadowRoot!.querySelector<HTMLDivElement>('.table')!.style.height = '100%';
+        this.smapsRecordTable!.reMeauseHeight();
+      }
+    }).observe(this.parentElement!);
   }
   public initHtml(): string {
     return `<style>
-        :host{
-            display: flex;
-            padding: 10px 10px;
-            flex-direction: column;
-        }
+            :host{
+                display: flex;
+                padding: 10px 10px;
+                flex-direction: column;
+                height: calc(100% - 20px);
+            }
+            #smaps-record-tbl{
+                height: 100%;
+            }
         </style>
-        <lit-table id="smaps-record-tbl" style="height: auto" no-head>
+        <lit-table id="smaps-record-tbl" no-head>
             <lit-table-column title="Name" data-index="name" align="flex-start" width="27%">
                 <template><div>{{name}}</div></template>
             </lit-table-column>

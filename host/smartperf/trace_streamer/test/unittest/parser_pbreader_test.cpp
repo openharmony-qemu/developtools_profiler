@@ -204,5 +204,88 @@ HWTEST_F(ParserPbreaderTest, HtraceAndEbpfParserTest, TestSize.Level1)
         EXPECT_TRUE(false);
     }
 }
+
+/**
+ * @tc.name: NoHeaderPerfParseTest
+ * @tc.desc: Test parsing perf(no profiler header) binary file export database
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParserPbreaderTest, NoHeaderPerfParseTest, TestSize.Level1)
+{
+    TS_LOGI("test34-5");
+    const std::string noHeaderPerfPath = "../../test/resource/htrace_perf_no_profiler_header.bin";
+    const std::string dbPath = "../../test/resource/test34-5_out.db";
+    constexpr size_t readSize = 1024;
+    constexpr uint32_t lineLength = 256;
+
+    if (access(noHeaderPerfPath.c_str(), F_OK) == 0) {
+        std::unique_ptr<SysTuning::TraceStreamer::TraceStreamerSelector> ta =
+            std::make_unique<SysTuning::TraceStreamer::TraceStreamerSelector>();
+        ta->EnableMetaTable(false);
+        int32_t fd(base::OpenFile(noHeaderPerfPath, O_RDONLY, G_FILE_PERMISSION));
+        while (true) {
+            std::unique_ptr<uint8_t[]> buff = std::make_unique<uint8_t[]>(readSize);
+            auto rsize = base::Read(fd, buff.get(), readSize);
+            if (rsize == 0) {
+                break;
+            }
+            if (rsize < 0) {
+                TS_LOGD("Reading trace file over (errno: %d, %s)", errno, strerror(errno));
+                break;
+            }
+            if (!ta->ParseTraceDataSegment(std::move(buff), rsize, 0, 1)) {
+                break;
+            };
+        }
+        ta->WaitForParserEnd();
+        close(fd);
+        ta->ExportDatabase(dbPath);
+        EXPECT_TRUE(access(dbPath.c_str(), F_OK) == 0);
+        remove(dbPath.c_str());
+    } else {
+        EXPECT_TRUE(false);
+    }
+}
+/**
+ * @tc.name: PerfCompressedParseTest
+ * @tc.desc: Test parsing perf(compressed callstack) binary file export database
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParserPbreaderTest, PerfCompressedParseTest, TestSize.Level1)
+{
+    TS_LOGI("test34-6");
+    const std::string compressedPerfPath = "../../test/resource/perfCompressed.data";
+    const std::string dbPath = "../../test/resource/test34-6_out.db";
+    constexpr size_t readSize = 1024;
+    constexpr uint32_t lineLength = 256;
+
+    if (access(compressedPerfPath.c_str(), F_OK) == 0) {
+        std::unique_ptr<SysTuning::TraceStreamer::TraceStreamerSelector> ta =
+            std::make_unique<SysTuning::TraceStreamer::TraceStreamerSelector>();
+        ta->EnableMetaTable(false);
+        int32_t fd(base::OpenFile(compressedPerfPath, O_RDONLY, G_FILE_PERMISSION));
+        while (true) {
+            std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(readSize);
+            auto rsize = base::Read(fd, buffer.get(), readSize);
+            if (rsize == 0) {
+                break;
+            }
+            if (rsize < 0) {
+                TS_LOGD("Reading compressed stack perf trace file over (errno: %d, %s)", errno, strerror(errno));
+                break;
+            }
+            if (!ta->ParseTraceDataSegment(std::move(buffer), rsize, 0, 1)) {
+                break;
+            };
+        }
+        ta->WaitForParserEnd();
+        close(fd);
+        ta->ExportDatabase(dbPath);
+        EXPECT_TRUE(access(dbPath.c_str(), F_OK) == 0);
+        remove(dbPath.c_str());
+    } else {
+        EXPECT_TRUE(false);
+    }
+}
 } // namespace TraceStreamer
 } // namespace SysTuning

@@ -48,9 +48,6 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_CPU_STATE = 'cpu-state';
   static ROW_TYPE_CPU_FREQ = 'cpu-freq';
   static ROW_TYPE_CPU_FREQ_LIMIT = 'cpu-limit-freq';
-  static ROW_TYPE_CPU_FREQ_ALL='cpu-frequency';
-  static ROW_TYPE_CPU_STATE_ALL = 'cpu-State';
-  static ROW_TYPE_CPU_FREQ_LIMITALL = 'cpu-frequency-limit';
   static ROW_TYPE_FPS = 'fps';
   static ROW_TYPE_NATIVE_MEMORY = 'native-memory';
   static ROW_TYPE_HIPERF = 'hiperf';
@@ -670,12 +667,6 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.checkBoxEL!.onclick = (ev: any) => {
       ev.stopPropagation();
     };
-    setTimeout(()=>{
-      let cpuFnanme=this.shadowRoot?.querySelector('.name')?.textContent;
-      if(this.folder && (cpuFnanme=='Cpu Frequency' || cpuFnanme=='Cpu State' || cpuFnanme=='Cpu Freq Limit')){
-        this.expansion=!this.expansion
-      }
-    },1400)
     this.describeEl?.addEventListener('click', () => {
       if (this.folder) {
         this.expansion = !this.expansion;

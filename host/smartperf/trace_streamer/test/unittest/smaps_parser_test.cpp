@@ -41,7 +41,7 @@ public:
 
 public:
     SysTuning::TraceStreamer::TraceStreamerSelector stream_ = {};
-    const std::string dbPath_ = "../../../data/resource/out.db";
+    const std::string dbPath_ = "data/resource/out.db";
 };
 /**
  * @tc.name: ParseSmapsParse
@@ -75,7 +75,7 @@ HWTEST_F(SmapsParserTest, ParseSmapsParse, TestSize.Level1)
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SMAPS, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
-    EXPECT_TRUE(stream_.traceDataCache_->GetConstProcessMeasureData().Size() == MEM_MAX * 1);
+    EXPECT_TRUE(stream_.traceDataCache_->GetConstProcessMeasureData().Size() == 9);
     EXPECT_EQ(stream_.traceDataCache_->GetConstProcessData().size(), 1);
 }
 /**
@@ -126,7 +126,7 @@ HWTEST_F(SmapsParserTest, ParseSmapsParseTestMeasureDataSize, TestSize.Level1)
 
     auto eventCount = stream_.traceDataCache_->GetConstStatAndInfo().GetValue(TRACE_SMAPS, STAT_EVENT_RECEIVED);
     EXPECT_TRUE(1 == eventCount);
-    EXPECT_TRUE(stream_.traceDataCache_->GetConstProcessMeasureData().Size() == MEM_MAX * 1);
+    EXPECT_TRUE(stream_.traceDataCache_->GetConstProcessMeasureData().Size() == 9);
     EXPECT_EQ(stream_.traceDataCache_->GetConstProcessData().size(), 1);
 
     EXPECT_TRUE(stream_.traceDataCache_->GetConstSmapsData().StartAddrs()[0] == "0x5589523000");

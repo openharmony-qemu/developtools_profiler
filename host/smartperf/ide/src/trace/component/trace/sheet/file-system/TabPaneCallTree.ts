@@ -23,6 +23,7 @@ import { FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { MerageBean } from '../../../../database/logic-worker/ProcedureLogicWorkerCommon.js';
 import { showButtonMenu } from '../SheetUtils.js';
+import { findSearchNode } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 
 @element('tabpane-calltree')
 export class TabPaneCallTree extends BaseElement {
@@ -47,6 +48,7 @@ export class TabPaneCallTree extends BaseElement {
   private loadingPage: any;
   private currentSelection: SelectionParam | undefined;
   private flameChartMode: ChartMode = ChartMode.Duration;
+  private currentCallTreeDataSource: Array<MerageBean> = [];
 
   set data(callTreeSelection: SelectionParam | any) {
     if (callTreeSelection === this.currentSelection) {
@@ -83,6 +85,7 @@ export class TabPaneCallTree extends BaseElement {
         this.frameChart!.mode = this.flameChartMode;
         this.frameChart?.updateCanvas(true, initWidth);
         this.frameChart!.data = this.callTreeDataSource;
+        this.currentCallTreeDataSource = this.callTreeDataSource;
         this.switchFlameChart();
         this.callTreeFilter.icon = 'block';
       }
@@ -221,7 +224,6 @@ export class TabPaneCallTree extends BaseElement {
 
     this.callTreeTbl!.rememberScrollTop = true;
     this.callTreeFilter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
-    this.callTreeFilter!.disabledTransfer(true);
     this.callTreeTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
       let data = evt.detail.data as MerageBean;
@@ -432,6 +434,8 @@ export class TabPaneCallTree extends BaseElement {
           },
         ];
         this.getDataByWorker(callTreeArgs, (result: any[]) => {
+          this.callTreeTbl!.isSearch = true;
+          this.callTreeTbl!.setStatus(result, true);
           this.setLTableData(result);
           this.frameChart!.data = this.callTreeDataSource;
           this.switchFlameChart(callTreeFilterData);

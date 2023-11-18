@@ -303,15 +303,15 @@ HWTEST_F(TableTest, DataDictTableTest, TestSize.Level1)
     std::string sqlSelect5 = "select * from data_dict where data <= 1";
     stream_.traceDataCache_->GetDataFromDict(1);
     auto row = stream_.traceDataCache_->SearchDatabase(sqlSelect, false);
-    EXPECT_EQ(row, 61);
+    EXPECT_EQ(row, 69);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect1, false);
     EXPECT_EQ(row, 1);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect2, false);
-    EXPECT_EQ(row, 59);
+    EXPECT_EQ(row, 67);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect3, false);
     EXPECT_EQ(row, 1);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect4, false);
-    EXPECT_EQ(row, 60);
+    EXPECT_EQ(row, 68);
     row = stream_.traceDataCache_->SearchDatabase(sqlSelect5, false);
     EXPECT_EQ(row, 1);
 }
@@ -1307,7 +1307,7 @@ HWTEST_F(TableTest, StatTableTest, TestSize.Level1)
     std::string sqlSelect = "select * from stat";
     stream_.traceDataCache_->GetStatAndInfo();
     auto row = stream_.traceDataCache_->SearchDatabase(sqlSelect, false);
-    EXPECT_EQ(row, 450);
+    EXPECT_EQ(row, 455);
 }
 /**
  * @tc.name: SymbolsTableTest

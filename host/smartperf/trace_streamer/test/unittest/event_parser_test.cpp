@@ -200,8 +200,7 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteC, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(2906, stream_.traceDataCache_->GetProcessMeasureData()->ValuesData()[0]);
 }
 
 /**
@@ -214,7 +213,7 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteBE, TestSize.Level1)
     TS_LOGI("test5-7");
     const uint8_t str[] =
         "system-1298 ( 1298) [001] ...1 174330.287420: tracing_mark_write: B|1298|Choreographer#doFrame\n \
-            system - 1298(1298)[001]... 1 174330.287622 : tracing_mark_write : E | 1298\n"; // E | 1298 wrong format
+            system-1298 ( 1298) [001] ...1 174330.287622: tracing_mark_write: E|1298\n";
     auto buf = std::make_unique<uint8_t[]>(G_BUF_SIZE);
     if (memcpy_s(buf.get(), G_BUF_SIZE, str, sizeof(str))) {
         EXPECT_TRUE(false);
@@ -224,10 +223,9 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteBE, TestSize.Level1)
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
 
-    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    EXPECT_EQ(bytraceParser.ParsedTraceInvalidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(2));
+    EXPECT_EQ(174330287420000, stream_.traceDataCache_->GetInternalSlicesData()->TimeStampData()[0]);
+    EXPECT_EQ(202000, stream_.traceDataCache_->GetInternalSlicesData()->DursData()[0]);
 }
 
 /**
@@ -240,9 +238,8 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteSF, TestSize.Level1)
     TS_LOGI("test5-8");
 
     const uint8_t str[] =
-        "system-1298 ( 1298) [001] ...1 174330.287478: tracing_mark_write: S|1298|animator:\
-            translateX|18888109\n system-1298(1298)[001]... 1 174330.287514 : tracing_mark_write : \
-            F | 1298 | animator : translateX | 18888109\n";
+        "system-1298 ( 1298) [001] ...1 174330.287478: tracing_mark_write: S|1298|animator:translateX|18888109\n\
+        system-1298 ( 1298) [001] ...1 174330.287514: tracing_mark_write: F|1298|animator:translateX|18888109\n";
     auto buf = std::make_unique<uint8_t[]>(G_BUF_SIZE);
     if (memcpy_s(buf.get(), G_BUF_SIZE, str, sizeof(str))) {
         EXPECT_TRUE(false);
@@ -252,10 +249,10 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteSF, TestSize.Level1)
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
 
-    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    EXPECT_EQ(bytraceParser.ParsedTraceInvalidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(2));
+    EXPECT_EQ(174330287478000, stream_.traceDataCache_->GetInternalSlicesData()->TimeStampData()[0]);
+    EXPECT_EQ(36000, stream_.traceDataCache_->GetInternalSlicesData()->DursData()[0]);
+    EXPECT_EQ(18888109, stream_.traceDataCache_->GetInternalSlicesData()->Cookies()[0]);
 }
 
 /**
@@ -267,9 +264,7 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteErrorPoint, TestSize.Level1)
 {
     TS_LOGI("test5-9");
     const uint8_t str[] =
-        "system-1298  ( 1298) [001] ...1 174330.287478: tracing_mark_write: G|1298|animator: \
-            translateX|18888109\n system-1298(1298)[001]... 1 174330.287514 : tracing_mark_write : \
-            F | 1298 | animator : translateX | 18888109\n";
+        "system-1298  ( 1298) [001] ...1 174330.287478: tracing_mark_write: G|1298|animator:translateX|18888109\n";
     auto buf = std::make_unique<uint8_t[]>(G_BUF_SIZE);
     if (memcpy_s(buf.get(), G_BUF_SIZE, str, sizeof(str))) {
         EXPECT_TRUE(false);
@@ -278,11 +273,7 @@ HWTEST_F(EventParserTest, ParseTracingMarkWriteErrorPoint, TestSize.Level1)
     BytraceParser bytraceParser(stream_.traceDataCache_.get(), stream_.streamFilters_.get());
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
-
-    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    EXPECT_EQ(bytraceParser.ParsedTraceInvalidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(0, stream_.traceDataCache_->GetInternalSlicesData()->TimeStampData().size());
 }
 
 /**
@@ -304,8 +295,8 @@ HWTEST_F(EventParserTest, ParseCpuIdle, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(174330280761000, stream_.traceDataCache_->GetMeasureData()->TimeStampData()[0]);
+    EXPECT_EQ(3, stream_.traceDataCache_->GetMeasureData()->ValuesData()[0]);
 }
 
 /**
@@ -328,8 +319,7 @@ HWTEST_F(EventParserTest, ParseIrqHandlerEntry, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(174330280362000, stream_.traceDataCache_->GetIrqData()->TimeStampData()[0]);
 }
 
 /**
@@ -340,7 +330,9 @@ HWTEST_F(EventParserTest, ParseIrqHandlerEntry, TestSize.Level1)
 HWTEST_F(EventParserTest, ParseIrqHandlerExit, TestSize.Level1)
 {
     TS_LOGI("test5-12");
-    const uint8_t str[] = "ACCS0-2716  ( 2519) [000] d.h1 174330.280382: irq_handler_exit: irq=19 ret=handled\n";
+    const uint8_t str[] =
+        "ACCS0-2716  ( 2519) [000] d.h1 174330.280362: irq_handler_entry: irq=19 name=408000.qcom,cpu-bwmon\n \
+    ACCS0-2716  ( 2519) [000] d.h1 174330.280382: irq_handler_exit: irq=19 ret=handled\n";
     auto buf = std::make_unique<uint8_t[]>(G_BUF_SIZE);
     if (memcpy_s(buf.get(), G_BUF_SIZE, str, sizeof(str))) {
         EXPECT_TRUE(false);
@@ -350,9 +342,9 @@ HWTEST_F(EventParserTest, ParseIrqHandlerExit, TestSize.Level1)
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
 
-    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(2));
+    EXPECT_EQ(1,
+              stream_.traceDataCache_->GetStatAndInfo()->GetValue(TRACE_EVENT_IRQ_HANDLER_EXIT, STAT_EVENT_RECEIVED));
 }
 
 /**
@@ -375,8 +367,7 @@ HWTEST_F(EventParserTest, ParseSchedWaking, TestSize.Level1)
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(0, stream_.traceDataCache_->GetSchedSliceData()->TimeStampData().size());
 }
 
 /**
@@ -400,8 +391,8 @@ HWTEST_F(EventParserTest, ParseSchedWakeup, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(174330280575000, stream_.traceDataCache_->GetRawData()->TimeStampData()[0]);
+    EXPECT_EQ(0, stream_.traceDataCache_->GetRawData()->CpuData()[0]);
 }
 
 /**
@@ -425,8 +416,10 @@ HWTEST_F(EventParserTest, ParseTraceEventClockSync, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(1,
+              stream_.traceDataCache_->GetStatAndInfo()->GetValue(TRACE_EVENT_TRACING_MARK_WRITE, STAT_EVENT_RECEIVED));
+    EXPECT_EQ(1, stream_.traceDataCache_->GetStatAndInfo()->GetValue(TRACE_EVENT_TRACING_MARK_WRITE,
+                                                                     STAT_EVENT_DATA_INVALID));
 }
 
 /**
@@ -450,8 +443,7 @@ HWTEST_F(EventParserTest, ParseSchedSwitch, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(174330289220000, stream_.traceDataCache_->GetSchedSliceData()->TimeStampData()[0]);
 }
 
 /**
@@ -463,7 +455,9 @@ HWTEST_F(EventParserTest, ParseTaskRename, TestSize.Level1)
 {
     TS_LOGI("test5-17");
     const uint8_t str[] =
-        "<...>-2093  (-----) [001] ...2 174332.792290: task_rename: pid=12729 oldcomm=perfd \
+        "ACCS0-12729  ( 2519) [000] d..3 174330.289220: sched_switch: prev_comm=ACCS0\
+     prev_pid=2716 prev_prio=120 prev_state=R+ ==> next_comm=Binder:924_6 next_pid=1332 next_prio=120\n\
+        <...>-2093  (-----) [001] ...2 174332.792290: task_rename: pid=12729 oldcomm=perfd \
             newcomm=POSIX timer 249 oom_score_adj=-1000\n";
     auto buf = std::make_unique<uint8_t[]>(G_BUF_SIZE);
     if (memcpy_s(buf.get(), G_BUF_SIZE, str, sizeof(str))) {
@@ -474,9 +468,10 @@ HWTEST_F(EventParserTest, ParseTaskRename, TestSize.Level1)
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
 
-    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    auto itid = stream_.streamFilters_->processFilter_->GetInternalTid(12729);
+    auto threadNameIndex = stream_.traceDataCache_->GetThreadData(itid)->nameIndex_;
+    auto expectThreadNameIndex = stream_.traceDataCache_->GetDataIndex("POSIX");
+    EXPECT_EQ(expectThreadNameIndex, threadNameIndex);
 }
 
 /**
@@ -500,8 +495,8 @@ HWTEST_F(EventParserTest, ParseTaskNewtask, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_EQ(access(dbPath_.c_str(), F_OK), 0);
+    auto itid = stream_.streamFilters_->processFilter_->GetInternalTid(12730);
+    EXPECT_EQ(INVALID_ID, itid);
 }
 
 /**
@@ -525,8 +520,7 @@ HWTEST_F(EventParserTest, ParseWorkqueueExecuteStart, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(174332827595000, stream_.traceDataCache_->GetInternalSlicesData()->TimeStampData()[0]);
 }
 
 /**
@@ -538,7 +532,9 @@ HWTEST_F(EventParserTest, ParseWorkqueueExecuteEnd, TestSize.Level1)
 {
     TS_LOGI("test5-20");
     const uint8_t str[] =
-        "<...>-12180 (-----) [001] ...1 174332.828056: workqueue_execute_end: work struct 0000000000000000\n";
+        "<...>-12180 (-----) [001] ...1 174332.827595: workqueue_execute_start: \
+    work struct 0000000000000000: function pm_runtime_work\n\
+    <...>-12180 (-----) [001] ...1 174332.828056: workqueue_execute_end: work struct 0000000000000000\n";
     auto buf = std::make_unique<uint8_t[]>(G_BUF_SIZE);
     if (memcpy_s(buf.get(), G_BUF_SIZE, str, sizeof(str))) {
         EXPECT_TRUE(false);
@@ -548,9 +544,8 @@ HWTEST_F(EventParserTest, ParseWorkqueueExecuteEnd, TestSize.Level1)
     bytraceParser.ParseTraceDataSegment(std::move(buf), G_BUF_SIZE);
     bytraceParser.WaitForParserEnd();
 
-    EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
+    EXPECT_EQ(174332827595000, stream_.traceDataCache_->GetInternalSlicesData()->TimeStampData()[0]);
+    EXPECT_EQ(461000, stream_.traceDataCache_->GetInternalSlicesData()->DursData()[0]);
 }
 
 /**
@@ -575,8 +570,6 @@ HWTEST_F(EventParserTest, ParsDistribute, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().Size() == 1);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().ChainIds()[0] == "8b00e96b2");
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().SpanIds()[0] == "2");
@@ -609,8 +602,6 @@ HWTEST_F(EventParserTest, ParsPairsOfDistributeEvent, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(2));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().Size() == 2);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().ChainIds()[0] == "8b00e96b2");
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().SpanIds()[0] == "2");
@@ -644,8 +635,6 @@ HWTEST_F(EventParserTest, ParsDistributeWithNoFlag, TestSize.Level1)
     bytraceParser.WaitForParserEnd();
 
     EXPECT_EQ(bytraceParser.ParsedTraceValidLines(), static_cast<const uint32_t>(1));
-    stream_.traceDataCache_->ExportDatabase(dbPath_);
-    EXPECT_TRUE(access(dbPath_.c_str(), F_OK) == 0);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().Size() == 1);
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().ChainIds()[0] == "8b00e96b2");
     EXPECT_TRUE(stream_.traceDataCache_->GetConstInternalSlicesData().SpanIds()[0] == "2");

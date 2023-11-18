@@ -50,6 +50,7 @@ export class LitPageTable extends BaseElement {
   private exportLoading: boolean = false;
   private currentPage: number = 0;
   private _loading: boolean = false;
+  startSkip: number = 0;
 
   static get observedAttributes() {
     return [
@@ -470,6 +471,7 @@ export class LitPageTable extends BaseElement {
       columns: this.columns as any[],
       tables: this.ds,
       fileName: date.getTime() + '',
+      columnFormatter: this.itemTextHandleMap
     }).then((res) => {
       this.exportLoading = false;
       this.exportProgress!.loading = false;
@@ -852,6 +854,7 @@ export class LitPageTable extends BaseElement {
   meauseAllRowHeight(list: any[]): TableRowObject[] {
     this.tbodyElement!.innerHTML = '';
     this.meauseRowElement = undefined;
+    this.startSkip = 0;
     let head = this.shadowRoot!.querySelector('.th');
     this.tbodyElement && (this.tbodyElement.style.width = head?.clientWidth + 'px');
     this.currentRecycleList = [];
@@ -906,12 +909,13 @@ export class LitPageTable extends BaseElement {
         if (reduce == 0) {
           return;
         }
-        while (reduce <= this.tableElement!.clientHeight) {
+        while (reduce <= this.tableElement!.clientHeight && (this.currentRecycleList.length + skip) < visibleObjects.length) {
           let newTableElement = this.createNewTableElement(visibleObjects[skip]);
           this.tbodyElement?.append(newTableElement);
           this.currentRecycleList.push(newTableElement);
           reduce += newTableElement.clientHeight;
         }
+        this.startSkip = skip;
         for (let i = 0; i < this.currentRecycleList.length; i++) {
           this.freshCurrentLine(this.currentRecycleList[i], visibleObjects[i + skip]);
         }
@@ -1288,7 +1292,7 @@ export class LitPageTable extends BaseElement {
     newTableElement.onclick = () => {
       this.dispatchRowClickEvent(rowData, [newTableElement]);
     };
-    newTableElement.onmouseenter = () => {
+    newTableElement.onmouseover = () => {
       this.dispatchRowHoverEvent(rowData, [newTableElement]);
     };
     if (rowData.data.isSelected != undefined) {

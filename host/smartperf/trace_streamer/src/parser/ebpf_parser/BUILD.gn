@@ -46,7 +46,20 @@ ohos_source_set("ebpf_parser_src") {
   if (is_mingw || is_mac) {
     include_dirs += [ "${THIRD_PARTY}/elfutils/libelf" ]
   }
-
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
+  }
   public_deps = [ "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/types/plugins/memory_data:memory_data_reader" ]
   if (is_win || is_mac || is_mingw) {
     include_dirs += [

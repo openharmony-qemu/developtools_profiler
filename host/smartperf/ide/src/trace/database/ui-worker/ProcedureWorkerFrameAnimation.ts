@@ -108,6 +108,7 @@ export class FrameAnimationStruct extends BaseStruct {
   startTs: number = 0;
   endTs: number = 0;
   frameInfo: string | undefined;
+  name: string | undefined;
 
   static setFrameAnimation(
     animationNode: FrameAnimationStruct,

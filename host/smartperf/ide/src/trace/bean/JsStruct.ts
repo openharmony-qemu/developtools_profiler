@@ -94,6 +94,7 @@ export class JsCpuProfilerTabStruct extends JsCpuProfilerUIStruct {
   selfTimeStr: string = ''; //selfTime unit conversion
   totalTimeStr: string = ''; //totalTime unit conversion
   isSearch: boolean = false; //filter data bold
+  status: boolean = false;
 
   constructor(
     name: string,

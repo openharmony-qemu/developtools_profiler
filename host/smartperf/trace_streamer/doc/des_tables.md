@@ -1664,12 +1664,16 @@ js_heap_sample:记录timeline的时间轴信息
 |input_time           |INT       |
 |start_point          |INT       |
 |end_point            |INT       |
+|frame_info           |TEXT      |
+|name                 |TEXT      |
 #### 表描述
 该表记录动效的响应时延和完成时延等信息。
 #### 关键字段描述
 - input_time：输入时间点
 - start_point：开始时间点
 - end_point：结束时间点
+- frame_info：动效帧信息，格式：`实际帧个数:实际帧帧率`
+- name: 当前动效名，eg：`H:APP_LIST_FLING, com.taobao.taobao`
 
 ### dynamic_frame表
 #### 表结构

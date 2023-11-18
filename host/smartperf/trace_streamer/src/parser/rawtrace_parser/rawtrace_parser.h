@@ -33,7 +33,7 @@ public:
 
 private:
     bool ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin);
-    void ParseTraceDataItem(const std::string& buffer) override {}
+    void ParseTraceDataItem(const std::string& buffer) override;
     bool ParseCpuRawData(uint32_t cpuId, const std::string& buffer);
     bool InitRawTraceFileHeader(std::deque<uint8_t>::iterator& packagesCurIter);
     bool InitEventFormats(const std::string& buffer);

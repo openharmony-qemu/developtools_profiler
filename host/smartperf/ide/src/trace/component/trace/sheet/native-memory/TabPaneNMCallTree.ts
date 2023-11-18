@@ -26,6 +26,7 @@ import { FileMerageBean } from '../../../../database/logic-worker/ProcedureLogic
 import { queryNativeHookSubType, queryNativeHookStatisticSubType } from '../../../../database/SqlLite.js';
 import { ParseExpression } from '../SheetUtils.js';
 import { NativeMemoryExpression } from '../../../../bean/NativeHook.js';
+import { findSearchNode } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 
 @element('tabpane-nm-calltree')
 export class TabpaneNMCalltree extends BaseElement {
@@ -58,6 +59,7 @@ export class TabpaneNMCalltree extends BaseElement {
   private lastIsExpression = false;
   private currentNMCallTreeFilter: TabPaneFilter | undefined | null;
   private expressionStruct: NativeMemoryExpression | null = null;
+  private currentNmCallTreeSource: Array<FileMerageBean> = [];
 
   set data(nmCallTreeParam: SelectionParam | any) {
     if (nmCallTreeParam == this.currentSelection) {
@@ -72,7 +74,6 @@ export class TabpaneNMCalltree extends BaseElement {
     } else {
       this.nmCallTreeFilter!.style.display = 'none';
     }
-    this.nmCallTreeFilter!.disabledTransfer(true);
     this.nmCallTreeFilter!.initializeFilterTree(true, true, nmCallTreeParam.nativeMemory.length > 0);
     this.nmCallTreeFilter!.filterValue = '';
     this.initFilterTypes();
@@ -117,6 +118,7 @@ export class TabpaneNMCalltree extends BaseElement {
         this.nmCallTreeFrameChart!.mode = ChartMode.Byte;
         this.nmCallTreeFrameChart?.updateCanvas(true, initWidth);
         this.nmCallTreeFrameChart!.data = this.nmCallTreeSource;
+        this.currentNmCallTreeSource = this.nmCallTreeSource;
         this.switchFlameChart();
         this.nmCallTreeFilter.icon = 'block';
       }
@@ -555,6 +557,8 @@ export class TabpaneNMCalltree extends BaseElement {
             this.lastIsExpression = false;
           }
           this.getDataByWorker(nmArgs, (result: any[]) => {
+            this.nmCallTreeTbl!.isSearch = true;
+            this.nmCallTreeTbl!.setStatus(result, true);
             this.setLTableData(result);
             this.nmCallTreeFrameChart!.data = this.nmCallTreeSource;
             this.switchFlameChart(nmCallTreeData);

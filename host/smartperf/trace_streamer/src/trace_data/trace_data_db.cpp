@@ -420,13 +420,21 @@ int32_t TraceDataDB::SearchDatabase(const std::string& sql, uint8_t* out, int32_
 {
     Prepare();
     sqlite3_stmt* stmt = nullptr;
+    std::unique_ptr<sqlite3_stmt, void (*)(sqlite3_stmt*)> stmtLocal(stmt, [](sqlite3_stmt* ptr) {
+        if (ptr != nullptr) {
+            sqlite3_finalize(ptr);
+            ptr = nullptr;
+        }
+    });
     int32_t ret = sqlite3_prepare_v2(db_, sql.c_str(), static_cast<int32_t>(sql.size()), &stmt, nullptr);
+    stmtLocal.reset(stmt);
     if (ret != SQLITE_OK) {
         TS_LOGE("sqlite3_prepare_v2(%s) failed: %d:%s", sql.c_str(), ret, sqlite3_errmsg(db_));
         return -1;
     }
     char* res = reinterpret_cast<char*>(out);
-    int32_t retSnprintf = snprintf_s(res, outLen, 1, "ok\r\n");
+    std::string snprintfInfo("ok");
+    int32_t retSnprintf = snprintf_s(res, outLen, snprintfInfo.size(), snprintfInfo.data());
     if (retSnprintf < 0) {
         return -1;
     }
@@ -435,20 +443,23 @@ int32_t TraceDataDB::SearchDatabase(const std::string& sql, uint8_t* out, int32_
     if (colCount == 0) {
         return pos;
     }
-    retSnprintf = snprintf_s(res + pos, outLen - pos, 1, "%s", "{\"columns\":[");
+    snprintfInfo = "{\"columns\":[";
+    retSnprintf = snprintf_s(res + pos, outLen - pos, snprintfInfo.size(), "%s", snprintfInfo.c_str());
     if (retSnprintf < 0) {
         return -1;
     }
     pos += retSnprintf;
     for (int32_t i = 0; i < colCount; i++) {
-        retSnprintf = snprintf_s(res + pos, outLen - pos, 1, "%s%s%s", "\"", sqlite3_column_name(stmt, i), "\",");
+        snprintfInfo = "\"" + std::string(sqlite3_column_name(stmt, i)) + "\",";
+        retSnprintf = snprintf_s(res + pos, outLen - pos, snprintfInfo.size(), "%s", snprintfInfo.c_str());
         if (retSnprintf < 0) {
             return -1;
         }
         pos += retSnprintf;
     }
     pos--; // rmove the last ','
-    retSnprintf = snprintf_s(res + pos, outLen - pos, 1, "],\"values\":[");
+    snprintfInfo = "],\"values\":[";
+    retSnprintf = snprintf_s(res + pos, outLen - pos, snprintfInfo.size(), snprintfInfo.data());
     if (retSnprintf < 0) {
         return -1;
     }
@@ -469,7 +480,8 @@ int32_t TraceDataDB::SearchDatabase(const std::string& sql, uint8_t* out, int32_
             sqlite3_finalize(stmt);
             return pos;
         }
-        retSnprintf = snprintf_s(res + pos, outLen - pos, 1, "%s%s", row.c_str(), ",");
+        snprintfInfo = row + ",";
+        retSnprintf = snprintf_s(res + pos, outLen - pos, snprintfInfo.size(), "%s", snprintfInfo.c_str());
         if (retSnprintf < 0) {
             return -1;
         }
@@ -478,12 +490,12 @@ int32_t TraceDataDB::SearchDatabase(const std::string& sql, uint8_t* out, int32_
     if (hasRow) {
         pos--; // remove the last ','
     }
-    retSnprintf = snprintf_s(res + pos, outLen - pos, 1, "]}\r\n");
+    snprintfInfo = "]}\r\n";
+    retSnprintf = snprintf_s(res + pos, outLen - pos, snprintfInfo.size(), snprintfInfo.c_str());
     if (retSnprintf < 0) {
         return -1;
     }
     pos += retSnprintf;
-    sqlite3_finalize(stmt);
     return pos;
 }
 void TraceDataDB::SetCancel(bool cancel)

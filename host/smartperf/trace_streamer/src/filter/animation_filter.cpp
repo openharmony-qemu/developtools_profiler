@@ -21,6 +21,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
+constexpr uint8_t ANIMATION_INFO_NUM_MIN = 2;
 constexpr uint8_t GENERATE_VSYNC_EVENT_MAX = 5;
 constexpr uint8_t DYNAMIC_STACK_DEPTH_MIN = 2;
 constexpr uint16_t FPS_60 = 60;
@@ -145,7 +146,8 @@ bool AnimationFilter::StartAnimationEvent(const BytraceLine& line, const TracePo
     auto infos = SplitStringToVec(point.name_, ", ");
     auto curAnimationIndex = traceDataCache_->GetDataIndex(infos.front());
     auto startEventIter = onAnimationStartEvents_.find(curAnimationIndex);
-    TS_CHECK_TRUE_RET(startEventIter != onAnimationStartEvents_.end(), false);
+    TS_CHECK_TRUE_RET(startEventIter != onAnimationStartEvents_.end() && infos.size() >= ANIMATION_INFO_NUM_MIN, false);
+    auto nameIndex = traceDataCache_->GetDataIndex(infos[0] + ", " + infos[1]);
     // pop for '.': '1693876195576.'
     auto& inputTimeStr = infos.back();
     if (inputTimeStr.back() == '.') {
@@ -155,7 +157,7 @@ bool AnimationFilter::StartAnimationEvent(const BytraceLine& line, const TracePo
     inputTime =
         streamFilters_->clockFilter_->ToPrimaryTraceTime(TS_CLOCK_REALTIME, inputTime * ONE_MILLION_NANOSECONDS);
     auto startPoint = line.ts;
-    auto animationRow = traceDataCache_->GetAnimation()->AppendAnimation(inputTime, startPoint);
+    auto animationRow = traceDataCache_->GetAnimation()->AppendAnimation(inputTime, startPoint, nameIndex);
     animationCallIds_.emplace(callStackRow, animationRow);
     if (curAnimationIndex == animationAppListCmd_) {
         realFrameRateFlagsDict_[traceDataCache_->GetDataIndex(point.name_)] = animationRow;

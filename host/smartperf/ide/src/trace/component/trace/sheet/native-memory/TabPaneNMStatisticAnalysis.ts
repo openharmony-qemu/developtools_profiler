@@ -24,6 +24,7 @@ import { procedurePool } from '../../../../database/Procedure.js';
 
 const TYPE_ALLOC_STRING = 'AllocEvent';
 const TYPE_MAP_STRING = 'MmapEvent';
+const TYPE_OTHER_MMAP = 'Other MmapEvent';
 
 const TYPE_ALLOC = 0;
 const TYPE_MAP = 1;
@@ -98,8 +99,6 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
   private tabName: HTMLDivElement | null | undefined;
   private progressEL: LitProgressBar | null | undefined;
   private type: string | null | undefined;
-  private sortColumn: string = '';
-  private sortType: number = 0;
   private isStatistic = false;
   private typeMap!: Map<number, Array<any>>;
   private currentLevel = -1;
@@ -256,7 +255,7 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
     this.currentLevelData = this.eventTypeData;
   }
 
-  nativeProcessLevelClickEvent(it: object): void {
+  nativeProcessLevelClickEvent(it: any): void {
     this.clearData();
     this.back!.style.visibility = 'visible';
     this.tableType!.style.display = 'none';
@@ -264,8 +263,8 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
     this.tableType!.setAttribute('hideDownload', '');
     this.soUsageTbl?.removeAttribute('hideDownload');
     this.getLibSize(it);
-    // @ts-ignore
-    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = it.typeName;
+    const typeName = it.typeName === TYPE_MAP_STRING ? TYPE_OTHER_MMAP : it.typeName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = typeName;
     // @ts-ignore
     this.type = it.typeName;
     this.pie?.hideTip();
@@ -292,7 +291,7 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
                         <div># Transient:${threadTipValue.obj.releaseCount} (${threadTipValue.obj.releaseCountPercent}%)</div>
                     </div>`;
       },
-      angleClick: (it): void => {
+      angleClick: (it: any): void => {
         // @ts-ignore
         if (it.tid != 'other') {
           this.clearData();
@@ -300,7 +299,8 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
           this.soUsageTbl!.style.display = 'grid';
           this.getLibSize(it);
           // @ts-ignore
-          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = it.type + ' / ' + 'Thread ' + it.tid;
+          const typeName = it.type === TYPE_MAP_STRING ? TYPE_OTHER_MMAP : it.type;
+          this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = typeName + ' / ' + 'Thread ' + it.tid;
           // @ts-ignore
           this.tid = it.tid;
           this.pie?.hideTip();
@@ -332,7 +332,8 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
       this.pie?.showHover();
       this.pie?.hideTip();
     });
-    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.type + '';
+    const typeName = this.type === TYPE_MAP_STRING ? TYPE_OTHER_MMAP : this.type;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = typeName + '';
     this.tabName!.textContent = 'Statistic By Thread Existing';
     this.threadUsageTbl!.recycleDataSource = this.threadData;
     this.threadUsageTbl?.reMeauseHeight();
@@ -378,7 +379,8 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
         },
       ],
     };
-    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.type + '';
+    const typeName = this.type === TYPE_MAP_STRING ? TYPE_OTHER_MMAP : this.type;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = typeName + '';
     this.soUsageTbl!.addEventListener('row-hover', (nmStatAnalysisUsageRowHover) => {
       // @ts-ignore
       let nmStatAnalysisUsageData = nmStatAnalysisUsageRowHover.detail;
@@ -420,8 +422,9 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
     this.soUsageTbl!.setAttribute('hideDownload', '');
     this.functionUsageTbl?.removeAttribute('hideDownload');
     this.getNMFunctionSize(it);
+    const typeName = this.type === TYPE_MAP_STRING ? TYPE_OTHER_MMAP : this.type;
     // @ts-ignore
-    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = this.type + ' / ' + it.libName;
+    this.shadowRoot!.querySelector<HTMLDivElement>('.title')!.textContent = typeName + ' / ' + it.libName;
     this.pie?.hideTip();
   }
 
@@ -486,8 +489,6 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
   }
 
   sortByColumn(column: string, sort: number): void {
-    this.sortColumn = column;
-    this.sortType = sort;
     let nmCurrentTable: LitTable | null | undefined;
     switch (this.currentLevel) {
       case 0:
@@ -1015,7 +1016,7 @@ export class TabPaneNMStatisticAnalysis extends BaseElement {
     let typeItem = new AnalysisObj(applySize, applyCount, releaseSize, releaseCount);
     typeItem.typeId = tyeId;
     typeItem.typeName = typeName;
-    typeItem.tableName = typeName;
+    typeItem.tableName = typeName === TYPE_MAP_STRING ? TYPE_OTHER_MMAP : typeName;
     return typeItem;
   }
 

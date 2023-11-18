@@ -755,7 +755,7 @@ where ts between start_ts and end_ts ${condition};
         }
       }
       if (selectionElement.max === undefined && typeof selectionElement.memoryTap === 'number') {
-        return item.subTypeId === selectionElement.memoryTap;
+        return item.subTypeId === selectionElement.memoryTap && item.eventType === 'MmapEvent';
       }
     }
     return false;
@@ -791,7 +791,7 @@ where ts between start_ts and end_ts ${condition};
                 ifnull(last_symbol_id,0) as lastSymbolId,
                 t.name as threadName,
                 A.addr,
-                A.sub_type_id as subTypeId
+                ifnull(A.sub_type_id, -1) as subTypeId
             from
                 native_hook A,
                 trace_range B

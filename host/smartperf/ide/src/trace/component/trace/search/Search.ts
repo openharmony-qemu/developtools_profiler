@@ -140,15 +140,13 @@ export class LitSearch extends BaseElement {
     if (searchStr === null || searchStr.length === 0 || searchStr.trim().length === 0) {
       return;
     }
-    if (this.lastSearch === searchStr) {
-      return;
-    }
-    this.lastSearch = searchStr;
     let searchInfo = this.searchList.find((searchInfo) => searchInfo.searchContent === searchStr);
     if (searchInfo != undefined) {
-      searchInfo.useCount += 1;
+      let index = this.searchList.indexOf(searchInfo);
+      this.searchList.splice(index, 1);
+      this.searchList.unshift({ searchContent: searchStr, useCount: 1 });
     } else {
-      this.searchList.push({ searchContent: searchStr, useCount: 1 });
+      this.searchList.unshift({ searchContent: searchStr, useCount: 1 });
     }
   }
 
@@ -341,8 +339,9 @@ export class LitSearch extends BaseElement {
         .search-history-list {
             list-style-type: none;
             margin: 0;
+            padding: 0;
             position: absolute;
-            width: 35vw;
+            width: 37vw;
             top: 100%;
             background-color: #FFFFFF;
             border: 1px solid #ddd;
@@ -365,6 +364,7 @@ export class LitSearch extends BaseElement {
             display: flex;
             justify-content: space-between;
             padding-right: 20px;
+            padding-left: 45px;
         }
         </style>
         <div class="root" style="display: none">
@@ -413,7 +413,9 @@ export class LitSearch extends BaseElement {
       fragment.append(searchContainer);
     });
     this.searchHistoryListEL?.append(fragment);
-    this.searchHistoryListEL!.style.display = 'block';
+    if (this.searchList.length > 0) {
+      this.searchHistoryListEL!.style.display = 'block';
+    }
     let closeOptionList = this.searchHistoryListEL!.querySelectorAll<LitIcon>('.close-option');
     closeOptionList.forEach((item) => {
       item.addEventListener('click', () => {
@@ -430,9 +432,6 @@ export class LitSearch extends BaseElement {
 
   hideSearchHistoryList() {
     this.searchHistoryListEL!.style.display = 'none';
-    this.searchList = this.searchList.sort((a, b) => {
-      return b.useCount - a.useCount;
-    });
     if (this.searchList.length > this.historyMaxCount) {
       this.searchList = this.searchList.slice(0, this.historyMaxCount);
     }

@@ -18,17 +18,72 @@ import LitSwitch from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitAllocationSelect.js';
 
 import '../../../base-ui/switch/lit-switch.js';
+import { SpRecordTrace } from '../SpRecordTrace.js';
+import { Cmd } from '../../../command/Cmd.js';
+import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
+import { LitSelect } from '../../../base-ui/select/LitSelect.js';
 
 @element('sp-hi-log')
 export class SpHilogRecord extends BaseElement {
   private vmTrackerSwitch: LitSwitch | undefined | null;
+  private processSelectEl: LitAllocationSelect | undefined | null;
+  private logsSelectEl: LitSelect | undefined | null;
 
   get recordHilog(): boolean {
     return this.vmTrackerSwitch!.checked;
   }
 
+  get appProcess(): string {
+    return this.processSelectEl!.value || '';
+  }
+
+  get appLogLevel(): string {
+    if (this.logsSelectEl!.value.trim() === '' || this.logsSelectEl!.value === 'ALL-Level') {
+      return 'LEVEL_UNSPECIFIED';
+    }
+    return this.logsSelectEl!.value || '';
+  }
+
   initElements(): void {
     this.vmTrackerSwitch = this.shadowRoot?.querySelector('.hilog-switch') as LitSwitch;
+    this.processSelectEl = this.shadowRoot?.querySelector('.record-process-select') as LitAllocationSelect;
+    this.logsSelectEl = this.shadowRoot?.querySelector('.record-logs-select') as LitSelect;
+    let hiLogConfigList = this.shadowRoot?.querySelectorAll<HTMLDivElement>('.hilog-config-top');
+    this.vmTrackerSwitch.addEventListener('change', ()=>{
+      let configVisibility = 'hidden';
+      if (this.vmTrackerSwitch?.checked) {
+        configVisibility = 'visible';
+      }
+      if (hiLogConfigList) {
+        hiLogConfigList!.forEach(configEl => {
+          configEl.style.visibility = configVisibility;
+        });
+      }
+    });
+    let processInputEl = this.processSelectEl.shadowRoot?.querySelector('.multipleSelect') as HTMLInputElement;
+    processInputEl.addEventListener('mousedown', (ev) => {
+      if (SpRecordTrace.serialNumber === '') {
+        this.processSelectEl!.processData = [];
+        this.processSelectEl!.initData();
+      } else {
+        Cmd.getProcess().then((processList) => {
+          if (processList.length > 0 && this.recordHilog) {
+            processInputEl!.setAttribute('readonly', 'readonly');
+          }
+          processList.unshift('ALL-Process');
+          this.processSelectEl!.processData = processList;
+          this.processSelectEl!.initData();
+        });
+      }
+    });
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    super.attributeChangedCallback(name, oldValue, newValue);
+  }
+
+  getHiLogLevel(): string[] {
+    return ['ALL-Level', 'Debug', 'Info', 'Warn', 'Error'];
   }
 
   initHtml(): string {
@@ -72,12 +127,62 @@ export class SpHilogRecord extends BaseElement {
           height: 38px;
           margin-top: 10px;
         }
+        .hilog-config-top {
+           display: flex;
+           flex-direction: column;
+           margin-top: 5vh;
+           gap: 25px;
+           visibility: hidden;
+        }
+        .config-title {
+          line-height: 40px;
+          font-weight: 700;
+          margin-right: 10px;
+          opacity: 0.9;
+          font-family: Helvetica-Bold;
+          font-size: 18px;
+          text-align: center;
+        }
+        .config-title-des {
+          line-height: 35px;
+          font-weight: 400;
+          opacity: 0.6;
+          font-family: Helvetica;
+          font-size: 14px;
+          text-align: center;
+        }
+        .config-select{
+          border-radius: 15px;
+          width: auto;
+        }
         </style>
         <div class="hilog-tracker">
             <div class="hilog-config-div">
               <div>
                  <span class="hilog-title">Start Hilog Record</span>
                  <lit-switch class="hilog-switch"></lit-switch>
+              </div>
+              <div class="hilog-config-top">
+                <div>
+                  <span class="process-title config-title">Process</span>
+                  <span class="config-title-des">Record process</span>
+                </div>
+                <lit-allocation-select default-value="" rounded="" class="record-process-select config-select" mode="multiple" canInsert="" title="Select Proces" placement="bottom" placeholder="">
+                </lit-allocation-select>
+              </div>
+              <div class="hilog-config-top">
+                <div>
+                  <span class="logs-title config-title">Level</span>
+                  <span class="config-title-des">Record logs level</span>
+                </div>
+                <lit-select default-value="" rounded="" class="record-logs-select config-select" canInsert="" title="Select Log Level" rounded placement = "bottom" placeholder=" ">
+                  ${this.getHiLogLevel().map(
+                    (level, index): string =>
+                      '<lit-select-option class="div-button" value="' + level + '">' + level + '</lit-select-option>'
+                  )
+                  .join('')}
+                </lit-select>
+               
               </div>
             </div>
         </div>

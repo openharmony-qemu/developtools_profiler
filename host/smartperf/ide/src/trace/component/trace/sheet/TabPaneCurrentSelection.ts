@@ -159,7 +159,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startTime || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startTime || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
     list.push({ name: 'Prio', value: data.priority || 0 });
@@ -324,7 +324,7 @@ export class TabPaneCurrentSelection extends BaseElement {
       });
       list.push({
         name: 'StartTime(Absolute)',
-        value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+        value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000,
       });
       list.push({
         name: 'Duration',
@@ -342,7 +342,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     contentList.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000,
     });
     contentList.push({
       name: 'Duration',
@@ -385,7 +385,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startNS || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startNS || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({
       name: 'Value',
@@ -410,7 +410,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startTime || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startTime || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'Value', value: data.value });
     list.push({ name: 'Delta', value: data.delta });
@@ -436,7 +436,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startNS || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startNS || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'Name', value: data.name });
     list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
@@ -472,7 +472,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startTime || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startTime || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
     let state;
@@ -761,7 +761,7 @@ export class TabPaneCurrentSelection extends BaseElement {
             });
             list.push({
               name: 'StartTime(Absolute)',
-              value: ((data.ts || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+              value: ((data.ts || 0) + (window as any).recordStartNS) / 1000000000,
             });
             list.push({
               name: 'end time',
@@ -783,7 +783,7 @@ export class TabPaneCurrentSelection extends BaseElement {
             });
             list.push({
               name: 'StartTime(Absolute)',
-              value: ((data.rs_ts || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+              value: ((data.rs_ts || 0) + (window as any).recordStartNS) / 1000000000,
             });
             list.push({
               name: 'end time',
@@ -843,7 +843,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000,
     });
     if (data.dur && data.dur > 0) {
       list.push({
@@ -927,7 +927,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.startTs || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'Duration', value: getTimeString(data.dur || 0) });
     this.currentSelectionTbl!.dataSource = list;
@@ -959,7 +959,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     this.tabCurrentSelectionInit('Animation Details');
     let list = [];
     let dataTs: number = data.startTs < 0 ? 0 : data.startTs;
-    list.push({ name: 'Name', value: data.animationId });
+    list.push({ name: 'Name', value: data.name });
     list.push({ name: 'Start time(Relative)', value: `${Utils.getTimeString(dataTs)}` });
     list.push({
       name: 'Start time(Absolute)',
@@ -1007,7 +1007,7 @@ export class TabPaneCurrentSelection extends BaseElement {
     list.push({ name: 'StartTime(Relative)', value: getTimeString(data.ts || 0) });
     list.push({
       name: 'StartTime(Absolute)',
-      value: ((data.ts || 0) + (window as any).recordStartNS) / 1000000000 + 's',
+      value: ((data.ts || 0) + (window as any).recordStartNS) / 1000000000,
     });
     list.push({ name: 'Duration', value: data.dur ? getTimeString(data.dur) : ' ' });
     if (data.frame_type !== 'frameTime') {
@@ -1260,10 +1260,7 @@ export class TabPaneCurrentSelection extends BaseElement {
         return wake;
       });
       if (this.selectWakeupBean) {
-         // 点击第一层唤醒树时向数组头部添加当前点击信息
-         if (data[0].schedulingLatency) {
-          resource.unshift(this.selectWakeupBean);
-        }
+        resource.unshift(this.selectWakeupBean);
         maxDuration = Math.max(maxDuration, this.selectWakeupBean.dur);
         maxPriority = Math.max(maxPriority, this.selectWakeupBean.priority);
       }

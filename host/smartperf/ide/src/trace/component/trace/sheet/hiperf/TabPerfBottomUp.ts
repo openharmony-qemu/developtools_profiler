@@ -25,6 +25,7 @@ import '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { type LitProgressBar } from '../../../../../base-ui/progress-bar/LitProgressBar.js';
 import { type PerfBottomUpStruct } from '../../../../bean/PerfBottomUpStruct.js';
+import { findSearchNode } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 
 @element('tabpane-perf-bottom-up')
 export class TabpanePerfBottomUp extends BaseElement {
@@ -50,7 +51,8 @@ export class TabpanePerfBottomUp extends BaseElement {
     this.bottomUpFilter!.getFilterData((data: FilterData) => {
       if (this.searchValue !== this.bottomUpFilter!.filterValue) {
         this.searchValue = this.bottomUpFilter!.filterValue;
-        this.findSearchNode(this.bottomUpSource, this.searchValue);
+        findSearchNode(this.bottomUpSource, this.searchValue, false);
+        this.bottomUpTable!.setStatus(this.bottomUpSource, true);
         this.setBottomUpTableData(this.bottomUpSource);
       }
     });
@@ -98,7 +100,6 @@ export class TabpanePerfBottomUp extends BaseElement {
     const percentFraction = 1;
     const timeFractionDigits = 2;
     this.stackTable!.recycleDataSource = [];
-    this.bottomUpTable!.recycleDataSource = [];
     let totalTime = results.reduce((sum, struct) => sum + struct.selfTime, 0);
     const setTabData = (array: Array<PerfBottomUpStruct>): void => {
       array.forEach((data) => {
@@ -177,22 +178,6 @@ export class TabpanePerfBottomUp extends BaseElement {
       evt.detail.callBack(true);
     }
   }
-  private findSearchNode(sampleArray: PerfBottomUpStruct[], search: string): void {
-    search = search.toLocaleLowerCase();
-    sampleArray.forEach((sample) => {
-      if (sample.symbolName && sample.symbolName.toLocaleLowerCase().includes(search)) {
-        sample.isSearch = sample.symbolName !== undefined && sample.symbolName.toLocaleLowerCase().includes(search);
-      } else {
-        sample.isSearch = false;
-      }
-      if (search === '') {
-        sample.isSearch = false;
-      }
-      if (sample.children.length > 0) {
-        this.findSearchNode(sample.children, search);
-      }
-    });
-  }
 
   public connectedCallback(): void {
     const tableOffsetHeight = 32;
@@ -200,12 +185,14 @@ export class TabpanePerfBottomUp extends BaseElement {
     super.connectedCallback();
     new ResizeObserver(() => {
       // @ts-ignore
-      this.bottomUpTable?.shadowRoot.querySelector('.table').style.height = `${this.parentElement!.clientHeight - tableOffsetHeight
-        }px`;
+      this.bottomUpTable?.shadowRoot.querySelector('.table').style.height = `${
+        this.parentElement!.clientHeight - tableOffsetHeight
+      }px`;
       this.bottomUpTable?.reMeauseHeight();
       // @ts-ignore
-      this.stackTable?.shadowRoot.querySelector('.table').style.height = `${this.parentElement!.clientHeight - tableOffsetHeight - spanHeight
-        }px`;
+      this.stackTable?.shadowRoot.querySelector('.table').style.height = `${
+        this.parentElement!.clientHeight - tableOffsetHeight - spanHeight
+      }px`;
       this.stackTable?.reMeauseHeight();
     }).observe(this.parentElement!);
   }

@@ -613,30 +613,32 @@ int32_t HtraceParser::GetNextSegment()
 bool HtraceParser::CalcEbpfCutOffset(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength)
 {
     auto standaloneDataLength = profilerDataLength_ - PACKET_HEADER_LENGTH;
-    if (EBPF_PLUGIN_NAME.compare(standalonePluginName_) == 0) {
-        if (traceDataCache_->isSplitFile_ && !parsedEbpfOver_) {
-            if (!hasInitEbpfPublicData_) {
-                // Record the offset of Hiperf's 1024-byte header relative to the entire file.
-                ebpfDataParser_->SetEbpfDataOffset(processedDataLen_);
-                ebpfDataParser_->SetSpliteTimeRange(traceDataCache_->SplitFileMinTime(),
-                                                    traceDataCache_->SplitFileMaxTime());
-                parsedFileOffset_ += profilerDataLength_ - PACKET_HEADER_LENGTH;
-                hasInitEbpfPublicData_ = true;
-            }
-            parsedEbpfOver_ = ebpfDataParser_->AddAndSplitEbpfData(packagesBuffer_);
-            packagesBuffer_.clear();
-            return true;
+    if (traceDataCache_->isSplitFile_ && !parsedEbpfOver_) {
+        if (!hasInitEbpfPublicData_) {
+            // Record the offset of Hiperf's 1024-byte header relative to the entire file.
+            ebpfDataParser_->SetEbpfDataOffset(processedDataLen_);
+            ebpfDataParser_->SetSpliteTimeRange(traceDataCache_->SplitFileMinTime(),
+                                                traceDataCache_->SplitFileMaxTime());
+            parsedFileOffset_ += profilerDataLength_ - PACKET_HEADER_LENGTH;
+            hasInitEbpfPublicData_ = true;
         }
-        if (packagesBuffer_.size() >= standaloneDataLength) {
-            ebpfDataParser_->InitAndParseEbpfData(packagesBuffer_, standaloneDataLength);
-            currentLength -= standaloneDataLength;
-            packagesBegin += standaloneDataLength;
+        parsedEbpfOver_ = ebpfDataParser_->AddAndSplitEbpfData(packagesBuffer_);
+        if (parsedEbpfOver_) {
             profilerDataType_ = ProfilerTraceFileHeader::UNKNOW_TYPE;
             hasGotHeader_ = false;
-            return true;
+            processedDataLen_ += standaloneDataLength;
         }
         return false;
     }
+    if (!traceDataCache_->isSplitFile_ && packagesBuffer_.size() >= standaloneDataLength) {
+        ebpfDataParser_->InitAndParseEbpfData(packagesBuffer_, standaloneDataLength);
+        currentLength -= standaloneDataLength;
+        packagesBegin += standaloneDataLength;
+        profilerDataType_ = ProfilerTraceFileHeader::UNKNOW_TYPE;
+        hasGotHeader_ = false;
+        return true;
+    }
+    return false;
 }
 
 bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength)
@@ -663,18 +665,20 @@ bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesB
         return ParseHiperfData(packagesBegin, currentLength);
     }
     if (profilerDataType_ == ProfilerTraceFileHeader::STANDALONE_DATA) {
-        CalcEbpfCutOffset(packagesBegin, currentLength);
+        if (EBPF_PLUGIN_NAME.compare(standalonePluginName_) == 0) {
+            return CalcEbpfCutOffset(packagesBegin, currentLength);
+        } else {
 #if IS_WASM
-        if (packagesBuffer_.size() >= profilerDataLength_ - PACKET_HEADER_LENGTH) {
-            auto thirdPartySize = profilerDataLength_ - PACKET_HEADER_LENGTH;
-            auto buffer = std::make_unique<uint8_t[]>(thirdPartySize).get();
-            std::copy(packagesBuffer_.begin(), packagesBuffer_.begin() + thirdPartySize, buffer);
-            TraceStreamer_Plugin_Out_Filter(reinterpret_cast<const char*>(buffer), thirdPartySize,
-                                            standalonePluginName_);
-            return true;
-        }
+            if (packagesBuffer_.size() >= profilerDataLength_ - PACKET_HEADER_LENGTH) {
+                auto thirdPartySize = profilerDataLength_ - PACKET_HEADER_LENGTH;
+                auto buffer = std::make_unique<uint8_t[]>(thirdPartySize).get();
+                std::copy(packagesBuffer_.begin(), packagesBuffer_.begin() + thirdPartySize, buffer);
+                TraceStreamer_Plugin_Out_Filter(reinterpret_cast<const char*>(buffer), thirdPartySize,
+                                                standalonePluginName_);
+                return true;
+            }
 #endif
-        return false;
+        }
     }
     while (true) {
         if (!hasGotSegLength_) {
@@ -801,7 +805,8 @@ bool HtraceParser::InitProfilerTraceFileHeader()
     }
     if (pHeader->data.dataType == ProfilerTraceFileHeader::HIPERF_DATA) {
         perfDataParser_->RecordPerfProfilerHeader(buffer, PACKET_HEADER_LENGTH);
-    } else if (pHeader->data.dataType == ProfilerTraceFileHeader::STANDALONE_DATA) {
+    } else if (pHeader->data.dataType == ProfilerTraceFileHeader::STANDALONE_DATA &&
+               EBPF_PLUGIN_NAME.compare(pHeader->data.standalonePluginName) == 0) {
         ebpfDataParser_->RecordEbpfProfilerHeader(buffer, PACKET_HEADER_LENGTH);
     } else {
         auto ret = memcpy_s(&profilerTraceFileHeader_, sizeof(profilerTraceFileHeader_), buffer, PACKET_HEADER_LENGTH);

@@ -39,7 +39,6 @@ private:
 
 private:
     static bool IsValidKernelSymbol(const KernelSymbol& symbol);
-    static bool CompareSymbolInfo(const KernelSymbol& a, const KernelSymbol& b);
 
 private:
     const TraceStreamerFilters* streamFilters_;

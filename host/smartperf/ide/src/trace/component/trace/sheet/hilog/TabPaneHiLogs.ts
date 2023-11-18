@@ -22,37 +22,29 @@ import { SpSystemTrace } from '../../../SpSystemTrace.js';
 import { ns2Timestamp, ns2x, Rect } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { LogStruct } from '../../../../database/ui-worker/ProcedureWorkerLog.js';
 import { ColorUtils } from '../../base/ColorUtils.js';
-import { LitTable } from '../../../../../base-ui/table/lit-table.js';
+import { LitPageTable } from '../../../../../base-ui/table/LitPageTable.js';
 
 @element('tab-hi-log')
 export class TabPaneHiLogs extends BaseElement {
   tableTimeHandle: (() => void) | undefined;
+  tableTitleTimeHandle: (() => void) | undefined;
   private systemLogSource: LogStruct[] = [];
   private spSystemTrace: SpSystemTrace | undefined | null;
   private traceSheetEl: TraceSheet | undefined | null;
-  private parentTabEl: HTMLElement | undefined | null;
   private levelFilterInput: HTMLSelectElement | undefined | null;
   private tagFilterInput: HTMLInputElement | undefined | null;
   private searchFilterInput: HTMLInputElement | undefined | null;
   private processFilter: HTMLInputElement | undefined | null;
-  private logTitle: HTMLDivElement | undefined | null;
   private logTableTitle: HTMLDivElement | undefined | null;
-  private logTable: HTMLDivElement | undefined | null;
-  private scrollContainer: HTMLDivElement | undefined | null;
   private tagFilterDiv: HTMLDivElement | undefined | null;
-  private hiLogDownLoadTbl: LitTable | undefined | null;
+  private hiLogsTbl: LitPageTable | undefined | null;
   private filterData: LogStruct[] = [];
-  private visibleData: LogStruct[] = [];
-  private optionLevel: string[] = ['D', 'I', 'W', 'E', 'F'];
-  private tableColumnHead: string[] = ['Timestamp', 'Time', 'Level', 'Tag', 'Process name', 'Message'];
+  private optionLevel: string[] = ['Debug', 'Info', 'Warn', 'Error', 'Fatal'];
   private allowTag: Set<string> = new Set();
-  private startDataIndex: number = 0;
-  private endDataIndex: number = 0;
-  private containerClientHeight: number = 0;
 
   set data(systemLogParam: SelectionParam) {
-    if (this.hiLogDownLoadTbl) {
-      this.hiLogDownLoadTbl.recycleDataSource = [];
+    if (this.hiLogsTbl) {
+      this.hiLogsTbl.recycleDataSource = [];
     }
     this.systemLogSource = systemLogParam.hiLogs;
     if (systemLogParam && systemLogParam.hiLogs.length > 0) {
@@ -61,11 +53,8 @@ export class TabPaneHiLogs extends BaseElement {
   }
 
   initElements(): void {
-    this.logTitle = this.shadowRoot?.querySelector<HTMLDivElement>('.logs-title-content');
-    this.logTableTitle = this.shadowRoot?.querySelector<HTMLDivElement>('#log-title');
-    this.scrollContainer = this.shadowRoot?.querySelector<HTMLDivElement>('.tbl-logs');
-    this.logTable = this.shadowRoot?.querySelector<HTMLDivElement>('#logs-data-content');
     this.levelFilterInput = this.shadowRoot?.querySelector<HTMLSelectElement>('#level-filter');
+    this.logTableTitle = this.shadowRoot?.querySelector<HTMLDivElement>('#log-title');
     this.tagFilterInput = this.shadowRoot?.querySelector<HTMLInputElement>('#tag-filter');
     this.searchFilterInput = this.shadowRoot?.querySelector<HTMLInputElement>('#search-filter');
     this.processFilter = this.shadowRoot?.querySelector<HTMLInputElement>('#process-filter');
@@ -73,8 +62,34 @@ export class TabPaneHiLogs extends BaseElement {
       .querySelector('body > sp-application')
       ?.shadowRoot?.querySelector<SpSystemTrace>('#sp-system-trace');
     this.tableTimeHandle = this.delayedRefresh(this.refreshTable);
+    this.tableTitleTimeHandle = this.delayedRefresh(this.refreshLogsTitle);
     this.tagFilterDiv = this.shadowRoot!.querySelector<HTMLDivElement>('#tagFilter');
-    this.hiLogDownLoadTbl = this.shadowRoot!.querySelector<LitTable>('#tb-hilogs');
+    this.hiLogsTbl = this.shadowRoot!.querySelector<LitPageTable>('#tb-hilogs');
+    this.hiLogsTbl!.getItemTextColor = (data)=>{
+      return ColorUtils.getHilogColor(data.level);
+    }
+    this.hiLogsTbl!.itemTextHandleMap.set('startTs', (startTs) => {
+      return ns2Timestamp(startTs);
+    });
+    this.hiLogsTbl!.addEventListener('row-hover', (e)=>{
+      // @ts-ignore
+      let data = e.detail.data;
+      if (data) {
+        let pointX: number = ns2x(
+          data.startTs || 0,
+          TraceRow.range!.startNS,
+          TraceRow.range!.endNS,
+          TraceRow.range!.totalNS,
+          new Rect(0, 0, TraceRow.FRAME_WIDTH, 0)
+        );
+        this.traceSheetEl!.systemLogFlag = new Flag(Math.floor(pointX), 0, 0, 0, data.startTs!, '#999999', true, '');
+        this.spSystemTrace?.refreshCanvas(false);
+      }
+    })
+    let tbl = this.hiLogsTbl?.shadowRoot?.querySelector<HTMLDivElement>('.table');
+    tbl!.addEventListener('scroll', ()=>{
+      this.tableTitleTimeHandle?.();
+    })
   }
 
   connectedCallback(): void {
@@ -85,9 +100,11 @@ export class TabPaneHiLogs extends BaseElement {
     this.searchFilterInput?.addEventListener('input', this.searchFilterInputEvent);
     this.processFilter?.addEventListener('input', this.processFilterEvent);
     this.levelFilterInput?.addEventListener('change', this.levelFilterInputEvent);
-    this.scrollContainer?.addEventListener('scroll', this.logTableScrollEvent);
     new ResizeObserver(() => {
-      this.updateVisibleData();
+      // @ts-ignore
+      this.hiLogsTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 45 + 'px';
+      this.tableTimeHandle?.();
+      this.tableTitleTimeHandle?.();
     }).observe(this.parentElement!);
   }
 
@@ -99,17 +116,14 @@ export class TabPaneHiLogs extends BaseElement {
     this.searchFilterInput?.removeEventListener('input', this.searchFilterInputEvent);
     this.processFilter?.removeEventListener('input', this.processFilterEvent);
     this.levelFilterInput?.removeEventListener('change', this.levelFilterInputEvent);
-    this.scrollContainer?.removeEventListener('scroll', this.logTableScrollEvent);
   }
 
   initHtml(): string {
     return `${this.initTitleCssStyle()}
-            ${this.initTableCssStyle()}
         <div class="logs-title-content">
           <label id="log-title">Hilogs [0, 0] / 0</label>
           <div style="display: flex;flex-wrap: wrap;">
             <div class="level-content">
-            <label class="level-select-title">Log Level</label>
             <select id="level-filter">
               <option>Debug</option>
               <option>Info</option>
@@ -123,36 +137,57 @@ export class TabPaneHiLogs extends BaseElement {
                  <input type="text" id="tag-filter" class="filter-input" placeholder="Filter by tag...">
               </div>
               <input type="text" id="process-filter" class="filter-input" placeholder="Search process name...">
-              <input type="text" id="search-filter" class="filter-input" placeholder="Search logs...">
+              <input type="text" id="search-filter" class="filter-input" placeholder="Search message...">
             </div>
           </div>
-          <div id="logs-head-content" style="display: flex"></div>
-          <div class="tbl-logs">
-              <div id="logs-data-content"></div>
-            </div>
-        <lit-table id="tb-hilogs" style="display: none;">
-            <lit-table-column title="Timestamp" width="1fr" data-index="startTs" key="startTs">
+        <lit-page-table id="tb-hilogs">
+            <lit-table-column title="Timestamp" width="10%" data-index="startTs" key="startTs">
             </lit-table-column>
-            <lit-table-column title="Time" width="1fr" data-index="originTime" key="originTime">
+            <lit-table-column title="Time" width="10%" data-index="originTime" key="originTime">
             </lit-table-column>
-            <lit-table-column title="Level" width="1fr" data-index="level" key="level">
+            <lit-table-column title="Level" width="5%" data-index="level" key="level">
             </lit-table-column>
-            <lit-table-column title="Tag" width="1fr" data-index="tag" key="tag">
+            <lit-table-column title="Tag" width="15%" data-index="tag" key="tag">
             </lit-table-column>
-            <lit-table-column title="Process Name" width="1fr" data-index="processName" key="processName">
+            <lit-table-column title="Process Name" width="12%" data-index="processName" key="processName">
             </lit-table-column>
-            <lit-table-column title="Message" width="1fr" data-index="context" key="context">
+            <lit-table-column title="Message" width="44%" data-index="context" key="context">
             </lit-table-column>
-        </lit-table>
+        </lit-page-table>
         `;
   }
 
-  initTabSheetEl(parentTabEl: HTMLElement, traceSheet: TraceSheet): void {
-    this.traceSheetEl = traceSheet;
-    if (parentTabEl) {
-      this.parentTabEl = parentTabEl;
-      this.containerClientHeight = parentTabEl.clientHeight;
+  refreshLogsTitle(): void{
+    let tbl = this.hiLogsTbl?.shadowRoot?.querySelector<HTMLDivElement>('.table');
+    if (tbl) {
+      tbl.querySelectorAll<HTMLElement>('.tr').forEach((trEl: HTMLElement): void=>{
+        let allTdEl = trEl.querySelectorAll<HTMLElement>('.td');
+        allTdEl[0].style.color = '#3D88C7';
+        allTdEl[0].style.textDecoration = 'underline';
+        allTdEl[0].style.textDecorationColor = '#3D88C7';
+        trEl.addEventListener('mouseout', () => {
+          this.traceSheetEl!.systemLogFlag = undefined;
+          this.spSystemTrace?.refreshCanvas(false);
+        })
+      });
     }
+    if (this.hiLogsTbl && this.hiLogsTbl.currentRecycleList.length > 0) {
+      let startDataIndex = this.hiLogsTbl.startSkip;
+      let endDataIndex = this.hiLogsTbl.currentRecycleList.length + startDataIndex;
+      if (endDataIndex > this.filterData.length) {
+        endDataIndex = this.filterData.length;
+      } else if (endDataIndex < this.filterData.length) {
+        endDataIndex -= 1;
+      }
+      this.logTableTitle!.textContent = `Hilogs [${startDataIndex === 0 ? 1 : startDataIndex}, 
+        ${endDataIndex}] / ${this.filterData.length || 0}`;
+    } else {
+      this.logTableTitle!.textContent = 'Hilogs [0, 0] / 0';
+    }
+  }
+
+  initTabSheetEl(traceSheet: TraceSheet): void {
+    this.traceSheetEl = traceSheet;
     this.levelFilterInput!.selectedIndex = 0;
     this.tagFilterInput!.value = '';
     this.tagFilterInput!.placeholder = 'Filter by tag...';
@@ -161,7 +196,7 @@ export class TabPaneHiLogs extends BaseElement {
     this.processFilter!.value = '';
     this.processFilter!.placeholder = 'Search process name...';
     this.searchFilterInput!.value = '';
-    this.searchFilterInput!.placeholder = 'Search logs...';
+    this.searchFilterInput!.placeholder = 'Search message...';
   }
 
   tagFilterInputEvent = (): void => {
@@ -218,7 +253,7 @@ export class TabPaneHiLogs extends BaseElement {
   searchFilterInputEvent = (): void => {
     if (this.searchFilterInput) {
       if (this.searchFilterInput.value === '') {
-        this.searchFilterInput.placeholder = 'Search logs...';
+        this.searchFilterInput.placeholder = 'Search message...';
       } else {
         this.searchFilterInput.placeholder = '';
       }
@@ -241,61 +276,18 @@ export class TabPaneHiLogs extends BaseElement {
     this.tableTimeHandle?.();
   };
 
-  logTableScrollEvent = (): void => {
-    let newIndex = Math.floor((this.scrollContainer?.scrollTop || 0) / tableRowHeight);
-    if (newIndex !== this.startDataIndex) {
-      this.startDataIndex = newIndex;
-      this.updateVisibleData();
-    }
-  };
-
   private updateFilterData(): void {
     if (this.systemLogSource?.length > 0) {
       this.filterData = this.systemLogSource.filter((data) => this.isFilterLog(data));
     }
+    // @ts-ignore
+    this.hiLogsTbl?.shadowRoot?.querySelector('.table').style.height = this.parentElement.clientHeight - 20 - 45 + 'px';
     if (this.filterData.length > 0) {
-      this.hiLogDownLoadTbl!.recycleDataSource = this.filterData;
+      this.hiLogsTbl!.recycleDataSource = this.filterData;
     } else {
-      this.hiLogDownLoadTbl!.recycleDataSource = [];
+      this.hiLogsTbl!.recycleDataSource = [];
     }
-  }
-
-  private updateVisibleData(): void {
-    this.visibleData = [];
-    this.logTable!.innerHTML = '';
-    if (this.systemLogSource?.length === 0 || this.parentTabEl?.clientHeight === 0) {
-      return;
-    }
-    if (this.parentTabEl) {
-      this.containerClientHeight = this.parentTabEl.clientHeight;
-    }
-    if (this.systemLogSource.length > 0 && this.logTable) {
-      let tableHeight = this.containerClientHeight - (this.logTitle?.clientHeight || 0) - tableRowHeight - 12;
-      this.scrollContainer!.style.height = `${tableHeight}px`;
-      if (this.filterData.length === 0) {
-        this.logTable.style.height = this.scrollContainer!.style.height;
-        this.logTableTitle!.textContent = 'Hilogs [0, 0] / 0';
-      } else {
-        this.logTable.style.height = `${this.filterData.length * tableRowHeight}px`;
-        let totalLength = Math.ceil(tableHeight / tableRowHeight);
-        this.endDataIndex = this.startDataIndex + totalLength;
-        if (this.filterData.length >= this.endDataIndex - this.startDataIndex) {
-          if (this.endDataIndex >= this.filterData.length) {
-            this.visibleData = this.filterData.slice(this.filterData.length - totalLength, this.filterData.length);
-          } else {
-            this.visibleData = this.filterData.slice(this.startDataIndex, this.endDataIndex);
-          }
-        } else {
-          this.visibleData = this.filterData;
-        }
-        let maxLength = this.endDataIndex > this.filterData.length ? this.filterData.length : this.endDataIndex;
-        this.logTableTitle!.textContent = `Hilogs [${this.startDataIndex || 0}, 
-        ${maxLength}] / ${this.filterData.length || 0}`;
-        let tableFragment = document.createDocumentFragment();
-        this.createVirtualDOM(tableFragment);
-        this.logTable.append(tableFragment);
-      }
-    }
+    this.refreshLogsTitle();
   }
 
   private isFilterLog(data: LogStruct): boolean {
@@ -316,12 +308,11 @@ export class TabPaneHiLogs extends BaseElement {
   }
 
   private refreshTable(): void {
-    this.traceSheetEl!.systemLogFlag = undefined;
-    this.spSystemTrace?.refreshCanvas(false);
-    let headEl = this.shadowRoot?.querySelector<HTMLDivElement>('#logs-head-content')
-    this.buildTableHead(headEl!);
-    this.updateFilterData();
-    this.updateVisibleData();
+    if (this.traceSheetEl) {
+      this.traceSheetEl.systemLogFlag = undefined;
+      this.spSystemTrace?.refreshCanvas(false);
+      this.updateFilterData();
+    }
   }
 
   private delayedRefresh(optionFn: Function, dur: number = tableTimeOut): () => void {
@@ -332,82 +323,6 @@ export class TabPaneHiLogs extends BaseElement {
         optionFn.apply(this, ...args);
       }, dur);
     };
-  }
-
-  private createVirtualDOM(tableFragment: DocumentFragment): void {
-    if (this.visibleData) {
-      this.visibleData.forEach((row, index) => {
-        let trEL = document.createElement('tr');
-        let time = document.createElement('td');
-        let timeStampEl = document.createElement('td');
-        let levelEl = document.createElement('td');
-        let tagEl = document.createElement('td');
-        let processNameEl = document.createElement('td');
-        let messageEl = document.createElement('td');
-        let colorIndex = this.optionLevel.indexOf(row.level!) - defaultIndex;
-        if (colorIndex >= 0) {
-          trEL.style.color = ColorUtils.getHilogColor(row.level!);
-        }
-        if (index === 0) {
-          let height =
-            (this.scrollContainer!.scrollTop <= tableRowHeight ? 0 : this.scrollContainer!.scrollTop) + tableRowHeight;
-          trEL.style.height = `${height}px`;
-        }
-        time.textContent = `${row.originTime}`;
-        time.title = `${row.originTime}`;
-        timeStampEl.classList.add('time-td');
-        timeStampEl.textContent = `${ns2Timestamp(row.startTs!)}`;
-        timeStampEl.title = `${ns2Timestamp(row.startTs!)}`;
-        levelEl.textContent = `${row.level}`;
-        levelEl.title = `${row.level}`;
-        tagEl.textContent = `${row.tag}`;
-        tagEl.title = `${row.tag}`;
-        processNameEl.textContent = `${row.processName}`;
-        processNameEl.title = `${row.processName}`;
-        messageEl.textContent = `${row.context}`;
-        messageEl.title = `${row.context}`;
-        trEL.addEventListener('mouseover', () => {
-          let pointX: number = ns2x(
-            row.startTs || 0,
-            TraceRow.range!.startNS,
-            TraceRow.range!.endNS,
-            TraceRow.range!.totalNS,
-            new Rect(0, 0, TraceRow.FRAME_WIDTH, 0)
-          );
-          this.traceSheetEl!.systemLogFlag = new Flag(Math.floor(pointX), 0, 0, 0, row.startTs!, '#999999', true, '');
-          this.spSystemTrace?.refreshCanvas(false);
-        });
-        trEL.addEventListener('mouseout', () => {
-          this.traceSheetEl!.systemLogFlag = undefined;
-          this.spSystemTrace?.refreshCanvas(false);
-        });
-        trEL.appendChild(timeStampEl);
-        trEL.appendChild(time);
-        trEL.appendChild(levelEl);
-        trEL.appendChild(tagEl);
-        trEL.appendChild(processNameEl);
-        trEL.appendChild(messageEl);
-        tableFragment.appendChild(trEL);
-      });
-    }
-  }
-
-  private buildTableHead(tableFragment: HTMLDivElement): void {
-    tableFragment.innerHTML = '';
-    let trEL = document.createElement('tr');
-    trEL.style.display = 'grid';
-    trEL.style.width = '100%';
-    trEL.style.marginTop = '8px';
-    this.tableColumnHead.forEach((columnText) => {
-      let columnEl = document.createElement('div');
-      columnEl.textContent = columnText;
-      columnEl.style.whiteSpace = 'nowrap';
-      columnEl.style.overflow = 'hidden';
-      columnEl.style.textOverflow = 'ellipsis';
-      columnEl.style.fontWeight = 'bold';
-      trEL.appendChild(columnEl);
-    });
-    tableFragment.appendChild(trEL);
   }
 
   private initTitleCssStyle(): string {
@@ -453,12 +368,6 @@ export class TabPaneHiLogs extends BaseElement {
           border: 1px solid rgba(0,0,0,0.60);
           border-radius: 10px;
         }
-        .level-select-title {
-          margin-right: 10px;
-          font-size: 14px;
-          line-height: 16px;
-          font-weight: 400;
-        }
         option {
           font-weight: 400;
           font-size: 14px;
@@ -487,53 +396,7 @@ export class TabPaneHiLogs extends BaseElement {
         }
         </style>`;
   }
-
-  private initTableCssStyle(): string {
-    return `<style>
-        .tbl-logs {
-          display: block;
-          height: auto;
-          overflow-y: scroll;
-        }
-        tr {
-          display: grid;
-          grid-template-columns: 12% 12% 5% 15% 12% 44%;
-          background-color: #FFFFFF;
-          font-weight: 400;
-          opacity: 0.9;
-        }
-        tr:hover {
-          background-color: #E0E5EB;
-        }
-        td {
-          white-space: nowrap;
-          overflow-x: scroll;
-          overflow-y: hidden;
-          display: inline-block;
-          margin-left: 10px;
-        }
-        td::-webkit-scrollbar {
-          display: none;
-        }
-        .head-column {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-left: 10px;
-          font-weight: bold;
-        }
-        .time-td {
-          color: #3D88C7;
-          text-decoration: underline;
-          text-decoration-color: #3D88C7;
-        }
-        .time-td:hover {
-          cursor: pointer;
-        }
-        </style>`;
-  }
 }
 
 let defaultIndex: number = 1;
-let tableRowHeight: number = 23;
 let tableTimeOut: number = 50;

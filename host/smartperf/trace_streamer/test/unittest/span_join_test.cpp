@@ -24,11 +24,13 @@ namespace SysTuning {
 namespace TraceStreamer {
 class SpanJoinTest : public ::testing::Test {
 public:
-    void SetUp()
+    void SetUp() {}
+    void TearDown()
     {
-        stream_.InitFilter();
+        if (stmt_ != nullptr) {
+            sqlite3_finalize(stmt_);
+        }
     }
-    void TearDown() {}
 
 public:
     void Prepare(const std::string& sql)
@@ -41,6 +43,8 @@ public:
     {
         Prepare(sql);
         sqlite3_step(stmt_);
+        sqlite3_finalize(stmt_);
+        stmt_ = nullptr;
     }
 
     void Next(const std::vector<int64_t> column)

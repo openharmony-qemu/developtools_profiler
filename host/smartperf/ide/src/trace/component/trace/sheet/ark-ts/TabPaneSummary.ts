@@ -723,7 +723,7 @@ export class TabPaneSummary extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="summary_left_table" style="width: 65%;">
             <lit-table id="summary_left" style="height: 100%" tree>
-                <lit-table-column width="40%" title="Constructor" data-index="" key="objectName" align="flex-start" order>
+                <lit-table-column width="40%" title="Constructor" data-index="objectName" key="objectName" align="flex-start" order>
                 </lit-table-column>
                 <lit-table-column width="2fr" title="Distance" data-index="distance" key="distance" align="flex-start" order>
                 </lit-table-column>
@@ -747,7 +747,7 @@ export class TabPaneSummary extends BaseElement {
                     </ul>
                 </div>
                 <lit-table id="summary_right" tree>
-                    <lit-table-column width="40%" title="Object" data-index="" key="objectName" align="flex-start" order>
+                    <lit-table-column width="40%" title="Object" data-index="objectName" key="objectName" align="flex-start" order>
                     </lit-table-column>
                     <lit-table-column width="2fr" title="Distance" data-index="distance" key="distance" align="flex-start" order>
                     </lit-table-column>

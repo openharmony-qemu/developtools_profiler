@@ -424,7 +424,7 @@ export let tabConfig: any = {
     type: TabPaneSmapsComparison,
   },
   'box-smaps-record': {
-    title: 'Smaps Record',
+    title: 'Native Heap',
     type: TabPaneSmapsRecord,
   },
   'box-vmtracker-shm': {

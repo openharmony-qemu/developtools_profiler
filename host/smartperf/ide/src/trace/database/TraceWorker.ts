@@ -533,114 +533,96 @@ self.onmessage = async (e: MessageEvent) => {
               if (receiveData.data.length > 0) {
                 let needCutMessage = receiveData.data as Array<{ offset: number; size: number }>;
                 let startOffset = needCutMessage[0].offset;
-                let endOffset =
-                  needCutMessage[needCutMessage.length - 1].offset + needCutMessage[needCutMessage.length - 1].size;
-                let searchDataInfo = allIndexDataList
-                  .filter(
-                    (value: {
-                      fileType: string;
-                      index: number;
-                      pageNum: number;
-                      startOffsetSize: number;
-                      endOffsetSize: number;
-                    }) => {
-                      return (
-                        value.fileType === fileType &&
-                        value.startOffsetSize <= endOffset &&
-                        value.endOffsetSize >= startOffset
-                      );
-                    }
-                  )
-                  .sort((valueA: { startOffsetSize: number }, valueB: { startOffsetSize: number }) => {
-                    return valueA.startOffsetSize - valueB.startOffsetSize;
-                  });
-                let startIndex = searchDataInfo[0].index;
-                let endIndex = searchDataInfo[searchDataInfo.length - 1].index;
-                let startQueryIndex = startIndex;
-                let endQueryIndex = startIndex + 10;
-                do {
-                  endQueryIndex = Math.min(endQueryIndex, endIndex);
-                  let searchCutFilter = searchDataInfo.filter(
-                    (value: {
-                      fileType: string;
-                      index: number;
-                      pageNum: number;
-                      startOffsetSize: number;
-                      endOffsetSize: number;
-                    }) => {
-                      if (endQueryIndex === startQueryIndex) {
-                        return value.index >= startQueryIndex;
-                      }
-                      return value.index >= startQueryIndex && value.index <= endQueryIndex;
-                    }
-                  );
-                  let minStartOffsetSize = Math.min(
-                    ...searchCutFilter.map((item: { startOffsetSize: number }) => item.startOffsetSize)
-                  );
-                  let maxEndOffsetSize = Math.max(
-                    ...searchCutFilter.map((item: { endOffsetSize: number }) => item.endOffsetSize)
-                  );
-                  let cutUseOffsetObjs = needCutMessage.filter((offseObj) => {
-                    return offseObj.offset > minStartOffsetSize && offseObj.offset < maxEndOffsetSize;
-                  });
-                  let transaction = db.transaction(STORE_NAME, 'readonly');
-                  let store = transaction.objectStore(STORE_NAME);
-                  let index = store.index('QueryCompleteFile');
-                  let range = IDBKeyRange.bound(
-                    [timStamp, fileType, 0, startQueryIndex],
-                    [timStamp, fileType, 0, endQueryIndex],
-                    false,
-                    false
-                  );
-                  const getRequest = index.openCursor(range);
-                  let queryAllData = await queryDataFromIndexeddb(getRequest);
-                  let mergeData = indexedDataToBufferData(queryAllData);
-                  for (let cutOffsetObjIndex = 0; cutOffsetObjIndex < cutUseOffsetObjs.length; cutOffsetObjIndex++) {
-                    let cutUseOffsetObj = cutUseOffsetObjs[cutOffsetObjIndex];
-                    let endOffset = cutUseOffsetObj.offset + cutUseOffsetObj.size;
-                    let sliceData = mergeData.slice(
-                      cutUseOffsetObj.offset - minStartOffsetSize,
-                      endOffset - minStartOffsetSize
-                    );
-                    let sliceDataLength = sliceData.length;
-                    if (currentChunkOffset + sliceDataLength >= maxSize) {
-                      let handleCurrentData = new Uint8Array(currentChunkOffset + sliceDataLength);
-                      let freeSaveArray = currentChunk.slice(0, currentChunkOffset);
-                      handleCurrentData.set(freeSaveArray, 0);
-                      handleCurrentData.set(sliceData, freeSaveArray.length);
-                      let newSliceDataLength: number = Math.ceil(handleCurrentData.length / maxSize);
-                      for (let newSliceIndex = 0; newSliceIndex < newSliceDataLength; newSliceIndex++) {
-                        let newSliceSize = newSliceIndex * maxSize;
-                        let number = Math.min(newSliceSize + maxSize, handleCurrentData.length);
-                        let saveArray = handleCurrentData.slice(newSliceSize, number);
-                        if (newSliceIndex === newSliceDataLength - 1 && number - newSliceSize < maxSize) {
-                          currentChunk = new Uint8Array(maxSize);
-                          currentChunkOffset = 0;
-                          currentChunk.set(saveArray, currentChunkOffset);
-                          currentChunkOffset += saveArray.length;
-                        } else {
-                          await addDataToIndexeddb(db, {
-                            buf: saveArray,
-                            id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
-                            fileType: `${fileType}_new`,
-                            pageNum: pageNum,
-                            startOffset: saveStartOffset,
-                            endOffset: saveStartOffset + maxSize,
-                            index: saveIndex,
-                            timStamp: timStamp,
-                          });
-                          saveStartOffset += maxSize;
-                          saveIndex++;
-                        }
-                      }
-                    } else {
-                      currentChunk.set(sliceData, currentChunkOffset);
-                      currentChunkOffset += sliceDataLength;
-                    }
+                let nowCutInfoList = [];
+                let isBeforeCutFinish = false;
+                for (let needCutIndex = 0; needCutIndex < needCutMessage.length; needCutIndex++) {
+                  let cutInfo = needCutMessage[needCutIndex];
+                  if (isBeforeCutFinish) {
+                    startOffset = cutInfo.offset;
+                    isBeforeCutFinish = false;
+                    nowCutInfoList.length = 0;
                   }
-                  startQueryIndex += 10;
-                  endQueryIndex += 10;
-                } while (startQueryIndex <= endIndex && endQueryIndex <= endIndex);
+                  if (cutInfo.offset + cutInfo.size - startOffset >= (maxSize * 10) || needCutIndex === needCutMessage.length - 1) {
+                    nowCutInfoList.push(cutInfo);
+                    let nowStartCutOffset = nowCutInfoList[0].offset;
+                    let nowEndCutOffset = cutInfo.offset + cutInfo.size;
+                    let searchDataInfo = allIndexDataList.filter(
+                      (value: {
+                        fileType: string;
+                        index: number;
+                        pageNum: number;
+                        startOffsetSize: number;
+                        endOffsetSize: number;
+                      }) => {
+                        return (
+                          value.fileType === fileType &&
+                          value.startOffsetSize <= nowEndCutOffset &&
+                          value.endOffsetSize >= nowStartCutOffset
+                        );
+                      }
+                    );
+                    let startIndex = searchDataInfo[0].index;
+                    let endIndex = searchDataInfo[searchDataInfo.length - 1].index;
+                    let transaction = db.transaction(STORE_NAME, 'readonly');
+                    let store = transaction.objectStore(STORE_NAME);
+                    let index = store.index('QueryCompleteFile');
+                    let range = IDBKeyRange.bound(
+                      [timStamp, fileType, 0, startIndex],
+                      [timStamp, fileType, 0, endIndex],
+                      false,
+                      false
+                    );
+                    const getRequest = index.openCursor(range);
+                    let queryAllData = await queryDataFromIndexeddb(getRequest);
+                    let mergeData = indexedDataToBufferData(queryAllData);
+                    for (let cutOffsetObjIndex = 0; cutOffsetObjIndex < nowCutInfoList.length; cutOffsetObjIndex++) {
+                      let cutUseOffsetObj = nowCutInfoList[cutOffsetObjIndex];
+                      let endOffset = cutUseOffsetObj.offset + cutUseOffsetObj.size;
+                      let sliceData = mergeData.slice(
+                        cutUseOffsetObj.offset - searchDataInfo[0].startOffsetSize,
+                        endOffset - searchDataInfo[0].startOffsetSize
+                      );
+                      let sliceDataLength = sliceData.length;
+                      if (currentChunkOffset + sliceDataLength >= maxSize) {
+                        let handleCurrentData = new Uint8Array(currentChunkOffset + sliceDataLength);
+                        let freeSaveArray = currentChunk.slice(0, currentChunkOffset);
+                        handleCurrentData.set(freeSaveArray, 0);
+                        handleCurrentData.set(sliceData, freeSaveArray.length);
+                        let newSliceDataLength: number = Math.ceil(handleCurrentData.length / maxSize);
+                        for (let newSliceIndex = 0; newSliceIndex < newSliceDataLength; newSliceIndex++) {
+                          let newSliceSize = newSliceIndex * maxSize;
+                          let number = Math.min(newSliceSize + maxSize, handleCurrentData.length);
+                          let saveArray = handleCurrentData.slice(newSliceSize, number);
+                          if (newSliceIndex === newSliceDataLength - 1 && number - newSliceSize < maxSize) {
+                            currentChunk = new Uint8Array(maxSize);
+                            currentChunkOffset = 0;
+                            currentChunk.set(saveArray, currentChunkOffset);
+                            currentChunkOffset += saveArray.length;
+                          } else {
+                            await addDataToIndexeddb(db, {
+                              buf: saveArray,
+                              id: `${fileType}_new_${timStamp}_${pageNum}_${saveIndex}`,
+                              fileType: `${fileType}_new`,
+                              pageNum: pageNum,
+                              startOffset: saveStartOffset,
+                              endOffset: saveStartOffset + maxSize,
+                              index: saveIndex,
+                              timStamp: timStamp,
+                            });
+                            saveStartOffset += maxSize;
+                            saveIndex++;
+                          }
+                        }
+                      } else {
+                        currentChunk.set(sliceData, currentChunkOffset);
+                        currentChunkOffset += sliceDataLength;
+                      }
+                    }
+                    isBeforeCutFinish = true;
+                  } else {
+                    nowCutInfoList.push(cutInfo);
+                  }
+                }
               }
             }
           }
@@ -704,6 +686,7 @@ async function splitFileAndSave(
   let saveStartOffset = 0;
   let currentChunk = new Uint8Array(maxSize);
   let currentChunkOffset = 0;
+  let resultFileSize = 0;
   do {
     queryEndIndex = queryStartIndex + 9;
     if (queryEndIndex > endIndex) {
@@ -712,11 +695,10 @@ async function splitFileAndSave(
     const transaction = db.transaction(STORE_NAME, 'readonly');
     const store = transaction.objectStore(STORE_NAME);
     const index = store.index('QueryCompleteFile');
-    let range = IDBKeyRange.bound([timStamp, fileType, 0, startIndex], [timStamp, fileType, 0, endIndex], false, false);
+    let range = IDBKeyRange.bound([timStamp, fileType, 0, queryStartIndex], [timStamp, fileType, 0, queryEndIndex], false, false);
     const getRequest = index.openCursor(range);
     let res = await queryDataFromIndexeddb(getRequest);
     queryStartIndex = queryEndIndex + 1;
-    let resultFileSize = 0;
     for (let i = 0; i < res.length; i++) {
       let arrayBuffer = res[i];
       let uint8Array = new Uint8Array(arrayBuffer.buf);

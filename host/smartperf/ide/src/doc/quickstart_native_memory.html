@@ -190,7 +190,6 @@
         position: relative;
         padding: 1em 1px 1px 0.9em;
       }
-
       pre[dl] .line-highlight-wrapper {
         position: absolute;
         top: 1px;
@@ -235,7 +234,6 @@
         top: auto;
         bottom: 0.5em;
       }
-
       html body {
         line-height: 1.6;
         font-size: 16px;
@@ -571,7 +569,6 @@
           white-space: pre;
         }
       }
-
       .smartperf-preview {
         width: 99%;
         height: 99%;
@@ -810,8 +807,8 @@
         <li>Use Fp Unwind：Fp回栈。</li>
         <li>Use Record Accurately：不过滤数据，上报全量的。</li>
         <li>Use Offline Symbolization：离线符号化。</li>
-        <li>Use Record Statistics：统计数据上报。</li>
-        <li>statistics interval：统计数据上报周期。</li>
+        <li>Use Record Statistics：统计数据上报时间间隔设置。</li>
+        <li>Use Startup Mode :抓取应用启动阶段的内存(默认是关闭，需要抓取应用启阶段内存可开启)。</li>
       </ul>
       <p class="fontColor">
         再点击Record setting，在output file path输入文件名hiprofiler_data_nativememory.htrace，拖动滚动条设置buffer
@@ -828,10 +825,14 @@
         <li>filter_size：过滤malloc的大小，最小值是0，默认值是4096Byte。</li>
         <li>smb_pages：nativedeamon与libnativehook间的共享内存大小。</li>
         <li>max_stack_depth：最多回栈的层数，也就是抓取的栈的最大深度。</li>
-        <li>fp_unwind：是否进行fp回栈。</li>
-        <li>malloc_free_matching_interval：native_daemon从nativehook so的共享内存里取数据的间隔时间。</li>
+        <li>process_name：抓取的应用进程名。</li>
         <li>string_compressed：是否进行字符串压缩。</li>
-        <li>fp_unwind：fp回栈。</li>
+        <li>fp_unwind：是否进行fp回栈。</li>
+        <li>callframe_compress: 是否进行栈帧压缩。</li>
+        <li>record_accurately: 是否不过滤数据，上报全量的。</li>
+        <li>offline_symbolization: 是否离线符号化。</li>
+        <li>statistics_interval: 统计模式下上报数据的时间间隔。</li>
+        <li>startup_mode: 是否需要抓取应用启动阶段内存。</li>
       </ul>
       <p class="fontColor">
         输入hdc_std shell，进入设备，执行命令。<br />
@@ -852,32 +853,27 @@
         <li>
           <pre class="smartperf-text fontColor light">
 Current Bytes：以申请内存的size绘制泳道图。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Native Memory Density：以申请内存的数量绘制泳道图。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 All Heap&amp;AnonuymousVM：malloc分配和mmap分配的总量。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 All Heap：malloc分配的内存。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 All Anonymous VM：mmap分配的内存。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">Native Memory泳道图的框选功能</h3>
@@ -891,56 +887,47 @@ All Anonymous VM：mmap分配的内存。
         <li>
           <pre class="smartperf-text fontColor light">
 Memory Type：内存的类型。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Exsiting：框选区域内申请没有释放的大小。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 #Exsiting：框选区域内申请没有释放的次数。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Transient：框选区域内释放的大小。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 #Transient：框选区域内释放的次数。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Total Bytes：框选区间内申请的大小。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 #Total： 框选区间内申请的次数。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Peak Value： 框选区间内内存申请的峰值。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Exsiting/Total：框选区间内剩余的内存比上申请的内存，其中浅紫色是框选区间内申请的大小/整个时间轴（申请+释放的总大小)，深紫色是框选区间内(申请+释放)的大小/整个时间轴（申请+释放的总大小）。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <p class="fontColor">
@@ -951,20 +938,17 @@ Exsiting/Total：框选区间内剩余的内存比上申请的内存，其中浅
         <li>
           <pre class="smartperf-text fontColor light">
 Symble Name：每个内存分配的调用栈。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Size：分配的总大小。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Count：相同调用栈出现的次数。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <p class="fontColor">
@@ -975,44 +959,37 @@ Count：相同调用栈出现的次数。
         <li>
           <pre class="smartperf-text fontColor light">
 Address：内存块的地址。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Memory Type：内存分配的类型。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Timestamp：时间戳信息。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 State：内存地址当前状态Existed 表示框选范围内未释放，Freed表示已释放。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Size：该次申请分配内存的大小。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Responsible Library ：调用该函数的库。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Responsible Caller  ：调用该函数的方法。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <p class="fontColor">
@@ -1023,32 +1000,27 @@ Responsible Caller  ：调用该函数的方法。
         <li>
           <pre class="smartperf-text fontColor light">
 Snapshot：标记的打点说明。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Timestamp ：时间戳信息。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Net Growth ：自从上次Snapshot的增长量，是计算的分配和释放的。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Total Growth ：自从上次Snapshot的增长量，是计算的每一次分配的。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 #Exsiting  ：仍然存在的内存数。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">Native Memory的辅助信息功能</h3>
@@ -1068,20 +1040,17 @@ Total Growth ：自从上次Snapshot的增长量，是计算的每一次分配�
         <li>
           <pre class="smartperf-text fontColor light">
  All Allocations：所有的内存。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
  Created &amp; Exsiting：创建且被存活的内存。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
  Created &amp; Destroyed： 创建且被销毁的内存。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <p class="fontColor">
@@ -1092,20 +1061,17 @@ Total Growth ：自从上次Snapshot的增长量，是计算的每一次分配�
         <li>
           <pre class="smartperf-text fontColor light">
 All Heap&amp;AnonuymousVM：Heap和AnonuymousVM的总量。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 All Heap：malloc分配的内存。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 All Anonymous VM：mmap的匿名页。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <p class="fontColor">
@@ -1116,13 +1082,110 @@ All Anonymous VM：mmap的匿名页。
       <h3 class="mume-header fontColor">Native Memory的火焰图功能</h3>
 
       <p class="fontColor">
-        点击callinfo左下角的柱状图的图标，会切换到火焰图页面。<br />
-        <img src="../figures/NativeMemory/nativeflame.jpg" alt="GitHub Logo" /><br />
-        进入到火焰图页面，火焰图的展示跟Callinfo的tab页的调用栈显示一致，鼠标放到色块上，悬浮框可以显示调用栈名称和size大小。<br />
-        <img src="../figures/NativeMemory/nativeflameshow.jpg" alt="GitHub Logo" /><br />
-        鼠标左键火焰图，会进入下一级界面，右键回到上一级。<br />
-        <img src="../figures/NativeMemory/nativeflamelevel2.jpg" alt="GitHub Logo" />
+        火焰图的展示跟Callinfo的tab页的调用栈显示一致，鼠标放到色块上，悬浮框可以显示调用栈名称，栈的所在库名，地址，size大小，栈的个数。<br />
+        <img src="../figures/NativeMemory/nativeflameshow.jpg" alt="GitHub Logo" />
       </p>
+      <h3 class="mume-header fontColor">基于函数进行调用栈（单个或多个）选择后可以在时间轴上显示内存操作点</h3>
+
+      <p class="fontColor">
+        点击火焰图函数时，触发火焰图点击中，显示调用栈中该函数出现在时间轴范围的分布情况。<br />
+        <img src="../figures/NativeMemory/memoryframe.jpg" alt="GitHub Logo" />
+      </p>
+      <h3 class="mume-header fontColor">内存搜索大小写不敏感，上层火焰图的大小和总内存需要根据搜索内容动态调整</h3>
+
+      <p class="fontColor">
+        执行搜索的关键字大小写不区分，搜索的函数的parent只显示搜索的children的大小之和，且可以与点选联动。
+      </p>
+      <h3 class="mume-header fontColor">焦点函数火焰图详细展开：选中函数的全部调用栈展示</h3>
+
+      <p class="fontColor">
+        点击调用栈某个函数，点击函数调用的函数对应铺满画布，点击函数的parent，显示以及绘制的大小变化为点击函数的大小，如下图点击OHOS::EglCoreInit()函数，会显示该函数的全部调用栈。<br />
+        <img src="../figures/NativeMemory/eg_callstack.jpg" alt="GitHub Logo" />
+      </p>
+      <h3 class="mume-header fontColor">调用栈默认显示火焰图，根据Native层分类规则显示颜色，搜索结果高亮</h3>
+
+      <p class="fontColor">
+        调用栈默认显示火焰图，新增搜索框表达式输入。表达式作用范围为nativehook统计与非统计模式。其中处理的均为Responsible
+        Library与Responsible Caller，其中Responsible Library，Responsible Caller表示从下往上非libc++
+        musl的第一条调用栈的lib跟symbol，如下图所示，由于最后一条 [ operator new(unsigned long) ]
+        libc++.so为libc++.so的函数，固跳过，所以该条调用栈的Responsible Library为
+        <a href="http://libhilog.so/">libhilog.so</a>，Responsible Caller为OHOS::HiviewDFX::GetDomainLevel(unsigned int)
+        。<br />
+        <img src="../figures/NativeMemory/framecaller.jpg" alt="GitHub Logo" /><br />
+        表达式说明:在InputFilter输入框可以进行搜索过滤和表达式过滤，其中表达式必须以@开头，英文括号包起所需要过滤的内容，每个括号必须包括
+        （Responsible Library，Responsible Caller）匹配全量以*表示，否则认为该输入为搜索过滤。
+      </p>
+      <table class="fontColor">
+        <thead>
+        <tr>
+          <th class="fontColor">表达式</th>
+          <th class="fontColor">含义</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>@(libquickjs tryalloc)</td>
+          <td>只显示 Responsible Library为libquickjs 且Responsible Caller包含tryalloc的数据</td>
+        </tr>
+        <tr>
+          <td>@(libquickjs *)</td>
+          <td>只显示Responsible Library包含libquickjs的数据</td>
+        </tr>
+        <tr>
+          <td>@(* tryalloc codec bitmapcache skYUV)</td>
+          <td>
+            只显示 Responsible Library为任意值 且Responsible Caller包含tryalloc或codec或bitmapcache或skYUV的数据
+          </td>
+        </tr>
+        <tr>
+          <td>@(libglobal *，*resourceManager)</td>
+          <td>
+            只显示Responsible Library包含libglobal且 Responsible Caller为任意值的数据 或 Responsible
+            Library为任意值，Responsible Caller包含resourceManager的数据
+          </td>
+        </tr>
+        <tr>
+          <td>@(/data/user *)</td>
+          <td>只显示Responsible Library路径/data/user且symbol为任意值的数据</td>
+        </tr>
+        <tr>
+          <td>@(<a href="http://mali.so/">mali.so</a> *,libGLES_mali.so *)</td>
+          <td>只显示Responsible Library包含mali.so或者libGLES_mali.so的数据</td>
+        </tr>
+        <tr>
+          <td>@(* PixelMap:ReadImageData)</td>
+          <td>只显示Responsible Caller包含PixelMap:ReadImageData的数据</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>@-(libark jsvm table)</td>
+          <td>不显示Responsible Library包含libark且Responsible Caller包含jsvm或者table的数据</td>
+        </tr>
+        <tr>
+          <td>@-(librender picture, libskia picture) <br /></td>
+          <td>不显示Responsible Library包含librender或者libskia且Responsible Caller中包含picture的数据</td>
+        </tr>
+        <tr>
+          <td>@-(libark *)</td>
+          <td>不显示Responsible Library包含libark的数据</td>
+        </tr>
+        <tr>
+          <td>@-(* table)</td>
+          <td>不显示Responsible Caller中table的数据</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>@(* table) - (libark *)</td>
+          <td>只显示Responsible Caller包含table且Responsible Library不为libark的数据</td>
+        </tr>
+        </tbody>
+      </table>
       <h3 class="mume-header fontColor">Native Memory数据统计功能</h3>
 
       <p class="fontColor">
@@ -1135,10 +1198,10 @@ All Anonymous VM：mmap的匿名页。
     <script>
       window.onload = () => {
         let isDark = window.location.search;
-        if (isDark.indexOf('?') != -1) {
+        if (isDark.indexOf('?') !== -1) {
           isDark = isDark.substr(1, isDark.length - 1);
         }
-        if (isDark == 'true') {
+        if (isDark === 'true') {
           document.getElementById('body').setAttribute('style', 'background-color:#272C34;');
           let header = document.getElementsByClassName('fontColor');
           for (let i = 0; i < header.length; i++) {

@@ -23,8 +23,6 @@ import { LitMainMenu, MenuGroup, MenuItem } from '../../base-ui/menu/LitMainMenu
 import { SpProbesConfig } from './setting/SpProbesConfig.js';
 import { SpTraceCommand } from './setting/SpTraceCommand.js';
 import { FlagsConfig } from './SpFlags.js';
-import LitSwitch from '../../base-ui/switch/lit-switch.js';
-import { LitSlider } from '../../base-ui/slider/LitSlider';
 
 import {
   CpuConfig,
@@ -380,6 +378,7 @@ export class SpRecordTrace extends BaseElement {
   public deviceSelect: HTMLSelectElement | undefined;
   public deviceVersion: HTMLSelectElement | undefined;
   private recordButtonText: HTMLSpanElement | undefined;
+  private devicePrompt: HTMLSpanElement | undefined;
   private recordButton: LitButton | undefined;
   private cancelButton: LitButton | undefined;
   private sp: SpApplication | undefined;
@@ -406,8 +405,6 @@ export class SpRecordTrace extends BaseElement {
   private appContent: HTMLElement | undefined | null;
   private record = 'Record';
   private stop = 'StopRecord';
-
-  private ftraceSlider: LitSlider | undefined | null;
 
   compareArray(devs: Array<string>): boolean {
     let clearFlag: boolean = false;
@@ -441,6 +438,7 @@ export class SpRecordTrace extends BaseElement {
           if (devs.length == 0) {
             this.recordButton!.hidden = true;
             this.disconnectButton!.hidden = true;
+            this.devicePrompt!.innerText = 'Device not connected';
           }
           for (let i = 0; i < devs.length; i++) {
             let dev = devs[i];
@@ -453,6 +451,7 @@ export class SpRecordTrace extends BaseElement {
               this.recordButton!.hidden = false;
               this.disconnectButton!.hidden = false;
               SpRecordTrace.serialNumber = option.value;
+              this.devicePrompt!.innerText = '';
             }
           }
         }
@@ -464,6 +463,7 @@ export class SpRecordTrace extends BaseElement {
         if (devs.length == 0) {
           this.recordButton!.hidden = true;
           this.disconnectButton!.hidden = true;
+          this.devicePrompt!.innerText = 'Device not connected';
         }
         for (let len = 0; len < devs.length; len++) {
           let dev = devs[len];
@@ -478,6 +478,7 @@ export class SpRecordTrace extends BaseElement {
             option.selected = true;
             this.recordButton!.hidden = false;
             this.disconnectButton!.hidden = false;
+            this.devicePrompt!.innerText = '';
             SpRecordTrace.serialNumber = option.value;
             HdcDeviceManager.connect(option.value).then((result) => {
               if (result) {
@@ -625,13 +626,21 @@ export class SpRecordTrace extends BaseElement {
     });
     this.deviceSelect = this.shadowRoot?.querySelector('#device-select') as HTMLSelectElement;
     this.deviceVersion = this.shadowRoot?.querySelector('#device-version') as HTMLSelectElement;
+    this.devicePrompt = this.shadowRoot?.querySelector('.prompt') as HTMLSpanElement;
+    this.deviceSelect?.addEventListener('mousedown', (evt) => {
+      if (this.deviceSelect!.options.length === 0) {
+        evt.preventDefault();
+      }
+    });
     this.deviceSelect!.onchange = (): void => {
       if (this.deviceSelect!.options.length > 0) {
         this.recordButton!.hidden = false;
         this.disconnectButton!.hidden = false;
+        this.devicePrompt!.innerText = '';
       } else {
         this.recordButton!.hidden = true;
         this.disconnectButton!.hidden = true;
+        this.devicePrompt!.innerText = 'Device not connected';
       }
       let deviceItem = this.deviceSelect!.options[this.deviceSelect!.selectedIndex];
       let value = deviceItem.value;
@@ -711,6 +720,7 @@ export class SpRecordTrace extends BaseElement {
           } else {
             this.recordButton!.hidden = true;
             this.disconnectButton!.hidden = true;
+            this.devicePrompt!.innerText = 'Device not connected';
             this.sp!.search = false;
             SpRecordTrace.serialNumber = '';
           }
@@ -727,15 +737,19 @@ export class SpRecordTrace extends BaseElement {
     if (this.deviceSelect!.options && this.deviceSelect!.options.length > 0) {
       this.disconnectButton!.hidden = false;
       this.recordButton!.hidden = false;
+      this.devicePrompt!.innerText = '';
     } else {
       this.disconnectButton!.hidden = true;
       this.recordButton!.hidden = true;
+      this.devicePrompt!.innerText = 'Device not connected';
     }
-    this.recordButton!.addEventListener('click', () => {
-      if (this.recordButtonText!.textContent == this.record) {
-        this.recordButtonListener();
-      } else {
-        this.stopRecordListener();
+    this.recordButton!.addEventListener('mousedown', (event) => {
+      if (event.button === 0) {
+        if (this.recordButtonText!.textContent === this.record) {
+          this.recordButtonListener();
+        } else {
+          this.stopRecordListener();
+        }
       }
     });
     this.cancelButton!.addEventListener('click', () => {
@@ -973,6 +987,7 @@ export class SpRecordTrace extends BaseElement {
           clickHandler: function (ev: InputEvent) {
             that.appContent!.innerHTML = '';
             that.appContent!.append(that.spWebShell!);
+            that.spWebShell!.shellDiv!.scrollTop = that.spWebShell!.currentScreenRemain;
             setTimeout(() => {
               that.spWebShell!.hdcShellFocus();
             }, 100);
@@ -995,33 +1010,6 @@ export class SpRecordTrace extends BaseElement {
           icon: 'externaltools',
           fileChoose: false,
           clickHandler: function (ev: InputEvent): void {
-            let startNativeSwitch=that.spAllocations?.shadowRoot?.getElementById('startNativeMemoryRecord')as LitSwitch;
-            let recordModeSwitch=that.probesConfig?.shadowRoot?.querySelector('lit-switch')as LitSwitch;
-            let checkDesBoxDis=that.probesConfig?.shadowRoot?.querySelectorAll('check-des-box')
-            let litCheckBoxDis=that.probesConfig?.shadowRoot?.querySelectorAll('lit-check-box')
-
-            that.ftraceSlider=that.probesConfig?.shadowRoot?.querySelector<LitSlider>('#ftrace-buff-size-slider')
-            startNativeSwitch.addEventListener('change',(event:any)=>{
-              let detail = event.detail;
-              if (detail!.checked) {
-                recordModeSwitch.removeAttribute('checked')
-
-                checkDesBoxDis?.forEach((item:any)=>{
-                  item.setAttribute('disabled','')
-                  item.checked=false
-                })
-    
-                litCheckBoxDis?.forEach((item:any)=>{
-                  item.setAttribute('disabled','')
-                  item.checked=false
-                })
-    
-                that.ftraceSlider!.setAttribute('disabled','')
-              } 
-            })
-
-
-
             let divConfigs = that.spAllocations?.shadowRoot?.querySelectorAll<HTMLDivElement>('.version-controller');
             if ((!SpRecordTrace.selectVersion || SpRecordTrace.selectVersion === '3.2') && divConfigs) {
               for (let divConfig of divConfigs) {
@@ -1169,6 +1157,7 @@ export class SpRecordTrace extends BaseElement {
           } else {
             this.recordButton!.hidden = true;
             this.disconnectButton!.hidden = true;
+            this.devicePrompt!.innerText = 'Device not connected';
             SpRecordTrace.serialNumber = '';
           }
         }
@@ -1939,13 +1928,23 @@ export class SpRecordTrace extends BaseElement {
         .cancel {
           visibility: hidden;
         }
+        .prompt {
+          position: absolute;
+          margin-left: 35px;
+          line-height: 32px;
+          font-family: Helvetica;
+          font-size: 14px;
+          opacity: 0.6;
+        }
         </style>
         <div class="container">
          <div class="header">
            <div style="display: flex;margin-bottom: 24px;margin-left:20px;">
              <span class="target">Target Platform:</span>
-               <select class="select" id = "device-select">
-               </select>
+               <div id="device-prompt">
+                  <span class="prompt"></span>
+                  <select class="select" id = "device-select"></select>
+               </div>
                <select class="device_version" id = "device-version">
                </select>
               <lit-button style="width: 180px" class="add" height="32px" width="164px" color="#0A59F7" font_size="14px" border="1px solid #0A59F7" 
@@ -1974,7 +1973,21 @@ export class SpRecordTrace extends BaseElement {
   }
 
   private createHilogConfig(reportingFrequency: number): ProfilerPluginConfig<HilogConfig> {
+    let appProcess = this.spHilog!.appProcess;
+    let re = /^[0-9]+.?[0-9]*/;
+    let pid = 0;
+    let processId = '';
+    if (appProcess.indexOf('(') != -1) {
+      processId = appProcess.slice(appProcess.lastIndexOf('(') + 1, appProcess.lastIndexOf(')'));
+    } else {
+      processId = appProcess;
+    }
+    if (re.test(processId)) {
+      pid = Number(processId);
+    }
     let hilogConfig: HilogConfig = {
+      pid: pid,
+      logLevel: levelFromJSON(this.spHilog!.appLogLevel),
       needClear: true,
     };
     let hilogConfigProfilerPluginConfig: ProfilerPluginConfig<HilogConfig> = {
@@ -2382,6 +2395,7 @@ export class SpRecordTrace extends BaseElement {
       this.deviceSelect!.appendChild(option);
       this.recordButton!.hidden = false;
       this.disconnectButton!.hidden = false;
+      this.devicePrompt!.innerText = '';
       if (SpRecordTrace.selectVersion && SpRecordTrace.selectVersion !== '') {
         this.setDeviceVersionSelect(SpRecordTrace.selectVersion);
       }

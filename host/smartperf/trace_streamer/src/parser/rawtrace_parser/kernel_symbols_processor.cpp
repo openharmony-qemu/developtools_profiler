@@ -50,17 +50,6 @@ bool KernelSymbolsProcessor::IsValidKernelSymbol(const KernelSymbol& symbol)
     return true;
 }
 
-bool KernelSymbolsProcessor::CompareSymbolInfo(const KernelSymbol& firstSymbol, const KernelSymbol& secondSymbol)
-{
-    if (firstSymbol.addr != secondSymbol.addr) {
-        return firstSymbol.addr < secondSymbol.addr;
-    }
-    if (firstSymbol.name != secondSymbol.name) {
-        return firstSymbol.name < secondSymbol.name;
-    }
-    return firstSymbol.type < secondSymbol.type;
-}
-
 bool KernelSymbolsProcessor::HandleKallSyms(const std::string& kallsyms)
 {
     TS_CHECK_TRUE(!kallsyms.empty(), false, "kallsyms is empty!");

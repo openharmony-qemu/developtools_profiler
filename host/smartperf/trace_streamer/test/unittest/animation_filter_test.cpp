@@ -75,14 +75,15 @@ HWTEST_F(AnimationFilterTest, InvalidCallStack, TestSize.Level1)
 {
     TS_LOGI("test36-2");
     TracePoint point;
+    std::string validName("H:RSUniRender::Process:[WindowScene_xxx] (0, 0, 1344, 2772) Alpha: 1.00");
+    std::string invalidName("H:RSUniRender::Process:[xxx] (0, 0, 1344, 2772) Alpha: 1.00");
     const size_t CALLSTACK_SLICE_ID = 1;
     CallStack* callStackSlice = stream_.traceDataCache_->GetInternalSlicesData();
     std::vector<DataIndex> callStackNames{
         stream_.traceDataCache_->GetDataIndex("H:RSMainThread::DoComposition"),
         stream_.traceDataCache_->GetDataIndex("H:ProcessDisplayRenderNode[0](0,0,0,0)"),
-        stream_.traceDataCache_->GetDataIndex(
-            "H:RSUniRender::Process:[WindowScene_xxx] (0, 0, 1344, 2772) Alpha: 1.00"),
-        stream_.traceDataCache_->GetDataIndex("H:RSUniRender::Process:[xxx] (0, 0, 1344, 2772) Alpha: 1.00"),
+        stream_.traceDataCache_->GetDataIndex(validName),
+        stream_.traceDataCache_->GetDataIndex(invalidName),
     };
     std::vector<std::string> funcPrefixs{
         "H:RSUniRender::Process:[WindowScene_xxx]",
@@ -108,12 +109,14 @@ HWTEST_F(AnimationFilterTest, InvalidCallStack, TestSize.Level1)
         index = callStackSlice->AppendInternalSlice(INVALID_TIME, INVALID_TIME, INVALID_UINT32, INVALID_UINT64,
                                                     INVALID_UINT16, callStackNames[i], depth, parentId);
     }
-    point.funcPrefix_ = funcPrefixs[0];
+    point.funcPrefix_ = funcPrefixs[1];
+    point.name_ = invalidName;
     auto curStackRow = 1;
     auto res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, curStackRow);
     EXPECT_FALSE(res);
     // valid callStack
-    point.funcPrefix_ = funcPrefixs[1];
+    point.funcPrefix_ = funcPrefixs[0];
+    point.name_ = validName;
     curStackRow = 2;
     res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, curStackRow);
     EXPECT_TRUE(res);
@@ -224,7 +227,7 @@ HWTEST_F(AnimationFilterTest, UpdateDynamicFrameInfo, TestSize.Level1)
         stream_.traceDataCache_->GetDataIndex(
             "H:RSUniRender::Process:[WindowScene_xxx] (0, 0, 1344, 2772) Alpha: 1.00"),
     };
-    std::string funcPrefix("H:RSUniRender::Process:[xxx]");
+    std::string funcPrefix("H:RSUniRender::Process:[WindowScene_xxx]");
     uint64_t index = INVALID_UINT64;
     uint64_t startTime = 59557002299000;
     uint64_t dur = ONE_MILLION_NANOSECONDS;
@@ -238,6 +241,7 @@ HWTEST_F(AnimationFilterTest, UpdateDynamicFrameInfo, TestSize.Level1)
                                                     callStackNames[i], depth, parentId);
     }
     point.funcPrefix_ = funcPrefix;
+    point.name_ = stream_.traceDataCache_->GetDataFromDict(callStackNames.back());
     auto res = stream_.streamFilters_->animationFilter_->BeginDynamicFrameEvent(point, index); // for WindowScene_xxx
     EXPECT_TRUE(res);
     stream_.streamFilters_->animationFilter_->UpdateDynamicFrameInfo();
@@ -268,7 +272,7 @@ HWTEST_F(AnimationFilterTest, AnimationStartAndEnd, TestSize.Level1)
                                                             INVALID_UINT16, callStackName, depth, parentId);
 
     TracePoint point;
-    point.name_ = "1693876195576., 1693876195586.";
+    point.name_ = "H:APP_LIST_FLING, com.taobao.taobao, pages/Index, 1693876205590.";
     stream_.streamFilters_->animationFilter_->StartAnimationEvent(line, point, callStackRow);
     EXPECT_TRUE(!stream_.streamFilters_->animationFilter_->animationCallIds_.empty());
     stream_.streamFilters_->animationFilter_->FinishAnimationEvent(line, callStackRow);

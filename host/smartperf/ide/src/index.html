@@ -15,25 +15,6 @@
         overflow: hidden;
       }
     </style>
-    <script type="text/javascript">
-      // Light = 1,Dark = 2,HighContrast = 3
-      window.addEventListener('message', (event) => {
-        const message = event.data;
-        let spApplication = document.getElementsByTagName('sp-application')[0];
-        spApplication.vs = true;
-        switch (message.colorThemeKind) {
-          case 1:
-            spApplication.dark = false;
-            break;
-          case 2:
-            spApplication.dark = true;
-            break;
-          default:
-            spApplication.dark = true;
-            break;
-        }
-      });
-    </script>
   </head>
   <body>
     <script type="text/javascript">

@@ -27,6 +27,7 @@ import '../TabPaneFilter.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { FileMerageBean } from '../../../../database/logic-worker/ProcedureLogicWorkerFileSystem.js';
 import { showButtonMenu } from '../SheetUtils.js';
+import { findSearchNode } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 
 @element('tabpane-filesystem-calltree')
 export class TabpaneFilesystemCalltree extends BaseElement {
@@ -49,6 +50,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
   private loadingList: number[] = [];
   private loadingPage: any;
   private currentSelection: SelectionParam | undefined;
+  private currentFsCallTreeDataSource: Array<FileMerageBean> = [];
 
   set data(fsCallTreeSelection: SelectionParam | any) {
     if (fsCallTreeSelection == this.currentSelection) {
@@ -85,6 +87,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
         this.frameChart!.mode = ChartMode.Duration;
         this.frameChart?.updateCanvas(true, initWidth);
         this.frameChart!.data = this.fsCallTreeDataSource;
+        this.currentFsCallTreeDataSource = this.fsCallTreeDataSource;
         this.switchFlameChart();
         this.fsCallTreeFilter.icon = 'block';
       }
@@ -170,7 +173,6 @@ export class TabpaneFilesystemCalltree extends BaseElement {
     });
     this.fsCallTreeTbl!.rememberScrollTop = true;
     this.fsCallTreeFilter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
-    this.fsCallTreeFilter!.disabledTransfer(true);
     this.fsCallTreeTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
       let data = evt.detail.data as FileMerageBean;
@@ -386,6 +388,8 @@ export class TabpaneFilesystemCalltree extends BaseElement {
           },
         ];
         this.getDataByWorker(fileArgs, (result: any[]) => {
+          this.fsCallTreeTbl!.isSearch = true;
+          this.fsCallTreeTbl!.setStatus(result, true);
           this.setLTableData(result);
           this.frameChart!.data = this.fsCallTreeDataSource;
           this.switchFlameChart(data);
