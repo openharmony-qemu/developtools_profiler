@@ -286,32 +286,35 @@ export class TabPaneNMemory extends BaseElement {
             detail: {
               time: '',
               type: 'square',
-              timeCallback: (t: any) => {
-                let minTs = 0;
-                let minItem: any = undefined;
-                let filterTemp = this.memorySource.filter((tempItem) => {
-                  if (minTs === 0 || (tempItem.startTs - t != 0 && Math.abs(tempItem.startTs - t) < minTs)) {
-                    minTs = Math.abs(tempItem.startTs - t);
-                    minItem = tempItem;
+              timeCallback: (timeArr: number[]) => {
+                if (timeArr && timeArr.length > 0) {
+                  let checkTs = timeArr[0];
+                  let minTs = 0;
+                  let minItem: any = undefined;
+                  let filterTemp = this.memorySource.filter((tempItem) => {
+                    if (minTs === 0 || (tempItem.startTs - checkTs != 0 && Math.abs(tempItem.startTs - checkTs) < minTs)) {
+                      minTs = Math.abs(tempItem.startTs - checkTs);
+                      minItem = tempItem;
+                    }
+                    return tempItem.startTs === checkTs;
+                  });
+                  if (filterTemp.length > 0) {
+                    filterTemp[0].isSelected = true;
+                  } else {
+                    if (minItem) {
+                      filterTemp.push(minItem);
+                      minItem.isSelected = true;
+                    }
                   }
-                  return tempItem.startTs === t;
-                });
-                if (filterTemp.length > 0) {
-                  filterTemp[0].isSelected = true;
-                } else {
-                  if (minItem) {
-                    filterTemp.push(minItem);
-                    minItem.isSelected = true;
+                  if (filterTemp.length > 0) {
+                    this.rowSelectData = filterTemp[0];
+                    let args = new Map<string, any>();
+                    args.set('startTs', this.rowSelectData.startTs);
+                    args.set('actionType', 'native-memory-state-change');
+                    this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => { });
+                    TabPaneNMSampleList.addSampleData(this.rowSelectData);
+                    this.memoryTbl!.scrollToData(this.rowSelectData);
                   }
-                }
-                if (filterTemp.length > 0) {
-                  this.rowSelectData = filterTemp[0];
-                  let args = new Map<string, any>();
-                  args.set('startTs', this.rowSelectData.startTs);
-                  args.set('actionType', 'native-memory-state-change');
-                  this.startNmMemoryWorker('native-memory-action', args, (results: any[]) => { });
-                  TabPaneNMSampleList.addSampleData(this.rowSelectData);
-                  this.memoryTbl!.scrollToData(this.rowSelectData);
                 }
               },
             },

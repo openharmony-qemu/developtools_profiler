@@ -20,7 +20,19 @@ export class LitCheckBox extends BaseElement {
   private checkbox: HTMLInputElement | undefined;
 
   static get observedAttributes() {
-    return ['checked', 'value'];
+    return ['checked', 'value','disabled'];
+  }
+
+  get disabled() {
+    return this.getAttribute('disabled') !== null;
+  }
+
+  set disabled(value) {
+    if (value === null || value === false) {
+      this.removeAttribute('disabled');
+    } else {
+      this.setAttribute('disabled', '');
+    }
   }
 
   get indeterminate() {
@@ -125,6 +137,9 @@ export class LitCheckBox extends BaseElement {
             width: 100%;
             height: 94%;
             transform: scale(0);
+        }
+        :host([disabled]){
+          pointer-events: none;
         }
         </style>
         <input type="checkbox" id="checkbox">

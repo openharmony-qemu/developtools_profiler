@@ -110,7 +110,7 @@ Snapshot List的Tab页，主要显示了各时刻内存的增长的差值。
 ### 焦点函数火焰图详细展开：选中函数的全部调用栈展示
 点击调用栈某个函数，点击函数调用的函数对应铺满画布，点击函数的parent，显示以及绘制的大小变化为点击函数的大小，如下图点击OHOS::EglCoreInit()函数，会显示该函数的全部调用栈。
 ![GitHub Logo](../../figures/NativeMemory/eg_callstack.jpg)
-### 调用栈默认显示火焰图，根据Native层分类规则显示颜色，搜索结果高亮
+### 搜索框支持表达式输入
 调用栈默认显示火焰图，新增搜索框表达式输入。表达式作用范围为nativehook统计与非统计模式。其中处理的均为Responsible Library与Responsible Caller，其中Responsible Library，Responsible Caller表示从下往上非libc++ musl的第一条调用栈的lib跟symbol，如下图所示，由于最后一条 [ operator new(unsigned long) ] libc++.so为libc++.so的函数，固跳过，所以该条调用栈的Responsible Library为 libhilog.so，Responsible Caller为OHOS::HiviewDFX::GetDomainLevel(unsigned int) 。
 ![GitHub Logo](../../figures/NativeMemory/framecaller.jpg)
 表达式说明:在InputFilter输入框可以进行搜索过滤和表达式过滤，其中表达式必须以@开头，英文括号包起所需要过滤的内容，每个括号必须包括 （Responsible Library，Responsible Caller）匹配全量以*表示，否则认为该输入为搜索过滤。

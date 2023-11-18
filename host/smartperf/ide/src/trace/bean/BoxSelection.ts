@@ -42,6 +42,9 @@ export class SelectionParam {
   staticInit: boolean = false;
 
   cpus: Array<number> = [];
+  cpuStateRowsId: Array<object> = [];
+  //新增框选cpu freq row名
+  cpuFreqFilterNames: Array<string> = [];
   cpuStateFilterIds: Array<number> = [];
   cpuFreqFilterIds: Array<number> = [];
   cpuFreqLimitDatas: Array<Array<CpuFreqLimitsStruct>> = [];

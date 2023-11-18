@@ -230,6 +230,27 @@ export class LitTable extends HTMLElement {
             width: 15px;
             height: 15px;
         }
+        .button-icon{
+          height: 32px;
+          width: 164px;
+          color: black;
+          font-size: 14px;
+          border: 1px solid black;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          background: var(--dark-background3,#FFFFFF);
+          border-radius: 20px;
+          padding: 15px;
+          transition: opacity 0.2s;
+          outline: none;
+          position: relative;
+        }
+        .button-icon:active {
+          background: var(--dark-background1,#f5f5f5)
+        }
         .mouse-select{
             background-color: var(--dark-background6,#DEEDFF);
         }
@@ -777,6 +798,23 @@ export class LitTable extends HTMLElement {
                     })
                   );
                 };
+              }
+              if (a.hasAttribute('button')) {
+                let buttonIcon = document.createElement('button');
+                buttonIcon.innerHTML = 'GetBusyTime(ms)';
+                buttonIcon.classList.add('button-icon');
+                h.appendChild(buttonIcon);
+                buttonIcon.addEventListener('click', (event) => {
+                  this.dispatchEvent(
+                    new CustomEvent('button-click', {
+                      detail: {
+                        key: key
+                      },
+                      composed: true
+                    })
+                  );
+                  event.stopPropagation()
+                })
               }
               h.style.justifyContent = a.getAttribute('align');
               this.gridTemplateColumns.push(a.getAttribute('width') || '1fr');

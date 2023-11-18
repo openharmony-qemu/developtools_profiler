@@ -789,7 +789,7 @@ export class SpProcessChart {
           this.trace.refreshCanvas(true);
         }
         for (let i = 0; i < res.length; i++) {
-          if (res[i].startName! < 4 && i < res.length - 1) {
+          if (res[i].startName! < 6 && i < res.length - 1) {
             res[i].endItid = res[i + 1].itid;
           }
         }

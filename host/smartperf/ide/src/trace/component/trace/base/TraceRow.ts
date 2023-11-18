@@ -48,6 +48,9 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static ROW_TYPE_CPU_STATE = 'cpu-state';
   static ROW_TYPE_CPU_FREQ = 'cpu-freq';
   static ROW_TYPE_CPU_FREQ_LIMIT = 'cpu-limit-freq';
+  static ROW_TYPE_CPU_FREQ_ALL = 'cpu-frequency';
+  static ROW_TYPE_CPU_STATE_ALL = 'cpu-State';
+  static ROW_TYPE_CPU_FREQ_LIMITALL = 'cpu-frequency-limit';
   static ROW_TYPE_FPS = 'fps';
   static ROW_TYPE_NATIVE_MEMORY = 'native-memory';
   static ROW_TYPE_HIPERF = 'hiperf';
@@ -696,6 +699,17 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
       this.onRowSettingChangeHandler?.(this.rowSettingTree!.getCheckdKeys(), this.rowSettingTree!.getCheckdNodes());
     };
     this.checkType = '-1';
+  }
+
+  expandFunc(): void {
+    if (this.rowType === TraceRow.ROW_TYPE_FUNC && !this.funcExpand) {
+      this.style.height = `${this.funcMaxHeight}px`;
+      this.funcExpand = true;
+      window.publish(window.SmartEvent.UI.RowHeightChange, {
+        expand: this.funcExpand,
+        value: this.funcMaxHeight - 20,
+      });
+    }
   }
 
   initCanvas(list: Array<HTMLCanvasElement>): void {

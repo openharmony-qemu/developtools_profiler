@@ -85,7 +85,7 @@ export class SpNativeMemoryChart {
     ];
     nativeRow.onRowSettingChangeHandler = (value) => {
       nativeRow.childrenList.forEach((row) => (row.drawType = parseInt(value[0])));
-      this.trace.getCollectRows(`trace-row[row-type='heap']`).forEach((it) => {
+      this.trace.getCollectRows((row) => row.rowType === 'heap').forEach((it) => {
         it.drawType = parseInt(value[0]);
       });
       this.trace.refreshCanvas(false);

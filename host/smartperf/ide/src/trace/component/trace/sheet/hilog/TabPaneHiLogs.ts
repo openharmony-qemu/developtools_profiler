@@ -159,8 +159,19 @@ export class TabPaneHiLogs extends BaseElement {
 
   refreshLogsTitle(): void{
     let tbl = this.hiLogsTbl?.shadowRoot?.querySelector<HTMLDivElement>('.table');
+    let height = 0;
+    let firstRowHeight = 27;
+    let tableHeadHeight = 26;
     if (tbl) {
-      tbl.querySelectorAll<HTMLElement>('.tr').forEach((trEl: HTMLElement): void=>{
+      tbl.querySelectorAll<HTMLElement>('.tr').forEach((trEl: HTMLElement, index: number): void=>{
+        if (index === 0) {
+          let frontTotalRowSize = Math.round(tbl!.scrollTop / trEl.clientHeight * 100) / 100;
+          if (frontTotalRowSize.toString().indexOf('.') >= 0) {
+            let rowCount = frontTotalRowSize.toString().split('.');
+            height += trEl.clientHeight - (Number(rowCount[1]) / 100 * trEl.clientHeight);
+          }
+          firstRowHeight = trEl.clientHeight;
+        }
         let allTdEl = trEl.querySelectorAll<HTMLElement>('.td');
         allTdEl[0].style.color = '#3D88C7';
         allTdEl[0].style.textDecoration = 'underline';
@@ -172,14 +183,28 @@ export class TabPaneHiLogs extends BaseElement {
       });
     }
     if (this.hiLogsTbl && this.hiLogsTbl.currentRecycleList.length > 0) {
-      let startDataIndex = this.hiLogsTbl.startSkip;
-      let endDataIndex = this.hiLogsTbl.currentRecycleList.length + startDataIndex;
-      if (endDataIndex > this.filterData.length) {
-        endDataIndex = this.filterData.length;
-      } else if (endDataIndex < this.filterData.length) {
-        endDataIndex -= 1;
+      let startDataIndex = this.hiLogsTbl.startSkip + 1;
+      let endDataIndex = startDataIndex;
+      if (height < firstRowHeight * 0.3) {
+        startDataIndex++;
       }
-      this.logTableTitle!.textContent = `Hilogs [${startDataIndex === 0 ? 1 : startDataIndex}, 
+      let tableHeight = Number(tbl!.style.height.replace('px', '')) - tableHeadHeight;
+      while (height < tableHeight) {
+        if (firstRowHeight <= 0 || height + firstRowHeight > tableHeight) {
+          break;
+        }
+        height += firstRowHeight;
+        endDataIndex++;
+      }
+      if (tableHeight - height > firstRowHeight * 0.3) {
+        endDataIndex++;
+      }
+      if (endDataIndex >= this.filterData.length) {
+        endDataIndex = this.filterData.length;
+      } else {
+        endDataIndex = this.hiLogsTbl.startSkip === 0 ? endDataIndex - 1 : endDataIndex;
+      }
+      this.logTableTitle!.textContent = `Hilogs [${this.hiLogsTbl.startSkip === 0 ? 1 : startDataIndex}, 
         ${endDataIndex}] / ${this.filterData.length || 0}`;
     } else {
       this.logTableTitle!.textContent = 'Hilogs [0, 0] / 0';

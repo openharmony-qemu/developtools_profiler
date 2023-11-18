@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-import './sql-wasm.js';
-
 import { Counter, Fps, SelectionData } from '../bean/BoxSelection.js';
 import { WakeupBean } from '../bean/WakeupBean.js';
 import { BinderArgBean } from '../bean/BinderArgBean.js';
@@ -3613,9 +3611,7 @@ export const queryGpuDataByTs = (
   return query('queryGpuDataByTs', sql);
 };
 
-export const queryGpuTotalData = (
-  moduleId: number | null
-): Promise<Array<{ startNs: number; value: number }>> => {
+export const queryGpuTotalData = (moduleId: number | null): Promise<Array<{ startNs: number; value: number }>> => {
   let moduleCondition = moduleId === null ? '' : `and module_name_id = ${moduleId}`;
   let sql = `
   select (ts - start_ts) startNs, sum(size) value
@@ -3667,7 +3663,7 @@ export const queryGpuDataTab = (
 export const queryGpuDataByRange = (
   leftNs: number,
   rightNs: number,
-  interval: number,
+  interval: number
 ): Promise<
   Array<{
     startTs: number;
@@ -3696,7 +3692,7 @@ export const queryGpuDataByRange = (
 
 export const queryGpuWindowData = (
   windowId: number,
-  moduleId: number | null,
+  moduleId: number | null
 ): Promise<Array<{ startNs: number; value: number }>> => {
   let moduleCondition = moduleId === null ? '' : `and module_name_id = ${moduleId}`;
   let sql = `
@@ -4708,7 +4704,7 @@ export const querySmapsRecordTabData = (
   startNs: number,
   ipid: number,
   pixelmapId: number,
-  typeId:number
+  typeId: number
 ): Promise<Array<{ name: string; size: number }>> =>
   query(
     'querySmapsRecordTabData',
@@ -4831,7 +4827,7 @@ export const queryGpuResourceData = (categoryNameId: number): Promise<Array<Snap
      WHERE ts between start_ts and end_ts
     AND category_name_id = ${categoryNameId}
      GROUP BY ts) AS subquery2
-  ON subquery1.startNs = subquery2.startNs`,
+  ON subquery1.startNs = subquery2.startNs`
   );
 
 //  VM Tracker Gpu Resource Tab页
@@ -5495,3 +5491,6 @@ export const queryTraceType = (): Promise<
             WHERE 
                 m.name = 'source_type';`
   );
+
+export const queryTransferList = (): Promise<Array<{ id: number; cmdStr: string }>> =>
+  query('queryTransferList', `select id, report_value as cmdStr from perf_report where report_type = 'config_name'`);

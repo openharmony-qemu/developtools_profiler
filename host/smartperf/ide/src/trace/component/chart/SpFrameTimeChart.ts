@@ -493,7 +493,7 @@ export class SpFrameTimeChart {
           context: context,
           useCache: useCache,
           type: 'frame_spacing_slice',
-          frameRate: deviceStruct.physicalFrameRate || 60,
+          frameRate: deviceStruct.physicalFrameRate,
           animationRanges: animationRanges,
         },
         frameSpacingRow!

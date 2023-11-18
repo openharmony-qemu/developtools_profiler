@@ -173,6 +173,7 @@ export class TabpaneFilesystemCalltree extends BaseElement {
     });
     this.fsCallTreeTbl!.rememberScrollTop = true;
     this.fsCallTreeFilter = this.shadowRoot?.querySelector<TabPaneFilter>('#filter');
+    this.fsCallTreeFilter!.disabledTransfer(true);
     this.fsCallTreeTbl!.addEventListener('row-click', (evt: any) => {
       // @ts-ignore
       let data = evt.detail.data as FileMerageBean;

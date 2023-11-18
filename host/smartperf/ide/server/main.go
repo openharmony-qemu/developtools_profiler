@@ -128,8 +128,8 @@ func main() {
         mime.AddExtensionType(".js", "application/javascript")
         log.Println(mime.TypeByExtension(".js"))
         mux.HandleFunc("/logger", consoleHandler)
-        mux.Handle("/application/upload/", http.StripPrefix("/upload/", http.FileServer(http.Dir(filepath.FromSlash(exPath+"/upload")))))
-        mux.HandleFunc("/application//download-file", downloadHandler)
+        mux.Handle("/application/upload/", http.StripPrefix("/application/upload/", http.FileServer(http.Dir(filepath.FromSlash(exPath+"/upload")))))
+        mux.HandleFunc("/application/download-file", downloadHandler)
         mux.HandleFunc("/application/serverInfo", serverInfo)
         fs := http.FileServer(http.Dir(exPath + "/"))
         mux.Handle("/application/", http.StripPrefix("/application/", cors(fs, version)))
@@ -273,7 +273,7 @@ func get(url string) (*http.Response, error) {
 }
 
 func clearOverdueFile() {
-    MkDir(filepath.FromSlash(fmt.Sprintf("./upload/")))
+    MkDir(filepath.FromSlash(fmt.Sprintf("./application/upload/")))
     now := time.Now()
     loc, err := time.LoadLocation("Asia/Shanghai")
     if err != nil {
@@ -291,7 +291,7 @@ func clearOverdueFile() {
         }
         return false
     }
-    slash := filepath.FromSlash(fmt.Sprintf("./upload/"))
+    slash := filepath.FromSlash(fmt.Sprintf("./application/upload/"))
     filepath.WalkDir(slash, func(path string, d fs.DirEntry, err error) error {
         if checkDue(d.Name()) {
             fmt.Println(now, "delete->", path, d.Name(), err)
@@ -344,7 +344,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
                 resp(&w)(false, -1, err.Error(), nil)
                 return
             }
-            pth := filepath.FromSlash(fmt.Sprintf("/upload/%s%s", time.Now().Format("20060102150405000"), getSuffixByUrl(url).suffix))
+            pth := filepath.FromSlash(fmt.Sprintf("/application/upload/%s%s", time.Now().Format("20060102150405000"), getSuffixByUrl(url).suffix))
             MkDir("." + pth)
             create, err := os.Create("." + pth)
             if err != nil {
@@ -357,7 +357,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
                 return
             }
             fmt.Println(url, written)
-            pth = "/application" + pth
+            pth = "/application/" + pth
             resp(&w)(true, 0, "success", map[string]interface{}{
                 "url":  pth,
                 "size": written,

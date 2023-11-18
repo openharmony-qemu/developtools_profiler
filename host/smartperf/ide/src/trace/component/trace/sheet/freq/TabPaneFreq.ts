@@ -28,7 +28,7 @@ export class TabPaneFreq extends BaseElement {
       this.freqTbl!.recycleDataSource = [
         {
           startNS: Utils.getTimeString(freqData.startNS >= 0 ? freqData.startNS : 0),
-          absoluteTime: (freqData.startNS + (window as any).recordStartNS) / 1000000000,
+          absoluteTime: (freqData.startNS + (window as any).recordStartNS) / 1000000000 + 's',
           dur: Utils.getProbablyTime(freqData.dur),
           freq: `${ColorUtils.formatNumberComma(freqData.value!)} kHz`,
           cpu: `Cpu ${freqData.cpu}`,

@@ -23,6 +23,8 @@ import { LitMainMenu, MenuGroup, MenuItem } from '../../base-ui/menu/LitMainMenu
 import { SpProbesConfig } from './setting/SpProbesConfig.js';
 import { SpTraceCommand } from './setting/SpTraceCommand.js';
 import { FlagsConfig } from './SpFlags.js';
+import LitSwitch from '../../base-ui/switch/lit-switch.js';
+import { LitSlider } from '../../base-ui/slider/LitSlider';
 
 import {
   CpuConfig,
@@ -399,6 +401,8 @@ export class SpRecordTrace extends BaseElement {
   private spRecordTemplate: SpRecordTemplate | undefined;
   private spArkTs: SpArkTs | undefined;
   private spHilog: SpHilogRecord | undefined;
+
+  private ftraceSlider: LitSlider | undefined | null;
 
   private spWebShell: SpWebHdcShell | undefined;
   private menuGroup: LitMainMenuGroup | undefined | null;
@@ -1010,6 +1014,31 @@ export class SpRecordTrace extends BaseElement {
           icon: 'externaltools',
           fileChoose: false,
           clickHandler: function (ev: InputEvent): void {
+            let startNativeSwitch = that.spAllocations?.shadowRoot?.getElementById('switch-disabled') as LitSwitch;
+            let recordModeSwitch = that.probesConfig?.shadowRoot?.querySelector('lit-switch') as LitSwitch;
+            let checkDesBoxDis = that.probesConfig?.shadowRoot?.querySelectorAll('check-des-box');
+            let litCheckBoxDis = that.probesConfig?.shadowRoot?.querySelectorAll('lit-check-box');
+
+            that.ftraceSlider = that.probesConfig?.shadowRoot?.querySelector<LitSlider>('#ftrace-buff-size-slider');
+            startNativeSwitch.addEventListener('change', (event: any) => {
+              let detail = event.detail;
+              if (detail!.checked) {
+                recordModeSwitch.removeAttribute('checked');
+
+                checkDesBoxDis?.forEach((item: any) => {
+                  item.setAttribute('disabled', '');
+                  item.checked = false;
+                });
+
+                litCheckBoxDis?.forEach((item: any) => {
+                  item.setAttribute('disabled', '');
+                  item.checked = false;
+                });
+
+                that.ftraceSlider!.setAttribute('disabled', '');
+              }
+            });
+
             let divConfigs = that.spAllocations?.shadowRoot?.querySelectorAll<HTMLDivElement>('.version-controller');
             if ((!SpRecordTrace.selectVersion || SpRecordTrace.selectVersion === '3.2') && divConfigs) {
               for (let divConfig of divConfigs) {
@@ -1429,13 +1458,13 @@ export class SpRecordTrace extends BaseElement {
       let traceTypePage: Array<number> = [];
       for (let fileIndex = 0; fileIndex < this.longTraceList.length; fileIndex++) {
         let traceFileName = this.longTraceList[fileIndex];
-        if (this.sp!.fileTypeList.some(fileType => traceFileName.toLowerCase().includes(fileType))) {
+        if (this.sp!.fileTypeList.some((fileType) => traceFileName.toLowerCase().includes(fileType))) {
           continue;
         }
         let firstLastIndexOf = traceFileName.lastIndexOf('.');
         let firstText = traceFileName.slice(0, firstLastIndexOf);
         let resultLastIndexOf = firstText.lastIndexOf('_');
-        traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1)
+        traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1);
       }
       traceTypePage.sort((leftNum: number, rightNum: number) => leftNum - rightNum);
       for (let fileIndex = 0; fileIndex < this.longTraceList.length; fileIndex++) {

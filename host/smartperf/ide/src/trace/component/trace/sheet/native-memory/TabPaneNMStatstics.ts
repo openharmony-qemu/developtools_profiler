@@ -29,6 +29,7 @@ import '../TabProgressBar.js';
 import { SpNativeMemoryChart } from '../../../chart/SpNativeMemoryChart.js';
 import { procedurePool } from '../../../../database/Procedure.js';
 import { resizeObserver } from '../SheetUtils.js';
+import { TabPaneNMSampleList } from './TabPaneNMSampleList.js';
 
 @element('tabpane-native-statistics')
 export class TabPaneNMStatstics extends BaseElement {
@@ -46,6 +47,7 @@ export class TabPaneNMStatstics extends BaseElement {
     }
     this.currentSelection = nativeStatisticsParam;
     this.allMax = 0;
+    TabPaneNMSampleList.clearData();
     SpNativeMemoryChart.EVENT_HEAP.map((heap) => {
       this.allMax += heap.sumHeapSize;
     });

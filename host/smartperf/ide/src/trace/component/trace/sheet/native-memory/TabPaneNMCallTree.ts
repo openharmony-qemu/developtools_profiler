@@ -74,6 +74,7 @@ export class TabpaneNMCalltree extends BaseElement {
     } else {
       this.nmCallTreeFilter!.style.display = 'none';
     }
+    this.nmCallTreeFilter!.disabledTransfer(true);
     this.nmCallTreeFilter!.initializeFilterTree(true, true, nmCallTreeParam.nativeMemory.length > 0);
     this.nmCallTreeFilter!.filterValue = '';
     this.initFilterTypes();

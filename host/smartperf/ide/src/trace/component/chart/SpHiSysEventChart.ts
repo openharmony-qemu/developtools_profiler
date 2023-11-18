@@ -555,6 +555,7 @@ export class SpHiSysEventChart {
       'Audio Volume Change',
       'Wifi State',
       'Bluetooth Br Switch State',
+      'Br Switch State',
       'Location Switch State',
       'Sensor State',
     ];
@@ -566,6 +567,7 @@ export class SpHiSysEventChart {
       'AUDIO_VOLUME_CHANGE',
       'WIFI_STATE',
       'BLUETOOTH_BR_SWITCH_STATE',
+      'BR_SWITCH_STATE',
       'LOCATION_SWITCH_STATE',
       'SENSOR_STATE',
     ];
@@ -577,6 +579,7 @@ export class SpHiSysEventChart {
       'nocolumn',
       'wifi',
       'bt_state',
+      'bt_state',
       'location',
       'nocolumn',
     ];
@@ -587,10 +590,8 @@ export class SpHiSysEventChart {
         continue;
       }
       let maxStateTotal = maxStateData[0].maxValue.toString();
-      if (
-        maxStateData[0].type.toLocaleLowerCase().includes('state') &&
-        maxStateData[0].type.toLocaleLowerCase() != 'bluetooth_br_switch_state'
-      ) {
+      let statType = maxStateData[0].type.toLocaleLowerCase();
+      if (statType.includes('state') && !statType.endsWith('br_switch_state')) {
         if (maxStateData[0].maxValue == 0) {
           maxStateTotal = 'enable';
         } else {
@@ -625,7 +626,7 @@ export class SpHiSysEventChart {
           tip = `<span>Switch Status: ${
             EnergyStateStruct.hoverEnergyStateStruct?.value == 1 ? 'disable' : 'enable'
           }</span>`;
-          if (EnergyStateStruct.hoverEnergyStateStruct?.type!.toLocaleLowerCase() == 'bluetooth_br_switch_state') {
+          if (EnergyStateStruct.hoverEnergyStateStruct?.type!.toLocaleLowerCase().endsWith('br_switch_state')) {
             tip = `<span>${SpHiSysEventChart.getBlueToothState(
               EnergyStateStruct.hoverEnergyStateStruct?.value
             )}</span>`;
@@ -650,7 +651,7 @@ export class SpHiSysEventChart {
             type: `energyState${index}`,
             maxState: maxStateData[0].maxValue,
             maxStateName:
-              maxStateData[0].type.toLocaleLowerCase() == 'bluetooth_br_switch_state' ? '-1' : maxStateTotal.toString(),
+              maxStateData[0].type.toLocaleLowerCase().endsWith('br_switch_state') ? '-1' : maxStateTotal.toString(),
           },
           stateTraceRow
         );

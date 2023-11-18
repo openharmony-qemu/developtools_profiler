@@ -381,6 +381,19 @@ export class SpHelp extends BaseElement {
                 `/application/doc/quickstart_Application_operation_skills.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
+          {
+            title: '快捷键说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'keywords_shortcuts',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_keywords_shortcuts.html?${that.dark} width="100%" height="100%"></object>`;
+            },
+          },
         ],
       },
       {

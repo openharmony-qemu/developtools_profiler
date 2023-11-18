@@ -145,17 +145,35 @@ export class SpChartList extends BaseElement {
     return (this.parentElement!.clientHeight - topHeight) * maxScale;
   }
 
-  getCollectRows(condition: string): Array<TraceRow<any>> | [] {
-    const result = this.rootEl?.querySelectorAll<TraceRow<any>>(condition);
-    if (result) {
-      return Array.from(result);
+  getCollectRows(filter?: (row: TraceRow<any>) => boolean) : Array<TraceRow<any>> | [] {
+    if (filter) {
+      return [...this.collectRowList1.filter(filter), ...this.collectRowList2.filter(filter)];
     } else {
-      return [];
+      return this.getAllCollectRows();
     }
   }
 
-  getCollectRow(condition: string): TraceRow<any> | null {
-    return this.rootEl!.querySelector<TraceRow<any>>(condition);
+  expandSearchRowGroup(row: TraceRow<any>) : void {
+    this.updateGroupDisplay();
+    if (row.collectGroup === SpChartList.COLLECT_G1) {
+      if (!this.collect1Expand) {
+        this.collect1Expand = true;
+        this.icon1!.style.transform = 'rotateZ(0deg)';
+        this.collectEl1?.appendChild(this.fragmentGroup1);
+      }
+    } else {
+      if (!this.collect2Expand) {
+        this.collect2Expand = true;
+        this.icon2!.style.transform = 'rotateZ(0deg)';
+        this.collectEl2?.appendChild(this.fragmentGroup2);
+        this.scrollTop = this.scrollHeight;
+      }
+    }
+    this.resizeHeight();
+  }
+
+  getCollectRow(filter: (row: TraceRow<any>) => boolean) : TraceRow<any> | undefined {
+    return this.collectRowList1.find(filter) || this.collectRowList2.find(filter);
   }
 
   getAllCollectRows(): Array<TraceRow<any>> {
@@ -263,15 +281,15 @@ export class SpChartList extends BaseElement {
         this.style.cursor = 'default';
         this.canResize = false;
       }
+      (window as any).collectResize = this.canResize;
     }
   };
 
   onMouseMove = (ev: MouseEvent): void => {
     if (this.containPoint(ev)) {
-      if (
-        this.getBoundingClientRect().bottom > ev.pageY - mouseMoveRange &&
-        this.getBoundingClientRect().bottom < ev.pageY + mouseMoveRange
-      ) {
+      let inResizeArea = this.getBoundingClientRect().bottom > ev.pageY - mouseMoveRange &&
+        this.getBoundingClientRect().bottom < ev.pageY + mouseMoveRange;
+      if ((this.isPress && this.canResize) || inResizeArea) {
         this.style.cursor = 'row-resize';
       } else {
         this.style.cursor = 'default';
@@ -282,38 +300,30 @@ export class SpChartList extends BaseElement {
       return;
     }
     if (this.canResize && this.isPress) {
-      (window as any).rowResize = true;
+      (window as any).collectResize = true;
       // 拖动超过所有泳道最大高度 或小于一个泳道的高度，不支持拖动
       let newHeight = this.startClientHeight + ev.pageY - this.startPageY;
-      if (newHeight > this.maxHeight || newHeight > this.getMaxLimitHeight() || newHeight < minHeight) {
-        // 超出最大最小高度时触发mouseup事件
-        const mouseUpEvent = new MouseEvent('mouseup', {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 0,
-          buttons: 0,
-          clientX: ev.clientX, // 鼠标在窗口中的水平坐标
-          clientY: ev.clientY, // 鼠标在窗口中的垂直坐标
-        });
-
-        // 获取需要触发事件的元素
-        const element = document.getElementById('myElement');
-        // 触发 mouseup 事件
-        element?.dispatchEvent(mouseUpEvent);
-        ev.stopPropagation();
-        return;
+      if (newHeight > this.maxHeight) {
+        newHeight = this.maxHeight;
+      }
+      if (newHeight > this.getMaxLimitHeight()) {
+        newHeight = this.getMaxLimitHeight();
+      }
+      if (newHeight < minHeight) {
+        newHeight = minHeight;
       }
       this!.style.height = `${newHeight}px`;
+      this.manualHeight = newHeight;
     } else {
-      (window as any).rowResize = false;
+      (window as any).collectResize = false;
     }
   };
 
   onMouseUp = (ev: MouseEvent): void => {
     this.isPress = false;
     this.canResize = false;
-    (window as any).rowResize = false;
+    this.style.cursor = 'default';
+    (window as any).collectResize = false;
     this.refreshFavoriteCanvas();
   };
 
@@ -387,9 +397,36 @@ export class SpChartList extends BaseElement {
     }
   }
 
+  hideCollectArea() : void {
+    if (this.collect1Expand) {
+      this.collectRowList1.forEach((row) => this.fragmentGroup1.appendChild(row));
+    }
+    if (this.collect2Expand) {
+      this.collectRowList2.forEach((row) => this.fragmentGroup2.appendChild(row));
+    }
+    this.groupTitle1!.style.display = 'none';
+    this.groupTitle2!.style.display = 'none';
+    this.resizeHeight();
+  }
+
+  showCollectArea() : void {
+    if (this.collect1Expand) {
+      this.collectEl1?.appendChild(this.fragmentGroup1);
+    }
+    if (this.collect2Expand) {
+      this.collectEl2?.appendChild(this.fragmentGroup2);
+    }
+    this.updateGroupDisplay();
+    this.resizeHeight();
+  }
+
   updateGroupDisplay(): void {
     this.groupTitle1!.style.display = this.collectRowList1.length === 0 ? 'none' : 'flex';
     this.groupTitle2!.style.display = this.collectRowList2.length === 0 ? 'none' : 'flex';
+  }
+
+  hasCollectRow() : boolean {
+    return this.collectRowList2.length > 0 || this.collectRowList1.length > 0;
   }
 
   clearRect(): void {

@@ -154,7 +154,7 @@ export class SpRecordSetting extends BaseElement {
     longTraceMaxSlide.innerHTML = `<div class="max-single-file-size">
         <div class="record-title">
             <span class="record-mode" >Single file max size</span>
-            <span class="record-prompt"> (single file size after cutting is 200MB - 400MB) </span>
+            <span class="record-prompt"> (single file size after cutting is 200MB - 300MB) </span>
         </div>
         <lit-slider id="max-size" defaultColor="var(--dark-color4,#86C5E3)" open dir="right">
         </lit-slider>
@@ -170,7 +170,7 @@ export class SpRecordSetting extends BaseElement {
     let maxSizeParentElement = maxSizeSliders.parentNode as Element;
     maxSizeSliders.sliderStyle = {
       minRange: 200,
-      maxRange: 400,
+      maxRange: 300,
       defaultValue: '200',
       resultUnit: 'MB',
       stepSize: 2,
@@ -193,7 +193,7 @@ export class SpRecordSetting extends BaseElement {
       htmlInputElement.value = maxSizeInput.value;
       maxSizeSliders!.sliderStyle = {
         minRange: 200,
-        maxRange: 400,
+        maxRange: 300,
         defaultValue: maxSizeInput.value,
         resultUnit: 'MB',
         stepSize: 2,

@@ -31,11 +31,13 @@ class NodeValue {
   size: number;
   count: number;
   dur: number;
+  eventCount: number;
 
   constructor() {
     this.size = 0;
     this.count = 0;
     this.dur = 0;
+    this.eventCount = 0;
   }
 }
 
@@ -97,6 +99,8 @@ export class FrameChart extends BaseElement {
         return node.drawCount || node.count;
       case ChartMode.Duration:
         return node.drawDur || node.dur;
+      case ChartMode.EventCount:
+        return node.drawEventCount || node.eventCount;
     }
   }
 
@@ -133,6 +137,7 @@ export class FrameChart extends BaseElement {
       this.rootNode.count += node.drawCount || node.count;
       this.rootNode.size += node.drawSize || node.size;
       this.rootNode.dur += node.drawDur || node.dur;
+      this.rootNode.eventCount += node.drawEventCount || node.eventCount;
       node.parent = this.rootNode;
     }
   }
@@ -167,14 +172,17 @@ export class FrameChart extends BaseElement {
       node.drawCount = 0;
       node.drawDur = 0;
       node.drawSize = 0;
+      node.drawEventCount = 0;
       for (let child of node.children) {
         node.drawCount += child.searchCount;
         node.drawDur += child.searchDur;
         node.drawSize += child.searchSize;
+        node.drawEventCount += child.searchEventCount;
       }
       module.count = node.drawCount = node.drawCount || node.count;
       module.dur = node.drawDur = node.drawDur || node.dur;
       module.size = node.drawSize = node.drawSize || node.size;
+      module.eventCount = node.drawEventCount = node.drawEventCount || node.eventCount;
 
       this.setParentDisplayInfo(node, module, true);
       this.setChildrenDisplayInfo(node);
@@ -191,12 +199,16 @@ export class FrameChart extends BaseElement {
         currentValuePercent = this.total / this.rootNode.size;
         break;
       case ChartMode.Count:
-        currentValue = Utils.timeMsFormat2p(this.total * (SpHiPerf.stringResult?.fValue || 1));
+        currentValue = this.total + '';
         currentValuePercent = this.total / this.rootNode.count;
         break;
       case ChartMode.Duration:
         currentValue = Utils.getProbablyTime(this.total);
         currentValuePercent = this.total / this.rootNode.dur;
+        break;
+      case ChartMode.EventCount:
+        currentValue = this.total + '';
+        currentValuePercent = this.total / this.rootNode.eventCount;
         break;
     }
     this.rootNode.symbol = `Root : ${currentValue} (${(currentValuePercent * 100).toFixed(2)}%)`;
@@ -218,6 +230,7 @@ export class FrameChart extends BaseElement {
       module.size = node.drawSize = node.searchSize = node.size;
       module.count = node.drawCount = node.searchCount = node.count;
       module.dur = node.drawDur = node.searchDur = node.dur;
+      module.eventCount = node.drawEventCount = node.searchEventCount = node.eventCount;
       this.setParentDisplayInfo(node, module, false);
       calDisplay = false;
     }
@@ -243,15 +256,18 @@ export class FrameChart extends BaseElement {
         parent.drawCount = module.count;
         parent.drawDur = module.dur;
         parent.drawSize = module.size;
+        parent.drawEventCount = module.eventCount;
       } else {
         parent.searchCount += module.count;
         parent.searchDur += module.dur;
         parent.searchSize += module.size;
+        parent.searchEventCount += module.eventCount;
         // 点击模式下不需要赋值draw value，由点击去
         if (!this.isClickMode) {
           parent.drawDur = parent.searchDur;
           parent.drawCount = parent.searchCount;
           parent.drawSize = parent.searchSize;
+          parent.drawEventCount = parent.searchEventCount;
         }
       }
       this.setParentDisplayInfo(parent, module, isSelect);
@@ -271,6 +287,7 @@ export class FrameChart extends BaseElement {
       children.drawCount = children.searchCount || children.count;
       children.drawDur = children.searchDur || children.dur;
       children.drawSize = children.searchSize || children.size;
+      children.drawEventCount = children.searchEventCount || children.eventCount;
       this.setChildrenDisplayInfo(children);
     }
   }
@@ -279,9 +296,11 @@ export class FrameChart extends BaseElement {
     node.drawCount = 0;
     node.drawDur = 0;
     node.drawSize = 0;
+    node.drawEventCount = 0;
     node.searchCount = 0;
     node.searchDur = 0;
     node.searchSize = 0;
+    node.searchEventCount = 0;
   }
 
   /**
@@ -386,14 +405,12 @@ export class FrameChart extends BaseElement {
         case ChartMode.Byte:
           calibration = Utils.getByteWithUnit(((this.total * sizeRatio) / 10) * i);
           break;
-        case ChartMode.Count:
-          //count 转化为时间
-          calibration = Utils.timeMsFormat2p(
-            ((this.total * (SpHiPerf.stringResult?.fValue || 1) * sizeRatio) / 10) * i
-          );
-          break;
         case ChartMode.Duration:
           calibration = Utils.getProbablyTime(((this.total * sizeRatio) / 10) * i);
+          break;
+        case ChartMode.EventCount:
+        case ChartMode.Count:
+          calibration = Math.ceil(((this.total * sizeRatio) / 10) * i) + '';
           break;
       }
       const size = this.canvasContext!.measureText(calibration).width;
@@ -450,10 +467,12 @@ export class FrameChart extends BaseElement {
           ignore.size += children.drawSize;
           ignore.count += children.drawCount;
           ignore.dur += children.drawDur;
+          ignore.eventCount += children.drawEventCount;
         } else {
           ignore.size += children.size;
           ignore.count += children.count;
           ignore.dur += children.dur;
+          ignore.eventCount += children.eventCount;
         }
       }
     }
@@ -464,6 +483,8 @@ export class FrameChart extends BaseElement {
         return ignore.count;
       case ChartMode.Duration:
         return ignore.dur;
+      case ChartMode.EventCount:
+        return ignore.eventCount;
     }
   }
 
@@ -475,6 +496,8 @@ export class FrameChart extends BaseElement {
         return node.searchCount > 0;
       case ChartMode.Duration:
         return node.searchDur > 0;
+      case ChartMode.EventCount:
+        return node.searchEventCount > 0;
     }
   }
 
@@ -618,6 +641,7 @@ export class FrameChart extends BaseElement {
       switch (this._mode) {
         case ChartMode.Byte:
         case ChartMode.Count:
+        case ChartMode.EventCount:
           if (Math.round((this.total * sizeRatio) / ratio) <= 10) {
             if (this.xPoint === 0) {
               return;
@@ -767,14 +791,11 @@ export class FrameChart extends BaseElement {
         break;
       case ChartMode.Count:
         const count = this.getNodeValue(hoverNode);
-        const dur = Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1));
         this.hintContent = `
                     <span class="bold">Name: </span> <span class="text">${name} </span> <br>
                     <span class="bold">Lib: </span> <span class="text">${hoverNode?.lib}</span>
                     <br>
                     <span class="bold">Addr: </span> <span>${hoverNode?.addr}</span>
-                    <br>
-                    <span class="bold">Dur: </span> <span>${dur} (${percent}%)</span>
                     <br>
                     <span class="bold">Count: </span> <span> ${count} (${percent}%)</span>`;
         break;
@@ -787,6 +808,15 @@ export class FrameChart extends BaseElement {
                     <span class="bold">Addr: </span> <span>${hoverNode?.addr}</span> <br>
                     <span class="bold">Duration: </span> <span>${duration} (${percent}%)</span>`;
         break;
+      case ChartMode.EventCount:
+        const eventCount = this.getNodeValue(hoverNode);
+        this.hintContent = `
+                      <span class="bold">Name: </span> <span class="text">${name} </span> <br>
+                      <span class="bold">Lib: </span> <span class="text">${hoverNode?.lib}</span>
+                      <br>
+                      <span class="bold">Addr: </span> <span>${hoverNode?.addr}</span>
+                      <br>
+                      <span class="bold">EventCount: </span> <span> ${eventCount} (${percent}%)</span>`;
     }
   }
 

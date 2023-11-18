@@ -183,6 +183,7 @@ export class TabPaneNMSampleList extends BaseElement {
         this.createTree(nameGroup, rootSample);
         rootSample.tempList = [...rootSample.children];
         this.samplerInfoSource.push(rootSample);
+        TabPaneNMSampleList.sampleTbl!.recycleDataSource = TabPaneNMSampleList.samplerInfoSource;
       }
     });
   }

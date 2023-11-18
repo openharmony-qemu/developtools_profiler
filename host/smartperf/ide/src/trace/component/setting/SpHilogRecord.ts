@@ -50,13 +50,14 @@ export class SpHilogRecord extends BaseElement {
     this.logsSelectEl = this.shadowRoot?.querySelector('.record-logs-select') as LitSelect;
     let hiLogConfigList = this.shadowRoot?.querySelectorAll<HTMLDivElement>('.hilog-config-top');
     this.vmTrackerSwitch.addEventListener('change', ()=>{
-      let configVisibility = 'hidden';
+      let configVisibility = 'none';
       if (this.vmTrackerSwitch?.checked) {
-        configVisibility = 'visible';
+        configVisibility = 'block';
       }
       if (hiLogConfigList) {
+        console.log(configVisibility);
         hiLogConfigList!.forEach(configEl => {
-          configEl.style.visibility = configVisibility;
+          configEl.style.display = configVisibility;
         });
       }
     });
@@ -128,11 +129,10 @@ export class SpHilogRecord extends BaseElement {
           margin-top: 10px;
         }
         .hilog-config-top {
-           display: flex;
+           display: none;
            flex-direction: column;
            margin-top: 5vh;
            gap: 25px;
-           visibility: hidden;
         }
         .config-title {
           line-height: 40px;
@@ -153,7 +153,7 @@ export class SpHilogRecord extends BaseElement {
         }
         .config-select{
           border-radius: 15px;
-          width: auto;
+          width: 100%;
         }
         </style>
         <div class="hilog-tracker">
