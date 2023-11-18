@@ -119,6 +119,7 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   static FRAME_WIDTH: number = 0;
   static range: TimeRange | undefined | null;
   static rangeSelectObject: RangeSelectStruct | undefined;
+  static ROW_TYPE_HI_SYSEVENT = 'hi-sysevent';
   public obj: TraceRowObject<any> | undefined | null;
   isHover: boolean = false;
   hoverX: number = 0;
@@ -289,6 +290,10 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
   set rowSettingList(value: Array<TreeItemData> | null | undefined) {
     this._rowSettingList = value;
     this.rowSettingTree!.treeData = value || [];
+  }
+
+  set rowSettingMultiple(value: boolean) {
+    this.rowSettingTree!.multiple = value;
   }
 
   get rowSettingList(): TreeItemData[] | null | undefined {
@@ -696,6 +701,13 @@ export class TraceRow<T extends BaseStruct> extends HTMLElement {
     this.rowSettingTree!.onChange = (e: any): void => {
       // @ts-ignore
       this.rowSettingPop!.visible = false;
+      if (this.rowSettingTree?.multiple) {
+        // @ts-ignore
+        this.rowSettingPop!.visible = true;
+      } else {
+        // @ts-ignore
+        this.rowSettingPop!.visible = false;
+      }
       this.onRowSettingChangeHandler?.(this.rowSettingTree!.getCheckdKeys(), this.rowSettingTree!.getCheckdNodes());
     };
     this.checkType = '-1';

@@ -56,6 +56,7 @@ import { FrameSpacingRender } from './ProcedureWorkerFrameSpacing.js';
 import { JsCpuProfilerRender } from './ProcedureWorkerCpuProfiler.js';
 import { SnapshotRender } from './ProcedureWorkerSnapshot.js';
 import { LogRender } from './ProcedureWorkerLog.js';
+import { HiSysEventRender } from './ProcedureWorkerHiSysEvent.js';
 
 let dataList: any = {};
 let dataList2: any = {};
@@ -109,6 +110,7 @@ export let renders: any = {
   'js-cpu-profiler': new JsCpuProfilerRender(),
   snapshot: new SnapshotRender(),
   logs: new LogRender(),
+  hiSysEvent: new HiSysEventRender(),
 };
 
 function match(type: string, req: RequestMessage): void {

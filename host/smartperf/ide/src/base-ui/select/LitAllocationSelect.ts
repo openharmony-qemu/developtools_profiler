@@ -139,7 +139,7 @@ export class LitAllocationSelect extends BaseElement {
         .multipleSelect{
             display: flex;
             width: 100%;
-            z-index: 2999;
+            z-index: 98;
             position: relative;
             padding: 3px 6px;
             font-size: 1rem;

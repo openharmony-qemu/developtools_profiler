@@ -1682,7 +1682,7 @@ export class SpRecordTrace extends BaseElement {
         request.pluginConfigs.push(this.createSdkConfig());
       }
       if (this.spHisysEvent?.startSamp) {
-        request.pluginConfigs.push(this.createHiSystemEventPluginConfig(this.spHisysEvent.process));
+        request.pluginConfigs.push(this.createHiSystemEventPluginConfig(this.spHisysEvent.domain, this.spHisysEvent.eventName));
       }
       if (this.spArkTs!.process != '' && this.spArkTs!.startSamp) {
         request.pluginConfigs.push(this.createArkTsConfig());
@@ -2310,10 +2310,11 @@ export class SpRecordTrace extends BaseElement {
     return fpsPlugin;
   }
 
-  private createHiSystemEventPluginConfig(appName: string): ProfilerPluginConfig<HiSystemEventConfig> {
+  private createHiSystemEventPluginConfig(domainName: string, eventName: string): ProfilerPluginConfig<HiSystemEventConfig> {
     let hiSystemEventConfig: HiSystemEventConfig = {
       msg: 'hisysevent-plugin',
-      processName: appName,
+      subscribe_domain : domainName,
+      subscribe_event : eventName,
     };
     let hiSystemEventPlugin: ProfilerPluginConfig<HiSystemEventConfig> = {
       pluginName: 'hisysevent-plugin',

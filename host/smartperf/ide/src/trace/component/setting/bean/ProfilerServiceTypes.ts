@@ -911,7 +911,8 @@ export interface HiperfPluginConfig {
 
 export interface HiSystemEventConfig {
   msg: string;
-  processName: string;
+  subscribe_domain: string;
+  subscribe_event: string;
 }
 
 export interface ArkTSConfig {

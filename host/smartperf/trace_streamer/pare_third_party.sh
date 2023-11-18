@@ -119,6 +119,7 @@ if [ ! -d "perf_include/hiviewdfx/faultloggerd" ];then
     $sed -i '/getpid() == gettid()/s/getpid() == gettid()/false/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/unwinder.cpp
     $sed -i '/!realpath(path, realPath)/s/!realpath(path, realPath)/false/g' perf_include/hiviewdfx/faultloggerd/common/dfxutil/dfx_util.cpp
     $sed -i '/#include "dfx_util.h"/a #include "utilities.h"' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_mmap.cpp
+    $sed -i '/#ifndef is_ohos_lite/s/#ifndef is_ohos_lite/#if false/g' perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/dfx_elf.cpp
 fi
 if [ ! -f "hiperf/BUILD.gn" ];then
     rm -rf hiperf developtools_hiperf

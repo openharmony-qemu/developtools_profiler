@@ -120,6 +120,8 @@ import { TabPaneGpuResourceVmTracker } from '../sheet/vmtracker/TabPaneGpuResour
 import { TabPaneGpuGraph } from '../sheet/gpu/TabPaneGraph.js';
 import { TabPaneFreqUsage } from '../sheet/frequsage/TabPaneFreqUsage.js';
 import { TabPaneFreqDataCut } from '../sheet/frequsage/TabPaneFreqDataCut.js';
+import { TabPaneHisysEvents } from '../sheet/hisysevent/TabPaneHisysEvents.js';
+import { TabPaneHiSysEventSummary } from '../sheet/hisysevent/TabPaneHiSysEventSummary.js';
 
 export let tabConfig: any = {
   'current-selection': {
@@ -637,5 +639,15 @@ export let tabConfig: any = {
     title: 'Freq DataCut',
     type: TabPaneFreqDataCut,
     require: (param: SelectionParam) => param.threadIds.length > 0 && param.threadIds.length < 2,
+  },
+  'tab-hisysevents': {
+    title: 'HiSysevents',
+    type: TabPaneHisysEvents,
+    require: (param: SelectionParam) => param.hiSysEvents.length > 0,
+  },
+  'tab-hisysevents-summary': {
+    title: 'Statistics',
+    type: TabPaneHiSysEventSummary,
+    require: (param: SelectionParam) => param.hiSysEvents.length > 0,
   },
 };

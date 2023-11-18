@@ -22,6 +22,7 @@ import { FrameAnimationStruct } from '../database/ui-worker/ProcedureWorkerFrame
 import { FrameSpacingStruct } from '../database/ui-worker/ProcedureWorkerFrameSpacing.js';
 import { JsCpuProfilerChartFrame } from './JsStruct.js';
 import { LogStruct } from '../database/ui-worker/ProcedureWorkerLog.js';
+import { HiSysEventStruct } from '../database/ui-worker/ProcedureWorkerHiSysEvent.js';
 
 export class SelectionParam {
   recordStartNs: number = 0;
@@ -107,6 +108,7 @@ export class SelectionParam {
   dmaVmTrackerData: Array<any> = [];
   gpuMemoryTrackerData: Array<any> = [];
   hiLogs: Array<LogStruct> = [];
+  hiSysEvents: Array<HiSysEventStruct> = [];
 }
 
 export class BoxJumpParam {

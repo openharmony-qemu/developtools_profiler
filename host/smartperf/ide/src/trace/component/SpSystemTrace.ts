@@ -103,6 +103,7 @@ import { TabPaneCounterSample } from './trace/sheet/cpu/TabPaneCounterSample.js'
 import { LitSearch } from './trace/search/Search.js';
 import { TabPaneFlag } from './trace/timer-shaft/TabPaneFlag.js';
 import { LitTabpane } from '../../base-ui/tabs/lit-tabpane.js';
+import { HiSysEventStruct } from '../database/ui-worker/ProcedureWorkerHiSysEvent.js';
 
 function dpr() {
   return window.devicePixelRatio || 1;
@@ -1225,6 +1226,13 @@ export class SpSystemTrace extends BaseElement {
             selection.hiLogs.push(...batch);
             currentIndex += batchSize;
           }
+        } else if (it.rowType === TraceRow.ROW_TYPE_HI_SYSEVENT) {
+          let systemEvents: HiSysEventStruct[] = it.dataList.filter(
+            (systemEventStruct: HiSysEventStruct) =>
+              (systemEventStruct.ts ?? 0) >= TraceRow.rangeSelectObject!.startNS! &&
+              (systemEventStruct.ts ?? 0) <= TraceRow.rangeSelectObject!.endNS!
+          );
+          selection.hiSysEvents.push(...systemEvents);
         }
         if (this.rangeTraceRow!.length !== rows.length) {
           let event = this.createPointEvent(it);

@@ -89,6 +89,7 @@ import { type FrameAnimationStruct } from './ui-worker/ProcedureWorkerFrameAnima
 import { type SnapshotStruct } from './ui-worker/ProcedureWorkerSnapshot.js';
 import { type MemoryConfig } from '../bean/MemoryConfig.js';
 import { LogStruct } from './ui-worker/ProcedureWorkerLog.js';
+import { HiSysEventStruct } from './ui-worker/ProcedureWorkerHiSysEvent.js';
 
 class DataWorkerThread extends Worker {
   taskMap: any = {};
@@ -864,7 +865,7 @@ export const getTabSlices = (
     on
       T.id = C.callid
     where
-      C.ts not null
+      C.ts > 0
     and
       c.dur >= 0
     and
@@ -908,7 +909,7 @@ export const getTabSlicesAsyncFunc = (
       A.id = C.callid
     left join process P on P.id = A.ipid
     where
-      C.ts not null
+      C.ts > 0
     and
       c.dur >= -1
     and 
@@ -5588,4 +5589,45 @@ export const queryCpuFreqFilterId = (): Promise<Array<any>> =>
       or
         name='cpu_frequency'
     `
+  );
+
+export const queryRealTime = (): Promise<
+  Array<{
+    ts: number;
+    value: string;
+  }>
+  > =>
+  query(
+    'queryRealTime',
+    `select CS.ts -TR.start_ts as ts ,clock_name
+     from clock_snapshot as CS ,trace_range as TR
+     where clock_name = 'realtime';`
+  );
+export const queryHiSysEventData = (): Promise<Array<HiSysEventStruct>> =>
+  query(
+    'queryHiSysEventData',
+    `SELECT S.id,
+            D2.data AS domain, 
+            D.data AS eventName, 
+            type AS eventType, 
+            time_zone AS tz, 
+            pid,
+            tid,
+            uid,
+            info,
+            level,
+            seq,
+            contents,
+            S.ts - TR.start_ts AS ts,
+            1 AS dur,
+            CASE
+            WHEN level = 'MINOR' THEN
+             0
+            WHEN level = 'CRITICAL' THEN
+             1
+            END AS depth
+        FROM hisys_all_event AS S ,trace_range AS TR
+        LEFT JOIN data_dict AS D on S.event_name_id = D.id
+        LEFT JOIN data_dict AS D2 on S.domain_id = D2.id
+        ORDER BY S.ts`
   );

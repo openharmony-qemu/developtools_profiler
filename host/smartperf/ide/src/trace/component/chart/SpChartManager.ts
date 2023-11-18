@@ -48,6 +48,7 @@ import { SpArkTsChart } from './SpArkTsChart.js';
 import { MemoryConfig } from '../../bean/MemoryConfig.js';
 import { FlagsConfig } from '../SpFlags.js';
 import { SpLogChart } from './SpLogChart.js';
+import { SpHiSysEvent } from './SpHiSysEvent.js';
 
 export class SpChartManager {
   static APP_STARTUP_PID_ARR: Array<number> = [];
@@ -70,6 +71,7 @@ export class SpChartManager {
   frameTimeChart: SpFrameTimeChart;
   public arkTsChart: SpArkTsChart;
   private logChart: SpLogChart;
+  private spHiSysEvent: SpHiSysEvent;
 
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
@@ -90,6 +92,7 @@ export class SpChartManager {
     this.frameTimeChart = new SpFrameTimeChart(trace);
     this.arkTsChart = new SpArkTsChart(trace);
     this.logChart = new SpLogChart(trace);
+    this.spHiSysEvent = new SpHiSysEvent(trace);
   }
 
   async init(progress: Function) {
@@ -128,6 +131,7 @@ export class SpChartManager {
     progress('cpu freq', 80);
     await this.freq.init();
     await this.logChart.init();
+    await this.spHiSysEvent.init();
     progress('Clock init', 82);
     await this.clockChart.init();
     progress('Irq init', 84);
