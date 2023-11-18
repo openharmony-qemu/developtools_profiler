@@ -107,6 +107,7 @@ private:
                                                          "AUDIO_STREAM_CHANGE",
                                                          "AUDIO_VOLUME_CHANGE",
                                                          "WIFI_STATE",
+                                                         "BR_SWITCH_STATE",
                                                          "BLUETOOTH_BR_SWITCH_STATE",
                                                          "LOCATION_SWITCH_STATE",
                                                          "ENABLE_SENSOR",

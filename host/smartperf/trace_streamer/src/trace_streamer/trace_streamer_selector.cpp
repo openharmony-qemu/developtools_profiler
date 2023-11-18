@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <regex>
+#include <stdlib.h>
 #include "animation_filter.h"
 #include "app_start_filter.h"
 #include "args_filter.h"
@@ -240,7 +241,7 @@ bool TraceStreamerSelector::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> dat
         htraceParser_->ParseTraceDataSegment(std::move(data), size);
     } else if (fileType_ == TRACE_FILETYPE_BY_TRACE || fileType_ == TRACE_FILETYPE_SYSEVENT ||
                fileType_ == TRACE_FILETYPE_HILOG) {
-        bytraceParser_->ParseTraceDataSegment(std::move(data), size);
+        bytraceParser_->ParseTraceDataSegment(std::move(data), size, isFinish);
         return true;
     } else if (fileType_ == TRACE_FILETYPE_PERF) {
         htraceParser_->StoreTraceDataSegment(std::move(data), size, isFinish);
@@ -400,6 +401,7 @@ bool TraceStreamerSelector::ReadSqlFileAndPrintResult(const std::string& sqlOper
     if (!LoadQueryFile(sqlOperator, sqlStrings)) {
         return false;
     }
+    system("clear");
     for (auto& str : sqlStrings) {
         SearchDatabase(str, true);
     }
@@ -407,6 +409,7 @@ bool TraceStreamerSelector::ReadSqlFileAndPrintResult(const std::string& sqlOper
 }
 bool TraceStreamerSelector::ParserAndPrintMetrics(const std::string& metrics)
 {
+    system("clear");
     auto metricsName = SplitStringToVec(metrics, ",");
     for (const auto& itemName : metricsName) {
         std::string result = SearchDatabase(MetricsSqlQuery(itemName));

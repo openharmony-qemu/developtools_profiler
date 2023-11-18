@@ -39,7 +39,7 @@ public:
                   TraceFileType fileType = TRACE_FILETYPE_BY_TRACE);
     ~BytraceParser();
 
-    void ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size) override;
+    void ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish = false) override;
     size_t ParsedTraceValidLines() const
     {
         return parsedTraceValidLines_;
@@ -141,7 +141,7 @@ private:
     bool supportThread_ = false;
     bool isBytrace_ = true;
     bool traceBegan_ = false;
-    bool isFirstLine = true;
+    bool isFirstLine_ = true;
     bool isHtmlTrace_ = false;
     bool isHtmlTraceContent_ = false;
     std::string traceDataBytrace_ = "";

@@ -25,7 +25,7 @@ class ParserBase {
 public:
     explicit ParserBase(const TraceStreamerFilters* filter);
     virtual ~ParserBase() = default;
-    virtual void ParseTraceDataSegment(std::unique_ptr<uint8_t[]>, size_t size) = 0;
+    virtual void ParseTraceDataSegment(std::unique_ptr<uint8_t[]>, size_t size, bool isFinish = false) = 0;
 
 protected:
     virtual void ParseTraceDataItem(const std::string& buffer) = 0;

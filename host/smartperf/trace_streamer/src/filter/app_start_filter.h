@@ -25,22 +25,10 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-constexpr uint32_t INVAILD_DATA = 2;
-constexpr uint32_t MIN_VECTOR_SIZE = 2;
-constexpr uint32_t VAILD_DATA_COUNT = 4;
-const std::string PROCESS_CREATE = "H:int OHOS::AAFwk::MissionListManager::StartAbilityLocked(";
-const std::string START_ABILITY = "H:virtual int OHOS::AAFwk::AbilityManagerService::StartAbility(";
-const std::string APP_LAUNCH =
-    "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::AttachApplication(const pid_t, const "
-    "sptr<OHOS::AppExecFwk::IAppScheduler> &)##";
-const std::string LAUNCH =
-    "H:void OHOS::AppExecFwk::MainThread::HandleLaunchAbility(const std::shared_ptr<AbilityLocalRecord> &)##";
-const std::string ONFOREGROUND =
-    "H:void OHOS::AppExecFwk::AbilityThread::HandleAbilityTransaction(const OHOS::AppExecFwk::Want &, const "
-    "OHOS::AppExecFwk::LifeCycleStateInfo &, sptr<OHOS::AAFwk::SessionInfo>)##";
-const std::string DLOPEN = "dlopen:";
 enum StartupApp {
-    PROCESS_CREATING = 0,
+    PROCESS_TOUCH = 0,
+    START_UI_ABILITY_BY_SCB,
+    LOAD_ABILITY,
     APPLICATION_LAUNCHING,
     UI_ABILITY_LAUNCHING,
     UI_ABILITY_ONFOREGROUND,
@@ -67,24 +55,38 @@ public:
     APPStartupFilter& operator=(const APPStartupFilter&) = delete;
     ~APPStartupFilter() override;
     void FilterAllAPPStartupData();
-
 private:
+    using appMap = std::unordered_map<DataIndex, std::map<uint32_t, std::unique_ptr<APPStartupData>>>;
     void ParserSoInitalization();
     void CalcDepthByTimeStamp(std::map<uint32_t, std::map<uint64_t, uint32_t>>::iterator it,
                               uint32_t& depth,
                               uint64_t endTime,
                               uint64_t startTime);
     void ParserAppStartup();
-    bool GetProcessCreate(uint32_t row, uint64_t& startTime, std::string nameString);
-    using appMap = std::unordered_map<DataIndex, std::map<uint32_t, std::unique_ptr<APPStartupData>>>;
     void UpdatePidByNameIndex(const appMap& mAPPStartupData);
     bool CaclRsDataByPid(appMap& mAPPStartupData);
     void AppendData(const appMap& mAPPStartupData);
-    void UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex);
+    bool UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex);
     bool ProcAbilityLaunchData(const std::string& nameString, uint64_t raw);
     void ProcForegroundData(uint64_t raw);
+private:
+    std::deque<std::unique_ptr<APPStartupData>> procTouchItems_;
+    std::deque<std::unique_ptr<APPStartupData>> startUIAbilityBySCBItems_;
+    std::deque<std::unique_ptr<APPStartupData>> loadAbilityItems_;
     appMap mAPPStartupData_;
     std::unordered_map<uint32_t, appMap> mAPPStartupDataWithPid_;
+    const std::string procTouchCmd_ = "H:client dispatch touchId:";
+    const std::string startUIAbilityBySCBCmd_ = "H:OHOS::ErrCode OHOS::AAFwk::AbilityManagerClient::StartUIAbilityBySCB";
+    const std::string loadAbilityCmd_ = "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::LoadAbility";
+    const std::string appLaunchCmd_ =
+        "H:virtual void OHOS::AppExecFwk::AppMgrServiceInner::AttachApplication(const pid_t, const "
+        "sptr<OHOS::AppExecFwk::IAppScheduler> &)##";
+    const std::string uiLaunchCmd_ =
+        "H:void OHOS::AppExecFwk::MainThread::HandleLaunchAbility(const std::shared_ptr<AbilityLocalRecord> &)##";
+    const std::string uiOnForegroundCmd_ =
+        "H:void OHOS::AbilityRuntime::FAAbilityThread::HandleAbilityTransaction(const OHOS::AbilityRuntime::Want &, const "
+        "OHOS::AbilityRuntime::LifeCycleStateInfo &, sptr<AppExecFwk::SessionInfo>)##";
+    const std::string dlopenCmd_ = "dlopen:";
 };
 } // namespace TraceStreamer
 } // namespace SysTuning

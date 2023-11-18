@@ -56,7 +56,7 @@ void BytraceParser::WaitForParserEnd()
     hilogParser_->FilterAllHilogData();
     dataSegArray_.reset();
 }
-void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
+void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish)
 {
     if (isParsingOver_) {
         return;
@@ -66,7 +66,11 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
     while (true) {
         auto packagesLine = std::find(packagesBegin, packagesBuffer_.end(), '\n');
         if (packagesLine == packagesBuffer_.end()) {
-            break;
+            if (isFinish) {
+                isParsingOver_ = true;
+            } else{
+                break;
+            }
         }
         if (packagesLine == packagesBuffer_.begin()) {
             packagesLine++;
@@ -74,11 +78,16 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
             continue;
         }
         // Support parsing windows file format(ff=dos)
-        auto extra = *(packagesLine - 1) == '\r' ? 1 : 0;
+        auto extra = 0;
+        if (packagesLine != packagesBuffer_.end()) {
+            if (*(packagesLine - 1) == '\r') {
+                extra =  1;
+            }
+        }
         std::string bufferLine(packagesBegin, packagesLine - extra);
 
-        if (isFirstLine) {
-            isFirstLine = false;
+        if (isFirstLine_) {
+            isFirstLine_ = false;
             if (IsHtmlTrace(bufferLine)) {
                 isHtmlTrace_ = true;
                 goto NEXT_LINE;
@@ -123,8 +132,10 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
         } else {
             ParseJsonData(bufferLine);
         }
-
     NEXT_LINE:
+        if (isParsingOver_) {
+            break;
+        }
         packagesBegin = packagesLine + 1;
         seq_++;
         continue;

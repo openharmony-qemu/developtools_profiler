@@ -58,7 +58,7 @@ class HtraceParser : public ParserBase, public HtracePluginTimeParser {
 public:
     HtraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters);
     ~HtraceParser();
-    void ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size) override;
+    void ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish = false) override;
     bool ReparseSymbolFilesAndResymbolization(std::string& symbolsPath, std::vector<std::string>& symbolsPaths);
     void WaitForParserEnd();
     void EnableFileSeparate(bool enabled);

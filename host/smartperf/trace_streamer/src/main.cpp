@@ -101,6 +101,7 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
     auto startTime =
         (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))
             .count();
+    auto isFinish = false;
     g_loadSize = 0;
     while (true) {
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(G_CHUNK_SIZE);
@@ -114,7 +115,10 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
             return false;
         }
         g_loadSize += rsize;
-        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize), false, false)) {
+        if (g_loadSize == g_fileSize) {
+            isFinish = true;
+        }
+        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize), false, isFinish)) {
             return false;
         };
         printf("\rLoadingFile:\t%.2f MB\r", static_cast<double>(g_loadSize) / 1E6);
@@ -127,8 +131,21 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
     (void)fprintf(stdout, "ParserSpeed:\t%.2f MB/s\n", (g_loadSize / (endTime - startTime) / 1E3));
     return true;
 }
+bool SetFileSize(const std::string& traceFilePath) {
+    if (traceFilePath.empty()) {
+        g_fileSize = 0;
+        return false;
+    }
+    struct stat statBuff;
+    stat(traceFilePath.c_str(), &statBuff);
+    g_fileSize = statBuff.st_size;
+    return true;
+}
 int OpenAndParserFile(TraceStreamerSelector& ts, const std::string& traceFilePath)
 {
+    if (!SetFileSize(traceFilePath)) {
+        return 0;
+    }
     int fd(OpenFile(traceFilePath, O_RDONLY, G_FILE_PERMISSION));
     if (fd < 0) {
         TS_LOGE("%s does not exist", traceFilePath.c_str());

@@ -45,7 +45,7 @@ bool RawTraceParser::ParseCpuRawData(uint32_t cpuId, const std::string& buffer)
     cpuDetailParser_->FilterAllEvents(*cpuDetail_.get());
     return true;
 }
-void RawTraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
+void RawTraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish)
 {
     packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
     auto packagesCurIter = packagesBuffer_.begin();

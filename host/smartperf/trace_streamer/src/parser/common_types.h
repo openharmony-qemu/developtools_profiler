@@ -137,7 +137,7 @@ struct HtraceSplitResult {
         struct {
             uint64_t offset;
             uint64_t size;
-        } json;
+        } originSeg;
     };
 };
 

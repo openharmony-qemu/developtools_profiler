@@ -137,12 +137,7 @@ void BytraceHilogParser::FilterAllHilogData()
     auto cmp = [](const std::unique_ptr<HilogLine>& a, const std::unique_ptr<HilogLine>& b) {
         return a->timeStamp < b->timeStamp;
     };
-#ifdef IS_WASM
     std::sort(hilogList_.begin(), hilogList_.end(), cmp);
-#else
-    std::stable_sort(hilogList_.begin(), hilogList_.end(), cmp);
-#endif
-
     for (auto& item : hilogList_) {
         HilogLine* hilogData = item.get();
         BeginFilterHilogData(hilogData);

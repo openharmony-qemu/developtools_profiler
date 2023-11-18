@@ -88,7 +88,7 @@ uint64_t PerfDataParser::SplitPerfData(const std::deque<uint8_t>& dequeBuffer,
         if (isFinish && splitState_ == SplitPerfState::WAIT_FOR_FINISH) {
             uint64_t currentDataOffset = perfDataOffset_ + processedLength_ + processedLen;
             HtraceSplitResult offsetData = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                                            .json = {.offset = currentDataOffset, .size = size - processedLen}};
+                                            .originSeg = {.offset = currentDataOffset, .size = size - processedLen}};
             splitResult_.emplace_back(offsetData);
             processedLength_ += size;
             return size;
@@ -249,7 +249,7 @@ bool PerfDataParser::SplitPerfWaitForData(const std::deque<uint8_t>& dequeBuffer
     }
 
     HtraceSplitResult offsetData = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                                    .json = {.offset = perfDataOffset_ + sizeof(perf_file_header),
+                                    .originSeg = {.offset = perfDataOffset_ + sizeof(perf_file_header),
                                              .size = perfHeader_.data.offset - sizeof(perf_file_header)}};
     splitResult_.emplace_back(offsetData);
 
@@ -312,11 +312,11 @@ bool PerfDataParser::SplitPerfParsingData(const std::deque<uint8_t>& dequeBuffer
     if (needRecord) {
         uint64_t currentDataOffset = perfDataOffset_ + processedLength_ + processedLen;
         auto it = splitResult_.rbegin();
-        if (it != splitResult_.rend() && (it->json.offset + it->json.size == currentDataOffset)) {
-            it->json.size += dataHeader.size;
+        if (it != splitResult_.rend() && (it->originSeg.offset + it->originSeg.size == currentDataOffset)) {
+            it->originSeg.size += dataHeader.size;
         } else {
             HtraceSplitResult offsetData = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                                            .json = {.offset = currentDataOffset, .size = dataHeader.size}};
+                                            .originSeg = {.offset = currentDataOffset, .size = dataHeader.size}};
             splitResult_.emplace_back(offsetData);
         }
         splitDataSize_ += dataHeader.size;

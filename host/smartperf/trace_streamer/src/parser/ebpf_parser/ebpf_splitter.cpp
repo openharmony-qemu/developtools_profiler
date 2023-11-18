@@ -100,7 +100,7 @@ void EbpfSplitter::SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer)
             case ITEM_EVENT_KENEL_SYMBOL_INFO: {
                 HtraceSplitResult publicDataOffset = {
                     .type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                    .json = {.offset = offsetOfEbpfDataInFile_ + splittedLen_, .size = segLen}};
+                    .originSeg = {.offset = offsetOfEbpfDataInFile_ + splittedLen_, .size = segLen}};
                 ebpfSplitResult_.emplace_back(publicDataOffset);
                 usefulDataLen_ += segLen;
                 break;
@@ -112,7 +112,7 @@ void EbpfSplitter::SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer)
                 if (fsFixedHeader.endTime <= splitFileMaxTs_ && fsFixedHeader.startTime >= splitFileMinTs_) {
                     HtraceSplitResult fsDataOffset = {
                         .type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                        .json = {.offset = offsetOfEbpfDataInFile_ + splittedLen_, .size = segLen}};
+                        .originSeg = {.offset = offsetOfEbpfDataInFile_ + splittedLen_, .size = segLen}};
                     ebpfSplitResult_.emplace_back(fsDataOffset);
                     usefulDataLen_ += segLen;
                 }
@@ -126,7 +126,7 @@ void EbpfSplitter::SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer)
                     pagedMemoryFixedHeader.startTime >= splitFileMinTs_) {
                     HtraceSplitResult pagedMemoryOffset = {
                         .type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                        .json = {.offset = offsetOfEbpfDataInFile_ + splittedLen_, .size = segLen}};
+                        .originSeg = {.offset = offsetOfEbpfDataInFile_ + splittedLen_, .size = segLen}};
                     ebpfSplitResult_.emplace_back(pagedMemoryOffset);
                     usefulDataLen_ += segLen;
                 }
@@ -138,7 +138,7 @@ void EbpfSplitter::SplitEbpfBodyData(std::deque<uint8_t>& dequeBuffer)
                             reinterpret_cast<char*>(&bioFixedHeader));
                 if (bioFixedHeader.endTime <= splitFileMaxTs_ && bioFixedHeader.startTime >= splitFileMinTs_) {
                     HtraceSplitResult bioDataOffset = {.type = (int32_t)SplitDataDataType::SPLIT_FILE_JSON,
-                                                       .json = {.offset = offsetOfEbpfDataInFile_ + splittedLen_,
+                                                       .originSeg = {.offset = offsetOfEbpfDataInFile_ + splittedLen_,
                                                                 .size = dataTitle.length + EBPF_TITLE_SIZE}};
                     ebpfSplitResult_.emplace_back(bioDataOffset);
                     usefulDataLen_ += segLen;

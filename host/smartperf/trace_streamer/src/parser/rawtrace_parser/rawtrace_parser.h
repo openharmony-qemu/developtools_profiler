@@ -28,7 +28,7 @@ class RawTraceParser : public ParserBase {
 public:
     RawTraceParser(TraceDataCache* dataCache, const TraceStreamerFilters* filters);
     ~RawTraceParser();
-    void ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size) override;
+    void ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish = false) override;
     void WaitForParserEnd();
 
 private:

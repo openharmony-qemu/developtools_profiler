@@ -18,6 +18,9 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
+constexpr uint32_t INVAILD_DATA = 2;
+constexpr uint32_t MIN_VECTOR_SIZE = 2;
+constexpr uint32_t VAILD_DATA_COUNT = 6;
 APPStartupFilter::APPStartupFilter(TraceDataCache* dataCache, const TraceStreamerFilters* filter)
     : FilterBase(dataCache, filter), mAPPStartupData_(0)
 {
@@ -29,29 +32,6 @@ void APPStartupFilter::FilterAllAPPStartupData()
 {
     ParserAppStartup();
     ParserSoInitalization();
-}
-
-bool APPStartupFilter::GetProcessCreate(uint32_t row, uint64_t& startTime, std::string nameString)
-{
-    auto sliceData = traceDataCache_->GetConstInternalSlicesData();
-    auto parentId = sliceData.ParentIdData()[row].value();
-    if (parentId == INVALID_UINT32) {
-        return false;
-    }
-    auto depth = sliceData.Depths()[row];
-    auto name = traceDataCache_->GetDataFromDict(sliceData.NamesData()[parentId]);
-    while (depth--) {
-        if (StartWith(name, nameString)) {
-            startTime = sliceData.TimeStampData()[parentId];
-            return true;
-        }
-        parentId = sliceData.ParentIdData()[parentId].value();
-        if (parentId == INVALID_UINT32) {
-            continue;
-        }
-        name = traceDataCache_->GetDataFromDict(sliceData.NamesData()[parentId]);
-    }
-    return false;
 }
 
 bool APPStartupFilter::CaclRsDataByPid(appMap& mAPPStartupData)
@@ -145,19 +125,34 @@ void APPStartupFilter::AppendData(const appMap& mAPPStartupData)
     }
 }
 
-void APPStartupFilter::UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex)
+bool APPStartupFilter::UpdateAPPStartupData(uint32_t row, const std::string& nameString, uint32_t startIndex)
 {
     auto sliceData = traceDataCache_->GetConstInternalSlicesData();
     auto vNameString = SplitStringToVec(nameString, "##");
-    if (vNameString.size() < MIN_VECTOR_SIZE) {
-        return;
-    }
+    TS_CHECK_TRUE_RET(vNameString.size() >= MIN_VECTOR_SIZE, false);
     auto dataIndex = traceDataCache_->GetDataIndex(vNameString[1].c_str());
+    // for update the last Item(valid val)
+    if (!procTouchItems_.empty()) {
+        auto lastProcTouchItem = std::move(procTouchItems_.back());
+        mAPPStartupData_[dataIndex].insert(std::make_pair(PROCESS_TOUCH, std::move(lastProcTouchItem)));
+        procTouchItems_.clear();
+    }
+    if (!startUIAbilityBySCBItems_.empty()) {
+        auto lastStartUIAbilityBySCBItem = std::move(startUIAbilityBySCBItems_.back());
+        mAPPStartupData_[dataIndex].insert(std::make_pair(START_UI_ABILITY_BY_SCB, std::move(lastStartUIAbilityBySCBItem)));
+        startUIAbilityBySCBItems_.clear();
+    }
+    if (!loadAbilityItems_.empty()) {
+        auto lastLoadAbilityItem = std::move(loadAbilityItems_.back());
+        mAPPStartupData_[dataIndex].insert(std::make_pair(LOAD_ABILITY, std::move(lastLoadAbilityItem)));
+        loadAbilityItems_.clear();
+    }
     auto callId = sliceData.CallIds()[row];
     auto startTime = sliceData.TimeStampData()[row];
     mAPPStartupData_[dataIndex].insert(
         std::make_pair(startIndex, std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime,
                                                                     INVALID_UINT64)));
+    return true;
 }
 
 void APPStartupFilter::ParserAppStartup()
@@ -165,34 +160,22 @@ void APPStartupFilter::ParserAppStartup()
     auto sliceData = traceDataCache_->GetConstInternalSlicesData();
     std::string mainThreadName = "";
     for (auto i = 0; i < sliceData.NamesData().size(); i++) {
-        auto callId = INVALID_UINT32;
-        uint64_t startTime = INVALID_UINT64;
-        std::string packedName = "";
         auto& nameString = traceDataCache_->GetDataFromDict(sliceData.NamesData()[i]);
-        if (StartWith(nameString, PROCESS_CREATE)) {
-            auto vNameString = SplitStringToVec(nameString, "##");
-            if (vNameString.size() >= MIN_VECTOR_SIZE) {
-                mainThreadName = vNameString[1];
-            }
-            if (!sliceData.ParentIdData()[i].has_value()) {
-                TS_LOGE("callstack data has no parentId");
-                return;
-            }
-            if (!GetProcessCreate(i, startTime, START_ABILITY)) {
-                continue;
-            }
-            callId = sliceData.CallIds()[i];
-            auto dataIndex = traceDataCache_->GetDataIndex(mainThreadName.c_str());
-            mAPPStartupData_[dataIndex].insert(std::make_pair(
-                PROCESS_CREATING,
-                std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64)));
-        } else if (StartWith(nameString, APP_LAUNCH)) {
+        auto callId = sliceData.CallIds()[i];
+        auto startTime = sliceData.TimeStampData()[i];
+        if (StartWith(nameString, procTouchCmd_)) {
+            procTouchItems_.emplace_back(std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
+        } else if (StartWith(nameString, startUIAbilityBySCBCmd_)) {
+            startUIAbilityBySCBItems_.emplace_back(std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
+        } else if (StartWith(nameString, loadAbilityCmd_)) {
+            loadAbilityItems_.emplace_back(std::make_unique<APPStartupData>(callId, INVALID_UINT32, INVALID_UINT32, startTime, INVALID_UINT64));
+        } else if (StartWith(nameString, appLaunchCmd_)) {
             UpdateAPPStartupData(i, nameString, APPLICATION_LAUNCHING);
-        } else if (StartWith(nameString, LAUNCH)) {
+        } else if (StartWith(nameString, uiLaunchCmd_)) {
             if (!ProcAbilityLaunchData(nameString, i)) {
                 continue;
             }
-        } else if (StartWith(nameString, ONFOREGROUND)) {
+        } else if (StartWith(nameString, uiOnForegroundCmd_)) {
             ProcForegroundData(i);
         }
     }
@@ -208,9 +191,7 @@ bool APPStartupFilter::ProcAbilityLaunchData(const std::string& nameString, uint
 {
     auto sliceData = traceDataCache_->GetConstInternalSlicesData();
     auto vNameString = SplitStringToVec(nameString, "##");
-    if (vNameString.size() < MIN_VECTOR_SIZE) {
-        return false;
-    }
+    TS_CHECK_TRUE_RET(vNameString.size() >= MIN_VECTOR_SIZE, false);
     auto dataIndex = traceDataCache_->GetDataIndex(vNameString[1].c_str());
     uint32_t callId = sliceData.CallIds()[raw];
     uint64_t startTime = sliceData.TimeStampData()[raw];
@@ -277,7 +258,7 @@ void APPStartupFilter::ParserSoInitalization()
     std::string nameString = "";
     for (auto i = 0; i < sliceData.NamesData().size(); i++) {
         nameString = traceDataCache_->GetDataFromDict(sliceData.NamesData()[i]);
-        if (nameString.find(DLOPEN) != std::string::npos) {
+        if (nameString.find(dlopenCmd_) != std::string::npos) {
             uint64_t startTime = sliceData.TimeStampData()[i];
             uint64_t endTime = startTime + sliceData.DursData()[i];
             uint32_t depth = 0;
@@ -298,7 +279,6 @@ void APPStartupFilter::ParserSoInitalization()
             }
         }
     }
-    return;
 }
 } // namespace TraceStreamer
 } // namespace SysTuning
