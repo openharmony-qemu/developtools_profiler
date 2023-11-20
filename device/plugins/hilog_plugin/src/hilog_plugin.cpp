@@ -36,15 +36,12 @@ const int TIME_SEC_WIDTH = 14;
 const int TIME_NS_WIDTH = 24;
 const int FILE_NAME_LEN = 15;
 const int TIME_BUFF_LEN = 32;
-const int BUF_MAX_LEN = 512;
+const int PIPE_SIZE_RATIO = 8;
 const int BYTE_BUFFER_SIZE = 1024;
 const int BASE_YEAR = 1900;
+const int MAX_BUFFER_LEN = 8192;
 const std::string DEFAULT_LOG_PATH("/data/local/tmp/");
 FileCache g_fileCache(DEFAULT_LOG_PATH);
-static pid_t volatile g_child;
-const int READ = 0;
-const int WRITE = 1;
-const int PIPE_LEN = 2;
 const std::string BIN_COMMAND("/system/bin/hilog");
 } // namespace
 
@@ -75,11 +72,11 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HilogPlugin: ParseFromArray failed");
     if (protoConfig_.need_clear()) {
-        fullCmd_ = "hilog -r";
         std::vector<std::string> cmdArg;
-        COMMON::SplitString(fullCmd_, " ", cmdArg);
-        cmdArg.emplace(cmdArg.begin(), BIN_COMMAND);
 
+        cmdArg.emplace_back(BIN_COMMAND); // exe file path
+        cmdArg.emplace_back("hilog"); // exe file name
+        cmdArg.emplace_back("-r");
         volatile pid_t childPid = -1;
         int pipeFds[2] = {-1, -1};
         FILE* fp = COMMON::CustomPopen(cmdArg, "r", pipeFds, childPid);
@@ -88,8 +85,11 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     }
 
     InitHilogCmd();
-    fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(fullCmd_.c_str(), "r"), CustomPclose);
-    CHECK_NOTNULL(fp_.get(), -1, "HilogPlugin: open(%s) Failed, errno(%d)", fullCmd_.c_str(), errno);
+    fp_ = std::unique_ptr<FILE, std::function<int (FILE*)>>(
+        COMMON::CustomPopen(fullCmd_, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {
+            return COMMON::CustomPclose(fp, pipeFds_, childPid_, true);
+        });
+
     if (protoConfig_.need_record()) {
         OpenLogFile();
     }
@@ -101,6 +101,12 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = true;
     locker.unlock();
+
+    int oldPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
+    fcntl(fileno(fp_.get()), F_SETPIPE_SZ, oldPipeSize * PIPE_SIZE_RATIO);
+    int pipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
+    HILOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
+
     workThread_ = std::thread(&HilogPlugin::Run, this);
 
     return 0;
@@ -111,9 +117,14 @@ int HilogPlugin::Stop()
     HILOG_INFO(LOG_CORE, "HilogPlugin: ready stop thread!");
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = false;
+    COMMON::CustomPUnblock(pipeFds_);
     locker.unlock();
     if (workThread_.joinable()) {
         workThread_.join();
+    }
+    if (protoConfig_.need_record() && !dataBuffer_.empty()) {
+        g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
+        dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
     }
     HILOG_INFO(LOG_CORE, "HilogPlugin: stop thread success!");
     if (protoConfig_.need_record()) {
@@ -140,15 +151,6 @@ bool HilogPlugin::OpenLogFile()
     return true;
 }
 
-inline std::string HilogPlugin::GetPidCmd()
-{
-    std::string pidCmd = "";
-    if (protoConfig_.pid() > 0) {
-        pidCmd = std::to_string(protoConfig_.pid());
-    }
-    return pidCmd;
-}
-
 std::string HilogPlugin::GetlevelCmd()
 {
     std::string levelCmd = "";
@@ -165,6 +167,9 @@ std::string HilogPlugin::GetlevelCmd()
         case WARN:
             levelCmd = "W";
             break;
+        case FATAL:
+            levelCmd = "F";
+            break;
         default:
             break;
     }
@@ -174,24 +179,26 @@ std::string HilogPlugin::GetlevelCmd()
 
 void HilogPlugin::InitHilogCmd()
 {
-    fullCmd_ = "hilog";
-    if (GetPidCmd().length() > 0) {
-        fullCmd_ += " -P ";
-        fullCmd_ += GetPidCmd();
+    fullCmd_.emplace_back(BIN_COMMAND); // exe file path
+    fullCmd_.emplace_back("hilog"); // exe file name
+
+    if (protoConfig_.pid() > 0) {
+        fullCmd_.emplace_back("-P");
+        fullCmd_.emplace_back(std::to_string(protoConfig_.pid()));
     }
     if (GetlevelCmd().length() > 0) {
-        fullCmd_ += " -L ";
-        fullCmd_ += GetlevelCmd();
+        fullCmd_.emplace_back("-L");
+        fullCmd_.emplace_back(GetlevelCmd());
     }
 
-    fullCmd_ = fullCmd_ + std::string(" --format nsec");
-    HILOG_INFO(LOG_CORE, "HilogPlugin: hilog cmd(%s)", fullCmd_.c_str());
+    fullCmd_.emplace_back("--format");
+    fullCmd_.emplace_back("nsec");
 }
 
 void HilogPlugin::Run(void)
 {
     HILOG_INFO(LOG_CORE, "HilogPlugin::Run start!");
-    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(BUF_MAX_LEN);
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_BUFFER_LEN);
 
     std::unique_ptr<HilogInfo> dataProto = nullptr;
     std::unique_ptr<ProtoEncoder::HilogInfo> hilogInfo = nullptr;
@@ -200,10 +207,14 @@ void HilogPlugin::Run(void)
     } else {
         hilogInfo = std::make_unique<ProtoEncoder::HilogInfo>(resultWriter_->startReport(resultWriter_));
     }
-    fcntl(fileno(fp_.get()), F_SETFL, O_NONBLOCK);
+
     while (running_) {
-        if (fgets(reinterpret_cast<char*>(buffer.get()), BUF_MAX_LEN - 1, fp_.get()) == nullptr) {
+        if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_BUFFER_LEN - 1, fp_.get()) == nullptr) {
             continue;
+        }
+
+        if ((strlen(reinterpret_cast<char*>(buffer.get())) + 1) == (MAX_BUFFER_LEN - 1)) {
+            HILOG_ERROR(LOG_CORE, "HilogPlugin:data length is greater than the MAX_BUFFER_LEN(%d)", MAX_BUFFER_LEN);
         }
 
         auto cptr = reinterpret_cast<char*>(buffer.get());
@@ -237,11 +248,6 @@ void HilogPlugin::Run(void)
     } else {
         FlushDataOptimize(hilogInfo.get());
         hilogInfo.reset();
-    }
-
-    if (protoConfig_.need_record() && !dataBuffer_.empty()) {
-        g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
-        dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
     }
     HILOG_INFO(LOG_CORE, "HilogPlugin::Run done!");
 }
@@ -457,76 +463,6 @@ int HilogPlugin::GetDateTime(char* psDateTime, uint32_t size)
     }
 
     return 0;
-}
-
-FILE* HilogPlugin::CustomPopen(const char* command, const char* type)
-{
-    CHECK_TRUE(command != nullptr && type != nullptr, nullptr, "HilogPlugin:%s param invalid", __func__);
-
-    int fd[PIPE_LEN];
-    pipe(fd);
-
-    pid_t pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        exit(1);
-    }
-
-    // child process
-    if (pid == 0) {
-        if (!strncmp(type, "r", strlen(type))) {
-            close(fd[READ]);
-            dup2(fd[WRITE], 1); // Redirect stdout to pipe
-            dup2(fd[WRITE], 2); // 2: Redirect stderr to pipe
-        } else {
-            close(fd[WRITE]);
-            dup2(fd[READ], 0); // Redirect stdin to pipe
-        }
-        setpgid(pid, pid);
-        std::vector<std::string> cmdArg;
-        COMMON::SplitString(std::string(command), " ", cmdArg);
-        std::vector<char*> vectArgv;
-        for (auto& item : cmdArg) {
-            vectArgv.push_back(const_cast<char*>(item.c_str()));
-        }
-        // execv : the last argv must be nullptr.
-        vectArgv.push_back(nullptr);
-        execv(BIN_COMMAND.c_str(), &vectArgv[0]);
-        exit(0);
-    } else {
-        if (!strncmp(type, "r", strlen(type))) {
-            // Close the WRITE end of the pipe since parent's fd is read-only
-            close(fd[WRITE]);
-        } else {
-            // Close the READ end of the pipe since parent's fd is write-only
-            close(fd[READ]);
-        }
-    }
-
-    g_child = pid;
-
-    if (!strncmp(type, "r", strlen(type))) {
-        return fdopen(fd[READ], "r");
-    }
-
-    return fdopen(fd[WRITE], "w");
-}
-
-int HilogPlugin::CustomPclose(FILE* fp)
-{
-    CHECK_NOTNULL(fp, -1, "HilogPlugin:%s fp is null", __func__);
-    int stat;
-
-    int ret = fclose(fp);
-    CHECK_TRUE(ret == 0, -1, "HilogPlugin:%s fclose failed! errno(%d)", __func__, errno);
-    kill(g_child, SIGKILL);
-    if (waitpid(g_child, &stat, 0) == -1) {
-        if (errno != EINTR) {
-            stat = -1;
-        }
-    }
-
-    return stat;
 }
 
 template <typename T> void HilogPlugin::FlushData(const T hilogLineProto)

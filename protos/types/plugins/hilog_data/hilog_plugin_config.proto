@@ -26,6 +26,7 @@ enum Level {
     INFO = 2;
     DEBUG = 3;
     WARN = 4;
+    FATAL = 5;
 }
 
 message HilogConfig {
