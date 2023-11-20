@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #include "debug_logger.h"
-#include "mem_map_item.h"
+#include "dfx_maps.h"
 #include "logging.h"
 #include "register.h"
 #include "symbols_file.h"
@@ -39,6 +39,29 @@ aff60000-aff96000 r--p 00000000 b3:05 923        /system/lib/libc++.so
 affeb000-affed000 rw-p 00000000 00:00 0
 b0023000-b0024000 r--p 00000000 b3:05 959        /system/lib/libdl.so
 */
+using namespace OHOS::HiviewDFX;
+class MemMaps : public DfxMaps {
+public:
+    MemMaps() {}
+    MemMaps(uint32_t filePathId) : filePathId_(filePathId) {}
+    void AddMap(std::shared_ptr<DfxMap> map, bool firstMap)
+    {
+        if (firstMap) {
+            soBegin_ = map->begin;
+            soEnd_ = map->end;
+            name_ = map->name;
+        } else {
+            maps_.back()->end = map->begin;
+        }
+        maps_.emplace_back(map);
+    }
+    uint64_t soBegin_;
+    uint64_t soEnd_;
+    uint32_t filePathId_ {0}; // for maps item filePath id
+    std::string name_;
+    bool isReported_ {false}; // indicates whether information about item has been reported
+};
+
 const std::string MMAP_NAME_HEAP = "[heap]";
 const std::string MMAP_NAME_ANON = "[anon]";
 
@@ -63,36 +86,34 @@ public:
     pid_t tid_;
     std::string name_;
 
-    const std::vector<MemMapItem> &GetMaps() const
+    const std::vector<std::shared_ptr<DfxMap>> &GetMaps() const
     {
-        return *memMaps_;
+        return *maps_;
     }
 
-    bool ParseMap(std::vector<MemMapItem> &memMaps, bool update = false);
+    bool ParseMap(std::vector<std::shared_ptr<DfxMap>> &memMaps, bool update = false);
     void CreateMapItem(const std::string filename, uint64_t begin, uint64_t len, uint64_t offset);
-    const MemMapItem *FindMapByAddr(uint64_t addr) const;
-    const std::pair<MemMaps*, uint32_t> FindMemMapsByAddr(uint64_t addr) const;
-    const MemMapItem *FindMapByFileInfo(const std::string name, uint64_t offset) const;
-    SymbolsFile *FindSymbolsFileByMap(const MemMapItem &inMap) const;
+    const std::shared_ptr<DfxMap> FindMapByAddr(uint64_t addr) const;
+    const std::pair<std::shared_ptr<MemMaps>, uint32_t> FindMemMapsByAddr(uint64_t addr) const;
+    const std::shared_ptr<DfxMap> FindMapByFileInfo(const std::string name, uint64_t offset) const;
+    SymbolsFile *FindSymbolsFileByMap(std::shared_ptr<DfxMap> inMap) const;
     SymbolsFile *FindSymbolsFileByName(const std::string &name) const;
     bool ReadRoMemory(uint64_t vaddr, uint8_t *data, size_t size) const;
 #ifdef HIPERF_DEBUG
     void ReportVaddrMapMiss(uint64_t vaddr) const;
 #endif
 public:
-    // caller want to check if new mmap is legal
-    static bool IsLegalFileName(const std::string &filename);
 
 private:
-    void SortMemMaps();
+    void SortMaps();
 #ifdef DEBUG_TIME
     bool IsSorted() const;
 #endif
     const std::unordered_map<std::string, std::unique_ptr<SymbolsFile>>& symbolsFiles_;
 
     // thread must use ref from process
-    std::vector<MemMapItem>* memMaps_;
 
+    std::vector<std::shared_ptr<DfxMap>>* maps_;
 #ifdef HIPERF_DEBUG
     mutable std::unordered_set<uint64_t> missedRuntimeVaddr_;
 #endif

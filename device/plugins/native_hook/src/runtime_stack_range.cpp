@@ -45,7 +45,6 @@ static void GetThreadRuntimeStackRange(const char** start, const char** end)
     pthread_t tid = pthread_self();
     pthread_attr_t attr;
     if (pthread_getattr_np(tid, &attr) == 0) {
-        char* stackAddr = nullptr;
         size_t stackSize;
         if (pthread_attr_getstack(&attr, reinterpret_cast<void**>(const_cast<char**>(start)), &stackSize) == 0) {
             *end = *start + stackSize;

@@ -26,8 +26,6 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
-const int SLEEP_TIME = 30000;
-
 class HookServiceTest : public ::testing::Test {
 public:
     static void SetUpTestCase() {}

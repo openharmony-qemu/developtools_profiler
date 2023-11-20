@@ -18,8 +18,6 @@ module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 config("module_private_config") {
   visibility = [ ":*" ]
   defines = [
-    "is_ohos=1",
-    "HAVE_LIBUNWIND=1",
     "HIPERF_DEBUG",
     "CONFIG_NO_HILOG",
     "target_cpu_${target_cpu}",
@@ -76,7 +74,10 @@ ohos_unittest("nativehook_ut") {
     "-Dprivate=public",  #allow test code access private members
     "-Dprotected=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "faultloggerd:libunwinder_static",
+    "hilog:libhilog",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

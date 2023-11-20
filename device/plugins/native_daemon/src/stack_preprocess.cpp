@@ -20,14 +20,12 @@
 #include "common.h"
 #include "logging.h"
 #include "plugin_service_types.pb.h"
-#include "elf_parser.h"
+#include "dfx_elf.h"
 #include "utilities.h"
 #include "native_hook_result_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
 #include "google/protobuf/text_format.h"
 
-static std::atomic<uint64_t> timeCost = 0;
-static std::atomic<uint64_t> unwindTimes = 0;
 
 constexpr static uint32_t SC_LG_TINY_MIN = 3;
 constexpr static uint32_t LG_QUANTUM = 4;
@@ -41,10 +39,7 @@ constexpr static uint32_t MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 constexpr static uint32_t MAX_MATCH_CNT = 1000;
 constexpr static uint32_t MAX_MATCH_INTERVAL = 2000;
 constexpr static uint32_t LOG_PRINT_TIMES = 10000;
-constexpr static uint32_t FUNCTION_MAP_LOG_PRINT = 100;
-constexpr static uint32_t FILE_MAP_LOG_PRINT = 10;
 constexpr static uint32_t MAX_BATCH_CNT = 5;
-constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
 constexpr static uint32_t RIGHT_MOVE_1 = 1;
 constexpr static uint32_t RIGHT_MOVE_2 = 2;
 constexpr static uint32_t RIGHT_MOVE_4 = 4;
@@ -53,6 +48,7 @@ constexpr static uint32_t RIGHT_MOVE_16 = 16;
 constexpr static uint32_t RIGHT_MOVE_32 = 32;
 
 using namespace OHOS::Developtools::NativeDaemon;
+using namespace OHOS::HiviewDFX;
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater,
     const NativeHookConfig& hookConfig,
@@ -715,26 +711,26 @@ void StackPreprocess::SetMapsInfo(pid_t pid)
 
         ElfSymbolTable symbolInfo;
         auto& curMemMaps = mapsIter->second;
-        GetSymbols(curMemMaps.name_, symbolInfo);
+        GetSymbols(curMemMaps->name_, symbolInfo);
         if (symbolInfo.symEntSize == 0) {
             continue;
         }
         BatchNativeHookData stackData;
         NativeHookData* hookData = stackData.add_events();
         FilePathMap* filepathMap = hookData->mutable_file_path();
-        filepathMap->set_id(curMemMaps.filePathId_);
-        filepathMap->set_name(curMemMaps.name_);
-        SetSymbolInfo(curMemMaps.filePathId_, symbolInfo, stackData);
+        filepathMap->set_id(curMemMaps->filePathId_);
+        filepathMap->set_name(curMemMaps->name_);
+        SetSymbolInfo(curMemMaps->filePathId_, symbolInfo, stackData);
 
-        for (auto& map : curMemMaps.maps_) {
-            if (map.type_ & PROT_EXEC) {
+        for (auto& map : curMemMaps->GetMaps()) {
+            if (map->prots & PROT_EXEC) {
                 NativeHookData* nativeHookData = stackData.add_events();
                 MapsInfo* mapSerialize = nativeHookData->mutable_maps_info();
                 mapSerialize->set_pid(pid);
-                mapSerialize->set_start(map.begin_);
-                mapSerialize->set_end(map.end_);
-                mapSerialize->set_offset(map.pageoffset_);
-                mapSerialize->set_file_path_id(curMemMaps.filePathId_);
+                mapSerialize->set_start(map->begin);
+                mapSerialize->set_end(map->end);
+                mapSerialize->set_offset(map->offset);
+                mapSerialize->set_file_path_id(curMemMaps->filePathId_);
             }
         }
         FlushData(stackData);
@@ -804,23 +800,14 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
 
 void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& symbols)
 {
-    using OHOS::Developtools::NativeDaemon::ELF::ElfFile;
-    std::unique_ptr<ElfFile> elfPtr = ElfFile::MakeUnique(filePath);
+    std::shared_ptr<DfxElf> elfPtr = std::make_shared<DfxElf>(filePath);
     if (elfPtr == nullptr) {
         HILOG_ERROR(LOG_CORE, "GetSymbols elfPtr is nullptr");
         return;
     }
 
-    symbols.textVaddr = (std::numeric_limits<uint64_t>::max)();
-    for (auto &item : elfPtr->phdrs_) {
-        if ((item->type_ == PT_LOAD) && (item->flags_ & PF_X)) {
-            // find the min addr
-            if (symbols.textVaddr != (std::min)(symbols.textVaddr, item->vaddr_)) {
-                symbols.textVaddr = (std::min)(symbols.textVaddr, item->vaddr_);
-                symbols.textOffset = item->offset_;
-            }
-        }
-    }
+    symbols.textVaddr = elfPtr->GetStartVaddr();
+    symbols.textOffset = elfPtr->GetStartOffset();
     if (symbols.textVaddr == (std::numeric_limits<uint64_t>::max)()) {
         HILOG_ERROR(LOG_CORE, "GetSymbols get textVaddr failed");
         return;
@@ -828,30 +815,31 @@ void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& sy
 
     std::string symSecName;
     std::string strSecName;
-    if (elfPtr->shdrs_.find(".symtab") != elfPtr->shdrs_.end()) {
+    ShdrInfo shdr;
+    if (elfPtr->GetSectionInfo(shdr, ".symtab")) {
         symSecName = ".symtab";
         strSecName = ".strtab";
-    } else if (elfPtr->shdrs_.find(".dynsym") != elfPtr->shdrs_.end()) {
+    } else if (elfPtr->GetSectionInfo(shdr, ".dynsym")) {
         symSecName = ".dynsym";
         strSecName = ".dynstr";
     } else {
         return;
     }
-    const auto &sym = elfPtr->shdrs_[static_cast<const std::string>(symSecName)];
-    const uint8_t* symData = elfPtr->GetSectionData(sym->secIndex_);
-    const auto &str = elfPtr->shdrs_[static_cast<const std::string>(strSecName)];
-    const uint8_t* strData = elfPtr->GetSectionData(str->secIndex_);
-
-    if (sym->secSize_ == 0 || str->secSize_ == 0) {
-        HILOG_ERROR(LOG_CORE, "GetSymbols get section size failed, \
-            sym size: %" PRIu64 ", str size: %" PRIu64 "", sym->secSize_, str->secSize_);
+    symbols.symEntSize = shdr.entSize;
+    symbols.symTable.resize(shdr.size);
+    if (!elfPtr->GetSectionData(symbols.symTable.data(), shdr.size, symSecName)) {
+        HILOG_ERROR(LOG_CORE, "GetSymbols get symbol section data failed");
         return;
     }
-    symbols.symEntSize = sym->secEntrySize_;
-    symbols.symTable.resize(sym->secSize_);
-    std::copy(symData, symData + sym->secSize_, symbols.symTable.data());
-    symbols.strTable.resize(str->secSize_);
-    std::copy(strData, strData + str->secSize_, symbols.strTable.data());
+    if (!elfPtr->GetSectionInfo(shdr, strSecName)) {
+        HILOG_ERROR(LOG_CORE, "GetSymbols get str section failed");
+        return;
+    }
+    symbols.strTable.resize(shdr.size);
+    if (!elfPtr->GetSectionData(symbols.strTable.data(), shdr.size, strSecName)) {
+        HILOG_ERROR(LOG_CORE, "GetSymbols get str section failed");
+        return;
+    }
 }
 
 bool StackPreprocess::FlushRecordStatistics()
@@ -948,7 +936,7 @@ size_t StackPreprocess::ComputeAlign(size_t size)
     size_t deltaInverseMask = size_t(-1) << lgDelta;
     unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
     unsigned index = SC_NTINY + grp + mod;
-    
+
     if (index < NTBINS) {
         return (size_t(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
     }

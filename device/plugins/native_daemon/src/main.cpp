@@ -27,14 +27,12 @@ using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
 const int SLEEP_ONE_SECOND = 1000;
-const int BUF_MAX_LEN = 10;
 const int VC_ARG_TWAIN = 2;
 const int VC_ARG_STEP_SIZE = 2;
 const int SMBSIZE_BASE = 4096;
 
 bool ProcessExist(std::string pid)
 {
-    int ret = 0;
     std::string pid_path = std::string();
     struct stat stat_buf;
     if (pid.size() == 0) {

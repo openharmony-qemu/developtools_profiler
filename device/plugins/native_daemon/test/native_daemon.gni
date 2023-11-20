@@ -27,7 +27,7 @@ code_check_flag = [
   "-Werror",
   "-Wmissing-field-initializers",
   "-Wuninitialized",
-  "-Wunused-parameter",
+  "-Wno-unused-parameter",
   "-Wunused-variable",
   "-Wnull-pointer-arithmetic",
   "-Wunused-lambda-capture",

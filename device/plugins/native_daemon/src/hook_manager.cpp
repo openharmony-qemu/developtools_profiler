@@ -41,9 +41,6 @@ std::shared_ptr<BufferWriter> g_buffWriter;
 constexpr uint32_t MAX_BUFFER_SIZE = 10 * 1024;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
-const int MOVE_BIT_8 = 8;
-const int MOVE_BIT_16 = 16;
-const int MOVE_BIT_32 = 32;
 const int SIGNAL_START_HOOK = 36;
 const int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
@@ -51,7 +48,6 @@ const std::string VERSION = "1.02";
 bool HookManager::CheckProcess()
 {
     if (pid_ != 0) {
-        int ret = 0;
         std::string pid_path = std::string();
         struct stat stat_buf;
         pid_path = "/proc/" + std::to_string(pid_) + "/status";
@@ -271,7 +267,6 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
 void HookManager::ReadShareMemory()
 {
     CHECK_NOTNULL(shareMemoryBlock_, NO_RETVAL, "smb is null!");
-    uint64_t value = eventNotifier_->Take();
     int rawRealSize = 0;
     while (true) {
         auto rawStack = std::make_shared<StackDataRepeater::RawStack>();

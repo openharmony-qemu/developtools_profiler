@@ -21,10 +21,6 @@
 #include "logging.h"
 
 namespace {
-const int MOVE_BIT_8 = 8;
-const int MOVE_BIT_32 = 32;
-const int MOVE_BIT_48 = 48;
-const int MOVE_BIT_56 = 56;
 constexpr int FLUSH_FLAG = 20;
 std::atomic<uint64_t> g_flushCount = 0;
 } // namespace

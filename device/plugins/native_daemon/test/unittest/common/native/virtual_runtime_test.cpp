@@ -130,11 +130,11 @@ void VirtualRuntimeTest::PrepareKernelSymbol()
                                   kernel->filePath_);
     runtime_->symbolsFiles_[kernel->filePath_] = std::move(kernel);
 
-    auto &kernelMap = runtime_->kernelSpaceMemMaps_.emplace_back();
-    kernelMap.name_ = kernelSymbol;
-    kernelMap.begin_ = 0;
-    kernelMap.end_ = 0 + TEST_KERNEL_LEN;
-    kernelMap.pageoffset_ = 0;
+    auto &kernelMap = runtime_->kernelSpaceMaps_.emplace_back();
+    kernelMap.name = kernelSymbol;
+    kernelMap.begin = 0;
+    kernelMap.end = 0 + TEST_KERNEL_LEN;
+    kernelMap.offset = 0;
 }
 
 void VirtualRuntimeTest::PrepareUserSymbol()
@@ -159,7 +159,7 @@ void VirtualRuntimeTest::PrepareUserSymbol()
  */
 HWTEST_F(VirtualRuntimeTest, GetSymbol, TestSize.Level1)
 {
-    Symbol symbol;
+    DfxSymbol symbol;
     PrepareKernelSymbol();
     PrepareUserSymbol();
 
@@ -167,12 +167,12 @@ HWTEST_F(VirtualRuntimeTest, GetSymbol, TestSize.Level1)
     CallFrame callFrame(0);
 
     symbol = runtime_->GetSymbol(callFrame, TEST_TID, TEST_TID);
-    EXPECT_EQ(symbol.isValid(), false);
+    EXPECT_EQ(symbol.IsValid(), false);
 
     callFrame.ip_ = TEST_KERNEL_VADDR + TEST_USET_MAP_BEGIN;
     symbol = runtime_->GetSymbol(callFrame, TEST_TID, TEST_TID);
     // in user
-    EXPECT_EQ(symbol.isValid(), true);
+    EXPECT_EQ(symbol.IsValid(), true);
     EXPECT_EQ(symbol.funcVaddr_, TEST_KERNEL_VADDR);
     EXPECT_STREQ(symbol.name_.data(), "first_user_func");
 }

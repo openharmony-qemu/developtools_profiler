@@ -40,8 +40,6 @@ namespace Developtools {
 namespace Profiler {
 namespace Hook {
 const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
-const int MOVE_BIT_16 = 16;
-const int MOVE_BIT_32 = 32;
 std::string g_smbName = "hooknativesmb";
 std::unique_ptr<EpollEventPoller> g_eventPoller_;
 std::shared_ptr<ShareMemoryBlock> g_shareMemoryBlock;

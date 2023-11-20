@@ -107,7 +107,7 @@ static const std::vector<frame> TEST_DWARF_FRAMES = {
     {0x457ffe, 0xb6ca1d28}, {0xb6f01f73, 0xb6ca1d38},
 };
 
-// data convert funcion
+// data convert function
 template<class T>
 void LoadFromFile(const std::string &fileName, std::vector<T> &data)
 {
