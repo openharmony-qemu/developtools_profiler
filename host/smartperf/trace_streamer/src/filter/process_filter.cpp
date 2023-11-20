@@ -191,7 +191,7 @@ std::vector<InternalTid>& ProcessFilter::GetInternalTids(uint32_t tid)
     return tmpTids_;
 }
 
-bool ProcessFilter::isThreadNameEmpty(uint32_t tid) const
+bool ProcessFilter::IsThreadNameEmpty(uint32_t tid) const
 {
     auto internalTid = GetInternalTid(tid);
     if (internalTid != INVALID_ID) {

@@ -84,7 +84,7 @@ export function ns2s(ns: number): string {
   } else if (ns > 0) {
     res = `${ns.toFixed(1)} ns`;
   } else {
-    res = `${ns.toFixed(1)} s`;
+    res = `${ns.toFixed(0)}`;
   }
   return res;
 }
@@ -105,10 +105,18 @@ export function ns2Timestamp(ns: number): string {
 
 const offsetX = 5;
 
-export function isFrameContainPoint(frame: Rect, x: number, y: number, strict: boolean = true, offset: boolean = false): boolean {
+export function isFrameContainPoint(
+  frame: Rect,
+  x: number,
+  y: number,
+  strict: boolean = true,
+  offset: boolean = false
+): boolean {
   if (strict) {
     if (offset) {
-      return x >= frame.x - offsetX && x <= frame.x + frame.width + offsetX && y >= frame.y && y <= frame.y + frame.height;
+      return (
+        x >= frame.x - offsetX && x <= frame.x + frame.width + offsetX && y >= frame.y && y <= frame.y + frame.height
+      );
     } else {
       return x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height;
     }
@@ -829,7 +837,7 @@ export function drawLinkLines(
     );
     let newSecondNode = new PairPoint(
       it[1].rowEL,
-      it[0].x,
+      it[1].x,
       it[1].y,
       it[1].ns,
       it[1].offsetY,
@@ -1188,6 +1196,7 @@ export class HiPerfStruct extends BaseStruct {
   endNS: number | undefined;
   dur: number | undefined;
   height: number | undefined;
+  eventCount: number | undefined;
 
   static drawRoundRectPath(cxt: Path2D, x: number, y: number, width: number, height: number, radius: number) {
     cxt.arc(x + width - radius, y + height - radius, radius, 0, Math.PI / 2);
@@ -1249,28 +1258,52 @@ export class HiPerfStruct extends BaseStruct {
     }
   }
 
-  static groupBy10MS(groupArray: Array<any>, intervalPerf: number, maxCpu?: number | undefined): Array<any> {
+  static groupBy10MS(
+    groupArray: Array<any>,
+    intervalPerf: number,
+    maxCpu?: number | undefined,
+    usage?: boolean,
+    event?: number
+  ): Array<any> {
+    let maxEventCount = 0;
     let obj = groupArray
       .map((it) => {
         it.timestamp_group = Math.trunc(it.startNS / 1_000_000_0) * 1_000_000_0;
         return it;
       })
       .reduce((pre, current) => {
-        (pre[current['timestamp_group']] = pre[current['timestamp_group']] || []).push(current);
+        if (usage || current.event_type_id === event || event === -1) {
+          if (pre[current['timestamp_group']]) {
+            pre[current['timestamp_group']].sampleCount += 1;
+            pre[current['timestamp_group']].eventCount += current.event_count;
+          } else {
+            pre[current['timestamp_group']] = {
+              sampleCount: 1,
+              eventCount: current.event_count,
+            };
+          }
+          maxEventCount = Math.max(pre[current['timestamp_group']].eventCount, maxEventCount);
+        }
+
         return pre;
       }, {});
     let arr = [];
     for (let aKey in obj) {
       let ns = parseInt(aKey);
       let height: number = 0;
-      if (maxCpu != undefined) {
-        height = Math.floor((obj[aKey].length / (10 / intervalPerf) / maxCpu) * 40);
+      if (usage) {
+        if (maxCpu != undefined) {
+          height = Math.floor((obj[aKey].sampleCount / (10 / intervalPerf) / maxCpu) * 40);
+        } else {
+          height = Math.floor((obj[aKey].sampleCount / (10 / intervalPerf)) * 40);
+        }
       } else {
-        height = Math.floor((obj[aKey].length / (10 / intervalPerf)) * 40);
+        height = Math.floor((obj[aKey].eventCount / maxEventCount) * 40);
       }
       arr.push({
         startNS: ns,
         dur: 1_000_000_0,
+        eventCount: obj[aKey].eventCount,
         height: height,
       });
     }
@@ -1409,4 +1442,25 @@ export function drawWakeUpList(
     wakeUpListContext.stroke();
     wakeUpListContext.closePath();
   }
+}
+
+export function findSearchNode(data: any[], search: string, parentSearch: boolean): void {
+  search = search.toLocaleLowerCase();
+  data.forEach((node) => {
+    if ((node.symbolName && node.symbolName.toLocaleLowerCase().includes(search) && search !== '') || parentSearch) {
+      node.searchShow = true;
+      node.isSearch = node.symbolName != undefined && node.symbolName.toLocaleLowerCase().includes(search);
+      let parentNode = node.parent;
+      while (parentNode && !parentNode.searchShow) {
+        parentNode.searchShow = true;
+        parentNode = parentNode.parent;
+      }
+    } else {
+      node.searchShow = false;
+      node.isSearch = false;
+    }
+    if (node.children.length > 0) {
+      findSearchNode(node.children, search, node.searchShow);
+    }
+  });
 }

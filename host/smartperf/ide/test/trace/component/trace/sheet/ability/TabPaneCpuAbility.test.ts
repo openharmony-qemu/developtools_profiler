@@ -17,6 +17,10 @@ import { TabPaneCpuAbility } from '../../../../../../dist/trace/component/trace/
 const sqlite = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {};
+});
+
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({

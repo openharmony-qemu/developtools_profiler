@@ -98,7 +98,6 @@ uint32_t HtraceJsCpuProfilerParser::ParseSampleData(const json& jMessage,
     uint32_t sample = std::numeric_limits<uint32_t>::max();
     json filteredSamples = nlohmann::json::array();
     json filteredTimeDeltas = nlohmann::json::array();
-    filteredTimeDeltas.push_back(jMessage.at("timeDeltas")[0]);
     startTimeSnap = streamFilters_->clockFilter_->Convert(TS_CLOCK_BOOTTIME, startTimeSnap, TS_MONOTONIC);
     endTimeSnap = streamFilters_->clockFilter_->Convert(TS_CLOCK_BOOTTIME, endTimeSnap, TS_MONOTONIC);
     for (size_t i = 0; i < jMessage.at("samples").size(); i++) {

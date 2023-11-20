@@ -35,7 +35,7 @@ import { perfDataQuery } from './PerfDataQuery.js';
 import { SpVirtualMemChart } from './SpVirtualMemChart.js';
 import { SpFileSystemChart } from './SpFileSystemChart.js';
 import { SpSdkChart } from './SpSdkChart.js';
-import { SpHiSysEventChart } from './SpHiSysEventChart.js';
+import { SpHiSysEnergyChart } from './SpHiSysEnergyChart.js';
 import { VmTrackerChart } from './SpVmTrackerChart.js';
 import { SpClockChart } from './SpClockChart.js';
 import { SpIrqChart } from './SpIrqChart.js';
@@ -48,6 +48,7 @@ import { SpArkTsChart } from './SpArkTsChart.js';
 import { MemoryConfig } from '../../bean/MemoryConfig.js';
 import { FlagsConfig } from '../SpFlags.js';
 import { SpLogChart } from './SpLogChart.js';
+import { SpHiSysEventChart } from './SpHiSysEventChart.js';
 
 export class SpChartManager {
   static APP_STARTUP_PID_ARR: Array<number> = [];
@@ -63,13 +64,14 @@ export class SpChartManager {
   private process: SpProcessChart;
   private fileSystem: SpFileSystemChart;
   private sdkChart: SpSdkChart;
-  private hiSyseventChart: SpHiSysEventChart;
+  private hiSyseventChart: SpHiSysEnergyChart;
   private smapsChart: VmTrackerChart;
   private clockChart: SpClockChart;
   private irqChart: SpIrqChart;
   frameTimeChart: SpFrameTimeChart;
   public arkTsChart: SpArkTsChart;
   private logChart: SpLogChart;
+  private spHiSysEvent: SpHiSysEventChart;
 
   constructor(trace: SpSystemTrace) {
     this.trace = trace;
@@ -83,13 +85,14 @@ export class SpChartManager {
     this.abilityMonitor = new SpAbilityMonitorChart(trace);
     this.process = new SpProcessChart(trace);
     this.sdkChart = new SpSdkChart(trace);
-    this.hiSyseventChart = new SpHiSysEventChart(trace);
+    this.hiSyseventChart = new SpHiSysEnergyChart(trace);
     this.smapsChart = new VmTrackerChart(trace);
     this.clockChart = new SpClockChart(trace);
     this.irqChart = new SpIrqChart(trace);
     this.frameTimeChart = new SpFrameTimeChart(trace);
     this.arkTsChart = new SpArkTsChart(trace);
     this.logChart = new SpLogChart(trace);
+    this.spHiSysEvent = new SpHiSysEventChart(trace);
   }
 
   async init(progress: Function) {
@@ -128,6 +131,7 @@ export class SpChartManager {
     progress('cpu freq', 80);
     await this.freq.init();
     await this.logChart.init();
+    await this.spHiSysEvent.init();
     progress('Clock init', 82);
     await this.clockChart.init();
     progress('Irq init', 84);
@@ -175,7 +179,7 @@ export class SpChartManager {
     await perfDataQuery.initPerfCache();
     await this.nativeMemory.initNativeMemory();
     await this.fileSystem.initFileCallchain();
-    this.perf.updateChartData();
+    this.perf.resetAllChartData();
   }
 
   handleProcessThread(arr: { id: number; name: string; type: string }[]) {

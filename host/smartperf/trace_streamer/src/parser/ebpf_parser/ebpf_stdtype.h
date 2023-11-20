@@ -14,7 +14,11 @@
  */
 #ifndef EBPF_DATA_STD_TYPE_H
 #define EBPF_DATA_STD_TYPE_H
+#if is_mingw
+#include "dfx_nonlinux_define.h"
+#else
 #include <elf.h>
+#endif
 #include <map>
 #include "ts_common.h"
 namespace SysTuning {

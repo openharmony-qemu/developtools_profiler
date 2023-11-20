@@ -24,8 +24,6 @@ import {
 } from '../../../../database/SqlLite.js';
 import { PerfFile, PerfSample, PerfStack, PerfThread } from '../../../../bean/PerfProfile.js';
 import { Utils } from '../../base/Utils.js';
-import '../../../DisassemblingWindow.js';
-import { DisassemblingWindow } from '../../../DisassemblingWindow.js';
 import { SpApplication } from '../../../../SpApplication.js';
 import { log } from '../../../../../log/Log.js';
 import '../../../../../base-ui/slicer/lit-slicer.js';
@@ -37,12 +35,10 @@ export class TabPanePerfSample extends BaseElement {
   private tblData: LitTable | null | undefined;
   private perfSampleSource: Array<PerfSample> = [];
   private processMap: Map<number, PerfThread> = new Map<number, PerfThread>();
-  private perfSampleListModal: DisassemblingWindow | null | undefined;
   private sortKey: string = 'timeString';
   private sortType: number = 0;
 
   set data(perfSampleSelection: SelectionParam | null | undefined) {
-    this.perfSampleListModal!.style.display = 'none';
     this.perfSampleTbl!.style.visibility = 'visible';
     // @ts-ignore
     this.perfSampleTbl?.shadowRoot?.querySelector('.table')?.style?.height =
@@ -59,7 +55,8 @@ export class TabPanePerfSample extends BaseElement {
           perfSampleSelection.rightNs,
           perfSampleSelection.perfAll ? [] : perfSampleSelection.perfCpus,
           perfSampleSelection.perfAll ? [] : perfSampleSelection.perfProcess,
-          perfSampleSelection.perfAll ? [] : perfSampleSelection.perfThread
+          perfSampleSelection.perfAll ? [] : perfSampleSelection.perfThread,
+          perfSampleSelection.perfEventTypeId
         ),
       ]).then((results) => {
         let processes = results[0] as Array<PerfThread>;
@@ -113,7 +110,6 @@ export class TabPanePerfSample extends BaseElement {
   initElements(): void {
     this.perfSampleTbl = this.shadowRoot?.querySelector<LitTable>('#tb-perf-sample');
     this.tblData = this.shadowRoot?.querySelector<LitTable>('#tb-stack-data');
-    this.perfSampleListModal = this.shadowRoot?.querySelector<DisassemblingWindow>('tab-native-data-modal');
     this.perfSampleTbl!.addEventListener('row-click', (e) => {
       // @ts-ignore
       let data = e.detail.data as PerfSample;
@@ -126,48 +122,6 @@ export class TabPanePerfSample extends BaseElement {
       this.sortType = evt.detail.sort;
       // @ts-ignore
       this.sortPerfSampleTable(evt.detail.key, evt.detail.sort);
-    });
-    let lastClikTime = 0;
-    let spApplication = <SpApplication>document.getElementsByTagName('sp-application')[0];
-    this.tblData!.addEventListener('row-click', (e) => {
-      if (Date.now() - lastClikTime < 200 && spApplication.vs) {
-        this.perfSampleTbl!.style.visibility = 'hidden';
-        new ResizeObserver((entries) => {
-          this.perfSampleListModal!.style.width = this.perfSampleTbl!.clientWidth + 'px';
-          this.perfSampleListModal!.style.height = this.perfSampleTbl!.clientHeight + 'px';
-        }).observe(this.perfSampleTbl!);
-        this.perfSampleListModal!.showLoading();
-        // @ts-ignore
-        let data = e.detail.data as PerfStack;
-        let perfSampleListPath = data.path;
-        let perfSampleListAddr = data.vaddrInFile;
-        let perfSampleListAddrHex = perfSampleListAddr.toString(16);
-        if (perfSampleListPath.trim() === '[kernel.kallsyms]') {
-          this.perfSampleListModal?.showContent(
-            `error : Symbol ${data.symbol} lib is [kernel.kallsyms] ,not support `,
-            perfSampleListAddrHex
-          );
-        } else if (perfSampleListPath.trim() === '') {
-          this.perfSampleListModal?.showContent(`error : Symbol ${data.symbol} lib is null `, perfSampleListAddrHex);
-        } else if (perfSampleListAddr < 0) {
-          this.perfSampleListModal?.showContent(
-            `error : Symbol ${data.symbol} current addr is error ` + perfSampleListAddrHex,
-            perfSampleListAddrHex
-          );
-        } else {
-          const binDir = 'C:/binary_cache';
-          let binPath = binDir + perfSampleListPath;
-          let cmd = 'C:/binary_cache/llvm-objdump.exe -S ' + binPath;
-          Cmd.execObjDump(cmd, perfSampleListAddrHex, (result: any) => {
-            this.perfSampleListModal?.showContent(result, perfSampleListAddrHex);
-          });
-        }
-      }
-      lastClikTime = Date.now();
-    });
-    this.perfSampleListModal!.setCloseListener(() => {
-      this.perfSampleListModal!.style.display = 'none';
-      this.perfSampleTbl!.style.visibility = 'visible';
     });
   }
 
@@ -183,7 +137,6 @@ export class TabPanePerfSample extends BaseElement {
         this.perfSampleTbl?.reMeauseHeight();
         this.tblData?.reMeauseHeight();
       }
-      this.perfSampleListModal!.style.height = this.perfSampleTbl!.clientHeight - 2 + 'px'; //2 is borderWidth
     }).observe(this.parentElement!);
   }
 

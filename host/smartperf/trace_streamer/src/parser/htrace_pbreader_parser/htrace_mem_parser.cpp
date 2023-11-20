@@ -210,8 +210,10 @@ uint32_t HtraceMemParser::ParseSmapsBlockDetail(ProtoReader::SmapsInfo_Reader& s
     }
     if ((EndWith(path, ".jar")) || (EndWith(path, ".apk")) || (EndWith(path, ".vdex")) || (EndWith(path, ".odex")) ||
         (EndWith(path, ".oat")) || (path.find("dex") != std::string::npos)) {
-        return hasX ? (hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_CODE_APP : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_CODE_SYS)
-                    : (hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_APP : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_SYS);
+        return hasX ? (hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_CODE_APP
+                                  : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_CODE_SYS)
+                    : (hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_APP
+                                  : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_SYS);
     }
     if (hasX && path.find("/bin/") != std::string::npos) {
         return (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_CODE_SYS;
@@ -220,7 +222,8 @@ uint32_t HtraceMemParser::ParseSmapsBlockDetail(ProtoReader::SmapsInfo_Reader& s
         return (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_SYS;
     }
     if (path.find("[bss]") != std::string::npos) {
-        return hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_APP : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_SYS;
+        return hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_APP
+                          : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_DATA_SYS;
     }
     if ((path.find("[anon]") != std::string::npos) || (path.find("[anon:") != std::string::npos)) {
         if (std::find(g_unknownAnonMemInfo.begin(), g_unknownAnonMemInfo.end(), path) != g_unknownAnonMemInfo.end()) {
@@ -259,7 +262,8 @@ uint32_t HtraceMemParser::ParseSmapsBlockType(ProtoReader::SmapsInfo_Reader& sma
     if (detailRet != (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_INVALID) {
         return detailRet;
     }
-    return hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_OTHER_APP : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_OTHER_SYS;
+    return hasAppNmae ? (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_OTHER_APP
+                      : (uint32_t)SmapsMemType::SMAPS_MEM_TYPE_OTHER_SYS;
 }
 
 void HtraceMemParser::ParseSmapsInfoEasy(const ProtoReader::ProcessMemoryInfo_Reader* memInfo,
@@ -1217,7 +1221,8 @@ void HtraceMemParser::DmaMemDeduplicate() const
             const auto& pidMap = item.second;
             for (const auto& pidItem : pidMap) {
                 if (pidItem.second.second < maxPidType) {
-                    dmaMemData->SetFlag(pidItem.second.first, (uint32_t)MemDeduplicateFlag::MEM_DEDUPLICATE_FLAG_DUP_DIFF_PROCESS);
+                    dmaMemData->SetFlag(pidItem.second.first,
+                                        (uint32_t)MemDeduplicateFlag::MEM_DEDUPLICATE_FLAG_DUP_DIFF_PROCESS);
                 }
             }
         }

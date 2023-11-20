@@ -20,8 +20,12 @@ ohos_source_set("hi_sysevent_tables") {
   sources = [
     "device_state_table.cpp",
     "device_state_table.h",
+    "sysevent_all_event_table.cpp",
+    "sysevent_all_event_table.h",
     "sysevent_measure_table.cpp",
     "sysevent_measure_table.h",
+    "sysevent_subkey_table.cpp",
+    "sysevent_subkey_table.h",
   ]
   include_dirs = [
     "../base",

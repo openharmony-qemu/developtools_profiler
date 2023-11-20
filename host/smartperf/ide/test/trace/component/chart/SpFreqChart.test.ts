@@ -14,12 +14,15 @@
  */
 
 // @ts-ignore
+import { queryCpuCount } from '../../../../dist/trace/database/SqlLite.js';
+
 window.ResizeObserver = window.ResizeObserver ||
     jest.fn().mockImplementation(() => ({
       disconnect: jest.fn(),
       observe: jest.fn(),
       unobserve: jest.fn(),
     }));
+// @ts-ignore
 import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
 // @ts-ignore
 import { SpFreqChart } from '../../../../dist/trace/component/chart/SpFreqChart.js';
@@ -118,6 +121,8 @@ describe('spFpsChart Test', () => {
   let MockgetCpuLimitFreqMax = sqlit.getCpuLimitFreqMax;
   MockgetCpuLimitFreqMax.mockResolvedValue([{ maxValue: 100, filterId: 9 }]);
 
+  let MockgetCpuCount = sqlit.queryCpuCount;
+  MockgetCpuCount.mockResolvedValue([{ maxCount: 100, filterId: 9 }]);
   it('spFpsChart01', function () {
     expect(spFpsChart.init()).toBeDefined();
   });

@@ -73,7 +73,11 @@ void Metrics::InitMemoryUnAggStrategy(const std::string& result)
     json jMessage = json::parse(result);
     for (int i = 0; i < jMessage.at("values").size(); i++) {
         ProcessValuesItem processValuesItem;
-        processValuesItem.processName = jMessage.at("values")[i].at(0);
+        if (jMessage.at("values")[i].at(0).is_null()) {
+            processValuesItem.processName = "";
+        } else {
+            processValuesItem.processName = jMessage.at("values")[i].at(0);
+        }
         auto names = SplitStringToVec(jMessage.at("values")[i].at(1), ",");
         auto values = SplitStringToVec(jMessage.at("values")[i].at(2), ",");
         auto times = SplitStringToVec(jMessage.at("values")[i].at(3), ",");

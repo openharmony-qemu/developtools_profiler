@@ -908,6 +908,12 @@ void PerfCallChain::Clear()
     symbolIds_.clear();
     names_.clear();
 }
+void PerfCallChain::UpdateSymbolId(size_t index, DataIndex symbolId)
+{
+    if (index < Size()) {
+        symbolIds_[index] = symbolId;
+    }
+}
 size_t PerfFiles::AppendNewPerfFiles(uint64_t fileIds, uint32_t serial, DataIndex symbols, DataIndex filePath)
 {
     ids_.emplace_back(Size());
@@ -1221,22 +1227,20 @@ const std::string& MetaData::Name(uint64_t row) const
 }
 DataIndex DataDict::GetStringIndex(std::string_view str)
 {
-    auto hashValue = hashFun(str);
-    auto itor = dataDictInnerMap_.find(hashValue);
+    auto itor = dataDictInnerMap_.find(str);
     if (itor != dataDictInnerMap_.end()) {
         return itor->second;
     }
     mutex_.lock();
     dataDict_.emplace_back(std::string(str));
     DataIndex stringIdentity = dataDict_.size() - 1;
-    dataDictInnerMap_.emplace(hashValue, stringIdentity);
+    dataDictInnerMap_.emplace(std::string_view(dataDict_.back()), stringIdentity);
     mutex_.unlock();
     return stringIdentity;
 }
 DataIndex DataDict::GetStringIndexNoWrite(std::string_view str) const
 {
-    auto hashValue = hashFun(str);
-    auto itor = dataDictInnerMap_.find(hashValue);
+    auto itor = dataDictInnerMap_.find(str);
     if (itor != dataDictInnerMap_.end()) {
         return itor->second;
     }
@@ -1808,34 +1812,29 @@ const std::deque<uint64_t>& EbpfElfSymbol::StSizes() const
     return stSizes_;
 }
 #endif
-uint32_t AppNames::AppendAppName(uint8_t flags, DataIndex eventSource, DataIndex appName)
+uint32_t HiSysEventSubkeys::AppendSysEventSubkey(DataIndex eventSource, DataIndex appName)
 {
-    flags_.push_back(flags);
-    appNames_.push_back(eventSource);
-    keyNames_.push_back(appName);
-    ids_.push_back(keyNames_.size() - 1);
+    sysEventNameIds_.emplace_back(eventSource);
+    subkeyNameIds_.emplace_back(appName);
+    ids_.emplace_back(subkeyNameIds_.size() - 1);
     return Size() - 1;
 }
-const std::deque<uint8_t>& AppNames::Falgs() const
+const std::deque<DataIndex>& HiSysEventSubkeys::SysEventNameId() const
 {
-    return flags_;
+    return sysEventNameIds_;
 }
-const std::deque<DataIndex>& AppNames::EventSourceId() const
+const std::deque<DataIndex>& HiSysEventSubkeys::SysEventSubkeyId() const
 {
-    return appNames_;
-}
-const std::deque<DataIndex>& AppNames::AppName() const
-{
-    return keyNames_;
+    return subkeyNameIds_;
 }
 
-void SysEventMeasureData::AppendData(uint64_t serial,
-                                     uint64_t ts,
-                                     uint32_t nameId,
-                                     uint32_t keyId,
-                                     int32_t type,
-                                     double numericValue,
-                                     DataIndex stringValue)
+void HiSysEventMeasureData::AppendData(uint64_t serial,
+                                       uint64_t ts,
+                                       uint32_t nameId,
+                                       uint32_t keyId,
+                                       int32_t type,
+                                       double numericValue,
+                                       DataIndex stringValue)
 {
     serial_.emplace_back(serial);
     ts_.emplace_back(ts);
@@ -1844,57 +1843,57 @@ void SysEventMeasureData::AppendData(uint64_t serial,
     types_.emplace_back(type);
     numValues_.emplace_back(numericValue);
     stringValues_.emplace_back(stringValue);
-    ids_.push_back(rowCount_);
+    ids_.emplace_back(rowCount_);
     rowCount_++;
 }
-const std::deque<uint64_t>& SysEventMeasureData::Serial() const
+const std::deque<uint64_t>& HiSysEventMeasureData::Serial() const
 {
     return serial_;
 }
-const std::deque<uint64_t>& SysEventMeasureData::Ts() const
+const std::deque<uint64_t>& HiSysEventMeasureData::Ts() const
 {
     return ts_;
 }
-const std::deque<uint32_t>& SysEventMeasureData::NameFilterId() const
+const std::deque<uint32_t>& HiSysEventMeasureData::NameFilterId() const
 {
     return nameFilterIds_;
 }
-const std::deque<uint32_t>& SysEventMeasureData::AppKeyFilterId() const
+const std::deque<uint32_t>& HiSysEventMeasureData::AppKeyFilterId() const
 {
     return appKeyFilterIds_;
 }
-const std::deque<int32_t>& SysEventMeasureData::Type() const
+const std::deque<int32_t>& HiSysEventMeasureData::Type() const
 {
     return types_;
 }
-const std::deque<double>& SysEventMeasureData::NumValue() const
+const std::deque<double>& HiSysEventMeasureData::NumValue() const
 {
     return numValues_;
 }
-const std::deque<DataIndex>& SysEventMeasureData::StringValue() const
+const std::deque<DataIndex>& HiSysEventMeasureData::StringValue() const
 {
     return stringValues_;
 }
-void DeviceStateData::AppendNewData(int32_t brightness,
-                                    int32_t btState,
-                                    int32_t location,
-                                    int32_t wifi,
-                                    int32_t streamDefault,
-                                    int32_t voiceCall,
-                                    int32_t music,
-                                    int32_t streamRing,
-                                    int32_t media,
-                                    int32_t voiceAssistant,
-                                    int32_t system,
-                                    int32_t alarm,
-                                    int32_t notification,
-                                    int32_t btSco,
-                                    int32_t enforcedAudible,
-                                    int32_t streamDtmf,
-                                    int32_t streamTts,
-                                    int32_t accessibility,
-                                    int32_t recording,
-                                    int32_t streamAll)
+void HiSysEventDeviceStateData::AppendNewData(int32_t brightness,
+                                              int32_t btState,
+                                              int32_t location,
+                                              int32_t wifi,
+                                              int32_t streamDefault,
+                                              int32_t voiceCall,
+                                              int32_t music,
+                                              int32_t streamRing,
+                                              int32_t media,
+                                              int32_t voiceAssistant,
+                                              int32_t system,
+                                              int32_t alarm,
+                                              int32_t notification,
+                                              int32_t btSco,
+                                              int32_t enforcedAudible,
+                                              int32_t streamDtmf,
+                                              int32_t streamTts,
+                                              int32_t accessibility,
+                                              int32_t recording,
+                                              int32_t streamAll)
 {
     brightness_.emplace_back(brightness);
     btStates_.emplace_back(btState);
@@ -1916,108 +1915,192 @@ void DeviceStateData::AppendNewData(int32_t brightness,
     accessibilitys_.emplace_back(accessibility);
     recordings_.emplace_back(recording);
     streamAlls_.emplace_back(streamAll);
-    ids_.push_back(rowCounts_);
+    ids_.emplace_back(rowCounts_);
     rowCounts_++;
 }
-const std::deque<int32_t>& DeviceStateData::Brightness() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Brightness() const
 {
     return brightness_;
 }
-const std::deque<int32_t>& DeviceStateData::BtState() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::BtState() const
 {
     return btStates_;
 }
-const std::deque<int32_t>& DeviceStateData::Location() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Location() const
 {
     return locations_;
 }
-const std::deque<int32_t>& DeviceStateData::Wifi() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Wifi() const
 {
     return wifis_;
 }
-const std::deque<int32_t>& DeviceStateData::StreamDefault() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::StreamDefault() const
 {
     return streamDefaults_;
 }
-const std::deque<int32_t>& DeviceStateData::VoiceCall() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::VoiceCall() const
 {
     return voiceCalls_;
 }
-const std::deque<int32_t>& DeviceStateData::Music() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Music() const
 {
     return musics_;
 }
-const std::deque<int32_t>& DeviceStateData::StreamRing() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::StreamRing() const
 {
     return streamRings_;
 }
-const std::deque<int32_t>& DeviceStateData::Media() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Media() const
 {
     return medias_;
 }
-const std::deque<int32_t>& DeviceStateData::VoiceAssistant() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::VoiceAssistant() const
 {
     return voiceAssistants_;
 }
-const std::deque<int32_t>& DeviceStateData::System() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::System() const
 {
     return systems_;
 }
-const std::deque<int32_t>& DeviceStateData::Alarm() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Alarm() const
 {
     return alarms_;
 }
-const std::deque<int32_t>& DeviceStateData::Notification() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Notification() const
 {
     return notifications_;
 }
-const std::deque<int32_t>& DeviceStateData::BtSco() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::BtSco() const
 {
     return btScos_;
 }
-const std::deque<int32_t>& DeviceStateData::EnforcedAudible() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::EnforcedAudible() const
 {
     return enforcedAudibles_;
 }
-const std::deque<int32_t>& DeviceStateData::StreamDtmf() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::StreamDtmf() const
 {
     return streamDtmfs_;
 }
-const std::deque<int32_t>& DeviceStateData::StreamTts() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::StreamTts() const
 {
     return streamTts_;
 }
-const std::deque<int32_t>& DeviceStateData::Accessibility() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Accessibility() const
 {
     return accessibilitys_;
 }
-const std::deque<int32_t>& DeviceStateData::Recording() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::Recording() const
 {
     return recordings_;
 }
-const std::deque<int32_t>& DeviceStateData::StreamAll() const
+const std::deque<int32_t>& HiSysEventDeviceStateData::StreamAll() const
 {
     return streamAlls_;
 }
-void TraceConfigData::AppendNewData(std::string traceSource, std::string key, std::string value)
+void TraceConfig::AppendNewData(std::string traceSource, std::string key, std::string value)
 {
     traceSource_.emplace_back(traceSource);
     key_.emplace_back(key);
     value_.emplace_back(value);
-    ids_.push_back(rowCounts_);
+    ids_.emplace_back(rowCounts_);
     rowCounts_++;
 }
-const std::deque<std::string>& TraceConfigData::TraceSource() const
+const std::deque<std::string>& TraceConfig::TraceSource() const
 {
     return traceSource_;
 }
-const std::deque<std::string>& TraceConfigData::Key() const
+const std::deque<std::string>& TraceConfig::Key() const
 {
     return key_;
 }
-const std::deque<std::string>& TraceConfigData::Value() const
+const std::deque<std::string>& TraceConfig::Value() const
 {
     return value_;
+}
+uint32_t HiSysEventAllEventData::AppendHiSysEventData(DataIndex domainId,
+                                                      DataIndex eventNameId,
+                                                      uint64_t timeStamp,
+                                                      uint32_t type,
+                                                      const std::string& timeZone,
+                                                      uint32_t pid,
+                                                      uint32_t tid,
+                                                      uint32_t uid,
+                                                      const std::string& level,
+                                                      const std::string& tag,
+                                                      const std::string& eventId,
+                                                      uint64_t seq,
+                                                      const std::string& info,
+                                                      const std::string& content)
+{
+    domainIds_.emplace_back(domainId);
+    eventNameIds_.emplace_back(eventNameId);
+    timeStamps_.emplace_back(timeStamp);
+    types_.emplace_back(type);
+    timeZones_.emplace_back(timeZone);
+    pids_.emplace_back(pid);
+    tids_.emplace_back(tid);
+    uids_.emplace_back(uid);
+    levels_.emplace_back(level);
+    tags_.emplace_back(tag);
+    eventIds_.emplace_back(eventId);
+    seqs_.emplace_back(seq);
+    infos_.emplace_back(info);
+    contents_.emplace_back(content);
+    ids_.emplace_back(Size());
+    return Size() - 1;
+}
+const std::deque<DataIndex>& HiSysEventAllEventData::DomainIds() const
+{
+    return domainIds_;
+}
+const std::deque<DataIndex>& HiSysEventAllEventData::EventNameIds() const
+{
+    return eventNameIds_;
+}
+const std::deque<uint32_t>& HiSysEventAllEventData::Types() const
+{
+    return types_;
+}
+const std::deque<std::string>& HiSysEventAllEventData::TimeZones() const
+{
+    return timeZones_;
+}
+const std::deque<uint32_t>& HiSysEventAllEventData::Pids() const
+{
+    return pids_;
+}
+const std::deque<uint32_t>& HiSysEventAllEventData::Tids() const
+{
+    return tids_;
+}
+const std::deque<uint32_t>& HiSysEventAllEventData::Uids() const
+{
+    return uids_;
+}
+const std::deque<std::string>& HiSysEventAllEventData::Levels() const
+{
+    return levels_;
+}
+const std::deque<std::string>& HiSysEventAllEventData::Tags() const
+{
+    return tags_;
+}
+const std::deque<std::string>& HiSysEventAllEventData::EventIds() const
+{
+    return eventIds_;
+}
+const std::deque<uint64_t>& HiSysEventAllEventData::Seqs() const
+{
+    return seqs_;
+}
+const std::deque<std::string>& HiSysEventAllEventData::Infos() const
+{
+    return infos_;
+}
+const std::deque<std::string>& HiSysEventAllEventData::Contents() const
+{
+    return contents_;
 }
 void SmapsData::AppendNewData(uint64_t timeStamp,
                               uint64_t ipid,
@@ -2058,7 +2141,7 @@ void SmapsData::AppendNewData(uint64_t timeStamp,
     swap_.emplace_back(swap);
     swapPss_.emplace_back(swapPss);
     type_.emplace_back(type);
-    ids_.push_back(rowCount_);
+    ids_.emplace_back(rowCount_);
     rowCount_++;
 }
 const std::deque<uint64_t>& SmapsData::TimeStamps() const
@@ -2379,8 +2462,8 @@ size_t FrameMaps::AppendNew(FrameSlice* frameSlice, uint64_t src, uint64_t dst)
 {
     timeStamps_.emplace_back(0);
     ids_.emplace_back(ids_.size());
-    srcs_.push_back(src);
-    dsts_.push_back(dst);
+    srcs_.emplace_back(src);
+    dsts_.emplace_back(dst);
     if (frameSlice->Types().at(dst) == FrameSlice::EXPECT_SLICE) {
         uint64_t expRsStartTime = frameSlice->TimeStampData().at(dst);
         uint64_t expUiEndTime = frameSlice->TimeStampData().at(src) + frameSlice->Durs().at(src);
@@ -3128,12 +3211,13 @@ void TaskPoolInfo::AppendTimeoutRow(uint32_t index, uint32_t timeoutRow)
         timeoutRows_[index] = timeoutRow;
     }
 }
-TableRowId Animation::AppendAnimation(InternalTime inputTime, InternalTime startPoint)
+TableRowId Animation::AppendAnimation(InternalTime inputTime, InternalTime startPoint, DataIndex nameIndex)
 {
     inputTimes_.emplace_back(inputTime);
     startPoints_.emplace_back(startPoint);
     endPoins_.emplace_back(INVALID_TIME);
     frameInfos_.emplace_back(INVALID_UINT64);
+    names_.emplace_back(nameIndex);
     ids_.emplace_back(Size());
     return ids_.size() - 1;
 }
@@ -3174,6 +3258,10 @@ const std::deque<InternalTime>& Animation::EndPoints() const
 const std::deque<DataIndex>& Animation::FrameInfos() const
 {
     return frameInfos_;
+}
+const std::deque<DataIndex>& Animation::Names() const
+{
+    return names_;
 }
 const std::deque<uint64_t>& Animation::IdsData() const
 {
@@ -3325,7 +3413,7 @@ void AshMemData::AppendNewData(InternalPid ipid,
     refCounts_.emplace_back(refCount);
     purgeds_.emplace_back(purged);
     flags_.emplace_back(flag);
-    ids_.push_back(rowCount_);
+    ids_.emplace_back(rowCount_);
     rowCount_++;
 }
 void AshMemData::SetFlag(uint64_t rowId, uint32_t flag)
@@ -3398,7 +3486,7 @@ void DmaMemData::AppendNewData(InternalPid ipid,
     bufNameIds_.emplace_back(bufNameId);
     expNameIds_.emplace_back(expNameId);
     flags_.emplace_back(flag);
-    ids_.push_back(rowCount_);
+    ids_.emplace_back(rowCount_);
     rowCount_++;
 }
 void DmaMemData::SetFlag(uint64_t rowId, uint32_t flag)
@@ -3457,7 +3545,7 @@ void GpuProcessMemData::AppendNewData(uint64_t ts,
     ipids_.emplace_back(ipid);
     itids_.emplace_back(itid);
     usedGpuSizes_.emplace_back(usedGpuSize);
-    ids_.push_back(rowCount_);
+    ids_.emplace_back(rowCount_);
     rowCount_++;
 }
 const std::deque<DataIndex>& GpuProcessMemData::GpuNameIds() const
@@ -3503,7 +3591,7 @@ void GpuWindowMemData::AppendNewData(uint64_t ts,
     counts_.emplace_back(count);
     purgeableSizes_.emplace_back(purgeableSize);
     ipids_.emplace_back(INVALID_IPID);
-    ids_.push_back(rowCount_);
+    ids_.emplace_back(rowCount_);
     rowCount_++;
 }
 const std::deque<DataIndex>& GpuWindowMemData::WindowNameIds() const

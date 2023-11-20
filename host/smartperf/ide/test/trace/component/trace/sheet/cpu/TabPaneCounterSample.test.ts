@@ -17,6 +17,9 @@
 import { TabPaneCounterSample } from '../../../../../../dist/trace/component/trace/sheet/cpu/TabPaneCounterSample.js';
 // @ts-ignore
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 // @ts-ignore
 import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 

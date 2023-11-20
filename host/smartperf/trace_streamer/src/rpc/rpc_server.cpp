@@ -22,6 +22,7 @@
 #include <filesystem>
 #endif
 #include "common_types.h"
+#include "bytrace_hilog_parser.h"
 #include "bytrace_parser.h"
 #include "htrace_parser.h"
 #include "json.hpp"
@@ -59,7 +60,7 @@ void from_json(const json& j, ParserConfig& v)
     j.at("BinderRunnable").get_to(v.binderConfigValue);
 }
 } // namespace jsonns
-bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack)
+bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack resultCallBack, bool isFinish)
 {
     g_loadSize += len;
     size_t blockSize = 1024 * 1024;
@@ -67,7 +68,7 @@ bool RpcServer::ParseData(const uint8_t* data, size_t len, ResultCallBack result
         size_t parseSize = std::min(len, blockSize);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(parseSize);
         std::copy(data, data + parseSize, buf.get());
-        if (!ts_->ParseTraceDataSegment(std::move(buf), parseSize, false, false)) {
+        if (!ts_->ParseTraceDataSegment(std::move(buf), parseSize, false, isFinish && (len <= blockSize))) {
             if (resultCallBack) {
                 resultCallBack("formaterror\r\n", SEND_FINISH);
             }
@@ -167,6 +168,12 @@ bool RpcServer::ParseSplitFileData(const uint8_t* data,
         ts_->GetBytraceData()->ClearByTraceData();
         return true;
     }
+    if (isSplitFile && ts_->GetFileType() == TRACE_FILETYPE_HILOG) {
+        splitFileCallBack(ts_->GetBytraceData()->GetHiLogParser()->GetTraceDataHiLog(),
+                          (int32_t)SplitDataDataType::SPLIT_FILE_DATA, isFinish);
+        ts_->GetBytraceData()->GetHiLogParser()->ClearHiLogData();
+        return true;
+    }
     if (isSplitFile && isFinish && ts_->GetFileType() == TRACE_FILETYPE_H_TRACE) {
         uint64_t dataSize = 0;
         std::string result = VALUE;
@@ -234,8 +241,8 @@ void RpcServer::ProcEbpfSplitResult(SplitFileCallBack splitFileCallBack, bool is
     std::string result = VALUE;
     for (auto it = splitResult.begin(); it != splitResult.end(); ++it) {
         if (it->type == (int32_t)SplitDataDataType::SPLIT_FILE_JSON) {
-            result += OFFSET + std::to_string(it->json.offset);
-            result += SIZE + std::to_string(it->json.size);
+            result += OFFSET + std::to_string(it->originSeg.offset);
+            result += SIZE + std::to_string(it->originSeg.size);
             result += "},";
         } else {
             if (result != VALUE) {
@@ -260,8 +267,8 @@ void RpcServer::ProcPerfSplitResult(SplitFileCallBack splitFileCallBack, bool is
     std::string result = VALUE;
     for (auto it = splitResult.begin(); it != splitResult.end(); ++it) {
         if (it->type == (int32_t)SplitDataDataType::SPLIT_FILE_JSON) {
-            result += OFFSET + std::to_string(it->json.offset);
-            result += SIZE + std::to_string(it->json.size);
+            result += OFFSET + std::to_string(it->originSeg.offset);
+            result += SIZE + std::to_string(it->originSeg.size);
             result += "},";
         } else {
             if (result != VALUE) {

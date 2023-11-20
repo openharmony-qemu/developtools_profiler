@@ -55,6 +55,8 @@ import './component/trace/base/CustomThemeColor.js';
 import { CustomThemeColor, Theme } from './component/trace/base/CustomThemeColor.js';
 import { convertPool } from './database/Convert.js';
 import { LongTraceDBUtils } from './database/LongTraceDBUtils.js';
+import { type SpKeyboard } from './component/SpKeyboard.js';
+import './component/SpKeyboard.js';
 
 @element('sp-application')
 export class SpApplication extends BaseElement {
@@ -261,6 +263,7 @@ export class SpApplication extends BaseElement {
         .search-container{
             z-index: 10;
             position: relative;
+            cursor: default;
         }
         .progress{
             bottom: 0;
@@ -500,8 +503,10 @@ export class SpApplication extends BaseElement {
             display: flex;
         }
         </style>
-        <div class="root">
+        <div class="root" style="position: relative;">
             <lit-main-menu id="main-menu" class="menu" data=''></lit-main-menu>
+            <sp-keyboard style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 8888" id="sp-keyboard">
+            </sp-keyboard>
             <div class="search-container">
                 <div class="search" style="position: relative;">
                     <div class="sidebar-button" style="width: 0">
@@ -550,8 +555,8 @@ export class SpApplication extends BaseElement {
                 </sp-help>
                 <sp-flags style="width:100%;height:100%;overflow:auto;visibility:hidden;top:0px;left:0px;right:0;bottom:0px;position:absolute;z-index: 104" id="sp-flags">
                 </sp-flags>
-                <trace-row-config class="chart-filter"></trace-row-config>
-                <custom-theme-color class="custom-color"></custom-theme-color>
+                <trace-row-config class="chart-filter" style="height:100%;top:0px;right:0;bottom:0px;position:absolute;z-index: 105"></trace-row-config>
+                <custom-theme-color class="custom-color" style="height:100%;top:0px;right:0;bottom:0px;position:absolute;z-index: 106"></custom-theme-color>
             </div>
         </div>
         `;
@@ -570,19 +575,18 @@ export class SpApplication extends BaseElement {
     let spInfoAndStats = this.shadowRoot!.querySelector<SpInfoAndStats>('#sp-info-and-stats') as SpInfoAndStats; // new SpInfoAndStats();
     let spSystemTrace = this.shadowRoot!.querySelector<SpSystemTrace>('#sp-system-trace');
     this.spHelp = this.shadowRoot!.querySelector<SpHelp>('#sp-help');
+    let SpKeyboard = this.shadowRoot!.querySelector<SpKeyboard>('#sp-keyboard') as SpKeyboard;
     let spFlags = this.shadowRoot!.querySelector<SpFlags>('#sp-flags') as SpFlags;
     let spRecordTrace = this.shadowRoot!.querySelector<SpRecordTrace>('#sp-record-trace');
     let spRecordTemplate = this.shadowRoot!.querySelector<SpRecordTrace>('#sp-record-template');
     let spSchedulingAnalysis = this.shadowRoot!.querySelector<SpSchedulingAnalysis>(
       '#sp-scheduling-analysis'
     ) as SpSchedulingAnalysis;
-    let appContent = this.shadowRoot?.querySelector('#app-content') as HTMLDivElement;
     let mainMenu = this.shadowRoot?.querySelector('#main-menu') as LitMainMenu;
     let menu = mainMenu.shadowRoot?.querySelector('.menu-button') as HTMLDivElement;
     let progressEL = this.shadowRoot?.querySelector('.progress') as LitProgressBar;
     let litSearch = this.shadowRoot?.querySelector('#lit-search') as LitSearch;
     let litRecordSearch = this.shadowRoot?.querySelector('#lit-record-search') as LitSearch;
-    let search = this.shadowRoot?.querySelector('.search-container') as HTMLElement;
     let sidebarButton: HTMLDivElement | undefined | null = this.shadowRoot?.querySelector('.sidebar-button');
     let chartFilter = this.shadowRoot?.querySelector('.chart-filter') as TraceRowConfig;
     let cutTraceFile = this.shadowRoot?.querySelector('.cut-trace-file') as HTMLImageElement;
@@ -607,6 +611,7 @@ export class SpApplication extends BaseElement {
       this.spHelp,
       spRecordTemplate,
       spFlags,
+      SpKeyboard,
     ];
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') {
@@ -648,6 +653,11 @@ export class SpApplication extends BaseElement {
       litSearch.index = spSystemTrace!.showStruct(false, litSearch.index, litSearch.list);
       litSearch.blur();
     });
+    // 翻页事件
+    litSearch.addEventListener('retarget-data', (ev: any) => {
+      litSearch.index = spSystemTrace!.showStruct(true, ev.detail.value, litSearch.list, ev.detail.value);
+      litSearch.blur();
+    });
     litSearch.valueChangeHandler = (value: string) => {
       if (value.length > 0) {
         let list = spSystemTrace!.searchCPU(value);
@@ -683,6 +693,9 @@ export class SpApplication extends BaseElement {
         this!.removeAttribute('chart_filter');
         chartFilter!.setAttribute('hidden', '');
       } else {
+        this!.removeAttribute('custom-color');
+        customColor!.setAttribute('hidden', '');
+        customColor.cancelOperate();
         this!.setAttribute('chart_filter', '');
         chartFilter!.removeAttribute('hidden');
       }
@@ -702,6 +715,8 @@ export class SpApplication extends BaseElement {
         customColor!.setAttribute('hidden', '');
         customColor.cancelOperate();
       } else {
+        this!.removeAttribute('chart_filter');
+        chartFilter!.setAttribute('hidden', '');
         this!.setAttribute('custom-color', '');
         customColor!.removeAttribute('hidden');
       }
@@ -752,6 +767,7 @@ export class SpApplication extends BaseElement {
         filterConfig.style.visibility = 'visible';
       } else {
         that.removeAttribute('custom-color');
+        customColor!.setAttribute('hidden', '');
         customColor.cancelOperate();
         menu!.style.pointerEvents = 'none';
         sidebarButton!.style.pointerEvents = 'none';
@@ -769,6 +785,11 @@ export class SpApplication extends BaseElement {
       childNodes.forEach((node) => {
         if (that.hasAttribute('chart_filter')) {
           that!.removeAttribute('chart_filter');
+        }
+        if (that!.hasAttribute('custom-color')) {
+          that!.removeAttribute('custom-color');
+          customColor!.setAttribute('hidden', '');
+          customColor.cancelOperate();
         }
         if (node === showNode) {
           showNode.style.visibility = 'visible';
@@ -915,42 +936,22 @@ export class SpApplication extends BaseElement {
       });
     }
 
-    function postConvert(fileName: string) {
-      let htraceData = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
-      let enc = new TextDecoder();
-      let headerStr = enc.decode(htraceData);
+    function postConvert(fileName: string): void {
       let newFileName = fileName.substring(0, fileName.lastIndexOf('.')) + '.systrace';
       let aElement = document.createElement('a');
-      let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
-        .map((byte) => byte.toString(16).padStart(2, '0'))
-        .join('');
-      if (headerStr.indexOf('OHOSPROF') === 0 || rowTraceStr.indexOf('49df') === 0) {
-        convertPool.submitWithName('getConvertData', (status: boolean, msg: string, results: Blob) => {
-          aElement.href = URL.createObjectURL(results);
-          aElement.download = newFileName;
-          let timeoutId = 0;
-          aElement.addEventListener('click', (ev) => {
-            clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(() => {
-              restoreDownLoadIcons();
-            }, 2000);
-          });
-          aElement.click();
-          window.URL.revokeObjectURL(aElement.href);
-        });
-      } else {
-        aElement.href = URL.createObjectURL(new Blob([DbPool.sharedBuffer!]));
+      convertPool.submitWithName('getConvertData', (status: boolean, msg: string, results: Blob) => {
+        aElement.href = URL.createObjectURL(results);
         aElement.download = newFileName;
-        let txtTimeoutId = 0;
+        let timeoutId = 0;
         aElement.addEventListener('click', (ev) => {
-          clearTimeout(txtTimeoutId);
-          txtTimeoutId = window.setTimeout(() => {
+          clearTimeout(timeoutId);
+          timeoutId = window.setTimeout(() => {
             restoreDownLoadIcons();
           }, 2000);
         });
         aElement.click();
         window.URL.revokeObjectURL(aElement.href);
-      }
+      });
     }
 
     function pushConvertTrace(fileName: string): Array<any> {
@@ -1017,9 +1018,9 @@ export class SpApplication extends BaseElement {
         } else {
           fd.append('file', ev as any);
         }
-        let uploadPath = `https://${window.location.host.split(':')[0]}:9000/upload`;
+        let uploadPath = `https://${window.location.host.split(':')[0]}:9000/application/upload`;
         if (that.vs) {
-          uploadPath = `http://${window.location.host.split(':')[0]}:${window.location.port}/upload`;
+          uploadPath = `http://${window.location.host.split(':')[0]}:${window.location.port}/application/upload`;
         }
         info('upload trace');
         let dbName = '';
@@ -1062,6 +1063,7 @@ export class SpApplication extends BaseElement {
                   mainMenu.menus!.splice(1, mainMenu.menus!.length > 2 ? 1 : 0, {
                     collapsed: false,
                     title: 'Current Trace',
+                    second: false,
                     describe: 'Actions on the current trace',
                     children: getTraceOptionMenus(showFileName, fileSize, fileName, true, dbName),
                   });
@@ -1104,110 +1106,87 @@ export class SpApplication extends BaseElement {
             splitDataList: that.longTraceDataList,
           },
           (res: Array<any>) => {
-            litSearch.setPercent('Cut in file ',  100);
+            litSearch.setPercent('Cut in file ', 100);
             if (that.longTraceHeadMessageList.length > 0) {
               getTraceFileByPage(that.currentPageNum);
               litSearch.style.marginLeft = '80px';
+              longTracePage.style.display = 'flex';
               let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
-              that.drawPageNumber(longTracePage, pageListDiv, that.longTraceHeadMessageList.length);
               let previewButton: HTMLDivElement | null | undefined =
                 that.shadowRoot?.querySelector<HTMLDivElement>('#preview-button');
               let nextButton: HTMLDivElement | null | undefined =
                 that.shadowRoot?.querySelector<HTMLDivElement>('#next-button');
               let pageInput = that.shadowRoot?.querySelector<HTMLInputElement>('.page-input');
+              pageListDiv.innerHTML = '';
+              that.refreshPageList(
+                pageListDiv,
+                previewButton!,
+                nextButton!,
+                pageInput!,
+                that.currentPageNum,
+                that.longTraceHeadMessageList.length
+              );
               if (previewButton) {
-                previewButton.style.pointerEvents = 'none';
-                previewButton.style.opacity = '0.7';
                 previewButton.addEventListener('click', () => {
-                  if (progressEL.loading) {
+                  if (progressEL.loading || that.currentPageNum === 1) {
                     return;
                   }
                   if (that.currentPageNum > 1) {
                     that.currentPageNum--;
-                    if (that.currentPageNum === 1) {
-                      previewButton!.style.pointerEvents = 'none';
-                      nextButton!.style.pointerEvents = 'auto';
-                      previewButton!.style.opacity = '0.7';
-                    } else {
-                      previewButton!.style.pointerEvents = 'auto';
-                      nextButton!.style.pointerEvents = 'none';
-                      previewButton!.style.opacity = '1';
-                    }
-                    let previewElement = that.shadowRoot?.querySelector<HTMLDivElement>(
-                      `.page-number[title='${that.currentPageNum}']`
-                    );
-                    if (previewElement!.textContent === '...') {
-                      return;
-                    }
-                    let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                    querySelector?.removeAttribute('selected');
-                    previewElement!.setAttribute('selected', '');
-                    pageInput!.value = that.currentPageNum + '';
                     progressEL.loading = true;
+                    that.refreshPageList(
+                      pageListDiv,
+                      previewButton!,
+                      nextButton!,
+                      pageInput!,
+                      that.currentPageNum,
+                      that.longTraceHeadMessageList.length
+                    );
                     getTraceFileByPage(that.currentPageNum);
                   }
                 });
               }
-              if (nextButton && that.longTraceHeadMessageList.length === 1) {
-                nextButton.style.pointerEvents = 'none';
-                nextButton.style.opacity = '0.7';
-              }
               nextButton!.addEventListener('click', () => {
-                if (progressEL.loading) {
+                if (progressEL.loading || that.currentPageNum === that.longTraceHeadMessageList.length) {
                   return;
                 }
                 if (that.currentPageNum < that.longTraceHeadMessageList.length) {
                   that.currentPageNum++;
-                  if (that.currentPageNum === that.longTraceHeadMessageList.length) {
-                    nextButton!.style.pointerEvents = 'none';
-                    previewButton!.style.pointerEvents = 'auto';
-                    nextButton!.style.opacity = '0.7';
-                  } else {
-                    previewButton!.style.pointerEvents = 'auto';
-                    nextButton!.style.pointerEvents = 'auto';
-                    nextButton!.style.opacity = '1';
-                  }
-                  let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
-                    `.page-number[title='${that.currentPageNum}']`
-                  );
-                  if (nextElement!.textContent === '...') {
-                    return;
-                  }
-                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                  querySelector?.removeAttribute('selected');
-                  nextElement!.setAttribute('selected', '');
                   progressEL.loading = true;
+                  that.refreshPageList(
+                    pageListDiv,
+                    previewButton!,
+                    nextButton!,
+                    pageInput!,
+                    that.currentPageNum,
+                    that.longTraceHeadMessageList.length
+                  );
                   getTraceFileByPage(that.currentPageNum);
                 }
               });
-              pageListDiv.querySelectorAll('div').forEach((divEL) => {
+              let nodeListOf = pageListDiv.querySelectorAll<HTMLDivElement>('div');
+              nodeListOf.forEach((divEL, index) => {
                 divEL.addEventListener('click', () => {
-                  if (progressEL.loading || divEL.textContent === '...') {
+                  if (progressEL.loading) {
                     return;
                   }
-                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                  querySelector?.removeAttribute('selected');
-                  divEL.setAttribute('selected', '');
-                  let selectPageNum = Number(divEL.textContent);
-                  if (selectPageNum !== that.currentPageNum) {
-                    that.currentPageNum = selectPageNum;
-                    if (that.currentPageNum === that.longTraceHeadMessageList.length) {
-                      nextButton!.style.pointerEvents = 'none';
-                      nextButton!.style.opacity = '0.7';
-                    } else {
-                      nextButton!.style.pointerEvents = 'auto';
-                      nextButton!.style.opacity = '1';
-                    }
-                    if (that.currentPageNum === 1) {
-                      previewButton!.style.pointerEvents = 'none';
-                      previewButton!.style.opacity = '0.7';
-                    } else {
-                      previewButton!.style.pointerEvents = 'auto';
-                      previewButton!.style.opacity = '1';
-                    }
-                    progressEL.loading = true;
-                    getTraceFileByPage(that.currentPageNum);
+                  if (divEL.textContent === '...') {
+                    let freeSize =
+                      Number(nodeListOf[index + 1].textContent) - Number(nodeListOf[index - 1].textContent);
+                    that.currentPageNum = Math.floor(freeSize / 2 + Number(nodeListOf[index - 1].textContent));
+                  } else {
+                    that.currentPageNum = Number(divEL.textContent);
                   }
+                  progressEL.loading = true;
+                  that.refreshPageList(
+                    pageListDiv,
+                    previewButton!,
+                    nextButton!,
+                    pageInput!,
+                    that.currentPageNum,
+                    that.longTraceHeadMessageList.length
+                  );
+                  getTraceFileByPage(that.currentPageNum);
                 });
               });
               pageInput!.addEventListener('input', () => {
@@ -1223,32 +1202,17 @@ export class SpApplication extends BaseElement {
                 if (progressEL.loading) {
                   return;
                 }
-                let pageIndex = Number(pageInput!.value);
-                if (pageIndex > 0 && pageIndex < that.longTraceHeadMessageList.length) {
-                  that.currentPageNum = pageIndex;
-                  if (that.currentPageNum === that.longTraceHeadMessageList.length) {
-                    nextButton!.style.pointerEvents = 'none';
-                    nextButton!.style.opacity = '0.7';
-                  } else {
-                    nextButton!.style.pointerEvents = 'auto';
-                    nextButton!.style.opacity = '1';
-                  }
-                  if (that.currentPageNum === 1) {
-                    previewButton!.style.pointerEvents = 'none';
-                    previewButton!.style.opacity = '0.7';
-                  } else {
-                    previewButton!.style.pointerEvents = 'auto';
-                    previewButton!.style.opacity = '1';
-                  }
-                  let nextElement = that.shadowRoot?.querySelector<HTMLDivElement>(
-                    `.page-number[title='${that.currentPageNum}']`
-                  );
-                  let querySelector = pageListDiv.querySelector('.page-number[selected]');
-                  querySelector?.removeAttribute('selected');
-                  nextElement!.setAttribute('selected', '');
-                  progressEL.loading = true;
-                  getTraceFileByPage(that.currentPageNum);
-                }
+                that.currentPageNum = Number(pageInput!.value);
+                progressEL.loading = true;
+                that.refreshPageList(
+                  pageListDiv,
+                  previewButton!,
+                  nextButton!,
+                  pageInput!,
+                  that.currentPageNum,
+                  that.longTraceHeadMessageList.length
+                );
+                getTraceFileByPage(that.currentPageNum);
               });
             }
           },
@@ -1331,8 +1295,9 @@ export class SpApplication extends BaseElement {
             if (otherDataLength > maxTraceFileLength) {
               if (traceLength > maxTraceFileLength) {
                 litSearch.isLoading = false;
-                litSearch.setPercent('hitrace file too big!',  -1);
+                litSearch.setPercent('hitrace file too big!', -1);
                 progressEL.loading = false;
+                that.freshMenuDisable(false);
               } else {
                 let freeDataLength = maxTraceFileLength - traceLength;
                 let freeDataIndex = findFreeSizeAlgorithm(
@@ -1346,12 +1311,14 @@ export class SpApplication extends BaseElement {
                 let fileBlob = new Blob(finalData);
                 const file = new File([fileBlob], fileName);
                 let fileSize = (file.size / 1048576).toFixed(1);
+                document.title = `${fileName}(${fileSize}M)`;
                 handleWasmMode(file, file.name, `${fileSize}M`, fileName);
               }
             } else {
               let fileBlob = new Blob([traceArray, ebpfArray, arkTsArray, hiPerfArray]);
               const file = new File([fileBlob], fileName);
               let fileSize = (file.size / 1048576).toFixed(1);
+              document.title = `${fileName}(${fileSize}M)`;
               handleWasmMode(file, file.name, `${fileSize}M`, file.name);
             }
             that.traceFileName = fileName;
@@ -1426,11 +1393,24 @@ export class SpApplication extends BaseElement {
             },
             async (res) => {
               let existFtrace = await queryExistFtrace();
+              let isAllowTrace = true;
+              if (DbPool.sharedBuffer) {
+                let traceHeadData = new Uint8Array(DbPool.sharedBuffer!.slice(0, 10));
+                let enc = new TextDecoder();
+                let headerStr = enc.decode(traceHeadData);
+                let rowTraceStr = Array.from(new Uint8Array(DbPool.sharedBuffer!.slice(0, 2)))
+                  .map((byte) => byte.toString(16).padStart(2, '0'))
+                  .join('');
+                if (headerStr.indexOf('OHOSPROF') !== 0 && rowTraceStr.indexOf('49df') !== 0) {
+                  isAllowTrace = false;
+                }
+              }
               let index = 2;
-              if (existFtrace.length > 0) {
+              if (existFtrace.length > 0 && isAllowTrace) {
                 mainMenu.menus!.splice(2, 1, {
                   collapsed: false,
                   title: 'Convert trace',
+                  second: false,
                   describe: 'Convert to other formats',
                   children: pushConvertTrace(fileName),
                 });
@@ -1439,6 +1419,7 @@ export class SpApplication extends BaseElement {
               mainMenu.menus!.splice(index, 1, {
                 collapsed: false,
                 title: 'Support',
+                second: false,
                 describe: 'Support',
                 children: [
                   {
@@ -1466,6 +1447,18 @@ export class SpApplication extends BaseElement {
                       showContent(spFlags);
                     },
                   },
+                  {
+                    title: 'Keyboard shortcuts',
+                    icon: 'menu',
+                    clickHandler: function (item: MenuItem) {
+                      SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                        event: 'Keyboard shortcuts',
+                        action: 'Keyboard shortcuts',
+                      });
+                      that.search = false;
+                      showContent(SpKeyboard);
+                    },
+                  },
                 ],
               });
               if (res.status) {
@@ -1473,6 +1466,7 @@ export class SpApplication extends BaseElement {
                 mainMenu.menus!.splice(1, mainMenu.menus!.length > 2 ? 1 : 0, {
                   collapsed: false,
                   title: 'Current Trace',
+                  second: false,
                   describe: 'Actions on the current trace',
                   children: getTraceOptionMenus(showFileName, fileSize, fileName, false),
                 });
@@ -1555,13 +1549,13 @@ export class SpApplication extends BaseElement {
           let file = detail[index];
           let fileName = file.name as string;
           allFileSize += file.size;
-          if (that.fileTypeList.some(fileType => fileName.toLowerCase().includes(fileType))) {
+          if (that.fileTypeList.some((fileType) => fileName.toLowerCase().includes(fileType))) {
             continue;
           }
           let firstLastIndexOf = fileName.lastIndexOf('.');
           let firstText = fileName.slice(0, firstLastIndexOf);
           let resultLastIndexOf = firstText.lastIndexOf('_');
-          traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1)
+          traceTypePage.push(Number(firstText.slice(resultLastIndexOf + 1, firstText.length)) - 1);
         }
         traceTypePage.sort((leftNum: number, rightNum: number) => leftNum - rightNum);
         const readFiles = async (files: FileList, traceTypePage: Array<number>) => {
@@ -1659,8 +1653,8 @@ export class SpApplication extends BaseElement {
               sliceLen = Math.min(file.size - offset, chunk);
               let slice = file.slice(offset, offset + sliceLen);
               readSize += slice.size;
-              let percentValue = (readSize * 100 / allFileSize).toFixed(2);
-              litSearch.setPercent('Read in file: ',  Number(percentValue));
+              let percentValue = ((readSize * 100) / allFileSize).toFixed(2);
+              litSearch.setPercent('Read in file: ', Number(percentValue));
               fr.readAsArrayBuffer(slice);
             }
             continue_reading();
@@ -1669,9 +1663,9 @@ export class SpApplication extends BaseElement {
             };
           });
         };
-        litSearch.setPercent('Read in file: ',  1);
+        litSearch.setPercent('Read in file: ', 1);
         readFiles(detail, traceTypePage).then(() => {
-          litSearch.setPercent('Cut in file: ',  1);
+          litSearch.setPercent('Cut in file: ', 1);
           sendCutFileMessage(timStamp);
         });
       }
@@ -1679,6 +1673,7 @@ export class SpApplication extends BaseElement {
 
     function openTraceFile(ev: any, isClickHandle?: boolean) {
       that.removeAttribute('custom-color');
+      customColor!.setAttribute('hidden', '');
       longTracePage.style.display = 'none';
       litSearch.style.marginLeft = '0px';
       let pageListDiv = that.shadowRoot?.querySelector('.page-number-list') as HTMLDivElement;
@@ -1767,6 +1762,7 @@ export class SpApplication extends BaseElement {
                   mainMenu.menus!.splice(1, mainMenu.menus!.length > 2 ? 1 : 0, {
                     collapsed: false,
                     title: 'Current Trace',
+                    second: false,
                     describe: 'Actions on the current trace',
                     children: getTraceOptionMenus(showFileName, fileSize, fileName, false),
                   });
@@ -1792,6 +1788,7 @@ export class SpApplication extends BaseElement {
       {
         collapsed: false,
         title: 'Navigation',
+        second: false,
         describe: 'Open or record a new trace',
         children: [
           {
@@ -1850,6 +1847,7 @@ export class SpApplication extends BaseElement {
       {
         collapsed: false,
         title: 'Support',
+        second: false,
         describe: 'Support',
         children: [
           {
@@ -1874,6 +1872,18 @@ export class SpApplication extends BaseElement {
               SpStatisticsHttpUtil.addOrdinaryVisitAction({
                 event: 'flags',
                 action: 'flags',
+              });
+            },
+          },
+          {
+            title: 'Keyboard shortcuts',
+            icon: 'smart-help',
+            clickHandler: function (item: MenuItem) {
+              that.search = false;
+              showContent(SpKeyboard);
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'Keyboard shortcuts',
+                action: 'Keyboard shortcuts',
               });
             },
           },
@@ -1967,9 +1977,8 @@ export class SpApplication extends BaseElement {
         sidebarButton.style.width = open ? `0px` : '48px';
       }
     };
-
-    let urlParams = this.getUrlParams(window.location.href);
-    if (urlParams && urlParams.trace && urlParams.link) {
+    let urlParams = new URL(window.location.href).searchParams;
+    if (urlParams && urlParams.get('trace') && urlParams.get('link')) {
       openFileInit();
       openMenu(false);
       litSearch.clear();
@@ -1977,76 +1986,153 @@ export class SpApplication extends BaseElement {
       that.search = true;
       progressEL.loading = true;
       let downloadLineFile = false;
+      if (urlParams.get('local')) {
+        downloadLineFile = false;
+      } else {
+        downloadLineFile = true;
+      }
       setProgress(downloadLineFile ? 'download trace file' : 'open trace file');
-      this.downloadOnLineFile(urlParams.trace, downloadLineFile, (localPath) => {
-        let path = urlParams.trace as string;
-        let fileName: string = '';
-        let showFileName: string = '';
-        if (urlParams.local) {
-          openMenu(true);
-          fileName = urlParams.traceName as string;
-        } else {
-          fileName = path.split('/').reverse()[0];
-        }
-        that.traceFileName = fileName;
-        showFileName = fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
-        TraceRow.rangeSelectObject = undefined;
-        let localUrl = downloadLineFile ? `${window.location.origin}${localPath}` : urlParams.trace;
-        fetch(localUrl)
-          .then((res) => {
-            res.arrayBuffer().then((arrayBuf) => {
-              if (urlParams.local) {
-                URL.revokeObjectURL(localUrl);
+      this.downloadOnLineFile(
+        urlParams.get('trace') as string,
+        downloadLineFile,
+        (arrayBuf, fileName, showFileName, fileSize) => {
+          handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
+        },
+        (localPath) => {
+          let path = urlParams.get('trace') as string;
+          let fileName: string = '';
+          let showFileName: string = '';
+          if (urlParams.get('local')) {
+            openMenu(true);
+            fileName = urlParams.get('traceName') as string;
+          } else {
+            fileName = path.split('/').reverse()[0];
+          }
+          that.traceFileName = fileName;
+          showFileName = fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
+          TraceRow.rangeSelectObject = undefined;
+          let localUrl = downloadLineFile ? `${window.location.origin}${localPath}` : urlParams.get('trace')!;
+          fetch(localUrl)
+            .then((res) => {
+              res.arrayBuffer().then((arrayBuf) => {
+                if (urlParams.get('local')) {
+                  URL.revokeObjectURL(localUrl);
+                }
+                let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
+                postLog(fileName, fileSize);
+                document.title = `${showFileName} (${fileSize}M)`;
+                info('Parse trace using wasm mode ');
+                handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
+              });
+            })
+            .catch((e) => {
+              if (!downloadLineFile) {
+                const firstQuestionMarkIndex = window.location.href.indexOf('?');
+                location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
               }
-              let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
-              postLog(fileName, fileSize);
-              document.title = `${showFileName} (${fileSize}M)`;
-              info('Parse trace using wasm mode ');
-              handleWasmMode(new File([arrayBuf], fileName), showFileName, fileSize, fileName);
             });
-          })
-          .catch((e) => {
-            const firstQuestionMarkIndex = window.location.href.indexOf('?');
-            location.replace(window.location.href.substring(0, firstQuestionMarkIndex));
-          });
-      });
+        }
+      );
     } else {
       openMenu(true);
     }
   }
 
-  private drawPageNumber(longTracePage: HTMLDivElement, pageListDiv: HTMLDivElement, maxPageNumber: number): void {
-    longTracePage.style.display = 'flex';
-    if (maxPageNumber > 6) {
-      for (let index = 1; index <= 6; index++) {
-        let element = document.createElement('div');
-        element.className = 'page-number pagination';
-        element.textContent = index.toString();
-        element.title = index.toString();
-        if (index === 1) {
-          element.setAttribute('selected', '');
-        }
-        if (index === 5) {
-          element.textContent = '...';
-          element.title = '...'
-        }
-        if (index === 6) {
-          element.textContent = `${maxPageNumber}`;
-          element.title = `${maxPageNumber}`;
-        }
-        pageListDiv.appendChild(element);
+  private refreshPageList(
+    pageListDiv: HTMLDivElement,
+    previewButton: HTMLDivElement,
+    nextButton: HTMLDivElement,
+    pageInput: HTMLInputElement,
+    currentPageNum: number,
+    maxPageNumber: number
+  ): void {
+    if (pageInput) {
+      pageInput.textContent = currentPageNum.toString();
+      pageInput.value = currentPageNum.toString();
+    }
+    let pageText: string[] = [];
+    if (maxPageNumber > 7) {
+      switch (currentPageNum) {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          pageText = ['1', '2', '3', '4', '5', '...', maxPageNumber.toString()];
+          break;
+        case maxPageNumber:
+        case maxPageNumber - 1:
+        case maxPageNumber - 2:
+        case maxPageNumber - 3:
+        case maxPageNumber - 4:
+          pageText = [
+            '1',
+            '...',
+            (maxPageNumber - 4).toString(),
+            (maxPageNumber - 3).toString(),
+            (maxPageNumber - 2).toString(),
+            (maxPageNumber - 1).toString(),
+            maxPageNumber.toString(),
+          ];
+          break;
+        default:
+          nextButton.style.pointerEvents = 'auto';
+          previewButton!.style.pointerEvents = 'auto';
+          nextButton.style.opacity = '1';
+          previewButton!.style.opacity = '1';
+          pageText = [
+            '1',
+            '...',
+            (currentPageNum - 1).toString(),
+            currentPageNum.toString(),
+            (currentPageNum + 1).toString(),
+            '...',
+            maxPageNumber.toString(),
+          ];
+          break;
       }
     } else {
-      for (let index = 1; index <= maxPageNumber; index++) {
+      pageText = [];
+      for (let index = 0; index < maxPageNumber; index++) {
+        pageText.push((index + 1).toString());
+      }
+    }
+    let pageNodeList = pageListDiv.querySelectorAll<HTMLDivElement>('div');
+    if (pageNodeList.length > 0) {
+      pageNodeList.forEach((page, index) => {
+        page.textContent = pageText[index].toString();
+        page.title = pageText[index];
+        if (currentPageNum.toString() === pageText[index]) {
+          page.setAttribute('selected', '');
+        } else {
+          if (page.hasAttribute('selected')) {
+            page.removeAttribute('selected');
+          }
+        }
+      });
+    } else {
+      pageListDiv.innerHTML = '';
+      pageText.forEach((page) => {
         let element = document.createElement('div');
         element.className = 'page-number pagination';
-        element.textContent = index.toString();
-        element.title = index.toString();
-        if (index === 1) {
+        element.textContent = page.toString();
+        element.title = page.toString();
+        if (currentPageNum.toString() === page.toString()) {
           element.setAttribute('selected', '');
         }
         pageListDiv.appendChild(element);
-      }
+      });
+    }
+    nextButton.style.pointerEvents = 'auto';
+    nextButton.style.opacity = '1';
+    previewButton.style.pointerEvents = 'auto';
+    previewButton.style.opacity = '1';
+    if (currentPageNum === 1) {
+      previewButton.style.pointerEvents = 'none';
+      previewButton.style.opacity = '0.7';
+    } else if (currentPageNum === maxPageNumber) {
+      nextButton.style.pointerEvents = 'none';
+      nextButton.style.opacity = '0.7';
     }
   }
 
@@ -2126,42 +2212,49 @@ export class SpApplication extends BaseElement {
     }, 1000);
   }
 
-  private downloadOnLineFile(url: string, download: boolean, openFileHandler: (path: string) => void) {
+  private downloadOnLineFile(
+    url: string,
+    download: boolean,
+    openUrl: (buffer: ArrayBuffer, fileName: string, showFileName: string, fileSize: string) => void,
+    openFileHandler: (path: string) => void
+  ) {
     if (download) {
-      let api = `${window.location.origin}/download-file`;
-      fetch(api, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          url: url,
-        }),
-      })
-        .then((response) => response.json())
+      fetch(url)
         .then((res) => {
-          if (res.code === 0 && res.success) {
-            let resultUrl = res.data.url;
-            if (resultUrl) {
-              openFileHandler(resultUrl.toString().replace(/\\/g, '/'));
-            }
-          }
+          res.arrayBuffer().then((arrayBuf) => {
+            let fileSize = (arrayBuf.byteLength / 1048576).toFixed(1);
+            let fileName = url.split('/').reverse()[0];
+            document.title = `${fileName} (${fileSize}M)`;
+            info('Parse trace using wasm mode ');
+            let showFileName =
+              fileName.lastIndexOf('.') == -1 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'));
+            openUrl(arrayBuf, fileName, showFileName, fileSize);
+          });
+        })
+        .catch((e) => {
+          let api = `${window.location.origin}/application/download-file`;
+          fetch(api, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              url: url,
+            }),
+          })
+            .then((response) => response.json())
+            .then((res) => {
+              if (res.code === 0 && res.success) {
+                let resultUrl = res.data.url;
+                if (resultUrl) {
+                  openFileHandler(resultUrl.toString().replace(/\\/g, '/'));
+                }
+              }
+            });
         });
     } else {
       openFileHandler(url);
     }
-  }
-
-  private getUrlParams(url: string) {
-    const _url = url || window.location.href;
-    const _urlParams = _url.match(/([?&])(.+?=[^&]+)/gim);
-    return _urlParams
-      ? _urlParams.reduce((a: any, b) => {
-          const value = b.slice(1).split('=');
-          a[`${value[0]}`] = decodeURIComponent(value[1]);
-          return a;
-        }, {})
-      : {};
   }
 
   private croppingFile(progressEL: LitProgressBar, litSearch: LitSearch) {

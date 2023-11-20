@@ -17,7 +17,7 @@ import { BaseElement, element } from '../../../../../base-ui/BaseElement.js';
 import { LitTable } from '../../../../../base-ui/table/lit-table.js';
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { getTabPowerBatteryData } from '../../../../database/SqlLite.js';
-import { SpHiSysEventChart } from '../../../chart/SpHiSysEventChart.js';
+import { SpHiSysEnergyChart } from '../../../chart/SpHiSysEnergyChart.js';
 import '../../../../../base-ui/table/lit-table.js';
 import { resizeObserver } from '../SheetUtils.js';
 
@@ -56,7 +56,7 @@ export class TabPanePowerBattery extends BaseElement {
       result.forEach((item) => {
         let powerDatum: any = powerData[item.eventName];
         if (item.appKey.toLocaleLowerCase() === 'appname') {
-          powerDatum['appName'] = SpHiSysEventChart.app_name;
+          powerDatum['appName'] = SpHiSysEnergyChart.app_name;
         } else {
           let eventData: Array<string> = item.eventValue.split(',');
           if (eventData.length > 0) {
@@ -91,7 +91,7 @@ export class TabPanePowerBattery extends BaseElement {
         name: 'Capacity',
         value: powerData['POWER_IDE_BATTERY'].capacity + ' mAh',
       });
-      list.push({ name: 'APP Name', value: SpHiSysEventChart.app_name! });
+      list.push({ name: 'APP Name', value: SpHiSysEnergyChart.app_name! });
       if (list.length > 0) {
         this.tblPower!.recycleDataSource = list;
       } else {

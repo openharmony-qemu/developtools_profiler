@@ -15,6 +15,9 @@
 
 // @ts-ignore
 import { TabPaneFrequencySample } from '../../../../../../dist/trace/component/trace/sheet/cpu/TabPaneFrequencySample.js';
+jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
+  return {};
+});
 // @ts-ignore
 import { SpSystemTrace } from '../../../../../../dist/trace/component/SpSystemTrace.js';
 // @ts-ignore
@@ -97,6 +100,8 @@ describe('TabPaneFrequencySample Test', () => {
     maxDuration: 63332,
     stdDuration: '',
     cpuFreqFilterIds: [1, 2, 9, 3],
+    cpuStateRowsId:[],
+    cpuFreqFilterNames:[],
   };
 
   it('TabPaneCounterSampleTest01', function () {

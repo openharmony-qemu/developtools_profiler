@@ -56,6 +56,8 @@ import { FrameSpacingRender } from './ProcedureWorkerFrameSpacing.js';
 import { JsCpuProfilerRender } from './ProcedureWorkerCpuProfiler.js';
 import { SnapshotRender } from './ProcedureWorkerSnapshot.js';
 import { LogRender } from './ProcedureWorkerLog.js';
+import { HiPerfCallChartRender } from './ProcedureWorkerHiPerfCallChart.js';
+import { HiSysEventRender } from './ProcedureWorkerHiSysEvent.js';
 
 let dataList: any = {};
 let dataList2: any = {};
@@ -86,6 +88,7 @@ export let renders: any = {
   'HiPerf-Group': new EmptyRender(),
   monitorGroup: new EmptyRender(),
   'HiPerf-Cpu': new HiperfCpuRender(),
+  'HiPerf-callchart': new HiPerfCallChartRender(),
   'HiPerf-Process': new HiperfProcessRender(),
   'HiPerf-Thread': new HiperfThreadRender(),
   'HiPerf-Report-Event': new HiperfEventRender(),
@@ -109,9 +112,10 @@ export let renders: any = {
   'js-cpu-profiler': new JsCpuProfilerRender(),
   snapshot: new SnapshotRender(),
   logs: new LogRender(),
+  hiSysEvent: new HiSysEventRender(),
 };
 
-function match(type: string, req: RequestMessage) {
+function match(type: string, req: RequestMessage): void {
   Reflect.ownKeys(renders).filter((it) => {
     if (type.startsWith(it as string)) {
       if (dataList[type]) {
@@ -123,7 +127,7 @@ function match(type: string, req: RequestMessage) {
 }
 
 let dec = new TextDecoder();
-let convertJSON = (arr: any) => {
+let convertJSON = (arr: any): any => {
   if (arr instanceof ArrayBuffer) {
     let jsonArr = [];
     let str = dec.decode(new Uint8Array(arr));
@@ -146,8 +150,8 @@ let convertJSON = (arr: any) => {
     return arr;
   }
 };
-self.onmessage = function (e: any) {
-  if ((e.data.type as string).startsWith('clear')) {
+self.onmessage = function (e: any): void {
+  if (e.data.type && (e.data.type as string).startsWith('clear')) {
     dataList = {};
     dataList2 = {};
     dataFilter = {};
@@ -161,7 +165,7 @@ self.onmessage = function (e: any) {
     });
     return;
   }
-  if (e.data.params.list) {
+  if (e.data.params && e.data.params.list) {
     dataList[e.data.type] = convertJSON(e.data.params.list);
     if (e.data.params.offscreen) {
       canvasList[e.data.type] = e.data.params.offscreen;
@@ -177,29 +181,32 @@ self.onmessage = function (e: any) {
   req.context = contextList[e.data.type];
   req.type = e.data.type as string;
   req.params = e.data.params;
-  req.online = e.data.params.online;
-  req.buf = e.data.params.buf;
-  req.isRangeSelect = e.data.params.isRangeSelect;
-  req.isHover = e.data.params.isHover;
-  req.xs = e.data.params.xs;
-  req.frame = e.data.params.frame;
-  req.flagMoveInfo = e.data.params.flagMoveInfo;
-  req.flagSelectedInfo = e.data.params.flagSelectedInfo;
-  req.hoverX = e.data.params.hoverX;
-  req.hoverY = e.data.params.hoverY;
-  req.startNS = e.data.params.startNS;
-  req.endNS = e.data.params.endNS;
-  req.totalNS = e.data.params.totalNS;
-  req.slicesTime = e.data.params.slicesTime;
-  req.range = e.data.params.range;
-  req.scale = e.data.params.scale;
-  req.canvasWidth = e.data.params.canvasWidth;
-  req.canvasHeight = e.data.params.canvasHeight;
-  req.useCache = e.data.params.useCache;
-  req.lineColor = e.data.params.lineColor;
-  req.chartColor = e.data.params.chartColor;
-  req.wakeupBean = e.data.params.wakeupBean;
-  req.intervalPerf = e.data.params.intervalPerf;
+  if (e.data.params) {
+    req.online = e.data.params.online;
+    req.buf = e.data.params.buf;
+    req.isRangeSelect = e.data.params.isRangeSelect;
+    req.isHover = e.data.params.isHover;
+    req.xs = e.data.params.xs;
+    req.frame = e.data.params.frame;
+    req.flagMoveInfo = e.data.params.flagMoveInfo;
+    req.flagSelectedInfo = e.data.params.flagSelectedInfo;
+    req.hoverX = e.data.params.hoverX;
+    req.hoverY = e.data.params.hoverY;
+    req.startNS = e.data.params.startNS;
+    req.endNS = e.data.params.endNS;
+    req.totalNS = e.data.params.totalNS;
+    req.slicesTime = e.data.params.slicesTime;
+    req.range = e.data.params.range;
+    req.scale = e.data.params.scale;
+    req.canvasWidth = e.data.params.canvasWidth;
+    req.canvasHeight = e.data.params.canvasHeight;
+    req.useCache = e.data.params.useCache;
+    req.lineColor = e.data.params.lineColor;
+    req.chartColor = e.data.params.chartColor;
+    req.wakeupBean = e.data.params.wakeupBean;
+    req.intervalPerf = e.data.params.intervalPerf;
+  }
+
   req.id = e.data.id;
   if (!req.frame) {
     info(req.frame);
@@ -214,4 +221,4 @@ self.onmessage = function (e: any) {
   }
   match(req.type, req);
 };
-self.onmessageerror = function (e: any) {};
+self.onmessageerror = function (e: any): void {};

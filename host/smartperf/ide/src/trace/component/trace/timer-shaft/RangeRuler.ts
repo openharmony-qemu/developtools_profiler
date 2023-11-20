@@ -239,7 +239,7 @@ export class RangeRuler extends Graph {
       if (rangeYu !== 0) {
         let first_NodeWidth = ((this.scale - rangeYu) / this.scale) * rangeRealW;
         rangeStartX += first_NodeWidth;
-        tempNs += rangeYu;
+        tempNs += (this.scale - rangeYu);
         this.range.xs.push(rangeStartX);
         this.range.xsTxt.push(ns2UnitS(tempNs + this.range.startNS, this.scale));
       }

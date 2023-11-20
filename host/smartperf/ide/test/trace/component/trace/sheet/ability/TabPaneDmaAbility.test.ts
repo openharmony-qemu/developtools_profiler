@@ -14,6 +14,11 @@
  */
 // @ts-ignore
 import { TabPaneDmaAbility } from '../../../../../../dist/trace/component/trace/sheet/ability/TabPaneDmaAbility.js';
+
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+    return {};
+});
+
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver ||
     jest.fn().mockImplementation(() => ({

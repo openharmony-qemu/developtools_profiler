@@ -116,6 +116,21 @@ export class ColorUtils {
     return logColor;
   }
 
+  public static getHisysEventColor(level: string): string {
+    let eventColor: string = '#00000';
+    switch (level) {
+      case 'MINOR':
+        eventColor = '#000000';
+        break;
+      case 'CRITICAL':
+        eventColor = '#FF4040';
+        break;
+      default:
+        break;
+    }
+    return eventColor;
+  }
+
   public static hash(str: string, max: number): number {
     let colorA: number = 0x811c9dc5;
     let colorB: number = 0xfffffff;

@@ -28,6 +28,7 @@ export class LitPageTable extends BaseElement {
   public rememberScrollTop = false;
   public getItemTextColor?: (data: any) => string;
   public itemTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
+  public exportTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
   private ds: Array<any> = [];
   public recycleDs: Array<any> = [];
   private gridTemplateColumns: Array<string> = [];
@@ -50,6 +51,7 @@ export class LitPageTable extends BaseElement {
   private exportLoading: boolean = false;
   private currentPage: number = 0;
   private _loading: boolean = false;
+  startSkip: number = 0;
 
   static get observedAttributes() {
     return [
@@ -423,6 +425,10 @@ export class LitPageTable extends BaseElement {
         :host([hideDownload]) .export{
             display: none;
         }
+        .td::-webkit-scrollbar {
+          width: 0;
+          background-color: transparent;
+        }
         </style>
         <lit-progress-bar id="export_progress_bar" class="progress"></lit-progress-bar>
         <slot id="slot" style="display: none"></slot>
@@ -470,6 +476,8 @@ export class LitPageTable extends BaseElement {
       columns: this.columns as any[],
       tables: this.ds,
       fileName: date.getTime() + '',
+      columnFormatter: this.itemTextHandleMap,
+      exportFormatter: this.exportTextHandleMap
     }).then((res) => {
       this.exportLoading = false;
       this.exportProgress!.loading = false;
@@ -852,6 +860,7 @@ export class LitPageTable extends BaseElement {
   meauseAllRowHeight(list: any[]): TableRowObject[] {
     this.tbodyElement!.innerHTML = '';
     this.meauseRowElement = undefined;
+    this.startSkip = 0;
     let head = this.shadowRoot!.querySelector('.th');
     this.tbodyElement && (this.tbodyElement.style.width = head?.clientWidth + 'px');
     this.currentRecycleList = [];
@@ -906,12 +915,13 @@ export class LitPageTable extends BaseElement {
         if (reduce == 0) {
           return;
         }
-        while (reduce <= this.tableElement!.clientHeight) {
+        while (reduce <= this.tableElement!.clientHeight && (this.currentRecycleList.length + skip) < visibleObjects.length) {
           let newTableElement = this.createNewTableElement(visibleObjects[skip]);
           this.tbodyElement?.append(newTableElement);
           this.currentRecycleList.push(newTableElement);
           reduce += newTableElement.clientHeight;
         }
+        this.startSkip = skip;
         for (let i = 0; i < this.currentRecycleList.length; i++) {
           this.freshCurrentLine(this.currentRecycleList[i], visibleObjects[i + skip]);
         }
@@ -1270,7 +1280,7 @@ export class LitPageTable extends BaseElement {
       let td: any;
       td = document.createElement('div');
       td.classList.add('td');
-      td.style.overflow = 'hidden';
+      td.style.overflow = 'scroll hidden';
       td.style.textOverflow = 'ellipsis';
       td.style.whiteSpace = 'nowrap';
       td.dataIndex = dataIndex;
@@ -1288,7 +1298,7 @@ export class LitPageTable extends BaseElement {
     newTableElement.onclick = () => {
       this.dispatchRowClickEvent(rowData, [newTableElement]);
     };
-    newTableElement.onmouseenter = () => {
+    newTableElement.onmouseover = () => {
       this.dispatchRowHoverEvent(rowData, [newTableElement]);
     };
     if (rowData.data.isSelected != undefined) {
@@ -1453,9 +1463,9 @@ export class LitPageTable extends BaseElement {
     this.reMeauseHeight();
   }
 
-  clearAllSelection(rowObjectData: any) {
+  clearAllSelection(rowObjectData: any = undefined) {
     this.recycleDs.forEach((item) => {
-      if (item.data != rowObjectData && item.data.isSelected) {
+      if (rowObjectData || (item.data != rowObjectData && item.data.isSelected)) {
         item.data.isSelected = false;
       }
     });

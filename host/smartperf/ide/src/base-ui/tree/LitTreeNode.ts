@@ -14,9 +14,7 @@
  */
 
 import '../icon/LitIcon.js';
-import '../checkbox/LitCheckBox.js';
 import { BaseElement, element } from '../BaseElement.js';
-import { type LitCheckBox } from '../checkbox/LitCheckBox.js';
 import { type LitIcon } from '../icon/LitIcon.js';
 import { type TreeItemData } from './LitTree.js';
 
@@ -24,7 +22,7 @@ import { type TreeItemData } from './LitTree.js';
 export class LitTreeNode extends BaseElement {
   private arrowElement: HTMLSpanElement | null | undefined;
   private itemElement: HTMLDivElement | null | undefined;
-  private checkboxElement: LitCheckBox | null | undefined;
+  private checkboxElement: HTMLInputElement  | null | undefined;
   private iconElement: LitIcon | null | undefined;
   private _data: TreeItemData | null | undefined;
 
@@ -145,22 +143,16 @@ export class LitTreeNode extends BaseElement {
     this.arrowElement = this.shadowRoot!.querySelector<HTMLSpanElement>('#arrow');
     this.iconElement = this.shadowRoot!.querySelector<LitIcon>('#icon');
     this.itemElement = this.shadowRoot!.querySelector<HTMLDivElement>('#item');
-    this.checkboxElement = this.shadowRoot!.querySelector<LitCheckBox>('#checkbox');
+    this.checkboxElement = this.shadowRoot!.querySelector<HTMLInputElement>('#checkbox');
     this.arrowElement!.onclick = (e): void => {
       e.stopPropagation();
       this.autoExpand();
     };
-    this.checkboxElement!.onchange = (e: any): boolean => {
-      e.stopPropagation();
-      this.onChange(e.detail.checked);
-      return false;
-    };
-    //这里需要给checkbox 添加onclick时间 并停止冒泡，不然onchange事件会触发父节点中的 onclick事件
-    this.checkboxElement!.onclick = (e): void => {
-      e.stopPropagation();
-    };
     this.itemElement!.onclick = (e): void => {
       e.stopPropagation();
+      if (this._data && this._data.disable === true) {
+        return;
+      }
       this.onChange(!this.data?.checked);
     };
   }
@@ -327,7 +319,8 @@ export class LitTreeNode extends BaseElement {
         </style>
         <span id="arrow" style="margin-right: 2px"></span>
         <div id="item" style="display: flex;align-items: center;padding-left: 2px">
-            <lit-check-box id="checkbox"></lit-check-box>
+<!--            <lit-check-box id="checkbox"></lit-check-box>-->
+            <input id="checkbox" type="radio" style="cursor: pointer; pointer-events: none"/>
             <lit-icon id="icon" name="${this.iconName}"></lit-icon>
             <span id="title">${this.title}</span>
         </div>
@@ -467,7 +460,7 @@ export class LitTreeNode extends BaseElement {
       }
     } else if (name === 'checkable') {
       if (this.checkboxElement) {
-        if (newValue === 'true') {
+        if (newValue === 'true' && this._data!.disable !== true) {
           this.checkboxElement!.style.display = 'inline-block';
         } else {
           this.checkboxElement!.style.display = 'none';

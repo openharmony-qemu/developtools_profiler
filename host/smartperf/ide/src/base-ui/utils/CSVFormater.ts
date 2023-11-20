@@ -52,11 +52,18 @@ export class JSONToCSV {
       // 如果存在自定义key值
       if (columns.key.length) {
         columns.key.map(function (m: any, idx: number) {
-          let strItem = n[m];
-          if (typeof n[m] == 'undefined') {
+          let strItem : any = '';
+          if (obj.exportFormatter && obj.exportFormatter.has(m)) {
+            strItem = (obj.exportFormatter.get(m)?.(n) || n[m])
+          } else if (obj.formatter && obj.formatter.has(m)) {
+            strItem = (obj.formatter.get(m)?.(n[m]) || n[m])
+          } else {
+            strItem = n[m];
+          }
+          if (typeof strItem == 'undefined') {
             strItem = '';
-          } else if (typeof n[m] == 'object') {
-            strItem = JSON.stringify(n[m]);
+          } else if (typeof strItem == 'object') {
+            strItem = JSON.stringify(strItem);
             strItem = strItem.replaceAll('"', '');
           }
           if (idx === 0 && typeof n['depthCSV'] !== 'undefined') {
@@ -178,7 +185,7 @@ export class JSONToCSV {
       let dataIndex = column.getAttribute('data-index');
       let columnName = column.getAttribute('title');
       if (columnName == '') {
-        columnName = dataIndex;
+        columnName = dataIndex == 'busyTimeStr' ? 'GetBusyTime(ms)' : dataIndex;
       }
       if (columnName !== '  ') {
         titleList.push(columnName);
@@ -191,7 +198,13 @@ export class JSONToCSV {
     };
   }
 
-  static async csvExport(dataSource: { columns: any[]; tables: any[]; fileName: string }): Promise<string> {
+  static async csvExport(dataSource: {
+    columns: any[];
+    tables: any[];
+    fileName: string;
+    columnFormatter: Map<string, (value: any) => string>;
+    exportFormatter: Map<string, (value: any) => string>;
+  }): Promise<string> {
     return new Promise((resolve) => {
       let data: any = this.columnsData(dataSource.columns);
       let columns = {
@@ -206,6 +219,7 @@ export class JSONToCSV {
               data: resultArr,
               fileName: `${dataSource.fileName}_${childIndex}`,
               columns: columns,
+              formatter: dataSource.columnFormatter
             });
           });
         } else {
@@ -214,6 +228,8 @@ export class JSONToCSV {
             data: resultArr,
             fileName: dataSource.fileName,
             columns: columns,
+            formatter: dataSource.columnFormatter,
+            exportFormatter: dataSource.exportFormatter
           });
         }
       }

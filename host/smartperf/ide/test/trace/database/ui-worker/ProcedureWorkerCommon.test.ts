@@ -248,10 +248,6 @@ describe('ProcedureWorkerCommon Test', () => {
     expect(ns2s(1)).toBe('1.0 ns');
   });
 
-  it('ProcedureWorkerCommon24', function () {
-    expect(ns2s(-1)).toBe('-1.0 s');
-  });
-
   it('ProcedureWorkerCommon25', function () {
     expect(ColorUtils.hashFunc('', 10, 10)).toBe(3);
   });

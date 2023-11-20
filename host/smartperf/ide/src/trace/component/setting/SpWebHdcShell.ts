@@ -22,7 +22,8 @@ import { DataMessage } from '../../../hdc/message/DataMessage.js';
 export class SpWebHdcShell extends BaseElement {
   private static MAX_DISPLAY_ROWS = 1000;
   private static MAX_SAVE_SIZE = 2097152;
-  private shellDiv: HTMLDivElement | null | undefined;
+  shellDiv: HTMLDivElement | null | undefined;
+  currentScreenRemain: number = 0;
   private shellCanvas: HTMLCanvasElement | null | undefined;
   private shellCanvasCtx: CanvasRenderingContext2D | null | undefined;
   private resultStr = '';
@@ -39,6 +40,8 @@ export class SpWebHdcShell extends BaseElement {
   private points: Point | undefined;
   private forwardFlag: boolean = false;
   private cursorIndex: number = 3;
+  private shellStrLength: number = 0;
+  private textY: number = 0;
   private cursorRow: string = '';
   private textDecoder: TextDecoder = new TextDecoder();
   private isDragging: boolean = false;
@@ -50,6 +53,7 @@ export class SpWebHdcShell extends BaseElement {
   private static LEFT_OFFSET = 48;
   private realTimeResult: string | null | undefined = '';
   private startRealTime: boolean = false;
+  private prevTextY: number = 0;
 
   public initElements(): void {
     this.shellCanvas = this.shadowRoot!.querySelector<HTMLCanvasElement>('#shell_cmd');
@@ -83,6 +87,13 @@ export class SpWebHdcShell extends BaseElement {
     });
     window.subscribe(window.SmartEvent.UI.DeviceDisConnect, (deviceName: string) => {
       this.clear();
+    });
+    let that = this;
+    this.shellCanvas!.addEventListener('blur', function (event) {
+      if (that.intervalId) {
+        window.clearInterval(that.intervalId);
+      }
+      that.shellCanvasCtx!.clearRect(that.shellStrLength, that.textY, 12, 3);
     });
     new ResizeObserver(() => {
       this.resizeCanvas();
@@ -330,25 +341,27 @@ export class SpWebHdcShell extends BaseElement {
             this.finalArr.push(shellStr);
           }
         }
-        let shellStrLength = 0;
         if (this.finalArr.length > SpWebHdcShell.MAX_DISPLAY_ROWS) {
           this.finalArr.splice(0, this.finalArr.length - SpWebHdcShell.MAX_DISPLAY_ROWS + 1);
         }
         let unitWidth: number = this.shellCanvasCtx!.measureText(' ').width;
         this.shellCanvasCtx!.fillStyle = '#fff';
         this.shellCanvasCtx!.font = '16px serif';
-        let textY = SpWebHdcShell.TOP_OFFSET;
+        this.textY = SpWebHdcShell.TOP_OFFSET;
         this.finalArr.push(this.cursorRow);
         for (let index: number = 0; index < this.finalArr.length; index++) {
           let shellStr: string = this.finalArr[index];
-          textY = SpWebHdcShell.TOP_OFFSET + index * 16;
-          this.shellCanvasCtx!.fillText(shellStr, SpWebHdcShell.LEFT_OFFSET, textY);
+          this.textY = SpWebHdcShell.TOP_OFFSET + index * 16;
+          this.shellCanvasCtx!.fillText(shellStr, SpWebHdcShell.LEFT_OFFSET, this.textY);
         }
-        shellStrLength =
+        this.shellStrLength =
           this.shellCanvasCtx!.measureText(this.cursorRow.slice(0, this.cursorIndex)).width + SpWebHdcShell.LEFT_OFFSET;
+        // 记录前一次滚动条的位置
+        this.prevTextY = this.shellDiv!.scrollTop + this.shellDiv!.clientHeight - 3;
         if (scroller) {
-          if (textY > this.shellDiv!.clientHeight) {
-            this.shellDiv!.scrollTop = textY - this.shellDiv!.clientHeight + 3;
+          if (this.textY > this.shellDiv!.clientHeight && this.textY > this.prevTextY) {
+            this.shellDiv!.scrollTop = this.textY - this.shellDiv!.clientHeight + 3;
+            this.currentScreenRemain = this.shellDiv!.scrollTop;
           }
         }
         if (this.intervalId) {
@@ -359,11 +372,11 @@ export class SpWebHdcShell extends BaseElement {
           if (needClear) {
             needClear = false;
             this.shellCanvasCtx!.fillStyle = '#000';
-            this.shellCanvasCtx!.fillRect(shellStrLength, textY, 12, 3);
+            this.shellCanvasCtx!.fillRect(this.shellStrLength, this.textY, 12, 3);
           } else {
             needClear = true;
             this.shellCanvasCtx!.fillStyle = '#fff';
-            this.shellCanvasCtx!.fillRect(shellStrLength, textY, 12, 3);
+            this.shellCanvasCtx!.fillRect(this.shellStrLength, this.textY, 12, 3);
           }
         }, 500);
       }

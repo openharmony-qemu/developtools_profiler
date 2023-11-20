@@ -16,32 +16,45 @@
 import { BaseElement, element } from '../../../base-ui/BaseElement.js';
 import LitSwitch, { LitSwitchChangeEvent } from '../../../base-ui/switch/lit-switch.js';
 import '../../../base-ui/select/LitAllocationSelect.js';
-
 import '../../../base-ui/switch/lit-switch.js';
-import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
 import { SpRecordTrace } from '../SpRecordTrace.js';
-import { Cmd } from '../../../command/Cmd.js';
-import { CmdConstant } from '../../../command/CmdConstant.js';
 import { HdcDeviceManager } from '../../../hdc/HdcDeviceManager.js';
+import { LitAllocationSelect } from '../../../base-ui/select/LitAllocationSelect.js';
 
 @element('sp-hisys-event')
 export class SpHisysEvent extends BaseElement {
-  private eventProcessInput: LitAllocationSelect | undefined | null;
-  private selectProcess: HTMLInputElement | undefined | null;
+  private domainInputEL: LitAllocationSelect | undefined | null;
+  private eventNameInputEL: LitAllocationSelect | undefined | null;
+  private sysEventConfigList: NodeListOf<LitAllocationSelect> | undefined | null;
+  private sysEventSwitch: LitSwitch | undefined | null;
+  private domainInputEl: HTMLInputElement | undefined | null;
+  private nameInputEl: HTMLInputElement | undefined | null;
+  private eventConfig: any = {};
 
   set startSamp(start: boolean) {
     if (start) {
       this.setAttribute('startSamp', '');
+      this.domainInputEL!.removeAttribute('readonly');
+      this.eventNameInputEL!.removeAttribute('readonly');
     } else {
       this.removeAttribute('startSamp');
-      let eventInput = this.eventProcessInput?.shadowRoot?.querySelector<HTMLInputElement>('#singleInput');
-      eventInput!.value = '';
+      this.domainInputEL!.setAttribute('readonly', 'readonly');
+      this.eventNameInputEL!.setAttribute('readonly', 'readonly');
+      this.domainInputEL!.value = '';
+      this.eventNameInputEL!.value = '';
     }
   }
 
-  get process(): string {
-    if (this.eventProcessInput!.value.length > 0) {
-      return this.eventProcessInput!.value;
+  get domain(): string {
+    if (this.domainInputEL!.value.length > 0 && this.domainInputEL!.value !== 'ALL-Domain') {
+      return this.domainInputEL!.value;
+    }
+    return '';
+  }
+
+  get eventName(): string {
+    if (this.eventNameInputEL!.value.length > 0) {
+      return this.eventNameInputEL!.value;
     }
     return '';
   }
@@ -50,85 +63,128 @@ export class SpHisysEvent extends BaseElement {
     return this.hasAttribute('startSamp');
   }
 
+  get sysEventConfigPath(): string {
+    return '/system/etc/hiview/hisysevent.def';
+  }
+
   initElements(): void {
-    let hisysEventSwitch = this.shadowRoot?.querySelector('lit-switch') as LitSwitch;
-    hisysEventSwitch.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
+    this.domainInputEL = this.shadowRoot?.querySelector<LitAllocationSelect>('.record-domain-input');
+    this.eventNameInputEL = this.shadowRoot?.querySelector<LitAllocationSelect>('.record-event-input');
+    this.sysEventConfigList = this.shadowRoot?.querySelectorAll<LitAllocationSelect>('.record-input');
+    this.sysEventSwitch = this.shadowRoot?.querySelector('lit-switch') as LitSwitch;
+    this.sysEventSwitch?.addEventListener('change', (event: CustomEventInit<LitSwitchChangeEvent>) => {
       let detail = event.detail;
-      if (detail!.checked) {
-        this.startSamp = true;
-        this.unDisable();
-      } else {
-        this.startSamp = false;
-        this.disable();
-      }
+      this.startSamp = detail!.checked;
+      this.updateDisable(detail!.checked);
     });
-    this.eventProcessInput = this.shadowRoot?.querySelector<LitAllocationSelect>('lit-allocation-select');
-    let hisyEventProcessInput = this.eventProcessInput?.shadowRoot?.querySelector('.multipleSelect') as HTMLDivElement;
-    this.selectProcess = this.eventProcessInput!.shadowRoot?.querySelector('input') as HTMLInputElement;
-    hisyEventProcessInput!.addEventListener('mousedown', (ev) => {
-      if (SpRecordTrace.serialNumber === '') {
-        this.eventProcessInput!.processData = [];
-        this.eventProcessInput!.initData();
-      }
+    this.updateDisable(false);
+    this.domainInputEl = this.domainInputEL?.shadowRoot?.querySelector('.multipleSelect') as HTMLInputElement;
+    this.nameInputEl = this.eventNameInputEL?.shadowRoot?.querySelector('.multipleSelect') as HTMLInputElement;
+    this.domainInputEl.addEventListener('valuable', () => {
+      this.eventNameInputEL!.value = '';
     });
-    hisyEventProcessInput!.addEventListener('mouseup', () => {
-      if (SpRecordTrace.serialNumber === '') {
-        this.eventProcessInput!.processData = [];
-        this.eventProcessInput!.initData();
-      } else {
-        Cmd.getProcess().then((processList) => {
-          this.eventProcessInput!.processData = processList;
-          this.eventProcessInput!.initData();
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.domainInputEl?.addEventListener('mousedown', this.domainInputEvent);
+    this.nameInputEl?.addEventListener('mousedown', this.nameInputEvent);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.domainInputEl?.removeEventListener('mousedown', this.domainInputEvent);
+    this.nameInputEl?.removeEventListener('mousedown', this.nameInputEvent);
+  }
+
+  domainInputEvent = (): void => {
+    if (SpRecordTrace.serialNumber === '') {
+      this.domainInputEL!.processData = [];
+      this.domainInputEL!.initData();
+    } else {
+      HdcDeviceManager.fileRecv(this.sysEventConfigPath, () => {
+      }).then((pullRes) => {
+        pullRes.arrayBuffer().then((buffer) => {
+          if (buffer.byteLength > 0) {
+            let dec = new TextDecoder();
+            this.eventConfig = JSON.parse(dec.decode(buffer));
+            let domainList = Object.keys(this.eventConfig!);
+            if (domainList.length > 0 && this.startSamp) {
+              this.domainInputEl!.setAttribute('readonly', 'readonly');
+              domainList.unshift('ALL-Domain');
+            }
+            this.domainInputEL!.processData = domainList;
+            this.domainInputEL!.initData();
+          }
         });
+      });
+    }
+  };
+
+  nameInputEvent = (): void => {
+    if (SpRecordTrace.serialNumber === '') {
+      this.eventNameInputEL!.processData = [];
+      this.eventNameInputEL!.initData();
+    } else {
+      let domain = this.domainInputEL?.value;
+      // @ts-ignore
+      let eventConfigElement = this.eventConfig[domain];
+      if (eventConfigElement) {
+        let eventNameList = Object.keys(eventConfigElement);
+        if (eventNameList?.length > 0 && this.startSamp) {
+          this.nameInputEl!.setAttribute('readonly', 'readonly');
+          this.eventNameInputEL!.processData = eventNameList;
+          this.eventNameInputEL!.initData();
+        }
+      } else {
+        this.eventNameInputEL!.value = '';
+        this.eventNameInputEL!.processData = [];
+        this.eventNameInputEL!.initData();
+      }
+    }
+  };
+
+  private updateDisable(isDisable: boolean): void {
+    this.sysEventConfigList!.forEach((configEL) => {
+      if (isDisable) {
+        configEL.removeAttribute('disabled');
+      } else {
+        configEL.setAttribute('disabled', '');
       }
     });
-    this.disable();
   }
 
-  private unDisable(): void {
-    let hisysEventConfigVals = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
-    hisysEventConfigVals!.forEach((hisysEventConfigVal) => {
-      hisysEventConfigVal.removeAttribute('disabled');
-    });
-  }
-
-  private disable(): void {
-    let hisysEventConfigVals = this.shadowRoot?.querySelectorAll<HTMLElement>('.config');
-    hisysEventConfigVals!.forEach((hisysEventConfigVal) => {
-      if (hisysEventConfigVal.title !== 'Start Hisystem Event Tracker Record') {
-        hisysEventConfigVal.setAttribute('disabled', '');
-      }
-    });
-  }
-
-  initHtml(): string {
+  private getCssStyle(): string {
     return `
         <style>
-        .root {
-            margin-bottom: 30px;
-            padding-top: 30px;
-            padding-left: 54px;
-            margin-right: 30px;
-            font-size:16px;
-        }
-
         :host{
-            background: var(--dark-background3,#FFFFFF);
-            display: inline-block;
-            width: 100%;
-            height: 100%;
-            border-radius: 0px 16px 16px 0px;
+          background: var(--dark-background3,#FFFFFF);
+          display: inline-block;
+          width: 100%;
+          height: 100%;
+          border-radius: 0px 16px 16px 0px;
         }
-        
-        .hisys-event-config-div {
-           width: 80%;
-           display: flex;
-           flex-direction: column;
-           gap: 25px;
-           margin-top: 5vh;
-           margin-bottom: 5vh;
+        :host([startSamp]) .record-input {
+          background: var(--dark-background5,#FFFFFF);
         }
-        
+        :host(:not([startSamp])) .record-input {
+          color: #999999;
+        }
+        .root {
+          margin-bottom: 30px;
+          padding-top: 30px;
+          padding-left: 54px;
+          margin-right: 30px;
+          font-size:16px;
+        }
+        .hisys-event-config {
+          width: 80%;
+          display: flex;
+          flex-direction: column;
+          gap: 25px;
+          margin-top: 5vh;
+          margin-bottom: 5vh;
+        }
         .event-title {
           font-weight: 700;
           opacity: 0.9;
@@ -138,7 +194,6 @@ export class SpHisysEvent extends BaseElement {
           line-height: 40px;
           margin-right: 10px;
         }
-
         .event-des {
           font-size: 14px;
           opacity: 0.6;
@@ -147,51 +202,52 @@ export class SpHisysEvent extends BaseElement {
           text-align: center;
           font-weight: 400;
         }
-
-        .event-select {
-          border-radius: 15px;
-        }
-
         lit-switch {
           height: 38px;
           margin-top: 10px;
           display:inline;
           float: right;
         }
-        input {
-           outline:none;
-           height: 25px;
-           border-radius: 16px;
-           text-indent:2%
+        .record-input {
+          line-height: 20px;
+          font-weight: 400;
+          border: 1px solid var(--dark-background5,#ccc);
+          font-family: Helvetica;
+          font-size: 14px;
+          color: var(--dark-color1,#212121);
+          text-align: left;
+          width: auto;
         }
-        input::-webkit-input-placeholder{
-            color:var(--bark-prompt,#999999);
-        }
+        </style>`;
+  }
 
-        .event-input {
-            border: 1px solid var(--dark-background5,#ccc);
-            font-family: Helvetica;
-            font-size: 14px;
-            color: var(--dark-color1,#212121);
-            text-align: left;
-            line-height: 20px;
-            font-weight: 400;
-        }
-        </style>
+  initHtml(): string {
+    return `
+        ${this.getCssStyle()}
         <div class="root">
-          <div class="hisys-event-config-div">
+          <div class="hisys-event-config">
               <div>
                  <span class="event-title">Start Hisystem Event Tracker Record</span>
                  <lit-switch></lit-switch>
               </div>
           </div>
-          <div class="hisys-event-config-div">
+          <div class="hisys-event-config">
               <div>
-                 <span class="event-title">AppName</span>
-                 <span class="event-des">Record AppName</span>
+                 <span class="event-title">Domain</span>
+                 <span class="event-des">Record Domain Name</span>
               </div>
-               <lit-allocation-select style="width: 100%;" rounded="" default-value="" class="event-select config" 
-               placement="bottom" title="AppName"></lit-allocation-select>
+              <lit-allocation-select default-value="" rounded="" class="record-domain-input record-input" 
+              mode="multiple" canInsert="" title="Select Proces" placement="bottom" placeholder="" readonly="readonly">
+              </lit-allocation-select>
+          </div>
+          <div class="hisys-event-config">
+              <div>
+                 <span class="event-title">EventName</span>
+                 <span class="event-des">Record Event Name</span>
+              </div>
+              <lit-allocation-select default-value="" rounded="" class="record-event-input record-input" 
+              mode="multiple" canInsert="" title="Select Proces" placement="bottom" placeholder="" readonly="readonly">
+              </lit-allocation-select>
           </div>
         </div>
         `;

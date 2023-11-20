@@ -34,8 +34,12 @@ PrintkFormatsProcessor::~PrintkFormatsProcessor() {}
 std::string PrintkFormatsProcessor::GetSymbol(uint64_t addr)
 {
     auto iter = printkFormatsDict_.find(addr);
-    TS_CHECK_TRUE_RET(iter != printkFormatsDict_.end(), "NULL");
-    return iter->second;
+    if (iter != printkFormatsDict_.end()) {
+        return iter->second;
+    }
+    auto addrStr = "0x" + base::number(addr, base::INTEGER_RADIX_TYPE_HEX);
+    TS_LOGD("can't find %s(addr) sym!", addrStr.data());
+    return addrStr;
 }
 
 bool PrintkFormatsProcessor::HandlePrintkSyms(const std::string& printkFormats)
@@ -43,10 +47,9 @@ bool PrintkFormatsProcessor::HandlePrintkSyms(const std::string& printkFormats)
     std::stringstream prinktkFormatStream(printkFormats);
     std::string curLine;
     uint64_t addr = 0;
-    char seperator = ':';
     std::string curSymbol = "";
     while (std::getline(prinktkFormatStream, curLine)) {
-        auto pos = curLine.find(seperator);
+        auto pos = curLine.find(':');
         if (pos == std::string::npos) {
             continue;
         }

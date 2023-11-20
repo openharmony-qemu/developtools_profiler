@@ -298,6 +298,7 @@ export class EnergySystemStruct extends BaseStruct {
   startNs: number | undefined;
   dur: number | undefined;
   count: number | undefined;
+  token: number | undefined;
   workScheduler: string | undefined;
   power: string | undefined;
   location: string | undefined;

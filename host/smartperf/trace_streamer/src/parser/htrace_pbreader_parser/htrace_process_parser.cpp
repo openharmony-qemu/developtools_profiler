@@ -70,11 +70,7 @@ void HtraceProcessParser::Finish()
     auto cmp = [](const std::unique_ptr<TsLiveProcessData>& a, const std::unique_ptr<TsLiveProcessData>& b) {
         return a->ts_ < b->ts_;
     };
-#ifdef IS_WASM
-    std::sort(liveProcessData_.begin(), liveProcessData_.end(), cmp);
-#else
     std::stable_sort(liveProcessData_.begin(), liveProcessData_.end(), cmp);
-#endif
     bool first = true;
     uint64_t lastTs = 0;
     for (auto itor = liveProcessData_.begin(); itor != liveProcessData_.end(); itor++) {

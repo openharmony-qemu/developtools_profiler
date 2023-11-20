@@ -144,10 +144,11 @@ public:
     EbpfElf ebpfElf_;
     EbpfElfSymbol ebpfElfSymbol_;
 #endif
-    AppNames appNames_;
-    SysEventMeasureData sysEventMeasureData_;
-    DeviceStateData deviceStateData_;
-    TraceConfigData traceConfigData_;
+    HiSysEventSubkeys sysEventNameIds_;
+    HiSysEventMeasureData sysEventMeasureData_;
+    HiSysEventDeviceStateData deviceStateData_;
+    TraceConfig traceConfigData_;
+    HiSysEventAllEventData hiSysEventAllEventData_;
     SmapsData smapsData_;
     BioLatencySampleData bioLatencySampleData_;
     ClockSnapshotData clockSnapshotData_;

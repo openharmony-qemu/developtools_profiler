@@ -139,11 +139,7 @@ bool CpuDetailParser::FilterAllEvents(FtraceCpuDetailMsg& cpuDetail, bool isFini
     auto cmp = [](const std::unique_ptr<RawTraceEventInfo>& a, const std::unique_ptr<RawTraceEventInfo>& b) {
         return a->msgPtr->timestamp() < b->msgPtr->timestamp();
     };
-#ifdef IS_WASM
-    std::sort(rawTraceEventList_.begin(), rawTraceEventList_.end(), cmp);
-#else
     std::stable_sort(rawTraceEventList_.begin(), rawTraceEventList_.end(), cmp);
-#endif
     if (rawTraceEventList_.empty()) {
         return false;
     }

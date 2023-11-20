@@ -118,6 +118,10 @@ import { TabPaneHiLogSummary } from '../sheet/hilog/TabPaneHiLogSummary.js';
 import { TabPaneSchedPriority } from '../sheet/cpu/TabPaneSchedPriority.js';
 import { TabPaneGpuResourceVmTracker } from '../sheet/vmtracker/TabPaneGpuResourceVmTracker.js';
 import { TabPaneGpuGraph } from '../sheet/gpu/TabPaneGraph.js';
+import { TabPaneFreqUsage } from '../sheet/frequsage/TabPaneFreqUsage.js';
+import { TabPaneFreqDataCut } from '../sheet/frequsage/TabPaneFreqDataCut.js';
+import { TabPaneHisysEvents } from '../sheet/hisysevent/TabPaneHisysEvents.js';
+import { TabPaneHiSysEventSummary } from '../sheet/hisysevent/TabPaneHiSysEventSummary.js';
 
 export let tabConfig: any = {
   'current-selection': {
@@ -424,7 +428,7 @@ export let tabConfig: any = {
     type: TabPaneSmapsComparison,
   },
   'box-smaps-record': {
-    title: 'Smaps Record',
+    title: 'Native Heap',
     type: TabPaneSmapsRecord,
   },
   'box-vmtracker-shm': {
@@ -610,7 +614,7 @@ export let tabConfig: any = {
   'box-hilogs-summary': {
     title: 'Summary',
     type: TabPaneHiLogSummary,
-    require: (param: SelectionParam) => param.hiLogSummary.length > 0,
+    require: (param: SelectionParam) => param.hiLogs.length > 0,
   },
   'box-sched-priority': {
     title: 'Sched Priority',
@@ -626,4 +630,24 @@ export let tabConfig: any = {
     type: TabPaneCurrent,
     require: (param: SelectionParam) => param.isCurrentPane,
   }, //current selection
+  'tabpane-frequsage': {
+    title: 'Freq Usage',
+    type: TabPaneFreqUsage,
+    require: (param: SelectionParam) => param.threadIds.length > 0,
+  },
+  'tabpane-freqdatacut': {
+    title: 'Freq DataCut',
+    type: TabPaneFreqDataCut,
+    require: (param: SelectionParam) => param.threadIds.length > 0,
+  },
+  'tab-hisysevents': {
+    title: 'HiSysevents',
+    type: TabPaneHisysEvents,
+    require: (param: SelectionParam) => param.hiSysEvents.length > 0,
+  },
+  'tab-hisysevents-summary': {
+    title: 'Statistics',
+    type: TabPaneHiSysEventSummary,
+    require: (param: SelectionParam) => param.hiSysEvents.length > 0,
+  },
 };

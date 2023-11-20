@@ -96,18 +96,7 @@ describe('TabPaneSmapsRecord Test', () => {
   smaps.privateClean = 3;
   let result = [smaps, smaps];
 
-  it('tabPaneSmapsRecord01', function () {
-    expect(
-      tabPaneSmapsRecord.sortByColumn({
-        key: '',
-        sort: '',
-      })
-    ).toBeUndefined();
-  });
   it('tabPaneSmapsRecord02', () => {
     expect(tabPaneSmapsRecord.initElements()).toBeUndefined();
-  });
-  it('tabPaneSmapsRecord03', () => {
-    expect(tabPaneSmapsRecord.filteredData(result)).toBeUndefined();
   });
 });

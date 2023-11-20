@@ -19,6 +19,7 @@ import { LitCheckBox, LitCheckBoxChangeEvent } from '../../../base-ui/checkbox/L
 import { LitRadioGroup } from '../../../base-ui/radiobox/LitRadioGroup.js';
 import { info, log } from '../../../log/Log.js';
 import { LitSlider } from '../../../base-ui/slider/LitSlider';
+import LitSwitch from '../../../base-ui/switch/lit-switch.js';
 
 @element('probes-config')
 export class SpProbesConfig extends BaseElement {
@@ -32,6 +33,21 @@ export class SpProbesConfig extends BaseElement {
   private _memoryConfig: HTMLElement | undefined | null;
   private _abilityConfig: HTMLElement | undefined | null;
   private ftraceBufferSizeResult: HTMLDivElement | null | undefined;
+  private ftraceSlider: LitSlider | null | undefined;
+
+  private ftraceBuffSizeResultInput: HTMLInputElement | null | undefined;
+
+  set startSamp(allocationStart: boolean) {
+    if (allocationStart) {
+      this.setAttribute('startSamp', '');
+    } else {
+      this.removeAttribute('startSamp');
+    }
+  }
+
+  get startSamp(): boolean {
+    return this.hasAttribute('startSamp');
+  }
 
   get traceConfig() {
     let selectedTrace = this._traceConfig?.querySelectorAll<SpCheckDesBox>(`check-des-box[checked]`) || [];
@@ -96,6 +112,12 @@ export class SpProbesConfig extends BaseElement {
   }
 
   initElements(): void {
+    this.ftraceBuffSizeResultInput = this.shadowRoot?.querySelector('.ftrace-buff-size-result') as HTMLInputElement;
+    this.ftraceBuffSizeResultInput!.addEventListener('keydown', (ev: any) => {
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    });
     this.traceConfigList = [
       {
         value: 'Scheduling details',
@@ -270,6 +292,18 @@ export class SpProbesConfig extends BaseElement {
       parent.append(litCheckBox);
     });
     this.bufferSizeSliderInit();
+
+    let litSwitch = this.shadowRoot?.querySelector('lit-switch') as LitSwitch;
+    this.ftraceSlider = this.shadowRoot?.querySelector<LitSlider>('#ftrace-buff-size-slider');
+
+    litSwitch.addEventListener('change', (event: any) => {
+      let detail = event.detail;
+      if (detail!.checked) {
+        this.unDisable();
+      } else {
+        this.disable();
+      }
+    });
   }
 
   private bufferSizeSliderInit() {
@@ -286,6 +320,12 @@ export class SpProbesConfig extends BaseElement {
     };
     let ftraceBufferSizeSliderParent = ftraceBufferSizeSlider!.parentNode as Element;
     let ftraceBuffSizeResultInput = this.shadowRoot?.querySelector('.ftrace-buff-size-result') as HTMLInputElement;
+    ftraceBuffSizeResultInput!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
     ftraceBuffSizeResultInput.value = ftraceBufferSizeSlider.sliderStyle.defaultValue;
     ftraceBufferSizeSlider.addEventListener('input', (evt) => {
       ftraceBuffSizeResultInput.parentElement!.classList.remove('border-red');
@@ -337,6 +377,54 @@ export class SpProbesConfig extends BaseElement {
         let htmlInputElement = ftraceBufferSizeSlider!.shadowRoot?.querySelector('#slider') as HTMLInputElement;
         htmlInputElement.value = ftraceBuffSizeResultInput.value;
       }
+    });
+  }
+
+  private unDisable() {
+    this.startSamp = true;
+    let checkDesBoxDis = this.shadowRoot?.querySelectorAll<SpCheckDesBox>('check-des-box');
+    let litCheckBoxDis = this.shadowRoot?.querySelectorAll<LitCheckBox>('lit-check-box');
+
+    let defaultSelected: any = [];
+    defaultSelected = defaultSelected.concat(
+      this.traceConfigList,
+      this.memoryConfigList,
+      this.abilityConfigList,
+      this.hitraceConfigList
+    );
+
+    this.shadowRoot?.querySelector<SpCheckDesBox>("[value='Hitrace categories']")?.setAttribute('checked', 'true');
+    this.ftraceSlider!.removeAttribute('disabled');
+
+    checkDesBoxDis?.forEach((item: any) => {
+      item.removeAttribute('disabled');
+    });
+
+    litCheckBoxDis?.forEach((item: any) => {
+      item.removeAttribute('disabled');
+    });
+
+    defaultSelected.filter((item: any) => {
+      if (item.isSelect)
+        this.shadowRoot?.querySelector<SpCheckDesBox>(`[value='${item.value}']`)?.setAttribute('checked', 'true');
+    });
+  }
+
+  private disable() {
+    this.startSamp = false;
+    let checkDesBoxDis = this.shadowRoot?.querySelectorAll<SpCheckDesBox>('check-des-box');
+    let litCheckBoxDis = this.shadowRoot?.querySelectorAll<LitCheckBox>('lit-check-box');
+
+    this.ftraceSlider!.setAttribute('disabled', '');
+
+    checkDesBoxDis?.forEach((item: any) => {
+      item.setAttribute('disabled', '');
+      item.checked = false;
+    });
+
+    litCheckBoxDis?.forEach((item: any) => {
+      item.setAttribute('disabled', '');
+      item.checked = false;
     });
   }
 
@@ -468,9 +556,18 @@ export class SpProbesConfig extends BaseElement {
         .border-red {
            border:1px solid red;
         }
+        lit-switch {
+          height: 38px;
+          margin-top: 10px;
+          display:inline;
+          float: right;
+        }
         </style>
         <div class="root">
-            <div class="recordText" >Record mode</div>
+            <div class="recordText" >
+                <span class="record-title">Record mode</span>
+                <lit-switch checked="true"></lit-switch>
+                </div>
             <div class="config-page">
                 <div>
                     <div class="trace-config"></div>
@@ -489,8 +586,8 @@ export class SpProbesConfig extends BaseElement {
                        <div id="ftrace-buff-size-div">
                           <lit-slider id="ftrace-buff-size-slider" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
                           </lit-slider>
-                          <div class='ftrace-buff-size-result-div'>
-                              <input class="ftrace-buff-size-result" type="text" value='20480' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                          <div class='ftrace-buff-size-result-div' >
+                              <input class="ftrace-buff-size-result" type="text" value='20480' oninput="if(this.value > 307200){this.value = '307200'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" onkeyup="this.value=this.value.replace(/\\D/g,'')">
                               <span style="text-align: center; margin: 8px"> KB </span>
                            </div>
                        </div>

@@ -29,16 +29,16 @@ describe('testColorUtils Test', () => {
   it('testColorUtils03', () => {
     // @ts-ignore
     let thread = { processId: 1 };
-    expect(ColorUtils.colorForThread(thread)).toEqual('#9785D3');
+    expect(ColorUtils.colorForThread(thread)).toEqual('#7a9160');
   });
 
-  it('testColorUtils03', () => {
+  it('testColorUtils05', () => {
     // @ts-ignore
     let thread = {
       processId: 0,
       tid: 1,
     };
-    expect(ColorUtils.colorForThread(thread)).toEqual('#9785D3');
+    expect(ColorUtils.colorForThread(thread)).toEqual('#7a9160');
   });
 
   it('testColorUtils04', () => {

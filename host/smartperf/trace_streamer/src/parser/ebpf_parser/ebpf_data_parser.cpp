@@ -86,7 +86,7 @@ void EbpfDataParser::SetSpliteTimeRange(uint64_t splitFileMinTs, uint64_t splitF
 {
     ebpfSplitter.SetSpliteTimeRange(splitFileMinTs, splitFileMaxTs);
 }
-bool EbpfDataParser::AddAndSplitEbpfData(const std::deque<uint8_t>& dequeBuffer)
+bool EbpfDataParser::AddAndSplitEbpfData(std::deque<uint8_t>& dequeBuffer)
 {
     return ebpfSplitter.AddAndSplitEbpfData(dequeBuffer);
 }

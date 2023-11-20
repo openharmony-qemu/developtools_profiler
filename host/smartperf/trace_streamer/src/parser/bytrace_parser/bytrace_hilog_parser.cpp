@@ -95,6 +95,10 @@ void BytraceHilogParser::ParseHilogDataItem(const std::string& buffer, const uin
 
     std::string timeStr = matcheLine[HILOG_MATCH_SEQ_TIME].str();
     HilogTimeStrToTimestamp(timeStr, bufLine->timeStamp);
+    if (traceDataCache_->isSplitFile_ && traceDataCache_->SplitFileMinTime() <= bufLine->timeStamp &&
+        traceDataCache_->SplitFileMaxTime() >= bufLine->timeStamp) {
+        traceDataHiLog_ += buffer + "\r\n";
+    }
 
     std::string pidStr = matcheLine[HILOG_MATCH_SEQ_PID].str();
     std::optional<uint32_t> optionalPid = base::StrToInt<uint32_t>(pidStr);
@@ -133,12 +137,7 @@ void BytraceHilogParser::FilterAllHilogData()
     auto cmp = [](const std::unique_ptr<HilogLine>& a, const std::unique_ptr<HilogLine>& b) {
         return a->timeStamp < b->timeStamp;
     };
-#ifdef IS_WASM
     std::sort(hilogList_.begin(), hilogList_.end(), cmp);
-#else
-    std::stable_sort(hilogList_.begin(), hilogList_.end(), cmp);
-#endif
-
     for (auto& item : hilogList_) {
         HilogLine* hilogData = item.get();
         BeginFilterHilogData(hilogData);

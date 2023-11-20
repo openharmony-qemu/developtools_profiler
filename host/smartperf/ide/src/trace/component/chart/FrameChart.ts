@@ -18,7 +18,6 @@ import { Rect } from '../trace/timer-shaft/Rect.js';
 import { ChartMode, ChartStruct, draw, setFuncFrame } from '../../bean/FrameChartStruct.js';
 import { SpApplication } from '../../SpApplication.js';
 import { Utils } from '../trace/base/Utils.js';
-import { SpHiPerf } from './SpHiPerf.js';
 
 const scaleHeight = 30; // 刻度尺高度
 const depthHeight = 20; // 调用栈高度
@@ -31,11 +30,13 @@ class NodeValue {
   size: number;
   count: number;
   dur: number;
+  eventCount: number;
 
   constructor() {
     this.size = 0;
     this.count = 0;
     this.dur = 0;
+    this.eventCount = 0;
   }
 }
 
@@ -97,6 +98,8 @@ export class FrameChart extends BaseElement {
         return node.drawCount || node.count;
       case ChartMode.Duration:
         return node.drawDur || node.dur;
+      case ChartMode.EventCount:
+        return node.drawEventCount || node.eventCount;
     }
   }
 
@@ -133,6 +136,7 @@ export class FrameChart extends BaseElement {
       this.rootNode.count += node.drawCount || node.count;
       this.rootNode.size += node.drawSize || node.size;
       this.rootNode.dur += node.drawDur || node.dur;
+      this.rootNode.eventCount += node.drawEventCount || node.eventCount;
       node.parent = this.rootNode;
     }
   }
@@ -167,14 +171,17 @@ export class FrameChart extends BaseElement {
       node.drawCount = 0;
       node.drawDur = 0;
       node.drawSize = 0;
+      node.drawEventCount = 0;
       for (let child of node.children) {
         node.drawCount += child.searchCount;
         node.drawDur += child.searchDur;
         node.drawSize += child.searchSize;
+        node.drawEventCount += child.searchEventCount;
       }
       module.count = node.drawCount = node.drawCount || node.count;
       module.dur = node.drawDur = node.drawDur || node.dur;
       module.size = node.drawSize = node.drawSize || node.size;
+      module.eventCount = node.drawEventCount = node.drawEventCount || node.eventCount;
 
       this.setParentDisplayInfo(node, module, true);
       this.setChildrenDisplayInfo(node);
@@ -191,15 +198,21 @@ export class FrameChart extends BaseElement {
         currentValuePercent = this.total / this.rootNode.size;
         break;
       case ChartMode.Count:
-        currentValue = Utils.timeMsFormat2p(this.total * (SpHiPerf.stringResult?.fValue || 1));
+        currentValue = `${this.total}`;
         currentValuePercent = this.total / this.rootNode.count;
         break;
       case ChartMode.Duration:
         currentValue = Utils.getProbablyTime(this.total);
         currentValuePercent = this.total / this.rootNode.dur;
         break;
+      case ChartMode.EventCount:
+        currentValue = `${this.total}`;
+        currentValuePercent = this.total / this.rootNode.eventCount;
+        break;
     }
-    this.rootNode.symbol = `Root : ${currentValue} (${(currentValuePercent * 100).toFixed(2)}%)`;
+    this.rootNode.symbol = currentValuePercent
+      ? `Root : ${currentValue} (${(currentValuePercent * 100).toFixed(2)}%)`
+      : `Root : ${currentValue}`;
   }
 
   /**
@@ -218,6 +231,7 @@ export class FrameChart extends BaseElement {
       module.size = node.drawSize = node.searchSize = node.size;
       module.count = node.drawCount = node.searchCount = node.count;
       module.dur = node.drawDur = node.searchDur = node.dur;
+      module.eventCount = node.drawEventCount = node.searchEventCount = node.eventCount;
       this.setParentDisplayInfo(node, module, false);
       calDisplay = false;
     }
@@ -243,15 +257,18 @@ export class FrameChart extends BaseElement {
         parent.drawCount = module.count;
         parent.drawDur = module.dur;
         parent.drawSize = module.size;
+        parent.drawEventCount = module.eventCount;
       } else {
         parent.searchCount += module.count;
         parent.searchDur += module.dur;
         parent.searchSize += module.size;
+        parent.searchEventCount += module.eventCount;
         // 点击模式下不需要赋值draw value，由点击去
         if (!this.isClickMode) {
           parent.drawDur = parent.searchDur;
           parent.drawCount = parent.searchCount;
           parent.drawSize = parent.searchSize;
+          parent.drawEventCount = parent.searchEventCount;
         }
       }
       this.setParentDisplayInfo(parent, module, isSelect);
@@ -271,6 +288,7 @@ export class FrameChart extends BaseElement {
       children.drawCount = children.searchCount || children.count;
       children.drawDur = children.searchDur || children.dur;
       children.drawSize = children.searchSize || children.size;
+      children.drawEventCount = children.searchEventCount || children.eventCount;
       this.setChildrenDisplayInfo(children);
     }
   }
@@ -279,9 +297,11 @@ export class FrameChart extends BaseElement {
     node.drawCount = 0;
     node.drawDur = 0;
     node.drawSize = 0;
+    node.drawEventCount = 0;
     node.searchCount = 0;
     node.searchDur = 0;
     node.searchSize = 0;
+    node.searchEventCount = 0;
   }
 
   /**
@@ -386,14 +406,12 @@ export class FrameChart extends BaseElement {
         case ChartMode.Byte:
           calibration = Utils.getByteWithUnit(((this.total * sizeRatio) / 10) * i);
           break;
-        case ChartMode.Count:
-          //count 转化为时间
-          calibration = Utils.timeMsFormat2p(
-            ((this.total * (SpHiPerf.stringResult?.fValue || 1) * sizeRatio) / 10) * i
-          );
-          break;
         case ChartMode.Duration:
           calibration = Utils.getProbablyTime(((this.total * sizeRatio) / 10) * i);
+          break;
+        case ChartMode.EventCount:
+        case ChartMode.Count:
+          calibration = `${Math.ceil(((this.total * sizeRatio) / 10) * i)}`;
           break;
       }
       const size = this.canvasContext!.measureText(calibration).width;
@@ -450,10 +468,12 @@ export class FrameChart extends BaseElement {
           ignore.size += children.drawSize;
           ignore.count += children.drawCount;
           ignore.dur += children.drawDur;
+          ignore.eventCount += children.drawEventCount;
         } else {
           ignore.size += children.size;
           ignore.count += children.count;
           ignore.dur += children.dur;
+          ignore.eventCount += children.eventCount;
         }
       }
     }
@@ -464,6 +484,8 @@ export class FrameChart extends BaseElement {
         return ignore.count;
       case ChartMode.Duration:
         return ignore.dur;
+      case ChartMode.EventCount:
+        return ignore.eventCount;
     }
   }
 
@@ -475,6 +497,8 @@ export class FrameChart extends BaseElement {
         return node.searchCount > 0;
       case ChartMode.Duration:
         return node.searchDur > 0;
+      case ChartMode.EventCount:
+        return node.searchEventCount > 0;
     }
   }
 
@@ -618,6 +642,7 @@ export class FrameChart extends BaseElement {
       switch (this._mode) {
         case ChartMode.Byte:
         case ChartMode.Count:
+        case ChartMode.EventCount:
           if (Math.round((this.total * sizeRatio) / ratio) <= 10) {
             if (this.xPoint === 0) {
               return;
@@ -754,6 +779,8 @@ export class FrameChart extends BaseElement {
     }
     const name = hoverNode?.symbol.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const percent = ((hoverNode?.percent || 0) * 100).toFixed(2);
+    const threadPercent = this.getCurrentPercentOfThread(hoverNode);
+    const processPercent = this.getCurrentPercentOfProcess(hoverNode);
     switch (this._mode) {
       case ChartMode.Byte:
         const size = Utils.getByteWithUnit(this.getNodeValue(hoverNode));
@@ -765,19 +792,6 @@ export class FrameChart extends BaseElement {
                     <span class="bold">Size: </span> <span>${size} (${percent}%) </span> <br>
                     <span class="bold">Count: </span> <span>${hoverNode?.count} (${countPercent}%)</span>`;
         break;
-      case ChartMode.Count:
-        const count = this.getNodeValue(hoverNode);
-        const dur = Utils.timeMsFormat2p(count * (SpHiPerf.stringResult?.fValue || 1));
-        this.hintContent = `
-                    <span class="bold">Name: </span> <span class="text">${name} </span> <br>
-                    <span class="bold">Lib: </span> <span class="text">${hoverNode?.lib}</span>
-                    <br>
-                    <span class="bold">Addr: </span> <span>${hoverNode?.addr}</span>
-                    <br>
-                    <span class="bold">Dur: </span> <span>${dur} (${percent}%)</span>
-                    <br>
-                    <span class="bold">Count: </span> <span> ${count} (${percent}%)</span>`;
-        break;
       case ChartMode.Duration:
         const duration = Utils.getProbablyTime(this.getNodeValue(hoverNode));
         this.hintContent = `
@@ -785,9 +799,62 @@ export class FrameChart extends BaseElement {
                     <span class="bold">Lib: </span> <span class="text">${hoverNode?.lib}</span>
                     <br>
                     <span class="bold">Addr: </span> <span>${hoverNode?.addr}</span> <br>
-                    <span class="bold">Duration: </span> <span>${duration} (${percent}%)</span>`;
+                    <span class="bold">Duration: </span> <span>${duration}</span>`;
+
+        break;
+      case ChartMode.EventCount:
+      case ChartMode.Count:
+        const label = ChartMode.Count === this._mode ? 'Count' : 'EventCount';
+        const count = this.getNodeValue(hoverNode);
+        this.hintContent = `
+                      <span class="bold">Name: </span> <span class="text">${name} </span> <br>
+                      <span class="bold">Lib: </span> <span class="text">${hoverNode?.lib}</span>
+                      <br>
+                      <span class="bold">Addr: </span> <span>${hoverNode?.addr}</span>
+                      <br>
+                      <span class="bold">${label}: </span> <span> ${count}</span>`;
         break;
     }
+    if (this._mode != ChartMode.Byte) {
+      if (threadPercent) {
+        this.hintContent += `
+                      <br>
+                      <span class="bold">% in current Thread:</span> <span>${threadPercent}%</span>`;
+      }
+      if (processPercent) {
+        this.hintContent += `
+                      <br>
+                      <span class="bold">% in current Process:</span> <span>${processPercent}%</span>`;
+      }
+      this.hintContent += `<br>
+                    <span class="bold">% in all Process: </span> <span> ${percent}%</span>`;
+    }
+  }
+
+  private getCurrentPercent(node: ChartStruct, isThread: boolean): string {
+    const parentNode = this.findCurrentNode(node, isThread);
+    if (parentNode) {
+      return ((this.getNodeValue(node) / this.getNodeValue(parentNode)) * 100).toFixed(2);
+    }
+    return '';
+  }
+
+  private findCurrentNode(node: ChartStruct, isThread: boolean): ChartStruct | null {
+    while (node.parent) {
+      if ((isThread && node.parent.isThread) || (!isThread && node.parent.isProcess)) {
+        return node.parent;
+      }
+      node = node.parent;
+    }
+    return null;
+  }
+
+  private getCurrentPercentOfThread(node: ChartStruct): string {
+    return this.getCurrentPercent(node, true);
+  }
+
+  private getCurrentPercentOfProcess(node: ChartStruct): string {
+    return this.getCurrentPercent(node, false);
   }
 
   /**
@@ -822,14 +889,21 @@ export class FrameChart extends BaseElement {
    */
   private listenerResize(): void {
     new ResizeObserver(() => {
-      if (this.canvas!.getBoundingClientRect()) {
-        const box = this.canvas!.getBoundingClientRect();
-        const element = document.documentElement;
-        this.startX = box.left + Math.max(element.scrollLeft, document.body.scrollLeft) - element.clientLeft;
-        this.startY =
-          box.top + Math.max(element.scrollTop, document.body.scrollTop) - element.clientTop + this.canvasScrollTop;
+      this.resizeChange();
+      if (this.rootNode && this.canvas.clientWidth !== 0) {
+        this.rootNode.frame!.width = this.canvas.clientWidth;
       }
-    }).observe(document.documentElement);
+    }).observe(this);
+  }
+
+  public resizeChange(): void {
+    if (this.canvas!.getBoundingClientRect()) {
+      const box = this.canvas!.getBoundingClientRect();
+      const element = document.documentElement;
+      this.startX = box.left + Math.max(element.scrollLeft, document.body.scrollLeft) - element.clientLeft;
+      this.startY =
+        box.top + Math.max(element.scrollTop, document.body.scrollTop) - element.clientTop + this.canvasScrollTop;
+    }
   }
 
   public initElements(): void {

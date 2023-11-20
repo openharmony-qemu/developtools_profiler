@@ -131,6 +131,15 @@ export class SpRecordSetting extends BaseElement {
   initElements(): void {
     this.bufferNumber = this.shadowRoot?.querySelector('.buffer-size') as HTMLElement;
     this.durationNumber = this.shadowRoot?.querySelector('.max-duration') as HTMLElement;
+    let inputs = this.shadowRoot?.querySelectorAll('input');
+    inputs!.forEach((item) => {
+      item.addEventListener('keydown', (ev) => {
+        // @ts-ignore
+        if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+          ev.preventDefault();
+        }
+      });
+    });
     let bu = this.shadowRoot?.querySelector('.record') as HTMLDivElement;
     this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.MenuButton').forEach((button) => {
       button!.addEventListener('mouseenter', (e) => {
@@ -154,12 +163,12 @@ export class SpRecordSetting extends BaseElement {
     longTraceMaxSlide.innerHTML = `<div class="max-single-file-size">
         <div class="record-title">
             <span class="record-mode" >Single file max size</span>
-            <span class="record-prompt"> (single file size after cutting is 200MB - 400MB) </span>
+            <span class="record-prompt"> (single file size after cutting is 200MB - 300MB) </span>
         </div>
         <lit-slider id="max-size" defaultColor="var(--dark-color4,#86C5E3)" open dir="right">
         </lit-slider>
         <div class='resultValue'>
-            <input class="max_size_result" type="text" value = '200' >
+            <input class="max_size_result" type="text" value = '200' oninput="if(this.value > 300){this.value = '300'} if(this.value < 200 ){ this.parentElement.style.border = '1px solid red' }else{ this.parentElement.style.border = '1px solid #ccc' } if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" >
             <span style="text-align: center; margin: 8px 8px 8px 0"> MB </span>
         </div>
       </div>`;
@@ -167,10 +176,16 @@ export class SpRecordSetting extends BaseElement {
     let maxSingleFileEl = longTraceMaxSlide.querySelector<HTMLDivElement>('.max-single-file-size');
     let maxSizeSliders = longTraceMaxSlide.querySelector('#max-size') as LitSlider;
     let maxSizeInput = longTraceMaxSlide.querySelector('.max_size_result') as HTMLInputElement;
+    maxSizeInput!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
     let maxSizeParentElement = maxSizeSliders.parentNode as Element;
     maxSizeSliders.sliderStyle = {
       minRange: 200,
-      maxRange: 400,
+      maxRange: 300,
       defaultValue: '200',
       resultUnit: 'MB',
       stepSize: 2,
@@ -193,7 +208,7 @@ export class SpRecordSetting extends BaseElement {
       htmlInputElement.value = maxSizeInput.value;
       maxSizeSliders!.sliderStyle = {
         minRange: 200,
-        maxRange: 400,
+        maxRange: 300,
         defaultValue: maxSizeInput.value,
         resultUnit: 'MB',
         stepSize: 2,
@@ -540,7 +555,7 @@ export class SpRecordSetting extends BaseElement {
             <lit-slider id="memory-buffer" defaultColor="var(--dark-color3,#46B1E3)" open dir="right">
             </lit-slider>
             <div class='resultSize'>
-                <input class="memory_buffer_result" type="text" value='64' onkeyup="this.value=this.value.replace(/\\D/g,'')">
+                <input class="memory_buffer_result" type="text" value='64' onkeyup="this.value=this.value.replace(/\\D/g,'')" oninput="if(this.value > 512){this.value = '512'} if(this.value > 0 && this.value.toString().startsWith('0')){ this.value = Number(this.value) }" >
                 <span style="text-align: center; margin: 8px"> MB </span>
             </div>
           </div>

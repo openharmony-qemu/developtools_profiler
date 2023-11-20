@@ -22,6 +22,8 @@ import {
 } from '../../../../src/trace/database/SqlLite.js';
 // @ts-ignore
 import { SpChartManager } from '../../../../dist/trace/component/chart/SpChartManager.js';
+// @ts-ignore
+import { queryPerfEventType } from '../../../../dist/trace/database/SqlLite.js';
 const sqlit = require('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
@@ -124,6 +126,11 @@ describe('SpHiPerf Test', () => {
       startNS: 129792,
     },
   ]);
+  let getPerfEventType = sqlit.queryPerfEventType;
+  getPerfEventType.mockResolvedValue([{
+    id:1,
+    report_value:'sched:sched_waking',
+  }])
   let ss = new SpChartManager();
   let spHiPerf = new SpHiPerf(ss);
   it('SpHiPerf01', function () {

@@ -33,43 +33,38 @@ HtraceNativeHookParser::~HtraceNativeHookParser()
             static_cast<unsigned long long>(MaxTs()));
 }
 
-void HtraceNativeHookParser::ParseStackMap(const ProtoReader::BytesView& bytesView)
+bool HtraceNativeHookParser::ParseStackMap(const ProtoReader::BytesView& bytesView)
 {
     if (traceDataCache_->isSplitFile_) {
         auto hookData = nativeHookFilter_->GetCommHookData().datas->add_events();
         StackMap* stackMap = hookData->mutable_stack_map();
         stackMap->ParseFromArray(bytesView.Data(), bytesView.Size());
         nativeHookFilter_->GetCommHookData().size += bytesView.Size();
-        return;
+        return false;
     }
     ProtoReader::StackMap_Reader stackMapReader(bytesView);
-    auto stackId = stackMapReader.id();
     bool parseError = false;
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(stackMapReader.pid(), "");
     // stores frames info. if offlineSymbolization is true, storing ips data, else storing FrameMap id.
     std::vector<uint64_t> frames;
     if (stackMapReader.has_frame_map_id()) {
         auto itor = stackMapReader.frame_map_id(&parseError);
-        if (parseError) {
-            TS_LOGE("Parse packed varInt in ParseStackMap function failed!!!");
-            return;
-        }
+        TS_CHECK_TRUE(!parseError, false, "Parse packed varInt in ParseStackMap function failed!!!");
         while (itor) {
             frames.emplace_back(*itor);
             itor++;
         }
     } else if (stackMapReader.has_ip()) {
         auto itor = stackMapReader.ip(&parseError);
-        if (parseError) {
-            TS_LOGE("Parse packed varInt in ParseStackMap function failed!!!");
-            return;
-        }
+        TS_CHECK_TRUE(!parseError, false, "Parse packed varInt in ParseStackMap function failed!!!");
+        // OfflineSymbolization use ipidToStartAddrToMapsInfoMap_ Multi-process differentiation
         while (itor) {
             frames.emplace_back(*itor);
             itor++;
         }
     }
-    nativeHookFilter_->AppendStackMaps(stackId, frames);
-    return;
+    nativeHookFilter_->AppendStackMaps(ipid, stackMapReader.id(), frames);
+    return true;
 }
 
 void HtraceNativeHookParser::ParseFrameMap(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData)
@@ -84,8 +79,9 @@ void HtraceNativeHookParser::ParseFrameMap(std::unique_ptr<NativeHookMetaData>& 
         return;
     }
     ProtoReader::FrameMap_Reader frameMapReader(frameMapByteView);
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(frameMapReader.pid(), "");
     // when callstack is compressed, Frame message only has ip data area.
-    nativeHookFilter_->AppendFrameMaps(frameMapReader.id(), frameMapReader.frame());
+    nativeHookFilter_->AppendFrameMaps(ipid, frameMapReader.id(), frameMapReader.frame());
 }
 void HtraceNativeHookParser::ParseFileEvent(const ProtoReader::BytesView& bytesView)
 {
@@ -97,9 +93,9 @@ void HtraceNativeHookParser::ParseFileEvent(const ProtoReader::BytesView& bytesV
         return;
     }
     ProtoReader::FilePathMap_Reader filePathMapReader(bytesView);
-    auto id = filePathMapReader.id();
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(filePathMapReader.pid(), "");
     auto nameIndex = traceDataCache_->dataDict_.GetStringIndex(filePathMapReader.name().ToStdString());
-    nativeHookFilter_->AppendFilePathMaps(id, nameIndex);
+    nativeHookFilter_->AppendFilePathMaps(ipid, filePathMapReader.id(), nameIndex);
 }
 void HtraceNativeHookParser::ParseSymbolEvent(const ProtoReader::BytesView& bytesView)
 {
@@ -111,9 +107,9 @@ void HtraceNativeHookParser::ParseSymbolEvent(const ProtoReader::BytesView& byte
         return;
     }
     ProtoReader::SymbolMap_Reader symbolMapReader(bytesView);
-    auto id = symbolMapReader.id();
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(symbolMapReader.pid(), "");
     auto nameIndex = traceDataCache_->dataDict_.GetStringIndex(symbolMapReader.name().ToStdString());
-    nativeHookFilter_->AppendSymbolMap(id, nameIndex);
+    nativeHookFilter_->AppendSymbolMap(ipid, symbolMapReader.id(), nameIndex);
 }
 void HtraceNativeHookParser::ParseThreadEvent(const ProtoReader::BytesView& bytesView)
 {
@@ -125,9 +121,9 @@ void HtraceNativeHookParser::ParseThreadEvent(const ProtoReader::BytesView& byte
         return;
     }
     ProtoReader::ThreadNameMap_Reader threadNameMapReader(bytesView);
-    auto id = threadNameMapReader.id();
-    auto nameIndex = traceDataCache_->dataDict_.GetStringIndex(threadNameMapReader.name().ToStdString());
-    nativeHookFilter_->AppendThreadNameMap(id, nameIndex);
+    auto ipid = streamFilters_->processFilter_->UpdateOrCreateProcessWithName(threadNameMapReader.pid(), "");
+    auto nameIndex = traceDataCache_->GetDataIndex(threadNameMapReader.name().ToStdString());
+    nativeHookFilter_->AppendThreadNameMap(ipid, threadNameMapReader.id(), nameIndex);
 }
 
 void HtraceNativeHookParser::ParseNativeHookAuxiliaryEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData)

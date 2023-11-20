@@ -689,6 +689,9 @@ export enum SysMeminfoType {
   MEMINFO_CMA_TOTAL = 'PMEM_CMA_TOTAL',
   MEMINFO_CMA_FREE = 'PMEM_CMA_FREE',
   MEMINFO_KERNEL_RECLAIMABLE = 'PMEM_KERNEL_RECLAIMABLE',
+  PMEM_ACTIVE_PURG = 'PMEM_ACTIVE_PURG',
+  PMEM_INACTIVE_PURG = 'PMEM_INACTIVE_PURG',
+  PMEM_PINED_PURG = 'PMEM_PINED_PURG',
   UNRECOGNIZED = 'UNRECOGNIZED',
 }
 
@@ -799,6 +802,15 @@ export function sysMeminfoTypeFromJSON(object: any): SysMeminfoType {
     case 34:
     case 'MEMINFO_KERNEL_RECLAIMABLE':
       return SysMeminfoType.MEMINFO_KERNEL_RECLAIMABLE;
+    case 35:
+    case 'PMEM_ACTIVE_PURG':
+      return SysMeminfoType.PMEM_ACTIVE_PURG;
+    case 36:
+    case 'PMEM_INACTIVE_PURG':
+      return SysMeminfoType.PMEM_INACTIVE_PURG;
+    case 37:
+    case 'PMEM_PINED_PURG':
+      return SysMeminfoType.PMEM_PINED_PURG;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -814,6 +826,8 @@ export enum Type {
 }
 
 export interface HilogConfig {
+  pid: number;
+  logLevel: Level;
   needClear: boolean;
 }
 
@@ -821,7 +835,7 @@ export function levelFromJSON(object: any): Level {
   switch (object) {
     case 0:
     case 'LEVEL_UNSPECIFIED':
-      return Level.LOG_UNSPECIFIED;
+      return Level.LEVEL_UNSPECIFIED;
     case 1:
     case 'Error':
       return Level.LOG_ERROR;
@@ -832,8 +846,11 @@ export function levelFromJSON(object: any): Level {
     case 'Debug':
       return Level.LOG_DEBUG;
     case 4:
-    case 'Warns':
+    case 'Warn':
       return Level.LOG_WARN;
+    case 5:
+    case 'Fatal':
+      return Level.LOG_FATAL;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -842,16 +859,17 @@ export function levelFromJSON(object: any): Level {
 }
 
 export enum Level {
-  LOG_UNSPECIFIED = 'LOG_UNSPECIFIED',
-  LOG_ERROR = 'LOG_ERROR',
-  LOG_INFO = 'LOG_INFO',
-  LOG_DEBUG = 'LOG_DEBUG',
-  LOG_WARN = 'LOG_WARN',
+  LEVEL_UNSPECIFIED = 'LEVEL_UNSPECIFIED',
+  LOG_ERROR = 'ERROR',
+  LOG_INFO = 'INFO',
+  LOG_DEBUG = 'DEBUG',
+  LOG_WARN = 'WARN',
+  LOG_FATAL = 'FATAL',
   UNRECOGNIZED = -1,
 }
 
 export interface NativeHookConfig {
-  pid: number;
+  pid?: number;
   saveFile: boolean;
   fileName: string;
   filterSize: number;
@@ -866,6 +884,9 @@ export interface NativeHookConfig {
   callframeCompress?: boolean;
   startupMode?: boolean;
   statisticsInterval?: number;
+  sampleInterval?: number;
+  expandPids?: number[];
+  responseLibraryMode?: boolean;
 }
 
 export interface FpsConfig {
@@ -905,7 +926,8 @@ export interface HiperfPluginConfig {
 
 export interface HiSystemEventConfig {
   msg: string;
-  processName: string;
+  subscribe_domain: string;
+  subscribe_event: string;
 }
 
 export interface ArkTSConfig {

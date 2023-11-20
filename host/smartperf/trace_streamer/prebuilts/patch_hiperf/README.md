@@ -35,8 +35,6 @@ TraceStreamer使用的perf文件列表如下：
     ├── callstack.cpp
     ├── debug_logger.cpp
     ├── dwarf_encoding.cpp
-    ├── elf_file.cpp
-    ├── elf_header.cpp
     ├── elf_symbol.cpp
     ├── option.cpp
     ├── perf_event_record.cpp

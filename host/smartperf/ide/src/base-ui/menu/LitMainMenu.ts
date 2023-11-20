@@ -54,37 +54,87 @@ export class LitMainMenu extends BaseElement {
       let groupDescribe = group!.shadowRoot!.querySelector('.group-describe') as LitMainMenuGroup;
       menuBody?.appendChild(group);
       it.children?.forEach((item: any) => {
-        let th = new LitMainMenuItem();
-        th.setAttribute('icon', item.icon || '');
-        th.setAttribute('title', item.title || '');
-        if (this.getAttribute('main_menu') === '1' && window.localStorage.getItem('Theme') === 'dark') {
-          groupName.style.color = 'white';
-          groupDescribe.style.color = 'white';
-          th!.style.color = 'white';
-        } else {
-          groupName.style.color = 'black';
-          groupDescribe.style.color = 'black';
-          th!.style.color = 'black';
-        }
-        if (item.fileChoose) {
-          th.setAttribute('file', '');
-          th.addEventListener('file-change', (e) => {
-            if (item.fileHandler && !th.disabled) {
-              item.fileHandler(e);
+        if (item.children && item.children.length > 0) {
+          let secondGroup = new LitMainMenuGroup();
+          secondGroup.setAttribute('title', item.title || '');
+          secondGroup.setAttribute('describe', item.describe || '');
+          if (item.second) {
+            secondGroup.setAttribute('second', '');
+          } else {
+            secondGroup.removeAttribute('second')
+          }
+          if (item.collapsed) {
+            secondGroup.setAttribute('collapsed', '')
+          } else {
+            secondGroup.removeAttribute('collapsed')
+          }
+          group?.appendChild(secondGroup)
+          item.children?.forEach((v: any) => {
+            let th = new LitMainMenuItem();
+            th.setAttribute('icon', v.icon || '');
+            th.setAttribute('title', v.title || '');if (this.getAttribute('main_menu') === '1' && window.localStorage.getItem('Theme') === 'dark') {
+              groupName.style.color = 'white';
+              groupDescribe.style.color = 'white';
+              th!.style.color = 'white';
+            } else {
+              groupName.style.color = 'black';
+              groupDescribe.style.color = 'black';
+              th!.style.color = 'black';
             }
-          });
-        } else {
-          th.removeAttribute('file');
-          th.addEventListener('click', (e) => {
-            if (item.clickHandler && !th.disabled) {
-              item.clickHandler(item);
+            if (v.fileChoose) {
+              th.setAttribute('file', '');
+              th.addEventListener('file-change', (e) => {
+                if (v.fileHandler && !th.disabled) {
+                  v.fileHandler(e);
+                }
+              });
+            } else {
+              th.removeAttribute('file');
+              th.addEventListener('click', (e) => {
+                if (v.clickHandler && !th.disabled) {
+                  v.clickHandler(v);
+                }
+              });
             }
-          });
+            if (v.disabled != undefined) {
+              th.disabled = v.disabled;
+            }
+            secondGroup.appendChild(th)
+          })
+        } else {
+          let th = new LitMainMenuItem();
+          th.setAttribute('icon', item.icon || '');
+          th.setAttribute('title', item.title || '');
+          if (this.getAttribute('main_menu') === '1' && window.localStorage.getItem('Theme') === 'dark') {
+            groupName.style.color = 'white';
+            groupDescribe.style.color = 'white';
+            th!.style.color = 'white';
+          } else {
+            groupName.style.color = 'black';
+            groupDescribe.style.color = 'black';
+            th!.style.color = 'black';
+          }
+          if (item.fileChoose) {
+            th.setAttribute('file', '');
+            th.addEventListener('file-change', (e) => {
+              if (item.fileHandler && !th.disabled) {
+                item.fileHandler(e);
+              }
+            });
+          } else {
+            th.removeAttribute('file');
+            th.addEventListener('click', (e) => {
+              if (item.clickHandler && !th.disabled) {
+                item.clickHandler(item);
+              }
+            });
+          }
+          if (item.disabled != undefined) {
+            th.disabled = item.disabled;
+          }
+          group?.appendChild(th);
         }
-        if (item.disabled != undefined) {
-          th.disabled = item.disabled;
-        }
-        group?.appendChild(th);
+
       });
     });
   }
@@ -94,7 +144,7 @@ export class LitMainMenu extends BaseElement {
     st?.addEventListener('slotchange', (e) => {
       this.slotElements = st?.assignedElements();
       this.slotElements?.forEach((it) => {
-        it.querySelectorAll('lit-main-menu-item').forEach((cell) => {});
+        it.querySelectorAll('lit-main-menu-item').forEach((cell) => { });
       });
     });
     let versionDiv: HTMLElement | null | undefined = this.shadowRoot?.querySelector<HTMLElement>('.version');
@@ -192,8 +242,9 @@ export class LitMainMenu extends BaseElement {
 export interface MenuGroup {
   title: string;
   describe: string;
+  second: boolean;
   collapsed: boolean;
-  children: Array<MenuItem>;
+  children: any;
 }
 
 export interface MenuItem {

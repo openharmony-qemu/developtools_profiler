@@ -16,6 +16,10 @@
 // @ts-ignore
 import { TabPaneFrameDynamic } from '../../../../../../dist/trace/component/trace/sheet/frame/TabPaneFrameDynamic.js';
 
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
+
 describe('TabPaneFrameDynamic Test', () => {
   let frameDynamic = new TabPaneFrameDynamic();
   let frameDynamicParam = {

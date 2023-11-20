@@ -54,6 +54,7 @@ export class SpHelp extends BaseElement {
       {
         collapsed: false,
         title: 'QuickStart',
+        second: false,
         describe: '',
         children: [
           {
@@ -184,19 +185,6 @@ export class SpHelp extends BaseElement {
               that.appContent!.innerHTML =
                 '<object type="text/html" data=' +
                 `/application/doc/quickstart_bio.html?${that.dark} width="100%" height="100%"></object>`;
-            },
-          },
-          {
-            title: '进程smaps抓取和展示说明',
-            icon: '',
-            clickHandler: function (item: MenuItem) {
-              SpStatisticsHttpUtil.addOrdinaryVisitAction({
-                event: 'smaps',
-                action: 'help_doc',
-              });
-              that.appContent!.innerHTML =
-                '<object type="text/html" data=' +
-                `/application/doc/quickstart_smaps.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
           {
@@ -343,6 +331,32 @@ export class SpHelp extends BaseElement {
             },
           },
           {
+            title: 'Hilog抓取和展示说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'hilog',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_hilog.html?${that.dark} width="100%" height="100%"></object>`;
+            },
+          },
+          {
+            title: 'Trace解析能力增强',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'trace_parsing',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_parsing_ability.html?${that.dark} width="100%" height="100%"></object>`;
+            },
+          },
+          {
             title: '应用操作技巧',
             icon: '',
             clickHandler: function (item: MenuItem) {
@@ -355,11 +369,25 @@ export class SpHelp extends BaseElement {
                 `/application/doc/quickstart_Application_operation_skills.html?${that.dark} width="100%" height="100%"></object>`;
             },
           },
+          {
+            title: '快捷键说明',
+            icon: '',
+            clickHandler: function (item: MenuItem) {
+              SpStatisticsHttpUtil.addOrdinaryVisitAction({
+                event: 'keywords_shortcuts',
+                action: 'help_doc',
+              });
+              that.appContent!.innerHTML =
+                '<object type="text/html" data=' +
+                `/application/doc/quickstart_keywords_shortcuts.html?${that.dark} width="100%" height="100%"></object>`;
+            },
+          },
         ],
       },
       {
         collapsed: false,
         title: 'TraceStreamer',
+        second: false,
         describe: '',
         children: [
           {
@@ -434,6 +462,7 @@ export class SpHelp extends BaseElement {
       {
         collapsed: false,
         title: 'SmartPerf',
+        second: false,
         describe: '',
         children: [
           {

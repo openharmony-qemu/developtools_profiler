@@ -17,11 +17,26 @@
 import { RangeRuler } from '../../../../../dist/trace/component/trace/timer-shaft/RangeRuler.js';
 // @ts-ignore
 import { Mark } from '../../../../../dist/trace/component/trace/timer-shaft/RangeRuler.js';
-import { TimerShaftElement } from '../../../../../src/trace/component/trace/TimerShaftElement';
+// @ts-ignore
+import { TimerShaftElement } from '../../../../../dist/trace/component/trace/TimerShaftElement.js';
+// @ts-ignore
+import { SpSystemTrace } from '../../../../../dist/trace/component/SpSystemTrace.js';
 
 jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
+
+const intersectionObserverMock = () => ({
+  observe: () => null,
+});
+window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
+window.ResizeObserver =
+  window.ResizeObserver ||
+  jest.fn().mockImplementation(() => ({
+    disconnect: jest.fn(),
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+  }));
 
 describe('RangeRuler Test', () => {
   const canvas = document.createElement('canvas');
@@ -29,7 +44,8 @@ describe('RangeRuler Test', () => {
   canvas.height = 1;
   const ctx = canvas.getContext('2d');
 
-  document.body.innerHTML = '<timer-shaft-element id="timerShaftEL"><timer-shaft-element>';
+  document.body.innerHTML = '<sp-system-trace style="visibility:visible;" id="sp-system-trace">' +
+    '<timer-shaft-element id="timerShaftEL"><timer-shaft-element>';
 
   let timerShaftElement = document.querySelector('#timerShaftEL') as TimerShaftElement;
 
@@ -228,7 +244,7 @@ describe('RangeRuler Test', () => {
     expect(
       rangeRuler.mouseMove({
         key: '',
-      })
+      }, new SpSystemTrace())
     ).toBeUndefined();
   });
 

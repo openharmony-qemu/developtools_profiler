@@ -18,7 +18,7 @@ import { type LitTable, TableMode } from '../../../../../base-ui/table/lit-table
 import { SelectionParam } from '../../../../bean/BoxSelection.js';
 import { type JsCpuProfilerChartFrame, JsCpuProfilerTabStruct } from '../../../../bean/JsStruct.js';
 import { procedurePool } from '../../../../database/Procedure.js';
-import { ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
+import { findSearchNode, ns2s } from '../../../../database/ui-worker/ProcedureWorkerCommon.js';
 import { type FilterData, TabPaneFilter } from '../TabPaneFilter.js';
 import '../TabPaneFilter.js';
 
@@ -125,8 +125,9 @@ export class TabPaneJsCpuCallTree extends BaseElement {
         if (children.length === 0) {
           return;
         }
-        const heaviestChild = children.reduce((max, struct): JsCpuProfilerTabStruct =>
-          Math.max(max.totalTime, struct.totalTime) === max.totalTime ? max : struct
+        const heaviestChild = children.reduce(
+          (max, struct): JsCpuProfilerTabStruct =>
+            Math.max(max.totalTime, struct.totalTime) === max.totalTime ? max : struct
         );
         heaviestStack?.push(heaviestChild);
         getHeaviestChildren(heaviestChild.children);
@@ -181,24 +182,9 @@ export class TabPaneJsCpuCallTree extends BaseElement {
     this.profilerFilter!.getFilterData((data: FilterData): void => {
       if (this.searchValue !== this.profilerFilter!.filterValue) {
         this.searchValue = this.profilerFilter!.filterValue;
-        this.findSearchNode(this.callTreeSource, this.searchValue);
+        findSearchNode(this.callTreeSource, this.searchValue, false);
+        this.callTreeTable!.setStatus(this.callTreeSource, true);
         this.setCallTreeTableData(this.callTreeSource);
-      }
-    });
-  }
-  private findSearchNode(sampleArray: JsCpuProfilerTabStruct[], search: string): void {
-    search = search.toLocaleLowerCase();
-    sampleArray.forEach((sample) => {
-      if (sample.symbolName && sample.symbolName.toLocaleLowerCase().includes(search)) {
-        sample.isSearch = sample.symbolName != undefined && sample.symbolName.toLocaleLowerCase().includes(search);
-      } else {
-        sample.isSearch = false;
-      }
-      if (search === '') {
-        sample.isSearch = false;
-      }
-      if (sample.children.length > 0) {
-        this.findSearchNode(sample.children, search);
       }
     });
   }
@@ -289,7 +275,7 @@ export class TabPaneJsCpuCallTree extends BaseElement {
         <lit-slicer style="width:100%">
         <div id="left_table" style="width: 65%">
             <lit-table id="callTreeTable" style="height: 100%" tree>
-                <lit-table-column width="60%" title="Symbol" data-index="" key="symbolName"  align="flex-start" order retract></lit-table-column>
+                <lit-table-column width="60%" title="Symbol" data-index="symbolName" key="symbolName"  align="flex-start" order retract></lit-table-column>
                 <lit-table-column width="1fr" title="SelfTime" data-index="selfTimeStr" key="selfTimeStr" align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="%" data-index="selfTimePercent" key="selfTimePercent"  align="flex-start"  order></lit-table-column>
                 <lit-table-column width="1fr" title="TotalTime" data-index="totalTimeStr" key="totalTimeStr"  align="flex-start"  order></lit-table-column>
@@ -301,7 +287,7 @@ export class TabPaneJsCpuCallTree extends BaseElement {
             <div style="flex: 1;display: block;">
               <span slot="head" style="height: 22px">Heaviest Stack</span>
               <lit-table id="stackTable" style="height: auto;">
-                  <lit-table-column width="50%" title="Symbol" data-index="" key="symbolName"  align="flex-start"></lit-table-column>
+                  <lit-table-column width="50%" title="Symbol" data-index="symbolName" key="symbolName"  align="flex-start"></lit-table-column>
                   <lit-table-column width="1fr" title="TotalTime" data-index="totalTimeStr" key="totalTimeStr"  align="flex-start" ></lit-table-column>
                   <lit-table-column width="1fr" title="%" data-index="totalTimePercent" key="totalTimePercent"  align="flex-start"></lit-table-column>
               </lit-table>

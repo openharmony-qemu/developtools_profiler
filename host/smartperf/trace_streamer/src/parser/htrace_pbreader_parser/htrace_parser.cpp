@@ -56,81 +56,16 @@ HtraceParser::HtraceParser(TraceDataCache* dataCache, const TraceStreamerFilters
 #endif
 {
 }
-void HtraceParser::GetSymbols(std::unique_ptr<ElfFile> elfPtr,
-                              std::shared_ptr<ElfSymbolTable> symbols,
-                              const std::string& filename)
+void HtraceParser::ParserFileSO(std::string& directory, std::vector<std::string>& relativeFilePaths)
 {
-    symbols->filePathIndex = traceDataCache_->dataDict_.GetStringIndex(filename.c_str());
-    symbols->textVaddr = (std::numeric_limits<uint64_t>::max)();
-    for (auto& item : elfPtr->phdrs_) {
-        if ((item->type_ == PT_LOAD) && (item->flags_ & PF_X)) {
-            // find the min addr
-            if (symbols->textVaddr != (std::min)(symbols->textVaddr, item->vaddr_)) {
-                symbols->textVaddr = (std::min)(symbols->textVaddr, item->vaddr_);
-                symbols->textOffset = item->offset_;
-            }
-        }
+    for (const auto& filePath : relativeFilePaths) {
+        auto absoluteFilePath = filePath.substr(directory.length());
+        auto symbolsFile =
+            OHOS::Developtools::HiPerf::SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE, absoluteFilePath);
+        symbolsFile->setSymbolsFilePath(directory);
+        symbolsFile->LoadSymbols(absoluteFilePath);
+        symbolsFiles_.emplace_back(std::move(symbolsFile));
     }
-    if (symbols->textVaddr == (std::numeric_limits<uint64_t>::max)()) {
-        TS_LOGE("GetSymbols get textVaddr failed");
-        return;
-    }
-
-    std::string symSecName;
-    std::string strSecName;
-    if (elfPtr->shdrs_.find(".symtab") != elfPtr->shdrs_.end()) {
-        symSecName = ".symtab";
-        strSecName = ".strtab";
-    } else if (elfPtr->shdrs_.find(".dynsym") != elfPtr->shdrs_.end()) {
-        symSecName = ".dynsym";
-        strSecName = ".dynstr";
-    } else {
-        return;
-    }
-    const auto& sym = elfPtr->shdrs_[static_cast<const std::string>(symSecName)];
-    const uint8_t* symData = elfPtr->GetSectionData(sym->secIndex_);
-    const auto& str = elfPtr->shdrs_[static_cast<const std::string>(strSecName)];
-    const uint8_t* strData = elfPtr->GetSectionData(str->secIndex_);
-
-    if (!sym->secSize_ || !str->secSize_) {
-        TS_LOGE(
-            "GetSymbols get section size failed, \
-            sym size: %" PRIu64 ", str size: %" PRIu64 "",
-            sym->secSize_, str->secSize_);
-        return;
-    }
-    symbols->symEntSize = sym->secEntrySize_;
-    std::string symTable(symData, symData + sym->secSize_);
-    symbols->symTable = std::move(symTable);
-    std::string strTable(strData, strData + str->secSize_);
-    symbols->strTable = std::move(strTable);
-}
-
-bool HtraceParser::ParserFileSO(std::string& directory, std::vector<std::string>& relativeFilePaths)
-{
-    elfSymbolTables_ = std::make_shared<std::vector<std::shared_ptr<ElfSymbolTable>>>();
-    std::cout << "start Parser File so" << std::endl;
-    for (auto relativeFilePath : relativeFilePaths) {
-        if (relativeFilePath.compare(0, directory.length(), directory)) {
-            TS_LOGI("%s not in directory %s", relativeFilePath.c_str(), directory.c_str());
-            continue;
-        }
-        std::unique_ptr<ElfFile> elfFile = ElfFile::MakeUnique(relativeFilePath);
-        if (elfFile == nullptr) {
-            TS_LOGI("elf %s load failed", relativeFilePath.c_str());
-            continue;
-        } else {
-            TS_LOGI("loaded elf %s", relativeFilePath.c_str());
-        }
-        auto symbolInfo = std::make_shared<ElfSymbolTable>();
-        auto absoluteFilePath = relativeFilePath.substr(directory.length());
-        GetSymbols(std::move(elfFile), symbolInfo, absoluteFilePath);
-        elfSymbolTables_->emplace_back(symbolInfo);
-    }
-    if (!elfSymbolTables_->size()) {
-        return false;
-    }
-    return true;
 }
 
 HtraceParser::~HtraceParser()
@@ -141,23 +76,17 @@ HtraceParser::~HtraceParser()
 bool HtraceParser::ReparseSymbolFilesAndResymbolization(std::string& symbolsPath,
                                                         std::vector<std::string>& symbolsPaths)
 {
-    auto parsePerfStatus = false;
     std::vector<std::string> dir;
     dir.emplace_back(symbolsPath);
-    parsePerfStatus = perfDataParser_->PerfReloadSymbolFiles(dir);
-    auto parseFileSOStatus = ParserFileSO(symbolsPath, symbolsPaths);
-    if (!parseFileSOStatus) {
-        elfSymbolTables_.reset();
-        return parsePerfStatus;
+    auto parseStatus = false;
+    parseStatus = perfDataParser_->PerfReloadSymbolFiles(dir);
+    ParserFileSO(symbolsPath, symbolsPaths);
+    if (traceDataCache_->GetNativeHookFrameData()->Size() > 0) {
+        htraceNativeHookParser_->NativeHookReloadElfSymbolTable(symbolsFiles_);
+        parseStatus = true;
     }
-    if (htraceNativeHookParser_->SupportImportSymbolTable()) {
-        htraceNativeHookParser_->NativeHookReloadElfSymbolTable(elfSymbolTables_);
-    }
-    if (ebpfDataParser_->SupportImportSymbolTable()) {
-        ebpfDataParser_->EBPFReloadElfSymbolTable(elfSymbolTables_);
-    }
-    elfSymbolTables_.reset();
-    return true;
+    symbolsFiles_.clear();
+    return parseStatus;
 }
 void HtraceParser::WaitForParserEnd()
 {
@@ -613,30 +542,32 @@ int32_t HtraceParser::GetNextSegment()
 bool HtraceParser::CalcEbpfCutOffset(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength)
 {
     auto standaloneDataLength = profilerDataLength_ - PACKET_HEADER_LENGTH;
-    if (EBPF_PLUGIN_NAME.compare(standalonePluginName_) == 0) {
-        if (traceDataCache_->isSplitFile_ && !parsedEbpfOver_) {
-            if (!hasInitEbpfPublicData_) {
-                // Record the offset of Hiperf's 1024-byte header relative to the entire file.
-                ebpfDataParser_->SetEbpfDataOffset(processedDataLen_);
-                ebpfDataParser_->SetSpliteTimeRange(traceDataCache_->SplitFileMinTime(),
-                                                    traceDataCache_->SplitFileMaxTime());
-                parsedFileOffset_ += profilerDataLength_ - PACKET_HEADER_LENGTH;
-                hasInitEbpfPublicData_ = true;
-            }
-            parsedEbpfOver_ = ebpfDataParser_->AddAndSplitEbpfData(packagesBuffer_);
-            packagesBuffer_.clear();
-            return true;
+    if (traceDataCache_->isSplitFile_ && !parsedEbpfOver_) {
+        if (!hasInitEbpfPublicData_) {
+            // Record the offset of Hiperf's 1024-byte header relative to the entire file.
+            ebpfDataParser_->SetEbpfDataOffset(processedDataLen_);
+            ebpfDataParser_->SetSpliteTimeRange(traceDataCache_->SplitFileMinTime(),
+                                                traceDataCache_->SplitFileMaxTime());
+            parsedFileOffset_ += profilerDataLength_ - PACKET_HEADER_LENGTH;
+            hasInitEbpfPublicData_ = true;
         }
-        if (packagesBuffer_.size() >= standaloneDataLength) {
-            ebpfDataParser_->InitAndParseEbpfData(packagesBuffer_, standaloneDataLength);
-            currentLength -= standaloneDataLength;
-            packagesBegin += standaloneDataLength;
+        parsedEbpfOver_ = ebpfDataParser_->AddAndSplitEbpfData(packagesBuffer_);
+        if (parsedEbpfOver_) {
             profilerDataType_ = ProfilerTraceFileHeader::UNKNOW_TYPE;
             hasGotHeader_ = false;
-            return true;
+            processedDataLen_ += standaloneDataLength;
         }
         return false;
     }
+    if (!traceDataCache_->isSplitFile_ && packagesBuffer_.size() >= standaloneDataLength) {
+        ebpfDataParser_->InitAndParseEbpfData(packagesBuffer_, standaloneDataLength);
+        currentLength -= standaloneDataLength;
+        packagesBegin += standaloneDataLength;
+        profilerDataType_ = ProfilerTraceFileHeader::UNKNOW_TYPE;
+        hasGotHeader_ = false;
+        return true;
+    }
+    return false;
 }
 
 bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesBegin, size_t& currentLength)
@@ -663,18 +594,20 @@ bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesB
         return ParseHiperfData(packagesBegin, currentLength);
     }
     if (profilerDataType_ == ProfilerTraceFileHeader::STANDALONE_DATA) {
-        CalcEbpfCutOffset(packagesBegin, currentLength);
+        if (EBPF_PLUGIN_NAME.compare(standalonePluginName_) == 0) {
+            return CalcEbpfCutOffset(packagesBegin, currentLength);
+        } else {
 #if IS_WASM
-        if (packagesBuffer_.size() >= profilerDataLength_ - PACKET_HEADER_LENGTH) {
-            auto thirdPartySize = profilerDataLength_ - PACKET_HEADER_LENGTH;
-            auto buffer = std::make_unique<uint8_t[]>(thirdPartySize).get();
-            std::copy(packagesBuffer_.begin(), packagesBuffer_.begin() + thirdPartySize, buffer);
-            TraceStreamer_Plugin_Out_Filter(reinterpret_cast<const char*>(buffer), thirdPartySize,
-                                            standalonePluginName_);
-            return true;
-        }
+            if (packagesBuffer_.size() >= profilerDataLength_ - PACKET_HEADER_LENGTH) {
+                auto thirdPartySize = profilerDataLength_ - PACKET_HEADER_LENGTH;
+                auto buffer = std::make_unique<uint8_t[]>(thirdPartySize).get();
+                std::copy(packagesBuffer_.begin(), packagesBuffer_.begin() + thirdPartySize, buffer);
+                TraceStreamer_Plugin_Out_Filter(reinterpret_cast<const char*>(buffer), thirdPartySize,
+                                                standalonePluginName_);
+                return true;
+            }
 #endif
-        return false;
+        }
     }
     while (true) {
         if (!hasGotSegLength_) {
@@ -719,7 +652,7 @@ bool HtraceParser::ParseDataRecursively(std::deque<uint8_t>::iterator& packagesB
     return true;
 }
 
-void HtraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
+void HtraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish)
 {
     packagesBuffer_.insert(packagesBuffer_.end(), &bufferStr[0], &bufferStr[size]);
     auto packagesBegin = packagesBuffer_.begin();
@@ -801,7 +734,8 @@ bool HtraceParser::InitProfilerTraceFileHeader()
     }
     if (pHeader->data.dataType == ProfilerTraceFileHeader::HIPERF_DATA) {
         perfDataParser_->RecordPerfProfilerHeader(buffer, PACKET_HEADER_LENGTH);
-    } else if (pHeader->data.dataType == ProfilerTraceFileHeader::STANDALONE_DATA) {
+    } else if (pHeader->data.dataType == ProfilerTraceFileHeader::STANDALONE_DATA &&
+               EBPF_PLUGIN_NAME.compare(pHeader->data.standalonePluginName) == 0) {
         ebpfDataParser_->RecordEbpfProfilerHeader(buffer, PACKET_HEADER_LENGTH);
     } else {
         auto ret = memcpy_s(&profilerTraceFileHeader_, sizeof(profilerTraceFileHeader_), buffer, PACKET_HEADER_LENGTH);

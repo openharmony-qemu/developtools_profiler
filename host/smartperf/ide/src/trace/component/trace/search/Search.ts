@@ -32,6 +32,9 @@ export class LitSearch extends BaseElement {
   private lastSearch = '';
   private searchList: Array<SearchInfo> = [];
   private searchELList: Array<HTMLElement> = [];
+  //定义翻页index
+  private retarget_index: number = 0;
+  private _retarge_index: HTMLInputElement | null | undefined;
 
   get list(): Array<any> {
     return this._list;
@@ -140,15 +143,13 @@ export class LitSearch extends BaseElement {
     if (searchStr === null || searchStr.length === 0 || searchStr.trim().length === 0) {
       return;
     }
-    if (this.lastSearch === searchStr) {
-      return;
-    }
-    this.lastSearch = searchStr;
     let searchInfo = this.searchList.find((searchInfo) => searchInfo.searchContent === searchStr);
     if (searchInfo != undefined) {
-      searchInfo.useCount += 1;
+      let index = this.searchList.indexOf(searchInfo);
+      this.searchList.splice(index, 1);
+      this.searchList.unshift({ searchContent: searchStr, useCount: 1 });
     } else {
-      this.searchList.push({ searchContent: searchStr, useCount: 1 });
+      this.searchList.unshift({ searchContent: searchStr, useCount: 1 });
     }
   }
 
@@ -224,6 +225,11 @@ export class LitSearch extends BaseElement {
     this.totalEL = this.shadowRoot!.querySelector<HTMLSpanElement>('#total');
     this.indexEL = this.shadowRoot!.querySelector<HTMLSpanElement>('#index');
     this.searchHistoryListEL = this.shadowRoot!.querySelector<HTMLUListElement>('.search-history-list');
+
+    this._retarge_index = this.shadowRoot!.querySelector<HTMLInputElement>("input[name='retarge_index']");
+    let _root = this.shadowRoot!.querySelector<HTMLInputElement>('.root');
+    let _prompt = this.shadowRoot!.querySelector<HTMLInputElement>('#prompt');
+
     this.search!.addEventListener('focus', () => {
       this.searchFocusListener();
     });
@@ -232,8 +238,11 @@ export class LitSearch extends BaseElement {
     });
     this.search!.addEventListener('change', (event) => {
       this.index = -1;
+      this._retarge_index!.value = '';
     });
     this.search!.addEventListener('keyup', (e: KeyboardEvent) => {
+      this._retarge_index!.value = ""
+      this.index = -1;
       this.searchKeyupListener(e);
     });
     this.shadowRoot?.querySelector('#arrow-left')?.addEventListener('click', (e) => {
@@ -253,6 +262,34 @@ export class LitSearch extends BaseElement {
           },
         })
       );
+    });
+
+    // 添加翻页监听事件
+    this.shadowRoot?.querySelector("input[name='retarge_index']")?.addEventListener('keyup', (e: any) => {
+      if (e.keyCode == 13) {
+        this.retarget_index = Number(this._retarge_index!.value);
+        if (this.retarget_index <= this._list.length && this.retarget_index != 0) {
+          this.dispatchEvent(
+            new CustomEvent('retarget-data', {
+              detail: {
+                value: this.retarget_index,
+              },
+            })
+          );
+        } else if (this.retarget_index == 0) {
+          return;
+        } else {
+          _prompt!.style.display = 'block';
+          _root!.style.display = 'none';
+          _prompt!.innerHTML = `${this._list.length} pages in total, please re-enter`;
+          setTimeout(() => {
+            _prompt!.style.display = 'none';
+            _root!.style.display = 'flex';
+            this._retarge_index!.value = '';
+          }, 2000);
+        }
+      }
+      e.stopPropagation();
     });
   }
 
@@ -307,6 +344,9 @@ export class LitSearch extends BaseElement {
         }
         :host([show-search-info]) .search-info{
             display: inline-flex;
+            higth:100%!important;
+            justify-content: center;
+            align-items: center;
         }
         :host(:not([show-search-info])) .search-info{
             display: none;
@@ -341,8 +381,9 @@ export class LitSearch extends BaseElement {
         .search-history-list {
             list-style-type: none;
             margin: 0;
+            padding: 0;
             position: absolute;
-            width: 35vw;
+            width: 37vw;
             top: 100%;
             background-color: #FFFFFF;
             border: 1px solid #ddd;
@@ -365,12 +406,16 @@ export class LitSearch extends BaseElement {
             display: flex;
             justify-content: space-between;
             padding-right: 20px;
+            padding-left: 45px;
+        }
+        input[name="retarge_index"]{
+          width:100px!important;
         }
         </style>
         <div class="root" style="display: none">
             <lit-icon id="search-icon" name="search" size="22" color="#aaaaaa">
             </lit-icon>
-            <input class="readonly" placeholder="Search" readonly/>
+            <input name="search" class="readonly" placeholder="Search" readonly/>
             <div class="search-info">
                 <span id="index">0</span><span>/</span><span id="total">0</span>
                 <lit-icon class="icon" id="arrow-left" name="caret-left" color="#AAAAAA" size="26">
@@ -378,8 +423,10 @@ export class LitSearch extends BaseElement {
                 <span>|</span>
                 <lit-icon class="icon" id="arrow-right"  name="caret-right" color="#AAAAAA" size="26">
                 </lit-icon>
+                <input name="retarge_index" placeholder="Go" oninput="value=value.replace(/^(0+)|[^0-9]/g,'')"/>
             </div>
         </div>
+        <div id="prompt" style="display: none"></div>
         <div class="search-history">
               <ul class="search-history-list"></ul>
         </div>
@@ -402,8 +449,13 @@ export class LitSearch extends BaseElement {
       searchInfoOption.textContent = historyInfo.searchContent;
       searchInfoOption.addEventListener('click', () => {
         if (searchInfoOption.textContent) {
+          let flag = this.search!.value;
           this.search!.value = searchInfoOption.textContent;
           this.valueChangeHandler?.(this.search!.value);
+          if (flag != searchInfoOption.textContent) {
+            this._retarge_index!.value = '';
+            this.index = -1;
+          }
         }
       });
       searchContainer.append(searchInfoOption);
@@ -413,7 +465,9 @@ export class LitSearch extends BaseElement {
       fragment.append(searchContainer);
     });
     this.searchHistoryListEL?.append(fragment);
-    this.searchHistoryListEL!.style.display = 'block';
+    if (this.searchList.length > 0) {
+      this.searchHistoryListEL!.style.display = 'block';
+    }
     let closeOptionList = this.searchHistoryListEL!.querySelectorAll<LitIcon>('.close-option');
     closeOptionList.forEach((item) => {
       item.addEventListener('click', () => {
@@ -430,9 +484,6 @@ export class LitSearch extends BaseElement {
 
   hideSearchHistoryList() {
     this.searchHistoryListEL!.style.display = 'none';
-    this.searchList = this.searchList.sort((a, b) => {
-      return b.useCount - a.useCount;
-    });
     if (this.searchList.length > this.historyMaxCount) {
       this.searchList = this.searchList.slice(0, this.historyMaxCount);
     }

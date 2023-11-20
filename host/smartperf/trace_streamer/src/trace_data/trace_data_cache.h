@@ -45,9 +45,13 @@ public:
     void SetSplitFileMinTime(uint64_t minTs);
     std::deque<std::unique_ptr<std::string>>& HookCommProtos();
     void ClearHookCommProtos();
+    int32_t ExportPerfReadableText(const std::string& outputName, TraceDataDB::ResultCallBack resultCallBack = nullptr);
 
 private:
     void InitDB();
+    void ExportPerfCallChaninText(uint32_t callChainId, std::string& buffLine);
+
+private:
     bool dbInited_ = false;
     bool animationTraceEnabled_ = false;
     bool taskPoolTraceEnabled_ = false;

@@ -20,6 +20,9 @@ jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
     return {}
 });
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+    return {};
+});
 jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver ||

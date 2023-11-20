@@ -17,6 +17,9 @@ import { TabPaneFps } from '../../../../../../dist/trace/component/trace/sheet/f
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {};
+});
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({

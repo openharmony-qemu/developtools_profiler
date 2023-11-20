@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>quickstart_keywords_shortcuts</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      code[class*='smartperf-'],
+      pre[class*='smartperf-'] {
+        color: #333333;
+        background: none;
+        font-family: Helvetica;
+        line-height: 1.6;
+        text-align: left;
+        white-space: pre;
+        -moz-tab-size: 9;
+        -o-tab-size: 9;
+        tab-size: 8;
+        -webkit-hyphens: none;
+        -moz-hyphens: none;
+        -ms-hyphens: none;
+        hyphens: none;
+      }
+
+      /* Code blocks */
+      pre[class*='smartperf-'] {
+        padding: 0.9em;
+        overflow: auto;
+        border-radius: 2px;
+        background: #f5f5f4;
+      }
+
+      /* Inline code */
+      :not(pre) > code[class*='smartperf-'] {
+        white-space: normal;
+        background: #fcf8f8;
+        padding: 1px 0.2em;
+        border-radius: 1px 0.3em;
+      }
+
+      .tk.comment,
+      .tk.blockquote {
+        color: #8c918c;
+      }
+
+      .tk.cdata {
+        color: #183898;
+      }
+
+      .tk.doctype,
+      .tk.punctuation,
+      .tk.variable,
+      .tk.macro.property {
+        color: #424242;
+      }
+
+      .tk.operator,
+      .tk.important,
+      .tk.keyword,
+      .tk.rule,
+      .tk.builtin {
+        color: #b71d65;
+      }
+
+      .tk.string,
+      .tk.url,
+      .tk.regex,
+      .tk.attr-value {
+        color: #16338d;
+      }
+
+      .tk.property,
+      .tk.number,
+      .tk.boolean,
+      .tk.entity,
+      .tk.atrule,
+      .tk.constant,
+      .tk.symbol,
+      .tk.command,
+      .tk.code {
+        color: #037aa2;
+      }
+
+      .tk.tag,
+      .tk.selector,
+      .tk.prolog {
+        color: #69ad62;
+      }
+
+      .tk.function,
+      .tk.namespace,
+      .tk.pseudo-element,
+      .tk.class,
+      .tk.class-name,
+      .tk.pseudo-class,
+      .tk.id,
+      .tk.url-reference .tk.variable,
+      .tk.attr-name {
+        color: #775d9d;
+      }
+
+      .tk.entity {
+        cursor: help;
+      }
+
+      .tk.title,
+      .tk.title .tk.punctuation {
+        font-weight: bold;
+        color: #1a3773;
+      }
+
+      .tk.list {
+        color: #f56940;
+      }
+
+      .tk.inserted {
+        background-color: #eaffea;
+        color: #509b2f;
+      }
+
+      .tk.deleted {
+        background-color: #fae1e1;
+        color: #ad2d06;
+      }
+
+      .tk.bold {
+        font-weight: bolder;
+      }
+
+      .tk.italic {
+        font-style: normal;
+      }
+
+      /* JSON */
+      .smartperf-json .tk.property {
+        color: #19358c;
+      }
+
+      .smartperf-markup .tk.tag .tk.punctuation {
+        color: #2c2b2b;
+      }
+
+      /* CSS */
+      code.smartperf-css,
+      .smartperf-css .tk.function {
+        color: #047ca4;
+      }
+
+      /* YAML */
+      .smartperf-yaml .tk.atrule {
+        color: #609b5a;
+      }
+
+      code.smartperf-yaml {
+        color: #153491;
+      }
+
+      /* Ruby */
+      .smartperf-ruby .tk.function {
+        color: #3f3e3e;
+      }
+
+      /* Markdown */
+      .smartperf-markdown .tk.url {
+        color: #6e5298;
+      }
+
+      /* Makefile */
+      .smartperf-makefile .tk.symbol {
+        color: #6c5393;
+      }
+
+      .smartperf-makefile .tk.variable {
+        color: #183488;
+      }
+
+      .smartperf-makefile .tk.builtin {
+        color: #027ba4;
+      }
+
+      /* Bash */
+      .smartperf-bash .tk.keyword {
+        color: #027fa9;
+      }
+
+      /* highlight */
+      pre[dl] {
+        position: relative;
+        padding: 1em 1px 1px 0.9em;
+      }
+
+      pre[dl] .line-highlight-wrapper {
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        background-color: transparent;
+        display: block;
+        width: 99%;
+      }
+
+      pre[dl] .line-highlight {
+        position: absolute;
+        left: 1px;
+        right: 1px;
+        padding: inherit;
+        margin-top: 0.9em;
+        background: hsla(25, 21%, 50%, 0.08);
+        background: linear-gradient(to right, hsla(24, 20%, 50%, 0.1) 70%, hsla(24, 20%, 50%, 0));
+        pointer-events: none;
+        line-height: inherit;
+        white-space: pre;
+      }
+
+      pre[dl] .line-highlight:before,
+      pre[dl] .line-highlight[data-end]:after {
+        content: attr(data-start);
+        position: absolute;
+        text-shadow: none;
+        top: 0.3em;
+        left: 0.7em;
+        min-width: 0.9em;
+        padding: 1px 0.6em;
+        background-color: hsla(24, 20%, 47%, 0.4);
+        color: hsl(20, 11%, 95%);
+        text-align: center;
+        vertical-align: 0.2em;
+        border-radius: 10000px;
+        box-shadow: 1px 2px #fdf6f6;
+      }
+
+      pre[dl] .line-highlight[data-end]:after {
+        content: attr(data-end);
+        top: auto;
+        bottom: 0.5em;
+      }
+
+      html body {
+        line-height: 1.6;
+        font-size: 16px;
+        color: #333333;
+        overflow: initial;
+        background-color: #ffffff;
+        word-wrap: break-word;
+        font-family: Helvetica;
+        box-sizing: border-box;
+      }
+
+      html body > :first-child {
+        margin-top: 0px;
+      }
+
+      html body h1,
+      html body h2,
+      html body h3,
+      html body h4,
+      html body h5,
+      html body h6 {
+        margin-top: 1em;
+        margin-bottom: 16px;
+        color: #000000;
+        line-height: 1.2;
+      }
+
+      html body h1 {
+        font-weight: 300;
+        font-size: 2.25em;
+        padding-bottom: 0.3em;
+      }
+
+      html body h2 {
+        font-weight: 410;
+        font-size: 1.74em;
+        padding-bottom: 0.2em;
+      }
+
+      html body h3 {
+        font-size: 1.6em;
+        font-weight: 501;
+      }
+
+      html body h4 {
+        font-size: 1.26em;
+        font-weight: 601;
+      }
+
+      html body h5 {
+        font-size: 1.2em;
+        font-weight: 601;
+      }
+
+      html body h6 {
+        font-size: 0.9em;
+        font-weight: 601;
+      }
+
+      html body h1,
+      html body h2,
+      html body h3,
+      html body h4,
+      html body h5 {
+        font-weight: 601;
+      }
+
+      html body h5 {
+        font-size: 0.9em;
+      }
+
+      html body h6 {
+        color: #5c5c5c;
+      }
+
+      html body strong {
+        color: #090909;
+      }
+
+      html body del {
+        color: #525252;
+      }
+
+      html body a:not([href]) {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      html body a {
+        color: #0192da;
+        text-decoration: none;
+      }
+
+      html body a:hover {
+        color: #029dea;
+        text-decoration: none;
+      }
+
+      html body img {
+        max-width: 99%;
+      }
+
+      html body > p {
+        margin-top: 1px;
+        margin-bottom: 15px;
+        word-wrap: break-word;
+      }
+
+      html body > ul,
+      html body > ol {
+        margin-bottom: 15px;
+      }
+
+      html body ul,
+      html body ol {
+        padding-left: 1.9em;
+      }
+
+      html body ul.no-list,
+      html body ol.no-list {
+        padding: 0px;
+        list-style-type: none;
+      }
+
+      html body ul ul,
+      html body ul ol,
+      html body ol ol,
+      html body ol ul {
+        margin-top: 1px;
+        margin-bottom: 1px;
+      }
+
+      html body li {
+        margin-bottom: 1px;
+      }
+
+      html body li.task-list-item {
+        list-style: none;
+      }
+
+      html body li > p {
+        margin-top: 1px;
+        margin-bottom: 1px;
+      }
+
+      html body .task-list-item-checkbox {
+        margin: 0 0.3em 0.24em -1.7em;
+        vertical-align: middle;
+      }
+
+      html body .task-list-item-checkbox:hover {
+        cursor: pointer;
+      }
+
+      html body blockquote {
+        padding: 0.1px 15px 0 0.1px;
+        font-size: inherit;
+        color: #5c5c5c;
+        margin: 16px 0.1px 0 0.1px;
+        border-left: 3px solid #cbc9c9;
+        background-color: #e8e6e6;
+      }
+
+      html body blockquote > :first-child {
+        margin-top: 0.2px;
+      }
+
+      html body blockquote > :last-child {
+        margin-bottom: 0.1px;
+      }
+
+      html body hr {
+        height: 5px;
+        background-color: #cbcaca;
+        margin: 32px 0 0.1px 0;
+        border: 0 none;
+      }
+
+      html body table {
+        overflow: auto;
+        border-collapse: collapse;
+        margin: 15px 0.1px 20px 0.1px;
+        border-spacing: 0;
+      }
+
+      html body table th {
+        font-weight: bold;
+        color: #000000;
+      }
+
+      html body table td,
+      html body table th {
+        border: 1px solid #d6d6d6;
+        padding: 2px 14px;
+      }
+
+      html body dl {
+        padding: 0px;
+      }
+
+      html body dl dt {
+        padding: 0px;
+        margin-top: 15px;
+        font-size: 0.9em;
+        font-style: italic;
+        font-weight: bold;
+      }
+
+      html body dl dd {
+        padding: 0px 17px;
+        margin-bottom: 17px;
+      }
+
+      html body code {
+        font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+        font-size: 0.86em !important;
+        color: #000000;
+        background-color: #f0f0f0;
+        border-radius: 4px;
+        padding: 0.3em 0px;
+      }
+
+      html body code::before,
+      html body code::after {
+        letter-spacing: -0.1em;
+        content: '\00a0';
+      }
+
+      html body pre > code {
+        padding: 1px;
+        margin: 0px;
+        font-size: 0.86em !important;
+        word-break: normal;
+        white-space: pre;
+        background: transparent;
+        border: 0px;
+      }
+
+      html body .highlight {
+        margin-bottom: 17px;
+      }
+
+      html body .highlight pre,
+      html body pre {
+        padding: 0.9em;
+        overflow: auto;
+        font-size: 0.86em !important;
+        line-height: 1.46;
+        border: #d6d6d6;
+        border-radius: 4px;
+      }
+
+      html body .highlight pre {
+        margin-bottom: 0px;
+        word-break: normal;
+      }
+
+      html body pre code,
+      html body pre tt {
+        display: inline;
+        max-width: initial;
+        padding: 1px;
+        margin: 1px;
+        overflow: initial;
+        line-height: inherit;
+        word-wrap: normal;
+        background-color: transparent;
+        border: 1px;
+      }
+
+      html body pre code:before,
+      html body pre tt:before,
+      html body pre code:after,
+      html body pre tt:after {
+        content: normal;
+      }
+
+      html body p,
+      html body blockquote,
+      html body ul,
+      html body ol,
+      html body dl,
+      html body pre {
+        margin-top: 1px;
+        margin-bottom: 17px;
+      }
+
+      html body kbd {
+        color: #000000;
+        border: 3px solid #d6d6d6;
+        border-bottom: 3px solid #c7c7c7;
+        padding: 3px 5px;
+        background-color: #f0f0f0;
+        border-radius: 2px;
+      }
+
+      @media print {
+        html body {
+          background-color: #ffffff;
+        }
+
+        html body h1,
+        html body h2,
+        html body h3,
+        html body h4,
+        html body h5,
+        html body h6 {
+          color: #000000;
+          page-break-after: avoid;
+        }
+
+        html body blockquote {
+          color: #5c5c53;
+        }
+
+        html body pre {
+          page-break-inside: avoid;
+        }
+
+        html body table {
+          display: table;
+        }
+
+        html body img {
+          display: block;
+          max-width: 99%;
+          max-height: 99%;
+        }
+
+        html body pre,
+        html body code {
+          word-wrap: break-word;
+          white-space: pre;
+        }
+      }
+
+      .smartperf-preview {
+        width: 99%;
+        height: 99%;
+        box-sizing: border-box;
+      }
+
+      .smartperf-preview .pagebreak,
+      .smartperf-preview .newpage {
+        page-break-before: always;
+      }
+
+      .smartperf-preview pre.line-numbers {
+        position: relative;
+        padding-left: 3.7em;
+        counter-reset: linenumber;
+      }
+
+      .smartperf-preview pre.line-numbers > code {
+        position: relative;
+      }
+
+      .smartperf-preview pre.line-numbers .line-numbers-rows {
+        position: absolute;
+        pointer-events: none;
+        top: 0.9em;
+        font-size: 99%;
+        left: 1px;
+        width: 3em;
+        letter-spacing: -1px;
+        border-right: 1px solid #999;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      .smartperf-preview pre.line-numbers .line-numbers-rows > span {
+        pointer-events: none;
+        display: block;
+        counter-increment: linenumber;
+      }
+
+      .smartperf-preview pre.line-numbers .line-numbers-rows > span:before {
+        content: counter(linenumber);
+        color: #999;
+        display: block;
+        padding-right: 0.79em;
+        text-align: right;
+      }
+
+      .smartperf-preview .mathjax-exps .MathJax_Display {
+        text-align: center !important;
+      }
+
+      .smartperf-preview:not([for='preview']) .code-chunk .btn-group {
+        display: none;
+      }
+
+      .smartperf-preview:not([for='preview']) .code-chunk .status {
+        display: none;
+      }
+
+      .smartperf-preview:not([for='preview']) .code-chunk .output-div {
+        margin-bottom: 16px;
+      }
+
+      .scrollbar-style::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .scrollbar-style::-webkit-scrollbar-track {
+        border-radius: 9px;
+        background-color: transparent;
+      }
+
+      .scrollbar-style::-webkit-scrollbar-thumb {
+        border-radius: 6px;
+        background-color: rgba(150, 150, 150, 1);
+        border: 4px solid rgba(150, 150, 150, 1);
+        background-clip: content-box;
+      }
+
+      html body[for='html-export']:not([dpm]) {
+        position: relative;
+        width: 99%;
+        height: 99%;
+        top: 1px;
+        left: 1px;
+        margin: 1px;
+        padding: 1px;
+        overflow: auto;
+      }
+
+      html body[for='html-export']:not([dpm]) .smartperf-preview {
+        position: relative;
+        top: 1px;
+      }
+
+      @media screen and (min-width: 914px) {
+        html body[for='html-export']:not([dpm]) .smartperf-preview {
+          padding: 2em calc(50% - 458px + 2em);
+        }
+      }
+
+      @media screen and (max-width: 914px) {
+        html body[for='html-export']:not([dpm]) .smartperf-preview {
+          padding: 1.9em;
+        }
+      }
+
+      @media screen and (max-width: 450px) {
+        html body[for='html-export']:not([dpm]) .smartperf-preview {
+          font-size: 15px !important;
+          padding: 1.1em;
+        }
+      }
+
+      @media print {
+        html body[for='html-export']:not([dpm]) #sidebar-toc-btn {
+          display: none;
+        }
+      }
+
+      html body[for='html-export']:not([dpm]) #sidebar-toc-btn {
+        position: fixed;
+        bottom: 9px;
+        left: 9px;
+        font-size: 28px;
+        cursor: pointer;
+        color: inherit;
+        z-index: 99;
+        width: 31px;
+        text-align: center;
+        opacity: 0.5;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] #sidebar-toc-btn {
+        opacity: 1;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc {
+        position: fixed;
+        top: 1px;
+        left: 1px;
+        width: 300px;
+        height: 99%;
+        padding: 32px 0 48px 0;
+        font-size: 14px;
+        box-shadow: 1px 1px 4px rgba(150, 150, 150, 0.33);
+        box-sizing: border-box;
+        overflow: auto;
+        background-color: inherit;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar {
+        width: 9px;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar-track {
+        border-radius: 11px;
+        background-color: transparent;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar-thumb {
+        border-radius: 6px;
+        background-color: rgba(150, 150, 150, 0.66);
+        border: 3px solid rgba(150, 150, 150, 0.66);
+        background-clip: content-box;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc a {
+        text-decoration: none;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc ul {
+        padding: 1px 1.7em;
+        margin-top: 0.9em;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc li {
+        margin-bottom: 0.8em;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc ul {
+        list-style-type: none;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
+        left: 301px;
+        width: calc(100% - 300px);
+        padding: 2em calc(50% - 457px - 150px);
+        margin: 1px;
+        box-sizing: border-box;
+      }
+
+      @media screen and (max-width: 1274px) {
+        html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
+          padding: 1.9em;
+        }
+      }
+
+      @media screen and (max-width: 450px) {
+        html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
+          width: 99%;
+        }
+      }
+
+      html body[for='html-export']:not([dpm]):not([hsst]) .smartperf-preview {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      html body[for='html-export']:not([dpm]):not([hsst]) .md-sidebar-toc {
+        display: none;
+      }
+    </style>
+  </head>
+  <body for="html-export" id="body">
+    <div class="smartperf smartperf-preview">
+      <h2 class="mume-header fontColor">快捷键说明</h2>
+
+      <p class="fontColor">利用键盘和鼠标的快捷键对界面进行操作。</p>
+      <h3 class="mume-header fontColor">键盘操作</h3>
+
+      <ul class="fontColor">
+        <li>w/s：界面的放大/缩小。</li>
+        <li>a/d：界面的左/右移动。</li>
+        <li>m：对指定区域进行临时标记。</li>
+        <li>Shift+m：对指定区域进行永久标记。</li>
+        <li>ctrl+[/]：对Shift+m的的标尺进行左右跳转。</li>
+        <li>ctrl+,/.：对旗子标志进行左右跳转。</li>
+      </ul>
+      <h3 class="mume-header fontColor">鼠标和键盘的操作</h3>
+
+      <ul class="fontColor">
+        <li>Ctrl + Scroll wheel：界面的放大/缩小。</li>
+        <li>Ctrl + Click + Drag：界面的左/右拖动。</li>
+      </ul>
+    </div>
+
+    <script>
+      window.onload = () => {
+        let isDark = window.location.search;
+        if (isDark.indexOf('?') !== -1) {
+          isDark = isDark.substr(1, isDark.length - 1);
+        }
+        if (isDark === 'true') {
+          document.getElementById('body').setAttribute('style', 'background-color:#272C34;');
+          let header = document.getElementsByClassName('fontColor');
+          for (let i = 0; i < header.length; i++) {
+            header[i].style.color = '#fff';
+          }
+          let lightBackGround = document.getElementsByClassName('light');
+          for (let i = 0; i < lightBackGround.length; i++) {
+            lightBackGround[i].style.backgroundColor = '#32373F';
+          }
+        }
+      };
+    </script>
+  </body>
+</html>

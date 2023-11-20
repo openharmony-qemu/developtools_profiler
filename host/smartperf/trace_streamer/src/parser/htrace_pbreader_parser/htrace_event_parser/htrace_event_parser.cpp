@@ -805,11 +805,7 @@ void HtraceEventParser::FilterAllEventsReader()
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimeStamp_ < b->eventTimeStamp_;
     };
-#ifdef IS_WASM
-    std::sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
-#else
     std::stable_sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
-#endif
 
     auto endOfList = htraceEventList_.begin() + maxBuffSize;
     for (auto itor = htraceEventList_.begin(); itor != endOfList; ++itor) {
@@ -834,11 +830,7 @@ void HtraceEventParser::FilterAllEvents()
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimeStamp_ < b->eventTimeStamp_;
     };
-#ifdef IS_WASM
-    std::sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
-#else
     std::stable_sort(htraceEventList_.begin(), htraceEventList_.end(), cmp);
-#endif
     size_t maxBuffSize = 1000 * 1000;
 
     while (htraceEventList_.size()) {

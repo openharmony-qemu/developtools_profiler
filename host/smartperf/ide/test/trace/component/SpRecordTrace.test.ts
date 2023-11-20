@@ -17,6 +17,11 @@
 import { SpRecordTrace } from '../../../dist/trace/component/SpRecordTrace.js';
 // @ts-ignore
 import { EventCenter } from '../../../dist/trace/component/trace/base/EventCenter.js';
+import '../../../dist/trace/SpApplication.js';
+// @ts-ignore
+import { SpApplication } from '../../../dist/trace/SpApplication.js';
+// @ts-ignore
+import { BaseElement } from '../../../dist/base-ui/BaseElement.js';
 declare global {
   interface Window {
     SmartEvent: {
@@ -54,11 +59,14 @@ window.ResizeObserver =
     unobserve: jest.fn(),
   }));
 
+const intersectionObserverMock = () => ({
+  observe: () => null,
+});
+window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
+
 describe('SpRecordTrace Test', () => {
-  document.body.innerHTML = `
-    <sp-application><sp-record-trace id="aaa"></sp-record-trace></sp-application>
-   `;
-  let spRecordTrace = document.querySelector('#aaa') as SpRecordTrace;
+  SpRecordTrace.patentNode = jest.fn(()=> document.createElement('div'))
+  let spRecordTrace = new SpRecordTrace();
   it('SpRecordTraceTest01', function () {
     expect(SpRecordTrace.initHtml).not.toBe('');
   });
@@ -86,6 +94,7 @@ describe('SpRecordTrace Test', () => {
     spRecordTrace.spAllocations.appProcess.indexOf = jest.fn(() => '');
     spRecordTrace.spAllocations.appProcess.lastIndexOf = jest.fn(() => 1);
     spRecordTrace.spAllocations.appProcess.slice = jest.fn(() => 1);
+    spRecordTrace.spAllocations.expandPids = jest.fn(() => []);
     expect(spRecordTrace.createNativePluginConfig(1)).toEqual({
       configData: {
         blocked: true,
@@ -93,7 +102,6 @@ describe('SpRecordTrace Test', () => {
         filterSize: undefined,
         fpUnwind: undefined,
         maxStackDepth: undefined,
-        pid: 1,
         processName: '',
         saveFile: false,
         smbPages: undefined,

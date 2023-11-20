@@ -446,9 +446,9 @@ bool BytraceEventParser::SetRateEvent(const ArgsMap& args, const BytraceLine& li
     }
     auto name = std::string_view(args.at("name"));
     auto state = base::StrToInt<int64_t>(args.at("state"));
-    auto cpu = base::StrToInt<uint64_t>(args.at("cpu_id"));
+    uint64_t cpu = 0;
     DataIndex nameIndex = traceDataCache_->GetDataIndex(name);
-    streamFilters_->clockRateFilter_->AppendNewMeasureData(cpu.value(), nameIndex, line.ts, state.value());
+    streamFilters_->clockRateFilter_->AppendNewMeasureData(cpu, nameIndex, line.ts, state.value());
     streamFilters_->statFilter_->IncreaseStat(TRACE_EVENT_CLOCK_SET_RATE, STAT_EVENT_RECEIVED);
     return true;
 }
@@ -692,11 +692,7 @@ void BytraceEventParser::FilterAllEventsTemp()
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimestamp < b->eventTimestamp;
     };
-#ifdef IS_WASM
-    std::sort(eventList_.begin(), eventList_.end(), cmp);
-#else
     std::stable_sort(eventList_.begin(), eventList_.end(), cmp);
-#endif
     auto endOfList = eventList_.begin() + maxBuffSize;
     for (auto itor = eventList_.begin(); itor != endOfList; itor++) {
         EventInfo* event = itor->get();
@@ -711,11 +707,7 @@ void BytraceEventParser::FilterAllEvents()
     auto cmp = [](const std::unique_ptr<EventInfo>& a, const std::unique_ptr<EventInfo>& b) {
         return a->eventTimestamp < b->eventTimestamp;
     };
-#ifdef IS_WASM
-    std::sort(eventList_.begin(), eventList_.end(), cmp);
-#else
     std::stable_sort(eventList_.begin(), eventList_.end(), cmp);
-#endif
     size_t maxBuffSize = 1000 * 1000;
     while (eventList_.size()) {
         int32_t size = std::min(maxBuffSize, eventList_.size());

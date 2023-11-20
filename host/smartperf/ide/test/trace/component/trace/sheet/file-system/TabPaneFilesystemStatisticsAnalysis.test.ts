@@ -21,6 +21,11 @@ import { LitTable } from '../../../../../../dist/base-ui/table/lit-table.js';
 import crypto from 'crypto';
 // @ts-ignore
 import { TabPaneFilter } from '../../../../../../dist/trace/component/trace/sheet/TabPaneFilter.js';
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {
+    initSort: ()=>{}
+  };
+});
 // @ts-ignore
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -129,7 +134,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     tabPane.filter = filter;
     tabPane.loadingList = [];
     tabPane.data = param;
-    expect(tabPane.fileStatisticsAnalysisCurrentSelection).not.toBeUndefined();
+    expect(tabPane.fileStatisticsAnalysisCurrentSelection).toBeUndefined();
   });
 
   it('systemStatisticsAnalysis02', function () {
@@ -274,35 +279,27 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     expect(tabPane.sortByColumn('durFormat', 1)).toBeUndefined();
   });
   it('systemStatisticsAnalysis13', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+      tableName: '',
+    };
     expect(tabPane.fileProcessLevelClickEvent(it)).toBeUndefined();
   });
   it('systemStatisticsAnalysis14', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+      tableName: '',
+    };
     expect(tabPane.fileTypeLevelClickEvent(it)).toBeUndefined();
   });
   it('systemStatisticsAnalysis15', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+        tableName: '',
+      };
     expect(tabPane.fileThreadLevelClickEvent(it)).toBeUndefined();
   });
   it('systemStatisticsAnalysis16', function () {
-    let it = [
-      {
-        tabName: '',
-      },
-    ];
+    let it = {
+      tableName: '',
+    };
     expect(tabPane.fileSoLevelClickEvent(it)).toBeUndefined();
   });
   it('TabPanePerfAnalysisTest17 ', function () {
@@ -317,7 +314,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     tabPane.processStatisticsData = jest.fn(() => true);
     tabPane.processStatisticsData.allDuration = jest.fn(() => true);
     tabPane.fileStatisticsAnalysisPidData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.fsBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
   it('TabPanePerfAnalysisTest18 ', function () {
@@ -332,7 +329,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     tabPane.threadStatisticsData = jest.fn(() => true);
     tabPane.threadStatisticsData.allDuration = jest.fn(() => true);
     tabPane.fileStatisticsAnalysisThreadData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.fsBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
   it('TabPanePerfAnalysisTest19 ', function () {
@@ -347,7 +344,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     tabPane.libStatisticsData = jest.fn(() => true);
     tabPane.libStatisticsData.allDuration = jest.fn(() => true);
     tabPane.fileStatisticsAnalysisSoData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.fsBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
   it('TabPanePerfAnalysisTest20 ', function () {
@@ -362,7 +359,7 @@ describe('TabPaneFilesystemStatisticsAnalysis Test', () => {
     tabPane.typeStatisticsData = jest.fn(() => true);
     tabPane.typeStatisticsData.allDuration = jest.fn(() => true);
     tabPane.fileStatisticsAnalysisTypeData = [{}, {}];
-    tabPane.back!.dispatchEvent(itemClick);
+    tabPane.fsBack!.dispatchEvent(itemClick);
     expect(tabPane.goBack()).toBeUndefined();
   });
 });

@@ -56,6 +56,14 @@ ohos_source_set("hiperf_parser_src") {
     "${COMMON_LIBRARY}/c_utils/base/include",
     "${THIRD_PARTY}/googletest/googletest/include",
   ]
+  include_dirs += [
+    "${THIRD_PARTY}/perf_include/hiviewdfx/hilog/include",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/dfxlog",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/dfxutil",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/common",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/nonlinux",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/include",
+  ]
   include_dirs += [ "${THIRD_PARTY}/libunwind/include" ]
   if (is_mingw || is_mac) {
     include_dirs += [ "${THIRD_PARTY}/libbpf/include/uapi" ]
@@ -71,5 +79,6 @@ group("hiperf_parser") {
     "${PERF_DIR}/hiperf:hiperf_platform_common",
     "${THIRD_PARTY}/protobuf:protobuf_lite_static",
     "${THIRD_PARTY}/protobuf:protobuf_static",
+    "//third_party/perf_include/hiviewdfx:hiviewdfx",
   ]
 }

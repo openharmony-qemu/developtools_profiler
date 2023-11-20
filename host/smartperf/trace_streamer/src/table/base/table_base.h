@@ -17,6 +17,7 @@
 #define TABLE_H
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -76,6 +77,18 @@ public:
         virtual int32_t Column(int32_t n) const = 0;
         virtual void FilterId(unsigned char op, sqlite3_value* argv);
         virtual void FilterEnd();
+        void SwapIndexFront(std::vector<FilterConstraints::Constraint>& cs, std::set<uint32_t>& sId)
+        {
+            uint32_t index = 0;
+            for (size_t i = 0; i < cs.size(); i++) {
+                const auto& c = cs[i];
+                if (sId.count(c.col)) {
+                    std::swap(cs[index], cs[i]);
+                    index++;
+                    break;
+                }
+            }
+        }
 
     public:
         sqlite3_context* context_;

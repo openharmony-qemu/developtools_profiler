@@ -26,7 +26,6 @@ export class TabPaneGpuResourceVmTracker extends BaseElement {
   private gpuResourceDataSource: Array<any> = [];
 
   set data(startNs: number) {
-    this.parentElement!.style.overflow = 'unset';
     this.gpuResourceDataSource = [];
     this.setGpuResourceTableData(startNs);
   }
@@ -62,14 +61,24 @@ export class TabPaneGpuResourceVmTracker extends BaseElement {
   connectedCallback() {
     super.connectedCallback();
     resizeObserver(this.parentElement!, this.gpuResourceTable!);
+    new ResizeObserver(() => {
+      if (this.parentElement?.clientHeight !== 0) {
+        this.gpuResourceTable!.shadowRoot!.querySelector<HTMLDivElement>('.table')!.style.height = '100%';
+        this.gpuResourceTable!.reMeauseHeight();
+      }
+    }).observe(this.parentElement!);
   }
   public initHtml(): string {
     return `<style>
-        :host{
-            display: flex;
-            padding: 10px 10px;
-            flex-direction: column;
-        }
+            :host{
+                display: flex;
+                padding: 10px 10px;
+                flex-direction: column;
+                height: calc(100% - 20px);
+            }
+            #gpu-resource-tbl{
+                height: 100%;
+            }
         </style>
         <lit-table id="gpu-resource-tbl" no-head>
             <lit-table-column title="Name" data-index="name" align="flex-start" width="27%">

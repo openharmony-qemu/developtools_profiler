@@ -18,6 +18,7 @@ import { PerfCall, PerfFile } from '../../bean/PerfProfile.js';
 import { info } from '../../../log/Log.js';
 import { SpHiPerf } from './SpHiPerf.js';
 import { procedurePool } from '../../database/Procedure.js';
+import {PerfCallChain} from "../../database/logic-worker/ProcedureLogicWorkerPerf";
 
 export class PerfDataQuery {
   filesData: any = {};
@@ -47,6 +48,20 @@ export class PerfDataQuery {
     });
     this.callChainMap = results as any;
     info('Perf Files Data initialized');
+  }
+
+  getLibName(fileId: number, symbolId: number) {
+    let name = 'unknown';
+    if (symbolId == -1) {
+      if (this.filesData[fileId] && this.filesData[fileId].length > 0) {
+        name = this.filesData[fileId][0].fileName;
+      }
+    } else {
+      if (this.filesData[fileId] && this.filesData[fileId].length > symbolId) {
+        name = this.filesData[fileId][symbolId].fileName;
+      }
+    }
+    return name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 }
 

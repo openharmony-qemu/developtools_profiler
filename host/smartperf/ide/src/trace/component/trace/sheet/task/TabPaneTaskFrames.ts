@@ -281,24 +281,11 @@ export class TabPaneTaskFrames extends BaseElement {
   }
 
   static getExecuteId(funName: string): string {
-    let strArray = funName.split(',');
-    let executeStr = '';
-    let executeId = '';
-    let endStr = '';
-    if (strArray.length >= 2) {
-      executeStr = strArray[1];
-      if (funName.indexOf(ALLOCATION_TASK) >= 0 || funName.indexOf(PERFORM_TASK) >= 0) {
-        executeId = executeStr.split(':')[1].trim();
-      } else if (funName.indexOf(END_TASK) >= 0) {
-        endStr = executeStr.split(':')[1].trim();
-        if (endStr.indexOf('[') >= 0) {
-          executeId = endStr.substring(0, endStr.indexOf('['));
-        } else {
-          executeId = endStr;
-        }
-      }
+    const executeIdMatch = funName.match(/executeId\s*:\s*(\d+)/i);
+    if (executeIdMatch && executeIdMatch.length > 1) {
+      return executeIdMatch[1];
     }
-    return executeId;
+    return '';
   }
 
   static getPriorityId(funName: string): number {

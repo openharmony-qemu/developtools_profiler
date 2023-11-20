@@ -6,840 +6,907 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
     <style>
-      code[class*='font-'],
-      pre[class*='font-'] {
-        text-align: left;
+      code[class*='smartperf-'],
+      pre[class*='smartperf-'] {
         color: #333333;
         background: none;
-        word-spacing: normal;
+        font-family: Helvetica;
+        line-height: 1.6;
+        text-align: left;
         white-space: pre;
-        word-break: normal;
-        word-wrap: normal;
-        line-height: 1.5;
+        -moz-tab-size: 9;
+        -o-tab-size: 9;
+        tab-size: 8;
+        -webkit-hyphens: none;
         -moz-hyphens: none;
         -ms-hyphens: none;
-        -o-tab-size: 8;
-        tab-size: 8;
-        -moz-tab-size: 8;
-        -webkit-hyphens: none;
         hyphens: none;
-        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
       }
 
-      pre[class*='font-'] {
-        border-radius: 3px;
-        background: #f5f5f5;
-        padding: 0.8em;
+      /* Code blocks */
+      pre[class*='smartperf-'] {
+        padding: 0.9em;
         overflow: auto;
+        border-radius: 2px;
+        background: #f5f5f4;
       }
 
-      :not(pre) > code[class*='font-'] {
+      /* Inline code */
+      :not(pre) > code[class*='smartperf-'] {
         white-space: normal;
-        background: #f5f5f5;
-        padding: 0.2em;
-        border-radius: 0.3em;
+        background: #fcf8f8;
+        padding: 1px 0.2em;
+        border-radius: 1px 0.3em;
       }
 
-      .temporary.cdata {
-        color: #183690;
+      .tk.comment,
+      .tk.blockquote {
+        color: #8c918c;
       }
 
-      .temporary.comment,
-      .temporary.blockquote {
-        color: #969897;
+      .tk.cdata {
+        color: #183898;
       }
 
-      .temporary.doctype,
-      .temporary.punctuation,
-      .temporary.variable,
-      .temporary.macro.property {
-        color: #333333;
+      .tk.doctype,
+      .tk.punctuation,
+      .tk.variable,
+      .tk.macro.property {
+        color: #424242;
       }
 
-      .temporary.string,
-      .temporary.url,
-      .temporary.regex,
-      .temporary.attr-value {
-        color: #183690;
+      .tk.operator,
+      .tk.important,
+      .tk.keyword,
+      .tk.rule,
+      .tk.builtin {
+        color: #b71d65;
       }
 
-      .temporary.operator,
-      .temporary.important,
-      .temporary.keyword,
-      .temporary.rule,
-      .temporary.builtin {
-        color: #a71d5c;
+      .tk.string,
+      .tk.url,
+      .tk.regex,
+      .tk.attr-value {
+        color: #16338d;
       }
 
-      .temporary.atrule,
-      .temporary.constant,
-      .temporary.symbol,
-      .temporary.command,
-      .temporary.property,
-      .temporary.number,
-      .temporary.boolean,
-      .temporary.entity,
-      .temporary.code {
-        color: #0086b2;
+      .tk.property,
+      .tk.number,
+      .tk.boolean,
+      .tk.entity,
+      .tk.atrule,
+      .tk.constant,
+      .tk.symbol,
+      .tk.command,
+      .tk.code {
+        color: #037aa2;
       }
 
-      .temporary.tag,
-      .temporary.selector,
-      .temporary.prolog {
-        color: #63a35e;
+      .tk.tag,
+      .tk.selector,
+      .tk.prolog {
+        color: #69ad62;
       }
 
-      .temporary.entity {
+      .tk.function,
+      .tk.namespace,
+      .tk.pseudo-element,
+      .tk.class,
+      .tk.class-name,
+      .tk.pseudo-class,
+      .tk.id,
+      .tk.url-reference .tk.variable,
+      .tk.attr-name {
+        color: #775d9d;
+      }
+
+      .tk.entity {
         cursor: help;
       }
 
-      .temporary.title,
-      .temporary.title .temporary.punctuation {
+      .tk.title,
+      .tk.title .tk.punctuation {
         font-weight: bold;
-        color: #1d3e89;
+        color: #1a3773;
       }
 
-      .temporary.list {
-        color: #ed6a48;
+      .tk.list {
+        color: #f56940;
       }
 
-      .temporary.function,
-      .temporary.namespace,
-      .temporary.pseudo-element,
-      .temporary.class,
-      .temporary.class-name,
-      .temporary.pseudo-class,
-      .temporary.id,
-      .temporary.url-reference .temporary.variable,
-      .temporary.attr-name {
-        color: #795da2;
+      .tk.inserted {
+        background-color: #eaffea;
+        color: #509b2f;
       }
 
-      .temporary.inserted {
-        color: #55a535;
-        background-color: #eaffee;
+      .tk.deleted {
+        background-color: #fae1e1;
+        color: #ad2d06;
       }
 
-      .temporary.bold {
-        font-weight: bold;
+      .tk.bold {
+        font-weight: bolder;
       }
 
-      .temporary.deleted {
-        color: #bd2c08;
-        background-color: #ffecea;
+      .tk.italic {
+        font-style: normal;
       }
 
-      .font-json .temporary.property {
-        color: #183690;
+      /* JSON */
+      .smartperf-json .tk.property {
+        color: #19358c;
       }
 
-      .temporary.italic {
-        font-style: italic;
+      .smartperf-markup .tk.tag .tk.punctuation {
+        color: #2c2b2b;
       }
 
-      .font-markup .temporary.tag .temporary.punctuation {
-        color: #333333;
+      /* CSS */
+      code.smartperf-css,
+      .smartperf-css .tk.function {
+        color: #047ca4;
       }
 
-      .font-yaml .temporary.atrule {
-        color: #63a35a;
+      /* YAML */
+      .smartperf-yaml .tk.atrule {
+        color: #609b5a;
       }
 
-      code.font-css,
-      .font-css .temporary.function {
-        color: #0086b8;
+      code.smartperf-yaml {
+        color: #153491;
       }
 
-      code.font-yaml {
-        color: #183690;
+      /* Ruby */
+      .smartperf-ruby .tk.function {
+        color: #3f3e3e;
       }
 
-      .font-ruby .temporary.function {
-        color: #333333;
+      /* Markdown */
+      .smartperf-markdown .tk.url {
+        color: #6e5298;
       }
 
-      .font-markdown .temporary.url {
-        color: #795da2;
+      /* Makefile */
+      .smartperf-makefile .tk.symbol {
+        color: #6c5393;
       }
 
-      .font-makefile .temporary.variable {
-        color: #183690;
+      .smartperf-makefile .tk.variable {
+        color: #183488;
       }
 
-      .font-makefile .temporary.builtin {
-        color: #0086b3;
+      .smartperf-makefile .tk.builtin {
+        color: #027ba4;
       }
 
-      .font-makefile .temporary.symbol {
-        color: #795da2;
+      /* Bash */
+      .smartperf-bash .tk.keyword {
+        color: #027fa9;
       }
 
-      .font-bash .temporary.keyword {
-        color: #0086b3;
-      }
-
-      pre[data-wire] {
-        padding: 1em 0 1em 2em;
+      /* highlight */
+      pre[dl] {
         position: relative;
+        padding: 1em 1px 1px 0.9em;
       }
 
-      pre[data-wire] .line-highlight-wrapper {
+      pre[dl] .line-highlight-wrapper {
+        position: absolute;
+        top: 1px;
+        left: 1px;
         background-color: transparent;
-        top: 2px;
-        left: 2px;
         display: block;
-        width: 100%;
-        position: absolute;
+        width: 99%;
       }
 
-      pre[data-wire] .line-highlight {
+      pre[dl] .line-highlight {
         position: absolute;
-        left: 2px;
-        right: 2px;
+        left: 1px;
+        right: 1px;
+        padding: inherit;
+        margin-top: 0.9em;
+        background: hsla(25, 21%, 50%, 0.08);
+        background: linear-gradient(to right, hsla(24, 20%, 50%, 0.1) 70%, hsla(24, 20%, 50%, 0));
         pointer-events: none;
-        margin-top: 3em;
-        background: hsla(25, 10%, 55%, 0.06);
-        background: linear-gradient(to right, hsla(25, 10%, 40%, 0.2) 80%, hsla(23, 24%, 52%, 0));
         line-height: inherit;
         white-space: pre;
       }
 
-      pre[data-wire] .line-highlight:before,
-      pre[data-wire] .line-highlight[data-end]:after {
+      pre[dl] .line-highlight:before,
+      pre[dl] .line-highlight[data-end]:after {
         content: attr(data-start);
         position: absolute;
-        background-color: hsla(22, 25%, 54%, 0.5);
-        min-width: 2em;
-        padding: 0 0.6em;
-        top: 0.5em;
-        left: 0.4em;
-        color: hsl(22, 23%, 90%);
-        vertical-align: 0.3em;
-        border-radius: 10px;
         text-shadow: none;
-        box-shadow: 0 2px white;
-        font: bold 60%/1.6 sans-serif;
+        top: 0.3em;
+        left: 0.7em;
+        min-width: 0.9em;
+        padding: 1px 0.6em;
+        background-color: hsla(24, 20%, 47%, 0.4);
+        color: hsl(20, 11%, 95%);
         text-align: center;
+        vertical-align: 0.2em;
+        border-radius: 10000px;
+        box-shadow: 1px 2px #fdf6f6;
       }
 
-      pre[data-wire] .line-highlight[data-end]:after {
-        bottom: 0.6em;
+      pre[dl] .line-highlight[data-end]:after {
         content: attr(data-end);
         top: auto;
+        bottom: 0.5em;
       }
 
-      body {
-        font-size: 16px;
-        font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;
+      html body {
         line-height: 1.6;
-        overflow: initial;
-        box-sizing: border-box;
-        word-wrap: break-word;
+        font-size: 16px;
         color: #333333;
+        overflow: initial;
         background-color: #ffffff;
+        word-wrap: break-word;
+        font-family: Helvetica;
+        box-sizing: border-box;
       }
 
-      body > :first-child {
-        margin-top: 0;
+      html body > :first-child {
+        margin-top: 0px;
       }
 
-      body h1,
-      body h2,
-      body h3 {
+      html body h1,
+      html body h2,
+      html body h3,
+      html body h4,
+      html body h5,
+      html body h6 {
+        margin-top: 1em;
         margin-bottom: 16px;
         color: #000000;
         line-height: 1.2;
-        margin-top: 1em;
       }
 
-      body h1 {
+      html body h1 {
         font-weight: 300;
         font-size: 2.25em;
         padding-bottom: 0.3em;
       }
 
-      body h2 {
-        font-weight: 400;
-        font-size: 1.75em;
-        padding-bottom: 0.3em;
+      html body h2 {
+        font-weight: 410;
+        font-size: 1.74em;
+        padding-bottom: 0.2em;
       }
 
-      body h3 {
-        font-size: 1.5em;
-        font-weight: 500;
+      html body h3 {
+        font-size: 1.6em;
+        font-weight: 501;
       }
 
-      body h1,
-      body h2,
-      body h3 {
-        font-weight: 600;
+      html body h4 {
+        font-size: 1.26em;
+        font-weight: 601;
       }
 
-      body del {
+      html body h5 {
+        font-size: 1.2em;
+        font-weight: 601;
+      }
+
+      html body h6 {
+        font-size: 0.9em;
+        font-weight: 601;
+      }
+
+      html body h1,
+      html body h2,
+      html body h3,
+      html body h4,
+      html body h5 {
+        font-weight: 601;
+      }
+
+      html body h5 {
+        font-size: 0.9em;
+      }
+
+      html body h6 {
         color: #5c5c5c;
       }
 
-      body strong {
-        color: #000000;
+      html body strong {
+        color: #090909;
       }
 
-      body a {
-        text-decoration: none;
-        color: #08c;
+      html body del {
+        color: #525252;
       }
 
-      body a:not([href]) {
-        text-decoration: none;
+      html body a:not([href]) {
         color: inherit;
-      }
-
-      body a:hover {
-        color: #00a3f5;
         text-decoration: none;
       }
 
-      body img {
-        max-width: 100%;
+      html body a {
+        color: #0192da;
+        text-decoration: none;
       }
 
-      body > ul,
-      body > ol {
-        margin-bottom: 16px;
+      html body a:hover {
+        color: #029dea;
+        text-decoration: none;
       }
 
-      body ul,
-      body ol {
-        padding-left: 2em;
+      html body img {
+        max-width: 99%;
       }
 
-      body > p {
-        margin-top: 0;
+      html body > p {
+        margin-top: 1px;
+        margin-bottom: 15px;
         word-wrap: break-word;
-        margin-bottom: 16px;
       }
 
-      body ul.no-list,
-      body ol.no-list {
-        padding: 0;
+      html body > ul,
+      html body > ol {
+        margin-bottom: 15px;
+      }
+
+      html body ul,
+      html body ol {
+        padding-left: 1.9em;
+      }
+
+      html body ul.no-list,
+      html body ol.no-list {
+        padding: 0px;
         list-style-type: none;
       }
 
-      body li {
-        margin-bottom: 0;
+      html body ul ul,
+      html body ul ol,
+      html body ol ol,
+      html body ol ul {
+        margin-top: 1px;
+        margin-bottom: 1px;
       }
 
-      body ul ul,
-      body ul ol,
-      body ol ol,
-      body ol ul {
-        margin-top: 0;
-        margin-bottom: 0;
+      html body li {
+        margin-bottom: 1px;
       }
 
-      body li.task-list-item {
+      html body li.task-list-item {
         list-style: none;
       }
 
-      body li > p {
-        margin-top: 0;
-        margin-bottom: 0;
+      html body li > p {
+        margin-top: 1px;
+        margin-bottom: 1px;
       }
 
-      body .task-list-item-checkbox {
-        margin: 0 0.2em 0.25em -1.8em;
+      html body .task-list-item-checkbox {
+        margin: 0 0.3em 0.24em -1.7em;
         vertical-align: middle;
       }
 
-      body blockquote {
-        margin: 16px 0;
-        font-size: inherit;
-        padding: 0 15px 0 0;
-        color: #5c5c5c;
-        background-color: #f0f0f0;
-        border-left: 4px solid #d6d6d6;
-      }
-
-      body .task-list-item-checkbox:hover {
+      html body .task-list-item-checkbox:hover {
         cursor: pointer;
       }
 
-      body blockquote > :first-child {
-        margin-top: 0;
+      html body blockquote {
+        padding: 0.1px 15px 0 0.1px;
+        font-size: inherit;
+        color: #5c5c5c;
+        margin: 16px 0.1px 0 0.1px;
+        border-left: 3px solid #cbc9c9;
+        background-color: #e8e6e6;
       }
 
-      body blockquote > :last-child {
-        margin-bottom: 0;
+      html body blockquote > :first-child {
+        margin-top: 0.2px;
       }
 
-      body hr {
-        background-color: #d6d6d6;
-        height: 6px;
+      html body blockquote > :last-child {
+        margin-bottom: 0.1px;
+      }
+
+      html body hr {
+        height: 5px;
+        background-color: #cbcaca;
+        margin: 32px 0 0.1px 0;
         border: 0 none;
-        margin: 32px 0 0 0;
       }
 
-      body table th {
+      html body table {
+        overflow: auto;
+        border-collapse: collapse;
+        margin: 15px 0.1px 20px 0.1px;
+        border-spacing: 0;
+      }
+
+      html body table th {
         font-weight: bold;
         color: #000000;
       }
 
-      body table {
-        margin: 10px 0 15px 0;
-        border-collapse: collapse;
-        border-spacing: 0;
-        width: 100%;
-        display: block;
-        overflow: auto;
-        word-break: normal;
-        word-break: keep-all;
-      }
-
-      body table td,
-      body table th {
-        padding: 5px 14px 0 0;
+      html body table td,
+      html body table th {
         border: 1px solid #d6d6d6;
+        padding: 2px 14px;
       }
 
-      body dl {
-        padding: 0;
+      html body dl {
+        padding: 0px;
       }
 
-      body dl dd {
-        padding: 0 15px;
-        margin-bottom: 15px;
-      }
-
-      body dl dt {
-        margin-top: 16px;
-        padding: 0;
-        font-size: 1em;
-        font-weight: bold;
+      html body dl dt {
+        padding: 0px;
+        margin-top: 15px;
+        font-size: 0.9em;
         font-style: italic;
+        font-weight: bold;
       }
 
-      body code {
-        font-size: 0.85em !important;
+      html body dl dd {
+        padding: 0px 17px;
+        margin-bottom: 17px;
+      }
+
+      html body code {
         font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
-        padding: 0.2em 0 0 0;
+        font-size: 0.86em !important;
         color: #000000;
         background-color: #f0f0f0;
-        border-radius: 3px;
+        border-radius: 4px;
+        padding: 0.3em 0px;
       }
 
-      body code::before,
-      body code::after {
-        letter-spacing: -0.2em;
+      html body code::before,
+      html body code::after {
+        letter-spacing: -0.1em;
         content: '\00a0';
       }
 
-      body .highlight pre {
-        word-break: normal;
-        margin-bottom: 0;
-      }
-
-      body pre > code {
+      html body pre > code {
+        padding: 1px;
+        margin: 0px;
+        font-size: 0.86em !important;
         word-break: normal;
         white-space: pre;
         background: transparent;
-        border: 0;
-        padding: 0;
-        margin: 0;
-        font-size: 0.85em !important;
+        border: 0px;
       }
 
-      body .highlight {
-        margin-bottom: 15px;
+      html body .highlight {
+        margin-bottom: 17px;
       }
 
-      body pre code,
-      body pre tt {
+      html body .highlight pre,
+      html body pre {
+        padding: 0.9em;
+        overflow: auto;
+        font-size: 0.86em !important;
+        line-height: 1.46;
+        border: #d6d6d6;
+        border-radius: 4px;
+      }
+
+      html body .highlight pre {
+        margin-bottom: 0px;
+        word-break: normal;
+      }
+
+      html body pre code,
+      html body pre tt {
         display: inline;
         max-width: initial;
-        word-wrap: normal;
+        padding: 1px;
+        margin: 1px;
         overflow: initial;
         line-height: inherit;
+        word-wrap: normal;
         background-color: transparent;
-        border: 0;
-        padding: 0;
-        margin: 0;
+        border: 1px;
       }
 
-      body .highlight pre,
-      body pre {
-        overflow: auto;
-        font-size: 0.85em !important;
-        line-height: 1.45;
-        border: #d6d6d6;
-        border-radius: 3px;
-        padding: 1em;
-      }
-
-      body pre code:before,
-      body pre tt:before,
-      body pre code:after,
-      body pre tt:after {
+      html body pre code:before,
+      html body pre tt:before,
+      html body pre code:after,
+      html body pre tt:after {
         content: normal;
       }
 
-      body p,
-      body blockquote,
-      body ul,
-      body ol,
-      body dl,
-      body pre {
-        margin-top: 0;
-        margin-bottom: 15px;
+      html body p,
+      html body blockquote,
+      html body ul,
+      html body ol,
+      html body dl,
+      html body pre {
+        margin-top: 1px;
+        margin-bottom: 17px;
       }
 
-      body kbd {
+      html body kbd {
         color: #000000;
-        border: 1px solid #d6d6d6;
-        border-bottom: 2px solid #c7c7c7;
-        padding: 2px 4px 0 0;
+        border: 3px solid #d6d6d6;
+        border-bottom: 3px solid #c7c7c7;
+        padding: 3px 5px;
         background-color: #f0f0f0;
-        border-radius: 3px;
+        border-radius: 2px;
       }
 
       @media print {
-        body {
+        html body {
           background-color: #ffffff;
         }
 
-        body pre {
+        html body h1,
+        html body h2,
+        html body h3,
+        html body h4,
+        html body h5,
+        html body h6 {
+          color: #000000;
+          page-break-after: avoid;
+        }
+
+        html body blockquote {
+          color: #5c5c53;
+        }
+
+        html body pre {
           page-break-inside: avoid;
         }
 
-        body table {
+        html body table {
           display: table;
         }
 
-        body h1,
-        body h2,
-        body h3 {
-          page-break-after: avoid;
-          color: #000000;
-        }
-
-        body blockquote {
-          color: #5c5c5c;
-        }
-
-        body pre,
-        body code {
-          white-space: pre;
-          word-wrap: break-word;
-        }
-
-        body img {
+        html body img {
           display: block;
-          max-width: 100%;
-          max-height: 100%;
+          max-width: 99%;
+          max-height: 99%;
+        }
+
+        html body pre,
+        html body code {
+          word-wrap: break-word;
+          white-space: pre;
         }
       }
 
-      .md-preview {
+      .smartperf-preview {
+        width: 99%;
+        height: 99%;
         box-sizing: border-box;
-        width: 100%;
-        height: 100%;
       }
 
-      .md-preview pre.line-numbers {
-        position: relative;
-        padding-left: 4em;
-        counter-reset: linenumber;
-      }
-
-      .md-preview .pagebreak,
-      .md-preview .newpage {
+      .smartperf-preview .pagebreak,
+      .smartperf-preview .newpage {
         page-break-before: always;
       }
 
-      .md-preview pre.line-numbers > code {
+      .smartperf-preview pre.line-numbers {
+        position: relative;
+        padding-left: 3.7em;
+        counter-reset: linenumber;
+      }
+
+      .smartperf-preview pre.line-numbers > code {
         position: relative;
       }
 
-      .md-preview pre.line-numbers .figure-numbers-rows > span {
+      .smartperf-preview pre.line-numbers .line-numbers-rows {
+        position: absolute;
+        pointer-events: none;
+        top: 0.9em;
+        font-size: 99%;
+        left: 1px;
+        width: 3em;
+        letter-spacing: -1px;
+        border-right: 1px solid #999;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      .smartperf-preview pre.line-numbers .line-numbers-rows > span {
         pointer-events: none;
         display: block;
         counter-increment: linenumber;
       }
 
-      .md-preview pre.line-numbers .figure-numbers-rows > span:before {
-        text-align: right;
+      .smartperf-preview pre.line-numbers .line-numbers-rows > span:before {
         content: counter(linenumber);
-        color: #999999;
+        color: #999;
         display: block;
-        padding-right: 0.8em;
+        padding-right: 0.79em;
+        text-align: right;
       }
 
-      .md-preview pre.line-numbers .figure-numbers-rows {
-        position: absolute;
-        top: 1em;
-        left: 0;
-        width: 3em;
-        letter-spacing: -1px;
-        border-right: 1px solid #999999;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        pointer-events: none;
-        font-size: 100%;
+      .smartperf-preview .mathjax-exps .MathJax_Display {
+        text-align: center !important;
       }
 
-      .md-preview:not([for='preview']) .code-chunk .btn-group {
+      .smartperf-preview:not([for='preview']) .code-chunk .btn-group {
         display: none;
       }
 
-      .md-preview:not([for='preview']) .code-chunk .status {
+      .smartperf-preview:not([for='preview']) .code-chunk .status {
         display: none;
       }
 
-      .md-preview:not([for='preview']) .code-chunk .output-div {
+      .smartperf-preview:not([for='preview']) .code-chunk .output-div {
         margin-bottom: 16px;
       }
 
-      .scrollbar-type::-webkit-scrollbar {
+      .scrollbar-style::-webkit-scrollbar {
         width: 8px;
       }
 
-      .scrollbar-type::-webkit-scrollbar-thumb {
-        border-radius: 6px;
-        background-clip: content-box;
-        background-color: rgba(150, 150, 150, 0.66);
-        border: 4px solid rgba(150, 150, 150, 0.66);
-      }
-
-      .scrollbar-type::-webkit-scrollbar-track {
-        border-radius: 10px;
+      .scrollbar-style::-webkit-scrollbar-track {
+        border-radius: 9px;
         background-color: transparent;
       }
 
-      body[for='native-export']:not([data-display-mode]) .md-preview {
+      .scrollbar-style::-webkit-scrollbar-thumb {
+        border-radius: 6px;
+        background-color: rgba(150, 150, 150, 1);
+        border: 4px solid rgba(150, 150, 150, 1);
+        background-clip: content-box;
+      }
+
+      html body[for='html-export']:not([dpm]) {
         position: relative;
-        top: 0;
+        width: 99%;
+        height: 99%;
+        top: 1px;
+        left: 1px;
+        margin: 1px;
+        padding: 1px;
+        overflow: auto;
       }
 
-      @media screen and (max-width: 450px) {
-        body[for='native-export']:not([data-display-mode]) .md-preview {
-          font-size: 14px !important;
-          padding: 1em;
-        }
-      }
-
-      @media print {
-        body[for='native-export']:not([data-display-mode]) #sidebarButton {
-          display: none;
-        }
+      html body[for='html-export']:not([dpm]) .smartperf-preview {
+        position: relative;
+        top: 1px;
       }
 
       @media screen and (min-width: 914px) {
-        body[for='native-export']:not([data-display-mode]) .md-preview {
-          padding: 2em calc(50% - 457px + 2em);
+        html body[for='html-export']:not([dpm]) .smartperf-preview {
+          padding: 2em calc(50% - 458px + 2em);
         }
       }
 
       @media screen and (max-width: 914px) {
-        body[for='native-export']:not([data-display-mode]) .md-preview {
-          padding: 2em;
+        html body[for='html-export']:not([dpm]) .smartperf-preview {
+          padding: 1.9em;
         }
       }
 
-      body[for='native-export']:not([data-display-mode]) #sidebarButton {
+      @media screen and (max-width: 450px) {
+        html body[for='html-export']:not([dpm]) .smartperf-preview {
+          font-size: 15px !important;
+          padding: 1.1em;
+        }
+      }
+
+      @media print {
+        html body[for='html-export']:not([dpm]) #sidebar-toc-btn {
+          display: none;
+        }
+      }
+
+      html body[for='html-export']:not([dpm]) #sidebar-toc-btn {
         position: fixed;
-        bottom: 8px;
-        left: 8px;
+        bottom: 9px;
+        left: 9px;
         font-size: 28px;
         cursor: pointer;
         color: inherit;
-        text-align: center;
-        opacity: 0.4;
         z-index: 99;
-        width: 32px;
+        width: 31px;
+        text-align: center;
+        opacity: 0.5;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] #sidebarButton {
+      html body[for='html-export']:not([dpm])[hsst] #sidebar-toc-btn {
         opacity: 1;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc {
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc {
         position: fixed;
-        top: 0;
-        left: 0;
-        padding: 32px 0 48px 0;
+        top: 1px;
+        left: 1px;
         width: 300px;
-        height: 100%;
+        height: 99%;
+        padding: 32px 0 48px 0;
         font-size: 14px;
-        box-shadow: 0 0 4px rgba(150, 150, 150, 0.33);
+        box-shadow: 1px 1px 4px rgba(150, 150, 150, 0.33);
         box-sizing: border-box;
         overflow: auto;
         background-color: inherit;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc::-webkit-scrollbar {
-        width: 8px;
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar {
+        width: 9px;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc::-webkit-scrollbar-track {
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar-track {
+        border-radius: 11px;
         background-color: transparent;
-        border-radius: 10px;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc::-webkit-scrollbar-thumb {
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc::-webkit-scrollbar-thumb {
+        border-radius: 6px;
         background-color: rgba(150, 150, 150, 0.66);
-        border-radius: 5px;
-        border: 4px solid rgba(150, 150, 150, 0.66);
+        border: 3px solid rgba(150, 150, 150, 0.66);
         background-clip: content-box;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc a {
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc a {
         text-decoration: none;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc li {
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc ul {
+        padding: 1px 1.7em;
+        margin-top: 0.9em;
+      }
+
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc li {
         margin-bottom: 0.8em;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc ul {
-        margin-top: 0.8em;
-        padding: 0 1.6em;
-      }
-
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-sidebar-toc ul {
+      html body[for='html-export']:not([dpm])[hsst] .md-sidebar-toc ul {
         list-style-type: none;
       }
 
-      body[for='native-export']:not([data-display-mode])[sidebarToc] .md-preview {
-        padding: 2em calc(50% - 457px - 150px);
-        margin: 0;
-        box-sizing: border-box;
-        left: 300px;
+      html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
+        left: 301px;
         width: calc(100% - 300px);
-      }
-
-      @media screen and (max-width: 450px) {
-        body[for='native-export']:not([data-display-mode])[sidebarToc] .md-preview {
-          width: 100%;
-        }
+        padding: 2em calc(50% - 457px - 150px);
+        margin: 1px;
+        box-sizing: border-box;
       }
 
       @media screen and (max-width: 1274px) {
-        body[for='native-export']:not([data-display-mode])[sidebarToc] .md-preview {
-          padding: 2em;
+        html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
+          padding: 1.9em;
         }
       }
 
-      body[for='native-export']:not([data-display-mode]):not([sidebarToc]) .md-preview {
-        transform: translateX(-50%);
-        left: 50%;
+      @media screen and (max-width: 450px) {
+        html body[for='html-export']:not([dpm])[hsst] .smartperf-preview {
+          width: 99%;
+        }
       }
 
-      body[for='native-export']:not([data-display-mode]):not([sidebarToc]) .md-sidebar-toc {
+      html body[for='html-export']:not([dpm]):not([hsst]) .smartperf-preview {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      html body[for='html-export']:not([dpm]):not([hsst]) .md-sidebar-toc {
         display: none;
       }
     </style>
   </head>
-  <body for="native-export" id="body">
-    <div class="mume md-preview">
-      <h1 class="mume-header fontColor">1.如何独立编译Trace_streamer</h1>
+  <body for="html-export" id="body">
+    <div class="smartperf smartperf-preview">
+      <h1 class="mume-header fontColor">如何编译TraceStreamer</h1>
 
-      <p class="fontColor">尽管本工具(trace_streamer)是在ohos工具箱中的一员，但你依然可以独立编译此工具。</p>
-      <p class="fontColor">本工具可以编译linux, mac, windows, WebAssembly版本。</p>
-      <p class="fontColor">本工具默认编译方式是使用gn</p>
-      <ul class="fontColor">
-        <li>编译方式</li>
-      </ul>
-      <pre class="font- light" data-info data-role="codeBlock"><code class="fontColor">third_party部分安装方式
-third_party相关控件下载链接：https://gitee.com/organizations/openharmony/projects
-在src路径下创建同级目录third_party。
-一、sqlite：
-1.打开上方链接，搜索sqlite。
-2.点击搜索结果进入下载界面，下载sqlite组件。
-3.把下载的文件解压后，文件夹命名为sqlite，并用代码路径中\prebuilts\buildsqlite\sqlite3build.gn文件替换sqlite目录中的BUILD.gn文件。
-4.把sqlite文件夹放入third_party目录中。
-二、protobuf：
-1.按上述下载方法，下载protobuf组件。
-2.把下载的文件解压后，文件夹命名为protobuf，并用代码路径中\prebuilts\buildprotobuf\protobufbuild.gn文件替换protobuf目录中的BUILD.gn文件。
-3.把protobuf文件夹放入third_party目录中。
-三、googletest：
-1.按上述下载方法，下载googletest相关组件。
-2.把下载的文件解压后，文件夹命名为googletest，并用代码路径中\prebuilts\buildgoogletest\googletestbuild.gn文件替换googletest目录中的BUILD.gn文件。
-3.把googletest文件夹放入third_party目录中。
-4.找到文件\googletest\include\gtest\internal\ gtest-port.h 把286行 #include &lt;sstream&gt; // NOLINT修改为
-#undef private
-#define private private
-#include &lt;sstream&gt;  // NOLINT
-#undef private
-#define private public</code></pre>
+      <p class="fontColor">TraceStreamer可以编译为命令行下的可执行程序，或者WebAssembly程序。</p>
+      <h2 class="mume-header fontColor">快速编译</h2>
 
-      <p class="fontColor">编译不同版本：linux, WebAssembly, mac</p>
-      <pre class="font- light" data-info data-role="codeBlock"><code class="fontColor">./build.sh linux/wasm/macx
-</code></pre>
+      <p class="fontColor">可以按下面的方法快速编译TraceStreamer。</p>
+      <h4 class="mume-header fontColor">准备工作</h4>
 
-      <p class="fontColor">如果需要编译WebAssembly版本，您需要在prebuilts/目录下安装emsdk</p>
-      <pre
-        class="font- light"
-        data-info
-        data-role="codeBlock"><code class="fontColor">git clone https://github.com/juj/emsdk.git --depth=1
-cd emsdk
-git pull
-./emsdk update # this may not work, ignore it
-./emsdk install latest
-./emsdk activate latest
-安装之后，您需要将upstream目录复制到prebuilts/emsdk/emsdk，node复制到prebuilts/emsdk/node
-</code></pre>
-      <p class="fontColor">安装之后，目录结构当如：</p>
-      <pre class="font- light" data-info data-role="codeBlock"><code class="fontColor">prebuilts/emsdk
-├── prebuilts/emsdk/emsdk
-│   ├── prebuilts/emsdk/emsdk/bin
-│   ├── prebuilts/emsdk/emsdk/emscripten
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/cache
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/cmake
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/docs
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/media
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/node_modules
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/__pycache__
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/src
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/system
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/tests
-│   │   ├── prebuilts/emsdk/emsdk/emscripten/third_party
-│   │   └── prebuilts/emsdk/emsdk/emscripten/tools
-│   ├── prebuilts/emsdk/emsdk/include
-│   │   └── prebuilts/emsdk/emsdk/include/c++
-│   └── prebuilts/emsdk/emsdk/lib
-│       └── prebuilts/emsdk/emsdk/lib/clang
-└── prebuilts/emsdk/node
-    └── prebuilts/emsdk/node/14.18.2_64bit
-        ├── prebuilts/emsdk/node/14.18.2_64bit/bin
-        ├── prebuilts/emsdk/node/14.18.2_64bit/include
-        ├── prebuilts/emsdk/node/14.18.2_64bit/lib
-        └── prebuilts/emsdk/node/14.18.2_64bit/share
-</code></pre>
-      <p class="fontColor">之后调用</p>
-      <pre
-        class="font- light"
-        data-info
-        data-role="codeBlock"><code class="fontColor">./build.sh wasm进行编译，您需要将sh脚本进行部分修改，因为这个脚本内置了一些库的下载和解析方式
-</code></pre>
+      <p class="fontColor">
+        在码云上添加ssh公钥。<br />
+        本工具工程组织方式是gn。编译需要对应的编译器，编译前请自行配置本地编译器。<br />
+        所需编译器和版本如下表所示：
+      </p>
+      <table class="fontColor">
+        <thead>
+        <tr>
+          <th class="fontColor">系统</th>
+          <th class="fontColor">工具</th>
+          <th class="fontColor">版本号</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>linux</td>
+          <td>clang/clang++</td>
+          <td>(Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0</td>
+        </tr>
+        <tr>
+          <td>macx</td>
+          <td>clang/clang++</td>
+          <td>14.0.3</td>
+        </tr>
+        <tr>
+          <td>windows</td>
+          <td>gcc.exe/g++.exe</td>
+          <td>(i686-posix-dwarf-rev0, Built by MinGW-W64 project) 8.1.0</td>
+        </tr>
+        <tr>
+          <td>wasm(linux下编译)</td>
+          <td>emcc/em++</td>
+          <td>3.1.12</td>
+        </tr>
+        </tbody>
+      </table>
+      <p class="fontColor">对于wasm环境（目前只支持linux下编译），build.sh会自行配置环境。</p>
+      <h4 class="mume-header fontColor">快速编译命令行下的可执行程序</h4>
+
+      <p class="fontColor">在linux/windows/macx平台进入代码根目录下执行：</p>
+      <pre data-role="codeBlock" data-info="" class="fontColor light smartperf-"><code class="fontColor">./build.sh
+    </code></pre>
+      <p class="fontColor">
+        本脚本会下载和准备本地依赖的环境，并编译目标。<br />
+        在不同的平台上编译后的目标在不同的文件夹，如下所示：
+      </p>
+      <table class="fontColor">
+        <thead>
+        <tr>
+          <th class="fontColor">系统</th>
+          <th class="fontColor">release版本</th>
+          <th class="fontColor">debug版本</th>
+          <th class="fontColor">生成二进制名称</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>linux</td>
+          <td>out/linux</td>
+          <td>out/linux_debug</td>
+          <td>trace_streamer</td>
+        </tr>
+        <tr>
+          <td>macx</td>
+          <td>out/macx</td>
+          <td>out/macx_debug</td>
+          <td>trace_streamer</td>
+        </tr>
+        <tr>
+          <td>windows</td>
+          <td>out/windows</td>
+          <td>out/windows_debug</td>
+          <td>trace_streamer</td>
+        </tr>
+        <tr>
+          <td>wasm(linux下编译)</td>
+          <td>-</td>
+          <td>out/wasm</td>
+          <td>trace_streamer_builtin.wasm和trace_streamer_builtin.js</td>
+        </tr>
+        </tbody>
+      </table>
+      <h4 class="mume-header fontColor">快速编译WebAssembly版本</h4>
+
+      <p class="fontColor">如要编译WebAssembly版本，只需在代码根目录下执行：</p>
+      <pre data-role="codeBlock" data-info="" class="fontColor light smartperf-"><code class="fontColor">./build.sh wasm
+    </code></pre>
+      <p class="fontColor">emsdk请使用3.1.12版本。</p>
+      <p class="fontColor">WebAssembly版本目前只支持在linux平台下编译。</p>
     </div>
-    <script type="text/javascript">
-      window.onload = () => {
-        let isDark = window.location.search;
-        if (isDark.indexOf('?') != -1) {
-          isDark = isDark.substr(1, isDark.length - 1);
+
+  <script>
+    window.onload = () => {
+      let isDark = window.location.search;
+      if (isDark.indexOf('?') !== -1) {
+        isDark = isDark.substr(1, isDark.length - 1);
+      }
+      if (isDark === 'true') {
+        document.getElementById('body').setAttribute('style', 'background-color:#272C34;');
+        let header = document.getElementsByClassName('fontColor');
+        for (let i = 0; i < header.length; i++) {
+          header[i].style.color = '#fff';
         }
-        if (isDark == 'true') {
-          document.getElementById('body').setAttribute('style', 'background-color:#272C34;');
-          let header = document.getElementsByClassName('fontColor');
-          for (let i = 0; i < header.length; i++) {
-            header[i].style.color = '#fff';
-          }
-          let lightBackGround = document.getElementsByClassName('light');
-          for (let i = 0; i < lightBackGround.length; i++) {
-            lightBackGround[i].style.backgroundColor = '#32373F';
-          }
+        let lightBackGround = document.getElementsByClassName('light');
+        for (let i = 0; i < lightBackGround.length; i++) {
+          lightBackGround[i].style.backgroundColor = '#32373F';
         }
-      };
-    </script>
+      }
+    };
+  </script>
   </body>
 </html>

@@ -122,7 +122,7 @@ export class SnapshotStruct extends BaseStruct {
         ctx.textBaseline = 'middle';
         if (data.frame!.height > 10 && data.frame!.height < 25) {
           SnapshotStruct.drawString(ctx, data.name || '', 4, data.frame!, data, 4);
-        } else if (data.frame!.height > 25) {
+        } else if (data.frame!.height >= 25) {
           SnapshotStruct.drawString(ctx, data.name || '', 4, data.frame!, data, 4);
           SnapshotStruct.drawString(ctx, Utils.getBinaryByteWithUnit(data.value || 0), 11, data.frame!, data, 2);
         }

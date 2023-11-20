@@ -49,11 +49,7 @@ void HtraceNetworkParser::Parse(ProtoReader::BytesView tracePacket, uint64_t ts)
 void HtraceNetworkParser::Finish()
 {
     auto cmp = [](const TsNetworkData& a, const TsNetworkData& b) { return a.ts < b.ts; };
-#ifdef IS_WASM
-    std::sort(networkData_.begin(), networkData_.end(), cmp);
-#else
     std::stable_sort(networkData_.begin(), networkData_.end(), cmp);
-#endif
     bool firstTime = true;
     uint64_t lastTs = 0;
     uint64_t lastRx = 0;

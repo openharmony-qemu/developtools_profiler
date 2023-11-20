@@ -39,6 +39,7 @@ ohos_source_set("ebpf_tables") {
     "${SRC}",
     "${THIRD_PARTY}/protobuf/src",
     "${THIRD_PARTY}/bounds_checking_function/include",
+    "${THIRD_PARTY}/json/single_include/nlohmann",
   ]
 
   if (!is_independent_compile) {

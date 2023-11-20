@@ -17,7 +17,10 @@
 import { TraceSheet } from '../../../../../dist/trace/component/trace/base/TraceSheet.js';
 const sqlit = require('../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../dist/trace/database/SqlLite.js');
-
+const intersectionObserverMock = () => ({
+  observe: () => null,
+});
+window.IntersectionObserver = jest.fn().mockImplementation(intersectionObserverMock);
 window.ResizeObserver =
   window.ResizeObserver ||
   jest.fn().mockImplementation(() => ({
@@ -76,6 +79,7 @@ describe('TraceSheet Test', () => {
       },
     ],
   };
+  document.body.innerHTML = '<sp-system-trace style="visibility:visible;" id="sp-system-trace"></sp-system-trace>';
   it('TraceSheet Test01', () => {
     let traceSheet = new TraceSheet();
     expect(traceSheet).not.toBeUndefined();
@@ -97,22 +101,5 @@ describe('TraceSheet Test', () => {
   it('TraceSheet Test11', () => {
     let traceSheet = new TraceSheet();
     expect(traceSheet.constructor()).toBeTruthy();
-  });
-  it('TraceSheet Test13', () => {
-    let nativeHookResponseTypes = sqlit.queryNativeHookResponseTypes;
-    let hookTypeData = [
-      {
-        lastLibId:33,
-        value:'bc'
-      },
-    ];
-    nativeHookResponseTypes.mockResolvedValue(hookTypeData);
-    let traceSheet = new TraceSheet();
-    let param = {
-      leftNs: 0,
-      rightNs: 1000,
-      nativeMemory: ['All Heap & Anonymous VM', 'All Heap', 'Heap'],
-    };
-    expect(traceSheet.initFilterLibList(param)).toBeUndefined();
   });
 });

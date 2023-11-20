@@ -37,9 +37,6 @@ void HttpServer::RegisterRpcFunction(RpcServer* rpc)
     using std::placeholders::_2;
     using std::placeholders::_3;
 
-    auto parsedata = std::bind(&RpcServer::ParseData, rpc, _1, _2, _3);
-    rpcFunctions_["/parsedata"] = parsedata;
-
     auto parsedataover = std::bind(&RpcServer::ParseDataOver, rpc, _1, _2, _3);
     rpcFunctions_["/parsedataover"] = parsedataover;
 

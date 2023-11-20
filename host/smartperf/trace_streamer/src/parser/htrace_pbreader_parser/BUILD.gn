@@ -61,7 +61,6 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "${PERF_DIR}/hiperf/include/nonlinux/linux",
     "${PERF_DIR}/hiperf/include/nonlinux",
     "${THIRD_PARTY}/googletest/googletest/include",
-    "${THIRD_PARTY}/perf_include/musl",
     "${THIRD_PARTY}/perf_include/libbpf",
     "${THIRD_PARTY}/perf_include/include",
     "${THIRD_PARTY}/perf_include",
@@ -70,6 +69,15 @@ ohos_source_set("htrace_pbreader_parser_src") {
     "../hiperf_parser/include",
     "${COMMON_LIBRARY}/c_utils/base/include",
     "${THIRD_PARTY}/sqlite",
+  ]
+  include_dirs += [
+    "${THIRD_PARTY}/perf_include/hiviewdfx/hilog/include",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/cutil",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/dfxlog",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/common/dfxutil",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/common",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/nonlinux",
+    "${THIRD_PARTY}/perf_include/hiviewdfx/faultloggerd/interfaces/innerkits/unwinder/include",
   ]
   if (is_mingw || is_mac) {
     include_dirs += [
@@ -120,6 +128,7 @@ group("htrace_pbreader_parser") {
     ":htrace_pbreader_parser_src",
     "${THIRD_PARTY}/protobuf:protobuf_lite_static",
     "${THIRD_PARTY}/protobuf:protobuf_static",
+    "//third_party/perf_include/hiviewdfx:hiviewdfx",
   ]
 
   if (!use_wasm && !is_win && !is_mingw && !is_mac && !is_test) {

@@ -58,6 +58,7 @@ declare global {
         WakeupList: string; //show wakeup list table
         DeviceConnect: string;
         DeviceDisConnect: string;
+        HoverNull: string;
       };
     };
 
@@ -113,6 +114,7 @@ window.SmartEvent = {
     WakeupList: 'SmartEvent-UI-WakeupList',
     DeviceConnect: 'SmartEvent-DEVICE_CONNECT',
     DeviceDisConnect: 'SmartEvent-DEVICE_DISCONNECT',
+    HoverNull: 'SmartEvent-Hover-NULL',
   },
 };
 Window.prototype.subscribe = (ev, fn) => EventCenter.subscribe(ev, fn);

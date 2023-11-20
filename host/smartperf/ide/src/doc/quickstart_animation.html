@@ -786,257 +786,216 @@
         display: none;
       }
     </style>
-  </head>
+</head>
   <body for="html-export" id="body">
     <div class="smartperf smartperf-preview">
       <h1 class="mume-header fontColor">Animation的抓取和展示说明</h1>
-
+    
       <p class="fontColor">通过动效模板的指标项对图形子系统和应用做动效卡顿类问题分析。</p>
       <h3 class="mume-header fontColor">Animation抓取参数的配置</h3>
-
+    
       <p class="fontColor">
-        <img src="../figures/animation/animationconfig.jpg" alt="GitHub Logo" />
-        <br />
+        <img src="../figures/animation/animationconfig.jpg" alt="GitHub Logo" /><br />
         配置项说明：
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Animation effect：动效配置项的总开关。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">Animation展示说明</h3>
-
+    
       <p class="fontColor">将抓取的Animation文件导入到smartperf工具中，查看图形子系统和应用动效卡顿类问题。</p>
       <h3 class="mume-header fontColor">Animation泳道图展示</h3>
-
+    
       <p class="fontColor">
-        Animation的响应时延泳道图显示,泳道图的Slice会显示响应时延，如下图中的Completion delay(683.035938ms)。
-        <br />
-        <img src="../figures/animation/anrsdelayrow.jpg" alt="GitHub Logo" />
-        。
-        <br />
-        Animation的动效曲线和帧间距的总泳道图，如图点击leashWindow40旁边的小齿轮可以切换leashWindow。
-        <br />
-        <img src="../figures/animation/anrsallrow.jpg" alt="GitHub Logo" />
-        。
-        <br />
-        Animation的动效曲线泳道图展示，如下：
-        <br />
-        <img src="../figures/animation/anieffectcurv.jpg" alt="GitHub Logo" />
-        <br />
+        Animation的响应时延和完成时延泳道图显示，泳道图的Slice会显示响应时延和完成时延，如下图中的Response
+        delay(79.379165ms),Completion delay(2606.938539ms)。<br />
+        <img src="../figures/animation/anrsdelayrow.jpg" alt="GitHub Logo" />。<br />
+        Animation的动效曲线和帧间距的总泳道图，如图点击WindowScene_mm37旁边的小齿轮可以切换WindowScene。<br />
+        <img src="../figures/animation/anrsallrow.jpg" alt="GitHub Logo" />。<br />
+        Animation的动效曲线泳道图展示，如下：<br />
+        <img src="../figures/animation/anieffectcurv.jpg" alt="GitHub Logo" /><br />
         泳道图说明:
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Animation Effect Curve旁边的齿轮显示的x,y,width,height,alpha是动效帧的属性值，可以切换。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Animation Effect Curve泳道图红色的曲线代表的是异常判断点，也就是相邻两帧属性值相同的异常时间区间。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <p class="fontColor">
-        Animation的帧间距泳道图展示，如下:
-        <br />
-        <img src="../figures/animation/framespacirow.jpg" alt="GitHub Logo" />
-        <br />
+        Animation的帧间距泳道图展示，如下:<br />
+        <img src="../figures/animation/framespacirow.jpg" alt="GitHub Logo" /><br />
         泳道图说明:
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Frame spacing泳道图显示相邻两帧在时间尺度上相对于设备物理屏幕的变化间距值。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">动效曲线泳道图点选功能</h3>
-
+    
       <p class="fontColor">
-        点选动效曲线泳道图上的属性值会出现一个空心小圆点，Frame Dynamic的Tab页会显示相关信息。
-        <br />
+        点选动效曲线泳道图上的属性值会出现一个空心小圆点，Frame Dynamic的Tab页会显示相关信息。<br />
         <img src="../figures/animation/anieffectcurvselect.jpg" alt="GitHub Logo" />
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Timestamp： 时间戳信息。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Index： 属性索引。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Value：属性值。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">动效曲线泳道图框选功能</h3>
-
+    
       <p class="fontColor">
-        框选动效曲线泳道图，Frame Dynamic的Tab页会显示框选范围内每个点的属性值。
-        <br />
+        框选动效曲线泳道图，Frame Dynamic的Tab页会显示框选范围内每个点的属性值。<br />
         <img src="../figures/animation/anieffectcurvdrag.jpg" alt="GitHub Logo" />
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Timestamp： 时间戳信息。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Index： 属性索引。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Value：属性值。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">帧间距泳道图点选功能</h3>
-
+    
       <p class="fontColor">
         点选帧间距泳道图，Frame
-        spacing的Tab页会显示这一个点的帧间距计算数据，一个点要计算两个属性的的帧间距，所以需要显示两个属性的。
-        <br />
+        spacing的Tab页会显示这一个点的帧间距计算数据，一个点要计算四个属性的的帧间距，所以需要显示四个属性的。<br />
         <img src="../figures/animation/anispacingselect.jpg" alt="GitHub Logo" />
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Timestamp： 时间戳信息。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Index： 属性索引。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
-property：动效宽度或高度属性。
-</pre
-          >
+property：动效宽度，高度，X，Y的属性。
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Value2： 当前帧的属性值。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Value1： 前一帧的属性值。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Screen：存储设备的物理宽度/高度。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 T2(s)： 当前帧的结束时间。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 T1(s)： 前一帧的结束时间。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 result：帧间距。
-</pre
-          >
+</pre>
         </li>
       </ul>
       <h3 class="mume-header fontColor">帧间距泳道图框选功能</h3>
-
+    
       <p class="fontColor">
-        框选帧间距泳道图，Frame spacing的Tab页会显示框选范围内帧间距数据。
-        <br />
+        框选帧间距泳道图，Frame spacing的Tab页会显示框选范围内帧间距数据。<br />
         <img src="../figures/animation/anispacingdrag.jpg" alt="GitHub Logo" />
       </p>
       <ul class="fontColor">
         <li>
           <pre class="smartperf-text fontColor light">
 Timestamp： 时间戳信息。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Index： 属性索引。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
-property：动效宽度或高度属性。
-</pre
-          >
+property：动效宽度，高度，X，Y的属性。
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Value2： 当前帧的属性值。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Value1： 前一帧的属性值。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 Screen：存储设备的物理宽度/高度。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 T2(s)： 当前帧的结束时间。
-</pre
-          >
+</pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 T1(s)： 前一帧的结束时间。
-</pre
-          >
+</pre>
+    </pre>
         </li>
         <li>
           <pre class="smartperf-text fontColor light">
 result：帧间距。
-</pre
-          >
+</pre>
         </li>
       </ul>
     </div>

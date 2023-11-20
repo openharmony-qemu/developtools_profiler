@@ -23,7 +23,9 @@ import { JSONToCSV } from '../utils/CSVFormater.js';
 import { NodeType } from '../../js-heap/model/DatabaseStruct.js';
 import { ConstructorType } from '../../js-heap/model/UiStruct.js';
 import { LitIcon } from '../icon/LitIcon.js';
-
+import { JsCpuProfilerStatisticsStruct } from '../../trace/bean/JsStruct.js';
+const iconWidth = 20;
+const iconPadding = 5;
 @element('lit-table')
 export class LitTable extends HTMLElement {
   meauseRowElement: HTMLDivElement | undefined;
@@ -32,6 +34,7 @@ export class LitTable extends HTMLElement {
   public rememberScrollTop = false;
   public getItemTextColor?: (data: any) => string;
   public itemTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
+  public exportTextHandleMap: Map<string, (value: any) => string> = new Map<string, (value: any) => string>();
   private ds: Array<any> = [];
   public recycleDs: Array<any> = [];
   private normalDs: Array<any> = [];
@@ -51,9 +54,10 @@ export class LitTable extends HTMLElement {
   private isScrollXOutSide: boolean = false;
   private exportLoading: boolean = false;
   private _loading: boolean = false;
-  private value: any;
+  private value: Array<any> = [];
   private _mode = TableMode.Expand;
   private columnResizeEnable: boolean = true;
+  private _isSearch: boolean = false;
 
   constructor() {
     super();
@@ -228,6 +232,28 @@ export class LitTable extends HTMLElement {
             width: 15px;
             height: 15px;
         }
+        .button-icon{
+          height: 32px;
+          width: 164px;
+          color: black;
+          font-size: 14px;
+          border: 1px solid black;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          background: var(--dark-background3,#FFFFFF);
+          border-radius: 20px;
+          padding: 15px;
+          transition: opacity 0.2s;
+          outline: none;
+          position: relative;
+          overflow: hidden;
+        }
+        .button-icon:active {
+          background: var(--dark-background1,#f5f5f5)
+        }
         .mouse-select{
             background-color: var(--dark-background6,#DEEDFF);
         }
@@ -285,7 +311,7 @@ export class LitTable extends HTMLElement {
         `;
   }
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return [
       'scroll-y',
       'selectable',
@@ -308,7 +334,7 @@ export class LitTable extends HTMLElement {
     this.exportProgress!.loading = value;
   }
 
-  get hideDownload() {
+  get hideDownload(): boolean {
     return this.hasAttribute('hideDownload');
   }
 
@@ -320,7 +346,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  get selectable() {
+  get selectable(): boolean {
     return this.hasAttribute('selectable');
   }
 
@@ -332,7 +358,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  get scrollY() {
+  get scrollY(): string {
     return this.getAttribute('scroll-y') || 'auto';
   }
 
@@ -340,7 +366,7 @@ export class LitTable extends HTMLElement {
     this.setAttribute('scroll-y', value);
   }
 
-  get dataSource() {
+  get dataSource(): any[] {
     return this.ds || [];
   }
 
@@ -363,12 +389,16 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  get noRecycle() {
+  get noRecycle(): boolean {
     return this.hasAttribute('noRecycle');
   }
 
-  get recycleDataSource() {
+  get recycleDataSource(): any[] {
     return this.ds || [];
+  }
+
+  set isSearch(value: boolean) {
+    this._isSearch = value;
   }
 
   set recycleDataSource(value) {
@@ -385,19 +415,30 @@ export class LitTable extends HTMLElement {
         this.tableElement!.scrollLeft = 0;
       }
       if (this.hasAttribute('tree')) {
-        this.value = value;
-        if (this.shadowRoot?.querySelector('.expand')) {
-          this.shadowRoot!.querySelector('.expand')!.querySelector<LitIcon>('.top')!.name = 'up';
-          this.shadowRoot!.querySelector('.expand')!.querySelector<LitIcon>('.bottom')!.name = 'down';
+        if (value.length === 0) {
+          this.value = [];
+          this.recycleDs = this.meauseTreeRowElement(value);
+        } else {
+          if (
+            value !== this.value &&
+            this.value.length !== 0 &&
+            !this._isSearch &&
+            this.querySelector('lit-table-column')?.hasAttribute('retract')
+          ) {
+            this.shadowRoot!.querySelector<LitIcon>('.top')!.name = 'up';
+            this.shadowRoot!.querySelector<LitIcon>('.bottom')!.name = 'down';
+          }
+          this._isSearch = false;
+          this.value = value;
+          this.recycleDs = this.meauseTreeRowElement(value, RedrawTreeForm.Retract);
         }
-        this.recycleDs = this.meauseTreeRowElement(value, RedrawTreeForm.Retract);
       } else {
         this.recycleDs = this.meauseAllRowHeight(value);
       }
     }
   }
 
-  get snapshotDataSource() {
+  get snapshotDataSource(): any[] {
     return this.ds || [];
   }
 
@@ -410,19 +451,19 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  move1px() {
+  move1px(): void {
     this.tableElement!.scrollTop = this.tableElement!.scrollTop + 1;
   }
 
-  dataExportInit() {
+  dataExportInit(): void {
     let exportDiv = this.shadowRoot!.querySelector<HTMLDivElement>('.export');
     exportDiv &&
-      (exportDiv.onclick = () => {
+      (exportDiv.onclick = (): void => {
         this.exportData();
       });
   }
 
-  exportData() {
+  exportData(): void {
     if (this.exportLoading || this.ds.length === 0) {
       return;
     }
@@ -432,32 +473,34 @@ export class LitTable extends HTMLElement {
     JSONToCSV.csvExport({
       columns: this.columns as any[],
       tables: this.ds,
-      fileName: date.getTime() + '',
+      fileName: `${date.getTime()}`,
+      columnFormatter: this.itemTextHandleMap,
+      exportFormatter: this.exportTextHandleMap
     }).then((res) => {
       this.exportLoading = false;
       this.exportProgress!.loading = false;
     });
   }
 
-  exportExcelData() {
+  exportExcelData(): void {
     let now = Date.now();
     ExcelFormater.testExport(
       [
         {
           columns: this.columns as any[],
           tables: this.ds,
-          sheetName: now + '',
+          sheetName: `${now}`,
         },
       ],
-      now + ''
+      `${now}`
     );
   }
 
   formatExportData(dataSource: any[]): any[] {
-    if (dataSource == undefined || dataSource.length == 0) {
+    if (dataSource === undefined || dataSource.length === 0) {
       return [];
     }
-    if (this.columns == undefined) {
+    if (this.columns === undefined) {
       return [];
     }
     return dataSource.map((item) => {
@@ -465,14 +508,14 @@ export class LitTable extends HTMLElement {
       this.columns!.forEach((column) => {
         let dataIndex = column.getAttribute('data-index');
         let columnName = column.getAttribute('title');
-        if (columnName == '') {
+        if (columnName === '') {
           columnName = dataIndex;
         }
         if (dataIndex && columnName && item[dataIndex] != undefined) {
           formatData[columnName] = item[dataIndex];
         }
       });
-      if (item.children != undefined) {
+      if (item.children !== undefined) {
         formatData.children = this.formatExportData(item.children);
       }
       return formatData;
@@ -480,7 +523,7 @@ export class LitTable extends HTMLElement {
   }
 
   formatExportCsvData(dataSource: any[]): string {
-    if (dataSource == undefined || dataSource.length == 0) {
+    if (dataSource === undefined || dataSource.length === 0) {
       return '';
     }
     if (this.columns == undefined) {
@@ -490,7 +533,7 @@ export class LitTable extends HTMLElement {
     str += this.columns!.map((column) => {
       let dataIndex = column.getAttribute('data-index');
       let columnName = column.getAttribute('title');
-      if (columnName == '') {
+      if (columnName === '') {
         columnName = dataIndex;
       }
       return columnName;
@@ -508,17 +551,17 @@ export class LitTable extends HTMLElement {
           return `"${item[dataIndex] || ''}"    `;
         })
         .join(',');
-      if (item.children != undefined) {
+      if (item.children !== undefined) {
         concatStr += this.recursionExportTableData(columns, item.children);
       }
-      if (index != dataSource.length - 1) {
+      if (index !== dataSource.length - 1) {
         concatStr += '\r\n';
       }
     });
     return concatStr;
   }
 
-  injectColumns() {
+  injectColumns(): void {
     this.columns = this.st!.assignedElements();
     this.columns.forEach((column) => {
       if (column.tagName === 'LIT-TABLE-COLUMN') {
@@ -527,18 +570,28 @@ export class LitTable extends HTMLElement {
     });
   }
 
-  setStatus(list: any, status: boolean) {
+  setStatus(list: any, status: boolean, depth: number = 0): void {
     this.tableElement!.scrollTop = 0;
+    // 添加depth参数，让切换图标的代码在递归中只走一遍
+    if (depth === 0) {
+      if (status) {
+        this.shadowRoot!.querySelector<LitIcon>('.top')!.name = 'down';
+        this.shadowRoot!.querySelector<LitIcon>('.bottom')!.name = 'up';
+      } else {
+        this.shadowRoot!.querySelector<LitIcon>('.top')!.name = 'up';
+        this.shadowRoot!.querySelector<LitIcon>('.bottom')!.name = 'down';
+      }
+    }
     for (let item of list) {
       item.status = status;
-      if (item.children != undefined && item.children.length > 0) {
-        this.setStatus(item.children, status);
+      if (item.children !== undefined && item.children.length > 0) {
+        this.setStatus(item.children, status, depth + 1);
       }
     }
   }
 
   //当 custom element首次被插入文档DOM时，被调用。
-  connectedCallback() {
+  connectedCallback(): void {
     this.st = this.shadowRoot?.querySelector('#slot');
     this.tableElement = this.shadowRoot?.querySelector('.table');
     this.exportProgress = this.shadowRoot?.querySelector('#export_progress_bar');
@@ -564,7 +617,7 @@ export class LitTable extends HTMLElement {
             formatStr += '    ';
           }
           formatStr += strings[i];
-          if (i != 0 && i % length == length - 1) {
+          if (i !== 0 && i % length === length - 1) {
             formatStr += '\n';
           }
         }
@@ -751,6 +804,23 @@ export class LitTable extends HTMLElement {
                   );
                 };
               }
+              if (a.hasAttribute('button')) {
+                let buttonIcon = document.createElement('button');
+                buttonIcon.innerHTML = 'GetBusyTime(ms)';
+                buttonIcon.classList.add('button-icon');
+                h.appendChild(buttonIcon);
+                buttonIcon.addEventListener('click', (event) => {
+                  this.dispatchEvent(
+                    new CustomEvent('button-click', {
+                      detail: {
+                        key: key,
+                      },
+                      composed: true,
+                    })
+                  );
+                  event.stopPropagation();
+                });
+              }
               h.style.justifyContent = a.getAttribute('align');
               this.gridTemplateColumns.push(a.getAttribute('width') || '1fr');
               h.style.gridArea = key;
@@ -804,7 +874,7 @@ export class LitTable extends HTMLElement {
   private beforeResizeWidth1: number = 0;
   private beforeResizeWidth2: number = 0;
 
-  resizeEventHandler(header: HTMLDivElement, element: HTMLDivElement, index: number) {
+  resizeEventHandler(header: HTMLDivElement, element: HTMLDivElement, index: number): void {
     header.addEventListener('mousemove', (event) => {
       if (!this.columnResizeEnable) return;
       if (this.isResize) {
@@ -873,15 +943,15 @@ export class LitTable extends HTMLElement {
   }
 
   // Is called when the custom element is removed from the document DOM.
-  disconnectedCallback() {}
+  disconnectedCallback(): void {}
 
   // It is called when the custom element is moved to a new document.
-  adoptedCallback() {}
+  adoptedCallback(): void {}
 
   // It is called when a custom element adds, deletes, or modifies its own properties.
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {}
+  attributeChangedCallback(name: string, oldValue: string, newValue: string): void {}
 
-  fixed(td: HTMLElement, placement: string, bgColor: string) {
+  fixed(td: HTMLElement, placement: string, bgColor: string): void {
     td.style.position = 'sticky';
     if (placement === 'left') {
       td.style.left = '0px';
@@ -892,7 +962,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  getCheckRows() {
+  getCheckRows(): any[] {
     // @ts-ignore
     return [...this.shadowRoot!.querySelectorAll('div[class=tr][checked]')]
       .map((a) => (a as any).data)
@@ -902,7 +972,7 @@ export class LitTable extends HTMLElement {
       });
   }
 
-  deleteRowsCondition(fn: any) {
+  deleteRowsCondition(fn: any): void {
     this.shadowRoot!.querySelectorAll('div[class=tr]').forEach((tr) => {
       // @ts-ignore
       if (fn(tr.data)) {
@@ -911,11 +981,11 @@ export class LitTable extends HTMLElement {
     });
   }
 
-  meauseElementHeight(rowData: any) {
+  meauseElementHeight(rowData: any): number {
     return 27;
   }
 
-  meauseTreeElementHeight(rowData: any, depth: number) {
+  meauseTreeElementHeight(rowData: any, depth: number): number {
     return 27;
   }
 
@@ -1150,7 +1220,11 @@ export class LitTable extends HTMLElement {
           td.title = rowData.data[dataIndex];
         } else {
           td = document.createElement('div');
-          td.innerHTML = text;
+          if (rowData.data.rowName === 'js-memory' || rowData.data.rowName === 'cpu-profiler') {
+            td.innerHTML = '';
+          } else {
+            td.innerHTML = text;
+          }
           td.dataIndex = dataIndex;
           if (text.indexOf('&lt;') === -1) {
             td.title = text;
@@ -1165,9 +1239,9 @@ export class LitTable extends HTMLElement {
           let btn = this.createBtn(rowData);
           td.insertBefore(btn, td.firstChild);
         }
-        td.style.paddingLeft = rowData.depth * 15 + 'px';
+        td.style.paddingLeft = rowData.depth * iconWidth + 'px';
         if (!rowData.data.children || rowData.data.children.length === 0) {
-          td.style.paddingLeft = 15 * rowData.depth + 16 + 'px';
+          td.style.paddingLeft = iconWidth * rowData.depth + iconWidth + iconPadding * 2 + 'px';
         }
         if (rowData.data.rowName === 'js-memory') {
           let nodeText = document.createElement('text');
@@ -1231,9 +1305,9 @@ export class LitTable extends HTMLElement {
             this.setMouseIn(false, [newTableElement]);
           }
         };
-        td.onclick = () => {
+        td.onmouseup = (e: MouseEvent) => {
           let indexOf = this.currentTreeDivList.indexOf(td);
-          this.dispatchRowClickEvent(rowData, [td, newTableElement]);
+          this.dispatchRowClickEvent(rowData, [td, newTableElement], e);
         };
         this.setHighLight(rowData.data.isSearch, td);
         this.treeElement!.style.width = column.getAttribute('width');
@@ -1247,7 +1321,13 @@ export class LitTable extends HTMLElement {
         td.style.whiteSpace = 'nowrap';
         let text = this.formatName(dataIndex, rowData.data[dataIndex]);
         if (text.indexOf('&lt;') === -1) {
-          td.title = text;
+          if (dataIndex === 'selfTimeStr' && rowData.data.chartFrameChildren) {
+            td.title = rowData.data.selfTime + 'ns';
+          } else if (dataIndex === 'totalTimeStr' && rowData.data.chartFrameChildren) {
+            td.title = rowData.data.totalTime + 'ns';
+          } else {
+            td.title = text;
+          }
         }
         td.dataIndex = dataIndex;
         td.style.justifyContent = column.getAttribute('align') || 'flex-start';
@@ -1288,14 +1368,14 @@ export class LitTable extends HTMLElement {
         this.setMouseIn(false, [this.treeElement?.children[indexOf] as HTMLElement]);
       }
     };
-    newTableElement.onclick = (e) => {
+    newTableElement.onmouseup = (e: MouseEvent) => {
       let indexOf = this.currentRecycleList.indexOf(newTableElement);
-      this.dispatchRowClickEvent(rowData, [this.treeElement?.children[indexOf] as HTMLElement, newTableElement]);
+      this.dispatchRowClickEvent(rowData, [this.treeElement?.children[indexOf] as HTMLElement, newTableElement], e);
     };
     return newTableElement;
   }
 
-  createBtn(rowData: any) {
+  createBtn(rowData: any): any {
     let btn: any = document.createElement('lit-icon');
     btn.classList.add('tree-icon');
     if (rowData.data.expanded) {
@@ -1333,7 +1413,7 @@ export class LitTable extends HTMLElement {
     return btn;
   }
 
-  createExpandBtn(rowData: any) {
+  createExpandBtn(rowData: any): any {
     let btn: any = document.createElement('lit-icon');
     btn.classList.add('tree-icon');
     // @ts-ignore
@@ -1401,8 +1481,8 @@ export class LitTable extends HTMLElement {
     return btn;
   }
 
-  reMeauseHeight() {
-    if (this.currentRecycleList.length == 0) {
+  reMeauseHeight(): void {
+    if (this.currentRecycleList.length === 0) {
       return;
     }
     let totalHeight = 0;
@@ -1426,7 +1506,7 @@ export class LitTable extends HTMLElement {
       }
     }
     let reduce = this.currentRecycleList.map((item) => item.clientHeight).reduce((a, b) => a + b, 0);
-    if (reduce == 0) {
+    if (reduce === 0) {
       return;
     }
     while (reduce <= this.tableElement!.clientHeight + 1) {
@@ -1478,7 +1558,11 @@ export class LitTable extends HTMLElement {
       td.style.justifyContent = column.getAttribute('align') || 'flex-start';
       let text = this.formatName(dataIndex, rowData.data[dataIndex]);
       if (text.indexOf('&lt;') === -1) {
-        td.title = text;
+        if (dataIndex === 'totalTimeStr' && rowData.data.chartFrameChildren) {
+          td.title = rowData.data.totalTime + 'ns';
+        } else {
+          td.title = text;
+        }
       }
       //   如果表格中有模板的情况，将模板中的数据放进td中，没有模板，直接将文本放进td
       //  但是对于Current Selection tab页来说，表格前两列是时间，第三列是input标签，第四列是button标签
@@ -1511,8 +1595,8 @@ export class LitTable extends HTMLElement {
       }
       newTableElement.append(td);
     });
-    newTableElement.onclick = () => {
-      this.dispatchRowClickEvent(rowData, [newTableElement]);
+    newTableElement.onmouseup = (e: MouseEvent) => {
+      this.dispatchRowClickEvent(rowData, [newTableElement], e);
     };
     newTableElement.onmouseenter = () => {
       this.dispatchRowHoverEvent(rowData, [newTableElement]);
@@ -1532,7 +1616,7 @@ export class LitTable extends HTMLElement {
     return newTableElement;
   }
 
-  getWheelStatus(element: any) {
+  getWheelStatus(element: any): void {
     element.addEventListener('wheel', (event: WheelEvent) => {
       if (element.scrollWidth !== element.offsetWidth) {
         event.preventDefault();
@@ -1541,9 +1625,13 @@ export class LitTable extends HTMLElement {
     });
   }
 
-  renderTable() {
-    if (!this.columns) return;
-    if (!this.ds) return; // If no data source is set, it is returned directly
+  renderTable(): void {
+    if (!this.columns) {
+      return;
+    }
+    if (!this.ds) {
+      return;
+    } // If no data source is set, it is returned directly
     this.normalDs = [];
     this.tbodyElement!.innerHTML = ''; // Clear the table contents
     this.ds.forEach((rowData: any) => {
@@ -1574,6 +1662,9 @@ export class LitTable extends HTMLElement {
         tblRowElement.appendChild(tblBox);
       }
       this.tableColumns!.forEach((tblColumn) => {
+        tblColumn.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+        });
         let dataIndex = tblColumn.getAttribute('data-index') || '1';
         gridTemplateColumns.push(tblColumn.getAttribute('width') || '1fr');
         if (tblColumn.template) {
@@ -1635,7 +1726,7 @@ export class LitTable extends HTMLElement {
     });
   }
 
-  freshCurrentLine(element: HTMLElement, rowObject: TableRowObject, firstElement?: HTMLElement) {
+  freshCurrentLine(element: HTMLElement, rowObject: TableRowObject, firstElement?: HTMLElement): void {
     if (!rowObject) {
       if (firstElement) {
         firstElement.style.display = 'none';
@@ -1648,8 +1739,8 @@ export class LitTable extends HTMLElement {
     element.childNodes.forEach((child) => {
       if (child.nodeType != 1) return;
       childIndex++;
-      let idx = firstElement != undefined ? childIndex + 1 : childIndex;
-      if (firstElement != undefined && childIndex == 0) {
+      let idx = firstElement !== undefined ? childIndex + 1 : childIndex;
+      if (firstElement !== undefined && childIndex === 0) {
         this.setHighLight(rowObject.data.isSearch, firstElement);
         (firstElement as any).data = rowObject.data;
         if ((this.columns![0] as any).template) {
@@ -1659,22 +1750,26 @@ export class LitTable extends HTMLElement {
         } else {
           let dataIndex = this.columns![0].getAttribute('data-index') || '1';
           let text = this.formatName(dataIndex, rowObject.data[dataIndex]);
-          firstElement.innerHTML = text;
+          if (rowObject.data.rowName === 'js-memory' || rowObject.data.rowName === 'cpu-profiler') {
+            firstElement.innerHTML = '';
+          } else {
+            firstElement.innerHTML = text;
+          }
           firstElement.title = text;
         }
         if (rowObject.children && rowObject.children.length > 0 && !rowObject.data.hasNext) {
           let btn = this.createExpandBtn(rowObject);
           firstElement.insertBefore(btn, firstElement.firstChild);
         }
-        firstElement.style.paddingLeft = 15 * rowObject.depth + 'px';
+        firstElement.style.paddingLeft = iconWidth * rowObject.depth + 'px';
         if (!rowObject.children || rowObject.children.length === 0) {
-          firstElement.style.paddingLeft = 15 * rowObject.depth + 16 + 'px';
+          firstElement.style.paddingLeft = iconWidth * rowObject.depth + iconWidth + iconPadding * 2 + 'px';
         }
         if (rowObject.data.hasNext) {
           let btn = this.createBtn(rowObject);
           firstElement.title = rowObject.data.objectName;
           firstElement.insertBefore(btn, firstElement.firstChild);
-          firstElement.style.paddingLeft = 15 * rowObject.depth + 'px';
+          firstElement.style.paddingLeft = iconWidth * rowObject.depth + 'px';
         }
         if (rowObject.data.rowName === 'js-memory') {
           let nodeText = document.createElement('text');
@@ -1705,9 +1800,9 @@ export class LitTable extends HTMLElement {
             edgeNameText.append(span);
           }
           if (
-            (rowObject.data.nodeType == NodeType.STRING ||
-              rowObject.data.nodeType == NodeType.CONCATENATED_STRING ||
-              rowObject.data.nodeType == NodeType.SLICED_STRING) &&
+            (rowObject.data.nodeType === NodeType.STRING ||
+              rowObject.data.nodeType === NodeType.CONCATENATED_STRING ||
+              rowObject.data.nodeType === NodeType.SLICED_STRING) &&
             rowObject.data.type != ConstructorType.ClassType
           ) {
             nodeText.style.color = '#d53d3d';
@@ -1718,11 +1813,11 @@ export class LitTable extends HTMLElement {
         if (rowObject.data.rowName === 'cpu-profiler') {
           this.createTextColor(rowObject, firstElement);
         }
-        firstElement.onclick = () => {
-          this.dispatchRowClickEvent(rowObject, [firstElement, element]);
+        firstElement.onmouseup = (e: MouseEvent) => {
+          this.dispatchRowClickEvent(rowObject, [firstElement, element], e);
         };
         firstElement.style.transform = `translateY(${rowObject.top - this.tableElement!.scrollTop}px)`;
-        if (rowObject.data.isSelected != undefined) {
+        if (rowObject.data.isSelected !== undefined) {
           this.setSelectedRow(rowObject.data.isSelected, [firstElement]);
         } else {
           this.setSelectedRow(false, [firstElement]);
@@ -1739,34 +1834,42 @@ export class LitTable extends HTMLElement {
           (child as HTMLElement).title = text;
         } else {
           (child as HTMLElement).innerHTML = text;
-          (child as HTMLElement).title = text;
+          if (dataIndex === 'selfTimeStr' && rowObject.data.chartFrameChildren) {
+            (child as HTMLElement).title = rowObject.data.selfTime + 'ns';
+          } else if (dataIndex === 'totalTimeStr' && rowObject.data.chartFrameChildren) {
+            (child as HTMLElement).title = rowObject.data.totalTime + 'ns';
+          } else if (dataIndex === 'timeStr' && rowObject.data instanceof JsCpuProfilerStatisticsStruct) {
+            (child as HTMLElement).title = rowObject.data.time + 'ns';
+          } else {
+            (child as HTMLElement).title = text;
+          }
         }
       }
     });
-    if (element.style.display == 'none') {
+    if (element.style.display === 'none') {
       element.style.display = 'grid';
     }
     element.style.transform = `translateY(${rowObject.top}px)`;
-    if (firstElement && firstElement.style.display == 'none') {
+    if (firstElement && firstElement.style.display === 'none') {
       firstElement.style.display = 'flex';
     }
-    element.onclick = (e) => {
-      if (firstElement != undefined) {
-        this.dispatchRowClickEvent(rowObject, [firstElement, element]);
+    element.onmouseup = (e: MouseEvent) => {
+      if (firstElement !== undefined) {
+        this.dispatchRowClickEvent(rowObject, [firstElement, element], e);
       } else {
-        this.dispatchRowClickEvent(rowObject, [element]);
+        this.dispatchRowClickEvent(rowObject, [element], e);
       }
     };
     element.onmouseenter = () => {
       this.dispatchRowHoverEvent(rowObject, [element]);
     };
     (element as any).data = rowObject.data;
-    if (rowObject.data.isSelected != undefined) {
+    if (rowObject.data.isSelected !== undefined) {
       this.setSelectedRow(rowObject.data.isSelected, [element]);
     } else {
       this.setSelectedRow(false, [element]);
     }
-    if (rowObject.data.isHover != undefined) {
+    if (rowObject.data.isHover !== undefined) {
       this.setMouseIn(rowObject.data.isHover, [element]);
     } else {
       this.setMouseIn(false, [element]);
@@ -1776,10 +1879,12 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  setSelectedRow(isSelected: boolean, rows: any[]) {
+  setSelectedRow(isSelected: boolean, rows: any[]): void {
     if (isSelected) {
       rows.forEach((row) => {
-        if (row.classList.contains('mouse-in')) row.classList.remove('mouse-in');
+        if (row.classList.contains('mouse-in')) {
+          row.classList.remove('mouse-in');
+        }
         row.classList.add('mouse-select');
       });
     } else {
@@ -1789,7 +1894,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  setMouseIn(isMouseIn: boolean, rows: any[]) {
+  setMouseIn(isMouseIn: boolean, rows: any[]): void {
     if (isMouseIn) {
       rows.forEach((row) => {
         row.classList.add('mouse-in');
@@ -1801,11 +1906,11 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  scrollToData(data: any) {
+  scrollToData(data: any): void {
     if (this.isRecycleList) {
       if (this.recycleDs.length > 0) {
         let filter = this.recycleDs.filter((item) => {
-          return item.data == data;
+          return item.data === data;
         });
         if (filter.length > 0) {
           this.tableElement!.scrollTop = filter[0].top;
@@ -1815,7 +1920,7 @@ export class LitTable extends HTMLElement {
     } else {
       if (this.normalDs.length > 0) {
         let filter = this.normalDs.filter((item) => {
-          return item.data == data;
+          return item.data === data;
         });
         if (filter.length > 0) {
           this.tableElement!.scrollTop = filter[0].top;
@@ -1824,7 +1929,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  expandList(datasource: any[]) {
+  expandList(datasource: any[]): void {
     let filter = this.recycleDs.filter((item) => {
       return datasource.indexOf(item.data) != -1;
     });
@@ -1837,7 +1942,7 @@ export class LitTable extends HTMLElement {
     this.reMeauseHeight();
   }
 
-  clearAllSelection(rowObjectData: any) {
+  clearAllSelection(rowObjectData: any): void {
     if (this.isRecycleList) {
       this.recycleDs.forEach((item) => {
         if (item.data != rowObjectData && item.data.isSelected) {
@@ -1856,7 +1961,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  clearAllHover(rowObjectData: any) {
+  clearAllHover(rowObjectData: any): void {
     if (this.isRecycleList) {
       this.recycleDs.forEach((item) => {
         if (item.data != rowObjectData && item.data.isHover) {
@@ -1875,7 +1980,7 @@ export class LitTable extends HTMLElement {
     }
   }
 
-  mouseOut() {
+  mouseOut(): void {
     if (this.isRecycleList) {
       this.recycleDs.forEach((item) => (item.data.isHover = false));
       this.setMouseIn(false, this.currentTreeDivList);
@@ -1966,10 +2071,11 @@ export class LitTable extends HTMLElement {
     );
   }
 
-  dispatchRowClickEvent(rowObject: any, elements: any[]): void {
+  dispatchRowClickEvent(rowObject: any, elements: any[], event: MouseEvent): void {
     this.dispatchEvent(
       new CustomEvent('row-click', {
         detail: {
+          button: event.button,
           ...rowObject.data,
           data: rowObject.data,
           callBack: (isSelected: boolean): void => {

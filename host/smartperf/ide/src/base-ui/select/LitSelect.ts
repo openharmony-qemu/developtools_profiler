@@ -439,6 +439,8 @@ export class LitSelect extends BaseElement {
             );
           }
         }
+      } else if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
       }
     };
   }

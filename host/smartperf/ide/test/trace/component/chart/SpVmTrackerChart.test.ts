@@ -85,7 +85,7 @@ describe('SpVmTrackerChart Test', () => {
     },
   ];
   purgeableProcessData.mockResolvedValue(processData);
-  let gpuGlData = sqlite.queryGpuGLData;
+  let gpuGlData = sqlite.queryGpuData;
   let glData = [
     {
       startNs: 0,

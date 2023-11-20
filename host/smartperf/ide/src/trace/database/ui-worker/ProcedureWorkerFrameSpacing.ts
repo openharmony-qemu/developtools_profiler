@@ -57,13 +57,35 @@ export class FrameSpacingRender extends Render {
   ): void {
     if (req.animationRanges.length > 0 && req.animationRanges[0] && frameSpacingFilter.length > 0) {
       let preFrameSpacing: FrameSpacingStruct = frameSpacingFilter[0];
-      // @ts-ignore
-      let smallTickStandard = smallTick[req.frameRate];
-      let [minValue, maxValue] = this.maxMinData(
-        smallTickStandard.firstLine,
-        smallTickStandard.thirdLine,
-        frameSpacingFilter
-      );
+      let minValue = 0;
+      let maxValue = 0;
+      let smallTickStandard = {
+        firstLine: 0,
+        secondLine: 0,
+        thirdLine: 0
+      };
+      if (req.frameRate) {
+        // @ts-ignore
+        smallTickStandard = smallTick[req.frameRate];
+        [minValue, maxValue] = this.maxMinData(
+          smallTickStandard.firstLine,
+          smallTickStandard.thirdLine,
+          frameSpacingFilter
+        );
+      } else {
+        minValue = Math.min.apply(
+          Math,
+          frameSpacingFilter.map((filterData) => {
+            return filterData.frameSpacingResult!;
+          })
+        );
+        maxValue = Math.max.apply(
+          Math,
+          frameSpacingFilter.map((filterData) => {
+            return filterData.frameSpacingResult!;
+          })
+        );
+      }
       let isDraw = false;
       let selectUnitWidth: number = 0;
       for (let index: number = 0; index < frameSpacingFilter.length; index++) {
@@ -91,8 +113,10 @@ export class FrameSpacingRender extends Render {
         FrameSpacingStruct.drawSelect(currentStruct, req.context, row);
         preFrameSpacing = currentStruct;
       }
-      if (isDraw) {
-        this.drawDashedLines(Object.values(smallTickStandard), req, row, minValue, maxValue);
+      if (req.frameRate) {
+        if (isDraw) {
+          this.drawDashedLines(Object.values(smallTickStandard), req, row, minValue, maxValue);
+        }
       }
       let findStructList = frameSpacingFilter.filter(
         (filter) => row.isHover && isSurroundingPoint(row.hoverX, filter.frame!, selectUnitWidth / multiple)

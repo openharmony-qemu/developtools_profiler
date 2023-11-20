@@ -21,7 +21,8 @@
 #include "offline_symbolization_filter.h"
 #include "stat_filter.h"
 #include "string_help.h"
-
+#include "symbols_file.h"
+using namespace OHOS::Developtools::HiPerf;
 namespace SysTuning {
 namespace TraceStreamer {
 class NativeHookFrameInfo {
@@ -71,22 +72,22 @@ public:
 public:
     void MaybeParseNativeHookMainEvent(uint64_t timeStamp, std::unique_ptr<NativeHookMetaData> nativeHookMetaData);
     void ParseConfigInfo(ProtoReader::BytesView& protoData);
-    void AppendStackMaps(uint32_t stackid, std::vector<uint64_t>& frames);
-    void AppendFrameMaps(uint32_t id, const ProtoReader::BytesView& bytesView);
-    void AppendFilePathMaps(uint32_t id, uint64_t fileIndex);
-    void AppendSymbolMap(uint32_t id, uint64_t symbolIndex);
-    void AppendThreadNameMap(uint32_t id, uint64_t threadNameIndex);
+    void AppendStackMaps(uint32_t ipid, uint32_t stackid, std::vector<uint64_t>& frames);
+    void AppendFrameMaps(uint32_t ipid, uint32_t frameMapId, const ProtoReader::BytesView& bytesView);
+    void AppendFilePathMaps(uint32_t ipid, uint32_t filePathId, uint64_t fileIndex);
+    void AppendSymbolMap(uint32_t ipid, uint32_t symId, uint64_t symbolIndex);
+    void AppendThreadNameMap(uint32_t ipid, uint32_t nameId, uint64_t threadNameIndex);
     void ParseMapsEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData);
     void ParseSymbolTableEvent(std::unique_ptr<NativeHookMetaData>& nativeHookMetaData);
     void ParseTagEvent(const ProtoReader::BytesView& bytesView);
     void FinishParseNativeHookData();
-    bool NativeHookReloadElfSymbolTable(std::shared_ptr<std::vector<std::shared_ptr<ElfSymbolTable>>> elfSymbolTables);
+    bool NativeHookReloadElfSymbolTable(const std::vector<std::unique_ptr<SymbolsFile>>& symbolsFiles);
     CommHookData& GetCommHookData();
     ProfilerPluginData* GetHookPluginData();
     void SerializeHookCommDataToString();
-    bool SupportImportSymbolTable()
+    bool IsSingleProcData()
     {
-        return traceDataCache_->GetNativeHookFrameData()->Size();
+        return isSingleProcData_;
     }
 
 private:
@@ -107,17 +108,19 @@ private:
     void ParseFramesInCallStackCompressedMode();
     void ParseFramesWithOutCallStackCompressedMode();
     void ParseSymbolizedNativeHookFrame();
-    bool GetIpsWitchNeedResymbolization(DataIndex filePathId, std::set<uint64_t>& ips);
+    bool GetIpsWitchNeedResymbolization(uint64_t ipid, DataIndex filePathId, std::set<uint64_t>& ips);
     template <class T>
     void UpdateSymbolTablePtrAndStValueToSymAddrMap(T* firstSymbolAddr,
                                                     const int size,
                                                     std::shared_ptr<ProtoReader::SymbolTable_Reader> reader);
-    void FillOfflineSymbolizationFrames(std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>>::iterator itor);
+    void FillOfflineSymbolizationFrames(std::map<uint64_t, std::shared_ptr<std::vector<uint64_t>>>::iterator itor);
     void ReparseStacksWithAddrRange(uint64_t start, uint64_t end);
     void ReparseStacksWithDifferentMeans();
-    void CompressStackAndFrames(ProtoReader::RepeatedDataAreaIterator<ProtoReader::BytesView> frames);
-    std::tuple<uint64_t, uint64_t> GetNeedUpdateProcessMapsAddrRange(uint64_t startAddr, uint64_t endAddr);
-    std::unique_ptr<NativeHookFrameInfo> ParseFrame(const ProtoReader::DataArea& frame);
+    void CompressStackAndFrames(uint64_t row, ProtoReader::RepeatedDataAreaIterator<ProtoReader::BytesView> frames);
+    std::tuple<uint64_t, uint64_t> GetNeedUpdateProcessMapsAddrRange(uint32_t ipid,
+                                                                     uint64_t startAddr,
+                                                                     uint64_t endAddr);
+    std::unique_ptr<NativeHookFrameInfo> ParseFrame(uint64_t row, const ProtoReader::DataArea& frame);
     template <class T>
     void UpdateFilePathIdAndStValueToSymAddrMap(T* firstSymbolAddr, const int size, uint32_t filePathId);
     uint64_t GetMemMapSubTypeWithAddr(uint64_t addr);
@@ -126,21 +129,20 @@ private:
 
 private:
     std::multimap<uint64_t, std::unique_ptr<NativeHookMetaData>> tsToMainEventsMap_ = {};
-    std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>> reparseStackIdToFramesMap_ = {};
-    std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>> allStackIdToFramesMap_ = {};
-    std::map<uint32_t, std::shared_ptr<std::vector<uint64_t>>> stackIdToFramesMap_ = {};
+    std::map<uint64_t /*ipidWithStackIdIndex*/, std::shared_ptr<std::vector<uint64_t>>> reparseStackIdToFramesMap_ = {};
+    std::map<uint64_t /*ipidWithStackIdIndex*/, std::shared_ptr<std::vector<uint64_t>>> allStackIdToFramesMap_ = {};
+    std::map<uint64_t /*ipidWithStackIdIndex*/, std::shared_ptr<std::vector<uint64_t>>> stackIdToFramesMap_ = {};
     std::map<uint32_t, uint64_t> callChainIdToStackHashValueMap_ = {};
-    std::unordered_map<uint32_t, std::shared_ptr<const ProtoReader::BytesView>> frameIdToFrameBytes_ = {};
+    DoubleMap<uint32_t, uint32_t, std::shared_ptr<const ProtoReader::BytesView>> ipidToFrameIdToFrameBytes_;
     std::unordered_map<uint64_t, std::vector<uint64_t>> stackHashValueToFramesHashMap_ = {};
     std::unordered_map<uint64_t, std::unique_ptr<NativeHookFrameInfo>> frameHashToFrameInfoMap_ = {};
-    std::unordered_map<uint32_t, uint64_t> threadNameIdToThreadNameIndex_ = {};
+    std::unordered_map<uint64_t /*ipidWithThreadNameIdIndex*/, uint64_t> threadNameIdToThreadNameIndex_ = {};
     std::unordered_map<uint32_t, std::tuple<uint64_t, uint64_t>> callIdToLastCallerPathIndex_ = {};
     std::unordered_map<uint64_t, std::string> functionNameIndexToVaddr_ = {};
-    std::unordered_map<uint32_t, uint64_t> symbolIdToSymbolIndex_ = {};
+    DoubleMap<uint32_t, uint32_t, uint64_t> ipidToSymIdToSymIndex_;
+    DoubleMap<uint32_t, uint32_t, uint64_t> ipidToFilePathIdToFileIndex_;
     std::unordered_map<uint64_t, uint32_t> stackHashValueToCallChainIdMap_ = {};
-    std::unordered_map<uint32_t, uint32_t> itidToThreadNameId_ = {};
-    std::unordered_map<uint32_t, uint64_t> filePathIdToFileIndex_ = {};
-    std::unordered_map<uint64_t, uint32_t> fileIndexToFilePathId_ = {};
+    std::unordered_map<uint32_t, uint64_t> itidToThreadNameId_ = {};
     std::unordered_map<uint32_t, uint32_t> stackIdToCallChainIdMap_ = {};
     std::unordered_map<uint64_t, uint64_t> addrToAllocEventRow_;
     std::unordered_map<uint64_t, uint64_t> addrToMmapEventRow_;
@@ -159,7 +161,6 @@ private:
     bool isStringCompressedMode_ = false;
     bool isStatisticMode_ = false;
     const size_t MAX_CACHE_SIZE = 200000;
-    uint32_t ipid_ = INVALID_UINT32;
     uint32_t callChainId_ = 0;
     CommHookData commHookData_;
     std::unique_ptr<ProfilerPluginData> hookPluginData_ = nullptr;

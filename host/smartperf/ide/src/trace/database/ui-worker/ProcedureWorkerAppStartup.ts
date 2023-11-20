@@ -66,7 +66,9 @@ export class AppStartupStruct extends BaseStruct {
   static hoverStartupStruct: AppStartupStruct | undefined;
   static selectStartupStruct: AppStartupStruct | undefined;
   static StartUpStep: string[] = [
-    'Process Creating',
+    'ProcessTouchEvent',
+    'StartUIAbilityBySCB',
+    'LoadAbility',
     'Application Launching',
     'UI Ability Launching',
     'UI Ability OnForeground',
@@ -109,7 +111,7 @@ export class AppStartupStruct extends BaseStruct {
   }
 
   static getStartupName(step: number | undefined): string {
-    if (step === undefined || step < 0 || step > 5) {
+    if (step === undefined || step < 0 || step > 7) {
       return 'Unknown Start Step';
     } else {
       return AppStartupStruct.StartUpStep[step];

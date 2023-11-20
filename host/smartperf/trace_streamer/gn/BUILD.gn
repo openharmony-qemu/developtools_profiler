@@ -66,6 +66,7 @@ config("default") {
     cflags += [
       "-fsanitize=address",
       "-fno-omit-frame-pointer",
+      "-fstandalone-debug",
     ]
     ldflags += [ "-fsanitize=address" ]
   }

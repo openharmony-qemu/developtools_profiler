@@ -15,8 +15,11 @@
 
 // @ts-ignore
 import { TabPaneNMSampleList } from '../../../../../../dist/trace/component/trace/sheet/native-memory/TabPaneNMSampleList.js';
-// @ts-ignore
-import { LitTable } from '../../../../../../dist/base-ui/table/lit-table';
+jest.mock('../../../../../../dist/base-ui/table/lit-table.js', () => {
+  return {
+    recycleDataSource: () => {},
+  };
+});
 // @ts-ignore
 import { NativeHookSampleQueryInfo, NativeHookSamplerInfo } from '../../../../../../dist/trace/bean/NativeHook.js';
 // @ts-ignore
@@ -25,8 +28,8 @@ import { NativeMemory } from '../../../../../../dist/trace/bean/NativeHook.js';
 jest.mock('../../../../../../dist/trace/component/trace/base/TraceRow.js', () => {
   return {};
 });
+jest.mock('../../../../../../dist/js-heap/model/DatabaseStruct.js', () => {});
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
-import { queryAllHookData } from '../../../../../../dist/trace/database/SqlLite.js';
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
 // @ts-ignore
 window.ResizeObserver = window.ResizeObserver ||
@@ -38,8 +41,7 @@ window.ResizeObserver = window.ResizeObserver ||
 describe('TabPaneNMSampleList Test', () => {
   document.body.innerHTML = '<tabpane-native-sample id="ddt"></tabpane-native-sample>';
   let tabPaneNMSampleList = document.querySelector<TabPaneNMSampleList>('#ddt');
-
-  TabPaneNMSampleList.source = [
+  TabPaneNMSampleList.samplerInfoSource = [
     {
       current: '',
       currentSize: 101,

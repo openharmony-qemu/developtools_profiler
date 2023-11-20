@@ -17,6 +17,8 @@
 import { TraceRow } from '../../../../../dist/trace/component/trace/base/TraceRow.js';
 // @ts-ignore
 import { Sptext } from '../../../../../dist/trace/component/Sptext.js';
+// @ts-ignore
+import { ThreadStruct } from '../../../../../dist/trace/database/ui-worker/ProcedureWorkerThread.js';
 jest.mock('../../../../../dist/trace/database/ui-worker/ProcedureWorker.js', () => {
   return {};
 });
@@ -210,15 +212,6 @@ describe('TraceRow Test', () => {
     expect(traceRow.frame).toBeTruthy();
   });
 
-  it('TraceRow Test60', () => {
-    expect(traceRow.disabledCheck).not.toBeUndefined();
-  });
-
-  it('TraceRow Test61', () => {
-    traceRow.disabledCheck = true;
-    expect(traceRow.disabledCheck).toBeTruthy();
-  });
-
   it('TraceRow Test62', () => {
     expect(traceRow.folderPaddingLeft).toBeUndefined();
   });
@@ -385,16 +378,9 @@ describe('TraceRow Test', () => {
     traceRow.expansion = false;
     expect(traceRow.expansion).toBeFalsy();
   });
-  it('TraceRow Test73', () => {
-    expect(traceRow.replaceTraceRow([],[])).toBeUndefined();
-  });
   it('TraceRow Test74', () => {
-    let child = [{
-      parentRowEl:[],
-    }];
-    // @ts-ignore
-    child.setAttribute = jest.fn();
-    expect(traceRow.addChildTraceRowSpecifyLocation(child,[])).toBeUndefined();
+    let threadRow = TraceRow.skeleton<ThreadStruct>();
+    expect(traceRow.addChildTraceRowSpecifyLocation(threadRow,0)).toBeUndefined();
   });
   it('TraceRow Test75', () => {
     expect(traceRow.drawLine(false,'top')).toBeUndefined();

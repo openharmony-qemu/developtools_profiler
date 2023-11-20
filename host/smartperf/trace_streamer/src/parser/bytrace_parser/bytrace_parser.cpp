@@ -32,6 +32,7 @@ BytraceParser::BytraceParser(TraceDataCache* dataCache, const TraceStreamerFilte
       traceDataCache_(dataCache),
       eventParser_(std::make_unique<BytraceEventParser>(dataCache, filters)),
       hilogParser_(std::make_unique<BytraceHilogParser>(dataCache, filters)),
+      hiSysEventParser_(std::make_unique<BytraceHiSysEventParser>(dataCache, filters)),
 #ifdef SUPPORTTHREAD
       dataSegArray_(std::make_unique<DataSegment[]>(MAX_SEG_ARRAY_SIZE)),
       supportThread_(true)
@@ -54,9 +55,11 @@ void BytraceParser::WaitForParserEnd()
     eventParser_->FilterAllEvents();
     eventParser_->Clear();
     hilogParser_->FilterAllHilogData();
+    hiSysEventParser_->Finish();
     dataSegArray_.reset();
+    isParsingOver_ = false;
 }
-void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size)
+void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, size_t size, bool isFinish)
 {
     if (isParsingOver_) {
         return;
@@ -66,7 +69,11 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
     while (true) {
         auto packagesLine = std::find(packagesBegin, packagesBuffer_.end(), '\n');
         if (packagesLine == packagesBuffer_.end()) {
-            break;
+            if (isFinish) {
+                isParsingOver_ = true;
+            } else {
+                break;
+            }
         }
         if (packagesLine == packagesBuffer_.begin()) {
             packagesLine++;
@@ -74,11 +81,16 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
             continue;
         }
         // Support parsing windows file format(ff=dos)
-        auto extra = *(packagesLine - 1) == '\r' ? 1 : 0;
+        auto extra = 0;
+        if (packagesLine != packagesBuffer_.end()) {
+            if (*(packagesLine - 1) == '\r') {
+                extra = 1;
+            }
+        }
         std::string bufferLine(packagesBegin, packagesLine - extra);
 
-        if (isFirstLine) {
-            isFirstLine = false;
+        if (isFirstLine_) {
+            isFirstLine_ = false;
             if (IsHtmlTrace(bufferLine)) {
                 isHtmlTrace_ = true;
                 goto NEXT_LINE;
@@ -112,7 +124,10 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
 
         if (fileType_ == TRACE_FILETYPE_HILOG) {
             hilogParser_->ParseHilogDataItem(bufferLine, seq_);
-        } else if (isBytrace_) {
+        } else if (fileType_ == TRACE_FILETYPE_HI_SYSEVENT) {
+            hiSysEventParser_->ParseHiSysEventDataItem(bufferLine, seq_);
+        }
+        if (isBytrace_) {
             if (!traceBegan_) {
                 traceBegan_ = true;
             }
@@ -120,11 +135,11 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
             if (traceDataCache_->isSplitFile_) {
                 goto NEXT_LINE;
             }
-        } else {
-            ParseJsonData(bufferLine);
         }
-
     NEXT_LINE:
+        if (isParsingOver_) {
+            break;
+        }
         packagesBegin = packagesLine + 1;
         seq_++;
         continue;
@@ -138,88 +153,6 @@ void BytraceParser::ParseTraceDataSegment(std::unique_ptr<uint8_t[]> bufferStr, 
     return;
 }
 
-inline void BytraceParser::AppendJsonDataToHiSysEventNewValue(JsonData jData,
-                                                              int32_t jIndex,
-                                                              DataIndex eventSourceIndex)
-{
-    auto value = jData.value[jIndex];
-    std::string key = jData.key[jIndex];
-    streamFilters_->hiSysEventMeasureFilter_->GetOrCreateFilterId(eventSourceIndex);
-    DataIndex keyIndex = eventParser_->traceDataCache_->GetDataIndex(key);
-    if (value.is_string()) {
-        std::string strValue = value;
-        DataIndex valueIndex = eventParser_->traceDataCache_->GetDataIndex(strValue);
-        streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(0, jData.timeStamp, eventSourceIndex, keyIndex, 1, 0,
-                                                                 valueIndex);
-    } else {
-        DataIndex valueIndex = value;
-        streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(0, jData.timeStamp, eventSourceIndex, keyIndex, 0,
-                                                                 valueIndex, 0);
-    }
-}
-
-inline void BytraceParser::NoArrayDataParse(JsonData jData,
-                                            std::vector<size_t> noArrayIndex,
-                                            DataIndex eventSourceIndex)
-{
-    for (auto itor = noArrayIndex.begin(); itor != noArrayIndex.end(); itor++) {
-        AppendJsonDataToHiSysEventNewValue(jData, *itor, eventSourceIndex);
-    }
-}
-void BytraceParser::ArrayDataParse(JsonData jData,
-                                   std::vector<size_t> arrayIndex,
-                                   DataIndex eventSourceIndex,
-                                   size_t maxArraySize)
-{
-    for (int32_t j = 0; j < maxArraySize; j++) {
-        for (auto itor = arrayIndex.begin(); itor != arrayIndex.end(); itor++) {
-            auto value = jData.value[*itor][j];
-            std::string key = jData.key[*itor];
-            DataIndex keyIndex = eventParser_->traceDataCache_->GetDataIndex(key);
-            streamFilters_->hiSysEventMeasureFilter_->GetOrCreateFilterId(eventSourceIndex);
-            if (value.is_number()) {
-                DataIndex valueIndex = value;
-                streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(0, jData.timeStamp, eventSourceIndex, keyIndex,
-                                                                         0, valueIndex, 0);
-            } else if (value.is_string()) {
-                std::string strValue = value;
-                DataIndex valueIndex = eventParser_->traceDataCache_->GetDataIndex(strValue);
-                streamFilters_->hiSysEventMeasureFilter_->AppendNewValue(0, jData.timeStamp, eventSourceIndex, keyIndex,
-                                                                         1, 0, valueIndex);
-            }
-        }
-    }
-}
-
-inline void BytraceParser::CommonDataParser(JsonData jData, DataIndex eventSourceIndex)
-{
-    for (int32_t j = 0; j < jData.key.size(); j++) {
-        AppendJsonDataToHiSysEventNewValue(jData, j, eventSourceIndex);
-    }
-}
-
-void BytraceParser::ParseJsonData(const std::string& buffer)
-{
-    std::stringstream ss;
-    json jMessage;
-    ss << buffer;
-    ss >> jMessage;
-    JsonData jData;
-    size_t maxArraySize = 0;
-    std::vector<size_t> noArrayIndex = {};
-    std::vector<size_t> arrayIndex = {};
-    if (!streamFilters_->hiSysEventMeasureFilter_->JGetData(jMessage, jData, maxArraySize, noArrayIndex, arrayIndex)) {
-        return;
-    }
-    DataIndex eventSourceIndex = eventParser_->traceDataCache_->GetDataIndex(jData.eventSource);
-    if (maxArraySize) {
-        NoArrayDataParse(jData, noArrayIndex, eventSourceIndex);
-        ArrayDataParse(jData, arrayIndex, eventSourceIndex, maxArraySize);
-    } else {
-        CommonDataParser(jData, eventSourceIndex);
-    }
-    return;
-}
 void BytraceParser::ParseTraceDataItem(const std::string& buffer)
 {
     if (!supportThread_) {

@@ -56,7 +56,20 @@ ohos_source_set("rawtrace_parser_src") {
   if (is_mingw) {
     cflags = [ "-includeMingW64Fix.h" ]
   }
-
+  if (enable_ts_utest && !use_wasm) {
+    cflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags = [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+      "--coverage",
+    ]
+    if (is_test) {
+      cflags += [ "-D IS_UT" ]
+    }
+  }
   public_deps = []
   deps = [
     "${OHOS_TRACE_STREAMER_PROTOS_DIR}/protos/services:ts_all_type_cpp_standard",

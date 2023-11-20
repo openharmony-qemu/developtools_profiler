@@ -49,6 +49,7 @@ using namespace SysTuning::base;
 constexpr size_t G_CHUNK_SIZE = 1024 * 1024;
 constexpr int G_MIN_PARAM_NUM = 2;
 constexpr size_t G_FILE_PERMISSION = 664;
+constexpr uint8_t RAW_TRACE_PARSE_MAX = 2;
 // set version info in meta.cpp please
 void ExportStatusToLog(const std::string& dbPath, TraceParserStatus status)
 {
@@ -74,8 +75,9 @@ void ShowHelpInfo(const char* argv)
         "Usage: %s FILE -e sqlite_out.pb\n"
         " or    %s FILE -c\n"
         "Options:\n"
-        " -e    transfer a bytrace file into a SQLiteBased DB. with -nm to except meta table\n"
+        " -e    transfer a trace file into a SQLiteBased DB. with -nm to except meta table\n"
         " -c    command line mode.\n"
+        " -d    dump perf readable text.\n"
         " -h    start HTTP server.\n"
         " -s    separate arkts-plugin data, and save it in current dir with default filename.\n"
         " -p    Specify the port of HTTP server, default is 9001.\n"
@@ -101,8 +103,17 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
     auto startTime =
         (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))
             .count();
+    auto isFinish = false;
     g_loadSize = 0;
+    auto curParseCnt = 1;
     while (true) {
+        // for rawtrace next parse.the first parse is for last comm data;
+        if (isFinish && ta.GetFileType() == TRACE_FILETYPE_RAW_TRACE && curParseCnt < RAW_TRACE_PARSE_MAX) {
+            ++curParseCnt;
+            isFinish = false;
+            g_loadSize = 0;
+            TS_CHECK_TRUE(lseek(fd, 0, SEEK_SET) != -1, false, "lseek error:%s", strerror(errno));
+        }
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(G_CHUNK_SIZE);
         auto rsize = Read(fd, buf.get(), G_CHUNK_SIZE);
         if (rsize == 0) {
@@ -114,7 +125,10 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
             return false;
         }
         g_loadSize += rsize;
-        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize), false, false)) {
+        if (g_loadSize == g_fileSize) {
+            isFinish = true;
+        }
+        if (!ta.ParseTraceDataSegment(std::move(buf), static_cast<size_t>(rsize), false, isFinish)) {
             return false;
         };
         printf("\rLoadingFile:\t%.2f MB\r", static_cast<double>(g_loadSize) / 1E6);
@@ -127,8 +141,22 @@ bool ReadAndParser(SysTuning::TraceStreamer::TraceStreamerSelector& ta, int fd)
     (void)fprintf(stdout, "ParserSpeed:\t%.2f MB/s\n", (g_loadSize / (endTime - startTime) / 1E3));
     return true;
 }
+bool SetFileSize(const std::string& traceFilePath)
+{
+    if (traceFilePath.empty()) {
+        g_fileSize = 0;
+        return false;
+    }
+    struct stat statBuff;
+    stat(traceFilePath.c_str(), &statBuff);
+    g_fileSize = statBuff.st_size;
+    return true;
+}
 int OpenAndParserFile(TraceStreamerSelector& ts, const std::string& traceFilePath)
 {
+    if (!SetFileSize(traceFilePath)) {
+        return 0;
+    }
     int fd(OpenFile(traceFilePath, O_RDONLY, G_FILE_PERMISSION));
     if (fd < 0) {
         TS_LOGE("%s does not exist", traceFilePath.c_str());
@@ -191,6 +219,7 @@ int ExportDatabase(TraceStreamerSelector& ts, const std::string& sqliteFilePath)
 struct TraceExportOption {
     std::string traceFilePath;
     std::string sqliteFilePath;
+    std::string perfReadableTextFilePath;
     std::string metricsIndex;
     std::string sqlOperatorFilePath;
     bool interactiveState = false;
@@ -206,33 +235,38 @@ int CheckFinal(char** argv, TraceExportOption& traceExportOption, HttpOption& ht
     if ((traceExportOption.traceFilePath.empty() ||
          (!traceExportOption.interactiveState && traceExportOption.sqliteFilePath.empty())) &&
         !httpOption.enable && !traceExportOption.separateFile && traceExportOption.metricsIndex.empty() &&
-        traceExportOption.sqlOperatorFilePath.empty()) {
+        traceExportOption.sqlOperatorFilePath.empty() && traceExportOption.perfReadableTextFilePath.empty()) {
         ShowHelpInfo(argv[0]);
         return 1;
     }
     return 0;
 }
 
+bool CheckArgc(int argc, char** argv, int curArgNum)
+{
+    if (curArgNum == argc) {
+        ShowHelpInfo(argv[0]);
+        return false;
+    }
+    return true;
+}
+
 int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpOption& httpOption)
 {
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-e")) {
-            i++;
-            if (i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             traceExportOption.sqliteFilePath = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--command")) {
             traceExportOption.interactiveState = true;
             continue;
+        } else if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--command")) {
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
+            traceExportOption.perfReadableTextFilePath = std::string(argv[i]);
+            continue;
         } else if (!strcmp(argv[i], "-q") || !strcmp(argv[i], "--query-file")) {
-            i++;
-            if (i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             traceExportOption.sqlOperatorFilePath = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-i") || !strcmp(argv[i], "--info")) {
@@ -244,11 +278,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
             traceExportOption.exportMetaTable = false;
             continue;
         } else if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--run-metrics")) {
-            i++;
-            if (i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             traceExportOption.metricsIndex = std::string(argv[i]);
             continue;
         } else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--v") || !strcmp(argv[i], "-version") ||
@@ -259,10 +289,7 @@ int CheckArgs(int argc, char** argv, TraceExportOption& traceExportOption, HttpO
             httpOption.enable = true;
             continue;
         } else if (!strcmp(argv[i], "-p")) {
-            if (++i == argc) {
-                ShowHelpInfo(argv[0]);
-                return 1;
-            }
+            TS_CHECK_TRUE_RET(CheckArgc(argc, argv, ++i), 1);
             httpOption.port = std::stoi(argv[i]);
             continue;
         }
@@ -304,6 +331,9 @@ int main(int argc, char** argv)
             ExportStatusToLog(tsOption.sqliteFilePath, GetAnalysisResult());
         }
         return 1;
+    }
+    if (!tsOption.perfReadableTextFilePath.empty()) {
+        ts.ExportPerfReadableText(tsOption.perfReadableTextFilePath);
     }
     if (tsOption.interactiveState) {
         MetaData* metaData = ts.GetMetaData();

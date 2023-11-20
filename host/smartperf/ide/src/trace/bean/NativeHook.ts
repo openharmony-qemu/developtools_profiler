@@ -165,3 +165,34 @@ export class NativeMemoryExpression {
   includeLib: Map<string, string[]> = new Map<string, string[]>();
   abandonLib: Map<string, string[]> = new Map<string, string[]>();
 }
+
+export class FilterByAnalysis {
+  symbolId?: number;
+  symbolName?: string;
+  libId?: number;
+  libName?: string;
+  tid?: number;
+  tName?: string;
+  type?: string;
+  typeId?: number;
+
+  constructor(
+    typeId: number| undefined,
+    type: string | undefined,
+    tName: string | undefined,
+    tid: number | undefined,
+    libId: number | undefined,
+    libName: string | undefined,
+    symbolId: number | undefined,
+    symbolName: string | undefined
+  ) {
+    this.typeId = typeId;
+    this.libId = libId || -1;
+    this.libName = libName;
+    this.tid = tid;
+    this.tName = tName;
+    this.symbolId = symbolId;
+    this.symbolName = symbolName;
+    this.type = type;
+  }
+}

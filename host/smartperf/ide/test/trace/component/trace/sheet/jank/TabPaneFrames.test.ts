@@ -13,6 +13,10 @@
  * limitations under the License.
  */
 
+jest.mock('../../../../../../dist/trace/component/trace/sheet/SheetUtils.js', () => {
+  return {};
+});
+
 // @ts-ignore
 import { TabPaneFrames } from '../../../../../../dist/trace/component/trace/sheet/jank/TabPaneFrames.js';
 

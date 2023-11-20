@@ -19,7 +19,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-enum class Index : int32_t { ID = 0, INPUT_TIME, START_POINT, END_POINT, FRAME_INFO };
+enum class Index : int32_t { ID = 0, INPUT_TIME, START_POINT, END_POINT, FRAME_INFO, NAME };
 AnimationTable::AnimationTable(const TraceDataCache* dataCache) : TableBase(dataCache)
 {
     tableColumn_.push_back(TableBase::ColumnInfo("id", "INTEGER"));
@@ -27,6 +27,7 @@ AnimationTable::AnimationTable(const TraceDataCache* dataCache) : TableBase(data
     tableColumn_.push_back(TableBase::ColumnInfo("start_point", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("end_point", "INTEGER"));
     tableColumn_.push_back(TableBase::ColumnInfo("frame_info", "TEXT"));
+    tableColumn_.push_back(TableBase::ColumnInfo("name", "TEXT"));
     tablePriKey_.push_back("id");
 }
 
@@ -70,6 +71,10 @@ int32_t AnimationTable::Cursor::Column(int32_t col) const
             break;
         case Index::FRAME_INFO:
             sqlite3_result_text(context_, dataCache_->GetDataFromDict(animationObj_.FrameInfos()[CurrentRow()]).c_str(),
+                                STR_DEFAULT_LEN, nullptr);
+            break;
+        case Index::NAME:
+            sqlite3_result_text(context_, dataCache_->GetDataFromDict(animationObj_.Names()[CurrentRow()]).c_str(),
                                 STR_DEFAULT_LEN, nullptr);
             break;
         default:

@@ -32,7 +32,48 @@ public:
     bool IsSupported(const std::string& eventName) const;
     bool HandleEvent(FtraceEvent& event, uint8_t data[], size_t size, const EventFormat& format) const;
     const std::string& GetEventNameById(uint32_t eventId);
-    using HandleFunction = std::function<void(FtraceEvent&, uint8_t[], size_t, const EventFormat&)>;
+
+private:
+    using HandleFunction = std::function<bool(FtraceEvent&, uint8_t[], size_t, const EventFormat&)>;
+    bool IpiEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool IpiExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool IrqHandlerEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool IrqHandlerExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SoftirqRaise(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SoftirqEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SoftirqExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SuspendResume(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool WorkqueueExecuteStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool WorkqueueExecuteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool CpuIdle(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool CpuFrequency(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool CpuFrequencyLimits(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool TracingMarkWriteOrPrintFormat(FtraceEvent& ftraceEvent,
+                                       uint8_t data[],
+                                       size_t size,
+                                       const EventFormat& format);
+    bool TaskRename(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool TaskNewtask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool BinderTransaction(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool BinderTransactionReceived(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool BinderTransactionAllocBuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool BinderTransactionAllocLock(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool BinderTransactionAllocLocked(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool BinderTransactionAllocUnlock(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedSwitch(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedBlockedReason(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedWakeup(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedWaking(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedWakeupNew(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedProcessExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool SchedProcessFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool ClockSetRate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool ClockEnable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool ClockDisable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool RegulatorSetVoltage(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool RegulatorSetVoltageComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool RegulatorDisable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
+    bool RegulatorDisableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format);
 
 private:
     FtraceEventProcessor();

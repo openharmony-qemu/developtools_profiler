@@ -16,6 +16,9 @@
 import { TabPaneCpuFreqLimits } from '../../../../../../dist/trace/component/trace/sheet/freq/TabPaneCpuFreqLimits.js';
 const sqlit = require('../../../../../../dist/trace/database/SqlLite.js');
 jest.mock('../../../../../../dist/trace/database/SqlLite.js');
+jest.mock('../../../../../../dist/trace/bean/NativeHook.js', () => {
+  return {};
+});
 
 // @ts-ignore
 window.ResizeObserver =

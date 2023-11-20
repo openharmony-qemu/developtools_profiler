@@ -299,6 +299,11 @@ export class CpuStruct extends BaseStruct {
   type: string | undefined;
   v: boolean = false;
   nofinish: boolean = false;
+  ts: number | undefined;
+  itid: number | undefined;
+  process: string | undefined;
+  pid: number | undefined;
+  thread: string | undefined;
   static draw(ctx: CanvasRenderingContext2D, data: CpuStruct, translateY: number) {
     if (data.frame) {
       let width = data.frame.width || 0;
@@ -326,7 +331,9 @@ export class CpuStruct extends BaseStruct {
         }
         let processCharWidth = Math.round(data.measurePWidth / data.displayProcess.length);
         let threadCharWidth = Math.round(data.measureTWidth / data.displayThread.length);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = ColorUtils.funcTextColor(
+          ColorUtils.colorForTid((data.processId || 0) > 0 ? data.processId || 0 : data.tid || 0)
+        );
         let y = data.frame.height / 2 + data.frame.y;
         if (data.measurePWidth < textFillWidth) {
           let x1 = Math.floor(width / 2 - data.measurePWidth / 2 + data.frame.x + textPadding);
@@ -344,7 +351,9 @@ export class CpuStruct extends BaseStruct {
             }
           }
         }
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = ColorUtils.funcTextColor(
+          ColorUtils.colorForTid((data.processId || 0) > 0 ? data.processId || 0 : data.tid || 0)
+        );
         ctx.font = '9px sans-serif';
         if (data.measureTWidth < textFillWidth) {
           ctx.textBaseline = 'top';
@@ -364,7 +373,7 @@ export class CpuStruct extends BaseStruct {
         }
       }
       if (data.nofinish && width > 4) {
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = '#fff';
         let ruptureWidth = 4;
         let ruptureNode = 8;
         ctx.moveTo(data.frame.x + data.frame.width - 1, data.frame.y);

@@ -20,6 +20,7 @@ export class LitAllocationSelect extends BaseElement {
   private selectAllocationInputEl: HTMLInputElement | null | undefined;
   private selectAllocationInputContent: HTMLDivElement | undefined;
   private selectAllocationOptions: any;
+  private processDataList: Array<string> = [];
 
   static get observedAttributes() {
     return ['value', 'disabled', 'placeholder'];
@@ -46,6 +47,7 @@ export class LitAllocationSelect extends BaseElement {
   }
 
   set processData(value: Array<string>) {
+    this.processDataList = value;
     this.selectAllocationOptions.innerHTML = '';
     value.forEach((item) => {
       let option = document.createElement('div');
@@ -95,8 +97,7 @@ export class LitAllocationSelect extends BaseElement {
         this.selectAllocationOptions.style.visibility = 'hidden';
         this.selectAllocationOptions.style.opacity = '0';
       } else {
-        this.selectAllocationOptions.style.visibility = 'visible';
-        this.selectAllocationOptions.style.opacity = '1';
+        this.showProcessList();
       }
       this.selectAllocationInputContent!.dispatchEvent(new CustomEvent('inputClick', {}));
     });
@@ -105,6 +106,15 @@ export class LitAllocationSelect extends BaseElement {
       this.selectAllocationOptions.style.opacity = '0';
     });
     this.initData();
+  }
+
+  showProcessList() {
+    setTimeout(() => {
+      if (this.processDataList.length > 0) {
+        this.selectAllocationOptions.style.visibility = 'visible';
+        this.selectAllocationOptions.style.opacity = '1';
+      }
+    }, 200);
   }
 
   initHtml() {
@@ -129,7 +139,7 @@ export class LitAllocationSelect extends BaseElement {
         .multipleSelect{
             display: flex;
             width: 100%;
-            z-index: 2999;
+            z-index: 98;
             position: relative;
             padding: 3px 6px;
             font-size: 1rem;
@@ -206,7 +216,14 @@ export class LitAllocationSelect extends BaseElement {
         `;
   }
 
-  connectedCallback() {}
+  connectedCallback() {
+    this.selectAllocationInputEl!.onkeydown = (ev): void => {
+      // @ts-ignore
+      if (ev.key === '0' && ev.target.value.length === 1 && ev.target.value === '0') {
+        ev.preventDefault();
+      }
+    };
+  }
 
   initData() {
     this.selectAllocationInputEl = this.shadowRoot!.querySelector('input');

@@ -578,7 +578,7 @@ export class TabPaneComparison extends BaseElement {
                 <lit-slicer style="width:100%">
                     <div style="width: 65%">
                         <lit-table id="tb-comparison" style="height: auto" tree>
-                            <lit-table-column width="30%" title="#Constructor" data-index="" key="objectName"  align="flex-start" order>
+                            <lit-table-column width="30%" title="#Constructor" data-index="objectName" key="objectName"  align="flex-start" order>
                             </lit-table-column>
                             <lit-table-column width="1fr" title="#New" data-index="addedCount" key="addedCount"  align="flex-start" order>
                             </lit-table-column>
@@ -599,7 +599,7 @@ export class TabPaneComparison extends BaseElement {
                         <div style="flex: 1;display: flex; flex-direction: column;">
                             <span slot="head" >Retainers</span>
                             <lit-table id="tb-retainer" style="height: calc(100% - 21px);" tree>
-                                <lit-table-column width="30%" title="Object" data-index="" key="objectName"  align="flex-start" order>
+                                <lit-table-column width="30%" title="Object" data-index="objectName" key="objectName"  align="flex-start" order>
                                 </lit-table-column>
                                 <lit-table-column width="1fr" title="distance" data-index="distance" key="distance"  align="flex-start" order>
                                 </lit-table-column>
