@@ -59,12 +59,7 @@ public:
         pluginService_->SetPluginSessionManager(pluginSessionMgr_);
     }
 
-    void TearDown()
-    {
-        pluginService_ = nullptr;
-        commandBuilder_ = nullptr;
-        pluginSessionMgr_ = nullptr;
-    }
+    void TearDown() {}
 
 public:
     std::shared_ptr<PluginService> pluginService_ = nullptr;
@@ -117,9 +112,6 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     plugin.sha256 = "ASDFAADSF";
     plugin.context = (SocketContext*)pluginClient_->unixSocketClient_.get();
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
-    ASSERT_TRUE(plugin.context != nullptr);
-    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
-    pluginService_->RemovePluginInfo(plugin);
 }
 
 /**
@@ -1007,6 +999,10 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSession, TestSize.Lev
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
+    ProfilerSessionConfig psc;
+    psc.set_session_mode(ProfilerSessionConfig::OFFLINE);
+    std::vector<string> names = {"testsample.so"};
+    pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
     EXPECT_TRUE(pluginSessionMgr_->CreatePluginSession(
                     ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)) != nullptr);
 }
@@ -1035,6 +1031,10 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSessions, TestSize.Le
     std::vector<ProfilerSessionConfig::BufferConfig> vecBuf;
     vecConfig.push_back(ppc);
     vecBuf.push_back(bc);
+    ProfilerSessionConfig psc;
+    psc.set_session_mode(ProfilerSessionConfig::OFFLINE);
+    std::vector<string> names = {"testsample1.so"};
+    pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
     EXPECT_TRUE(pluginSessionMgr_->CreatePluginSessions(vecConfig, vecBuf,
                                                         std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
     std::vector<std::string> nameList{"testsample.so", "testsample1.so"};

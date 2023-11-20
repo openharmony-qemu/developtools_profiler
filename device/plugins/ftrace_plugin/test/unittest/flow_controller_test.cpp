@@ -199,6 +199,7 @@ HWTEST_F(FlowControllerTest, SetTracePeriodForLoadConfig, TestSize.Level1)
     // set config
     config.add_hitrace_apps("ftrace_plugin_ut");
     config.add_hitrace_categories("idle");
+    config.add_hitrace_categories("ability");
     std::vector<uint8_t> configData(config.ByteSizeLong());
     int ret = config.SerializeToArray(configData.data(), configData.size());
     ASSERT_GT(ret, 0);
@@ -221,6 +222,7 @@ HWTEST_F(FlowControllerTest, SetHitraceAppForLoadConfig, TestSize.Level1)
 
     // set config
     config.add_ftrace_events("sched/sched_switch");
+    config.add_hitrace_categories("ability");
     config.set_trace_period_ms(0);
     std::vector<uint8_t> configData(config.ByteSizeLong());
     int ret = config.SerializeToArray(configData.data(), configData.size());
@@ -244,6 +246,8 @@ HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level1)
 
     // set config
     config.add_ftrace_events("sched/sched_switch");
+    config.add_hitrace_categories("ability");
+    config.add_hitrace_categories("ace");
     config.set_buffer_size_kb(BUFFER_SIZE_KB);
     config.set_flush_interval_ms(FLUSH_INTERVAL_MS);
     config.set_flush_threshold_kb(FLUSH_THRESHOLD_KB);
@@ -282,6 +286,8 @@ HWTEST_F(FlowControllerTest, TestFramework, TestSize.Level1)
     // set config
     TracePluginConfig config;
     config.add_ftrace_events("sched/sched_switch");
+    config.add_hitrace_categories("ability");
+    config.add_hitrace_categories("ace");
     config.set_buffer_size_kb(BUFFER_SIZE_KB);
     config.set_flush_interval_ms(FLUSH_INTERVAL_MS);
     config.set_flush_threshold_kb(FLUSH_THRESHOLD_KB);
@@ -316,6 +322,8 @@ HWTEST_F(FlowControllerTest, TestFrameworkWithFile, TestSize.Level1)
     // set config
     TracePluginConfig config;
     config.add_ftrace_events("sched/sched_switch");
+    config.add_hitrace_categories("ability");
+    config.add_hitrace_categories("ace");
     config.set_buffer_size_kb(BUFFER_SIZE);
     config.set_trace_period_ms(TRACE_PERIOD_MS);
     std::vector<uint8_t> configData(config.ByteSizeLong());
@@ -347,6 +355,8 @@ HWTEST_F(FlowControllerTest, TestFrameworkEncoder, TestSize.Level1)
     // set config
     TracePluginConfig config;
     config.add_ftrace_events("sched/sched_switch");
+    config.add_hitrace_categories("ability");
+    config.add_hitrace_categories("ace");
     config.set_buffer_size_kb(BUFFER_SIZE);
     config.set_trace_period_ms(TRACE_PERIOD_MS);
     std::vector<uint8_t> configData(config.ByteSizeLong());

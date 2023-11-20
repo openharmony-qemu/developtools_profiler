@@ -54,9 +54,12 @@ protected:
         // set writer
         WriterStruct writer = {WriteFunc, FlushFunc};
         controller.SetWriter(static_cast<WriterStructPtr>(&writer));
-
+        // stop capture firstly
+        controller.StopCapture();
         // set config
         config.add_ftrace_events("sched/sched_switch");
+        config.add_hitrace_categories("ability");
+        config.add_hitrace_categories("ace");
         config.set_buffer_size_kb(BUFFER_SIZE_KB);
         config.set_flush_interval_ms(FLUSH_INTERVAL_MS);
         config.set_flush_threshold_kb(FLUSH_THRESHOLD_KB);

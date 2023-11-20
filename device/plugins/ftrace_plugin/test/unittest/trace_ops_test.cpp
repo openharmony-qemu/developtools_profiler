@@ -97,10 +97,13 @@ HWTEST_F(TraceOpsTest, EnableCategoriesNormal, TestSize.Level1)
     std::unique_ptr<TraceOps> traceOps = std::make_unique<HitraceOps>();
     std::vector<std::string> categories;
     categories.push_back("sched");
+    traceOps->DisableCategories();
     EXPECT_TRUE(traceOps->EnableCategories(categories));
     categories.push_back("ability");
+    traceOps->DisableCategories();
     EXPECT_TRUE(traceOps->EnableCategories(categories));
     categories.push_back("idle");
+    traceOps->DisableCategories();
     EXPECT_TRUE(traceOps->EnableCategories(categories));
 }
 
