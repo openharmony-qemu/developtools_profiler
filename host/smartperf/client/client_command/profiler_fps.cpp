@@ -105,8 +105,8 @@ static std::string GetLayer()
             }
             std::vector<std::string> params;
             StrSplit(line, " ", params);
-            if (params[windowNameIndex].find("WindowName")!= std::string::npos &&
-                params[windowIdIndex].find("WinId")!= std::string::npos) {
+            if (params[windowNameIndex].find("WindowName") != std::string::npos &&
+                params[windowIdIndex].find("WinId") != std::string::npos) {
                 continue;
             }
             if (params.size() == paramFifteen) {
@@ -132,7 +132,7 @@ static std::string GetLayer()
     }
     return resultWindowName;
 }
-static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo) 
+static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
 {
     char tmp[1024];
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
@@ -224,7 +224,7 @@ static FpsInfo GetSurfaceFrame(std::string name, FpsConfig &fpsConfig)
     if (fpsConfig.cnt < minPrintLine) {
         fpsInfo.fps = fpsInfo.preFps;
         return fpsInfo;
-    }  
+    }
     if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
         fpsInfo.fps = 0;
         return fpsInfo;
@@ -317,8 +317,7 @@ static void CalculateFPS(int num)
             FpsConfig fpsUniteConfig;
             gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
             gfpsUniteInfo = GetSurfaceFrame(uniteLayer, fpsUniteConfig);
-            if (gfpsUniteInfo.fps > gfpsInfo.fps)
-            {
+            if (gfpsUniteInfo.fps > gfpsInfo.fps) {
                 printf("fps:%d|%lld\n", gfpsUniteInfo.fps, gfpsUniteInfo.currentFpsTime);
             } else {
                 printf("fps:%d|%lld\n", gfpsInfo.fps, gfpsInfo.currentFpsTime);
@@ -334,10 +333,11 @@ static void CalculateFPS(int num)
 void ProfilerFPS::GetFPS(int argc, char *argv[])
 {
     int num = 1;
-    if (!strcmp(argv[2], "")) {
+    int number = 2;
+    if (!strcmp(argv[number], "")) {
         printf("the args of num must be not-null!\n");
     } else {
-        num = atoi(argv[2]);
+        num = atoi(argv[number]);
         if (num < 0) {
             printf("set num:%d not valid arg\n", num);
         }
