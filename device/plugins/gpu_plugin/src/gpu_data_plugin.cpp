@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,29 +14,16 @@
  */
 
 #include "gpu_data_plugin.h"
-
 #include <ctime>
 #include <vector>
-
 #include "gpu_plugin_result.pbencoder.h"
 #include "buffer_splitter.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
-const std::string GPU_UTILISATION_PATH = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
-
+const std::string path_ = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
 } // namespace
-
-GpuDataPlugin::GpuDataPlugin()
-{
-
-}
-
-GpuDataPlugin::~GpuDataPlugin()
-{
-
-}
 
 int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
@@ -56,9 +43,7 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 int GpuDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
 {
     ProtoEncoder::GpuData dataProto(randomWrite);
-
     WriteGpuDataInfo(dataProto);
-
     int msgSize = dataProto.Finish();
     return msgSize;
 }
@@ -67,7 +52,6 @@ int GpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 {
     GpuData dataProto;
     uint32_t length;
-
     WriteGpuDataInfo(dataProto);
 
     length = dataProto.ByteSizeLong();
@@ -142,7 +126,6 @@ int32_t GpuDataPlugin::ReadFile(std::string& fileName)
 
 template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 {
-
     // write system info
     std::string fileName = path_;
     int32_t ret = ReadFile(fileName);

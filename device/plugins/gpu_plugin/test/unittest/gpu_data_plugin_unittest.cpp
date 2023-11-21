@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,6 @@
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
 #include <dlfcn.h>
-
 #include "gpu_data_plugin.h"
 #include "plugin_module_api.h"
 
@@ -39,7 +38,6 @@ struct TestVmstat {
     int64_t pgpgin;
     int64_t pgpgout;
 };
-
 
 class GpuDataPluginTest : public ::testing::Test {
 public:
@@ -131,7 +129,7 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
     GpuDataPlugin gpuPlugin;
     GpuData gpuData;
-    const unsigned long long expect_val = 12;
+    const unsigned long long expectVal = 12;
     gpuPlugin.SetPath(g_path);
 
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, gpuData, false));

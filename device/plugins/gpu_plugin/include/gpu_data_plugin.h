@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,19 +29,15 @@
 #include "plugin_module_api.h"
 
 enum ErrorType {
-    RET_NULL_ADDR,
-    RET_IVALID_PID,
-    RET_TGID_VALUE_NULL,
+    RET_NULL_ADDR = -2;
     RET_FAIL = -1,
     RET_SUCC = 0,
 };
 
-
-
 class GpuDataPlugin {
 public:
-    GpuDataPlugin();
-    ~GpuDataPlugin();
+    GpuDataPlugin() = default;
+    ~GpuDataPlugin() = default;
     int Start(const uint8_t* configData, uint32_t configSize);
     int Report(uint8_t* data, uint32_t dataSize);
     int ReportOptimize(RandomWriteCtx* randomWrite);
@@ -54,17 +50,12 @@ public:
 
 private:
     int32_t ReadFile(std::string& fileName);
-
     template <typename T> void WriteGpuDataInfo(T& gpuData);
 
-
 private:
-    /* data */
     GpuConfig protoConfig_;
     void* buffer_ = nullptr;
-    std::string path_ = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
     int32_t err_ = -1;
-
     int pid_ = -1;
 };
 
