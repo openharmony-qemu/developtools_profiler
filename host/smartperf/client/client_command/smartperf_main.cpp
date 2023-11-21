@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-proliferfps")) {
         OHOS::SmartPerf::ProfilerFPS fps;
-        fps.GetFPS(argc,argv);   
+        fps.GetFPS(argc,argv);
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);
