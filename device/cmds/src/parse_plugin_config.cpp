@@ -16,6 +16,7 @@
 #include "parse_plugin_config.h"
 
 #include "cpu_plugin_config_standard.pb.h"
+#include "gpu_plugin_config_standard.pb.h"
 #include "diskio_plugin_config_standard.pb.h"
 #include "hidump_plugin_config_standard.pb.h"
 #include "hiebpf_plugin_config_standard.pb.h"
@@ -129,6 +130,8 @@ bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName,
         ret = SetSerializeArkTSConfig(pluginName, pluginConfig);
     } else if (pluginName == "xpower-plugin") {
         ret = SetSerializeXpowerConfig(pluginName, pluginConfig);
+    } else if (pluginName == "gpu-plugin") {
+        ret = SetSerializeGpuConfig(pluginName, pluginConfig);
     } else {
         printf("unsupport plugin: %s\n", pluginName.c_str());
     }
@@ -386,6 +389,22 @@ bool ParsePluginConfig::SetSerializeXpowerConfig(const std::string& pluginName, 
 
     std::vector<uint8_t> configDataVec(xpowerConfigNolite->ByteSizeLong());
     if (xpowerConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
+        return false;
+    }
+    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    return true;
+}
+
+bool ParsePluginConfig::SetSerializeGpuConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
+{
+    std::string configData = pluginConfigMap[pluginName];
+    auto gpuConfigNolite = std::make_unique<ForStandard::GpuConfig>();
+    if (!parser_.ParseFromString(configData, gpuConfigNolite.get())) {
+        return false;
+    }
+
+    std::vector<uint8_t> configDataVec(gpuConfigNolite->ByteSizeLong());
+    if (gpuConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
     pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());

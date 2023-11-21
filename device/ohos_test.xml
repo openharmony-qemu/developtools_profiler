@@ -189,4 +189,10 @@
             <option name="shell" value="aa force-stop com.taobao.taobao"/>
         </cleaner>
     </target>
+    <target name="gpudataplugin_ut">
+        <preparer>
+            <option name="push" value="plugins/gpu_plugin/test/resources/gpustat1 -> /data/local/tmp/" src="res"/>
+            <option name="push" value="plugins/gpu_plugin/test/resources/gpustat2 -> /data/local/tmp/" src="res"/>
+        </preparer>
+    </target>
 </configuration>
