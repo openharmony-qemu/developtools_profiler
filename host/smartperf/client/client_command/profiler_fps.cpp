@@ -330,14 +330,14 @@ static void CalculateFPS(int num)
             }
         }
 }
-void ProfilerFPS::GetFPS(int argc, char *argv[])
+void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
 {
     int num = 1;
     int number = 2;
-    if (!strcmp(argv[number], "")) {
+    if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
-        num = atoi(argv[number]);
+        num = atoi(v[number].c_str());
         if (num < 0) {
             printf("set num:%d not valid arg\n", num);
         }

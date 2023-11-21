@@ -19,7 +19,7 @@ namespace OHOS {
     namespace SmartPerf {
         class ProfilerFPS {
             public:
-                void GetFPS(int argc, char *argv[]);
+                void GetFPS(int argc, std::vector<std::string> v);
         };
     }
 }

@@ -24,9 +24,14 @@ int main(int argc, char *argv[])
         }
         OHOS::SmartPerf::EditorCommand(argc, v);
         return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-proliferfps")) {
+    } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
+        std::vector<std::string> v;
+        for (int i = 0; i < argc; i++) {
+            v.push_back(argv[i]);
+        }
         OHOS::SmartPerf::ProfilerFPS fps;
-        fps.GetFPS(argc,argv);
+        fps.GetFPS(argc, v);
+        
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);
