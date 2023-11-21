@@ -32,7 +32,7 @@
 
 namespace OHOS {
 namespace SmartPerf {
-void ControlCallCmd::GetResultData(int argc, std::vector<std::string> v)
+void ControlCallCmd::GetResultData(std::vector<std::string> v)
 {
     if (v[ohType] == "ohtest") {
         isOhTest = true;

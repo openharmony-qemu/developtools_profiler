@@ -14,6 +14,7 @@
  */
 #include "include/smartperf_command.h"
 #include "include/editor_command.h"
+#include "include/profiler_fps.h"
 int main(int argc, char *argv[])
 {
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
@@ -22,6 +23,14 @@ int main(int argc, char *argv[])
             v.push_back(argv[i]);
         }
         OHOS::SmartPerf::EditorCommand(argc, v);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
+        std::vector<std::string> v;
+        for (int i = 0; i < argc; i++) {
+            v.push_back(argv[i]);
+        }
+        OHOS::SmartPerf::ProfilerFPS fps;
+        fps.GetFPS(argc, v);
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);
