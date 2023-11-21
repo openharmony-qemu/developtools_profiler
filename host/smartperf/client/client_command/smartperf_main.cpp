@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
         }
         OHOS::SmartPerf::ProfilerFPS fps;
         fps.GetFPS(argc, v);
-        
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);
