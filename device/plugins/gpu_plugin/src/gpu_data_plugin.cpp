@@ -22,7 +22,6 @@
 namespace {
 using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
-const std::string path_ = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
 } // namespace
 
 int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -127,8 +126,7 @@ int32_t GpuDataPlugin::ReadFile(std::string& fileName)
 template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 {
     // write system info
-    std::string fileName = path_;
-    int32_t ret = ReadFile(fileName);
+    int32_t ret = ReadFile(path_);
     if (ret == RET_FAIL) {
         return;
     }

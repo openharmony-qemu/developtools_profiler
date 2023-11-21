@@ -29,7 +29,7 @@
 #include "plugin_module_api.h"
 
 enum ErrorType {
-    RET_NULL_ADDR = -2;
+    RET_NULL_ADDR = -2,
     RET_FAIL = -1,
     RET_SUCC = 0,
 };
@@ -53,6 +53,7 @@ private:
     template <typename T> void WriteGpuDataInfo(T& gpuData);
 
 private:
+    std::string path_ = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
     GpuConfig protoConfig_;
     void* buffer_ = nullptr;
     int32_t err_ = -1;
