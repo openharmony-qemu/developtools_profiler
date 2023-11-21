@@ -19,12 +19,13 @@
 #include "include/ByTrace.h"
 namespace OHOS {
 namespace SmartPerf {
-void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps) const
+void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps, int mCurNum) const
 {
     sum = mSum;
     interval = mInterval;
     threshold = mThreshold;
     lowfps = mLowfps;
+    curNum = mCurNum;
 }
 void ByTrace::SetTraceCmd(std::string mTraceCmd) const
 {
@@ -45,8 +46,9 @@ void ByTrace::ThreadGetTrace() const
 }
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps)
 {
+    times++;
     long long curTime = SPUtils::GetCurTime();
-    if (curNum <= sum && curTriggerFlag < 0) {
+    if (curNum <= sum && curTriggerFlag < 0 && times > 2) {
         for (size_t i = 0; i < jitters.size(); i++) {
             long long normalJitter = jitters[i] / 1e6;
             if (normalJitter > threshold || cfps < lowfps) {
