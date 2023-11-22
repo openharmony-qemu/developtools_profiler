@@ -51,7 +51,7 @@ private:
     // 上一次触发时间
     mutable long long lastTriggerTime = -1;
     // 当前是否触发
-    mutable long long curTriggerFlag = -1;
+    mutable long long currentTrigger = -1;
     //traceCmd
     mutable std::string traceCmd = "";
     //低帧触发

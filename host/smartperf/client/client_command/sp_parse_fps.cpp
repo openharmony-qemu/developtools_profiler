@@ -219,10 +219,10 @@ FpsResult  ParseFPS::PraseFPSTrace(FilePath& filePath, float staticTime, SpStrin
         }
         const auto duration = std::stof(rfV.leaveEndTime) - std::stof(rfV.leaveStartTime);
         const auto complexFps1 =  rfV.frameNum / duration;
-        if(complexFps1 == -0 || (duration == 0 && rfV.frameNum == 0)){
+        if (complexFps1 == -0 || (duration == 0 && rfV.frameNum == 0)) {
             printf("failed Operation\n");
             rfV.complexFps = "-1";
-        }else{
+        } else {
             rfV.complexFps = std::to_string(complexFps1);
         }
     }

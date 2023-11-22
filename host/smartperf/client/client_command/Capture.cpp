@@ -29,6 +29,11 @@ using namespace OHOS::Media;
 using namespace OHOS::Rosen;
 void Capture::ThreadGetCatch(const std::string &curTime) const
 {
+    std::string cmdResult;
+    if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
+        SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
+        printf("/data/local/tmp/capture created! \n");
+    };
     auto savePath = "data/local/tmp/capture/screenCap_" + curTime + ".png";
     std::stringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);

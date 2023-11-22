@@ -47,8 +47,9 @@ void ByTrace::ThreadGetTrace() const
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps)
 {
     times++;
+    int two = 2;
     long long curTime = SPUtils::GetCurTime();
-    if (curNum <= sum && curTriggerFlag < 0 && times > 2) {
+    if (curNum <= sum && currentTrigger < 0 && times > two) {
         for (size_t i = 0; i < jitters.size(); i++) {
             long long normalJitter = jitters[i] / 1e6;
             if (normalJitter > threshold || cfps < lowfps) {
@@ -57,10 +58,10 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps)
         }
     }
     std::cout << "TRACE CHECK RUNING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    std::cout << "TRACE CHECK lastTriggerTime:" << lastTriggerTime << " curTime:" << curTime << " curTriggerFlag:" <<
-        curTriggerFlag << std::endl;
-    if ((curTime - lastTriggerTime) / 1e3 > interval && curTriggerFlag == 1) {
-        curTriggerFlag = -1;
+    std::cout << "TRACE CHECK lastTriggerTime:" << lastTriggerTime << " curTime:" << curTime << " currentTrigger:" <<
+        currentTrigger << std::endl;
+    if ((curTime - lastTriggerTime) / 1e3 > interval && currentTrigger == 1) {
+        currentTrigger = -1;
     }
     return TraceStatus::TRACE_FINISH;
 }
@@ -68,7 +69,7 @@ void ByTrace::TriggerCatch(long long curTime) const
 {
     if ((curTime - lastTriggerTime) / 1e3 > interval) {
         std::thread tStart(&ByTrace::ThreadGetTrace, this);
-        curTriggerFlag = 1;
+        currentTrigger = 1;
         lastTriggerTime = curTime;
         curNum++;
         std::cout << "TRACE START >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;

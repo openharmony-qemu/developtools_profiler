@@ -47,7 +47,7 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
         }
     }
     if (argc >= threeParamMore) {
-        InitSomething();
+        //InitSomething();
         for (int i = 1; i <= argc - 1; i++) {
             std::string argStr = argv[i];
             std::string argStr1;
@@ -149,10 +149,6 @@ void SmartPerfCommand::InitSomething()
     std::string cmdResult;
     if (SPUtils::LoadCmd("chmod o+r /proc/stat", cmdResult)) {
         printf("Privilege escalation! \n");
-    };
-    if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
-        SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
-        printf("/data/local/tmp/capture created! \n");
     };
 }
 }
