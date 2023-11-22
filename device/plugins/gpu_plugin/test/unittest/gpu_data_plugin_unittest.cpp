@@ -16,6 +16,7 @@
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
 #include <dlfcn.h>
+#include <fstream>
 #include "gpu_data_plugin.h"
 #include "plugin_module_api.h"
 
@@ -129,12 +130,17 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
     GpuDataPlugin gpuPlugin;
     GpuData gpuData;
-    const unsigned long long expectVal = 12;
-    gpuPlugin.SetPath(g_path);
+    const unsigned long long ceil = 100;
+    const unsigned long long floor = 0;
 
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, gpuData, false));
-    EXPECT_EQ(gpuData.gpu_utilisation(), expect_val);
-
+    EXPECT_LE(gpuData.gpu_utilisation(), ceil);
+    EXPECT_GE(gpuData.gpu_utilisation(), floor);
+    gpuPlugin.file.close();
+    gpuPlugin.file.open(g_path);
+    EXPECT_EQ(gpuPlugin.ReadFile(), 12);
+    sleep(5);
+    EXPECT_EQ(gpuPlugin.ReadFile(), 12);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
 
     // 缓冲区异常
@@ -142,19 +148,6 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
     EXPECT_EQ(gpuPlugin.Stop(), 0);
 }
 
-/**
- * @tc.name: gpu plugin
- * @tc.desc: gpu information test for unusual path.
- * @tc.type: FUNC
- */
-HWTEST_F(GpuDataPluginTest, TestPluginBoundary, TestSize.Level1)
-{
-    GpuDataPlugin gpuPlugin;
-    GpuData gpuData;
-    gpuPlugin.SetPath("123");
-    EXPECT_FALSE(PluginGpuInfoStub(gpuPlugin, gpuData, false));
-    gpuPlugin.Stop();
-}
 
 /**
  * @tc.name: gpu plugin

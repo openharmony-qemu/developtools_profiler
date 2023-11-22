@@ -22,6 +22,7 @@
 namespace {
 using namespace OHOS::Developtools::Profiler;
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
+const std::string GPU_PATH = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
 } // namespace
 
 int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -34,6 +35,12 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     if (protoConfig_.pid() > 0) {
         pid_ = protoConfig_.pid();
+    }
+
+    file.open(GPU_PATH);
+    if (!file.is_open()) {
+        HILOG_ERROR(LOG_CORE, "%s:failed to open(%s)", __func__, GPU_PATH.c_str());
+        return RET_FAIL;
     }
     HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
@@ -69,68 +76,32 @@ int GpuDataPlugin::Stop()
         free(buffer_);
         buffer_ = nullptr;
     }
+    file.close();
     HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
-int32_t GpuDataPlugin::ReadFile(std::string& fileName)
+uint64_t GpuDataPlugin::ReadFile()
 {
-    int fd = -1;
-    ssize_t bytesRead = 0;
-    char filePath[PATH_MAX + 1] = {0};
-    char realPath[PATH_MAX + 1] = {0};
-
-    if (snprintf_s(filePath, sizeof(filePath), sizeof(filePath) - 1, "%s", fileName.c_str()) < 0) {
-        const int bufSize = 256;
-        char buf[bufSize] = { 0 };
-        strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "snprintf_s(%s) error, errno(%d:%s)", fileName.c_str(), errno, buf);
-        return RET_FAIL;
+    file.clear();
+    file.seekg(0);
+    std::string line;
+    std::getline(file, line);
+    for (char charac : line) {
+        if (!isdigit(charac)) {
+            HILOG_ERROR(LOG_CORE, "invalid file content for (%s)", GPU_PATH.c_str());
+            return -1;
+        }
     }
-    if (realpath(filePath, realPath) == nullptr) {
-        const int bufSize = 256;
-        char buf[bufSize] = { 0 };
-        strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "realpath(%s) failed, errno(%d:%s)", fileName.c_str(), errno, buf);
-        return RET_FAIL;
-    }
-
-    fd = open(realPath, O_RDONLY | O_CLOEXEC);
-    if (fd == -1) {
-        const int bufSize = 256;
-        char buf[bufSize] = { 0 };
-        strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, realPath, errno, buf);
-        err_ = errno;
-        return RET_FAIL;
-    }
-    if (buffer_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
-        err_ = RET_NULL_ADDR;
-        close(fd);
-        return RET_FAIL;
-    }
-    bytesRead = read(fd, buffer_, READ_BUFFER_SIZE - 1);
-    if (bytesRead <= 0) {
-        close(fd);
-        HILOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, realPath, errno);
-        err_ = errno;
-        return RET_FAIL;
-    }
-    close(fd);
-
-    return bytesRead;
+    return stoi(line);
 }
 
 
 template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 {
     // write system info
-    int32_t ret = ReadFile(path_);
-    if (ret == RET_FAIL) {
-        return;
-    }
-    if ((buffer_ == nullptr) || (ret == 0)) {
+    uint64_t ret = ReadFile();
+    if (ret == (uint64_t)-1) {
         return;
     }
 
@@ -140,10 +111,5 @@ template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
     uint64_t boottime = (static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec)) / 1000000;
     gpuData.set_boottime(boottime);
-
-    const char* pFile = reinterpret_cast<char*>(buffer_);
-    BufferSplitter totalbuffer(const_cast<char*>(pFile), ret + 1);
-    std::string curWord = std::string(totalbuffer.CurLine(), totalbuffer.CurLineSize());
-    int utilisation = atoi(curWord.c_str());
-    gpuData.set_gpu_utilisation(utilisation);
+    gpuData.set_gpu_utilisation(ret);
 }

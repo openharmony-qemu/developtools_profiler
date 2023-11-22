@@ -42,22 +42,16 @@ public:
     int Report(uint8_t* data, uint32_t dataSize);
     int ReportOptimize(RandomWriteCtx* randomWrite);
     int Stop();
-    // for UT
-    void SetPath(std::string path)
-    {
-        path_ = path;
-    }
 
 private:
-    int32_t ReadFile(std::string& fileName);
+    uint64_t ReadFile();
     template <typename T> void WriteGpuDataInfo(T& gpuData);
 
 private:
-    std::string path_ = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
     GpuConfig protoConfig_;
     void* buffer_ = nullptr;
-    int32_t err_ = -1;
     int pid_ = -1;
+    std::ifstream file;
 };
 
 #endif
