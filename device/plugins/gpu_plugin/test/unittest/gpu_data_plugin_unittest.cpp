@@ -34,6 +34,8 @@ constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 
 std::string g_path;
 std::string g_testPath;
+const unsigned long long expectVal = 12;
+const unsigned long long sleepTime = 5;
 
 struct TestVmstat {
     int64_t pgpgin;
@@ -93,13 +95,15 @@ bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, GpuData& gpuData, bool unusualB
     if (ret < 0) {
         return false;
     }
-
+    
+    gpuPlugin.file.close();
+    gpuPlugin.file.open(g_path);
     // report
     std::vector<uint8_t> bufferData(BUF_SIZE);
     if (unusualBuff) { // buffer异常，调整缓冲区长度为1，测试异常情况
         bufferData.resize(1, 0);
     }
-
+ 
     ret = gpuPlugin.Report(bufferData.data(), bufferData.size());
     if (ret > 0) {
         gpuData.ParseFromArray(bufferData.data(), ret);
@@ -130,17 +134,13 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
     GpuDataPlugin gpuPlugin;
     GpuData gpuData;
-    const unsigned long long ceil = 100;
-    const unsigned long long floor = 0;
 
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, gpuData, false));
-    EXPECT_LE(gpuData.gpu_utilisation(), ceil);
-    EXPECT_GE(gpuData.gpu_utilisation(), floor);
-    gpuPlugin.file.close();
-    gpuPlugin.file.open(g_path);
-    EXPECT_EQ(gpuPlugin.ReadFile(), 12);
-    sleep(5);
-    EXPECT_EQ(gpuPlugin.ReadFile(), 12);
+    EXPECT_EQ(gpuData.gpu_utilisation(), expectVal);
+
+    EXPECT_EQ(gpuPlugin.ReadFile(), expectVal);
+    sleep(sleepTime);
+    EXPECT_EQ(gpuPlugin.ReadFile(), expectVal);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
 
     // 缓冲区异常
