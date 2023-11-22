@@ -184,10 +184,6 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     std::string cfgData = config[0].config_data();
     CHECK_TRUE(hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) > 0,
                false, "%s: ParseFromArray failed", __func__);
-
-    CHECK_TRUE(getuid() == 0 || COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name()),
-               false, "Application debug permisson denied!");
-
     pid_ = hookConfig_.pid();
 
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();

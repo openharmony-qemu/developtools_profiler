@@ -119,8 +119,8 @@ bool IsProcessExist(const std::string& processName, int& pid)
         }
         FILE* fp = fopen(filePath, "r");
         if (fp == nullptr) {
-            HILOG_WARN(LOG_CORE, "open file failed!");
-            break;
+            HILOG_DEBUG(LOG_CORE, "open file failed! %s", filePath);
+            continue;
         }
         char buf[BUFFER_SIZE] = {0};
         if (fgets(buf, sizeof(buf) - 1, fp) == nullptr) {

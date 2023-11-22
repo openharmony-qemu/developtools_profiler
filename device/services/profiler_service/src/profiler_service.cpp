@@ -253,19 +253,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     pluginConfigs.reserve(nConfigs);
 
     for (int i = 0; i < nConfigs; i++) {
-        if (request->plugin_configs(i).name() == "nativehook" && getuid() != 0) {
-            NativeHookConfig hookConfig;
-            std::string cfgData = request->plugin_configs(i).config_data();
-            if (hookConfig.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
-                HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
-                continue;
-            }
-            if (!COMMON::CheckApplicationPermission(hookConfig.pid(), hookConfig.process_name())) {
-                HILOG_ERROR(LOG_CORE, "Application debug permisson denied!");
-                continue;
-            }
-        }
-        pluginConfigs.push_back(request->plugin_configs(i));
+        pluginConfigs.emplace_back(request->plugin_configs(i));
     }
 
     if (pluginConfigs.empty()) {
