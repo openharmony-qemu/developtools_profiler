@@ -1,0 +1,75 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../base/config.gni")
+
+ohos_source_set("gpudataplugin_source") {
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  sources = [
+    "../memory_plugin/src/buffer_splitter.cpp",
+    "src/gpu_data_plugin.cpp",
+    "src/gpu_module.cpp",
+  ]
+  include_dirs = [
+    "include",
+    "../memory_plugin/include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/base/include",
+    "//third_party/bounds_checking_function/include",
+  ]
+  deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_data_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_data_encoder",
+    "//third_party/bounds_checking_function:libsec_static",
+  ]
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps = [ "hilog:libhilog" ]
+  }
+  public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
+}
+
+ohos_shared_library("gpudataplugin") {
+  output_name = "gpudataplugin"
+
+  deps = [ ":gpudataplugin_source" ]
+  install_enable = true
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_executable("gpudataplugintest") {
+  output_name = "gpudataplugintest"
+  sources = [ "src/test_main.cpp" ]
+  include_dirs = [
+    "include",
+    "../api/include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/base/include",
+  ]
+  deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_data_cpp",
+  ]
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps = [ "hilog:libhilog" ]
+  }
+  install_enable = false
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
