@@ -66,8 +66,8 @@ std::vector<float> CPU::GetCpuLoad()
     }
     std::vector<float> workload;
 
-    static char preBuffer[14][256] = {"\0", "\0", "\0", "\0", "\0", "\0", 
-    "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    static char preBuffer[14][256] = {
+        "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
     if (!SPUtils::FileAccess(procStat)) {
         return workload;
     }
@@ -113,10 +113,10 @@ std::vector<float> CPU::GetCpuLoad()
 
 float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
 {
-    //const size_t defaultIndex = 4;
     const size_t defaultShift = 10;
     const char defaultStart = '0';
     const char defaultEnd = '9';
+    const size_t oneHundred = 100;
 
     size_t preLen = strlen(preBuffer);
     size_t len = strlen(buffer);
@@ -128,7 +128,7 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
     size_t preTime[defaultShift];
     size_t cnt = 0;
 
-    for (i=(int)(strchr(buffer,'') - buffer); i < len; ++i) {
+    for (i = (size_t)(strchr(buffer, ' ') - buffer); i < len; ++i) {
         size_t tmp = 0;
         if (buffer[i] < defaultStart || buffer[i] > defaultEnd) {
             continue;
@@ -141,7 +141,7 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
     }
 
     size_t preCnt = 0;
-    for (i=(int)(strchr(preBuffer,'') - preBuffer); i < preLen; ++i) {
+    for (i = (size_t)(strchr(preBuffer, ' ') - preBuffer); i < preLen; ++i) {
         size_t tmp = 0;
         if (preBuffer[i] < defaultStart || preBuffer[i] > defaultEnd) {
             continue;
@@ -150,7 +150,7 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
             tmp = tmp * defaultShift + (preBuffer[i] - defaultStart);
             i++;
         }
-        preTime[cnt++] = tmp;
+        preTime[preCnt++] = tmp;
     }
 
     size_t preNoidle = preTime[0] + preTime[1] + preTime[2] + preTime[4] + preTime[5] + preTime[6];
@@ -162,7 +162,7 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
         return 0.0;
     }
 
-    return static_cast<float>((noidle - preNoidle) * 100 / (float)(total - preTotal));
+    return static_cast<float>((noidle - preNoidle) * oneHundred / (float)(total - preTotal));
 }
 }
 }

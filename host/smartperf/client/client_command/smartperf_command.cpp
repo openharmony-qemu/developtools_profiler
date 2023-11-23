@@ -47,7 +47,6 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
         }
     }
     if (argc >= threeParamMore) {
-        //InitSomething();
         for (int i = 1; i <= argc - 1; i++) {
             std::string argStr = argv[i];
             std::string argStr1;
