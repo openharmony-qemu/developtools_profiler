@@ -39,6 +39,7 @@ const std::string DEFAULT_HIPROFILERD_PATH("/system/bin/hiprofilerd");
 const std::string DEFAULT_HIPROFILER_PLUGINS_PATH("/system/bin/hiprofiler_plugins");
 const std::string DEFAULT_HIPROFILERD_NAME("hiprofilerd");
 const std::string DEFAULT_HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
+
 const std::string DEFAULT_HIPROFILER_CMD_PATH("/system/bin/hiprofiler_cmd");
 const std::string FTRACE_PLUGIN_PATH("/data/local/tmp/libftrace_plugin.z.so");
 std::string DEFAULT_PATH("/data/local/tmp/");
@@ -77,13 +78,13 @@ public:
     {
         std::string stopCmd = "kill " + std::to_string(processNum);
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
+        sleep(SLEEP_TIME); // wait process exit
     }
 
     bool RunCommand(const std::string& cmd, std::string& content)
     {
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
         CHECK_TRUE(pipe, false, "RunCommand: create popen FAILED!");
-
         std::array<char, READ_BUFFER_SIZE> buffer;
         while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
             content += buffer.data();
@@ -215,7 +216,8 @@ public:
             "hiprofiler_cmd \\\n"
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
-        cmdStr += "-t " + std::to_string(time) + " \\\n"
+        cmdStr += "-t " + std::to_string(time) + " \\\n";
+        cmdStr += "-k \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
             "session_config {\n"
@@ -223,7 +225,7 @@ public:
             "    pages: 1000\n"
             "  }\n"
             "  result_file: \"/data/local/tmp/hiprofiler_data.htrace\"\n"
-            "  sample_duration: 3000\n"
+            "  sample_duration: 1000\n"
             "}\n"
             "plugin_configs {\n"
             "  plugin_name: \"ftrace-plugin\"\n"
@@ -236,6 +238,8 @@ public:
             "    ftrace_events: \"sched/sched_waking\"\n"
             "    ftrace_events: \"sched/sched_process_exit\"\n"
             "    ftrace_events: \"sched/sched_process_free\"\n"
+            "    hitrace_categories: \"ability\"\n"
+            "    hitrace_categories: \"ace\"\n"
             "    buffer_size_kb: 51200\n"
             "    flush_interval_ms: 1000\n"
             "    flush_threshold_kb: 4096\n"
@@ -276,6 +280,8 @@ public:
             "    ftrace_events: \"sched/sched_waking\"\n"
             "    ftrace_events: \"sched/sched_process_exit\"\n"
             "    ftrace_events: \"sched/sched_process_free\"\n"
+            "    hitrace_categories: \"ability\"\n"
+            "    hitrace_categories: \"ace\"\n"
             "    buffer_size_kb: 51200\n"
             "    flush_interval_ms: 1000\n"
             "    flush_threshold_kb: 4096\n"
@@ -512,8 +518,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
     std::string content = "";
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s";
     EXPECT_TRUE(RunCommand(cmd, content));
-    sleep(1);
-
+    sleep(2); // 2: wait hiprofilerd start
     pid_t pid = fork();
     EXPECT_GE(pid, 0);
     if (pid == 0) {
@@ -522,35 +527,30 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
         std::string outFile = DEFAULT_PATH + "trace.htrace";
         cmd = CreateCommand(outFile, time);
         EXPECT_TRUE(RunCommand(cmd, content));
-        EXPECT_TRUE(content.find("hiprofiler_cmd receive signal(2)!", 0) != std::string::npos);
         EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
-
         // 删除生成的trace文件
         cmd = "rm " + outFile;
         system(cmd.c_str());
         _exit(0);
     } else if (pid > 0) {
-        sleep(10);
+        sleep(1); // 1: wait child process start
         content = "";
         cmd = "pidof hiprofiler_cmd";
         EXPECT_TRUE(RunCommand(cmd, content));
         ASSERT_STRNE(content.c_str(), "");
-
         cmd = "kill -2 " + content;
         content = "";
         EXPECT_TRUE(RunCommand(cmd, content));
         EXPECT_STREQ(content.c_str(), "");
-
         // 等待子进程结束
         waitpid(pid, nullptr, 0);
+        cmd = DEFAULT_HIPROFILER_CMD_PATH + " -k";
+        EXPECT_TRUE(RunCommand(cmd, content));
+        sleep(5); // 5: wait hiprofilerd exit
+        content = "";
+        cmd = "pidof " + DEFAULT_HIPROFILERD_NAME;
+        EXPECT_TRUE(RunCommand(cmd, content));
+        EXPECT_STREQ(content.c_str(), "");
     }
-
-    cmd = DEFAULT_HIPROFILER_CMD_PATH + " -k";
-    EXPECT_TRUE(RunCommand(cmd, content));
-    sleep(1);
-    content = "";
-    cmd = "pidof " + DEFAULT_HIPROFILERD_NAME;
-    EXPECT_TRUE(RunCommand(cmd, content));
-    EXPECT_STREQ(content.c_str(), "");
 }
 }

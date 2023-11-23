@@ -35,7 +35,7 @@ constexpr int DEFAULT_CALLOC_SIZE = 100;
 constexpr int DEFAULT_REALLOC_SIZE = 1000;
 constexpr int DATA_SIZE = 50;
 constexpr int SLEEP_TIME = 10;
-constexpr int WAIT_FLUSH = 2;
+constexpr int WAIT_FLUSH = 3;
 
 const std::string DEFAULT_NATIVE_DAEMON_PATH("/system/bin/native_daemon");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
