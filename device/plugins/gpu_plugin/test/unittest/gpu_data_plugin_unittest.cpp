@@ -122,7 +122,7 @@ HWTEST_F(GpuDataPluginTest, TestPath, TestSize.Level1)
     g_path = GetFullPath(DEFAULT_TEST_PATH);
     g_testPath = g_path;
     EXPECT_NE("", g_path);
-    g_path += "gpustat1.txt";
+    g_path += "/gpustat1.txt";
 }
 
 /**
