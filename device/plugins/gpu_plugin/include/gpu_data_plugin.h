@@ -44,14 +44,13 @@ public:
     int Stop();
 
 private:
-    uint64_t ReadFile();
+    int ReadFile();
     template <typename T> void WriteGpuDataInfo(T& gpuData);
 
 private:
     GpuConfig protoConfig_;
-    void* buffer_ = nullptr;
     int pid_ = -1;
-    std::ifstream file;
+    std::ifstream file_;
 };
 
 #endif

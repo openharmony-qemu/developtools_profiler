@@ -96,8 +96,8 @@ bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, GpuData& gpuData, bool unusualB
         return false;
     }
     
-    gpuPlugin.file.close();
-    gpuPlugin.file.open(g_path);
+    gpuPlugin.file_.close();
+    gpuPlugin.file_.open(g_path);
     // report
     std::vector<uint8_t> bufferData(BUF_SIZE);
     if (unusualBuff) { // buffer异常，调整缓冲区长度为1，测试异常情况

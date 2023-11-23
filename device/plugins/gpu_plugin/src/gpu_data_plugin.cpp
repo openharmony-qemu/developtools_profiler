@@ -15,21 +15,15 @@
 
 #include "gpu_data_plugin.h"
 #include <ctime>
-#include <vector>
 #include "gpu_plugin_result.pbencoder.h"
-#include "buffer_splitter.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
-constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 const std::string GPU_PATH = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
 } // namespace
 
 int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    buffer_ = malloc(READ_BUFFER_SIZE);
-    CHECK_NOTNULL(buffer_, RET_FAIL, "%s:malloc buffer_ failed!", __func__);
-
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
 
@@ -37,8 +31,8 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
         pid_ = protoConfig_.pid();
     }
 
-    file.open(GPU_PATH);
-    if (!file.is_open()) {
+    file_.open(GPU_PATH);
+    if (!file_.is_open()) {
         HILOG_ERROR(LOG_CORE, "%s:failed to open(%s)", __func__, GPU_PATH.c_str());
         return RET_FAIL;
     }
@@ -72,25 +66,21 @@ int GpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 
 int GpuDataPlugin::Stop()
 {
-    if (buffer_ != nullptr) {
-        free(buffer_);
-        buffer_ = nullptr;
-    }
-    file.close();
+    file_.close();
     HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
-uint64_t GpuDataPlugin::ReadFile()
+int GpuDataPlugin::ReadFile()
 {
-    file.clear();
-    file.seekg(0);
+    file_.clear();
+    file_.seekg(0);
     std::string line;
-    std::getline(file, line);
+    std::getline(file_, line);
     for (char charac : line) {
         if (!isdigit(charac)) {
             HILOG_ERROR(LOG_CORE, "invalid file content for (%s)", GPU_PATH.c_str());
-            return -1;
+            return RET_FAIL;
         }
     }
     return stoi(line);
@@ -99,9 +89,8 @@ uint64_t GpuDataPlugin::ReadFile()
 
 template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 {
-    // write system info
-    uint64_t ret = ReadFile();
-    if (ret == (uint64_t)-1) {
+    int ret = ReadFile();
+    if (ret == RET_FAIL) {
         return;
     }
 
@@ -111,5 +100,5 @@ template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
     uint64_t boottime = (static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec)) / 1000000;
     gpuData.set_boottime(boottime);
-    gpuData.set_gpu_utilisation(ret);
+    gpuData.set_gpu_utilisation((uint64_t)ret);
 }
