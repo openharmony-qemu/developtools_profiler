@@ -35,7 +35,7 @@ const int SLEEP_TIME = 50;
 const int BUF_MAX_LEN = 64;
 const int MS_PER_S = 1000;
 const int US_PER_S = 1000000;
-const char *g_fpsFormat = "GP_daemon_fps 31104000";
+const char *g_fpsFormat = "SP_daemon -profilerfps 31104000";
 
 static pid_t volatile g_child;
 const int READ = 0;
