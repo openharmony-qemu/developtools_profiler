@@ -123,7 +123,7 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
     if (preLen == 0 || len == 0) {
         return -1.0f;
     }
-    int i;
+    size_t i;
     size_t time[defaultShift];
     size_t preTime[defaultShift];
     size_t cnt = 0;
