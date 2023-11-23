@@ -66,7 +66,8 @@ std::vector<float> CPU::GetCpuLoad()
     }
     std::vector<float> workload;
 
-    static char preBuffer[10][256] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    static char preBuffer[14][256] = {
+        "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
     if (!SPUtils::FileAccess(procStat)) {
         return workload;
     }
@@ -112,21 +113,22 @@ std::vector<float> CPU::GetCpuLoad()
 
 float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
 {
-    const size_t defaultIndex = 4;
     const size_t defaultShift = 10;
     const char defaultStart = '0';
     const char defaultEnd = '9';
+    const size_t oneHundred = 100;
 
     size_t preLen = strlen(preBuffer);
     size_t len = strlen(buffer);
     if (preLen == 0 || len == 0) {
         return -1.0f;
     }
-    size_t time[10] = {0};
-    size_t preTime[10] = {0};
+    size_t i;
+    size_t time[defaultShift];
+    size_t preTime[defaultShift];
     size_t cnt = 0;
 
-    for (size_t i = defaultIndex; i < len; ++i) {
+    for (i = (size_t)(strchr(buffer, ' ') - buffer); i < len; ++i) {
         size_t tmp = 0;
         if (buffer[i] < defaultStart || buffer[i] > defaultEnd) {
             continue;
@@ -139,7 +141,7 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
     }
 
     size_t preCnt = 0;
-    for (size_t i = defaultIndex; i < preLen; ++i) {
+    for (i = (size_t)(strchr(preBuffer, ' ') - preBuffer); i < preLen; ++i) {
         size_t tmp = 0;
         if (preBuffer[i] < defaultStart || preBuffer[i] > defaultEnd) {
             continue;
@@ -151,21 +153,16 @@ float CPU::CacWorkload(const char *buffer, const char *preBuffer) const
         preTime[preCnt++] = tmp;
     }
 
-    size_t user = time[0] + time[1] - preTime[0] - preTime[1];
-    size_t sys = time[2] - preTime[2];
-    size_t idle = time[3] - preTime[3];
-    size_t iowait = time[4] - preTime[4];
-    size_t irq = time[5] + time[6] - preTime[5] - preTime[6];
-    size_t total = user + sys + idle + iowait + irq;
+    size_t preNoidle = preTime[0] + preTime[1] + preTime[2] + preTime[4] + preTime[5] + preTime[6];
+    size_t noidle = time[0] + time[1] + time[2] + time[4] + time[5] + time[6];
+    size_t preTotal = preTime[0] + preTime[1] + preTime[2] + preTime[3] + preTime[4] + preTime[5] + preTime[6];
+    size_t total = time[0] + time[1] + time[2] + time[3] + time[4] + time[5] + time[6];
+    
+    if (noidle - preNoidle <= 0 || total - preTotal <= 0) {
+        return 0.0;
+    }
 
-    double perUser = std::atof(std::to_string(user * 100.0 / total).c_str());
-    double perSys = std::atof(std::to_string(sys * 100.0 / total).c_str());
-    double periowait = std::atof(std::to_string(iowait * 100.0 / total).c_str());
-    double perirq = std::atof(std::to_string(irq * 100.0 / total).c_str());
-
-    double workload = perUser + perSys + periowait + perirq;
-
-    return static_cast<float>(workload);
+    return static_cast<float>((noidle - preNoidle) * oneHundred / (float)(total - preTotal));
 }
 }
 }

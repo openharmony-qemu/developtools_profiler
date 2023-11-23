@@ -92,6 +92,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
     int mInterval = 0;
     long long mThreshold = 0;
     int lowFps = 0;
+    int mCurNum = 1;
     for (std::string vItem:values) {
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
@@ -109,7 +110,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
         }
     }
     ByTrace &bTrace = ByTrace::GetInstance();
-    bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps);
+    bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
 }
 void SpProfilerFactory::SetProfilerPid(std::string pid)
 {

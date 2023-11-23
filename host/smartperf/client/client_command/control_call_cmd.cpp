@@ -53,27 +53,27 @@ std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
     if (v[typeName] == "coldStart") {
         time = SmartPerf::ControlCallCmd::ColdStart(v);
         stream << time;
-        result = "time:" + stream.str();
+        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "hotStart") {
         time = SmartPerf::ControlCallCmd::HotStart(v);
         stream << time;
-        result = "time:" + stream.str();
+        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "responseTime") {
         time = SmartPerf::ControlCallCmd::ResponseTime();
         stream << time;
-        result = "time:" + stream.str();
+        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "completeTime") {
         time = SmartPerf::ControlCallCmd::CompleteTime();
         stream << time;
-        result = "time:" + stream.str();
+        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "startResponse") {
         time = SmartPerf::ControlCallCmd::StartResponse(v);
         stream << time;
-        result = "time:" + stream.str();
+        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "coldStartHM") {
         time = SmartPerf::ControlCallCmd::ColdStartHM(v);
         stream << time;
-        result = "time:" + stream.str();
+        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
     } else if (v[typeName] == "pagefps") {
