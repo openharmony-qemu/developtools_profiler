@@ -34,8 +34,8 @@ constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 
 std::string g_path;
 std::string g_testPath;
-const unsigned long long expectVal = 12;
-const unsigned long long sleepTime = 5;
+const unsigned long long EXPECT_VAL = 12;
+const unsigned long long SLEEP_TIME = 5;
 
 struct TestVmstat {
     int64_t pgpgin;
@@ -136,11 +136,11 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
     GpuData gpuData;
 
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, gpuData, false));
-    EXPECT_EQ(gpuData.gpu_utilisation(), expectVal);
+    EXPECT_EQ(gpuData.gpu_utilisation(), EXPECT_VAL);
 
-    EXPECT_EQ(gpuPlugin.ReadFile(), expectVal);
-    sleep(sleepTime);
-    EXPECT_EQ(gpuPlugin.ReadFile(), expectVal);
+    EXPECT_EQ(gpuPlugin.ReadFile(), EXPECT_VAL);
+    sleep(SLEEP_TIME);
+    EXPECT_EQ(gpuPlugin.ReadFile(), EXPECT_VAL);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
 
     // 缓冲区异常

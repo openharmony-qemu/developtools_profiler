@@ -86,7 +86,6 @@ int GpuDataPlugin::ReadFile()
     return stoi(line);
 }
 
-
 template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 {
     int ret = ReadFile();
@@ -100,5 +99,5 @@ template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
     uint64_t boottime = (static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec)) / 1000000;
     gpuData.set_boottime(boottime);
-    gpuData.set_gpu_utilisation((uint64_t)ret);
+    gpuData.set_gpu_utilisation(static_cast<uint64_t>(ret));
 }
