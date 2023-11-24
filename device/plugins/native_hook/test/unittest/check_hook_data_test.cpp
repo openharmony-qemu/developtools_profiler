@@ -681,8 +681,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         system(cmdEnd.c_str());
         sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
-        cmdEnd = "kill -2 " + std::to_string(daemonPid_);
-        system(cmdEnd.c_str());
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
