@@ -72,8 +72,6 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         HILOG_ERROR(LOG_CORE, "ProtocolProc receive peerConfig:%d not expected", peerConfig);
         return false;
     }
-    CHECK_TRUE(getuid() == 0 || COMMON::CheckApplicationPermission(pid_, ""), false,
-               "Application debug permisson denied!");
     HILOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d", pid_);
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
     context.SendFileDescriptor(smbFd_);
