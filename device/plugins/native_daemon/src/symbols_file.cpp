@@ -162,12 +162,12 @@ public:
     {
     }
 
-    bool LoadSymbols(const std::string &symbolFilePath) override
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         symbolsLoaded_ = true;
         std::string findPath = FindSymbolFile(symbolsFileSearchPaths_, symbolFilePath);
         UNWIND_CHECK_TRUE(!findPath.empty(), false, "elf found failed (belong to %s)", filePath_.c_str());
-        if (LoadElfSymbols(findPath)) {
+        if (LoadElfSymbols(map, findPath)) {
             return true;
         } else {
             HLOGW("elf open failed with '%s'", findPath.c_str());
@@ -182,7 +182,7 @@ public:
     }
 
 protected:
-    bool LoadDebugInfo(const std::string &symbolFilePath) override
+    bool LoadDebugInfo(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         if (debugInfoLoaded_) {
             return true;
@@ -191,12 +191,15 @@ protected:
         }
         std::string elfPath = FindSymbolFile(symbolsFileSearchPaths_, symbolFilePath);
         UNWIND_CHECK_TRUE(!elfPath.empty(), false, "elf found failed (belong to %s)", filePath_.c_str());
-        elfFile_ = std::make_shared<DfxElf>(elfPath);
         if (elfFile_ == nullptr) {
-            HLOGD("elf load failed");
-            return false;
-        } else {
-            HLOGD("loaded elf %s", elfPath.c_str());
+            if (StringEndsWith(elfPath, ".hap")) {
+                elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
+                map->elf = elfFile_;
+                HLOGD("loaded map %s", elfPath.c_str());
+            } else {
+                elfFile_ = std::make_shared<DfxElf>(elfPath);
+                HLOGD("loaded elf %s", elfPath.c_str());
+            }
         }
         if (!elfFile_->IsValid()) {
             HLOGD("parser elf file failed.");
@@ -339,19 +342,19 @@ private:
         }
     }
 
-    bool LoadElfSymbols(std::string elfPath)
+    bool LoadElfSymbols(std::shared_ptr<DfxMap> map, std::string elfPath)
     {
 #ifdef HIPERF_DEBUG_TIME
         const auto startTime = steady_clock::now();
 #endif
-        elfFile_ = std::make_shared<DfxElf>(elfPath);
-        if (elfFile_ == nullptr) {
-            HLOGD("elf load failed");
-            return false;
+        if (StringEndsWith(elfPath, ".hap") && map != nullptr) {
+            elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
+            map->elf = elfFile_;
+            HLOGD("loaded map %s", elfPath.c_str());
         } else {
+            elfFile_ = std::make_shared<DfxElf>(elfPath);
             HLOGD("loaded elf %s", elfPath.c_str());
         }
-
         if (!elfFile_->IsValid()) {
             HLOGD("parser elf file failed.");
             return false;
@@ -539,7 +542,7 @@ public:
             return true;
         }
     }
-    bool LoadSymbols(const std::string &symbolFilePath) override
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         symbolsLoaded_ = true;
         HLOGV("KernelSymbols try read '%s' search paths size %zu, inDeviceRecord %d",
@@ -572,7 +575,7 @@ public:
         } // no search path
 
         // try vmlinux
-        return ElfFileSymbols::LoadSymbols(KERNEL_ELF_NAME);
+        return ElfFileSymbols::LoadSymbols(nullptr, KERNEL_ELF_NAME);
     }
     uint64_t GetVaddrInSymbols(uint64_t ip, uint64_t mapStart, uint64_t) const override
     {
@@ -592,7 +595,7 @@ public:
     }
     ~KernelModuleSymbols() override {};
 
-    bool LoadSymbols(const std::string &symbolFilePath) override
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         symbolsLoaded_ = true;
         if (module_ == filePath_ and onRecording_) {
@@ -613,7 +616,7 @@ public:
             LoadBuildId();
         } else {
             HLOGV("we have file path, load with %s", filePath_.c_str());
-            return ElfFileSymbols::LoadSymbols(filePath_);
+            return ElfFileSymbols::LoadSymbols(nullptr, filePath_);
         }
         return false;
     }
@@ -646,7 +649,7 @@ public:
     {
         symbolFileType_ = SYMBOL_KERNEL_FILE;
     }
-    bool LoadSymbols(const std::string &symbolFilePath) override
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         symbolsLoaded_ = true;
         return false;
@@ -668,7 +671,7 @@ public:
     {
         symbolFileType_ = SYMBOL_KERNEL_FILE;
     }
-    bool LoadSymbols(const std::string &symbolFilePath) override
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         symbolsLoaded_ = true;
         return false;
@@ -682,7 +685,7 @@ public:
         : SymbolsFile(SYMBOL_UNKNOW_FILE, symbolFilePath)
     {
     }
-    bool LoadSymbols(const std::string &symbolFilePath) override
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
         symbolsLoaded_ = true;
         return false;

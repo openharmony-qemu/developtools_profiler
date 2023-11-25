@@ -52,6 +52,7 @@ public:
             name_ = map->name;
         } else {
             maps_.back()->end = map->begin;
+            map->prevMap = maps_.back();
         }
         maps_.emplace_back(map);
     }

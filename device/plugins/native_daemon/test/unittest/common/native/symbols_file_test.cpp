@@ -81,7 +81,7 @@ public:
     {
         std::unique_ptr<SymbolsFile> symbolsFile = SymbolsFile::CreateSymbolsFile(symbolsFileType);
         EXPECT_EQ(symbolsFile->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-        return symbolsFile->LoadSymbols(path);
+        return symbolsFile->LoadSymbols(nullptr, path);
     }
     default_random_engine rnd_;
 };
@@ -254,7 +254,7 @@ bool TestLoadSymbols(SymbolsFileType symbolsFileType, const std::string &path)
 {
     std::unique_ptr<SymbolsFile> symbolsFile = SymbolsFile::CreateSymbolsFile(symbolsFileType);
     EXPECT_EQ(symbolsFile->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    return symbolsFile->LoadSymbols(path);
+    return symbolsFile->LoadSymbols(nullptr, path);
 }
 
 /**
@@ -332,20 +332,20 @@ HWTEST_F(SymbolsFileTest, LoadElfSymbols, TestSize.Level1)
     EXPECT_EQ(symbolsElfLoader->LoadSymbols(), false);
 
     ASSERT_EQ(symbolsElfLoader->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    EXPECT_EQ(symbolsElfLoader->LoadSymbols(TEST_FILE_ELF), true);
+    EXPECT_EQ(symbolsElfLoader->LoadSymbols(nullptr, TEST_FILE_ELF), true);
     if (HasFailure()) {
         PrintSymbols(symbolsElfLoader->GetSymbols());
     }
 
     ASSERT_EQ(symbolsElfStrippedLoader->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    EXPECT_EQ(symbolsElfStrippedLoader->LoadSymbols(TEST_FILE_ELF_STRIPPED), true);
+    EXPECT_EQ(symbolsElfStrippedLoader->LoadSymbols(nullptr, TEST_FILE_ELF_STRIPPED), true);
     if (HasFailure()) {
         PrintSymbols(symbolsElfStrippedLoader->GetSymbols());
     }
     EXPECT_GT(symbolsElfLoader->GetSymbols().size(), symbolsElfStrippedLoader->GetSymbols().size());
 
     ASSERT_EQ(symbolsElfStrippedLoader->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    EXPECT_EQ(symbolsElfStrippedLoader->LoadSymbols(TEST_FILE_ELF), true);
+    EXPECT_EQ(symbolsElfStrippedLoader->LoadSymbols(nullptr, TEST_FILE_ELF), true);
     if (HasFailure()) {
         PrintSymbols(symbolsElfStrippedLoader->GetSymbols());
     }
@@ -397,7 +397,7 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddr2, TestSize.Level1)
 {
     auto elfSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
     ASSERT_EQ(elfSymbols->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    EXPECT_EQ(elfSymbols->LoadSymbols(TEST_FILE_ELF), true);
+    EXPECT_EQ(elfSymbols->LoadSymbols(nullptr, TEST_FILE_ELF), true);
     ASSERT_EQ(elfSymbols->GetSymbols().empty(), false);
 
     /*
@@ -459,7 +459,7 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddrFullMatch1, TestSize.Level1)
 {
     auto elfSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
     ASSERT_EQ(elfSymbols->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    if (elfSymbols->LoadSymbols(TEST_SYMBOLS_FILE_ELF)) {
+    if (elfSymbols->LoadSymbols(nullptr, TEST_SYMBOLS_FILE_ELF)) {
         ASSERT_EQ(elfSymbols->GetSymbols().empty(), false);
         /*
             nm -C --defined-only symbols_file_test_elf64
@@ -530,7 +530,7 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddrFullMatch, TestSize.Level1)
 {
     auto elfSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
     ASSERT_EQ(elfSymbols->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
-    if (elfSymbols->LoadSymbols(TEST_SYMBOLS_FILE_ELF)) {
+    if (elfSymbols->LoadSymbols(nullptr, TEST_SYMBOLS_FILE_ELF)) {
         ASSERT_EQ(elfSymbols->GetSymbols().empty(), false);
         /*
             nm -C --defined-only symbols_file_test_elf64
@@ -696,19 +696,19 @@ HWTEST_F(SymbolsFileTest, GetBuildId, TestSize.Level1)
     symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
     ASSERT_EQ(symbolsFile->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
     // kernel elf
-    EXPECT_EQ(symbolsFile->LoadSymbols(TEST_FILE_VMLINUX), true);
+    EXPECT_EQ(symbolsFile->LoadSymbols(nullptr, TEST_FILE_VMLINUX), true);
     EXPECT_EQ(symbolsFile->GetBuildId().empty(), false);
 
     symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
     ASSERT_EQ(symbolsFile->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
     // stripped elf
-    EXPECT_EQ(symbolsFile->LoadSymbols(TEST_FILE_ELF), true);
+    EXPECT_EQ(symbolsFile->LoadSymbols(nullptr, TEST_FILE_ELF), true);
     EXPECT_EQ(symbolsFile->GetBuildId().empty(), false);
 
     symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
     ASSERT_EQ(symbolsFile->setSymbolsFilePath(PATH_RESOURCE_TEST_DATA), true);
     // stripped elf
-    EXPECT_EQ(symbolsFile->LoadSymbols(TEST_FILE_ELF_STRIPPED), true);
+    EXPECT_EQ(symbolsFile->LoadSymbols(nullptr, TEST_FILE_ELF_STRIPPED), true);
     EXPECT_EQ(symbolsFile->GetBuildId().empty(), false);
 }
 

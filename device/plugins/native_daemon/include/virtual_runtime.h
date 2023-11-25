@@ -178,7 +178,7 @@ private:
     std::string ReadThreadName(pid_t tid);
     VirtualThread &CreateThread(pid_t pid, pid_t tid);
 
-    const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<DfxMap> &Maps,
+    const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,
                                  const VirtualThread &thread);
     const DfxSymbol GetUserSymbol(uint64_t ip, const VirtualThread &thread);
     void FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol);

@@ -79,6 +79,9 @@ const std::shared_ptr<DfxMap> VirtualThread::FindMapByAddr(uint64_t addr) const
         }
     }
     if (addr >= (*maps_)[left]->begin and addr < (*maps_)[left]->end) {
+        if (left > 0) {
+            (*maps_)[left]->prevMap = (*maps_)[left - 1];
+        }
         return (*maps_)[left];
     }
     return nullptr;
@@ -133,7 +136,7 @@ SymbolsFile *VirtualThread::FindSymbolsFileByMap(std::shared_ptr<DfxMap> inMap) 
     if (search != symbolsFiles_.end()) {
         auto& symbolsFile = search->second;
         HLOGM("found symbol for map '%s'", inMap->name.c_str());
-        symbolsFile->LoadDebugInfo();
+        symbolsFile->LoadDebugInfo(inMap);
         return symbolsFile.get();
     }
 #ifdef DEBUG_MISS_SYMBOL
@@ -191,13 +194,18 @@ bool VirtualThread::ReadRoMemory(uint64_t vaddr, uint8_t *data, size_t size) con
     auto [curMemMaps, itemIndex] = virtualruntime_->FindMap(vaddr);
     if (curMemMaps != nullptr) {
         // found symbols by file name
-        SymbolsFile *symbolsFile = FindSymbolsFileByName(curMemMaps->name_);
+        SymbolsFile *symbolsFile = FindSymbolsFileByMap((curMemMaps->GetMaps())[itemIndex]);
         if (symbolsFile != nullptr) {
             std::shared_ptr<DfxMap> map = (curMemMaps->GetMaps())[itemIndex];
             HLOGM("read vaddr from addr is 0x%" PRIx64 " at '%s'", vaddr - map->begin,
                   curMemMaps->name_.c_str());
             map->elf = symbolsFile->GetElfFile();
-            if (map->elf != nullptr && map->elf->Read(map->FileOffsetFromAddr(vaddr), data, size)) {
+            if (map->elf != nullptr) {
+                auto fileOffset = map->FileOffsetFromAddr(vaddr);
+                if (StringEndsWith(map->name, ".hap")) {
+                    fileOffset -= map->elf->GetBaseOffset();
+                }
+                map->elf->Read(fileOffset, data, size);
                 return true;
             }
             HLOGE("ElfFile(%s) is null or read file offset from addr fail", curMemMaps->name_.c_str());
@@ -293,7 +301,7 @@ void VirtualThread::CreateMapItem(const std::string filename, uint64_t begin, ui
         return; // skip some memmap
     }
     uint32_t prots =  PROT_EXEC;
-    
+
     std::shared_ptr<DfxMap> map = std::make_shared<DfxMap>(begin, begin + len, offset, prots, filename);
     maps_->emplace_back(map);
     std::string tempMapName{" "};

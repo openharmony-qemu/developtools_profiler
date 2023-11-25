@@ -293,42 +293,42 @@ void VirtualRuntime::UpdateSymbols(std::string fileName)
 #endif
 }
 
-const DfxSymbol VirtualRuntime::GetKernelSymbol(uint64_t ip, const std::vector<DfxMap> &maps,
+const DfxSymbol VirtualRuntime::GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,
                                                 const VirtualThread &thread)
 {
     DfxSymbol vaddrSymbol(ip, thread.name_);
     for (auto &map : maps) {
-        if (ip > map.begin && ip < map.end) {
+        if (ip > map->begin && ip < map->end) {
             HLOGM("found addr 0x%" PRIx64 " in kernel map 0x%" PRIx64 " - 0x%" PRIx64 " from %s",
-                  ip, map.begin, map.end, map.name.c_str());
-            vaddrSymbol.module_ = map.name;
+                  ip, map->begin, map->end, map->name.c_str());
+            vaddrSymbol.module_ = map->name;
             // found symbols by file name
-            auto search = symbolsFiles_.find(map.name);
+            auto search = symbolsFiles_.find(map->name);
             if (search != symbolsFiles_.end()) {
                 auto& symbolsFile = search->second;
                 vaddrSymbol.fileVaddr_ =
-                        symbolsFile->GetVaddrInSymbols(ip, map.begin, map.offset);
+                        symbolsFile->GetVaddrInSymbols(ip, map->begin, map->offset);
                 HLOGV("found symbol vaddr 0x%" PRIx64 " for runtime vaddr 0x%" PRIx64
                         " at '%s'",
-                        vaddrSymbol.fileVaddr_, ip, map.name.c_str());
+                        vaddrSymbol.fileVaddr_, ip, map->name.c_str());
                 if (!symbolsFile->SymbolsLoaded()) {
-                    symbolsFile->LoadSymbols();
+                    symbolsFile->LoadSymbols(map);
                 }
                 DfxSymbol foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
                 foundSymbols.taskVaddr_ = ip;
                 if (!foundSymbols.IsValid()) {
                     HLOGW("addr 0x%" PRIx64 " vaddr  0x%" PRIx64 " NOT found in symbol file %s",
-                            ip, vaddrSymbol.fileVaddr_, map.name.c_str());
+                            ip, vaddrSymbol.fileVaddr_, map->name.c_str());
                     return vaddrSymbol;
                 } else {
                     return foundSymbols;
                 }
             }
             HLOGW("addr 0x%" PRIx64 " in map but NOT found the symbol file %s", ip,
-                  map.name.c_str());
+                  map->name.c_str());
         } else {
             HLOGM("addr 0x%" PRIx64 " not in map 0x%" PRIx64 " - 0x%" PRIx64 " from %s", ip,
-                  map.begin, map.end, map.name.c_str());
+                  map->begin, map->end, map->name.c_str());
         }
     }
     return vaddrSymbol;
@@ -342,14 +342,14 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
         auto symbolsFilesIter = symbolsFiles_.find(curMaps->name_);
         if (symbolsFilesIter != symbolsFiles_.end()) {
             auto symbolsFile = symbolsFilesIter->second.get();
-            symbolsFile->LoadDebugInfo();
+            symbolsFile->LoadDebugInfo((curMaps->GetMaps())[itemIndex]);
             vaddrSymbol.fileVaddr_ =
                 symbolsFile->GetVaddrInSymbols(ip, (curMaps->GetMaps())[itemIndex]->begin,
                                                (curMaps->GetMaps())[itemIndex]->offset);
             vaddrSymbol.module_ = (curMaps->GetMaps())[itemIndex]->name;
             vaddrSymbol.symbolName_ = vaddrSymbol.GetName();
             if (!symbolsFile->SymbolsLoaded()) {
-                symbolsFile->LoadSymbols();
+                symbolsFile->LoadSymbols((curMaps->GetMaps())[itemIndex]);
             }
             DfxSymbol foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
             foundSymbols.taskVaddr_ = ip;
