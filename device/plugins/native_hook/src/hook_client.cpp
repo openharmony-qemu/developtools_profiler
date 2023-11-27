@@ -45,6 +45,14 @@ static pthread_key_t g_hookTid;
 static pthread_key_t g_updateThreadNameCount;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
+
+#ifdef PERFORMANCE_DEBUG
+static std::atomic<uint64_t> g_timeCost = 0;
+static std::atomic<uint64_t> g_dataCounts = 0;
+constexpr int PRINT_INTERVAL = 5000;
+constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
+#endif
+
 using OHOS::Developtools::NativeDaemon::buildArchType;
 static std::shared_ptr<HookSocketClient> g_hookClient;
 static Sampling g_sampler;
