@@ -21,10 +21,11 @@
 #include "stack_writer.h"
 
 class UnixSocketClient;
+class Sampling;
 
 class HookSocketClient : public ServiceBase {
 public:
-    HookSocketClient(int pid, ClientConfig *config);
+    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler);
     ~HookSocketClient();
     bool Connect(const std::string addrname);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
@@ -46,6 +47,7 @@ private:
     int eventFd_;
     int pid_;
     ClientConfig *config_ = nullptr;
+    Sampling *sampler_ = nullptr;
     std::shared_ptr<StackWriter> stackWriter_;
 };
 

@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "stack_preprocess.h"
 
 #include <elf.h>
@@ -25,6 +26,7 @@
 #include "native_hook_result_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
 #include "google/protobuf/text_format.h"
+#include "trace_file_writer.h"
 
 
 constexpr static uint32_t SC_LG_TINY_MIN = 3;
@@ -52,10 +54,10 @@ using namespace OHOS::HiviewDFX;
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater,
     const NativeHookConfig& hookConfig,
-    clockid_t pluginDataClockId,
+    clockid_t pluginDataClockId, FILE* fpHookData,
     bool isHookStandalone) : dataRepeater_(dataRepeater), buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]),
-                             hookConfig_(hookConfig), fpHookData_(nullptr, nullptr),
-                             pluginDataClockId_(pluginDataClockId), isHookStandaloneSerialize_(isHookStandalone)
+                             hookConfig_(hookConfig), pluginDataClockId_(pluginDataClockId), fpHookData_(fpHookData),
+                             isHookStandaloneSerialize_(isHookStandalone)
 {
     runtime_instance = std::make_shared<VirtualRuntime>(hookConfig_);
 
@@ -79,32 +81,10 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater,
     hookDataClockId_ = COMMON::GetClockId(hookConfig_.clock());
     HILOG_INFO(LOG_CORE, "StackPreprocess(): pluginDataClockId = %d hookDataClockId = %d \n",
         pluginDataClockId_, hookDataClockId_);
-    // create file
-    if (hookConfig_.save_file()) {
-        if (hookConfig_.file_name() != "") {
-            HILOG_DEBUG(LOG_CORE, "save file name = %s", hookConfig_.file_name().c_str());
-            FILE *fp = fopen(hookConfig_.file_name().c_str(), "wb+");
-            if (fp) {
-                fpHookData_.reset();
-                fpHookData_ = std::unique_ptr<FILE, decltype(&fclose)>(fp, fclose);
-                if (isHookStandaloneSerialize_) {
-                    std::string str;
-                    size_t length = hookConfig_.ByteSizeLong();
-                    hookConfig_.SerializeToArray(buffer_.get(), length);
-                    ForStandard::NativeHookConfig StandardNativeHookConfig;
-                    StandardNativeHookConfig.ParseFromArray(buffer_.get(), length);
-                    google::protobuf::TextFormat::PrintToString(StandardNativeHookConfig, &str);
-                    size_t n = fwrite(str.data(), 1, str.size(), fp);
-                    HILOG_DEBUG(LOG_CORE, "Flush hookConfig_ fwrite n = %zu strbuf.size() = %zu", n, str.size());
-                }
-            } else {
-                fpHookData_.reset();
-            }
-        } else {
-            HILOG_WARN(LOG_CORE, "If you need to save the file, please set the file_name");
-        }
+    if (hookConfig_.save_file() && fpHookData_ == nullptr) {
+        HILOG_ERROR(LOG_CORE, "If you need to save the file, please set the file_name");
     }
-    HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize_ = %d\n", isHookStandaloneSerialize_);
+    HILOG_INFO(LOG_CORE, "isHookStandaloneSerialize_ = %d", isHookStandaloneSerialize_);
 #if defined(__arm__)
     u64regs_.resize(PERF_REG_ARM_MAX);
 #else
@@ -112,8 +92,6 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater,
 #endif
     callFrames_.reserve(hookConfig_.max_stack_depth());
 }
-
-StackPreprocess::StackPreprocess(bool fpUnwind): fpHookData_(nullptr, nullptr) {}
 
 StackPreprocess::~StackPreprocess()
 {
@@ -126,9 +104,15 @@ StackPreprocess::~StackPreprocess()
     }
     runtime_instance = nullptr;
     fpHookData_ = nullptr;
+
+    if (isSaService_) {
+        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+        tfPtr->SetDurationTime();
+        tfPtr->Finish();
+    }
 }
 
-void StackPreprocess::SetWriter(const std::shared_ptr<BufferWriter>& writer)
+void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
 {
     writer_ = writer;
 }
@@ -196,11 +180,15 @@ void StackPreprocess::TakeResults()
                     "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
                     mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
                     mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
-                runtime_instance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr), mmapRawData->mallocSize,
-                    mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
+                {
+                    std::lock_guard<std::mutex> guard(mtx_);
+                    runtime_instance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr),
+                        mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
+                }
                 flushBasicData_ = true;
                 continue;
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
+                std::lock_guard<std::mutex> guard(mtx_);
                 runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
             }
             if (rawData->stackConext->type == THREAD_NAME_MSG) {
@@ -256,12 +244,16 @@ void StackPreprocess::TakeResults()
             if (rawData->reduceStackFlag) {
                 stackDepth = minStackDepth;
             }
-            bool ret = runtime_instance->UnwindStack(u64regs_, rawData->stackData, rawData->stackSize,
-                rawData->stackConext->pid, rawData->stackConext->tid, callFrames_, stackDepth);
-            if (!ret) {
-                HILOG_ERROR(LOG_CORE, "unwind fatal error");
-                continue;
+            {
+                std::lock_guard<std::mutex> guard(mtx_);
+                bool ret = runtime_instance->UnwindStack(u64regs_, rawData->stackData, rawData->stackSize,
+                    rawData->stackConext->pid, rawData->stackConext->tid, callFrames_, stackDepth);
+                if (!ret) {
+                    HILOG_ERROR(LOG_CORE, "unwind fatal error");
+                    continue;
+                }
             }
+
             if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
                 SetHookData(rawData, callFrames_, stackData);
             } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
@@ -290,7 +282,10 @@ void StackPreprocess::TakeResults()
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }
-        FlushData(stackData);
+        {
+            std::lock_guard<std::mutex> guard(mtx_);
+            FlushData(stackData);
+        }
 
         // interval reporting statistics
         if (hookConfig_.statistics_interval() > 0) {
@@ -308,6 +303,7 @@ void StackPreprocess::TakeResults()
 inline void StackPreprocess::ReportThreadNameMap(uint32_t tid, const std::string& tname,
                                                  BatchNativeHookData& batchNativeHookData)
 {
+    std::lock_guard<std::mutex> guard(mtx_);
     auto it = threadNameMap_.find(tid);
     if (it == threadNameMap_.end() || it->second != tname) {
         threadNameMap_[tid] = tname;
@@ -315,6 +311,7 @@ inline void StackPreprocess::ReportThreadNameMap(uint32_t tid, const std::string
         auto* thread = hookData->mutable_thread_name_map();
         thread->set_id(tid);
         thread->set_name(tname);
+        thread->set_pid(pid_);
     }
 }
 
@@ -335,6 +332,22 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames,
     }
 }
 
+inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack)
+{
+    if (hookConfig_.response_library_mode()) {
+        auto itStack = responseLibraryMap_.find(callStack[0]);
+        if (itStack != responseLibraryMap_.end()) {
+            return itStack->second;
+        }
+    } else {
+        auto itStack = callStackMap_.find(callStack);
+        if (itStack != callStackMap_.end()) {
+            return itStack->second;
+        }
+    }
+    return 0;
+}
+
 /**
  * @return '0' is invalid stack id, '> 0' is valid stack id
  */
@@ -342,8 +355,14 @@ inline uint32_t StackPreprocess::SetCallStackMap(BatchNativeHookData& batchNativ
 {
     auto hookData = batchNativeHookData.add_events();
     StackMap* stackmap = hookData->mutable_stack_map();
-    uint32_t stackId = callStackMap_.size() + 1;
+    uint32_t stackId = 0;
+    if (hookConfig_.response_library_mode()) {
+        stackId = responseLibraryMap_.size() + 1;
+    } else {
+        stackId = callStackMap_.size() + 1;
+    }
     stackmap->set_id(stackId);
+    stackmap->set_pid(pid_);
     // offline symbolization use ip, other use frame_map_id
     if (hookConfig_.offline_symbolization()) {
         for (size_t i = 0; i < callStack_.size(); i++) {
@@ -354,7 +373,11 @@ inline uint32_t StackPreprocess::SetCallStackMap(BatchNativeHookData& batchNativ
             stackmap->add_frame_map_id(callStack_[i]);
         }
     }
-    callStackMap_[callStack_] = stackId;
+    if (hookConfig_.response_library_mode()) {
+        responseLibraryMap_[callStack_[0]] = stackId;
+    } else {
+        callStackMap_[callStack_] = stackId;
+    }
     return stackId;
 }
 
@@ -381,9 +404,10 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack,
         FillOfflineCallStack(callFrames, idx);
     }
     // return call stack id
-    auto itStack = callStackMap_.find(callStack_);
-    if (itStack != callStackMap_.end()) {
-        return itStack->second;
+    std::lock_guard<std::mutex> guard(mtx_);
+    uint32_t stackId = FindCallStackId(callStack_);
+    if (stackId > 0) {
+        return stackId;
     } else {
         return SetCallStackMap(batchNativeHookData);
     }
@@ -405,8 +429,6 @@ void StackPreprocess::SetEventFrame(const RawStackPtr& rawStack,
         event->set_stack_id(stackMapId);
     } else if (hookConfig_.string_compressed()) {
         for (; idx < callFrames.size(); ++idx) {
-            ReportSymbolNameMap(callFrames[idx], batchNativeHookData);
-            ReportFilePathMap(callFrames[idx], batchNativeHookData);
             Frame* frame = event->add_frame_info();
             SetFrameInfo(*frame, callFrames[idx]);
         }
@@ -431,12 +453,14 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     } else {
         FillOfflineCallStack(callFrames, idx);
     }
+
+    std::lock_guard<std::mutex> guard(mtx_);
     // by call stack id set alloc statistics data.
-    auto itStack = callStackMap_.find(callStack_);
-    if (itStack != callStackMap_.end()) {
-        SetAllocStatisticsData(rawStack, itStack->second, true);
+    uint32_t stackId = FindCallStackId(callStack_);
+    if (stackId > 0) {
+        SetAllocStatisticsData(rawStack, stackId, true);
     } else {
-        auto stackId = SetCallStackMap(batchNativeHookData);
+        stackId = SetCallStackMap(batchNativeHookData);
         SetAllocStatisticsData(rawStack, stackId);
     }
 }
@@ -477,6 +501,14 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
     if (hookConfig_.callframe_compress() &&
         !(rawStack->stackConext->type == MEMORY_TAG || rawStack->stackConext->type == PR_SET_VMA_MSG)) {
         stackMapId = GetCallStackId(rawStack, callFrames, batchNativeHookData);
+    }
+
+    if ((!hookConfig_.callframe_compress() || stackMapId == 0) && hookConfig_.string_compressed()) {
+        size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+        for (; idx < callFrames.size(); ++idx) {
+            ReportSymbolNameMap(callFrames[idx], batchNativeHookData);
+            ReportFilePathMap(callFrames[idx], batchNativeHookData);
+        }
     }
 
     NativeHookData* hookData = batchNativeHookData.add_events();
@@ -523,6 +555,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
         tagEvent->set_tag(prefix + tagName);
         tagEvent->set_size(rawStack->stackConext->mallocSize);
         tagEvent->set_addr((uint64_t)rawStack->stackConext->addr);
+        tagEvent->set_pid(pid_);
     } else if (rawStack->stackConext->type == MEMORY_USING_MSG) {
         MmapEvent* mmapEvent = hookData->mutable_mmap_event();
         mmapEvent->set_size(static_cast<uint64_t>(rawStack->stackConext->mallocSize));
@@ -607,13 +640,13 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
 
 void StackPreprocess::WriteFrames(RawStackPtr rawStack, const std::vector<CallFrame>& callFrames)
 {
-    CHECK_TRUE(fpHookData_.get() != nullptr, NO_RETVAL, "fpHookData_ is nullptr, please check file_name(%s)",
+    CHECK_TRUE(fpHookData_ != nullptr, NO_RETVAL, "fpHookData_ is nullptr, please check file_name(%s)",
         hookConfig_.file_name().c_str());
     if (rawStack->stackConext->type == PR_SET_VMA_MSG) {
         const std::string prefix = "Anonymous:";
         std::string tagName;
         GetMemTag(rawStack->stackConext->tagId, tagName);
-        fprintf(fpHookData_.get(), "prctl;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ":tag:%s\n",
+        fprintf(fpHookData_, "prctl;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ":tag:%s\n",
             rawStack->stackConext->pid, rawStack->stackConext->tid,
             (int64_t)rawStack->stackConext->ts.tv_sec, rawStack->stackConext->ts.tv_nsec,
             (uint64_t)rawStack->stackConext->addr, (prefix + tagName).c_str());
@@ -637,12 +670,12 @@ void StackPreprocess::WriteFrames(RawStackPtr rawStack, const std::vector<CallFr
             break;
     }
 
-    fprintf(fpHookData_.get(), "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
+    fprintf(fpHookData_, "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
         rawStack->stackConext->pid, rawStack->stackConext->tid, (int64_t)rawStack->stackConext->ts.tv_sec,
         rawStack->stackConext->ts.tv_nsec, (uint64_t)rawStack->stackConext->addr, rawStack->stackConext->mallocSize);
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     for (; idx < callFrames.size(); ++idx) {
-        (void)fprintf(fpHookData_.get(), "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
+        (void)fprintf(fpHookData_, "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
             callFrames[idx].ip_, callFrames[idx].sp_, std::string(callFrames[idx].symbolName_).c_str(),
             std::string(callFrames[idx].filePath_).c_str(), callFrames[idx].offset_, callFrames[idx].symbolOffset_);
     }
@@ -674,6 +707,7 @@ inline void StackPreprocess::ReportSymbolNameMap(CallFrame& callFrame, BatchNati
         SymbolMap* symbolMap = hookData->mutable_symbol_name();
         symbolMap->set_id(callFrame.symbolNameId_);
         symbolMap->set_name(std::string(callFrame.symbolName_));
+        symbolMap->set_pid(pid_);
     }
 }
 
@@ -684,6 +718,7 @@ inline void StackPreprocess::ReportFilePathMap(CallFrame& callFrame, BatchNative
         FilePathMap* filePathMap = hookData->mutable_file_path();
         filePathMap->set_id(callFrame.filePathId_);
         filePathMap->set_name(std::string(callFrame.filePath_));
+        filePathMap->set_pid(pid_);
     }
 }
 
@@ -697,11 +732,13 @@ inline void StackPreprocess::ReportFrameMap(CallFrame& callFrame, BatchNativeHoo
         Frame* frame = frameMap->mutable_frame();
         SetFrameInfo(*frame, callFrame);
         frameMap->set_id(callFrame.callFrameId_);
+        frameMap->set_pid(pid_);
     }
 }
 
 void StackPreprocess::SetMapsInfo(pid_t pid)
 {
+    std::lock_guard<std::mutex> guard(mtx_);
     for (auto& itemSoBegin : runtime_instance->GetOfflineMaps()) {
         auto& maps = runtime_instance->GetMapsCache();
         auto mapsIter = maps.find(itemSoBegin);
@@ -720,6 +757,7 @@ void StackPreprocess::SetMapsInfo(pid_t pid)
         FilePathMap* filepathMap = hookData->mutable_file_path();
         filepathMap->set_id(curMemMaps->filePathId_);
         filepathMap->set_name(curMemMaps->name_);
+        filepathMap->set_pid(pid_);
         SetSymbolInfo(curMemMaps->filePathId_, symbolInfo, stackData);
 
         for (auto& map : curMemMaps->GetMaps()) {
@@ -753,6 +791,7 @@ void StackPreprocess::SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolI
     symTable->set_sym_entry_size(symbolInfo.symEntSize);
     symTable->set_sym_table(symbolInfo.symTable.data(), symbolInfo.symTable.size());
     symTable->set_str_table(symbolInfo.strTable.data(), symbolInfo.strTable.size());
+    symTable->set_pid(pid_);
 }
 
 void StackPreprocess::FlushData(BatchNativeHookData& stackData)
@@ -766,8 +805,8 @@ void StackPreprocess::FlushData(BatchNativeHookData& stackData)
                 ForStandard::BatchNativeHookData StandardStackData;
                 StandardStackData.ParseFromArray(buffer_.get(), length);
                 google::protobuf::TextFormat::PrintToString(StandardStackData, &str);
-                size_t n = fwrite(str.data(), 1, str.size(), fpHookData_.get());
-                fflush(fpHookData_.get());
+                size_t n = fwrite(str.data(), 1, str.size(), fpHookData_);
+                fflush(fpHookData_);
                 HILOG_DEBUG(LOG_CORE, "Flush Data fwrite n = %zu str.size() = %zu", n, str.size());
             } else {
                 Flush(buffer_.get(), length);
@@ -794,7 +833,9 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
     pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(pluginDataClockId_));
     pluginData.set_tv_sec(ts.tv_sec);
     pluginData.set_tv_nsec(ts.tv_nsec);
-    writer_->WriteMessage(pluginData, "nativehook");
+    pluginData.SerializeToArray(buffer_.get(), pluginData.ByteSizeLong());
+
+    writer_->Write(buffer_.get(), pluginData.ByteSizeLong());
     writer_->Flush();
 }
 
@@ -868,7 +909,10 @@ bool StackPreprocess::FlushRecordStatistics()
             recordEvent->set_tag_name(tagName);
         }
     }
-    FlushData(statisticsData);
+    {
+        std::lock_guard<std::mutex> guard(mtx_);
+        FlushData(statisticsData);
+    }
     statisticsPeriodData_.clear();
 
     return true;
@@ -950,4 +994,13 @@ size_t StackPreprocess::ComputeAlign(size_t size)
     size_t modSize = (modVal + 1) << lgDeltaVal;
     size_t usize = grpSize + modSize;
     return usize;
+}
+
+void StackPreprocess::WriteHookConfig()
+{
+    std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+    hookConfig_.SerializeToArray(buffer_.get(), hookConfig_.ByteSizeLong());
+    tfPtr->WriteStandalonePluginData(
+        "nativehook_config",
+        std::string(reinterpret_cast<char*>(buffer_.get()), hookConfig_.ByteSizeLong()));
 }

@@ -65,7 +65,7 @@ constexpr int32_t CLIENT_WEBSOCKET_UPGRADE_RSP_LEN = 129;
 constexpr int32_t SOCKET_MASK_LEN = 4;
 constexpr char MASK_KEY[SOCKET_MASK_LEN + 1] = "abcd";
 constexpr uint32_t TIME_OUT = 5;
-constexpr uint32_t MAX_MATCH_CNT = 1000;
+constexpr uint32_t TIME_BASE = 1000;
 constexpr int32_t SOCKET_SUCCESS = 0;
 constexpr int32_t SOCKET_HEADER_LEN = 2;
 constexpr int32_t PAYLOAD_LEN = 2;
@@ -135,15 +135,14 @@ int32_t ArkTSPlugin::EnableTimeline()
 
 int32_t ArkTSPlugin::EnableSnapshot()
 {
-    snapshotCmd_ = SNAPSHOT_HEAD + (protoConfig_.capture_numeric_value() ? "true" : "false") + SNAPSHOT_TAIL;
-    auto interval = ScheduleTaskManager::ms(protoConfig_.interval() * MAX_MATCH_CNT);
-    if (interval.count() == 0) {
+    if (protoConfig_.interval() == 0) {
         HILOG_ERROR(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
         return -1;
     }
+    snapshotCmd_ = SNAPSHOT_HEAD + (protoConfig_.capture_numeric_value() ? "true" : "false") + SNAPSHOT_TAIL;
     auto callback = std::bind(&ArkTSPlugin::Snapshot, this);
-    if (!ScheduleTaskManager::GetInstance().ScheduleTask(
-            ARKTS_SCHEDULE, callback, interval, ScheduleTaskManager::ms(0))) {
+    snapshotScheduleTaskFd_ = scheduleTaskManager_.ScheduleTask(callback, protoConfig_.interval() * TIME_BASE);
+    if (snapshotScheduleTaskFd_ == -1) {
         HILOG_ERROR(LOG_CORE, "%s:scheduleTask failed!", __func__);
         return -1;
     }
@@ -173,7 +172,7 @@ int32_t ArkTSPlugin::Stop()
 {
     switch (static_cast<int32_t>(protoConfig_.type())) {
         case static_cast<int32_t>(HeapType::SNAPSHOT): {
-            ScheduleTaskManager::GetInstance().UnscheduleTask(ARKTS_SCHEDULE);
+            scheduleTaskManager_.UnscheduleTask(snapshotScheduleTaskFd_);
             break;
         }
         case static_cast<int32_t>(HeapType::TIMELINE): {

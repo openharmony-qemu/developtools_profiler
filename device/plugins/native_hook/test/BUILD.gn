@@ -38,6 +38,7 @@ ohos_unittest("nativehook_ut") {
     "unittest/check_hook_data_test.cpp",
     "unittest/hook_client_test.cpp",
     "unittest/hook_socket_client_test.cpp",
+    "unittest/sampling_test.cpp",
     "unittest/stack_writer_test.cpp",
   ]
 

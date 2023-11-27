@@ -15,6 +15,7 @@
 
 #include "hook_service.h"
 
+#include "hook_manager.h"
 #include <cinttypes>
 #include <unistd.h>
 
@@ -24,12 +25,8 @@
 #include "socket_context.h"
 
 namespace OHOS::Developtools::NativeDaemon {
-HookService::HookService(int smbFd,
-                         int eventFd,
-                         int pid,
-                         const std::string& processName,
-                         const ClientConfig& clientConfig)
-    : smbFd_(smbFd), eventFd_(eventFd), pid_(pid), processName_(processName), clientConfig_(clientConfig)
+HookService::HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook)
+    : clientConfig_(clientConfig), hookMgr_(hook)
 {
     serviceName_ = "HookService";
     if (getuid() == 0) {
@@ -59,23 +56,37 @@ bool HookService::StartService(const std::string& unixSocketName)
 bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
     if (size != sizeof(int)) {
-        HILOG_ERROR(LOG_CORE, "ProtocolProc hook config error, pid_ = %d, size = %d", pid_, size);
+        return false;
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
     if (peerConfig == -1) {
-        return true;
-    }
-    if (pid_ == 0) {
-        printf("Process %d hook started.\n", peerConfig);
-        pid_ = peerConfig;
-    } else if (peerConfig != pid_) {
-        HILOG_ERROR(LOG_CORE, "ProtocolProc receive peerConfig:%d not expected", peerConfig);
         return false;
     }
-    HILOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d", pid_);
+
+    std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
+    std::string bundleName;
+    if (!LoadStringFromFile(filePath, bundleName)) {
+        HILOG_ERROR(LOG_CORE, "Get process name by pid failed!, pid: %d", peerConfig);
+        return false;
+    }
+    bundleName.resize(strlen(bundleName.c_str()));
+
+    if (bundleName.substr(0, 2) == "./") {
+        bundleName = bundleName.substr(2);
+    }
+
+    std::lock_guard<std::mutex> lock(mtx_);
+    auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, bundleName);
+    if (eventFd == smbFd) {
+        HILOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
+        return false;
+    }
+
+    HILOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
+                peerConfig);
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
-    context.SendFileDescriptor(smbFd_);
-    context.SendFileDescriptor(eventFd_);
+    context.SendFileDescriptor(smbFd);
+    context.SendFileDescriptor(eventFd);
     return true;
 }
 }

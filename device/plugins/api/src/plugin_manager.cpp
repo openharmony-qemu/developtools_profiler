@@ -161,7 +161,7 @@ bool PluginManager::RemovePlugin(const std::string& pluginPath)
         // delete schedule task if POLLING mode
         if (pluginModules_[index]->GetSampleMode() == PluginModule::SampleMode::POLLING) {
             HILOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s", __func__, pluginName.c_str());
-            if (!scheduleTaskManager_.UnscheduleTask(pluginName)) {
+            if (!scheduleTaskManager_.UnscheduleTask(scheduleTask_[pluginName])) {
                 HILOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s failed!", __func__, pluginName.c_str());
             }
         }
@@ -297,19 +297,17 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                 HILOG_WARN(LOG_CORE, "%s:idx %zu out of size %zu", __func__, idx, config.size());
                 return false;
             }
-            auto interval = ScheduleTaskManager::ms(config[idx].sample_interval());
-            std::string pluginName = config[idx].name();
-            HILOG_DEBUG(LOG_CORE, "%s:interval = %ld", __func__, static_cast<long>(interval.count()));
-            HILOG_DEBUG(LOG_CORE, "%s:pluginName = %s", __func__, pluginName.c_str());
-            auto callback = std::bind(&PluginManager::PullResult, this, id, config[idx].is_protobuf_serialize());
-            if (interval.count() == 0) {
+            if (config[idx].sample_interval() == 0) {
                 HILOG_DEBUG(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
                 return false;
             }
-            if (!scheduleTaskManager_.ScheduleTask(pluginName, callback, interval)) {
+            auto callback = std::bind(&PluginManager::PullResult, this, id, config[idx].is_protobuf_serialize());
+            int32_t timerFd = scheduleTaskManager_.ScheduleTask(callback, config[idx].sample_interval());
+            if (timerFd == -1) {
                 HILOG_DEBUG(LOG_CORE, "%s:scheduleTask failed!", __func__);
                 return false;
             }
+            scheduleTask_[config[idx].name()] = timerFd;
         }
 
         // need update standalone plugin output file name
@@ -335,10 +333,10 @@ bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             return false;
         }
         if (pluginModules_[id]->GetSampleMode() == PluginModule::SampleMode::POLLING) {
-            for (auto it : pluginIds_) {
+            for (const auto& it : pluginIds_) {
                 if (it.second == id) {
                     HILOG_DEBUG(LOG_CORE, "%s:find plugin name = %s", __func__, it.first.c_str());
-                    if (!scheduleTaskManager_.UnscheduleTask(it.first)) {
+                    if (!scheduleTaskManager_.UnscheduleTask(scheduleTask_[it.first])) {
                         return false;
                     }
                 }

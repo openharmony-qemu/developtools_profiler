@@ -17,7 +17,7 @@
 #define __RUNTIME_STACK_RANGE_H__
 
 #include <pthread.h>
-
+#include <vector>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,7 +26,7 @@ constexpr int INIT_LINE_SIZE = 1000;
 constexpr int INC_LINE_SIZE = 100;
 
 void GetRuntimeStackEnd(const char* stackptr, const char** end, pid_t pid, pid_t tid);
-void GetMainThreadRuntimeStackRange(void);
+void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t,uint64_t>>&);
 
 #ifdef __cplusplus
 }

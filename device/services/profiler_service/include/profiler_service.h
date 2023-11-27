@@ -21,6 +21,7 @@
 #include "nocopyable.h"
 #include "hiperf_plugin_config.pb.h"
 #include "profiler_service.grpc.pb.h"
+#include "schedule_task_manager.h"
 
 class PluginService;
 
@@ -87,8 +88,8 @@ private:
     struct SessionContext : public std::enable_shared_from_this<SessionContext> {
         uint32_t id = 0;
         std::string name;
-        std::string offlineTask; // offline sample task name
-        std::string timeoutTask; // session timeout task name
+        int32_t offlineScheduleTaskFd {-1};
+        int32_t timeoutScheduleTaskFd {-1};
         ProfilerService* service = nullptr;
         std::mutex sessionMutex;
         ProfilerSessionConfig sessionConfig;
@@ -97,6 +98,7 @@ private:
         std::vector<ProfilerPluginConfig> pluginConfigs;
         std::shared_ptr<ProfilerDataRepeater> dataRepeater {nullptr};
         std::shared_ptr<TraceFileWriter> traceFileWriter {nullptr};
+        ScheduleTaskManager stopExpireTask;
 
         SessionContext() = default;
         ~SessionContext();
@@ -108,8 +110,8 @@ private:
         size_t UpdatePluginConfigs(const std::vector<ProfilerPluginConfig>& newPluginConfigs);
 
         void SetKeepAliveTime(uint32_t timeout);
-        void StartSessionExpireTask();
-        void StopSessionExpireTask();
+        void StartSessionExpireTask(ScheduleTaskManager& task);
+        void StopSessionExpireTask(ScheduleTaskManager& task);
         DISALLOW_COPY_AND_MOVE(SessionContext);
     };
 
@@ -132,6 +134,7 @@ private:
     std::atomic<uint32_t> responseIdCounter_ = 0;
     std::map<uint32_t, SessionContextPtr> sessionContext_ = {};
     std::unique_ptr<grpc::Server> server_ = nullptr;
+    ScheduleTaskManager removeTask_;
 
     DISALLOW_COPY_AND_MOVE(ProfilerService);
 };

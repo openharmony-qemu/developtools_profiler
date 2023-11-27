@@ -25,11 +25,21 @@ config("hook_config") {
     "HIPERF_DEBUG",
     "CONFIG_NO_HILOG",
     "NATIVEDAEMON_USE_CALLSTACK",
+    "LITE_PROTO",
   ]
   defines += [ "target_cpu_${target_cpu}" ]
   if (use_jemalloc) {
     defines += [ "USE_JEMALLOC" ]
   }
+}
+
+config("profiler_sa_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "native_memory_profiler_sa/include",
+    "native_memory_profiler_sa/util/include",
+    "../../base/include",
+  ]
 }
 
 ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
@@ -81,31 +91,125 @@ ohos_executable("native_daemon") {
     "//third_party/bounds_checking_function/include",
     "//third_party/googletest/googletest/include",
   ]
+
+  include_dirs += [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
+  ]
+
+  sources += [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
+  ]
+
   deps = [
     ":hiprofiler_daemon.cfg",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
+    "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "../../base:hiprofiler_base",
     "//third_party/bounds_checking_function:libsec_static",
+    "//third_party/openssl:libcrypto_shared",
     "//third_party/zlib:libz",
   ]
+
   if (hiprofiler_use_libunwind) {
     deps += [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
   }
-  external_deps = [ "init:libbegetutil" ]
+
+  external_deps = [
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder_static" ]
   }
+
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]
   }
   use_exceptions = true
   install_enable = true
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_executable("native_daemon_client") {
+  output_name = "native_daemon_client"
+  include_dirs = [
+    "../../base/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
+  ]
+
+  sources = [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
+    "native_daemon_client.cpp",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
+  }
+
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_shared_library("libnative_daemon_client") {
+  public_configs = [ ":profiler_sa_config" ]
+  include_dirs = [
+    "../../base/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
+  ]
+
+  sources = [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
+    "../../base/src/common.cpp",
+  ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
+  }
+
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

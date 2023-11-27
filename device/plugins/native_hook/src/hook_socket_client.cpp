@@ -19,13 +19,15 @@
 #include "hook_common.h"
 #include "unix_socket_client.h"
 #include "logging.h"
+#include "sampling.h"
 
 namespace {
 constexpr int FLUSH_FLAG = 20;
 std::atomic<uint64_t> g_flushCount = 0;
 } // namespace
 
-HookSocketClient::HookSocketClient(int pid, ClientConfig *config) : pid_(pid), config_(config)
+HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler)
+                                : pid_(pid), config_(config), sampler_(sampler)
 {
     smbFd_ = 0;
     eventFd_ = 0;
@@ -66,10 +68,12 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     HILOG_INFO(LOG_CORE, "recv hook client config:%s\n", configStr.c_str());
-
+    sampler_->InitSampling(config_->sampleInterval);
+    HILOG_INFO(LOG_CORE, "%s sample interval %" PRIu64 "", __func__, sampler_->GetSampleInterval());
     smbFd_ = context.ReceiveFileDiscriptor();
     eventFd_ = context.ReceiveFileDiscriptor();
-    stackWriter_ = std::make_shared<StackWriter>("hooknativesmb", config_->shareMemroySize,
+    std::string smbName = "hooknativesmb_" + std::to_string(pid_);
+    stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked);
     struct mallinfo2 mi = mallinfo2();
     COMMON::PrintMallinfoLog("stackWriter init(byte) => ", mi);

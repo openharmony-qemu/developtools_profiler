@@ -24,7 +24,6 @@
 #include "plugin_session_manager.h"
 #include "profiler_capability_manager.h"
 #include "profiler_data_repeater.h"
-#include "schedule_task_manager.h"
 #include "trace_file_writer.h"
 
 using namespace ::grpc;
@@ -70,10 +69,10 @@ ProfilerService::~ProfilerService() {}
 ProfilerService::SessionContext::~SessionContext()
 {
     HILOG_INFO(LOG_CORE, "~SessionContext id = %d", id);
-    if (offlineTask.size() > 0) {
-        ScheduleTaskManager::GetInstance().UnscheduleTask(offlineTask);
+    if (offlineScheduleTaskFd != -1) {
+        stopExpireTask.UnscheduleTask(offlineScheduleTaskFd);
     }
-    StopSessionExpireTask();
+    StopSessionExpireTask(service->removeTask_);
     service->pluginSessionManager_->RemovePluginSessions(pluginNames);
 }
 
@@ -82,6 +81,8 @@ Status ProfilerService::GetCapabilities(ServerContext* context,
                                         ::GetCapabilitiesResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
+    HILOG_INFO(LOG_CORE, "GetCapabilities from '%s'", context->peer().c_str());
+
     HILOG_INFO(LOG_CORE, "GetCapabilities %d start", request->request_id());
     std::vector<ProfilerPluginCapability> capabilities = ProfilerCapabilityManager::GetInstance().GetCapabilities();
 
@@ -136,24 +137,22 @@ bool ProfilerService::SessionContext::StartPluginSessions()
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         uint32_t sampleDuration = sessionConfig.sample_duration();
         if (sampleDuration > 0) {
-            offlineTask = "stop-session-" + std::to_string(id);
+            traceFileWriter->SetTimeSource();
             std::weak_ptr<SessionContext> weakCtx(shared_from_this());
             // start offline trace timeout task
-            ScheduleTaskManager::GetInstance().ScheduleTask(
-                offlineTask,
+            offlineScheduleTaskFd = stopExpireTask.ScheduleTask(
                 [weakCtx]() {
                     if (auto ctx = weakCtx.lock(); ctx != nullptr) {
                         ctx->StopPluginSessions();
                     }
                 },
-                std::chrono::milliseconds(0), // do not repeat
-                std::chrono::milliseconds(sampleDuration));
-
+                sampleDuration,
+                true);
             // keep_alive_time not set by client, but the sample_duration setted
             if (sessionConfig.keep_alive_time() == 0) {
                 // use sample_duration add a little time to set keep_alive_time
                 SetKeepAliveTime(sampleDuration + DEFAULT_KEEP_ALIVE_DELTA);
-                StartSessionExpireTask();
+                StartSessionExpireTask(service->removeTask_);
             }
         }
     }
@@ -167,10 +166,13 @@ bool ProfilerService::SessionContext::StopPluginSessions()
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
-        if (offlineTask.size() > 0) {
-            ScheduleTaskManager::GetInstance().UnscheduleTask(offlineTask);
-            offlineTask = "";
+        if (offlineScheduleTaskFd != -1) {
+            stopExpireTask.UnscheduleTask(offlineScheduleTaskFd);
+            offlineScheduleTaskFd = -1;
+        } else {
+            return true;
         }
+        traceFileWriter->SetDurationTime();
     }
 
     // stop each plugin sessions
@@ -210,25 +212,24 @@ bool IsValidKeepAliveTime(uint32_t timeout)
 void ProfilerService::SessionContext::SetKeepAliveTime(uint32_t timeout)
 {
     if (timeout > 0) {
-        timeoutTask = "timeout-session-" + std::to_string(id);
         sessionConfig.set_keep_alive_time(timeout);
     }
 }
 
-void ProfilerService::SessionContext::StartSessionExpireTask()
+void ProfilerService::SessionContext::StartSessionExpireTask(ScheduleTaskManager& task)
 {
-    if (timeoutTask.size() > 0) {
-        ScheduleTaskManager::GetInstance().ScheduleTask(timeoutTask,
-                                                        std::bind(&ProfilerService::RemoveSessionContext, service, id),
-                                                        std::chrono::milliseconds(0), // do not repeat
-                                                        std::chrono::milliseconds(sessionConfig.keep_alive_time()));
+    if (sessionConfig.keep_alive_time() > 0 && timeoutScheduleTaskFd == -1) {
+        timeoutScheduleTaskFd = task.ScheduleTask(
+            std::bind(&ProfilerService::RemoveSessionContext, service, id),
+            sessionConfig.keep_alive_time(), true);
     }
 }
 
-void ProfilerService::SessionContext::StopSessionExpireTask()
+void ProfilerService::SessionContext::StopSessionExpireTask(ScheduleTaskManager& task)
 {
-    if (timeoutTask.size() > 0) {
-        ScheduleTaskManager::GetInstance().UnscheduleTask(timeoutTask);
+    if (sessionConfig.keep_alive_time() > 0 && timeoutScheduleTaskFd != -1) {
+        task.UnscheduleTask(timeoutScheduleTaskFd);
+        timeoutScheduleTaskFd = -1;
     }
 }
 
@@ -253,7 +254,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     pluginConfigs.reserve(nConfigs);
 
     for (int i = 0; i < nConfigs; i++) {
-        pluginConfigs.emplace_back(request->plugin_configs(i));
+        pluginConfigs.push_back(request->plugin_configs(i));
     }
 
     if (pluginConfigs.empty()) {
@@ -337,7 +338,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
         CHECK_EXPRESSION_TRUE(IsValidKeepAliveTime(keepAliveTime), "keep_alive_time invalid!");
         // create schedule task for session timeout feature
         ctx->SetKeepAliveTime(keepAliveTime);
-        ctx->StartSessionExpireTask();
+        ctx->StartSessionExpireTask(removeTask_);
     }
 
     // prepare response data fields
@@ -644,9 +645,9 @@ Status ProfilerService::DestroySession(ServerContext* context,
     }
 
     // reschedule session timeout task
-    if (ctx->timeoutTask.size() > 0) {
-        ctx->StopSessionExpireTask();
-        ctx->StartSessionExpireTask();
+    if (ctx->sessionConfig.keep_alive_time() > 0) {
+        ctx->StopSessionExpireTask(removeTask_);
+        ctx->StartSessionExpireTask(removeTask_);
     }
     HILOG_INFO(LOG_CORE, "KeepSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;

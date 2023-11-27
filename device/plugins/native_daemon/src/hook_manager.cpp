@@ -33,69 +33,99 @@
 #include "virtual_runtime.h"
 #include "hook_common.h"
 #include "common.h"
+#include "native_memory_profiler_sa_service.h"
 
 namespace OHOS::Developtools::NativeDaemon {
+namespace {
 const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 const int PAGE_BYTES = 4096;
-std::shared_ptr<BufferWriter> g_buffWriter;
+std::shared_ptr<Writer> g_buffWriter;
 constexpr uint32_t MAX_BUFFER_SIZE = 10 * 1024;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
 const int SIGNAL_START_HOOK = 36;
 const int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
+constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
+constexpr int32_t MAX_PID_COUNT = 4;
+}
 
 bool HookManager::CheckProcess()
 {
-    if (pid_ != 0) {
-        std::string pid_path = std::string();
-        struct stat stat_buf;
-        pid_path = "/proc/" + std::to_string(pid_) + "/status";
-        if (stat(pid_path.c_str(), &stat_buf) != 0) {
-            pid_ = 0;
-            HILOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
-            return false;
-        } else {
-            return true;
+    if (hookConfig_.pid() > 0) {
+        hookConfig_.add_expand_pids(hookConfig_.pid());
+    }
+    std::set<int32_t> pidCache;
+    for (const auto& pid : hookConfig_.expand_pids()) {
+        if (pid > 0) {
+            std::string pidPath = std::string();
+            struct stat statBuf;
+            pidPath = "/proc/" + std::to_string(pid) + "/status";
+            if (stat(pidPath.c_str(), &statBuf) != 0) {
+                // pid = 0;
+                HILOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
+                return false;
+            } else {
+                auto [iter, isExist] = pidCache.emplace(pid);
+                if (isExist) {
+                    hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(pid));
+                    HILOG_INFO(LOG_CORE, "hook context: pid: %d", pid);
+                }
+                continue;
+            }
         }
-    } else if (hookConfig_.process_name() != "") {
-        // check if the pid and process name is consistency
-        CheckProcessName();
     }
 
+    if (!hookConfig_.process_name().empty() && !CheckProcessName()) {
+        return false;
+    }
+
+    if (hookConfig_.response_library_mode()) {
+        if (hookCtx_.size() > RESPONSE_MAX_PID_COUNT) {
+            HILOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, RESPONSE_MAX_PID_COUNT);
+            return false;
+        }
+    } else {
+        if (hookCtx_.size() > MAX_PID_COUNT) {
+            HILOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, MAX_PID_COUNT);
+            return false;
+        }
+    }
     return true;
 }
 
-void HookManager::CheckProcessName()
+bool HookManager::CheckProcessName()
 {
     int pidValue = -1;
     const std::string processName = hookConfig_.process_name();
     bool isExist = COMMON::IsProcessExist(processName, pidValue);
-    if (hookConfig_.startup_mode() || !isExist) {
+    if (hookConfig_.startup_mode() && !isExist) {
         HILOG_INFO(LOG_CORE, "Wait process %s start or restart, set param", hookConfig_.process_name().c_str());
         std::string cmd = STARTUP + hookConfig_.process_name();
         int ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
         if (ret < 0) {
-            HILOG_WARN(LOG_CORE, "set param failed, please manually set param and start process(%s)",
-                       hookConfig_.process_name().c_str());
+            HILOG_ERROR(LOG_CORE, "set param failed, please manually set param and start process(%s)",
+                        hookConfig_.process_name().c_str());
         } else {
             HILOG_INFO(LOG_CORE, "set param success, please start process(%s)", hookConfig_.process_name().c_str());
+            hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(hookConfig_.process_name()));
         }
+    } else if (pidValue != -1) {
+        HILOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pidValue);
+        for (const auto& item : hookCtx_) {
+            if (item->pid == pidValue) {
+                return true;
+            }
+        }
+        hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(pidValue));
     } else {
-        pid_ = pidValue;
-        HILOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pid_);
+        HILOG_ERROR(LOG_CORE, "The startup mode parameter is not set, name: %s", hookConfig_.process_name().c_str());
+        return false;
     }
+    return true;
 }
 
-HookManager::HookManager() : buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]), pid_(0) { }
-
-HookManager::HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock,
-                         std::shared_ptr<EventNotifier>& eventNotifier,
-                         StackDataRepeaterPtr& stackData) : shareMemoryBlock_(shareMemoryBlock),
-                                                            eventNotifier_(eventNotifier),
-                                                            stackData_(stackData)
-{
-}
+HookManager::HookManager() : buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]) { }
 
 void HookManager::SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
 {
@@ -161,9 +191,9 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
     return true;
 }
 
-void HookManager::GetClientConfig(const NativeHookConfig& nativeHookConfig, ClientConfig& clientConfig)
+void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
-    clientConfig.shareMemroySize = static_cast<uint32_t>(hookConfig_.smb_pages() * PAGE_BYTES);
+    clientConfig.shareMemorySize = static_cast<uint32_t>(hookConfig_.smb_pages() * PAGE_BYTES);
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
@@ -174,44 +204,83 @@ void HookManager::GetClientConfig(const NativeHookConfig& nativeHookConfig, Clie
     clientConfig.fpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
+    clientConfig.sampleInterval = hookConfig_.sample_interval();
+    clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
+}
+
+bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
+{
+    if (ctx == nullptr) {
+        return false;
+    }
+    if (ctx->pid > 0) {
+        ctx->smbName = "hooknativesmb_" + std::to_string(ctx->pid);
+    } else if (!ctx->processName.empty()) {
+        ctx->smbName = "hooknativesmb_" + ctx->processName;
+    } else {
+        HILOG_ERROR(LOG_CORE, "HandleHookContext context error, pid: %d, process name: %s",
+            ctx->pid, ctx->processName.c_str());
+        return false;
+    }
+    // create smb and eventNotifier
+    uint32_t bufferSize = hookConfig_.smb_pages() * PAGE_BYTES; /* bufferConfig.pages() */
+    ctx->shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(ctx->smbName, bufferSize);
+    CHECK_TRUE(ctx->shareMemoryBlock != nullptr, false, "CreateMemoryBlockLocal FAIL %s", ctx->smbName.c_str());
+
+    ctx->eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
+    CHECK_NOTNULL(ctx->eventNotifier, false, "create EventNotifier for %s failed!", ctx->smbName.c_str());
+
+    // start event poller task
+    ctx->eventPoller = std::make_unique<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
+    CHECK_NOTNULL(ctx->eventPoller, false, "create event poller FAILED!");
+
+    ctx->eventPoller->Init();
+    ctx->eventPoller->Start();
+    ctx->eventPoller->AddFileDescriptor(
+        ctx->eventNotifier->GetFd(),
+        std::bind(&HookManager::ReadShareMemory, this, ctx));
+
+    HILOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", ctx->shareMemoryBlock->GetfileDescriptor(),
+               ctx->eventNotifier->GetFd());
+
+    ctx->isRecordAccurately = hookConfig_.record_accurately();
+    HILOG_INFO(LOG_CORE, "hookConfig filter size = %d, malloc disable = %d mmap disable = %d",
+        hookConfig_.filter_size(), hookConfig_.malloc_disable(), hookConfig_.mmap_disable());
+    HILOG_INFO(LOG_CORE, "hookConfig fp unwind = %d, max stack depth = %d, record_accurately=%d",
+        hookConfig_.fp_unwind(), hookConfig_.max_stack_depth(), ctx->isRecordAccurately);
+    HILOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
+
+    ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
+    CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
+    clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
+        fpHookData_, isHookStandalone_);
+    CHECK_TRUE(ctx->stackPreprocess != nullptr, false, "Create StackPreprocess FAIL");
+    ctx->stackPreprocess->SetWriter(g_buffWriter);
+    ctx->stackPreprocess->SetSaServiceFlag(isSaService_);
+    return true;
 }
 
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
 {
     HILOG_DEBUG(LOG_CORE, "CreatePluginSession");
-    smbName_ = "hooknativesmb";
     // save config
-    std::string cfgData = config[0].config_data();
-    CHECK_TRUE(hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) > 0,
-               false, "%s: ParseFromArray failed", __func__);
-    pid_ = hookConfig_.pid();
+    if (!config.empty()) {
+        std::string cfgData = config[0].config_data();
+        if (hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
+            HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
+            return false;
+        }
+    }
 
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();
     if (hookConfig_.filter_size() > uShortMax) {
         HILOG_WARN(LOG_CORE, "%s: filter size invalid(size exceed 65535), reset to 65535!", __func__);
         hookConfig_.set_filter_size(uShortMax);
     }
-    if (!CheckProcess()) {
+    if (!CheckProcess()) { // Check and initialize the context for the target process.
         return false;
     }
-
-    // create smb and eventNotifier
-    uint32_t bufferSize = hookConfig_.smb_pages() * PAGE_BYTES; /* bufferConfig.pages() */
-    shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(smbName_, bufferSize);
-    CHECK_TRUE(shareMemoryBlock_ != nullptr, false, "CreateMemoryBlockLocal FAIL %s", smbName_.c_str());
-
-    eventNotifier_ = EventNotifier::Create(0, EventNotifier::NONBLOCK);
-    CHECK_NOTNULL(eventNotifier_, false, "create EventNotifier for %s failed!", smbName_.c_str());
-
-    // start event poller task
-    eventPoller_ = std::make_unique<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
-    CHECK_NOTNULL(eventPoller_, false, "create event poller FAILED!");
-
-    eventPoller_->Init();
-    eventPoller_->Start();
-    eventPoller_->AddFileDescriptor(eventNotifier_->GetFd(), std::bind(&HookManager::ReadShareMemory, this));
-    HILOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", shareMemoryBlock_->GetfileDescriptor(),
-               eventNotifier_->GetFd());
 
     if (hookConfig_.max_stack_depth() < DLOPEN_MIN_UNWIND_DEPTH) {
         // set default max depth
@@ -219,7 +288,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
 #if defined(__arm__)
     hookConfig_.set_fp_unwind(false); // if OS is 32-bit,set fp_unwind false.
+    hookConfig_.set_response_library_mode(false);
 #endif
+    if (hookConfig_.response_library_mode()) {
+        hookConfig_.set_fp_unwind(true);
+        hookConfig_.set_offline_symbolization(true);
+    }
     // offlinem symbolization, callframe must be compressed
     if (hookConfig_.offline_symbolization()) {
         hookConfig_.set_callframe_compress(true);
@@ -236,37 +310,41 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_string_compressed(true);
     }
 
-    isRecordAccurately_ = hookConfig_.record_accurately();
-    HILOG_INFO(LOG_CORE, "hookConfig filter size = %d, malloc disable = %d mmap disable = %d",
-        hookConfig_.filter_size(), hookConfig_.malloc_disable(), hookConfig_.mmap_disable());
-    HILOG_INFO(LOG_CORE, "hookConfig fp unwind = %d, max stack depth = %d, record_accurately=%d",
-        hookConfig_.fp_unwind(), hookConfig_.max_stack_depth(), isRecordAccurately_);
-    HILOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
+    if (hookCtx_.empty()) {
+        HILOG_ERROR(LOG_CORE, "HookManager no task");
+        return false;
+    }
+    if (hookConfig_.save_file() && !hookConfig_.file_name().empty()) {
+        fpHookData_ = fopen(hookConfig_.file_name().c_str(), "wb+");
+        if (fpHookData_ == nullptr) {
+            HILOG_INFO(LOG_CORE, "fopen file %s fail", hookConfig_.file_name().c_str());
+            return false;
+        }
+    }
+    for (const auto& item : hookCtx_) {
+        CHECK_TRUE(HandleHookContext(item), false, "handle hook context failed"); // Create the required resources.
+    }
 
-    ClientConfig clientConfig;
-    GetClientConfig(hookConfig_, clientConfig);
-    std::string clientConfigStr = clientConfig.ToString();
-    HILOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
-    hookService_ = std::make_shared<HookService>(shareMemoryBlock_->GetfileDescriptor(),
-        eventNotifier_->GetFd(), pid_, hookConfig_.process_name(), clientConfig);
-    CHECK_NOTNULL(hookService_, false, "HookService create failed!");
+    if (!isSaService_) { // SA mode will start HookService in the service.
+        ClientConfig clientConfig;
+        GetClientConfig(clientConfig);
+        std::string clientConfigStr = clientConfig.ToString();
+        HILOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
+        hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this());
+        CHECK_NOTNULL(hookService_, false, "HookService create failed!");
+    }
 
-    stackData_ = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
-    CHECK_TRUE(stackData_ != nullptr, false, "Create StackDataRepeater FAIL");
-    clockid_t pluginDataClockId = COMMON::GetClockId(config[0].clock());
-    stackPreprocess_ = std::make_shared<StackPreprocess>(stackData_, hookConfig_, pluginDataClockId);
-    CHECK_TRUE(stackPreprocess_ != nullptr, false, "Create StackPreprocess FAIL");
-    stackPreprocess_->SetWriter(g_buffWriter);
     return true;
 }
 
-void HookManager::ReadShareMemory()
+void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx)
 {
-    CHECK_NOTNULL(shareMemoryBlock_, NO_RETVAL, "smb is null!");
+    CHECK_NOTNULL(hookCtx->shareMemoryBlock, NO_RETVAL, "smb is null!");
+    hookCtx->eventNotifier->Take();
     int rawRealSize = 0;
     while (true) {
         auto rawStack = std::make_shared<StackDataRepeater::RawStack>();
-        bool ret = shareMemoryBlock_->TakeData([&](const int8_t data[], uint32_t size) -> bool {
+        bool ret = hookCtx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
             CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
 
             rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
@@ -299,10 +377,10 @@ void HookManager::ReadShareMemory()
         }
         if (rawStack->stackConext->type == MEMORY_TAG) {
             std::string tagName = reinterpret_cast<char*>(rawStack->data);
-            stackPreprocess_->SaveMemTag(rawStack->stackConext->tagId, tagName);
+            hookCtx->stackPreprocess->SaveMemTag(rawStack->stackConext->tagId, tagName);
             continue;
         }
-        if (!stackData_->PutRawStack(rawStack, isRecordAccurately_)) {
+        if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
             break;
         }
     }
@@ -313,29 +391,31 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
     // release hook service
     hookService_ = nullptr;
 
-    // stop event poller
-    if (eventPoller_) {
-        HILOG_ERROR(LOG_CORE, "eventPoller_ unset!");
-        if (eventNotifier_ != nullptr) {
-            eventPoller_->RemoveFileDescriptor(eventNotifier_->GetFd());
+    for (const auto& item : hookCtx_) {
+        if (item->eventPoller != nullptr) {
+            HILOG_ERROR(LOG_CORE, "eventPoller unset!");
+            if (item->eventNotifier != nullptr) {
+                item->eventPoller->RemoveFileDescriptor(item->eventNotifier->GetFd());
+            }
+            item->eventPoller->Stop();
+            item->eventPoller->Finalize();
+            item->eventPoller = nullptr;
         }
-        eventPoller_->Stop();
-        eventPoller_->Finalize();
-        eventPoller_ = nullptr;
-    }
 
-    // release smb and eventNotifier
-    if (shareMemoryBlock_) {
-        ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(smbName_);
-        shareMemoryBlock_ = nullptr;
+        if (item->shareMemoryBlock != nullptr) {
+            ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
+            item->shareMemoryBlock = nullptr;
+        }
+        if (item->eventNotifier != nullptr) {
+            item->eventNotifier = nullptr;
+        }
+        item->stackPreprocess = nullptr;
+        item->stackData = nullptr;
     }
-
-    if (eventNotifier_) {
-        eventNotifier_ = nullptr;
+    if (fpHookData_) {
+        fclose(fpHookData_);
+        fpHookData_ = nullptr;
     }
-
-    stackPreprocess_ = nullptr;
-    stackData_ = nullptr;
     return true;
 }
 
@@ -343,54 +423,41 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                                      const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
 {
     UNUSED_PARAMETER(config);
-    CHECK_TRUE(stackPreprocess_ != nullptr, false, "start StackPreprocess FAIL");
-    stackPreprocess_->StartTakeResults();
-
-    if (pid_ > 0) {
-        HILOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", pid_);
-        if (kill(pid_, SIGNAL_START_HOOK) == -1) {
-            const int bufSize = 256;
-            char buf[bufSize] = {0};
-            strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
-        }
-    } else {
-        HILOG_INFO(LOG_CORE, "StartPluginSession: pid_(%d) is less or equal zero.", pid_);
+    if (hookCtx_.empty()) {
+        return false;
     }
-
+    StartPluginSession();
     return true;
 }
 
 bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
-    // send signal
-    if (pid_ == 0 && hookService_ != nullptr) {
-        pid_ = hookService_->GetPid();
+    if (hookCtx_.empty()) {
+        return false;
     }
-    if (pid_ > 0) {
-        HILOG_INFO(LOG_CORE, "stop command : send 37 signal to process  %d", pid_);
-        if (kill(pid_, SIGNAL_STOP_HOOK) == -1) {
-            const int bufSize = 256;
-            char buf[bufSize] = {0};
-            strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "send 37 signal to process %d , error = %s", pid_, buf);
+    for (const auto& item : hookCtx_) {
+        if (item->pid > 0) {
+            HILOG_INFO(LOG_CORE, "stop command : send 37 signal to process  %d", item->pid);
+            if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
+                const int bufSize = 256;
+                char buf[bufSize] = {0};
+                strerror_r(errno, buf, bufSize);
+                HILOG_ERROR(LOG_CORE, "send 37 signal to process %d , error = %s", item->pid, buf);
+            }
+        } else {
+            HILOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
-    } else {
-        HILOG_INFO(LOG_CORE, "StopPluginSession: pid_(%d) is less or equal zero.", pid_);
+        CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
+        item->stackPreprocess->StopTakeResults();
+        HILOG_INFO(LOG_CORE, "StopTakeResults success");
+        if (hookConfig_.statistics_interval() > 0) {
+            item->stackPreprocess->FlushRecordStatistics();
+        }
+        if (item->stackData != nullptr) {
+            item->stackData->Close();
+        }
     }
 
-    CHECK_TRUE(stackPreprocess_ != nullptr, false, "stop StackPreprocess FAIL");
-    HILOG_INFO(LOG_CORE, "start StopTakeResults");
-    stackPreprocess_->StopTakeResults();
-    HILOG_INFO(LOG_CORE, "StopTakeResults success");
-    if (hookConfig_.statistics_interval() > 0) {
-        stackPreprocess_->FlushRecordStatistics();
-    }
-
-    // make sure TakeResults thread exit
-    if (stackData_) {
-        stackData_->Close();
-    }
     ResetStartupParam();
     return true;
 }
@@ -427,7 +494,7 @@ bool HookManager::ResetWriter(uint32_t pluginId)
     return true;
 }
 
-void HookManager::RegisterWriter(const BufferWriterPtr& writer)
+void HookManager::RegisterWriter(const std::shared_ptr<Writer> writer)
 {
     g_buffWriter = writer;
     return;
@@ -436,5 +503,94 @@ void HookManager::RegisterWriter(const BufferWriterPtr& writer)
 void HookManager::SetHookConfig(const NativeHookConfig& hookConfig)
 {
     hookConfig_ = hookConfig;
+}
+
+void HookManager::SethookStandalone(bool HookStandalone)
+{
+    isHookStandalone_ = HookStandalone;
+}
+
+void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    hookConfig_.set_pid(config->pid_);
+    if (!config->processName_.empty()) {
+        hookConfig_.set_process_name(config->processName_);
+    }
+    hookConfig_.set_filter_size(config->filterSize_);
+    hookConfig_.set_smb_pages(config->shareMemorySize_);
+    hookConfig_.set_max_stack_depth(config->maxStackDepth_);
+    hookConfig_.set_malloc_disable(config->mallocDisable_);
+    hookConfig_.set_mmap_disable(config->mmapDisable_);
+    hookConfig_.set_free_stack_report(config->freeStackData_);
+    hookConfig_.set_munmap_stack_report(config->munmapStackData_);
+    hookConfig_.set_malloc_free_matching_interval(config->mallocFreeMatchingInterval_);
+    hookConfig_.set_malloc_free_matching_cnt(config->mallocFreeMatchingCnt_);
+    hookConfig_.set_string_compressed(config->stringCompressed_);
+    hookConfig_.set_fp_unwind(config->fpUnwind_);
+    hookConfig_.set_blocked(config->blocked_);
+    hookConfig_.set_record_accurately(config->recordAccurately_);
+    hookConfig_.set_startup_mode(config->startupMode_);
+    hookConfig_.set_memtrace_enable(config->memtraceEnable_);
+    hookConfig_.set_offline_symbolization(config->offlineSymbolization_);
+    hookConfig_.set_callframe_compress(config->callframeCompress_);
+    hookConfig_.set_statistics_interval(config->statisticsInterval_);
+    hookConfig_.set_clock(COMMON::GetClockStr(config->clockId_));
+    hookConfig_.set_sample_interval(config->sampleInterval_);
+    hookConfig_.set_response_library_mode(config->responseLibraryMode_);
+}
+
+int32_t HookManager::CreatePluginSession()
+{
+    if (CreatePluginSession({})) {
+        return RET_OK;
+    }
+    return RET_ERR;
+}
+
+void HookManager::StartPluginSession()
+{
+    for (const auto& item : hookCtx_) {
+        if (item->stackPreprocess == nullptr) {
+            continue;
+        }
+        HILOG_ERROR(LOG_CORE, "StartPluginSession name: %s", item->processName.c_str());
+        item->stackPreprocess->StartTakeResults();
+        if (item->pid > 0) {
+            HILOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
+            if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
+                const int bufSize = 256;
+                char buf[bufSize] = {0};
+                strerror_r(errno, buf, bufSize);
+                HILOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
+            }
+        } else {
+            HILOG_INFO(LOG_CORE, "StartPluginSession: pid(%d) is less or equal zero.", item->pid);
+        }
+    }
+}
+
+void HookManager::WriteHookConfig()
+{
+    for (const auto& item : hookCtx_) {
+        if (item == nullptr) {
+            HILOG_ERROR(LOG_CORE, "HookManager WriteHookConfig failed");
+            return;
+        }
+        item->stackPreprocess->WriteHookConfig();
+    }
+}
+
+std::pair<int, int> HookManager::GetFds(int32_t pid, const std::string& name)
+{
+    for (const auto& item : hookCtx_) {
+        if (item->pid == pid || item->processName == name) {
+            if (item->pid == -1) {
+                item->pid = pid;
+            }
+            item->stackPreprocess->SetPid(pid);
+            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor()};
+        }
+    }
+    return {-1, -1};
 }
 }

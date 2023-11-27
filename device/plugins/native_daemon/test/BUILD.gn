@@ -12,9 +12,8 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import(
-    "//developtools/profiler/device/plugins/native_daemon/test/native_daemon.gni")
 import("../../../base/config.gni")
+import("native_daemon.gni")
 
 module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 
@@ -44,6 +43,12 @@ sources_base = [
   "../src/utilities.cpp",
   "../src/virtual_runtime.cpp",
   "../src/virtual_thread.cpp",
+  "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
+  "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
+  "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
+  "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
+  "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
+  "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
 ]
 
 common_deps = [
@@ -55,6 +60,7 @@ common_deps = [
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
   "../../../base:hiprofiler_base",
   "//third_party/bounds_checking_function:libsec_static",
+  "//third_party/openssl:libcrypto_shared",
   "//third_party/zlib:libz",
 ]
 
@@ -71,9 +77,7 @@ config("native_daemon_test_config") {
     ]
     ldflags += [ "--coverage" ]
   }
-  if (use_clang_coverage) {
-    defines += [ "COVERAGE_TEST" ]
-  }
+
   defines += [ "DEFAULT_LOG_LEVEL=LEVEL_VERBOSE" ]
   defines += [
     "HAVE_LIBUNWINDER=1",
@@ -98,6 +102,9 @@ config("native_daemon_test_config") {
     "//third_party/bounds_checking_function/include",
     "${native_daemon_path}/test/unittest/common/native/include",
     "${native_daemon_path}/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
   ]
 }
 

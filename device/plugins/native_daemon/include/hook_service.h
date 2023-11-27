@@ -23,24 +23,20 @@
 #include "service_entry.h"
 
 namespace OHOS::Developtools::NativeDaemon {
+class HookManager;
 class HookService : public ServiceBase {
 public:
-    HookService(int smbFd, int eventFd, int pid, const std::string& processName, const ClientConfig& clientConfig);
+    HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook);
     ~HookService();
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
-    inline int GetPid()
-    {
-        return pid_;
-    }
 private:
     bool StartService(const std::string& unixSocketName);
 
-    std::shared_ptr<ServiceEntry> serviceEntry_;
-    int smbFd_;
-    int eventFd_;
-    int pid_;
-    std::string processName_;
+private:
+    std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     ClientConfig clientConfig_;
+    std::shared_ptr<HookManager> hookMgr_{nullptr};
+    std::mutex mtx_;
 };
 }
 #endif // HOOK_SERVICE_H

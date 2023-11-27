@@ -1,0 +1,147 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("../../../../base/config.gni")
+import("../../test/native_daemon.gni")
+
+module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
+
+config("native_memory_profiler_sa_config") {
+  cflags = code_check_flag
+  ldflags = []
+  defines = []
+
+  if (native_daemon_test_coverage && is_ohos) {
+    defines += [ "TEST_COVERAGE" ]
+    cflags += [
+      "-fprofile-arcs",
+      "-ftest-coverage",
+    ]
+    ldflags += [ "--coverage" ]
+  }
+
+  defines += [ "DEFAULT_LOG_LEVEL=LEVEL_VERBOSE" ]
+  defines += [
+    "HAVE_LIBUNWIND=0",
+    "HAVE_LIBUNWINDER=1",
+    "HIPERF_DEBUG",
+    "CONFIG_NO_HILOG",
+    "NATIVEDAEMON_USE_CALLSTACK",
+    "LITE_PROTO",
+  ]
+  defines += [ "target_cpu_${target_cpu}" ]
+  if (use_jemalloc) {
+    defines += [ "USE_JEMALLOC" ]
+  }
+
+  include_dirs = [
+    "${OHOS_PROFILER_DIR}/device/base/include",
+    "../../src/",
+    "../../../api/include",
+    "../../../api/src",
+    "../../../native_hook/include",
+    "../../../native_hook/src",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
+    "//third_party/googletest/googletest/include/gtest",
+    "//third_party/bounds_checking_function/include",
+    "${native_daemon_path}/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
+  ]
+}
+
+ohos_unittest("native_memory_profiler_sa_ut") {
+  configs = [ ":native_memory_profiler_sa_config" ]
+  module_out_path = module_output_path
+  sources = [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
+    "../../../api/src/buffer_writer.cpp",
+    "../../../api/src/command_poller.cpp",
+    "../../src/call_stack.cpp",
+    "../../src/debug_logger.cpp",
+    "../../src/dwarf_encoding.cpp",
+    "../../src/get_thread_id.cpp",
+    "../../src/hook_manager.cpp",
+    "../../src/hook_service.cpp",
+    "../../src/register.cpp",
+    "../../src/stack_data_repeater.cpp",
+    "../../src/stack_preprocess.cpp",
+    "../../src/symbols_file.cpp",
+    "../../src/utilities.cpp",
+    "../../src/virtual_runtime.cpp",
+    "../../src/virtual_thread.cpp",
+    "unittest/native_memory_profiler_sa_client_manager_test.cpp",
+    "unittest/native_memory_profiler_sa_config_test.cpp",
+    "unittest/native_memory_profiler_sa_service_test.cpp",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps = [ "hilog:libhilog" ]
+  }
+
+  deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
+    "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
+    "//third_party/bounds_checking_function:libsec_static",
+    "//third_party/openssl:libcrypto_shared",
+    "//third_party/zlib:libz",
+  ]
+
+  if (hiprofiler_use_libunwind) {
+    deps += [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
+  }
+
+  use_exceptions = true
+  if (is_linux) {
+    static_link = false
+  }
+
+  external_deps += [
+    "c_utils:utils",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  if (hiprofiler_use_libunwinder) {
+    external_deps += [ "faultloggerd:libunwinder_static" ]
+  }
+
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"
+}
+
+group("unittest") {
+  testonly = true
+  deps = [ ":native_memory_profiler_sa_ut" ]
+}

@@ -144,7 +144,7 @@ SymbolsFile *VirtualThread::FindSymbolsFileByMap(std::shared_ptr<DfxMap> inMap) 
         missedSymbolFile_.end()) {
         missedSymbolFile_.emplace_back(inMap->name);
         HLOGW("NOT found symbol for map '%s'", inMap->name.c_str());
-        for (auto &file : symbolsFiles_)
+        for (auto &file : symbolsFiles_) {
             HLOGW(" we have '%s'", file->filePath_.c_str());
         }
     }

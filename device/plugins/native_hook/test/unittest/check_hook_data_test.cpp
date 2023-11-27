@@ -104,6 +104,10 @@ public:
                 command_.push_back(const_cast<char*>("-r"));
                 command_.push_back(const_cast<char*>("true"));
             }
+            if (responseLibraryMode_) {
+                command_.push_back(const_cast<char*>("-so"));
+                command_.push_back(const_cast<char*>("true"));
+            }
             command_.push_back(nullptr);
             execv(DEFAULT_NATIVE_DAEMON_PATH.c_str(), command_.data());
             _exit(1);
@@ -408,6 +412,7 @@ public:
     bool callframeCompress_ = false;
     bool stringCompress_ = false;
     bool rawString_ = false;
+    bool responseLibraryMode_ = false;
     std::string outFile_ = "";
     std::string outFileType_ = "";
     std::string mode_[2] = {"dwarf", "fp"};
@@ -880,6 +885,42 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
         }
         EXPECT_TRUE(findFrameInfo);
         EXPECT_TRUE(findSymbolName);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook raw responseLibraryMode normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Level3)
+{
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 6;
+        outFileType_ = "responseLibraryMode";
+        modeIndex_ = i;
+        responseLibraryMode_ = true;
+        offlineSymbolization_ = true;
+        StartMallocProcess();
+        StartAndStopHook();
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        bool foundSymbolTab = false;
+        bool foundMapsInfo = false;
+
+        while (getline(infile, buf)) {
+            if (buf.find("symbol_tab") != std::string::npos) {
+                foundSymbolTab = true;
+            }
+            if (buf.find("maps_info") != std::string::npos) {
+                foundMapsInfo = true;
+            }
+        }
+        EXPECT_TRUE(foundSymbolTab);
+        EXPECT_TRUE(foundMapsInfo);
     }
 }
 }

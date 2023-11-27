@@ -16,29 +16,24 @@
 #include "schedule_task_manager.h"
 
 #include <ctime>
-#include <iostream>
+#include <fcntl.h>
 #include <mutex>
 #include <pthread.h>
-
-#include "logging.h"
-#include "securec.h"
+#include <cstring>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+#include <sys/timerfd.h>
+#include <unistd.h>
 
 namespace {
-constexpr std::chrono::milliseconds POLL_INTERVAL = std::chrono::milliseconds(5000);
-constexpr std::chrono::milliseconds MIN_REPEAT_INTERVAL = std::chrono::milliseconds(10);
-constexpr std::chrono::milliseconds ZERO_INTERVAL = std::chrono::milliseconds(0);
+constexpr int32_t TIME_BASE = 1000; // Time progression rate.
+constexpr int32_t FIRST_TIME = 10; // The start time of the first task is 10 nanoseconds.
+constexpr int32_t EPOLL_EVENT_MAX = 1024;
 } // namespace
-
-ScheduleTaskManager& ScheduleTaskManager::GetInstance()
-{
-    static ScheduleTaskManager instance;
-    return instance;
-}
 
 ScheduleTaskManager::ScheduleTaskManager()
 {
-    runScheduleThread_ = true;
-    scheduleThread_ = std::thread(&ScheduleTaskManager::ScheduleThread, this);
+    StartThread();
 }
 
 ScheduleTaskManager::~ScheduleTaskManager()
@@ -52,139 +47,109 @@ void ScheduleTaskManager::Shutdown()
     if (!runScheduleThread_.compare_exchange_strong(expect, false)) {
         return;
     }
-    taskCv_.notify_one();
+    uint64_t value = 1;
+    write(stopFd_, &value, sizeof(value));
     if (scheduleThread_.joinable()) {
         scheduleThread_.join();
     }
-    taskMap_.clear();
-    timeMap_.clear();
-}
-
-std::chrono::milliseconds ScheduleTaskManager::NormalizeInterval(std::chrono::milliseconds interval)
-{
-    if (interval <= ZERO_INTERVAL) {
-        return ZERO_INTERVAL;
+    for (const auto& [timerFd, func] : tasks_) {
+        close(timerFd);
     }
-    if (interval < MIN_REPEAT_INTERVAL) {
-        return MIN_REPEAT_INTERVAL;
+    close(epollFd_);
+    close(stopFd_);
+}
+
+int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once)
+{
+    int32_t timerFd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+    if (timerFd == -1) {
+        HILOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd create failed");
+        return -1;
     }
-    return interval / MIN_REPEAT_INTERVAL * MIN_REPEAT_INTERVAL;
+
+    std::function<void(void)> func;
+    struct itimerspec time;
+    if (once) {
+        if (interval == 0) {
+            HILOG_ERROR(LOG_CORE, "the interval parameters of a single execution cannot be 0");
+            return -1;
+        }
+        time.it_value.tv_sec = interval / TIME_BASE;
+        time.it_value.tv_nsec = (interval % TIME_BASE) * TIME_BASE * TIME_BASE;
+        time.it_interval.tv_sec = 0;
+        time.it_interval.tv_nsec = 0;
+        func = std::bind(&ScheduleTaskManager::HandleSingleTask, this, timerFd, callback);
+    } else {
+        time.it_value.tv_sec = 0;
+        time.it_value.tv_nsec = FIRST_TIME;
+        time.it_interval.tv_sec = interval / TIME_BASE;
+        time.it_interval.tv_nsec = (interval % TIME_BASE) * TIME_BASE * TIME_BASE;
+        func = callback;
+    }
+
+    int32_t ret = timerfd_settime(timerFd, 0, &time, NULL);
+    if (ret == -1) {
+        HILOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd settime failed");
+        return -1;
+    }
+
+    struct epoll_event evt;
+    evt.data.fd = timerFd;
+    evt.events = EPOLLIN;
+    epoll_ctl(epollFd_, EPOLL_CTL_ADD, timerFd, &evt);
+    tasks_[timerFd] = std::move(func);
+    return timerFd;
 }
 
-bool ScheduleTaskManager::ScheduleTask(const std::string& name,
-                                       const std::function<void(void)>& callback,
-                                       const std::chrono::milliseconds& repeatInterval)
+bool ScheduleTaskManager::UnscheduleTask(const int32_t timerFd)
 {
-    return ScheduleTask(name, callback, repeatInterval, repeatInterval);
-}
-
-bool ScheduleTaskManager::ScheduleTask(const std::string& name,
-                                       const std::function<void(void)>& callback,
-                                       const std::chrono::milliseconds& repeatInterval,
-                                       std::chrono::milliseconds initialDelay)
-{
-    auto currentTime = Clock::now();
-    auto task = std::make_shared<Task>();
-
-    task->name = name;
-    task->callback = callback;
-    task->initialDelay = initialDelay;
-    task->repeatInterval = NormalizeInterval(repeatInterval);
-    task->nextRunTime = currentTime + initialDelay;
-
-    std::lock_guard<std::mutex> guard(taskMutex_);
-    CHECK_TRUE(taskMap_.count(name) <= 0, false, "task name %s already exists!", name.c_str());
-
-    taskMap_[name] = task;
-    timeMap_.insert(std::make_pair(task->nextRunTime, task));
-    taskCv_.notify_one();
-
-    DumpTask(task);
-    HILOG_DEBUG(LOG_CORE, "add schedule %s done, total: %zu", name.c_str(), taskMap_.size());
-    return true;
-}
-
-bool ScheduleTaskManager::UnscheduleTask(const std::string& name)
-{
-    std::unique_lock<std::mutex> lck(taskMutex_);
-    HILOG_DEBUG(LOG_CORE, "del schedule %s start, total: %zu", name.c_str(), taskMap_.size());
-    auto it = taskMap_.find(name);
-    if (it != taskMap_.end()) {
-        taskMap_.erase(it);
-        HILOG_DEBUG(LOG_CORE, "del schedule %s done, remain: %zu", name.c_str(), taskMap_.size());
+    if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
+        close(timerFd);
+        epoll_ctl(epollFd_, EPOLL_CTL_DEL, timerFd, NULL);
+        tasks_.erase(timerFd);
         return true;
     }
-    HILOG_DEBUG(LOG_CORE, "del schedule %s pass, total: %zu", name.c_str(), taskMap_.size());
     return false;
 }
-
-ScheduleTaskManager::WeakTask ScheduleTaskManager::TakeFront()
-{
-    std::unique_lock<std::mutex> lck(taskMutex_);
-
-    // thread wait until task insert or shutdown
-    while (timeMap_.empty() && runScheduleThread_) {
-        taskCv_.wait_for(lck, POLL_INTERVAL);
-    }
-
-    if (!runScheduleThread_) {
-        return {};
-    }
-
-    auto task = timeMap_.begin()->second;
-    timeMap_.erase(timeMap_.begin());
-    return task;
-}
-
-void ScheduleTaskManager::DumpTask(const SharedTask& task) {}
 
 void ScheduleTaskManager::ScheduleThread()
 {
     pthread_setname_np(pthread_self(), "SchedTaskMgr");
+    uint64_t exp;
     while (runScheduleThread_) {
-        // take front task from task queue
-        WeakTask weakTask = TakeFront();
-        if (!runScheduleThread_) {
-            break;
-        }
+        struct epoll_event events[EPOLL_EVENT_MAX];
+        int32_t nfd = epoll_wait(epollFd_, events, EPOLL_EVENT_MAX, -1);
+        if (nfd > 0) {
+            for (int32_t i = 0; i < nfd; ++i) {
+                if (events[i].data.fd == stopFd_) {
+                    return;
+                }
 
-        TimePoint targetTime;
-        {
-            auto taskTime = weakTask.lock(); // promote to shared_ptr
-            if (!taskTime) {
-                // task cancelled with UnschduleTask or not a repeat task
-                HILOG_INFO(LOG_CORE, "front task cacelled or not repeat task");
-                continue;
+                int32_t ret = read(events[i].data.fd, &exp, sizeof(uint64_t));
+                if (ret == sizeof(uint64_t)) {
+                    if (tasks_.find(events[i].data.fd) != tasks_.end()) {
+                        tasks_[events[i].data.fd]();
+                    }
+                }
             }
-            targetTime = taskTime->nextRunTime;
-        }
-
-        // delay to target time
-        auto currentTime = Clock::now();
-        if (targetTime >= currentTime) {
-            std::this_thread::sleep_for(targetTime - currentTime);
-        }
-
-        auto taskRepeat = weakTask.lock();
-        if (!taskRepeat) {
-            // task cancelled with UnschduleTask
-            HILOG_INFO(LOG_CORE, "front task cacelled");
-            continue;
-        }
-
-        // call task callback
-        DumpTask(taskRepeat);
-        taskRepeat->callback();
-        taskRepeat->nextRunTime = targetTime + taskRepeat->repeatInterval;
-
-        if (taskRepeat->repeatInterval.count() != 0) {
-            // repeat task, re-insert task to timeMap
-            std::unique_lock<std::mutex> guard(taskMutex_);
-            timeMap_.insert(std::make_pair(taskRepeat->nextRunTime, taskRepeat));
-        } else {
-            // not a repeat task.
-            std::unique_lock<std::mutex> guard(taskMutex_);
-            taskMap_.erase(taskRepeat->name);
         }
     }
+}
+
+void ScheduleTaskManager::HandleSingleTask(int32_t fd, std::function<void(void)> callback)
+{
+    callback();
+    UnscheduleTask(fd);
+}
+
+void ScheduleTaskManager::StartThread()
+{
+    epollFd_ = epoll_create(0);
+    stopFd_ = eventfd(0, EFD_NONBLOCK); // Specifically designed for stopping epoll_wait.
+    struct epoll_event evt;
+    evt.data.fd = stopFd_;
+    evt.events = EPOLLIN;
+    epoll_ctl(epollFd_, EPOLL_CTL_ADD, stopFd_, &evt);
+
+    scheduleThread_ = std::thread(&ScheduleTaskManager::ScheduleThread, this);
 }

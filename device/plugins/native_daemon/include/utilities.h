@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -87,33 +88,47 @@ constexpr uint64_t KILO = 1024;
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+namespace {
 const std::string EMPTY_STRING = "";
+constexpr int32_t STRING_POOL_SIZE = 4000;
+}
 
 // string function
-static class StringViewMemoryHold {
+class StringViewMemoryHold {
 public:
-    ~StringViewMemoryHold()
+    const char *HoldStringView(const std::string& view)
     {
-        for (auto &p : holder_) {
-            delete[] p;
-        }
-    }
-    const char *HoldStringView(std::string_view view)
-    {
-        if (view.size() == 0) {
-            return "";
-        }
-        // for null end
-        char *p = new char[view.size() + 1];
-        p[view.size()] = '\0';
-        std::copy(view.data(), view.data() + view.size(), p);
-        holder_.emplace_back(p);
-        return p;
+        pthread_spin_lock(&spin_lock_);
+        const char* str = stringSet_.emplace(view).first->data();
+        pthread_spin_unlock(&spin_lock_);
+        return str;
     };
 
+    static StringViewMemoryHold& GetInstance()
+    {
+        static StringViewMemoryHold s;
+        return s;
+    }
+
+    void Clear()
+    {
+        pthread_spin_lock(&spin_lock_);
+        stringSet_.clear();
+        pthread_spin_unlock(&spin_lock_);
+    }
+
 private:
-    std::vector<char *> holder_;
-} memHolder;
+    StringViewMemoryHold()
+    {
+        pthread_spin_init(&spin_lock_, PTHREAD_PROCESS_PRIVATE);
+    }
+    ~StringViewMemoryHold()
+    {
+        pthread_spin_destroy(&spin_lock_);
+    }
+    std::unordered_set<std::string> stringSet_{STRING_POOL_SIZE};
+    pthread_spinlock_t spin_lock_;
+};
 
 std::string StringReplace(std::string source, const std::string &from, const std::string &to);
 
@@ -129,7 +144,7 @@ std::string VectorToString(const std::vector<T> &items)
     } else {
         std::string itemsString;
         const std::string split = ",";
-        for (auto item : items) {
+        for (auto& item : items) {
             if (!itemsString.empty())
                 itemsString.append(split);
             if constexpr (std::is_same<T, std::string>::value) {
@@ -299,6 +314,7 @@ bool PowerOfTwo(int n);
 #ifndef MAP_FAILED
 #define MAP_FAILED MMAP_FAILED
 #endif
+int32_t GetProcessPid(const std::string& processName);
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

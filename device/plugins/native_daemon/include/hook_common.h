@@ -101,9 +101,10 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     void Reset()
     {
         filterSize = -1;
-        shareMemroySize = 0;
+        shareMemorySize = 0;
         clockId = CLOCK_REALTIME;
         maxStackDepth = 0;
+        sampleInterval = 0;
         mallocDisable = false;
         mmapDisable = false;
         freeStackData = false;
@@ -111,21 +112,24 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         fpunwind = false;
         isBlocked = false;
         memtraceEnable = false;
+        responseLibraryMode = false;
     }
 
     std::string ToString()
     {
         std::stringstream ss;
-        ss << "filterSize:" << filterSize << ", shareMemroySize:" << shareMemroySize
+        ss << "filterSize:" << filterSize << ", shareMemorySize:" << shareMemorySize
             << ", clockId:" << clockId << ", maxStackDepth:" << std::to_string(maxStackDepth)
             << ", mallocDisable:" << mallocDisable << ", mmapDisable:" << mmapDisable
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
-            << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable;
+            << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
+            << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode;
         return ss.str();
     }
 
     int32_t filterSize = -1;
-    uint32_t shareMemroySize = 0;
+    uint32_t shareMemorySize = 0;
+    uint32_t sampleInterval = 0;
     clockid_t clockId = CLOCK_REALTIME;
     uint8_t maxStackDepth = 0;
     bool mallocDisable = false;
@@ -135,6 +139,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool fpunwind = false;
     bool isBlocked = false;
     bool memtraceEnable = false;
+    bool responseLibraryMode = false;
 };
 
 struct StandaloneRawStack {

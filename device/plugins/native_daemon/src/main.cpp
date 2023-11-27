@@ -22,6 +22,7 @@
 #include "writer_adapter.h"
 #include "hook_standalone.h"
 #include "hook_common.h"
+#include "native_memory_profiler_sa_service.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -52,12 +53,18 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
         if (args[idx] == "-o") {
             hookData.fileName = args[idx + 1].c_str();
         } else if (args[idx] == "-p") {
-            hookData.pid = std::stoi(args[idx + 1], nullptr);
-            if (std::to_string(hookData.pid) != args[idx + 1]) {
-                return false;
+            std::vector<std::string> pids = StringSplit(args[idx + 1], ",");
+            hookData.pids.insert(pids.begin(), pids.end());
+            for (auto iter = hookData.pids.begin(); iter != hookData.pids.end();) {
+                if (!ProcessExist(*iter)) {
+                    iter = hookData.pids.erase(iter);
+                    printf("process does not exist %s\n", iter->c_str());
+                } else {
+                    ++iter;
+                }
             }
-            if (!ProcessExist(args[idx + 1])) {
-                printf("process does not exist\n");
+            if (hookData.pids.empty()) {
+                printf("all process does not exist\n");
                 return false;
             }
         } else if (args[idx] == "-n") {
@@ -86,7 +93,7 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
             }
         } else if (args[idx] == "-F") {
             if (idx + 1 < args.size()) {
-                hookData.performance_filename = args[idx + 1];
+                hookData.performanceFilename = args[idx + 1];
             }
         } else if (args[idx] == "-u") {
             std::string unwind = args[idx + 1];
@@ -101,6 +108,11 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
         } else if (args[idx] == "-S") {
             hookData.statisticsInterval = std::stoi(args[idx + 1], nullptr);
             if (std::to_string(hookData.statisticsInterval) != args[idx + 1]) {
+                return false;
+            }
+        } else if (args[idx] == "-i") {
+            hookData.sampleInterval = std::stoi(args[idx + 1], nullptr);
+            if (std::to_string(hookData.sampleInterval) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-O") {
@@ -143,6 +155,16 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
                 return false;
             }
             printf("set rawString mode:%s\n", rawString.c_str());
+        } else if (args[idx] == "-so") {
+            std::string rawString = args[idx + 1];
+            if (rawString == "false") {
+                hookData.responseLibraryMode = false;
+            } else if (rawString == "true") {
+                hookData.responseLibraryMode = true;
+            } else {
+                return false;
+            }
+            printf("set responseLibraryMode mode:%s\n", rawString.c_str());
         } else {
             printf("args[%zu] = %s\n", idx, args[idx].c_str());
             return false;
@@ -157,10 +179,6 @@ bool VerifyCommand(std::vector<std::string> args, HookData& hookData)
     if ((args.size() % VC_ARG_TWAIN) != 0) {
         return false;
     }
-    hookData.pid = 0;
-    hookData.duration = 0;
-    hookData.performance_filename = "./performance.txt";
-    hookData.fileName = "";
     if (!ParseCommand(args, hookData)) {
         return false;
     }
@@ -168,7 +186,7 @@ bool VerifyCommand(std::vector<std::string> args, HookData& hookData)
         printf("Please configure a multiple of 4096 for the shared memory size\n");
         return false;
     }
-    if (!hookData.fileName.empty() && (!hookData.processName.empty() || hookData.pid > 0)) {
+    if (!hookData.fileName.empty() && (!hookData.processName.empty() || hookData.pids.size() > 0)) {
         return true;
     }
     return false;
@@ -177,19 +195,19 @@ bool VerifyCommand(std::vector<std::string> args, HookData& hookData)
 void GetHookedProceInfo(HookData& hookData)
 {
     printf("Record file = %s, apply sharememory size = %u\n", hookData.fileName.c_str(), hookData.smbSize);
-    if (hookData.pid > 0) {
-        printf("Please send signal 36 to target process %d\n", hookData.pid);
+    if (hookData.pids.size() > 0) {
+        for (const auto& pid : hookData.pids) {
+            printf("hook target process %s start\n", pid.c_str());
+        }
     } else if (!hookData.processName.empty()) {
         int pidValue = -1;
         const std::string processName = hookData.processName;
         bool isExist = COMMON::IsProcessExist(processName, pidValue);
         if (!isExist) {
-            printf("Please start process %s\n", hookData.processName.c_str());
+            hookData.startupMode = true;
+            printf("startup mode ,Please start process %s\n", hookData.processName.c_str());
         } else {
-            printf("If you want to hook current process, please send signal 36 to target process %d\n", pidValue);
-            printf("If you want to hook new process, please\n");
-            printf("1.param set libc.hook_mode startup:%s\n", hookData.processName.c_str());
-            printf("2.restart process %s\n", hookData.processName.c_str());
+            hookData.pids.emplace(std::to_string(pidValue));
         }
     }
 
@@ -217,41 +235,51 @@ int main(int argc, char* argv[])
     }
 
     if (argc > 1) {
-        std::vector<std::string> args;
-        for (int i = 1; i < argc; i++) {
-            args.push_back(argv[i]);
-        }
-        HookData hookData = {0, 0, 0, 0, MAX_UNWIND_DEPTH, 0, "", "", "",
-                             false, false, false, false, false,
-                             false, false, false, false};
-        if (VerifyCommand(args, hookData)) {
-            GetHookedProceInfo(hookData);
+        if (argc == 2 && strcmp(argv[1], "sa") == 0) {
+            if (!OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaService::StartServiceAbility()) {
+                return 0;
+            }
+            while (true) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
+            }
         } else {
-            std::string help = R"(Usage: native_daemon
-            [-o file]
-            [-s smb_size]
-            <-n process_name>
-            <-f filter_size>
-            <-d max_stack_depth>
-            <-u fp|dwarf>
-            <-S statistics_interval>
-            <-O offline_symbolization true|false>
-            <-C callframe_compress true|false>
-            <-c string_compressed true|false>
-            <-r raw_string true|false>
-            )";
-            printf("%s\n", help.c_str());
-            return 0;
+            std::vector<std::string> args;
+            for (int i = 1; i < argc; i++) {
+                args.push_back(argv[i]);
+            }
+            HookData hookData;
+            if (VerifyCommand(args, hookData)) {
+                GetHookedProceInfo(hookData);
+            } else {
+                std::string help = R"(Usage: native_daemon
+                [-o file]
+                [-s smb_size]
+                <-n process_name>
+                <-p pids>
+                <-f filter_size>
+                <-d max_stack_depth>
+                <-i sample_interval>
+                <-u fp|dwarf>
+                <-S statistics_interval>
+                <-O offline_symbolization true|false>
+                <-C callframe_compress true|false>
+                <-c string_compressed true|false>
+                <-r raw_string true|false>
+                <-so responseLibraryMode true|false>
+                )";
+                printf("%s\n", help.c_str());
+                return 0;
+            }
         }
     } else {
         auto hookManager = std::make_shared<HookManager>();
         CHECK_NOTNULL(hookManager, 1, "create PluginManager FAILED!");
-
         auto commandPoller = std::make_shared<CommandPoller>(hookManager);
         CHECK_NOTNULL(commandPoller, 1, "create CommandPoller FAILED!");
         CHECK_TRUE(commandPoller->OnConnect(), 1, "connect FAILED");
         hookManager->SetCommandPoller(commandPoller);
         hookManager->RegisterAgentPlugin("nativehook");
+
         while (true) {
             std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
         }

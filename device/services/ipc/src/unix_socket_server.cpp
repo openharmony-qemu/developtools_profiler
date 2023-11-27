@@ -35,12 +35,14 @@ UnixSocketServer::UnixSocketServer()
 
 UnixSocketServer::~UnixSocketServer()
 {
-    if (socketHandle_ != -1) {
-        HILOG_DEBUG(LOG_CORE, "close UnixSocketServer");
-        close(socketHandle_);
-        socketHandle_ = -1;
-        unlink(sAddrName_.c_str());
+    if (getuid() == 0) {
+        if (socketHandle_ != -1) {
+            HILOG_DEBUG(LOG_CORE, "close UnixSocketServer");
+            close(socketHandle_);
+            unlink(sAddrName_.c_str());
+        }
     }
+    socketHandle_ = -1;
 
     if (acceptThread_.joinable()) {
         acceptThread_.join();
@@ -59,13 +61,17 @@ void UnixSocketServer::UnixSocketAccept()
     int epfd = epoll_create(1);
     struct epoll_event evt;
     evt.data.fd = socketHandle_;
-    evt.events = EPOLLIN | EPOLLET | EPOLLHUP;
+    evt.events = EPOLLIN | EPOLLHUP;
     CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, socketHandle_, &evt) != -1, NO_RETVAL, "Unix Socket Server Exit");
     while (socketHandle_ != -1) {
         struct epoll_event events[10];
-        int nfds = epoll_wait(epfd, &events[0], 1, 1000);  // timeout value set 1000.
-        if (nfds > 0) {
-            if (events[0].events & EPOLLIN) {
+        int nfds = epoll_wait(epfd, events, 10, 1000);  // timeout value set 1000.
+        if (nfds == -1) {
+            HILOG_ERROR(LOG_CORE, "UnixSocketServer epoll_wait failed, errno: %s", strerror(errno));
+            return;
+        }
+        for (int32_t i = 0; i < nfds; ++i) {
+            if (events[i].events & EPOLLIN) {
                 int clientSocket = accept(socketHandle_, nullptr, nullptr);
                 HILOG_INFO(LOG_CORE, "Accept A Client %d", clientSocket);
 
@@ -80,17 +86,16 @@ void UnixSocketServer::UnixSocketAccept()
                 } else {
                     HILOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
                 }
-            } else if (events[0].events & EPOLLHUP) {
+            } else if (events[i].events & EPOLLHUP) {
                 struct epoll_event delEvt;
-                delEvt.data.fd = events[0].data.fd;
+                delEvt.data.fd = events[i].data.fd;
                 delEvt.events = EPOLLHUP;
-                epoll_ctl(epfd, EPOLL_CTL_DEL, events[0].data.fd, &delEvt);
-
-                if (socketClients_.find(events[0].data.fd) != socketClients_.end()) {
+                epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &delEvt);
+                if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
                     HILOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu", socketClients_.size());
-                    socketClients_.erase(events[0].data.fd);
+                    socketClients_.erase(events[i].data.fd);
                 } else {
-                    HILOG_ERROR(LOG_CORE, "Client %d not exist", events[0].data.fd);
+                    HILOG_ERROR(LOG_CORE, "Client %d not exist", events[i].data.fd);
                 }
             }
         }
@@ -101,6 +106,7 @@ void UnixSocketServer::UnixSocketAccept()
 namespace {
 const int UNIX_SOCKET_LISTEN_COUNT = 5;
 }
+
 bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
 {
     CHECK_TRUE(socketHandle_ == -1, false, "StartServer FAIL socketHandle_ != -1");
