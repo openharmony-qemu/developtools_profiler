@@ -42,6 +42,7 @@ bool ReadFile(const std::string& filePath, const std::vector<std::string>& valid
 std::string GetErrorMsg();
 std::string GetTimeStr();
 clockid_t GetClockId(const std::string& clockIdStr);
+std::string GetClockStr(const int32_t clockId);
 void AdaptSandboxPath(std::string& filePath, int pid);
 int32_t GetPackageUid(const std::string &name);
 bool GetCurrentUserId(int32_t &userId);

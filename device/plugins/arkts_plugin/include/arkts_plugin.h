@@ -70,6 +70,8 @@ private:
     };
     std::atomic<SocketState> socketState_{SocketState::UNINITED};
     uint8_t commandResult_{0};
+    ScheduleTaskManager scheduleTaskManager_;
+    int32_t snapshotScheduleTaskFd_;
 };
 
 #endif // ARKTS_PLUGIN_H

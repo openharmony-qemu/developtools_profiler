@@ -18,8 +18,12 @@
 #include <memory>
 #include <sys/statvfs.h>
 #include <unistd.h>
+#include <cstdio>
 
 #include "common.h"
+#ifdef LITE_PROTO
+#include "common_types_lite.pb.h"
+#endif
 #include "logging.h"
 
 using CharPtr = std::unique_ptr<char>::pointer;
@@ -32,8 +36,15 @@ constexpr int SPLIT_FILE_MIN_SIZE = 200;    // split file min size
 constexpr int SPLIT_FILE_DEFAULT_NUM = 10;  // split file default num
 } // namespace
 
-TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path, false, 0, 0)
+TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path, false, 0, 0) {}
+
+TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
 {
+    if (write(fd_, &header_, sizeof(header_)) != sizeof(header_)) {
+        HILOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
+    }
+    isWriteFd_ = true;
+    (void)FlushStream();
 }
 
 TraceFileWriter::TraceFileWriter(const std::string& path, bool splitFile, uint32_t splitFileMaxSizeMb,
@@ -75,28 +86,74 @@ bool TraceFileWriter::SetPluginConfig(const void* data, size_t size)
     return true;
 }
 
+#ifdef LITE_PROTO
+void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion)
+{
+    LITE::ProfilerPluginData pluginData;
+    pluginData.set_name(pluginName);
+    pluginData.set_data(data);
+    if (!pluginVersion.empty()) {
+        pluginData.set_version(pluginVersion);
+        pluginData.set_status(0);
+
+        struct timespec ts = { 0, 0 };
+        clock_gettime(CLOCK_REALTIME, &ts);
+        pluginData.set_tv_sec(ts.tv_sec);
+        pluginData.set_tv_nsec(ts.tv_nsec);
+        pluginData.set_clock_id(LITE::ProfilerPluginData::CLOCKID_REALTIME);
+    }
+
+    std::vector<char> msgData(pluginData.ByteSizeLong());
+    if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
+        HILOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
+    }
+
+    Write(msgData.data(), msgData.size());
+}
+#endif
+
 void TraceFileWriter::SetTimeStamp()
+{
+    header_.data_.boottime = headerDataTime_.boottime;
+    header_.data_.realtime = headerDataTime_.realtime;
+    header_.data_.realtimeCoarse = headerDataTime_.realtimeCoarse;
+    header_.data_.monotonic = headerDataTime_.monotonic;
+    header_.data_.monotonicCoarse = headerDataTime_.monotonicCoarse;
+    header_.data_.monotonicRaw = headerDataTime_.monotonicRaw;
+    header_.data_.durationNs = headerDataTime_.durationNs;
+}
+
+void TraceFileWriter::SetTimeSource()
 {
     constexpr uint64_t nanoSeconds = 1000000000;
     struct timespec ts;
     clock_gettime(CLOCK_BOOTTIME, &ts);
-    header_.data_.boottime = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
+    headerDataTime_.boottime = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec);
     clock_gettime(CLOCK_REALTIME, &ts);
-    header_.data_.realtime = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
+    headerDataTime_.realtime = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec);
     clock_gettime(CLOCK_REALTIME_COARSE, &ts);
-    header_.data_.realtimeCoarse = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
+    headerDataTime_.realtimeCoarse = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec);
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    header_.data_.monotonic = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
+    headerDataTime_.monotonic = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec);
     clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
-    header_.data_.monotonicCoarse = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
+    headerDataTime_.monotonicCoarse = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec);
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-    header_.data_.monotonicRaw = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
+    headerDataTime_.monotonicRaw = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec);
+}
+
+void TraceFileWriter::SetDurationTime()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_BOOTTIME, &ts);
+    constexpr uint64_t nanoSeconds = 1000000000;
+    auto currBoottime = static_cast<uint64_t>(ts.tv_sec) * nanoSeconds + static_cast<uint64_t>(ts.tv_nsec);
+    headerDataTime_.durationNs = currBoottime - headerDataTime_.boottime;
 }
 
 bool TraceFileWriter::WriteHeader()
@@ -151,17 +208,25 @@ long TraceFileWriter::Write(const void* data, size_t size)
     }
 
     uint32_t dataLen = size;
-    CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
+    if (isWriteFd_) {
+        auto ret = write(fd_, reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
+        CHECK_TRUE(ret == sizeof(dataLen), 0, "write raw buffer data failed!");
+        ret = write(fd_, data, size);
+        CHECK_TRUE(ret == size, 0, "write raw buffer data failed!, dataSize: %zu, errno: %s", size, strerror(errno));
+    } else {
+        CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
 
-    // write 4B data length.
-    stream_.write(reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
-    CHECK_TRUE(stream_, 0, "binary file %s write raw buffer size failed!", path_.c_str());
-    CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(&dataLen), sizeof(dataLen)),
-        0, "Add payload for size %u FAILED!", dataLen);
+        // write 4B data length.
+        stream_.write(reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
+        CHECK_TRUE(stream_, 0, "binary file %s write raw buffer size failed!", path_.c_str());
+        CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(&dataLen), sizeof(dataLen)),
+            0, "Add payload for size %u FAILED!", dataLen);
 
-    // write data bytes
-    stream_.write(reinterpret_cast<ConstCharPtr>(data), size);
-    CHECK_TRUE(stream_, 0, "binary file %s write raw buffer data failed!", path_.c_str());
+        // write data bytes
+        stream_.write(reinterpret_cast<ConstCharPtr>(data), size);
+        CHECK_TRUE(stream_, 0, "binary file %s write raw buffer data failed!", path_.c_str());
+    }
+
     CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(const_cast<void*>(data)), size),
         0, "Add payload for data bytes %zu FAILED!", size);
 
@@ -179,6 +244,7 @@ bool TraceFileWriter::IsSplitFile(uint32_t size)
             path_.c_str(), dataSize_, size, splitFileMaxSize_);
 
         // update old file header
+        SetDurationTime();
         Finish();
         if (stream_.is_open()) {
             stream_.close();
@@ -189,6 +255,7 @@ bool TraceFileWriter::IsSplitFile(uint32_t size)
         if (!WriteHeader()) {
             return false;
         }
+        SetTimeSource();
 
         // write the plugin config of the new file
         for (size_t i = 0; i < pluginConfigsData_.size(); i++) {
@@ -220,19 +287,27 @@ bool TraceFileWriter::Finish()
 {
     // update header info
     helper_.Update(header_);
-
-    // move write position to begin of file
-    CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
-    stream_.seekp(0);
-    CHECK_TRUE(stream_, false, "seek write position to head for %s failed!", path_.c_str());
-
     SetTimeStamp(); // add timestamp in header
 
-    // write final header
-    stream_.write(reinterpret_cast<CharPtr>(&header_), sizeof(header_));
-    CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
-    CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
-    HILOG_INFO(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_, writeCount_);
+    if (isWriteFd_) {
+        if (lseek(fd_, 0, SEEK_SET) == -1) {
+            return false;
+        }
+        auto ret = write(fd_, &header_, sizeof(header_));
+        CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
+    } else {
+        // move write position to begin of file
+        CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
+        stream_.seekp(0);
+        CHECK_TRUE(stream_, false, "seek write position to head for %s failed!", path_.c_str());
+
+        // write final header
+        stream_.write(reinterpret_cast<CharPtr>(&header_), sizeof(header_));
+        CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
+        CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
+        HILOG_INFO(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
+                   writeCount_);
+    }
     return true;
 }
 
@@ -243,9 +318,11 @@ bool TraceFileWriter::Flush()
 
 bool TraceFileWriter::FlushStream()
 {
-    CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
-    CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
-    HILOG_INFO(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_, writeCount_);
+    if (!isWriteFd_) {
+        CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
+        CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
+    }
+    HILOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_, writeCount_);
     return true;
 }
 

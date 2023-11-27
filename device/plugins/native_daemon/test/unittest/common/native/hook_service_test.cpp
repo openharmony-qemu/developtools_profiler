@@ -17,10 +17,13 @@
 #include <hwext/gtest-tag.h>
 
 #include "hook_service.h"
+#include "hook_manager.h"
 #include "hook_socket_client.h"
 #include "socket_context.h"
 #include "share_memory_allocator.h"
 #include "event_notifier.h"
+#include "command_poller.h"
+#include "native_hook_config.pb.h"
 
 using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -41,19 +44,33 @@ public:
  */
 HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level1)
 {
-    auto shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("hooknativesmb", 4096);
-    ASSERT_TRUE(shareMemoryBlock != nullptr);
-    auto eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
-    ASSERT_TRUE(eventNotifier != nullptr);
-    int smbFd = shareMemoryBlock->GetfileDescriptor();
-    int eventFd = eventNotifier->GetFd();
+    std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
+    ASSERT_TRUE(hookManager != nullptr);
+
+    ProfilerPluginConfig config;
+    config.set_name("nativehook");
+    config.set_plugin_sha256("");
+    config.set_sample_interval(20);
+
+    NativeHookConfig hookConfig;
+    hookConfig.set_pid(1);
+    hookConfig.set_smb_pages(16384);
+    hookConfig.set_startup_mode(true);
+    std::vector<uint8_t> buffer(hookConfig.ByteSizeLong());
+    hookConfig.SerializeToArray(buffer.data(), hookConfig.ByteSizeLong());
+    config.set_config_data(buffer.data(), buffer.size());
+
+    PluginResult result;
+    std::vector<ProfilerPluginConfig> configVec;
+    configVec.push_back(config);
+    EXPECT_TRUE(hookManager->CreatePluginSession(configVec));
+
     SocketContext socketContext;
-    std::vector<unsigned char> buf(4096);
-    struct ProtocolHead* pph = (struct ProtocolHead*)buf.data();
-    uint32_t head_size = sizeof(struct ProtocolHead);
+    int pid = 1;
+    const int8_t* pidPtr = reinterpret_cast<const int8_t*>(&pid);
     ClientConfig clientConfig;
-    auto hookService = std::make_shared<HookService>(smbFd, eventFd, 0, "", clientConfig);
+    auto hookService = std::make_shared<HookService>(clientConfig, hookManager);
     ASSERT_TRUE(hookService != nullptr);
-    ASSERT_TRUE(hookService->ProtocolProc(socketContext, 0, pph->datas, head_size));
+    ASSERT_TRUE(hookService->ProtocolProc(socketContext, 0, pidPtr, sizeof(pid)));
 }
 } // namespace

@@ -57,7 +57,7 @@ private:
     std::unordered_map<void *, std::shared_ptr<RawStack>> mallocMap_ = {};
     size_t maxSize_;
     uint64_t reducedStackCount_;
-    bool closed_;
+    std::atomic_bool closed_;
 
     DISALLOW_COPY_AND_MOVE(StackDataRepeater);
 };

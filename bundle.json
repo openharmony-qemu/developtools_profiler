@@ -86,6 +86,17 @@
             ]
           },
           "name": "//developtools/profiler/hidebug/interfaces/native/innerkits:libhidebug_init"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/device",
+            "header_files": [
+              "plugins/native_daemon/native_memory_profiler_sa/include/native_memory_profiler_sa_client_manager.h",
+              "plugins/native_daemon/native_memory_profiler_sa/include/native_memory_profiler_sa_config.h",
+              "base/include/common.h"
+            ]
+          },
+          "name": "//developtools/profiler/device/plugins/native_daemon:libnative_daemon_client"
         }
       ],
       "test": [

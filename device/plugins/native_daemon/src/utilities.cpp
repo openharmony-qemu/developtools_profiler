@@ -496,6 +496,23 @@ std::string BufferToHexString(const unsigned char buf[], size_t size)
     }
     return ss.str();
 }
+
+int32_t GetProcessPid(const std::string& processName)
+{
+    std::string cmd = "pidof " + processName;
+    std::unique_ptr<FILE, decltype(&pclose)> runCmd(popen(cmd.c_str(), "r"), pclose);
+    if (runCmd == nullptr) {
+        return 0;
+    }
+
+    constexpr uint32_t readBufferSize = 16;
+    std::array<char, readBufferSize> buffer;
+    std::string result;
+    while (fgets(buffer.data(), buffer.size(), runCmd.get()) != nullptr) {
+        result = buffer.data();
+    }
+    return std::atoi(result.c_str());
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

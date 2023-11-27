@@ -32,6 +32,7 @@ using google::protobuf::MessageLite;
 class TraceFileWriter : public Writer {
 public:
     explicit TraceFileWriter(const std::string& path);
+    explicit TraceFileWriter(int32_t fd);
 
     explicit TraceFileWriter(const std::string& path, bool splitFile, uint32_t splitFileMaxSizeMb,
         uint32_t splitFileMaxNum);
@@ -41,6 +42,8 @@ public:
     std::string Path() const;
 
     bool SetPluginConfig(const void* data, size_t size);
+
+    void WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion = "");
 
     bool WriteHeader();
 
@@ -55,6 +58,9 @@ public:
     bool IsSplitFile(uint32_t size);
 
     void SetStopSplitFile(bool isStop);
+
+    void SetTimeSource();
+    void SetDurationTime();
 
 private:
     void SetTimeStamp();
@@ -81,6 +87,9 @@ private:
     std::vector<std::vector<char>> pluginConfigsData_;
     bool isStop_ = false;
     int fileNum_;
+    TraceFileHeader::HeaderData headerDataTime_ = {}; // used to store the clock source and collection time.
+    int32_t fd_{-1};
+    bool isWriteFd_{false};
 
     DISALLOW_COPY_AND_MOVE(TraceFileWriter);
 };

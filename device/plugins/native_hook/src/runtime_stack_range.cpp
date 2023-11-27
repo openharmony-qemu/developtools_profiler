@@ -15,16 +15,12 @@
 
 #include "runtime_stack_range.h"
 
-#include <cassert>
 #include <csignal>
-#include <cstdio>
 #include <cstring>
-#include <iostream>
-#include <pthread.h>
-#include <string>
+#include <map>
 #include <sys/types.h>
-#include <unistd.h>
 #include "get_thread_id.h"
+#include "utilities.h"
 
 namespace {
 constexpr int BASE_MIN = 2;
@@ -35,7 +31,17 @@ struct StackScope {
     const char* start;
     const char* end;
 };
+struct StandardLibrary {
+    StandardLibrary(uint64_t begin, uint64_t end, const std::string& name)
+        : soBegin_(begin), soEnd_(end), name_(name)
+    {}
+    uint64_t soBegin_;
+    uint64_t soEnd_;
+    std::string name_;
+};
+
 static StackScope g_mainStack;
+static std::map<std::string, StandardLibrary> g_stdLib;
 }  // namespace
 
 static void GetThreadRuntimeStackRange(const char** start, const char** end)
@@ -79,7 +85,6 @@ static long long CvtStrToInt(const char* str, int base)
             ++str;
         }
     } else {
-        assert(0);
         result = 0;
     }
     return result;
@@ -127,7 +132,38 @@ static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
     } while (1);
 }
 
-void GetMainThreadRuntimeStackRange()
+bool IsLegalSoName(const std::string &fileName)
+{
+    if (fileName.front() == '[' or fileName.back() == ']' or
+        std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 or
+        std::strncmp(fileName.c_str(), "/memfd:", sizeof("/memfd:")) == 0 or
+        std::strncmp(fileName.c_str(), "//anon", sizeof("//anon")) == 0) {
+        return false;
+    }
+    return true;
+}
+
+void GetStandardLibraryRange(std::string& line)
+{
+    line.resize(strlen(line.c_str()));
+    std::vector<std::string> mapTokens = OHOS::Developtools::NativeDaemon::StringSplit(line, " ");
+    std::string& soRange = mapTokens.front();
+    std::string& soName = mapTokens.back();
+    if (IsLegalSoName(soName)) {
+        std::string::size_type concatPos = soRange.find('-');
+        uint64_t soStart = strtoll(soRange.c_str(), nullptr, BASE_MAX);
+        uint64_t soEnd = strtoll(soRange.c_str() + concatPos + 1, nullptr, BASE_MAX);
+        auto [iter, isExit] = g_stdLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
+        if (!isExit) {
+            if (iter->second.soBegin_ > soStart) {
+                iter->second.soBegin_ = soStart;
+            } else if (iter->second.soEnd_ < soEnd) {
+                iter->second.soEnd_ = soEnd;
+            }
+        }
+    }
+}
+void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange)
 {
     std::string line;
     FILE* fp = fopen("/proc/self/maps", "re");
@@ -135,24 +171,26 @@ void GetMainThreadRuntimeStackRange()
         return;
     }
     while (!feof(fp)) {
+        line.clear();
         GetAnUnlimitedLine(fp, line);
         if (IsEmptyString(line)) {
             continue;
         }
-        std::string::size_type pos = line.find("[stack]");
-        if (pos != static_cast<std::string::size_type>(-1)) {
+        if (line.find("[stack]") != std::string::npos) {
             std::string::size_type concatPos = line.find('-');
-            if (concatPos == static_cast<std::string::size_type>(-1)) {
-                continue;
+            if (concatPos != std::string::npos) {
+                g_mainStack.start = reinterpret_cast<char*>(CvtStrToInt(line.c_str(), BASE_MAX));
+                g_mainStack.end = reinterpret_cast<char*>(CvtStrToInt(line.c_str() + concatPos + 1, BASE_MAX));
             }
-            g_mainStack.start = reinterpret_cast<char*>(CvtStrToInt(line.c_str(), BASE_MAX));
-            g_mainStack.end = reinterpret_cast<char*>(CvtStrToInt(line.c_str() + concatPos + 1, BASE_MAX));
-
-            break;
+        } else if (line.find("ld-musl") != std::string::npos || line.find("libc++") != std::string::npos) {
+            GetStandardLibraryRange(line);
         }
     }
     if (fclose(fp) != 0) {
         printf("fclose failed.\n");
+    }
+    for (const auto& [soName, stdLibrary]: g_stdLib) {
+        filterStaLibRange.emplace_back(stdLibrary.soBegin_, stdLibrary.soEnd_);
     }
 }
 

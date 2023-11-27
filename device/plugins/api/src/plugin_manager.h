@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "manager_interface.h"
 #include "plugin_module.h"
@@ -70,6 +71,7 @@ private:
     CommandPollerPtr commandPoller_;
     ScheduleTaskManager scheduleTaskManager_;
     std::map<std::string, std::string> pluginPathAndNameMap_;
+    std::unordered_map<std::string, int32_t> scheduleTask_; // key is plugin name, value is timerfd.
 };
 
 #endif // PLUGIN_MANAGER_H

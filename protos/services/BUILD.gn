@@ -242,3 +242,42 @@ ohos_source_set("proto_services_cpp") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
+
+#######################################################
+common_types_lite_proto = [ "./common_types.proto" ]
+
+common_types_lite_codegen = []
+foreach(proto, common_types_lite_proto) {
+  name = get_path_info(proto, "name")
+  common_types_lite_codegen += [
+    "$proto_out_dir/${name}_lite.pb.h",
+    "$proto_out_dir/${name}_lite.pb.cc",
+  ]
+}
+
+action("common_types_lite_proto_gen") {
+  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
+  sources = common_types_lite_proto
+  outputs = common_types_lite_codegen
+  args = [
+    "$libc_dir_proto",
+    "$root_output_dir_proto",
+    "$proto_rel_out_dir",  # standard proto file destination path
+    "--cpp_out",
+    "$proto_rel_out_dir",
+    "--proto_path",
+    rebase_path(".", root_build_dir),
+  ]
+  args += rebase_path(sources, root_build_dir)
+  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+}
+
+ohos_source_set("common_types_lite_proto") {
+  deps = [ ":common_types_lite_proto_gen" ]
+  public_deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":public_configs" ]
+  sources = common_types_lite_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}

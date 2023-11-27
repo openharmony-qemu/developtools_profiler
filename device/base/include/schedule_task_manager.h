@@ -27,61 +27,44 @@
 #include <unordered_map>
 
 #include "logging.h"
-#include "nocopyable.h"
 
 class ScheduleTaskManager {
 public:
-    static ScheduleTaskManager& GetInstance();
-
-    using ms = std::chrono::milliseconds;
-
-    bool ScheduleTask(const std::string& name,
-                      const std::function<void(void)>& callback,
-                      const std::chrono::milliseconds& repeatInterval);
-
-    bool ScheduleTask(const std::string& name,
-                      const std::function<void(void)>& callback,
-                      const std::chrono::milliseconds& repeatInterval,
-                      std::chrono::milliseconds initialDelay);
-
-    bool UnscheduleTask(const std::string& name);
-
-    void Shutdown();
-
     ScheduleTaskManager();
     ~ScheduleTaskManager();
 
+    /**
+     * @brief Set up a scheduled task.
+     * @param callback Callback function
+     * @param interval Indicates the interval time, measured in milliseconds. If the 'once' parameter is set to false,
+     * an 'interval' of 0 means the task will execute immediately once and not repeat thereafter. If the 'once'
+     * parameter is set to true, the 'interval' cannot be 0.
+     * @param once Indicates whether to execute the task only once.
+     * @return If successful, it returns a timerFd greater than 0; if unsuccessful, it returns -1.
+     * @note It is crucial to ensure that the code logic executed within the provided callback function
+     * does not include any self-termination logic.
+     */
+    int32_t ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once = false);
+
+    /**
+     * @brief Cancel the scheduled task.
+     * @param timerFd The return value of interface ScheduleTask().
+     * @return If the cancellation of the scheduled task is successful, it returns true; otherwise, it returns false.
+     */
+    bool UnscheduleTask(const int32_t timerFd);
+    void Shutdown();
+    void StartThread();
+
 private:
-    using Clock = std::chrono::steady_clock;
-    using TimePoint = std::chrono::time_point<Clock>;
-
-    struct Task {
-        std::string name;
-        std::function<void(void)> callback;
-        std::chrono::milliseconds repeatInterval;
-        std::chrono::milliseconds initialDelay;
-        TimePoint nextRunTime;
-    };
-    using SharedTask = STD_PTR(shared, Task);
-    using WeakTask = STD_PTR(weak, Task);
-
-    static std::chrono::milliseconds NormalizeInterval(std::chrono::milliseconds interval);
-
-    void DumpTask(const SharedTask& task);
-
     void ScheduleThread();
-
-    WeakTask TakeFront();
+    void HandleSingleTask(int32_t fd, std::function<void(void)> callback);
 
 private:
-    mutable std::mutex taskMutex_;
-    std::condition_variable taskCv_;
     std::atomic<bool> runScheduleThread_ = true;
-    std::multimap<TimePoint, WeakTask> timeMap_;          // schedule list
-    std::unordered_map<std::string, SharedTask> taskMap_; // task details
     std::thread scheduleThread_;
-
-    DISALLOW_COPY_AND_MOVE(ScheduleTaskManager);
+    std::unordered_map<int32_t, std::function<void(void)>> tasks_;
+    int32_t epollFd_{-1};
+    int32_t stopFd_{-1};
 };
 
 #endif // !OHOS_PROFILER_SCHEDULE_TASK_MANAGER_H

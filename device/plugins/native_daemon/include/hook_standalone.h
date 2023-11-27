@@ -17,36 +17,54 @@
 #define HOOK_STANDALONE_H
 
 #include <string>
+#include <sstream>
+#include <set>
 
-using HookData = struct {
-    int pid;
-    uint32_t smbSize;
-    uint64_t duration;
-    uint32_t filterSize;
-    uint32_t maxStackDepth;
-    uint32_t statisticsInterval;
-    std::string fileName;
+struct HookData
+{
+    std::set<std::string> pids;
+    uint32_t smbSize {0};
+    uint64_t duration {0};
+    uint32_t filterSize {0};
+    uint32_t maxStackDepth {100};
+    uint32_t statisticsInterval {0};
+    uint32_t sampleInterval {0};
+    std::string fileName {"/data/local/tmp/data.txt"};
     std::string processName;
-    std::string performance_filename;
-    bool mallocDisable;
-    bool mmapDisable;
-    bool freemsgstack;
-    bool munmapmsgstack;
-    bool fpUnwind;
-    bool offlineSymbolization;
-    bool callframeCompress;
-    bool stringCompressed;
-    bool rawString;
+    std::string performanceFilename {"/data/local/tmp/performance.txt"};
+    bool mallocDisable {false};
+    bool mmapDisable {false};
+    bool freemsgstack {false};
+    bool munmapmsgstack {false};
+    bool fpUnwind {false};
+    bool offlineSymbolization {false};
+    bool callframeCompress {false};
+    bool stringCompressed {false};
+    bool rawString {false};
+    bool startupMode {false};
+    bool responseLibraryMode {false};
+    std::string ToString() const
+    {
+        std::stringstream ss;
+        ss << "smbSize:" << smbSize << ", duration:" << duration
+        << ", filterSize:" << filterSize << ", maxStackDepth:" << maxStackDepth
+        << ", statisticsInterval:" << statisticsInterval << ", fileName:" << fileName
+        << ", performanceFilename:" << performanceFilename << ", mallocDisable:" << mallocDisable
+        << ", mmapDisable:" << mmapDisable << ", freemsgstack:" << freemsgstack
+        << ", munmapmsgstack:" << munmapmsgstack << ", fpUnwind:" << fpUnwind
+        << ", offlineSymbolization:" << offlineSymbolization << ", callframeCompress:" << callframeCompress
+        << ", stringCompressed:" << stringCompressed << ", rawString:" << rawString <<", pids:";
+        for (std::string pid: pids) {
+            ss << pid <<' ';
+        }
+        ss << ", processName:" << processName << ' ' <<",startupMode: " << startupMode
+           << ", responseLibraryMode: " << responseLibraryMode << ", sampleInterval: " << sampleInterval;
+        return ss.str();
+    }
 };
 
-namespace OHOS {
-namespace Developtools {
-namespace Profiler {
-namespace Hook {
+namespace OHOS::Developtools::Profiler::Hook {
 bool StartHook(HookData& hookData);
-} // namespace Hook
-} // namespace Profiler
-} // namespace Developtools
-} // namespace OHOS
+} // namespace OHOS::Developtools::Profiler::Hook
 
 #endif // HOOK_STANDALONE_H

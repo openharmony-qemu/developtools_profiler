@@ -27,10 +27,7 @@ namespace {
 class ScheduleTaskManagerTest : public testing::Test {
 protected:
     static void SetUpTestCase() {}
-    static void TearDownTestCase()
-    {
-        ScheduleTaskManager::GetInstance().Shutdown();
-    }
+    static void TearDownTestCase() {}
 };
 
 /**
@@ -41,16 +38,13 @@ protected:
 HWTEST_F(ScheduleTaskManagerTest, ScheduleTaskOneshot, TestSize.Level1)
 {
     std::atomic<int> count = 0;
-    ScheduleTaskManager::ms initalDelay{10};
+    uint64_t initalDelay = 10; // 10ms
 
     ScheduleTaskManager scheduleTaskManager;
-    EXPECT_TRUE(scheduleTaskManager.ScheduleTask(
-        "task-1", [&]() { count++; }, ScheduleTaskManager::ms{0}, initalDelay));
+    EXPECT_NE(scheduleTaskManager.ScheduleTask([&]() { count++; }, initalDelay, true), -1);
 
-    std::this_thread::sleep_for(initalDelay + initalDelay);
+    std::this_thread::sleep_for(std::chrono::milliseconds(initalDelay + initalDelay));
     EXPECT_EQ(count.load(), 1);
-
-    scheduleTaskManager.Shutdown();
 }
 
 /**
@@ -63,30 +57,26 @@ HWTEST_F(ScheduleTaskManagerTest, ScheduleTaskRepeated, TestSize.Level1)
     std::atomic<int> count = 0;
     constexpr int cnt = 5;
 
-    ScheduleTaskManager::ms repeatInterval{100};
-    ScheduleTaskManager::ms initalDelay{10};
+    uint64_t repeatInterval = 100;
 
     ScheduleTaskManager scheduleTaskManager;
-    EXPECT_TRUE(scheduleTaskManager.ScheduleTask(
-        "task-2",
+    EXPECT_NE(scheduleTaskManager.ScheduleTask(
         [&]() {
             count++;
             struct timeval tv;
             gettimeofday(&tv, nullptr);
         },
-        repeatInterval, initalDelay));
+    repeatInterval), -1);
 
     int expected = 0;
-    std::this_thread::sleep_for(initalDelay + initalDelay);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     for (int i = 0; i < cnt; i++) {
         expected++;
         struct timeval tv = { 0, 0 };
         gettimeofday(&tv, nullptr);
         EXPECT_EQ(count.load(), expected);
-        std::this_thread::sleep_for(repeatInterval);
+        std::this_thread::sleep_for(std::chrono::milliseconds(repeatInterval));
     }
-
-    scheduleTaskManager.Shutdown();
 }
 
 /**
@@ -99,31 +89,30 @@ HWTEST_F(ScheduleTaskManagerTest, UnscheduleTask, TestSize.Level1)
     std::atomic<int> count = 0;
     constexpr int cnt = 5;
 
-    std::string taskName = "task-3";
-    ScheduleTaskManager::ms repeatInterval{100};
-    ScheduleTaskManager::ms initalDelay{10};
+    int32_t taskFd = -1;
+    uint64_t repeatInterval = 100;
+    uint64_t initalDelay = 10;
 
     ScheduleTaskManager scheduleTaskManager;
-    EXPECT_TRUE(scheduleTaskManager.ScheduleTask(
-        taskName,
+    taskFd = scheduleTaskManager.ScheduleTask(
         [&]() {
             count++;
             struct timeval tv;
             gettimeofday(&tv, nullptr);
         },
-        repeatInterval));
+        repeatInterval);
+    EXPECT_NE(taskFd, -1);
 
     int expected = 0;
-    std::this_thread::sleep_for(initalDelay);
+    std::this_thread::sleep_for(std::chrono::milliseconds(initalDelay));
     for (int i = 0; i < cnt; i++) {
-        std::this_thread::sleep_for(repeatInterval);
         expected++;
         struct timeval tv = { 0, 0 };
         gettimeofday(&tv, nullptr);
         EXPECT_EQ(count.load(), expected);
+        std::this_thread::sleep_for(std::chrono::milliseconds(repeatInterval));
     }
 
-    EXPECT_TRUE(scheduleTaskManager.UnscheduleTask(taskName));
-    scheduleTaskManager.Shutdown();
+    EXPECT_TRUE(scheduleTaskManager.UnscheduleTask(taskFd));
 }
 } // namespace

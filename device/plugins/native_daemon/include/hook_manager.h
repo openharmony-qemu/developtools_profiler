@@ -23,7 +23,6 @@
 
 #include "buffer_writer.h"
 #include "manager_interface.h"
-#include "hook_service.h"
 #include "epoll_event_poller.h"
 #include "share_memory_allocator.h"
 #include "event_notifier.h"
@@ -32,6 +31,7 @@
 #include "virtual_runtime.h"
 #include "stack_data_repeater.h"
 #include "stack_preprocess.h"
+#include "native_memory_profiler_sa_config.h"
 
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
 class ProfilerPluginConfig;
@@ -47,11 +47,24 @@ struct HookContext {
 };
 
 namespace OHOS::Developtools::NativeDaemon {
-class HookManager : public ManagerInterface {
+class HookService;
+class HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
 public:
+    struct HookManagerCtx {
+        HookManagerCtx(int32_t pid) : pid(pid) {}
+        HookManagerCtx(const std::string& name) : processName(name) {}
+        ~HookManagerCtx() {}
+        int32_t pid = -1;
+        std::string processName;
+        std::string smbName;
+        std::shared_ptr<ShareMemoryBlock> shareMemoryBlock = nullptr;
+        std::shared_ptr<EventNotifier> eventNotifier = nullptr;
+        std::unique_ptr<EpollEventPoller> eventPoller = nullptr;
+        std::shared_ptr<StackDataRepeater> stackData = nullptr;
+        std::shared_ptr<StackPreprocess> stackPreprocess = nullptr;
+        bool isRecordAccurately = false;
+    };
     HookManager();
-    HookManager(std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock, std::shared_ptr<EventNotifier>& eventNotifier,
-                StackDataRepeaterPtr& stackData);
     bool RegisterAgentPlugin(const std::string& pluginPath);
     bool UnregisterAgentPlugin(const std::string& pluginPath);
 
@@ -72,32 +85,39 @@ public:
     bool ResetWriter(uint32_t pluginId) override;
     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
     void ResetStartupParam();
-    void ReadShareMemory();
+    void SethookStandalone(bool);
+    bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
+    void StartPluginSession();
+    void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx);
     void SetHookConfig(const NativeHookConfig& hookConfig);
+    void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    int32_t CreatePluginSession();
+    void RegisterWriter(const std::shared_ptr<Writer> writer);
+    void WriteHookConfig();
+    std::pair<int, int> GetFds(int32_t pid, const std::string& name);
+    inline void SetSaServiceFlag(bool flag)
+    {
+        isSaService_ = flag;
+    }
+    void GetClientConfig(ClientConfig& clientConfig);
 
 private:
-    void RegisterWriter(const BufferWriterPtr& writer);
     bool CheckProcess();
-    void CheckProcessName();
+    bool CheckProcessName();
     void SetHookData(HookContext& hookContext, struct timespec ts,
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);
-    void GetClientConfig(const NativeHookConfig& nativeHookConfig, ClientConfig& clientConfig);
 
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;
     int agentIndex_ = -1;
     std::string agentPluginName_;
-    std::unique_ptr<EpollEventPoller> eventPoller_;
-    std::shared_ptr<ShareMemoryBlock> shareMemoryBlock_;
-    std::shared_ptr<EventNotifier> eventNotifier_;
     NativeHookConfig hookConfig_;
-    std::string smbName_;
     std::unique_ptr<uint8_t[]> buffer_;
-    StackDataRepeaterPtr stackData_;
-    std::shared_ptr<StackPreprocess> stackPreprocess_;
-    int pid_;
-    bool isRecordAccurately_ = false;
+    bool isHookStandalone_ {false};
+    FILE* fpHookData_ {nullptr};
+    std::vector<std::shared_ptr<HookManagerCtx>> hookCtx_;
+    bool isSaService_{false};
 };
 }
 #endif // AGENT_MANAGER_H

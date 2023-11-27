@@ -23,6 +23,7 @@
 #include "socket_context.h"
 #include "unix_socket_client.h"
 #include "logging.h"
+#include "sampling.h"
 
 using namespace testing::ext;
 
@@ -50,7 +51,8 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
     uint64_t config = FILTER_SIZE;
     config <<= MOBILE_BIT;
     config |= SMB_SIZE;
-    HookSocketClient hookClient(1, &g_ClientConfigTest);
+    Sampling sampler;
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(uint64_t);
@@ -64,9 +66,11 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
  */
 HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
 {
-    ClientConfig config = {0};
-    config.shareMemroySize = SMB_SIZE;
-    HookSocketClient hookClient(1, &g_ClientConfigTest);
+    uint64_t config = FILTER_SIZE;
+    config <<= MOBILE_BIT;
+    config |= SMB_SIZE;
+    Sampling sampler;
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(ClientConfig);
@@ -96,9 +100,10 @@ HWTEST_F(HookSocketClientTest, GetSmbFd, TestSize.Level1)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
+    Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(clientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetSmbFd(), -1);
 }
@@ -112,9 +117,10 @@ HWTEST_F(HookSocketClientTest, GetEventFd, TestSize.Level1)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
+    Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(clientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetEventFd(), -1);
 }

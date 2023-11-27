@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <list>
 #include <algorithm>
+#include <mutex>
 
 #include "logging.h"
 #include "nocopyable.h"
@@ -45,17 +46,26 @@ public:
     };
 
     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
-        clockid_t pluginDataClockId, bool isHookStandalone = false);
-    explicit StackPreprocess(bool fpUnwind);
+        clockid_t pluginDataClockId, FILE* fpHookData = nullptr, bool isHookStandalone = false);
     ~StackPreprocess();
-    void SetWriter(const std::shared_ptr<BufferWriter>& writer);
+    void SetWriter(const std::shared_ptr<Writer>& writer);
     bool StartTakeResults();
     bool StopTakeResults();
     bool FlushRecordStatistics();
     void SetSerializeMode(bool isProtobufSerialize);
+    inline void SetPid(int32_t pid)
+    {
+        pid_ = pid;
+    }
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
     void SaveThreadName(uint32_t tid, const std::string& tname);
+    void ReportBasicData();
+    void WriteHookConfig();
+    inline void SetSaServiceFlag(bool flag)
+    {
+        isSaService_ = flag;
+    }
 
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
@@ -96,6 +106,7 @@ private:
     uint32_t SetCallStackMap(BatchNativeHookData& batchNativeHookData);
     uint32_t GetCallStackId(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
         BatchNativeHookData& batchNativeHookData);
+    uint32_t FindCallStackId(std::vector<uint64_t>& callStack);
     template <typename T>
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
         BatchNativeHookData& batchNativeHookData, T* event, uint32_t stackId);
@@ -107,17 +118,16 @@ private:
     uint64_t PowCeil(uint64_t x);
     size_t ComputeAlign(size_t size);
 private:
-    std::shared_ptr<BufferWriter> writer_ = nullptr;
+    std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
     std::thread thread_ {};
     std::unique_ptr<uint8_t[]> buffer_;
-    bool isStopTakeData_ = false;
+    std::atomic_bool isStopTakeData_ = false;
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
     DISALLOW_COPY_AND_MOVE(StackPreprocess);
     OHOS::SafeMap<uint32_t, std::string> memTagMap_ = {};
     std::unordered_map<uint32_t, std::string> threadNameMap_ = {};
     NativeHookConfig hookConfig_;
-    std::unique_ptr<FILE, decltype(&fclose)> fpHookData_;
     uint32_t ignoreCnts_ = 0;
     uint32_t eventCnts_ = 0;
     bool flushBasicData_ {true};
@@ -126,6 +136,8 @@ private:
     std::vector<uint64_t> callStack_;
     // Key is callStack_, value is call stack id
     std::map<std::vector<uint64_t>, uint32_t> callStackMap_;
+    // Key is ip , response_library_mode used
+    std::unordered_map<uint64_t, uint32_t> responseLibraryMap_;
     std::chrono::seconds statisticsInterval_ {0};
     std::chrono::steady_clock::time_point lastStatisticsTime_;
     // Key is call stack id, value is recordstatistic data
@@ -139,7 +151,11 @@ private:
     clockid_t pluginDataClockId_ = CLOCK_REALTIME;
     // used for clac wait time in StackDataRepeater::TakeRawData() or statistics HookData
     clockid_t hookDataClockId_ = CLOCK_REALTIME;
-    bool isHookStandaloneSerialize_ = false;
+    FILE* fpHookData_ {nullptr};
+    bool isHookStandaloneSerialize_ {false};
+    int32_t pid_ {-1};
+    std::mutex mtx_;
+    bool isSaService_{false};
 };
 
 #endif // STACK_PREPROCESS_H

@@ -35,6 +35,7 @@
 #include "get_thread_id.h"
 #include "hook_client.h"
 #include <sys/mman.h>
+#include "sampling.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -46,6 +47,7 @@ namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
 using OHOS::Developtools::NativeDaemon::buildArchType;
 static std::shared_ptr<HookSocketClient> g_hookClient;
+static Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::mutex g_tagMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
@@ -58,8 +60,14 @@ constexpr int PID_STR_SIZE = 4;
 constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
 constexpr int FD_PATH_LENGTH = 64;
+constexpr int MIN_SAMPLER_INTERVAL = 1;
+//5: fp mode is used, response_library_mode maximum stack depth
+#if defined(__aarch64__)
+constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
+#endif
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
+std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 const MallocDispatchType* GetDispatch()
 {
     return g_dispatch.load(std::memory_order_relaxed);
@@ -186,7 +194,8 @@ bool ohos_malloc_hook_on_start(void)
         return true;
     } else {
         g_ClientConfig.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig);
+        g_sampler.Reset();
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler);
     }
     pthread_key_create(&g_disableHookFlag, nullptr);
     pthread_setspecific(g_disableHookFlag, nullptr);
@@ -195,7 +204,7 @@ bool ohos_malloc_hook_on_start(void)
     pthread_key_create(&g_updateThreadNameCount, nullptr);
     pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
     HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
-    GetMainThreadRuntimeStackRange();
+    GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
     int ret = GetParameter("persist.hiviewdfx.profiler.mem.filter", "", paramOutBuf, paramBufferLen);
@@ -240,6 +249,14 @@ bool ohos_malloc_hook_on_end(void)
     pthread_detach(threadEnd);
     return true;
 }
+bool FilterStandardSoIp(uint64_t ip) {
+    for (auto [soBegin, soEnd_]: g_filterStaLibRange) {
+        if (ip >= soBegin && ip < soEnd_) {
+            return true;
+        }
+    }
+    return false;
+}
 
 #if defined(__aarch64__)
 static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t *ip, int stackSize)
@@ -247,6 +264,8 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
     void **startfp = (void **)__builtin_frame_address(0);
     void **fp = startfp;
     int depth = 0;
+    int count = 0;
+    uint64_t tempIp = 0;
     while (depth < maxDepth) {
         void **nextFp = (void **)*fp;
         if (nextFp <= fp) {
@@ -256,10 +275,21 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
             break;
         }
         fp = nextFp;
-        if (*(reinterpret_cast<unsigned long *>(fp + 1)) == 0) {
+        tempIp = *(reinterpret_cast<unsigned long *>(fp + 1));
+        if (tempIp == 0) {
             break;
         }
-        ip[depth++] = *(reinterpret_cast<unsigned long *>(fp + 1));
+        if (g_ClientConfig.responseLibraryMode) {
+            if (++count >= RESPONSE_LIBRARY_MODE_DEPTH || !FilterStandardSoIp(tempIp)) {
+                break;
+            }
+        } else {
+            ip[depth++] = tempIp;
+        }
+    }
+    if (g_ClientConfig.responseLibraryMode) {
+        ip[0] = tempIp;
+        depth = 1;
     }
     return depth;
 }
@@ -275,6 +305,9 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         return ret;
     }
     if (!ohos_set_filter_size(size, ret)) {
+        return ret;
+    }
+    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {  //0 not sampling
         return ret;
     }
 #ifdef PERFORMANCE_DEBUG
@@ -359,7 +392,9 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (!ohos_set_filter_size(number * size, pRet)) {
         return pRet;
     }
-
+    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size * number) == 0) {
+        return pRet;
+    }
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -424,7 +459,9 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (!ohos_set_filter_size(size, pRet)) {
         return pRet;
     }
-
+    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {
+        return pRet;
+    }
     StackRawData rawdata = {{{{0}}}};
     StackRawData freeData = {{{{0}}}};
     const char* stackptr = nullptr;
@@ -575,6 +612,10 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         ret = fn(addr, length, prot, flags, fd, offset);
     }
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
+        return ret;
+    }
+    if ((fd < 0 && offset == 0) && g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL
+        && g_sampler.StartSampling(length) == 0) {
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};

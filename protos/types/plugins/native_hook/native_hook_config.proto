@@ -41,4 +41,7 @@ message NativeHookConfig {
     bool callframe_compress = 21;
     uint32 statistics_interval = 22;
     string clock = 23;
+    uint32 sample_interval = 24;
+    bool response_library_mode = 25;
+    repeated int32 expand_pids = 26;
 }

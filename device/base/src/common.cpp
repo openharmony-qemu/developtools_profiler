@@ -40,6 +40,21 @@
 using namespace OHOS;
 using namespace OHOS::AppExecFwk;
 namespace COMMON {
+namespace {
+const std::map<std::string, clockid_t> clockIdMap = {
+    {"realtime",            CLOCK_REALTIME},
+    {"mono",                CLOCK_MONOTONIC},
+    {"process_cputime_id",  CLOCK_PROCESS_CPUTIME_ID},
+    {"thread_cputime_id",   CLOCK_THREAD_CPUTIME_ID},
+    {"mono_raw",            CLOCK_MONOTONIC_RAW},
+    {"realtime_coarse",     CLOCK_REALTIME_COARSE},
+    {"mono_coarse",         CLOCK_MONOTONIC_COARSE},
+    {"boot",                CLOCK_BOOTTIME},
+    {"realtime_alarm",      CLOCK_REALTIME_ALARM},
+    {"boot_alarm",          CLOCK_BOOTTIME_ALARM},
+    {"sgi_cycle",           CLOCK_SGI_CYCLE},
+    {"tai",                 CLOCK_TAI},
+};
 constexpr int EXECVP_ERRNO = 2;
 const int SHELL_UID = 2000;
 const std::string DEFAULT_PATH = "/data/local/tmp/";
@@ -49,7 +64,7 @@ const int FILE_PATH_SIZE = 512;
 const int BUFFER_SIZE = 1024;
 const int INVALID_PID = -1;
 constexpr int32_t EC_INVALID_VALUE = -2;
-
+}
 
 bool IsProcessRunning(int& lockFileFd)
 {
@@ -478,27 +493,24 @@ std::string GetTimeStr()
 // get clockid by str, return CLOCK_REALTIME as default
 clockid_t GetClockId(const std::string& clockIdStr)
 {
-    const std::map<std::string, clockid_t> clockIdMap = {
-        {"realtime",            CLOCK_REALTIME},
-        {"mono",                CLOCK_MONOTONIC},
-        {"process_cputime_id",  CLOCK_PROCESS_CPUTIME_ID},
-        {"thread_cputime_id",   CLOCK_THREAD_CPUTIME_ID},
-        {"mono_raw",            CLOCK_MONOTONIC_RAW},
-        {"realtime_coarse",     CLOCK_REALTIME_COARSE},
-        {"mono_coarse",         CLOCK_MONOTONIC_COARSE},
-        {"boot",                CLOCK_BOOTTIME},
-        {"realtime_alarm",      CLOCK_REALTIME_ALARM},
-        {"boot_alarm",          CLOCK_BOOTTIME_ALARM},
-        {"sgi_cycle",           CLOCK_SGI_CYCLE},
-        {"tai",                 CLOCK_TAI},
-    };
-
     clockid_t clockId = CLOCK_REALTIME;
     auto iter = clockIdMap.find(clockIdStr);
     if (iter != clockIdMap.end()) {
         clockId = iter->second;
     }
     return clockId;
+}
+
+std::string GetClockStr(const int32_t clockId)
+{
+    std::string ret = "realtime";
+    for (const auto& [str, id] : clockIdMap) {
+        if (id == clockId) {
+            ret = str;
+            break;
+        }
+    }
+    return ret;
 }
 
 void AdaptSandboxPath(std::string& filePath, int pid)
