@@ -254,38 +254,6 @@ Status ProfilerService::CreateSession(ServerContext* context,
     pluginConfigs.reserve(nConfigs);
 
     for (int i = 0; i < nConfigs; i++) {
-        if (request->plugin_configs(i).name() == "nativehook" && getuid() != 0) {
-            NativeHookConfig hookConfig;
-            std::string cfgData = request->plugin_configs(i).config_data();
-            if (hookConfig.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
-                HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
-                continue;
-            }
-
-            if (hookConfig.pid() > 0 && !COMMON::CheckApplicationPermission(hookConfig.pid(), "")) {
-                HILOG_ERROR(LOG_CORE, "Application debug permisson denied!, pid: %d", hookConfig.pid());
-                continue;
-            }
-
-            bool errorFlag = false;
-            for (const auto& pid : hookConfig.expand_pids()) {
-                if (pid > 0 && COMMON::CheckApplicationPermission(pid, "")) {
-                    HILOG_ERROR(LOG_CORE, "Application debug permisson denied!, pid: %d", pid);
-                    errorFlag = true;
-                    break;
-                }
-            }
-            if (errorFlag) {
-                continue;
-            }
-
-            if (!hookConfig.process_name().empty()
-                && !COMMON::CheckApplicationPermission(0, hookConfig.process_name())) {
-                HILOG_ERROR(LOG_CORE, "Application debug permisson denied!, process name: %s",
-                    hookConfig.process_name().c_str());
-                continue;
-            }
-        }
         pluginConfigs.push_back(request->plugin_configs(i));
     }
 

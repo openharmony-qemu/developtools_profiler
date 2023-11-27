@@ -63,11 +63,6 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return false;
     }
 
-    if (getuid() != 0 && !COMMON::CheckApplicationPermission(peerConfig, "")) {
-        HILOG_ERROR(LOG_CORE, "Application debug permisson denied!, pid: %d", peerConfig);
-        return false;
-    }
-
     std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
     std::string bundleName;
     if (!LoadStringFromFile(filePath, bundleName)) {
