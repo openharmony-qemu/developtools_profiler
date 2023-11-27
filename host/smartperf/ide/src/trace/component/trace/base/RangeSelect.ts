@@ -46,10 +46,8 @@ export class RangeSelect {
     this.trace = trace;
     this.timerShaftEL = trace?.timerShaftEL;
     this.timerShaftDragEL = this.timerShaftEL?.shadowRoot?.querySelector('.total > div:nth-child(1)');
-    // this.spacerEL = trace?.spacerEL!;
     this.rowsEL = trace?.rowsEL;
     this.rowsPaneEL = trace?.rowsPaneEL;
-    // this.favoriteRowsEL = trace?.favoriteRowsEL;
   }
 
   isInRowsEl(ev: MouseEvent): boolean {
