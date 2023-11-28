@@ -448,7 +448,7 @@ static inline int RmqEntryTotalSize(unsigned int size)
 
 bool FlowController::HmParseEventData(uint8_t* &data)
 {
-    struct RmqConsumerData *rmqData = static_cast<struct RmqConsumerData *>(data);
+    struct RmqConsumerData *rmqData = reinterpret_cast<struct RmqConsumerData *>(data);
     uint64_t timeStampBase = rmqData->timeStamp;
     auto traceResult = std::make_unique<TracePluginResult>();
     auto cpuDetailMsg = traceResult->add_ftrace_cpu_detail();
@@ -460,13 +460,13 @@ bool FlowController::HmParseEventData(uint8_t* &data)
     auto curPtr = rmqData->data;
     auto endPtr = rmqData->data + rmqData->length;
     while (curPtr < endPtr) {
-        event = static_cast<struct RmqEntry *>(curPtr);
+        event = reinterpret_cast<struct RmqEntry *>(curPtr);
         unsigned int evtSize = event->size;
         if (evtSize == 0U) {
             break;
         }
 
-        struct HmTraceHeader *header = static_cast<struct HmTraceHeader *>(event->data);
+        struct HmTraceHeader *header = reinterpret_cast<struct HmTraceHeader *>(event->data);
         auto parseEventCtx =
             SubEventParser<FtraceEvent>::GetInstance().GetParseEventCtx(header->commonType);
         if (parseEventCtx == NULL) {
@@ -478,7 +478,7 @@ bool FlowController::HmParseEventData(uint8_t* &data)
         ftraceEvent->set_timestamp(event->timeStampOffset + timeStampBase);
         ftraceEvent->set_tgid(header->tgid);
         ftraceEvent->set_comm(header->tcbName);
-        CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, static_cast<uint8_t *>(header),
+        CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, reinterpret_cast<uint8_t *>(header),
             evtSize, parseEventCtx), false, "hm parse event failed!");
         curPtr += RmqEntryTotalSize(evtSize);
     }
