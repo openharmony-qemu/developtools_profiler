@@ -67,17 +67,13 @@ int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& cont
 {
     bool ret = false;
     if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), W_OK) == 0) {
-        if (ret || FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content) > 0) {
+        if (FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content) > 0) {
             ret = true;
-        } else {
-            ret = false;
         }
     }
     if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
-        if (ret || FileUtils::WriteFile(ftraceRoot_ + path, content) > 0) {
+        if (FileUtils::WriteFile(ftraceRoot_ + path, content) > 0) {
             ret = true;
-        } else {
-            ret = false;
         }
     }
 
@@ -88,17 +84,13 @@ int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& cont
 {
     bool ret = false;
     if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), W_OK) == 0) {
-        if (ret || FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content, flags) > 0) {
+        if (FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content, flags) > 0) {
             ret = true;
-        } else {
-            ret = false;
         }
     }
     if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
-        if (ret || FileUtils::WriteFile(ftraceRoot_ + path, content, flags) > 0) {
+        if (FileUtils::WriteFile(ftraceRoot_ + path, content, flags) > 0) {
             ret = true;
-        } else {
-            ret = false;
         }
     }
 
