@@ -1004,7 +1004,7 @@ template <typename T> void MemoryDataPlugin::WriteGpuMemInfo(T& dataProto)
     getline(input, line);
     line += '\n';
 
-    BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+    BufferSplitter totalBuffer(static_cast<const char*>(line.c_str()), line.size() + 1);
     auto* gpuMemoryInfo = dataProto.add_gpumemoryinfo();
     if (totalBuffer.NextWord(' ')) {
         gpuMemoryInfo->set_gpu_name(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize()));
