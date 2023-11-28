@@ -1061,7 +1061,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteDmaInfo, TestSize.Level1)
         EXPECT_EQ(dmaInfo.fd(), g_dmaMemInfo[i].fd);
         EXPECT_EQ(dmaInfo.size(), g_dmaMemInfo[i].size);
         EXPECT_EQ(dmaInfo.ino(), g_dmaMemInfo[i].ino);
-        EXPECT_EQ(dmaInfo.expPid(), g_dmaMemInfo[i].expPid);
+        EXPECT_EQ(dmaInfo.exp_pid(), g_dmaMemInfo[i].expPid);
         EXPECT_STREQ(dmaInfo.exp_task_comm().c_str(), g_dmaMemInfo[i].exp_task_comm.c_str());
         EXPECT_STREQ(dmaInfo.buf_name().c_str(), g_dmaMemInfo[i].buf_name.c_str());
         EXPECT_STREQ(dmaInfo.exp_name().c_str(), g_dmaMemInfo[i].exp_name.c_str());
@@ -1126,7 +1126,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
             auto subInfoTest = detailInfoTest.gpu_sub_info[0];
             EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
             EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
-            EXPECT_EQ(subInfo.entryNum(), subInfoTest.entryNum);
+            EXPECT_EQ(subInfo.entry_num(), subInfoTest.entryNum);
         } else if (i == 2) {
             const int subSize = 2;
             ASSERT_EQ(detailInfo.gpu_sub_info().size(), subSize);
@@ -1135,7 +1135,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
                 auto subInfoTest = detailInfoTest.gpu_sub_info[j];
                 EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
                 EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
-                EXPECT_EQ(subInfo.entryNum(), subInfoTest.entryNum);
+                EXPECT_EQ(subInfo.entry_num(), subInfoTest.entryNum);
             }
         } else if (i == 4) {
             const int subSize = 4;
@@ -1145,7 +1145,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
                 auto subInfoTest = detailInfoTest.gpu_sub_info[j];
                 EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
                 EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
-                EXPECT_EQ(subInfo.entryNum(), subInfoTest.entryNum);
+                EXPECT_EQ(subInfo.entry_num(), subInfoTest.entryNum);
             }
         }
     }
@@ -1166,7 +1166,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
         auto subInfoTest = detailInfoTest.gpu_sub_info[0];
         EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
         EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
-        EXPECT_EQ(subInfo.entryNum(), subInfoTest.entryNum);
+        EXPECT_EQ(subInfo.entry_num(), subInfoTest.entryNum);
     }
     EXPECT_EQ(gpuDumpInfo1.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo1.gpu_purgeable_size,
                                                                     g_gpudumpInfo1.type));
@@ -1193,7 +1193,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
     auto subInfoTest = detailInfoTest.gpu_sub_info[0];
     EXPECT_STREQ(subInfo.category_name().c_str(), subInfoTest.category_name.c_str());
     EXPECT_EQ(subInfo.size(), plugin.SizeToBytes(subInfoTest.size, subInfoTest.type));
-    EXPECT_EQ(subInfo.entryNum(), subInfoTest.entryNum);
+    EXPECT_EQ(subInfo.entry_num(), subInfoTest.entryNum);
     EXPECT_EQ(gpuDumpInfo2.gpu_purgeable_size(), plugin.SizeToBytes(g_gpudumpInfo2.gpu_purgeable_size,
                                                                     g_gpudumpInfo2.type));
 
