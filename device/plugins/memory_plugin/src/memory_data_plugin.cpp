@@ -776,24 +776,24 @@ template <typename T> void MemoryDataPlugin::WriteProcesseList(T& memoryData)
 
 template <typename T> void MemoryDataPlugin::SetAshmemInfo(T& ashmemInfo, int key, const char* word)
 {
-    int32_t value = 0;
-    uint64_t size = 0;
+    int64_t value = 0;
+    int64_t size = 0;
     switch (key) {
         case ASHMEM_PROCESS_NAME:
             ashmemInfo.set_name(word);
             break;
         case ASHMEM_PID:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
             ashmemInfo.set_pid(value);
             break;
         case ASHMEM_ADJ:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull adj failed", __func__);
             ashmemInfo.set_adj(value);
             break;
         case ASHMEM_FD:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull fd failed", __func__);
             ashmemInfo.set_fd(value);
             break;
@@ -801,27 +801,27 @@ template <typename T> void MemoryDataPlugin::SetAshmemInfo(T& ashmemInfo, int ke
             ashmemInfo.set_ashmem_name(word);
             break;
         case ASHMEM_SIZE:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull size failed", __func__);
             ashmemInfo.set_size(size);
             break;
         case ASHMEM_ID:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull id failed", __func__);
             ashmemInfo.set_id(value);
             break;
         case ASHMEM_TIME:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull time failed", __func__);
             ashmemInfo.set_time(size);
             break;
         case ASHMEM_REF_COUNT:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull ref_count failed", __func__);
             ashmemInfo.set_ref_count(size);
             break;
         case ASHMEM_PURGED:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull purged failed", __func__);
             ashmemInfo.set_purged(size);
             break;
@@ -854,7 +854,7 @@ template <typename T> void MemoryDataPlugin::WriteAshmemInfo(T& dataProto)
             continue;
         }
 
-        BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+        BufferSplitter totalBuffer(static_cast<const char*>(line.c_str()), line.size() + 1);
         if (!totalBuffer.NextWord(',')) {
             break;
         }
@@ -873,34 +873,34 @@ template <typename T> void MemoryDataPlugin::WriteAshmemInfo(T& dataProto)
 
 template <typename T> void MemoryDataPlugin::SetDmaInfo(T& dmaInfo, int key, const char* word)
 {
-    int32_t value = 0;
-    uint64_t size = 0;
+    int64_t value = 0;
+    int64_t size = 0;
     switch (key) {
         case DMA_NAME:
             dmaInfo.set_name(word);
             break;
         case DMA_PID:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
             dmaInfo.set_pid(value);
             break;
         case DMA_FD:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull fd failed", __func__);
             dmaInfo.set_fd(value);
             break;
         case DMA_SIZE:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull size failed", __func__);
             dmaInfo.set_size(size);
             break;
         case DMA_INO:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull magic failed", __func__);
             dmaInfo.set_ino(value);
             break;
         case DMA_EXP_PID:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull exp_pid failed", __func__);
             dmaInfo.set_exp_pid(value);
             break;
@@ -945,7 +945,7 @@ template <typename T> void MemoryDataPlugin::WriteDmaInfo(T& dataProto)
             continue; // not data.
         }
 
-        BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+        BufferSplitter totalBuffer(static_cast<const char*>(line.c_str()), line.size() + 1);
         if (!totalBuffer.NextWord(' ')) {
             break;
         }
@@ -964,24 +964,24 @@ template <typename T> void MemoryDataPlugin::WriteDmaInfo(T& dataProto)
 
 template <typename T> void MemoryDataPlugin::SetGpuProcessInfo(T& gpuProcessInfo, int key, const char* word)
 {
-    int32_t value = 0;
-    uint64_t size = 0;
+    int64_t value = 0;
+    int64_t size = 0;
     switch (key) {
         case GPU_ADDR:
             gpuProcessInfo.set_addr(word);
             break;
         case GPU_TID:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull tid failed", __func__);
             gpuProcessInfo.set_tid(value);
             break;
         case GPU_PID:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
             gpuProcessInfo.set_pid(value);
             break;
         case GPU_USED_SIZE:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull used_gpu_size failed", __func__);
             gpuProcessInfo.set_used_gpu_size(size * PAGE_SIZE);
             break;
@@ -1021,15 +1021,15 @@ template <typename T> void MemoryDataPlugin::WriteGpuMemInfo(T& dataProto)
         getline(input, line);
         line += '\n';
 
-        BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
-        if (!totalBuffer.NextWord(' ')) {
+        BufferSplitter buffer(static_cast<const char*>(line.c_str()), line.size() + 1);
+        if (!buffer.NextWord(' ')) {
             break;
         }
         auto* gpuProcessInfo = gpuMemoryInfo->add_gpu_process_info();
         for (int i = GPU_ADDR; i <= GPU_USED_SIZE; i++) {
-            std::string curWord = std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize());
+            std::string curWord = std::string(buffer.CurWord(), buffer.CurWordSize());
             SetGpuProcessInfo(*gpuProcessInfo, i, curWord.c_str());
-            if (!totalBuffer.NextWord(' ')) {
+            if (!buffer.NextWord(' ')) {
                 break;
             }
         }
@@ -1125,11 +1125,11 @@ template <typename T> bool MemoryDataPlugin::SetGpuDumpInfo(T& gpuDumpInfo, Buff
 
 template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, int key, const char* word)
 {
-    int32_t pid = 0;
-    uint64_t size = 0;
+    int64_t pid = 0;
+    int64_t size = 0;
     switch (key) {
         case RS_SIZE:
-            size = strtoull(word, nullptr, DEC_BASE);
+            size = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(size >= 0, NO_RETVAL, "%s:strtoull size failed", __func__);
             rsDumpInfo.set_size(size);
             break;
@@ -1141,7 +1141,7 @@ template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, i
             }
             break;
         case RS_PID:
-            pid = strtoull(word, nullptr, DEC_BASE);
+            pid = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(pid >= 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
             rsDumpInfo.set_pid(pid);
             break;
@@ -1224,7 +1224,7 @@ bool MemoryDataPlugin::isRenderService(int pid)
 {
     if (ReadProcPidFile(pid, "cmdline") > 0) {
         std::string processName(reinterpret_cast<char*>(buffer_.get()), strlen(reinterpret_cast<char*>(buffer_.get())));
-        int index = processName.size() - RENDER_SERVICE_NAME.size();
+        int index = static_cast<int>(processName.size()) - static_cast<int>(RENDER_SERVICE_NAME.size());
         if (index >= 0 && processName.substr(index) == RENDER_SERVICE_NAME) {
             return true;
         }
@@ -1277,7 +1277,7 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
         GraphicsMemory graphicsMemory;
         if (isRenderService(pid)) {
             std::vector<MemoryGraphic> memGraphicVec = RSInterfaces::GetInstance().GetMemoryGraphics();
-            auto sumPidsMemGL = 0;
+            uint64_t sumPidsMemGL = 0;
             for (auto it = memGraphicVec.begin(); it != memGraphicVec.end(); it++) {
                 sumPidsMemGL += it->GetGpuMemorySize();
             }
@@ -1301,13 +1301,13 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
 
 template <typename T> void MemoryDataPlugin::SetManagerServiceInfo(T& windowinfo, int key, const char* word)
 {
-    int32_t pid = 0;
+    int64_t pid = 0;
     switch (key) {
         case WINDOW_NAME:
             windowinfo.set_window_name(word);
             break;
         case WINDOW_PID:
-            pid = strtoull(word, nullptr, DEC_BASE);
+            pid = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(pid >= 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
             windowinfo.set_pid(pid);
             break;
@@ -1388,7 +1388,7 @@ template <typename T> void MemoryDataPlugin::WriteProfileMemInfo(T& dataProto)
 
             if (strncmp(line.c_str(), MEM_PROFILE_STR.c_str(), MEM_PROFILE_STR.size()) == 0) {
                 auto* profileMemInfo = dataProto.add_profilememinfo();
-                BufferSplitter totalBuffer((const char*)line.c_str(), line.size() + 1);
+                BufferSplitter totalBuffer(static_cast<const char*>(line.c_str()), line.size() + 1);
                 if (totalBuffer.NextWord(':') && totalBuffer.NextWord('(')) {
                     profileMemInfo->set_channel(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize() - 1));
                 }
