@@ -40,6 +40,7 @@ using namespace OHOS::Developtools::Profiler;
     constexpr uint32_t MAX_FLUSH_THRESHOLD = 128 * 1024 * 1024;
     constexpr uint32_t MAX_TRACE_PERIOD_MS = 720 * 1000;
     constexpr uint32_t MAX_BUFFER_SIZE_KB = 64 * 1024; // 64MB
+    constexpr uint32_t HM_MAX_BUFFER_SIZE_KB = 512 * 1024; // 512MB
     constexpr uint32_t MIN_BUFFER_SIZE_KB = 1024;      // 1 MB
     constexpr uint32_t DEFAULT_TRACE_PERIOD_MS = 250;  // 250 ms
     constexpr uint32_t MAX_BLOCK_SIZE_PAGES = 4096;    // 16 MB
@@ -359,6 +360,9 @@ long FlowController::HmReadEventData()
     while ((nbytes = reader->Read(&buffer[used], rest)) > 0 && used < bufferSize) {
         used += nbytes;
         rest -= nbytes;
+    }
+    if (used == bufferSize) {
+        HILOG_WARN(LOG_CORE, "hm trace raw data may overwrite. current buffer size = %u.", (unsigned int)bufferSize);
     }
     return used;
 }
@@ -786,10 +790,14 @@ int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
 
 void FlowController::SetupTraceBufferSize(uint32_t sizeKb)
 {
+    uint32_t maxBufferSizeKb = MAX_BUFFER_SIZE_KB;
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+        maxBufferSizeKb = HM_MAX_BUFFER_SIZE_KB;
+    }
     if (sizeKb < MIN_BUFFER_SIZE_KB) {
         bufferSizeKb_ = MIN_BUFFER_SIZE_KB;
-    } else if (sizeKb > MAX_BUFFER_SIZE_KB) {
-        bufferSizeKb_ = MAX_BUFFER_SIZE_KB;
+    } else if (sizeKb > maxBufferSizeKb) {
+        bufferSizeKb_ = maxBufferSizeKb;
     } else {
         bufferSizeKb_ = sizeKb / KB_PER_PAGE * KB_PER_PAGE;
     }
