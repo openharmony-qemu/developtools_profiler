@@ -38,7 +38,6 @@ config("native_memory_profiler_sa_config") {
     "HIPERF_DEBUG",
     "CONFIG_NO_HILOG",
     "NATIVEDAEMON_USE_CALLSTACK",
-    "LITE_PROTO",
   ]
   defines += [ "target_cpu_${target_cpu}" ]
   if (use_jemalloc) {
@@ -105,7 +104,6 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
-    "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",

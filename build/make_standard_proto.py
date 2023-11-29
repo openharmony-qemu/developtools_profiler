@@ -17,21 +17,16 @@ import sys
 import shutil
 
 
-def replace_lite_option(target_path, protofilepath, type):
+def replace_lite_option(target_path, protofilepath):
     target_file_path = os.path.basename(protofilepath)
-    prototype = "_" + type + ".proto"
-    target_file_path = target_path + '/' + target_file_path.replace(".proto", prototype)
+    target_file_path = target_path + '/' + target_file_path.replace(".proto", "_standard.proto")
     shutil.copyfile(protofilepath, target_file_path)
     # replease lite flag, import file name, add package name
     with open(target_file_path, 'r+') as content:
         newcontent = content.read()
-        if type == "standard":
-            newcontent = newcontent.replace('option optimize_for = LITE_RUNTIME;\n', '')
-            newcontent = newcontent.replace('syntax = "proto3";', 'syntax = "proto3";\npackage ForStandard;')
-            newcontent = newcontent.replace('.proto";', '_standard.proto";')
-        elif type == "lite":
-            newcontent = newcontent.replace('grpc.service";\n',
-                                            'grpc.service";\n\noption optimize_for = LITE_RUNTIME;\n\npackage LITE;\n')
+        newcontent = newcontent.replace('option optimize_for = LITE_RUNTIME;\n', '')
+        newcontent = newcontent.replace('syntax = "proto3";', 'syntax = "proto3";\npackage ForStandard;')
+        newcontent = newcontent.replace('.proto";', '_standard.proto";')
         content.seek(0, 0)
         content.write(newcontent)
         content.truncate()
@@ -39,14 +34,11 @@ def replace_lite_option(target_path, protofilepath, type):
 
 
 def main():
-    type = sys.argv[1]
-    target_dir = sys.argv[2]
-    i = 3
+    target_dir = sys.argv[1]
+    i = 2
     while i < len(sys.argv):
         proto_file_path = sys.argv[i]
-        replace_lite_option(target_dir, proto_file_path, "standard")
-        if type == "lite":
-            replace_lite_option(target_dir, proto_file_path, "lite")
+        replace_lite_option(target_dir, proto_file_path)
         i += 1
 
 if __name__ == '__main__':
