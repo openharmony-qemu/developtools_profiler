@@ -197,14 +197,12 @@ bool VirtualThread::ReadRoMemory(uint64_t vaddr, uint8_t *data, size_t size) con
         SymbolsFile *symbolsFile = FindSymbolsFileByMap((curMemMaps->GetMaps())[itemIndex]);
         if (symbolsFile != nullptr) {
             std::shared_ptr<DfxMap> map = (curMemMaps->GetMaps())[itemIndex];
-            HLOGM("read vaddr from addr is 0x%" PRIx64 " at '%s'", vaddr - map->begin,
-                  curMemMaps->name_.c_str());
+            HLOGM("read vaddr from addr is 0x%" PRIx64 "  mapStart :0x%" PRIx64 " mapOffset :0x%" PRIx64 " at '%s'",
+                  vaddr - map->begin, map->begin, map->offset, map->name.c_str());
             map->elf = symbolsFile->GetElfFile();
             if (map->elf != nullptr) {
                 auto fileOffset = map->FileOffsetFromAddr(vaddr);
-                if (StringEndsWith(map->name, ".hap")) {
-                    fileOffset -= map->elf->GetBaseOffset();
-                }
+                fileOffset -= map->elf->GetBaseOffset();
                 map->elf->Read(fileOffset, data, size);
                 return true;
             }
@@ -230,18 +228,36 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     }
     memMaps = dfxMaps->GetMaps();
     bool mapsAdded = !update;
-    std::set<std::string> addSymbolFile;
     std::vector<std::shared_ptr<DfxMap>> tempMap;
     std::string tempMapName;
+    std::shared_ptr<DfxMap> prevMap = nullptr;
     for (auto memMapItem : memMaps) {
         if (!update) {
             virtualruntime_->FillMapsCache(tempMapName, memMapItem);
-            virtualruntime_->UpdateSymbols(memMapItem->name);
+            bool updateNormalSymbol = true;
+            if (memMapItem->name.find(".hap") != std::string::npos && (memMapItem->prots & PROT_EXEC)) {
+                memMapItem->prevMap = prevMap;
+                HLOGD("update hap(%s) symbols", memMapItem->name.c_str());
+                updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
+            }
+            if (updateNormalSymbol) {
+                virtualruntime_->UpdateSymbols(memMapItem->name);
+            }
+            prevMap = memMapItem;
         } else if (!virtualruntime_->IsSymbolExist(memMapItem->name)) {
             virtualruntime_->FillMapsCache(tempMapName, memMapItem);
             mapsAdded = true;
             tempMap.push_back(memMapItem);
-            addSymbolFile.emplace(memMapItem->name);
+            bool updateNormalSymbol = true;
+            if (memMapItem->name.find(".hap") != std::string::npos && (memMapItem->prots & PROT_EXEC)) {
+                memMapItem->prevMap = prevMap;
+                HLOGD("update hap(%s) symbols", memMapItem->name.c_str());
+                updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
+            }
+            if (updateNormalSymbol) {
+                virtualruntime_->UpdateSymbols(memMapItem->name);
+            }
+            prevMap = memMapItem;
         }
     }
 
@@ -259,11 +275,6 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
         }
     }
     memMaps.insert(memMaps.end(), tempMap.begin(), tempMap.end());
-
-    for (const auto& it : addSymbolFile) {
-        virtualruntime_->UpdateSymbols(it);
-        HLOGD("add symbol file %s", it.c_str());
-    }
 
     if (mapsAdded) {
         HILOG_DEBUG(LOG_CORE, "maps changed and need sort");

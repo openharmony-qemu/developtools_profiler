@@ -182,7 +182,7 @@ protected:
     std::vector<DfxSymbol> symbols_ {};
     std::vector<DfxSymbol *> matchedSymbols_ {};
     std::vector<FileSymbol> fileSymbols_ {};
-
+    std::mutex mutex_;
     void AdjustSymbols();
     void SortMatchedSymbols();
     bool CheckPathReadable(const std::string &path) const;
