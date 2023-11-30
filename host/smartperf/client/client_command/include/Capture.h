@@ -17,7 +17,7 @@
 #include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
-class Capture : public SpProfiler{
+class Capture : public SpProfiler {
 public:
     std::map<std::string, std::string> ItemData() override;
     static Capture &GetInstance()
