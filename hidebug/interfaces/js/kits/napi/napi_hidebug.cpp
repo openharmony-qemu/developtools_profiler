@@ -29,6 +29,7 @@
 #include "context.h"
 #include "cpu_collector.h"
 #include "directory_ex.h"
+#include "dump_usage.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
 #include "memory_collector.h"
@@ -360,7 +361,7 @@ napi_value GetPss(napi_env env, napi_callback_info info)
     if (collector) {
         int pid = getpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        int32_t pssInfo = collectResult.data.pss;
+        int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
         napi_create_bigint_uint64(env, pssInfo, &pss);
     } else {
         napi_create_bigint_uint64(env, 0, &pss);
@@ -401,11 +402,11 @@ napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 {
     napi_value cpuUsageValue;
-    std::shared_ptr<UCollectUtil::CpuCollector> collector = UCollectUtil::CpuCollector::Create();
-    if (collector) {
+    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
+    if (dumpUsage) {
         pid_t pid = getpid();
-        auto collectResult = collector->CollectProcessCpuStatInfo(pid);
-        double cpuUsage = collectResult.data.cpuUsage;
+        float tmpCpuUsage = dumpUsage->GetCpuUsage(pid);
+        double cpuUsage = double(tmpCpuUsage);
         napi_create_double(env, cpuUsage, &cpuUsageValue);
     } else {
         napi_create_double(env, 0, &cpuUsageValue);
