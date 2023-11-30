@@ -59,7 +59,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             FPS::GetInstance().SetTraceCatch();
             break; 
         case MessageType::GET_CAPTURE:
-            Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
+            profiler = &Capture::GetInstance();
             break; 
         case MessageType::SET_DUBAI_DB: {
             Dubai::DumpDubaiBegin();
@@ -148,7 +148,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             FPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_SNAPSHOT:
-            Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
+            profiler = &Capture::GetInstance();
             break; 
         case CommandType::CT_HW:
             break;            
