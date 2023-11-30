@@ -21,9 +21,7 @@
 #include <cstdio>
 
 #include "common.h"
-#ifdef LITE_PROTO
-#include "common_types_lite.pb.h"
-#endif
+#include "common_types.pb.h"
 #include "logging.h"
 
 using CharPtr = std::unique_ptr<char>::pointer;
@@ -86,10 +84,9 @@ bool TraceFileWriter::SetPluginConfig(const void* data, size_t size)
     return true;
 }
 
-#ifdef LITE_PROTO
 void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion)
 {
-    LITE::ProfilerPluginData pluginData;
+    ProfilerPluginData pluginData;
     pluginData.set_name(pluginName);
     pluginData.set_data(data);
     if (!pluginVersion.empty()) {
@@ -100,7 +97,7 @@ void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::str
         clock_gettime(CLOCK_REALTIME, &ts);
         pluginData.set_tv_sec(ts.tv_sec);
         pluginData.set_tv_nsec(ts.tv_nsec);
-        pluginData.set_clock_id(LITE::ProfilerPluginData::CLOCKID_REALTIME);
+        pluginData.set_clock_id(ProfilerPluginData::CLOCKID_REALTIME);
     }
 
     std::vector<char> msgData(pluginData.ByteSizeLong());
@@ -110,7 +107,6 @@ void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::str
 
     Write(msgData.data(), msgData.size());
 }
-#endif
 
 void TraceFileWriter::SetTimeStamp()
 {

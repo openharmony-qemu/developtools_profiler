@@ -24,13 +24,7 @@ PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
 OPT_PLUGIN_PATH=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
 OPT_PLUGIN=--plugin=protoc-gen-opt=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
 OPT_OUT=--opt_out
-PROTO_TYPE="standard"
-if [[ "${8##*/}" == "common_types.proto" ]]; then
-  if [[ $# -eq 8 ]]; then
-    PROTO_TYPE="lite"
-  fi
-fi
-PYTHON_SHELL=$THIS_DIR/make_proto.py # shell path
+PYTHON_SHELL=$THIS_DIR/make_standard_proto.py # shell path
 TMP=$2
 PROTO_OUT_DIR="$PROJECT_TOP/${TMP%/*}/$3" # path of the new proto file
 
@@ -52,7 +46,7 @@ do
 done
 PARAMS_PRINT="$PROTO_OUT_DIR $PARAMS_SOURCES" # splice the python args
 echo "EXEC: python $PYTHON_SHELL $PARAMS_PRINT"
-python $PYTHON_SHELL $PROTO_TYPE $PARAMS_PRINT
+python $PYTHON_SHELL $PARAMS_PRINT
 # end python
 
 # creat pb file
@@ -64,16 +58,6 @@ do
   PARAMS_STANDARD="$PARAMS_STANDARD$PROTO_OUT_DIR/${VAR##*/} " # add .proto file name to args
 done
 PARAMS_ALL="$PARAMS_SRC $PARAMS_STANDARD" # add new argument list to old argument list
-
-if [[ "$PROTO_TYPE" == "lite" ]]; then # common_types.proto need to create lite pb file
-  PARAMS_LITE_REPLACE=${PARAMS_SOURCES//.proto/_lite.proto} # make the new proto file name. like "_lite.proto"
-  PARAMS_LITE=" --proto_path $PROTO_OUT_DIR " # add proto_path，$PROTO_OUT_DIR is the pb file path
-  for VAR in ${PARAMS_LITE_REPLACE[@]}
-  do
-    PARAMS_LITE="$PARAMS_LITE$PROTO_OUT_DIR/${VAR##*/} " # add .proto file name to args
-  done
-  PARAMS_ALL="$PARAMS_SRC $PARAMS_STANDARD $PARAMS_LITE" # add new argument list to old argument list
-fi
 
 # avoid conflict, param4=--plugin* means ipc plugin, generate encode file if opt plugin exist
 if [[ "$4" != --plugin* ]]; then
