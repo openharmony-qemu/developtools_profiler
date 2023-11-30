@@ -15,23 +15,8 @@ import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
-config("napi_hidebug_config") {
-  visibility = [ ":*" ]
-
-  include_dirs = [
-    "//commonlibrary/c_utils/base/include",
-    "//third_party/node/src",
-    "//foundation/arkui/napi",
-    "//foundation/arkui/napi/native_engine",
-    "//foundation/arkui/napi/interfaces/kits",
-    "//base/hiviewdfx/hidumper/interfaces/innerkits/include/",
-    "//foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/context",
-  ]
-}
-
 ohos_shared_library("hidebug") {
   sources = [ "napi_hidebug.cpp" ]
-  configs = [ ":napi_hidebug_config" ]
 
   external_deps = [
     "ability_base:configuration",
@@ -42,6 +27,7 @@ ohos_shared_library("hidebug") {
     "c_utils:utils",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
+    "hiview:libucollection_utility",
     "ipc:ipc_core",
     "napi:ace_napi",
     "samgr:samgr_proxy",

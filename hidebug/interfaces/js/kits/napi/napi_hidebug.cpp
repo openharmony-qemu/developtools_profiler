@@ -27,10 +27,12 @@
 
 #include "application_context.h"
 #include "context.h"
+#include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
+#include "memory_collector.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "native_engine/native_engine.h"
@@ -355,10 +357,11 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 napi_value GetPss(napi_env env, napi_callback_info info)
 {
     napi_value pss;
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    if (dumpUsage) {
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (collector) {
         int pid = getpid();
-        uint64_t pssInfo = dumpUsage->GetPss(pid);
+        auto collectResult = collector->CollectProcessMemory(pid);
+        int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
         napi_create_bigint_uint64(env, pssInfo, &pss);
     } else {
         napi_create_bigint_uint64(env, 0, &pss);
@@ -369,10 +372,11 @@ napi_value GetPss(napi_env env, napi_callback_info info)
 napi_value GetSharedDirty(napi_env env, napi_callback_info info)
 {
     napi_value sharedDirty;
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    if (dumpUsage) {
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (collector) {
         int pid = getpid();
-        uint64_t sharedDirtyInfo = dumpUsage->GetSharedDirty(pid);
+        auto collectResult = collector->CollectProcessMemory(pid);
+        int32_t sharedDirtyInfo = collectResult.data.sharedDirty;
         napi_create_bigint_uint64(env, sharedDirtyInfo, &sharedDirty);
     } else {
         napi_create_bigint_uint64(env, 0, &sharedDirty);
@@ -383,10 +387,11 @@ napi_value GetSharedDirty(napi_env env, napi_callback_info info)
 napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 {
     napi_value privateDirtyValue;
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    if (dumpUsage) {
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (collector) {
         pid_t pid = getpid();
-        uint64_t privateDirty = dumpUsage->GetPrivateDirty(pid);
+        auto collectResult = collector->CollectProcessMemory(pid);
+        int32_t privateDirty = collectResult.data.privateDirty;
         napi_create_bigint_uint64(env, privateDirty, &privateDirtyValue);
     } else {
         napi_create_bigint_uint64(env, 0, &privateDirtyValue);
@@ -460,6 +465,21 @@ static napi_value GetServiceDump(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+napi_value GetVss(napi_env env, napi_callback_info info)
+{
+    napi_value vss;
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (collector) {
+        pid_t pid = getpid();
+        auto collectResult = collector->CollectProcessVss(pid);
+        uint64_t vssInfo = collectResult.data;
+        napi_create_bigint_uint64(env, vssInfo, &vss);
+    } else {
+        napi_create_bigint_uint64(env, 0, &vss);
+    }
+    return vss;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -476,7 +496,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getServiceDump", GetServiceDump),
         DECLARE_NAPI_FUNCTION("getNativeHeapSize", GetNativeHeapSize),
         DECLARE_NAPI_FUNCTION("getNativeHeapAllocatedSize", GetNativeHeapAllocatedSize),
-        DECLARE_NAPI_FUNCTION("getNativeHeapFreeSize", GetNativeHeapFreeSize)
+        DECLARE_NAPI_FUNCTION("getNativeHeapFreeSize", GetNativeHeapFreeSize),
+        DECLARE_NAPI_FUNCTION("getVss", GetVss)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     return exports;
