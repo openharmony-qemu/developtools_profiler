@@ -42,6 +42,7 @@ const std::string DEFAULT_HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 
 const std::string DEFAULT_HIPROFILER_CMD_PATH("/system/bin/hiprofiler_cmd");
 const std::string FTRACE_PLUGIN_PATH("/data/local/tmp/libftrace_plugin.z.so");
+const std::string HIPERF_PLUGIN_PATH("/data/local/tmp/libhiperfplugin.z.so");
 std::string DEFAULT_PATH("/data/local/tmp/");
 constexpr uint32_t READ_BUFFER_SIZE = 1024;
 constexpr int SLEEP_TIME = 3;
@@ -247,6 +248,37 @@ public:
             "    clock: \"mono\"\n"
             "    trace_period_ms: 200\n"
             "    debug_on: false\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+
+    std::string CreateHiperfCommand(const std::string &outFile, int time) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n";
+        cmdStr += "-k \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 1000\n"
+            "  }\n"
+            "  result_file: \"/data/local/tmp/hiprofiler_data.htrace\"\n"
+            "  sample_duration: 1000\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"hiperf-plugin\"\n"
+            "  sample_interval: 1000\n"
+            "  is_protobuf_serialize: true\n"
+            "  config_data {\n"
+            "    is_root: false\n"
+            "    outfile_name: \"/data/local/tmp/perf.data\"\n"
+            "    record_args: \"-f 1000 -a --call-stack dwarf\"\n"
             "  }\n"
             "}\n"
             "CONFIG\n";
@@ -552,5 +584,35 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
         EXPECT_TRUE(RunCommand(cmd, content));
         EXPECT_STREQ(content.c_str(), "");
     }
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with -c string.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level1)
+{
+    std::string cmd = "cp " + DEFAULT_SO_PATH + "libhiperfplugin.z.so " + DEFAULT_PATH;
+    system(cmd.c_str());
+
+    // 开启hiprofilerd和hiprofiler_plugin进程，验证字符串格式的config
+    std::string content = "";
+    StartServerStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    std::string outFile = DEFAULT_PATH + "trace.htrace";
+    int time = 10;
+    cmd = CreateHiperfCommand(outFile, time);
+    EXPECT_TRUE(RunCommand(cmd, content));
+    sleep(time);
+    EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
+
+    // 删除资源文件和生成的trace文件
+    cmd = "rm " + HIPERF_PLUGIN_PATH + " " + outFile;
+    system(cmd.c_str());
+    StopProcessStub(hiprofilerPluginsPid_);
+    StopProcessStub(hiprofilerdPid_);
 }
 }
