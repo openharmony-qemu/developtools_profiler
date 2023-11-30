@@ -143,6 +143,9 @@ void SPTask::StopTask()
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
         long long endTime  = SPUtils::GetCurTime();
         long long testDuration = (endTime - startTime) / 1000;
+        std::string screenStr = SPUtils::GetScreen();
+        int pos3 = screenStr.find("=");
+        std::string refreshrate = screenStr.substr(pos3 + 1);
         std::map<std::string, std::string> taskInfoMap = {
             {"sessionId", curTaskInfo.sessionId},
             {"taskId", curTaskInfo.sessionId},
@@ -153,6 +156,7 @@ void SPTask::StopTask()
             {"testDuration", std::to_string(testDuration)},
             {"taskName", "testtask"},
             {"board", "hw"},
+            {"target_fps", "refreshrate"},
         };
         std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
         std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo();

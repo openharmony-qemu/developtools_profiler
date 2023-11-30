@@ -27,20 +27,27 @@ namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;
 using namespace OHOS::Rosen;
+std::map<std::string, std::string> Capture::ItemData()
+{
+    std::map<std::string, std::string> result;
+    long long curTime = SPUtils::GetCurTime();
+    std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
+    result["capture"] = path;
+    Capture::TriggerGetCatch(curTime);
+    return result;
+}
 void Capture::ThreadGetCatch(const std::string &curTime) const
 {
+    auto savePath = "data/local/tmp/capture/screenCap_" + curTime + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
         SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
         printf("/data/local/tmp/capture created! \n");
     };
-    auto savePath = "data/local/tmp/capture/screenCap_" + curTime + ".png";
     std::stringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (!TakeScreenCap(savePath)) {
         std::cout << "Screen Capture Failed：---"<< errorRecv.str() << std::endl;
-    } else {
-        std::cout << "Screen Capture save to---"<< savePath << std::endl;
     }
     (void) close(fd);
 }
