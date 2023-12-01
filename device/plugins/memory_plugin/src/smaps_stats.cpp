@@ -24,7 +24,6 @@ bool MatchHead(const std::string& name, const char* str)
 
 bool MatchTail(const std::string& name, const char* str)
 {
-    CHECK_TRUE(name.size() >= strlen(str), false, "str is larger than name");
     int index = name.size() - strlen(str);
     if (index < 0) {
         return false;
