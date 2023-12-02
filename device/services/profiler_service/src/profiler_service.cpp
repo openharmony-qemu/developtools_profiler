@@ -614,11 +614,10 @@ Status ProfilerService::DestroySession(ServerContext* context,
             auto pluginName = ctx->pluginNames[i];
             std::tie(pluginId, pluginCtx) = pluginService_->GetPluginContext(pluginName);
             if (pluginCtx->isStandaloneFileData == true) {
-                std::string file = ctx->sessionConfig.result_file();
-                if (ctx->sessionConfig.split_file()) {
-                    file = ctx->traceFileWriter.get()->Path();
+                if (!ctx->sessionConfig.split_file()) {
+                    MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
+                                        pluginCtx->pluginVersion);
                 }
-                MergeStandaloneFile(file, pluginName, pluginCtx->outFileName, pluginCtx->pluginVersion);
             }
         }
     }

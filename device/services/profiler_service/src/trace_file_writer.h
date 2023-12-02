@@ -51,6 +51,8 @@ public:
 
     long Write(const void* data, size_t size) override;
 
+    long WriteStandalonePluginFile(std::string file, std::string name, std::string version, DataType type);
+
     bool Flush() override;
 
     bool Finish();
