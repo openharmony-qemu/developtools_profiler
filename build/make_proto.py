@@ -49,7 +49,6 @@ def add_lite_option(target_path, protofilepath):
         content.close()
 
 def main():
-    # type = sys.argv[1]
     target_dir = sys.argv[1]
     i = 2
     while i < len(sys.argv):
