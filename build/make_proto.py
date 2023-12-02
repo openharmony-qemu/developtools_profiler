@@ -32,6 +32,7 @@ def remove_lite_option(target_path, protofilepath):
         content.truncate()
         content.close()
 
+
 def add_lite_option(target_path, protofilepath):
     target_file_path = os.path.basename(protofilepath)
     target_file_path = target_path + '/' + target_file_path.replace(".proto", "_lite.proto")
@@ -40,13 +41,15 @@ def add_lite_option(target_path, protofilepath):
     with open(target_file_path, 'r+') as content:
         newcontent = content.read()
         if newcontent.find('option optimize_for = LITE_RUNTIME') == -1:
-            newcontent = newcontent.replace('syntax = "proto3";', 'syntax = "proto3";\n\noption optimize_for = LITE_RUNTIME;')
+            newcontent = newcontent.replace('syntax = "proto3";',
+                                            'syntax = "proto3";\n\noption optimize_for = LITE_RUNTIME;')
         newcontent = newcontent.replace('syntax = "proto3";', 'syntax = "proto3";\n\npackage LITE;')
         newcontent = newcontent.replace('.proto";', '_lite.proto";')
         content.seek(0, 0)
         content.write(newcontent)
         content.truncate()
         content.close()
+
 
 def main():
     target_dir = sys.argv[1]
@@ -56,6 +59,7 @@ def main():
         remove_lite_option(target_dir, proto_file_path)
         add_lite_option(target_dir, proto_file_path)
         i += 1
+
 
 if __name__ == '__main__':
     main()
