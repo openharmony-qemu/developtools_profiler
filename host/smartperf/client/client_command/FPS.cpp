@@ -123,6 +123,7 @@ FpsInfo FPS::GetFpsInfo()
         flagFpsInfo = fpsInfoMax;
         return fpsInfoMax;
     }
+}
 
 FpsInfo FPS::GetSurfaceFrame(std::string name)
 {
