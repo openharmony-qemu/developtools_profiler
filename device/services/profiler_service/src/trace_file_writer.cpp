@@ -281,10 +281,6 @@ long TraceFileWriter::Write(const MessageLite& message)
 
 bool TraceFileWriter::Finish()
 {
-    long long filePos = stream_.tellp();
-    if (filePos == -1) { // -1 :file not open or error
-        return false;
-    }
     // update header info
     helper_.Update(header_);
     SetTimeStamp(); // add timestamp in header
@@ -303,10 +299,9 @@ bool TraceFileWriter::Finish()
 
         // write final header
         stream_.write(reinterpret_cast<CharPtr>(&header_), sizeof(header_));
-        stream_.seekp(filePos);
         CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
-        HILOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
+        HILOG_INFO(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
                    writeCount_);
     }
     return true;

@@ -451,10 +451,10 @@ void PluginService::ReadShareMemoryOffline(PluginContext& context)
         dataFlushSize_ += static_cast<uint32_t>(retval);
         stopTakeDataSize += static_cast<uint32_t>(retval);
         if (stopTakeDataSize > STOP_BASELINE) {
+            traceWriter_->Flush();
             break;
         } else if (dataFlushSize_ > FLUSH_BASELINE) {
             traceWriter_->Flush();
-            traceWriter_->Finish();
             dataFlushSize_ = 0;
         }
 
@@ -462,8 +462,6 @@ void PluginService::ReadShareMemoryOffline(PluginContext& context)
             break;
         }
     }
-    traceWriter_->Flush();
-    traceWriter_->Finish();
 }
 
 void PluginService::ReadShareMemoryOnline(PluginContext& context)
@@ -504,7 +502,6 @@ void PluginService::FlushShareMemory(PluginContext& context)
             break;
         }
     }
-    traceWriter_->Finish();
 }
 
 void PluginService::FlushAllData(const std::string& pluginName)
