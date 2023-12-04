@@ -85,10 +85,9 @@ FpsInfo FPS::GetFpsInfo()
     std::string layerName;
     std::vector<std::string> sps;
     SPUtils::StrSplit(this->pkgName, ".", sps);
-    std::string addEndChar = "0";
     const uint64_t pNameLastPos = sps.size();
     std::string pkgSuffix = sps[pNameLastPos - 1];
-    layerName = std::string(pkgSuffix.c_str() + addEndChar);
+    layerName = std::string(pkgSuffix.c_str());
     std::string uniteLayer = "DisplayNode";
     uniteLayer = GetSurface();
     std::string spSurfacePrefix = "sp_";
