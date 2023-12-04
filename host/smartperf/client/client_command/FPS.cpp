@@ -115,8 +115,14 @@ FpsInfo FPS::GetFpsInfo()
     if (fpsInfoMax.fps < fpsValue) {
         fpsInfoMax.fps = fpsValue;
     }
-    return fpsInfoMax;
-}
+    if (flagFpsInfo == fpsInfoMax) {
+        flagFpsInfo = fpsInfoMax;
+        fpsInfoMax.clear();
+        return fpsInfoMax;
+    } else {
+        flagFpsInfo = fpsInfoMax;
+        return fpsInfoMax;
+    }
 
 FpsInfo FPS::GetSurfaceFrame(std::string name)
 {
