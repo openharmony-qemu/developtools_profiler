@@ -281,10 +281,6 @@ long TraceFileWriter::Write(const MessageLite& message)
 
 bool TraceFileWriter::Finish()
 {
-    long long filePos = stream_.tellp();
-    if (filePos == -1) { // -1 :file not open or error
-        return false;
-    }
     // update header info
     helper_.Update(header_);
     SetTimeStamp(); // add timestamp in header
@@ -296,6 +292,10 @@ bool TraceFileWriter::Finish()
         auto ret = write(fd_, &header_, sizeof(header_));
         CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
     } else {
+        long long filePos = stream_.tellp();
+        if (filePos == -1) { // -1 :file not open or error
+            return false;
+        }
         // move write position to begin of file
         CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
         stream_.seekp(0);
