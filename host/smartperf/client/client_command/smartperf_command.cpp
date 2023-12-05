@@ -110,7 +110,9 @@ std::string SmartPerfCommand::ExecCommand()
 {
     int index = 0;
     std::vector<SPData> vmap;
+    const long long freq = 1000;
     while (index < num) {
+        long long lastTime = SPUtils::GetCurTime();
         std::map<std::string, std::string> spMap;
         long long timestamp = SPUtils::GetCurTime();
         spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(timestamp)));
@@ -137,7 +139,11 @@ std::string SmartPerfCommand::ExecCommand()
         SPData spdata;
         spdata.values = spMap;
         vmap.push_back(spdata);
-        sleep(1);
+        long long nextTime = SPUtils::GetCurTime();
+        long long costTime = nextTime - lastTime;
+        if (costTime < freq) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(freq - costTime));
+        }
         index++;
     }
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);

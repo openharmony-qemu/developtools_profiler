@@ -26,6 +26,26 @@ struct FpsInfo {
     std::queue<long long> timeStampQ;
     long long lastFrameReadyTime;
     long long currentFpsTime;
+    void Clear()
+    {
+        fps = 0;
+        jitters.clear();
+    }
+    bool operator==(const FpsInfo& other) const
+    {
+        if (fps != other.fps) {
+            return false;
+        }
+        if (jitters.size() != other.jitters.size()) {
+            return false;
+        }
+        for (int i = 0; i < jitters.size(); i++) {
+            if (jitters[i] != other.jitters[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
     FpsInfo()
     {
         fps = 0;
@@ -43,6 +63,7 @@ public:
     std::string GetSurface();
     std::string GetLayer(std::string pkgSurface);
     FpsInfo mFpsInfo;
+    FpsInfo flagFpsInfo;
     static FPS &GetInstance()
     {
         static FPS instance;
