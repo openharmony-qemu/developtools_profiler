@@ -501,10 +501,10 @@ void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t fla
             std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length,
                                                                        offset, flags, curMaps->name_);
             curMaps->AddMap(mapItem, false);
-            if (flags & PROT_EXEC) {
-                offlineMapAddr_.push_back(soBegin_);
-            }
         }
+    }
+    if (flags & PROT_EXEC) {
+        offlineMapAddr_.push_back(soBegin_);
     }
 }
 
