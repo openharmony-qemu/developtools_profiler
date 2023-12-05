@@ -117,7 +117,7 @@ FpsInfo FPS::GetFpsInfo()
     }
     if (flagFpsInfo == fpsInfoMax) {
         flagFpsInfo = fpsInfoMax;
-        fpsInfoMax.clear();
+        fpsInfoMax.Clear();
         return fpsInfoMax;
     } else {
         flagFpsInfo = fpsInfoMax;

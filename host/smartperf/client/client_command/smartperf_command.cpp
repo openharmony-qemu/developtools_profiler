@@ -110,8 +110,8 @@ std::string SmartPerfCommand::ExecCommand()
 {
     int index = 0;
     std::vector<SPData> vmap;
+    const long long freq = 1000;
     while (index < num) {
-        const long long freq = 1000;
         long long lastTime = SPUtils::GetCurTime();
         std::map<std::string, std::string> spMap;
         long long timestamp = SPUtils::GetCurTime();

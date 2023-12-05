@@ -26,10 +26,10 @@ struct FpsInfo {
     std::queue<long long> timeStampQ;
     long long lastFrameReadyTime;
     long long currentFpsTime;
-    void clear()
+    void Clear()
     {
-       fps = 0;
-       jitters.clear();
+        fps = 0;
+        jitters.clear();
     }
     bool operator==(const FpsInfo& other) const
     {
