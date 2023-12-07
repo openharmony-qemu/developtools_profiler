@@ -18,4 +18,5 @@ option optimize_for = LITE_RUNTIME;
 message HiebpfConfig {
     string cmd_line = 1;
     string outfile_name = 2;
+    string split_outfile_name = 3;
 }
