@@ -190,7 +190,6 @@ public:
 protected:
     bool LoadDebugInfo(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
         if (debugInfoLoaded_) {
             return true;
         } else {
