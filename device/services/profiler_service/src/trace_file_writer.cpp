@@ -89,8 +89,9 @@ bool TraceFileWriter::SetPluginConfig(const void* data, size_t size)
 }
 
 #ifdef LITE_PROTO
-void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion)
-{
+void TraceFileWriter::WriteStandalonePluginData(
+    const std::string &pluginName, const std::string &data,
+    const std::string &pluginVersion) {
     LITE::ProfilerPluginData pluginData;
     pluginData.set_name(pluginName);
     pluginData.set_data(data);
@@ -113,8 +114,9 @@ void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::str
     Write(msgData.data(), msgData.size());
 }
 #else
-void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion)
-{
+void TraceFileWriter::WriteStandalonePluginData(
+    const std::string &pluginName, const std::string &data,
+    const std::string &pluginVersion) {
     ProfilerPluginData pluginData;
     pluginData.set_name(pluginName);
     pluginData.set_data(data);
@@ -261,8 +263,10 @@ long TraceFileWriter::Write(const void* data, size_t size)
     return nbytes;
 }
 
-long TraceFileWriter::WriteStandalonePluginFile(std::string file, std::string name, std::string version, DataType type)
-{
+long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
+                                                const std::string &name,
+                                                const std::string &version,
+                                                DataType type) {
     CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
 
     std::ifstream fsFile {}; // read data from file
