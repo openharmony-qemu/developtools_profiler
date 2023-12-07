@@ -99,7 +99,7 @@ bool HookManager::CheckProcessName()
     int pidValue = -1;
     const std::string processName = hookConfig_.process_name();
     bool isExist = COMMON::IsProcessExist(processName, pidValue);
-    if (hookConfig_.startup_mode() && !isExist) {
+    if (hookConfig_.startup_mode() || !isExist) {
         HILOG_INFO(LOG_CORE, "Wait process %s start or restart, set param", hookConfig_.process_name().c_str());
         std::string cmd = STARTUP + hookConfig_.process_name();
         int ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
