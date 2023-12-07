@@ -19,7 +19,6 @@
 #include "arkts_plugin_config.pb.h"
 #include "plugin_module_api.h"
 #include "schedule_task_manager.h"
-#include "trace_file_writer.h"
 
 struct WebSocketFrame {
     uint8_t fin;
@@ -73,7 +72,6 @@ private:
     uint8_t commandResult_{0};
     ScheduleTaskManager scheduleTaskManager_;
     int32_t snapshotScheduleTaskFd_;
-    std::shared_ptr<TraceFileWriter> splitTraceWriter_ {nullptr};
 };
 
 #endif // ARKTS_PLUGIN_H

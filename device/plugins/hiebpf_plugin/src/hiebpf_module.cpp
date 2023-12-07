@@ -23,7 +23,6 @@
 #include "hiebpf_plugin_config.pb.h"
 #include "logging.h"
 #include "plugin_module_api.h"
-#include "trace_file_writer.h"
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -31,8 +30,6 @@ std::mutex g_taskMutex;
 constexpr int32_t RET_OK = 0;
 constexpr int32_t RET_ERR = -1;
 bool g_releaseResources = false;
-HiebpfConfig g_config;
-std::shared_ptr<TraceFileWriter> g_splitTraceWriter {nullptr};
 
 void RunCmd(std::string& cmd)
 {
@@ -60,25 +57,16 @@ static int32_t HiebpfSessionStart(const uint8_t* configData, uint32_t configSize
         HILOG_ERROR(LOG_CORE, "Parameter error");
         return RET_ERR;
     }
-
-    CHECK_TRUE(g_config.ParseFromArray(configData, configSize) > 0, RET_ERR, "Parameter parsing failed");
-
-    if (!g_config.split_outfile_name().empty()) {
-        g_splitTraceWriter = std::make_shared<TraceFileWriter>(g_config.split_outfile_name());
-        g_splitTraceWriter->WriteStandalonePluginData(
-            std::string(g_pluginModule.name) + "_config",
-            std::string(reinterpret_cast<const char *>(configData),
-                        configSize));
-        g_splitTraceWriter->SetTimeSource();
-    }
+    HiebpfConfig config;
+    CHECK_TRUE(config.ParseFromArray(configData, configSize) > 0, RET_ERR, "Parameter parsing failed");
 
     size_t defaultSize = sizeof(g_pluginModule.outFileName);
-    CHECK_TRUE(sizeof(g_config.outfile_name().c_str()) <= defaultSize - 1, RET_ERR,
+    CHECK_TRUE(sizeof(config.outfile_name().c_str()) <= defaultSize - 1, RET_ERR,
                "The out file path more than %zu bytes", defaultSize);
-    int32_t ret = strncpy_s(g_pluginModule.outFileName, defaultSize, g_config.outfile_name().c_str(), defaultSize - 1);
-    CHECK_TRUE(ret == EOK, RET_ERR, "strncpy_s error! outfile is %s", g_config.outfile_name().c_str());
-    std::string cmd = g_config.cmd_line();
-    cmd += " --start true --output_file " + g_config.outfile_name();
+    int32_t ret = strncpy_s(g_pluginModule.outFileName, defaultSize, config.outfile_name().c_str(), defaultSize - 1);
+    CHECK_TRUE(ret == EOK, RET_ERR, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
+    std::string cmd = config.cmd_line();
+    cmd += " --start true --output_file " + config.outfile_name();
     RunCmd(cmd);
     HILOG_DEBUG(LOG_CORE, "leave");
     return RET_OK;
@@ -89,23 +77,8 @@ static int32_t HiebpfSessionStop()
     std::lock_guard<std::mutex> guard(g_taskMutex);
     CHECK_TRUE(!g_releaseResources, 0, "%s: hiebpf released resources, return", __func__);
     HILOG_DEBUG(LOG_CORE, "enter");
-
-    if (!g_config.split_outfile_name().empty()) {
-        CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, SetDurationTime failed", __func__);
-        g_splitTraceWriter->SetDurationTime();
-    }
-
     std::string stop = "hiebpf --stop true";
     RunCmd(stop);
-
-    if (!g_config.split_outfile_name().empty()) { // write split file.
-        CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, WriteStandaloneFile failed", __func__);
-        g_splitTraceWriter->WriteStandalonePluginFile(std::string(g_pluginModule.outFileName),
-            std::string(g_pluginModule.name), std::string(g_pluginModule.version), DataType::STANDALONE_DATA);
-        g_splitTraceWriter->Finish();
-        g_splitTraceWriter.reset();
-        g_splitTraceWriter = nullptr;
-    }
     HILOG_DEBUG(LOG_CORE, "leave");
     return RET_OK;
 }

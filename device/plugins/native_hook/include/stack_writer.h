@@ -37,6 +37,7 @@ public:
     long WriteTimeout(const void* data, size_t size);
     long WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize);
     bool Flush() override;
+    bool Clear() override;
 
 private:
     void DoStats(long bytes);

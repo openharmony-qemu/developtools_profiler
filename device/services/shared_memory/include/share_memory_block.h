@@ -45,6 +45,7 @@ public:
     std::string GetName();
     uint32_t GetSize();
     EXPORT_API int GetfileDescriptor();
+    EXPORT_API void ClearShareMemoryBlock();
 
     bool Valid() const;
 

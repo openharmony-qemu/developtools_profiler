@@ -148,6 +148,10 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
             printf("set %s plugin config failed\n", pluginConfig->name().c_str());
             return nullptr;
         }
+        if (sessionConfig->split_file() && pluginConfig->name() != "ftrace-plugin") {
+            printf("only ftrace-plugin support split_file, please check session_config.\n");
+            return nullptr;
+        }
     }
 
     content.clear();

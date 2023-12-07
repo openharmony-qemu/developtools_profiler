@@ -16,8 +16,6 @@ import("../../base/config.gni")
 
 ohos_source_set("arkts_source") {
   sources = [
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
     "src/arkts_module.cpp",
     "src/arkts_plugin.cpp",
   ]
@@ -26,20 +24,17 @@ ohos_source_set("arkts_source") {
     "../../base/include/",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "${OHOS_PROFILER_DIR}/device/plugins/api/include",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
     "//third_party/bounds_checking_function/include",
   ]
   deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
-    "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/arkts_plugin:arkts_plugin_data_cpp",
     "../../base:hiprofiler_base",
     "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/openssl:libcrypto_shared",
   ]
 
-  defines = [ "LITE_PROTO" ]
+  defines = []
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
     external_deps = [ "hilog:libhilog" ]
