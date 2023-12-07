@@ -21,11 +21,7 @@
 #include <cstdio>
 
 #include "common.h"
-#ifdef LITE_PROTO
-#include "common_types_lite.pb.h"
-#else
 #include "common_types.pb.h"
-#endif
 #include "logging.h"
 
 using CharPtr = std::unique_ptr<char>::pointer;
@@ -88,35 +84,8 @@ bool TraceFileWriter::SetPluginConfig(const void* data, size_t size)
     return true;
 }
 
-#ifdef LITE_PROTO
-void TraceFileWriter::WriteStandalonePluginData(
-    const std::string &pluginName, const std::string &data,
-    const std::string &pluginVersion) {
-    LITE::ProfilerPluginData pluginData;
-    pluginData.set_name(pluginName);
-    pluginData.set_data(data);
-    if (!pluginVersion.empty()) {
-        pluginData.set_version(pluginVersion);
-        pluginData.set_status(0);
-
-        struct timespec ts = { 0, 0 };
-        clock_gettime(CLOCK_REALTIME, &ts);
-        pluginData.set_tv_sec(ts.tv_sec);
-        pluginData.set_tv_nsec(ts.tv_nsec);
-        pluginData.set_clock_id(LITE::ProfilerPluginData::CLOCKID_REALTIME);
-    }
-
-    std::vector<char> msgData(pluginData.ByteSizeLong());
-    if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
-        HILOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
-    }
-
-    Write(msgData.data(), msgData.size());
-}
-#else
-void TraceFileWriter::WriteStandalonePluginData(
-    const std::string &pluginName, const std::string &data,
-    const std::string &pluginVersion) {
+void TraceFileWriter::WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion)
+{
     ProfilerPluginData pluginData;
     pluginData.set_name(pluginName);
     pluginData.set_data(data);
@@ -138,7 +107,7 @@ void TraceFileWriter::WriteStandalonePluginData(
 
     Write(msgData.data(), msgData.size());
 }
-#endif
+
 void TraceFileWriter::SetTimeStamp()
 {
     header_.data_.boottime = headerDataTime_.boottime;
@@ -261,61 +230,6 @@ long TraceFileWriter::Write(const void* data, size_t size)
     writeBytes_ += nbytes;
     ++writeCount_;
     return nbytes;
-}
-
-long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
-                                                const std::string &name,
-                                                const std::string &version,
-                                                DataType type) {
-    CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
-
-    std::ifstream fsFile {}; // read data from file
-    fsFile.open(file, std::ios_base::in | std::ios_base::binary);
-    if (!fsFile.good()) {
-        HILOG_ERROR(LOG_CORE, "open file(%s) failed: %d", file.c_str(), fsFile.rdstate());
-        return 0;
-    }
-
-    TraceFileHeader header {};
-    fsFile.seekg(0, std::ios_base::end);
-    uint64_t fileSize = static_cast<uint64_t>(fsFile.tellg());
-    header.data_.length += fileSize;
-    size_t size = name.size();
-    if (size > 0) {
-        if (size > PLUGIN_MODULE_NAME_MAX) {
-            HILOG_ERROR(LOG_CORE, "standalonePluginName(%s) size(%zu) is greater than %d!",
-                name.c_str(), size, PLUGIN_MODULE_NAME_MAX);
-        } else if (strncpy_s(header.data_.standalonePluginName, PLUGIN_MODULE_NAME_MAX, name.c_str(), size) != EOK) {
-            HILOG_ERROR(LOG_CORE, "strncpy_s standalonePluginName(%s) error!", name.c_str());
-        }
-    }
-    size = version.size();
-    if (size > 0) {
-        if (size > PLUGIN_MODULE_VERSION_MAX) {
-            HILOG_ERROR(LOG_CORE, "pluginVersion(%s) size(%zu) is greater than %d!",
-                version.c_str(), size, PLUGIN_MODULE_VERSION_MAX);
-        } else if (strncpy_s(header.data_.pluginVersion, PLUGIN_MODULE_VERSION_MAX, version.c_str(), size) != EOK) {
-            HILOG_ERROR(LOG_CORE, "strncpy_s pluginVersion(%s) error!", version.c_str());
-        }
-    }
-    header.data_.dataType = type;
-    stream_.write(reinterpret_cast<char*>(&header), sizeof(header));
-
-    constexpr uint64_t readBufSize = 4 * 1024 * 1024;
-    std::vector<char> readBuf(readBufSize);
-    uint64_t readSize = 0;
-    fsFile.seekg(0);
-    while ((readSize = std::min(readBufSize, fileSize)) > 0) {
-        fsFile.read(readBuf.data(), readSize);
-        stream_.write(readBuf.data(), readSize);
-
-        fileSize -= readSize;
-        writeBytes_ += readSize;
-        ++writeCount_;
-    }
-
-    fsFile.close();
-    return fileSize;
 }
 
 bool TraceFileWriter::IsSplitFile(uint32_t size)

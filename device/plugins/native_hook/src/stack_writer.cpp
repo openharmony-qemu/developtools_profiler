@@ -94,3 +94,12 @@ bool StackWriter::Flush()
     bytesPending_ = 0;
     return true;
 }
+
+bool StackWriter::Clear()
+{
+    if (shareMemoryBlock_ == nullptr) {
+        return false;
+    }
+    shareMemoryBlock_->ClearShareMemoryBlock();
+    return true;
+}

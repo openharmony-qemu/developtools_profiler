@@ -28,15 +28,11 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
   ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/hiperf_plugin/src/hiperf_module.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
     "hiperfstartplugin_fuzzer.cpp",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
-    "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
-    "//third_party/openssl:libcrypto_shared",
   ]
 
   include_dirs = [
@@ -44,10 +40,8 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
     "//commonlibrary/c_utils/base/include",
   ]
-  defines = [ "LITE_PROTO" ]
   external_deps = [ "c_utils:utils" ]
 }
 

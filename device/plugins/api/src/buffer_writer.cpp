@@ -129,6 +129,15 @@ bool BufferWriter::Flush()
     return true;
 }
 
+bool BufferWriter::Clear()
+{
+    if (shareMemoryBlock_ == nullptr) {
+        return false;
+    }
+    shareMemoryBlock_->ClearShareMemoryBlock();
+    return true;
+}
+
 void BufferWriter::UseMemory(int32_t size)
 {
     if (shareMemoryBlock_ == nullptr) {

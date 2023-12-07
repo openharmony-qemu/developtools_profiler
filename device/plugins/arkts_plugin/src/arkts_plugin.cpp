@@ -79,16 +79,6 @@ int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
         HILOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
         return -1;
     }
-
-    if (!protoConfig_.split_outfile_name().empty()) {
-        splitTraceWriter_ = std::make_shared<TraceFileWriter>(protoConfig_.split_outfile_name());
-        splitTraceWriter_->WriteStandalonePluginData(
-            std::string(g_pluginModule.name) + "_config",
-            std::string(reinterpret_cast<const char *>(configData),
-                        configSize));
-        splitTraceWriter_->SetTimeSource();
-    }
-
     pid_ = protoConfig_.pid();
     if (pid_ <= 0) {
         HILOG_ERROR(LOG_CORE, "%s: pid is less than or equal to 0", __func__);
@@ -209,14 +199,6 @@ int32_t ArkTSPlugin::Stop()
         }
     }
     Close();
-
-    if (!protoConfig_.split_outfile_name().empty()) { // write split file.
-        CHECK_NOTNULL(splitTraceWriter_, -1, "%s: writer is nullptr, WriteStandaloneFile failed", __func__);
-        splitTraceWriter_->SetDurationTime();
-        splitTraceWriter_->Finish();
-        splitTraceWriter_.reset();
-        splitTraceWriter_ = nullptr;
-    }
     return 0;
 }
 
@@ -244,9 +226,6 @@ void ArkTSPlugin::FlushData(const std::string& command)
             endFlag = RESPONSE_FLAG_HEAD + match[1].str() + RESPONSE_FLAG_TAIL;
         }
     }
-    if (!protoConfig_.split_outfile_name().empty()) {
-        CHECK_NOTNULL(splitTraceWriter_, NO_RETVAL, "%s: writer is nullptr, WriteStandaloneFile failed", __func__);
-    }
 
     while (true) {
         std::string recv = Decode();
@@ -258,24 +237,14 @@ void ArkTSPlugin::FlushData(const std::string& command)
         data.set_result(recv.c_str(), recv.size());
         buffer_.resize(data.ByteSizeLong());
         data.SerializeToArray(buffer_.data(), buffer_.size());
-
-        if (protoConfig_.split_outfile_name().empty()) {
-            resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
-            resultWriter_->flush(resultWriter_);
-        } else { // write split file.
-            splitTraceWriter_->WriteStandalonePluginData(
-                std::string(g_pluginModule.name),
-                std::string(buffer_.data(), buffer_.size()),
-                std::string(g_pluginModule.version));
+        resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
+        resultWriter_->flush(resultWriter_);
+        if (endFlag.empty()) {
+            return;
         }
-
-        if (endFlag.empty() || recv == endFlag) {
-            break;
+        if (recv == endFlag) {
+            return;
         }
-    }
-
-    if (!protoConfig_.split_outfile_name().empty()) {
-        splitTraceWriter_->Flush();
     }
 }
 

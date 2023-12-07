@@ -250,6 +250,13 @@ bool PluginModule::ReportBasicData()
     CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onReportBasicDataCallback != nullptr) {
+            auto write = GetWriter();
+            CHECK_NOTNULL(write, false, "%s:get write falied!", __func__);
+            if (isProtobufSerialize_) {
+                // proto_encoder mode cannot clean up shared memory because data is written directly to shared memory.
+                // protobuf mode requires clear shared memory in order to prioritize reporting basic data.
+                write->Clear();
+            }
             return (structPtr_->callbacks->onReportBasicDataCallback() == 0);
         }
     }

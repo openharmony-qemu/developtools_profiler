@@ -36,6 +36,7 @@ public:
     ~BufferWriter();
     long Write(const void* data, size_t size) override;
     bool Flush() override;
+    bool Clear() override;
     void UseMemory(int32_t size) override;
     RandomWriteCtx* StartReport() override;
     void FinishReport(int32_t size) override;
