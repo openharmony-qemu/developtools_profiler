@@ -112,6 +112,9 @@ public:
 #endif
     const bool loadSymboleWhenNeeded_ = true; // thie is a feature config
     void UpdateSymbols(std::string filename);
+    // we don't know whether hap vma mapping is stand for a so
+    // thus we need try to parse it first
+    bool UpdateHapSymbols(std::shared_ptr<DfxMap> map);
     bool IsSymbolExist(const std::string& fileName);
     void DelSymbolFile(const std::string& fileName);
     void UpdateMaps(pid_t pid, pid_t tid);

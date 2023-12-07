@@ -293,6 +293,26 @@ void VirtualRuntime::UpdateSymbols(std::string fileName)
 #endif
 }
 
+bool VirtualRuntime::UpdateHapSymbols(std::shared_ptr<DfxMap> map)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(map->name);
+    if (symbolsFile == nullptr) {
+        HLOGV("Failed to load CreateSymbolsFile for exec section in hap(%s)", map->name.c_str());
+        return false;
+    }
+    // update maps name if load debuginfo successfully
+    if (!symbolsFile->LoadDebugInfo(map)) {
+        HLOGV("Failed to load debuginfo for exec section in hap(%s)", map->name.c_str());
+        return false;
+    }
+
+    if (!loadSymboleWhenNeeded_) {
+        symbolsFile->LoadSymbols(map);
+    }
+    symbolsFiles_[symbolsFile->filePath_] = (std::move(symbolsFile));
+    return true;
+}
+
 const DfxSymbol VirtualRuntime::GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,
                                                 const VirtualThread &thread)
 {
@@ -339,10 +359,9 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
     DfxSymbol vaddrSymbol(ip, thread.name_);
     auto [curMaps, itemIndex] = FindMap(ip);
     if (curMaps != nullptr) {
-        auto symbolsFilesIter = symbolsFiles_.find(curMaps->name_);
+        auto symbolsFilesIter = symbolsFiles_.find((curMaps->GetMaps())[itemIndex]->name);
         if (symbolsFilesIter != symbolsFiles_.end()) {
             auto symbolsFile = symbolsFilesIter->second.get();
-            symbolsFile->LoadDebugInfo((curMaps->GetMaps())[itemIndex]);
             vaddrSymbol.fileVaddr_ =
                 symbolsFile->GetVaddrInSymbols(ip, (curMaps->GetMaps())[itemIndex]->begin,
                                                (curMaps->GetMaps())[itemIndex]->offset);
@@ -500,6 +519,11 @@ void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t fla
             curMaps->soEnd_ = begin + length;
             std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length,
                                                                        offset, flags, curMaps->name_);
+            if (mapItem->name.find(".hap") != std::string::npos && (mapItem->prots & PROT_EXEC)) {
+                mapItem->prevMap = curMaps->GetMaps().back();
+                HLOGD("update hap(%s) symbols", mapItem->name.c_str());
+                UpdateHapSymbols(mapItem);
+            }
             curMaps->AddMap(mapItem, false);
         }
     }

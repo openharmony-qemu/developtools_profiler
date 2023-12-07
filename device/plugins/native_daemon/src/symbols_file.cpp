@@ -136,7 +136,13 @@ const std::string SymbolsFile::FindSymbolFile(
             }
         }
     }
-
+    auto pathSplit = StringSplit(symboleFilePath, "!");
+    if (pathSplit.size() > 1) {
+        HLOGV("base name is: %s ", pathSplit.back().c_str());
+        if (StringEndsWith(pathSplit[0], ".hap")) {
+            foundPath = pathSplit[0];
+        }
+    }
     // only access the patch in onRecording_
     // in report mode we don't load any thing in runtime path
     if (foundPath.empty() and onRecording_) {
@@ -195,24 +201,33 @@ protected:
             if (StringEndsWith(elfPath, ".hap")) {
                 elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
                 map->elf = elfFile_;
-                HLOGD("loaded map %s", elfPath.c_str());
             } else {
                 elfFile_ = std::make_shared<DfxElf>(elfPath);
-                HLOGD("loaded elf %s", elfPath.c_str());
             }
         }
-        if (!elfFile_->IsValid()) {
-            HLOGD("parser elf file failed.");
+
+        if (elfFile_ == nullptr) {
+            HLOGE("Failed to create elf file for %s.", elfPath.c_str());
             return false;
         }
 
-        auto ptloads = elfFile_->GetPtLoads();
-        for (const auto &ptload : ptloads) {
-            if (textExecVaddr_ != std::min(textExecVaddr_, ptload.second.tableVaddr)) {
-                textExecVaddr_ = std::min(textExecVaddr_, ptload.second.tableVaddr);
-                textExecVaddrFileOffset_ = ptload.second.offset;
-            }
+        if (!elfFile_->IsValid()) {
+            HLOGE("parse elf file failed.");
+            return false;
         }
+
+        HLOGD("loaded elf %s", elfPath.c_str());
+        // update path for so in hap
+        if (StringEndsWith(elfPath, ".hap")) {
+            filePath_ = elfPath + "!" + elfFile_->GetElfName();
+            HLOGD("update path for so in hap %s.", filePath_.c_str());
+            map->name = filePath_;
+            map->elf = elfFile_;
+            map->prevMap->name = filePath_;
+            map->prevMap->elf = elfFile_;
+        }
+        textExecVaddr_ = elfFile_->GetStartVaddr();
+        textExecVaddrFileOffset_ = elfFile_->GetStartOffset();
         HLOGD("textExecVaddr_ 0x%016" PRIx64 " file offset 0x%016" PRIx64 "", textExecVaddr_,
               textExecVaddrFileOffset_);
 
@@ -347,26 +362,23 @@ private:
 #ifdef HIPERF_DEBUG_TIME
         const auto startTime = steady_clock::now();
 #endif
-        if (StringEndsWith(elfPath, ".hap") && map != nullptr) {
-            elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
-            map->elf = elfFile_;
-            HLOGD("loaded map %s", elfPath.c_str());
-        } else {
-            elfFile_ = std::make_shared<DfxElf>(elfPath);
-            HLOGD("loaded elf %s", elfPath.c_str());
+        if (elfFile_ == nullptr) {
+            if (StringEndsWith(elfPath, ".hap") && map != nullptr) {
+                elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
+                map->elf = elfFile_;
+                HLOGD("loaded map %s", elfPath.c_str());
+            } else {
+                elfFile_ = std::make_shared<DfxElf>(elfPath);
+                HLOGD("loaded elf %s", elfPath.c_str());
+            }
         }
-        if (!elfFile_->IsValid()) {
+
+        if (elfFile_ == nullptr || !elfFile_->IsValid()) {
             HLOGD("parser elf file failed.");
             return false;
         }
-
-        auto ptloads = elfFile_->GetPtLoads();
-        for (const auto &ptload : ptloads) {
-            if (textExecVaddr_ != std::min(textExecVaddr_, ptload.second.tableVaddr)) {
-                textExecVaddr_ = std::min(textExecVaddr_, ptload.second.tableVaddr);
-                textExecVaddrFileOffset_ = ptload.second.offset;
-            }
-        }
+        textExecVaddr_ = elfFile_->GetStartVaddr();
+        textExecVaddrFileOffset_ = elfFile_->GetStartOffset();
         HLOGD("textExecVaddr_ 0x%016" PRIx64 " file offset 0x%016" PRIx64 "", textExecVaddr_,
               textExecVaddrFileOffset_);
 
