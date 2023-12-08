@@ -43,13 +43,19 @@ public:
 
     bool SetPluginConfig(const void* data, size_t size);
 
-    void WriteStandalonePluginData(std::string pluginName, std::string data, std::string pluginVersion = "");
+    void WriteStandalonePluginData(const std::string& pluginName,
+                                   const std::string& data,
+                                   const std::string& pluginVersion = "");
 
     bool WriteHeader();
 
     long Write(const MessageLite& message);
 
     long Write(const void* data, size_t size) override;
+
+    long WriteStandalonePluginFile(const std::string& file,
+                                   const std::string& name,
+                                   const std::string& version, DataType type);
 
     bool Flush() override;
 

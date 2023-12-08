@@ -214,6 +214,5 @@ HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level1)
     EXPECT_FALSE(write->Write(nullptr, 0));
     EXPECT_FALSE(write->WriteTimeout(nullptr, 0));
     EXPECT_TRUE(write->WriteTimeout((const void*)buffer1, sizeof(buffer1)));
-    EXPECT_TRUE(write->Clear());
 }
 } // namespace

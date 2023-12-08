@@ -367,7 +367,6 @@ HWTEST_F(SharedMemoryBlockTest, GetMemory, TestSize.Level1)
 {
     ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
     ASSERT_TRUE(shareMemoryBlock.Valid());
-    shareMemoryBlock.ClearShareMemoryBlock();
 
     // There are only 12 bytes left in shared memory.
     const int expectedSize = 12;

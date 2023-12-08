@@ -32,4 +32,5 @@ message ArkTSConfig {
     // When the CPU profiler mode is active, it signifies the data capturing interval, measured in microseconds,
     // with a default value of 1000 microseconds.
     uint32 cpu_profiler_interval = 7;
+    string split_outfile_name = 8;
 }
