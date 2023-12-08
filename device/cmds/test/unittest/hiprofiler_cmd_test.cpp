@@ -758,7 +758,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split Htrace file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level1)
 {
     std::string outFileName = "split_htrace";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
@@ -782,7 +782,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split arkts file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level1)
 {
     std::string outFileName = "split_arkts";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
@@ -807,7 +807,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split hiperf file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level1)
 {
     std::string outFileName = "split_hiperf";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
@@ -840,7 +840,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split hiebpf file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
 {
     std::string outFileName = "split_hiebpf";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
