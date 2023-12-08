@@ -149,7 +149,7 @@ HWTEST_F(HidumpPluginUnittest, TestInvalidCmd2, TestSize.Level1)
     config.set_report_fps(true);
     plugin.SetConfig(config);
 
-    const char *cmd = "GP_daemon_fps 0";
+    const char *cmd = "SP_daemon -profilerfps 0";
     plugin.SetTestCmd(cmd);
     plugin.SetWriter(&writer);
     EXPECT_STREQ(plugin.GetTestCmd(), cmd);
