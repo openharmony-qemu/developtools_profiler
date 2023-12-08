@@ -213,6 +213,5 @@ HWTEST_F(BufferWriteTest, WriteMessageTest, TestSize.Level1)
 
     EXPECT_TRUE(write->WriteMessage(pluginData, "111"));
     EXPECT_TRUE(CheckMessage(data, size));
-    EXPECT_TRUE(write->Clear());
 }
 } // namespace

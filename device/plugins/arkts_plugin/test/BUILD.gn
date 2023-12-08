@@ -27,13 +27,17 @@ ohos_unittest("arktsplugin_ut") {
   sources = [ "unittest/arkts_plugin_unittest.cpp" ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/arkts_plugin:arkts_source",
+    "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/arkts_plugin:arkts_plugin_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
+    "//third_party/openssl:libcrypto_shared",
   ]
   include_dirs = [
     "../include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
     "//third_party/googletest/googletest/include/gtest",
     "//third_party/bounds_checking_function/include",
   ]

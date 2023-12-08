@@ -26,6 +26,7 @@
 #include "logging.h"
 #include "securec.h"
 #include "common.h"
+#include "trace_file_writer.h"
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -42,6 +43,8 @@ const std::string HIPERF_BIN_PATH = "/system/bin/hiperf";
 std::mutex g_taskMutex;
 bool g_isRoot = false;
 std::string g_logLevel = "";
+HiperfPluginConfig g_config;
+std::shared_ptr<TraceFileWriter> g_splitTraceWriter {nullptr};
 
 bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>& cmds)
 {
@@ -112,12 +115,20 @@ bool RunCommand(const std::string& cmd)
 int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSize)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    HiperfPluginConfig config;
-    bool res = config.ParseFromArray(configData, configSize);
+    bool res = g_config.ParseFromArray(configData, configSize);
     CHECK_TRUE(res, -1, "HiperfPluginSessionStart, parse config from array FAILED! configSize: %u", configSize);
 
+    if (!g_config.split_outfile_name().empty()) {
+        g_splitTraceWriter = std::make_shared<TraceFileWriter>(g_config.split_outfile_name());
+        g_splitTraceWriter->WriteStandalonePluginData(
+            std::string(g_pluginModule.name) + "_config",
+            std::string(reinterpret_cast<const char *>(configData),
+                        configSize));
+        g_splitTraceWriter->SetTimeSource();
+    }
+
     std::vector<std::string> cmds;
-    res = ParseConfigToCmd(config, cmds);
+    res = ParseConfigToCmd(g_config, cmds);
     CHECK_TRUE(res, -1, "HiperfPluginSessionStart, parse config FAILED!");
 
     for (const auto &cmd : cmds) {
@@ -131,6 +142,11 @@ int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSiz
 int HiperfPluginSessionStop(void)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    if (!g_config.split_outfile_name().empty()) {
+        CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, SetDurationTime failed", __func__);
+        g_splitTraceWriter->SetDurationTime();
+    }
+
     std::string cmd;
     if (g_isRoot) {
         cmd = SU_ROOT;
@@ -139,6 +155,15 @@ int HiperfPluginSessionStop(void)
     cmd += HIPERF_RECORD_STOP;
     RunCommand(cmd);
     usleep(250000); // 250000: wait for perf.data
+
+    if (!g_config.split_outfile_name().empty()) { // write split file.
+        CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, WriteStandaloneFile failed", __func__);
+        g_splitTraceWriter->WriteStandalonePluginFile(std::string(g_pluginModule.outFileName),
+            std::string(g_pluginModule.name), std::string(g_pluginModule.version), DataType::HIPERF_DATA);
+        g_splitTraceWriter->Finish();
+        g_splitTraceWriter.reset();
+        g_splitTraceWriter = nullptr;
+    }
     return 0;
 }
 

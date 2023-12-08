@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -327,6 +328,141 @@ public:
         return cmdStr;
     }
 
+    std::string CreateSplitHtraceCommand(const std::string &outFile, int time) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd -s -k \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 16384\n"
+            "  }\n"
+            "  split_file: true\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"ftrace-plugin\"\n"
+            "  sample_interval: 1000\n"
+            "  config_data {\n"
+            "    ftrace_events: \"sched/sched_switch\"\n"
+            "    ftrace_events: \"sched/sched_wakeup\"\n"
+            "    ftrace_events: \"sched/sched_wakeup_new\"\n"
+            "    ftrace_events: \"sched/sched_waking\"\n"
+            "    ftrace_events: \"sched/sched_process_exit\"\n"
+            "    ftrace_events: \"sched/sched_process_free\"\n"
+            "    buffer_size_kb: 51200\n"
+            "    flush_interval_ms: 1000\n"
+            "    flush_threshold_kb: 4096\n"
+            "    parse_ksyms: true\n"
+            "    clock: \"mono\"\n"
+            "    trace_period_ms: 200\n"
+            "    debug_on: false\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+
+    std::string CreateSplitArktsCommand(const std::string &outFile, const std::string &arktsSplitFile, int time) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd -s -k \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 16384\n"
+            "  }\n"
+            "  split_file: true\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"arkts-plugin\"\n"
+            "  config_data {\n"
+            "    pid: 1\n"
+            "    capture_numeric_value: true\n"
+            "    track_allocations: false\n"
+            "    enable_cpu_profiler: true\n"
+            "    cpu_profiler_interval: 1000\n"
+            "    split_outfile_name: \"" + arktsSplitFile + "\"\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+
+    std::string CreateSplitHiperfCommand(const std::string &outFile, const std::string &perfFile,
+                                    const std::string &perfSplitFile, int time) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd -s -k \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 16384\n"
+            "  }\n"
+            "  split_file: true\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"hiperf-plugin\"\n"
+            "  config_data {\n"
+            "    is_root: false\n"
+            "    outfile_name: \"" + perfFile + "\"\n"
+            "    record_args: \"-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking --call-stack dwarf --clockid monotonic --offcpu -m 256\"\n"
+            "    split_outfile_name: \"" + perfSplitFile + "\"\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+
+    std::string CreateSplitHiebpfCommand(const std::string &outFile, const std::string &ebpfFile,
+                                            const std::string &ebpfSplitFile, int time) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd -s -k \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 16384\n"
+            "  }\n"
+            "  split_file: true\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"hiebpf-plugin\"\n"
+            "  config_data {\n"
+            "    cmd_line: \"hiebpf --events fs,ptrace,bio --duration 200 --max_stack_depth 10\"\n"
+            "    outfile_name: \"" + ebpfFile + "\"\n"
+            "    split_outfile_name: \"" + ebpfSplitFile + "\"\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+
+    unsigned long GetFileSize(const char* filename)
+    {
+        struct stat buf;
+
+        if (stat(filename, &buf) < 0) {
+            return 0;
+        }
+        return static_cast<unsigned long>(buf.st_size);
+    }
+
     void KillProcess(const std::string processName)
     {
         int pid = -1;
@@ -615,4 +751,120 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
     StopProcessStub(hiprofilerPluginsPid_);
     StopProcessStub(hiprofilerdPid_);
 }
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with split Htrace file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level1)
+{
+    std::string outFileName = "split_htrace";
+    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
+    std::string content = "";
+    int time = 10;
+    std::string cmd = CreateSplitHtraceCommand(outFile, time);
+    EXPECT_TRUE(RunCommand(cmd, content));
+
+    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
+
+    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_STRNE(content.c_str(), "");
+
+    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with split arkts file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level1)
+{
+    std::string outFileName = "split_arkts";
+    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
+    std::string arktsSplitFile = "/data/local/tmp/split_arkts_data.htrace";
+    std::string content = "";
+    int time = 10;
+    std::string cmd = CreateSplitArktsCommand(outFile, arktsSplitFile, time);
+    EXPECT_TRUE(RunCommand(cmd, content));
+
+    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
+
+    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_STRNE(content.c_str(), "");
+
+    EXPECT_EQ(access(arktsSplitFile.c_str(), F_OK), 0);
+    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace";
+    system(cmd.c_str());
+}
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with split hiperf file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level1)
+{
+    std::string outFileName = "split_hiperf";
+    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
+    std::string perfFile = "/data/local/tmp/perf.data";
+    std::string perfSplitFile = "/data/local/tmp/split_perf_data.htrace";
+    std::string content = "";
+    int time = 10;
+    std::string cmd = CreateSplitHiperfCommand(outFile, perfFile, perfSplitFile, time);
+    EXPECT_TRUE(RunCommand(cmd, content));
+
+    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
+
+    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_STRNE(content.c_str(), "");
+
+    EXPECT_EQ(access(perfSplitFile.c_str(), F_OK), 0);
+    if (access(perfFile.c_str(), F_OK) == 0) {
+        const int headerSize = 1024 + 1024; // htrace header + hiperf header
+        auto perfFileSize = GetFileSize(perfFile.c_str());
+        auto perfSplitFileSize = GetFileSize(perfSplitFile.c_str());
+        EXPECT_GT(perfSplitFileSize, perfFileSize + headerSize);
+    }
+
+    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + perfFile + " " + perfSplitFile;
+    system(cmd.c_str());
+}
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with split hiebpf file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
+{
+    std::string outFileName = "split_hiebpf";
+    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
+    std::string ebpfFile = "/data/local/tmp/ebpf.data";
+    std::string ebpfSplitFile = "/data/local/tmp/split_ebpf_data.htrace";
+    std::string content = "";
+    int time = 10;
+    std::string cmd = CreateSplitHiebpfCommand(outFile, ebpfFile, ebpfSplitFile, time);
+    EXPECT_TRUE(RunCommand(cmd, content));
+
+    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
+
+    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_STRNE(content.c_str(), "");
+
+    EXPECT_EQ(access(ebpfSplitFile.c_str(), F_OK), 0);
+    if (access(ebpfFile.c_str(), F_OK) == 0) {
+        const int headerSize = 1024 + 1024; // htrace header + hiebpf header
+        auto ebpfFileSize = GetFileSize(ebpfFile.c_str());
+        auto ebpfSplitFileSize = GetFileSize(ebpfSplitFile.c_str());
+        EXPECT_GT(ebpfSplitFileSize, ebpfFileSize + headerSize);
+    }
+
+    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + ebpfFile + " " + ebpfSplitFile;
+    system(cmd.c_str());
 }
