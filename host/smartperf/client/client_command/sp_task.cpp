@@ -156,7 +156,7 @@ void SPTask::StopTask()
             {"testDuration", std::to_string(testDuration)},
             {"taskName", "testtask"},
             {"board", "hw"},
-            {"target_fps", "refreshrate"},
+            {"target_fps", refreshrate},
         };
         std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
         std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo();

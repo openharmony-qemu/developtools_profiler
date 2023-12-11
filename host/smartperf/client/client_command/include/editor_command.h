@@ -18,7 +18,6 @@ namespace OHOS {
 namespace SmartPerf {
 class EditorCommand {
 public:
-    const int threeParamMore = 3;
     EditorCommand(int argc, std::vector<std::string> v);
     ~EditorCommand() {};
 };

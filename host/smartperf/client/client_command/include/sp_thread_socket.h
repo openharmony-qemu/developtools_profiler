@@ -118,7 +118,7 @@ public:
                 SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
             }
             OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-            std::string result = controlCallCmd.GetResult(vec.size(), vec);
+            std::string result = controlCallCmd.GetResult(vec);
             spSocket.Send(result);
         }
     }

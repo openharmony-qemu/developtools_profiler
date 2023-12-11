@@ -17,20 +17,16 @@
 #include "include/profiler_fps.h"
 int main(int argc, char *argv[])
 {
+    std::vector<std::string> vec;
+    for (int i = 0; i < argc; i++) {
+        vec.push_back(argv[i]);
+    }
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
-        std::vector<std::string> v;
-        for (int i = 0; i < argc; i++) {
-            v.push_back(argv[i]);
-        }
-        OHOS::SmartPerf::EditorCommand(argc, v);
+        OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
-        std::vector<std::string> v;
-        for (int i = 0; i < argc; i++) {
-            v.push_back(argv[i]);
-        }
         OHOS::SmartPerf::ProfilerFPS fps;
-        fps.GetFPS(argc, v);
+        fps.GetFPS(argc, vec);
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);
