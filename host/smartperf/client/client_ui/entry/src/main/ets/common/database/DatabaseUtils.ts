@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import dataRdb from '@ohos.data.rdb'
+import relationalStore from '@ohos.data.relationalStore'
 import { GPData,TIndexInfo,TGeneralInfo,TPowerSensorInfo,TPowerAppInfo } from '../entity/DatabaseEntity';
 import { sql_t_index_info, dbVersion, dbName,task_powersensor_info,task_powerapp_info } from '../constant/ConstantSQL'
 import SPLogger from '../utils/SPLogger'
@@ -24,10 +24,11 @@ export default {
 
     //创建表(T_INDEX_INFO T_GENERAL_INFO)
     async createTable(pathSuffix: number): Promise<void> {
-        const STORE_CONFIG_Index = {
-            name: pathSuffix + ".db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: pathSuffix + ".db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
-           dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG_Index, dbVersion)
+        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                .then(rdbStore => {
                    rdbStore.executeSql(sql_t_index_info, null).catch(err => {
 
@@ -80,10 +81,11 @@ export default {
             //      "volume":strMap.get("volume"),
             //      "batteryVolume":strMap.get("batteryVolume")
         }
-        const STORE_CONFIG = {
-            name: dbName
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: dbName,
+            securityLevel: relationalStore.SecurityLevel.S1
         }
-        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion, (err, rdbStore) => {
+        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
 //            SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData :tableName:" + tableName + "| valueInsert:" + JSON.stringify(valueInsert))
             rdbStore.insert(tableName, valueInsert).catch(err => {
 //                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData err:" + err)
@@ -140,24 +142,26 @@ export default {
             "networkUpSpeed": strMap.get("networkUpSpeed"),
             "networkDownSpeed": strMap.get("networkDownSpeed")
         }
-        const STORE_CONFIG = {
-            name: pathSuffix + ".db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: pathSuffix + ".db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
-        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion, (err, rdbStore) => {
+        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
             rdbStore.insert(tableName, valueInsert)
         })
     },
 
     //查询表( T_GENERAL_INFO)
     async queryGeneralData(): Promise<Array<TGeneralInfo>> {
-        const STORE_CONFIG = {
-            name: dbName
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: dbName,
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TGeneralInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(rdbStore => {
-                    let predicates = new dataRdb.RdbPredicates('t_general_info')
+                    let predicates = new relationalStore.RdbPredicates('t_general_info')
                     predicates.orderByDesc("startTime")
                     return rdbStore.query(predicates, ["sessionId",
                     "startTime", "taskId", "appName", "appVersion", "packageName", "endTime", "testDuration", "taskName"
@@ -200,14 +204,15 @@ export default {
 
     //查询表( T_INDEX_INFO) 2022-02-23 改为传时间戳
     async queryData(dbPath: string): Promise<Array<TIndexInfo>> {
-        const STORE_CONFIG = {
-            name: dbPath
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: dbPath,
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TIndexInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(rdbStore => {
-                    let predicates = new dataRdb.RdbPredicates('t_index_info')
+                    let predicates = new relationalStore.RdbPredicates('t_index_info')
                     predicates.orderByDesc("timestamp")
                     return rdbStore.query(predicates, [
                         "timestamp",
@@ -392,10 +397,11 @@ export default {
             "current": strMap.get("current"),
             "percent": strMap.get("percent"),
         }
-        const STORE_CONFIG = {
-            name: pathSuffix + ".db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: pathSuffix + ".db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
-        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion, (err, rdbStore) => {
+        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
             SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerSenspor" + JSON.stringify(pathSuffix))
             rdbStore.insert(tableName, valueInsert)
         })
@@ -414,10 +420,11 @@ export default {
             "energy": strMap.get("power"),
             "percent": strMap.get("percent"),
         }
-        const STORE_CONFIG = {
-            name: pathSuffix + ".db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: pathSuffix + ".db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
-        dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, dbVersion, (err, rdbStore) => {
+        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
             SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerApp" + JSON.stringify(pathSuffix))
             rdbStore.insert(tableName, valueInsert)
         })
@@ -425,12 +432,13 @@ export default {
 
     //查询表（detailed_applications_display）
     async query_applications_display(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_display " +
@@ -462,12 +470,13 @@ export default {
     },
     //查询表（task_powersensor_info）
     async query_powersensor_info(pathSuffix: number): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: pathSuffix+".db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: pathSuffix+".db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                          let strSQL: string = "select * " +
                         "from task_powersensor_info order by power desc  "
@@ -491,12 +500,13 @@ export default {
     },
     //查询表（detailed_applications_cpu）
     async query_applications_cpu(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_cpu " +
@@ -527,12 +537,13 @@ export default {
     },
     //查询表（detailed_applications_gpu）
     async query_applications_gpu(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_gpu " +
@@ -564,12 +575,13 @@ export default {
     },
     //查询表（detailed_applications_wifi_data）
     async query_applications_wifi_data(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_wifi_data " +
@@ -599,12 +611,13 @@ export default {
     },
     //查询表（detailed_applications_system_idle）
     async query_applications_system_idle(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_system_idle " +
@@ -634,12 +647,13 @@ export default {
     },
     //查询表（detailed_applications_audio）
     async query_applications_audio(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_audio " +
@@ -669,12 +683,13 @@ export default {
     },
     //查询表（detailed_applications_dss）
     async query_applications_dss(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_dss " +
@@ -704,12 +719,13 @@ export default {
     },
     //查询表（detailed_applications_ddr）
     async query_applications_ddr(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_ddr " +
@@ -739,12 +755,13 @@ export default {
         }
     }, //查询表（detailed_applications_sensor）
     async query_applications_sensor(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_sensor " +
@@ -773,12 +790,13 @@ export default {
     },
     //查询表（detailed_applications_rom）
     async query_applications_rom(start_time: String, end_time: String,pkg_name:String): Promise<Array<TPowerSensorInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerSensorInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current " +
                     "from detailed_applications_rom " +
@@ -807,13 +825,14 @@ export default {
     },
     //查询dubai 所有进程功耗 并插入表 t_power_appinfo
     async query_applications_power_info(start_time: string, end_time: string): Promise<Array<TPowerAppInfo>> {
-        const STORE_CONFIG = {
-            name: "dubai.db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: "dubai.db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerAppInfo>()
         var strSQL:String = ""
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let sqlWhere = " where formatted_start_time >= '{startTime}'  and formatted_end_time <= '{endTime}' "
                     let sqlWhereReplace = sqlWhere.replace("{startTime}",start_time).replace("{endTime}",end_time)
@@ -893,12 +912,13 @@ export default {
 
     //查询 t_powerapp_info
     async query_powerapp_info(pathSuffix: number): Promise<Array<TPowerAppInfo>> {
-        const STORE_CONFIG = {
-            name: pathSuffix+".db"
+        const STORE_CONFIG:relationalStore.StoreConfig = {
+            name: pathSuffix + ".db",
+            securityLevel: relationalStore.SecurityLevel.S1
         }
         let results = Array<TPowerAppInfo>()
         try {
-            return await dataRdb.getRdbStore(globalThis.abilityContext, STORE_CONFIG, 1)
+            return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
                     let strSQL: string = "select * " +
                     "from task_powerapp_info order by energy desc  "
