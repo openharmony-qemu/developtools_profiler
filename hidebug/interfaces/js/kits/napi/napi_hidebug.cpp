@@ -44,6 +44,8 @@ namespace {
 constexpr HiLogLabel LABEL = { LOG_CORE, 0xD002D0A, "HiDebug_NAPI" };
 constexpr int ONE_VALUE_LIMIT = 1;
 constexpr int ARRAY_INDEX_FIRST = 0;
+constexpr int ARRAY_INDEX_SECOND = 1;
+constexpr int REMOVE_NAPI_WRAP_PARAM_COUNT = 2;
 const std::string SLASH_STR = "/";
 const std::string DEFAULT_FILENAME = "undefined";
 const std::string JSON_FILE = ".json";
@@ -480,6 +482,51 @@ napi_value GetVss(napi_env env, napi_callback_info info)
     return vss;
 }
 
+static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
+{
+    size_t argc = REMOVE_NAPI_WRAP_PARAM_COUNT;
+    napi_value argv[REMOVE_NAPI_WRAP_PARAM_COUNT] = {nullptr};
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (argc != REMOVE_NAPI_WRAP_PARAM_COUNT ||
+        (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_object) ||
+        !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
+        HiLog::Error(LABEL, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
+        std::string paramErrorMessage = "The parameter check failed.";
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+
+    // remove jsObj's wrap
+    auto jsObj = argv[ARRAY_INDEX_FIRST];
+    void *nativePtr = nullptr;
+    napi_remove_wrap(env, jsObj, (void **)&nativePtr);
+
+    // remove jsObj's properties wrap
+    bool needRemoveProperty = false;
+    napi_get_value_bool(env, argv[ARRAY_INDEX_SECOND], &needRemoveProperty);
+    //HiLog::Info(LABEL, "RemoveNapiWrap, %{public}d", needRemoveProperty);
+    if (needRemoveProperty) {
+        napi_value allPropertyNames = nullptr;
+        napi_object_get_keys(env, jsObj, &allPropertyNames);
+        uint32_t nameCount = 0;
+        napi_get_array_length(env, allPropertyNames, &nameCount);
+        for (size_t i = 0; i < nameCount; ++i) {
+            napi_value propertyName = nullptr;
+            napi_get_element(env, allPropertyNames, i, &propertyName);
+            char name[128] = {0};
+            size_t len = 0;
+            napi_get_value_string_utf8(env, propertyName, name, 64, &len);
+            napi_value propertyObj = nullptr;
+            napi_get_named_property(env, jsObj, name, &propertyObj);
+            napi_remove_wrap(env, propertyObj, (void **)&nativePtr);
+            //HiLog::Info(LABEL, "RemoveNapiWrap, property = %{public}s", name);
+        }
+    }
+    return CreateUndefined(env);
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -497,7 +544,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getNativeHeapSize", GetNativeHeapSize),
         DECLARE_NAPI_FUNCTION("getNativeHeapAllocatedSize", GetNativeHeapAllocatedSize),
         DECLARE_NAPI_FUNCTION("getNativeHeapFreeSize", GetNativeHeapFreeSize),
-        DECLARE_NAPI_FUNCTION("getVss", GetVss)
+        DECLARE_NAPI_FUNCTION("getVss", GetVss),
+        DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     return exports;
