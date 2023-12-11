@@ -275,7 +275,7 @@ void ControlCallCmd::GetAppStartTime()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
     std::thread thGetHisysId = sd.ThreadGetHisysId();
-    std::string str = SPUtils::GetRadarFrame();
+    std::string str = SPUtils::GetRadar();
     thGetTrace.join();
     thGetHisysId.join();
     radar.ParseRadarAppStrart(str);
