@@ -74,11 +74,18 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     if (bundleName.substr(0, 2) == "./") {
         bundleName = bundleName.substr(2);
     }
+    size_t found = bundleName.rfind("/");
+    std::string procName;
+    if (found != std::string::npos) {
+        procName = bundleName.substr(found + 1);
+    } else {
+        procName = bundleName;
+    }
 
     std::lock_guard<std::mutex> lock(mtx_);
-    auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, bundleName);
+    auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
     if (eventFd == smbFd) {
-        HILOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
+        HILOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
         return false;
     }
 
