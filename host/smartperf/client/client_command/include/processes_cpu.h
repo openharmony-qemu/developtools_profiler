@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include "sp_profiler.h"
+#include <string>
 namespace OHOS {
 namespace SmartPerf {
 class ProcessesCpu : public SpProfiler {
