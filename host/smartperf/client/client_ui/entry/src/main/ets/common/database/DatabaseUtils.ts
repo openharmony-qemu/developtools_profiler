@@ -31,16 +31,6 @@ export default {
             }
             relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(rdbStore => {
-                    rdbStore.executeSql(sql_t_index_info, null).catch(err => {
-
-                    })
-                    rdbStore.executeSql(task_powersensor_info, null).catch(err => {
-
-                    })
-                    rdbStore.executeSql(task_powerapp_info, null).catch(err => {
-
-                    })
-
                     return rdbStore
                 })
         } catch (err) {
@@ -91,12 +81,7 @@ export default {
                 securityLevel: relationalStore.SecurityLevel.S1
             }
             relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
-                //            SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData :tableName:" + tableName + "| valueInsert:" + JSON.stringify(valueInsert))
-                rdbStore.insert(tableName, valueInsert).catch(err => {
-                    //                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData err:" + err)
-                }).then(() => {
-                    //                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData success:")
-                })
+                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData :tableName:" + tableName + "| valueInsert:" + JSON.stringify(valueInsert))
             })
         } catch (err) {
             SPLogger.ERROR(TAG, "insertGeneraData ERR:" + err);
@@ -109,7 +94,6 @@ export default {
         var strMap = new Map;
         for (let k of Object.keys(tIndexInfo)) {
             strMap.set(k, tIndexInfo[k]);
-
         }
 
         const valueInsert = {
@@ -498,7 +482,7 @@ export default {
         try {
             return await relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
                 .then(async(rdbStore) => {
-                         let strSQL: string = "select * " +
+                    let strSQL: string = "select * " +
                         "from task_powersensor_info order by power desc  "
 
                     return rdbStore.querySql(strSQL)
@@ -577,7 +561,6 @@ export default {
                     return rdbStore.querySql(strSQL)
                 })
                 .then(resultSet => {
-
                     while (resultSet.goToNextRow()) {
                         let sensor = "gpu"
                         let power = resultSet.getString(resultSet.getColumnIndex("power"))
