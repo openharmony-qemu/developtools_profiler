@@ -16,10 +16,16 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
-#include <cstdio>
 #include <string>
-#include <climits>
+#include <unistd.h>
+#include <dirent.h>
+#include <cstdio>
+#include <cstdlib>
 #include <stdio.h>
+#include <climits>
+#include <cctype>
+#include "sys/time.h"
+#include "securec.h"
 #include "include/sp_utils.h"
 #define LARGE_BUFF_MAX_LEN (256)
 namespace OHOS {

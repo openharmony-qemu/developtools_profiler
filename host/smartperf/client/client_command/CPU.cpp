@@ -18,6 +18,8 @@
 #include <cstdio>
 #include <unistd.h>
 #include <cstring>
+#include <string>
+#include <iostream>
 #include <climits>
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -68,14 +70,14 @@ std::map<std::string, std::string> CPU::ItemData()
         totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
             workLoads[i].systemUsage + workLoads[i].ioWaitUsage +
             workLoads[i].irqUsage + workLoads[i].softIrqUsage) * oneHundred);
-        return[cpuIdStr + userUsage] = userUsageStr;
-        return[cpuIdStr + niceUsage] = niceUsageStr;
-        return[cpuIdStr + systemUsage] = systemUsageStr;
-        return[cpuIdStr + idleUsage] = idleUsageStr;
-        return[cpuIdStr + ioWaitUsage] = ioWaitUsageStr;
-        return[cpuIdStr + irqUsage] = irqUsageStr;
-        return[cpuIdStr + softIrqUsage] = softIrqUsageStr;
-        return[cpuIdStr + Usage] = totalUsageStr;
+        result[cpuIdStr + "userUsage"] = userUsageStr;
+        result[cpuIdStr + "niceUsage"] = niceUsageStr;
+        result[cpuIdStr + "systemUsage"] = systemUsageStr;
+        result[cpuIdStr + "idleUsage"] = idleUsageStr;
+        result[cpuIdStr + "ioWaitUsage"] = ioWaitUsageStr;
+        result[cpuIdStr + "irqUsage"] = irqUsageStr;
+        result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
+        result[cpuIdStr + "Usage"] = totalUsageStr;
     }
     return result;
 }
