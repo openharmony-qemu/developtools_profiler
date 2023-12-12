@@ -38,7 +38,7 @@ bool SPUtils::HasNumber(const std::string& str)
         return std::isdigit(c);
     });
 }
-bool SPUtils::Cmp(const std::string& a, std::string& b)
+bool SPUtils::Cmp(const std::string& a, const std::string& b)
 {
     if (HasNumber(a) && HasNumber(b)) {
         std::string str1 = a.substr(0, a.find_first_of("0123456789"));

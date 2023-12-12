@@ -39,7 +39,7 @@ std::map<std::string, std::string> CPU::ItemData()
     std::string cpuId;
     for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
         cpuFreqStr = std::to_string(cpuFreqInfo[i].curFreq);
-        cpuId = std::to_string(cpuFreqInfo[i].curId);
+        cpuId = std::to_string(cpuFreqInfo[i].cpuId);
         result["cpu" + cpuId + "Frequency"] = cpuFreqStr;
     }
     std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
@@ -68,14 +68,14 @@ std::map<std::string, std::string> CPU::ItemData()
         totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
             workLoads[i].systemUsage + workLoads[i].ioWaitUsage +
             workLoads[i].irqUsage + workLoads[i].softIrqUsage) * oneHundred);
-        return[cpuIdStr + "userUsage"] = userUsageStr;
-        return[cpuIdStr + "niceUsage"] = niceUsageStr;
-        return[cpuIdStr + "systemUsage"] = systemUsageStr;
-        return[cpuIdStr + "idleUsage"] = idleUsageStr;
-        return[cpuIdStr + "ioWaitUsage"] = ioWaitUsageStr;
-        return[cpuIdStr + "irqUsage"] = irqUsageStr;
-        return[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
-        return[cpuIdStr + "Usage"] = totalUsageStr;
+        return[cpuIdStr + userUsage] = userUsageStr;
+        return[cpuIdStr + niceUsage] = niceUsageStr;
+        return[cpuIdStr + systemUsage] = systemUsageStr;
+        return[cpuIdStr + idleUsage] = idleUsageStr;
+        return[cpuIdStr + ioWaitUsage] = ioWaitUsageStr;
+        return[cpuIdStr + irqUsage] = irqUsageStr;
+        return[cpuIdStr + softIrqUsage] = softIrqUsageStr;
+        return[cpuIdStr + Usage] = totalUsageStr;
     }
     return result;
 }
@@ -86,7 +86,7 @@ std::vector<CpuFreqs> CPU::GetCpuFreq()
     std::vector<CpuFreqs> cpuFreqs2;
     std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
     CollectResult<std::vector<CpuFreq>> result = collector->CollectCpuFrequency();
-    std::vector<CpuFreqs>& cpufreq = result.data;
+    std::vector<CpuFreq>& cpufreq = result.data;
     for (size_t i = 0; i < cpufreq.size(); i++) {
         cpuFreqs.cpuId = cpufreq[i].cpuId;
         cpuFreqs.curFreq = cpufreq[i].curFreq;

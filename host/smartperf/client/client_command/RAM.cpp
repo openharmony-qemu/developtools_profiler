@@ -43,7 +43,7 @@ void RAM::SetProcessId(std::string pid)
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::map<std::string, std::string> ramInfo;
-    if (processId.length > 0) {
+    if (processId.length() > 0) {
         int32_t procId = 0;
         procId = std::stoi(processId);
         std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();

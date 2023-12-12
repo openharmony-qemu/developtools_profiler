@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <string>
 #include <climits>
+#include <stdio.h>
 #include "include/sp_utils.h"
 #define LARGE_BUFF_MAX_LEN (256)
 namespace OHOS {
