@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <string>
 namespace OHOS {
 namespace SmartPerf {
 namespace SPUtils {
@@ -28,12 +29,12 @@ namespace SPUtils {
  * @return false
  */
 bool HasNumber(const std::string& str);
-bool Cmp(const std::string &str1, const std::string &str2);
+bool Cmp(const std::string &a, const std::string &b);
 /**
  * @brief Comparison key name
  *
- * @param str
- * @param str
+ * @param a
+ * @param b
  * @return true
  * @return false
  */

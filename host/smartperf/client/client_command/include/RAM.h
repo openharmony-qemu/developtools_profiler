@@ -15,6 +15,8 @@
 #ifndef RAM_H
 #define RAM_H
 #include "sp_profiler.h"
+#include <string>
+#include 
 namespace OHOS {
 namespace SmartPerf {
 class RAM : public SpProfiler {

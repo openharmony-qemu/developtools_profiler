@@ -36,7 +36,7 @@ bool SPUtils::HasNumber(const std::string& str)
 {
     return std::any_of(str.begin(), str.end(), [](char c) {
         return std::isdigit(c);
-    })
+    });
 }
 bool SPUtils::Cmp(const std::string& a, std::string& b)
 {

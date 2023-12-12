@@ -39,13 +39,13 @@ int GPU::GetGpuFreq()
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<GpuFreq> result = collector->CollectGpuFrequency();
     return result.data.curFeq;
+}
 
 float GPU::GetGpuLoad()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<SysGpuLoad> result = collector->CollectSysGpuLoad();
     return float(result.data.gpuLoad);
-}
 }
 }
 }
