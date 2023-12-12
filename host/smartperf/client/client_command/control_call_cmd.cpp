@@ -32,67 +32,54 @@
 
 namespace OHOS {
 namespace SmartPerf {
-void ControlCallCmd::GetResultData(std::vector<std::string> v)
+std::string ControlCallCmd::GetResult(std::vector<std::string> v)
 {
-    if (v[ohType] == "ohtest") {
-        isOhTest = true;
-    }
-    if (v[typeName] == "screen") {
-        std::string screen = SPUtils::GetScreen();
-        std::cout << screen << std::endl;
-    } else if (v[typeName] == "frameLoss") {
-        SmartPerf::ControlCallCmd::GetFrame();
-    }
-}
-std::string ControlCallCmd::GetResult(int argc, std::vector<std::string> v)
-{
-    std::ostringstream stream;
     if (v[ohType] == "ohtest") {
         isOhTest = true;
     }
     if (v[typeName] == "coldStart") {
         time = SmartPerf::ControlCallCmd::ColdStart(v);
-        stream << time;
-        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "hotStart") {
         time = SmartPerf::ControlCallCmd::HotStart(v);
-        stream << time;
-        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "responseTime") {
         time = SmartPerf::ControlCallCmd::ResponseTime();
-        stream << time;
-        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "completeTime") {
         time = SmartPerf::ControlCallCmd::CompleteTime();
-        stream << time;
-        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "startResponse") {
         time = SmartPerf::ControlCallCmd::StartResponse(v);
-        stream << time;
-        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "coldStartHM") {
         time = SmartPerf::ControlCallCmd::ColdStartHM(v);
-        stream << time;
-        result = "time:" + stream.str() + "ms";
     } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
+        std::cout << result << std::endl;
     } else if (v[typeName] == "pagefps") {
-        double fps = SmartPerf::ControlCallCmd::PageFps();
-        stream << fps;
-        result = "FPS:" + stream.str() + "fps";
+        fps = SmartPerf::ControlCallCmd::PageFps();
     } else if (v[typeName] == "FPS") {
         result = SmartPerf::ControlCallCmd::SlideFPS(v);
     } else if (v[typeName] == "startFrame") {
-        double fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
-        stream << fps;
-        result = "FPS:" + stream.str() + "fps";
+        fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
         SPUtils::LoadCmd("GP_daemon_fps 10", result);
+    } else if (v[typeName] == "screen") {
+        std::string screen = SPUtils::GetScreen();
+        std::cout << screen << std::endl;
+    } else if (v[typeName] == "frameLoss") {
+        SmartPerf::ControlCallCmd::GetFrame();
+    } else if (v[typeName] == "appStartTime") {
+        ControlCallCmd::GetAppStartTime();
     }
     if (time == noNameType) {
         std::cout << "Startup error, unknown application or application not responding" << std::endl;
     } else {
-        std::cout << result << std::endl;
+        if (time != 0) {
+            stream << time;
+            result = "time:" + stream.str() + "ms";
+            std::cout << result << std::endl;
+        } else if (fps != 0) {
+            stream << fps;
+            result = "FPS:" + stream.str() + "fps";
+            std::cout << result << std::endl;
+        }
     }
     return result;
 }
@@ -119,8 +106,8 @@ double ControlCallCmd::PageFps()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
-    double fps = pageFpsTrace.ParsePageFpsTrace(traceName);
-    return fps;
+    double pageFps = pageFpsTrace.ParsePageFpsTrace(traceName);
+    return pageFps;
 }
 std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
 {
@@ -132,8 +119,8 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
-    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return fps;
+    std::string slidFps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    return slidFps;
 }
 std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
 {
@@ -161,8 +148,8 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
     cmd = "uinput -T -m 650 1500 650 500 30";
     SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
-    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return fps;
+    std::string slideFps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    return slideFps;
 }
 double ControlCallCmd::ResponseTime()
 {
@@ -244,8 +231,8 @@ double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     SPUtils::LoadCmd(cmd, cmdResult);
     sleep(1);
     thGetTrace.join();
-    double fps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
-    return fps;
+    double startFps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
+    return startFps;
 }
 double ControlCallCmd::StartResponse(std::vector<std::string> v)
 {
@@ -278,6 +265,20 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
         time = radar.ParseRadarStartResponse(str);
         return time;
     }
+}
+void ControlCallCmd::GetAppStartTime()
+{
+    OHOS::SmartPerf::StartUpDelay sd;
+    std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
+    std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
+    std::thread thGetHisysId = sd.ThreadGetHisysId();
+    std::string str = SPUtils::GetRadar();
+    thGetTrace.join();
+    thGetHisysId.join();
+    radar.ParseRadarAppStrart(str);
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)
 {

@@ -68,7 +68,7 @@ namespace OHOS {
                     frameStartTime = std::stod(GetLineTime(line));
                     startTimes.frameId = frameNum;
                     startTimes.times = frameStartTime;
-                    startTimeArr.push_back(endTimes);
+                    startTimeArr.push_back(startTimes);
                 }
                 if (isNeedEnd) {
                     if (line.find("B|" + pid + "|") != std::string::npos && line.find("-" + pid) != std::string::npos) {
