@@ -42,7 +42,6 @@ std::map<std::string, std::string> ProcessesCpu::ItemData()
     std::map<std::string, std::string> processCpuInfo = ProcessesCpu::GetSpecProcessCpuLoad();
     result = processCpuInfo;
     return result;
-
 }
 
 void ProcessesCpu::SetProcessId(std::string pid)

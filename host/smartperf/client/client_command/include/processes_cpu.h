@@ -36,7 +36,6 @@ private:
     ProcessesCpu(const ProcessesCpu &);
     ProcessesCpu &operator = (const ProcessesCpu &);
     std::string processId = "";
-
 };
 }
 }

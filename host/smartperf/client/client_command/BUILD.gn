@@ -35,16 +35,14 @@ ohos_executable("SP_daemon") {
   sources = [
     "ByTrace.cpp",
     "CPU.cpp",
-    "processes_cpu.cpp",
     "Capture.cpp",
     "DDR.cpp",
     "Dubai.cpp",
     "FPS.cpp",
     "GPU.cpp",
+    "Network.cpp",
     "Power.cpp",
     "RAM.cpp",
-    "system_ram.cpp",
-    "Network.cpp",
     "Temperature.cpp",
     "control_call_cmd.cpp",
     "editor_command.cpp",
@@ -55,6 +53,7 @@ ohos_executable("SP_daemon") {
     "parse_start_frame_trace.cpp",
     "parse_start_trace_noh.cpp",
     "parse_trace.cpp",
+    "processes_cpu.cpp",
     "profiler_fps.cpp",
     "smartperf_command.cpp",
     "smartperf_main.cpp",
@@ -64,6 +63,7 @@ ohos_executable("SP_daemon") {
     "sp_task.cpp",
     "sp_utils.cpp",
     "startup_delay.cpp",
+    "system_ram.cpp",
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]
@@ -72,10 +72,10 @@ ohos_executable("SP_daemon") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [
     "c_utils:utils",
+    "hiview:libucollection_utility",
     "image_framework:image_native",
     "window_manager:libdm",
     "window_manager:libwm",
-    "hiview:libucollection_utility"
   ]
 }
 ## Build so }}}

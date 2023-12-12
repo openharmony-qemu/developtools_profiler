@@ -116,7 +116,6 @@ std::string GetRadarFrame();
 std::map<std::string, std::string> GetDeviceInfo();
 std::map<std::string, std::string> GetCpuInfo();
 std::map<std::string, std::string> GetGpuInfo();
-std::map<std::string, std::string> GetNetwork();
 std::string GetScreen();
 };
 }

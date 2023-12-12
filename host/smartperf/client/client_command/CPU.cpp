@@ -66,7 +66,7 @@ std::map<std::string, std::string> CPU::ItemData()
         irqUsageStr = std::to_string(workLoads[i].irqUsage * oneHundred);
         softIrqUsageStr = std::to_string(workLoads[i].softIrqUsage * oneHundred);
         totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
-            workLoads[i].systemUsage + workLoads[i].ioWaitUsage + 
+            workLoads[i].systemUsage + workLoads[i].ioWaitUsage +
             workLoads[i].irqUsage + workLoads[i].softIrqUsage) * oneHundred);
         return[cpuIdStr + "userUsage"] = userUsageStr;
         return[cpuIdStr + "niceUsage"] = niceUsageStr;
@@ -80,7 +80,7 @@ std::map<std::string, std::string> CPU::ItemData()
     return result;
 }
 
-std::vector<CpuFreqs> CPU:: GetCpuFreq()
+std::vector<CpuFreqs> CPU::GetCpuFreq()
 {
     OHOS::SmartPerf::CpuFreqs cpuFreqs;
     std::vector<CpuFreqs> cpuFreqs2;
@@ -95,10 +95,10 @@ std::vector<CpuFreqs> CPU:: GetCpuFreq()
     return cpuFreqs2;
 }
 
-std::vector<CpuUsageInfos> CPU:: GetCpuUsage()
+std::vector<CpuUsageInfos> CPU::GetCpuUsage()
 {
     OHOS::SmartPerf::CpuUsageInfos cpuUsageInfos;
-    std::vector<CpuUsageInfos> workload; 
+    std::vector<CpuUsageInfos> workload;
     std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
     CollectResult<SysCpuUsage> result = collector->CollectSysCpuUsage(true);
     SysCpuUsage& sysCpuUsage = result.data;

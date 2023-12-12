@@ -17,7 +17,6 @@
 #include <fstream>
 #include <iostream>
 #include <cstdio>
-#include <stdio.h>
 #include <string>
 #include <climits>
 #include "include/sp_utils.h"
@@ -50,7 +49,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo() const
     }
     while (fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
-            if (sscanf(buff, "%*s%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu",
+            if (sscanf_s(buff, "%*s%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu",
                 &curRx, &curTx) < 0) {
                 return networkInfo;
             }
