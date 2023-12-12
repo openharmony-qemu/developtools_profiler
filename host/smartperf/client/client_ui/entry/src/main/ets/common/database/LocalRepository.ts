@@ -26,18 +26,22 @@ const TAG = "LocalRepository"
 
 
 export function initDb(): void {
-  const STORE_CONFIG:relationalStore.StoreConfig = {
-    name: dbName,
-    securityLevel: relationalStore.SecurityLevel.S1
-}
-relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
-    .then(rdbStore => {
-      rdbStore.executeSql(sql_t_general_info, null).catch(err => {
-        SPLogger.DEBUG(TAG, "--> createTable t_genneral_info err:" + err)
+  try {
+    const STORE_CONFIG:relationalStore.StoreConfig = {
+      name: dbName,
+      securityLevel: relationalStore.SecurityLevel.S1
+    }
+    relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
+      .then(rdbStore => {
+        rdbStore.executeSql(sql_t_general_info, null).catch(err => {
+          SPLogger.DEBUG(TAG, "--> createTable t_genneral_info err:" + err)
+        })
+        SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_genneral_info:" + sql_t_general_info)
+        return rdbStore
       })
-      SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_genneral_info:" + sql_t_general_info)
-      return rdbStore
-    })
+  } catch (err) {
+    SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_genneral_info catch:" + sql_t_general_info)
+  }
 
   getReportListDb().then(res => {
     globalThis.reportList = res

@@ -24,24 +24,28 @@ export default {
 
     //创建表(T_INDEX_INFO T_GENERAL_INFO)
     async createTable(pathSuffix: number): Promise<void> {
-        const STORE_CONFIG:relationalStore.StoreConfig = {
-            name: pathSuffix + ".db",
-            securityLevel: relationalStore.SecurityLevel.S1
+        try {
+            const STORE_CONFIG:relationalStore.StoreConfig = {
+                name: pathSuffix + ".db",
+                securityLevel: relationalStore.SecurityLevel.S1
+            }
+            relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
+                .then(rdbStore => {
+                    rdbStore.executeSql(sql_t_index_info, null).catch(err => {
+
+                    })
+                    rdbStore.executeSql(task_powersensor_info, null).catch(err => {
+
+                    })
+                    rdbStore.executeSql(task_powerapp_info, null).catch(err => {
+
+                    })
+
+                    return rdbStore
+                })
+        } catch (err) {
+            SPLogger.ERROR(TAG, "createTable ERR:" + err);
         }
-        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
-               .then(rdbStore => {
-                   rdbStore.executeSql(sql_t_index_info, null).catch(err => {
-
-                   })
-                   rdbStore.executeSql(task_powersensor_info, null).catch(err => {
-
-                   })
-                   rdbStore.executeSql(task_powerapp_info, null).catch(err => {
-
-                   })
-
-                   return rdbStore
-               })
 
     },
 
@@ -81,18 +85,22 @@ export default {
             //      "volume":strMap.get("volume"),
             //      "batteryVolume":strMap.get("batteryVolume")
         }
-        const STORE_CONFIG:relationalStore.StoreConfig = {
-            name: dbName,
-            securityLevel: relationalStore.SecurityLevel.S1
-        }
-        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
-//            SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData :tableName:" + tableName + "| valueInsert:" + JSON.stringify(valueInsert))
-            rdbStore.insert(tableName, valueInsert).catch(err => {
-//                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData err:" + err)
-            }).then(() => {
-//                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData success:")
+        try {
+            const STORE_CONFIG:relationalStore.StoreConfig = {
+                name: dbName,
+                securityLevel: relationalStore.SecurityLevel.S1
+            }
+            relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
+                //            SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData :tableName:" + tableName + "| valueInsert:" + JSON.stringify(valueInsert))
+                rdbStore.insert(tableName, valueInsert).catch(err => {
+                    //                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData err:" + err)
+                }).then(() => {
+                    //                SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData success:")
+                })
             })
-        })
+        } catch (err) {
+            SPLogger.ERROR(TAG, "insertGeneraData ERR:" + err);
+        }
     },
 
     //插入表(T_INDEX_INFO)
@@ -142,13 +150,17 @@ export default {
             "networkUpSpeed": strMap.get("networkUpSpeed"),
             "networkDownSpeed": strMap.get("networkDownSpeed")
         }
-        const STORE_CONFIG:relationalStore.StoreConfig = {
-            name: pathSuffix + ".db",
-            securityLevel: relationalStore.SecurityLevel.S1
+        try {
+            const STORE_CONFIG:relationalStore.StoreConfig = {
+                name: pathSuffix + ".db",
+                securityLevel: relationalStore.SecurityLevel.S1
+            }
+            relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
+                rdbStore.insert(tableName, valueInsert)
+            })
+        } catch (err) {
+            SPLogger.ERROR(TAG, "insertGeneraData ERR:" + err);
         }
-        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
-            rdbStore.insert(tableName, valueInsert)
-        })
     },
 
     //查询表( T_GENERAL_INFO)
@@ -397,14 +409,18 @@ export default {
             "current": strMap.get("current"),
             "percent": strMap.get("percent"),
         }
-        const STORE_CONFIG:relationalStore.StoreConfig = {
-            name: pathSuffix + ".db",
-            securityLevel: relationalStore.SecurityLevel.S1
+        try {
+            const STORE_CONFIG:relationalStore.StoreConfig = {
+                name: pathSuffix + ".db",
+                securityLevel: relationalStore.SecurityLevel.S1
+            }
+            relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
+                SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerSenspor" + JSON.stringify(pathSuffix))
+                rdbStore.insert(tableName, valueInsert)
+            })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet insertPowerSensor Data:err" + err)
         }
-        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
-            SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerSenspor" + JSON.stringify(pathSuffix))
-            rdbStore.insert(tableName, valueInsert)
-        })
     },
 
     //插入表(task_powerapp_info)
@@ -420,14 +436,18 @@ export default {
             "energy": strMap.get("power"),
             "percent": strMap.get("percent"),
         }
-        const STORE_CONFIG:relationalStore.StoreConfig = {
-            name: pathSuffix + ".db",
-            securityLevel: relationalStore.SecurityLevel.S1
+        try {
+            const STORE_CONFIG:relationalStore.StoreConfig = {
+                name: pathSuffix + ".db",
+                securityLevel: relationalStore.SecurityLevel.S1
+            }
+            relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
+                SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerApp" + JSON.stringify(pathSuffix))
+                rdbStore.insert(tableName, valueInsert)
+            })
+        } catch (err) {
+            SPLogger.ERROR(TAG,"resultSet insertPowerAppInfo Data:err" + err)
         }
-        relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
-            SPLogger.INFO("TAG","resultSet query_applications_display-----tPowerApp" + JSON.stringify(pathSuffix))
-            rdbStore.insert(tableName, valueInsert)
-        })
     },
 
     //查询表（detailed_applications_display）
