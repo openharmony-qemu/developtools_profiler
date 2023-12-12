@@ -35,6 +35,7 @@ ohos_executable("SP_daemon") {
   sources = [
     "ByTrace.cpp",
     "CPU.cpp",
+    "processes_cpu.cpp",
     "Capture.cpp",
     "DDR.cpp",
     "Dubai.cpp",
@@ -42,6 +43,8 @@ ohos_executable("SP_daemon") {
     "GPU.cpp",
     "Power.cpp",
     "RAM.cpp",
+    "system_ram.cpp",
+    "Network.cpp",
     "Temperature.cpp",
     "control_call_cmd.cpp",
     "editor_command.cpp",
@@ -72,6 +75,7 @@ ohos_executable("SP_daemon") {
     "image_framework:image_native",
     "window_manager:libdm",
     "window_manager:libwm",
+    "hiview:libucollection_utility"
   ]
 }
 ## Build so }}}

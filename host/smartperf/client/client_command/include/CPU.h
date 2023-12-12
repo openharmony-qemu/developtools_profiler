@@ -19,6 +19,21 @@
 #include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
+struct CpuFreqs {
+    uint32_t cpuId = 0;
+    uint32_t curFreq = 0;
+};
+struct CpuUsageInfos {
+    std::string cpuId;
+    double userUsage = 0;
+    double niceUsage = 0;
+    double systemUsage = 0;
+    double idleUsage = 0;
+    double ioWaitUsage = 0;
+    double irqUsage = 0;
+    double softIrqUsage = 0;
+};
+
 class CPU : public SpProfiler {
 public:
     static CPU &GetInstance()
@@ -27,25 +42,13 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-
-    int GetCpuNum();
-    int GetCpuFreq(int cpuId) const;
-    std::vector<float> GetCpuLoad();
+    std::vector<CpuFreqs> GetCpuFreq();
+    std::vector<CpuUsageInfos> GetCpuUsage();
 
 private:
     CPU() {};
     CPU(const CPU &);
     CPU &operator = (const CPU &);
-
-    const std::string cpuBasePath = "/sys/devices/system/cpu";
-    const std::string procStat = "/proc/stat";
-    inline const std::string CpuScalingCurFreq(int cpuId) const
-    {
-        return cpuBasePath + "/cpu" + std::to_string(cpuId) + "/cpufreq/scaling_cur_freq";
-    }
-
-    int mCpuNum = -1;
-    float CacWorkload(const char *buffer, const char *preBuffer) const;
 };
 }
 }

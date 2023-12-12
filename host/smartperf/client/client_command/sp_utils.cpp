@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+#include <cctype>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -30,6 +31,26 @@ namespace SmartPerf {
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
+}
+bool SPUtils::HasNumber(const std::string& str)
+{
+    return std::any_of(str.begin(), str.end(), [](char c) {
+        return std::isdigit(c);
+    })
+}
+bool SPUtils::Cmp(const std::string& a, std::string& b)
+{
+    if (HasNumber(a) && HasNumber(b)) {
+        std::string a_str = a.substr(0, a.find_first_of("0123456789"));
+        std::string b_str = b.substr(0, b.find_first_of("0123456789"));
+        if (a_str != b_str) {
+            return a_str < b_str;
+        }
+        int num1 = std::stoi(a.substr(a_str.length()));
+        int num2 = std::stoi(b.substr(b_str.length()));
+        return num1 < num2;
+    }
+    return false;
 }
 
 bool SPUtils::LoadFile(const std::string &filePath, std::string &content)

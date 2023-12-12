@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <thread>
 #include <cstring>
+#include <iterator>
 #include "unistd.h"
 #include "include/sp_utils.h"
 #include "include/sp_csv_util.h"
@@ -87,12 +88,14 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
             }
             break;
         case CommandType::CT_C:
+        case CommandType::CT_PL:
         case CommandType::CT_G:
         case CommandType::CT_D:
         case CommandType::CT_F:
         case CommandType::CT_T:
         case CommandType::CT_P:
         case CommandType::CT_R:
+        case CommandType::CT_PR:
         case CommandType::CT_TTRACE:
         case CommandType::CT_SNAPSHOT:
         case CommandType::CT_HW:
@@ -113,7 +116,7 @@ std::string SmartPerfCommand::ExecCommand()
     const long long freq = 1000;
     while (index < num) {
         long long lastTime = SPUtils::GetCurTime();
-        std::map<std::string, std::string> spMap;
+        std::multimap<std::string, std::string, decltype(SPUtils::Cmp)*> spMap(SPUtils::Cmp);
         long long timestamp = SPUtils::GetCurTime();
         spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(timestamp)));
 
@@ -122,9 +125,7 @@ std::string SmartPerfCommand::ExecCommand()
             SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(curParam));
             if (profiler != nullptr) {
                 std::map<std::string, std::string> data = profiler->ItemData();
-                std::map<std::string, std::string> tempData = spMap;
-                tempData.insert(data.cbegin(), data.cend());
-                spMap = tempData;
+                spMap.insert(data.cbegin(), data.cend());
             }
         }
 
@@ -137,7 +138,7 @@ std::string SmartPerfCommand::ExecCommand()
         std::cout << std::endl;
 
         SPData spdata;
-        spdata.values = spMap;
+        spdata.values.insert(spMap.cbegin(), spMap.cend());
         vmap.push_back(spdata);
         long long nextTime = SPUtils::GetCurTime();
         long long costTime = nextTime - lastTime;

@@ -27,6 +27,16 @@ namespace SPUtils {
  * @return true
  * @return false
  */
+bool HasNumber(const std::string& str);
+bool Cmp(const std::string &str1, const std::string &str2);
+/**
+ * @brief Comparison key name
+ *
+ * @param str
+ * @param str
+ * @return true
+ * @return false
+ */
 bool FileAccess(const std::string &fileName);
 /**
  * @brief Load content from file node

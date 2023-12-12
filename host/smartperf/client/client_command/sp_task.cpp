@@ -44,8 +44,6 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             interval = std::stoll(args[++i]);
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PKG)) {
             pkg = args[++i];
-        } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_NET)) {
-            std::cout << "arg:net:" << std::endl;
         } else {
             configs.push_back(args[i]);
         }
@@ -81,9 +79,6 @@ ErrCode SPTask::InitTask(std::string recvStr)
         isInit = true;
         return ErrCode::OK;
     }
-    if (recvStr.find("-net") != std::string::npos) {
-        isInitNet = true;
-    }
     std::cout << "ExceptionMsg:" << ExceptionMsgMap.at(exMsg) << std::endl;
     return ErrCode::FAILED;
 }
@@ -112,12 +107,8 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
                 std::map<std::string, std::string> itemMap = profiler->ItemData();
                 dataMap.insert(itemMap.begin(), itemMap.end());
             }
-            if (isInitNet) {
-                std::map<std::string, std::string> itemMap = SPUtils::GetNetwork();
-                dataMap.insert(itemMap.begin(), itemMap.end());
-            }
             SPData spdata;
-            spdata.values = dataMap;
+            spdata.values.insert(dataMap.begin(), dataMap.end());
             vmap.push_back(spdata);
             long long nextTime = SPUtils::GetCurTime();
             long long costTime = nextTime - lastTime;
@@ -171,7 +162,6 @@ void SPTask::StopTask()
     }
     isRunning = false;
     isInit = false;
-    isInitNet = false;
     vmap.clear();
     if (thread.joinable()) {
         thread.join();

@@ -39,7 +39,7 @@ struct FpsInfo {
         if (jitters.size() != other.jitters.size()) {
             return false;
         }
-        for (int i = 0; i < jitters.size(); i++) {
+        for (size_t i = 0; i < jitters.size(); i++) {
             if (jitters[i] != other.jitters[i]) {
                 return false;
             }
