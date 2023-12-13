@@ -92,6 +92,12 @@ enum perf_event_arm64_regs {
     PERF_REG_ARM64_MAX,
 };
 
+enum perf_event_riscv64_regs {
+    PERF_REG_RISCV64_SP,
+    PERF_REG_RISCV64_PC,
+    PERF_REG_RISCV64_MAX,
+};
+
 enum perf_event_arm_regs {
     PERF_REG_ARM_SP,
     PERF_REG_ARM_PC,
@@ -103,6 +109,7 @@ enum ArchType {
     X86_64,
     ARM,
     ARM64,
+    RISCV64,
     UNSUPPORT,
 };
 
@@ -117,6 +124,9 @@ static const std::map<size_t, const std::string> PERF_REG_NAME_MAP = {
 #elif defined(target_cpu_arm64)
     {PERF_REG_ARM64_PC, "PERF_REG_ARM64_PC"},
     {PERF_REG_ARM64_SP, "PERF_REG_ARM64_SP"},
+#elif defined(target_cpu_riscv64)
+    {PERF_REG_RISCV64_PC, "PERF_REG_RISCV64_PC"},
+    {PERF_REG_RISCV64_SP, "PERF_REG_RISCV64_SP"},
 #endif
 };
 
@@ -137,6 +147,8 @@ constexpr ArchType buildArchType = ArchType::X86_64;
 constexpr ArchType buildArchType = ArchType::ARM64;
 #elif defined(target_cpu_arm)
 constexpr ArchType buildArchType = ArchType::ARM;
+#elif defined(target_cpu_riscv64)
+constexpr ArchType buildArchType = ArchType::RISCV64;
 #else
 #error NOT SUPPORT ARCH
 #endif
@@ -163,6 +175,8 @@ inline const std::string GetArchName(ArchType arch)
             return "ARM";
         case ArchType::ARM64:
             return "ARM64";
+        case ArchType::RISCV64:
+            return "RISCV64";
         default:
             return "Unsupport";
     }
@@ -181,6 +195,8 @@ inline size_t RegisterGetCount()
             return PERF_REG_ARM_MAX;
         case ArchType::ARM64:
             return PERF_REG_ARM64_MAX;
+        case ArchType::RISCV64:
+            return PERF_REG_RISCV64_MAX;
         default: {
             HLOGM("Registers in an unknown CPU.");
             return std::numeric_limits<size_t>::max();
