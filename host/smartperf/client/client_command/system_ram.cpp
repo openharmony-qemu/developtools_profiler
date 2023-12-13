@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "include/system_ram.h"
+#include <sstream>
+#include <fstream>
+#include <climits>
+#include "include/sp_utils.h"
+#include "memory_collector.h"
+#include "collect_result.h"
+
+using namespace OHOS::HiviewDFX;
+using namespace OHOS::HiviewDFX::UCollectUtil;
+using namespace OHOS::HiviewDFX::UCollect;
+
+namespace OHOS {
+namespace SmartPerf {
+std::map<std::string, std::string> SystemRam::ItemData()
+{
+    std::map<std::string, std::string> result;
+    std::map<std::string, std::string> ramInfo = SystemRam::GetSysRamInfo();
+    result = ramInfo;
+    return result;
+}
+
+std::map<std::string, std::string> SystemRam::GetSysRamInfo() const
+{
+    std::map<std::string, std::string> ramInfo;
+    std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
+    CollectResult<SysMemory> result = collector->CollectSysMemory();
+    ramInfo["memTotal"] = std::to_string(result.data.memFree);
+    ramInfo["memFree"] = std::to_string(result.data.memFree);
+    ramInfo["memAvailable"] = std::to_string(result.data.memAvailable);
+    return ramInfo;
+}
+}
+}

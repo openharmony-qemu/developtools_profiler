@@ -18,6 +18,9 @@
 #include "include/GPU.h"
 #include "include/FPS.h"
 #include "include/RAM.h"
+#include "include/system_ram.h"
+#include "include/processes_cpu.h"
+#include "include/Network.h"
 #include "include/Power.h"
 #include "include/Temperature.h"
 #include "include/ByTrace.h"
@@ -116,6 +119,8 @@ void SpProfilerFactory::SetProfilerPid(std::string pid)
 {
     RAM &ram = RAM::GetInstance();
     ram.SetProcessId(pid);
+    ProcessesCpu &processesCpu = ProcessesCpu::GetInstance();
+    processesCpu.SetProcessId(pid);
 }
 SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
 {
@@ -123,6 +128,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
     switch (commandType) {
         case CommandType::CT_C:
             profiler = &CPU::GetInstance();
+            break;
+        case CommandType::CT_PL:
+            profiler = &ProcessesCpu::GetInstance();
             break;
         case CommandType::CT_G:
             profiler = &GPU::GetInstance();
@@ -142,7 +150,13 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             profiler = &Temperature::GetInstance();
             break;
         case CommandType::CT_R:
+            profiler = &SystemRam::GetInstance();
+            break;
+        case CommandType::CT_PR:
             profiler = &RAM::GetInstance();
+            break;
+        case CommandType::CT_NET:
+            profiler = &Network::GetInstance();
             break;
         case CommandType::CT_TTRACE:
             FPS::GetInstance().SetTraceCatch();

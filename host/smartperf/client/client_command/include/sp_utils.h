@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <string>
 namespace OHOS {
 namespace SmartPerf {
 namespace SPUtils {
@@ -24,6 +25,16 @@ namespace SPUtils {
  * @brief Check if the file has permission to access
  *
  * @param fileName
+ * @return true
+ * @return false
+ */
+bool HasNumber(const std::string& str);
+bool Cmp(const std::string &a, const std::string &b);
+/**
+ * @brief Comparison key name
+ *
+ * @param a
+ * @param b
  * @return true
  * @return false
  */
@@ -106,7 +117,6 @@ std::string GetRadarFrame();
 std::map<std::string, std::string> GetDeviceInfo();
 std::map<std::string, std::string> GetCpuInfo();
 std::map<std::string, std::string> GetGpuInfo();
-std::map<std::string, std::string> GetNetwork();
 std::string GetScreen();
 };
 }

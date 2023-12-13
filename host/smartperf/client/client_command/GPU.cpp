@@ -12,15 +12,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "include/GPU.h"
 #include <iostream>
 #include "include/sp_utils.h"
-#include "include/GPU.h"
+#include "gpu_collector.h"
+#include "collect_result.h"
+
+using namespace OHOS::HiviewDFX;
+using namespace OHOS::HiviewDFX::UCollectUtil;
+using namespace OHOS::HiviewDFX::UCollect;
+
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> GPU::ItemData()
 {
     std::map<std::string, std::string> result;
-    int freq = GetGpuFreq();
+    int32_t freq = GetGpuFreq();
     float load = GetGpuLoad();
     result["gpuFrequency"] = std::to_string(freq);
     result["gpuLoad"] = std::to_string(load);
@@ -29,32 +36,16 @@ std::map<std::string, std::string> GPU::ItemData()
 
 int GPU::GetGpuFreq()
 {
-    std::string gpuFreq;
-    for (auto path : gpuCurFreqPaths) {
-        if (SPUtils::FileAccess(path)) {
-            SPUtils::LoadFile(path, gpuFreq);
-        }
-    }
-    return atoi(gpuFreq.c_str());
+    std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
+    CollectResult<GpuFreq> result = collector->CollectGpuFrequency();
+    return result.data.curFeq;
 }
+
 float GPU::GetGpuLoad()
 {
-    std::vector<std::string> sps;
-    std::string bufferLine;
-    for (auto path : gpuCurLoadPaths) {
-        if (SPUtils::FileAccess(path)) {
-            SPUtils::LoadFile(path, bufferLine);
-        }
-    }
-    SPUtils::StrSplit(bufferLine, "@", sps);
-    if (sps.size() > 0) {
-        float loadRk = std::stof(sps[0]);
-        return loadRk;
-    } else {
-        float loadWgr = std::stof(bufferLine);
-        return loadWgr;
-    }
-    return -1.0;
+    std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
+    CollectResult<SysGpuLoad> result = collector->CollectSysGpuLoad();
+    return float(result.data.gpuLoad);
 }
 }
 }

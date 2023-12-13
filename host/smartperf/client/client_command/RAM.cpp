@@ -12,11 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "include/RAM.h"
 #include <sstream>
 #include <fstream>
+#include <iostream>
+#include <string>
 #include <climits>
 #include "include/sp_utils.h"
-#include "include/RAM.h"
+#include "memory_collector.h"
+#include "collect_result.h"
+
+using namespace OHOS::HiviewDFX;
+using namespace OHOS::HiviewDFX::UCollectUtil;
+using namespace OHOS::HiviewDFX::UCollect;
+
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> RAM::ItemData()
@@ -26,42 +35,25 @@ std::map<std::string, std::string> RAM::ItemData()
     result = ramInfo;
     return result;
 }
+
 void RAM::SetProcessId(std::string pid)
 {
     processId = std::move(pid);
 }
-
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::map<std::string, std::string> ramInfo;
-    std::string pssValue = "";
-    ramInfo["pss"] = "-1";
-    if (processId.size() > 0) {
-        const int zero = 0;
-        const int one = 1;
-        const int two = 2;
-        std::ostringstream cmdGrep;
-        cmdGrep.str("");
-        cmdGrep << "/proc/" << processId << "/smaps_rollup";
-        std::string cmdRam = cmdGrep.str();
-        char realPath[PATH_MAX] = {0x00};
-        if (realpath(cmdRam.c_str(), realPath) == nullptr) {
-            std::cout << "" << std::endl;
-        }
-        std::ifstream infile(realPath, std::ios::in);
-        if (!infile) {
+    if (processId.length() > 0) {
+        int32_t procId = 0;
+        procId = std::stoi(processId);
+        std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
+        CollectResult<ProcessMemory> result = collector->CollectProcessMemory(procId);
+        if (sizeof(result.data) != 0) {
+            ramInfo["pss"] = std::to_string(result.data.pss);
+            ramInfo["pid"] = std::to_string(result.data.pid);
+            ramInfo["name"] = result.data.name;
             return ramInfo;
         }
-        std::string textline;
-        while (getline(infile, textline, '\n')) {
-            if (textline[zero] == 'P' && textline[one] == 's' && textline[two] == 's') {
-                pssValue = textline;
-                break;
-            }
-        }
-    }
-    if (pssValue.size() > 0) {
-        ramInfo["pss"] = SPUtils::ExtractNumber(pssValue.c_str());
     }
     return ramInfo;
 }
