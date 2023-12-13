@@ -58,7 +58,7 @@ std::map<std::string, std::string> CPU::ItemData()
     if (workLoads.empty()) {
         return result;
     }
-    for (size_t i = 0; i < workLoads.size(); i++) {
+    for (size_t i = 1; i < workLoads.size(); i++) {
         cpuIdStr = workLoads[i].cpuId;
         userUsageStr = std::to_string(workLoads[i].userUsage * oneHundred);
         niceUsageStr = std::to_string(workLoads[i].niceUsage * oneHundred);
