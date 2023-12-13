@@ -166,13 +166,35 @@ struct TitleWindowPage {
           })
         }
 
-        if (this.tIndexInfo.cpu0Frequency != undefined) {
+        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"] != undefined) {
           ItemContent({
             icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo.cpu0Frequency.toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
+            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
             tittle: "CPU-A频率",
             onClickCallBack: () => {
               this.floatWindowEvent("sp_cpu0Frequency", FloatWindowConstant.CPU0_FREQUENCY)
+            }
+          })
+        }
+
+        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[1] +"Frequency"] != undefined) {
+          ItemContent({
+            icon: $r("app.media.icon_counter"),
+            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[1] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu1Load + "%",
+            tittle: "CPU-B频率",
+            onClickCallBack: () => {
+              this.floatWindowEvent("sp_cpu1Frequency", FloatWindowConstant.CPU1_FREQUENCY)
+            }
+          })
+        }
+        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[2] +"Frequency"] != undefined) {
+
+          ItemContent({
+            icon: $r("app.media.icon_counter"),
+            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[2] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu2Load + "%",
+            tittle: "CPU-C频率",
+            onClickCallBack: () => {
+              this.floatWindowEvent("sp_cpu2Frequency", FloatWindowConstant.CPU2_FREQUENCY)
             }
           })
         }
@@ -221,19 +243,19 @@ struct TitleWindowPage {
 
       }.width('100%')
       .gesture(
-      GestureGroup(GestureMode.Exclusive,
-      PanGesture({})
-        .onActionStart((event: GestureEvent) => {
-        })
-        .onActionUpdate((event: GestureEvent) => {
-          this.offsetX = event.offsetX
-          this.offsetY = event.offsetY
-        })
-        .onActionEnd(() => {
-          this.MoveWindow(this.offsetX, this.offsetY)
-          this.SetWindowPosition(this.offsetX, this.offsetY)
-        })
-      ))
+        GestureGroup(GestureMode.Exclusive,
+          PanGesture({})
+            .onActionStart((event: GestureEvent) => {
+            })
+            .onActionUpdate((event: GestureEvent) => {
+              this.offsetX = event.offsetX
+              this.offsetY = event.offsetY
+            })
+            .onActionEnd(() => {
+              this.MoveWindow(this.offsetX, this.offsetY)
+              this.SetWindowPosition(this.offsetX, this.offsetY)
+            })
+        ))
     }
   }
 }
