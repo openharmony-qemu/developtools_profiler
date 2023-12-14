@@ -450,11 +450,11 @@ static inline int RmqEntryTotalSize(unsigned int size)
     return sizeof(struct RmqEntry) + ((size + RMQ_ENTRY_ALIGN_MASK) & (~RMQ_ENTRY_ALIGN_MASK));
 }
 
-bool FlowController::HmParseEventData(uint8_t* &data)
+template <typename T, typename E>
+bool FlowController::HmParseEventData(T* traceResult, uint8_t* &data, E* ftraceEvent)
 {
     struct RmqConsumerData *rmqData = reinterpret_cast<struct RmqConsumerData *>(data);
     uint64_t timeStampBase = rmqData->timeStamp;
-    auto traceResult = std::make_unique<TracePluginResult>();
     auto cpuDetailMsg = traceResult->add_ftrace_cpu_detail();
     struct RmqEntry *event;
 
@@ -472,13 +472,13 @@ bool FlowController::HmParseEventData(uint8_t* &data)
 
         struct HmTraceHeader *header = reinterpret_cast<struct HmTraceHeader *>(event->data);
         auto parseEventCtx =
-            SubEventParser<FtraceEvent>::GetInstance().GetParseEventCtx(header->commonType);
+            SubEventParser<E>::GetInstance().GetParseEventCtx(header->commonType);
         if (parseEventCtx == NULL) {
             curPtr += RmqEntryTotalSize(evtSize);
             continue;
         }
 
-        auto ftraceEvent = cpuDetailMsg->add_event();
+        ftraceEvent = cpuDetailMsg->add_event();
         ftraceEvent->set_timestamp(event->timeStampOffset + timeStampBase);
         ftraceEvent->set_tgid(header->tgid);
         ftraceEvent->set_comm(header->tcbName);
@@ -488,7 +488,7 @@ bool FlowController::HmParseEventData(uint8_t* &data)
     }
 
     data += PAGE_SIZE;
-    return tansporter_->Submit(std::move(traceResult));
+    return true;
 }
 
 bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
@@ -498,7 +498,26 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
     auto endPtr = buffer + dataSize;
 
     for (auto data = buffer; data < endPtr;) {
-        CHECK_TRUE(HmParseEventData(data), false, "hm ParseEventData failed!");
+        if (resultWriter_->isProtobufSerialize) {
+            auto traceResult = std::make_unique<TracePluginResult>();
+            FtraceEvent* event = nullptr;
+            CHECK_TRUE(HmParseEventData(traceResult.get(), data, event), false, "hm parse raw data failed!");
+            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report hm raw event failed!");
+        } else {
+            auto ctx = resultWriter_->startReport(resultWriter_);
+            CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
+            static ProtoEncoder::MessagePool msgPool;
+            static ProtoEncoder::TracePluginResult traceResult;
+            msgPool.Reset();
+            traceResult.Reset(ctx, &msgPool);
+            ProtoEncoder::FtraceEvent* event = nullptr;
+            if (!HmParseEventData(&traceResult, data, event)) {
+                HILOG_ERROR(LOG_CORE, "hm parse raw data failed!");
+            }
+            int32_t msgSize = traceResult.Finish();
+            resultWriter_->finishReport(resultWriter_, msgSize);
+            tansporter_->Report(static_cast<size_t>(msgSize));
+        }
     }
 
     return true;

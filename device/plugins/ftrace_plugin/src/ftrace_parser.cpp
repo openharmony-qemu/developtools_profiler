@@ -122,6 +122,8 @@ bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
 
         CHECK_TRUE(SubEventParser<FtraceEvent>::GetInstance().SetupEvent(hmformat),
             false, "setup hm %s/%s failed!", type.c_str(), name.c_str());
+        CHECK_TRUE(SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().SetupEvent(hmformat),
+            false, "setup hm pbzero %s/%s failed!", type.c_str(), name.c_str());
     }
     return true;
 }
