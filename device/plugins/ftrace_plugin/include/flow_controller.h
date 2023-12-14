@@ -68,7 +68,9 @@ private:
     bool HmParseEventDataOnNomalMode(long dataSize);
     bool ParseEventDataOnDelayMode();
     bool ParseEventData(int cpuid, uint8_t* page);
-    bool HmParseEventData(uint8_t* &data);
+
+    template <typename T, typename E>
+    bool HmParseEventData(T* tracePluginResult, uint8_t* &data, E* ftraceEvent);
 
     bool AddPlatformEventsToParser(void);
     void EnableTraceEvents(void);
