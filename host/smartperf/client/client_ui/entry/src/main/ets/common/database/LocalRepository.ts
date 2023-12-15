@@ -17,13 +17,28 @@ import database from './DatabaseUtils'
 import BundleManager from '../utils/BundleMangerUtils';
 import { dateFormat } from '../utils/TimeUtils'
 import { ReportItem } from '../entity/LocalConfigEntity'
-import { sql_t_general_info, dbVersion, dbName } from '../constant/ConstantSQL';
+import { sql_t_general_info, dbVersion, dbName, sql_t_index_info } from '../constant/ConstantSQL';
 import { AppFileRealDir } from '../constant/ConstantsPath'
 import SPLogger from '../utils/SPLogger'
 
 
 const TAG = "LocalRepository"
 
+export function initDbIndex(): void {
+  try {
+    const STORE_CONFIG:relationalStore.StoreConfig = {
+      name: globalThis.dbTime + '.db',
+      securityLevel: relationalStore.SecurityLevel.S1
+    }
+    relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
+      .then(rdbStore => {
+        rdbStore.executeSql(sql_t_index_info, null);
+        return rdbStore;
+      })
+  } catch (err) {
+    SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_index_info:" + sql_t_index_info);
+  }
+}
 
 export function initDb(): void {
   try {
@@ -33,7 +48,7 @@ export function initDb(): void {
     }
     relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
       .then(rdbStore => {
-        SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_genneral_info:" + sql_t_general_info)
+        rdbStore.executeSql(sql_t_general_info, null);
         return rdbStore
       })
   } catch (err) {
