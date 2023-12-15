@@ -360,7 +360,7 @@ napi_value GetPss(napi_env env, napi_callback_info info)
 {
     napi_value pss;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector) {
+    if (collector != nullptr) {
         int pid = getpid();
         auto collectResult = collector->CollectProcessMemory(pid);
         int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
@@ -375,7 +375,7 @@ napi_value GetSharedDirty(napi_env env, napi_callback_info info)
 {
     napi_value sharedDirty;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector) {
+    if (collector != nullptr) {
         int pid = getpid();
         auto collectResult = collector->CollectProcessMemory(pid);
         int32_t sharedDirtyInfo = collectResult.data.sharedDirty;
@@ -390,7 +390,7 @@ napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 {
     napi_value privateDirtyValue;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector) {
+    if (collector != nullptr) {
         pid_t pid = getpid();
         auto collectResult = collector->CollectProcessMemory(pid);
         int32_t privateDirty = collectResult.data.privateDirty;
@@ -405,7 +405,7 @@ napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 {
     napi_value cpuUsageValue;
     std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    if (dumpUsage) {
+    if (dumpUsage != nullptr) {
         pid_t pid = getpid();
         float tmpCpuUsage = dumpUsage->GetCpuUsage(pid);
         double cpuUsage = double(tmpCpuUsage);
@@ -471,7 +471,7 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 {
     napi_value vss;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector) {
+    if (collector != nullptr) {
         pid_t pid = getpid();
         auto collectResult = collector->CollectProcessVss(pid);
         uint64_t vssInfo = collectResult.data;
