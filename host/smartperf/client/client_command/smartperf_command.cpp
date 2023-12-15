@@ -28,7 +28,7 @@ namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
 {
     if (argc == oneParam) {
-        OSOH::SmartPerf::StartUpDelay sd;
+        OHOS::SmartPerf::StartUpDelay sd;
         std::string pid = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = "taskset -p f " + pid;
         std::string result = "";
