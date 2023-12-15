@@ -29,14 +29,14 @@ export function initDbIndex(): void {
     const STORE_CONFIG:relationalStore.StoreConfig = {
       name: globalThis.dbTime + '.db',
       securityLevel: relationalStore.SecurityLevel.S1
-    }
+    };
     relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG)
       .then(rdbStore => {
         rdbStore.executeSql(sql_t_index_info, null);
         return rdbStore;
-      })
+      });
   } catch (err) {
-    SPLogger.DEBUG(TAG, "--> createTable start execute sql_t_index_info:" + sql_t_index_info);
+    SPLogger.DEBUG(TAG, '--> createTable start execute sql_t_index_info:' + sql_t_index_info);
   }
 }
 

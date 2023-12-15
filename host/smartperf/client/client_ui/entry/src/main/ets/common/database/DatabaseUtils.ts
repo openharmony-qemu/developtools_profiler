@@ -82,7 +82,7 @@ export default {
             }
             relationalStore.getRdbStore(globalThis.abilityContext, STORE_CONFIG, (err, rdbStore) => {
                 SPLogger.DEBUG(TAG,"--> insert into  insertGeneraData :tableName:" + tableName + "| valueInsert:" + JSON.stringify(valueInsert))
-                rdbStore.insert(tableName, valueInsert);
+        rdbStore.insert(tableName, valueInsert);
             })
         } catch (err) {
             SPLogger.ERROR(TAG, "insertGeneraData ERR:" + err);
@@ -160,10 +160,9 @@ export default {
                 .then(rdbStore => {
                     let predicates = new relationalStore.RdbPredicates('t_general_info')
                     predicates.orderByDesc("startTime")
-                    return rdbStore.query(predicates, ['sessionId',
-                    'startTime', 'taskId', 'appName', 'appVersion', 'packageName', 'endTime', 'testDuration', 'taskName',
-                        'board', 'deviceTypeName', 'brand', 'version', 'sn'
-                    ])
+          return rdbStore.query(predicates, ['sessionId', 'startTime', 'appName', 'appVersion', 'packageName',
+            'endTime', 'testDuration', 'taskName', 'board', 'deviceTypeName', 'brand', 'version', 'sn','taskId',
+          ])
                 })
                 .then(resultSet => {
                     while (resultSet.goToNextRow()) {
