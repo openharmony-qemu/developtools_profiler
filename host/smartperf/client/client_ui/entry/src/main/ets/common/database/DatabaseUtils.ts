@@ -161,7 +161,7 @@ export default {
                     let predicates = new relationalStore.RdbPredicates('t_general_info')
                     predicates.orderByDesc("startTime")
           return rdbStore.query(predicates, ['sessionId', 'startTime', 'appName', 'appVersion', 'packageName',
-            'endTime', 'testDuration', 'taskName', 'board', 'deviceTypeName', 'brand', 'version', 'sn','taskId',
+            'endTime', 'testDuration', 'taskName', 'board', 'deviceTypeName', 'brand', 'version', 'sn', 'taskId'
           ])
                 })
                 .then(resultSet => {
