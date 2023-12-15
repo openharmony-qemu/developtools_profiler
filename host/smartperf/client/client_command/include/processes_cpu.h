@@ -23,8 +23,7 @@ namespace SmartPerf {
 class ProcessesCpu : public SpProfiler {
 public:
     void SetProcessId(std::string pid);
-    std::map<std::string, std::string> GetSpecProcessCpuLoad() const;
-    uint64_t GetSysProcessCpuLoad();
+    std::map<std::string, std::string> GetSysProcessCpuLoad() const;
     static ProcessesCpu &GetInstance()
     {
         static ProcessesCpu instance;

@@ -39,7 +39,6 @@ std::map<std::string, std::string> Network::ItemData()
 
 std::map<std::string, std::string> Network::GetNetworkInfo() const
 {
-    std::cout << "GetNetwork is called" << std::endl;
     std::map<std::string, std::string> networkInfo;
     long long allTx = 0;
     long long allRx = 0;
@@ -50,8 +49,6 @@ std::map<std::string, std::string> Network::GetNetworkInfo() const
     if (fp == nullptr) {
         std::cout << "net work node is not accessed" << std::endl;
         return networkInfo;
-    } else {
-        std::cout << "net work node is accessed" << std::endl;
     }
     while (fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {

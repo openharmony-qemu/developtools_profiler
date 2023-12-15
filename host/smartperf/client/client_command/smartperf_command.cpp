@@ -28,6 +28,11 @@ namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
 {
     if (argc == oneParam) {
+        OSOH::SmartPerf::StartUpDelay sd;
+        std::string pid = sd.GetPidByPkg("SP_daemon");
+        std::string cmdStr = "taskset -p f " + pid;
+        std::string result = "";
+        SPUtils::LoadCmd(cmdStr, result);
         daemon(0, 0);
         InitSomething();
         SpThreadSocket udpThreadSocket;
@@ -95,6 +100,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
         case CommandType::CT_T:
         case CommandType::CT_P:
         case CommandType::CT_R:
+        case CommandType::CT_NET:
         case CommandType::CT_PR:
         case CommandType::CT_TTRACE:
         case CommandType::CT_SNAPSHOT:
