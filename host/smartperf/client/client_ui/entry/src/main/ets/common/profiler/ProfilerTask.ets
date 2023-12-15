@@ -26,6 +26,7 @@ import { GPData, TIndexInfo, TGeneralInfo, TPowerSensorInfo } from '../entity/Da
 import { ProfilerFactory } from './base/ProfilerFactory'
 import { CollectorType } from './base/ProfilerConstant'
 import SPLogger from '../../common/utils/SPLogger'
+import { initDbIndex } from '../../common/database/LocalRepository';
 
 export class ProfilerTask {
   private collectItems:Array<string> = []
@@ -93,8 +94,8 @@ export class ProfilerTask {
 
     // power 电压队列
     globalThis.powerVoltArr = new Array<String>()
-
-
+    globalThis.taskId = -1;
+    initDbIndex();
     //初始化数据库  2022-02-23 dbName改为时间戳
     database.createTable(globalThis.dbTime)
     SPLogger.INFO(ProfilerTask.name,'ProfilerUtils taskInit called');

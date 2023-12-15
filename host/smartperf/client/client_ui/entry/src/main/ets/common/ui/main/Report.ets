@@ -93,7 +93,7 @@ export struct Report {
               })
             }
           }
-        }, item => item.toString())
+        }, item => JSON.stringify(item))
       }
       .edgeEffect(EdgeEffect.None) // 滑动到边缘无效果
       .chainAnimation(false) // 联动特效关闭
