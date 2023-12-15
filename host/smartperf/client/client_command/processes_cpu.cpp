@@ -61,7 +61,7 @@ std::map<std::string, std::string> ProcessesCpu::GetSysProcessCpuLoad() const
         if (procId == data[i].pid) {
             processCpuInfo["ProcId"] = std::to_string(data[i].pid);
             processCpuInfo["ProcAppName"] = data[i].procName;
-            processCpuInfo["ProcCpuLoad"] = std::to_string(data[i].cpuiLoad * oneHundred);
+            processCpuInfo["ProcCpuLoad"] = std::to_string(data[i].cpuLoad * oneHundred);
             processCpuInfo["ProcCpuUsage"] = std::to_string(data[i].cpuUsage * oneHundred);
             processCpuInfo["ProcUCpuUsage"] = std::to_string(data[i].uCpuUsage * oneHundred);
             processCpuInfo["ProcSCpuUsage"] = std::to_string(data[i].sCpuUsage * oneHundred);
