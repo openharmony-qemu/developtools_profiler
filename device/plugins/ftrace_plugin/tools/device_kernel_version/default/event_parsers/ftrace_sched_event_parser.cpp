@@ -35,24 +35,6 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_blocked_reason,
         sched_blocked_reason_func(msg, data, size, format);
     });
 
-template <typename T> void hm_sched_blocked_reason_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
-{
-    int i = 0;
-    msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_hmcaller(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_io_wait(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hm_sched_blocked_reason,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_sched_blocked_reason_format();
-        hm_sched_blocked_reason_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hm_sched_blocked_reason,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_sched_blocked_reason_format();
-        hm_sched_blocked_reason_func(msg, data, size, format);
-    });
-
 template <typename T> void sched_kthread_stop_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
 {
     int i = 0;

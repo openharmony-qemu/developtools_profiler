@@ -42,11 +42,7 @@ struct FtraceEventHeader {
     uint32_t array[0];
 };
 
-#define HMCAP_THREAD_NAME_SIZE 16
 struct HmTraceHeader {
-    unsigned int size;
-    int tgid;
-    char tcbName[HMCAP_THREAD_NAME_SIZE];
     unsigned short commonType;
     unsigned char commonFlags;
     unsigned char commonPreemptCount;

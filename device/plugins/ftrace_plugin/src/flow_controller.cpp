@@ -480,8 +480,6 @@ bool FlowController::HmParseEventData(T* traceResult, uint8_t* &data, E* ftraceE
 
         ftraceEvent = cpuDetailMsg->add_event();
         ftraceEvent->set_timestamp(event->timeStampOffset + timeStampBase);
-        ftraceEvent->set_tgid(header->tgid);
-        ftraceEvent->set_comm(header->tcbName);
         CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, reinterpret_cast<uint8_t *>(header),
             evtSize, parseEventCtx), false, "hm parse event failed!");
         curPtr += RmqEntryTotalSize(evtSize);
