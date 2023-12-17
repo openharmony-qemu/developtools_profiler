@@ -106,9 +106,6 @@ bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
     hmformat.eventName = name;
     desc = FtraceFsOps::GetInstance().HmGetEventDataFormat(type, name);
     if (desc != "") {
-        if (name == "sched_blocked_reason") {
-            hmformat.eventName = "hm_sched_blocked_reason";
-        }
         CHECK_TRUE(ParseEventFormat(desc.data(), hmformat), false, " parse hm %s/%s/format failed!",
             type.c_str(), name.c_str());
 
