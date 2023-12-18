@@ -43,17 +43,36 @@ void RAM::SetProcessId(std::string pid)
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::map<std::string, std::string> ramInfo;
-    if (processId.length() > 0) {
-        int32_t procId = 0;
-        procId = std::stoi(processId);
-        std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
-        CollectResult<ProcessMemory> result = collector->CollectProcessMemory(procId);
-        if (sizeof(result.data) != 0) {
-            ramInfo["pss"] = std::to_string(result.data.pss);
-            ramInfo["pid"] = std::to_string(result.data.pid);
-            ramInfo["name"] = result.data.name;
-            return ramInfo;
+    std::string pssValue = "";
+    ramInfo["pss"] = "-1";
+    if (processId.size() == 0) {
+        return ramInfo;
+    }
+    std::string cmd = "cat /proc/" + processId + "/smaps_rollup";
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return ramInfo;
+    }
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        if (line[0] == '-' || line[0] == '') {
+            continue;
         }
+        if (line.find("Pss:") != std::string::npos) {
+            std::regex pattern("\\d+");
+            std::smatch result;
+            if (std::regex_search(line, result, pattern)) {
+                pssValue = result[0];
+            }
+        }
+        if (pssValue.size() > 0) {
+            break;
+        }
+    }
+    pclose(fd);
+    if (pssValue.size() > 0) {
+        ramInfo["pss"] = pssValue;
     }
     return ramInfo;
 }

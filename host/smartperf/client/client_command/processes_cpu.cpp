@@ -49,23 +49,22 @@ std::map<std::string, std::string> ProcessesCpu::GetSysProcessCpuLoad() const
 {
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
-    if (processId.length() < 0) {
-        return processCpuInfo;
-    }
-    int32_t procId = 0;
-    procId = std::stoi(processId);
-    std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
-    auto collectResult = collector->CollectProcessCpuStatInfos(true);
-    auto data = collectResult.data;
-    for (size_t i = 0; i < data.size(); i++) {
-        if (procId == data[i].pid) {
-            processCpuInfo["ProcId"] = std::to_string(data[i].pid);
-            processCpuInfo["ProcAppName"] = data[i].procName;
-            processCpuInfo["ProcCpuLoad"] = std::to_string(data[i].cpuLoad * oneHundred);
-            processCpuInfo["ProcCpuUsage"] = std::to_string(data[i].cpuUsage * oneHundred);
-            processCpuInfo["ProcUCpuUsage"] = std::to_string(data[i].uCpuUsage * oneHundred);
-            processCpuInfo["ProcSCpuUsage"] = std::to_string(data[i].sCpuUsage * oneHundred);
-            return processCpuInfo;
+    if (processId.length() > 0) {
+        int32_t procId = 0;
+        procId = std::stoi(processId);
+        std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
+        auto collectResult = collector->CollectProcessCpuStatInfos(true);
+        auto data = collectResult.data;
+        for (size_t i = 0; i < data.size(); i++) {
+            if (procId == data[i].pid) {
+                processCpuInfo["ProcId"] = std::to_string(data[i].pid);
+                processCpuInfo["ProcAppName"] = data[i].procName;
+                processCpuInfo["ProcCpuLoad"] = std::to_string(data[i].cpuLoad * oneHundred);
+                processCpuInfo["ProcCpuUsage"] = std::to_string(data[i].cpuUsage * oneHundred);
+                processCpuInfo["ProcUCpuUsage"] = std::to_string(data[i].uCpuUsage * oneHundred);
+                processCpuInfo["ProcSCpuUsage"] = std::to_string(data[i].sCpuUsage * oneHundred);
+                return processCpuInfo;
+            }
         }
     }
     return processCpuInfo;
