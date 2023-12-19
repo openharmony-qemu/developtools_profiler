@@ -33,6 +33,7 @@ private:
     std::string message = "init::-SESSIONID 1 -INTERVAL 1000 ";
     const char* message1 = "start:::";
     const char* message2 = "stop::";
+	int numBuff = 1024;
 };
 }
 }

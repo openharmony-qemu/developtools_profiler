@@ -19,19 +19,19 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include "include/client_control.h"
-#include "include/sp_unils.h"
+#include "include/sp_utils.h"
 #include "include/startup_delay.h"
 namespace OHOS {
 namespace SmartPerf {
 int ClientControl::SocketStart(std::string agrs)
 {
-    std::string messageInit = msessage + args;
+    std::string messageInit = message + args;
     const char* message_cstr = messageInit.c_str();
     OHOS::SmartPerf::ClientControl::InitSocket();
     send(client_socket, message_cstr, strlen(message_cstr), 0);
-    read(client_socket, buffer, 1024);
+    read(client_socket, buffer, numBuff);
     send(client_socket, message1, strlen(message1), 0);
-    read(client_socket, buffer, 1024);
+    read(client_socket, buffer, numBuff);
     std::cout << "SP_daemon " << buffer << std::endl;
     OHOS::SmartPerf::ClientControl::CloseSocket();
     return 0;
@@ -40,7 +40,7 @@ int ClientControl::SocketStop()
 {
     OHOS::SmartPerf::ClientControl::InitSocket();
     send(client_socket, message2, strlen(message2), 0);
-    read(client_socket, buffer, 1024);
+    read(client_socket, buffer, numBuff);
     std::cout << "SP_daemon " << buffer << std::endl;
     OHOS::SmartPerf::ClientControl::CloseSocket();
     return 0;
@@ -54,9 +54,9 @@ int ClientControl::InitSocket()
     }
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_address.sin_prot = htons(prot_number);
+    server_address.sin_port = htons(prot_number);
     if (connect(client_socket, (struct socketaddr*)&server_address, sizeof(server_address)) < 0) {
-        std::cout << "Failed to connect to server" << std::endl
+        std::cout << "Failed to connect to server" << std::endl;
     }
     return 0;
 }
