@@ -94,7 +94,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         if (SPUtils::LoadCmd(pidCmd, pidResult)) {
             SpProfilerFactory::SetProfilerPid(pidResult);
         }
-    } 
+    }
     thread = std::thread([this, msgTask]() {
         std::cout << "Task " << curTaskInfo.sessionId << ": collecting data loop..." << std::endl;
         while (isRunning) {

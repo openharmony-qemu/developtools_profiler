@@ -24,6 +24,8 @@
 namespace OHOS {
 namespace SmartPerf {
 bool static flagRunning = false;
+std::string static cmdResult;
+const int static type = 2;
 class SpThreadSocket {
 public:
     std::string MapToString(std::map<std::string, std::string> dataMap) const
@@ -84,7 +86,6 @@ public:
     // TCP
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
-        // init::-SessionId 12345678 -Interval 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r
         if (recvStr.find("init::") != std::string::npos) {
             ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
             if (code == ErrCode::OK) {
@@ -128,9 +129,7 @@ public:
                 }
             }
             vec.push_back(recvStr.substr(j, size - j));
-            const int type = 2;
             if (vec[type] == "findAppPage") {
-                std::string cmdResult;
                 SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
             }
             OHOS::SmartPerf::ControlCallCmd controlCallCmd;

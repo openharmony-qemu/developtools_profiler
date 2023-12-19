@@ -23,17 +23,17 @@ public:
     int SocketStart(std::string agrs);
     int SocketStop();
     int InitSocket();
-    void StartSP_daemon();
+    void StartSPDaemon();
     int CloseSocket();
 private:
-    int client_socket;
-    struct sockaddr_in server_address;
+    int clientSocket;
+    struct sockaddr_in serverAddress;
     char buffer[1024] = {0};
-    int prot_number = 8284;
+    int protNumber = 8284;
     std::string message = "init::-SESSIONID 1 -INTERVAL 1000 ";
     const char* message1 = "start:::";
     const char* message2 = "stop::";
-	int numBuff = 1024;
+    int numBuff = 1024;
 };
 }
 }
