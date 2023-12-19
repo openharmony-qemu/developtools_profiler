@@ -15,16 +15,14 @@
 #include "include/RAM.h"
 #include <sstream>
 #include <fstream>
-#include <iostream>
-#include <string>
 #include <climits>
+#include <cstdio>
+#include <algorithm>
+#include <iostream>
+#include <thread>
+#include <string>
+#include <regex>
 #include "include/sp_utils.h"
-#include "memory_collector.h"
-#include "collect_result.h"
-
-using namespace OHOS::HiviewDFX;
-using namespace OHOS::HiviewDFX::UCollectUtil;
-using namespace OHOS::HiviewDFX::UCollect;
 
 namespace OHOS {
 namespace SmartPerf {
@@ -56,7 +54,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line = buf;
-        if (line[0] == '-' || line[0] == '') {
+        if (line[0] == '-' || line[0] == ' ') {
             continue;
         }
         if (line.find("Pss:") != std::string::npos) {
