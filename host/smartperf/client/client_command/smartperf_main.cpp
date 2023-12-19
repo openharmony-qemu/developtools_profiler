@@ -12,9 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstdio>
+#include <thread>
+#include <cstring>
+#include "unistd.h"
 #include "include/smartperf_command.h"
 #include "include/editor_command.h"
 #include "include/profiler_fps.h"
+#include "include/client_control.h"
 int main(int argc, char *argv[])
 {
     std::vector<std::string> vec;
@@ -28,6 +33,20 @@ int main(int argc, char *argv[])
         OHOS::SmartPerf::ProfilerFPS fps;
         fps.GetFPS(argc, vec);
         return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
+        OHOS::SmartPerf::ClientControl cc;
+        cc.StartSP_daemon();
+        std::string result;
+        for (int i = 2; i < argc; i++) {
+            result += argv[i];
+            if (i != argc - 1) {
+                result += " ";
+            }
+        }
+        cc.SocketStart(result);
+    } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
+        OHOS::SmartPerf::ClientControl cc;
+        cc.SocketStop();
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(argc, argv);
     std::cout << cmd.ExecCommand() << std::endl;

@@ -23,6 +23,7 @@
 #include "startup_delay.h"
 namespace OHOS {
 namespace SmartPerf {
+bool static flagRunning = false;
 class SpThreadSocket {
 public:
     std::string MapToString(std::map<std::string, std::string> dataMap) const
@@ -65,7 +66,7 @@ public:
         std::cout << "Socket Process finished!" << std::endl;
         spSocket.Close();
     }
-    void TypeTcp(SpServerSocket spSocket) const
+    void TypeTcp(SpServerSocket &spSocket) const
     {
         while (1) {
             int procFd = spSocket.Accept();
@@ -91,6 +92,19 @@ public:
             } else if (code == ErrCode::FAILED) {
                 spSocket.Send("init::False");
             }
+        } else if (recvStr.find("start:::") != std::string::npos) {
+            if (flagRunning) {
+                spSocket.Send("SP_daemon is running");
+                return;
+            }
+            auto lambdaTask = [](std::string data) {};
+            ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+            if (code == ErrCode::OK) {
+                spSocket.Send("start::True");
+                flagRunning = true;
+            } else if (code == ErrCode::FAILED) {
+                spSocket.Send("start::False");
+            }
         } else if (recvStr.find("start::") != std::string::npos) {
             auto lambdaTask = [&spSocket](std::string data) { spSocket.Send(data); };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
@@ -102,6 +116,7 @@ public:
         } else if (recvStr.find("stop::") != std::string::npos) {
             SPTask::GetInstance().StopTask();
             spSocket.Send("stop::True");
+            flagRunning = false;
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
             std::vector<std::string> vec;
             int size = recvStr.size();

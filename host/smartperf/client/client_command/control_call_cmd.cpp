@@ -51,12 +51,10 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         time = SmartPerf::ControlCallCmd::ColdStartHM(v);
     } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
-        std::cout << result << std::endl;
     } else if (v[typeName] == "pagefps") {
         fps = SmartPerf::ControlCallCmd::PageFps();
     } else if (v[typeName] == "FPS") {
         result = SmartPerf::ControlCallCmd::SlideFPS(v);
-        std::cout << result << std::endl;
     } else if (v[typeName] == "startFrame") {
         fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
@@ -120,6 +118,7 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    std::cout << fps << std::endl;
     return fps;
 }
 std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
@@ -149,6 +148,7 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
     SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    std::cout << fps << std::endl;
     return fps;
 }
 double ControlCallCmd::ResponseTime()
