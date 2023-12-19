@@ -87,7 +87,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     }
     isRunning = true;
     startTime = SPUtils::GetCurTime();
-    if (!curTaskInfo.packageName.empty) {
+    if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
         std::string pidCmd = "pidof " + curTaskInfo.packageName;
         std::string pidResult;

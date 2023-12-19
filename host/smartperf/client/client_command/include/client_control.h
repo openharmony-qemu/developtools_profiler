@@ -27,7 +27,7 @@ public:
     int CloseSocket();
 private:
     int client_socket;
-    struct socketaddr_in server_address;
+    struct sockaddr_in server_address;
     char buffer[1024] = {0};
     int prot_number = 8284;
     std::string message = "init::-SESSIONID 1 -INTERVAL 1000 ";

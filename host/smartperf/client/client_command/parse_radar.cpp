@@ -63,7 +63,7 @@ namespace OHOS {
         }
         void Radar::ParseRadarFrame(std::string string)
         {
-            std::string budleName = extract_string(string, "\"BUNDLE_NAME\":");
+            std::string budleName = extract_string(string, "\"BUNDLE_NAME_EX\":");
             std::cout << "BUNDLE_NAME:" << budleName << std::endl;
             std::string sceneId = extract_string(string, "\"SCENE_ID\":");
             std::cout << "SCENE_ID:" << sceneId << std::endl;
