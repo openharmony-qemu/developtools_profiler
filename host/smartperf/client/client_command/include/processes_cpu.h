@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,8 +23,7 @@ namespace SmartPerf {
 class ProcessesCpu : public SpProfiler {
 public:
     void SetProcessId(std::string pid);
-    std::map<std::string, std::string> GetSpecProcessCpuLoad() const;
-    uint64_t GetSysProcessCpuLoad();
+    std::map<std::string, std::string> GetSysProcessCpuLoad() const;
     static ProcessesCpu &GetInstance()
     {
         static ProcessesCpu instance;

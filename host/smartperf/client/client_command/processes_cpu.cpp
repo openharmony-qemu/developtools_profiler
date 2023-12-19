@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,11 +35,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> ProcessesCpu::ItemData()
 {
     std::map<std::string, std::string> result;
-    uint64_t procStartTime = GetSysProcessCpuLoad();
-    if (procStartTime == 0) {
-        return result;
-    }
-    std::map<std::string, std::string> processCpuInfo = ProcessesCpu::GetSpecProcessCpuLoad();
+    std::map<std::string, std::string> processCpuInfo = ProcessesCpu::GetSysProcessCpuLoad();
     result = processCpuInfo;
     return result;
 }
@@ -49,18 +45,7 @@ void ProcessesCpu::SetProcessId(std::string pid)
     processId = std::move(pid);
 }
 
-uint64_t ProcessesCpu::GetSysProcessCpuLoad()
-{
-    uint64_t startTime = 0;
-    std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
-    auto collectResult = collector->CollectProcessCpuStatInfos(true);
-    for (size_t i = 0; i < collectResult.data.size(); i++) {
-        startTime = collectResult.data[i].startTime;
-    }
-    return startTime;
-}
-
-std::map<std::string, std::string> ProcessesCpu::GetSpecProcessCpuLoad() const
+std::map<std::string, std::string> ProcessesCpu::GetSysProcessCpuLoad() const
 {
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
@@ -68,15 +53,19 @@ std::map<std::string, std::string> ProcessesCpu::GetSpecProcessCpuLoad() const
         int32_t procId = 0;
         procId = std::stoi(processId);
         std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
-        auto collectResult = collector->CollectProcessCpuStatInfo(procId);
+        auto collectResult = collector->CollectProcessCpuStatInfos(true);
         auto data = collectResult.data;
-        processCpuInfo["ProcId"] = std::to_string(data.pid);
-        processCpuInfo["ProcAppName"] = data.procName;
-        processCpuInfo["ProcCpuLoad"] = std::to_string(data.cpuLoad * oneHundred);
-        processCpuInfo["ProcCpuUsage"] = std::to_string(data.cpuUsage * oneHundred);
-        processCpuInfo["ProcUCpuUsage"] = std::to_string(data.uCpuUsage * oneHundred);
-        processCpuInfo["ProcSCpuUsage"] = std::to_string(data.sCpuUsage * oneHundred);
-        return processCpuInfo;
+        for (size_t i = 0; i < data.size(); i++) {
+            if (procId == data[i].pid) {
+                processCpuInfo["ProcId"] = std::to_string(data[i].pid);
+                processCpuInfo["ProcAppName"] = data[i].procName;
+                processCpuInfo["ProcCpuLoad"] = std::to_string(data[i].cpuLoad * oneHundred);
+                processCpuInfo["ProcCpuUsage"] = std::to_string(data[i].cpuUsage * oneHundred);
+                processCpuInfo["ProcUCpuUsage"] = std::to_string(data[i].uCpuUsage * oneHundred);
+                processCpuInfo["ProcSCpuUsage"] = std::to_string(data[i].sCpuUsage * oneHundred);
+                return processCpuInfo;
+            }
+        }
     }
     return processCpuInfo;
 }

@@ -20,6 +20,7 @@
 #include "sp_utils.h"
 #include "sp_task.h"
 #include "control_call_cmd.h"
+#include "startup_delay.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -133,11 +134,9 @@ public:
                 if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
                     std::string curPkgName = SplitMsg(recvBuf);
                     SpProfilerFactory::SetProfilerPkg(curPkgName);
-                    std::string pidCmd = "pidof " + curPkgName;
-                    std::string pidResult;
-                    if (SPUtils::LoadCmd(pidCmd, pidResult)) {
-                        SpProfilerFactory::SetProfilerPid(pidResult);
-                    }
+                    OHOS::SmartPerf::StartUpDelay sd;
+                    std::string pidNum = sd.GetPidByPkg(curPkgName);
+                    SpProfilerFactory::SetProfilerPid(pidNum);
                     spSocket.Sendto(curPkgName);
                 } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
                     SpProfilerFactory::SetProfilerPid(SplitMsg(recvBuf));

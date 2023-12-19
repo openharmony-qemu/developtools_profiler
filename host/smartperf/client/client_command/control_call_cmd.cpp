@@ -56,6 +56,7 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         fps = SmartPerf::ControlCallCmd::PageFps();
     } else if (v[typeName] == "FPS") {
         result = SmartPerf::ControlCallCmd::SlideFPS(v);
+        std::cout << result << std::endl;
     } else if (v[typeName] == "startFrame") {
         fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
@@ -74,10 +75,6 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         if (time != 0) {
             stream << time;
             result = "time:" + stream.str() + "ms";
-            std::cout << result << std::endl;
-        } else if (fps != 0) {
-            stream << fps;
-            result = "FPS:" + stream.str() + "fps";
             std::cout << result << std::endl;
         }
     }
@@ -106,8 +103,11 @@ double ControlCallCmd::PageFps()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
-    double pageFps = pageFpsTrace.ParsePageFpsTrace(traceName);
-    return pageFps;
+    double fps = pageFpsTrace.ParsePageFpsTrace(traceName);
+    stream << fps;
+    result = "FPS:" + stream.str() + "fps";
+    std::cout << result << std::endl;
+    return fps;
 }
 std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
 {
@@ -119,8 +119,8 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
-    std::string slidFps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return slidFps;
+    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    return fps;
 }
 std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
 {
@@ -148,8 +148,8 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
     cmd = "uinput -T -m 650 1500 650 500 30";
     SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
-    std::string slideFps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return slideFps;
+    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
+    return fps;
 }
 double ControlCallCmd::ResponseTime()
 {
@@ -231,8 +231,11 @@ double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     SPUtils::LoadCmd(cmd, cmdResult);
     sleep(1);
     thGetTrace.join();
-    double startFps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
-    return startFps;
+    double fps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
+    stream << fps;
+    result = "FPS:" + stream.str() + "fps";
+    std::cout << result << std::endl;
+    return fps;
 }
 double ControlCallCmd::StartResponse(std::vector<std::string> v)
 {
@@ -275,7 +278,7 @@ void ControlCallCmd::GetAppStartTime()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
     std::thread thGetHisysId = sd.ThreadGetHisysId();
-    std::string str = SPUtils::GetRadar();
+    std::string str = SPUtils::GetRadarFrame();
     thGetTrace.join();
     thGetHisysId.join();
     radar.ParseRadarAppStrart(str);

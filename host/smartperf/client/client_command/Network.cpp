@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,7 +21,6 @@
 #include <dirent.h>
 #include <cstdio>
 #include <cstdlib>
-#include <stdio.h>
 #include <climits>
 #include <cctype>
 #include "sys/time.h"
@@ -40,7 +39,6 @@ std::map<std::string, std::string> Network::ItemData()
 
 std::map<std::string, std::string> Network::GetNetworkInfo() const
 {
-    std::cout << "GetNetwork is called" << std::endl;
     std::map<std::string, std::string> networkInfo;
     long long allTx = 0;
     long long allRx = 0;
@@ -51,8 +49,6 @@ std::map<std::string, std::string> Network::GetNetworkInfo() const
     if (fp == nullptr) {
         std::cout << "net work node is not accessed" << std::endl;
         return networkInfo;
-    } else {
-        std::cout << "net work node is accessed" << std::endl;
     }
     while (fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
