@@ -23,11 +23,11 @@
 #include "include/startup_delay.h"
 namespace OHOS {
 namespace SmartPerf {
-int ClientControl::SocketStart(std::string agrs)
+int ClientControl::SocketStart(std::string args)
 {
     std::string messageInit = message + args;
     OHOS::SmartPerf::ClientControl::InitSocket();
-    send(clientSocket,  messageInit.c_str(), strlen( messageInit.c_str()), 0);
+    send(clientSocket,  messageInit.c_str(), strlen(messageInit.c_str()), 0);
     read(clientSocket, buffer, numBuff);
     send(clientSocket, message1, strlen(message1), 0);
     read(clientSocket, buffer, numBuff);
