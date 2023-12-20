@@ -49,8 +49,8 @@ public:
     bool recordAccurately_{true};
     bool startupMode_{false};
     bool memtraceEnable_{false};
-    bool offlineSymbolization_{false};
-    bool callframeCompress_{false};
+    bool offlineSymbolization_{true};
+    bool callframeCompress_{true};
     uint32_t statisticsInterval_{0};
     clockid_t clockId_{CLOCK_REALTIME};
     uint32_t sampleInterval_{0};
