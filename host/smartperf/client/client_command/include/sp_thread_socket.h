@@ -24,8 +24,6 @@
 namespace OHOS {
 namespace SmartPerf {
 bool static flagRunning = false;
-std::string static cmdResult;
-const int static type = 2;
 class SpThreadSocket {
 public:
     std::string MapToString(std::map<std::string, std::string> dataMap) const
@@ -119,23 +117,29 @@ public:
             spSocket.Send("stop::True");
             flagRunning = false;
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
-            std::vector<std::string> vec;
-            int size = recvStr.size();
-            int j = 0;
-            for (int i = 0; i < size; i++) {
-                if (recvStr[i] == ' ') {
-                    vec.push_back(recvStr.substr(j, i - j));
-                    j = i+1;
-                }
-            }
-            vec.push_back(recvStr.substr(j, size - j));
-            if (vec[type] == "findAppPage") {
-                SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
-            }
-            OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-            std::string result = controlCallCmd.GetResult(vec);
-            spSocket.Send(result);
+            EditorRecv(recvStr,spSocket);
         }
+    }
+    void EditorRecv(std::string recvStr, SpServerSocket &spSocket) const
+    {
+        std::vector<std::string> vec;
+        int size = recvStr.size();
+        int j = 0;
+        for (int i = 0; i < size; i++) {
+            if (recvStr[i] == ' ') {
+                vec.push_back(recvStr.substr(j, i - j));
+                j = i+1;
+            }
+        }
+        vec.push_back(recvStr.substr(j, size - j));
+        const int type = 2;
+        if (vec[type] == "findAppPage") {
+            std::string cmdResult;
+            SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+        }
+        OHOS::SmartPerf::ControlCallCmd controlCallCmd;
+        std::string result = controlCallCmd.GetResult(vec);
+        spSocket.Send(result);
     }
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const

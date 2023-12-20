@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
         OHOS::SmartPerf::ClientControl cc;
-        cc.StartSP_daemon();
+        cc.StartSPDaemon();
         std::string result;
         for (int i = 2; i < argc; i++) {
             result += argv[i];

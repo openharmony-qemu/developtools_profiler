@@ -54,7 +54,7 @@ int ClientControl::InitSocket()
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     serverAddress.sin_port = htons(protNumber);
-    if (connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
+    if (connect(clientSocket, static_cast<struct sockaddr*>(&serverAddress), sizeof(serverAddress)) < 0) {
         std::cout << "Failed to connect to server" << std::endl;
     }
     return 0;
