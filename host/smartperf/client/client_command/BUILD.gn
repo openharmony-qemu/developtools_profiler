@@ -44,6 +44,7 @@ ohos_executable("SP_daemon") {
     "Power.cpp",
     "RAM.cpp",
     "Temperature.cpp",
+    "client_control.cpp",
     "control_call_cmd.cpp",
     "editor_command.cpp",
     "parse_click_complete_trace.cpp",

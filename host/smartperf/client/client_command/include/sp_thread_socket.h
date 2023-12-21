@@ -25,6 +25,7 @@ namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
 public:
+    static bool flagRunning;
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
@@ -65,7 +66,7 @@ public:
         std::cout << "Socket Process finished!" << std::endl;
         spSocket.Close();
     }
-    void TypeTcp(SpServerSocket spSocket) const
+    void TypeTcp(SpServerSocket &spSocket) const
     {
         while (1) {
             int procFd = spSocket.Accept();
@@ -83,13 +84,25 @@ public:
     // TCP
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
-        // init::-SessionId 12345678 -Interval 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r
         if (recvStr.find("init::") != std::string::npos) {
             ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
             if (code == ErrCode::OK) {
                 spSocket.Send("init::True");
             } else if (code == ErrCode::FAILED) {
                 spSocket.Send("init::False");
+            }
+        } else if (recvStr.find("start:::") != std::string::npos) {
+            if (flagRunning) {
+                spSocket.Send("SP_daemon is running");
+                return;
+            }
+            auto lambdaTask = [](std::string data) {};
+            ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+            if (code == ErrCode::OK) {
+                spSocket.Send("start::True");
+                flagRunning = true;
+            } else if (code == ErrCode::FAILED) {
+                spSocket.Send("start::False");
             }
         } else if (recvStr.find("start::") != std::string::npos) {
             auto lambdaTask = [&spSocket](std::string data) { spSocket.Send(data); };
@@ -102,26 +115,31 @@ public:
         } else if (recvStr.find("stop::") != std::string::npos) {
             SPTask::GetInstance().StopTask();
             spSocket.Send("stop::True");
+            flagRunning = false;
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
-            std::vector<std::string> vec;
-            int size = recvStr.size();
-            int j = 0;
-            for (int i = 0; i < size; i++) {
-                if (recvStr[i] == ' ') {
-                    vec.push_back(recvStr.substr(j, i - j));
-                    j = i+1;
-                }
-            }
-            vec.push_back(recvStr.substr(j, size - j));
-            const int type = 2;
-            if (vec[type] == "findAppPage") {
-                std::string cmdResult;
-                SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
-            }
-            OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-            std::string result = controlCallCmd.GetResult(vec);
-            spSocket.Send(result);
+            EditorRecv(recvStr, spSocket);
         }
+    }
+    void EditorRecv(std::string recvStr, SpServerSocket &spSocket) const
+    {
+        std::vector<std::string> vec;
+        int size = recvStr.size();
+        int j = 0;
+        for (int i = 0; i < size; i++) {
+            if (recvStr[i] == ' ') {
+                vec.push_back(recvStr.substr(j, i - j));
+                j = i+1;
+            }
+        }
+        vec.push_back(recvStr.substr(j, size - j));
+        const int type = 2;
+        if (vec[type] == "findAppPage") {
+            std::string cmdResult;
+            SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+        }
+        OHOS::SmartPerf::ControlCallCmd controlCallCmd;
+        std::string result = controlCallCmd.GetResult(vec);
+        spSocket.Send(result);
     }
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
@@ -158,6 +176,7 @@ public:
         }
     }
 };
+bool SpThreadSocket::flagRunning = false;
 }
 }
 #endif

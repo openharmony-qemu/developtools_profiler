@@ -50,8 +50,6 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     }
     if (sessionId.empty()) {
         return ExceptionMsg::SESSION_ID_NULL;
-    } else if (pkg.empty()) {
-        return ExceptionMsg::PACKAGE_NULL;
     } else if (configs.size() == 0) {
         return ExceptionMsg::TASK_CONFIG_NULL;
     }
@@ -89,11 +87,13 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     }
     isRunning = true;
     startTime = SPUtils::GetCurTime();
-    SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
-    std::string pidCmd = "pidof " + curTaskInfo.packageName;
-    std::string pidResult;
-    if (SPUtils::LoadCmd(pidCmd, pidResult)) {
-        SpProfilerFactory::SetProfilerPid(pidResult);
+    if (!curTaskInfo.packageName.empty()) {
+        SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
+        std::string pidCmd = "pidof " + curTaskInfo.packageName;
+        std::string pidResult;
+        if (SPUtils::LoadCmd(pidCmd, pidResult)) {
+            SpProfilerFactory::SetProfilerPid(pidResult);
+        }
     }
     thread = std::thread([this, msgTask]() {
         std::cout << "Task " << curTaskInfo.sessionId << ": collecting data loop..." << std::endl;
