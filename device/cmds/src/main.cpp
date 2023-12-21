@@ -392,6 +392,8 @@ int CheckGrpcMsgSend()
 bool StartDependentProcess()
 {
     constexpr int waitProcMills = 300;
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     if (getuid() == 0) {
         if (!COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid)) {
             // need start hiprofilerd
