@@ -38,6 +38,7 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
         SpThreadSocket udpThreadSocket;
         SpThreadSocket tcpThreadSocket;
         std::thread tSocket(&SpThreadSocket::Process, tcpThreadSocket, ProtoType::TCP);
+        sleep(1);
         std::thread tSocket1(&SpThreadSocket::Process, udpThreadSocket, ProtoType::UDP);
         tSocket.join();
         tSocket1.join();
