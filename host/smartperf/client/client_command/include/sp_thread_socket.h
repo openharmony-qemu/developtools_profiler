@@ -23,9 +23,9 @@
 #include "startup_delay.h"
 namespace OHOS {
 namespace SmartPerf {
-bool static flagRunning = false;
 class SpThreadSocket {
 public:
+    static bool flagRunning = false;
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
