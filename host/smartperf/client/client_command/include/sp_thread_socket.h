@@ -25,7 +25,7 @@ namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
 public:
-    static bool flagRunning = false;
+    static bool flagRunning;
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
@@ -176,6 +176,7 @@ public:
         }
     }
 };
+bool SpThreadSocket::flagRunning = false;
 }
 }
 #endif
