@@ -382,6 +382,8 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
 
         long rawDataBytes = HmReadEventData();
 
+        ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
+
         if (flushCacheData_ && !keepRunning_) {
             HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
