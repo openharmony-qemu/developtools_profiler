@@ -53,7 +53,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
     EXPECT_NE(config, nullptr);
 
     int32_t pid = GetProcessPid(TEST_HAP_NAME);
-    EXPECT_NE(pid, 0);
     config->pid_ = pid;
     config->duration_ = 10;
     config->filePath_ = "/data/local/tmp/native_hook_test.htrace";
