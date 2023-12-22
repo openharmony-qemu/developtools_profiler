@@ -73,7 +73,22 @@ long BufferWriter::Write(const void* data, size_t size)
     if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
         return false;
     }
-    return shareMemoryBlock_->PutRawTimeout(reinterpret_cast<const int8_t*>(data), size);
+    
+    ProfilerPluginData pluginData;
+    pluginData.set_name(pluginName_);
+    pluginData.set_version(pluginVersion_);
+    pluginData.set_status(0);
+    pluginData.set_data(data, size);
+
+    struct timespec ts = { 0, 0 };
+    clock_gettime(clockId_, &ts);
+
+    pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId_));
+    pluginData.set_tv_sec(ts.tv_sec);
+    pluginData.set_tv_nsec(ts.tv_nsec);
+
+    DoStats(pluginData.ByteSizeLong());
+    return shareMemoryBlock_->PutMessage(pluginData, pluginName_);
 }
 
 RandomWriteCtx* BufferWriter::StartReport()

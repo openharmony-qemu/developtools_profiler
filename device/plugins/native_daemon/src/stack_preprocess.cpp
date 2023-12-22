@@ -823,19 +823,22 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
         HILOG_ERROR(LOG_CORE, "Flush src is nullptr");
         return;
     }
-    ProfilerPluginData pluginData;
-    pluginData.set_name("nativehook");
-    pluginData.set_version("1.02");
-    pluginData.set_status(0);
-    pluginData.set_data(src, size);
-    struct timespec ts;
-    clock_gettime(pluginDataClockId_, &ts);
-    pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(pluginDataClockId_));
-    pluginData.set_tv_sec(ts.tv_sec);
-    pluginData.set_tv_nsec(ts.tv_nsec);
-    pluginData.SerializeToArray(buffer_.get(), pluginData.ByteSizeLong());
+    if (isSaService_) {
+        ProfilerPluginData pluginData;
+        pluginData.set_name("nativehook");
+        pluginData.set_version("1.02");
+        pluginData.set_status(0);
+        pluginData.set_data(src, size);
+        struct timespec ts;
+        clock_gettime(pluginDataClockId_, &ts);
+        pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(pluginDataClockId_));
+        pluginData.set_tv_sec(ts.tv_sec);
+        pluginData.set_tv_nsec(ts.tv_nsec);
+        pluginData.SerializeToArray(buffer_.get(), pluginData.ByteSizeLong());
+        size = pluginData.ByteSizeLong();
+    }
 
-    writer_->Write(buffer_.get(), pluginData.ByteSizeLong());
+    writer_->Write(buffer_.get(), size);
     writer_->Flush();
 }
 
