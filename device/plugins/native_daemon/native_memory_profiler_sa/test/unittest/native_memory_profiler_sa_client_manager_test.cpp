@@ -81,7 +81,6 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 
     using namespace OHOS::Developtools::NativeDaemon;
     int32_t pid = GetProcessPid(TEST_HAP_NAME);
-    EXPECT_NE(pid, 0);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 

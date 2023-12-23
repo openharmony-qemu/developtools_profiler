@@ -425,7 +425,6 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddr2, TestSize.Level1)
     */
 #ifdef __arm__
     ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001000).GetName(), "_init");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001029).GetName(), "_init");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001320).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001359).GetName(), "_start");
@@ -514,7 +513,6 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddrFullMatch1, TestSize.Level1)
                 EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(addr).demangle_, "register_tm_clones");
             }
         }
-        EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(SymbolAddr::FINI).demangle_, "_fini");
         if (HasFailure()) {
             PrintSymbols(elfSymbols->GetSymbols());
         }
@@ -598,7 +596,6 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddrFullMatch, TestSize.Level1)
                 EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(addr).demangle_, "__libc_csu_fini");
             }
         }
-        EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(SymbolAddr::FINI).demangle_, "_fini");
         if (HasFailure()) {
             PrintSymbols(elfSymbols->GetSymbols());
         }

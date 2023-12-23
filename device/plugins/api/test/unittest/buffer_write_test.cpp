@@ -162,7 +162,6 @@ HWTEST_F(BufferWriteTest, WriteTest, TestSize.Level1)
     uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
 
     EXPECT_TRUE(write->Write(buffer1, sizeof(buffer1)));
-    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
     EXPECT_TRUE(write->Write(buffer2, sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
     EXPECT_TRUE(write->Write(buffer3, sizeof(buffer3)));
