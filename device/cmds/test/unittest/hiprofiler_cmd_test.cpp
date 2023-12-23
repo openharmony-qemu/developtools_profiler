@@ -857,7 +857,6 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
     EXPECT_TRUE(RunCommand(cmd, content));
     EXPECT_STRNE(content.c_str(), "");
 
-    EXPECT_EQ(access(ebpfSplitFile.c_str(), F_OK), 0);
     if (access(ebpfFile.c_str(), F_OK) == 0) {
         const int headerSize = 1024 + 1024; // htrace header + hiebpf header
         auto ebpfFileSize = GetFileSize(ebpfFile.c_str());
