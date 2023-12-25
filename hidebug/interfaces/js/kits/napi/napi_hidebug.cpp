@@ -41,7 +41,10 @@
 namespace OHOS {
 namespace HiviewDFX {
 namespace {
-constexpr HiLogLabel LABEL = { LOG_CORE, 0xD002D0A, "HiDebug_NAPI" };
+#undef LOG_DOMAIN
+#define LOG_DOMAIN 0xD002D0A
+#undef LOG_TAG
+#define LOG_TAG "HiDebug_NAPI"
 constexpr int ONE_VALUE_LIMIT = 1;
 constexpr int ARRAY_INDEX_FIRST = 0;
 constexpr int ARRAY_INDEX_SECOND = 1;
@@ -76,7 +79,7 @@ static bool CreateFile(const std::string &path)
     const mode_t defaultMode = S_IRUSR | S_IWUSR | S_IRGRP; // -rw-r-----
     int fd = creat(path.c_str(), defaultMode);
     if (fd == -1) {
-        HiLog::Error(LABEL, "file create failed, errno = %{public}d", errno);
+        HILOG_ERROR(LOG_CORE, "file create failed, errno = %{public}d", errno);
         return false;
     } else {
         close(fd);
@@ -116,40 +119,40 @@ static bool GetDumpParam(napi_env env, napi_callback_info info,
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     if (argc != valueNum) {
-        HiLog::Error(LABEL, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
+        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
         return false;
     }
     int thirdPos = 2;
     if (!MatchValueType(env, argv[0], napi_number) &&
         !MatchValueType(env, argv[1], napi_number) &&
         !MatchValueType(env, argv[thirdPos], napi_object)) {
-        HiLog::Error(LABEL, "params type error.");
+        HILOG_ERROR(LOG_CORE, "params type error.");
         return false;
     }
     if (napi_get_value_int32(env, argv[0], &serviceId) != napi_ok) {
-        HiLog::Error(LABEL, "Get input serviceId failed.");
+        HILOG_ERROR(LOG_CORE, "Get input serviceId failed.");
         return false;
     }
     if (napi_get_value_int32(env, argv[1], &fd) != napi_ok) {
-        HiLog::Error(LABEL, "Get input fd failed.");
+        HILOG_ERROR(LOG_CORE, "Get input fd failed.");
         return false;
     }
     uint32_t arraySize = 0;
     if (!IsArrayForNapiValue(env, argv[thirdPos], arraySize)) {
-        HiLog::Error(LABEL, "Get input args failed.");
+        HILOG_ERROR(LOG_CORE, "Get input args failed.");
         return false;
     }
     for (uint32_t i = 0; i < arraySize; i++) {
         napi_value jsValue = nullptr;
         if (napi_get_element(env, argv[thirdPos], i, &jsValue) != napi_ok) {
-            HiLog::Error(LABEL, "get_element -> Get input args failed.");
+            HILOG_ERROR(LOG_CORE, "get_element -> Get input args failed.");
             return false;
         }
         const size_t bufSize = 256;
         size_t bufLen = 0;
         char buf[bufSize] = {0};
         if (napi_get_value_string_utf8(env, jsValue, buf, bufSize - 1, &bufLen) != napi_ok) {
-            HiLog::Error(LABEL, "get_value -> Get input args failed.");
+            HILOG_ERROR(LOG_CORE, "get_value -> Get input args failed.");
             return false;
         }
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> strCnv;
@@ -166,22 +169,22 @@ static std::string GetFileNameParam(napi_env env, napi_callback_info info)
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     if (argc != ONE_VALUE_LIMIT) {
-        HiLog::Error(LABEL, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
+        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
         return DEFAULT_FILENAME;
     }
     if (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_string)) {
-        HiLog::Error(LABEL, "Type error, should be string type!");
+        HILOG_ERROR(LOG_CORE, "Type error, should be string type!");
         return DEFAULT_FILENAME;
     }
     size_t bufLen = 0;
     napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &bufLen);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get input filename param length failed.");
+        HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
         return DEFAULT_FILENAME;
     }
     const int bufMax = 128;
     if (bufLen > bufMax || bufLen == 0) {
-        HiLog::Error(LABEL, "input filename param length is illegal.");
+        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
         return DEFAULT_FILENAME;
     }
     char buf[bufLen + 1];
@@ -198,22 +201,22 @@ static bool GetFileNameParamThrowErrorVersion(napi_env env, napi_callback_info i
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     if (argc != ONE_VALUE_LIMIT) {
-        HiLog::Error(LABEL, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
+        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
         return false;
     }
     if (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_string)) {
-        HiLog::Error(LABEL, "Type error, should be string type!");
+        HILOG_ERROR(LOG_CORE, "Type error, should be string type!");
         return false;
     }
     size_t bufLen = 0;
     napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &bufLen);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get input filename param length failed.");
+        HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
         return false;
     }
     const int bufMax = 128;
     if (bufLen > bufMax || bufLen == 0) {
-        HiLog::Error(LABEL, "input filename param length is illegal.");
+        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
         return false;
     }
     char buf[bufLen + 1];
@@ -269,7 +272,7 @@ napi_value StartJsCpuProfiling(napi_env env, napi_callback_info info)
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
-    HiLog::Info(LABEL, "filename: %{public}s.", fileName.c_str());
+    HILOG_INFO(LOG_CORE, "filename: %{public}s.", fileName.c_str());
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
         return CreateErrorMessage(env, "Get ApplicationContext failed.");
@@ -335,7 +338,7 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
-    HiLog::Error(LABEL, "filename: %{public}s.", fileName.c_str());
+    HILOG_ERROR(LOG_CORE, "filename: %{public}s.", fileName.c_str());
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
         return CreateErrorMessage(env, "Get ApplicationContext failed.");
@@ -457,13 +460,13 @@ static napi_value GetServiceDump(napi_env env, napi_callback_info info)
     }
     sptr<IRemoteObject> sa = sam->CheckSystemAbility(serviceAbilityId);
     if (sa == nullptr) {
-        HiLog::Error(LABEL, "no this system ability.");
+        HILOG_ERROR(LOG_CORE, "no this system ability.");
         std::string idErrorMessage = "service id is invalid, system ability is not exist.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_ABILITY_NOT_FOUND).c_str(), idErrorMessage.c_str());
         return CreateUndefined(env);
     }
     int dumpResult = sa->Dump(fd, args);
-    HiLog::Info(LABEL, "Dump result: %{public}d", dumpResult);
+    HILOG_INFO(LOG_CORE, "Dump result: %{public}d", dumpResult);
     return CreateUndefined(env);
 }
 
@@ -492,7 +495,7 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     if (argc != REMOVE_NAPI_WRAP_PARAM_COUNT ||
         (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_object) ||
         !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
-        HiLog::Error(LABEL, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
+        HILOG_ERROR(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
         std::string paramErrorMessage = "The parameter check failed.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -506,7 +509,6 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     // remove jsObj's properties wrap
     bool needRemoveProperty = false;
     napi_get_value_bool(env, argv[ARRAY_INDEX_SECOND], &needRemoveProperty);
-    //HiLog::Info(LABEL, "RemoveNapiWrap, %{public}d", needRemoveProperty);
     if (needRemoveProperty) {
         napi_value allPropertyNames = nullptr;
         napi_object_get_keys(env, jsObj, &allPropertyNames);
@@ -521,7 +523,6 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
             napi_value propertyObj = nullptr;
             napi_get_named_property(env, jsObj, name, &propertyObj);
             napi_remove_wrap(env, propertyObj, (void **)&nativePtr);
-            //HiLog::Info(LABEL, "RemoveNapiWrap, property = %{public}s", name);
         }
     }
     return CreateUndefined(env);
