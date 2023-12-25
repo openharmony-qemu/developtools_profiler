@@ -25,6 +25,10 @@
 
 using namespace testing::ext;
 
+namespace {
+const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
+}
+
 class NativeMemoryProfilerSaServiceTest : public testing::Test {
 public:
     static void SetUpTestCase(void) {}
