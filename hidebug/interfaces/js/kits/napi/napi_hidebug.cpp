@@ -509,7 +509,6 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     // remove jsObj's properties wrap
     bool needRemoveProperty = false;
     napi_get_value_bool(env, argv[ARRAY_INDEX_SECOND], &needRemoveProperty);
-    //HILOG_INFO(LOG_CORE, "RemoveNapiWrap, %{public}d", needRemoveProperty);
     if (needRemoveProperty) {
         napi_value allPropertyNames = nullptr;
         napi_object_get_keys(env, jsObj, &allPropertyNames);
@@ -524,7 +523,6 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
             napi_value propertyObj = nullptr;
             napi_get_named_property(env, jsObj, name, &propertyObj);
             napi_remove_wrap(env, propertyObj, (void **)&nativePtr);
-            //HILOG_INFO(LOG_CORE, "RemoveNapiWrap, property = %{public}s", name);
         }
     }
     return CreateUndefined(env);
