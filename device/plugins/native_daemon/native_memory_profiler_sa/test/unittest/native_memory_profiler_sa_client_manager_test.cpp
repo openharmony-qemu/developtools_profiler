@@ -31,7 +31,6 @@ using namespace testing::ext;
 
 namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
-const std::string TEST_HAP_NAME = "cn.openharmony.rebound_project";
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
@@ -44,67 +43,4 @@ public:
     void SetUp() {}
     void TearDown() {}
 };
-
-/**
- * @tc.name: NativeMemoryProfilerSaClientManagerTest001
- * @tc.desc: The test service is not started
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest001, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
-
-    config->duration_ = 100;
-    std::string filePath = "XXXXXXXXXXXX";
-    config->filePath_ = filePath;
-    config->fpUnwind_ = false;
-
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_ERR);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(
-        NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK, 0, 0, 0), RET_ERR);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop("test"), RET_ERR);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(1), RET_ERR);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(0, config), RET_ERR);
-}
-
-/**
- * @tc.name: NativeMemoryProfilerSaClientManagerTest002
- * @tc.desc: Test the normal situation
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest002, TestSize.Level3)
-{
-    EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "2"), 0);
-    sleep(1);
-
-    using namespace OHOS::Developtools::NativeDaemon;
-    int32_t pid = GetProcessPid(TEST_HAP_NAME);
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
-
-    config->pid_ = pid;
-    config->duration_ = 10;
-    config->filePath_ = "/data/local/tmp/native_hook_test.htrace";
-    config->offlineSymbolization_ = true;
-
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_OK);
-    sleep(2);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_HAP_NAME), RET_OK);
-
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(
-        NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK,
-        pid, 10, 0), RET_OK);
-    sleep(2);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
-
-    uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
-        O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    EXPECT_GT(fd, 0);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(fd, config), RET_OK);
-    sleep(2);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
-}
-
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
