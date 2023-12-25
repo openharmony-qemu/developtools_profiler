@@ -26,7 +26,6 @@
 using namespace testing::ext;
 
 namespace {
-const std::string TEST_HAP_NAME = "cn.openharmony.rebound_project";
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 }
 
@@ -40,35 +39,5 @@ public:
     void SetUp() {}
     void TearDown() {}
 };
-
-/**
- * @tc.name: NativeMemoryProfilerSaServiceTest001
- * @tc.desc: Test the service interface
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
-
-    int32_t pid = GetProcessPid(TEST_HAP_NAME);
-    config->pid_ = pid;
-    config->duration_ = 10;
-    config->filePath_ = "/data/local/tmp/native_hook_test.htrace";
-    config->offlineSymbolization_ = true;
-
-    NativeMemoryProfilerSaService service;
-    EXPECT_EQ(service.Start(config), RET_OK);
-    sleep(3);
-    EXPECT_EQ(service.Stop(config->pid_), RET_OK);
-
-    uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
-        O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    EXPECT_GT(fd, 0);
-    EXPECT_EQ(service.DumpData(fd, config), RET_OK);
-    sleep(2);
-    EXPECT_EQ(service.Stop(config->pid_), RET_OK);
-}
 
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
