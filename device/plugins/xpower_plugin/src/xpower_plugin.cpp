@@ -39,7 +39,13 @@ XpowerPlugin::XpowerPlugin()
     procMesTypeMapping_.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
 }
 
-XpowerPlugin::~XpowerPlugin() {}
+XpowerPlugin::~XpowerPlugin()
+{
+    if (powerClientHandle_ != nullptr) {
+        dlclose(powerClientHandle_);
+        powerClientHandle_ = nullptr;
+    }
+}
 
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 {
@@ -145,7 +151,6 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
 
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
 {
-    HILOG_INFO(LOG_CORE, "power: report the data to caller");
     if (dataQueuePtr_->Empty()) {
         return 0;
     }
@@ -181,9 +186,6 @@ int XpowerPlugin::Stop()
     if (listenerHandle_ != nullptr) {
         stopOptimizeMode(listenerHandle_);
         HILOG_INFO(LOG_CORE, "stop xpower plugin callback");
-    }
-    if (powerClientHandle_ != nullptr) {
-        dlclose(powerClientHandle_);
     }
     dataQueuePtr_->ShutDown();
     return 0;
