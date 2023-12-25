@@ -123,6 +123,9 @@ const std::map<int, int> LibUnwindRegMap = {
 #elif defined(target_cpu_arm)
     {UNW_ARM_R13, PERF_REG_ARM_SP},
     {UNW_ARM_R15, PERF_REG_ARM_PC},
+#elif defined(target_cpu_riscv64)
+    {UNW_RISCV_X2, PERF_REG_RISCV64_SP},
+    {UNW_RISCV_PC, PERF_REG_RISCV64_PC},
 #else
 #error not support
 #endif
