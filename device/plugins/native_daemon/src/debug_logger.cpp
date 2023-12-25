@@ -67,14 +67,13 @@ void DebugLogger::Disable(bool disable)
 
 #if is_ohos
 #ifndef CONFIG_NO_HILOG
-int DebugLogger::HiLog(std::string &buffer) const
+void DebugLogger::HiLog(std::string &buffer) const
 {
     size_t lastLF = buffer.find_last_of('\n');
     if (lastLF != std::string::npos) {
         buffer.erase(lastLF, 1);
     }
-    return OHOS::HiviewDFX::HiLog::Debug(HIPERF_HILOG_LABLE[MODULE_DEFAULT], "%{public}s",
-                                         buffer.c_str());
+    HILOG_DEBUG(LOG_CORE, "%{public}s", buffer.c_str());
 }
 #endif
 #endif
@@ -109,7 +108,7 @@ int DebugLogger::Log(DebugLevel level, const std::string &logTag, const char *fm
     if (enableHilog_) {
 #if is_ohos && !defined(CONFIG_NO_HILOG)
         std::lock_guard<std::mutex> lock(logMutex_);
-        ret = HiLog(buffer); // to the hilog
+        HiLog(buffer); // to the hilog
 #endif
     } else if (file_ != nullptr) {
         std::lock_guard<std::mutex> lock(logMutex_);
