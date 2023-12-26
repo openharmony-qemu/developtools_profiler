@@ -32,7 +32,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "kfree: call_site=%p ptr=%p", msg.call_site(), msg.ptr());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kfree) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(kfree) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -104,7 +104,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                       {(unsigned long)((gfp_t)0x800u), "__GFP_KSWAPD_RECLAIM"})
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmalloc) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(kmalloc) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -177,7 +177,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 : "none",
             msg.node());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmalloc_node) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(kmalloc_node) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -249,7 +249,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                       {(unsigned long)((gfp_t)0x800u), "__GFP_KSWAPD_RECLAIM"})
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmem_cache_alloc) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(kmem_cache_alloc) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -323,8 +323,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 : "none",
             msg.node());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(kmem_cache_alloc_node) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(kmem_cache_alloc_node) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -338,7 +338,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "kmem_cache_free: call_site=%p ptr=%p", msg.call_site(), msg.ptr());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmem_cache_free) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(kmem_cache_free) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -410,7 +410,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                       {(unsigned long)((gfp_t)0x800u), "__GFP_KSWAPD_RECLAIM"})
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mm_page_alloc) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(mm_page_alloc) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -428,8 +428,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "0000000000000000", msg.pfn(), msg.alloc_order(), msg.fallback_order(), (11 - 1), msg.alloc_migratetype(),
             msg.fallback_migratetype(), msg.fallback_order() < (11 - 1), msg.change_ownership());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(mm_page_alloc_extfrag) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(mm_page_alloc_extfrag) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -444,8 +444,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "mm_page_alloc_zone_locked: page=%s pfn=%" PRIu64 " order=%u migratetype=%d percpu_refill=%d",
             "0000000000000000", msg.pfn() != -1UL ? msg.pfn() : 0, msg.order(), msg.migratetype(), msg.order() == 0);
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(mm_page_alloc_zone_locked) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_alloc_zone_locked) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -459,7 +459,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_page_free: page=%s pfn=%" PRIu64 " order=%d",
             "0000000000000000", msg.pfn(), msg.order());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mm_page_free) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(mm_page_free) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -473,8 +473,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "mm_page_free_batched: page=%s pfn=%" PRIu64 " order=0", "0000000000000000", msg.pfn());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(mm_page_free_batched) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(mm_page_free_batched) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -489,8 +489,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "mm_page_pcpu_drain: page=%s pfn=%" PRIu64 " order=%d migratetype=%d", "0000000000000000", msg.pfn(),
             msg.order(), msg.migratetype());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(mm_page_pcpu_drain) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(mm_page_pcpu_drain) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -505,7 +505,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "rss_stat: mm_id=%u curr=%d member=%d size=%" PRIu64 "B",
                 msg.mm_id(), msg.curr(), msg.member(), msg.size());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rss_stat) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rss_stat) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

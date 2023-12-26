@@ -32,7 +32,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITEBOOL(parcel, data, ...) \
     do { \
         if (!(parcel).WriteBool(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteBool "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteBool "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -40,7 +40,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITEINT32(parcel, data, ...) \
     do { \
         if (!(parcel).WriteInt32(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteInt32 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteInt32 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -48,7 +48,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITEINT64(parcel, data, ...) \
     do { \
         if (!(parcel).WriteInt64(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteInt64 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteInt64 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -56,7 +56,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITEUINT8(parcel, data, ...) \
     do { \
         if (!(parcel).WriteUint8(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteUint8 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteUint8 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -64,7 +64,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITEUINT32(parcel, data, ...) \
     do { \
         if (!(parcel).WriteUint32(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteUint32 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteUint32 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -72,7 +72,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITEUINT64(parcel, data, ...) \
     do { \
         if (!(parcel).WriteUint64(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteUint64 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteUint64 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -80,7 +80,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define WRITESTRING(parcel, data, ...) \
     do { \
         if (!(parcel).WriteString(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "WriteString "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "WriteString "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -88,7 +88,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READBOOL(parcel, data, ...) \
     do { \
         if (!(parcel).ReadBool(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadBool "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadBool "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -96,7 +96,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READINT32(parcel, data, ...) \
     do { \
         if (!(parcel).ReadInt32(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadInt32 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadInt32 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -104,7 +104,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READINT64(parcel, data, ...) \
     do { \
         if (!(parcel).ReadInt64(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadInt64 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadInt64 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -112,7 +112,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READUINT8(parcel, data, ...) \
     do { \
         if (!(parcel).ReadUint8(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadUint8 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadUint8 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -120,7 +120,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READUINT32(parcel, data, ...) \
     do { \
         if (!(parcel).ReadUint32(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadUint32 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadUint32 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -128,7 +128,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READUINT64(parcel, data, ...) \
     do { \
         if (!(parcel).ReadUint64(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadUint64 "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadUint64 "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)
@@ -136,7 +136,7 @@ namespace OHOS::Developtools::NativeDaemon {
 #define READSTRING(parcel, data, ...) \
     do { \
         if (!(parcel).ReadString(data)) { \
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadString "#data" failed"); \
+            HILOG_ERROR(LOG_CORE, "ReadString "#data" failed"); \
             return DEFRET(false, ##__VA_ARGS__); \
         } \
     } while (0)

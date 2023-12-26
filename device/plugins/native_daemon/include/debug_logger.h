@@ -109,7 +109,7 @@ private:
     DebugLevel GetLogLevelByTag(const std::string &) const;
     const std::string GetLogLevelName(DebugLevel) const;
 
-    void HiLog(std::string &buffer) const;
+    int HiLog(std::string &buffer) const;
 
     static std::unique_ptr<DebugLogger> logInstance_;
     std::string logFileBuffer_;

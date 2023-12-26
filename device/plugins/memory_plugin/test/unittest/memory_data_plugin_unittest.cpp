@@ -366,17 +366,17 @@ int GetPid(const std::string processName)
 {
     int pid = -1;
     std::string findpid = "pidof " + processName;
-    PROFILER_LOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
+    HILOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
 
     char line[LINE_SIZE];
     do {
         if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
-            PROFILER_LOG_INFO(LOG_CORE, "not find processName : %s", processName.c_str());
+            HILOG_INFO(LOG_CORE, "not find processName : %s", processName.c_str());
             return pid;
         } else if (strlen(line) > 0 && isdigit(static_cast<unsigned char>(line[0]))) {
             pid = atoi(line);
-            PROFILER_LOG_INFO(LOG_CORE, "find processName : %s, pid: %d", processName.c_str(), pid);
+            HILOG_INFO(LOG_CORE, "find processName : %s, pid: %d", processName.c_str(), pid);
             break;
         }
     } while (1);
@@ -862,7 +862,7 @@ void OutputData(uint8_t* data, uint32_t size)
     MemoryData memoryData;
     int ret = memoryData.ParseFromArray(data, size);
     if (ret <= 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "MemoryDataPluginTest, %s:parseFromArray failed!", __func__);
+        HILOG_ERROR(LOG_CORE, "MemoryDataPluginTest, %s:parseFromArray failed!", __func__);
         return;
     }
 
@@ -906,7 +906,7 @@ HWTEST_F(MemoryDataPluginTest, TestProcessTreeRunTime, TestSize.Level1)
     gettimeofday(&end, nullptr);
     clock_t clockend = clock();
     int timeuse = US_PER_S * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec;
-    PROFILER_LOG_INFO(LOG_CORE, "clock time=%.3fs, timeofday=%.3fs", (double)(clockend - clockstart) / CLOCKS_PER_SEC,
+    HILOG_INFO(LOG_CORE, "clock time=%.3fs, timeofday=%.3fs", (double)(clockend - clockstart) / CLOCKS_PER_SEC,
         (double)timeuse / US_PER_S);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), 0);
 }

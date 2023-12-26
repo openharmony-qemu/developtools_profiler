@@ -39,7 +39,7 @@ DiskioDataPlugin::DiskioDataPlugin()
 
 DiskioDataPlugin::~DiskioDataPlugin()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:~DiskioDataPlugin!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:~DiskioDataPlugin!", __func__);
     if (buffer_ != nullptr) {
         free(buffer_);
         buffer_ = nullptr;
@@ -57,7 +57,7 @@ int DiskioDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     if (protoConfig_.report_io_stats()) {
         ioEntry_ = std::make_shared<IoStats>(protoConfig_.report_io_stats());
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
 }
 
@@ -109,7 +109,7 @@ int DiskioDataPlugin::Stop()
         ioEntry_.reset();
         ioEntry_ = nullptr;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:plugin:stop success!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:plugin:stop success!", __func__);
     return 0;
 }
 
@@ -122,12 +122,12 @@ int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
                "%s:path is invalid: %s, errno=%d", __func__, fileName.c_str(), errno);
     fd = open(realPath, O_RDONLY | O_CLOEXEC);
     if (fd == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno=%d", __func__, fileName.c_str(), errno);
+        HILOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno=%d", __func__, fileName.c_str(), errno);
         err_ = errno;
         return RET_FAIL;
     }
     if (buffer_ == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
+        HILOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
         close(fd);
         return RET_FAIL;
@@ -135,7 +135,7 @@ int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
     bytesRead = read(fd, buffer_, READ_BUFFER_SIZE - 1);
     if (bytesRead <= 0) {
         close(fd);
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, fileName.c_str(), errno);
+        HILOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, fileName.c_str(), errno);
         err_ = errno;
         return RET_FAIL;
     }
@@ -171,16 +171,14 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
         std::string curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
         if (strcmp(curWord.c_str(), "pgpgin") == 0) {
             if (!totalbuffer.NextWord('\n')) {
-                PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to get pgpgin, CurWord() = %s",
-                                   __func__, totalbuffer.CurWord());
+                HILOG_ERROR(LOG_CORE, "%s:failed to get pgpgin, CurWord() = %s", __func__, totalbuffer.CurWord());
                 break;
             }
             curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
             rd_sectors_kb = atoi(curWord.c_str());
         } else if (strcmp(curWord.c_str(), "pgpgout") == 0) {
             if (!totalbuffer.NextWord('\n')) {
-                PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to get pgpgout, CurWord() = %s",
-                                   __func__, totalbuffer.CurWord());
+                HILOG_ERROR(LOG_CORE, "%s:failed to get pgpgout, CurWord() = %s", __func__, totalbuffer.CurWord());
                 break;
             }
             curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());

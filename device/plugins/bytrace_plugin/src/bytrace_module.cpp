@@ -65,7 +65,7 @@ void ParseConfig(const BytracePluginConfig& config)
 
 bool RunCommand(const std::string& cmd)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:start running commond: %s", __func__, cmd.c_str());
+    HILOG_INFO(LOG_CORE, "%s:start running commond: %s", __func__, cmd.c_str());
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.data(), "r"), pclose);
     CHECK_TRUE(pipe, false, "BytraceCall::RunCommand: create popen FAILED!");
 
@@ -74,7 +74,7 @@ bool RunCommand(const std::string& cmd)
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:runCommand result: %s", __func__, result.data());
+    HILOG_INFO(LOG_CORE, "%s:runCommand result: %s", __func__, result.data());
     return true;
 }
 
@@ -153,7 +153,7 @@ int BytracePluginSessionStop()
 
 int BytraceRegisterWriterStruct(const WriterStruct* writer)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:writer %p", __func__, writer);
+    HILOG_INFO(LOG_CORE, "%s:writer %p", __func__, writer);
     return 0;
 }
 

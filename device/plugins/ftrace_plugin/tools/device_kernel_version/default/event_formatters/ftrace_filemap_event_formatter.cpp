@@ -33,7 +33,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.s_dev()) >> 20)), ((unsigned int)((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(),
             msg.old(), msg.seq_new());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
+            HILOG_WARN(LOG_CORE,
                 "maybe, the contents of print event(file_check_and_advance_wb_err) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -49,7 +49,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "filemap_set_wb_err: dev=%d:%d ino=0x%" PRIx64 " errseq=0x%x", ((unsigned int)((msg.s_dev()) >> 20)),
             ((unsigned int)((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), msg.errseq());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
+            HILOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(filemap_set_wb_err) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -66,7 +66,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), "0000000000000000", msg.pfn(),
             msg.index() << 12);
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
+            HILOG_WARN(LOG_CORE,
                 "maybe, the contents of print event(mm_filemap_add_to_page_cache) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -84,7 +84,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), msg.i_ino(), "0000000000000000", msg.pfn(),
             msg.index() << 12);
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
+            HILOG_WARN(LOG_CORE,
                 "maybe, the contents of print event(mm_filemap_delete_from_page_cache) msg had be cut off in outfile");
         }
         return std::string(buffer);

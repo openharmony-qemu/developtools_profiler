@@ -64,7 +64,7 @@ ShareMemoryBlockPtr ShareMemoryAllocator::CreateMemoryBlockLocal(std::string nam
 
     auto block = std::make_shared<ShareMemoryBlock>(name, size);
     if (!block->Valid()) {
-        PROFILER_LOG_INFO(LOG_CORE, "CreateMemoryBlockLocal FAIL");
+        HILOG_INFO(LOG_CORE, "CreateMemoryBlockLocal FAIL");
         return nullptr;
     }
     memoryBlocks[name] = block;
@@ -79,7 +79,7 @@ ShareMemoryBlockPtr ShareMemoryAllocator::CreateMemoryBlockRemote(std::string na
 
     auto block = std::make_shared<ShareMemoryBlock>(name, size, fd);
     if (!block->Valid()) {
-        PROFILER_LOG_INFO(LOG_CORE, "CreateMemoryBlockRemote FAIL");
+        HILOG_INFO(LOG_CORE, "CreateMemoryBlockRemote FAIL");
         return nullptr;
     }
     memoryBlocks[name] = block;

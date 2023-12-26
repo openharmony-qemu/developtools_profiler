@@ -37,7 +37,7 @@ NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(N
     serviceEntry_ = std::make_shared<ServiceEntry>();
     if (!serviceEntry_->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH)) {
         serviceEntry_ = nullptr;
-        PROFILER_LOG_ERROR(LOG_CORE, "Start IPC Service FAIL");
+        HILOG_ERROR(LOG_CORE, "Start IPC Service FAIL");
         return;
     }
     serviceEntry_->RegisterService(*this);
@@ -57,7 +57,7 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     CHECK_NOTNULL(native, false, "native is nullptr");
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Service native memory failed to start");
+        HILOG_ERROR(LOG_CORE, "Service native memory failed to start");
         return false;
     }
 
@@ -66,10 +66,10 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
 
     bool ret = abilityObject->AddDeathRecipient(new NativeMemoryProfilerSaDeathRecipient());
     if (ret == false) {
-        PROFILER_LOG_ERROR(LOG_CORE, "AddDeathRecipient failed");
+        HILOG_ERROR(LOG_CORE, "AddDeathRecipient failed");
         return false;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "Service native memory started successfully");
+    HILOG_INFO(LOG_CORE, "Service native memory started successfully");
     return true;
 }
 
@@ -111,7 +111,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         config = taskIter->second;
     }
     if (config == nullptr) {
-        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",
+        HILOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",
             pid, name.c_str());
         return;
     }
@@ -129,7 +129,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         close(config->fd);
     }
     if (--taskNum_ == 0) {
-        PROFILER_LOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
+        HILOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
         StringViewMemoryHold::GetInstance().Clear();
     }
 }
@@ -144,7 +144,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "file path: %s", config->filePath_.c_str());
+    HILOG_INFO(LOG_CORE, "file path: %s", config->filePath_.c_str());
 
     if (!CheckConfig(config, fd)) {
         return RET_ERR;
@@ -175,7 +175,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         config->duration_ * TIME_BASE,
         true);
     if (timerFd == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService Start Schedule Task failed");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService Start Schedule Task failed");
         return RET_ERR;
     }
 
@@ -204,12 +204,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
 bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
     if (taskNum_ + 1 > MAX_TASK_NUM) {
-        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
+        HILOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
         return false;
     }
 
     if (hasStartupMode_ && config->startupMode_) {
-        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: tasks with an existing startup mode, name: %s",
+        HILOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: tasks with an existing startup mode, name: %s",
             startupModeProcessName_.c_str());
         return false;
     }
@@ -217,17 +217,17 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
     if (config->pid_ > 0) {
         config->processName_.clear();
         if (pidCtx_.find(config->pid_) != pidCtx_.end()) {
-            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
+            HILOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
             return false;
         }
     } else if (!config->processName_.empty()) {
         if (nameAndFilePathCtx_.find(config->processName_) != nameAndFilePathCtx_.end()) {
-            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, process name: %s",
+            HILOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, process name: %s",
                        config->processName_.c_str());
             return false;
         }
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "The PID and process name are not configured");
+        HILOG_ERROR(LOG_CORE, "The PID and process name are not configured");
         return false;
     }
 
@@ -237,12 +237,11 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
 
     if (!config->filePath_.empty()) {
         if (nameAndFilePathCtx_.find(config->filePath_) != nameAndFilePathCtx_.end()) {
-            PROFILER_LOG_ERROR(LOG_CORE,
-                               "NativeMemoryProfilerSaService: File %s is being used.", config->filePath_.c_str());
+            HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: File %s is being used.", config->filePath_.c_str());
             return false;
         }
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "The file path are not configured");
+        HILOG_ERROR(LOG_CORE, "The file path are not configured");
         return false;
     }
     return true;
@@ -264,7 +263,7 @@ void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std
             hasStartupMode_ = false;
         }
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: fill TaskConfig context failed");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: fill TaskConfig context failed");
     }
 }
 
@@ -282,7 +281,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
     std::string bundleName;
     if (!LoadStringFromFile(filePath, bundleName)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Get process name by pid failed!, pid: %d", peerConfig);
+        HILOG_ERROR(LOG_CORE, "Get process name by pid failed!, pid: %d", peerConfig);
         return false;
     }
     bundleName.resize(strlen(bundleName.c_str()));
@@ -296,11 +295,10 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (auto iter = pidCtx_.find(peerConfig); iter != pidCtx_.end()) {
         auto [eventFd, smbFd] = iter->second->hookMgr->GetFds(peerConfig, bundleName);
         if (eventFd == smbFd) {
-            PROFILER_LOG_ERROR(LOG_CORE,
-                               "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
+            HILOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
             return false;
         }
-        PROFILER_LOG_INFO(LOG_CORE,
+        HILOG_INFO(LOG_CORE,
                    "ProtocolProc, receive message from hook client, and send hook config to process %d, name: %s",
                    peerConfig, bundleName.c_str());
         ClientConfig clientConfig;

@@ -30,7 +30,7 @@ int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryP
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: start GetRemoteService failed");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: start GetRemoteService failed");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
@@ -41,7 +41,7 @@ int32_t NativeMemoryProfilerSaClientManager::Start(NativeMemProfilerType type, u
     uint32_t sampleIntervel)
 {
     if (pid == 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: pid cannot be 0");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: pid cannot be 0");
         return RET_ERR;
     }
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
@@ -62,7 +62,7 @@ int32_t NativeMemoryProfilerSaClientManager::Stop(uint32_t pid)
     CHECK_TRUE(pid != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: pid is 0");
     auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
@@ -74,7 +74,7 @@ int32_t NativeMemoryProfilerSaClientManager::Stop(const std::string& name)
     CHECK_TRUE(!name.empty(), RET_ERR, "NativeMemoryProfilerSaClientManager: name is empty");
     auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
@@ -89,7 +89,7 @@ int32_t NativeMemoryProfilerSaClientManager::DumpData(uint32_t fd,
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
@@ -109,7 +109,7 @@ bool NativeMemoryProfilerSaClientManager::CheckConfig(const std::shared_ptr<Nati
 {
     CHECK_NOTNULL(config, false, "NativeMemoryProfilerSaClientManager: config is nullptr");
     if (config->duration_ == 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: duration cannot be 0");
+        HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: duration cannot be 0");
         return false;
     }
     if (config->shareMemorySize_ == 0) {

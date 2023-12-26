@@ -175,7 +175,7 @@ HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserNormal, TestSize.Level1)
     for (auto& entry : PrintkFormatsParser::GetInstance().printkFormats_) {
         uint64_t addr = entry.first;
         std::string symbol = entry.second;
-        PROFILER_LOG_INFO(LOG_CORE, "%" PRIx64 " : %s", addr, symbol.c_str());
+        HILOG_INFO(LOG_CORE, "%" PRIx64 " : %s", addr, symbol.c_str());
     }
     std::string symbol = PrintkFormatsParser::GetInstance().GetSymbol(CPU_ON_ADDR);
     EXPECT_EQ(symbol, CPU_ON_STR);

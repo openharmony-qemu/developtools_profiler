@@ -68,7 +68,7 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlockWithFd mmap ERR : %s", buf);
+        HILOG_ERROR(LOG_CORE, "CreateBlockWithFd mmap ERR : %s", buf);
         return false;
     }
 
@@ -96,7 +96,7 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
 
 bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "CreateBlock %s %d", name.c_str(), size);
+    HILOG_INFO(LOG_CORE, "CreateBlock %s %d", name.c_str(), size);
     CHECK_TRUE(size > sizeof(BlockHeader), false, "size %u too less!", size);
     CHECK_TRUE(size % PAGE_SIZE == 0, false, "size %u not times of %d!", size, PAGE_SIZE);
 
@@ -109,7 +109,7 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR(LOG_CORE, "OHOS::AshmemSetProt ERR : %s", buf);
+        HILOG_ERROR(LOG_CORE, "OHOS::AshmemSetProt ERR : %s", buf);
         return false;
     }
 
@@ -119,7 +119,7 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock mmap ERR : %s", buf);
+        HILOG_ERROR(LOG_CORE, "CreateBlock mmap ERR : %s", buf);
         return false;
     }
 
@@ -233,11 +233,11 @@ bool ShareMemoryBlock::PutRaw(const int8_t* data, uint32_t size)
     PthreadLocker locker(header_->info.mutex_);
     int8_t* rawMemory = GetFreeMemory(size);
     if (rawMemory == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "PutRaw not enough space [%d]", size);
+        HILOG_ERROR(LOG_CORE, "PutRaw not enough space [%d]", size);
         return false;
     }
     if (memcpy_s(rawMemory, size, data, size) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s error");
+        HILOG_ERROR(LOG_CORE, "memcpy_s error");
         return false;
     }
 
@@ -255,18 +255,18 @@ bool ShareMemoryBlock::PutRawTimeout(const int8_t* data, uint32_t size)
     clock_gettime(CLOCK_REALTIME, &time_out);
     time_out.tv_sec += TIMEOUT_SEC;
     if (pthread_mutex_timedlock(&header_->info.mutex_, &time_out) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "PutRawTimeout failed %d", errno);
+        HILOG_ERROR(LOG_CORE, "PutRawTimeout failed %d", errno);
         return false;
     }
 
     int8_t* rawMemory = GetFreeMemory(size);
     if (rawMemory == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "PutRaw not enough space [%d]", size);
+        HILOG_ERROR(LOG_CORE, "PutRaw not enough space [%d]", size);
         pthread_mutex_unlock(&header_->info.mutex_);
         return false;
     }
     if (memcpy_s(rawMemory, size, data, size) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s error");
+        HILOG_ERROR(LOG_CORE, "memcpy_s error");
         pthread_mutex_unlock(&header_->info.mutex_);
         return false;
     }
@@ -322,13 +322,13 @@ bool ShareMemoryBlock::PutMessage(const google::protobuf::Message& pmsg, const s
     PthreadLocker locker(header_->info.mutex_);
     int8_t* rawMemory = GetFreeMemory(size);
     if (rawMemory == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: PutMessage not enough space [%zu]", pluginName.c_str(), size);
+        HILOG_ERROR(LOG_CORE, "%s: PutMessage not enough space [%zu]", pluginName.c_str(), size);
         return false;
     }
 
     int ret = pmsg.SerializeToArray(rawMemory, size);
     if (ret <= 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: SerializeToArray failed with %d, size: %zu", __func__, ret, size);
+        HILOG_ERROR(LOG_CORE, "%s: SerializeToArray failed with %d, size: %zu", __func__, ret, size);
         return false;
     }
     UseFreeMemory(rawMemory, size);
@@ -489,7 +489,7 @@ bool ShareMemoryBlock::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offs
         }
     }
 
-    PROFILER_LOG_ERROR(LOG_CORE, "Write not enough space, realSize=%u, rp=%u, wp=%u", realSize, rp, wp);
+    HILOG_ERROR(LOG_CORE, "Write not enough space, realSize=%u, rp=%u, wp=%u", realSize, rp, wp);
     return false;
 }
 

@@ -66,7 +66,7 @@ HWTEST_F(EpollEventPollerTest, InitFinalize, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitFinalize start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitFinalize start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Finalize());
 }
@@ -79,7 +79,7 @@ HWTEST_F(EpollEventPollerTest, InitFinalize, TestSize.Level1)
 HWTEST_F(EpollEventPollerTest, InitOnly, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitOnly start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitOnly start!");
     EXPECT_TRUE(eventPoller->Init());
 }
 
@@ -92,7 +92,7 @@ HWTEST_F(EpollEventPollerTest, Init2Finalize1, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.Init2Finalize1 start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.Init2Finalize1 start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_FALSE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Finalize());
@@ -107,7 +107,7 @@ HWTEST_F(EpollEventPollerTest, InitStartStopFinalize, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartStopFinalize start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartStopFinalize start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Start());
     EXPECT_TRUE(eventPoller->Stop());
@@ -123,7 +123,7 @@ HWTEST_F(EpollEventPollerTest, InitStartStop, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartStop start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartStop start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Start());
     EXPECT_TRUE(eventPoller->Stop());
@@ -138,7 +138,7 @@ HWTEST_F(EpollEventPollerTest, InitStart, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStart start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStart start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Start());
 }
@@ -152,7 +152,7 @@ HWTEST_F(EpollEventPollerTest, InitStartAddFd, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Start());
 
@@ -160,7 +160,7 @@ HWTEST_F(EpollEventPollerTest, InitStartAddFd, TestSize.Level1)
     uint64_t readValue = 0;
     auto onReadable = [&readValue, &eventFd]() {
         read(eventFd, &readValue, sizeof(readValue));
-        PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd read %" PRIu64, readValue);
+        HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd read %" PRIu64, readValue);
     };
     EXPECT_TRUE(eventPoller->AddFileDescriptor(eventFd, onReadable));
 
@@ -182,7 +182,7 @@ HWTEST_F(EpollEventPollerTest, InitStartAddEventFd, TestSize.Level1)
 {
     ASSERT_NE(eventPoller, nullptr);
 
-    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd start!");
+    HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd start!");
     EXPECT_TRUE(eventPoller->Init());
     EXPECT_TRUE(eventPoller->Start());
 
@@ -190,7 +190,7 @@ HWTEST_F(EpollEventPollerTest, InitStartAddEventFd, TestSize.Level1)
     uint64_t readValue = 0;
     auto onReadable = [&readValue, &notifier]() {
         readValue = notifier->Take();
-        PROFILER_LOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd read %" PRIu64, readValue);
+        HILOG_INFO(LOG_CORE, "EpollEventPollerTest.InitStartAddFd read %" PRIu64, readValue);
     };
     EXPECT_TRUE(eventPoller->AddFileDescriptor(notifier->GetFd(), onReadable));
 

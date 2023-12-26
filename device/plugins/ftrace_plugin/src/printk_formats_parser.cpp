@@ -33,12 +33,12 @@ PrintkFormatsParser& PrintkFormatsParser::GetInstance()
 
 PrintkFormatsParser::PrintkFormatsParser()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "PrintkFormatsParser create!");
+    HILOG_INFO(LOG_CORE, "PrintkFormatsParser create!");
 }
 
 PrintkFormatsParser::~PrintkFormatsParser()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "PrintkFormatsParser destroy!");
+    HILOG_INFO(LOG_CORE, "PrintkFormatsParser destroy!");
 }
 
 std::string PrintkFormatsParser::GetSymbol(uint64_t addr)

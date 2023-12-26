@@ -31,7 +31,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_lru_activate: page=%p pfn=%" PRIu64 "", msg.page(), msg.pfn());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mm_lru_activate) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(mm_lru_activate) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -47,7 +47,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.flags() & 0x0001u ? "M" : " ", msg.flags() & 0x0002u ? "a" : "f", msg.flags() & 0x0008u ? "s" : " ",
             msg.flags() & 0x0010u ? "b" : " ", msg.flags() & 0x0020u ? "d" : " ", msg.flags() & 0x0040u ? "B" : " ");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mm_lru_insertion) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(mm_lru_insertion) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

@@ -34,7 +34,7 @@ int TracePluginRegisterWriter(const WriterStruct* writer)
     g_mainController = std::make_unique<FTRACE_NS::FlowController>();
 
     int result = g_mainController->SetWriter(const_cast<WriterStructPtr>(writer));
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     return result;
 }
 
@@ -43,13 +43,13 @@ int TracePluginStartSession(const uint8_t configData[], const uint32_t configSiz
     std::unique_lock<std::mutex> lock(g_mutex);
     CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
 
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     int retval = g_mainController->LoadConfig(configData, configSize);
     CHECK_TRUE(retval == 0, retval, "LoadConfig failed!");
 
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     int result = g_mainController->StartCapture();
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     return result;
 }
 
@@ -58,9 +58,9 @@ int TracePluginReportBasicData()
     std::unique_lock<std::mutex> lock(g_mutex);
     CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
 
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     g_mainController->SetReportBasicData(true);
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     return 0;
 }
 
@@ -69,9 +69,9 @@ int TracePluginStopSession()
     std::unique_lock<std::mutex> lock(g_mutex);
     CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
 
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
     int result = g_mainController->StopCapture();
-    PROFILER_LOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
+    HILOG_INFO(LOG_CORE, "%s: %d", __func__, __LINE__);
 
     g_mainController.reset();
     return result;

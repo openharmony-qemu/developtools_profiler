@@ -31,7 +31,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "i2c_read: i2c-%d #%u a=%03x f=%04x l=%u",
             msg.adapter_nr(), msg.msg_nr(), msg.addr(), msg.flags(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_read) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_read) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -46,7 +46,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "i2c_reply: i2c-%d #%u a=%03x f=%04x l=%" PRId32 " [%" PRId32 "]", msg.adapter_nr(), msg.msg_nr(),
             msg.addr(), msg.flags(), msg.len(), msg.buf());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_reply) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_reply) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -60,7 +60,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "i2c_result: i2c-%d n=%u ret=%d", msg.adapter_nr(),
             msg.nr_msgs(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_result) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_result) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -75,7 +75,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "i2c_write: i2c-%d #%u a=%03x f=%04x l=%" PRId32 " [%" PRId32 "]", msg.adapter_nr(), msg.msg_nr(),
             msg.addr(), msg.flags(), msg.len(), msg.buf());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_write) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(i2c_write) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

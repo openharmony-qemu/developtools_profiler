@@ -32,7 +32,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "sys_enter: NR %" PRIu64 " (%" PRIx64 ", %" PRIx64 ", %" PRIx64 ", %" PRIx64 ", %" PRIx64 ", %" PRIx64 ")",
             msg.id(), msg.args()[0], msg.args()[1], msg.args()[2], msg.args()[3], msg.args()[4], msg.args()[5]);
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(sys_enter) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(sys_enter) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -46,7 +46,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "sys_exit: NR %" PRIu64 " = %" PRIu64 "", msg.id(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(sys_exit) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(sys_exit) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

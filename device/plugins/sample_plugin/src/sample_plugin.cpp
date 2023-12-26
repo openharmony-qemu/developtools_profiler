@@ -41,15 +41,15 @@ uint64_t SamplePlugin::GetTimeMS()
 
 int SamplePlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:config data -->configSize=%d", __func__, configSize);
+    HILOG_INFO(LOG_CORE, "%s:config data -->configSize=%d", __func__, configSize);
     CHECK_TRUE(configData != nullptr, -1, "SamplePlugin: param invalid!!!");
     for (uint32_t i = 0; i < configSize; i++) {
-        PROFILER_LOG_INFO(LOG_CORE, "%s:configData[%d] = 0x%02x", __func__, i, configData[i]);
+        HILOG_INFO(LOG_CORE, "%s:configData[%d] = 0x%02x", __func__, i, configData[i]);
     }
 
     // 反序列化
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
-    PROFILER_LOG_INFO(LOG_CORE, "%s:pid = %d", __func__, protoConfig_.pid());
+    HILOG_INFO(LOG_CORE, "%s:pid = %d", __func__, protoConfig_.pid());
     // 插件准备工作
 
     return 0;
@@ -92,6 +92,6 @@ int SamplePlugin::Report(uint8_t* data, uint32_t dataSize)
 
 int SamplePlugin::Stop()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }

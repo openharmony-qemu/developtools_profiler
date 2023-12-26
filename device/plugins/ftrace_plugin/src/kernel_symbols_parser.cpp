@@ -30,12 +30,12 @@ constexpr int MAX_BUFFER_SIZE = 10 * 1000;
 FTRACE_NS_BEGIN
 KernelSymbolsParser::KernelSymbolsParser()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "KernelSymbolsParser create!");
+    HILOG_INFO(LOG_CORE, "KernelSymbolsParser create!");
 }
 
 KernelSymbolsParser::~KernelSymbolsParser()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "KernelSymbolsParser destroy!");
+    HILOG_INFO(LOG_CORE, "KernelSymbolsParser destroy!");
 }
 
 void KernelSymbolsParser::Accept(const std::function<void(const KernelSymbol&)>& visitor)

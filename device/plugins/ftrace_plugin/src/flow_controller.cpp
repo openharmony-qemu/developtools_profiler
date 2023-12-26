@@ -63,7 +63,7 @@ FlowController::FlowController()
 
 FlowController::~FlowController(void)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "FlowController destroy!");
+    HILOG_INFO(LOG_CORE, "FlowController destroy!");
 }
 
 int FlowController::SetWriter(const WriterStructPtr& writer)
@@ -124,7 +124,7 @@ bool FlowController::CreateRawDataReaders()
 
 bool FlowController::CreatePagedMemoryPool()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "create memory pool, buffer_size_kb = %u", bufferSizeKb_);
+    HILOG_INFO(LOG_CORE, "create memory pool, buffer_size_kb = %u", bufferSizeKb_);
     size_t bufferSizePages = bufferSizeKb_ / KB_PER_PAGE;
     size_t pagesPerBlock = bufferSizePages / static_cast<size_t>(platformCpuNum_);
     if (pagesPerBlock < MIN_BLOCK_SIZE_PAGES) {
@@ -182,7 +182,7 @@ bool FlowController::ParseBasicData()
             CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
             auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
             if (!ReportClockTimes(traceResult)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "report clock times FAILED!");
+                HILOG_ERROR(LOG_CORE, "report clock times FAILED!");
             }
             int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
@@ -201,7 +201,7 @@ bool FlowController::ParseBasicData()
             CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
             auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
             if (!ParseKernelSymbols(traceResult)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "parse kernel symbols FAILED!");
+                HILOG_ERROR(LOG_CORE, "parse kernel symbols FAILED!");
             }
             int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
@@ -219,7 +219,7 @@ bool FlowController::ParseBasicData()
         CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
         auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
         if (!ParsePerCpuStatus(traceResult, TRACE_START)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "parse TRACE_START stats failed!");
+            HILOG_ERROR(LOG_CORE, "parse TRACE_START stats failed!");
         }
         int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
@@ -246,7 +246,7 @@ std::string FlowController::ReloadTraceArgs()
     if (bufferSizeKb_ > 0) {
         args += (" bufferSize:" + std::to_string(bufferSizeKb_));
     }
-    PROFILER_LOG_INFO(LOG_CORE, "trace args: %s", args.c_str());
+    HILOG_INFO(LOG_CORE, "trace args: %s", args.c_str());
     return args;
 }
 
@@ -271,7 +271,7 @@ int FlowController::StartCapture(void)
 
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
     if (!FtraceFsOps::GetInstance().SetSavedCmdLinesSize(savedCmdlinesSize)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "SetSavedCmdLinesSize %u fail.", savedCmdlinesSize);
+        HILOG_ERROR(LOG_CORE, "SetSavedCmdLinesSize %u fail.", savedCmdlinesSize);
     }
 
     // enable additional record options
@@ -287,14 +287,14 @@ int FlowController::StartCapture(void)
         CHECK_TRUE(CreateRawDataCaches(), -1, "create raw data caches failed!");
         pollThread_ = std::thread(&FlowController::CaptureWorkOnDelayMode, this);
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "ParseMode is Illegal parameter!");
+        HILOG_ERROR(LOG_CORE, "ParseMode is Illegal parameter!");
         return -1;
     }
 
     // set trace_clock and enable all tag categories with hiview::TraceCollector
     auto openRet = traceCollector_->OpenRecording(ReloadTraceArgs());
     if (openRet.retCode != OHOS::HiviewDFX::UCollect::UcError::SUCCESS) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Enable tag categories failed, trace error code is %d!", openRet.retCode);
+        HILOG_ERROR(LOG_CORE, "Enable tag categories failed, trace error code is %d!", openRet.retCode);
         return -1;
     }
     EnableTraceEvents();
@@ -304,7 +304,7 @@ int FlowController::StartCapture(void)
 void FlowController::CaptureWorkOnNomalModeInner()
 {
     pthread_setname_np(pthread_self(), "TraceReader");
-    PROFILER_LOG_INFO(LOG_CORE, "FlowController::CaptureWorkOnNomalMode start!");
+    HILOG_INFO(LOG_CORE, "FlowController::CaptureWorkOnNomalMode start!");
 
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
     std::vector<long> rawDataBytes(platformCpuNum_, 0);
@@ -315,7 +315,7 @@ void FlowController::CaptureWorkOnNomalModeInner()
         // read data from percpu trace_pipe_raw, consume kernel ring buffers
         for (size_t i = 0; i < rawDataBytes.size(); i++) {
             if (flushCacheData_ && !keepRunning_) {
-                PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+                HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
                 return;
             }
             long nbytes = ReadEventData(i);
@@ -328,11 +328,11 @@ void FlowController::CaptureWorkOnNomalModeInner()
         // parse ftrace percpu event data
         for (size_t i = 0; i < rawDataBytes.size(); i++) {
             if (flushCacheData_ && !keepRunning_) {
-                PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+                HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
                 return;
             }
             if (rawDataBytes[i] == 0) {
-                PROFILER_LOG_INFO(LOG_CORE, "Get raw data from CPU%zu is 0 bytes.", i);
+                HILOG_INFO(LOG_CORE, "Get raw data from CPU%zu is 0 bytes.", i);
                 continue;
             }
             CHECK_TRUE(ParseEventDataOnNomalMode(i, rawDataBytes[i]), NO_RETVAL, "ParseEventData failed!");
@@ -345,7 +345,7 @@ void FlowController::CaptureWorkOnNomalModeInner()
     }
 
     tansporter_->Flush();
-    PROFILER_LOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnNomalMode done!");
+    HILOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnNomalMode done!");
 }
 
 long FlowController::HmReadEventData()
@@ -362,8 +362,7 @@ long FlowController::HmReadEventData()
         rest -= nbytes;
     }
     if (used == bufferSize) {
-        PROFILER_LOG_WARN(LOG_CORE, "hm trace raw data may overwrite. current buffer size = %u.",
-                          (unsigned int)bufferSize);
+        HILOG_WARN(LOG_CORE, "hm trace raw data may overwrite. current buffer size = %u.", (unsigned int)bufferSize);
     }
     return used;
 }
@@ -371,13 +370,13 @@ long FlowController::HmReadEventData()
 void FlowController::HmCaptureWorkOnNomalModeInner()
 {
     pthread_setname_np(pthread_self(), "HmTraceReader");
-    PROFILER_LOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode start!");
+    HILOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode start!");
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
 
     while (keepRunning_) {
         std::this_thread::sleep_for(tracePeriod);
         if (flushCacheData_ && !keepRunning_) {
-            PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+            HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
         }
 
@@ -386,11 +385,11 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
         ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
 
         if (flushCacheData_ && !keepRunning_) {
-            PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+            HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
         }
         if (rawDataBytes == 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "Get hm raw data is 0 bytes.");
+            HILOG_INFO(LOG_CORE, "Get hm raw data is 0 bytes.");
             continue;
         }
 
@@ -398,7 +397,7 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
     }
 
     tansporter_->Flush();
-    PROFILER_LOG_DEBUG(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode done!");
+    HILOG_DEBUG(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode done!");
 }
 
 void FlowController::CaptureWorkOnNomalMode()
@@ -413,7 +412,7 @@ void FlowController::CaptureWorkOnNomalMode()
 void FlowController::CaptureWorkOnDelayMode()
 {
     pthread_setname_np(pthread_self(), "TraceReader");
-    PROFILER_LOG_INFO(LOG_CORE, "FlowController::CaptureWorkOnDelayMode start!");
+    HILOG_INFO(LOG_CORE, "FlowController::CaptureWorkOnDelayMode start!");
 
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
     int writeDataCount = 0;
@@ -423,12 +422,12 @@ void FlowController::CaptureWorkOnDelayMode()
         // read data from percpu trace_pipe_raw, consume kernel ring buffers
         for (int cpuIdx = 0; cpuIdx < platformCpuNum_; cpuIdx++) {
             if (flushCacheData_ && !keepRunning_) {
-                PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
+                HILOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
                 return;
             }
             long nbytes = ReadEventData(cpuIdx);
             if (nbytes == 0) {
-                PROFILER_LOG_INFO(LOG_CORE, "Get raw data from CPU%d is 0 bytes.", cpuIdx);
+                HILOG_INFO(LOG_CORE, "Get raw data from CPU%d is 0 bytes.", cpuIdx);
                 continue;
             }
             fwrite(&cpuIdx, sizeof(uint8_t), 1, rawDataFile_.get());
@@ -445,7 +444,7 @@ void FlowController::CaptureWorkOnDelayMode()
 
     CHECK_TRUE(ParseEventDataOnDelayMode(), NO_RETVAL, "ParseEventData failed!");
     tansporter_->Flush();
-    PROFILER_LOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnDelayMode done!");
+    HILOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnDelayMode done!");
 }
 
 static inline int RmqEntryTotalSize(unsigned int size)
@@ -513,7 +512,7 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
             traceResult.Reset(ctx, &msgPool);
             ProtoEncoder::FtraceEvent* event = nullptr;
             if (!HmParseEventData(&traceResult, data, event)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "hm parse raw data failed!");
+                HILOG_ERROR(LOG_CORE, "hm parse raw data failed!");
             }
             int32_t msgSize = traceResult.Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
@@ -540,7 +539,7 @@ long FlowController::ReadEventData(int cpuid)
     }
 
     if (used == bufferSize) {
-        PROFILER_LOG_INFO(LOG_CORE,
+        HILOG_INFO(LOG_CORE,
             "used(%ld) equals bufferSize(%ld), please expand buffer_size_kb, otherwise the kernel may lose data\n",
             used, bufferSize);
     }
@@ -564,7 +563,7 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
         traceResult.Reset(ctx, &msgPool);
         ProtoEncoder::FtraceEvent* event = nullptr; // Used to distinguish between SubEventParser instance types.
         if (!ParseFtraceEvent(&traceResult, cpuid, page, event)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "parse raw event for cpu-%d failed!", cpuid);
+            HILOG_ERROR(LOG_CORE, "parse raw event for cpu-%d failed!", cpuid);
         }
         int32_t msgSize = traceResult.Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
@@ -616,9 +615,9 @@ int FlowController::StopCapture(void)
     // stop ftrace event data polling thread
     keepRunning_ = false;
     if (pollThread_.joinable()) {
-        PROFILER_LOG_INFO(LOG_CORE, "join thread start!\n");
+        HILOG_INFO(LOG_CORE, "join thread start!\n");
         pollThread_.join();
-        PROFILER_LOG_INFO(LOG_CORE, "join thread  done!\n");
+        HILOG_INFO(LOG_CORE, "join thread  done!\n");
     }
 
     // parse per cpu stats
@@ -631,7 +630,7 @@ int FlowController::StopCapture(void)
         CHECK_NOTNULL(ctx, -1, "%s: get RandomWriteCtx FAILED!", __func__);
         auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
         if (!ParsePerCpuStatus(traceResult, TRACE_END)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "parse TRACE_END stats FAILED!");
+            HILOG_ERROR(LOG_CORE, "parse TRACE_END stats FAILED!");
         }
         int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
@@ -670,7 +669,7 @@ template <typename T> bool FlowController::ParsePerCpuStatus(T& tracePluginResul
     }
 
     for (int i = 0; i < platformCpuNum_; i++) {
-        PROFILER_LOG_INFO(LOG_CORE, "[%d] ParsePerCpuStatus %d!", i, stage);
+        HILOG_INFO(LOG_CORE, "[%d] ParsePerCpuStatus %d!", i, stage);
         PerCpuStats stats = {};
         stats.cpuIndex = i;
         ftraceParser_->ParsePerCpuStatus(stats, FtraceFsOps::GetInstance().GetPerCpuStats(i));
@@ -729,7 +728,7 @@ template <typename T> bool FlowController::ParseKernelSymbols(T& tracePluginResu
         symbolDetail->set_symbol_addr(symbol.addr);
         symbolDetail->set_symbol_name(symbol.name);
     });
-    PROFILER_LOG_INFO(LOG_CORE, "parse kernel symbol message done!");
+    HILOG_INFO(LOG_CORE, "parse kernel symbol message done!");
     return true;
 }
 
@@ -749,7 +748,7 @@ bool FlowController::AddPlatformEventsToParser(void)
 {
     CHECK_TRUE(ftraceSupported_, false, "current kernel not support ftrace!");
 
-    PROFILER_LOG_INFO(LOG_CORE, "Add platform events to parser start!");
+    HILOG_INFO(LOG_CORE, "Add platform events to parser start!");
     for (auto& typeName : FtraceFsOps::GetInstance().GetPlatformEvents()) {
         std::string type = typeName.first;
         std::string name = typeName.second;
@@ -757,7 +756,7 @@ bool FlowController::AddPlatformEventsToParser(void)
             supportedEvents_.push_back(typeName);
         }
     }
-    PROFILER_LOG_INFO(LOG_CORE, "Add platform events to parser done, events: %zu!", supportedEvents_.size());
+    HILOG_INFO(LOG_CORE, "Add platform events to parser done, events: %zu!", supportedEvents_.size());
     return true;
 }
 

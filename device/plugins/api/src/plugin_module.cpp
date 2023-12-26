@@ -35,7 +35,7 @@ bool PluginModule::Load()
 {
     char realPath[PATH_MAX + 1] = {0};
     if (handle_ != nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:already open", __func__);
+        HILOG_DEBUG(LOG_CORE, "%s:already open", __func__);
         return false;
     }
     CHECK_TRUE((path_.length() < PATH_MAX) && (realpath(path_.c_str(), realPath) != nullptr), false,
@@ -44,7 +44,7 @@ bool PluginModule::Load()
     std::string rpath = realPath; // for SC warning
     handle_ = dlopen(rpath.c_str(), RTLD_NODELETE);
     if (handle_ == nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:dlopen err:%s.", __func__, dlerror());
+        HILOG_DEBUG(LOG_CORE, "%s:dlopen err:%s.", __func__, dlerror());
         return false;
     }
     return true;
@@ -52,10 +52,10 @@ bool PluginModule::Load()
 
 bool PluginModule::Unload()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:unload ready!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:unload ready!", __func__);
     if (handle_ != nullptr) {
         int ret = dlclose(handle_);
-        PROFILER_LOG_INFO(LOG_CORE, "%s:unload plugin ret = %d", __func__, ret);
+        HILOG_INFO(LOG_CORE, "%s:unload plugin ret = %d", __func__, ret);
         handle_ = nullptr;
         structPtr_ = nullptr;
         return true;
@@ -105,7 +105,7 @@ std::string PluginModule::GetConfigData() const
 void PluginModule::SetClockId(clockid_t clockId)
 {
     clockId_ = clockId;
-    PROFILER_LOG_INFO(LOG_CORE, "SetClockId: plugin=%s, clock=%d", GetPluginName().c_str(), clockId);
+    HILOG_INFO(LOG_CORE, "SetClockId: plugin=%s, clock=%d", GetPluginName().c_str(), clockId);
     if (writerAdapter_ != nullptr && writerAdapter_->GetWriter() != nullptr) {
         writerAdapter_->GetWriter()->SetClockId(clockId);
     }
@@ -199,19 +199,19 @@ bool PluginModule::BindFunctions()
     if (structPtr_ == nullptr) {
         structPtr_ = static_cast<PluginModuleStruct*>(dlsym(handle_, "g_pluginModule"));
         if (structPtr_ == nullptr) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "%s:structPtr_ == nullptr", __func__);
+            HILOG_DEBUG(LOG_CORE, "%s:structPtr_ == nullptr", __func__);
             return false;
         }
     }
 
     if (structPtr_->callbacks == nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:structPtr_->callbacks == nullptr", __func__);
+        HILOG_DEBUG(LOG_CORE, "%s:structPtr_->callbacks == nullptr", __func__);
         return false;
     }
 
     if ((structPtr_->callbacks->onPluginSessionStart == nullptr) ||
         (structPtr_->callbacks->onPluginSessionStop == nullptr)) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:onPluginSessionStart == nullptr", __func__);
+        HILOG_DEBUG(LOG_CORE, "%s:onPluginSessionStart == nullptr", __func__);
         return false;
     }
 
@@ -220,7 +220,7 @@ bool PluginModule::BindFunctions()
 
 bool PluginModule::StartSession(const uint8_t* buffer, uint32_t size)
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "StartSession");
+    HILOG_DEBUG(LOG_CORE, "StartSession");
     CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onPluginSessionStart) {
@@ -233,7 +233,7 @@ bool PluginModule::StartSession(const uint8_t* buffer, uint32_t size)
 
 bool PluginModule::StopSession()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:stop Session ready!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:stop Session ready!", __func__);
     CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onPluginSessionStop != nullptr) {
@@ -246,7 +246,7 @@ bool PluginModule::StopSession()
 
 bool PluginModule::ReportBasicData()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:report basic data ready!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:report basic data ready!", __func__);
     CHECK_NOTNULL(handle_, false, "%s:plugin not load", __func__);
     if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
         if (structPtr_->callbacks->onReportBasicDataCallback != nullptr) {

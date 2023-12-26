@@ -17,7 +17,7 @@
 
 FileCache::FileCache(const std::string& path) : path_(path), fp_(nullptr)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "FileCache: path(%s)!", path_.c_str());
+    HILOG_INFO(LOG_CORE, "FileCache: path(%s)!", path_.c_str());
 }
 
 FileCache::~FileCache()

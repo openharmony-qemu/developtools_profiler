@@ -54,8 +54,8 @@ VirtualRuntime::VirtualRuntime(const NativeHookConfig& hookConfig): hookConfig_(
 
 VirtualRuntime::~VirtualRuntime()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:%d UserSymbolCache size = %zu", __func__, __LINE__, userSymbolCache_.size());
-    PROFILER_LOG_INFO(LOG_CORE, "Total number of call stack errors: %" PRIu64 "", callStackErrCnt.load());
+    HILOG_INFO(LOG_CORE, "%s:%d UserSymbolCache size = %zu", __func__, __LINE__, userSymbolCache_.size());
+    HILOG_INFO(LOG_CORE, "Total number of call stack errors: %" PRIu64 "", callStackErrCnt.load());
     ClearMaps();
 }
 
@@ -159,7 +159,7 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
 #else
             ++callStackErrCnt;
             if (callStackErrCnt.load() % CALL_STACK_ERROR_TIMES == 0) {
-                PROFILER_LOG_DEBUG(LOG_CORE, "number of call stack errors: %" PRIu64 "", callStackErrCnt.load());
+                HILOG_DEBUG(LOG_CORE, "number of call stack errors: %" PRIu64 "", callStackErrCnt.load());
             }
             callFrames.erase(callFrameIt, callFrames.end());
             return true;
@@ -182,9 +182,9 @@ void VirtualRuntime::UpdateMaps(pid_t pid, pid_t tid)
 {
     auto &thread = UpdateThread(pid, tid);
     if (thread.ParseMap(processMaps_, true)) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "voluntarily update maps succeed");
+        HILOG_DEBUG(LOG_CORE, "voluntarily update maps succeed");
     } else {
-        PROFILER_LOG_DEBUG(LOG_CORE, "voluntarily update maps ignore");
+        HILOG_DEBUG(LOG_CORE, "voluntarily update maps ignore");
     }
 }
 

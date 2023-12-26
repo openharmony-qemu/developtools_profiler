@@ -47,7 +47,7 @@ int StreamPlugin::Stop()
     if (writeThread_.joinable()) {
         writeThread_.join();
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
@@ -59,7 +59,7 @@ int StreamPlugin::SetWriter(WriterStruct* writer)
 
 void StreamPlugin::Loop(void)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:transporter thread %d start !!!!!", __func__, gettid());
+    HILOG_INFO(LOG_CORE, "%s:transporter thread %d start !!!!!", __func__, gettid());
     CHECK_NOTNULL(resultWriter_, NO_RETVAL, "%s: resultWriter_ nullptr", __func__);
 
     uint32_t index = 0;
@@ -87,5 +87,5 @@ void StreamPlugin::Loop(void)
 
         index++;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:transporter thread %d exit !!!!!", __func__, gettid());
+    HILOG_INFO(LOG_CORE, "%s:transporter thread %d exit !!!!!", __func__, gettid());
 }

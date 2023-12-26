@@ -197,7 +197,7 @@ HWTEST_F(ProfilerDataRepeaterTest, CloseWithFastProducer, TestSize.Level1)
         for (int i = 0; i < numProducts; i++) {
             auto data = std::make_shared<ProfilerPluginData>();
             if (!dataRepeater->PutPluginData(data)) {
-                PROFILER_LOG_DEBUG(LOG_CORE, "put data %d FAILED!", i);
+                HILOG_DEBUG(LOG_CORE, "put data %d FAILED!", i);
                 break;
             }
         }
@@ -208,7 +208,7 @@ HWTEST_F(ProfilerDataRepeaterTest, CloseWithFastProducer, TestSize.Level1)
         for (int i = 0; i < numProducts; i++) {
             auto data = dataRepeater->TakePluginData();
             if (!data) {
-                PROFILER_LOG_DEBUG(LOG_CORE, "get data %d FAILED!", i);
+                HILOG_DEBUG(LOG_CORE, "get data %d FAILED!", i);
                 break;
             }
             usleep(consumeDelayUs);
