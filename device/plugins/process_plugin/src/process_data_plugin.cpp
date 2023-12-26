@@ -42,7 +42,7 @@ ProcessDataPlugin::ProcessDataPlugin()
 
 ProcessDataPlugin::~ProcessDataPlugin()
 {
-    HILOG_INFO(LOG_CORE, "%s:~ProcessDataPlugin!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:~ProcessDataPlugin!", __func__);
 
     buffer_ = nullptr;
 
@@ -56,7 +56,7 @@ int ProcessDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
 
-    HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
 }
 
@@ -96,7 +96,7 @@ int ProcessDataPlugin::Stop()
     cpuTime_.clear();
     bootTime_.clear();
 
-    HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
@@ -106,7 +106,7 @@ DIR* ProcessDataPlugin::OpenDestDir(const char* dirPath)
 
     destDir = opendir(dirPath);
     if (destDir == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:failed to opendir(%s), errno=%d", __func__, dirPath, errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to opendir(%s), errno=%d", __func__, dirPath, errno);
     }
 
     return destDir;
@@ -136,20 +136,20 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
     ssize_t bytesRead = 0;
 
     if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s%d/%s", path_.c_str(), pid, pFileName) < 0) {
-        HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
     }
     if (realpath(fileName, realPath) == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:realpath failed, errno=%d", __func__, errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath failed, errno=%d", __func__, errno);
         return RET_FAIL;
     }
     fd = open(realPath, O_RDONLY | O_CLOEXEC);
     if (fd == -1) {
-        HILOG_INFO(LOG_CORE, "%s:failed to open(%s), errno=%d", __func__, fileName, errno);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to open(%s), errno=%d", __func__, fileName, errno);
         err_ = errno;
         return RET_FAIL;
     }
     if (buffer_.get() == nullptr) {
-        HILOG_INFO(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
         close(fd);
         return RET_FAIL;
@@ -157,7 +157,7 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
     bytesRead = read(fd, buffer_.get(), READ_BUFFER_SIZE - 1);
     if (bytesRead < 0) {
         close(fd);
-        HILOG_INFO(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, fileName, errno);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, fileName, errno);
         err_ = errno;
         return RET_FAIL;
     }
@@ -216,7 +216,7 @@ void ProcessDataPlugin::WriteProcess(T& processinfo, const char* pFile, uint32_t
             char* end = nullptr;
             int32_t value = static_cast<int32_t>(strtoul(totalbuffer.CurWord(), &end, DEC_BASE));
             if (value < 0) {
-                HILOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
+                PROFILER_LOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
             }
             processinfo.set_pid(value);
         } else if (BufnCmp(totalbuffer.CurWord(), totalbuffer.CurWordSize(), "PPid", strlen("PPid"))) {
@@ -227,7 +227,7 @@ void ProcessDataPlugin::WriteProcess(T& processinfo, const char* pFile, uint32_t
             char* end = nullptr;
             int32_t value = static_cast<int32_t>(strtoul(totalbuffer.CurWord(), &end, DEC_BASE));
             if (value < 0) {
-                HILOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
+                PROFILER_LOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
             }
             processinfo.set_ppid(value);
         } else if (BufnCmp(totalbuffer.CurWord(), totalbuffer.CurWordSize(), "Uid", strlen("Uid"))) {
@@ -240,7 +240,7 @@ void ProcessDataPlugin::WriteProcess(T& processinfo, const char* pFile, uint32_t
             char* end = nullptr;
             int32_t value = static_cast<int32_t>(strtoul(curWord.c_str(), &end, DEC_BASE));
             if (value < 0) {
-                HILOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
+                PROFILER_LOG_ERROR(LOG_CORE, "%s:strtoull value failed", __func__);
             }
             processinfo.set_uid(value);
             break;
@@ -297,7 +297,7 @@ template <typename T> bool ProcessDataPlugin::WriteProcesseList(T& processData)
     while (int32_t pid = GetValidPid(procDir)) {
         if (pid <= 0) {
             closedir(procDir);
-            HILOG_WARN(LOG_CORE, "%s: get pid[%d] failed", __func__, pid);
+            PROFILER_LOG_WARN(LOG_CORE, "%s: get pid[%d] failed", __func__, pid);
             return false;
         }
         addPidBySort(pid);
@@ -324,7 +324,7 @@ template <typename T> bool ProcessDataPlugin::WriteThreadData(int pid, T& cpuInf
     while (int32_t tid = GetValidPid(procDir)) {
         if (tid <= 0) {
             closedir(procDir);
-            HILOG_WARN(LOG_CORE, "%s: get pid[%d] failed", __func__, tid);
+            PROFILER_LOG_WARN(LOG_CORE, "%s: get pid[%d] failed", __func__, tid);
             return false;
         }
         i++;

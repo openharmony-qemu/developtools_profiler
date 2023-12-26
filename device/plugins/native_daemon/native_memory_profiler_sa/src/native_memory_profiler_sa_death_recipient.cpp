@@ -22,6 +22,6 @@ NativeMemoryProfilerSaDeathRecipient::NativeMemoryProfilerSaDeathRecipient() {}
 
 void NativeMemoryProfilerSaDeathRecipient::OnRemoteDied(const OHOS::wptr<OHOS::IRemoteObject> &object)
 {
-    HILOG_ERROR(LOG_CORE, "NativeMemoryProfiler SA has died");
+    PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfiler SA has died");
 }
 } // namespace OHOS::Developtools::NativeDaemon

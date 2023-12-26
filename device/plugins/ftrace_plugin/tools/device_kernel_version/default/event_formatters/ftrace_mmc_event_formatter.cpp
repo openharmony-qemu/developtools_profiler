@@ -40,7 +40,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.sbc_retries(), msg.bytes_xfered(), msg.data_err(), msg.tag(), msg.can_retune(), msg.doing_retune(),
             msg.retune_now(), msg.need_retune(), msg.hold_retune(), msg.retune_period());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(mmc_request_done) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mmc_request_done) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -62,7 +62,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.can_retune(), msg.doing_retune(), msg.retune_now(), msg.need_retune(), msg.hold_retune(),
             msg.retune_period());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(mmc_request_start) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mmc_request_start) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

@@ -31,7 +31,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "rpc_call_status: task:%u@%u status=%d",
             msg.task_id(), msg.client_id(), msg.status());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_call_status) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_call_status) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -45,8 +45,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "rpc_connect_status: task:%u@%u status=%d",
             msg.task_id(), msg.client_id(), msg.status());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(rpc_connect_status) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(rpc_connect_status) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -67,7 +67,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "FIN_WAIT2"}, {6, "TIME_WAIT"}, {7, "CLOSE"}, {8, "CLOSE_WAIT"}, {9, "LAST_ACK"}, {10, "LISTEN"},
                 {11, "CLOSING"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_socket_close) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_socket_close) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -88,8 +88,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "FIN_WAIT2"}, {6, "TIME_WAIT"}, {7, "CLOSE"}, {8, "CLOSE_WAIT"}, {9, "LAST_ACK"}, {10, "LISTEN"},
                 {11, "CLOSING"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(rpc_socket_connect) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(rpc_socket_connect) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -110,7 +110,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "FIN_WAIT2"}, {6, "TIME_WAIT"}, {7, "CLOSE"}, {8, "CLOSE_WAIT"}, {9, "LAST_ACK"}, {10, "LISTEN"},
                 {11, "CLOSING"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_socket_error) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_socket_error) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -131,8 +131,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "FIN_WAIT2"}, {6, "TIME_WAIT"}, {7, "CLOSE"}, {8, "CLOSE_WAIT"}, {9, "LAST_ACK"}, {10, "LISTEN"},
                 {11, "CLOSING"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE,
-                "maybe, the contents of print event(rpc_socket_reset_connection) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                "the contents of print event(rpc_socket_reset_connection) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -153,8 +153,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "FIN_WAIT2"}, {6, "TIME_WAIT"}, {7, "CLOSE"}, {8, "CLOSE_WAIT"}, {9, "LAST_ACK"}, {10, "LISTEN"},
                 {11, "CLOSING"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(rpc_socket_shutdown) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(rpc_socket_shutdown) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -175,8 +175,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "FIN_WAIT2"}, {6, "TIME_WAIT"}, {7, "CLOSE"}, {8, "CLOSE_WAIT"}, {9, "LAST_ACK"}, {10, "LISTEN"},
                 {11, "CLOSING"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(rpc_socket_state_change) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(rpc_socket_state_change) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -217,7 +217,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.status(), msg.action());
         }
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_task_begin) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_task_begin) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -260,7 +260,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.status(), msg.action());
         }
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_task_complete) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_task_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -303,8 +303,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.status(), msg.action());
         }
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(rpc_task_run_action) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(rpc_task_run_action) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -327,7 +327,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1UL << 6), "SIGNALLED"}),
             msg.status(), msg.timeout(), msg.q_name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_task_sleep) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_task_sleep) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -350,7 +350,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1UL << 6), "SIGNALLED"}),
             msg.status(), msg.timeout(), msg.q_name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(rpc_task_wakeup) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rpc_task_wakeup) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -369,7 +369,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1UL << 10), "XPT_LISTENER"}, {(1UL << 11), "XPT_CACHE_AUTH"}, {(1UL << 12), "XPT_LOCAL"},
                 {(1UL << 13), "XPT_KILL_TEMP"}, {(1UL << 14), "XPT_CONG_CTRL"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(svc_handle_xprt) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(svc_handle_xprt) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -384,7 +384,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "svc_process: addr=%s xid=0x%08x service=%s vers=%u proc=%u", msg.addr().c_str(), msg.xid(),
             msg.service().c_str(), msg.vers(), msg.proc());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(svc_process) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(svc_process) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -402,7 +402,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {((((1UL))) << ((4))), "SPLICE_OK"}, {((((1UL))) << ((5))), "VICTIM"}, {((((1UL))) << ((6))), "BUSY"},
                 {((((1UL))) << ((7))), "DATA"}, {((((1UL))) << ((8))), "AUTHERR"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(svc_recv) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(svc_recv) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -420,7 +420,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {((((1UL))) << ((4))), "SPLICE_OK"}, {((((1UL))) << ((5))), "VICTIM"}, {((((1UL))) << ((6))), "BUSY"},
                 {((((1UL))) << ((7))), "DATA"}, {((((1UL))) << ((8))), "AUTHERR"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(svc_send) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(svc_send) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -433,7 +433,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "svc_wake_up: pid=%d", msg.pid());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(svc_wake_up) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(svc_wake_up) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -453,7 +453,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1UL << 13), "XPT_KILL_TEMP"}, {(1UL << 14), "XPT_CONG_CTRL"}),
             msg.wakeup());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(svc_xprt_dequeue) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(svc_xprt_dequeue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -472,8 +472,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1UL << 10), "XPT_LISTENER"}, {(1UL << 11), "XPT_CACHE_AUTH"}, {(1UL << 12), "XPT_LOCAL"},
                 {(1UL << 13), "XPT_KILL_TEMP"}, {(1UL << 14), "XPT_CONG_CTRL"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(svc_xprt_do_enqueue) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(svc_xprt_do_enqueue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -488,7 +488,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "xprt_lookup_rqst: peer=[%s]:%s xid=0x%08x status=%d",
                 msg.addr().c_str(), msg.port().c_str(), msg.xid(), msg.status());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(xprt_lookup_rqst) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(xprt_lookup_rqst) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -502,7 +502,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "xprt_transmit: xid=0x%08x status=%d", msg.xid(), msg.status());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(xprt_transmit) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(xprt_transmit) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

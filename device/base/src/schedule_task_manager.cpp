@@ -63,7 +63,7 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
 {
     int32_t timerFd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
     if (timerFd == -1) {
-        HILOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd create failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd create failed");
         return -1;
     }
 
@@ -71,7 +71,7 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
     struct itimerspec time;
     if (once) {
         if (interval == 0) {
-            HILOG_ERROR(LOG_CORE, "the interval parameters of a single execution cannot be 0");
+            PROFILER_LOG_ERROR(LOG_CORE, "the interval parameters of a single execution cannot be 0");
             return -1;
         }
         time.it_value.tv_sec = interval / TIME_BASE;
@@ -89,7 +89,7 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
 
     int32_t ret = timerfd_settime(timerFd, 0, &time, NULL);
     if (ret == -1) {
-        HILOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd settime failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd settime failed");
         return -1;
     }
 

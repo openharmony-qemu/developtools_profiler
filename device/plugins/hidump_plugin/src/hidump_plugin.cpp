@@ -48,7 +48,7 @@ HidumpPlugin::HidumpPlugin() : fp_(nullptr, nullptr) {}
 
 HidumpPlugin::~HidumpPlugin()
 {
-    HILOG_INFO(LOG_CORE, "%s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s: ready!", __func__);
     std::unique_lock<std::mutex> locker(mutex_);
     if (running_) {
         running_ = false;
@@ -61,12 +61,12 @@ HidumpPlugin::~HidumpPlugin()
     if (fp_ != nullptr) {
         fp_.reset();
     }
-    HILOG_INFO(LOG_CORE, "%s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
 int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    HILOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HidumpPlugin: ParseFromArray failed");
 
     fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(g_fpsFormat, "r"), CustomPclose);
@@ -74,7 +74,7 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", g_fpsFormat, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", g_fpsFormat, errno, buf);
         return -1;
     }
     CHECK_NOTNULL(resultWriter_, -1, "HidumpPlugin: Writer is no set!");
@@ -84,7 +84,7 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
     running_ = true;
     writeThread_ = std::thread(&HidumpPlugin::Loop, this);
 
-    HILOG_INFO(LOG_CORE, "HidumpPlugin: ---> Start success!");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin: ---> Start success!");
     return 0;
 }
 
@@ -96,11 +96,11 @@ int HidumpPlugin::Stop()
     if (writeThread_.joinable()) {
         writeThread_.join();
     }
-    HILOG_INFO(LOG_CORE, "HidumpPlugin:stop thread success!");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:stop thread success!");
     if (fp_ != nullptr) {
         fp_.reset();
     }
-    HILOG_INFO(LOG_CORE, "HidumpPlugin: stop success!");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin: stop success!");
     return 0;
 }
 
@@ -112,7 +112,7 @@ int HidumpPlugin::SetWriter(WriterStruct* writer)
 
 void HidumpPlugin::Loop(void)
 {
-    HILOG_INFO(LOG_CORE, "HidumpPlugin: Loop start");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin: Loop start");
     CHECK_NOTNULL(resultWriter_, NO_RETVAL, "%s: resultWriter_ nullptr", __func__);
 
     fcntl(fileno(fp_.get()), F_SETFL, O_NONBLOCK);
@@ -137,7 +137,7 @@ void HidumpPlugin::Loop(void)
         } else {
             ProtoEncoder::HidumpInfo hidumpInfo(resultWriter_->startReport(resultWriter_));
             if (!ParseHidumpInfo(hidumpInfo, buf)) {
-                HILOG_ERROR(LOG_CORE, "parse hidump info failed!");
+                PROFILER_LOG_ERROR(LOG_CORE, "parse hidump info failed!");
             }
             int messageLen = hidumpInfo.Finish();
             resultWriter_->finishReport(resultWriter_, messageLen);
@@ -145,7 +145,7 @@ void HidumpPlugin::Loop(void)
         }
     }
 
-    HILOG_INFO(LOG_CORE, "HidumpPlugin: Loop exit");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin: Loop exit");
 }
 
 template <typename T>
@@ -154,9 +154,9 @@ bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf)
     // format: fps:123|1501960484673
     if (strncmp(buf, "fps:", strlen("fps:")) != 0) {
         if (strstr(buf, "inaccessible or not found") != nullptr) {
-            HILOG_ERROR(LOG_CORE, "HidumpPlugin: fps command not found!");
+            PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: fps command not found!");
         } else {
-            HILOG_ERROR(LOG_CORE, "format error. %s", buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "format error. %s", buf);
         }
         return false;
     }
@@ -235,7 +235,7 @@ int HidumpPlugin::CustomPclose(FILE* fp)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "HidumpPlugin:%s fclose failed! errno(%d:%s)", __func__, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin:%s fclose failed! errno(%d:%s)", __func__, errno, buf);
         return -1;
     }
     kill(g_child, SIGKILL);

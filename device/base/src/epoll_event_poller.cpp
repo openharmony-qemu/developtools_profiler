@@ -31,11 +31,11 @@ EpollEventPoller::EpollEventPoller(int timeOut) : timeOut_(timeOut), epollFd_(IN
 EpollEventPoller::~EpollEventPoller()
 {
     if (state_ == STARTED) {
-        HILOG_INFO(LOG_CORE, "need Stop in destructor!");
+        PROFILER_LOG_INFO(LOG_CORE, "need Stop in destructor!");
         Stop();
     }
     if (state_ == INITIED) {
-        HILOG_INFO(LOG_CORE, "need Finalize in dtor!");
+        PROFILER_LOG_INFO(LOG_CORE, "need Finalize in dtor!");
         Finalize();
     }
 }
@@ -106,10 +106,10 @@ bool EpollEventPoller::UpdateEvent(int op, const EventContextPtr& ctx)
     event.data.ptr = ctx.get();
 
     std::string name = EpollOpName(op).c_str();
-    HILOG_DEBUG(LOG_CORE, "poll set %s %d %x start!", name.c_str(), ctx->fd, event.events);
+    PROFILER_LOG_DEBUG(LOG_CORE, "poll set %s %d %x start!", name.c_str(), ctx->fd, event.events);
     int retval = epoll_ctl(epollFd_, op, ctx->fd, &event);
     CHECK_TRUE(retval == 0, false, "epoll_ctl %s failed, %d", name.c_str(), errno);
-    HILOG_DEBUG(LOG_CORE, "poll set %s %d %x done!", name.c_str(), ctx->fd, event.events);
+    PROFILER_LOG_DEBUG(LOG_CORE, "poll set %s %d %x done!", name.c_str(), ctx->fd, event.events);
     return true;
 }
 
@@ -125,7 +125,7 @@ void EpollEventPoller::Run()
         int retval = TEMP_FAILURE_RETRY(epoll_wait(epollFd_, eventVec.data(), eventVec.size(), timeOut_));
         CHECK_TRUE(retval >= 0, NO_RETVAL, "epoll_wait failed, %d!", errno);
         if (retval == 0) {
-            HILOG_INFO(LOG_CORE, "epoll_wait %dms timeout!", timeOut_);
+            PROFILER_LOG_INFO(LOG_CORE, "epoll_wait %dms timeout!", timeOut_);
             continue;
         }
         for (int i = 0; i < retval; i++) {
@@ -154,20 +154,20 @@ void EpollEventPoller::OnNotify()
 {
     uint64_t value = 0;
     CHECK_TRUE(read(eventFd_, &value, sizeof(value)) == sizeof(value), NO_RETVAL, "read eventfd FAILED!");
-    HILOG_DEBUG(LOG_CORE, "OnNotify %llu done!", static_cast<unsigned long long>(value));
+    PROFILER_LOG_DEBUG(LOG_CORE, "OnNotify %llu done!", static_cast<unsigned long long>(value));
 }
 
 bool EpollEventPoller::Notify(uint64_t value)
 {
     auto nbytes = write(eventFd_, &value, sizeof(value));
     CHECK_TRUE(static_cast<size_t>(nbytes) == sizeof(value), false, "write eventfd FAILED!");
-    HILOG_DEBUG(LOG_CORE, "Notify %llu done!", static_cast<unsigned long long>(value));
+    PROFILER_LOG_DEBUG(LOG_CORE, "Notify %llu done!", static_cast<unsigned long long>(value));
     return true;
 }
 
 bool EpollEventPoller::Init()
 {
-    HILOG_INFO(LOG_CORE, "Init %d", state_.load());
+    PROFILER_LOG_INFO(LOG_CORE, "Init %d", state_.load());
     CHECK_TRUE(state_ == INITIAL, false, "Init FAIL %d", state_.load());
 
     int epollFd = epoll_create1(EPOLL_CLOEXEC);
@@ -187,7 +187,7 @@ bool EpollEventPoller::Init()
     epollFd_ = epollFd;
     eventFd_ = eventFd;
     AddContextLocked(eventFdCtx);
-    HILOG_INFO(LOG_CORE, "EpollEventPoller::Init %d done!", state_.load());
+    PROFILER_LOG_INFO(LOG_CORE, "EpollEventPoller::Init %d done!", state_.load());
     state_ = INITIED;
     return true;
 }
@@ -195,11 +195,11 @@ bool EpollEventPoller::Init()
 bool EpollEventPoller::Finalize()
 {
     if (state_ == STARTED) {
-        HILOG_INFO(LOG_CORE, "need Stop in Finalize!");
+        PROFILER_LOG_INFO(LOG_CORE, "need Stop in Finalize!");
         Stop();
     }
 
-    HILOG_INFO(LOG_CORE, "Finalize %d", state_.load());
+    PROFILER_LOG_INFO(LOG_CORE, "Finalize %d", state_.load());
     CHECK_TRUE(state_ == INITIED, false, "Finalize FAIL %d", state_.load());
 
     std::unique_lock<std::mutex> lock(mutex_);
@@ -208,7 +208,7 @@ bool EpollEventPoller::Finalize()
         contextVec.push_back(ctxPair.second);
     }
     for (auto ctxPtr : contextVec) {
-        HILOG_DEBUG(LOG_CORE, "remove context for %d", ctxPtr->fd);
+        PROFILER_LOG_DEBUG(LOG_CORE, "remove context for %d", ctxPtr->fd);
         RemoveContextLocked(ctxPtr);
     }
 
@@ -225,7 +225,7 @@ bool EpollEventPoller::Finalize()
 
 bool EpollEventPoller::Start()
 {
-    HILOG_INFO(LOG_CORE, "%s %d", __func__, state_.load());
+    PROFILER_LOG_INFO(LOG_CORE, "%s %d", __func__, state_.load());
     CHECK_TRUE(state_ == INITIED, false, "Start FAIL %d", state_.load());
 
     running_ = true;

@@ -33,10 +33,10 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     file_.open(GPU_PATH);
     if (!file_.is_open()) {
-        HILOG_ERROR(LOG_CORE, "%s:failed to open(%s)", __func__, GPU_PATH.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s)", __func__, GPU_PATH.c_str());
         return RET_FAIL;
     }
-    HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
 }
 
@@ -67,7 +67,7 @@ int GpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 int GpuDataPlugin::Stop()
 {
     file_.close();
-    HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
@@ -79,7 +79,7 @@ int GpuDataPlugin::ReadFile()
     std::getline(file_, line);
     for (char charac : line) {
         if (!isdigit(charac)) {
-            HILOG_ERROR(LOG_CORE, "invalid file content for (%s)", GPU_PATH.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "invalid file content for (%s)", GPU_PATH.c_str());
             return RET_FAIL;
         }
     }

@@ -62,7 +62,7 @@ MemoryDataPlugin::MemoryDataPlugin()
 
 MemoryDataPlugin::~MemoryDataPlugin()
 {
-    HILOG_INFO(LOG_CORE, "%s:~MemoryDataPlugin!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:~MemoryDataPlugin!", __func__);
 
     buffer_ = nullptr;
 
@@ -120,7 +120,7 @@ int MemoryDataPlugin::InitMemVmemFd()
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
             return RET_FAIL;
         }
         meminfoFd_ = open(realPath, O_RDONLY | O_CLOEXEC);
@@ -128,7 +128,7 @@ int MemoryDataPlugin::InitMemVmemFd()
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "%s:open failed, fileName, errno(%d:%s)", __func__, errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:open failed, fileName, errno(%d:%s)", __func__, errno, buf);
             return RET_FAIL;
         }
     }
@@ -142,7 +142,7 @@ int MemoryDataPlugin::InitMemVmemFd()
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
             return RET_FAIL;
         }
         vmstatFd_ = open(realPath, O_RDONLY | O_CLOEXEC);
@@ -150,7 +150,7 @@ int MemoryDataPlugin::InitMemVmemFd()
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "%s:failed to open(/proc/vmstat), errno(%d:%s)", __func__, errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(/proc/vmstat), errno(%d:%s)", __func__, errno, buf);
             return RET_FAIL;
         }
     }
@@ -196,7 +196,7 @@ int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
         }
     }
 
-    HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
 }
 
@@ -318,7 +318,7 @@ template <typename T> bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t 
 
     size_t ret = fread(buffer.get(), 1, BUF_MAX_LEN, fp.get());
     if (ret == 0) {
-        HILOG_ERROR(LOG_CORE, "%s:fread failed", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:fread failed", __func__);
     }
     buffer.get()[BUF_MAX_LEN - 1] = '\0';
 
@@ -422,7 +422,7 @@ int MemoryDataPlugin::Stop()
             }
         }
     }
-    HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
@@ -453,7 +453,7 @@ int32_t MemoryDataPlugin::ReadFile(int fd)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "%s:failed to read(%d), errno(%d:%s)", __func__, fd, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to read(%d), errno(%d:%s)", __func__, fd, errno, buf);
         err_ = errno;
         return RET_FAIL;
     }
@@ -470,7 +470,7 @@ std::string MemoryDataPlugin::ReadFile(const std::string& path)
         const int maxSize = 256;
         char buf[maxSize] = { 0 };
         strerror_r(errno, buf, maxSize);
-        HILOG_WARN(LOG_CORE, "open file %s FAILED: %s!", path.c_str(), buf);
+        PROFILER_LOG_WARN(LOG_CORE, "open file %s FAILED: %s!", path.c_str(), buf);
         return "";
     }
 
@@ -501,20 +501,20 @@ std::vector<int> MemoryDataPlugin::OpenProcPidFiles(int32_t pid)
     for (int i = 0; i < count; i++) {
         if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1,
             "%s/%d/%s", testpath_, pid, procfdMapping[i].file) < 0) {
-            HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
         }
         if (realpath(fileName, realPath) == nullptr) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
         }
         int fd = open(realPath, O_RDONLY | O_CLOEXEC);
         if (fd == -1) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName, errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName, errno, buf);
         }
         profds.emplace(profds.begin() + i, fd);
     }
@@ -530,7 +530,7 @@ DIR* MemoryDataPlugin::OpenDestDir(const char* dirPath)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "%s:failed to opendir(%s), errno(%d:%s)", __func__, dirPath, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to opendir(%s), errno(%d:%s)", __func__, dirPath, errno, buf);
     }
 
     return destDir;
@@ -564,7 +564,7 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
         return RET_FAIL;
     }
     fd = open(realPath, O_RDONLY | O_CLOEXEC);
@@ -572,12 +572,12 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_INFO(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName, errno, buf);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName, errno, buf);
         err_ = errno;
         return RET_FAIL;
     }
     if (buffer_.get() == nullptr) {
-        HILOG_INFO(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
         close(fd);
         return RET_FAIL;
@@ -588,7 +588,7 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_INFO(LOG_CORE, "%s:failed to read(%s), errno(%d:%s)", __func__, fileName, errno, buf);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to read(%s), errno(%d:%s)", __func__, fileName, errno, buf);
         err_ = errno;
         return RET_FAIL;
     }
@@ -652,7 +652,7 @@ template <typename T> void MemoryDataPlugin::SetProcessInfo(T& processMemoryInfo
     uint64_t value;
 
     if ((key >= PRO_TGID && key <= PRO_PURGPIN && key != PRO_NAME) && !StringToUll(word, value)) {
-        HILOG_ERROR(LOG_CORE, "MemoryDataPlugin:%s, strtoull failed, key(%d), word(%s)", __func__, key, word);
+        PROFILER_LOG_ERROR(LOG_CORE, "MemoryDataPlugin:%s, strtoull failed, key(%d), word(%s)", __func__, key, word);
         return;
     }
 
@@ -733,7 +733,7 @@ template <typename T> void MemoryDataPlugin::WriteOomInfo(T& processMemoryInfo, 
         return;
     }
     if (buffer_.get() == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:invalid params, read buffer_ is NULL", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid params, read buffer_ is NULL", __func__);
         return;
     }
     processMemoryInfo.set_oom_score_adj(static_cast<int64_t>(strtol(reinterpret_cast<char*>(buffer_.get()),
@@ -836,7 +836,7 @@ template <typename T> void MemoryDataPlugin::WriteAshmemInfo(T& dataProto)
     std::string file = path + "/purgeable_ashmem_trigger";
     std::ifstream input(file, std::ios::in);
     if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
         return;
     }
 
@@ -927,7 +927,7 @@ template <typename T> void MemoryDataPlugin::WriteDmaInfo(T& dataProto)
     std::string file = std::string(testpath_) + "/process_dmabuf_info";
     std::ifstream input(file, std::ios::in);
     if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
         return;
     }
 
@@ -996,7 +996,7 @@ template <typename T> void MemoryDataPlugin::WriteGpuMemInfo(T& dataProto)
     std::string file = path + "/gpu_memory";
     std::ifstream input(file, std::ios::in);
     if (input.fail()) {
-        HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
         return;
     }
 
@@ -1042,7 +1042,7 @@ std::string MemoryDataPlugin::RunCommand(const std::string& cmd)
     std::string ret = "";
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
     if (!pipe) {
-        HILOG_ERROR(LOG_CORE, "%s:popen(%s) error", __func__, cmd.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:popen(%s) error", __func__, cmd.c_str());
         return ret;
     }
 
@@ -1239,7 +1239,7 @@ bool MemoryDataPlugin::GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graph
     bool ret = false;
     sptr<IMemoryTrackerInterface> memtrack = IMemoryTrackerInterface::Get(true);
     if (memtrack == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s: get IMemoryTrackerInterface failed", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: get IMemoryTrackerInterface failed", __func__);
         return ret;
     }
 
@@ -1373,7 +1373,7 @@ template <typename T> void MemoryDataPlugin::WriteProfileMemInfo(T& dataProto)
 
         std::ifstream input(file, std::ios::in);
         if (input.fail()) {
-            HILOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:open %s failed, errno = %d", __func__, file.c_str(), errno);
             return;
         }
 

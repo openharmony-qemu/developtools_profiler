@@ -155,38 +155,34 @@ static inline std::string StringFormat(const char* fmt, ...)
 }
 }  // logging
 
-#ifdef HILOG_DEBUG
-#undef HILOG_DEBUG
-#endif
-
-#ifdef HILOG_INFO
-#undef HILOG_INFO
-#endif
-
-#ifdef HILOG_WARN
-#undef HILOG_WARN
-#endif
-
-#ifdef HILOG_ERROR
-#undef HILOG_ERROR
-#endif
-
 #ifdef HILOG_PRINT
 #undef HILOG_PRINT
 #endif
 
 #ifdef HAVE_HILOG
-#define HILOG_PRINT(type, level, fmt, ...) \
-    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_DEBUG(type, fmt, ...) \
+    HILOG_DEBUG(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_INFO(type, fmt, ...) \
+    HILOG_INFO(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_WARN(type, fmt, ...) \
+    HILOG_WARN(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_ERROR(type, fmt, ...) \
+    HILOG_ERROR(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #else
-#define HILOG_PRINT(type, level, fmt, ...) \
+#define HILOG_PRINT_DEBUG(type, level, fmt, ...) \
+    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_INFO(type, level, fmt, ...) \
+    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_WARN(type, level, fmt, ...) \
+    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_ERROR(type, level, fmt, ...) \
     HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #endif
 
-#define HILOG_DEBUG(type, fmt, ...) HILOG_PRINT(type, LOG_DEBUG, fmt, ##__VA_ARGS__)
-#define HILOG_INFO(type, fmt, ...) HILOG_PRINT(type, LOG_INFO, fmt, ##__VA_ARGS__)
-#define HILOG_WARN(type, fmt, ...) HILOG_PRINT(type, LOG_WARN, fmt, ##__VA_ARGS__)
-#define HILOG_ERROR(type, fmt, ...) HILOG_PRINT(type, LOG_ERROR, fmt, ##__VA_ARGS__)
+#define PROFILER_LOG_DEBUG(type, fmt, ...) HILOG_PRINT_DEBUG(type, fmt, ##__VA_ARGS__)
+#define PROFILER_LOG_INFO(type, fmt, ...) HILOG_PRINT_INFO(type, fmt, ##__VA_ARGS__)
+#define PROFILER_LOG_WARN(type, fmt, ...) HILOG_PRINT_WARN(type, fmt, ##__VA_ARGS__)
+#define PROFILER_LOG_ERROR(type, fmt, ...) HILOG_PRINT_ERROR(type, fmt, ##__VA_ARGS__)
 #endif  // NDEBUG
 
 #define STD_PTR(K, T) std::K##_ptr<T>
@@ -196,8 +192,9 @@ static inline std::string StringFormat(const char* fmt, ...)
 #define CHECK_NOTNULL(ptr, retval, fmt, ...)                                                                        \
     do {                                                                                                            \
         if (ptr == nullptr) {                                                                                       \
-            HILOG_WARN(LOG_CORE, "CHECK_NOTNULL(%s) in %s:%d FAILED, " fmt, #ptr, __func__, \
-                       __LINE__, ##__VA_ARGS__);                                                                    \
+            std::string str = std::string("CHECK_NOTNULL(") + logging::StringFormat(fmt, ##__VA_ARGS__) +           \
+                              ") in " + __func__ + ":" + std::to_string(__LINE__) + "FAILED";                       \
+            HILOG_WARN(LOG_CORE, "%{public}s", str.c_str());                                                        \
             return retval;                                                                                          \
         }                                                                                                           \
     } while (0)
@@ -206,7 +203,9 @@ static inline std::string StringFormat(const char* fmt, ...)
 #define CHECK_TRUE(expr, retval, fmt, ...)                                                                          \
     do {                                                                                                            \
         if (!(expr)) {                                                                                              \
-            HILOG_WARN(LOG_CORE, "CHECK_TRUE(%s) in %s:%d FAILED, " fmt, #expr, __func__, __LINE__, ##__VA_ARGS__); \
+            std::string str = std::string("CHECK_TRUE(") + logging::StringFormat(fmt, ##__VA_ARGS__) +              \
+                              ") in " + __func__ + ":" + std::to_string(__LINE__) + "FAILED";                       \
+            HILOG_WARN(LOG_CORE, "%{public}s", str.c_str());                                                        \
             return retval;                                                                                          \
         }                                                                                                           \
     } while (0)
@@ -222,7 +221,7 @@ static inline std::string StringFormat(const char* fmt, ...)
 #define RETURN_IF(expr, retval, fmt, ...)             \
     do {                                              \
         if ((expr)) {                                 \
-            HILOG_WARN(LOG_CORE, fmt, ##__VA_ARGS__); \
+            HILOG_WARN(LOG_CORE, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str()); \
             return retval;                            \
         }                                             \
     } while (0)

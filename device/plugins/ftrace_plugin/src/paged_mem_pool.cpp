@@ -30,7 +30,7 @@ FTRACE_NS_BEGIN
 PagedMemPool::PagedMemPool(size_t pagePerBlock, size_t maxCacheSize)
     : blockSize_(pagePerBlock * PAGE_SIZE), maxCacheSize_(maxCacheSize)
 {
-    HILOG_INFO(LOG_CORE, "PagedMemPool init with %zu ppb, %zu slots!", pagePerBlock, maxCacheSize);
+    PROFILER_LOG_INFO(LOG_CORE, "PagedMemPool init with %zu ppb, %zu slots!", pagePerBlock, maxCacheSize);
 }
 
 PagedMemPool::~PagedMemPool()
@@ -40,7 +40,7 @@ PagedMemPool::~PagedMemPool()
         Free(*it);
         it = blockSet_.erase(it);
     }
-    HILOG_INFO(LOG_CORE, "PagedMemPool deinit!");
+    PROFILER_LOG_INFO(LOG_CORE, "PagedMemPool deinit!");
 }
 
 size_t PagedMemPool::GetBlockSize() const
@@ -60,7 +60,7 @@ void* PagedMemPool::Allocate()
     block = mmap(nullptr, blockSize_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     CHECK_NOTNULL(block, nullptr, "mmap failed, %d", errno);
     blockSet_.insert(block);
-    HILOG_INFO(LOG_CORE, "PagedMemPool::Allocate %zuB block done!", blockSize_);
+    PROFILER_LOG_INFO(LOG_CORE, "PagedMemPool::Allocate %zuB block done!", blockSize_);
     return block;
 }
 

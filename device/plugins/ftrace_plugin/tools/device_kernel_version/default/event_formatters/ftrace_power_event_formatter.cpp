@@ -32,7 +32,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "clock_disable: %s state=%lu cpu_id=%lu",
             msg.name().c_str(), (unsigned long)msg.state(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(clock_disable) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(clock_disable) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -46,7 +46,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "clock_enable: %s state=%lu cpu_id=%lu",
             msg.name().c_str(), (unsigned long)msg.state(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(clock_enable) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(clock_enable) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -60,7 +60,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "clock_set_rate: %s state=%lu cpu_id=%lu",
             msg.name().c_str(), (unsigned long)msg.state(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(clock_set_rate) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(clock_set_rate) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -74,7 +74,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cpu_frequency: state=%lu cpu_id=%lu",
             (unsigned long)msg.state(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cpu_frequency) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(cpu_frequency) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -88,8 +88,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cpu_frequency_limits: min=%lu max=%lu cpu_id=%lu",
             (unsigned long)msg.min_freq(), (unsigned long)msg.max_freq(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(cpu_frequency_limits) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(cpu_frequency_limits) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -103,7 +103,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cpu_idle: state=%lu cpu_id=%lu",
             (unsigned long)msg.state(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cpu_idle) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(cpu_idle) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -120,8 +120,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {DEV_PM_QOS_FLAGS, "DEV_PM_QOS_FLAGS"}),
             msg.new_value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(dev_pm_qos_add_request) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(dev_pm_qos_add_request) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -138,8 +138,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {DEV_PM_QOS_FLAGS, "DEV_PM_QOS_FLAGS"}),
             msg.new_value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE,
-                "maybe, the contents of print event(dev_pm_qos_remove_request) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                "the contents of print event(dev_pm_qos_remove_request) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -156,8 +156,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {DEV_PM_QOS_FLAGS, "DEV_PM_QOS_FLAGS"}),
             msg.new_value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE,
-                "maybe, the contents of print event(dev_pm_qos_update_request) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                "the contents of print event(dev_pm_qos_update_request) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -171,8 +171,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "device_pm_callback_end: %s %s, err=%d",
             msg.driver().c_str(), msg.device().c_str(), msg.error());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(device_pm_callback_end) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(device_pm_callback_end) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -190,8 +190,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                     {0x0008, "quiesce"}, {0x0004, "hibernate"}, {0x0020, "thaw"}, {0x0040, "restore"},
                     {0x0080, "recover"}));
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(device_pm_callback_start) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(device_pm_callback_start) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -205,8 +205,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "pm_qos_add_request: CPU_DMA_LATENCY value=%d", msg.value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(pm_qos_add_request) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(pm_qos_add_request) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -220,8 +220,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "pm_qos_remove_request: CPU_DMA_LATENCY value=%d", msg.value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(pm_qos_remove_request) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(pm_qos_remove_request) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -238,8 +238,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {PM_QOS_REMOVE_REQ, "REMOVE_REQ"}),
             msg.prev_value(), msg.curr_value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(pm_qos_update_flags) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(pm_qos_update_flags) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -253,8 +253,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "pm_qos_update_request: CPU_DMA_LATENCY value=%d", msg.value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(pm_qos_update_request) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(pm_qos_update_request) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -271,8 +271,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {PM_QOS_REMOVE_REQ, "REMOVE_REQ"}),
             msg.prev_value(), msg.curr_value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(pm_qos_update_target) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(pm_qos_update_target) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -286,8 +286,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "power_domain_target: %s state=%lu cpu_id=%lu",
             msg.name().c_str(), (unsigned long)msg.state(), (unsigned long)msg.cpu_id());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(power_domain_target) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(power_domain_target) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -305,7 +305,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             (unsigned long)msg.to(), msg.mperf(), msg.aperf(), msg.tsc(), (unsigned long)msg.freq(),
             (unsigned long)msg.io_boost());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(pstate_sample) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(pstate_sample) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -319,7 +319,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "suspend_resume: %s[%u] %s", msg.action().c_str(),
             (unsigned int)msg.val(), (msg.start()) ? "begin" : "end");
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(suspend_resume) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(suspend_resume) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -333,8 +333,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "wakeup_source_activate: %s state=0x%" PRIx64 "",
             msg.name().c_str(), msg.state());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(wakeup_source_activate) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(wakeup_source_activate) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -348,8 +348,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "wakeup_source_deactivate: %s state=0x%" PRIx64 "",
             msg.name().c_str(), msg.state());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(wakeup_source_deactivate) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "the contents of print event(wakeup_source_deactivate) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
