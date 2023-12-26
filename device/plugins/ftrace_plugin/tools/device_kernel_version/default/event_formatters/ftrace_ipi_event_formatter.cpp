@@ -30,7 +30,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "ipi_entry: (%s)", msg.reason().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_entry) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_entry) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -43,7 +43,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "ipi_exit: (%s)", msg.reason().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_exit) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_exit) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -57,7 +57,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "ipi_raise: target_mask=%" PRIu64 " (%s)",
             msg.target_cpus(), msg.reason().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_raise) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_raise) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

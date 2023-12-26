@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
         listenUri = argv[1];
     }
     if (service->StartService(listenUri)) {
-        HILOG_INFO(LOG_CORE, "ProfilerService start SUCCESS!");
+        PROFILER_LOG_INFO(LOG_CORE, "ProfilerService start SUCCESS!");
         service->WaitServiceDone();
     }
     close(lockFileFd);

@@ -137,13 +137,13 @@ int PluginModuleApiTest::StreamRegisterWriterStruct(WriterStruct* writer)
 // write
 long PluginModuleApiTest::Write(WriterStruct* writer, const void* data, size_t size)
 {
-    HILOG_INFO(LOG_CORE, "PluginModuleApiTest::Write no implementation !");
+    PROFILER_LOG_INFO(LOG_CORE, "PluginModuleApiTest::Write no implementation !");
     return 0;
 }
 
 bool PluginModuleApiTest::Flush(WriterStruct* writer)
 {
-    HILOG_INFO(LOG_CORE, "PluginModuleApiTest::Write no implementation !");
+    PROFILER_LOG_INFO(LOG_CORE, "PluginModuleApiTest::Write no implementation !");
     return true;
 }
 

@@ -49,7 +49,7 @@ HilogPlugin::HilogPlugin() : fp_(nullptr, nullptr) {}
 
 HilogPlugin::~HilogPlugin()
 {
-    HILOG_INFO(LOG_CORE, "%s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s: ready!", __func__);
     std::unique_lock<std::mutex> locker(mutex_);
     if (running_) {
         running_ = false;
@@ -65,7 +65,7 @@ HilogPlugin::~HilogPlugin()
     if (fp_ != nullptr) {
         fp_.reset();
     }
-    HILOG_INFO(LOG_CORE, "%s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
 int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -105,7 +105,7 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     int oldPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
     fcntl(fileno(fp_.get()), F_SETPIPE_SZ, oldPipeSize * PIPE_SIZE_RATIO);
     int pipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
-    HILOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
+    PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
 
     workThread_ = std::thread(&HilogPlugin::Run, this);
 
@@ -114,7 +114,7 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
 int HilogPlugin::Stop()
 {
-    HILOG_INFO(LOG_CORE, "HilogPlugin: ready stop thread!");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin: ready stop thread!");
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = false;
     COMMON::CustomPUnblock(pipeFds_);
@@ -126,13 +126,13 @@ int HilogPlugin::Stop()
         g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
         dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
     }
-    HILOG_INFO(LOG_CORE, "HilogPlugin: stop thread success!");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin: stop thread success!");
     if (protoConfig_.need_record()) {
         g_fileCache.Close();
     }
     fp_.reset();
 
-    HILOG_INFO(LOG_CORE, "HilogPlugin: stop success!");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin: stop success!");
     return 0;
 }
 
@@ -197,7 +197,7 @@ void HilogPlugin::InitHilogCmd()
 
 void HilogPlugin::Run(void)
 {
-    HILOG_INFO(LOG_CORE, "HilogPlugin::Run start!");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin::Run start!");
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_BUFFER_LEN);
 
     std::unique_ptr<HilogInfo> dataProto = nullptr;
@@ -214,7 +214,8 @@ void HilogPlugin::Run(void)
         }
 
         if ((strlen(reinterpret_cast<char*>(buffer.get())) + 1) == (MAX_BUFFER_LEN - 1)) {
-            HILOG_ERROR(LOG_CORE, "HilogPlugin:data length is greater than the MAX_BUFFER_LEN(%d)", MAX_BUFFER_LEN);
+            PROFILER_LOG_ERROR(LOG_CORE,
+                               "HilogPlugin:data length is greater than the MAX_BUFFER_LEN(%d)", MAX_BUFFER_LEN);
         }
 
         auto cptr = reinterpret_cast<char*>(buffer.get());
@@ -249,13 +250,13 @@ void HilogPlugin::Run(void)
         FlushDataOptimize(hilogInfo.get());
         hilogInfo.reset();
     }
-    HILOG_INFO(LOG_CORE, "HilogPlugin::Run done!");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin::Run done!");
 }
 
 template <typename T> void HilogPlugin::ParseLogLineInfo(const char* data, size_t len, T& hilogLineInfo)
 {
     if (data == nullptr || len < TIME_NS_WIDTH) {
-        HILOG_ERROR(LOG_CORE, "HilogPlugin:%s param invalid", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin:%s param invalid", __func__);
         return;
     }
 
@@ -332,7 +333,7 @@ template <typename T> bool HilogPlugin::SetHilogLineDetails(const char* data, T&
     if (google::protobuf::internal::IsStructurallyValidUTF8(pTmp, strlen(pTmp) - 1)) {
         hilogLineInfo.set_context(pTmp, strlen(pTmp) - 1);  // - \n
     } else {
-        HILOG_ERROR(LOG_CORE, "HilogPlugin: log context include invalid UTF-8 data");
+        PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin: log context include invalid UTF-8 data");
         hilogLineInfo.set_context("");
     }
 
@@ -407,7 +408,7 @@ bool HilogPlugin::TimeStringToNS(const char* data, struct timespec *tsTime)
         const int bufSize = 128;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "HilogPlugin: get localtime failed!, errno(%d:%s)", errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin: get localtime failed!, errno(%d:%s)", errno, buf);
         return false;
     }
     tmTime.tm_year = result.tm_year;
@@ -415,7 +416,7 @@ bool HilogPlugin::TimeStringToNS(const char* data, struct timespec *tsTime)
     pTmp = const_cast<char*>(data) + TIME_HOUR_WIDTH;
     CHECK_TRUE(StringToL(pTmp, fixHour), false, "%s:strtol fixHour failed", __func__);
     if (static_cast<int>(fixHour) != tmTime.tm_hour) { // hours since midnight - [0, 23]
-        HILOG_INFO(LOG_CORE, "HilogPlugin: hour(%d) <==> fix hour(%ld)!", tmTime.tm_hour, fixHour);
+        PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin: hour(%d) <==> fix hour(%ld)!", tmTime.tm_hour, fixHour);
         tmTime.tm_hour = fixHour;
     }
     pTmp = const_cast<char*>(data) + TIME_SEC_WIDTH;
@@ -429,7 +430,7 @@ bool HilogPlugin::TimeStringToNS(const char* data, struct timespec *tsTime)
 
     char buff[TIME_BUFF_LEN] = {0};
     if (snprintf_s(buff, sizeof(buff), sizeof(buff) - 1, "%ld.%09u\n", timetTime, nsec) < 0) {
-        HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
     }
     size_t buffSize = strlen(buff);
     for (size_t i = 0; i < buffSize && protoConfig_.need_record(); i++) {
@@ -453,13 +454,13 @@ int HilogPlugin::GetDateTime(char* psDateTime, uint32_t size)
         const int bufSize = 128;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "HilogPlugin: get localtime failed!, errno(%d:%s)", errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin: get localtime failed!, errno(%d:%s)", errno, buf);
         return -1;
     }
 
     if (snprintf_s(psDateTime, size, size - 1, "%04d%02d%02d%02d%02d%02d", pTM->tm_year + BASE_YEAR, pTM->tm_mon + 1,
                    pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec) < 0) {
-        HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
     }
 
     return 0;

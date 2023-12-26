@@ -43,7 +43,7 @@ TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path
 TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
 {
     if (write(fd_, &header_, sizeof(header_)) != sizeof(header_)) {
-        HILOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
     }
     isWriteFd_ = true;
     (void)FlushStream();
@@ -109,7 +109,7 @@ void TraceFileWriter::WriteStandalonePluginData(
 
     std::vector<char> msgData(pluginData.ByteSizeLong());
     if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
-        HILOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
+        PROFILER_LOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
     }
 
     Write(msgData.data(), msgData.size());
@@ -135,7 +135,7 @@ void TraceFileWriter::WriteStandalonePluginData(
 
     std::vector<char> msgData(pluginData.ByteSizeLong());
     if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
-        HILOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
+        PROFILER_LOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
     }
 
     Write(msgData.data(), msgData.size());
@@ -210,7 +210,7 @@ bool TraceFileWriter::WriteHeader()
     stream_.write(reinterpret_cast<CharPtr>(&header_), sizeof(header_));
     CHECK_TRUE(stream_, false, "write initial header to %s failed!", path_.c_str());
     dataSize_ = header_.HEADER_SIZE;
-    HILOG_INFO(LOG_CORE, "write file(%s) header end", path_.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "write file(%s) header end", path_.c_str());
     return true;
 }
 
@@ -218,13 +218,13 @@ bool TraceFileWriter::WriteHeader()
 void TraceFileWriter::DeleteOldSplitFile()
 {
     if (splitFilePaths_.size() <= splitFileMaxNum_) {
-        HILOG_INFO(LOG_CORE, "splitFilePaths_ size %zu, no need to delete.", splitFilePaths_.size());
+        PROFILER_LOG_INFO(LOG_CORE, "splitFilePaths_ size %zu, no need to delete.", splitFilePaths_.size());
         return;
     }
 
     std::string splitFilePath = splitFilePaths_.front();
     int ret = unlink(splitFilePath.c_str());
-    HILOG_INFO(LOG_CORE, "DeleteOldSplitFile remove %s return %d. ", splitFilePath.c_str(), ret);
+    PROFILER_LOG_INFO(LOG_CORE, "DeleteOldSplitFile remove %s return %d. ", splitFilePath.c_str(), ret);
     splitFilePaths_.pop();
 }
 
@@ -275,7 +275,7 @@ long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
     std::ifstream fsFile {}; // read data from file
     fsFile.open(file, std::ios_base::in | std::ios_base::binary);
     if (!fsFile.good()) {
-        HILOG_ERROR(LOG_CORE, "open file(%s) failed: %d", file.c_str(), fsFile.rdstate());
+        PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", file.c_str(), fsFile.rdstate());
         return 0;
     }
 
@@ -286,19 +286,19 @@ long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
     size_t size = name.size();
     if (size > 0) {
         if (size > PLUGIN_MODULE_NAME_MAX) {
-            HILOG_ERROR(LOG_CORE, "standalonePluginName(%s) size(%zu) is greater than %d!",
+            PROFILER_LOG_ERROR(LOG_CORE, "standalonePluginName(%s) size(%zu) is greater than %d!",
                 name.c_str(), size, PLUGIN_MODULE_NAME_MAX);
         } else if (strncpy_s(header.data_.standalonePluginName, PLUGIN_MODULE_NAME_MAX, name.c_str(), size) != EOK) {
-            HILOG_ERROR(LOG_CORE, "strncpy_s standalonePluginName(%s) error!", name.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s standalonePluginName(%s) error!", name.c_str());
         }
     }
     size = version.size();
     if (size > 0) {
         if (size > PLUGIN_MODULE_VERSION_MAX) {
-            HILOG_ERROR(LOG_CORE, "pluginVersion(%s) size(%zu) is greater than %d!",
+            PROFILER_LOG_ERROR(LOG_CORE, "pluginVersion(%s) size(%zu) is greater than %d!",
                 version.c_str(), size, PLUGIN_MODULE_VERSION_MAX);
         } else if (strncpy_s(header.data_.pluginVersion, PLUGIN_MODULE_VERSION_MAX, version.c_str(), size) != EOK) {
-            HILOG_ERROR(LOG_CORE, "strncpy_s pluginVersion(%s) error!", version.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s pluginVersion(%s) error!", version.c_str());
         }
     }
     header.data_.dataType = type;
@@ -325,7 +325,7 @@ bool TraceFileWriter::IsSplitFile(uint32_t size)
 {
     dataSize_ += sizeof(uint32_t) + size;
     if (dataSize_ >= splitFileMaxSize_) {
-        HILOG_INFO(LOG_CORE, "need to split the file(%s), data size:%d, size: %d, splitFileMaxSize_:%d",
+        PROFILER_LOG_INFO(LOG_CORE, "need to split the file(%s), data size:%d, size: %d, splitFileMaxSize_:%d",
             path_.c_str(), dataSize_, size, splitFileMaxSize_);
 
         // update old file header
@@ -395,7 +395,7 @@ bool TraceFileWriter::Finish()
         stream_.seekp(filePos);
         CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
-        HILOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
+        PROFILER_LOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
                    writeCount_);
     }
     return true;
@@ -412,7 +412,8 @@ bool TraceFileWriter::FlushStream()
         CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
     }
-    HILOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_, writeCount_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(),
+                       writeBytes_, writeCount_);
     return true;
 }
 
@@ -433,7 +434,8 @@ void TraceFileWriter::LogDiskUsage()
     int ret = statvfs(diskPath.c_str(), &diskInfo);
     if (ret != 0) {
         std::string errorMsg = COMMON::GetErrorMsg();
-        HILOG_ERROR(LOG_CORE, "LogDiskUsage() return %d, path:%s, msg:%s", ret, diskPath.c_str(), errorMsg.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "LogDiskUsage() return %d, path:%s, msg:%s",
+                           ret, diskPath.c_str(), errorMsg.c_str());
         return;
     }
 
@@ -444,5 +446,5 @@ void TraceFileWriter::LogDiskUsage()
     float freePercent = static_cast<float>(freeSize) / static_cast<float>(totalSize);
     uint32_t freeSizeGb = freeSize / GB_TO_BYTE;
     // 100: in terms of percentage
-    HILOG_INFO(LOG_CORE, "LogDiskUsage() freePercent:%.1f, freeSizeGb:%u", freePercent * 100, freeSizeGb);
+    PROFILER_LOG_INFO(LOG_CORE, "LogDiskUsage() freePercent:%.1f, freeSizeGb:%u", freePercent * 100, freeSizeGb);
 }

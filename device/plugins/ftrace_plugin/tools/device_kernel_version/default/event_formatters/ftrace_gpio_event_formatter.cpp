@@ -31,7 +31,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "gpio_direction: %u %3s (%d)", msg.gpio(),
             msg.in() ? "in" : "out", msg.err());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(gpio_direction) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(gpio_direction) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -45,7 +45,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "gpio_value: %u %3s %d", msg.gpio(),
             msg.get() ? "get" : "set", msg.value());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(gpio_value) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(gpio_value) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

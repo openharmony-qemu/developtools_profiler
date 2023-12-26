@@ -37,7 +37,7 @@ UnixSocketServer::~UnixSocketServer()
 {
     if (getuid() == 0) {
         if (socketHandle_ != -1) {
-            HILOG_DEBUG(LOG_CORE, "close UnixSocketServer");
+            PROFILER_LOG_DEBUG(LOG_CORE, "close UnixSocketServer");
             close(socketHandle_);
             unlink(sAddrName_.c_str());
         }
@@ -47,9 +47,9 @@ UnixSocketServer::~UnixSocketServer()
     if (acceptThread_.joinable()) {
         acceptThread_.join();
     }
-    HILOG_DEBUG(LOG_CORE, "acceptThread finish");
+    PROFILER_LOG_DEBUG(LOG_CORE, "acceptThread finish");
     if (socketClients_.size() > 0) {
-        HILOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
+        PROFILER_LOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
         socketClients_.clear();
     }
 }
@@ -67,13 +67,13 @@ void UnixSocketServer::UnixSocketAccept()
         struct epoll_event events[10];
         int nfds = epoll_wait(epfd, events, 10, 1000);  // timeout value set 1000.
         if (nfds == -1) {
-            HILOG_ERROR(LOG_CORE, "UnixSocketServer epoll_wait failed, errno: %s", strerror(errno));
+            PROFILER_LOG_ERROR(LOG_CORE, "UnixSocketServer epoll_wait failed, errno: %s", strerror(errno));
             return;
         }
         for (int32_t i = 0; i < nfds; ++i) {
             if (events[i].events & EPOLLIN) {
                 int clientSocket = accept(socketHandle_, nullptr, nullptr);
-                HILOG_INFO(LOG_CORE, "Accept A Client %d", clientSocket);
+                PROFILER_LOG_INFO(LOG_CORE, "Accept A Client %d", clientSocket);
 
                 struct epoll_event clientEvt;
                 clientEvt.data.fd = clientSocket;
@@ -81,10 +81,11 @@ void UnixSocketServer::UnixSocketAccept()
                 epoll_ctl(epfd, EPOLL_CTL_ADD, clientSocket, &clientEvt);
 
                 if (socketClients_.find(clientSocket) == socketClients_.end()) {
-                    HILOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu", socketClients_.size());
+                    PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
+                                       socketClients_.size());
                     socketClients_[clientSocket] = std::make_shared<ClientConnection>(clientSocket, *serviceEntry_);
                 } else {
-                    HILOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
+                    PROFILER_LOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
                 }
             } else if (events[i].events & EPOLLHUP) {
                 struct epoll_event delEvt;
@@ -92,10 +93,11 @@ void UnixSocketServer::UnixSocketAccept()
                 delEvt.events = EPOLLHUP;
                 epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &delEvt);
                 if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
-                    HILOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu", socketClients_.size());
+                    PROFILER_LOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu",
+                                       socketClients_.size());
                     socketClients_.erase(events[i].data.fd);
                 } else {
-                    HILOG_ERROR(LOG_CORE, "Client %d not exist", events[i].data.fd);
+                    PROFILER_LOG_ERROR(LOG_CORE, "Client %d not exist", events[i].data.fd);
                 }
             }
         }
@@ -117,18 +119,18 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
         CHECK_TRUE(sock != -1, false, "StartServer FAIL create socket ERR : %d", errno);
 
         if (memset_s(&addr, sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un)) != EOK) {
-            HILOG_ERROR(LOG_CORE, "memset_s error!");
+            PROFILER_LOG_ERROR(LOG_CORE, "memset_s error!");
         }
         addr.sun_family = AF_UNIX;
         if (strncpy_s(addr.sun_path, sizeof(addr.sun_path), addrname.c_str(), sizeof(addr.sun_path) - 1) != EOK) {
-            HILOG_ERROR(LOG_CORE, "strncpy_s error!");
+            PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error!");
         }
         unlink(addrname.c_str());
         CHECK_TRUE(bind(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0, close(sock) != 0,
                    "StartServer FAIL bind ERR : %d", errno);
 
         std::string chmodCmd = "chmod 666 " + addrname;
-        HILOG_INFO(LOG_CORE, "chmod command : %s", chmodCmd.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "chmod command : %s", chmodCmd.c_str());
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(chmodCmd.c_str(), "r"), pclose);
     } else {
         sock = GetControlSocket(addrname.c_str());
@@ -146,7 +148,7 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "StartServer FAIL pthread_create ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "StartServer FAIL pthread_create ERR : %s", buf);
         socketHandle_ = -1;
         return false;
     }

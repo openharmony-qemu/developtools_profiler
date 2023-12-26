@@ -34,7 +34,7 @@ std::shared_ptr<HookManager> g_hookManager;
 NativeHookConfig g_nativeConfig;
 static void SignalHandl(int signo)
 {
-    HILOG_INFO(LOG_CORE, "SignalHandl recv %d", signo);
+    PROFILER_LOG_INFO(LOG_CORE, "SignalHandl recv %d", signo);
     std::vector<uint32_t> pluginIds;
     g_hookManager->StopPluginSession(pluginIds);
     g_hookManager->DestroyPluginSession(pluginIds);
@@ -81,7 +81,7 @@ void SetNativeHookConfig(const HookData& hookData)
         g_nativeConfig.response_library_mode()) {
         g_hookManager->SethookStandalone(true);
     }
-    HILOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());
 }
 
 bool StartHook(HookData& hookData)

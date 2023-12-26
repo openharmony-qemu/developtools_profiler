@@ -55,7 +55,7 @@ int ClientMap::AutoRelease()
             case CLIENT_STAT_WAIT_THREAD_EXIT:
                 break;
             case CLIENT_STAT_THREAD_EXITED:
-                HILOG_INFO(LOG_CORE, "AutoRelease release %d", iter->first);
+                PROFILER_LOG_INFO(LOG_CORE, "AutoRelease release %d", iter->first);
                 socketClients_.erase(iter->first);
                 return 1;
                 break;

@@ -37,73 +37,73 @@ PluginServiceStubPtr PluginServiceStub::GetInstance()
 
 void PluginServiceStub::SetCreateResult(bool value)
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
     createResult_ = value;
 }
 
 bool PluginServiceStub::GetCreateResult() const
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, createResult_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, createResult_);
     return createResult_;
 }
 
 void PluginServiceStub::SetStartResult(bool value)
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
     startResult_ = value;
 }
 
 bool PluginServiceStub::GetStartResult() const
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, startResult_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, startResult_);
     return startResult_;
 }
 
 void PluginServiceStub::SetStopResult(bool value)
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
     stopResult_ = value;
 }
 
 bool PluginServiceStub::GetStopResult() const
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, stopResult_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, stopResult_);
     return stopResult_;
 }
 
 void PluginServiceStub::SetDestroyResult(bool value)
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
     destroyResult_ = value;
 }
 
 bool PluginServiceStub::GetDestroyResult() const
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, destroyResult_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, destroyResult_);
     return destroyResult_;
 }
 
 void PluginServiceStub::SetAddResult(bool value)
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
     addResult_ = value;
 }
 
 bool PluginServiceStub::GetAddResult()
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, addResult_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, addResult_);
     return addResult_;
 }
 
 void PluginServiceStub::SetRemoveResult(bool value)
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, value);
     removeResult_ = value;
 }
 
 bool PluginServiceStub::GetRemoveResult()
 {
-    HILOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, removeResult_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s(%d)", __FUNCTION__, removeResult_);
     return removeResult_;
 }
 #endif
@@ -145,7 +145,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
 
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
 
-    HILOG_DEBUG(LOG_CORE, "CreatePluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -164,7 +164,7 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& pluginConfig)
     std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
 
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::IN_SESSION);
-    HILOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -176,7 +176,7 @@ bool PluginService::StopPluginSession(const std::string& pluginName)
 
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
 
-    HILOG_DEBUG(LOG_CORE, "StopPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "StopPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -196,7 +196,7 @@ bool PluginService::DestroyPluginSession(const std::string& pluginName)
     }
 
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::REGISTERED);
-    HILOG_INFO(LOG_CORE, "DestroyPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "DestroyPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -205,7 +205,7 @@ bool PluginService::RefreshPluginSession(const std::string& pluginName)
     uint32_t pluginId = 0;
     PluginContextPtr pluginCtx = nullptr;
     std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
-    HILOG_INFO(LOG_CORE, "RefreshPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "RefreshPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -268,7 +268,7 @@ bool PluginService::AddPluginInfo(const PluginInfo& pluginInfo)
             pluginCtx->bufferSizeHint = pluginInfo.bufferSizeHint;
         }
     }
-    HILOG_DEBUG(LOG_CORE, "AddPluginInfo for %s done!", pluginInfo.name.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "AddPluginInfo for %s done!", pluginInfo.name.c_str());
 
     return true;
 }
@@ -302,7 +302,7 @@ bool PluginService::RemovePluginInfo(const PluginInfo& pluginInfo)
     std::unique_lock<std::mutex> lock(mutex_);
     nameIndex_.erase(pluginName);
     pluginContext_.erase(pluginId);
-    HILOG_DEBUG(LOG_CORE, "RemovePluginInfo for %s done!", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "RemovePluginInfo for %s done!", pluginName.c_str());
     return true;
 }
 
@@ -327,5 +327,5 @@ void PluginService::StopEpollThread()
 
 void PluginService::FlushAllData(const std::string& pluginName)
 {
-    HILOG_INFO(LOG_CORE, "FlushAllData for %s", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "FlushAllData for %s", pluginName.c_str());
 }

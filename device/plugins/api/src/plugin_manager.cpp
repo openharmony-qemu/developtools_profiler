@@ -45,7 +45,7 @@ std::string ComputeFileSha256(const std::string& path)
 
     size_t nbytes = 0;
     if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
-        HILOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
         return "";
     }
     std::unique_ptr<FILE, decltype(fclose)*> fptr(fopen(realPath, "rb"), fclose);
@@ -61,7 +61,7 @@ std::string ComputeFileSha256(const std::string& path)
         result.push_back(HEX_CHARS[LHB(out[i])]);
     }
 
-    HILOG_DEBUG(LOG_CORE, "%s:%s-(%s)", __func__, path.c_str(), result.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:%s-(%s)", __func__, path.c_str(), result.c_str());
     return result;
 }
 }  // namespace
@@ -80,27 +80,27 @@ bool PluginManager::AddPlugin(const std::string& pluginPath)
     CHECK_TRUE(plugin->Load(), false, "%s:load failed!", __func__);
 
     if (!plugin->BindFunctions()) {
-        HILOG_DEBUG(LOG_CORE, "%s:bindFunctions failed %s", __func__, pluginPath.c_str());
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:bindFunctions failed %s", __func__, pluginPath.c_str());
         plugin->Unload();
         return false;
     }
 
     if (!plugin->GetInfo(info)) {
-        HILOG_DEBUG(LOG_CORE, "%s:getinfo failed!", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:getinfo failed!", __func__);
         plugin->Unload();
         return false;
     }
 
     std::string pluginName = info.name;
     if (pluginIds_.find(pluginName) != pluginIds_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:already add", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:already add", __func__);
         plugin->Unload();
         return false;
     }
-    HILOG_DEBUG(LOG_CORE, "%s:add plugin name = %s", __func__, pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:add plugin name = %s", __func__, pluginName.c_str());
 
     if (!plugin->Unload()) {
-        HILOG_DEBUG(LOG_CORE, "%s:unload failed!", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:unload failed!", __func__);
         return false;
     }
 
@@ -122,19 +122,19 @@ bool PluginManager::RegisterPlugin(const PluginModulePtr& plugin, const std::str
     request.set_plugin_version(pluginInfo.pluginVersion);
     if (commandPoller_->RegisterPlugin(request, response)) {
         if (response.status() == ResponseStatus::OK) {
-            HILOG_DEBUG(LOG_CORE, "%s:response.plugin_id() = %d", __func__, response.plugin_id());
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:response.plugin_id() = %d", __func__, response.plugin_id());
             pluginIds_[pluginInfo.name] = response.plugin_id();
             pluginModules_.insert(std::pair<uint32_t, std::shared_ptr<PluginModule>>(response.plugin_id(), plugin));
             pluginPathAndNameMap_.insert(
                 {pluginPath, pluginInfo.name}
             );
-            HILOG_DEBUG(LOG_CORE, "%s:registerPlugin ok", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:registerPlugin ok", __func__);
         } else {
-            HILOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 1", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 1", __func__);
             return false;
         }
     } else {
-        HILOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 2", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 2", __func__);
         return false;
     }
 
@@ -149,33 +149,34 @@ bool PluginManager::RemovePlugin(const std::string& pluginPath)
     std::string pluginName = pluginPathAndNameMap_[pluginPath];
     auto it = pluginIds_.find(pluginName);
     if (it == pluginIds_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
         return false;
     }
     uint32_t index = it->second;
 
     // stop plugin if plugin running
     if (pluginModules_[index]->IsRunning()) {
-        HILOG_WARN(LOG_CORE, "%s:plugin delete while using, stop plugin", __func__);
+        PROFILER_LOG_WARN(LOG_CORE, "%s:plugin delete while using, stop plugin", __func__);
 
         // delete schedule task if POLLING mode
         if (pluginModules_[index]->GetSampleMode() == PluginModule::SampleMode::POLLING) {
-            HILOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s", __func__, pluginName.c_str());
+            PROFILER_LOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s", __func__, pluginName.c_str());
             if (!scheduleTaskManager_.UnscheduleTask(scheduleTask_[pluginName])) {
-                HILOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s failed!", __func__, pluginName.c_str());
+                PROFILER_LOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s failed!",
+                                  __func__, pluginName.c_str());
             }
         }
 
         if (!pluginModules_[index]->StopSession()) {
-            HILOG_WARN(LOG_CORE, "%s:plugin stop failed!", __func__);
+            PROFILER_LOG_WARN(LOG_CORE, "%s:plugin stop failed!", __func__);
         }
     }
 
     // Unload plugin if plugin loaded
     if (pluginModules_[index]->IsLoaded()) {
-        HILOG_WARN(LOG_CORE, "%s:plugin delete while using, unload plugin", __func__);
+        PROFILER_LOG_WARN(LOG_CORE, "%s:plugin delete while using, unload plugin", __func__);
         if (!pluginModules_[index]->Unload()) {
-            HILOG_WARN(LOG_CORE, "%s:unload plugin failed!", __func__);
+            PROFILER_LOG_WARN(LOG_CORE, "%s:unload plugin failed!", __func__);
         }
     }
 
@@ -185,17 +186,17 @@ bool PluginManager::RemovePlugin(const std::string& pluginPath)
     UnregisterPluginResponse response;
     if (commandPoller_->UnregisterPlugin(request, response)) {
         if (response.status() != ResponseStatus::OK) {
-            HILOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 1", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 1", __func__);
             return false;
         }
     } else {
-        HILOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 2", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:registerPlugin fail 2", __func__);
         return false;
     }
 
     auto itPluginModules = pluginModules_.find(index);
     if (it == pluginIds_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
         return false;
     }
     pluginModules_.erase(itPluginModules);
@@ -205,7 +206,7 @@ bool PluginManager::RemovePlugin(const std::string& pluginPath)
 
 bool PluginManager::LoadPlugin(const std::string& pluginName)
 {
-    HILOG_DEBUG(LOG_CORE, "%s:size = %zu", __func__, pluginIds_.size());
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:size = %zu", __func__, pluginIds_.size());
     auto it = pluginIds_.find(pluginName);
     CHECK_TRUE(it != pluginIds_.end(), false, "%s:plugin not exist", __func__);
     uint32_t index = it->second;
@@ -223,7 +224,7 @@ bool PluginManager::UnloadPlugin(const std::string& pluginName)
 {
     auto it = pluginIds_.find(pluginName);
     if (it == pluginIds_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
         return false;
     }
 
@@ -232,9 +233,9 @@ bool PluginManager::UnloadPlugin(const std::string& pluginName)
 
 bool PluginManager::UnloadPlugin(const uint32_t pluginId)
 {
-    HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:ready!", __func__);
     if (pluginModules_.find(pluginId) == pluginModules_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
         return false;
     }
     if (!pluginModules_[pluginId]->Unload()) {
@@ -245,17 +246,17 @@ bool PluginManager::UnloadPlugin(const uint32_t pluginId)
 
 bool PluginManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
 {
-    HILOG_DEBUG(LOG_CORE, "%s:ready", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:ready", __func__);
 
     for (size_t idx = 0; idx < config.size(); ++idx) {
-        HILOG_DEBUG(LOG_CORE, "%s:config->name() = %s", __func__, config[idx].name().c_str());
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:config->name() = %s", __func__, config[idx].name().c_str());
         auto it = pluginIds_.find(config[idx].name());
         if (it == pluginIds_.end()) {
-            HILOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
             return false;
         }
 
-        HILOG_INFO(LOG_CORE, "%s:index = %d, clock = %s", __func__, it->second, config[idx].clock().c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "%s:index = %d, clock = %s", __func__, it->second, config[idx].clock().c_str());
         pluginModules_[it->second]->SetConfigData(config[idx].config_data());
         pluginModules_[it->second]->SetClockId(COMMON::GetClockId(config[idx].clock()));
     }
@@ -267,7 +268,7 @@ bool PluginManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
     for (uint32_t id : pluginIds) {
         auto it = pluginModules_.find(id);
         if (it == pluginModules_.end()) {
-            HILOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
             return false;
         }
     }
@@ -277,13 +278,13 @@ bool PluginManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                                        const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
 {
-    HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:ready!", __func__);
     size_t idx = 0;
 
     for (uint32_t id : pluginIds) {
         auto it = pluginModules_.find(id);
         if (it == pluginModules_.end()) {
-            HILOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
             return false;
         }
         auto plugin = pluginModules_[id];
@@ -294,17 +295,17 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
 
         if (plugin->GetSampleMode() == PluginModule::SampleMode::POLLING) {
             if (idx > config.size()) {
-                HILOG_WARN(LOG_CORE, "%s:idx %zu out of size %zu", __func__, idx, config.size());
+                PROFILER_LOG_WARN(LOG_CORE, "%s:idx %zu out of size %zu", __func__, idx, config.size());
                 return false;
             }
             if (config[idx].sample_interval() == 0) {
-                HILOG_DEBUG(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
+                PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
                 return false;
             }
             auto callback = std::bind(&PluginManager::PullResult, this, id, config[idx].is_protobuf_serialize());
             int32_t timerFd = scheduleTaskManager_.ScheduleTask(callback, config[idx].sample_interval());
             if (timerFd == -1) {
-                HILOG_DEBUG(LOG_CORE, "%s:scheduleTask failed!", __func__);
+                PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask failed!", __func__);
                 return false;
             }
             scheduleTask_[config[idx].name()] = timerFd;
@@ -326,16 +327,16 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
 
 bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
-    HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:ready!", __func__);
     for (uint32_t id : pluginIds) {
         if (pluginModules_.find(id) == pluginModules_.end()) {
-            HILOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
+            PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
             return false;
         }
         if (pluginModules_[id]->GetSampleMode() == PluginModule::SampleMode::POLLING) {
             for (const auto& it : pluginIds_) {
                 if (it.second == id) {
-                    HILOG_DEBUG(LOG_CORE, "%s:find plugin name = %s", __func__, it.first.c_str());
+                    PROFILER_LOG_DEBUG(LOG_CORE, "%s:find plugin name = %s", __func__, it.first.c_str());
                     if (!scheduleTaskManager_.UnscheduleTask(scheduleTask_[it.first])) {
                         return false;
                     }
@@ -361,7 +362,7 @@ bool PluginManager::StopAllPluginSession()
 
 bool PluginManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds)
 {
-    HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:ready!", __func__);
     for (uint32_t id : pluginIds) {
         CHECK_TRUE(pluginModules_.find(id) != pluginModules_.end(), false, "%s:plugin not find", __func__);
         // notify plugin to report basic data
@@ -372,7 +373,7 @@ bool PluginManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds
 
 bool PluginManager::SubmitResult(const PluginResult& pluginResult)
 {
-    HILOG_INFO(LOG_CORE, "%s:ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:ready!", __func__);
     NotifyResultRequest request;
     CHECK_NOTNULL(commandPoller_, false, "%s:commandPoller_ is null", __func__);
     request.set_request_id(commandPoller_->GetRequestId());
@@ -381,14 +382,14 @@ bool PluginManager::SubmitResult(const PluginResult& pluginResult)
     *p = pluginResult;
     NotifyResultResponse response;
     if (!commandPoller_->NotifyResult(request, response)) {
-        HILOG_DEBUG(LOG_CORE, "%s:fail 1", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:fail 1", __func__);
         return false;
     }
     if (response.status() != ResponseStatus::OK) {
-        HILOG_DEBUG(LOG_CORE, "%s:fail 2", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:fail 2", __func__);
         return false;
     }
-    HILOG_DEBUG(LOG_CORE, "%s:ok", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:ok", __func__);
     return true;
 }
 
@@ -399,7 +400,7 @@ bool PluginManager::PullResult(uint32_t pluginId, bool isProtobufSerialize)
     std::string version = "";
     auto it = pluginModules_.find(pluginId);
     if (it == pluginModules_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
         return false;
     }
     pluginModules_[pluginId]->GetBufferSizeHint(size);
@@ -470,19 +471,19 @@ bool PluginManager::CreateWriter(std::string pluginName, uint32_t bufferSize, in
 {
     auto it = pluginIds_.find(pluginName);
     if (it == pluginIds_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
         return false;
     }
     uint32_t index = it->second;
 
     if (bufferSize > 0) {
-        HILOG_DEBUG(LOG_CORE, "%s:%s Use ShareMemory %d", __func__, pluginName.c_str(), bufferSize);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:%s Use ShareMemory %d", __func__, pluginName.c_str(), bufferSize);
         std::string pluginVersion = "";
         pluginModules_[index]->GetPluginVersion(pluginVersion);
         pluginModules_[index]->RegisterWriter(std::make_shared<BufferWriter>
             (pluginName, pluginVersion, bufferSize, smbFd, eventFd, index), isProtobufSerialize);
     } else {
-        HILOG_ERROR(LOG_CORE, "%s:no shared memory buffer allocated!", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:no shared memory buffer allocated!", __func__);
         return false;
     }
     return true;
@@ -491,10 +492,10 @@ bool PluginManager::CreateWriter(std::string pluginName, uint32_t bufferSize, in
 bool PluginManager::ResetWriter(uint32_t pluginId)
 {
     if (pluginModules_.find(pluginId) == pluginModules_.end()) {
-        HILOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not exist", __func__);
         return false;
     }
-    HILOG_DEBUG(LOG_CORE, "%s:resetWriter %u", __func__, pluginId);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:resetWriter %u", __func__, pluginId);
     pluginModules_[pluginId]->RegisterWriter(nullptr);
     return true;
 }
