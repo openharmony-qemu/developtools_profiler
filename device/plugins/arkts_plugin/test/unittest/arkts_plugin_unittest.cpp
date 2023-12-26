@@ -52,7 +52,7 @@ public:
             if (std::regex_search(result, match, pattern)) {
                 std::string matchedString = match[1].str();
                 pid_ = std::stoi(matchedString);
-                PROFILER_LOG_INFO(LOG_CORE, "ArkTSPluginTest: pid_ is %d", pid_);
+                HILOG_INFO(LOG_CORE, "ArkTSPluginTest: pid_ is %d", pid_);
             }
         }
     }

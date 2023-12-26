@@ -74,7 +74,7 @@ HWTEST_F(TraceFileReaderTest, WriteRead, TestSize.Level1)
         pluginData.set_data("Hello, World!");
         long bytes = writer->Write(pluginData);
         EXPECT_EQ(bytes, sizeof(uint32_t) + pluginData.ByteSizeLong());
-        PROFILER_LOG_INFO(LOG_CORE, "[%d/%d] write %ld bytes to %s.", i, n, bytes, path.c_str());
+        HILOG_INFO(LOG_CORE, "[%d/%d] write %ld bytes to %s.", i, n, bytes, path.c_str());
     }
     writer.reset(); // make sure write done!
 
@@ -85,8 +85,8 @@ HWTEST_F(TraceFileReaderTest, WriteRead, TestSize.Level1)
     for (int i = 1; i <= n; i++) {
         ProfilerPluginData data{};
         long bytes = reader->Read(data);
-        PROFILER_LOG_INFO(LOG_CORE, "data = {%s, %d, %s}", data.name().c_str(), data.status(), data.data().c_str());
-        PROFILER_LOG_INFO(LOG_CORE, "read %ld bytes from %s", bytes, path.c_str());
+        HILOG_INFO(LOG_CORE, "data = {%s, %d, %s}", data.name().c_str(), data.status(), data.data().c_str());
+        HILOG_INFO(LOG_CORE, "read %ld bytes from %s", bytes, path.c_str());
     }
 }
 
@@ -109,7 +109,7 @@ HWTEST_F(TraceFileReaderTest, WriteReadBreak, TestSize.Level1)
         pluginData.set_data("Hello, World!");
         long bytes = writer->Write(pluginData);
         EXPECT_EQ(bytes, sizeof(uint32_t) + pluginData.ByteSizeLong());
-        PROFILER_LOG_INFO(LOG_CORE, "[%d/%d] write %ld bytes to %s.", i, n, bytes, path.c_str());
+        HILOG_INFO(LOG_CORE, "[%d/%d] write %ld bytes to %s.", i, n, bytes, path.c_str());
     }
     writer.reset(); // make sure write done!
 
@@ -121,8 +121,8 @@ HWTEST_F(TraceFileReaderTest, WriteReadBreak, TestSize.Level1)
     do {
         ProfilerPluginData data{};
         bytes = reader->Read(data);
-        PROFILER_LOG_INFO(LOG_CORE, "data = {%s, %d, %s}", data.name().c_str(), data.status(), data.data().c_str());
-        PROFILER_LOG_INFO(LOG_CORE, "read %ld bytes from %s", bytes, path.c_str());
+        HILOG_INFO(LOG_CORE, "data = {%s, %d, %s}", data.name().c_str(), data.status(), data.data().c_str());
+        HILOG_INFO(LOG_CORE, "read %ld bytes from %s", bytes, path.c_str());
     } while (bytes > 0);
 }
 

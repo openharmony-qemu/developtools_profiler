@@ -70,7 +70,7 @@ std::vector<std::string> TraceOps::ListCategories()
     CHECK_TRUE(PrepareListCategoriesCmd(), result, "prepare list categories command failed!");
 
     int retval = ExecuteCommand(true, true);
-    PROFILER_LOG_INFO(LOG_CORE, "exec %s exit %d!", bin_.c_str(), retval);
+    HILOG_INFO(LOG_CORE, "exec %s exit %d!", bin_.c_str(), retval);
 
     std::string line;
     std::stringstream stream(output_);
@@ -116,7 +116,7 @@ bool TraceOps::EnableCategories(const std::vector<std::string>& categories, int 
         if (HasCategory(category)) {
             targetCategories_.push_back(category);
         } else {
-            PROFILER_LOG_ERROR(LOG_CORE, "\"%s\" is not support category on this device", category.c_str());
+            HILOG_ERROR(LOG_CORE, "\"%s\" is not support category on this device", category.c_str());
         }
     }
 
@@ -128,7 +128,7 @@ bool TraceOps::EnableCategories(const std::vector<std::string>& categories, int 
     CHECK_TRUE(PrepareEnableCategoriesCmd(traceTime), false, "prepare enable categories failed!");
 
     int retval = ExecuteCommand();
-    PROFILER_LOG_INFO(LOG_CORE, "exec %s exit %d!", bin_.c_str(), retval);
+    HILOG_INFO(LOG_CORE, "exec %s exit %d!", bin_.c_str(), retval);
     CHECK_TRUE(retval == 0, false, "exec %s failed with %d", bin_.c_str(), retval);
     return true;
 }
@@ -139,7 +139,7 @@ bool TraceOps::DisableCategories()
     CHECK_TRUE(PrepareDisableCategoriesCmd(), false, "prepare enable categories failed!");
 
     int retval = ExecuteCommand();
-    PROFILER_LOG_INFO(LOG_CORE, "exec %s exit %d!", bin_.c_str(), retval);
+    HILOG_INFO(LOG_CORE, "exec %s exit %d!", bin_.c_str(), retval);
 
     targetCategories_.clear();
     CHECK_TRUE(retval == 0, false, "exec %s failed with %d", bin_.c_str(), retval);

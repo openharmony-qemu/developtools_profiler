@@ -84,26 +84,26 @@ bool IsProcessRunning(int& lockFileFd)
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName.c_str(), errno, buf);
+        HILOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName.c_str(), errno, buf);
         return false;
     }
     int flags = fcntl(fd, F_GETFD);
     if (flags == -1) {
         close(fd);
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: get fd flags failed!", __func__);
+        HILOG_ERROR(LOG_CORE, "%s: get fd flags failed!", __func__);
         return false;
     }
     flags |= FD_CLOEXEC;
     if (fcntl(fd, F_SETFD, flags) == -1) {
         close(fd);
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: set fd_cloexec failed!", __func__);
+        HILOG_ERROR(LOG_CORE, "%s: set fd_cloexec failed!", __func__);
         return false;
     }
     if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
         // 进程正在运行，加锁失败
         close(fd);
         printf("%s is running, please don't start it again.\n", processName.c_str());
-        PROFILER_LOG_ERROR(LOG_CORE, "%s is running, please don't start it again.", processName.c_str());
+        HILOG_ERROR(LOG_CORE, "%s is running, please don't start it again.", processName.c_str());
         return true;
     }
     std::string pidStr = std::to_string(getpid());
@@ -129,12 +129,12 @@ bool IsProcessExist(const std::string& processName, int& pid)
         char filePath[FILE_PATH_SIZE] = {0};
         int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
         if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
             continue;
         }
         FILE* fp = fopen(filePath, "r");
         if (fp == nullptr) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "open file failed! %s", filePath);
+            HILOG_DEBUG(LOG_CORE, "open file failed! %s", filePath);
             continue;
         }
         char buf[BUFFER_SIZE] = {0};
@@ -180,7 +180,7 @@ int StartProcess(const std::string& processBin, std::vector<char*>& argv)
         int retval = execvp(processBin.c_str(), argv.data());
         if (retval == -1 && errno == EXECVP_ERRNO) {
             printf("warning: %s does not exist!\n", processBin.c_str());
-            PROFILER_LOG_WARN(LOG_CORE, "warning: %s does not exist!", processBin.c_str());
+            HILOG_WARN(LOG_CORE, "warning: %s does not exist!", processBin.c_str());
         }
         _exit(EXIT_FAILURE);
     }
@@ -214,7 +214,7 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2&
         ", fsmblks = " + std::to_string(mi.fsmblks) + ", uordblks = " + std::to_string(mi.uordblks);
     mallinfoLog +=
         ", fordblks = " + std::to_string(mi.fordblks) + ", keepcost = " + std::to_string(mi.keepcost);
-    PROFILER_LOG_INFO(LOG_CORE, "%s", mallinfoLog.c_str());
+    HILOG_INFO(LOG_CORE, "%s", mallinfoLog.c_str());
 #endif  // HOOK_ENABLE
 }
 
@@ -239,9 +239,9 @@ inline int CustomFdFclose(FILE** fp)
 FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
                   volatile pid_t& childPid, bool needUnblock)
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
+    HILOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
     if (command.empty() || type == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: param invalid", __func__);
+        HILOG_ERROR(LOG_CORE, "%s: param invalid", __func__);
         return nullptr;
     }
 
@@ -280,7 +280,7 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
         setpgid(pid, pid);
         // exe path = argv[0]; exe name = argv[1]
         if (execve(argv[0], &argv[1], envp) == -1) {
-            PROFILER_LOG_ERROR(LOG_CORE, "execve failed {%s:%s}", __func__, strerror(errno));
+            HILOG_ERROR(LOG_CORE, "execve failed {%s:%s}", __func__, strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
@@ -300,28 +300,28 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     // Make sure the parent pipe reads and writes exist;CustomPUnblock will use.
     childPid = pid;
     if (strncmp(type, "r", strlen(type)) == 0) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "END %s fds[READ]: success!", __func__);
+        HILOG_DEBUG(LOG_CORE, "END %s fds[READ]: success!", __func__);
         return fdopen(fds[READ], "r");
     }
 
-    PROFILER_LOG_DEBUG(LOG_CORE, "END %s fds[WRITE]: success!", __func__);
+    HILOG_DEBUG(LOG_CORE, "END %s fds[WRITE]: success!", __func__);
     return fdopen(fds[WRITE], "w");
 }
 
 int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock)
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
+    HILOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
     CHECK_NOTNULL(fp, -1, "NOTE %s: fp is null", __func__);
 
     int stat = 0;
 
     if (needUnblock) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "NOTE Kill Endless Loop Child %d.", childPid);
+        HILOG_DEBUG(LOG_CORE, "NOTE Kill Endless Loop Child %d.", childPid);
         kill(childPid, SIGKILL);
     }
 
     while (waitpid(childPid, &stat, 0) == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: %s.", __func__, strerror(errno));
+        HILOG_ERROR(LOG_CORE, "%s: %s.", __func__, strerror(errno));
         if (errno == EINTR) {
             continue;
         }
@@ -336,20 +336,20 @@ int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock
             fds[WRITE] = -1;
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, -1, "CustomFdClose failed!");
         } else {
-            PROFILER_LOG_INFO(LOG_CORE, "%s: Can't find fp in fds[READ/WRITE].", __func__);
+            HILOG_INFO(LOG_CORE, "%s: Can't find fp in fds[READ/WRITE].", __func__);
         }
     }
 
     CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
 
-    PROFILER_LOG_DEBUG(LOG_CORE, "END %s: success!", __func__);
+    HILOG_DEBUG(LOG_CORE, "END %s: success!", __func__);
     return stat;
 }
 
 // IF pipe fds is block, before release other threads, you need call CustomPUnblock
 int CustomPUnblock(int fds[])
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
+    HILOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
 
     CHECK_TRUE(fds[READ] != -1 && fds[WRITE] != -1, -1, "END fds[READ/WRITE]=-1");
 
@@ -357,12 +357,12 @@ int CustomPUnblock(int fds[])
     CHECK_TRUE(stat != -1, -1, "END fcntl(F_GETFL) failed!");
 
     if (!(stat & O_NONBLOCK)) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "NOTE %s: ready!Unblock r_fd and close all", __func__);
+        HILOG_DEBUG(LOG_CORE, "NOTE %s: ready!Unblock r_fd and close all", __func__);
         const char* eof = "\n\0";
         write(fds[WRITE], eof, strlen(eof) + 1);
         fcntl(fds[READ], F_SETFL, O_NONBLOCK);
     }
-    PROFILER_LOG_DEBUG(LOG_CORE, "END %s: success!", __func__);
+    HILOG_DEBUG(LOG_CORE, "END %s: success!", __func__);
     return 0;
 }
 
@@ -381,14 +381,14 @@ int GetServicePort()
     istr >> minPort >> maxPort;
     const int offset = 3168; // To be compatible with previously used port 50051;
     int port = (minPort + maxPort) / 2 + offset;
-    PROFILER_LOG_DEBUG(LOG_CORE, "Service port is: %d", port);
+    HILOG_DEBUG(LOG_CORE, "Service port is: %d", port);
     return port;
 }
 
 void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret)
 {
     if (str.empty()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "The string splited is empty!");
+        HILOG_ERROR(LOG_CORE, "The string splited is empty!");
         return;
     }
     std::string::size_type beginPos = str.find_first_not_of(sep);
@@ -416,7 +416,7 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     if (pid > 0) {
         std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
         if (!LoadStringFromFile(filePath, bundleName)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "Get process name by pid failed!");
+            HILOG_ERROR(LOG_CORE, "Get process name by pid failed!");
             return false;
         }
         bundleName.resize(strlen(bundleName.c_str()));
@@ -525,16 +525,16 @@ bool GetCurrentUserId(int32_t& userId)
     std::vector<int32_t> activeIds;
     int32_t ret = AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds);
     if (ret != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed ret:%d", ret);
+        HILOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed ret:%d", ret);
         return false;
     }
 
     if (activeIds.empty()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds activeIds empty");
+        HILOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds activeIds empty");
         return false;
     }
     userId = activeIds[0];
-    PROFILER_LOG_INFO(LOG_CORE, "QueryActiveOsAccountIds userId[0]:%d", userId);
+    HILOG_INFO(LOG_CORE, "QueryActiveOsAccountIds userId[0]:%d", userId);
     return true;
 }
 
@@ -542,26 +542,26 @@ int32_t GetPackageUid(const std::string& name)
 {
     int32_t userId = 0;
     if (!GetCurrentUserId(userId)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Failed to get current user id");
+        HILOG_ERROR(LOG_CORE, "Failed to get current user id");
         return EC_INVALID_VALUE;
     }
     auto manager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (manager == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "systemAbilityManager is nullptr");
+        HILOG_ERROR(LOG_CORE, "systemAbilityManager is nullptr");
         return EC_INVALID_VALUE;
     }
     sptr<IRemoteObject> remoteObject = manager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     if (remoteObject == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "failed to get service id");
+        HILOG_ERROR(LOG_CORE, "failed to get service id");
         return EC_INVALID_VALUE;
     }
     sptr<AppExecFwk::IBundleMgr> mgr = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     if (mgr == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "mgr is nullptr");
+        HILOG_ERROR(LOG_CORE, "mgr is nullptr");
         return EC_INVALID_VALUE;
     }
     int32_t uid = mgr->GetUidByBundleName(name, userId);
-    PROFILER_LOG_INFO(LOG_CORE, "pkgname is: %s, uid is : %d", name.c_str(), uid);
+    HILOG_INFO(LOG_CORE, "pkgname is: %s, uid is : %d", name.c_str(), uid);
     return uid;
 }
 } // namespace COMMON

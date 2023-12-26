@@ -48,7 +48,7 @@ void StackDataRepeater::Close()
         rawDataQueue_.clear();
         closed_ = true;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
+    HILOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
     slotCondVar_.notify_all();
     itemCondVar_.notify_all();
 }
@@ -59,8 +59,7 @@ bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAcc
     std::unique_lock<std::mutex> lock(mutex_);
 
     if ((rawData == nullptr) && (rawDataQueue_.size() > 0)) {
-        PROFILER_LOG_INFO(LOG_CORE, "no need put nullptr if queue has data, rawDataQueue_.size() = %zu",
-                          rawDataQueue_.size());
+        HILOG_INFO(LOG_CORE, "no need put nullptr if queue has data, rawDataQueue_.size() = %zu", rawDataQueue_.size());
         return true;
     }
     while (rawDataQueue_.size() >= maxSize_ && !closed_) {

@@ -162,7 +162,7 @@ bool PluginSessionManager::StartPluginSessions(const std::vector<std::string>& n
             continue;
         }
         if (!it->second->Start()) {
-            PROFILER_LOG_INFO(LOG_CORE, "start session %s FAILED!", it->first.c_str());
+            HILOG_INFO(LOG_CORE, "start session %s FAILED!", it->first.c_str());
             failureCount++;
         }
     }
@@ -180,7 +180,7 @@ bool PluginSessionManager::StopPluginSessions(const std::vector<std::string>& na
             continue;
         }
         if (!it->second->Stop()) {
-            PROFILER_LOG_INFO(LOG_CORE, "stop session %s FAILED!", it->first.c_str());
+            HILOG_INFO(LOG_CORE, "stop session %s FAILED!", it->first.c_str());
             failureCount++;
         }
     }
@@ -197,7 +197,7 @@ bool PluginSessionManager::RefreshPluginSession()
             continue;
         }
         if (!it->second->Refresh()) {
-            PROFILER_LOG_INFO(LOG_CORE, "refresh data %s FAILED!", it->first.c_str());
+            HILOG_INFO(LOG_CORE, "refresh data %s FAILED!", it->first.c_str());
             failureCount++;
         }
     }
@@ -214,7 +214,7 @@ bool PluginSessionManager::CheckStatus(const std::vector<std::string>& nameList,
         }
         auto actualState = it->second->GetState();
         if (actualState != state) {
-            PROFILER_LOG_INFO(LOG_CORE, "plugin %s state is %d not %d!", it->first.c_str(), actualState, state);
+            HILOG_INFO(LOG_CORE, "plugin %s state is %d not %d!", it->first.c_str(), actualState, state);
             return false;
         }
     }

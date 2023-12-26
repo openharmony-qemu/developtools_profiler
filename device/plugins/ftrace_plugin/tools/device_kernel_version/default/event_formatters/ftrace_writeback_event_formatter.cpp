@@ -38,8 +38,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.dirty_ratelimit(), msg.task_ratelimit(), msg.dirtied(), msg.dirtied_pause(), msg.paused(), msg.pause(),
             msg.period(), msg.think(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(balance_dirty_pages) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(balance_dirty_pages) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -57,8 +57,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.bdi().c_str(), msg.write_bw(), msg.avg_write_bw(), msg.dirty_rate(), msg.dirty_ratelimit(),
             msg.task_ratelimit(), msg.balanced_dirty_ratelimit(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(bdi_dirty_ratelimit) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(bdi_dirty_ratelimit) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -75,8 +75,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.nr_dirty(), msg.nr_writeback(), msg.background_thresh(), msg.dirty_thresh(), msg.dirty_limit(),
             msg.nr_dirtied(), msg.nr_written());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(global_dirty_state) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(global_dirty_state) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -94,7 +94,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.for_background(), msg.for_reclaim(), msg.range_cyclic(), msg.range_start(), msg.range_end(),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(wbc_writepage) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(wbc_writepage) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -108,8 +108,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "writeback_bdi_register: bdi %s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_bdi_register) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_bdi_register) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -123,8 +123,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "writeback_congestion_wait: usec_timeout=%u usec_delayed=%u", msg.usec_timeout(), msg.usec_delayed());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_congestion_wait) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_congestion_wait) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -144,8 +144,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 2), "I_DIRTY_PAGES"}, {(1 << 3), "I_NEW"}, {(1 << 4), "I_WILL_FREE"}, {(1 << 5), "I_FREEING"},
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}));
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_dirty_inode) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_dirty_inode) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -165,8 +165,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}),
             msg.mode());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_dirty_inode_enqueue) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_dirty_inode_enqueue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -186,8 +186,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 2), "I_DIRTY_PAGES"}, {(1 << 3), "I_NEW"}, {(1 << 4), "I_WILL_FREE"}, {(1 << 5), "I_FREEING"},
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}));
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_dirty_inode_start) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_dirty_inode_start) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -202,8 +202,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "writeback_dirty_page: bdi %s: ino=%" PRIu64 " index=%" PRIu64 "", msg.name().c_str(), msg.ino(),
             msg.index());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_dirty_page) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_dirty_page) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -224,7 +224,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {4, "laptop_timer"}, {5, "fs_free_space"}, {6, "forker_thread"}),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_exec) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(writeback_exec) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -244,8 +244,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}),
             msg.mode());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_lazytime) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_lazytime) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -265,8 +265,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}),
             msg.mode());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_lazytime_iput) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_lazytime_iput) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -286,8 +286,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 2), "I_DIRTY_PAGES"}, {(1 << 3), "I_NEW"}, {(1 << 4), "I_WILL_FREE"}, {(1 << 5), "I_FREEING"},
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}));
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_mark_inode_dirty) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_mark_inode_dirty) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -300,8 +300,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "writeback_pages_written: %" PRIu64 "", msg.pages());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_pages_written) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_pages_written) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -322,7 +322,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {4, "laptop_timer"}, {5, "fs_free_space"}, {6, "forker_thread"}),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_queue) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(writeback_queue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -340,8 +340,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {4, "laptop_timer"}, {5, "fs_free_space"}, {6, "forker_thread"}),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_queue_io) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_queue_io) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -361,8 +361,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {(1 << 6), "I_CLEAR"}, {(1 << 7), "I_SYNC"}, {(1 << 11), "I_DIRTY_TIME"}, {(1 << 8), "I_REFERENCED"}),
             msg.dirtied_when(), (jiffies - msg.dirtied_when()) / 300, msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_sb_inodes_requeue) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_sb_inodes_requeue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -383,8 +383,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.dirtied_when(), (jiffies - msg.dirtied_when()) / 300, msg.writeback_index(), msg.nr_to_write(),
             msg.wrote(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_single_inode) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_single_inode) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -405,8 +405,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.dirtied_when(), (jiffies - msg.dirtied_when()) / 300, msg.writeback_index(), msg.nr_to_write(),
             msg.wrote(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_single_inode_start) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_single_inode_start) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -427,7 +427,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {4, "laptop_timer"}, {5, "fs_free_space"}, {6, "forker_thread"}),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_start) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(writeback_start) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -448,7 +448,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {4, "laptop_timer"}, {5, "fs_free_space"}, {6, "forker_thread"}),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_wait) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(writeback_wait) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -462,8 +462,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "writeback_wait_iff_congested: usec_timeout=%u usec_delayed=%u", msg.usec_timeout(), msg.usec_delayed());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_wait_iff_congested) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_wait_iff_congested) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -477,8 +477,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "writeback_wake_background: bdi %s: cgroup_ino=%" PRId32 "", msg.name().c_str(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_wake_background) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_wake_background) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -493,8 +493,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "writeback_write_inode: bdi %s: ino=%" PRIu64 " sync_mode=%d cgroup_ino=%" PRId32 "", msg.name().c_str(),
             msg.ino(), msg.sync_mode(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(writeback_write_inode) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(writeback_write_inode) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -509,8 +509,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "writeback_write_inode_start: bdi %s: ino=%" PRIu64 " sync_mode=%d cgroup_ino=%" PRId32 "",
             msg.name().c_str(), msg.ino(), msg.sync_mode(), msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(writeback_write_inode_start) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_write_inode_start) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -531,7 +531,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {4, "laptop_timer"}, {5, "fs_free_space"}, {6, "forker_thread"}),
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_written) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(writeback_written) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

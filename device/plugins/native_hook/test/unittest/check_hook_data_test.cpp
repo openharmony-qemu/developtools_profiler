@@ -146,7 +146,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "snprintf_s(%s) error, errno(%d:%s)", file.c_str(), errno, buf);
+            HILOG_ERROR(LOG_CORE, "snprintf_s(%s) error, errno(%d:%s)", file.c_str(), errno, buf);
             return -1;
         }
 
@@ -155,7 +155,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "realpath(%s) failed, errno(%d:%s)", file.c_str(), errno, buf);
+            HILOG_ERROR(LOG_CORE, "realpath(%s) failed, errno(%d:%s)", file.c_str(), errno, buf);
             return -1;
         }
 
@@ -164,18 +164,18 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, realPath, errno, buf);
+            HILOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, realPath, errno, buf);
             return -1;
         }
         if (g_buffer == nullptr) {
-            PROFILER_LOG_ERROR(LOG_CORE, "%s:empty address, g_buffer is NULL", __func__);
+            HILOG_ERROR(LOG_CORE, "%s:empty address, g_buffer is NULL", __func__);
             close(fd);
             return -1;
         }
         bytesRead = read(fd, g_buffer.get(), BUFFER_SIZE - 1);
         if (bytesRead <= 0) {
             close(fd);
-            PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, realPath, errno);
+            HILOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, realPath, errno);
             return -1;
         }
         close(fd);
@@ -212,7 +212,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "ApplyForMalloc: malloc failure, errno(%d:%s)", errno, buf);
+            HILOG_ERROR(LOG_CORE, "ApplyForMalloc: malloc failure, errno(%d:%s)", errno, buf);
             return;
         }
         DepthFree(depth, p);
@@ -294,7 +294,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "ApplyForCalloc: calloc failure, errno(%d:%s)", errno, buf);
+            HILOG_ERROR(LOG_CORE, "ApplyForCalloc: calloc failure, errno(%d:%s)", errno, buf);
             return;
         }
         DepthFree(depth, p);
@@ -337,7 +337,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "ApplyForRealloc: malloc failure, errno(%d:%s)", errno, buf);
+            HILOG_ERROR(LOG_CORE, "ApplyForRealloc: malloc failure, errno(%d:%s)", errno, buf);
             return;
         }
         char *np = DepthRealloc(depth, p, reallocSize);
@@ -346,7 +346,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "ApplyForRealloc: realloc failure, errno(%d:%s)", errno, buf);
+            HILOG_ERROR(LOG_CORE, "ApplyForRealloc: realloc failure, errno(%d:%s)", errno, buf);
             return;
         }
         DepthFree(depth, np);

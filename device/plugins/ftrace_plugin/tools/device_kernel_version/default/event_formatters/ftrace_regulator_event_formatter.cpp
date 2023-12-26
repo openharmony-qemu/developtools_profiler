@@ -31,8 +31,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_bypass_disable: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(regulator_bypass_disable) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(regulator_bypass_disable) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -46,8 +46,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_bypass_disable_complete: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(regulator_bypass_disable_complete) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_bypass_disable_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -61,8 +61,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_bypass_enable: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(regulator_bypass_enable) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(regulator_bypass_enable) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -76,8 +76,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_bypass_enable_complete: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(regulator_bypass_enable_complete) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_bypass_enable_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -90,7 +90,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_disable: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(regulator_disable) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(regulator_disable) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -104,8 +104,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_disable_complete: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(regulator_disable_complete) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_disable_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -118,7 +118,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_enable: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(regulator_enable) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(regulator_enable) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -132,8 +132,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_enable_complete: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(regulator_enable_complete) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_enable_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -147,8 +147,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_enable_delay: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(regulator_enable_delay) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(regulator_enable_delay) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -162,8 +162,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_set_voltage: name=%s (%d-%d)",
             msg.name().c_str(), (int)msg.min(), (int)msg.max());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "the contents of print event(regulator_set_voltage) msg had be cut off in outfile");
+            HILOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(regulator_set_voltage) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -177,8 +177,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_set_voltage_complete: name=%s, val=%u",
             msg.name().c_str(), (int)msg.val());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                "the contents of print event(regulator_set_voltage_complete) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_set_voltage_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

@@ -35,7 +35,7 @@
 
 #define HILOG_DEBUG(LOG_CORE, fmt, ...) \
     if (debugOn_) { \
-        PROFILER_LOG_INFO(LOG_CORE, ":DEBUG: " fmt, ##__VA_ARGS__); \
+        HILOG_INFO(LOG_CORE, ":DEBUG: " fmt, ##__VA_ARGS__); \
     }
 
 namespace {
@@ -58,7 +58,7 @@ inline uint64_t GetTimestampIncrements(uint64_t ext)
 FTRACE_NS_BEGIN
 FtraceParser::FtraceParser()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "FtraceParser create!");
+    HILOG_INFO(LOG_CORE, "FtraceParser create!");
 }
 
 bool FtraceParser::Init()
@@ -77,7 +77,7 @@ bool FtraceParser::Init()
 
 FtraceParser::~FtraceParser()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "FtraceParser destroy!");
+    HILOG_INFO(LOG_CORE, "FtraceParser destroy!");
 }
 
 bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
@@ -142,7 +142,7 @@ bool FtraceParser::ParseHeaderPageFormat(const std::string& formatDesc)
         }
     }
 
-    PROFILER_LOG_INFO(LOG_CORE, "page header info:");
+    HILOG_INFO(LOG_CORE, "page header info:");
     PrintFieldInfo(pageHeaderFormat_.timestamp);
     PrintFieldInfo(pageHeaderFormat_.commit);
     PrintFieldInfo(pageHeaderFormat_.overwrite);
@@ -228,7 +228,7 @@ void FtraceParser::PrintFieldInfo(const FieldFormat& info)
 {
     UNUSED_PARAMETER(GetProtoTypeName);
     UNUSED_PARAMETER(GetFieldTypeName);
-    PROFILER_LOG_INFO(LOG_CORE,
+    HILOG_DEBUG(LOG_CORE,
                 "FieldFormat { offset: %u, size:%u, sign: %u fieldType: %s, protoType:%s, typeName: %s, name: %s}",
                 info.offset, info.size, info.isSigned, GetFieldTypeName(info.filedType).c_str(),
                 GetProtoTypeName(info.protoType).c_str(), info.typeName.c_str(), info.name.c_str());
@@ -561,7 +561,7 @@ bool FtraceParser::ParseSavedTgid(const std::string& savedTgid)
     }
 
     if (tgidDict_.size() == 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "ParseSavedTgid: parsed tigds: %zu", tgidDict_.size());
+        HILOG_WARN(LOG_CORE, "ParseSavedTgid: parsed tigds: %zu", tgidDict_.size());
     }
     return true;
 }
@@ -587,7 +587,7 @@ bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
     }
 
     if (commDict_.size() == 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "ParseSavedCmdlines: parsed cmdlines: %zu", commDict_.size());
+        HILOG_WARN(LOG_CORE, "ParseSavedCmdlines: parsed cmdlines: %zu", commDict_.size());
     }
     return retval;
 }
@@ -611,7 +611,7 @@ bool FtraceParser::ParseTimeExtend(const FtraceEventHeader& eventHeader)
     CHECK_TRUE(ReadInc(&cur_, endOfData_, &deltaExt, sizeof(deltaExt)), false, "read time delta failed!");
 
     timestamp_ += GetTimestampIncrements(deltaExt);
-    PROFILER_LOG_INFO(LOG_CORE, "ParseTimeExtend: update ts with %u to %" PRIu64, deltaExt, timestamp_);
+    HILOG_INFO(LOG_CORE, "ParseTimeExtend: update ts with %u to %" PRIu64, deltaExt, timestamp_);
     return true;
 }
 
@@ -622,7 +622,7 @@ bool FtraceParser::ParseTimeStamp(const FtraceEventHeader& eventHeader)
 
     // refers kernel function rb_update_write_stamp in ring_buffer.c
     timestamp_ = eventHeader.timeDelta + GetTimestampIncrements(deltaExt);
-    PROFILER_LOG_INFO(LOG_CORE, "ParseTimeStamp: update ts with %u to %" PRIu64, deltaExt, timestamp_);
+    HILOG_INFO(LOG_CORE, "ParseTimeStamp: update ts with %u to %" PRIu64, deltaExt, timestamp_);
     return true;
 }
 
@@ -645,6 +645,6 @@ bool FtraceParser::IsValidIndex(int idx)
 void FtraceParser::SetDebugOn(bool value)
 {
     debugOn_ = value;
-    PROFILER_LOG_INFO(LOG_CORE, "debugOption: %s", debugOn_ ? "true" : "false");
+    HILOG_INFO(LOG_CORE, "debugOption: %s", debugOn_ ? "true" : "false");
 }
 FTRACE_NS_END

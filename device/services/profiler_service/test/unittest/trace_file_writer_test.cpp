@@ -39,7 +39,7 @@ protected:
     void TearDown() override
     {
         int retval = unlink(path.c_str());
-        PROFILER_LOG_DEBUG(LOG_CORE, "unlink(%s): %d", path.c_str(), retval);
+        HILOG_DEBUG(LOG_CORE, "unlink(%s): %d", path.c_str(), retval);
     }
 };
 

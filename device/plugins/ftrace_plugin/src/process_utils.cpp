@@ -51,7 +51,7 @@ private:
     int Init()
     {
         handler_ = signal(sig_, &PipedSigHandler::SigHandler);
-        PROFILER_LOG_INFO(LOG_CORE, "set signal handler for sig %d done!", sig_);
+        HILOG_INFO(LOG_CORE, "set signal handler for sig %d done!", sig_);
 
         CHECK_TRUE(pipe(pipe_) != -1, -1, "create pipe failed, %d", errno);
         CHECK_TRUE(fcntl(pipe_[RD], F_SETFL, O_NONBLOCK) != -1, -1, "set non block to pipe[WR] failed!");
@@ -63,7 +63,7 @@ private:
         CHECK_TRUE(close(pipe_[RD]) != -1, -1, "close pipe_[RD] failed, %d", errno);
         CHECK_TRUE(close(pipe_[WR]) != -1, -1, "close pipe_[WR] failed, %d", errno);
         signal(sig_, nullptr);
-        PROFILER_LOG_INFO(LOG_CORE, "restore signal handler for sig %d done!", sig_);
+        HILOG_INFO(LOG_CORE, "restore signal handler for sig %d done!", sig_);
         return 0;
     }
 
@@ -90,7 +90,7 @@ struct Poller {
         pfd.events = events;
         pollSet_.push_back(pfd);
         callbacks_[fd] = onEvent;
-        PROFILER_LOG_INFO(LOG_CORE, "Add fd %d to poll set done!", fd);
+        HILOG_INFO(LOG_CORE, "Add fd %d to poll set done!", fd);
     }
 
     int PollEvents(int timeout)
@@ -98,7 +98,7 @@ struct Poller {
         int nready = poll(pollSet_.data(), pollSet_.size(), timeout);
         CHECK_TRUE(nready >= 0, -1, "poll failed, %d", errno);
         if (nready == 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "poll %dms timeout!", timeout);
+            HILOG_INFO(LOG_CORE, "poll %dms timeout!", timeout);
             return 0;
         }
         return nready;
@@ -177,14 +177,14 @@ static std::string ReceiveOutputAndSigchld(int pipeFd, const PipedSigHandler& ha
         childExit = true;
         int sig = 0;
         read(handler.GetNotifyFd(), &sig, sizeof(sig));
-        PROFILER_LOG_INFO(LOG_CORE, "sig %d received!", sig);
+        HILOG_INFO(LOG_CORE, "sig %d received!", sig);
     });
 
     while (!childExit) {
         int timeout = 1000;
         int events = poller.PollEvents(timeout);
         if (events < 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "poll failed!");
+            HILOG_INFO(LOG_CORE, "poll failed!");
             break;
         }
         poller.DispatchEvents(events);
@@ -203,13 +203,13 @@ static int GetProcessExitCode(int pid)
     int retval = 0;
     if (WIFEXITED(wstatus)) {
         retval = WEXITSTATUS(wstatus);
-        PROFILER_LOG_INFO(LOG_CORE, "process %d exited with status %d", pid, retval);
+        HILOG_INFO(LOG_CORE, "process %d exited with status %d", pid, retval);
     } else if (WIFSIGNALED(wstatus)) {
         retval = -1;
-        PROFILER_LOG_INFO(LOG_CORE, "process %d killed by signal %d\n", pid, WTERMSIG(wstatus));
+        HILOG_INFO(LOG_CORE, "process %d killed by signal %d\n", pid, WTERMSIG(wstatus));
     } else {
         retval = -1;
-        PROFILER_LOG_WARN(LOG_CORE, "process %d exited with unknow status!", pid);
+        HILOG_WARN(LOG_CORE, "process %d exited with unknow status!", pid);
     }
     return retval;
 }
@@ -224,7 +224,7 @@ int ProcessUtils::Execute(const ExecuteArgs& args, std::string& output)
     CHECK_TRUE(fcntl(pipeFds[RD], F_SETFL, O_NONBLOCK) != -1, -1, "set non block to pipe[WR] failed!");
 
     std::string cmdline = StringUtils::Join(args.argv_, " ");
-    PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): prepare ...", cmdline.c_str());
+    HILOG_INFO(LOG_CORE, "ExecuteCommand(%s): prepare ...", cmdline.c_str());
 
     PipedSigHandler sigChldHandler(SIGCHLD);
     pid_t pid = fork();
@@ -240,17 +240,17 @@ int ProcessUtils::Execute(const ExecuteArgs& args, std::string& output)
 
     output = ReceiveOutputAndSigchld(pipeFds[RD], sigChldHandler);
     auto lines = StringUtils::Split(output, "\n");
-    PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): output %zuB, %zuLn", cmdline.c_str(), output.size(), lines.size());
+    HILOG_INFO(LOG_CORE, "ExecuteCommand(%s): output %zuB, %zuLn", cmdline.c_str(), output.size(), lines.size());
 
     int retval = GetProcessExitCode(pid);
 
     // close pipe fds
     CHECK_TRUE(close(pipeFds[RD]) != -1, -1, "close pipe[RD] failed, %d", errno);
     if (retval != 0 && cmdline != "hitrace -l") {
-        PROFILER_LOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d, hitrace output is %s", cmdline.c_str(),
+        HILOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d, hitrace output is %s", cmdline.c_str(),
             retval, output.c_str());
     } else {
-        PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);
+        HILOG_INFO(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);
     }
     return retval;
 }

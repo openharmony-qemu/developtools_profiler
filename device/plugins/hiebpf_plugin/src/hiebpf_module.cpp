@@ -38,7 +38,7 @@ void RunCmd(std::string& cmd)
 {
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
     if (pipe == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HiebpfPlugin::RunCmd: create popen FAILED!");
+        HILOG_ERROR(LOG_CORE, "HiebpfPlugin::RunCmd: create popen FAILED!");
         return;
     }
     constexpr uint32_t readBufferSize = 4096;
@@ -47,7 +47,7 @@ void RunCmd(std::string& cmd)
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
     }
-    PROFILER_LOG_INFO(LOG_CORE, "HiebpfPlugin::run command result: %s", result.c_str());
+    HILOG_INFO(LOG_CORE, "HiebpfPlugin::run command result: %s", result.c_str());
 }
 } // namespace
 
@@ -55,9 +55,9 @@ static int32_t HiebpfSessionStart(const uint8_t* configData, uint32_t configSize
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
     CHECK_TRUE(!g_releaseResources, 0, "%s: hiebpf released resources, return", __func__);
-    PROFILER_LOG_DEBUG(LOG_CORE, "enter");
+    HILOG_DEBUG(LOG_CORE, "enter");
     if (configData == nullptr || configSize < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Parameter error");
+        HILOG_ERROR(LOG_CORE, "Parameter error");
         return RET_ERR;
     }
 
@@ -80,7 +80,7 @@ static int32_t HiebpfSessionStart(const uint8_t* configData, uint32_t configSize
     std::string cmd = g_config.cmd_line();
     cmd += " --start true --output_file " + g_config.outfile_name();
     RunCmd(cmd);
-    PROFILER_LOG_DEBUG(LOG_CORE, "leave");
+    HILOG_DEBUG(LOG_CORE, "leave");
     return RET_OK;
 }
 
@@ -88,7 +88,7 @@ static int32_t HiebpfSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
     CHECK_TRUE(!g_releaseResources, 0, "%s: hiebpf released resources, return", __func__);
-    PROFILER_LOG_DEBUG(LOG_CORE, "enter");
+    HILOG_DEBUG(LOG_CORE, "enter");
 
     if (!g_config.split_outfile_name().empty()) {
         CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, SetDurationTime failed", __func__);
@@ -106,7 +106,7 @@ static int32_t HiebpfSessionStop()
         g_splitTraceWriter.reset();
         g_splitTraceWriter = nullptr;
     }
-    PROFILER_LOG_DEBUG(LOG_CORE, "leave");
+    HILOG_DEBUG(LOG_CORE, "leave");
     return RET_OK;
 }
 

@@ -71,12 +71,12 @@ bool PluginStart(HidumpPlugin& plugin, HidumpConfig& config)
     std::vector<uint8_t> configData(size);
     int ret = config.SerializeToArray(configData.data(), configData.size());
     CHECK_TRUE(ret > 0, false, "HidumpPluginUnittest: SerializeToArray fail!!!");
-    PROFILER_LOG_INFO(LOG_CORE, "HidumpPluginUnittest: SerializeToArray success");
+    HILOG_INFO(LOG_CORE, "HidumpPluginUnittest: SerializeToArray success");
 
     // start
     ret = plugin.Start(configData.data(), configData.size());
     CHECK_TRUE(ret == 0, false, "HidumpPluginUnittest: start plugin fail!!!");
-    PROFILER_LOG_INFO(LOG_CORE, "HidumpPluginUnittest: Start success");
+    HILOG_INFO(LOG_CORE, "HidumpPluginUnittest: Start success");
 
     return true;
 }
@@ -221,14 +221,14 @@ bool RecordFileExist(std::string& file)
     std::string cmd = "cat " + file;
     std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(cmd.c_str(), "r"), pclose);
     if (!fp) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:: popen error", __func__);
+        HILOG_ERROR(LOG_CORE, "%s:: popen error", __func__);
         return false;
     }
 
     char buff[BUF_MAX_LEN] = {0};
     char* pRet = fgets(buff, BUF_MAX_LEN - 1, fp.get());
     if (pRet == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: fgets Failed, errno(%d)", __func__, errno);
+        HILOG_ERROR(LOG_CORE, "%s: fgets Failed, errno(%d)", __func__, errno);
         return false;
     }
     buff[BUF_MAX_LEN - 1] = '\0';

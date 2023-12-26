@@ -35,10 +35,10 @@ BufferWriter::BufferWriter(std::string name,
                            uint32_t pluginId)
     : pluginName_(name), pluginVersion_(version)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:%s %d [%d] [%d]", __func__, name.c_str(), size, smbFd, eventFd);
+    HILOG_INFO(LOG_CORE, "%s:%s %d [%d] [%d]", __func__, name.c_str(), size, smbFd, eventFd);
     shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
     if (shareMemoryBlock_ == nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:create shareMemoryBlock_ failed!", __func__);
+        HILOG_DEBUG(LOG_CORE, "%s:create shareMemoryBlock_ failed!", __func__);
     }
     eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     pluginId_ = pluginId;
@@ -50,14 +50,14 @@ BufferWriter::BufferWriter(std::string name,
 
 BufferWriter::~BufferWriter()
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "%s:destroy eventfd = %d!", __func__, eventNotifier_ ? eventNotifier_->GetFd() : -1);
+    HILOG_DEBUG(LOG_CORE, "%s:destroy eventfd = %d!", __func__, eventNotifier_ ? eventNotifier_->GetFd() : -1);
     eventNotifier_ = nullptr;
     ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote(pluginName_);
 }
 
 void BufferWriter::Report() const
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "%s:stats B: %" PRIu64 ", P: %d, W:%" PRIu64 ", F: %d", __func__,
+    HILOG_DEBUG(LOG_CORE, "%s:stats B: %" PRIu64 ", P: %d, W:%" PRIu64 ", F: %d", __func__,
         bytesCount_.load(), bytesPending_.load(), writeCount_.load(), flushCount_.load());
 }
 

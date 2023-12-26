@@ -89,7 +89,7 @@ int main(int agrc, char* agrv[])
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            PROFILER_LOG_ERROR(LOG_CORE, "test:dlopen err, errno(%d:%s)", errno, buf);
+            HILOG_ERROR(LOG_CORE, "test:dlopen err, errno(%d:%s)", errno, buf);
             return 0;
         }
 

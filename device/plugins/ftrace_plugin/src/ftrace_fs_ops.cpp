@@ -32,12 +32,12 @@ FtraceFsOps& FtraceFsOps::GetInstance()
 
 FtraceFsOps::FtraceFsOps() : ftraceRoot_(GetFtraceRoot()), hmTraceDir_(GetHmTraceDir())
 {
-    PROFILER_LOG_INFO(LOG_CORE, "FtraceFsOps create!");
+    HILOG_INFO(LOG_CORE, "FtraceFsOps create!");
 }
 
 FtraceFsOps::~FtraceFsOps()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "FtraceFsOps destroy!");
+    HILOG_INFO(LOG_CORE, "FtraceFsOps destroy!");
 }
 
 std::string FtraceFsOps::GetFtraceRoot()
@@ -299,7 +299,7 @@ std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents(
         AddPlatformEvents(eventSet, ftraceRoot_ + hmTraceDir_ + "/events");
     }
     AddPlatformEvents(eventSet, ftraceRoot_ + "/events");
-    PROFILER_LOG_INFO(LOG_CORE, "get platform event formats done, types: %zu!", eventSet.size());
+    HILOG_INFO(LOG_CORE, "get platform event formats done, types: %zu!", eventSet.size());
     return {eventSet.begin(), eventSet.end()};
 }
 

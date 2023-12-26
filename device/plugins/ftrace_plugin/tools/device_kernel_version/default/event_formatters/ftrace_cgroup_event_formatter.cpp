@@ -32,7 +32,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "cgroup_attach_task: dst_root=%d dst_id=%d dst_level=%d dst_path=%s pid=%d comm=%s", msg.dst_root(),
             msg.dst_id(), msg.dst_level(), msg.dst_path().c_str(), msg.pid(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
+            HILOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_attach_task) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -47,7 +47,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_destroy_root: root=%d ss_mask=%#x name=%s",
             msg.root(), msg.ss_mask(), msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
+            HILOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_destroy_root) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -62,8 +62,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_freeze: root=%d id=%d level=%d path=%s",
             msg.root(), msg.id(), msg.level(), msg.path().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_freeze) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_freeze) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -77,8 +76,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_mkdir: root=%d id=%d level=%d path=%s",
             msg.root(), msg.id(), msg.level(), msg.path().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_mkdir) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_mkdir) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -93,7 +91,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "cgroup_notify_frozen: root=%d id=%d level=%d path=%s val=%d", msg.root(), msg.id(), msg.level(),
             msg.path().c_str(), msg.val());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
+            HILOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_notify_frozen) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -109,7 +107,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "cgroup_notify_populated: root=%d id=%d level=%d path=%s val=%d", msg.root(), msg.id(), msg.level(),
             msg.path().c_str(), msg.val());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
+            HILOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_notify_populated) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -124,8 +122,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_release: root=%d id=%d level=%d path=%s",
             msg.root(), msg.id(), msg.level(), msg.path().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_release) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_release) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -139,8 +136,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_remount: root=%d ss_mask=%#x name=%s",
             msg.root(), msg.ss_mask(), msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_remount) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_remount) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -154,8 +150,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_rename: root=%d id=%d level=%d path=%s",
             msg.root(), msg.id(), msg.level(), msg.path().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_rename) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_rename) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -169,8 +164,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_rmdir: root=%d id=%d level=%d path=%s",
             msg.root(), msg.id(), msg.level(), msg.path().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_rmdir) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_rmdir) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -184,8 +178,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_setup_root: root=%d ss_mask=%#x name=%s",
             msg.root(), msg.ss_mask(), msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_setup_root) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_setup_root) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -200,7 +193,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "cgroup_transfer_tasks: dst_root=%d dst_id=%d dst_level=%d dst_path=%s pid=%d comm=%s", msg.dst_root(),
             msg.dst_id(), msg.dst_level(), msg.dst_path().c_str(), msg.pid(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
+            HILOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_transfer_tasks) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -215,8 +208,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cgroup_unfreeze: root=%d id=%d level=%d path=%s",
             msg.root(), msg.id(), msg.level(), msg.path().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cgroup_unfreeze) msg had be cut off in outfile");
+            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cgroup_unfreeze) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

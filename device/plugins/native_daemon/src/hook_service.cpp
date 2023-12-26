@@ -46,7 +46,7 @@ bool HookService::StartService(const std::string& unixSocketName)
     serviceEntry_ = std::make_shared<ServiceEntry>();
     if (!serviceEntry_->StartServer(unixSocketName)) {
         serviceEntry_ = nullptr;
-        PROFILER_LOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
+        HILOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
         return false;
     }
     serviceEntry_->RegisterService(*this);
@@ -66,7 +66,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
     std::string bundleName;
     if (!LoadStringFromFile(filePath, bundleName)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Get process name by pid failed!, pid: %d", peerConfig);
+        HILOG_ERROR(LOG_CORE, "Get process name by pid failed!, pid: %d", peerConfig);
         return false;
     }
     bundleName.resize(strlen(bundleName.c_str()));
@@ -85,11 +85,11 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     std::lock_guard<std::mutex> lock(mtx_);
     auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
     if (eventFd == smbFd) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
+        HILOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
         return false;
     }
 
-    PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
+    HILOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                 peerConfig);
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
     context.SendFileDescriptor(smbFd);

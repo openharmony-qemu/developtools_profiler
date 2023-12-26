@@ -26,7 +26,7 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
 {
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != INativeMemoryProfilerSa::GetDescriptor()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Get unexpect descriptor:%s", Str16ToStr8(descriptor).c_str());
+        HILOG_ERROR(LOG_CORE, "Get unexpect descriptor:%s", Str16ToStr8(descriptor).c_str());
         return ERR_INVALID_STATE;
     }
 
@@ -44,7 +44,7 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
             return StubDumpFile(data, reply);
         }
         default : {
-            PROFILER_LOG_ERROR(LOG_CORE, "Unknown code:%u", code);
+            HILOG_ERROR(LOG_CORE, "Unknown code:%u", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, options);
         }
     }

@@ -60,7 +60,7 @@ std::vector<std::string> presetPluginVec = {
 volatile sig_atomic_t g_isRunning = true;
 void SignalSigtermHandler(int sig)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "hiprofiler plugin receive sigterm signal!");
+    HILOG_INFO(LOG_CORE, "hiprofiler plugin receive sigterm signal!");
     g_isRunning = false;
 }
 } // namespace
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     const int connectRetrySeconds = 3;
     std::string pluginDir(DEFAULT_PLUGIN_PATH);
     if (argv[1] != nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:pluginDir = %s", __func__, argv[1]);
+        HILOG_DEBUG(LOG_CORE, "%s:pluginDir = %s", __func__, argv[1]);
         pluginDir = argv[1];
     }
 
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
         if (commandPoller->OnConnect()) {
             break;
         }
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:connect failed, try again", __func__);
+        HILOG_DEBUG(LOG_CORE, "%s:connect failed, try again", __func__);
         sleep(connectRetrySeconds);
     }
     pluginManager->SetCommandPoller(commandPoller);
@@ -98,9 +98,9 @@ int main(int argc, char* argv[])
     for (size_t i = 0; i < presetPluginVec.size(); i++) {
         const std::string pluginPath = DEFAULT_LIB_PATH + presetPluginVec[i];
         if (pluginManager->AddPlugin(pluginPath)) {
-            PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s success!", pluginPath.c_str());
+            HILOG_INFO(LOG_CORE, "add preset plugin %s success!", pluginPath.c_str());
         } else {
-            PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s failed!", pluginPath.c_str());
+            HILOG_INFO(LOG_CORE, "add preset plugin %s failed!", pluginPath.c_str());
         }
     }
 
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
     }
     if (flock(lockFileFd, LOCK_UN) == -1) {
-        PROFILER_LOG_INFO(LOG_CORE, "release lockfile failed!");
+        HILOG_INFO(LOG_CORE, "release lockfile failed!");
     }
     close(lockFileFd);
     pluginManager->StopAllPluginSession();

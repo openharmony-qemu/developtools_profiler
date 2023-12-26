@@ -28,7 +28,7 @@ ClientConnection::ClientConnection(int sfd, ServiceEntry& serviceEntry)
     clientState_ = CLIENT_STAT_WORKING;
     lastProcMS_ = GetTimeMS();
     serviceEntry_ = &serviceEntry;
-    PROFILER_LOG_INFO(LOG_CORE, "new ClientConnection construct");
+    HILOG_INFO(LOG_CORE, "new ClientConnection construct");
     CreateRecvThread();
 }
 
@@ -41,7 +41,7 @@ int ClientConnection::RawProtocolProc(uint32_t pnum, const int8_t* buf, const ui
             struct RawPointToService* prrs = (struct RawPointToService*)buf;
             protoServiceName_ = prrs->serviceName_;
             serviceBase_ = const_cast<ServiceBase*>(serviceEntry_->FindServiceByName(protoServiceName_));
-            PROFILER_LOG_INFO(LOG_CORE, "RAW_PROTOCOL_POINTTO_SERVICE %s", protoServiceName_.c_str());
+            HILOG_INFO(LOG_CORE, "RAW_PROTOCOL_POINTTO_SERVICE %s", protoServiceName_.c_str());
         }
             return 1;
         default:

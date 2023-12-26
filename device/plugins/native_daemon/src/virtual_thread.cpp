@@ -277,10 +277,10 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     memMaps.insert(memMaps.end(), tempMap.begin(), tempMap.end());
 
     if (mapsAdded) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "maps changed and need sort");
+        HILOG_DEBUG(LOG_CORE, "maps changed and need sort");
         SortMaps();
     } else {
-        PROFILER_LOG_DEBUG(LOG_CORE, "maps no change");
+        HILOG_DEBUG(LOG_CORE, "maps no change");
         return false;
     }
     virtualruntime_->soBegin_ = 0;

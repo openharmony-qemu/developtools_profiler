@@ -31,7 +31,7 @@ FtraceDataReader::FtraceDataReader(const std::string& path) : path_(path), readF
     char realPath[PATH_MAX + 1] = {0};
 
     if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:so filename invalid, errno=%d", __func__, errno);
+        HILOG_ERROR(LOG_CORE, "%s:so filename invalid, errno=%d", __func__, errno);
     }
     readFd_ = open(realPath, O_CLOEXEC | O_NONBLOCK);
     CHECK_TRUE(readFd_ >= 0, NO_RETVAL, "open %s failed, %d", realPath, errno);
