@@ -117,6 +117,24 @@ protected:
     static void TearDownTestCase() {}
 };
 
+bool CheckBuffer(uint8_t *buffer, size_t size)
+{
+    ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr1);
+    uint8_t *cmpaddr = (uint8_t *)g_smbAddr1 + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_.load();
+    uint32_t cmpsize = *(uint32_t*)cmpaddr;
+    cmpaddr = cmpaddr + sizeof(uint32_t);
+    ProfilerPluginData pluginData;
+    pluginData.ParseFromArray(cmpaddr, cmpsize);
+    const char* data = pluginData.data().c_str();
+
+    header_->info.readOffset_ = header_->info.writeOffset_.load();
+    if (memcmp(buffer, data, size) == 0) {
+        return true;
+    }
+    return false;
+}
+
+
 bool CheckMessage(uint8_t *buffer, size_t size)
 {
     ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr2);
@@ -141,9 +159,14 @@ HWTEST_F(BufferWriteTest, WriteTest, TestSize.Level1)
 
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
 
     EXPECT_TRUE(write->Write(buffer1, sizeof(buffer1)));
     EXPECT_TRUE(write->Write(buffer2, sizeof(buffer2)));
+    EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
+    EXPECT_TRUE(write->Write(buffer3, sizeof(buffer3)));
+    EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
+    EXPECT_FALSE(write->Write(nullptr, 0));
 }
 
 /**

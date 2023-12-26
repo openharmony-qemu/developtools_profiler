@@ -31,4 +31,31 @@ public:
     void TearDown() {}
 };
 
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest001
+ * @tc.desc: Test serialization and derivativeization
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest001, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(config, nullptr);
+
+    config->duration_ = 100;
+    std::string filePath = "XXXXXXXXXXXX";
+    config->filePath_ = filePath;
+    config->fpUnwind_ = false;
+
+    OHOS::Parcel parcel;
+    EXPECT_EQ(config->Marshalling(parcel), true);
+
+    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(result, nullptr);
+    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
+    EXPECT_EQ(result->duration_, 100);
+    EXPECT_EQ(result->filePath_, filePath);
+    EXPECT_EQ(result->fpUnwind_, false);
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H

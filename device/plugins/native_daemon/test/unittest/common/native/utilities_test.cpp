@@ -614,6 +614,23 @@ HWTEST_F(UtilitiesTest, PowerOfTwo, TestSize.Level1)
 {
     EXPECT_EQ(PowerOfTwo(1), true);
 }
+
+/**
+ * @tc.name: GetSubthreadIDs
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, GetSubthreadIDs, TestSize.Level1)
+{
+    StartThreads(1);
+    std::vector<pid_t> tids = GetSubthreadIDs(getpid());
+    if (!HasFailure()) {
+        for (pid_t tid : tids) {
+            EXPECT_NE(find(tids_.begin(), tids_.end(), tid), tids_.end());
+        }
+    }
+    ExitThreads();
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS
