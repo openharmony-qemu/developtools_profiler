@@ -32,13 +32,7 @@ class GpuDataPluginTest : public ::testing::Test {
 public:
     static void SetUpTestCase() {}
 
-    static void TearDownTestCase()
-    {
-        if (access(g_testPath.c_str(), F_OK) == 0) {
-            std::string str = "rm -rf " + g_testPath;
-            system(str.c_str());
-        }
-    }
+    static void TearDownTestCase() {}
 };
 
 string Getexepath()

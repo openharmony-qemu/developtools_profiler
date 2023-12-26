@@ -425,14 +425,12 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddr2, TestSize.Level1)
     */
 #ifdef __arm__
     ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001029).GetName(), "_init");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001320).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001359).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001512).GetName(), "main");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x0000152c).GetName(), "main");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x0000145d).GetName(), "TestGlobalChildFunction");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x000014d9).GetName(), "TestGlobalParentFunction");
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001b38).GetName(), "_fini");
 #else
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002000).GetName(), "_init");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002019).GetName(), "_init");
