@@ -46,7 +46,7 @@ int32_t NativeMemoryProfilerSaClientManager::Start(NativeMemProfilerType type, u
     }
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
     CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
-    config->pid_ = pid;
+    config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = duration;
     config->sampleInterval_ = sampleIntervel;
     if (type == NativeMemProfilerType::MEM_PROFILER_LIBRARY) {

@@ -20,8 +20,7 @@
 #include <sstream>
 #include <set>
 
-struct HookData
-{
+struct HookData {
     std::set<std::string> pids;
     uint32_t smbSize {0};
     uint64_t duration {0};

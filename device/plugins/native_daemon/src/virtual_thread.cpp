@@ -290,11 +290,11 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
 void VirtualThread::SortMaps()
 {
     for (size_t currPos = 1; currPos < maps_->size(); ++currPos) {
-        int targetPos = currPos - 1;
+        int targetPos = static_cast<int>(currPos - 1);
         while (targetPos >= 0 && (*maps_)[currPos]->end < (*maps_)[targetPos]->end) {
             --targetPos;
         }
-        if (targetPos < currPos - 1) {
+        if (targetPos < static_cast<int>(currPos - 1)) {
             auto target = (*maps_)[currPos];
             for (size_t k = currPos - 1; k > targetPos; --k) {
                 (*maps_)[k + 1] = (*maps_)[k];

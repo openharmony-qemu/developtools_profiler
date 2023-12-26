@@ -33,7 +33,7 @@ int main(int agrc, char* agrv[])
         return 0;
     }
     std::cout << "test:handle = " << handle << std::endl;
-    gpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");
+    gpuPlugin = static_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
     std::cout << "test:name = " << gpuPlugin->name << std::endl;
     std::cout << "test:buffer size = " << gpuPlugin->resultBufferSizeHint << std::endl;
 

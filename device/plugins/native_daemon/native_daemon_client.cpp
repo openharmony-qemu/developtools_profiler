@@ -24,7 +24,7 @@
 
 using namespace OHOS::Developtools::NativeDaemon;
 
-uint32_t TestDumpFile()
+static uint32_t TestDumpFile()
 {
     uint32_t fd = open("/data/local/tmp/test_dump_file.htrace",
                        O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
@@ -84,7 +84,7 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--filePath") || (arg == "-f")) {
             config->filePath_ = std::string(argv[++i]);
         } else if ((arg == "--duration") || (arg == "-d")) {
-            config->duration_ = std::stoi(argv[++i]);
+            config->duration_ = static_cast<uint32_t>(std::stoi(argv[++i]));
         } else if ((arg == "--filterSize") || (arg == "-fs")) {
             config->filterSize_ = std::stoi(argv[++i]);
         } else if ((arg == "--shareMemorySize") || (arg == "-sms")) {
@@ -123,8 +123,6 @@ int32_t main(int32_t argc, char* argv[])
             config->callframeCompress_ = true;
         } else if ((arg == "--statisticsInterval") || (arg == "-si")) {
             config->statisticsInterval_ = std::stoi(argv[++i]);
-        } else if ((arg == "--clockId") || (arg == "-c")) {
-            config->clockId_ = std::stoi(argv[++i]);
         } else if ((arg == "--clockId") || (arg == "-c")) {
             config->clockId_ = std::stoi(argv[++i]);
         } else if ((arg == "--dumpData") || (arg == "-dd")) {

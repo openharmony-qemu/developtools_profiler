@@ -75,7 +75,7 @@ int32_t NativeMemoryProfilerSaStub::StubStopName(MessageParcel &data, MessagePar
 
 int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessageParcel &reply)
 {
-    uint32_t fd = data.ReadFileDescriptor();
+    uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     if (!NativeMemoryProfilerSaConfig::Unmarshalling(data, config)) {
         close(fd);

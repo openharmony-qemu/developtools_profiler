@@ -56,8 +56,8 @@ public:
         }
         maps_.emplace_back(map);
     }
-    uint64_t soBegin_;
-    uint64_t soEnd_;
+    uint64_t soBegin_ {0};
+    uint64_t soEnd_ {0};
     uint32_t filePathId_ {0}; // for maps item filePath id
     std::string name_;
     bool isReported_ {false}; // indicates whether information about item has been reported
@@ -83,8 +83,8 @@ public:
 
     std::string ReadThreadName(pid_t tid);
 
-    pid_t pid_;
-    pid_t tid_;
+    pid_t pid_ {0};
+    pid_t tid_ {0};
     std::string name_;
 
     const std::vector<std::shared_ptr<DfxMap>> &GetMaps() const
@@ -114,14 +114,14 @@ private:
 
     // thread must use ref from process
 
-    std::vector<std::shared_ptr<DfxMap>>* maps_;
+    std::vector<std::shared_ptr<DfxMap>>* maps_ = {};
 #ifdef HIPERF_DEBUG
     mutable std::unordered_set<uint64_t> missedRuntimeVaddr_;
 #endif
 #ifdef DEBUG_MISS_SYMBOL
     mutable std::vector<std::string> missedSymbolFile_;
 #endif
-    VirtualRuntime* virtualruntime_;
+    VirtualRuntime* virtualruntime_ = nullptr;
     FRIEND_TEST(VirtualThreadTest, ReadRoMemory);
 };
 } // namespace NativeDaemon

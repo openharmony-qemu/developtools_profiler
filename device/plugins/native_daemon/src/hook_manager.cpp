@@ -37,14 +37,14 @@
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
-const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
-const int PAGE_BYTES = 4096;
+constexpr int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
+constexpr uint32_t PAGE_BYTES = 4096;
 std::shared_ptr<Writer> g_buffWriter;
 constexpr uint32_t MAX_BUFFER_SIZE = 10 * 1024;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
-const int SIGNAL_START_HOOK = 36;
-const int SIGNAL_STOP_HOOK = 37;
+constexpr int SIGNAL_START_HOOK = 36;
+constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
@@ -58,11 +58,9 @@ bool HookManager::CheckProcess()
     std::set<int32_t> pidCache;
     for (const auto& pid : hookConfig_.expand_pids()) {
         if (pid > 0) {
-            std::string pidPath = std::string();
             struct stat statBuf;
-            pidPath = "/proc/" + std::to_string(pid) + "/status";
+            std::string pidPath = "/proc/" + std::to_string(pid) + "/status";
             if (stat(pidPath.c_str(), &statBuf) != 0) {
-                // pid = 0;
                 HILOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
                 return false;
             } else {
@@ -406,9 +404,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
             item->shareMemoryBlock = nullptr;
         }
-        if (item->eventNotifier != nullptr) {
-            item->eventNotifier = nullptr;
-        }
+        item->eventNotifier = nullptr;
         item->stackPreprocess = nullptr;
         item->stackData = nullptr;
     }

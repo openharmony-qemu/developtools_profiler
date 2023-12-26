@@ -71,8 +71,8 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     }
     bundleName.resize(strlen(bundleName.c_str()));
 
-    if (bundleName.substr(0, 2) == "./") {
-        bundleName = bundleName.substr(2);
+    if (bundleName.substr(0, 2) == "./") { // 2: size
+        bundleName = bundleName.substr(2); // 2: point
     }
     size_t found = bundleName.rfind("/");
     std::string procName;
