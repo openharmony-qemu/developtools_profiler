@@ -229,8 +229,6 @@ static inline std::string StringFormat(const char* fmt, ...)
 #ifndef HAVE_HILOG
 static std::string GetTimeStr()
 {
-    string str = "CHECK_NOTNULL(" + logging::StringFormat(fmt, ##__VA_ARGS__) +
-                         "in " + __func__ + ":" + __LINE__+"FAILED";
     char timeStr[64];
     struct timespec ts;
     struct tm tmStruct;
