@@ -15,6 +15,7 @@
 #include <fstream>
 #include <string>
 #include "include/parse_slide_fps_trace.h"
+
 namespace OHOS {
 namespace SmartPerf {
 double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)

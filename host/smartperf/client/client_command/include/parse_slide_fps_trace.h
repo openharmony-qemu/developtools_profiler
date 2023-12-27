@@ -18,6 +18,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+
 namespace OHOS {
 namespace SmartPerf {
 class ParseSlideFpsTrace {
