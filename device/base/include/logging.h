@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_PROFILER_LOGGING_H
-#define OHOS_PROFILER_LOGGING_H
+#ifndef OHOS_PROF_LOGGING_H
+#define OHOS_PROF_LOGGING_H
 
 #define EXPORT_API __attribute__((visibility("default")))
 
@@ -63,22 +63,22 @@ static inline long GetTid(void)
 }
 
 enum {
-    LOG_UNKNOWN = 0,
-    LOG_DEFAULT,
-    LOG_VERBOSE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARN,
-    LOG_ERROR,
-    LOG_FATAL,
-    LOG_SILENT,
+    PROF_LOG_UNKNOWN = 0,
+    PROF_LOG_DEFAULT,
+    PROF_LOG_VERBOSE,
+    PROF_LOG_DEBUG,
+    PROF_LOG_INFO,
+    PROF_LOG_WARN,
+    PROF_LOG_ERROR,
+    PROF_LOG_FATAL,
+    PROF_LOG_SILENT,
 };
 
 namespace {
 constexpr int NS_PER_MS_LOG = 1000 * 1000;
 }
 
-static inline std::string GetTimeStr();
+static inline std::string GetTimeString();
 
 typedef const char* ConstCharPtr;
 
@@ -87,7 +87,7 @@ static inline int HiLogPrintArgs(int prio, int domain, ConstCharPtr tag, ConstCh
     static std::mutex mtx;
     static std::vector<std::string> prioNames = {"U", " ", "V", "D", "I", "W", "E", "F", "S"};
     std::unique_lock<std::mutex> lock(mtx);
-    int count = fprintf(stderr, "%04x %s %7d %7ld %5s %s ", domain, GetTimeStr().c_str(), getpid(), GetTid(),
+    int count = fprintf(stderr, "%04x %s %7d %7ld %5s %s ", domain, GetTimeString().c_str(), getpid(), GetTid(),
                         prioNames[prio].c_str(), tag);
     if (count < 0) {
         return 0;
@@ -111,10 +111,26 @@ static inline int HiLogPrint(int type, int prio, int domain, ConstCharPtr tag, C
 #define LOG_CORE 0
 #endif
 
-#define HILOG_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_ERROR(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#ifdef HILOG_DEBUG
+#undef HILOG_DEBUG
+#endif
+
+#ifdef HILOG_INFO
+#undef HILOG_INFO
+#endif
+
+#ifdef HILOG_WARN
+#undef HILOG_WARN
+#endif
+
+#ifdef HILOG_ERROR
+#undef HILOG_ERROR
+#endif
+
+#define HILOG_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_ERROR(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 
 #endif // HAVE_HILOG
 
@@ -169,14 +185,14 @@ static inline std::string StringFormat(const char* fmt, ...)
 #define HILOG_PRINT_ERROR(type, fmt, ...) \
     HILOG_ERROR(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #else
-#define HILOG_PRINT_DEBUG(type, level, fmt, ...) \
-    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
-#define HILOG_PRINT_INFO(type, level, fmt, ...) \
-    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
-#define HILOG_PRINT_WARN(type, level, fmt, ...) \
-    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
-#define HILOG_PRINT_ERROR(type, level, fmt, ...) \
-    HiLogPrint(type, level, LOG_DOMAIN, LOG_TAG, "%s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+#define HILOG_PRINT_DEBUG(type, fmt, ...) \
+    HiLogPrint(type, PROF_LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_PRINT_INFO(type, fmt, ...) \
+    HiLogPrint(type, PROF_LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_PRINT_WARN(type, fmt, ...) \
+    HiLogPrint(type, PROF_LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_PRINT_ERROR(type, fmt, ...) \
+    HiLogPrint(type, PROF_LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #endif
 
 #define PROFILER_LOG_DEBUG(type, fmt, ...) HILOG_PRINT_DEBUG(type, fmt, ##__VA_ARGS__)
@@ -227,7 +243,7 @@ static inline std::string StringFormat(const char* fmt, ...)
     } while (0)
 
 #ifndef HAVE_HILOG
-static std::string GetTimeStr()
+static std::string GetTimeString()
 {
     char timeStr[64];
     struct timespec ts;
@@ -244,4 +260,4 @@ static std::string GetTimeStr()
     return timeStr;
 }
 #endif // !HAVE_HILOG
-#endif // OHOS_PROFILER_LOGGING_H
+#endif // OHOS_PROF_LOGGING_H
