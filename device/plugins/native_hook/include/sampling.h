@@ -45,6 +45,13 @@ public:
     {
         pthread_spin_destroy(&spinlock_);
     }
+
+    // for test
+    void SetRandomEngineSeed(uint64_t cnt)
+    {
+        randomEngine_.seed(cnt);
+    }
+
 private:
     class Spinlock {
     public:

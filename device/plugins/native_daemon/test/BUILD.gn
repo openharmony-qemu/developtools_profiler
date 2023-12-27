@@ -69,6 +69,7 @@ config("native_daemon_test_config") {
   ldflags = []
   defines = []
 
+  cflags += [ "-Dprivate=public" ]  # allow test code access private members
   if (native_daemon_test_coverage && is_ohos) {
     defines += [ "TEST_COVERAGE" ]
     cflags += [
