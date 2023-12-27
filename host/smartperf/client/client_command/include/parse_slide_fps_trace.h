@@ -19,30 +19,30 @@
 #include <string>
 #include <vector>
 namespace OHOS {
-    namespace SmartPerf {
-        class ParseSlideFpsTrace {
-            public:
-                double ParseSlideFpsTraceNoh(std::string file);
-                double CalculateTime();
-                std::string GetLineTime(std::string lineStr);
-                std::string CutString(std::string lineStr, std::string start, std::string end, size_t off);
-            private:
-                std::ifstream infile;
-                std::string startLine = "";
-                std::string responseLine = "";
-                std::string completeLine = "";
-                bool needUpdateResponseLine = false;
-                int frameNum = 0;
-                std::string pid = "";
-                int count = 0;
-                bool updateCount = false;
-                double frameStartTime = 0;
-                bool animatorFlag = false;
-                int animatorSecond = 0;
-                std::string::size_type maxnpos = std::string::npos;
-                std::string line;
-                int numA = 2;
-        };
-    }
+namespace SmartPerf {
+class ParseSlideFpsTrace {
+    public:
+        double ParseSlideFpsTraceNoh(std::string file);
+        double CalculateTime();
+        std::string GetLineTime(std::string lineStr);
+        std::string CutString(std::string lineStr, std::string start, std::string end, size_t off);
+    private:
+        std::ifstream infile;
+        std::string startLine = "";
+        std::string responseLine = "";
+        std::string completeLine = "";
+        bool needUpdateResponseLine = false;
+        int frameNum = 0;
+        std::string pid = "";
+        int count = 0;
+        bool updateCount = false;
+        double frameStartTime = 0;
+        bool animatorFlag = false;
+        int animatorSecond = 0;
+        std::string::size_type maxnpos = std::string::npos;
+        std::string line;
+        int numA = 2;
+};
+}
 }
 #endif // SMARTPERF_COMMAND_H
