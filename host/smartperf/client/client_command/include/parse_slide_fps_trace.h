@@ -25,7 +25,7 @@ namespace OHOS {
                 double ParseSlideFpsTraceNoh(std::string file);
                 double CalculateTime();
                 std::string GetLineTime(std::string lineStr);
-                std::string CutString(std::string lineStr, std::string start, std::string end, size_t offset);
+                std::string CutString(std::string lineStr, std::string start, std::string end, size_t off);
             private:
                 std::ifstream infile;
                 std::string startLine = "";

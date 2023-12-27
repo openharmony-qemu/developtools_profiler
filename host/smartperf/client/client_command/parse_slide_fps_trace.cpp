@@ -73,11 +73,11 @@ namespace OHOS {
             size_t position2 = line.find(":");
             return line.substr(position1 + num, position2 - position1 - num);
         }
-        std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t offset)
+        std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t off)
         {
             size_t position1 = line.find(start);
             size_t position2 = line.find(end);
-            return line.substr(position1 + offset, position2 - position1 - offset);
+            return line.substr(position1 + off, position2 - position1 - off);
         }
     }
 }
