@@ -121,6 +121,7 @@ HWTEST_F(ArkTSPluginTest, TestStartFunction, TestSize.Level1)
     configData.clear();
     configData = SetArkTSConfig(protoConfig, pid_, ArkTSConfig::INVALID, 0, false, false, false);
     ret = arkTSPlugin.Start(configData.data(), configData.size());
+    EXPECT_EQ(ret, 0);
     EXPECT_EQ(arkTSPlugin.Stop(), 0);
 }
 
@@ -137,6 +138,7 @@ HWTEST_F(ArkTSPluginTest, TestSnapshot, TestSize.Level1)
 
     std::vector<uint8_t> configData = SetArkTSConfig(protoConfig, pid_, ArkTSConfig::SNAPSHOT, 5, false, false, false);
     arkTSPlugin.SetWriter(&writer);
+    EXPECT_EQ(arkTSPlugin.Start(configData.data(), configData.size()), 0);
     sleep(10);
     EXPECT_EQ(arkTSPlugin.Stop(), 0);
 }
@@ -154,6 +156,7 @@ HWTEST_F(ArkTSPluginTest, TestTimeline, TestSize.Level1)
 
     std::vector<uint8_t> configData = SetArkTSConfig(protoConfig, pid_, ArkTSConfig::TIMELINE, 0, false, true, false);
     arkTSPlugin.SetWriter(&writer);
+    EXPECT_EQ(arkTSPlugin.Start(configData.data(), configData.size()), 0);
     sleep(5);
     EXPECT_EQ(arkTSPlugin.Stop(), 0);
 }
@@ -171,6 +174,7 @@ HWTEST_F(ArkTSPluginTest, TestCpuProfiler, TestSize.Level1)
 
     std::vector<uint8_t> configData = SetArkTSConfig(protoConfig, pid_, ArkTSConfig::INVALID, 0, false, false, true);
     arkTSPlugin.SetWriter(&writer);
+    EXPECT_EQ(arkTSPlugin.Start(configData.data(), configData.size()), 0);
     sleep(5);
     EXPECT_EQ(arkTSPlugin.Stop(), 0);
 }

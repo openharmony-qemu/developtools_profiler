@@ -19,12 +19,14 @@
 
 #include "hook_client.h"
 #include "musl_preinit_common.h"
+#include "init_param.h"
 
 using namespace testing::ext;
 
 namespace {
 constexpr uint32_t g_size = 1024;
 constexpr uint32_t g_resize = 2048;
+const std::string MEM_FILTER("persist.hiviewdfx.profiler.mem.filter");
 
 class NativeHookTest : public ::testing::Test {
 public:
@@ -50,6 +52,41 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
     ohos_malloc_hook_free(mallocBlack);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+
+    SystemSetParameter(MEM_FILTER.c_str(), "1,3");
+    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    void* mallocBlack2 = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack2, nullptr);
+
+    ohos_malloc_hook_free(mallocBlack2);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+
+    SystemSetParameter(MEM_FILTER.c_str(), "0,0");
+    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    void* mallocBlack3 = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack3, nullptr);
+
+    ohos_malloc_hook_free(mallocBlack3);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+
+    SystemSetParameter(MEM_FILTER.c_str(), "2048,4096");
+    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    void* mallocBlack4 = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack4, nullptr);
+
+    ohos_malloc_hook_free(mallocBlack4);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    SystemSetParameter(MEM_FILTER.c_str(), "0");
+    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    void* mallocBlack5 = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack5, nullptr);
+
+    ohos_malloc_hook_free(mallocBlack5);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
 
 /**
@@ -70,6 +107,16 @@ HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
     ohos_malloc_hook_free(reallocBlack);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+
+    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    void* mallocBlack2 = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack2, nullptr);
+    void* reallocBlack2 = ohos_malloc_hook_realloc(mallocBlack2, g_size);
+    EXPECT_NE(reallocBlack2, nullptr);
+
+    ohos_malloc_hook_free(reallocBlack2);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
 
 /**
@@ -86,6 +133,14 @@ HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
     EXPECT_NE(callocBlack, nullptr);
 
     ohos_malloc_hook_free(callocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+
+    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    void* callocBlack2 = ohos_malloc_hook_calloc(0, g_resize);
+    EXPECT_NE(callocBlack2, nullptr);
+
+    ohos_malloc_hook_free(callocBlack2);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
@@ -197,5 +252,8 @@ HWTEST_F(NativeHookTest, MallocHookFlag, TestSize.Level1)
     EXPECT_EQ(ohos_malloc_hook_get_hook_flag(), flag);
     EXPECT_EQ(ohos_malloc_hook_set_hook_flag(flagPrev), flag);
     EXPECT_EQ(ohos_malloc_hook_get_hook_flag(), flagPrev);
+
+    EXPECT_TRUE(ohos_malloc_hook_set_hook_flag(false));
+    EXPECT_FALSE(ohos_malloc_hook_get_hook_flag());
 }
 } // namespace

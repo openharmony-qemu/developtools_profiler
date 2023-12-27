@@ -203,6 +203,9 @@ HWTEST_F(DebugLoggerTest, SetLogPath, TestSize.Level1)
     DebugLogger::GetInstance()->SetLogPath(DEFAULT_LOG_PATH);
     EXPECT_NE(access(logFile3.c_str(), F_OK), 0);
     EXPECT_EQ(access(DEFAULT_LOG_PATH.c_str(), F_OK), 0);
+
+    EXPECT_EQ(DebugLogger::GetInstance()->SetLogPath(""), false);
+    EXPECT_EQ(DebugLogger::GetInstance()->SetLogPath("/data/"), false);
 }
 
 /**
@@ -239,6 +242,10 @@ HWTEST_F(DebugLoggerTest, SetLogTags, TestSize.Level1)
 
     // back to default
     DebugLogger::GetInstance()->SetLogTags("");
+
+    // tag:level
+    DebugLogger::GetInstance()->SetLogTags("DebugTest:D");
+    DebugLogger::GetInstance()->SetLogTags("DebugTest:T");
 }
 
 /**
@@ -250,6 +257,7 @@ HWTEST_F(DebugLoggerTest, Disable, TestSize.Level1)
 {
     HLOGD("log disabled");
     DebugLogger::GetInstance()->Disable(true);
+    EXPECT_EQ(DebugLogger::GetInstance()->OpenLog(), false);
     ASSERT_EQ(DebugLogger::GetInstance()->logDisabled_, true);
     for (int loglevel = LEVEL_MUCH; loglevel < LEVEL_MAX; loglevel++) {
         LogLevelTest(static_cast<DebugLevel>(loglevel));
