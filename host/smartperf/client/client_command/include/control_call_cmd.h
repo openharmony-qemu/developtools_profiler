@@ -33,7 +33,7 @@ public:
     double PageFps();
     std::string StartFrameFps(std::vector<std::string> v);
     std::string GetResult(std::vector<std::string> v);
-    void GetFrame();
+    std::string GetFrame();
     std::string GetAppStartTime();
     std::string SlideList();
 private:
@@ -43,7 +43,6 @@ private:
     int typeName = 2;
     double time = 0.0;
     double noNameType = -1.0;
-    double fps = 0.0;
     std::ostringstream stream;
 };
 }

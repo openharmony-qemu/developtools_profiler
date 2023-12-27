@@ -105,11 +105,11 @@ std::string ControlCallCmd::SlideList()
         std::string responseSlide = "time:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         stream << sFps;
-        result = "FPS:" + stream.str() + "fps\n" + responseTime;
+        result = "FPS:" + stream.str() + "fps\n" + responseSlide;
     }
-    return time;
+    return result;
 }
-void ControlCallCmd::GetFrame()
+std::string ControlCallCmd::GetFrame()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
@@ -121,7 +121,8 @@ void ControlCallCmd::GetFrame()
     std::string str = SPUtils::GetRadarFrame();
     thGetTrace.join();
     thGetHisysId.join();
-    radar.ParseRadarFrame(str);
+    std::string reslut = radar.ParseRadarFrame(str);
+    return result;
 }
 double ControlCallCmd::PageFps()
 {
@@ -148,7 +149,6 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    std::cout << fps << std::endl;
     return fps;
 }
 std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)

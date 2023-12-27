@@ -62,7 +62,7 @@ namespace OHOS {
             time = std::stod(extract_string(string, target));
             return time;
         }
-        void Radar::ParseRadarFrame(std::string string)
+        std::string Radar::ParseRadarFrame(std::string string)
         {
             std::string budleName = extract_string(string, "\"BUNDLE_NAME_EX\":");
             std::cout << "BUNDLE_NAME:" << budleName << std::endl;
@@ -86,6 +86,8 @@ namespace OHOS {
             std::cout << "AVERAGE_RENDER_FRAMETIME:" << averageRenderFrametime << "ms" << std::endl;
             std::string maxRenderSeqMissedFrames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
             std::cout << "MAX_RENDER_SEQ_MISSED_FRAMES:" << maxRenderSeqMissedFrames << std::endl;
+            std::string result = "";
+            return result;
         }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {

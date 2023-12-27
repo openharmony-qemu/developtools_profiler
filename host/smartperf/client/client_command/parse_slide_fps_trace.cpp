@@ -45,29 +45,30 @@ namespace OHOS {
                     count = 0;
                     pid = CutString(line, "B|", "H:RSMainThread::DoComposition", numA);
                     frameNum++;
-                    if (needUpdateResponseLine = numA) {
+                    if (needUpdateResponseLine && frameNum == numA) {
                         responseLine = line;
                     }
-                    frameStartTime = std::stdod(GetLineTime(line));
+                    frameStartTime = std::stod(GetLineTime(line));
                     if (animatorFlag) {
                         animatorSecond++;
                         completeLine = line;
                     }
-                    if (line.find("H:Animator: friction") != std::string::npos && line.find("F|") != std::string::npos) {
-                        animatorFlag = true;
-                    }
                 }
-                if (startLine.compare("") == 0) {
-                    std::cout << "can not find start point {H:touchEventDispatch}" << std::endl;
-                } else if (completeLine.compare("") == 0) {
-                    std::cout << "can not find complete point {H:RSMainThread::leashWindow}" << std::endl;
-                } else {
-                    double responseTime = std::stod(SmartPerf::StartTraceNoh::GetLineTime(responseLine));
-                    double completeTime = std::stod(SmartPerf::StartTraceNoh::GetLineTime(completeLine));
-                    int mFrame = 2;
-                    int endFrameNum = frameNum - mFrame;
-                    return endFrameNum / (completeTime - responseTime);
+                if (line.find("H:Animator: friction") != std::string::npos && line.find("F|") != std::string::npos) {
+                    animatorFlag = true;
                 }
+            }
+            if (startLine.compare("") == 0) {
+                std::cout << "can not find start point {H:touchEventDispatch}" << std::endl;
+            } else if (completeLine.compare("") == 0) {
+                std::cout << "can not find complete point {H:RSMainThread::leashWindow}" << std::endl;
+            } else {
+                double responseTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(responseLine));
+                double completeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(completeLine));
+                int mFrame = 2;
+                int endFrameNum = frameNum - mFrame;
+                return endFrameNum / (completeTime - responseTime);
+            }
             return -1.0;
         }
         std::string ParseSlideFpsTrace::GetLineTime(std::string line)
