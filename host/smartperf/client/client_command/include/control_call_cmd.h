@@ -31,10 +31,11 @@ public:
     static std::string SlideFPS(std::vector<std::string> v);
     static std::string SlideFps(std::vector<std::string> v);
     double PageFps();
-    double StartFrameFps(std::vector<std::string> v);
+    std::string StartFrameFps(std::vector<std::string> v);
     std::string GetResult(std::vector<std::string> v);
     void GetFrame();
-    void GetAppStartTime();
+    std::string GetAppStartTime();
+    std::string SlideList();
 private:
     bool isOhTest = false;
     std::string result = "";

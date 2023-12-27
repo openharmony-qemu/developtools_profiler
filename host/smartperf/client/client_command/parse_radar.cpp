@@ -40,12 +40,13 @@ namespace OHOS {
             time = std::stod(extract_string(string, target));
             return time;
         }
-        void Radar::ParseRadarAppStrart(std::string string)
+        std::string Radar::ParseRadarAppStrart(std::string string)
         {
             std::string completeTime = extract_string(string, "\"E2E_LATENCY\":");
-            std::cout << "completeTime:" << completeTime << "ms" <<std::endl;
             std::string responseTime = extract_string(string, "\"RESPONSE_LATENCY\":");
-            std::cout << "responseTime:" << responseTime << "ms" <<std::endl;
+            std::string result = "completeTime:" + completeTime + "ms"
+            "responseTime:" + responseTime + "ms";
+            return result;
         }
         double Radar::ParseRadarResponse(std::string string)
         {
