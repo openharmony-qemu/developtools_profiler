@@ -63,13 +63,13 @@ bool HookManager::CheckProcess()
             pidPath = "/proc/" + std::to_string(pid) + "/status";
             if (stat(pidPath.c_str(), &statBuf) != 0) {
                 // pid = 0;
-                HILOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
+                PROFILER_LOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
                 return false;
             } else {
                 auto [iter, isExist] = pidCache.emplace(pid);
                 if (isExist) {
                     hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(pid));
-                    HILOG_INFO(LOG_CORE, "hook context: pid: %d", pid);
+                    PROFILER_LOG_INFO(LOG_CORE, "hook context: pid: %d", pid);
                 }
                 continue;
             }
@@ -82,12 +82,13 @@ bool HookManager::CheckProcess()
 
     if (hookConfig_.response_library_mode()) {
         if (hookCtx_.size() > RESPONSE_MAX_PID_COUNT) {
-            HILOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, RESPONSE_MAX_PID_COUNT);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.",
+                               __func__, RESPONSE_MAX_PID_COUNT);
             return false;
         }
     } else {
         if (hookCtx_.size() > MAX_PID_COUNT) {
-            HILOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, MAX_PID_COUNT);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, MAX_PID_COUNT);
             return false;
         }
     }
@@ -100,18 +101,19 @@ bool HookManager::CheckProcessName()
     const std::string processName = hookConfig_.process_name();
     bool isExist = COMMON::IsProcessExist(processName, pidValue);
     if (hookConfig_.startup_mode() || !isExist) {
-        HILOG_INFO(LOG_CORE, "Wait process %s start or restart, set param", hookConfig_.process_name().c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "Wait process %s start or restart, set param", hookConfig_.process_name().c_str());
         std::string cmd = STARTUP + hookConfig_.process_name();
         int ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
         if (ret < 0) {
-            HILOG_ERROR(LOG_CORE, "set param failed, please manually set param and start process(%s)",
-                        hookConfig_.process_name().c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "set param failed, please manually set param and start process(%s)",
+                               hookConfig_.process_name().c_str());
         } else {
-            HILOG_INFO(LOG_CORE, "set param success, please start process(%s)", hookConfig_.process_name().c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "set param success, please start process(%s)",
+                              hookConfig_.process_name().c_str());
             hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(hookConfig_.process_name()));
         }
     } else if (pidValue != -1) {
-        HILOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pidValue);
+        PROFILER_LOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pidValue);
         for (const auto& item : hookCtx_) {
             if (item->pid == pidValue) {
                 return true;
@@ -119,7 +121,8 @@ bool HookManager::CheckProcessName()
         }
         hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(pidValue));
     } else {
-        HILOG_ERROR(LOG_CORE, "The startup mode parameter is not set, name: %s", hookConfig_.process_name().c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "The startup mode parameter is not set, name: %s",
+                           hookConfig_.process_name().c_str());
         return false;
     }
     return true;
@@ -144,15 +147,15 @@ bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 
     if (commandPoller_->RegisterPlugin(request, response)) {
         if (response.status() == ResponseStatus::OK) {
-            HILOG_DEBUG(LOG_CORE, "response.plugin_id() = %d", response.plugin_id());
+            PROFILER_LOG_DEBUG(LOG_CORE, "response.plugin_id() = %d", response.plugin_id());
             agentIndex_ = response.plugin_id();
-            HILOG_DEBUG(LOG_CORE, "RegisterPlugin OK");
+            PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin OK");
         } else {
-            HILOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL 1");
+            PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL 1");
             return false;
         }
     } else {
-        HILOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL 2");
+        PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL 2");
         return false;
     }
 
@@ -168,7 +171,7 @@ bool HookManager::UnregisterAgentPlugin(const std::string& pluginPath)
     if (commandPoller_->UnregisterPlugin(request, response)) {
         CHECK_TRUE(response.status() == ResponseStatus::OK, false, "UnregisterPlugin FAIL 1");
     } else {
-        HILOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL 2");
+        PROFILER_LOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL 2");
         return false;
     }
     agentIndex_ = -1;
@@ -218,7 +221,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     } else if (!ctx->processName.empty()) {
         ctx->smbName = "hooknativesmb_" + ctx->processName;
     } else {
-        HILOG_ERROR(LOG_CORE, "HandleHookContext context error, pid: %d, process name: %s",
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext context error, pid: %d, process name: %s",
             ctx->pid, ctx->processName.c_str());
         return false;
     }
@@ -240,15 +243,15 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->eventNotifier->GetFd(),
         std::bind(&HookManager::ReadShareMemory, this, ctx));
 
-    HILOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", ctx->shareMemoryBlock->GetfileDescriptor(),
-               ctx->eventNotifier->GetFd());
+    PROFILER_LOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", ctx->shareMemoryBlock->GetfileDescriptor(),
+                      ctx->eventNotifier->GetFd());
 
     ctx->isRecordAccurately = hookConfig_.record_accurately();
-    HILOG_INFO(LOG_CORE, "hookConfig filter size = %d, malloc disable = %d mmap disable = %d",
+    PROFILER_LOG_INFO(LOG_CORE, "hookConfig filter size = %d, malloc disable = %d mmap disable = %d",
         hookConfig_.filter_size(), hookConfig_.malloc_disable(), hookConfig_.mmap_disable());
-    HILOG_INFO(LOG_CORE, "hookConfig fp unwind = %d, max stack depth = %d, record_accurately=%d",
+    PROFILER_LOG_INFO(LOG_CORE, "hookConfig fp unwind = %d, max stack depth = %d, record_accurately=%d",
         hookConfig_.fp_unwind(), hookConfig_.max_stack_depth(), ctx->isRecordAccurately);
-    HILOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
+    PROFILER_LOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
 
     ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
     CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
@@ -263,19 +266,19 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
 {
-    HILOG_DEBUG(LOG_CORE, "CreatePluginSession");
+    PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession");
     // save config
     if (!config.empty()) {
         std::string cfgData = config[0].config_data();
         if (hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
-            HILOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
             return false;
         }
     }
 
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();
     if (hookConfig_.filter_size() > uShortMax) {
-        HILOG_WARN(LOG_CORE, "%s: filter size invalid(size exceed 65535), reset to 65535!", __func__);
+        PROFILER_LOG_WARN(LOG_CORE, "%s: filter size invalid(size exceed 65535), reset to 65535!", __func__);
         hookConfig_.set_filter_size(uShortMax);
     }
     if (!CheckProcess()) { // Check and initialize the context for the target process.
@@ -311,13 +314,13 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
 
     if (hookCtx_.empty()) {
-        HILOG_ERROR(LOG_CORE, "HookManager no task");
+        PROFILER_LOG_ERROR(LOG_CORE, "HookManager no task");
         return false;
     }
     if (hookConfig_.save_file() && !hookConfig_.file_name().empty()) {
         fpHookData_ = fopen(hookConfig_.file_name().c_str(), "wb+");
         if (fpHookData_ == nullptr) {
-            HILOG_INFO(LOG_CORE, "fopen file %s fail", hookConfig_.file_name().c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "fopen file %s fail", hookConfig_.file_name().c_str());
             return false;
         }
     }
@@ -329,7 +332,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         ClientConfig clientConfig;
         GetClientConfig(clientConfig);
         std::string clientConfigStr = clientConfig.ToString();
-        HILOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
         hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this());
         CHECK_NOTNULL(hookService_, false, "HookService create failed!");
     }
@@ -393,7 +396,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 
     for (const auto& item : hookCtx_) {
         if (item->eventPoller != nullptr) {
-            HILOG_ERROR(LOG_CORE, "eventPoller unset!");
+            PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset!");
             if (item->eventNotifier != nullptr) {
                 item->eventPoller->RemoveFileDescriptor(item->eventNotifier->GetFd());
             }
@@ -437,19 +440,19 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     }
     for (const auto& item : hookCtx_) {
         if (item->pid > 0) {
-            HILOG_INFO(LOG_CORE, "stop command : send 37 signal to process  %d", item->pid);
+            PROFILER_LOG_INFO(LOG_CORE, "stop command : send 37 signal to process  %d", item->pid);
             if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
                 const int bufSize = 256;
                 char buf[bufSize] = {0};
                 strerror_r(errno, buf, bufSize);
-                HILOG_ERROR(LOG_CORE, "send 37 signal to process %d , error = %s", item->pid, buf);
+                PROFILER_LOG_ERROR(LOG_CORE, "send 37 signal to process %d , error = %s", item->pid, buf);
             }
         } else {
-            HILOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
+            PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
         CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
         item->stackPreprocess->StopTakeResults();
-        HILOG_INFO(LOG_CORE, "StopTakeResults success");
+        PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
         if (hookConfig_.statistics_interval() > 0) {
             item->stackPreprocess->FlushRecordStatistics();
         }
@@ -468,9 +471,9 @@ void HookManager::ResetStartupParam()
     if (hookConfig_.startup_mode()) {
         int ret = SystemSetParameter(PARAM_NAME.c_str(), resetParam.c_str());
         if (ret < 0) {
-            HILOG_WARN(LOG_CORE, "set param failed, please reset param(%s)", PARAM_NAME.c_str());
+            PROFILER_LOG_WARN(LOG_CORE, "set param failed, please reset param(%s)", PARAM_NAME.c_str());
         } else {
-            HILOG_INFO(LOG_CORE, "reset param success");
+            PROFILER_LOG_INFO(LOG_CORE, "reset param success");
         }
     }
 }
@@ -483,7 +486,7 @@ bool HookManager::ReportPluginBasicData(const std::vector<uint32_t>& pluginIds)
 bool HookManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
                                bool isProtobufSerialize)
 {
-    HILOG_DEBUG(LOG_CORE, "agentIndex_ %d", agentIndex_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "agentIndex_ %d", agentIndex_);
     RegisterWriter(std::make_shared<BufferWriter>(pluginName, VERSION, bufferSize, smbFd, eventFd, agentIndex_));
     return true;
 }
@@ -553,18 +556,18 @@ void HookManager::StartPluginSession()
         if (item->stackPreprocess == nullptr) {
             continue;
         }
-        HILOG_ERROR(LOG_CORE, "StartPluginSession name: %s", item->processName.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "StartPluginSession name: %s", item->processName.c_str());
         item->stackPreprocess->StartTakeResults();
         if (item->pid > 0) {
-            HILOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
+            PROFILER_LOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
             if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
                 const int bufSize = 256;
                 char buf[bufSize] = {0};
                 strerror_r(errno, buf, bufSize);
-                HILOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
+                PROFILER_LOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
             }
         } else {
-            HILOG_INFO(LOG_CORE, "StartPluginSession: pid(%d) is less or equal zero.", item->pid);
+            PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
     }
 }
@@ -573,7 +576,7 @@ void HookManager::WriteHookConfig()
 {
     for (const auto& item : hookCtx_) {
         if (item == nullptr) {
-            HILOG_ERROR(LOG_CORE, "HookManager WriteHookConfig failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "HookManager WriteHookConfig failed");
             return;
         }
         item->stackPreprocess->WriteHookConfig();

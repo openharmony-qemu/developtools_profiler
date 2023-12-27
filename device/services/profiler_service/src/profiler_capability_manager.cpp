@@ -37,7 +37,8 @@ bool ProfilerCapabilityManager::AddCapability(const ProfilerPluginCapability& ca
                    "capability.name conflict with %zu", (it - pluginCapabilities_.begin()));
     }
     pluginCapabilities_.push_back(capability);
-    HILOG_INFO(LOG_CORE, "AddCapability({%s, %s}) SUCCESS!", capability.name().c_str(), capability.path().c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "AddCapability({%s, %s}) SUCCESS!",
+                      capability.name().c_str(), capability.path().c_str());
     return true;
 }
 
@@ -64,7 +65,7 @@ bool ProfilerCapabilityManager::UpdateCapability(const std::string& name, const 
     for (auto it = pluginCapabilities_.begin(); it != pluginCapabilities_.end(); it++) {
         if (it->name() == capability.name()) {
             *it = capability;
-            HILOG_WARN(LOG_CORE, "UpdateCapability(%s, %s) SUCCESS!", it->name().c_str(), it->path().c_str());
+            PROFILER_LOG_WARN(LOG_CORE, "UpdateCapability(%s, %s) SUCCESS!", it->name().c_str(), it->path().c_str());
             return true;
         }
     }
@@ -76,7 +77,7 @@ bool ProfilerCapabilityManager::RemoveCapability(const std::string& name)
     std::lock_guard<std::mutex> guard(mutex_);
     for (auto it = pluginCapabilities_.begin(); it != pluginCapabilities_.end(); it++) {
         if (it->name() == name) {
-            HILOG_INFO(LOG_CORE, "RemoveCapability({%s, %s}) SUCCESS!", it->name().c_str(), it->path().c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "RemoveCapability({%s, %s}) SUCCESS!", it->name().c_str(), it->path().c_str());
             pluginCapabilities_.erase(it);
             return true;
         }

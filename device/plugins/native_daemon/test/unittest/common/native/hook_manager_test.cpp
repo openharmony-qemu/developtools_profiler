@@ -49,7 +49,7 @@ public:
     static void StartServerStub(std::string name)
     {
         int processNum = fork();
-        HILOG_INFO(LOG_CORE, "processNum : %d", processNum);
+        PROFILER_LOG_INFO(LOG_CORE, "processNum : %d", processNum);
         if (processNum == 0) {
             if (DEFAULT_HIPROFILERD_PATH == name) {
                 // start running hiprofilerd
@@ -64,7 +64,7 @@ public:
     static void StopServerStub(int processNum)
     {
         std::string stopCmd = "kill " + std::to_string(processNum);
-        HILOG_INFO(LOG_CORE, "stop command : %s", stopCmd.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "stop command : %s", stopCmd.c_str());
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
     }
 };

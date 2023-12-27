@@ -84,7 +84,7 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
 
 bool RunCommand(const std::string& cmd)
 {
-    HILOG_INFO(LOG_CORE, "run command: %s", cmd.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "run command: %s", cmd.c_str());
     bool res = false;
     std::vector<std::string> cmdArg;
     COMMON::SplitString(cmd, " ", cmdArg);
@@ -106,7 +106,7 @@ bool RunCommand(const std::string& cmd)
         }
     }
     COMMON::CustomPclose(fp, pipeFds, childPid);
-    HILOG_INFO(LOG_CORE, "run command result: %s", result.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "run command result: %s", result.c_str());
     CHECK_TRUE(res, false, "HiperfPlugin::RunCommand: execute command FAILED!");
     return true;
 }
@@ -169,7 +169,7 @@ int HiperfPluginSessionStop(void)
 
 int HiperfRegisterWriterStruct(const WriterStruct* writer)
 {
-    HILOG_INFO(LOG_CORE, "%s:writer", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:writer", __func__);
     return 0;
 }
 

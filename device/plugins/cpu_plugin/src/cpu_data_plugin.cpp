@@ -54,7 +54,7 @@ CpuDataPlugin::CpuDataPlugin()
 
 CpuDataPlugin::~CpuDataPlugin()
 {
-    HILOG_INFO(LOG_CORE, "%s:~CpuDataPlugin!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:~CpuDataPlugin!", __func__);
     if (buffer_ != nullptr) {
         free(buffer_);
         buffer_ = nullptr;
@@ -79,12 +79,12 @@ int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     if (protoConfig_.pid() > 0) {
         pid_ = protoConfig_.pid();
     } else if (protoConfig_.report_process_info()) {
-        HILOG_INFO(LOG_CORE, "%s:need report process info", __func__);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:need report process info", __func__);
     } else {
-        HILOG_ERROR(LOG_CORE, "%s:invalid pid", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid pid", __func__);
         return RET_FAIL;
     }
-    HILOG_INFO(LOG_CORE, "%s:start success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
     return RET_SUCC;
 }
 
@@ -143,7 +143,7 @@ template <typename T> bool CpuDataPlugin::WriteProcnum(T& cpuData)
     while (int32_t tid = GetValidTid(procDir)) {
         if (tid <= 0) {
             closedir(procDir);
-            HILOG_WARN(LOG_CORE, "%s: get pid[%d] failed", __func__, tid);
+            PROFILER_LOG_WARN(LOG_CORE, "%s: get pid[%d] failed", __func__, tid);
             return false;
         }
         i++;
@@ -165,7 +165,7 @@ int CpuDataPlugin::Stop()
     prevThreadCpuTimeMap_.clear();
     prevCoreSystemCpuTimeMap_.clear();
     prevCoreSystemBootTimeMap_.clear();
-    HILOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
     return 0;
 }
 
@@ -180,14 +180,14 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "snprintf_s(%s) error, errno(%d:%s)", fileName.c_str(), errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "snprintf_s(%s) error, errno(%d:%s)", fileName.c_str(), errno, buf);
         return RET_FAIL;
     }
     if (realpath(filePath, realPath) == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "realpath(%s) failed, errno(%d:%s)", fileName.c_str(), errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "realpath(%s) failed, errno(%d:%s)", fileName.c_str(), errno, buf);
         return RET_FAIL;
     }
 
@@ -196,12 +196,12 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, realPath, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, realPath, errno, buf);
         err_ = errno;
         return RET_FAIL;
     }
     if (buffer_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
         close(fd);
         return RET_FAIL;
@@ -209,7 +209,7 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
     bytesRead = read(fd, buffer_, READ_BUFFER_SIZE - 1);
     if (bytesRead <= 0) {
         close(fd);
-        HILOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, realPath, errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, realPath, errno);
         err_ = errno;
         return RET_FAIL;
     }
@@ -276,7 +276,7 @@ template <typename T> void CpuDataPlugin::WriteProcessCpuUsage(T& cpuUsageInfo, 
 
     // 获取到的数据不包含utime、stime、cutime、cstime四个数值时返回
     if (cpuUsageVec.size() != PROCESS_UNSPECIFIED) {
-        HILOG_ERROR(LOG_CORE, "%s:failed to get process cpu usage, size=%zu", __func__, cpuUsageVec.size());
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to get process cpu usage, size=%zu", __func__, cpuUsageVec.size());
         return;
     }
 
@@ -604,7 +604,7 @@ template <typename T> void CpuDataPlugin::WriteThread(T& threadInfo, const char*
 
     // 获取到的数据不包含utime、stime、cutime、cstime四个数值时返回
     if (cpuUsageVec.size() != PROCESS_UNSPECIFIED) {
-        HILOG_ERROR(LOG_CORE, "%s:failed to get thread cpu usage, size=%zu", __func__, cpuUsageVec.size());
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to get thread cpu usage, size=%zu", __func__, cpuUsageVec.size());
         return;
     }
 

@@ -105,7 +105,7 @@ bool PluginService::StartService(const std::string& unixSocketName)
     if (!serviceEntry_->StartServer(unixSocketName)) {
         pluginServiceImpl_ = nullptr;
         serviceEntry_ = nullptr;
-        HILOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
+        PROFILER_LOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
         return false;
     }
     serviceEntry_->RegisterService(*pluginServiceImpl_.get());
@@ -142,7 +142,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     CHECK_TRUE(smb != nullptr, false, "CreateMemoryBlockLocal FAIL %s", pluginName.c_str());
 
     auto policy = GetReusePolicy(bufferConfig);
-    HILOG_DEBUG(LOG_CORE, "CreatePluginSession policy = %d", (int)policy);
+    PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession policy = %d", (int)policy);
     smb->SetReusePolicy(policy);
 
     auto notifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
@@ -158,7 +158,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     
     auto configIter = profilerSessionConfigs_.find(pluginName);
     if (configIter == profilerSessionConfigs_.end()) {
-        HILOG_ERROR(LOG_CORE, "profiler session config not set fot plugin name: %s", pluginName.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "profiler session config not set fot plugin name: %s", pluginName.c_str());
         return false;
     }
     if (configIter->second->session_mode() == ProfilerSessionConfig::OFFLINE) {
@@ -168,7 +168,8 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
         eventPoller_->AddFileDescriptor(notifier->GetFd(),
                                         std::bind(&PluginService::ReadShareMemoryOnline, this, *pluginCtx));
     }
-    HILOG_DEBUG(LOG_CORE, "CreatePluginSession %s done, shmem fd = %d", pluginName.c_str(), smb->GetfileDescriptor());
+    PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession %s done, shmem fd = %d",
+                       pluginName.c_str(), smb->GetfileDescriptor());
     return true;
 }
 
@@ -191,7 +192,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
                "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-    HILOG_DEBUG(LOG_CORE, "CreatePluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -209,7 +210,7 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& config)
                "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::IN_SESSION);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-    HILOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -230,14 +231,14 @@ bool PluginService::StopPluginSession(const std::string& pluginName)
     CHECK_NOTNULL(sem, false, "create Semaphore for stop %s FAILED!", pluginName.c_str());
 
     waitSemphores_[cmd->command_id()] = sem;
-    HILOG_DEBUG(LOG_CORE, "=== StopPluginSession %s Waiting ... ===", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "=== StopPluginSession %s Waiting ... ===", pluginName.c_str());
     // wait on semaphore at most 30 seconds.
     if (!sem->TimedWait(30)) {
         // semaphore timeout
-        HILOG_DEBUG(LOG_CORE, "=== StopPluginSession Waiting FAIL ===");
+        PROFILER_LOG_DEBUG(LOG_CORE, "=== StopPluginSession Waiting FAIL ===");
         return false;
     }
-    HILOG_DEBUG(LOG_CORE, "StopPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "StopPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -267,7 +268,7 @@ bool PluginService::DestroyPluginSession(const std::string& pluginName)
                "%s hiprofiler_plugin process is off line!", __func__);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::REGISTERED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-    HILOG_INFO(LOG_CORE, "DestroyPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "DestroyPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -283,7 +284,7 @@ bool PluginService::RefreshPluginSession(const std::string& pluginName)
     CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
                "%s hiprofiler_plugin process is off line!", __func__);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
-    HILOG_INFO(LOG_CORE, "RefreshPluginSession %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "RefreshPluginSession %s done!", pluginName.c_str());
     return true;
 }
 
@@ -303,7 +304,7 @@ bool PluginService::RemovePluginSessionCtx(const std::string& pluginName)
     }
 
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::INITED);
-    HILOG_INFO(LOG_CORE, "RemovePluginSessionCtx %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "RemovePluginSessionCtx %s done!", pluginName.c_str());
     return true;
 }
 
@@ -378,7 +379,7 @@ bool PluginService::AddPluginInfo(const PluginInfo& pluginInfo)
             pluginCtx->pluginVersion = pluginInfo.pluginVersion;
         }
     }
-    HILOG_DEBUG(LOG_CORE, "AddPluginInfo for %s done!", pluginInfo.name.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "AddPluginInfo for %s done!", pluginInfo.name.c_str());
 
     return true;
 }
@@ -420,7 +421,7 @@ bool PluginService::RemovePluginInfo(const PluginInfo& pluginInfo)
     std::unique_lock<std::mutex> lock(mutex_);
     nameIndex_.erase(pluginName);
     pluginContext_.erase(pluginId);
-    HILOG_DEBUG(LOG_CORE, "RemovePluginInfo for %s done!", pluginName.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "RemovePluginInfo for %s done!", pluginName.c_str());
     return true;
 }
 
@@ -443,7 +444,7 @@ void PluginService::ReadShareMemoryOffline(PluginContext& context)
         }, isProtobufSerialize_);
 
         if (retval == -1) {
-            HILOG_DEBUG(LOG_CORE, "need to clear share memory block and report the basic data");
+            PROFILER_LOG_DEBUG(LOG_CORE, "need to clear share memory block and report the basic data");
             pluginSessionManager_->RefreshPluginSession();
             break;
         }
@@ -509,10 +510,10 @@ void PluginService::FlushShareMemory(PluginContext& context)
 
 void PluginService::FlushAllData(const std::string& pluginName)
 {
-    HILOG_INFO(LOG_CORE, "FlushAllData for %s start!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "FlushAllData for %s start!", pluginName.c_str());
     auto configIter = profilerSessionConfigs_.find(pluginName);
     if (configIter == profilerSessionConfigs_.end()) {
-        HILOG_ERROR(LOG_CORE, "profiler session config not set fot plugin name: %s", pluginName.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "profiler session config not set fot plugin name: %s", pluginName.c_str());
         return;
     }
     if (!configIter->second->discard_cache_data()) {
@@ -526,7 +527,7 @@ void PluginService::FlushAllData(const std::string& pluginName)
             ReadShareMemoryOnline(*pluginCtx);
         }
     }
-    HILOG_INFO(LOG_CORE, "FlushAllData for %s done!", pluginName.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "FlushAllData for %s done!", pluginName.c_str());
 }
 
 bool PluginService::AppendResult(NotifyResultRequest& request)
@@ -538,17 +539,17 @@ bool PluginService::AppendResult(NotifyResultRequest& request)
     }
 
     int size = request.result_size();
-    HILOG_DEBUG(LOG_CORE, "AppendResult size:%d, cmd id:%d", size, request.command_id());
+    PROFILER_LOG_DEBUG(LOG_CORE, "AppendResult size:%d, cmd id:%d", size, request.command_id());
     for (int i = 0; i < size; i++) {
         PluginResult pr = request.result(i);
         if (pr.data().size() > 0) {
-            HILOG_DEBUG(LOG_CORE, "AppendResult Size : %zu", pr.data().size());
+            PROFILER_LOG_DEBUG(LOG_CORE, "AppendResult Size : %zu", pr.data().size());
             uint32_t pluginId = pr.plugin_id();
             PluginContextPtr pluginCtx = GetPluginContextById(pluginId);
             CHECK_NOTNULL(pluginCtx, false, "plugin id %u not found!", pluginId);
             if (pluginCtx->profilerDataRepeater == nullptr) {
-                HILOG_DEBUG(LOG_CORE, "AppendResult profilerDataRepeater==nullptr %s %d", pr.status().name().c_str(),
-                            pluginId);
+                PROFILER_LOG_DEBUG(LOG_CORE, "AppendResult profilerDataRepeater==nullptr %s %d",
+                                   pr.status().name().c_str(), pluginId);
                 return false;
             }
             auto pluginData = std::make_shared<ProfilerPluginData>();
@@ -564,7 +565,7 @@ bool PluginService::AppendResult(NotifyResultRequest& request)
             CHECK_TRUE(pluginContext_.count(pluginId) > 0, false, "plugin id %u not found!", pluginId);
             pluginContext_[pluginId]->outFileName = pr.out_file_name();
         } else {
-            HILOG_DEBUG(LOG_CORE, "Flush?Data From ShareMemory?");
+            PROFILER_LOG_DEBUG(LOG_CORE, "Flush?Data From ShareMemory?");
         }
     }
     return true;

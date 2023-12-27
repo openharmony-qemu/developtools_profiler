@@ -35,18 +35,18 @@ ResultTransporter::ResultTransporter(const std::string& name, WriterStructPtr wr
 
 ResultTransporter::~ResultTransporter(void)
 {
-    HILOG_INFO(LOG_CORE, "ResultTransporter destroy!");
+    PROFILER_LOG_INFO(LOG_CORE, "ResultTransporter destroy!");
 }
 
 void ResultTransporter::SetFlushInterval(int ms)
 {
-    HILOG_INFO(LOG_CORE, "ResultTransporter set flush interval to %d", ms);
+    PROFILER_LOG_INFO(LOG_CORE, "ResultTransporter set flush interval to %d", ms);
     flushInterval_ = std::chrono::milliseconds(ms);
 }
 
 void ResultTransporter::SetFlushThreshold(uint32_t nbytes)
 {
-    HILOG_INFO(LOG_CORE, "ResultTransporter set flush threshold to %u", nbytes);
+    PROFILER_LOG_INFO(LOG_CORE, "ResultTransporter set flush threshold to %u", nbytes);
     flushThreshold_ = nbytes;
 }
 
@@ -91,7 +91,7 @@ void ResultTransporter::Flush()
     auto count = bytesCount_.load();
     auto pending = bytesPending_.load();
     bytesPending_ = 0;
-    HILOG_DEBUG(LOG_CORE, "ResultTransporter TX stats B: %" PRIu64 ", P: %u", count, pending);
+    PROFILER_LOG_DEBUG(LOG_CORE, "ResultTransporter TX stats B: %" PRIu64 ", P: %u", count, pending);
 }
 
 bool ResultTransporter::Submit(ResultPtr&& packet)
@@ -99,7 +99,7 @@ bool ResultTransporter::Submit(ResultPtr&& packet)
     std::unique_lock<std::mutex> lock(mutex_);
     long nbytes = Write(std::move(packet));
     if (nbytes < 0) {
-        HILOG_ERROR(LOG_CORE, "send result FAILED!");
+        PROFILER_LOG_ERROR(LOG_CORE, "send result FAILED!");
         lock.unlock();
         return false;
     }

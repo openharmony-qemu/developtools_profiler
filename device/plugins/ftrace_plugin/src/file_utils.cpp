@@ -59,7 +59,7 @@ std::string FileUtils::ReadFile(const std::string& path)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_WARN(LOG_CORE, "open file %s FAILED: %s!", path.c_str(), buf);
+        PROFILER_LOG_WARN(LOG_CORE, "open file %s FAILED: %s!", path.c_str(), buf);
         return "";
     }
     std::string content = ReadFile(fd);

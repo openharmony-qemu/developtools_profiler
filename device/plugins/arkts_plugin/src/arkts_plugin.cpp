@@ -76,7 +76,7 @@ constexpr uint32_t CPU_PROFILER_INTERVAL_DEFAULT = 1000;
 int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:parseFromArray failed!", __func__);
         return -1;
     }
 
@@ -91,7 +91,7 @@ int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     pid_ = protoConfig_.pid();
     if (pid_ <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s: pid is less than or equal to 0", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: pid is less than or equal to 0", __func__);
         return -1;
     }
 
@@ -109,7 +109,7 @@ int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     if (protoConfig_.enable_cpu_profiler()) {
         if (EnableCpuProfiler() != 0) {
-            HILOG_ERROR(LOG_CORE, "arkts plugin cpu profiler start failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "arkts plugin cpu profiler start failed");
             return -1;
         }
     }
@@ -122,11 +122,11 @@ int32_t ArkTSPlugin::Start(const uint8_t* configData, uint32_t configSize)
             return EnableTimeline();
         }
         case static_cast<int32_t>(HeapType::INVALID): {
-            HILOG_INFO(LOG_CORE, "arkts plugin memory type is INVALID");
+            PROFILER_LOG_INFO(LOG_CORE, "arkts plugin memory type is INVALID");
             return 0;
         }
         default: {
-            HILOG_ERROR(LOG_CORE, "arkts plugin start type error");
+            PROFILER_LOG_ERROR(LOG_CORE, "arkts plugin start type error");
             return -1;
         }
     }
@@ -146,14 +146,14 @@ int32_t ArkTSPlugin::EnableTimeline()
 int32_t ArkTSPlugin::EnableSnapshot()
 {
     if (protoConfig_.interval() == 0) {
-        HILOG_ERROR(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
         return -1;
     }
     snapshotCmd_ = SNAPSHOT_HEAD + (protoConfig_.capture_numeric_value() ? "true" : "false") + SNAPSHOT_TAIL;
     auto callback = std::bind(&ArkTSPlugin::Snapshot, this);
     snapshotScheduleTaskFd_ = scheduleTaskManager_.ScheduleTask(callback, protoConfig_.interval() * TIME_BASE);
     if (snapshotScheduleTaskFd_ == -1) {
-        HILOG_ERROR(LOG_CORE, "%s:scheduleTask failed!", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:scheduleTask failed!", __func__);
         return -1;
     }
     return 0;
@@ -198,7 +198,7 @@ int32_t ArkTSPlugin::Stop()
             break;
         }
         default: {
-            HILOG_ERROR(LOG_CORE, "arkts plugin stop type error");
+            PROFILER_LOG_ERROR(LOG_CORE, "arkts plugin stop type error");
             break;
         }
     }
@@ -251,7 +251,7 @@ void ArkTSPlugin::FlushData(const std::string& command)
     while (true) {
         std::string recv = Decode();
         if (recv.empty()) {
-            HILOG_ERROR(LOG_CORE, "%s: recv is empty", __func__);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: recv is empty", __func__);
             break;
         }
         ArkTSResult data;
@@ -282,19 +282,20 @@ void ArkTSPlugin::FlushData(const std::string& command)
 bool ArkTSPlugin::ClientConnectUnixWebSocket(const std::string& sockName, uint32_t timeoutLimit)
 {
     if (socketState_ != SocketState::UNINITED) {
-        HILOG_ERROR(LOG_CORE, "client has inited");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has inited");
         return true;
     }
 
     client_ = socket(AF_UNIX, SOCK_STREAM, 0);
     if (client_ < SOCKET_SUCCESS) {
-        HILOG_ERROR(LOG_CORE, "client socket failed, error = %d, , desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client socket failed, error = %d, , desc = %s", errno, strerror(errno));
         return false;
     }
 
     // set send and recv timeout limit
     if (!SetWebSocketTimeOut(client_, timeoutLimit)) {
-        HILOG_ERROR(LOG_CORE, "client SetWebSocketTimeOut failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client SetWebSocketTimeOut failed, error = %d, desc = %s",
+                           errno, strerror(errno));
         close(client_);
         client_ = -1;
         return false;
@@ -302,15 +303,16 @@ bool ArkTSPlugin::ClientConnectUnixWebSocket(const std::string& sockName, uint32
 
     struct sockaddr_un serverAddr;
     if (memset_s(&serverAddr, sizeof(serverAddr), 0, sizeof(serverAddr)) != EOK) {
-        HILOG_ERROR(LOG_CORE, "client memset_s serverAddr failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client memset_s serverAddr failed, error = %d, desc = %s",
+                           errno, strerror(errno));
         close(client_);
         client_ = -1;
         return false;
     }
     serverAddr.sun_family = AF_UNIX;
     if (strcpy_s(serverAddr.sun_path + 1, sizeof(serverAddr.sun_path) - 1, sockName.c_str()) != EOK) {
-        HILOG_ERROR(LOG_CORE, "client strcpy_s serverAddr.sun_path failed, error = %d, , desc = %s", errno,
-                    strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client strcpy_s serverAddr.sun_path failed, error = %d, , desc = %s",
+                           errno, strerror(errno));
         close(client_);
         client_ = -1;
         return false;
@@ -320,56 +322,56 @@ bool ArkTSPlugin::ClientConnectUnixWebSocket(const std::string& sockName, uint32
     uint32_t len = offsetof(struct sockaddr_un, sun_path) + strlen(sockName.c_str()) + 1;
     int ret = connect(client_, reinterpret_cast<struct sockaddr*>(&serverAddr), static_cast<int32_t>(len));
     if (ret != SOCKET_SUCCESS) {
-        HILOG_ERROR(LOG_CORE, "client connect failed, error, error = %d, , desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client connect failed, error, error = %d, , desc = %s", errno, strerror(errno));
         close(client_);
         client_ = -1;
         return false;
     }
     socketState_ = SocketState::INITED;
-    HILOG_INFO(LOG_CORE, "client connect success...");
+    PROFILER_LOG_INFO(LOG_CORE, "client connect success...");
     return true;
 }
 
 bool ArkTSPlugin::ClientSendWSUpgradeReq()
 {
     if (socketState_ == SocketState::UNINITED) {
-        HILOG_ERROR(LOG_CORE, "client has not inited");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has not inited");
         return false;
     }
     if (socketState_ == SocketState::CONNECTED) {
-        HILOG_ERROR(LOG_CORE, "client has connected");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has connected");
         return true;
     }
 
     int msgLen = strlen(CLIENT_WEBSOCKET_UPGRADE_REQ);
     int32_t sendLen = send(client_, CLIENT_WEBSOCKET_UPGRADE_REQ, msgLen, 0);
     if (sendLen != msgLen) {
-        HILOG_ERROR(LOG_CORE, "client send wsupgrade req failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client send wsupgrade req failed, error = %d, desc = %s", errno, strerror(errno));
         socketState_ = SocketState::UNINITED;
         shutdown(client_, SHUT_RDWR);
         close(client_);
         client_ = -1;
         return false;
     }
-    HILOG_INFO(LOG_CORE, "client send wsupgrade req success");
+    PROFILER_LOG_INFO(LOG_CORE, "client send wsupgrade req success");
     return true;
 }
 
 bool ArkTSPlugin::ClientRecvWSUpgradeRsp()
 {
     if (socketState_ == SocketState::UNINITED) {
-        HILOG_ERROR(LOG_CORE, "client has not inited");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has not inited");
         return false;
     }
     if (socketState_ == SocketState::CONNECTED) {
-        HILOG_ERROR(LOG_CORE, "ClientRecvWSUpgradeRsp::client has connected");
+        PROFILER_LOG_ERROR(LOG_CORE, "ClientRecvWSUpgradeRsp::client has connected");
         return true;
     }
 
     char recvBuf[CLIENT_WEBSOCKET_UPGRADE_RSP_LEN + 1] = {0};
     int32_t bufLen = recv(client_, recvBuf, CLIENT_WEBSOCKET_UPGRADE_RSP_LEN, 0);
     if (bufLen != CLIENT_WEBSOCKET_UPGRADE_RSP_LEN) {
-        HILOG_ERROR(LOG_CORE, "client recv wsupgrade rsp failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client recv wsupgrade rsp failed, error = %d, desc = %s", errno, strerror(errno));
         socketState_ = SocketState::UNINITED;
         shutdown(client_, SHUT_RDWR);
         close(client_);
@@ -377,14 +379,14 @@ bool ArkTSPlugin::ClientRecvWSUpgradeRsp()
         return false;
     }
     socketState_ = SocketState::CONNECTED;
-    HILOG_INFO(LOG_CORE, "client recv wsupgrade rsp success");
+    PROFILER_LOG_INFO(LOG_CORE, "client recv wsupgrade rsp success");
     return true;
 }
 
 bool ArkTSPlugin::ClientSendReq(const std::string& message)
 {
     if (socketState_ != SocketState::CONNECTED) {
-        HILOG_ERROR(LOG_CORE, "client has not connected");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has not connected");
         return false;
     }
 
@@ -417,7 +419,7 @@ bool ArkTSPlugin::ClientSendReq(const std::string& message)
     }
 
     if (memcpy_s(sendBuf + sendMsgLen, SOCKET_MASK_LEN, MASK_KEY, SOCKET_MASK_LEN) != EOK) {
-        HILOG_ERROR(LOG_CORE, "client memcpy_s MASK_KEY failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client memcpy_s MASK_KEY failed, error = %d, desc = %s", errno, strerror(errno));
         return false;
     }
     sendMsgLen += SOCKET_MASK_LEN;
@@ -428,23 +430,24 @@ bool ArkTSPlugin::ClientSendReq(const std::string& message)
         maskMessage.push_back(message[i] ^ MASK_KEY[j]);
     }
     if (memcpy_s(sendBuf + sendMsgLen, msgLen, maskMessage.c_str(), msgLen) != EOK) {
-        HILOG_ERROR(LOG_CORE, "client memcpy_s maskMessage failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client memcpy_s maskMessage failed, error = %d, desc = %s",
+                           errno, strerror(errno));
         return false;
     }
     msgBuf[sendMsgLen + msgLen] = '\0';
 
     if (send(client_, sendBuf, sendMsgLen + msgLen, 0) != static_cast<int>(sendMsgLen + msgLen)) {
-        HILOG_ERROR(LOG_CORE, "client send msg req failed, error = %d, desc = %s", errno, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "client send msg req failed, error = %d, desc = %s", errno, strerror(errno));
         return false;
     }
-    HILOG_INFO(LOG_CORE, "ClientRecvWSUpgradeRsp::client send msg req success...");
+    PROFILER_LOG_INFO(LOG_CORE, "ClientRecvWSUpgradeRsp::client send msg req success...");
     return true;
 }
 
 void ArkTSPlugin::Close()
 {
     if (socketState_ == SocketState::UNINITED) {
-        HILOG_ERROR(LOG_CORE, "client has not inited");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has not inited");
         return;
     }
     shutdown(client_, SHUT_RDWR);
@@ -470,12 +473,12 @@ bool ArkTSPlugin::SetWebSocketTimeOut(int32_t fd, uint32_t timeoutLimit)
 std::string ArkTSPlugin::Decode()
 {
     if (socketState_ != SocketState::CONNECTED) {
-        HILOG_ERROR(LOG_CORE, "client has not connected");
+        PROFILER_LOG_ERROR(LOG_CORE, "client has not connected");
         return {};
     }
     char recvbuf[SOCKET_HEADER_LEN + 1];
     if (!Recv(client_, recvbuf, SOCKET_HEADER_LEN, 0)) {
-        HILOG_ERROR(LOG_CORE, "Decode failed, client websocket disconnect");
+        PROFILER_LOG_ERROR(LOG_CORE, "Decode failed, client websocket disconnect");
         socketState_ = SocketState::INITED;
         shutdown(client_, SHUT_RDWR);
         close(client_);
@@ -514,7 +517,7 @@ bool ArkTSPlugin::HandleFrame(WebSocketFrame& wsFrame)
     if (wsFrame.payloadLen == 126) { // 126: the payloadLen read from frame
         char recvbuf[PAYLOAD_LEN + 1] = {0};
         if (!Recv(client_, recvbuf, PAYLOAD_LEN, 0)) {
-            HILOG_ERROR(LOG_CORE, "HandleFrame: Recv payloadLen == 126 failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleFrame: Recv payloadLen == 126 failed");
             return false;
         }
         recvbuf[PAYLOAD_LEN] = '\0';
@@ -526,7 +529,7 @@ bool ArkTSPlugin::HandleFrame(WebSocketFrame& wsFrame)
     } else if (wsFrame.payloadLen > 126) { // 126: the payloadLen read from frame
         char recvbuf[EXTEND_PAYLOAD_LEN + 1] = {0};
         if (!Recv(client_, recvbuf, EXTEND_PAYLOAD_LEN, 0)) {
-            HILOG_ERROR(LOG_CORE, "HandleFrame: Recv payloadLen > 127 failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleFrame: Recv payloadLen > 127 failed");
             return false;
         }
         recvbuf[EXTEND_PAYLOAD_LEN] = '\0';

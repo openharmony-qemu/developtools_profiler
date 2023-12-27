@@ -44,7 +44,7 @@ int InitShareMemory1()
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
         return -1;
     }
 
@@ -54,7 +54,7 @@ int InitShareMemory1()
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "CreateBlock g_smbAddr1 mmap ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock g_smbAddr1 mmap ERR : %s", buf);
         return -1;
     }
 
@@ -81,7 +81,7 @@ int InitShareMemory2()
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
         return -1;
     }
 
@@ -91,7 +91,7 @@ int InitShareMemory2()
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "CreateBlock g_smbAddr2 mmap ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock g_smbAddr2 mmap ERR : %s", buf);
         return -1;
     }
 

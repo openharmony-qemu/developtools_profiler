@@ -46,19 +46,19 @@ EventNotifier::EventNotifier(unsigned int initValue, unsigned int mask) : fd_(-1
     }
     fd_ = eventfd(initValue, flags_);
     CHECK_TRUE(fd_ >= 0, NO_RETVAL, "create eventfd FAILED, %d", errno);
-    HILOG_DEBUG(LOG_CORE, "EventNotifier create eventfd %d done!", fd_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "EventNotifier create eventfd %d done!", fd_);
 }
 
 EventNotifier::EventNotifier(int fd) : fd_(fd), flags_(0)
 {
     int flags = fcntl(fd_, F_GETFL);
     CHECK_TRUE(flags >= 0, NO_RETVAL, "get flags of fd %d FAILED, %d", fd, errno);
-    HILOG_DEBUG(LOG_CORE, "EventNotifier bind eventfd %d done!", fd_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "EventNotifier bind eventfd %d done!", fd_);
 }
 
 EventNotifier::~EventNotifier()
 {
-    HILOG_DEBUG(LOG_CORE, "EventNotifier close eventfd %d", fd_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "EventNotifier close eventfd %d", fd_);
     close(fd_);
 }
 
