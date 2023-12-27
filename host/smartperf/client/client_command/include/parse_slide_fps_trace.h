@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PARSESLIDEFPSTRACE_H
+#define PARSESLIDEFPSTRACE_H
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -22,8 +24,8 @@ namespace OHOS {
             public:
                 double ParseSlideFpsTraceNoh(std::string file);
                 double CalculateTime();
-                std::string GetLineTime(std::string line);
-                std::string CutString(std::string line, std::string start, std::string end, size_t offset);
+                std::string GetLineTime(std::string lineStr);
+                std::string CutString(std::string lineStr, std::string start, std::string end, size_t offset);
             private:
                 std::ifstream infile;
                 std::string startLine = "";
@@ -43,3 +45,4 @@ namespace OHOS {
         };
     }
 }
+#endif // SMARTPERF_COMMAND_H

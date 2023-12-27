@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,8 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 #include <fstream>
 #include <string>
 #include "include/parse_slide_fps_trace.h"
@@ -68,14 +66,14 @@ namespace OHOS {
             }
             return -1.0;
         }
-        std::string ParseSlideFpsTrace::GetLineTime(std::string line)
+        std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr)
         {
             size_t num = 7;
             size_t position1 = line.find("....");
             size_t position2 = line.find(":");
             return line.substr(position1 + num, position2 - position1 - num);
         }
-        std::string ParseSlideFpsTrace::CutString(std::string line, std::string start, std::string end, size_t offset)
+        std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t offset)
         {
             size_t position1 = line.find(start);
             size_t position2 = line.find(end);

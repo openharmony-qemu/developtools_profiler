@@ -31,7 +31,11 @@ int ClientControl::SocketStart(std::string args)
     read(clientSocket, buffer, numBuff);
     send(clientSocket, message1, strlen(message1), 0);
     read(clientSocket, buffer, numBuff);
-    std::cout << "SP_daemon " << buffer << std::endl;
+    if (strcmp(buffer, "start::true") == 0) {
+        std::cout << "SP_daemon Collection begins" << std::endl;
+    } else {
+        std::cout << "SP_daemon Collection begins failed" << std::endl;
+    }
     OHOS::SmartPerf::ClientControl::CloseSocket();
     return 0;
 }
@@ -40,7 +44,12 @@ int ClientControl::SocketStop()
     OHOS::SmartPerf::ClientControl::InitSocket();
     send(clientSocket, message2, strlen(message2), 0);
     read(clientSocket, buffer, numBuff);
-    std::cout << "SP_daemon " << buffer << std::endl;
+    if (strcmp(buffer, "stop::true") == 0) {
+        std::cout << "SP_daemon Collection ended" << std::endl;
+        std::cout << "Output Path: data/local/tmp/smartperf/1/t_index_info.csv" << std::endl;
+    } else {
+        std::cout << "SP_daemon Collection ended failed" << std::endl;
+    }
     OHOS::SmartPerf::ClientControl::CloseSocket();
     return 0;
 }
