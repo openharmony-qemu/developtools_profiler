@@ -36,7 +36,10 @@ namespace OHOS {
                 bool updateCount = false;
                 double frameStartTime = 0;
                 bool animatorFlag = false;
-                int animatorSecond = 0;          
+                int animatorSecond = 0;
+                std::string::size_type maxnpos = std::string::npos;
+                std::string line;
+                int numA = 2;
         };
     }
 }

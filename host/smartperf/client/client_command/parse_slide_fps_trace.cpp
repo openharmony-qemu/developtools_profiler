@@ -33,14 +33,12 @@ namespace OHOS {
         }
         double ParseSlideFpsTrace::CalculateTime()
         {
-            std::string line;
-            int numA = 2;
             while (getline(infile, line)) {
-                if (line.find("H:OnTouchEvent") != std::string::npos) {
+                if (line.find("H:OnTouchEvent") != maxnpos) {
                     startLine = line;
                     needUpdateResponseLine = true;
                     frameNum = 0;
-                }  else if (line.find("H:RSMainThread::DoComposition") != std::string::npos && animatorSecond < numA) {
+                }  else if (line.find("H:RSMainThread::DoComposition") != maxnpos && animatorSecond < numA) {
                     updateCount = true;
                     count = 0;
                     pid = CutString(line, "B|", "H:RSMainThread::DoComposition", numA);
@@ -54,7 +52,7 @@ namespace OHOS {
                         completeLine = line;
                     }
                 }
-                if (line.find("H:Animator: friction") != std::string::npos && line.find("F|") != std::string::npos) {
+                if (line.find("H:Animator: friction") != maxnpos && line.find("F|") != maxnpos) {
                     animatorFlag = true;
                 }
             }
@@ -65,8 +63,7 @@ namespace OHOS {
             } else {
                 double responseTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(responseLine));
                 double completeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(completeLine));
-                int mFrame = 2;
-                int endFrameNum = frameNum - mFrame;
+                int endFrameNum = frameNum - numA;
                 return endFrameNum / (completeTime - responseTime);
             }
             return -1.0;

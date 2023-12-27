@@ -87,7 +87,7 @@ std::string ControlCallCmd::SlideList()
     OHOS::SmartPerf::ParseSlideFpsTrace slideFpsTrace;
     std::string cmdResult;
     OHOS::SmartPerf::Radar radar;
-    std::string result = "";
+    std::string resultStream = "";
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_fps.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     if (isOhTest) {
@@ -105,9 +105,9 @@ std::string ControlCallCmd::SlideList()
         std::string responseSlide = "time:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         stream << sFps;
-        result = "FPS:" + stream.str() + "fps\n" + responseSlide;
+        resultStream = "FPS:" + stream.str() + "fps\n" + responseSlide;
     }
-    return result;
+    return resultStream;
 }
 std::string ControlCallCmd::GetFrame()
 {
@@ -309,8 +309,8 @@ std::string ControlCallCmd::GetAppStartTime()
     std::string str = SPUtils::GetRadar();
     thGetTrace.join();
     thGetHisysId.join();
-    std::string result = radar.ParseRadarAppStrart(str);
-    return result;
+    std::string resultStream = radar.ParseRadarAppStrart(str);
+    return resultStream;
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)
 {
