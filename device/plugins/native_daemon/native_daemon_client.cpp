@@ -26,8 +26,8 @@ using namespace OHOS::Developtools::NativeDaemon;
 
 static uint32_t TestDumpFile()
 {
-    uint32_t fd = open("/data/local/tmp/test_dump_file.htrace",
-                       O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    uint32_t fd = static_cast<uint32_t>(open("/data/local/tmp/test_dump_file.htrace",
+                                             O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
     return fd;
 }
 
@@ -102,7 +102,7 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--munmapStackData") || (arg == "-musd")) {
             config->munmapStackData_ = true;
         } else if ((arg == "--mallocFreeMatchingInterval") || (arg == "-mfmi")) {
-            config->mallocFreeMatchingInterval_ = std::stoi(argv[++i]);
+            config->mallocFreeMatchingInterval_ = static_cast<uint32_t>(std::stoi(argv[++i]));
         } else if ((arg == "--mallocFreeMatchingCnt") || (arg == "-mfmc")) {
             config->mallocFreeMatchingCnt_ = std::stoi(argv[++i]);
         } else if ((arg == "--disable_stringCompressed") || (arg == "-sc")) {

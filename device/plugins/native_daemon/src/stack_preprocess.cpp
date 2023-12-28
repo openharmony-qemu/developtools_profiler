@@ -427,11 +427,6 @@ void StackPreprocess::SetEventFrame(const RawStackPtr& rawStack,
 
     if (hookConfig_.callframe_compress() && stackMapId != 0) {
         event->set_stack_id(stackMapId);
-    } else if (hookConfig_.string_compressed()) {
-        for (; idx < callFrames.size(); ++idx) {
-            Frame* frame = event->add_frame_info();
-            SetFrameInfo(*frame, callFrames[idx]);
-        }
     } else {
         for (; idx < callFrames.size(); ++idx) {
             Frame* frame = event->add_frame_info();

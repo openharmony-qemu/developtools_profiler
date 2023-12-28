@@ -225,8 +225,10 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     std::shared_ptr<DfxMaps> dfxMaps = OHOS::HiviewDFX::DfxMaps::Create(pid_, mapPath);
     if (dfxMaps == nullptr) {
         HLOGE("VirtualThread Failed to Parse Map.");
+    } else {
+        memMaps = dfxMaps->GetMaps();
     }
-    memMaps = dfxMaps->GetMaps();
+
     bool mapsAdded = !update;
     std::vector<std::shared_ptr<DfxMap>> tempMap;
     std::string tempMapName;
@@ -296,7 +298,7 @@ void VirtualThread::SortMaps()
         }
         if (targetPos < static_cast<int>(currPos - 1)) {
             auto target = (*maps_)[currPos];
-            for (size_t k = currPos - 1; k > targetPos; --k) {
+            for (size_t k = currPos - 1; k > static_cast<size_t>(targetPos); --k) {
                 (*maps_)[k + 1] = (*maps_)[k];
             }
             (*maps_)[targetPos + 1] = target;

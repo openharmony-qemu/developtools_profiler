@@ -21,7 +21,7 @@
 #include <set>
 
 struct HookData {
-    std::set<std::string> pids;
+    std::set<std::string> pids = {};
     uint32_t smbSize {0};
     uint64_t duration {0};
     uint32_t filterSize {0};

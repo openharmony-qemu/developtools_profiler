@@ -34,7 +34,6 @@ std::shared_ptr<HookManager> g_hookManager;
 NativeHookConfig g_nativeConfig;
 static void SignalHandl(int signo)
 {
-    HILOG_INFO(LOG_CORE, "SignalHandl recv %d", signo);
     std::vector<uint32_t> pluginIds;
     g_hookManager->StopPluginSession(pluginIds);
     g_hookManager->DestroyPluginSession(pluginIds);

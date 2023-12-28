@@ -221,7 +221,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         return false;
     }
     // create smb and eventNotifier
-    uint32_t bufferSize = hookConfig_.smb_pages() * PAGE_BYTES; /* bufferConfig.pages() */
+    uint32_t bufferSize = static_cast<uint32_t>(hookConfig_.smb_pages()) * PAGE_BYTES; /* bufferConfig.pages() */
     ctx->shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(ctx->smbName, bufferSize);
     CHECK_TRUE(ctx->shareMemoryBlock != nullptr, false, "CreateMemoryBlockLocal FAIL %s", ctx->smbName.c_str());
 

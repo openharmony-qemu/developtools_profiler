@@ -54,7 +54,10 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
 
     auto native = new NativeMemoryProfilerSaService();
-    CHECK_NOTNULL(native, false, "native is nullptr");
+    if (native == nullptr) {
+        HILOG_ERROR(LOG_CORE, "native is nullptr");
+        return false;
+    }
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
         HILOG_ERROR(LOG_CORE, "Service native memory failed to start");
