@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_PROF_LOGGING_H
-#define OHOS_PROF_LOGGING_H
+#ifndef OHOS_PROFILER_LOGGING_H
+#define OHOS_PROFILER_LOGGING_H
 
 #define EXPORT_API __attribute__((visibility("default")))
 
@@ -63,15 +63,15 @@ static inline long GetTid(void)
 }
 
 enum {
-    PROF_LOG_UNKNOWN = 0,
-    PROF_LOG_DEFAULT,
-    PROF_LOG_VERBOSE,
-    PROF_LOG_DEBUG,
-    PROF_LOG_INFO,
-    PROF_LOG_WARN,
-    PROF_LOG_ERROR,
-    PROF_LOG_FATAL,
-    PROF_LOG_SILENT,
+    LOG_UNKNOWN = 0,
+    LOG_DEFAULT,
+    LOG_VERBOSE,
+    LOG_DEBUG,
+    LOG_INFO,
+    LOG_WARN,
+    LOG_ERROR,
+    LOG_FATAL,
+    LOG_SILENT,
 };
 
 namespace {
@@ -127,10 +127,10 @@ static inline int HiLogPrint(int type, int prio, int domain, ConstCharPtr tag, C
 #undef HILOG_ERROR
 #endif
 
-#define HILOG_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_ERROR(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, PROF_LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_ERROR(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 
 #endif // HAVE_HILOG
 
@@ -186,13 +186,13 @@ static inline std::string StringFormat(const char* fmt, ...)
     HILOG_ERROR(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #else
 #define HILOG_PRINT_DEBUG(type, fmt, ...) \
-    HiLogPrint(type, PROF_LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+    HiLogPrint(type, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #define HILOG_PRINT_INFO(type, fmt, ...) \
-    HiLogPrint(type, PROF_LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+    HiLogPrint(type, LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #define HILOG_PRINT_WARN(type, fmt, ...) \
-    HiLogPrint(type, PROF_LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+    HiLogPrint(type, LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #define HILOG_PRINT_ERROR(type, fmt, ...) \
-    HiLogPrint(type, PROF_LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+    HiLogPrint(type, LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #endif
 
 #define PROFILER_LOG_DEBUG(type, fmt, ...) HILOG_PRINT_DEBUG(type, fmt, ##__VA_ARGS__)
@@ -260,4 +260,4 @@ static std::string GetTimeString()
     return timeStr;
 }
 #endif // !HAVE_HILOG
-#endif // OHOS_PROF_LOGGING_H
+#endif // OHOS_PROFILER_LOGGING_H

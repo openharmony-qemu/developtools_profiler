@@ -224,7 +224,7 @@ bool ohos_malloc_hook_on_start(void)
             g_ClientConfig.filterSize = min > 0 ? min : 0;
         }
         PROFILER_LOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
-                   paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
+                          paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
     }
     return true;
 }
