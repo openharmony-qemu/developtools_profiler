@@ -111,22 +111,6 @@ static inline int HiLogPrint(int type, int prio, int domain, ConstCharPtr tag, C
 #define LOG_CORE 0
 #endif
 
-#ifdef HILOG_DEBUG
-#undef HILOG_DEBUG
-#endif
-
-#ifdef HILOG_INFO
-#undef HILOG_INFO
-#endif
-
-#ifdef HILOG_WARN
-#undef HILOG_WARN
-#endif
-
-#ifdef HILOG_ERROR
-#undef HILOG_ERROR
-#endif
-
 #define HILOG_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #define HILOG_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 #define HILOG_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
@@ -170,10 +154,6 @@ static inline std::string StringFormat(const char* fmt, ...)
     return buf;
 }
 }  // logging
-
-#ifdef HILOG_PRINT
-#undef HILOG_PRINT
-#endif
 
 #ifdef HAVE_HILOG
 #define HILOG_PRINT_DEBUG(type, fmt, ...) \
