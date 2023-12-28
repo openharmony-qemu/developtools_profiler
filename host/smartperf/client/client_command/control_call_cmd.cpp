@@ -29,6 +29,7 @@
 #include "include/parse_start_frame_trace.h"
 #include "include/parse_start_trace_noh.h"
 #include "include/parse_radar.h"
+#include "include/parse_slide_fps_trace.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -52,20 +53,21 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
     } else if (v[typeName] == "fps") {
         result = SmartPerf::ControlCallCmd::SlideFps(v);
     } else if (v[typeName] == "pagefps") {
-        fps = SmartPerf::ControlCallCmd::PageFps();
+        result = SmartPerf::ControlCallCmd::PageFps();
     } else if (v[typeName] == "FPS") {
         result = SmartPerf::ControlCallCmd::SlideFPS(v);
     } else if (v[typeName] == "startFrame") {
-        fps = SmartPerf::ControlCallCmd::StartFrameFps(v);
+        result = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
         SPUtils::LoadCmd("GP_daemon_fps 10", result);
     } else if (v[typeName] == "screen") {
-        std::string screen = SPUtils::GetScreen();
-        std::cout << screen << std::endl;
+        result = SPUtils::GetScreen();
     } else if (v[typeName] == "frameLoss") {
         SmartPerf::ControlCallCmd::GetFrame();
     } else if (v[typeName] == "appStartTime") {
-        ControlCallCmd::GetAppStartTime();
+        result = ControlCallCmd::GetAppStartTime();
+    } else if (v[typeName] == "slideList") {
+        result = ControlCallCmd::SlideList();
     }
     if (time == noNameType) {
         std::cout << "Startup error, unknown application or application not responding" << std::endl;
@@ -73,12 +75,41 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         if (time != 0) {
             stream << time;
             result = "time:" + stream.str() + "ms";
-            std::cout << result << std::endl;
         }
+        std::cout << result << std::endl;
     }
     return result;
 }
-void ControlCallCmd::GetFrame()
+std::string ControlCallCmd::SlideList()
+{
+    OHOS::SmartPerf::ParseClickResponseTrace pcrt;
+    OHOS::SmartPerf::StartUpDelay sd;
+    OHOS::SmartPerf::ParseSlideFpsTrace slideFpsTrace;
+    std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
+    std::string resultStream = "";
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_fps.ftrace", cmdResult);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
+    if (isOhTest) {
+        std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+        thGetTrace.join();
+        time = pcrt.ParseResponseTrace(traceName);
+    } else {
+        std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::string str = SPUtils::GetRadarResponse();
+        thGetTrace.join();
+        thGetHisysId.join();
+        double responseTime = radar.ParseRadarResponse(str);
+        stream << responseTime;
+        std::string responseSlide = "time:" + stream.str() + "ms";
+        double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
+        stream << sFps;
+        resultStream = "FPS:" + stream.str() + "fps\n" + responseSlide;
+    }
+    return resultStream;
+}
+std::string ControlCallCmd::GetFrame()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
@@ -90,7 +121,8 @@ void ControlCallCmd::GetFrame()
     std::string str = SPUtils::GetRadarFrame();
     thGetTrace.join();
     thGetHisysId.join();
-    radar.ParseRadarFrame(str);
+    std::string reslut = radar.ParseRadarFrame(str);
+    return result;
 }
 double ControlCallCmd::PageFps()
 {
@@ -104,7 +136,6 @@ double ControlCallCmd::PageFps()
     double fps = pageFpsTrace.ParsePageFpsTrace(traceName);
     stream << fps;
     result = "FPS:" + stream.str() + "fps";
-    std::cout << result << std::endl;
     return fps;
 }
 std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
@@ -118,7 +149,6 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    std::cout << fps << std::endl;
     return fps;
 }
 std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
@@ -148,7 +178,6 @@ std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
     SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    std::cout << fps << std::endl;
     return fps;
 }
 double ControlCallCmd::ResponseTime()
@@ -208,7 +237,7 @@ double ControlCallCmd::CompleteTime()
     }
     return time;
 }
-double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
+std::string ControlCallCmd::StartFrameFps(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
@@ -234,8 +263,7 @@ double ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     double fps = startFrameTraceNoh.ParseStartFrameTraceNoh(traceName);
     stream << fps;
     result = "FPS:" + stream.str() + "fps";
-    std::cout << result << std::endl;
-    return fps;
+    return result;
 }
 double ControlCallCmd::StartResponse(std::vector<std::string> v)
 {
@@ -269,7 +297,7 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
         return time;
     }
 }
-void ControlCallCmd::GetAppStartTime()
+std::string ControlCallCmd::GetAppStartTime()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
@@ -278,10 +306,11 @@ void ControlCallCmd::GetAppStartTime()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
     std::thread thGetHisysId = sd.ThreadGetHisysId();
-    std::string str = SPUtils::GetRadarFrame();
+    std::string str = SPUtils::GetRadar();
     thGetTrace.join();
     thGetHisysId.join();
-    radar.ParseRadarAppStrart(str);
+    std::string resultStream = radar.ParseRadarAppStrart(str);
+    return resultStream;
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)
 {

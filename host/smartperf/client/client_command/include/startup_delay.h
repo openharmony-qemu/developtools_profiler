@@ -30,6 +30,7 @@ public:
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     std::string GetDeviceType();
+    bool GetSpTcp();
     void InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName);
     void InitXY(const std::string &curAppName, const std::string &fileName);
     std::string pointXY = "0 0";
