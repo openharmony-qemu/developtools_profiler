@@ -26,6 +26,9 @@
 namespace OHOS {
 bool StopSessionTest(const uint8_t* data, size_t size)
 {
+#ifdef ASAN_MODE
+    std::this_thread::sleep_for(std::chrono::millseconds(1));
+#endif
     auto pluginManage = std::make_shared<PluginManager>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
     pluginManage->SetCommandPoller(commandPoller);
