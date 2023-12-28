@@ -235,6 +235,10 @@ int main(int argc, char* argv[])
     }
 
     if (argc > 1) {
+        if (!COMMON::IsBetaVersion()) {
+            printf("memory profiler only support in beta version\n");
+            return 0;
+        }
         if (argc == 2 && strcmp(argv[1], "sa") == 0) {
             if (!OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaService::StartServiceAbility()) {
                 return 0;
