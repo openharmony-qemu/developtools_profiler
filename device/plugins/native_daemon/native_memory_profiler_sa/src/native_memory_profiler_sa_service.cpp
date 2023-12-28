@@ -322,7 +322,7 @@ void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
         delayedShutdownTimerFd_ = -1;
     } else {
         int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-            [](){
+            []() {
                 int ret = SystemSetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
                 if (ret < 0) {
                     HILOG_ERROR(LOG_CORE, "DelayedShutdown close sa failed");
