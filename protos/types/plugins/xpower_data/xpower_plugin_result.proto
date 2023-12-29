@@ -20,13 +20,13 @@ option optimize_for = LITE_RUNTIME;
 message OptimizeReport {
   int64 start_time = 1;                 //统计起始时间
   int64 end_time = 2;                   //统计结束时间
-  string bundle_name = 3;               //调优应用包名（AppStatistic和AppDetail必传，其他非必传）
+  string bundle_name = 3;               //调优应用包名（AppStatistic/AppDetail/AbnormalEvents必传，其他非必传）
   uint32 message_type = 4;              //调优消息类型值累加（建议用于二进制位运算，判断是否包含某消息类型）
   RealBattery real_battery = 5;         //电源信息统计，对应messageType为1（对应原hisysevent中的POWER_IDE_BATTERY上报）
   AppStatistic app_statistic = 6;       //指定应用的各器件统计信息，对应messageType为2
   AppDetail app_detail = 7;             //指定应用的各器件调优信息，对应messageType为4
   ComponentTop component_top = 8;       //整机各器件的top应用信息，对应messageType为8（对应原hisysevent中的POWER_IDE_*上报）
-  AbnormalEvents abnormal_events = 9;   //指定应用的异常事件检测，对应messageType为16（3min/次的异常检测，暂未实现，预留）
+  AbnormalEvents abnormal_events = 9;   //指定应用的异常事件检测，对应messageType为16（应用异常快速检测，3min/次）
 }
 
 message RealBattery {
@@ -56,8 +56,10 @@ message AppStatisticCommon {
 }
 
 message AppDetail {
-  AppDetailCPU cpu = 1;   //指定应用的cpu调优信息
-  AppDetailGPU gpu = 2;   //指定应用的gpu调优信息
+  AppDetailCPU cpu = 1;         //指定应用的cpu调优信息
+  AppDetailGPU gpu = 2;         //指定应用的gpu调优信息
+  AppDetailWifi wifi = 3;       //指定应用的wifi调优信息
+  AppDetailDisplay display = 4; //指定应用的display调优信息
 }
 
 message AppDetailCPU {
@@ -73,6 +75,26 @@ message AppDetailGPU {
   repeated int64 frequency = 2; //GPU运行的频率
   repeated int64 idle_time = 3; //对应频率的idea时长
   repeated int64 run_time = 4;  //对应频率的运行时长
+}
+
+message AppDetailWifi {
+  int64 tx_packets = 1;   //wifi传输数据包
+  int64 rx_packets = 2;   //wifi接受数据包
+  int64 tx_bytes = 3;     //wifi传输字节数
+  int64 rx_bytes = 4;     //wifi接受字节数
+}
+
+message AppDetailDisplay {
+  int64 count_1hz = 1;      //刷新率在每秒1次的驻留时长
+  int64 count_10hz = 2;     //刷新率在每秒10次的驻留时长
+  int64 count_15hz = 3;     //刷新率在每秒15次的驻留时长
+  int64 count_24hz = 4;     //刷新率在每秒24次的驻留时长
+  int64 count_30hz = 5;     //刷新率在每秒30次的驻留时长
+  int64 count_45hz = 6;     //刷新率在每秒45次的驻留时长
+  int64 count_60hz = 7;     //刷新率在每秒60次的驻留时长
+  int64 count_90hz = 8;     //刷新率在每秒90次的驻留时长
+  int64 count_120hz = 9;    //刷新率在每秒120次的驻留时长
+  int64 count_180hz = 10;   //刷新率在每秒180次的驻留时长
 }
 
 message ComponentTop {
@@ -136,7 +158,26 @@ message ComponentTopDisplay {
   repeated int64 energy = 4;    //应用功耗值
 }
 
-
 message AbnormalEvents {
-  //to do
+  int64 anomaly_start_time = 1;             //异常检测起始时间
+  int64 anomaly_end_time = 2;               //异常检测结束时间
+  int32 count = 3;                          //检测到当前应用的异常数
+  repeated AbnormalEventInfo events = 4;    //各类异常详情数组
+}
+
+message AbnormalEventInfo {
+  enum AbnormalType {
+    CPU_BG_HEAVY_LOAD = 0;        //cpu后台高负载异常
+    CPU_FG_HEAVY_LOAD = 1;        //cpu前台高负载异常
+    CPU_HIGH_FREQUENCY = 2;       //cpu高频异常
+    GNSS_ENERGY = 3;              //Gnss高耗电异常
+    LOCATION_COUNTER = 4;         //频繁定位异常
+    WIFI_ENERGY = 5;              //Wifi高耗电异常
+  }
+  AbnormalType abnormal_type = 1;  //异常类型
+  int64 usage_time = 2;           //使用时长
+  int64 usage_energy = 3;         //使用功耗
+  int64 usage_load = 4;           //使用负载
+  int64 usage_freq = 5;           //使用频率
+  int32 usage_count = 6;          //使用次数
 }

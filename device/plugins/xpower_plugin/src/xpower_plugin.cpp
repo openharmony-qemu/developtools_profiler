@@ -27,7 +27,8 @@
 namespace {
 constexpr size_t MAX_QUEUE_SIZE = 2000;
 constexpr uint32_t WAIT_DURATION = 100;
-constexpr int MIN_USER_ID = 10000;
+constexpr int32_t AID_HAP_START = 20010000;
+constexpr int32_t AID_HAP_END = 21065535;
 } // namespace
 XpowerPlugin::XpowerPlugin()
 {
@@ -38,7 +39,13 @@ XpowerPlugin::XpowerPlugin()
     procMesTypeMapping_.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
 }
 
-XpowerPlugin::~XpowerPlugin() {}
+XpowerPlugin::~XpowerPlugin()
+{
+    if (powerClientHandle_ != nullptr) {
+        dlclose(powerClientHandle_);
+        powerClientHandle_ = nullptr;
+    }
+}
 
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 {
@@ -52,19 +59,7 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         HILOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
         return -1;
     }
-    // 判断进程是否存在
-    int processId = -1;
-    bool isExsit = COMMON::IsProcessExist(bundleName, processId);
-    if (!isExsit) {
-        HILOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
-        return -1;
-    }
-    // check bundleName
-    int32_t uid = COMMON::GetPackageUid(bundleName);
-    if (uid < MIN_USER_ID) {
-        HILOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
-        return -1;
-    }
+    // Get message type
     if (protoConfig_.message_type().size() > 0) {
         for (int i = 0; i < protoConfig_.message_type().size(); i++) {
             uint32_t mesType = procMesTypeMapping_[static_cast<XpowerMessageType>(protoConfig_.message_type(i))];
@@ -72,6 +67,24 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         }
     }
     HILOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
+    if ((messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0 ||
+        (messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0 ||
+        (messageType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
+        // check bundleName
+        int32_t uid = COMMON::GetPackageUid(bundleName);
+        if (uid < AID_HAP_START || uid > AID_HAP_END) {
+            HILOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
+            return -1;
+        }
+    }
+    if ((messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0) {
+        int processId = -1;
+        bool isExsit = COMMON::IsProcessExist(bundleName, processId);
+        if (!isExsit) {
+            HILOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
+            return -1;
+        }
+    }
     // 加载对应so 库文件
     if (!StartPowerManager(messageType, bundleName)) {
         HILOG_ERROR(LOG_CORE, "start power manager failed!");
@@ -116,7 +129,7 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
         return;
     }
     // write protoData to file
-    if (resultWriter_ != nullptr) {
+    if (resultWriter_ != nullptr && resultWriter_->isProtobufSerialize) {
         resultWriter_->write(resultWriter_, protoData, protoSize);
         resultWriter_->flush(resultWriter_);
     }
@@ -138,7 +151,6 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
 
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
 {
-    HILOG_INFO(LOG_CORE, "power: report the data to caller");
     if (dataQueuePtr_->Empty()) {
         return 0;
     }
@@ -174,9 +186,6 @@ int XpowerPlugin::Stop()
     if (listenerHandle_ != nullptr) {
         stopOptimizeMode(listenerHandle_);
         HILOG_INFO(LOG_CORE, "stop xpower plugin callback");
-    }
-    if (powerClientHandle_ != nullptr) {
-        dlclose(powerClientHandle_);
     }
     dataQueuePtr_->ShutDown();
     return 0;

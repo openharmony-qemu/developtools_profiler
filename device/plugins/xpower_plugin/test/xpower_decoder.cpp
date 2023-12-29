@@ -13,14 +13,10 @@
  * limitations under the License.
  */
 #include "xpower_decoder.h"
-
 #include <securec.h>
-
 #include <climits>
 #include <cstring>
-
 #include "xpower_common.h"
-
 XpowerDecoder::XpowerDecoder() {}
 
 XpowerDecoder::~XpowerDecoder() {}
@@ -30,6 +26,8 @@ cJSON* XpowerDecoder::CreateAppDetail(const AppDetail& appDetail)
     cJSON* cjsonAppDetail = cJSON_CreateObject();
     cJSON_AddItemToObject(cjsonAppDetail, "cpu", CreateAppDetailCpu(appDetail.cpu()));
     cJSON_AddItemToObject(cjsonAppDetail, "gpu", CreateAppDetailGpu(appDetail.gpu()));
+    cJSON_AddItemToObject(cjsonAppDetail, "wifi", CreateAppDetailWifi(appDetail.wifi()));
+    cJSON_AddItemToObject(cjsonAppDetail, "display", CreateAppDetailDisplay(appDetail.display()));
     return cjsonAppDetail;
 }
 
@@ -70,6 +68,32 @@ cJSON* XpowerDecoder::CreateAppDetailGpu(const AppDetailGPU& appDeGpu)
     }
     cJSON_AddItemToObject(cjsonGpu, "run_time", runTimeArr);
     return cjsonGpu;
+}
+
+cJSON* XpowerDecoder::CreateAppDetailWifi(const AppDetailWifi& appWifi)
+{
+    cJSON* cjsonWifi = cJSON_CreateObject();
+    cJSON_AddNumberToObject(cjsonWifi, "tx_packets", appWifi.tx_packets());
+    cJSON_AddNumberToObject(cjsonWifi, "rx_packets", appWifi.rx_packets());
+    cJSON_AddNumberToObject(cjsonWifi, "tx_bytes", appWifi.tx_bytes());
+    cJSON_AddNumberToObject(cjsonWifi, "rx_bytes", appWifi.rx_bytes());
+    return cjsonWifi;
+}
+
+cJSON* XpowerDecoder::CreateAppDetailDisplay(const AppDetailDisplay& appDisplay)
+{
+    cJSON* cjsonDisplay = cJSON_CreateObject();
+    cJSON_AddNumberToObject(cjsonDisplay, "count_1hz", appDisplay.count_1hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_10hz", appDisplay.count_10hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_15hz", appDisplay.count_15hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_24hz", appDisplay.count_24hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_30hz", appDisplay.count_30hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_45hz", appDisplay.count_45hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_60hz", appDisplay.count_60hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_90hz", appDisplay.count_90hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_120hz", appDisplay.count_120hz());
+    cJSON_AddNumberToObject(cjsonDisplay, "count_180hz", appDisplay.count_180hz());
+    return cjsonDisplay;
 }
 
 cJSON* XpowerDecoder::CreateAppDetailCpu(const AppDetailCPU& appDeCpu)
@@ -359,6 +383,32 @@ cJSON* XpowerDecoder::CreateComponentTop(const ComponentTop& componentTop)
     return jsonComTop;
 }
 
+cJSON* XpowerDecoder::CreateAbnormalEventInfo(const AbnormalEventInfo& eventInfo)
+{
+    cJSON* jsonEventInfo = cJSON_CreateObject();
+    cJSON_AddStringToObject(jsonEventInfo, "abnormal_type",
+                            eventInfo.AbnormalType_Name(eventInfo.abnormal_type()).c_str());
+    cJSON_AddNumberToObject(jsonEventInfo, "usage_time", eventInfo.usage_time());
+    cJSON_AddNumberToObject(jsonEventInfo, "usage_energy", eventInfo.usage_energy());
+    cJSON_AddNumberToObject(jsonEventInfo, "usage_load", eventInfo.usage_load());
+    cJSON_AddNumberToObject(jsonEventInfo, "usage_freq", eventInfo.usage_freq());
+    cJSON_AddNumberToObject(jsonEventInfo, "usage_count", eventInfo.usage_count());
+    return jsonEventInfo;
+}
+
+cJSON* XpowerDecoder::CreateAbnormalEvents(const AbnormalEvents& abnormEvent)
+{
+    cJSON* jsonEvent = cJSON_CreateObject();
+    cJSON_AddNumberToObject(jsonEvent, "anomaly_start_time", abnormEvent.anomaly_start_time());
+    cJSON_AddNumberToObject(jsonEvent, "anomaly_end_time", abnormEvent.anomaly_end_time());
+    cJSON_AddNumberToObject(jsonEvent, "count", abnormEvent.count());
+    cJSON* eventsArr = cJSON_CreateArray();
+    for (int i = 0; i < abnormEvent.events().size(); i++) {
+        cJSON_AddItemToArray(eventsArr, CreateAbnormalEventInfo(abnormEvent.events(i)));
+    }
+    return jsonEvent;
+}
+
 std::string XpowerDecoder::DecodeXpowerMessage(OptimizeReport& dataProto)
 {
     std::string retStr;
@@ -379,6 +429,9 @@ std::string XpowerDecoder::DecodeXpowerMessage(OptimizeReport& dataProto)
     }
     if ((mesType & OptimizeMessageType::MESSAGE_COMPONENT_TOP) != 0) {
         cJSON_AddItemToObject(optReport, "component_top", CreateComponentTop(dataProto.component_top()));
+    }
+    if ((mesType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
+        cJSON_AddItemToObject(optReport, "abnormal_events", CreateAbnormalEvents(dataProto.abnormal_events()));
     }
     retStr = cJSON_Print(optReport);
     cJSON_Delete(optReport);
