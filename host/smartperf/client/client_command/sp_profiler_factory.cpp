@@ -18,8 +18,6 @@
 #include "include/GPU.h"
 #include "include/FPS.h"
 #include "include/RAM.h"
-#include "include/system_ram.h"
-#include "include/processes_cpu.h"
 #include "include/Network.h"
 #include "include/Power.h"
 #include "include/Temperature.h"

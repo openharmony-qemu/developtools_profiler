@@ -87,6 +87,9 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
             break;
         case CommandType::CT_PKG:
             pkgName = argStr1;
+            if (pkgName.length() > 0) {
+                SpProfilerFactory::SetProfilerPkg(pkgName);
+            }
             break;
         case CommandType::CT_OUT:
             outPathParam = argStr1;
@@ -111,7 +114,6 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
             std::cout << "other unknown args:" << argStr << std::endl;
             break;
     }
-    SpProfilerFactory::SetProfilerPkg(pkgName);
 }
 
 std::string SmartPerfCommand::ExecCommand()

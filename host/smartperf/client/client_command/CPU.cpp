@@ -25,6 +25,7 @@
 #include "include/sp_utils.h"
 #include "cpu_collector.h"
 #include "collect_result.h"
+#include "include/startup_delay.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -76,7 +77,7 @@ std::map<std::string, std::string> CPU::ItemData()
     return result;
 }
 
-void RAM::SetPackageName(std::string pName)
+void CPU::SetPackageName(std::string pName)
 {
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(pName);
@@ -127,7 +128,7 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         int32_t procId = 0;
         procId = std::stoi(processId);
         std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
-        auto collectResult = collector->CollectProcessCpuStatInfos(true);
+        auto collectResult = collector->CollectProcessCpuStatInfo(procId, true);
         auto data = collectResult.data;
         processCpuInfo["ProcId"] = std::to_string(data.pid);
         processCpuInfo["ProcAppName"] = data.procName;

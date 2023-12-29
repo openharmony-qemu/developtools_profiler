@@ -86,7 +86,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     }
     return procRamInfo;
 }
-std::map<std::string, std::string> SystemRam::GetSysRamInfo() const
+std::map<std::string, std::string> RAM::GetSysRamInfo() const
 {
     std::map<std::string, std::string> sysRamInfo;
     std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
