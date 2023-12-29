@@ -17,6 +17,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <chrono>
+#include <thread>
 
 #include "command_poller.h"
 #include "plugin_manager.h"
