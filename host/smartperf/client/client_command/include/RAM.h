@@ -23,13 +23,14 @@ public:
     void SetProcessId(std::string pid);
     std::map<std::string, std::string> GetRamInfo() const
     ;
+    std::map<std::string, std::string> GetSysRamInfo() const;
     static RAM &GetInstance()
     {
         static RAM instance;
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-
+    void SetPackageName(std::string pName);
 private:
     RAM() {};
     RAM(const RAM &);

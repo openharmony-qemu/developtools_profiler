@@ -88,9 +88,6 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
         case CommandType::CT_PKG:
             pkgName = argStr1;
             break;
-        case CommandType::CT_PID:
-            pid = argStr1;
-            break;
         case CommandType::CT_OUT:
             outPathParam = argStr1;
             if (strcmp(outPathParam.c_str(), "") != 0) {
@@ -98,7 +95,6 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
             }
             break;
         case CommandType::CT_C:
-        case CommandType::CT_PL:
         case CommandType::CT_G:
         case CommandType::CT_D:
         case CommandType::CT_F:
@@ -106,7 +102,6 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
         case CommandType::CT_P:
         case CommandType::CT_R:
         case CommandType::CT_NET:
-        case CommandType::CT_PR:
         case CommandType::CT_TTRACE:
         case CommandType::CT_SNAPSHOT:
         case CommandType::CT_HW:
@@ -116,7 +111,6 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
             std::cout << "other unknown args:" << argStr << std::endl;
             break;
     }
-    SpProfilerFactory::SetProfilerPid(pid);
     SpProfilerFactory::SetProfilerPkg(pkgName);
 }
 

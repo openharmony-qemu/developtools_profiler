@@ -152,12 +152,10 @@ public:
                 if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
                     std::string curPkgName = SplitMsg(recvBuf);
                     SpProfilerFactory::SetProfilerPkg(curPkgName);
-                    OHOS::SmartPerf::StartUpDelay sd;
-                    std::string pidNum = sd.GetPidByPkg(curPkgName);
-                    SpProfilerFactory::SetProfilerPid(pidNum);
                     spSocket.Sendto(curPkgName);
                 } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
-                    SpProfilerFactory::SetProfilerPid(SplitMsg(recvBuf));
+                    std::string curPkgName1 = SplitMsg(recvBuf);
+                    SpProfilerFactory::SetProfilerPkg(curPkgName1);
                 } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG)) {
                     SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
                 } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CMD)) {

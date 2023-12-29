@@ -79,6 +79,10 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
+    RAM &ram = RAM::GetInstance();
+    ram.SetPackageName(pkg);
+    CPU &cpu = CPU::GetInstance();
+    cpu.SetPackageName(pkg);
 }
 void SpProfilerFactory::SetByTraceCmd(std::string cmd)
 {
@@ -115,22 +119,12 @@ void SpProfilerFactory::SetByTrace(std::string message)
     ByTrace &bTrace = ByTrace::GetInstance();
     bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
 }
-void SpProfilerFactory::SetProfilerPid(std::string pid)
-{
-    RAM &ram = RAM::GetInstance();
-    ram.SetProcessId(pid);
-    ProcessesCpu &processesCpu = ProcessesCpu::GetInstance();
-    processesCpu.SetProcessId(pid);
-}
 SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
 {
     SpProfiler *profiler = nullptr;
     switch (commandType) {
         case CommandType::CT_C:
             profiler = &CPU::GetInstance();
-            break;
-        case CommandType::CT_PL:
-            profiler = &ProcessesCpu::GetInstance();
             break;
         case CommandType::CT_G:
             profiler = &GPU::GetInstance();
@@ -150,9 +144,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             profiler = &Temperature::GetInstance();
             break;
         case CommandType::CT_R:
-            profiler = &SystemRam::GetInstance();
-            break;
-        case CommandType::CT_PR:
             profiler = &RAM::GetInstance();
             break;
         case CommandType::CT_NET:

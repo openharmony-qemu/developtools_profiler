@@ -35,39 +35,27 @@ namespace SmartPerf {
 std::map<std::string, std::string> CPU::ItemData()
 {
     std::map<std::string, std::string> result;
-    std::vector<CpuFreqs> cpuFreqInfo;
-    cpuFreqInfo = GetCpuFreq();
-    std::string cpuFreqStr;
-    std::string cpuId;
+    std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
     for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
-        cpuFreqStr = std::to_string(cpuFreqInfo[i].curFreq);
-        cpuId = std::to_string(cpuFreqInfo[i].cpuId);
+        std::string cpuFreqStr = std::to_string(cpuFreqInfo[i].curFreq);
+        std::string cpuId = std::to_string(cpuFreqInfo[i].cpuId);
         result["cpu" + cpuId + "Frequency"] = cpuFreqStr;
     }
     std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
-    std::string cpuIdStr;
-    std::string userUsageStr;
-    std::string niceUsageStr;
-    std::string systemUsageStr;
-    std::string idleUsageStr;
-    std::string ioWaitUsageStr;
-    std::string irqUsageStr;
-    std::string softIrqUsageStr;
-    std::string totalUsageStr;
     const size_t oneHundred = 100;
     if (workLoads.empty()) {
         return result;
     }
     for (size_t i = 1; i < workLoads.size(); i++) {
-        cpuIdStr = workLoads[i].cpuId;
-        userUsageStr = std::to_string(workLoads[i].userUsage * oneHundred);
-        niceUsageStr = std::to_string(workLoads[i].niceUsage * oneHundred);
-        systemUsageStr = std::to_string(workLoads[i].systemUsage * oneHundred);
-        idleUsageStr = std::to_string(workLoads[i].idleUsage * oneHundred);
-        ioWaitUsageStr = std::to_string(workLoads[i].ioWaitUsage * oneHundred);
-        irqUsageStr = std::to_string(workLoads[i].irqUsage * oneHundred);
-        softIrqUsageStr = std::to_string(workLoads[i].softIrqUsage * oneHundred);
-        totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
+        std::string cpuIdStr = workLoads[i].cpuId;
+        std::string userUsageStr = std::to_string(workLoads[i].userUsage * oneHundred);
+        std::string niceUsageStr = std::to_string(workLoads[i].niceUsage * oneHundred);
+        std::string systemUsageStr = std::to_string(workLoads[i].systemUsage * oneHundred);
+        std::string idleUsageStr = std::to_string(workLoads[i].idleUsage * oneHundred);
+        std::string ioWaitUsageStr = std::to_string(workLoads[i].ioWaitUsage * oneHundred);
+        std::string irqUsageStr = std::to_string(workLoads[i].irqUsage * oneHundred);
+        std::string softIrqUsageStr = std::to_string(workLoads[i].softIrqUsage * oneHundred);
+        std::string totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
             workLoads[i].systemUsage + workLoads[i].ioWaitUsage +
             workLoads[i].irqUsage + workLoads[i].softIrqUsage) * oneHundred);
         result[cpuIdStr + "userUsage"] = userUsageStr;
@@ -79,9 +67,20 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
+    std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
+    if (!processCpuInfo.empty()) {
+        for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
+            result.insert(*it);
+        }
+    }
     return result;
 }
 
+void RAM::SetPackageName(std::string pName)
+{
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(pName);
+}
 std::vector<CpuFreqs> CPU::GetCpuFreq()
 {
     OHOS::SmartPerf::CpuFreqs cpuFreqs;
@@ -119,6 +118,26 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
         workload.push_back(cpuUsageInfos);
     }
     return workload;
+}
+std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
+{
+    std::map<std::string, std::string> processCpuInfo;
+    const size_t oneHundred = 100;
+    if (processId.length() > 0) {
+        int32_t procId = 0;
+        procId = std::stoi(processId);
+        std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
+        auto collectResult = collector->CollectProcessCpuStatInfos(true);
+        auto data = collectResult.data;
+        processCpuInfo["ProcId"] = std::to_string(data.pid);
+        processCpuInfo["ProcAppName"] = data.procName;
+        processCpuInfo["ProcCpuLoad"] = std::to_string(data.cpuLoad * oneHundred);
+        processCpuInfo["ProcCpuUsage"] = std::to_string(data.cpuUsage * oneHundred);
+        processCpuInfo["ProcUCpuUsage"] = std::to_string(data.uCpuUsage * oneHundred);
+        processCpuInfo["ProcSCpuUsage"] = std::to_string(data.sCpuUsage * oneHundred);
+        return processCpuInfo;
+    }
+    return processCpuInfo;
 }
 }
 }
