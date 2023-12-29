@@ -380,7 +380,7 @@ private:
 
     std::unordered_map<int32_t, std::vector<int>> pidFds_ = {};
     std::vector<int32_t> seenPids_ = {};
-    char* testpath_ = nullptr;
+    char* testpath_ = "";
     int32_t err_ = -1;
     int32_t ReadFile(int fd);
     std::string ReadFile(const std::string& path);
