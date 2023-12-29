@@ -121,7 +121,7 @@ private:
 #ifdef DEBUG_MISS_SYMBOL
     mutable std::vector<std::string> missedSymbolFile_;
 #endif
-    VirtualRuntime* virtualruntime_ = nullptr;
+    VirtualRuntime* virtualruntime_;
     FRIEND_TEST(VirtualThreadTest, ReadRoMemory);
 };
 } // namespace NativeDaemon
