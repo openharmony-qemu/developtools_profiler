@@ -96,7 +96,7 @@ bool StartUpDelay::GetSpTcp()
     bool flagTcp = false;
     SPUtils::LoadCmd("netstat -anp |grep 8284", str);
     size_t pos = str.find("SP_daemon");
-    if (pos != std::string::npos) {
+    if (pos == std::string::npos) {
         flagTcp = false;
     } else {
         flagTcp = true;

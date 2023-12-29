@@ -104,8 +104,9 @@ std::string ControlCallCmd::SlideList()
         stream << responseTime;
         std::string responseSlide = "time:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
-        stream << sFps;
-        resultStream = "FPS:" + stream.str() + "fps\n" + responseSlide;
+        std::ostringstream streamFps;
+        streamFps << sFps;
+        resultStream = "FPS:" + streamFps.str() + "fps\n" + responseSlide;
     }
     return resultStream;
 }

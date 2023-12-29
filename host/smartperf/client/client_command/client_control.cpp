@@ -70,12 +70,6 @@ int ClientControl::InitSocket()
 }
 void ClientControl::StartSPDaemon()
 {
-    std::string result = "";
-    SPUtils::LoadCmd("SP_daemon", result);
-    sleep(1);
-}
-int ClientControl::CloseSocket()
-{
     OHOS::SmartPerf::StartUpDelay sd;
     bool spTcp = sd.GetSpTcp();
     if (!spTcp) {
@@ -83,6 +77,9 @@ int ClientControl::CloseSocket()
         SPUtils::LoadCmd("SP_daemon", result);
         sleep(1);
     }
+}
+int ClientControl::CloseSocket()
+{
     shutdown(clientSocket, SHUT_RD);
     return 0;
 }

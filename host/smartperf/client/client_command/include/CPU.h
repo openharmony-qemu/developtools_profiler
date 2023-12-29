@@ -44,11 +44,13 @@ public:
     std::map<std::string, std::string> ItemData() override;
     std::vector<CpuFreqs> GetCpuFreq();
     std::vector<CpuUsageInfos> GetCpuUsage();
-
+    std::map<std::string, std::string> GetSysProcessCpuLoad() const;
+    void SetPackageName(std::string pName);
 private:
     CPU() {};
     CPU(const CPU &);
     CPU &operator = (const CPU &);
+    std::string processId = "";
 };
 }
 }
