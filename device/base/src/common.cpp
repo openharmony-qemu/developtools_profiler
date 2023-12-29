@@ -449,6 +449,15 @@ bool VerifyPath(const std::string& filePath, const std::vector<std::string>& val
     return false;
 }
 
+std::string RealPath(const std::string& filePath)
+{
+    char* realFilePath = realpath(filePath.c_str(), nullptr);
+    CHECK_NOTNULL(realFilePath, "", "Fail to realPath: %s", filePath.c_str());
+    std::string realFilePathStr(realFilePath);
+    free(realFilePath);
+    return realFilePathStr;
+}
+
 bool ReadFile(const std::string &filePath, const std::vector<std::string>& validPaths, std::string& fileContent)
 {
     char* realFilePath = realpath(filePath.c_str(), nullptr);
