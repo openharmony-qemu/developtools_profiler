@@ -842,6 +842,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
 {
+#if defined(__LP64__)  // just support 64bit
     std::string outFileName = "split_hiebpf";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
     std::string ebpfFile = "/data/local/tmp/ebpf.data";
@@ -867,4 +868,5 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
 
     cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + ebpfFile + " " + ebpfSplitFile;
     system(cmd.c_str());
+#endif
 }

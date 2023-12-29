@@ -156,38 +156,16 @@ bool CheckMessage(uint8_t *buffer, size_t size)
 HWTEST_F(BufferWriteTest, WriteTest, TestSize.Level1)
 {
     auto write = std::make_shared<BufferWriter>(PLUGIN_NAME, PLUGIN_VERSION, SMB1_SIZE, g_smbFd1, -1, 0);
-
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
     uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
-
-    uint8_t data[1024];
-    ProfilerPluginData pluginData;
-    pluginData.set_name("test");
-    pluginData.set_status(1);
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    pluginData.set_clock_id(ProfilerPluginData::CLOCKID_REALTIME);
-    pluginData.set_tv_sec(ts.tv_sec);
-    pluginData.set_tv_nsec(ts.tv_nsec);
-
-
-    pluginData.set_data(buffer1, sizeof(buffer1));
-    size_t size = pluginData.ByteSizeLong();
-    pluginData.SerializeToArray(data, size);
-    EXPECT_TRUE(write->Write(data, size));
+    EXPECT_TRUE(write->Write(buffer1, sizeof(buffer1)));
     EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
 
-    pluginData.set_data(buffer2, sizeof(buffer2));
-    size = pluginData.ByteSizeLong();
-    pluginData.SerializeToArray(data, size);
-    EXPECT_TRUE(write->Write(data, size));
+    EXPECT_TRUE(write->Write(buffer2, sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
 
-    pluginData.set_data(buffer3, sizeof(buffer3));
-    size = pluginData.ByteSizeLong();
-    pluginData.SerializeToArray(data, size);
-    EXPECT_TRUE(write->Write(data, size));
+    EXPECT_TRUE(write->Write(buffer3, sizeof(buffer3)));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
     EXPECT_FALSE(write->Write(nullptr, 0));
 }

@@ -451,26 +451,21 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddr2, TestSize.Level1)
         0000000000002aa8    0           _fini
     */
 #ifdef __arm__
+    // func of 0 size will be ignored
     ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001000).GetName(), "_init");
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001029).GetName(), "_init");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001320).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001359).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001512).GetName(), "main");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x0000152c).GetName(), "main");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x0000145d).GetName(), "TestGlobalChildFunction");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x000014d9).GetName(), "TestGlobalParentFunction");
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00001b38).GetName(), "_fini");
 #else
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002000).GetName(), "_init");
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002019).GetName(), "_init");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x000022f0).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x0000231e).GetName(), "_start");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002478).GetName(), "main");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002486).GetName(), "main");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x000023d9).GetName(), "TestGlobalChildFunction");
     EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002447).GetName(), "TestGlobalParentFunction");
-    EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(0x00002aa8).GetName(), "_fini");
 #endif
     if (HasFailure()) {
         PrintSymbols(elfSymbols->GetSymbols());
@@ -541,7 +536,7 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddrFullMatch1, TestSize.Level1)
                 EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(addr).demangle_, "register_tm_clones");
             }
         }
-        EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(SymbolAddr::FINI).demangle_, "_fini");
+        EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(SymbolAddr::MAIN).demangle_, "main");
         if (HasFailure()) {
             PrintSymbols(elfSymbols->GetSymbols());
         }
@@ -625,7 +620,7 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddrFullMatch, TestSize.Level1)
                 EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(addr).demangle_, "__libc_csu_fini");
             }
         }
-        EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(SymbolAddr::FINI).demangle_, "_fini");
+        EXPECT_EQ(elfSymbols->GetSymbolWithVaddr(SymbolAddr::MAIN).demangle_, "main");
         if (HasFailure()) {
             PrintSymbols(elfSymbols->GetSymbols());
         }

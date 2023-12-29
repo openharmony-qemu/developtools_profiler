@@ -84,7 +84,7 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
     g_protoXpower.clear();
     // set config
     XpowerConfig config;
-    config.set_bundle_name("com.taobao.taobao");
+    config.set_bundle_name("com.ohos.sceneboard");
     config.add_message_type(XpowerMessageType::REAL_BATTERY);
     config.add_message_type(XpowerMessageType::APP_STATISTIC);
     config.add_message_type(XpowerMessageType::APP_DETAIL);

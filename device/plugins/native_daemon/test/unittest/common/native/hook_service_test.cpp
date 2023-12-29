@@ -72,5 +72,7 @@ HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level1)
     auto hookService = std::make_shared<HookService>(clientConfig, hookManager);
     ASSERT_TRUE(hookService != nullptr);
     ASSERT_TRUE(hookService->ProtocolProc(socketContext, 0, pidPtr, sizeof(pid)));
+    std::vector<uint32_t> pluginIds;
+    hookManager->DestroyPluginSession(pluginIds);
 }
 } // namespace
