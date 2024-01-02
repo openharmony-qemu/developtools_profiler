@@ -69,6 +69,10 @@ constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
 constexpr int FD_PATH_LENGTH = 64;
 constexpr int MIN_SAMPLER_INTERVAL = 1;
+constexpr int FIRST_HASH = 16;
+constexpr int SECOND_HASH = 13;
+constexpr int THRESHOLD = 256;
+constexpr int DIVIDE_VAL = 32;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
@@ -80,28 +84,28 @@ constexpr int MAX_BITPOOL_SIZE = 100 * 1024;
 struct Bitpool {
     std::atomic<uint32_t> slot;
 };
-Bitpool addressChecker[MAX_BITPOOL_SIZE] = {{0}};
+Bitpool g_addressChecker[MAX_BITPOOL_SIZE] = {{0}};
 
-inline static uint32_t addrHash(uint32_t h)
+inline static uint32_t AddrHash(uint32_t h)
 {
-    h ^= h >> 16;
+    h ^= h >> FIRST_HASH;
     h *= 0x85ebca6b;
-    h ^= h >> 13;
+    h ^= h >> SECOND_HASH;
     h *= 0xc2b2ae35;
-    h ^= h >> 16;
+    h ^= h >> FIRST_HASH;
     return h;
 }
 
 inline void Addr2Bitpool(void* addr)
 {
-    uint32_t val = addrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * 32);
-    addressChecker[val / 32].slot |= (0x1 << (val % 32));
+    uint32_t val = AddrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
+    g_addressChecker[val / DIVIDE_VAL].slot |= (0x1 << (val % DIVIDE_VAL));
 }
 
 inline bool IsAddrExist(void* addr)
 {
-    uint32_t val = addrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * 32);
-    if (addressChecker[val / 32].slot.load() & (0x1 << (val % 32))) {
+    uint32_t val = AddrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
+    if (g_addressChecker[val / DIVIDE_VAL].slot.load() & (0x1 << (val % DIVIDE_VAL))) {
         return true;
     }
     return false;
@@ -388,7 +392,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
-    if (g_ClientConfig.sampleInterval >= 256) {
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         Addr2Bitpool(ret);
     }
     int realSize = 0;
@@ -465,7 +469,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
-    if (g_ClientConfig.sampleInterval >= 256) {
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         Addr2Bitpool(pRet);
     }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
@@ -544,7 +548,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
-    if (g_ClientConfig.sampleInterval >= 256) {
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         Addr2Bitpool(pRet);
     }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
@@ -586,7 +590,7 @@ void hook_free(void (*free_func)(void*), void* p)
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return;
     }
-    if (g_ClientConfig.sampleInterval >= 256) {
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         if (!IsAddrExist(p)) {
             return;
         }

@@ -340,7 +340,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (!isSaService_) { // SA mode will start HookService in the service.
         ClientConfig clientConfig;
         GetClientConfig(clientConfig);
-        if(noDataQueue_) {
+        if (noDataQueue_) {
             clientConfig.freeEventOnlyAddrEnable = true;
         }
         std::string clientConfigStr = clientConfig.ToString();

@@ -132,7 +132,7 @@ bool StackPreprocess::StartTakeResults()
 bool StackPreprocess::StopTakeResults()
 {
     HILOG_INFO(LOG_CORE, "start StopTakeResults");
-    if(!dataRepeater_) {
+    if (!dataRepeater_) {
         isStopTakeData_ = true;
         return true;
     }
@@ -194,7 +194,7 @@ bool StackPreprocess::HandleNoStackEvent(RawStackPtr& rawData, BatchNativeHookDa
 }
 
 void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>& eventNotifier,
-                                        const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
+                                           const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
 {
     eventNotifier->Take();
     StackDataRepeater::RawStack rawStack;
@@ -202,7 +202,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
     while (!isStopTakeData_) {
         BatchNativeHookData stackData;
         bool ret = shareMemoryBlock->TakeData(
-        [&](const int8_t data[], uint32_t size) -> bool {
+            [&](const int8_t data[], uint32_t size) -> bool {
                 if (size == sizeof(uint64_t)) {
                     uint64_t addr = *reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data));
                     SetFreeStatisticsData(addr);
@@ -218,8 +218,8 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                     std::string tagName = reinterpret_cast<char*>(rawData->data);
                     SaveMemTag(rawData->stackConext->tagId, tagName);
                     return true;
-                } else if(HandleNoStackEvent(rawData, stackData)) {
-                    if(rawData->stackConext->type == THREAD_NAME_MSG) {
+                } else if (HandleNoStackEvent(rawData, stackData)) {
+                    if (rawData->stackConext->type == THREAD_NAME_MSG) {
                         FlushData(stackData);
                     }
                     return true;
@@ -534,7 +534,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
 {
     callStack_.resize(rawStack->fpDepth);
     if (memcpy_s(callStack_.data(), sizeof(uint64_t) * rawStack->fpDepth,
-                rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
+                 rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
         HILOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
         return;
     }
