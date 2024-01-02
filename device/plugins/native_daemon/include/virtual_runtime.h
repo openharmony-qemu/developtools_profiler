@@ -177,9 +177,7 @@ private:
 
     // find synbols function name
     void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
-    
-    // threads
-    VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
+
     std::string ReadThreadName(pid_t tid);
     VirtualThread &CreateThread(pid_t pid, pid_t tid);
 
