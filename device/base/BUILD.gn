@@ -21,7 +21,10 @@ config("hiprofiler_test_config") {
     "-fvisibility=hidden",
   ]
 
-  cflags_cc = [ "-fvisibility-inlines-hidden" ]
+  cflags_cc = [
+    "-fvisibility-inlines-hidden",
+    "-fno-exceptions",
+  ]
 
   ldflags = []
 

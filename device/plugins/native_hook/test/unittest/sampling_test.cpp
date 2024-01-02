@@ -44,6 +44,19 @@ HWTEST_F(SamplerTest, InitSampling001, TestSize.Level1)
 
 /*
  * @tc.name: Sampler
+ * @tc.desc: test Sampler::InitSampling with abnormal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SamplerTest, InitSampling002, TestSize.Level1)
+{
+    Sampling sampler;
+    sampler.SetRandomEngineSeed(1);
+    sampler.InitSampling(512);
+    EXPECT_EQ(sampler.StartSampling(511), 512u);
+}
+
+/*
+ * @tc.name: Sampler
  * @tc.desc: test Sampler::InitSampling with boundary case.
  * @tc.type: FUNC
  */

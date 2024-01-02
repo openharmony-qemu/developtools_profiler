@@ -45,6 +45,7 @@ private:
     bool CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
+    void DelayedShutdown(bool cancel);
 
 private:
     struct TaskConfig {
@@ -70,6 +71,7 @@ private:
     std::string startupModeProcessName_;
     int32_t taskNum_{0};
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
+    int32_t delayedShutdownTimerFd_{-1};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

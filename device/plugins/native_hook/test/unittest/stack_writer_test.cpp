@@ -129,6 +129,7 @@ HWTEST_F(StackWriterTest, WriteaNormalTest, TestSize.Level1)
     EXPECT_TRUE(write->Write((const void*)buffer3, sizeof(buffer3)));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
 
+    EXPECT_FALSE(write->Write((const void*)buffer3, 0));
     EXPECT_FALSE(write->Write(nullptr, 0));
 }
 
@@ -152,6 +153,7 @@ HWTEST_F(StackWriterTest, WriteaFalseTest, TestSize.Level1)
     EXPECT_FALSE(write->Write((const void*)buffer3, sizeof(buffer3)));
     EXPECT_FALSE(CheckBuffer(buffer3, sizeof(buffer3)));
 
+    EXPECT_FALSE(write->Write((const void*)buffer3, 0));
     EXPECT_FALSE(write->Write(nullptr, 0));
 }
 
@@ -212,7 +214,101 @@ HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level1)
         (const void*)buffer4, sizeof(buffer4)));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
     EXPECT_FALSE(write->Write(nullptr, 0));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer3, 0, nullptr, 0));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0));
+}
+
+/**
+ * @tc.name: WriteWithPayloadTimeout
+ * @tc.desc: test WriteWithPayloadTimeout with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutNormalTest, TestSize.Level1)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0xCC, 0xDD, 0xBB, 0xEE};
+    EXPECT_TRUE(write->WriteWithPayloadTimeout((const void*)buffer, sizeof(buffer),
+        (const void*)buffer, sizeof(buffer)));
+    EXPECT_TRUE(CheckBuffer(buffer, sizeof(buffer)));
+}
+
+/**
+ * @tc.name: WriteWithPayloadTimeout
+ * @tc.desc: test WriteWithPayloadTimeout with false case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutFalseTest, TestSize.Level1)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, 0, -1, true);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer, sizeof(buffer),
+        (const void*)buffer, sizeof(buffer)));
+    EXPECT_FALSE(CheckBuffer(buffer, sizeof(buffer)));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer, 0, nullptr, 0));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0));
+}
+
+/**
+ * @tc.name: WriteTimeout
+ * @tc.desc: Write data to shared memory through writer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteTimeoutNormalTest, TestSize.Level1)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0x55, 0xAA, 0x55, 0xAA};
+    EXPECT_TRUE(write->WriteTimeout((const void*)buffer, sizeof(buffer)));
+    EXPECT_TRUE(CheckBuffer(buffer, sizeof(buffer)));
+    EXPECT_FALSE(write->WriteTimeout((const void*)buffer, 0));
     EXPECT_FALSE(write->WriteTimeout(nullptr, 0));
-    EXPECT_TRUE(write->WriteTimeout((const void*)buffer1, sizeof(buffer1)));
+}
+
+/**
+ * @tc.name: WriteTimeout
+ * @tc.desc: WriteTimeout failure test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteTimeoutFalseTest, TestSize.Level1)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, 0, -1);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    EXPECT_FALSE(write->WriteTimeout((const void*)buffer, sizeof(buffer)));
+    EXPECT_FALSE(CheckBuffer(buffer, sizeof(buffer)));
+    EXPECT_FALSE(write->WriteTimeout((const void*)buffer, 0));
+    EXPECT_FALSE(write->WriteTimeout(nullptr, 0));
+}
+
+/**
+ * @tc.name: StackWriter
+ * @tc.desc: StackWriter failure test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, StackWriterFalseTest, TestSize.Level1)
+{
+    auto write = std::make_shared<StackWriter>("", SMB_SIZE, 0, -1);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    write = std::make_shared<StackWriter>(PLUGIN_NAME, 0, 0, -1);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    write = std::make_shared<StackWriter>("", 0, 0, -1);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    write = std::make_shared<StackWriter>("", SMB_SIZE, 0, -1, true);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    write = std::make_shared<StackWriter>(PLUGIN_NAME, 0, 0, -1, true);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    write = std::make_shared<StackWriter>("", 0, 0, -1, true);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
 }
 } // namespace

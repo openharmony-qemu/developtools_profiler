@@ -155,4 +155,30 @@ HWTEST_F(HookManagerTest, PluginSession, TestSize.Level1)
     EXPECT_FALSE(hookManager->StopPluginSession(pluginIds));
     EXPECT_TRUE(hookManager->DestroyPluginSession(pluginIds));
 }
+
+/*
+ * @tc.name: CheckProcess
+ * @tc.desc: test CheckProcess with false case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
+{
+    HookManager hookManager;
+    NativeHookConfig nativeConfig;
+    nativeConfig.set_process_name("HookManagerTest");
+    hookManager.SetHookConfig(nativeConfig);
+    EXPECT_FALSE(hookManager.CheckProcess());
+
+    nativeConfig.set_startup_mode(true);
+    hookManager.SetHookConfig(nativeConfig);
+    EXPECT_TRUE(hookManager.CheckProcess());
+    hookManager.ResetStartupParam();
+
+    // native_daemon_ut as a testing process
+    nativeConfig.set_startup_mode(false);
+    nativeConfig.set_process_name("native_daemon_ut");
+    hookManager.SetHookConfig(nativeConfig);
+    EXPECT_TRUE(hookManager.CheckProcess());
+    EXPECT_TRUE(hookManager.CheckProcessName());
+}
 } // namespace

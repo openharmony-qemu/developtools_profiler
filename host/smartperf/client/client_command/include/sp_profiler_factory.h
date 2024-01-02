@@ -22,7 +22,6 @@ class SpProfilerFactory {
 public:
     static SpProfiler *GetProfilerItem(MessageType messageType);
     static void SetProfilerPkg(std::string pkg);
-    static void SetProfilerPid(std::string pid);
     static void SetByTrace(std::string message);
     static void SetByTraceCmd(std::string cmd);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType);

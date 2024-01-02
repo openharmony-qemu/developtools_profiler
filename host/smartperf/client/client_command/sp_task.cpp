@@ -89,11 +89,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     startTime = SPUtils::GetCurTime();
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
-        std::string pidCmd = "pidof " + curTaskInfo.packageName;
-        std::string pidResult;
-        if (SPUtils::LoadCmd(pidCmd, pidResult)) {
-            SpProfilerFactory::SetProfilerPid(pidResult);
-        }
     }
     thread = std::thread([this, msgTask]() {
         std::cout << "Task " << curTaskInfo.sessionId << ": collecting data loop..." << std::endl;

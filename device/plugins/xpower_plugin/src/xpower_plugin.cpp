@@ -27,7 +27,8 @@
 namespace {
 constexpr size_t MAX_QUEUE_SIZE = 2000;
 constexpr uint32_t WAIT_DURATION = 100;
-constexpr int MIN_USER_ID = 10000;
+constexpr int32_t AID_HAP_START = 20010000;
+constexpr int32_t AID_HAP_END = 21065535;
 } // namespace
 XpowerPlugin::XpowerPlugin()
 {
@@ -38,7 +39,13 @@ XpowerPlugin::XpowerPlugin()
     procMesTypeMapping_.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
 }
 
-XpowerPlugin::~XpowerPlugin() {}
+XpowerPlugin::~XpowerPlugin()
+{
+    if (powerClientHandle_ != nullptr) {
+        dlclose(powerClientHandle_);
+        powerClientHandle_ = nullptr;
+    }
+}
 
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 {
@@ -122,7 +129,7 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
         return;
     }
     // write protoData to file
-    if (resultWriter_ != nullptr) {
+    if (resultWriter_ != nullptr && resultWriter_->isProtobufSerialize) {
         resultWriter_->write(resultWriter_, protoData, protoSize);
         resultWriter_->flush(resultWriter_);
     }
@@ -144,7 +151,6 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
 
 int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "power: report the data to caller");
     if (dataQueuePtr_->Empty()) {
         return 0;
     }
@@ -180,9 +186,6 @@ int XpowerPlugin::Stop()
     if (listenerHandle_ != nullptr) {
         stopOptimizeMode(listenerHandle_);
         PROFILER_LOG_INFO(LOG_CORE, "stop xpower plugin callback");
-    }
-    if (powerClientHandle_ != nullptr) {
-        dlclose(powerClientHandle_);
     }
     dataQueuePtr_->ShutDown();
     return 0;

@@ -90,6 +90,19 @@ void StartUpDelay::GetHisysId()
     }
     SPUtils::LoadCmd("kill " + second_str, str);
 }
+bool StartUpDelay::GetSpTcp()
+{
+    std::string str = "";
+    bool flagTcp = false;
+    SPUtils::LoadCmd("netstat -anp |grep 8284", str);
+    size_t pos = str.find("SP_daemon");
+    if (pos == std::string::npos) {
+        flagTcp = false;
+    } else {
+        flagTcp = true;
+    }
+    return flagTcp;
+}
 std::thread StartUpDelay::ThreadGetHisysId()
 {
     std::thread thGetHisysId(&StartUpDelay::GetHisysId, this);
