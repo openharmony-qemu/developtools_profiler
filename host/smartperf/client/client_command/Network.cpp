@@ -57,6 +57,9 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         }
     }
     fclose(fp);
+    if (allTx == 0 && allRx == 0) {
+        return networkInfo;
+    }
     if (prevTx != 0) {
         diffTx = allTx - prevTx;
     }
