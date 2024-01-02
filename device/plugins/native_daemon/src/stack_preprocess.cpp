@@ -132,6 +132,10 @@ bool StackPreprocess::StartTakeResults()
 bool StackPreprocess::StopTakeResults()
 {
     HILOG_INFO(LOG_CORE, "start StopTakeResults");
+    if(!dataRepeater_) {
+        isStopTakeData_ = true;
+        return true;
+    }
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
     CHECK_TRUE(thread_.get_id() != std::thread::id(), false, "thread invalid");
 
@@ -144,6 +148,97 @@ bool StackPreprocess::StopTakeResults()
     }
     HILOG_INFO(LOG_CORE, "StopTakeResults Wait thread join success");
     return true;
+}
+
+inline void StackPreprocess::IntervalFlushRecordStatistics(BatchNativeHookData& stackData)
+{
+    {
+        std::lock_guard<std::mutex> guard(mtx_);
+        FlushData(stackData);
+    }
+    // interval reporting statistics
+    if (hookConfig_.statistics_interval() > 0) {
+        static auto lastStatisticsTime = std::chrono::steady_clock::now();
+        auto currentTime = std::chrono::steady_clock::now();
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime);
+        if (elapsedTime >= statisticsInterval_) {
+            lastStatisticsTime = currentTime;
+            FlushRecordStatistics();
+        }
+    }
+}
+
+bool StackPreprocess::HandleNoStackEvent(RawStackPtr& rawData, BatchNativeHookData& stackData)
+{
+    if (rawData->stackConext->type == MMAP_FILE_TYPE) {
+        BaseStackRawData* mmapRawData = rawData->stackConext;
+        std::string filePath(reinterpret_cast<char *>(rawData->data));
+        COMMON::AdaptSandboxPath(filePath, rawData->stackConext->pid);
+        HILOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
+                    "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
+                    mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
+                    mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
+        {
+            std::lock_guard<std::mutex> guard(mtx_);
+            runtime_instance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr),
+                mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
+        }
+        flushBasicData_ = true;
+    } else if (rawData->stackConext->type == THREAD_NAME_MSG) {
+        std::string threadName = reinterpret_cast<char*>(rawData->data);
+        ReportThreadNameMap(rawData->stackConext->tid, threadName, stackData);
+    } else {
+        return false;
+    }
+    return true;
+}
+
+void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>& eventNotifier,
+                                        const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
+{
+    eventNotifier->Take();
+    StackDataRepeater::RawStack rawStack;
+    RawStackPtr rawData(&rawStack, [](StackDataRepeater::RawStack* del) {});
+    while (!isStopTakeData_) {
+        BatchNativeHookData stackData;
+        bool ret = shareMemoryBlock->TakeData(
+        [&](const int8_t data[], uint32_t size) -> bool {
+                if (size == sizeof(uint64_t)) {
+                    uint64_t addr = *reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data));
+                    SetFreeStatisticsData(addr);
+                    return true;
+                }
+                CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
+                rawData->stackConext = reinterpret_cast<BaseStackRawData *>(const_cast<int8_t *>(data));
+                rawData->data = reinterpret_cast<uint8_t*>(const_cast<int8_t *>(data)) + sizeof(BaseStackRawData);
+                rawData->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
+                if (isStopTakeData_) {
+                    return false;
+                } else if (rawData->stackConext->type == MEMORY_TAG) {
+                    std::string tagName = reinterpret_cast<char*>(rawData->data);
+                    SaveMemTag(rawData->stackConext->tagId, tagName);
+                    return true;
+                } else if(HandleNoStackEvent(rawData, stackData)) {
+                    if(rawData->stackConext->type == THREAD_NAME_MSG) {
+                        FlushData(stackData);
+                    }
+                    return true;
+                } else if (rawData->stackConext->type == MUNMAP_MSG) {
+                    std::lock_guard<std::mutex> guard(mtx_);
+                    runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
+                }
+                {
+                    std::lock_guard<std::mutex> guard(mtx_);
+                    runtime_instance->UpdateThread(rawData->stackConext->pid, rawData->stackConext->tid);
+                }
+                SetHookData(rawData, stackData);
+                IntervalFlushRecordStatistics(stackData);
+                return true;
+        });
+        if (!ret) {
+            break;
+        }
+    }
 }
 
 void StackPreprocess::TakeResults()
@@ -172,29 +267,11 @@ void StackPreprocess::TakeResults()
             if (!rawData || isStopTakeData_) {
                 break;
             }
-            if (rawData->stackConext->type == MMAP_FILE_TYPE) {
-                BaseStackRawData* mmapRawData = rawData->stackConext;
-                std::string filePath(reinterpret_cast<char *>(rawData->data));
-                COMMON::AdaptSandboxPath(filePath, rawData->stackConext->pid);
-                HILOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
-                    "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
-                    mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
-                    mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
-                {
-                    std::lock_guard<std::mutex> guard(mtx_);
-                    runtime_instance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr),
-                        mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
-                }
-                flushBasicData_ = true;
+            if (HandleNoStackEvent(rawData, stackData)) {
                 continue;
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
                 runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
-            }
-            if (rawData->stackConext->type == THREAD_NAME_MSG) {
-                std::string threadName = reinterpret_cast<char*>(rawData->data);
-                ReportThreadNameMap(rawData->stackConext->tid, threadName, stackData);
-                continue;
             }
 
             if (!rawData->reportFlag) {
@@ -282,20 +359,7 @@ void StackPreprocess::TakeResults()
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }
-        {
-            std::lock_guard<std::mutex> guard(mtx_);
-            FlushData(stackData);
-        }
-
-        // interval reporting statistics
-        if (hookConfig_.statistics_interval() > 0) {
-            auto currentTime = std::chrono::steady_clock::now();
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime_);
-            if (elapsedTime >= statisticsInterval_) {
-                lastStatisticsTime_ = currentTime;
-                FlushRecordStatistics();
-            }
-        }
+        IntervalFlushRecordStatistics(stackData);
     }
     HILOG_INFO(LOG_CORE, "TakeResults thread %d, exit!", gettid());
 }
@@ -465,6 +529,58 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     }
 }
 
+void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
+    BatchNativeHookData& batchNativeHookData)
+{
+    callStack_.resize(rawStack->fpDepth);
+    if (memcpy_s(callStack_.data(), sizeof(uint64_t) * rawStack->fpDepth,
+                rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
+        HILOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
+        return;
+    }
+    std::lock_guard<std::mutex> guard(mtx_);
+    // by call stack id set alloc statistics data.
+    uint32_t stackId = FindCallStackId(callStack_);
+    if (stackId > 0) {
+        SetAllocStatisticsData(rawStack, stackId, true);
+    } else {
+        stackId = SetCallStackMap(batchNativeHookData);
+        SetAllocStatisticsData(rawStack, stackId);
+    }
+}
+
+void StackPreprocess::SetHookData(RawStackPtr rawStack, BatchNativeHookData& batchNativeHookData)
+{
+    if (flushBasicData_) {
+        SetMapsInfo(rawStack->stackConext->pid);
+        flushBasicData_ = false;
+    }
+    // statistical reporting must is compressed and accurate.
+    switch (rawStack->stackConext->type) {
+        case FREE_MSG:
+        case MUNMAP_MSG:
+        case MEMORY_UNUSING_MSG: {
+            SetFreeStatisticsData((uint64_t)rawStack->stackConext->addr);
+            break;
+        }
+        case MALLOC_MSG:
+        case MMAP_MSG:
+        case MMAP_FILE_PAGE_MSG:
+        case MEMORY_USING_MSG: {
+            SetAllocStatisticsFrame(rawStack, batchNativeHookData);
+            break;
+        }
+        case PR_SET_VMA_MSG: {
+            break;
+        }
+        default: {
+            HILOG_ERROR(LOG_CORE, "statistics event type: error");
+            break;
+        }
+    }
+    return;
+}
+
 void StackPreprocess::SetHookData(RawStackPtr rawStack,
     std::vector<CallFrame>& callFrames, BatchNativeHookData& batchNativeHookData)
 {
@@ -487,6 +603,9 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
             case MMAP_FILE_PAGE_MSG:
             case MEMORY_USING_MSG: {
                 SetAllocStatisticsFrame(rawStack, callFrames, batchNativeHookData);
+                break;
+            }
+            case PR_SET_VMA_MSG: {
                 break;
             }
             default: {
@@ -823,22 +942,19 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
         HILOG_ERROR(LOG_CORE, "Flush src is nullptr");
         return;
     }
-    if (isSaService_) {
-        ProfilerPluginData pluginData;
-        pluginData.set_name("nativehook");
-        pluginData.set_version("1.02");
-        pluginData.set_status(0);
-        pluginData.set_data(src, size);
-        struct timespec ts;
-        clock_gettime(pluginDataClockId_, &ts);
-        pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(pluginDataClockId_));
-        pluginData.set_tv_sec(ts.tv_sec);
-        pluginData.set_tv_nsec(ts.tv_nsec);
-        pluginData.SerializeToArray(buffer_.get(), pluginData.ByteSizeLong());
-        size = pluginData.ByteSizeLong();
-    }
+    ProfilerPluginData pluginData;
+    pluginData.set_name("nativehook");
+    pluginData.set_version("1.02");
+    pluginData.set_status(0);
+    pluginData.set_data(src, size);
+    struct timespec ts;
+    clock_gettime(pluginDataClockId_, &ts);
+    pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(pluginDataClockId_));
+    pluginData.set_tv_sec(ts.tv_sec);
+    pluginData.set_tv_nsec(ts.tv_nsec);
+    pluginData.SerializeToArray(buffer_.get(), pluginData.ByteSizeLong());
 
-    writer_->Write(buffer_.get(), size);
+    writer_->Write(buffer_.get(), pluginData.ByteSizeLong());
     writer_->Flush();
 }
 

@@ -85,6 +85,8 @@ public:
     void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
     void HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags, uint64_t offset, const std::string& filePath);
     void RemoveMaps(uint64_t addr);
+      // threads
+    VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
     std::vector<uint64_t>& GetOfflineMaps()
     {
         return offlineMapAddr_;
@@ -112,9 +114,6 @@ public:
 #endif
     const bool loadSymboleWhenNeeded_ = true; // thie is a feature config
     void UpdateSymbols(std::string filename);
-    // we don't know whether hap vma mapping is stand for a so
-    // thus we need try to parse it first
-    bool UpdateHapSymbols(std::shared_ptr<DfxMap> map);
     bool IsSymbolExist(const std::string& fileName);
     void DelSymbolFile(const std::string& fileName);
     void UpdateMaps(pid_t pid, pid_t tid);
@@ -176,8 +175,6 @@ private:
     // find synbols function name
     void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
 
-    // threads
-    VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
     std::string ReadThreadName(pid_t tid);
     VirtualThread &CreateThread(pid_t pid, pid_t tid);
 

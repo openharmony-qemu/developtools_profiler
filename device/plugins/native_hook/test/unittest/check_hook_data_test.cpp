@@ -22,10 +22,8 @@
 
 #include "buffer_splitter.h"
 #include "logging.h"
-#include "parameters.h"
 #include <fstream>
 #include <iostream>
-#include <thread>
 
 #pragma clang optimize off
 
@@ -73,9 +71,6 @@ public:
         outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
         int processNum = fork();
         if (processNum == 0) {
-            int waitProcMills = 300;
-            OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
             command_.push_back(const_cast<char*>(DEFAULT_NATIVE_DAEMON_PATH.c_str()));
             command_.push_back(const_cast<char*>("-o"));
             command_.push_back(const_cast<char*>(outFile_.c_str()));
@@ -901,11 +896,12 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Level3)
 {
-    for (size_t i = 1; i < 2; ++i) { // 1 is fp mode,  response_library_mode only fp mode is used
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 6;
         outFileType_ = "responseLibraryMode";
         modeIndex_ = i;
         responseLibraryMode_ = true;
+        offlineSymbolization_ = true;
         StartMallocProcess();
         StartAndStopHook();
 
@@ -913,24 +909,19 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
         infile.open(outFile_, std::ios::in);
         EXPECT_TRUE(infile.is_open());
         std::string buf;
-        uint16_t ipCount = 0;
+        bool foundSymbolTab = false;
+        bool foundMapsInfo = false;
 
         while (getline(infile, buf)) {
-            if (buf.find("stack_map") != std::string::npos) {
-                while (getline(infile, buf)) {
-                    if (buf.find("ip") != std::string::npos) {
-                        ++ipCount;
-                        continue;
-                    } else if (buf.find("}") != std::string::npos) {
-                        break;
-                    }
-                }
+            if (buf.find("symbol_tab") != std::string::npos) {
+                foundSymbolTab = true;
             }
-            if (ipCount > 0) {
-                break;
+            if (buf.find("maps_info") != std::string::npos) {
+                foundMapsInfo = true;
             }
         }
-        EXPECT_TRUE(ipCount == 1); // response_library_mode callstack depth only is 1
+        EXPECT_TRUE(foundSymbolTab);
+        EXPECT_TRUE(foundMapsInfo);
     }
 }
 #endif

@@ -76,6 +76,37 @@ constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
+constexpr int MAX_BITPOOL_SIZE = 100 * 1024;
+struct Bitpool {
+    std::atomic<uint32_t> slot;
+};
+Bitpool addressChecker[MAX_BITPOOL_SIZE] = {{0}};
+
+inline static uint32_t addrHash(uint32_t h)
+{
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+    return h;
+}
+
+inline void Addr2Bitpool(void* addr)
+{
+    uint32_t val = addrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * 32);
+    addressChecker[val / 32].slot |= (0x1 << (val % 32));
+}
+
+inline bool IsAddrExist(void* addr)
+{
+    uint32_t val = addrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * 32);
+    if (addressChecker[val / 32].slot.load() & (0x1 << (val % 32))) {
+        return true;
+    }
+    return false;
+}
+
 const MallocDispatchType* GetDispatch()
 {
     return g_dispatch.load(std::memory_order_relaxed);
@@ -357,6 +388,9 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
+    if (g_ClientConfig.sampleInterval >= 256) {
+        Addr2Bitpool(ret);
+    }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
         realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
@@ -431,6 +465,9 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
+    if (g_ClientConfig.sampleInterval >= 256) {
+        Addr2Bitpool(pRet);
+    }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
     auto holder = weakClient.lock();
     if (holder != nullptr) {
@@ -507,6 +544,9 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
+    if (g_ClientConfig.sampleInterval >= 256) {
+        Addr2Bitpool(pRet);
+    }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
     auto holder = weakClient.lock();
     if (holder != nullptr) {
@@ -544,6 +584,20 @@ void hook_free(void (*free_func)(void*), void* p)
         free_func(p);
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+        return;
+    }
+    if (g_ClientConfig.sampleInterval >= 256) {
+        if (!IsAddrExist(p)) {
+            return;
+        }
+    }
+    if (g_ClientConfig.freeEventOnlyAddrEnable) {
+        uint64_t addr = reinterpret_cast<uint64_t>(p);
+        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+        auto holder = weakClient.lock();
+        if (holder != nullptr) {
+            holder->SendStackWithPayload(&addr, sizeof(addr), nullptr, 0);
+        }
         return;
     }
     StackRawData rawdata = {{{{0}}}};
