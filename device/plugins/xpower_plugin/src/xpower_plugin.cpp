@@ -52,26 +52,32 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
         return -1;
     }
-    // 判断进程是否存在
-    int processId = -1;
-    bool isExsit = COMMON::IsProcessExist(bundleName, processId);
-    if (!isExsit) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
-        return -1;
-    }
-    // check bundleName
-    int32_t uid = COMMON::GetPackageUid(bundleName);
-    if (uid < MIN_USER_ID) {
-        PROFILER_LOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
-        return -1;
-    }
+    // Get message type
     if (protoConfig_.message_type().size() > 0) {
         for (int i = 0; i < protoConfig_.message_type().size(); i++) {
             uint32_t mesType = procMesTypeMapping_[static_cast<XpowerMessageType>(protoConfig_.message_type(i))];
             messageType |= mesType;
         }
     }
-    PROFILER_LOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
+    PROFILER_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
+    if ((messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0 ||
+        (messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0 ||
+        (messageType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
+        // check bundleName
+        int32_t uid = COMMON::GetPackageUid(bundleName);
+        if (uid < AID_HAP_START || uid > AID_HAP_END) {
+            PROFILER_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
+            return -1;
+        }
+    }
+    if ((messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0) {
+        int processId = -1;
+        bool isExsit = COMMON::IsProcessExist(bundleName, processId);
+        if (!isExsit) {
+            PROFILER_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
+            return -1;
+        }
+    }
     // 加载对应so 库文件
     if (!StartPowerManager(messageType, bundleName)) {
         PROFILER_LOG_ERROR(LOG_CORE, "start power manager failed!");
