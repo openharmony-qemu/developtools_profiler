@@ -442,15 +442,6 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
     pthread_mutex_unlock(&header_->info.mutex_);
     return true;
 }
-void ShareMemoryBlock::ClearShareMemoryBlock()
-{
-    // clear header infos
-    PthreadLocker locker(header_->info.mutex_);
-    header_->info.readOffset_ = 0;
-    header_->info.writeOffset_ = 0;
-    header_->info.bytesCount_ = 0;
-    header_->info.chunkCount_ = 0;
-}
 
 void ShareMemoryBlock::UseMemory(int32_t size)
 {
