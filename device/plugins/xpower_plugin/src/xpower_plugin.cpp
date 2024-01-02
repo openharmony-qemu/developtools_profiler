@@ -66,14 +66,14 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
             messageType |= mesType;
         }
     }
-    PROFILER_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
+    PROFILER_LOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
     if ((messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0 ||
         (messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0 ||
         (messageType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
         // check bundleName
         int32_t uid = COMMON::GetPackageUid(bundleName);
         if (uid < AID_HAP_START || uid > AID_HAP_END) {
-            PROFILER_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
             return -1;
         }
     }
@@ -81,7 +81,7 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         int processId = -1;
         bool isExsit = COMMON::IsProcessExist(bundleName, processId);
         if (!isExsit) {
-            PROFILER_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
             return -1;
         }
     }
