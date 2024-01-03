@@ -57,16 +57,28 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         }
     }
     fclose(fp);
-    if (allTx == 0 && allRx == 0) {
+    if (isFirst) {
+        networkInfo["networkUp"] = std::to_string(prevTx);
+        networkInfo["networkDown"] = std::to_string(prevRx);
+        isFirst = false;
+        prevTx = allTx;
+        prevRx = allRx;
+        allTx = 0;
+        allRx = 0;
         return networkInfo;
     }
-    if (prevTx != 0) {
-        diffTx = allTx - prevTx;
+    if ((allTx == 0 && allRx == 0) || (allTx <= prevTx && allRx <= prevRx)) {
+        networkInfo["networkUp"] = "0";
+        networkInfo["networkDown"] = "0";
+        prevTx = allTx;
+        prevRx = allRx;
+        allTx = 0;
+        allRx = 0;
+        return networkInfo;
     }
+    diffTx = allTx - prevTx;
     prevTx = allTx;
-    if (prevRx != 0) {
-        diffRx = allRx - prevRx;
-    }
+    diffRx = allRx - prevRx;
     prevRx = allRx;
     allTx = 0;
     allRx = 0;

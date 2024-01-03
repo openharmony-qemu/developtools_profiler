@@ -40,6 +40,7 @@ private:
     long long diffRx = 0;
     long long prevTx = 0;
     long long prevRx = 0;
+    bool isFirst = true;
 };
 }
 }
