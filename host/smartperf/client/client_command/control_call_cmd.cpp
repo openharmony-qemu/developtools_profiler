@@ -18,6 +18,7 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <future>
 #include "include/control_call_cmd.h"
 #include "include/startup_delay.h"
 #include "include/parse_trace.h"
@@ -68,6 +69,8 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         result = ControlCallCmd::GetAppStartTime();
     } else if (v[typeName] == "slideList") {
         result = ControlCallCmd::SlideList();
+    } else if (v[typeName] == "timmeDelay") {
+        result = ControlCallCmd::TimeDelay();
     }
     if (time == noNameType) {
         std::cout << "Startup error, unknown application or application not responding" << std::endl;
@@ -79,6 +82,33 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         std::cout << result << std::endl;
     }
     return result;
+}
+std::string ControlCallCmd::TimeDelay()
+{
+    OHOS::SmartPerf::ParseClickResponseTrace pcrt;
+    OHOS::SmartPerf::StartUpDelay sd;
+    std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
+    std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
+    std::thread thGetHisysId = sd.ThreadGetHisysIdResponse();
+    std::thread thGetHisysId2 = sd.ThreadGetHisysIdComplete();
+    std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
+    std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarComplete);
+    std::string str = futureResult.get();
+    std::string str2 = futureResult2.get();
+    thGetTrace.join();
+    thGetHisysId.join();
+    thGetHisysId2.join();
+    double strResponseTime = radar.ParseRadarResponse(str);
+    stream << strResponseTime;
+    double strCompleteTime = radar.ParseRadarResponse(str2);
+    std::ostringstream streamComplete;
+    streamComplete << strCompleteTime;
+    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +
+     "CompleteTime:" + streamComplete.str() + "ms";
+    return resultTime;
 }
 std::string ControlCallCmd::SlideList()
 {

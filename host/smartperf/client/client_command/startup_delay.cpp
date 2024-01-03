@@ -90,6 +90,52 @@ void StartUpDelay::GetHisysId()
     }
     SPUtils::LoadCmd("kill " + second_str, str);
 }
+void StartUpDelay::GetHisysIdResponse()
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep INTERACTION_RESPONSE_LATENCY", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ss_line(line);
+    std::string word = "";
+    std::string second_str;
+    int count = 0;
+    int num = 2;
+    while (ss_line >> word) {
+        count++;
+        if (count == num) {
+            second_str = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + second_str, str);
+}
+void StartUpDelay::GetHisysIdComplete()
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep INTERACTION_COMPLETED_LATENCY", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ss_line(line);
+    std::string word = "";
+    std::string second_str;
+    int count = 0;
+    int num = 2;
+    while (ss_line >> word) {
+        count++;
+        if (count == num) {
+            second_str = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + second_str, str);
+}
 bool StartUpDelay::GetSpTcp()
 {
     std::string str = "";
@@ -103,10 +149,20 @@ bool StartUpDelay::GetSpTcp()
     }
     return flagTcp;
 }
+std::thread StartUpDelay::ThreadGetHisysIdResponse()
+{
+    std::thread thGetHisysIdResponse(&StartUpDelay::GetHisysIdResponse, this);
+    return thGetHisysIdResponse;
+}
 std::thread StartUpDelay::ThreadGetHisysId()
 {
     std::thread thGetHisysId(&StartUpDelay::GetHisysId, this);
     return thGetHisysId;
+}
+std::thread StartUpDelay::ThreadGetHisysIdComplete()
+{
+    std::thread thGetHisysIdComplete(&StartUpDelay::GetHisysIdComplete, this);
+    return thGetHisysIdComplete;
 }
 void StartUpDelay::ChangeToBackground()
 {
