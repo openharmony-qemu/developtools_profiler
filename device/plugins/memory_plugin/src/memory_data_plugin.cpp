@@ -370,9 +370,10 @@ template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memo
         WriteGpuMemInfo(memoryDataProto);
     }
 
+    WriteDumpProcessInfo(memoryDataProto);
+
     if (protoConfig_.report_gpu_dump_info()) {
         WriteGpuDumpInfo(memoryDataProto);
-        WriteDumpProcessInfo(memoryDataProto);
         WriteManagerServiceInfo(memoryDataProto);
         WriteProfileMemInfo(memoryDataProto);
     }
@@ -787,15 +788,15 @@ template <typename T> void MemoryDataPlugin::SetAshmemInfo(T& ashmemInfo, int ke
             CHECK_TRUE(value > 0, NO_RETVAL, "%s:strtoull pid failed", __func__);
             ashmemInfo.set_pid(value);
             break;
-        case ASHMEM_ADJ:
-            value = strtol(word, nullptr, DEC_BASE);
-            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull adj failed", __func__);
-            ashmemInfo.set_adj(value);
-            break;
         case ASHMEM_FD:
             value = strtol(word, nullptr, DEC_BASE);
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull fd failed", __func__);
             ashmemInfo.set_fd(value);
+            break;
+        case ASHMEM_ADJ:
+            value = strtoull(word, nullptr, DEC_BASE);
+            CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull adj failed", __func__);
+            ashmemInfo.set_adj(value);
             break;
         case ASHMEM_NAME:
             ashmemInfo.set_ashmem_name(word);

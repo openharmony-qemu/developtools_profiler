@@ -29,6 +29,8 @@ private:
     cJSON* CreateAppDetail(const AppDetail& appDetail);
     cJSON* CreateAppDetailGpu(const AppDetailGPU& appDeGpu);
     cJSON* CreateAppDetailCpu(const AppDetailCPU& appDeCpu);
+    cJSON* CreateAppDetailWifi(const AppDetailWifi& appWifi);
+    cJSON* CreateAppDetailDisplay(const AppDetailDisplay& appDisplay);
     // 应用的各器件信息的统计
     cJSON* CreateAppStatistic(const AppStatistic& appStatistic);
     cJSON* CreatAppStatisticCommon(const AppStatisticCommon& appCom);
@@ -40,6 +42,9 @@ private:
     cJSON* CreateComponentTopCamera(const ComponentTopCamera& topCamera);
     cJSON* CreateComponentTopCpu(const ComponentTopCpu& topCpu);
     cJSON* CreateComponentTopDisplay(const ComponentTopDisplay& topDisplay);
+    // 异常事件上报
+    cJSON* CreateAbnormalEventInfo(const AbnormalEventInfo& eventInfo);
+    cJSON* CreateAbnormalEvents(const AbnormalEvents& abnormEvent);
 };
 
 #endif // XPOWER_DECODER_H

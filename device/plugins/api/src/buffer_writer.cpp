@@ -73,7 +73,6 @@ long BufferWriter::Write(const void* data, size_t size)
     if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
         return false;
     }
-    
     ProfilerPluginData pluginData;
     pluginData.set_name(pluginName_);
     pluginData.set_version(pluginVersion_);

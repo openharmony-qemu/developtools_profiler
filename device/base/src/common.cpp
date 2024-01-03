@@ -21,6 +21,8 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
+#include <parameter.h>
+#include <parameters.h>
 #include <sstream>
 #include <sys/file.h>
 #include <sys/types.h>
@@ -64,6 +66,7 @@ const int FILE_PATH_SIZE = 512;
 const int BUFFER_SIZE = 1024;
 const int INVALID_PID = -1;
 constexpr int32_t EC_INVALID_VALUE = -2;
+const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
 }
 
 bool IsProcessRunning(int& lockFileFd)
@@ -572,5 +575,17 @@ int32_t GetPackageUid(const std::string& name)
     int32_t uid = mgr->GetUidByBundleName(name, userId);
     HILOG_INFO(LOG_CORE, "pkgname is: %s, uid is : %d", name.c_str(), uid);
     return uid;
+}
+
+bool IsBetaVersion()
+{
+    int ret = static_cast<int>(FindParameter(KEY_HIVIEW_USER_TYPE.c_str()));
+    if (ret == -1) {
+        HILOG_INFO(LOG_CORE, "user type is not exist");
+        return true;
+    }
+    std::string userType = OHOS::system::GetParameter(KEY_HIVIEW_USER_TYPE, "");
+    HILOG_INFO(LOG_CORE, "user type is:%s", userType.c_str());
+    return userType == "beta";
 }
 } // namespace COMMON

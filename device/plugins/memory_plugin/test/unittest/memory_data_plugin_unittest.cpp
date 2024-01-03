@@ -81,8 +81,8 @@ unsigned long g_vmeminfo[] = {
 struct AshMemInfo {
     std::string name;
     int32_t pid;
-    int32_t adj;
     int32_t fd;
+    int32_t adj;
     std::string ashmem_name;
     uint64_t size;
     int32_t id;
@@ -92,11 +92,11 @@ struct AshMemInfo {
 };
 
 AshMemInfo g_ashMemInfo[] = {
-    {"com.ohos.settin", 1474, 1, 46, "dev/ashmem/SharedBlock:/data/storage/el2/database/entry/rdb/settingsdata.db",
+    {"com.ohos.settin", 1474, 46, 1, "dev/ashmem/SharedBlock:/data/storage/el2/database/entry/rdb/settingsdata.db",
      2097152, 1, 1282999603, 1, 1},
-    {"com.ohos.launch", 1515, 1, 54, "dev/ashmem/hooknativesmb", 67108864, 10, 1282945782, 1, 0},
-    {"hiprofilerd", 6746, 1, 27, "dev/ashmem/memory-plugin", 67108864, 12, 1287845167, 0, 0},
-    {"hiprofiler_plug", 6756, 1, 7, "dev/ashmem/memory-plugin", 67108864, 15, 1358999004, 0, 0},
+    {"com.ohos.launch", 1515, 54, 1, "dev/ashmem/hooknativesmb", 67108864, 10, 1282945782, 1, 0},
+    {"hiprofilerd", 6746, 27, 1, "dev/ashmem/memory-plugin", 67108864, 12, 1287845167, 0, 0},
+    {"hiprofiler_plug", 6756, 7, 1, "dev/ashmem/memory-plugin", 67108864, 15, 1358999004, 0, 0},
 };
 
 struct ProcessGpuInfo {

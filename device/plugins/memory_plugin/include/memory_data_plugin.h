@@ -271,8 +271,8 @@ constexpr ProcfdMapping procfdMapping[] = {
 enum AshmemType {
     ASHMEM_PROCESS_NAME = 1,
     ASHMEM_PID,
-    ASHMEM_ADJ,
     ASHMEM_FD,
+    ASHMEM_ADJ,
     ASHMEM_NAME,
     ASHMEM_SIZE,
     ASHMEM_ID,

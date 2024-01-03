@@ -33,7 +33,8 @@ std::map<std::string, std::string> Temperature::ItemData()
             SPUtils::LoadFile(dirTemp, temp);
             for (auto node : collectNodes) {
                 if (type.find(node) != std::string::npos) {
-                    result[type] = temp;
+                    float t = std::stof(temp);
+                    result[type] = std::to_string(t / 1e3);
                 }
             }
         }

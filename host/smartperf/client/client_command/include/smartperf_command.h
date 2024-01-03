@@ -32,18 +32,20 @@ public:
         "These are common commands list:\n"
         " -N             set num of profiler <must be non-null>\n"
         " -PKG           set pkgname of profiler \n"
-        " -PID           set process id of profiler \n"
-        " -OUT           set output path of CSV\n"
-        " -c             get cpuFreq and cpuLoad  \n"
+        " -c             get device cpuFreq、cpuUsage and process cpuUsage、cpuLoad .. \n"
         " -g             get gpuFreq and gpuLoad  \n"
         " -f             get fps and fps jitters \n"
         " -t             get soc-temp gpu-temp .. \n"
         " -p             get current_now and voltage_now \n"
-        " -r             get ram(pss) \n"
+        " -r             get process memory and total memory .. \n"
         " -snapshot      get screen capture\n"
+        " -net           get networkUp and networkDown\n"
         "--------------------------------------------------------------------\n"
-        "Example: SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f \n"
-        "--------------------------------------------------------------------\n";
+        "Example 1: SP_daemon -N 20 -c -g -t -p -r -net -snapshot \n"
+        "--------------------------------------------------------------------\n"
+        "---------------------------------------------------------------------------------------\n"
+        "Example 2: SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot\n"
+        "---------------------------------------------------------------------------------------\n";
     const int oneParam = 1;
     const int twoParam = 2;
     const int threeParamMore = 3;

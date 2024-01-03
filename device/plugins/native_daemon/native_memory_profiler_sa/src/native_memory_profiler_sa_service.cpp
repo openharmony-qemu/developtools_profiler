@@ -20,6 +20,7 @@
 #include "trace_file_writer.h"
 #include "socket_context.h"
 #include "hook_common.h"
+#include "init_param.h"
 
 #include "logging.h"
 
@@ -29,6 +30,7 @@ constexpr int32_t TIME_BASE = 1000;
 constexpr int32_t MAX_TASK_NUM = 4;
 const std::string FILE_PATH_HEAD = "/data/local/tmp/native_memory_";
 const std::string FILE_PATH_TAIL = ".htrace";
+constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -41,6 +43,7 @@ NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(N
         return;
     }
     serviceEntry_->RegisterService(*this);
+    DelayedShutdown(false);
 }
 
 NativeMemoryProfilerSaService::~NativeMemoryProfilerSaService()
@@ -134,6 +137,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
     if (--taskNum_ == 0) {
         HILOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
         StringViewMemoryHold::GetInstance().Clear();
+        DelayedShutdown(false);
     }
 }
 
@@ -201,6 +205,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         nameAndFilePathCtx_[configCtx->filePath] = configCtx;
     }
     ++taskNum_;
+    DelayedShutdown(true);
     return RET_OK;
 }
 
@@ -311,5 +316,30 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         context.SendFileDescriptor(eventFd);
     }
     return true;
+}
+
+void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
+{
+    if (cancel) {
+        scheduleTaskManager_.UnscheduleTask(delayedShutdownTimerFd_);
+        delayedShutdownTimerFd_ = -1;
+    } else {
+        int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+            []() {
+                int ret = SystemSetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
+                if (ret < 0) {
+                    HILOG_ERROR(LOG_CORE, "DelayedShutdown close sa failed");
+                } else {
+                    HILOG_INFO(LOG_CORE, "DelayedShutdown close sa success");
+                }
+            },
+            DELAYED_SHUTDOWN_TIME * TIME_BASE,
+            true);
+        if (timerFd == -1) {
+            HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService:DelayedShutdown Schedule Task failed");
+            return;
+        }
+        delayedShutdownTimerFd_ = timerFd;
+    }
 }
 } // namespace OHOS::Developtools::NativeDaemon

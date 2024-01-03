@@ -51,10 +51,10 @@ ohos_executable("SP_daemon") {
     "parse_click_response_trace.cpp",
     "parse_page_fps_trace.cpp",
     "parse_radar.cpp",
+    "parse_slide_fps_trace.cpp",
     "parse_start_frame_trace.cpp",
     "parse_start_trace_noh.cpp",
     "parse_trace.cpp",
-    "processes_cpu.cpp",
     "profiler_fps.cpp",
     "smartperf_command.cpp",
     "smartperf_main.cpp",
@@ -64,7 +64,6 @@ ohos_executable("SP_daemon") {
     "sp_task.cpp",
     "sp_utils.cpp",
     "startup_delay.cpp",
-    "system_ram.cpp",
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]

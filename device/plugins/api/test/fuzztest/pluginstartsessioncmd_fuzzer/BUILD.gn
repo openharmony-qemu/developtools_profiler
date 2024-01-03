@@ -33,6 +33,9 @@ ohos_fuzztest("PluginStartSessionCmdFuzzTest") {
     "../../..:plugins_sources",
   ]
   external_deps = [ "hilog:libhilog" ]
+  if (is_asan) {
+    defines = [ "ASAN_MODE" ]
+  }
 }
 
 ###############################################################################

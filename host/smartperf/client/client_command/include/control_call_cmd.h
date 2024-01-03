@@ -31,10 +31,11 @@ public:
     static std::string SlideFPS(std::vector<std::string> v);
     static std::string SlideFps(std::vector<std::string> v);
     double PageFps();
-    double StartFrameFps(std::vector<std::string> v);
+    std::string StartFrameFps(std::vector<std::string> v);
     std::string GetResult(std::vector<std::string> v);
-    void GetFrame();
-    void GetAppStartTime();
+    std::string GetFrame();
+    std::string GetAppStartTime();
+    std::string SlideList();
 private:
     bool isOhTest = false;
     std::string result = "";
@@ -42,7 +43,6 @@ private:
     int typeName = 2;
     double time = 0.0;
     double noNameType = -1.0;
-    double fps = 0.0;
     std::ostringstream stream;
 };
 }
