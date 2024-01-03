@@ -461,6 +461,9 @@ bool CheckProcessExit(const std::string& processName, int& pid)
 
 void KillDependentProcess()
 {
+    constexpr int waitProcMills = 300;
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     if (getuid() == 0) {
         // if pid is equal to -1, need to get pid first.
         if (g_nativeDaemonPid == -1) {
