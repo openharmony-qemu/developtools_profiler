@@ -76,19 +76,19 @@ void StartUpDelay::GetHisysId()
     std::stringstream ss(str);
     std::string line = "";
     getline(ss, line);
-    std::stringstream ss_line(line);
+    std::stringstream ssLine(line);
     std::string word = "";
-    std::string second_str;
+    std::string secondStr;
     int count = 0;
     int num = 2;
-    while (ss_line >> word) {
+    while (ssLine >> word) {
         count++;
         if (count == num) {
-            second_str = word;
+            secondStr = word;
             break;
         }
     }
-    SPUtils::LoadCmd("kill " + second_str, str);
+    SPUtils::LoadCmd("kill " + secondStr, str);
 }
 void StartUpDelay::GetHisysIdResponse()
 {
@@ -99,19 +99,19 @@ void StartUpDelay::GetHisysIdResponse()
     std::stringstream ss(str);
     std::string line = "";
     getline(ss, line);
-    std::stringstream ss_line(line);
+    std::stringstream ssLine(line);
     std::string word = "";
-    std::string second_str;
+    std::string secondStr;
     int count = 0;
     int num = 2;
-    while (ss_line >> word) {
+    while (ssLine >> word) {
         count++;
         if (count == num) {
-            second_str = word;
+            secondStr = word;
             break;
         }
     }
-    SPUtils::LoadCmd("kill " + second_str, str);
+    SPUtils::LoadCmd("kill " + secondStr, str);
 }
 void StartUpDelay::GetHisysIdComplete()
 {
@@ -122,19 +122,19 @@ void StartUpDelay::GetHisysIdComplete()
     std::stringstream ss(str);
     std::string line = "";
     getline(ss, line);
-    std::stringstream ss_line(line);
+    std::stringstream ssLine(line);
     std::string word = "";
-    std::string second_str;
+    std::string secondStr;
     int count = 0;
     int num = 2;
-    while (ss_line >> word) {
+    while (ssLine >> word) {
         count++;
         if (count == num) {
-            second_str = word;
+            secondStr = word;
             break;
         }
     }
-    SPUtils::LoadCmd("kill " + second_str, str);
+    SPUtils::LoadCmd("kill " + secondStr, str);
 }
 bool StartUpDelay::GetSpTcp()
 {

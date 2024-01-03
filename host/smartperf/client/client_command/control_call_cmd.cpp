@@ -55,8 +55,6 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         result = SmartPerf::ControlCallCmd::SlideFps(v);
     } else if (v[typeName] == "pagefps") {
         result = SmartPerf::ControlCallCmd::PageFps();
-    } else if (v[typeName] == "FPS") {
-        result = SmartPerf::ControlCallCmd::SlideFPS(v);
     } else if (v[typeName] == "startFrame") {
         result = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
@@ -178,35 +176,6 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-    thGetTrace.join();
-    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return fps;
-}
-std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
-{
-    OHOS::SmartPerf::StartUpDelay sd;
-    ParseFPS parseFPS;
-    std::string cmdResult;
-    int type = 4;
-    int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
-    sleep(1);
-    size_t position = cmdResult.find(":");
-    size_t position2 = cmdResult.find("json");
-    std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
-    std::string deviceType = sd.GetDeviceType();
-    sd.InitXY2(v[type], pathJson, v[typePKG]);
-    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
-    std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
-    sleep(1);
-    SPUtils::LoadCmd(cmd, cmdResult);
-    sleep(1);
-    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-    sleep(1);
-    cmd = "uinput -T -m 650 1500 650 500 30";
-    SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
     return fps;
