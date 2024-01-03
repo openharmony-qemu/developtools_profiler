@@ -18,6 +18,7 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <future>
 #include "include/control_call_cmd.h"
 #include "include/startup_delay.h"
 #include "include/parse_trace.h"
@@ -54,8 +55,6 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         result = SmartPerf::ControlCallCmd::SlideFps(v);
     } else if (v[typeName] == "pagefps") {
         result = SmartPerf::ControlCallCmd::PageFps();
-    } else if (v[typeName] == "FPS") {
-        result = SmartPerf::ControlCallCmd::SlideFPS(v);
     } else if (v[typeName] == "startFrame") {
         result = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
@@ -68,6 +67,8 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         result = ControlCallCmd::GetAppStartTime();
     } else if (v[typeName] == "slideList") {
         result = ControlCallCmd::SlideList();
+    } else if (v[typeName] == "timmeDelay") {
+        result = ControlCallCmd::TimeDelay();
     }
     if (time == noNameType) {
         std::cout << "Startup error, unknown application or application not responding" << std::endl;
@@ -79,6 +80,33 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         std::cout << result << std::endl;
     }
     return result;
+}
+std::string ControlCallCmd::TimeDelay()
+{
+    OHOS::SmartPerf::ParseClickResponseTrace pcrt;
+    OHOS::SmartPerf::StartUpDelay sd;
+    std::string cmdResult;
+    OHOS::SmartPerf::Radar radar;
+    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
+    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
+    std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
+    std::thread thGetHisysId = sd.ThreadGetHisysIdResponse();
+    std::thread thGetHisysId2 = sd.ThreadGetHisysIdComplete();
+    std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
+    std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarComplete);
+    std::string str = futureResult.get();
+    std::string str2 = futureResult2.get();
+    thGetTrace.join();
+    thGetHisysId.join();
+    thGetHisysId2.join();
+    double strResponseTime = radar.ParseRadarResponse(str);
+    stream << strResponseTime;
+    double strCompleteTime = radar.ParseRadarResponse(str2);
+    std::ostringstream streamComplete;
+    streamComplete << strCompleteTime;
+    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +
+     "CompleteTime:" + streamComplete.str() + "ms";
+    return resultTime;
 }
 std::string ControlCallCmd::SlideList()
 {
@@ -148,35 +176,6 @@ std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-    thGetTrace.join();
-    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return fps;
-}
-std::string ControlCallCmd::SlideFPS(std::vector<std::string> v)
-{
-    OHOS::SmartPerf::StartUpDelay sd;
-    ParseFPS parseFPS;
-    std::string cmdResult;
-    int type = 4;
-    int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
-    sleep(1);
-    size_t position = cmdResult.find(":");
-    size_t position2 = cmdResult.find("json");
-    std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
-    std::string deviceType = sd.GetDeviceType();
-    sd.InitXY2(v[type], pathJson, v[typePKG]);
-    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
-    std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
-    sleep(1);
-    SPUtils::LoadCmd(cmd, cmdResult);
-    sleep(1);
-    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-    sleep(1);
-    cmd = "uinput -T -m 650 1500 650 500 30";
-    SPUtils::LoadCmd(cmd, cmdResult);
     thGetTrace.join();
     std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
     return fps;
