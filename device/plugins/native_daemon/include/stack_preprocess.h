@@ -66,6 +66,7 @@ public:
     {
         isSaService_ = flag;
     }
+    void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
 
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
@@ -78,15 +79,16 @@ private:
     };
 
     enum RecordStatisticsLimit : std::size_t {
-        STATISTICS_MAP_SZIE = 2048,
-        STATISTICS_PERIOD_DATA_SIZE = 256,
-        ALLOC_ADDRMAMP_SIZE = 2048,
+        STATISTICS_MAP_SZIE = 100000,
+        STATISTICS_PERIOD_DATA_SIZE = 100000,
+        ALLOC_ADDRMAMP_SIZE = 100000,
     };
 
 private:
     void TakeResults();
     void SetHookData(RawStackPtr RawStack, std::vector<CallFrame>& callFrames,
         BatchNativeHookData& batchNativeHookData);
+    void SetHookData(RawStackPtr rawStack, BatchNativeHookData& batchNativeHookData);
     void WriteFrames(RawStackPtr RawStack, const std::vector<CallFrame>& callFrames);
     void SetFrameInfo(Frame& frame, CallFrame& callFrame);
     void ReportSymbolNameMap(CallFrame& callFrame, BatchNativeHookData& batchNativeHookData);
@@ -112,8 +114,11 @@ private:
         BatchNativeHookData& batchNativeHookData, T* event, uint32_t stackId);
     void SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
         BatchNativeHookData& batchNativeHookData);
+    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, BatchNativeHookData& batchNativeHookData);
     bool SetFreeStatisticsData(uint64_t addr);
     void SetAllocStatisticsData(const RawStackPtr& rawStack, size_t stackId, bool isExists = false);
+    void IntervalFlushRecordStatistics(BatchNativeHookData& stackData);
+    bool HandleNoStackEvent(RawStackPtr& rawStack, BatchNativeHookData& stackData);
     unsigned LgFloor(unsigned long x);
     uint64_t PowCeil(uint64_t x);
     size_t ComputeAlign(size_t size);
@@ -139,7 +144,6 @@ private:
     // Key is ip , response_library_mode used
     std::unordered_map<uint64_t, uint32_t> responseLibraryMap_;
     std::chrono::seconds statisticsInterval_ {0};
-    std::chrono::steady_clock::time_point lastStatisticsTime_;
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_ {STATISTICS_MAP_SZIE};
     // Key is call stack id, value is recordstatistic data pointer

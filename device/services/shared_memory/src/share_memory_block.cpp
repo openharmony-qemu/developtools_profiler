@@ -347,7 +347,6 @@ bool ShareMemoryBlock::TakeData(const DataHandler& func, bool isProtobufSerializ
     CHECK_NOTNULL(header_, false, "header not ready!");
     CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
 
-    PthreadLocker locker(header_->info.mutex_);
     auto size = GetDataSize();
     if (size == 0) {
         return false;

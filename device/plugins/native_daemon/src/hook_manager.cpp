@@ -40,7 +40,6 @@ namespace {
 const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 const int PAGE_BYTES = 4096;
 std::shared_ptr<Writer> g_buffWriter;
-constexpr uint32_t MAX_BUFFER_SIZE = 10 * 1024;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
 const int SIGNAL_START_HOOK = 36;
@@ -124,8 +123,6 @@ bool HookManager::CheckProcessName()
     }
     return true;
 }
-
-HookManager::HookManager() : buffer_(new (std::nothrow) uint8_t[MAX_BUFFER_SIZE]) { }
 
 void HookManager::SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
 {
@@ -236,9 +233,6 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
     ctx->eventPoller->Init();
     ctx->eventPoller->Start();
-    ctx->eventPoller->AddFileDescriptor(
-        ctx->eventNotifier->GetFd(),
-        std::bind(&HookManager::ReadShareMemory, this, ctx));
 
     HILOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", ctx->shareMemoryBlock->GetfileDescriptor(),
                ctx->eventNotifier->GetFd());
@@ -250,11 +244,23 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         hookConfig_.fp_unwind(), hookConfig_.max_stack_depth(), ctx->isRecordAccurately);
     HILOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
 
-    ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
-    CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
     clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
-    ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
+    if (noDataQueue_) {
+        ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
         fpHookData_, isHookStandalone_);
+        ctx->eventPoller->AddFileDescriptor(
+            ctx->eventNotifier->GetFd(),
+            std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
+            ctx->eventNotifier, ctx->shareMemoryBlock));
+    } else {
+        ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
+        CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
+        ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
+        fpHookData_, isHookStandalone_);
+        ctx->eventPoller->AddFileDescriptor(
+            ctx->eventNotifier->GetFd(),
+            std::bind(&HookManager::ReadShareMemory, this, ctx));
+    }
     CHECK_TRUE(ctx->stackPreprocess != nullptr, false, "Create StackPreprocess FAIL");
     ctx->stackPreprocess->SetWriter(g_buffWriter);
     ctx->stackPreprocess->SetSaServiceFlag(isSaService_);
@@ -321,6 +327,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
+    if (hookConfig_.fp_unwind() && hookConfig_.record_accurately()
+        && hookConfig_.blocked() && hookConfig_.offline_symbolization()
+        && hookConfig_.statistics_interval() > 0
+        && hookConfig_.sample_interval() > 1) {
+        noDataQueue_ = true;
+    }
     for (const auto& item : hookCtx_) {
         CHECK_TRUE(HandleHookContext(item), false, "handle hook context failed"); // Create the required resources.
     }
@@ -328,6 +340,9 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (!isSaService_) { // SA mode will start HookService in the service.
         ClientConfig clientConfig;
         GetClientConfig(clientConfig);
+        if (noDataQueue_) {
+            clientConfig.freeEventOnlyAddrEnable = true;
+        }
         std::string clientConfigStr = clientConfig.ToString();
         HILOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
         hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this());
@@ -554,7 +569,9 @@ void HookManager::StartPluginSession()
             continue;
         }
         HILOG_ERROR(LOG_CORE, "StartPluginSession name: %s", item->processName.c_str());
-        item->stackPreprocess->StartTakeResults();
+        if (!noDataQueue_) {
+            item->stackPreprocess->StartTakeResults();
+        }
         if (item->pid > 0) {
             HILOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
             if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
