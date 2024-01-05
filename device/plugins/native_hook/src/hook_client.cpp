@@ -293,8 +293,7 @@ bool ohos_malloc_hook_on_end(void)
     return true;
 }
 
-#if defined(__aarch64__)
-static bool FilterStandardSoIp(uint64_t ip)
+bool FilterStandardSoIp(uint64_t ip)
 {
     for (auto [soBegin, soEnd_]: g_filterStaLibRange) {
         if (ip >= soBegin && ip < soEnd_) {
@@ -304,6 +303,7 @@ static bool FilterStandardSoIp(uint64_t ip)
     return false;
 }
 
+#if defined(__aarch64__)
 static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t *ip, int stackSize)
 {
     void **startfp = (void **)__builtin_frame_address(0);
