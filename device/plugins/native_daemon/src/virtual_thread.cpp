@@ -227,7 +227,7 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
         HLOGE("VirtualThread Failed to Parse Map.");
         return false;
     }
-
+    memMaps = dfxMaps->GetMaps();
     bool mapsAdded = !update;
     std::vector<std::shared_ptr<DfxMap>> tempMap;
     std::string tempMapName;
