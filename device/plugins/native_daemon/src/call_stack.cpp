@@ -497,7 +497,7 @@ we should have CallStack cache for each thread
 use expendLimit to setup how may frame match is needs
 
 */
-#if HAVE_LIBUNWINDER
+#if defined(HAVE_LIBUNWINDER) && HAVE_LIBUNWINDER
 
 bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &callStack,
                           size_t maxStackLevel)
@@ -521,7 +521,7 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
     regs->SetRegsData(tempRegs);
 #else
     std::shared_ptr<DfxRegs> regs = std::make_shared<DfxRegsArm64>();
-    regs->SetRegsData((uintptr_t*)regs_, regsNum_);
+    regs->SetRegsData(static_cast<uintptr_t*>(regs_), regsNum_);
 #endif
 
     unwinder->SetRegs(regs);
@@ -644,7 +644,7 @@ int CallStack::AccessMem2(uintptr_t addr, uintptr_t *val, void *arg)
 
 CallStack::CallStack()
 {
-#if HAVE_LIBUNWINDER
+#if defined(HAVE_LIBUNWINDER) && HAVE_LIBUNWINDER
     accessor_ = std::make_shared<OHOS::HiviewDFX::UnwindAccessors>();
     accessor_->FindUnwindTable = &CallStack::FindUnwindTable;
     accessor_->AccessMem = &CallStack::AccessMem2;

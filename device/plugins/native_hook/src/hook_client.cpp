@@ -293,7 +293,8 @@ bool ohos_malloc_hook_on_end(void)
     return true;
 }
 
-bool FilterStandardSoIp(uint64_t ip) {
+bool FilterStandardSoIp(uint64_t ip)
+{
     for (auto [soBegin, soEnd_]: g_filterStaLibRange) {
         if (ip >= soBegin && ip < soEnd_) {
             return true;

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef __SAMPLING_H_
-#define __SAMPLING_H_
+#ifndef __SAMPLING_H__
+#define __SAMPLING_H__
 
 #include <stdint.h>
 #include <cstddef>
@@ -75,4 +75,4 @@ private:
     static inline std::default_random_engine randomEngine_;
     static inline pthread_spinlock_t spinlock_;
 };
-#endif  // __SAMPLING_H_
+#endif  // __SAMPLING_H__

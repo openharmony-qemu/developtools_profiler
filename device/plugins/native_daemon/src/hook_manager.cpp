@@ -37,13 +37,13 @@
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
-const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
-const int PAGE_BYTES = 4096;
+constexpr int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
+constexpr uint32_t PAGE_BYTES = 4096;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
-const int SIGNAL_START_HOOK = 36;
-const int SIGNAL_STOP_HOOK = 37;
+constexpr int SIGNAL_START_HOOK = 36;
+constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
@@ -57,9 +57,8 @@ bool HookManager::CheckProcess()
     std::set<int32_t> pidCache;
     for (const auto& pid : hookConfig_.expand_pids()) {
         if (pid > 0) {
-            std::string pidPath = std::string();
             struct stat statBuf;
-            pidPath = "/proc/" + std::to_string(pid) + "/status";
+            std::string pidPath = "/proc/" + std::to_string(pid) + "/status";
             if (stat(pidPath.c_str(), &statBuf) != 0) {
                 // pid = 0;
                 PROFILER_LOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
@@ -223,7 +222,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         return false;
     }
     // create smb and eventNotifier
-    uint32_t bufferSize = hookConfig_.smb_pages() * PAGE_BYTES; /* bufferConfig.pages() */
+    uint32_t bufferSize = static_cast<uint32_t>(hookConfig_.smb_pages()) * PAGE_BYTES; /* bufferConfig.pages() */
     ctx->shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(ctx->smbName, bufferSize);
     CHECK_TRUE(ctx->shareMemoryBlock != nullptr, false, "CreateMemoryBlockLocal FAIL %s", ctx->smbName.c_str());
 
@@ -324,7 +323,10 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         return false;
     }
     if (hookConfig_.save_file() && !hookConfig_.file_name().empty()) {
-        fpHookData_ = fopen(hookConfig_.file_name().c_str(), "wb+");
+        std::string realFilePathStr = COMMON::RealPath(hookConfig_.file_name());
+        CHECK_TRUE(!realFilePathStr.empty(), false, "hookConfig_.file_name: %s realpath failed.",
+                   hookConfig_.file_name().c_str());
+        fpHookData_ = fopen(realFilePathStr.c_str(), "wb+");
         if (fpHookData_ == nullptr) {
             PROFILER_LOG_INFO(LOG_CORE, "fopen file %s fail", hookConfig_.file_name().c_str());
             return false;
@@ -424,9 +426,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
             item->shareMemoryBlock = nullptr;
         }
-        if (item->eventNotifier != nullptr) {
-            item->eventNotifier = nullptr;
-        }
+        item->eventNotifier = nullptr;
         item->stackPreprocess = nullptr;
         item->stackData = nullptr;
     }

@@ -132,7 +132,7 @@ static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
     } while (1);
 }
 
-bool IsLegalSoName(const std::string &fileName)
+static bool IsLegalSoName(const std::string &fileName)
 {
     if (fileName.front() == '[' or fileName.back() == ']' or
         std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 or
@@ -143,16 +143,16 @@ bool IsLegalSoName(const std::string &fileName)
     return true;
 }
 
-void GetStandardLibraryRange(std::string& line)
+static void GetStandardLibraryRange(std::string& line)
 {
     line.resize(strlen(line.c_str()));
     std::vector<std::string> mapTokens = OHOS::Developtools::NativeDaemon::StringSplit(line, " ");
-    std::string& soRange = mapTokens.front();
+    const std::string& soRange = mapTokens.front();
     std::string& soName = mapTokens.back();
     if (IsLegalSoName(soName)) {
         std::string::size_type concatPos = soRange.find('-');
-        uint64_t soStart = strtoll(soRange.c_str(), nullptr, BASE_MAX);
-        uint64_t soEnd = strtoll(soRange.c_str() + concatPos + 1, nullptr, BASE_MAX);
+        uint64_t soStart = static_cast<uint64_t>(strtoll(soRange.c_str(), nullptr, BASE_MAX));
+        uint64_t soEnd = static_cast<uint64_t>(strtoll(soRange.c_str() + concatPos + 1, nullptr, BASE_MAX));
         auto [iter, isExit] = g_stdLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
         if (!isExit) {
             if (iter->second.soBegin_ > soStart) {
@@ -163,6 +163,7 @@ void GetStandardLibraryRange(std::string& line)
         }
     }
 }
+
 void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange)
 {
     std::string line;

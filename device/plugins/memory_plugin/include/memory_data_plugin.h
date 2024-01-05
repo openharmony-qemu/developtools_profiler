@@ -318,8 +318,8 @@ enum WinMgrSvcType {
 };
 
 struct GraphicsMemory {
-    uint64_t gl;
-    uint64_t graph;
+    uint64_t gl = 0;
+    uint64_t graph = 0;
 };
 
 const std::vector<std::pair<OHOS::HDI::Memorytracker::V1_0::MemoryTrackerType, std::string>> MEMORY_TRACKER_TYPES = {
@@ -362,14 +362,14 @@ private:
 
     std::unique_ptr<uint8_t[]> buffer_;
 
-    int meminfoFd_;
-    int vmstatFd_;
-    std::map<std::string, int> meminfoCounters_;
-    std::map<std::string, int> vmstatCounters_;
+    int meminfoFd_ = -1;
+    int vmstatFd_ = -1;
+    std::map<std::string, int> meminfoCounters_ = {};
+    std::map<std::string, int> vmstatCounters_ = {};
 
     void InitProto2StrVector();
-    std::vector<const char*> meminfoStrList_;
-    std::vector<const char*> vmstatStrList_;
+    std::vector<const char*> meminfoStrList_ = {};
+    std::vector<const char*> vmstatStrList_ = {};
 
     // SmapsStats *
     template <typename T> void WriteVmstat(T& memoryData);
@@ -378,10 +378,10 @@ private:
 
     template <typename T> void WriteZramData(T& memoryData);
 
-    std::unordered_map<int32_t, std::vector<int>> pidFds_;
-    std::vector<int32_t> seenPids_;
+    std::unordered_map<int32_t, std::vector<int>> pidFds_ = {};
+    std::vector<int32_t> seenPids_ = {};
     char* testpath_;
-    int32_t err_;
+    int32_t err_ = -1;
     int32_t ReadFile(int fd);
     std::string ReadFile(const std::string& path);
     std::vector<int> OpenProcPidFiles(int32_t pid);
