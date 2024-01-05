@@ -35,7 +35,8 @@ public:
     ~StackWriter();
     long Write(const void* data, size_t size) override;
     long WriteTimeout(const void* data, size_t size);
-    long WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize);
+    long WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
+                                 const std::function<bool()>& callback);
     bool Flush() override;
 
 private:

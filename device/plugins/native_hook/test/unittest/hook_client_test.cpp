@@ -44,7 +44,7 @@ public:
 HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     void* mallocBlack = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack, nullptr);
@@ -54,7 +54,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 
     SystemSetParameter(MEM_FILTER.c_str(), "1,3");
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     void* mallocBlack2 = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack2, nullptr);
 
@@ -63,7 +63,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 
     SystemSetParameter(MEM_FILTER.c_str(), "0,0");
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     void* mallocBlack3 = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack3, nullptr);
 
@@ -72,7 +72,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 
     SystemSetParameter(MEM_FILTER.c_str(), "2048,4096");
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     void* mallocBlack4 = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack4, nullptr);
 
@@ -80,7 +80,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     SystemSetParameter(MEM_FILTER.c_str(), "0");
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     void* mallocBlack5 = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack5, nullptr);
 
@@ -97,7 +97,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     void* mallocBlack = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack, nullptr);
@@ -108,7 +108,7 @@ HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     void* mallocBlack2 = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack2, nullptr);
     void* reallocBlack2 = ohos_malloc_hook_realloc(mallocBlack2, g_size);
@@ -127,7 +127,7 @@ HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     void* callocBlack = ohos_malloc_hook_calloc(g_size, g_resize);
     EXPECT_NE(callocBlack, nullptr);
@@ -136,7 +136,7 @@ HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     void* callocBlack2 = ohos_malloc_hook_calloc(0, g_resize);
     EXPECT_NE(callocBlack2, nullptr);
 
@@ -153,7 +153,7 @@ HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     void* vallocBlack = ohos_malloc_hook_valloc(g_size);
     EXPECT_EQ(vallocBlack, nullptr);
@@ -171,7 +171,7 @@ HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, NormalHookMemalignTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     void* memalignBlack = ohos_malloc_hook_memalign(g_size, g_resize);
     EXPECT_EQ(memalignBlack, nullptr);
@@ -190,7 +190,7 @@ HWTEST_F(NativeHookTest, NormalHookMemalignTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     void* mallocBlack = ohos_malloc_hook_malloc(g_size);
     EXPECT_NE(mallocBlack, nullptr);
@@ -220,7 +220,7 @@ HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, NormalOtherTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
 
     ohos_malloc_hook_finalize();
 
@@ -235,7 +235,7 @@ HWTEST_F(NativeHookTest, NormalOtherTest, TestSize.Level1)
 HWTEST_F(NativeHookTest, FailureTest, TestSize.Level1)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(nullptr, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start());
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
 

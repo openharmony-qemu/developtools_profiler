@@ -24,10 +24,11 @@
 namespace {
 constexpr int FLUSH_FLAG = 20;
 std::atomic<uint64_t> g_flushCount = 0;
+std::atomic<bool> g_disableHook = false;
 } // namespace
 
-HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler)
-                                : pid_(pid), config_(config), sampler_(sampler)
+HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)())
+    : pid_(pid), config_(config), sampler_(sampler), disableHookCallback_(disableHookCallback)
 {
     smbFd_ = 0;
     eventFd_ = 0;
@@ -99,12 +100,20 @@ bool HookSocketClient::SendStack(const void* data, size_t size)
 bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const void* payload,
     size_t payloadSize)
 {
-    if (stackWriter_ == nullptr || unixSocketClient_ == nullptr) {
+    if (stackWriter_ == nullptr || unixSocketClient_ == nullptr || g_disableHook) {
+        return false;
+    } else if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
+        DisableHook();
         return false;
     }
 
-    stackWriter_->WriteWithPayloadTimeout(data, size, payload, payloadSize);
-    g_flushCount++;
+    bool ret = stackWriter_->WriteWithPayloadTimeout(data, size, payload, payloadSize,
+                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret && config_->isBlocked) {
+        DisableHook();
+        return false;
+    }
+    ++g_flushCount;
     if (g_flushCount % FLUSH_FLAG == 0) {
         stackWriter_->Flush();
     }
@@ -117,4 +126,20 @@ void HookSocketClient::Flush()
         return;
     }
     stackWriter_->Flush();
+}
+
+void HookSocketClient::DisableHook()
+{
+    bool expected = false;
+    if (g_disableHook.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
+        HILOG_INFO(LOG_CORE, "%s %p", __func__, disableHookCallback_);
+        if (disableHookCallback_) {
+            disableHookCallback_();
+        }
+    }
+}
+
+bool HookSocketClient::PeerIsConnected()
+{
+    return !unixSocketClient_->IsConnected();
 }

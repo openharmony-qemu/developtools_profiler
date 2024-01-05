@@ -25,7 +25,7 @@ class Sampling;
 
 class HookSocketClient : public ServiceBase {
 public:
-    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler);
+    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)());
     ~HookSocketClient();
     bool Connect(const std::string addrname);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
@@ -41,6 +41,8 @@ public:
     bool SendStack(const void* data, size_t size);
     bool SendStackWithPayload(const void* data, size_t size, const void* payload,
             size_t payloadSize);
+    void DisableHook();
+    bool PeerIsConnected();
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
     int smbFd_;
@@ -49,6 +51,7 @@ private:
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
     std::shared_ptr<StackWriter> stackWriter_;
+    void (*disableHookCallback_)(){nullptr};
 };
 
 #endif // HOOK_SOCKET_CLIENT

@@ -72,14 +72,19 @@ long StackWriter::WriteTimeout(const void* data, size_t size)
     return shareMemoryBlock_->PutRawTimeout(reinterpret_cast<const int8_t*>(data), size);
 }
 
-long StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize)
+long StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
+                                          const std::function<bool()>& callback)
 {
     if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
         return false;
     }
     if (blocked_) {
         return shareMemoryBlock_->PutWithPayloadSync(
-            reinterpret_cast<const int8_t*>(data), size, reinterpret_cast<const int8_t*>(payload), payloadSize);
+            reinterpret_cast<const int8_t*>(data),
+            size,
+            reinterpret_cast<const int8_t*>(payload),
+            payloadSize,
+            callback);
     } else {
         return shareMemoryBlock_->PutWithPayloadTimeout(
             reinterpret_cast<const int8_t*>(data), size, reinterpret_cast<const int8_t*>(payload), payloadSize);
