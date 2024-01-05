@@ -225,8 +225,7 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     std::shared_ptr<DfxMaps> dfxMaps = OHOS::HiviewDFX::DfxMaps::Create(pid_, mapPath);
     if (dfxMaps == nullptr) {
         HLOGE("VirtualThread Failed to Parse Map.");
-    } else {
-        memMaps = dfxMaps->GetMaps();
+        return false;
     }
 
     bool mapsAdded = !update;
