@@ -514,7 +514,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     callStack_.clear();
     callStack_.reserve(callFrames.size() + 1);
-    callStack_.push_back(rawStack->stackConext->mallocSize | SIZE_MASK);
+    callStack_.push_back(ComputeAlign(rawStack->stackConext->mallocSize) | SIZE_MASK);
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, batchNativeHookData, idx);
     } else {
@@ -536,7 +536,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     BatchNativeHookData& batchNativeHookData)
 {
     callStack_.resize(rawStack->fpDepth + 1);
-    callStack_[0] = (rawStack->stackConext->mallocSize | SIZE_MASK);
+    callStack_[0] = (ComputeAlign(rawStack->stackConext->mallocSize) | SIZE_MASK);
     if (memcpy_s(callStack_.data() + 1, sizeof(uint64_t) * rawStack->fpDepth,
                  rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
