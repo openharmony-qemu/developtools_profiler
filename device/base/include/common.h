@@ -46,5 +46,6 @@ std::string GetClockStr(const int32_t clockId);
 void AdaptSandboxPath(std::string& filePath, int pid);
 int32_t GetPackageUid(const std::string &name);
 bool GetCurrentUserId(int32_t &userId);
+bool IsBetaVersion();
 } // COMMON
 #endif // COMMON_H

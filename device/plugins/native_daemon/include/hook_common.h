@@ -113,6 +113,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         isBlocked = false;
         memtraceEnable = false;
         responseLibraryMode = false;
+        freeEventOnlyAddrEnable = false;
     }
 
     std::string ToString()
@@ -123,7 +124,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", mallocDisable:" << mallocDisable << ", mmapDisable:" << mmapDisable
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
-            << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode;
+            << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
+            << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable;
         return ss.str();
     }
 
@@ -140,14 +142,6 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool isBlocked = false;
     bool memtraceEnable = false;
     bool responseLibraryMode = false;
+    bool freeEventOnlyAddrEnable = false;
 };
-
-struct StandaloneRawStack {
-    BaseStackRawData* stackConext; // points to the foundation type data
-    uint8_t* stackData;
-    int8_t* data; // fp mode data is ip, dwarf mode data is regs
-    uint32_t stackSize;
-    uint8_t fpDepth; // fp mode fpDepth is ip depth, dwarf mode is invalid
-};
-
 #endif // HOOK_COMMON_H

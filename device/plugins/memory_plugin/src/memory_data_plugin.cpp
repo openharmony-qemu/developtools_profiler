@@ -370,9 +370,10 @@ template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memo
         WriteGpuMemInfo(memoryDataProto);
     }
 
+    WriteDumpProcessInfo(memoryDataProto);
+
     if (protoConfig_.report_gpu_dump_info()) {
         WriteGpuDumpInfo(memoryDataProto);
-        WriteDumpProcessInfo(memoryDataProto);
         WriteManagerServiceInfo(memoryDataProto);
         WriteProfileMemInfo(memoryDataProto);
     }

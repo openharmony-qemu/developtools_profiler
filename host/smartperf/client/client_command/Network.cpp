@@ -37,13 +37,9 @@ std::map<std::string, std::string> Network::ItemData()
     return result;
 }
 
-std::map<std::string, std::string> Network::GetNetworkInfo() const
+std::map<std::string, std::string> Network::GetNetworkInfo()
 {
     std::map<std::string, std::string> networkInfo;
-    long long allTx = 0;
-    long long allRx = 0;
-    long long curTx = 0;
-    long long curRx = 0;
     char buff[LARGE_BUFF_MAX_LEN];
     FILE *fp = fopen("/proc/net/dev", "r");
     if (fp == nullptr) {
@@ -61,8 +57,33 @@ std::map<std::string, std::string> Network::GetNetworkInfo() const
         }
     }
     fclose(fp);
-    networkInfo["networkUp"] = std::to_string(allTx);
-    networkInfo["networkDown"] = std::to_string(allRx);
+    if (isFirst) {
+        networkInfo["networkUp"] = std::to_string(prevTx);
+        networkInfo["networkDown"] = std::to_string(prevRx);
+        isFirst = false;
+        prevTx = allTx;
+        prevRx = allRx;
+        allTx = 0;
+        allRx = 0;
+        return networkInfo;
+    }
+    if ((allTx == 0 && allRx == 0) || (allTx <= prevTx && allRx <= prevRx)) {
+        networkInfo["networkUp"] = "0";
+        networkInfo["networkDown"] = "0";
+        prevTx = allTx;
+        prevRx = allRx;
+        allTx = 0;
+        allRx = 0;
+        return networkInfo;
+    }
+    diffTx = allTx - prevTx;
+    prevTx = allTx;
+    diffRx = allRx - prevRx;
+    prevRx = allRx;
+    allTx = 0;
+    allRx = 0;
+    networkInfo["networkUp"] = std::to_string(diffTx);
+    networkInfo["networkDown"] = std::to_string(diffRx);
     return networkInfo;
 }
 }

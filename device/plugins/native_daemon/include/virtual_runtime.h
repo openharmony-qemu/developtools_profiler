@@ -85,6 +85,8 @@ public:
     void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
     void HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags, uint64_t offset, const std::string& filePath);
     void RemoveMaps(uint64_t addr);
+      // threads
+    VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
     std::vector<uint64_t>& GetOfflineMaps()
     {
         return offlineMapAddr_;
@@ -176,8 +178,6 @@ private:
     // find synbols function name
     void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
 
-    // threads
-    VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
     std::string ReadThreadName(pid_t tid);
     VirtualThread &CreateThread(pid_t pid, pid_t tid);
 
