@@ -19,8 +19,6 @@
 #include <random>
 #include <sys/mman.h>
 
-#include <hilog/log.h>
-
 #include "symbols_file_test.h"
 
 using namespace testing::ext;

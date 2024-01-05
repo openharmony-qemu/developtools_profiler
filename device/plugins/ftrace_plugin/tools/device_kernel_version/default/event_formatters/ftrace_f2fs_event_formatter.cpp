@@ -36,7 +36,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             (unsigned long)msg.ino(), (unsigned long)msg.pino(), msg.mode(), msg.size(), (unsigned int)msg.nlink(),
             msg.blocks(), (unsigned char)msg.advise());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(f2fs_sync_file_enter) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -59,7 +59,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {CP_SPEC_LOG_NUM, "log type is 2"}, {CP_RECOVER_DIR, "dir needs recovery"}),
             msg.datasync(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(f2fs_sync_file_exit) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -76,7 +76,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
             (unsigned long)msg.ino(), msg.pos(), msg.len(), msg.flags());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(f2fs_write_begin) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(f2fs_write_begin) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -92,7 +93,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
             (unsigned long)msg.ino(), msg.pos(), msg.len(), msg.copied());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(f2fs_write_end) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(f2fs_write_end) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

@@ -81,7 +81,7 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
     size_t metaSize = sizeof(ts);
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(metaSize);
     if (memcpy_s(buffer.get(), metaSize, &ts, sizeof(ts)) != EOK) {
-        HILOG_ERROR(LOG_CORE, "memcpy_s ts failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s ts failed");
     }
     metaSize = sizeof(ts);
     EXPECT_FALSE(hookClient.SendStack(buffer.get(), metaSize));

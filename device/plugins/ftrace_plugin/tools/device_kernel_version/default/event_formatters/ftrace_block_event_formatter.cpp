@@ -33,7 +33,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_bio_backmerge) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -49,7 +49,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.rwbs().c_str(),
             msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_bio_bounce) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_bio_bounce) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -64,7 +65,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.rwbs().c_str(),
             msg.sector(), msg.nr_sector(), msg.error());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_bio_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -81,7 +82,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_bio_frontmerge) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -97,7 +98,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.rwbs().c_str(),
             msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_bio_queue) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_bio_queue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -114,7 +116,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.old_dev()) >> 20)), ((unsigned int)((msg.old_dev()) & ((1U << 20) - 1))),
             msg.old_sector());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_bio_remap) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_bio_remap) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -129,7 +132,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "block_dirty_buffer: %d,%d sector=%" PRIu64 " size=%" PRIu64 "", ((unsigned int)((msg.dev()) >> 20)),
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.sector(), msg.size());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_dirty_buffer) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -145,7 +148,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.rwbs().c_str(),
             msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_getrq) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_getrq) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -158,7 +162,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "block_plug: [%s]", msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_plug) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(block_plug) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -174,7 +178,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.cmd().c_str(), msg.sector(), msg.nr_sector(), msg.error());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_rq_complete) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_rq_complete) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -190,7 +195,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.bytes(), msg.cmd().c_str(), msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_rq_insert) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_rq_insert) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -206,7 +212,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.bytes(), msg.cmd().c_str(), msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_rq_issue) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_rq_issue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -223,7 +230,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.old_dev()) >> 20)), ((unsigned int)((msg.old_dev()) & ((1U << 20) - 1))),
             msg.old_sector(), msg.nr_bios());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_rq_remap) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_rq_remap) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -239,7 +247,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.cmd().c_str(), msg.sector(), msg.nr_sector(), 0);
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_rq_requeue) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_rq_requeue) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -254,7 +263,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.rwbs().c_str(),
             msg.sector(), msg.nr_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_sleeprq) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_sleeprq) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -270,7 +280,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                 msg.rwbs().c_str(), msg.sector(), msg.new_sector(), msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_split) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_split) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -285,7 +296,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "block_touch_buffer: %d,%d sector=%" PRIu64 " size=%" PRIu64 "", ((unsigned int)((msg.dev()) >> 20)),
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.sector(), msg.size());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(
+            PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_touch_buffer) msg had be cut off in outfile");
         }
         return std::string(buffer);
@@ -300,7 +311,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "block_unplug: [%s] %d", msg.comm().c_str(), msg.nr_rq());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(block_unplug) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(block_unplug) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

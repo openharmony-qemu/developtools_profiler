@@ -32,7 +32,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "task_newtask: pid=%d comm=%s clone_flags=%" PRIx64 " oom_score_adj=%d", msg.pid(), msg.comm().c_str(),
             msg.clone_flags(), msg.oom_score_adj());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(task_newtask) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(task_newtask) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -47,7 +47,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "task_rename: pid=%d oldcomm=%s newcomm=%s oom_score_adj=%d", msg.pid(), msg.oldcomm().c_str(),
             msg.newcomm().c_str(), msg.oom_score_adj());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(task_rename) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(task_rename) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

@@ -21,8 +21,6 @@
 #include <random>
 #include <sys/mman.h>
 
-#include <hilog/log.h>
-
 #include "call_stack.h"
 #include "debug_logger.h"
 #include "utilities.h"

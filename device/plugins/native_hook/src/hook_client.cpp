@@ -183,7 +183,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
         ret = client->SendStackWithPayload(&tnameData,
                                            sizeof(BaseStackRawData) + strlen(tnameData.name) + 1, nullptr, 0);
         if (!ret) {
-            HILOG_DEBUG(LOG_CORE, "Send thread name failed!");
+            PROFILER_LOG_DEBUG(LOG_CORE, "Send thread name failed!");
             return ret;
         }
     }
@@ -214,7 +214,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
         if (strcpy_s(tagData.name, PATH_MAX + 1, tagName) != 0) {
-            HILOG_ERROR(LOG_CORE, "Set tag name failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
         }
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
@@ -233,7 +233,7 @@ bool ohos_malloc_hook_on_start(void)
     g_hookPid = GetRealPid();
     g_mallocTimes = 0;
     if (g_hookClient != nullptr) {
-        HILOG_INFO(LOG_CORE, "hook already started");
+        PROFILER_LOG_INFO(LOG_CORE, "hook already started");
         return true;
     } else {
         g_ClientConfig.Reset();
@@ -246,7 +246,7 @@ bool ohos_malloc_hook_on_start(void)
     pthread_setspecific(g_hookTid, nullptr);
     pthread_key_create(&g_updateThreadNameCount, nullptr);
     pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
-    HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
@@ -258,8 +258,8 @@ bool ohos_malloc_hook_on_start(void)
             g_maxSize = max > 0 ? max : INT_MAX;
             g_ClientConfig.filterSize = min > 0 ? min : 0;
         }
-        HILOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
-                   paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
+        PROFILER_LOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
+                          paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
     }
     return true;
 }
@@ -272,7 +272,7 @@ void* ohos_release_on_end(void*)
     pthread_key_delete(g_hookTid);
     pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
-    HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     struct mallinfo2 miFinal = mallinfo2();
     COMMON::PrintMallinfoLog("after hook(byte) => ", miFinal);
@@ -286,7 +286,7 @@ bool ohos_malloc_hook_on_end(void)
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
-        HILOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
+        PROFILER_LOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
         return false;
     }
     pthread_detach(threadEnd);
@@ -409,7 +409,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
     g_dataCounts += stackSize;
     if (g_mallocTimes % PRINT_INTERVAL == 0) {
-        HILOG_ERROR(LOG_CORE,
+        PROFILER_LOG_ERROR(LOG_CORE,
             "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
             g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
     }
@@ -733,7 +733,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
                 rawdata.tagId = GetTagId(holder, fileName);
             }
         } else {
-            HILOG_ERROR(LOG_CORE, "Set mmap fd linked file name failed!");
+            PROFILER_LOG_ERROR(LOG_CORE, "Set mmap fd linked file name failed!");
         }
     }
     if (!UpdateThreadName(holder)) {
@@ -824,7 +824,7 @@ int hook_prctl(int(*fn)(int, ...),
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if (strcpy_s(rawdata.name, PATH_MAX + 1, reinterpret_cast<char*>(arg5))) {
-            HILOG_ERROR(LOG_CORE, "Set tag name failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
         }
         if (holder != nullptr) {
             holder->SendStackWithPayload(&rawdata,

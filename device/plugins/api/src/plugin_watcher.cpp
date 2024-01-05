@@ -36,7 +36,7 @@ PluginWatcher::PluginWatcher(const PluginManagerPtr& pluginManager)
 {
     inotifyFd_ = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
     if (inotifyFd_ < 0) {
-        HILOG_INFO(LOG_CORE, "%s:inotify_init1 failed! inotifyFd_ : %d", __func__, inotifyFd_);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:inotify_init1 failed! inotifyFd_ : %d", __func__, inotifyFd_);
     } else {
         monitorThread_ = std::thread(&PluginWatcher::Monitor, this);
     }
@@ -61,7 +61,7 @@ bool PluginWatcher::ScanPlugins(const std::string& pluginDir)
     struct dirent* entry = nullptr;
     char fullpath[PATH_MAX + 1] = {0};
     realpath(pluginDir.c_str(), fullpath);
-    HILOG_INFO(LOG_CORE, "%s:scan plugin from directory %s", __func__, fullpath);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:scan plugin from directory %s", __func__, fullpath);
     dir = opendir(fullpath);
     if (dir == nullptr) {
         return false;
@@ -69,7 +69,7 @@ bool PluginWatcher::ScanPlugins(const std::string& pluginDir)
     while (true) {
         entry = readdir(dir);
         if (!entry) {
-            HILOG_INFO(LOG_CORE, "%s:readdir finish!", __func__);
+            PROFILER_LOG_INFO(LOG_CORE, "%s:readdir finish!", __func__);
             break;
         }
         std::string fileName = entry->d_name;
@@ -91,10 +91,10 @@ bool PluginWatcher::WatchPlugins(const std::string& pluginDir)
 
     int wd = inotify_add_watch(inotifyFd_, fullpath, IN_ALL_EVENTS);
     if (wd < 0) {
-        HILOG_INFO(LOG_CORE, "%s:inotify_add_watch add directory %s failed!", __func__, pluginDir.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "%s:inotify_add_watch add directory %s failed!", __func__, pluginDir.c_str());
         return false;
     }
-    HILOG_INFO(LOG_CORE, "%s:inotify_add_watch add directory %s success!", __func__, fullpath);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:inotify_add_watch add directory %s success!", __func__, fullpath);
     std::lock_guard<std::mutex> guard(mtx_);
     wdToDir_.insert(std::pair<int, std::string>(wd, std::string(fullpath)));
     return true;
@@ -137,7 +137,7 @@ bool PluginWatcher::MonitorIsSet()
         }
     }
     if (memset_s(buffer, sizeof(buffer), 0, sizeof(buffer)) != 0) {
-        HILOG_ERROR(LOG_CORE, "%s:memset_s error!", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:memset_s error!", __func__);
     }
     return true;
 }
@@ -171,12 +171,12 @@ void PluginWatcher::OnPluginAdded(const std::string& pluginPath)
     auto pluginManager = pluginManager_.lock();
     if (pluginManager != nullptr) {
         if (pluginManager->AddPlugin(pluginPath)) {
-            HILOG_INFO(LOG_CORE, "%s:plugin %s add success!", __func__, pluginPath.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "%s:plugin %s add success!", __func__, pluginPath.c_str());
         } else {
-            HILOG_INFO(LOG_CORE, "%s:pluginPath %s add failed!", __func__, pluginPath.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "%s:pluginPath %s add failed!", __func__, pluginPath.c_str());
         }
     } else {
-        HILOG_INFO(LOG_CORE, "%s:weak_ptr pluginManager lock failed!", __func__);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:weak_ptr pluginManager lock failed!", __func__);
     }
 }
 
@@ -185,11 +185,11 @@ void PluginWatcher::OnPluginRemoved(const std::string& pluginPath)
     auto pluginManager = pluginManager_.lock();
     if (pluginManager != nullptr) {
         if (pluginManager->RemovePlugin(pluginPath)) {
-            HILOG_INFO(LOG_CORE, "%s:pluginPath %s remove success!", __func__, pluginPath.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "%s:pluginPath %s remove success!", __func__, pluginPath.c_str());
         } else {
-            HILOG_INFO(LOG_CORE, "%s:pluginPath %s remove failed!", __func__, pluginPath.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "%s:pluginPath %s remove failed!", __func__, pluginPath.c_str());
         }
     } else {
-        HILOG_INFO(LOG_CORE, "%s:weak_ptr pluginManager lock failed!", __func__);
+        PROFILER_LOG_INFO(LOG_CORE, "%s:weak_ptr pluginManager lock failed!", __func__);
     }
 }

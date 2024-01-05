@@ -82,12 +82,12 @@ bool PluginStart(HilogPlugin& plugin, HilogConfig& config)
     std::vector<uint8_t> configData(size);
     int ret = config.SerializeToArray(configData.data(), configData.size());
     CHECK_TRUE(ret > 0, false, "HilogPluginTest: SerializeToArray fail!!!");
-    HILOG_INFO(LOG_CORE, "HilogPluginTest: SerializeToArray success");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPluginTest: SerializeToArray success");
 
     // start
     ret = plugin.Start(configData.data(), configData.size());
     CHECK_TRUE(ret == 0, false, "HilogPluginTest: start plugin fail!!!");
-    HILOG_INFO(LOG_CORE, "HilogPluginTest: Start success");
+    PROFILER_LOG_INFO(LOG_CORE, "HilogPluginTest: Start success");
 
     return true;
 }
@@ -101,7 +101,7 @@ bool RecordFileExist(std::string& file)
     nSeconds = time(nullptr);
     pTM = localtime(&nSeconds);
     if (snprintf_s(name, sizeof(name), sizeof(name) - 1, "%04d", pTM->tm_year + BASE_YEAR) < 0) {
-        HILOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
     }
     if (access(DEFAULT_RECORD_FILE.c_str(), F_OK) != 0) {
         return false;
@@ -111,7 +111,7 @@ bool RecordFileExist(std::string& file)
     char buff[BUF_MAX_LEN] = {0};
     std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(cmd.c_str(), "r"), pclose);
     if (!fp) {
-        HILOG_ERROR(LOG_CORE, "%s:: popen error", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:: popen error", __func__);
         return false;
     }
 
@@ -132,7 +132,7 @@ uint64_t GetSec(HilogPlugin& plugin, const char* data)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "GetSec: get time failed!, errno(%d:%s)", errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "GetSec: get time failed!, errno(%d:%s)", errno, buf);
         return 0;
     }
 
@@ -141,7 +141,7 @@ uint64_t GetSec(HilogPlugin& plugin, const char* data)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "GetSec: get localtime failed!, errno(%d:%s)", errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "GetSec: get localtime failed!, errno(%d:%s)", errno, buf);
         return 0;
     }
 
@@ -152,7 +152,7 @@ uint64_t GetSec(HilogPlugin& plugin, const char* data)
     long fixHour;
     CHECK_TRUE(plugin.StringToL(pTmp, fixHour), 0, "%s:strtol fixHour failed", __func__);
     if (static_cast<int>(fixHour) != tmTime.tm_hour) { // hours since midnight - [0, 23]
-        HILOG_INFO(LOG_CORE, "GetSec: hour(%d) <==> fix hour(%ld)!", tmTime.tm_hour, fixHour);
+        PROFILER_LOG_INFO(LOG_CORE, "GetSec: hour(%d) <==> fix hour(%ld)!", tmTime.tm_hour, fixHour);
         tmTime.tm_hour = fixHour;
     }
 

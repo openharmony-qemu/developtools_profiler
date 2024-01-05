@@ -15,7 +15,6 @@
 
 #include "symbols_file_test.h"
 #include <gtest/gtest.h>
-#include <hilog/log.h>
 #include <random>
 #include <unistd.h>
 

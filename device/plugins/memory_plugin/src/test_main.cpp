@@ -34,7 +34,7 @@ int main(int agrc, char* agrv[])
     for (int i = 1; i < agrc; i++) {
         size = atoi(agrv[i]);
         if (size <= 0) {
-            HILOG_INFO(LOG_CORE, "ready malloc size(%zu)Mb invalid", size);
+            PROFILER_LOG_INFO(LOG_CORE, "ready malloc size(%zu)Mb invalid", size);
             continue;
         }
         buf = (char *)malloc(size * MB_PER_BYTE);
@@ -42,7 +42,7 @@ int main(int agrc, char* agrv[])
             const int bufferSize = 256;
             char buffer[bufferSize] = { 0 };
             strerror_r(errno, buffer, bufferSize);
-            HILOG_ERROR(LOG_CORE, "malloc %zu fail, err(%s:%d)", size, buffer, errno);
+            PROFILER_LOG_ERROR(LOG_CORE, "malloc %zu fail, err(%s:%d)", size, buffer, errno);
             continue;
         }
         cache.emplace(cache.begin() + i - 1, buf);

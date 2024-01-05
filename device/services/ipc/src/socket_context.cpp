@@ -41,28 +41,28 @@ SocketContext::SocketContext()
 SocketContext::~SocketContext()
 {
     if (socketHandle_ >= 0) {
-        HILOG_ERROR(LOG_CORE, "SocketContext socketHandle_ = %d", socketHandle_);
+        PROFILER_LOG_ERROR(LOG_CORE, "SocketContext socketHandle_ = %d", socketHandle_);
 
         int ret = shutdown(socketHandle_, SHUT_RDWR);
         if (ret < 0) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "shutdown socket err = %d %s", errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "shutdown socket err = %d %s", errno, buf);
         }
         ret = close(socketHandle_);
         if (ret < 0) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "close socket err = %d %s", errno, buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "close socket err = %d %s", errno, buf);
         }
         socketHandle_ = -1;
     }
     if (recvThread_.joinable()) {
         recvThread_.join();
     }
-    HILOG_ERROR(LOG_CORE, "~SocketContext recvThread join success");
+    PROFILER_LOG_ERROR(LOG_CORE, "~SocketContext recvThread join success");
 }
 
 int SocketContext::RawProtocolProc(uint32_t pnum, const int8_t* buf, const uint32_t size)
@@ -107,12 +107,12 @@ void* SocketContext::UnixSocketRecv(void* pp)
     CHECK_TRUE(pssr->socketHandle_ != -1, nullptr, "UnixSocketRecv pssr->socketHandle_ ==-1");
     while (pssr->socketHandle_ >= 0) {
         if (!ReceiveData(pssr->socketHandle_, buf.data(), head_size)) {
-            HILOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
+            PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
             break;
         }
         if (pph->protoSize > bufferSize) {
             if (pph->protoSize > PROTO_SIZE_MAX) {
-                HILOG_ERROR(LOG_CORE, "buffer size out of range %d/%d", pph->protoSize, PROTO_SIZE_MAX);
+                PROFILER_LOG_ERROR(LOG_CORE, "buffer size out of range %d/%d", pph->protoSize, PROTO_SIZE_MAX);
                 break;
             }
             bufferSize = (pph->protoSize / MEMORY_BLOCK_UNIT + 1) * MEMORY_BLOCK_UNIT;
@@ -121,7 +121,7 @@ void* SocketContext::UnixSocketRecv(void* pp)
         }
 
         if (!ReceiveData(pssr->socketHandle_, buf.data() + head_size, pph->protoSize - head_size)) {
-            HILOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
+            PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
             break;
         }
         switch (pph->protoType & PROTOCOL_TYPE_FILTER) {
@@ -135,12 +135,12 @@ void* SocketContext::UnixSocketRecv(void* pp)
                 }
                 break;
             default:
-                HILOG_ERROR(LOG_CORE, "unknown protocol %d", pph->protoType);
+                PROFILER_LOG_ERROR(LOG_CORE, "unknown protocol %d", pph->protoType);
                 break;
         }
     }
     pssr->clientState_ = CLIENT_STAT_THREAD_EXITED;
-    HILOG_DEBUG(LOG_CORE, "UnixSocketRecv thread exit");
+    PROFILER_LOG_DEBUG(LOG_CORE, "UnixSocketRecv thread exit");
     return nullptr;
 }
 
@@ -226,7 +226,7 @@ bool SocketContext::SendFileDescriptor(int fd)
     char buf[CMSG_SPACE(1 * sizeof(int))] = {0};
     char data;
     if (memset_s(buf, sizeof(buf), 0, sizeof(buf)) != EOK) {
-        HILOG_ERROR(LOG_CORE, "memset_s error!");
+        PROFILER_LOG_ERROR(LOG_CORE, "memset_s error!");
     }
     struct iovec io = {.iov_base = &data, .iov_len = 1};
     msg.msg_iov = &io;
@@ -238,7 +238,7 @@ bool SocketContext::SendFileDescriptor(int fd)
     cmsg->cmsg_type = SCM_RIGHTS;
     cmsg->cmsg_len = CMSG_LEN(sizeof(int) * 1);
     if (memcpy_s(CMSG_DATA(cmsg), 1 * sizeof(int), &fd, 1 * sizeof(int)) != EOK) {
-        HILOG_ERROR(LOG_CORE, "memcpy_s error");
+        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s error");
     }
 
     CHECK_TRUE(sendmsg(socketHandle_, &msg, 0) != -1, false, "SendFileDescriptor FAIL");
