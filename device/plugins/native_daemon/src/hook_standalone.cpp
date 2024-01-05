@@ -80,7 +80,7 @@ void SetNativeHookConfig(const HookData& hookData)
         g_nativeConfig.response_library_mode()) {
         g_hookManager->SethookStandalone(true);
     }
-    HILOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());
 }
 
 bool StartHook(HookData& hookData)

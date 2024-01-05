@@ -37,28 +37,28 @@ HisyseventPlugin::HisyseventPlugin() : fp_(nullptr, nullptr) {}
 
 HisyseventPlugin::~HisyseventPlugin()
 {
-    HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     Stop();
-    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
 }
 
 int HisyseventPlugin::SetWriter(WriterStruct* writer)
 {
     resultWriter_ = writer;
 
-    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
     return 0;
 }
 
 int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
-    HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     CHECK_NOTNULL(configData, -1, "NOTE %s: param invalid", __func__);
 
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1,
                "NOTE HisyseventPlugin: ParseFromArray failed");
 
-    HILOG_DEBUG(LOG_CORE, "config sourse data:%s domain:%s event:%s", protoConfig_.msg().c_str(),
+    PROFILER_LOG_DEBUG(LOG_CORE, "config sourse data:%s domain:%s event:%s", protoConfig_.msg().c_str(),
         protoConfig_.subscribe_domain().c_str(), protoConfig_.subscribe_event().c_str());
 
     CHECK_TRUE(InitHisyseventCmd(), -1, "HisyseventPlugin: Init HisyseventCmd failed");
@@ -76,13 +76,13 @@ int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
     running_ = true;
     workThread_ = std::thread(&HisyseventPlugin::Run, this);
 
-    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
     return 0;
 }
 
 int HisyseventPlugin::Stop()
 {
-    HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     running_ = false;
     COMMON::CustomPUnblock(pipeFds_);
 
@@ -94,20 +94,21 @@ int HisyseventPlugin::Stop()
         fp_.reset();
     }
 
-    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
     return 0;
 }
 
 void HisyseventPlugin::Run(void)
 {
-    HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_STRING_LEN);
 
-    HILOG_INFO(LOG_CORE, "NOTE hisysevent_plugin_result.proto->HisyseventInfo:dataProto;Ready to output the result!");
+    PROFILER_LOG_INFO(LOG_CORE,
+                      "NOTE hisysevent_plugin_result.proto->HisyseventInfo:dataProto;Ready to output the result!");
 
     fcntl(fileno(fp_.get()), F_SETPIPE_SZ, PIPE_SIZE);
     int aPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
-    HILOG_INFO(LOG_CORE, "{fp = %d, aPipeSize=%d, PIPE_SIZE=%d}", fileno(fp_.get()), aPipeSize, PIPE_SIZE);
+    PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, aPipeSize=%d, PIPE_SIZE=%d}", fileno(fp_.get()), aPipeSize, PIPE_SIZE);
 
     std::unique_ptr<HisyseventInfo> dataProto = nullptr;
     std::unique_ptr<ProtoEncoder::HisyseventInfo> hisyseventInfo = nullptr;
@@ -153,7 +154,7 @@ void HisyseventPlugin::Run(void)
         hisyseventInfo.reset();
     }
 
-    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
 }
 
 std::string HisyseventPlugin::GetFullCmd()
@@ -172,9 +173,9 @@ std::string HisyseventPlugin::GetFullCmd()
 
 inline bool HisyseventPlugin::InitHisyseventCmd()
 {
-    HILOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
     if (!fullCmd_.empty()) {
-        HILOG_INFO(LOG_CORE, "fullCmd_ is dirty.Then clear().");
+        PROFILER_LOG_INFO(LOG_CORE, "fullCmd_ is dirty.Then clear().");
         fullCmd_.clear();
     }
 
@@ -190,7 +191,7 @@ inline bool HisyseventPlugin::InitHisyseventCmd()
         fullCmd_.emplace_back("-n");
         fullCmd_.emplace_back(protoConfig_.subscribe_event());
     }
-    HILOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
     return true;
 }
 
@@ -205,7 +206,7 @@ inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len
         info->set_context(data, strlen(data) - 1); // - \n
         id_++;
     } else {
-        HILOG_ERROR(LOG_CORE, "NOTE HisyseventPlugin: hisysevent context include invalid UTF-8 data");
+        PROFILER_LOG_ERROR(LOG_CORE, "NOTE HisyseventPlugin: hisysevent context include invalid UTF-8 data");
         return false;
     }
 

@@ -40,7 +40,7 @@ HookSocketClient::~HookSocketClient()
 {
     if (stackWriter_) {
         stackWriter_->Flush();
-        HILOG_INFO(LOG_CORE, "~HookSocketClient Flush()");
+        PROFILER_LOG_INFO(LOG_CORE, "~HookSocketClient Flush()");
     }
     unixSocketClient_ = nullptr;
     stackWriter_ = nullptr;
@@ -67,9 +67,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
-    HILOG_INFO(LOG_CORE, "recv hook client config:%s\n", configStr.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "recv hook client config:%s\n", configStr.c_str());
     sampler_->InitSampling(config_->sampleInterval);
-    HILOG_INFO(LOG_CORE, "%s sample interval %" PRIu64 "", __func__, sampler_->GetSampleInterval());
+    PROFILER_LOG_INFO(LOG_CORE, "%s sample interval %" PRIu64 "", __func__, sampler_->GetSampleInterval());
     smbFd_ = context.ReceiveFileDiscriptor();
     eventFd_ = context.ReceiveFileDiscriptor();
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);

@@ -36,12 +36,12 @@ public:
 
     SubEventParser()
     {
-        HILOG_INFO(LOG_CORE, "SubEventParser create!");
+        PROFILER_LOG_INFO(LOG_CORE, "SubEventParser create!");
     }
 
     ~SubEventParser()
     {
-        HILOG_INFO(LOG_CORE, "SubEventParser destroy!");
+        PROFILER_LOG_INFO(LOG_CORE, "SubEventParser destroy!");
     }
 
     static SubEventParser<T>& GetInstance()
@@ -59,7 +59,7 @@ public:
     {
         auto it = nameToFunctions_.find(format.eventName);
         if (it == nameToFunctions_.end()) {
-            HILOG_INFO(LOG_CORE, "SetupEvent: event(%s) is not supported", format.eventName.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "SetupEvent: event(%s) is not supported", format.eventName.c_str());
             return false;
         }
 

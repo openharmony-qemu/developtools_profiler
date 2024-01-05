@@ -28,7 +28,6 @@ public:
     double CompleteTime();
     double ResponseTime();
     double StartResponse(std::vector<std::string> v);
-    static std::string SlideFPS(std::vector<std::string> v);
     static std::string SlideFps(std::vector<std::string> v);
     double PageFps();
     std::string StartFrameFps(std::vector<std::string> v);
@@ -36,6 +35,7 @@ public:
     std::string GetFrame();
     std::string GetAppStartTime();
     std::string SlideList();
+    std::string TimeDelay();
 private:
     bool isOhTest = false;
     std::string result = "";

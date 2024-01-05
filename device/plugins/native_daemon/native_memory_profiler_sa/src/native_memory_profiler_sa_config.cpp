@@ -84,18 +84,20 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
 
 void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
-    HILOG_DEBUG(LOG_CORE, "pid: %d, filePath: %s, duration: %d, filterSize: %d, shareMemorySize: %d, processName: %s",
+    PROFILER_LOG_DEBUG(LOG_CORE,
+        "pid: %d, filePath: %s, duration: %d, filterSize: %d, shareMemorySize: %d, processName: %s",
         config->pid_, config->filePath_.c_str(), config->duration_, config->filterSize_, config->shareMemorySize_,
         config->processName_.c_str());
-    HILOG_DEBUG(LOG_CORE, "maxStackDepth: %d, mallocDisable: %d, mmapDisable: %d, freeStackData: %d," \
+    PROFILER_LOG_DEBUG(LOG_CORE, "maxStackDepth: %d, mallocDisable: %d, mmapDisable: %d, freeStackData: %d," \
         "munmapStackData: %d",
         config->maxStackDepth_, config->mallocDisable_, config->mmapDisable_, config->freeStackData_,
         config->munmapStackData_);
-    HILOG_DEBUG(LOG_CORE, "mallocFreeMatchingInterval: %d, mallocFreeMatchingCnt: %d, stringCompressed: %d," \
+    PROFILER_LOG_DEBUG(LOG_CORE, "mallocFreeMatchingInterval: %d, mallocFreeMatchingCnt: %d, stringCompressed: %d," \
         "fpUnwind: %d, blocked: %d, recordAccurately: %d",
         config->mallocFreeMatchingInterval_, config->mallocFreeMatchingCnt_, config->stringCompressed_,
         config->fpUnwind_, config->blocked_, config->recordAccurately_);
-    HILOG_DEBUG(LOG_CORE, "startupMode: %d, memtraceEnable: %d, offlineSymbolization: %d, callframeCompress: %d," \
+    PROFILER_LOG_DEBUG(LOG_CORE,
+        "startupMode: %d, memtraceEnable: %d, offlineSymbolization: %d, callframeCompress: %d," \
         "statisticsInterval: %d, clockId: %d",
         config->startupMode_, config->memtraceEnable_, config->offlineSymbolization_, config->callframeCompress_,
         config->statisticsInterval_, config->clockId_);

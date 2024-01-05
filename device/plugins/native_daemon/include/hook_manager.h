@@ -64,7 +64,7 @@ public:
         std::shared_ptr<StackPreprocess> stackPreprocess = nullptr;
         bool isRecordAccurately = false;
     };
-    HookManager();
+    HookManager() = default;
     bool RegisterAgentPlugin(const std::string& pluginPath);
     bool UnregisterAgentPlugin(const std::string& pluginPath);
 
@@ -118,6 +118,7 @@ private:
     FILE* fpHookData_ {nullptr};
     std::vector<std::shared_ptr<HookManagerCtx>> hookCtx_;
     bool isSaService_{false};
+    bool noDataQueue_{false};
 };
 }
 #endif // AGENT_MANAGER_H

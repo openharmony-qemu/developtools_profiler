@@ -34,21 +34,21 @@ protected:
         FILE* file = fopen(filePath.c_str(), "w");
         if (file == nullptr) {
             std::string errorMsg = GetErrorMsg();
-            HILOG_ERROR(LOG_CORE, "WriteFile: fopen() fail, %s, %s", filePath.c_str(), errorMsg.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "WriteFile: fopen() fail, %s, %s", filePath.c_str(), errorMsg.c_str());
             return false;
         }
 
         size_t len = fwrite(const_cast<char*>(fileContent.c_str()), 1, fileContent.length(), file);
         if (len < 0) {
             std::string errorMsg = GetErrorMsg();
-            HILOG_ERROR(LOG_CORE, "WriteFile: fwrite() fail, %s", errorMsg.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "WriteFile: fwrite() fail, %s", errorMsg.c_str());
             (void)fclose(file);
             return false;
         }
 
         if (fflush(file) == EOF) {
             std::string errorMsg = GetErrorMsg();
-            HILOG_ERROR(LOG_CORE, "WriteFile: fflush() error = %s", errorMsg.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "WriteFile: fflush() error = %s", errorMsg.c_str());
             (void)fclose(file);
             return false;
         }
@@ -56,7 +56,7 @@ protected:
         fsync(fileno(file));
         if (fclose(file) != 0) {
             std::string errorMsg = GetErrorMsg();
-            HILOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", errorMsg.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", errorMsg.c_str());
             return false;
         }
         return true;

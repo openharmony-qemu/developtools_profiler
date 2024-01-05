@@ -25,6 +25,10 @@ public:
     std::thread ThreadGetLayout();
     void InputEvent(const std::string &point);
     std::thread ThreadInputEvent(const std::string &point);
+    void GetHisysIdResponse();
+    std::thread ThreadGetHisysIdResponse();
+    void GetHisysIdComplete();
+    std::thread ThreadGetHisysIdComplete();
     void GetHisysId();
     std::thread ThreadGetHisysId();
     void ChangeToBackground();

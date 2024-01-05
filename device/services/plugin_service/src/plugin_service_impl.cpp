@@ -41,16 +41,16 @@ bool PluginServiceImpl::RegisterPlugin(SocketContext& context,
     int pluginId = pluginService->GetPluginIdByName(pluginInfo.name);
     if (pluginService->AddPluginInfo(pluginInfo)) {
         if (pluginId != 0) { // update plugin not need reply response
-            HILOG_DEBUG(LOG_CORE, "UpdatePlugin OK");
+            PROFILER_LOG_DEBUG(LOG_CORE, "UpdatePlugin OK");
             return false;
         }
         response.set_status(ResponseStatus::OK);
         response.set_plugin_id(pluginService->GetPluginIdByName(pluginInfo.name));
-        HILOG_DEBUG(LOG_CORE, "RegisterPlugin OK");
+        PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin OK");
         return true;
     }
     response.set_status(ResponseStatus::ERR);
-    HILOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL");
+    PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL");
     return false;
 }
 bool PluginServiceImpl::UnregisterPlugin(SocketContext& context,
@@ -62,11 +62,11 @@ bool PluginServiceImpl::UnregisterPlugin(SocketContext& context,
 
     if (pluginService->RemovePluginInfo(pluginInfo)) {
         response.set_status(ResponseStatus::OK);
-        HILOG_DEBUG(LOG_CORE, "UnregisterPlugin OK");
+        PROFILER_LOG_DEBUG(LOG_CORE, "UnregisterPlugin OK");
         return true;
     }
     response.set_status(ResponseStatus::ERR);
-    HILOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL");
+    PROFILER_LOG_DEBUG(LOG_CORE, "UnregisterPlugin FAIL");
     return false;
 }
 
@@ -79,7 +79,7 @@ bool PluginServiceImpl::NotifyResult(SocketContext& context,
                                      ::NotifyResultRequest& request,
                                      ::NotifyResultResponse& response)
 {
-    HILOG_DEBUG(LOG_CORE, "NotifyResult");
+    PROFILER_LOG_DEBUG(LOG_CORE, "NotifyResult");
     if (pluginService->AppendResult(request)) {
         response.set_status(ResponseStatus::OK);
         return true;

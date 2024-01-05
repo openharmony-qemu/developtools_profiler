@@ -39,7 +39,7 @@ using PluginContextPtr = std::shared_ptr<PluginContext>;
 #define CHECK_POINTER_NOTNULL(ptr, errorMessage)                              \
     do {                                                                      \
         if ((ptr) == nullptr) {                                                 \
-            HILOG_ERROR(LOG_CORE, "%s: FAILED, %s is null!", __func__, #ptr); \
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: FAILED, %s is null!", __func__, #ptr); \
             return {StatusCode::INTERNAL, errorMessage};                      \
         }                                                                     \
     } while (0)
@@ -47,7 +47,7 @@ using PluginContextPtr = std::shared_ptr<PluginContext>;
 #define CHECK_EXPRESSION_TRUE(expr, errorMessage)                            \
     do {                                                                     \
         if (!(expr)) {                                                       \
-            HILOG_ERROR(LOG_CORE, "%s: FAILED, %s", __func__, errorMessage); \
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: FAILED, %s", __func__, errorMessage); \
             return {StatusCode::INTERNAL, (errorMessage)};                   \
         }                                                                    \
     } while (0)
@@ -68,7 +68,7 @@ ProfilerService::~ProfilerService() {}
 
 ProfilerService::SessionContext::~SessionContext()
 {
-    HILOG_INFO(LOG_CORE, "~SessionContext id = %d", id);
+    PROFILER_LOG_INFO(LOG_CORE, "~SessionContext id = %d", id);
     if (offlineScheduleTaskFd != -1) {
         stopExpireTask.UnscheduleTask(offlineScheduleTaskFd);
     }
@@ -81,16 +81,16 @@ Status ProfilerService::GetCapabilities(ServerContext* context,
                                         ::GetCapabilitiesResponse* response)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-    HILOG_INFO(LOG_CORE, "GetCapabilities from '%s'", context->peer().c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "GetCapabilities from '%s'", context->peer().c_str());
 
-    HILOG_INFO(LOG_CORE, "GetCapabilities %d start", request->request_id());
+    PROFILER_LOG_INFO(LOG_CORE, "GetCapabilities %d start", request->request_id());
     std::vector<ProfilerPluginCapability> capabilities = ProfilerCapabilityManager::GetInstance().GetCapabilities();
 
     response->set_status(StatusCode::OK);
     for (size_t i = 0; i < capabilities.size(); i++) {
         *response->add_capabilities() = capabilities[i];
     }
-    HILOG_INFO(LOG_CORE, "GetCapabilities %d done!", request->request_id());
+    PROFILER_LOG_INFO(LOG_CORE, "GetCapabilities %d done!", request->request_id());
     return Status::OK;
 }
 
@@ -240,7 +240,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     CHECK_REQUEST_RESPONSE(context, request, response);
     CHECK_POINTER_NOTNULL(pluginService_, "plugin service not ready!");
     // check plugin configs
-    HILOG_INFO(LOG_CORE, "CreateSession %d start", request->request_id());
+    PROFILER_LOG_INFO(LOG_CORE, "CreateSession %d start", request->request_id());
     const int nConfigs = request->plugin_configs_size();
     CHECK_EXPRESSION_TRUE(nConfigs > 0, "no plugin configs!");
 
@@ -258,7 +258,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     }
 
     if (pluginConfigs.empty()) {
-        HILOG_ERROR(LOG_CORE, "No plugins are loaded!");
+        PROFILER_LOG_ERROR(LOG_CORE, "No plugins are loaded!");
         return Status(StatusCode::PERMISSION_DENIED, "");
     }
     // copy buffer configs
@@ -270,7 +270,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
         // if more than one buffer config provided, the number of buffer configs must equals number of plugin configs
         bufferConfigs.assign(sessionConfig->buffers().begin(), sessionConfig->buffers().end());
     }
-    HILOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
+    PROFILER_LOG_INFO(LOG_CORE, "bufferConfigs: %zu", bufferConfigs.size());
     std::vector<std::string> pluginNames;
     std::transform(pluginConfigs.begin(), pluginConfigs.end(), std::back_inserter(pluginNames),
                    [](ProfilerPluginConfig& config) { return config.name(); });
@@ -295,7 +295,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
             pluginData.set_data(pluginConfigs[i].config_data());
             std::vector<char> msgData(pluginData.ByteSizeLong());
             if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
-                HILOG_WARN(LOG_CORE, "PluginConfig SerializeToArray failed!");
+                PROFILER_LOG_WARN(LOG_CORE, "PluginConfig SerializeToArray failed!");
             }
             traceWriter->SetPluginConfig(msgData.data(), msgData.size());
         }
@@ -345,7 +345,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     response->set_status(0);
     response->set_session_id(sessionId);
 
-    HILOG_INFO(LOG_CORE, "CreateSession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "CreateSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;
 }
 
@@ -374,7 +374,7 @@ bool ProfilerService::RemoveSessionContext(uint32_t sessionId)
     auto it = sessionContext_.find(sessionId);
     if (it != sessionContext_.end()) {
         auto ptr = it->second;
-        HILOG_INFO(LOG_CORE, "DelCtx use_count: %ld", ptr.use_count());
+        PROFILER_LOG_INFO(LOG_CORE, "DelCtx use_count: %ld", ptr.use_count());
         sessionContext_.erase(it);
         return true;
     }
@@ -385,21 +385,22 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
     const std::string& outputFile, const std::string& pluginVersion)
 {
     if (pluginName.empty() || outputFile.empty()) {
-        HILOG_ERROR(LOG_CORE, "pluginName(%s) didn't set output file(%s)", pluginName.c_str(), outputFile.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "pluginName(%s) didn't set output file(%s)",
+                           pluginName.c_str(), outputFile.c_str());
         return;
     }
 
     std::ifstream fsFile {}; // read from output file
     fsFile.open(outputFile, std::ios_base::in | std::ios_base::binary);
     if (!fsFile.good()) {
-        HILOG_ERROR(LOG_CORE, "open file(%s) failed: %d", outputFile.c_str(), fsFile.rdstate());
+        PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", outputFile.c_str(), fsFile.rdstate());
         return;
     }
 
     std::ofstream fsTarget {}; // write to profiler ouput file
     fsTarget.open(resultFile, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     if (!fsTarget.good()) {
-        HILOG_ERROR(LOG_CORE, "open file(%s) failed: %d", resultFile.c_str(), fsTarget.rdstate());
+        PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", resultFile.c_str(), fsTarget.rdstate());
         return;
     }
     fsTarget.seekp(0, std::ios_base::end);
@@ -417,18 +418,18 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
     size_t pluginSize = sizeof(header.data_.standalonePluginName);
     int ret = strncpy_s(header.data_.standalonePluginName, pluginSize, pluginName.c_str(), pluginSize - 1);
     if (ret != EOK) {
-        HILOG_ERROR(LOG_CORE, "strncpy_s error! pluginName is %s", pluginName.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error! pluginName is %s", pluginName.c_str());
         return;
     }
     pluginSize = sizeof(header.data_.pluginVersion);
     ret = strncpy_s(header.data_.pluginVersion, pluginSize, pluginVersion.c_str(), pluginSize - 1);
     if (ret != EOK) {
-        HILOG_ERROR(LOG_CORE, "strncpy_s error! pluginVersion is %s", pluginVersion.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error! pluginVersion is %s", pluginVersion.c_str());
         return;
     }
     fsTarget.write(reinterpret_cast<char*>(&header), sizeof(header));
     if (!fsTarget.good()) {
-        HILOG_ERROR(LOG_CORE, "write file(%s) header failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
+        PROFILER_LOG_ERROR(LOG_CORE, "write file(%s) header failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
         return;
     }
 
@@ -442,7 +443,7 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
         fsFile.read(buf.data(), readSize);
         fsTarget.write(buf.data(), readSize);
         if (!fsTarget.good()) {
-            HILOG_ERROR(LOG_CORE, "write file(%s) failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
+            PROFILER_LOG_ERROR(LOG_CORE, "write file(%s) failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
             return;
         }
         fileSize -= readSize;
@@ -456,7 +457,7 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
     fsFile.close();
     fsTarget.close();
 
-    HILOG_INFO(LOG_CORE, "write standalone(%s) to result(%s) done", outputFile.c_str(), resultFile.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "write standalone(%s) to result(%s) done", outputFile.c_str(), resultFile.c_str());
 }
 
 Status ProfilerService::StartSession(ServerContext* context,
@@ -466,13 +467,13 @@ Status ProfilerService::StartSession(ServerContext* context,
     CHECK_REQUEST_RESPONSE(context, request, response);
 
     uint32_t sessionId = request->session_id();
-    HILOG_INFO(LOG_CORE, "StartSession %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "StartSession %d %u start", request->request_id(), sessionId);
 
     // copy plugin configs from request
     std::vector<ProfilerPluginConfig> newPluginConfigs;
     newPluginConfigs.reserve(request->update_configs_size());
     for (int i = 0; i < request->update_configs_size(); i++) {
-        HILOG_INFO(LOG_CORE, "update_configs %d, name = %s", i, request->update_configs(i).name().c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "update_configs %d, name = %s", i, request->update_configs(i).name().c_str());
         newPluginConfigs.push_back(request->update_configs(i));
     }
 
@@ -502,12 +503,12 @@ Status ProfilerService::StartSession(ServerContext* context,
 
         // re-create plugin sessions
         CHECK_EXPRESSION_TRUE(ctx->CreatePluginSessions(), "refresh sessions failed!");
-        HILOG_INFO(LOG_CORE, "StartSession %zu plugin config updated!", updates);
+        PROFILER_LOG_INFO(LOG_CORE, "StartSession %zu plugin config updated!", updates);
     }
 
     // start plugin sessions with configs
     CHECK_EXPRESSION_TRUE(ctx->StartPluginSessions(), "start plugin sessions failed!");
-    HILOG_INFO(LOG_CORE, "StartSession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "StartSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;
 }
 
@@ -523,7 +524,7 @@ Status ProfilerService::FetchData(ServerContext* context,
     CHECK_POINTER_NOTNULL(writer, "writer invalid!");
 
     uint32_t sessionId = request->session_id();
-    HILOG_INFO(LOG_CORE, "FetchData %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "FetchData %d %u start", request->request_id(), sessionId);
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
@@ -556,18 +557,18 @@ Status ProfilerService::FetchData(ServerContext* context,
                 }
             } else {
                 response.set_has_more(false);
-                HILOG_INFO(LOG_CORE, "no more data need to fill to response!");
+                PROFILER_LOG_INFO(LOG_CORE, "no more data need to fill to response!");
             }
 
             bool sendSuccess = writer->Write(response);
             if (count <= 0 || !sendSuccess) {
-                HILOG_INFO(LOG_CORE, "count = %d, sendSuccess = %d", count, sendSuccess);
+                PROFILER_LOG_INFO(LOG_CORE, "count = %d, sendSuccess = %d", count, sendSuccess);
                 break;
             }
         }
     }
 
-    HILOG_INFO(LOG_CORE, "FetchData %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "FetchData %d %u done!", request->request_id(), sessionId);
     return Status::OK;
 }
 
@@ -577,7 +578,7 @@ Status ProfilerService::StopSession(ServerContext* context,
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
     uint32_t sessionId = request->session_id();
-    HILOG_INFO(LOG_CORE, "StopSession %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u start", request->request_id(), sessionId);
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
@@ -586,7 +587,7 @@ Status ProfilerService::StopSession(ServerContext* context,
         ctx->traceFileWriter.get()->SetStopSplitFile(true);
     }
     CHECK_EXPRESSION_TRUE(ctx->StopPluginSessions(), "stop plugin sessions failed!");
-    HILOG_INFO(LOG_CORE, "StopSession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;
 }
 
@@ -597,7 +598,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
     CHECK_REQUEST_RESPONSE(context, request, response);
 
     uint32_t sessionId = request->session_id();
-    HILOG_INFO(LOG_CORE, "DestroySession %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "DestroySession %d %u start", request->request_id(), sessionId);
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
@@ -605,7 +606,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
     CHECK_EXPRESSION_TRUE(RemoveSessionContext(sessionId), "remove session FAILED!");
     CHECK_EXPRESSION_TRUE(pluginSessionManager_->RemovePluginSessions(ctx->pluginNames),
                           "remove plugin session FAILED!");
-    HILOG_INFO(LOG_CORE, "DestroySession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "DestroySession %d %u done!", request->request_id(), sessionId);
 
     if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         uint32_t pluginId = 0;
@@ -631,7 +632,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
     uint32_t sessionId = request->session_id();
-    HILOG_INFO(LOG_CORE, "KeepSession %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "KeepSession %d %u start", request->request_id(), sessionId);
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
@@ -648,7 +649,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
         ctx->StopSessionExpireTask(removeTask_);
         ctx->StartSessionExpireTask(removeTask_);
     }
-    HILOG_INFO(LOG_CORE, "KeepSession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "KeepSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;
 }
 
@@ -660,9 +661,9 @@ public:
     {
         const char* method = info_->method();
         if (methods->QueryInterceptionHookPoint(experimental::InterceptionHookPoints::POST_SEND_MESSAGE)) {
-            HILOG_DEBUG(LOG_CORE, "POST_SEND_MESSAGE method: %s", method);
+            PROFILER_LOG_DEBUG(LOG_CORE, "POST_SEND_MESSAGE method: %s", method);
         } else if (methods->QueryInterceptionHookPoint(experimental::InterceptionHookPoints::POST_RECV_MESSAGE)) {
-            HILOG_DEBUG(LOG_CORE, "POST_RECV_MESSAGE method: %s", method);
+            PROFILER_LOG_DEBUG(LOG_CORE, "POST_RECV_MESSAGE method: %s", method);
         }
         methods->Proceed();
     }
@@ -689,7 +690,7 @@ bool ProfilerService::StartService(const std::string& listenUri)
 
     auto server = builder.BuildAndStart();
     CHECK_NOTNULL(server, false, "start service failed!");
-    HILOG_INFO(LOG_CORE, "Service started successfully.");
+    PROFILER_LOG_INFO(LOG_CORE, "Service started successfully.");
     server_ = std::move(server);
     return true;
 }
@@ -697,9 +698,9 @@ bool ProfilerService::StartService(const std::string& listenUri)
 void ProfilerService::WaitServiceDone()
 {
     if (server_) {
-        HILOG_INFO(LOG_CORE, "waiting Server...");
+        PROFILER_LOG_INFO(LOG_CORE, "waiting Server...");
         server_->Wait();
-        HILOG_INFO(LOG_CORE, "Server done!");
+        PROFILER_LOG_INFO(LOG_CORE, "Server done!");
     }
 }
 
@@ -707,6 +708,6 @@ void ProfilerService::StopService()
 {
     if (server_) {
         server_->Shutdown();
-        HILOG_INFO(LOG_CORE, "Server stop done!");
+        PROFILER_LOG_INFO(LOG_CORE, "Server stop done!");
     }
 }

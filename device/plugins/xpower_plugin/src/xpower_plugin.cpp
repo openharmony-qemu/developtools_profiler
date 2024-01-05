@@ -49,14 +49,14 @@ XpowerPlugin::~XpowerPlugin()
 
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 {
-    HILOG_INFO(LOG_CORE, "%s:config data -->configSize=%d", __func__, configSize);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:config data -->configSize=%d", __func__, configSize);
     CHECK_TRUE(configData != nullptr, -1, "XpowerPlugin error: param invalid!!!");
     // 反序列化
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
     uint32_t messageType = static_cast<uint32_t>(OptimizeMessageType::MESSAGE_OPTIMIZE_STOP);
     std::string bundleName = protoConfig_.bundle_name();
     if (bundleName.empty()) {
-        HILOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
+        PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
         return -1;
     }
     // Get message type
@@ -66,14 +66,14 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
             messageType |= mesType;
         }
     }
-    HILOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
+    PROFILER_LOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
     if ((messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0 ||
         (messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0 ||
         (messageType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
         // check bundleName
         int32_t uid = COMMON::GetPackageUid(bundleName);
         if (uid < AID_HAP_START || uid > AID_HAP_END) {
-            HILOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
             return -1;
         }
     }
@@ -81,16 +81,16 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         int processId = -1;
         bool isExsit = COMMON::IsProcessExist(bundleName, processId);
         if (!isExsit) {
-            HILOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
             return -1;
         }
     }
     // 加载对应so 库文件
     if (!StartPowerManager(messageType, bundleName)) {
-        HILOG_ERROR(LOG_CORE, "start power manager failed!");
+        PROFILER_LOG_ERROR(LOG_CORE, "start power manager failed!");
         return -1;
     }
-    HILOG_INFO(LOG_CORE, "finish register the callback function:%s", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "finish register the callback function:%s", __func__);
     return 0;
 }
 
@@ -100,13 +100,13 @@ bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bun
         powerClientHandle_ = dlopen("/system/lib64/libxpower_manager_client.z.so", RTLD_LAZY);
     }
     if (powerClientHandle_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "%s :fail to open libxpower_manager_client.z.so", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s :fail to open libxpower_manager_client.z.so", __func__);
         return false;
     }
     // 注册回调
     StartOptimizeMode startOptimizeMode = (StartOptimizeMode)dlsym(powerClientHandle_, "StartOptimizeC");
     if (startOptimizeMode == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Failed to dlsy startOptimizeMode");
+        PROFILER_LOG_ERROR(LOG_CORE, "Failed to dlsy startOptimizeMode");
         return false;
     }
     config_.messageType = messageType;
@@ -115,7 +115,7 @@ bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bun
                                  std::placeholders::_3);
     listenerHandle_ = startOptimizeMode(config_);
     if (listenerHandle_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Failed to startOptimizeMode");
+        PROFILER_LOG_ERROR(LOG_CORE, "Failed to startOptimizeMode");
         return false;
     }
     dataQueuePtr_ = std::make_shared<PowerMessageQueue>(MAX_QUEUE_SIZE);
@@ -125,7 +125,7 @@ bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bun
 void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8_t *protoData, size_t protoSize)
 {
     if (protoData == nullptr || protoSize <= 0) {
-        HILOG_ERROR(LOG_CORE, "the power message is invalid !");
+        PROFILER_LOG_ERROR(LOG_CORE, "the power message is invalid !");
         return;
     }
     // write protoData to file
@@ -134,14 +134,14 @@ void XpowerPlugin::OptimizeCallback(const std::uint32_t messageType, const uint8
         resultWriter_->flush(resultWriter_);
     }
     if (dataQueuePtr_->Size() >= MAX_QUEUE_SIZE) {
-        HILOG_ERROR(LOG_CORE, "The buffer queue is full,discard message");
+        PROFILER_LOG_ERROR(LOG_CORE, "The buffer queue is full,discard message");
         return;
     }
     // 拷贝
     auto rawData = std::make_shared<PowerOptimizeData>();
     rawData->baseData = std::make_unique<uint8_t[]>(protoSize);
     if (memcpy_s(rawData->baseData.get(), protoSize, protoData, protoSize) != EOK) {
-        HILOG_ERROR(LOG_CORE, "memcpy_s raw powerdata failed!");
+        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s raw powerdata failed!");
         return;
     }
     rawData->length = protoSize;
@@ -156,11 +156,11 @@ int XpowerPlugin::Report(uint8_t *data, uint32_t dataSize)
     }
     std::shared_ptr<PowerOptimizeData> result = nullptr;
     if (!dataQueuePtr_->WaitAndPop(result, std::chrono::milliseconds(WAIT_DURATION))) {
-        HILOG_ERROR(LOG_CORE, "fetch data error!");
+        PROFILER_LOG_ERROR(LOG_CORE, "fetch data error!");
         return 0;
     }
     if (result == nullptr) {
-        HILOG_ERROR(LOG_CORE, "fetch data error!");
+        PROFILER_LOG_ERROR(LOG_CORE, "fetch data error!");
         return 0;
     }
     if (result->length > dataSize) {
@@ -177,15 +177,15 @@ void XpowerPlugin::SetWriter(WriterStruct *writer)
 
 int XpowerPlugin::Stop()
 {
-    HILOG_INFO(LOG_CORE, "%s:begin to stop xpower plugin", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:begin to stop xpower plugin", __func__);
     StopOptimizeMode stopOptimizeMode = (StopOptimizeMode)dlsym(powerClientHandle_, "StopOptimizeC");
     if (stopOptimizeMode == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Faile to dlsym StopOptimizeC");
+        PROFILER_LOG_ERROR(LOG_CORE, "Faile to dlsym StopOptimizeC");
         return -1;
     }
     if (listenerHandle_ != nullptr) {
         stopOptimizeMode(listenerHandle_);
-        HILOG_INFO(LOG_CORE, "stop xpower plugin callback");
+        PROFILER_LOG_INFO(LOG_CORE, "stop xpower plugin callback");
     }
     dataQueuePtr_->ShutDown();
     return 0;

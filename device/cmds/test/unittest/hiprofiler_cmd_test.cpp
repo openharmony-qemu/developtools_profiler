@@ -106,7 +106,7 @@ public:
         size_t nbytes = 0;
 
         if ((strlen(path.c_str()) >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
-            HILOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
             return "";
         }
         FILE* file = fopen(realPath, "rb");
@@ -131,7 +131,7 @@ public:
             result.push_back(HEX_CHARS[LHB(out[i])]);
         }
 
-        HILOG_DEBUG(LOG_CORE, "%s:%s-(%s)", __func__, path.c_str(), result.c_str());
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:%s-(%s)", __func__, path.c_str(), result.c_str());
         return result;
     }
 
@@ -173,7 +173,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "CreateConfigFile: fopen() error = %s", buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "CreateConfigFile: fopen() error = %s", buf);
             return;
         }
 
@@ -182,9 +182,9 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "CreateConfigFile: fwrite() error = %s", buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "CreateConfigFile: fwrite() error = %s", buf);
             if (fclose(writeFp) != 0) {
-                HILOG_ERROR(LOG_CORE, "fclose() error");
+                PROFILER_LOG_ERROR(LOG_CORE, "fclose() error");
             }
             return;
         }
@@ -194,9 +194,9 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "CreateConfigFile: fflush() error = %s", buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "CreateConfigFile: fflush() error = %s", buf);
             if (fclose(writeFp) != 0) {
-                HILOG_ERROR(LOG_CORE, "fclose() error");
+                PROFILER_LOG_ERROR(LOG_CORE, "fclose() error");
             }
             return;
         }
@@ -207,7 +207,7 @@ public:
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
-            HILOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", buf);
+            PROFILER_LOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", buf);
             return;
         }
     }
@@ -467,17 +467,17 @@ public:
     {
         int pid = -1;
         std::string findpid = "pidof " + processName;
-        HILOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
 
         char line[LINE_SIZE];
         do {
             if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
-                HILOG_INFO(LOG_CORE, "not find processName : %s", processName.c_str());
+                PROFILER_LOG_INFO(LOG_CORE, "not find processName : %s", processName.c_str());
                 return;
             } else if (strlen(line) > 0 && isdigit(static_cast<unsigned char>(line[0]))) {
                 pid = atoi(line);
-                HILOG_INFO(LOG_CORE, "find processName : %s, pid: %d", processName.c_str(), pid);
+                PROFILER_LOG_INFO(LOG_CORE, "find processName : %s, pid: %d", processName.c_str(), pid);
                 break;
             }
         } while (1);

@@ -69,6 +69,10 @@ constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
 constexpr int FD_PATH_LENGTH = 64;
 constexpr int MIN_SAMPLER_INTERVAL = 1;
+constexpr int FIRST_HASH = 16;
+constexpr int SECOND_HASH = 13;
+constexpr int THRESHOLD = 256;
+constexpr int DIVIDE_VAL = 32;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
@@ -76,6 +80,37 @@ constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
+constexpr int MAX_BITPOOL_SIZE = 100 * 1024;
+struct Bitpool {
+    std::atomic<uint32_t> slot;
+};
+Bitpool g_addressChecker[MAX_BITPOOL_SIZE] = {{0}};
+
+inline static uint32_t AddrHash(uint32_t h)
+{
+    h ^= h >> FIRST_HASH;
+    h *= 0x85ebca6b;
+    h ^= h >> SECOND_HASH;
+    h *= 0xc2b2ae35;
+    h ^= h >> FIRST_HASH;
+    return h;
+}
+
+inline void Addr2Bitpool(void* addr)
+{
+    uint32_t val = AddrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
+    g_addressChecker[val / DIVIDE_VAL].slot |= (0x1 << (val % DIVIDE_VAL));
+}
+
+inline bool IsAddrExist(void* addr)
+{
+    uint32_t val = AddrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
+    if (g_addressChecker[val / DIVIDE_VAL].slot.load() & (0x1 << (val % DIVIDE_VAL))) {
+        return true;
+    }
+    return false;
+}
+
 const MallocDispatchType* GetDispatch()
 {
     return g_dispatch.load(std::memory_order_relaxed);
@@ -148,7 +183,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
         ret = client->SendStackWithPayload(&tnameData,
                                            sizeof(BaseStackRawData) + strlen(tnameData.name) + 1, nullptr, 0);
         if (!ret) {
-            HILOG_DEBUG(LOG_CORE, "Send thread name failed!");
+            PROFILER_LOG_DEBUG(LOG_CORE, "Send thread name failed!");
             return ret;
         }
     }
@@ -179,7 +214,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
         if (strcpy_s(tagData.name, PATH_MAX + 1, tagName) != 0) {
-            HILOG_ERROR(LOG_CORE, "Set tag name failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
         }
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
@@ -198,7 +233,7 @@ bool ohos_malloc_hook_on_start(void)
     g_hookPid = GetRealPid();
     g_mallocTimes = 0;
     if (g_hookClient != nullptr) {
-        HILOG_INFO(LOG_CORE, "hook already started");
+        PROFILER_LOG_INFO(LOG_CORE, "hook already started");
         return true;
     } else {
         g_ClientConfig.Reset();
@@ -211,7 +246,7 @@ bool ohos_malloc_hook_on_start(void)
     pthread_setspecific(g_hookTid, nullptr);
     pthread_key_create(&g_updateThreadNameCount, nullptr);
     pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
-    HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
@@ -223,8 +258,8 @@ bool ohos_malloc_hook_on_start(void)
             g_maxSize = max > 0 ? max : INT_MAX;
             g_ClientConfig.filterSize = min > 0 ? min : 0;
         }
-        HILOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
-                   paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
+        PROFILER_LOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
+                          paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
     }
     return true;
 }
@@ -237,7 +272,7 @@ void* ohos_release_on_end(void*)
     pthread_key_delete(g_hookTid);
     pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
-    HILOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     struct mallinfo2 miFinal = mallinfo2();
     COMMON::PrintMallinfoLog("after hook(byte) => ", miFinal);
@@ -251,7 +286,7 @@ bool ohos_malloc_hook_on_end(void)
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
-        HILOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
+        PROFILER_LOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
         return false;
     }
     pthread_detach(threadEnd);
@@ -359,6 +394,9 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        Addr2Bitpool(ret);
+    }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
         realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
@@ -373,7 +411,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
     g_dataCounts += stackSize;
     if (g_mallocTimes % PRINT_INTERVAL == 0) {
-        HILOG_ERROR(LOG_CORE,
+        PROFILER_LOG_ERROR(LOG_CORE,
             "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
             g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
     }
@@ -433,6 +471,9 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        Addr2Bitpool(pRet);
+    }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
     auto holder = weakClient.lock();
     if (holder != nullptr) {
@@ -509,6 +550,9 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        Addr2Bitpool(pRet);
+    }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
     auto holder = weakClient.lock();
     if (holder != nullptr) {
@@ -546,6 +590,20 @@ void hook_free(void (*free_func)(void*), void* p)
         free_func(p);
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+        return;
+    }
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        if (!IsAddrExist(p)) {
+            return;
+        }
+    }
+    if (g_ClientConfig.freeEventOnlyAddrEnable) {
+        uint64_t addr = reinterpret_cast<uint64_t>(p);
+        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+        auto holder = weakClient.lock();
+        if (holder != nullptr) {
+            holder->SendStackWithPayload(&addr, sizeof(addr), nullptr, 0);
+        }
         return;
     }
     StackRawData rawdata = {{{{0}}}};
@@ -677,7 +735,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
                 rawdata.tagId = GetTagId(holder, fileName);
             }
         } else {
-            HILOG_ERROR(LOG_CORE, "Set mmap fd linked file name failed!");
+            PROFILER_LOG_ERROR(LOG_CORE, "Set mmap fd linked file name failed!");
         }
     }
     if (!UpdateThreadName(holder)) {
@@ -768,7 +826,7 @@ int hook_prctl(int(*fn)(int, ...),
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if (strcpy_s(rawdata.name, PATH_MAX + 1, reinterpret_cast<char*>(arg5))) {
-            HILOG_ERROR(LOG_CORE, "Set tag name failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
         }
         if (holder != nullptr) {
             holder->SendStackWithPayload(&rawdata,

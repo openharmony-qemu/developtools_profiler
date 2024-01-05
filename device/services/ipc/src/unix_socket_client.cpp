@@ -32,7 +32,7 @@ UnixSocketClient::~UnixSocketClient() {}
 
 bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceBase)
 {
-    HILOG_ERROR(LOG_CORE, "UnixSocketClient connect");
+    PROFILER_LOG_ERROR(LOG_CORE, "UnixSocketClient connect");
     CHECK_TRUE(socketHandle_ == -1, false, "socketHandle_ != -1 Already Connected");
 
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -40,11 +40,11 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
 
     struct sockaddr_un addr;
     if (memset_s(&addr, sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un)) != EOK) {
-        HILOG_ERROR(LOG_CORE, "memset_s error!");
+        PROFILER_LOG_ERROR(LOG_CORE, "memset_s error!");
     }
     addr.sun_family = AF_UNIX;
     if (strncpy_s(addr.sun_path, sizeof(addr.sun_path), addrname.c_str(), sizeof(addr.sun_path) - 1) != EOK) {
-        HILOG_ERROR(LOG_CORE, "strncpy_s error!");
+        PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error!");
     }
 
     CHECK_TRUE(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) != -1, close(sock) != 0,
@@ -54,7 +54,7 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
     struct RawPointToService rrs;
     if (strncpy_s(rrs.serviceName_, sizeof(rrs.serviceName_),
         serviceBase_->serviceName_.c_str(), serviceBase_->serviceName_.size()) != EOK) {
-        HILOG_ERROR(LOG_CORE, "strncpy_s error!");
+        PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error!");
     }
     rrs.serviceName_[serviceBase_->serviceName_.size()] = 0;
     CHECK_TRUE(

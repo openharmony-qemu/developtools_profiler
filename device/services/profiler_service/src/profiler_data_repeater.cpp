@@ -53,7 +53,8 @@ bool ProfilerDataRepeater::PutPluginData(const ProfilerPluginDataPtr& pluginData
     std::unique_lock<std::mutex> lock(mutex_);
 
     if ((pluginData == nullptr) && (dataQueue_.size() > 0)) {
-        HILOG_INFO(LOG_CORE, "no need put nullptr if queue has data, dataQueue_.size() = %zu", dataQueue_.size());
+        PROFILER_LOG_INFO(LOG_CORE, "no need put nullptr if queue has data, dataQueue_.size() = %zu",
+                          dataQueue_.size());
         return true;
     }
 

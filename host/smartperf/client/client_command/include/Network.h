@@ -26,12 +26,21 @@ public:
         static Network instance;
         return instance;
     }
-    std::map<std::string, std::string> GetNetworkInfo() const;
+    std::map<std::string, std::string> GetNetworkInfo();
 
 private:
     Network() {};
     Network(const Network &);
     Network &operator = (const Network &);
+    long long allTx = 0;
+    long long allRx = 0;
+    long long curTx = 0;
+    long long curRx = 0;
+    long long diffTx = 0;
+    long long diffRx = 0;
+    long long prevTx = 0;
+    long long prevRx = 0;
+    bool isFirst = true;
 };
 }
 }

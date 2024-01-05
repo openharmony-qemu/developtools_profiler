@@ -78,12 +78,12 @@ bool PluginStart(HisyseventPlugin& plugin, HisyseventConfig& config)
     std::vector<uint8_t> configData(size);
     int ret = config.SerializeToArray(configData.data(), configData.size());
     CHECK_TRUE(ret > 0, false, "HisyseventPluginTest: SerializeToArray fail!!!");
-    HILOG_INFO(LOG_CORE, "HisyseventPluginTest: SerializeToArray success");
+    PROFILER_LOG_INFO(LOG_CORE, "HisyseventPluginTest: SerializeToArray success");
 
     // start
     ret = plugin.Start(configData.data(), configData.size());
     CHECK_TRUE(ret == 0, false, "HisyseventPluginTest: start plugin fail!!!");
-    HILOG_INFO(LOG_CORE, "HisyseventPluginTest: Start success");
+    PROFILER_LOG_INFO(LOG_CORE, "HisyseventPluginTest: Start success");
 
     return true;
 }

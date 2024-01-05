@@ -31,7 +31,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "gpu_mem_total: gpu_id=%u pid=%u size=%" PRIu64 "",
             msg.gpu_id(), msg.pid(), msg.size());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(gpu_mem_total) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(gpu_mem_total) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

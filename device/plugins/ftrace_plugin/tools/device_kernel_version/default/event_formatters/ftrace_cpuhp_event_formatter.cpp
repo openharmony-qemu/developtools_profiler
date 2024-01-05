@@ -42,7 +42,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.cpu(), msg.target(), msg.idx(), msg.fun());
         }
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cpuhp_enter) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(cpuhp_enter) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -56,7 +57,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "cpuhp_exit:  cpu: %04u  state: %3d step: %3d ret: %d", msg.cpu(), msg.state(), msg.idx(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cpuhp_exit) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(cpuhp_exit) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
@@ -83,7 +84,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.fun());
         }
         if (len >= BUFFER_SIZE - 1) {
-            HILOG_WARN(LOG_CORE, "maybe, the contents of print event(cpuhp_multi_enter) msg had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(cpuhp_multi_enter) msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

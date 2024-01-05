@@ -40,7 +40,7 @@ bool CommandPoller::OnConnect()
 
 bool CommandPoller::OnCreateSessionCmd(const CreateSessionCmd& cmd, SocketContext& context) const
 {
-    HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);
     CHECK_TRUE(cmd.buffer_sizes().size() != 0 && cmd.plugin_configs().size() != 0, false, "%s:cmd invalid!", __func__);
 
     uint32_t bufferSize = cmd.buffer_sizes(0);
@@ -56,24 +56,24 @@ bool CommandPoller::OnCreateSessionCmd(const CreateSessionCmd& cmd, SocketContex
     int smbFd = -1;
     int eventFd = -1;
     if (bufferSize != 0) {
-        HILOG_DEBUG(LOG_CORE, "%s:bufferSize = %d", __func__, bufferSize);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:bufferSize = %d", __func__, bufferSize);
         smbFd = context.ReceiveFileDiscriptor();
         eventFd = context.ReceiveFileDiscriptor();
         int flags = fcntl(eventFd, F_GETFL);
-        HILOG_DEBUG(LOG_CORE, "%s:smbFd = %d, eventFd = %d", __func__, smbFd, eventFd);
-        HILOG_DEBUG(LOG_CORE, "%s:eventFd flags = %X", __func__, flags);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:smbFd = %d, eventFd = %d", __func__, smbFd, eventFd);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:eventFd flags = %X", __func__, flags);
     }
     CHECK_TRUE(pluginManager->CreateWriter(config.name(), bufferSize, smbFd, eventFd, config.is_protobuf_serialize()),
                false, "%s:createWriter failed!", __func__);
     CHECK_TRUE(pluginManager->CreatePluginSession(configVec), false,
                "%s:createPluginSession failed!", __func__);
-    HILOG_DEBUG(LOG_CORE, "%s:ok", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:ok", __func__);
     return true;
 }
 
 bool CommandPoller::OnDestroySessionCmd(const DestroySessionCmd& cmd) const
 {
-    HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);
     CHECK_TRUE(cmd.plugin_ids().size() != 0, false, "%s:cmd invalid!", __func__);
     uint32_t pluginId = cmd.plugin_ids(0);
     std::vector<uint32_t> pluginIdVec;
@@ -85,13 +85,13 @@ bool CommandPoller::OnDestroySessionCmd(const DestroySessionCmd& cmd) const
                "%s:destroyPluginSession failed!", __func__);
     CHECK_TRUE(pluginManager->ResetWriter(pluginId), false, "%s:resetWriter failed!", __func__);
     CHECK_TRUE(pluginManager->UnloadPlugin(pluginId), false, "%s:unloadPlugin failed!", __func__);
-    HILOG_DEBUG(LOG_CORE, "%s:ok", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:ok", __func__);
     return true;
 }
 
 bool CommandPoller::OnStartSessionCmd(const StartSessionCmd& cmd, PluginResult& result) const
 {
-    HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);
     CHECK_TRUE(cmd.plugin_ids().size() != 0 && cmd.plugin_configs().size() != 0, false,
                "%s:cmd invalid!", __func__);
     std::vector<uint32_t> pluginIds;
@@ -103,13 +103,13 @@ bool CommandPoller::OnStartSessionCmd(const StartSessionCmd& cmd, PluginResult& 
     CHECK_NOTNULL(pluginManager, false, "promote FAILED!");
     CHECK_TRUE(pluginManager->StartPluginSession(pluginIds, configVec, result), false,
                "%s:start Session failed!", __func__);
-    HILOG_DEBUG(LOG_CORE, "%s:OK", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:OK", __func__);
     return true;
 }
 
 bool CommandPoller::OnStopSessionCmd(const StopSessionCmd& cmd) const
 {
-    HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);
     CHECK_TRUE(cmd.plugin_ids().size() != 0, false, "%s:cmd invalid!", __func__);
     std::vector<uint32_t> pluginIds;
     pluginIds.push_back(cmd.plugin_ids(0));
@@ -117,13 +117,13 @@ bool CommandPoller::OnStopSessionCmd(const StopSessionCmd& cmd) const
     auto pluginManager = pluginManager_.lock(); // promote to shared_ptr
     CHECK_NOTNULL(pluginManager, false, "promote FAILED!");
     CHECK_TRUE(pluginManager->StopPluginSession(pluginIds), false, "%s:stop Session failed!", __func__);
-    HILOG_DEBUG(LOG_CORE, "%s:ok", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:ok", __func__);
     return true;
 }
 
 bool CommandPoller::OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const
 {
-    HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);
     CHECK_TRUE(cmd.plugin_ids().size() != 0, false, "%s:cmd invalid!", __func__);
     std::vector<uint32_t> pluginIds;
     pluginIds.push_back(cmd.plugin_ids(0));
@@ -131,13 +131,13 @@ bool CommandPoller::OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const
     auto pluginManager = pluginManager_.lock(); // promote to shared_ptr
     CHECK_NOTNULL(pluginManager, false, "promote FAILED!");
     CHECK_TRUE(pluginManager->ReportPluginBasicData(pluginIds), false, "%s:report basic data failed!", __func__);
-    HILOG_INFO(LOG_CORE, "%s:ok", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:ok", __func__);
     return true;
 }
 
 bool CommandPoller::OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response)
 {
-    HILOG_DEBUG(LOG_CORE, "%s:proc", __func__);
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);
     std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     NotifyResultRequest nrr;
     nrr.set_request_id(1);
@@ -173,10 +173,10 @@ bool CommandPoller::OnGetCommandResponse(SocketContext& context, ::GetCommandRes
         OnReportBasicDataCmd(response.refresh_session_cmd());
         status->set_state(ProfilerPluginState::IN_SESSION);
     } else {
-        HILOG_DEBUG(LOG_CORE, "%s:command Response failed!", __func__);
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:command Response failed!", __func__);
         return false;
     }
-    HILOG_DEBUG(LOG_CORE, "%s:ok id = %d", __func__, nrr.command_id());
+    PROFILER_LOG_DEBUG(LOG_CORE, "%s:ok id = %d", __func__, nrr.command_id());
     NotifyResult(nrr);
     return true;
 }

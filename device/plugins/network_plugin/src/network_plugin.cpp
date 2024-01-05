@@ -38,7 +38,7 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_NOTNULL(buffer_, -1, "%s:NetworkPlugin, buffer_ is null", __func__);
 
     if (protoConfig_.ParseFromArray(configData, configSize) <= 0) {
-        HILOG_ERROR(LOG_CORE, "%s:NetworkPlugin, parseFromArray failed!", __func__);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:NetworkPlugin, parseFromArray failed!", __func__);
         return -1;
     }
 
@@ -47,7 +47,7 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         pidUid_.emplace(pid, GetUid(pid));
     }
 
-    HILOG_INFO(LOG_CORE, "%s:NetworkPlugin, start success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:NetworkPlugin, start success!", __func__);
 
     return 0;
 }
@@ -161,7 +161,7 @@ int NetworkPlugin::Stop()
     fp_ = nullptr;
     pidUid_.clear();
 
-    HILOG_INFO(LOG_CORE, "%s:NetworkPlugin, stop success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "%s:NetworkPlugin, stop success!", __func__);
     return 0;
 }
 
@@ -193,7 +193,7 @@ int32_t NetworkPlugin::GetUid(int32_t pid)
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        HILOG_ERROR(LOG_CORE, "%s:NetworkPlugin, open %s failed, errno(%s)", __func__, path.c_str(), buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:NetworkPlugin, open %s failed, errno(%s)", __func__, path.c_str(), buf);
         return -1;
     }
     do {
@@ -204,7 +204,7 @@ int32_t NetworkPlugin::GetUid(int32_t pid)
         getline(input, line);
         if (!strncmp(line.c_str(), "Uid:", strlen("Uid:"))) {
             std::string str = line.substr(strlen("Uid:\t"));
-            HILOG_INFO(LOG_CORE, "%s:NetworkPlugin, line(%s), str(%s)", __func__, line.c_str(), str.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "%s:NetworkPlugin, line(%s), str(%s)", __func__, line.c_str(), str.c_str());
             return strtol(str.c_str(), &end, DEC_BASE);
         }
     } while (!input.eof());

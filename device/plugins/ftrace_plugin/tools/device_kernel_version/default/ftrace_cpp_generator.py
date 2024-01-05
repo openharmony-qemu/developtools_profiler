@@ -725,7 +725,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
 
             f.write("    if (len >= BUFFER_SIZE - 1) {\n")
             f.write(
-                '      HILOG_WARN(LOG_CORE, "maybe, the contents of print event({}) msg had be cut off '
+                '      PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event({}) msg had be cut off '
                 'in outfile");\n'.format(event.name)
             )
             f.write("    }\n")
