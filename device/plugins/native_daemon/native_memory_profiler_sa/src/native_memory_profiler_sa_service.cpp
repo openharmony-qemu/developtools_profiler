@@ -327,15 +327,15 @@ void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
             []() {
                 int ret = SystemSetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
                 if (ret < 0) {
-                    HILOG_ERROR(LOG_CORE, "DelayedShutdown close sa failed");
+                    PROFILER_LOG_ERROR(LOG_CORE, "DelayedShutdown close sa failed");
                 } else {
-                    HILOG_INFO(LOG_CORE, "DelayedShutdown close sa success");
+                    PROFILER_LOG_INFO(LOG_CORE, "DelayedShutdown close sa success");
                 }
             },
             DELAYED_SHUTDOWN_TIME * TIME_BASE,
             true);
         if (timerFd == -1) {
-            HILOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService:DelayedShutdown Schedule Task failed");
+            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService:DelayedShutdown Schedule Task failed");
             return;
         }
         delayedShutdownTimerFd_ = timerFd;

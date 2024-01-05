@@ -572,11 +572,11 @@ bool IsBetaVersion()
 {
     int ret = static_cast<int>(FindParameter(KEY_HIVIEW_USER_TYPE.c_str()));
     if (ret == -1) {
-        HILOG_INFO(LOG_CORE, "user type is not exist");
+        PROFILER_LOG_INFO(LOG_CORE, "user type is not exist");
         return true;
     }
     std::string userType = OHOS::system::GetParameter(KEY_HIVIEW_USER_TYPE, "");
-    HILOG_INFO(LOG_CORE, "user type is:%s", userType.c_str());
+    PROFILER_LOG_INFO(LOG_CORE, "user type is:%s", userType.c_str());
     return userType == "beta";
 }
 } // namespace COMMON

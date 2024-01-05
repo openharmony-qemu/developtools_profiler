@@ -34,6 +34,10 @@
 #endif
 
 #ifdef HAVE_HILOG
+#undef HAVE_HILOG
+#endif
+
+#ifdef HAVE_HILOG
 #include "hilog/log.h"
 #include <string>
 #else // HAVE_HILOG

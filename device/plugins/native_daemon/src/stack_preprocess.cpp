@@ -174,7 +174,7 @@ bool StackPreprocess::HandleNoStackEvent(RawStackPtr& rawData, BatchNativeHookDa
         BaseStackRawData* mmapRawData = rawData->stackConext;
         std::string filePath(reinterpret_cast<char *>(rawData->data));
         COMMON::AdaptSandboxPath(filePath, rawData->stackConext->pid);
-        HILOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
+        PROFILER_LOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
                     "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
                     mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
                     mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
@@ -536,7 +536,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     callStack_.resize(rawStack->fpDepth);
     if (memcpy_s(callStack_.data(), sizeof(uint64_t) * rawStack->fpDepth,
                  rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
-        HILOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
         return;
     }
     std::lock_guard<std::mutex> guard(mtx_);
@@ -575,7 +575,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack, BatchNativeHookData& bat
             break;
         }
         default: {
-            HILOG_ERROR(LOG_CORE, "statistics event type: error");
+            PROFILER_LOG_ERROR(LOG_CORE, "statistics event type: error");
             break;
         }
     }
@@ -966,7 +966,7 @@ void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& sy
 {
     std::shared_ptr<DfxElf> elfPtr = std::make_shared<DfxElf>(filePath);
     if (elfPtr == nullptr) {
-        HILOG_ERROR(LOG_CORE, "GetSymbols elfPtr is nullptr");
+        PROFILER_LOG_ERROR(LOG_CORE, "GetSymbols elfPtr is nullptr");
         return;
     }
 
