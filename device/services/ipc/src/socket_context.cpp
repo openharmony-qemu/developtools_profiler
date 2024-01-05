@@ -224,7 +224,7 @@ bool SocketContext::IsConnected()
     char buf[1];
     ssize_t recv_bytes = recv(socketHandle_, buf, sizeof(buf), MSG_DONTWAIT);
     if (recv_bytes == 0) {
-        HILOG_ERROR(LOG_CORE,"Peer Process Exceptionally Disconnected %s errno = %d", __func__, errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "Peer Process Exceptionally Disconnected");
         return false;
     } else if (recv_bytes > 0) {
         // This is not supposed to happen because currently native_deomon does not send data to the client.
