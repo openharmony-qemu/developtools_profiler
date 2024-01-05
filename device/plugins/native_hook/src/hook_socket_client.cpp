@@ -27,7 +27,7 @@ std::atomic<uint64_t> g_flushCount = 0;
 } // namespace
 
 HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler)
-                                : pid_(pid), config_(config), sampler_(sampler)
+    : pid_(pid), config_(config), sampler_(sampler)
 {
     smbFd_ = 0;
     eventFd_ = 0;

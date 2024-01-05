@@ -241,7 +241,8 @@ long TraceFileWriter::Write(const void* data, size_t size)
         auto ret = write(fd_, reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
         CHECK_TRUE(ret == sizeof(dataLen), 0, "write raw buffer data failed!");
         ret = write(fd_, data, size);
-        CHECK_TRUE(ret == size, 0, "write raw buffer data failed!, dataSize: %zu, errno: %s", size, strerror(errno));
+        CHECK_TRUE(ret == static_cast<long>(size), 0, "write raw buffer data failed!, dataSize: %zu, errno: %s",
+                   size, strerror(errno));
     } else {
         CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
 

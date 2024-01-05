@@ -85,7 +85,6 @@ void BaseMessage::AddBytes(uint32_t fieldId, const void* data, uint32_t dataSize
 
     uint8_t* fieldMemory = nullptr;
     uint32_t fieldOffset = 0;
-    // max field size = varint(fieldId + type) + varint(dataSize) + dataSize
     if (!writeCtx_->getMemory(writeCtx_, VARINT_ENCODE_MAX_SIZE + SIZE_RESERVED_LEN + dataSize,
                               &fieldMemory, &fieldOffset)) {
         Drop();

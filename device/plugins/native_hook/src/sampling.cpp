@@ -36,7 +36,7 @@ size_t Sampling::CalcSamplings(size_t allocSize)
     size_t counts = 0;
     {
         Spinlock s;
-        for (nextSampleInterval_ -= allocSize; nextSampleInterval_ <= 0;
+        for (nextSampleInterval_ -= static_cast<int64_t>(allocSize); nextSampleInterval_ <= 0;
             nextSampleInterval_ += CalcNextSampleInterval()) {
             ++counts;
         }

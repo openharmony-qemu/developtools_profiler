@@ -57,7 +57,10 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
 
     auto native = new NativeMemoryProfilerSaService();
-    CHECK_NOTNULL(native, false, "native is nullptr");
+    if (native == nullptr) {
+        HILOG_ERROR(LOG_CORE, "native is nullptr");
+        return false;
+    }
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Service native memory failed to start");
@@ -262,10 +265,10 @@ void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std
         if (iter->second->isStartupMode) {
             hasStartupMode_ = false;
         }
-    } else if (auto iter = nameAndFilePathCtx_.find(name); iter != nameAndFilePathCtx_.end()) {
-        iter->second->pid = pid;
-        pidCtx_[pid] = iter->second;
-        if (iter->second->isStartupMode) {
+    } else if (auto it = nameAndFilePathCtx_.find(name); it != nameAndFilePathCtx_.end()) {
+        it->second->pid = pid;
+        pidCtx_[pid] = it->second;
+        if (it->second->isStartupMode) {
             hasStartupMode_ = false;
         }
     } else {
@@ -292,8 +295,8 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     }
     bundleName.resize(strlen(bundleName.c_str()));
 
-    if (bundleName.substr(0, 2) == "./") { // Command line programs will be prefixed with "./"
-        bundleName = bundleName.substr(2);
+    if (bundleName.substr(0, 2) == "./") { // 2: size, Command line programs will be prefixed with "./"
+        bundleName = bundleName.substr(2); // 2: point
     }
     FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
 
