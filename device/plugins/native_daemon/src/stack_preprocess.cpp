@@ -48,6 +48,7 @@ constexpr static uint32_t RIGHT_MOVE_4 = 4;
 constexpr static uint32_t RIGHT_MOVE_8 = 8;
 constexpr static uint32_t RIGHT_MOVE_16 = 16;
 constexpr static uint32_t RIGHT_MOVE_32 = 32;
+constexpr static uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 
 using namespace OHOS::Developtools::NativeDaemon;
 using namespace OHOS::HiviewDFX;
@@ -512,7 +513,8 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     // ignore the first two frame if dwarf unwind
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     callStack_.clear();
-    callStack_.reserve(callFrames.size());
+    callStack_.reserve(callFrames.size() + 1);
+    callStack_.push_back(rawStack->stackConext->mallocSize | SIZE_MASK);
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, batchNativeHookData, idx);
     } else {
@@ -533,8 +535,9 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
 void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack,
     BatchNativeHookData& batchNativeHookData)
 {
-    callStack_.resize(rawStack->fpDepth);
-    if (memcpy_s(callStack_.data(), sizeof(uint64_t) * rawStack->fpDepth,
+    callStack_.resize(rawStack->fpDepth + 1);
+    callStack_[0] = (rawStack->stackConext->mallocSize | SIZE_MASK);
+    if (memcpy_s(callStack_.data() + 1, sizeof(uint64_t) * rawStack->fpDepth,
                  rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
         return;
