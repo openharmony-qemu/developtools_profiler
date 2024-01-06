@@ -33,6 +33,10 @@ static uint32_t TestDumpFile()
 
 int32_t main(int32_t argc, char* argv[])
 {
+    if (argc > 50) { // 50: max args size
+        printf("error too many args.\n");
+        return 0;
+    }
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     bool start = false;
     bool stop = false;
