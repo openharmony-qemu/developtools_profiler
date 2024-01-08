@@ -30,12 +30,15 @@ const std::string SO_PATH = "/system/lib64/libgpudataplugin.z.so";
 const std::string SO_PATH = "/system/lib/libgpudataplugin.z.so";
 #endif
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/gpudataplugintest");
-constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 
 std::string g_path;
 std::string g_testPath;
+
+#if defined(__LP64__)
 const unsigned long long EXPECT_VAL = 12;
 const unsigned long long SLEEP_TIME = 5;
+constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
+#endif
 
 struct TestVmstat {
     int64_t pgpgin;
@@ -81,6 +84,7 @@ std::string GetFullPath(std::string path)
     return path;
 }
 
+#if defined(__LP64__)
 bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, GpuData& gpuData, bool unusualBuff)
 {
     GpuConfig protoConfig;
@@ -111,6 +115,7 @@ bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, GpuData& gpuData, bool unusualB
     }
     return false;
 }
+#endif
 
 /**
  * @tc.name: gpu plugin
@@ -132,6 +137,7 @@ HWTEST_F(GpuDataPluginTest, TestPath, TestSize.Level1)
  */
 HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
+#if defined(__LP64__)
     GpuDataPlugin gpuPlugin;
     GpuData gpuData;
 
@@ -146,6 +152,7 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
     // 缓冲区异常
     EXPECT_FALSE(PluginGpuInfoStub(gpuPlugin, gpuData, true));
     EXPECT_EQ(gpuPlugin.Stop(), 0);
+#endif
 }
 
 
@@ -156,6 +163,7 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
  */
 HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
 {
+#if defined(__LP64__)
     void* handle = dlopen(SO_PATH.c_str(), RTLD_LAZY);
     ASSERT_NE(handle, nullptr);
     PluginModuleStruct* gpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");
@@ -181,6 +189,7 @@ HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
     std::vector<uint8_t> configBuffer2(configLength);
     EXPECT_TRUE(protoConfig.SerializeToArray(configBuffer2.data(), configLength));
     EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStart(configBuffer2.data(), configLength+1), RET_FAIL);
+#endif
 }
 
 

@@ -618,7 +618,7 @@ HWTEST_F(MemoryDataPluginTest, Testpluginforsinglepid, TestSize.Level1)
     EXPECT_TRUE(PluginStub(memoryPlugin, protoConfig, memoryData));
 
     int index = memoryData.processesinfo_size();
-    EXPECT_EQ(1, index);
+    EXPECT_EQ(2, index); // 2: the size of processinfo
 
     ProcessMemoryInfo it = memoryData.processesinfo(0);
     EXPECT_EQ(singlepid.pid, it.pid());
@@ -667,8 +667,8 @@ HWTEST_F(MemoryDataPluginTest, Testpluginforpids, TestSize.Level1)
     EXPECT_TRUE(PluginStub(memoryPlugin, protoConfig, memoryData));
 
     int index = memoryData.processesinfo_size();
-    EXPECT_EQ(3, index);
-    for (int i = 0; i < index; ++i) {
+    EXPECT_EQ(6, index); // 3: the size of processinfo
+    for (int i = 0; i < 3; ++i) {
         ProcessMemoryInfo it = memoryData.processesinfo(i);
         EXPECT_EQ(g_pidtarget[i].pid, it.pid());
         EXPECT_EQ(g_pidtarget[i].name, it.name());
