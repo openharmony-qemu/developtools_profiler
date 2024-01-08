@@ -36,6 +36,7 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
   external_deps = [
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "graphic_2d:librender_service_client",
+    "hilog:libhilog",
   ]
 
   include_dirs = [

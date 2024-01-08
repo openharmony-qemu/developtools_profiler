@@ -31,7 +31,7 @@ ohos_fuzztest("DiskioStartPluginFuzzTest") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/diskio_data:diskio_data_cpp",
     "//third_party/bounds_checking_function:libsec_static",
   ]
-
+  external_deps = [ "hilog:libhilog" ]
   include_dirs = [
     "../../../include",
     "../../../../api/include",
