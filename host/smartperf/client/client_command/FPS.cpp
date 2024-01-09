@@ -26,7 +26,12 @@ namespace SmartPerf {
 std::map<std::string, std::string> FPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfo fpsInfo = GetFpsInfo();
+    FpsInfo fpsInfo;
+    if (surfaceViewName.length() > 0) {
+        fpsInfo = GetDiffLayersFpsInfo(surfaceViewName);
+    } else {
+        fpsInfo = GetFpsInfo();
+    }
     result["fps"] = std::to_string(fpsInfo.fps);
     std::string jitterStr = "";
     std::string split = "";
@@ -59,6 +64,10 @@ void FPS::SetCaptureOn()
 void FPS::SetPackageName(std::string pName)
 {
     pkgName = std::move(pName);
+}
+void FPS::SetLayerName(std::string sName)
+{
+    surfaceViewName = std::move(sName);
 }
 std::string FPS::GetSurface()
 {
@@ -189,6 +198,9 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
                 long long currFrame = (fpsInfo.timeStampQ.front());
                 if (lastFrame != -1) {
                     long long jitter = currFrame - lastFrame;
+                    fpsInfo.jitters.push_back(jitter);
+                } else {
+                    long long jitter = currFrame - currFrame / mod * mod;
                     fpsInfo.jitters.push_back(jitter);
                 }
                 lastFrame = currFrame;

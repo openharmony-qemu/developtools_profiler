@@ -59,6 +59,8 @@ public:
     int num = 0;
     // 包名
     std::string pkgName = "";
+    // 图层名
+    std::string layerName = "";
     // 是否开启trace 抓取
     int trace = 0;
     // csv输出路径

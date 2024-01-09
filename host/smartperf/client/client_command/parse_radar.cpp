@@ -42,7 +42,7 @@ namespace OHOS {
         }
         std::string Radar::ParseRadarAppStrart(std::string string)
         {
-            std::string completeTime = extract_string(string, "\"E2E_LATENCY\":");
+            std::string completeTime = extract_string(string, "\"ANIMATION_LATENCY\":");
             std::string responseTime = extract_string(string, "\"RESPONSE_LATENCY\":");
             std::string result = "completeTime:" + completeTime + "ms\n"
             "responseTime:" + responseTime + "ms";

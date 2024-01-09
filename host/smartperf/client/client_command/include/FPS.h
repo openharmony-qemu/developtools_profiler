@@ -57,9 +57,11 @@ struct FpsInfo {
 class FPS : public SpProfiler {
 public:
     void SetPackageName(std::string pName);
+    void SetLayerName(std::string sName);
     void SetCaptureOn();
     void SetTraceCatch();
     FpsInfo GetFpsInfo();
+    FpsInfo GetDiffLayersFpsInfo(std::string sName);
     std::string GetSurface();
     std::string GetLayer(std::string pkgSurface);
     FpsInfo mFpsInfo;
@@ -77,6 +79,7 @@ private:
     FPS &operator = (const FPS &);
 
     std::string pkgName;
+    std::string surfaceViewName;
     std::string curLayerName;
     int isCatchTrace = 0;
     int isCapture = 0;

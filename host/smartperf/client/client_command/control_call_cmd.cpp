@@ -128,7 +128,7 @@ std::string ControlCallCmd::SlideList()
         std::string str = SPUtils::GetRadarResponse();
         thGetTrace.join();
         thGetHisysId.join();
-        double responseTime = radar.ParseRadarResponse(str);
+        double responseTime = radar.ParseRadarComplete(str);
         stream << responseTime;
         std::string responseSlide = "time:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
