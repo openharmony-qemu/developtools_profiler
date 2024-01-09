@@ -82,6 +82,11 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
 }
+void SpProfilerFactory::SetProfilerLayer(std::string layer)
+{
+    FPS &fps = FPS::GetInstance();
+    fps.SetLayerName(layer);
+}
 void SpProfilerFactory::SetByTraceCmd(std::string cmd)
 {
     ByTrace &bTrace = ByTrace::GetInstance();

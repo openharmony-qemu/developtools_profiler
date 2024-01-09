@@ -26,7 +26,12 @@ namespace SmartPerf {
 std::map<std::string, std::string> FPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfo fpsInfo = GetFpsInfo();
+    FpsInfo fpsInfo;
+    if (surfaceViewName.length() > 0) {
+        fpsInfo = GetDiffLayersFpsInfo(surfaceViewName);
+    } else {
+        fpsInfo = GetFpsInfo();
+    }
     result["fps"] = std::to_string(fpsInfo.fps);
     std::string jitterStr = "";
     std::string split = "";
@@ -59,6 +64,14 @@ void FPS::SetCaptureOn()
 void FPS::SetPackageName(std::string pName)
 {
     pkgName = std::move(pName);
+}
+void FPS::SetLayerName(std::string sName)
+{
+    surfaceViewName = std::move(sName);
+}
+FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName) {
+    FpsInfo fpsInfo = GetSurfaceFrame(sName);
+    return fpsInfo;
 }
 std::string FPS::GetSurface()
 {
@@ -190,6 +203,9 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
                 if (lastFrame != -1) {
                     long long jitter = currFrame - lastFrame;
                     fpsInfo.jitters.push_back(jitter);
+                } else {
+                    long long jitter = currFrame - currFrame / mod * mod;
+                    fpsInfo.jitters.push_back(jitter);
                 }
                 lastFrame = currFrame;
                 (fpsInfo.timeStampQ).pop();
@@ -254,6 +270,7 @@ std::string FPS::GetLayer(std::string pkgSurface)
         char buf[1024] = {'\0'};
 
         const int paramFifteen = 15;
+        const int paramFourteen = 14;
         const int paramThree = 3;
         const int windowNameIndex = 0;
         const int windowIdIndex = 3;
@@ -272,6 +289,10 @@ std::string FPS::GetLayer(std::string pkgSurface)
             }
             if (params.size() == paramFifteen) {
                 DumpEntity dumpEntity { params[0], params[1], params[2], params[3], params[7]};
+                dumpEntityList.push_back(dumpEntity);
+            }
+            if (params.size() == paramFourteen) {
+                DumpEntity dumpEntity { params[0], params[1], params[2], params[2], params[6]};
                 dumpEntityList.push_back(dumpEntity);
             }
             if (params.size() == paramThree) {

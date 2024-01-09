@@ -76,6 +76,7 @@ enum class CommandType {
     CT_SESSIONID,
     CT_INTERVAL,
     CT_NET,
+    CT_VIEW,
 };
 enum class CommandHelp {
     HELP,
@@ -92,7 +93,7 @@ const std::unordered_map<std::string, CommandType> commandMap = {
     { std::string("-trace"), CommandType::CT_TTRACE }, { std::string("-snapshot"), CommandType::CT_SNAPSHOT },
     { std::string("-hw"), CommandType::CT_HW },        { std::string("-d"), CommandType::CT_D },
     { std::string("-INTERVAL"), CommandType::CT_INTERVAL },  { std::string("-SESSIONID"), CommandType::CT_SESSIONID },
-    { std::string("-net"), CommandType::CT_NET },
+    { std::string("-net"), CommandType::CT_NET },      { std::string("-VIEW"), CommandType::CT_VIEW },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -105,7 +106,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_TTRACE, std::string("-trace") }, { CommandType::CT_SNAPSHOT, std::string("-snapshot") },
     { CommandType::CT_HW, std::string("-hw") },        { CommandType::CT_D, std::string("-d") },
     { CommandType::CT_INTERVAL, std::string("-INTERVAL") },  { CommandType::CT_SESSIONID, std::string("-SESSIONID") },
-    { CommandType::CT_NET, std::string("-net") },
+    { CommandType::CT_NET, std::string("-net") },      { CommandType::CT_VIEW, std::string("-VIEW") },
 };
 
 

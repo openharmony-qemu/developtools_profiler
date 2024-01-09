@@ -91,6 +91,12 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
                 SpProfilerFactory::SetProfilerPkg(pkgName);
             }
             break;
+        case CommandType::CT_VIEW:
+            layerName = argStr1;
+            if (layerName.length() > 0) {
+                SpProfilerFactory::SetProfilerLayer(layerName);
+            }
+            break;
         case CommandType::CT_OUT:
             outPathParam = argStr1;
             if (strcmp(outPathParam.c_str(), "") != 0) {

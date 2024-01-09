@@ -157,7 +157,6 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
             (fpsInfo.timeStampQ).push(frameReadyTime);
         } else if (tFrameReadyTime == tLastReadyTime + 1) {
             fpsConfig.jump = true;
-            lastFrame = fpsInfo.lastFrameReadyTime;
             fpsConfig.lastReadyTime = frameReadyTime;
             int fpsTmp = 0;
             fpsInfo.jitters.clear();
@@ -166,6 +165,9 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
                 long long currFrame = (fpsInfo.timeStampQ.front());
                 if (lastFrame != -1) {
                     long long jitter = currFrame - lastFrame;
+                    fpsInfo.jitters.push_back(jitter);
+                } else {
+                    long long jitter = currFrame - currFrame / fpsConfig.mod * fpsConfig.mod;
                     fpsInfo.jitters.push_back(jitter);
                 }
                 lastFrame = currFrame;
@@ -287,7 +289,55 @@ static std::string GetSurFace()
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
-static void CalculateFPS(int num)
+static void GetSectionsPrint(int printCount, long long msStartTime)
+{
+    int ten  = 10;
+    long long msJiange = 100000000;
+    if (printCount < ten) {
+        for (int i = 0; i < ten - printCount; i++) {
+            msStartTime += msJiange;
+            printf("sectionsFps:%d|%lld\n", 0, msStartTime);
+        }
+    }
+}
+static void GetSectionsFps(FpsInfo &fpsInfo)
+{
+    int msCount = 0;
+    int ten = 10;
+    long long msStartTime = fpsInfo.currentFpsTime;
+    long long msAdd = 0;
+    long long msJiange = 100000000;
+    int addcount = 0;
+    int printCount = 0;
+    for (int i = 0; i < fpsInfo.jitters.size(); i++) {
+        msAdd += fpsInfo.jitters[i];
+        if (msAdd <= msJiange) {
+            msCount++;
+            if (i == fpsInfo.jitters.size() - 1) {
+                printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
+                printCount++;
+                GetSectionsPrint(printCount, msStartTime);
+            }
+        } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
+            printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
+            printCount++;
+            msStartTime += msAdd - 1e8 * addcount;
+            addcount = 0;
+            msCount = 1;
+            msJiange += 1e8;
+        } else {
+            printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
+            printCount++;
+            msStartTime += 1e8;
+            addcount++;
+            msCount = 0;
+            msAdd -= fpsInfo.jitters[i];
+            i--;
+            msJiange += 1e8;
+        }
+    }
+}
+static void CalculateFPS(int num, int sectionsNum)
 {
         FpsInfo gfpsInfo;
         FpsInfo gfpsUniteInfo;
@@ -298,6 +348,7 @@ static void CalculateFPS(int num)
         std::string uniteLayer = "DisplayNode";
         uniteLayer = GetSurFace();
         unsigned long oneSec = 1000000;
+        int ten = 10;
         std::string cmdResult;
         for (int i = 0; i < num; i++) {
             unsigned long runTime;
@@ -319,8 +370,14 @@ static void CalculateFPS(int num)
             gfpsUniteInfo = GetSurfaceFrame(uniteLayer, fpsUniteConfig);
             if (gfpsUniteInfo.fps > gfpsInfo.fps) {
                 printf("fps:%d|%lld\n", gfpsUniteInfo.fps, gfpsUniteInfo.currentFpsTime);
+                if (sectionsNum == ten) {
+                    GetSectionsFps(gfpsUniteInfo);
+                }
             } else {
                 printf("fps:%d|%lld\n", gfpsInfo.fps, gfpsInfo.currentFpsTime);
+                if (sectionsNum == ten) {
+                    GetSectionsFps(gfpsInfo);
+                }
             }
             fflush(stdout);
             gettimeofday(&end, nullptr);
@@ -334,6 +391,9 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
 {
     int num = 1;
     int number = 2;
+    int ten = 10;
+    int four = 4;
+    int sectionsNum = 0;
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
@@ -342,7 +402,12 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
             printf("set num:%d not valid arg\n", num);
         }
         printf("set num:%d success\n", num);
-        CalculateFPS(num);
+        sectionsNum = atoi(v[four].c_str());
+        if (sectionsNum == ten) {
+            CalculateFPS(num, sectionsNum);
+        } else {
+            CalculateFPS(num, 0);
+        }
     }
     printf("SP_daemon exec finished!\n");
 }
