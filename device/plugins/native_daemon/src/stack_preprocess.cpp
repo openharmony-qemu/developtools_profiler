@@ -568,6 +568,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack, BatchNativeHookData& bat
             break;
         }
         case MALLOC_MSG:
+            rawStack->stackConext->mallocSize = ComputeAlign(rawStack->stackConext->mallocSize);
         case MMAP_MSG:
         case MMAP_FILE_PAGE_MSG:
         case MEMORY_USING_MSG: {
@@ -603,6 +604,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack,
                 break;
             }
             case MALLOC_MSG:
+                rawStack->stackConext->mallocSize = ComputeAlign(rawStack->stackConext->mallocSize);
             case MMAP_MSG:
             case MMAP_FILE_PAGE_MSG:
             case MEMORY_USING_MSG: {
@@ -719,9 +721,9 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         if (recordIter != recordStatisticsMap_.end()) {
             auto& record = recordIter->second;
             ++record.applyCount;
-            record.applySize += ComputeAlign(rawStack->stackConext->mallocSize);
+            record.applySize += rawStack->stackConext->mallocSize;
             allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
-                std::pair(ComputeAlign(rawStack->stackConext->mallocSize), &recordIter->second);
+                std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
             statisticsPeriodData_[stackId] = &recordIter->second;
         }
     } else {
@@ -729,7 +731,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         record.pid = rawStack->stackConext->pid;
         record.callstackId = stackId;
         record.applyCount = 1;
-        record.applySize = ComputeAlign(rawStack->stackConext->mallocSize);
+        record.applySize = rawStack->stackConext->mallocSize;
         switch (rawStack->stackConext->type) {
             case MALLOC_MSG: {
                 record.type = RecordStatisticsEvent::MALLOC;
@@ -756,7 +758,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
 
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
         allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
-            std::pair(ComputeAlign(rawStack->stackConext->mallocSize), &recordIter->second);
+            std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
 }
