@@ -719,9 +719,9 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         if (recordIter != recordStatisticsMap_.end()) {
             auto& record = recordIter->second;
             ++record.applyCount;
-            record.applySize += rawStack->stackConext->mallocSize;
+            record.applySize += ComputeAlign(rawStack->stackConext->mallocSize);
             allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
-                std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
+                std::pair(ComputeAlign(rawStack->stackConext->mallocSize), &recordIter->second);
             statisticsPeriodData_[stackId] = &recordIter->second;
         }
     } else {
@@ -729,7 +729,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         record.pid = rawStack->stackConext->pid;
         record.callstackId = stackId;
         record.applyCount = 1;
-        record.applySize = rawStack->stackConext->mallocSize;
+        record.applySize = ComputeAlign(rawStack->stackConext->mallocSize);
         switch (rawStack->stackConext->type) {
             case MALLOC_MSG: {
                 record.type = RecordStatisticsEvent::MALLOC;
@@ -756,7 +756,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
 
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
         allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
-            std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
+            std::pair(ComputeAlign(rawStack->stackConext->mallocSize), &recordIter->second);
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
 }
