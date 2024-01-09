@@ -69,6 +69,10 @@ void FPS::SetLayerName(std::string sName)
 {
     surfaceViewName = std::move(sName);
 }
+FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName) {
+    FpsInfo fpsInfo = GetSurfaceFrame(sName);
+    return fpsInfo;
+}
 std::string FPS::GetSurface()
 {
     std::string cmdResult;

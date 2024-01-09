@@ -289,7 +289,7 @@ static std::string GetSurFace()
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
-static std::string GetSectionsPrint(int printCount, long long msStartTime)
+static void GetSectionsPrint(int printCount, long long msStartTime)
 {
     int ten  = 10;
     long long msJiange = 100000000;
@@ -316,7 +316,7 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
             if (i == fpsInfo.jitters.size() - 1) {
                 printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
                 printCount++;
-                getSectionsPrint(printCount, msStartTime);
+                GetSectionsPrint(printCount, msStartTime);
             }
         } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
@@ -408,7 +408,6 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
         } else {
             CalculateFPS(num, 0);
         }
-        CalculateFPS(num);
     }
     printf("SP_daemon exec finished!\n");
 }

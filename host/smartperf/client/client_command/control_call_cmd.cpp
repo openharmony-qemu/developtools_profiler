@@ -101,7 +101,7 @@ std::string ControlCallCmd::TimeDelay()
     thGetHisysId2.join();
     double strResponseTime = radar.ParseRadarResponse(str);
     stream << strResponseTime;
-    double strCompleteTime = radar.ParseRadarResponse(str2);
+    double strCompleteTime = radar.ParseRadarComplete(str2);
     std::ostringstream streamComplete;
     streamComplete << strCompleteTime;
     std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +
@@ -128,7 +128,7 @@ std::string ControlCallCmd::SlideList()
         std::string str = SPUtils::GetRadarResponse();
         thGetTrace.join();
         thGetHisysId.join();
-        double responseTime = radar.ParseRadarComplete(str);
+        double responseTime = radar.ParseRadarResponse(str);
         stream << responseTime;
         std::string responseSlide = "time:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
