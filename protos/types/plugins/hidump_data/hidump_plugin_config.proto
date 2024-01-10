@@ -17,4 +17,5 @@ option optimize_for = LITE_RUNTIME;
 
 message HidumpConfig {
     bool report_fps = 1;
+    uint32 sections = 2;
 }

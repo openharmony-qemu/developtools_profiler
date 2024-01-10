@@ -35,7 +35,7 @@ const int SLEEP_TIME = 50;
 const int BUF_MAX_LEN = 64;
 const int MS_PER_S = 1000;
 const int US_PER_S = 1000000;
-const char *g_fpsFormat = "SP_daemon -profilerfps 31104000";
+const char *g_fpsFormat = "SP_daemon -profilerfps 31104000 -sections ";
 
 static pid_t volatile g_child;
 const int READ = 0;
@@ -69,7 +69,9 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
     PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HidumpPlugin: ParseFromArray failed");
 
-    fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(g_fpsFormat, "r"), CustomPclose);
+    std::string cmd = g_fpsFormat + std::to_string(protoConfig_.sections());
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Excute cmd: %s", cmd.c_str());
+    fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(cmd.c_str(), "r"), CustomPclose);
     if (fp_.get() == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
@@ -152,7 +154,7 @@ template <typename T>
 bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf)
 {
     // format: fps:123|1501960484673
-    if (strncmp(buf, "fps:", strlen("fps:")) != 0) {
+    if (strncmp(buf, "fps:", strlen("fps:")) != 0 && strncmp(buf, "sectionsFps:", strlen("sectionsFps:")) != 0) {
         if (strstr(buf, "inaccessible or not found") != nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: fps command not found!");
         } else {
@@ -161,7 +163,12 @@ bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf)
         return false;
     }
 
-    buf += strlen("fps:");
+    if (strncmp(buf, "fps:", strlen("fps:")) == 0) {
+        buf += strlen("fps:");
+    } else if (strncmp(buf, "sectionsFps:", strlen("sectionsFps:")) == 0) {
+        buf += strlen("sectionsFps:");
+    }
+
     char *tmp = strchr(buf, '|');
     CHECK_NOTNULL(tmp, false, "format error. %s", buf);
     *tmp = ' ';
