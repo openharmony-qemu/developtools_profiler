@@ -60,12 +60,13 @@ public:
     bool SendFileDescriptor(int fd);
     bool SendHookConfig(const uint8_t* config, size_t len);
     bool SendHeartBeat();
+    bool IsConnected();
     int ReceiveFileDiscriptor();
     enum ClientState GetClientState() { return clientState_; }
 protected:
     int socketHandle_;
     bool CreateRecvThread();
-    enum ClientState clientState_;
+    volatile enum ClientState clientState_;
     uint64_t lastProcMS_;
 
     ServiceBase* serviceBase_;

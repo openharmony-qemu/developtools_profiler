@@ -353,7 +353,7 @@ HWTEST_F(SharedMemoryBlockTest, PutWithPayloadSync, TestSize.Level1)
     for (int i = 0; i < size; i++) {
         *((uint32_t*)data) = i;
         *((uint32_t*)header) = i + 1;
-        shareMemoryBlock.PutWithPayloadSync(header, ARRAYSIZE, data, ARRAYSIZE);
+        shareMemoryBlock.PutWithPayloadSync(header, ARRAYSIZE, data, ARRAYSIZE, nullptr);
     }
     ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }

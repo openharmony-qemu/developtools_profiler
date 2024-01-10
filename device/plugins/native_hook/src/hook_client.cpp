@@ -225,7 +225,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
 
 static bool IsPidChanged(void);
 
-bool ohos_malloc_hook_on_start(void)
+bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     g_miStart = mallinfo2();
@@ -238,7 +238,7 @@ bool ohos_malloc_hook_on_start(void)
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler);
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler, disableHookCallback);
     }
     pthread_key_create(&g_disableHookFlag, nullptr);
     pthread_setspecific(g_disableHookFlag, nullptr);

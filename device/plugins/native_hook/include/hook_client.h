@@ -29,7 +29,7 @@ EXPORT_API bool ohos_malloc_hook_initialize(const MallocDispatchType*, bool*, co
 EXPORT_API bool ohos_malloc_hook_get_hook_flag(void);
 EXPORT_API bool ohos_malloc_hook_set_hook_flag(bool);
 EXPORT_API void ohos_malloc_hook_finalize(void);
-EXPORT_API bool ohos_malloc_hook_on_start(void);
+EXPORT_API bool ohos_malloc_hook_on_start(void (*disableHookCallback)());
 EXPORT_API bool ohos_malloc_hook_on_end(void);
 EXPORT_API void* ohos_malloc_hook_malloc(size_t);
 EXPORT_API void* ohos_malloc_hook_realloc(void*, size_t);

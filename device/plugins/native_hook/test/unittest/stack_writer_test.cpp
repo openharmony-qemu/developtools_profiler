@@ -205,17 +205,17 @@ HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level1)
     uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
     uint8_t buffer4[] = {0xCC, 0xDD, 0xBB, 0xEE};
 
-    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, nullptr));
     EXPECT_TRUE(write->WriteWithPayloadTimeout((const void*)buffer1, sizeof(buffer1),
-        (const void*)buffer2, sizeof(buffer2)));
+        (const void*)buffer2, sizeof(buffer2), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
     write->blocked_ = false;
     EXPECT_TRUE(write->WriteWithPayloadTimeout((const void*)buffer3, sizeof(buffer3),
-        (const void*)buffer4, sizeof(buffer4)));
+        (const void*)buffer4, sizeof(buffer4), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
     EXPECT_FALSE(write->Write(nullptr, 0));
-    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer3, 0, nullptr, 0));
-    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer3, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, nullptr));
 }
 
 /**
@@ -230,7 +230,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutNormalTest, TestSize.Level1)
 
     uint8_t buffer[] = {0xCC, 0xDD, 0xBB, 0xEE};
     EXPECT_TRUE(write->WriteWithPayloadTimeout((const void*)buffer, sizeof(buffer),
-        (const void*)buffer, sizeof(buffer)));
+        (const void*)buffer, sizeof(buffer), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer, sizeof(buffer)));
 }
 
@@ -246,10 +246,10 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutFalseTest, TestSize.Level1)
 
     uint8_t buffer[] = {0xAA, 0xBB, 0xCC, 0xDD};
     EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer, sizeof(buffer),
-        (const void*)buffer, sizeof(buffer)));
+        (const void*)buffer, sizeof(buffer), nullptr));
     EXPECT_FALSE(CheckBuffer(buffer, sizeof(buffer)));
-    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer, 0, nullptr, 0));
-    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout((const void*)buffer, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, nullptr));
 }
 
 /**

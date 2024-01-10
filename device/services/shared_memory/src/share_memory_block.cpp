@@ -409,7 +409,7 @@ int ShareMemoryBlock::GetfileDescriptor()
 }
 
 bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerSize,
-    const int8_t* payload, uint32_t payloadSize)
+    const int8_t* payload, uint32_t payloadSize, const std::function<bool()>& callback)
 {
     CHECK_NOTNULL(header_, false, "header not ready!");
     pthread_mutex_lock(&header_->info.mutex_);
@@ -417,6 +417,10 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
     if (rawMemory == nullptr) {
         while (true) {
             if (rawMemory == nullptr) {
+                if (callback && callback()) {
+                    pthread_mutex_unlock(&header_->info.mutex_);
+                    return false;
+                }
                 pthread_mutex_unlock(&header_->info.mutex_);
                 usleep(WAIT_RELEASE_TIMEOUT_US);
                 pthread_mutex_lock(&header_->info.mutex_);

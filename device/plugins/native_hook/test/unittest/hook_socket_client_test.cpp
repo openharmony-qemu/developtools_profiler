@@ -52,7 +52,7 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
     config <<= MOBILE_BIT;
     config |= SMB_SIZE;
     Sampling sampler;
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(uint64_t);
@@ -70,7 +70,7 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
     config <<= MOBILE_BIT;
     config |= SMB_SIZE;
     Sampling sampler;
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(ClientConfig);
@@ -103,7 +103,7 @@ HWTEST_F(HookSocketClientTest, GetSmbFd, TestSize.Level1)
     Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(clientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetSmbFd(), -1);
 }
@@ -120,7 +120,7 @@ HWTEST_F(HookSocketClientTest, GetEventFd, TestSize.Level1)
     Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(clientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetEventFd(), -1);
 }
