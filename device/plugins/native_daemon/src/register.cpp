@@ -22,7 +22,7 @@
 #include <sys/utsname.h>
 #endif
 
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
 #include <libunwind.h>
 #endif
 
@@ -90,7 +90,7 @@ uint64_t GetSupportedRegMask(ArchType arch)
     return result;
 }
 
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
 const std::map<int, int> LibUnwindRegMap = {
 #if defined(target_cpu_x86_64)
     {UNW_X86_64_RAX, PERF_REG_X86_AX},  {UNW_X86_64_RDX, PERF_REG_X86_DX},

@@ -25,7 +25,7 @@
 #include "unwinder.h"
 #include "virtual_thread.h"
 #include "hook_common.h"
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
 using ADDR_TYPE = unw_word_t;
 #else
 using ADDR_TYPE = uintptr_t;
@@ -66,7 +66,7 @@ private:
     std::unordered_map<pid_t, unwMemoryCache> porcessMemoryMap_;
     static bool ReadVirtualThreadMemory(UnwindInfo &unwindInfoPtr, ADDR_TYPE addr,
                                         ADDR_TYPE *data);
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
     static const std::string GetUnwErrorName(int error);
     static void dumpUDI(unw_dyn_info_t &di);
     static bool fillUDI(unw_dyn_info_t &di, SymbolsFile &symbolsFile, std::shared_ptr<DfxMap> mapmmap,

@@ -60,7 +60,6 @@ bool HookManager::CheckProcess()
             struct stat statBuf;
             std::string pidPath = "/proc/" + std::to_string(pid) + "/status";
             if (stat(pidPath.c_str(), &statBuf) != 0) {
-                // pid = 0;
                 PROFILER_LOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
                 return false;
             } else {

@@ -98,13 +98,13 @@ inline static uint32_t AddrHash(uint32_t h)
 
 inline void Addr2Bitpool(void* addr)
 {
-    uint32_t val = AddrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
+    uint32_t val = AddrHash(static_cast<uint32_t>(reinterpret_cast<uint64_t>(addr))) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
     g_addressChecker[val / DIVIDE_VAL].slot |= (0x1 << (val % DIVIDE_VAL));
 }
 
 inline bool IsAddrExist(void* addr)
 {
-    uint32_t val = AddrHash((uint32_t)(uint64_t)addr) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
+    uint32_t val = AddrHash(static_cast<uint32_t>(reinterpret_cast<uint64_t>(addr))) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
     if (g_addressChecker[val / DIVIDE_VAL].slot.load() & (0x1 << (val % DIVIDE_VAL))) {
         return true;
     }

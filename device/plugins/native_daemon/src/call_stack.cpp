@@ -18,7 +18,7 @@
 #include "dfx_ark.h"
 
 #include <string>
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
 #include <libunwind.h>
 extern "C" {
 #include <libunwind_i.h>
@@ -56,7 +56,7 @@ bool CallStack::ReadVirtualThreadMemory(UnwindInfo &unwindInfoPtr, ADDR_TYPE add
     }
 }
 
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
 const std::map<unw_error_t, const std::string> UNW_ERROR_MAP = {
     {UNW_ESUCCESS, std::to_string(UNW_ESUCCESS)},
     {UNW_EUNSPEC, std::to_string(UNW_EUNSPEC)},
@@ -406,7 +406,7 @@ bool CallStack::GetIpSP(uint64_t &ip, uint64_t &sp, const u64 *regs, size_t regN
     return false;
 }
 
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
 bool CallStack::DoUnwind(const VirtualThread &thread, std::vector<CallFrame> &callStack,
                          size_t maxStackLevel)
 {
@@ -472,7 +472,7 @@ bool CallStack::UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regs
      * unwind itself.
      */
     if (maxStackLevel - 1 > 0) {
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
         return DoUnwind(thread, callStack, maxStackLevel);
 #else
         return DoUnwind2(thread, callStack, maxStackLevel);
@@ -654,7 +654,7 @@ CallStack::CallStack()
 
 CallStack::~CallStack()
 {
-#if HAVE_LIBUNWIND
+#if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
     for (auto &pair : unwindAddrSpaceMap_) {
         unw_destroy_addr_space(pair.second);
     }
