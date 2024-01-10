@@ -31,9 +31,9 @@ int ClientControl::SocketStart(std::string args)
     read(clientSocket, buffer, numBuff);
     send(clientSocket, message1, strlen(message1), 0);
     read(clientSocket, buffer, numBuff);
-    char dest = [ARRAY_SIZE] = {0};
+    char dest = [arraySize] = {0};
     size_t i;
-    for (i = 0; buffer[i] != '\0' && i < ARRAY_SIZE - 1; i++) {
+    for (i = 0; buffer[i] != '\0' && i < arraySize - 1; i++) {
         dest[i] = buffer[i];
     }
     dest[i] = '\0';
@@ -50,9 +50,9 @@ int ClientControl::SocketStop()
     OHOS::SmartPerf::ClientControl::InitSocket();
     send(clientSocket, message2, strlen(message2), 0);
     read(clientSocket, buffer, numBuff);
-    char dest = [ARRAY_SIZE] = {0};
+    char dest = [arraySize] = {0};
     size_t i;
-    for (i = 0; buffer[i] != '\0' && i < ARRAY_SIZE - 1; i++) {
+    for (i = 0; buffer[i] != '\0' && i < arraySize - 1; i++) {
         dest[i] = buffer[i];
     }
     dest[i] = '\0';

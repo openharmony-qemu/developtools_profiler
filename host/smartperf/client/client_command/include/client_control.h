@@ -28,8 +28,8 @@ public:
 private:
     int clientSocket;
     struct sockaddr_in serverAddress;
-    const int ARRAY_SIZE = 1024;
-    static char buffer[ARRAY_SIZE] = {0};
+    static const int arraySize = 1024;
+    char buffer[arraySize] = {0};
     int protNumber = 8284;
     std::string message = "init::-SESSIONID 1 -INTERVAL 1000 ";
     const char* message1 = "start:::";
