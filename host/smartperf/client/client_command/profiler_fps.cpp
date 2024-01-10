@@ -313,7 +313,7 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
         msAdd += fpsInfo.jitters[i];
         if (msAdd <= msJiange) {
             msCount++;
-            if (i == fpsInfo.jitters.size() - 1) {
+            if (i == (fpsInfo.jitters.size() - 1)) {
                 printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
                 printCount++;
                 GetSectionsPrint(printCount, msStartTime);
@@ -321,14 +321,14 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
         } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
             printCount++;
-            msStartTime += msAdd - 1e8 * addcount;
+            msStartTime = fpsInfo.currentFpsTime + (msAdd / 1e6) - (1e2 * addcount);
             addcount = 0;
             msCount = 1;
             msJiange += 1e8;
         } else {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
             printCount++;
-            msStartTime += 1e8;
+            msStartTime += 1e2;
             addcount++;
             msCount = 0;
             msAdd -= fpsInfo.jitters[i];

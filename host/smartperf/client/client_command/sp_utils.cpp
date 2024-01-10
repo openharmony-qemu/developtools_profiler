@@ -246,18 +246,16 @@ static std::string GetSplitOne(std::string cmd)
 {
     std::string result;
     SPUtils::LoadCmd(cmd, result);
-    std::vector<std::string> splitStrings;
-    SPUtils::StrSplit(result, "=", splitStrings);
-    return splitStrings[1];
+    return result;
 }
 
 std::map<std::string, std::string> SPUtils::GetDeviceInfo()
 {
     std::map<std::string, std::string> resultMap;
-    std::string sn = GetSplitOne("param get |grep ohos.boot.sn");
-    std::string deviceTypeName = GetSplitOne("param get |grep ohos.boot.hardware");
-    std::string brand = GetSplitOne("param get |grep const.product.brand");
-    std::string version = GetSplitOne("param get |grep const.product.software.version");
+    std::string sn = GetSplitOne("param get ohos.boot.sn");
+    std::string deviceTypeName = GetSplitOne("param get ohos.boot.hardware");
+    std::string brand = GetSplitOne("param get const.product.brand");
+    std::string version = GetSplitOne("param get const.product.software.version");
     resultMap["sn"] = sn;
     resultMap["deviceTypeName"] = deviceTypeName;
     resultMap["brand"] = brand;

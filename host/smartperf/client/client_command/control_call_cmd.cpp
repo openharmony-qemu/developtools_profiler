@@ -153,7 +153,7 @@ std::string ControlCallCmd::GetFrame()
     std::string reslut = radar.ParseRadarFrame(str);
     return result;
 }
-double ControlCallCmd::PageFps()
+std::string ControlCallCmd::PageFps()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::PageFpsTrace pageFpsTrace;
@@ -165,7 +165,7 @@ double ControlCallCmd::PageFps()
     double fps = pageFpsTrace.ParsePageFpsTrace(traceName);
     stream << fps;
     result = "FPS:" + stream.str() + "fps";
-    return fps;
+    return result;
 }
 std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
 {
