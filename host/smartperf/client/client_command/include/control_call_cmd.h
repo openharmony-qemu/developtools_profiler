@@ -29,7 +29,7 @@ public:
     double ResponseTime();
     double StartResponse(std::vector<std::string> v);
     static std::string SlideFps(std::vector<std::string> v);
-    double PageFps();
+    std::string PageFps();
     std::string StartFrameFps(std::vector<std::string> v);
     std::string GetResult(std::vector<std::string> v);
     std::string GetFrame();

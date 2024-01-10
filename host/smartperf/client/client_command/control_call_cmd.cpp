@@ -153,7 +153,7 @@ std::string ControlCallCmd::GetFrame()
     std::string reslut = radar.ParseRadarFrame(str);
     return result;
 }
-double ControlCallCmd::PageFps()
+std::string ControlCallCmd::PageFps()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::PageFpsTrace pageFpsTrace;

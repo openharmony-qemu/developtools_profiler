@@ -48,7 +48,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
     }
     while (fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
-            if (sscanf_s(buff, "%*s%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu%llu%*llu%*llu%*llu%*llu%*llu%*llu%*llu",
+            if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
                 return networkInfo;
             }
