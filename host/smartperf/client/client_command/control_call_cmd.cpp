@@ -165,7 +165,7 @@ double ControlCallCmd::PageFps()
     double fps = pageFpsTrace.ParsePageFpsTrace(traceName);
     stream << fps;
     result = "FPS:" + stream.str() + "fps";
-    return fps;
+    return result;
 }
 std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
 {

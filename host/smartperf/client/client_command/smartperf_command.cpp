@@ -29,10 +29,6 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
 {
     if (argc == oneParam) {
         OHOS::SmartPerf::StartUpDelay sd;
-        bool spId = sd.GetSpTcp();
-        if (spId) {
-            return;
-        }
         std::string pid = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = "taskset -p f " + pid;
         std::string result = "";
