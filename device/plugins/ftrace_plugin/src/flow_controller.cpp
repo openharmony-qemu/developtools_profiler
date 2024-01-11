@@ -641,9 +641,7 @@ int FlowController::StopCapture(void)
     // disable userspace trace triggers
     // because trace cmd will read trace buffer,
     // so we to this action after polling thread exit.
-    if (traceCategories_.size() > 0) {
-        traceCollector_->Recover();
-    }
+    traceCollector_->Recover();
     tansporter_->Flush();
 
     // release resources
