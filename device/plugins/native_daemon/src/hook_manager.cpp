@@ -322,10 +322,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         return false;
     }
     if (hookConfig_.save_file() && !hookConfig_.file_name().empty()) {
-        std::string realFilePathStr = COMMON::RealPath(hookConfig_.file_name());
-        CHECK_TRUE(!realFilePathStr.empty(), false, "hookConfig_.file_name: %s realpath failed.",
-                   hookConfig_.file_name().c_str());
-        fpHookData_ = fopen(realFilePathStr.c_str(), "wb+");
+        fpHookData_ = fopen(hookConfig_.file_name().c_str(), "wb+");
         if (fpHookData_ == nullptr) {
             PROFILER_LOG_INFO(LOG_CORE, "fopen file %s fail", hookConfig_.file_name().c_str());
             return false;
