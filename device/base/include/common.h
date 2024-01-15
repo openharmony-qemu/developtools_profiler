@@ -39,7 +39,6 @@ void SplitString(const std::string& str, const std::string &sep, std::vector<std
 bool CheckApplicationPermission(int pid, const std::string& processName);
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths);
 bool ReadFile(const std::string& filePath, const std::vector<std::string>& validPaths, std::string& fileContent);
-std::string RealPath(const std::string& filePath);
 std::string GetErrorMsg();
 std::string GetTimeStr();
 clockid_t GetClockId(const std::string& clockIdStr);
