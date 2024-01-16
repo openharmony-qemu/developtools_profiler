@@ -94,6 +94,7 @@ std::string CutLayerName(std::string layerName)
     } else {
         subLayerName = layerName;
     }
+    return subLayerName;
 }
 
 FpsInfo FPS::GetFpsInfo()
