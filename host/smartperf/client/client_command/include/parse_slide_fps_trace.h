@@ -28,21 +28,24 @@ class ParseSlideFpsTrace {
         std::string GetLineTime(std::string lineStr);
         std::string CutString(std::string lineStr, std::string start, std::string end, size_t off);
     private:
+        bool HandleTraceOne();
+        bool HandleTraceTwo();
+        bool HandleTraceThree();
         std::ifstream infile;
         std::string startLine = "";
         std::string responseLine = "";
         std::string completeLine = "";
         bool needUpdateResponseLine = false;
         int frameNum = 0;
-        std::string pid = "";
-        int count = 0;
-        bool updateCount = false;
-        double frameStartTime = 0;
-        bool animatorFlag = false;
-        int animatorSecond = 0;
         std::string::size_type maxnpos = std::string::npos;
         std::string line;
-        int numA = 2;
+        int touchNum = 0;
+        bool animEmptyFlag = false;
+        bool doFlag = false;
+        bool animateFlag = true;
+        double lastTime = 0.0;
+        double nowTime = 0.0;
+        int firstFrame = 0;
 };
 }
 }

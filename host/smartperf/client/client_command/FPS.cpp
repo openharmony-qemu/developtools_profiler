@@ -235,6 +235,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
             fpsInfo.timeStampQ.pop();
         }
         fpsInfo.fps = 0;
+        fpsInfo.jitters.clear();
         return fpsInfo;
     }
     const int minPrintLine = 5;
@@ -244,6 +245,9 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     }
     if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
         fpsInfo.fps = fpsGb;
+        if (fpsGb == 0) {
+            fpsInfo.jitters.clear();
+        }
         return fpsInfo;
     }
     if (fpsGb > 0) {
@@ -269,7 +273,6 @@ std::string FPS::GetLayer(std::string pkgSurface)
         int lineNum = 0;
         char buf[1024] = {'\0'};
 
-        const int paramFifteen = 15;
         const int paramFourteen = 14;
         const int paramThree = 3;
         const int windowNameIndex = 0;
@@ -287,12 +290,8 @@ std::string FPS::GetLayer(std::string pkgSurface)
                 params[windowIdIndex].find("WinId") != std::string::npos) {
                 continue;
             }
-            if (params.size() == paramFifteen) {
+            if (params.size() > paramFourteen) {
                 DumpEntity dumpEntity { params[0], params[1], params[2], params[3], params[7]};
-                dumpEntityList.push_back(dumpEntity);
-            }
-            if (params.size() == paramFourteen) {
-                DumpEntity dumpEntity { params[0], params[1], params[2], params[2], params[6]};
                 dumpEntityList.push_back(dumpEntity);
             }
             if (params.size() == paramThree) {

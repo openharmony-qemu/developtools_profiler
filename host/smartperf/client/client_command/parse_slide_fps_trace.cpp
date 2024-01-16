@@ -30,40 +30,91 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     }
     return fps;
 }
+
+bool ParseSlideFpsTrace::HandleTraceOne()
+{
+    if (needUpdateResponseLine) {
+        if (line.find("H:RSMainTHread::DoComposition") != maxnpos) {
+            doFlag = true;
+            if (firstFrame == 0) {
+                responseLine = line;
+                firstFrame = 1;
+            }
+            if (animEmptyFlag) {
+                frameNum++;
+                completeLine = line;
+                return true;
+            } else {
+                completeLine = line;
+                frameNum++;
+            }
+            animEmptyFlag = false;
+        }
+    }
+    return false;
+}
+
+bool ParseSlideFpsTrace::HandleTraceThree()
+{
+    const double one = 0.1;
+    noeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+    if (lastTime == 0) {
+        lastTime = nowTime;
+    } else {
+        if (nowTime - lastTime > one) {
+            return true;
+        } else {
+            lastTime = nowTime;
+        }
+    }
+    return false;
+}
+
+bool ParseSlideFpsTrace::HandleTraceTwo()
+{
+    if (line.find("H:rs_RequestNextVSync") != maxnpos) {
+        if (!animEmptyFlag) {
+            return HandleTraceThree();
+        }
+    }
+    return false;
+}
+
 double ParseSlideFpsTrace::CalculateTime()
 {
+    const int four = 4;
     while (getline(infile, line)) {
-        if (line.find("H:OnTouchEvent") != maxnpos) {
-            startLine = line;
-            needUpdateResponseLine = true;
+        if (line.find("H:touchEventDispatch") != maxnpos) {
+            touchNum++;
+            if (touchNum == four) {
+                startLine = line;
+                needUpdateResponseLine = true;
+            }
             frameNum = 0;
-        }  else if (line.find("H:RSMainThread::DoComposition") != maxnpos && animatorSecond < numA) {
-            updateCount = true;
-            count = 0;
-            pid = CutString(line, "B|", "H:RSMainThread::DoComposition", numA);
-            frameNum++;
-            if (needUpdateResponseLine && frameNum == numA) {
-                responseLine = line;
-            }
-            frameStartTime = std::stod(GetLineTime(line));
-            if (animatorFlag) {
-                animatorSecond++;
-                completeLine = line;
-            }
         }
-        if (line.find("H:Animator: friction") != maxnpos && line.find("F|") != maxnpos) {
-            animatorFlag = true;
+        if (HandleTraceOne()) {
+            break;
+        }
+        if (line.find("H:Animate" != maxnpos)) {
+            animateFlag = true;
+        }
+        if (animateFlag && needUpdateResponseLine && doFlag) {
+            if (HandleTraceTwo()) {
+                break;
+            }
+            if (line.find("H:Animation running empty") != maxnpos) {
+                animEmptyFlag = true;
+            }
         }
     }
     if (startLine.compare("") == 0) {
         std::cout << "can not find start point {H:touchEventDispatch}" << std::endl;
     } else if (completeLine.compare("") == 0) {
-        std::cout << "can not find complete point {H:RSMainThread::leashWindow}" << std::endl;
+        std::cout << "can not find complete point {H:rs_RequestNextVSync}" << std::endl;
     } else {
         double responseTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(responseLine));
         double completeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(completeLine));
-        int endFrameNum = frameNum - numA;
-        return endFrameNum / (completeTime - responseTime);
+        return frameNum / (completeTime - responseTime);
     }
     return -1.0;
 }

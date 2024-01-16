@@ -58,23 +58,22 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     if (processId.size() == 0) {
         return procRamInfo;
     }
-    std::string cmd = "cat /proc/" + processId + "/smaps_rollup";
+    std::string cmd = "hidumper --mem "+ processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;
     }
+    const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line = buf;
-        if (line[0] == '-' || line[0] == ' ') {
+        if (line[0] == '-') {
             continue;
         }
-        if (line.find("Pss:") != std::string::npos) {
-            std::regex pattern("\\d+");
-            std::smatch result;
-            if (std::regex_search(line, result, pattern)) {
-                pssValue = result[0];
-            }
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, "", params);
+        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+            pssValue = params[1];
         }
         if (pssValue.size() > 0) {
             break;
