@@ -34,7 +34,7 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
 bool ParseSlideFpsTrace::HandleTraceOne()
 {
     if (needUpdateResponseLine) {
-        if (line.find("H:RSMainTHread::DoComposition") != maxnpos) {
+        if (line.find("H:RSMainThread::DoComposition") != maxnpos) {
             doFlag = true;
             if (firstFrame == 0) {
                 responseLine = line;
@@ -57,7 +57,7 @@ bool ParseSlideFpsTrace::HandleTraceOne()
 bool ParseSlideFpsTrace::HandleTraceThree()
 {
     const double one = 0.1;
-    noeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+    nowTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
     if (lastTime == 0) {
         lastTime = nowTime;
     } else {
@@ -95,7 +95,7 @@ double ParseSlideFpsTrace::CalculateTime()
         if (HandleTraceOne()) {
             break;
         }
-        if (line.find("H:Animate" != maxnpos)) {
+        if (line.find("H:Animate") != maxnpos) {
             animateFlag = true;
         }
         if (animateFlag && needUpdateResponseLine && doFlag) {

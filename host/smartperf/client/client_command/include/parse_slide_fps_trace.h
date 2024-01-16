@@ -27,10 +27,10 @@ class ParseSlideFpsTrace {
         double CalculateTime();
         std::string GetLineTime(std::string lineStr);
         std::string CutString(std::string lineStr, std::string start, std::string end, size_t off);
-    private:
         bool HandleTraceOne();
         bool HandleTraceTwo();
         bool HandleTraceThree();
+    private:
         std::ifstream infile;
         std::string startLine = "";
         std::string responseLine = "";

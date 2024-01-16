@@ -111,7 +111,14 @@ FpsInfo FPS::GetFpsInfo()
     std::string zOrd = "-1";
     std::string focusSurface = params[0];
     FpsInfo uniteFpsInfo;
-    if (focusSurface.find(layerName) != std::string::npos) {
+    std::string subLayerName;
+    int twenty = 20;
+    if (layerName.size() > twenty) {
+        subLayerName = layerName.substr(0, twenty);
+    } else {
+        subLayerName = layerName;
+    }
+    if (focusSurface.find(subLayerName) != std::string::npos) {
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
     }
     if ((focusSurface.find(spSurfacePrefix) != std::string::npos) && (strcmp(pkgZOrd.c_str(), zOrd.c_str()) != 0)) {

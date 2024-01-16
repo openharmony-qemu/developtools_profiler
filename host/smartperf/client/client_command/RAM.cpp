@@ -71,7 +71,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
             continue;
         }
         std::vector<std::string> params;
-        SPUtils::StrSplit(line, "", params);
+        SPUtils::StrSplit(line, " ", params);
         if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
             pssValue = params[1];
         }

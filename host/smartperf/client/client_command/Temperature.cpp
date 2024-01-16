@@ -24,17 +24,15 @@ std::map<std::string, std::string> Temperature::ItemData()
     struct dirent *dirp;
     std::vector<std::string> dirs;
     if (dp == nullptr) {
-        std::cout << "Open directory failes!" << std::endl;
+        std::cout << "Open directory failed!" << std::endl;
     }
     while ((dirp = readdir(dp)) != nullptr) {
-        if (strcmp(dirp->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+        if (strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0) {
             dirs.push_back(SPUtils::IncludePathDelimiter(thermalBasePath) + std::string(dirp->d_name));
         }
     }
-    close(dp);
+    closedir(dp);
     std::map<std::string, std::string> result;
-    std::vector<std::string> dirs;
-    SPUtils::ForDirFiles(thermalBasePath, dirs);
     for (auto dir : dirs) {
         std::string dirType = dir + "/type";
         std::string dirTemp = dir + "/temp";
