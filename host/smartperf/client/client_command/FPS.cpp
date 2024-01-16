@@ -69,7 +69,8 @@ void FPS::SetLayerName(std::string sName)
 {
     surfaceViewName = std::move(sName);
 }
-FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName) {
+FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName)
+{
     FpsInfo fpsInfo = GetSurfaceFrame(sName);
     return fpsInfo;
 }
@@ -84,17 +85,25 @@ std::string FPS::GetSurface()
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
+std::string CutLayerName(std::string layerName)
+{
+    std::string subLayerName;
+    int twenty = 20;
+    if (layerName.size() > twenty) {
+        subLayerName = layerName.substr(0, twenty);
+    } else {
+        subLayerName = layerName;
+    }
+}
 
 FpsInfo FPS::GetFpsInfo()
 {
     FpsInfo fpsInfoMax;
     fpsInfoMax.fps = 0;
     int fpsValue = 0;
-
     if (pkgName.empty()) {
         return fpsInfoMax;
     }
-
     std::string layerName;
     std::vector<std::string> sps;
     SPUtils::StrSplit(this->pkgName, ".", sps);
@@ -111,13 +120,7 @@ FpsInfo FPS::GetFpsInfo()
     std::string zOrd = "-1";
     std::string focusSurface = params[0];
     FpsInfo uniteFpsInfo;
-    std::string subLayerName;
-    int twenty = 20;
-    if (layerName.size() > twenty) {
-        subLayerName = layerName.substr(0, twenty);
-    } else {
-        subLayerName = layerName;
-    }
+    std::string subLayerName = CutLayerName(layerName);
     if (focusSurface.find(subLayerName) != std::string::npos) {
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
     }

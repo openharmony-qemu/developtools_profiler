@@ -60,6 +60,7 @@ public:
     void SetLayerName(std::string sName);
     void SetCaptureOn();
     void SetTraceCatch();
+    std::string CutLayerName(std::string layerName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
     std::string GetSurface();
