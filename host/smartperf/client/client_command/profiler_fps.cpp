@@ -292,7 +292,7 @@ static std::string GetSurFace()
 static void GetSectionsPrint(int printCount, long long msStartTime)
 {
     int ten  = 10;
-    long long msJiange = 100000000;
+    long long msJiange = 100;
     if (printCount < ten) {
         for (int i = 0; i < ten - printCount; i++) {
             msStartTime += msJiange;
@@ -307,7 +307,6 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
     long long msStartTime = fpsInfo.currentFpsTime;
     long long msAdd = 0;
     long long msJiange = 100000000;
-    int addcount = 0;
     int printCount = 0;
     for (int i = 0; i < fpsInfo.jitters.size(); i++) {
         msAdd += fpsInfo.jitters[i];
@@ -321,15 +320,13 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
         } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
             printCount++;
-            msStartTime = fpsInfo.currentFpsTime + (msAdd / 1e6) - (1e2 * addcount);
-            addcount = 0;
+            msStartTime = fpsInfo.currentFpsTime + (msAdd / 1e6);
             msCount = 1;
             msJiange += 1e8;
         } else {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
             printCount++;
             msStartTime += 1e2;
-            addcount++;
             msCount = 0;
             msAdd -= fpsInfo.jitters[i];
             i--;

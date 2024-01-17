@@ -69,7 +69,8 @@ void FPS::SetLayerName(std::string sName)
 {
     surfaceViewName = std::move(sName);
 }
-FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName) {
+FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName)
+{
     FpsInfo fpsInfo = GetSurfaceFrame(sName);
     return fpsInfo;
 }
@@ -84,17 +85,26 @@ std::string FPS::GetSurface()
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
+std::string FPS::CutLayerName(std::string layerName)
+{
+    std::string subLayerName;
+    int twenty = 20;
+    if (layerName.size() > twenty) {
+        subLayerName = layerName.substr(0, twenty);
+    } else {
+        subLayerName = layerName;
+    }
+    return subLayerName;
+}
 
 FpsInfo FPS::GetFpsInfo()
 {
     FpsInfo fpsInfoMax;
     fpsInfoMax.fps = 0;
     int fpsValue = 0;
-
     if (pkgName.empty()) {
         return fpsInfoMax;
     }
-
     std::string layerName;
     std::vector<std::string> sps;
     SPUtils::StrSplit(this->pkgName, ".", sps);
@@ -111,7 +121,8 @@ FpsInfo FPS::GetFpsInfo()
     std::string zOrd = "-1";
     std::string focusSurface = params[0];
     FpsInfo uniteFpsInfo;
-    if (focusSurface.find(layerName) != std::string::npos) {
+    std::string subStrLayerName = CutLayerName(layerName);
+    if (focusSurface.find(subStrLayerName) != std::string::npos) {
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
     }
     if ((focusSurface.find(spSurfacePrefix) != std::string::npos) && (strcmp(pkgZOrd.c_str(), zOrd.c_str()) != 0)) {
@@ -235,6 +246,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
             fpsInfo.timeStampQ.pop();
         }
         fpsInfo.fps = 0;
+        fpsInfo.jitters.clear();
         return fpsInfo;
     }
     const int minPrintLine = 5;
@@ -244,6 +256,9 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     }
     if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
         fpsInfo.fps = fpsGb;
+        if (fpsGb == 0) {
+            fpsInfo.jitters.clear();
+        }
         return fpsInfo;
     }
     if (fpsGb > 0) {
@@ -269,7 +284,6 @@ std::string FPS::GetLayer(std::string pkgSurface)
         int lineNum = 0;
         char buf[1024] = {'\0'};
 
-        const int paramFifteen = 15;
         const int paramFourteen = 14;
         const int paramThree = 3;
         const int windowNameIndex = 0;
@@ -287,12 +301,8 @@ std::string FPS::GetLayer(std::string pkgSurface)
                 params[windowIdIndex].find("WinId") != std::string::npos) {
                 continue;
             }
-            if (params.size() == paramFifteen) {
+            if (params.size() > paramFourteen) {
                 DumpEntity dumpEntity { params[0], params[1], params[2], params[3], params[7]};
-                dumpEntityList.push_back(dumpEntity);
-            }
-            if (params.size() == paramFourteen) {
-                DumpEntity dumpEntity { params[0], params[1], params[2], params[2], params[6]};
                 dumpEntityList.push_back(dumpEntity);
             }
             if (params.size() == paramThree) {

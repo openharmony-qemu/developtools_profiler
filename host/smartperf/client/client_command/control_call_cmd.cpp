@@ -67,7 +67,7 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         result = ControlCallCmd::GetAppStartTime();
     } else if (v[typeName] == "slideList") {
         result = ControlCallCmd::SlideList();
-    } else if (v[typeName] == "timmeDelay") {
+    } else if (v[typeName] == "timeDelay") {
         result = ControlCallCmd::TimeDelay();
     }
     if (time == noNameType) {
@@ -130,7 +130,7 @@ std::string ControlCallCmd::SlideList()
         thGetHisysId.join();
         double responseTime = radar.ParseRadarResponse(str);
         stream << responseTime;
-        std::string responseSlide = "time:" + stream.str() + "ms";
+        std::string responseSlide = "responseTime:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         std::ostringstream streamFps;
         streamFps << sFps;

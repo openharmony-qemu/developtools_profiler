@@ -14,14 +14,25 @@
  */
 #include <iostream>
 #include "include/sp_utils.h"
+#include <dirent.h>
 #include "include/Temperature.h"
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Temperature::ItemData()
 {
-    std::map<std::string, std::string> result;
+    DIR *dp = opendir(thermalBasePath.c_str());
+    struct dirent *dirp;
     std::vector<std::string> dirs;
-    SPUtils::ForDirFiles(thermalBasePath, dirs);
+    if (dp == nullptr) {
+        std::cout << "Open directory failed!" << std::endl;
+    }
+    while ((dirp = readdir(dp)) != nullptr) {
+        if (strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0) {
+            dirs.push_back(SPUtils::IncludePathDelimiter(thermalBasePath) + std::string(dirp->d_name));
+        }
+    }
+    closedir(dp);
+    std::map<std::string, std::string> result;
     for (auto dir : dirs) {
         std::string dirType = dir + "/type";
         std::string dirTemp = dir + "/temp";
