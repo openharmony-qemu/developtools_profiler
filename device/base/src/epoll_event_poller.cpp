@@ -226,8 +226,12 @@ bool EpollEventPoller::Finalize()
 bool EpollEventPoller::Start()
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s %d", __func__, state_.load());
+    if (state_ == STARTED) {
+        PROFILER_LOG_INFO(LOG_CORE, "need Stop in start!");
+        Stop();
+    }
+    std::unique_lock<std::mutex> lock(mutex_);
     CHECK_TRUE(state_ == INITIED, false, "Start FAIL %d", state_.load());
-
     running_ = true;
     pollThread_ = std::thread(&EpollEventPoller::Run, this);
     state_ = STARTED;
@@ -237,7 +241,6 @@ bool EpollEventPoller::Start()
 bool EpollEventPoller::Stop()
 {
     CHECK_TRUE(state_ == STARTED, false, "Stop FAIL %d", state_.load());
-
     running_ = false;
     Notify();
     if (pollThread_.joinable()) {

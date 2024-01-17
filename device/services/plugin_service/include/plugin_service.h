@@ -105,8 +105,8 @@ public:
     std::pair<uint32_t, PluginContextPtr> GetPluginContext(const std::string& pluginName);
     void SetTraceWriter(const TraceFileWriterPtr& traceWriter);
     void FlushAllData(const std::string& pluginName);
-    void StartEpollThread();
-    void StopEpollThread();
+    bool StartEpollThread();
+    bool StopEpollThread();
 
 private:
     bool StartService(const std::string& unixSocketName);
