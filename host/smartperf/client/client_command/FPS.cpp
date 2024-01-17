@@ -85,7 +85,7 @@ std::string FPS::GetSurface()
     size_t position2 = cmdResult.find("]");
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
-std::string CutLayerName(std::string layerName)
+std::string FPS::CutLayerName(std::string layerName)
 {
     std::string subLayerName;
     int twenty = 20;
