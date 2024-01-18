@@ -61,18 +61,20 @@ PluginService::~PluginService()
     }
 }
 
-void PluginService::StartEpollThread()
+bool PluginService::StartEpollThread()
 {
     if (eventPoller_) {
-        eventPoller_->Start();
+        return eventPoller_->Start();
     }
+    return false;
 }
 
-void PluginService::StopEpollThread()
+bool PluginService::StopEpollThread()
 {
     if (eventPoller_) {
-        eventPoller_->Stop();
+        return eventPoller_->Stop();
     }
+    return false;
 }
 
 void PluginService::SetPluginSessionManager(const PluginSessionManagerPtr& pluginSessionManager)

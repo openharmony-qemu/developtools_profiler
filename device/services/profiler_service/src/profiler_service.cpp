@@ -487,7 +487,7 @@ Status ProfilerService::StartSession(ServerContext* context,
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
 
     // start epoll thread to receive shared memory messages.
-    pluginService_->StartEpollThread();
+    CHECK_EXPRESSION_TRUE(pluginService_->StartEpollThread(), "start epoll thread failed!");
 
     // get intersection set of requestNames and pluginNames
     std::vector<std::string> updateNames;
