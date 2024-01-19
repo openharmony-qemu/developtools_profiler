@@ -35,13 +35,13 @@ const int SLEEP_TIME = 50;
 const int BUF_MAX_LEN = 64;
 const int MS_PER_S = 1000;
 const int US_PER_S = 1000000;
-const char *g_fpsFormat = "SP_daemon -profilerfps 31104000 -sections ";
+const char *g_fpsFormat = "SP_daemon -profilerfps 31104000 -sections 10";
 
 static pid_t volatile g_child;
 const int READ = 0;
 const int WRITE = 1;
 const int PIPE_LEN = 2;
-const std::string BIN_COMMAND("/bin/sh");
+const std::string BIN_COMMAND("/bin/SP_daemon");
 } // namespace
 
 HidumpPlugin::HidumpPlugin() : fp_(nullptr, nullptr) {}
@@ -69,9 +69,8 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
     PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HidumpPlugin: ParseFromArray failed");
 
-    std::string cmd = g_fpsFormat + std::to_string(protoConfig_.sections());
-    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Excute cmd: %s", cmd.c_str());
-    fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(cmd.c_str(), "r"), CustomPclose);
+    fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(std::to_string(protoConfig_.sections()).c_str(), "r"),
+                                                CustomPclose);
     if (fp_.get() == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
@@ -213,7 +212,7 @@ FILE* HidumpPlugin::CustomPopen(const char* command, const char* type)
         }
 
         setpgid(pid, pid);
-        execl(BIN_COMMAND.c_str(), BIN_COMMAND.c_str(), "-c", command, nullptr);
+        execl(BIN_COMMAND.c_str(), "SP_daemon", "-profilerfps", "31104000", "-sections", command, nullptr);
         exit(0);
     } else {
         if (!strncmp(type, "r", strlen(type))) {
