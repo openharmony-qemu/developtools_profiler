@@ -227,8 +227,8 @@ bool EpollEventPoller::Start()
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s %d", __func__, state_.load());
     if (state_ == STARTED) {
-        PROFILER_LOG_INFO(LOG_CORE, "need Stop in start!");
-        Stop();
+        PROFILER_LOG_INFO(LOG_CORE, "epoll thread has started!");
+        return true;
     }
     std::unique_lock<std::mutex> lock(mutex_);
     CHECK_TRUE(state_ == INITIED, false, "Start FAIL %d", state_.load());
