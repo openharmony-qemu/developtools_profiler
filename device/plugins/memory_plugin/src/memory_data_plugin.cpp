@@ -17,6 +17,7 @@
 #include <cmath>
 #include <sstream>
 
+#include "dump_usage.h"
 #include "memory_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "smaps_stats.h"
@@ -1244,24 +1245,17 @@ bool MemoryDataPlugin::GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graph
         return ret;
     }
 
-    for (const auto &memTrackerType : MEMORY_TRACKER_TYPES) {
-        std::vector<MemoryRecord> records;
-        if (memtrack->GetDevMem(pid, memTrackerType.first, records) == HDF_SUCCESS) {
-            uint64_t value = 0;
-            for (const auto &record : records) {
-                if ((static_cast<uint32_t>(record.flags) & FLAG_UNMAPPED) == FLAG_UNMAPPED) {
-                    value = static_cast<uint64_t>(record.size / KB_TO_BYTES);
-                    break;
-                }
-            }
-            if (memTrackerType.first == MEMORY_TRACKER_TYPE_GL) {
-                graphicsMemory.gl = value;
-                ret = true;
-            } else if (memTrackerType.first == MEMORY_TRACKER_TYPE_GRAPH) {
-                graphicsMemory.graph = value;
-                ret = true;
+    std::vector<MemoryRecord> records;
+    if (memtrack->GetDevMem(pid, MEMORY_TRACKER_TYPE_GL, records) == HDF_SUCCESS) {
+        uint64_t value = 0;
+        for (const auto& record : records) {
+            if ((static_cast<uint32_t>(record.flags) & FLAG_UNMAPPED) == FLAG_UNMAPPED) {
+                value = static_cast<uint64_t>(record.size / KB_TO_BYTES);
+                break;
             }
         }
+        graphicsMemory.gl = value;
+        ret = true;
     }
     return ret;
 }
@@ -1276,6 +1270,8 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
         // refers hidumper
         // https://gitee.com/openharmony/hiviewdfx_hidumper/blob/master/frameworks/native/src/executor/memory/memory_info.cpp#L260
         GraphicsMemory graphicsMemory;
+        std::unique_ptr<OHOS::HiviewDFX::DumpUsage> dumpUsage = std::make_unique<OHOS::HiviewDFX::DumpUsage>();
+        graphicsMemory.graph = dumpUsage->GetDma(pid);
         if (isRenderService(pid)) {
             std::vector<MemoryGraphic> memGraphicVec = RSInterfaces::GetInstance().GetMemoryGraphics();
             uint64_t sumPidsMemGL = 0;
@@ -1290,10 +1286,10 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
                 processesInfo->set_graph_pss_kb(graphicsMemory.graph);
             }
         } else {
+            GetRenderServiceGlSize(pid, graphicsMemory);
             auto& rsClient = RSInterfaces::GetInstance();
             std::unique_ptr<MemoryGraphic> memGraphic = std::make_unique<MemoryGraphic>(rsClient.GetMemoryGraphic(pid));
             graphicsMemory.gl = memGraphic->GetGpuMemorySize() / KB_TO_BYTES;
-            graphicsMemory.graph = memGraphic->GetCpuMemorySize() / KB_TO_BYTES;
             processesInfo->set_gl_pss_kb(graphicsMemory.gl);
             processesInfo->set_graph_pss_kb(graphicsMemory.graph);
         }
