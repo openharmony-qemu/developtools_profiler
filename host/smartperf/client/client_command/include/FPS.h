@@ -67,6 +67,7 @@ public:
     std::string GetLayer(std::string pkgSurface);
     FpsInfo mFpsInfo;
     FpsInfo flagFpsInfo;
+    FpsInfo cntFpsInfo;
     static FPS &GetInstance()
     {
         static FPS instance;

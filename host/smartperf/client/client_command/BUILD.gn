@@ -64,6 +64,7 @@ ohos_executable("SP_daemon") {
     "sp_task.cpp",
     "sp_utils.cpp",
     "startup_delay.cpp",
+    "sp_log.cpp",
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]
@@ -76,6 +77,11 @@ ohos_executable("SP_daemon") {
     "image_framework:image_native",
     "window_manager:libdm",
     "window_manager:libwm",
+    "hilog:libhilog",
+  ]
+  defines = [
+    "HI_LOG_ENABLE",
+    "LOG_DOMAIN = 0XD004100",
   ]
 }
 ## Build so }}}

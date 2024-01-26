@@ -97,6 +97,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             long long lastTime = SPUtils::GetCurTime();
             std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
+            dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
             for (std::string itConfig:curTaskInfo.taskConfig) {
                 SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(itConfig));
                 std::map<std::string, std::string> itemMap = profiler->ItemData();
