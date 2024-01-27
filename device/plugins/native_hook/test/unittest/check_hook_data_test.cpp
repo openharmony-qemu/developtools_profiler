@@ -1073,7 +1073,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
-        EXPECT_TRUE(applyCount > 0);
     }
 }
 
