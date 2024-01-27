@@ -100,6 +100,7 @@ int ClientControl::CloseSocket()
 {
     shutdown(clientSocket, SHUT_RD);
     close(clientSocket);
+    clientSocket = -1;
     return 0;
 }
 }

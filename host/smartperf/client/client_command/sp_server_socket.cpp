@@ -79,10 +79,11 @@ int SpServerSocket::Send(std::string sendBuf)
     return 0;
 }
 
-void SpServerSocket::Close() const
+void SpServerSocket::Close()
 {
     shutdown(sock, SHUT_RD);
     close(sock);
+    sock = -1;
 }
 
 int SpServerSocket::Recvfrom()

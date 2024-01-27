@@ -137,8 +137,8 @@ FpsInfo FPS::GetFpsInfo()
     std::string focusSurface = params[0];
     FpsInfo uniteFpsInfo;
     std::string subStrLayerName = CutLayerName(layerName);
-    LOGE("layerName: %s", layerName.c_str(), "uniteLayer: %s", uniteLayer.c_str(), "line: %s", line.c_str(),
-        "focusSurface: %s", focusSurface.c_str(), "subStrLayerName: %s", subStrLayerName.c_str());
+    LOGE("layerName: %s", "uniteLayer: %s", "line: %s", "focusSurface: %s", "subStrLayerName: %s",
+        layerName.c_str(), uniteLayer.c_str(), line.c_str(), focusSurface.c_str(), subStrLayerName.c_str());
     if ((focusSurface.find(subStrLayerName) != std::string::npos) && (strcmp(pkgZOrd.c_str(), zOrd.c_str()) != 0)) {
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
         PrintFpsInfo(uniteFpsInfo, uniteLayer, "one");
