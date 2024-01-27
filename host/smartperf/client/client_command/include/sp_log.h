@@ -22,21 +22,21 @@ typedef enum {
     SP_LOG_INFO,
     SP_LOG_WARN,
     SP_LOG_ERROR,
-} SPLogLevel;
+} SpLogLevel;
 
-void SpLog(SPLogLevel logLevel, const char *fmt, ...);
+void SpLog(SpLogLevel logLevel, const char *fmt, ...);
 
 #define LOGD(fmt, ...) \
-    SpLog(OHOS::SmartPerf::SP_LOG_DEBUG, (std::string("[") + "SP_daemon" +"][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_DEBUG, (std::string("[") + "SP_daemon" +"][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
 
 #define LOGI(fmt, ...) \
-    SpLog(OHOS::SmartPerf::SP_LOG_INFO, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_INFO, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
 
 #define LOGW(fmt, ...) \
-    SpLog(OHOS::SmartPerf::SP_LOG_WARN, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_WARN, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
 
 #define LOGE(fmt, ...) \
-    SpLog(OHOS::SmartPerf::SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H

@@ -117,6 +117,7 @@ public:
             SPTask::GetInstance().StopTask();
             spSocket.Send("stop::True");
             flagRunning = false;
+            spSocket.Close();
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
             EditorRecv(recvStr, spSocket);
         }

@@ -81,7 +81,7 @@ ohos_executable("SP_daemon") {
   ]
   defines = [
     "HI_LOG_ENABLE",
-    "LOG_DOMAIN = 0XD004100",
+    "LOG_DOMAIN = 0xD004100",
   ]
 }
 ## Build so }}}

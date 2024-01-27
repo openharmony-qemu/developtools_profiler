@@ -93,7 +93,7 @@ static void PrintFpsInfo(FpsInfo &fpsInfo, std::string Tag, std::string Type)
     LOGE("Print fps: %s", std::to_string(fpsInfo.fps).c_str());
     LOGE("Print Tag: %s", Tag.c_str());
     LOGE("Print Type: %s", Type.c_str());
-    std::string jit
+    std::string jitterStr = "";
     std::string split = "";
     for (size_t i = 0; i < fpsInfo.jitters.size(); i++) {
         if (i > 0) {
@@ -123,12 +123,10 @@ FpsInfo FPS::GetFpsInfo()
     if (pkgName.empty()) {
         return fpsInfoMax;
     }
-    std::string layerName;
     std::vector<std::string> sps;
     SPUtils::StrSplit(this->pkgName, ".", sps);
     const uint64_t pNameLastPos = sps.size();
-    std::string pkgSuffix = sps[pNameLastPos - 1];
-    layerName = std::string(pkgSuffix.c_str());
+    std::string layerName = std::string(sps[pNameLastPos - 1].c_str());
     std::string uniteLayer = "DisplayNode";
     uniteLayer = GetSurface();
     std::string line = GetLayer(layerName);
@@ -147,7 +145,6 @@ FpsInfo FPS::GetFpsInfo()
     }
     FpsInfo fpsInfo = GetSurfaceFrame(focusSurface);
     PrintFpsInfo(fpsInfo, focusSurface, "two");
-
     if (fpsInfo.fps > uniteFpsInfo.fps) {
         fpsInfoMax = fpsInfo;
     } else {
@@ -259,6 +256,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         }
         int total = 138;
         if (cnt == total && fpsGb != 0) {
+            LOGE("cnt == total && fpsGb != 0");
             lastReadyTime = frameReadyTime;
             int fpsTmp = 0;
             cntFpsInfo.jitters.clear();
@@ -334,7 +332,7 @@ std::string FPS::GetLayer(std::string pkgSurface)
         int lineNum = 0;
         char buf[1024] = {'\0'};
         const int paramFourteen = 14;
-        const int paramTwentyFour = 14;
+        const int paramTwentyFour = 24;
         const int paramThree = 3;
         const int windowNameIndex = 0;
         const int windowIdIndex = 3;
@@ -379,15 +377,15 @@ std::string FPS::GetLayer(std::string pkgSurface)
         int curWinId = std::stoi(dumpItem.windId);
         if (curId == curWinId) {
             LOGE("curId == curWinId");
-            if ((dumpItem.windowName.find(spSurfacePrefix) != std::string::npos) ||
-                (dumpItem.windowName.find(floatWindow) != std::string::npos) && dumpItem.zOrd != "-1") {
+            if ((dumpItem.windowName.find(spSurfacePrefix) != std::string::npos ||
+                dumpItem.windowName.find(floatWindow) != std::string::npos) && dumpItem.zOrd != "-1") {
                 continue;
             }
             focusWindowName = dumpItem.windowName;
             LOGE("focusWindowName: %s", focusWindowName.c_str());
             LOGE("dumpItem.windowName: %s", dumpItem.windowName.c_str());
         }
-        if ((dumpItem.windowName.find(pkgSurface) != std::string::npos) && dumpItem.zOrd != "-1") {
+        if (dumpItem.windowName.find(pkgSurface) != std::string::npos && dumpItem.zOrd != "-1") {
             focusWindowName = dumpItem.windowName;
             pkgZOrd = dumpItem.zOrd;
             LOGE("pkgZOrd: %s", pkgZOrd.c_str());

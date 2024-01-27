@@ -25,7 +25,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
-#include <stdint.h>
+#include <cstdint>
 #endif
 
 namespace OHOS {
@@ -65,7 +65,7 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
             printf("[W]%s\n", logBuf);
             break;
         case SP_LOG_ERROR:
-            printf("[E]%s\ns", logBuf);
+            printf("[E]%s\n", logBuf);
             break;
         default:
             break;
@@ -79,14 +79,14 @@ void SpLog(SpLogLevel logLevel, const char *fmt, ...)
     va_list arg;
     int32_t ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
     if (ret != 0) {
-        DmLogOut(logLevel, "SP log memset_s error.");
+        SpLogOut(logLevel, "SP log memset_s error.");
         return;
     }
     va_start(arg, fmt);
     ret = vsprintf_s(logBuf, sizeof(logBuf), fmt, arg);
     va_end(arg);
     if (ret < 0) {
-        DmLogOut(logLevel, "SP log length error.");
+        SpLogOut(logLevel, "SP log length error.");
         return;
     }
     SpLogOut(logLevel, logBuf);

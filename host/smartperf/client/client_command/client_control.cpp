@@ -26,7 +26,10 @@ namespace SmartPerf {
 int ClientControl::SocketStart(std::string args)
 {
     std::string messageInit = message + args;
-    OHOS::SmartPerf::ClientControl::InitSocket();
+    int resultId = OHOS::SmartPerf::ClientControl::InitSocket();
+    if (resultId == 1) {
+        return resultId;
+    }
     send(clientSocket,  messageInit.c_str(), strlen(messageInit.c_str()), 0);
     read(clientSocket, buffer, numBuff);
     send(clientSocket, message1, strlen(message1), 0);
@@ -39,10 +42,12 @@ int ClientControl::SocketStart(std::string args)
     dest[i] = '\0';
     if (strcmp(dest, "start::True") == 0) {
         std::cout << "SP_daemon Collection begins" << std::endl;
+        OHOS::SmartPerf::ClientControl::CloseSocket();
     } else {
         std::cout << "SP_daemon Collection begins failed" << std::endl;
+        OHOS::SmartPerf::StartUpDelay sd;
+        sd.GetSpTcp();
     }
-    OHOS::SmartPerf::ClientControl::CloseSocket();
     return 0;
 }
 int ClientControl::SocketStop()
@@ -59,10 +64,12 @@ int ClientControl::SocketStop()
     if (strcmp(dest, "stop::True") == 0) {
         std::cout << "SP_daemon Collection ended" << std::endl;
         std::cout << "Output Path: data/local/tmp/smartperf/1/t_index_info.csv" << std::endl;
+        OHOS::SmartPerf::StartUpDelay sd;
+        sd.GetSpTcp();
+        OHOS::SmartPerf::ClientControl::CloseSocket();
     } else {
         std::cout << "SP_daemon Collection ended failed" << std::endl;
     }
-    OHOS::SmartPerf::ClientControl::CloseSocket();
     return 0;
 }
 int ClientControl::InitSocket()
@@ -77,6 +84,9 @@ int ClientControl::InitSocket()
     serverAddress.sin_port = htons(protNumber);
     if (connect(clientSocket, reinterpret_cast<struct sockaddr*>(&serverAddress), sizeof(serverAddress)) < 0) {
         std::cout << "Failed to connect to server" << std::endl;
+        OHOS::SmartPerf::StartUpDelay sd;
+        sd.GetSpTcp();
+        return 1;
     }
     return 0;
 }
@@ -89,6 +99,7 @@ void ClientControl::StartSPDaemon()
 int ClientControl::CloseSocket()
 {
     shutdown(clientSocket, SHUT_RD);
+    close(clientSocket);
     return 0;
 }
 }
