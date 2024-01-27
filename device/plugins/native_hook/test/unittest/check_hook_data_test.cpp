@@ -19,6 +19,7 @@
 #include <hwext/gtest-tag.h>
 #include <vector>
 #include <sys/syscall.h>
+#include <sys/mman.h>
 
 #include "buffer_splitter.h"
 #include "logging.h"
@@ -26,6 +27,8 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+
+
 
 #pragma clang optimize off
 
@@ -49,11 +52,13 @@ constexpr int MALLOC_VEC_SIZE = 5;
 constexpr int FREE_VEC_SIZE = 4;
 constexpr int MALLOC_GET_DATE_SIZE = 3;
 constexpr int FREE_GET_DATA_SIZE = 2;
+constexpr uint32_t SMB_SIZE = 10 * 4096;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
 const std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
 const std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
 const std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
+const std::string SMB_NAME = "maptest";
 const int LIBA_MALLOC_SIZE = 888;
 const int LIBB_MALLOC_SIZE = 666;
 typedef char* (*DepthMallocSo)(int depth, int mallocSize);
@@ -92,6 +97,10 @@ public:
             if (statisticsInterval_ > 0) {
                 command_.push_back(const_cast<char*>("-S"));
                 command_.push_back(const_cast<char*>(std::to_string(statisticsInterval_).c_str()));
+            }
+            if (sampleInterval_ > 0) {
+                command_.push_back(const_cast<char*>("-i"));
+                command_.push_back(const_cast<char*>(std::to_string(sampleInterval_).c_str()));
             }
             if (offlineSymbolization_) {
                 command_.push_back(const_cast<char*>("-O"));
@@ -263,6 +272,18 @@ public:
         }
     }
 
+    void StartMapProcess()
+    {
+        int processNum = fork();
+        if (processNum == 0) {
+            int fd = syscall(SYS_memfd_create, SMB_NAME.c_str(), 0);
+            void* g_smbAddr = mmap(nullptr, SMB_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+            munmap(g_smbAddr, SMB_SIZE);
+        } else {
+            hookPid_ = processNum;
+        }
+    }
+
     void StartDlopenProcess()
     {
         int processNum = fork();
@@ -413,6 +434,7 @@ public:
     int modeIndex_ = 0;
     int unwindDepth_ = 0;
     int statisticsInterval_ = 0;
+    int sampleInterval_ = 0;
     bool offlineSymbolization_ = false;
     bool callframeCompress_ = false;
     bool stringCompress_ = false;
@@ -934,6 +956,125 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
     }
 }
 #endif
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook statistics data normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level1)
+{
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 10;
+        sampleInterval_ = 256;
+        outFileType_ = "sample_interval_";
+        modeIndex_ = i;
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(1);
+        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+        system(cmd.c_str());
+
+        sleep(SLEEP_TIME); // 等待生成文本
+        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+        system(cmdEnd.c_str());
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map") != std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event") != std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook statistics data normal process for mmap and munmap
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level1)
+{
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 10;
+        outFileType_ = "mmap_munmap";
+        modeIndex_ = i;
+        StartMapProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(1);
+        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+        system(cmd.c_str());
+
+        sleep(SLEEP_TIME); // 等待生成文本
+        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+        system(cmdEnd.c_str());
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map") != std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event") != std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+    }
 }
 
 #pragma clang optimize on
