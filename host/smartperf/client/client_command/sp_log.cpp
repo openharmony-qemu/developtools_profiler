@@ -19,14 +19,14 @@
 
 #ifdef HI_LOG_ENABLE
 #include "hilog/log.h"
-#else
-#include <cstdio>
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <cstring>
 #include <cstdint>
 #include <unisted.h>
+#else
+#include <cstdio>
 #endif
 
 namespace OHOS {
