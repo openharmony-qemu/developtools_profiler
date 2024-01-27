@@ -138,16 +138,13 @@ void StartUpDelay::GetHisysIdComplete()
 }
 bool StartUpDelay::GetSpTcp()
 {
-    std::string str = "";
-    bool flagTcp = false;
-    SPUtils::LoadCmd("netstat -anp |grep 8284", str);
-    size_t pos = str.find("SP_daemon");
-    if (pos == std::string::npos) {
-        flagTcp = false;
-    } else {
-        flagTcp = true;
-    }
-    return flagTcp;
+    std::string resultPid;
+    std::string str;
+    SPUtils::LoadCmd("pidof SP_daemon", resultPid);
+    size_t splitFlag = resultPid.find(" ");
+    resultPid = resultPid.substr(0, splitFlag);
+    SPUtils::LoadCmd("kill " + resultPid, str);
+    return false;
 }
 std::thread StartUpDelay::ThreadGetHisysIdResponse()
 {

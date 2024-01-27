@@ -15,6 +15,7 @@
 #include <iostream>
 #include "include/sp_utils.h"
 #include "include/Power.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Power::ItemData()
@@ -26,6 +27,8 @@ std::map<std::string, std::string> Power::ItemData()
     SPUtils::LoadFile(voltageNowPath, voltageNow);
     result["currentNow"] = currentNow;
     result["voltageNow"] = voltageNow;
+    LOGE("currentNow: %s", currentNow.c_str());
+    LOGE("voltageNow: %s", voltageNow.c_str());
     return result;
 }
 }

@@ -21,6 +21,7 @@
 #include "sp_task.h"
 #include "control_call_cmd.h"
 #include "startup_delay.h"
+#include "sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -116,6 +117,7 @@ public:
             SPTask::GetInstance().StopTask();
             spSocket.Send("stop::True");
             flagRunning = false;
+            spSocket.Close();
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
             EditorRecv(recvStr, spSocket);
         }
@@ -147,26 +149,33 @@ public:
         auto iterator = messageMap.begin();
         while (iterator != messageMap.end()) {
             std::string recvBuf = spSocket.RecvBuf();
+            std::cout << "recvBuf" << recvBuf << std::endl;
             if (SPUtils::IsSubString(recvBuf, iterator->second)) {
                 SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
                 if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
                     std::string curPkgName = SplitMsg(recvBuf);
                     SpProfilerFactory::SetProfilerPkg(curPkgName);
                     spSocket.Sendto(curPkgName);
+                    LOGE("sendData1: %s", curPkgName.c_str());
                 } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
                     std::string curPkgName1 = SplitMsg(recvBuf);
                     SpProfilerFactory::SetProfilerPkg(curPkgName1);
+                    LOGE("sendData2: %s", curPkgName1.c_str());
                 } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG)) {
                     SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+                    LOGE("sendData3: %s", recvBuf.c_str());
                 } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CMD)) {
                     SpProfilerFactory::SetByTraceCmd(SplitMsg(recvBuf));
+                    LOGE("sendData4: %s", recvBuf.c_str());
                 } else if (profiler == nullptr) {
                     std::string returnStr = iterator->second;
                     spSocket.Sendto(returnStr);
+                    LOGE("sendData5: %s", returnStr.c_str());
                 } else {
                     std::map<std::string, std::string> data = profiler->ItemData();
                     std::string sendData = MapToString(data);
                     spSocket.Sendto(sendData);
+                    LOGE("sendData6: %s", sendData.c_str());
                 }
                 break;
             }

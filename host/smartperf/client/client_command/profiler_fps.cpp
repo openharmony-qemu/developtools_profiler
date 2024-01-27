@@ -320,7 +320,7 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
         } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
             printCount++;
-            msStartTime = fpsInfo.currentFpsTime + (msAdd / 1e6);
+            msStartTime += 1e2;
             msCount = 1;
             msJiange += 1e8;
         } else {
