@@ -26,6 +26,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdint>
+#include <unisted.h>
 #endif
 
 namespace OHOS {
