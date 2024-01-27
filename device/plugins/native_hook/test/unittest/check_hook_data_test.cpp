@@ -28,8 +28,6 @@
 #include <iostream>
 #include <thread>
 
-
-
 #pragma clang optimize off
 
 using namespace testing::ext;
@@ -277,8 +275,8 @@ public:
         int processNum = fork();
         if (processNum == 0) {
             int fd = syscall(SYS_memfd_create, SMB_NAME.c_str(), 0);
-            void* g_smbAddr = mmap(nullptr, SMB_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-            munmap(g_smbAddr, SMB_SIZE);
+            void* gSmbAddr = mmap(nullptr, SMB_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+            munmap(gSmbAddr, SMB_SIZE);
         } else {
             hookPid_ = processNum;
         }
