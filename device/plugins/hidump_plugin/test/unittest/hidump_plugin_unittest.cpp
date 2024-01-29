@@ -240,6 +240,29 @@ bool RecordFileExist(std::string& file)
 
 /**
  * @tc.name: hidump plugin
+ * @tc.desc: Test CustomPopen whether non-blocking
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidumpPluginUnittest, TestCustomPopenW, TestSize.Level1)
+{
+    FILE *fp = nullptr;
+    HidumpPlugin plugin;
+    std::string fileName = "/data/local/tmp/hidumpTest.txt";
+    std::string cmd = "echo \"123\" > " + fileName;
+
+    fp = plugin.CustomPopen(cmd.c_str(), "w");
+    EXPECT_NE(fp, nullptr);
+    fflush(fp);
+    sleep(1);
+    EXPECT_NE(plugin.CustomPclose(fp), -1);
+    ASSERT_TRUE(RecordFileExist(fileName));
+
+    std::string rmCmd = "rm -rf " + fileName;
+    system(rmCmd.c_str());
+}
+
+/**
+ * @tc.name: hidump plugin
  * @tc.desc: Test CustomPopen whether nullptr cmd
  * @tc.type: FUNC
  */
