@@ -87,7 +87,6 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
     config.set_bundle_name("com.ohos.sceneboard");
     config.add_message_type(XpowerMessageType::REAL_BATTERY);
     config.add_message_type(XpowerMessageType::APP_STATISTIC);
-    config.add_message_type(XpowerMessageType::APP_DETAIL);
     int size = config.ByteSizeLong();
     ASSERT_GT(size, 0);
     std::vector<uint8_t> configData(size);
