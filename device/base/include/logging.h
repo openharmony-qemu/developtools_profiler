@@ -76,6 +76,7 @@ enum {
 
 namespace {
 constexpr int NS_PER_MS_LOG = 1000 * 1000;
+constexpr int TIME_STRING_MAX_LENGTH = 64;
 }
 
 static inline std::string GetTimeString();
@@ -225,7 +226,7 @@ static inline std::string StringFormat(const char* fmt, ...)
 #ifndef HAVE_HILOG
 static std::string GetTimeString()
 {
-    char timeStr[64];
+    char timeStr[TIME_STRING_MAX_LENGTH];
     struct timespec ts;
     struct tm tmStruct;
     clock_gettime(CLOCK_REALTIME, &ts);
@@ -235,6 +236,9 @@ static std::string GetTimeString()
     CHECK_TRUE(localtime_s(&tmStruct, &ts.tv_sec) == 0, "", "localtime_s FAILED!");
 #endif
     size_t used = strftime(timeStr, sizeof(timeStr), "%m-%d %H:%M:%S", &tmStruct);
+    if (used >= TIME_STRING_MAX_LENGTH) {
+        return "";
+    }
     (void)snprintf_s(&timeStr[used], sizeof(timeStr) - used, sizeof(timeStr) - used - 1, ".%03ld",
         ts.tv_nsec / NS_PER_MS_LOG);
     return timeStr;
