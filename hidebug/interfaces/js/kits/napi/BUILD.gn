@@ -16,7 +16,17 @@ import("//build/ohos/ace/ace.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_shared_library("hidebug") {
-  sources = [ "napi_hidebug.cpp" ]
+  include_dirs = [
+    "$hidebug_path/frameworks/native/include",
+    ".",
+  ]
+
+  sources = [
+    "napi_hidebug.cpp",
+    "napi_hidebug_init.cpp",
+  ]
+
+  deps = [ "$hidebug_path/frameworks/native:libhidebug_source" ]
 
   external_deps = [
     "ability_base:configuration",
@@ -27,6 +37,7 @@ ohos_shared_library("hidebug") {
     "c_utils:utils",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
+    "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
     "ipc:ipc_core",
     "napi:ace_napi",

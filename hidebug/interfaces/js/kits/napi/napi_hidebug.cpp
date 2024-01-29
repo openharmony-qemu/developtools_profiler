@@ -30,9 +30,11 @@
 #include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
+#include "hidebug_native_interface.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
 #include "memory_collector.h"
+#include "napi_hidebug_init.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "native_engine/native_engine.h"
@@ -524,6 +526,71 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+napi_value GetAppVMMemoryInfo(napi_env env, napi_callback_info info)
+{
+    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
+    if (engine == nullptr) {
+        return CreateUndefined(env);
+    }
+
+    napi_value vMMemoryInfo;
+    napi_create_object(env, &vMMemoryInfo);
+
+    napi_value totalHeap;
+    uint64_t totalHeapValue = engine->GetHeapTotalSize();
+    napi_create_bigint_uint64(env, totalHeapValue, &totalHeap);
+    napi_set_named_property(env, vMMemoryInfo, "totalHeap", totalHeap);
+
+    napi_value heapUsed;
+    uint64_t heapUsedValue = engine->GetHeapUsedSize();
+    napi_create_bigint_uint64(env, heapUsedValue, &heapUsed);
+    napi_set_named_property(env, vMMemoryInfo, "heapUsed", heapUsed);
+
+    napi_value allArraySize;
+    uint64_t allArraySizeValue = engine->GetArrayBufferSize();
+    napi_create_bigint_uint64(env, allArraySizeValue, &allArraySize);
+    napi_set_named_property(env, vMMemoryInfo, "allArraySize", allArraySize);
+
+    return vMMemoryInfo;
+}
+
+static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result, uint32_t threadIdValue, double cpuUsageValue)
+{
+    napi_create_object(env, &result);
+
+    napi_value threadId;
+    napi_create_uint32(env, threadIdValue, &threadId);
+    napi_set_named_property(env, result, "threadId", threadId);
+
+    napi_value cpuUsage;
+    napi_create_double(env, cpuUsageValue, &cpuUsage);
+    napi_set_named_property(env, result, "cpuUsage", cpuUsage);
+}
+
+static void ConvertThreadCpuUsageMapToJs(napi_env env, napi_value &result, const std::map<uint32_t, double> &threadMap)
+{
+    napi_create_array(env, &result);
+    size_t idx = 0;
+    for (const auto[threadId, cpuUsage] : threadMap) {
+        napi_value obj = nullptr;
+        ConvertThreadCpuUsageToJs(env, obj, threadId, cpuUsage);
+        napi_set_element(env, result, idx, obj);
+        idx++;
+    }
+}
+
+napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
+{
+    napi_value result;
+    auto nativeInterface = HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        return CreateUndefined(env);
+    }
+    std::map<uint32_t, double> threadMap = nativeInterface->GetAppThreadCpuUsage();
+    ConvertThreadCpuUsageMapToJs(env, result, threadMap);
+    return result;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -542,9 +609,12 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getNativeHeapAllocatedSize", GetNativeHeapAllocatedSize),
         DECLARE_NAPI_FUNCTION("getNativeHeapFreeSize", GetNativeHeapFreeSize),
         DECLARE_NAPI_FUNCTION("getVss", GetVss),
-        DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap)
+        DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
+        DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
+        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
+    InitNapiClass(env, exports);
     return exports;
 }
 

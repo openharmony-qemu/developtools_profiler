@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/test.gni")
+import("//developtools/profiler/hidebug/hidebug.gni")
 
 module_output_path = "hiprofiler/hidebug/test/"
 
@@ -20,11 +21,13 @@ ohos_unittest("hidebug_test") {
   sources = [ "./hidebug_test.cpp" ]
 
   deps = [
+    "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",
     "//developtools/profiler/hidebug/interfaces/native/innerkits:libhidebug",
   ]
 
   include_dirs = [
     "//developtools/profiler/hidebug/interfaces/native/innerkits/include",
+    "$hidebug_path/interfaces/native/kits/include",
     "//third_party/googletest/googletest/include/gtest",
   ]
 }

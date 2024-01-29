@@ -14,6 +14,8 @@
  */
 
 #include "hidebug_base.h"
+#include "hidebug/hidebug.h"
+#include "hidebug/hidebug_type.h"
 
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
@@ -145,4 +147,31 @@ HWTEST_F(HidebugTest, InitEnvironmentParam9, TestSize.Level1)
     const char* inputName = "hidebug";
     EXPECT_FALSE(InitEnvironmentParam(inputName));
 }
+
+/**
+ * @tc.name: OH_HiDebug_GetAppCpuUsage1
+ * @tc.desc: test OH_HiDebug_GetAppCpuUsage.get app cpu usage
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetAppCpuUsage1, TestSize.Level1)
+{
+    EXPECT_TRUE(OH_HiDebug_GetAppCpuUsage() >= 0);
+}
+
+/**
+ * @tc.name: OH_HiDebug_GetAppThreadCpuUsage1
+ * @tc.desc: test OH_HiDebug_GetAppThreadCpuUsage.get thread cpu usage of app
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
+{
+    HiDebug_ThreadCpuUsagePtr threadCpuUsage = OH_HiDebug_GetAppThreadCpuUsage();
+    HiDebug_ThreadCpuUsagePtr curThreadCpuUsage = threadCpuUsage;
+    while (curThreadCpuUsage != nullptr) {
+        curThreadCpuUsage = curThreadCpuUsage->next;
+    }
+    OH_HiDebug_FreeThreadCpuUsage(&threadCpuUsage);
+    EXPECT_TRUE(true);
+}
+
 } // namespace

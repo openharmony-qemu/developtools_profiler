@@ -1,0 +1,38 @@
+[
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_GetSystemCpuUsage"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_GetAppCpuUsage"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_GetAppThreadCpuUsage"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_FreeThreadCpuUsage"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_GetSystemMemInfo"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_GetAppNativeMemInfo"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_GetAppMemoryLimit"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_StartCaptureAppTrace"
+    },
+    {
+        "first_introduced": "12",
+        "name": "OH_HiDebug_StopCaptureAppTrace"
+    }
+]
