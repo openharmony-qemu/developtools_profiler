@@ -60,7 +60,6 @@ std::vector<std::string> presetPluginVec = {
 volatile sig_atomic_t g_isRunning = true;
 void SignalSigtermHandler(int sig)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "hiprofiler plugin receive sigterm signal!");
     g_isRunning = false;
 }
 } // namespace
