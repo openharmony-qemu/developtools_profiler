@@ -163,7 +163,12 @@ HWTEST_F(FtraceParserTest, ParsePerCpuStatus, TestSize.Level1)
 HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level1)
 {
     std::vector<uint8_t> buffer(PAGE_SIZE, 0);
-    std::string traceRaw = FtraceFsOps::GetInstance().GetRawTracePath(0);
+    std::string traceRaw;
+    if (FtraceFsOps::GetInstance().hmTraceDir_ != "") {
+        traceRaw = FtraceFsOps::GetInstance().GetHmRawTracePath();
+    } else {
+        traceRaw = FtraceFsOps::GetInstance().GetRawTracePath(0);
+    }
     int fd = open(traceRaw.c_str(), O_EXCL);
     EXPECT_NE(fd, -1);
 

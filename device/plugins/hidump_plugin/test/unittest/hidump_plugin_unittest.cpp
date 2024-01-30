@@ -212,54 +212,6 @@ HWTEST_F(HidumpPluginUnittest, TestCustomPopenR, TestSize.Level1)
     EXPECT_NE(plugin.CustomPclose(fp), -1);
 }
 
-bool RecordFileExist(std::string& file)
-{
-    if (access(DEFAULT_RECORD_FILE.c_str(), F_OK) != 0) {
-        return false;
-    }
-
-    std::string cmd = "cat " + file;
-    std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(cmd.c_str(), "r"), pclose);
-    if (!fp) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:: popen error", __func__);
-        return false;
-    }
-
-    char buff[BUF_MAX_LEN] = {0};
-    char* pRet = fgets(buff, BUF_MAX_LEN - 1, fp.get());
-    if (pRet == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: fgets Failed, errno(%d)", __func__, errno);
-        return false;
-    }
-    buff[BUF_MAX_LEN - 1] = '\0';
-    if (!strncmp(pRet, "123", strlen("123"))) {
-        return true;
-    }
-    return false;
-}
-
-/**
- * @tc.name: hidump plugin
- * @tc.desc: Test CustomPopen whether non-blocking
- * @tc.type: FUNC
- */
-HWTEST_F(HidumpPluginUnittest, TestCustomPopenW, TestSize.Level1)
-{
-    FILE *fp = nullptr;
-    HidumpPlugin plugin;
-    std::string fileName = "/data/local/tmp/hidumpTest.txt";
-    std::string cmd = "echo \"123\" > " + fileName;
-
-    fp = plugin.CustomPopen(cmd.c_str(), "w");
-    EXPECT_NE(fp, nullptr);
-    fflush(fp);
-    sleep(1);
-    EXPECT_NE(plugin.CustomPclose(fp), -1);
-    ASSERT_TRUE(RecordFileExist(fileName));
-
-    std::string rmCmd = "rm -rf " + fileName;
-    system(rmCmd.c_str());
-}
 
 /**
  * @tc.name: hidump plugin

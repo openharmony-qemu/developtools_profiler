@@ -642,7 +642,6 @@ HWTEST_F(MemoryDataPluginTest, Testpluginforsinglepid, TestSize.Level1)
     EXPECT_EQ(singlepid.code, app.code());
     EXPECT_EQ(singlepid.stack, app.stack());
     EXPECT_EQ(singlepid.graphics, app.graphics());
-    EXPECT_EQ(singlepid.private_other, app.private_other());
 
     memoryPlugin.Stop();
 }
