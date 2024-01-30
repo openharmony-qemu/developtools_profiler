@@ -36,7 +36,6 @@ const std::string DEFAULT_TEST_PATH("/system/lib/");
 #endif
 const std::string DEFAULT_RECORD_FILE("/data/local/tmp/");
 const int DEFAULT_WAIT = 10;
-constexpr int BUF_MAX_LEN = 8;
 
 class HidumpPluginUnittest : public ::testing::Test {
 public:
@@ -211,7 +210,6 @@ HWTEST_F(HidumpPluginUnittest, TestCustomPopenR, TestSize.Level1)
 
     EXPECT_NE(plugin.CustomPclose(fp), -1);
 }
-
 
 /**
  * @tc.name: hidump plugin
