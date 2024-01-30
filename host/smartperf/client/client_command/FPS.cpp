@@ -88,11 +88,11 @@ std::string FPS::GetSurface()
     LOGE("cmdResult==: %s", (cmdResult.substr(position1 + 1, position2 - position1 - 1)).c_str());
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
-static void PrintFpsInfo(FpsInfo &fpsInfo, std::string Tag, std::string Type)
+static void PrintFpsInfo(FpsInfo &fpsInfo, std::string tag, std::string type)
 {
     LOGE("Print fps: %s", std::to_string(fpsInfo.fps).c_str());
-    LOGE("Print Tag: %s", Tag.c_str());
-    LOGE("Print Type: %s", Type.c_str());
+    LOGE("Print tag: %s", tag.c_str());
+    LOGE("Print type: %s", type.c_str());
     std::string jitterStr = "";
     std::string split = "";
     for (size_t i = 0; i < fpsInfo.jitters.size(); i++) {
@@ -101,7 +101,7 @@ static void PrintFpsInfo(FpsInfo &fpsInfo, std::string Tag, std::string Type)
         }
         jitterStr += split + std::to_string(fpsInfo.jitters[i]);
     }
-    LOGE("Print Tag: %s", Tag.c_str());
+    LOGE("Print jitterStr: %s", jitterStr.c_str());
 }
 std::string FPS::CutLayerName(std::string layerName)
 {
@@ -137,8 +137,6 @@ FpsInfo FPS::GetFpsInfo()
     std::string focusSurface = params[0];
     FpsInfo uniteFpsInfo;
     std::string subStrLayerName = CutLayerName(layerName);
-    LOGE("layerName: %s", "uniteLayer: %s", "line: %s", "focusSurface: %s", "subStrLayerName: %s",
-        layerName.c_str(), uniteLayer.c_str(), line.c_str(), focusSurface.c_str(), subStrLayerName.c_str());
     if ((focusSurface.find(subStrLayerName) != std::string::npos) && (strcmp(pkgZOrd.c_str(), zOrd.c_str()) != 0)) {
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
         PrintFpsInfo(uniteFpsInfo, uniteLayer, "one");
@@ -156,6 +154,7 @@ FpsInfo FPS::GetFpsInfo()
     if (flagFpsInfo == fpsInfoMax) {
         if (cntFpsInfo.fps != 0) {
             fpsInfoMax = cntFpsInfo;
+            flagFpsInfo = cntFpsInfo;
         } else {
             flagFpsInfo = fpsInfoMax;
             fpsInfoMax.Clear();
@@ -254,7 +253,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
             }
             (fpsInfo.timeStampQ).push(frameReadyTime);
         }
-        int total = 138;
+        int total = 266;
         if (cnt == total && fpsGb != 0) {
             LOGE("cnt == total && fpsGb != 0");
             lastReadyTime = frameReadyTime;
@@ -278,7 +277,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         }
     }
     pclose(fp);
-    const int maxZeroNum = 130;
+    const int maxZeroNum = 266;
     if (zeroNum >= maxZeroNum) {
         LOGE("zeroNum====: %s", std::to_string(zeroNum).c_str());
         while (!(fpsInfo.timeStampQ.empty())) {

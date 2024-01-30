@@ -164,11 +164,9 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
                 fpsTmp++;
                 long long currFrame = (fpsInfo.timeStampQ.front());
                 if (lastFrame != -1) {
-                    long long jitter = currFrame - lastFrame;
-                    fpsInfo.jitters.push_back(jitter);
+                    fpsInfo.jitters.push_back(currFrame - lastFrame);
                 } else {
-                    long long jitter = currFrame - currFrame / fpsConfig.mod * fpsConfig.mod;
-                    fpsInfo.jitters.push_back(jitter);
+                    fpsInfo.jitters.push_back(currFrame - currFrame / fpsConfig.mod * fpsConfig.mod);
                 }
                 lastFrame = currFrame;
                 (fpsInfo.timeStampQ).pop();

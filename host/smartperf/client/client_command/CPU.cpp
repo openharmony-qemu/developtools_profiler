@@ -82,7 +82,6 @@ void CPU::SetPackageName(std::string pName)
 {
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(pName);
-    LOGE("cpu.processId===: %s", processId.c_str());
 }
 std::vector<CpuFreqs> CPU::GetCpuFreq()
 {

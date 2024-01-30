@@ -90,7 +90,7 @@ void StartUpDelay::GetHisysId()
     }
     SPUtils::LoadCmd("kill " + secondStr, str);
 }
-void StartUpDelay::GetHisysIdResponse()
+void StartUpDelay::GetHisysIdResponse() const
 {
     int time = 10;
     sleep(time);
@@ -113,7 +113,7 @@ void StartUpDelay::GetHisysIdResponse()
     }
     SPUtils::LoadCmd("kill " + secondStr, str);
 }
-void StartUpDelay::GetHisysIdComplete()
+void StartUpDelay::GetHisysIdComplete() const
 {
     int time = 10;
     sleep(time);
@@ -146,7 +146,7 @@ bool StartUpDelay::GetSpTcp()
     SPUtils::LoadCmd("kill " + resultPid, str);
     return false;
 }
-std::thread StartUpDelay::ThreadGetHisysIdResponse()
+std::thread StartUpDelay::ThreadGetHisysIdResponse() const
 {
     std::thread thGetHisysIdResponse(&StartUpDelay::GetHisysIdResponse, this);
     return thGetHisysIdResponse;
@@ -156,7 +156,7 @@ std::thread StartUpDelay::ThreadGetHisysId()
     std::thread thGetHisysId(&StartUpDelay::GetHisysId, this);
     return thGetHisysId;
 }
-std::thread StartUpDelay::ThreadGetHisysIdComplete()
+std::thread StartUpDelay::ThreadGetHisysIdComplete() const
 {
     std::thread thGetHisysIdComplete(&StartUpDelay::GetHisysIdComplete, this);
     return thGetHisysIdComplete;
