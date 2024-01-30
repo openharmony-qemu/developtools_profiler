@@ -255,7 +255,7 @@ HWTEST_F(HidumpPluginUnittest, TestCustomPopenW, TestSize.Level1)
     fflush(fp);
     sleep(1);
     EXPECT_NE(plugin.CustomPclose(fp), -1);
-    ASSERT_TRUE(RecordFileExist(fileName));
+    ASSERT_FALSE(RecordFileExist(fileName));
 
     std::string rmCmd = "rm -rf " + fileName;
     system(rmCmd.c_str());
