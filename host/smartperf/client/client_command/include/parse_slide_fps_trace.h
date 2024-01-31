@@ -25,8 +25,9 @@ class ParseSlideFpsTrace {
     public:
         double ParseSlideFpsTraceNoh(std::string file);
         double CalculateTime();
+        void GetLastCompleteLine();
         std::string GetLineTime(std::string lineStr) const;
-        std::string CutString(std::string lineStr, std::string start, std::string end, size_t off) const;
+        std::string CutString(std::string lineStr, std::string start, std::string end, size_t offset) const;
     private:
         std::ifstream infile;
         std::string responseLine = "";

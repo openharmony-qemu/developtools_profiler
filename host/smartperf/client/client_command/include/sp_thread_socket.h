@@ -156,26 +156,26 @@ public:
                     std::string curPkgName = SplitMsg(recvBuf);
                     SpProfilerFactory::SetProfilerPkg(curPkgName);
                     spSocket.Sendto(curPkgName);
-                    LOGE("sendData1: %s", curPkgName.c_str());
+                    LOGI("sendData1: %s", curPkgName.c_str());
                 } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
                     std::string curPkgName1 = SplitMsg(recvBuf);
                     SpProfilerFactory::SetProfilerPkg(curPkgName1);
-                    LOGE("sendData2: %s", curPkgName1.c_str());
+                    LOGI("sendData2: %s", curPkgName1.c_str());
                 } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG)) {
                     SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
-                    LOGE("sendData3: %s", recvBuf.c_str());
+                    LOGI("sendData3: %s", recvBuf.c_str());
                 } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CMD)) {
                     SpProfilerFactory::SetByTraceCmd(SplitMsg(recvBuf));
-                    LOGE("sendData4: %s", recvBuf.c_str());
+                    LOGI("sendData4: %s", recvBuf.c_str());
                 } else if (profiler == nullptr) {
                     std::string returnStr = iterator->second;
                     spSocket.Sendto(returnStr);
-                    LOGE("sendData5: %s", returnStr.c_str());
+                    LOGI("sendData5: %s", returnStr.c_str());
                 } else {
                     std::map<std::string, std::string> data = profiler->ItemData();
                     std::string sendData = MapToString(data);
                     spSocket.Sendto(sendData);
-                    LOGE("sendData6: %s", sendData.c_str());
+                    LOGI("sendData6: %s", sendData.c_str());
                 }
                 break;
             }

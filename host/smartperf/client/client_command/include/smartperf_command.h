@@ -35,7 +35,7 @@ public:
         " -c             get device cpuFreq and cpuUsage, process cpuUsage and cpuLoad .. \n"
         " -g             get device gpuFreq and gpuLoad  \n"
         " -f             get app refresh fps and fps jitters \n"
-        "-profilerfps    get refresh fps and timestamp \n"
+        " -profilerfps    get refresh fps and timestamp \n"
         " -t             get soc-temp battery-temp .. \n"
         " -p             get current_now and voltage_now \n"
         " -r             get process memory and total memory .. \n"

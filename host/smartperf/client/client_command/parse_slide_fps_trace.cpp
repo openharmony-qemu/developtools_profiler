@@ -33,13 +33,26 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     return fps;
 }
 
+void ParseSlideFpsTrace::GetLastCompleteLine()
+{
+    float num = 0.1;
+    if (lastCompleteLine != "") {
+        double completeNow = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(newCompleteLine));
+        double completeLast = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(lastCompleteLine));
+        if (completeNow - completeLast > num) {
+            completeLine = lastCompleteLine;
+            updateCount = true;
+            frameNum = frameNow - 1;
+        }
+    }
+}
+
 double ParseSlideFpsTrace::CalculateTime()
 {
     std::string line;
-    float num = 0.1;
     while (getline(infile, line)) {
         if (line.find("H:RSJankStats::RecordAnimationDynamicFrameRate") != std::string::npos) {
-            std::string delimiter = "frame rate is";
+            std::string delimiter = "frame rate is ";
             size_t pos1 = line.find(delimiter);
             std::string result1 = line.substr(pos1 + delimiter.length());
             std::string delimiter1 = ":";
@@ -53,22 +66,14 @@ double ParseSlideFpsTrace::CalculateTime()
                 needUpdateResponseLine = true;
                 frameNow = 0;
             }
-        } else if (line.find(H:RSMainThread::DoComposition) != std::string::npos && !updateCount) {
+        } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos && !updateCount) {
             frameNow++;
             if (needUpdateResponseLine) {
                 responseLine = line;
                 needUpdateResponseLine = false;
             }
             newCompleteLine = line;
-            if (lastCompleteLine != "") {
-                double completeNow = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(newCompleteLine));
-                double completeLast = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(lastCompleteLine));
-                if (completeNow - completeLast > num) {
-                    completeLine = lastCompleteLine;
-                    updateCount = true;
-                    frameNum = frameNow - 1;
-                }
-            }
+            GetLastCompleteLine();
             lastCompleteLine = newCompleteLine;
         }
     }
@@ -90,7 +95,7 @@ std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr) const
     size_t position2 = lineStr.find(":");
     return lineStr.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t off) const
+std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t offset) const
 {
     size_t position1 = lineStr.find(start);
     size_t position2 = lineStr.find(end);
