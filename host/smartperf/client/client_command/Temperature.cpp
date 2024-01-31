@@ -36,9 +36,9 @@ std::map<std::string, std::string> Temperature::ItemData()
     std::map<std::string, std::string> result;
     for (auto dir : dirs) {
         std::string dirType = dir + "/type";
-        LOGE("dirType====: %s", dirType.c_str());
+        LOGI("dirType====: %s", dirType.c_str());
         std::string dirTemp = dir + "/temp";
-        LOGE("dirTemp====: %s", dirTemp.c_str());
+        LOGI("dirTemp====: %s", dirTemp.c_str());
 
         if (SPUtils::FileAccess(dirType)) {
             std::string type;
@@ -47,9 +47,9 @@ std::map<std::string, std::string> Temperature::ItemData()
             SPUtils::LoadFile(dirTemp, temp);
             for (auto node : collectNodes) {
                 if (type.find(node) != std::string::npos) {
-                    LOGE("type====: %s", type.c_str());
+                    LOGI("type====: %s", type.c_str());
                     float t = std::stof(temp);
-                    LOGE("temp====: %s", temp.c_str());
+                    LOGI("temp====: %s", temp.c_str());
                     result[type] = std::to_string(t / 1e3);
                 }
             }
