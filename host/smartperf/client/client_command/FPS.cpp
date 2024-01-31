@@ -137,7 +137,7 @@ FpsInfo FPS::GetFpsInfoMax()
             return fpsInfoMax;
         } else {
             LOGI("cntFpsInfo != lastFlagFpsInfo");
-            if ((cntFpsInfo.jitters.size() > 0 && lastFlagFpsInfo.jitters > 0) &&
+            if ((cntFpsInfo.jitters.size() > 0 && lastFlagFpsInfo.jitters.size() > 0) &&
                 cntFpsInfo.jitters[0] == lastFlagFpsInfo.jitters[0]) {
                 LOGI("cntFpsInfo.jitters.size: %s", std::to_string(cntFpsInfo.jitters.size()).c_str());
                 LOGI("lastFlagFpsInfo.jitters.size: %s", std::to_string(lastFlagFpsInfo.jitters.size()).c_str());
@@ -149,14 +149,14 @@ FpsInfo FPS::GetFpsInfoMax()
                 LOGI("6666666666666666666");
                 lastFlagFpsInfo = cntFpsInfo;
             }
-            reurn cntFpsInfo;
+            return cntFpsInfo;
         }
     } else {
         LOGI("fpsInfoMax != prevFlagFpsInfo");
-        if ((fpsInfoMax.jitters.size() > 0 && lastFlagFpsInfo.jitters > 0) &&
+        if ((fpsInfoMax.jitters.size() > 0 && lastFlagFpsInfo.jitters.size() > 0) &&
             fpsInfoMax.jitters[0] == lastFlagFpsInfo.jitters[0]) {
             LOGI("fpsInfoMax == lastFlagFpsInfo");
-            lastFlagFpsInfo = fpsInfoMax;
+            lastFlagFpsInfo = cntFpsInfo;
             return cntFpsInfo;
         }
         LOGI("fpsInfoMax != lastFlagFpsInfo");
@@ -193,7 +193,7 @@ FpsInfo FPS::GetFpsInfo()
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
         PrintFpsInfo(uniteFpsInfo, uniteLayer, "one");
     }
-    FpsInfo fpsInfo = GetSurfaceFrame(focusSurface);
+    fpsInfo = GetSurfaceFrame(focusSurface);
     PrintFpsInfo(fpsInfo, focusSurface, "two");
     return GetFpsInfoMax();
 }
@@ -367,7 +367,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         GetLastFpsInfo(fpsInfo);
     }
     pclose(fp);
-    GetFpsInfoResult(fpsInfo, lastLineTime);
+    return GetFpsInfoResult(fpsInfo, lastLineTime);
 }
 
 std::string FPS::GetLayer(std::string pkgSurface)
