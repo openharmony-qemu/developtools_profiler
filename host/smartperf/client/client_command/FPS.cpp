@@ -45,7 +45,7 @@ std::map<std::string, std::string> FPS::ItemData()
         jitterStr += split + std::to_string(fpsInfo.jitters[i]);
     }
     result["fpsJitters"] = jitterStr;
-    LOGI("result.jitterStr====: %s", jitterStr.c_str());
+    LOGI("result.jitters====: %s", jitterStr.c_str());
     if (isCatchTrace > 0) {
         ByTrace::GetInstance().CheckFpsJitters(fpsInfo.jitters, fpsInfo.fps);
     }
@@ -117,29 +117,9 @@ std::string FPS::CutLayerName(std::string layerName)
     return subLayerName;
 }
 
-FpsInfo FPS::GetFpsInfo()
+FpsInfo FPS::GetFpsInfoMax()
 {
-    fpsInfoMax.fps = 0;
     int fpsValue = 0;
-    if (pkgName.empty()) {
-        return fpsInfoMax;
-    }
-    SPUtils::StrSplit(this->pkgName, ".", sps);
-    std::string layerName = std::string(sps[sps.size() - 1].c_str());
-    std::string uniteLayer = "DisplayNode";
-    uniteLayer = GetSurface();
-    std::string line = GetLayer(layerName);
-    SPUtils::StrSplit(line, ":", params);
-    std::string pkgZOrd = params[1];
-    std::string zOrd = "-1";
-    std::string focusSurface = params[0];
-    std::string subStrLayerName = CutLayerName(layerName);
-    if ((focusSurface.find(subStrLayerName) != std::string::npos) && (strcmp(pkgZOrd.c_str(), zOrd.c_str()) != 0)) {
-        uniteFpsInfo = GetSurfaceFrame(uniteLayer);
-        PrintFpsInfo(uniteFpsInfo, uniteLayer, "one");
-    }
-    FpsInfo fpsInfo = GetSurfaceFrame(focusSurface);
-    PrintFpsInfo(fpsInfo, focusSurface, "two");
     if (fpsInfo.fps > uniteFpsInfo.fps) {
         fpsInfoMax = fpsInfo;
     } else {
@@ -149,24 +129,73 @@ FpsInfo FPS::GetFpsInfo()
         fpsInfoMax.fps = fpsValue;
     }
     if (fpsInfoMax == prevFlagFpsInfo) {
+        LOGI("fpsInfoMax == prevFlagFpsInfo");
         if (cntFpsInfo == lastFlagFpsInfo) {
+            LOGI("cntFpsInfo == lastFlagFpsInfo");
             fpsInfoMax.fps = 0;
             fpsInfoMax.Clear();
             return fpsInfoMax;
         } else {
+            LOGI("cntFpsInfo != lastFlagFpsInfo");
             if ((cntFpsInfo.jitters.size() > 0 && lastFlagFpsInfo.jitters > 0) &&
                 cntFpsInfo.jitters[0] == lastFlagFpsInfo.jitters[0]) {
+                LOGI("cntFpsInfo.jitters.size: %s", std::to_string(cntFpsInfo.jitters.size()).c_str());
+                LOGI("lastFlagFpsInfo.jitters.size: %s", std::to_string(lastFlagFpsInfo.jitters.size()).c_str());
+                LOGI("cntFpsInfo.jitters[0]: %s", std::to_string(cntFpsInfo.jitters[0]).c_str());
+                LOGI("lastFlagFpsInfo.jitters[0]: %s", std::to_string(lastFlagFpsInfo.jitters[0]).c_str());
                 cntFpsInfo.fps = 0;
                 cntFpsInfo.Clear();
             } else {
+                LOGI("6666666666666666666");
                 lastFlagFpsInfo = cntFpsInfo;
             }
             reurn cntFpsInfo;
         }
     } else {
+        LOGI("fpsInfoMax != prevFlagFpsInfo");
+        if ((fpsInfoMax.jitters.size() > 0 && lastFlagFpsInfo.jitters > 0) &&
+            fpsInfoMax.jitters[0] == lastFlagFpsInfo.jitters[0]) {
+            LOGI("fpsInfoMax == lastFlagFpsInfo");
+            lastFlagFpsInfo = fpsInfoMax;
+            return cntFpsInfo;
+        }
+        LOGI("fpsInfoMax != lastFlagFpsInfo");
         prevFlagFpsInfo = fpsInfoMax;
         return fpsInfoMax;
     }
+}
+
+FpsInfo FPS::GetFpsInfo()
+{
+    fpsInfoMax.fps = 0;
+    if (pkgName.empty()) {
+        return fpsInfoMax;
+    }
+    std::vector<std::string> sps;
+    SPUtils::StrSplit(this->pkgName, ".", sps);
+    std::string layerName = std::string(sps[sps.size() - 1].c_str());
+    LOGI("layerName===: %s", layerName.c_str());
+    std::string uniteLayer = "DisplayNode";
+    uniteLayer = GetSurface();
+    LOGI("uniteLayer===: %s", uniteLayer.c_str());
+    std::string line = GetLayer(layerName);
+    LOGI("line===: %s", line.c_str());
+    std::vector<std::string> params;
+    SPUtils::StrSplit(line, ":", params);
+    std::string pkgZOrd = params[1];
+    LOGI("pkgZOrd===: %s", pkgZOrd.c_str());
+    std::string zOrd = "-1";
+    std::string focusSurface = params[0];
+    LOGI("focusSurface===: %s", focusSurface.c_str());
+    std::string subStrLayerName = CutLayerName(layerName);
+    LOGI("subStrLayerName===: %s", subStrLayerName.c_str());
+    if ((focusSurface.find(subStrLayerName) != std::string::npos) && (strcmp(pkgZOrd.c_str(), zOrd.c_str()) != 0)) {
+        uniteFpsInfo = GetSurfaceFrame(uniteLayer);
+        PrintFpsInfo(uniteFpsInfo, uniteLayer, "one");
+    }
+    FpsInfo fpsInfo = GetSurfaceFrame(focusSurface);
+    PrintFpsInfo(fpsInfo, focusSurface, "two");
+    return GetFpsInfoMax();
 }
 FpsInfo FPS::GetFpsInfoResult(FpsInfo &fpsInfo, long long &lastLineTime)
 {
@@ -211,7 +240,7 @@ FpsInfo FPS::GetFpsInfoResult(FpsInfo &fpsInfo, long long &lastLineTime)
         fpsInfo.jitters.clear();
         LOGI("fpsInfo.fps5: %s", std::to_string(fpsInfo.fps).c_str());
         return fpsInfo;
-    }   
+    }
 }
 
 void FPS::GetLastFpsInfo(FpsInfo &fpsInfo)
@@ -267,7 +296,7 @@ void FPS::GetPrevFpsInfo(FpsInfo &fpsInfo)
             (fpsInfo.timeStampQ).pop();
         }
         fpsGb = fpsTmp;
-        LOGD("fpsGb====: %s", std::to_string(fpsGb).c_str());
+        LOGI("fpsGb====: %s", std::to_string(fpsGb).c_str());
         (fpsInfo.timeStampQ).push(frameReadyTime);
         fpsInfo.lastFrameReadyTime = lastFrame;
     } else if (tFrameReadyTime > tLastReadyTime + 1) {

@@ -41,7 +41,6 @@ class ParseSlideFpsTrace {
         int four = 4;
         bool updateCount = false;
         double frameRate = 0;
-
 };
 }
 }

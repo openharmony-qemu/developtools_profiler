@@ -62,7 +62,7 @@ double ParseSlideFpsTrace::CalculateTime()
         }
         if (line.find("H:touchEventDispatch") != std::string::npos) {
             count++;
-            if(count == four) {
+            if (count == four) {
                 needUpdateResponseLine = true;
                 frameNow = 0;
             }

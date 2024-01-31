@@ -154,7 +154,6 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
         long long tLastReadyTime = fpsConfig.lastReadyTime / fpsConfig.mod;
         long long lastFrame = -1;
         if (tFrameReadyTime == tLastReadyTime) {
-            (fpsInfo.timeStampQ).push(frameReadyTime);
         } else if (tFrameReadyTime == tLastReadyTime + 1) {
             fpsConfig.jump = true;
             fpsConfig.lastReadyTime = frameReadyTime;
@@ -172,7 +171,6 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
                 (fpsInfo.timeStampQ).pop();
             }
             fpsConfig.fpsGb = fpsTmp;
-            (fpsInfo.timeStampQ).push(frameReadyTime);
             fpsInfo.lastFrameReadyTime = lastFrame;
         } else if (tFrameReadyTime > tLastReadyTime + 1) {
             fpsConfig.jump = true;
@@ -180,8 +178,8 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
             while (!(fpsInfo.timeStampQ).empty()) {
                 (fpsInfo.timeStampQ).pop();
             }
-            (fpsInfo.timeStampQ).push(frameReadyTime);
         }
+        (fpsInfo.timeStampQ).push(frameReadyTime);
     }
 }
 

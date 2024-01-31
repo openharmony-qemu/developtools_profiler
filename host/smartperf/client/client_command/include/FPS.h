@@ -62,6 +62,7 @@ public:
     void SetTraceCatch();
     std::string CutLayerName(std::string layerName);
     FpsInfo GetFpsInfo();
+    FpsInfo GetFpsInfoMax();
     FpsInfo GetFpsInfoResult(FpsInfo &fpsInfo, long long &lastLineTime);
     void GetLastFpsInfo(FpsInfo &fpsInfo);
     void GetPrevFpsInfo(FpsInfo &fpsInfo);
@@ -69,6 +70,7 @@ public:
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
     std::string GetSurface();
     std::string GetLayer(std::string pkgSurface);
+    FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo uniteFpsInfo;
     FpsInfo mFpsInfo;
@@ -81,8 +83,6 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-    std::vector<std::string> sps;
-    std::vector<std::string> params;
 private:
     FPS() {};
     FPS(const FPS &);
