@@ -158,10 +158,11 @@ FpsInfo FPS::GetFpsInfoMax()
             LOGI("fpsInfoMax == lastFlagFpsInfo");
             lastFlagFpsInfo = cntFpsInfo;
             return cntFpsInfo;
+        } else {
+            LOGI("fpsInfoMax != lastFlagFpsInfo");
+            prevFlagFpsInfo = fpsInfoMax;
+            return fpsInfoMax;
         }
-        LOGI("fpsInfoMax != lastFlagFpsInfo");
-        prevFlagFpsInfo = fpsInfoMax;
-        return fpsInfoMax;
     }
 }
 
