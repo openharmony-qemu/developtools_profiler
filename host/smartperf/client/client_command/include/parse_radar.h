@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PARSE_RADAR_H
+#define PARSE_RADAR_H
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -30,3 +32,4 @@ namespace OHOS {
         };
     }
 }
+#endif // PARSE_RADAR_H

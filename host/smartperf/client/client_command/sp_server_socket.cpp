@@ -15,6 +15,7 @@
 #include <sstream>
 #include <cstring>
 #include <sys/socket.h>
+#include <unistd.h>
 #include "include/sp_server_socket.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -78,9 +79,11 @@ int SpServerSocket::Send(std::string sendBuf)
     return 0;
 }
 
-void SpServerSocket::Close() const
+void SpServerSocket::Close()
 {
     shutdown(sock, SHUT_RD);
+    close(sock);
+    sock = -1;
 }
 
 int SpServerSocket::Recvfrom()

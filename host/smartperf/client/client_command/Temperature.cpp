@@ -16,6 +16,7 @@
 #include "include/sp_utils.h"
 #include <dirent.h>
 #include "include/Temperature.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Temperature::ItemData()
@@ -35,7 +36,9 @@ std::map<std::string, std::string> Temperature::ItemData()
     std::map<std::string, std::string> result;
     for (auto dir : dirs) {
         std::string dirType = dir + "/type";
+        LOGI("dirType====: %s", dirType.c_str());
         std::string dirTemp = dir + "/temp";
+        LOGI("dirTemp====: %s", dirTemp.c_str());
 
         if (SPUtils::FileAccess(dirType)) {
             std::string type;
@@ -44,7 +47,9 @@ std::map<std::string, std::string> Temperature::ItemData()
             SPUtils::LoadFile(dirTemp, temp);
             for (auto node : collectNodes) {
                 if (type.find(node) != std::string::npos) {
+                    LOGI("type====: %s", type.c_str());
                     float t = std::stof(temp);
+                    LOGI("temp====: %s", temp.c_str());
                     result[type] = std::to_string(t / 1e3);
                 }
             }

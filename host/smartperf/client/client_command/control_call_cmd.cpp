@@ -59,8 +59,6 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         result = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
         SPUtils::LoadCmd("GP_daemon_fps 10", result);
-    } else if (v[typeName] == "screen") {
-        result = SPUtils::GetScreen();
     } else if (v[typeName] == "frameLoss") {
         SmartPerf::ControlCallCmd::GetFrame();
     } else if (v[typeName] == "appStartTime") {
@@ -130,7 +128,7 @@ std::string ControlCallCmd::SlideList()
         thGetHisysId.join();
         double responseTime = radar.ParseRadarResponse(str);
         stream << responseTime;
-        std::string responseSlide = "responseTime:" + stream.str() + "ms";
+        std::string responseSlide = "ResponseTime:" + stream.str() + "ms";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         std::ostringstream streamFps;
         streamFps << sFps;

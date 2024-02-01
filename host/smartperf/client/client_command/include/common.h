@@ -80,7 +80,8 @@ enum class CommandType {
 };
 enum class CommandHelp {
     HELP,
-    VERSION
+    VERSION,
+    SCREEN,
 };
 
 const std::unordered_map<std::string, CommandType> commandMap = {
@@ -113,6 +114,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
 const std::unordered_map<CommandHelp, std::string> commandHelpMap = {
     { CommandHelp::HELP, std::string("--help") },
     { CommandHelp::VERSION, std::string("--version") },
+    { CommandHelp::SCREEN, std::string("-screen") },
 };
 
 enum class TraceStatus {

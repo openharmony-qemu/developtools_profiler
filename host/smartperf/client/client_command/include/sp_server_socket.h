@@ -36,7 +36,7 @@ public:
     int Send(std::string sendBuf);
     int Recv();
     // 关闭
-    void Close() const;
+    void Close();
     std::string RecvBuf() const;
 
 private:

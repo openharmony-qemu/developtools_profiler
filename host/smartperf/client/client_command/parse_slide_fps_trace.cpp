@@ -14,6 +14,8 @@
  */
 #include <fstream>
 #include <string>
+#include <iostream>
+#include <regex>
 #include "include/parse_slide_fps_trace.h"
 
 namespace OHOS {
@@ -31,105 +33,73 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     return fps;
 }
 
-bool ParseSlideFpsTrace::HandleTraceOne()
+void ParseSlideFpsTrace::GetLastCompleteLine()
 {
-    if (needUpdateResponseLine) {
-        if (line.find("H:RSMainThread::DoComposition") != maxnpos) {
-            doFlag = true;
-            if (firstFrame == 0) {
-                responseLine = line;
-                firstFrame = 1;
-            }
-            if (animEmptyFlag) {
-                frameNum++;
-                completeLine = line;
-                return true;
-            } else {
-                completeLine = line;
-                frameNum++;
-            }
-            animEmptyFlag = false;
+    float num = 0.1;
+    if (lastCompleteLine != "") {
+        double completeNow = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(newCompleteLine));
+        double completeLast = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(lastCompleteLine));
+        if (completeNow - completeLast > num) {
+            completeLine = lastCompleteLine;
+            updateCount = true;
+            frameNum = frameNow - 1;
         }
     }
-    return false;
-}
-
-bool ParseSlideFpsTrace::HandleTraceThree()
-{
-    const double one = 0.1;
-    nowTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
-    if (lastTime == 0) {
-        lastTime = nowTime;
-    } else {
-        if (nowTime - lastTime > one) {
-            return true;
-        } else {
-            lastTime = nowTime;
-        }
-    }
-    return false;
-}
-
-bool ParseSlideFpsTrace::HandleTraceTwo()
-{
-    if (line.find("H:rs_RequestNextVSync") != maxnpos) {
-        if (!animEmptyFlag) {
-            return HandleTraceThree();
-        }
-    }
-    return false;
 }
 
 double ParseSlideFpsTrace::CalculateTime()
 {
-    const int four = 4;
+    std::string line;
     while (getline(infile, line)) {
-        if (line.find("H:touchEventDispatch") != maxnpos) {
-            touchNum++;
-            if (touchNum == four) {
-                startLine = line;
+        if (line.find("H:RSJankStats::RecordAnimationDynamicFrameRate") != std::string::npos) {
+            std::string delimiter = "frame rate is ";
+            size_t pos1 = line.find(delimiter);
+            std::string result1 = line.substr(pos1 + delimiter.length());
+            std::string delimiter1 = ":";
+            size_t pos2 = line.find(delimiter1);
+            std::string result2 = result1.substr(0, pos2);
+            frameRate = std::stod(result2);
+        }
+        if (line.find("H:touchEventDispatch") != std::string::npos) {
+            count++;
+            if (count == four) {
                 needUpdateResponseLine = true;
+                frameNow = 0;
             }
-            frameNum = 0;
-        }
-        if (HandleTraceOne()) {
-            break;
-        }
-        if (line.find("H:Animate") != maxnpos) {
-            animateFlag = true;
-        }
-        if (animateFlag && needUpdateResponseLine && doFlag) {
-            if (HandleTraceTwo()) {
-                break;
+        } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos && !updateCount) {
+            frameNow++;
+            if (needUpdateResponseLine) {
+                responseLine = line;
+                needUpdateResponseLine = false;
             }
-            if (line.find("H:Animation running empty") != maxnpos) {
-                animEmptyFlag = true;
-            }
+            newCompleteLine = line;
+            GetLastCompleteLine();
+            lastCompleteLine = newCompleteLine;
         }
     }
-    if (startLine.compare("") == 0) {
-        std::cout << "can not find start point {H:touchEventDispatch}" << std::endl;
-    } else if (completeLine.compare("") == 0) {
-        std::cout << "can not find complete point {H:rs_RequestNextVSync}" << std::endl;
-    } else {
+    if (frameRate == 0) {
+        completeLine = newCompleteLine;
+        frameNum = frameNow;
         double responseTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(responseLine));
         double completeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(completeLine));
         return frameNum / (completeTime - responseTime);
+    } else {
+        return frameRate;
     }
     return -1.0;
 }
-std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr)
+std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr) const
 {
     size_t num = 7;
     size_t position1 = lineStr.find("....");
     size_t position2 = lineStr.find(":");
     return lineStr.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t off)
+std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t offset) const
 {
     size_t position1 = lineStr.find(start);
     size_t position2 = lineStr.find(end);
-    return lineStr.substr(position1 + off, position2 - position1 - off);
+    return lineStr.substr(position1 + offset, position2 - position1 - offset);
 }
 }
 }
