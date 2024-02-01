@@ -154,7 +154,6 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
         long long tLastReadyTime = fpsConfig.lastReadyTime / fpsConfig.mod;
         long long lastFrame = -1;
         if (tFrameReadyTime == tLastReadyTime) {
-            (fpsInfo.timeStampQ).push(frameReadyTime);
         } else if (tFrameReadyTime == tLastReadyTime + 1) {
             fpsConfig.jump = true;
             fpsConfig.lastReadyTime = frameReadyTime;
@@ -164,17 +163,14 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
                 fpsTmp++;
                 long long currFrame = (fpsInfo.timeStampQ.front());
                 if (lastFrame != -1) {
-                    long long jitter = currFrame - lastFrame;
-                    fpsInfo.jitters.push_back(jitter);
+                    fpsInfo.jitters.push_back(currFrame - lastFrame);
                 } else {
-                    long long jitter = currFrame - currFrame / fpsConfig.mod * fpsConfig.mod;
-                    fpsInfo.jitters.push_back(jitter);
+                    fpsInfo.jitters.push_back(currFrame - currFrame / fpsConfig.mod * fpsConfig.mod);
                 }
                 lastFrame = currFrame;
                 (fpsInfo.timeStampQ).pop();
             }
             fpsConfig.fpsGb = fpsTmp;
-            (fpsInfo.timeStampQ).push(frameReadyTime);
             fpsInfo.lastFrameReadyTime = lastFrame;
         } else if (tFrameReadyTime > tLastReadyTime + 1) {
             fpsConfig.jump = true;
@@ -182,8 +178,8 @@ static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
             while (!(fpsInfo.timeStampQ).empty()) {
                 (fpsInfo.timeStampQ).pop();
             }
-            (fpsInfo.timeStampQ).push(frameReadyTime);
         }
+        (fpsInfo.timeStampQ).push(frameReadyTime);
     }
 }
 
@@ -320,7 +316,7 @@ static void GetSectionsFps(FpsInfo &fpsInfo)
         } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
             printCount++;
-            msStartTime = fpsInfo.currentFpsTime + (msAdd / 1e6);
+            msStartTime += 1e2;
             msCount = 1;
             msJiange += 1e8;
         } else {

@@ -17,6 +17,7 @@
 #include "include/sp_utils.h"
 #include "gpu_collector.h"
 #include "collect_result.h"
+#include "include/sp_log.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -38,6 +39,7 @@ int GPU::GetGpuFreq()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<GpuFreq> result = collector->CollectGpuFrequency();
+    LOGI("GpuFrequency: %s", std::to_string(result.data.curFeq).c_str());
     return result.data.curFeq;
 }
 
@@ -45,6 +47,7 @@ float GPU::GetGpuLoad()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<SysGpuLoad> result = collector->CollectSysGpuLoad();
+    LOGI("SysGpuLoad: %s", std::to_string(result.data.gpuLoad).c_str());
     return float(result.data.gpuLoad);
 }
 }

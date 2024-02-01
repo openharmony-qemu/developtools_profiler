@@ -26,6 +26,7 @@
 #include "cpu_collector.h"
 #include "collect_result.h"
 #include "include/startup_delay.h"
+#include "include/sp_log.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -93,6 +94,8 @@ std::vector<CpuFreqs> CPU::GetCpuFreq()
         cpuFreqs.cpuId = cpufreq[i].cpuId;
         cpuFreqs.curFreq = cpufreq[i].curFreq;
         cpuFreqs2.push_back(cpuFreqs);
+        LOGI("cpuFreqs.cpuId: %s", std::to_string(cpufreq[i].cpuId).c_str());
+        LOGI("cpuFreqs.curFreq: %s", std::to_string(cpufreq[i].curFreq).c_str());
     }
     return cpuFreqs2;
 }
@@ -117,6 +120,14 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
         cpuUsageInfos.irqUsage = cpuInfo.irqUsage;
         cpuUsageInfos.softIrqUsage = cpuInfo.softIrqUsage;
         workload.push_back(cpuUsageInfos);
+        LOGI("UsageCpuId: %s", cpuInfo.cpuId.c_str());
+        LOGI("userUsage: %s", std::to_string(cpuInfo.userUsage).c_str());
+        LOGI("niceUsage: %s", std::to_string(cpuInfo.niceUsage).c_str());
+        LOGI("systemUsage: %s", std::to_string(cpuInfo.systemUsage).c_str());
+        LOGI("idleUsage: %s", std::to_string(cpuInfo.idleUsage).c_str());
+        LOGI("ioWaitUsage: %s", std::to_string(cpuInfo.ioWaitUsage).c_str());
+        LOGI("irqUsage: %s", std::to_string(cpuInfo.irqUsage).c_str());
+        LOGI("softIrqUsage: %s", std::to_string(cpuInfo.softIrqUsage).c_str());
     }
     return workload;
 }
@@ -136,6 +147,12 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcCpuUsage"] = std::to_string(data.cpuUsage * oneHundred);
         processCpuInfo["ProcUCpuUsage"] = std::to_string(data.uCpuUsage * oneHundred);
         processCpuInfo["ProcSCpuUsage"] = std::to_string(data.sCpuUsage * oneHundred);
+        LOGI("ProcId: %s", std::to_string(data.pid).c_str());
+        LOGI("ProcAppName: %s", data.procName.c_str());
+        LOGI("ProcCpuLoad: %s", std::to_string(data.cpuLoad).c_str());
+        LOGI("ProcCpuUsage: %s", std::to_string(data.cpuUsage).c_str());
+        LOGI("ProcUCpuUsage: %s", std::to_string(data.uCpuUsage).c_str());
+        LOGI("ProcSCpuUsage: %s", std::to_string(data.sCpuUsage).c_str());
         return processCpuInfo;
     }
     return processCpuInfo;
