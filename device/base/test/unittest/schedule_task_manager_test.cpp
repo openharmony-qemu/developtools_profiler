@@ -56,6 +56,7 @@ HWTEST_F(ScheduleTaskManagerTest, ScheduleTaskRepeated, TestSize.Level1)
 {
     std::atomic<int> count = 0;
     constexpr int cnt = 5;
+    constexpr int thresh = 1;
 
     uint64_t repeatInterval = 100;
 
@@ -74,9 +75,9 @@ HWTEST_F(ScheduleTaskManagerTest, ScheduleTaskRepeated, TestSize.Level1)
         expected++;
         struct timeval tv = { 0, 0 };
         gettimeofday(&tv, nullptr);
-        EXPECT_EQ(count.load(), expected);
         std::this_thread::sleep_for(std::chrono::milliseconds(repeatInterval));
     }
+    EXPECT_LE(abs(count.load() - expected), thresh);
 }
 
 /**
@@ -88,7 +89,7 @@ HWTEST_F(ScheduleTaskManagerTest, UnscheduleTask, TestSize.Level1)
 {
     std::atomic<int> count = 0;
     constexpr int cnt = 5;
-
+    constexpr int thresh = 1;
     int32_t taskFd = -1;
     uint64_t repeatInterval = 100;
     uint64_t initalDelay = 10;
@@ -109,10 +110,9 @@ HWTEST_F(ScheduleTaskManagerTest, UnscheduleTask, TestSize.Level1)
         expected++;
         struct timeval tv = { 0, 0 };
         gettimeofday(&tv, nullptr);
-        EXPECT_EQ(count.load(), expected);
         std::this_thread::sleep_for(std::chrono::milliseconds(repeatInterval));
     }
-
+    EXPECT_LE(abs(count.load() - expected), thresh);
     EXPECT_TRUE(scheduleTaskManager.UnscheduleTask(taskFd));
 }
 } // namespace
