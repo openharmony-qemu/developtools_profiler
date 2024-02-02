@@ -65,6 +65,7 @@ private:
     std::unordered_map<int32_t, std::function<void(void)>> tasks_;
     int32_t epollFd_{-1};
     int32_t stopFd_{-1};
+    std::mutex mtx_;
 };
 
 #endif // !OHOS_PROFILER_SCHEDULE_TASK_MANAGER_H
