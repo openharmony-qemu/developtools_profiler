@@ -52,11 +52,9 @@ void ScheduleTaskManager::Shutdown()
     if (scheduleThread_.joinable()) {
         scheduleThread_.join();
     }
-    {
-        std::lock_guard<std::mutex> guard(mtx_);
-        for (const auto& [timerFd, func] : tasks_) {
-            close(timerFd);
-        }
+    std::lock_guard<std::mutex> guard(mtx_);
+    for (const auto& [timerFd, func] : tasks_) {
+        close(timerFd);
     }
     close(epollFd_);
     close(stopFd_);
@@ -108,6 +106,16 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
 bool ScheduleTaskManager::UnscheduleTask(const int32_t timerFd)
 {
     std::lock_guard<std::mutex> guard(mtx_);
+    return DeleteTask(timerFd);
+}
+
+bool ScheduleTaskManager::UnscheduleTaskLockless(const int32_t timerFd)
+{
+    return DeleteTask(timerFd);
+}
+
+bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
+{
     if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
         close(timerFd);
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, timerFd, NULL);
@@ -145,7 +153,7 @@ void ScheduleTaskManager::ScheduleThread()
 void ScheduleTaskManager::HandleSingleTask(int32_t fd, std::function<void(void)> callback)
 {
     callback();
-    UnscheduleTask(fd);
+    UnscheduleTaskLockless(fd);
 }
 
 void ScheduleTaskManager::StartThread()

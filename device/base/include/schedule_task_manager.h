@@ -52,12 +52,14 @@ public:
      * @return If the cancellation of the scheduled task is successful, it returns true; otherwise, it returns false.
      */
     bool UnscheduleTask(const int32_t timerFd);
+    bool UnscheduleTaskLockless(const int32_t timerFd);
     void Shutdown();
     void StartThread();
 
 private:
     void ScheduleThread();
     void HandleSingleTask(int32_t fd, std::function<void(void)> callback);
+    bool DeleteTask(const int32_t timerFd);
 
 private:
     std::atomic<bool> runScheduleThread_ = true;
