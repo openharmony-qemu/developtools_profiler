@@ -362,6 +362,7 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
         auto symbolsFilesIter = symbolsFiles_.find((curMaps->GetMaps())[itemIndex]->name);
         if (symbolsFilesIter != symbolsFiles_.end()) {
             auto symbolsFile = symbolsFilesIter->second.get();
+            symbolsFile->LoadDebugInfo((curMaps->GetMaps())[itemIndex]);
             vaddrSymbol.fileVaddr_ =
                 symbolsFile->GetVaddrInSymbols(ip, (curMaps->GetMaps())[itemIndex]->begin,
                                                (curMaps->GetMaps())[itemIndex]->offset);
