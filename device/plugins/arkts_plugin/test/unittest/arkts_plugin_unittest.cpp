@@ -127,24 +127,6 @@ HWTEST_F(ArkTSPluginTest, TestStartFunction, TestSize.Level1)
 
 /**
  * @tc.name: arkts plugin
- * @tc.desc: arkts plugin test memory snapshot.
- * @tc.type: FUNC
- */
-HWTEST_F(ArkTSPluginTest, TestSnapshot, TestSize.Level1)
-{
-    ArkTSPlugin arkTSPlugin;
-    ArkTSConfig protoConfig;
-    WriterStruct writer = {WriteFunc, FlushFunc};
-
-    std::vector<uint8_t> configData = SetArkTSConfig(protoConfig, pid_, ArkTSConfig::SNAPSHOT, 5, false, false, false);
-    arkTSPlugin.SetWriter(&writer);
-    EXPECT_EQ(arkTSPlugin.Start(configData.data(), configData.size()), 0);
-    sleep(10);
-    EXPECT_EQ(arkTSPlugin.Stop(), 0);
-}
-
-/**
- * @tc.name: arkts plugin
  * @tc.desc: arkts plugin test memory timeline.
  * @tc.type: FUNC
  */

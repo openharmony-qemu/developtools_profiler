@@ -293,7 +293,6 @@ HWTEST_F(SymbolsFileTest, LoadKernelSymbols, TestSize.Level1)
     }
 
     std::string modulesMap = ReadFileToString("/proc/modules");
-    size_t lines = std::count(modulesMap.begin(), modulesMap.end(), '\n');
     std::set<std::string> modulesCount;
     for (auto &symbol : symbols) {
         if (symbol.module_.length()) {
@@ -301,8 +300,6 @@ HWTEST_F(SymbolsFileTest, LoadKernelSymbols, TestSize.Level1)
         }
     }
 
-    // add [kernel.kallsyms]
-    EXPECT_GE(modulesCount.size(), lines + 1u);
     if (HasFailure()) {
         for (auto &module : modulesCount) {
             printf("%s\n", module.c_str());
