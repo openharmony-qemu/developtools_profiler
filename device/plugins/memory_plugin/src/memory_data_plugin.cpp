@@ -1289,7 +1289,7 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
             GetRenderServiceGlSize(pid, graphicsMemory);
             auto& rsClient = RSInterfaces::GetInstance();
             std::unique_ptr<MemoryGraphic> memGraphic = std::make_unique<MemoryGraphic>(rsClient.GetMemoryGraphic(pid));
-            graphicsMemory.gl = memGraphic->GetGpuMemorySize() / KB_TO_BYTES;
+            graphicsMemory.gl += memGraphic->GetGpuMemorySize() / KB_TO_BYTES;
             processesInfo->set_gl_pss_kb(graphicsMemory.gl);
             processesInfo->set_graph_pss_kb(graphicsMemory.graph);
         }
