@@ -114,11 +114,10 @@ bool RunCommand(const std::string& cmd)
 
 int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSize)
 {
-    FILE* file = fopen("/data/local/tmp/perf.data", "w");
+    FILE* file = fopen("/data/local/tmp/perf.data", "w+");
     if (file == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "WriteFile: fopen() perf.data fail");
     } else {
-        (void)fwrite("", 0, 0, file);
         (void)fclose(file);
     }
     std::lock_guard<std::mutex> guard(g_taskMutex);
