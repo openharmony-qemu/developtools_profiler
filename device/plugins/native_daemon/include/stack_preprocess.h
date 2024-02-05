@@ -21,6 +21,7 @@
 #include <list>
 #include <algorithm>
 #include <mutex>
+#include <variant>
 
 #include "logging.h"
 #include "nocopyable.h"
@@ -30,8 +31,10 @@
 #include "hook_common.h"
 #include "native_hook_config.pb.h"
 #include "native_hook_result.pb.h"
+#include "native_hook_result.pbencoder.h"
 #include "safe_map.h"
 
+using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 class StackPreprocess {
 public:
     struct RecordStatistic {
@@ -46,13 +49,14 @@ public:
     };
 
     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
-        clockid_t pluginDataClockId, FILE* fpHookData = nullptr, bool isHookStandalone = false);
+        clockid_t pluginDataClockId, FILE* fpHookData = nullptr, bool isHookStandalone = false,
+        bool isSaService = false, bool isProtobufSerialize = true);
     ~StackPreprocess();
     void SetWriter(const std::shared_ptr<Writer>& writer);
+    void SetWriter(const WriterStructPtr& writer);
     bool StartTakeResults();
     bool StopTakeResults();
     bool FlushRecordStatistics();
-    void SetSerializeMode(bool isProtobufSerialize);
     inline void SetPid(int32_t pid)
     {
         pid_ = pid;
@@ -62,11 +66,17 @@ public:
     void SaveThreadName(uint32_t tid, const std::string& tname);
     void ReportBasicData();
     void WriteHookConfig();
-    inline void SetSaServiceFlag(bool flag)
-    {
-        isSaService_ = flag;
-    }
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
+    void SetFlushSize(uint64_t size)
+    {
+        double tenth = static_cast<double>(size) / 10.0;
+        flushSize_ = static_cast<uint64_t>(std::ceil(tenth));
+        PROFILER_LOG_INFO(LOG_CORE, "SetFlushSize size: %" PRIu64 ", flushSize_: %" PRIu64 "", size, flushSize_);
+        if (isProtobufSerialize_) {
+            bufferSize_ = flushSize_ << 1;
+            buffer_ = std::make_unique<uint8_t[]>(bufferSize_);
+        }
+    }
 
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
@@ -84,44 +94,70 @@ private:
         ALLOC_ADDRMAMP_SIZE = 100000,
     };
 
+    struct ScopedLockFile {
+        ScopedLockFile(FILE* fpHook): fpHookData(fpHook)
+        {
+            flockfile(fpHookData);
+        }
+        ~ScopedLockFile()
+        {
+            funlockfile(fpHookData);
+        }
+        FILE* fpHookData {nullptr};
+    };
+
 private:
     void TakeResults();
-    void SetHookData(RawStackPtr RawStack, std::vector<CallFrame>& callFrames,
-        BatchNativeHookData& batchNativeHookData);
-    void SetHookData(RawStackPtr rawStack, BatchNativeHookData& batchNativeHookData);
+    template <typename T>
+    void SetHookData(RawStackPtr rawStack, T& stackData);
+    template <typename T>
+    void SetHookData(RawStackPtr rawStack, std::vector<CallFrame>& callFrames, T& stackData);
     void WriteFrames(RawStackPtr RawStack, const std::vector<CallFrame>& callFrames);
-    void SetFrameInfo(Frame& frame, CallFrame& callFrame);
-    void ReportSymbolNameMap(CallFrame& callFrame, BatchNativeHookData& batchNativeHookData);
-    void ReportFilePathMap(CallFrame& callFrame, BatchNativeHookData& batchNativeHookData);
-    void ReportFrameMap(CallFrame& callFrame, BatchNativeHookData& batchNativeHookData);
-    void ReportThreadNameMap(uint32_t tid, const std::string& tname, BatchNativeHookData& batchNativeHookData);
-    void SetMapsInfo(pid_t pid);
-    void SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolInfo,
-        BatchNativeHookData& batchNativeHookData);
+    template <typename T>
+    void SetFrameInfo(T& frame, CallFrame& callFrame);
+     template <typename T>
+    void ReportSymbolNameMap(CallFrame& callFrame, T& stackData);
+     template <typename T>
+    void ReportFilePathMap(CallFrame& callFrame, T& stackData);
+    template <typename T>
+    void ReportFrameMap(CallFrame& callFrame, T& stackData);
+    void ReportThreadNameMap(uint32_t tid, const std::string& tname);
+    void SetMapsInfo();
+    template <typename T>
+    void SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolInfo, T& batchNativeHookData);
+    template <typename T>
+    void FlushCheck(T& stackData);
     void FlushData(BatchNativeHookData& stackData);
+    void FlushData(OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData& stackData);
     void Flush(const uint8_t* src, size_t size);
     void GetSymbols(const std::string& filePath, ElfSymbolTable& symbols);
 
     void FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx);
-    void FillCallStack(std::vector<CallFrame>& callFrames,
-        BatchNativeHookData& batchNativeHookData, size_t idx);
-    uint32_t SetCallStackMap(BatchNativeHookData& batchNativeHookData);
-    uint32_t GetCallStackId(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
-        BatchNativeHookData& batchNativeHookData);
+    template <typename T>
+    void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
+    template <typename T>
+    uint32_t SetCallStackMap(T& stackData);
+    template <typename T>
+    uint32_t GetCallStackId(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames, T& stackData);
     uint32_t FindCallStackId(std::vector<uint64_t>& callStack);
     template <typename T>
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
-        BatchNativeHookData& batchNativeHookData, T* event, uint32_t stackId);
-    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
-        BatchNativeHookData& batchNativeHookData);
-    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, BatchNativeHookData& batchNativeHookData);
+        T* event, uint32_t stackId, const std::string& type = "");
+    template <typename T>
+    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames, T& stackData);
+    template <typename T>
+    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, T& stackData);
+    void IntervalFlushRecordStatistics();
+    bool HandleNoStackEvent(RawStackPtr& rawStack);
     bool SetFreeStatisticsData(uint64_t addr);
     void SetAllocStatisticsData(const RawStackPtr& rawStack, size_t stackId, bool isExists = false);
-    void IntervalFlushRecordStatistics(BatchNativeHookData& stackData);
-    bool HandleNoStackEvent(RawStackPtr& rawStack, BatchNativeHookData& stackData);
     unsigned LgFloor(unsigned long x);
     uint64_t PowCeil(uint64_t x);
     size_t ComputeAlign(size_t size);
+    void ReportOfflineSymbolizationData();
+
+    RandomWriteCtx* StartReport();
+    void FinishReport();
 private:
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
@@ -150,7 +186,6 @@ private:
     std::unordered_map<uint32_t, RecordStatistic*> statisticsPeriodData_ {STATISTICS_PERIOD_DATA_SIZE};
     // Key is alloc or mmap address, value first is mallocsize, second is recordstatistic data pointer
     std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> allocAddrMap_ {ALLOC_ADDRMAMP_SIZE};
-    bool isProtobufSerialize_ = true;
     // used for plugin data
     clockid_t pluginDataClockId_ = CLOCK_REALTIME;
     // used for clac wait time in StackDataRepeater::TakeRawData() or statistics HookData
@@ -160,6 +195,13 @@ private:
     int32_t pid_ {-1};
     std::mutex mtx_;
     bool isSaService_{false};
+    bool isProtobufSerialize_{true};
+    WriterStructPtr resultWriter_{nullptr};
+    std::variant<BatchNativeHookData, OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData> stackData_;
+    uint64_t flushSize_{0};
+    uint64_t bufferSize_{0};
+    bool statisticsModelFlushCallstack_{false};
+    OHOS::Developtools::Profiler::ProtoEncoder::ProfilerPluginData profilerPluginData_;
 };
 
 #endif // STACK_PREPROCESS_H

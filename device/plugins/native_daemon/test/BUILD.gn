@@ -30,6 +30,7 @@ sources_base = [
   "unittest/common/native/virtual_runtime_test.cpp",
   "../../api/src/buffer_writer.cpp",
   "../../api/src/command_poller.cpp",
+  "../../api/src/writer_adapter.cpp",
   "../src/hook_manager.cpp",
   "../src/call_stack.cpp",
   "../src/debug_logger.cpp",

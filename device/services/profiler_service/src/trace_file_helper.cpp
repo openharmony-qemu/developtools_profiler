@@ -34,11 +34,12 @@ bool TraceFileHelper::AddSegment(const uint8_t data[], uint32_t size)
     if (size > std::numeric_limits<decltype(header_.data_.length)>::max() - header_.data_.length - sizeof(size)) {
         return false;
     }
-    int retval = 0;
     header_.data_.segments += 1;
     header_.data_.length += size;
-    retval = SHA256_Update(shaCtx_.get(), data, size);
-    CHECK_TRUE(retval, false, "[%u] SHA256_Update FAILED, s:%u!", header_.data_.segments, size);
+    if (data != nullptr) {
+        int retval = SHA256_Update(shaCtx_.get(), data, size);
+        CHECK_TRUE(retval, false, "[%u] SHA256_Update FAILED, s:%u, d:%p!", header_.data_.segments, size, data);
+    }
     return true;
 }
 

@@ -24,10 +24,15 @@
 
 #include "logging.h"
 #include "nocopyable.h"
+#include "plugin_module_api.h"
 #include "trace_file_helper.h"
 #include "writer.h"
 
 using google::protobuf::MessageLite;
+
+#ifndef MMAP_FAILED
+#define MMAP_FAILED (reinterpret_cast<void *>(-1))
+#endif
 
 class TraceFileWriter : public Writer {
 public:
@@ -77,6 +82,22 @@ private:
 
     bool FlushStream();
 
+    bool GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset);
+    bool Seek(uint32_t offset);
+    bool RemapFile();
+
+    struct TraceFileWriterCtx {
+        RandomWriteCtx ctx;
+        TraceFileWriter* write;
+    };
+
+    RandomWriteCtx* GetCtx() override
+    {
+        return &writeCtx_.ctx;
+    }
+    void ResetPos() override;
+    void FinishReport(int32_t size) override;
+
 private:
     std::string path_ {};
     std::string oldPath_ {};
@@ -95,7 +116,13 @@ private:
     int fileNum_;
     TraceFileHeader::HeaderData headerDataTime_ = {}; // used to store the clock source and collection time.
     int32_t fd_{-1};
-    bool isWriteFd_{false};
+    TraceFileWriterCtx writeCtx_ {};
+    void* fileMapAddr_ = MMAP_FAILED;
+    size_t fileLength_ = 0;
+    uint32_t fileWriteLength_ = 0;
+    uint32_t messageWriteOffset_ = 0;
+    size_t pageSize_ = 0;
+    size_t mapOffset_ = 0;
 
     DISALLOW_COPY_AND_MOVE(TraceFileWriter);
 };

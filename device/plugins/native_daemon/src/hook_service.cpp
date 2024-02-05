@@ -94,6 +94,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
     context.SendFileDescriptor(smbFd);
     context.SendFileDescriptor(eventFd);
+    hookMgr_->ResetStartupParam();
     return true;
 }
 }

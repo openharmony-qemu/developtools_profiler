@@ -352,13 +352,27 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (!ohos_set_filter_size(size, ret)) {
         return ret;
     }
-    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {  //0 not sampling
-        return ret;
-    }
+
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
+
+    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {  //0 not sampling
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
+        return ret;
+    }
+
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
     auto holder = weakClient.lock();
     if (holder == nullptr) {
@@ -440,7 +454,24 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (!ohos_set_filter_size(number * size, pRet)) {
         return pRet;
     }
+
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
     if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size * number) == 0) {
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
         return pRet;
     }
     StackRawData rawdata = {{{{0}}}};
@@ -486,6 +517,16 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
     g_mallocTimes++;
+#ifdef PERFORMANCE_DEBUG
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
     return pRet;
 }
 
@@ -510,7 +551,24 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (!ohos_set_filter_size(size, pRet)) {
         return pRet;
     }
+
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
     if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
         return pRet;
     }
     StackRawData rawdata = {{{{0}}}};
@@ -571,6 +629,17 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         holder->SendStackWithPayload(&freeData, sizeof(BaseStackRawData), nullptr, 0); // 0: Don't unwind the freeData
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
     return pRet;
 }
 
@@ -597,6 +666,11 @@ void hook_free(void (*free_func)(void*), void* p)
             return;
         }
     }
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
     if (g_ClientConfig.freeEventOnlyAddrEnable) {
         uint64_t addr = reinterpret_cast<uint64_t>(p);
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
@@ -604,6 +678,17 @@ void hook_free(void (*free_func)(void*), void* p)
         if (holder != nullptr) {
             holder->SendStackWithPayload(&addr, sizeof(addr), nullptr, 0);
         }
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
         return;
     }
     StackRawData rawdata = {{{{0}}}};
@@ -647,6 +732,17 @@ void hook_free(void (*free_func)(void*), void* p)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
 }
 
 inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::string& filePath,
@@ -682,8 +778,25 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
         return ret;
     }
+
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
     if ((fd < 0 && offset == 0) && g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL
         && g_sampler.StartSampling(length) == 0) {
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
@@ -748,6 +861,17 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
     holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
     return ret;
 }
 
@@ -760,6 +884,12 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
         return ret;
     }
+
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
     int stackSize = 0;
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
@@ -801,6 +931,17 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
     return ret;
 }
 
@@ -815,6 +956,10 @@ int hook_prctl(int(*fn)(int, ...),
         return ret;
     }
     if (option == PR_SET_VMA && arg2 == PR_SET_VMA_ANON_NAME) {
+#ifdef PERFORMANCE_DEBUG
+        struct timespec start = {};
+        clock_gettime(CLOCK_REALTIME, &start);
+#endif
         StackRawData rawdata = {{{{0}}}};
         clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
@@ -832,6 +977,17 @@ int hook_prctl(int(*fn)(int, ...),
             holder->SendStackWithPayload(&rawdata,
                                          sizeof(rawdata) + strlen(reinterpret_cast<char*>(arg5)), nullptr, 0);
         }
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
     }
     return ret;
 }
@@ -841,6 +997,10 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (!g_ClientConfig.memtraceEnable || IsPidChanged()) {
         return;
     }
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
     int stackSize = 0;
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
@@ -882,6 +1042,17 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
 }
 
 bool ohos_malloc_hook_initialize(const MallocDispatchType*malloc_dispatch, bool*, const char*)

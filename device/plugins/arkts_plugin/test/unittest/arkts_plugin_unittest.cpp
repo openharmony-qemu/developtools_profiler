@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "arkts_plugin.h"
+#include "common.h"
 #include "plugin_module_api.h"
 
 using namespace testing::ext;
@@ -34,32 +35,12 @@ class ArkTSPluginTest : public ::testing::Test {
 public:
     ArkTSPluginTest()
     {
-        sleep(10); // Wait for the application to start successfully.
-        std::unique_ptr<FILE, decltype(&pclose)> runCmd(popen("netstat -anp | grep Panda", "r"), pclose);
-        if (runCmd == nullptr) {
-            return;
-        }
-
-        constexpr uint32_t readBufferSize = 4096;
-        std::array<char, readBufferSize> buffer;
-        while (fgets(buffer.data(), buffer.size(), runCmd.get()) != nullptr) {
-            std::string result = buffer.data();
-            if (result.find("cn.openharmo") == std::string::npos) {
-                continue;
-            }
-            std::regex pattern(R"(\b(\d+)/)");
-            std::smatch match;
-            if (std::regex_search(result, match, pattern)) {
-                std::string matchedString = match[1].str();
-                pid_ = std::stoi(matchedString);
-                PROFILER_LOG_INFO(LOG_CORE, "ArkTSPluginTest: pid_ is %d", pid_);
-            }
-        }
+        sleep(5); // Wait for the application to start successfully.
+        const std::string processName = "cn.openharmony.rebound_project";
+        COMMON::IsProcessExist(processName, pid_);
+        HILOG_INFO(LOG_CORE, "ArkTSPluginTest pid: %d", pid_);
     }
-    ~ArkTSPluginTest()
-    {
-        sleep(5);
-    }
+    ~ArkTSPluginTest() {}
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
     int32_t pid_{0};

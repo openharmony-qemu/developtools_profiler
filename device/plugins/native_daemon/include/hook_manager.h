@@ -32,6 +32,7 @@
 #include "stack_data_repeater.h"
 #include "stack_preprocess.h"
 #include "native_memory_profiler_sa_config.h"
+#include "writer_adapter.h"
 
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
 class ProfilerPluginConfig;
@@ -95,11 +96,16 @@ public:
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void WriteHookConfig();
     std::pair<int, int> GetFds(int32_t pid, const std::string& name);
-    inline void SetSaServiceFlag(bool flag)
+    inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
     {
-        isSaService_ = flag;
+        isSaService_ = saFlag;
+        isProtobufSerialize_ = isProtobufSerialize;
     }
     void GetClientConfig(ClientConfig& clientConfig);
+    bool GetNoDataQueueFlag()
+    {
+        return noDataQueue_;
+    }
 
 private:
     bool CheckProcess();
@@ -107,6 +113,7 @@ private:
     void SetHookData(HookContext& hookContext, struct timespec ts,
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);
+    void CreateWriter();
 
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;
@@ -119,6 +126,11 @@ private:
     std::vector<std::shared_ptr<HookManagerCtx>> hookCtx_;
     bool isSaService_{false};
     bool noDataQueue_{false};
+    std::shared_ptr<WriterAdapter> writerAdapter_{nullptr};
+    bool isProtobufSerialize_{true};
+    std::shared_ptr<Writer> writer_{nullptr};
+    constexpr static uint32_t MAX_BUFFER_SIZE = 100 * 1024 * 1024;
+    uint64_t shareMemorySize_{MAX_BUFFER_SIZE};
 };
 }
 #endif // AGENT_MANAGER_H
