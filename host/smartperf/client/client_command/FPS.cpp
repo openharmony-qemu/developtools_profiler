@@ -28,26 +28,26 @@ namespace SmartPerf {
 std::map<std::string, std::string> FPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfo fpsInfo;
+    FpsInfo fpsInfoResult;
     if (surfaceViewName.length() > 0) {
-        fpsInfo = GetDiffLayersFpsInfo(surfaceViewName);
+        fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
     } else {
-        fpsInfo = GetFpsInfo();
+        fpsInfoResult = GetFpsInfo();
     }
-    result["fps"] = std::to_string(fpsInfo.fps);
-    LOGI("result.fps====: %s", std::to_string(fpsInfo.fps).c_str());
+    result["fps"] = std::to_string(fpsInfoResult.fps);
+    LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
     std::string jitterStr = "";
     std::string split = "";
-    for (size_t i = 0; i < fpsInfo.jitters.size(); i++) {
+    for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
         if (i > 0) {
             split = ";;";
         }
-        jitterStr += split + std::to_string(fpsInfo.jitters[i]);
+        jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
     }
     result["fpsJitters"] = jitterStr;
     LOGI("result.jitters====: %s", jitterStr.c_str());
     if (isCatchTrace > 0) {
-        ByTrace::GetInstance().CheckFpsJitters(fpsInfo.jitters, fpsInfo.fps);
+        ByTrace::GetInstance().CheckFpsJitters(fpsInfoResult.jitters, fpsInfoResult.fps);
     }
     if (isCapture > 0) {
         Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
@@ -75,8 +75,8 @@ void FPS::SetLayerName(std::string sName)
 }
 FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName)
 {
-    FpsInfo fpsInfo = GetSurfaceFrame(sName);
-    return fpsInfo;
+    FpsInfo surfaceFramefpsInfo = GetSurfaceFrame(sName);
+    return surfaceFramefpsInfo;
 }
 std::string FPS::GetSurface()
 {
@@ -90,7 +90,7 @@ std::string FPS::GetSurface()
     LOGI("cmdResult==: %s", (cmdResult.substr(position1 + 1, position2 - position1 - 1)).c_str());
     return cmdResult.substr(position1 + 1, position2 - position1 - 1);
 }
-static void PrintFpsInfo(FpsInfo &fpsInfo, std::string tag, std::string type)
+static void PrintFpsInfo(FpsInfo &fpsInfo, const std::string tag, const std::string type)
 {
     LOGI("Print fps: %s", std::to_string(fpsInfo.fps).c_str());
     LOGI("Print tag: %s", tag.c_str());
@@ -335,7 +335,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         tmp.preFps = 0;
         fpsMap[name] = tmp;
     }
-    FpsInfo &fpsInfo = fpsMap[name];
+    fpsInfo = fpsMap[name];
     fpsInfo.fps = 0;
     FILE *fp;
     static char tmp[1024];
