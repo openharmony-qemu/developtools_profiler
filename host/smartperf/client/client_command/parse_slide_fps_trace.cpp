@@ -35,10 +35,10 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
 
 void ParseSlideFpsTrace::GetLastCompleteLine()
 {
-    float num = 0.1;
     if (lastCompleteLine != "") {
         double completeNow = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(newCompleteLine));
         double completeLast = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(lastCompleteLine));
+        float num = 0.1;
         if (completeNow - completeLast > num) {
             completeLine = lastCompleteLine;
             updateCount = true;
