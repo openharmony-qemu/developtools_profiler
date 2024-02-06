@@ -52,6 +52,7 @@ void ScheduleTaskManager::Shutdown()
     if (scheduleThread_.joinable()) {
         scheduleThread_.join();
     }
+    std::lock_guard<std::mutex> guard(mtx_);
     for (const auto& [timerFd, func] : tasks_) {
         close(timerFd);
     }
@@ -97,11 +98,23 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
     evt.data.fd = timerFd;
     evt.events = EPOLLIN;
     epoll_ctl(epollFd_, EPOLL_CTL_ADD, timerFd, &evt);
+    std::lock_guard<std::mutex> guard(mtx_);
     tasks_[timerFd] = std::move(func);
     return timerFd;
 }
 
 bool ScheduleTaskManager::UnscheduleTask(const int32_t timerFd)
+{
+    std::lock_guard<std::mutex> guard(mtx_);
+    return DeleteTask(timerFd);
+}
+
+bool ScheduleTaskManager::UnscheduleTaskLockless(const int32_t timerFd)
+{
+    return DeleteTask(timerFd);
+}
+
+bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
 {
     if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
         close(timerFd);
@@ -127,6 +140,7 @@ void ScheduleTaskManager::ScheduleThread()
 
                 int32_t ret = read(events[i].data.fd, &exp, sizeof(uint64_t));
                 if (ret == sizeof(uint64_t)) {
+                    std::lock_guard<std::mutex> guard(mtx_);
                     if (tasks_.find(events[i].data.fd) != tasks_.end()) {
                         tasks_[events[i].data.fd]();
                     }
@@ -139,7 +153,7 @@ void ScheduleTaskManager::ScheduleThread()
 void ScheduleTaskManager::HandleSingleTask(int32_t fd, std::function<void(void)> callback)
 {
     callback();
-    UnscheduleTask(fd);
+    UnscheduleTaskLockless(fd);
 }
 
 void ScheduleTaskManager::StartThread()
