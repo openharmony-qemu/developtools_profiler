@@ -114,8 +114,8 @@ bool RunCommand(const std::string& cmd)
 
 int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSize)
 {
-    (void)remove("/data/local/tmp/perf.data");
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    (void)remove("/data/local/tmp/perf.data");
     bool res = g_config.ParseFromArray(configData, configSize);
     CHECK_TRUE(res, -1, "HiperfPluginSessionStart, parse config from array FAILED! configSize: %u", configSize);
 
