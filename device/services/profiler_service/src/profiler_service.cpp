@@ -167,7 +167,7 @@ bool ProfilerService::SessionContext::StopPluginSessions()
     std::unique_lock<std::mutex> lock(sessionMutex);
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         if (offlineScheduleTaskFd != -1) {
-            stopExpireTask.UnscheduleTask(offlineScheduleTaskFd);
+            stopExpireTask.UnscheduleTaskLockless(offlineScheduleTaskFd);
             offlineScheduleTaskFd = -1;
         } else {
             return true;
