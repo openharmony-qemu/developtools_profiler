@@ -35,7 +35,7 @@ private:
     RAM() {};
     RAM(const RAM &);
     RAM &operator = (const RAM &);
-    std::string processId = "";
+    std::string packageName = "";
 };
 }
 }
