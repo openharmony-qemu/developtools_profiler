@@ -26,6 +26,13 @@ public:
     static std::unique_ptr<HidebugNativeInterface> CreateInstance();
     virtual ~HidebugNativeInterface() = default;
 
+    /**
+     * GetSystemCpuUsage
+     *
+     * @return the cpu usage of the system
+     */
+    virtual double GetSystemCpuUsage() = 0;
+
     virtual double GetCpuUsage() = 0;
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
     virtual std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) = 0;

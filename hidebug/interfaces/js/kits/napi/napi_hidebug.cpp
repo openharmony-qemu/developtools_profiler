@@ -482,6 +482,13 @@ napi_value GetVss(napi_env env, napi_callback_info info)
     return vss;
 }
 
+static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
+{
+    napi_value retMsg = nullptr;
+    napi_create_double(env, HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage(),  &retMsg);
+    return retMsg;
+}
+
 static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 {
     size_t argc = REMOVE_NAPI_WRAP_PARAM_COUNT;
@@ -610,7 +617,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVss", GetVss),
         DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
-        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage)
+        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
+        DECLARE_NAPI_FUNCTION("getSystemCpuUsage", GetSystemCpuUsage)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

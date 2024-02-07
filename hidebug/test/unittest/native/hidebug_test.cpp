@@ -174,4 +174,14 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
     EXPECT_TRUE(true);
 }
 
+/**
+ * @tc.name: GetSystemCpuUsage
+ * @tc.desc: test InitEnvironmentParam for libc.hook_mode param set wrong_proc
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, GetSystemCpuUsage, TestSize.Level1)
+{
+    double systemCpuUsage = OH_HiDebug_GetAppCpuUsage();
+    EXPECT_TRUE(systemCpuUsage >= 0 && systemCpuUsage <= 1);
+}
 } // namespace

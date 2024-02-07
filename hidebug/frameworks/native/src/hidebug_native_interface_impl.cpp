@@ -22,7 +22,7 @@
 
 #include "dump_usage.h"
 #include "hilog/log.h"
-
+#include "client/cpu_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -41,6 +41,18 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
+    double GetSystemCpuUsage() override;
+private:
+    /**
+     * GetElapsedNanoSecondsSinceBoot
+     *
+     * @return NanoSecondsSinceBoot
+     */
+    int64_t GetElapsedNanoSecondsSinceBoot();
+    constexpr static int secondToNanoSecond = 1 * 1000 * 1000 * 1000;
+    constexpr static int cpuUsageValidity = 2 * secondToNanoSecond; // 2s
+    int64_t lastCpuUsageGetTime_ = 0;
+    double lastCpuUsage_ = 0;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
@@ -71,6 +83,35 @@ void HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
 }
 
-}
+double HidebugNativeInterfaceImpl::GetSystemCpuUsage()
+{
+    HILOG_INFO(LOG_CORE, "GetSystemCpuUsage");
+    int64_t now = GetElapsedNanoSecondsSinceBoot();
+    if (lastCpuUsageGetTime_ > 0 && now <= lastCpuUsageGetTime_ + cpuUsageValidity) {
+        HILOG_WARN(LOG_CORE, "GetSystemCpuUsage too frequently, return the last result");
+        return lastCpuUsage_;
+    }
+    std::shared_ptr<UCollectClient::CpuCollector> collector = UCollectClient::CpuCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, return the last result");
+        return lastCpuUsage_;
+    }
+    auto collectResult = collector->GetSysCpuUsage();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, retCode: %{public}d, return the last result",
+                    static_cast<int>(collectResult.retCode));
+        return lastCpuUsage_;
+    }
+    lastCpuUsage_ = collectResult.data;
+    lastCpuUsageGetTime_ = GetElapsedNanoSecondsSinceBoot();
+    return lastCpuUsage_;
 }
 
+int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
+{
+    struct timespec times = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &times);
+    return times.tv_sec * secondToNanoSecond + times.tv_nsec;
+}
+}
+}

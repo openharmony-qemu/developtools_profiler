@@ -32,6 +32,7 @@ ohos_source_set("libhidebug_source") {
     "hichecker:libhichecker",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
+    "hiview:libucollection_client",
     "init:libbegetutil",
   ]
 }
