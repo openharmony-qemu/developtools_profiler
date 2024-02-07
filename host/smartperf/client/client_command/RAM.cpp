@@ -56,7 +56,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::string processId = "";
     OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(pName);
+    processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> procRamInfo;
     std::string pssValue = "";
     if (processId.size() == 0) {
