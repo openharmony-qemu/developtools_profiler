@@ -50,7 +50,7 @@ private:
     CPU() {};
     CPU(const CPU &);
     CPU &operator = (const CPU &);
-    std::string processId = "";
+    std::string packageName = "";
 };
 }
 }

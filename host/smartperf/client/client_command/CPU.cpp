@@ -80,9 +80,9 @@ std::map<std::string, std::string> CPU::ItemData()
 
 void CPU::SetPackageName(std::string pName)
 {
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(pName);
+    packageName = pName;
 }
+
 std::vector<CpuFreqs> CPU::GetCpuFreq()
 {
     OHOS::SmartPerf::CpuFreqs cpuFreqs;
@@ -131,8 +131,12 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
     }
     return workload;
 }
+
 std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
 {
+    std::string processId = "";
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
     if (processId.length() > 0) {
