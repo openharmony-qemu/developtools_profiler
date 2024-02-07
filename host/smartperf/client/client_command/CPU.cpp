@@ -136,7 +136,7 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
 {
     std::string processId = "";
     OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(pName);
+    processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
     if (processId.length() > 0) {
