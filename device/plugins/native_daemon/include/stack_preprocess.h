@@ -160,6 +160,7 @@ private:
     int32_t pid_ {-1};
     std::mutex mtx_;
     bool isSaService_{false};
+    std::mutex mtex_;
 };
 
 #endif // STACK_PREPROCESS_H
