@@ -23,369 +23,60 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include "include/profiler_fps.h"
+#include "include/sp_log.h"
+#include "include/sp_utils.h"
 
 
 namespace OHOS {
 namespace SmartPerf {
-struct DumpEntityProfiler {
-    const std::string windowName;
-    const std::string displayId;
-    const std::string pid;
-    const std::string windId;
-};
-struct FpsInfo {
-    int fps;
-    int preFps;
-    std::vector<long long> jitters;
-    std::queue<long long> timeStampQ;
-    long long lastFrameReadyTime;
-    long long currentFpsTime;
-    FpsInfo()
-    {
-        fps = 0;
-        preFps = 0;
-        lastFrameReadyTime = 0;
-        currentFpsTime = 0;
-    }
-};
-struct FpsConfig {
-    const long long mod = 1e9;
-    long long lastReadyTime;
-    int fpsGb;
-    bool jump;
-    bool refresh;
-    int cnt;
-    int zeroNum;
-    FpsConfig()
-    {
-        lastReadyTime = -1;
-        fpsGb = 0;
-        jump = false;
-        refresh = false;
-        cnt = 0;
-        zeroNum = 0;
-    }
-};
-static void StrSplit(const std::string &content, const std::string &sp, std::vector<std::string> &out)
-{
-    size_t index = 0;
-    while (index != std::string::npos) {
-        size_t tEnd = content.find_first_of(sp, index);
-        std::string tmp = content.substr(index, tEnd - index);
-        if (tmp != "" && tmp != " ") {
-            out.push_back(tmp);
-        }
-        if (tEnd == std::string::npos) {
-            break;
-        }
-        index = tEnd + 1;
-    }
-}
 
-static std::string GetLayer()
+void ProfilerFPS::GetResultFPS(int sectionsNum)
 {
-    std::vector<DumpEntityProfiler> dumpEntityList;
-    std::string curFocusId = "-1";
-    const std::string cmd = "hidumper -s WindowManagerService -a -a";
-    std::string cmdExc = cmd;
-    FILE *fd = popen(cmdExc.c_str(), "r");
-    if (fd != nullptr) {
-        int lineNum = 0;
-        std::string line;
-        char buf[1024] = {'\0'};
-        const int paramFifteen = 15;
-        const int paramThree = 3;
-        const int windowNameIndex = 0;
-        const int windowIdIndex = 3;
-        const int focusNameIndex = 2;
-        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            line = buf;
-            if (line[0] == '-' || line[0] == ' ') {
-                continue;
-            }
-            std::vector<std::string> params;
-            StrSplit(line, " ", params);
-            if (params[windowNameIndex].find("WindowName") != std::string::npos &&
-                params[windowIdIndex].find("WinId") != std::string::npos) {
-                continue;
-            }
-            if (params.size() == paramFifteen) {
-                DumpEntityProfiler dumpEntity { params[0], params[1], params[2], params[3] };
-                dumpEntityList.push_back(dumpEntity);
-            }
-            if (params.size() == paramThree) {
-                curFocusId = params[focusNameIndex];
-                break;
-            }
-            lineNum++;
-        }
-        pclose(fd);
-    }
-    std::string resultWindowName = "NA";
-    int curId = std::stoi(curFocusId);
-    for (size_t i = 0; i < dumpEntityList.size(); i++) {
-        DumpEntityProfiler dumpItem = dumpEntityList[i];
-        int curWinId = std::stoi(dumpItem.windId);
-        if (curId == curWinId) {
-            resultWindowName = dumpItem.windowName;
-        }
-    }
-    return resultWindowName;
-}
-static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
-{
-    char tmp[1024];
-    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        long long frameReadyTime = 0;
-        std::stringstream sstream;
-        sstream << tmp;
-        sstream >> frameReadyTime;
-        fpsConfig.cnt++;
-        if (frameReadyTime == 0) {
-            fpsConfig.zeroNum++;
-            continue;
-        }
-        if (fpsConfig.lastReadyTime >= frameReadyTime) {
-            fpsConfig.lastReadyTime = -1;
-            continue;
-        }
-        fpsConfig.refresh = true;
-        long long tFrameReadyTime = frameReadyTime / fpsConfig.mod;
-        long long tLastReadyTime = fpsConfig.lastReadyTime / fpsConfig.mod;
-        long long lastFrame = -1;
-        if (tFrameReadyTime == tLastReadyTime) {
-        } else if (tFrameReadyTime == tLastReadyTime + 1) {
-            fpsConfig.jump = true;
-            fpsConfig.lastReadyTime = frameReadyTime;
-            int fpsTmp = 0;
-            fpsInfo.jitters.clear();
-            while (!(fpsInfo.timeStampQ).empty()) {
-                fpsTmp++;
-                long long currFrame = (fpsInfo.timeStampQ.front());
-                if (lastFrame != -1) {
-                    fpsInfo.jitters.push_back(currFrame - lastFrame);
-                } else {
-                    fpsInfo.jitters.push_back(currFrame - currFrame / fpsConfig.mod * fpsConfig.mod);
-                }
-                lastFrame = currFrame;
-                (fpsInfo.timeStampQ).pop();
-            }
-            fpsConfig.fpsGb = fpsTmp;
-            fpsInfo.lastFrameReadyTime = lastFrame;
-        } else if (tFrameReadyTime > tLastReadyTime + 1) {
-            fpsConfig.jump = true;
-            fpsConfig.lastReadyTime = frameReadyTime;
-            while (!(fpsInfo.timeStampQ).empty()) {
-                (fpsInfo.timeStampQ).pop();
-            }
-        }
-        (fpsInfo.timeStampQ).push(frameReadyTime);
-    }
-}
-
-static FpsInfo GetSurfaceFrame(std::string name, FpsConfig &fpsConfig)
-{
-    static std::map<std::string, FpsInfo> fpsMap;
-    if (fpsMap.count(name) == 0) {
-        FpsInfo tmp;
-        tmp.fps = 0;
-        tmp.preFps = 0;
-        fpsMap[name] = tmp;
-    }
-    FpsInfo &fpsInfo = fpsMap[name];
-    fpsInfo.fps = 0;
-    struct timeval tv;
-    gettimeofday(&tv, nullptr);
-    fpsInfo.currentFpsTime = tv.tv_sec * 1e3 + tv.tv_usec / 1e3;
-    std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
-    std::string cmdExc = cmd;
-    FILE *fp = popen(cmdExc.c_str(), "r");
-    if (fp == nullptr) {
-        return fpsInfo;
-    }
-    static long long lastLineTime;
-    if (!(fpsInfo.timeStampQ).empty()) {
-        fpsConfig.lastReadyTime = (fpsInfo.timeStampQ).back();
-        lastLineTime = (fpsInfo.timeStampQ).back();
-    }
-    ProcessResult(fp, fpsConfig, fpsInfo);
-    pclose(fp);
-    const int maxZeroNum = 120;
-    const int minPrintLine = 5;
-    if (fpsConfig.zeroNum >= maxZeroNum) {
-        while (!(fpsInfo.timeStampQ.empty())) {
-            fpsInfo.timeStampQ.pop();
-        }
-        fpsInfo.fps = 0;
-        return fpsInfo;
-    }
-    if (fpsConfig.cnt < minPrintLine) {
-        fpsInfo.fps = fpsInfo.preFps;
-        return fpsInfo;
-    }
-    if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
-        fpsInfo.fps = 0;
-        return fpsInfo;
-    }
-    if (fpsConfig.fpsGb > 0) {
-        fpsInfo.fps = fpsConfig.fpsGb;
-        fpsInfo.preFps = fpsConfig.fpsGb;
-        return fpsInfo;
-    } else if (fpsConfig.refresh && !fpsConfig.jump) {
-        fpsInfo.fps = fpsInfo.preFps;
-        return fpsInfo;
-    } else {
-        fpsInfo.fps = 0;
-        return fpsInfo;
-    }
-}
-
-static void ReplaceString(std::string &res)
-{
-    std::string flagOne = "\r";
-    std::string flagTwo = "\n";
-    std::string::size_type ret = res.find(flagOne);
-    while (ret != res.npos) {
-        res.replace(ret, 1, "");
-        ret = res.find(flagOne);
-    }
-    ret = res.find(flagTwo);
-    while (ret != res.npos) {
-        res.replace(ret, 1, "");
-        ret = res.find(flagTwo);
-    }
-}
-
-static bool LoadCmd(const std::string &cmd, std::string &result)
-{
-    std::string cmdExc = cmd;
-    FILE *fd = popen(cmdExc.c_str(), "r");
-    if (fd == nullptr) {
-        return false;
-    }
-    char buf[1024] = {'\0'};
-    int ret = fread(buf, sizeof(buf), 1, fd);
-    if (ret >= 0) {
-        result = buf;
-    }
-    if (pclose(fd) == -1) {
-        std::cout << "" << std::endl;
-    }
-    ReplaceString(result);
-    return ret >= 0 ? true : false;
-}
-static std::string GetSurFace()
-{
-    std::string cmdResult;
-    std::string cmdString1 = "hidumper -s 10 -a sur";
-    std::string cmdString2 = "face | grep sur";
-    std::string cmdString3 = "face";
-    LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
-    size_t position1 = cmdResult.find("[");
-    size_t position2 = cmdResult.find("]");
-    return cmdResult.substr(position1 + 1, position2 - position1 - 1);
-}
-static void GetSectionsPrint(int printCount, long long msStartTime)
-{
-    int ten  = 10;
-    long long msJiange = 100;
-    if (printCount < ten) {
-        for (int i = 0; i < ten - printCount; i++) {
-            msStartTime += msJiange;
-            printf("sectionsFps:%d|%lld\n", 0, msStartTime);
-        }
-    }
-}
-static void GetSectionsFps(FpsInfo &fpsInfo)
-{
-    int msCount = 0;
-    int ten = 10;
-    long long msStartTime = fpsInfo.currentFpsTime;
-    long long msAdd = 0;
-    long long msJiange = 100000000;
-    int printCount = 0;
-    for (int i = 0; i < fpsInfo.jitters.size(); i++) {
-        msAdd += fpsInfo.jitters[i];
-        if (msAdd <= msJiange) {
-            msCount++;
-            if (i == (fpsInfo.jitters.size() - 1)) {
-                printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
-                printCount++;
-                GetSectionsPrint(printCount, msStartTime);
-            }
-        } else if (msJiange < msAdd && msAdd <= (msJiange + 1e8)) {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
-            printCount++;
-            msStartTime += 1e2;
-            msCount = 1;
-            msJiange += 1e8;
+    struct timeval start;
+    struct timeval end;
+    gettimeofday(&start, nullptr);
+    FpsInfoProfiler fpsInfoResult;
+    unsigned long runTime;
+    fpsInfoResult = GetFpsInfo();
+    LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
+    if (fpsInfoResult.fps == 0) {
+        if (lastCurrTime == 0) {
+            long long msStartTime = ((currRealTime / msClear) * msClear) - msClear;
+            printf("fps:%d|%lld\n", fpsInfoResult.fps, msStartTime / oneSec);
         } else {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, msStartTime);
-            printCount++;
-            msStartTime += 1e2;
-            msCount = 0;
-            msAdd -= fpsInfo.jitters[i];
-            i--;
-            msJiange += 1e8;
+            printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime + oneThousand);
+            lastCurrTime = lastCurrTime + oneThousand;
+        }
+    } else {
+        long long two = 2;
+        long long currTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + currTimeDiff;
+        if ((lastCurrTime + two) == (currTime / oneSec)) {
+            fpsInfoResult.fps = 0;
+            printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime + oneThousand);
+            lastCurrTime = lastCurrTime + oneThousand;
+        } else {
+            if (lastCurrTime < (currTime / oneSec)) {
+                printf("fps:%d|%lld\n", fpsInfoResult.fps, currTime / oneSec);
+                lastCurrTime = currTime / oneSec;
+            } else {
+                fpsInfoResult.fps = 0;
+                printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime + oneThousand);
+                lastCurrTime = lastCurrTime + oneThousand;
+            }
         }
     }
+    if (sectionsNum == ten && fpsInfoResult.fps != 0) {
+        GetSectionsFps(fpsInfoResult);
+    }
+    gettimeofday(&end, nullptr);
+    runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
+    if (runTime < oneSec) {
+        usleep(oneSec - runTime);
+    }
 }
-static void CalculateFPS(int num, int sectionsNum)
-{
-        FpsInfo gfpsInfo;
-        FpsInfo gfpsUniteInfo;
-        std::string layerName;
-        std::string tempLayerName;
-        struct timeval start;
-        struct timeval end;
-        std::string uniteLayer = "DisplayNode";
-        uniteLayer = GetSurFace();
-        unsigned long oneSec = 1000000;
-        int ten = 10;
-        std::string cmdResult;
-        for (int i = 0; i < num; i++) {
-            unsigned long runTime;
-            gettimeofday(&start, nullptr);
-            tempLayerName = GetLayer();
-            if (i == 0) {
-                layerName = tempLayerName;
-                LoadCmd("hidumper -s 10 -a \"fpsClear DisplayNode\"", cmdResult);
-                LoadCmd("hidumper -s 10 -a \"fpsClear" + layerName + "\"", cmdResult);
-            } else {
-                if (layerName.compare(tempLayerName) != 0) {
-                    layerName = tempLayerName;
-                    LoadCmd("hidumper -s 10 -a \"fpsClear" + layerName + "\"", cmdResult);
-                }
-            }
-            FpsConfig fpsConfig;
-            FpsConfig fpsUniteConfig;
-            gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
-            gfpsUniteInfo = GetSurfaceFrame(uniteLayer, fpsUniteConfig);
-            if (gfpsUniteInfo.fps > gfpsInfo.fps) {
-                printf("fps:%d|%lld\n", gfpsUniteInfo.fps, gfpsUniteInfo.currentFpsTime);
-                if (sectionsNum == ten) {
-                    GetSectionsFps(gfpsUniteInfo);
-                }
-            } else {
-                printf("fps:%d|%lld\n", gfpsInfo.fps, gfpsInfo.currentFpsTime);
-                if (sectionsNum == ten) {
-                    GetSectionsFps(gfpsInfo);
-                }
-            }
-            fflush(stdout);
-            gettimeofday(&end, nullptr);
-            runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
-            if (runTime < oneSec) {
-                usleep(oneSec - runTime);
-            }
-        }
-}
+
 void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
 {
-    int num = 1;
-    int number = 2;
-    int ten = 10;
-    int four = 4;
     int sectionsNum = 0;
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
@@ -396,13 +87,396 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
         }
         printf("set num:%d success\n", num);
         sectionsNum = atoi(v[four].c_str());
-        if (sectionsNum == ten) {
-            CalculateFPS(num, sectionsNum);
-        } else {
-            CalculateFPS(num, 0);
+        for (int i = 0; i < num; i++) {
+            GetResultFPS(sectionsNum);
         }
     }
     printf("SP_daemon exec finished!\n");
 }
+
+void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime)
+{
+    long long msJiange = 1e8;
+    long long msSix = 1000000;
+    if (printCount < ten) {
+        for (int i = 0; i < ten - printCount; i++) {
+            msStartTime += msJiange;
+            printf("sectionsFps:%d|%lld\n", 0, msStartTime / msSix);
+        }
+    }
+}
+
+void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfo)
+{
+    int msCount = 0;
+    long long msJiange = 100000000;
+    long long msSix = 1000000;
+    long long msStartTime = (fpsInfo.currTimeStamps[0] / msClear) * msClear + msJiange;
+    long long currTime = 0;
+    int printCount = 0;
+    for (int i = 0; i < fpsInfo.currTimeStamps.size(); i++) {
+        currTime = fpsInfo.currTimeStamps[i];
+        if (currTime <= msStartTime) {
+            msCount++;
+        } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
+            long long timeStart = msStartTime - msJiange + currTimeDiff;
+            printf("sectionsFps:%d|%lld\n", msCount * ten, timeStart / msSix);
+            msCount = 1;
+            msStartTime += msJiange;
+            printCount++;
+        } else {
+            long long timeStart = msStartTime - msJiange + currTimeDiff;
+            printf("sectionsFps:%d|%lld\n", msCount * ten, timeStart / msSix);
+            printCount++;
+            msCount = 0;
+            msStartTime += msJiange;
+            i--;
+        }
+        if (i == (fpsInfo.currTimeStamps.size() - 1)) {
+            long long timeStart = msStartTime - msJiange + currTimeDiff;
+            printf("sectionsFps:%d|%lld\n", msCount * ten, timeStart / msSix);
+            printCount++;
+            GetSectionsPrint(printCount, timeStart);
+        }
+    }
+}
+
+void ProfilerFPS::GetTimeDiff()
+{
+    long long clockRealTime = 0;
+    long long clockMonotonicRaw = 0;
+    int two = 2;
+    std::string strRealTime;
+    std::string cmd = "timestamps";
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return;
+    }
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
+            strRealTime = params[two];
+            strRealTime.erase(strRealTime.find('.'), 1);
+            clockRealTime = std::stoll(strRealTime);
+            currRealTime = clockRealTime;
+        } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
+            strRealTime = params[two];
+            strRealTime.erase(strRealTime.find('.'), 1);
+            clockMonotonicRaw = std::stoll(strRealTime);
+        }
+    }
+    pclose(fd);
+    currTimeDiff = clockRealTime - clockMonotonicRaw;
+}
+
+std::string ProfilerFPS::GetSurface()
+{
+    std::string cmdResult;
+    std::string cmdString1 = "hidumper -s 10 -a sur";
+    std::string cmdString2 = "face | grep sur";
+    std::string cmdString3 = "face";
+    SPUtils::LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
+    size_t position1 = cmdResult.find("[");
+    size_t position2 = cmdResult.find("]");
+    LOGI("cmdResult==: %s", (cmdResult.substr(position1 + 1, position2 - position1 - 1)).c_str());
+    return cmdResult.substr(position1 + 1, position2 - position1 - 1);
+}
+
+std::string ProfilerFPS::CutLayerName(std::string layerName)
+{
+    std::string subLayerName;
+    size_t twenty = 20;
+    if (layerName.size() > twenty) {
+        subLayerName = layerName.substr(0, twenty);
+    } else {
+        subLayerName = layerName;
+    }
+    return subLayerName;
+}
+
+FpsInfoProfiler ProfilerFPS::GetFpsInfoMax()
+{
+    int fpsValue = 0;
+    if (fpsInfo.fps > uniteFpsInfo.fps) {
+        fpsInfoMax = fpsInfo;
+    } else {
+        fpsInfoMax = uniteFpsInfo;
+    }
+    if (fpsInfoMax.fps < fpsValue) {
+        fpsInfoMax.fps = fpsValue;
+    }
+    if (fpsInfoMax == prevFlagFpsInfo) {
+        LOGI("fpsInfoMax == prevFlagFpsInfo");
+        if (cntFpsInfo == lastFlagFpsInfo) {
+            LOGI("cntFpsInfo == lastFlagFpsInfo");
+            fpsInfoMax.fps = 0;
+            fpsInfoMax.Clear();
+            return fpsInfoMax;
+        } else {
+            LOGI("cntFpsInfo != lastFlagFpsInfo");
+            if ((cntFpsInfo.currTimeStamps.size() > 0 && lastFlagFpsInfo.currTimeStamps.size() > 0) &&
+                cntFpsInfo.currTimeStamps[0] == lastFlagFpsInfo.currTimeStamps[0]) {
+                cntFpsInfo.fps = 0;
+                cntFpsInfo.Clear();
+            } else {
+                lastFlagFpsInfo = cntFpsInfo;
+            }
+            return cntFpsInfo;
+        }
+    } else {
+        LOGI("fpsInfoMax != prevFlagFpsInfo");
+        if ((fpsInfoMax.currTimeStamps.size() > 0 && lastFlagFpsInfo.currTimeStamps.size() > 0) &&
+            fpsInfoMax.currTimeStamps[0] == lastFlagFpsInfo.currTimeStamps[0]) {
+            LOGI("fpsInfoMax == lastFlagFpsInfo");
+            lastFlagFpsInfo = cntFpsInfo;
+            prevFlagFpsInfo = fpsInfoMax;
+            return cntFpsInfo;
+        } else if ((fpsInfoMax.currTimeStamps.size() > 0 && prevFlagFpsInfo.currTimeStamps.size() > 0) &&
+            fpsInfoMax.currTimeStamps[0] == prevFlagFpsInfo.currTimeStamps[0]) {
+            prevFlagFpsInfo = fpsInfoMax;
+            fpsInfoMax.fps = 0;
+            fpsInfoMax.Clear();
+            return fpsInfoMax;
+        } else {
+            LOGI("fpsInfoMax != lastFlagFpsInfo");
+            prevFlagFpsInfo = fpsInfoMax;
+            return fpsInfoMax;
+        }
+    }
+}
+FpsInfoProfiler ProfilerFPS::GetFpsInfo()
+{
+    fpsInfoMax.fps = 0;
+    std::string tempLayerName;
+    std::string uniteLayer = "DisplayNode";
+    uniteLayer = GetSurface();
+    tempLayerName = GetLayer();
+    GetTimeDiff();
+    uniteFpsInfo = GetSurfaceFrame(uniteLayer);
+    fpsInfo = GetSurfaceFrame(tempLayerName);
+    return GetFpsInfoMax();
+}
+
+FpsInfoProfiler ProfilerFPS::GetFpsInfoResult(FpsInfoProfiler &fpsInfo, long long &lastLineTime)
+{
+    const int maxZeroNum = 266;
+    if (zeroNum >= maxZeroNum) {
+        LOGI("zeroNum====: %s", std::to_string(zeroNum).c_str());
+        while (!(fpsInfo.timeStampQ.empty())) {
+            fpsInfo.timeStampQ.pop();
+        }
+        fpsInfo.fps = 0;
+        fpsInfo.jitters.clear();
+        LOGI("fpsInfo.fps0: %s", std::to_string(fpsInfo.fps).c_str());
+        return fpsInfo;
+    }
+    const int minPrintLine = 5;
+    if (cnt < minPrintLine) {
+        fpsInfo.fps = fpsInfo.preFps;
+        LOGI("fpsInfo.fps1: %s", std::to_string(fpsInfo.fps).c_str());
+        return fpsInfo;
+    }
+    if (!fpsInfo.timeStampQ.empty() && fpsInfo.timeStampQ.back() == lastLineTime) {
+        fpsInfo.fps = fpsGb;
+        if (fpsGb == 0) {
+            fpsInfo.jitters.clear();
+        }
+        LOGI("fpsInfo.fps2: %s", std::to_string(fpsInfo.fps).c_str());
+        LOGI("lastLineTime: %s", std::to_string(lastLineTime).c_str());
+        return fpsInfo;
+    }
+    if (fpsGb > 0) {
+        fpsInfo.fps = fpsGb;
+        fpsInfo.preFps = fpsGb;
+        LOGI("fpsInfo.fps3: %s", std::to_string(fpsInfo.fps).c_str());
+        LOGI("fpsInfo.preFps3: %s", std::to_string(fpsInfo.preFps).c_str());
+        return fpsInfo;
+    } else if (refresh && !jump) {
+        fpsInfo.fps = fpsInfo.preFps;
+        LOGI("fpsInfo.fps4: %s", std::to_string(fpsInfo.fps).c_str());
+        return fpsInfo;
+    } else {
+        fpsInfo.fps = 0;
+        fpsInfo.jitters.clear();
+        LOGI("fpsInfo.fps5: %s", std::to_string(fpsInfo.fps).c_str());
+        return fpsInfo;
+    }
+}
+
+void ProfilerFPS::GetLastFpsInfo(FpsInfoProfiler &fpsInfo)
+{
+    int total = 266;
+    if (cnt == total) {
+        LOGI("cnt == total && fpsGb != 0");
+        lastReadyTime = frameReadyTime;
+        int fpsTmp = 0;
+        cntFpsInfo.jitters.clear();
+        cntFpsInfo.currTimeStamps.clear();
+        while (!(fpsInfo.timeStampQ).empty()) {
+            fpsTmp++;
+            long long currFrame = (fpsInfo.timeStampQ.front());
+            cntFpsInfo.currTimeStamps.push_back(currFrame);
+            if (lastFrame != -1) {
+                long long jitter = currFrame - lastFrame;
+                cntFpsInfo.jitters.push_back(jitter);
+            } else {
+                long long jitter = currFrame - currFrame / mod * mod;
+                cntFpsInfo.jitters.push_back(jitter);
+            }
+            lastFrame = currFrame;
+            (fpsInfo.timeStampQ).pop();
+        }
+        cntFpsInfo.fps = fpsTmp;
+        LOGI("cntFpsInfo.fps====: %s", std::to_string(cntFpsInfo.fps).c_str());
+    }
+}
+
+void ProfilerFPS::GetPrevFpsInfo(FpsInfoProfiler &fpsInfo)
+{
+    refresh = true;
+    long long tFrameReadyTime = frameReadyTime / mod;
+    long long tLastReadyTime = lastReadyTime / mod;
+    lastFrame = -1;
+    if (tFrameReadyTime == tLastReadyTime) {
+        (fpsInfo.timeStampQ).push(frameReadyTime);
+    } else if (tFrameReadyTime >= tLastReadyTime + 1) {
+        jump = true;
+        lastReadyTime = frameReadyTime;
+        int fpsTmp = 0;
+        fpsInfo.jitters.clear();
+        fpsInfo.currTimeStamps.clear();
+        while (!(fpsInfo.timeStampQ).empty()) {
+            fpsTmp++;
+            long long currFrame = (fpsInfo.timeStampQ.front());
+            fpsInfo.currTimeStamps.push_back(currFrame);
+            if (lastFrame != -1) {
+                long long jitter = currFrame - lastFrame;
+                fpsInfo.jitters.push_back(jitter);
+            } else {
+                long long jitter = currFrame - currFrame / mod * mod;
+                fpsInfo.jitters.push_back(jitter);
+            }
+            lastFrame = currFrame;
+            (fpsInfo.timeStampQ).pop();
+        }
+        fpsGb = fpsTmp;
+        LOGI("fpsGb====: %s", std::to_string(fpsGb).c_str());
+        (fpsInfo.timeStampQ).push(frameReadyTime);
+        fpsInfo.lastFrameReadyTime = lastFrame;
+    }
+}
+
+void ProfilerFPS::InitParams(FpsInfoProfiler &fpsInfo, long long &lastLineTime)
+{
+    lastReadyTime = -1;
+    fpsGb = 0;
+    if (!(fpsInfo.timeStampQ).empty()) {
+        lastReadyTime = (fpsInfo.timeStampQ).back();
+        lastLineTime = (fpsInfo.timeStampQ).back();
+    }
+    jump = false;
+    refresh = false;
+    cnt = 0;
+    zeroNum = 0;
+}
+
+FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
+{
+    if (name == "") {
+        return FpsInfoProfiler();
+    }
+    static std::map<std::string, FpsInfoProfiler> fpsMap;
+    if (fpsMap.count(name) == 0) {
+        FpsInfoProfiler tmp;
+        tmp.fps = 0;
+        tmp.preFps = 0;
+        fpsMap[name] = tmp;
+    }
+    fpsInfo = fpsMap[name];
+    fpsInfo.fps = 0;
+    FILE *fp;
+    static char tmp[1024];
+    std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
+    LOGI("cmd=====: %s", cmd.c_str());
+    fp = popen(cmd.c_str(), "r");
+    if (fp == nullptr) {
+        return fpsInfo;
+    }
+    static long long lastLineTime;
+    InitParams(fpsInfo, lastLineTime);
+    LOGI("dump time: start!");
+    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
+        std::string str(tmp);
+        LOGD("dump time: %s", str.c_str());
+        frameReadyTime = 0;
+        std::stringstream sstream;
+        sstream << tmp;
+        sstream >> frameReadyTime;
+        cnt++;
+        if (frameReadyTime == 0) {
+            zeroNum++;
+            continue;
+        }
+        if (lastReadyTime >= frameReadyTime) {
+            lastReadyTime = -1;
+            continue;
+        }
+        GetPrevFpsInfo(fpsInfo);
+        GetLastFpsInfo(fpsInfo);
+    }
+    pclose(fp);
+    return GetFpsInfoResult(fpsInfo, lastLineTime);
+}
+
+std::string ProfilerFPS::GetLayer()
+{
+    std::vector<DumpEntityProfiler> dumpEntityList;
+    std::string curFocusId = "-1";
+    const std::string cmd = "hidumper -s WindowManagerService -a -a";
+    std::string focusWindowName = "NA";
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return focusWindowName;
+    }
+    int lineNum = 0;
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        if (line[0] == '-' || line[0] == ' ') {
+            continue;
+        }
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params[windowNameIndex].find("WindowName") != std::string::npos &&
+            params[windowIdIndex].find("WinId") != std::string::npos) {
+            continue;
+        }
+        if (params.size() > paramFourteen) {
+            DumpEntityProfiler dumpEntity { params[0], params[1], params[2], params[3], params[7]};
+            dumpEntityList.push_back(dumpEntity);
+        }
+        if (params.size() == paramFourteen || params.size() == paramTwentyFour) {
+            DumpEntityProfiler dumpEntity { params[0], params[2], params[2], params[3], params[6]};
+            dumpEntityList.push_back(dumpEntity);
+        }
+        if (params.size() == paramThree) {
+            curFocusId = params[focusNameIndex];
+            break;
+        }
+        lineNum++;
+    }
+    pclose(fd);
+    int curId = std::stoi(curFocusId);
+    for (size_t i = 0; i < dumpEntityList.size(); i++) {
+        DumpEntityProfiler dumpItem = dumpEntityList[i];
+        int curWinId = std::stoi(dumpItem.windId);
+        if (curId == curWinId) {
+            focusWindowName = dumpItem.windowName;
+        }
+    }
+    return focusWindowName;
 }
 }
