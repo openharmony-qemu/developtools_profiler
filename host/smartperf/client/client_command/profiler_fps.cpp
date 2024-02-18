@@ -66,6 +66,10 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
         }
     }
     time_t now = time(0);
+    if (now == -1) {
+        LOGI("Failed to get current time.");
+        return;
+    }
     char* dt = ctime(&now);
     LOGI("printf time is: %s", dt);
     if (sectionsNum == ten && fpsInfoResult.fps != 0) {
@@ -100,7 +104,6 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
 
 void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime)
 {
-    int ten = 10;
     long long msJiange = 100;
     if (printCount < ten) {
         for (int i = 0; i < ten - printCount; i++) {
