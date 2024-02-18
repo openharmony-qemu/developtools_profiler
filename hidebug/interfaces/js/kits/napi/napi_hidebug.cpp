@@ -409,8 +409,7 @@ napi_value GetCpuUsage(napi_env env, napi_callback_info info)
     napi_value cpuUsageValue;
     std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
     pid_t pid = getpid();
-    float tmpCpuUsage = dumpUsage->GetCpuUsage(pid);
-    double cpuUsage = static_cast<double>(tmpCpuUsage);
+    double cpuUsage = dumpUsage->GetCpuUsage(pid);
     napi_create_double(env, cpuUsage, &cpuUsageValue);
     return cpuUsageValue;
 }
