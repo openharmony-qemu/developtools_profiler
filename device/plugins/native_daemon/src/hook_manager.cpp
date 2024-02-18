@@ -520,7 +520,8 @@ bool HookManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int 
 
 void HookManager::CreateWriter()
 {
-    PROFILER_LOG_INFO(LOG_CORE, "CreateWriter isProtobufSerialize: %d, noDataQueue_: %d", isProtobufSerialize_, noDataQueue_);
+    PROFILER_LOG_INFO(LOG_CORE, "CreateWriter isProtobufSerialize: %d, noDataQueue_: %d",
+                      isProtobufSerialize_, noDataQueue_);
     if (isProtobufSerialize_) {
         RegisterWriter(writer_);
     } else {

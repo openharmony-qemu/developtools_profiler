@@ -115,9 +115,9 @@ private:
     void WriteFrames(RawStackPtr RawStack, const std::vector<CallFrame>& callFrames);
     template <typename T>
     void SetFrameInfo(T& frame, CallFrame& callFrame);
-     template <typename T>
+    template <typename T>
     void ReportSymbolNameMap(CallFrame& callFrame, T& stackData);
-     template <typename T>
+    template <typename T>
     void ReportFilePathMap(CallFrame& callFrame, T& stackData);
     template <typename T>
     void ReportFrameMap(CallFrame& callFrame, T& stackData);

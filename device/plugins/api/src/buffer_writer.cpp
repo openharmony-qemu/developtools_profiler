@@ -45,7 +45,7 @@ BufferWriter::BufferWriter(std::string name,
     lastFlushTime_ = std::chrono::steady_clock::now();
     if (shareMemoryBlock_ != nullptr) {
         writeCtx_ = reinterpret_cast<RandomWriteCtx*>(shareMemoryBlock_->GetCtx());
-		profilerPluginData_ = ProtoEncoder::ProfilerPluginData(writeCtx_);
+        profilerPluginData_ = ProtoEncoder::ProfilerPluginData(writeCtx_);
     }
 }
 

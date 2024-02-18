@@ -31,11 +31,12 @@
 using namespace testing::ext;
 
 namespace {
+constexpr int SLEEP_TIME = 5;
 class ArkTSPluginTest : public ::testing::Test {
 public:
     ArkTSPluginTest()
     {
-        sleep(5); // Wait for the application to start successfully.
+        sleep(SLEEP_TIME); // Wait for the application to start successfully.
         const std::string processName = "cn.openharmony.rebound_project";
         COMMON::IsProcessExist(processName, pid_);
         HILOG_INFO(LOG_CORE, "ArkTSPluginTest pid: %d", pid_);

@@ -231,8 +231,9 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                 timeCost += curTimeCost;
                 unwindTimes++;
                 if (unwindTimes % LOG_PRINT_TIMES == 0) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "unwindTimes %" PRIu64" cost time = %" PRIu64" mean cost = %" PRIu64"\n",
-                        unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
+                    PROFILER_LOG_ERROR(LOG_CORE,
+                                       "unwindTimes %" PRIu64" cost time = %" PRIu64" mean cost = %" PRIu64"\n",
+                                       unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
                 }
 #endif
                 return true;
@@ -247,7 +248,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                 std::string tagName = reinterpret_cast<char*>(rawData->data);
                 SaveMemTag(rawData->stackConext->tagId, tagName);
                 return true;
-            } else if(HandleNoStackEvent(rawData)) {
+            } else if (HandleNoStackEvent(rawData)) {
                 return true;
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
@@ -261,7 +262,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
             std::visit([&](auto& stackData) {
                 SetHookData(rawData, stackData);
                 FlushCheck(stackData);
-            }, stackData_);
+                }, stackData_);
             IntervalFlushRecordStatistics();
 #ifdef PERFORMANCE_DEBUG
             struct timespec end = {};
@@ -316,7 +317,7 @@ void StackPreprocess::TakeResults()
             struct timespec start = {};
             clock_gettime(CLOCK_REALTIME, &start);
 #endif
-            if(HandleNoStackEvent(rawData)) {
+            if (HandleNoStackEvent(rawData)) {
                 continue;
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
@@ -388,7 +389,7 @@ void StackPreprocess::TakeResults()
                     SetHookData(rawData, callFrames_, stackData);
                 }
                 FlushCheck(stackData);
-            }, stackData_);
+                }, stackData_);
 
 #ifdef PERFORMANCE_DEBUG
             struct timespec end = {};
@@ -429,7 +430,7 @@ inline void StackPreprocess::ReportThreadNameMap(uint32_t tid, const std::string
             thread->set_name(tname);
             thread->set_pid(pid_);
             FlushCheck(stackData);
-        }, stackData_);
+            }, stackData_);
     }
 }
 
@@ -952,7 +953,7 @@ void StackPreprocess::SetMapsInfo()
                 }
             }
             FlushData(stackData);
-        }, stackData_);
+            }, stackData_);
     }
     runtime_instance->ClearOfflineMaps();
 }
@@ -1111,7 +1112,7 @@ bool StackPreprocess::FlushRecordStatistics()
     }
     std::visit([&](auto& stackData) {
         FlushData(stackData);
-    }, stackData_);
+        }, stackData_);
     std::visit([&](auto& stackData) {
         struct timespec ts;
         clock_gettime(hookDataClockId_, &ts);
@@ -1129,7 +1130,7 @@ bool StackPreprocess::FlushRecordStatistics()
             recordEvent->set_release_size(statistics->releaseSize);
         }
         FlushData(stackData);
-    }, stackData_);
+        }, stackData_);
     statisticsPeriodData_.clear();
     return true;
 }
