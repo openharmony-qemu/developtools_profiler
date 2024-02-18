@@ -20,6 +20,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <ctime>
 #include <unistd.h>
 #include <sys/time.h>
 #include "include/profiler_fps.h"
@@ -59,15 +60,18 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
                 printf("fps:%d|%lld\n", fpsInfoResult.fps, currTime / oneSec);
                 lastCurrTime = currTime / oneSec;
             } else {
-                fpsInfoResult.fps = 0;
                 printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime + oneThousand);
                 lastCurrTime = lastCurrTime + oneThousand;
             }
         }
     }
+    time_t now = time(0);
+    char* dt = ctime(&now);
+    LOGI("printf time is: %s", dt);
     if (sectionsNum == ten && fpsInfoResult.fps != 0) {
         GetSectionsFps(fpsInfoResult);
     }
+    fflush(stdout);
     gettimeofday(&end, nullptr);
     runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
     if (runTime < oneSec) {
@@ -96,12 +100,12 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
 
 void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime)
 {
-    long long msJiange = 1e8;
-    long long msSix = 1000000;
+    int ten = 10;
+    long long msJiange = 100;
     if (printCount < ten) {
         for (int i = 0; i < ten - printCount; i++) {
             msStartTime += msJiange;
-            printf("sectionsFps:%d|%lld\n", 0, msStartTime / msSix);
+            printf("sectionsFps:%d|%lld\n", 0, msStartTime);
         }
     }
 }
@@ -110,33 +114,33 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfo)
 {
     int msCount = 0;
     long long msJiange = 100000000;
-    long long msSix = 1000000;
     long long msStartTime = (fpsInfo.currTimeStamps[0] / msClear) * msClear + msJiange;
     long long currTime = 0;
+    long long currLastTime = lastCurrTime;
+    long long harTime = 100;
     int printCount = 0;
     for (int i = 0; i < fpsInfo.currTimeStamps.size(); i++) {
         currTime = fpsInfo.currTimeStamps[i];
         if (currTime <= msStartTime) {
             msCount++;
         } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
-            long long timeStart = msStartTime - msJiange + currTimeDiff;
-            printf("sectionsFps:%d|%lld\n", msCount * ten, timeStart / msSix);
+            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
             msCount = 1;
             msStartTime += msJiange;
+            currLastTime += harTime;
             printCount++;
         } else {
-            long long timeStart = msStartTime - msJiange + currTimeDiff;
-            printf("sectionsFps:%d|%lld\n", msCount * ten, timeStart / msSix);
+            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
             printCount++;
             msCount = 0;
             msStartTime += msJiange;
+            currLastTime += harTime;
             i--;
         }
         if (i == (fpsInfo.currTimeStamps.size() - 1)) {
-            long long timeStart = msStartTime - msJiange + currTimeDiff;
-            printf("sectionsFps:%d|%lld\n", msCount * ten, timeStart / msSix);
+            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
             printCount++;
-            GetSectionsPrint(printCount, timeStart);
+            GetSectionsPrint(printCount, currLastTime);
         }
     }
 }
@@ -478,5 +482,6 @@ std::string ProfilerFPS::GetLayer()
         }
     }
     return focusWindowName;
+}
 }
 }
