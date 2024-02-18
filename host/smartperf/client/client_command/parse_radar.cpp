@@ -46,7 +46,7 @@ namespace OHOS {
             std::string completeTime = extract_string(string, "\"E2E_LATENCY\":");
             std::string responseTime = extract_string(string, "\"RESPONSE_LATENCY\":");
             std::string firstFrameDrawnTime = extract_string(string, "\"FIRST_FRAEM_DRAWN_LATENCY\":");
-            std::string result = "responseTime:" + responseTime + "ms\n"
+            std::string result = "ResponseTime:" + responseTime + "ms\n"
             "FirstFrameDrawnTime:" + firstFrameDrawnTime + "ms\n"
             "AnimationCompleteTime:" + animationCompleteTime + "ms\n"
             "CompleteTime:" + completeTime + "ms\n";
