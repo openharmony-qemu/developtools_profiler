@@ -195,6 +195,7 @@ private:
     int32_t pid_ {-1};
     std::mutex mtx_;
     bool isSaService_{false};
+    std::mutex allocAddrMapMtx;
     bool isProtobufSerialize_{true};
     WriterStructPtr resultWriter_{nullptr};
     std::variant<BatchNativeHookData, OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData> stackData_;

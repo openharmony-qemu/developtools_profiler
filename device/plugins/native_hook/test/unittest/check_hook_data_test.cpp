@@ -396,7 +396,7 @@ public:
 #else
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(1);
+        sleep(5);
 #endif
         std::string cmd = "kill -36 " + std::to_string(hookPid_);
         system(cmd.c_str());

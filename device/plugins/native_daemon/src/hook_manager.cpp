@@ -343,6 +343,11 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         && hookConfig_.sample_interval() > 1) {
         noDataQueue_ = true;
     }
+
+    if (!isSaService_) {
+        CreateWriter();
+    }
+
     for (const auto& item : hookCtx_) {
         CHECK_TRUE(HandleHookContext(item), false, "handle hook context failed"); // Create the required resources.
     }

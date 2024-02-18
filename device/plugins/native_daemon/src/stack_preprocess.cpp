@@ -749,6 +749,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack, std::vector<CallFrame>& 
 inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
 {
     // through the addr lookup record
+    std::lock_guard<std::mutex> guard(allocAddrMapMtx);
     auto addrIter = allocAddrMap_.find(addr);
     if (addrIter != allocAddrMap_.end()) {
         auto& record = addrIter->second.second;
@@ -770,6 +771,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
             auto& record = recordIter->second;
             ++record.applyCount;
             record.applySize += rawStack->stackConext->mallocSize;
+            std::lock_guard<std::mutex> guard(allocAddrMapMtx);
             allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
                 std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
             statisticsPeriodData_[stackId] = &recordIter->second;
@@ -805,6 +807,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         }
 
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
+        std::lock_guard<std::mutex> guard(allocAddrMapMtx);
         allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
             std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
         statisticsPeriodData_[stackId] = &recordIter->second;
