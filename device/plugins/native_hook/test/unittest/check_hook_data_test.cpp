@@ -48,6 +48,7 @@ constexpr int CALLOC_DEPTH = 13;
 constexpr int REALLOC_DEPTH = 10;
 constexpr int MALLOC_VEC_SIZE = 5;
 constexpr int FREE_VEC_SIZE = 4;
+constexpr int WAIT_TIME = 5;
 constexpr int MALLOC_GET_DATE_SIZE = 3;
 constexpr int FREE_GET_DATA_SIZE = 2;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
@@ -396,7 +397,7 @@ public:
 #else
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(5);
+        sleep(WAIT_TIME);
 #endif
         std::string cmd = "kill -36 " + std::to_string(hookPid_);
         system(cmd.c_str());
