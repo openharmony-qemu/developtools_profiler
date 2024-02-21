@@ -556,7 +556,13 @@ void StackPreprocess::SetEventFrame(const RawStackPtr& rawStack, std::vector<Cal
     }
 
     if constexpr (!std::is_same<T, ::FreeEvent>::value && !std::is_same<T, ProtoEncoder::FreeEvent>::value) {
-        event->set_size(static_cast<uint64_t>(rawStack->stackConext->mallocSize));
+        auto size = static_cast<uint64_t>(rawStack->stackConext->mallocSize);
+#ifdef USE_JEMALLOC
+    if constexpr (std::is_same<T, ::AllocEvent>::value || std::is_same<T, ProtoEncoder::AllocEvent>::value) {
+        size = static_cast<uint64_t>(ComputeAlign(size));
+    }
+#endif
+        event->set_size(size);
     }
 
     if (hookConfig_.callframe_compress() && stackMapId != 0) {
@@ -750,7 +756,7 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack, std::vector<CallFrame>& 
 inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
 {
     // through the addr lookup record
-    std::lock_guard<std::mutex> guard(allocAddrMapMtx);
+    std::lock_guard<std::mutex> guard(allocAddrMapMtx_);
     auto addrIter = allocAddrMap_.find(addr);
     if (addrIter != allocAddrMap_.end()) {
         auto& record = addrIter->second.second;
@@ -772,7 +778,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
             auto& record = recordIter->second;
             ++record.applyCount;
             record.applySize += rawStack->stackConext->mallocSize;
-            std::lock_guard<std::mutex> guard(allocAddrMapMtx);
+            std::lock_guard<std::mutex> guard(allocAddrMapMtx_);
             allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
                 std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
             statisticsPeriodData_[stackId] = &recordIter->second;
@@ -808,7 +814,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         }
 
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
-        std::lock_guard<std::mutex> guard(allocAddrMapMtx);
+        std::lock_guard<std::mutex> guard(allocAddrMapMtx_);
         allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
             std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
         statisticsPeriodData_[stackId] = &recordIter->second;
