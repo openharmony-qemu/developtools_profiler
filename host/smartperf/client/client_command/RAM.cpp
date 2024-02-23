@@ -80,11 +80,11 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
 std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> pssRamInfo;
-    std:string gpuPssValue = "";
-    std:string graphicPssValue = "";
-    std:string arktsHeapPssValue = "";
-    std:string nativeHeapPssValue = "";
-    std:string stackPssValue = "";
+    std::string gpuPssValue = "";
+    std::string graphicPssValue = "";
+    std::string arktsHeapPssValue = "";
+    std::string nativeHeapPssValue = "";
+    std::string stackPssValue = "";
     const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
