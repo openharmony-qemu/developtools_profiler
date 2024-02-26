@@ -63,10 +63,10 @@ public:
     std::string CutLayerName(std::string layerName);
     FpsInfo GetFpsInfo();
     FpsInfo GetFpsInfoMax();
-    FpsInfo GetFpsInfoResult(FpsInfo &fpsInfo, long long &lastLineTime);
-    void GetLastFpsInfo(FpsInfo &fpsInfo);
-    void GetPrevFpsInfo(FpsInfo &fpsInfo);
-    void InitParams(FpsInfo &fpsInfo, long long &lastLineTime);
+    FpsInfo GetFpsInfoResult(long long &lastLineTime);
+    void GetLastFpsInfo();
+    void GetPrevFpsInfo();
+    void InitParams(long long &lastLineTime);
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
     std::string GetSurface();
     std::string GetLayer(std::string pkgSurface);

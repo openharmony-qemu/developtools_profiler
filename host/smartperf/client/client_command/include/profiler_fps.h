@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -70,10 +70,10 @@ public:
     std::string CutLayerName(std::string layerName);
     FpsInfoProfiler GetFpsInfo();
     FpsInfoProfiler GetFpsInfoMax();
-    FpsInfoProfiler GetFpsInfoResult(FpsInfoProfiler &fpsInfo, long long &lastLineTime);
-    void GetLastFpsInfo(FpsInfoProfiler &fpsInfo);
-    void GetPrevFpsInfo(FpsInfoProfiler &fpsInfo);
-    void InitParams(FpsInfoProfiler &fpsInfo, long long &lastLineTime);
+    FpsInfoProfiler GetFpsInfoResult(long long &lastLineTime);
+    void GetLastFpsInfo();
+    void GetPrevFpsInfo();
+    void InitParams(long long &lastLineTime);
     void GetResultFPS(int sectionsNum);
     std::string GetSurface();
     std::string GetLayer();

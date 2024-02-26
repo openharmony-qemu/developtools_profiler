@@ -198,7 +198,7 @@ FpsInfo FPS::GetFpsInfo()
     PrintFpsInfo(fpsInfo, focusSurface, "two");
     return GetFpsInfoMax();
 }
-FpsInfo FPS::GetFpsInfoResult(FpsInfo &fpsInfo, long long &lastLineTime)
+FpsInfo FPS::GetFpsInfoResult(long long &lastLineTime)
 {
     const int maxZeroNum = 266;
     if (zeroNum >= maxZeroNum) {
@@ -244,7 +244,7 @@ FpsInfo FPS::GetFpsInfoResult(FpsInfo &fpsInfo, long long &lastLineTime)
     }
 }
 
-void FPS::GetLastFpsInfo(FpsInfo &fpsInfo)
+void FPS::GetLastFpsInfo()
 {
     int total = 266;
     if (cnt == total && fpsGb != 0) {
@@ -270,7 +270,7 @@ void FPS::GetLastFpsInfo(FpsInfo &fpsInfo)
     }
 }
 
-void FPS::GetPrevFpsInfo(FpsInfo &fpsInfo)
+void FPS::GetPrevFpsInfo()
 {
     refresh = true;
     long long tFrameReadyTime = frameReadyTime / mod;
@@ -309,7 +309,7 @@ void FPS::GetPrevFpsInfo(FpsInfo &fpsInfo)
         (fpsInfo.timeStampQ).push(frameReadyTime);
     }
 }
-void FPS::InitParams(FpsInfo &fpsInfo, long long &lastLineTime)
+void FPS::InitParams(long long &lastLineTime)
 {
     lastReadyTime = -1;
     fpsGb = 0;
@@ -346,7 +346,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         return fpsInfo;
     }
     static long long lastLineTime;
-    InitParams(fpsInfo, lastLineTime);
+    InitParams(lastLineTime);
     LOGI("dump time: start!");
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
@@ -364,11 +364,11 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
             lastReadyTime = -1;
             continue;
         }
-        GetPrevFpsInfo(fpsInfo);
-        GetLastFpsInfo(fpsInfo);
+        GetPrevFpsInfo();
+        GetLastFpsInfo();
     }
     pclose(fp);
-    return GetFpsInfoResult(fpsInfo, lastLineTime);
+    return GetFpsInfoResult(lastLineTime);
 }
 
 std::string FPS::GetLayer(std::string pkgSurface)

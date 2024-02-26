@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <regex>
 #include "include/parse_radar.h"
+#include "include/sp_log.h"
 namespace OHOS {
     namespace SmartPerf {
         double Radar::ParseRadarStart(std::string str)
@@ -95,6 +96,7 @@ namespace OHOS {
         }
         std::string Radar::extract_string(const std::string& str, const std::string& target)
         {
+            LOGI("Radar.str====: %s", str.c_str());
             size_t pos = str.find(target);
             if (pos != std::string::npos) {
                 pos += target.length();
