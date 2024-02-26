@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -65,7 +65,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
             }
         }
     }
-    time_t now = time(0);
+    time_t now = time(nullptr);
     if (now == -1) {
         LOGI("Failed to get current time.");
         return;
@@ -267,7 +267,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     return GetFpsInfoMax();
 }
 
-FpsInfoProfiler ProfilerFPS::GetFpsInfoResult(FpsInfoProfiler &fpsInfo, long long &lastLineTime)
+FpsInfoProfiler ProfilerFPS::GetFpsInfoResult(long long &lastLineTime)
 {
     const int maxZeroNum = 266;
     if (zeroNum >= maxZeroNum) {
@@ -313,7 +313,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfoResult(FpsInfoProfiler &fpsInfo, long lon
     }
 }
 
-void ProfilerFPS::GetLastFpsInfo(FpsInfoProfiler &fpsInfo)
+void ProfilerFPS::GetLastFpsInfo()
 {
     int total = 266;
     if (cnt == total) {
@@ -341,7 +341,7 @@ void ProfilerFPS::GetLastFpsInfo(FpsInfoProfiler &fpsInfo)
     }
 }
 
-void ProfilerFPS::GetPrevFpsInfo(FpsInfoProfiler &fpsInfo)
+void ProfilerFPS::GetPrevFpsInfo()
 {
     refresh = true;
     long long tFrameReadyTime = frameReadyTime / mod;
@@ -376,7 +376,7 @@ void ProfilerFPS::GetPrevFpsInfo(FpsInfoProfiler &fpsInfo)
     }
 }
 
-void ProfilerFPS::InitParams(FpsInfoProfiler &fpsInfo, long long &lastLineTime)
+void ProfilerFPS::InitParams(long long &lastLineTime)
 {
     lastReadyTime = -1;
     fpsGb = 0;
@@ -413,7 +413,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
         return fpsInfo;
     }
     static long long lastLineTime;
-    InitParams(fpsInfo, lastLineTime);
+    InitParams(lastLineTime);
     LOGI("dump time: start!");
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
@@ -431,11 +431,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
             lastReadyTime = -1;
             continue;
         }
-        GetPrevFpsInfo(fpsInfo);
-        GetLastFpsInfo(fpsInfo);
+        GetPrevFpsInfo();
+        GetLastFpsInfo();
     }
     pclose(fp);
-    return GetFpsInfoResult(fpsInfo, lastLineTime);
+    return GetFpsInfoResult(lastLineTime);
 }
 
 std::string ProfilerFPS::GetLayer()

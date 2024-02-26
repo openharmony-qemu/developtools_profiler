@@ -33,20 +33,6 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     return fps;
 }
 
-void ParseSlideFpsTrace::GetLastCompleteLine()
-{
-    if (lastCompleteLine != "") {
-        double completeNow = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(newCompleteLine));
-        double completeLast = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(lastCompleteLine));
-        float num = 0.1;
-        if (completeNow - completeLast > num) {
-            completeLine = lastCompleteLine;
-            updateCount = true;
-            frameNum = frameNow - 1;
-        }
-    }
-}
-
 double ParseSlideFpsTrace::CalculateTime()
 {
     std::string line;
@@ -63,26 +49,33 @@ double ParseSlideFpsTrace::CalculateTime()
         if (line.find("H:touchEventDispatch") != std::string::npos) {
             count++;
             if (count == four) {
-                needUpdateResponseLine = true;
+                needTime = true;
                 frameNow = 0;
+                touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
             }
-        } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos && !updateCount) {
+        } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
-            if (needUpdateResponseLine) {
-                responseLine = line;
-                needUpdateResponseLine = false;
+            doCompositionTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+            if (flagWeb) {
+                completeTime = doCompositionTime;
+                frameNum = frameNow;
+                flagWeb = false;
             }
-            newCompleteLine = line;
-            GetLastCompleteLine();
-            lastCompleteLine = newCompleteLine;
+        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos) {
+            flagWeb = true;
+        }
+        if (touchTime != 0 && (doCompositionTime - touchTime) > completionTime && needTime) {
+            frameNow = 1;
+            needTime = false;
+            responseTime = doCompositionTime;
         }
     }
     if (frameRate == 0) {
-        completeLine = newCompleteLine;
-        frameNum = frameNow;
-        double responseTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(responseLine));
-        double completeTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(completeLine));
-        return frameNum / (completeTime - responseTime);
+        if (completeTime == 0 || responseTime == 0) {
+            return -1;
+        } else {
+            return frameNum / (completeTime - responseTime);
+        }
     } else {
         return frameRate;
     }
