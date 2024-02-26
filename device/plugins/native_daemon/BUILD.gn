@@ -208,6 +208,7 @@ ohos_shared_library("libnative_daemon_client") {
     external_deps += [ "hilog:libhilog" ]
   }
 
+  innerapi_tags = [ "platformsdk" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
