@@ -26,6 +26,7 @@
 #include "memory_collector.h"
 #include "collect_result.h"
 #include "include/startup_delay.h"
+#include "include/sp_log.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -58,7 +59,6 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> procRamInfo;
-    std::string pssValue = "";
     if (processId.size() == 0) {
         return procRamInfo;
     }
@@ -67,6 +67,24 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     if (fd == nullptr) {
         return procRamInfo;
     }
+    std::vector<std::string> paramsInfo;
+    std::map<std::string, std::string> totalRamInfo = GetPssRamInfo(fd, paramsInfo);
+    if (totalRamInfo.empty()) {
+        LOGE("RAM::GetRamInfo totalRamInfo is empty");
+    }
+    procRamInfo.insert(totalRamInfo.cbegin(), totalRamInfo.cend());
+
+    return procRamInfo;
+}
+
+std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
+{
+    std::map<std::string, std::string> pssRamInfo;
+    std::string gpuPssValue = "";
+    std::string graphicPssValue = "";
+    std::string arktsHeapPssValue = "";
+    std::string nativeHeapPssValue = "";
+    std::string stackPssValue = "";
     const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
@@ -76,18 +94,57 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
-            pssValue = params[1];
+        if (params.size() == paramEleven && params[0].find("GL") != std::string::npos) {
+            gpuPssValue = params[1];
         }
-        if (pssValue.size() > 0) {
+        if (params.size() == paramEleven && params[0].find("Graph") != std::string::npos) {
+            graphicPssValue = params[1];
+        }
+        if (params[0].find("ark") != std::string::npos) {
+            arktsHeapPssValue = params[RAM_THIRD];
+        }
+        if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
+            nativeHeapPssValue = params[RAM_SECOND];
+        }
+        if (params.size() == paramEleven && params[0].find("stack") != std::string::npos) {
+            stackPssValue = params[1];
+        }
+        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+            paramsInfo = params;
+        }
+        if (paramsInfo.size() > 0) {
             break;
         }
     }
     pclose(fd);
-    if (pssValue.size() > 0) {
-        procRamInfo["pss"] = pssValue;
+    std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
+    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
+    pssRamInfo["gpuPss"] = gpuPssValue;
+    pssRamInfo["graphicPss"] = graphicPssValue;
+    pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
+    pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
+    pssRamInfo["stackPss"] = stackPssValue;
+
+    return pssRamInfo;
+}
+
+std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
+{
+    std::map<std::string, std::string> sumRamInfo;
+    if (sumRamInfo.size() > 0) {
+        sumRamInfo["pss"] = paramsInfo[RAM_ONE];
+        sumRamInfo["sharedClean"] = paramsInfo[RAM_SECOND];
+        sumRamInfo["sharedDirty"] = paramsInfo[RAM_THIRD];
+        sumRamInfo["privateClean"] = paramsInfo[RAM_FOURTH];
+        sumRamInfo["privateDirty"] = paramsInfo[RAM_FIFTH];
+        sumRamInfo["swap"] = paramsInfo[RAM_SIXTH];
+        sumRamInfo["swapPss"] = paramsInfo[RAM_SEVENTH];
+        sumRamInfo["heapSize"] = paramsInfo[RAM_EIGHTH];
+        sumRamInfo["heapAlloc"] = paramsInfo[RAM_NINTH];
+        sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
     }
-    return procRamInfo;
+
+    return sumRamInfo;
 }
 
 std::map<std::string, std::string> RAM::GetSysRamInfo() const
