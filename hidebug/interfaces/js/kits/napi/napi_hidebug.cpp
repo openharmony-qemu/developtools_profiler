@@ -59,7 +59,8 @@ enum ErrorCode {
     PERMISSION_ERROR = 201,
     PARAMETER_ERROR = 401,
     VERSION_ERROR = 801,
-    SYSTEM_ABILITY_NOT_FOUND = 11400101
+    SYSTEM_ABILITY_NOT_FOUND = 11400101,
+    SYSTEM_STATUS_ABNORMAL = 11400104,
 };
 }
 
@@ -484,8 +485,14 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
+    auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
+    if (!cpuUsageOptional.has_value()) {
+        std::string paramErrorMessage = "The status of the system cpu usage is abnormal.";
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
     napi_value retMsg = nullptr;
-    napi_create_double(env, HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage(),  &retMsg);
+    napi_create_double(env, cpuUsageOptional.value(),  &retMsg);
     return retMsg;
 }
 

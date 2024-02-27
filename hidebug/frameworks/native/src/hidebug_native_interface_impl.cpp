@@ -41,7 +41,7 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
-    double GetSystemCpuUsage() override;
+    std::optional<double> GetSystemCpuUsage() override;
 private:
     /**
      * GetElapsedNanoSecondsSinceBoot
@@ -83,7 +83,7 @@ void HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
 }
 
-double HidebugNativeInterfaceImpl::GetSystemCpuUsage()
+std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
 {
     HILOG_INFO(LOG_CORE, "GetSystemCpuUsage");
     int64_t now = GetElapsedNanoSecondsSinceBoot();
@@ -94,13 +94,13 @@ double HidebugNativeInterfaceImpl::GetSystemCpuUsage()
     std::shared_ptr<UCollectClient::CpuCollector> collector = UCollectClient::CpuCollector::Create();
     if (!collector) {
         HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, return the last result");
-        return lastCpuUsage_;
+        return std::nullopt;
     }
     auto collectResult = collector->GetSysCpuUsage();
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, retCode: %{public}d, return the last result",
                     static_cast<int>(collectResult.retCode));
-        return lastCpuUsage_;
+        return std::nullopt;
     }
     lastCpuUsage_ = collectResult.data;
     lastCpuUsageGetTime_ = GetElapsedNanoSecondsSinceBoot();

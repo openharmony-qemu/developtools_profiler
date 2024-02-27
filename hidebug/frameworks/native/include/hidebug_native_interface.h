@@ -18,6 +18,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -31,7 +32,7 @@ public:
      *
      * @return the cpu usage of the system
      */
-    virtual double GetSystemCpuUsage() = 0;
+    virtual std::optional<double> GetSystemCpuUsage() = 0;
 
     virtual double GetCpuUsage() = 0;
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
