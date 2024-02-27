@@ -68,3 +68,20 @@ void OH_HiDebug_FreeThreadCpuUsage(HiDebug_ThreadCpuUsagePtr *threadCpuUsage)
     }
     *threadCpuUsage = nullptr;
 }
+
+void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
+{
+    if (!memoryLimit) {
+        return;
+    }
+    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        return;
+    }
+    auto collectResult = nativeInterface->GetAppMemoryLimit();
+    if (!collectResult) {
+        return;
+    }
+    memoryLimit->vssLimit = collectResult->vssLimit;
+    memoryLimit->rssLimit = collectResult->rssLimit;
+}

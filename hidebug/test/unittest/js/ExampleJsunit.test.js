@@ -251,6 +251,24 @@ describe("HidebugJsTest", function () {
     })
 
     /**
+     * @tc.name: HidebugJsTest_012
+     * @tc.desc: getAppMemoryLimit正常测试
+     * @tc.type: FUNC
+     * @tc.require: issueI8ZX7S
+     */
+    it('HidebugJsTest_012', 0, function () {
+        console.info("---------------------------HidebugJsTest_012----------------------------------");
+        try {
+            let temp = hidebug.getAppMemoryLimit();
+            expect(temp.rssLimit >= BigInt(0)).assertTrue();
+            expect(temp.vssLimit >= BigInt(0)).assertTrue();
+            expect(temp.vmHeapLimit >= BigInt(0)).assertTrue();
+        } catch (error) {
+            expect().assertFail();
+        }
+    })
+    
+    /**
      * @tc.name: HidebugJsTest_013
      * @tc.desc: getAppVMMemoryInfo正常测试
      * @tc.type: FUNC

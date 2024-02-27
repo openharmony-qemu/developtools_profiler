@@ -22,7 +22,7 @@
 
 #include "dump_usage.h"
 #include "hilog/log.h"
-
+#include "memory_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -41,6 +41,7 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
+    std::optional<MemoryLimit> GetAppMemoryLimit() override;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
@@ -69,6 +70,26 @@ std::string HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint
 
 void HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
+}
+
+std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
+{
+    auto collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetAppMemoryLimit Failed");
+        return {};
+    }
+    auto collectResult = collector->CollectMemoryLimit();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetAppMemoryLimit Failed, retCode: %{public}d", static_cast<int>(collectResult.retCode));
+        return {};
+    }
+
+    MemoryLimit memoryLimit;
+    memoryLimit.vssLimit = collectResult.data.vssLimit;
+    memoryLimit.rssLimit = collectResult.data.rssLimit;
+
+    return memoryLimit;
 }
 
 }
