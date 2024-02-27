@@ -23,9 +23,9 @@ ohos_shared_library("ohhidebug") {
 
   deps = [ "../native:libhidebug_source" ]
 
-  external_deps = [ 
+  external_deps = [
     "hilog:libhilog",
-    "hiview:libucollection_utility", 
+    "hiview:libucollection_utility",
   ]
 
   innerapi_tags = [ "ndk" ]
