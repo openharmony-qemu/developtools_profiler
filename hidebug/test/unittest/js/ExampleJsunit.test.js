@@ -197,7 +197,7 @@ describe("HidebugJsTest", function () {
             fs.closeSync(file);
         })
     })
-    
+
     /**
      * @tc.name: HidebugJsTest_007
      * @tc.desc: getServiceDump的异常测试，参数错误
@@ -249,4 +249,41 @@ describe("HidebugJsTest", function () {
             fs.closeSync(file);
         })
     })
+
+    /**
+     * @tc.name: HidebugJsTest_013
+     * @tc.desc: getAppVMMemoryInfo正常测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_013', 0, function () {
+        console.info("---------------------------HidebugJsTest_013----------------------------------");
+        try {
+            let result = hidebug.getAppVMMemoryInfo();
+            expect(result.allArraySize >= 0 && result.totalHeap >= 0 && result.heapUsed >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_014
+     * @tc.desc: getAppThreadCpuUsage正常测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_014', 0, function () {
+        console.info("---------------------------HidebugJsTest_014----------------------------------");
+        try {
+            let appThreadCpuUsage = hidebug.getAppThreadCpuUsage();
+            expect(appThreadCpuUsage.length >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
 })
