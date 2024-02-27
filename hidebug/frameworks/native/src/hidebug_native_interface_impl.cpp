@@ -49,8 +49,8 @@ private:
      * @return NanoSecondsSinceBoot
      */
     int64_t GetElapsedNanoSecondsSinceBoot();
-    constexpr static int secondToNanoSecond = 1 * 1000 * 1000 * 1000;
-    constexpr static int cpuUsageValidity = 2 * secondToNanoSecond; // 2s
+    constexpr static int SECOND_TO_NANOSECOND = 1 * 1000 * 1000 * 1000;
+    constexpr static int CPU_USAGE_VALIDITY = 2 * SECOND_TO_NANOSECOND; // 2s
     int64_t lastCpuUsageGetTime_ = 0;
     double lastCpuUsage_ = 0;
 };
@@ -87,7 +87,7 @@ std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
 {
     HILOG_INFO(LOG_CORE, "GetSystemCpuUsage");
     int64_t now = GetElapsedNanoSecondsSinceBoot();
-    if (lastCpuUsageGetTime_ > 0 && now <= lastCpuUsageGetTime_ + cpuUsageValidity) {
+    if (lastCpuUsageGetTime_ > 0 && now <= lastCpuUsageGetTime_ + CPU_USAGE_VALIDITY) {
         HILOG_WARN(LOG_CORE, "GetSystemCpuUsage too frequently, return the last result");
         return lastCpuUsage_;
     }
@@ -111,7 +111,7 @@ int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
 {
     struct timespec times = {0, 0};
     clock_gettime(CLOCK_MONOTONIC, &times);
-    return times.tv_sec * secondToNanoSecond + times.tv_nsec;
+    return times.tv_sec * SECOND_TO_NANOSECOND + times.tv_nsec;
 }
 }
 }
