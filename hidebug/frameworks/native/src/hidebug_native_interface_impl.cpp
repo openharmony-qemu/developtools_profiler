@@ -22,6 +22,7 @@
 
 #include "dump_usage.h"
 #include "hilog/log.h"
+#include "memory_collector.h"
 
 
 namespace OHOS {
@@ -41,6 +42,8 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
+    std::optional<ProcessMemory> GetAppNativeMemInfo() override;
+    std::optional<SysMemory> GetSystemMemInfo() override;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
@@ -69,6 +72,64 @@ std::string HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint
 
 void HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
+}
+
+std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
+{
+    HILOG_INFO(LOG_CORE, "OGetAppNativeMemInfo");
+     
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
+        return {};
+    }
+    int pid = getpid();
+    auto collectResult = collector->CollectProcessMemory(pid);
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessMemory Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return {};
+    }
+
+    ProcessMemory nativeMemInfo;
+    uint32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
+    nativeMemInfo.pss = pssInfo;
+    nativeMemInfo.rss = collectResult.data.rss;
+    nativeMemInfo.sharedDirty = collectResult.data.sharedDirty;
+    nativeMemInfo.privateDirty = collectResult.data.privateDirty;
+    nativeMemInfo.sharedClean = collectResult.data.sharedClean;
+    nativeMemInfo.privateClean = collectResult.data.privateClean;
+
+    auto collectVss = collector->CollectProcessVss(pid);
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectResult.retCode));
+        return {};
+    }
+    nativeMemInfo.vss = collectVss.data;
+    return nativeMemInfo;
+}
+
+std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
+{
+    HILOG_INFO(LOG_CORE, "GetSystemMemInfo");
+
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetSystemMemInfo Failed");
+        return {};
+    }
+    auto collectResult = collector->CollectSysMemory();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetSystemMemInfo Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return {};
+    }
+
+    SysMemory sysMemInfo;
+    sysMemInfo.memTotal = collectResult.data.memTotal;
+    sysMemInfo.memFree = collectResult.data.memFree;
+    sysMemInfo.memAvailable = collectResult.data.memAvailable;
+    return sysMemInfo;
 }
 
 }

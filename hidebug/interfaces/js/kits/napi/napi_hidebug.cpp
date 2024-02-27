@@ -590,6 +590,82 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value GetAppNativeMemory(napi_env env, napi_callback_info info)
+{
+    auto nativeInterface = HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        CreateUndefined(env);
+    }
+
+    auto nativeMemInfo = nativeInterface->GetAppNativeMemInfo();
+    if (!nativeMemInfo) {
+        CreateUndefined(env);
+    }
+
+    napi_value memInfo;
+    napi_create_object(env, &memInfo);
+
+    napi_value pss;
+    napi_create_bigint_uint64(env, nativeMemInfo->pss, &pss);
+    napi_set_named_property(env, memInfo, "pss", pss);
+
+    napi_value rss;
+    napi_create_bigint_uint64(env, nativeMemInfo->rss, &rss);
+    napi_set_named_property(env, memInfo, "rss", rss);
+
+    napi_value sharedDirty;
+    napi_create_bigint_uint64(env, nativeMemInfo->sharedDirty, &sharedDirty);
+    napi_set_named_property(env, memInfo, "sharedDirty", sharedDirty);
+
+    napi_value privateDirty;
+    napi_create_bigint_uint64(env, nativeMemInfo->privateDirty, &privateDirty);
+    napi_set_named_property(env, memInfo, "privateDirty", privateDirty);
+
+    napi_value sharedClean;
+    napi_create_bigint_uint64(env, nativeMemInfo->sharedClean, &sharedClean);
+    napi_set_named_property(env, memInfo, "sharedClean", sharedClean);
+
+    napi_value privateClean;
+    napi_create_bigint_uint64(env, nativeMemInfo->privateClean, &privateClean);
+    napi_set_named_property(env, memInfo, "privateClean", privateClean);
+
+    napi_value vss;
+    napi_create_bigint_uint64(env, nativeMemInfo->vss, &vss);
+    napi_set_named_property(env, memInfo, "vss", vss);
+
+    return memInfo;
+}
+
+napi_value GetSysMemory(napi_env env, napi_callback_info info)
+{
+    auto nativeInterface = HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        CreateUndefined(env);
+    }
+
+    auto systemMemInfo = nativeInterface->GetSystemMemInfo();
+    if (!systemMemInfo) {
+        CreateUndefined(env);
+    }
+
+    napi_value sysMemInfo;
+    napi_create_object(env, &sysMemInfo);
+
+    napi_value totalMem;
+    napi_create_bigint_uint64(env, systemMemInfo->memTotal, &totalMem);
+    napi_set_named_property(env, sysMemInfo, "totalMem", totalMem);
+
+    napi_value freeMem;
+    napi_create_bigint_uint64(env, systemMemInfo->memFree, &freeMem);
+    napi_set_named_property(env, sysMemInfo, "freeMem", freeMem);
+
+    napi_value availableMem;
+    napi_create_bigint_uint64(env, systemMemInfo->memAvailable, &availableMem);
+    napi_set_named_property(env, sysMemInfo, "availableMem", availableMem);
+
+    return sysMemInfo;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -610,7 +686,9 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVss", GetVss),
         DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
-        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage)
+        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
+        DECLARE_NAPI_FUNCTION("getAppNativeMemory", GetAppNativeMemory),
+        DECLARE_NAPI_FUNCTION("getSysMemory", GetSysMemory)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

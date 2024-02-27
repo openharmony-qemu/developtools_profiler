@@ -174,4 +174,36 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
     EXPECT_TRUE(true);
 }
 
+/**
+ * @tc.name: OH_HiDebug_GetAppNativeMemInfo1
+ * @tc.desc: test OH_HiDebug_GetAppNativeMemInfo. get application process memory info
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetAppNativeMemInfo1, TestSize.Level1)
+{
+    HiDebug_NativeMemInfo nativeMemInfo;
+    OH_HiDebug_GetAppNativeMemInfo(&nativeMemInfo);
+    ASSERT_TRUE(nativeMemInfo.pss >= 0);
+    ASSERT_TRUE(nativeMemInfo.vss >= 0);
+    ASSERT_TRUE(nativeMemInfo.rss >= 0);
+    ASSERT_TRUE(nativeMemInfo.sharedDirty >= 0);
+    ASSERT_TRUE(nativeMemInfo.privateDirty >= 0);
+    ASSERT_TRUE(nativeMemInfo.sharedClean >= 0);
+    ASSERT_TRUE(nativeMemInfo.privateClean >= 0);
+}
+
+/**
+ * @tc.name: OH_HiDebug_GetSystemMemInfo1
+ * @tc.desc: test OH_HiDebug_GetSystemMemInfo. get system memory info
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetSystemMemInfo1, TestSize.Level1)
+{
+    HiDebug_SystemMemInfo systemMemInfo;
+    OH_HiDebug_GetSystemMemInfo(&systemMemInfo);
+    ASSERT_TRUE(systemMemInfo.memTotal >= 0);
+    ASSERT_TRUE(systemMemInfo.memFree >= 0);
+    ASSERT_TRUE(systemMemInfo.memAvailable >= 0);
+}
+
 } // namespace

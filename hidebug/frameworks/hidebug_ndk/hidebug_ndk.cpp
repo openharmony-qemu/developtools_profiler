@@ -68,3 +68,37 @@ void OH_HiDebug_FreeThreadCpuUsage(HiDebug_ThreadCpuUsagePtr *threadCpuUsage)
     }
     *threadCpuUsage = nullptr;
 }
+void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
+{
+    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
+    if ((!nativeMemInfo) || (!nativeInterface)) {
+        return;
+    }
+    auto nativeMemoryInfo = nativeInterface->GetAppNativeMemInfo();
+    if (!nativeMemoryInfo) {
+        return;
+    }
+
+    nativeMemInfo->pss = static_cast<uint32_t>(nativeMemoryInfo->pss);
+    nativeMemInfo->vss = static_cast<uint32_t>(nativeMemoryInfo->vss);
+    nativeMemInfo->rss = static_cast<uint32_t>(nativeMemoryInfo->rss);
+    nativeMemInfo->sharedDirty = static_cast<uint32_t>(nativeMemoryInfo->sharedDirty);
+    nativeMemInfo->privateDirty = static_cast<uint32_t>(nativeMemoryInfo->privateDirty);
+    nativeMemInfo->sharedClean = static_cast<uint32_t>(nativeMemoryInfo->sharedClean);
+    nativeMemInfo->privateClean = static_cast<uint32_t>(nativeMemoryInfo->privateClean);
+}
+void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
+{
+    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
+    if ((!systemMemInfo) || (!nativeInterface)) {
+        return;
+    }
+    auto sysMemInfo = nativeInterface->GetSystemMemInfo();
+    if (!sysMemInfo) {
+        return;
+    }
+
+    systemMemInfo->totalMem = static_cast<uint32_t>(sysMemInfo->memTotal);
+    systemMemInfo->freeMem = static_cast<uint32_t>(sysMemInfo->memFree);
+    systemMemInfo->availableMem = static_cast<uint32_t>(sysMemInfo->memAavailable);
+}
