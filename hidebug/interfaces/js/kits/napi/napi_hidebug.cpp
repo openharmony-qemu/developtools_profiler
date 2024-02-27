@@ -590,6 +590,36 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
+{
+    napi_value appMemoryLimit;
+    napi_create_object(env, &appMemoryLimit);
+    auto nativeInterface = HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        return CreateUndefined(env);
+    }
+
+    auto memoryLimit = nativeInterface->GetAppMemoryLimit();
+    if (!memoryLimit) {
+        return CreateUndefined(env);
+    }
+    napi_value rssLimit;
+    napi_create_bigint_uint64(env, memoryLimit->rssLimit, &rssLimit);
+    napi_set_named_property(env, appMemoryLimit, "rssLimit", rssLimit);
+
+    napi_value vssLimit;
+    napi_create_bigint_uint64(env, memoryLimit->vssLimit, &vssLimit);
+    napi_set_named_property(env, appMemoryLimit, "vssLimit", vssLimit);
+
+    NativeEngine *engine = reinterpret_cast<NativeEngine *>(env);
+    napi_value vmHeapLimit;
+    uint64_t vmHeapLimitValue = engine->GetHeapLimitSize();
+    napi_create_bigint_uint64(env, vmHeapLimitValue, &vmHeapLimit);
+    napi_set_named_property(env, appMemoryLimit, "vmHeapLimit", vmHeapLimit);
+
+    return appMemoryLimit;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -610,7 +640,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVss", GetVss),
         DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
-        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage)
+        DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
+		DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
