@@ -641,7 +641,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
         DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
-		DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit)
+        DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

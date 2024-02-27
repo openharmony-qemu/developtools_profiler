@@ -31,7 +31,7 @@ public:
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
     virtual std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) = 0;
     virtual void StopAppTraceCapture() = 0;
-	virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
+    virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
 };
 }
 }

@@ -41,7 +41,7 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
-	std::optional<MemoryLimit> GetAppMemoryLimit() override;
+    std::optional<MemoryLimit> GetAppMemoryLimit() override;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
