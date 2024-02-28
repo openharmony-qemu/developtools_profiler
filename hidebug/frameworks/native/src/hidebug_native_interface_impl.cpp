@@ -44,7 +44,6 @@ public:
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
     std::optional<ProcessMemory> GetAppNativeMemInfo() override;
     std::optional<SysMemory> GetSystemMemInfo() override;
-
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
