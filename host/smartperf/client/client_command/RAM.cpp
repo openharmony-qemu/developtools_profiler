@@ -131,7 +131,7 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
-    if (sumRamInfo.size() > 0) {
+    if (paramsInfo.size() > 0) {
         sumRamInfo["pss"] = paramsInfo[RAM_ONE];
         sumRamInfo["sharedClean"] = paramsInfo[RAM_SECOND];
         sumRamInfo["sharedDirty"] = paramsInfo[RAM_THIRD];
