@@ -252,21 +252,21 @@ describe("HidebugJsTest", function () {
 
         /**
      * @tc.name: HidebugJsTest_009
-     * @tc.desc: getAppNativeMemory的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
+     * @tc.desc: GetAppNativeMemInfo的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
      * @tc.type: FUNC
      * @tc.require: issueI5VY8L
      */
         it('HidebugJsTest_009', 0, function () {
             console.info("---------------------------HidebugJsTest_009----------------------------------");
             try {
-                let nativeMemory = hidebug.getAppNativeMemory();
-                expect(nativeMemory.pss >= 0).assertTrue();
-                expect(nativeMemory.vss >= 0).assertTrue();
-                expect(nativeMemory.rss >= 0).assertTrue();
-                expect(nativeMemory.sharedDirty >= 0).assertTrue();
-                expect(nativeMemory.privateDirty >= 0).assertTrue();
-                expect(nativeMemory.sharedClean >= 0).assertTrue();
-                expect(nativeMemory.privateClean >= 0).assertTrue();
+                let nativeMemInfo = hidebug.GetAppNativeMemInfo();
+                expect(nativeMemInfo.pss >= 0).assertTrue();
+                expect(nativeMemInfo.vss >= 0).assertTrue();
+                expect(nativeMemInfo.rss >= 0).assertTrue();
+                expect(nativeMemInfo.sharedDirty >= 0).assertTrue();
+                expect(nativeMemInfo.privateDirty >= 0).assertTrue();
+                expect(nativeMemInfo.sharedClean >= 0).assertTrue();
+                expect(nativeMemInfo.privateClean >= 0).assertTrue();
             } catch (error) {
                 console.info(error.code);
                 console.info(error.message);
@@ -276,17 +276,17 @@ describe("HidebugJsTest", function () {
 
         /**
          * @tc.name: HidebugJsTest_010
-         * @tc.desc: getSysMemory()的正常测试
+         * @tc.desc: getSystemMemInfo()的正常测试
          * @tc.type: FUNC
          * @tc.require: issueI5VY8L
          */
         it('HidebugJsTest_010', 0, function () {
             console.info("---------------------------HidebugJsTest_010----------------------------------");
             try {
-                let sysMemory = hidebug.getSysMemory();
-                expect(sysMemory.memTotal >= 0).assertTrue();
-                expect(sysMemory.memFree >= 0).assertTrue();
-                expect(sysMemory.memAvailable >= 0).assertTrue();
+                let systemMemInfo = hidebug.getSystemMemInfo();
+                expect(systemMemInfo.totalMem >= 0).assertTrue();
+                expect(systemMemInfo.freeMem >= 0).assertTrue();
+                expect(systemMemInfo.availableMem >= 0).assertTrue();
             } catch (error) {
                 console.info(error.code);
                 console.info(error.message);
