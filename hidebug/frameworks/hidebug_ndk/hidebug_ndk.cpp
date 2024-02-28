@@ -119,5 +119,5 @@ void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
 
     systemMemInfo->totalMem = static_cast<uint32_t>(sysMemInfo->memTotal);
     systemMemInfo->freeMem = static_cast<uint32_t>(sysMemInfo->memFree);
-    systemMemInfo->availableMem = static_cast<uint32_t>(sysMemInfo->memAavailable);
+    systemMemInfo->availableMem = static_cast<uint32_t>(sysMemInfo->memAvailable);
 }
