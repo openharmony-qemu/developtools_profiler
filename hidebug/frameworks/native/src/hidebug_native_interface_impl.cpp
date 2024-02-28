@@ -23,6 +23,7 @@
 #include "dump_usage.h"
 #include "hilog/log.h"
 #include "client/cpu_collector.h"
+#include "utility/memory_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -42,6 +43,7 @@ public:
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
     std::optional<double> GetSystemCpuUsage() override;
+    std::optional<MemoryLimit> GetAppMemoryLimit() override;
 private:
     /**
      * GetElapsedNanoSecondsSinceBoot
@@ -53,6 +55,7 @@ private:
     constexpr static int CPU_USAGE_VALIDITY = 2 * SECOND_TO_NANOSECOND; // 2s
     int64_t lastCpuUsageGetTime_ = 0;
     double lastCpuUsage_ = 0;
+    
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
@@ -105,6 +108,26 @@ std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
     lastCpuUsage_ = collectResult.data;
     lastCpuUsageGetTime_ = GetElapsedNanoSecondsSinceBoot();
     return lastCpuUsage_;
+}
+
+std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
+{
+    auto collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetAppMemoryLimit Failed");
+        return {};
+    }
+    auto collectResult = collector->CollectMemoryLimit();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetAppMemoryLimit Failed, retCode: %{public}d", static_cast<int>(collectResult.retCode));
+        return {};
+    }
+
+    MemoryLimit memoryLimit;
+    memoryLimit.vssLimit = collectResult.data.vssLimit;
+    memoryLimit.rssLimit = collectResult.data.rssLimit;
+
+    return memoryLimit;
 }
 
 int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
