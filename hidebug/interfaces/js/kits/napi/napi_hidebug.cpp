@@ -59,7 +59,8 @@ enum ErrorCode {
     PERMISSION_ERROR = 201,
     PARAMETER_ERROR = 401,
     VERSION_ERROR = 801,
-    SYSTEM_ABILITY_NOT_FOUND = 11400101
+    SYSTEM_ABILITY_NOT_FOUND = 11400101,
+    SYSTEM_STATUS_ABNORMAL = 11400104,
 };
 }
 
@@ -482,6 +483,19 @@ napi_value GetVss(napi_env env, napi_callback_info info)
     return vss;
 }
 
+static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
+{
+    auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
+    if (!cpuUsageOptional.has_value()) {
+        std::string paramErrorMessage = "The status of the system cpu usage is abnormal.";
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+    napi_value retMsg = nullptr;
+    napi_create_double(env, cpuUsageOptional.value(),  &retMsg);
+    return retMsg;
+}
+
 static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 {
     size_t argc = REMOVE_NAPI_WRAP_PARAM_COUNT;
@@ -641,6 +655,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
         DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
+        DECLARE_NAPI_FUNCTION("getSystemCpuUsage", GetSystemCpuUsage),
         DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));

@@ -251,6 +251,24 @@ describe("HidebugJsTest", function () {
     })
 
     /**
+     * @tc.name: HidebugJsTest_011
+     * @tc.desc: getSystemCpuUsage的正常测试，查询system cpu usage
+     * @tc.type: FUNC
+     * @tc.require: issueI90Z36
+     */
+    it('HidebugJsTest_011', 0, function () {
+        console.info("---------------------------HidebugJsTest_011----------------------------------");
+        try {
+            let sysCpuUsage = hidebug.getSystemCpuUsage();
+            expect(sysCpuUsage >= 0 && sysCpuUsage <= 1).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+    
+    /**
      * @tc.name: HidebugJsTest_012
      * @tc.desc: getAppMemoryLimit正常测试
      * @tc.type: FUNC

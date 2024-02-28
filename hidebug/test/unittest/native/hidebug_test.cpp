@@ -175,6 +175,17 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSystemCpuUsage
+ * @tc.desc: test InitEnvironmentParam for libc.hook_mode param set wrong_proc
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, GetSystemCpuUsage, TestSize.Level1)
+{
+    double systemCpuUsage = OH_HiDebug_GetAppCpuUsage();
+    EXPECT_TRUE(systemCpuUsage >= 0 && systemCpuUsage <= 1);
+}
+
+/**
  * @tc.name: GetAppMemoryLimit1
  * @tc.desc: test GetAppMemoryLimit1
  * @tc.type: FUNC
@@ -186,5 +197,4 @@ HWTEST_F(HidebugTest, GetAppMemoryLimit1, TestSize.Level1)
     ASSERT_TRUE(memoryLimit.rssLimit >= 0);
     ASSERT_TRUE(memoryLimit.vssLimit >= 0);
 }
-
 } // namespace

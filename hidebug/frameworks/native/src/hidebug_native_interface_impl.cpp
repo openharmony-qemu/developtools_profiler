@@ -22,7 +22,8 @@
 
 #include "dump_usage.h"
 #include "hilog/log.h"
-#include "memory_collector.h"
+#include "client/cpu_collector.h"
+#include "utility/memory_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -41,7 +42,19 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
     void StopAppTraceCapture() override;
+    std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
+private:
+    /**
+     * GetElapsedNanoSecondsSinceBoot
+     *
+     * @return NanoSecondsSinceBoot
+     */
+    int64_t GetElapsedNanoSecondsSinceBoot();
+    constexpr static int SECOND_TO_NANOSECOND = 1 * 1000 * 1000 * 1000;
+    constexpr static int CPU_USAGE_VALIDITY = 2 * SECOND_TO_NANOSECOND; // 2s
+    int64_t lastCpuUsageGetTime_ = 0;
+    double lastCpuUsage_ = 0;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
@@ -72,6 +85,30 @@ void HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
 }
 
+std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
+{
+    HILOG_INFO(LOG_CORE, "GetSystemCpuUsage");
+    int64_t now = GetElapsedNanoSecondsSinceBoot();
+    if (lastCpuUsageGetTime_ > 0 && now <= lastCpuUsageGetTime_ + CPU_USAGE_VALIDITY) {
+        HILOG_WARN(LOG_CORE, "GetSystemCpuUsage too frequently, return the last result");
+        return lastCpuUsage_;
+    }
+    std::shared_ptr<UCollectClient::CpuCollector> collector = UCollectClient::CpuCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, return the last result");
+        return std::nullopt;
+    }
+    auto collectResult = collector->GetSysCpuUsage();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, retCode: %{public}d, return the last result",
+                    static_cast<int>(collectResult.retCode));
+        return std::nullopt;
+    }
+    lastCpuUsage_ = collectResult.data;
+    lastCpuUsageGetTime_ = GetElapsedNanoSecondsSinceBoot();
+    return lastCpuUsage_;
+}
+
 std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
 {
     auto collector = UCollectUtil::MemoryCollector::Create();
@@ -92,6 +129,11 @@ std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
     return memoryLimit;
 }
 
+int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
+{
+    struct timespec times = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &times);
+    return times.tv_sec * SECOND_TO_NANOSECOND + times.tv_nsec;
 }
 }
-
+}
