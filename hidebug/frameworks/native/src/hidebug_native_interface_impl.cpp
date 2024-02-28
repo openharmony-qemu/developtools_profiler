@@ -132,9 +132,7 @@ std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
 }
 
 std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
-{
-    HILOG_INFO(LOG_CORE, "GetAppNativeMemInfo");
-     
+{    
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (!collector) {
         HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
@@ -168,8 +166,6 @@ std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
 
 std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
 {
-    HILOG_INFO(LOG_CORE, "GetSystemMemInfo");
-
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (!collector) {
         HILOG_ERROR(LOG_CORE, "GetSystemMemInfo Failed");
