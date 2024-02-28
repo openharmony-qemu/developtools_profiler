@@ -115,6 +115,7 @@ private:
                                uintptr_t pc, UnwindTableInfo& outTableInfo);
     static int FindUnwindTable(uintptr_t pc, UnwindTableInfo& outTableInfo, void *arg);
     static int AccessMem2(uintptr_t addr, uintptr_t *val, void *arg);
+    static int GetMapByPc(uintptr_t pc, std::shared_ptr<DfxMap>& map, void *arg);
 
     // pid->unwinder(acc/regs/maps) cache
     std::unordered_map<pid_t, std::shared_ptr<Unwinder>> pidUnwinder_;

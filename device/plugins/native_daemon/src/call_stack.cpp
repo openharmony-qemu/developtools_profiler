@@ -640,6 +640,12 @@ int CallStack::AccessMem2(uintptr_t addr, uintptr_t *val, void *arg)
 
     return 0;
 }
+
+int CallStack::GetMapByPc([[maybe_unused]] uintptr_t pc, [[maybe_unused]] std::shared_ptr<DfxMap>& map,
+                          [[maybe_unused]] void *arg)
+{
+    return 0;
+}
 #endif
 
 CallStack::CallStack()
@@ -649,6 +655,7 @@ CallStack::CallStack()
     accessor_->FindUnwindTable = &CallStack::FindUnwindTable;
     accessor_->AccessMem = &CallStack::AccessMem2;
     accessor_->AccessReg = nullptr;
+    accessor_->GetMapByPc = &CallStack::GetMapByPc;
 #endif
 }
 
