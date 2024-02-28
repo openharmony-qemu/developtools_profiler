@@ -214,9 +214,9 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetSystemMemInfo1, TestSize.Level1)
 {
     HiDebug_SystemMemInfo systemMemInfo;
     OH_HiDebug_GetSystemMemInfo(&systemMemInfo);
-    ASSERT_TRUE(systemMemInfo.memTotal >= 0);
-    ASSERT_TRUE(systemMemInfo.memFree >= 0);
-    ASSERT_TRUE(systemMemInfo.memAvailable >= 0);
+    ASSERT_TRUE(systemMemInfo.totalMem >= 0);
+    ASSERT_TRUE(systemMemInfo.freeMem >= 0);
+    ASSERT_TRUE(systemMemInfo.availableMem >= 0);
 }
 
 } // namespace
