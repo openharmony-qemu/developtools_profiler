@@ -68,6 +68,24 @@ void OH_HiDebug_FreeThreadCpuUsage(HiDebug_ThreadCpuUsagePtr *threadCpuUsage)
     }
     *threadCpuUsage = nullptr;
 }
+
+void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
+{
+    if (!memoryLimit) {
+        return;
+    }
+    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        return;
+    }
+    auto collectResult = nativeInterface->GetAppMemoryLimit();
+    if (!collectResult) {
+        return;
+    }
+    memoryLimit->vssLimit = collectResult->vssLimit;
+    memoryLimit->rssLimit = collectResult->rssLimit;
+}
+
 void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
 {
     auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
@@ -87,6 +105,7 @@ void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
     nativeMemInfo->sharedClean = static_cast<uint32_t>(nativeMemoryInfo->sharedClean);
     nativeMemInfo->privateClean = static_cast<uint32_t>(nativeMemoryInfo->privateClean);
 }
+
 void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
 {
     auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();

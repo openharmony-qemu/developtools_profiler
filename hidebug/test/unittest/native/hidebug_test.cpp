@@ -175,6 +175,19 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetAppMemoryLimit1
+ * @tc.desc: test GetAppMemoryLimit1
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, GetAppMemoryLimit1, TestSize.Level1)
+{
+    HiDebug_MemoryLimit memoryLimit;
+    OH_HiDebug_GetAppMemoryLimit(&memoryLimit);
+    ASSERT_TRUE(memoryLimit.rssLimit >= 0);
+    ASSERT_TRUE(memoryLimit.vssLimit >= 0);
+}
+
+/**
  * @tc.name: OH_HiDebug_GetAppNativeMemInfo1
  * @tc.desc: test OH_HiDebug_GetAppNativeMemInfo. get application process memory info
  * @tc.type: FUNC
