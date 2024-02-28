@@ -620,7 +620,7 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     return appMemoryLimit;
 }
 
-napi_value GetAppNativeMemory(napi_env env, napi_callback_info info)
+napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 {
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
@@ -666,7 +666,7 @@ napi_value GetAppNativeMemory(napi_env env, napi_callback_info info)
     return memInfo;
 }
 
-napi_value GetSysMemory(napi_env env, napi_callback_info info)
+napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
@@ -718,8 +718,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
         DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
         DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit),
-        DECLARE_NAPI_FUNCTION("getAppNativeMemory", GetAppNativeMemory),
-        DECLARE_NAPI_FUNCTION("getSysMemory", GetSysMemory)
+        DECLARE_NAPI_FUNCTION("getAppNativeMemInfo", GetAppNativeMemInfo),
+        DECLARE_NAPI_FUNCTION("getSystemMemInfo", GetSystemMemInfo)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
