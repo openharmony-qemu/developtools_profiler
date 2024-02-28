@@ -98,7 +98,7 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
 void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
 {
     auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if ((!nativeMemInfo) || (!nativeInterface)) {
+    if (!nativeMemInfo || !nativeInterface) {
         return;
     }
     auto nativeMemoryInfo = nativeInterface->GetAppNativeMemInfo();
@@ -118,7 +118,7 @@ void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
 void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
 {
     auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if ((!systemMemInfo) || (!nativeInterface)) {
+    if (!systemMemInfo || !nativeInterface) {
         return;
     }
     auto sysMemInfo = nativeInterface->GetSystemMemInfo();
