@@ -28,6 +28,15 @@ double OH_HiDebug_GetAppCpuUsage()
     return cpuUsage;
 }
 
+double OH_HiDebug_GetSystemCpuUsage()
+{
+    auto cpuUsageOptional = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
+    if (cpuUsageOptional.has_value()) {
+        return cpuUsageOptional.value();
+    }
+    return 0;
+}
+
 HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage()
 {
     auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();

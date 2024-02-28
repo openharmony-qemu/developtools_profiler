@@ -18,6 +18,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include "resource/memory.h"
 
 namespace OHOS {
@@ -26,6 +27,13 @@ class HidebugNativeInterface {
 public:
     static std::unique_ptr<HidebugNativeInterface> CreateInstance();
     virtual ~HidebugNativeInterface() = default;
+
+    /**
+     * GetSystemCpuUsage
+     *
+     * @return the cpu usage of the system
+     */
+    virtual std::optional<double> GetSystemCpuUsage() = 0;
 
     virtual double GetCpuUsage() = 0;
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
