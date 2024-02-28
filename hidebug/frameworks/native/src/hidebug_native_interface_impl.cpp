@@ -55,7 +55,6 @@ private:
     constexpr static int CPU_USAGE_VALIDITY = 2 * SECOND_TO_NANOSECOND; // 2s
     int64_t lastCpuUsageGetTime_ = 0;
     double lastCpuUsage_ = 0;
-    
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()

@@ -252,7 +252,7 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_011
-     * @tc.desc: getSysCpuUsage的正常测试，查询system cpu usage
+     * @tc.desc: getSystemCpuUsage的正常测试，查询system cpu usage
      * @tc.type: FUNC
      * @tc.require: issueI90Z36
      */
