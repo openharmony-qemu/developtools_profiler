@@ -72,7 +72,7 @@ public:
     void StartDaemonProcessArgs()
     {
         outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
-        if (signal(SIGCHLD, SIG_IGN) = SIG_ERR) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
             return;
         }
         int processNum = fork();
@@ -260,7 +260,7 @@ public:
 
     void StartMallocProcess()
     {
-        if (signal(SIGCHLD, SIG_IGN) = SIG_ERR) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
             return;
         }
         int processNum = fork();
@@ -276,7 +276,7 @@ public:
 
     void StartDlopenProcess()
     {
-        if (signal(SIGCHLD, SIG_IGN) = SIG_ERR) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
             return;
         }
         int processNum = fork();
@@ -321,7 +321,7 @@ public:
 
     void StartCallocProcess(int depth)
     {
-        if (signal(SIGCHLD, SIG_IGN) = SIG_ERR) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
             return;
         }
         int processNum = fork();
@@ -376,7 +376,7 @@ public:
 
     void StartReallocProcess(int depth)
     {
-        if (signal(SIGCHLD, SIG_IGN) = SIG_ERR) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
             return;
         }
         int processNum = fork();

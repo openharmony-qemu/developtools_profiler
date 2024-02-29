@@ -48,7 +48,7 @@ public:
 
     static void StartServerStub(std::string name)
     {
-        if (signal(SIGCHLD, SIG_IGN) = SIG_ERR) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
             return;
         }
         int processNum = fork();
