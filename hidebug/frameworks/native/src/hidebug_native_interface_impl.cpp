@@ -55,8 +55,8 @@ private:
     int64_t GetElapsedNanoSecondsSinceBoot();
     constexpr static int SECOND_TO_NANOSECOND = 1 * 1000 * 1000 * 1000;
     constexpr static int CPU_USAGE_VALIDITY = 2 * SECOND_TO_NANOSECOND; // 2s
-    int64_t lastCpuUsageGetTime_ = 0;
-    double lastCpuUsage_ = 0;
+    static inline int64_t lastCpuUsageGetTime_ = 0;
+    static inline double lastCpuUsage_ = 0;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
