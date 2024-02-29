@@ -59,6 +59,7 @@ public:
 
     void StartServerStub(std::string name)
     {
+        signal(SIGCHLD, SIG_IGN);
         int processNum = fork();
         if (processNum == 0) {
             if (DEFAULT_HIPROFILERD_PATH == name) {
