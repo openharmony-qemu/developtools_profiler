@@ -1073,15 +1073,8 @@ unsigned StackPreprocess::LgFloor(unsigned long val)
 
 uint64_t StackPreprocess::PowCeil(uint64_t val)
 {
-    ++val;
-    val |= val >> RIGHT_MOVE_1;
-    val |= val >> RIGHT_MOVE_2;
-    val |= val >> RIGHT_MOVE_4;
-    val |= val >> RIGHT_MOVE_8;
-    val |= val >> RIGHT_MOVE_16;
-    val |= val >> RIGHT_MOVE_32;
-    ++val;
-    return val;
+    size_t msbIndex = LgFloor(val - 1);
+    return 1ULL << (msbIndex + 1);
 }
 
 size_t StackPreprocess::ComputeAlign(size_t size)
@@ -1089,18 +1082,20 @@ size_t StackPreprocess::ComputeAlign(size_t size)
     if (size == 0) {
         return 0;
     }
+    unsigned index = 0;
     if (size <= (size_t(1) << SC_LG_TINY_MAXCLASS)) {
         unsigned lgTmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
         unsigned lgCeil = LgFloor(PowCeil(size));
-        return (lgCeil < lgTmin ? 0 : lgCeil - lgTmin);
+        index = (lgCeil < lgTmin) ? 0 : lgCeil - lgTmin;
+    } else {
+        unsigned floor = LgFloor((size << 1) - 1);
+        unsigned shift = (floor < SC_LG_NGROUP + LG_QUANTUM) ? 0 : floor - (SC_LG_NGROUP + LG_QUANTUM);
+        unsigned grp = shift << SC_LG_NGROUP;
+        unsigned lgDelta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
+        size_t deltaInverseMask = size_t(-1) << lgDelta;
+        unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
+        index = SC_NTINY + grp + mod;
     }
-    unsigned floor = LgFloor((size << 1) - 1);
-    unsigned shift = (floor < SC_LG_NGROUP + LG_QUANTUM) ? 0 : floor - (SC_LG_NGROUP + LG_QUANTUM);
-    unsigned grp = shift << SC_LG_NGROUP;
-    unsigned lgDelta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
-    size_t deltaInverseMask = size_t(-1) << lgDelta;
-    unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
-    unsigned index = SC_NTINY + grp + mod;
 
     if (index < NTBINS) {
         return (size_t(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
