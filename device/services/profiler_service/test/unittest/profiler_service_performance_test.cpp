@@ -381,7 +381,7 @@ protected:
     bool StartActiveProcess(int& cpuActivePid)
     {
         if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-            return;
+            return false;
         }
         int processNum = fork();
         if (processNum == 0) {
