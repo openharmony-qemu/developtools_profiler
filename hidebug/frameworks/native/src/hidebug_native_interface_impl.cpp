@@ -44,6 +44,8 @@ public:
     void StopAppTraceCapture() override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
+    std::optional<ProcessMemory> GetAppNativeMemInfo() override;
+    std::optional<SysMemory> GetSystemMemInfo() override;
 private:
     /**
      * GetElapsedNanoSecondsSinceBoot
@@ -127,6 +129,60 @@ std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
     memoryLimit.rssLimit = collectResult.data.rssLimit;
 
     return memoryLimit;
+}
+
+std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
+{
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
+        return {};
+    }
+    int pid = getpid();
+    auto collectResult = collector->CollectProcessMemory(pid);
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessMemory Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return {};
+    }
+
+    ProcessMemory nativeMemInfo;
+    uint32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
+    nativeMemInfo.pss = pssInfo;
+    nativeMemInfo.rss = collectResult.data.rss;
+    nativeMemInfo.sharedDirty = collectResult.data.sharedDirty;
+    nativeMemInfo.privateDirty = collectResult.data.privateDirty;
+    nativeMemInfo.sharedClean = collectResult.data.sharedClean;
+    nativeMemInfo.privateClean = collectResult.data.privateClean;
+
+    auto collectVss = collector->CollectProcessVss(pid);
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectResult.retCode));
+        return {};
+    }
+    nativeMemInfo.vss = collectVss.data;
+    return nativeMemInfo;
+}
+
+std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
+{
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetSystemMemInfo Failed");
+        return {};
+    }
+    auto collectResult = collector->CollectSysMemory();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetSystemMemInfo Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return {};
+    }
+
+    SysMemory sysMemInfo;
+    sysMemInfo.memTotal = collectResult.data.memTotal;
+    sysMemInfo.memFree = collectResult.data.memFree;
+    sysMemInfo.memAvailable = collectResult.data.memAvailable;
+    return sysMemInfo;
 }
 
 int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
