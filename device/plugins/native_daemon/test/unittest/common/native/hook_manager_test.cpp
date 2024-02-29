@@ -48,6 +48,7 @@ public:
 
     static void StartServerStub(std::string name)
     {
+        signal(SIGCHLD, SIG_IGN);
         int processNum = fork();
         PROFILER_LOG_INFO(LOG_CORE, "processNum : %d", processNum);
         if (processNum == 0) {
