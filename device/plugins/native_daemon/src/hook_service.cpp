@@ -83,10 +83,10 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     }
 
     std::lock_guard<std::mutex> lock(mtx_);
-    if (!firstProcess) {
+    if (!firstProcess_) {
         return false;
     }
-    firstProcess = false;
+    firstProcess_ = false;
     auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
     if (eventFd == smbFd) {
         PROFILER_LOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);

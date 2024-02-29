@@ -37,7 +37,7 @@ private:
     ClientConfig clientConfig_;
     std::shared_ptr<HookManager> hookMgr_{nullptr};
     std::mutex mtx_;
-    bool firstProcess = true;
+    bool firstProcess_ = true;
 };
 }
 #endif // HOOK_SERVICE_H
