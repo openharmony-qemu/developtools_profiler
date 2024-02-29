@@ -47,7 +47,6 @@ constexpr static uint32_t RIGHT_MOVE_2 = 2;
 constexpr static uint32_t RIGHT_MOVE_4 = 4;
 constexpr static uint32_t RIGHT_MOVE_8 = 8;
 constexpr static uint32_t RIGHT_MOVE_16 = 16;
-constexpr static uint32_t RIGHT_MOVE_32 = 32;
 constexpr static uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 
 using namespace OHOS::Developtools::NativeDaemon;
