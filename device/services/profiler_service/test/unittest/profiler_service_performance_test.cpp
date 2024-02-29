@@ -108,6 +108,9 @@ protected:
 
     void StartServerStub(std::string name)
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             if (DEFAULT_HIPROFILERD_PATH == name) {
@@ -377,6 +380,9 @@ protected:
 
     bool StartActiveProcess(int& cpuActivePid)
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return false;
+        }
         int processNum = fork();
         if (processNum == 0) {
             // consume cpu
@@ -430,6 +436,9 @@ protected:
 
     void StartIdleProcess()
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             // not to do
@@ -443,6 +452,9 @@ protected:
 
     void StartRequestMemoryProcess(int& requestMemoryPid)
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             auto requestBuff = std::make_unique<char[]>(MB_PER_BYTE);
@@ -504,6 +516,9 @@ protected:
     }
     void StartTestDiskioProcess(int& diskioPid)
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             IoTest();

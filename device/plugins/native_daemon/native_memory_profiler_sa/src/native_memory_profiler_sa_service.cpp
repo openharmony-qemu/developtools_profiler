@@ -105,7 +105,7 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     return RET_OK;
 }
 
-void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
+void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, bool timeout)
 {
     std::lock_guard<std::mutex> guard(mtx_);
     std::shared_ptr<TaskConfig> config = nullptr;
@@ -124,7 +124,11 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
 
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
-    scheduleTaskManager_.UnscheduleTask(config->timerFd);
+    if (timeout) {
+        scheduleTaskManager_.UnscheduleTaskLockless(config->timerFd);
+    } else {
+        scheduleTaskManager_.UnscheduleTask(config->timerFd);
+    }
     nameAndFilePathCtx_.erase(config->processName);
     nameAndFilePathCtx_.erase(config->filePath);
     pidCtx_.erase(config->pid);
@@ -178,7 +182,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     hook->StartPluginSession();
 
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-        std::bind(&NativeMemoryProfilerSaService::StopHook, this, config->pid_, config->processName_),
+        std::bind(&NativeMemoryProfilerSaService::StopHook, this, config->pid_, config->processName_, true),
         config->duration_ * TIME_BASE,
         true);
     if (timerFd == -1) {

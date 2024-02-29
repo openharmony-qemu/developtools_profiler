@@ -228,7 +228,7 @@ void ProfilerService::SessionContext::StartSessionExpireTask(ScheduleTaskManager
 void ProfilerService::SessionContext::StopSessionExpireTask(ScheduleTaskManager& task)
 {
     if (sessionConfig.keep_alive_time() > 0 && timeoutScheduleTaskFd != -1) {
-        task.UnscheduleTask(timeoutScheduleTaskFd);
+        task.UnscheduleTaskLockless(timeoutScheduleTaskFd);
         timeoutScheduleTaskFd = -1;
     }
 }
