@@ -22,8 +22,8 @@ config("module_private_config") {
 ohos_unittest("sp_daemon_ut") {
   module_out_path = module_output_path
   sources = [
-    "unittest/sp_daemon_test.cpp",
     "../sp_utils.cpp",
+    "unittest/sp_daemon_test.cpp",
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",
@@ -31,8 +31,8 @@ ohos_unittest("sp_daemon_ut") {
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command:SP_daemon",
-    "//third_party/libpng:libpng",
     "//third_party/googletest:gtest",
+    "//third_party/libpng:libpng",
   ]
   external_deps = [
     "c_utils:utils",
