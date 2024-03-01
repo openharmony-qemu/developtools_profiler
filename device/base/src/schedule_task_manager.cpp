@@ -62,6 +62,7 @@ void ScheduleTaskManager::Shutdown()
 
 int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once,
                                           bool block)
+{
     int32_t timerFd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
     if (timerFd == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd create failed");
