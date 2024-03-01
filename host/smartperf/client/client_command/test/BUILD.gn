@@ -1,0 +1,52 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("../../../../../build/config.gni")
+
+module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/sp_daemon"
+config("module_private_config") {
+  visibility = [ ":*" ]
+}
+
+ohos_unittest("sp_daemon_ut") {
+  module_out_path = module_output_path
+  sources = [
+    "unittest/sp_daemon_test.cpp",
+    "../sp_utils.cpp",
+  ]
+  include_dirs = [
+    "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",
+    "//third_party/googletest/googletest/include/gtest",
+  ]
+  deps = [
+    "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command:SP_daemon",
+    "//third_party/libpng:libpng",
+    "//third_party/googletest:gtest",
+  ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hiview:libucollection_utility",
+    "image_framework:image_native",
+    "window_manager:libdm",
+    "window_manager:libwm",
+  ]
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+group("unittest") {
+  testonly = True
+  deps = [":sp_daemon_ut"]
+}
