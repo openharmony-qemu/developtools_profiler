@@ -83,7 +83,7 @@ HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
  */
 HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
 {
-    std::string cmd = "SP_daemon -N 1 -PKG com.huawei.hmos.settings -f";
+    std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
