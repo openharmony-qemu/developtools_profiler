@@ -89,7 +89,9 @@ HWTEST_F(BpfControllerTest, Normal, TestSize.Level1)
 
     // create mem data
     int num = 1;
-    signal(SIGCHLD, SIG_IGN);
+    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+        return;
+    }
     pid_t pid = fork();
     if (pid == 0) {
         num++;
