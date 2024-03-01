@@ -60,8 +60,8 @@ void ScheduleTaskManager::Shutdown()
     close(stopFd_);
 }
 
-int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once)
-{
+int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once,
+                                          bool block)
     int32_t timerFd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
     if (timerFd == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd create failed");
@@ -98,8 +98,12 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
     evt.data.fd = timerFd;
     evt.events = EPOLLIN;
     epoll_ctl(epollFd_, EPOLL_CTL_ADD, timerFd, &evt);
-    std::lock_guard<std::mutex> guard(mtx_);
-    tasks_[timerFd] = std::move(func);
+    if (block) {
+        std::lock_guard<std::mutex> guard(mtx_);
+        tasks_[timerFd] = std::move(func);
+    } else {
+        tasks_[timerFd] = std::move(func);
+    }
     return timerFd;
 }
 
