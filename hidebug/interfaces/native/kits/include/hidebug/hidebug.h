@@ -31,7 +31,7 @@
  *
  * @brief Defines the debug functions of the HiDebug module.
  *
- * @library libhidebug_c.so
+ * @library libohhidebug.so
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
  */
@@ -102,15 +102,16 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit);
 /**
  * @brief Start capture application trace.
  *
- * @param fileName Output trace file name
  * @param flag Trace flag
  * @param tags Tag of trace
  * @param limitSize Max size of trace file, in bytes, the max is 500MB.
+ * @param fileName Output trace file name buffer
+ * @param length Output trace file name buffer length
  * @return Returns {@code HIDEBUG_SUCCESS} if successful. See {@link HiDebug_ErrorCode}
  * @since 12
  */
-HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(const char* fileName, HiDebug_TraceFlag flag,
-    uint64_t tags, uint32_t limitSize);
+HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
+    uint64_t tags, uint32_t limitSize, char* fileName, uint32_t length);
 
 /**
  * @brief Stop capture application trace.
