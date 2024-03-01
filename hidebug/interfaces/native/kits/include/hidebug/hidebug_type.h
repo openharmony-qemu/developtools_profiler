@@ -152,11 +152,11 @@ typedef struct HiDebug_MemoryLimit {
     /**
      * The limit of the application process's resident set, in kibibytes
      */
-    uint32_t rssLimit;
+    uint64_t rssLimit;
     /**
      * The limit of the application process's virtual memory, in kibibytes
      */
-    uint32_t vssLimit;
+    uint64_t vssLimit;
 } HiDebug_MemoryLimit;
 
 /**
@@ -265,11 +265,11 @@ typedef enum HiDebug_TraceFlag {
  */
 #define HIDEBUG_TRACE_TAG_GRAPHICS (1ULL << 38)
 /**
- * @brief ACE development framework tag.
+ * @brief ARKUI development framework tag.
  *
  * @since 12
  */
-#define HIDEBUG_TRACE_TAG_ACE (1ULL << 39)
+#define HIDEBUG_TRACE_TAG_ARKUI (1ULL << 39)
 /**
  * @brief Notification module tag.
  *

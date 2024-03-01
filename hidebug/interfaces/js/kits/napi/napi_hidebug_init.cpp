@@ -67,7 +67,7 @@ void InitTraceFlagMap(napi_env env, std::map<const char*, napi_value>& traceFlag
 void InitTagsMap(napi_env env, std::map<const char*, napi_value>& tagsMap)
 {
     tagsMap["ABILITY_MANAGER"] = CreateBigintUint64(env, HITRACE_TAG_ABILITY_MANAGER);
-    tagsMap["ACE"] = CreateBigintUint64(env, HITRACE_TAG_ACE);
+    tagsMap["ARKUI"] = CreateBigintUint64(env, HITRACE_TAG_ACE);
     tagsMap["ARK"] = CreateBigintUint64(env, HITRACE_TAG_ARK);
     tagsMap["BLUETOOTH"] = CreateBigintUint64(env, HITRACE_TAG_BLUETOOTH);
     tagsMap["COMMON_LIBRARY"] = CreateBigintUint64(env, HITRACE_TAG_COMMONLIBRARY);
