@@ -48,6 +48,9 @@ protected:
     static constexpr auto TEMP_DELAY = std::chrono::milliseconds(20);
     static void SetUpTestCase()
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             // start running hiprofilerd

@@ -44,8 +44,8 @@ public:
      * @note It is crucial to ensure that the code logic executed within the provided callback function
      * does not include any self-termination logic.
      */
-    int32_t ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once = false);
-
+    int32_t ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once = false,
+                         bool block = true);
     /**
      * @brief Cancel the scheduled task.
      * @param timerFd The return value of interface ScheduleTask().

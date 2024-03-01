@@ -72,6 +72,9 @@ public:
     void StartDaemonProcessArgs()
     {
         outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             int waitProcMills = 300;
@@ -257,6 +260,9 @@ public:
 
     void StartMallocProcess()
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             while (1) {
@@ -270,6 +276,9 @@ public:
 
     void StartDlopenProcess()
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             const std::vector<std::string> VEC_SO_PATH { DEFAULT_LIBA_PATH, DEFAULT_LIBB_PATH};
@@ -312,6 +321,9 @@ public:
 
     void StartCallocProcess(int depth)
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             int firstSleep = 3; // avoid malloc before sending kill -36 signal
@@ -364,6 +376,9 @@ public:
 
     void StartReallocProcess(int depth)
     {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
         int processNum = fork();
         if (processNum == 0) {
             while (1) {
