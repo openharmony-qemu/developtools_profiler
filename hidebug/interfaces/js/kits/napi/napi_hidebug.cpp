@@ -51,6 +51,7 @@ constexpr int ONE_VALUE_LIMIT = 1;
 constexpr int ARRAY_INDEX_FIRST = 0;
 constexpr int ARRAY_INDEX_SECOND = 1;
 constexpr int REMOVE_NAPI_WRAP_PARAM_COUNT = 2;
+constexpr int BYTE_2_KB_SHIFT_BITS = 10;
 const std::string SLASH_STR = "/";
 const std::string DEFAULT_FILENAME = "undefined";
 const std::string JSON_FILE = ".json";
@@ -551,16 +552,19 @@ napi_value GetAppVMMemoryInfo(napi_env env, napi_callback_info info)
 
     napi_value totalHeap;
     uint64_t totalHeapValue = engine->GetHeapTotalSize();
+    totalHeapValue = totalHeapValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, totalHeapValue, &totalHeap);
     napi_set_named_property(env, vMMemoryInfo, "totalHeap", totalHeap);
 
     napi_value heapUsed;
     uint64_t heapUsedValue = engine->GetHeapUsedSize();
+    heapUsedValue = heapUsedValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, heapUsedValue, &heapUsed);
     napi_set_named_property(env, vMMemoryInfo, "heapUsed", heapUsed);
 
     napi_value allArraySize;
     uint64_t allArraySizeValue = engine->GetArrayBufferSize();
+    allArraySizeValue = allArraySizeValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, allArraySizeValue, &allArraySize);
     napi_set_named_property(env, vMMemoryInfo, "allArraySize", allArraySize);
 
@@ -628,6 +632,7 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     NativeEngine *engine = reinterpret_cast<NativeEngine *>(env);
     napi_value vmHeapLimit;
     uint64_t vmHeapLimitValue = engine->GetHeapLimitSize();
+    vmHeapLimitValue = vmHeapLimitValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, vmHeapLimitValue, &vmHeapLimit);
     napi_set_named_property(env, appMemoryLimit, "vmHeapLimit", vmHeapLimit);
 
