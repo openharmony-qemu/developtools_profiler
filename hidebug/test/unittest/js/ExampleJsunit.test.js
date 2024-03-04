@@ -259,7 +259,7 @@ describe("HidebugJsTest", function () {
         it('HidebugJsTest_009', 0, function () {
             console.info("---------------------------HidebugJsTest_009----------------------------------");
             try {
-                let nativeMemInfo = hidebug.GetAppNativeMemInfo();
+                let nativeMemInfo = hidebug.getAppNativeMemInfo();
                 expect(nativeMemInfo.pss >= 0).assertTrue();
                 expect(nativeMemInfo.vss >= 0).assertTrue();
                 expect(nativeMemInfo.rss >= 0).assertTrue();
