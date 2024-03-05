@@ -89,6 +89,10 @@ bool HookManager::CheckProcess()
             return false;
         }
     }
+
+    if (hookCtx_.size() > 1) {
+        isProtobufSerialize_ = true;
+    }
     return true;
 }
 
@@ -108,6 +112,7 @@ bool HookManager::CheckProcessName()
             PROFILER_LOG_INFO(LOG_CORE, "set param success, please start process(%s)",
                               hookConfig_.process_name().c_str());
             hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(hookConfig_.process_name()));
+            hookConfig_.set_startup_mode(true);
         }
     } else if (pidValue != -1) {
         PROFILER_LOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pidValue);
@@ -248,7 +253,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
     if (noDataQueue_) {
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
-        fpHookData_, isHookStandalone_);
+            fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
@@ -257,14 +262,18 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
         CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
-        fpHookData_, isHookStandalone_);
+            fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&HookManager::ReadShareMemory, this, ctx));
     }
     CHECK_TRUE(ctx->stackPreprocess != nullptr, false, "Create StackPreprocess FAIL");
-    ctx->stackPreprocess->SetWriter(g_buffWriter);
-    ctx->stackPreprocess->SetSaServiceFlag(isSaService_);
+    if (isProtobufSerialize_ || isSaService_) {
+        ctx->stackPreprocess->SetWriter(g_buffWriter);
+    } else {
+        ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
+    }
+    ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
     return true;
 }
 
@@ -334,6 +343,11 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         && hookConfig_.sample_interval() > 1) {
         noDataQueue_ = true;
     }
+
+    if (!isSaService_) {
+        CreateWriter();
+    }
+
     for (const auto& item : hookCtx_) {
         CHECK_TRUE(HandleHookContext(item), false, "handle hook context failed"); // Create the required resources.
     }
@@ -422,7 +436,9 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
             item->shareMemoryBlock = nullptr;
         }
-        item->eventNotifier = nullptr;
+        if (item->eventNotifier != nullptr) {
+            item->eventNotifier = nullptr;
+        }
         item->stackPreprocess = nullptr;
         item->stackData = nullptr;
     }
@@ -471,8 +487,6 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             item->stackData->Close();
         }
     }
-
-    ResetStartupParam();
     return true;
 }
 
@@ -498,8 +512,22 @@ bool HookManager::CreateWriter(std::string pluginName, uint32_t bufferSize, int 
                                bool isProtobufSerialize)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "agentIndex_ %d", agentIndex_);
-    RegisterWriter(std::make_shared<BufferWriter>(pluginName, VERSION, bufferSize, smbFd, eventFd, agentIndex_));
+    writer_ = std::make_shared<BufferWriter>(pluginName, VERSION, bufferSize, smbFd, eventFd, agentIndex_);
+    isProtobufSerialize_ = isProtobufSerialize;
+    shareMemorySize_ = bufferSize;
     return true;
+}
+
+void HookManager::CreateWriter()
+{
+    PROFILER_LOG_INFO(LOG_CORE, "CreateWriter isProtobufSerialize: %d, noDataQueue_: %d",
+                      isProtobufSerialize_, noDataQueue_);
+    if (isProtobufSerialize_) {
+        RegisterWriter(writer_);
+    } else {
+        writerAdapter_ = std::make_shared<WriterAdapter>(isProtobufSerialize_);
+        writerAdapter_->SetWriter(writer_);
+    }
 }
 
 bool HookManager::ResetWriter(uint32_t pluginId)

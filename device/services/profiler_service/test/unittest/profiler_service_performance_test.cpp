@@ -149,6 +149,12 @@ protected:
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
     }
 
+    void StopDependServerStub()
+    {
+        std::string stopCmd = "killall " + DEFAULT_HIPROFILER_PLUGINS_PATH + " " + DEFAULT_HIPROFILERD_PATH;
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
+    }
+
     std::unique_ptr<IProfilerService::Stub> GetProfilerServiceStub()
     {
         auto grpcChannel = grpc::CreateChannel("127.0.0.1:50051", grpc::InsecureChannelCredentials());
@@ -545,6 +551,7 @@ private:
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
     int requestMemoryPid = -1;
     StartIdleProcess();
@@ -779,6 +786,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
     StartIdleProcess();
 
@@ -1012,6 +1020,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
     StartDependServerStub();
     Timer timer = {};
@@ -1153,6 +1162,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
 
     StartDependServerStub();
@@ -1282,6 +1292,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
     StartDependServerStub();
     Timer timer = {};
@@ -1419,6 +1430,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
     StartDependServerStub();
     Timer timer = {};
@@ -1521,6 +1533,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0070, Function | MediumTest | Level1)
 {
+    StopDependServerStub();
     ASSERT_TRUE(profilerStub_ != nullptr);
     uint32_t sessionId;
     GetCapabilitiesResponse capResponse1;

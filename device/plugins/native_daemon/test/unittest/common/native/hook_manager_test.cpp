@@ -169,6 +169,9 @@ HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
     HookManager hookManager;
     NativeHookConfig nativeConfig;
     nativeConfig.set_process_name("HookManagerTest");
+    hookManager.SetHookConfig(nativeConfig);
+    EXPECT_TRUE(hookManager.CheckProcess());
+
     nativeConfig.set_startup_mode(true);
     hookManager.SetHookConfig(nativeConfig);
     EXPECT_TRUE(hookManager.CheckProcess());

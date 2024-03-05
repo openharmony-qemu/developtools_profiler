@@ -45,6 +45,7 @@ BufferWriter::BufferWriter(std::string name,
     lastFlushTime_ = std::chrono::steady_clock::now();
     if (shareMemoryBlock_ != nullptr) {
         writeCtx_ = reinterpret_cast<RandomWriteCtx*>(shareMemoryBlock_->GetCtx());
+        profilerPluginData_ = ProtoEncoder::ProfilerPluginData(writeCtx_);
     }
 }
 
@@ -96,13 +97,12 @@ RandomWriteCtx* BufferWriter::StartReport()
         return nullptr;
     }
 
-    profilerPluginData_.reset();
     shareMemoryBlock_->ResetPos();
-    profilerPluginData_ = std::make_shared<ProtoEncoder::ProfilerPluginData>(writeCtx_);
-    profilerPluginData_->set_name(pluginName_);
-    profilerPluginData_->set_version(pluginVersion_);
-    profilerPluginData_->set_status(0);
-    return profilerPluginData_->startAdd_data();
+    profilerPluginData_.Reset(writeCtx_);
+    profilerPluginData_.set_name(pluginName_);
+    profilerPluginData_.set_version(pluginVersion_);
+    profilerPluginData_.set_status(0);
+    return profilerPluginData_.startAdd_data();
 }
 
 void BufferWriter::FinishReport(int32_t size)
@@ -111,13 +111,13 @@ void BufferWriter::FinishReport(int32_t size)
         return;
     }
 
-    profilerPluginData_->finishAdd_data(size);
+    profilerPluginData_.finishAdd_data(size);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    profilerPluginData_->set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId_));
-    profilerPluginData_->set_tv_sec(ts.tv_sec);
-    profilerPluginData_->set_tv_nsec(ts.tv_nsec);
-    int32_t len = profilerPluginData_->Finish();
+    profilerPluginData_.set_clock_id(ProfilerPluginData::CLOCKID_REALTIME);
+    profilerPluginData_.set_tv_sec(ts.tv_sec);
+    profilerPluginData_.set_tv_nsec(ts.tv_nsec);
+    int32_t len = profilerPluginData_.Finish();
     shareMemoryBlock_->UseMemory(len);
     DoStats(len);
 }

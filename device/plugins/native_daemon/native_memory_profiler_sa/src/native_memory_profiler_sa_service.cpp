@@ -31,6 +31,7 @@ constexpr int32_t MAX_TASK_NUM = 4;
 const std::string FILE_PATH_HEAD = "/data/local/tmp/native_memory_";
 const std::string FILE_PATH_TAIL = ".htrace";
 constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
+constexpr int FILE_MODE = 0644;
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -57,10 +58,7 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
 
     auto native = new NativeMemoryProfilerSaService();
-    if (native == nullptr) {
-        HILOG_ERROR(LOG_CORE, "native is nullptr");
-        return false;
-    }
+    CHECK_NOTNULL(native, false, "native is nullptr");
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Service native memory failed to start");
@@ -161,12 +159,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         return RET_ERR;
     }
 
-    std::shared_ptr<TraceFileWriter> writeFile = nullptr;
     if (fd == 0) {
-        writeFile = std::make_shared<TraceFileWriter>(config->filePath_);
-    } else {
-        writeFile = std::make_shared<TraceFileWriter>(fd);
+        fd = open(config->filePath_.c_str(), O_RDWR | O_CREAT, FILE_MODE);
+        CHECK_TRUE(fd >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
     }
+
+    std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);
     CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
     writeFile->SetTimeSource();
 
@@ -174,7 +172,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     hook->RegisterWriter(writeFile);
     hook->SetHookConfig(config);
-    hook->SetSaServiceFlag(true);
+    hook->SetSaServiceConfig(true, false);
     if (hook->CreatePluginSession() != RET_OK) {
         return RET_ERR;
     }
@@ -317,9 +315,16 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
             peerConfig, bundleName.c_str());
         ClientConfig clientConfig;
         iter->second->hookMgr->GetClientConfig(clientConfig);
+        if (iter->second->hookMgr->GetNoDataQueueFlag()) {
+            clientConfig.freeEventOnlyAddrEnable = true;
+        }
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
         context.SendFileDescriptor(smbFd);
         context.SendFileDescriptor(eventFd);
+        iter->second->hookMgr->ResetStartupParam();
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
+        return false;
     }
     return true;
 }

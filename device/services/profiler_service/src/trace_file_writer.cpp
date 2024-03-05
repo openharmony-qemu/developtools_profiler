@@ -15,7 +15,9 @@
 #include "trace_file_writer.h"
 
 #include <cinttypes>
+#include <fcntl.h>
 #include <memory>
+#include <sys/mman.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <cstdio>
@@ -36,6 +38,8 @@ constexpr int MB_TO_BYTE = (1024 * 1024);
 constexpr int GB_TO_BYTE = (1024 * 1024 * 1024);
 constexpr int SPLIT_FILE_MIN_SIZE = 200;    // split file min size
 constexpr int SPLIT_FILE_DEFAULT_NUM = 10;  // split file default num
+constexpr size_t DEFULT_PAGES = 64 * 256; // 64M
+const int PIECE_HEAD_LEN = 4;
 } // namespace
 
 TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path, false, 0, 0) {}
@@ -45,8 +49,33 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
     if (write(fd_, &header_, sizeof(header_)) != sizeof(header_)) {
         PROFILER_LOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
     }
-    isWriteFd_ = true;
     (void)FlushStream();
+    fileWriteLength_ = sizeof(header_);
+    mapOffset_ = sizeof(header_);
+    messageWriteOffset_ = PIECE_HEAD_LEN;
+    pageSize_ = sysconf(_SC_PAGE_SIZE);
+    fileLength_ = DEFULT_PAGES * pageSize_;
+
+    if (ftruncate(fd_, fileLength_) != 0) {
+        HILOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", fileLength_, strerror(errno));
+        return;
+    }
+
+    fileMapAddr_ = mmap(nullptr, fileLength_, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd_, 0);
+    if (fileMapAddr_ == MAP_FAILED) {
+        HILOG_ERROR(LOG_CORE, "mmap file(%d) failed, error: %s", fd_, strerror(errno));
+        return;
+    }
+
+    writeCtx_.write = this;
+    writeCtx_.ctx.getMemory = [](RandomWriteCtx* ctx, uint32_t size, uint8_t** memory, uint32_t* offset) -> bool {
+        TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
+        return writeCtx->write->GetMemory(size, memory, offset);
+    };
+    writeCtx_.ctx.seek = [](RandomWriteCtx* ctx, uint32_t offset) -> bool {
+        TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
+        return writeCtx->write->Seek(offset);
+    };
 }
 
 TraceFileWriter::TraceFileWriter(const std::string& path, bool splitFile, uint32_t splitFileMaxSizeMb,
@@ -67,6 +96,13 @@ TraceFileWriter::~TraceFileWriter()
     (void)FlushStream();
     if (stream_.is_open()) {
         stream_.close();
+    }
+    if (fileMapAddr_ != MMAP_FAILED) {
+        munmap(fileMapAddr_, fileLength_);
+    }
+
+    if (fd_ != -1) {
+        close(fd_);
     }
 }
 
@@ -114,33 +150,8 @@ void TraceFileWriter::WriteStandalonePluginData(
 
     Write(msgData.data(), msgData.size());
 }
-#else
-void TraceFileWriter::WriteStandalonePluginData(
-    const std::string &pluginName, const std::string &data,
-    const std::string &pluginVersion)
-{
-    ProfilerPluginData pluginData;
-    pluginData.set_name(pluginName);
-    pluginData.set_data(data);
-    if (!pluginVersion.empty()) {
-        pluginData.set_version(pluginVersion);
-        pluginData.set_status(0);
-
-        struct timespec ts = { 0, 0 };
-        clock_gettime(CLOCK_REALTIME, &ts);
-        pluginData.set_tv_sec(ts.tv_sec);
-        pluginData.set_tv_nsec(ts.tv_nsec);
-        pluginData.set_clock_id(ProfilerPluginData::CLOCKID_REALTIME);
-    }
-
-    std::vector<char> msgData(pluginData.ByteSizeLong());
-    if (pluginData.SerializeToArray(msgData.data(), msgData.size()) <= 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "%s StandalonePluginData SerializeToArray failed!", pluginName.c_str());
-    }
-
-    Write(msgData.data(), msgData.size());
-}
 #endif
+
 void TraceFileWriter::SetTimeStamp()
 {
     header_.data_.boottime = headerDataTime_.boottime;
@@ -237,25 +248,17 @@ long TraceFileWriter::Write(const void* data, size_t size)
     }
 
     uint32_t dataLen = size;
-    if (isWriteFd_) {
-        auto ret = write(fd_, reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
-        CHECK_TRUE(ret == sizeof(dataLen), 0, "write raw buffer data failed!");
-        ret = write(fd_, data, size);
-        CHECK_TRUE(ret == static_cast<long>(size), 0, "write raw buffer data failed!, dataSize: %zu, errno: %s",
-                   size, strerror(errno));
-    } else {
-        CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
+    CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
 
-        // write 4B data length.
-        stream_.write(reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
-        CHECK_TRUE(stream_, 0, "binary file %s write raw buffer size failed!", path_.c_str());
-        CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(&dataLen), sizeof(dataLen)),
-            0, "Add payload for size %u FAILED!", dataLen);
+    // write 4B data length.
+    stream_.write(reinterpret_cast<CharPtr>(&dataLen), sizeof(dataLen));
+    CHECK_TRUE(stream_, 0, "binary file %s write raw buffer size failed!", path_.c_str());
+    CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(&dataLen), sizeof(dataLen)),
+        0, "Add payload for size %u FAILED!", dataLen);
 
-        // write data bytes
-        stream_.write(reinterpret_cast<ConstCharPtr>(data), size);
-        CHECK_TRUE(stream_, 0, "binary file %s write raw buffer data failed!", path_.c_str());
-    }
+    // write data bytes
+    stream_.write(reinterpret_cast<ConstCharPtr>(data), size);
+    CHECK_TRUE(stream_, 0, "binary file %s write raw buffer data failed!", path_.c_str());
 
     CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(const_cast<void*>(data)), size),
         0, "Add payload for data bytes %zu FAILED!", size);
@@ -375,12 +378,14 @@ bool TraceFileWriter::Finish()
     helper_.Update(header_);
     SetTimeStamp(); // add timestamp in header
 
-    if (isWriteFd_) {
+    if (fd_ != -1) {
         if (lseek(fd_, 0, SEEK_SET) == -1) {
             return false;
         }
         auto ret = write(fd_, &header_, sizeof(header_));
         CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
+        CHECK_TRUE(ftruncate(fd_, fileWriteLength_) == 0, false, "ftruncate(%u) failed, error: %s",
+            fileWriteLength_, strerror(errno));
     } else {
         long long filePos = stream_.tellp();
         if (filePos == -1) { // -1 :file not open or error
@@ -409,7 +414,7 @@ bool TraceFileWriter::Flush()
 
 bool TraceFileWriter::FlushStream()
 {
-    if (!isWriteFd_) {
+    if (fd_ == -1) {
         CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
     }
@@ -448,4 +453,71 @@ void TraceFileWriter::LogDiskUsage()
     uint32_t freeSizeGb = freeSize / GB_TO_BYTE;
     // 100: in terms of percentage
     PROFILER_LOG_INFO(LOG_CORE, "LogDiskUsage() freePercent:%.1f, freeSizeGb:%u", freePercent * 100, freeSizeGb);
+}
+
+bool TraceFileWriter::RemapFile()
+{
+    if (munmap(fileMapAddr_, fileLength_) != 0) {
+        HILOG_ERROR(LOG_CORE, "munmap file(%zu) failed, error: %s", fileLength_, strerror(errno));
+        return false;
+    }
+
+    // file size increased by DEFULT_PAGES * pageSize_(64M)
+    size_t newLength = fileLength_ + DEFULT_PAGES * pageSize_;
+    if (ftruncate(fd_, newLength) != 0) {
+        HILOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", newLength, strerror(errno));
+        return false;
+    }
+
+    size_t remapPos = fileWriteLength_ & ~(pageSize_ - 1);
+    fileMapAddr_ = mmap(nullptr, newLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd_, remapPos);
+    if (fileMapAddr_ == MAP_FAILED) {
+        HILOG_ERROR(LOG_CORE, "remap(%zu:%zu) data file failed, error: %s", newLength, remapPos, strerror(errno));
+        return false;
+    }
+
+    mapOffset_ = fileWriteLength_ - remapPos;
+    fileLength_ = newLength;
+    HILOG_INFO(LOG_CORE, "remap(%zu:%zu) data file(%zu) sucess", remapPos, mapOffset_, fileLength_);
+    return true;
+}
+
+bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset)
+{
+    if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
+        if (!RemapFile()) {
+            HILOG_ERROR(LOG_CORE, "RemapFile failed!");
+            return false;
+        }
+    }
+
+    *memory = &reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_ + messageWriteOffset_];
+    *offset = messageWriteOffset_;
+    return true;
+}
+
+bool TraceFileWriter::Seek(uint32_t offset)
+{
+    messageWriteOffset_ = offset;
+    return true;
+}
+
+void TraceFileWriter::FinishReport(int32_t size)
+{
+    auto realSize = PIECE_HEAD_LEN + size;
+    CHECK_TRUE(helper_.AddSegment(nullptr, realSize), NO_RETVAL, "AddSegment(%d) failed, error: %s",
+        realSize, strerror(errno));
+
+    // write data length
+    *((int*)(&reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_])) = size;
+
+    mapOffset_ += realSize;
+    fileWriteLength_ += realSize;
+    writeBytes_ += realSize;
+    ++writeCount_;
+}
+
+void TraceFileWriter::ResetPos()
+{
+    messageWriteOffset_ = PIECE_HEAD_LEN;
 }

@@ -89,6 +89,12 @@ void UtilitiesTest::StartThreads(const size_t count)
     if (ret == EOF) {
         printf("fflush() error\n");
     }
+
+    std::vector<pid_t> tids = GetSubthreadIDs(getpid());
+    tids_.clear();
+    for (const auto& tid : tids) {
+        tids_.emplace_back(tid);
+    }
 }
 
 void UtilitiesTest::ExitThreads()
