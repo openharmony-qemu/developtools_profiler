@@ -107,7 +107,8 @@
         "//developtools/profiler/interfaces/kits/test:unittest",
         "//developtools/profiler/hidebug/test/unittest:unittest",
         "//developtools/profiler/hiebpf/test:unittest",
-        "//developtools/profiler/proto_encoder/test:unittest"
+        "//developtools/profiler/proto_encoder/test:unittest",
+        "//developtools/profiler/host/smartperf/client/client_command/test:unittest"
       ]
     }
   }
