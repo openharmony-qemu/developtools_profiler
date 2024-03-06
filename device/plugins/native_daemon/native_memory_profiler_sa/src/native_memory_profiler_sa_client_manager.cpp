@@ -24,6 +24,8 @@ namespace {
 constexpr uint32_t LIB_SMS = 4096;
 constexpr uint32_t CALL_STACK_SMS = 16384;
 }
+static bool printNmd_ = false;
+
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
@@ -84,6 +86,8 @@ int32_t NativeMemoryProfilerSaClientManager::Stop(const std::string& name)
 int32_t NativeMemoryProfilerSaClientManager::DumpData(uint32_t fd,
                                                       std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    config->printNmd_ = printNmd_;
+    printNmd_ = false;
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
@@ -116,5 +120,10 @@ bool NativeMemoryProfilerSaClientManager::CheckConfig(const std::shared_ptr<Nati
         config->shareMemorySize_ = config->responseLibraryMode_ ? LIB_SMS : CALL_STACK_SMS;
     }
     return true;
+}
+
+void NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int type)
+{
+    printNmd_ = true;
 }
 } // namespace OHOS::Developtools::NativeDaemon

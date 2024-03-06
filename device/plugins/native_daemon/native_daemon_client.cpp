@@ -135,7 +135,9 @@ int32_t main(int32_t argc, char* argv[])
             config->sampleInterval_ = std::stoi(argv[++i]);
         } else if ((arg == "--responseLibraryMode") || (arg == "-r")) {
             config->responseLibraryMode_ = true;
-        }  else {
+        } else if ((arg == "--printNmd") || (arg == "-nmd")) {
+            config->printNmd_ = true;
+        } else {
             printf("error arg: %s\n", arg.c_str());
             error = true;
             break;

@@ -55,6 +55,7 @@ public:
     clockid_t clockId_{CLOCK_REALTIME};
     uint32_t sampleInterval_{0};
     bool responseLibraryMode_{false};
+    bool printNmd_{false};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

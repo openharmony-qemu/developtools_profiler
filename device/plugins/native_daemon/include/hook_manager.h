@@ -95,7 +95,7 @@ public:
     int32_t CreatePluginSession();
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void WriteHookConfig();
-    std::pair<int, int> GetFds(int32_t pid, const std::string& name);
+    std::vector<int> GetFds(int32_t pid, const std::string& name);
     inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
     {
         isSaService_ = saFlag;
@@ -106,8 +106,15 @@ public:
     {
         return noDataQueue_;
     }
+    bool PrintStat(int type);
+    void SetPid(int pid)
+    {
+        pid_ = pid;
+    }
 
 private:
+    int pid_ = -1;
+    bool printMallocNmd_ = false;
     bool CheckProcess();
     bool CheckProcessName();
     void SetHookData(HookContext& hookContext, struct timespec ts,
@@ -131,6 +138,7 @@ private:
     std::shared_ptr<Writer> writer_{nullptr};
     constexpr static uint32_t MAX_BUFFER_SIZE = 100 * 1024 * 1024;
     uint64_t shareMemorySize_{MAX_BUFFER_SIZE};
+    std::shared_ptr<ShareMemoryBlock> shareMemoryNmd_ = nullptr;
 };
 }
 #endif // AGENT_MANAGER_H

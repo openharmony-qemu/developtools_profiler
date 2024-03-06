@@ -18,7 +18,7 @@
 #include <limits>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <cstdlib>
 #include "command_poller.h"
 #include "common.h"
 #include "epoll_event_poller.h"
@@ -47,6 +47,7 @@ constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
+constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
 }
 
 bool HookManager::CheckProcess()
@@ -452,6 +453,8 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                                      const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
 {
+    std::string cmd = "rm -rf /data/local/tmp/*-malloc-stats*";
+    system(cmd.c_str());
     UNUSED_PARAMETER(config);
     if (hookCtx_.empty()) {
         return false;
@@ -462,6 +465,9 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
 
 bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
+    if (printMallocNmd_) {
+        PrintStat(0);
+    }
     if (hookCtx_.empty()) {
         return false;
     }
@@ -486,6 +492,11 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->Close();
         }
+    }
+    int waitTime = 0;
+    while (printMallocNmd_ && (!PrintStat(1)) && waitTime < 500) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        waitTime += 100;
     }
     return true;
 }
@@ -579,6 +590,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_clock(COMMON::GetClockStr(config->clockId_));
     hookConfig_.set_sample_interval(config->sampleInterval_);
     hookConfig_.set_response_library_mode(config->responseLibraryMode_);
+    printMallocNmd_ = config->printNmd_;
 }
 
 int32_t HookManager::CreatePluginSession()
@@ -624,17 +636,35 @@ void HookManager::WriteHookConfig()
     }
 }
 
-std::pair<int, int> HookManager::GetFds(int32_t pid, const std::string& name)
+std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
+    shareMemoryNmd_ = ShareMemoryAllocator::GetInstance.CreateMemoryBlockLocal("nmd", MEMCHECK_DETAILINFO_MAXSIZE * 3);
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
             if (item->pid == -1) {
                 item->pid = pid;
             }
             item->stackPreprocess->SetPid(pid);
-            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor()};
+            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor(), shareMemoryNmd_->GetfileDescriptor()};
         }
     }
-    return {-1, -1};
+    return {-1, -1, -1};
+}
+
+bool HookManager::PrintStat(int type)
+{
+    bool ret = shareMemoryNmd_->TakeData(
+        [&](const int8_t data[], uint32_t size) -> bool {
+            const char* result = reinterpret_cast<const char*>(data);
+            char filename[100];
+            sprintf(filename, "/data/local/tmp/%d-%d-malloc-stats.txt", pid_, type);
+            int flag = O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC;
+            mode_t mode = 0660;
+            int fd = open(filename, flag, mode);
+            (void)write(fd, result, strlen(result));
+            return true;
+        }
+    );
+    return ret;
 }
 }

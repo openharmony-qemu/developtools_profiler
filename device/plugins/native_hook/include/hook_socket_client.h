@@ -43,14 +43,18 @@ public:
             size_t payloadSize);
     void DisableHook();
     bool PeerIsConnected();
+    void SendNmdInfo();
+
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
     int smbFd_;
     int eventFd_;
     int pid_;
+    int nmdFd_;
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
     std::shared_ptr<StackWriter> stackWriter_;
+    std::shared_ptr<ShareMemoryBlock> shareMemoryBlockNmd_;
     void (*disableHookCallback_)(){nullptr};
 };
 
