@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "dump_usage.h"
+#include "hidebug_app_thread_cpu.h"
 #include "hilog/log.h"
 #include "client/cpu_collector.h"
 #include "utility/memory_collector.h"
@@ -40,8 +41,8 @@ public:
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
-    std::string StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize) override;
-    void StopAppTraceCapture() override;
+    int StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize, std::string &file) override;
+    int StopAppTraceCapture() override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
     std::optional<ProcessMemory> GetAppNativeMemInfo() override;
@@ -57,6 +58,7 @@ private:
     constexpr static int CPU_USAGE_VALIDITY = 2 * SECOND_TO_NANOSECOND; // 2s
     static inline int64_t lastCpuUsageGetTime_ = 0;
     static inline double lastCpuUsage_ = 0;
+    static inline HidebugAppThreadCpu threadCpu_;
 };
 
 std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
@@ -75,16 +77,47 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
-    return {};
+    auto collectResult = threadCpu_.CollectThreadStatInfos();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetAppThreadCpuUsage fail, ret: %{public}d", static_cast<int>(collectResult.retCode));
+        return {};
+    }
+    std::map<uint32_t, double> threadMap;
+    for (auto &threadCpuStatInfo : collectResult.data) {
+        threadMap[threadCpuStatInfo.tid] = threadCpuStatInfo.cpuUsage;
+    }
+    return threadMap;
 }
 
-std::string HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize)
+int HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
+    uint32_t limitsize, std::string &file)
 {
-    return "";
+    auto ret = StartCaptureAppTrace((TraceFlag)flag, tags, limitsize, file);
+    if (ret == RET_SUCC) {
+        return TRACE_SUCCESS;
+    }
+    if (ret == RET_FAIL_INVALID_ARGS) {
+        return TRACE_INVALID_ARGS;
+    }
+    if (ret == RET_STARTED) {
+        return TRACE_CAPTURED_ALREADY;
+    }
+    if (ret == RET_FAIL_MKDIR || ret == RET_FAIL_SETACL || ret == RET_FAIL_EACCES || ret == RET_FAIL_ENOENT) {
+        return TRACE_NO_PERMISSION;
+    }
+    return TRACE_ABNORMAL;
 }
 
-void HidebugNativeInterfaceImpl::StopAppTraceCapture()
+int HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
+    auto ret = StopCaptureAppTrace();
+    if (ret == RET_SUCC) {
+        return TRACE_SUCCESS;
+    }
+    if (ret == RET_STOPPED) {
+        return TRACE_NO_RUNNING;
+    }
+    return TRACE_ABNORMAL;
 }
 
 std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
