@@ -48,22 +48,7 @@ struct FloatBall {
     globalThis.CreateTitleWindow()
     globalThis.task_status = TaskStatus.task_init
     initFloatWindow()
-//    this.initCollectPid()
   }
-
-//  initCollectPid(){
-//    //尝试循环刷新 当前running abilitysInfo 获取pid
-//    globalThis.collectIntervalPid = setInterval(()=>{
-//      //初始化采集目标进程pid
-//      getPidOfAbility(globalThis.collectPkg).then(pid=>{
-//        globalThis.processPid = pid
-//        if(pid != "-1"){
-//          clearInterval(globalThis.collectIntervalPid)
-//          SPLogger.DEBUG(TAG, "clear collectIntervalPid and cur pid:" + pid)
-//        }
-//      })
-//    },1000)
-//  }
 
   initAllCollect() {
     console.log("collectIntervalCollect initAllCollect....");

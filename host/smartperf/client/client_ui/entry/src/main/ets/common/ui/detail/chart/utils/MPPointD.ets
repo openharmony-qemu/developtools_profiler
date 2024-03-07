@@ -36,9 +36,6 @@ export default class MPPointD extends Poolable {
     this.pool.recycle(instance);
   }
 
-  //    public static recycleInstances(instances:JArrayList<MPPointD>){
-  //        this.pool.recycle(instances);
-  //    }
 
   public instantiate(): Poolable{
     return new MPPointD(0, 0);

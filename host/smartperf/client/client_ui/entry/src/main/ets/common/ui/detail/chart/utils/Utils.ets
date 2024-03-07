@@ -37,32 +37,6 @@ export default abstract class Utils {
   public static DOUBLE_EPSILON: number = 4.9E-324;
   public static FLOAT_EPSILON: number = 1.4E-45;
 
-/**
-     * initialize method, called inside the Chart.init() method.
-     *
-     * @param context
-     */
-  public static init() {
-
-    //        if (context == null) {
-    //            // noinspection deprecation
-    //            mMinimumFlingVelocity = ViewConfiguration.getMinimumFlingVelocity();
-    //            // noinspection deprecation
-    //            mMaximumFlingVelocity = ViewConfiguration.getMaximumFlingVelocity();
-    //
-    //            Log.e("MPChartLib-Utils"
-    //                    , "Utils.init(...) PROVIDED CONTEXT OBJECT IS NULL");
-    //
-    //        } else {
-    //            ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
-    //            mMinimumFlingVelocity = viewConfiguration.getScaledMinimumFlingVelocity();
-    //            mMaximumFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
-    //
-    //            Resources res = context.getResources();
-    //            mMetrics = res.getDisplayMetrics();
-    //        }
-  }
-
 
 /**
   * This method converts dp unit to equivalent pixels, depending on device
@@ -74,36 +48,12 @@ export default abstract class Utils {
   * device density
   */
   public static convertDpToPixel(dp: number): number{
-    //return dp * this.scaledDensity;
     return vp2px(dp);
   }
 
   public static setScaledDensity(value: number) {
     this.scaledDensity = value
   }
-
-//
-//    /**
-//     * This method converts device specific pixels to density independent
-//     * pixels. NEEDS UTILS TO BE INITIALIZED BEFORE USAGE.
-//     *
-//     * @param px A value in px (pixels) unit. Which we need to convert into db
-//     * @return A float value to represent dp equivalent to px value
-//     */
-//    public static float convertPixelsToDp(float px) {
-//
-//        if (mMetrics == null) {
-//
-//            Log.e("MPChartLib-Utils",
-//                    "Utils NOT INITIALIZED. You need to call Utils.init(...) at least once before" +
-//                            " calling Utils.convertPixelsToDp(...). Otherwise conversion does not" +
-//                            " take place.");
-//            return px;
-//        }
-//
-//        return px / mMetrics.density;
-//    }
-//
 /**
      * calculates the approximate width of a text, depending on a demo text
      * avoid repeated calls (e.g. inside drawing methods)
@@ -129,27 +79,15 @@ export default abstract class Utils {
     return paint.getTextSize();
   }
 
-//    private static Paint.FontMetrics mFontMetrics = new Paint.FontMetrics();
-//
-//    public static getLineHeight(paint : Paint) :  number {
-//        return getLineHeight(paint, mFontMetrics);
-//    }
 
   public static getLineHeight(paint: Paint): number {
-    //        paint.getFontMetrics(fontMetrics);
-    ////        return fontMetrics.descent - fontMetrics.ascent;
     return paint.getTextSize();
   }
-//
+
   public static getLineSpacing(paint: Paint): number {
     return 1.2;
   }
-//
-//    public static float getLineSpacing(Paint paint, Paint.FontMetrics fontMetrics){
-//        paint.getFontMetrics(fontMetrics);
-//        return fontMetrics.ascent - fontMetrics.top + fontMetrics.bottom;
-//    }
-//
+
 //    /**
 //     * Returns a recyclable FSize instance.
 //     * calculates the approximate size of a text, depending on a demo text
@@ -163,37 +101,8 @@ export default abstract class Utils {
     var fsize: FSize = new FSize(paint.getTextSize() * demoText.length, paint.getTextSize());
     return fsize;
   }
-//
-//    private static Rect mCalcTextSizeRect = new Rect();
-//    /**
-//     * calculates the approximate size of a text, depending on a demo text
-//     * avoid repeated calls (e.g. inside drawing methods)
-//     *
-//     * @param paint
-//     * @param demoText
-//     * @param outputFSize An output variable, modified by the function.
-//     */
-//    public static void calcTextSize(Paint paint, String demoText, FSize outputFSize) {
-//
-//        Rect r = mCalcTextSizeRect;
-//        r.set(0,0,0,0);
-//        paint.getTextBounds(demoText, 0, demoText.length(), r);
-//        outputFSize.width = r.width();
-//        outputFSize.height = r.height();
-//
-//    }
-//
-//
-//    /**
-//     * Math.pow(...) is very expensive, so avoid calling it and create it
-//     * yourself.
-//     */
-//    private static final int POW_10[] = {
-//            1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
-//    };
-//
+
   private static mDefaultValueFormatter: IValueFormatter = Utils.generateDefaultValueFormatter();
-//
   private static generateDefaultValueFormatter(): IValueFormatter {
     var formatter: DefaultValueFormatter = new DefaultValueFormatter(1);
     return formatter;
@@ -204,110 +113,7 @@ export default abstract class Utils {
   {
     return Utils.mDefaultValueFormatter;
   }
-//
-//    /**
-//     * Formats the given number to the given number of decimals, and returns the
-//     * number as a string, maximum 35 characters. If thousands are separated, the separating
-//     * character is a dot (".").
-//     *
-//     * @param number
-//     * @param digitCount
-//     * @param separateThousands set this to true to separate thousands values
-//     * @return
-//     */
-//    public static String formatNumber(float number, int digitCount, boolean separateThousands) {
-//        return formatNumber(number, digitCount, separateThousands, '.');
-//    }
-//
-//    /**
-//     * Formats the given number to the given number of decimals, and returns the
-//     * number as a string, maximum 35 characters.
-//     *
-//     * @param number
-//     * @param digitCount
-//     * @param separateThousands set this to true to separate thousands values
-//     * @param separateChar      a caracter to be paced between the "thousands"
-//     * @return
-//     */
-//    public static String formatNumber(float number, int digitCount, boolean separateThousands,
-//                                      char separateChar) {
-//
-//        char[] out = new char[35];
-//
-//        boolean neg = false;
-//        if (number == 0) {
-//            return "0";
-//        }
-//
-//        boolean zero = false;
-//        if (number < 1 && number > -1) {
-//            zero = true;
-//        }
-//
-//        if (number < 0) {
-//            neg = true;
-//            number = -number;
-//        }
-//
-//        if (digitCount > POW_10.length) {
-//            digitCount = POW_10.length - 1;
-//        }
-//
-//        number *= POW_10[digitCount];
-//        long lval = Math.round(number);
-//        int ind = out.length - 1;
-//        int charCount = 0;
-//        boolean decimalPointAdded = false;
-//
-//        while (lval != 0 || charCount < (digitCount + 1)) {
-//            int digit = (int) (lval % 10);
-//            lval = lval / 10;
-//            out[ind--] = (char) (digit + '0');
-//            charCount++;
-//
-//            // add decimal point
-//            if (charCount == digitCount) {
-//                out[ind--] = ',';
-//                charCount++;
-//                decimalPointAdded = true;
-//
-//                // add thousand separators
-//            } else if (separateThousands && lval != 0 && charCount > digitCount) {
-//
-//                if (decimalPointAdded) {
-//
-//                    if ((charCount - digitCount) % 4 == 0) {
-//                        out[ind--] = separateChar;
-//                        charCount++;
-//                    }
-//
-//                } else {
-//
-//                    if ((charCount - digitCount) % 4 == 3) {
-//                        out[ind--] = separateChar;
-//                        charCount++;
-//                    }
-//                }
-//            }
-//        }
-//
-//        // if number around zero (between 1 and -1)
-//        if (zero) {
-//            out[ind--] = '0';
-//            charCount += 1;
-//        }
-//
-//        // if the number is negative
-//        if (neg) {
-//            out[ind--] = '-';
-//            charCount += 1;
-//        }
-//
-//        int start = out.length - charCount;
-//
-//        return String.valueOf(out, start, out.length - start);
-//    }
-//
+
 /**
      * rounds the given number to the next significant number
      *
@@ -343,53 +149,6 @@ export default abstract class Utils {
 
     return Math.floor(Math.ceil(-Math.log10(i)) + 2);
   }
-//
-//    /**
-//     * Converts the provided Integer List to an int array.
-//     *
-//     * @param integers
-//     * @return
-//     */
-//    public static int[] convertIntegers(List<Integer> integers) {
-//
-//        int[] ret = new int[integers.size()];
-//
-//        copyIntegers(integers, ret);
-//
-//        return ret;
-//    }
-//
-//    public static void copyIntegers(List<Integer> from, int[] to){
-//        int count = to.length < from.size() ? to.length : from.size();
-//        for(int i = 0 ; i < count ; i++){
-//            to[i] = from.get(i);
-//        }
-//    }
-//
-//    /**
-//     * Converts the provided String List to a String array.
-//     *
-//     * @param strings
-//     * @return
-//     */
-//    public static String[] convertStrings(List<String> strings) {
-//
-//        String[] ret = new String[strings.size()];
-//
-//        for (int i = 0; i < ret.length; i++) {
-//            ret[i] = strings.get(i);
-//        }
-//
-//        return ret;
-//    }
-//
-//    public static void copyStrings(List<String> from, String[] to){
-//        int count = to.length < from.size() ? to.length : from.size();
-//        for(int i = 0 ; i < count ; i++){
-//            to[i] = from.get(i);
-//        }
-//    }
-//
 /**
      * Replacement for the Math.nextUp(...) method that is only available in
      * HONEYCOMB and higher. Dat's some seeeeek sheeet.
@@ -423,55 +182,10 @@ export default abstract class Utils {
     p.y = center.y + dist * Math.sin((angle* Math.PI / 180));
     return p
   }
-//
-//    public static void velocityTrackerPointerUpCleanUpIfNecessary(MotionEvent ev,
-//                                                                  VelocityTracker tracker) {
-//
-//        // Check the dot product of current velocities.
-//        // If the pointer that left was opposing another velocity vector, clear.
-//        tracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
-//        final int upIndex = ev.getActionIndex();
-//        final int id1 = ev.getPointerId(upIndex);
-//        final float x1 = tracker.getXVelocity(id1);
-//        final float y1 = tracker.getYVelocity(id1);
-//        for (int i = 0, count = ev.getPointerCount(); i < count; i++) {
-//            if (i == upIndex)
-//                continue;
-//
-//            final int id2 = ev.getPointerId(i);
-//            final float x = x1 * tracker.getXVelocity(id2);
-//            final float y = y1 * tracker.getYVelocity(id2);
-//
-//            final float dot = x + y;
-//            if (dot < 0) {
-//                tracker.clear();
-//                break;
-//            }
-//        }
-//    }
-//
-//    /**
-//     * Original method view.postInvalidateOnAnimation() only supportd in API >=
-//     * 16, This is a replica of the code from ViewCompat.
-//     *
-//     * @param view
-//     */
-//    @SuppressLint("NewApi")
-//    public static void postInvalidateOnAnimation(View view) {
-//        if (Build.VERSION.SDK_INT >= 16)
-//            view.postInvalidateOnAnimation();
-//        else
-//            view.postInvalidateDelayed(10);
-//    }
-//
+
   public static getMinimumFlingVelocity():number {
     return Utils.mMinimumFlingVelocity;
   }
-//
-//    public static int getMaximumFlingVelocity() {
-//        return mMaximumFlingVelocity;
-//    }
-//
     /**
      * returns an angle between 0.f < 360.f (not less than zero, less than 360)
      */
@@ -503,9 +217,6 @@ export default abstract class Utils {
     return [drawable];
   }
 
-//    private static Rect mDrawTextRectBuffer = new Rect();
-//    private static Paint.FontMetrics mFontMetricsBuffer = new Paint.FontMetrics();
-//
   public static drawXAxisValue(text: string, x: number, y: number, paint: TextPaint,
                                anchor: MPPointF, angleDegrees: number): Paint{
 
@@ -560,125 +271,7 @@ export default abstract class Utils {
     }
     return paint
   }
-//
-//    public static void drawMultilineText(Canvas c, StaticLayout textLayout,
-//                                         float x, float y,
-//                                         TextPaint paint,
-//                                         MPPointF anchor, float angleDegrees) {
-//
-//        float drawOffsetX = 0.f;
-//        float drawOffsetY = 0.f;
-//        float drawWidth;
-//        float drawHeight;
-//
-//        final float lineHeight = paint.getFontMetrics(mFontMetricsBuffer);
-//
-//        drawWidth = textLayout.getWidth();
-//        drawHeight = textLayout.getLineCount() * lineHeight;
-//
-//        drawOffsetX -= mDrawTextRectBuffer.left;
-//
-//        //  and draws from bottom to top.
-//        // And we want to normalize it.
-//        drawOffsetY += drawHeight;
-//
-//        // To have a consistent point of reference, we always draw left-aligned
-//        Paint.Align originalTextAlign = paint.getTextAlign();
-//        paint.setTextAlign(Paint.Align.LEFT);
-//
-//        if (angleDegrees != 0.f) {
-//
-//            // Move the text drawing rect in a way that it always rotates around its center
-//            drawOffsetX -= drawWidth * 0.5f;
-//            drawOffsetY -= drawHeight * 0.5f;
-//
-//            float translateX = x;
-//            float translateY = y;
-//
-//            // Move the "outer" rect relative to the anchor, assuming its centered
-//            if (anchor.x != 0.5f || anchor.y != 0.5f) {
-//                final FSize rotatedSize = getSizeOfRotatedRectangleByDegrees(
-//                        drawWidth,
-//                        drawHeight,
-//                        angleDegrees);
-//
-//                translateX -= rotatedSize.width * (anchor.x - 0.5f);
-//                translateY -= rotatedSize.height * (anchor.y - 0.5f);
-//                FSize.recycleInstance(rotatedSize);
-//            }
-//
-//            c.save();
-//            c.translate(translateX, translateY);
-//            c.rotate(angleDegrees);
-//
-//            c.translate(drawOffsetX, drawOffsetY);
-//            textLayout.draw(c);
-//
-//            c.restore();
-//        } else {
-//            if (anchor.x != 0.f || anchor.y != 0.f) {
-//
-//                drawOffsetX -= drawWidth * anchor.x;
-//                drawOffsetY -= drawHeight * anchor.y;
-//            }
-//
-//            drawOffsetX += x;
-//            drawOffsetY += y;
-//
-//            c.save();
-//
-//            c.translate(drawOffsetX, drawOffsetY);
-//            textLayout.draw(c);
-//
-//            c.restore();
-//        }
-//
-//        paint.setTextAlign(originalTextAlign);
-//    }
-//
-//    public static void drawMultilineText(Canvas c, String text,
-//                                         float x, float y,
-//                                         TextPaint paint,
-//                                         FSize constrainedToSize,
-//                                         MPPointF anchor, float angleDegrees) {
-//
-//        StaticLayout textLayout = new StaticLayout(
-//                text, 0, text.length(),
-//                paint,
-//                (int) Math.max(Math.ceil(constrainedToSize.width), 1.f),
-//                Layout.Alignment.ALIGN_NORMAL, 1.f, 0.f, false);
-//
-//
-//        drawMultilineText(c, textLayout, x, y, paint, anchor, angleDegrees);
-//    }
-//
-//    /**
-//     * Returns a recyclable FSize instance.
-//     * Represents size of a rotated rectangle by degrees.
-//     *
-//     * @param rectangleSize
-//     * @param degrees
-//     * @return A Recyclable FSize instance
-//     */
-//    public static getSizeOfRotatedRectangleByDegrees( rectangleSize:FSize, degrees:number):FSize{
-//        var radians:number = degrees * Utils.FDEG2RAD;
-//        return this.getSizeOfRotatedRectangleByRadians(rectangleSize.width, rectangleSize.height,
-//                radians);
-//    }
-//
-//    /**
-//     * Returns a recyclable FSize instance.
-//     * Represents size of a rotated rectangle by radians.
-//     *
-//     * @param rectangleSize
-//     * @param radians
-//     * @return A Recyclable FSize instance
-//     */
-//    public static  getSizeOfRotatedRectangleByRadians( rectangleSize:FSize,  radians:number):FSize {
-//        return getSizeOfRotatedRectangleByRadians(rectangleSize.width, rectangleSize.height,
-//                radians);
-//    }
-//
+
 //    /**
 //     * Returns a recyclable FSize instance.
 //     * Represents size of a rotated rectangle by degrees.

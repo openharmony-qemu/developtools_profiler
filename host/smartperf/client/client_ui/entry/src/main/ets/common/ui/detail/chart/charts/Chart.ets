@@ -746,118 +746,6 @@ export default abstract class Chart <T> {
     this.mDragDecelerationFrictionCoef = newValue;
   }
 
-
-/** CODE BELOW FOR PROVIDING EASING FUNCTIONS */
-//
-//    /**
-//     * Animates the drawing / rendering of the chart on both x- and y-axis with
-//     * the specified animation time. If animate(...) is called, no further
-//     * calling of invalidate() is necessary to refresh the chart. ANIMATIONS
-//     *
-//     * @param durationMillisX
-//     * @param durationMillisY
-//     * @param easingX         a custom easing function to be used on the animation phase
-//     * @param easingY         a custom easing function to be used on the animation phase
-//     */
-//    @RequiresApi(11)
-//    public void animateXY(int durationMillisX, int durationMillisY, EasingFunction easingX,
-//                          EasingFunction easingY) {
-//        mAnimator.animateXY(durationMillisX, durationMillisY, easingX, easingY);
-//    }
-//
-//    /**
-//     * Animates the drawing / rendering of the chart on both x- and y-axis with
-//     * the specified animation time. If animate(...) is called, no further
-//     * calling of invalidate() is necessary to refresh the chart. ANIMATIONS
-//     *
-//     * @param durationMillisX
-//     * @param durationMillisY
-//     * @param easing         a custom easing function to be used on the animation phase
-//     */
-//    @RequiresApi(11)
-//    public void animateXY(int durationMillisX, int durationMillisY, EasingFunction easing) {
-//        mAnimator.animateXY(durationMillisX, durationMillisY, easing);
-//    }
-
-//    /**
-//     * Animates the rendering of the chart on the x-axis with the specified
-//     * animation time. If animate(...) is called, no further calling of
-//     * invalidate() is necessary to refresh the chart. ANIMATIONS ONLY WORK FOR
-//     *
-//     * @param durationMillis
-//     * @param easing         a custom easing function to be used on the animation phase
-//     */
-//    @RequiresApi(11)
-//    public void animateX(int durationMillis, EasingFunction easing) {
-//        mAnimator.animateX(durationMillis, easing);
-//    }
-
-//    /**
-//     * Animates the rendering of the chart on the y-axis with the specified
-//     * animation time. If animate(...) is called, no further calling of
-//     * invalidate() is necessary to refresh the chart. ANIMATIONS ONLY WORK FOR
-//     *
-//     * @param durationMillis
-//     * @param easing         a custom easing function to be used on the animation phase
-//     */
-//    @RequiresApi(11)
-//    public void animateY(int durationMillis, EasingFunction easing) {
-//        mAnimator.animateY(durationMillis, easing);
-//    }
-//
-//    /**
-//     * ################ ################ ################ ################
-//     */
-//    /** CODE BELOW FOR PREDEFINED EASING OPTIONS */
-//
-//    /**
-//     * ################ ################ ################ ################
-//     */
-//    /** CODE BELOW FOR ANIMATIONS WITHOUT EASING */
-//
-//    /**
-//     * Animates the rendering of the chart on the x-axis with the specified
-//     * animation time. If animate(...) is called, no further calling of
-//     * invalidate() is necessary to refresh the chart. ANIMATIONS ONLY WORK FOR
-//     *
-//     * @param durationMillis
-//     */
-//    @RequiresApi(11)
-//    public void animateX(int durationMillis) {
-//        mAnimator.animateX(durationMillis);
-//    }
-//
-//    /**
-//     * Animates the rendering of the chart on the y-axis with the specified
-//     * animation time. If animate(...) is called, no further calling of
-//     * invalidate() is necessary to refresh the chart. ANIMATIONS ONLY WORK FOR
-//     *
-//     * @param durationMillis
-//     */
-//    @RequiresApi(11)
-//    public void animateY(int durationMillis) {
-//        mAnimator.animateY(durationMillis);
-//    }
-//
-//    /**
-//     * Animates the drawing / rendering of the chart on both x- and y-axis with
-//     * the specified animation time. If animate(...) is called, no further
-//     * calling of invalidate() is necessary to refresh the chart. ANIMATIONS
-//     *
-//     * @param durationMillisX
-//     * @param durationMillisY
-//     */
-//    @RequiresApi(11)
-//    public void animateXY(int durationMillisX, int durationMillisY) {
-//        mAnimator.animateXY(durationMillisX, durationMillisY);
-//    }
-//
-//    /**
-//     * ################ ################ ################ ################
-//     */
-//    /** BELOW THIS ONLY GETTERS AND SETTERS */
-//
-//
 /**
   * Returns the object representing all x-labels, this method can be used to
   * acquire the XAxis object and modify it (e.g. change the position of the
@@ -1182,23 +1070,6 @@ export default abstract class Chart <T> {
     return this.mViewPortHandler.getContentRect();
   }
 
-/**
-  * disables intercept touchevents
-  */
-//  public disableScroll() {
-//        ViewParent parent = getParent();
-//        if (parent != null)
-//            parent.requestDisallowInterceptTouchEvent(true);
-//  }
-
-/**
-     * enables intercept touchevents
-     */
-//    public enableScroll() {
-//        ViewParent parent = getParent();
-//        if (parent != null)
-//            parent.requestDisallowInterceptTouchEvent(false);
-//    }
 
 /**
   * paint for the grid background (only line and barchart)
@@ -1366,16 +1237,10 @@ export default abstract class Chart <T> {
   * @return
   */
   public getChartBitmap(): Paint[] {
-    // Define a bitmap with the same size as the view
     var returnedBitmap: Paint[] = [];
-    // Get the view's background
     var background = this.getBackground();
     if (background == null)
-    // has background drawable, then draw it on the canvas
     background = "#ffffff"
-    // draw the view on the canvas
-    //    this.draw();
-    // return the bitmap
     return returnedBitmap;
   }
 
@@ -1387,149 +1252,6 @@ export default abstract class Chart <T> {
     return this.background;
   }
 
-//    /**
-//     * Saves the current chart state with the given name to the given path on
-//     * the sdcard leaving the path empty "" will put the saved file directly on
-//     * the SD card chart is saved as a PNG image, example:
-//     * saveToPath("myfilename", "foldername1/foldername2");
-//     *
-//     * @param title
-//     * @param pathOnSD e.g. "folder1/folder2/folder3"
-//     * @return returns true on success, false on error
-//     */
-//    public boolean saveToPath(String title, String pathOnSD) {
-//
-//
-//
-//        Bitmap b = getChartBitmap();
-//
-//        OutputStream stream = null;
-//        try {
-//            stream = new FileOutputStream(Environment.getExternalStorageDirectory().getPath()
-//                    + pathOnSD + "/" + title
-//                    + ".png");
-//
-//            /*
-//             * Write bitmap to file using JPEG or PNG and 40% quality hint for
-//             * JPEG.
-//             */
-//            b.compress(CompressFormat.PNG, 40, stream);
-//
-//            stream.close();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return false;
-//        }
-//
-//        return true;
-//    }
-
-//    /**
-//     * Saves the current state of the chart to the gallery as an image type. The
-//     * compression must be set for JPEG only. 0 == maximum compression, 100 = low
-//     * compression (high quality). NOTE: Needs permission WRITE_EXTERNAL_STORAGE
-//     *
-//     * @param fileName        e.g. "my_image"
-//     * @param subFolderPath   e.g. "ChartPics"
-//     * @param fileDescription e.g. "Chart details"
-//     * @param format          e.g. Bitmap.CompressFormat.PNG
-//     * @param quality         e.g. 50, min = 0, max = 100
-//     * @return returns true if saving was successful, false if not
-//     */
-//    public boolean saveToGallery(String fileName, String subFolderPath, String fileDescription, Bitmap.CompressFormat
-//            format, int quality) {
-//        // restrain quality
-//        if (quality < 0 || quality > 100)
-//            quality = 50;
-//
-//        long currentTime = System.currentTimeMillis();
-//
-//        File extBaseDir = Environment.getExternalStorageDirectory();
-//        File file = new File(extBaseDir.getAbsolutePath() + "/DCIM/" + subFolderPath);
-//        if (!file.exists()) {
-//            if (!file.mkdirs()) {
-//                return false;
-//            }
-//        }
-//
-//        String mimeType = "";
-//        switch (format) {
-//            case PNG:
-//                mimeType = "image/png";
-//                if (!fileName.endsWith(".png"))
-//                    fileName += ".png";
-//                break;
-//            case WEBP:
-//                mimeType = "image/webp";
-//                if (!fileName.endsWith(".webp"))
-//                    fileName += ".webp";
-//                break;
-//            case JPEG:
-//            default:
-//                mimeType = "image/jpeg";
-//                if (!(fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")))
-//                    fileName += ".jpg";
-//                break;
-//        }
-//
-//        String filePath = file.getAbsolutePath() + "/" + fileName;
-//        FileOutputStream out = null;
-//        try {
-//            out = new FileOutputStream(filePath);
-//
-//            Bitmap b = getChartBitmap();
-//            b.compress(format, quality, out);
-//
-//            out.flush();
-//            out.close();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//
-//            return false;
-//        }
-//
-//        long size = new File(filePath).length();
-//
-//        ContentValues values = new ContentValues(8);
-//
-//        // store the details
-//        values.put(Images.Media.TITLE, fileName);
-//        values.put(Images.Media.DISPLAY_NAME, fileName);
-//        values.put(Images.Media.DATE_ADDED, currentTime);
-//        values.put(Images.Media.MIME_TYPE, mimeType);
-//        values.put(Images.Media.DESCRIPTION, fileDescription);
-//        values.put(Images.Media.ORIENTATION, 0);
-//        values.put(Images.Media.DATA, filePath);
-//        values.put(Images.Media.SIZE, size);
-//
-//        return getContext().getContentResolver().insert(Images.Media.EXTERNAL_CONTENT_URI, values) != null;
-//    }
-//
-//    /**
-//     * Saves the current state of the chart to the gallery as a JPEG image. The
-//     * filename and compression can be set. 0 == maximum compression, 100 = low
-//     * compression (high quality). NOTE: Needs permission WRITE_EXTERNAL_STORAGE
-//     *
-//     * @param fileName e.g. "my_image"
-//     * @param quality  e.g. 50, min = 0, max = 100
-//     * @return returns true if saving was successful, false if not
-//     */
-//    public boolean saveToGallery(String fileName, int quality) {
-//        return saveToGallery(fileName, "", "ohos-MPChart-Library Save", Bitmap.CompressFormat.PNG, quality);
-//    }
-//
-//    /**
-//     * Saves the current state of the chart to the gallery as a PNG image.
-//     * NOTE: Needs permission WRITE_EXTERNAL_STORAGE
-//     *
-//     * @param fileName e.g. "my_image"
-//     * @return returns true if saving was successful, false if not
-//     */
-//    public boolean saveToGallery(String fileName) {
-//        return saveToGallery(fileName, "", "ohos-MPChart-Library Save", Bitmap.CompressFormat.PNG, 40);
-//    }
-//
 /**
   * tasks to be done after the view is setup
   */
@@ -1577,102 +1299,12 @@ export default abstract class Chart <T> {
     return this.mJobs;
   }
 
-//    @Override
-//    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-//
-//        for (int i = 0; i < getChildCount(); i++) {
-//            getChildAt(i).layout(left, top, right, bottom);
-//        }
-//    }
-//
-//    @Override
-//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-//        int size = (int) Utils.convertDpToPixel(50f);
-//        setMeasuredDimension(
-//                Math.max(getSuggestedMinimumWidth(),
-//                        resolveSize(size,
-//                                widthMeasureSpec)),
-//                Math.max(getSuggestedMinimumHeight(),
-//                        resolveSize(size,
-//                                heightMeasureSpec)));
-//    }
-//
-//    @Override
-//    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-//        if (mLogEnabled)
-//            Log.i(LOG_TAG, "OnSizeChanged()");
-//
-//        if (w > 0 && h > 0 && w < 10000 && h < 10000) {
-//            if (mLogEnabled)
-//                Log.i(LOG_TAG, "Setting chart dimens, width: " + w + ", height: " + h);
-//            mViewPortHandler.setChartDimens(w, h);
-//        } else {
-//            if (mLogEnabled)
-//                Log.w(LOG_TAG, "*Avoiding* setting chart dimens! width: " + w + ", height: " + h);
-//        }
-//
-//        // This may cause the chart view to mutate properties affecting the view port --
-//        //   lets do this before we try to run any pending jobs on the view port itself
-//        notifyDataSetChanged();
-//
-//        for (Runnable r : mJobs) {
-//            post(r);
-//        }
-//
-//        mJobs.clear();
-//
-//        super.onSizeChanged(w, h, oldw, oldh);
-//    }
-//
-/**
-     * Setting this to true will set the layer-type HARDWARE for the view, false
-     * will set layer-type SOFTWARE.
-     *
-     * @param enabled
-     */
-  public setHardwareAccelerationEnabled(enabled: boolean) {
-
-    //        if (enabled)
-    //            setLayerType(View.LAYER_TYPE_HARDWARE, null);
-    //        else
-    //            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-  }
-
-//    @Override
-//    protected void onDetachedFromWindow() {
-//        super.onDetachedFromWindow();
-//
-//        //Log.i(LOG_TAG, "Detaching...");
-//
-//        if (mUnbind)
-//            unbindDrawables(this);
-//    }
 
 /**
      * unbind flag
      */
   private mUnbind: boolean = false;
 
-//    /**
-//     * Unbind all drawables to avoid memory leaks.
-//     * Link: http://stackoverflow.com/a/6779164/1590502
-//     *
-//     * @param view
-//     */
-//    private void unbindDrawables(View view) {
-//
-//        if (view.getBackground() != null) {
-//            view.getBackground().setCallback(null);
-//        }
-//        if (view instanceof ViewGroup) {
-//            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
-//                unbindDrawables(((ViewGroup) view).getChildAt(i));
-//            }
-//            ((ViewGroup) view).removeAllViews();
-//        }
-//    }
-//
 /**
   * Set this to true to enable "unbinding" of drawables. When a View is detached
   * from a window. This helps avoid memory leaks.

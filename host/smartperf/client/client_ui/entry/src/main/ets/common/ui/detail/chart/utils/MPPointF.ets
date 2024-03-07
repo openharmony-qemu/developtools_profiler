@@ -21,14 +21,6 @@ export default class MPPointF extends Poolable {
   public x: number;
   public y: number;
 
-  /*static {
-        pool = ObjectPool.create(32, new MPPointF(0,0));
-        pool.setReplenishPercentage(0.5f);
-    }*/
-
-  /*   public MPPointF() {
-    }*/
-
   public constructor(x?: number, y?: number) {
     super()
     this.x = x;
@@ -51,17 +43,6 @@ export default class MPPointF extends Poolable {
     return this.pool.get();
   }
 
-  /* public static MPPointF getInstance() {
-        return pool.get();
-    }
-
-    public static MPPointF getInstance(MPPointF copy) {
-        MPPointF result = pool.get();
-        result.x = copy.x;
-        result.y = copy.y;
-        return result;
-    }*/
-
   public static recycleInstance(instance: MPPointF) {
     this.pool.recycle(instance);
   }
@@ -69,39 +50,6 @@ export default class MPPointF extends Poolable {
   public static recycleInstances(instances: Array<MPPointF>) {
     MPPointF.pool.recycleArray(instances);
   }
-
-  /*public static final Parcelable.Creator<MPPointF> CREATOR = new Parcelable.Creator<MPPointF>() {
-       */
-  /**
-         * Return a new point from the data in the specified parcel.
-         */
-  /*
-        public MPPointF createFromParcel(Parcel in) {
-            MPPointF r = new MPPointF(0,0);
-            r.my_readFromParcel(in);
-            return r;
-        }
-
-       */
-  /**
-         * Return an array of rectangles of the specified size.
-         */
-  /*
-        public MPPointF[] newArray(int size) {
-            return new MPPointF[size];
-        }
-    };*/
-
-  /**
-     * Set the point's coordinates from the data stored in the specified
-     * parcel. To write a point to a parcel, call writeToParcel().
-     *
-     * @param in The parcel to read the point's coordinates from
-     */
-  /* public void my_readFromParcel(Parcel in) {
-        x = in.readFloat();
-        y = in.readFloat();
-    }*/
 
   public getX(): number{
     return this.x;
