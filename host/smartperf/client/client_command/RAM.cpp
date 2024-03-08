@@ -45,6 +45,7 @@ std::map<std::string, std::string> RAM::ItemData()
     for (auto it = procRamInfo.begin(); it != procRamInfo.end(); ++it) {
         result.insert(*it);
     }
+
     return result;
 }
 
@@ -151,10 +152,15 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
 {
     std::map<std::string, std::string> sysRamInfo;
     std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
+    if (collector == nullptr) {
+        LOGE("RAM::GetSysRamInfo collector is nullptr!");
+        return sysRamInfo;
+    }
     CollectResult<SysMemory> result = collector->CollectSysMemory();
     sysRamInfo["memTotal"] = std::to_string(result.data.memTotal);
     sysRamInfo["memFree"] = std::to_string(result.data.memFree);
     sysRamInfo["memAvailable"] = std::to_string(result.data.memAvailable);
+
     return sysRamInfo;
 }
 }
