@@ -181,7 +181,7 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
  */
 HWTEST_F(HidebugTest, GetSystemCpuUsage, TestSize.Level1)
 {
-    double systemCpuUsage = OH_HiDebug_GetAppCpuUsage();
+    double systemCpuUsage = OH_HiDebug_GetSystemCpuUsage();
     EXPECT_TRUE(systemCpuUsage >= 0 && systemCpuUsage <= 1);
 }
 
@@ -228,6 +228,28 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetSystemMemInfo1, TestSize.Level1)
     ASSERT_TRUE(systemMemInfo.totalMem >= 0);
     ASSERT_TRUE(systemMemInfo.freeMem >= 0);
     ASSERT_TRUE(systemMemInfo.availableMem >= 0);
+}
+
+/**
+ * @tc.name: OH_HiDebug_StartAppTraceCapture1
+ * @tc.desc: test OH_HiDebug_StartAppTraceCapture. start app capture trace
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_StartAppTraceCapture1, TestSize.Level1)
+{
+    uint32_t fileLength = 256;
+    char fileName[256] = {0};
+    HiDebug_TraceFlag flag = HIDEBUG_TRACE_FLAG_MAIN_THREAD;
+    uint64_t tags = HIDEBUG_TRACE_TAG_COMMON_LIBRARY;
+    uint32_t limitSize = 1024 * 1024;
+    auto resutl1 = OH_HiDebug_StartAppTraceCapture(flag, tags, limitSize, fileName, fileLength);
+    EXPECT_TRUE(resutl1 == HIDEBUG_SUCCESS);
+    if (resutl1 == HIDEBUG_SUCCESS) {
+        auto result2 = OH_HiDebug_StopAppTraceCapture();
+        auto length = sizeof(fileName) / sizeof(fileName[0]);
+        EXPECT_TRUE(result2 == HIDEBUG_SUCCESS);
+        EXPECT_TRUE(length > 1);
+    }
 }
 
 } // namespace

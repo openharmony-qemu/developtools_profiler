@@ -52,6 +52,9 @@ constexpr int ARRAY_INDEX_FIRST = 0;
 constexpr int ARRAY_INDEX_SECOND = 1;
 constexpr int REMOVE_NAPI_WRAP_PARAM_COUNT = 2;
 constexpr int BYTE_2_KB_SHIFT_BITS = 10;
+constexpr int FIRST_POS = 0;
+constexpr int SECOND_POS = 1;
+constexpr int THIRD_POS = 2;
 const std::string SLASH_STR = "/";
 const std::string DEFAULT_FILENAME = "undefined";
 const std::string JSON_FILE = ".json";
@@ -61,7 +64,10 @@ enum ErrorCode {
     PARAMETER_ERROR = 401,
     VERSION_ERROR = 801,
     SYSTEM_ABILITY_NOT_FOUND = 11400101,
+    HAVA_ALREADY_TRACE = 11400102,
+    WITHOUT_WRITE_PERMISSON = 11400103,
     SYSTEM_STATUS_ABNORMAL = 11400104,
+    NO_CAPTURE_TRACE_RUNNING = 11400105,
 };
 }
 
@@ -226,6 +232,53 @@ static bool GetFileNameParamThrowErrorVersion(napi_env env, napi_callback_info i
     char buf[bufLen + 1];
     napi_get_value_string_utf8(env, argv[0], buf, bufLen + 1, &bufLen);
     fileName = buf;
+    return true;
+}
+
+static bool GetTraceParam(napi_env env, napi_callback_info info,
+    uint32_t& traceFlag, uint32_t& limitSize, std::vector<uint64_t>& tags)
+{
+    const int valueNum = 3;
+    size_t argc = valueNum;
+    napi_value argv[valueNum] = {nullptr};
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (argc != valueNum) {
+        HILOG_ERROR(LOG_CORE, "invalid numbers of params!");
+        return false;
+    }
+    if (!MatchValueType(env, argv[FIRST_POS], napi_object) &&
+        !MatchValueType(env, argv[SECOND_POS], napi_number) &&
+        !MatchValueType(env, argv[THIRD_POS], napi_number)) {
+        HILOG_ERROR(LOG_CORE, "params type error.");
+        return false;
+    }
+    uint32_t arraySize = 0;
+    if (!IsArrayForNapiValue(env, argv[FIRST_POS], arraySize)) {
+        HILOG_ERROR(LOG_CORE, "Get input tags failed.");
+        return false;
+    }
+    uint64_t tag = 0;
+    bool lossless = true;
+    for (uint32_t i = 0; i < arraySize; ++i) {
+        napi_value jsValue = nullptr;
+        if (napi_get_element(env, argv[FIRST_POS], i, &jsValue) != napi_ok) {
+            HILOG_ERROR(LOG_CORE, "get_element -> Get input tags failed.");
+            return false;
+        }
+        if (napi_get_value_bigint_uint64(env, jsValue, &tag, &lossless) != napi_ok) {
+            HILOG_ERROR(LOG_CORE, "Get input tags failed.");
+            return false;
+        }
+        tags.push_back(tag);
+    }
+    if (napi_get_value_uint32(env, argv[SECOND_POS], &traceFlag) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "Get input traceFlag failed.");
+        return false;
+    }
+    if (napi_get_value_uint32(env, argv[THIRD_POS], &limitSize) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "Get input limitSize failed.");
+        return false;
+    }
     return true;
 }
 
@@ -715,6 +768,63 @@ napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
     return sysMemInfo;
 }
 
+napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
+{
+    napi_value result;
+    uint32_t traceFlag = 0;
+    uint32_t limitSize = 0;
+    std::vector<uint64_t> tags;
+    if (!GetTraceParam(env, info, traceFlag, limitSize, tags)) {
+        std::string paramErrorMessage = "Invalid argument";
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+    }
+    uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
+    std::string file;
+    auto nativeInterface = HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        std::string errorMessage = "The status of the trace is abnormal";
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
+    }
+    auto ret = nativeInterface->StartAppTraceCapture(tag, traceFlag, limitSize, file);
+    if (ret == TRACE_SUCCESS) {
+        napi_create_string_utf8(env, file.c_str(), NAPI_AUTO_LENGTH, &result);
+        return result;
+    }
+    if (ret == PARAMETER_ERROR) {
+        std::string errorMessage = "Invalid argument";
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage.c_str());
+    }
+    if (ret == HAVA_ALREADY_TRACE) {
+        std::string errorMessage = "Have already capture trace";
+        napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage.c_str());
+    }
+    if (ret == WITHOUT_WRITE_PERMISSON) {
+        std::string errorMessage = "Without write permission on the file";
+        napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage.c_str());
+    }
+    std::string errorMessage = "The status of the trace is abnormal";
+    napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
+    return CreateUndefined(env);
+}
+
+napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
+{
+    auto nativeInterface = HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        return CreateUndefined(env);
+    }
+    auto ret = nativeInterface->StopAppTraceCapture();
+    if (ret == SYSTEM_STATUS_ABNORMAL) {
+        std::string errorMessage = "The status of the trace is abnormal";
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
+    }
+    if (ret == NO_CAPTURE_TRACE_RUNNING) {
+        std::string errorMessage = "No capture trace running";
+        napi_throw_error(env, std::to_string(ErrorCode::NO_CAPTURE_TRACE_RUNNING).c_str(), errorMessage.c_str());
+    }
+    return CreateUndefined(env);
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -739,7 +849,9 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSystemCpuUsage", GetSystemCpuUsage),
         DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit),
         DECLARE_NAPI_FUNCTION("getAppNativeMemInfo", GetAppNativeMemInfo),
-        DECLARE_NAPI_FUNCTION("getSystemMemInfo", GetSystemMemInfo)
+        DECLARE_NAPI_FUNCTION("getSystemMemInfo", GetSystemMemInfo),
+        DECLARE_NAPI_FUNCTION("startAppTraceCapture", StartAppTraceCapture),
+        DECLARE_NAPI_FUNCTION("stopAppTraceCapture", StopAppTraceCapture),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
