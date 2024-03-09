@@ -867,7 +867,7 @@ void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
     std::string temp;
     bool res = memTagMap_.Find(tagId, temp);
     if (!res) {
-        memTagMap_[tagId] = tagName;
+        memTagMap_.EnsureInsert(tagId, tagName);
     }
 }
 
