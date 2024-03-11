@@ -26,6 +26,7 @@ struct FpsInfo {
     void Clear()
     {
         fps = 0;
+        curTime = 0;
         jitters.clear();
     }
     bool operator==(const FpsInfo& other) const

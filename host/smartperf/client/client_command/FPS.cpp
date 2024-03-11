@@ -151,7 +151,6 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     FILE *fp;
     static char tmp[1024];
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
-    LOGI("cmd=====: %s", cmd.c_str());
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
         return fpsInfo;
@@ -161,7 +160,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     lastTime = -1;
     LOGI("dump time: start!");
     struct timespec time1 = {0};
-    clock_gittime(CLOCK_MONOTONIC, &time1);
+    clock_gettime(CLOCK_MONOTONIC, &time1);
     LOGI("Time-------time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
     LOGI("Time-------time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
@@ -173,16 +172,14 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         std::stringstream sstream;
         sstream << tmp;
         sstream >> frameReadyTime;
-        cnt++;
         if (frameReadyTime == 0) {
-            zeroNum++;
             continue;
         }
         if (lastReadyTime >= frameReadyTime) {
             lastReadyTime = -1;
             continue;
         }
-        GetSameTimeNums(); 
+        GetSameTimeNums();
     }
     pclose(fp);
     LOGI("Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
@@ -194,7 +191,7 @@ void FPS::GetSameTimeNums()
     long long jitter;
     std::string onScreenTime = std::to_string(frameReadyTime / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
-    if (onScreenTime.find(fpsCurTime) != std::string::nops) {
+    if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
     }
     fpsInfo.fps = fpsNum;
@@ -216,33 +213,33 @@ bool FPS::IsForeGround()
     isFoundAppName = false;
     isFoundBundleName = false;
     FILE *fd = popen(cmd.c_str(), "r");
-    if (fd != nullptr) {
+    if (fd == nullptr) {
         return false;
     }
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) { 
+    while (fgets(buf, sizeof(buf), fd) != nullptr) { 
         std::string line = buf;
-        if (line.find(appLine) != std::string::nops) {
+        if (line.find(appLine) != std::string::npos) {
             isFoundAppName = true;
         }
-        if (line.find(bundleLine) != std::string::nops) {
+        if (line.find(bundleLine) != std::string::npos) {
             isFoundBundleName = true;
         }
         if (isFoundAppName || isFoundBundleName) {
-            if (line.find("app state") != std::string::nops) {
+            if (line.find("app state") != std::string::npos) {
                 bool tag = IsFindForeGround(line);
-                pclose(fp);
+                pclose(fd);
                 return tag;
             }
         }
     }
-    pclose(fp);
+    pclose(fd);
     return false;
 }
 
-bool FPS::IsFindForeGround(std::string line) {
-    std::string foreGroundTag = line.substr(line.find("#" + 1));
-    if (foreGroundTag.find("FOREGROUND") != std::string::nops) {
-        bool tag = IsFindForeGround(line);
+bool FPS::IsFindForeGround(std::string line)
+{
+    std::string foreGroundTag = line.substr(line.find("#") + 1);
+    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
         return true;
     } else {
         return false;

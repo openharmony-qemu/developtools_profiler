@@ -24,14 +24,14 @@ struct FpsInfoProfiler {
     std::vector<long long> jitters;
     std::vector<long long> currTimeStamps;
     int curTime;
-    long long curTimeDiff;
-    long long curTimeDump;
+    long long currTimeDiff;
+    long long currTimeDump;
     void Clear()
     {
         fps = 0;
         jitters.clear();
-        curTimeDiff = 0;
-        curTimeDump = 0;
+        currTimeDiff = 0;
+        currTimeDump = 0;
     }
     bool operator==(const FpsInfoProfiler& other) const
     {
@@ -52,8 +52,9 @@ struct FpsInfoProfiler {
     {
         fps = 0;
         curTime = 0;
-        curTimeDiff = 0;
-        curTimeDump = 0;
+        currTimeDiff = 0;
+        currTimeDump = 0;
+    }
 };
 class ProfilerFPS {
 public:
@@ -61,7 +62,7 @@ public:
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     FpsInfoProfiler GetFpsInfoMax();
-    void GetSameTimeNums();    
+    void GetSameTimeNums();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     void GetSectionsFps();
     void GetSectionsPrint(int printCount, long long msStartTime);
@@ -76,7 +77,6 @@ public:
 private:
     int num = 1;
     int number = 2;
-    std::string surfaceViewName;
     bool refresh = false;
     long long mod = 1e9;
     long long lastReadyTime = -1;

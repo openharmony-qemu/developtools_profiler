@@ -43,7 +43,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
     if (fpsInfoResult.fps == 0) {
         if (lastCurrTime == 0) {
-            long long currTime = (fpsInfoResult.curTimeDump / msClear) * msClear + fpsInfoResult.curTimeDiff;
+            long long currTime = (fpsInfoResult.currTimeDump / msClear) * msClear + fpsInfoResult.currTimeDiff;
             lastCurrTime = currTime / oneSec;
             printf("fps:%d|%lld\n", fpsInfoResult.fps, currTime / oneSec);
         } else {
@@ -52,7 +52,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
         }
     } else {
         if (lastCurrTime == 0) {
-            long long currTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + fpsInfoResult.curTimeDiff;
+            long long currTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + fpsInfoResult.currTimeDiff;
             lastCurrTime = currTime / oneSec;
             printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime);
         } else {
@@ -70,7 +70,6 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     }
     char* dt = ctime(&now);
     LOGI("printf time is: %s", dt);
-
     fflush(stdout);
     gettimeofday(&end, nullptr);
     runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
@@ -88,7 +87,7 @@ void ProfilerFPS::GetTimeDiff()
     std::string strRealTime;
     std::string cmd = "timestamps";
     FILE *fd = popen(cmd.c_str(), "r");
-    if (fd != nullptr) {
+    if (fd == nullptr) {
         return false;
     }
     char buf[1024] = {'\0'};
@@ -108,7 +107,7 @@ void ProfilerFPS::GetTimeDiff()
         }
     }
     pclose(fd);
-    fpsTnfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
+    fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
 void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime)
@@ -176,31 +175,6 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
     printf("SP_daemon exec finished!\n");
 }
 
-std::string ProfilerFPS::GetSurface()
-{
-    std::string cmdResult;
-    std::string cmdString1 = "hidumper -s 10 -a sur";
-    std::string cmdString2 = "face | grep sur";
-    std::string cmdString3 = "face";
-    SPUtils::LoadCmd(cmdString1 + cmdString2 + cmdString3, cmdResult);
-    size_t position1 = cmdResult.find("[");
-    size_t position2 = cmdResult.find("]");
-    LOGI("cmdResult==: %s", (cmdResult.substr(position1 + 1, position2 - position1 - 1)).c_str());
-    return cmdResult.substr(position1 + 1, position2 - position1 - 1);
-}
-
-std::string ProfilerFPS::CutLayerName(std::string layerName)
-{
-    std::string subLayerName;
-    size_t twenty = 20;
-    if (layerName.size() > twenty) {
-        subLayerName = layerName.substr(0, twenty);
-    } else {
-        subLayerName = layerName;
-    }
-    return subLayerName;
-}
-
 FpsInfoProfiler ProfilerFPS::GetFpsInfoMax()
 {
     if (uniteFpsInfo.curTime == (prevResultFpsInfo.curTime + 1)) {
@@ -222,7 +196,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfoMax()
         prevFpsInfoMax = uniteFpsInfo;
         return prevResultFpsInfo;
     } else {
-        LOGI("8888888888888888888888888"); 
+        LOGI("8888888888888888888888888");
         prevResultFpsInfo = uniteFpsInfo;
         prevSecFpsInfoMax = secUniteFpsInfo;
         prevFpsInfoMax = uniteFpsInfo;
@@ -237,8 +211,8 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
     uniteFpsInfo = GetSurfaceFrame(uniteLayer);
-    std::this_thread::sleep_for(std::chrono::milliseconds(threeHundred));
-    secUniteFpsInfo = GetSurfaceFrame(uniteLayer); 
+    std::this_thread::sleep_for(std::chrono::milliseconds(fourHundred));
+    secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
     return GetFpsInfoMax();
 }
 
@@ -257,6 +231,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     fpsInfo.fps = 0;
     FILE *fp;
     static char tmp[1024];
+    GetTimeDiff();
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     LOGI("cmd=====: %s", cmd.c_str());
     fp = popen(cmd.c_str(), "r");
@@ -268,10 +243,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     lastTime = -1;
     LOGI("dump time: start!");
     struct timespec time1 = {0};
-    clock_gittime(CLOCK_MONOTONIC, &time1);
+    clock_gettime(CLOCK_MONOTONIC, &time1);
     LOGI("Time-------time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
     LOGI("Time-------time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
+    fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGI("Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
@@ -280,16 +256,14 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
         std::stringstream sstream;
         sstream << tmp;
         sstream >> frameReadyTime;
-        cnt++;
         if (frameReadyTime == 0) {
-            zeroNum++;
             continue;
         }
         if (lastReadyTime >= frameReadyTime) {
             lastReadyTime = -1;
             continue;
         }
-        GetSameTimeNums(); 
+        GetSameTimeNums();
     }
     pclose(fp);
     LOGI("Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
@@ -301,7 +275,7 @@ void ProfilerFPS::GetSameTimeNums()
     long long jitter;
     std::string onScreenTime = std::to_string(frameReadyTime / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
-    if (onScreenTime.find(fpsCurTime) != std::string::nops) {
+    if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
     }
     fpsInfo.fps = fpsNum;
@@ -309,6 +283,7 @@ void ProfilerFPS::GetSameTimeNums()
         if (lastTime != -1) {
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
+            fpsInfo.currTimeStamps.push_back(frameReadyTime);
         }
         lastTime = frameReadyTime;
     }
