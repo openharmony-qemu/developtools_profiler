@@ -51,6 +51,7 @@ namespace OHOS {
             "FirstFrameDrawnTime:" + firstFrameDrawnTime + "ms\n"
             "AnimationCompleteTime:" + animationCompleteTime + "ms\n"
             "CompleteTime:" + completeTime + "ms\n";
+            LOGI("Radar.result====: %s", result.c_str());
             return result;
         }
         double Radar::ParseRadarResponse(std::string string)
