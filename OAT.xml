@@ -147,6 +147,9 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="hiebpf/test/resources/elf32.unstripped" desc="the hiebpf test file, the file is self-developed"/>
                 <filteritem type="filepath" name="hiebpf/test/resources/elf64.stripped" desc="the hiebpf test file, the file is self-developed"/>
             </filefilter>
+            <filefilter name="defaultFilter" desc="Files not to check">
+                <filteritem type="filename" name="hvigorfile.js" desc=".js not need check"/>
+			</filefilter>
         </filefilterlist>
     </oatconfig>
 </configuration>
