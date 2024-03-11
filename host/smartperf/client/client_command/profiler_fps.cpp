@@ -40,7 +40,6 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     FpsInfoProfiler fpsInfoResult;
     unsigned long runTime;
     fpsInfoResult = GetFpsInfo();
-    LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
     if (fpsInfoResult.fps == 0) {
         if (lastCurrTime == 0) {
             long long currTime = (fpsInfoResult.currTimeDump / msClear) * msClear + fpsInfoResult.currTimeDiff;
@@ -249,8 +248,6 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     LOGI("dump time: start!");
     struct timespec time1 = {0};
     clock_gettime(CLOCK_MONOTONIC, &time1);
-    LOGI("Time-------time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
-    LOGI("Time-------time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGI("Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
