@@ -1004,6 +1004,9 @@ void StackPreprocess::FlushCheck(T& stackData)
 
 void StackPreprocess::FlushData(BatchNativeHookData& stackData)
 {
+    if (buffer_ == nullptr) {
+        return;
+    }
     if (stackData.events().size() > 0) {
         size_t length = stackData.ByteSizeLong();
         stackData.SerializeToArray(buffer_.get(), length);

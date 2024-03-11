@@ -254,6 +254,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     if (noDataQueue_) {
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
+        ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
@@ -263,6 +264,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
+        ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&HookManager::ReadShareMemory, this, ctx));
@@ -273,7 +275,6 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     } else {
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
-    ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
     return true;
 }
 
