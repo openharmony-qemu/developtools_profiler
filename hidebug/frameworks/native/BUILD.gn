@@ -24,7 +24,6 @@ ohos_source_set("libhidebug_source") {
 
   sources = [
     "hidebug_base.c",
-    "src/hidebug_app_thread_cpu.cpp",
     "src/hidebug_native_interface_impl.cpp",
   ]
 
@@ -33,7 +32,6 @@ ohos_source_set("libhidebug_source") {
     "hichecker:libhichecker",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
-    "hitrace:hitrace_meter",
     "hiview:libucollection_client",
     "hiview:libucollection_utility",
     "init:libbegetutil",

@@ -311,7 +311,7 @@ describe("HidebugJsTest", function () {
             expect(false).assertTrue();
         }
     })
-
+    
     /**
      * @tc.name: HidebugJsTest_012
      * @tc.desc: getAppMemoryLimit正常测试
@@ -329,7 +329,7 @@ describe("HidebugJsTest", function () {
             expect().assertFail();
         }
     })
-
+    
     /**
      * @tc.name: HidebugJsTest_013
      * @tc.desc: getAppVMMemoryInfo正常测试
@@ -359,31 +359,6 @@ describe("HidebugJsTest", function () {
         try {
             let appThreadCpuUsage = hidebug.getAppThreadCpuUsage();
             expect(appThreadCpuUsage.length >= 0).assertTrue();
-        } catch (error) {
-            console.info(error.code);
-            console.info(error.message);
-            expect(false).assertTrue();
-        }
-    })
-
-    /**
-     * @tc.name: HidebugJsTest_015
-     * @tc.desc: StartAppTraceCapture正常测试
-     * @tc.type: FUNC
-     * @tc.require: issueI5VY8L
-     */
-    it('HidebugJsTest_015', 0, function () {
-        console.info("---------------------------HidebugJsTest_015----------------------------------");
-        try {
-            let tags = [hidebug.tags.ABILITY_MANAGER];
-            let flag = hidebug.TraceFlag.MAIN_THREAD;
-            let limitSize = 1024 * 1024;
-            let fileName = hidebug.startAppTraceCapture(tags, flag, limitSize);
-            for (let i = 0; i < 3; i++) {
-                hidebug.getSharedDirty();
-            }
-            hidebug.stopAppTraceCapture();
-            expect(fileName.length > 0).assertTrue();
         } catch (error) {
             console.info(error.code);
             console.info(error.message);

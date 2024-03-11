@@ -21,7 +21,6 @@
 
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
-#include "securec.h"
 
 double OH_HiDebug_GetAppCpuUsage()
 {
@@ -130,40 +129,4 @@ void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
     systemMemInfo->totalMem = static_cast<uint32_t>(sysMemInfo->memTotal);
     systemMemInfo->freeMem = static_cast<uint32_t>(sysMemInfo->memFree);
     systemMemInfo->availableMem = static_cast<uint32_t>(sysMemInfo->memAvailable);
-}
-
-HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
-    uint64_t tags, uint32_t limitSize, char* fileName, uint32_t length)
-{
-    if (fileName == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
-    }
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return HIDEBUG_TRACE_ABNORMAL;
-    }
-    std::string file;
-    auto ret = nativeInterface->StartAppTraceCapture(tags, flag, limitSize, file);
-    if (ret != OHOS::HiviewDFX::TRACE_SUCCESS) {
-        return static_cast<HiDebug_ErrorCode>(ret);
-    }
-    if (strcpy_s(fileName, length, file.c_str()) != EOK) {
-        nativeInterface->StopAppTraceCapture();
-        return HIDEBUG_INVALID_ARGUMENT;
-    }
-    return HIDEBUG_SUCCESS;
-}
-
-
-HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture()
-{
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return HIDEBUG_TRACE_ABNORMAL;
-    }
-    auto ret = nativeInterface->StopAppTraceCapture();
-    if (ret == OHOS::HiviewDFX::TRACE_SUCCESS) {
-        return HIDEBUG_SUCCESS;
-    }
-    return HIDEBUG_TRACE_ABNORMAL;
 }
