@@ -31,6 +31,7 @@
 #include "include/parse_start_trace_noh.h"
 #include "include/parse_radar.h"
 #include "include/parse_slide_fps_trace.h"
+#include "include/sp_log.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -308,6 +309,7 @@ std::string ControlCallCmd::GetAppStartTime()
     thGetTrace.join();
     thGetHisysId.join();
     std::string resultStream = radar.ParseRadarAppStrart(str);
+    LOGI("resultStream====: %s", resultStream.c_str());
     return resultStream;
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)

@@ -282,13 +282,13 @@ void ProfilerFPS::GetSameTimeNums()
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
+        fpsInfo.currTimeStamps.push_back(frameReadyTime);
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {
         if (lastTime != -1) {
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
-            fpsInfo.currTimeStamps.push_back(frameReadyTime);
         }
         lastTime = frameReadyTime;
     }

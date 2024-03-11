@@ -62,9 +62,9 @@ public:
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     FpsInfoProfiler GetFpsInfoMax();
-    void GetSameTimeNums(FpsInfoProfiler &fpsInfoResult);
+    void GetSameTimeNums();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
-    void GetSectionsFps();
+    void GetSectionsFps(FpsInfoProfiler &fpsInfoResult);
     void GetSectionsPrint(int printCount, long long msStartTime) const;
     void GetTimeDiff();
     FpsInfoProfiler fpsInfo;
@@ -93,7 +93,7 @@ private:
     long long lastCurrTime = 0;
     long long oneThousand = 1000;
     long long msClear = 1000000000;
-    long long currRealTime;
+    long long currRealTime = 0;
 };
 }
 }
