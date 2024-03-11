@@ -19,25 +19,19 @@
 #include <queue>
 namespace OHOS {
 namespace SmartPerf {
-struct DumpEntityProfiler {
-    const std::string windowName;
-    const std::string displayId;
-    const std::string pid;
-    const std::string windId;
-    const std::string zOrd;
-};
 struct FpsInfoProfiler {
     int fps;
-    int preFps;
     std::vector<long long> jitters;
-    std::queue<long long> timeStampQ;
-    long long lastFrameReadyTime;
-    long long currentFpsTime;
     std::vector<long long> currTimeStamps;
+    int curTime;
+    long long curTimeDiff;
+    long long curTimeDump;
     void Clear()
     {
         fps = 0;
         jitters.clear();
+        curTimeDiff = 0;
+        curTimeDump = 0;
     }
     bool operator==(const FpsInfoProfiler& other) const
     {
@@ -57,64 +51,47 @@ struct FpsInfoProfiler {
     FpsInfoProfiler()
     {
         fps = 0;
-        preFps = 0;
-        lastFrameReadyTime = 0;
-        currentFpsTime = 0;
-    }
+        curTime = 0;
+        curTimeDiff = 0;
+        curTimeDump = 0;
 };
 class ProfilerFPS {
 public:
-    void GetSectionsFps(FpsInfoProfiler &fpsInfo);
-    void GetSectionsPrint(int printCount, long long msStartTime);
-    void GetTimeDiff();
-    std::string CutLayerName(std::string layerName);
+    void GetFPS(int argc, std::vector<std::string> v);
+    void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     FpsInfoProfiler GetFpsInfoMax();
-    FpsInfoProfiler GetFpsInfoResult(long long &lastLineTime);
-    void GetLastFpsInfo();
-    void GetPrevFpsInfo();
-    void InitParams(long long &lastLineTime);
-    void GetResultFPS(int sectionsNum);
-    std::string GetSurface();
-    std::string GetLayer();
+    void GetSameTimeNums();    
+    FpsInfoProfiler GetSurfaceFrame(std::string name);
+    void GetSectionsFps();
+    void GetSectionsPrint(int printCount, long long msStartTime);
+    void GetTimeDiff();
     FpsInfoProfiler fpsInfo;
-    FpsInfoProfiler fpsInfoMax;
-    FpsInfoProfiler uniteFpsInfo;
-    FpsInfoProfiler mFpsInfo;
-    FpsInfoProfiler cntFpsInfo;
-    FpsInfoProfiler lastFlagFpsInfo;
-    FpsInfoProfiler prevFlagFpsInfo;
-    void GetFPS(int argc, std::vector<std::string> v);
+    FpsInfoProfiler fpsInfoMax;   //最后输出的
+    FpsInfoProfiler prevFpsInfoMax;  // 上一次第一个dump
+    FpsInfoProfiler prevSecFpsInfoMax; // 上一次第二个dump
+    FpsInfoProfiler uniteFpsInfo; // 当前第一个dump 
+    FpsInfoProfiler secUniteFpsInfo; // 当前第二个dump
+    FpsInfoProfiler prevResultFpsInfo; // 上一次输出的结果
 private:
-    std::string pkgName;
+    int num = 1;
+    int number = 2;
     std::string surfaceViewName;
-    std::string curLayerName;
-    bool jump = false;
     bool refresh = false;
-    int cnt = 0;
-    int zeroNum = 0;
-    int fpsGb = 0;
     long long mod = 1e9;
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
-    long long lastFrame = -1;
-    long long currTimeDiff;
-    long long currRealTime;
-    const int paramFourteen = 14;
-    const int paramTwentyFour = 24;
-    const int paramThree = 3;
-    const int windowNameIndex = 0;
-    const int windowIdIndex = 3;
-    const int focusNameIndex = 2;
-    long long lastCurrTime = 0;
-    int num = 1;
-    int number = 2;
-    int four = 4;
+    long long lastTime = -1;
+    int fpsNum = 0;
+    bool isFirstResult = false;
     unsigned long oneSec = 1000000;
-    long long msClear = 1000000000;
-    long long oneThousand = 1000;
+    unsigned long sleepTime = 980000;
     int ten = 10;
-    FpsInfoProfiler GetSurfaceFrame(std::string name);
+    int four = 4;
+    long long lastCurrTime = 0;
+    long long oneThousand = 1000;
+    long long msClear = 1000000000;
+    long long currRealTime;
 };
 }
 }
