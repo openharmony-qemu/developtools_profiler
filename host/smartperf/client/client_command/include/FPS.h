@@ -63,12 +63,12 @@ public:
     bool IsFindForeGround(std::string line);
     void GetSameTimeNums();
     FpsInfo fpsInfo;
-    FpsInfo fpsInfoMax;   //最后输出的
-    FpsInfo prevFpsInfoMax;  // 上一次第一个dump
-    FpsInfo prevSecFpsInfoMax; // 上一次第二个dump
-    FpsInfo uniteFpsInfo; // 当前第一个dump 
-    FpsInfo secUniteFpsInfo; // 当前第二个dump
-    FpsInfo prevResultFpsInfo; // 上一次输出的结果
+    FpsInfo fpsInfoMax;
+    FpsInfo prevFpsInfoMax;
+    FpsInfo prevSecFpsInfoMax;
+    FpsInfo uniteFpsInfo;
+    FpsInfo secUniteFpsInfo;
+    FpsInfo prevResultFpsInfo;
     static FPS &GetInstance()
     {
         static FPS instance;

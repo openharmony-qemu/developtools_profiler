@@ -62,18 +62,19 @@ public:
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     FpsInfoProfiler GetFpsInfoMax();
-    void GetSameTimeNums();
+    void GetSameTimeNums(FpsInfoProfiler &fpsInfoResult);
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     void GetSectionsFps();
-    void GetSectionsPrint(int printCount, long long msStartTime);
+    void GetSectionsPrint(int printCount, long long msStartTime) const;
     void GetTimeDiff();
     FpsInfoProfiler fpsInfo;
-    FpsInfoProfiler fpsInfoMax;   //最后输出的
-    FpsInfoProfiler prevFpsInfoMax;  // 上一次第一个dump
-    FpsInfoProfiler prevSecFpsInfoMax; // 上一次第二个dump
-    FpsInfoProfiler uniteFpsInfo; // 当前第一个dump 
-    FpsInfoProfiler secUniteFpsInfo; // 当前第二个dump
-    FpsInfoProfiler prevResultFpsInfo; // 上一次输出的结果
+    FpsInfoProfiler fpsInfoMax;
+    FpsInfoProfiler prevFpsInfoMax;
+    FpsInfoProfiler prevSecFpsInfoMax;
+    FpsInfoProfiler uniteFpsInfo;
+    FpsInfoProfiler secUniteFpsInfo;
+    FpsInfoProfiler prevResultFpsInfo;
+    FpsInfoProfiler lastFpsInfoResult;
 private:
     int num = 1;
     int number = 2;
@@ -85,7 +86,8 @@ private:
     int fpsNum = 0;
     bool isFirstResult = false;
     unsigned long oneSec = 1000000;
-    unsigned long sleepTime = 980000;
+    unsigned long sleepTime = 950000;
+    unsigned long sleepNowTime = 10000;
     int ten = 10;
     int four = 4;
     long long lastCurrTime = 0;

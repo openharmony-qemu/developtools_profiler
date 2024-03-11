@@ -105,7 +105,7 @@ FpsInfo FPS::GetFpsInfoMax()
         prevFpsInfoMax = uniteFpsInfo;
         return prevResultFpsInfo;
     } else {
-        LOGI("8888888888888888888888888"); 
+        LOGI("8888888888888888888888888");
         prevResultFpsInfo = uniteFpsInfo;
         prevSecFpsInfoMax = secUniteFpsInfo;
         prevFpsInfoMax = uniteFpsInfo;
@@ -124,12 +124,12 @@ FpsInfo FPS::GetFpsInfo()
     std::string uniteLayer = "UniRender";
     bool onTop = IsForeGround();
     if (onTop) {
-        LOGI("onTop==========="); 
+        LOGI("onTop===========");
         uniteFpsInfo = GetSurfaceFrame(uniteLayer);
         std::this_thread::sleep_for(std::chrono::milliseconds(threeHundred));
-        secUniteFpsInfo = GetSurfaceFrame(uniteLayer); 
+        secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
     } else {
-        LOGI("in the background=========="); 
+        LOGI("in the background==========");
         return fpsInfoMax;
     }
     return GetFpsInfoMax();
@@ -216,7 +216,7 @@ bool FPS::IsForeGround()
     if (fd == nullptr) {
         return false;
     }
-    while (fgets(buf, sizeof(buf), fd) != nullptr) { 
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
         std::string line = buf;
         if (line.find(appLine) != std::string::npos) {
             isFoundAppName = true;

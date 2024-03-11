@@ -51,15 +51,11 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
             lastCurrTime = lastCurrTime + oneThousand;
         }
     } else {
-        if (lastCurrTime == 0) {
-            long long currTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + fpsInfoResult.currTimeDiff;
-            lastCurrTime = currTime / oneSec;
-            printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime);
-        } else {
-            printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime + oneThousand);
-            lastCurrTime = lastCurrTime + oneThousand;
-        }
+        long long currTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + fpsInfoResult.currTimeDiff;
+        lastCurrTime = currTime / oneSec;
+        printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime);
     }
+    lastFpsInfoResult = fpsInfoResult;
     if (sectionsNum == ten && fpsInfoResult.fps != 0) {
         GetSectionsFps(fpsInfoResult);
     }
@@ -77,6 +73,16 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     if (runTime < sleepTime) {
         usleep(sleepTime - runTime);
     }
+    for (int i = 0; i < ten; i++) {
+        struct timespec time1 = {0};
+        clock_gettime(CLOCK_MONOTONIC, &time1);
+        int curTimeNow = static_cast<int>(time1.tv_sec - 1);
+        if (curTimeNow == lastFpsInfoResult.curTime) {
+            usleep(sleepNowTime);
+        } else {
+            break;
+        }
+    }
 }
 
 void ProfilerFPS::GetTimeDiff()
@@ -88,7 +94,7 @@ void ProfilerFPS::GetTimeDiff()
     std::string cmd = "timestamps";
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
-        return false;
+        return;
     }
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
@@ -110,7 +116,7 @@ void ProfilerFPS::GetTimeDiff()
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
-void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime)
+void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime) const
 {
     long long msJiange = 100;
     if (printCount < ten) {
@@ -121,17 +127,17 @@ void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime)
     }
 }
 
-void ProfilerFPS::GetSectionsFps()
+void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult)
 {
     int msCount = 0;
     long long msJiange = 100000000;
-    long long msStartTime = (fpsInfo.currTimeStamps[0] / msClear) * msClear + msJiange;
+    long long msStartTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + msJiange;
     long long currTime = 0;
     long long currLastTime = lastCurrTime;
     long long harTime = 100;
     int printCount = 0;
-    for (int i = 0; i < fpsInfo.currTimeStamps.size(); i++) {
-        currTime = fpsInfo.currTimeStamps[i];
+    for (int i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
+        currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
             msCount++;
         } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
@@ -148,7 +154,7 @@ void ProfilerFPS::GetSectionsFps()
             currLastTime += harTime;
             i--;
         }
-        if (i == (fpsInfo.currTimeStamps.size() - 1)) {
+        if (i == (fpsInfoResult.currTimeStamps.size() - 1)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
             printCount++;
             GetSectionsPrint(printCount, currLastTime);
@@ -233,7 +239,6 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     static char tmp[1024];
     GetTimeDiff();
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
-    LOGI("cmd=====: %s", cmd.c_str());
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
         return fpsInfo;
