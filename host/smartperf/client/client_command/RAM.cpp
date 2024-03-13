@@ -41,9 +41,11 @@ std::map<std::string, std::string> RAM::ItemData()
     for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
         result.insert(*it);
     }
-    std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
-    for (auto it = procRamInfo.begin(); it != procRamInfo.end(); ++it) {
-        result.insert(*it);
+    if (packageName.length() > 0) {
+        std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
+        for (auto it = procRamInfo.begin(); it != procRamInfo.end(); ++it) {
+            result.insert(*it);
+        }
     }
 
     return result;
@@ -61,6 +63,21 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> procRamInfo;
     if (processId.size() == 0) {
+        procRamInfo["gpuPss"] = "0";
+        procRamInfo["graphicPss"] = "0";
+        procRamInfo["arktsHeapPss"] = "0";
+        procRamInfo["nativeHeapPss"] = "0";
+        procRamInfo["stackPss"] = "0";
+        procRamInfo["pss"] = "0";
+        procRamInfo["sharedClean"] = "0";
+        procRamInfo["sharedDirty"] = "0";
+        procRamInfo["privateClean"] = "0";
+        procRamInfo["privateDirty"] = "0";
+        procRamInfo["swap"] = "0";
+        procRamInfo["swapPss"] = "0";
+        procRamInfo["heapSize"] = "0";
+        procRamInfo["heapAlloc"] = "0";
+        procRamInfo["heapFree"] = "0";
         return procRamInfo;
     }
     std::string cmd = "hidumper --mem "+ processId;
