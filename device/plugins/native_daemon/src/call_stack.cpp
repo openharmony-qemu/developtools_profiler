@@ -533,12 +533,10 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
     callStack.clear();
     for (auto frame: dfxcallStack) {
         HLOGD("pc 0x%" PRIx64 " sp 0x%" PRIx64 " isJsFrame = %d", frame.pc, frame.sp, frame.isJsFrame);
-        if ( !frame.isJsFrame || ( maxjsDepth-- > 0 )) {
+        if (!frame.isJsFrame || ( maxjsDepth-- > 0)) {
             callStack.emplace_back(frame.pc, frame.sp, frame.isJsFrame);
         }
-
     }
-
     return true;
 }
 
@@ -645,7 +643,6 @@ int CallStack::GetMapByPc([[maybe_unused]] uintptr_t pc, [[maybe_unused]] std::s
 {
     UnwindInfo *unwindInfoPtr = static_cast<UnwindInfo *>(arg);
     map = unwindInfoPtr->thread.FindMapByAddr(pc);
-
     if (map != nullptr) {
         HLOGW("GetMapByPc success");
         return 0;

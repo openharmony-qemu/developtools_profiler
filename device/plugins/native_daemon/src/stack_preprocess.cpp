@@ -343,7 +343,7 @@ void StackPreprocess::TakeResults()
             callFrames_.clear();
             if (hookConfig_.fp_unwind()) {
                 FillFpNativeIp(rawData);
-                 if (rawData->stackConext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report()) {
+                if (rawData->stackConext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report()) {
                     FillFpJsData(rawData);
                 }
             } else {
@@ -1314,8 +1314,8 @@ void StackPreprocess::FillFpJsData(RawStackPtr& rawData)
             case MUNMAP_MSG:
             case MEMORY_UNUSING_MSG:
                  return;
-        default:
-            break;
+            default:
+                break;
         }
     }
     std::vector<std::string> mapTokens = StringSplit(rawData->jsStackData, JS_CALL_STACK_DEPTH_SEP);

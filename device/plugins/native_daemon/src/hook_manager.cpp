@@ -426,7 +426,8 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
             hookCtx->stackPreprocess->SaveMemTag(rawStack->stackConext->tagId, tagName);
             continue;
         } else if (rawStack->stackConext->type == JS_STACK_MSG) {
-            hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackConext->jsChainId, reinterpret_cast<char*>(rawStack->data));
+            hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackConext->jsChainId,
+                                                     reinterpret_cast<char*>(rawStack->data));
             continue;
         }
         if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {

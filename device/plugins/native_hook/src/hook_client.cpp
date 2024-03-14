@@ -74,6 +74,7 @@ constexpr int FIRST_HASH = 16;
 constexpr int SECOND_HASH = 13;
 constexpr int THRESHOLD = 256;
 constexpr int DIVIDE_VAL = 32;
+constexpr int TEMP_IP = 100;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
@@ -322,7 +323,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         }
         fp = nextFp;
         tempIp = *(reinterpret_cast<unsigned long *>(fp + 1));
-        if (tempIp <= 100) {
+        if (tempIp <= TEMP_IP) {
             break;
         }
         if (g_ClientConfig.responseLibraryMode) {
@@ -1229,5 +1230,5 @@ bool ohos_malloc_hook_send_hook_js_rawstack(uint64_t id, const char* jsStackptr,
 
 void* ohos_malloc_hook_get_hook_js_config()
 {
-   return &g_ClientConfig.ArktsConfig;
+    return &g_ClientConfig.ArktsConfig;
 }

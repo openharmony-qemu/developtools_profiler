@@ -824,7 +824,6 @@ public:
             DfxSymbol &foundSymbol = symbolsMap_[ip];
             if (!foundSymbol.matched_) {
                 foundSymbol.matched_ = true;
-                //foundSymbol.symbolFileIndex_ = id_;
                 matchedSymbols_.push_back(&(symbolsMap_[ip]));
             }
 

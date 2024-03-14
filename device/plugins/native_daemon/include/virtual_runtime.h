@@ -80,7 +80,8 @@ public:
                      pid_t tid,
                      std::vector<CallFrame>& callFrames,
                      size_t maxStackLevel);
-    bool GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first, bool onlyjs = false);
+    bool GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first,
+                       bool onlyjs = false);
     void ClearMaps();
     void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
     void HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags, uint64_t offset, const std::string& filePath);

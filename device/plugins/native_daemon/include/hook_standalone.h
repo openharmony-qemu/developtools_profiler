@@ -61,7 +61,8 @@ struct HookData {
         }
         ss << ", processName:" << processName << ' ' <<",startupMode: " << startupMode
            << ", responseLibraryMode: " << responseLibraryMode << ", sampleInterval: " << sampleInterval
-           << ", jsStackReport: " << jsStackReport << ", maxJsStackdepth: " << maxJsStackdepth <<", filterNapiName" << filterNapiName;
+           << ", jsStackReport: " << jsStackReport << ", maxJsStackdepth: " << maxJsStackdepth
+           <<", filterNapiName" << filterNapiName;
         return ss.str();
     }
 };

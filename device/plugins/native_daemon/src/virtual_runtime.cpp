@@ -122,7 +122,8 @@ void VirtualRuntime::MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame)
     }
 }
 
-bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first, bool onlyjs)
+bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first,
+                                   bool onlyjs)
 {
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
@@ -135,7 +136,7 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
         auto &callFrame = callFrameIt.operator*();
         if (onlyjs && !callFrame.isJsFrame_) {
            // only symbolize arkts frame
-           continue;
+            continue;
         }
         if (callFrame.ip_ >= PERF_CONTEXT_MAX) {
             // dont care, this is not issue.
@@ -165,7 +166,8 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
             if (callStackErrCnt.load() % CALL_STACK_ERROR_TIMES == 0) {
                 PROFILER_LOG_DEBUG(LOG_CORE, "number of call stack errors: %" PRIu64 "", callStackErrCnt.load());
             }
-            if (callFrames.back().isJsFrame_) { //The fp mode js call stack is behind the native call stack, so it can't be deleted entirely
+            if (callFrames.back().isJsFrame_) { //The fp mode js call stack is behind the native
+            //call stack, so it can't be deleted entirely
                 callFrameIt = callFrames.erase(callFrameIt);
                 --callFrameIt;
                 continue;
@@ -388,7 +390,6 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
 
             DfxSymbol foundSymbols;
 
-
             if (!symbolsFile->IsAbc()) {
                 foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
             } else {
@@ -443,7 +444,7 @@ const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t
 {
     HLOGM("try find tid %u ip 0x%" PRIx64 " in %zu symbolsFiles ", tid, callFrame.ip_, symbolsFiles_.size());
     DfxSymbol symbol;
-    if (hookConfig_.fp_unwind() && callFrame.isJsFrame_) { 
+    if (hookConfig_.fp_unwind() && callFrame.isJsFrame_) {
         if (ArktsGetSymbolCache(callFrame, symbol)) {
             return symbol;
         } else {

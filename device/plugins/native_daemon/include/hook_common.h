@@ -138,9 +138,10 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
-            << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: " << ArktsConfig.jsStackReport
-            << ", maxJsStackDepth: " << std::to_string(ArktsConfig.maxJsStackDepth) << ", filterNapiName: " << ArktsConfig.filterNapiName
-            << ", jsFpunwind: " << ArktsConfig.jsFpunwind;
+            << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
+            << ArktsConfig.jsStackReport << ", maxJsStackDepth: "
+            << std::to_string(ArktsConfig.maxJsStackDepth) << ", filterNapiName: "
+            << ArktsConfig.filterNapiName << ", jsFpunwind: " << ArktsConfig.jsFpunwind;
         return ss.str();
     }
 
