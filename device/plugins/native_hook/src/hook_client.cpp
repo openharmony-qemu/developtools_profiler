@@ -74,10 +74,10 @@ constexpr int FIRST_HASH = 16;
 constexpr int SECOND_HASH = 13;
 constexpr int THRESHOLD = 256;
 constexpr int DIVIDE_VAL = 32;
-constexpr int TEMP_IP = 100;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
+constexpr int TEMP_IP = 100;
 #endif
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
