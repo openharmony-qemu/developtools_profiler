@@ -36,6 +36,7 @@
 #include "hook_client.h"
 #include <sys/mman.h>
 #include "sampling.h"
+#include "hitrace/trace.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -321,7 +322,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         }
         fp = nextFp;
         tempIp = *(reinterpret_cast<unsigned long *>(fp + 1));
-        if (tempIp == 0) {
+        if (tempIp <= 100) {
             break;
         }
         if (g_ClientConfig.responseLibraryMode) {
@@ -337,6 +338,17 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         depth = 1;
     }
     return depth;
+}
+
+uint64_t getJsChainId()
+{
+    if (g_ClientConfig.ArktsConfig.jsStackReport) {
+            OHOS::HiviewDFX::HiTraceId hitraceId = OHOS::HiviewDFX::HiTraceChain::GetId();
+            if (hitraceId.IsValid()) {
+                return hitraceId.GetChainId();
+            }
+    }
+    return 0;
 }
 #endif
 
@@ -395,6 +407,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         stackSize = stackendptr - stackptr;
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
+        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
@@ -488,6 +501,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         stackSize = stackendptr - stackptr;
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
+        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
@@ -615,6 +629,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     auto holder = weakClient.lock();
     if (holder != nullptr) {
         int realSize = 0;
+        int freeRealSize = 0;
         freeData.type = FREE_MSG;
         freeData.pid = rawdata.pid;
         freeData.tid = rawdata.tid;
@@ -623,10 +638,12 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         freeData.ts = rawdata.ts;
         if (g_ClientConfig.fpunwind) {
             realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+            freeRealSize = sizeof(BaseStackRawData);
         } else {
             realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+            freeRealSize = realSize;
         }
-        holder->SendStackWithPayload(&freeData, sizeof(BaseStackRawData), nullptr, 0); // 0: Don't unwind the freeData
+        holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0); // 0: Don't unwind the freeData
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
 #ifdef PERFORMANCE_DEBUG
@@ -706,6 +723,7 @@ void hook_free(void (*free_func)(void*), void* p)
             stackSize = stackendptr - stackptr;
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
+            rawdata.jsChainId = getJsChainId();
 #endif
         } else {
             unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
@@ -813,6 +831,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         stackSize = stackendptr - stackptr;
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
+        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
@@ -905,6 +924,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
             stackSize = stackendptr - stackptr;
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
+            rawdata.jsChainId = getJsChainId();
 #endif
         } else {
             unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
@@ -1016,6 +1036,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
             stackSize = stackendptr - stackptr;
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
+            rawdata.jsChainId = getJsChainId();
 #endif
         } else {
             unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
@@ -1182,7 +1203,7 @@ static bool IsPidChanged(void)
     if (g_isPidChanged) {
         return true;
     }
-    int pid = getpid();
+    int pid = getprocpid();
     // hap app after pid namespace used
     if (pid == PID_NAMESPACE_ID) {
         return false;
@@ -1191,4 +1212,22 @@ static bool IsPidChanged(void)
         g_isPidChanged = (g_hookPid != pid);
     }
     return g_isPidChanged;
+}
+
+bool ohos_malloc_hook_send_hook_js_rawstack(uint64_t id, const char* jsStackptr, size_t jsStackSize)
+{
+    StackRawData rawdata = {{{{0}}}};
+    rawdata.jsChainId = id;
+    rawdata.type = JS_STACK_MSG;
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder != nullptr) {
+        return holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), jsStackptr, jsStackSize);
+    }
+    return false;
+}
+
+void* ohos_malloc_hook_get_hook_js_config()
+{
+   return &g_ClientConfig.ArktsConfig;
 }

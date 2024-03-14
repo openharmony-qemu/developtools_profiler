@@ -122,7 +122,7 @@ void VirtualRuntime::MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame)
     }
 }
 
-bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first)
+bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first, bool onlyjs)
 {
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
@@ -133,6 +133,10 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
     perf_callchain_context perfCallchainContext = PERF_CONTEXT_MAX;
     for (auto callFrameIt = callFrames.begin() + offset; callFrameIt != callFrames.end(); ++callFrameIt) {
         auto &callFrame = callFrameIt.operator*();
+        if (onlyjs && !callFrame.isJsFrame_) {
+           // only symbolize arkts frame
+           continue;
+        }
         if (callFrame.ip_ >= PERF_CONTEXT_MAX) {
             // dont care, this is not issue.
             HLOGV("%s", UpdatePerfContext(callFrame.ip_, perfCallchainContext).c_str());
@@ -160,6 +164,11 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
             ++callStackErrCnt;
             if (callStackErrCnt.load() % CALL_STACK_ERROR_TIMES == 0) {
                 PROFILER_LOG_DEBUG(LOG_CORE, "number of call stack errors: %" PRIu64 "", callStackErrCnt.load());
+            }
+            if (callFrames.back().isJsFrame_) { //The fp mode js call stack is behind the native call stack, so it can't be deleted entirely
+                callFrameIt = callFrames.erase(callFrameIt);
+                --callFrameIt;
+                continue;
             }
             callFrames.erase(callFrameIt, callFrames.end());
             return true;
@@ -203,7 +212,8 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
     int offset = 0;
     auto &thread = UpdateThread(pid, tid);
     if (stack_size > 0) {
-        callstack_.UnwindCallStack(thread, &regs[0], regs.size(), stack_addr, stack_size, callFrames, maxStackLevel);
+        callstack_.UnwindCallStack(thread, &regs[0], regs.size(), stack_addr, stack_size, callFrames, maxStackLevel,
+            hookConfig_.js_stack_report()?hookConfig_.max_js_stack_depth():0);
         if (callFrames.size() <= FILTER_STACK_DEPTH) {
             callFrames.clear();
             return false;
@@ -218,6 +228,10 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
     unwindFromRecordTimes_ += duration_cast<microseconds>(steady_clock::now() - startTime);
 #endif
     if (hookConfig_.offline_symbolization()) {
+        // only get js symbol if report js frame and offline symbolization
+        if (hookConfig_.js_stack_report()) {
+            GetSymbolName(pid, tid, callFrames, offset, true, true);
+        }
         return true;
     }
     if (!GetSymbolName(pid, tid, callFrames, offset, true)) {
@@ -371,7 +385,16 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
             if (!symbolsFile->SymbolsLoaded()) {
                 symbolsFile->LoadSymbols((curMaps->GetMaps())[itemIndex]);
             }
-            DfxSymbol foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
+
+            DfxSymbol foundSymbols;
+
+
+            if (!symbolsFile->IsAbc()) {
+                foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
+            } else {
+                HLOGD("symbolsFile:%s is ABC :%d", symbolsFile->filePath_.c_str(), symbolsFile->IsAbc());
+                foundSymbols = symbolsFile->GetSymbolWithPcAndMap(ip, curMaps->GetMaps()[itemIndex]);
+            }
             foundSymbols.taskVaddr_ = ip;
             foundSymbols.symbolName_ = foundSymbols.GetName();
             if (!foundSymbols.IsValid()) {
@@ -420,7 +443,23 @@ const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t
 {
     HLOGM("try find tid %u ip 0x%" PRIx64 " in %zu symbolsFiles ", tid, callFrame.ip_, symbolsFiles_.size());
     DfxSymbol symbol;
-    if (GetSymbolCache(callFrame.ip_, symbol, GetThread(pid, tid))) {
+    if (hookConfig_.fp_unwind() && callFrame.isJsFrame_) { 
+        if (ArktsGetSymbolCache(callFrame, symbol)) {
+            return symbol;
+        } else {
+            symbol.filePathId_ = FillArkTsFilePath(callFrame.filePath_);
+            symbol.module_ = callFrame.filePath_;
+            symbol.symbolName_ = callFrame.symbolName_;
+            symbol.symbolId_ = userSymbolCache_.size() + 1;
+            if (hookConfig_.string_compressed()) {
+                FillSymbolNameId(callFrame, symbol);
+                FillFileSet(callFrame, symbol);
+            }
+            callFrame.needReport_ |= CALL_FRAME_REPORT;
+            userSymbolCache_[std::pair(callFrame.ip_, symbol.filePathId_)] = symbol;
+            return symbol;
+        }
+    } else if (GetSymbolCache(callFrame.ip_, symbol, GetThread(pid, tid))) {
         return symbol;
     }
     if (context == PERF_CONTEXT_USER or (context == PERF_CONTEXT_MAX and !symbol.IsValid())) {
@@ -479,7 +518,7 @@ void VirtualRuntime::FillMapsCache(std::string& currentFileName, std::shared_ptr
     }
 }
 
-inline void VirtualRuntime::FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol)
+void VirtualRuntime::FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol)
 {
     auto itFuntion = functionMap_.find(std::string(symbol.symbolName_));
     if (itFuntion != functionMap_.end()) {
@@ -491,7 +530,7 @@ inline void VirtualRuntime::FillSymbolNameId(CallFrame& callFrame, DfxSymbol& sy
     }
 }
 
-inline void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
+void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
 {
     auto itFile = fileSet_.find(symbol.filePathId_);
     if (itFile == fileSet_.end()) {
@@ -560,6 +599,49 @@ std::pair<std::shared_ptr<MemMaps>, uint32_t> VirtualRuntime::FindMap(uint64_t a
     }
     return {nullptr, 0};
 }
+
+bool VirtualRuntime::ArktsGetSymbolCache(CallFrame& callFrame, DfxSymbol &symbol)
+{
+    uint32_t jsfilePathId = FindArkTsFilePath(callFrame.filePath_);
+    if (jsfilePathId != 0) {
+        auto foundSymbolIter = userSymbolCache_.find(std::pair(callFrame.ip_, jsfilePathId));
+        if (foundSymbolIter != userSymbolCache_.end()) {
+            symbol = foundSymbolIter->second;
+            return true;
+        }
+    }
+    return false;
+}
+
+uint32_t VirtualRuntime::FindArkTsFilePath(std::string_view& jstr)
+{
+    auto iter = jsUrlMap_.find(jstr);
+    if (iter == jsUrlMap_.end()) {
+        return 0;
+    } else {
+        return iter->second;
+    }
+}
+
+uint32_t VirtualRuntime::FillArkTsFilePath(std::string_view& jstr)
+{
+    auto iter = jsUrlMap_.find(jstr);
+    if (iter == jsUrlMap_.end()) {
+        jsUrlMap_[jstr] = ++memMapFilePathId_;
+    }
+    return jsUrlMap_[jstr];
+}
+
+void VirtualRuntime::FillJsSymbolCache(CallFrame& callFrame, const DfxSymbol& symbol)
+{
+    userSymbolCache_[std::pair(callFrame.ip_, symbol.filePathId_)] = symbol;
+}
+
+uint32_t VirtualRuntime::GetJsSymbolCacheSize()
+{
+    return userSymbolCache_.size() + 1;
+}
+
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

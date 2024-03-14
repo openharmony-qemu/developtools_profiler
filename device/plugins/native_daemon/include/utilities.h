@@ -315,6 +315,7 @@ bool PowerOfTwo(int n);
 #define MAP_FAILED MMAP_FAILED
 #endif
 int32_t GetProcessPid(const std::string& processName);
+bool IsArkJsFile(const std::string& filepath);
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

@@ -75,7 +75,9 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --clockId                           -c : clockId\n");
             printf("    --dumpData                          -dd : dump data\n");
             printf("    --sampleInterval                    -spi : sampleInterval, default: 0\n");
-            printf("    --responseLibraryMode               -r : responseLibraryMode, default: false\n");
+            printf("    --jsStackReport                     -jr : jsStackReport, default: false\n");
+            printf("    --maxJsStackDepth                   -mjsd : maxJsStackDepth, default: 0\n");
+            printf("    --filterNapiName                    -fnapi : filterNapiName \n");
             return 0;
         }
 
@@ -135,7 +137,13 @@ int32_t main(int32_t argc, char* argv[])
             config->sampleInterval_ = std::stoi(argv[++i]);
         } else if ((arg == "--responseLibraryMode") || (arg == "-r")) {
             config->responseLibraryMode_ = true;
-        }  else {
+        } else if ((arg == "--jsStackReport") || (arg == "-jr")) {
+            config->jsStackReport_ = true;
+        } else if ((arg == "--maxJsStackDepth") || (arg == "-mjsd")) {
+            config->maxJsStackDepth_ = std::stoi(argv[++i]);
+        } else if ((arg == "--filterNapiName") || (arg == "-fnapi")) {
+            config->filterNapiName_ = std::string(argv[++i]);
+        } else {
             printf("error arg: %s\n", arg.c_str());
             error = true;
             break;

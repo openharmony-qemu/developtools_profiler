@@ -67,7 +67,10 @@ ohos_source_set("native_hook_source") {
   if (hiprofiler_use_libunwind) {
     public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
   }
-  external_deps = [ "init:libbegetutil" ]
+  external_deps = [
+    "hitrace:libhitracechain",
+    "init:libbegetutil",
+  ]
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder_static" ]
   }

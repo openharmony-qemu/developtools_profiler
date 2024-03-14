@@ -439,7 +439,7 @@ bool CallStack::DoUnwind(const VirtualThread &thread, std::vector<CallFrame> &ca
 
 bool CallStack::UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regsNum,
                                 const u8 *stack, u64 stackSize, std::vector<CallFrame> &callStack,
-                                size_t maxStackLevel)
+                                size_t maxStackLevel, int maxjsDepth)
 {
     regs_ = regs;
     regsNum_ = regsNum;
@@ -475,7 +475,7 @@ bool CallStack::UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regs
 #if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
         return DoUnwind(thread, callStack, maxStackLevel);
 #else
-        return DoUnwind2(thread, callStack, maxStackLevel);
+        return DoUnwind2(thread, callStack, maxStackLevel, maxjsDepth);
 #endif
     }
     return true;
@@ -500,7 +500,7 @@ use expendLimit to setup how may frame match is needs
 #if defined(HAVE_LIBUNWINDER) && HAVE_LIBUNWINDER
 
 bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &callStack,
-                          size_t maxStackLevel)
+                          size_t maxStackLevel, int maxjsDepth)
 {
     UnwindInfo unwindInfo = {
         .thread = thread,
@@ -526,20 +526,19 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
 
     unwinder->SetRegs(regs);
 
-    uintptr_t pc = regs->GetPc();
-    uintptr_t sp = regs->GetSp();
-    while (callStack.size() < maxStackLevel) {
-        if (unwinder->Step(pc, sp, &unwindInfo)) {
-            if (pc == callStack.back().ip_ && sp == callStack.back().sp_) {
-                HLOGW("we found a same frame, stop here");
-                break;
-            }
-            callStack.emplace_back(pc, sp);
-            HLOGV("unwind:%zu: ip 0x%" UNW_WORD_PFLAG " sp 0x%" UNW_WORD_PFLAG "", callStack.size(), pc, sp);
-        } else {
-            break;
+    unwinder->Unwind(&unwindInfo, maxStackLevel + maxjsDepth);
+    std::vector<DfxFrame> dfxcallStack;
+
+    dfxcallStack = unwinder->GetFrames();
+    callStack.clear();
+    for (auto frame: dfxcallStack) {
+        HLOGD("pc 0x%" PRIx64 " sp 0x%" PRIx64 " isJsFrame = %d", frame.pc, frame.sp, frame.isJsFrame);
+        if ( !frame.isJsFrame || ( maxjsDepth-- > 0 )) {
+            callStack.emplace_back(frame.pc, frame.sp, frame.isJsFrame);
         }
+
     }
+
     return true;
 }
 
@@ -644,7 +643,15 @@ int CallStack::AccessMem2(uintptr_t addr, uintptr_t *val, void *arg)
 int CallStack::GetMapByPc([[maybe_unused]] uintptr_t pc, [[maybe_unused]] std::shared_ptr<DfxMap>& map,
                           [[maybe_unused]] void *arg)
 {
-    return 0;
+    UnwindInfo *unwindInfoPtr = static_cast<UnwindInfo *>(arg);
+    map = unwindInfoPtr->thread.FindMapByAddr(pc);
+
+    if (map != nullptr) {
+        HLOGW("GetMapByPc success");
+        return 0;
+    }
+    HLOGW("GetMapByPc failed");
+    return -1;
 }
 #endif
 

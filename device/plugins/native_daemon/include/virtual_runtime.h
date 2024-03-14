@@ -80,13 +80,20 @@ public:
                      pid_t tid,
                      std::vector<CallFrame>& callFrames,
                      size_t maxStackLevel);
-    bool GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first);
+    bool GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first, bool onlyjs = false);
     void ClearMaps();
     void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
     void HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags, uint64_t offset, const std::string& filePath);
     void RemoveMaps(uint64_t addr);
       // threads
     VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
+    void FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol);
+    void FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol);
+    uint32_t FillArkTsFilePath(std::string_view& jstr);
+    uint32_t FindArkTsFilePath(std::string_view& jstr);
+    bool ArktsGetSymbolCache(CallFrame& callFrame, DfxSymbol &symbol);
+    uint32_t GetJsSymbolCacheSize();
+    void FillJsSymbolCache(CallFrame& callFrame, const DfxSymbol& symbol);
     std::vector<uint64_t>& GetOfflineMaps()
     {
         return offlineMapAddr_;
@@ -184,8 +191,6 @@ private:
     const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,
                                  const VirtualThread &thread);
     const DfxSymbol GetUserSymbol(uint64_t ip, const VirtualThread &thread);
-    void FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol);
-    void FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol);
 
     std::vector<std::string> symbolsPaths_;
 
@@ -197,6 +202,7 @@ private:
     uint32_t memMapFilePathId_ = 0;
     std::map<uint64_t, std::shared_ptr<MemMaps>> mapsCache_; // key is memMap soBegin, value is MemMaps
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
+    std::unordered_map<std::string_view, uint32_t> jsUrlMap_; // Key is js url , value is filePathId
 };
 } // namespace NativeDaemon
 } // namespace Developtools
