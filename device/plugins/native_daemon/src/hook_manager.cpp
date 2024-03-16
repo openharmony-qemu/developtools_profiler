@@ -200,15 +200,24 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
+    clientConfig.ArktsConfig.maxJsStackDepth = hookConfig_.max_js_stack_depth();
     clientConfig.mallocDisable = hookConfig_.malloc_disable();
     clientConfig.mmapDisable = hookConfig_.mmap_disable();
     clientConfig.freeStackData = hookConfig_.free_stack_report();
     clientConfig.munmapStackData = hookConfig_.munmap_stack_report();
     clientConfig.fpunwind = hookConfig_.fp_unwind();
+    clientConfig.ArktsConfig.jsFpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
+    clientConfig.ArktsConfig.jsStackReport = hookConfig_.js_stack_report();
+    // -1 is save '\0'
+    int ret = memcpy_s(clientConfig.ArktsConfig.filterNapiName, sizeof(clientConfig.ArktsConfig.filterNapiName) - 1,
+                       hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());
+    if (ret != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s filter_napi_name fail");
+    }
 }
 
 bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
@@ -249,6 +258,8 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig fp unwind = %d, max stack depth = %d, record_accurately=%d",
         hookConfig_.fp_unwind(), hookConfig_.max_stack_depth(), ctx->isRecordAccurately);
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
+    PROFILER_LOG_INFO(LOG_CORE, "hookConfig  js_stack_report = %d max_js_stack_depth = %u",
+        hookConfig_.js_stack_report(), hookConfig_.max_js_stack_depth());
 
     clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
     if (noDataQueue_) {
@@ -309,6 +320,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.response_library_mode()) {
         hookConfig_.set_fp_unwind(true);
         hookConfig_.set_offline_symbolization(true);
+        hookConfig_.set_js_stack_report(false);
     }
     // offlinem symbolization, callframe must be compressed
     if (hookConfig_.offline_symbolization()) {
@@ -340,7 +352,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.fp_unwind() && hookConfig_.record_accurately()
         && hookConfig_.blocked() && hookConfig_.offline_symbolization()
         && hookConfig_.statistics_interval() > 0
-        && hookConfig_.sample_interval() > 1) {
+        && hookConfig_.sample_interval() > 1 && !hookConfig_.js_stack_report()) {
         noDataQueue_ = true;
     }
 
@@ -385,12 +397,16 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
             rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
             rawStack->reportFlag = true;
             if (rawStack->stackConext->type == MEMORY_TAG || rawStack->stackConext->type == THREAD_NAME_MSG ||
-                rawStack->stackConext->type == MMAP_FILE_TYPE || rawStack->stackConext->type == PR_SET_VMA_MSG) {
+                rawStack->stackConext->type == MMAP_FILE_TYPE || rawStack->stackConext->type == PR_SET_VMA_MSG ||
+                rawStack->stackConext->type == JS_STACK_MSG) {
                 return true;
             }
             rawStack->reduceStackFlag = false;
             if (hookConfig_.fp_unwind()) {
                 rawStack->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
+                if (rawStack->stackConext->jsChainId > 0) {
+                    rawStack->jsStackData = hookCtx->stackPreprocess->GetJsRawStack(rawStack->stackConext->jsChainId);
+                }
                 return true;
             } else {
                 rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
@@ -408,6 +424,10 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         if (rawStack->stackConext->type == MEMORY_TAG) {
             std::string tagName = reinterpret_cast<char*>(rawStack->data);
             hookCtx->stackPreprocess->SaveMemTag(rawStack->stackConext->tagId, tagName);
+            continue;
+        } else if (rawStack->stackConext->type == JS_STACK_MSG) {
+            hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackConext->jsChainId,
+                                                     reinterpret_cast<char*>(rawStack->data));
             continue;
         }
         if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
@@ -579,6 +599,9 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_clock(COMMON::GetClockStr(config->clockId_));
     hookConfig_.set_sample_interval(config->sampleInterval_);
     hookConfig_.set_response_library_mode(config->responseLibraryMode_);
+    hookConfig_.set_js_stack_report(config->jsStackReport_);
+    hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
+    hookConfig_.set_filter_napi_name(config->filterNapiName_);
 }
 
 int32_t HookManager::CreatePluginSession()

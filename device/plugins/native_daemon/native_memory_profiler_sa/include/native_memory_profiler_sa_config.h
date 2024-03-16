@@ -55,6 +55,9 @@ public:
     clockid_t clockId_{CLOCK_REALTIME};
     uint32_t sampleInterval_{0};
     bool responseLibraryMode_{false};
+    bool jsStackReport_{false};
+    uint8_t maxJsStackDepth_{0};
+    std::string filterNapiName_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

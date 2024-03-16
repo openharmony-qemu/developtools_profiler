@@ -69,6 +69,7 @@ enum {
     MEMORY_TAG,
     THREAD_NAME_MSG,
     PR_SET_VMA_MSG,
+    JS_STACK_MSG,
 };
 
 struct alignas(8) MmapFileRawData { // 8 is 8 bit
@@ -83,6 +84,7 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
     };
     void* addr;
     size_t mallocSize;
+    uint64_t jsChainId;
     uint32_t pid;
     uint32_t tid;
     uint16_t type;
@@ -95,6 +97,13 @@ struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
         uint64_t ip[MAX_UNWIND_DEPTH];
         char name[PATH_MAX + 1] {0};
     };
+};
+
+struct alignas(8) ArkTsClientConfig { // 8 is 8 bit
+        uint8_t maxJsStackDepth = 0;
+        bool jsStackReport = false;
+        bool jsFpunwind = false;
+        char filterNapiName[64] = {""};
 };
 
 struct alignas(8) ClientConfig { // 8 is 8 bit
@@ -114,6 +123,10 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         memtraceEnable = false;
         responseLibraryMode = false;
         freeEventOnlyAddrEnable = false;
+        ArktsConfig.maxJsStackDepth = 0;
+        ArktsConfig.jsStackReport = false;
+        ArktsConfig.jsFpunwind = false;
+        ArktsConfig.filterNapiName[0] = '\0';
     }
 
     std::string ToString()
@@ -125,7 +138,10 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
-            << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable;
+            << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
+            << ArktsConfig.jsStackReport << ", maxJsStackDepth: "
+            << std::to_string(ArktsConfig.maxJsStackDepth) << ", filterNapiName: "
+            << ArktsConfig.filterNapiName << ", jsFpunwind: " << ArktsConfig.jsFpunwind;
         return ss.str();
     }
 
@@ -143,5 +159,6 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool memtraceEnable = false;
     bool responseLibraryMode = false;
     bool freeEventOnlyAddrEnable = false;
+    ArkTsClientConfig ArktsConfig = {0};
 };
 #endif // HOOK_COMMON_H

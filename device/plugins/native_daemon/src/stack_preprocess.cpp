@@ -47,6 +47,11 @@ constexpr static uint32_t RIGHT_MOVE_4 = 4;
 constexpr static uint32_t RIGHT_MOVE_8 = 8;
 constexpr static uint32_t RIGHT_MOVE_16 = 16;
 constexpr static uint64_t SIZE_MASK = 0xFFFFFF0000000000;
+constexpr static uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
+constexpr static uint8_t JS_SYMBOL_INDEX = 0;       // 0 is js symbolName
+constexpr static uint8_t JS_FILEPATH_INDEX = 1;     // 1 is js filePath:line:col
+static std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
+static std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
 
 #ifdef PERFORMANCE_DEBUG
 constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
@@ -95,7 +100,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
 #else
     u64regs_.resize(PERF_REG_ARM64_MAX);
 #endif
-    callFrames_.reserve(hookConfig_.max_stack_depth());
+    callFrames_.reserve(hookConfig_.max_stack_depth() + hookConfig_.max_js_stack_depth());
 }
 
 StackPreprocess::~StackPreprocess()
@@ -337,17 +342,9 @@ void StackPreprocess::TakeResults()
             }
             callFrames_.clear();
             if (hookConfig_.fp_unwind()) {
-#if defined(__aarch64__)
-                uintptr_t pacMask = 0xFFFFFF8000000000;
-#else
-                uintptr_t pacMask = 0;
-#endif
-                uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
-                for (uint8_t idx = 0; idx < rawData->fpDepth ; ++idx) {
-                    if (fpIp[idx] == 0) {
-                        break;
-                    }
-                    callFrames_.emplace_back(fpIp[idx] & (~pacMask));
+                FillFpNativeIp(rawData);
+                if (rawData->stackConext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report()) {
+                    FillFpJsData(rawData);
                 }
             } else {
 #if defined(__arm__)
@@ -433,9 +430,15 @@ inline void StackPreprocess::ReportThreadNameMap(uint32_t tid, const std::string
     }
 }
 
-inline void StackPreprocess::FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx)
+template <typename T>
+inline void StackPreprocess::FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData)
 {
     for (; idx < callFrames.size(); ++idx) {
+        if (callFrames[idx].isJsFrame_) {
+            ReportFrameMap(callFrames[idx], stackData);
+            callStack_.push_back(callFrames[idx].callFrameId_ | JS_OFFLINE_IP_MASK);
+            continue;
+        }
         callStack_.push_back(callFrames[idx].ip_);
     }
 }
@@ -528,7 +531,7 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, idx, stackData);
     } else {
-        FillOfflineCallStack(callFrames, idx);
+        FillOfflineCallStack(callFrames, idx, stackData);
     }
     // return call stack id
     std::lock_guard<std::mutex> guard(mtx_);
@@ -588,7 +591,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, idx, stackData);
     } else {
-        FillOfflineCallStack(callFrames, idx);
+        FillOfflineCallStack(callFrames, idx, stackData);
     }
 
     std::lock_guard<std::mutex> guard(mtx_);
@@ -869,6 +872,11 @@ inline void StackPreprocess::SetFrameInfo(T& frame, CallFrame& callFrame)
 {
     frame.set_ip(callFrame.ip_);
     if (hookConfig_.offline_symbolization()) {
+        if (callFrame.isJsFrame_ && callFrame.symbolNameId_ != 0 && callFrame.filePathId_ != 0) {
+            frame.set_symbol_name_id(callFrame.symbolNameId_);
+            frame.set_file_path_id(callFrame.filePathId_);
+            frame.set_offset(callFrame.offset_);
+        }
         return;
     }
     frame.set_sp(callFrame.sp_);
@@ -1155,6 +1163,29 @@ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
     return memTagMap_.Find(tagId, tagName);
 }
 
+void StackPreprocess::SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack)
+{
+    auto iter = jsStackMap_.find(jsChainId);
+    if (iter == jsStackMap_.end()) {
+        auto iter = jsStackSet_.find(jsRawStack);
+        if (iter == jsStackSet_.end()) {
+            auto iter = jsStackSet_.insert(jsRawStack);
+            jsStackMap_[jsChainId] = iter.first->c_str();
+        } else {
+            jsStackMap_[jsChainId] = iter->c_str();
+        }
+    }
+}
+
+const char* StackPreprocess::GetJsRawStack(uint64_t jsChainId)
+{
+    auto iter = jsStackMap_.find(jsChainId);
+    if (iter != jsStackMap_.end()) {
+        return iter->second;
+    }
+    return nullptr;
+}
+
 unsigned StackPreprocess::LgFloor(unsigned long val)
 {
     val |= (val >> RIGHT_MOVE_1);
@@ -1257,4 +1288,62 @@ void StackPreprocess::FinishReport()
 
     int32_t len = profilerPluginData_.Finish();
     writer_->FinishReport(len);
+}
+
+void StackPreprocess::FillFpNativeIp(RawStackPtr& rawData)
+{
+#if defined(__aarch64__)
+    uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
+    uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
+    for (uint8_t idx = 0; idx < rawData->fpDepth ; ++idx) {
+        if (fpIp[idx] == 0) {
+            break;
+        }
+        callFrames_.emplace_back(fpIp[idx] & (~pacMask));
+    }
+}
+
+void StackPreprocess::FillFpJsData(RawStackPtr& rawData)
+{
+    if (hookConfig_.statistics_interval() > 0) {
+        switch (rawData->stackConext->type) {
+            case FREE_MSG:
+            case MUNMAP_MSG:
+            case MEMORY_UNUSING_MSG:
+                 return;
+            default:
+                break;
+        }
+    }
+    std::vector<std::string> mapTokens = StringSplit(rawData->jsStackData, JS_CALL_STACK_DEPTH_SEP);
+    for (size_t i = 0; i < mapTokens.size(); i++) {
+        std::vector<std::string> url = StringSplit(mapTokens[i], JS_SYMBOL_FILEPATH_SEP);
+        CallFrame& jsCallFrame = callFrames_.emplace_back(0);
+        jsCallFrame.symbolName_ = StringViewMemoryHold::GetInstance().HoldStringView(url[JS_SYMBOL_INDEX]);
+        jsCallFrame.filePath_ = StringViewMemoryHold::GetInstance().HoldStringView(url[JS_FILEPATH_INDEX]);
+        jsCallFrame.isJsFrame_ = true;
+        if (hookConfig_.offline_symbolization()) {
+            DfxSymbol symbol;
+            if (runtime_instance->ArktsGetSymbolCache(jsCallFrame, symbol)) {
+            } else {
+                symbol.filePathId_ = runtime_instance->FillArkTsFilePath(jsCallFrame.filePath_);
+                symbol.symbolName_ = jsCallFrame.symbolName_;
+                symbol.module_ = jsCallFrame.filePath_;
+                symbol.symbolId_ = runtime_instance->GetJsSymbolCacheSize();
+                runtime_instance->FillSymbolNameId(jsCallFrame, symbol);
+                runtime_instance->FillFileSet(jsCallFrame, symbol);
+                jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
+                runtime_instance->FillJsSymbolCache(jsCallFrame, symbol);
+            }
+            jsCallFrame.callFrameId_ = symbol.symbolId_;
+            jsCallFrame.symbolNameId_ = symbol.symbolNameId_;
+            jsCallFrame.filePathId_ = symbol.filePathId_;
+            jsCallFrame.filePath_ = symbol.module_;
+            jsCallFrame.symbolName_ = symbol.symbolName_;
+            jsCallFrame.offset_ = jsCallFrame.ip_;
+        }
+    }
 }

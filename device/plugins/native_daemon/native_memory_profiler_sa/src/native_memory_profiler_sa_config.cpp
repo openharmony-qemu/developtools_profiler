@@ -45,6 +45,9 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEINT32(parcel, clockId_);
     WRITEUINT32(parcel, sampleInterval_);
     WRITEBOOL(parcel, responseLibraryMode_);
+    WRITEBOOL(parcel, jsStackReport_);
+    WRITEUINT8(parcel, maxJsStackDepth_);
+    WRITESTRING(parcel, filterNapiName_);
     return true;
 }
 
@@ -78,6 +81,9 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READINT32(parcel, config->clockId_);
     READUINT32(parcel, config->sampleInterval_);
     READBOOL(parcel, config->responseLibraryMode_);
+    READBOOL(parcel, config->jsStackReport_);
+    READUINT8(parcel, config->maxJsStackDepth_);
+    READSTRING(parcel, config->filterNapiName_);
     PrintConfig(config);
     return true;
 }
@@ -101,5 +107,8 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         "statisticsInterval: %d, clockId: %d",
         config->startupMode_, config->memtraceEnable_, config->offlineSymbolization_, config->callframeCompress_,
         config->statisticsInterval_, config->clockId_);
+    PROFILER_LOG_DEBUG(LOG_CORE,
+        "jsStackReport: %d, maxJsStackDepth_: %d, filterNapiName_: %s",
+        config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());
 }
 } // namespace OHOS::Developtools::NativeDaemon

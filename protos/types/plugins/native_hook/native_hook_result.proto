@@ -69,8 +69,10 @@ message MunmapEvent {
 
 message StackMap {
     uint32 id = 1;
-    repeated uint64 frame_map_id = 2; // online symbolization use frame_map_id
-    repeated uint64 ip = 3; // offline symbolization use ip
+    // online symbolization, only use frame_map_id 
+    repeated uint64 frame_map_id = 2; 
+    // offline symbolization, ip sequence include fake ip(arkts frame id, etc)
+    repeated uint64 ip = 3;
     int32 pid = 4;
 }
 

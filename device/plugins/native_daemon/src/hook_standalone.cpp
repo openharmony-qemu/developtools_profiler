@@ -58,6 +58,9 @@ void SetNativeHookConfig(const HookData& hookData)
     g_nativeConfig.set_process_name(hookData.processName);
     g_nativeConfig.set_sample_interval(hookData.sampleInterval);
     g_nativeConfig.set_response_library_mode(hookData.responseLibraryMode);
+    g_nativeConfig.set_js_stack_report(hookData.jsStackReport);
+    g_nativeConfig.set_max_js_stack_depth(hookData.maxJsStackdepth);
+    g_nativeConfig.set_filter_napi_name(hookData.filterNapiName);
     for (const std::string& pid: hookData.pids) {
         g_nativeConfig.add_expand_pids(atoi(pid.data()));
     }
@@ -77,7 +80,7 @@ void SetNativeHookConfig(const HookData& hookData)
     }
 
     if (g_nativeConfig.string_compressed() || hookData.rawString ||
-        g_nativeConfig.response_library_mode()) {
+        g_nativeConfig.response_library_mode() || g_nativeConfig.js_stack_report()) {
         g_hookManager->SethookStandalone(true);
     }
     PROFILER_LOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());
