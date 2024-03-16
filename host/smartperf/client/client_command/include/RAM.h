@@ -46,6 +46,7 @@ public:
     }
     std::map<std::string, std::string> ItemData() override;
     void SetPackageName(std::string pName);
+
 private:
     RAM() {};
     RAM(const RAM &);

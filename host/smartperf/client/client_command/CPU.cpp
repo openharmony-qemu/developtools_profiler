@@ -58,8 +58,8 @@ std::map<std::string, std::string> CPU::ItemData()
         std::string irqUsageStr = std::to_string(workLoads[i].irqUsage * oneHundred);
         std::string softIrqUsageStr = std::to_string(workLoads[i].softIrqUsage * oneHundred);
         std::string totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
-            workLoads[i].systemUsage + workLoads[i].ioWaitUsage +
-            workLoads[i].irqUsage + workLoads[i].softIrqUsage) * oneHundred);
+            workLoads[i].systemUsage + workLoads[i].ioWaitUsage + workLoads[i].irqUsage + workLoads[i].softIrqUsage) *
+            oneHundred);
         result[cpuIdStr + "userUsage"] = userUsageStr;
         result[cpuIdStr + "niceUsage"] = niceUsageStr;
         result[cpuIdStr + "systemUsage"] = systemUsageStr;
@@ -75,12 +75,15 @@ std::map<std::string, std::string> CPU::ItemData()
             result.insert(*it);
         }
     }
+
+    LOGI("CPU::ItemData map size(%u)", result.size());
     return result;
 }
 
 void CPU::SetPackageName(std::string pName)
 {
     packageName = pName;
+    LOGI("CPU SetPackageName name(%s)", pName.c_str());
 }
 
 std::vector<CpuFreqs> CPU::GetCpuFreq()
@@ -89,7 +92,7 @@ std::vector<CpuFreqs> CPU::GetCpuFreq()
     std::vector<CpuFreqs> cpuFreqs2;
     std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
     CollectResult<std::vector<CpuFreq>> result = collector->CollectCpuFrequency();
-    std::vector<CpuFreq>& cpufreq = result.data;
+    std::vector<CpuFreq> &cpufreq = result.data;
     for (size_t i = 0; i < cpufreq.size(); i++) {
         cpuFreqs.cpuId = cpufreq[i].cpuId;
         cpuFreqs.curFreq = cpufreq[i].curFreq;
@@ -106,11 +109,11 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
     std::vector<CpuUsageInfos> workload;
     std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
     CollectResult<SysCpuUsage> result = collector->CollectSysCpuUsage(true);
-    SysCpuUsage& sysCpuUsage = result.data;
+    SysCpuUsage &sysCpuUsage = result.data;
     if (sysCpuUsage.cpuInfos.empty()) {
         return workload;
     }
-    for (auto& cpuInfo : sysCpuUsage.cpuInfos) {
+    for (auto &cpuInfo : sysCpuUsage.cpuInfos) {
         cpuUsageInfos.cpuId = cpuInfo.cpuId;
         cpuUsageInfos.userUsage = cpuInfo.userUsage;
         cpuUsageInfos.niceUsage = cpuInfo.niceUsage;

@@ -46,6 +46,7 @@ public:
     std::vector<CpuUsageInfos> GetCpuUsage();
     std::map<std::string, std::string> GetSysProcessCpuLoad() const;
     void SetPackageName(std::string pName);
+
 private:
     CPU() {};
     CPU(const CPU &);

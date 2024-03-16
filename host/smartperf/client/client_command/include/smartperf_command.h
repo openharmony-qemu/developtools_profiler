@@ -27,43 +27,38 @@ public:
     const std::string smartPerfExeName = "SP_daemon";
     const std::string smartPerfVersion = "1.0.2\n";
     const std::string smartPerfMsgErr = "error input!\n use command '--help' get more information\n";
-    const std::string smartPerfMsg = "usage: SP_daemon <options> <arguments> \n"
-        "-------------------------------------------------------------------------------------\n"
-        "These are common commands list:\n"
-        " -N             set the collection times, for example: -N 10 \n"
+    const std::string smartPerfMsg = "OpenHarmony performance testing tool SmartPerf command-line version\n"
+        "Usage: SP_daemon [options] [arguments]\n\n"
+        "options:\n"
+        " -N             set the collection times(default value is 0) range[1,2147483647], for example: -N 10 \n"
         " -PKG           set package name, must add, for example: -PKG ohos.samples.ecg \n"
-        " -c             get device cpuFreq and cpuUsage, process cpuUsage and cpuLoad .. \n"
-        " -g             get device gpuFreq and gpuLoad  \n"
-        " -f             get app refresh fps and fps jitters \n"
-        " -profilerfps    get refresh fps and timestamp \n"
-        " -t             get soc-temp battery-temp .. \n"
-        " -p             get current_now and voltage_now \n"
+        " -c             get device CPU frequency and CPU usage, process CPU usage and CPU load .. \n"
+        " -g             get device GPU frequency and GPU load  \n"
+        " -f             get app refresh fps(frames per second) and fps jitters \n"
+        " -profilerfps   get refresh fps and timestamp \n"
+        " -t             get remaining battery power and temperature.. \n"
+        " -p             get battery power consumption and voltage \n"
         " -r             get process memory and total memory .. \n"
         " -snapshot      get screen capture\n"
-        " -net           get networkUp and networkDown\n"
-        " -start          collection start command \n"
+        " -net           get uplink and downlink traffic\n"
+        " -start         collection start command \n"
         " -stop          collection stop command \n"
         " -VIEW          set layler, for example: -VIEW DisplayNode \n"
         " -screen        get screen resolution \n"
-        "-------------------------------------------------------------------------------------\n"
-        "Example 1: SP_daemon -N 20 -c -g -t -p -r -net -snapshot \n"
-        "-------------------------------------------------------------------------------------\n"
-        "-------------------------------------------------------------------------------------\n"
-        "Example 2: SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot \n"
-        "-------------------------------------------------------------------------------------\n"
-        "-------------------------------------------------------------------------------------\n"
-        "Example 3: SP_daemon -start -c \n"
-        "-------------------------------------------------------------------------------------\n"
-         "-------------------------------------------------------------------------------------\n"
-        "Example 4: SP_daemon -stop \n"
-        "-------------------------------------------------------------------------------------\n"
-             "-------------------------------------------------------------------------------------\n"
-        "Example 5: SP_daemon -screen \n"
-        "-------------------------------------------------------------------------------------\n";
+        " -editor        editing function. performance testing, marking characters"
+        " -OUT           set csv output path.\n"
+        " -d             get device DDR information\n\n"
+        "example:\n"
+        "SP_daemon -N 20 -c -g -t -p -r -net -snapshot \n"
+        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot \n"
+        "SP_daemon -start -c \n"
+        "SP_daemon -stop \n"
+        "SP_daemon -screen \n";
+
     const int oneParam = 1;
     const int twoParam = 2;
     const int threeParamMore = 3;
-    SmartPerfCommand(int argc, char *argv[]);
+    explicit SmartPerfCommand(std::vector<std::string> argv);
     ~SmartPerfCommand() {};
     static void InitSomething();
     std::string ExecCommand();

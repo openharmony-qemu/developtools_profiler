@@ -29,6 +29,7 @@ public:
     static void DumpDubaiBegin();
     // dubai -f
     static void DumpDubaiFinish();
+
 private:
     Dubai() {};
     Dubai(const Dubai &);

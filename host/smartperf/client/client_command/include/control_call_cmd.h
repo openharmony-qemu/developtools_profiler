@@ -36,6 +36,7 @@ public:
     std::string GetAppStartTime();
     std::string SlideList();
     std::string TimeDelay();
+
 private:
     bool isOhTest = false;
     std::string result = "";

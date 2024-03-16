@@ -12,25 +12,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PARSE_CLICK_RESPONSE_TRACE_H
+#define PARSE_CLICK_RESPONSE_TRACE_H
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 namespace OHOS {
-    namespace SmartPerf {
-        class ParseClickResponseTrace {
-            public:
-                double ParseResponseTrace(std::string fileNamePath);
-                double GetTime(std::string startTime, std::string endTime);
-                std::string GetPid(std::string line, const std::string &pn, const std::string &pb);
-                std::string GetStartTime(std::string line, const std::string &startTimeBefore);
-                double GetLineTime();
-            private:
-                std::string flagTime = "0";
-                int flagTouch = 0;
-                int appPidnum = 0;
-                double completeTime = -1;
-                std::ifstream infile;
-        };
-    }
+namespace SmartPerf {
+class ParseClickResponseTrace {
+public:
+    double ParseResponseTrace(std::string fileNamePath);
+    double GetTime(std::string startTime, std::string endTime);
+    std::string GetPid(std::string line, const std::string &pn, const std::string &pb);
+    std::string GetStartTime(std::string line, const std::string &startTimeBefore);
+    double GetLineTime();
+
+private:
+    std::string flagTime = "0";
+    int flagTouch = 0;
+    int appPidnum = 0;
+    double completeTime = -1;
+    std::ifstream infile;
+};
 }
+}
+#endif

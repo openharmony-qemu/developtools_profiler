@@ -19,17 +19,17 @@
 #include <string>
 #include <vector>
 namespace OHOS {
-    namespace SmartPerf {
-        class Radar {
-            public:
-                double ParseRadarStart(std::string string);
-                double ParseRadarStartResponse(std::string string);
-                double ParseRadarResponse(std::string string);
-                std::string  ParseRadarAppStrart(std::string string);
-                double ParseRadarComplete(std::string string);
-                std::string extract_string(const std::string& str, const std::string& target);
-                std::string ParseRadarFrame(std::string string);
-        };
-    }
+namespace SmartPerf {
+class ParseRadar {
+public:
+    double ParseRadarStart(std::string string);
+    double ParseRadarStartResponse(std::string string);
+    double ParseRadarResponse(std::string string);
+    std::string ParseRadarAppStrart(std::string string);
+    double ParseRadarComplete(std::string string);
+    std::string extract_string(const std::string &str, const std::string &target);
+    std::string ParseRadarFrame(std::string string);
+};
+}
 }
 #endif // PARSE_RADAR_H
