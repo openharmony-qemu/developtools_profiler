@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 namespace OHOS {
 namespace SmartPerf {
@@ -28,7 +29,7 @@ namespace SPUtils {
  * @return true
  * @return false
  */
-bool HasNumber(const std::string& str);
+bool HasNumber(const std::string &str);
 bool Cmp(const std::string &a, const std::string &b);
 /**
  * @brief Comparison key name
@@ -106,7 +107,7 @@ void ReplaceString(std::string &res);
  */
 long long GetCurTime();
 /**
- * @brief get top pkg 
+ * @brief get top pkg
  *
  */
 std::string GetTopPkgName();
@@ -118,6 +119,13 @@ std::map<std::string, std::string> GetDeviceInfo();
 std::map<std::string, std::string> GetCpuInfo();
 std::map<std::string, std::string> GetGpuInfo();
 std::string GetScreen();
+void RemoveSpace(std::string &str);
+bool IntegerVerification(std::string str, std::string errorInfo);
+bool VeriyParameter(std::set<std::string>& keys, std::string param, std::string& errorInfo);
+bool VeriyKey(std::set<std::string>& keys, std::map<std::string, std::string>& mapInfo, std::string& errorInfo);
+bool VerifyValueStr(std::map<std::string, std::string>& mapInfo, std::string& errorInfo);
+bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
+    std::string &errorInfo);
 };
 }
 }

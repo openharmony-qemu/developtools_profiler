@@ -26,51 +26,45 @@
 #include "include/sp_profiler_factory.h"
 #include "include/Dubai.h"
 #include "include/Capture.h"
+#include "include/GpuCounter.h"
+
+
 namespace OHOS {
 namespace SmartPerf {
 SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 {
     SpProfiler *profiler = nullptr;
-    switch (messageType) {
-        case MessageType::GET_CPU_NUM:
-        case MessageType::GET_CPU_FREQ:
-        case MessageType::GET_CPU_LOAD:
-            profiler = &CPU::GetInstance();
-            break;
-        case MessageType::GET_FPS_AND_JITTERS:
-            profiler = &FPS::GetInstance();
-            break;
-        case MessageType::GET_GPU_FREQ:
-        case MessageType::GET_GPU_LOAD:
-            profiler = &GPU::GetInstance();
-            break;
-        case MessageType::GET_DDR_FREQ:
-            profiler = &DDR::GetInstance();
-            break;
-        case MessageType::GET_RAM_INFO:
-            profiler = &RAM::GetInstance();
-            break;
-        case MessageType::GET_TEMPERATURE:
-            profiler = &Temperature::GetInstance();
-            break;
-        case MessageType::GET_POWER:
-            profiler = &Power::GetInstance();
-            break;
-        case MessageType::CATCH_TRACE_CONFIG:
-            FPS::GetInstance().SetTraceCatch();
-            break; 
-        case MessageType::GET_CAPTURE:
-            profiler = &Capture::GetInstance();
-            break; 
-        case MessageType::SET_DUBAI_DB: {
-            Dubai::DumpDubaiBegin();
-            Dubai::DumpDubaiFinish();
-            Dubai::MoveDubaiDb();
-            break;   
-        }              
-        default:
-            break;
+
+    if (messageType == MessageType::GET_CPU_NUM || messageType == MessageType::GET_CPU_FREQ ||
+        messageType == MessageType::GET_CPU_LOAD) {
+        profiler = &CPU::GetInstance();
+    } else if (messageType == MessageType::GET_FPS_AND_JITTERS) {
+        profiler = &FPS::GetInstance();
+    } else if (messageType == MessageType::GET_GPU_FREQ || messageType == MessageType::GET_GPU_LOAD) {
+        profiler = &GPU::GetInstance();
+    } else if (messageType == MessageType::GET_DDR_FREQ) {
+        profiler = &DDR::GetInstance();
+    } else if (messageType == MessageType::GET_RAM_INFO) {
+        profiler = &RAM::GetInstance();
+    } else if (messageType == MessageType::GET_TEMPERATURE) {
+        profiler = &Temperature::GetInstance();
+    } else if (messageType == MessageType::GET_POWER) {
+        profiler = &Power::GetInstance();
+    } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
+        FPS::GetInstance().SetTraceCatch();
+    } else if (messageType == MessageType::GET_CAPTURE) {
+        profiler = &Capture::GetInstance();
+    } else if (messageType == MessageType::SET_DUBAI_DB) {
+        Dubai::DumpDubaiBegin();
+        Dubai::DumpDubaiFinish();
+        Dubai::MoveDubaiDb();
+    } else if (messageType == MessageType::GPU_COUNTER_HB_REQ || messageType == MessageType::CATCH_GPU_COUNTER ||
+        messageType == MessageType::GET_GPU_COUNTER_RESULT) {
+        profiler = &GpuCounter::GetInstance();
+    } else if (messageType == MessageType::CATCH_NETWORK_TRAFFIC || messageType == MessageType::GET_NETWORK_TRAFFIC) {
+        profiler = &Network::GetInstance();
     }
+
     return profiler;
 }
 void SpProfilerFactory::SetProfilerPkg(std::string pkg)
@@ -103,7 +97,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
     long long mThreshold = 0;
     int lowFps = 0;
     int mCurNum = 1;
-    for (std::string vItem:values) {
+    for (std::string vItem : values) {
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
         if (vItems[0] == "traceSum") {
@@ -157,9 +151,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             break;
         case CommandType::CT_SNAPSHOT:
             profiler = &Capture::GetInstance();
-            break; 
+            break;
         case CommandType::CT_HW:
-            break;            
+            break;
         default:
             break;
     }

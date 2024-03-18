@@ -33,7 +33,7 @@ struct FpsInfoProfiler {
         currTimeDiff = 0;
         currTimeDump = 0;
     }
-    bool operator==(const FpsInfoProfiler& other) const
+    bool operator == (const FpsInfoProfiler &other) const
     {
         if (fps != other.fps) {
             return false;
@@ -75,6 +75,7 @@ public:
     FpsInfoProfiler secUniteFpsInfo;
     FpsInfoProfiler prevResultFpsInfo;
     FpsInfoProfiler lastFpsInfoResult;
+
 private:
     int num = 1;
     int number = 2;

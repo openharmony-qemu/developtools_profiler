@@ -34,7 +34,12 @@ enum class MessageType {
     GET_CAPTURE,
     CATCH_TRACE_CONFIG,
     CATCH_TRACE_CMD,
-    SET_DUBAI_DB
+    SET_DUBAI_DB,
+    GPU_COUNTER_HB_REQ,
+    CATCH_GPU_COUNTER,      // 请求抓取GPU counter信息
+    GET_GPU_COUNTER_RESULT, // 获取GPU counter信息
+    CATCH_NETWORK_TRAFFIC,
+    GET_NETWORK_TRAFFIC // 获取网络流量信息
 };
 
 const std::unordered_map<MessageType, std::string> messageMap = {
@@ -54,6 +59,11 @@ const std::unordered_map<MessageType, std::string> messageMap = {
     { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
     { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
+    { MessageType::GPU_COUNTER_HB_REQ, std::string("gpu_counter_hb_req") },
+    { MessageType::CATCH_GPU_COUNTER, std::string("catch_gpu_counter") },
+    { MessageType::GET_GPU_COUNTER_RESULT, std::string("get_gpu_counter_result") },
+    { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
+    { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
 };
 
 enum class CommandType {
@@ -77,6 +87,8 @@ enum class CommandType {
     CT_INTERVAL,
     CT_NET,
     CT_VIEW,
+    CT_FL,
+    CT_FTL,
 };
 enum class CommandHelp {
     HELP,
@@ -85,29 +97,53 @@ enum class CommandHelp {
 };
 
 const std::unordered_map<std::string, CommandType> commandMap = {
-    { std::string("-N"), CommandType::CT_N },          { std::string("-PKG"), CommandType::CT_PKG },
-    { std::string("-PID"), CommandType::CT_PID },      { std::string("-OUT"), CommandType::CT_OUT },
-    { std::string("-c"), CommandType::CT_C },          { std::string("-g"), CommandType::CT_G },
-    { std::string("-f"), CommandType::CT_F },          { std::string("-f1"), CommandType::CT_F1 },
-    { std::string("-f2"), CommandType::CT_F1 },        { std::string("-t"), CommandType::CT_T },
-    { std::string("-p"), CommandType::CT_P },          { std::string("-r"), CommandType::CT_R },
-    { std::string("-trace"), CommandType::CT_TTRACE }, { std::string("-snapshot"), CommandType::CT_SNAPSHOT },
-    { std::string("-hw"), CommandType::CT_HW },        { std::string("-d"), CommandType::CT_D },
-    { std::string("-INTERVAL"), CommandType::CT_INTERVAL },  { std::string("-SESSIONID"), CommandType::CT_SESSIONID },
-    { std::string("-net"), CommandType::CT_NET },      { std::string("-VIEW"), CommandType::CT_VIEW },
+    { std::string("-N"), CommandType::CT_N },
+    { std::string("-PKG"), CommandType::CT_PKG },
+    { std::string("-PID"), CommandType::CT_PID },
+    { std::string("-OUT"), CommandType::CT_OUT },
+    { std::string("-c"), CommandType::CT_C },
+    { std::string("-g"), CommandType::CT_G },
+    { std::string("-f"), CommandType::CT_F },
+    { std::string("-f1"), CommandType::CT_F1 },
+    { std::string("-f2"), CommandType::CT_F1 },
+    { std::string("-t"), CommandType::CT_T },
+    { std::string("-p"), CommandType::CT_P },
+    { std::string("-r"), CommandType::CT_R },
+    { std::string("-trace"), CommandType::CT_TTRACE },
+    { std::string("-snapshot"), CommandType::CT_SNAPSHOT },
+    { std::string("-hw"), CommandType::CT_HW },
+    { std::string("-d"), CommandType::CT_D },
+    { std::string("-INTERVAL"), CommandType::CT_INTERVAL },
+    { std::string("-SESSIONID"), CommandType::CT_SESSIONID },
+    { std::string("-net"), CommandType::CT_NET },
+    { std::string("-VIEW"), CommandType::CT_VIEW },
+    { std::string("-fl"), CommandType::CT_FL },
+    { std::string("-ftl"), CommandType::CT_FTL },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
-    { CommandType::CT_N, std::string("-N") },          { CommandType::CT_PKG, std::string("-PKG") },
-    { CommandType::CT_PID, std::string("-PID") },      { CommandType::CT_OUT, std::string("-OUT") },
-    { CommandType::CT_C, std::string("-c") },          { CommandType::CT_G, std::string("-g") },
-    { CommandType::CT_F, std::string("-f") },          { CommandType::CT_F1, std::string("-f1") },
-    { CommandType::CT_F1, std::string("-f2") },        { CommandType::CT_T, std::string("-t") },
-    { CommandType::CT_P, std::string("-p") },          { CommandType::CT_R, std::string("-r") },
-    { CommandType::CT_TTRACE, std::string("-trace") }, { CommandType::CT_SNAPSHOT, std::string("-snapshot") },
-    { CommandType::CT_HW, std::string("-hw") },        { CommandType::CT_D, std::string("-d") },
-    { CommandType::CT_INTERVAL, std::string("-INTERVAL") },  { CommandType::CT_SESSIONID, std::string("-SESSIONID") },
-    { CommandType::CT_NET, std::string("-net") },      { CommandType::CT_VIEW, std::string("-VIEW") },
+    { CommandType::CT_N, std::string("-N") },
+    { CommandType::CT_PKG, std::string("-PKG") },
+    { CommandType::CT_PID, std::string("-PID") },
+    { CommandType::CT_OUT, std::string("-OUT") },
+    { CommandType::CT_C, std::string("-c") },
+    { CommandType::CT_G, std::string("-g") },
+    { CommandType::CT_F, std::string("-f") },
+    { CommandType::CT_F1, std::string("-f1") },
+    { CommandType::CT_F1, std::string("-f2") },
+    { CommandType::CT_T, std::string("-t") },
+    { CommandType::CT_P, std::string("-p") },
+    { CommandType::CT_R, std::string("-r") },
+    { CommandType::CT_TTRACE, std::string("-trace") },
+    { CommandType::CT_SNAPSHOT, std::string("-snapshot") },
+    { CommandType::CT_HW, std::string("-hw") },
+    { CommandType::CT_D, std::string("-d") },
+    { CommandType::CT_INTERVAL, std::string("-INTERVAL") },
+    { CommandType::CT_SESSIONID, std::string("-SESSIONID") },
+    { CommandType::CT_NET, std::string("-net") },
+    { CommandType::CT_VIEW, std::string("-VIEW") },
+    { CommandType::CT_FL, std::string("-fl") },
+    { CommandType::CT_FTL, std::string("-ftl") },
 };
 
 

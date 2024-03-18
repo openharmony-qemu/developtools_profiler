@@ -31,7 +31,6 @@
 
 namespace OHOS {
 namespace SmartPerf {
-
 void ProfilerFPS::GetResultFPS(int sectionsNum)
 {
     struct timeval start;
@@ -63,7 +62,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
         LOGI("Failed to get current time.");
         return;
     }
-    char* dt = ctime(&now);
+    char *dt = ctime(&now);
     LOGI("printf time is: %s", dt);
     fflush(stdout);
     gettimeofday(&end, nullptr);
@@ -73,7 +72,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
         usleep(sleepTime - runTime);
     }
     for (int i = 0; i < ten; i++) {
-        struct timespec time1 = {0};
+        struct timespec time1 = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &time1);
         int curTimeNow = static_cast<int>(time1.tv_sec - 1);
         if (curTimeNow == lastFpsInfoResult.curTime) {
@@ -246,7 +245,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     refresh = true;
     lastTime = -1;
     LOGI("dump time: start!");
-    struct timespec time1 = {0};
+    struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;

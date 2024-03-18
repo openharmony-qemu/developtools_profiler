@@ -23,11 +23,13 @@
 #include "include/sp_thread_socket.h"
 #include "include/ByTrace.h"
 #include "include/smartperf_command.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
+SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
-    if (argc == oneParam) {
+    LOGI("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
+    if (argv.size() == oneParam) {
         OHOS::SmartPerf::StartUpDelay sd;
         std::string pid = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = "taskset -p f " + pid;
@@ -43,21 +45,21 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
         tSocket.join();
         tSocket1.join();
     }
-    if (argc == twoParam) {
+    if (argv.size() == twoParam) {
         auto iterator = commandHelpMap.begin();
         while (iterator != commandHelpMap.end()) {
-            if (strcmp(argv[1], iterator->second.c_str()) == 0) {
+            if (0 == iterator->second.compare(argv[1])) {
                 HelpCommand(iterator->first);
                 break;
             }
             ++iterator;
         }
     }
-    if (argc >= threeParamMore) {
-        for (int i = 1; i <= argc - 1; i++) {
+    if (argv.size() >= threeParamMore) {
+        for (int i = 1; i <= argv.size() - 1; i++) {
             std::string argStr = argv[i];
             std::string argStr1;
-            if (i < argc - 1) {
+            if (i < argv.size() - 1) {
                 argStr1 = argv[i + 1];
             }
             if (commandMap.count(argStr) > 0) {
@@ -65,9 +67,12 @@ SmartPerfCommand::SmartPerfCommand(int argc, char *argv[])
             }
         }
     }
+
+    LOGI("SmartPerfCommand::SmartPerfCommand  complete");
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type) const
 {
+    LOGI("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
         std::cout << smartPerfMsg << std::endl;
     }
@@ -81,6 +86,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
 }
 void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
 {
+    LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (commandMap.at(argStr)) {
         case CommandType::CT_N:
             num = atoi(argStr1.c_str());
@@ -124,12 +130,13 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
 
 std::string SmartPerfCommand::ExecCommand()
 {
+    LOGI("SmartPerfCommand::ExecCommand start num(%d)", num);
     int index = 0;
     std::vector<SPData> vmap;
     const long long freq = 1000;
     while (index < num) {
         long long lastTime = SPUtils::GetCurTime();
-        std::multimap<std::string, std::string, decltype(SPUtils::Cmp)*> spMap(SPUtils::Cmp);
+        std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long timestamp = SPUtils::GetCurTime();
         spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(timestamp)));
 
@@ -168,6 +175,7 @@ void SmartPerfCommand::InitSomething()
     std::string cmdResult;
     if (SPUtils::LoadCmd("chmod o+r /proc/stat", cmdResult)) {
         printf("Privilege escalation! \n");
+        LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };
 }
 }

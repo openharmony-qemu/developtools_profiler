@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef STARTUP_DELAY_H
+#define STARTUP_DELAY_H
 #include <thread>
 namespace OHOS {
 namespace SmartPerf {
@@ -41,3 +43,4 @@ public:
 };
 }
 }
+#endif

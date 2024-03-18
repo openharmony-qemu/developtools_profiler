@@ -14,12 +14,14 @@
  */
 #include "include/sp_utils.h"
 #include "include/DDR.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> DDR::ItemData()
 {
     std::map<std::string, std::string> result;
     result["ddrFrequency"] = std::to_string(GetDdrFreq());
+    LOGI("DDR::ItemData map size(%u)", result.size());
     return result;
 }
 long long DDR::GetDdrFreq()

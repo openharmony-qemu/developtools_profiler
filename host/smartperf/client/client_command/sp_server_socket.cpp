@@ -17,6 +17,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "include/sp_server_socket.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 SpServerSocket::SpServerSocket() {}
@@ -38,6 +39,7 @@ int SpServerSocket::Init(ProtoType type)
     }
     if (sock < 0) {
         std::cout << "Socket Create Failed:" << sock << std::endl;
+        LOGE("SpServerSocket::Init Socket Create Failed");
         return -1;
     }
     local.sin_family = AF_INET;
@@ -45,14 +47,18 @@ int SpServerSocket::Init(ProtoType type)
     local.sin_addr.s_addr = htonl(INADDR_ANY);
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
         std::cout << "Socket Bind failed:" << sock << std::endl;
+        LOGE("SpServerSocket::Init Socket Bind failed");
         return -1;
     }
     if (type == ProtoType::TCP) {
         if (listen(sock, listenCount) < 0) {
             std::cout << "Socket Listen failed:" << sock << std::endl;
+            LOGE("SpServerSocket::Init Socket Listen failed");
             return -1;
         }
     }
+
+    LOGI("SpServerSocket::Init OK");
     return 0;
 }
 
@@ -65,7 +71,7 @@ int SpServerSocket::Accept()
 int SpServerSocket::Sendto(std::string &sendBuf)
 {
     socklen_t len = sizeof(sockaddr_in);
-    sendto(sock, sendBuf.c_str(), sendBuf.size(), 0, reinterpret_cast<struct sockaddr*>(&client), len);
+    sendto(sock, sendBuf.c_str(), sendBuf.size(), 0, reinterpret_cast<struct sockaddr *>(&client), len);
     return 0;
 }
 
@@ -74,6 +80,7 @@ int SpServerSocket::Send(std::string sendBuf)
     int sendBytes = send(connFd, sendBuf.c_str(), sendBuf.size(), 0);
     if (sendBytes < 0) {
         std::cout << "Send:Error" << std::endl;
+        LOGE("SpServerSocket::Send Error(%d) fd(%d)", sendBytes, connFd);
         return -1;
     }
     return 0;
@@ -90,7 +97,7 @@ int SpServerSocket::Recvfrom()
 {
     bzero(rbuf, sizeof(rbuf));
     socklen_t len = sizeof(sockaddr_in);
-    int l = recvfrom(sock, rbuf, sizeof(rbuf) - 1, 0, reinterpret_cast<struct sockaddr*>(&client), &len);
+    int l = recvfrom(sock, rbuf, sizeof(rbuf) - 1, 0, reinterpret_cast<struct sockaddr *>(&client), &len);
     if (l > 0) {
         std::cout << "Client:" << rbuf << std::endl;
     }
@@ -104,6 +111,7 @@ int SpServerSocket::Recv()
     if (l > 0) {
         std::cout << "Client:" << rbuf << std::endl;
     } else {
+        LOGE("SpServerSocket::recv Error(%d) fd(%d)", l, connFd);
         perror("recv error:");
         return -1;
     }

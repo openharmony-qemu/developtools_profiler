@@ -85,7 +85,7 @@ std::string ControlCallCmd::TimeDelay()
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
@@ -103,8 +103,7 @@ std::string ControlCallCmd::TimeDelay()
     double strCompleteTime = radar.ParseRadarComplete(str2);
     std::ostringstream streamComplete;
     streamComplete << strCompleteTime;
-    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +
-     "CompleteTime:" + streamComplete.str() + "ms";
+    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" + "CompleteTime:" + streamComplete.str() + "ms";
     return resultTime;
 }
 std::string ControlCallCmd::SlideList()
@@ -113,7 +112,7 @@ std::string ControlCallCmd::SlideList()
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseSlideFpsTrace slideFpsTrace;
     std::string cmdResult;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     std::string resultStream = "";
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_fps.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
@@ -141,7 +140,7 @@ std::string ControlCallCmd::GetFrame()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_frame.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "frame" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("frame", traceName);
@@ -155,13 +154,13 @@ std::string ControlCallCmd::GetFrame()
 std::string ControlCallCmd::PageFps()
 {
     OHOS::SmartPerf::StartUpDelay sd;
-    OHOS::SmartPerf::PageFpsTrace pageFpsTrace;
+    OHOS::SmartPerf::ParsePageFpsTrace pageFpsTrace;
     std::string cmdResult;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
     thGetTrace.join();
-    double fps = pageFpsTrace.ParsePageFpsTrace(traceName);
+    double fps = pageFpsTrace.PageFpsTrace(traceName);
     stream << fps;
     result = "FPS:" + stream.str() + "fps";
     return result;
@@ -169,7 +168,7 @@ std::string ControlCallCmd::PageFps()
 std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
-    ParseFPS parseFPS;
+    SpParseFPS parseFPS;
     std::string cmdResult;
     int typePKG = 3;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
@@ -184,7 +183,7 @@ double ControlCallCmd::ResponseTime()
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     if (isOhTest) {
@@ -219,7 +218,7 @@ double ControlCallCmd::CompleteTime()
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseClickCompleteTrace pcct;
     std::string cmdResult;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     if (isOhTest) {
@@ -268,7 +267,7 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
@@ -300,7 +299,7 @@ std::string ControlCallCmd::GetAppStartTime()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
@@ -316,7 +315,7 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
@@ -360,7 +359,7 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;
-    OHOS::SmartPerf::Radar radar;
+    OHOS::SmartPerf::ParseRadar radar;
     std::string cmdResult;
     std::string deviceType = sd.GetDeviceType();
     if (isOhTest) {

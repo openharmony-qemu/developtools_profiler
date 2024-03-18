@@ -55,9 +55,25 @@ std::map<std::string, std::string> FPS::ItemData()
     if (isCapture > 0) {
         Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
     }
+    SetFpsCurrentFpsTime(fpsInfoResult);
+
+    LOGI("FPS::ItemData map size(%u)", result.size());
     return result;
 }
 
+void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
+{
+    ffTime.fps = fpsInfoResult.fps;
+    if (!fpsInfoResult.jitters.empty()) {
+        auto maxElement = std::max_element(fpsInfoResult.jitters.begin(), fpsInfoResult.jitters.end());
+        ffTime.currentFpsTime = *maxElement;
+    }
+}
+
+FpsCurrentFpsTime FPS::GetFpsCurrentFpsTime()
+{
+    return ffTime;
+}
 void FPS::SetTraceCatch()
 {
     isCatchTrace = 1;
@@ -159,7 +175,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     refresh = true;
     lastTime = -1;
     LOGI("dump time: start!");
-    struct timespec time1 = {0};
+    struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     LOGI("Time-------time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
     LOGI("Time-------time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());

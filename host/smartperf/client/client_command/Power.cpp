@@ -29,6 +29,7 @@ std::map<std::string, std::string> Power::ItemData()
     result["voltageNow"] = voltageNow;
     LOGI("currentNow: %s", currentNow.c_str());
     LOGI("voltageNow: %s", voltageNow.c_str());
+    LOGI("Power::ItemData map size(%u)", result.size());
     return result;
 }
 }

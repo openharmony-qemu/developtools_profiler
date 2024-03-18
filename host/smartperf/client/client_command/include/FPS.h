@@ -29,7 +29,7 @@ struct FpsInfo {
         curTime = 0;
         jitters.clear();
     }
-    bool operator==(const FpsInfo& other) const
+    bool operator == (const FpsInfo &other) const
     {
         if (fps != other.fps) {
             return false;
@@ -50,6 +50,11 @@ struct FpsInfo {
         curTime = 0;
     }
 };
+struct FpsCurrentFpsTime {
+    int fps = 0;
+    long long currentFpsTime = 0;
+};
+
 class FPS : public SpProfiler {
 public:
     void SetPackageName(std::string pName);
@@ -75,6 +80,9 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
+    void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
+    FpsCurrentFpsTime GetFpsCurrentFpsTime();
+
 private:
     FPS() {};
     FPS(const FPS &);
@@ -95,6 +103,7 @@ private:
     bool isFoundAppName = false;
     bool isFoundBundleName = false;
     int threeHundred = 300;
+    FpsCurrentFpsTime ffTime;
 };
 }
 }

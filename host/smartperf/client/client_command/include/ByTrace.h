@@ -52,11 +52,11 @@ private:
     mutable long long lastTriggerTime = -1;
     // 当前是否触发
     mutable long long currentTrigger = -1;
-    //traceCmd
+    // traceCmd
     mutable std::string traceCmd = "";
-    //低帧触发
+    // 低帧触发
     mutable int lowfps = -1;
-    //前2秒采的不准
+    // 前2秒采的不准
     mutable int times = 0;
 };
 }

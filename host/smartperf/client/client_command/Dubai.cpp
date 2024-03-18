@@ -16,18 +16,20 @@
 #include <sstream>
 #include "include/sp_utils.h"
 #include "include/Dubai.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-
 void Dubai::DumpDubaiBegin()
 {
     std::string result;
     SPUtils::LoadCmd("hidumper -s 1213 -a '-b'", result);
+    LOGI("Dubai::DumpDubaiBegin");
 }
 void Dubai::DumpDubaiFinish()
 {
     std::string result;
     SPUtils::LoadCmd("hidumper -s 1213 -a '-f'", result);
+    LOGI("Dubai::DumpDubaiFinish");
 }
 
 void Dubai::MoveDubaiDb()

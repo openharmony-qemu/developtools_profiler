@@ -21,6 +21,7 @@
 #include "include/client_control.h"
 #include "include/sp_utils.h"
 #include "include/startup_delay.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 int ClientControl::SocketStart(std::string args)
@@ -28,9 +29,10 @@ int ClientControl::SocketStart(std::string args)
     std::string messageInit = message + args;
     int resultId = OHOS::SmartPerf::ClientControl::InitSocket();
     if (resultId == 1) {
+        LOGE("ClientControl::InitSocket() error(%d)", resultId);
         return resultId;
     }
-    send(clientSocket,  messageInit.c_str(), strlen(messageInit.c_str()), 0);
+    send(clientSocket, messageInit.c_str(), strlen(messageInit.c_str()), 0);
     read(clientSocket, buffer, numBuff);
     send(clientSocket, message1, strlen(message1), 0);
     read(clientSocket, buffer, numBuff);
@@ -48,6 +50,7 @@ int ClientControl::SocketStart(std::string args)
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
     }
+    LOGI("ClientControl::SocketStart() OK");
     return 0;
 }
 int ClientControl::SocketStop()
@@ -70,6 +73,7 @@ int ClientControl::SocketStop()
     } else {
         std::cout << "SP_daemon Collection ended failed" << std::endl;
     }
+    LOGI("ClientControl::SocketStop() OK");
     return 0;
 }
 int ClientControl::InitSocket()
@@ -77,17 +81,20 @@ int ClientControl::InitSocket()
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1) {
         std::cout << "Faild to create socket" << std::endl;
+        LOGE("Faild to create socket");
         return -1;
     }
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     serverAddress.sin_port = htons(protNumber);
-    if (connect(clientSocket, reinterpret_cast<struct sockaddr*>(&serverAddress), sizeof(serverAddress)) < 0) {
+    if (connect(clientSocket, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(serverAddress)) < 0) {
         std::cout << "Failed to connect to server" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
+        LOGE("Failed to connect to server");
         return 1;
     }
+    LOGI("ClientControl::InitSocket() OK");
     return 0;
 }
 void ClientControl::StartSPDaemon()
@@ -95,12 +102,14 @@ void ClientControl::StartSPDaemon()
     std::string result = "";
     SPUtils::LoadCmd("SP_daemon", result);
     sleep(1);
+    LOGI("ClientControl::StartSPDaemon() OK");
 }
 int ClientControl::CloseSocket()
 {
     shutdown(clientSocket, SHUT_RD);
     close(clientSocket);
     clientSocket = -1;
+    LOGI("ClientControl::CloseSocket() OK");
     return 0;
 }
 }
