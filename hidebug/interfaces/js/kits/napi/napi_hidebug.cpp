@@ -696,12 +696,12 @@ napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 {
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
-        CreateUndefined(env);
+        return CreateUndefined(env);
     }
 
     auto nativeMemInfo = nativeInterface->GetAppNativeMemInfo();
     if (!nativeMemInfo) {
-        CreateUndefined(env);
+        return CreateUndefined(env);
     }
 
     napi_value memInfo;
@@ -742,12 +742,12 @@ napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
-        CreateUndefined(env);
+        return CreateUndefined(env);
     }
 
     auto systemMemInfo = nativeInterface->GetSystemMemInfo();
     if (!systemMemInfo) {
-        CreateUndefined(env);
+        return CreateUndefined(env);
     }
 
     napi_value sysMemInfo;
