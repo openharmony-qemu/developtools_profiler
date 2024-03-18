@@ -39,15 +39,6 @@ double ParseSlideFpsTrace::CalculateTime()
 {
     std::string line;
     while (getline(infile, line)) {
-        if (line.find("H:RSJankStats::RecordAnimationDynamicFrameRate") != std::string::npos) {
-            std::string delimiter = "frame rate is ";
-            size_t pos1 = line.find(delimiter);
-            std::string result1 = line.substr(pos1 + delimiter.length());
-            std::string delimiter1 = ":";
-            size_t pos2 = line.find(delimiter1);
-            std::string result2 = result1.substr(0, pos2);
-            frameRate = std::stod(result2);
-        }
         if (line.find("H:touchEventDispatch") != std::string::npos) {
             count++;
             if (count == four) {
@@ -63,7 +54,7 @@ double ParseSlideFpsTrace::CalculateTime()
                 frameNum = frameNow;
                 flagWeb = false;
             }
-        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos) {
+        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos || line.find("H:APP_LIST_FLING 0") != std::string::npos) {
             flagWeb = true;
         }
         if (touchTime != 0 && (doCompositionTime - touchTime) > completionTime && needTime) {

@@ -31,8 +31,12 @@ public:
     std::thread ThreadGetHisysIdResponse() const;
     void GetHisysIdComplete() const;
     std::thread ThreadGetHisysIdComplete() const;
-    void GetHisysId();
+    void GetHisysId() const;
     std::thread ThreadGetHisysId();
+    void GetHisysIdStart();
+    std::thread ThreadGetHisysIdStart() const;
+    void GetHisysIdMaxFrame();
+    std::thread ThreadGetHisysIdMaxFrame() const;
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     std::string GetDeviceType();

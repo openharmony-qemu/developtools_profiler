@@ -90,6 +90,52 @@ void StartUpDelay::GetHisysId()
     }
     SPUtils::LoadCmd("kill " + secondStr, str);
 }
+void StartUpDelay::GetHisysIdStart() const
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep APP_START", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ssLine(line);
+    std::string word = "";
+    std::string secondStr;
+    int count = 0;
+    int num = 2;
+    while (ssLine >> word) {
+        count++;
+        if (count == num) {
+            secondStr = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + secondStr, str);
+}
+void StartUpDelay::GetHisysIdMaxFrame() const
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep INTERACTION_JANK", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ssLine(line);
+    std::string word = "";
+    std::string secondStr;
+    int count = 0;
+    int num = 2;
+    while (ssLine >> word) {
+        count++;
+        if (count == num) {
+            secondStr = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + secondStr, str);
+}
 void StartUpDelay::GetHisysIdResponse() const
 {
     int time = 10;
@@ -160,6 +206,16 @@ std::thread StartUpDelay::ThreadGetHisysIdComplete() const
 {
     std::thread thGetHisysIdComplete(&StartUpDelay::GetHisysIdComplete, this);
     return thGetHisysIdComplete;
+}
+std::thread StartUpDelay::ThreadGetHisysIdStart() const
+{
+    std::thread thGetHisysIdStart(&StartUpDelay::GetHisysIdStart, this);
+    return thGetHisysIdStart;
+}
+std::thread StartUpDelay::ThreadGetHisysIdMaxFrame() const
+{
+    std::thread thGetHisysIdMaxFrame(&StartUpDelay::GetHisysIdMaxFrame, this);
+    return thGetHisysIdMaxFrame;
 }
 void StartUpDelay::ChangeToBackground()
 {
