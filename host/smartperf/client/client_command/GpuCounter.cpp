@@ -93,13 +93,13 @@ int GpuCounter::Init(std::string packageName, std::map<std::string, std::string>
             break;
         }
         sandBoxPath = constSandBoxPath + packageName + constSandBoxFile;
-        if (-1 == access(sandBoxPath.c_str(), W_OK)) { // Determine whether SandBox can be written
+        if (access(sandBoxPath.c_str(), W_OK) == -1) { // Determine whether SandBox can be written
             errorInfo = "unable to access sandbox path(" + sandBoxPath + ")";
             ret = ERROR_CODE_NEGATIVE_THREE;
             break;
         }
     } while (false);
-    if (0 != ret) {
+    if (ret != 0) {
         retMap["gpu_counter"] = "false";
         retMap["error"] = errorInfo;
         LOGE("%s", errorInfo.c_str());
@@ -107,7 +107,7 @@ int GpuCounter::Init(std::string packageName, std::map<std::string, std::string>
     }
     SPUtils::LoadCmd(constAddPermissionsCounter, result);
     ret = Start();
-    if (0 == ret) {
+    if (ret == 0) {
         retMap["gpu_counter"] = "true";
     } else {
         errorInfo = "counters_collector run failed";
@@ -158,8 +158,9 @@ int GpuCounter::Start()
 
 void GpuCounter::Check()
 {
-    if (isStop)
+    if (isStop) {
         return;
+    }
 
     long long diff = 0;
     long long nowTime = SPUtils::GetCurTime();
