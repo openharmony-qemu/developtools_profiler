@@ -69,7 +69,7 @@ std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
 double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
     std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    pid_t pid = getpid();
+    pid_t pid = getprocpid();
     float tmpCpuUsage = dumpUsage->GetCpuUsage(pid);
     double cpuUsage = static_cast<double>(tmpCpuUsage);
     return cpuUsage;
@@ -171,7 +171,7 @@ std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
         HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
         return {};
     }
-    int pid = getpid();
+    int pid = getprocpid();
     auto collectResult = collector->CollectProcessMemory(pid);
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "CollectProcessMemory Failed,retCode = %{public}d",
