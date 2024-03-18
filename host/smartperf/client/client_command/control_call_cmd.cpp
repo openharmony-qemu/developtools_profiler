@@ -321,7 +321,8 @@ std::string ControlCallCmd::GetAppStartTime()
     LOGI("resultStream2====: %s", resultStream2.c_str());
     double result = srt.StallingRateResult(traceName);
     std::ostringstream ss;
-    ss << std::fixed << std::setprecision(2) << result;
+    int two = 2;
+    ss << std::fixed << std::setprecision(two) << result;
     std::string ssResult = ss.str();
     std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
     resultStream = resultStream + hitchTimeRate + resultStream2;

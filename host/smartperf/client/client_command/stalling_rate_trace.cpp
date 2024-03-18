@@ -56,11 +56,19 @@ double StallingRateTrace::CalculateTime()
             if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
-                roundTime = oneThousand / nowFrameRate;
+                if (nowFrameRate != 0) {
+                    roundTime = oneThousand / nowFrameRate;
+                } else {
+                    frameLossRate = 0;
+                }
             } else if (line.find("H:RSHardwareThread::PerformSetActiveMode setting active mode") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
-                roundTime = oneThousand / nowFrameRate;
+                if (nowFrameRate != 0) {
+                    roundTime = oneThousand / nowFrameRate;
+                } else {
+                    frameLossRate = 0;
+                }
             }
             GetScreenInfo(line);
         }
@@ -81,7 +89,7 @@ void StallingRateTrace::GetScreenInfo(std::string line)
         }
         syd::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
         if (line.find(waitFenceId) != std::string::npos) {
-            nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line)); 
+            nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
         }
         if ((nowTime - lastTime) > roundTime && lastTime != 0) {
             double diffTime = (nowTime - lastTime) - roundTime;

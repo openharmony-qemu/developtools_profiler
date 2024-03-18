@@ -54,7 +54,8 @@ double ParseSlideFpsTrace::CalculateTime()
                 frameNum = frameNow;
                 flagWeb = false;
             }
-        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos || line.find("H:APP_LIST_FLING 0") != std::string::npos) {
+        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
+            line.find("H:APP_LIST_FLING 0") != std::string::npos) {
             flagWeb = true;
         }
         if (touchTime != 0 && (doCompositionTime - touchTime) > completionTime && needTime) {
