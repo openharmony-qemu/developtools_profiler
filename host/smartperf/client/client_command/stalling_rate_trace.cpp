@@ -39,21 +39,21 @@ double StallingRateTrace::CalculateTime()
 {
     frameLossRate = 0;
     frameLossTime = 0;
-    std::string signS = "|S";
-    std::string signF = "|F";
+    std::string signS = "S|";
+    std::string signF = "F|";
     std::string line;
     while (getline(infile, line)) {
-        if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON") != std::string::npos) {
+        if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos) {
             if (animalFlag) {
-                dynamicFinishTime = GetTimes(line signF);
+                dynamicFinishTime = GetTimes(line, signF);
                 animalFlag = false;
             } else {
-                dynamicStartTime = GetTimes(line signS);
+                dynamicStartTime = GetTimes(line, signS);
                 animalFlag = true;
             }
         }
         if (animalFlag) {
-            if (line.find("H:RSHardwareThread::CommirAndReleaseLayers") != std::string::npos) {
+            if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
                 roundTime = oneThousand / nowFrameRate;
@@ -62,21 +62,7 @@ double StallingRateTrace::CalculateTime()
                 nowFrameRate = GetFrameRate(line);
                 roundTime = oneThousand / nowFrameRate;
             }
-            if (upperScreenFlag) {
-                if (line.find("|H:Present Fence ") != std::string::npos) {
-                    fenceId = GetFenceId(line);
-                }
-                syd::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
-                if (line.find(waitFenceId) != std::string::npos) {
-                   nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line)); 
-                }
-                if ((nowTime - lastTime) > roundTime && lastTime != 0) {
-                    double diffTime = (nowTime - lastTime) - roundTime;
-                    frameLossTime += diffTime;
-                }
-                lastTime = nowTime;
-                upperScreenFlag = false;
-            }
+            GetScreenInfo(line);
         }
     }
     if (frameLossTime == 0) {
@@ -84,7 +70,26 @@ double StallingRateTrace::CalculateTime()
     } else {
         frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
     }
-    return std::sqrt(frameLossRate);
+    return frameLossRate;
+}
+
+void StallingRateTrace::GetScreenInfo(std::string line)
+{
+    if (upperScreenFlag) {
+        if (line.find("|H:Present Fence ") != std::string::npos) {
+            fenceId = GetFenceId(line);
+        }
+        syd::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
+        if (line.find(waitFenceId) != std::string::npos) {
+            nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line)); 
+        }
+        if ((nowTime - lastTime) > roundTime && lastTime != 0) {
+            double diffTime = (nowTime - lastTime) - roundTime;
+            frameLossTime += diffTime;
+        }
+        lastTime = nowTime;
+        upperScreenFlag = false;
+    }
 }
 
 double StallingRateTrace::GetFrameRate(std::string line)
@@ -108,7 +113,7 @@ int StallingRateTrace::GetFenceId(std::string line)
     return presentFenceId;
 }
 
-std::string StallingRateTrace::GetOnScreenTimeStart(td::string line)
+std::string StallingRateTrace::GetOnScreenTimeStart(std::string line)
 {
     std::string startTime = "0";
     size_t subNum = 5;

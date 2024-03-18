@@ -65,8 +65,8 @@ ohos_executable("SP_daemon") {
     "sp_server_socket.cpp",
     "sp_task.cpp",
     "sp_utils.cpp",
-    "startup_delay.cpp",
     "stalling_rate_trace.cpp",
+    "startup_delay.cpp",
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]

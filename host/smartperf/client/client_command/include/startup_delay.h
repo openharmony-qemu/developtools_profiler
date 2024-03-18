@@ -31,11 +31,11 @@ public:
     std::thread ThreadGetHisysIdResponse() const;
     void GetHisysIdComplete() const;
     std::thread ThreadGetHisysIdComplete() const;
-    void GetHisysId() const;
+    void GetHisysId();
     std::thread ThreadGetHisysId();
-    void GetHisysIdStart();
+    void GetHisysIdStart() const;
     std::thread ThreadGetHisysIdStart() const;
-    void GetHisysIdMaxFrame();
+    void GetHisysIdMaxFrame() const;
     std::thread ThreadGetHisysIdMaxFrame() const;
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);

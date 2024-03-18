@@ -77,7 +77,8 @@ double ParseRadar::ParseRadarComplete(std::string string)
 std::string ParseRadar::ParseRadarMaxFrame(std::string string)
 {
     std::string maxRenderSeqMissedFrames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
-    std::string result = "MAX_RENDER_SEQ_MISSED_FRAMES" + maxRenderSeqMissedFrames;
+    std::string result = "MAX_RENDER_SEQ_MISSED_FRAMES:" + maxRenderSeqMissedFrames;
+    return result;
 }
 std::string ParseRadar::ParseRadarFrame(std::string string)
 {

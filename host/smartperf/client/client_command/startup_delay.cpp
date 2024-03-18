@@ -90,52 +90,6 @@ void StartUpDelay::GetHisysId()
     }
     SPUtils::LoadCmd("kill " + secondStr, str);
 }
-void StartUpDelay::GetHisysIdStart() const
-{
-    int time = 10;
-    sleep(time);
-    std::string str = "";
-    SPUtils::LoadCmd("ps -ef |grep APP_START", str);
-    std::stringstream ss(str);
-    std::string line = "";
-    getline(ss, line);
-    std::stringstream ssLine(line);
-    std::string word = "";
-    std::string secondStr;
-    int count = 0;
-    int num = 2;
-    while (ssLine >> word) {
-        count++;
-        if (count == num) {
-            secondStr = word;
-            break;
-        }
-    }
-    SPUtils::LoadCmd("kill " + secondStr, str);
-}
-void StartUpDelay::GetHisysIdMaxFrame() const
-{
-    int time = 10;
-    sleep(time);
-    std::string str = "";
-    SPUtils::LoadCmd("ps -ef |grep INTERACTION_JANK", str);
-    std::stringstream ss(str);
-    std::string line = "";
-    getline(ss, line);
-    std::stringstream ssLine(line);
-    std::string word = "";
-    std::string secondStr;
-    int count = 0;
-    int num = 2;
-    while (ssLine >> word) {
-        count++;
-        if (count == num) {
-            secondStr = word;
-            break;
-        }
-    }
-    SPUtils::LoadCmd("kill " + secondStr, str);
-}
 void StartUpDelay::GetHisysIdResponse() const
 {
     int time = 10;
@@ -165,6 +119,52 @@ void StartUpDelay::GetHisysIdComplete() const
     sleep(time);
     std::string str = "";
     SPUtils::LoadCmd("ps -ef |grep INTERACTION_COMPLETED_LATENCY", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ssLine(line);
+    std::string word = "";
+    std::string secondStr;
+    int count = 0;
+    int num = 2;
+    while (ssLine >> word) {
+        count++;
+        if (count == num) {
+            secondStr = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + secondStr, str);
+}
+void StartUpDelay::GetHisysIdStart() const
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep APP_START", str);
+    std::stringstream ss(str);
+    std::string line = "";
+    getline(ss, line);
+    std::stringstream ssLine(line);
+    std::string word = "";
+    std::string secondStr;
+    int count = 0;
+    int num = 2;
+    while (ssLine >> word) {
+        count++;
+        if (count == num) {
+            secondStr = word;
+            break;
+        }
+    }
+    SPUtils::LoadCmd("kill " + secondStr, str);
+}
+void StartUpDelay::GetHisysIdMaxFrame() const
+{
+    int time = 10;
+    sleep(time);
+    std::string str = "";
+    SPUtils::LoadCmd("ps -ef |grep INTERACTION_JANK", str);
     std::stringstream ss(str);
     std::string line = "";
     getline(ss, line);

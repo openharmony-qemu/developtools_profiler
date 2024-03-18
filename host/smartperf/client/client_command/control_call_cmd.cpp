@@ -18,6 +18,7 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <iomanip>
 #include <future>
 #include "include/control_call_cmd.h"
 #include "include/startup_delay.h"
@@ -307,8 +308,8 @@ std::string ControlCallCmd::GetAppStartTime()
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
     std::thread thGetHisysId = sd.ThreadGetHisysIdStart();
     std::thread thGetHisysId2 = sd.ThreadGetHisysIdMaxFrame();
-    std::future<std::string> futureResult = std::async(std:launch::async, SPUtils::GetRadar);
-    std::future<std::string> futureResult2 = std::async(std:launch::async, SPUtils::GetRadarFrame);
+    std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadar);
+    std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
     std::string str = futureResult.get();
     std::string str2 = futureResult2.get();
     thGetTrace.join();
@@ -319,7 +320,10 @@ std::string ControlCallCmd::GetAppStartTime()
     LOGI("resultStream====: %s", resultStream.c_str());
     LOGI("resultStream2====: %s", resultStream2.c_str());
     double result = srt.StallingRateResult(traceName);
-    std::string hitchTimeRate = "HitchTimeRate:" + std::to_string(result) + "ms/s \n";
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(2) << result;
+    std::string ssResult = ss.str();
+    std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
     resultStream = resultStream + hitchTimeRate + resultStream2;
     return resultStream;
 }

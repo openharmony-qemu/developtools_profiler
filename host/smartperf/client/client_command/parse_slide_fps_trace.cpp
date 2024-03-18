@@ -63,14 +63,10 @@ double ParseSlideFpsTrace::CalculateTime()
             responseTime = doCompositionTime;
         }
     }
-    if (frameRate == 0) {
-        if (completeTime == 0 || responseTime == 0) {
-            return -1;
-        } else {
-            return frameNum / (completeTime - responseTime);
-        }
+    if (completeTime == 0 || responseTime == 0) {
+        return -1;
     } else {
-        return frameRate;
+        return frameNum / (completeTime - responseTime);
     }
     return -1.0;
 }

@@ -27,8 +27,9 @@ public:
     double CalculateTime();
     double GetFrameRate(std::string line);
     int GetFenceId(std::string line);
-    std::string GetOnScreenTimeStart(td::string line);
+    std::string GetOnScreenTimeStart(std::string line);
     double GetTimes(std::string line, std::string sign);
+    void GetScreenInfo(std::string line);
 private:
     std::ifstream infile;
     double nowFrameRate = 0;
