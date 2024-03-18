@@ -39,7 +39,7 @@ void HidebugAppThreadCpu::InitThreadCpuCollector()
         HILOG_ERROR(LOG_CORE, "InitThreadCpuCollector fail, CpuCollector create fail!");
         return;
     }
-    int pid = getpid();
+    int pid = getpropid();
     threadStatInfoCollector_ = cpuCollector->CreateThreadCollector(pid);
     if (!threadStatInfoCollector_) {
         HILOG_ERROR(LOG_CORE, "InitThreadCpuCollector fail, CreateThreadStatInfoCollector fail!");
