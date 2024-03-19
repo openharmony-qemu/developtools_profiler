@@ -307,14 +307,14 @@ std::string ControlCallCmd::GetAppStartTime()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
     std::thread thGetHisysId = sd.ThreadGetHisysIdStart();
-    std::thread thGetHisysId2 = sd.ThreadGetHisysIdMaxFrame();
+    std::thread thGetHisysIdMaxFrame = sd.ThreadGetHisysIdMaxFrame();
     std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadar);
     std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
     std::string str = futureResult.get();
     std::string str2 = futureResult2.get();
     thGetTrace.join();
     thGetHisysId.join();
-    thGetHisysId2.join();
+    thGetHisysIdMaxFrame.join();
     std::string resultStream = radar.ParseRadarAppStrart(str);
     std::string resultStream2 = radar.ParseRadarMaxFrame(str2);
     LOGI("resultStream====: %s", resultStream.c_str());
