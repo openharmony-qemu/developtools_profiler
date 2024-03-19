@@ -31,6 +31,32 @@
 
 namespace OHOS {
 namespace SmartPerf {
+std::map<std::string, std::string> ProfilerFPS::ItemData()
+{
+    std::map<std::string, std::string> result;
+    FpsInfoProfiler finalResult;
+    finalResult = GetFpsInfo();
+    result["fps"] = std::to_string(finalResult.fps);
+    LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
+    LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());
+    std::string jitterStr = "";
+    std::string split = "";
+    for (size_t i = 0; i < finalResult.jitters.size(); i++) {
+        if (i > 0) {
+            split = ";;";
+        }
+        jitterStr += split + std::to_string(finalResult.jitters[i]);
+    }
+    result["fpsJitters"] = jitterStr;
+    LOGI("ProfilerFPS.result.jitters====: %s", jitterStr.c_str());
+    return result;
+}
+
+void ProfilerFPS::SetPackageName(std::string pName)
+{
+    pkgName = std::move(pName);
+}
+
 void ProfilerFPS::GetResultFPS(int sectionsNum)
 {
     struct timeval start;
@@ -213,9 +239,22 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     int fourHundred = 400;
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
-    uniteFpsInfo = GetSurfaceFrame(uniteLayer);
-    std::this_thread::sleep_for(std::chrono::milliseconds(fourHundred));
-    secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
+    if (pkgName.empty()) {
+        uniteFpsInfo = GetSurfaceFrame(uniteLayer);
+        std::this_thread::sleep_for(std::chrono::milliseconds(fourHundred));
+        secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
+    } else {
+        bool onTop = IsForeGround();
+        if (onTop) {
+            LOGI("ProfilerFPS.onTop===========");
+            uniteFpsInfo = GetSurfaceFrame(uniteLayer);
+            std::this_thread::sleep_for(std::chrono::milliseconds(threeHundred));
+            secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
+        } else {
+            LOGI("ProfilerFPS.in the background==========");
+            return fpsInfoMax;
+        }
+    }
     return GetFpsInfoMax();
 }
 
@@ -286,6 +325,47 @@ void ProfilerFPS::GetSameTimeNums()
             fpsInfo.jitters.push_back(jitter);
         }
         lastTime = frameReadyTime;
+    }
+}
+bool ProfilerFPS::IsForeGround()
+{
+    const std::string cmd = "aa dump -l";
+    char buf[1024] = {'\0'};
+    std::string appLine = "app name [" + pkgName;
+    std::string bundleLine = "bundle name [" + pkgName;
+    isFoundAppName = false;
+    isFoundBundleName = false;
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return false;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line = buf;
+        if (line.find(appLine) != std::string::npos) {
+            isFoundAppName = true;
+        }
+        if (line.find(bundleLine) != std::string::npos) {
+            isFoundBundleName = true;
+        }
+        if (isFoundAppName || isFoundBundleName) {
+            if (line.find("app state") != std::string::npos) {
+                bool tag = IsFindForeGround(line);
+                pclose(fd);
+                return tag;
+            }
+        }
+    }
+    pclose(fd);
+    return false;
+}
+
+bool ProfilerFPS::IsFindForeGround(std::string line)
+{
+    std::string foreGroundTag = line.substr(line.find("#") + 1);
+    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
+        return true;
+    } else {
+        return false;
     }
 }
 }

@@ -17,6 +17,7 @@
 #include "include/DDR.h"
 #include "include/GPU.h"
 #include "include/FPS.h"
+#include "include/profiler_fps.h"
 #include "include/RAM.h"
 #include "include/Network.h"
 #include "include/Power.h"
@@ -39,7 +40,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
         messageType == MessageType::GET_CPU_LOAD) {
         profiler = &CPU::GetInstance();
     } else if (messageType == MessageType::GET_FPS_AND_JITTERS) {
-        profiler = &FPS::GetInstance();
+        profiler = &ProfilerFPS::GetInstance();
     } else if (messageType == MessageType::GET_GPU_FREQ || messageType == MessageType::GET_GPU_LOAD) {
         profiler = &GPU::GetInstance();
     } else if (messageType == MessageType::GET_DDR_FREQ) {
@@ -71,6 +72,8 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
+    ProfilerFPS &profilerFPS = ProfilerFPS::GetInstance();
+    profilerFPS.SetPackageName(pkg);
     RAM &ram = RAM::GetInstance();
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
