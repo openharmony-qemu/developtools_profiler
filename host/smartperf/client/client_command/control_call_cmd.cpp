@@ -18,6 +18,7 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <iomanip>
 #include <future>
 #include "include/control_call_cmd.h"
 #include "include/startup_delay.h"
@@ -32,6 +33,7 @@
 #include "include/parse_radar.h"
 #include "include/parse_slide_fps_trace.h"
 #include "include/sp_log.h"
+#include "include/stalling_rate_trace.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -300,15 +302,30 @@ std::string ControlCallCmd::GetAppStartTime()
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
+    OHOS::SmartPerf::StallingRateTrace srt;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysId();
-    std::string str = SPUtils::GetRadar();
+    std::thread thGetHisysId = sd.ThreadGetHisysIdStart();
+    std::thread thGetHisysIdMaxFrame = sd.ThreadGetHisysIdMaxFrame();
+    std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadar);
+    std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
+    std::string str = futureResult.get();
+    std::string str2 = futureResult2.get();
     thGetTrace.join();
     thGetHisysId.join();
+    thGetHisysIdMaxFrame.join();
     std::string resultStream = radar.ParseRadarAppStrart(str);
+    std::string resultStream2 = radar.ParseRadarMaxFrame(str2);
     LOGI("resultStream====: %s", resultStream.c_str());
+    LOGI("resultStream2====: %s", resultStream2.c_str());
+    double result = srt.StallingRateResult(traceName);
+    std::ostringstream ss;
+    int two = 2;
+    ss << std::fixed << std::setprecision(two) << result;
+    std::string ssResult = ss.str();
+    std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
+    resultStream = resultStream + hitchTimeRate + resultStream2;
     return resultStream;
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)

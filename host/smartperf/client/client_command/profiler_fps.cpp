@@ -200,7 +200,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfoMax()
         prevFpsInfoMax = uniteFpsInfo;
         return prevResultFpsInfo;
     } else {
-        LOGI("8888888888888888888888888");
         prevResultFpsInfo = uniteFpsInfo;
         prevSecFpsInfoMax = secUniteFpsInfo;
         prevFpsInfoMax = uniteFpsInfo;

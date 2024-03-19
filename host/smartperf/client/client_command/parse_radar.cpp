@@ -74,6 +74,12 @@ double ParseRadar::ParseRadarComplete(std::string string)
     time = std::stod(extract_string(string, target));
     return time;
 }
+std::string ParseRadar::ParseRadarMaxFrame(std::string string)
+{
+    std::string maxRenderSeqMissedFrames = extract_string(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
+    std::string result = "MAX_RENDER_SEQ_MISSED_FRAMES:" + maxRenderSeqMissedFrames;
+    return result;
+}
 std::string ParseRadar::ParseRadarFrame(std::string string)
 {
     std::string budleName = extract_string(string, "\"BUNDLE_NAME_EX\":");

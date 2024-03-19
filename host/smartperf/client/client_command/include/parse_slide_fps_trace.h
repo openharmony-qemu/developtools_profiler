@@ -36,7 +36,6 @@ private:
     int frameNow = 0;
     int count = 0;
     int four = 4;
-    double frameRate = 0;
     double touchTime = 0;
     double responseTime = 0;
     double doCompositionTime = 0;
