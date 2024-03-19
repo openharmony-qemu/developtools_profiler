@@ -34,8 +34,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfoProfiler finalResult;
-    finalResult = GetFpsInfo();
+    FpsInfoProfiler finalResult = GetFpsInfo();
     result["fps"] = std::to_string(finalResult.fps);
     LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
     LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());
@@ -237,6 +236,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
     isFirstResult = false;
     int fourHundred = 400;
+    int threeHundred = 300;
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
     if (pkgName.empty()) {
@@ -282,15 +282,15 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     fpsNum = 0;
     refresh = true;
     lastTime = -1;
-    LOGI("dump time: start!");
+    LOGI("ProfilerFPS dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGI("Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
+    LOGI("ProfilerFPS Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
-        LOGD("dump time: %s", str.c_str());
+        LOGD("ProfilerFPS dump time: %s", str.c_str());
         frameReadyTime = 0;
         std::stringstream sstream;
         sstream << tmp;
@@ -305,7 +305,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
         GetSameTimeNums();
     }
     pclose(fp);
-    LOGI("Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
+    LOGI("ProfilerFPS Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
     return fpsInfo;
 }
 

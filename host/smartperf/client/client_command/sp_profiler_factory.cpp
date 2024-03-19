@@ -72,8 +72,8 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
-    ProfilerFPS &profilerFPS = ProfilerFPS::GetInstance();
-    profilerFPS.SetPackageName(pkg);
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetPackageName(pkg);
     RAM &ram = RAM::GetInstance();
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
