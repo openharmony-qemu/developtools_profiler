@@ -30,6 +30,7 @@ public:
     std::string GetOnScreenTimeStart(std::string line);
     double GetTimes(std::string line, std::string sign);
     void GetScreenInfo(std::string line);
+    void CalculateRoundTime();
 private:
     std::ifstream infile;
     double nowFrameRate = 0;

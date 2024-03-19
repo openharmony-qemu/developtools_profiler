@@ -56,19 +56,11 @@ double StallingRateTrace::CalculateTime()
             if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
-                if (nowFrameRate != 0) {
-                    roundTime = oneThousand / nowFrameRate;
-                } else {
-                    frameLossRate = 0;
-                }
+                CalculateRoundTime();
             } else if (line.find("H:RSHardwareThread::PerformSetActiveMode setting active mode") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
-                if (nowFrameRate != 0) {
-                    roundTime = oneThousand / nowFrameRate;
-                } else {
-                    frameLossRate = 0;
-                }
+                CalculateRoundTime();
             }
             GetScreenInfo(line);
         }
@@ -81,22 +73,30 @@ double StallingRateTrace::CalculateTime()
     return frameLossRate;
 }
 
+void StallingRateTrace::CalculateRoundTime()
+{
+    if (nowFrameRate != 0) {
+        roundTime = oneThousand / nowFrameRate;
+    } else {
+        roundTime = 0;
+    }
+}
 void StallingRateTrace::GetScreenInfo(std::string line)
 {
     if (upperScreenFlag) {
         if (line.find("|H:Present Fence ") != std::string::npos) {
             fenceId = GetFenceId(line);
         }
-        syd::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
+        std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
         if (line.find(waitFenceId) != std::string::npos) {
             nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+            if ((nowTime - lastTime) > roundTime && lastTime != 0) {
+                double diffTime = (nowTime - lastTime) - roundTime;
+                frameLossTime += diffTime;
+            }
+            lastTime = nowTime;
+            upperScreenFlag = false;
         }
-        if ((nowTime - lastTime) > roundTime && lastTime != 0) {
-            double diffTime = (nowTime - lastTime) - roundTime;
-            frameLossTime += diffTime;
-        }
-        lastTime = nowTime;
-        upperScreenFlag = false;
     }
 }
 
