@@ -34,7 +34,7 @@
 #include "include/parse_slide_fps_trace.h"
 #include "include/sp_log.h"
 #include "include/stalling_rate_trace.h"
-#include "include/parse_page_rate_trace .h"
+#include "include/parse_page_rate_trace.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -111,7 +111,7 @@ std::string ControlCallCmd::TimeDelay()
     double strCompleteTime = radar.ParseRadarComplete(str2);
     std::ostringstream streamComplete;
     streamComplete << strCompleteTime;
-    std::string maxFrame = rader.ParseRadarMaxFrame(str3);
+    std::string maxFrame = radar.ParseRadarMaxFrame(str3);
     std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +"CompleteTime:" + streamComplete.str() + "ms\n";
     double rateResult = pprt.ParsePageRateResult(traceName);
     std::ostringstream ss;
@@ -150,7 +150,7 @@ std::string ControlCallCmd::SlideList()
         thGetHisysId2.join();
         double responseTime = radar.ParseRadarResponse(str);
         stream << responseTime;
-        std::string maxFrame = rader.ParseRadarMaxFrame(str2);
+        std::string maxFrame = radar.ParseRadarMaxFrame(str2);
         std::string responseSlide = "ResponseTime:" + stream.str() + "ms\n";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         std::ostringstream streamFps;

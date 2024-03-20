@@ -51,7 +51,6 @@ ohos_executable("SP_daemon") {
     "parse_click_complete_trace.cpp",
     "parse_click_response_trace.cpp",
     "parse_page_fps_trace.cpp",
-    "parse_page_fps_trace.cpp",
     "parse_page_rate_trace.cpp",
     "parse_radar.cpp",
     "parse_slide_fps_trace.cpp",
