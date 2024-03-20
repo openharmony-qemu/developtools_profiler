@@ -44,7 +44,8 @@ double StallingRateTrace::CalculateTime()
     std::string line;
     while (getline(infile, line)) {
         if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
-            line.find("H:APP_LIST_FLING 0") != std::string::npos || line.find("H:WEB_LIST_FLING 0") != std::string::npos) {
+            line.find("H:APP_LIST_FLING 0") != std::string::npos ||
+            line.find("H:WEB_LIST_FLING 0") != std::string::npos) {
             if (animalFlag) {
                 dynamicFinishTime = GetTimes(line, signF);
                 animalFlag = false;

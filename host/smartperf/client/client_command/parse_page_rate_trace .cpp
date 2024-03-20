@@ -46,7 +46,7 @@ double ParsePageRateTrace::CalculateTime()
         if (line.find("RSJankStats::SetReportEventResponse") != std::string::npos) {
             dynamicStartTime = GetTimes(line);
             animalFlag = true;
-        } 
+        }
         if (line.find("RSApplicationAgentImpl::OnTransaction") != std::string::npos) {
             dynamicFinishTime = GetTimes(line);
             animalFlag = false;
