@@ -28,7 +28,7 @@ double StallingRateTrace::StallingRateResult(std::string file)
     infile.open(file);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
-        LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
+        LOGI("StallingRateTrace open file(%s) fialed ", file.c_str());
     } else {
         stalligRate = SmartPerf::StallingRateTrace::CalculateTime();
     }
@@ -43,7 +43,8 @@ double StallingRateTrace::CalculateTime()
     std::string signF = "F|";
     std::string line;
     while (getline(infile, line)) {
-        if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos) {
+        if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
+            line.find("H:APP_LIST_FLING 0") != std::string::npos || line.find("H:WEB_LIST_FLING 0") != std::string::npos) {
             if (animalFlag) {
                 dynamicFinishTime = GetTimes(line, signF);
                 animalFlag = false;
@@ -65,8 +66,8 @@ double StallingRateTrace::CalculateTime()
             GetScreenInfo(line);
         }
     }
-    if (frameLossTime == 0) {
-        frameLossRate = 0;
+    if (dynamicStartTime == 0 || dynamicFinishTime) {
+        frameLossRate = -1;
     } else {
         frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
     }
@@ -77,8 +78,6 @@ void StallingRateTrace::CalculateRoundTime()
 {
     if (nowFrameRate != 0) {
         roundTime = oneThousand / nowFrameRate;
-    } else {
-        roundTime = 0;
     }
 }
 void StallingRateTrace::GetScreenInfo(std::string line)
