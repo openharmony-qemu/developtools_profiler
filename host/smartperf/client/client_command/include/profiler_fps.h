@@ -56,12 +56,15 @@ struct FpsInfoProfiler {
         currTimeDump = 0;
     }
 };
-class ProfilerFPS {
+class ProfilerFPS : public SpProfiler {
 public:
+    void SetPackageName(std::string pName);
     void GetFPS(int argc, std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     FpsInfoProfiler GetFpsInfoMax();
+    bool IsForeGround();
+    bool IsFindForeGround(std::string line);
     void GetSameTimeNums();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult);
@@ -75,8 +78,19 @@ public:
     FpsInfoProfiler secUniteFpsInfo;
     FpsInfoProfiler prevResultFpsInfo;
     FpsInfoProfiler lastFpsInfoResult;
+    static ProfilerFPS &GetInstance()
+    {
+        static ProfilerFPS instance;
+        return instance;
+    }
+    std::map<std::string, std::string> ItemData() override;
 
 private:
+    ProfilerFPS() {};
+    ProfilerFPS(const ProfilerFPS &);
+    ProfilerFPS &operator = (const ProfilerFPS &);
+
+    std::string pkgName;
     int num = 1;
     int number = 2;
     bool refresh = false;
@@ -95,6 +109,8 @@ private:
     long long oneThousand = 1000;
     long long msClear = 1000000000;
     long long currRealTime = 0;
+    bool isFoundAppName = false;
+    bool isFoundBundleName = false;
 };
 }
 }
