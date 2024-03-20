@@ -72,12 +72,17 @@ export class FloatWindowFun {
 
         globalThis.CreateTitleWindow = (() => {
       wm.create(globalThis.abilityContext, 'sp_TitleWindow', wm.WindowType.TYPE_FLOAT).then((floatWin) => {
+        SPLogger.DEBUG(TAG, 'CreateTitleWindow Done1')
                 floatWin.moveTo(this.titleWindowOffsetX, this.titleWindowOffsetY).then(() => {
+                  SPLogger.DEBUG(TAG, 'CreateTitleWindow Done2')
                     floatWin.resetSize(350*globalThis.coefficient, 480*globalThis.coefficient).then(() => {
+                      SPLogger.DEBUG(TAG, 'CreateTitleWindow Done3')
                         floatWin.getProperties().then((property) => {
+                          SPLogger.DEBUG(TAG, 'CreateTitleWindow Done4')
                             property.isTransparent = false
                         })
                         floatWin.loadContent('pages/TitleWindowPage').then(() => {
+                          SPLogger.DEBUG(TAG, 'CreateTitleWindow Done5')
                             floatWin.setBackgroundColor("#00000000")
                             floatWin.hide()
                             SPLogger.DEBUG(TAG, 'CreateTitleWindow Done')
@@ -101,21 +106,29 @@ export class FloatWindowFun {
         })
 
         globalThis.DestroyTitleWindow = (() => {
+          SPLogger.DEBUG('cm-destroy-TitleWindow')
             wm.find("sp_TitleWindow").then((fltWin) => {
+              SPLogger.DEBUG('cm-destroy-TitleWindow1')
                 fltWin.destroy().then(() => {
                 })
             })
         })
 
         globalThis.HideTitleWindow = (() => {
+          SPLogger.DEBUG('cm-hide-TitleWindow')
             wm.find("sp_TitleWindow").then((fltWin) => {
+              SPLogger.DEBUG('cm-hide-TitleWindow1')
                 fltWin.hide()
+              SPLogger.DEBUG('cm-hide-TitleWindow2')
             })
         })
 
         globalThis.ShowTitleWindow = (() => {
+          SPLogger.DEBUG('cm-show-TitleWindow')
             wm.find("sp_TitleWindow").then((fltWin) => {
+              SPLogger.DEBUG('cm-show-TitleWindow1')
                 fltWin.show()
+              SPLogger.DEBUG('cm-show-TitleWindow2')
             })
         })
 

@@ -45,9 +45,12 @@ struct FloatBall {
     ProfilerTask.getInstance().initModule()
     ProfilerTask.getInstance().taskInit()
     //创建TiTile窗
+    SPLogger.DEBUG('cm-floatBall-CreateTitleWindow1')
     globalThis.CreateTitleWindow()
+    SPLogger.DEBUG('cm-floatBall-CreateTitleWindow2')
     globalThis.task_status = TaskStatus.task_init
     initFloatWindow()
+    SPLogger.DEBUG('cm-floatBall-CreateTitleWindow3')
   }
 
   initAllCollect() {
@@ -65,7 +68,7 @@ struct FloatBall {
           ProfilerTask.getInstance().taskStart()
           this.timerNum++
         }
-        console.log("collectIntervalCollect running status::"+ this.playerState);
+        console.log("collectIntervalCollect running status::"+ this.playerState + 'cm-timerNum' +this.timerNum);
       }, 1000)
 
       globalThis.collectPowerCollect = setInterval(() => {
@@ -82,6 +85,7 @@ struct FloatBall {
   }
 
   singleEvent() {
+    SPLogger.DEBUG('cm-floatBall-singleEvent')
     if (this.playerState == TaskStatus.task_running) {
       globalThis.task_status = TaskStatus.task_pause
       this.playerState = TaskStatus.task_pause
@@ -93,6 +97,7 @@ struct FloatBall {
   }
 
   doubleEvent() {
+    SPLogger.DEBUG('cm-floatBall-doubleEvent' + this.windShowState)
     // 双击启动悬浮TITLE
     if (this.windShowState) {
       globalThis.HideTitleWindow()
@@ -104,6 +109,7 @@ struct FloatBall {
   }
 
   longEvent() {
+    SPLogger.DEBUG('cm-floatBall-longEvent')
     ProfilerTask.getInstance().taskStop()
     this.destroyAllWindow()
     this.clearAllInterVal()
@@ -120,12 +126,14 @@ struct FloatBall {
     MainWorker.postMessage({"setDuBaiDb": true})
   }
   destroyAllWindow(){
+    SPLogger.DEBUG('cm-floatBall-destroyAllWindow')
     globalThis.DestroyFloatingWindow()
     globalThis.DestroyTitleWindow()
     destoryAllFloatWindow()
   }
 
   clearAllInterVal(){
+    SPLogger.DEBUG('cm-floatBall-clearAllInterVal')
     if(globalThis.collectConfigs.trace){
       MainWorker.postMessage({"catch_trace_end":true})
     }
