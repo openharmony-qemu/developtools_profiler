@@ -19,7 +19,6 @@
 ├── GpuCounter.cpp                              # GpuCounter采集代码文件
 ├── Network.cpp                                 # 网络上下行速率采集代码文件
 ├── Power.cpp                                   # 功耗采集代码文件
-├── profiler_fps.cpp                            # 不指定应用帧率采集及分段采集帧率代码文件
 ├── RAM.cpp                                     # 内存采集代码文件
 ├── smartperf_command.cpp                       # 程序执行文件
 ├── smartperf_main.cpp                          # 程序入口文件
@@ -174,4 +173,4 @@ command exec finished!
 **3.2.0.0版本发布内容：预制SP_daemon bin文件，支持以下功能：**<br>
 1. 支持RK3568、Hi3516。<br>
 2. 支持Shell启动。<br>
-3. 支持采集整机CPU、GPU、POWER、TEMPERATURE、应用的FPS、RAM
+3. 支持采集整机CPU、GPU、POWER、TEMPERATURE、应用的FPS、RAM、CPU等
