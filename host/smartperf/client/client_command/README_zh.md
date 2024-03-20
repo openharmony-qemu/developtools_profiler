@@ -163,9 +163,11 @@ command exec finished!
 #
 ----------------------------------Print END--------------------------------------
 ```
-3）执行完毕后会在data/local/tmp生成data.csv文件，每次执行命令覆盖写入。
+3）执行完毕后会在data/local/tmp生成data.csv文件，每次执行命令覆盖写入，可导出到本地查看。
 ```bash
-# cat /data/local/tmp/data.csv
+c:\Users\xxx>hdc file recv data/local/tmp/data.csv D:\
+[I][2024-03-20 18:27:07] HdcFile::TransferSummary success
+FileTransfer finish, Size:7306, File count = 1, time:377ms rate:19.38kB/s
 ---
 
 ## 发布版本
