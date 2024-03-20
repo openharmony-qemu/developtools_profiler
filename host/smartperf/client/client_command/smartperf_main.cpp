@@ -55,7 +55,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
         return true;
     }
     // 'help' and 'version' start with "--" and are processed separately
-    if (std::string::npos != str.find("--help") || std::string::npos != str.find("--version")) {
+    if (str.find("--help") != std::string::npos || str.find("--version") != std::string::npos) {
         std::vector<std::string> out;
         OHOS::SmartPerf::SPUtils::StrSplit(str, "-", out);
         if (1 != out.size()) {
@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
         vec.push_back(argv[i]);
     }
     if (!CheckCMDParam(vec, errorInfo)) {
-        std::cout << "SP_daemon:" << errorInfo << std::endl
-            << "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl
-            << "Try `SP_daemon --help' for more options." << std::endl;
+        std::cout << "SP_daemon:" << errorInfo << std::endl <<
+             "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
+             "Try `SP_daemon --help' for more options." << std::endl;
 
         return 0;
     }

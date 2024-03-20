@@ -267,10 +267,11 @@ bool SPTask::CheckCounterId()
     std::string result;
 
     SPUtils::LoadCmd("ps -ef |grep hiprofiler_cmd |grep -v grep", result);
-    if (result.empty())
+    if (result.empty()) {
         return false;
+    }
 
-    if (std::string::npos != result.find("-k")) {
+    if (result.find("-k") != std::string::npos) {
         return true;
     }
 

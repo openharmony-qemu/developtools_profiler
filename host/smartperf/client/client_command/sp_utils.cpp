@@ -327,7 +327,7 @@ void SPUtils::RemoveSpace(std::string &str)
     int len = 0;
 
     for (size_t i = 0; i < str.length(); i++) {
-        if (' ' != str[i]) {
+        if (str[i] != ' ') {
             break;
         }
 
@@ -340,7 +340,7 @@ void SPUtils::RemoveSpace(std::string &str)
 
     len = 0;
     for (size_t i = str.length(); i > 0; --i) {
-        if (' ' != str[i - 1]) {
+        if (str[i - 1] != ' ') {
             break;
         }
 
@@ -376,7 +376,7 @@ bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
             return false;
         }
 
-        if (!isValid && ('0' == str[i])) {
+        if (!isValid && (str[i] == '0')) {
             continue;
         }
 
@@ -385,7 +385,7 @@ bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
         dest += (str[i] - CHAR_NUM_DIFF);
     }
 
-    if (0 == dest || dest > INT_MAX) {
+    if (dest == 0 || dest > INT_MAX) {
         errorInfo = "option parameter out of range";
         LOGE("sour(%s) dest(%u) error(%s)", str.c_str(), dest, errorInfo.c_str());
         return false;
