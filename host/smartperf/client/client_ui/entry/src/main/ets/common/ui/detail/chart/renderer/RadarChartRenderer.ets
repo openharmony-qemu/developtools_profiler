@@ -147,30 +147,8 @@ export default class RadarChartRenderer extends LineRadarRenderer {
       pointType.setDataIndex(-1)
       pointTypeArr.push(pointType);
     }
-    //
-    //        surface.close();
-    //
-    //        if (dataSet.isDrawFilledEnabled()) {
-    //
-    //            final Drawable drawable = dataSet.getFillDrawable();
-    //            if (drawable != null) {
-    //
-    //                drawFilledPath(c, surface, drawable);
-    //            } else {
-    //
-    //                drawFilledPath(c, surface, dataSet.getFillColor(), dataSet.getFillAlpha());
-    //            }
-    //        }
-    //
     this.mRenderPaint.setStrokeWidth(dataSet.getLineWidth());
     this.mRenderPaint.setStyle(Style.STROKE);
-    //
-    //        // draw the line (only if filled is disabled or alpha is below 255)
-    //        if (!dataSet.isDrawFilledEnabled() || dataSet.getFillAlpha() < 255)
-    //            c.drawPath(surface, mRenderPaint);
-    //
-    //        MPPointF.recycleInstance(center);
-    //        MPPointF.recycleInstance(pOut);
     surface+=" Z"
     let pathPaint:PathPaint=new PathPaint();
     pathPaint.set(this.mRenderPaint);
@@ -234,28 +212,6 @@ export default class RadarChartRenderer extends LineRadarRenderer {
           (j)));
         }else{
           paints=paints.concat(new TextPaint())
-        }
-
-        if (entry.getIcon() != null && dataSet.isDrawIconsEnabled()) {
-          //
-          //                        Drawable icon = entry.getIcon();
-          //
-          //                        Utils.getPosition(
-          //                                center,
-          //                                (entry.getY()) * factor * phaseY + iconsOffset.y,
-          //                                sliceangle * j * phaseX + mChart.getRotationAngle(),
-          //                                pIcon);
-          //
-          //                        //noinspection SuspiciousNameCombination
-          //                        pIcon.y += iconsOffset.x;
-          //
-          //                        Utils.drawImage(
-          //                                c,
-          //                                icon,
-          //                                (int)pIcon.x,
-          //                                (int)pIcon.y,
-          //                                icon.getIntrinsicWidth(),
-          //                                icon.getIntrinsicHeight());
         }
       }
 
@@ -388,23 +344,12 @@ export default class RadarChartRenderer extends LineRadarRenderer {
       imagePaint.setWidth(textWidth+10)
       imagePaint.setHeight(textWidth)
       paintData.push(imagePaint);
-      //high.setDraw(pOut.x, pOut.y);
-
-      // draw the lines
-      //this.drawHighlightLines( pOut.x, pOut.y, dataSet);
 
       if (dataSet.isDrawHighlightCircleEnabled()) {
 
         if (!Number.isNaN(pOut.x) && !Number.isNaN(pOut.y)) {
 
           let strokeColor:number = dataSet.getHighlightCircleStrokeColor();
-//          if (strokeColor == ColorTemplate.COLOR_NONE) {
-//            strokeColor = dataSet.getColor(0);
-//          }
-//
-//          if (dataSet.getHighlightCircleStrokeAlpha() < 255) {
-//            strokeColor = ColorTemplate.colorWithAlpha(strokeColor, dataSet.getHighlightCircleStrokeAlpha());
-//          }
 
           paintData=paintData.concat( this.drawHighlightCircle(
             pOut,
@@ -440,14 +385,12 @@ export default class RadarChartRenderer extends LineRadarRenderer {
       outerPaintCircle.setY(point.y-outerRadius)
       outerPaintCircle.setWidth(outerRadius*2)
       outerPaintCircle.setHeight(outerRadius*2)
-      //paint.push(outerPaintCircle)
       if (innerRadius > 0) {
            let innerPaintCir:CirclePaint=new CirclePaint()
            innerPaintCir.setX(point.x-innerRadius)
            innerPaintCir.setY(point.y-innerRadius)
            innerPaintCir.setWidth(innerRadius*2)
            innerPaintCir.setHeight(innerRadius*2)
-          // paint.push(innerPaintCir)
       }
       this.mHighlightCirclePaint.setColor(fillColor);
       this.mHighlightCirclePaint.setStyle(Style.FILL);

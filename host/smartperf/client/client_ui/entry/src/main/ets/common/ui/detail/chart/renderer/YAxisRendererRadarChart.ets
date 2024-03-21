@@ -179,8 +179,6 @@ export default class YAxisRendererRadarChart extends YAxisRenderer {
             Utils.getPosition(center, r, this.radarChartMode.getRotationAngle(), pOut);
 
             let label:string =this.mYAxis.getFormattedLabel(j);
-
-            //c.drawText(label, pOut.x + xOffset, pOut.y, mAxisLabelPaint);
         }
         MPPointF.recycleInstance(center);
         MPPointF.recycleInstance(pOut);
@@ -217,20 +215,14 @@ export default class YAxisRendererRadarChart extends YAxisRenderer {
             let r:number = (l.getLimit() - this.radarChartMode.getYChartMin()) * factor;
 
             let limitPath:string = this.mRenderLimitLinesPathBuffer;
-            //limitPath.reset();
 
 
             for (let j = 0; j < this.radarChartMode.getData().getMaxEntryCountSet().getEntryCount(); j++) {
 
                 Utils.getPosition(center, r, sliceangle * j + this.radarChartMode.getRotationAngle(), pOut);
 
-//                if (j == 0)
-//                    limitPath.moveTo(pOut.x, pOut.y);
-//                else
-//                    limitPath.lineTo(pOut.x, pOut.y);
             }
 
-            //c.drawPath(limitPath, mLimitLinePaint);
         }
         MPPointF.recycleInstance(center);
         MPPointF.recycleInstance(pOut);

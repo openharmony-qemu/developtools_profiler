@@ -13,13 +13,10 @@
  * limitations under the License.
  */
 
-//import { DataSet } from './DataSet';
 import LineScatterCandleRadarDataSet from './LineScatterCandleRadarDataSet'
 import EntryOhos from './EntryOhos'
 import IScatterDataSet from '../interfaces/datasets/IScatterDataSet'
 import ColorTemplate from '../utils/ColorTemplate'
-//import {ScatterShape} from '../charts/ScatterChart'
-
 import {JArrayList} from '../utils/JArrayList'
 import IShapeRenderer from '../renderer/scatter/IShapeRenderer'
 

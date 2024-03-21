@@ -45,11 +45,6 @@ export default class XAixsMode{
 
         this.handler.restrainViewPort(this.minOffset,this.minOffset,this.minOffset,this.minOffset)
         this.handler.setChartDimens(this.width,this.height);
-
-        /*this.topAxis.setLabelCount(6, false);
-        this.topAxis.setPosition(XAxisPosition.TOP);
-        this.topAxis.setAxisMinimum(0);
-        this.topAxis.setAxisMaximum(240);*/
         let mAxisRendererTop:XAxisRenderer = new XAxisRenderer(this.handler,this.topAxis,new Transformer(this.handler));
         mAxisRendererTop.yLeftLongestLabel=this.yLeftLongestLabel;
         mAxisRendererTop.yRightLongestLabel=this.yRightLongestLabel;
@@ -57,11 +52,6 @@ export default class XAixsMode{
         this.paints = this.paints.concat(mAxisRendererTop.renderAxisLine());
         this.paints = this.paints.concat(mAxisRendererTop.renderAxisLabels())
         this.paints = this.paints.concat(mAxisRendererTop.renderGridLines())
-
-        /*this.bottomAxis.setLabelCount(6, false);
-        this.bottomAxis.setPosition(XAxisPosition.BOTTOM);
-        this.bottomAxis.setAxisMinimum(0);
-        this.bottomAxis.setAxisMaximum(240);*/
         let mAxisRendererBottom:XAxisRenderer = new XAxisRenderer(this.handler,this.bottomAxis,new Transformer(this.handler));
         mAxisRendererBottom.yLeftLongestLabel=this.yLeftLongestLabel;
         mAxisRendererBottom.yRightLongestLabel=this.yRightLongestLabel;

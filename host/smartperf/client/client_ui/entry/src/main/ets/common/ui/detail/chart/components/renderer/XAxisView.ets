@@ -45,44 +45,6 @@ export default struct XAxisView {
   scaleMode:ScaleMode=new ScaleMode()
   aboutToAppear(){
     this.scaleMode.xAixsMode.draw()
-//    let minYOffset=this.topAxis.getTextSize()+this.topAxis.getYOffset();
-//    this.minOffset=this.minOffset<minYOffset?minYOffset:this.minOffset
-//
-//    this.handler.restrainViewPort(this.minOffset,this.minOffset,this.minOffset,this.minOffset)
-//    this.handler.setChartDimens(this.width,this.height);
-//
-//    /*this.topAxis.setLabelCount(6, false);
-//    this.topAxis.setPosition(XAxisPosition.TOP);
-//    this.topAxis.setAxisMinimum(0);
-//    this.topAxis.setAxisMaximum(240);*/
-//    let mAxisRendererTop:XAxisRenderer = new XAxisRenderer(this.handler,this.topAxis,new Transformer(this.handler));
-//    mAxisRendererTop.yLeftLongestLabel=this.yLeftLongestLabel;
-//    mAxisRendererTop.yRightLongestLabel=this.yRightLongestLabel;
-//    mAxisRendererTop.computeAxis(this.topAxis.mAxisMinimum,this.topAxis.mAxisMaximum,false)
-//    this.paints = this.paints.concat(mAxisRendererTop.renderAxisLine());
-//    this.paints = this.paints.concat(mAxisRendererTop.renderAxisLabels())
-//    this.paints = this.paints.concat(mAxisRendererTop.renderGridLines())
-//
-//    /*this.bottomAxis.setLabelCount(6, false);
-//    this.bottomAxis.setPosition(XAxisPosition.BOTTOM);
-//    this.bottomAxis.setAxisMinimum(0);
-//    this.bottomAxis.setAxisMaximum(240);*/
-//    let mAxisRendererBottom:XAxisRenderer = new XAxisRenderer(this.handler,this.bottomAxis,new Transformer(this.handler));
-//    mAxisRendererBottom.yLeftLongestLabel=this.yLeftLongestLabel;
-//    mAxisRendererBottom.yRightLongestLabel=this.yRightLongestLabel;
-//    mAxisRendererBottom.computeAxis(this.bottomAxis.mAxisMinimum,this.bottomAxis.mAxisMaximum,false)
-//    this.paints = this.paints.concat(mAxisRendererBottom.renderAxisLine());
-//    this.paints = this.paints.concat(mAxisRendererBottom.renderAxisLabels())
-//
-//    this.paints = this.paints.concat(mAxisRendererTop.renderLimitLines());
-//
-//    let arr = [];
-//    for(let item of this.paints){
-//      if(item){
-//        arr.push(item);
-//      }
-//    }
-//    this.paints = arr;
   }
 
   build() {

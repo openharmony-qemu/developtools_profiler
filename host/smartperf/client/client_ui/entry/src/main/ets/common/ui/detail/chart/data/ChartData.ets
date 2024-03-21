@@ -196,15 +196,6 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
     }
 
     /**
-     * Returns the smallest y-value the data object contains.
-     *
-     * @return
-     */
-//    public getYMin() : number {
-//        return this.mYMin;
-//    }
-
-    /**
      * Returns the minimum y-value for the specified axis.
      *
      * @param axis
@@ -227,15 +218,6 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
                 return this.mRightAxisMin;
         }
     }
-
-    /**
-     * Returns the greatest y-value the data object contains.
-     *
-     * @return
-     */
-//    public getYMax() : number {
-//        return this.mYMax;
-//    }
 
     /**
      * Returns the maximum y-value for the specified axis.
