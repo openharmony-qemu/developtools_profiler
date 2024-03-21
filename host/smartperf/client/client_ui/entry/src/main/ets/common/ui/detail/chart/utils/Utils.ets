@@ -37,6 +37,14 @@ export default abstract class Utils {
   public static DOUBLE_EPSILON: number = 4.9E-324;
   public static FLOAT_EPSILON: number = 1.4E-45;
 
+  /**
+   * initialize method, called inside the Chart.init() method.
+   *
+   * @param context
+   */
+  public static init() {
+
+  }
 
 /**
   * This method converts dp unit to equivalent pixels, depending on device

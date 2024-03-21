@@ -24,7 +24,7 @@ export let windowWidth: number = 2560
 export let windowHeight: number = 1600
 
 export function initFloatWindow() {
-  SPLogger.DEBUG('cm-floatWindowUtils-initFloatWindow1')
+  console.log('cm-floatWindowUtils-initFloatWindow1')
   createFloatWindow("sp_currentNow")
   createFloatWindow("sp_shellBackTemp")
   createFloatWindow("sp_ddrFrequency")
@@ -34,20 +34,20 @@ export function initFloatWindow() {
   createFloatWindow("sp_cpu2Frequency")
   createFloatWindow("sp_RAM")
   createFloatWindow("sp_FPS")
-  SPLogger.DEBUG('cm-floatWindowUtils-initFloatWindow2')
+  console.log('cm-floatWindowUtils-initFloatWindow2')
 }
 export function createFloatWindow(floatName:string) {
 
     //5.5SP2  2106 改成 8
-  SPLogger.DEBUG('cm-floatWindowUtils-createFloatWindow1')
+  console.log('cm-floatWindowUtils-createFloatWindow1')
     wm.create(globalThis.abilityContext, floatName, wm.WindowType.TYPE_FLOAT).then((floatWin) => {
-      SPLogger.DEBUG('cm-floatWindowUtils-createFloatWindow2')
+      console.log('cm-floatWindowUtils-createFloatWindow2')
         floatWin.moveTo(lineChartWindowOffsetX, lineChartWindowOffsetY).then(() => {
           floatWin.resetSize(360*globalThis.coefficient,270*globalThis.coefficient).then(() => {
             floatWin.getProperties().then((property) => {
               property.isTransparent = false
             })
-            SPLogger.DEBUG('cm-floatWindowUtils-createFloatWindow3')
+            console.log('cm-floatWindowUtils-createFloatWindow3')
             if(floatName=="sp_currentNow"){
               floatWin.loadContent('pages/CurrentNowLineChartPage').then(() => {
                 floatWin.setBackgroundColor("#B3000000").then(() => { //透明
@@ -84,18 +84,18 @@ export function createFloatWindow(floatName:string) {
               })
             }
             else if(floatName=="sp_gpuFrequency"){
-              SPLogger.DEBUG('cm-floatWindowUtils-sp_gpuFrequency1')
+              console.log('cm-floatWindowUtils-sp_gpuFrequency1')
               floatWin.loadContent('pages/GPULineChartPage').then(() => {
-                SPLogger.DEBUG('cm-floatWindowUtils-sp_gpuFrequency2')
+                console.log('cm-floatWindowUtils-sp_gpuFrequency2')
                 floatWin.setBackgroundColor("#B3000000").then(() => { //透明
                   console.log("xhq win setTransparent end.");
                   floatWin.setBackgroundColor("#59020000").then(() => { //背景颜色
                   })
                 })
                 floatWin.show().then(() => {
-                  SPLogger.DEBUG('cm-floatWindowUtils-sp_gpuFrequency-hide1')
+                  console.log('cm-floatWindowUtils-sp_gpuFrequency-hide1')
                   floatWin.hide()
-                  SPLogger.DEBUG('cm-floatWindowUtils-sp_gpuFrequency-hide2')
+                  console.log('cm-floatWindowUtils-sp_gpuFrequency-hide2')
                 })
               })
             }
@@ -163,7 +163,7 @@ export function createFloatWindow(floatName:string) {
     })
 }
 export function destoryAllFloatWindow() {
-  SPLogger.DEBUG('cm-floatWindowUtils-destoryAllFloatWindow')
+  console.log('cm-floatWindowUtils-destoryAllFloatWindow')
   destroyFloatWindow("sp_currentNow")
   destroyFloatWindow("sp_shellBackTemp")
   destroyFloatWindow("sp_ddrFrequency")
@@ -175,7 +175,7 @@ export function destoryAllFloatWindow() {
   destroyFloatWindow("sp_FPS")
 }
 export function destroyFloatWindow(floatName:string) {
-  SPLogger.DEBUG('cm-floatWindowUtils-destoryAllFloatWindow1')
+  console.log('cm-floatWindowUtils-destoryAllFloatWindow1')
     wm.find(floatName).then((fltWin) => {
       fltWin.destroy().then(() => {
         globalThis.showFPSLineChartWindow = false
