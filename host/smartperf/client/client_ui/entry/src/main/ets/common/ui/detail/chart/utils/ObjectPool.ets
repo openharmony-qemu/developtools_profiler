@@ -94,10 +94,6 @@ export abstract class ObjectPool <T extends Poolable> {
     return this.replenishPercentage;
   }
 
-  /*private refillPool() {
-    this.refillPool(this.replenishPercentage);
-  }
-*/
   private refillPool(percentage?: number) {
 
     if (percentage == null) {

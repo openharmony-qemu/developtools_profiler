@@ -72,15 +72,20 @@ export class FloatWindowFun {
 
         globalThis.CreateTitleWindow = (() => {
       wm.create(globalThis.abilityContext, 'sp_TitleWindow', wm.WindowType.TYPE_FLOAT).then((floatWin) => {
+        console.log(TAG, 'CreateTitleWindow Done1')
                 floatWin.moveTo(this.titleWindowOffsetX, this.titleWindowOffsetY).then(() => {
+                  console.log(TAG, 'CreateTitleWindow Done2')
                     floatWin.resetSize(350*globalThis.coefficient, 480*globalThis.coefficient).then(() => {
+                      console.log(TAG, 'CreateTitleWindow Done3')
                         floatWin.getProperties().then((property) => {
+                          console.log(TAG, 'CreateTitleWindow Done4')
                             property.isTransparent = false
                         })
                         floatWin.loadContent('pages/TitleWindowPage').then(() => {
+                          console.log(TAG, 'CreateTitleWindow Done5')
                             floatWin.setBackgroundColor("#00000000")
                             floatWin.hide()
-                            SPLogger.DEBUG(TAG, 'CreateTitleWindow Done')
+                            console.log(TAG, 'CreateTitleWindow Done')
                         })
                     })
                 })
@@ -101,21 +106,29 @@ export class FloatWindowFun {
         })
 
         globalThis.DestroyTitleWindow = (() => {
+          console.log('cm-destroy-TitleWindow')
             wm.find("sp_TitleWindow").then((fltWin) => {
+              console.log('cm-destroy-TitleWindow1')
                 fltWin.destroy().then(() => {
                 })
             })
         })
 
         globalThis.HideTitleWindow = (() => {
+          console.log('cm-hide-TitleWindow')
             wm.find("sp_TitleWindow").then((fltWin) => {
+              console.log('cm-hide-TitleWindow1')
                 fltWin.hide()
+              console.log('cm-hide-TitleWindow2')
             })
         })
 
         globalThis.ShowTitleWindow = (() => {
+          console.log('cm-show-TitleWindow')
             wm.find("sp_TitleWindow").then((fltWin) => {
+              console.log('cm-show-TitleWindow1')
                 fltWin.show()
+              console.log('cm-show-TitleWindow2')
             })
         })
 

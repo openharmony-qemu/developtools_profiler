@@ -58,7 +58,6 @@ export default class DefaultValueFormatter implements IValueFormatter
             b+="0";
         }
 
-        //mFormat = new DecimalFormat("###,###,###,##0" + b.toString());
     }
 
     public  getFormattedValue( value:number, entry:EntryOhos, dataSetIndex:number,  viewPortHandler:ViewPortHandler):string {

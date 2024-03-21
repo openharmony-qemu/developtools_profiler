@@ -64,8 +64,6 @@ export default abstract class ChartTouchListener <T extends Chart> {
 
   constructor(chart: T) {
     this.mChart = chart;
-
-    //        mGestureDetector = new GestureDetector(chart.getContext(), this);
   }
 
 /**
