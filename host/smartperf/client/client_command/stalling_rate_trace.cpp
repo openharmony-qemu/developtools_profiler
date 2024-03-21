@@ -44,13 +44,16 @@ double StallingRateTrace::CalculateTime()
     std::string line;
     while (getline(infile, line)) {
         if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
-            line.find("H:APP_LIST_FLING 0") != std::string::npos ||
-            line.find("H:WEB_LIST_FLING 0") != std::string::npos) {
+            line.find("H:APP_LIST_FLING,") != std::string::npos ||
+            line.find("H:WEB_LIST_FLING,") != std::string::npos ||
+            line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos) {
             if (animalFlag) {
                 dynamicFinishTime = GetTimes(line, signF);
+                LOGI("dynamicFinishTime=====: %S", std::to_string(dynamicFinishTime).c_str());
                 animalFlag = false;
             } else {
                 dynamicStartTime = GetTimes(line, signS);
+                LOGI("dynamicStartTime=====: %S", std::to_string(dynamicStartTime).c_str());
                 animalFlag = true;
             }
         }
@@ -58,10 +61,12 @@ double StallingRateTrace::CalculateTime()
             if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
+                LOGI("nowFrameRate1=====: %S", std::to_string(nowFrameRate).c_str());
                 CalculateRoundTime();
             } else if (line.find("H:RSHardwareThread::PerformSetActiveMode setting active mode") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
+                LOGI("nowFrameRate2=====: %S", std::to_string(nowFrameRate).c_str());
                 CalculateRoundTime();
             }
             GetScreenInfo(line);
@@ -71,6 +76,7 @@ double StallingRateTrace::CalculateTime()
         frameLossRate = -1;
     } else {
         frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
+        LOGI("frameLossRate=====: %S", std::to_string(frameLossRate).c_str());
     }
     return frameLossRate;
 }
@@ -79,6 +85,7 @@ void StallingRateTrace::CalculateRoundTime()
 {
     if (nowFrameRate != 0) {
         roundTime = oneThousand / nowFrameRate;
+        LOGI("roundTime=====: %S", std::to_string(roundTime).c_str());
     }
 }
 void StallingRateTrace::GetScreenInfo(std::string line)
@@ -86,13 +93,16 @@ void StallingRateTrace::GetScreenInfo(std::string line)
     if (upperScreenFlag) {
         if (line.find("|H:Present Fence ") != std::string::npos) {
             fenceId = GetFenceId(line);
+            LOGI("fenceId=====: %S", std::to_string(fenceId).c_str());
         }
         std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
         if (line.find(waitFenceId) != std::string::npos) {
             nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+            LOGI("nowTime=====: %S", std::to_string(nowTime).c_str());
             if ((nowTime - lastTime) > roundTime && lastTime != 0) {
                 double diffTime = (nowTime - lastTime) - roundTime;
                 frameLossTime += diffTime;
+                LOGI("frameLossTime=====: %S", std::to_string(frameLossTime).c_str());
             }
             lastTime = nowTime;
             upperScreenFlag = false;

@@ -34,7 +34,6 @@
 #include "include/parse_slide_fps_trace.h"
 #include "include/sp_log.h"
 #include "include/stalling_rate_trace.h"
-#include "include/parse_page_rate_trace.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -89,7 +88,7 @@ std::string ControlCallCmd::TimeDelay()
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
-    OHOS::SmartPerf::ParsePageRateTrace pprt;
+    OHOS::SmartPerf::StallingRateTrace srt;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
@@ -113,7 +112,7 @@ std::string ControlCallCmd::TimeDelay()
     streamComplete << strCompleteTime;
     std::string maxFrame = radar.ParseRadarMaxFrame(str3);
     std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +"CompleteTime:" + streamComplete.str() + "ms\n";
-    double rateResult = pprt.ParsePageRateResult(traceName);
+    double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     int two = 2;
     ss << std::fixed << std::setprecision(two) << rateResult;
