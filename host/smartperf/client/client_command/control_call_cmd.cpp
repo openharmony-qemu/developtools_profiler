@@ -88,24 +88,37 @@ std::string ControlCallCmd::TimeDelay()
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
+    OHOS::SmartPerf::StallingRateTrace srt;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
     std::thread thGetHisysId = sd.ThreadGetHisysIdResponse();
     std::thread thGetHisysId2 = sd.ThreadGetHisysIdComplete();
+    std::thread thGetHisysId3 = sd.ThreadGetHisysIdMaxFrame();
     std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
     std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarComplete);
+    std::future<std::string> futureResult3 = std::async(std::launch::async, SPUtils::GetRadarFrame);
     std::string str = futureResult.get();
     std::string str2 = futureResult2.get();
+    std::string str3 = futureResult3.get();
     thGetTrace.join();
     thGetHisysId.join();
     thGetHisysId2.join();
+    thGetHisysId3.join();
     double strResponseTime = radar.ParseRadarResponse(str);
     stream << strResponseTime;
     double strCompleteTime = radar.ParseRadarComplete(str2);
     std::ostringstream streamComplete;
     streamComplete << strCompleteTime;
-    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" + "CompleteTime:" + streamComplete.str() + "ms";
+    std::string maxFrame = radar.ParseRadarMaxFrame(str3);
+    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +"CompleteTime:" + streamComplete.str() + "ms\n";
+    double rateResult = srt.StallingRateResult(traceName);
+    std::ostringstream ss;
+    int two = 2;
+    ss << std::fixed << std::setprecision(two) << rateResult;
+    std::string ssResult = ss.str();
+    std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
+    resultTime = resultTime + hitchTimeRate + maxFrame;
     return resultTime;
 }
 std::string ControlCallCmd::SlideList()
@@ -115,6 +128,7 @@ std::string ControlCallCmd::SlideList()
     OHOS::SmartPerf::ParseSlideFpsTrace slideFpsTrace;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
+    OHOS::SmartPerf::StallingRateTrace srt;
     std::string resultStream = "";
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_fps.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
@@ -124,17 +138,29 @@ std::string ControlCallCmd::SlideList()
         time = pcrt.ParseResponseTrace(traceName);
     } else {
         std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-        std::thread thGetHisysId = sd.ThreadGetHisysId();
-        std::string str = SPUtils::GetRadarResponse();
+        std::thread thGetHisysId = sd.ThreadGetHisysIdResponse();
+        std::thread thGetHisysId2 = sd.ThreadGetHisysIdMaxFrame();
+        std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
+        std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
+        std::string str = futureResult.get();
+        std::string str2 = futureResult2.get();
         thGetTrace.join();
         thGetHisysId.join();
+        thGetHisysId2.join();
         double responseTime = radar.ParseRadarResponse(str);
         stream << responseTime;
-        std::string responseSlide = "ResponseTime:" + stream.str() + "ms";
+        std::string maxFrame = radar.ParseRadarMaxFrame(str2);
+        std::string responseSlide = "ResponseTime:" + stream.str() + "ms\n";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         std::ostringstream streamFps;
         streamFps << sFps;
-        resultStream = "FPS:" + streamFps.str() + "fps\n" + responseSlide;
+        double result = srt.StallingRateResult(traceName);
+        std::ostringstream ss;
+        int two = 2;
+        ss << std::fixed << std::setprecision(two) << result;
+        std::string ssResult = ss.str();
+        std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
+        resultStream = "FPS:" + streamFps.str() + "fps\n" + responseSlide + hitchTimeRate + maxFrame;
     }
     return resultStream;
 }
