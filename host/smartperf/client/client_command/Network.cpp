@@ -36,6 +36,12 @@ std::map<std::string, std::string> Network::ItemData()
     std::map<std::string, std::string> networkInfo = Network::GetNetworkInfo();
     result = networkInfo;
     LOGI("Network ItemData map siez=%u", result.size());
+    if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
+        result["networkUp"] = "NA";
+    }
+    if (result.find("networkDown") != result.end() && result["networkDown"].empty()) {
+        result["networkDown"] = "NA";
+    }
     return result;
 }
 

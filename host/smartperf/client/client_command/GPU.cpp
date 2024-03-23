@@ -32,6 +32,10 @@ std::map<std::string, std::string> GPU::ItemData()
     float load = GetGpuLoad();
     result["gpuFrequency"] = std::to_string(freq);
     result["gpuLoad"] = std::to_string(load);
+    if (result.find("gpuFrequency") != result.end() && result["gpuFrequency"].empty()) {
+        result["gpuFrequency"] = "NA";
+        result["gpuLoad"] = "NA";
+    }
     LOGI("GPU::ItemData map size(%u)", result.size());
     return result;
 }

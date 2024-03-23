@@ -69,10 +69,12 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
-    if (!processCpuInfo.empty()) {
-        for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
-            result.insert(*it);
+    if (packageName.length() > 0) {
+        std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
+        if (!processCpuInfo.empty()) {
+            for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
+                result.insert(*it);
+            }
         }
     }
 
@@ -140,6 +142,7 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
     std::string processId = "";
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(packageName);
+    LOGI("CPU::processId -- %s", processId.c_str());
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
     if (processId.length() > 0) {
@@ -160,7 +163,21 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         LOGI("ProcCpuUsage: %s", std::to_string(data.cpuUsage).c_str());
         LOGI("ProcUCpuUsage: %s", std::to_string(data.uCpuUsage).c_str());
         LOGI("ProcSCpuUsage: %s", std::to_string(data.sCpuUsage).c_str());
-        return processCpuInfo;
+    } else {
+        processCpuInfo["ProcId"] = "NA";
+        processCpuInfo["ProcAppName"] = packageName;
+        processCpuInfo["ProcCpuLoad"] = "NA";
+        processCpuInfo["ProcCpuUsage"] = "NA";
+        processCpuInfo["ProcUCpuUsage"] = "NA";
+        processCpuInfo["ProcSCpuUsage"] = "NA";
+    }
+    if (processCpuInfo.find("ProcAppName") != processCpuInfo.end() && processCpuInfo["ProcAppName"].empty()) {
+        processCpuInfo["ProcId"] = "NA";
+        processCpuInfo["ProcAppName"] = packageName;
+        processCpuInfo["ProcCpuLoad"] = "NA";
+        processCpuInfo["ProcCpuUsage"] = "NA";
+        processCpuInfo["ProcUCpuUsage"] = "NA";
+        processCpuInfo["ProcSCpuUsage"] = "NA";
     }
     return processCpuInfo;
 }

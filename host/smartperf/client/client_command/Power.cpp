@@ -27,6 +27,12 @@ std::map<std::string, std::string> Power::ItemData()
     SPUtils::LoadFile(voltageNowPath, voltageNow);
     result["currentNow"] = currentNow;
     result["voltageNow"] = voltageNow;
+    if (result.find("currentNow") != result.end() && result["currentNow"].empty()) {
+        result["currentNow"] = "NA";
+    }
+    if (result.find("voltageNow") != result.end() && result["voltageNow"].empty()) {
+        result["voltageNow"] = "NA";
+    }
     LOGI("currentNow: %s", currentNow.c_str());
     LOGI("voltageNow: %s", voltageNow.c_str());
     LOGI("Power::ItemData map size(%u)", result.size());
