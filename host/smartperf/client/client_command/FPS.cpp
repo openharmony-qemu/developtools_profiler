@@ -24,6 +24,7 @@
 #include "include/ByTrace.h"
 #include "include/Capture.h"
 #include "include/FPS.h"
+#include "include/startup_delay.h"
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {

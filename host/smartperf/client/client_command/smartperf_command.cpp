@@ -167,6 +167,7 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
     return std::string("command exec finished!");
 }
