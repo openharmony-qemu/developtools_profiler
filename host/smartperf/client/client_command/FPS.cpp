@@ -24,6 +24,7 @@
 #include "include/ByTrace.h"
 #include "include/Capture.h"
 #include "include/FPS.h"
+#include "include/startup_delay.h"
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -49,6 +50,16 @@ std::map<std::string, std::string> FPS::ItemData()
     }
     result["fpsJitters"] = jitterStr;
     LOGI("result.jitters====: %s", jitterStr.c_str());
+    if (pkgName.length() > 0) {
+        std::string processId = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        processId = sp.GetPidByPkg(pkgName);
+        LOGI("FPS::processId -- %s", processId.c_str());
+        if (processId.empty()) {
+            result["fps"] = "NA";
+            result["fpsJitters"] = "NA";
+        }
+    }
     if (isCatchTrace > 0) {
         ByTrace::GetInstance().CheckFpsJitters(fpsInfoResult.jitters, fpsInfoResult.fps);
     }

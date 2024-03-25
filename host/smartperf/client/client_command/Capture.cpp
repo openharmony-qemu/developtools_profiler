@@ -35,6 +35,9 @@ std::map<std::string, std::string> Capture::ItemData()
     std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
     result["capture"] = path;
     Capture::TriggerGetCatch(curTime);
+    if (result.find("capture") != result.end() && result["capture"].empty()) {
+        result["capture"] = "NA";
+    }
     LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
 }
@@ -50,7 +53,8 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
     std::stringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (!TakeScreenCap(savePath)) {
-        std::cout << "Screen Capture Failed：---" << errorRecv.str() << std::endl;
+        std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
+        LOGE("Screen Capture Failed!");
     }
     (void)close(fd);
 }
@@ -68,6 +72,7 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     static constexpr int bitmapDepth = 8;
     if (pixelMap == nullptr) {
         std::cout << "Failed to get display pixelMap" << std::endl;
+        LOGE("Failed to get display pixelMap");
         return false;
     }
     auto width = static_cast<uint32_t>(pixelMap->GetWidth());
@@ -77,17 +82,20 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     png_structp pngStruct = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if (pngStruct == nullptr) {
         std::cout << "error: png_create_write_struct nullptr!" << std::endl;
+        LOGE("png_create_write_struct nullptr!");
         return false;
     }
     png_infop pngInfo = png_create_info_struct(pngStruct);
     if (pngInfo == nullptr) {
         std::cout << "error: png_create_info_struct error nullptr!" << std::endl;
+        LOGE("png_create_info_struct error nullptr!");
         png_destroy_write_struct(&pngStruct, nullptr);
         return false;
     }
     FILE *fp = fopen(savePath.c_str(), "wb");
     if (fp == nullptr) {
         std::cout << "error: open file error!" << std::endl;
+        LOGE("open file error!");
         png_destroy_write_struct(&pngStruct, &pngInfo);
         return false;
     }

@@ -63,21 +63,21 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> procRamInfo;
     if (processId.size() == 0) {
-        procRamInfo["gpuPss"] = "0";
-        procRamInfo["graphicPss"] = "0";
-        procRamInfo["arktsHeapPss"] = "0";
-        procRamInfo["nativeHeapPss"] = "0";
-        procRamInfo["stackPss"] = "0";
-        procRamInfo["pss"] = "0";
-        procRamInfo["sharedClean"] = "0";
-        procRamInfo["sharedDirty"] = "0";
-        procRamInfo["privateClean"] = "0";
-        procRamInfo["privateDirty"] = "0";
-        procRamInfo["swap"] = "0";
-        procRamInfo["swapPss"] = "0";
-        procRamInfo["heapSize"] = "0";
-        procRamInfo["heapAlloc"] = "0";
-        procRamInfo["heapFree"] = "0";
+        procRamInfo["gpuPss"] = "NA";
+        procRamInfo["graphicPss"] = "NA";
+        procRamInfo["arktsHeapPss"] = "NA";
+        procRamInfo["nativeHeapPss"] = "NA";
+        procRamInfo["stackPss"] = "NA";
+        procRamInfo["pss"] = "NA";
+        procRamInfo["sharedClean"] = "NA";
+        procRamInfo["sharedDirty"] = "NA";
+        procRamInfo["privateClean"] = "NA";
+        procRamInfo["privateDirty"] = "NA";
+        procRamInfo["swap"] = "NA";
+        procRamInfo["swapPss"] = "NA";
+        procRamInfo["heapSize"] = "NA";
+        procRamInfo["heapAlloc"] = "NA";
+        procRamInfo["heapFree"] = "NA";
         return procRamInfo;
     }
     std::string cmd = "hidumper --mem " + processId;
@@ -86,11 +86,24 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
         return procRamInfo;
     }
     std::vector<std::string> paramsInfo;
-    std::map<std::string, std::string> totalRamInfo = GetPssRamInfo(fd, paramsInfo);
-    if (totalRamInfo.empty()) {
-        LOGE("RAM::GetRamInfo totalRamInfo is empty");
+    procRamInfo = GetPssRamInfo(fd, paramsInfo);
+    if (procRamInfo.find("gpuPss") != procRamInfo.end() && procRamInfo["gpuPss"].empty()) {
+        procRamInfo["gpuPss"] = "NA";
+        procRamInfo["graphicPss"] = "NA";
+        procRamInfo["arktsHeapPss"] = "NA";
+        procRamInfo["nativeHeapPss"] = "NA";
+        procRamInfo["stackPss"] = "NA";
+        procRamInfo["pss"] = "NA";
+        procRamInfo["sharedClean"] = "NA";
+        procRamInfo["sharedDirty"] = "NA";
+        procRamInfo["privateClean"] = "NA";
+        procRamInfo["privateDirty"] = "NA";
+        procRamInfo["swap"] = "NA";
+        procRamInfo["swapPss"] = "NA";
+        procRamInfo["heapSize"] = "NA";
+        procRamInfo["heapAlloc"] = "NA";
+        procRamInfo["heapFree"] = "NA";
     }
-    procRamInfo.insert(totalRamInfo.cbegin(), totalRamInfo.cend());
 
     return procRamInfo;
 }
