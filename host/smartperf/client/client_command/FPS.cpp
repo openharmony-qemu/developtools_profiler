@@ -120,7 +120,7 @@ void FPS::GetCurrentTime()
         struct timespec time1 = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &time1);
         int curTimeNow = static_cast<int>(time1.tv_sec - 1);
-        if (curTimeNow == lastFpsInfoResult.curTime) {
+        if (curTimeNow == prevResultFpsInfo.curTime) {
             usleep(sleepNowTime);
         } else {
             break;

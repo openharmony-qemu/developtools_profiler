@@ -24,6 +24,7 @@ struct FpsInfo {
     std::vector<long long> jitters;
     std::vector<long long> currTimeStamps;
     int curTime;
+    long long currTimeDump;
     void Clear()
     {
         fps = 0;
