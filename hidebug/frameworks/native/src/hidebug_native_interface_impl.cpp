@@ -83,7 +83,7 @@ std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
         return {};
     }
     std::map<uint32_t, double> threadMap;
-    for (auto &threadCpuStatInfo : collectResult.data) {
+    for (const auto &threadCpuStatInfo : collectResult.data) {
         threadMap[threadCpuStatInfo.tid] = threadCpuStatInfo.cpuUsage;
     }
     return threadMap;
