@@ -69,6 +69,7 @@ enum SymbolsFileType {
     SYMBOL_ELF_FILE,
     SYMBOL_JAVA_FILE,
     SYMBOL_JS_FILE,
+    SYMBOL_HAP_FILE,
     SYMBOL_UNKNOW_FILE,
 };
 
@@ -85,6 +86,7 @@ public:
     uint64_t textExecVaddr_ = maxVaddr;
     uint64_t textExecVaddrFileOffset_ = 0;
     uint64_t textExecVaddrRange_ = maxVaddr;
+    std::shared_ptr<DfxMap> map_ = nullptr;
 
     SymbolsFile(SymbolsFileType symbolType, const std::string path)
         : symbolFileType_(symbolType), filePath_(path) {};
@@ -97,8 +99,8 @@ public:
 
     // create the symbols file object
     static std::unique_ptr<SymbolsFile> CreateSymbolsFile(
-        SymbolsFileType = SYMBOL_UNKNOW_FILE, const std::string symbolFilePath = EMPTY_STRING);
-    static std::unique_ptr<SymbolsFile> CreateSymbolsFile(const std::string &symbolFilePath);
+        SymbolsFileType = SYMBOL_UNKNOW_FILE, const std::string symbolFilePath = EMPTY_STRING, pid_t pid = 0);
+    static std::unique_ptr<SymbolsFile> CreateSymbolsFile(const std::string &symbolFilePath, pid_t pid = 0);
 
     // set symbols path
     bool setSymbolsFilePath(const std::string &symbolsSearchPath)
@@ -107,7 +109,11 @@ public:
         return setSymbolsFilePath(symbolsSearchPaths);
     };
     bool setSymbolsFilePath(const std::vector<std::string> &);
-
+    virtual bool IsAbc()
+    {
+        return false;
+    }
+    virtual void SetBoolValue(bool value);
     // load symbol from file
     virtual bool LoadSymbols([[maybe_unused]] std::shared_ptr<DfxMap> map = nullptr,
                              [[maybe_unused]] const std::string &symbolFilePath = EMPTY_STRING)
@@ -167,20 +173,33 @@ public:
     // this means we are in recording
     // will try read some elf in runtime path
     static bool onRecording_;
+    std::vector<DfxSymbol> symbols_ {};
+    std::vector<DfxSymbol *> matchedSymbols_ {};
+    std::map<uint64_t, DfxSymbol> symbolsMap_;
+    virtual DfxSymbol GetSymbolWithPcAndMap(uint64_t pc, std::shared_ptr<DfxMap> map)
+    {
+        return DfxSymbol();
+    }
 
+    // set map info
+    void SetMapsInfo(std::shared_ptr<DfxMap> map)
+    {
+        map_ = map;
+    }
 protected:
     bool symbolsLoaded_ = false;
+    bool symbolsLoadResult_ = false;
     bool debugInfoLoaded_ = false;
+    bool debugInfoLoadResult_ = false;
     const std::string FindSymbolFile(const std::vector<std::string> &,
                                      std::string symboleFilePath = EMPTY_STRING) const;
 
     std::string SearchReadableFile(const std::vector<std::string> &searchPaths,
                                    const std::string &filePath) const;
     bool UpdateBuildIdIfMatch(std::string buildId);
-    std::string buildId_;
+    std::string buildId_ = "";
     std::vector<std::string> symbolsFileSearchPaths_;
-    std::vector<DfxSymbol> symbols_ {};
-    std::vector<DfxSymbol *> matchedSymbols_ {};
+
     std::vector<FileSymbol> fileSymbols_ {};
 
     void AdjustSymbols();

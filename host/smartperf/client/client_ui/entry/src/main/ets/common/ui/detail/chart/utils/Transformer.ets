@@ -83,8 +83,6 @@ export default class Transformer {
 
     this.mMatrixOffset.reset();
 
-    // offset.postTranslate(mOffsetLeft, getHeight() - mOffsetBottom);
-
     if (!inverted)
     this.mMatrixOffset.postTranslate(this.mViewPortHandler.offsetLeft(),
       this.mViewPortHandler.getChartHeight() - this.mViewPortHandler.offsetBottom());
@@ -224,19 +222,6 @@ export default class Transformer {
       this.valuePointsForGenerateTransformedValuesCandle = new Array<number>(count);
     }
     var valuePoints: number[] = this.valuePointsForGenerateTransformedValuesCandle;
-
-    for (var j = 0; j < count; j += 2) {
-
-//      var e: CandleEntry = data.getEntryForIndex(j / 2 + froms);
-//
-//      if (e != null) {
-//        valuePoints[j] = e.getX();
-//        valuePoints[j + 1] = e.getHigh() * phaseY;
-//      } else {
-//        valuePoints[j] = 0;
-//        valuePoints[j + 1] = 0;
-//      }
-    }
 
     this.getValueToPixelMatrix().mapPoints(valuePoints);
 

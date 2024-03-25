@@ -22,23 +22,28 @@
 #include <cstdlib>
 #include <climits>
 #include <cctype>
+#include <climits>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
-#define LARGE_BUFF_MAX_LEN (256)
+#include "include/sp_log.h"
+
+
 namespace OHOS {
 namespace SmartPerf {
+const unsigned int INT_MAX_LEN = 10;
+const unsigned int CHAR_NUM_DIFF = 48;
+const unsigned int UI_DECIMALISM = 10;
+const unsigned int UI_INDEX_2 = 2;
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
 }
-bool SPUtils::HasNumber(const std::string& str)
+bool SPUtils::HasNumber(const std::string &str)
 {
-    return std::any_of(str.begin(), str.end(), [](char c) {
-        return std::isdigit(c);
-    });
+    return std::any_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
-bool SPUtils::Cmp(const std::string& a, const std::string& b)
+bool SPUtils::Cmp(const std::string &a, const std::string &b)
 {
     if (HasNumber(a) && HasNumber(b)) {
         std::string str1 = a.substr(0, a.find_first_of("0123456789"));
@@ -200,7 +205,7 @@ std::string SPUtils::GetTopPkgName()
     LoadCmd(cmd, curTopPkgStr);
     uint64_t left = curTopPkgStr.find_first_of("[");
     uint64_t right = curTopPkgStr.find_first_of("]");
-	std::string topPkg = curTopPkgStr.substr(left + 1, right - left - 1);
+    std::string topPkg = curTopPkgStr.substr(left + 1, right - left - 1);
     return topPkg;
 }
 
@@ -315,6 +320,223 @@ std::map<std::string, std::string> SPUtils::GetGpuInfo()
         }
     }
     return resultMap;
+}
+
+void SPUtils::RemoveSpace(std::string &str)
+{
+    int len = 0;
+
+    for (size_t i = 0; i < str.length(); i++) {
+        if (str[i] != ' ') {
+            break;
+        }
+
+        ++len;
+    }
+
+    if (len > 0) {
+        str = str.substr(len);
+    }
+
+    len = 0;
+    for (size_t i = str.length(); i > 0; --i) {
+        if (str[i - 1] != ' ') {
+            break;
+        }
+
+        ++len;
+    }
+
+    if (len > 0) {
+        str = str.substr(0, str.length() - len);
+    }
+}
+
+
+bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
+{
+    unsigned int dest = 0;
+    bool isValid = false;
+
+    if (str.empty()) {
+        errorInfo = "option requires an argument";
+        LOGE("sour(%s) error(%s)", str.c_str(), errorInfo.c_str());
+        return false;
+    }
+    if (str.length() > INT_MAX_LEN) {
+        errorInfo = "invalid option parameters";
+        LOGE("sour(%s) error(%s)", str.c_str(), errorInfo.c_str());
+        return false;
+    }
+
+    for (size_t i = 0; i < str.length(); i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            errorInfo = "invalid option parameters";
+            LOGE("sour(%s) error(%s)", str.c_str(), errorInfo.c_str());
+            return false;
+        }
+
+        if (!isValid && (str[i] == '0')) {
+            continue;
+        }
+
+        isValid = true;
+        dest *= UI_DECIMALISM;
+        dest += (str[i] - CHAR_NUM_DIFF);
+    }
+
+    if (dest == 0 || dest > INT_MAX) {
+        errorInfo = "option parameter out of range";
+        LOGE("sour(%s) dest(%u) error(%s)", str.c_str(), dest, errorInfo.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool SPUtils::VeriyParameter(std::set<std::string> &keys, std::string param, std::string &errorInfo)
+{
+    std::string keyParam;
+    std::string valueParm;
+    std::vector<std::string> out;
+    std::vector<std::string> subOut;
+    std::map<std::string, std::string> mapInfo;
+
+    if (param.empty()) {
+        errorInfo = "The parameter cannot be empty";
+        return false;
+    }
+
+    SPUtils::StrSplit(param, "-", out);
+
+    for (auto it = out.begin(); it != out.end(); ++it) { // Parsing keys and values
+        subOut.clear();
+        SPUtils::StrSplit(*it, " ", subOut);
+        if (mapInfo.end() != mapInfo.find(subOut[0])) {
+            errorInfo = "duplicate parameters -- '" + subOut[0] + "'";
+            return false;
+        }
+
+        if (subOut.size() >= UI_INDEX_2) {
+            keyParam = subOut[0];
+            valueParm = subOut[1];
+            SPUtils::RemoveSpace(keyParam);
+            SPUtils::RemoveSpace(valueParm);
+            mapInfo[keyParam] = valueParm;
+        } else if (subOut.size() >= 1) {
+            keyParam = subOut[0];
+            SPUtils::RemoveSpace(keyParam);
+            mapInfo[keyParam] = "";
+        }
+    }
+
+    if (!VeriyKey(keys, mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+
+    if (!VerifyValueStr(mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+
+    if (!IntegerValueVerification(keys, mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool SPUtils::VeriyKey(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
+    std::string &errorInfo)
+{
+    for (auto it = mapInfo.begin(); it != mapInfo.end(); ++it) {
+        if (keys.end() == keys.find(it->first)) {
+            errorInfo = "invalid parameter -- '" + it->first + "'";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::string &errorInfo)
+{
+    auto a = mapInfo.find("VIEW");
+    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
+        errorInfo += "option requires an argument -- '" + a->first + "'";
+        return false;
+    }
+    a = mapInfo.find("PKG");
+    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
+        errorInfo += "option requires an argument -- '" + a->first + "'";
+        return false;
+    }
+    a = mapInfo.find("OUT");
+    if (mapInfo.end() != a) {
+        if (a->second.empty()) {
+            errorInfo += "option requires an argument -- '" + a->first + "'";
+            return false;
+        }
+        // The total length of file path and name cannot exceed PATH_MAX
+        if (a->second.length() >= PATH_MAX) {
+            errorInfo +=
+                "invalid parameter, file path cannot exceed " + std::to_string(PATH_MAX) + " -- '" + a->first + "'";
+            return false;
+        }
+        size_t pos = a->second.rfind('/');
+        if (pos == a->second.length()) { // not file name
+            errorInfo += "invalid parameter,not file name -- '" + a->first + "'";
+            return false;
+        }
+        if (std::string::npos != pos &&
+            (!SPUtils::FileAccess(a->second.substr(0, pos)))) { // determine if the directory exists
+            errorInfo += "invalid parameter,file path not found -- '" + a->first + "'";
+            return false;
+        }
+        std::string outStr = a->second;
+        std::vector<std::string> outList;
+        SPUtils::StrSplit(outStr, "/", outList);
+        for (auto it = outList.begin(); outList.end() != it; ++it) {
+            if ((*it).length() >= NAME_MAX) {
+                errorInfo += "invalid parameter, file directory or name cannot exceed 255 -- '" + a->first + "'";
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool SPUtils::IntegerValueVerification(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
+    std::string &errorInfo)
+{
+    std::vector<std::string> integerCheck; // Number of integers to be detected
+
+    if (keys.end() != keys.find("N")) {
+        integerCheck.push_back("N");
+    }
+    if (keys.end() != keys.find("fl")) {
+        integerCheck.push_back("fl");
+    }
+    if (keys.end() != keys.find("ftl")) {
+        integerCheck.push_back("ftl");
+    }
+
+    for (auto it = integerCheck.begin(); it != integerCheck.end(); ++it) {
+        auto a = mapInfo.find(*it);
+        if (mapInfo.end() != a) {
+            if (a->second.empty()) {
+                errorInfo += "option requires an argument -- '" + a->first + "'";
+                return false;
+            }
+            if (!SPUtils::IntegerVerification(a->second, errorInfo)) {
+                errorInfo += "option parameter out of range -- '" + a->first + "'";
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 }
 }

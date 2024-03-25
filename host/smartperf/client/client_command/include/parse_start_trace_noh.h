@@ -12,21 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PARSE_START_TRACE_NOH_H
+#define PARSE_START_TRACE_NOH_H
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 namespace OHOS {
-    namespace SmartPerf {
-        class StartTraceNoh {
-            public:
-                double ParseStartTraceNohe(std::string file);
-                double CalculateTime();
-                std::string GetLineTime(std::string line);
-                std::string CutString(std::string line, std::string start, std::string end, size_t offset);
-                std::vector<std::string> Split(std::string str, std::string patten);
-            private:
-                std::ifstream infile;
-        };
-    }
+namespace SmartPerf {
+class ParseStartTraceNoh {
+public:
+    double ParseStartTraceNohe(std::string file);
+    double CalculateTime();
+    std::string GetLineTime(std::string line);
+    std::string CutString(std::string line, std::string start, std::string end, size_t offset);
+    std::vector<std::string> Split(std::string str, std::string patten);
+
+private:
+    std::ifstream infile;
+};
 }
+}
+#endif

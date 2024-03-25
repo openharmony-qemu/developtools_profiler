@@ -40,6 +40,7 @@ ohos_executable("SP_daemon") {
     "Dubai.cpp",
     "FPS.cpp",
     "GPU.cpp",
+    "GpuCounter.cpp",
     "Network.cpp",
     "Power.cpp",
     "RAM.cpp",
@@ -64,6 +65,7 @@ ohos_executable("SP_daemon") {
     "sp_server_socket.cpp",
     "sp_task.cpp",
     "sp_utils.cpp",
+    "stalling_rate_trace.cpp",
     "startup_delay.cpp",
   ]
   include_dirs = [ "include" ]

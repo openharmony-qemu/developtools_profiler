@@ -27,7 +27,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
-#define LARGE_BUFF_MAX_LEN (256)
+const int LARGE_BUFF_MAX_LEN = 256;
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
@@ -35,6 +35,7 @@ std::map<std::string, std::string> Network::ItemData()
     std::map<std::string, std::string> result;
     std::map<std::string, std::string> networkInfo = Network::GetNetworkInfo();
     result = networkInfo;
+    LOGI("Network ItemData map siez=%u", result.size());
     return result;
 }
 
@@ -47,7 +48,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         std::cout << "net work node is not accessed" << std::endl;
         return networkInfo;
     }
-    while (fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
+    while (nullptr != fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
@@ -57,7 +58,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
             allRx += curRx;
         }
     }
-    fclose(fp);
+    (void)fclose(fp);
     if (isFirst) {
         networkInfo["networkUp"] = std::to_string(prevTx);
         networkInfo["networkDown"] = std::to_string(prevRx);

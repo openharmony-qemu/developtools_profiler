@@ -29,10 +29,10 @@
     },
     {
         "first_introduced": "12",
-        "name": "OH_HiDebug_StartCaptureAppTrace"
+        "name": "OH_HiDebug_StartAppTraceCapture"
     },
     {
         "first_introduced": "12",
-        "name": "OH_HiDebug_StopCaptureAppTrace"
+        "name": "OH_HiDebug_StopAppTraceCapture"
     }
 ]

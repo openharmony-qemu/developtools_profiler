@@ -21,17 +21,15 @@ namespace OHOS {
 namespace SmartPerf {
 struct FpsInfo {
     int fps;
-    int preFps;
     std::vector<long long> jitters;
-    std::queue<long long> timeStampQ;
-    long long lastFrameReadyTime;
-    long long currentFpsTime;
+    int curTime;
     void Clear()
     {
         fps = 0;
+        curTime = 0;
         jitters.clear();
     }
-    bool operator==(const FpsInfo& other) const
+    bool operator == (const FpsInfo &other) const
     {
         if (fps != other.fps) {
             return false;
@@ -49,40 +47,42 @@ struct FpsInfo {
     FpsInfo()
     {
         fps = 0;
-        preFps = 0;
-        lastFrameReadyTime = 0;
-        currentFpsTime = 0;
+        curTime = 0;
     }
 };
+struct FpsCurrentFpsTime {
+    int fps = 0;
+    long long currentFpsTime = 0;
+};
+
 class FPS : public SpProfiler {
 public:
     void SetPackageName(std::string pName);
     void SetLayerName(std::string sName);
     void SetCaptureOn();
     void SetTraceCatch();
-    std::string CutLayerName(std::string layerName);
     FpsInfo GetFpsInfo();
     FpsInfo GetFpsInfoMax();
-    FpsInfo GetFpsInfoResult(long long &lastLineTime);
-    void GetLastFpsInfo();
-    void GetPrevFpsInfo();
-    void InitParams(long long &lastLineTime);
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
-    std::string GetSurface();
-    std::string GetLayer(std::string pkgSurface);
+    bool IsForeGround();
+    bool IsFindForeGround(std::string line);
+    void GetSameTimeNums();
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
+    FpsInfo prevFpsInfoMax;
+    FpsInfo prevSecFpsInfoMax;
     FpsInfo uniteFpsInfo;
-    FpsInfo mFpsInfo;
-    FpsInfo cntFpsInfo;
-    FpsInfo lastFlagFpsInfo; // 倒数第一个flag
-    FpsInfo prevFlagFpsInfo; // 倒数第二个flag
+    FpsInfo secUniteFpsInfo;
+    FpsInfo prevResultFpsInfo;
     static FPS &GetInstance()
     {
         static FPS instance;
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
+    void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
+    FpsCurrentFpsTime GetFpsCurrentFpsTime();
+
 private:
     FPS() {};
     FPS(const FPS &);
@@ -90,29 +90,21 @@ private:
 
     std::string pkgName;
     std::string surfaceViewName;
-    std::string curLayerName;
-    bool jump = false;
     bool refresh = false;
-    int cnt = 0;
-    int zeroNum = 0;
-    int fpsGb = 0;
     long long mod = 1e9;
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
-    long long lastFrame = -1;
+    long long lastTime = -1;
     int isCatchTrace = 0;
     int isCapture = 0;
+    int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
+    bool isFirstResult = false;
+    bool isFoundAppName = false;
+    bool isFoundBundleName = false;
+    int threeHundred = 300;
+    FpsCurrentFpsTime ffTime;
 };
-
-struct DumpEntity {
-    const std::string windowName;
-    const std::string displayId;
-    const std::string pid;
-    const std::string windId;
-    const std::string zOrd;
-};
-
 }
 }
 #endif

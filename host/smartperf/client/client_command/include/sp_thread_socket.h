@@ -22,6 +22,7 @@
 #include "control_call_cmd.h"
 #include "startup_delay.h"
 #include "sp_log.h"
+#include "GpuCounter.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -52,19 +53,23 @@ public:
     void Process(ProtoType type) const
     {
         std::cout << "Socket Process called!" << std::endl;
+        LOGI("Socket Process called!");
         SpServerSocket spSocket;
         spSocket.Init(type);
         if (type == ProtoType::TCP) {
             std::cout << "Socket TCP Init called!" << std::endl;
+            LOGI("Socket TCP Init called!");
             TypeTcp(spSocket);
         }
         if (type == ProtoType::UDP) {
+            LOGI("Socket UDP Init called!");
             while (1) {
                 spSocket.Recvfrom();
                 HandleMsg(spSocket);
             }
         }
         std::cout << "Socket Process finished!" << std::endl;
+        LOGI("Socket Process finished!");
         spSocket.Close();
     }
     void TypeTcp(SpServerSocket &spSocket) const
@@ -74,7 +79,9 @@ public:
             std::cout << "Socket TCP procFd: " << procFd << std::endl;
             while (procFd > 0) {
                 int reFd = spSocket.Recv();
-                if (reFd < 0) break;
+                if (reFd < 0) {
+                    break;
+                }
                 std::string recvStr = spSocket.RecvBuf();
                 std::cout << "Socket TCP Recv: " << recvStr << std::endl;
                 // 解析消息 分发处理
@@ -86,19 +93,25 @@ public:
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
         if (recvStr.find("init::") != std::string::npos) {
-            ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
-            if (code == ErrCode::OK) {
-                spSocket.Send("init::True");
-            } else if (code == ErrCode::FAILED) {
-                spSocket.Send("init::False");
+            std::string errorInfo;
+            std::string checkStr = recvStr.substr(std::string("init::").length());
+            if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
+                LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
+                spSocket.Send("init::False,\"error\":" + errorInfo);
+                return;
             }
+            ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
+            LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
+            spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
         } else if (recvStr.find("start:::") != std::string::npos) {
             if (flagRunning) {
+                LOGI("SP_daemon is running");
                 spSocket.Send("SP_daemon is running");
                 return;
             }
             auto lambdaTask = [](std::string data) {};
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+            LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
             if (code == ErrCode::OK) {
                 spSocket.Send("start::True");
                 flagRunning = true;
@@ -108,6 +121,7 @@ public:
         } else if (recvStr.find("start::") != std::string::npos) {
             auto lambdaTask = [&spSocket](std::string data) { spSocket.Send(data); };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+            LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
             if (code == ErrCode::OK) {
                 spSocket.Send("start::True");
             } else if (code == ErrCode::FAILED) {
@@ -115,6 +129,7 @@ public:
             }
         } else if (recvStr.find("stop::") != std::string::npos) {
             SPTask::GetInstance().StopTask();
+            LOGI("stop::True");
             spSocket.Send("stop::True");
             flagRunning = false;
             spSocket.Close();
@@ -130,7 +145,7 @@ public:
         for (int i = 0; i < size; i++) {
             if (recvStr[i] == ' ') {
                 vec.push_back(recvStr.substr(j, i - j));
-                j = i+1;
+                j = i + 1;
             }
         }
         vec.push_back(recvStr.substr(j, size - j));
@@ -146,40 +161,52 @@ public:
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
     {
+        std::string retCode = "";
         auto iterator = messageMap.begin();
         while (iterator != messageMap.end()) {
             std::string recvBuf = spSocket.RecvBuf();
-            std::cout << "recvBuf" << recvBuf << std::endl;
-            if (SPUtils::IsSubString(recvBuf, iterator->second)) {
-                SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
-                if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
-                    std::string curPkgName = SplitMsg(recvBuf);
-                    SpProfilerFactory::SetProfilerPkg(curPkgName);
-                    spSocket.Sendto(curPkgName);
-                    LOGI("sendData1: %s", curPkgName.c_str());
-                } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
-                    std::string curPkgName1 = SplitMsg(recvBuf);
-                    SpProfilerFactory::SetProfilerPkg(curPkgName1);
-                    LOGI("sendData2: %s", curPkgName1.c_str());
-                } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG)) {
-                    SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
-                    LOGI("sendData3: %s", recvBuf.c_str());
-                } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CMD)) {
-                    SpProfilerFactory::SetByTraceCmd(SplitMsg(recvBuf));
-                    LOGI("sendData4: %s", recvBuf.c_str());
-                } else if (profiler == nullptr) {
-                    std::string returnStr = iterator->second;
-                    spSocket.Sendto(returnStr);
-                    LOGI("sendData5: %s", returnStr.c_str());
-                } else {
-                    std::map<std::string, std::string> data = profiler->ItemData();
-                    std::string sendData = MapToString(data);
-                    spSocket.Sendto(sendData);
-                    LOGI("sendData6: %s", sendData.c_str());
-                }
-                break;
+            if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
+                ++iterator;
+                continue;
             }
-            ++iterator;
+            SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
+            if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
+                retCode = SplitMsg(recvBuf);
+                SpProfilerFactory::SetProfilerPkg(retCode);
+                spSocket.Sendto(retCode);
+            } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
+                retCode = SplitMsg(recvBuf);
+                SpProfilerFactory::SetProfilerPkg(retCode);
+            } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
+                iterator->first == MessageType::CATCH_TRACE_CMD)) {
+                SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+            } else if (profiler == nullptr) {
+                retCode = iterator->second;
+                spSocket.Sendto(retCode);
+            } else {
+                std::map<std::string, std::string> data;
+                if (iterator->first == MessageType::GPU_COUNTER_HB_REQ) {
+                    GpuCounter::GetInstance().Check();
+                    break; // No need to return
+                } else if (iterator->first == MessageType::CATCH_GPU_COUNTER) {
+                    std::string curPkgName = SplitMsg(recvBuf);
+                    GpuCounter::GetInstance().Init(curPkgName, data);
+                } else if (iterator->first == MessageType::GET_GPU_COUNTER_RESULT) {
+                    data = profiler->ItemData();
+                } else if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
+                    profiler->ItemData(); // record the collection point for the first time,no need to return
+                    data["network_traffic"] = "true";
+                } else if (iterator->first == MessageType::GET_NETWORK_TRAFFIC) {
+                    data = profiler->ItemData();
+                    data["network_traffic"] = "true";
+                } else {
+                    data = profiler->ItemData();
+                }
+                retCode = MapToString(data);
+                spSocket.Sendto(retCode);
+            }
+            LOGI("sendData key(%d) content(%s)", (int)iterator->first, retCode.c_str());
+            break;
         }
     }
 };

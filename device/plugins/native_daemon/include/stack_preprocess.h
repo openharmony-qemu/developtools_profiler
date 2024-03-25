@@ -63,7 +63,8 @@ public:
     }
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
-    void SaveThreadName(uint32_t tid, const std::string& tname);
+    void SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack);
+    const char* GetJsRawStack(uint64_t jsChainId);
     void ReportBasicData();
     void WriteHookConfig();
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
@@ -131,8 +132,8 @@ private:
     void FlushData(OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData& stackData);
     void Flush(const uint8_t* src, size_t size);
     void GetSymbols(const std::string& filePath, ElfSymbolTable& symbols);
-
-    void FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx);
+    template <typename T>
+    void FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
     template <typename T>
     void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
     template <typename T>
@@ -158,6 +159,8 @@ private:
 
     RandomWriteCtx* StartReport();
     void FinishReport();
+    void FillFpNativeIp(RawStackPtr& rawData);
+    void FillFpJsData(RawStackPtr& rawData);
 private:
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
@@ -203,6 +206,9 @@ private:
     uint64_t bufferSize_{0};
     bool statisticsModelFlushCallstack_{false};
     OHOS::Developtools::Profiler::ProtoEncoder::ProfilerPluginData profilerPluginData_;
+    // Key is js stack id , value is js raw stack pointer
+    std::map<uint64_t, const char*> jsStackMap_ = {};
+    std::set<std::string> jsStackSet_ = {};
 };
 
 #endif // STACK_PREPROCESS_H

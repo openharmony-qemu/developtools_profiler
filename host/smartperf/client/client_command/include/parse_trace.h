@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PARSE_TRACE_H
+#define PARSE_TRACE_H
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -30,6 +32,7 @@ public:
     std::string GetStartTime(std::string line, const std::string &startTimeBefore);
     std::string GetWindowTime(std::string line, std::string wt);
     std::string GetFrameId(std::string line, std::string appPid, std::string fid);
+
 private:
     std::ifstream infile;
     std::string flagTime = "0";
@@ -42,3 +45,4 @@ private:
 };
 }
 }
+#endif

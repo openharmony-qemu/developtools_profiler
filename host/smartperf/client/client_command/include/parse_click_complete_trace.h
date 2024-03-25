@@ -12,28 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PARSE_CLICK_COMPLETE_TRACE_H
+#define PARSE_CLICK_COMPLETE_TRACE_H
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 namespace OHOS {
-    namespace SmartPerf {
-        class ParseClickCompleteTrace {
-            public:
-                double ParseCompleteTrace(std::string fileNamePath);
-                double GetTime(std::string endTime);
-                std::string GetPid(std::string line, const std::string &pn, const std::string &pb);
-                std::string GetStartTime(std::string line, const std::string &startTimeBefore);
-                double GetLineTime();
-            private:
-                std::ifstream infile;
-                std::string flagTime = "0";
-                int flagTouch = 0;
-                int appPidnum = 0;
-                double completeTime = -1;
-                std::string startTime = "0";
-                std::string endTimeFlag = "0";
-                std::string appPid = "0";
-        };
-    }
+namespace SmartPerf {
+class ParseClickCompleteTrace {
+public:
+    double ParseCompleteTrace(std::string fileNamePath);
+    double GetTime(std::string endTime);
+    std::string GetPid(std::string line, const std::string &pn, const std::string &pb);
+    std::string GetStartTime(std::string line, const std::string &startTimeBefore);
+    double GetLineTime();
+
+private:
+    std::ifstream infile;
+    std::string flagTime = "0";
+    int flagTouch = 0;
+    int appPidnum = 0;
+    double completeTime = -1;
+    std::string startTime = "0";
+    std::string endTimeFlag = "0";
+    std::string appPid = "0";
+};
 }
+}
+#endif

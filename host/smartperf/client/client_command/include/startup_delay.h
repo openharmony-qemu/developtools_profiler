@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef STARTUP_DELAY_H
+#define STARTUP_DELAY_H
 #include <thread>
 namespace OHOS {
 namespace SmartPerf {
@@ -31,6 +33,10 @@ public:
     std::thread ThreadGetHisysIdComplete() const;
     void GetHisysId();
     std::thread ThreadGetHisysId();
+    void GetHisysIdStart() const;
+    std::thread ThreadGetHisysIdStart() const;
+    void GetHisysIdMaxFrame() const;
+    std::thread ThreadGetHisysIdMaxFrame() const;
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     std::string GetDeviceType();
@@ -41,3 +47,4 @@ public:
 };
 }
 }
+#endif

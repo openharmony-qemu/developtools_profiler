@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include "include/sp_utils.h"
 #include "include/Capture.h"
+#include "include/sp_log.h"
 #include "display_manager.h"
 #include "wm_common.h"
 #include "png.h"
@@ -34,6 +35,7 @@ std::map<std::string, std::string> Capture::ItemData()
     std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
     result["capture"] = path;
     Capture::TriggerGetCatch(curTime);
+    LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
 }
 void Capture::ThreadGetCatch(const std::string &curTime) const
@@ -43,13 +45,14 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
     if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
         SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
         printf("/data/local/tmp/capture created! \n");
+        LOGI("/data/local/tmp/capture created!");
     };
     std::stringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (!TakeScreenCap(savePath)) {
-        std::cout << "Screen Capture Failed：---"<< errorRecv.str() << std::endl;
+        std::cout << "Screen Capture Failed：---" << errorRecv.str() << std::endl;
     }
-    (void) close(fd);
+    (void)close(fd);
 }
 void Capture::TriggerGetCatch(long long curTime) const
 {
@@ -90,9 +93,9 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     }
     png_init_io(pngStruct, fp);
     png_set_IHDR(pngStruct, pngInfo, width, height, bitmapDepth, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-    png_set_packing(pngStruct);          // set packing info
-    png_write_info(pngStruct, pngInfo);  // write to header
+        PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+    png_set_packing(pngStruct);         // set packing info
+    png_write_info(pngStruct, pngInfo); // write to header
     for (uint32_t i = 0; i < height; i++) {
         png_write_row(pngStruct, data + (i * stride));
     }

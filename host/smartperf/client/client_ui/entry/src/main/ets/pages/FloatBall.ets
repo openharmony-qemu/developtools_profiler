@@ -45,25 +45,13 @@ struct FloatBall {
     ProfilerTask.getInstance().initModule()
     ProfilerTask.getInstance().taskInit()
     //创建TiTile窗
+    console.log('cm-floatBall-CreateTitleWindow1')
     globalThis.CreateTitleWindow()
+    console.log('cm-floatBall-CreateTitleWindow2')
     globalThis.task_status = TaskStatus.task_init
     initFloatWindow()
-//    this.initCollectPid()
+    console.log('cm-floatBall-CreateTitleWindow3')
   }
-
-//  initCollectPid(){
-//    //尝试循环刷新 当前running abilitysInfo 获取pid
-//    globalThis.collectIntervalPid = setInterval(()=>{
-//      //初始化采集目标进程pid
-//      getPidOfAbility(globalThis.collectPkg).then(pid=>{
-//        globalThis.processPid = pid
-//        if(pid != "-1"){
-//          clearInterval(globalThis.collectIntervalPid)
-//          SPLogger.DEBUG(TAG, "clear collectIntervalPid and cur pid:" + pid)
-//        }
-//      })
-//    },1000)
-//  }
 
   initAllCollect() {
     console.log("collectIntervalCollect initAllCollect....");
@@ -80,7 +68,7 @@ struct FloatBall {
           ProfilerTask.getInstance().taskStart()
           this.timerNum++
         }
-        console.log("collectIntervalCollect running status::"+ this.playerState);
+        console.log("collectIntervalCollect running status::"+ this.playerState + 'cm-timerNum' +this.timerNum);
       }, 1000)
 
       globalThis.collectPowerCollect = setInterval(() => {
@@ -97,6 +85,7 @@ struct FloatBall {
   }
 
   singleEvent() {
+    console.log('cm-floatBall-singleEvent')
     if (this.playerState == TaskStatus.task_running) {
       globalThis.task_status = TaskStatus.task_pause
       this.playerState = TaskStatus.task_pause
@@ -108,6 +97,7 @@ struct FloatBall {
   }
 
   doubleEvent() {
+    console.log('cm-floatBall-doubleEvent' + this.windShowState)
     // 双击启动悬浮TITLE
     if (this.windShowState) {
       globalThis.HideTitleWindow()
@@ -119,6 +109,7 @@ struct FloatBall {
   }
 
   longEvent() {
+    console.log('cm-floatBall-longEvent')
     ProfilerTask.getInstance().taskStop()
     this.destroyAllWindow()
     this.clearAllInterVal()
@@ -135,12 +126,14 @@ struct FloatBall {
     MainWorker.postMessage({"setDuBaiDb": true})
   }
   destroyAllWindow(){
+    console.log('cm-floatBall-destroyAllWindow')
     globalThis.DestroyFloatingWindow()
     globalThis.DestroyTitleWindow()
     destoryAllFloatWindow()
   }
 
   clearAllInterVal(){
+    console.log('cm-floatBall-clearAllInterVal')
     if(globalThis.collectConfigs.trace){
       MainWorker.postMessage({"catch_trace_end":true})
     }

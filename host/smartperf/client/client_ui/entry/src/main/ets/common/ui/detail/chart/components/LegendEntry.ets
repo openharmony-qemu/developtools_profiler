@@ -28,14 +28,12 @@ export default class LegendEntry {
      */
   constructor(label ?: string, form ?: LegendForm, formSize ?: number, formLineWidth ?: number,
               formLineDashEffect ?: Object/*DashPathEffect*/, formColor ?: number|Color)  {
-    //        if (label && form && formSize && formLineWidth && formLineDashEffect && formColor) {
     this.label = label;
     this.form = form;
     this.formSize = formSize;
     this.formLineWidth = formLineWidth;
     this.formLineDashEffect = formLineDashEffect;
     this.formColor = formColor;
-    //        }
   }
 
   /**

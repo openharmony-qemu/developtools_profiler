@@ -25,6 +25,7 @@ ohos_shared_library("ohhidebug") {
 
   external_deps = [
     "hilog:libhilog",
+    "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
   ]
 

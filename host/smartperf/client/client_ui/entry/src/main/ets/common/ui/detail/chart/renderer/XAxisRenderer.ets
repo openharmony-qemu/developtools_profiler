@@ -415,7 +415,6 @@ export default class XAxisRenderer extends AxisRenderer {
         let labelLineHeight = Utils.calcTextHeight(this.mLimitLinePaint, label);
         textPaint.x=this.calcXLeftOffset(position[0])-xOffset-labelLineWidth;
         textPaint.y=this.mViewPortHandler.contentBottom()-yOffset-labelLineHeight;
-        //                c.drawText(label, position[0] - xOffset, mViewPortHandler.contentBottom() - yOffset, mLimitLinePaint);
       }
       return  textPaint;
     }

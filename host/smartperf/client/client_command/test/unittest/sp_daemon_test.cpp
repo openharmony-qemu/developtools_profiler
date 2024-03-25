@@ -287,11 +287,11 @@ HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
 }
 
 /**
- * @tc.name: ScreenTestCase
- * @tc.desc: Test Screen
+ * @tc.name: FrameLossTestCase
+ * @tc.desc: Test FrameLoss
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
+HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
 {
     std::string cmd = "SP_daemon -editor frameLoss";
     std::string result = "";

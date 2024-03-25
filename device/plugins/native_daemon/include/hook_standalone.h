@@ -26,11 +26,13 @@ struct HookData {
     uint64_t duration {0};
     uint32_t filterSize {0};
     uint32_t maxStackDepth {100};
+    uint32_t maxJsStackdepth = {0};
     uint32_t statisticsInterval {0};
     uint32_t sampleInterval {0};
     std::string fileName {"/data/local/tmp/data.txt"};
     std::string processName;
     std::string performanceFilename {"/data/local/tmp/performance.txt"};
+    std::string filterNapiName = {""};
     bool mallocDisable {false};
     bool mmapDisable {false};
     bool freemsgstack {false};
@@ -42,6 +44,7 @@ struct HookData {
     bool rawString {false};
     bool startupMode {false};
     bool responseLibraryMode {false};
+    bool jsStackReport {false};
     std::string ToString() const
     {
         std::stringstream ss;
@@ -57,7 +60,9 @@ struct HookData {
             ss << pid <<' ';
         }
         ss << ", processName:" << processName << ' ' <<",startupMode: " << startupMode
-           << ", responseLibraryMode: " << responseLibraryMode << ", sampleInterval: " << sampleInterval;
+           << ", responseLibraryMode: " << responseLibraryMode << ", sampleInterval: " << sampleInterval
+           << ", jsStackReport: " << jsStackReport << ", maxJsStackdepth: " << maxJsStackdepth
+           <<", filterNapiName" << filterNapiName;
         return ss.str();
     }
 };

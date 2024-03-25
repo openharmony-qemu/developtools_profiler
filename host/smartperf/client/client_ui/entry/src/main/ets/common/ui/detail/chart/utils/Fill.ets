@@ -256,12 +256,6 @@ export default class Fill{
 
         this.ensureClipPathSupported();
 
-//        this.mDrawable.setBounds(
-//            clipRect == null ? 0 : clipRect.left,
-//            clipRect == null ? 0 : clipRect.top,
-//            clipRect == null ?0 : clipRect.right,
-//            clipRect == null ? 0: clipRect.bottom);
-
         let imagePaint=new ImagePaint(this.mDrawable);
         let leftImage:number=(clipRect == null ? 0 : clipRect.left)
         let topImage:number=(clipRect == null ? 0 : clipRect.top)

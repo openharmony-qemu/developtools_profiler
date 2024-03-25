@@ -54,8 +54,9 @@ struct CallFrame {
     uint32_t symbolNameId_ = 0; // for symbolName_ id
     uint32_t callFrameId_ = 0; // for frame map id
     uint8_t needReport_ = 0; // 0X01 for CALL_FRAME_REPORT,0x02 for SYMBOL_NAME_ID_REPORT,0x04 for FILE_PATH_ID_REPORT
+    bool isJsFrame_ = false;
 
-    CallFrame(uint64_t ip, uint64_t sp = 0) : ip_(ip), sp_(sp) {}
+    CallFrame(uint64_t ip, uint64_t sp = 0, bool isJsFrame = false) : ip_(ip), sp_(sp), isJsFrame_(isJsFrame) {}
 
     // this is for ut test
     CallFrame(uint64_t ip, uint64_t vaddrInFile, const char *name, const char *filePath)

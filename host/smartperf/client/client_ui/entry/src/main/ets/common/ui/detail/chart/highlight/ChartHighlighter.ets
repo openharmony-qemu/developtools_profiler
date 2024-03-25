@@ -246,8 +246,6 @@ export default class ChartHighlighter<T extends BarLineScatterCandleBubbleDataPr
      * @return
      */
     protected getDistance(x1 : number, y1 : number, x2 : number, y2 : number) : number {
-        //return Math.abs(y1 - y2);
-        //return Math.abs(x1 - x2);
         return Math.hypot(x1 - x2, y1 - y2);
     }
 

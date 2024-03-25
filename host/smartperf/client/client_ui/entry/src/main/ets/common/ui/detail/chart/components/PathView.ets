@@ -218,16 +218,6 @@ export class PathViewModel extends ScaleMode{
   public onSingleClick(event: ClickEvent){
     this.eventX = event.x;
     this.eventY = event.y;
-//    console.log("jk: event.x = "+event.x+", event.screenX = "+event.screenX)
-//    let screenCenterX: number = (this.rect.right - this.rect.left) / 2;
-//    let screenCenterY: number = (this.rect.bottom - this.rect.top) / 2;
-//    console.log("jk: this.eventY = "+this.eventY+", screenCenterY = "+screenCenterY);
-
-//    if(this.scaleX > 1){
-//      this.clickTransX = screenCenterX - this.eventX;
-//      this.clickTransY = screenCenterY - this.eventY;
-//      this.ondraw();
-//    }
     this.heightlightPaint = [];
     this.heightlightPaint = this.mRenderer.drawHighlighted();
   }

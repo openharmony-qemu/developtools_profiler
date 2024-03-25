@@ -30,14 +30,17 @@ using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
 class StackDataRepeater {
 public:
     struct RawStack {
-        std::unique_ptr<uint8_t[]> baseStackData; // save the shared memory data
-        BaseStackRawData* stackConext; // points to the foundation type data
-        uint8_t* stackData;
-        uint8_t* data; // fp mode data is ip, dwarf mode data is regs
-        uint32_t stackSize;
-        uint8_t fpDepth; // fp mode fpDepth is ip depth, dwarf mode is invalid
-        bool reportFlag;
-        bool reduceStackFlag;
+        std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
+        BaseStackRawData* stackConext = nullptr; // points to the foundation type data
+        union {
+            uint8_t* stackData;
+            const char* jsStackData = nullptr;
+        };
+        uint8_t* data = nullptr; // fp mode data is ip, dwarf mode data is regs
+        uint32_t stackSize = 0;
+        uint8_t fpDepth = 0; // fp mode fpDepth is ip depth, dwarf mode is invalid
+        bool reportFlag = false;
+        bool reduceStackFlag = false;
     };
 
     explicit StackDataRepeater(size_t maxSize);

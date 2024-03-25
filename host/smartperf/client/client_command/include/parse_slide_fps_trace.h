@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,25 +22,25 @@
 namespace OHOS {
 namespace SmartPerf {
 class ParseSlideFpsTrace {
-    public:
-        double ParseSlideFpsTraceNoh(std::string file);
-        double CalculateTime();
-        std::string GetLineTime(std::string lineStr) const;
-        std::string CutString(std::string lineStr, std::string start, std::string end, size_t offset) const;
-    private:
-        std::ifstream infile;
-        bool needTime = false;
-        bool flagWeb = false;
-        int frameNum = 0;
-        int frameNow = 0;
-        int count = 0;
-        int four = 4;
-        double frameRate = 0;
-        double touchTime = 0;
-        double responseTime = 0;
-        double doCompositionTime = 0;
-        double completionTime = 0.035;
-        double completeTime = 0;
+public:
+    double ParseSlideFpsTraceNoh(std::string file);
+    double CalculateTime();
+    std::string GetLineTime(std::string lineStr) const;
+    std::string CutString(std::string lineStr, std::string start, std::string end, size_t offset) const;
+
+private:
+    std::ifstream infile;
+    bool needTime = false;
+    bool flagWeb = false;
+    int frameNum = 0;
+    int frameNow = 0;
+    int count = 0;
+    int four = 4;
+    double touchTime = 0;
+    double responseTime = 0;
+    double doCompositionTime = 0;
+    double completionTime = 0.035;
+    double completeTime = 0;
 };
 }
 }

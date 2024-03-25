@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@
 #include <iostream>
 #include <regex>
 #include "include/parse_slide_fps_trace.h"
+#include "include/sp_log.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -26,6 +27,7 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     infile.open(file);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
+        LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
         return fps;
     } else {
         fps = SmartPerf::ParseSlideFpsTrace::CalculateTime();
@@ -37,15 +39,6 @@ double ParseSlideFpsTrace::CalculateTime()
 {
     std::string line;
     while (getline(infile, line)) {
-        if (line.find("H:RSJankStats::RecordAnimationDynamicFrameRate") != std::string::npos) {
-            std::string delimiter = "frame rate is ";
-            size_t pos1 = line.find(delimiter);
-            std::string result1 = line.substr(pos1 + delimiter.length());
-            std::string delimiter1 = ":";
-            size_t pos2 = line.find(delimiter1);
-            std::string result2 = result1.substr(0, pos2);
-            frameRate = std::stod(result2);
-        }
         if (line.find("H:touchEventDispatch") != std::string::npos) {
             count++;
             if (count == four) {
@@ -61,7 +54,8 @@ double ParseSlideFpsTrace::CalculateTime()
                 frameNum = frameNow;
                 flagWeb = false;
             }
-        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos) {
+        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
+            line.find("H:APP_LIST_FLING 0") != std::string::npos) {
             flagWeb = true;
         }
         if (touchTime != 0 && (doCompositionTime - touchTime) > completionTime && needTime) {
@@ -70,14 +64,10 @@ double ParseSlideFpsTrace::CalculateTime()
             responseTime = doCompositionTime;
         }
     }
-    if (frameRate == 0) {
-        if (completeTime == 0 || responseTime == 0) {
-            return -1;
-        } else {
-            return frameNum / (completeTime - responseTime);
-        }
+    if (completeTime == 0 || responseTime == 0) {
+        return -1;
     } else {
-        return frameRate;
+        return frameNum / (completeTime - responseTime);
     }
     return -1.0;
 }
