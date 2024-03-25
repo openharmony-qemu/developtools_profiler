@@ -43,7 +43,7 @@ public:
             size_t payloadSize);
     void DisableHook();
     bool PeerIsConnected();
-    void SendNmdInfo();
+    bool SendNmdInfo();
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;

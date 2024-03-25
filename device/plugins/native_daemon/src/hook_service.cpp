@@ -62,7 +62,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     if (peerConfig == -1) {
         return false;
     }
-
+    hookMgr_->SetPid(peerConfig);
     std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
     std::string bundleName;
     if (!LoadStringFromFile(filePath, bundleName)) {

@@ -96,6 +96,11 @@ int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
 
 int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (config->printNmd_) {
+        std::lock_guard<std::mutex> guard(nmdMtx_);
+        nmdPidType_[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
+        return RET_OK;
+    }
     if (StartHook(config, fd) == RET_ERR) {
         close(fd);
         return RET_ERR;
@@ -118,6 +123,13 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",
             pid, name.c_str());
         return;
+    }
+
+    if (config->hookMgr->GetPid() > 0) {
+        std::lock_guard<std::mutex> guard(nmdMtx_);
+        if (nmdPidType_.find(config->hookMgr->GetPid()) != nmdPidType_.end()) {
+            config->hookMgr->SetNmdInfo(nmdPidType_[config->hookMgr->GetPid()]);
+        }
     }
 
     config->hookMgr->StopPluginSession({});

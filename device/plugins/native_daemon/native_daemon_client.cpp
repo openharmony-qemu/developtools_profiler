@@ -154,6 +154,10 @@ int32_t main(int32_t argc, char* argv[])
             uint32_t fd = TestDumpFile();
             NativeMemoryProfilerSaClientManager::DumpData(fd, config);
             close(fd);
+        } else if (config->printNmd_) {
+            uint32_t fd = TestDumpFile();
+            NativeMemoryProfilerSaClientManager::GetMallocStats(fd, config->pid_, 1);
+            close(fd);
         } else {
             NativeMemoryProfilerSaClientManager::Start(config);
         }

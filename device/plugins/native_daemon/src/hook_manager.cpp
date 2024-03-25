@@ -465,9 +465,6 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
 
 bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
-    if (printMallocNmd_) {
-        PrintStat(0);
-    }
     if (hookCtx_.empty()) {
         return false;
     }
@@ -493,10 +490,20 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             item->stackData->Close();
         }
     }
-    int waitTime = 0;
-    while (printMallocNmd_ && (!PrintStat(1)) && waitTime < 500) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        waitTime += 100;
+
+    if (printMallocNmd_) {
+        if (nmdParamInfo_.fd == 0) {
+            return false;
+        }
+        if (nmdParamInfo_.type == 0) {
+            PrintStat(nmdParamInfo_.fd, 0);
+        } else if (nmdParamInfo_.type == 1) {
+            int waitTime = 0;
+            while ((!PrintStat(nmdParamInfo_.fd, 1)) && waitTime < 500) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                waitTime += 100;
+            }
+        }
     }
     return true;
 }
@@ -638,21 +645,24 @@ void HookManager::WriteHookConfig()
 
 std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
-    shareMemoryNmd_ = ShareMemoryAllocator::GetInstance.CreateMemoryBlockLocal("nmd", MEMCHECK_DETAILINFO_MAXSIZE * 3);
+    shareMemoryNmd_ = ShareMemoryAllocator::GetInstance.CreateMemoryBlockLocal("nmd " + std::to_string(pid),
+                                                                               MEMCHECK_DETAILINFO_MAXSIZE * 3);
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
             if (item->pid == -1) {
                 item->pid = pid;
             }
             item->stackPreprocess->SetPid(pid);
-            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor(), shareMemoryNmd_->GetfileDescriptor()};
+            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor(),
+                    shareMemoryNmd_->GetfileDescriptor()};
         }
     }
     return {-1, -1, -1};
 }
 
-bool HookManager::PrintStat(int type)
+bool HookManager::PrintStat(uint32_t fdNum, int type)
 {
+    CHECK_NOTNULL(shareMemoryNmd_, false, "PrintStat failed, sharedMemoryNmd empty");
     bool ret = shareMemoryNmd_->TakeData(
         [&](const int8_t data[], uint32_t size) -> bool {
             const char* result = reinterpret_cast<const char*>(data);
@@ -666,5 +676,12 @@ bool HookManager::PrintStat(int type)
         }
     );
     return ret;
+}
+
+void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
+{
+    printMallocNmd_ = true;
+    nmdParamInfo_.fd = info.first;
+    nmdParamInfo_.type = info.second;
 }
 }

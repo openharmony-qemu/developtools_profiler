@@ -47,6 +47,11 @@ struct HookContext {
     uint32_t mallocSize;
 };
 
+struct NmdParam {
+    uint32_t fd = 0;
+    uint32_t type = -1;
+};
+
 namespace OHOS::Developtools::NativeDaemon {
 class HookService;
 class HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
@@ -106,11 +111,16 @@ public:
     {
         return noDataQueue_;
     }
-    bool PrintStat(int type);
+    bool PrintStat(uint32_t fd, int type);
     void SetPid(int pid)
     {
         pid_ = pid;
     }
+    int GetPid()
+    {
+        return pid_;
+    }
+    void SetNmdInfo(std::pair<uint32_t, uint32_t>);
 
 private:
     int pid_ = -1;
@@ -139,6 +149,7 @@ private:
     constexpr static uint32_t MAX_BUFFER_SIZE = 100 * 1024 * 1024;
     uint64_t shareMemorySize_{MAX_BUFFER_SIZE};
     std::shared_ptr<ShareMemoryBlock> shareMemoryNmd_ = nullptr;
+    NmdParam nmdParamInfo_;
 };
 }
 #endif // AGENT_MANAGER_H

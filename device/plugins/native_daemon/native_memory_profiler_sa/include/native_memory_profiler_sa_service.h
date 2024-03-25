@@ -66,12 +66,14 @@ private:
     std::unordered_map<std::string, std::shared_ptr<TaskConfig>> nameAndFilePathCtx_;
     std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> pidCtx_;
     std::mutex mtx_;
+    std::mutex nmdMtx_;
     ScheduleTaskManager scheduleTaskManager_;
     bool hasStartupMode_{false};
     std::string startupModeProcessName_;
     int32_t taskNum_{0};
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     int32_t delayedShutdownTimerFd_{-1};
+    std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

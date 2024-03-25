@@ -46,6 +46,8 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT32(parcel, sampleInterval_);
     WRITEBOOL(parcel, responseLibraryMode_);
     WRITEBOOL(parcel, printNmd_);
+    WRITEUINT32(parcel, nmdPid_);
+    WRITEUINT32(parcel, nmdType_);
     return true;
 }
 
@@ -80,6 +82,8 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT32(parcel, config->sampleInterval_);
     READBOOL(parcel, config->responseLibraryMode_);
     READBOOL(parcel, config->printNmd_);
+    READUINT32(parcel, config->nmdPid_);
+    READUINT32(parcel, config->nmdType_);
     PrintConfig(config);
     return true;
 }

@@ -56,6 +56,8 @@ public:
     uint32_t sampleInterval_{0};
     bool responseLibraryMode_{false};
     bool printNmd_{false};
+    uint32_t nmdPid_{0};
+    uint32_t nmdType_{0};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

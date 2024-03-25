@@ -192,9 +192,12 @@ bool HookSocketClient::PeerIsConnected()
     return !unixSocketClient_->IsConnected();
 }
 
-void HookSocketClient::SendNmdInfo()
+bool HookSocketClient::SendNmdInfo()
 {
+    CHECK_TRUE(nmdFd_ != -1, false, "HookSocketClient::SendNmdInfo failed, invalid nmdFd_");
+    CHECK_NOTNULL(shareMemoryBlockNmd_, false, "HookSocketClient::SendNmdInfo failed, sharedMemoryBlock error")
     struct OptArg opt = {0, (char*)(malloc(MEMCHECK_DETAILINFO_MAXSIZE)) };
     malloc_stats_print(NmdWriteStat, &opt, "a");
     sharedMemoryBlockNmd_->PutRawTimeOut(reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1);
+    return true;
 }
