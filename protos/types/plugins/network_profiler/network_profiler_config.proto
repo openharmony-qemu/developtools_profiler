@@ -1,0 +1,46 @@
+// Copyright (c) Huawei Technologies Co., Ltd. 2024. All rights reserved.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+option java_package = "ohos.devtools.datasources.transport.grpc.service";
+option optimize_for = LITE_RUNTIME;
+
+message NetworkProfilerConfig {
+    // Data collection when the program is running
+    repeated int64 pid = 1;
+
+    // Data collection in program startup stage
+    repeated string startup_process_name = 2;
+
+    // Data collection of program restart
+    repeated string restart_process_name = 3;
+    enum ClockId {
+        CLOCKID_REALTIME = 0;
+        CLOCKID_MONOTONIC = 1;
+        CLOCKID_PROCESS_CPUTIME_ID = 2; // since Linux 2.6.12
+        CLOCKID_THREAD_CPUTIME_ID = 3;  // since Linux 2.6.12
+        CLOCKID_MONOTONIC_RAW = 4;      // since Linux 2.6.28; Linux-specific
+        CLOCKID_REALTIME_COARSE = 5;    // since Linux 2.6.32; Linux-specific
+        CLOCKID_MONOTONIC_COARSE = 6;   // since Linux 2.6.32; Linux-specific
+        CLOCKID_BOOTTIME = 7;           // since Linux 2.6.39; Linux-specific
+        CLOCKID_REALTIME_ALARM = 8;     // since Linux 3.0; Linux-specific
+        CLOCKID_BOOTTIME_ALARM = 9;     // since Linux 3.0; Linux-specific
+        CLOCKID_TAI = 10;               // since Linux 3.10; Linux-specific
+    };
+    ClockId clock_id = 4;
+    uint32 smb_pages = 5;
+    uint32 flush_interval = 6;
+
+    // false: Discard data when there is no space in shared memory
+    // true: Block waiting when there is no space in the shared memory
+    bool block = 7;
+}
