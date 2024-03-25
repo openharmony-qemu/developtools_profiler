@@ -35,6 +35,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
 {
     std::map<std::string, std::string> result;
     FpsInfoProfiler finalResult = GetFpsInfo();
+    lastFpsInfoResult = finalResult;
     result["fps"] = std::to_string(finalResult.fps);
     LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
     LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());
@@ -96,7 +97,12 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     if (runTime < sleepTime) {
         usleep(sleepTime - runTime);
     }
-    for (int i = 0; i < ten; i++) {
+    GetCurrentTime(ten);
+}
+
+void ProfilerFPS::GetCurrentTime(int sleepNum)
+{
+    for (int i = 0; i < sleepNum; i++) {
         struct timespec time1 = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &time1);
         int curTimeNow = static_cast<int>(time1.tv_sec - 1);
@@ -204,58 +210,25 @@ void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
     printf("SP_daemon exec finished!\n");
 }
 
-FpsInfoProfiler ProfilerFPS::GetFpsInfoMax()
-{
-    if (uniteFpsInfo.curTime == (prevResultFpsInfo.curTime + 1)) {
-        LOGI("uniteFpsInfo.curTime == prevResultFpsInfo.curTime + 1");
-        prevResultFpsInfo = uniteFpsInfo;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        return prevResultFpsInfo;
-    } else if (uniteFpsInfo.curTime == prevResultFpsInfo.curTime) {
-        LOGI("uniteFpsInfo.curTime == prevResultFpsInfo.curTime");
-        prevResultFpsInfo = secUniteFpsInfo;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        return prevResultFpsInfo;
-    } else if (uniteFpsInfo.curTime > (prevResultFpsInfo.curTime + 1) && isFirstResult) {
-        LOGI("uniteFpsInfo.curTime > prevResultFpsInfo.curTime");
-        prevResultFpsInfo = prevSecFpsInfoMax;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        return prevResultFpsInfo;
-    } else {
-        prevResultFpsInfo = uniteFpsInfo;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        isFirstResult = true;
-        return prevResultFpsInfo;
-    }
-}
+
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
-    isFirstResult = false;
-    int fourHundred = 400;
-    int threeHundred = 300;
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
     if (pkgName.empty()) {
-        uniteFpsInfo = GetSurfaceFrame(uniteLayer);
-        std::this_thread::sleep_for(std::chrono::milliseconds(fourHundred));
-        secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
+        GetCurrentTime(fifty);
+        fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
         bool onTop = IsForeGround();
         if (onTop) {
             LOGI("ProfilerFPS.onTop===========");
-            uniteFpsInfo = GetSurfaceFrame(uniteLayer);
-            std::this_thread::sleep_for(std::chrono::milliseconds(threeHundred));
-            secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
+            GetCurrentTime(fifty);
+            fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
-            LOGI("ProfilerFPS.in the background==========");
-            return fpsInfoMax;
+            fpsInfoMax.Clear();
         }
     }
-    return GetFpsInfoMax();
+    return fpsInfoMax;
 }
 
 FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)

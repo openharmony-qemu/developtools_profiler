@@ -62,7 +62,6 @@ public:
     void GetFPS(int argc, std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
-    FpsInfoProfiler GetFpsInfoMax();
     bool IsForeGround();
     bool IsFindForeGround(std::string line);
     void GetSameTimeNums();
@@ -70,13 +69,9 @@ public:
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult);
     void GetSectionsPrint(int printCount, long long msStartTime) const;
     void GetTimeDiff();
+    void GetCurrentTime(int sleepNum);
     FpsInfoProfiler fpsInfo;
     FpsInfoProfiler fpsInfoMax;
-    FpsInfoProfiler prevFpsInfoMax;
-    FpsInfoProfiler prevSecFpsInfoMax;
-    FpsInfoProfiler uniteFpsInfo;
-    FpsInfoProfiler secUniteFpsInfo;
-    FpsInfoProfiler prevResultFpsInfo;
     FpsInfoProfiler lastFpsInfoResult;
     static ProfilerFPS &GetInstance()
     {
@@ -105,6 +100,7 @@ private:
     unsigned long sleepNowTime = 10000;
     int ten = 10;
     int four = 4;
+    int fifty = 50;
     long long lastCurrTime = 0;
     long long oneThousand = 1000;
     long long msClear = 1000000000;
