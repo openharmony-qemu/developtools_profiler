@@ -64,7 +64,7 @@ static void NmdWriteStat(void *arg, const char *buf)
     size_t nmdTimeLen = getNmdTime.size();
     if (strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos,
                   getNmdTime.c_str(), nmdTimeLen) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy time failed");
         return;
     }
     opt->pos += nmdTimeLen;
@@ -73,7 +73,10 @@ static void NmdWriteStat(void *arg, const char *buf)
     if (len + opt->pos + 1 > MEMCHECK_DETAILINFO_MAXSIZE) {
         return;
     }
-    strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos, buf, len);
+    if (strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos, buf, len) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy failed");
+        return;
+    }
     opt->pos += len;
 }
 

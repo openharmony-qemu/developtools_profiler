@@ -48,6 +48,7 @@ const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
+constexpr uint32_t SHARED_MEMORY_SIZE = 307200;
 constexpr uint32_t WAIT_TIME = 100;
 constexpr uint32_t MAX_WAIT_TIME = 500;
 }
@@ -671,7 +672,7 @@ void HookManager::WriteHookConfig()
 std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
     shareMemoryNmd_ = ShareMemoryAllocator::GetInstance.CreateMemoryBlockLocal("nmd " + std::to_string(pid),
-                                                                               MEMCHECK_DETAILINFO_MAXSIZE * 3);
+                                                                               SHARED_MEMORY_SIZE);
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
             if (item->pid == -1) {
