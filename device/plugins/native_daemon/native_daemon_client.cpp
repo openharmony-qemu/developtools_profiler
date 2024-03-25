@@ -24,9 +24,9 @@
 
 using namespace OHOS::Developtools::NativeDaemon;
 
-static uint32_t TestDumpFile()
+static uint32_t TestDumpFile(std::string postfix = "")
 {
-    uint32_t fd = static_cast<uint32_t>(open("/data/local/tmp/test_dump_file.htrace",
+    uint32_t fd = static_cast<uint32_t>(open(("/data/local/tmp/test_dump_file" + postfix + ".htrace").c_str(),
                                              O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
     return fd;
 }
@@ -163,9 +163,12 @@ int32_t main(int32_t argc, char* argv[])
             NativeMemoryProfilerSaClientManager::DumpData(fd, config);
             close(fd);
         } else if (config->printNmd_) {
-            uint32_t fd = TestDumpFile();
-            NativeMemoryProfilerSaClientManager::GetMallocStats(fd, config->pid_, 1);
-            close(fd);
+            uint32_t fd_first = TestDumpFile(std::to_string(0));
+            uint32_t fd_second = TestDumpFile(std::to_string(1));
+            NativeMemoryProfilerSaClientManager::GetMallocStats(fd_first, config->pid_, 0);
+            NativeMemoryProfilerSaClientManager::GetMallocStats(fd_second, config->pid_, 1);
+            close(fd_first);
+            close(fd_second);
         } else {
             NativeMemoryProfilerSaClientManager::Start(config);
         }

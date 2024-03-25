@@ -119,7 +119,7 @@ bool NativeMemoryProfilerSaClientManager::CheckConfig(const std::shared_ptr<Nati
     return true;
 }
 
-void NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int type)
+int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int type)
 {
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats invalid pid");

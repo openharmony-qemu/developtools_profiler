@@ -48,6 +48,8 @@ const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
+constexpr uint32_t WAIT_TIME = 100;
+constexpr uint32_t MAX_WAIT_TIME = 500;
 }
 
 bool HookManager::CheckProcess()
@@ -519,9 +521,9 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             PrintStat(nmdParamInfo_.fd, 0);
         } else if (nmdParamInfo_.type == 1) {
             int waitTime = 0;
-            while ((!PrintStat(nmdParamInfo_.fd, 1)) && waitTime < 500) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                waitTime += 100;
+            while ((!PrintStat(nmdParamInfo_.fd, 1)) && waitTime < MAX_WAIT_TIME) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME));
+                waitTime += WAIT_TIME;
             }
         }
     }
@@ -621,7 +623,6 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     printMallocNmd_ = config->printNmd_;
-
 }
 
 int32_t HookManager::CreatePluginSession()
@@ -684,17 +685,12 @@ std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
     return {-1, -1, -1};
 }
 
-bool HookManager::PrintStat(uint32_t fdNum, int type)
+bool HookManager::PrintStat(uint32_t fd, int type)
 {
     CHECK_NOTNULL(shareMemoryNmd_, false, "PrintStat failed, sharedMemoryNmd empty");
     bool ret = shareMemoryNmd_->TakeData(
         [&](const int8_t data[], uint32_t size) -> bool {
             const char* result = reinterpret_cast<const char*>(data);
-            char filename[100];
-            sprintf(filename, "/data/local/tmp/%d-%d-malloc-stats.txt", pid_, type);
-            int flag = O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC;
-            mode_t mode = 0660;
-            int fd = open(filename, flag, mode);
             (void)write(fd, result, strlen(result));
             return true;
         }
