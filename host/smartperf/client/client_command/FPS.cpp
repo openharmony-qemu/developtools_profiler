@@ -16,8 +16,10 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <queue>
 #include <string>
 #include <thread>
+#include <unistd.h>
 #include <ctime>
 #include <sys/time.h>
 #include "include/sp_utils.h"
@@ -34,8 +36,10 @@ std::map<std::string, std::string> FPS::ItemData()
     FpsInfo fpsInfoResult;
     if (surfaceViewName.length() > 0) {
         fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
+        prevResultFpsInfo = fpsInfoResult;
     } else {
         fpsInfoResult = GetFpsInfo();
+        prevResultFpsInfo = fpsInfoResult;
     }
     result["fps"] = std::to_string(fpsInfoResult.fps);
     LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
@@ -105,44 +109,27 @@ void FPS::SetLayerName(std::string sName)
 }
 FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName)
 {
-    uniteFpsInfo = GetSurfaceFrame(sName);
-    std::this_thread::sleep_for(std::chrono::milliseconds(threeHundred));
-    secUniteFpsInfo = GetSurfaceFrame(sName);
-    return GetFpsInfoMax();
+    GetCurrentTime();
+    fpsInfoMax = GetSurfaceFrame(sName);
+    return fpsInfoMax;
 }
 
-FpsInfo FPS::GetFpsInfoMax()
+void FPS::GetCurrentTime()
 {
-    if (uniteFpsInfo.curTime == (prevResultFpsInfo.curTime + 1)) {
-        LOGI("uniteFpsInfo.curTime == prevResultFpsInfo.curTime + 1");
-        prevResultFpsInfo = uniteFpsInfo;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        return prevResultFpsInfo;
-    } else if (uniteFpsInfo.curTime == prevResultFpsInfo.curTime) {
-        LOGI("uniteFpsInfo.curTime == prevResultFpsInfo.curTime");
-        prevResultFpsInfo = secUniteFpsInfo;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        return prevResultFpsInfo;
-    } else if (uniteFpsInfo.curTime > (prevResultFpsInfo.curTime + 1) && isFirstResult) {
-        LOGI("uniteFpsInfo.curTime > prevResultFpsInfo.curTime");
-        prevResultFpsInfo = prevSecFpsInfoMax;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        return prevResultFpsInfo;
-    } else {
-        prevResultFpsInfo = uniteFpsInfo;
-        prevSecFpsInfoMax = secUniteFpsInfo;
-        prevFpsInfoMax = uniteFpsInfo;
-        isFirstResult = true;
-        return prevResultFpsInfo;
+    for (int i = 0; i < fifty; i++) {
+        struct timespec time1 = { 0 };
+        clock_gettime(CLOCK_MONOTONIC, &time1);
+        int curTimeNow = static_cast<int>(time1.tv_sec - 1);
+        if (curTimeNow == prevResultFpsInfo.curTime) {
+            usleep(sleepNowTime);
+        } else {
+            break;
+        }
     }
 }
 
 FpsInfo FPS::GetFpsInfo()
 {
-    isFirstResult = false;
     fpsInfoMax.fps = 0;
     if (pkgName.empty()) {
         return fpsInfoMax;
@@ -151,14 +138,12 @@ FpsInfo FPS::GetFpsInfo()
     bool onTop = IsForeGround();
     if (onTop) {
         LOGI("onTop===========");
-        uniteFpsInfo = GetSurfaceFrame(uniteLayer);
-        std::this_thread::sleep_for(std::chrono::milliseconds(threeHundred));
-        secUniteFpsInfo = GetSurfaceFrame(uniteLayer);
+        GetCurrentTime();
+        fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
-        LOGI("in the background==========");
-        return fpsInfoMax;
+        fpsInfoMax.Clear();
     }
-    return GetFpsInfoMax();
+    return fpsInfoMax;
 }
 
 FpsInfo FPS::GetSurfaceFrame(std::string name)
@@ -187,10 +172,12 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     LOGI("dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
+    fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
+    fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGI("Time-------time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
     LOGI("Time-------time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
-    fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     LOGI("Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
+    LOGI("Time-------fpsInfo.currTimeDump: %s", std::to_string(fpsInfo.currTimeDump).c_str());
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("dump time: %s", str.c_str());
@@ -219,6 +206,7 @@ void FPS::GetSameTimeNums()
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
+        fpsInfo.currTimeStamps.push_back(frameReadyTime);
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {

@@ -45,7 +45,6 @@ public:
         " -stop          collection stop command \n"
         " -VIEW          set layler, for example: -VIEW DisplayNode \n"
         " -screen        get screen resolution \n"
-        " -editor        editing function. performance testing, marking characters"
         " -OUT           set csv output path.\n"
         " -d             get device DDR information\n\n"
         "example:\n"

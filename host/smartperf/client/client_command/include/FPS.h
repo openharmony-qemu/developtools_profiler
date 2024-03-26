@@ -22,7 +22,9 @@ namespace SmartPerf {
 struct FpsInfo {
     int fps;
     std::vector<long long> jitters;
+    std::vector<long long> currTimeStamps;
     int curTime;
+    long long currTimeDump;
     void Clear()
     {
         fps = 0;
@@ -62,17 +64,13 @@ public:
     void SetCaptureOn();
     void SetTraceCatch();
     FpsInfo GetFpsInfo();
-    FpsInfo GetFpsInfoMax();
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
     bool IsForeGround();
     bool IsFindForeGround(std::string line);
     void GetSameTimeNums();
+    void GetCurrentTime();
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
-    FpsInfo prevFpsInfoMax;
-    FpsInfo prevSecFpsInfoMax;
-    FpsInfo uniteFpsInfo;
-    FpsInfo secUniteFpsInfo;
     FpsInfo prevResultFpsInfo;
     static FPS &GetInstance()
     {
@@ -99,10 +97,10 @@ private:
     int isCapture = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
-    bool isFirstResult = false;
+    unsigned long sleepNowTime = 10000;
     bool isFoundAppName = false;
     bool isFoundBundleName = false;
-    int threeHundred = 300;
+    int fifty = 50;
     FpsCurrentFpsTime ffTime;
 };
 }
