@@ -84,7 +84,7 @@ double StallingRateTrace::CalculateTime()
 void StallingRateTrace::CalculateRoundTime()
 {
     if (nowFrameRate != 0) {
-        roundTime = oneThousand / nowFrameRate;
+        roundTime = 1 / nowFrameRate;
         LOGI("roundTime=====: %s", std::to_string(roundTime).c_str());
     }
 }
