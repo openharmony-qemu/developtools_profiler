@@ -41,6 +41,7 @@ std::map<std::string, std::string> FPS::ItemData()
         fpsInfoResult = GetFpsInfo();
         prevResultFpsInfo = fpsInfoResult;
     }
+    result["refreshrate"] = GetScreenInfo();
     result["fps"] = std::to_string(fpsInfoResult.fps);
     LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
     LOGI("result.curTime====: %s", std::to_string(fpsInfoResult.curTime).c_str());
@@ -74,6 +75,16 @@ std::map<std::string, std::string> FPS::ItemData()
 
     LOGI("FPS::ItemData map size(%u)", result.size());
     return result;
+}
+
+std::string FPS::GetScreenInfo()
+{
+    int one = 1;
+    std::string resultScreen = SPUtils::GetScreen();
+    int pos = resultScreen.find("=");
+    std::string numStr = resultScreen.substr(pos + one);
+    LOGI("numStr====: %s", numStr.c_str());
+    return numStr;
 }
 
 void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)

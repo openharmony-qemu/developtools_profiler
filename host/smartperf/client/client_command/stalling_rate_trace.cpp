@@ -72,7 +72,7 @@ double StallingRateTrace::CalculateTime()
             GetScreenInfo(line);
         }
     }
-    if (dynamicStartTime == 0 || dynamicFinishTime) {
+    if (dynamicStartTime == 0 || dynamicFinishTime == 0) {
         frameLossRate = -1;
     } else {
         frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
