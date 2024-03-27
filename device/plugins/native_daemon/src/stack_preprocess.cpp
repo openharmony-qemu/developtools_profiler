@@ -538,7 +538,7 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, idx, stackData);
     } else {
-        if ((!hookConfig_.fp_unwind()) && rawData->stackSize == 0) {
+        if ((!hookConfig_.fp_unwind()) && rawStack->stackSize == 0) {
             idx = 0;
         }
         FillOfflineCallStack(callFrames, idx, stackData);
