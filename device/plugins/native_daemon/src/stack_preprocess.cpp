@@ -1363,8 +1363,13 @@ void StackPreprocess::FillFpJsData(RawStackPtr& rawData)
     }
 }
 
-void StackPreprocess::FillDwarfErrorStack() {
+void StackPreprocess::FillDwarfErrorStack()
+{
+#if defined(__aarch64__)
     uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
     CallFrame& jsCallFrame = callFrames_.emplace_back(0 & (~pacMask));
     jsCallFrame.symbolName_ = "UnwindErrorDwarf";
     jsCallFrame.isJsFrame_ = true;
