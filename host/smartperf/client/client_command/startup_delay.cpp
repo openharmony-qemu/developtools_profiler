@@ -242,6 +242,10 @@ std::string StartUpDelay::GetDeviceType()
 }
 void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)
 {
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(fileName.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
     std::ifstream file(fileName, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
@@ -287,6 +291,10 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
 }
 void StartUpDelay::InitXY(const std::string &curAppName, const std::string &fileName)
 {
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(fileName.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
     std::ifstream file(fileName, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
