@@ -161,6 +161,7 @@ private:
     void FinishReport();
     void FillFpNativeIp(RawStackPtr& rawData);
     void FillFpJsData(RawStackPtr& rawData);
+    void FillDwarfErrorStack();
 private:
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
@@ -209,6 +210,7 @@ private:
     // Key is js stack id , value is js raw stack pointer
     std::map<uint64_t, const char*> jsStackMap_ = {};
     std::set<std::string> jsStackSet_ = {};
+    bool check = true;
 };
 
 #endif // STACK_PREPROCESS_H

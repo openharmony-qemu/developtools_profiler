@@ -416,6 +416,9 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
         GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
         stackSize = stackendptr - stackptr;
+        if (stackendptr == nullptr) {
+            stackSize = 0;
+        }
     }
     rawdata.type = MALLOC_MSG;
     rawdata.pid = static_cast<uint32_t>(g_hookPid);
@@ -510,6 +513,9 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
         GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
         stackSize = stackendptr - stackptr;
+        if (stackendptr == nullptr) {
+            stackSize = 0;
+        }
     }
 
     rawdata.type = MALLOC_MSG;
@@ -612,6 +618,9 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
         GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
         stackSize = stackendptr - stackptr;
+        if (stackendptr == nullptr) {
+            stackSize = 0;
+        }
         if (g_ClientConfig.freeStackData) {
             (void)memcpy_s(freeData.regs, sizeof(freeData.regs) / sizeof(char),
                            rawdata.regs, sizeof(rawdata.regs) / sizeof(char));
@@ -732,6 +741,9 @@ void hook_free(void (*free_func)(void*), void* p)
             stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
             stackSize = stackendptr - stackptr;
+            if (stackendptr == nullptr) {
+                stackSize = 0;
+            }
         }
     }
 
@@ -840,6 +852,9 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
         GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
         stackSize = stackendptr - stackptr;
+        if (stackendptr == nullptr) {
+            stackSize = 0;
+        }
     }
 
     rawdata.type = MMAP_MSG;
@@ -933,6 +948,9 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
             stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
             stackSize = stackendptr - stackptr;
+            if (stackendptr == nullptr) {
+                stackSize = 0;
+            }
         }
     }
 
@@ -1045,6 +1063,9 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
             stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
             stackSize = stackendptr - stackptr;
+            if (stackendptr == nullptr) {
+                stackSize = 0;
+            }
         }
     }
     rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
