@@ -145,7 +145,7 @@ std::map<std::string, std::string> MEMORY::GetPssRamInfo(FILE *fd, std::vector<s
     return pssRamInfo;
 }
 
-std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
+std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
     if (paramsInfo.size() > 0) {
@@ -157,7 +157,7 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
         sumRamInfo["swapPss"] = paramsInfo[MEMORY_SEVENTH];
         sumRamInfo["heapSize"] = paramsInfo[MEMORY_EIGHTH];
         sumRamInfo["heapAlloc"] = paramsInfo[MEMORY_NINTH];
-        sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
+        sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(paramsInfo[MEMORY_TENTH].size() - 1);
     }
 
     return sumRamInfo;
