@@ -66,7 +66,7 @@ public:
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
     bool IsForeGround();
-    bool IsFindForeGround(std::string line);
+    bool IsFindForeGround(std::string line) const;
     void GetSameTimeNums();
     void GetCurrentTime();
     std::string GetScreenInfo();

@@ -260,7 +260,7 @@ bool FPS::IsForeGround()
     return false;
 }
 
-bool FPS::IsFindForeGround(std::string line)
+bool FPS::IsFindForeGround(std::string line) const
 {
     std::string foreGroundTag = line.substr(line.find("#") + 1);
     if (foreGroundTag.find("FOREGROUND") != std::string::npos) {

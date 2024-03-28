@@ -22,12 +22,12 @@ namespace SmartPerf {
 std::map<std::string, std::string> Temperature::ItemData()
 {
     DIR *dp = opendir(thermalBasePath.c_str());
-    struct dirent *dirp;
     std::vector<std::string> dirs;
     if (dp == nullptr) {
         std::cout << "Open directory failed!" << std::endl;
     }
-    while ((dirp = readdir(dp)) != nullptr) {
+    struct dirent *dirp = readdir(dp);
+    while (dirp != nullptr) {
         if (strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0) {
             dirs.push_back(SPUtils::IncludePathDelimiter(thermalBasePath) + std::string(dirp->d_name));
         }
