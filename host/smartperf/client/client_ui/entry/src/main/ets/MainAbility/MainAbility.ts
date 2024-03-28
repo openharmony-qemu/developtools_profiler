@@ -33,12 +33,14 @@ let abilityWindowStage;
 export default class MainAbility extends Ability {
 
     onCreate(want, launchParam) {
+        console.log('cm-MainAbility-onCreate');
         globalThis.showFloatingWindow=false
         BundleManager.getAppList().then(appList => {
             globalThis.appList = appList
         })
     }
     onDestroy() {
+        console.log('cm-MainAbility-onDestroy');
         MainWorker.terminate()
     }
     onWindowStageCreate(windowStage) {
@@ -65,6 +67,7 @@ export default class MainAbility extends Ability {
     }
     onWindowStageDestroy() {}
     onForeground() {
+        console.log('cm-MainAbility-onForeground');
         initDb()
         FloatWindowFun.initAllFun()
         //NetWork.getInstance().init()

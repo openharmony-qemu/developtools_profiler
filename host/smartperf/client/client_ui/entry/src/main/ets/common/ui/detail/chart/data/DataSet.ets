@@ -231,7 +231,6 @@ export  abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
 
     if (this.mEntries.size() > 0 && this.mEntries.get(this.mEntries.size() - 1).getX() > e.getX()) {
       var closestIndex : number = this.getEntryIndex(e.getX(), e.getY(), Rounding.UP);
-      //              this.mEntries.add(closestIndex, e);
     } else {
       this.mEntries.add(e);
     }

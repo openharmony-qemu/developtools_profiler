@@ -82,7 +82,6 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
       this.mCircleColors = new JArrayList<Number>();
     }
     this.mCircleColors.clear();
-    //    this.mCircleColors.add(Color.rgb(140, 234, 255));
     this.mCircleColors.add(0x8ceaff);
 
   }
@@ -157,7 +156,6 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
   public setCircleRadius(radius: number): void  {
 
     if (radius >= 1) {
-//      this.mCircleRadius = Utils.convertDpToPixel(radius);
       this.mCircleRadius = radius;
     } else {
       console.log("LineDataSet", "Circle radius cannot be < 1")
@@ -177,7 +175,6 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
   public setCircleHoleRadius(holeRadius: number): void{
 
     if (holeRadius >= 0.5) {
-//      this.mCircleHoleRadius = Utils.convertDpToPixel(holeRadius);
       this.mCircleHoleRadius = holeRadius;
     } else {
       console.log("LineDataSet", "Circle radius cannot be < 0.5")
