@@ -145,9 +145,9 @@ void ScheduleTaskManager::ScheduleThread()
 
                 int32_t ret = read(events[i].data.fd, &exp, sizeof(uint64_t));
                 if (ret == sizeof(uint64_t)) {
-                    std::lock_guard<std::mutex> guard(mtx_);
-                    if (tasks_.find(events[i].data.fd) != tasks_.end()) {
-                        tasks_[events[i].data.fd]();
+                    if (tasks_.find(events[i].data.fd) != tasks_.end() && tasks_[events[i].data.fd] != nullptr) {
+                        auto funcTask = tasks_[events[i].data.fd];
+                        funcTask();
                     }
                 }
             }
