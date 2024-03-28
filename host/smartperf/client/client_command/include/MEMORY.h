@@ -18,16 +18,16 @@
 #include <string>
 
 enum {
-    RAM_ONE = 1,
-    RAM_SECOND,
-    RAM_THIRD,
-    RAM_FOURTH,
-    RAM_FIFTH,
-    RAM_SIXTH,
-    RAM_SEVENTH,
-    RAM_EIGHTH,
-    RAM_NINTH,
-    RAM_TENTH,
+    MEMORY_ONE = 1,
+    MEMORY_SECOND,
+    MEMORY_THIRD,
+    MEMORY_FOURTH,
+    MEMORY_FIFTH,
+    MEMORY_SIXTH,
+    MEMORY_SEVENTH,
+    MEMORY_EIGHTH,
+    MEMORY_NINTH,
+    MEMORY_TENTH,
 };
 
 namespace OHOS {

@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/RAM.h"
+#include "include/MEMORY.h"
 #include <sstream>
 #include <fstream>
 #include <climits>
@@ -94,7 +94,7 @@ std::map<std::string, std::string> MEMORY::GetRamInfo() const
     return procRamInfo;
 }
 
-std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
+std::map<std::string, std::string> MEMORY::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> pssRamInfo;
     std::string gpuPssValue = "";
@@ -118,10 +118,10 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
             graphicPssValue = params[1];
         }
         if (params[0].find("ark") != std::string::npos) {
-            arktsHeapPssValue = params[RAM_THIRD];
+            arktsHeapPssValue = params[MEMORY_THIRD];
         }
         if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
-            nativeHeapPssValue = params[RAM_SECOND];
+            nativeHeapPssValue = params[MEMORY_SECOND];
         }
         if (params.size() == paramEleven && params[0].find("stack") != std::string::npos) {
             stackPssValue = params[1];
@@ -149,15 +149,15 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
 {
     std::map<std::string, std::string> sumRamInfo;
     if (paramsInfo.size() > 0) {
-        sumRamInfo["sharedClean"] = paramsInfo[RAM_SECOND];
-        sumRamInfo["sharedDirty"] = paramsInfo[RAM_THIRD];
-        sumRamInfo["privateClean"] = paramsInfo[RAM_FOURTH];
-        sumRamInfo["privateDirty"] = paramsInfo[RAM_FIFTH];
-        sumRamInfo["swap"] = paramsInfo[RAM_SIXTH];
-        sumRamInfo["swapPss"] = paramsInfo[RAM_SEVENTH];
-        sumRamInfo["heapSize"] = paramsInfo[RAM_EIGHTH];
-        sumRamInfo["heapAlloc"] = paramsInfo[RAM_NINTH];
-        sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
+        sumRamInfo["sharedClean"] = paramsInfo[MEMORY_SECOND];
+        sumRamInfo["sharedDirty"] = paramsInfo[MEMORY_THIRD];
+        sumRamInfo["privateClean"] = paramsInfo[MEMORY_FOURTH];
+        sumRamInfo["privateDirty"] = paramsInfo[MEMORY_FIFTH];
+        sumRamInfo["swap"] = paramsInfo[MEMORY_SIXTH];
+        sumRamInfo["swapPss"] = paramsInfo[MEMORY_SEVENTH];
+        sumRamInfo["heapSize"] = paramsInfo[MEMORY_EIGHTH];
+        sumRamInfo["heapAlloc"] = paramsInfo[MEMORY_NINTH];
+        sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
     }
 
     return sumRamInfo;

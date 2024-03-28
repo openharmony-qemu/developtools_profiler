@@ -162,7 +162,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             break;
         case CommandType::CT_HW:
             break;
-        case CommandType::CT_MEM:
+        case CommandType::CT_M:
             profiler = &MEMORY::GetInstance();
             break;
         default:

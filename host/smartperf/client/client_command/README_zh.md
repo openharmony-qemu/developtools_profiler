@@ -54,7 +54,7 @@
 | -VIEW | 设置图层，需要先获取应用图层名                |否|
 | -screen | 采集屏幕分辨率和刷新率               |否|
 | -d    | 采集DDR                 |否|
-| -mem  | 采集其他内存信息         |否|
+| -m  | 采集其他内存信息         |否|
 | -sections| 设置分段采集          |否|
 
 **1.2 启停采集命令参数**
@@ -91,10 +91,10 @@ These are common commands list:
  -screen        get screen resolution
  -OUT           set csv output path
  -d             get device DDR information
- -mem           get other memory
+ -m             get other memory
  example:
- SP_daemon -N 20 -c -g -t -p -r -mem -d -net -snapshot
- SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -mem -d -net -snapshot
+ SP_daemon -N 20 -c -g -t -p -r -m -d -net -snapshot
+ SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -m -d -net -snapshot
  SP_daemon -start -c
  SP_daemon -stop
  SP_daemon -screen
@@ -102,7 +102,7 @@ These are common commands list:
 command exec finished!
 #
 ```
-2）执行示例命令：SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -mem -d -net -snapshot
+2）执行示例命令：SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -m -d -net -snapshot
 ```
 ----------------------------------Print START------------------------------------
 order:0 timestamp=1710916175201

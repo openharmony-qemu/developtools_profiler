@@ -74,6 +74,8 @@ void RAM::SetPackageName(std::string pName)
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::string processId = "";
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> ramInfo;
     std::string pssValue = "";
     ramInfo["pss"] = "-1";
@@ -100,6 +102,8 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
                 break;
             }
         }
+    } else {
+        ramInfo["pss"] = "NA";
     }
     if (pssValue.size() > 0) {
         ramInfo["pss"] = SPUtils::ExtractNumber(pssValue.c_str());
