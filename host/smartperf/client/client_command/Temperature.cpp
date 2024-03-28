@@ -27,7 +27,6 @@ std::map<std::string, std::string> Temperature::ItemData()
     if (dp == nullptr) {
         std::cout << "Open directory failed!" << std::endl;
     }
-    struct dirent *dirp = readdir(dp);
     while ((dirp = readdir(dp)) != nullptr) {
         if (strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0) {
             dirs.push_back(SPUtils::IncludePathDelimiter(thermalBasePath) + std::string(dirp->d_name));
