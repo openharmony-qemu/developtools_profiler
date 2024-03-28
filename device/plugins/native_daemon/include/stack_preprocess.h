@@ -210,7 +210,7 @@ private:
     // Key is js stack id , value is js raw stack pointer
     std::map<uint64_t, const char*> jsStackMap_ = {};
     std::set<std::string> jsStackSet_ = {};
-    bool check = true;
+    bool unwind_fail_report = true;
 };
 
 #endif // STACK_PREPROCESS_H
