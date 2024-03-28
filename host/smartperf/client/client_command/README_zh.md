@@ -54,6 +54,8 @@
 | -VIEW | 设置图层，需要先获取应用图层名                |否|
 | -screen | 采集屏幕分辨率和刷新率               |否|
 | -d    | 采集DDR                 |否|
+| -mem  | 采集其他内存信息         |否|
+| -sections| 设置分段采集          |否|
 
 **1.2 启停采集命令参数**
 | 命令   | 功能                   |必选|
@@ -75,11 +77,12 @@ These are common commands list:
  -PKG           set package name, must add, for example: -PKG ohos.samples.ecg
  -c             get device CPU frequency and CPU usage, process CPU usage and CPU load ..
  -g             get device GPU frequency and GPU load 
- -f             get app refresh fps(frames per second) and fps jitters
+ -f             get app refresh fps(frames per second) and fps jitters and refreshrate
  -profilerfps   get refresh fps and timestamp
+ -sections      set collection time period(using with profilerfps)
  -t             get remaining battery power and temperature..
  -p             get battery power consumption and voltage
- -r             get process memory and total memory ..
+ -r             get process memory and total memory
  -snapshot      get screen capture
  -net           get uplink and downlink traffic
  -start         collection start command
@@ -88,9 +91,10 @@ These are common commands list:
  -screen        get screen resolution
  -OUT           set csv output path
  -d             get device DDR information
+ -mem           get other memory
  example:
- SP_daemon -N 20 -c -g -t -p -r -d -net -snapshot
- SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -d -net -snapshot
+ SP_daemon -N 20 -c -g -t -p -r -mem -d -net -snapshot
+ SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -mem -d -net -snapshot
  SP_daemon -start -c
  SP_daemon -stop
  SP_daemon -screen
@@ -98,7 +102,7 @@ These are common commands list:
 command exec finished!
 #
 ```
-2）执行示例命令：SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -d -net -snapshot
+2）执行示例命令：SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -mem -d -net -snapshot
 ```
 ----------------------------------Print START------------------------------------
 order:0 timestamp=1710916175201
@@ -130,28 +134,29 @@ order:123 currentNow=278
 order:124 voltageNow=4250532
 order:125 fps=3
 order:126 fpsJitters=881659966;;108846354;;8289583
-order:127 arktsHeapPss=13394
-order:128 gpuPss=280
-order:129 graphicPss=0
-order:130 heapAlloc=48080
-order:131 heapFree=2576
-order:132 heapSize=50788
-order:133 memAvailable=6354252
-order:134 memFree=5971776
-order:135 memTotal=11530092
-order:136 nativeHeapPss=41897
-order:137 privateClean=67232
-order:138 privateDirty=12848
-order:139 pss=78045
-order:140 sharedClean=76224
-order:141 sharedDirty=12848
-order:142 stackPss=1096
-order:143 swap=0
-order:144 swapPss=0
-order:145 ddrFrequency=1531000000
-order:146 networkDown=0
-order:147 networkUp=0
-order:148 capture=data/local/tmp/capture/screenCap_1711190737580.png
+order:127 refreshrate=120
+order:128 memAvailable=6354252
+order:129 memFree=5971776
+order:130 memTotal=11530092
+order:131 pss=78045
+order:132 arktsHeapPss=13394
+order:133 gpuPss=280
+order:134 graphicPss=0
+order:135 heapAlloc=48080
+order:136 heapFree=2576
+order:137 heapSize=50788
+order:138 nativeHeapPss=41897
+order:139 privateClean=67232
+order:140 privateDirty=12848
+order:141 sharedClean=76224
+order:142 sharedDirty=12848
+order:143 stackPss=1096
+order:144 swap=0
+order:145 swapPss=0
+order:146 ddrFrequency=1531000000
+order:147 networkDown=0
+order:148 networkUp=0
+order:149 capture=data/local/tmp/capture/screenCap_1711190737580.png
 
 
 ----------------------------------Print END--------------------------------------
@@ -185,28 +190,29 @@ order:123 currentNow=303
 order:124 voltageNow=4251570
 order:125 fps=12
 order:126 fpsJitters=122794860;;8372396;;8375521;;8448958;;16691667;;8357812;;8367188;;8364062;;8383855;;8514062;;8238542;;849062
-order:127 arktsHeapPss=13586
-order:128 gpuPss=280
-order:129 graphicPss=0
-order:130 heapAlloc=48156
-order:131 heapFree=2648
-order:132 heapSize=50780
-order:133 memAvailable=6370048
-order:134 memFree=5990136
-order:135 memTotal=11530092
-order:136 nativeHeapPss=41877
-order:137 privateClean=67404
-order:138 privateDirty=2920
-order:139 pss=78217
-order:140 sharedClean=76224
-order:141 sharedDirty=12848
-order:142 stackPss=1096
-order:143 swap=0
-order:144 swapPss=0
-order:145 ddrFrequency=1531000000
-order:146 networkDown=0
-order:147 networkUp=0
-order:148 capture=data/local/tmp/capture/screenCap_1711190738589.png
+order:127 refreshrate=120
+order:128 memAvailable=6370048
+order:129 memFree=5990136
+order:130 memTotal=11530092
+order:131 pss=78217
+order:132 arktsHeapPss=13586
+order:133 gpuPss=280
+order:134 graphicPss=0
+order:135 heapAlloc=48156
+order:136 heapFree=2648
+order:137 heapSize=50780
+order:138 nativeHeapPss=41877
+order:139 privateClean=67404
+order:140 privateDirty=2920
+order:141 sharedClean=76224
+order:142 sharedDirty=12848
+order:143 stackPss=1096
+order:144 swap=0
+order:145 swapPss=0
+order:146 ddrFrequency=1531000000
+order:147 networkDown=0
+order:148 networkUp=0
+order:149 capture=data/local/tmp/capture/screenCap_1711190738589.png
 
 command exec finished!
 #
