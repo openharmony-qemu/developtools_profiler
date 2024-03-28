@@ -29,6 +29,10 @@ namespace SmartPerf {
 double ParseStartTraceNoh::ParseStartTraceNohe(std::string file)
 {
     double codeTime = -1.0;
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(file.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
     infile.open(file);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;

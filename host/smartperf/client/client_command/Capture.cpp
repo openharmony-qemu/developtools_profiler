@@ -41,9 +41,10 @@ std::map<std::string, std::string> Capture::ItemData()
     LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
 }
+
 void Capture::ThreadGetCatch(const std::string &curTime) const
 {
-    auto savePath = "data/local/tmp/capture/screenCap_" + curTime + ".png";
+    auto savePath = "/data/local/tmp/capture/screenCap_" + curTime + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
         SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
@@ -58,12 +59,14 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
     }
     (void)close(fd);
 }
+
 void Capture::TriggerGetCatch(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
     std::thread tStart(&Capture::ThreadGetCatch, this, curTimeStr);
     tStart.detach();
 }
+
 bool Capture::TakeScreenCap(const std::string &savePath) const
 {
     // get PixelMap from DisplayManager API
