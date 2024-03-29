@@ -20,8 +20,10 @@
 #include <unistd.h>
 #include <cstring>
 #include <cstdint>
+#include <cstdlib>
 #include <cstdio>
 #include <functional>
+#include <stdio.h>
 #include "GpuCounter.h"
 
 using namespace testing::ext;
@@ -122,13 +124,22 @@ HWTEST_F(SPdaemonTest, ItemData001, TestSize.Level1)
  */
 HWTEST_F(SPdaemonTest, GetCounterDuration001, TestSize.Level1)
 {
-    bool ret = false;
-    long long lg = GpuCounter::GetInstance().GetCounterDuration();
-    if (lg >= 0) {
-        ret = true;
-    }
+    int ret = -1;
+    const char* cmd = "cd /data/local/tmp";
+    std::string fileName = "config.txt";
 
-    EXPECT_EQ(ret, true);
+    ret = system(cmd);
+    FILE *file = fopen(fileName.c_str(), "r+");
+
+    long long lg = GpuCounter::GetInstance().GetCounterDuration();
+    if (ret == 0 && file != NULL) {
+        if (lg >= 0) {
+            ret = 1;
+        }
+        EXPECT_EQ(ret, 1);
+    } else {
+        EXPECT_EQ(lg, -1);
+    }
 }
 
 /**
