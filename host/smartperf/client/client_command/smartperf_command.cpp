@@ -119,6 +119,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
         case CommandType::CT_NET:
         case CommandType::CT_TTRACE:
         case CommandType::CT_SNAPSHOT:
+        case CommandType::CT_M:
         case CommandType::CT_HW:
             configs.push_back(argStr);
             break;
