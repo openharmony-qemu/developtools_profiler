@@ -1230,5 +1230,5 @@ bool ohos_malloc_hook_send_hook_js_rawstack(uint64_t id, const char* jsStackptr,
 
 void* ohos_malloc_hook_get_hook_js_config()
 {
-    return &g_ClientConfig.ArktsConfig;
+    return &g_ClientConfig.arktsConfig;
 }
