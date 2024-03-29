@@ -23,7 +23,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <functional>
-#include <stdio.h>
 #include "GpuCounter.h"
 
 using namespace testing::ext;
@@ -132,7 +131,7 @@ HWTEST_F(SPdaemonTest, GetCounterDuration001, TestSize.Level1)
     FILE *file = fopen(fileName.c_str(), "r+");
 
     long long lg = GpuCounter::GetInstance().GetCounterDuration();
-    if (ret == 0 && file != NULL) {
+    if (ret == 0 && file != nullptr) {
         if (lg >= 0) {
             ret = 1;
         }
