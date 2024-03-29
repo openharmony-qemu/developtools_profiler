@@ -337,9 +337,7 @@ bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             for (const auto& it : pluginIds_) {
                 if (it.second == id) {
                     PROFILER_LOG_DEBUG(LOG_CORE, "%s:find plugin name = %s", __func__, it.first.c_str());
-                    if (!scheduleTaskManager_.UnscheduleTask(scheduleTask_[it.first])) {
-                        return false;
-                    }
+                    scheduleTaskManager_.UnscheduleTask(scheduleTask_[it.first]);
                 }
             }
         }
