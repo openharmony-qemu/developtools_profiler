@@ -712,7 +712,7 @@ public:
         pid_ = pid;
     }
 
-    ~HapFileSymbols()
+    ~HapFileSymbols() override
     {
 #if defined(is_ohos) && is_ohos
         if (arkExtractorptr_ != 0) {
