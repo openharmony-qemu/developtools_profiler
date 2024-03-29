@@ -99,6 +99,25 @@ struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
     };
 };
 
+struct alignas(8) ReportEventBaseData { // 8 is 8 bit
+    ReportEventBaseData(const BaseStackRawData* baseData, uint32_t id = 0) {
+        ts = baseData->ts;
+        addr = reinterpret_cast<uint64_t>(baseData->addr);
+        type = baseData->type;
+        tagId = baseData->tagId;
+        mallocSize = baseData->mallocSize;
+        tid = baseData->tid;
+        stackMapId = id;
+    }
+    struct timespec ts;
+    uint64_t addr: 40;
+    uint64_t type: 8;
+    uint64_t tagId: 16;
+    uint32_t mallocSize;
+    uint32_t tid;
+    uint32_t stackMapId;
+};
+
 struct alignas(8) ArkTsClientConfig { // 8 is 8 bit
         uint8_t maxJsStackDepth = 0;
         bool jsStackReport = false;
@@ -123,10 +142,10 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         memtraceEnable = false;
         responseLibraryMode = false;
         freeEventOnlyAddrEnable = false;
-        ArktsConfig.maxJsStackDepth = 0;
-        ArktsConfig.jsStackReport = false;
-        ArktsConfig.jsFpunwind = false;
-        ArktsConfig.filterNapiName[0] = '\0';
+        arktsConfig.maxJsStackDepth = 0;
+        arktsConfig.jsStackReport = false;
+        arktsConfig.jsFpunwind = false;
+        arktsConfig.filterNapiName[0] = '\0';
     }
 
     std::string ToString()
@@ -139,9 +158,9 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
-            << ArktsConfig.jsStackReport << ", maxJsStackDepth: "
-            << std::to_string(ArktsConfig.maxJsStackDepth) << ", filterNapiName: "
-            << ArktsConfig.filterNapiName << ", jsFpunwind: " << ArktsConfig.jsFpunwind;
+            << arktsConfig.jsStackReport << ", maxJsStackDepth: "
+            << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
+            << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind;
         return ss.str();
     }
 
@@ -159,6 +178,6 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool memtraceEnable = false;
     bool responseLibraryMode = false;
     bool freeEventOnlyAddrEnable = false;
-    ArkTsClientConfig ArktsConfig = {0};
+    ArkTsClientConfig arktsConfig = {0};
 };
 #endif // HOOK_COMMON_H

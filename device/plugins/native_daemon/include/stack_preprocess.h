@@ -57,6 +57,7 @@ public:
     bool StartTakeResults();
     bool StopTakeResults();
     bool FlushRecordStatistics();
+    void FlushRecordApplyAndReleaseMatchData();
     inline void SetPid(int32_t pid)
     {
         pid_ = pid;
@@ -93,6 +94,7 @@ private:
         STATISTICS_MAP_SZIE = 100000,
         STATISTICS_PERIOD_DATA_SIZE = 100000,
         ALLOC_ADDRMAMP_SIZE = 100000,
+        MATCH_ADDRMAMP_SIZE = 100000,
     };
 
     struct ScopedLockFile {
@@ -145,10 +147,15 @@ private:
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
         T* event, uint32_t stackId, const std::string& type = "");
     template <typename T>
+    void SetEventFrame(const ReportEventBaseData& rawStack, T* event, uint32_t stackMapId, const std::string& type = "");
+    template <typename T>
     void SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames, T& stackData);
     template <typename T>
     void SetAllocStatisticsFrame(const RawStackPtr& rawStack, T& stackData);
+    template <typename T>
+    void SetApplyAndReleaseMatchFrame(RawStackPtr rawStack, std::vector<CallFrame>& callFrames, T& stackData);
     void IntervalFlushRecordStatistics();
+    void IntervalFlushApplyAndReleaseMatchData();
     bool HandleNoStackEvent(RawStackPtr& rawStack);
     bool SetFreeStatisticsData(uint64_t addr);
     void SetAllocStatisticsData(const RawStackPtr& rawStack, size_t stackId, bool isExists = false);
@@ -189,6 +196,10 @@ private:
     std::unordered_map<uint32_t, RecordStatistic*> statisticsPeriodData_ {STATISTICS_PERIOD_DATA_SIZE};
     // Key is alloc or mmap address, value first is mallocsize, second is recordstatistic data pointer
     std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> allocAddrMap_ {ALLOC_ADDRMAMP_SIZE};
+    // Key is alloc or mmap address, value is ReportEventBaseData list iterator
+    std::unordered_map<uint64_t, std::list<ReportEventBaseData>::iterator> applyAndReleaseMatchIntervallMap_;
+    std::list<ReportEventBaseData> applyAndReleaseMatchPeriodListData_;
+    std::chrono::seconds applyAndReleaseMatchInterval_{0};
     // used for plugin data
     clockid_t pluginDataClockId_ = CLOCK_REALTIME;
     // used for clac wait time in StackDataRepeater::TakeRawData() or statistics HookData
@@ -209,6 +220,7 @@ private:
     // Key is js stack id , value is js raw stack pointer
     std::map<uint64_t, const char*> jsStackMap_ = {};
     std::set<std::string> jsStackSet_ = {};
+    std::vector<std::string> prctlPeriodTags_; // applyAndReleaseMatchInterval mode used
 };
 
 #endif // STACK_PREPROCESS_H
