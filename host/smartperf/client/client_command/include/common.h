@@ -40,7 +40,8 @@ enum class MessageType {
     CATCH_GPU_COUNTER,      // 请求抓取GPU counter信息
     GET_GPU_COUNTER_RESULT, // 获取GPU counter信息
     CATCH_NETWORK_TRAFFIC,
-    GET_NETWORK_TRAFFIC // 获取网络流量信息
+    GET_NETWORK_TRAFFIC, // 获取网络流量信息
+    BACK_TO_DESKTOP,
 };
 
 const std::unordered_map<MessageType, std::string> messageMap = {
@@ -66,6 +67,7 @@ const std::unordered_map<MessageType, std::string> messageMap = {
     { MessageType::GET_GPU_COUNTER_RESULT, std::string("get_gpu_counter_result") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
+    { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },
 };
 
 enum class CommandType {

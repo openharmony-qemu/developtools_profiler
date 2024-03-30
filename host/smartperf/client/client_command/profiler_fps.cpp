@@ -215,7 +215,8 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
-    if (pkgName.empty()) {
+    if (pkgName.empty() || pkgName.find("desktops") != std::string::npos) {
+        LOGI("ProfilerFPS.pkgName===: %s", pkgName.c_str());
         GetCurrentTime(fifty);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
