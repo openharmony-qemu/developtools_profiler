@@ -82,7 +82,8 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
 bool NativeMemoryProfilerSaService::HasProfilingPermission()
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callingTokenID, "ohos.permission.ENABLE_PROFILER");
+    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callingTokenID,
+                                                                       "ohos.permission.ENABLE_PROFILER");
     if (res != Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
         PROFILER_LOG_ERROR(LOG_CORE, "No profiling permission, please check!");
         return false;
