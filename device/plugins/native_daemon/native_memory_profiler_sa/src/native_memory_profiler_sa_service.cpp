@@ -21,6 +21,8 @@
 #include "socket_context.h"
 #include "hook_common.h"
 #include "init_param.h"
+#include "token_setproc.h"
+#include "accesstoken_kit.h"
 
 #include "logging.h"
 
@@ -77,6 +79,17 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     return true;
 }
 
+bool NativeMemoryProfilerSaService::HasProfilingPermission()
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callingTokenID, "ohos.permission.ENABLE_PROFILER");
+    if (res != Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
+        PROFILER_LOG_ERROR(LOG_CORE, "No profiling permission, please check!");
+        return false;
+    }
+    return true;
+}
+
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     return StartHook(config);
@@ -105,6 +118,10 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
 
 void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, bool timeout)
 {
+    if (!HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
+        return RET_ERR;
+    }
     std::lock_guard<std::mutex> guard(mtx_);
     std::shared_ptr<TaskConfig> config = nullptr;
     if (pid > 0) {
@@ -145,6 +162,10 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
 
 int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
+    if (!HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
+        return RET_ERR;
+    }
     if (config == nullptr) {
         return RET_ERR;
     }
