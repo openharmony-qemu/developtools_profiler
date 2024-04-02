@@ -79,6 +79,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     std::map<std::string, std::string> procRamInfo;
     std::string pssValue = "";
     if (processId.size() == 0) {
+        procRamInfo["pss"] = "NA";
         return procRamInfo;
     }
     std::string cmd = "hidumper --mem "+ processId;
