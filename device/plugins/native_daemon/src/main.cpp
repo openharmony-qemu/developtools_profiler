@@ -251,10 +251,6 @@ int main(int argc, char* argv[])
     }
 
     if (argc > 1) {
-        if (!COMMON::IsBetaVersion()) {
-            printf("memory profiler only support in beta version\n");
-            return 0;
-        }
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
             if (!OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaService::StartServiceAbility()) {
                 return 0;
@@ -263,6 +259,10 @@ int main(int argc, char* argv[])
                 std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
             }
         } else {
+            if (!COMMON::IsBetaVersion()) {
+                printf("memory profiler only support in beta version\n");
+                return 0;
+            }
             std::vector<std::string> args;
             for (int i = 1; i < argc; i++) {
                 args.push_back(argv[i]);

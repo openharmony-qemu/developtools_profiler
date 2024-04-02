@@ -33,9 +33,9 @@ public:
     static int32_t Stop(uint32_t pid);
     static int32_t Stop(const std::string& name);
     static int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    static sptr<IRemoteObject> GetRemoteService();
 
 private:
-    static sptr<IRemoteObject> GetRemoteService();
     static bool CheckConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
 };
 }
