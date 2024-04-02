@@ -76,39 +76,38 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     std::string processId = "";
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(packageName);
-    std::map<std::string, std::string> ramInfo;
+    std::map<std::string, std::string> procRamInfo;
     std::string pssValue = "";
-    ramInfo["pss"] = "-1";
-    if (processId.size() > 0) {
-        const int zero = 0;
-        const int one = 1;
-        const int two = 2;
-        std::ostringstream cmdGrep;
-        cmdGrep.str("");
-        cmdGrep << "/proc/" << processId << "/smaps_rollup";
-        std::string cmdRam = cmdGrep.str();
-        char realPath[PATH_MAX] = {0x00};
-        if (realpath(cmdRam.c_str(), realPath) == nullptr) {
-            std::cout << "" << std::endl;
-        }
-        std::ifstream infile(realPath, std::ios::in);
-        if (!infile) {
-            return ramInfo;
-        }
-        std::string textline;
-        while (getline(infile, textline, '\n')) {
-            if (textline[zero] == 'P' && textline[one] == 's' && textline[two] == 's') {
-                pssValue = textline;
-                break;
-            }
-        }
-    } else {
-        ramInfo["pss"] = "NA";
+    if (processId.size() == 0) {
+        procRamInfo["pss"] = "NA";
+        return procRamInfo;
     }
+    std::string cmd = "hidumper --mem "+ processId;
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return procRamInfo;
+    }
+    const int paramEleven = 11;
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        if (line[0] == '-') {
+            continue;
+        }
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+            pssValue = params[1];
+        }
+        if (pssValue.size() > 0) {
+            break;
+        }
+    }
+    pclose(fd);
     if (pssValue.size() > 0) {
-        ramInfo["pss"] = SPUtils::ExtractNumber(pssValue.c_str());
+        procRamInfo["pss"] = pssValue;
     }
-    return ramInfo;
+    return procRamInfo;
 }
 }
 }
