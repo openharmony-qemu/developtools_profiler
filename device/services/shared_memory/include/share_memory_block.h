@@ -25,7 +25,7 @@
 #include "logging.h"
 #include "plugin_module_api.h"
 
-class ShareMemoryBlock {
+class EXPORT_API ShareMemoryBlock {
 public:
     ShareMemoryBlock(const std::string& name, uint32_t size);
     ShareMemoryBlock(const std::string& name, uint32_t size, int fd);
