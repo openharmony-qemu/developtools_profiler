@@ -112,13 +112,21 @@ void StallingRateTrace::GetScreenInfo(std::string line)
 
 double StallingRateTrace::GetFrameRate(std::string line)
 {
+    double rate = 0;
     std::string delimiter = "rate: ";
-    std::string delimiter1 = ", now:";
-    size_t pos1 = line.find(delimiter);
-    std::string result1 = line.substr(pos1 + delimiter.length());
-    size_t pos2 = line.find(delimiter1);
-    std::string result2 = result1.substr(0, pos2);
-    double rate = std::stod(result2.c_str());
+    if (line.find("now:") != std::string::npos && line.find("rate:") != std::string::npos) {
+        std::string delimiter1 = ", now:";
+        size_t pos1 = line.find(delimiter);
+        std::string result1 = line.substr(pos1 + delimiter.length());
+        size_t pos2 = line.find(delimiter1);
+        std::string result2 = result1.substr(0, pos2);
+        rate = std::stod(result2.c_str());
+    }
+    if (line.find("rate:") != std::string::npos) {
+        size_t pos = line.find(delimiter);
+        std::string result = line.substr(pos + delimiter.length());
+        rate = std::stod(result.c_str());
+    }
     return rate;
 }
 
