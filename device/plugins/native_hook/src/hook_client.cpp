@@ -343,7 +343,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
 
 uint64_t getJsChainId()
 {
-    if (g_ClientConfig.ArktsConfig.jsStackReport) {
+    if (g_ClientConfig.arktsConfig.jsStackReport) {
             OHOS::HiviewDFX::HiTraceId hitraceId = OHOS::HiviewDFX::HiTraceChain::GetId();
             if (hitraceId.IsValid()) {
                 return hitraceId.GetChainId();
@@ -988,15 +988,15 @@ int hook_prctl(int(*fn)(int, ...),
         rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
         rawdata.mallocSize = arg4;
         rawdata.addr = reinterpret_cast<void*>(arg3);
-
+        size_t tagLen = strlen(reinterpret_cast<char*>(arg5)) + 1;
+        if (memcpy_s(rawdata.name, sizeof(rawdata.name), reinterpret_cast<char*>(arg5), tagLen) != EOK) {
+            HILOG_ERROR(LOG_CORE, "memcpy_s tag failed");
+        }
+        rawdata.name[sizeof(rawdata.name) - 1] = '\0';
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
-        if (strcpy_s(rawdata.name, PATH_MAX + 1, reinterpret_cast<char*>(arg5))) {
-            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
-        }
         if (holder != nullptr) {
-            holder->SendStackWithPayload(&rawdata,
-                                         sizeof(rawdata) + strlen(reinterpret_cast<char*>(arg5)), nullptr, 0);
+            holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0);
         }
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
@@ -1230,5 +1230,5 @@ bool ohos_malloc_hook_send_hook_js_rawstack(uint64_t id, const char* jsStackptr,
 
 void* ohos_malloc_hook_get_hook_js_config()
 {
-    return &g_ClientConfig.ArktsConfig;
+    return &g_ClientConfig.arktsConfig;
 }
