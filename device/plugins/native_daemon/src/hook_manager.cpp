@@ -280,7 +280,6 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             ctx->eventNotifier->GetFd(),
             std::bind(&HookManager::ReadShareMemory, this, ctx));
     }
-    CHECK_TRUE(ctx->stackPreprocess != nullptr, false, "Create StackPreprocess FAIL");
     if (isProtobufSerialize_ || isSaService_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);
     } else {
@@ -465,9 +464,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
             item->shareMemoryBlock = nullptr;
         }
-        if (item->eventNotifier != nullptr) {
-            item->eventNotifier = nullptr;
-        }
+        item->eventNotifier = nullptr;
         item->stackPreprocess = nullptr;
         item->stackData = nullptr;
     }

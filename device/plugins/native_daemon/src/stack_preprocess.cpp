@@ -1161,10 +1161,6 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
 void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& symbols)
 {
     std::shared_ptr<DfxElf> elfPtr = std::make_shared<DfxElf>(filePath);
-    if (elfPtr == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetSymbols elfPtr is nullptr");
-        return;
-    }
 
     symbols.textVaddr = elfPtr->GetStartVaddr();
     symbols.textOffset = elfPtr->GetStartOffset();
@@ -1248,14 +1244,14 @@ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 
 void StackPreprocess::SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack)
 {
-    auto iter = jsStackMap_.find(jsChainId);
-    if (iter == jsStackMap_.end()) {
-        auto iter = jsStackSet_.find(jsRawStack);
-        if (iter == jsStackSet_.end()) {
+    auto iterChainId = jsStackMap_.find(jsChainId);
+    if (iterChainId == jsStackMap_.end()) {
+        auto iterRawStack = jsStackSet_.find(jsRawStack);
+        if (iterRawStack == jsStackSet_.end()) {
             auto iter = jsStackSet_.insert(jsRawStack);
             jsStackMap_[jsChainId] = iter.first->c_str();
         } else {
-            jsStackMap_[jsChainId] = iter->c_str();
+            jsStackMap_[jsChainId] = iterRawStack->c_str();
         }
     }
 }
