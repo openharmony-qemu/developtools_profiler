@@ -732,10 +732,6 @@ public:
         HLOGD("the symbol file is %s.", filePath_.c_str());
         if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")) {
             dfxExtractor_ = std::make_unique<DfxExtractor>(filePath_);
-            if (dfxExtractor_ == nullptr) {
-                HLOGD("DfxExtractor create failed.");
-                return false;
-            }
             if (!dfxExtractor_->GetHapAbcInfo(loadOffSet_, abcDataPtr_, abcDataSize_)) {
                 HLOGD("failed to call GetHapAbcInfo, the symbol file is:%s", filePath_.c_str());
                 return false;
