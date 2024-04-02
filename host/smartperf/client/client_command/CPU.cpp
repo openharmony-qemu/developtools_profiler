@@ -69,12 +69,10 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    if (packageName.length() > 0) {
-        std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
-        if (!processCpuInfo.empty()) {
-            for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
-                result.insert(*it);
-            }
+    std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
+    if (!processCpuInfo.empty()) {
+        for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
+            result.insert(*it);
         }
     }
 
@@ -141,8 +139,10 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
 {
     std::string processId = "";
     OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
-    LOGI("CPU::processId -- %s", processId.c_str());
+    if (packageName.length() > 0) {
+        processId = sp.GetPidByPkg(packageName);
+        LOGI("CPU::processId -- %s", processId.c_str());
+    }
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
     if (processId.length() > 0) {

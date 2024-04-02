@@ -41,11 +41,9 @@ std::map<std::string, std::string> RAM::ItemData()
     for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
         result.insert(*it);
     }
-    if (packageName.length() > 0) {
-        std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
-        for (auto it = procRamInfo.begin(); it != procRamInfo.end(); ++it) {
-            result.insert(*it);
-        }
+    std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
+    for (auto it = procRamInfo.begin(); it != procRamInfo.end(); ++it) {
+        result.insert(*it);
     }
 
     return result;
@@ -75,7 +73,9 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::string processId = "";
     OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
+    if (packageName.length() > 0) {
+        processId = sp.GetPidByPkg(packageName);
+    }
     std::map<std::string, std::string> procRamInfo;
     std::string pssValue = "";
     if (processId.size() == 0) {
