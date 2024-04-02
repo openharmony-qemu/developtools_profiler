@@ -571,9 +571,8 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
 
 template <typename T>
 void StackPreprocess::SetEventFrame(const ReportEventBaseData& rawStack,
-     T* event, uint32_t stackMapId, const std::string& type)
+    T* event, uint32_t stackMapId, const std::string& type)
 {
-    
     event->set_pid(pid_);
     event->set_tid(rawStack.tid);
     event->set_addr(rawStack.addr);
@@ -723,7 +722,8 @@ void StackPreprocess::ReportOfflineSymbolizationData()
 }
 
 template <typename T>
-void StackPreprocess::SetApplyAndReleaseMatchFrame(RawStackPtr rawStack, std::vector<CallFrame>& callFrames, T& stackData)
+void StackPreprocess::SetApplyAndReleaseMatchFrame(RawStackPtr rawStack, std::vector<CallFrame>& callFrames,
+                                                   T& stackData)
 {
     uint32_t stackMapId = 0;
     if (rawStack->stackConext->type != PR_SET_VMA_MSG) {
@@ -1479,7 +1479,7 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
             }
         }
         FlushData(stackData);
-    }, stackData_);
+        }, stackData_);
     applyAndReleaseMatchPeriodListData_.clear();
     applyAndReleaseMatchIntervallMap_.clear();
     prctlPeriodTags_.clear();

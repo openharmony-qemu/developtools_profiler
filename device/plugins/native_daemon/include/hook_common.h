@@ -100,7 +100,8 @@ struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
 };
 
 struct alignas(8) ReportEventBaseData { // 8 is 8 bit
-    ReportEventBaseData(const BaseStackRawData* baseData, uint32_t id = 0) {
+    ReportEventBaseData(const BaseStackRawData* baseData, uint32_t id = 0)
+    {
         ts = baseData->ts;
         addr = reinterpret_cast<uint64_t>(baseData->addr);
         type = baseData->type;
@@ -110,9 +111,9 @@ struct alignas(8) ReportEventBaseData { // 8 is 8 bit
         stackMapId = id;
     }
     struct timespec ts;
-    uint64_t addr: 40;
-    uint64_t type: 8;
-    uint64_t tagId: 16;
+    uint64_t addr : 40;
+    uint64_t type : 8;
+    uint64_t tagId : 16;
     uint32_t mallocSize;
     uint32_t tid;
     uint32_t stackMapId;

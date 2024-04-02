@@ -147,7 +147,8 @@ private:
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
         T* event, uint32_t stackId, const std::string& type = "");
     template <typename T>
-    void SetEventFrame(const ReportEventBaseData& rawStack, T* event, uint32_t stackMapId, const std::string& type = "");
+    void SetEventFrame(const ReportEventBaseData& rawStack, T* event, uint32_t stackMapId,
+                       const std::string& type = "");
     template <typename T>
     void SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames, T& stackData);
     template <typename T>
