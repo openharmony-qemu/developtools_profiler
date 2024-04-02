@@ -62,7 +62,7 @@ private:
         bool isStartupMode{false};
         uint32_t fd{0};
     };
-
+    bool HasProfilingPermission();
     std::unordered_map<std::string, std::shared_ptr<TaskConfig>> nameAndFilePathCtx_;
     std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> pidCtx_;
     std::mutex mtx_;

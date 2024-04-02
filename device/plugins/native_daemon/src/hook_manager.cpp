@@ -204,20 +204,20 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
-    clientConfig.ArktsConfig.maxJsStackDepth = hookConfig_.max_js_stack_depth();
+    clientConfig.arktsConfig.maxJsStackDepth = hookConfig_.max_js_stack_depth();
     clientConfig.mallocDisable = hookConfig_.malloc_disable();
     clientConfig.mmapDisable = hookConfig_.mmap_disable();
     clientConfig.freeStackData = hookConfig_.free_stack_report();
     clientConfig.munmapStackData = hookConfig_.munmap_stack_report();
     clientConfig.fpunwind = hookConfig_.fp_unwind();
-    clientConfig.ArktsConfig.jsFpunwind = hookConfig_.fp_unwind();
+    clientConfig.arktsConfig.jsFpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
-    clientConfig.ArktsConfig.jsStackReport = hookConfig_.js_stack_report();
+    clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
     // -1 is save '\0'
-    int ret = memcpy_s(clientConfig.ArktsConfig.filterNapiName, sizeof(clientConfig.ArktsConfig.filterNapiName) - 1,
+    int ret = memcpy_s(clientConfig.arktsConfig.filterNapiName, sizeof(clientConfig.arktsConfig.filterNapiName) - 1,
                        hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());
     if (ret != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s filter_napi_name fail");
@@ -269,6 +269,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     if (noDataQueue_) {
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
+        ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
@@ -278,17 +279,16 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
+        ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&HookManager::ReadShareMemory, this, ctx));
     }
-    CHECK_TRUE(ctx->stackPreprocess != nullptr, false, "Create StackPreprocess FAIL");
     if (isProtobufSerialize_ || isSaService_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);
     } else {
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
-    ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
     return true;
 }
 
@@ -337,6 +337,13 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_record_accurately(true);
     }
 
+    // malloc and free matching interval reporting must be callframe compressed and accurate.
+    if (hookConfig_.malloc_free_matching_interval() > 0) {
+        hookConfig_.set_callframe_compress(true);
+        hookConfig_.set_record_accurately(true);
+        hookConfig_.set_statistics_interval(0);
+    }
+
     // callframe compressed, string must be compressed.
     if (hookConfig_.callframe_compress()) {
         hookConfig_.set_string_compressed(true);
@@ -356,7 +363,8 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.fp_unwind() && hookConfig_.record_accurately()
         && hookConfig_.blocked() && hookConfig_.offline_symbolization()
         && hookConfig_.statistics_interval() > 0
-        && hookConfig_.sample_interval() > 1 && !hookConfig_.js_stack_report()) {
+        && hookConfig_.sample_interval() > 1
+        && !hookConfig_.js_stack_report()) {
         noDataQueue_ = true;
     }
 
@@ -460,9 +468,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
             item->shareMemoryBlock = nullptr;
         }
-        if (item->eventNotifier != nullptr) {
-            item->eventNotifier = nullptr;
-        }
+        item->eventNotifier = nullptr;
         item->stackPreprocess = nullptr;
         item->stackData = nullptr;
     }
@@ -508,6 +514,9 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
         if (hookConfig_.statistics_interval() > 0) {
             item->stackPreprocess->FlushRecordStatistics();
+        }
+        if (hookConfig_.malloc_free_matching_interval() > 0) {
+            item->stackPreprocess->FlushRecordApplyAndReleaseMatchData();
         }
         if (item->stackData != nullptr) {
             item->stackData->Close();

@@ -119,6 +119,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
         case CommandType::CT_NET:
         case CommandType::CT_TTRACE:
         case CommandType::CT_SNAPSHOT:
+        case CommandType::CT_M:
         case CommandType::CT_HW:
             configs.push_back(argStr);
             break;
@@ -167,6 +168,7 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
     return std::string("command exec finished!");
 }

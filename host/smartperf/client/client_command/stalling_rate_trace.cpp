@@ -49,11 +49,11 @@ double StallingRateTrace::CalculateTime()
             line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos) {
             if (animalFlag) {
                 dynamicFinishTime = GetTimes(line, signF);
-                LOGI("dynamicFinishTime=====: %S", std::to_string(dynamicFinishTime).c_str());
+                LOGI("dynamicFinishTime=====: %s", std::to_string(dynamicFinishTime).c_str());
                 animalFlag = false;
             } else {
                 dynamicStartTime = GetTimes(line, signS);
-                LOGI("dynamicStartTime=====: %S", std::to_string(dynamicStartTime).c_str());
+                LOGI("dynamicStartTime=====: %s", std::to_string(dynamicStartTime).c_str());
                 animalFlag = true;
             }
         }
@@ -61,22 +61,22 @@ double StallingRateTrace::CalculateTime()
             if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
-                LOGI("nowFrameRate1=====: %S", std::to_string(nowFrameRate).c_str());
+                LOGI("nowFrameRate1=====: %s", std::to_string(nowFrameRate).c_str());
                 CalculateRoundTime();
             } else if (line.find("H:RSHardwareThread::PerformSetActiveMode setting active mode") != std::string::npos) {
                 upperScreenFlag = true;
                 nowFrameRate = GetFrameRate(line);
-                LOGI("nowFrameRate2=====: %S", std::to_string(nowFrameRate).c_str());
+                LOGI("nowFrameRate2=====: %s", std::to_string(nowFrameRate).c_str());
                 CalculateRoundTime();
             }
             GetScreenInfo(line);
         }
     }
-    if (dynamicStartTime == 0 || dynamicFinishTime) {
+    if (dynamicStartTime == 0 || dynamicFinishTime == 0) {
         frameLossRate = -1;
     } else {
         frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
-        LOGI("frameLossRate=====: %S", std::to_string(frameLossRate).c_str());
+        LOGI("frameLossRate=====: %s", std::to_string(frameLossRate).c_str());
     }
     return frameLossRate;
 }
@@ -84,8 +84,8 @@ double StallingRateTrace::CalculateTime()
 void StallingRateTrace::CalculateRoundTime()
 {
     if (nowFrameRate != 0) {
-        roundTime = oneThousand / nowFrameRate;
-        LOGI("roundTime=====: %S", std::to_string(roundTime).c_str());
+        roundTime = 1 / nowFrameRate;
+        LOGI("roundTime=====: %s", std::to_string(roundTime).c_str());
     }
 }
 void StallingRateTrace::GetScreenInfo(std::string line)
@@ -93,16 +93,16 @@ void StallingRateTrace::GetScreenInfo(std::string line)
     if (upperScreenFlag) {
         if (line.find("|H:Present Fence ") != std::string::npos) {
             fenceId = GetFenceId(line);
-            LOGI("fenceId=====: %S", std::to_string(fenceId).c_str());
+            LOGI("fenceId=====: %s", std::to_string(fenceId).c_str());
         }
         std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
         if (line.find(waitFenceId) != std::string::npos) {
             nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
-            LOGI("nowTime=====: %S", std::to_string(nowTime).c_str());
+            LOGI("nowTime=====: %s", std::to_string(nowTime).c_str());
             if ((nowTime - lastTime) > roundTime && lastTime != 0) {
                 double diffTime = (nowTime - lastTime) - roundTime;
                 frameLossTime += diffTime;
-                LOGI("frameLossTime=====: %S", std::to_string(frameLossTime).c_str());
+                LOGI("frameLossTime=====: %s", std::to_string(frameLossTime).c_str());
             }
             lastTime = nowTime;
             upperScreenFlag = false;
@@ -112,13 +112,21 @@ void StallingRateTrace::GetScreenInfo(std::string line)
 
 double StallingRateTrace::GetFrameRate(std::string line)
 {
+    double rate = 0;
     std::string delimiter = "rate: ";
-    std::string delimiter1 = ", now:";
-    size_t pos1 = line.find(delimiter);
-    std::string result1 = line.substr(pos1 + delimiter.length());
-    size_t pos2 = line.find(delimiter1);
-    std::string result2 = result1.substr(0, pos2);
-    double rate = std::stod(result2.c_str());
+    if (line.find("now:") != std::string::npos && line.find("rate:") != std::string::npos) {
+        std::string delimiter1 = ", now:";
+        size_t pos1 = line.find(delimiter);
+        std::string result1 = line.substr(pos1 + delimiter.length());
+        size_t pos2 = line.find(delimiter1);
+        std::string result2 = result1.substr(0, pos2);
+        rate = std::stod(result2.c_str());
+    }
+    if (line.find("rate:") != std::string::npos) {
+        size_t pos = line.find(delimiter);
+        std::string result = line.substr(pos + delimiter.length());
+        rate = std::stod(result.c_str());
+    }
     return rate;
 }
 

@@ -70,6 +70,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     keys.insert("start");
     keys.insert("stop");
     keys.insert("screen");
+    keys.insert("sections");
     for (auto a : OHOS::SmartPerf::commandMap) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }

@@ -784,6 +784,7 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     if (!nativeInterface) {
         std::string errorMessage = "The status of the trace is abnormal";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
+        return CreateUndefined(env);
     }
     auto ret = nativeInterface->StartAppTraceCapture(tag, traceFlag, limitSize, file);
     if (ret == TRACE_SUCCESS) {

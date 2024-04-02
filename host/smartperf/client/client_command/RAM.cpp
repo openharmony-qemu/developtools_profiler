@@ -51,120 +51,6 @@ std::map<std::string, std::string> RAM::ItemData()
     return result;
 }
 
-void RAM::SetPackageName(std::string pName)
-{
-    packageName = pName;
-}
-
-std::map<std::string, std::string> RAM::GetRamInfo() const
-{
-    std::string processId = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
-    std::map<std::string, std::string> procRamInfo;
-    if (processId.size() == 0) {
-        procRamInfo["gpuPss"] = "0";
-        procRamInfo["graphicPss"] = "0";
-        procRamInfo["arktsHeapPss"] = "0";
-        procRamInfo["nativeHeapPss"] = "0";
-        procRamInfo["stackPss"] = "0";
-        procRamInfo["pss"] = "0";
-        procRamInfo["sharedClean"] = "0";
-        procRamInfo["sharedDirty"] = "0";
-        procRamInfo["privateClean"] = "0";
-        procRamInfo["privateDirty"] = "0";
-        procRamInfo["swap"] = "0";
-        procRamInfo["swapPss"] = "0";
-        procRamInfo["heapSize"] = "0";
-        procRamInfo["heapAlloc"] = "0";
-        procRamInfo["heapFree"] = "0";
-        return procRamInfo;
-    }
-    std::string cmd = "hidumper --mem " + processId;
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        return procRamInfo;
-    }
-    std::vector<std::string> paramsInfo;
-    std::map<std::string, std::string> totalRamInfo = GetPssRamInfo(fd, paramsInfo);
-    if (totalRamInfo.empty()) {
-        LOGE("RAM::GetRamInfo totalRamInfo is empty");
-    }
-    procRamInfo.insert(totalRamInfo.cbegin(), totalRamInfo.cend());
-
-    return procRamInfo;
-}
-
-std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
-{
-    std::map<std::string, std::string> pssRamInfo;
-    std::string gpuPssValue = "";
-    std::string graphicPssValue = "";
-    std::string arktsHeapPssValue = "";
-    std::string nativeHeapPssValue = "";
-    std::string stackPssValue = "";
-    const int paramEleven = 11;
-    char buf[1024] = {'\0'};
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line = buf;
-        if (line[0] == '-') {
-            continue;
-        }
-        std::vector<std::string> params;
-        SPUtils::StrSplit(line, " ", params);
-        if (params.size() == paramEleven && params[0].find("GL") != std::string::npos) {
-            gpuPssValue = params[1];
-        }
-        if (params.size() == paramEleven && params[0].find("Graph") != std::string::npos) {
-            graphicPssValue = params[1];
-        }
-        if (params[0].find("ark") != std::string::npos) {
-            arktsHeapPssValue = params[RAM_THIRD];
-        }
-        if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
-            nativeHeapPssValue = params[RAM_SECOND];
-        }
-        if (params.size() == paramEleven && params[0].find("stack") != std::string::npos) {
-            stackPssValue = params[1];
-        }
-        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
-            paramsInfo = params;
-        }
-        if (paramsInfo.size() > 0) {
-            break;
-        }
-    }
-    pclose(fd);
-    std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
-    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
-    pssRamInfo["gpuPss"] = gpuPssValue;
-    pssRamInfo["graphicPss"] = graphicPssValue;
-    pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
-    pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
-    pssRamInfo["stackPss"] = stackPssValue;
-
-    return pssRamInfo;
-}
-
-std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
-{
-    std::map<std::string, std::string> sumRamInfo;
-    if (paramsInfo.size() > 0) {
-        sumRamInfo["pss"] = paramsInfo[RAM_ONE];
-        sumRamInfo["sharedClean"] = paramsInfo[RAM_SECOND];
-        sumRamInfo["sharedDirty"] = paramsInfo[RAM_THIRD];
-        sumRamInfo["privateClean"] = paramsInfo[RAM_FOURTH];
-        sumRamInfo["privateDirty"] = paramsInfo[RAM_FIFTH];
-        sumRamInfo["swap"] = paramsInfo[RAM_SIXTH];
-        sumRamInfo["swapPss"] = paramsInfo[RAM_SEVENTH];
-        sumRamInfo["heapSize"] = paramsInfo[RAM_EIGHTH];
-        sumRamInfo["heapAlloc"] = paramsInfo[RAM_NINTH];
-        sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
-    }
-
-    return sumRamInfo;
-}
-
 std::map<std::string, std::string> RAM::GetSysRamInfo() const
 {
     std::map<std::string, std::string> sysRamInfo;
@@ -177,8 +63,51 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     sysRamInfo["memTotal"] = std::to_string(result.data.memTotal);
     sysRamInfo["memFree"] = std::to_string(result.data.memFree);
     sysRamInfo["memAvailable"] = std::to_string(result.data.memAvailable);
-
     return sysRamInfo;
+}
+
+void RAM::SetPackageName(std::string pName)
+{
+    packageName = pName;
+}
+
+std::map<std::string, std::string> RAM::GetRamInfo() const
+{
+    std::string processId = "";
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(packageName);
+    std::map<std::string, std::string> procRamInfo;
+    std::string pssValue = "";
+    if (processId.size() == 0) {
+        procRamInfo["pss"] = "NA";
+        return procRamInfo;
+    }
+    std::string cmd = "hidumper --mem "+ processId;
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return procRamInfo;
+    }
+    const int paramEleven = 11;
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        if (line[0] == '-') {
+            continue;
+        }
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+            pssValue = params[1];
+        }
+        if (pssValue.size() > 0) {
+            break;
+        }
+    }
+    pclose(fd);
+    if (pssValue.size() > 0) {
+        procRamInfo["pss"] = pssValue;
+    }
+    return procRamInfo;
 }
 }
 }

@@ -21,6 +21,9 @@ std::map<std::string, std::string> DDR::ItemData()
 {
     std::map<std::string, std::string> result;
     result["ddrFrequency"] = std::to_string(GetDdrFreq());
+    if (result.find("ddrFrequency") != result.end() && result["ddrFrequency"].empty()) {
+        result["ddrFrequency"] = "NA";
+    }
     LOGI("DDR::ItemData map size(%u)", result.size());
     return result;
 }

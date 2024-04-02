@@ -174,12 +174,12 @@ public:
                 retCode = SplitMsg(recvBuf);
                 SpProfilerFactory::SetProfilerPkg(retCode);
                 spSocket.Sendto(retCode);
-            } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
-                retCode = SplitMsg(recvBuf);
-                SpProfilerFactory::SetProfilerPkg(retCode);
             } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
                 iterator->first == MessageType::CATCH_TRACE_CMD)) {
                 SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+            } else if (profiler == nullptr && (iterator->first == MessageType::BACK_TO_DESKTOP)) {
+                std::string cmdResult;
+                SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
             } else if (profiler == nullptr) {
                 retCode = iterator->second;
                 spSocket.Sendto(retCode);

@@ -124,6 +124,16 @@ void HidumpPlugin::Loop(void)
             std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
             continue;
         }
+        char* pTempBuf = buf;
+        if (strncmp(pTempBuf, "fps:", strlen("fps:")) == 0) {
+            pTempBuf += strlen("fps:");
+            std::string stringBuf(pTempBuf);
+            size_t npos = stringBuf.find("|");
+            uint32_t fps = static_cast<uint32_t>(std::stoi(stringBuf.substr(0, npos)));
+            if (fps > 0) {
+                continue;
+            }
+        }
         if (resultWriter_->isProtobufSerialize) {
             HidumpInfo dataProto;
             if (!ParseHidumpInfo(dataProto, buf)) {
