@@ -1010,10 +1010,10 @@ template <typename T>
 inline void StackPreprocess::ReportFrameMap(CallFrame& callFrame, T& stackData)
 {
     if (callFrame.needReport_ & CALL_FRAME_REPORT) {
-        if ((!hookConfig_.fp_unwind()) && callFrame.callFrameId_ == DWARF_ERROR_ID && !unwind_fail_report) {
+        if ((!hookConfig_.fp_unwind()) && callFrame.callFrameId_ == DWARF_ERROR_ID && !unwindFailReport_) {
             return;
-        } else if ((!hookConfig_.fp_unwind()) && callFrame.callFrameId_ == DWARF_ERROR_ID && unwind_fail_report) {
-            unwind_fail_report = false;
+        } else if ((!hookConfig_.fp_unwind()) && callFrame.callFrameId_ == DWARF_ERROR_ID && unwindFailReport_) {
+            unwindFailReport_ = false;
         }
         ReportSymbolNameMap(callFrame, stackData);
         ReportFilePathMap(callFrame, stackData);
