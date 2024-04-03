@@ -190,7 +190,7 @@ HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
  * @tc.desc: test PrintStat with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
+HWTEST_F(HookManagerTest, PrintStat, TestSize.Level1)
 {
     HookManager hookManager;
     NativeHookConfig nativeConfig;
