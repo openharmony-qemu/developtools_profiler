@@ -48,6 +48,7 @@ constexpr static uint32_t RIGHT_MOVE_8 = 8;
 constexpr static uint32_t RIGHT_MOVE_16 = 16;
 constexpr static uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 constexpr static uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
+constexpr static uint64_t DWARF_ERROR_ID = 999999;
 constexpr static uint8_t JS_SYMBOL_INDEX = 0;       // 0 is js symbolName
 constexpr static uint8_t JS_FILEPATH_INDEX = 1;     // 1 is js filePath:line:col
 static std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
@@ -366,6 +367,9 @@ void StackPreprocess::TakeResults()
                     FillFpJsData(rawData);
                 }
             } else if (rawData->stackConext->type != PR_SET_VMA_MSG) {
+                if (rawData->stackSize == 0) {
+                    FillDwarfErrorStack();
+                } else {
 #if defined(__arm__)
                 uint32_t *regAddrArm = reinterpret_cast<uint32_t *>(rawData->data);
                 u64regs_.assign(regAddrArm, regAddrArm + PERF_REG_ARM_MAX);
@@ -375,6 +379,7 @@ void StackPreprocess::TakeResults()
                     PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s regs failed");
                 }
 #endif
+                }
             }
 #ifdef PERFORMANCE_DEBUG
             size_t realFrameDepth = callFrames_.size();
@@ -385,7 +390,7 @@ void StackPreprocess::TakeResults()
             if (rawData->reduceStackFlag) {
                 stackDepth = minStackDepth;
             }
-            {
+            if ((hookConfig_.fp_unwind()) || rawData->stackSize > 0) {
                 std::lock_guard<std::mutex> guard(mtx_);
                 if (rawData->stackConext->type != PR_SET_VMA_MSG) {
                     bool ret = runtime_instance->UnwindStack(u64regs_, rawData->stackData, rawData->stackSize,
@@ -396,7 +401,9 @@ void StackPreprocess::TakeResults()
                     }
                 }
             }
-            ReportOfflineSymbolizationData();
+            if ((hookConfig_.fp_unwind()) || rawData->stackSize > 0) {
+                ReportOfflineSymbolizationData();
+            }
             std::visit([&](auto& stackData) {
                 if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
                     SetHookData(rawData, callFrames_, stackData);
@@ -557,6 +564,9 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, idx, stackData);
     } else {
+        if ((!hookConfig_.fp_unwind()) && rawStack->stackSize == 0) {
+            idx = 0;
+        }
         FillOfflineCallStack(callFrames, idx, stackData);
     }
     // return call stack id
@@ -1000,6 +1010,11 @@ template <typename T>
 inline void StackPreprocess::ReportFrameMap(CallFrame& callFrame, T& stackData)
 {
     if (callFrame.needReport_ & CALL_FRAME_REPORT) {
+        if ((!hookConfig_.fp_unwind()) && callFrame.callFrameId_ == DWARF_ERROR_ID && !unwindFailReport_) {
+            return;
+        } else if ((!hookConfig_.fp_unwind()) && callFrame.callFrameId_ == DWARF_ERROR_ID && unwindFailReport_) {
+            unwindFailReport_ = false;
+        }
         ReportSymbolNameMap(callFrame, stackData);
         ReportFilePathMap(callFrame, stackData);
         auto hookData = stackData.add_events();
@@ -1425,6 +1440,25 @@ void StackPreprocess::FillFpJsData(RawStackPtr& rawData)
             jsCallFrame.offset_ = jsCallFrame.ip_;
         }
     }
+}
+
+void StackPreprocess::FillDwarfErrorStack()
+{
+#if defined(__aarch64__)
+    uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
+    CallFrame& jsCallFrame = callFrames_.emplace_back(0 & (~pacMask));
+    jsCallFrame.symbolName_ = "UnwindErrorDwarf";
+    jsCallFrame.isJsFrame_ = true;
+    jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
+    jsCallFrame.needReport_ |= SYMBOL_NAME_ID_REPORT;
+    jsCallFrame.needReport_ |= FILE_PATH_ID_REPORT;
+    jsCallFrame.callFrameId_ = DWARF_ERROR_ID;
+    jsCallFrame.symbolNameId_ = DWARF_ERROR_ID;
+    jsCallFrame.filePathId_ = DWARF_ERROR_ID;
+    jsCallFrame.filePath_ = "no-file-path";
 }
 
 void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
