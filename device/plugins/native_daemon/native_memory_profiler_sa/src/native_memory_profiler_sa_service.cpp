@@ -358,7 +358,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
         context.SendFileDescriptor(smbFd);
         context.SendFileDescriptor(eventFd);
-        context.SendFileDescriptor(nmdFd)
+        context.SendFileDescriptor(nmdFd);
         iter->second->hookMgr->ResetStartupParam();
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
