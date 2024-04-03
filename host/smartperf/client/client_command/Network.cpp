@@ -58,6 +58,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
+                (void)fclose(fp);
                 return networkInfo;
             }
             allTx += curTx;

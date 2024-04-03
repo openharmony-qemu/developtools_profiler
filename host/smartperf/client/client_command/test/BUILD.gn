@@ -22,8 +22,20 @@ config("module_private_config") {
 ohos_unittest("sp_daemon_ut") {
   module_out_path = module_output_path
   sources = [
+    "../ByTrace.cpp",
+    "../Capture.cpp",
+    "../FPS.cpp",
+    "../GpuCounter.cpp",
+    "../sp_log.cpp",
+    "../sp_task.cpp",
     "../sp_utils.cpp",
+    "../startup_delay.cpp",
+    "unittest/fps_test.cpp",
+    "unittest/gpu_counter_test.cpp",
+    "unittest/smartperf_main_test.cpp",
     "unittest/sp_daemon_test.cpp",
+    "unittest/sp_task_test.cpp",
+    "unittest/sp_utils_test.cpp",
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",
@@ -42,6 +54,9 @@ ohos_unittest("sp_daemon_ut") {
     "window_manager:libdm",
     "window_manager:libwm",
   ]
+
+  configs = [ "//build/config/compiler:exceptions" ]
+
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

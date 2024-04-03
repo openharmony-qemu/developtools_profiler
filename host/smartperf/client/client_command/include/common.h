@@ -29,6 +29,7 @@ enum class MessageType {
     GET_GPU_LOAD,
     GET_DDR_FREQ,
     GET_RAM_INFO,
+    GET_MEMORY_INFO,
     GET_TEMPERATURE,
     GET_POWER,
     GET_CAPTURE,
@@ -39,7 +40,8 @@ enum class MessageType {
     CATCH_GPU_COUNTER,      // 请求抓取GPU counter信息
     GET_GPU_COUNTER_RESULT, // 获取GPU counter信息
     CATCH_NETWORK_TRAFFIC,
-    GET_NETWORK_TRAFFIC // 获取网络流量信息
+    GET_NETWORK_TRAFFIC, // 获取网络流量信息
+    BACK_TO_DESKTOP,
 };
 
 const std::unordered_map<MessageType, std::string> messageMap = {
@@ -56,6 +58,7 @@ const std::unordered_map<MessageType, std::string> messageMap = {
     { MessageType::GET_TEMPERATURE, std::string("get_temperature") },
     { MessageType::GET_POWER, std::string("get_power") },
     { MessageType::GET_CAPTURE, std::string("get_capture") },
+    { MessageType::GET_MEMORY_INFO, std::string("get_memory") },
     { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
     { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
@@ -64,6 +67,7 @@ const std::unordered_map<MessageType, std::string> messageMap = {
     { MessageType::GET_GPU_COUNTER_RESULT, std::string("get_gpu_counter_result") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
+    { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },
 };
 
 enum class CommandType {
@@ -89,6 +93,7 @@ enum class CommandType {
     CT_VIEW,
     CT_FL,
     CT_FTL,
+    CT_M,
 };
 enum class CommandHelp {
     HELP,
@@ -119,6 +124,7 @@ const std::unordered_map<std::string, CommandType> commandMap = {
     { std::string("-VIEW"), CommandType::CT_VIEW },
     { std::string("-fl"), CommandType::CT_FL },
     { std::string("-ftl"), CommandType::CT_FTL },
+    { std::string("-m"), CommandType::CT_M },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -144,6 +150,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_VIEW, std::string("-VIEW") },
     { CommandType::CT_FL, std::string("-fl") },
     { CommandType::CT_FTL, std::string("-ftl") },
+    { CommandType::CT_M, std::string("-m") },
 };
 
 

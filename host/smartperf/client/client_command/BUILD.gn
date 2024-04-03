@@ -41,6 +41,7 @@ ohos_executable("SP_daemon") {
     "FPS.cpp",
     "GPU.cpp",
     "GpuCounter.cpp",
+    "MEMORY.cpp",
     "Network.cpp",
     "Power.cpp",
     "RAM.cpp",

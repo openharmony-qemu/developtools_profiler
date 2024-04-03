@@ -156,7 +156,7 @@ void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime) const
     }
 }
 
-void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult)
+void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
 {
     int msCount = 0;
     long long msJiange = 100000000;
@@ -165,7 +165,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult)
     long long currLastTime = lastCurrTime;
     long long harTime = 100;
     int printCount = 0;
-    for (int i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
+    for (uint32_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
         currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
             msCount++;
@@ -215,7 +215,8 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
-    if (pkgName.empty()) {
+    if (pkgName.empty() || pkgName.find("desktops") != std::string::npos) {
+        LOGI("ProfilerFPS.pkgName===: %s", pkgName.c_str());
         GetCurrentTime(fifty);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {

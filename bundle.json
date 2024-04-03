@@ -27,6 +27,7 @@
       "components": [
         "ability_runtime",
         "ability_base",
+        "access_token",
         "bundle_framework",
         "common_event_service",
         "c_utils",
@@ -99,6 +100,15 @@
             ]
           },
           "name": "//developtools/profiler/device/plugins/native_daemon:libnative_daemon_client"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/device",
+            "header_files": [
+              "plugins/network_profiler/client/include/network_profiler.h"
+            ]
+          },
+          "name": "//developtools/profiler/device/plugins/network_profiler/client:libnetwork_profiler"
         }
       ],
       "test": [

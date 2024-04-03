@@ -25,6 +25,7 @@
 #include "profiler_capability_manager.h"
 #include "profiler_data_repeater.h"
 #include "trace_file_writer.h"
+#include <cinttypes>
 
 using namespace ::grpc;
 using PluginContextPtr = std::shared_ptr<PluginContext>;
@@ -56,6 +57,9 @@ namespace {
 constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
 constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
+#ifdef  PERFORMANCE_DEBUG
+constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
+#endif
 } // namespace
 
 ProfilerService::ProfilerService(const PluginServicePtr& pluginService)
@@ -576,6 +580,10 @@ Status ProfilerService::StopSession(ServerContext* context,
                                     const ::StopSessionRequest* request,
                                     ::StopSessionResponse* response)
 {
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
     CHECK_REQUEST_RESPONSE(context, request, response);
     uint32_t sessionId = request->session_id();
     PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u start", request->request_id(), sessionId);
@@ -588,6 +596,12 @@ Status ProfilerService::StopSession(ServerContext* context,
     }
     CHECK_EXPRESSION_TRUE(ctx->StopPluginSessions(), "stop plugin sessions failed!");
     PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u done!", request->request_id(), sessionId);
+#ifdef PERFORMANCE_DEBUG
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    uint64_t costTime = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    PROFILER_LOG_INFO(LOG_CORE, "StopSession cost time  %" PRIu64 " ns", costTime);
+#endif
     return Status::OK;
 }
 
