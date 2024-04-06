@@ -55,6 +55,9 @@ public:
     clockid_t clockId_{CLOCK_REALTIME};
     uint32_t sampleInterval_{0};
     bool responseLibraryMode_{false};
+    bool printNmd_{false};
+    uint32_t nmdPid_{0};
+    uint32_t nmdType_{0};
     bool jsStackReport_{false};
     uint8_t maxJsStackDepth_{0};
     std::string filterNapiName_;

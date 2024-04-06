@@ -18,14 +18,67 @@
 #include "common.h"
 #include "hook_common.h"
 #include "unix_socket_client.h"
+#include "share_memory_allocator.h"
 #include "logging.h"
 #include "sampling.h"
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
 
 namespace {
 constexpr int FLUSH_FLAG = 20;
 std::atomic<uint64_t> g_flushCount = 0;
 std::atomic<bool> g_disableHook = false;
+constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
+constexpr uint32_t SHARED_MEMORY_SIZE = 307200;
+
+struct OptArg {
+    int pos;
+    char *buf;
+};
+
 } // namespace
+
+
+static std::string GetRealTime()
+{
+    time_t now = time(nullptr);
+    tm tm;
+    const int timeLength = 64;
+    char stampStr[timeLength] = {0};
+
+    if (localtime_r(&now, &tm) == nullptr || strftime(stampStr, timeLength, "%Y/%m/%d %H:%M:%S", &tm) == 0) {
+        return "error time format!";
+    }
+    return std::string(stampStr);
+}
+
+static void NmdWriteStat(void *arg, const char *buf)
+{
+    struct OptArg *opt = static_cast<struct OptArg*>(arg);
+    std::string getNmdTime = std::to_string(getpid()) + " " + GetRealTime() + "\n";
+    size_t nmdTimeLen = getNmdTime.size();
+    if (strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos,
+                  getNmdTime.c_str(), nmdTimeLen) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy time failed");
+        return;
+    }
+    opt->pos += nmdTimeLen;
+
+    size_t len = strlen(buf);
+    if (len + opt->pos + 1 > MEMCHECK_DETAILINFO_MAXSIZE) {
+        return;
+    }
+    if (strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos, buf, len) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy failed");
+        return;
+    }
+    opt->pos += len;
+}
 
 HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)())
     : pid_(pid), config_(config), sampler_(sampler), disableHookCallback_(disableHookCallback)
@@ -73,11 +126,15 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     PROFILER_LOG_INFO(LOG_CORE, "%s sample interval %" PRIu64 "", __func__, sampler_->GetSampleInterval());
     smbFd_ = context.ReceiveFileDiscriptor();
     eventFd_ = context.ReceiveFileDiscriptor();
+    nmdFd_ = context.ReceiveFileDiscriptor();
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked);
+    shareMemoryBlockNmd_ =
+    ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("nmd", SHARED_MEMORY_SIZE, nmdFd_);
     struct mallinfo2 mi = mallinfo2();
     COMMON::PrintMallinfoLog("stackWriter init(byte) => ", mi);
+    SendNmdInfo();
     return true;
 }
 
@@ -142,4 +199,16 @@ void HookSocketClient::DisableHook()
 bool HookSocketClient::PeerIsConnected()
 {
     return !unixSocketClient_->IsConnected();
+}
+
+bool HookSocketClient::SendNmdInfo()
+{
+    CHECK_TRUE(nmdFd_ != -1, false, "HookSocketClient::SendNmdInfo failed, invalid nmdFd_");
+    CHECK_NOTNULL(shareMemoryBlockNmd_, false, "HookSocketClient::SendNmdInfo failed, sharedMemoryBlock error");
+    void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
+    CHECK_NOTNULL(nmdBuf, false, "HookSocketClient::SendNmdInfo failed, nmdBuf malloc failed");
+    struct OptArg opt = {0, (char*)(nmdBuf) };
+    malloc_stats_print(NmdWriteStat, &opt, "a");
+    shareMemoryBlockNmd_->PutRawTimeout(reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1);
+    return true;
 }

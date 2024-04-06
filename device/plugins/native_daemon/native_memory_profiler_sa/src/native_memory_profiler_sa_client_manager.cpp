@@ -24,6 +24,7 @@ namespace {
 constexpr uint32_t LIB_SMS = 4096;
 constexpr uint32_t CALL_STACK_SMS = 16384;
 }
+
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
@@ -116,5 +117,24 @@ bool NativeMemoryProfilerSaClientManager::CheckConfig(const std::shared_ptr<Nati
         config->shareMemorySize_ = config->responseLibraryMode_ ? LIB_SMS : CALL_STACK_SMS;
     }
     return true;
+}
+
+int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int type)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats fd is 0");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats invalid pid");
+    CHECK_TRUE(type == 0 || type == 1, RET_ERR, "NativeMemoryProfilerSaClientManager: type is invalid");
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->printNmd_ = true;
+    config->nmdPid_ = pid;
+    config->nmdType_ = type;
+    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
+    auto service = GetRemoteService();
+    if (service == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        return RET_ERR;
+    }
+    NativeMemoryProfilerSaProxy proxy(service);
+    return proxy.DumpData(fd, config);
 }
 } // namespace OHOS::Developtools::NativeDaemon
