@@ -32,6 +32,7 @@
 namespace {
 constexpr int FLUSH_FLAG = 20;
 std::atomic<uint64_t> g_flushCount = 0;
+std::atomic<uint64_t> g_memIndex = 0;
 std::atomic<bool> g_disableHook = false;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
 constexpr uint32_t SHARED_MEMORY_SIZE = 307200;
@@ -131,7 +132,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked);
     shareMemoryBlockNmd_ =
-    ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("nmd", SHARED_MEMORY_SIZE, nmdFd_);
+    ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("nmd" + std::to_string(g_memIndex),
+                                                                SHARED_MEMORY_SIZE, nmdFd_);
+    ++g_memIndex;
     struct mallinfo2 mi = mallinfo2();
     COMMON::PrintMallinfoLog("stackWriter init(byte) => ", mi);
     SendNmdInfo();
