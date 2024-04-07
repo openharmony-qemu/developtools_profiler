@@ -700,6 +700,7 @@ bool HookManager::PrintStat(uint32_t fd, int type)
     bool ret = shareMemoryNmd_->TakeData(
         [&](const int8_t data[], uint32_t size) -> bool {
             const char* result = reinterpret_cast<const char*>(data);
+            lseek(fd, 0, SEEK_END);
             (void)write(fd, result, strlen(result));
             return true;
         }
