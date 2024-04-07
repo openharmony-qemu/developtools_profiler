@@ -21,7 +21,7 @@ ohos_shared_library("ohhidebug") {
 
   sources = [ "hidebug_ndk.cpp" ]
 
-  deps = [ "../native:libhidebug_source" ]
+  deps = [ "../native:hidebug_native" ]
 
   external_deps = [
     "hilog:libhilog",
