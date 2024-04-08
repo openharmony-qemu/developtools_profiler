@@ -58,6 +58,7 @@ struct FpsInfoProfiler {
 };
 class ProfilerFPS : public SpProfiler {
 public:
+    void SetTraceCatch();
     void SetPackageName(std::string pName);
     void GetFPS(int argc, std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
@@ -107,6 +108,7 @@ private:
     long long currRealTime = 0;
     bool isFoundAppName = false;
     bool isFoundBundleName = false;
+    int isCatchTrace = 0;
 };
 }
 }

@@ -61,8 +61,6 @@ class FPS : public SpProfiler {
 public:
     void SetPackageName(std::string pName);
     void SetLayerName(std::string sName);
-    void SetCaptureOn();
-    void SetTraceCatch();
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(std::string sName);
     bool IsForeGround();
@@ -94,8 +92,6 @@ private:
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
     long long lastTime = -1;
-    int isCatchTrace = 0;
-    int isCapture = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
     unsigned long sleepNowTime = 10000;

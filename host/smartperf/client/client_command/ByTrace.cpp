@@ -41,7 +41,7 @@ void ByTrace::ThreadGetTrace() const
     std::string time = std::to_string(SPUtils::GetCurTime());
     sstream.str("");
     sstream << traceCmd;
-    sstream << " > /data/app/el2/100/base/com.ohos.smartperf/haps/entry/files/sptrace_";
+    sstream << " > /data/local/tmp/sptrace_";
     sstream << time << ".ftrace";
     std::string traceCmdExe = sstream.str();
     SPUtils::LoadCmd(traceCmdExe, result);

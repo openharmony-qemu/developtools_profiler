@@ -65,12 +65,7 @@ std::map<std::string, std::string> FPS::ItemData()
             result["fpsJitters"] = "NA";
         }
     }
-    if (isCatchTrace > 0) {
-        ByTrace::GetInstance().CheckFpsJitters(fpsInfoResult.jitters, fpsInfoResult.fps);
-    }
-    if (isCapture > 0) {
-        Capture::GetInstance().TriggerGetCatch(SPUtils::GetCurTime());
-    }
+
     SetFpsCurrentFpsTime(fpsInfoResult);
 
     LOGI("FPS::ItemData map size(%u)", result.size());
@@ -98,15 +93,6 @@ void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
 FpsCurrentFpsTime FPS::GetFpsCurrentFpsTime()
 {
     return ffTime;
-}
-void FPS::SetTraceCatch()
-{
-    isCatchTrace = 1;
-}
-
-void FPS::SetCaptureOn()
-{
-    isCapture = 1;
 }
 
 void FPS::SetPackageName(std::string pName)
