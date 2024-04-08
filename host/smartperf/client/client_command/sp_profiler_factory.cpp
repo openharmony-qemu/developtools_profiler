@@ -118,10 +118,10 @@ void SpProfilerFactory::SetByTrace(std::string message)
         }
     }
     ByTrace &bTrace = ByTrace::GetInstance();
-    if (message.find("traceSum") != std::string::nops) {
+    if (message.find("traceSum") != std::string::npos) {
         bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
     }
-    if (message.find("bytrace -b 2048") != std::string::nops) {
+    if (message.find("bytrace -b 2048") != std::string::npos) {
         bTrace.SetTraceCmd(message);
     }
 }

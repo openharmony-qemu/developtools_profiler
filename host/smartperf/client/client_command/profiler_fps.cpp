@@ -51,7 +51,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     result["fpsJitters"] = jitterStr;
     LOGI("ProfilerFPS.result.jitters====: %s", jitterStr.c_str());
     if (isCatchTrace > 0) {
-        ByTrace::GetInstance().CheckFpsJitters(fpsInfoResult.jitters, fpsInfoResult.fps);
+        ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
     }
     return result;
 }
