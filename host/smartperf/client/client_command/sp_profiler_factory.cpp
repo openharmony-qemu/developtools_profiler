@@ -55,7 +55,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     } else if (messageType == MessageType::GET_POWER) {
         profiler = &Power::GetInstance();
     } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
-        FPS::GetInstance().SetTraceCatch();
+        ProfilerFPS::GetInstance().SetTraceCatch();
     } else if (messageType == MessageType::GET_CAPTURE) {
         profiler = &Capture::GetInstance();
     } else if (messageType == MessageType::SET_DUBAI_DB) {
@@ -89,11 +89,7 @@ void SpProfilerFactory::SetProfilerLayer(std::string layer)
     FPS &fps = FPS::GetInstance();
     fps.SetLayerName(layer);
 }
-void SpProfilerFactory::SetByTraceCmd(std::string cmd)
-{
-    ByTrace &bTrace = ByTrace::GetInstance();
-    bTrace.SetTraceCmd(cmd);
-}
+
 void SpProfilerFactory::SetByTrace(std::string message)
 {
     std::vector<std::string> values;
@@ -122,7 +118,12 @@ void SpProfilerFactory::SetByTrace(std::string message)
         }
     }
     ByTrace &bTrace = ByTrace::GetInstance();
-    bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
+    if (message.find("traceSum") != std::string::npos) {
+        bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
+    }
+    if (message.find("bytrace -b 2048") != std::string::npos) {
+        bTrace.SetTraceCmd(message);
+    }
 }
 SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
 {
@@ -155,7 +156,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             profiler = &Network::GetInstance();
             break;
         case CommandType::CT_TTRACE:
-            FPS::GetInstance().SetTraceCatch();
+            ProfilerFPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_SNAPSHOT:
             profiler = &Capture::GetInstance();

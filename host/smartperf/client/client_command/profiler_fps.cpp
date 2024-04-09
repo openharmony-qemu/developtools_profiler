@@ -27,6 +27,7 @@
 #include "include/profiler_fps.h"
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
+#include "include/ByTrace.h"
 
 
 namespace OHOS {
@@ -49,7 +50,15 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     }
     result["fpsJitters"] = jitterStr;
     LOGI("ProfilerFPS.result.jitters====: %s", jitterStr.c_str());
+    if (isCatchTrace > 0) {
+        ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
+    }
     return result;
+}
+
+void ProfilerFPS::SetTraceCatch()
+{
+    isCatchTrace = 1;
 }
 
 void ProfilerFPS::SetPackageName(std::string pName)
