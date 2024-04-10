@@ -45,8 +45,7 @@ public:
 private:
     void GetCounterId(std::vector<std::string> &pidList);
     void KillCounter();
-    void ThreadCapture();
-    void Capture();
+    int Capture();
 
 private:
     bool isStop = false;
@@ -62,19 +61,19 @@ private:
     const std::string constKillProcess = "kill -9  ";
     const std::string constGetCounterId = "pidof counters_collector";
     const std::string constRmCsv = "rm /data/local/tmp/gpu_conter.csv";
-    const std::string constAddPermissionsCounter = "chmod 777 /data/local/tmp/counters_collector";
+    const std::string constAddPermissionsCounter = "chmod 777 /bin/counters_collector";
     const std::string constCmd =
-        "LD_LIBRARY_PATH=/data/local/tmp/ /data/local/tmp/counters_collector /data/local/tmp/config.txt &";
+        "LD_LIBRARY_PATH=/bin/ /bin/counters_collector /bin/config.txt &";
 
     const std::string constSandBoxFile = "/files/";
     const std::string constSandBoxPath = "/data/app/el2/100/base/";
     const std::string constOutDestCVSPrefix = "gpu_counter";
     const std::string constOutSourCVSFile = "/data/local/tmp/gpu_counter.csv";
 
-    const std::string constConfigFile = "/data/local/tmp/config.txt";
-    const std::string constExecFile = "/data/local/tmp/counters_collector";
-    const std::string constLibFile = "/data/local/tmp/libGPU_PCM.so";
-    const std::string constV2File = "/data/local/tmp/counters_collector_v2.txt";
+    const std::string constConfigFile = "/bin/config.txt";
+    const std::string constExecFile = "/bin/counters_collector";
+    const std::string constLibFile = "/bin/libGPU_PCM.so";
+    const std::string constV2File = "/bin/counters_collector_v2.txt";
     const std::string constCheckProductInfo = "param get const.product.name";
     const std::string constProductInfo = "Mate 60 Pro";
 
