@@ -28,6 +28,7 @@
         "ability_runtime",
         "ability_base",
         "access_token",
+        "bounds_checking_function",
         "bundle_framework",
         "common_event_service",
         "c_utils",
@@ -40,13 +41,15 @@
         "ipc",
         "init",
         "napi",
+        "protobuf",
         "safwk",
         "samgr",
         "drivers_interface_memorytracker",
         "graphic_2d",
         "os_account",
         "window_manager",
-        "image_framework"
+        "image_framework",
+        "ffrt"
       ],
       "third_party": [
         "bounds_checking_function",
@@ -109,6 +112,15 @@
             ]
           },
           "name": "//developtools/profiler/device/plugins/network_profiler/client:libnetwork_profiler"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/device",
+            "header_files": [
+              "plugins/ffrt_profiler/client/include/ffrt_profiler.h"
+            ]
+          },
+          "name": "//developtools/profiler/device/plugins/ffrt_profiler/client:libffrt_profiler"
         }
       ],
       "test": [

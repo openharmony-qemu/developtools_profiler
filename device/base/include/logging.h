@@ -57,11 +57,6 @@ inline long getsystid()
 #include <vector>
 #include <unistd.h>
 
-static inline long GetTid(void)
-{
-    return getsystid();
-}
-
 enum {
     LOG_UNKNOWN = 0,
     LOG_DEFAULT,
@@ -88,7 +83,7 @@ static inline int HiLogPrintArgs(int prio, int domain, ConstCharPtr tag, ConstCh
     static std::mutex mtx;
     static std::vector<std::string> prioNames = {"U", " ", "V", "D", "I", "W", "E", "F", "S"};
     std::unique_lock<std::mutex> lock(mtx);
-    int count = fprintf(stderr, "%04x %s %7d %7ld %5s %s ", domain, GetTimeString().c_str(), getpid(), GetTid(),
+    int count = fprintf(stderr, "%04x %s %7d %7ld %5s %s ", domain, GetTimeString().c_str(), getpid(), getsystid(),
                         prioNames[prio].c_str(), tag);
     if (count < 0) {
         return 0;

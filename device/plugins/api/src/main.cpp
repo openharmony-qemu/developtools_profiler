@@ -25,6 +25,7 @@
 #include "plugin_watcher.h"
 #include "schedule_task_manager.h"
 #include "writer_adapter.h"
+#include "ffrt_profiler_manager.h"
 
 namespace {
 #if defined(__i386__) || defined(__x86_64__)
@@ -102,6 +103,10 @@ int main(int argc, char* argv[])
             PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s failed!", pluginPath.c_str());
         }
     }
+
+    using namespace OHOS::Developtools::Profiler;
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    ffrtProfilerMgr->Init();
 
     while (g_isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));

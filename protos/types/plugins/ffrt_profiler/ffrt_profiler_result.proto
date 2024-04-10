@@ -1,0 +1,45 @@
+// Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+option java_package = "ohos.devtools.datasources.transport.grpc.service";
+option optimize_for = LITE_RUNTIME;
+
+message TraceEvent {
+    uint32 cpu = 1;
+    bytes trace_type = 2;
+    bytes label = 3;
+    uint64 cookie = 4;
+}
+
+message RawEvent {
+    int32 type = 1;
+    bytes payload = 2;
+}
+
+message FfrtProfilerEvent {
+    uint64 tv_sec = 1;
+    uint64 tv_nsec = 2;
+    uint32 pid = 4;
+    uint32 tid = 5;
+    bytes process_name = 6;
+    bytes thread_name = 7;
+
+    oneof event {
+        TraceEvent trace = 8;
+        RawEvent raw = 9;
+    }
+}
+
+message FfrtProfilerResult {
+    repeated FfrtProfilerEvent ffrt_event = 1;
+}
