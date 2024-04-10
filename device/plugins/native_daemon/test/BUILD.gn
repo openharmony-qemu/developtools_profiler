@@ -127,6 +127,7 @@ ohos_unittest("native_daemon_ut") {
     "faultloggerd:libunwinder_static",
     "init:libbegetutil",
   ]
+  defines += [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]

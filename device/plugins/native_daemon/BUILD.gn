@@ -136,6 +136,8 @@ ohos_executable("native_daemon") {
     "samgr:samgr_proxy",
   ]
 
+  defines += [ "ENABLE_HAP_EXTRACTOR" ]
+
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder_static" ]
   }

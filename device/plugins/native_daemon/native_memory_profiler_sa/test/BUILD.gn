@@ -134,6 +134,8 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "samgr:samgr_proxy",
   ]
 
+  defines += [ "ENABLE_HAP_EXTRACTOR" ]
+
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder_static" ]
   }
