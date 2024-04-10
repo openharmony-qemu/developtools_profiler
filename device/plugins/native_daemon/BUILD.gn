@@ -136,14 +136,14 @@ ohos_executable("native_daemon") {
     "samgr:samgr_proxy",
   ]
 
-  defines += [ "ENABLE_HAP_EXTRACTOR" ]
+  defines = [ "ENABLE_HAP_EXTRACTOR" ]
 
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder_static" ]
   }
 
   if (current_toolchain != host_toolchain) {
-    defines = [ "HAVE_HILOG" ]
+    defines += [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]
   }
   use_exceptions = true
