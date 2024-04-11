@@ -481,8 +481,6 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                                      const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
 {
-    std::string cmd = "rm -rf /data/local/tmp/*-malloc-stats*";
-    system(cmd.c_str());
     UNUSED_PARAMETER(config);
     if (hookCtx_.empty()) {
         return false;
