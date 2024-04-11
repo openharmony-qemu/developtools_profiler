@@ -83,7 +83,7 @@ int GpuCounter::Init(std::string packageName, std::map<std::string, std::string>
         }
         if ((!SPUtils::FileAccess(constV2File)) || (!SPUtils::FileAccess(constExecFile)) ||
             (!SPUtils::FileAccess(constConfigFile)) || (!SPUtils::FileAccess(constLibFile))) {
-            errorInfo = "Missing dependency files such as XX counters_collector";
+            errorInfo = "Missing dependency files such as counters_collector";
             ret = -1;
             break;
         }
@@ -141,16 +141,13 @@ int GpuCounter::Start()
         LOGW("read config duration failed,load default(%ll)", captureDuration);
     }
 
-    ThreadCapture();
-
-    std::this_thread::sleep_for(std::chrono::microseconds(WAIT_EXIT_TIME));
-    std::vector<std::string> pidList;
-    GetCounterId(pidList);
-
-    if (!pidList.empty()) {
-        ret = 0;
-        startCaptureTime = SPUtils::GetCurTime();
+    ret = Capture();
+    if (ret) {
+        LOGW("counters_collector run failed  ret(%d)", ret);
+        return -1;
     }
+
+    startCaptureTime = SPUtils::GetCurTime();
 
     LOGI("GpuCounter Started ret(%d)", ret);
     return ret;
@@ -267,19 +264,10 @@ long long GpuCounter::GetCounterDuration()
     return ret;
 }
 
-void GpuCounter::ThreadCapture()
-{
-    std::thread t(&GpuCounter::Capture, this);
-    t.detach();
-}
 
-void GpuCounter::Capture()
+int GpuCounter::Capture()
 {
-    std::string result;
-
-    std::cout << " Start GPU time=" << SPUtils::GetCurTime() << std::endl;
-    SPUtils::LoadCmd(constCmd, result);
-    std::cout << "End GPU  result=" << result << " time=" << SPUtils::GetCurTime() << std::endl;
+    return system(constCmd.c_str());
 }
 }
 }
