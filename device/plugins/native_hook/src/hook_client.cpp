@@ -49,7 +49,7 @@ static std::atomic<uint64_t> g_mallocTimes = 0;
 
 enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
-}
+};
 
 #ifdef PERFORMANCE_DEBUG
 static std::atomic<uint64_t> g_timeCost = 0;
@@ -1243,14 +1243,14 @@ static bool IsPidChanged(void)
 
 bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
-    if (type == (uint32_t)MISC_TYPE::JS_STACK_DATA) {
+    if (type == reinterpret_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
         StackRawData rawdata = {{{{0}}}};
         rawdata.jsChainId = id;
         rawdata.type = JS_STACK_MSG;
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if (holder != nullptr) {
-            return holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), jsStackptr, jsStackSize);
+            return holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize);
         }
     }
     return false;
