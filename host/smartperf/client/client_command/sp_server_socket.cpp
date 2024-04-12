@@ -88,9 +88,15 @@ int SpServerSocket::Send(std::string sendBuf)
 
 void SpServerSocket::Close()
 {
-    shutdown(sock, SHUT_RD);
-    close(sock);
-    sock = -1;
+    int optval = 1;
+    setsockopt(sock, SO_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    local.sin_family = AF_INET;
+    local.sin_port = htons(sockPort);
+    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
+        std::cout << "Socket Bind failed:" << sock << std::endl;
+        LOGI("SpServerSocket::Init Socket Bind failed");
+    }
 }
 
 int SpServerSocket::Recvfrom()
