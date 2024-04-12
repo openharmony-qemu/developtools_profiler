@@ -579,4 +579,16 @@ bool IsBetaVersion()
     PROFILER_LOG_INFO(LOG_CORE, "user type is:%s", userType.c_str());
     return userType == "beta";
 }
-} // namespace COMMON
+
+std::string GetProcessNameByPid(int pid)
+{
+    std::string processName;
+    if (pid > 0) {
+        std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
+        if (!LoadStringFromFile(filePath, processName)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get process name by pid failed!");
+        }
+    }
+    return processName;
+} 
+}// namespace COMMON

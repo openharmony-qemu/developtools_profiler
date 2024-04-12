@@ -20,7 +20,10 @@
 #include <regex>
 #include <sys/un.h>
 #include <unistd.h>
-
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
 #include "arkts_plugin_result.pb.h"
 #include "logging.h"
 #include "securec.h"
@@ -286,7 +289,7 @@ bool ArkTSPlugin::ClientConnectUnixWebSocket(const std::string& sockName, uint32
         return true;
     }
 
-    client_ = socket(AF_UNIX, SOCK_STREAM, 0);
+    client_ = socket(AF_INET, SOCK_STREAM, 0);
     if (client_ < SOCKET_SUCCESS) {
         PROFILER_LOG_ERROR(LOG_CORE, "client socket failed, error = %d, , desc = %s", errno, strerror(errno));
         return false;
@@ -301,7 +304,7 @@ bool ArkTSPlugin::ClientConnectUnixWebSocket(const std::string& sockName, uint32
         return false;
     }
 
-    struct sockaddr_un serverAddr;
+    struct sockaddr_in serverAddr;
     if (memset_s(&serverAddr, sizeof(serverAddr), 0, sizeof(serverAddr)) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "client memset_s serverAddr failed, error = %d, desc = %s",
                            errno, strerror(errno));
@@ -309,18 +312,13 @@ bool ArkTSPlugin::ClientConnectUnixWebSocket(const std::string& sockName, uint32
         client_ = -1;
         return false;
     }
-    serverAddr.sun_family = AF_UNIX;
-    if (strcpy_s(serverAddr.sun_path + 1, sizeof(serverAddr.sun_path) - 1, sockName.c_str()) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "client strcpy_s serverAddr.sun_path failed, error = %d, , desc = %s",
-                           errno, strerror(errno));
-        close(client_);
-        client_ = -1;
-        return false;
-    }
-    serverAddr.sun_path[0] = '\0';
+    const int serverPort = 60000;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(serverPort);
+    serverAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
+    bzero(&(serverAddr.sin_zero),8);
 
-    uint32_t len = offsetof(struct sockaddr_un, sun_path) + strlen(sockName.c_str()) + 1;
-    int ret = connect(client_, reinterpret_cast<struct sockaddr*>(&serverAddr), static_cast<int32_t>(len));
+    int ret = connect(client_, reinterpret_cast<struct sockaddr*>(&serverAddr), sizeof(struct sockaddr));
     if (ret != SOCKET_SUCCESS) {
         PROFILER_LOG_ERROR(LOG_CORE, "client connect failed, error, error = %d, , desc = %s", errno, strerror(errno));
         close(client_);
