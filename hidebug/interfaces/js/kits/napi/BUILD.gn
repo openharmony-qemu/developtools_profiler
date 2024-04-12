@@ -26,7 +26,7 @@ ohos_shared_library("hidebug") {
     "napi_hidebug_init.cpp",
   ]
 
-  deps = [ "$hidebug_path/frameworks/native:libhidebug_source" ]
+  deps = [ "$hidebug_path/frameworks/native:hidebug_native" ]
 
   external_deps = [
     "ability_base:configuration",
