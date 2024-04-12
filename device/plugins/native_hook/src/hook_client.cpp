@@ -1243,7 +1243,7 @@ static bool IsPidChanged(void)
 
 bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
-    if (type == reinterpret_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
+    if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
         StackRawData rawdata = {{{{0}}}};
         rawdata.jsChainId = id;
         rawdata.type = JS_STACK_MSG;
