@@ -26,7 +26,7 @@
 using namespace testing::ext;
 
 namespace {
-const std::string TEST_HAP_NAME = "hiview";
+const std::string TEST_PROC_NAME = "hiview";
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 constexpr uint32_t TEST_DURATION = 10;
 constexpr uint32_t TEST_SHARE_MEMORY_SIZE = 4096;
@@ -54,7 +54,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
-    int32_t pid = GetProcessPid(TEST_HAP_NAME);
+    int32_t pid = GetProcessPid(TEST_PROC_NAME);
     EXPECT_NE(pid, 0);
     config->pid_ = pid;
     config->duration_ = TEST_DURATION;
@@ -86,7 +86,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
-    int32_t pid = GetProcessPid(TEST_HAP_NAME);
+    int32_t pid = GetProcessPid(TEST_PROC_NAME);
     EXPECT_NE(pid, 0);
     config->pid_ = pid;
     config->duration_ = TEST_DURATION;

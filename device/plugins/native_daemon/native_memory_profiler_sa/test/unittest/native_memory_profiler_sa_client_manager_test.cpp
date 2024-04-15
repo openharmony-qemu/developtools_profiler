@@ -33,7 +33,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
-const std::string TEST_HAP_NAME = "hiview";
+const std::string TEST_PROC_NAME = "hiview";
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
@@ -56,7 +56,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 {
     using namespace OHOS::Developtools::NativeDaemon;
     using namespace OHOS::Security::AccessToken;
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_HAP_NAME);
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
     SetSelfTokenID(tokenID);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
@@ -85,7 +85,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     sleep(1);
 
     using namespace OHOS::Developtools::NativeDaemon;
-    int32_t pid = GetProcessPid(TEST_HAP_NAME);
+    int32_t pid = GetProcessPid(TEST_PROC_NAME);
     EXPECT_NE(pid, 0);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
@@ -97,7 +97,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_OK);
     sleep(2);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_HAP_NAME), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_PROC_NAME), RET_OK);
     EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
     sleep(1);
     EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "2"), 0);
