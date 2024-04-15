@@ -63,14 +63,14 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
     config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
 
     NativeMemoryProfilerSaService service;
-    EXPECT_EQ(service.Start(config), RET_ERR);
+    EXPECT_EQ(service.Start(config), RET_OK);
     sleep(3);
     EXPECT_EQ(service.Stop(config->pid_), RET_OK);
 
     uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
         O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     EXPECT_GT(fd, 0);
-    EXPECT_EQ(service.DumpData(fd, config), RET_ERR);
+    EXPECT_EQ(service.DumpData(fd, config), RET_OK);
     sleep(2);
     EXPECT_EQ(service.Stop(config->pid_), RET_OK);
 }

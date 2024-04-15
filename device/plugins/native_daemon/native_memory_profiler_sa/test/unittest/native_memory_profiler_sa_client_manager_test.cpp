@@ -26,6 +26,8 @@
 #include "init_param.h"
 #include "native_memory_profiler_sa_client_manager.h"
 #include "utilities.h"
+#include "token_setproc.h"
+#include "accesstoken_kit.h"
 
 using namespace testing::ext;
 
@@ -53,6 +55,9 @@ public:
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest001, TestSize.Level3)
 {
     using namespace OHOS::Developtools::NativeDaemon;
+    using namespace OHOS::Security::AccessToken;
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_HAP_NAME);
+    SetSelfTokenID(tokenID);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
@@ -90,22 +95,30 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     config->filePath_ = "/data/local/tmp/native_hook_test.htrace";
     config->offlineSymbolization_ = true;
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_OK);
     sleep(2);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_HAP_NAME), RET_OK);
-
+    EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
+    sleep(1);
+    EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "2"), 0);
+    sleep(1);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(
         NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK,
-        pid, 10, 0), RET_ERR);
+        pid, 10, 0), RET_OK);
     sleep(2);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
-
+    EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
+    sleep(1);
+    EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "2"), 0);
+    sleep(1);
     uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
         O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     EXPECT_GT(fd, 0);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(fd, config), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(fd, config), RET_OK);
     sleep(2);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
+    EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
+    sleep(1);
 }
 
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
