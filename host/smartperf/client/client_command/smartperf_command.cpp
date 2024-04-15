@@ -143,7 +143,7 @@ std::string SmartPerfCommand::ExecCommand()
 
         for (size_t j = 0; j < configs.size(); j++) {
             std::string curParam = configs[j];
-            SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(curParam));
+            SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(curParam), true);
             if (profiler != nullptr) {
                 std::map<std::string, std::string> data = profiler->ItemData();
                 spMap.insert(data.cbegin(), data.cend());

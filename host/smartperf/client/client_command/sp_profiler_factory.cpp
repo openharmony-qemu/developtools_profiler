@@ -29,6 +29,7 @@
 #include "include/Dubai.h"
 #include "include/Capture.h"
 #include "include/GpuCounter.h"
+#include "include/sp_log.h"
 
 
 namespace OHOS {
@@ -57,7 +58,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
         ProfilerFPS::GetInstance().SetTraceCatch();
     } else if (messageType == MessageType::GET_CAPTURE) {
-        profiler = &Capture::GetInstance();
+        Capture::GetInstance().GetCaptureFromSocket();
     } else if (messageType == MessageType::SET_DUBAI_DB) {
         Dubai::DumpDubaiBegin();
         Dubai::DumpDubaiFinish();
@@ -125,7 +126,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
         bTrace.SetTraceCmd(message);
     }
 }
-SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
+SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool cmdFlag)
 {
     SpProfiler *profiler = nullptr;
     switch (commandType) {
@@ -160,6 +161,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             break;
         case CommandType::CT_SNAPSHOT:
             profiler = &Capture::GetInstance();
+            if (!cmdFlag) {
+                Capture::GetInstance().SocketMessage();
+            }
             break;
         case CommandType::CT_HW:
             break;

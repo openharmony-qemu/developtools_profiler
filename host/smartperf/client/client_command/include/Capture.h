@@ -30,11 +30,15 @@ public:
     // 触发线程
     void TriggerGetCatch(long long curTime) const;
     bool TakeScreenCap(const std::string &savePath) const;
+    std::string GetCaptureFromSocket();
+    void SocketMessage();
 
 private:
     Capture() {};
     Capture(const Capture &);
     Capture &operator = (const Capture &);
+    bool isSocketMessage = false;
+    int callNum = 0;
 };
 }
 }
