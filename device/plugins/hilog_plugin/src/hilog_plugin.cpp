@@ -228,7 +228,7 @@ void HilogPlugin::Run(void)
         auto cptr = reinterpret_cast<char*>(buffer.get());
         std::string curTime = cptr;
         curTime = curTime.substr(0, TIME_SEC_WIDTH);
-        if (curTime.c_str() < startTime) {
+        if (curTime < startTime) {
             continue;
         }
         if (resultWriter_->isProtobufSerialize) {
