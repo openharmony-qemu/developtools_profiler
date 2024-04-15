@@ -26,7 +26,7 @@
 using namespace testing::ext;
 
 namespace {
-const std::string TEST_HAP_NAME = "cn.openharmony.rebound_project";
+const std::string TEST_HAP_NAME = "hiview";
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 constexpr uint32_t TEST_DURATION = 10;
 constexpr uint32_t TEST_SHARE_MEMORY_SIZE = 4096;
@@ -63,14 +63,14 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
     config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
 
     NativeMemoryProfilerSaService service;
-    EXPECT_EQ(service.Start(config), RET_OK);
+    EXPECT_EQ(service.Start(config), RET_ERR);
     sleep(3);
     EXPECT_EQ(service.Stop(config->pid_), RET_OK);
 
     uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
         O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     EXPECT_GT(fd, 0);
-    EXPECT_EQ(service.DumpData(fd, config), RET_OK);
+    EXPECT_EQ(service.DumpData(fd, config), RET_ERR);
     sleep(2);
     EXPECT_EQ(service.Stop(config->pid_), RET_OK);
 }

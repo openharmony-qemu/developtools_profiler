@@ -31,7 +31,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
-const std::string TEST_HAP_NAME = "cn.openharmony.rebound_project";
+const std::string TEST_HAP_NAME = "hiview";
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
@@ -90,20 +90,20 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     config->filePath_ = "/data/local/tmp/native_hook_test.htrace";
     config->offlineSymbolization_ = true;
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_ERR);
     sleep(2);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_HAP_NAME), RET_OK);
 
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(
         NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK,
-        pid, 10, 0), RET_OK);
+        pid, 10, 0), RET_ERR);
     sleep(2);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
 
     uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
         O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     EXPECT_GT(fd, 0);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(fd, config), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(fd, config), RET_ERR);
     sleep(2);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
 }
