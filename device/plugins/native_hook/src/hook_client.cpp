@@ -283,10 +283,10 @@ void* ohos_release_on_end(void*)
 
 bool ohos_malloc_hook_on_end(void)
 {
-    g_hookClient->SendNmdInfo();
     if (g_hookClient != nullptr) {
         g_hookClient->Flush();
     }
+    g_hookClient->SendNmdInfo();
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
         PROFILER_LOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
