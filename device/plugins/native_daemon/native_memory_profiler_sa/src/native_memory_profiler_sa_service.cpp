@@ -126,6 +126,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
 {
     if (!HasProfilingPermission()) {
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
+        return;
     }
     std::lock_guard<std::mutex> guard(mtx_);
     std::shared_ptr<TaskConfig> config = nullptr;
