@@ -17,6 +17,7 @@
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 
+#include <filesystem>
 #include <hwext/gtest-ext.h>
 #include <hwext/gtest-tag.h>
 
@@ -242,13 +243,15 @@ HWTEST_F(HidebugTest, OH_HiDebug_StartAppTraceCapture1, TestSize.Level1)
     HiDebug_TraceFlag flag = HIDEBUG_TRACE_FLAG_MAIN_THREAD;
     uint64_t tags = HIDEBUG_TRACE_TAG_COMMON_LIBRARY;
     uint32_t limitSize = 1024 * 1024;
-    auto resutl1 = OH_HiDebug_StartAppTraceCapture(flag, tags, limitSize, fileName, fileLength);
-    EXPECT_TRUE(resutl1 == HIDEBUG_SUCCESS);
-    if (resutl1 == HIDEBUG_SUCCESS) {
-        auto result2 = OH_HiDebug_StopAppTraceCapture();
-        auto length = sizeof(fileName) / sizeof(fileName[0]);
-        EXPECT_TRUE(result2 == HIDEBUG_SUCCESS);
-        EXPECT_TRUE(length > 1);
+    const char* targetPath = "/data/storage/el2/log";
+    auto captureResult = OH_HiDebug_StartAppTraceCapture(flag, tags, limitSize, fileName, fileLength);
+    if (std::filesystem::exists(targetPath)) {
+        EXPECT_EQ(captureResult, HIDEBUG_SUCCESS);
+        EXPECT_GT(sizeof(fileName) / sizeof(fileName[0]), 1);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_SUCCESS);
+    } else {
+        EXPECT_EQ(captureResult, HIDEBUG_NO_PERMISSION);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_TRACE_ABNORMAL);
     }
 }
 
