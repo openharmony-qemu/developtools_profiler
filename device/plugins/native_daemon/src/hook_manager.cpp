@@ -348,6 +348,10 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_string_compressed(true);
     }
 
+    if (hookConfig_.js_stack_report() && hookConfig_.max_js_stack_depth() == 0) {
+        hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
+    }
+
     if (hookCtx_.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookManager no task");
         return false;
