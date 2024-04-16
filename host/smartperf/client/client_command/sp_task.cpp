@@ -145,11 +145,33 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
     return futureResult;
 }
 
+std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
+{
+    std::future<std::map<std::string, std::string>> futureResult;
+    for (std::string fpsConfig : curTaskInfo.taskConfig) {
+        if (fpsConfig.find("-f") != std::string::npos) {
+            futureResult = std::async(std::launch::async, []() {
+                return FPS::GetInstance().ItemData();
+            });
+        }
+    }
+    return futureResult;
+}
+
 void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
     std::map<std::string, std::string> &dataMap)
 {
     if (ramResult.valid()) {
         std::map<std::string, std::string> result = ramResult.get();
+        dataMap.insert(result.begin(), result.end());
+    }
+}
+
+void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
+    std::map<std::string, std::string> &dataMap)
+{
+    if (fpsResult.valid()) {
+        std::map<std::string, std::string> result = fpsResult.get();
         dataMap.insert(result.begin(), result.end());
     }
 }
@@ -167,14 +189,13 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
     thread = std::thread([this, msgTask]() {
-        std::cout << "Task " << curTaskInfo.sessionId << ": collecting data loop..." << std::endl;
         while (isRunning) {
-            // 执行采集任务
             long long lastTime = SPUtils::GetCurTime();
             std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
             std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
+            std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
             for (std::string itConfig : curTaskInfo.taskConfig) {
                 SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(itConfig), false);
                 if (profiler != nullptr) {
@@ -183,6 +204,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
                 }
             }
             CheckFutureRam(ramResult, dataMap);
+            CheckFutureFps(fpsResult, dataMap);
             if (curTaskInfo.stuckInfo.isEffective) {
                 std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
                 if (!timeUsedMap.empty()) {
@@ -202,7 +224,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             }
         }
     });
-
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }

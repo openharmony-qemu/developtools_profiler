@@ -138,7 +138,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
         case CommandType::CT_F:
         case CommandType::CT_F1:
         case CommandType::CT_F2:
-            profiler = &FPS::GetInstance();
+            if (cmdFlag) {
+                profiler = &FPS::GetInstance();
+            }
             break;
         case CommandType::CT_D:
             profiler = &DDR::GetInstance();
