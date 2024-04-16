@@ -125,7 +125,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
         bTrace.SetTraceCmd(message);
     }
 }
-SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
+SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool cmdFlag)
 {
     SpProfiler *profiler = nullptr;
     switch (commandType) {
@@ -150,7 +150,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             profiler = &Temperature::GetInstance();
             break;
         case CommandType::CT_R:
-            profiler = &RAM::GetInstance();
+            if (cmdFlag) {
+                profiler = &RAM::GetInstance();
+            }
             break;
         case CommandType::CT_NET:
             profiler = &Network::GetInstance();

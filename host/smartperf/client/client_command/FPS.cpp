@@ -216,7 +216,7 @@ void FPS::GetSameTimeNums()
 
 bool FPS::IsForeGround()
 {
-    const std::string cmd = "aa dump -l";
+    const std::string cmd = "hidumper -s WindowManagerService -a -a";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

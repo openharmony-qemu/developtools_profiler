@@ -20,6 +20,7 @@
 #include "include/sp_profiler_factory.h"
 #include "include/sp_utils.h"
 #include "include/FPS.h"
+#include "include/RAM.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
 #include "ByTrace.h"
@@ -30,6 +31,7 @@
 #include <sstream>
 #include <regex>
 #include "unistd.h"
+#include <future>
 
 namespace OHOS {
 namespace SmartPerf {
@@ -129,6 +131,29 @@ ErrCode SPTask::InitTask(std::string recvStr)
     std::cout << "ExceptionMsg:" << errInfo << std::endl;
     return ErrCode::FAILED;
 }
+
+std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
+{
+    std::future<std::map<std::string, std::string>> futureResult;
+    for (std::string ramConfig : curTaskInfo.taskConfig) {
+        if (ramConfig.find("-r") != std::string::npos) {
+            futureResult = std::async(std::launch::async, []() {
+                return RAM::GetInstance().ItemData();
+            });
+        }
+    }
+    return futureResult;
+}
+
+void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
+    std::map<std::string, std::string> &dataMap)
+{
+    if (ramResult.valid()) {
+        std::map<std::string, std::string> result = ramResult.get();
+        dataMap.insert(result.begin(), result.end());
+    }
+}
+
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
     LOGI("SPTask::StartTask start ");
@@ -149,11 +174,15 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
+            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
             for (std::string itConfig : curTaskInfo.taskConfig) {
-                SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(itConfig));
-                std::map<std::string, std::string> itemMap = profiler->ItemData();
-                dataMap.insert(itemMap.begin(), itemMap.end());
+                SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(itConfig), false);
+                if (profiler != nullptr) {
+                    std::map<std::string, std::string> itemMap = profiler->ItemData();
+                    dataMap.insert(itemMap.begin(), itemMap.end());
+                }
             }
+            CheckFutureRam(ramResult, dataMap);
             if (curTaskInfo.stuckInfo.isEffective) {
                 std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
                 if (!timeUsedMap.empty()) {
