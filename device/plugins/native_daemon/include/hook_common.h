@@ -42,7 +42,7 @@ const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 const uint32_t  MMAP_FILE_TYPE = (1u << 8);
 // default max js stack depth
-const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 5;
+const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
 }
 }
 }
