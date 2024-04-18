@@ -137,8 +137,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             profiler = &GPU::GetInstance();
             break;
         case CommandType::CT_F:
-        case CommandType::CT_F1:
-        case CommandType::CT_F2:
             if (cmdFlag) {
                 profiler = &FPS::GetInstance();
             }

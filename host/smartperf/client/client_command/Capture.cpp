@@ -31,7 +31,7 @@ using namespace OHOS::Rosen;
 std::map<std::string, std::string> Capture::ItemData()
 {
     callNum++;
-    std::map<std:: string, std::string> result;
+    std::map<std::string, std::string> result;
     int two = 2;
     if (callNum % two != 0) {
         long long curTime = SPUtils::GetCurTime();
