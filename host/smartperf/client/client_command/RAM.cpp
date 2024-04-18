@@ -47,7 +47,7 @@ std::map<std::string, std::string> RAM::ItemData()
             result.insert(*it);
         }
     }
-
+    LOGI("RAM::ItemData map size(%u)", result.size());
     return result;
 }
 

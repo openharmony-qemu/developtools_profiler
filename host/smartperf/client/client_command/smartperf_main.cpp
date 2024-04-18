@@ -23,6 +23,7 @@
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
 #include "include/common.h"
+#include "parameters.h"
 
 
 std::string &GetOptions(std::vector<std::string> &argv)
@@ -98,6 +99,10 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
 
 int main(int argc, char *argv[])
 {
+    if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
+        std::cout << "Not a development mode state" << std::endl;
+        return 0;
+    }
     std::string errorInfo;
     std::vector<std::string> vec;
 
