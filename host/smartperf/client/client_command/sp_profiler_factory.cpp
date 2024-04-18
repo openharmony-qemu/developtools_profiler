@@ -58,7 +58,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
         ProfilerFPS::GetInstance().SetTraceCatch();
     } else if (messageType == MessageType::GET_CAPTURE) {
-        Capture::GetInstance().GetCaptureFromSocket();
+        profiler = &Capture::GetInstance();
     } else if (messageType == MessageType::SET_DUBAI_DB) {
         Dubai::DumpDubaiBegin();
         Dubai::DumpDubaiFinish();
@@ -164,9 +164,8 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             ProfilerFPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_SNAPSHOT:
-            profiler = &Capture::GetInstance();
-            if (!cmdFlag) {
-                Capture::GetInstance().SocketMessage();
+            if (cmdFlag) {
+                profiler = &Capture::GetInstance();
             }
             break;
         case CommandType::CT_HW:

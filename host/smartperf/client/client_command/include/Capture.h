@@ -27,8 +27,10 @@ public:
     }
     // 截图线程
     void ThreadGetCatch(const std::string &curTime) const;
+    void ThreadGetCatchSocket(const std::string &curTime) const;
     // 触发线程
     void TriggerGetCatch(long long curTime) const;
+    void TriggerGetCatchSocket(long long curTime) const;
     bool TakeScreenCap(const std::string &savePath) const;
     std::string GetCaptureFromSocket();
     void SocketMessage();

@@ -74,6 +74,7 @@ public:
         std::map<std::string, std::string> &dataMap);
     void CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
         std::map<std::string, std::string> &dataMap);
+    void GetItemData(std::map<std::string, std::string> &dataMap);
 
 private:
     std::thread ThreadGetHiperf(long long ts);
