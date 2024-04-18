@@ -210,7 +210,7 @@ bool HookSocketClient::SendNmdInfo()
     CHECK_NOTNULL(shareMemoryBlockNmd_, false, "HookSocketClient::SendNmdInfo failed, sharedMemoryBlock error");
     void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
     CHECK_NOTNULL(nmdBuf, false, "HookSocketClient::SendNmdInfo failed, nmdBuf malloc failed");
-    struct OptArg opt = {0, (char*)(nmdBuf) };
+    struct OptArg opt = {0, reinterpret_cast<char*>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "a");
     shareMemoryBlockNmd_->PutRawTimeout(reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1);
     return true;

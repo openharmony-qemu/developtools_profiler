@@ -144,7 +144,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
     }
 
     if (config->hookMgr->GetPid() > 0) {
-        std::lock_guard<std::mutex> guard(nmdMtx_);
+        std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
         if (nmdPidType_.find(config->hookMgr->GetPid()) != nmdPidType_.end()) {
             config->hookMgr->SetNmdInfo(nmdPidType_[config->hookMgr->GetPid()]);
         }

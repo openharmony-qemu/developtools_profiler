@@ -24,7 +24,7 @@
 
 using namespace OHOS::Developtools::NativeDaemon;
 
-static uint32_t TestDumpFile(std::string postfix = "")
+static uint32_t TestDumpFile(const std::string postfix = "")
 {
     uint32_t fd = static_cast<uint32_t>(open(("/data/local/tmp/test_dump_file" + postfix + ".htrace").c_str(),
                                              O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));

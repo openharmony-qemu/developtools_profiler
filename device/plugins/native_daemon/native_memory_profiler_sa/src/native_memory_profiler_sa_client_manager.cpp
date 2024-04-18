@@ -128,7 +128,6 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
     config->printNmd_ = true;
     config->nmdPid_ = pid;
     config->nmdType_ = type;
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     auto service = GetRemoteService();
     if (service == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
