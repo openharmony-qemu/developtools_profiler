@@ -200,7 +200,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
     }
 }
 
-void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
+void ProfilerFPS::GetFPS(std::vector<std::string> v)
 {
     int sectionsNum = 0;
     if (v[number] == "") {
@@ -342,7 +342,7 @@ bool ProfilerFPS::IsForeGround()
     return false;
 }
 
-bool ProfilerFPS::IsFindForeGround(std::string line)
+bool ProfilerFPS::IsFindForeGround(std::string line) const
 {
     std::string foreGroundTag = line.substr(line.find("#") + 1);
     if (foreGroundTag.find("FOREGROUND") != std::string::npos) {

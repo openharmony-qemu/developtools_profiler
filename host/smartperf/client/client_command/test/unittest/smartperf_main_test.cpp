@@ -38,7 +38,7 @@ public:
     void TearDown() {}
 };
 
-std::string &GetOptions(std::vector<std::string> &argv)
+std::string &g_getOptions(std::vector<std::string> &argv)
 {
     std::string str = "";
     std::string strFlag;
@@ -61,7 +61,7 @@ std::string &GetOptions(std::vector<std::string> &argv)
 
 bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
-    std::string str = GetOptions(argv);
+    std::string str = g_getOptions(argv);
     std::set<std::string> keys;
 
     if (str.empty()) {
@@ -85,7 +85,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     keys.insert("stop");
     keys.insert("screen");
 
-    for (auto a : OHOS::SmartPerf::commandMap) {
+    for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
@@ -124,7 +124,7 @@ HWTEST_F(SPdaemonTest, GetOptionsTestCase001, TestSize.Level1)
     argv.push_back("-start");
     argv.push_back("-c");
 
-    std::string str = GetOptions(argv);
+    std::string str = g_getOptions(argv);
 
     if (!str.empty()) {
         ret = true;

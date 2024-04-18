@@ -110,7 +110,7 @@ void StallingRateTrace::GetScreenInfo(std::string line)
     }
 }
 
-double StallingRateTrace::GetFrameRate(std::string line)
+double StallingRateTrace::GetFrameRate(std::string line) const
 {
     double rate = 0;
     std::string delimiter = "rate: ";
@@ -130,7 +130,7 @@ double StallingRateTrace::GetFrameRate(std::string line)
     return rate;
 }
 
-int StallingRateTrace::GetFenceId(std::string line)
+int StallingRateTrace::GetFenceId(std::string line) const
 {
     std::string delimiter = "H:Present Fence ";
     size_t pos = line.find(delimiter);
@@ -139,7 +139,7 @@ int StallingRateTrace::GetFenceId(std::string line)
     return presentFenceId;
 }
 
-std::string StallingRateTrace::GetOnScreenTimeStart(std::string line)
+std::string StallingRateTrace::GetOnScreenTimeStart(std::string line) const
 {
     std::string startTime = "0";
     size_t subNum = 5;
@@ -149,7 +149,7 @@ std::string StallingRateTrace::GetOnScreenTimeStart(std::string line)
     return startTime;
 }
 
-double StallingRateTrace::GetTimes(std::string line, std::string sign)
+double StallingRateTrace::GetTimes(std::string line, std::string sign) const
 {
     double signTime = 0;
     size_t subNum = 5;

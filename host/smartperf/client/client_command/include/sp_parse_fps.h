@@ -81,17 +81,17 @@ public:
     FpsResult ParseTraceFile(FilePath &filePath, PackageName &packageName);
 
 private:
-    inline unsigned int GetTouchEventNum(Line &line, TouchEvent &touchEvent);
-    inline void StrSplit(const SpString &content, const SpString &sp, std::vector<SpString> &out);
-    inline void GetAndSetPageType(Line &line, PageType &pageType);
+    inline unsigned int GetTouchEventNum(Line &line, TouchEvent &touchEvent) const;
+    inline void StrSplit(const SpString &content, const SpString &sp, std::vector<SpString> &out) const;
+    inline void GetAndSetPageType(Line &line, PageType &pageType) const;
     inline const FpsResult ParseBranch(FilePath &filePath, PackageName &pN, PageType &pT, TouchEvent &tE);
     inline FpsResult PraseFPSTrace(FilePath &filePath, float staticTime, SpString uiPoint);
     // Gets the statistical off start time marker bits
-    inline void DecHandOffTime(Line &line, RecordFpsVars &rfv);
+    inline void DecHandOffTime(Line &line, RecordFpsVars &rfV);
     // Statistics of the start time of the handout
-    inline void StaticHandoffStartTime(Line &line, RecordFpsVars &rfv);
+    inline void StaticHandoffStartTime(Line &line, RecordFpsVars &rfV);
     // Count the number of rendered frames and the end time
-    inline bool CountRsEndTime(Line &line, RecordFpsVars &rfv, float staticTime, SpString uiPoint);
+    inline bool CountRsEndTime(Line &line, RecordFpsVars &rfV, float staticTime, SpString uiPoint);
 
     const SpString videoPoint = "H:RSUniRender::Process:[RosenRenderTexture]";
     const SpString webPoint = "H:RSUniRender::Process:[RosenRenderWeb]";

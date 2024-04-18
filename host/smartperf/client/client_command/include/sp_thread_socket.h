@@ -109,7 +109,9 @@ public:
                 spSocket.Send("SP_daemon is running");
                 return;
             }
-            auto lambdaTask = [](std::string data) {};
+            auto lambdaTask = [](std::string data) {
+                std::cout << data << std::endl;
+            };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
             LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
             if (code == ErrCode::OK) {
@@ -162,8 +164,8 @@ public:
     void HandleMsg(SpServerSocket &spSocket) const
     {
         std::string retCode = "";
-        auto iterator = messageMap.begin();
-        while (iterator != messageMap.end()) {
+        auto iterator = MESSAGE_MAP.begin();
+        while (iterator != MESSAGE_MAP.end()) {
             std::string recvBuf = spSocket.RecvBuf();
             if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
                 ++iterator;
@@ -205,7 +207,7 @@ public:
                 retCode = MapToString(data);
                 spSocket.Sendto(retCode);
             }
-            LOGI("sendData key(%d) content(%s)", (int)iterator->first, retCode.c_str());
+            LOGI("sendData key(%d) content(%s)", iterator->first, retCode.c_str());
             break;
         }
     }

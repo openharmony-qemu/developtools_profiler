@@ -72,7 +72,7 @@ std::map<std::string, std::string> FPS::ItemData()
     return result;
 }
 
-std::string FPS::GetScreenInfo()
+std::string FPS::GetScreenInfo() const
 {
     std::string resultScreen = SPUtils::GetScreen();
     int pos = resultScreen.find("=");

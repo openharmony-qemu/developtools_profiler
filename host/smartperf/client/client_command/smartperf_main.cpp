@@ -25,7 +25,7 @@
 #include "include/common.h"
 
 
-std::string &GetOptions(std::vector<std::string> &argv)
+static std::string GetOptions(std::vector<std::string> &argv)
 {
     std::string str = "";
     std::string strFlag;
@@ -33,7 +33,7 @@ std::string &GetOptions(std::vector<std::string> &argv)
     for (std::size_t i = 0; i < argv.size(); i++) {
         if (!isFill) {
             strFlag = argv[i];
-            if (std::string::npos != strFlag.find("SP_daemon")) {
+            if (strFlag.find("SP_daemon") != std::string::npos) {
                 isFill = true;
             }
         } else {
@@ -46,7 +46,7 @@ std::string &GetOptions(std::vector<std::string> &argv)
     return str;
 }
 
-bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
+static bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
     std::string str = GetOptions(argv);
     std::set<std::string> keys; // Includes three parts "SP_daemon" CommandType and CommandHelp
@@ -58,7 +58,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     if (str.find("--help") != std::string::npos || str.find("--version") != std::string::npos) {
         std::vector<std::string> out;
         OHOS::SmartPerf::SPUtils::StrSplit(str, "-", out);
-        if (1 != out.size()) {
+        if (out.size() != 1) {
             errorInfo = "--help and --version cannot be used together with other options";
             return false;
         } else {
@@ -71,7 +71,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     keys.insert("stop");
     keys.insert("screen");
     keys.insert("sections");
-    for (auto a : OHOS::SmartPerf::commandMap) {
+    for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(argc, vec);
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(argc);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
         OHOS::SmartPerf::ClientControl cc;

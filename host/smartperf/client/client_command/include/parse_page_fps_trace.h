@@ -25,7 +25,7 @@ public:
     double PageFpsTrace(std::string file);
     double CalculateTime();
     double CalculateTimeEnd();
-    std::string getLineTime(std::string line);
+    std::string GetLineTime(std::string line);
     std::string CutString(std::string line, std::string start, std::string end, size_t offset);
 
 private:

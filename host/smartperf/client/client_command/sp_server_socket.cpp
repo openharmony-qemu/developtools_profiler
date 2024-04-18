@@ -75,7 +75,7 @@ int SpServerSocket::Sendto(std::string &sendBuf)
     return 0;
 }
 
-int SpServerSocket::Send(std::string sendBuf)
+int SpServerSocket::Send(std::string sendBuf) const
 {
     int sendBytes = send(connFd, sendBuf.c_str(), sendBuf.size(), 0);
     if (sendBytes < 0) {

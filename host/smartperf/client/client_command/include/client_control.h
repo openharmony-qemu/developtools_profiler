@@ -20,10 +20,10 @@ namespace OHOS {
 namespace SmartPerf {
 class ClientControl {
 public:
-    int SocketStart(std::string agrs);
+    int SocketStart(std::string args);
     int SocketStop();
     int InitSocket();
-    void StartSPDaemon();
+    void StartSPDaemon() const;
     int CloseSocket();
 
 private:

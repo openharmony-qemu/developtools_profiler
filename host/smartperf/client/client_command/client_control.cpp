@@ -97,7 +97,7 @@ int ClientControl::InitSocket()
     LOGI("ClientControl::InitSocket() OK");
     return 0;
 }
-void ClientControl::StartSPDaemon()
+void ClientControl::StartSPDaemon() const
 {
     std::string result = "";
     SPUtils::LoadCmd("SP_daemon", result);
