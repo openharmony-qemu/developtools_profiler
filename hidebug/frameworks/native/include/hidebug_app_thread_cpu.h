@@ -25,7 +25,7 @@ public:
     void InitThreadCpuCollector();
     CollectResult<std::vector<ThreadCpuStatInfo>> CollectThreadStatInfos() const;
 private:
-    std::shared_ptr<UCollectUtil::ThreadCollector> threadStatInfoCollector_ = nullptr;
+    std::shared_ptr<UCollectUtil::ThreadCpuCollector> threadStatInfoCollector_ = nullptr;
 };
 }
 }
