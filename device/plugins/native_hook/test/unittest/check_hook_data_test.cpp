@@ -967,6 +967,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
 {
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
+        statisticsInterval_ = 1;
         sampleInterval_ = 256;
         outFileType_ = "sample_interval_";
         modeIndex_ = i;

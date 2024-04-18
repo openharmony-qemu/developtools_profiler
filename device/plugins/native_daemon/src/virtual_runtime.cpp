@@ -230,8 +230,8 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
     unwindFromRecordTimes_ += duration_cast<microseconds>(steady_clock::now() - startTime);
 #endif
     if (hookConfig_.offline_symbolization()) {
-        // only get js symbol if report js frame and offline symbolization
-        if (hookConfig_.js_stack_report()) {
+        // only get js symbol if report js frame and offline symbolization for dwarf mode
+        if (hookConfig_.js_stack_report() && !hookConfig_.fp_unwind()) {
             GetSymbolName(pid, tid, callFrames, offset, true, true);
         }
         return true;

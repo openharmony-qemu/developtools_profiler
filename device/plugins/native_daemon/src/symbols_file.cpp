@@ -721,7 +721,7 @@ public:
         }
 #endif
     }
-
+    // abc is the ark bytecode
     bool IsHapAbc()
     {
 #if defined(is_ohos) && is_ohos
@@ -732,6 +732,11 @@ public:
         HLOGD("the symbol file is %s.", filePath_.c_str());
         if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")) {
             dfxExtractor_ = std::make_unique<DfxExtractor>(filePath_);
+            if (dfxExtractor_ == nullptr) {
+                HLOGD("DfxExtractor create failed.");
+                return false;
+            }
+            // extract the bytecode information of the ark in the hap package
             if (!dfxExtractor_->GetHapAbcInfo(loadOffSet_, abcDataPtr_, abcDataSize_)) {
                 HLOGD("failed to call GetHapAbcInfo, the symbol file is:%s", filePath_.c_str());
                 return false;
@@ -823,6 +828,7 @@ public:
             JsFunction jsFunc;
             std::string module = map->name;
             HLOGD("map->name module:%s", module.c_str());
+            // symbolization based on ark bytecode
             auto ret = DfxArk::ParseArkFrameInfo(static_cast<uintptr_t>(ip), static_cast<uintptr_t>(map->begin),
                                                  loadOffSet_, abcDataPtr_.get(), abcDataSize_,
                                                  arkExtractorptr_, &jsFunc);

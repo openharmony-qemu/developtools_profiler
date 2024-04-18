@@ -167,6 +167,8 @@ std::string &StringTrim(std::string &s);
 
 std::vector<std::string> StringSplit(std::string source, std::string split = ",");
 
+void AdvancedSplitString(const std::string_view& str, const std::string& delimiters, std::vector<std::string>& elems);
+
 size_t SubStringCount(const std::string &source, const std::string &sub);
 
 bool StringStartsWith(const std::string &string, const std::string &with);
