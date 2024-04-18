@@ -200,7 +200,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
     }
 }
 
-void ProfilerFPS::GetFPS(std::vector<std::string> v)
+void ProfilerFPS::GetFPS(int num, std::vector<std::string> v)
 {
     int sectionsNum = 0;
     if (v[number] == "") {

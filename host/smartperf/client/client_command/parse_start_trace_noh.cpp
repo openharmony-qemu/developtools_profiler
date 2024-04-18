@@ -93,7 +93,7 @@ std::string ParseStartTraceNoh::CutString(std::string line, std::string start, s
     size_t position2 = line.find(end);
     return line.substr(position1 + offset, position2 - position1 - offset);
 }
-std::vector<std::string> StartFrameTraceNoh::Split(std::string str, std::string pattern)
+std::vector<std::string> ParseStartTraceNoh::Split(std::string str, std::string pattern)
 {
     std::vector<std::string> result;
     if (str.empty() || pattern.empty() || str.size() < pattern.size()) {
