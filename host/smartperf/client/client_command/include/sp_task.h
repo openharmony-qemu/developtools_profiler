@@ -18,6 +18,7 @@
 #include <functional>
 #include <vector>
 #include <thread>
+#include <future>
 #include <map>
 #include <mutex>
 #include "sp_csv_util.h"
@@ -67,6 +68,12 @@ public:
     std::string GetCurrentTimeAsString();
     std::map<std::string, std::string> DetectionAndGrab();
     bool CheckTcpParam(std::string str, std::string &errorInfo);
+    std::future<std::map<std::string, std::string>> AsyncCollectRam();
+    std::future<std::map<std::string, std::string>> AsyncCollectFps();
+    void CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
+        std::map<std::string, std::string> &dataMap);
+    void CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
+        std::map<std::string, std::string> &dataMap);
 
 private:
     std::thread ThreadGetHiperf(long long ts);

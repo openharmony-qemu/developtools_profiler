@@ -207,6 +207,13 @@ void HilogPlugin::Run(void)
     } else {
         hilogInfo = std::make_unique<ProtoEncoder::HilogInfo>(resultWriter_->startReport(resultWriter_));
     }
+    time_t startTm = time(nullptr);
+    struct tm* pTime = localtime(&startTm);
+    char startTime[FILE_NAME_LEN] = {0};
+    if (pTime != nullptr) {
+        (void)snprintf_s(startTime, FILE_NAME_LEN, FILE_NAME_LEN - 1, "%02d-%02d %02d:%02d:%02d",
+                         pTime->tm_mon + 1, pTime->tm_mday, pTime->tm_hour, pTime->tm_min, pTime->tm_sec);
+    }
 
     while (running_) {
         if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_BUFFER_LEN - 1, fp_.get()) == nullptr) {
@@ -219,6 +226,11 @@ void HilogPlugin::Run(void)
         }
 
         auto cptr = reinterpret_cast<char*>(buffer.get());
+        std::string curTime = cptr;
+        curTime = curTime.substr(0, TIME_SEC_WIDTH);
+        if (curTime < startTime) {
+            continue;
+        }
         if (resultWriter_->isProtobufSerialize) {
             ParseLogLineData(cptr, strlen(cptr), dataProto.get());
 
