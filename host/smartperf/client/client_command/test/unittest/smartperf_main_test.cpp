@@ -30,7 +30,7 @@ using namespace std;
 
 namespace OHOS {
 namespace SmartPerf {
-class SPdaemonTest : public testing::Test {
+class SPdaemonMainTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -113,7 +113,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
  * @tc.desc: Test GetOptions
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, GetOptionsTestCase001, TestSize.Level1)
+HWTEST_F(SPdaemonMainTest, GetOptionsTestCase001, TestSize.Level1)
 {
     bool ret = false;
 
@@ -138,7 +138,7 @@ HWTEST_F(SPdaemonTest, GetOptionsTestCase001, TestSize.Level1)
  * @tc.desc: Test CheckCMDParam
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, CheckCMDParamTestCase001, TestSize.Level1)
+HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase001, TestSize.Level1)
 {
     std::string errorInfo = "";
     std::vector<std::string> argv;
@@ -156,7 +156,7 @@ HWTEST_F(SPdaemonTest, CheckCMDParamTestCase001, TestSize.Level1)
     EXPECT_EQ(ret, true);
 }
 
-HWTEST_F(SPdaemonTest, CheckCMDParamTestCase002, TestSize.Level1)
+HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)
 {
     std::string errorInfo = "";
     std::vector<std::string> argv;
@@ -171,7 +171,7 @@ HWTEST_F(SPdaemonTest, CheckCMDParamTestCase002, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, CheckCMDParamTestCase003, TestSize.Level1)
+HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase003, TestSize.Level1)
 {
     std::string errorInfo = "";
     std::vector<std::string> argv;

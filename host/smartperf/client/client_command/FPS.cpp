@@ -66,7 +66,7 @@ std::map<std::string, std::string> FPS::ItemData()
         }
     }
 
-    SetFpsCurrentFpsTime(fpsInfoResult);
+    SetFpsCurrentFpsTime(fpsInfoResult);s
 
     LOGI("FPS::ItemData map size(%u)", result.size());
     return result;
