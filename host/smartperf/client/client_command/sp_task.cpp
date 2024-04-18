@@ -21,6 +21,7 @@
 #include "include/sp_utils.h"
 #include "include/FPS.h"
 #include "include/RAM.h"
+#include "include/Capture.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
 #include "ByTrace.h"
@@ -176,6 +177,22 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
     }
 }
 
+void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
+{
+    for (std::string itConfig : curTaskInfo.taskConfig) {
+        if (itConfig.find("-snapshot") != std::string::npos) {
+            Capture::GetInstance().SocketMessage();
+            std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
+            dataMap.insert(captureMap.begin(), captureMap.end());
+        }
+        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
+        if (profiler != nullptr) {
+            std::map<std::string, std::string> itemMap = profiler->ItemData();
+            dataMap.insert(itemMap.begin(), itemMap.end());
+        }
+    }
+}
+
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
     LOGI("SPTask::StartTask start ");
@@ -196,13 +213,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
             std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
             std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-            for (std::string itConfig : curTaskInfo.taskConfig) {
-                SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
-                if (profiler != nullptr) {
-                    std::map<std::string, std::string> itemMap = profiler->ItemData();
-                    dataMap.insert(itemMap.begin(), itemMap.end());
-                }
-            }
+            GetItemData(dataMap);
             CheckFutureRam(ramResult, dataMap);
             CheckFutureFps(fpsResult, dataMap);
             if (curTaskInfo.stuckInfo.isEffective) {

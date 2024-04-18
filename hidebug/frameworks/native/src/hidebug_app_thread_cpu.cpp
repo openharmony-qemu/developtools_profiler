@@ -34,13 +34,8 @@ HidebugAppThreadCpu::HidebugAppThreadCpu()
 
 void HidebugAppThreadCpu::InitThreadCpuCollector()
 {
-    auto cpuCollector = UCollectUtil::CpuCollector::Create();
-    if (!cpuCollector) {
-        HILOG_ERROR(LOG_CORE, "InitThreadCpuCollector fail, CpuCollector create fail!");
-        return;
-    }
-    int pid = getprocpid();
-    threadStatInfoCollector_ = cpuCollector->CreateThreadCollector(pid);
+    int32_t pid = getprocpid();
+    threadStatInfoCollector_ = UCollectUtil::ThreadCpuCollector::Create(pid);
     if (!threadStatInfoCollector_) {
         HILOG_ERROR(LOG_CORE, "InitThreadCpuCollector fail, CreateThreadStatInfoCollector fail!");
     }
