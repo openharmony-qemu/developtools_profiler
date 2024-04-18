@@ -195,4 +195,10 @@
             <option name="push" value="plugins/gpu_plugin/test/utresources/info/2/gpustat2.txt -> /data/local/tmp/resource/" src="res"/>
         </preparer>
     </target>
+    <target name="ffrt_profiler_ut">
+        <preparer>
+            <option name="push" value="developtools/hiprofiler/ffrt_profiler_test_exe -> /data/local/tmp/" src="out"/>
+            <option name="shell" value="chmod +x /data/local/tmp/ffrt_profiler_test_exe"/>
+        </preparer>
+    </target>
 </configuration>

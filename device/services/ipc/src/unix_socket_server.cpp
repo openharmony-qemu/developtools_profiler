@@ -26,6 +26,12 @@
 #include "logging.h"
 #include "securec.h"
 
+namespace {
+constexpr int UNIX_SOCKET_LISTEN_COUNT = 5;
+constexpr int EPOLL_MAX_TASK_COUNT = 10;
+constexpr int EPOLL_WAIT_TIMEOUT = 1000;
+}
+
 UnixSocketServer::UnixSocketServer()
 {
     sAddrName_ = "";
@@ -63,9 +69,9 @@ void UnixSocketServer::UnixSocketAccept()
     evt.data.fd = socketHandle_;
     evt.events = EPOLLIN | EPOLLHUP;
     CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, socketHandle_, &evt) != -1, NO_RETVAL, "Unix Socket Server Exit");
+    struct epoll_event events[EPOLL_MAX_TASK_COUNT];
     while (socketHandle_ != -1) {
-        struct epoll_event events[10];
-        int nfds = epoll_wait(epfd, events, 10, 1000);  // timeout value set 1000.
+        int nfds = epoll_wait(epfd, events, EPOLL_MAX_TASK_COUNT, EPOLL_WAIT_TIMEOUT);  // timeout value set 1000.
         if (nfds == -1) {
             PROFILER_LOG_ERROR(LOG_CORE, "UnixSocketServer epoll_wait failed, errno: %s", strerror(errno));
             return;
@@ -103,10 +109,6 @@ void UnixSocketServer::UnixSocketAccept()
         }
     }
     close(epfd);
-}
-
-namespace {
-const int UNIX_SOCKET_LISTEN_COUNT = 5;
 }
 
 bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)

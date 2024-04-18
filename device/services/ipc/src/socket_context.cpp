@@ -125,9 +125,10 @@ void* SocketContext::UnixSocketRecv(void* pp)
             break;
         }
         switch (pph->protoType & PROTOCOL_TYPE_FILTER) {
-            case PROTOCOL_TYPE_RAW:
+            case PROTOCOL_TYPE_RAW: {
                 pssr->RawProtocolProc(pph->protoType & (~PROTOCOL_TYPE_FILTER), pph->datas, pph->protoSize - head_size);
                 break;
+            }
             case PROTOCOL_TYPE_PROTOBUF:
                 if (pssr->serviceBase_ != nullptr) {
                     pssr->serviceBase_->ProtocolProc(*pssr, pph->protoType & (~PROTOCOL_TYPE_FILTER), pph->datas,
