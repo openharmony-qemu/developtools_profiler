@@ -148,7 +148,6 @@ std::map<std::string, std::string> MEMORY::GetPssRamInfo(FILE *fd, std::vector<s
 std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
-    //if (paramsInfo.size() > 0) {
     sumRamInfo["sharedClean"] = paramsInfo[MEMORY_SECOND];
     sumRamInfo["sharedDirty"] = paramsInfo[MEMORY_THIRD];
     sumRamInfo["privateClean"] = paramsInfo[MEMORY_FOURTH];
@@ -158,8 +157,6 @@ std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::strin
     sumRamInfo["heapSize"] = paramsInfo[MEMORY_EIGHTH];
     sumRamInfo["heapAlloc"] = paramsInfo[MEMORY_NINTH];
     sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(paramsInfo[MEMORY_TENTH].size() - 1);
-    //}
-
     return sumRamInfo;
 }
 }
