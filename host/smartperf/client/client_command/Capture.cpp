@@ -30,16 +30,34 @@ using namespace OHOS::Media;
 using namespace OHOS::Rosen;
 std::map<std::string, std::string> Capture::ItemData()
 {
+    callNum++;
     std::map<std::string, std::string> result;
-    long long curTime = SPUtils::GetCurTime();
-    std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
-    result["capture"] = path;
-    Capture::TriggerGetCatch(curTime);
-    if (result.find("capture") != result.end() && result["capture"].empty()) {
+    int two = 2;
+    if (callNum % two != 0) {
+        long long curTime = SPUtils::GetCurTime();
+        if (isSocketMessage) {
+            std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".jpeg";
+            result["capture"] = path;
+            Capture::TriggerGetCatchSocket(curTime);
+            isSocketMessage = false;
+        } else {
+            std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
+            result["capture"] = path;
+            Capture::TriggerGetCatch(curTime);
+            if (result.find("capture") != result.end() && result["capture"].empty()) {
+                result["capture"] = "NA";
+            }
+        }
+    } else {
         result["capture"] = "NA";
     }
     LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
+}
+
+void Capture::SocketMessage()
+{
+    isSocketMessage = true;
 }
 
 void Capture::ThreadGetCatch(const std::string &curTime) const
@@ -60,10 +78,32 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
     (void)close(fd);
 }
 
+
+void Capture::ThreadGetCatchSocket(const std::string &curTime) const
+{
+    auto savePath = "/data/local/tmp/capture/screenCap_" + curTime + ".jpeg";
+    std::string cmdResult;
+    if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
+        SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
+        printf("/data/local/tmp/capture created! \n");
+        LOGI("/data/local/tmp/capture created!");
+    };
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);
+    (void)close(fd);
+}
+
 void Capture::TriggerGetCatch(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
     std::thread tStart(&Capture::ThreadGetCatch, this, curTimeStr);
+    tStart.detach();
+}
+
+void Capture::TriggerGetCatchSocket(long long curTime) const
+{
+    std::string curTimeStr = std::to_string(curTime);
+    std::thread tStart(&Capture::ThreadGetCatchSocket, this, curTimeStr);
     tStart.detach();
 }
 

@@ -29,6 +29,7 @@
 #include "include/Dubai.h"
 #include "include/Capture.h"
 #include "include/GpuCounter.h"
+#include "include/sp_log.h"
 
 
 namespace OHOS {
@@ -136,8 +137,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             profiler = &GPU::GetInstance();
             break;
         case CommandType::CT_F:
-        case CommandType::CT_F1:
-        case CommandType::CT_F2:
             if (cmdFlag) {
                 profiler = &FPS::GetInstance();
             }
@@ -163,7 +162,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             ProfilerFPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_SNAPSHOT:
-            profiler = &Capture::GetInstance();
+            if (cmdFlag) {
+                profiler = &Capture::GetInstance();
+            }
             break;
         case CommandType::CT_HW:
             break;
