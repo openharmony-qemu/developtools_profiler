@@ -58,6 +58,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
         ProfilerFPS::GetInstance().SetTraceCatch();
     } else if (messageType == MessageType::GET_CAPTURE) {
+        Capture::GetInstance().SocketMessage();
         profiler = &Capture::GetInstance();
     } else if (messageType == MessageType::SET_DUBAI_DB) {
         Dubai::DumpDubaiBegin();
@@ -101,7 +102,6 @@ void SpProfilerFactory::SetByTrace(std::string message)
     int mInterval = 0;
     long long mThreshold = 0;
     int lowFps = 0;
-    int mCurNum = 1;
     for (std::string vItem : values) {
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
@@ -120,6 +120,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
     }
     ByTrace &bTrace = ByTrace::GetInstance();
     if (message.find("traceSum") != std::string::npos) {
+        int mCurNum = 1;
         bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
     }
     if (message.find("bytrace -b 2048") != std::string::npos) {

@@ -27,7 +27,7 @@ public:
     double ParseRadarResponse(std::string string);
     std::string ParseRadarAppStrart(std::string string);
     double ParseRadarComplete(std::string string);
-    std::string extract_string(const std::string &str, const std::string &target);
+    std::string ExtractString(const std::string &str, const std::string &target);
     std::string ParseRadarFrame(std::string string);
     std::string ParseRadarMaxFrame(std::string string);
 };

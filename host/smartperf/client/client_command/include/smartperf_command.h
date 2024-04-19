@@ -56,9 +56,9 @@ public:
         "SP_daemon -stop \n"
         "SP_daemon -screen \n";
 
-    const int oneParam = 1;
-    const int twoParam = 2;
-    const int threeParamMore = 3;
+    const size_t oneParam = 1;
+    const size_t twoParam = 2;
+    const size_t threeParamMore = 3;
     explicit SmartPerfCommand(std::vector<std::string> argv);
     ~SmartPerfCommand() {};
     static void InitSomething();

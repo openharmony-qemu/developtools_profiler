@@ -54,7 +54,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         std::cout << "net work node is not accessed" << std::endl;
         return networkInfo;
     }
-    while (nullptr != fgets(buff, LARGE_BUFF_MAX_LEN, fp)) {
+    while (fgets(buff, LARGE_BUFF_MAX_LEN, fp) != nullptr) {
         if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {

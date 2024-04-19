@@ -154,10 +154,10 @@ std::string ControlCallCmd::SlideList()
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         std::ostringstream streamFps;
         streamFps << sFps;
-        double result = srt.StallingRateResult(traceName);
+        double stallingRateResult = srt.StallingRateResult(traceName);
         std::ostringstream ss;
         int two = 2;
-        ss << std::fixed << std::setprecision(two) << result;
+        ss << std::fixed << std::setprecision(two) << stallingRateResult;
         std::string ssResult = ss.str();
         std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
         resultStream = "FPS:" + streamFps.str() + "fps\n" + responseSlide + hitchTimeRate + maxFrame;
@@ -323,7 +323,7 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
         return time;
     }
 }
-std::string ControlCallCmd::GetAppStartTime()
+std::string ControlCallCmd::GetAppStartTime() const
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
@@ -345,10 +345,10 @@ std::string ControlCallCmd::GetAppStartTime()
     std::string resultStream2 = radar.ParseRadarMaxFrame(str2);
     LOGI("resultStream====: %s", resultStream.c_str());
     LOGI("resultStream2====: %s", resultStream2.c_str());
-    double result = srt.StallingRateResult(traceName);
+    double stallingRateResult2 = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     int two = 2;
-    ss << std::fixed << std::setprecision(two) << result;
+    ss << std::fixed << std::setprecision(two) << stallingRateResult2;
     std::string ssResult = ss.str();
     std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
     resultStream = resultStream + hitchTimeRate + resultStream2;

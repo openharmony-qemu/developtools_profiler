@@ -200,19 +200,19 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
     }
 }
 
-void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
+void ProfilerFPS::GetFPS(int args, std::vector<std::string> v)
 {
     int sectionsNum = 0;
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
-        num = atoi(v[number].c_str());
-        if (num < 0) {
-            printf("set num:%d not valid arg\n", num);
+        this->num = atoi(v[number].c_str());
+        if (this->num < 0) {
+            printf("set num:%d not valid arg\n", this->num);
         }
-        printf("set num:%d success\n", num);
+        printf("set num:%d success\n", this->num);
         sectionsNum = atoi(v[four].c_str());
-        for (int i = 0; i < num; i++) {
+        for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }
     }
@@ -342,7 +342,7 @@ bool ProfilerFPS::IsForeGround()
     return false;
 }
 
-bool ProfilerFPS::IsFindForeGround(std::string line)
+bool ProfilerFPS::IsFindForeGround(std::string line) const
 {
     std::string foreGroundTag = line.substr(line.find("#") + 1);
     if (foreGroundTag.find("FOREGROUND") != std::string::npos) {

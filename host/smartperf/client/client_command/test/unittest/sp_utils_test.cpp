@@ -28,7 +28,7 @@ using namespace std;
 
 namespace OHOS {
 namespace SmartPerf {
-class SPdaemonTest : public testing::Test {
+class SPdaemonUtilsTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -41,7 +41,7 @@ public:
  * @tc.desc: Test IntegerValueVerification
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, IntegerValueVerificationTest001, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest001, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -59,7 +59,7 @@ HWTEST_F(SPdaemonTest, IntegerValueVerificationTest001, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, IntegerValueVerificationTest002, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest002, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -77,7 +77,7 @@ HWTEST_F(SPdaemonTest, IntegerValueVerificationTest002, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, IntegerValueVerificationTest003, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest003, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -100,7 +100,7 @@ HWTEST_F(SPdaemonTest, IntegerValueVerificationTest003, TestSize.Level1)
  * @tc.desc: Test VerifyValueStr
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, VerifyValueStrTest001, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VerifyValueStrTest001, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -109,7 +109,7 @@ HWTEST_F(SPdaemonTest, VerifyValueStrTest001, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, VerifyValueStrTest002, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VerifyValueStrTest002, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -119,7 +119,7 @@ HWTEST_F(SPdaemonTest, VerifyValueStrTest002, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, VerifyValueStrTest003, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VerifyValueStrTest003, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -130,7 +130,7 @@ HWTEST_F(SPdaemonTest, VerifyValueStrTest003, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, VerifyValueStrTest004, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VerifyValueStrTest004, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -141,7 +141,7 @@ HWTEST_F(SPdaemonTest, VerifyValueStrTest004, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, VerifyValueStrTest005, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VerifyValueStrTest005, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -152,7 +152,7 @@ HWTEST_F(SPdaemonTest, VerifyValueStrTest005, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, VerifyValueStrTest006, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VerifyValueStrTest006, TestSize.Level1)
 {
     std::string errorInfo;
     std::map<std::string, std::string> mapInfo;
@@ -167,7 +167,7 @@ HWTEST_F(SPdaemonTest, VerifyValueStrTest006, TestSize.Level1)
  * @tc.desc: Test VeriyKey
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, VeriyKey001, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VeriyKey001, TestSize.Level1)
 {
     std::set<std::string> keys;
     std::map<std::string, std::string> mapInfo;
@@ -187,7 +187,7 @@ HWTEST_F(SPdaemonTest, VeriyKey001, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonTest, VeriyKey002, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, VeriyKey002, TestSize.Level1)
 {
     std::set<std::string> keys;
     std::map<std::string, std::string> mapInfo;

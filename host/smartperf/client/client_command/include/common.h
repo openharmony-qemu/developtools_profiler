@@ -44,7 +44,7 @@ enum class MessageType {
     BACK_TO_DESKTOP,
 };
 
-const std::unordered_map<MessageType, std::string> messageMap = {
+const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_CPU_NUM, std::string("get_cpu_num") },
     { MessageType::GET_CPU_FREQ, std::string("get_cpu_freq") },
     { MessageType::GET_CPU_LOAD, std::string("get_cpu_load") },
@@ -99,7 +99,7 @@ enum class CommandHelp {
     SCREEN,
 };
 
-const std::unordered_map<std::string, CommandType> commandMap = {
+const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-N"), CommandType::CT_N },
     { std::string("-PKG"), CommandType::CT_PKG },
     { std::string("-PID"), CommandType::CT_PID },
@@ -148,7 +148,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
 };
 
 
-const std::unordered_map<CommandHelp, std::string> commandHelpMap = {
+const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
     { CommandHelp::HELP, std::string("--help") },
     { CommandHelp::VERSION, std::string("--version") },
     { CommandHelp::SCREEN, std::string("-screen") },

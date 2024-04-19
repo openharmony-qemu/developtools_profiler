@@ -67,7 +67,7 @@ public:
     bool IsFindForeGround(std::string line) const;
     void GetSameTimeNums();
     void GetCurrentTime();
-    std::string GetScreenInfo();
+    std::string GetScreenInfo() const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo prevResultFpsInfo;

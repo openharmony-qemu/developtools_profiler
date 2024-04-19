@@ -95,16 +95,21 @@ std::string ParseStartTraceNoh::CutString(std::string line, std::string start, s
 }
 std::vector<std::string> ParseStartTraceNoh::Split(std::string str, std::string pattern)
 {
-    std::string::size_type pos;
     std::vector<std::string> result;
-    str += pattern;
-    size_t size = str.size();
-    for (size_t i = 0; i < size; i++) {
-        pos = str.find(pattern, i);
-        if (pos < size) {
-            std::string s = str.substr(i, pos - i);
-            result.push_back(s);
-            i = pos + pattern.size() - 1;
+    if (str.empty() || pattern.empty() || str.size() < pattern.size()) {
+        return result;
+    }
+    size_t start = 0; // start index
+    size_t pos = 0;
+    while (start < str.size()) {
+        pos = str.find(pattern, start);
+        if (pos != std::string::npos) {
+            result.push_back(str.substr(start, pos - start));
+            start = pos + pattern.size(); // next start index
+        } else {
+            //the last start
+            result.push_back(str.substr(start));
+            break;
         }
     }
     return result;

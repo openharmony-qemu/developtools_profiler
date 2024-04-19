@@ -56,7 +56,7 @@ double ParsePageFpsTrace::CalculateTime()
                 responseLine = line;
                 needUpdateResponseLine = false;
             }
-            frameStartTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(line));
+            frameStartTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(line));
         }
         if (updateCount) {
             if (line.find("B|" + pid + "|") != std::string::npos && line.find("-" + pid) != std::string::npos) {
@@ -68,7 +68,7 @@ double ParsePageFpsTrace::CalculateTime()
                 completeLine = line;
                 frameStartInterval = frameEndTime;
                 frameStartInterval = 0;
-                frameEndTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(completeLine));
+                frameEndTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(completeLine));
                 updateCount = false;
             }
         }
@@ -89,14 +89,14 @@ double ParsePageFpsTrace::CalculateTimeEnd()
     } else if (completeLine.compare("") == 0) {
         LOGW("can not find response and complete point {H:RSMainThread::DoComposition}");
     } else {
-        double responseTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(responseLine));
-        double completeTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(completeLine));
+        double responseTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(responseLine));
+        double completeTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(completeLine));
         return frameNum / (completeTime - responseTime);
     }
     return -1.0;
 }
 
-std::string ParsePageFpsTrace::getLineTime(std::string line)
+std::string ParsePageFpsTrace::GetLineTime(std::string line)
 {
     size_t num = 7;
     size_t position1 = line.find("....");

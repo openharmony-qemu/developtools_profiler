@@ -26,7 +26,7 @@ public:
     double CalculateTime();
     std::string GetLineTime(std::string line);
     std::string CutString(std::string line, std::string start, std::string end, size_t offset);
-    std::vector<std::string> Split(std::string str, std::string patten);
+    std::vector<std::string> Split(std::string str, std::string pattern);
 
 private:
     std::ifstream infile;

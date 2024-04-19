@@ -60,11 +60,11 @@ class ProfilerFPS : public SpProfiler {
 public:
     void SetTraceCatch();
     void SetPackageName(std::string pName);
-    void GetFPS(int argc, std::vector<std::string> v);
+    void GetFPS(int args, std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     bool IsForeGround();
-    bool IsFindForeGround(std::string line);
+    bool IsFindForeGround(std::string line) const;
     void GetSameTimeNums();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const;

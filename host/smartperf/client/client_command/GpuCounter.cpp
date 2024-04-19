@@ -76,7 +76,7 @@ int GpuCounter::Init(std::string packageName, std::map<std::string, std::string>
     Rest();
     do {
         SPUtils::LoadCmd(constCheckProductInfo, result);
-        if (result.empty() || std::string::npos == result.find(constProductInfo)) {
+        if (result.empty() || result.find(constProductInfo) == std::string::npos) {
             errorInfo = "Non Hisilicon chips";
             ret = ERROR_CODE_NEGATIVE_FOUR;
             break;
@@ -232,13 +232,13 @@ long long GpuCounter::GetCounterDuration()
 
     while (std::getline(file, line)) {
         if (!startFlag) {
-            if (std::string::npos != line.find("collector {")) {
+            if (line.find("collector {") != std::string::npos) {
                 startFlag = true;
             }
             continue;
         }
 
-        if (std::string::npos != line.find("duration_ms:")) {
+        if (line.find("duration_ms:") != std::string::npos) {
             std::vector<std::string> out;
             SPUtils::StrSplit(line, ":", out);
 
@@ -254,7 +254,7 @@ long long GpuCounter::GetCounterDuration()
             } catch (std::exception &e) {
                 return -1;
             }
-        } else if (std::string::npos != line.find("}")) {
+        } else if (line.find("}") != std::string::npos) {
             startFlag = false;
         }
     }

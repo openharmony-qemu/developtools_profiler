@@ -19,7 +19,7 @@ SpParseFPS::SpParseFPS()
     pidPattern = std::regex("\\|(\\d+)\\|");
 }
 SpParseFPS::~SpParseFPS() {}
-void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vector<SpString> &out)
+void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vector<SpString> &out) const
 {
     size_t index = 0;
     while (index != SpString::npos) {
@@ -34,7 +34,7 @@ void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vect
         index = tEnd + 1;
     }
 }
-void SpParseFPS::GetAndSetPageType(Line &line, PageType &pageType)
+void SpParseFPS::GetAndSetPageType(Line &line, PageType &pageType) const
 {
     if (line.empty()) {
         return;
@@ -47,7 +47,7 @@ void SpParseFPS::GetAndSetPageType(Line &line, PageType &pageType)
         pageType = LARGE;
     }
 }
-unsigned int SpParseFPS::GetTouchEventNum(Line &line, TouchEvent &touchEvent)
+unsigned int SpParseFPS::GetTouchEventNum(Line &line, TouchEvent &touchEvent) const
 {
     if (line.empty()) {
         return 0;
@@ -110,7 +110,7 @@ FpsResult SpParseFPS::ParseTraceFile(FilePath &filePath, PackageName &packageNam
     }
     return "FPS:" + fps + "fps";
 }
-void SpParseFPS::StaticHandoffStartTime(Line &line, RecordFpsVars &rfv)
+void SpParseFPS::StaticHandoffStartTime(Line &line, RecordFpsVars &rfV)
 {
     if (line.empty()) {
         return;
@@ -131,7 +131,7 @@ void SpParseFPS::StaticHandoffStartTime(Line &line, RecordFpsVars &rfv)
         }
     }
 }
-void SpParseFPS::DecHandOffTime(Line &line, RecordFpsVars &rfv)
+void SpParseFPS::DecHandOffTime(Line &line, RecordFpsVars &rfV)
 {
     if (line.empty()) {
         return;
@@ -155,7 +155,7 @@ void SpParseFPS::DecHandOffTime(Line &line, RecordFpsVars &rfv)
         rfV.isAddFrame = true;
     }
 }
-bool SpParseFPS::CountRsEndTime(Line &line, RecordFpsVars &rfv, float staticTime, SpString uiPoint)
+bool SpParseFPS::CountRsEndTime(Line &line, RecordFpsVars &rfV, float staticTime, SpString uiPoint)
 {
     if (line.empty()) {
         return false;

@@ -72,7 +72,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f
                 isFPS = true;
             }
-            if (commandMap.end() != commandMap.find(args[i])) {
+            if (COMMAND_MAP.end() != COMMAND_MAP.find(args[i])) {
                 configs.push_back(args[i]);
             }
         }
@@ -185,7 +185,7 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
-        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(itConfig), false);
+        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
         if (profiler != nullptr) {
             std::map<std::string, std::string> itemMap = profiler->ItemData();
             dataMap.insert(itemMap.begin(), itemMap.end());
@@ -358,7 +358,7 @@ void SPTask::GetHiperf(std::string traceName)
 bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
 {
     std::set<std::string> keys;
-    for (auto a : commandMap) {
+    for (auto a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
 
