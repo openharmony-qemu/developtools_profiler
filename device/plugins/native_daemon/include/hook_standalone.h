@@ -29,6 +29,7 @@ struct HookData {
     uint32_t maxJsStackdepth = {0};
     uint32_t statisticsInterval {0};
     uint32_t sampleInterval {0};
+    int32_t jsStackReport {0};
     std::string fileName {"/data/local/tmp/data.txt"};
     std::string processName;
     std::string performanceFilename {"/data/local/tmp/performance.txt"};
@@ -44,7 +45,6 @@ struct HookData {
     bool rawString {false};
     bool startupMode {false};
     bool responseLibraryMode {false};
-    bool jsStackReport {false};
     std::string ToString() const
     {
         std::stringstream ss;

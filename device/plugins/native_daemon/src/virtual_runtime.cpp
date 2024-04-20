@@ -215,7 +215,7 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
     auto &thread = UpdateThread(pid, tid);
     if (stack_size > 0) {
         callstack_.UnwindCallStack(thread, &regs[0], regs.size(), stack_addr, stack_size, callFrames, maxStackLevel,
-            hookConfig_.js_stack_report()?hookConfig_.max_js_stack_depth():0);
+            hookConfig_.js_stack_report() > 0 ? hookConfig_.max_js_stack_depth() : 0);
         if (callFrames.size() <= FILTER_STACK_DEPTH) {
             callFrames.clear();
             return false;
@@ -231,7 +231,7 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
 #endif
     if (hookConfig_.offline_symbolization()) {
         // only get js symbol if report js frame and offline symbolization for dwarf mode
-        if (hookConfig_.js_stack_report() && !hookConfig_.fp_unwind()) {
+        if (hookConfig_.js_stack_report() > 0 && !hookConfig_.fp_unwind()) {
             GetSymbolName(pid, tid, callFrames, offset, true, true);
         }
         return true;
