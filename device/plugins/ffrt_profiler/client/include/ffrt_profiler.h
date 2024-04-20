@@ -31,9 +31,9 @@ public:
     static FfrtProfiler* GetInstance();
     virtual ~FfrtProfiler();
 
-    bool IsProfilerEnable();
+    bool IsProfilerEnabled();
     void FfrtProfilerTrace(const uint8_t traceType, const std::string& lable = "", uint64_t cookie = 0);
-    void FfrtProfiling(const EventType& type, const char* payload, size_t payloadSize);
+    void FfrtProfiling(const EventType type, const char* payload, size_t payloadSize);
 
     void SetClockId(int32_t type)
     {
