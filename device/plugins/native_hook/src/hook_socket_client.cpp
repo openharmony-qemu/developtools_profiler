@@ -32,10 +32,8 @@
 namespace {
 constexpr int FLUSH_FLAG = 20;
 std::atomic<uint64_t> g_flushCount = 0;
-std::atomic<uint64_t> g_memIndex = 0;
 std::atomic<bool> g_disableHook = false;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
-constexpr uint32_t SHARED_MEMORY_SIZE = 307200;
 
 struct OptArg {
     int pos;
@@ -127,17 +125,16 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     PROFILER_LOG_INFO(LOG_CORE, "%s sample interval %" PRIu64 "", __func__, sampler_->GetSampleInterval());
     smbFd_ = context.ReceiveFileDiscriptor();
     eventFd_ = context.ReceiveFileDiscriptor();
-    nmdFd_ = context.ReceiveFileDiscriptor();
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked);
-    shareMemoryBlockNmd_ =
-    ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("nmd" + std::to_string(g_memIndex),
-                                                                SHARED_MEMORY_SIZE, nmdFd_);
-    ++g_memIndex;
     struct mallinfo2 mi = mallinfo2();
     COMMON::PrintMallinfoLog("stackWriter init(byte) => ", mi);
-    SendNmdInfo();
+    nmdType_ = config_->nmdType;
+    if (nmdType_ == 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "sending nmd info before hook");
+        SendNmdInfo();
+    }
     return true;
 }
 
@@ -206,12 +203,35 @@ bool HookSocketClient::PeerIsConnected()
 
 bool HookSocketClient::SendNmdInfo()
 {
-    CHECK_TRUE(nmdFd_ != -1, false, "HookSocketClient::SendNmdInfo failed, invalid nmdFd_");
-    CHECK_NOTNULL(shareMemoryBlockNmd_, false, "HookSocketClient::SendNmdInfo failed, sharedMemoryBlock error");
+    if (!config_->printNmd) {
+        return false;
+    }
     void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
     CHECK_NOTNULL(nmdBuf, false, "HookSocketClient::SendNmdInfo failed, nmdBuf malloc failed");
     struct OptArg opt = {0, reinterpret_cast<char*>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "a");
-    shareMemoryBlockNmd_->PutRawTimeout(reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1);
+    StackRawData radata = {{{{0}}}};
+    rawdata.type = NMD_MSG;
+    if (stackWriter_) {
+        bool ret = stackWriter_->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                         reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
+                                                         std::bind(&HookSocketClient::PeerIsConnected, this);
+        PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg ret val: %d", ret);
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendEndMsg stackWriter_ is nullptr");
+    }
+    return true;
+}
+
+bool HookSocketClient::SendEndMsg()
+{
+    StackRawData radata = {{{{0}}}};
+    rawdata.type = END_MSG;
+    if (stackWriter_) {
+        bool ret = stackWriter_->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
+        PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg ret val: %d", ret);
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendEndMsg stackWriter_ is nullptr");
+    }
     return true;
 }

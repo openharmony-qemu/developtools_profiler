@@ -44,17 +44,21 @@ public:
     void DisableHook();
     bool PeerIsConnected();
     bool SendNmdInfo();
+    bool SendEndMsg();
+    int GetNmdType()
+    {
+        return nmdType_;
+    }
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
     int smbFd_;
     int eventFd_;
     int pid_;
-    int nmdFd_;
+    int nmdType_ = -1;
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
     std::shared_ptr<StackWriter> stackWriter_;
-    std::shared_ptr<ShareMemoryBlock> shareMemoryBlockNmd_;
     void (*disableHookCallback_)(){nullptr};
 };
 

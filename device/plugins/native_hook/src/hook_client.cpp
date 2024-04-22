@@ -284,8 +284,14 @@ void* ohos_release_on_end(void*)
 bool ohos_malloc_hook_on_end(void)
 {
     if (g_hookClient != nullptr) {
-        g_hookClient->SendNmdInfo();
+        if (g_hookClient->GetNmdType() == 1) {
+            PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
+            g_hookClient->SendNmdInfo();
+        }
+        g_hookClient->SendEndMsg();
         g_hookClient->Flush();
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {

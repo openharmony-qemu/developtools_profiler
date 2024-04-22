@@ -62,6 +62,10 @@ public:
     {
         pid_ = pid;
     }
+    inline void SetStopFlag(bool flag)
+    {
+        isStopTakeData_ = flag;
+    }
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
     void SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack);

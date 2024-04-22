@@ -167,14 +167,11 @@ bool StackPreprocess::StopTakeResults()
 {
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
     if (!dataRepeater_) {
-        isStopTakeData_ = true;
         return true;
     }
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
     CHECK_TRUE(thread_.get_id() != std::thread::id(), false, "thread invalid");
 
-    isStopTakeData_ = true;
-    dataRepeater_->PutRawStack(nullptr, false);
     PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults Wait thread join");
 
     if (thread_.joinable()) {
@@ -331,9 +328,12 @@ void StackPreprocess::TakeResults()
     PROFILER_LOG_INFO(LOG_CORE, "TakeResults thread %d, start!", gettid());
     while (1) {
         RawStackPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+        if (isStopTakeData_) {
+            break;
+        }
         auto result = dataRepeater_->TakeRawData(hookConfig_.malloc_free_matching_interval(), hookDataClockId_,
             MAX_BATCH_CNT, batchRawStack);
-        if (!result || isStopTakeData_) {
+        if (!result) {
             break;
         }
         for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
