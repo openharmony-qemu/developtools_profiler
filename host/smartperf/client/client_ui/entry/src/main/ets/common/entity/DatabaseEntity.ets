@@ -17,9 +17,9 @@
  * GPData实体类
  */
 export class GPData {
-  public moduleType: String
-  public timeStamp: number
-  public values: Map<String, String>
+  public moduleType: String;
+  public timeStamp: number;
+  public values: Map<String, String>;
 
   constructor(moduleType: String, timeStamp: number, values: Map<String, String>) {
     this.moduleType = moduleType;
@@ -34,11 +34,17 @@ export class GPData {
       var key = iterator.next().value;
       obj[key] = this.values.get(key);
     }
-    return "GPData{" +
-    "module='" + this.moduleType + '\'' +
-    ", timeStamp=" + this.timeStamp +
-    ", values=" + JSON.stringify(obj) +
-    '}';
+    return (
+      'GPData{' +
+      "module='" +
+      this.moduleType +
+      "'" +
+      ', timeStamp=' +
+      this.timeStamp +
+      ', values=' +
+      JSON.stringify(obj) +
+      '}'
+    );
   }
 }
 
@@ -47,80 +53,90 @@ export class GPData {
  */
 export class TGeneralInfo {
   //目录生成的UUID  作为主键
-  public sessionId: String
+  public sessionId: String;
   //任务Id
-  public taskId: String
+  public taskId: String;
   //测试游戏名称
-  public appName: String
+  public appName: String;
   //测试游戏版本
-  public appVersion: String
+  public appVersion: String;
   //游戏包名
-  public packageName: String
+  public packageName: String;
   //开始时间
-  public startTime: number
+  public startTime: number;
   //结束时间
-  public endTime: number
+  public endTime: number;
   //测试时长
-  public testDuration: number
+  public testDuration: number;
   //任务名称
-  public taskName: String
+  public taskName: String;
   //测试方式  middle
-  public testCase: String
+  public testCase: String;
   //测试类型  smartPerf beta
-  public testType: String
+  public testType: String;
   //用户名
-  public user: String
+  public user: String;
   //用户id
-  public userId: String
+  public userId: String;
   //项目Id
-  public projectId: String
+  public projectId: String;
   //报告来源
-  public dataSource: String
+  public dataSource: String;
   //sp版本
-  public spVersion: String
+  public spVersion: String;
   //设备类型
-  public deviceTypeName: String
+  public deviceTypeName: String;
   //设备品牌
-  public brand: String
+  public brand: String;
   //设备名称  XX-XXX(****00018)
-  public deviceName: String
+  public deviceName: String;
   //设备型号
-  public board: String
+  public board: String;
   //手机版本
-  public version: String
+  public version: String;
   //芯片平台
-  public plat: String
+  public plat: String;
   //大中小核心
-  public cpuCluster: String
+  public cpuCluster: String;
   //设备sn号
-  public sn: String
+  public sn: String;
   //分辨类
-  public resolution: String
+  public resolution: String;
   //当前亮度
-  public screenBrightness: String
+  public screenBrightness: String;
   //设备当前音量
-  public volume: String
+  public volume: String;
   //当前电池电量
-  public batteryVolume: String
+  public batteryVolume: String;
   //是否是多路测试
-  public isOnline: boolean
+  public isOnline: boolean;
   //设备号
-  public deviceNum: number
+  public deviceNum: number;
   //房间号
-  public roomNumber: String
+  public roomNumber: String;
   //任务类型 主控、被控
-  public taskType: number
+  public taskType: number;
 
-  constructor(sessionId ?: String, taskId ?: String, appName ?: String, appVersion ?: String, packageName ?: String, startTime ?: number, endTime ?: number, testDuration ?: number, taskName ?: String) {
-    this.sessionId = sessionId
-    this.taskId = taskId
-    this.appName = appName
-    this.appVersion = appVersion
-    this.packageName = packageName
-    this.startTime = startTime
-    this.endTime = endTime
-    this.testDuration = testDuration
-    this.taskName = taskName
+  constructor(
+    sessionId?: String,
+    taskId?: String,
+    appName?: String,
+    appVersion?: String,
+    packageName?: String,
+    startTime?: number,
+    endTime?: number,
+    testDuration?: number,
+    taskName?: String
+  ) {
+    this.sessionId = sessionId;
+    this.taskId = taskId;
+    this.appName = appName;
+    this.appVersion = appVersion;
+    this.packageName = packageName;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.testDuration = testDuration;
+    this.taskName = taskName;
   }
 }
 
@@ -233,131 +249,179 @@ export class TIndexInfo {
   constructor(
     timestamp?: String,
     taskId?: String,
-    cpu0Freq?: String, cpu1Freq?: String, cpu2Freq?: String, cpu3Freq?: String, cpu4Freq?: String, cpu5Freq?: String, cpu6Freq?: String, cpu7Freq?: String,
-    cpu0Load?: string, cpu1Load?: string, cpu2Load?: string, cpu3Load?: string, cpu4Load?: string, cpu5Load?: string, cpu6Load?: string, cpu7Load?: string,
-    gpuFreq?: String, gpuLoad?: String,
+    cpu0Freq?: String,
+    cpu1Freq?: String,
+    cpu2Freq?: String,
+    cpu3Freq?: String,
+    cpu4Freq?: String,
+    cpu5Freq?: String,
+    cpu6Freq?: String,
+    cpu7Freq?: String,
+    cpu0Load?: string,
+    cpu1Load?: string,
+    cpu2Load?: string,
+    cpu3Load?: string,
+    cpu4Load?: string,
+    cpu5Load?: string,
+    cpu6Load?: string,
+    cpu7Load?: string,
+    gpuFreq?: String,
+    gpuLoad?: String,
     ddrFreq?: String,
-    shellFrame?: String, shellFront?: String, shellBack?: String, socThermal?: String, systemH?: String, gpu?: String, ambient?: String, battery?: String,
-    currentNow?: String, voltageNow?: String,
+    shellFrame?: String,
+    shellFront?: String,
+    shellBack?: String,
+    socThermal?: String,
+    systemH?: String,
+    gpu?: String,
+    ambient?: String,
+    battery?: String,
+    currentNow?: String,
+    voltageNow?: String,
     pss?: String,
     fps?: String,
     fpsJitters?: String,
-    networkUpSpeed?: String, networkDownSpeed?: String
+    networkUpSpeed?: String,
+    networkDownSpeed?: String
   ) {
-    this.timestamp = timestamp
-    this.taskId = taskId
-    this.cpu0Frequency = cpu0Freq
-    this.cpu1Frequency = cpu1Freq
-    this.cpu2Frequency = cpu2Freq
-    this.cpu3Frequency = cpu3Freq
-    this.cpu4Frequency = cpu4Freq
-    this.cpu5Frequency = cpu5Freq
-    this.cpu6Frequency = cpu6Freq
-    this.cpu7Frequency = cpu7Freq
-    this.cpu0Load = cpu0Load
-    this.cpu1Load = cpu1Load
-    this.cpu2Load = cpu2Load
-    this.cpu3Load = cpu3Load
-    this.cpu4Load = cpu4Load
-    this.cpu5Load = cpu5Load
-    this.cpu6Load = cpu6Load
-    this.cpu7Load = cpu7Load
-    this.gpuFrequency = gpuFreq
-    this.gpuLoad = gpuLoad
-    this.ddrFrequency = ddrFreq
-    this.shellFrameTemp = shellFrame
-    this.shellFrontTemp = shellFront
-    this.shellBackTemp = shellBack
-    this.socThermalTemp = socThermal
-    this.systemHTemp = systemH
-    this.gpuTemp = gpu
-    this.ambientTemp = ambient
-    this.batteryTemp = battery
-    this.currentNow = currentNow
-    this.voltageNow = voltageNow
-    this.pss = pss
-    this.fps = fps
-    this.fpsJitters = fpsJitters
-    this.networkUpSpeed = networkUpSpeed
-    this.networkDownSpeed = networkDownSpeed
+    this.timestamp = timestamp;
+    this.taskId = taskId;
+    this.cpu0Frequency = cpu0Freq;
+    this.cpu1Frequency = cpu1Freq;
+    this.cpu2Frequency = cpu2Freq;
+    this.cpu3Frequency = cpu3Freq;
+    this.cpu4Frequency = cpu4Freq;
+    this.cpu5Frequency = cpu5Freq;
+    this.cpu6Frequency = cpu6Freq;
+    this.cpu7Frequency = cpu7Freq;
+    this.cpu0Load = cpu0Load;
+    this.cpu1Load = cpu1Load;
+    this.cpu2Load = cpu2Load;
+    this.cpu3Load = cpu3Load;
+    this.cpu4Load = cpu4Load;
+    this.cpu5Load = cpu5Load;
+    this.cpu6Load = cpu6Load;
+    this.cpu7Load = cpu7Load;
+    this.gpuFrequency = gpuFreq;
+    this.gpuLoad = gpuLoad;
+    this.ddrFrequency = ddrFreq;
+    this.shellFrameTemp = shellFrame;
+    this.shellFrontTemp = shellFront;
+    this.shellBackTemp = shellBack;
+    this.socThermalTemp = socThermal;
+    this.systemHTemp = systemH;
+    this.gpuTemp = gpu;
+    this.ambientTemp = ambient;
+    this.batteryTemp = battery;
+    this.currentNow = currentNow;
+    this.voltageNow = voltageNow;
+    this.pss = pss;
+    this.fps = fps;
+    this.fpsJitters = fpsJitters;
+    this.networkUpSpeed = networkUpSpeed;
+    this.networkDownSpeed = networkDownSpeed;
   }
 
   setTimeStamp(timestamp: String) {
-    this.timestamp = timestamp
+    this.timestamp = timestamp;
   }
 
   setTaskId(taskId: String) {
-    this.taskId = taskId
+    this.taskId = taskId;
   }
 
-  setCPUData(cpu0Freq: String, cpu1Freq: String, cpu2Freq: String, cpu3Freq: String, cpu4Freq: String, cpu5Freq: String, cpu6Freq: String, cpu7Freq: String) {
-    this.cpu0Frequency = cpu0Freq
-    this.cpu1Frequency = cpu1Freq
-    this.cpu2Frequency = cpu2Freq
-    this.cpu3Frequency = cpu3Freq
-    this.cpu4Frequency = cpu4Freq
-    this.cpu5Frequency = cpu5Freq
-    this.cpu6Frequency = cpu6Freq
-    this.cpu7Frequency = cpu7Freq
+  setCPUData(
+    cpu0Freq: String,
+    cpu1Freq: String,
+    cpu2Freq: String,
+    cpu3Freq: String,
+    cpu4Freq: String,
+    cpu5Freq: String,
+    cpu6Freq: String,
+    cpu7Freq: String
+  ) {
+    this.cpu0Frequency = cpu0Freq;
+    this.cpu1Frequency = cpu1Freq;
+    this.cpu2Frequency = cpu2Freq;
+    this.cpu3Frequency = cpu3Freq;
+    this.cpu4Frequency = cpu4Freq;
+    this.cpu5Frequency = cpu5Freq;
+    this.cpu6Frequency = cpu6Freq;
+    this.cpu7Frequency = cpu7Freq;
   }
 
-  setCPULoadData(cpu0Load: String, cpu1Load: String, cpu2Load: String, cpu3Load: String, cpu4Load: String, cpu5Load: String, cpu6Load: String, cpu7Load: String) {
-    this.cpu0Load = cpu0Load
-    this.cpu1Load = cpu1Load
-    this.cpu2Load = cpu2Load
-    this.cpu3Load = cpu3Load
-    this.cpu4Load = cpu4Load
-    this.cpu5Load = cpu5Load
-    this.cpu6Load = cpu6Load
-    this.cpu7Load = cpu7Load
+  setCPULoadData(
+    cpu0Load: String,
+    cpu1Load: String,
+    cpu2Load: String,
+    cpu3Load: String,
+    cpu4Load: String,
+    cpu5Load: String,
+    cpu6Load: String,
+    cpu7Load: String
+  ) {
+    this.cpu0Load = cpu0Load;
+    this.cpu1Load = cpu1Load;
+    this.cpu2Load = cpu2Load;
+    this.cpu3Load = cpu3Load;
+    this.cpu4Load = cpu4Load;
+    this.cpu5Load = cpu5Load;
+    this.cpu6Load = cpu6Load;
+    this.cpu7Load = cpu7Load;
   }
 
   setGPUData(gpuFreq: String, gpuLoad: String) {
-    this.gpuFrequency = gpuFreq
-    this.gpuLoad = gpuLoad
+    this.gpuFrequency = gpuFreq;
+    this.gpuLoad = gpuLoad;
   }
 
   setDDRData(ddrFreq: String) {
-    this.ddrFrequency = ddrFreq
+    this.ddrFrequency = ddrFreq;
   }
 
-  setTempData(shellFrame: String, shellFront: String, shellBack: String, soc_thermal: String, system_h: String, gpu: String, ambient: String) {
-    this.shellFrameTemp = shellFrame
-    this.shellFrontTemp = shellFront
-    this.shellBackTemp = shellBack
-    this.socThermalTemp = soc_thermal
-    this.systemHTemp = system_h
-    this.gpuTemp = gpu
-    this.ambientTemp = ambient
-
+  setTempData(
+    shellFrame: String,
+    shellFront: String,
+    shellBack: String,
+    soc_thermal: String,
+    system_h: String,
+    gpu: String,
+    ambient: String
+  ) {
+    this.shellFrameTemp = shellFrame;
+    this.shellFrontTemp = shellFront;
+    this.shellBackTemp = shellBack;
+    this.socThermalTemp = soc_thermal;
+    this.systemHTemp = system_h;
+    this.gpuTemp = gpu;
+    this.ambientTemp = ambient;
   }
 
-  setPowerData(currentNow: String, voltageNow: String,batteryTemp:String) {
-    this.currentNow = currentNow
-    this.voltageNow = voltageNow
-    this.batteryTemp = batteryTemp
-
+  setPowerData(currentNow: String, voltageNow: String, batteryTemp: String) {
+    this.currentNow = currentNow;
+    this.voltageNow = voltageNow;
+    this.batteryTemp = batteryTemp;
   }
 
   setFpsData(fps: String, fpsJitter: String) {
-    this.fps = fps
-    this.fpsJitters = fpsJitter
+    this.fps = fps;
+    this.fpsJitters = fpsJitter;
   }
 
   setRamData(pss: String) {
-    this.pss = pss
+    this.pss = pss;
   }
 
-  setNetWorkData(networkUpSpeed:String, networkDownSpeed:String){
-    this.networkDownSpeed = networkDownSpeed
-    this.networkUpSpeed = networkUpSpeed
+  setNetWorkData(networkUpSpeed: String, networkDownSpeed: String) {
+    this.networkDownSpeed = networkDownSpeed;
+    this.networkUpSpeed = networkUpSpeed;
   }
 
   setDefaultValue() {
-    let properties = Object.keys(this)
-    properties.forEach(property => {
-      this[property] = "-1"
-    })
+    let properties = Object.keys(this);
+    properties.forEach((property) => {
+      this[property] = '-1';
+    });
   }
 }
 
@@ -371,26 +435,34 @@ export class TPowerAppInfo {
   public current: String;
   public percent: String;
   public color: Resource;
-  constructor(id ?: String, taskId ?: String, application ?: String, power ?: String, current ?: String, percent ?: String,color?: Resource) {
-    this.id = id
-    this.taskId = taskId
-    this.application = application
-    this.power = power
-    this.current = current
-    this.percent = percent
-    this.color = color
+  constructor(
+    id?: String,
+    taskId?: String,
+    application?: String,
+    power?: String,
+    current?: String,
+    percent?: String,
+    color?: Resource
+  ) {
+    this.id = id;
+    this.taskId = taskId;
+    this.application = application;
+    this.power = power;
+    this.current = current;
+    this.percent = percent;
+    this.color = color;
   }
-  setColor(color?: Resource){
-    this.color = color
+  setColor(color?: Resource) {
+    this.color = color;
   }
-  setPower(power?: String){
-    this.power = power
+  setPower(power?: String) {
+    this.power = power;
   }
-  setPercent(percent?: String){
-    this.percent = percent
+  setPercent(percent?: String) {
+    this.percent = percent;
   }
-  setCurrent(current?: String){
-    this.current = current
+  setCurrent(current?: String) {
+    this.current = current;
   }
 }
 
@@ -404,24 +476,24 @@ export class TPowerSensorInfo {
   public current: string;
   public percent: string;
   public color: Resource;
-  constructor( taskId ?: string, sensor ?:string, power ?: string, current ?: string, percent ?: string,color?: Resource) {
-    this.taskId = taskId
-    this.sensor = sensor
-    this.power = power
-    this.current = current
-    this.percent = percent
-    this.color = color
+  constructor(taskId?: string, sensor?: string, power?: string, current?: string, percent?: string, color?: Resource) {
+    this.taskId = taskId;
+    this.sensor = sensor;
+    this.power = power;
+    this.current = current;
+    this.percent = percent;
+    this.color = color;
   }
   setPerenct(percent: string) {
-    this.percent = percent
+    this.percent = percent;
   }
   setColor(color: Resource) {
-    this.color = color
+    this.color = color;
   }
   setPower(power: string) {
-    this.power = power
+    this.power = power;
   }
   setCurrent(current: string) {
-    this.current = current
+    this.current = current;
   }
 }

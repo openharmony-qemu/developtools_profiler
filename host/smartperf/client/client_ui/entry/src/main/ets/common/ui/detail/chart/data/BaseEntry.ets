@@ -15,23 +15,23 @@
 
 import { ImagePaint } from './Paint';
 
-export default abstract class BaseEntry{
+export default abstract class BaseEntry {
     /** the y value */
-    private y:number= 0;
+    private y: number = 0;
     /** optional spot for additional data this Entry represents */
-    private mData:Object = null;
+    private mData: Object = null;
     /** optional icon image */
-    private mIcon:ImagePaint = null;
+    private mIcon: ImagePaint = null;
 
-    constructor(y?:number,icon?:ImagePaint,data?:Object) {
-        if(y != undefined){
-          this.y=y;
+    constructor(y?: number, icon?: ImagePaint, data?: Object) {
+        if (y != undefined) {
+            this.y = y;
         }
-        if(icon != undefined){
-          this.mIcon = icon;
+        if (icon != undefined) {
+            this.mIcon = icon;
         }
-        if(data != undefined){
-          this.mData = data;
+        if (data != undefined) {
+            this.mData = data;
         }
     }
     /**
@@ -39,7 +39,7 @@ export default abstract class BaseEntry{
      *
      * @return
      */
-    public getY():number {
+    public getY(): number {
         return this.y;
     }
 
@@ -48,7 +48,7 @@ export default abstract class BaseEntry{
      *
      * @param icon
      */
-    public setIcon(icon:ImagePaint):void {
+    public setIcon(icon: ImagePaint): void {
         this.mIcon = icon;
     }
 
@@ -57,7 +57,7 @@ export default abstract class BaseEntry{
      *
      * @return
      */
-    public getIcon():ImagePaint{
+    public getIcon(): ImagePaint {
         return this.mIcon;
     }
 
@@ -66,7 +66,7 @@ export default abstract class BaseEntry{
      *
      * @param y
      */
-    public  setY( y:number):void {
+    public setY(y: number): void {
         this.y = y;
     }
 
@@ -76,7 +76,7 @@ export default abstract class BaseEntry{
      *
      * @return
      */
-    public getData():Object {
+    public getData(): Object {
         return this.mData;
     }
 
@@ -85,7 +85,7 @@ export default abstract class BaseEntry{
      *
      * @param data
      */
-    public  setData( data:Object):void {
+    public setData(data: Object): void {
         this.mData = data;
     }
 }

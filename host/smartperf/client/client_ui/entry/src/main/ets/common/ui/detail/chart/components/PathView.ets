@@ -93,12 +93,12 @@ export default struct PathView {
                 .position({ x: 0, y: 0 })
                 .visibility(this.model.isShowHeightlight ? Visibility.Visible : Visibility.None)
             } else if (item instanceof ImagePaint){
-//              Image($r('app.media.marker2'))
-//                .width(item.width)
-//                .height(item.height)
-//                .objectFit(ImageFit.Fill)
-//                .position({ x:item.x,y:item.y })
-//                .visibility(this.model.isShowClickValue ? Visibility.Visible : Visibility.None)
+              //              Image($r('app.media.marker2'))
+              //                .width(item.width)
+              //                .height(item.height)
+              //                .objectFit(ImageFit.Fill)
+              //                .position({ x:item.x,y:item.y })
+              //                .visibility(this.model.isShowClickValue ? Visibility.Visible : Visibility.None)
             } else if (item instanceof TextPaint){
               Text(item.text)
                 .position({ x: item.x, y: item.y })
@@ -155,7 +155,7 @@ export class PathViewModel extends ScaleMode{
   lineChartModel: LineChartModel=null;
 
   public setYLeftAxis(yleftAxis: YAxis): void{
-      this.yleftAxis = yleftAxis;
+    this.yleftAxis = yleftAxis;
   }
 
   public setYRightAxis(yRightAxis: YAxis): void{

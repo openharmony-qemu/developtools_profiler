@@ -14,44 +14,42 @@
  */
 
 import { fileOpen, travelFile } from '../profiler/base/BaseProfilerUtils';
-import { ProcessRunningInfo } from '../utils/../entity/SystemEntity'
+import { ProcessRunningInfo } from '../utils/../entity/SystemEntity';
 import appManager from '@ohos.application.appManager';
 
 export function getCpuCoreInfo(): Array<String> {
-  const basePath = "/sys/devices/system/cpu/cpufreq"
-  let defaultPolicy = new Array(
-    "policy0", "policy1", "policy2"
-  )
-  var supportPolicy = []
-  let policyArr = travelFile(basePath, "policy")
+  const basePath = '/sys/devices/system/cpu/cpufreq';
+  let defaultPolicy = new Array('policy0', 'policy1', 'policy2');
+  var supportPolicy = [];
+  let policyArr = travelFile(basePath, 'policy');
 
   policyArr.forEach((policy) => {
     defaultPolicy.forEach((defaultItem) => {
       if (defaultItem == policy) {
-        supportPolicy.push(defaultItem)
+        supportPolicy.push(defaultItem);
       }
-    })
-  })
-  var coreArr = new Array()
+    });
+  });
+  var coreArr = new Array();
   for (var index = 0; index < supportPolicy.length; index++) {
     const policy = supportPolicy[index];
-    var affected_cpus = fileOpen(basePath + "/" + policy + "/affected_cpus")
-    coreArr.push(affected_cpus.charAt(0))
+    var affected_cpus = fileOpen(basePath + '/' + policy + '/affected_cpus');
+    coreArr.push(affected_cpus.charAt(0));
   }
-  return coreArr
+  return coreArr;
 }
 
 export function getPidOfAbility(processName: string): Promise<String> {
-  return appManager.getProcessRunningInfos().then(data => {
-    let processArr: Array<ProcessRunningInfo> = data
-    var pid = "-1"
-    processArr.forEach(process=>{
-        if (process.processName == processName) {
-            pid = process.pid.toString()
-        }
-    })
-    return pid
-  })
+  return appManager.getProcessRunningInfos().then((data) => {
+    let processArr: Array<ProcessRunningInfo> = data;
+    var pid = '-1';
+    processArr.forEach((process) => {
+      if (process.processName == processName) {
+        pid = process.pid.toString();
+      }
+    });
+    return pid;
+  });
 }
 export function bubbleSort(arr: Array<number>): Array<number> {
   let final: Array<number> = new Array(...arr);
@@ -74,4 +72,3 @@ export function bubbleSort(arr: Array<number>): Array<number> {
   }
   return final;
 }
-

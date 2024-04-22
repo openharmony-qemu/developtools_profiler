@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-import ViewPortHandler from '../utils/ViewPortHandler'
+import ViewPortHandler from '../utils/ViewPortHandler';
 /**
  * Abstract baseclass of all Renderers.
  *
  * @author Philipp Jahoda
  */
 export default abstract class Renderer {
-
-/**
- * the component that handles the drawing area of the chart and it's offsets
- */
+  /**
+   * the component that handles the drawing area of the chart and it's offsets
+   */
   protected mViewPortHandler: ViewPortHandler;
 
   constructor(viewPortHandler: ViewPortHandler) {

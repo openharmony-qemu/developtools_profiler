@@ -14,16 +14,15 @@
  */
 
 import { DashPathEffect } from '../../data/Paint';
-import {LegendForm} from '../../components/Legend'
-import {AxisDependency} from '../../components/YAxis'
-import {Rounding} from '../../data/DataSet'
-import EntryOhos from '../../data/EntryOhos'
-import IValueFormatter from '../../formatter/IValueFormatter'
-import MPPointF from '../../utils/MPPointF'
-import {JArrayList} from '../../utils/JArrayList'
+import { LegendForm } from '../../components/Legend';
+import { AxisDependency } from '../../components/YAxis';
+import { Rounding } from '../../data/DataSet';
+import EntryOhos from '../../data/EntryOhos';
+import IValueFormatter from '../../formatter/IValueFormatter';
+import MPPointF from '../../utils/MPPointF';
+import { JArrayList } from '../../utils/JArrayList';
 
 export default interface IDataSet<T extends EntryOhos> {
-
     /** ###### ###### DATA RELATED METHODS ###### ###### */
 
     /**
@@ -31,28 +30,28 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @return
      */
-    getYMin() : number;
+    getYMin(): number;
 
     /**
      * returns the maximum y-value this DataSet holds
      *
      * @return
      */
-    getYMax() : number;
+    getYMax(): number;
 
     /**
      * returns the minimum x-value this DataSet holds
      *
      * @return
      */
-    getXMin() : number;
+    getXMin(): number;
 
     /**
      * returns the maximum x-value this DataSet holds
      *
      * @return
      */
-    getXMax() : number;
+    getXMax(): number;
 
     /**
      * Returns the number of y-values this DataSet represents -> the size of the y-values array
@@ -60,12 +59,12 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @return
      */
-    getEntryCount() : number;
+    getEntryCount(): number;
 
     /**
      * Calculates the minimum and maximum x and y values (mXMin, mXMax, mYMin, mYMax).
      */
-    calcMinMax() : void;
+    calcMinMax(): void;
 
     /**
      * Calculates the min and max y-values from the Entry closest to the given fromX to the Entry closest to the given toX value.
@@ -74,7 +73,7 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param fromX
      * @param toX
      */
-    calcMinMaxY(fromX : number, toX : number) : void;
+    calcMinMaxY(fromX: number, toX: number): void;
 
     /**
      * Returns the first Entry object found at the given x-value with binary
@@ -89,10 +88,10 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param rounding determine whether to round up/down/closest
      *                 if there is no Entry matching the provided x-value
      * @return
-     *
+    *
      *
      */
-    getEntryForXValue(xValue : number, closestToY : number, rounding?: Rounding) : T;
+    getEntryForXValue(xValue: number, closestToY: number, rounding?: Rounding): T;
 
     /**
      * Returns the first Entry object found at the given x-value with binary
@@ -118,7 +117,7 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param xValue
      * @return
      */
-    getEntriesForXValue(xValue : number):JArrayList<T> ;
+    getEntriesForXValue(xValue: number): JArrayList<T>;
 
     /**
      * Returns the Entry object found at the given index (NOT xIndex) in the values array.
@@ -126,7 +125,7 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param index
      * @return
      */
-    getEntryForIndex(index : number) : T;
+    getEntryForIndex(index: number): T;
 
     /**
      * Returns the first Entry index found at the given x-value with binary
@@ -142,7 +141,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *                 if there is no Entry matching the provided x-value
      * @return
      */
-    getEntryIndex(xValue : number, closestToY:number,  rounding:Rounding) : number;
+    getEntryIndex(xValue: number, closestToY: number, rounding: Rounding): number;
 
     /**
      * Returns the position of the provided entry in the DataSets Entry array.
@@ -151,8 +150,7 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param e
      * @return
      */
-    getEntryIndexByEntry(e : T) : number;
-
+    getEntryIndexByEntry(e: T): number;
 
     /**
      * This method returns the actual
@@ -163,7 +161,7 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param xIndex
      * @return
      */
-    getIndexInEntries(xIndex : number) : number;
+    getIndexInEntries(xIndex: number): number;
 
     /**
      * Adds an Entry to the DataSet dynamically.
@@ -173,8 +171,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param e
      */
-    addEntry(e : T) : boolean;
-
+    addEntry(e: T): boolean;
 
     /**
      * Adds an Entry to the DataSet dynamically.
@@ -184,7 +181,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param e
      */
-    addEntryOrdered(e : T) : void;
+    addEntryOrdered(e: T): void;
 
     /**
      * Removes the first Entry (at index 0) of this DataSet from the entries array.
@@ -192,7 +189,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @return
      */
-    removeFirst() : boolean;
+    removeFirst(): boolean;
 
     /**
      * Removes the last Entry (at index size-1) of this DataSet from the entries array.
@@ -210,7 +207,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param e
      */
-    removeEntry(e : T) : boolean;
+    removeEntry(e: T): boolean;
 
     /**
      * Removes the Entry object closest to the given x-value from the DataSet.
@@ -218,7 +215,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param xValue
      */
-    removeEntryByXValue(xValue : number) : boolean;
+    removeEntryByXValue(xValue: number): boolean;
 
     /**
      * Removes the Entry object at the given index in the values array from the DataSet.
@@ -227,7 +224,7 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param index
      * @return
      */
-    removeEntryByIndex(index : number) : boolean;
+    removeEntryByIndex(index: number): boolean;
 
     /**
      * Checks if this DataSet contains the specified Entry. Returns true if so,
@@ -237,13 +234,12 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param entry
      * @return
      */
-    contains(entry : T) : boolean;
+    contains(entry: T): boolean;
 
     /**
      * Removes all values from this DataSet and does all necessary recalculations.
      */
-    clear() : void;
-
+    clear(): void;
 
     /** ###### ###### STYLING RELATED (& OTHER) METHODS ###### ###### */
 
@@ -252,14 +248,14 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @return
      */
-     getLabel():string;
+    getLabel(): string;
 
     /**
      * Sets the label string that describes the DataSet.
      *
      * @param label
      */
-    setLabel( label:string) : void;
+    setLabel(label: string): void;
 
     /**
      * Returns the axis this DataSet should be plotted against.
@@ -274,14 +270,14 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param dependency
      */
-    setAxisDependency( dependency:AxisDependency) : void;
+    setAxisDependency(dependency: AxisDependency): void;
 
     /**
      * returns all the colors that are set for this DataSet
      *
      * @return
      */
-     getColors():JArrayList<Number>;
+    getColors(): JArrayList<Number>;
 
     /**
      * Returns the first color (index 0) of the colors-array this DataSet
@@ -289,7 +285,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @return
      */
-    getColor() : number;
+    getColor(): number;
 
     /**
      * Returns the color at the given index of the DataSet's color array.
@@ -298,14 +294,14 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param index
      * @return
      */
-    getColor(index : number) : number;
+    getColor(index: number): number;
 
     /**
      * returns true if highlighting of values is enabled, false if not
      *
      * @return
      */
-    isHighlightEnabled() : boolean;
+    isHighlightEnabled(): boolean;
 
     /**
      * If set to true, value highlighting is enabled which means that values can
@@ -313,7 +309,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param enabled
      */
-    setHighlightEnabled(enabled : boolean) : void;
+    setHighlightEnabled(enabled: boolean): void;
 
     /**
      * Sets the formatter to be used for drawing the values inside the chart. If
@@ -324,56 +320,56 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param f
      */
-    setValueFormatter(f:IValueFormatter) : void;
+    setValueFormatter(f: IValueFormatter): void;
 
     /**
      * Returns the formatter used for drawing the values inside the chart.
      *
      * @return
      */
-    getValueFormatter() : IValueFormatter;
+    getValueFormatter(): IValueFormatter;
 
     /**
      * Returns true if the valueFormatter object of this DataSet is null.
      *
      * @return
      */
-    needsFormatter() : boolean;
+    needsFormatter(): boolean;
 
     /**
      * Sets the color the value-labels of this DataSet should have.
      *
      * @param color
      */
-    setValueTextColor(color : number) : void;
+    setValueTextColor(color: number): void;
 
     /**
      * Sets a list of colors to be used as the colors for the drawn values.
      *
      * @param colors
      */
-    setValueTextColors(colors:JArrayList<Number> ) : void;
+    setValueTextColors(colors: JArrayList<Number>): void;
 
     /**
      * Sets a Typeface for the value-labels of this DataSet.
      *
      * @param tf
      */
-    setValueTypeface( tf:FontWeight) : void;
+    setValueTypeface(tf: FontWeight): void;
 
     /**
      * Sets the text-size of the value-labels of this DataSet in dp.
      *
      * @param size
      */
-    setValueTextSize(size : number) : void;
+    setValueTextSize(size: number): void;
 
     /**
      * Returns only the first color of all colors that are set to be used for the values.
      *
      * @return
      */
-    getValueTextColor() : number;
+    getValueTextColor(): number;
 
     /**
      * Returns the color at the specified index that is used for drawing the values inside the chart.
@@ -382,49 +378,49 @@ export default interface IDataSet<T extends EntryOhos> {
      * @param index
      * @return
      */
-    getValueTextColor(index : number) : number;
+    getValueTextColor(index: number): number;
 
     /**
      * Returns the typeface that is used for drawing the values inside the chart
      *
      * @return
      */
-     getValueTypeface():FontWeight;
+    getValueTypeface(): FontWeight;
 
     /**
      * Returns the text size that is used for drawing the values inside the chart
      *
      * @return
      */
-    getValueTextSize() : number;
+    getValueTextSize(): number;
 
     /**
      * The form to draw for this dataset in the legend.
      * <p/>
      * Return `DEFAULT` to use the default legend form.
      */
-     getForm():LegendForm;
+    getForm(): LegendForm;
 
     /**
      * The form size to draw for this dataset in the legend.
      * <p/>
      * Return `Float.NaN` to use the default legend form size.
      */
-    getFormSize() : number;
+    getFormSize(): number;
 
     /**
      * The line width for drawing the form of this dataset in the legend
      * <p/>
      * Return `Float.NaN` to use the default legend form line width.
      */
-    getFormLineWidth() : number;
+    getFormLineWidth(): number;
 
     /**
      * The line dash path effect used for shapes that consist of lines.
      * <p/>
      * Return `null` to use the default legend form line dash effect.
      */
-    getFormLineDashEffect() : DashPathEffect/*DashPathEffect*/;
+    getFormLineDashEffect(): DashPathEffect /*DashPathEffect*/;
 
     /**
      * set this to true to draw y-values on the chart.
@@ -433,14 +429,14 @@ export default interface IDataSet<T extends EntryOhos> {
      * if this is enabled
      * @param enabled
      */
-    setDrawValues(enabled : boolean) : void;
+    setDrawValues(enabled: boolean): void;
 
     /**
      * Returns true if y-value drawing is enabled, false if not
      *
      * @return
      */
-    isDrawValuesEnabled() : boolean;
+    isDrawValuesEnabled(): boolean;
 
     /**
      * Set this to true to draw y-icons on the chart.
@@ -450,14 +446,14 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param enabled
      */
-    setDrawIcons(enabled : boolean) : void;
+    setDrawIcons(enabled: boolean): void;
 
     /**
      * Returns true if y-icon drawing is enabled, false if not
      *
      * @return
      */
-    isDrawIconsEnabled() : boolean;
+    isDrawIconsEnabled(): boolean;
 
     /**
      * Offset of icons drawn on the chart.
@@ -467,12 +463,12 @@ export default interface IDataSet<T extends EntryOhos> {
      * For Pie and Radar chart it will be (y offset, distance from center offset); so if you want icon to be rendered under value, you should increase X component of CGPoint, and if you want icon to be rendered closet to center, you should decrease height component of CGPoint.
      * @param offset
      */
-    setIconsOffset( offset:MPPointF) : void;
+    setIconsOffset(offset: MPPointF): void;
 
     /**
      * Get the offset for drawing icons.
      */
-     getIconsOffset():MPPointF;
+    getIconsOffset(): MPPointF;
 
     /**
      * Set the visibility of this DataSet. If not visible, the DataSet will not
@@ -480,7 +476,7 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @param visible
      */
-    setVisible(visible : boolean) : void;
+    setVisible(visible: boolean): void;
 
     /**
      * Returns true if this DataSet is visible inside the chart, or false if it
@@ -488,5 +484,5 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * @return
      */
-    isVisible() : boolean;
+    isVisible(): boolean;
 }

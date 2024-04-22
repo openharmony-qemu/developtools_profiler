@@ -91,12 +91,12 @@ export default struct LineChart {
     for(let i=0; i<this.lineChartModel.lineData.getDataSets().size(); i++) {
       let dataSet = this.lineChartModel.lineData.getDataSetByIndex(i)
       let entry = new LegendEntry(
-        dataSet.getLabel(),                  // 设置图例的字符串,mLabel
-        dataSet.getForm(),                   // 设置图例的形状,mShape,默认值LegendForm.SQUARE
-        dataSet.getFormSize(),               // 图例大小,mFormSize,默认值8
-        dataSet.getFormLineWidth(),          // 图例线宽,mFormLineWidth,默认值3
+      dataSet.getLabel(),                  // 设置图例的字符串,mLabel
+      dataSet.getForm(),                   // 设置图例的形状,mShape,默认值LegendForm.SQUARE
+      dataSet.getFormSize(),               // 图例大小,mFormSize,默认值8
+      dataSet.getFormLineWidth(),          // 图例线宽,mFormLineWidth,默认值3
         null,                                // 设置虚线,dataSet.getFormLineDashEffect()
-        dataSet.getColor()                   // 设置图例图形的颜色,
+      dataSet.getColor()                   // 设置图例图形的颜色,
       )
       entries.add(entry)
     }

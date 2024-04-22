@@ -33,21 +33,21 @@ export default class Paint {
   typeface: FontWeight = FontWeight.Normal;
   textAlign: TextAlign = TextAlign.Start;
   align: Align = Align.LEFT;
-  strokeDashArray: number[] = [0,0];
+  strokeDashArray: number[] = [0, 0];
   strokeDashOffset: number = 0;
   dashPathEffect: DashPathEffect;
   x: number = 0;
   y: number = 0;
   width: number | string = null;
   height: number | string = null;
-  visibility: Visibility = Visibility.Visible
+  visibility: Visibility = Visibility.Visible;
   clickPosition = -1;
   value = 0;
   translateX = 0;
   translateY = 0;
 
-  constructor(paint?:Paint){
-    if(paint != null && paint != undefined){
+  constructor(paint?: Paint) {
+    if (paint != null && paint != undefined) {
       this.color = paint.color;
       this.textSize = paint.textSize;
       this.fill = paint.fill;
@@ -71,7 +71,7 @@ export default class Paint {
     }
   }
 
-  public set(paint:Paint){
+  public set(paint: Paint) {
     this.color = paint.color;
     this.textSize = paint.textSize;
     this.fill = paint.fill;
@@ -95,60 +95,60 @@ export default class Paint {
   }
 
   setColor(value: Color | number | string | Resource) {
-    this.color = value
-    switch(this.style){
+    this.color = value;
+    switch (this.style) {
       case Style.STROKE:
-        this.setStroke(value)
+        this.setStroke(value);
         break;
       case Style.FILL:
-        this.setFill(value)
+        this.setFill(value);
         break;
       case Style.FILL_AND_STROKE:
-        this.setStroke(value)
-        this.setFill(value)
+        this.setStroke(value);
+        this.setFill(value);
         break;
     }
   }
 
-  getColor(): Color | number | string | Resource{
+  getColor(): Color | number | string | Resource {
     return this.color;
   }
 
   setTextSize(value: number) {
-    this.textSize = value
+    this.textSize = value;
   }
 
-  getTextSize(): number{
+  getTextSize(): number {
     return this.textSize;
   }
 
-  setFill(value: Color | number | string | Resource){
-    this.fill = value
+  setFill(value: Color | number | string | Resource) {
+    this.fill = value;
   }
 
-  setStroke(value: Color | number | string | Resource){
-    this.stroke = value
+  setStroke(value: Color | number | string | Resource) {
+    this.stroke = value;
   }
 
   setStrokeWidth(value: number) {
-    this.strokeWidth = value
+    this.strokeWidth = value;
   }
 
-  getStrokeWidth(): number{
+  getStrokeWidth(): number {
     return this.strokeWidth;
   }
 
-  setStrokeRadius(value: number){
+  setStrokeRadius(value: number) {
     this.strokeRadius = value;
   }
 
-  getStrokeRadius(): number{
+  getStrokeRadius(): number {
     return this.strokeRadius;
   }
 
   setStyle(value: Style) {
-    this.style = value
-    switch(value){
+    this.style = value;
+    switch (value) {
       case Style.STROKE:
         this.setStroke(this.color);
         break;
@@ -162,110 +162,109 @@ export default class Paint {
     }
   }
 
-  getStyle(): Style{
-    return this.style
+  getStyle(): Style {
+    return this.style;
   }
 
   setAlpha(value: number) {
-    this.alpha = value
+    this.alpha = value;
   }
 
-  getAlpha(): number{
+  getAlpha(): number {
     return this.alpha;
   }
 
   setTypeface(value: FontWeight) {
-    this.typeface = value
+    this.typeface = value;
   }
 
-  getTypeface(): number{
+  getTypeface(): number {
     return this.typeface;
   }
 
   setTextAlign(value: TextAlign) {
-    this.textAlign = value
+    this.textAlign = value;
   }
 
-  getTextAlign(): TextAlign{
+  getTextAlign(): TextAlign {
     return this.textAlign;
   }
 
   setAlign(value: Align) {
-    this.align = value
+    this.align = value;
   }
 
-  getAlign(): Align{
+  getAlign(): Align {
     return this.align;
   }
 
   setStrokeDashArray(value: number[]) {
-    this.strokeDashArray = value
+    this.strokeDashArray = value;
   }
 
-  getStrokeDashArray(): number[]{
-    return this.strokeDashArray
+  getStrokeDashArray(): number[] {
+    return this.strokeDashArray;
   }
 
   setStrokeDashOffset(value: number) {
-    this.strokeDashOffset = value
+    this.strokeDashOffset = value;
   }
 
-  getStrokeDashOffset(): number{
-    return this.strokeDashOffset
+  getStrokeDashOffset(): number {
+    return this.strokeDashOffset;
   }
 
   setDashPathEffect(value: DashPathEffect) {
     this.dashPathEffect = value;
-    if(this.dashPathEffect != null){
-      this.setStrokeDashArray(this.dashPathEffect.dash)
-      this.setStrokeDashOffset(this.dashPathEffect.offset)
+    if (this.dashPathEffect != null) {
+      this.setStrokeDashArray(this.dashPathEffect.dash);
+      this.setStrokeDashOffset(this.dashPathEffect.offset);
     }
   }
 
-  getDashPathEffect(): DashPathEffect{
+  getDashPathEffect(): DashPathEffect {
     return this.dashPathEffect;
   }
 
   setX(value: number) {
-    this.x = value
+    this.x = value;
   }
 
-  getX(): number{
-    return this.x
+  getX(): number {
+    return this.x;
   }
 
   setY(value: number) {
-    this.y = value
+    this.y = value;
   }
 
-  getY(): number{
-    return this.y
+  getY(): number {
+    return this.y;
   }
 
   setWidth(value: number | string) {
     this.width = value;
   }
 
-  getWidth(): number | string{
-    return this.width
+  getWidth(): number | string {
+    return this.width;
   }
 
   setHeight(value: number | string) {
-    this.height = value
+    this.height = value;
   }
 
-  getHeight(): number | string{
-    return this.height
+  getHeight(): number | string {
+    return this.height;
   }
 
-  setVisibility(visibility: Visibility){
+  setVisibility(visibility: Visibility) {
     this.visibility = visibility;
   }
 
-  setClickPosition(position: number){
+  setClickPosition(position: number) {
     this.clickPosition = position;
   }
-
 }
 
 /**
@@ -273,38 +272,38 @@ export default class Paint {
  */
 export class LinePaint extends Paint {
   startPoint: number[] = [0, 0];
-  endPoint: number[] = [0, 0]
+  endPoint: number[] = [0, 0];
 
-  constructor(paint?:LinePaint){
-    super(paint)
-    if(paint != null && paint != undefined){
+  constructor(paint?: LinePaint) {
+    super(paint);
+    if (paint != null && paint != undefined) {
       this.startPoint = paint.startPoint;
       this.endPoint = paint.endPoint;
     }
   }
 
   setStartPoint(value: number[]) {
-    this.startPoint = value
+    this.startPoint = value;
   }
 
-  getStartPoint(): number[]{
-    return this.startPoint
+  getStartPoint(): number[] {
+    return this.startPoint;
   }
 
   setEndPoint(value: number[]) {
-    this.endPoint = value
+    this.endPoint = value;
   }
 
-  getEndPoint(): number[]{
-    return this.endPoint
+  getEndPoint(): number[] {
+    return this.endPoint;
   }
 }
 
 export class TextPaint extends Paint {
-  text: string = "";
-  constructor(paint?:TextPaint){
-    super(paint)
-    if(paint != null && paint != undefined){
+  text: string = '';
+  constructor(paint?: TextPaint) {
+    super(paint);
+    if (paint != null && paint != undefined) {
       this.text = paint.text;
     }
   }
@@ -312,214 +311,213 @@ export class TextPaint extends Paint {
   translateY: number = 0;
   rotate: number = 0;
   setText(value: string) {
-    this.text = value
+    this.text = value;
   }
 
-  getText(): string{
-    return this.text
+  getText(): string {
+    return this.text;
   }
 
   setTranslateX(value: number) {
-    this.translateX = value
+    this.translateX = value;
   }
 
-  getTranslateX(): number{
-    return this.translateX
+  getTranslateX(): number {
+    return this.translateX;
   }
   setTranslateY(value: number) {
-    this.translateY = value
+    this.translateY = value;
   }
 
-  getTranslateY(): number{
-    return this.translateY
+  getTranslateY(): number {
+    return this.translateY;
   }
   setRotate(value: number) {
-    this.rotate = value
+    this.rotate = value;
   }
 
-  getRotate(): number{
-    return this.rotate
+  getRotate(): number {
+    return this.rotate;
   }
 }
 
 export class PathPaint extends Paint {
-  commands: string = "";
-  commandsFill: string = "";
+  commands: string = '';
+  commandsFill: string = '';
   filled: boolean = false;
   linearGradientColors: Array<ColorStop> = null;
   enabled: boolean = false;
   circleColor: string | number | Color = Color.White;
-  colors:JArrayList<Number> = null;
+  colors: JArrayList<Number> = null;
   radius: number = 2;
   circleHoleRadius: number = 1;
   circleHoleColor: string | number | Color = Color.White;
   circleHoleEnabled: boolean = true;
   drawValueEnable: boolean = true;
-  rotate:number
-  rotateText:number
-  percentage:string = ''
-  filledColor:number = 0
-  label:string = ''
-  axisDependency:AxisDependency = AxisDependency.LEFT
-  lineSvg:string = ''
+  rotate: number;
+  rotateText: number;
+  percentage: string = '';
+  filledColor: number = 0;
+  label: string = '';
+  axisDependency: AxisDependency = AxisDependency.LEFT;
+  lineSvg: string = '';
   fillStyle: FillStyle = FillStyle.MIN;
-  positionX:number
-  positionY:number
-  labelX:number
-  labelY:number
-  iconX:number = 0
-  iconY:number = 0
+  positionX: number;
+  positionY: number;
+  labelX: number;
+  labelY: number;
+  iconX: number = 0;
+  iconY: number = 0;
 
-  constructor(paint?:PathPaint){
-    super(paint)
-    if(paint != null && paint != undefined){
+  constructor(paint?: PathPaint) {
+    super(paint);
+    if (paint != null && paint != undefined) {
       this.commands = paint.commands;
     }
   }
 
-  setIconY(iconY:number){
-    this.iconY = iconY
+  setIconY(iconY: number) {
+    this.iconY = iconY;
   }
-  setIconX(iconX:number){
-    this.iconX = iconX
+  setIconX(iconX: number) {
+    this.iconX = iconX;
   }
-  setLabelX(labelX:number){
-    this.labelX = labelX
+  setLabelX(labelX: number) {
+    this.labelX = labelX;
   }
-  setLabelY(labelY:number){
-    this.labelY = labelY
+  setLabelY(labelY: number) {
+    this.labelY = labelY;
   }
-  setPositionX(positionX:number){
-    this.positionX = positionX
+  setPositionX(positionX: number) {
+    this.positionX = positionX;
   }
-  setPositionY(positionY:number){
-    this.positionY = positionY
-  }
-
-  setLineSvg(lineSvg:string){
-    this.lineSvg = lineSvg
-  }
-  setLabel(label:string){
-    this.label = label
+  setPositionY(positionY: number) {
+    this.positionY = positionY;
   }
 
-  getLabel():string{
-    return this.label
+  setLineSvg(lineSvg: string) {
+    this.lineSvg = lineSvg;
   }
-  setFilledColor(filledColor:number){
-    this.filledColor = filledColor
+  setLabel(label: string) {
+    this.label = label;
   }
-  getFilledColor():number{
-    return this.filledColor
+
+  getLabel(): string {
+    return this.label;
   }
-  setRotateText(rotateText: number){
+  setFilledColor(filledColor: number) {
+    this.filledColor = filledColor;
+  }
+  getFilledColor(): number {
+    return this.filledColor;
+  }
+  setRotateText(rotateText: number) {
     this.rotateText = rotateText;
   }
 
-  getRotateText():number{
-    return this.rotateText
+  getRotateText(): number {
+    return this.rotateText;
   }
 
-  setPercentage(percentage:string){
-    this.percentage = percentage
+  setPercentage(percentage: string) {
+    this.percentage = percentage;
   }
 
-  getPercentage():string{
-    return this.percentage
+  getPercentage(): string {
+    return this.percentage;
   }
 
-  setRotate(value:number){
-    this.rotate = value
+  setRotate(value: number) {
+    this.rotate = value;
   }
 
-  setCommands(value: string){
+  setCommands(value: string) {
     this.commands = value;
   }
 
-  setCommandsFill(commandsFill: string){
+  setCommandsFill(commandsFill: string) {
     this.commandsFill = commandsFill;
   }
 
-  public setFillStyle(fillStyle: FillStyle){
+  public setFillStyle(fillStyle: FillStyle) {
     this.fillStyle = fillStyle;
   }
 
-  setDrawFilled(filled:boolean){
-    this.filled = filled
+  setDrawFilled(filled: boolean) {
+    this.filled = filled;
   }
 
-  isDrawFilledEnabled(): boolean{
-    return this.filled
+  isDrawFilledEnabled(): boolean {
+    return this.filled;
   }
 
-  setGradientFillColor(linearGradientColors: Array<ColorStop>): void{
+  setGradientFillColor(linearGradientColors: Array<ColorStop>): void {
     this.linearGradientColors = linearGradientColors;
   }
 
-  setColors(colors: JArrayList<Number>){
-    this.colors = colors
+  setColors(colors: JArrayList<Number>) {
+    this.colors = colors;
   }
 
-  setDrawCircles(enabled: boolean){
-    this.enabled = enabled
+  setDrawCircles(enabled: boolean) {
+    this.enabled = enabled;
   }
 
-  isDrawCirclesEnabled(): boolean{
-    return this.enabled
+  isDrawCirclesEnabled(): boolean {
+    return this.enabled;
   }
 
-  setCirclesColor(circleColor: string | number | Color){
+  setCirclesColor(circleColor: string | number | Color) {
     this.circleColor = circleColor;
   }
 
-  setCircleRadius(radius: number){
+  setCircleRadius(radius: number) {
     this.radius = radius;
   }
 
-  setCircleHoleRadius(circleHoleRadius: number){
+  setCircleHoleRadius(circleHoleRadius: number) {
     this.circleHoleRadius = circleHoleRadius;
   }
 
-  setCircleHoleColor(circleHoleColor: string | number | Color){
+  setCircleHoleColor(circleHoleColor: string | number | Color) {
     this.circleHoleColor = circleHoleColor;
   }
 
-  setDrawCircleHole(circleHoleEnabled: boolean){
+  setDrawCircleHole(circleHoleEnabled: boolean) {
     this.circleHoleEnabled = circleHoleEnabled;
   }
 
-  setDrawValueEnable(drawValueEnable: boolean){
+  setDrawValueEnable(drawValueEnable: boolean) {
     this.drawValueEnable = drawValueEnable;
   }
 
-  setAxisDependency(axisDependency:AxisDependency){
+  setAxisDependency(axisDependency: AxisDependency) {
     this.axisDependency = axisDependency;
   }
-
 }
 
 export class PathFillPaint extends Paint {
-  commandsFill: string = "";
+  commandsFill: string = '';
   filled: boolean = false;
   linearGradientColors: Array<ColorStop> = null;
 
-  constructor(paint?:PathFillPaint){
-    super(paint)
+  constructor(paint?: PathFillPaint) {
+    super(paint);
   }
 
-  setCommandsFill(commandsFill: string){
+  setCommandsFill(commandsFill: string) {
     this.commandsFill = commandsFill;
   }
 
-  setDrawFilled(filled:boolean){
-    this.filled = filled
+  setDrawFilled(filled: boolean) {
+    this.filled = filled;
   }
 
-  isDrawFilledEnabled(): boolean{
-    return this.filled
+  isDrawFilledEnabled(): boolean {
+    return this.filled;
   }
 
-  setGradientFillColor(linearGradientColors: Array<ColorStop>): void{
+  setGradientFillColor(linearGradientColors: Array<ColorStop>): void {
     this.linearGradientColors = linearGradientColors;
   }
 }
@@ -527,186 +525,180 @@ export class PathFillPaint extends Paint {
 export enum Style {
   FILL,
   STROKE,
-  FILL_AND_STROKE
+  FILL_AND_STROKE,
 }
 
 /**
  * 用于绘制Legend的属性类
  */
 export class RectPaint extends Paint {
-  startPoint: number[] = [0, 0]
-  linearGradientColors: Array<ColorStop>
+  startPoint: number[] = [0, 0];
+  linearGradientColors: Array<ColorStop>;
 
-  constructor(paint?:RectPaint){
-    super(paint)
-    if(paint != null && paint != undefined){
+  constructor(paint?: RectPaint) {
+    super(paint);
+    if (paint != null && paint != undefined) {
       this.startPoint = paint.startPoint;
     }
   }
 
   setStartPoint(value: number[]) {
-    this.x = value[0]
-    this.y = value[1]
-    this.startPoint = value
+    this.x = value[0];
+    this.y = value[1];
+    this.startPoint = value;
   }
 
-  getStartPoint(): number[]{
-    return this.startPoint
+  getStartPoint(): number[] {
+    return this.startPoint;
   }
 
-  setGradientFillColor(linearGradientColors: Array<ColorStop>): void{
+  setGradientFillColor(linearGradientColors: Array<ColorStop>): void {
     this.linearGradientColors = linearGradientColors;
   }
-
 }
 
 export class BackGroundPaint extends RectPaint {
-  backgroundColor: number = 0xffffff
+  backgroundColor: number = 0xffffff;
 
-  constructor(paint?:BackGroundPaint){
-    super(paint)
-    if(paint != null && paint != undefined){
+  constructor(paint?: BackGroundPaint) {
+    super(paint);
+    if (paint != null && paint != undefined) {
       this.backgroundColor = paint.backgroundColor;
     }
   }
 
   setBackgroundColor(value: number) {
-    this.backgroundColor = value
+    this.backgroundColor = value;
   }
 
-  getBackgroundColor(): number{
-    return this.backgroundColor
+  getBackgroundColor(): number {
+    return this.backgroundColor;
   }
 }
 export class LinearGradientPaint extends RectPaint {
-  constructor(paint?:BackGroundPaint){
-    super(paint)
+  constructor(paint?: BackGroundPaint) {
+    super(paint);
   }
 }
 export class IndexPositionPaint extends RectPaint {
-  dataSetIndex:number
-  dataIndex:number
-  constructor(paint?:IndexPositionPaint){
-    super(paint)
+  dataSetIndex: number;
+  dataIndex: number;
+  constructor(paint?: IndexPositionPaint) {
+    super(paint);
   }
   setDataSetIndex(value: number) {
-    this.dataSetIndex = value
+    this.dataSetIndex = value;
   }
 
-  getDataSetIndex(): number{
-    return this.dataSetIndex
+  getDataSetIndex(): number {
+    return this.dataSetIndex;
   }
   setDataIndex(value: number) {
-    this.dataIndex = value
+    this.dataIndex = value;
   }
 
-  getDataIndex(): number{
-    return this.dataIndex
+  getDataIndex(): number {
+    return this.dataIndex;
   }
 }
 
 export class CirclePaint extends Paint {
-
   enabled: boolean = false;
   circleColor: string | number | Color = Color.White;
-  colors:JArrayList<number> = null;
+  colors: JArrayList<number> = null;
   radius: number = 2;
   circleHoleRadius: number = 1;
   circleHoleColor: string | number | Color = Color.White;
   circleHoleEnabled: boolean = true;
 
-  constructor(paint?:Paint){
-    super(paint)
+  constructor(paint?: Paint) {
+    super(paint);
   }
 
-  setDrawCircles(enabled: boolean){
-    this.enabled = enabled
+  setDrawCircles(enabled: boolean) {
+    this.enabled = enabled;
   }
 
-  isDrawCirclesEnabled(): boolean{
-    return this.enabled
+  isDrawCirclesEnabled(): boolean {
+    return this.enabled;
   }
 
-  setCirclesColor(circleColor: string | number | Color){
+  setCirclesColor(circleColor: string | number | Color) {
     this.circleColor = circleColor;
   }
 
-  setCircleRadius(radius: number){
+  setCircleRadius(radius: number) {
     this.radius = radius;
   }
 
-  setCircleHoleRadius(circleHoleRadius: number){
+  setCircleHoleRadius(circleHoleRadius: number) {
     this.circleHoleRadius = circleHoleRadius;
   }
 
-  setCircleHoleColor(circleHoleColor: string | number | Color){
+  setCircleHoleColor(circleHoleColor: string | number | Color) {
     this.circleHoleColor = circleHoleColor;
   }
 
-  setDrawCircleHole(circleHoleEnabled: boolean){
+  setDrawCircleHole(circleHoleEnabled: boolean) {
     this.circleHoleEnabled = circleHoleEnabled;
   }
 }
 
-
 export class ImagePaint extends Paint {
-
-  icon: string|Resource = null;
-  constructor(paint?:ImagePaint){
-    super(paint)
-    if(paint != null && paint != undefined){
+  icon: string | Resource = null;
+  constructor(paint?: ImagePaint) {
+    super(paint);
+    if (paint != null && paint != undefined) {
       this.icon = paint.icon;
     }
   }
 
-  setIcon(value: string|Resource){
+  setIcon(value: string | Resource) {
     this.icon = value;
   }
 
-  getIcon(): string|Resource{
+  getIcon(): string | Resource {
     return this.icon;
   }
-
 }
 
 export enum Align {
-    LEFT,
-    CENTER,
-    RIGHT
+  LEFT,
+  CENTER,
+  RIGHT,
 }
 
-export class DashPathEffect{
-
+export class DashPathEffect {
   dash: number[];
-  offset: number
+  offset: number;
 
-  constructor(dash:number[],offset:number){
+  constructor(dash: number[], offset: number) {
     this.dash = dash;
     this.offset = offset;
   }
 }
 
 export class FontMetrics {
-    /**
-     * The maximum distance above the baseline for the tallest glyph in
-     * the font at a given text size.
-     */
-    public top : number;
-    /**
-     * The recommended distance above the baseline for singled spaced text.
-     */
-    public ascent : number;
-    /**
-     * The recommended distance below the baseline for singled spaced text.
-     */
-    public descent : number;
-    /**
-     * The maximum distance below the baseline for the lowest glyph in
-     * the font at a given text size.
-     */
-    public bottom : number;
-    /**
-     * The recommended additional space to add between lines of text.
-     */
-    public leading : number;
+  /**
+   * The maximum distance above the baseline for the tallest glyph in
+   * the font at a given text size.
+   */
+  public top: number;
+  /**
+   * The recommended distance above the baseline for singled spaced text.
+   */
+  public ascent: number;
+  /**
+   * The recommended distance below the baseline for singled spaced text.
+   */
+  public descent: number;
+  /**
+   * The maximum distance below the baseline for the lowest glyph in
+   * the font at a given text size.
+   */
+  public bottom: number;
+  /**
+   * The recommended additional space to add between lines of text.
+   */
+  public leading: number;
 }

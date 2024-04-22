@@ -13,61 +13,61 @@
  * limitations under the License.
  */
 import { createGPData, extractNumber } from '../base/BaseProfilerUtils';
-import { BaseProfiler } from '../base/BaseProfiler'
-import { CollectorType } from '../base/ProfilerConstant'
-import { SocketProfiler } from '../base/SocketProfiler'
-import SPLogger from '../../../common/utils/SPLogger'
+import { BaseProfiler } from '../base/BaseProfiler';
+import { CollectorType } from '../base/ProfilerConstant';
+import { SocketProfiler } from '../base/SocketProfiler';
+import SPLogger from '../../../common/utils/SPLogger';
 
-import worker from '@ohos.worker'; 
+import worker from '@ohos.worker';
 import WorkerHandler from '../WorkerHandler';
-let MainWorker = globalThis.MainWorker
+let MainWorker = globalThis.MainWorker;
 
 MainWorker.onmessage = function (result) {
-  WorkerHandler.socketHandler(result)
-}
+  WorkerHandler.socketHandler(result);
+};
 
 export class FPS extends BaseProfiler implements SocketProfiler {
-  private fpsMap: Map<String, String> = new Map
+  private fpsMap: Map<String, String> = new Map;
 
-  public static instance: FPS = null
+  public static instance: FPS = null;
   public static getInstance() {
     if (this.instance == null) {
-      this.instance = new FPS()
+      this.instance = new FPS();
     }
-    return this.instance
+    return this.instance;
   }
 
   init() {
     //初始化FPS
-    return CollectorType.TYPE_FPS
+    return CollectorType.TYPE_FPS;
   }
 
-  isSupport(){
+  isSupport() {
     if (globalThis.useDaemon) {
-      return true
+      return true;
     }
-    return false
+    return false;
   }
 
   readData() {
     if (globalThis.useDaemon) {
-      this.readMessageQueue()
+      this.readMessageQueue();
     }
-    return createGPData("FPS", this.fpsMap)
+    return createGPData('FPS', this.fpsMap);
   }
 
   readMessageQueue() {
-    MainWorker.postMessage({ "fps": true, "pkg": globalThis.collectPkg })
-    SPLogger.DEBUG(FPS.name, "messageQueue for fps" + globalThis.fpsArr.length)
+    MainWorker.postMessage({ fps: true, pkg: globalThis.collectPkg });
+    SPLogger.DEBUG(FPS.name, 'messageQueue for fps' + globalThis.fpsArr.length);
     if (globalThis.fpsArr.length > 0) {
-      let fpsQueue: Array<String> = globalThis.fpsArr
-      let fpsJitterQueue: Array<String> = globalThis.fpsJitterArr
-      let curFPS = fpsQueue.pop()
-      globalThis.timerFps = curFPS
-      let curFPSJitter = fpsJitterQueue.pop()
-      let fpsJitters = "\"" + curFPSJitter.split("==").join(",") + "\""
-      this.fpsMap.set("fpsJitters", fpsJitters)
-      this.fpsMap.set("fps", extractNumber(curFPS))
+      let fpsQueue: Array<String> = globalThis.fpsArr;
+      let fpsJitterQueue: Array<String> = globalThis.fpsJitterArr;
+      let curFPS = fpsQueue.pop();
+      globalThis.timerFps = curFPS;
+      let curFPSJitter = fpsJitterQueue.pop();
+      let fpsJitters = '"' + curFPSJitter.split('==').join(',') + '"';
+      this.fpsMap.set('fpsJitters', fpsJitters);
+      this.fpsMap.set('fps', extractNumber(curFPS));
     }
   }
 }

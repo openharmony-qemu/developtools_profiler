@@ -13,12 +13,11 @@
  * limitations under the License.
  */
 
-import BarLineScatterCandleBubbleDataProvider from './BarLineScatterCandleBubbleDataProvider'
-import YAxis,{AxisDependency} from '../../components/YAxis'
+import BarLineScatterCandleBubbleDataProvider from './BarLineScatterCandleBubbleDataProvider';
+import YAxis, { AxisDependency } from '../../components/YAxis';
 import LineData from '../../data/LineData';
 
 export default interface LineDataProvider extends BarLineScatterCandleBubbleDataProvider {
-
     getLineData(): LineData;
 
     getAxis(dependency: AxisDependency): YAxis;

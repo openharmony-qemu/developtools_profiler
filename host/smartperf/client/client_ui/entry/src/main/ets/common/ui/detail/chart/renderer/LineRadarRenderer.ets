@@ -13,41 +13,40 @@
  * limitations under the License.
  */
 
-import Paint, { ImagePaint , PathPaint}  from '../data/Paint';
-import LineScatterCandleRadarRenderer from './LineScatterCandleRadarRenderer'
-import Utils from '../utils/Utils'
-import ChartAnimator from '../animation/ChartAnimator'
-import ViewPortHandler from '../utils/ViewPortHandler'
+import Paint, { ImagePaint, PathPaint } from '../data/Paint';
+import LineScatterCandleRadarRenderer from './LineScatterCandleRadarRenderer';
+import Utils from '../utils/Utils';
+import ChartAnimator from '../animation/ChartAnimator';
+import ViewPortHandler from '../utils/ViewPortHandler';
 
 /**
  * Created by Philipp Jahoda on 25/01/16.
  */
 export default abstract class LineRadarRenderer extends LineScatterCandleRadarRenderer {
-
-  constructor(animator:ChartAnimator, viewPortHandler:ViewPortHandler) {
+  constructor(animator: ChartAnimator, viewPortHandler: ViewPortHandler) {
     super(animator, viewPortHandler);
   }
 
-/**
-  * Draws the provided path in filled mode with the provided drawable.
-  *
-  * @param c
-  * @param filledPath
-  * @param drawable
-  */
-  protected drawFilledPath(filledPath:string , icon?:ImagePaint,fillColor?:number, fillAlpha?:number):Paint[] {
-    if(icon != null){
+  /**
+   * Draws the provided path in filled mode with the provided drawable.
+   *
+   * @param c
+   * @param filledPath
+   * @param drawable
+   */
+  protected drawFilledPath(filledPath: string, icon?: ImagePaint, fillColor?: number, fillAlpha?: number): Paint[] {
+    if (icon != null) {
       icon.setX(this.mViewPortHandler.contentLeft());
       icon.setY(this.mViewPortHandler.contentTop());
       icon.setWidth(this.mViewPortHandler.contentRight() - this.mViewPortHandler.contentLeft());
       icon.setHeight(this.mViewPortHandler.contentBottom() - this.mViewPortHandler.contentTop());
-      return [icon]
-    }else{
-      let color:number = (fillAlpha << 24) | (fillColor & 0xffffff);
-      let pathPaint:PathPaint = new PathPaint();
+      return [icon];
+    } else {
+      let color: number = (fillAlpha << 24) | (fillColor & 0xffffff);
+      let pathPaint: PathPaint = new PathPaint();
       pathPaint.setCommands(filledPath);
       pathPaint.setFill(color);
-      return [pathPaint]
+      return [pathPaint];
     }
   }
 }

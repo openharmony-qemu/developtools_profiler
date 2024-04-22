@@ -60,23 +60,23 @@ export struct Power {
       console.log('globalThis.TIndexInfo--length: ' +  this.gpData.length);
       const gpDataCur = this.gpData[index];
       let currentNow = Number(gpDataCur.currentNow).valueOf()
-       curVoltage = Number(gpDataCur.voltageNow).valueOf() / 1e6
+      curVoltage = Number(gpDataCur.voltageNow).valueOf() / 1e6
       let batteryTemp = Number(gpDataCur.batteryTemp).valueOf()/10;
       avgBatteryTemp+=batteryTemp
-      batteryTemp>maxBatteryTemp?maxBatteryTemp=batteryTemp:null
+        batteryTemp>maxBatteryTemp?maxBatteryTemp=batteryTemp:null
       normalCurrentNow += Math.abs(currentNow) * Math.abs(curVoltage) / 3.8;     //机测电压 原型机3.8  wgr4.0
-      (0-currentNow )> maxCurrentNow ? maxCurrentNow = (0-currentNow ) : null
+        (0-currentNow )> maxCurrentNow ? maxCurrentNow = (0-currentNow ) : null
 
     }
 
-      this.summaryItems.push(
-        new SummaryItem($r("app.media.icon_normalized_current"), "归一化电流", (normalCurrentNow / this.gpData.length).toFixed(0) + "mA", "#fff8f8"),
-        new SummaryItem($r("app.media.icon_normalized_current"), "最大电流", maxCurrentNow.toFixed(0) + "mA", "#fff8f8"),
-        new SummaryItem($r("app.media.icon_normalized_current"), "电压", (curVoltage *1000 / (this.gpData.length+1)).toFixed(0)+ "mV", "#fff8f8"),
-        new SummaryItem($r("app.media.icon_max_temperature"), "平均温度", (avgBatteryTemp/ (this.gpData.length+1)).toFixed(0) + "℃", "#fff8f8"),
-        new SummaryItem($r("app.media.icon_max_temperature"), "最大温度", (maxBatteryTemp ).toFixed(0) + "℃", "#fff8f8"),
-        new SummaryItem($r("app.media.icon_normalized_current"), "归一耗电", (normalCurrentNow*parseInt(this.testDuration)/3600/ (this.gpData.length-1)).toFixed(5) + "mAH", "#fff8f8"),
-      )
+    this.summaryItems.push(
+      new SummaryItem($r("app.media.icon_normalized_current"), "归一化电流", (normalCurrentNow / this.gpData.length).toFixed(0) + "mA", "#fff8f8"),
+      new SummaryItem($r("app.media.icon_normalized_current"), "最大电流", maxCurrentNow.toFixed(0) + "mA", "#fff8f8"),
+      new SummaryItem($r("app.media.icon_normalized_current"), "电压", (curVoltage *1000 / (this.gpData.length+1)).toFixed(0)+ "mV", "#fff8f8"),
+      new SummaryItem($r("app.media.icon_max_temperature"), "平均温度", (avgBatteryTemp/ (this.gpData.length+1)).toFixed(0) + "℃", "#fff8f8"),
+      new SummaryItem($r("app.media.icon_max_temperature"), "最大温度", (maxBatteryTemp ).toFixed(0) + "℃", "#fff8f8"),
+      new SummaryItem($r("app.media.icon_normalized_current"), "归一耗电", (normalCurrentNow*parseInt(this.testDuration)/3600/ (this.gpData.length-1)).toFixed(5) + "mAH", "#fff8f8"),
+    )
 
     this.lineData = this.initCurveData();
 
@@ -181,10 +181,10 @@ export struct Power {
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();

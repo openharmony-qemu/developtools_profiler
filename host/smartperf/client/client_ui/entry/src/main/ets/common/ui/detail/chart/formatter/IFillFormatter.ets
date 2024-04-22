@@ -21,9 +21,7 @@ import ILineDataSet from '../interfaces/datasets/ILineDataSet';
  *
  * @author Philipp Jahoda
  */
-export default interface IFillFormatter
-{
-
+export default interface IFillFormatter {
     /**
      * Returns the vertical (y-axis) position where the filled-line of the
      * LineDataSet should end.
@@ -32,5 +30,5 @@ export default interface IFillFormatter
      * @param dataProvider
      * @return
      */
-    getFillLinePosition( dataSet:ILineDataSet, dataProvider:LineDataProvider):number;
+    getFillLinePosition(dataSet: ILineDataSet, dataProvider: LineDataProvider): number;
 }

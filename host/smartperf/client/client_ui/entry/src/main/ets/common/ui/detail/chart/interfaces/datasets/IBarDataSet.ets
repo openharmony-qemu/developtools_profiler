@@ -15,21 +15,20 @@
 
 import EntryOhos from '../../data/EntryOhos';
 import Fill from '../../utils/Fill';
-import {JArrayList} from '../../utils/JArrayList'
-import IBarLineScatterCandleBubbleDataSet from './IBarLineScatterCandleBubbleDataSet'
+import { JArrayList } from '../../utils/JArrayList';
+import IBarLineScatterCandleBubbleDataSet from './IBarLineScatterCandleBubbleDataSet';
 
 export default interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<EntryOhos> {
+    getFills(): JArrayList<Fill>;
 
-    getFills() : JArrayList<Fill>;
-
-    getFill(index : number) : Fill;
+    getFill(index: number): Fill;
 
     /**
      * Returns true if this DataSet is stacked (stacksize > 1) or not.
      *
      * @return
      */
-    isStacked() : boolean;
+    isStacked(): boolean;
 
     /**
      * Returns the maximum number of bars that can be stacked upon another in
@@ -37,7 +36,7 @@ export default interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<
      *
      * @return
      */
-    getStackSize() : number;
+    getStackSize(): number;
 
     /**
      * Returns the color used for drawing the bar-shadows. The bar shadows is a
@@ -45,7 +44,7 @@ export default interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<
      *
      * @return
      */
-    getBarShadowColor() : number;
+    getBarShadowColor(): number;
 
     /**
      * Returns the width used for drawing borders around the bars.
@@ -53,14 +52,14 @@ export default interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<
      *
      * @return
      */
-    getBarBorderWidth() : number;
+    getBarBorderWidth(): number;
 
     /**
      * Returns the color drawing borders around the bars.
      *
      * @return
      */
-    getBarBorderColor() : number;
+    getBarBorderColor(): number;
 
     /**
      * Returns the alpha value (transparency) that is used for drawing the
@@ -68,8 +67,7 @@ export default interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<
      *
      * @return
      */
-    getHighLightAlpha() : number;
-
+    getHighLightAlpha(): number;
 
     /**
      * Returns the labels used for the different value-stacks in the legend.
@@ -77,5 +75,5 @@ export default interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<
      *
      * @return
      */
-    getStackLabels() : string[];
+    getStackLabels(): string[];
 }

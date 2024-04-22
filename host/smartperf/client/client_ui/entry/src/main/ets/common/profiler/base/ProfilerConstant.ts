@@ -23,7 +23,7 @@ export enum CatchTraceStatus {
   // trace采集运行中
   catch_trace_running = 4,
   // trace 采集 停止后间隔60次
-  catch_trace_times = 60
+  catch_trace_times = 60,
 }
 
 //采集状态
@@ -35,22 +35,19 @@ export enum TaskStatus {
   //采集暂停
   task_pause = 3,
   //采集结束
-  task_stop = 4
+  task_stop = 4,
 }
 
 //采集项
 export enum CollectorType {
-  TYPE_CPU = "CPU",
-  TYPE_GPU = "GPU",
-  TYPE_DDR = "DDR",
-  TYPE_FPS = "FPS",
-  TYPE_HW_COUNTER = "HW_COUNTER",
-  TYPE_POWER = "POWER",
-  TYPE_TEMPERATURE = "TEMP",
-  TYPE_RAM = "RAM",
-  TYPE_NET = "NETWORK",
-  TYPE_UNKNOWN = "UNKNOWN"
-};
-
-
-
+  TYPE_CPU = 'CPU',
+  TYPE_GPU = 'GPU',
+  TYPE_DDR = 'DDR',
+  TYPE_FPS = 'FPS',
+  TYPE_HW_COUNTER = 'HW_COUNTER',
+  TYPE_POWER = 'POWER',
+  TYPE_TEMPERATURE = 'TEMP',
+  TYPE_RAM = 'RAM',
+  TYPE_NET = 'NETWORK',
+  TYPE_UNKNOWN = 'UNKNOWN',
+}

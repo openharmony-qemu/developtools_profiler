@@ -16,7 +16,7 @@
 import Transformer from '../utils/Transformer';
 import ViewPortHandler from '../utils/ViewPortHandler';
 import Runnable from '../data/Runnable';
-import Chart from '../charts/Chart'
+import Chart from '../charts/Chart';
 
 /**
  * Runnable that is used for viewport modifications since they cannot be
@@ -24,35 +24,32 @@ import Chart from '../charts/Chart'
  * modifications until the onSizeChanged(...) method of the chart-view is called.
  * This is especially important if viewport modifying methods are called on the chart
  * directly after initialization.
- * 
+ *
  * @author Philipp Jahoda
  */
 export default abstract class ViewPortJob extends Runnable {
+    protected pts: number[] = new Array(2);
 
-    protected pts:number[] = new Array(2);
+    protected mViewPortHandler: ViewPortHandler;
+    protected xValue: number = 0;
+    protected yValue: number = 0;
+    protected mTrans: Transformer;
+    protected view: Chart<any>;
 
-    protected mViewPortHandler:ViewPortHandler;
-    protected xValue:number = 0;
-    protected yValue:number = 0;
-    protected mTrans:Transformer;
-    protected view:Chart<any>;
-
-    constructor(viewPortHandler:ViewPortHandler, xValue:number, yValue:number,
-                        trans:Transformer, v:Chart<any>) {
-        super(null,null);
+    constructor(viewPortHandler: ViewPortHandler, xValue: number, yValue: number, trans: Transformer, v: Chart<any>) {
+        super(null, null);
         this.mViewPortHandler = viewPortHandler;
         this.xValue = xValue;
         this.yValue = yValue;
         this.mTrans = trans;
         this.view = v;
-
     }
 
-    public getXValue():number{
+    public getXValue(): number {
         return this.xValue;
     }
 
-    public getYValue():number {
+    public getYValue(): number {
         return this.yValue;
     }
 }

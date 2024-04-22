@@ -13,16 +13,16 @@
  * limitations under the License.
  */
 
-import MPPointD from '../utils/MPPointD'
-import ViewPortHandler from './ViewPortHandler'
-import Matrix from './Matrix'
-import IScatterDataSet from '../interfaces/datasets/IScatterDataSet'
-import Entry from '../data/EntryOhos'
-import IBubbleDataSet from '../interfaces/datasets/IBubbleDataSet'
-import ILineDataSet from '../interfaces/datasets/ILineDataSet'
-import ICandleDataSet from '../interfaces/datasets/ICandleDataSet'
+import MPPointD from '../utils/MPPointD';
+import ViewPortHandler from './ViewPortHandler';
+import Matrix from './Matrix';
+import IScatterDataSet from '../interfaces/datasets/IScatterDataSet';
+import Entry from '../data/EntryOhos';
+import IBubbleDataSet from '../interfaces/datasets/IBubbleDataSet';
+import ILineDataSet from '../interfaces/datasets/ILineDataSet';
+import ICandleDataSet from '../interfaces/datasets/ICandleDataSet';
 
-import MyRect from '../data/Rect'
+import MyRect from '../data/Rect';
 
 /**
  * Transformer class that contains all matrices and is responsible for
@@ -31,15 +31,14 @@ import MyRect from '../data/Rect'
  * @author Philipp Jahoda
  */
 export default class Transformer {
-
   /**
-    * matrix to map the values to the screen pixels
-    */
+   * matrix to map the values to the screen pixels
+   */
   protected mMatrixValueToPx: Matrix = new Matrix();
 
   /**
-    * matrix for handling the different offsets of the chart
-    */
+   * matrix for handling the different offsets of the chart
+   */
   protected mMatrixOffset: Matrix = new Matrix();
   protected mViewPortHandler: ViewPortHandler;
 
@@ -48,16 +47,15 @@ export default class Transformer {
   }
 
   /**
-       * Prepares the matrix that transforms values to pixels. Calculates the
-       * scale factors from the charts size and offsets.
-       *
-       * @param xChartMin
-       * @param deltaX
-       * @param deltaY
-       * @param yChartMin
-       */
+   * Prepares the matrix that transforms values to pixels. Calculates the
+   * scale factors from the charts size and offsets.
+   *
+   * @param xChartMin
+   * @param deltaX
+   * @param deltaY
+   * @param yChartMin
+   */
   public prepareMatrixValuePx(xChartMin: number, deltaX: number, deltaY: number, yChartMin: number) {
-
     var scaleX: number = this.mViewPortHandler.contentWidth() / deltaX;
     var scaleY: number = this.mViewPortHandler.contentHeight() / deltaY;
 
@@ -75,20 +73,20 @@ export default class Transformer {
   }
 
   /**
-    * Prepares the matrix that contains all offsets.
-    *
-    * @param inverted
-    */
+   * Prepares the matrix that contains all offsets.
+   *
+   * @param inverted
+   */
   public prepareMatrixOffset(inverted: boolean) {
-
     this.mMatrixOffset.reset();
 
     if (!inverted)
-    this.mMatrixOffset.postTranslate(this.mViewPortHandler.offsetLeft(),
-      this.mViewPortHandler.getChartHeight() - this.mViewPortHandler.offsetBottom());
+    this.mMatrixOffset.postTranslate(
+    this.mViewPortHandler.offsetLeft(),
+      this.mViewPortHandler.getChartHeight() - this.mViewPortHandler.offsetBottom()
+    );
     else {
-      this.mMatrixOffset
-        .setTranslate(this.mViewPortHandler.offsetLeft(), -this.mViewPortHandler.offsetTop());
+      this.mMatrixOffset.setTranslate(this.mViewPortHandler.offsetLeft(), -this.mViewPortHandler.offsetTop());
       this.mMatrixOffset.postScale(1.0, -1.0);
     }
   }
@@ -96,15 +94,19 @@ export default class Transformer {
   protected valuePointsForGenerateTransformedValuesScatter: number[] = new Array<number>(1);
 
   /**
-       * Transforms an List of Entry into a float array containing the x and
-       * y values transformed with all matrices for the SCATTERCHART.
-       *
-       * @param data
-       * @return
-       */
-  public generateTransformedValuesScatter(data: IScatterDataSet, phaseX: number,
-                                          phaseY: number, froms: number, to: number): number[] {
-
+   * Transforms an List of Entry into a float array containing the x and
+   * y values transformed with all matrices for the SCATTERCHART.
+   *
+   * @param data
+   * @return
+   */
+  public generateTransformedValuesScatter(
+    data: IScatterDataSet,
+    phaseX: number,
+    phaseY: number,
+    froms: number,
+    to: number
+  ): number[] {
     const count: number = to - froms * phaseX + 1 * 2;
 
     if (this.valuePointsForGenerateTransformedValuesScatter.length != count) {
@@ -113,7 +115,6 @@ export default class Transformer {
     var valuePoints: number[] = this.valuePointsForGenerateTransformedValuesScatter;
 
     for (var j = 0; j < count; j += 2) {
-
       var e: Entry = data.getEntryForIndex(j / 2 + froms);
 
       if (e != null) {
@@ -133,14 +134,13 @@ export default class Transformer {
   protected valuePointsForGenerateTransformedValuesBubble: number[] = new Array<number>(1);
 
   /**
-    * Transforms an List of Entry into a float array containing the x and
-    * y values transformed with all matrices for the BUBBLECHART.
-    *
-    * @param data
-    * @return
-    */
+   * Transforms an List of Entry into a float array containing the x and
+   * y values transformed with all matrices for the BUBBLECHART.
+   *
+   * @param data
+   * @return
+   */
   public generateTransformedValuesBubble(data: IBubbleDataSet, phaseY: number, froms: number, to: number): number[] {
-
     const count = (to - froms + 1) * 2; // (int) Math.ceil((to - from) * phaseX) * 2;
 
     if (this.valuePointsForGenerateTransformedValuesBubble.length != count) {
@@ -149,7 +149,6 @@ export default class Transformer {
     var valuePoints: number[] = this.valuePointsForGenerateTransformedValuesBubble;
 
     for (var j = 0; j < count; j += 2) {
-
       var e: Entry = data.getEntryForIndex(j / 2 + froms);
 
       if (e != null) {
@@ -169,17 +168,20 @@ export default class Transformer {
   protected valuePointsForGenerateTransformedValuesLine: number[] = new Array<number>(1);
 
   /**
-    * Transforms an List of Entry into a float array containing the x and
-    * y values transformed with all matrices for the LINECHART.
-    *
-    * @param data
-    * @return
-    */
-  public generateTransformedValuesLine(data: ILineDataSet,
-                                       phaseX: number, phaseY: number,
-                                       min: number, max: number): number[] {
-
-    const count: number = (((max - min) * phaseX) + 1) * 2;
+   * Transforms an List of Entry into a float array containing the x and
+   * y values transformed with all matrices for the LINECHART.
+   *
+   * @param data
+   * @return
+   */
+  public generateTransformedValuesLine(
+    data: ILineDataSet,
+    phaseX: number,
+    phaseY: number,
+    min: number,
+    max: number
+  ): number[] {
+    const count: number = ((max - min) * phaseX + 1) * 2;
 
     if (this.valuePointsForGenerateTransformedValuesLine.length != count) {
       this.valuePointsForGenerateTransformedValuesLine = new Array<number>(count);
@@ -187,7 +189,6 @@ export default class Transformer {
     var valuePoints: number[] = this.valuePointsForGenerateTransformedValuesLine;
 
     for (var j = 0; j < count; j += 2) {
-
       var e: Entry = data.getEntryForIndex(j / 2 + min);
 
       if (e != null) {
@@ -207,15 +208,19 @@ export default class Transformer {
   protected valuePointsForGenerateTransformedValuesCandle: number[] = new Array<number>(1);
 
   /**
-       * Transforms an List of Entry into a float array containing the x and
-       * y values transformed with all matrices for the CANDLESTICKCHART.
-       *
-       * @param data
-       * @return
-       */
-  public generateTransformedValuesCandle(data: ICandleDataSet,
-                                         phaseX: number, phaseY: number, froms: number, to: number): number[] {
-
+   * Transforms an List of Entry into a float array containing the x and
+   * y values transformed with all matrices for the CANDLESTICKCHART.
+   *
+   * @param data
+   * @return
+   */
+  public generateTransformedValuesCandle(
+    data: ICandleDataSet,
+    phaseX: number,
+    phaseY: number,
+    froms: number,
+    to: number
+  ): number[] {
     const count: number = ((to - froms) * phaseX + 1) * 2;
 
     if (this.valuePointsForGenerateTransformedValuesCandle.length != count) {
@@ -229,11 +234,11 @@ export default class Transformer {
   }
 
   /**
-    * transform a path with all the given matrices VERY IMPORTANT: keep order
-    * to value-touch-offset
-    *
-    * @param path
-    */
+   * transform a path with all the given matrices VERY IMPORTANT: keep order
+   * to value-touch-offset
+   *
+   * @param path
+   */
   public pathValueToPixel(path: string): string {
     path = this.pathTransform(path, this.mMatrixValueToPx);
     path = this.pathTransform(path, this.mViewPortHandler.getMatrixTouch());
@@ -242,28 +247,29 @@ export default class Transformer {
   }
 
   public pathTransform(path: string, matrix: Matrix): string {
-    var num = path.match(/(\d+\.\d+)|(\d+)/g)
-    for (var i = 0;i < num.length; i++) {
-      var beforeNum: number = Number(num[i])
+    var num = path.match(/(\d+\.\d+)|(\d+)/g);
+    for (var i = 0; i < num.length; i++) {
+      var beforeNum: number = Number(num[i]);
       var lastNum: number = 0;
       var values: number[] = matrix.getValues();
-      if (i % 2 == 0) { //x轴
-        lastNum = beforeNum * values[Matrix.MSCALE_X] + values[Matrix.MTRANS_X]
-      } else { //y轴
-        lastNum = beforeNum * values[Matrix.MSCALE_Y] + values[Matrix.MTRANS_Y]
+      if (i % 2 == 0) {
+        //x轴
+        lastNum = beforeNum * values[Matrix.MSCALE_X] + values[Matrix.MTRANS_X];
+      } else {
+        //y轴
+        lastNum = beforeNum * values[Matrix.MSCALE_Y] + values[Matrix.MTRANS_Y];
       }
-      path = path.replace(String(beforeNum), String(lastNum))
+      path = path.replace(String(beforeNum), String(lastNum));
     }
     return path;
   }
 
-
   /**
-    * Transform an array of points with all matrices. VERY IMPORTANT: Keep
-    * matrix order "value-touch-offset" when transforming.
-    *
-    * @param pts
-    */
+   * Transform an array of points with all matrices. VERY IMPORTANT: Keep
+   * matrix order "value-touch-offset" when transforming.
+   *
+   * @param pts
+   */
   public pointValuesToPixel(pts: number[]) {
     this.mMatrixValueToPx.mapPoints(pts);
     this.mViewPortHandler.getMatrixTouch().mapPoints(pts);
@@ -271,25 +277,23 @@ export default class Transformer {
   }
 
   /**
-    * Transform a rectangle with all matrices.
-    *
-    * @param r
-    */
+   * Transform a rectangle with all matrices.
+   *
+   * @param r
+   */
   public rectValueToPixel(r: MyRect) {
-
     this.mMatrixValueToPx.mapRect(r);
     this.mViewPortHandler.getMatrixTouch().mapRect(r);
     this.mMatrixOffset.mapRect(r);
   }
 
   /**
-    * Transform a rectangle with all matrices with potential animation phases.
-    *
-    * @param r
-    * @param phaseY
-    */
+   * Transform a rectangle with all matrices with potential animation phases.
+   *
+   * @param r
+   * @param phaseY
+   */
   public rectToPixelPhase(r: MyRect, phaseY: number) {
-
     // multiply the height of the rect with the phase
     r.top *= phaseY;
     r.bottom *= phaseY;
@@ -300,7 +304,6 @@ export default class Transformer {
   }
 
   public rectToPixelPhaseHorizontal(r: MyRect, phaseY: number) {
-
     // multiply the height of the rect with the phase
     r.left *= phaseY;
     r.right *= phaseY;
@@ -311,10 +314,10 @@ export default class Transformer {
   }
 
   /**
-    * Transform a rectangle with all matrices with potential animation phases.
-    *
-    * @param r
-    */
+   * Transform a rectangle with all matrices with potential animation phases.
+   *
+   * @param r
+   */
   public rectValueToPixelHorizontal(r: MyRect, phaseY?: number) {
     if (phaseY != null && phaseY != undefined) {
       r.left *= phaseY;
@@ -326,12 +329,11 @@ export default class Transformer {
   }
 
   /**
-    * transforms multiple rects with all matrices
-    *
-    * @param rects
-    */
+   * transforms multiple rects with all matrices
+   *
+   * @param rects
+   */
   public rectValuesToPixel(rects: MyRect[]) {
-
     var m: Matrix = this.getValueToPixelMatrix();
 
     for (var i = 0; i < rects.length; i++) {
@@ -342,13 +344,12 @@ export default class Transformer {
   protected mPixelToValueMatrixBuffer: Matrix = new Matrix();
 
   /**
-     * Transforms the given array of touch positions (pixels) (x, y, x, y, ...)
-     * into values on the chart.
-     *
-     * @param pixels
-     */
+   * Transforms the given array of touch positions (pixels) (x, y, x, y, ...)
+   * into values on the chart.
+   *
+   * @param pixels
+   */
   public pixelsToValue(pixels: number[]) {
-
     var tmp: Matrix = this.mPixelToValueMatrixBuffer;
     tmp.reset();
 
@@ -364,24 +365,23 @@ export default class Transformer {
   }
 
   /**
-     * buffer for performance
-     */
+   * buffer for performance
+   */
   ptsBuffer: number[] = new Array<number>(2);
 
-
   /**
-    * Returns a recyclable MPPointD instance.
-    * returns the x and y values in the chart at the given touch point
-    * (encapsulated in a MPPointD). This method transforms pixel coordinates to
-    * coordinates / values in the chart. This is the opposite method to
-    * getPixelForValues(...).
-    *
-    * @param x
-    * @param y
-    * @return
-    */
+   * Returns a recyclable MPPointD instance.
+   * returns the x and y values in the chart at the given touch point
+   * (encapsulated in a MPPointD). This method transforms pixel coordinates to
+   * coordinates / values in the chart. This is the opposite method to
+   * getPixelForValues(...).
+   *
+   * @param x
+   * @param y
+   * @return
+   */
   public getValuesByTouchPoint(x: number, y: number, outputPoint?: MPPointD): MPPointD {
-    var result: MPPointD = (outputPoint != null&&outputPoint!=undefined)?outputPoint:MPPointD.getInstance(0, 0);
+    var result: MPPointD = outputPoint != null && outputPoint != undefined ? outputPoint : MPPointD.getInstance(0, 0);
 
     this.ptsBuffer[0] = x;
     this.ptsBuffer[1] = y;
@@ -395,15 +395,14 @@ export default class Transformer {
   }
 
   /**
-    * Returns a recyclable MPPointD instance.
-    * Returns the x and y coordinates (pixels) for a given x and y value in the chart.
-    *
-    * @param x
-    * @param y
-    * @return
-    */
+   * Returns a recyclable MPPointD instance.
+   * Returns the x and y coordinates (pixels) for a given x and y value in the chart.
+   *
+   * @param x
+   * @param y
+   * @return
+   */
   public getPixelForValues(x: number, y: number): MPPointD {
-
     this.ptsBuffer[0] = x;
     this.ptsBuffer[1] = y;
 

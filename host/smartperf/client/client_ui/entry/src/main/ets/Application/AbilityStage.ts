@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-import AbilityStage from "@ohos.app.ability.AbilityStage"
+import AbilityStage from '@ohos.app.ability.AbilityStage';
 
 export default class MyAbilityStage extends AbilityStage {
   onCreate() {
-    console.log("MyApplication MyAbilityStage onCreate")
-    globalThis.hapModuleName = "entry"
+    console.log('MyApplication MyAbilityStage onCreate');
+    globalThis.hapModuleName = 'entry';
   }
 }

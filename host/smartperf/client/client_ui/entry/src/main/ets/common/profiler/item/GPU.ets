@@ -13,76 +13,76 @@
  * limitations under the License.
  */
 import { fileOpen, createGPData, isAccess } from '../base/BaseProfilerUtils';
-import { BaseProfiler } from '../base/BaseProfiler'
-import { CollectorType } from '../base/ProfilerConstant'
+import { BaseProfiler } from '../base/BaseProfiler';
+import { CollectorType } from '../base/ProfilerConstant';
 
 let GPU_CONFIG = {
   GPU_FREQ_PATH: [
-    "/sys/class/devfreq/fde60000.gpu/cur_freq", //RK
-    "/sys/class/devfreq/gpufreq/cur_freq"
+    '/sys/class/devfreq/fde60000.gpu/cur_freq', //RK
+    '/sys/class/devfreq/gpufreq/cur_freq',
   ],
   GPU_LOAD_PATH: [
-    "/sys/class/devfreq/fde60000.gpu/load", //RK
-    "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation"
-  ]
-}
+    '/sys/class/devfreq/fde60000.gpu/load', //RK
+    '/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation',
+  ],
+};
 
 export class GPU extends BaseProfiler {
-  private gpuMap: Map<String, String> = new Map
-  public static instance: GPU = null
+  private gpuMap: Map<String, String> = new Map();
+  public static instance: GPU = null;
   public static getInstance() {
     if (this.instance == null) {
-      this.instance = new GPU()
+      this.instance = new GPU();
     }
-    return this.instance
+    return this.instance;
   }
 
   init() {
     //初始化GPU
-    return CollectorType.TYPE_GPU
+    return CollectorType.TYPE_GPU;
   }
 
   isSupport() {
-    let curFreqPath = undefined
-    let curLoadPath = undefined
-    GPU_CONFIG.GPU_FREQ_PATH.forEach(path => {
+    let curFreqPath = undefined;
+    let curLoadPath = undefined;
+    GPU_CONFIG.GPU_FREQ_PATH.forEach((path) => {
       if (isAccess(path)) {
-        curFreqPath = path
+        curFreqPath = path;
       }
-    })
-    GPU_CONFIG.GPU_LOAD_PATH.forEach(path => {
+    });
+    GPU_CONFIG.GPU_LOAD_PATH.forEach((path) => {
       if (isAccess(path)) {
-        curLoadPath = path
+        curLoadPath = path;
       }
-    })
+    });
     if (curFreqPath != undefined && curLoadPath != undefined) {
-      return true
+      return true;
     }
-    return false
+    return false;
   }
 
   readData() {
-    let gpuFreq:String = ""
-    let gpuLoad:String = ""
-    GPU_CONFIG.GPU_FREQ_PATH.forEach(path => {
+    let gpuFreq: String = '';
+    let gpuLoad: String = '';
+    GPU_CONFIG.GPU_FREQ_PATH.forEach((path) => {
       if (isAccess(path)) {
-        gpuFreq = fileOpen(path)
+        gpuFreq = fileOpen(path);
       }
-    })
-    GPU_CONFIG.GPU_LOAD_PATH.forEach(path => {
+    });
+    GPU_CONFIG.GPU_LOAD_PATH.forEach((path) => {
       if (isAccess(path)) {
-        gpuLoad = fileOpen(path)
+        gpuLoad = fileOpen(path);
       }
-    })
-    let loadStr: string[] = gpuLoad.split("@")
-    let load = "-1"
+    });
+    let loadStr: string[] = gpuLoad.split('@');
+    let load = '-1';
     if (loadStr.length > 0) {
-      load = loadStr[0].toString()
+      load = loadStr[0].toString();
     } else {
-      load = gpuLoad.toString()
+      load = gpuLoad.toString();
     }
-    this.gpuMap.set("gpuFreq", gpuFreq)
-    this.gpuMap.set("gpuLoad", load)
-    return createGPData("GPU", this.gpuMap)
+    this.gpuMap.set('gpuFreq', gpuFreq);
+    this.gpuMap.set('gpuLoad', load);
+    return createGPData('GPU', this.gpuMap);
   }
 }

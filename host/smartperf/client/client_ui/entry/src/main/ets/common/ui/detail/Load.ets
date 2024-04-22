@@ -571,12 +571,12 @@ export struct Load {
   }
 
   /**
-     * 初始化数据 cpu0Load、cpu1Load、cpu2Load、cpu3Load
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据 cpu0Load、cpu1Load、cpu2Load、cpu3Load
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCpuLoad0to3Data(): LineData {
-    
+
     let dataSet = new JArrayList<ILineDataSet>();
 
     let values = new JArrayList<EntryOhos>();
@@ -1037,52 +1037,52 @@ export struct Load {
     Stack({ alignContent: Alignment.TopStart }) {
       Scroll() {
         Column({ space: 20 }) {
-            LineChart({lineChartModel: this.lineChartModel})
-            Row({ space: 20 })  {
-              Text("cpu0Load(%),") {
-              }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
-              Text('cpu1Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-              Text('cpu2Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
-              Text('cpu3Load(%)').fontWeight(FontWeight.Bold).fontColor(Color.Orange).fontSize('15fp').textAlign(TextAlign.Center)
+          LineChart({lineChartModel: this.lineChartModel})
+          Row({ space: 20 })  {
+            Text("cpu0Load(%),") {
+            }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
+            Text('cpu1Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+            Text('cpu2Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
+            Text('cpu3Load(%)').fontWeight(FontWeight.Bold).fontColor(Color.Orange).fontSize('15fp').textAlign(TextAlign.Center)
+          }
+          LineChart({lineChartModel: this.lineChartModel1})
+          Text("cpu0Frequency(MHZ)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
+          LineChart({lineChartModel: this.lineChartModel2})
+          Row({ space: 20 })  {
+            Text('cpu4Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
+            Text("cpu5Load(%),") {
+            }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
+            Text('cpu6Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+          }
+          LineChart({lineChartModel: this.lineChartModel3})
+          Text("cpu4Frequency(MHZ)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+
+          LineChart({lineChartModel: this.lineChartModel4})
+          Text("cpu7Load(%)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+
+          LineChart({lineChartModel: this.lineChartModel5})
+          Text("cpu7Frequency(MHZ)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+
+
+          LineChart({lineChartModel: this.lineChartModel6})
+          Text("GPULoad(%)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+
+          LineChart({lineChartModel: this.lineChartModel7})
+          Text("GPUFrequency(MHZ)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
+
+          Stack() {
+            Column() {
+              LineChart({lineChartModel: this.lineChartModel8})
+              Text("DDR Frequency(MHZ)") {
+              }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center).margin({ top: "50%" })
             }
-            LineChart({lineChartModel: this.lineChartModel1})
-            Text("cpu0Frequency(MHZ)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
-            LineChart({lineChartModel: this.lineChartModel2})
-            Row({ space: 20 })  {
-              Text('cpu4Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
-              Text("cpu5Load(%),") {
-              }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
-              Text('cpu6Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-            }
-            LineChart({lineChartModel: this.lineChartModel3})
-            Text("cpu4Frequency(MHZ)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-
-            LineChart({lineChartModel: this.lineChartModel4})
-            Text("cpu7Load(%)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-
-            LineChart({lineChartModel: this.lineChartModel5})
-            Text("cpu7Frequency(MHZ)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-
-
-            LineChart({lineChartModel: this.lineChartModel6})
-            Text("GPULoad(%)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-
-            LineChart({lineChartModel: this.lineChartModel7})
-            Text("GPUFrequency(MHZ)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-
-            Stack() {
-              Column() {
-                LineChart({lineChartModel: this.lineChartModel8})
-                Text("DDR Frequency(MHZ)") {
-                }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center).margin({ top: "50%" })
-              }
-            }
+          }
         }.width('100%').alignItems(HorizontalAlign.Center)
       }.width('100%')
     }.width('100%').height('100%')

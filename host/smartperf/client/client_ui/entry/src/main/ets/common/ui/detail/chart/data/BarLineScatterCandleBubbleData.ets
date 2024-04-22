@@ -14,19 +14,18 @@
  */
 
 import IBarLineScatterCandleBubbleDataSet from '../interfaces/datasets/IBarLineScatterCandleBubbleDataSet';
-import {JArrayList} from '../utils/JArrayList';
+import { JArrayList } from '../utils/JArrayList';
 import ChartData from './ChartData';
 import EntryOhos from './EntryOhos';
 
 /**
  * Baseclass for all Line, Bar, Scatter, Candle and Bubble data.
- * 
+ *
  */
-export default abstract class BarLineScatterCandleBubbleData<T extends IBarLineScatterCandleBubbleDataSet</*T extends */EntryOhos>>
-extends ChartData<T> {
-
-  constructor(sets ?: JArrayList<T>) {
+export default abstract class BarLineScatterCandleBubbleData<
+T extends IBarLineScatterCandleBubbleDataSet</*T extends */ EntryOhos>
+> extends ChartData<T> {
+  constructor(sets?: JArrayList<T>) {
     super(sets);
   }
 }
-
