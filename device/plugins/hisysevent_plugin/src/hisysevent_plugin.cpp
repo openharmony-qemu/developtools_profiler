@@ -163,7 +163,8 @@ std::string HisyseventPlugin::GetFullCmd()
 
     if (!fullCmd_.empty()) {
         size_t i = 0;
-        for (size_t cmdSize = fullCmd_.size() - 1; i < cmdSize; i++) {
+        size_t dataLen = fullCmd_.size() > 1 ? static_cast<size_t>(fullCmd_.size() - 1) : 0;
+        for (size_t cmdSize = dataLen; i < cmdSize; i++) {
             cmd.append(fullCmd_[i]).append(" ");
         }
         cmd.append(fullCmd_[i]);
@@ -199,8 +200,8 @@ template <typename T>
 inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len, T hisyseventInfoProto)
 {
     CHECK_TRUE(data != nullptr && len >= MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
-
-    if (google::protobuf::internal::IsStructurallyValidUTF8(data, strlen(data) - 1)) {
+    size_t dataLen = strlen(data) > 1 ? static_cast<size_t>(strlen(data) - 1) : 0;
+    if (google::protobuf::internal::IsStructurallyValidUTF8(data, dataLen)) {
         auto* info = hisyseventInfoProto->add_info();
         info->set_id(id_);
         info->set_context(data, strlen(data) - 1); // - \n

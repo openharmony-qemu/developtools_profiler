@@ -108,12 +108,12 @@ private:
     TraceFileHelper helper_ {};
     uint32_t dataSize_ = 0;
     bool isSplitFile_ = false;
-    uint32_t splitFileMaxSize_;
-    uint32_t splitFileMaxNum_;
+    uint32_t splitFileMaxSize_ = 0;
+    uint32_t splitFileMaxNum_ = 0;
     std::queue<std::string> splitFilePaths_;
     std::vector<std::vector<char>> pluginConfigsData_;
     bool isStop_ = false;
-    int fileNum_;
+    int fileNum_ = 0;
     TraceFileHeader::HeaderData headerDataTime_ = {}; // used to store the clock source and collection time.
     int32_t fd_{-1};
     TraceFileWriterCtx writeCtx_ {};
