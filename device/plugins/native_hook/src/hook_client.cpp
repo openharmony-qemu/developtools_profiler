@@ -285,6 +285,8 @@ bool ohos_malloc_hook_on_end(void)
 {
     if (g_hookClient != nullptr) {
         g_hookClient->SendNmdInfo();
+    }
+    if (g_hookClient != nullptr) {
         g_hookClient->Flush();
     }
     pthread_t threadEnd;

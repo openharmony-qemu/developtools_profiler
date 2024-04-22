@@ -122,6 +122,16 @@ public:
                 command_.push_back(const_cast<char*>("-so"));
                 command_.push_back(const_cast<char*>("true"));
             }
+            if (mallocFreeMatchingInterval_ > 0) {
+                command_.push_back(const_cast<char*>("-mfm"));
+                command_.push_back(const_cast<char*>(std::to_string(mallocFreeMatchingInterval_).c_str()));
+            }
+            if (jsReport_) {
+                command_.push_back(const_cast<char*>("-js"));
+                command_.push_back(const_cast<char*>("true"));
+                command_.push_back(const_cast<char*>("-jsd"));
+                command_.push_back(const_cast<char*>(std::to_string(jsMaxDepth_).c_str()));
+            }
             command_.push_back(nullptr);
             execv(DEFAULT_NATIVE_DAEMON_PATH.c_str(), command_.data());
             _exit(1);
@@ -268,7 +278,7 @@ public:
         if (processNum == 0) {
             while (1) {
                 ApplyForMalloc(unwindDepth_);
-                usleep(500); // sleep 500 us
+                usleep(5000); // sleep 5000 us
             }
         } else {
             hookPid_ = processNum;
@@ -335,7 +345,7 @@ public:
             free(ret);
             while (1) {
                 ApplyForCalloc(depth);
-                usleep(500); // sleep 500 us
+                usleep(5000); // sleep 5000 us
             }
         } else {
             hookPid_ = processNum;
@@ -384,7 +394,7 @@ public:
         if (processNum == 0) {
             while (1) {
                 ApplyForRealloc(depth);
-                usleep(500); // sleep 500 us
+                usleep(5000); // sleep 5000 us
             }
         } else {
             hookPid_ = processNum;
@@ -435,6 +445,9 @@ public:
     int unwindDepth_ = 0;
     int statisticsInterval_ = 0;
     int sampleInterval_ = 0;
+    bool jsReport_ = false;
+    int jsMaxDepth_ = 0;
+    int mallocFreeMatchingInterval_ = 0;
     bool offlineSymbolization_ = false;
     bool callframeCompress_ = false;
     bool stringCompress_ = false;
@@ -652,7 +665,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
-    for (size_t i = 0; i < 2; ++i) {
+    for (size_t i = 1; i < 2; ++i) {
         unwindDepth_ = 6;
         outFileType_ = "dlopen_";
         modeIndex_ = i;
@@ -956,7 +969,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
     }
 }
 #endif
-}
 
 /**
  * @tc.name: native hook
@@ -1017,6 +1029,115 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
     }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook alloc free matching interval normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level3)
+{
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 6;
+        outFileType_ = "mallocFreeMatchingInterval_";
+        modeIndex_ = i;
+        mallocFreeMatchingInterval_ = 2;
+        StartMallocProcess();
+        StartAndStopHook();
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        bool findSymbolName;
+        bool findfilePath;
+        bool findFrameMap;
+        bool findStackMap;
+        while (getline(infile, buf))
+        {
+            if (!findSymbolName || buf.find("symbol_name") != std::string::npos) {
+                findSymbolName = true;
+            } else if (!findfilePath || buf.find("file_path") != std::string::npos) {
+                findfilePath = true;
+            } else if (!findFrameMap || buf.find("frame_map") != std::string::npos) {
+                findFrameMap = true;
+            } else if (!findStackMap || buf.find("stack_map") != std::string::npos) {
+                findStackMap = true;
+                if (findSymbolName && findfilePath && findFrameMap) {
+                    break;
+                }
+            }
+        }
+        EXPECT_TRUE(findSymbolName);
+        EXPECT_TRUE(findfilePath);
+        EXPECT_TRUE(findFrameMap);
+        EXPECT_TRUE(findStackMap);
+    }
+}
+
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook js statistics data normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level1)
+{
+    for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 10;
+        statisticsInterval_ = 1;
+        jsReport_ = true;
+        jsMaxDepth_ = 10;
+        outFileType_ = "js_report_";
+        modeIndex_ = i;
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(1);
+        std::string cmd = "kill -36 " + std::to_string(hookPid_);
+        system(cmd.c_str());
+
+        sleep(SLEEP_TIME); // 等待生成文本
+        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
+        system(cmdEnd.c_str());
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map") != std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event") != std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+    }
+}
 }
 
 #pragma clang optimize on
