@@ -54,7 +54,6 @@ void FfrtProfilerManager::Init()
     CHECK_TRUE(commandPoller->OnConnect(), NO_RETVAL, "FfrtProfilerManager::Init connect FAILED");
     SetCommandPoller(commandPoller);
     RegisterAgentPlugin("ffrt-profiler");
-    //test
 }
 
 bool FfrtProfilerManager::CheckConfig()
