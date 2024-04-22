@@ -29,10 +29,10 @@ export struct PowerDubai {
     for (var i = 0; i <this.tPowerSensorList.length ; i++) {
 
       if(this.tPowerSensorList[i].power==""||this.tPowerSensorList[i].power==null){
-          this.tPowerSensorList[i].setPower("0")
-          this.tPowerSensorList[i].setCurrent("0")
-          this.tPowerSensorList[i].setPerenct("0.00%")
-        }else{
+        this.tPowerSensorList[i].setPower("0")
+        this.tPowerSensorList[i].setCurrent("0")
+        this.tPowerSensorList[i].setPerenct("0.00%")
+      }else{
         sumPower+=Number(this.tPowerSensorList[i].power.toString())
         sumCurrent+=Number(this.tPowerSensorList[i].current.toString())
       }
@@ -53,108 +53,108 @@ export struct PowerDubai {
 
   build() {
     Scroll(){
-        Column(){
-            Column() {
+      Column(){
+        Column() {
 
-              Text("功耗拆解知识参考项，测试应用功耗请使用归一化电流/整机电流（报告概览页）") {
-              }.fontWeight(FontWeight.Bold).fontColor($r("app.color.color_333")).fontSize('12fp').textAlign(TextAlign.Center)
+          Text("功耗拆解知识参考项，测试应用功耗请使用归一化电流/整机电流（报告概览页）") {
+          }.fontWeight(FontWeight.Bold).fontColor($r("app.color.color_333")).fontSize('12fp').textAlign(TextAlign.Center)
 
-              List() {
-                ForEach(this.tPowerSensorList, (powerSensor) => {
-                  ListItem() {
-                    Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
-                      Text(powerSensor.sensor)
-                        .fontSize('12fp')
-                        .fontColor($r("app.color.color_333"))
-                        .height('30vp')
-                        .width('20%')
-                        .border({ width: '1vp', color: $r("app.color.color_999") })
-                        .backgroundColor( powerSensor.color)
-                        .textAlign(TextAlign.Center)
+          List() {
+            ForEach(this.tPowerSensorList, (powerSensor) => {
+              ListItem() {
+                Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+                  Text(powerSensor.sensor)
+                    .fontSize('12fp')
+                    .fontColor($r("app.color.color_333"))
+                    .height('30vp')
+                    .width('20%')
+                    .border({ width: '1vp', color: $r("app.color.color_999") })
+                    .backgroundColor( powerSensor.color)
+                    .textAlign(TextAlign.Center)
 
-//                      Text(powerSensor.power)
-//                        .fontSize('12fp')
-//                        .fontColor($r("app.color.color_333"))
-//                        .height('30vp')
-//                        .width('20%')
-//                        .border({ width: '1vp', color: $r("app.color.color_999") })
-//                        .backgroundColor(powerSensor.color)
-//                        .textAlign(TextAlign.Center)
+                  //                      Text(powerSensor.power)
+                  //                        .fontSize('12fp')
+                  //                        .fontColor($r("app.color.color_333"))
+                  //                        .height('30vp')
+                  //                        .width('20%')
+                  //                        .border({ width: '1vp', color: $r("app.color.color_999") })
+                  //                        .backgroundColor(powerSensor.color)
+                  //                        .textAlign(TextAlign.Center)
 
-                      Text(powerSensor.current)
-                        .fontSize('12fp')
-                        .fontColor($r("app.color.color_333"))
-                        .height('30vp')
-                        .width('20%')
-                        .border({ width: '1vp', color: $r("app.color.color_999") })
-                        .backgroundColor(powerSensor.color)
-                        .textAlign(TextAlign.Center)
-                      Text(powerSensor.percent)
-                        .fontSize('12fp')
-                        .fontColor($r("app.color.color_333"))
-                        .height('30vp')
-                        .width('20%')
-                        .border({ width: '1vp', color: $r("app.color.color_999") })
-                        .backgroundColor(powerSensor.color)
-                        .textAlign(TextAlign.Center)
-                    }.width('100%')
-                  }
-                }, powerSensor => powerSensor.sensor)
-              }.width('100%')
-             }.alignItems(HorizontalAlign.Center)
+                  Text(powerSensor.current)
+                    .fontSize('12fp')
+                    .fontColor($r("app.color.color_333"))
+                    .height('30vp')
+                    .width('20%')
+                    .border({ width: '1vp', color: $r("app.color.color_999") })
+                    .backgroundColor(powerSensor.color)
+                    .textAlign(TextAlign.Center)
+                  Text(powerSensor.percent)
+                    .fontSize('12fp')
+                    .fontColor($r("app.color.color_333"))
+                    .height('30vp')
+                    .width('20%')
+                    .border({ width: '1vp', color: $r("app.color.color_999") })
+                    .backgroundColor(powerSensor.color)
+                    .textAlign(TextAlign.Center)
+                }.width('100%')
+              }
+            }, powerSensor => powerSensor.sensor)
+          }.width('100%')
+        }.alignItems(HorizontalAlign.Center)
 
-            Column() {
-              Text("Top20进程功耗") {
-              }.fontWeight(FontWeight.Bold).fontColor($r("app.color.color_333")).fontSize('12fp').textAlign(TextAlign.Center)
+        Column() {
+          Text("Top20进程功耗") {
+          }.fontWeight(FontWeight.Bold).fontColor($r("app.color.color_333")).fontSize('12fp').textAlign(TextAlign.Center)
 
 
-              List() {
-                ForEach(this.TPowerAppInfoList, (powerApp) => {
-                  ListItem() {
-                    Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
-                      Text(powerApp.application)
-                        .fontSize('12fp')
-                        .fontColor($r("app.color.color_333"))
-                        .height('30vp')
-                        .width('20%')
-                        .border({ width: '1vp', color: $r("app.color.color_999") })
-                        .backgroundColor(powerApp.color)
-                        .textAlign(TextAlign.Center)
+          List() {
+            ForEach(this.TPowerAppInfoList, (powerApp) => {
+              ListItem() {
+                Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+                  Text(powerApp.application)
+                    .fontSize('12fp')
+                    .fontColor($r("app.color.color_333"))
+                    .height('30vp')
+                    .width('20%')
+                    .border({ width: '1vp', color: $r("app.color.color_999") })
+                    .backgroundColor(powerApp.color)
+                    .textAlign(TextAlign.Center)
 
-//                      Text(powerApp.power)
-//                        .fontSize('12fp')
-//                        .fontColor($r("app.color.color_333"))
-//                        .height('30vp')
-//                        .width('20%')
-//                        .border({ width: '1vp', color: $r("app.color.color_999") })
-//                        .backgroundColor(powerApp.color)
-//                        .textAlign(TextAlign.Center)
+                  //                      Text(powerApp.power)
+                  //                        .fontSize('12fp')
+                  //                        .fontColor($r("app.color.color_333"))
+                  //                        .height('30vp')
+                  //                        .width('20%')
+                  //                        .border({ width: '1vp', color: $r("app.color.color_999") })
+                  //                        .backgroundColor(powerApp.color)
+                  //                        .textAlign(TextAlign.Center)
 
-                      Text(powerApp.current)
-                        .fontSize('12fp')
-                        .fontColor($r("app.color.color_333"))
-                        .height('30vp')
-                        .width('20%')
-                        .border({ width: '1vp', color: $r("app.color.color_999") })
-                        .backgroundColor(powerApp.color)
-                        .textAlign(TextAlign.Center)
+                  Text(powerApp.current)
+                    .fontSize('12fp')
+                    .fontColor($r("app.color.color_333"))
+                    .height('30vp')
+                    .width('20%')
+                    .border({ width: '1vp', color: $r("app.color.color_999") })
+                    .backgroundColor(powerApp.color)
+                    .textAlign(TextAlign.Center)
 
-                      Text(powerApp.percent)
-                        .fontSize('12fp')
-                        .fontColor($r("app.color.color_333"))
-                        .height('30vp')
-                        .width('20%')
-                        .border({ width: '1vp', color: $r("app.color.color_999") })
-                        .backgroundColor(powerApp.color)
-                        .textAlign(TextAlign.Center)
+                  Text(powerApp.percent)
+                    .fontSize('12fp')
+                    .fontColor($r("app.color.color_333"))
+                    .height('30vp')
+                    .width('20%')
+                    .border({ width: '1vp', color: $r("app.color.color_999") })
+                    .backgroundColor(powerApp.color)
+                    .textAlign(TextAlign.Center)
 
-                    }.width('100%')
-                  }
-                }, powerApp => powerApp.application)
-              }.width('100%')
+                }.width('100%')
+              }
+            }, powerApp => powerApp.application)
+          }.width('100%')
 
-            }.alignItems(HorizontalAlign.Center)
-        }
+        }.alignItems(HorizontalAlign.Center)
+      }
     }.scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).height("60%")
 
 

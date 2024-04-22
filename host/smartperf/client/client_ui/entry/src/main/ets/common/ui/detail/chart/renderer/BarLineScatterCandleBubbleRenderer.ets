@@ -14,45 +14,48 @@
  */
 
 import MPPointD from '../utils/MPPointD';
-import {XAxis} from '../components/XAxis';
+import { XAxis } from '../components/XAxis';
 import EntryOhos from '../data/EntryOhos';
-import {DataSet, Rounding} from '../data/DataSet';
+import { DataSet, Rounding } from '../data/DataSet';
 import ChartAnimator from '../animation/ChartAnimator';
-import DataRenderer from './DataRenderer'
-import ViewPortHandler from '../utils/ViewPortHandler'
-import IBarLineScatterCandleBubbleDataSet from '../interfaces/datasets/IBarLineScatterCandleBubbleDataSet'
-import BarLineScatterCandleBubbleDataProvider from '../interfaces/dataprovider/BarLineScatterCandleBubbleDataProvider'
-import IDataSet from '../interfaces/datasets/IDataSet'
+import DataRenderer from './DataRenderer';
+import ViewPortHandler from '../utils/ViewPortHandler';
+import IBarLineScatterCandleBubbleDataSet from '../interfaces/datasets/IBarLineScatterCandleBubbleDataSet';
+import BarLineScatterCandleBubbleDataProvider from '../interfaces/dataprovider/BarLineScatterCandleBubbleDataProvider';
+import IDataSet from '../interfaces/datasets/IDataSet';
 
 export class XBounds {
-
-  constructor(mAnimator:ChartAnimator){
-    this.mAnimator=mAnimator;
+  constructor(mAnimator: ChartAnimator) {
+    this.mAnimator = mAnimator;
   }
   /**
-    * minimum visible entry index
-    */
+   * minimum visible entry index
+   */
   public min: number;
 
   /**
-    * maximum visible entry index
-    */
+   * maximum visible entry index
+   */
   public max: number;
 
   /**
-    * range of visible entry indices
-    */
+   * range of visible entry indices
+   */
   public range: number;
 
-  public mAnimator:ChartAnimator
+  public mAnimator: ChartAnimator;
 
   /**
-    * Calculates the minimum and maximum x values as well as the range between them.
-    *
-    * @param chart
-    * @param dataSet
-    */
-  public set(chart: BarLineScatterCandleBubbleDataProvider, dataSet: IBarLineScatterCandleBubbleDataSet<any>,mAnimator:ChartAnimator) {
+   * Calculates the minimum and maximum x values as well as the range between them.
+   *
+   * @param chart
+   * @param dataSet
+   */
+  public set(
+    chart: BarLineScatterCandleBubbleDataProvider,
+    dataSet: IBarLineScatterCandleBubbleDataSet<any>,
+    mAnimator: ChartAnimator
+  ) {
     let phaseX: number = Math.max(0, Math.min(1, mAnimator.getPhaseX()));
 
     let low: number = chart.getLowestVisibleX();
@@ -63,7 +66,7 @@ export class XBounds {
 
     this.min = entryFrom == null ? 0 : dataSet.getEntryIndexByEntry(entryFrom);
     this.max = entryTo == null ? 0 : dataSet.getEntryIndexByEntry(entryTo);
-    this.range = ((this.max - this.min) * phaseX);
+    this.range = (this.max - this.min) * phaseX;
   }
 }
 
@@ -71,38 +74,35 @@ export class XBounds {
  * Created by Philipp Jahoda on 09/06/16.
  */
 export default abstract class BarLineScatterCandleBubbleRenderer extends DataRenderer {
-
-/**
-  * buffer for storing the current minimum and maximum visible x
-  */
-  protected mXBounds: XBounds
+  /**
+   * buffer for storing the current minimum and maximum visible x
+   */
+  protected mXBounds: XBounds;
 
   constructor(animator: ChartAnimator, viewPortHandler: ViewPortHandler) {
     super(animator, viewPortHandler);
-    this.mXBounds= new XBounds(this.mAnimator);
+    this.mXBounds = new XBounds(this.mAnimator);
   }
 
-/**
-  * Returns true if the DataSet values should be drawn, false if not.
-  *
-  * @param set
-  * @return
-  */
+  /**
+   * Returns true if the DataSet values should be drawn, false if not.
+   *
+   * @param set
+   * @return
+   */
   protected shouldDrawValues(dataSet: IDataSet<any>): boolean {
     return dataSet.isVisible() && (dataSet.isDrawValuesEnabled() || dataSet.isDrawIconsEnabled());
   }
 
-/**
-  * Checks if the provided entry object is in bounds for drawing considering the current animation phase.
-  *
-  * @param e
-  * @param set
-  * @return
-  */
+  /**
+   * Checks if the provided entry object is in bounds for drawing considering the current animation phase.
+   *
+   * @param e
+   * @param set
+   * @return
+   */
   protected isInBoundsX(e: EntryOhos, dataSet: IBarLineScatterCandleBubbleDataSet<EntryOhos>): boolean {
-
-    if (e == null)
-    return false;
+    if (e == null) return false;
 
     let entryIndex = dataSet.getEntryIndexByEntry(e);
 
@@ -113,5 +113,3 @@ export default abstract class BarLineScatterCandleBubbleRenderer extends DataRen
     }
   }
 }
-
-

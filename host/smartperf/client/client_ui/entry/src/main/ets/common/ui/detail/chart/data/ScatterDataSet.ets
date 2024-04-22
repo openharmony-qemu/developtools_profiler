@@ -13,18 +13,12 @@
  * limitations under the License.
  */
 
-import LineScatterCandleRadarDataSet from './LineScatterCandleRadarDataSet'
-import EntryOhos from './EntryOhos'
-import IScatterDataSet from '../interfaces/datasets/IScatterDataSet'
-import ColorTemplate from '../utils/ColorTemplate'
-import {JArrayList} from '../utils/JArrayList'
-import IShapeRenderer from '../renderer/scatter/IShapeRenderer'
-
-
-
-
-
-
+import LineScatterCandleRadarDataSet from './LineScatterCandleRadarDataSet';
+import EntryOhos from './EntryOhos';
+import IScatterDataSet from '../interfaces/datasets/IScatterDataSet';
+import ColorTemplate from '../utils/ColorTemplate';
+import { JArrayList } from '../utils/JArrayList';
+import IShapeRenderer from '../renderer/scatter/IShapeRenderer';
 
 export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> implements IScatterDataSet {
     /**
@@ -35,7 +29,6 @@ export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> imp
     /**
      * Renderer responsible for rendering this DataSet, default: square
      */
-
 
     /**
      * The radius of the hole in the shape (applies to Square, Circle and Triangle)
@@ -64,7 +57,7 @@ export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> imp
         return copied;
     }
 
-    public copyTo(scatterDataSet: ScatterDataSet): void{
+    public copyTo(scatterDataSet: ScatterDataSet): void {
         super.copyTo(scatterDataSet);
         scatterDataSet.mShapeSize = this.mShapeSize;
 
@@ -93,7 +86,6 @@ export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> imp
      * @param shape
      */
 
-
     /**
      * Sets a new IShapeRenderer responsible for drawing this DataSet.
      * This can also be used to set a custom IShapeRenderer aside from the default ones.
@@ -101,14 +93,13 @@ export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> imp
      * @param shapeRenderer
      */
 
-
     /**
      * Sets the radius of the hole in the shape (applies to Square, Circle and Triangle)
      * Set this to <= 0 to remove holes.
      *
      * @param holeRadius
      */
-    public setScatterShapeHoleRadius(holeRadius: number): void  {
+    public setScatterShapeHoleRadius(holeRadius: number): void {
         this.mScatterShapeHoleRadius = holeRadius;
     }
 
@@ -128,6 +119,4 @@ export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> imp
     public getScatterShapeHoleColor(): number {
         return this.mScatterShapeHoleColor;
     }
-
-
 }

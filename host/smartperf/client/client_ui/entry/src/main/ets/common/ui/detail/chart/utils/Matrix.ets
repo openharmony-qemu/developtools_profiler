@@ -13,16 +13,16 @@
  * limitations under the License.
  */
 
-import MyRect from '../data/Rect'
+import MyRect from '../data/Rect';
 
 /**
  * 仅用于translate 和 scale，rotate、skew未移植
  */
 export default class Matrix {
   public static MSCALE_X: number = 0; //!< use with getValues/setValues
-  public static MSKEW_X: number  = 1; //!< use with getValues/setValues
+  public static MSKEW_X: number = 1; //!< use with getValues/setValues
   public static MTRANS_X: number = 2; //!< use with getValues/setValues
-  public static MSKEW_Y: number  = 3; //!< use with getValues/setValues
+  public static MSKEW_Y: number = 3; //!< use with getValues/setValues
   public static MSCALE_Y: number = 4; //!< use with getValues/setValues
   public static MTRANS_Y: number = 5; //!< use with getValues/setValues
   public static MPERSP_0: number = 6; //!< use with getValues/setValues
@@ -32,7 +32,7 @@ export default class Matrix {
   private data: number[] = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
 
   public reset() {
-    this.data.splice(0, this.data.length)
+    this.data.splice(0, this.data.length);
     this.data[Matrix.MSCALE_X] = 1.0;
     this.data[Matrix.MSCALE_Y] = 1.0;
     this.data[Matrix.MPERSP_2] = 1.0;
@@ -41,18 +41,18 @@ export default class Matrix {
   }
 
   public set(matrix: Matrix) {
-    this.data[Matrix.MSCALE_X] = matrix.getValues()[Matrix.MSCALE_X]
-    this.data[Matrix.MSKEW_X] = matrix.getValues()[Matrix.MSKEW_X]
-    this.data[Matrix.MTRANS_X] = matrix.getValues()[Matrix.MTRANS_X]
-    this.data[Matrix.MSKEW_Y] = matrix.getValues()[Matrix.MSKEW_Y]
-    this.data[Matrix.MSCALE_Y] = matrix.getValues()[Matrix.MSCALE_Y]
-    this.data[Matrix.MTRANS_Y] = matrix.getValues()[Matrix.MTRANS_Y]
-    this.data[Matrix.MPERSP_0] = matrix.getValues()[Matrix.MPERSP_0]
-    this.data[Matrix.MPERSP_1] = matrix.getValues()[Matrix.MPERSP_1]
-    this.data[Matrix.MPERSP_2] = matrix.getValues()[Matrix.MPERSP_2]
+    this.data[Matrix.MSCALE_X] = matrix.getValues()[Matrix.MSCALE_X];
+    this.data[Matrix.MSKEW_X] = matrix.getValues()[Matrix.MSKEW_X];
+    this.data[Matrix.MTRANS_X] = matrix.getValues()[Matrix.MTRANS_X];
+    this.data[Matrix.MSKEW_Y] = matrix.getValues()[Matrix.MSKEW_Y];
+    this.data[Matrix.MSCALE_Y] = matrix.getValues()[Matrix.MSCALE_Y];
+    this.data[Matrix.MTRANS_Y] = matrix.getValues()[Matrix.MTRANS_Y];
+    this.data[Matrix.MPERSP_0] = matrix.getValues()[Matrix.MPERSP_0];
+    this.data[Matrix.MPERSP_1] = matrix.getValues()[Matrix.MPERSP_1];
+    this.data[Matrix.MPERSP_2] = matrix.getValues()[Matrix.MPERSP_2];
   }
 
-  public getValues(): number[]{
+  public getValues(): number[] {
     return this.data;
   }
 
@@ -78,82 +78,83 @@ export default class Matrix {
     this.data[Matrix.MSCALE_Y] = scaleY;
     if (centerX != null && centerX != undefined) {
       this.data[Matrix.MTRANS_X] += -centerX * scaleX;
-    }else{
-      this.data[Matrix.MTRANS_X] = 0
+    } else {
+      this.data[Matrix.MTRANS_X] = 0;
     }
     if (centerY != null && centerY != undefined) {
       this.data[Matrix.MTRANS_Y] += -centerY * scaleY;
-    }else{
-      this.data[Matrix.MTRANS_Y] = 0
+    } else {
+      this.data[Matrix.MTRANS_Y] = 0;
     }
   }
 
   public postTranslate(dx: number, dy: number) {
-    if(!isNaN(dx) && dx != undefined){
+    if (!isNaN(dx) && dx != undefined) {
       this.data[Matrix.MTRANS_X] += dx;
     }
-    if(!isNaN(dy) && dy != undefined){
+    if (!isNaN(dy) && dy != undefined) {
       this.data[Matrix.MTRANS_Y] += dy;
     }
   }
 
   public setTranslate(dx: number, dy: number) {
-    if(!isNaN(dx) && dx != undefined){
+    if (!isNaN(dx) && dx != undefined) {
       this.data[Matrix.MTRANS_X] = dx;
     }
-    if(!isNaN(dy) && dy != undefined){
+    if (!isNaN(dy) && dy != undefined) {
       this.data[Matrix.MTRANS_Y] = dy;
     }
-    this.data[Matrix.MSCALE_X] = 1
-    this.data[Matrix.MSCALE_Y] = 1
+    this.data[Matrix.MSCALE_X] = 1;
+    this.data[Matrix.MSCALE_Y] = 1;
   }
 
-  public postConcat(matrix:Matrix){
+  public postConcat(matrix: Matrix) {
     var values = matrix.getValues();
-    this.postScale(values[Matrix.MSCALE_X],values[Matrix.MSCALE_Y]);
-    this.postTranslate(values[Matrix.MTRANS_X],values[Matrix.MTRANS_Y]);
-//    this.data[Matrix.MTRANS_X] = values[Matrix.MTRANS_X] * this.data[Matrix.MSCALE_X]
-//    this.data[Matrix.MSCALE_X] *= values[Matrix.MSCALE_X]
-//    this.data[Matrix.MSCALE_Y] *= values[Matrix.MSCALE_Y]
+    this.postScale(values[Matrix.MSCALE_X], values[Matrix.MSCALE_Y]);
+    this.postTranslate(values[Matrix.MTRANS_X], values[Matrix.MTRANS_Y]);
+    //    this.data[Matrix.MTRANS_X] = values[Matrix.MTRANS_X] * this.data[Matrix.MSCALE_X]
+    //    this.data[Matrix.MSCALE_X] *= values[Matrix.MSCALE_X]
+    //    this.data[Matrix.MSCALE_Y] *= values[Matrix.MSCALE_Y]
   }
 
   public mapPoints(pts: number[]) {
-    this.checkValue()
-    for(var i = 0;i < pts.length;i++){
-      if(i % 2 == 0){ //x轴
-        pts[i] = pts[i] * this.data[Matrix.MSCALE_X] + this.data[Matrix.MTRANS_X]
-      }else{ //y轴
-        pts[i] = pts[i] * this.data[Matrix.MSCALE_Y] + this.data[Matrix.MTRANS_Y]
+    this.checkValue();
+    for (var i = 0; i < pts.length; i++) {
+      if (i % 2 == 0) {
+        //x轴
+        pts[i] = pts[i] * this.data[Matrix.MSCALE_X] + this.data[Matrix.MTRANS_X];
+      } else {
+        //y轴
+        pts[i] = pts[i] * this.data[Matrix.MSCALE_Y] + this.data[Matrix.MTRANS_Y];
       }
     }
   }
 
-  public mapRect(rect: MyRect){
+  public mapRect(rect: MyRect) {
     var x: number = this.data[Matrix.MTRANS_X];
     var y: number = this.data[Matrix.MTRANS_Y];
     rect.set(rect.left + x, rect.top + y, rect.right + x, rect.bottom + y);
   }
 
-  public invert(matrix:Matrix){
+  public invert(matrix: Matrix) {
     var values: number[] = matrix.getValues();
-    values[Matrix.MSCALE_X] = 1 / (this.data[Matrix.MSCALE_X] / 1)
-    values[Matrix.MSCALE_Y] = 1 / (this.data[Matrix.MSCALE_Y] / 1)
-    values[Matrix.MTRANS_X] = -this.data[Matrix.MTRANS_X] * values[Matrix.MSCALE_X]
-    values[Matrix.MTRANS_Y] = -this.data[Matrix.MTRANS_Y] * values[Matrix.MSCALE_Y]
+    values[Matrix.MSCALE_X] = 1 / (this.data[Matrix.MSCALE_X] / 1);
+    values[Matrix.MSCALE_Y] = 1 / (this.data[Matrix.MSCALE_Y] / 1);
+    values[Matrix.MTRANS_X] = -this.data[Matrix.MTRANS_X] * values[Matrix.MSCALE_X];
+    values[Matrix.MTRANS_Y] = -this.data[Matrix.MTRANS_Y] * values[Matrix.MSCALE_Y];
     matrix.setValues(values);
     return matrix;
   }
 
-  private checkValue(){
-    for(var i = 0;i < this.data.length;i++){
-      if(isNaN(this.data[i]) || this.data[i] == undefined){
-        if(i == Matrix.MSCALE_X || i == Matrix.MSCALE_Y || i == Matrix.MPERSP_2){
-          this.data[i] = 1
-        }else{
-          this.data[i] = 0
+  private checkValue() {
+    for (var i = 0; i < this.data.length; i++) {
+      if (isNaN(this.data[i]) || this.data[i] == undefined) {
+        if (i == Matrix.MSCALE_X || i == Matrix.MSCALE_Y || i == Matrix.MPERSP_2) {
+          this.data[i] = 1;
+        } else {
+          this.data[i] = 0;
         }
       }
     }
   }
-
 }

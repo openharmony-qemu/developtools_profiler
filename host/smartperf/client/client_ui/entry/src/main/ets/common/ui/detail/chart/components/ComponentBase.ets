@@ -23,37 +23,34 @@ export default abstract class ComponentBase {
     /**
      * flag that indicates if this axis / legend is enabled or not
      */
-    protected  mEnabled:boolean = true;
+    protected mEnabled: boolean = true;
 
     /**
      * the offset in pixels this component has on the x-axis
      */
-    protected mXOffset:number = 5;
+    protected mXOffset: number = 5;
 
     /**
      * the offset in pixels this component has on the Y-axis
      */
-    protected mYOffset:number = 5;
+    protected mYOffset: number = 5;
 
     /**
      * the typeface used for the labels
      */
-    protected  mTypeface:FontWeight/*Typeface*/ = FontWeight.Normal;
+    protected mTypeface: FontWeight /*Typeface*/ = FontWeight.Normal;
 
     /**
      * the text size of the labels
      */
-    protected mTextSize:number = 10;
+    protected mTextSize: number = 10;
 
     /**
      * the text color to use for the labels
      */
-    protected mTextColor:number = Color.Black;
+    protected mTextColor: number = Color.Black;
 
-
-    constructor(){
-
-    }
+    constructor() {}
 
     /**
      * Returns the used offset on the x-axis for drawing the axis or legend
@@ -61,7 +58,7 @@ export default abstract class ComponentBase {
      *
      * @return
      */
-    public getXOffset():number{
+    public getXOffset(): number {
         return this.mXOffset;
     }
 
@@ -70,7 +67,7 @@ export default abstract class ComponentBase {
      *
      * @param xOffset
      */
-    public setXOffset(xOffset:number):void{
+    public setXOffset(xOffset: number): void {
         this.mXOffset = Utils.convertDpToPixel(xOffset);
     }
 
@@ -80,7 +77,7 @@ export default abstract class ComponentBase {
      *
      * @return
      */
-    public  getYOffset():number {
+    public getYOffset(): number {
         return this.mYOffset;
     }
 
@@ -91,7 +88,7 @@ export default abstract class ComponentBase {
      *
      * @param yOffset
      */
-    public  setYOffset(yOffset:number):void {
+    public setYOffset(yOffset: number): void {
         this.mYOffset = Utils.convertDpToPixel(yOffset);
     }
 
@@ -100,7 +97,7 @@ export default abstract class ComponentBase {
      *
      * @return
      */
-    public  getTypeface():FontWeight/*Typeface*/ {
+    public getTypeface(): FontWeight /*Typeface*/ {
         return this.mTypeface;
     }
 
@@ -109,7 +106,7 @@ export default abstract class ComponentBase {
      *
      * @param tf
      */
-    public  setTypeface( tf:FontWeight/*Typeface*/):void{
+    public setTypeface(tf: FontWeight /*Typeface*/): void {
         this.mTypeface = tf;
     }
 
@@ -119,12 +116,9 @@ export default abstract class ComponentBase {
      *
      * @param size the text size, in DP
      */
-    public setTextSize(size:number):void {
-
-        if (size > 24)
-            size = 24;
-        if (size < 6)
-            size = 6;
+    public setTextSize(size: number): void {
+        if (size > 24) size = 24;
+        if (size < 6) size = 6;
 
         this.mTextSize = size;
     }
@@ -134,10 +128,9 @@ export default abstract class ComponentBase {
      *
      * @return
      */
-    public getTextSize():number {
+    public getTextSize(): number {
         return this.mTextSize;
     }
-
 
     /**
      * Sets the text color to use for the labels. Make sure to use
@@ -145,7 +138,7 @@ export default abstract class ComponentBase {
      *
      * @param color
      */
-    public setTextColor(color:number):void {
+    public setTextColor(color: number): void {
         this.mTextColor = color;
     }
 
@@ -154,7 +147,7 @@ export default abstract class ComponentBase {
      *
      * @return
      */
-    public getTextColor():Color|string|number|Resource {
+    public getTextColor(): Color | string | number | Resource {
         return this.mTextColor;
     }
 
@@ -165,7 +158,7 @@ export default abstract class ComponentBase {
      *
      * @param enabled
      */
-    public setEnabled(enabled:boolean):void {
+    public setEnabled(enabled: boolean): void {
         this.mEnabled = enabled;
     }
 
@@ -174,7 +167,7 @@ export default abstract class ComponentBase {
      *
      * @return
      */
-    public  isEnabled():boolean {
+    public isEnabled(): boolean {
         return this.mEnabled;
     }
 }

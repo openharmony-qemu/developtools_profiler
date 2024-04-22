@@ -20,15 +20,15 @@
  * @param percent
  */
 export class FpsLostFrame {
-  public key: string
-  public value: string
-  public percent: string
-  public color: Resource
+  public key: string;
+  public value: string;
+  public percent: string;
+  public color: Resource;
 
   constructor(key: string, value: string, percent: string, color: Resource) {
-    this.key = key
-    this.value = value
-    this.percent = percent
-    this.color = color
+    this.key = key;
+    this.value = value;
+    this.percent = percent;
+    this.color = color;
   }
 }

@@ -17,29 +17,29 @@ import { DashPathEffect } from '../../data/Paint';
 import EntryOhos from '../../data/EntryOhos';
 import IBarLineScatterCandleBubbleDataSet from './IBarLineScatterCandleBubbleDataSet';
 
-export default interface ILineScatterCandleRadarDataSet<T extends EntryOhos> extends IBarLineScatterCandleBubbleDataSet<T> {
+export default interface ILineScatterCandleRadarDataSet<T extends EntryOhos>
+extends IBarLineScatterCandleBubbleDataSet<T> {
+    /**
+     * Returns true if vertical highlight indicator lines are enabled (drawn)
+     * @return
+     */
+    isVerticalHighlightIndicatorEnabled(): boolean;
 
     /**
      * Returns true if vertical highlight indicator lines are enabled (drawn)
      * @return
      */
-    isVerticalHighlightIndicatorEnabled() : boolean;
-
-    /**
-     * Returns true if vertical highlight indicator lines are enabled (drawn)
-     * @return
-     */
-    isHorizontalHighlightIndicatorEnabled() : boolean;
+    isHorizontalHighlightIndicatorEnabled(): boolean;
 
     /**
      * Returns the line-width in which highlight lines are to be drawn.
      * @return
      */
-    getHighlightLineWidth() : number;
+    getHighlightLineWidth(): number;
 
     /**
      * Returns the DashPathEffect that is used for highlighting.
      * @return
      */
-    getDashPathEffectHighlight() : DashPathEffect;
+    getDashPathEffectHighlight(): DashPathEffect;
 }

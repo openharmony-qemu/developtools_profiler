@@ -14,20 +14,26 @@
  */
 
 import ColorTemplate from '../utils/ColorTemplate';
-import {LegendForm} from './Legend';
+import { LegendForm } from './Legend';
 
 export default class LegendEntry {
   /**
-     *
-     * @param label The legend entry text. A `null` label will start a group.
-     * @param form The form to draw for this entry.
-     * @param formSize Set to NaN to use the legend's default.
-     * @param formLineWidth Set to NaN to use the legend's default.
-     * @param formLineDashEffect Set to nil to use the legend's default.
-     * @param formColor The color for drawing the form.
-     */
-  constructor(label ?: string, form ?: LegendForm, formSize ?: number, formLineWidth ?: number,
-              formLineDashEffect ?: Object/*DashPathEffect*/, formColor ?: number|Color)  {
+   *
+   * @param label The legend entry text. A `null` label will start a group.
+   * @param form The form to draw for this entry.
+   * @param formSize Set to NaN to use the legend's default.
+   * @param formLineWidth Set to NaN to use the legend's default.
+   * @param formLineDashEffect Set to nil to use the legend's default.
+   * @param formColor The color for drawing the form.
+   */
+  constructor(
+    label?: string,
+    form?: LegendForm,
+    formSize?: number,
+    formLineWidth?: number,
+    formLineDashEffect?: Object /*DashPathEffect*/,
+    formColor?: number | Color
+  ) {
     this.label = label;
     this.form = form;
     this.formSize = formSize;
@@ -37,52 +43,52 @@ export default class LegendEntry {
   }
 
   /**
-     * The legend entry text.
-     * A `null` label will start a group.
-     */
-  public  label:string;
+   * The legend entry text.
+   * A `null` label will start a group.
+   */
+  public label: string;
 
   /**
-     * The form to draw for this entry.
-     *
-     * `NONE` will avoid drawing a form, and any related space.
-     * `EMPTY` will avoid drawing a form, but keep its space.
-     * `DEFAULT` will use the Legend's default.
-     */
-  public  form:LegendForm = LegendForm.DEFAULT;
+   * The form to draw for this entry.
+   *
+   * `NONE` will avoid drawing a form, and any related space.
+   * `EMPTY` will avoid drawing a form, but keep its space.
+   * `DEFAULT` will use the Legend's default.
+   */
+  public form: LegendForm = LegendForm.DEFAULT;
 
   /**
-     * Form size will be considered except for when .None is used
-     *
-     * Set as NaN to use the legend's default
-     */
-  public  formSize:number = Number.NaN;
+   * Form size will be considered except for when .None is used
+   *
+   * Set as NaN to use the legend's default
+   */
+  public formSize: number = Number.NaN;
 
   /**
-     * Line width used for shapes that consist of lines.
-     *
-     * Set as NaN to use the legend's default
-     */
-  public formLineWidth:number = Number.NaN;
+   * Line width used for shapes that consist of lines.
+   *
+   * Set as NaN to use the legend's default
+   */
+  public formLineWidth: number = Number.NaN;
 
   /**
-     * Line dash path effect used for shapes that consist of lines.
-     *
-     * Set to null to use the legend's default
-     */
-  public  formLineDashEffect:Object/*DashPathEffect*/ = null;
+   * Line dash path effect used for shapes that consist of lines.
+   *
+   * Set to null to use the legend's default
+   */
+  public formLineDashEffect: Object /*DashPathEffect*/ = null;
 
   /**
-     * The color for drawing the form
-     */
-  public  formColor:number|Color// = ColorTemplate.COLOR_NONE;
+   * The color for drawing the form
+   */
+  public formColor: number | Color; // = ColorTemplate.COLOR_NONE;
 
-  public colorArr:Number[]=[]
-  public colorItemSpace:number=3
-  public colorLabelSpace:number=4
-  public colorWidth:number=10
-  public colorHeight:number=10
-  public labelColor:number=Color.Black
-  public labelTextSize:number=10
-  public islableNeedNewLine:boolean=false
+  public colorArr: Number[] = [];
+  public colorItemSpace: number = 3;
+  public colorLabelSpace: number = 4;
+  public colorWidth: number = 10;
+  public colorHeight: number = 10;
+  public labelColor: number = Color.Black;
+  public labelTextSize: number = 10;
+  public islableNeedNewLine: boolean = false;
 }

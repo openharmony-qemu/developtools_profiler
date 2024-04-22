@@ -21,10 +21,10 @@ export class User {
   public token_type: String; //token类型
 
   constructor(token?: String, expires_in?: String, refresh_token?: String, expires_at?: String, token_type?: String) {
-    this.token = token
-    this.expires_in = expires_in
-    this.refresh_token = refresh_token
-    this.expires_at = expires_at
-    this.token_type = token_type
+    this.token = token;
+    this.expires_in = expires_in;
+    this.refresh_token = refresh_token;
+    this.expires_at = expires_at;
+    this.token_type = token_type;
   }
 }

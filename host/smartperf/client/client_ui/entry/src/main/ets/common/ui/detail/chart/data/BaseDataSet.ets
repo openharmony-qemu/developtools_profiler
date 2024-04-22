@@ -14,24 +14,23 @@
  */
 
 import { DashPathEffect } from './Paint';
-import EntryOhos from './EntryOhos'
-import IDataSet from '../interfaces/datasets/IDataSet'
-import {JArrayList} from '../utils/JArrayList'
-import {AxisDependency} from '../components/YAxis'
-import IValueFormatter from '../formatter/IValueFormatter'
-import {LegendForm} from '../components/Legend'
-import MPPointF from '../utils/MPPointF'
-import Color from '../utils/ColorTemplate'
-import ColorTemplate from '../utils/ColorTemplate'
-import Utils from '../utils/Utils'
-import {Rounding} from './DataSet'
+import EntryOhos from './EntryOhos';
+import IDataSet from '../interfaces/datasets/IDataSet';
+import { JArrayList } from '../utils/JArrayList';
+import { AxisDependency } from '../components/YAxis';
+import IValueFormatter from '../formatter/IValueFormatter';
+import { LegendForm } from '../components/Legend';
+import MPPointF from '../utils/MPPointF';
+import Color from '../utils/ColorTemplate';
+import ColorTemplate from '../utils/ColorTemplate';
+import Utils from '../utils/Utils';
+import { Rounding } from './DataSet';
 
 /**
  * This is the base dataset of all DataSets. It's purpose is to implement critical methods
  * provided by the IDataSet interface.
  */
-export default abstract class BaseDataSet <T extends EntryOhos> implements IDataSet<T> {
-
+export default abstract class BaseDataSet<T extends EntryOhos> implements IDataSet<T> {
   /**
    * List representing all colors that are used for this DataSet
    */
@@ -45,12 +44,12 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
   /**
    * label that describes the DataSet or the data the DataSet represents
    */
-  private mLabel: string = "DataSet";
+  private mLabel: string = 'DataSet';
 
   /**
    * this specifies which axis this DataSet should be plotted against
    */
-  protected mAxisDependency: AxisDependency  = AxisDependency.LEFT;
+  protected mAxisDependency: AxisDependency = AxisDependency.LEFT;
 
   /**
    * if true, value highlightning is enabled
@@ -65,7 +64,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
   /**
    * the typeface used for the value text
    */
-  protected mValueTypeface: FontWeight /*Typeface*/
+  protected mValueTypeface: FontWeight; /*Typeface*/
   private mForm: LegendForm = LegendForm.DEFAULT;
   private mFormSize: number = Number.NaN;
   private mFormLineWidth: number = Number.NaN;
@@ -111,15 +110,14 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
   /**
    * Use this method to tell the data set that the underlying data has changed.
    */
-  public notifyDataSetChanged(): void  {
+  public notifyDataSetChanged(): void {
     this.calcMinMax();
   }
-
 
   /**
    * ###### ###### COLOR GETTING RELATED METHODS ##### ######
    */
-  public getColors(): JArrayList<Number>  {
+  public getColors(): JArrayList<Number> {
     return this.mColors;
   }
 
@@ -128,12 +126,11 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
   }
 
   public getColor(index?: number): number {
-    if(!index||index==null||index==undefined){
-      index=0;
+    if (!index || index == null || index == undefined) {
+      index = 0;
     }
     return this.mColors.get(index % this.mColors.size()).valueOf();
   }
-
 
   /**
    * ###### ###### COLOR SETTING RELATED METHODS ##### ######
@@ -148,7 +145,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    *
    * @param colors
    */
-  public setColorsByList(colors: JArrayList<Number>): void  {
+  public setColorsByList(colors: JArrayList<Number>): void {
     this.mColors = colors;
   }
 
@@ -176,9 +173,8 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    * @param colors
    */
   public setColorsByArr(colors: number[]): void {
-
     if (this.mColors == null) {
-      this.mColors = new JArrayList <Number>();
+      this.mColors = new JArrayList<Number>();
     }
     this.mColors.clear();
     for (let color of colors) {
@@ -191,7 +187,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    *
    * @param color
    */
-  public addColor(color: number): void  {
+  public addColor(color: number): void {
     if (this.mColors == null) {
       this.mColors = new JArrayList<Number>();
     }
@@ -204,7 +200,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    *
    * @param color
    */
-  public setColorByColor(color: Number): void  {
+  public setColorByColor(color: Number): void {
     this.resetColors();
     this.mColors.add(color);
   }
@@ -215,9 +211,14 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    * @param color
    * @param alpha from 0-255
    */
-  public setColorByAlpha(color: number, alpha: number): void  {
-    var mColor:number = ColorTemplate.argb(alpha, ColorTemplate.red(color), ColorTemplate.green(color), ColorTemplate.blue(color));
-    this.setColorsByVariable([mColor])
+  public setColorByAlpha(color: number, alpha: number): void {
+    var mColor: number = ColorTemplate.argb(
+      alpha,
+    ColorTemplate.red(color),
+    ColorTemplate.green(color),
+    ColorTemplate.blue(color)
+    );
+    this.setColorsByVariable([mColor]);
   }
 
   /**
@@ -226,10 +227,12 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    * @param colors
    * @param alpha
    */
-  public setColorsByArrAndAlpha(colors: number[], alpha: number): void  {
+  public setColorsByArrAndAlpha(colors: number[], alpha: number): void {
     this.resetColors();
     for (let color of colors) {
-      this.addColor(ColorTemplate.argb(alpha, ColorTemplate.red(color), ColorTemplate.green(color), ColorTemplate.blue(color)));
+      this.addColor(
+      ColorTemplate.argb(alpha, ColorTemplate.red(color), ColorTemplate.green(color), ColorTemplate.blue(color))
+      );
     }
   }
 
@@ -254,7 +257,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mLabel;
   }
 
-  public setHighlightEnabled(enabled: boolean): void  {
+  public setHighlightEnabled(enabled: boolean): void {
     this.mHighlightEnabled = enabled;
   }
 
@@ -262,17 +265,13 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mHighlightEnabled;
   }
 
-  public setValueFormatter(f: IValueFormatter): void  {
-
-    if (f == null)
-    return;
-    else
-    this.mValueFormatter = f;
+  public setValueFormatter(f: IValueFormatter): void {
+    if (f == null) return;
+    else this.mValueFormatter = f;
   }
 
   public getValueFormatter(): IValueFormatter {
-    if (this.needsFormatter())
-    return Utils.getDefaultValueFormatter();
+    if (this.needsFormatter()) return Utils.getDefaultValueFormatter();
     return this.mValueFormatter;
   }
 
@@ -280,7 +279,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mValueFormatter == null;
   }
 
-  public setValueTextColor(color: number): void  {
+  public setValueTextColor(color: number): void {
     this.mValueColors.clear();
     this.mValueColors.add(color);
   }
@@ -289,24 +288,22 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     this.mValueColors = colors;
   }
 
-  public setValueTypeface(tf: FontWeight /*Typeface*/
-  ): void {
+  public setValueTypeface(tf: FontWeight /*Typeface*/): void {
     this.mValueTypeface = tf;
   }
 
-  public setValueTextSize(size: number): void  {
+  public setValueTextSize(size: number): void {
     this.mValueTextSize = size;
   }
 
   public getValueTextColor(index?: number): number {
     if (!index) {
-      index = 0
+      index = 0;
     }
     return this.mValueColors.get(index % this.mValueColors.size()).valueOf();
   }
 
-  public getValueTypeface(): FontWeight /*Typeface*/
-  {
+  public getValueTypeface(): FontWeight /*Typeface*/ {
     return this.mValueTypeface;
   }
 
@@ -322,7 +319,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mForm;
   }
 
-  public setFormSize(formSize: number): void  {
+  public setFormSize(formSize: number): void {
     this.mFormSize = formSize;
   }
 
@@ -338,17 +335,15 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mFormLineWidth;
   }
 
-  public setFormLineDashEffect(dashPathEffect: DashPathEffect
-  ): void {
+  public setFormLineDashEffect(dashPathEffect: DashPathEffect): void {
     this.mFormLineDashEffect = dashPathEffect;
   }
 
-  public getFormLineDashEffect(): DashPathEffect
-  {
+  public getFormLineDashEffect(): DashPathEffect {
     return this.mFormLineDashEffect;
   }
 
-  public setDrawValues(enabled: boolean): void  {
+  public setDrawValues(enabled: boolean): void {
     this.mDrawValues = enabled;
   }
 
@@ -356,16 +351,15 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mDrawValues;
   }
 
-  public setDrawIcons(enabled: boolean): void  {
+  public setDrawIcons(enabled: boolean): void {
     this.mDrawIcons = enabled;
   }
 
-  public isDrawIconsEnabled(): boolean  {
+  public isDrawIconsEnabled(): boolean {
     return this.mDrawIcons;
   }
 
-  public setIconsOffset(offsetDp: MPPointF): void  {
-
+  public setIconsOffset(offsetDp: MPPointF): void {
     this.mIconsOffset.x = offsetDp.x;
     this.mIconsOffset.y = offsetDp.y;
   }
@@ -382,20 +376,19 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return this.mVisible;
   }
 
-  public getAxisDependency(): AxisDependency{
+  public getAxisDependency(): AxisDependency {
     return this.mAxisDependency;
   }
 
-  public setAxisDependency(dependency: AxisDependency): void  {
+  public setAxisDependency(dependency: AxisDependency): void {
     this.mAxisDependency = dependency;
   }
-
 
   /**
    * ###### ###### DATA RELATED METHODS ###### ######
    */
   public getIndexInEntries(xIndex: number): number {
-    for (let i = 0;i < this.getEntryCount(); i++) {
+    for (let i = 0; i < this.getEntryCount(); i++) {
       if (xIndex == this.getEntryForIndex(i).getX()) {
         return i;
       }
@@ -403,7 +396,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     return -1;
   }
 
-  public removeFirst(): boolean  {
+  public removeFirst(): boolean {
     if (this.getEntryCount() > 0) {
       var entry: T = this.getEntryForIndex(0);
       return this.removeEntry(entry);
@@ -416,8 +409,7 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     if (this.getEntryCount() > 0) {
       var e: T = this.getEntryForIndex(this.getEntryCount() - 1);
       return this.removeEntry(e);
-    } else
-    return false;
+    } else return false;
   }
 
   public removeEntryByXValue(xValue: number): boolean {
@@ -432,12 +424,11 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
 
   public contains(e: T): boolean {
     for (let i = 0; i < this.getEntryCount(); i++) {
-      if (this.getEntryForIndex(i) == e)
-      return true;
+      if (this.getEntryForIndex(i) == e) return true;
     }
     return false;
   }
-  protected copyTo(baseDataSet: BaseDataSet<T>): void  {
+  protected copyTo(baseDataSet: BaseDataSet<T>): void {
     baseDataSet.mAxisDependency = this.mAxisDependency;
     baseDataSet.mColors = this.mColors;
     baseDataSet.mDrawIcons = this.mDrawIcons;
@@ -455,8 +446,8 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
     baseDataSet.mVisible = this.mVisible;
   }
 
-  getYMin(): number{
-    return 0
+  getYMin(): number {
+    return 0;
   }
 
   /**
@@ -464,8 +455,8 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    *
    * @return
    */
-  getYMax(): number{
-    return 0
+  getYMax(): number {
+    return 0;
   }
 
   /**
@@ -473,8 +464,8 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    *
    * @return
    */
-  getXMin(): number{
-    return 0
+  getXMin(): number {
+    return 0;
   }
 
   /**
@@ -482,51 +473,47 @@ export default abstract class BaseDataSet <T extends EntryOhos> implements IData
    *
    * @return
    */
-  getXMax(): number{
-    return 0
-  }
-
-  getEntryCount(): number{
+  getXMax(): number {
     return 0;
   }
 
-  calcMinMax(e?: T): void{
+  getEntryCount(): number {
+    return 0;
   }
 
-  calcMinMaxY(fromX: number, toX: number): void{
+  calcMinMax(e?: T): void {}
+
+  calcMinMaxY(fromX: number, toX: number): void {}
+
+  getEntryForXValue(xValue: number, closestToY: number, rounding?: Rounding): T {
+    return null;
   }
 
-  getEntryForXValue(xValue: number, closestToY: number, rounding?: Rounding): T{
-    return null
+  getEntriesForXValue(xValue: number): JArrayList<T> {
+    return null;
   }
 
-  getEntriesForXValue(xValue: number): JArrayList<T>{
-    return null
+  getEntryForIndex(index: number): T {
+    return null;
   }
 
-  getEntryForIndex(index: number): T{
-    return null
+  getEntryIndex(xValue: number, closestToY: number, rounding: Rounding): number {
+    return 0;
   }
 
-  getEntryIndex(xValue: number, closestToY: number, rounding: Rounding): number{
-    return 0
+  getEntryIndexByEntry(e: T): number {
+    return 0;
   }
 
-  getEntryIndexByEntry(e: T): number{
-    return 0
+  addEntry(e: T): boolean {
+    return false;
   }
 
-  addEntry(e : T) : boolean{
-    return false
+  addEntryOrdered(e: T): void {}
+
+  removeEntry(e: T): boolean {
+    return false;
   }
 
-  addEntryOrdered(e : T) : void{
-  }
-
-  removeEntry(e : T) : boolean{
-    return false
-  }
-
-  clear() : void{
-  }
+  clear(): void {}
 }

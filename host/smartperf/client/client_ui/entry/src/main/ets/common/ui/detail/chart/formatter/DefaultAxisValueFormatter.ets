@@ -13,49 +13,46 @@
  * limitations under the License.
  */
 
-import IAxisValueFormatter from './IAxisValueFormatter'
-import AxisBase from '../components/AxisBase'
+import IAxisValueFormatter from './IAxisValueFormatter';
+import AxisBase from '../components/AxisBase';
 
 export default class DefaultAxisValueFormatter implements IAxisValueFormatter {
-
   /**
-    * the number of decimal digits this formatter uses
-    */
+   * the number of decimal digits this formatter uses
+   */
   protected digits: number = 0;
 
   /**
-    * Constructor that specifies to how many digits the value should be
-    * formatted.
-    *
-    * @param digits
-    */
+   * Constructor that specifies to how many digits the value should be
+   * formatted.
+   *
+   * @param digits
+   */
   constructor(digits: number) {
     this.digits = digits;
 
-    var b: string = "";
+    var b: string = '';
     for (var i = 0; i < digits; i++) {
-      if (i == 0)
-      b += ".";
-      b += "0";
+      if (i == 0) b += '.';
+      b += '0';
     }
-
   }
 
   public getFormattedValue(value: number, axis: AxisBase): string {
     // avoid memory allocations here (for performance)
-    var str = String(value.toFixed(1)).split(".");
-    if(str[1] == "0"){
+    var str = String(value.toFixed(1)).split('.');
+    if (str[1] == '0') {
       return str[0];
-    }else{
-      return String(value.toFixed(1))
+    } else {
+      return String(value.toFixed(1));
     }
   }
 
   /**
-    * Returns the number of decimal digits this formatter uses or -1, if unspecified.
-    *
-    * @return
-    */
+   * Returns the number of decimal digits this formatter uses or -1, if unspecified.
+   *
+   * @return
+   */
   public getDecimalDigits(): number {
     return this.digits;
   }

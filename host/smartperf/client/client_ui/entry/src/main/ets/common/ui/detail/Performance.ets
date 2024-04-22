@@ -60,7 +60,7 @@ export struct Performance {
     this.topAxis.setPosition(XAxisPosition.TOP);
     this.topAxis.setAxisMinimum(0);
     this.topAxis.setAxisMaximum(this.gpData.length - 1);
-     this.topAxis.setDrawAxisLine(false)
+    this.topAxis.setDrawAxisLine(false)
     if (this.gpData.length < 10) {
       this.bottomAxis.setLabelCount(this.gpData.length, false);
     } else {
@@ -137,8 +137,8 @@ export struct Performance {
   }
 
   /**
-    * 获取百分比
-    */
+   * 获取百分比
+   */
   private getPercent(value: number, total: number): String {
     SPLogger.DEBUG(TAG, "value end  : " + value + "total: " + total);
     if (isNaN(value) || isNaN(total)) {
@@ -153,10 +153,10 @@ export struct Performance {
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();

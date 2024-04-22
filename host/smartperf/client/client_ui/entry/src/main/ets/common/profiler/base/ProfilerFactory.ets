@@ -12,45 +12,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { CPU } from '../item/CPU'
-import { GPU } from '../item/GPU'
-import { FPS } from '../item/FPS'
-import { Power } from '../item/Power'
-import { RAM } from '../item/RAM'
-import { Thermal } from '../item/Thermal'
-import { DDR } from '../item/DDR'
+import { CPU } from '../item/CPU';
+import { GPU } from '../item/GPU';
+import { FPS } from '../item/FPS';
+import { Power } from '../item/Power';
+import { RAM } from '../item/RAM';
+import { Thermal } from '../item/Thermal';
+import { DDR } from '../item/DDR';
 import { NetWork } from '../item/NetWork';
-import { CollectorType } from './ProfilerConstant'
-import { BaseProfiler } from './BaseProfiler'
-import SPLogger from '../../../common/utils/SPLogger'
+import { CollectorType } from './ProfilerConstant';
+import { BaseProfiler } from './BaseProfiler';
+import SPLogger from '../../../common/utils/SPLogger';
 
 export class ProfilerFactory {
-  static getProfilerByConfig(moduleName: string): BaseProfiler{
+  static getProfilerByConfig(moduleName: string): BaseProfiler {
     if (moduleName == CollectorType.TYPE_FPS) {
-
-      return FPS.getInstance()
+      return FPS.getInstance();
     } else if (moduleName == CollectorType.TYPE_CPU) {
-
-      return CPU.getInstance()
+      return CPU.getInstance();
     } else if (moduleName == CollectorType.TYPE_GPU) {
-
-      return GPU.getInstance()
+      return GPU.getInstance();
     } else if (moduleName == CollectorType.TYPE_POWER) {
-
-      return Power.getInstance()
+      return Power.getInstance();
     } else if (moduleName == CollectorType.TYPE_RAM) {
-
-      return RAM.getInstance()
+      return RAM.getInstance();
     } else if (moduleName == CollectorType.TYPE_TEMPERATURE) {
-
-      return Thermal.getInstance()
+      return Thermal.getInstance();
     } else if (moduleName == CollectorType.TYPE_DDR) {
-
-      return DDR.getInstance()
-    }else if (moduleName == CollectorType.TYPE_NET) {
-
-      return NetWork.getInstance()
+      return DDR.getInstance();
+    } else if (moduleName == CollectorType.TYPE_NET) {
+      return NetWork.getInstance();
     }
-    return null
+    return null;
   }
 }

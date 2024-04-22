@@ -18,17 +18,17 @@
  */
 export default class GameUtils {
   // 30,40,60 连续丢帧>=3帧 为一般卡顿
-  static GENERAL_CATON_FLAG_LOW: number = 3
+  static GENERAL_CATON_FLAG_LOW: number = 3;
   // 30,40,60 连续丢帧>=6帧 为严重卡顿
-  static CRITICAL_CATON_FLAG_LOW: number = 6
+  static CRITICAL_CATON_FLAG_LOW: number = 6;
   // 30,40,60 连续丢帧>=9帧 为致命卡顿
-  static FATAL_CATON_FLAG_LOW: number = 9
+  static FATAL_CATON_FLAG_LOW: number = 9;
   // 90,120 连续丢帧>=4帧 为一般卡顿
-  static GENERAL_CATON_FLAG_HIGHT: number = 4
+  static GENERAL_CATON_FLAG_HIGHT: number = 4;
   // 90,120 连续丢帧>=8帧 为严重卡顿
-  static CRITICAL_CATON_FLAG_HIGHT: number = 8
+  static CRITICAL_CATON_FLAG_HIGHT: number = 8;
   // 90,120 连续丢帧>=12帧 为致命卡顿
-  static FATAL_CATON_FLAG_HIGHT: number = 12
+  static FATAL_CATON_FLAG_HIGHT: number = 12;
 
   // 连续丢帧数组长度
   private static JANK_SIZE: number = 21;
@@ -37,15 +37,14 @@ export default class GameUtils {
   private static JANK_RANGE_ARRAY_60 = new Array<number>(GameUtils.JANK_SIZE);
   private static JANK_RANGE_ARRAY_40 = new Array<number>(GameUtils.JANK_SIZE);
   private static JANK_RANGE_ARRAY_30 = new Array<number>(GameUtils.JANK_SIZE);
-  private constructor() {
-  }
+  private constructor() {}
 
   /**
-  * 方法描述 计算满帧
-  *
-  * @param maxFps maxFps
-  * @return java.lang.Integer get full fps
-  */
+   * 方法描述 计算满帧
+   *
+   * @param maxFps maxFps
+   * @return java.lang.Integer get full fps
+   */
   static getFullFps(maxFps: number): number {
     /*关于满帧判定，把所有帧率做一次遍历:
      * 1、只要有>=100帧，则判断为120帧
@@ -82,22 +81,22 @@ export default class GameUtils {
   }
 
   /**
-  * 方法描述 计算帧率中位数
-  *
-  * @param fpsList fpsList
-  * @return java.lang.Integer fps
-  */
+   * 方法描述 计算帧率中位数
+   *
+   * @param fpsList fpsList
+   * @return java.lang.Integer fps
+   */
   private static getMedianFrameRadio(fpsArray: Array<number>): number {
     if (null == fpsArray || fpsArray.length == 0) {
       return null;
     }
 
-    fpsArray.sort()
+    fpsArray.sort();
 
     let length = fpsArray.length;
 
     if (length % 2 == 0) {
-      return ((fpsArray[fpsArray.length / 2] + fpsArray[fpsArray.length / 2 - 1]) / 2); // 偶数个取中间两个数的平均数
+      return (fpsArray[fpsArray.length / 2] + fpsArray[fpsArray.length / 2 - 1]) / 2; // 偶数个取中间两个数的平均数
     } else {
       return fpsArray[fpsArray.length / 2]; // 奇数个取最中间那个数
     }
@@ -120,7 +119,7 @@ export default class GameUtils {
    * @param param param
    * @return java.lang.Integer 得分
    */
-  private static getFpsJitterScore(param: number): number{
+  private static getFpsJitterScore(param: number): number {
     if (null == param) {
       return null;
     }
@@ -128,14 +127,14 @@ export default class GameUtils {
   }
 
   public static createJankStr(jankSrcStr: string, fullFPS: number, JankMap: Map<string, number>): string {
-    if (null == jankSrcStr || jankSrcStr == "") {
-      return "NA";
+    if (null == jankSrcStr || jankSrcStr == '') {
+      return 'NA';
     }
 
     // 初始化连续丢帧数组
     GameUtils.initJankArray(fullFPS);
 
-    let allDrawFrame: Array<string> = jankSrcStr.split(",");
+    let allDrawFrame: Array<string> = jankSrcStr.split(',');
     let jitters = new Array<number>(allDrawFrame.length);
     for (let i = 0; i < allDrawFrame.length; i++) {
       try {
@@ -145,9 +144,9 @@ export default class GameUtils {
       }
     }
 
-    let jitterStr = "NA";
+    let jitterStr = 'NA';
     let jankCountMap = new Map<number, number>();
-    jitters.forEach(jank => {
+    jitters.forEach((jank) => {
       let doubleJank = jank / 1e6;
       let jankRange = 0;
       if (fullFPS == 120) {
@@ -182,9 +181,13 @@ export default class GameUtils {
     let allKeysIterator = jankCountMap.keys();
 
     for (var i = 0; i < jankCountMap.size; i++) {
-      let key: number = allKeysIterator.next().value
-      let jankKey = key == 22 ? ">20" : String(key - 1);
-      jitterBuilder.concat(jankKey).concat(":").concat(String(jankCountMap.get(key))).concat(";");
+      let key: number = allKeysIterator.next().value;
+      let jankKey = key == 22 ? '>20' : String(key - 1);
+      jitterBuilder
+        .concat(jankKey)
+        .concat(':')
+        .concat(String(jankCountMap.get(key)))
+        .concat(';');
       JankMap.set(jankKey, jankCountMap.get(key));
     }
 
@@ -215,11 +218,11 @@ export default class GameUtils {
   }
 
   /**
-  * 方法描述
-  *
-  * @param jankRangeArray 连续丢帧数组
-  * @param defaultJankTime 默认单帧时间
-  */
+   * 方法描述
+   *
+   * @param jankRangeArray 连续丢帧数组
+   * @param defaultJankTime 默认单帧时间
+   */
   private static calJankArray(jankRangeArray: Array<number>, defaultJankTime: number) {
     if (jankRangeArray[0] < 0.01) {
       for (let i = 1; i <= GameUtils.JANK_SIZE; i++) {
@@ -228,7 +231,7 @@ export default class GameUtils {
     }
   }
 
-  private static getJankRange(jankRangeArray: Array<number>, currRange: number, jank: number): number{
+  private static getJankRange(jankRangeArray: Array<number>, currRange: number, jank: number): number {
     if (currRange > 22) {
       return 0;
     }
