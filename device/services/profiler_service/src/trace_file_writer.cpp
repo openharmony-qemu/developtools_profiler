@@ -509,8 +509,7 @@ void TraceFileWriter::FinishReport(int32_t size)
         realSize, strerror(errno));
 
     // write data length
-    *((int*)(&reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_])) = size;
-
+    *(reinterpret_cast<int*>((&reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_]))) = size;
     mapOffset_ += static_cast<uint64_t>(realSize);
     fileWriteLength_ += static_cast<uint64_t>(realSize);
     writeBytes_ += static_cast<uint64_t>(realSize);

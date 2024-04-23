@@ -29,6 +29,7 @@ struct HookData {
     uint32_t maxJsStackdepth = {0};
     uint32_t statisticsInterval {0};
     uint32_t sampleInterval {0};
+    uint32_t mallocFreeMatchingInterval {0};
     std::string fileName {"/data/local/tmp/data.txt"};
     std::string processName;
     std::string performanceFilename {"/data/local/tmp/performance.txt"};
@@ -62,7 +63,7 @@ struct HookData {
         ss << ", processName:" << processName << ' ' <<",startupMode: " << startupMode
            << ", responseLibraryMode: " << responseLibraryMode << ", sampleInterval: " << sampleInterval
            << ", jsStackReport: " << jsStackReport << ", maxJsStackdepth: " << maxJsStackdepth
-           <<", filterNapiName" << filterNapiName;
+           <<", filterNapiName" << filterNapiName << "mallocFreeMatchingInterval: " << mallocFreeMatchingInterval;
         return ss.str();
     }
 };

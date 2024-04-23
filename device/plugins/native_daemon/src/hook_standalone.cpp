@@ -61,11 +61,13 @@ void SetNativeHookConfig(const HookData& hookData)
     g_nativeConfig.set_js_stack_report(hookData.jsStackReport);
     g_nativeConfig.set_max_js_stack_depth(hookData.maxJsStackdepth);
     g_nativeConfig.set_filter_napi_name(hookData.filterNapiName);
+    g_nativeConfig.set_malloc_free_matching_interval(hookData.mallocFreeMatchingInterval);
     for (const std::string& pid: hookData.pids) {
         g_nativeConfig.add_expand_pids(atoi(pid.data()));
     }
     // statistical reporting must be callframe compressed and accurate.
-    if (g_nativeConfig.statistics_interval() > 0) {
+    if (g_nativeConfig.statistics_interval() > 0 ||
+        g_nativeConfig.malloc_free_matching_interval() > 0) {
         g_nativeConfig.set_callframe_compress(true);
         g_nativeConfig.set_record_accurately(true);
     }

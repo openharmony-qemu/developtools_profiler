@@ -35,7 +35,7 @@ const int SLEEP_TIME = 50;
 const int BUF_MAX_LEN = 64;
 const int MS_PER_S = 1000;
 const int US_PER_S = 1000000;
-const char *g_fpsFormat = "SP_daemon -profilerfps 31104000 -sections 10";
+const char *FPS_FORMAT = "SP_daemon -profilerfps 31104000 -sections 10";
 
 static pid_t volatile g_child;
 const int READ = 0;
@@ -75,7 +75,7 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", g_fpsFormat, errno, buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", FPS_FORMAT, errno, buf);
         return -1;
     }
     CHECK_NOTNULL(resultWriter_, -1, "HidumpPlugin: Writer is no set!");
