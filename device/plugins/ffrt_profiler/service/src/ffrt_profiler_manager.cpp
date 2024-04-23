@@ -235,7 +235,7 @@ bool FfrtProfilerManager::HandleFfrtProfilerContext(const std::shared_ptr<FfrtPr
     PROFILER_LOG_INFO(LOG_CORE, "%s smbFd = %d, eventFd = %d\n", ctx->smbName.c_str(),
         ctx->shareMemoryBlock->GetfileDescriptor(), ctx->eventNotifier->GetFd());
 
-    ctx->handle = std::make_shared<FfrtProfilerHandle>(CLOCK_REALTIME, BUFFER_SIZE, isProtobufSerialize_);
+    ctx->handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, isProtobufSerialize_);
     if (isProtobufSerialize_) {
         ctx->handle->SetWriter(g_buffWriter);
     } else {
